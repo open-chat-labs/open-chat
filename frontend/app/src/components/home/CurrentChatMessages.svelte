@@ -1,7 +1,5 @@
-<svelte:options immutable />
-
 <script lang="ts">
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import {
         type EventWrapper,
@@ -19,17 +17,16 @@
         currentChatEditingEvent,
         currentChatPinnedMessages,
         messagesRead,
-        unconfirmedReadByThem,
         unconfirmed,
         failedMessagesStore,
         userGroupKeys,
         draftMessagesStore,
         focusMessageIndex,
-        chatStateStore,
         chatListScopeStore as chatListScope,
         selectedCommunity,
         expandedDeletedMessages,
         eventsStore,
+        chatStateStore,
     } from "openchat-client";
     import InitialChatMessage from "./InitialChatMessage.svelte";
     import page from "page";
@@ -37,37 +34,57 @@
     import PrivatePreview from "./PrivatePreview.svelte";
     import TimelineDate from "./TimelineDate.svelte";
     import Witch from "../Witch.svelte";
+    import { trackedEffect } from "@src/utils/effects.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let chat: ChatSummary;
-    export let unreadMessages: number;
-    export let readonly: boolean;
-    export let firstUnreadMention: Mention | undefined;
-    export let canPin: boolean;
-    export let canBlockUsers: boolean;
-    export let canDelete: boolean;
-    export let canSendAny: boolean;
-    export let canReact: boolean;
-    export let canInvite: boolean;
-    export let footer: boolean;
-    export let canReplyInThread: boolean;
-    export let filteredProposals: FilteredProposals | undefined;
-    export let privateChatPreview: boolean;
+    interface Props {
+        chat: ChatSummary;
+        unreadMessages: number;
+        readonly: boolean;
+        firstUnreadMention: Mention | undefined;
+        canPin: boolean;
+        canBlockUsers: boolean;
+        canDelete: boolean;
+        canSendAny: boolean;
+        canReact: boolean;
+        canInvite: boolean;
+        footer: boolean;
+        canReplyInThread: boolean;
+        filteredProposals: FilteredProposals | undefined;
+        privateChatPreview: boolean;
+        onRemovePreview: (event: EventWrapper<Message>, url: string) => void;
+        onReplyTo: (ctx: EnhancedReplyContext) => void;
+    }
 
-    $: showAvatar = initialised && shouldShowAvatar(chat, $eventsStore[0]?.index);
-    $: messageContext = { chatId: chat.id, threadRootMessageIndex: undefined };
+    let {
+        chat,
+        unreadMessages,
+        readonly,
+        firstUnreadMention,
+        canPin,
+        canBlockUsers,
+        canDelete,
+        canSendAny,
+        canReact,
+        canInvite,
+        footer,
+        canReplyInThread,
+        filteredProposals,
+        privateChatPreview,
+        onRemovePreview,
+        onReplyTo,
+    }: Props = $props();
 
     // treat this as if it might be null so we don't get errors when it's unmounted
-    let chatEventList: ChatEventList | undefined;
-    let messagesDiv: HTMLDivElement | undefined;
-    let messagesDivHeight: number;
-    let initialised = false;
-    let currentChatId: ChatIdentifier | undefined;
+    let chatEventList: ChatEventList | undefined = $state();
+    let messagesDiv: HTMLDivElement | undefined = $state();
+    let messagesDivHeight: number = $state(0);
+    let initialised = $state(false);
+    let currentChatId: ChatIdentifier | undefined = $state();
 
-    function goToMessageIndex(ev: CustomEvent<{ index: number }>) {
-        doGoToMessageIndex(ev.detail.index);
+    function onGoToMessageIndex(detail: { index: number }) {
+        doGoToMessageIndex(detail.index);
     }
 
     function doGoToMessageIndex(index: number): void {
@@ -81,11 +98,11 @@
 
     function replyTo(replyContext: EnhancedReplyContext) {
         if (!canSendAny) return;
-        dispatch("replyTo", replyContext);
+        onReplyTo(replyContext);
     }
 
-    function onEditEvent(ev: CustomEvent<EventWrapper<Message>>) {
-        draftMessagesStore.setEditing({ chatId: chat.id }, ev.detail);
+    function onEditEvent(ev: EventWrapper<Message>) {
+        draftMessagesStore.setEditing({ chatId: chat.id }, ev);
     }
 
     function eventKey(e: EventWrapper<ChatEventType>): string {
@@ -97,7 +114,11 @@
     }
 
     export function externalGoToMessage(messageIndex: number): void {
-        chatEventList?.onMessageWindowLoaded(messageContext, messageIndex);
+        chatEventList?.onMessageWindowLoaded({
+            context: messageContext,
+            messageIndex,
+            initialLoad: false,
+        });
     }
 
     // Checks if a key already exists for this group, if so, that key will be reused so that Svelte is able to match the
@@ -129,33 +150,6 @@
         return firstKey;
     }
 
-    $: timeline = client.groupEvents(
-        [...$eventsStore].reverse(),
-        $user.userId,
-        $expandedDeletedMessages,
-        groupInner(filteredProposals),
-    );
-
-    $: privateCommunityPreview =
-        $selectedCommunity !== undefined &&
-        ($selectedCommunity.membership.role === "none" || $selectedCommunity.membership.lapsed) &&
-        (!$selectedCommunity.public || $selectedCommunity.gateConfig.gate.kind !== "no_gate");
-
-    $: privatePreview = privateCommunityPreview || privateChatPreview;
-    $: isEmptyChat = chat.latestEventIndex <= 0 || privatePreview;
-
-    $: {
-        if (currentChatId === undefined || !chatIdentifiersEqual(chat.id, currentChatId)) {
-            currentChatId = chat.id;
-            initialised = false;
-
-            // If the chat is empty, there is nothing to initialise, so we can set initialised to true
-            if (isEmptyChat) {
-                initialised = true;
-            }
-        }
-    }
-
     function isMe(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
             return evt.event.sender === $user.userId;
@@ -164,21 +158,6 @@
             return evt.event.created_by === $user.userId;
         }
         return false;
-    }
-
-    function isReadByThem(
-        chat: ChatSummary,
-        readByThem: Set<bigint>,
-        evt: EventWrapper<ChatEventType>,
-    ): boolean {
-        if (evt.event.kind === "message") {
-            const confirmedRead = client.messageIsReadByThem(chat.id, evt.event.messageIndex);
-            if (confirmedRead && readByThem.has(evt.event.messageId)) {
-                unconfirmedReadByThem.delete(evt.event.messageId);
-            }
-            return confirmedRead || readByThem.has(evt.event.messageId);
-        }
-        return true;
     }
 
     function isPinned(store: Set<number>, evt: EventWrapper<ChatEventType>): boolean {
@@ -257,6 +236,36 @@
         const indexRequired = Math.max(client.earliestAvailableEventIndex(chat), 1);
         return earliestLoadedEventIndex <= indexRequired;
     }
+    let privateCommunityPreview = $derived(
+        $selectedCommunity !== undefined &&
+            ($selectedCommunity.membership.role === "none" ||
+                $selectedCommunity.membership.lapsed) &&
+            (!$selectedCommunity.public || $selectedCommunity.gateConfig.gate.kind !== "no_gate"),
+    );
+    let privatePreview = $derived(privateCommunityPreview || privateChatPreview);
+    let isEmptyChat = $derived(chat.latestEventIndex <= 0 || privatePreview);
+
+    trackedEffect("current-chat-messages", () => {
+        if (currentChatId === undefined || !chatIdentifiersEqual(chat.id, currentChatId)) {
+            currentChatId = chat.id;
+            initialised = false;
+
+            // If the chat is empty, there is nothing to initialise, so we can set initialised to true
+            if (isEmptyChat) {
+                initialised = true;
+            }
+        }
+    });
+    let showAvatar = $derived(initialised && shouldShowAvatar(chat, $eventsStore[0]?.index));
+    let messageContext = $derived({ chatId: chat.id, threadRootMessageIndex: undefined });
+    let timeline = $derived(
+        client.groupEvents(
+            [...$eventsStore].reverse(),
+            $user.userId,
+            $expandedDeletedMessages,
+            groupInner(filteredProposals),
+        ),
+    );
 </script>
 
 <Witch />
@@ -274,69 +283,70 @@
     {chat}
     bind:initialised
     bind:messagesDiv
-    bind:messagesDivHeight
-    let:isAccepted
-    let:isConfirmed
-    let:isFailed
-    let:isReadByMe
-    let:messageObserver
-    let:labelObserver>
-    {#if !privatePreview}
-        {#each timeline as timelineItem}
-            {#if timelineItem.kind === "timeline_date"}
-                <TimelineDate observer={labelObserver} timestamp={timelineItem.timestamp} />
-            {:else}
-                {#each timelineItem.group as innerGroup (userGroupKey(innerGroup))}
-                    {#each innerGroup as evt, i (eventKey(evt))}
-                        <ChatEvent
-                            observer={messageObserver}
-                            focused={evt.event.kind === "message" &&
-                                evt.event.messageIndex === $focusMessageIndex &&
-                                !isFailed($failedMessagesStore, evt)}
-                            accepted={isAccepted($unconfirmed, evt)}
-                            confirmed={isConfirmed($unconfirmed, evt)}
-                            failed={isFailed($failedMessagesStore, evt)}
-                            readByThem={isReadByThem(chat, $unconfirmedReadByThem, evt)}
-                            readByMe={isReadByMe($messagesRead, evt)}
-                            chatId={chat.id}
-                            chatType={chat.kind}
-                            user={$user}
-                            me={isMe(evt)}
-                            first={i + 1 === innerGroup.length}
-                            last={i === 0}
-                            {readonly}
-                            {canPin}
-                            {canBlockUsers}
-                            {canDelete}
-                            {canSendAny}
-                            {canReact}
-                            {canInvite}
-                            {canReplyInThread}
-                            collapsed={isCollapsed(evt, filteredProposals)}
-                            supportsEdit
-                            supportsReply
-                            threadRootMessage={undefined}
-                            publicGroup={(chat.kind === "group_chat" || chat.kind === "channel") &&
-                                chat.public}
-                            pinned={isPinned($currentChatPinnedMessages, evt)}
-                            editing={$currentChatEditingEvent === evt}
-                            onReplyTo={replyTo}
-                            on:removePreview
-                            on:editEvent={onEditEvent}
-                            on:goToMessageIndex={goToMessageIndex}
-                            onExpandMessage={() => toggleMessageExpansion(evt, true)}
-                            on:collapseMessage={() => toggleMessageExpansion(evt, false)}
-                            on:retrySend
-                            event={evt} />
+    bind:messagesDivHeight>
+    {#snippet children({
+        isAccepted,
+        isConfirmed,
+        isFailed,
+        isReadByMe,
+        messageObserver,
+        labelObserver,
+    })}
+        {#if !privatePreview}
+            {#each timeline as timelineItem}
+                {#if timelineItem.kind === "timeline_date"}
+                    <TimelineDate observer={labelObserver} timestamp={timelineItem.timestamp} />
+                {:else}
+                    {#each timelineItem.group as innerGroup (userGroupKey(innerGroup))}
+                        {#each innerGroup as evt, i (eventKey(evt))}
+                            <ChatEvent
+                                observer={messageObserver}
+                                focused={evt.event.kind === "message" &&
+                                    evt.event.messageIndex === $focusMessageIndex &&
+                                    !isFailed($failedMessagesStore, evt)}
+                                accepted={isAccepted($unconfirmed, evt)}
+                                confirmed={isConfirmed($unconfirmed, evt)}
+                                failed={isFailed($failedMessagesStore, evt)}
+                                readByMe={isReadByMe($messagesRead, evt)}
+                                chatId={chat.id}
+                                chatType={chat.kind}
+                                me={isMe(evt)}
+                                first={i + 1 === innerGroup.length}
+                                last={i === 0}
+                                {readonly}
+                                {canPin}
+                                {canBlockUsers}
+                                {canDelete}
+                                {canSendAny}
+                                {canReact}
+                                {canInvite}
+                                {canReplyInThread}
+                                collapsed={isCollapsed(evt, filteredProposals)}
+                                supportsEdit
+                                supportsReply
+                                threadRootMessage={undefined}
+                                publicGroup={(chat.kind === "group_chat" ||
+                                    chat.kind === "channel") &&
+                                    chat.public}
+                                pinned={isPinned($currentChatPinnedMessages, evt)}
+                                editing={$currentChatEditingEvent === evt}
+                                onReplyTo={replyTo}
+                                {onRemovePreview}
+                                {onEditEvent}
+                                {onGoToMessageIndex}
+                                onExpandMessage={() => toggleMessageExpansion(evt, true)}
+                                onCollapseMessage={() => toggleMessageExpansion(evt, false)}
+                                event={evt} />
+                        {/each}
                     {/each}
-                {/each}
-            {/if}
-        {/each}
-    {/if}
-    {#if privatePreview}
-        <PrivatePreview />
-    {/if}
-    {#if showAvatar}
-        <InitialChatMessage {chat} />
-    {/if}
+                {/if}
+            {/each}
+        {/if}
+        {#if privatePreview}
+            <PrivatePreview />
+        {/if}
+        {#if showAvatar}
+            <InitialChatMessage {chat} />
+        {/if}
+    {/snippet}
 </ChatEventList>

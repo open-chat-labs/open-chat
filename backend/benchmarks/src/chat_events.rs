@@ -99,7 +99,7 @@ fn add_reactions() -> BenchResult {
 
     bench_fn(|| {
         for args in args_vec {
-            chat_events.add_reaction::<NullRuntime>(args, None);
+            let _ = chat_events.add_reaction::<NullRuntime>(args, None);
         }
     })
 }

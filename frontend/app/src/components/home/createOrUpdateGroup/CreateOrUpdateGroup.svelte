@@ -1,36 +1,36 @@
 <script lang="ts">
-    import ModalContent from "../../ModalContent.svelte";
-    import Button from "../../Button.svelte";
-    import { menuCloser } from "../../../actions/closeMenu";
-    import GroupDetails from "./GroupDetails.svelte";
-    import RulesEditor from "../RulesEditor.svelte";
-    import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
-    import GroupPermissionsViewer from "../GroupPermissionsViewer.svelte";
-    import { toastStore } from "../../../stores/toast";
-    import { mobileWidth } from "../../../stores/screenDimensions";
-    import ChooseMembers from "../ChooseMembers.svelte";
     import {
         type CandidateGroupChat,
         type CreateGroupResponse,
+        type Level,
+        type MultiUserChatIdentifier,
         type OpenChat,
+        type ResourceKey,
         UnsupportedValueError,
         type UpdateGroupResponse,
-        routeForChatIdentifier,
-        chatIdentifierUnset,
-        type MultiUserChatIdentifier,
         type UserSummary,
-        type Level,
-        type ResourceKey,
+        chatIdentifierUnset,
         chatListScopeStore as chatListScope,
+        routeForChatIdentifier,
         selectedCommunity,
+        ui,
     } from "openchat-client";
-    import StageHeader from "../StageHeader.svelte";
-    import { getContext, tick } from "svelte";
     import page from "page";
-    import AreYouSure from "../../AreYouSure.svelte";
-    import VisibilityControl from "../VisibilityControl.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import { getContext, tick } from "svelte";
+    import { menuCloser } from "../../../actions/closeMenu";
     import { i18nKey } from "../../../i18n/i18n";
+    import { toastStore } from "../../../stores/toast";
+    import AreYouSure from "../../AreYouSure.svelte";
+    import Button from "../../Button.svelte";
+    import ModalContent from "../../ModalContent.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import ChooseMembers from "../ChooseMembers.svelte";
+    import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
+    import GroupPermissionsViewer from "../GroupPermissionsViewer.svelte";
+    import RulesEditor from "../RulesEditor.svelte";
+    import StageHeader from "../StageHeader.svelte";
+    import VisibilityControl from "../VisibilityControl.svelte";
+    import GroupDetails from "./GroupDetails.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -48,7 +48,7 @@
     let actualWidth = $state(0);
     let detailsValid = $state(true);
     let visibilityValid = $state(true);
-    let originalGroup = $state($state.snapshot(candidateGroup));
+    let originalGroup = $state<CandidateGroupChat>($state.snapshot(candidateGroup));
     let rulesValid = $state(true);
 
     function getSteps(
@@ -182,7 +182,7 @@
 
         confirming = false;
 
-        const updatedGroup = $state.snapshot(candidateGroup);
+        const updatedGroup = { ...candidateGroup };
 
         return client
             .updateGroup(
@@ -235,7 +235,7 @@
         const level = candidateGroup.level;
 
         client
-            .createGroupChat($state.snapshot(candidateGroup))
+            .createGroupChat(candidateGroup)
             .then((resp) => {
                 if (resp.kind !== "success") {
                     const resourceKey = groupCreationErrorMessage(resp, level);
@@ -271,9 +271,6 @@
         tick().then(() => page(url)); // trigger the selection of the chat
     }
 
-    function changeStep(ev: CustomEvent<string>) {
-        step = ev.detail;
-    }
     let editing = $derived(!chatIdentifierUnset(candidateGroup.id));
     let hideInviteUsers = $derived(candidateGroup.level === "channel" && candidateGroup.public);
     let steps = $derived(
@@ -367,8 +364,8 @@
     {/snippet}
     {#snippet body()}
         <div class="body">
-            <StageHeader {steps} enabled on:step={changeStep} {step} />
-            <div class="wrapper">
+            <StageHeader {steps} enabled onStep={(s) => (step = s)} {step} />
+            <div use:menuCloser class="wrapper">
                 {#if step === "details"}
                     <div class="details">
                         <GroupDetails
@@ -400,7 +397,7 @@
                     </div>
                 {/if}
                 {#if step === "permissions"}
-                    <div use:menuCloser class="permissions">
+                    <div class="permissions">
                         {#if canEditPermissions}
                             <GroupPermissionsEditor
                                 {embeddedContent}
@@ -412,7 +409,7 @@
                         {:else}
                             <GroupPermissionsViewer
                                 {embeddedContent}
-                                bind:permissions={candidateGroup.permissions}
+                                permissions={candidateGroup.permissions}
                                 isPublic={candidateGroup.public}
                                 isCommunityPublic={$selectedCommunity?.public ?? true}
                                 isChannel={candidateGroup.id.kind === "channel"} />
@@ -437,8 +434,8 @@
                     {#if !editing && stepIndex > 0}
                         <Button
                             disabled={busy}
-                            small={!$mobileWidth}
-                            tiny={$mobileWidth}
+                            small={!ui.mobileWidth}
+                            tiny={ui.mobileWidth}
                             onClick={() => (step = steps[stepIndex - 1].key)}
                             ><Translatable resourceKey={i18nKey("group.back")} /></Button>
                     {/if}
@@ -446,8 +443,8 @@
                 <div class="actions">
                     <Button
                         disabled={false}
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}
+                        small={!ui.mobileWidth}
+                        tiny={ui.mobileWidth}
                         onClick={onClose}
                         secondary><Translatable resourceKey={i18nKey("cancel")} /></Button>
 
@@ -455,8 +452,8 @@
                         <Button
                             disabled={!dirty || busy || !valid}
                             loading={busy}
-                            small={!$mobileWidth}
-                            tiny={$mobileWidth}
+                            small={!ui.mobileWidth}
+                            tiny={ui.mobileWidth}
                             onClick={() => updateGroup()}
                             ><Translatable
                                 resourceKey={i18nKey(
@@ -467,8 +464,8 @@
                                 )} /></Button>
                     {:else if stepIndex < steps.length - 1}
                         <Button
-                            small={!$mobileWidth}
-                            tiny={$mobileWidth}
+                            small={!ui.mobileWidth}
+                            tiny={ui.mobileWidth}
                             onClick={() => (step = steps[stepIndex + 1].key)}
                             ><Translatable resourceKey={i18nKey("group.next")} />
                         </Button>
@@ -476,8 +473,8 @@
                         <Button
                             disabled={busy || !valid}
                             loading={busy}
-                            small={!$mobileWidth}
-                            tiny={$mobileWidth}
+                            small={!ui.mobileWidth}
+                            tiny={ui.mobileWidth}
                             onClick={createGroup}
                             ><Translatable
                                 resourceKey={i18nKey(

@@ -538,4 +538,24 @@ pub mod happy_path {
 
         assert!(matches!(response, user_canister::unblock_user::Response::Success));
     }
+
+    pub fn pay_for_streak_insurance(env: &mut PocketIc, user: &User, additional_days: u8, expected_price: u128) {
+        let pay_for_insurance_response = super::pay_for_streak_insurance(
+            env,
+            user.principal,
+            user.canister(),
+            &user_canister::pay_for_streak_insurance::Args {
+                additional_days,
+                expected_price,
+                pin: None,
+            },
+        );
+        assert!(
+            matches!(
+                pay_for_insurance_response,
+                user_canister::pay_for_streak_insurance::Response::Success
+            ),
+            "{pay_for_insurance_response:?}"
+        );
+    }
 }

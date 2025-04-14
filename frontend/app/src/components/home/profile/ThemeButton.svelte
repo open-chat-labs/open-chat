@@ -1,66 +1,71 @@
 <script lang="ts">
-    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
-    import Legend from "../../Legend.svelte";
-    import MenuIcon from "../../MenuIconLegacy.svelte";
-    import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItemLegacy.svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import { AvatarSize, OpenChat, userStore } from "openchat-client";
-    import Avatar from "../../Avatar.svelte";
-    import type { Theme } from "../../../theme/types";
-    import { createEventDispatcher, getContext } from "svelte";
-    import type { Alignment } from "../../../utils/alignment";
     import type { ResourceKey } from "openchat-client";
+    import { AvatarSize, OpenChat, ui, userStore } from "openchat-client";
+    import { getContext } from "svelte";
+    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
+    import type { Theme } from "../../../theme/types";
+    import type { Alignment } from "../../../utils/alignment";
+    import Avatar from "../../Avatar.svelte";
+    import Legend from "../../Legend.svelte";
+    import Menu from "../../Menu.svelte";
+    import MenuIcon from "../../MenuIcon.svelte";
+    import MenuItem from "../../MenuItem.svelte";
 
-    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
-    export let theme: Theme;
-    export let otherThemes: Theme[];
-    export let label: ResourceKey;
-    export let align: Alignment;
-
-    function onSelect(name: string) {
-        dispatch("select", name);
+    interface Props {
+        theme: Theme;
+        otherThemes: Theme[];
+        label: ResourceKey;
+        align: Alignment;
+        onSelect: (name: string) => void;
     }
+
+    let { theme, otherThemes, label, align, onSelect }: Props = $props();
 </script>
 
 <div class="theme-wrapper">
     <Legend {label} />
     <MenuIcon gutter={0} position="bottom" {align}>
-        <div
-            tabindex="0"
-            role="button"
-            slot="icon"
-            class="theme"
-            style={`background: ${theme.bg}; border-color: ${theme.accent}`}>
-            <div style={`color: ${theme.txt}`} class="theme-txt">
-                {theme.label}
-            </div>
+        {#snippet menuIcon()}
+            <div
+                tabindex="0"
+                role="button"
+                class="theme"
+                style={`background: ${theme.bg}; border-color: ${theme.accent}`}>
+                <div style={`color: ${theme.txt}`} class="theme-txt">
+                    {theme.label}
+                </div>
 
-            <div class="icon">
-                <ChevronDown viewBox={"0 -3 24 24"} size={$iconSize} color={`${theme.accent}`} />
+                <div class="icon">
+                    <ChevronDown
+                        viewBox={"0 -3 24 24"}
+                        size={ui.iconSize}
+                        color={`${theme.accent}`} />
+                </div>
             </div>
-        </div>
-        <span slot="menu">
+        {/snippet}
+        {#snippet menuItems()}
             <Menu>
-                {#each otherThemes.sort() as theme}
+                {#each otherThemes.toSorted() as theme}
                     <MenuItem onclick={() => onSelect(theme.name)}>
-                        <div class="theme-item" slot="text">
-                            <div class="label">{theme.label}</div>
-                            {#if theme.author !== undefined && $userStore.get(theme.author) !== undefined}
-                                <div class="avatar">
-                                    <Avatar
-                                        url={client.userAvatarUrl($userStore.get(theme.author))}
-                                        userId={theme.author}
-                                        size={AvatarSize.Tiny} />
-                                </div>
-                            {/if}
-                        </div>
+                        {#snippet text()}
+                            <div class="theme-item">
+                                <div class="label">{theme.label}</div>
+                                {#if theme.author !== undefined && $userStore.get(theme.author) !== undefined}
+                                    <div class="avatar">
+                                        <Avatar
+                                            url={client.userAvatarUrl($userStore.get(theme.author))}
+                                            userId={theme.author}
+                                            size={AvatarSize.Tiny} />
+                                    </div>
+                                {/if}
+                            </div>
+                        {/snippet}
                     </MenuItem>
                 {/each}
             </Menu>
-        </span>
+        {/snippet}
     </MenuIcon>
 </div>
 

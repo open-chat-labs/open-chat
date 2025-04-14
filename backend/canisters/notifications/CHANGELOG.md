@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [[2.0.1674](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1674-notifications)] - 2025-04-02
 
+### Fixed
+
+- Fix `c2c_push_notifications` idempotency check ([#7733](https://github.com/open-chat-labs/open-chat/pull/7733))
+
+## [[2.0.1674](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1674-notifications)] - 2025-04-02
+
 ### Added
 
 - Store bot endpoints in notifications canisters ([#7668](https://github.com/open-chat-labs/open-chat/pull/7668))

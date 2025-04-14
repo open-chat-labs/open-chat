@@ -3,6 +3,7 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, COMMUNITY_
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_community;
+use oc_error_codes::OCErrorCode;
 use std::collections::HashSet;
 use tracing::error;
 use types::{CanisterId, CommunityId};
@@ -41,10 +42,10 @@ async fn create_community(mut args: Args) -> Response {
                     community_id: r.community_id,
                 })
             }
-            c2c_create_community::Response::NameTaken => NameTaken,
+            c2c_create_community::Response::NameTaken => Error(OCErrorCode::NameTaken.into()),
+            c2c_create_community::Response::UserNotFound => Error(OCErrorCode::InitiatorNotFound.into()),
+            c2c_create_community::Response::InternalError(error) => Error(OCErrorCode::Unknown.with_message(error)),
             c2c_create_community::Response::Error(error) => Error(error),
-            c2c_create_community::Response::UserNotFound => InternalError("User not found".to_string()),
-            c2c_create_community::Response::InternalError(error) => InternalError(error),
         },
         Err(error) => {
             error!(?error, "Error calling create community");

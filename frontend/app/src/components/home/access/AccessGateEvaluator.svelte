@@ -1,34 +1,33 @@
 <script lang="ts">
-    import VectorCombine from "svelte-material-icons/VectorCombine.svelte";
     import {
         isCompositeGate,
         isCredentialGate,
+        isDiamondGate,
         isLeafGate,
+        isLifetimeDiamondGate,
         isPaymentGate,
         isUniquePersonGate,
-        isLifetimeDiamondGate,
-        isDiamondGate,
         OpenChat,
         shouldPreprocessGate,
+        ui,
         type EnhancedAccessGate,
+        type GateCheckSucceeded,
         type LeafGate,
         type PaymentGateApprovals,
-        type GateCheckSucceeded,
     } from "openchat-client";
-    import { _ } from "svelte-i18n";
+    import { getContext, onMount } from "svelte";
+    import VectorCombine from "svelte-material-icons/VectorCombine.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import ModalContent from "../../ModalContent.svelte";
-    import { getContext, onMount } from "svelte";
-    import PaymentGateEvaluator from "./PaymentGateEvaluator.svelte";
-    import DiamondGateEvaluator from "./DiamondGateEvaluator.svelte";
-    import CredentialGateEvaluator from "./CredentialGateEvaluator.svelte";
-    import UniqueHumanGateEvaluator from "./UniqueHumanGateEvaluator.svelte";
+    import Radio from "../../Radio.svelte";
     import Translatable from "../../Translatable.svelte";
     import AccessGateSummary from "./AccessGateSummary.svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import Radio from "../../Radio.svelte";
+    import CredentialGateEvaluator from "./CredentialGateEvaluator.svelte";
+    import DiamondGateEvaluator from "./DiamondGateEvaluator.svelte";
+    import PaymentGateEvaluator from "./PaymentGateEvaluator.svelte";
+    import UniqueHumanGateEvaluator from "./UniqueHumanGateEvaluator.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -108,9 +107,15 @@
         }
     }
 
-    function approvePayment({
-        detail: { ledger, amount, approvalFee },
-    }: CustomEvent<{ ledger: string; amount: bigint; approvalFee: bigint }>) {
+    function onApprovePayment({
+        ledger,
+        amount,
+        approvalFee,
+    }: {
+        ledger: string;
+        amount: bigint;
+        approvalFee: bigint;
+    }) {
         const existing = paymentApprovals.get(ledger);
         if (existing !== undefined) {
             // if we already have an approval pending for this ledger we add on the amount
@@ -126,8 +131,8 @@
         nextGate();
     }
 
-    function credentialReceived(ev: CustomEvent<string>) {
-        credentials.push(ev.detail);
+    function credentialReceived(cred: string) {
+        credentials.push(cred);
         nextGate();
     }
 
@@ -156,7 +161,7 @@
                 {#if isCompositeGate(currentGate) && currentGate.operator === "or"}
                     <div class="header">
                         <div class="icon">
-                            <VectorCombine size={$iconSize} color={"var(--txt)"} />
+                            <VectorCombine size={ui.iconSize} color={"var(--txt)"} />
                         </div>
                         <p class="title">
                             <Translatable resourceKey={i18nKey("access.chooseOneGate")} />
@@ -171,7 +176,7 @@
                             <Radio
                                 group={"optional_gates"}
                                 checked={!optionalGatesByIndex.has(i)}
-                                on:change={() => toggleIndex(i, currentGate)}
+                                onChange={() => toggleIndex(i, currentGate)}
                                 label={i18nKey(subgate.kind)}
                                 id={`subgate_${i}`}>
                                 <AccessGateSummary
@@ -184,14 +189,14 @@
                     {/each}
                 {:else if isCredentialGate(currentGate)}
                     <CredentialGateEvaluator
-                        on:close={onClose}
-                        on:credentialReceived={credentialReceived}
+                        {onClose}
+                        onCredentialReceived={credentialReceived}
                         gate={currentGate}
                         level={currentGate.level} />
                 {:else if isUniquePersonGate(currentGate)}
                     <UniqueHumanGateEvaluator
-                        on:credentialReceived={credentialReceived}
-                        on:close={onClose}
+                        onCredentialReceived={credentialReceived}
+                        {onClose}
                         expiry={currentGate.expiry}
                         level={currentGate.level} />
                 {:else if isPaymentGate(currentGate)}
@@ -199,20 +204,20 @@
                         {paymentApprovals}
                         gate={currentGate}
                         level={currentGate.level}
-                        on:approvePayment={approvePayment}
-                        on:close={onClose} />
+                        {onApprovePayment}
+                        {onClose} />
                 {:else if isLifetimeDiamondGate(currentGate)}
                     <DiamondGateEvaluator
                         level={currentGate.level}
                         lifetime
-                        on:credentialReceived={credentialReceived}
-                        on:cancel={onClose} />
+                        onCredentialReceived={credentialReceived}
+                        onCancel={onClose} />
                 {:else if isDiamondGate(currentGate)}
                     <DiamondGateEvaluator
                         level={currentGate.level}
                         lifetime={false}
-                        on:credentialReceived={credentialReceived}
-                        on:cancel={onClose} />
+                        onCredentialReceived={credentialReceived}
+                        onCancel={onClose} />
                 {/if}
             {/if}
         </div>

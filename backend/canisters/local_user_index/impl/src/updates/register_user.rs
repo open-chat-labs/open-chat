@@ -12,7 +12,6 @@ use user_canister::init::Args as InitUserCanisterArgs;
 use user_canister::ReferredUserRegistered;
 use user_index_canister::UserRegistered;
 use utils::canister;
-use utils::canister::CreateAndInstallError;
 use utils::text_validation::{validate_username, UsernameValidationError};
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
@@ -62,9 +61,14 @@ async fn register_user(args: Args) -> Response {
                 icp_account: default_ledger_account(user_id.into()),
             })
         }
-        Err(error) => {
-            mutate_state(|state| rollback(&caller, &error, state));
-            InternalError(format!("{error:?}"))
+        Err((canister_id, error)) => {
+            mutate_state(|state| {
+                state.data.local_users.mark_registration_failed(&caller);
+                if let Some(id) = canister_id {
+                    state.data.canister_pool.push(id);
+                }
+            });
+            Error(error.into())
         }
     }
 }
@@ -220,14 +224,6 @@ fn commit(
                 now,
             );
         }
-    }
-}
-
-fn rollback(principal: &Principal, error: &CreateAndInstallError, state: &mut RuntimeState) {
-    state.data.local_users.mark_registration_failed(principal);
-
-    if let CreateAndInstallError::InstallFailed(id, ..) = error {
-        state.data.canister_pool.push(*id);
     }
 }
 

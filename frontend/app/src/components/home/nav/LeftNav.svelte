@@ -1,74 +1,72 @@
 <script lang="ts">
-    import Avatar from "../../Avatar.svelte";
-    import MenuIcon from "../../MenuIcon.svelte";
-    import HoverIcon from "../../HoverIcon.svelte";
-    import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
-    import Compass from "svelte-material-icons/CompassOutline.svelte";
-    import Hamburger from "svelte-material-icons/Menu.svelte";
-    import ArrowRight from "svelte-material-icons/ArrowExpandRight.svelte";
-    import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
-    import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
-    import BellRingOutline from "svelte-material-icons/BellRingOutline.svelte";
-    import { mobileWidth } from "../../../stores/screenDimensions";
-    import { communityListScrollTop } from "../../../stores/scrollPos";
-    import { pathParams } from "../../../routes";
-    import page from "page";
-    import { getContext, onMount, tick } from "svelte";
-    import LeftNavItem from "./LeftNavItem.svelte";
-    import MainMenu from "./MainMenu.svelte";
-    import { layoutStore, navOpen } from "../../../stores/layout";
-    import { flip } from "svelte/animate";
-    import { type DndEvent, dndzone } from "svelte-dnd-action";
-    import { isTouchDevice } from "../../../utils/devices";
-    import { rtlStore } from "../../../stores/rtl";
-    import { i18nKey } from "../../../i18n/i18n";
-    import { now } from "../../../stores/time";
-    import LighteningBolt from "./LighteningBolt.svelte";
-    import { activityFeedShowing } from "../../../stores/activity";
-    import { hideChitIcon, disableChit } from "../../../stores/settings";
     import {
         AvatarSize,
         type CommunitySummary,
         type OpenChat,
-        emptyCombinedUnreadCounts,
-        userStore,
-        chitStateStore as chitState,
-        currentUser as createdUser,
-        communitiesList as communities,
-        selectedCommunity,
-        chatListScopeStore as chatListScope,
-        unreadDirectCounts,
-        unreadActivityCount,
-        directVideoCallCounts,
-        groupVideoCallCounts,
-        favouritesVideoCallCounts,
-        unreadGroupCounts,
-        unreadFavouriteCounts,
-        unreadCommunityChannelCounts,
-        communityChannelVideoCallCounts,
         anonUser,
-        globalStateStore as globalState,
+        chatListScopeStore as chatListScope,
+        chitStateStore as chitState,
+        communitiesList as communities,
+        communityChannelVideoCallCounts,
+        currentUser as createdUser,
+        directVideoCallCounts,
+        emptyCombinedUnreadCounts,
         favouritesStore,
+        favouritesVideoCallCounts,
+        globalStateStore as globalState,
+        groupVideoCallCounts,
+        pathState,
+        publish,
+        selectedCommunity,
+        ui,
+        unreadActivityCount,
+        unreadCommunityChannelCounts,
+        unreadDirectCounts,
+        unreadFavouriteCounts,
+        unreadGroupCounts,
+        userStore,
     } from "openchat-client";
-    import { publish } from "@src/utils/pubsub";
+    import page from "page";
+    import { getContext, onMount, tick } from "svelte";
+    import { type DndEvent, dndzone } from "svelte-dnd-action";
+    import ArrowRight from "svelte-material-icons/ArrowExpandRight.svelte";
+    import BellRingOutline from "svelte-material-icons/BellRingOutline.svelte";
+    import Compass from "svelte-material-icons/CompassOutline.svelte";
+    import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
+    import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
+    import Hamburger from "svelte-material-icons/Menu.svelte";
+    import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
+    import { flip } from "svelte/animate";
+    import { i18nKey } from "../../../i18n/i18n";
+    import { activityFeedShowing } from "../../../stores/activity";
+    import { rtlStore } from "../../../stores/rtl";
+    import { communityListScrollTop } from "../../../stores/scrollPos";
+    import { disableChit, hideChitIcon } from "../../../stores/settings";
+    import { now } from "../../../stores/time";
+    import { isTouchDevice } from "../../../utils/devices";
+    import Avatar from "../../Avatar.svelte";
+    import HoverIcon from "../../HoverIcon.svelte";
+    import MenuIcon from "../../MenuIcon.svelte";
+    import LeftNavItem from "./LeftNavItem.svelte";
+    import LighteningBolt from "./LighteningBolt.svelte";
+    import MainMenu from "./MainMenu.svelte";
 
     const client = getContext<OpenChat>("client");
     const flipDurationMs = 300;
 
     let user = $derived($userStore.get($createdUser.userId));
-    let avatarSize = $derived($mobileWidth ? AvatarSize.Small : AvatarSize.Default);
-    let communityExplorer = $derived($pathParams.kind === "communities_route");
+    let avatarSize = $derived(ui.mobileWidth ? AvatarSize.Small : AvatarSize.Default);
+    let communityExplorer = $derived(pathState.route.kind === "communities_route");
     let selectedCommunityId = $derived($selectedCommunity?.id.communityId);
     let claimChitAvailable = $derived($chitState.nextDailyChitClaim < $now);
 
-    let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
+    let iconSize = ui.mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
     let scrollingSection: HTMLElement;
-    let navWrapper: HTMLElement;
 
     // we don't want drag n drop to monkey around with the key
     type CommunityItem = CommunitySummary & { _id: string };
     let communityItems: CommunityItem[] = $state([]);
-    let dragging = false;
+    let dragging = $state<boolean>(false);
 
     onMount(() => {
         const unsub = communities.subscribe(initCommunitiesList);
@@ -95,27 +93,15 @@
         communityItems = e.detail.items;
     }
 
-    function resetScroll(el: HTMLElement | undefined) {
-        if (el) {
-            el.scrollLeft = 0;
-        }
-    }
-
     function handleDndFinalize(e: CustomEvent<DndEvent<CommunityItem>>) {
         dragging = false;
         communityItems = e.detail.items;
-        resetScroll(navWrapper);
-        resetScroll(scrollingSection);
         client.updateCommunityIndexes(e.detail.items);
     }
 
     function toggleNav(e: Event) {
         e.stopPropagation();
-        if ($navOpen) {
-            navOpen.set(false);
-        } else {
-            navOpen.set(true);
-        }
+        ui.toggleNav();
     }
 
     function viewProfile() {
@@ -149,13 +135,11 @@
     }
 
     function closeIfOpen() {
-        if ($navOpen) {
-            navOpen.set(false);
-        }
+        ui.closeNavIfOpen();
     }
 
     function showActivityFeed() {
-        if ($pathParams.kind === "communities_route") {
+        if (pathState.route.kind === "communities_route") {
             page("/");
         }
         activityFeedShowing.set(true);
@@ -164,12 +148,7 @@
 
 <svelte:body onclick={closeIfOpen} />
 
-<section
-    class:visible={$layoutStore.showNav}
-    bind:this={navWrapper}
-    class="nav"
-    class:open={$navOpen}
-    class:rtl={$rtlStore}>
+<section class:visible={ui.showNav} class="nav" class:open={ui.navOpen} class:rtl={$rtlStore}>
     <div class="top">
         <LeftNavItem separator label={i18nKey("communities.mainMenu")}>
             <div class="hover logo">
@@ -298,10 +277,10 @@
                 <Compass size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
-        <LeftNavItem label={$navOpen ? i18nKey("collapse") : i18nKey("expand")}>
+        <LeftNavItem label={ui.navOpen ? i18nKey("collapse") : i18nKey("expand")}>
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <div class:open={$navOpen} onclick={toggleNav} class="expand hover">
+            <div class:open={ui.navOpen} onclick={toggleNav} class="expand hover">
                 <ArrowRight size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>

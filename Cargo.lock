@@ -1178,6 +1178,7 @@ dependencies = [
  "canister_client_macros",
  "ic-cdk 0.18.0-alpha.2",
  "tracing",
+ "types",
 ]
 
 [[package]]
@@ -1403,6 +1404,7 @@ dependencies = [
  "itertools 0.13.0",
  "ledger_utils",
  "msgpack",
+ "oc_error_codes",
  "rand 0.8.5",
  "search",
  "serde",
@@ -1632,6 +1634,7 @@ dependencies = [
  "activity_notification_state",
  "candid",
  "canister_api_macros",
+ "canister_client",
  "canister_logger",
  "canister_state_macros",
  "canister_time",
@@ -1668,6 +1671,7 @@ dependencies = [
  "msgpack",
  "notifications_canister",
  "notifications_canister_c2c_client",
+ "oc_error_codes",
  "principal_to_user_id_map",
  "proptest",
  "rand 0.8.5",
@@ -1780,9 +1784,9 @@ dependencies = [
 
 [[package]]
 name = "crossbeam-channel"
-version = "0.5.11"
+version = "0.5.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "176dc175b78f56c0f321911d9c8eb2b77a78a4860b9c19db83835fea1a46649b"
+checksum = "82b8f8f868b36967f9606790d1903570de9ceaf870a7bf9fbbd3016d636a2cb2"
 dependencies = [
  "crossbeam-utils",
 ]
@@ -2827,6 +2831,7 @@ dependencies = [
  "icrc-ledger-types",
  "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
+ "oc_error_codes",
  "sns_governance_canister",
  "sns_governance_canister_c2c_client",
  "test-case",
@@ -2973,6 +2978,7 @@ dependencies = [
  "activity_notification_state",
  "candid",
  "canister_api_macros",
+ "canister_client",
  "canister_logger",
  "canister_state_macros",
  "canister_time",
@@ -3007,6 +3013,7 @@ dependencies = [
  "msgpack",
  "notifications_canister",
  "notifications_canister_c2c_client",
+ "oc_error_codes",
  "principal_to_user_id_map",
  "rand 0.8.5",
  "serde",
@@ -3038,6 +3045,7 @@ dependencies = [
  "itertools 0.13.0",
  "lazy_static",
  "msgpack",
+ "oc_error_codes",
  "proptest",
  "rand 0.8.5",
  "regex-lite",
@@ -4452,6 +4460,7 @@ dependencies = [
  "msgpack",
  "notifications_canister",
  "notifications_index_canister",
+ "oc_error_codes",
  "online_users_canister",
  "openchat_installer_canister",
  "pocket-ic",
@@ -5415,8 +5424,11 @@ dependencies = [
  "ic-cdk 0.18.0-alpha.2",
  "msgpack",
  "notifications_canister",
+ "serde",
+ "timer_job_queues",
  "tracing",
  "types",
+ "utils 0.1.0",
 ]
 
 [[package]]
@@ -5655,6 +5667,7 @@ dependencies = [
  "candid",
  "enum-repr",
  "serde",
+ "serde_json",
  "ts-rs",
  "ts_export",
 ]
@@ -5805,9 +5818,9 @@ dependencies = [
 
 [[package]]
 name = "openssl"
-version = "0.10.70"
+version = "0.10.72"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61cfb4e166a8bb8c9b55c500bc2308550148ece889be90f609377e58140f42c6"
+checksum = "fedfea7d58a1f73118430a55da6a286e7b044961736ce96a16a17068ea25e5da"
 dependencies = [
  "bitflags 2.4.2",
  "cfg-if",
@@ -5846,9 +5859,9 @@ dependencies = [
 
 [[package]]
 name = "openssl-sys"
-version = "0.9.105"
+version = "0.9.107"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b22d5b84be05a8d6947c7cb71f7c849aa0f112acd4bf51c2a7c1c988ac0a9dc"
+checksum = "8288979acd84749c744a9014b4382d42b8f7b2592847b5afb2ed29e5d16ede07"
 dependencies = [
  "cc",
  "libc",
@@ -8402,9 +8415,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.43.0"
+version = "1.44.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d61fa4ffa3de412bfea335c6ecff681de2b609ba3c77ef3e00e521813a9ed9e"
+checksum = "e6b88822cbe49de4185e3a4cbf8321dd487cf5fe0c5c65695fef6346371e9c48"
 dependencies = [
  "backtrace",
  "bytes",
@@ -8753,6 +8766,7 @@ dependencies = [
  "candid",
  "getrandom 0.2.15",
  "hex",
+ "ic-cdk 0.18.0-alpha.2",
  "ic-ledger-types",
  "icrc-ledger-types",
  "oc_error_codes",
@@ -9121,6 +9135,7 @@ dependencies = [
  "ic-management-canister-types 0.3.0",
  "itertools 0.13.0",
  "msgpack",
+ "oc_error_codes",
  "rand 0.8.5",
  "serde",
  "serde_json",

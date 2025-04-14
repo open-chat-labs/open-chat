@@ -1356,7 +1356,9 @@
         "onlyUniquePerson": "רק בני אדם ייחודיים",
         "prizeFinished": "הודעת הפרס שלך הסתיימה כעת",
         "randomDistribution": "הפצה אקראית",
-        "restrictedMessage": "כדי לתבוע את הפרס הזה, אתה צריך את הדברים הבאים",
+        "requiresCaptcha": "דורש CAPTCHA",
+        "restrictedMessage": "לפרס זה יש את ההגבלות הבאות",
+        "restrictions": "הגבלות תביעה",
         "standardDiamond": "תֶקֶן",
         "streak": "פַּס",
         "streakFull": "רצף של {n} ימים או יותר",
@@ -1606,7 +1608,7 @@
     "roleChanged": "{changedBy} שינה את התפקיד של {changed} ל-{newRole}",
     "rotationChallenge": {
         "info": "סובב את התמונה משמאל עד שתתאים לזווית התמונה מימין",
-        "infoMobile": "סובב את התמונה העליונה עד שתתאים לזון של התמונה התחתונה",
+        "infoMobile": "סובב את התמונה התחתונה עד שתתאים לזווית של התמונה העליונה",
         "title": "איזון את הבוטים"
     },
     "rules": {

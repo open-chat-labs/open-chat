@@ -9,7 +9,7 @@ use std::collections::BTreeMap;
 use std::fmt::Debug;
 use std::time::Duration;
 use tracing::{error, trace};
-use types::{CanisterId, ChannelId, ChatId, CommunityId, MessageId, MessageIndex, MultiUserChat, Proposal};
+use types::{C2CError, CanisterId, ChannelId, ChatId, CommunityId, MessageId, MessageIndex, MultiUserChat, Proposal};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -57,7 +57,7 @@ async fn push_proposal(
 async fn fetch_payload_rendering_if_required(
     governance_canister_id: CanisterId,
     proposal: Proposal,
-) -> Result<Proposal, (RejectCode, String)> {
+) -> Result<Proposal, C2CError> {
     if let Proposal::SNS(p) = &proposal {
         // If not a motion proposal, call `get_proposal` to get the payload rendering.
         if p.action != 1 {
@@ -75,7 +75,7 @@ async fn fetch_payload_rendering_if_required(
                     }
                 }
                 Err(error) => {
-                    mark_proposal_pushed(governance_canister_id, proposal, Err(error.0));
+                    mark_proposal_pushed(governance_canister_id, proposal, Err(error.reject_code()));
                     return Err(error);
                 }
             }
@@ -182,7 +182,7 @@ fn mark_proposal_pushed(
 
 fn extract_channel_result(
     message_id: MessageId,
-    response: Result<community_canister::c2c_send_message::Response, (RejectCode, String)>,
+    response: Result<community_canister::c2c_send_message::Response, C2CError>,
     canister_id: CanisterId,
 ) -> Result<(MessageId, Option<MessageIndex>), RejectCode> {
     match response {
@@ -193,7 +193,7 @@ fn extract_channel_result(
 
 fn extract_group_result(
     message_id: MessageId,
-    response: Result<group_canister::c2c_send_message::Response, (RejectCode, String)>,
+    response: Result<group_canister::c2c_send_message::Response, C2CError>,
     canister_id: CanisterId,
 ) -> Result<(MessageId, Option<MessageIndex>), RejectCode> {
     match response {
@@ -204,13 +204,15 @@ fn extract_group_result(
 
 fn extract_result_inner<T: Debug>(
     message_id: MessageId,
-    response: Result<T, (RejectCode, String)>,
+    response: Result<T, C2CError>,
     canister_id: CanisterId,
 ) -> Result<(MessageId, Option<MessageIndex>), RejectCode> {
     match response {
         // If the messageId has already been used, treat that as success
-        Err((code, error)) if code == RejectCode::CanisterError && error.contains("MessageId") => Ok((message_id, None)),
-        Err((code, _)) => Err(code),
+        Err(error) if error.reject_code() == RejectCode::CanisterError && error.message().contains("MessageId") => {
+            Ok((message_id, None))
+        }
+        Err(error) => Err(error.reject_code()),
         _ => {
             error!(?response, %canister_id, "Failed to push proposal");
             Err(RejectCode::CanisterError)

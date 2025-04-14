@@ -4,6 +4,7 @@ use crate::stable_memory::get_stable_memory_map;
 use crate::utils::now_millis;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
+use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
@@ -44,7 +45,7 @@ fn delete_channel_succeeds(as_owner: bool) {
     } else {
         assert!(matches!(
             response,
-            community_canister::delete_channel::Response::NotAuthorized
+            community_canister::delete_channel::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)
         ));
     }
 

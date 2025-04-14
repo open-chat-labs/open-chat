@@ -1,8 +1,6 @@
-<svelte:options immutable />
-
 <script lang="ts">
     import Avatar from "../../Avatar.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext, type Snippet } from "svelte";
     import type { OpenChat } from "openchat-client";
     import { AvatarSize, currentCommunityMembers as communityMembers } from "openchat-client";
     import FilteredUsername from "../../FilteredUsername.svelte";
@@ -13,22 +11,34 @@
     import Badges from "../profile/Badges.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let user: UserSummary;
-    export let me: boolean = false;
-    export let searchTerm: string = "";
-    export let role: string | undefined = undefined;
-    export let profile = true;
-    export let lapsed = false;
+    interface Props {
+        user: UserSummary;
+        me?: boolean;
+        searchTerm?: string;
+        role?: string | undefined;
+        profile?: boolean;
+        children?: Snippet;
+        onClick?: () => void;
+    }
+
+    let {
+        user,
+        me = false,
+        searchTerm = "",
+        role = undefined,
+        profile = true,
+        children,
+        onClick,
+    }: Props = $props();
 
     // if search term is !== "", split the username into three parts [prefix, match, postfix]
 
-    let hovering = false;
+    let hovering = $state(false);
 
-    $: displayName = client.getDisplayName(user, $communityMembers);
+    let displayName = $derived(client.getDisplayName(user, $communityMembers));
 
-    function onClick(ev: Event) {
+    function click(ev: Event) {
         if (profile) {
             ev.target?.dispatchEvent(
                 new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
@@ -42,18 +52,18 @@
             );
         }
 
-        dispatch("click");
+        onClick?.();
     }
 </script>
 
-<!-- svelte-ignore a11y-interactive-supports-focus -->
+<!-- svelte-ignore a11y_interactive_supports_focus -->
 <div
     class="member"
     class:me
-    on:click={onClick}
+    onclick={click}
     role="button"
-    on:mouseenter={() => (hovering = true)}
-    on:mouseleave={() => (hovering = false)}>
+    onmouseenter={() => (hovering = true)}
+    onmouseleave={() => (hovering = false)}>
     <span class="avatar">
         <Avatar
             statusBorder={hovering && !me ? "var(--members-hv)" : "transparent"}
@@ -80,7 +90,7 @@
             <FilteredUsername {searchTerm} username={"@" + user.username} />
         </div>
     </div>
-    <slot />
+    {@render children?.()}
 </div>
 
 <style lang="scss">

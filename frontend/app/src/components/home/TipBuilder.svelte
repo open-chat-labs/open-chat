@@ -1,37 +1,37 @@
 <script lang="ts">
-    import { fade } from "svelte/transition";
-    import { tweened } from "svelte/motion";
-    import { quadOut } from "svelte/easing";
-    import Button from "../Button.svelte";
-    import TokenInput from "./TokenInput.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
     import type {
-        CreatedUser,
         Message,
         MessageContext,
         OpenChat,
         PendingCryptocurrencyTransfer,
     } from "openchat-client";
     import {
-        lastCryptoSent,
         cryptoBalance as cryptoBalanceStore,
         cryptoLookup,
+        currentUser,
         exchangeRatesLookupStore as exchangeRatesLookup,
+        lastCryptoSent,
+        ui,
     } from "openchat-client";
-    import Overlay from "../Overlay.svelte";
-    import AccountInfo from "./AccountInfo.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import { _ } from "svelte-i18n";
     import { getContext, onMount } from "svelte";
+    import { _ } from "svelte-i18n";
+    import { quadOut } from "svelte/easing";
+    import { Tween } from "svelte/motion";
+    import { fade } from "svelte/transition";
+    import { i18nKey } from "../../i18n/i18n";
+    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
+    import { toastStore } from "../../stores/toast";
+    import Button from "../Button.svelte";
+    import ButtonGroup from "../ButtonGroup.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
+    import ModalContent from "../ModalContent.svelte";
+    import Overlay from "../Overlay.svelte";
+    import Translatable from "../Translatable.svelte";
+    import AccountInfo from "./AccountInfo.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
     import TipButton from "./TipButton.svelte";
-    import { i18nKey } from "../../i18n/i18n";
-    import Translatable from "../Translatable.svelte";
-    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
-    import { toastStore } from "../../stores/toast";
+    import TokenInput from "./TokenInput.svelte";
 
     const client = getContext<OpenChat>("client");
     const increments: Increment[] = [1, 10, 100];
@@ -40,22 +40,26 @@
     interface Props {
         ledger: string;
         msg: Message;
-        user: CreatedUser;
         messageContext: MessageContext;
         onClose: () => void;
     }
 
-    let { ledger = $bindable(), msg, user, messageContext, onClose }: Props = $props();
+    let { ledger = $bindable(), msg, messageContext, onClose }: Props = $props();
+
+    const tweenOptions = {
+        duration: 800,
+        easing: quadOut,
+    };
 
     let refreshing = $state(false);
     let error: string | undefined = $state(undefined);
     let toppingUp = $state(false);
     let tokenChanging = $state(true);
     let balanceWithRefresh: BalanceWithRefresh;
-    let dollar: HTMLElement;
-    let dollarTop = tweened(-1000);
-    let dollarOpacity = tweened(0);
-    let dollarScale = tweened(0);
+    let dollar = $state<HTMLElement | undefined>();
+    let dollarTop = new Tween(-1000, tweenOptions);
+    let dollarOpacity = new Tween(0, tweenOptions);
+    let dollarScale = new Tween(0, tweenOptions);
     let centAmount = $state(0);
     let showCustomTip = $state(false);
     let validAmount: boolean = $state(false);
@@ -108,9 +112,9 @@
         error = undefined;
     }
 
-    function onBalanceRefreshError(ev: CustomEvent<string>) {
+    function onBalanceRefreshError(err: string) {
         onBalanceRefreshFinished();
-        error = ev.detail;
+        error = err;
     }
 
     function onBalanceRefreshFinished() {
@@ -126,27 +130,23 @@
     }
 
     function bounceMoneyMouthFrom(target: HTMLElement) {
+        if (!dollar) return;
         const buttonRect = target.getBoundingClientRect();
         const hDiff = buttonRect.height - dollar.clientHeight;
         const wDiff = buttonRect.width - dollar.clientWidth;
         const top = buttonRect.top + hDiff / 2;
         const left = buttonRect.left + wDiff / 2;
 
-        dollarTop = tweened(top, {
-            duration: 800,
-            easing: quadOut,
+        Promise.all([
+            dollarTop.set(top, { duration: 0 }),
+            dollarOpacity.set(1, { duration: 0 }),
+            dollarScale.set(0, { duration: 0 }),
+        ]).then(() => {
+            dollarTop.target = top - 300;
+            dollarOpacity.target = 0;
+            dollarScale.target = 2;
+            dollarOpacity.set(0);
         });
-        dollarOpacity = tweened(1, {
-            duration: 800,
-            easing: quadOut,
-        });
-        dollarScale = tweened(0, {
-            duration: 800,
-            easing: quadOut,
-        });
-        dollarTop.set(top - 300);
-        dollarOpacity.set(0);
-        dollarScale.set(2);
         dollar.style.left = `${left}px`;
     }
 
@@ -174,7 +174,7 @@
         };
         lastCryptoSent.set(ledger);
 
-        const currentTip = (msg.tips[transfer.ledger] ?? {})[user.userId] ?? 0n;
+        const currentTip = (msg.tips[transfer.ledger] ?? {})[$currentUser.userId] ?? 0n;
 
         client.tipMessage(messageContext, msg.messageId, transfer, currentTip).then((resp) => {
             if (resp.kind === "failure") {
@@ -218,11 +218,11 @@
     });
     $effect(() => {
         if (dollar) {
-            dollar.style.setProperty("top", `${$dollarTop}px`);
-            dollar.style.setProperty("opacity", `${$dollarOpacity}`);
+            dollar.style.setProperty("top", `${dollarTop.current}px`);
+            dollar.style.setProperty("opacity", `${dollarOpacity.current}`);
             dollar.style.setProperty(
                 "transform",
-                `scale(${$dollarScale}) rotate(${$dollarScale}turn)`,
+                `scale(${dollarScale.current}) rotate(${dollarScale.current}turn)`,
             );
         }
     });
@@ -249,15 +249,15 @@
                     bold
                     showTopUp
                     bind:refreshing
-                    on:refreshed={onBalanceRefreshed}
-                    on:error={onBalanceRefreshError} />
+                    onRefreshed={onBalanceRefreshed}
+                    onError={onBalanceRefreshError} />
             </span>
         {/snippet}
         {#snippet body()}
             <form onsubmit={send}>
                 <div class="body" class:zero={zero || toppingUp}>
                     {#if zero || toppingUp}
-                        <AccountInfo {ledger} {user} />
+                        <AccountInfo {ledger} />
                         {#if zero}
                             <p>
                                 <Translatable
@@ -342,21 +342,21 @@
         {#snippet footer()}
             <span>
                 <ButtonGroup>
-                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary onClick={cancel}
+                    <Button small={!ui.mobileWidth} tiny={ui.mobileWidth} secondary onClick={cancel}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     {#if toppingUp || zero}
                         <Button
-                            small={!$mobileWidth}
+                            small={!ui.mobileWidth}
                             disabled={refreshing}
                             loading={refreshing}
-                            tiny={$mobileWidth}
+                            tiny={ui.mobileWidth}
                             onClick={reset}
                             ><Translatable resourceKey={i18nKey("refresh")} /></Button>
                     {:else}
                         <Button
-                            small={!$mobileWidth}
+                            small={!ui.mobileWidth}
                             disabled={!valid}
-                            tiny={$mobileWidth}
+                            tiny={ui.mobileWidth}
                             onClick={send}
                             ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
                     {/if}

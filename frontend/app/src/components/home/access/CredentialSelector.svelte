@@ -1,13 +1,12 @@
 <script lang="ts">
-    import Delete from "svelte-material-icons/Delete.svelte";
-    import Legend from "../../Legend.svelte";
-    import Input from "../../Input.svelte";
-    import type { CredentialGate, Credential } from "openchat-client";
+    import { Principal } from "@dfinity/principal";
+    import { type Credential, type CredentialGate, ui } from "openchat-client";
     import { onMount } from "svelte";
+    import Delete from "svelte-material-icons/Delete.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import { Principal } from "@dfinity/principal";
+    import Input from "../../Input.svelte";
+    import Legend from "../../Legend.svelte";
     import Translatable from "../../Translatable.svelte";
 
     const MIN_LENGTH = 1;
@@ -111,7 +110,7 @@
     <Legend required={editable} label={i18nKey("access.credential.credentialName")} />
     <Input
         bind:value={selectedCredentialIssuer.credentialName}
-        on:change={sync}
+        onChange={sync}
         disabled={!editable}
         invalid={!nameValid}
         minlength={MIN_LENGTH}
@@ -122,7 +121,7 @@
     <Input
         bind:value={selectedCredentialIssuer.issuerCanisterId}
         invalid={!canisterValid}
-        on:change={sync}
+        onChange={sync}
         disabled={!editable}
         minlength={MIN_LENGTH}
         maxlength={MAX_LENGTH}
@@ -132,7 +131,7 @@
     <Input
         bind:value={selectedCredentialIssuer.issuerOrigin}
         invalid={!originValid}
-        on:change={sync}
+        onChange={sync}
         disabled={!editable}
         minlength={MIN_LENGTH}
         maxlength={MAX_LENGTH}
@@ -142,7 +141,7 @@
     <Input
         bind:value={selectedCredentialIssuer.credentialType}
         invalid={!typeValid}
-        on:change={sync}
+        onChange={sync}
         disabled={!editable}
         minlength={MIN_LENGTH}
         maxlength={MAX_LENGTH}
@@ -155,7 +154,7 @@
                 <Input
                     bind:value={arg[0]}
                     invalid={!stringValid(arg[0])}
-                    on:change={sync}
+                    onChange={sync}
                     disabled={!editable}
                     minlength={MIN_LENGTH}
                     maxlength={MAX_LENGTH}
@@ -166,7 +165,7 @@
                 <Input
                     bind:value={arg[1]}
                     invalid={!stringValid(arg[1])}
-                    on:change={sync}
+                    onChange={sync}
                     disabled={!editable}
                     minlength={MIN_LENGTH}
                     maxlength={MAX_LENGTH}
@@ -174,7 +173,7 @@
             </div>
             {#if editable}
                 <div onclick={() => deleteArgument(arg[0])} class="delete-icon">
-                    <Delete size={$iconSize} color={"var(--icon-txt)"} />
+                    <Delete size={ui.iconSize} color={"var(--icon-txt)"} />
                 </div>
             {/if}
         </div>

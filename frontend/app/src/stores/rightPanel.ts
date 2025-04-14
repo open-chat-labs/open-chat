@@ -1,120 +1,132 @@
-import type { ChatSummary, ChatPermissions, MultiUserChatIdentifier } from "openchat-client";
-import { writable } from "svelte/store";
+// import type { ChatSummary, ChatPermissions, MultiUserChatIdentifier } from "openchat-client";
+// import { writable } from "svelte/store";
 
-export type RightPanelState =
-    | GroupDetailsPanel
-    | InviteGroupMembersPanel
-    | InviteCommunityMembers
-    | ShowGroupMembersPanel
-    | ShowCommunityMembers
-    | ShowPinnedPanel
-    | UserProfilePanel
-    | MessageThreadPanel
-    | ProposalFilterPanel
-    | CommunityFilters
-    | CommunityDetails
-    | CallParticipantsPanel
-    | NoPanel;
+// export type RightPanelState =
+//     | GroupDetailsPanel
+//     | InviteGroupMembersPanel
+//     | InviteCommunityMembers
+//     | ShowGroupMembersPanel
+//     | ShowCommunityMembers
+//     | ShowPinnedPanel
+//     | UserProfilePanel
+//     | MessageThreadPanel
+//     | ProposalFilterPanel
+//     | CommunityFilters
+//     | CommunityDetails
+//     | CallParticipantsPanel
+//     | NoPanel;
 
-export type NoPanel = {
-    kind: "no_panel";
-};
+// export type NoPanel = {
+//     kind: "no_panel";
+// };
 
-export type MessageThreadPanel = {
-    kind: "message_thread_panel";
-    threadRootMessageIndex: number;
-    threadRootMessageId: bigint;
-};
+// export type MessageThreadPanel = {
+//     kind: "message_thread_panel";
+//     threadRootMessageIndex: number;
+//     threadRootMessageId: bigint;
+// };
 
-export type GroupDetailsPanel = {
-    kind: "group_details";
-};
+// export type GroupDetailsPanel = {
+//     kind: "group_details";
+// };
 
-export type UserProfilePanel = {
-    kind: "user_profile";
-};
+// export type UserProfilePanel = {
+//     kind: "user_profile";
+// };
 
-export type InviteGroupMembersPanel = {
-    kind: "invite_group_users";
-};
+// export type InviteGroupMembersPanel = {
+//     kind: "invite_group_users";
+// };
 
-export type InviteCommunityMembers = {
-    kind: "invite_community_users";
-};
+// export type InviteCommunityMembers = {
+//     kind: "invite_community_users";
+// };
 
-export type ShowGroupMembersPanel = {
-    kind: "show_group_members";
-};
+// export type ShowGroupMembersPanel = {
+//     kind: "show_group_members";
+// };
 
-export type CommunityDetails = {
-    kind: "community_details";
-};
+// export type CommunityDetails = {
+//     kind: "community_details";
+// };
 
-export type ShowCommunityMembers = {
-    kind: "show_community_members";
-    userGroupId?: number;
-};
+// export type ShowCommunityMembers = {
+//     kind: "show_community_members";
+//     userGroupId?: number;
+// };
 
-export type CallParticipantsPanel = {
-    kind: "call_participants_panel";
-    chatId: MultiUserChatIdentifier;
-    messageId: bigint;
-    isOwner: boolean;
-};
+// export type CallParticipantsPanel = {
+//     kind: "call_participants_panel";
+//     chatId: MultiUserChatIdentifier;
+//     messageId: bigint;
+//     isOwner: boolean;
+// };
 
-export type ShowPinnedPanel = {
-    kind: "show_pinned";
-};
+// export type ShowPinnedPanel = {
+//     kind: "show_pinned";
+// };
 
-export type ProposalFilterPanel = {
-    kind: "proposal_filters";
-};
+// export type ProposalFilterPanel = {
+//     kind: "proposal_filters";
+// };
 
-export type CommunityFilters = {
-    kind: "community_filters";
-};
+// export type CommunityFilters = {
+//     kind: "community_filters";
+// };
 
-export type UpdatedAvatar = {
-    blobUrl?: string;
-    blobData?: Uint8Array;
-};
+// export type UpdatedAvatar = {
+//     blobUrl?: string;
+//     blobData?: Uint8Array;
+// };
 
-export type UpdatedGroup = {
-    name: string;
-    desc: string;
-    avatar?: UpdatedAvatar;
-    permissions: ChatPermissions;
-};
+// export type UpdatedGroup = {
+//     name: string;
+//     desc: string;
+//     avatar?: UpdatedAvatar;
+//     permissions: ChatPermissions;
+// };
 
-export function filterRightPanelHistory(fn: (state: RightPanelState) => boolean): void {
-    return rightPanelHistory.update((history) => history.filter(fn));
-}
+// function createRightPanelHistoryStore() {
+//     const store = writable<RightPanelState[]>([]);
+//     let storeValue: RightPanelState[] = [];
+//     store.subscribe((v) => (storeValue = v));
 
-export function filterByChatType(chat: ChatSummary | undefined): void {
-    if (chat === undefined) return;
-    filterRightPanelHistory((panel) => {
-        if (chat.kind === "direct_chat") {
-            return ["new_group_panel", "user_profile"].includes(panel.kind);
-        }
+//     function set(states: RightPanelState[]) {
+//         // optimise the empty case
+//         if (states.length === 0 && storeValue.length === 0) {
+//             return;
+//         }
+//         return store.set(states);
+//     }
 
-        if (
-            chat.kind === "group_chat" &&
-            (chat.previewed ||
-                (!(chat.subtype?.isNns ?? false) && panel.kind === "proposal_filters"))
-        ) {
-            return false;
-        }
+//     function filter(fn: (state: RightPanelState) => boolean) {
+//         return set(storeValue.filter(fn));
+//     }
 
-        return true;
-    });
-}
+//     return {
+//         subscribe: store.subscribe,
+//         update: store.update,
+//         set,
+//         filter,
+//         filterByChatType: (chat: ChatSummary | undefined) => {
+//             if (chat === undefined) return;
 
-export const rightPanelHistory = writable<RightPanelState[]>([]);
-
-export function popRightPanelHistory(): void {
-    rightPanelHistory.update((history) => history.slice(0, history.length - 1));
-}
-
-export function pushRightPanelHistory(state: RightPanelState): void {
-    rightPanelHistory.update((history) => [...history, state]);
-}
+//             return filter((p) => {
+//                 if (chat.kind === "direct_chat") {
+//                     return ["new_group_panel", "user_profile"].includes(p.kind);
+//                 }
+//                 if (
+//                     chat.kind === "group_chat" &&
+//                     (chat.previewed ||
+//                         (!(chat.subtype?.isNns ?? false) && p.kind === "proposal_filters"))
+//                 ) {
+//                     return false;
+//                 }
+//                 return true;
+//             });
+//         },
+//         pop: () => store.update((history) => history.slice(0, history.length - 1)),
+//         push: (state: RightPanelState) => store.update((history) => [...history, state]),
+//     };
+// }
+// export const rightPanelHistory = createRightPanelHistoryStore();

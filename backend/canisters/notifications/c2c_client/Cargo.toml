@@ -10,5 +10,8 @@ canister_client = { path = "../../../libraries/canister_client" }
 ic-cdk = { workspace = true }
 msgpack = { path = "../../../libraries/msgpack" }
 notifications_canister = { path = "../api" }
+serde = { workspace = true }
+timer_job_queues = { path = "../../../libraries/timer_job_queues" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
+utils = { path = "../../../libraries/utils" }

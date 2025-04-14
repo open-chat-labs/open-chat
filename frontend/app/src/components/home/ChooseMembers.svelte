@@ -2,14 +2,18 @@
     import SelectUsers from "./SelectUsers.svelte";
     import type { CandidateMember, UserOrUserGroup, UserSummary } from "openchat-client";
 
-    export let members: CandidateMember[];
-    export let busy: boolean;
-    export let userLookup: (
-        searchTerm: string,
-        maxResults?: number,
-    ) => Promise<[UserSummary[], UserSummary[]]>;
+    interface Props {
+        members: CandidateMember[];
+        busy: boolean;
+        userLookup: (
+            searchTerm: string,
+            maxResults?: number,
+        ) => Promise<[UserSummary[], UserSummary[]]>;
+    }
 
-    $: selectedUsers = members.map((m) => m.user);
+    let { members = $bindable(), busy, userLookup }: Props = $props();
+
+    let selectedUsers = $derived(members.map((m) => m.user));
 
     function deleteMember(user: UserOrUserGroup): void {
         if (busy || user.kind !== "user") return;

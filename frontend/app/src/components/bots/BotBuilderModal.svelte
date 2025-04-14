@@ -1,15 +1,14 @@
 <script lang="ts">
-    import { currentUser, emptyBotInstance, OpenChat, type ExternalBot } from "openchat-client";
+    import { currentUser, emptyBotInstance, OpenChat, ui, type ExternalBot } from "openchat-client";
+    import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import { toastStore } from "../../stores/toast";
+    import Button from "../Button.svelte";
+    import ButtonGroup from "../ButtonGroup.svelte";
+    import FancyLoader from "../icons/FancyLoader.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Translatable from "../Translatable.svelte";
     import BotBuilder from "./AutoBotBuilder.svelte";
-    import Button from "../Button.svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import { getContext } from "svelte";
-    import { toastStore } from "../../stores/toast";
-    import ButtonGroup from "../ButtonGroup.svelte";
-    import FancyLoader from "../icons/FancyLoader.svelte";
     import ChooseBot from "./ChooseBot.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -44,7 +43,7 @@
         if (botState.current !== undefined && valid) {
             busy = true;
             client
-                .registerBot(principal, $state.snapshot(botState.current))
+                .registerBot(principal, botState.current)
                 .then((success) => {
                     if (!success) {
                         toastStore.showFailureToast(i18nKey("Unable to register test bot"));
@@ -156,7 +155,7 @@
     {#snippet footer()}
         <div class="footer">
             <ButtonGroup>
-                <Button secondary small={!$mobileWidth} tiny={$mobileWidth} onClick={onClose}>
+                <Button secondary small={!ui.mobileWidth} tiny={ui.mobileWidth} onClick={onClose}>
                     <Translatable resourceKey={i18nKey("cancel")} />
                 </Button>
                 {#if mode !== "remove"}
@@ -164,8 +163,8 @@
                         onClick={mode === "update" ? update : register}
                         disabled={!valid || busy}
                         loading={busy}
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}>
+                        small={!ui.mobileWidth}
+                        tiny={ui.mobileWidth}>
                         <Translatable
                             resourceKey={mode === "update"
                                 ? i18nKey("bots.update_bot.action")

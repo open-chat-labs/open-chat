@@ -1,13 +1,12 @@
 use crate::{mutate_state, read_state};
 use constants::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 use event_store_producer::EventBuilder;
-use ic_cdk::call::RejectCode;
 use icrc_ledger_types::icrc3::transactions::{GetTransactionsRequest, Transaction};
 use serde::Serialize;
 use std::cell::Cell;
 use std::convert::Into;
 use std::time::Duration;
-use types::{CanisterId, Milliseconds};
+use types::{C2CError, CanisterId, Milliseconds};
 
 const DEFAULT_INTERVAL: Milliseconds = MINUTE_IN_MS;
 const BATCH_SIZE: usize = 1000;
@@ -125,7 +124,7 @@ async fn run_async() -> Milliseconds {
     delay
 }
 
-async fn get_transactions(start: u64, ledger_canister_id: CanisterId) -> Result<Vec<Transaction>, (RejectCode, String)> {
+async fn get_transactions(start: u64, ledger_canister_id: CanisterId) -> Result<Vec<Transaction>, C2CError> {
     let response = sns_ledger_canister_c2c_client::get_transactions(
         ledger_canister_id,
         &GetTransactionsRequest {

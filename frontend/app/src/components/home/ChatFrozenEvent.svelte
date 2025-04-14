@@ -1,5 +1,3 @@
-<svelte:options immutable />
-
 <script lang="ts">
     import NonMessageEvent from "./NonMessageEvent.svelte";
     import type { UserSummary } from "openchat-client";
@@ -8,22 +6,28 @@
     import type { ChatFrozenEvent } from "openchat-shared";
     import { buildDisplayName } from "../../utils/user";
 
-    export let event: ChatFrozenEvent;
-    export let user: UserSummary | undefined;
-    export let timestamp: bigint;
+    interface Props {
+        event: ChatFrozenEvent;
+        user: UserSummary | undefined;
+        timestamp: bigint;
+    }
 
-    $: me = event.frozenBy === user?.userId;
-    $: frozenByStr = buildDisplayName($userStore, event.frozenBy, me);
+    let { event, user, timestamp }: Props = $props();
 
-    $: chatFrozenByText = $_("chatFrozenBy", {
-        values: {
-            frozenBy: frozenByStr,
-        },
-    });
+    let me = $derived(event.frozenBy === user?.userId);
+    let frozenByStr = $derived(buildDisplayName($userStore, event.frozenBy, me));
 
-    $: text = event.reason
-        ? `${chatFrozenByText}\n${$_("reason")}: ${event.reason}`
-        : chatFrozenByText;
+    let chatFrozenByText = $derived(
+        $_("chatFrozenBy", {
+            values: {
+                frozenBy: frozenByStr,
+            },
+        }),
+    );
+
+    let text = $derived(
+        event.reason ? `${chatFrozenByText}\n${$_("reason")}: ${event.reason}` : chatFrozenByText,
+    );
 </script>
 
 <NonMessageEvent {text} {timestamp} />

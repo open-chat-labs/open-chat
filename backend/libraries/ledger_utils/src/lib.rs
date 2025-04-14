@@ -1,9 +1,8 @@
 use candid::Principal;
-use ic_cdk::call::RejectCode;
 use ic_ledger_types::{AccountIdentifier, Subaccount, DEFAULT_SUBACCOUNT};
 use sha2::{Digest, Sha256};
 use types::{
-    CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, TimestampNanos, UserId,
+    C2CError, CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, TimestampNanos, UserId,
 };
 
 pub mod icrc1;
@@ -34,7 +33,7 @@ pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
     sender: CanisterId,
     retry_if_bad_fee: bool,
-) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, (RejectCode, String)> {
+) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, C2CError> {
     match transaction {
         PendingCryptoTransaction::NNS(t) => nns::process_transaction(t, sender).await,
         PendingCryptoTransaction::ICRC1(t) => match icrc1::process_transaction(t, sender, retry_if_bad_fee).await {

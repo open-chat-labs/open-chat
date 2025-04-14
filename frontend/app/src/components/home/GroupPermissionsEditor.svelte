@@ -157,7 +157,7 @@
         <Toggle
             id="override-chat-messages"
             small
-            on:change={onOverrideChatMessagesChanged}
+            onChange={onOverrideChatMessagesChanged}
             label={i18nKey("permissions.overrideChatMessages")}
             bind:checked={overrideChatMessages} />
 

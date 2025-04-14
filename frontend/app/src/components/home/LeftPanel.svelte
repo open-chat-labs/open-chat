@@ -1,15 +1,15 @@
 <script lang="ts">
-    import ChatList from "./ChatList.svelte";
+    import { ui } from "openchat-client";
+    import { activityFeedShowing } from "../../stores/activity";
     import { rtlStore } from "../../stores/rtl";
     import { currentTheme } from "../../theme/themes";
-    import { layoutStore } from "../../stores/layout";
-    import { activityFeedShowing } from "../../stores/activity";
     import ActivityFeed from "./activity/ActivityFeed.svelte";
+    import ChatList from "./ChatList.svelte";
 </script>
 
 <section
-    class:visible={$layoutStore.showLeft}
-    class:offset={$layoutStore.showNav}
+    class:visible={ui.showLeft}
+    class:offset={ui.showNav}
     class:rtl={$rtlStore}
     class:halloween={$currentTheme.name === "halloween"}>
     <div class="chat-list">

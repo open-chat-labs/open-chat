@@ -1356,7 +1356,9 @@
         "onlyUniquePerson": "Solo gli umani unici",
         "prizeFinished": "Il tuo messaggio premio è terminato",
         "randomDistribution": "Distribuzione casuale",
-        "restrictedMessage": "Per richiedere questo premio devi avere quanto segue",
+        "requiresCaptcha": "Richiede CAPTCHA",
+        "restrictedMessage": "Questo premio ha le seguenti restrizioni",
+        "restrictions": "Restrizioni di richiesta",
         "standardDiamond": "Standard",
         "streak": "Strisciante",
         "streakFull": "Una serie di {n} giorni o più",
@@ -1606,7 +1608,7 @@
     "roleChanged": "{changedBy} ha cambiato il ruolo di {changed} in {newRole}",
     "rotationChallenge": {
         "info": "Ruota l'immagine a sinistra finché non corrisponde all'angolazione dell'immagine a destra",
-        "infoMobile": "Ruota l'immagine in alto finché non corrisponde all'angolazione dell'immagine in basso",
+        "infoMobile": "Ruota l'immagine in basso finché non corrisponde all'angolazione dell'immagine in alto",
         "title": "Bilanciare i bot"
     },
     "rules": {

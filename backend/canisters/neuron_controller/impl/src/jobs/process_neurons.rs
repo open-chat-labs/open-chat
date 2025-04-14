@@ -1,7 +1,6 @@
 use crate::updates::manage_nns_neuron::manage_nns_neuron_impl;
 use crate::{mutate_state, read_state, Neurons};
 use constants::{DAY_IN_MS, MINUTE_IN_MS, SNS_GOVERNANCE_CANISTER_ID};
-use ic_cdk::call::RejectCode;
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
 use icrc_ledger_types::icrc1::account::Account;
 use nns_governance_canister::types::manage_neuron::{Command, Disburse, Spawn};
@@ -9,7 +8,7 @@ use nns_governance_canister::types::neuron::DissolveState;
 use nns_governance_canister::types::{ListNeurons, Neuron, NeuronId};
 use std::time::Duration;
 use tracing::info;
-use types::{CanisterId, Empty, Milliseconds, TimestampMillis};
+use types::{C2CError, CanisterId, Empty, Milliseconds, TimestampMillis};
 use utils::canister_timers::run_now_then_interval;
 
 // We add a minute because spawning takes 7 days, and if we wait exactly 7 days, there may still be a few seconds left
@@ -18,10 +17,10 @@ const REFRESH_NEURONS_INTERVAL: Milliseconds = DAY_IN_MS + MINUTE_IN_MS;
 const E8S_PER_ICP: u64 = 100_000_000;
 
 pub fn start_job() {
-    run_now_then_interval(Duration::from_millis(REFRESH_NEURONS_INTERVAL), run);
+    run_now_then_interval(Duration::from_millis(REFRESH_NEURONS_INTERVAL), process_neurons);
 }
 
-fn run() {
+pub(crate) fn process_neurons() {
     ic_cdk::futures::spawn(run_async());
 }
 
@@ -87,7 +86,7 @@ async fn run_async() {
 
         if neurons_updated {
             // Refresh the neurons again given that they've been updated
-            ic_cdk_timers::set_timer(Duration::ZERO, run);
+            ic_cdk_timers::set_timer(Duration::ZERO, process_neurons);
         }
     }
 }
@@ -209,7 +208,7 @@ async fn disburse_neurons(neuron_ids: Vec<(u64, bool)>) {
 async fn is_cycles_dispenser_balance_low(
     nns_ledger_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
-) -> Result<bool, (RejectCode, String)> {
+) -> Result<bool, C2CError> {
     icrc_ledger_canister_c2c_client::icrc1_balance_of(nns_ledger_canister_id, &Account::from(cycles_dispenser_canister_id))
         .await
         .map(|balance| balance < 10_000 * E8S_PER_ICP)

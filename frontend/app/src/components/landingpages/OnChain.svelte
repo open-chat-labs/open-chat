@@ -1,6 +1,6 @@
 <script lang="ts">
     import { currentTheme } from "../../theme/themes";
-    $: txtColor = $currentTheme.landing.txt;
+    let txtColor = $derived($currentTheme.landing.txt);
 </script>
 
 <svg width="303" height="16" viewBox="0 0 303 16" fill="none" xmlns="http://www.w3.org/2000/svg">

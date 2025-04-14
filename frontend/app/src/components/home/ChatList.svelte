@@ -1,58 +1,57 @@
 <script lang="ts">
+    import {
+        type BotMatch,
+        chatIdentifiersEqual,
+        chatIdentifierToString,
+        type ChatListScope,
+        chatListScopeStore as chatListScope,
+        chatSummariesListStore,
+        type ChatSummary as ChatSummaryType,
+        type CombinedUnreadCounts,
+        currentUser as createdUser,
+        emptyCombinedUnreadCounts,
+        type GroupMatch,
+        type GroupSearchResponse,
+        numberOfThreadsStore,
+        OpenChat,
+        publish,
+        routeForChatIdentifier,
+        selectedChatId,
+        selectedCommunity,
+        ui,
+        unreadCommunityChannelCounts,
+        unreadDirectCounts,
+        unreadFavouriteCounts,
+        unreadGroupCounts,
+        userStore,
+        type UserSummary,
+    } from "openchat-client";
+    import page from "page";
+    import { getContext, tick } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Compass from "svelte-material-icons/CompassOutline.svelte";
-    import SelectedCommunityHeader from "./communities/SelectedCommunityHeader.svelte";
-    import ChatListSearch from "./ChatListSearch.svelte";
-    import ChatSummary from "./ChatSummary.svelte";
-    import {
-        type ChatListScope,
-        type ChatSummary as ChatSummaryType,
-        type GroupMatch,
-        type UserSummary,
-        OpenChat,
-        type GroupSearchResponse,
-        routeForChatIdentifier,
-        chatIdentifiersEqual,
-        emptyCombinedUnreadCounts,
-        chatIdentifierToString,
-        type CombinedUnreadCounts,
-        userStore,
-        currentUser as createdUser,
-        selectedChatId,
-        chatListScopeStore as chatListScope,
-        numberOfThreadsStore,
-        selectedCommunity,
-        chatSummariesListStore,
-        unreadDirectCounts,
-        unreadGroupCounts,
-        unreadFavouriteCounts,
-        unreadCommunityChannelCounts,
-        type BotMatch,
-    } from "openchat-client";
-    import { getContext, tick } from "svelte";
-    import SearchResult from "./SearchResult.svelte";
-    import page from "page";
-    import Button from "../Button.svelte";
     import { menuCloser } from "../../actions/closeMenu";
-    import ThreadPreviews from "./thread/ThreadPreviews.svelte";
-    import { chatListView } from "../../stores/chatListView";
-    import { iconSize } from "../../stores/iconSize";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import { exploreGroupsDismissed } from "../../stores/settings";
-    import GroupChatsHeader from "./communities/GroupChatsHeader.svelte";
-    import DirectChatsHeader from "./communities/DirectChatsHeader.svelte";
-    import FavouriteChatsHeader from "./communities/FavouriteChatsHeader.svelte";
-    import PreviewWrapper from "./communities/PreviewWrapper.svelte";
+    import { i18nKey } from "../../i18n/i18n";
     import { routeForScope } from "../../routes";
+    import { chatListView } from "../../stores/chatListView";
+    import { exploreGroupsDismissed } from "../../stores/settings";
+    import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import FilteredUsername from "../FilteredUsername.svelte";
-    import ChatListSectionButton from "./ChatListSectionButton.svelte";
-    import Badges from "./profile/Badges.svelte";
-    import BrowseChannels from "./communities/details/BrowseChannels.svelte";
     import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
+    import ChatListSearch from "./ChatListSearch.svelte";
+    import ChatListSectionButton from "./ChatListSectionButton.svelte";
+    import ChatSummary from "./ChatSummary.svelte";
+    import BrowseChannels from "./communities/details/BrowseChannels.svelte";
+    import DirectChatsHeader from "./communities/DirectChatsHeader.svelte";
+    import FavouriteChatsHeader from "./communities/FavouriteChatsHeader.svelte";
+    import GroupChatsHeader from "./communities/GroupChatsHeader.svelte";
+    import PreviewWrapper from "./communities/PreviewWrapper.svelte";
+    import SelectedCommunityHeader from "./communities/SelectedCommunityHeader.svelte";
+    import Badges from "./profile/Badges.svelte";
+    import SearchResult from "./SearchResult.svelte";
+    import ThreadPreviews from "./thread/ThreadPreviews.svelte";
     import ActiveCallSummary from "./video/ActiveCallSummary.svelte";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 
@@ -174,10 +173,6 @@
         });
     }
 
-    function markAllRead() {
-        client.markAllReadForCurrentScope();
-    }
-
     function userOrBotKey(match: UserSummary | BotMatch): string {
         switch (match.kind) {
             case "bot_match":
@@ -187,7 +182,7 @@
         }
     }
     let showPreview = $derived(
-        $mobileWidth &&
+        ui.mobileWidth &&
             $selectedCommunity?.membership.role === "none" &&
             $selectedChatId === undefined,
     );
@@ -244,16 +239,13 @@
 <!-- svelte-ignore missing_declaration -->
 {#if user}
     {#if $chatListScope.kind === "favourite"}
-        <FavouriteChatsHeader on:markAllRead={markAllRead} {canMarkAllRead} />
+        <FavouriteChatsHeader {canMarkAllRead} />
     {:else if $chatListScope.kind === "group_chat"}
-        <GroupChatsHeader on:markAllRead={markAllRead} {canMarkAllRead} />
+        <GroupChatsHeader {canMarkAllRead} />
     {:else if $chatListScope.kind === "direct_chat"}
-        <DirectChatsHeader on:markAllRead={markAllRead} {canMarkAllRead} />
+        <DirectChatsHeader {canMarkAllRead} />
     {:else if $selectedCommunity && $chatListScope.kind === "community"}
-        <SelectedCommunityHeader
-            community={$selectedCommunity}
-            {canMarkAllRead}
-            on:markAllRead={markAllRead} />
+        <SelectedCommunityHeader community={$selectedCommunity} {canMarkAllRead} />
     {/if}
 
     <ChatListSearch
@@ -384,13 +376,16 @@
             {#if showExploreGroups}
                 <div class="explore-groups" onclick={() => page("/groups")}>
                     <div class="disc">
-                        <Compass size={$iconSize} color={"var(--icon-txt)"} />
+                        <Compass size={ui.iconSize} color={"var(--icon-txt)"} />
                     </div>
                     <div class="label">
                         <Translatable resourceKey={i18nKey("exploreGroups")} />
                     </div>
                     <div onclick={() => exploreGroupsDismissed.set(true)} class="close">
-                        <Close viewBox="0 -3 24 24" size={$iconSize} color={"var(--button-txt)"} />
+                        <Close
+                            viewBox="0 -3 24 24"
+                            size={ui.iconSize}
+                            color={"var(--button-txt)"} />
                     </div>
                 </div>
             {/if}

@@ -3,16 +3,22 @@
     import { setLocale, supportedLanguages } from "../i18n/i18n";
     import { locale } from "svelte-i18n";
     import { onMount } from "svelte";
-    export let minHeight: string | undefined = undefined;
-    export let bgClass:
-        | "none"
-        | "underwater"
-        | "woods"
-        | "sunset"
-        | "error"
-        | "upgrade"
-        | "empty"
-        | "network" = "network";
+    import { trackedEffect } from "@src/utils/effects.svelte";
+    interface Props {
+        minHeight?: string | undefined;
+        bgClass?:
+            | "none"
+            | "underwater"
+            | "woods"
+            | "sunset"
+            | "error"
+            | "upgrade"
+            | "empty"
+            | "network";
+        children?: import("svelte").Snippet;
+    }
+
+    let { minHeight = undefined, bgClass = "network", children }: Props = $props();
 
     onMount(() => {
         document.body.classList.add("fill");
@@ -21,17 +27,17 @@
         };
     });
 
-    let selectedLocale = ($locale as string).substring(0, 2);
-    $: {
+    let selectedLocale = $state(($locale as string).substring(0, 2));
+    trackedEffect("set-locale", () => {
         setLocale(selectedLocale);
-    }
+    });
 </script>
 
 <div class={`modal-page ${bgClass}`}>
     <div class="modal-page-panel" style="min-height: {minHeight}">
-        <slot />
+        {@render children?.()}
     </div>
-    <div class="powered-by" />
+    <div class="powered-by"></div>
     <div class="lang">
         <Select bind:value={selectedLocale}>
             {#each supportedLanguages as lang}

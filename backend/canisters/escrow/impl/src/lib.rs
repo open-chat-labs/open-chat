@@ -50,6 +50,7 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             swaps: self.data.swaps.metrics(now),
+            notify_status_change_queue_len: self.data.notify_status_change_queue.len() as u32,
             stable_memory_sizes: memory::memory_sizes(),
             disabled_tokens: self.data.disabled_tokens.iter().copied().collect(),
             canister_ids: CanisterIds {
@@ -98,6 +99,7 @@ pub struct Metrics {
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub swaps: SwapMetrics,
+    pub notify_status_change_queue_len: u32,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub disabled_tokens: Vec<CanisterId>,
     pub canister_ids: CanisterIds,

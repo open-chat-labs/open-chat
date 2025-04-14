@@ -8,10 +8,11 @@ use std::cmp::max;
 use std::ops::{Add, Deref};
 use std::time::{Duration, SystemTime};
 use test_case::test_case;
-use types::{ChitEarnedReason, TimestampMillis};
+use types::{ChitEarnedReason, OptionUpdate, TimestampMillis};
 use utils::time::MonthKey;
 
 const DAY_ZERO: TimestampMillis = 1704067200000; // Mon Jan 01 2024 00:00:00 GMT+0000
+const ONE_CHAT: u128 = 100_000_000;
 
 #[test]
 fn claim_daily_chit_reflected_in_user_index() {
@@ -147,28 +148,12 @@ fn chit_streak_maintained_if_insured(days_insured: u8) {
 
     claim_then_check_result(env, &user, 1, 1);
 
-    const ONE_CHAT: u128 = 100_000_000;
     client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user.user_id, 100 * ONE_CHAT);
 
     let expected_price = (2u128.pow(days_insured as u32) - 1) * ONE_CHAT;
 
     if days_insured > 0 {
-        let pay_for_insurance_response = client::user::pay_for_streak_insurance(
-            env,
-            user.principal,
-            user.canister(),
-            &user_canister::pay_for_streak_insurance::Args {
-                additional_days: days_insured,
-                expected_price,
-            },
-        );
-        assert!(
-            matches!(
-                pay_for_insurance_response,
-                user_canister::pay_for_streak_insurance::Response::Success
-            ),
-            "{pay_for_insurance_response:?}"
-        );
+        client::user::happy_path::pay_for_streak_insurance(env, &user, days_insured, expected_price);
     }
 
     let result = client::user::happy_path::initial_state(env, &user);
@@ -249,6 +234,81 @@ fn chit_streak_maintained_if_insured(days_insured: u8) {
         ))
         .map(|e| timestamp_to_day(e.timestamp))
         .all_unique());
+}
+
+#[test_case(1)]
+#[test_case(3)]
+#[test_case(10)]
+fn streak_insurance_can_cover_multiple_days_missed_in_a_row(days_insured: u8) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let user = client::register_user(env, canister_ids);
+    ensure_time_at_least_day0(env);
+
+    let expected_price = (2u128.pow(days_insured as u32) - 1) * ONE_CHAT;
+
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user.user_id, 2000 * ONE_CHAT);
+    client::user::happy_path::claim_daily_chit(env, &user);
+    client::user::happy_path::pay_for_streak_insurance(env, &user, days_insured, expected_price);
+
+    env.advance_time(Duration::from_millis(DAY_IN_MS));
+    env.tick();
+
+    for _ in 0..days_insured {
+        env.advance_time(Duration::from_millis(DAY_IN_MS));
+        env.tick();
+    }
+
+    let summary = client::user::happy_path::initial_state(env, &user);
+    assert_eq!(summary.streak, days_insured as u16 + 1);
+    assert!(summary.streak_insurance.is_some());
+
+    env.advance_time(Duration::from_millis(DAY_IN_MS));
+    env.tick();
+
+    let summary = client::user::happy_path::initial_state(env, &user);
+    assert_eq!(summary.streak, 0);
+    assert!(summary.streak_insurance.is_none());
+}
+
+#[test_case(true)]
+#[test_case(false)]
+fn streak_insurance_updates_returned_in_summary_updates(final_day_manually_claimed: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let user = client::register_user(env, canister_ids);
+    ensure_time_at_least_day0(env);
+
+    let start = now_millis(env);
+
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user.user_id, 2000 * ONE_CHAT);
+    client::user::happy_path::claim_daily_chit(env, &user);
+    client::user::happy_path::pay_for_streak_insurance(env, &user, 1, ONE_CHAT);
+
+    env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
+    env.tick();
+
+    if final_day_manually_claimed {
+        client::user::happy_path::claim_daily_chit(env, &user);
+        env.advance_time(Duration::from_millis(DAY_IN_MS));
+        env.tick();
+    }
+
+    env.advance_time(Duration::from_millis(DAY_IN_MS));
+    env.tick();
+
+    let summary_updates = client::user::happy_path::updates(env, &user, start).unwrap();
+    assert!(matches!(summary_updates.streak_insurance, OptionUpdate::SetToNone));
 }
 
 fn advance_to_next_month(env: &mut PocketIc) {

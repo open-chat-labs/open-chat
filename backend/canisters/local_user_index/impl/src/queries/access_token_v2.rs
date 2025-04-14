@@ -319,7 +319,7 @@ async fn get_api_key(scope: AccessTokenScope, api_key_args: c2c_bot_api_key::Arg
     match response {
         Ok(c2c_bot_api_key::Response::Success(api_key)) => Ok(api_key),
         Ok(_) => Err(NotAuthorized),
-        Err((code, message)) => Err(InternalError(format!("{code:?}: {message}"))),
+        Err(error) => Err(InternalError(format!("{error:?}"))),
     }
 }
 

@@ -1,13 +1,11 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
-    import CogOutline from "svelte-material-icons/CogOutline.svelte";
-    import ReviewTranslationCorrections from "./ReviewTranslationCorrections.svelte";
-    import SectionHeader from "../../SectionHeader.svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import OperatorFunctions from "./OperatorFunctions.svelte";
-    import { platformOperator } from "openchat-client";
-    import Button from "../../Button.svelte";
+    import { platformOperator, ui } from "openchat-client";
     import page from "page";
+    import CogOutline from "svelte-material-icons/CogOutline.svelte";
+    import Button from "../../Button.svelte";
+    import SectionHeader from "../../SectionHeader.svelte";
+    import OperatorFunctions from "./OperatorFunctions.svelte";
+    import ReviewTranslationCorrections from "./ReviewTranslationCorrections.svelte";
 
     let selectedTab: "translations" | "operator" = $state("translations");
 
@@ -28,7 +26,7 @@
         <SectionHeader slim border={false}>
             <div class="header">
                 <div class="icon">
-                    <CogOutline size={$iconSize} color={"var(--icon-txt)"} />
+                    <CogOutline size={ui.iconSize} color={"var(--icon-txt)"} />
                 </div>
                 <div class="details">
                     <h4 class="name">Admin</h4>

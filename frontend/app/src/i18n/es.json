@@ -1356,7 +1356,9 @@
         "onlyUniquePerson": "Sólo humanos únicos",
         "prizeFinished": "Tu mensaje de premio ya ha terminado.",
         "randomDistribution": "Distribución aleatoria",
-        "restrictedMessage": "Para reclamar este premio debes tener lo siguiente",
+        "requiresCaptcha": "Requiere CAPTCHA",
+        "restrictedMessage": "Este premio tiene las siguientes restricciones",
+        "restrictions": "Restricciones de reclamaciones",
         "standardDiamond": "Estándar",
         "streak": "Racha",
         "streakFull": "Una racha de {n} días o más",
@@ -1606,7 +1608,7 @@
     "roleChanged": "{changedBy} cambió el rol de {changed} a {newRole}",
     "rotationChallenge": {
         "info": "Gire la imagen de la izquierda hasta que coincida con el ángulo de la imagen de la derecha.",
-        "infoMobile": "Gire la imagen superior hasta que coincida con el ángulo de la imagen inferior.",
+        "infoMobile": "Gire la imagen inferior hasta que coincida con el ángulo de la imagen superior",
         "title": "Equilibrar los bots"
     },
     "rules": {

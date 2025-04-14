@@ -2,9 +2,8 @@ use crate::guards::caller_is_openchat_user;
 use crate::read_state;
 use candid::Principal;
 use canister_api_macros::query;
-use ic_cdk::call::RejectCode;
 use local_user_index_canister::chat_events::{Response::*, *};
-use types::{BotInitiator, UserId};
+use types::{BotInitiator, C2CError, UserId};
 
 #[query(composite = true, guard = "caller_is_openchat_user", candid = true, msgpack = true)]
 async fn chat_events(args: Args) -> Response {
@@ -188,7 +187,7 @@ pub(crate) async fn make_c2c_call_to_get_events(
     }
 }
 
-fn map_response<R: Into<EventsResponse>>(response: Result<R, (RejectCode, String)>) -> EventsResponse {
+fn map_response<R: Into<EventsResponse>>(response: Result<R, C2CError>) -> EventsResponse {
     match response {
         Ok(result) => result.into(),
         Err(error) => EventsResponse::InternalError(format!("{error:?}")),

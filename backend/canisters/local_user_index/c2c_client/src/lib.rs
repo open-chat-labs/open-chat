@@ -1,10 +1,9 @@
 use candid::Principal;
 use canister_client::generate_c2c_call;
 use constants::CHUNK_STORE_CHUNK_SIZE;
-use ic_cdk::call::RejectCode;
 use local_user_index_canister::*;
 use std::collections::HashMap;
-use types::{CanisterId, UserId};
+use types::{C2CError, CanisterId, UserId};
 
 // Queries
 generate_c2c_call!(c2c_can_push_notifications);
@@ -23,30 +22,22 @@ generate_c2c_call!(c2c_user_canister, 300);
 generate_c2c_call!(join_channel);
 generate_c2c_call!(join_group);
 
-#[derive(Debug)]
-pub enum LookupUserError {
-    UserNotFound,
-    InternalError(String),
-}
-
 pub async fn lookup_user(
     user_id_or_principal: Principal,
     local_user_index_canister_id: CanisterId,
-) -> Result<GlobalUser, LookupUserError> {
+) -> Result<Option<GlobalUser>, C2CError> {
     let args = c2c_lookup_user::Args { user_id_or_principal };
 
-    match crate::c2c_lookup_user(local_user_index_canister_id, &args).await {
-        Ok(c2c_lookup_user::Response::Success(user)) => Ok(user),
-        Ok(_) => Err(LookupUserError::UserNotFound),
-        Err(error) => Err(LookupUserError::InternalError(format!("{error:?}"))),
-    }
+    let response = crate::c2c_lookup_user(local_user_index_canister_id, &args).await?;
+
+    Ok(if let c2c_lookup_user::Response::Success(user) = response { Some(user) } else { None })
 }
 
 pub async fn push_wasm_in_chunks(
     canister_id: CanisterId,
     canister_type: ChildCanisterType,
     wasm: &[u8],
-) -> Result<c2c_push_wasm_chunk::Response, (RejectCode, String)> {
+) -> Result<c2c_push_wasm_chunk::Response, C2CError> {
     for (index, chunk) in wasm.chunks(CHUNK_STORE_CHUNK_SIZE).enumerate() {
         let response = c2c_push_wasm_chunk(
             canister_id,

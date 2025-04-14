@@ -1,6 +1,17 @@
+<script lang="ts" module>
+    export interface MenuItemProps {
+        href?: string;
+        disabled?: boolean;
+        selected?: boolean;
+        warning?: boolean;
+        separator?: boolean;
+        unpadded?: boolean;
+        onclick?: () => void;
+    }
+</script>
+
 <script lang="ts">
     import type { Snippet } from "svelte";
-    import type { MenuItemProps } from "./MenuItemLegacy.svelte";
 
     let {
         href,

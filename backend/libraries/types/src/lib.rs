@@ -135,6 +135,7 @@ pub use message_id::*;
 pub use message_index::*;
 pub use message_match::*;
 pub use notifications::*;
+use oc_error_codes::OCError;
 pub use option::*;
 pub use p2p_swaps::*;
 pub use phone_number::*;
@@ -174,6 +175,8 @@ pub type ProposalId = u64;
 pub type SnsNeuronId = [u8; 32];
 pub type TimestampMillis = u64;
 pub type TimestampNanos = u64;
+
+pub type OCResult<T = ()> = Result<T, OCError>;
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]

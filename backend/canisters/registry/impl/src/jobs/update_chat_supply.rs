@@ -1,14 +1,13 @@
 use crate::mutate_state;
 use candid::Principal;
 use constants::{CHAT_LEDGER_CANISTER_ID, HOUR_IN_MS, SNS_GOVERNANCE_CANISTER_ID};
-use ic_cdk::call::RejectCode;
 use icrc_ledger_types::icrc1::account::Account;
 use sha256::sha256;
 use sns_governance_canister::types::NeuronId;
 use std::collections::HashSet;
 use std::time::Duration;
 use tracing::info;
-use types::Timestamped;
+use types::{C2CError, Timestamped};
 use utils::canister_timers::run_now_then_interval;
 
 pub fn start_job() {
@@ -21,7 +20,7 @@ fn run() {
     });
 }
 
-async fn run_async() -> Result<(), (RejectCode, String)> {
+async fn run_async() -> Result<(), C2CError> {
     let total_supply = icrc_ledger_canister_c2c_client::icrc1_total_supply(CHAT_LEDGER_CANISTER_ID)
         .await
         .map(|s| u128::try_from(s.0).unwrap())?;
@@ -71,7 +70,7 @@ async fn run_async() -> Result<(), (RejectCode, String)> {
     Ok(())
 }
 
-async fn neuron_ids_by_principal(principal: Principal) -> Result<Vec<NeuronId>, (RejectCode, String)> {
+async fn neuron_ids_by_principal(principal: Principal) -> Result<Vec<NeuronId>, C2CError> {
     let mut neuron_ids = Vec::new();
 
     loop {

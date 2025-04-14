@@ -1,16 +1,13 @@
 <script lang="ts">
-    import SectionHeader from "../../SectionHeader.svelte";
-    import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
-    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
-    import HoverIcon from "../../HoverIcon.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
+    import { publish, ui, type Level } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import { iconSize } from "../../../stores/iconSize";
-    import { mobileWidth } from "../../../stores/screenDimensions";
-    import type { Level } from "openchat-client";
+    import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
+    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import HoverIcon from "../../HoverIcon.svelte";
+    import SectionHeader from "../../SectionHeader.svelte";
     import Translatable from "../../Translatable.svelte";
-    import { publish } from "@src/utils/pubsub";
 
     interface Props {
         canEdit: boolean;
@@ -31,23 +28,23 @@
     }
 </script>
 
-<SectionHeader border={false} flush={!$mobileWidth} shadow>
+<SectionHeader border={false} flush={!ui.mobileWidth} shadow>
     <span title={$_("members")} class="members" onclick={showGroupMembers}>
         <HoverIcon>
-            <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />
+            <AccountMultiple size={ui.iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
     {#if canEdit}
         <span title={$_("group.edit", { values: { level } })} class="edit" onclick={editGroup}>
             <HoverIcon>
-                <PencilOutline size={$iconSize} color={"var(--icon-txt)"} />
+                <PencilOutline size={ui.iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </span>
     {/if}
     <h4><Translatable resourceKey={i18nKey("groupDetails", undefined, level)} /></h4>
     <span title={$_("close")} class="close" onclick={onClose}>
         <HoverIcon>
-            <Close size={$iconSize} color={"var(--icon-txt)"} />
+            <Close size={ui.iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
 </SectionHeader>

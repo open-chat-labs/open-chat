@@ -2,7 +2,8 @@ use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
 use canister_tracing_macros::trace;
 use registry_canister::updates::{Response::*, *};
-use types::OptionUpdate;
+use registry_canister::TokenDetails;
+use types::{CanisterId, OptionUpdate};
 
 #[query(candid = true, msgpack = true)]
 #[trace]
@@ -25,21 +26,31 @@ fn updates_impl(args: Args, state: &RuntimeState) -> Response {
     .unwrap();
 
     if updates_since < last_updated {
+        let mut token_details: Option<Vec<TokenDetails>> = None;
+        let mut tokens_uninstalled: Option<Vec<CanisterId>> = None;
+        if tokens_last_updated > updates_since {
+            for token in state.data.tokens.iter().filter(|t| t.last_updated > updates_since) {
+                if token.uninstalled {
+                    if let Some(u) = &mut tokens_uninstalled {
+                        u.push(token.ledger_canister_id)
+                    } else {
+                        tokens_uninstalled = Some(vec![token.ledger_canister_id]);
+                    }
+                } else {
+                    let token = token.clone().remove_logo_if_logo_id_set();
+                    if let Some(t) = &mut token_details {
+                        t.push(token)
+                    } else {
+                        token_details = Some(vec![token]);
+                    }
+                }
+            }
+        }
+
         Success(SuccessResult {
             last_updated,
-            token_details: if tokens_last_updated > updates_since {
-                Some(
-                    state
-                        .data
-                        .tokens
-                        .iter()
-                        .filter(|t| t.last_updated > updates_since)
-                        .map(|t| t.clone().remove_logo_if_logo_id_set())
-                        .collect(),
-                )
-            } else {
-                None
-            },
+            token_details,
+            tokens_uninstalled,
             nervous_system_details: state
                 .data
                 .nervous_systems

@@ -3,8 +3,12 @@
     import Translatable from "../Translatable.svelte";
     import type { ResourceKey } from "openchat-client";
 
-    export let text: ResourceKey;
-    export let failed: boolean;
+    interface Props {
+        text: ResourceKey;
+        failed: boolean;
+    }
+
+    let { text, failed }: Props = $props();
 </script>
 
 <div class={"prize"}>

@@ -1,29 +1,29 @@
 <script lang="ts">
     import {
         OpenChat,
-        type CommunityIdentifier,
-        type BotSummaryMode,
-        type ExternalBotPermissions,
+        ui,
         type BotInstallationLocation,
+        type BotSummaryMode,
         type ChatIdentifier,
-        type Level,
+        type CommunityIdentifier,
         type ExternalBotLike,
+        type ExternalBotPermissions,
+        type Level,
     } from "openchat-client";
     import { getContext } from "svelte";
-    import Overlay from "../Overlay.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import ButtonGroup from "../ButtonGroup.svelte";
-    import Button from "../Button.svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
     import { toastStore } from "../../stores/toast";
-    import ShowApiKeyModal from "./ShowApiKeyModal.svelte";
     import AreYouSure from "../AreYouSure.svelte";
-    import ChoosePermissions from "./install/ChoosePermissions.svelte";
-    import BotProperties from "./install/BotProperties.svelte";
+    import Button from "../Button.svelte";
+    import ButtonGroup from "../ButtonGroup.svelte";
     import Legend from "../Legend.svelte";
+    import ModalContent from "../ModalContent.svelte";
+    import Overlay from "../Overlay.svelte";
+    import Translatable from "../Translatable.svelte";
     import ApiKey from "./ApiKey.svelte";
+    import BotProperties from "./install/BotProperties.svelte";
+    import ChoosePermissions from "./install/ChoosePermissions.svelte";
+    import ShowApiKeyModal from "./ShowApiKeyModal.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -87,7 +87,7 @@
     function updateBot(id: BotInstallationLocation) {
         busy = true;
         client
-            .updateInstalledBot($state.snapshot(id), bot.id, $state.snapshot(grantedPermissions))
+            .updateInstalledBot(id, bot.id, grantedPermissions)
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("bots.edit.failure"));
@@ -111,11 +111,7 @@
                 if (bot.definition.autonomousConfig !== undefined) {
                     busy = true;
                     client
-                        .generateBotApiKey(
-                            $state.snapshot(id),
-                            bot.id,
-                            $state.snapshot(grantedPermissions),
-                        )
+                        .generateBotApiKey(id, bot.id, grantedPermissions)
                         .then((resp) => {
                             if (resp.kind === "success") {
                                 newApiKey = currentApiKey = resp.apiKey;
@@ -192,15 +188,19 @@
         {#snippet footer()}
             <div class="footer">
                 <ButtonGroup>
-                    <Button secondary small={!$mobileWidth} tiny={$mobileWidth} onClick={onClose}>
+                    <Button
+                        secondary
+                        small={!ui.mobileWidth}
+                        tiny={ui.mobileWidth}
+                        onClick={onClose}>
                         <Translatable resourceKey={i18nKey("cancel")} />
                     </Button>
                     <Button
                         onClick={mainButton}
                         loading={busy}
                         disabled={busy}
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}>
+                        small={!ui.mobileWidth}
+                        tiny={ui.mobileWidth}>
                         <Translatable resourceKey={cta} />
                     </Button>
                 </ButtonGroup>

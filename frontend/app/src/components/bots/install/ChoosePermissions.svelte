@@ -40,7 +40,7 @@
                 id={`chat_permission_${perm}`}
                 label={i18nKey(`permissions.${perm}`)}
                 checked={granted.chatPermissions.includes(perm)}
-                on:change={() => togglePermission(granted, "chatPermissions", perm)}
+                onChange={() => togglePermission(granted, "chatPermissions", perm)}
                 align={"start"}>
             </Checkbox>
         {/each}
@@ -55,7 +55,7 @@
                 id={`community_permission_${perm}`}
                 label={i18nKey(`permissions.${perm}`)}
                 checked={granted.communityPermissions.includes(perm)}
-                on:change={() => togglePermission(granted, "communityPermissions", perm)}
+                onChange={() => togglePermission(granted, "communityPermissions", perm)}
                 align={"start"}>
             </Checkbox>
         {/each}
@@ -70,7 +70,7 @@
                 id={`message_permission_${perm}`}
                 label={i18nKey(`permissions.messagePermissions.${perm}`)}
                 checked={granted.messagePermissions.includes(perm)}
-                on:change={() => togglePermission(granted, "messagePermissions", perm)}
+                onChange={() => togglePermission(granted, "messagePermissions", perm)}
                 align={"start"}>
             </Checkbox>
         {/each}

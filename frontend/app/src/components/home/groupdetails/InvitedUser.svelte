@@ -1,28 +1,34 @@
-<svelte:options immutable />
-
 <script lang="ts">
-    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
+    import { ui } from "openchat-client";
+    import type { UserSummary } from "openchat-shared";
     import Cancel from "svelte-material-icons/Cancel.svelte";
-    import MenuIcon from "../../MenuIconLegacy.svelte";
+    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
     import HoverIcon from "../../HoverIcon.svelte";
     import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItemLegacy.svelte";
-    import { createEventDispatcher } from "svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import type { UserSummary } from "openchat-shared";
-    import User from "./User.svelte";
+    import MenuIcon from "../../MenuIcon.svelte";
+    import MenuItem from "../../MenuItem.svelte";
     import Translatable from "../../Translatable.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
+    import User from "./User.svelte";
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        user: UserSummary;
+        canUninviteUser?: boolean;
+        searchTerm?: string;
+        me?: boolean;
+        onCancelInvite: (userId: string) => void;
+    }
 
-    export let user: UserSummary;
-    export let canUninviteUser: boolean = false;
-    export let searchTerm: string = "";
-    export let me = false;
+    let {
+        user,
+        canUninviteUser = false,
+        searchTerm = "",
+        me = false,
+        onCancelInvite,
+    }: Props = $props();
 
     function cancelInvite() {
-        dispatch("cancelInvite", user.userId);
+        onCancelInvite(user.userId);
     }
 </script>
 
@@ -30,24 +36,25 @@
     {#if canUninviteUser}
         <span class="menu">
             <MenuIcon position={"bottom"} align={"end"}>
-                <span slot="icon">
+                {#snippet menuIcon()}
                     <HoverIcon>
-                        <ChevronDown size={$iconSize} color={"var(--icon-txt)"} />
+                        <ChevronDown size={ui.iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
-                </span>
-                <span slot="menu">
+                {/snippet}
+                {#snippet menuItems()}
                     <Menu>
                         <MenuItem onclick={cancelInvite}>
-                            <Cancel
-                                size={$iconSize}
-                                color={"var(--icon-inverted-txt)"}
-                                slot="icon" />
-                            <div slot="text">
-                                <Translatable resourceKey={i18nKey("cancelInvite")} />
-                            </div>
+                            {#snippet icon()}
+                                <Cancel size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
+                                <div>
+                                    <Translatable resourceKey={i18nKey("cancelInvite")} />
+                                </div>
+                            {/snippet}
                         </MenuItem>
                     </Menu>
-                </span>
+                {/snippet}
             </MenuIcon>
         </span>
     {/if}

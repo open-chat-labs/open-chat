@@ -3,34 +3,32 @@
 </script>
 
 <script lang="ts">
-    import FeaturesPage from "./FeaturesPage.svelte";
-    import HomePage from "./HomePage.svelte";
-    import Header from "./Header.svelte";
-    import Content from "./Content.svelte";
+    import { identityState, pathState, ui, type CreatedUser, type OpenChat } from "openchat-client";
+    import { getContext, type Component } from "svelte";
     import {
         isArchitectureRoute,
         isBlogRoute,
         isDiamondRoute,
         isFaqRoute,
         isGuidelinesRoute,
-        isTermsRoute,
         isRoadmapRoute,
+        isTermsRoute,
         isWhitepaperRoute,
-        pathParams,
     } from "../../routes";
-    import { getContext, type Component } from "svelte";
-    import { type CreatedUser, type OpenChat, identityState } from "openchat-client";
+    import { showMenuForLandingRoute } from "../../utils/urls";
+    import Loading from "../Loading.svelte";
     import Overlay from "../Overlay.svelte";
     import Register from "../register/Register.svelte";
     import BlogPage from "./BlogPage.svelte";
-    import Loading from "../Loading.svelte";
-    import { showMenuForLandingRoute } from "../../utils/urls";
-    import { framed } from "../../stores/xframe";
+    import Content from "./Content.svelte";
+    import FeaturesPage from "./FeaturesPage.svelte";
+    import Header from "./Header.svelte";
+    import HomePage from "./HomePage.svelte";
     import HostedLandingPage from "./HostedLandingPage.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    let showMenu = $derived(showMenuForLandingRoute($pathParams));
+    let showMenu = $derived(showMenuForLandingRoute(pathState.route));
 
     function createdUser(user: CreatedUser) {
         client.onCreatedUser(user);
@@ -43,7 +41,7 @@
     </Overlay>
 {/if}
 
-{#if $framed}
+{#if ui.runningInIframe}
     <HostedLandingPage />
 {:else}
     {#if showMenu}
@@ -51,23 +49,23 @@
     {/if}
 
     <main class="main">
-        {#if $pathParams.kind === "features_route"}
+        {#if pathState.route.kind === "features_route"}
             <FeaturesPage />
         {:else}
             <Content>
-                {#if isBlogRoute($pathParams)}
-                    {#if $pathParams.slug !== undefined}
+                {#if isBlogRoute(pathState.route)}
+                    {#if pathState.route.slug !== undefined}
                         {#await import("./BlogPostPage.svelte")}
                             <div class="loading">
                                 <Loading />
                             </div>
                         {:then { default: BlogPostPage }}
-                            <BlogPostPage slug={$pathParams.slug} />
+                            <BlogPostPage slug={pathState.route.slug} />
                         {/await}
                     {:else}
                         <BlogPage />
                     {/if}
-                {:else if isRoadmapRoute($pathParams)}
+                {:else if isRoadmapRoute(pathState.route)}
                     {#await import("./RoadmapPage.svelte")}
                         <div class="loading">
                             <Loading />
@@ -75,7 +73,7 @@
                     {:then { default: RoadmapPage }}
                         <RoadmapPage />
                     {/await}
-                {:else if isWhitepaperRoute($pathParams)}
+                {:else if isWhitepaperRoute(pathState.route)}
                     {#await import("./WhitepaperPage.svelte")}
                         <div class="loading">
                             <Loading />
@@ -83,7 +81,7 @@
                     {:then { default: WhitepaperPage }}
                         <WhitepaperPage />
                     {/await}
-                {:else if isArchitectureRoute($pathParams)}
+                {:else if isArchitectureRoute(pathState.route)}
                     {#await import("./ArchitecturePage.svelte")}
                         <div class="loading">
                             <Loading />
@@ -91,7 +89,7 @@
                     {:then { default: ArchitecturePage }}
                         <ArchitecturePage />
                     {/await}
-                {:else if isGuidelinesRoute($pathParams)}
+                {:else if isGuidelinesRoute(pathState.route)}
                     {#await import("./GuidelinesPage.svelte")}
                         <div class="loading">
                             <Loading />
@@ -99,7 +97,7 @@
                     {:then { default: GuidelinesPage }}
                         <GuidelinesPage />
                     {/await}
-                {:else if isTermsRoute($pathParams)}
+                {:else if isTermsRoute(pathState.route)}
                     {#await import("./TermsPage.svelte")}
                         <div class="loading">
                             <Loading />
@@ -107,7 +105,7 @@
                     {:then { default: TermsPage }}
                         <TermsPage />
                     {/await}
-                {:else if isFaqRoute($pathParams)}
+                {:else if isFaqRoute(pathState.route)}
                     {#await import("./FAQPage.svelte")}
                         <div class="loading">
                             <Loading />
@@ -115,7 +113,7 @@
                     {:then { default: FAQPage }}
                         <FAQPage />
                     {/await}
-                {:else if isDiamondRoute($pathParams)}
+                {:else if isDiamondRoute(pathState.route)}
                     {#await import("./DiamondPage.svelte")}
                         <div class="loading">
                             <Loading />

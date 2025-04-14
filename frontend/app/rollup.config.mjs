@@ -55,6 +55,7 @@ function clean() {
                 );
             }
             copyFile(".", "build", ".ic-assets.json5");
+            copyFile(".", "build/.well-known", "assetlinks.json");
         },
     };
 }
@@ -81,7 +82,6 @@ export default {
                 },
             }),
             compilerOptions: {
-                // immutable: true, // this could be a great optimisation, but we need to plan for it a bit
                 // runes: true,
             },
             onwarn: (warning, handler) => {
@@ -305,9 +305,11 @@ export default {
         }),
         sourcemapNewline(),
         execute({
-            commands: [`../../scripts/get-public-key.sh ${process.env.OC_DFX_NETWORK} > ./public/public-key`],
+            commands: [
+                `../../scripts/get-public-key.sh ${process.env.OC_DFX_NETWORK} > ./public/public-key`,
+            ],
             hook: "buildStart",
-        })
+        }),
     ],
     watch: {
         clearScreen: false,

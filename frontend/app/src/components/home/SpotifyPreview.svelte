@@ -1,15 +1,18 @@
 <script lang="ts">
-    export let pinned: boolean;
-    export let fill: boolean;
-    export let matches: RegExpMatchArray;
+    interface Props {
+        pinned: boolean;
+        fill: boolean;
+        matches: RegExpMatchArray;
+    }
 
-    $: type = matches[1];
-    $: id = matches[2];
-    $: url = buildUrl(type, id);
+    let { pinned, fill, matches }: Props = $props();
 
     function buildUrl(type: string, id: string) {
         return `https://open.spotify.com/embed/${type}/${id}?utm_source=generator`;
     }
+    let type = $derived(matches[1]);
+    let id = $derived(matches[2]);
+    let url = $derived(buildUrl(type, id));
 </script>
 
 <div>

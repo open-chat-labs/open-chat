@@ -1,5 +1,3 @@
-<svelte:options immutable />
-
 <script lang="ts">
     import NonMessageEvent from "./NonMessageEvent.svelte";
     import type { Level, UserSummary } from "openchat-client";
@@ -12,34 +10,42 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let user: UserSummary | undefined;
-    export let changedBy: string;
-    export let changed: string[];
-    export let timestamp: bigint;
-    export let resourceKey: string;
-    export let level: Level;
+    interface Props {
+        user: UserSummary | undefined;
+        changedBy: string;
+        changed: string[];
+        timestamp: bigint;
+        resourceKey: string;
+        level: Level;
+    }
 
-    $: me = changedBy === user?.userId;
-    $: changedByStr = `**${buildDisplayName($userStore, changedBy, me)}**`;
-    $: members = client.getMembersString(
-        user!,
-        $userStore,
-        changed,
-        $_("unknownUser"),
-        $_("you"),
-        user ? client.compareIsNotYouThenUsername(user.userId) : client.compareUsername,
+    let { user, changedBy, changed, timestamp, resourceKey, level }: Props = $props();
+
+    let me = $derived(changedBy === user?.userId);
+    let changedByStr = $derived(`**${buildDisplayName($userStore, changedBy, me)}**`);
+    let members = $derived(
+        client.getMembersString(
+            user!,
+            $userStore,
+            changed,
+            $_("unknownUser"),
+            $_("you"),
+            user ? client.compareIsNotYouThenUsername(user.userId) : client.compareUsername,
+        ),
     );
 
-    $: text = interpolate(
-        $_,
-        i18nKey(
-            resourceKey,
-            {
-                changed: members,
-                changedBy: changedByStr,
-            },
-            level,
-            true,
+    let text = $derived(
+        interpolate(
+            $_,
+            i18nKey(
+                resourceKey,
+                {
+                    changed: members,
+                    changedBy: changedByStr,
+                },
+                level,
+                true,
+            ),
         ),
     );
 </script>

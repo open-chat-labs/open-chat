@@ -5,7 +5,8 @@ use crate::{
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::add_members_to_channel::{Response::*, *};
-use types::{AddedToChannelNotification, ChannelId, Notification, UserId, UserType};
+use oc_error_codes::OCErrorCode;
+use types::{AddedToChannelNotification, ChannelId, Notification, OCResult, UserId, UserType};
 
 #[update(msgpack = true)]
 #[trace]
@@ -14,7 +15,7 @@ fn add_members_to_channel(args: Args) -> Response {
 
     let prepare_result = match read_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
-        Err(response) => return response,
+        Err(response) => return Error(response),
     };
 
     mutate_state(|state| {
@@ -36,35 +37,35 @@ struct PrepareResult {
 }
 
 #[allow(clippy::result_large_err)]
-fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
+fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
     if state.data.is_frozen() {
-        return Err(CommunityFrozen);
+        return Err(OCErrorCode::CommunityFrozen.into());
     }
 
     if state.data.is_public.value {
-        return Err(CommunityPublic);
+        return Err(OCErrorCode::CommunityPublic.into());
     }
 
     let caller = state.env.caller();
 
     if let Some(member) = state.data.members.get(caller) {
         if member.suspended().value {
-            return Err(UserSuspended);
+            return Err(OCErrorCode::InitiatorSuspended.into());
         } else if member.lapsed().value {
-            return Err(UserLapsed);
+            return Err(OCErrorCode::InitiatorLapsed.into());
         }
 
         let user_id = member.user_id;
 
         if let Some(channel) = state.data.channels.get(&args.channel_id) {
             if let Some(limit) = channel.chat.members.user_limit_reached() {
-                Err(UserLimitReached(limit))
+                Err(OCErrorCode::UserLimitReached.with_message(limit))
             } else if let Some(channel_member) = channel.chat.members.get(&user_id) {
                 let permissions = &channel.chat.permissions;
                 if !channel_member.role().can_add_members(permissions) {
-                    return Err(NotAuthorized);
+                    return Err(OCErrorCode::InitiatorNotAuthorized.into());
                 } else if channel_member.lapsed().value {
-                    return Err(UserLapsed);
+                    return Err(OCErrorCode::InitiatorLapsed.into());
                 }
 
                 // Only add users who are already community members
@@ -81,13 +82,13 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                     member_display_name: member.display_name().value.clone(),
                 })
             } else {
-                Err(UserNotInChannel)
+                Err(OCErrorCode::InitiatorNotInChat.into())
             }
         } else {
-            Err(ChannelNotFound)
+            Err(OCErrorCode::ChatNotFound.into())
         }
     } else {
-        Err(UserNotInCommunity)
+        Err(OCErrorCode::InitiatorNotInCommunity.into())
     }
 }
 
@@ -112,7 +113,7 @@ fn commit(
     } = state.data.add_members_to_channel(&channel_id, users_to_add, added_by, now);
 
     let Some(channel_name) = channel_name else {
-        return ChannelNotFound;
+        return Error(OCErrorCode::ChatNotFound.into());
     };
 
     if users_added.is_empty() {

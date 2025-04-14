@@ -22,8 +22,8 @@ impl TimerJobItem for LocalGroupIndexEventBatch {
 
         match response {
             Ok(_) => Ok(()),
-            Err((code, msg)) => {
-                let retry = should_retry_failed_c2c_call(code, &msg);
+            Err(error) => {
+                let retry = should_retry_failed_c2c_call(error.reject_code(), error.message());
                 Err(retry)
             }
         }

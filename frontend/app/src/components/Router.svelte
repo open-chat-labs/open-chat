@@ -5,13 +5,10 @@
     import { type HomeType } from "./home/HomeRoute.svelte";
     import LandingPage from "./landingpages/LandingPage.svelte";
     import { type LandingPageType } from "./landingpages/LandingPage.svelte";
-    import NotFound from "./NotFoundWrapper.svelte";
-    import { type NotFoundType } from "./NotFoundWrapper.svelte";
+    import NotFound from "./NotFound.svelte";
+    import { type NotFoundType } from "./NotFound.svelte";
     import {
-        pathContextStore,
-        notFound,
         type RouteParams,
-        pathParams,
         communitesRoute,
         blogRoute,
         shareRoute,
@@ -20,9 +17,9 @@
         selectedCommunityRoute,
         selectedChannelRoute,
         chatListRoute,
-        routerReady,
         adminRoute,
     } from "../routes";
+    import { pathState } from "openchat-client";
 
     interface Props {
         showLandingPage: boolean;
@@ -34,9 +31,7 @@
 
     function parsePathParams(fn: (ctx: PageJS.Context) => RouteParams) {
         return (ctx: PageJS.Context, next: () => any) => {
-            notFound.set(false);
-            pathContextStore.set(ctx);
-            pathParams.set(fn(ctx));
+            pathState.setRouteParams(ctx, fn(ctx));
             scrollToTop();
             next();
         };
@@ -198,13 +193,13 @@
             "*",
             parsePathParams(() => ({ kind: "not_found_route" })),
             () => {
-                notFound.set(true);
+                pathState.notFound = true;
                 route = NotFound;
             },
         );
         page.start();
 
-        routerReady.set(true);
+        pathState.routerReady = true;
     });
 
     onDestroy(() => page.stop());

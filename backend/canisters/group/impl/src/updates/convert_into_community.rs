@@ -5,6 +5,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
 use group_canister::convert_into_community::{Response::*, *};
+use oc_error_codes::OCErrorCode;
 use rand::RngCore;
 use std::collections::HashMap;
 use types::{CanisterId, UserId};
@@ -25,7 +26,7 @@ async fn convert_into_community(args: Args) -> Response {
     };
 
     match user_index_canister_c2c_client::lookup_user(caller, user_index_canister_id).await {
-        Ok(user) if user.is_diamond_member => {}
+        Ok(Some(user)) if user.is_diamond_member => {}
         _ => return NotAuthorized,
     }
 
@@ -48,10 +49,17 @@ async fn convert_into_community(args: Args) -> Response {
                 channel_id: c2c_args.channel_id,
             })
         }
-        Ok(group_index_canister::c2c_convert_group_into_community::Response::InternalError(error)) => InternalError(error),
+        Ok(group_index_canister::c2c_convert_group_into_community::Response::Error(error)) => {
+            mutate_state(rollback);
+            Error(error)
+        }
+        Ok(group_index_canister::c2c_convert_group_into_community::Response::InternalError(error)) => {
+            mutate_state(rollback);
+            Error(OCErrorCode::Unknown.with_message(error))
+        }
         Err(error) => {
             mutate_state(rollback);
-            InternalError(format!("{error:?}"))
+            Error(OCErrorCode::C2CError.with_message(format!("{error:?}")))
         }
     }
 }

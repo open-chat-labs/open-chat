@@ -1,9 +1,8 @@
 <script lang="ts">
-    import { mobileWidth } from "../../stores/screenDimensions";
+    import { emptyUnreadCounts, ui, type ResourceKey } from "openchat-client";
     import Button from "../Button.svelte";
-    import UnreadCount from "./UnreadCount.svelte";
-    import { emptyUnreadCounts, type ResourceKey } from "openchat-client";
     import Translatable from "../Translatable.svelte";
+    import UnreadCount from "./UnreadCount.svelte";
 
     interface Props {
         selected?: boolean;
@@ -15,7 +14,12 @@
     let { selected = false, title, unread = emptyUnreadCounts(), onClick }: Props = $props();
 </script>
 
-<Button fill={$mobileWidth} hollow={!selected} small={!$mobileWidth} tiny={$mobileWidth} {onClick}>
+<Button
+    fill={ui.mobileWidth}
+    hollow={!selected}
+    small={!ui.mobileWidth}
+    tiny={ui.mobileWidth}
+    {onClick}>
     <h4 class="title">
         <Translatable resourceKey={title} />
     </h4>

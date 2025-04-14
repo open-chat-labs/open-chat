@@ -5,8 +5,7 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{
-    AddRemoveReactionArgs, AddRemoveReactionResult, DeleteMessageResult, DeleteUndeleteMessagesArgs, EditMessageArgs,
-    MessageContentInternal, Reader, TipMessageArgs, TipMessageResult,
+    AddRemoveReactionArgs, DeleteUndeleteMessagesArgs, EditMessageArgs, MessageContentInternal, Reader, TipMessageArgs,
 };
 use constants::{HOUR_IN_MS, MINUTE_IN_MS};
 use event_store_producer_cdk_runtime::CdkRuntime;
@@ -100,7 +99,7 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
         }
         UserCanisterEvent::JoinVideoCall(c) => {
             if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
-                chat.events.set_video_call_presence(
+                let _ = chat.events.set_video_call_presence(
                     caller_user_id,
                     c.message_id,
                     VideoCallPresence::Default,
@@ -198,7 +197,7 @@ fn edit_message(args: user_canister::EditMessageArgs, caller_user_id: UserId, st
         let now = state.env.now();
         let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
 
-        chat.events.edit_message::<CdkRuntime>(
+        let _ = chat.events.edit_message::<CdkRuntime>(
             EditMessageArgs {
                 sender: caller_user_id,
                 min_visible_event_index: EventIndex::default(),
@@ -231,7 +230,7 @@ fn delete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_user_
 
         let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
         for (message_id, result) in delete_message_results {
-            if matches!(result, DeleteMessageResult::Success(_)) {
+            if result.is_ok() {
                 state.data.timer_jobs.enqueue_job(
                     TimerJob::HardDeleteMessageContent(Box::new(HardDeleteMessageContentJob {
                         chat_id,
@@ -281,10 +280,7 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
         };
 
         if args.added {
-            if matches!(
-                chat.events.add_reaction::<CdkRuntime>(add_remove_reaction_args, None),
-                AddRemoveReactionResult::Success(_)
-            ) {
+            if chat.events.add_reaction::<CdkRuntime>(add_remove_reaction_args, None).is_ok() {
                 if let Some(message_event) = chat
                     .events
                     .main_events_reader()
@@ -323,7 +319,7 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
                 state.award_achievement_and_notify(Achievement::HadMessageReactedTo, now);
             }
         } else {
-            chat.events.remove_reaction(add_remove_reaction_args);
+            let _ = chat.events.remove_reaction(add_remove_reaction_args);
         }
     }
 }
@@ -380,11 +376,11 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
             now,
         };
 
-        if matches!(
-            chat.events
-                .tip_message::<CdkRuntime>(tip_message_args, EventIndex::default(), None),
-            TipMessageResult::Success
-        ) {
+        if chat
+            .events
+            .tip_message::<CdkRuntime>(tip_message_args, EventIndex::default(), None)
+            .is_ok()
+        {
             if let Some(message_event) = chat
                 .events
                 .main_events_reader()

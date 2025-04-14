@@ -32,6 +32,7 @@ export function updatesResponse(
                 mapOptional(value.Success.token_details, (tokens) =>
                     tokens.map((t) => tokenDetails(t, blobUrlPattern, registryCanisterId)),
                 ) ?? [],
+            tokensUninstalled: value.Success.tokens_uninstalled?.map(principalBytesToString) ?? [],
             nervousSystemSummary: value.Success.nervous_system_details.map(nervousSystemSummary),
             swapProviders: mapOptional(value.Success.swap_providers, (r) => r.map(swapProvider)),
             messageFiltersAdded: value.Success.message_filters_added,

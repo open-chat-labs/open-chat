@@ -7,17 +7,28 @@
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
 
-    export let adoptPercent: number;
-    export let rejectPercent: number;
-    export let votingEnded: boolean;
-    export let deadline: number;
-    export let minYesPercentageOfTotal: number;
-    export let minYesPercentageOfExercised: number;
+    interface Props {
+        adoptPercent: number;
+        rejectPercent: number;
+        votingEnded: boolean;
+        deadline: number;
+        minYesPercentageOfTotal: number;
+        minYesPercentageOfExercised: number;
+    }
+
+    let {
+        adoptPercent,
+        rejectPercent,
+        votingEnded,
+        deadline,
+        minYesPercentageOfTotal,
+        minYesPercentageOfExercised,
+    }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
-    $: deadlineDate = new Date(Number(deadline));
-    $: rtl = $rtlStore ? "right" : "left";
+    let deadlineDate = $derived(new Date(Number(deadline)));
+    let rtl = $derived($rtlStore ? "right" : "left");
 </script>
 
 <div class="wrapper">
@@ -30,10 +41,10 @@
         </svg>
     </div>
     <div class="progress">
-        <div class="adopt" style="width: {adoptPercent}%" />
-        <div class="reject" style="width: {rejectPercent}%" />
-        <div class="vertical-line" style="{rtl}: {minYesPercentageOfTotal}%" />
-        <div class="vertical-line" style="{rtl}: {minYesPercentageOfExercised}%" />
+        <div class="adopt" style="width: {adoptPercent}%"></div>
+        <div class="reject" style="width: {rejectPercent}%"></div>
+        <div class="vertical-line" style="{rtl}: {minYesPercentageOfTotal}%"></div>
+        <div class="vertical-line" style="{rtl}: {minYesPercentageOfExercised}%"></div>
     </div>
 
     <div class="remaining">

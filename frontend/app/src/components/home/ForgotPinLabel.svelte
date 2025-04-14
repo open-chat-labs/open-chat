@@ -1,19 +1,17 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
 
-    const dispatch = createEventDispatcher();
-
-    function forgotPin() {
-        dispatch("forgot");
+    interface Props {
+        onForgot: () => void;
     }
+    let { onForgot }: Props = $props();
 </script>
 
 <div class="forgot">
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <!-- svelte-ignore a11y-missing-attribute -->
-    <a role="button" tabindex="0" on:click={forgotPin}>
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_missing_attribute -->
+    <a role="button" tabindex="0" onclick={onForgot}>
         <Translatable resourceKey={i18nKey("pinNumber.forgotLabel")} />
     </a>
 </div>

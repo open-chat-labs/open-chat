@@ -1,47 +1,48 @@
 <script lang="ts">
-    import CancelIcon from "svelte-material-icons/Cancel.svelte";
-    import TickIcon from "svelte-material-icons/Check.svelte";
-    import MenuIcon from "../../MenuIconLegacy.svelte";
-    import HoverIcon from "../../HoverIcon.svelte";
-    import BellOff from "svelte-material-icons/BellOff.svelte";
-    import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
-    import Contain from "svelte-material-icons/Contain.svelte";
+    import type { CommunitySummary, OpenChat } from "openchat-client";
+    import { chatSummariesListStore, platformModerator, publish, ui } from "openchat-client";
+    import { getContext } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
-    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
-    import LocationExit from "svelte-material-icons/LocationExit.svelte";
-    import FileDocument from "svelte-material-icons/FileDocument.svelte";
-    import PlaylistPlus from "svelte-material-icons/PlaylistPlus.svelte";
+    import BellOff from "svelte-material-icons/BellOff.svelte";
+    import CancelIcon from "svelte-material-icons/Cancel.svelte";
+    import TickIcon from "svelte-material-icons/Check.svelte";
+    import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
+    import Contain from "svelte-material-icons/Contain.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import Kebab from "svelte-material-icons/DotsVertical.svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItemLegacy.svelte";
-    import type { CommunitySummary, OpenChat } from "openchat-client";
-    import { chatSummariesListStore, platformModerator } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
-    import { rightPanelHistory } from "../../../stores/rightPanel";
+    import FileDocument from "svelte-material-icons/FileDocument.svelte";
+    import LocationExit from "svelte-material-icons/LocationExit.svelte";
+    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
+    import PlaylistPlus from "svelte-material-icons/PlaylistPlus.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
-    import { notificationsSupported } from "../../../utils/notifications";
     import { toastStore } from "../../../stores/toast";
-    import { publish } from "@src/utils/pubsub";
+    import { notificationsSupported } from "../../../utils/notifications";
+    import HoverIcon from "../../HoverIcon.svelte";
+    import Menu from "../../Menu.svelte";
+    import MenuIcon from "../../MenuIcon.svelte";
+    import MenuItem from "../../MenuItem.svelte";
+    import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    export let community: CommunitySummary;
-    export let canMarkAllRead: boolean;
+    interface Props {
+        community: CommunitySummary;
+        canMarkAllRead: boolean;
+    }
 
-    const dispatch = createEventDispatcher();
+    let { community, canMarkAllRead }: Props = $props();
 
-    $: member = community.membership.role !== "none";
-    $: frozen = client.isCommunityFrozen(community.id);
-    $: canLeave = member;
-    $: canDelete = member && !frozen && client.canDeleteCommunity(community.id);
-    $: canEdit = member && !frozen && client.canEditCommunity(community.id);
-    $: canInvite = member && !frozen && client.canInviteUsers(community.id);
-    $: canCreateChannel = member && !frozen && client.canCreateChannel(community.id);
-    $: isCommunityMuted = $chatSummariesListStore.every((c) => c.membership.notificationsMuted);
+    let member = $derived(community.membership.role !== "none");
+    let frozen = $derived(client.isCommunityFrozen(community.id));
+    let canLeave = $derived(member);
+    let canDelete = $derived(member && !frozen && client.canDeleteCommunity(community.id));
+    let canEdit = $derived(member && !frozen && client.canEditCommunity(community.id));
+    let canInvite = $derived(member && !frozen && client.canInviteUsers(community.id));
+    let canCreateChannel = $derived(member && !frozen && client.canCreateChannel(community.id));
+    let isCommunityMuted = $derived(
+        $chatSummariesListStore.every((c) => c.membership.notificationsMuted),
+    );
 
     function leaveCommunity() {
         publish("leaveCommunity", {
@@ -66,7 +67,7 @@
     }
 
     function markAllRead() {
-        dispatch("markAllRead");
+        client.markAllReadForCurrentScope();
     }
 
     function newChannel() {
@@ -78,11 +79,13 @@
     }
 
     function showMembers() {
-        rightPanelHistory.set([{ kind: "show_community_members" }]);
+        ui.rightPanelHistory = [{ kind: "show_community_members" }];
     }
 
     function invite() {
-        canInvite && rightPanelHistory.set([{ kind: "invite_community_users" }]);
+        if (canInvite) {
+            ui.rightPanelHistory = [{ kind: "invite_community_users" }];
+        }
     }
 
     function editCommunity() {
@@ -115,108 +118,149 @@
 </script>
 
 <MenuIcon position="bottom" align="end">
-    <span slot="icon">
+    {#snippet menuIcon()}
         <HoverIcon>
-            <Kebab size={$iconSize} color={"var(--icon-txt)"} />
+            <Kebab size={ui.iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
-    </span>
-    <span slot="menu">
+    {/snippet}
+    {#snippet menuItems()}
         <Menu>
             <MenuItem onclick={communityDetails}>
-                <FileDocument size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                <div slot="text"><Translatable resourceKey={i18nKey("communities.details")} /></div>
+                {#snippet icon()}
+                    <FileDocument size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                {/snippet}
+                {#snippet text()}
+                    <div><Translatable resourceKey={i18nKey("communities.details")} /></div>
+                {/snippet}
             </MenuItem>
             <MenuItem onclick={showMembers}>
-                <AccountMultiple size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                <div slot="text"><Translatable resourceKey={i18nKey("communities.members")} /></div>
+                {#snippet icon()}
+                    <AccountMultiple size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                {/snippet}
+                {#snippet text()}
+                    <div><Translatable resourceKey={i18nKey("communities.members")} /></div>
+                {/snippet}
             </MenuItem>
             {#if canInvite}
                 <MenuItem onclick={invite}>
-                    <AccountMultiplePlus
-                        size={$iconSize}
-                        color={"var(--icon-inverted-txt)"}
-                        slot="icon" />
-                    <div slot="text">
-                        <Translatable resourceKey={i18nKey("communities.invite")} />
-                    </div>
+                    {#snippet icon()}
+                        <AccountMultiplePlus
+                            size={ui.iconSize}
+                            color={"var(--icon-inverted-txt)"} />
+                    {/snippet}
+                    {#snippet text()}
+                        <div>
+                            <Translatable resourceKey={i18nKey("communities.invite")} />
+                        </div>
+                    {/snippet}
                 </MenuItem>
             {/if}
             {#if canEdit}
                 <MenuItem onclick={editCommunity}>
-                    <PencilOutline
-                        size={$iconSize}
-                        color={"var(--icon-inverted-txt)"}
-                        slot="icon" />
-                    <div slot="text">
-                        <Translatable resourceKey={i18nKey("communities.edit")} />
-                    </div>
+                    {#snippet icon()}
+                        <PencilOutline size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                    {/snippet}
+                    {#snippet text()}
+                        <div>
+                            <Translatable resourceKey={i18nKey("communities.edit")} />
+                        </div>
+                    {/snippet}
                 </MenuItem>
             {/if}
             {#if canCreateChannel}
                 <MenuItem onclick={newChannel}>
-                    <PlaylistPlus size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                    <span slot="text"
-                        ><Translatable resourceKey={i18nKey("communities.createChannel")} /></span>
+                    {#snippet icon()}
+                        <PlaylistPlus size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                    {/snippet}
+                    {#snippet text()}
+                        <span
+                            ><Translatable
+                                resourceKey={i18nKey("communities.createChannel")} /></span>
+                    {/snippet}
                 </MenuItem>
             {/if}
             {#if canCreateChannel}
                 <MenuItem onclick={embedContent}>
-                    <Contain size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                    <span slot="text"
-                        ><Translatable resourceKey={i18nKey("communities.embed")} /></span>
+                    {#snippet icon()}
+                        <Contain size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                    {/snippet}
+                    {#snippet text()}
+                        <span><Translatable resourceKey={i18nKey("communities.embed")} /></span>
+                    {/snippet}
                 </MenuItem>
             {/if}
             <MenuItem disabled={!canMarkAllRead} onclick={markAllRead}>
-                <CheckboxMultipleMarked
-                    size={$iconSize}
-                    color={"var(--icon-inverted-txt)"}
-                    slot="icon" />
-                <span slot="text"><Translatable resourceKey={i18nKey("markAllRead")} /></span>
+                {#snippet icon()}
+                    <CheckboxMultipleMarked size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                {/snippet}
+                {#snippet text()}
+                    <span><Translatable resourceKey={i18nKey("markAllRead")} /></span>
+                {/snippet}
             </MenuItem>
             {#if notificationsSupported && !isCommunityMuted}
                 <MenuItem onclick={muteAllChannels}>
-                    <BellOff size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                    <span slot="text"
-                        ><Translatable
-                            resourceKey={i18nKey("communities.muteAllChannels")} /></span>
+                    {#snippet icon()}
+                        <BellOff size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                    {/snippet}
+                    {#snippet text()}
+                        <span
+                            ><Translatable
+                                resourceKey={i18nKey("communities.muteAllChannels")} /></span>
+                    {/snippet}
                 </MenuItem>
             {/if}
             {#if member}
                 <MenuItem separator />
                 {#if canDelete}
                     <MenuItem warning onclick={deleteCommunity}>
-                        <DeleteOutline size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
-                        <div slot="text">
-                            <Translatable resourceKey={i18nKey("communities.delete")} />
-                        </div>
+                        {#snippet icon()}
+                            <DeleteOutline size={ui.iconSize} color={"var(--menu-warn)"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <div>
+                                <Translatable resourceKey={i18nKey("communities.delete")} />
+                            </div>
+                        {/snippet}
                     </MenuItem>
                 {/if}
                 {#if canLeave}
                     <MenuItem warning onclick={leaveCommunity}>
-                        <LocationExit size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
-                        <div slot="text">
-                            <Translatable resourceKey={i18nKey("communities.leave")} />
-                        </div>
+                        {#snippet icon()}
+                            <LocationExit size={ui.iconSize} color={"var(--menu-warn)"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <div>
+                                <Translatable resourceKey={i18nKey("communities.leave")} />
+                            </div>
+                        {/snippet}
                     </MenuItem>
                 {/if}
             {/if}
             {#if $platformModerator}
                 {#if client.isCommunityFrozen(community.id)}
                     <MenuItem warning onclick={unfreezeCommunity}>
-                        <TickIcon size={$iconSize} color={"var(--menu-warn"} slot="icon" />
-                        <div slot="text">
-                            <Translatable resourceKey={i18nKey("unfreezeCommunity")} />
-                        </div>
+                        {#snippet icon()}
+                            <TickIcon size={ui.iconSize} color={"var(--menu-warn"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <div>
+                                <Translatable resourceKey={i18nKey("unfreezeCommunity")} />
+                            </div>
+                        {/snippet}
                     </MenuItem>
                 {:else}
                     <MenuItem warning onclick={freezeCommunity}>
-                        <CancelIcon size={$iconSize} color={"var(--menu-warn"} slot="icon" />
-                        <div slot="text">
-                            <Translatable resourceKey={i18nKey("freezeCommunity")} />
-                        </div>
+                        {#snippet icon()}
+                            <CancelIcon size={ui.iconSize} color={"var(--menu-warn"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <div>
+                                <Translatable resourceKey={i18nKey("freezeCommunity")} />
+                            </div>
+                        {/snippet}
                     </MenuItem>
                 {/if}
             {/if}
         </Menu>
-    </span>
+    {/snippet}
 </MenuIcon>

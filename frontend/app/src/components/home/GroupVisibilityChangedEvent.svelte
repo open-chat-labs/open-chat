@@ -1,5 +1,3 @@
-<svelte:options immutable />
-
 <script lang="ts">
     import NonMessageEvent from "./NonMessageEvent.svelte";
     import type { Level, UserSummary } from "openchat-client";
@@ -8,25 +6,32 @@
     import { buildDisplayName } from "../../utils/user";
     import { i18nKey, interpolate } from "../../i18n/i18n";
 
-    export let user: UserSummary | undefined;
-    export let isPublic: boolean | undefined;
-    export let messagesVisibleToNonMembers: boolean | undefined;
-    export let changedBy: string;
-    export let timestamp: bigint;
-    export let level: Level;
+    interface Props {
+        user: UserSummary | undefined;
+        isPublic: boolean | undefined;
+        messagesVisibleToNonMembers: boolean | undefined;
+        changedBy: string;
+        timestamp: bigint;
+        level: Level;
+    }
 
-    $: showEvent = messagesVisibleToNonMembers !== undefined || isPublic !== undefined;
-    $: me = changedBy === user?.userId;
-    $: changedByStr = buildDisplayName($userStore, changedBy, me);
-    $: text = interpolate(
-        $_,
-        i18nKey(
-            "groupVisibilityChangedBy",
-            {
-                changedBy: changedByStr,
-            },
-            level,
-            true,
+    let { user, isPublic, messagesVisibleToNonMembers, changedBy, timestamp, level }: Props =
+        $props();
+
+    let showEvent = $derived(messagesVisibleToNonMembers !== undefined || isPublic !== undefined);
+    let me = $derived(changedBy === user?.userId);
+    let changedByStr = $derived(buildDisplayName($userStore, changedBy, me));
+    let text = $derived(
+        interpolate(
+            $_,
+            i18nKey(
+                "groupVisibilityChangedBy",
+                {
+                    changedBy: changedByStr,
+                },
+                level,
+                true,
+            ),
         ),
     );
 </script>
