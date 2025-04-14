@@ -1,6 +1,17 @@
 import { SvelteMap, SvelteSet } from "svelte/reactivity";
 import { scheduleUndo, type UndoLocalUpdate } from "./undo";
 
+export interface IReadonlyMap<K, V> {
+    get(key: K): V | undefined;
+    has(key: K): boolean;
+    get size(): number;
+    [Symbol.iterator](): Iterator<[K, V]>;
+    entries(): IterableIterator<[K, V]>;
+    keys(): IterableIterator<K>;
+    values(): IterableIterator<V>;
+    forEach(callback: (value: V, key: K, map: IReadonlyMap<K, V>) => void): void;
+}
+
 export class ReadonlyMap<K, V> implements Iterable<[K, V]> {
     #map: Map<K, V>;
 

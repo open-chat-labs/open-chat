@@ -29,7 +29,6 @@
         OpenChat,
         type UpdateMarketMakerConfigArgs,
         anonUser,
-        app,
         botState,
         chatListScopeStore as chatListScope,
         identityState,
@@ -38,7 +37,6 @@
         pathState,
         routeForChatIdentifier,
         routeForScope,
-        selectedCommunity,
         subscribe,
         ui,
     } from "openchat-client";
@@ -144,12 +142,6 @@
     });
 
     trackedEffect("calculate-height", calculateHeight);
-
-    $inspect(app.selectedCommunityId);
-
-    $effect(() => {
-        console.log("FX: ", $selectedCommunity?.id);
-    });
 
     onMount(() => {
         const unsubs = [

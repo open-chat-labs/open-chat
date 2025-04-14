@@ -37,56 +37,56 @@
     onMount(() => {
         page(
             "/home",
-            parsePathParams(() => ({ kind: "home_landing_route" })),
+            parsePathParams(() => ({ kind: "home_landing_route", scope: { kind: "none" } })),
             track,
             () => (route = LandingPage),
         );
         page(
             "/features",
-            parsePathParams(() => ({ kind: "features_route" })),
+            parsePathParams(() => ({ kind: "features_route", scope: { kind: "none" } })),
             track,
             () => (route = LandingPage),
         );
         page(
             "/roadmap",
-            parsePathParams(() => ({ kind: "roadmap_route" })),
+            parsePathParams(() => ({ kind: "roadmap_route", scope: { kind: "none" } })),
             track,
             () => (route = LandingPage),
         );
         page("/blog/:slug?", parsePathParams(blogRoute), track, () => (route = LandingPage));
         page(
             "/whitepaper",
-            parsePathParams(() => ({ kind: "whitepaper_route" })),
+            parsePathParams(() => ({ kind: "whitepaper_route", scope: { kind: "none" } })),
             track,
             () => (route = LandingPage),
         );
         page(
             "/guidelines",
-            parsePathParams(() => ({ kind: "guidelines_route" })),
+            parsePathParams(() => ({ kind: "guidelines_route", scope: { kind: "none" } })),
             track,
             () => (route = LandingPage),
         );
         page(
             "/terms",
-            parsePathParams(() => ({ kind: "terms_route" })),
+            parsePathParams(() => ({ kind: "terms_route", scope: { kind: "none" } })),
             track,
             () => (route = LandingPage),
         );
         page(
             "/faq",
-            parsePathParams(() => ({ kind: "faq_route" })),
+            parsePathParams(() => ({ kind: "faq_route", scope: { kind: "none" } })),
             track,
             () => (route = LandingPage),
         );
         page(
             "/diamond",
-            parsePathParams(() => ({ kind: "diamond_route" })),
+            parsePathParams(() => ({ kind: "diamond_route", scope: { kind: "none" } })),
             track,
             () => (route = LandingPage),
         );
         page(
             "/architecture",
-            parsePathParams(() => ({ kind: "architecture_route" })),
+            parsePathParams(() => ({ kind: "architecture_route", scope: { kind: "none" } })),
             track,
             () => (route = LandingPage),
         );
@@ -188,7 +188,7 @@
         );
         page(
             "*",
-            parsePathParams(() => ({ kind: "not_found_route" })),
+            parsePathParams(() => ({ kind: "not_found_route", scope: { kind: "none" } })),
             () => {
                 pathState.notFound = true;
                 route = NotFound;

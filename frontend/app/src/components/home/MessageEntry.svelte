@@ -17,6 +17,7 @@
     } from "openchat-client";
     import {
         anonUser,
+        app,
         botState,
         chatIdentifiersEqual,
         currentUser,
@@ -27,7 +28,6 @@
         selectedCommunity,
         throttleDeadline,
         ui,
-        currentCommunityUserGroups as userGroups,
         userStore,
     } from "openchat-client";
     import { getContext, tick } from "svelte";
@@ -318,7 +318,7 @@
 
     function formatUserGroupMentions(text: string): string {
         return text.replace(/@UserGroup\(([\d\w-]+)\)/g, (match, p1) => {
-            const u = $userGroups.get(Number(p1));
+            const u = app.selectedCommunityDetails.userGroups.get(Number(p1));
             if (u !== undefined) {
                 return `@${u.name}`;
             }

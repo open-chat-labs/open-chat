@@ -25,7 +25,6 @@ export function configureEffects(client: OpenChat) {
                 // make double sure we are only reacting to the things we want to react to
                 untrack(() => {
                     client.setSelectedCommunity(id, true).then((found) => {
-                        console.log("community found: ", found);
                         if (found) {
                             client.selectFirstChat();
                         }

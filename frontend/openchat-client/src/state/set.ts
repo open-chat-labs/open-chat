@@ -1,11 +1,21 @@
 import { SvelteSet } from "svelte/reactivity";
 import { scheduleUndo, type UndoLocalUpdate } from "./undo";
 
+export interface IReadonlySet<T> {
+    has(item: T): boolean;
+    get size(): number;
+    [Symbol.iterator](): Iterator<T>;
+    values(): IterableIterator<T>;
+    keys(): IterableIterator<T>;
+    entries(): IterableIterator<[T, T]>;
+    forEach(callback: (value: T, value2: T, set: IReadonlySet<T>) => void): void;
+}
+
 /**
  * This is used for the ultimate result of merging server & local state since we want the set itself to be readonly
  * to prevent accidental mutation rather than just the property being readonly.
  */
-export class ReadonlySet<T> implements Iterable<T> {
+export class ReadonlySet<T> implements IReadonlySet<T> {
     #set: Set<T>;
     constructor(s: Set<T>) {
         this.#set = s;

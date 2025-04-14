@@ -60,13 +60,7 @@ import {
     threadsFollowedByMeStore,
     uninitializedDirectChats,
 } from "./stores/chat";
-import {
-    communities,
-    communityPreviewsStore,
-    currentCommunityBots,
-    currentCommunityRules,
-    selectedCommunity,
-} from "./stores/community";
+import { communities, communityPreviewsStore, selectedCommunity } from "./stores/community";
 import { walletConfigStore } from "./stores/crypto";
 import { diamondStatus, isDiamond, isLifetimeDiamond } from "./stores/diamond";
 import { type DraftMessages, draftMessagesStore } from "./stores/draftMessages";
@@ -130,7 +124,6 @@ export class LiveState {
     allChats!: ChatMap<ChatSummary>;
     selectedCommunity!: CommunitySummary | undefined;
     draftMessages!: DraftMessages;
-    currentCommunityRules!: VersionedRules | undefined;
     user!: CreatedUser;
     anonUser!: boolean;
     suspendedUser!: boolean;
@@ -143,13 +136,11 @@ export class LiveState {
     walletConfig!: WalletConfig;
     installedDirectBots!: Map<string, ExternalBotPermissions>;
     currentChatBots!: Map<string, ExternalBotPermissions>;
-    currentCommunityBots!: Map<string, ExternalBotPermissions>;
     serverStreakInsurance!: StreakInsurance;
 
     constructor() {
         serverStreakInsuranceStore.subscribe((state) => (this.serverStreakInsurance = state));
         currentChatBots.subscribe((state) => (this.currentChatBots = state));
-        currentCommunityBots.subscribe((state) => (this.currentCommunityBots = state));
         installedDirectBots.subscribe((state) => (this.installedDirectBots = state));
         chitStateStore.subscribe((state) => (this.chitState = state));
         offlineStore.subscribe((offline) => (this.offlineStore = offline));
@@ -202,7 +193,6 @@ export class LiveState {
         allChats.subscribe((data) => (this.allChats = data));
         selectedCommunity.subscribe((data) => (this.selectedCommunity = data));
         draftMessagesStore.subscribe((data) => (this.draftMessages = data));
-        currentCommunityRules.subscribe((data) => (this.currentCommunityRules = data));
         locale.subscribe((data) => (this.locale = data ?? "en"));
         pinNumberRequiredStore.subscribe((data) => (this.pinNumberRequired = data));
         capturePinNumberStore.subscribe((data) => (this.capturePinNumber = data));

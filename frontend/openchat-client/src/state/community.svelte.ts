@@ -8,20 +8,30 @@ import {
     type VersionedRules,
 } from "openchat-shared";
 import { SvelteMap } from "svelte/reactivity";
-import { LocalMap } from "./map";
+import { LocalMap, ReadonlyMap } from "./map";
 import { LocalSet, ReadonlySet } from "./set";
-import type { UndoLocalUpdate } from "./undo";
+import { scheduleUndo, type UndoLocalUpdate } from "./undo";
 
 export class CommunityLocalState {
+    #rules = $state<VersionedRules | undefined>();
+
     readonly invitedUsers = new LocalSet<string>();
     readonly blockedUsers = new LocalSet<string>();
     readonly referrals = new LocalSet<string>();
     readonly lapsedMembers = new LocalSet<string>();
     readonly members = new LocalMap<string, Member>();
+    readonly userGroups = new LocalMap<number, UserGroupDetails>();
+    readonly bots = new LocalMap<string, ExternalBotPermissions>();
+    readonly apiKeys = new LocalMap<string, PublicApiKeyDetails>();
+
+    get rules() {
+        return this.#rules;
+    }
+    set rules(val: VersionedRules | undefined) {
+        this.#rules = val;
+    }
 }
 
-// Manager - urgh
-// todo - this still needs to deal with pruning
 export class CommunityLocalStateManager {
     #data = new SvelteMap<string, CommunityLocalState>();
 
@@ -39,7 +49,7 @@ export class CommunityLocalStateManager {
     }
 
     updateMember(id: CommunityIdentifier, userId: string, member: Member) {
-        this.#getOrCreate(id).members.addOrUpdate(userId, member);
+        return this.#getOrCreate(id).members.addOrUpdate(userId, member);
     }
 
     blockUser(id: CommunityIdentifier, userId: string): UndoLocalUpdate {
@@ -48,6 +58,59 @@ export class CommunityLocalStateManager {
 
     unblockUser(id: CommunityIdentifier, userId: string): UndoLocalUpdate {
         return this.#getOrCreate(id).blockedUsers.remove(userId);
+    }
+
+    removeMember(id: CommunityIdentifier, userId: string): UndoLocalUpdate {
+        return this.#getOrCreate(id).members.remove(userId);
+    }
+
+    inviteUsers(id: CommunityIdentifier, userIds: string[]): UndoLocalUpdate {
+        const invited = this.#getOrCreate(id).invitedUsers;
+        const undos = userIds.map((u) => invited.add(u));
+        return () => {
+            undos.forEach((u) => {
+                u();
+            });
+        };
+    }
+
+    uninviteUsers(id: CommunityIdentifier, userIds: string[]): UndoLocalUpdate {
+        const invited = this.#getOrCreate(id).invitedUsers;
+        const undos = userIds.map((u) => invited.remove(u));
+        return () => {
+            undos.forEach((u) => {
+                u();
+            });
+        };
+    }
+
+    updateRules(id: CommunityIdentifier, rules: VersionedRules): UndoLocalUpdate {
+        const state = this.#getOrCreate(id);
+        const previous = state.rules;
+        state.rules = rules;
+        return scheduleUndo(() => {
+            state.rules = previous;
+        });
+    }
+
+    deleteUserGroup(id: CommunityIdentifier, userGroupId: number): UndoLocalUpdate {
+        return this.#getOrCreate(id).userGroups.remove(userGroupId);
+    }
+
+    addOrUpdateUserGroup(id: CommunityIdentifier, userGroup: UserGroupDetails): UndoLocalUpdate {
+        return this.#getOrCreate(id).userGroups.addOrUpdate(userGroup.id, userGroup);
+    }
+
+    removeBot(id: CommunityIdentifier, botId: string): UndoLocalUpdate {
+        return this.#getOrCreate(id).bots.remove(botId);
+    }
+
+    installBot(
+        id: CommunityIdentifier,
+        botId: string,
+        perm: ExternalBotPermissions,
+    ): UndoLocalUpdate {
+        return this.#getOrCreate(id).bots.addOrUpdate(botId, perm);
     }
 }
 
@@ -85,27 +148,31 @@ export class CommunityServerState {
     }
 }
 
+const empty = CommunityServerState.empty();
+
 export class CommunityMergedState {
-    #userGroups;
-    #members;
-    #bots;
-    #apiKeys;
-    #rules;
-    #blockedUsers = $derived.by<ReadonlySet<string>>(() =>
-        this.#mergeSet(this.server.blockedUsers, this.#local?.blockedUsers),
-    );
-    #lapsedMembers = $derived<ReadonlySet<string>>(
+    #server: CommunityServerState | undefined;
+    #userGroups = $derived(this.#mergeMap(this.server.userGroups, this.#local?.userGroups));
+    #members = $derived(this.#mergeMap(this.server.members, this.#local?.members));
+    #bots = $derived(this.#mergeMap(this.server.bots, this.#local?.bots));
+    #apiKeys = $derived(this.#mergeMap(this.server.apiKeys, this.#local?.apiKeys));
+    #blockedUsers = $derived.by(() => {
+        console.log("Deriving blocked users");
+        return this.#mergeSet(this.server.blockedUsers, this.#local?.blockedUsers);
+    });
+    #lapsedMembers = $derived(
         this.#mergeSet(this.server.lapsedMembers, this.#local?.lapsedMembers),
     );
-    #invitedUsers = $derived<ReadonlySet<string>>(
-        this.#mergeSet(this.server.invitedUsers, this.#local?.invitedUsers),
-    );
-    #referrals = $derived<ReadonlySet<string>>(
-        this.#mergeSet(this.server.referrals, this.#local?.referrals),
-    );
+    #invitedUsers = $derived(this.#mergeSet(this.server.invitedUsers, this.#local?.invitedUsers));
+    #referrals = $derived(this.#mergeSet(this.server.referrals, this.#local?.referrals));
+    #rules = $derived(this.#local?.rules ?? this.server.rules);
 
     #mergeSet<T>(server: Set<T>, local?: LocalSet<T>): ReadonlySet<T> {
         return new ReadonlySet(local ? local.apply(server) : server);
+    }
+
+    #mergeMap<K, V>(server: Map<K, V>, local?: LocalMap<K, V>): ReadonlyMap<K, V> {
+        return new ReadonlyMap(local ? local.apply(server) : server);
     }
 
     get #local() {
@@ -115,12 +182,12 @@ export class CommunityMergedState {
         }
     }
 
-    constructor(private server: CommunityServerState) {
-        this.#userGroups = this.server.userGroups;
-        this.#members = this.server.members;
-        this.#bots = this.server.bots;
-        this.#apiKeys = this.server.apiKeys;
-        this.#rules = this.server.rules;
+    private get server() {
+        return this.#server ?? empty;
+    }
+
+    constructor(server: CommunityServerState) {
+        this.#server = server;
     }
 
     get userGroups() {

@@ -22,11 +22,6 @@
         currentChatLapsedMembers,
         currentChatMembers,
         currentChatPinnedMessages,
-        currentCommunityApiKeys,
-        currentCommunityBlockedUsers as currentCommunityBlocked,
-        currentCommunityBots,
-        currentCommunityInvitedUsers as currentCommunityInvited,
-        currentCommunityLapsedMembers as currentCommunityLapsed,
         currentUser,
         eventsStore,
         pageReplace,
@@ -461,13 +456,13 @@
             <Members
                 {closeIcon}
                 collection={$selectedCommunity}
-                invited={$currentCommunityInvited}
+                invited={app.selectedCommunityDetails.invitedUsers}
                 members={[...app.selectedCommunityDetails.members.values()]}
-                blocked={$currentCommunityBlocked}
-                lapsed={$currentCommunityLapsed}
+                blocked={app.selectedCommunityDetails.blockedUsers}
+                lapsed={app.selectedCommunityDetails.lapsedMembers}
                 initialUsergroup={ui.lastRightPanelState.userGroupId}
-                installedBots={$currentCommunityBots}
-                apiKeys={$currentCommunityApiKeys}
+                installedBots={app.selectedCommunityDetails.bots}
+                apiKeys={app.selectedCommunityDetails.apiKeys}
                 onClose={ui.popRightPanelHistory}
                 onBlockUser={onBlockCommunityUser}
                 onUnblockUser={onUnblockCommunityUser}

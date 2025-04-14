@@ -1,63 +1,64 @@
 /* eslint-disable no-case-declarations */
+import DRange from "drange";
 import type {
     ChatEvent,
+    ChatIdentifier,
+    ChatListScope,
     ChatSpecificState,
     ChatSummary,
+    DirectChatIdentifier,
     DirectChatSummary,
     EventWrapper,
-    ThreadSyncDetails,
-    ChatIdentifier,
-    DirectChatIdentifier,
-    MultiUserChat,
-    ChatListScope,
     ExpiredEventsRange,
-    MessageContext,
     ExternalBotPermissions,
+    MessageContext,
+    MultiUserChat,
+    ThreadSyncDetails,
 } from "openchat-shared";
 import {
+    chatIdentifiersEqual,
+    ChatMap,
     compareChats,
     emptyChatMetrics,
     emptyRules,
-    ChatMap,
-    nullMembership,
-    chatIdentifiersEqual,
     messageContextsEqual,
+    nullMembership,
 } from "openchat-shared";
-import { unconfirmed } from "./unconfirmed";
 import { derived, get, type Readable, writable, type Writable } from "svelte/store";
-import { immutableStore } from "./immutable";
+import type { OpenChat } from "../openchat";
+import { app } from "../state/app.svelte";
 import {
     getNextEventAndMessageIndexes,
     isPreviewing,
-    mergeEventsAndLocalUpdates,
-    mergeUnconfirmedIntoSummary,
     mergeChatMetrics,
+    mergeEventsAndLocalUpdates,
     mergeLocalSummaryUpdates,
+    mergeUnconfirmedIntoSummary,
 } from "../utils/chat";
-import { currentUser, currentUserIdStore, suspendedUsers } from "./user";
-import DRange from "drange";
-import { snsFunctions } from "./snsFunctions";
-import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
-import { createChatSpecificObjectStore } from "./dataByChatFactory";
-import { localMessageUpdates } from "./localMessageUpdates";
-import { localChatSummaryUpdates } from "./localChatSummaryUpdates";
-import { setsAreEqual } from "../utils/set";
-import { failedMessagesStore } from "./failedMessages";
-import { proposalTallies } from "./proposalTallies";
-import type { OpenChat } from "../openchat";
-import { allServerChats, chatListScopeStore, getAllServerChats, globalStateStore } from "./global";
-import { createDerivedPropStore } from "./derived";
-import { messagesRead } from "./markRead";
-import { safeWritable } from "./safeWritable";
-import { communityPreviewsStore, currentCommunityBlockedUsers } from "./community";
-import { translationStore } from "./translation";
-import { messageFiltersStore } from "./messageFilters";
-import { draftMessagesStore } from "./draftMessages";
-import { blockedUsers } from "./blockedUsers";
-import { createLsBoolStore } from "./localStorageSetting";
 import { configKeys } from "../utils/config";
-import { recentlySentMessagesStore } from "./recentlySentMessages";
+import { setsAreEqual } from "../utils/set";
+import { blockedUsers } from "./blockedUsers";
+import { communityPreviewsStore } from "./community";
+import { createChatSpecificObjectStore } from "./dataByChatFactory";
+import { createDerivedPropStore } from "./derived";
+import { draftMessagesStore } from "./draftMessages";
 import { ephemeralMessages } from "./ephemeralMessages";
+import { failedMessagesStore } from "./failedMessages";
+import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
+import { allServerChats, chatListScopeStore, getAllServerChats, globalStateStore } from "./global";
+import { immutableStore } from "./immutable";
+import { localChatSummaryUpdates } from "./localChatSummaryUpdates";
+import { localMessageUpdates } from "./localMessageUpdates";
+import { createLsBoolStore } from "./localStorageSetting";
+import { messagesRead } from "./markRead";
+import { messageFiltersStore } from "./messageFilters";
+import { proposalTallies } from "./proposalTallies";
+import { recentlySentMessagesStore } from "./recentlySentMessages";
+import { safeWritable } from "./safeWritable";
+import { snsFunctions } from "./snsFunctions";
+import { translationStore } from "./translation";
+import { unconfirmed } from "./unconfirmed";
+import { currentUser, currentUserIdStore, suspendedUsers } from "./user";
 
 let currentScope: ChatListScope = { kind: "direct_chat" };
 chatListScopeStore.subscribe((s) => (currentScope = s));
@@ -206,16 +207,15 @@ export const expiredEventRangesStore = createDerivedPropStore<
 export const hideMessagesFromDirectBlocked = createLsBoolStore(configKeys.hideBlocked, false);
 
 export const currentChatBlockedOrSuspendedUsers = derived(
-    [
-        currentChatBlockedUsers,
-        currentCommunityBlockedUsers,
-        suspendedUsers,
-        blockedUsers,
-        hideMessagesFromDirectBlocked,
-    ],
-    ([chatBlocked, communityBlocked, suspended, directBlocked, hideBlocked]) => {
+    [currentChatBlockedUsers, suspendedUsers, blockedUsers, hideMessagesFromDirectBlocked],
+    ([chatBlocked, suspended, directBlocked, hideBlocked]) => {
         const direct = hideBlocked ? directBlocked : [];
-        return new Set<string>([...chatBlocked, ...communityBlocked, ...suspended, ...direct]);
+        return new Set<string>([
+            ...chatBlocked,
+            ...app.selectedCommunityDetails.blockedUsers, //TODO This is no longer reactive - not ideal but probably liveable with short term
+            ...suspended,
+            ...direct,
+        ]);
     },
 );
 

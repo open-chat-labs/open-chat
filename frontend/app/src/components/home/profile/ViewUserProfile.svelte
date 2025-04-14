@@ -4,6 +4,7 @@
         AvatarSize,
         type ChatSummary,
         type CommunitySummary,
+        type IReadonlySet,
         type OpenChat,
         type PublicProfile,
         type ResourceKey,
@@ -13,7 +14,6 @@
         currentChatMembersMap as chatMembersMap,
         currentUser as createdUser,
         currentChatBlockedUsers,
-        currentCommunityBlockedUsers,
         platformModerator,
         selectedChatStore as selectedChat,
         selectedCommunity,
@@ -157,7 +157,7 @@
         community: CommunitySummary | undefined,
         blockedUsers: Set<string>,
         blockedChatUsers: Set<string>,
-        blockedCommunityUsers: Set<string>,
+        blockedCommunityUsers: IReadonlySet<string>,
     ) {
         if (me || inGlobalContext) return false;
 
@@ -177,7 +177,7 @@
         community: CommunitySummary | undefined,
         blockedUsers: Set<string>,
         blockedChatUsers: Set<string>,
-        blockedCommunityUsers: Set<string>,
+        blockedCommunityUsers: IReadonlySet<string>,
     ) {
         if (me || inGlobalContext) return false;
         if (chat !== undefined) {
@@ -272,7 +272,7 @@
             $selectedCommunity,
             $blockedUsers,
             $currentChatBlockedUsers,
-            $currentCommunityBlockedUsers,
+            app.selectedCommunityDetails.blockedUsers,
         ),
     );
     let canUnblock = $derived(
@@ -281,7 +281,7 @@
             $selectedCommunity,
             $blockedUsers,
             $currentChatBlockedUsers,
-            $currentCommunityBlockedUsers,
+            app.selectedCommunityDetails.blockedUsers,
         ),
     );
 </script>

@@ -275,7 +275,8 @@ import { LiveState } from "./liveState";
 import { snapshot } from "./snapshot.svelte";
 import { app } from "./state/app.svelte";
 import { botState } from "./state/bots.svelte";
-import type { CommunityMergedState } from "./state/community.svelte";
+import { communityLocalUpdates, type CommunityMergedState } from "./state/community.svelte";
+import type { IReadonlyMap } from "./state/map";
 import { pathState, type RouteParams } from "./state/path.svelte";
 import { ui } from "./state/ui.svelte";
 import { blockedUsers } from "./stores/blockedUsers";
@@ -303,7 +304,6 @@ import {
 import {
     addCommunityPreview,
     communityPreviewsStore,
-    communityStateStore,
     nextCommunityIndex,
     removeCommunityPreview,
 } from "./stores/community";
@@ -1641,22 +1641,15 @@ export class OpenChat {
             newAchievement,
         }).then((resp) => {
             if (resp === "success") {
-                // TODO wrong should use local updates
-                // we *could* do something similar with the new runes state
-                // but it would not be reactive as is and it's not what
-                // we should be doing
-                communityStateStore.updateProp(id, "members", (ms) => {
-                    const userId = this.#liveState.user.userId;
-                    if (userId !== undefined) {
-                        const m = ms.get(userId);
-                        if (m !== undefined) {
-                            ms.set(userId, { ...m, displayName });
-                            return new Map(ms);
-                        }
+                const userId = this.#liveState.user.userId;
+                if (userId !== undefined) {
+                    const m = app.selectedCommunityDetails.members.get(userId);
+                    if (m !== undefined) {
+                        communityLocalUpdates.updateMember(id, userId, { ...m, displayName });
                     }
-                    return ms;
-                });
+                }
 
+                // TODO - we also need to deal with this
                 localCommunitySummaryUpdates.updateDisplayName(id, displayName);
             }
             return resp;
@@ -2552,38 +2545,6 @@ export class OpenChat {
     compareIsNotYouThenUsername = compareIsNotYouThenUsername;
     compareUsername = compareUsername;
 
-    // TODO wrong should use local updates
-    #blockCommunityUserLocally(id: CommunityIdentifier, userId: string): void {
-        communityStateStore.updateProp(id, "blockedUsers", (b) => new Set([...b, userId]));
-        communityStateStore.updateProp(id, "members", (ms) => {
-            ms.delete(userId);
-            return new Map(ms);
-        });
-    }
-
-    // TODO wrong should use local updates
-    #unblockCommunityUserLocally(
-        id: CommunityIdentifier,
-        userId: string,
-        addToMembers: boolean,
-    ): void {
-        communityStateStore.updateProp(id, "blockedUsers", (b) => {
-            return new Set([...b].filter((u) => u !== userId));
-        });
-        if (addToMembers) {
-            communityStateStore.updateProp(id, "members", (ms) => {
-                ms.set(userId, {
-                    role: "member",
-                    userId,
-                    displayName: undefined,
-                    lapsed: false,
-                });
-                return new Map(ms);
-                return ms;
-            });
-        }
-    }
-
     #blockUserLocally(chatId: ChatIdentifier, userId: string): void {
         chatStateStore.updateProp(chatId, "blockedUsers", (b) => new Set([...b, userId]));
         chatStateStore.updateProp(chatId, "members", (p) => p.filter((p) => p.userId !== userId));
@@ -2607,33 +2568,36 @@ export class OpenChat {
     }
 
     blockCommunityUser(id: CommunityIdentifier, userId: string): Promise<boolean> {
-        this.#blockCommunityUserLocally(id, userId);
+        const blockUndo = communityLocalUpdates.blockUser(id, userId);
+        const membersUndo = communityLocalUpdates.removeMember(id, userId);
         return this.#sendRequest({ kind: "blockCommunityUser", id, userId })
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    this.#unblockCommunityUserLocally(id, userId, true);
+                    blockUndo();
+                    membersUndo();
                     return false;
                 }
                 return true;
             })
             .catch(() => {
-                this.#unblockCommunityUserLocally(id, userId, true);
+                blockUndo();
+                membersUndo();
                 return false;
             });
     }
 
     unblockCommunityUser(id: CommunityIdentifier, userId: string): Promise<boolean> {
-        this.#unblockCommunityUserLocally(id, userId, false);
+        const undo = communityLocalUpdates.unblockUser(id, userId);
         return this.#sendRequest({ kind: "unblockCommunityUser", id, userId })
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    this.#blockCommunityUserLocally(id, userId);
+                    undo();
                     return false;
                 }
                 return true;
             })
             .catch(() => {
-                this.#blockCommunityUserLocally(id, userId);
+                undo();
                 return false;
             });
     }
@@ -3178,6 +3142,7 @@ export class OpenChat {
         }).catch(() => "failure");
         if (resp !== "failure") {
             const [lapsed, members] = partition(resp.members, (m) => m.lapsed);
+            console.log("Setting community details");
             app.setSelectedCommunityDetails(
                 id,
                 resp.userGroups,
@@ -3924,7 +3889,7 @@ export class OpenChat {
             return false;
         }
 
-        const communityRules = this.#liveState.currentCommunityRules;
+        const communityRules = app.selectedCommunityDetails.rules;
         const community = this.#liveState.selectedCommunity;
 
         console.debug(
@@ -4890,13 +4855,13 @@ export class OpenChat {
         });
     }
 
-    getDisplayNameById(userId: string, communityMembers?: Map<string, Member>): string {
+    getDisplayNameById(userId: string, communityMembers?: IReadonlyMap<string, Member>): string {
         return this.getDisplayName(this.#liveState.userStore.get(userId), communityMembers);
     }
 
     getDisplayName(
         user: { userId: string; username: string; displayName?: string } | undefined,
-        communityMembers?: Map<string, Member>,
+        communityMembers?: IReadonlyMap<string, Member>,
     ): string {
         if (user !== undefined) {
             const member = communityMembers?.get(user.userId);
@@ -4921,28 +4886,23 @@ export class OpenChat {
         return this.#sendRequest({ kind: "removeSubscription", subscription });
     }
 
-    //TODO this is wrong - this should use local updates
     #inviteUsersLocally(
         id: MultiUserChatIdentifier | CommunityIdentifier,
         userIds: string[],
     ): void {
         if (id.kind === "community") {
-            communityStateStore.updateProp(id, "invitedUsers", (b) => new Set([...b, ...userIds]));
+            communityLocalUpdates.inviteUsers(id, userIds);
         } else {
             chatStateStore.updateProp(id, "invitedUsers", (b) => new Set([...b, ...userIds]));
         }
     }
 
-    //TODO this is wrong - this should use local updates
     #uninviteUsersLocally(
         id: MultiUserChatIdentifier | CommunityIdentifier,
         userIds: string[],
     ): void {
         if (id.kind === "community") {
-            communityStateStore.updateProp(id, "invitedUsers", (b) => {
-                return new Set([...b].filter((u) => !userIds.includes(u)));
-            });
-
+            communityLocalUpdates.uninviteUsers(id, userIds);
             const community = this.#liveState.communities.get({
                 kind: "community",
                 communityId: id.communityId,
@@ -5020,15 +4980,19 @@ export class OpenChat {
         });
     }
 
-    // TODO this is wrong - this should use local updates
     removeCommunityMember(id: CommunityIdentifier, userId: string): Promise<RemoveMemberResponse> {
-        communityStateStore.updateProp(id, "members", (ms) => {
-            ms.delete(userId);
-            return new Map(ms);
-        });
-        return this.#sendRequest({ kind: "removeCommunityMember", id, userId }).catch(
-            () => "failure",
-        );
+        const undo = communityLocalUpdates.removeMember(id, userId);
+        return this.#sendRequest({ kind: "removeCommunityMember", id, userId })
+            .then((resp) => {
+                if (resp !== "success") {
+                    undo();
+                }
+                return resp;
+            })
+            .catch(() => {
+                undo();
+                return "failure";
+            });
     }
 
     removeMember(chatId: MultiUserChatIdentifier, userId: string): Promise<RemoveMemberResponse> {
@@ -5044,16 +5008,11 @@ export class OpenChat {
     ): Promise<boolean> {
         if (newRole === oldRole) return Promise.resolve(true);
 
-        // Update the local store
-        // TODO - wrong - should use local updates
-        communityStateStore.updateProp(id, "members", (ms) => {
-            const m = ms.get(userId);
-            if (m !== undefined) {
-                ms.set(userId, { ...m, role: newRole });
-                return new Map(ms);
-            }
-            return ms;
-        });
+        const m = app.selectedCommunityDetails.members.get(userId);
+        let undo = undefined;
+        if (m !== undefined) {
+            undo = communityLocalUpdates.updateMember(id, userId, { ...m, role: newRole });
+        }
 
         return this.#sendRequest({ kind: "changeCommunityRole", id, userId, newRole })
             .then((resp) => {
@@ -5062,16 +5021,7 @@ export class OpenChat {
             .catch(() => false)
             .then((success) => {
                 if (!success) {
-                    // Revert the local store
-                    // TODO - wrong - should use local updates
-                    communityStateStore.updateProp(id, "members", (ms) => {
-                        const m = ms.get(userId);
-                        if (m !== undefined) {
-                            ms.set(userId, { ...m, role: oldRole });
-                            return new Map(ms);
-                        }
-                        return ms;
-                    });
+                    undo?.();
                 }
                 return success;
             });
@@ -7849,8 +7799,7 @@ export class OpenChat {
                         return g;
                     });
                     if (rules !== undefined && resp.rulesVersion !== undefined) {
-                        // TODO why are rules stored in community state?
-                        communityStateStore.setProp(community.id, "rules", {
+                        communityLocalUpdates.updateRules(community.id, {
                             text: rules.text,
                             enabled: rules.enabled,
                             version: resp.rulesVersion,
@@ -7877,24 +7826,8 @@ export class OpenChat {
             .catch(() => undefined);
     }
 
-    // TODO wrong should use local updates
-    #deleteUserGroupLocally(id: CommunityIdentifier, userGroup: UserGroupDetails) {
-        communityStateStore.updateProp(id, "userGroups", (groups) => {
-            groups.delete(userGroup.id);
-            return new Map(groups);
-        });
-    }
-
-    // TODO wrong should use local updates
-    #undeleteUserGroupLocally(id: CommunityIdentifier, userGroup: UserGroupDetails) {
-        communityStateStore.updateProp(id, "userGroups", (groups) => {
-            groups.set(userGroup.id, userGroup);
-            return new Map(groups);
-        });
-    }
-
     deleteUserGroup(id: CommunityIdentifier, userGroup: UserGroupDetails): Promise<boolean> {
-        this.#deleteUserGroupLocally(id, userGroup);
+        const undo = communityLocalUpdates.deleteUserGroup(id, userGroup.id);
         return this.#sendRequest({
             kind: "deleteUserGroups",
             communityId: id.communityId,
@@ -7902,12 +7835,12 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    this.#undeleteUserGroupLocally(id, userGroup);
+                    undo();
                 }
                 return resp.kind === "success";
             })
             .catch(() => {
-                this.#undeleteUserGroupLocally(id, userGroup);
+                undo();
                 return false;
             });
     }
@@ -7924,10 +7857,9 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    // TODO wrong should use local updates
-                    communityStateStore.updateProp(id, "userGroups", (groups) => {
-                        groups.set(resp.userGroupId, { ...userGroup, id: resp.userGroupId });
-                        return new Map(groups);
+                    communityLocalUpdates.addOrUpdateUserGroup(id, {
+                        ...userGroup,
+                        id: resp.userGroupId,
                     });
                 }
                 return resp;
@@ -7957,11 +7889,7 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    // TODO wrong should use local updates
-                    communityStateStore.updateProp(id, "userGroups", (groups) => {
-                        groups.set(userGroup.id, userGroup);
-                        return new Map(groups);
-                    });
+                    communityLocalUpdates.addOrUpdateUserGroup(id, userGroup);
                 }
                 return resp;
             })
@@ -8068,9 +7996,8 @@ export class OpenChat {
                             acceptedRules.chat = this.#liveState.currentChatRules?.version;
                         }
 
-                        if (this.#liveState.currentCommunityRules?.enabled ?? false) {
-                            acceptedRules.community =
-                                this.#liveState.currentCommunityRules?.version;
+                        if (app.selectedCommunityDetails.rules?.enabled ?? false) {
+                            acceptedRules.community = app.selectedCommunityDetails.rules?.version;
                         }
                     }
 
@@ -8317,8 +8244,11 @@ export class OpenChat {
         let perm: ExternalBotPermissions | undefined;
         switch (id.kind) {
             case "community":
-                perm = this.#liveState.currentCommunityBots.get(botId);
-                localCommunitySummaryUpdates.removeBot(id, botId);
+                perm = app.selectedCommunityDetails.bots.get(botId);
+                // TODO - when chat state and global state are done
+                // the same way, we can return the undo fn here which
+                // will be better.
+                communityLocalUpdates.removeBot(id, botId);
                 break;
             case "group_chat":
                 perm = this.#liveState.currentChatBots.get(botId);
@@ -8342,8 +8272,8 @@ export class OpenChat {
         switch (id.kind) {
             case "community":
                 if (perm === undefined) return perm;
-                previousPermissions = this.#liveState.currentCommunityBots.get(botId);
-                localCommunitySummaryUpdates.installBot(id, botId, perm);
+                previousPermissions = app.selectedCommunityDetails.bots.get(botId);
+                communityLocalUpdates.installBot(id, botId, perm);
                 break;
             case "group_chat":
                 if (perm === undefined) return perm;

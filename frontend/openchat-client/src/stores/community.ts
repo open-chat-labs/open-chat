@@ -1,21 +1,7 @@
-import type {
-    ExternalBotPermissions,
-    Member,
-    UserGroupDetails,
-    UserGroupSummary,
-} from "openchat-shared";
-import {
-    type CommunityIdentifier,
-    CommunityMap,
-    type CommunitySpecificState,
-    type CommunitySummary,
-    emptyRules,
-} from "openchat-shared";
+import type { UserGroupSummary } from "openchat-shared";
+import { type CommunityIdentifier, CommunityMap, type CommunitySummary } from "openchat-shared";
 import { type Writable, derived, get, writable } from "svelte/store";
 import { mergeLocalUpdates } from "../utils/community";
-import { setsAreEqual } from "../utils/set";
-import { createCommunitySpecificObjectStore } from "./dataByCommunityFactory";
-import { createDerivedPropStore } from "./derived";
 import { chatListScopeStore, globalStateStore } from "./global";
 import { localCommunitySummaryUpdates } from "./localCommunitySummaryUpdates";
 
@@ -63,19 +49,19 @@ export const communitiesList = derived(communities, ($communities) => {
     });
 });
 
-export const communityStateStore = createCommunitySpecificObjectStore<CommunitySpecificState>(
-    () => ({
-        members: new Map<string, Member>(),
-        blockedUsers: new Set<string>(),
-        lapsedMembers: new Set<string>(),
-        invitedUsers: new Set<string>(),
-        referrals: new Set<string>(),
-        userGroups: new Map<number, UserGroupDetails>(),
-        rules: emptyRules(),
-        bots: new Map(),
-        apiKeys: new Map(),
-    }),
-);
+// export const communityStateStore = createCommunitySpecificObjectStore<CommunitySpecificState>(
+//     () => ({
+//         members: new Map<string, Member>(),
+//         blockedUsers: new Set<string>(),
+//         lapsedMembers: new Set<string>(),
+//         invitedUsers: new Set<string>(),
+//         referrals: new Set<string>(),
+//         userGroups: new Map<number, UserGroupDetails>(),
+//         rules: emptyRules(),
+//         bots: new Map(),
+//         apiKeys: new Map(),
+//     }),
+// );
 
 export const selectedCommunity = derived(
     [communities, chatListScopeStore],
@@ -90,63 +76,63 @@ export const selectedCommunity = derived(
     },
 );
 
-const currentServerCommunityBots = createDerivedPropStore<CommunitySpecificState, "bots">(
-    communityStateStore,
-    "bots",
-    () => new Map<string, ExternalBotPermissions>(),
-);
+// const currentServerCommunityBots = createDerivedPropStore<CommunitySpecificState, "bots">(
+//     communityStateStore,
+//     "bots",
+//     () => new Map<string, ExternalBotPermissions>(),
+// );
 
-export const currentCommunityBots = derived(
-    [selectedCommunity, currentServerCommunityBots, localCommunitySummaryUpdates],
-    ([$community, $serverBots, $local]) => {
-        if ($community === undefined) return $serverBots;
-        const clone = new Map($serverBots);
-        const localInstalled = [...($local.get($community.id)?.installedBots?.entries() ?? [])];
-        const localDeleted = [...($local.get($community.id)?.removedBots?.values() ?? [])];
-        localInstalled.forEach(([id, perm]) => {
-            clone.set(id, perm);
-        });
-        localDeleted.forEach((id) => clone.delete(id));
-        return clone;
-    },
-);
+// export const currentCommunityBots = derived(
+//     [selectedCommunity, currentServerCommunityBots, localCommunitySummaryUpdates],
+//     ([$community, $serverBots, $local]) => {
+//         if ($community === undefined) return $serverBots;
+//         const clone = new Map($serverBots);
+//         const localInstalled = [...($local.get($community.id)?.installedBots?.entries() ?? [])];
+//         const localDeleted = [...($local.get($community.id)?.removedBots?.values() ?? [])];
+//         localInstalled.forEach(([id, perm]) => {
+//             clone.set(id, perm);
+//         });
+//         localDeleted.forEach((id) => clone.delete(id));
+//         return clone;
+//     },
+// );
 
-export const currentCommunityApiKeys = createDerivedPropStore<CommunitySpecificState, "apiKeys">(
-    communityStateStore,
-    "apiKeys",
-    () => new Map(),
-);
+// export const currentCommunityApiKeys = createDerivedPropStore<CommunitySpecificState, "apiKeys">(
+//     communityStateStore,
+//     "apiKeys",
+//     () => new Map(),
+// );
 
-export const currentCommunityUserGroups = createDerivedPropStore<
-    CommunitySpecificState,
-    "userGroups"
->(communityStateStore, "userGroups", () => new Map<number, UserGroupDetails>());
+// export const currentCommunityUserGroups = createDerivedPropStore<
+//     CommunitySpecificState,
+//     "userGroups"
+// >(communityStateStore, "userGroups", () => new Map<number, UserGroupDetails>());
 
-export const currentCommunityBlockedUsers = createDerivedPropStore<
-    CommunitySpecificState,
-    "blockedUsers"
->(communityStateStore, "blockedUsers", () => new Set<string>(), setsAreEqual);
+// export const currentCommunityBlockedUsers = createDerivedPropStore<
+//     CommunitySpecificState,
+//     "blockedUsers"
+// >(communityStateStore, "blockedUsers", () => new Set<string>(), setsAreEqual);
 
-export const currentCommunityLapsedMembers = createDerivedPropStore<
-    CommunitySpecificState,
-    "lapsedMembers"
->(communityStateStore, "lapsedMembers", () => new Set<string>(), setsAreEqual);
+// export const currentCommunityLapsedMembers = createDerivedPropStore<
+//     CommunitySpecificState,
+//     "lapsedMembers"
+// >(communityStateStore, "lapsedMembers", () => new Set<string>(), setsAreEqual);
 
-export const currentCommunityReferrals = createDerivedPropStore<
-    CommunitySpecificState,
-    "referrals"
->(communityStateStore, "referrals", () => new Set<string>(), setsAreEqual);
+// export const currentCommunityReferrals = createDerivedPropStore<
+//     CommunitySpecificState,
+//     "referrals"
+// >(communityStateStore, "referrals", () => new Set<string>(), setsAreEqual);
 
-export const currentCommunityInvitedUsers = createDerivedPropStore<
-    CommunitySpecificState,
-    "invitedUsers"
->(communityStateStore, "invitedUsers", () => new Set<string>(), setsAreEqual);
+// export const currentCommunityInvitedUsers = createDerivedPropStore<
+//     CommunitySpecificState,
+//     "invitedUsers"
+// >(communityStateStore, "invitedUsers", () => new Set<string>(), setsAreEqual);
 
-export const currentCommunityRules = createDerivedPropStore<CommunitySpecificState, "rules">(
-    communityStateStore,
-    "rules",
-    () => undefined,
-);
+// export const currentCommunityRules = createDerivedPropStore<CommunitySpecificState, "rules">(
+//     communityStateStore,
+//     "rules",
+//     () => undefined,
+// );
 
 export function nextCommunityIndex(): number {
     return (get(communitiesList)[0]?.membership.index ?? -1) + 1;

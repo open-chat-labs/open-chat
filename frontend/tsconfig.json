@@ -15,7 +15,7 @@
         "sourceMap": false,
         "target": "ESNext",
         "types": ["jest", "node", "svelte"],
-        "useDefineForClassFields": false,
+        "useDefineForClassFields": true,
         "verbatimModuleSyntax": true
     },
     "exclude": ["build/**/*", "lib/**/*", "node_modules"]

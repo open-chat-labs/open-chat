@@ -8,11 +8,6 @@
         currentChatInvitedUsers as currentChatInvited,
         currentChatLapsedMembers as currentChatLapsed,
         currentChatMembers,
-        currentCommunityApiKeys,
-        currentCommunityBlockedUsers as currentCommunityBlocked,
-        currentCommunityBots,
-        currentCommunityInvitedUsers as currentCommunityInvited,
-        currentCommunityLapsedMembers as currentCommunityLapsed,
         type MemberRole,
         OpenChat,
         publish,
@@ -110,12 +105,12 @@
             showHeader={false}
             {closeIcon}
             collection={community}
-            invited={$currentCommunityInvited}
+            invited={app.selectedCommunityDetails.invitedUsers}
             members={[...app.selectedCommunityDetails.members.values()]}
-            blocked={$currentCommunityBlocked}
-            lapsed={$currentCommunityLapsed}
-            installedBots={$currentCommunityBots}
-            apiKeys={$currentCommunityApiKeys}
+            blocked={app.selectedCommunityDetails.blockedUsers}
+            lapsed={app.selectedCommunityDetails.lapsedMembers}
+            installedBots={app.selectedCommunityDetails.bots}
+            apiKeys={app.selectedCommunityDetails.apiKeys}
             {onClose}
             onBlockUser={onBlockCommunityUser}
             onUnblockUser={onUnblockCommunityUser}
@@ -134,7 +129,7 @@
             members={$currentChatMembers}
             blocked={$currentChatBlocked}
             lapsed={$currentChatLapsed}
-            installedBots={$currentCommunityBots}
+            installedBots={app.selectedCommunityDetails.bots}
             apiKeys={$currentChatApiKeys}
             {onClose}
             onBlockUser={onBlockGroupUser}

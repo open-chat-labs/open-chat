@@ -1,3 +1,4 @@
+import type { Principal } from "@dfinity/principal";
 import {
     deleteDB,
     openDB,
@@ -9,50 +10,49 @@ import {
     type StoreValue,
 } from "idb";
 import type {
+    BotsResponse,
     ChatEvent,
     ChatIdentifier,
     ChatStateFull,
     ChatSummary,
+    CommunityDetails,
+    CommunitySummary,
+    CreatedUser,
+    CryptocurrencyContent,
+    CurrentUserSummary,
+    DataContent,
+    DiamondMembershipStatus,
     EventsResponse,
     EventsSuccessResult,
     EventWrapper,
     ExpiredEventsRange,
     ExpiredMessagesRange,
+    ExternalAchievement,
     GroupChatDetails,
     IndexRange,
     Message,
+    MessageActivityEvent,
     MessageContent,
+    MessageContext,
+    P2PSwapContent,
+    PrizeContent,
     ReplyContext,
     SendMessageResponse,
     SendMessageSuccess,
-    UpdatedEvent,
-    MessageContext,
-    CommunityDetails,
-    CommunitySummary,
-    DataContent,
-    CreatedUser,
-    DiamondMembershipStatus,
     TransferSuccess,
-    CurrentUserSummary,
-    ExternalAchievement,
-    MessageActivityEvent,
-    BotsResponse,
+    UpdatedEvent,
 } from "openchat-shared";
 import {
     canRetryMessage,
     chatIdentifiersEqual,
     chatIdentifierToString,
     ChatMap,
-    MessageContextMap,
     MAX_EVENTS,
     MAX_MESSAGES,
+    MessageContextMap,
     ONE_DAY,
     updateCreatedUser,
 } from "openchat-shared";
-import type { Principal } from "@dfinity/principal";
-import type { CryptocurrencyContent } from "openchat-shared";
-import type { PrizeContent } from "openchat-shared";
-import type { P2PSwapContent } from "openchat-shared";
 
 const CACHE_VERSION = 131;
 const EARLIEST_SUPPORTED_MIGRATION = 125;
@@ -1515,10 +1515,11 @@ export async function removeCachedChannelApiKeys(
             for (const { id } of community.channels) {
                 const cacheKey = `${id.communityId}_${id.channelId}`;
                 if (db === undefined) return;
-                const details = await getCachedGroupDetails(db, cacheKey);
+                const store = tx.objectStore("group_details");
+                const details = await store.get(cacheKey);
                 if (details !== undefined) {
                     details.apiKeys.delete(botId);
-                    await setCachedGroupDetails(db, cacheKey, details);
+                    await store.put(details, cacheKey);
                 }
             }
             tx.commit();

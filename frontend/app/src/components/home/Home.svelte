@@ -27,13 +27,13 @@
     } from "openchat-client";
     import {
         anonUser,
+        app,
         chatIdentifiersEqual,
         chatListScopeStore as chatListScope,
         chatsInitialised,
         chatSummariesListStore,
         chatSummariesStore,
         communities,
-        currentCommunityRules,
         defaultChatRules,
         draftMessagesStore,
         identityState,
@@ -1064,7 +1064,7 @@
         modal = {
             kind: "edit_community",
             community,
-            communityRules: $currentCommunityRules ?? defaultChatRules("community"),
+            communityRules: app.selectedCommunityDetails.rules ?? defaultChatRules("community"),
         };
     }
 

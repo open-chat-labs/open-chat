@@ -1,18 +1,14 @@
 <script lang="ts">
     import type {
         CommunitySummary,
+        IReadonlyMap,
         Member,
         OpenChat,
         UserGroupDetails,
         UserLookup,
         UserSummary,
     } from "openchat-client";
-    import {
-        app,
-        ui,
-        currentCommunityUserGroups as userGroupsMap,
-        userStore,
-    } from "openchat-client";
+    import { app, ui, userStore } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
@@ -50,7 +46,7 @@
     });
 
     function createLookup(
-        members: Map<string, Member>,
+        members: IReadonlyMap<string, Member>,
         allUsers: UserLookup,
     ): Record<string, UserSummary> {
         return [...members.values()].reduce(
@@ -123,7 +119,7 @@
         openedGroupId = undefined;
     }
     let searchTermLower = $derived(searchTerm.toLowerCase());
-    let userGroups = $derived([...$userGroupsMap.values()]);
+    let userGroups = $derived([...app.selectedCommunityDetails.userGroups.values()]);
     let canManageUserGroups = $derived(client.canManageUserGroups(community.id));
     let matchingGroups = $derived(userGroups.filter((ug) => matchesSearch(searchTermLower, ug)));
 </script>
