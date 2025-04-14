@@ -11,10 +11,7 @@ use group_canister::c2c_join_group::{Response::*, *};
 use group_chat_core::AddResult;
 use group_community_common::ExpiringMember;
 use oc_error_codes::OCErrorCode;
-use types::{
-    AccessGate, AccessGateConfigInternal, CommunityCanisterCommunitySummary, GroupCanisterGroupChatSummary,
-    MemberJoinedInternal, OCResult, UsersUnblocked,
-};
+use types::{AccessGate, GroupCanisterGroupChatSummary, MemberJoinedInternal, OCResult, UsersUnblocked};
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]

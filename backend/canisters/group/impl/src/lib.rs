@@ -929,12 +929,6 @@ pub struct CanisterIds {
     pub icp_ledger: CanisterId,
 }
 
-pub enum StartImportIntoCommunityResult {
-    Success(StartImportIntoCommunityResultSuccess),
-    AlreadyImportingToAnotherCommunity,
-    ChatFrozen,
-}
-
 pub struct StartImportIntoCommunityResultSuccess {
     pub total_bytes: u64,
     pub transfers_required: HashMap<CanisterId, (u128, u128)>,
