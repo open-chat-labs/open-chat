@@ -134,7 +134,7 @@ async fn send_message_v2(args: Args) -> Response {
                             Err(error) => return Error(error.into()),
                         }
                     }
-                    Err(error) => return error.into(),
+                    Err(error) => return Error(error.into()),
                 }
             }
             ValidateNewMessageContentResult::Error(error) => {

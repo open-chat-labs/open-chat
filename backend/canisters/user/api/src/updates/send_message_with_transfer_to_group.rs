@@ -4,8 +4,8 @@ use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
-    ChatId, CompletedCryptoTransaction, Cryptocurrency, EventIndex, GroupReplyContext, MessageContentInitial, MessageId,
-    MessageIndex, Milliseconds, PinNumberWrapper, TimestampMillis, User, Version,
+    ChatId, CompletedCryptoTransaction, EventIndex, GroupReplyContext, MessageContentInitial, MessageId, MessageIndex,
+    PinNumberWrapper, TimestampMillis, User, Version,
 };
 
 #[ts_export(user, send_message_with_transfer_to_group)]
@@ -30,25 +30,8 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    TextTooLong(u32),
-    RecipientBlocked,
     CallerNotInGroup(Option<CompletedCryptoTransaction>),
-    CryptocurrencyNotSupported(Cryptocurrency),
-    InvalidRequest(String),
-    TransferFailed(String),
-    TransferCannotBeZero,
-    TransferCannotBeToSelf,
-    P2PSwapSetUpFailed(String),
-    UserSuspended,
-    UserLapsed,
-    ChatFrozen,
-    RulesNotAccepted,
-    MessageAlreadyExists,
     Retrying(String, CompletedCryptoTransaction),
-    PinRequired,
-    PinIncorrect(Milliseconds),
-    TooManyFailedPinAttempts(Milliseconds),
-    InternalError(String),
     Error(OCError),
 }
 

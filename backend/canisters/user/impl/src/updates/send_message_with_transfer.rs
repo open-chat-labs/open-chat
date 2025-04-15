@@ -1,6 +1,5 @@
 use crate::guards::caller_is_owner;
 use crate::model::p2p_swaps::P2PSwap;
-use crate::model::pin_number::VerifyPinError;
 use crate::timer_job_types::{NotifyEscrowCanisterOfDepositJob, SendMessageToChannelJob, SendMessageToGroupJob, TimerJob};
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
@@ -13,11 +12,11 @@ use tracing::error;
 use types::icrc1::Account;
 use types::{
     icrc1, Achievement, C2CError, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, MessageContentInitial,
-    MessageId, MessageIndex, Milliseconds, P2PSwapLocation, PendingCryptoTransaction, TimestampMillis, UserId, MAX_TEXT_LENGTH,
+    MessageId, MessageIndex, OCResult, P2PSwapLocation, PendingCryptoTransaction, TimestampMillis, UserId, MAX_TEXT_LENGTH,
     MAX_TEXT_LENGTH_USIZE,
 };
+use user_canister::send_message_with_transfer_to_channel;
 use user_canister::send_message_with_transfer_to_group;
-use user_canister::{send_message_v2, send_message_with_transfer_to_channel};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
@@ -48,30 +47,22 @@ async fn send_message_with_transfer_to_channel(
             state,
         )
     }) {
-        PrepareResult::Success(t) => (t, None),
-        PrepareResult::P2PSwap(escrow_canister_id, create_swap_args) => {
+        Ok(PrepareResult::Success(t)) => (t, None),
+        Ok(PrepareResult::P2PSwap(escrow_canister_id, create_swap_args)) => {
             match set_up_p2p_swap(escrow_canister_id, create_swap_args).await {
                 Ok((id, t)) => (t, Some(id)),
-                Err(error) => return error.into(),
+                Err(error) => return Error(error.into()),
             }
         }
-        PrepareResult::UserSuspended => return UserSuspended,
-        PrepareResult::TextTooLong(v) => return TextTooLong(v),
-        PrepareResult::RecipientBlocked => return RecipientBlocked,
-        PrepareResult::InvalidRequest(t) => return InvalidRequest(t),
-        PrepareResult::TransferCannotBeZero => return TransferCannotBeZero,
-        PrepareResult::TransferCannotBeToSelf => return TransferCannotBeToSelf,
-        PrepareResult::PinRequired => return PinRequired,
-        PrepareResult::PinIncorrect(delay) => return PinIncorrect(delay),
-        PrepareResult::TooManyFailedPinAttempts(delay) => return TooManyFailedPinAttempts(delay),
+        Err(error) => return Error(error),
     };
 
     // Make the crypto transfer
     let (content, completed_transaction) = match process_transaction(args.content, pending_transaction, p2p_swap_id, now).await
     {
         Ok(Ok((c, t))) => (c, t),
-        Ok(Err(error)) => return TransferFailed(error),
-        Err(error) => return InternalError(format!("{error:?}")),
+        Ok(Err(error)) => return Error(OCErrorCode::TransferFailed.with_message(error)),
+        Err(error) => return Error(error.into()),
     };
 
     let achievement = content.content_type().achievement();
@@ -160,30 +151,22 @@ async fn send_message_with_transfer_to_group(
             state,
         )
     }) {
-        PrepareResult::Success(t) => (t, None),
-        PrepareResult::P2PSwap(escrow_canister_id, create_swap_args) => {
+        Ok(PrepareResult::Success(t)) => (t, None),
+        Ok(PrepareResult::P2PSwap(escrow_canister_id, create_swap_args)) => {
             match set_up_p2p_swap(escrow_canister_id, create_swap_args).await {
                 Ok((id, t)) => (t, Some(id)),
-                Err(error) => return error.into(),
+                Err(error) => return Error(error.into()),
             }
         }
-        PrepareResult::UserSuspended => return UserSuspended,
-        PrepareResult::TextTooLong(v) => return TextTooLong(v),
-        PrepareResult::RecipientBlocked => return RecipientBlocked,
-        PrepareResult::InvalidRequest(t) => return InvalidRequest(t),
-        PrepareResult::TransferCannotBeZero => return TransferCannotBeZero,
-        PrepareResult::TransferCannotBeToSelf => return TransferCannotBeToSelf,
-        PrepareResult::PinRequired => return PinRequired,
-        PrepareResult::PinIncorrect(delay) => return PinIncorrect(delay),
-        PrepareResult::TooManyFailedPinAttempts(delay) => return TooManyFailedPinAttempts(delay),
+        Err(error) => return Error(error),
     };
 
     // Make the crypto transfer
     let (content, completed_transaction) = match process_transaction(args.content, pending_transaction, p2p_swap_id, now).await
     {
         Ok(Ok((c, t))) => (c, t),
-        Ok(Err(error)) => return TransferFailed(error),
-        Err(error) => return InternalError(format!("{error:?}")),
+        Ok(Err(error)) => return Error(OCErrorCode::TransferFailed.with_message(error)),
+        Err(error) => return Error(error.into()),
     };
 
     let achievement = content.content_type().achievement();
@@ -245,15 +228,6 @@ async fn send_message_with_transfer_to_group(
 enum PrepareResult {
     Success(PendingCryptoTransaction),
     P2PSwap(CanisterId, escrow_canister::create_swap::Args),
-    UserSuspended,
-    TextTooLong(u32),
-    RecipientBlocked,
-    InvalidRequest(String),
-    TransferCannotBeZero,
-    TransferCannotBeToSelf,
-    PinRequired,
-    PinIncorrect(Milliseconds),
-    TooManyFailedPinAttempts(Milliseconds),
 }
 
 fn prepare(
@@ -264,43 +238,39 @@ fn prepare(
     pin: Option<String>,
     now: TimestampMillis,
     state: &mut RuntimeState,
-) -> PrepareResult {
+) -> OCResult<PrepareResult> {
     use PrepareResult::*;
 
-    if state.data.suspended.value {
-        return UserSuspended;
-    } else if content.text_length() > MAX_TEXT_LENGTH_USIZE {
-        return TextTooLong(MAX_TEXT_LENGTH);
+    state.data.verify_not_suspended()?;
+
+    if content.text_length() > MAX_TEXT_LENGTH_USIZE {
+        return Err(OCErrorCode::TextTooLong.with_message(MAX_TEXT_LENGTH));
     }
 
     if let Err(error) = state.data.pin_number.verify(pin.as_deref(), now) {
-        return match error {
-            VerifyPinError::PinRequired => PinRequired,
-            VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
-            VerifyPinError::TooManyFailedAttempted(delay) => TooManyFailedPinAttempts(delay),
-        };
+        return Err(error.into());
     }
 
     let pending_transaction = match &content {
         MessageContentInitial::Crypto(c) => {
             let my_user_id = state.env.canister_id().into();
             if c.recipient == my_user_id {
-                return TransferCannotBeToSelf;
+                return Err(OCErrorCode::TransferCannotBeToSelf.into());
             }
             if state.data.blocked_users.contains(&c.recipient) {
-                return RecipientBlocked;
+                return Err(OCErrorCode::TargetUserBlocked.into());
             }
             match &c.transfer {
                 CryptoTransaction::Pending(t) => t.clone().set_memo(&MEMO_MESSAGE),
-                _ => return InvalidRequest("Transaction must be of type 'Pending'".to_string()),
+                _ => return Err(OCErrorCode::InvalidRequest.with_message("Transaction must be of type 'Pending'")),
             }
         }
         MessageContentInitial::Prize(c) => {
             if thread_root_message_index.is_some() {
-                return InvalidRequest("Prize messages cannot be sent within threads".to_string());
+                return Err(OCErrorCode::InvalidRequest.with_message("Prize messages cannot be sent within threads"));
             }
             if c.end_date <= now {
-                return InvalidRequest("Prize end date must be in the future".to_string());
+                return Err(OCErrorCode::InvalidRequest.with_message("Prize end date must be in the future"));
             }
             match &c.transfer {
                 CryptoTransaction::Pending(t) => {
@@ -317,12 +287,14 @@ fn prepare(
                             ?transaction_amount,
                             "Expected vs Actual prize transfer"
                         );
-                        return InvalidRequest("Transaction amount must equal total prizes + total fees".to_string());
+                        return Err(
+                            OCErrorCode::InvalidRequest.with_message("Transaction amount must equal total prizes + total fees")
+                        );
                     }
 
                     t.clone().set_memo(&MEMO_PRIZE)
                 }
-                _ => return InvalidRequest("Transaction must be of type 'Pending'".to_string()),
+                _ => return Err(OCErrorCode::InvalidRequest.with_message("Transaction must be of type 'Pending'")),
             }
         }
         MessageContentInitial::P2PSwap(p) => {
@@ -337,15 +309,15 @@ fn prepare(
                 additional_admins: vec![chat_canister_id],
                 canister_to_notify: Some(chat_canister_id),
             };
-            return P2PSwap(state.data.escrow_canister_id, create_swap_args);
+            return Ok(P2PSwap(state.data.escrow_canister_id, create_swap_args));
         }
-        _ => return InvalidRequest("Message must include a crypto transfer".to_string()),
+        _ => return Err(OCErrorCode::InvalidRequest.with_message("Message must include a crypto transfer")),
     };
 
     if !pending_transaction.is_zero() {
-        Success(pending_transaction)
+        Ok(Success(pending_transaction))
     } else {
-        TransferCannotBeZero
+        Err(OCErrorCode::TransferCannotBeZero.into())
     }
 }
 
@@ -422,35 +394,13 @@ pub(crate) enum SetUpP2PSwapError {
     Error(OCError),
 }
 
-impl From<SetUpP2PSwapError> for send_message_with_transfer_to_channel::Response {
+impl From<SetUpP2PSwapError> for OCError {
     fn from(value: SetUpP2PSwapError) -> Self {
-        use send_message_with_transfer_to_channel::Response::*;
         match value {
-            SetUpP2PSwapError::InvalidSwap(message) => InvalidRequest(message),
-            SetUpP2PSwapError::InternalError(error) => P2PSwapSetUpFailed(error),
-            SetUpP2PSwapError::Error(error) => Error(error),
-        }
-    }
-}
-
-impl From<SetUpP2PSwapError> for send_message_with_transfer_to_group::Response {
-    fn from(value: SetUpP2PSwapError) -> Self {
-        use send_message_with_transfer_to_group::Response::*;
-        match value {
-            SetUpP2PSwapError::InvalidSwap(message) => InvalidRequest(message),
-            SetUpP2PSwapError::InternalError(error) => P2PSwapSetUpFailed(error),
-            SetUpP2PSwapError::Error(error) => Error(error),
-        }
-    }
-}
-
-impl From<SetUpP2PSwapError> for send_message_v2::Response {
-    fn from(value: SetUpP2PSwapError) -> Self {
-        send_message_v2::Response::Error(match value {
             SetUpP2PSwapError::InvalidSwap(message) => OCErrorCode::InvalidRequest.with_message(message),
             SetUpP2PSwapError::InternalError(error) => OCErrorCode::Unknown.with_message(error),
             SetUpP2PSwapError::Error(error) => error,
-        })
+        }
     }
 }
 

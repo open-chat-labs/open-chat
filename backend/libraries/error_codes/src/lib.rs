@@ -164,6 +164,11 @@ pub enum OCErrorCode {
     Throttled = 320,
     InvalidChannelName = 321,
     ApprovalFailed = 322,
+    TransferCannotBeToSelf = 323,
+    DateInThePast = 324,
+    SwapFailed = 325,
+    PinTooShort = 326,
+    PinTooLong = 327,
 
     // InternalError
     C2CError = 500,

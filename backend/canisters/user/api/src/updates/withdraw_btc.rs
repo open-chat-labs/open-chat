@@ -2,7 +2,7 @@ use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{Milliseconds, PinNumberWrapper};
+use types::PinNumberWrapper;
 
 #[ts_export(user, withdraw_btc)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -16,11 +16,5 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(u64), // The block index of the ckBTC burn transaction
-    ApproveError(String),
-    RetrieveBtcError(String),
-    PinRequired,
-    PinIncorrect(Milliseconds),
-    TooManyFailedPinAttempts(Milliseconds),
-    InternalError(String),
     Error(OCError),
 }
