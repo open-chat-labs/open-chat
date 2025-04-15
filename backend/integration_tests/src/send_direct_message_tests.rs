@@ -79,9 +79,9 @@ fn text_too_long_fails() {
     };
     let response = client::user::send_message_v2(env, user1.principal, user1.canister(), &send_message_args);
     if !matches!(&response, user_canister::send_message_v2::Response::Error(e)
-        if e.matches_code(OCErrorCode::TextTooLong) && e.message().is_some_and(|m| m.contains("10000")))
+        if e.matches_code(OCErrorCode::InvalidMessageContent) && e.message().is_some_and(|m| m.contains("10000")))
     {
-        panic!("SendMessage was expected to return TextTooLong(10000) but did not: {response:?}");
+        panic!("SendMessage was expected to return InvalidMessageContent but did not: {response:?}");
     }
 }
 
