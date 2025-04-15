@@ -1,6 +1,7 @@
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
 use crate::{client, TestEnv};
+use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::random_from_u128;
@@ -48,8 +49,9 @@ fn empty_message_fails() {
         correlation_id: 0,
     };
     let response = client::user::send_message_v2(env, user1.principal, user1.canister(), &send_message_args);
-    if !matches!(response, user_canister::send_message_v2::Response::MessageEmpty) {
-        panic!("SendMessage was expected to return MessageEmpty but did not: {response:?}");
+    if !matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InvalidMessageContent))
+    {
+        panic!("SendMessage was expected to return InvalidMessageContent but did not: {response:?}");
     }
 }
 
@@ -76,7 +78,9 @@ fn text_too_long_fails() {
         correlation_id: 0,
     };
     let response = client::user::send_message_v2(env, user1.principal, user1.canister(), &send_message_args);
-    if !matches!(response, user_canister::send_message_v2::Response::TextTooLong(10000)) {
+    if !matches!(&response, user_canister::send_message_v2::Response::Error(e)
+        if e.matches_code(OCErrorCode::TextTooLong) && e.message() == Some("10000"))
+    {
         panic!("SendMessage was expected to return TextTooLong(10000) but did not: {response:?}");
     }
 }
