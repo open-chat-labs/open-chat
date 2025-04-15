@@ -27,6 +27,7 @@ ic-stable-structures = { workspace = true }
 identity_canister = { path = "../api" }
 identity_utils = { path = "../../../libraries/identity_utils" }
 msgpack = { path = "../../../libraries/msgpack" }
+oc_error_codes = { path = "../../../libraries/error_codes" }
 rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
@@ -34,5 +35,7 @@ sha256 = { path = "../../../libraries/sha256" }
 stable_memory = { path = "../../../libraries/stable_memory" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
+user_index_canister = { path = "../../user_index/api" }
+user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }
 utils = { path = "../../../libraries/utils" }
 x509-parser = { workspace = true }

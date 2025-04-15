@@ -152,6 +152,7 @@ pub enum OCErrorCode {
     PollOptionNotFound = 308,
     CannotChangeVote = 309,
     AlreadyImportingIntoAnotherCommunity = 310,
+    InvalidSignature = 311,
 
     // InternalError
     C2CError = 500,

@@ -16,6 +16,14 @@ pub fn caller_is_governance_principal() -> Result<(), String> {
     }
 }
 
+pub fn caller_is_identity_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_identity_canister()) {
+        Ok(())
+    } else {
+        Err("Caller is not the Identity canister".to_string())
+    }
+}
+
 pub fn caller_is_registry_canister() -> Result<(), String> {
     if read_state(|state| state.is_caller_registry_canister()) {
         Ok(())
