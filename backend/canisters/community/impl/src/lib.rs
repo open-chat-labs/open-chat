@@ -107,6 +107,27 @@ impl RuntimeState {
         self.data.video_call_operators.iter().any(|o| *o == caller)
     }
 
+    pub fn get_caller_user_id(&self) -> Result<UserId, OCErrorCode> {
+        let caller = self.env.caller();
+        if caller == self.data.user_index_canister_id {
+            Ok(OPENCHAT_BOT_USER_ID)
+        } else {
+            self.data
+                .members
+                .lookup_user_id(caller)
+                .ok_or(OCErrorCode::InitiatorNotInCommunity)
+        }
+    }
+
+    pub fn get_calling_member(&self, verify: bool) -> Result<CommunityMemberInternal, OCErrorCode> {
+        let caller = self.env.caller();
+        let member = self.data.members.get(caller).ok_or(OCErrorCode::InitiatorNotInCommunity)?;
+        if verify {
+            member.verify()?;
+        }
+        Ok(member)
+    }
+
     pub fn push_notification(&mut self, sender: Option<UserId>, recipients: Vec<UserId>, notification: Notification) {
         if !recipients.is_empty() {
             self.data.notifications_queue.push(IdempotentEnvelope {
@@ -157,7 +178,7 @@ impl RuntimeState {
                 .channels_for_member(m.user_id)
                 .iter()
                 .filter_map(|c| self.data.channels.get(c))
-                .filter_map(|c| c.summary(Some(m.user_id), true, data.is_public.value, &data.members))
+                .filter_map(|c| c.summary(Some(m.user_id), data.is_public.value, &data.members))
                 .collect();
 
             (channels, Some(membership))
@@ -168,7 +189,7 @@ impl RuntimeState {
                 .channels
                 .public_channels()
                 .iter()
-                .filter_map(|c| c.summary(None, false, data.is_public.value, &data.members))
+                .filter_map(|c| c.summary(None, data.is_public.value, &data.members))
                 .collect();
 
             (channels, None)
@@ -274,7 +295,7 @@ impl RuntimeState {
     }
 
     pub fn notify_user_of_achievement(&mut self, user_id: UserId, achievement: Achievement, now: TimestampMillis) {
-        if self.data.achievements.award(user_id, achievement).is_some() {
+        if !self.data.members.bots().contains_key(&user_id) && self.data.achievements.award(user_id, achievement).is_some() {
             self.push_event_to_user(user_id, CommunityCanisterEvent::Achievement(achievement), now);
         }
     }
@@ -407,18 +428,7 @@ struct Data {
     bot_api_keys: BotApiKeys,
     verified: Timestamped<bool>,
     idempotency_checker: IdempotencyChecker,
-    #[serde(default = "default_notifications_queue")]
     notifications_queue: BatchedTimerJobQueue<NotificationsBatch>,
-}
-
-fn default_notifications_queue() -> BatchedTimerJobQueue<NotificationsBatch> {
-    BatchedTimerJobQueue::new(
-        NotificationPusherState {
-            notifications_canister: CanisterId::anonymous(),
-            authorizer: CanisterId::anonymous(),
-        },
-        false,
-    )
 }
 
 impl Data {
@@ -552,6 +562,14 @@ impl Data {
             || self.members.get(caller).is_some()
             || self.is_invited(caller)
             || self.is_invite_code_valid(invite_code)
+    }
+
+    pub fn verify_is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> Result<(), OCErrorCode> {
+        if self.is_accessible(caller, invite_code) {
+            Ok(())
+        } else {
+            Err(OCErrorCode::InitiatorNotInCommunity)
+        }
     }
 
     pub fn is_invited(&self, caller: Principal) -> bool {

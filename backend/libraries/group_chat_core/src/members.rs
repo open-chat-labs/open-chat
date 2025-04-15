@@ -667,6 +667,16 @@ impl GroupMemberInternal {
         self.latest_proposal_vote_removed > since
     }
 
+    pub fn verify(&self) -> Result<(), OCErrorCode> {
+        if self.suspended.value {
+            Err(OCErrorCode::InitiatorSuspended)
+        } else if self.lapsed.value {
+            Err(OCErrorCode::InitiatorLapsed)
+        } else {
+            Ok(())
+        }
+    }
+
     fn prune_proposal_votes(&mut self, now: TimestampMillis) -> u32 {
         let cutoff = calculate_summary_updates_data_removal_cutoff(now);
         let still_valid = self.proposal_votes.split_off(&(cutoff, 0.into()));

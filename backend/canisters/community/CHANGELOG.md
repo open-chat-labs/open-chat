@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Notify Communities when user deleted ([#7781](https://github.com/open-chat-labs/open-chat/pull/7781))
+
+### Changed
+
+- Switch more canister endpoints over to the new `OCError` response type ([#7793](https://github.com/open-chat-labs/open-chat/pull/7793))
+
+### Removed
+
+- Remove response types that are no longer used ([#7788](https://github.com/open-chat-labs/open-chat/pull/7788))
+
+## [[2.0.1700](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1700-community)] - 2025-04-11
+
+### Fixed
+
+- Fix check for if user can leave community ([#7783](https://github.com/open-chat-labs/open-chat/pull/7783))
+
+## [[2.0.1699](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1699-community)] - 2025-04-10
+
 ### Changed
 
 - Increase timeout of bounded-wait calls to 5 minutes ([#7730](https://github.com/open-chat-labs/open-chat/pull/7730))

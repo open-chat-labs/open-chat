@@ -26,12 +26,9 @@ fn messages_by_message_index_impl(args: Args, state: &RuntimeState) -> OCResult<
     }
 
     let events_caller = user_id.map_or(EventsCaller::Unknown, EventsCaller::User);
+    let channel = state.data.channels.get_or_err(&args.channel_id)?;
 
-    if let Some(channel) = state.data.channels.get(&args.channel_id) {
-        channel
-            .chat
-            .messages_by_message_index(events_caller, args.thread_root_message_index, args.messages)
-    } else {
-        Err(OCErrorCode::ChatNotFound.into())
-    }
+    channel
+        .chat
+        .messages_by_message_index(events_caller, args.thread_root_message_index, args.messages)
 }

@@ -5,6 +5,7 @@ import {
     DelegationChain,
     DelegationIdentity,
     ECDSAKeyIdentity,
+    type JsonnableDelegationChain,
     WebAuthnIdentity,
 } from "@dfinity/identity";
 import DRange from "drange";
@@ -275,7 +276,7 @@ import { LiveState } from "./liveState";
 import { snapshot } from "./snapshot.svelte";
 import { app } from "./state/app.svelte";
 import { botState } from "./state/bots.svelte";
-import { communityLocalUpdates, type CommunityMergedState } from "./state/community.svelte";
+import { communityLocalUpdates, type CommunityMergedState } from "./state/community_details";
 import type { IReadonlyMap } from "./state/map";
 import { pathState, type RouteParams } from "./state/path.svelte";
 import { ui } from "./state/ui.svelte";
@@ -625,7 +626,7 @@ export class OpenChat {
         });
     }
 
-    deleteCurrentUser(delegation: DelegationChain): Promise<boolean> {
+    deleteCurrentUser(delegation: JsonnableDelegationChain): Promise<boolean> {
         if (!this.#liveState.anonUser) {
             return this.#sendRequest({
                 kind: "deleteUser",

@@ -32,8 +32,8 @@ fn summary_updates_impl(
         state.env.caller()
     };
 
-    if !state.data.is_accessible(caller, invite_code) {
-        return PrivateCommunity;
+    if let Err(error) = state.data.verify_is_accessible(caller, invite_code) {
+        return Error(error.into());
     }
 
     let member = state.data.members.get(caller);
@@ -93,24 +93,15 @@ fn summary_updates_impl(
     let mut channels_updated = Vec::new();
 
     let user_id = member.as_ref().map(|m| m.user_id);
-    let is_community_member = member.is_some();
 
     for channel in channels_with_updates {
         if channel.date_imported.is_some_and(|ts| ts > updates_since) {
-            if let Some(summary) =
-                channel.summary(user_id, is_community_member, state.data.is_public.value, &state.data.members)
-            {
+            if let Some(summary) = channel.summary(user_id, state.data.is_public.value, &state.data.members) {
                 last_updated = max(last_updated, summary.last_updated);
                 channels_added.push(summary);
             }
         } else {
-            match channel.summary_updates(
-                user_id,
-                updates_since,
-                is_community_member,
-                state.data.is_public.value,
-                &state.data.members,
-            ) {
+            match channel.summary_updates(user_id, updates_since, state.data.is_public.value, &state.data.members) {
                 ChannelUpdates::Added(s) => {
                     last_updated = max(last_updated, s.last_updated);
                     channels_added.push(s)

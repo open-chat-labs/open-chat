@@ -2,7 +2,6 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::unfollow_thread::{Response::*, *};
-use oc_error_codes::OCErrorCode;
 use types::OCResult;
 
 #[update(msgpack = true)]
@@ -20,12 +19,7 @@ fn unfollow_thread(args: Args) -> Response {
 fn unfollow_thread_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-    let user_id = match state.data.lookup_user_id(caller) {
-        Some(uid) => uid,
-        None => return Err(OCErrorCode::InitiatorNotInChat.into()),
-    };
-
+    let user_id = state.get_caller_user_id()?;
     let now = state.env.now();
     state
         .data

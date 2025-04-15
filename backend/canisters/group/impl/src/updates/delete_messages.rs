@@ -6,7 +6,6 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use group_canister::delete_messages::{Response::*, *};
-use oc_error_codes::OCErrorCode;
 use types::{Achievement, CanisterId, OCResult, UserId};
 use user_index_canister_c2c_client::lookup_user;
 
@@ -19,7 +18,6 @@ async fn delete_messages(args: Args) -> Response {
         caller,
         user_id,
         user_index_canister_id,
-        is_bot,
     } = match read_state(prepare) {
         Ok(ok) => ok,
         Err(response) => return Error(response),
@@ -27,13 +25,13 @@ async fn delete_messages(args: Args) -> Response {
 
     if args.as_platform_moderator.unwrap_or_default() && caller != user_index_canister_id {
         match lookup_user(caller, user_index_canister_id).await {
-            Ok(u) if u.is_platform_moderator => {}
+            Ok(Some(u)) if u.is_platform_moderator => {}
             Ok(_) => return NotPlatformModerator,
             Err(error) => return InternalError(format!("{error:?}")),
         }
     }
 
-    if let Err(error) = mutate_state(|state| delete_messages_impl(user_id, is_bot, args, state)) {
+    if let Err(error) = mutate_state(|state| delete_messages_impl(user_id, args, state)) {
         Error(error)
     } else {
         Success
@@ -44,29 +42,29 @@ struct PrepareResult {
     caller: Principal,
     user_id: UserId,
     user_index_canister_id: CanisterId,
-    is_bot: bool,
 }
 
 fn prepare(state: &RuntimeState) -> OCResult<PrepareResult> {
-    let caller = state.env.caller();
-    let (user_id, is_bot) =
-        if let Some((user_id, is_bot)) = state.data.get_member(caller).map(|m| (m.user_id(), m.user_type().is_bot())) {
-            (user_id, is_bot)
-        } else if caller == state.data.user_index_canister_id {
-            (OPENCHAT_BOT_USER_ID, true)
-        } else {
-            return Err(OCErrorCode::InitiatorNotInChat.into());
-        };
+    let user_id = match state.get_caller_user_id() {
+        Ok(u) => u,
+        Err(error) => {
+            let caller = state.env.caller();
+            if caller == state.data.user_index_canister_id {
+                OPENCHAT_BOT_USER_ID
+            } else {
+                return Err(error.into());
+            }
+        }
+    };
 
     Ok(PrepareResult {
-        caller,
+        caller: state.env.caller(),
         user_id,
         user_index_canister_id: state.data.user_index_canister_id,
-        is_bot,
     })
 }
 
-fn delete_messages_impl(user_id: UserId, is_bot: bool, args: Args, state: &mut RuntimeState) -> OCResult {
+fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
     let now = state.env.now();
@@ -101,7 +99,7 @@ fn delete_messages_impl(user_id: UserId, is_bot: bool, args: Args, state: &mut R
         );
     }
 
-    if args.new_achievement && !is_bot {
+    if args.new_achievement {
         state.notify_user_of_achievement(user_id, Achievement::DeletedMessage, now);
     }
 

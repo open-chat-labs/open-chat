@@ -2,6 +2,7 @@ use super::members::CommunityMembers;
 use chat_events::Reader;
 use group_chat_core::{GroupChatCore, GroupMemberInternal};
 use installed_bots::BotApiKeys;
+use oc_error_codes::OCErrorCode;
 use rand::rngs::StdRng;
 use rand::{Rng, RngCore};
 use search::weighted::*;
@@ -94,8 +95,16 @@ impl Channels {
         self.channels.get(channel_id)
     }
 
+    pub fn get_or_err(&self, channel_id: &ChannelId) -> Result<&Channel, OCErrorCode> {
+        self.get(channel_id).ok_or(OCErrorCode::ChatNotFound)
+    }
+
     pub fn get_mut(&mut self, channel_id: &ChannelId) -> Option<&mut Channel> {
         self.channels.get_mut(channel_id)
+    }
+
+    pub fn get_mut_or_err(&mut self, channel_id: &ChannelId) -> Result<&mut Channel, OCErrorCode> {
+        self.get_mut(channel_id).ok_or(OCErrorCode::ChatNotFound)
     }
 
     pub fn public_channel_ids(&self) -> Vec<ChannelId> {
@@ -116,7 +125,9 @@ impl Channels {
     }
 
     pub fn can_leave_all_channels(&self, user_id: UserId) -> bool {
-        self.channels.values().all(|c| c.chat.can_leave(user_id).is_ok())
+        self.channels
+            .values()
+            .all(|c| !c.chat.members.contains(&user_id) || c.chat.can_leave(user_id).is_ok())
     }
 
     pub fn leave_all_channels(&mut self, user_id: UserId, now: TimestampMillis) -> HashMap<ChannelId, GroupMemberInternal> {
@@ -252,11 +263,11 @@ impl Channel {
     pub fn summary(
         &self,
         user_id: Option<UserId>,
-        is_community_member: bool,
         is_public_community: bool,
         community_members: &CommunityMembers,
     ) -> Option<CommunityCanisterChannelSummary> {
         let chat = &self.chat;
+        let is_community_member = user_id.is_some_and(|user_id| community_members.contains(&user_id));
         let member = user_id.and_then(|user_id| chat.members.get(&user_id));
 
         let (min_visible_event_index, min_visible_message_index, is_invited) = if let Some(member) = &member {
@@ -359,17 +370,17 @@ impl Channel {
         &self,
         user_id: Option<UserId>,
         since: TimestampMillis,
-        is_community_member: bool,
         is_public_community: bool,
         community_members: &CommunityMembers,
     ) -> ChannelUpdates {
         let chat = &self.chat;
+        let is_community_member = user_id.is_some_and(|user_id| community_members.contains(&user_id));
         let member = user_id.and_then(|id| chat.members.get(&id));
 
         if let Some(m) = &member {
             if m.date_added() > since {
                 return ChannelUpdates::Added(
-                    self.summary(user_id, is_community_member, is_public_community, community_members)
+                    self.summary(user_id, is_public_community, community_members)
                         .expect("Channel should be accessible"),
                 );
             }

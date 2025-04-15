@@ -26,9 +26,9 @@ async fn delete_messages(args: Args) -> Response {
 
     if args.as_platform_moderator.unwrap_or_default() && caller != user_index_canister_id {
         match lookup_user(caller, user_index_canister_id).await {
-            Ok(u) if u.is_platform_moderator => {}
-            Ok(_) => return NotPlatformModerator,
-            Err(error) => return InternalError(format!("{error:?}")),
+            Ok(Some(u)) if u.is_platform_moderator => {}
+            Ok(_) => return Error(OCErrorCode::InitiatorNotAuthorized.into()),
+            Err(error) => return Error(error.into()),
         }
     }
 
@@ -100,13 +100,7 @@ fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -
         );
     }
 
-    if args.new_achievement
-        && state
-            .data
-            .members
-            .get_by_user_id(&user_id)
-            .is_some_and(|m| !m.user_type.is_bot())
-    {
+    if args.new_achievement {
         state.notify_user_of_achievement(user_id, Achievement::DeletedMessage, now);
     }
 

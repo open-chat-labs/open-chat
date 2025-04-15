@@ -36,16 +36,13 @@ fn events_window_impl(
 
     let caller = on_behalf_of.unwrap_or_else(|| state.env.caller());
     let events_caller = state.data.get_caller_for_events(caller, args.channel_id, bot_initiator)?;
+    let channel = state.data.channels.get_or_err(&args.channel_id)?;
 
-    if let Some(channel) = state.data.channels.get(&args.channel_id) {
-        channel.chat.events_window(
-            events_caller,
-            args.thread_root_message_index,
-            args.mid_point,
-            args.max_messages,
-            args.max_events,
-        )
-    } else {
-        Err(OCErrorCode::ChatNotFound.into())
-    }
+    channel.chat.events_window(
+        events_caller,
+        args.thread_root_message_index,
+        args.mid_point,
+        args.max_messages,
+        args.max_events,
+    )
 }

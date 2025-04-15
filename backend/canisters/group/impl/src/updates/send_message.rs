@@ -57,7 +57,7 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
             BotPermissions::from_message_permission((&args.content).into()),
         )
     }) {
-        return c2c_bot_send_message::Response::NotAuthorized;
+        return c2c_bot_send_message::Response::Error(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
     match mutate_state(|state| send_message_impl(args, Some(bot_caller), finalised, state)) {
@@ -72,9 +72,8 @@ pub(crate) fn send_message_impl(
     finalised: bool,
     state: &mut RuntimeState,
 ) -> OCResult<SuccessResult> {
-    if state.data.is_frozen() {
-        return Err(OCErrorCode::ChatFrozen.into());
-    }
+    state.data.verify_not_frozen()?;
+
     if state.data.chat.external_url.is_some() {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }

@@ -6,8 +6,9 @@ use canister_tracing_macros::trace;
 use group_canister::change_role::*;
 use group_chat_core::GroupRoleInternal;
 use group_community_common::ExpiringMember;
+use oc_error_codes::OCErrorCode;
 use types::{CanisterId, GroupRole, OCResult, UserId};
-use user_index_canister_c2c_client::{lookup_user, LookupUserError};
+use user_index_canister_c2c_client::lookup_user;
 
 #[update(msgpack = true)]
 #[trace]
@@ -34,7 +35,7 @@ async fn change_role(args: Args) -> Response {
     if lookup_caller || lookup_target {
         let user_id = if lookup_caller { caller_id } else { args.user_id };
         match lookup_user(user_id.into(), user_index_canister_id).await {
-            Ok(user) => {
+            Ok(Some(user)) => {
                 if user.is_platform_moderator {
                     if lookup_caller {
                         is_caller_platform_moderator = true;
@@ -43,8 +44,8 @@ async fn change_role(args: Args) -> Response {
                     }
                 }
             }
-            Err(LookupUserError::UserNotFound) => return NotAuthorized,
-            Err(LookupUserError::InternalError(error)) => return InternalError(error),
+            Ok(_) => return Error(OCErrorCode::InitiatorNotAuthorized.into()),
+            Err(error) => return Error(error.into()),
         };
     }
 
@@ -71,8 +72,8 @@ struct PrepareResult {
 }
 
 fn prepare(user_id: UserId, state: &RuntimeState) -> OCResult<PrepareResult> {
-    let caller = state.env.caller();
-    let member = state.data.get_verified_member(caller)?;
+    let member = state.get_calling_member(true)?;
+
     Ok(PrepareResult {
         caller_id: member.user_id(),
         user_index_canister_id: state.data.user_index_canister_id,

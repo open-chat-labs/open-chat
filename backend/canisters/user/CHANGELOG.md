@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Notify Groups/Communities when user deleted ([#7781](https://github.com/open-chat-labs/open-chat/pull/7781))
+
 ### Changed
 
 - Push CHIT event for each streak insurance claim ([#7728](https://github.com/open-chat-labs/open-chat/pull/7728))

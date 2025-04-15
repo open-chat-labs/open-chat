@@ -21,8 +21,7 @@ fn edit_message(args: Args) -> Response {
 fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-    let member = state.data.members.get_verified_member(caller)?;
+    let member = state.get_calling_member(true)?;
     let now = state.env.now();
 
     let Some(channel) = state.data.channels.get_mut(&args.channel_id) else {
@@ -46,7 +45,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         Some(&mut state.data.event_store_client),
     )?;
 
-    if args.new_achievement && !member.user_type.is_bot() {
+    if args.new_achievement {
         state.notify_user_of_achievement(sender, Achievement::EditedMessage, now);
     }
 

@@ -1,6 +1,7 @@
 use crate::env::ENV;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
+use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use testing::rng::random_string;
@@ -23,6 +24,38 @@ fn leave_community_succeeds() {
     } = init_test_data(env, canister_ids, *controller, true);
 
     client::community::happy_path::join_community(env, user2.principal, community_id);
+
+    env.tick();
+
+    client::user::happy_path::leave_community(env, &user2, community_id);
+
+    env.tick();
+
+    let initial_state = client::user::happy_path::initial_state(env, &user2);
+
+    assert!(initial_state.communities.summaries.is_empty())
+}
+
+#[test]
+fn leave_community_succeeds_when_not_in_all_channels() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData {
+        user1,
+        user2,
+        community_id,
+    } = init_test_data(env, canister_ids, *controller, true);
+
+    let channel_id = client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
+
+    client::community::happy_path::join_community(env, user2.principal, community_id);
+    client::community::happy_path::leave_channel(env, user2.principal, community_id, channel_id);
 
     env.tick();
 
@@ -62,7 +95,7 @@ fn cannot_leave_community_if_last_owner() {
 
     assert!(matches!(
         leave_community_response,
-        user_canister::leave_community::Response::LastOwnerCannotLeave
+        user_canister::leave_community::Response::Error(e) if e.matches_code(OCErrorCode::LastOwnerCannotLeave)
     ));
 
     let initial_state = client::user::happy_path::initial_state(env, &user1);
@@ -99,7 +132,7 @@ fn cannot_leave_community_if_last_owner_of_a_channel() {
 
     assert!(matches!(
         leave_community_response,
-        user_canister::leave_community::Response::LastOwnerCannotLeave
+        user_canister::leave_community::Response::Error(e) if e.matches_code(OCErrorCode::LastOwnerCannotLeave)
     ));
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);

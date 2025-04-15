@@ -8,9 +8,10 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::remove_member::{Response::*, *};
 use fire_and_forget_handler::FireAndForgetHandler;
-use local_user_index_canister_c2c_client::{lookup_user, LookupUserError};
+use local_user_index_canister_c2c_client::lookup_user;
 use msgpack::serialize_then_unwrap;
-use types::{CanisterId, CommunityMembersRemoved, CommunityRole, CommunityUsersBlocked, UserId};
+use oc_error_codes::OCErrorCode;
+use types::{CanisterId, CommunityMembersRemoved, CommunityRole, CommunityUsersBlocked, OCResult, UserId};
 use user_canister::c2c_remove_from_community;
 
 #[update(msgpack = true)]
@@ -37,7 +38,7 @@ async fn remove_member_impl(user_id: UserId, block: bool) -> Response {
     // Check the caller can remove the user
     let prepare_result = match read_state(|state| prepare(user_id, block, state)) {
         Ok(ok) => ok,
-        Err(response) => return response,
+        Err(error) => return Error(error),
     };
 
     // If the user is an owner of the community then call the local_user_index
@@ -45,9 +46,9 @@ async fn remove_member_impl(user_id: UserId, block: bool) -> Response {
     // is not authorized
     if prepare_result.is_user_to_remove_an_owner {
         match lookup_user(user_id.into(), prepare_result.local_user_index_canister_id).await {
-            Ok(user) if !user.is_platform_moderator => (),
-            Ok(_) | Err(LookupUserError::UserNotFound) => return NotAuthorized,
-            Err(LookupUserError::InternalError(error)) => return InternalError(error),
+            Ok(Some(user)) if !user.is_platform_moderator => (),
+            Ok(_) => return Error(OCErrorCode::InitiatorNotAuthorized.into()),
+            Err(error) => return Error(error.into()),
         }
     }
 
@@ -63,48 +64,37 @@ struct PrepareResult {
     is_user_to_remove_an_owner: bool,
 }
 
-fn prepare(user_id: UserId, block: bool, state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if state.data.is_frozen() {
-        return Err(CommunityFrozen);
-    }
+fn prepare(user_id: UserId, block: bool, state: &RuntimeState) -> OCResult<PrepareResult> {
+    state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-
-    if let Some(member) = state.data.members.get(caller) {
-        if member.suspended().value {
-            Err(UserSuspended)
-        } else if member.lapsed().value {
-            Err(UserLapsed)
-        } else if member.user_id == user_id {
-            Err(CannotRemoveSelf)
-        } else {
-            let user_to_remove_role = match state.data.members.get_by_user_id(&user_id) {
-                Some(member_to_remove) => member_to_remove.role(),
-                None if block => {
-                    if state.data.members.is_blocked(&user_id) {
-                        return Err(Success);
-                    }
-                    CommunityRole::Member
-                }
-                None => return Err(TargetUserNotInCommunity),
-            };
-
-            // Check if the caller is authorized to remove the user
-            if member
-                .role()
-                .can_remove_members_with_role(user_to_remove_role, &state.data.permissions)
-            {
-                Ok(PrepareResult {
-                    removed_by: member.user_id,
-                    local_user_index_canister_id: state.data.local_user_index_canister_id,
-                    is_user_to_remove_an_owner: user_to_remove_role.is_owner(),
-                })
-            } else {
-                return Err(NotAuthorized);
-            }
-        }
+    let member = state.get_calling_member(true)?;
+    if member.user_id == user_id {
+        Err(OCErrorCode::CannotRemoveSelf.into())
     } else {
-        Err(UserNotInCommunity)
+        let user_to_remove_role = match state.data.members.get_by_user_id(&user_id) {
+            Some(member_to_remove) => member_to_remove.role(),
+            None if block => {
+                if state.data.members.is_blocked(&user_id) {
+                    return Err(OCErrorCode::NoChange.into());
+                }
+                CommunityRole::Member
+            }
+            None => return Err(OCErrorCode::TargetUserNotInCommunity.into()),
+        };
+
+        // Check if the caller is authorized to remove the user
+        if member
+            .role()
+            .can_remove_members_with_role(user_to_remove_role, &state.data.permissions)
+        {
+            Ok(PrepareResult {
+                removed_by: member.user_id,
+                local_user_index_canister_id: state.data.local_user_index_canister_id,
+                is_user_to_remove_an_owner: user_to_remove_role.is_owner(),
+            })
+        } else {
+            Err(OCErrorCode::InitiatorNotAuthorized.into())
+        }
     }
 }
 

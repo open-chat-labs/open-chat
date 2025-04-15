@@ -6,6 +6,7 @@ use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use chat_events::ChatEventInternal;
 use itertools::Itertools;
+use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix};
 use std::ops::Deref;
@@ -119,7 +120,7 @@ fn not_group_owner_returns_unauthorized() {
 
     assert!(matches!(
         convert_into_community_response,
-        group_canister::convert_into_community::Response::NotAuthorized
+        group_canister::convert_into_community::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)
     ));
 }
 

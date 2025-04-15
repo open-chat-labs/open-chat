@@ -3,11 +3,13 @@ use crate::guards::caller_is_local_group_index;
 use crate::model::events::CommunityEventInternal;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
+use canister_time::now_millis;
 use canister_tracing_macros::trace;
 use community_canister::c2c_local_group_index::*;
 use community_canister::LocalGroupIndexEvent;
 use constants::OPENCHAT_BOT_USER_ID;
-use types::{GroupNameChanged, Timestamped};
+use std::cell::LazyCell;
+use types::{GroupNameChanged, TimestampMillis, Timestamped};
 
 #[update(guard = "caller_is_local_group_index", msgpack = true)]
 #[trace]
@@ -18,21 +20,24 @@ fn c2c_local_group_index(args: Args) -> Response {
 }
 
 fn c2c_local_group_index_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let now = LazyCell::new(now_millis);
     for event in args.events {
         if state.data.idempotency_checker.check(
             state.data.local_group_index_canister_id,
             event.created_at,
             event.idempotency_id,
         ) {
-            process_event(event.value, state);
+            process_event(event.value, &now, state);
         }
     }
     Response::Success
 }
 
-fn process_event(event: LocalGroupIndexEvent, state: &mut RuntimeState) {
-    let now = state.env.now();
-
+fn process_event<F: FnOnce() -> TimestampMillis>(
+    event: LocalGroupIndexEvent,
+    now: &LazyCell<TimestampMillis, F>,
+    state: &mut RuntimeState,
+) {
     match event {
         LocalGroupIndexEvent::NameChanged(ev) => {
             state.data.events.push_event(
@@ -41,13 +46,19 @@ fn process_event(event: LocalGroupIndexEvent, state: &mut RuntimeState) {
                     previous_name: state.data.name.value.clone(),
                     changed_by: OPENCHAT_BOT_USER_ID,
                 })),
-                now,
+                **now,
             );
 
-            state.data.name = Timestamped::new(ev.name, now);
+            state.data.name = Timestamped::new(ev.name, **now);
         }
         LocalGroupIndexEvent::VerifiedChanged(ev) => {
-            state.data.verified = Timestamped::new(ev.verified, now);
+            state.data.verified = Timestamped::new(ev.verified, **now);
+        }
+        LocalGroupIndexEvent::UserDeleted(user_id) => {
+            for channel in state.data.channels.iter_mut() {
+                channel.chat.members.remove(user_id, **now);
+            }
+            state.data.members.remove(user_id, None, **now);
         }
     }
 

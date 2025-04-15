@@ -111,6 +111,23 @@ impl RuntimeState {
         }
     }
 
+    pub fn get_caller_user_id(&self) -> Result<UserId, OCErrorCode> {
+        let caller = self.env.caller();
+        self.data
+            .principal_to_user_id_map
+            .get(&caller)
+            .ok_or(OCErrorCode::InitiatorNotInChat)
+    }
+
+    pub fn get_calling_member(&self, verify: bool) -> Result<GroupMemberInternal, OCErrorCode> {
+        let caller = self.env.caller();
+        let member = self.data.get_member(caller).ok_or(OCErrorCode::InitiatorNotInChat)?;
+        if verify {
+            member.verify()?;
+        }
+        Ok(member)
+    }
+
     pub fn push_notification(&mut self, sender: Option<UserId>, recipients: Vec<UserId>, notification: Notification) {
         if !recipients.is_empty() {
             self.data.notifications_queue.push(IdempotentEnvelope {
@@ -222,13 +239,14 @@ impl RuntimeState {
         result
     }
 
-    pub fn start_importing_into_community(&mut self, community: CommunityBeingImportedInto) -> StartImportIntoCommunityResult {
-        use StartImportIntoCommunityResult::*;
-
+    pub fn start_importing_into_community(
+        &mut self,
+        community: CommunityBeingImportedInto,
+    ) -> OCResult<StartImportIntoCommunityResultSuccess> {
         if self.data.community_being_imported_into.is_some() && self.data.is_frozen() {
-            AlreadyImportingToAnotherCommunity
+            Err(OCErrorCode::AlreadyImportingIntoAnotherCommunity.into())
         } else if self.data.is_frozen() {
-            ChatFrozen
+            Err(OCErrorCode::ChatFrozen.into())
         } else {
             let transfers_required = self.prepare_transfers_for_import_into_community();
             let serialized = serialize_then_unwrap(&self.data.chat);
@@ -248,7 +266,7 @@ impl RuntimeState {
                 self,
             );
 
-            Success(StartImportIntoCommunityResultSuccess {
+            Ok(StartImportIntoCommunityResultSuccess {
                 total_bytes,
                 transfers_required,
             })
@@ -349,7 +367,8 @@ impl RuntimeState {
     }
 
     pub fn notify_user_of_achievement(&mut self, user_id: UserId, achievement: Achievement, now: TimestampMillis) {
-        if self.data.achievements.award(user_id, achievement).is_some() {
+        if !self.data.chat.members.bots().contains_key(&user_id) && self.data.achievements.award(user_id, achievement).is_some()
+        {
             self.push_event_to_user(user_id, GroupCanisterEvent::Achievement(achievement), now);
         }
     }
@@ -486,18 +505,7 @@ struct Data {
     pub bots: InstalledBots,
     pub bot_api_keys: BotApiKeys,
     idempotency_checker: IdempotencyChecker,
-    #[serde(default = "default_notifications_queue")]
     notifications_queue: BatchedTimerJobQueue<NotificationsBatch>,
-}
-
-fn default_notifications_queue() -> BatchedTimerJobQueue<NotificationsBatch> {
-    BatchedTimerJobQueue::new(
-        NotificationPusherState {
-            notifications_canister: CanisterId::anonymous(),
-            authorizer: CanisterId::anonymous(),
-        },
-        false,
-    )
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -626,20 +634,6 @@ impl Data {
             .unwrap_or(user_id_or_principal.into());
 
         self.chat.members.get(&user_id)
-    }
-
-    pub fn get_verified_member(&self, user_id_or_principal: Principal) -> Result<GroupMemberInternal, OCErrorCode> {
-        let Some(member) = self.get_member(user_id_or_principal) else {
-            return Err(OCErrorCode::InitiatorNotInChat);
-        };
-
-        if member.suspended().value {
-            Err(OCErrorCode::InitiatorSuspended)
-        } else if member.lapsed().value {
-            Err(OCErrorCode::InitiatorLapsed)
-        } else {
-            Ok(member)
-        }
     }
 
     pub fn is_frozen(&self) -> bool {
@@ -933,12 +927,6 @@ pub struct CanisterIds {
     pub proposals_bot: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub icp_ledger: CanisterId,
-}
-
-pub enum StartImportIntoCommunityResult {
-    Success(StartImportIntoCommunityResultSuccess),
-    AlreadyImportingToAnotherCommunity,
-    ChatFrozen,
 }
 
 pub struct StartImportIntoCommunityResultSuccess {

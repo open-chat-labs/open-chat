@@ -3,8 +3,7 @@ use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
-    AccessGateConfig, ChannelId, Document, FieldTooLongResult, FieldTooShortResult, Milliseconds, OptionUpdate,
-    OptionalGroupPermissions, UpdatedRules, Version,
+    AccessGateConfig, ChannelId, Document, Milliseconds, OptionUpdate, OptionalGroupPermissions, UpdatedRules, Version,
 };
 
 #[ts_export(community, update_channel)]
@@ -31,23 +30,6 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     SuccessV2(SuccessResult),
-    NotAuthorized,
-    UserNotInCommunity,
-    ChannelNotFound,
-    UserNotInChannel,
-    NameTooShort(FieldTooShortResult),
-    NameTooLong(FieldTooLongResult),
-    NameReserved,
-    DescriptionTooLong(FieldTooLongResult),
-    AvatarTooBig(FieldTooLongResult),
-    AccessGateInvalid,
-    NameTaken,
-    RulesTooLong(FieldTooLongResult),
-    RulesTooShort(FieldTooShortResult),
-    UserSuspended,
-    ExternalUrlInvalid,
-    CommunityFrozen,
-    UserLapsed,
     Error(OCError),
 }
 

@@ -2,7 +2,6 @@ use crate::{activity_notifications::handle_activity_notification, mutate_state, 
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::undelete_messages::{Response::*, *};
-use oc_error_codes::OCErrorCode;
 use std::collections::HashSet;
 use types::OCResult;
 
@@ -18,36 +17,30 @@ fn undelete_messages(args: Args) -> Response {
 }
 
 fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<SuccessResult> {
-    if state.data.is_frozen() {
-        return Err(OCErrorCode::CommunityFrozen.into());
-    }
+    state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-    let member = state.data.members.get_verified_member(caller)?;
-
+    let member = state.get_calling_member(true)?;
+    let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
     let now = state.env.now();
-    if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-        let messages = channel
-            .chat
-            .undelete_messages(member.user_id, args.thread_root_message_index, args.message_ids, now)?;
 
-        if !messages.is_empty() {
-            let message_ids: HashSet<_> = messages.iter().map(|m| m.message_id).collect();
-            state.data.timer_jobs.cancel_jobs(|job| {
-                if let TimerJob::HardDeleteMessageContent(j) = job {
-                    j.channel_id == args.channel_id
-                        && j.thread_root_message_index == args.thread_root_message_index
-                        && message_ids.contains(&j.message_id)
-                } else {
-                    false
-                }
-            });
+    let messages = channel
+        .chat
+        .undelete_messages(member.user_id, args.thread_root_message_index, args.message_ids, now)?;
 
-            handle_activity_notification(state);
-        }
+    if !messages.is_empty() {
+        let message_ids: HashSet<_> = messages.iter().map(|m| m.message_id).collect();
+        state.data.timer_jobs.cancel_jobs(|job| {
+            if let TimerJob::HardDeleteMessageContent(j) = job {
+                j.channel_id == args.channel_id
+                    && j.thread_root_message_index == args.thread_root_message_index
+                    && message_ids.contains(&j.message_id)
+            } else {
+                false
+            }
+        });
 
-        Ok(SuccessResult { messages })
-    } else {
-        Err(OCErrorCode::InitiatorNotInChat.into())
+        handle_activity_notification(state);
     }
+
+    Ok(SuccessResult { messages })
 }

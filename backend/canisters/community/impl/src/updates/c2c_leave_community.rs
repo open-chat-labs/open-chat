@@ -2,6 +2,8 @@ use crate::{activity_notifications::handle_activity_notification, mutate_state, 
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_leave_community::{Response::*, *};
+use oc_error_codes::OCErrorCode;
+use types::OCResult;
 
 // Called via the user's user canister
 #[update(msgpack = true)]
@@ -9,36 +11,33 @@ use community_canister::c2c_leave_community::{Response::*, *};
 fn c2c_leave_community(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| c2c_leave_community_impl(args, state))
+    if let Err(error) = mutate_state(|state| c2c_leave_community_impl(args, state)) {
+        Error(error)
+    } else {
+        Success
+    }
 }
 
-fn c2c_leave_community_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return CommunityFrozen;
-    }
+fn c2c_leave_community_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-    let now = state.env.now();
-
-    let member = match state.data.members.get(caller) {
-        Some(p) => p,
-        None => return UserNotInCommunity,
-    };
+    let member = state.get_calling_member(false)?;
 
     if member.suspended().value {
-        return UserSuspended;
+        return Err(OCErrorCode::InitiatorSuspended.into());
     }
 
     if (member.role().is_owner() && state.data.members.owners().len() <= 1)
         || !state.data.channels.can_leave_all_channels(member.user_id)
     {
-        return LastOwnerCannotLeave;
+        return Err(OCErrorCode::LastOwnerCannotLeave.into());
     }
 
+    let now = state.env.now();
     state
         .data
         .remove_user_from_community(member.user_id, Some(args.principal), now);
 
     handle_activity_notification(state);
-    Success
+    Ok(())
 }
