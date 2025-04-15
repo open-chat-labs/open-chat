@@ -1,7 +1,7 @@
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use group_canister::update_bot::{Response::*, *};
+use user_canister::update_bot::{Response::*, *};
 
 #[update(msgpack = true)]
 #[trace]

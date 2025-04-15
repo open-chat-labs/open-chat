@@ -5,6 +5,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::accept_p2p_swap::{Response::*, *};
 use icrc_ledger_types::icrc1::transfer::TransferError;
+use oc_error_codes::OCErrorCode;
 use types::{AcceptSwapSuccess, Achievement, Chat, EventIndex, MessageId, MessageIndex, OCResult, P2PSwapLocation, UserId};
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -76,10 +77,10 @@ async fn accept_p2p_swap(args: Args) -> Response {
                 })
             }
             Ok(user_canister::c2c_accept_p2p_swap::Response::TransferError(TransferError::InsufficientFunds { .. })) => {
-                InsufficientFunds
+                Error(OCErrorCode::InsufficientFunds.into())
             }
-            Ok(response) => InternalError(format!("{response:?}")),
-            Err(error) => InternalError(format!("{error:?}")),
+            Ok(response) => Error(OCErrorCode::Unknown.with_json(&response)),
+            Err(error) => Error(error.into()),
         };
 
     if !matches!(result, Success(_)) {

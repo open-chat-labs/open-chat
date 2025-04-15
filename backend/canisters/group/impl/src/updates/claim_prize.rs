@@ -42,7 +42,7 @@ async fn claim_prize(args: Args) -> Response {
         }
         Err(error) => {
             mutate_state(|state| rollback(args, prepare_result.user_id, prize_amount, false, state));
-            InternalError(format!("{error:?}"))
+            Error(error.into())
         }
     }
 }

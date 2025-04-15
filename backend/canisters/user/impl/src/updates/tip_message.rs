@@ -52,14 +52,6 @@ async fn tip_message(args: Args) -> Response {
             match group_canister_c2c_client::c2c_tip_message(group_id.into(), &c2c_args).await {
                 Ok(Response::Success) => Success,
                 Ok(Response::Error(error)) => Error(error),
-                Ok(Response::MessageNotFound) => MessageNotFound,
-                Ok(Response::CannotTipSelf) => CannotTipSelf,
-                Ok(Response::RecipientMismatch) => TransferNotToMessageSender,
-                Ok(Response::NotAuthorized) => NotAuthorized,
-                Ok(Response::GroupFrozen) => ChatFrozen,
-                Ok(Response::UserNotInGroup) => ChatNotFound,
-                Ok(Response::UserSuspended) => UserSuspended,
-                Ok(Response::UserLapsed) => UserLapsed,
                 Err(error) => {
                     mutate_state(|state| fire_and_forget_c2c_tip_message(group_id.into(), &c2c_args, state));
                     Retrying(format!("{error:?}"))
@@ -71,14 +63,6 @@ async fn tip_message(args: Args) -> Response {
             match community_canister_c2c_client::c2c_tip_message(community_id.into(), &c2c_args).await {
                 Ok(Response::Success) => Success,
                 Ok(Response::Error(error)) => Error(error),
-                Ok(Response::MessageNotFound) => MessageNotFound,
-                Ok(Response::CannotTipSelf) => CannotTipSelf,
-                Ok(Response::RecipientMismatch) => TransferNotToMessageSender,
-                Ok(Response::NotAuthorized) => NotAuthorized,
-                Ok(Response::CommunityFrozen) => ChatFrozen,
-                Ok(Response::UserSuspended) => UserSuspended,
-                Ok(Response::UserLapsed) => UserLapsed,
-                Ok(Response::UserNotInCommunity | Response::ChannelNotFound) => ChatNotFound,
                 Err(error) => {
                     mutate_state(|state| fire_and_forget_c2c_tip_message(community_id.into(), &c2c_args, state));
                     Retrying(format!("{error:?}"))

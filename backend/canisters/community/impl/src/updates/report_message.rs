@@ -26,12 +26,12 @@ async fn report_message(args: Args) -> Response {
 
             match result {
                 c2c_report_message::Response::Success => Success,
-                c2c_report_message::Response::AlreadyReported => AlreadyReported,
-                c2c_report_message::Response::InternalError(error) => InternalError(error),
+                c2c_report_message::Response::AlreadyReported => Error(OCErrorCode::AlreadyReported.into()),
+                c2c_report_message::Response::InternalError(error) => Error(OCErrorCode::Unknown.with_message(error)),
                 c2c_report_message::Response::Error(error) => Error(error),
             }
         }
-        Err(err) => InternalError(format!("{err:?}")),
+        Err(error) => Error(error.into()),
     }
 }
 

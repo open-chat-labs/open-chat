@@ -42,11 +42,7 @@ async fn bot_create_channel(args: Args) -> Response {
                 channel_id: result.channel_id,
             }),
             community_canister::c2c_bot_create_channel::Response::Error(error) => Error(error),
-            community_canister::c2c_bot_create_channel::Response::NotAuthorized => NotAuthorized,
-            community_canister::c2c_bot_create_channel::Response::CommunityFrozen => Frozen,
-            community_canister::c2c_bot_create_channel::Response::InvalidRequest(message) => InvalidRequest(message),
-            community_canister::c2c_bot_create_channel::Response::InternalError(message) => C2CError(0, message),
         },
-        Err(error) => C2CError(error.reject_code() as i32, error.message().to_string()),
+        Err(error) => Error(error.into()),
     }
 }

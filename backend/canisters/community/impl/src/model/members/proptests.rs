@@ -103,7 +103,7 @@ fn execute_operation(members: &mut CommunityMembers, op: Operation, timestamp: T
         } => {
             let owner = get_from_set(&members.owners, owner_index);
             let user_id = get_from_map(&members.members_and_channels, user_index);
-            members.change_role(
+            let _ = members.change_role(
                 owner,
                 user_id,
                 role,

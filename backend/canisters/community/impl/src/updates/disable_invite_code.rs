@@ -5,45 +5,39 @@ use crate::{
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::disable_invite_code::{Response::*, *};
-use types::{GroupInviteCodeChange, GroupInviteCodeChanged, Timestamped};
+use oc_error_codes::OCErrorCode;
+use types::{GroupInviteCodeChange, GroupInviteCodeChanged, OCResult, Timestamped};
 
 #[update(msgpack = true)]
 #[trace]
 fn disable_invite_code(_args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(disable_invite_code_impl)
+    if let Err(error) = mutate_state(disable_invite_code_impl) {
+        Error(error)
+    } else {
+        Success
+    }
 }
 
-fn disable_invite_code_impl(state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return CommunityFrozen;
+fn disable_invite_code_impl(state: &mut RuntimeState) -> OCResult {
+    state.data.verify_not_frozen()?;
+
+    let member = state.get_calling_member(true)?;
+    if member.role().can_invite_users(&state.data.permissions) {
+        let now = state.env.now();
+        state.data.invite_code_enabled = Timestamped::new(false, now);
+        state.data.events.push_event(
+            CommunityEventInternal::InviteCodeChanged(Box::new(GroupInviteCodeChanged {
+                change: GroupInviteCodeChange::Disabled,
+                changed_by: member.user_id,
+            })),
+            now,
+        );
+
+        handle_activity_notification(state);
+        Ok(())
+    } else {
+        Err(OCErrorCode::InitiatorNotAuthorized.into())
     }
-
-    let caller = state.env.caller();
-    if let Some(member) = state.data.members.get(caller) {
-        if member.suspended().value {
-            return UserSuspended;
-        } else if member.lapsed().value {
-            return UserLapsed;
-        }
-
-        if member.role().can_invite_users(&state.data.permissions) {
-            let now = state.env.now();
-            state.data.invite_code_enabled = Timestamped::new(false, now);
-            state.data.events.push_event(
-                CommunityEventInternal::InviteCodeChanged(Box::new(GroupInviteCodeChanged {
-                    change: GroupInviteCodeChange::Disabled,
-                    changed_by: member.user_id,
-                })),
-                now,
-            );
-
-            handle_activity_notification(state);
-
-            return Success;
-        }
-    }
-
-    NotAuthorized
 }

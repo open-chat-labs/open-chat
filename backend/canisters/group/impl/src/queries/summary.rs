@@ -3,6 +3,7 @@ use crate::RuntimeState;
 use candid::Principal;
 use canister_api_macros::query;
 use group_canister::summary::{Response::*, *};
+use oc_error_codes::OCErrorCode;
 
 #[query(candid = true, msgpack = true)]
 fn summary(args: Args) -> Response {
@@ -26,6 +27,6 @@ fn summary_impl(on_behalf_of: Option<Principal>, state: &RuntimeState) -> Respon
         let summary = state.summary(&member);
         Success(SuccessResult { summary })
     } else {
-        CallerNotInGroup
+        Error(OCErrorCode::InitiatorNotInChat.into())
     }
 }

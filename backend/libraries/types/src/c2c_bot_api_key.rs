@@ -11,7 +11,5 @@ pub struct Args {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(String),
-    NotAuthorized,
-    NotFound,
     Error(OCError),
 }

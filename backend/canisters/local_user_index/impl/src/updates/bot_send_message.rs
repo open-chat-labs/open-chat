@@ -149,9 +149,8 @@ async fn send_message_to_channel(
                 expires_at: result.expires_at,
             }),
             community_canister::c2c_bot_send_message::Response::Error(error) => Error(error),
-            community_canister::c2c_bot_send_message::Response::NotAuthorized => NotAuthorized,
         },
-        Err(error) => C2CError(error.reject_code() as i32, error.message().to_string()),
+        Err(error) => Error(error.into()),
     }
 }
 

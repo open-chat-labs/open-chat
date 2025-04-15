@@ -2,7 +2,7 @@ use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{AcceptSwapSuccess, MessageId, MessageIndex, Milliseconds, PinNumberWrapper, SwapStatusError};
+use types::{AcceptSwapSuccess, MessageId, MessageIndex, PinNumberWrapper};
 
 #[ts_export(group, accept_p2p_swap)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -17,16 +17,5 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(AcceptSwapSuccess),
-    InsufficientFunds,
-    StatusError(SwapStatusError),
-    SwapNotFound,
-    UserNotInGroup,
-    UserSuspended,
-    UserLapsed,
-    ChatFrozen,
-    PinRequired,
-    PinIncorrect(Milliseconds),
-    TooManyFailedPinAttempts(Milliseconds),
-    InternalError(String),
     Error(OCError),
 }

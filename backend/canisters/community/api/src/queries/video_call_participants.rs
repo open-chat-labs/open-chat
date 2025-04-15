@@ -16,9 +16,5 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(VideoCallParticipants),
-    VideoCallNotFound,
-    UserNotInCommunity,
-    UserNotInChannel,
-    ChannelNotFound,
     Error(OCError),
 }

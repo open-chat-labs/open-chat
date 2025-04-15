@@ -3,33 +3,34 @@ use crate::read_state;
 use crate::RuntimeState;
 use canister_api_macros::query;
 use group_canister::c2c_bot_group_details::{Response::*, *};
-use types::BotPermissions;
+use oc_error_codes::OCErrorCode;
 use types::ChatDetails;
 use types::ChatPermission;
 use types::EventIndex;
+use types::{BotPermissions, OCResult};
 
 #[query(guard = "caller_is_local_user_index", msgpack = true)]
 fn c2c_bot_group_details(args: Args) -> Response {
     read_state(|state| match c2c_bot_group_details_impl(args, state) {
-        Some(details) => Success(details),
-        None => NotAuthorized,
+        Ok(details) => Success(details),
+        Err(error) => Error(error),
     })
 }
 
-fn c2c_bot_group_details_impl(args: Args, state: &RuntimeState) -> Option<ChatDetails> {
+fn c2c_bot_group_details_impl(args: Args, state: &RuntimeState) -> OCResult<ChatDetails> {
     if !state.data.is_bot_permitted(
         &args.bot_id,
         &args.initiator,
         BotPermissions::from_chat_permission(ChatPermission::ReadChatDetails),
     ) {
-        return None;
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
     let chat = &state.data.chat;
     let events_ttl = chat.events.get_events_time_to_live();
     let main_events_reader = chat.events.visible_main_events_reader(EventIndex::default());
 
-    Some(ChatDetails {
+    Ok(ChatDetails {
         name: chat.name.value.clone(),
         description: chat.description.value.clone(),
         rules: chat.rules.value.clone().into(),
