@@ -16,8 +16,6 @@ export function configureEffects(client: OpenChat) {
         // set selected community when communityId changes
         $effect(() => {
             if (app.chatsInitialised && app.selectedCommunityId !== undefined) {
-                // TODO - we need to trigger the no_access modal if the community is not found and cannot be previewed
-                // modal = { kind: "no_access" };
                 const id = app.selectedCommunityId;
 
                 // this untrack is not really necessary in this case but it's probably a good pattern to follow to

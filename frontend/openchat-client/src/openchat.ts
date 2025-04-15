@@ -7550,6 +7550,7 @@ export class OpenChat {
             } else {
                 // if we get here it means we're not a member of the community and we can't look it up
                 // it may be private and we may not be invited.
+                publish("noAccess");
                 return false;
             }
         }

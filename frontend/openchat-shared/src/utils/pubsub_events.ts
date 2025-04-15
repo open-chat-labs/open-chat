@@ -14,9 +14,9 @@ import type {
     MessageContext,
     MultiUserChat,
     MultiUserChatIdentifier,
+    Notification,
     ResourceKey,
     UpdatedRules,
-    Notification,
 } from "..";
 
 export type PubSubEvents = {
@@ -125,4 +125,5 @@ export type PubSubEvents = {
     };
     remoteVideoCallEnded: bigint;
     notification: Notification;
+    noAccess: undefined;
 };

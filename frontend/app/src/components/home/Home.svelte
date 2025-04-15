@@ -238,6 +238,7 @@
             subscribe("remoteVideoCallStarted", remoteVideoCallStarted),
             subscribe("remoteVideoCallEnded", remoteVideoCallEnded),
             subscribe("notification", (n) => client.notificationReceived(n)),
+            subscribe("noAccess", () => (modal = { kind: "no_access" })),
         ];
         //TODO push all of this inside the OC client itself
         initialiseNotifications(client);
