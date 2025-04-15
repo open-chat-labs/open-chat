@@ -158,6 +158,12 @@ pub enum OCErrorCode {
     BannerTooBig = 314,
     CannotChangeRoleOfLastOwner = 315,
     CannotMakeBotOwner = 316,
+    MessageAlreadyFinalized = 317,
+    MaxGroupsCreated = 318,
+    MaxCommunitiesCreated = 319,
+    Throttled = 320,
+    InvalidChannelName = 321,
+    ApprovalFailed = 322,
 
     // InternalError
     C2CError = 500,

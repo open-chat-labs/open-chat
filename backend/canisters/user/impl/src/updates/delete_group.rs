@@ -3,6 +3,7 @@ use crate::{mutate_state, read_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_delete_group;
+use oc_error_codes::OCErrorCode;
 use user_canister::delete_group::{Response::*, *};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -11,7 +12,7 @@ async fn delete_group(args: Args) -> Response {
     run_regular_jobs();
 
     if read_state(|state| state.data.suspended.value) {
-        return UserSuspended;
+        return Error(OCErrorCode::InitiatorSuspended.into());
     }
 
     let c2c_args = c2c_delete_group::Args {};
@@ -24,6 +25,6 @@ async fn delete_group(args: Args) -> Response {
             }
             c2c_delete_group::Response::Error(error) => Error(error),
         },
-        Err(error) => InternalError(format!("{error:?}")),
+        Err(error) => Error(error.into()),
     }
 }

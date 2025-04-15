@@ -102,8 +102,7 @@ impl From<user_canister::EventsResponse> for EventsResponse {
     fn from(value: user_canister::EventsResponse) -> Self {
         match value {
             user_canister::EventsResponse::Success(events) => EventsResponse::Success(events),
-            user_canister::EventsResponse::ReplicaNotUpToDateV2(ts) => EventsResponse::ReplicaNotUpToDate(ts),
-            _ => EventsResponse::NotFound,
+            user_canister::EventsResponse::Error(error) => EventsResponse::Error(error),
         }
     }
 }

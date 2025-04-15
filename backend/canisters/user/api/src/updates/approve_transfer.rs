@@ -2,7 +2,7 @@ use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{icrc1::Account, icrc2::ApproveError, CanisterId, Milliseconds, PinNumberWrapper};
+use types::{icrc1::Account, CanisterId, Milliseconds, PinNumberWrapper};
 
 #[ts_export(user, approve_transfer)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -18,10 +18,5 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
-    ApproveError(ApproveError),
-    PinRequired,
-    PinIncorrect(Milliseconds),
-    TooManyFailedPinAttempts(Milliseconds),
-    InternalError(String),
     Error(OCError),
 }

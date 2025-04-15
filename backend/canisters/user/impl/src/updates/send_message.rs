@@ -13,18 +13,19 @@ use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextI
 use constants::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
 use event_store_producer::NullRuntime;
 use event_store_producer_cdk_runtime::CdkRuntime;
+use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use std::ops::Not;
-use types::BotCaller;
 use types::BotPermissions;
 use types::DirectMessageNotification;
 use types::EventIndex;
 use types::Notification;
 use types::{
-    BlobReference, CanisterId, Chat, ChatId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction,
-    EventWrapper, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, P2PSwapLocation, ReplyContext,
-    TimestampMillis, UserId, UserType,
+    BlobReference, CanisterId, Chat, ChatId, CompletedCryptoTransaction, CryptoTransaction, EventWrapper, Message,
+    MessageContent, MessageContentInitial, MessageId, MessageIndex, P2PSwapLocation, ReplyContext, TimestampMillis, UserId,
+    UserType,
 };
+use types::{BotCaller, OCResult};
 use user_canister::c2c_bot_send_message;
 use user_canister::send_message_v2::{Response::*, *};
 use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent};
@@ -44,7 +45,7 @@ async fn send_message_v2(args: Args) -> Response {
         maybe_recipient_type,
     } = match read_state(|state| prepare(&args, false, state)) {
         Ok(ok) => ok,
-        Err(response) => return *response,
+        Err(error) => return Error(error),
     };
 
     let recipient_type = if let Some(recipient_type) = maybe_recipient_type {
@@ -55,8 +56,10 @@ async fn send_message_v2(args: Args) -> Response {
         };
         match local_user_index_canister_c2c_client::c2c_lookup_user(local_user_index_canister_id, &c2c_args).await {
             Ok(local_user_index_canister::c2c_lookup_user::Response::Success(result)) => RecipientType::Other(result.user_type),
-            Ok(local_user_index_canister::c2c_lookup_user::Response::UserNotFound) => return RecipientNotFound,
-            Err(error) => return InternalError(format!("{error:?}")),
+            Ok(local_user_index_canister::c2c_lookup_user::Response::UserNotFound) => {
+                return Error(OCErrorCode::TargetUserNotFound.into())
+            }
+            Err(error) => return Error(error.into()),
         }
     };
 
@@ -70,7 +73,7 @@ async fn send_message_v2(args: Args) -> Response {
                 };
 
                 if !pending_transfer.validate_recipient(args.recipient) {
-                    return InvalidRequest("Transaction is not to the user's account".to_string());
+                    return Error(OCErrorCode::InvalidRequest.with_message("Transaction is not to the user's account"));
                 }
 
                 if let Err(error) = mutate_state(|state| state.data.pin_number.verify(args.pin.as_deref(), now)) {
@@ -95,8 +98,8 @@ async fn send_message_v2(args: Args) -> Response {
                         );
                         (content, Some(completed))
                     }),
-                    Ok(Err(failed)) => return TransferFailed(failed.error_message().to_string()),
-                    Err(error) => return InternalError(format!("{error:?}")),
+                    Ok(Err(failed)) => return Error(OCErrorCode::TransferFailed.with_message(failed.error_message())),
+                    Err(error) => return Error(error.into()),
                 }
             }
             ValidateNewMessageContentResult::SuccessPrize(_) => unreachable!(),
@@ -126,30 +129,16 @@ async fn send_message_v2(args: Args) -> Response {
                                 (content, Some(completed))
                             }
                             Ok(Err(failed)) => {
-                                return TransferFailed(failed.error_message().to_string());
+                                return Error(OCErrorCode::TransferFailed.with_message(failed.error_message()));
                             }
-                            Err(error) => return InternalError(format!("{error:?}")),
+                            Err(error) => return Error(error.into()),
                         }
                     }
                     Err(error) => return error.into(),
                 }
             }
             ValidateNewMessageContentResult::Error(error) => {
-                return match error {
-                    ContentValidationError::Empty => MessageEmpty,
-                    ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
-                    ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
-                    ContentValidationError::TransferCannotBeZero => TransferCannotBeZero,
-                    ContentValidationError::InvalidTypeForForwarding => {
-                        InvalidRequest("Cannot forward this type of message".to_string())
-                    }
-                    ContentValidationError::TransferMustBePending | ContentValidationError::PrizeEndDateInThePast => {
-                        unreachable!()
-                    }
-                    ContentValidationError::Unauthorized => {
-                        InvalidRequest("User unauthorized to send messages of this type".to_string())
-                    }
-                }
+                return Error(OCErrorCode::InvalidMessageContent.with_json(&error));
             }
         };
 
@@ -195,12 +184,12 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
             &bot_caller.initiator,
             BotPermissions::from_message_permission((&args.content).into()),
         ) {
-            return c2c_bot_send_message::Response::NotAuthorized;
+            return c2c_bot_send_message::Response::Error(OCErrorCode::InitiatorNotAuthorized.into());
         }
 
         let result = match prepare(&args, true, state) {
             Ok(ok) => ok,
-            Err(response) => return (*response).into(),
+            Err(error) => return c2c_bot_send_message::Response::Error(error),
         };
 
         let now = result.now;
@@ -212,23 +201,7 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
                 | ValidateNewMessageContentResult::SuccessCrypto(_)
                 | ValidateNewMessageContentResult::SuccessPrize(_) => unreachable!(),
                 ValidateNewMessageContentResult::Error(error) => {
-                    let response = match error {
-                        ContentValidationError::Empty => MessageEmpty,
-                        ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
-                        ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
-                        ContentValidationError::TransferCannotBeZero => TransferCannotBeZero,
-                        ContentValidationError::InvalidTypeForForwarding => {
-                            InvalidRequest("Cannot forward this type of message".to_string())
-                        }
-                        ContentValidationError::TransferMustBePending | ContentValidationError::PrizeEndDateInThePast => {
-                            unreachable!()
-                        }
-                        ContentValidationError::Unauthorized => {
-                            InvalidRequest("User unauthorized to send messages of this type".to_string())
-                        }
-                    };
-
-                    return response.into();
+                    return c2c_bot_send_message::Response::Error(OCErrorCode::InvalidMessageContent.with_json(&error));
                 }
             };
 
@@ -261,7 +234,7 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
                             chat.events.edit_message::<CdkRuntime>(edit_message_args, None)
                         else {
                             // Shouldn't happen
-                            return c2c_bot_send_message::Response::NotAuthorized;
+                            return c2c_bot_send_message::Response::Error(OCErrorCode::InitiatorNotAuthorized.into());
                         };
 
                         if finalised && !chat.notifications_muted.value {
@@ -291,7 +264,7 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
                     }
                 }
 
-                return c2c_bot_send_message::Response::MessageAlreadyFinalised;
+                return c2c_bot_send_message::Response::Error(OCErrorCode::MessageAlreadyFinalized.into());
             }
         }
 
@@ -399,19 +372,15 @@ struct PrepareOk {
     maybe_recipient_type: Option<RecipientType>,
 }
 
-fn prepare(args: &Args, is_v2_bot: bool, state: &RuntimeState) -> Result<PrepareOk, Box<Response>> {
-    if state.data.suspended.value {
-        return Err(Box::new(UserSuspended));
-    }
+fn prepare(args: &Args, is_v2_bot: bool, state: &RuntimeState) -> OCResult<PrepareOk> {
+    state.data.verify_not_suspended()?;
 
     if state.data.blocked_users.contains(&args.recipient) {
-        return Err(Box::new(RecipientBlocked));
+        return Err(OCErrorCode::TargetUserBlocked.into());
     }
 
     if args.recipient == OPENCHAT_BOT_USER_ID {
-        return Err(Box::new(InvalidRequest(
-            "Messaging the OpenChat Bot is not currently supported".to_string(),
-        )));
+        return Err(OCErrorCode::InvalidRequest.with_message("Messaging the OpenChat Bot is not currently supported"));
     }
 
     let my_user_id = state.env.canister_id().into();
@@ -420,7 +389,7 @@ fn prepare(args: &Args, is_v2_bot: bool, state: &RuntimeState) -> Result<Prepare
             .events
             .message_already_finalised(args.thread_root_message_index, args.message_id, is_v2_bot)
         {
-            return Err(Box::new(DuplicateMessageId));
+            return Err(OCErrorCode::MessageIdAlreadyExists.into());
         }
         Some(if args.recipient == my_user_id {
             RecipientType::_Self

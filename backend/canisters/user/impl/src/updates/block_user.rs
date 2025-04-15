@@ -2,6 +2,7 @@ use crate::guards::caller_is_owner;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use oc_error_codes::OCErrorCode;
 use user_canister::block_user::{Response::*, *};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -14,7 +15,7 @@ fn block_user(args: Args) -> Response {
 
 fn block_user_impl(args: Args, state: &mut RuntimeState) -> Response {
     if state.data.suspended.value {
-        return UserSuspended;
+        return Error(OCErrorCode::InitiatorSuspended.into());
     }
 
     let now = state.env.now();

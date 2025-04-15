@@ -8,7 +8,7 @@ use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
 use constants::{MEMO_MESSAGE, MEMO_P2P_SWAP_CREATE, MEMO_PRIZE, NANOS_PER_MILLISECOND, PRIZE_FEE_PERCENT, SECOND_IN_MS};
 use escrow_canister::deposit_subaccount;
-use oc_error_codes::OCError;
+use oc_error_codes::{OCError, OCErrorCode};
 use tracing::error;
 use types::icrc1::Account;
 use types::{
@@ -446,12 +446,11 @@ impl From<SetUpP2PSwapError> for send_message_with_transfer_to_group::Response {
 
 impl From<SetUpP2PSwapError> for send_message_v2::Response {
     fn from(value: SetUpP2PSwapError) -> Self {
-        use send_message_v2::Response::*;
-        match value {
-            SetUpP2PSwapError::InvalidSwap(message) => InvalidRequest(message),
-            SetUpP2PSwapError::InternalError(error) => P2PSwapSetUpFailed(error),
-            SetUpP2PSwapError::Error(error) => Error(error),
-        }
+        send_message_v2::Response::Error(match value {
+            SetUpP2PSwapError::InvalidSwap(message) => OCErrorCode::InvalidRequest.with_message(message),
+            SetUpP2PSwapError::InternalError(error) => OCErrorCode::Unknown.with_message(error),
+            SetUpP2PSwapError::Error(error) => error,
+        })
     }
 }
 

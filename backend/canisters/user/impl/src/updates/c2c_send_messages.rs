@@ -3,6 +3,7 @@ use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal, ValidateNewMessageContentResult};
 use ic_cdk::update;
+use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use types::{
     BotCaller, BotMessageContext, CanisterId, Chat, ContentValidationError, DirectMessageNotification, EventWrapper, Message,
@@ -19,7 +20,9 @@ async fn c2c_handle_bot_messages(
 
     let (sender, sender_user_type) = match sender_status {
         SenderStatus::Ok(user_id, user_type) => (user_id, user_type),
-        SenderStatus::Blocked => return user_canister::c2c_handle_bot_messages::Response::Blocked,
+        SenderStatus::Blocked => {
+            return user_canister::c2c_handle_bot_messages::Response::Error(OCErrorCode::InitiatorBlocked.into())
+        }
         SenderStatus::UnknownUser(local_user_index_canister_id, user_id) => {
             let user_type = match verify_user(local_user_index_canister_id, user_id).await {
                 Some(UserType::Bot) => UserType::Bot,

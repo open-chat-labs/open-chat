@@ -2,7 +2,7 @@ use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{MessageId, MessageIndex, PushEventResult, Reaction, UserId};
+use types::{MessageId, MessageIndex, Reaction, UserId};
 
 #[ts_export(user, remove_reaction)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -18,10 +18,5 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
-    SuccessV2(PushEventResult),
-    NoChange,
-    MessageNotFound,
-    ChatNotFound,
-    UserSuspended,
     Error(OCError),
 }
