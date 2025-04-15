@@ -15,7 +15,7 @@ use user_canister::c2c_remove_from_group;
 #[trace]
 async fn block_user(args: group_canister::block_user::Args) -> group_canister::block_user::Response {
     if !read_state(|state| state.data.chat.is_public.value) {
-        return group_canister::block_user::Response::GroupNotPublic;
+        return group_canister::block_user::Response::Error(OCErrorCode::ChatNotPublic.into());
     }
 
     remove_participant_impl(args.user_id, true).await.into()
@@ -41,8 +41,8 @@ async fn remove_participant_impl(user_to_remove: UserId, block: bool) -> Respons
     if prepare_result.is_user_to_remove_an_owner {
         match lookup_user(user_to_remove.into(), prepare_result.local_user_index_canister_id).await {
             Ok(Some(user)) if !user.is_platform_moderator => (),
-            Ok(_) => return NotAuthorized,
-            Err(error) => return InternalError(format!("{error:?}")),
+            Ok(_) => return Error(OCErrorCode::InitiatorNotAuthorized.into()),
+            Err(error) => return Error(error.into()),
         }
     }
 

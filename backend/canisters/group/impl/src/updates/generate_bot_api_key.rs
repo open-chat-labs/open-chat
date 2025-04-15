@@ -3,7 +3,8 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::generate_bot_api_key::{Response::*, *};
-use types::{AccessTokenScope, BotApiKeyToken, Chat};
+use oc_error_codes::OCErrorCode;
+use types::{AccessTokenScope, BotApiKeyToken, Chat, OCResult};
 use utils::base64;
 
 #[update(msgpack = true)]
@@ -11,29 +12,26 @@ use utils::base64;
 fn generate_bot_api_key(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| generate_bot_api_key_impl(args, state))
+    match mutate_state(|state| generate_bot_api_key_impl(args, state)) {
+        Ok(result) => Success(result),
+        Err(error) => Error(error),
+    }
 }
 
-fn generate_bot_api_key_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return ChatFrozen;
-    }
+fn generate_bot_api_key_impl(args: Args, state: &mut RuntimeState) -> OCResult<SuccessResult> {
+    state.data.verify_not_frozen()?;
 
     if state.data.bots.get(&args.bot_id).is_none() {
-        return BotNotFound;
+        return Err(OCErrorCode::BotNotFound.into());
     };
 
-    let caller = state.env.caller();
-    let Some(member) = state.data.get_member(caller) else {
-        return NotAuthorized;
-    };
+    let member = state.get_calling_member(true)?;
 
-    if !member.role().is_owner() || member.suspended().value {
-        return NotAuthorized;
+    if !member.role().is_owner() {
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
     let now = state.env.now();
-
     let api_key_secret =
         state
             .data
@@ -52,5 +50,5 @@ fn generate_bot_api_key_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     handle_activity_notification(state);
 
-    Success(SuccessResult { api_key })
+    Ok(SuccessResult { api_key })
 }

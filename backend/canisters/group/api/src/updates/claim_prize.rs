@@ -15,17 +15,7 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
-    CallerNotInGroup,
-    UserSuspended,
-    UserLapsed,
-    ChatFrozen,
-    MessageNotFound,
-    AlreadyClaimed,
-    PrizeFullyClaimed,
-    PrizeEnded,
-    LedgerError,
     TransferFailed(String, FailedCryptoTransaction),
     FailedAfterTransfer(String, CompletedCryptoTransaction),
-    InternalError(String),
     Error(OCError),
 }

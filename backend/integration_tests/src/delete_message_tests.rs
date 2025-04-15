@@ -1,6 +1,7 @@
 use crate::env::ENV;
 use crate::{client, TestEnv};
 use constants::MINUTE_IN_MS;
+use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
@@ -404,7 +405,7 @@ fn platform_operators_can_delete_messages(is_platform_moderator: bool) {
     } else {
         assert!(matches!(
             delete_messages_response,
-            group_canister::delete_messages::Response::NotPlatformModerator
+            group_canister::delete_messages::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)
         ));
     }
 }

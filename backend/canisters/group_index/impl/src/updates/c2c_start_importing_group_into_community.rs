@@ -24,15 +24,7 @@ async fn c2c_start_importing_group_into_community(args: Args) -> Response {
     {
         Ok(group_canister::c2c_start_import_into_community::Response::Success(total_bytes)) => Success(total_bytes),
         Ok(group_canister::c2c_start_import_into_community::Response::Error(error)) => Error(error),
-        Ok(group_canister::c2c_start_import_into_community::Response::AlreadyImportingToAnotherCommunity) => {
-            AlreadyImportingToAnotherCommunity
-        }
-        Ok(group_canister::c2c_start_import_into_community::Response::UserNotInGroup) => UserNotInGroup,
-        Ok(group_canister::c2c_start_import_into_community::Response::NotAuthorized) => NotAuthorized,
-        Ok(group_canister::c2c_start_import_into_community::Response::UserSuspended) => UserSuspended,
-        Ok(group_canister::c2c_start_import_into_community::Response::UserLapsed) => UserLapsed,
-        Ok(group_canister::c2c_start_import_into_community::Response::ChatFrozen) => ChatFrozen,
-        Err(error) => InternalError(format!("{error:?}")),
+        Err(error) => Error(error.into()),
     }
 }
 

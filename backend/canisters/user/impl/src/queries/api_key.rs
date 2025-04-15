@@ -3,6 +3,7 @@ use crate::guards::caller_is_owner;
 use crate::read_state;
 use crate::RuntimeState;
 use canister_api_macros::query;
+use oc_error_codes::OCErrorCode;
 use types::AccessTokenScope;
 use types::BotApiKeyToken;
 use types::Chat;
@@ -18,7 +19,7 @@ fn api_key(args: Args) -> Response {
 fn c2c_bot_api_key(args: group_canister::c2c_bot_api_key::Args) -> Response {
     read_state(|state| {
         if state.env.canister_id() != args.initiator.into() {
-            return NotAuthorized;
+            return Error(OCErrorCode::InitiatorNotAuthorized.into());
         }
 
         api_key_impl(Args { bot_id: args.bot_id }, state)
@@ -28,7 +29,7 @@ fn c2c_bot_api_key(args: group_canister::c2c_bot_api_key::Args) -> Response {
 fn api_key_impl(args: Args, state: &RuntimeState) -> Response {
     let api_key = match state.data.bot_api_keys.get(&args.bot_id) {
         Some(api_key) => api_key,
-        None => return NotFound,
+        None => return Error(OCErrorCode::ApiKeyNotFound.into()),
     };
 
     let api_key_token = BotApiKeyToken {

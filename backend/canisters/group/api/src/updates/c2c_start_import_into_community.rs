@@ -12,11 +12,5 @@ pub struct Args {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(u64),
-    UserNotInGroup,
-    AlreadyImportingToAnotherCommunity,
-    NotAuthorized,
-    UserSuspended,
-    UserLapsed,
-    ChatFrozen,
     Error(OCError),
 }

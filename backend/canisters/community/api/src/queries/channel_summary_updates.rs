@@ -20,8 +20,5 @@ pub enum Response {
     SuccessAdded(CommunityCanisterChannelSummary),
     SuccessUpdated(CommunityCanisterChannelSummaryUpdates),
     SuccessNoUpdates,
-    PrivateCommunity,
-    ChannelNotFound,
-    PrivateChannel,
     Error(OCError),
 }

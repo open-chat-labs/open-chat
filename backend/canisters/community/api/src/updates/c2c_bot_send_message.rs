@@ -41,7 +41,6 @@ impl From<Args> for send_message::Args {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    NotAuthorized,
     Error(OCError),
 }
 

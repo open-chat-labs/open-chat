@@ -96,13 +96,6 @@ type DeleteMessagesArgs = record {
 
 type DeleteMessagesResponse = variant {
     Success;
-    CallerNotInGroup;
-    MessageNotFound;
-    UserSuspended;
-    UserLapsed;
-    ChatFrozen;
-    NotPlatformModerator;
-    InternalError : text;
     Error : OCError;
 };
 
@@ -130,14 +123,6 @@ type RegisterPollVoteArgs = record {
 
 type RegisterPollVoteResponse = variant {
     Success : PollVotes;
-    PollNotFound;
-    PollEnded;
-    OptionIndexOutOfRange;
-    CallerNotInGroup;
-    UserSuspended;
-    UserLapsed;
-    ChatFrozen;
-    UserCannotChangeVote;
     Error : OCError;
 };
 
@@ -150,17 +135,6 @@ type AcceptP2PSwapArgs = record {
 
 type AcceptP2PSwapResponse = variant {
     Success : AcceptSwapSuccess;
-    InsufficientFunds;
-    StatusError : SwapStatusError;
-    SwapNotFound;
-    UserNotInGroup;
-    UserSuspended;
-    UserLapsed;
-    ChatFrozen;
-    PinRequired;
-    PinIncorrect : Milliseconds;
-    TooManyFailedPinAttempts : Milliseconds;
-    InternalError : text;
     Error : OCError;
 };
 
@@ -209,14 +183,6 @@ type ReportMessageArgs = record {
 
 type ReportMessageResponse = variant {
     Success;
-    ChatFrozen;
-    UserSuspended;
-    UserLapsed;
-    NotAuthorized;
-    CallerNotInGroup;
-    MessageNotFound;
-    AlreadyReported;
-    InternalError : text;
     Error : OCError;
 };
 
@@ -227,16 +193,6 @@ type BlockUserArgs = record {
 
 type BlockUserResponse = variant {
     Success;
-    CallerNotInGroup;
-    CannotBlockSelf;
-    CannotBlockUser;
-    GroupNotPublic;
-    InternalError : text;
-    NotAuthorized;
-    UserNotInGroup;
-    UserSuspended;
-    UserLapsed;
-    ChatFrozen;
     Error : OCError;
 };
 
@@ -247,13 +203,6 @@ type UnblockUserArgs = record {
 
 type UnblockUserResponse = variant {
     Success;
-    CallerNotInGroup;
-    CannotUnblockSelf;
-    GroupNotPublic;
-    NotAuthorized;
-    UserSuspended;
-    UserLapsed;
-    ChatFrozen;
     Error : OCError;
 };
 
@@ -264,15 +213,6 @@ type RemoveParticipantArgs = record {
 
 type RemoveParticipantResponse = variant {
     Success;
-    CallerNotInGroup;
-    CannotRemoveSelf;
-    CannotRemoveUser;
-    InternalError : text;
-    NotAuthorized;
-    UserNotInGroup;
-    UserSuspended;
-    UserLapsed;
-    ChatFrozen;
     Error : OCError;
 };
 
@@ -304,21 +244,6 @@ type UpdateGroupV2Response = variant {
     SuccessV2 : record {
         rules_version : opt Version;
     };
-    NotAuthorized;
-    CallerNotInGroup;
-    NameTooShort : FieldTooShortResult;
-    NameTooLong : FieldTooLongResult;
-    NameReserved;
-    DescriptionTooLong : FieldTooLongResult;
-    AvatarTooBig : FieldTooLongResult;
-    AccessGateInvalid;
-    NameTaken;
-    InternalError;
-    RulesTooLong : FieldTooLongResult;
-    RulesTooShort : FieldTooShortResult;
-    UserSuspended;
-    UserLapsed;
-    ChatFrozen;
     Error : OCError;
 };
 
@@ -349,26 +274,11 @@ type RegisterProposalVoteArgs = record {
 
 type RegisterProposalVoteResponse = variant {
     Success;
-    AlreadyVoted : bool;
-    CallerNotInGroup;
-    NoEligibleNeurons;
-    ProposalMessageNotFound;
-    ProposalNotFound;
-    ProposalNotAcceptingVotes;
-    UserSuspended;
-    UserLapsed;
-    ChatFrozen;
-    InternalError : text;
     Error : OCError;
 };
 
 type RegisterProposalVoteV2Response = variant {
     Success;
-    CallerNotInGroup;
-    ProposalMessageNotFound;
-    UserSuspended;
-    UserLapsed;
-    ChatFrozen;
     Error : OCError;
 };
 
@@ -379,18 +289,8 @@ type ClaimPrizeArgs = record {
 
 type ClaimPrizeResponse = variant {
     Success;
-    CallerNotInGroup;
-    UserSuspended;
-    UserLapsed;
-    ChatFrozen;
-    MessageNotFound;
-    AlreadyClaimed;
-    PrizeFullyClaimed;
-    PrizeEnded;
-    LedgerError;
     TransferFailed : record { text; FailedCryptoTransaction };
     FailedAfterTransfer : record { text; CompletedCryptoTransaction };
-    InternalError : text;
     Error : OCError;
 };
 
@@ -406,13 +306,6 @@ type ConvertIntoCommunityResponse = variant {
         community_id : CommunityId;
         channel_id : ChannelId;
     };
-    CallerNotInGroup;
-    AlreadyImportingToAnotherCommunity;
-    NotAuthorized;
-    UserSuspended;
-    UserLapsed;
-    ChatFrozen;
-    InternalError : text;
     Error : OCError;
 };
 
@@ -424,7 +317,6 @@ type SummaryResponse = variant {
     Success : record {
         summary : GroupCanisterGroupChatSummary;
     };
-    CallerNotInGroup;
     Error : OCError;
 };
 
@@ -438,7 +330,6 @@ type SummaryUpdatesResponse = variant {
         updates : GroupCanisterGroupChatSummaryUpdates;
     };
     SuccessNoUpdates;
-    CallerNotInGroup;
     Error : OCError;
 };
 
@@ -460,7 +351,6 @@ type SelectedInitialSuccess = record {
 
 type SelectedInitialResponse = variant {
     Success : SelectedInitialSuccess;
-    CallerNotInGroup;
     Error : OCError;
 };
 
@@ -471,7 +361,6 @@ type SelectedUpdatesV2Args = record {
 type SelectedUpdatesV2Response = variant {
     Success : SelectedGroupUpdates;
     SuccessNoUpdates : TimestampMillis;
-    CallerNotInGroup;
     Error : OCError;
 };
 
@@ -530,8 +419,6 @@ type ThreadPreviewsResponse = variant {
         threads : vec ThreadPreview;
         timestamp : TimestampMillis;
     };
-    CallerNotInGroup;
-    ReplicaNotUpToDate : TimestampMillis;
     Error : OCError;
 };
 
@@ -544,10 +431,6 @@ type DeletedMessageResponse = variant {
     Success : record {
         content : MessageContent;
     };
-    CallerNotInGroup;
-    NotAuthorized;
-    MessageNotFound;
-    MessageHardDeleted;
     Error : OCError;
 };
 
@@ -558,8 +441,6 @@ type VideoCallParticipantsArgs = record {
 
 type VideoCallParticipantsResponse = variant {
     Success : VideoCallParticipants;
-    VideoCallNotFound;
-    CallerNotInGroup;
     Error : OCError;
 };
 
@@ -571,11 +452,6 @@ type SearchMessagesArgs = record {
 
 type SearchMessagesResponse = variant {
     Success : SearchMessagesSuccessResult;
-    TermTooShort : nat8;
-    TermTooLong : nat8;
-    TooManyUsers : nat8;
-    InvalidTerm;
-    CallerNotInGroup;
     Error : OCError;
 };
 
@@ -589,7 +465,6 @@ type PublicSummaryArgs = record {
 
 type PublicSummaryResponse = variant {
     Success : PublicSummarySuccess;
-    NotAuthorized;
     Error : OCError;
 };
 
@@ -604,7 +479,6 @@ type RulesArgs = record {
 
 type RulesResponse = variant {
     Success : RulesSuccess;
-    NotAuthorized;
     Error : OCError;
 };
 
@@ -614,7 +488,6 @@ type RulesSuccess = record {
 
 type DeclineInvitationResponse = variant {
     Success;
-    NotInvited;
     Error : OCError;
 };
 
@@ -624,7 +497,6 @@ type ToggleMuteNotificationsArgs = record {
 
 type ToggleMuteNotificationsResponse = variant {
     Success;
-    CallerNotInGroup;
     Error : OCError;
 };
 
@@ -634,7 +506,6 @@ type InviteCodeResponse = variant {
     Success : record {
         code : opt nat64;
     };
-    NotAuthorized;
     Error : OCError;
 };
 
@@ -646,10 +517,6 @@ type EnableInviteCodeResponse = variant {
     Success : record {
         code : nat64;
     };
-    NotAuthorized;
-    UserSuspended;
-    UserLapsed;
-    ChatFrozen;
     Error : OCError;
 };
 
@@ -659,10 +526,6 @@ type DisableInviteCodeArgs = record {
 
 type DisableInviteCodeResponse = variant {
     Success;
-    NotAuthorized;
-    UserSuspended;
-    UserLapsed;
-    ChatFrozen;
     Error : OCError;
 };
 
@@ -674,10 +537,6 @@ type ResetInviteCodeResponse = variant {
     Success : record {
         code : nat64;
     };
-    NotAuthorized;
-    UserSuspended;
-    UserLapsed;
-    ChatFrozen;
     Error : OCError;
 };
 

@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Switch more canister endpoints over to the new `OCError` response type ([#7793](https://github.com/open-chat-labs/open-chat/pull/7793))
+- Migrate more endpoints to returning standardised error codes ([#7797](https://github.com/open-chat-labs/open-chat/pull/7797))
 
 ### Removed
 

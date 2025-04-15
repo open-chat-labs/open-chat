@@ -2,6 +2,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::decline_invitation::{Response::*, *};
+use oc_error_codes::OCErrorCode;
 
 #[update(msgpack = true)]
 #[trace]
@@ -16,6 +17,6 @@ fn decline_invitation_impl(state: &mut RuntimeState) -> Response {
     let now = state.env.now();
     match state.data.remove_invitation(caller, now) {
         Some(_) => Success,
-        None => NotInvited,
+        None => Error(OCErrorCode::NoChange.into()),
     }
 }

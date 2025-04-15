@@ -1,8 +1,8 @@
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use group_canister::generate_bot_api_key::{Response::*, *};
 use types::{AccessTokenScope, BotApiKeyToken, Chat};
+use user_canister::generate_bot_api_key::{Response::*, *};
 use utils::base64;
 
 #[update(msgpack = true)]

@@ -59,6 +59,6 @@ pub(crate) async fn delete_group(group_index_canister_id: CanisterId, args: &c2c
 
     match make_c2c_call_raw(group_index_canister_id, method_name, &payload, cycles, None).await {
         Ok(_) => Success,
-        Err(error) => InternalError(format!("{error:?}")),
+        Err(error) => Error(error.into()),
     }
 }

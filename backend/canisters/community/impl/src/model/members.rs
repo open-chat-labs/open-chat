@@ -11,7 +11,7 @@ use stable_memory_map::StableMemoryMap;
 use std::collections::btree_map::Entry::Vacant;
 use std::collections::{BTreeMap, BTreeSet};
 use types::{
-    is_default, ChannelId, CommunityMember, CommunityPermissions, CommunityRole, PushIfNotContains, TimestampMillis,
+    is_default, ChannelId, CommunityMember, CommunityPermissions, CommunityRole, OCResult, PushIfNotContains, TimestampMillis,
     Timestamped, UserId, UserType, Version,
 };
 
@@ -216,44 +216,39 @@ impl CommunityMembers {
         is_caller_platform_moderator: bool,
         is_user_platform_moderator: bool,
         now: TimestampMillis,
-    ) -> ChangeRoleResult {
+    ) -> OCResult<ChangeRoleSuccess> {
         // Is the caller authorized to change the user to this role
-        match self.get_by_user_id(&user_id) {
-            Some(p) => {
-                if p.suspended.value {
-                    return ChangeRoleResult::UserSuspended;
-                }
-                // Platform moderators can always promote themselves to owner
-                if !(p.role.can_change_roles(new_role, permissions) || (is_caller_platform_moderator && new_role.is_owner())) {
-                    return ChangeRoleResult::NotAuthorized;
-                }
-            }
-            None => return ChangeRoleResult::UserNotInCommunity,
+        let initiator = self.get_verified_member(user_id.into())?;
+
+        // Platform moderators can always promote themselves to owner
+        if !(initiator.role.can_change_roles(new_role, permissions) || (is_caller_platform_moderator && new_role.is_owner())) {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
 
-        let mut member = match self.members_map.get(&target_user_id) {
-            Some(p) => p,
-            None => return ChangeRoleResult::TargetUserNotInCommunity,
-        };
+        let mut member = self
+            .members_map
+            .get(&target_user_id)
+            .ok_or(OCErrorCode::TargetUserNotInCommunity)?;
 
         // Platform moderators cannot be demoted from owner except by themselves
         if is_user_platform_moderator && member.role.is_owner() && target_user_id != user_id {
-            return ChangeRoleResult::NotAuthorized;
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
 
         // It is not possible to change the role of the last owner
         if member.role.is_owner() && self.owners.len() <= 1 {
-            return ChangeRoleResult::Invalid;
+            return Err(OCErrorCode::CannotChangeRoleOfLastOwner.into());
         }
+
         // It is not currently possible to make a bot an owner
         if member.user_type.is_3rd_party_bot() && new_role.is_owner() {
-            return ChangeRoleResult::Invalid;
+            return Err(OCErrorCode::CannotMakeBotOwner.into());
         }
 
         let prev_role = member.role;
 
         if prev_role == new_role {
-            return ChangeRoleResult::Unchanged;
+            return Err(OCErrorCode::NoChange.into());
         }
 
         match prev_role {
@@ -279,10 +274,7 @@ impl CommunityMembers {
         self.members_map.insert(target_user_id, member);
         self.prune_then_insert_member_update(target_user_id, MemberUpdate::RoleChanged, now);
 
-        ChangeRoleResult::Success(ChangeRoleSuccessResult {
-            caller_id: user_id,
-            prev_role,
-        })
+        Ok(ChangeRoleSuccess { prev_role })
     }
 
     pub fn set_suspended(&mut self, user_id: UserId, suspended: bool, now: TimestampMillis) -> Option<bool> {
@@ -797,18 +789,7 @@ pub enum AddResult {
     Blocked,
 }
 
-pub enum ChangeRoleResult {
-    Success(ChangeRoleSuccessResult),
-    UserNotInCommunity,
-    NotAuthorized,
-    TargetUserNotInCommunity,
-    Unchanged,
-    Invalid,
-    UserSuspended,
-}
-
-pub struct ChangeRoleSuccessResult {
-    pub caller_id: UserId,
+pub struct ChangeRoleSuccess {
     pub prev_role: CommunityRole,
 }
 

@@ -8,10 +8,5 @@ pub type Args = Empty;
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
-    NotAuthorized,
-    CommunityFrozen,
-    UserSuspended,
-    InternalError(String),
-    UserLapsed,
     Error(OCError),
 }
