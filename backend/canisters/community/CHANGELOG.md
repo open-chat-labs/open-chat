@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Migrate more endpoints to returning standardised error codes ([#7797](https://github.com/open-chat-labs/open-chat/pull/7797))
+
+## [[2.0.1701](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1701-community)] - 2025-04-15
+
 ### Added
 
 - Notify Communities when user deleted ([#7781](https://github.com/open-chat-labs/open-chat/pull/7781))
