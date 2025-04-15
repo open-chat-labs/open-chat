@@ -1,9 +1,7 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
-    import { identityState } from "openchat-client";
+    import { identityState, routeForScope } from "openchat-client";
     import { getContext } from "svelte";
-    import { _ } from "svelte-i18n";
-    import { routeForScope } from "../../routes";
 
     const client = getContext<OpenChat>("client");
 

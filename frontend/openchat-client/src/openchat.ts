@@ -1,113 +1,311 @@
 /* eslint-disable no-case-declarations */
-import { gaTrack } from "./utils/ga";
 import { DER_COSE_OID, type Identity, type SignIdentity, unwrapDER } from "@dfinity/agent";
 import { AuthClient, type AuthClientLoginOptions } from "@dfinity/auth-client";
-import { get } from "svelte/store";
+import {
+    DelegationChain,
+    DelegationIdentity,
+    ECDSAKeyIdentity,
+    type JsonnableDelegationChain,
+    WebAuthnIdentity,
+} from "@dfinity/identity";
 import DRange from "drange";
+import type {
+    AcceptedRules,
+    AcceptP2PSwapResponse,
+    AccessGate,
+    AccessGateConfig,
+    AccessTokenType,
+    AccountTransactionResult,
+    Achievement,
+    AddMembersToChannelResponse,
+    AirdropChannelDetails,
+    ApproveAccessGatePaymentResponse,
+    ApproveTransferResponse,
+    AttachmentContent,
+    AuthenticationPrincipal,
+    BotActionScope,
+    BotClientConfigData,
+    BotCommandInstance,
+    BotCommandResponse,
+    BotDefinition,
+    BotDefinitionResponse,
+    BotInstallationLocation,
+    BotMessageContext,
+    CancelP2PSwapResponse,
+    CandidateGroupChat,
+    CandidateProposal,
+    CandidateTranslations,
+    CaptionedContent,
+    ChallengeAttempt,
+    ChannelIdentifier,
+    ChannelSummary,
+    ChatEvent,
+    ChatEventsArgs,
+    ChatEventsResponse,
+    ChatFrozenEvent,
+    ChatIdentifier,
+    ChatListScope,
+    ChatPermissions,
+    ChatSummary,
+    ChatUnfrozenEvent,
+    CheckUsernameResponse,
+    ChitEventsRequest,
+    ChitEventsResponse,
+    ChitLeaderboardResponse,
+    CkbtcMinterDepositInfo,
+    CkbtcMinterWithdrawalInfo,
+    ClaimDailyChitResponse,
+    ClientJoinCommunityResponse,
+    ClientJoinGroupResponse,
+    CommunityDetailsResponse,
+    CommunityIdentifier,
+    CommunityInvite,
+    CommunityPermissions,
+    CommunitySummary,
+    CompletedCryptocurrencyTransfer,
+    ConnectToWorkerResponse,
+    CreateCommunityResponse,
+    CreatedUser,
+    CreateGroupResponse,
+    CreateUserGroupResponse,
+    CryptocurrencyContent,
+    CryptocurrencyDetails,
+    CryptocurrencyTransfer,
+    CurrentUserResponse,
+    DataContent,
+    DexId,
+    DiamondMembershipDuration,
+    DiamondMembershipFees,
+    DiamondMembershipStatus,
+    DirectChatIdentifier,
+    DisableInviteCodeResponse,
+    EnableInviteCodeResponse,
+    EnhancedAccessGate,
+    EventsResponse,
+    EventWrapper,
+    ExpiredEventsRange,
+    ExploreBotsResponse,
+    ExploreChannelsResponse,
+    ExploreCommunitiesResponse,
+    ExternalBot,
+    ExternalBotCommandInstance,
+    ExternalBotPermissions,
+    Failure,
+    FromWorker,
+    GenerateBotKeyResponse,
+    GenerateChallengeResponse,
+    GenerateMagicLinkResponse,
+    GroupChatDetailsResponse,
+    GroupChatIdentifier,
+    GroupChatSummary,
+    GroupInvite,
+    GroupMoved,
+    GroupSearchResponse,
+    GroupSubtype,
+    HandleMagicLinkResponse,
+    IdentityState,
+    InternalBotCommandInstance,
+    InviteCodeResponse,
+    JoinVideoCallResponse,
+    Level,
+    LinkIdentitiesResponse,
+    Logger,
+    MarkReadRequest,
+    Member,
+    MemberRole,
+    Mention,
+    Message,
+    MessageActivityFeedResponse,
+    MessageContent,
+    MessageContext,
+    MessageFormatter,
+    MessagePermission,
+    MessageReminderCreatedContent,
+    ModerationFlag,
+    MultiUserChat,
+    MultiUserChatIdentifier,
+    NamedAccount,
+    NervousSystemDetails,
+    Notification,
+    OptionalChatPermissions,
+    OptionUpdate,
+    PayForDiamondMembershipResponse,
+    PayForStreakInsuranceResponse,
+    PaymentGateApproval,
+    PaymentGateApprovals,
+    PendingCryptocurrencyTransfer,
+    PendingCryptocurrencyWithdrawal,
+    PinNumberFailures,
+    PreprocessedGate,
+    ProposalVoteDetails,
+    ProposeResponse,
+    PublicProfile,
+    RegisterProposalVoteResponse,
+    RegisterUserResponse,
+    RejectReason,
+    RemoteUserSentMessage,
+    RemoteUserToggledReaction,
+    RemoveIdentityLinkResponse,
+    RemoveMemberResponse,
+    ResetInviteCodeResponse,
+    Rules,
+    SaveCryptoAccountResponse,
+    SearchDirectChatResponse,
+    SearchGroupChatResponse,
+    SendMessageResponse,
+    SendMessageSuccess,
+    SetBioResponse,
+    SetDisplayNameResponse,
+    SetMemberDisplayNameResponse,
+    SetPinNumberResponse,
+    SetUsernameResponse,
+    SiwePrepareLoginResponse,
+    SiwsPrepareLoginResponse,
+    SubmitProofOfUniquePersonhoodResponse,
+    Success,
+    SwapTokensResponse,
+    ThreadPreview,
+    ThreadRead,
+    ThreadSummary,
+    ThreadSyncDetails,
+    TipMessageResponse,
+    TokenSwapStatusResponse,
+    TransferSuccess,
+    UpdatedEvent,
+    UpdatedRules,
+    UpdateGroupResponse,
+    UpdateMarketMakerConfigArgs,
+    UpdateMarketMakerConfigResponse,
+    UpdatesResult,
+    UpdateUserGroupResponse,
+    User,
+    UserGroupDetails,
+    UserOrUserGroup,
+    UsersArgs,
+    UsersResponse,
+    UserStatus,
+    UserSummary,
+    Verification,
+    VerifiedCredentialArgs,
+    VersionedRules,
+    VideoCallContent,
+    VideoCallParticipant,
+    VideoCallPresence,
+    WalletConfig,
+    WebAuthnKey,
+    WebAuthnKeyFull,
+    WebRtcMessage,
+    WithdrawBtcResponse,
+    WithdrawCryptocurrencyResponse,
+    WorkerError,
+    WorkerRequest,
+    WorkerResponse,
+    WorkerResult,
+} from "openchat-shared";
 import {
-    canChangeRoles as canChangeCommunityRoles,
-    canBlockUsers as canBlockCommunityUsers,
-    canUnblockUsers as canUnblockCommunityUsers,
-    canInviteUsers as canInviteCommunityUsers,
-    canRemoveMembers as canRemoveCommunityMembers,
-    canDeleteCommunity,
-    canEditCommunity,
-    canChangeCommunityPermissions,
-    canCreatePublicChannel,
-    canCreatePrivateChannel,
-    canManageUserGroups,
-    isCommunityLapsed,
-} from "./utils/community";
-import {
-    buildUserAvatarUrl,
-    canBlockUsers,
-    canAddMembers,
-    canChangePermissions,
-    canChangeRoles,
-    canDeleteGroup,
-    canDeleteOtherUsersMessages,
-    canEditGroupDetails,
-    canForward,
-    canInviteUsers,
-    canLeaveGroup,
-    canChangeVisibility,
-    canPinMessages,
-    canReactToMessages,
-    canRemoveMembers,
-    canMentionAllMembers,
-    canUnblockUsers,
-    containsReaction,
-    createMessage,
-    findMessageById,
-    getMembersString,
-    groupBySender,
-    groupChatFromCandidate,
-    groupEvents,
-    groupMessagesByDate,
-    makeRtcConnections,
-    mergeServerEvents,
-    messageIsReadByThem,
-    metricsEqual,
-    sameUser,
-    isFrozen,
-    isPreviewing,
-    buildTransactionLink,
-    buildTransactionUrlByIndex,
-    buildCryptoTransferText,
-    mergeSendMessageResponse,
-    serialiseMessageForRtc,
-    canConvertToCommunity,
-    canImportToCommunity,
-    buildIdenticonUrl,
-    getMessageText,
-    diffGroupPermissions,
-    canSendDirectMessage,
-    canSendGroupMessage,
-    permittedMessagesInDirectChat,
-    permittedMessagesInGroup,
-    activeUserIdFromEvent,
-    doesMessageFailFilter,
-    canStartVideoCalls,
-    buildBlobUrl,
-    isLapsed,
-    isEventKindHidden,
-} from "./utils/chat";
-import {
-    buildUsernameList,
-    compareIsNotYouThenUsername,
-    compareUsername,
-    formatLastOnlineDate,
-    nullUser,
-    userAvatarUrl,
-} from "./utils/user";
-import { rtcConnectionsManager } from "./utils/rtcConnectionsManager";
-import { showTrace } from "./utils/profiling";
-import { CachePrimer } from "./utils/cachePrimer";
-import { Poller } from "./utils/poller";
-import { RecentlyActiveUsersTracker } from "./utils/recentlyActiveUsersTracker";
+    ANON_USER_ID,
+    anonymousUser,
+    AuthProvider,
+    buildDelegationIdentity,
+    canRetryMessage,
+    chatIdentifiersEqual,
+    chatIdentifierToString,
+    ChatMap,
+    CommonResponses,
+    communityRoles,
+    compareRoles,
+    contentTypeToPermission,
+    defaultChatRules,
+    deletedUser,
+    E8S_PER_TOKEN,
+    extractUserIdsFromMentions,
+    featureRestricted,
+    getContentAsFormattedText,
+    getDisplayDate,
+    getEmailSignInSession,
+    getTimeUntilSessionExpiryMs,
+    IdentityStorage,
+    indexRangeForChat,
+    isBalanceGate,
+    isCaptionedContent,
+    isCompositeGate,
+    isCredentialGate,
+    isEditableContent,
+    isMessageNotification,
+    isNeuronGate,
+    isPaymentGate,
+    isTransfer,
+    LARGE_GROUP_THRESHOLD,
+    LEDGER_CANISTER_CHAT,
+    mapAcceptP2PSwapResponseToStatus,
+    mapCancelP2PSwapResponseToStatus,
+    MessageContextMap,
+    messageContextsEqual,
+    missingUserIds,
+    NoMeetingToJoin,
+    ONE_DAY,
+    ONE_HOUR,
+    ONE_MINUTE_MILLIS,
+    OPENCHAT_BOT_USER_ID,
+    OPENCHAT_VIDEO_CALL_USER_ID,
+    parseBigInt,
+    publish,
+    random128,
+    random64,
+    removeEmailSignInSession,
+    routeForChatIdentifier,
+    shouldPreprocessGate,
+    storeEmailSignInSession,
+    Stream,
+    toDer,
+    toTitleCase,
+    updateCreatedUser,
+    userIdsFromEvents,
+    userIdsFromTransactions,
+    userOrUserGroupId,
+    userOrUserGroupName,
+    userStatus,
+    WEBAUTHN_ORIGINATING_CANISTER,
+} from "openchat-shared";
+import { get } from "svelte/store";
+import type { OpenChatConfig } from "./config";
+import { AIRDROP_BOT_USER_ID } from "./constants";
+import { configureEffects } from "./effects.svelte";
+import { remoteVideoCallStartedEvent } from "./events";
+import { LiveState } from "./liveState";
+import { snapshot } from "./snapshot.svelte";
+import { app } from "./state/app.svelte";
+import { botState } from "./state/bots.svelte";
+import { communityLocalUpdates, type CommunityMergedState } from "./state/community_details";
+import type { IReadonlyMap } from "./state/map";
+import { pathState, type RouteParams } from "./state/path.svelte";
+import { ui } from "./state/ui.svelte";
 import { blockedUsers } from "./stores/blockedUsers";
-import { undeletingMessagesStore } from "./stores/undeletingMessages";
 import {
-    chatsInitialised,
-    chatsLoading,
+    addGroupPreview,
     chatStateStore,
     clearSelectedChat,
-    createDirectChat,
-    nextEventAndMessageIndexes,
-    setSelectedChat,
-    threadServerEventsStore,
-    nextEventAndMessageIndexesForThread,
     clearServerEvents,
     confirmedEventIndexesLoaded,
-    addGroupPreview,
-    removeUninitializedDirectChat,
-    removeGroupPreview,
+    confirmedThreadEventIndexesLoadedStore,
+    createDirectChat,
     groupPreviewsStore,
     isContiguous,
-    confirmedThreadEventIndexesLoadedStore,
     isContiguousInThread,
+    nextEventAndMessageIndexes,
+    nextEventAndMessageIndexesForThread,
+    removeGroupPreview,
+    removeUninitializedDirectChat,
     selectedMessageContext,
+    setSelectedChat,
+    threadServerEventsStore,
 } from "./stores/chat";
+import {
+    addCommunityPreview,
+    communityPreviewsStore,
+    nextCommunityIndex,
+    removeCommunityPreview,
+} from "./stores/community";
 import {
     bitcoinAddress,
     cryptoBalance,
@@ -117,54 +315,161 @@ import {
     nervousSystemLookup,
     swappableTokensStore,
 } from "./stores/crypto";
+import { diamondDurationToMs } from "./stores/diamond";
+import { draftMessagesStore } from "./stores/draftMessages";
+import { ephemeralMessages } from "./stores/ephemeralMessages";
+import { failedMessagesStore } from "./stores/failedMessages";
 import {
     disableAllProposalFilters,
     enableAllProposalFilters,
     toggleProposalFilter,
     toggleProposalFilterMessageExpansion,
 } from "./stores/filteredProposals";
+import { hasFlag } from "./stores/flagStore";
+import {
+    chatListScopeStore,
+    chitStateStore,
+    globalStateStore,
+    mergeCombinedUnreadCounts,
+    setGlobalState,
+} from "./stores/global";
+import { applyTranslationCorrection } from "./stores/i18n";
+import { identityState } from "./stores/identity";
 import { lastOnlineDates } from "./stores/lastOnlineDates";
 import { localChatSummaryUpdates } from "./stores/localChatSummaryUpdates";
+import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
+import { localGlobalUpdates } from "./stores/localGlobalUpdates";
 import { localMessageUpdates } from "./stores/localMessageUpdates";
 import {
     messageActivityFeedReadUpToLocally,
     messagesRead,
     startMessagesReadTracker,
 } from "./stores/markRead";
+import { type MessageFilter, messageFiltersStore } from "./stores/messageFilters";
+import { minutesOnlineStore } from "./stores/minutesOnline";
 import {
     askForNotificationPermission,
     initNotificationStores,
     setSoftDisabled,
 } from "./stores/notifications";
-import { recommendedGroupExclusions } from "./stores/recommendedGroupExclusions";
+import {
+    capturePinNumberStore,
+    pinNumberFailureStore,
+    pinNumberRequiredStore,
+} from "./stores/pinNumber";
 import { proposalTallies } from "./stores/proposalTallies";
+import { recommendedGroupExclusions } from "./stores/recommendedGroupExclusions";
+import { captureRulesAcceptanceStore } from "./stores/rules";
 import { storageStore, updateStorageLimit } from "./stores/storage";
+import { initialiseMostRecentSentMessageTimes, shouldThrottle } from "./stores/throttling";
 import { isTyping, typing } from "./stores/typing";
 import { unconfirmed, unconfirmedReadByThem } from "./stores/unconfirmed";
+import { undeletingMessagesStore } from "./stores/undeletingMessages";
 import {
+    airdropBotUser,
+    anonymousUserSummary,
+    currentUser,
     openChatBotUser,
     proposalsBotUser,
     specialUsers,
     userStore,
-    currentUser,
-    anonymousUserSummary,
     videoCallBotUser,
-    airdropBotUser,
 } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
 import { dataToBlobUrl } from "./utils/blob";
+import { CachePrimer } from "./utils/cachePrimer";
+import {
+    activeUserIdFromEvent,
+    buildBlobUrl,
+    buildCryptoTransferText,
+    buildIdenticonUrl,
+    buildTransactionLink,
+    buildTransactionUrlByIndex,
+    buildUserAvatarUrl,
+    canAddMembers,
+    canBlockUsers,
+    canChangePermissions,
+    canChangeRoles,
+    canChangeVisibility,
+    canConvertToCommunity,
+    canDeleteGroup,
+    canDeleteOtherUsersMessages,
+    canEditGroupDetails,
+    canForward,
+    canImportToCommunity,
+    canInviteUsers,
+    canLeaveGroup,
+    canMentionAllMembers,
+    canPinMessages,
+    canReactToMessages,
+    canRemoveMembers,
+    canSendDirectMessage,
+    canSendGroupMessage,
+    canStartVideoCalls,
+    canUnblockUsers,
+    containsReaction,
+    createMessage,
+    diffGroupPermissions,
+    doesMessageFailFilter,
+    findMessageById,
+    getMembersString,
+    getMessageText,
+    getTypingString,
+    groupBySender,
+    groupChatFromCandidate,
+    groupEvents,
+    groupMessagesByDate,
+    isEventKindHidden,
+    isFrozen,
+    isLapsed,
+    isPreviewing,
+    makeRtcConnections,
+    mergeSendMessageResponse,
+    mergeServerEvents,
+    messageIsReadByThem,
+    metricsEqual,
+    permittedMessagesInDirectChat,
+    permittedMessagesInGroup,
+    sameUser,
+    serialiseMessageForRtc,
+    startTyping,
+    stopTyping,
+} from "./utils/chat";
+import {
+    canBlockUsers as canBlockCommunityUsers,
+    canChangeCommunityPermissions,
+    canChangeRoles as canChangeCommunityRoles,
+    canCreatePrivateChannel,
+    canCreatePublicChannel,
+    canDeleteCommunity,
+    canEditCommunity,
+    canInviteUsers as canInviteCommunityUsers,
+    canManageUserGroups,
+    canRemoveMembers as canRemoveCommunityMembers,
+    canUnblockUsers as canUnblockCommunityUsers,
+    isCommunityLapsed,
+} from "./utils/community";
+import { verifyCredential } from "./utils/credentials";
 import { formatTokens, validateTokenInput } from "./utils/cryptoFormatter";
 import {
     formatMessageDate,
     toDateString,
     toDatetimeString,
     toLongDateString,
-    toShortTimeString,
     toMonthString,
+    toShortTimeString,
 } from "./utils/date";
 import formatFileSize from "./utils/fileSize";
+import { gaTrack } from "./utils/ga";
 import { calculateMediaDimensions } from "./utils/layout";
+import {
+    disableLinksInText,
+    extractDisabledLinks,
+    extractEnabledLinks,
+    stripLinkDisabledMarker,
+} from "./utils/linkPreviews";
 import { groupBy, groupWhile, keepMax, partition, toRecord, toRecord2 } from "./utils/list";
+import { getUserCountryCode } from "./utils/location";
 import {
     audioRecordingMimeType,
     containsSocialVideoLink,
@@ -174,16 +479,24 @@ import {
     isSocialVideoLink,
     type MaxMediaSizes,
     messageContentFromFile,
+    spotifyRegex,
     twitterLinkRegex,
     youtubeRegex,
-    spotifyRegex,
 } from "./utils/media";
 import { mergeKeepingOnlyChanged } from "./utils/object";
+import { hasOwnerRights } from "./utils/permissions";
+import { Poller } from "./utils/poller";
+import { showTrace } from "./utils/profiling";
+import { indexIsInRanges } from "./utils/range";
+import { RecentlyActiveUsersTracker } from "./utils/recentlyActiveUsersTracker";
+import { pageRedirect } from "./utils/routes";
 import {
     createRemoteVideoStartedEvent,
     filterWebRtcMessage,
     parseWebRtcMessage,
 } from "./utils/rtc";
+import { rtcConnectionsManager } from "./utils/rtcConnectionsManager";
+import { Semaphore } from "./utils/semaphore";
 import {
     durationFromMilliseconds,
     formatDisappearingMessageTime,
@@ -193,320 +506,17 @@ import {
 } from "./utils/time";
 import { initialiseTracking, startTrackingSession, trackEvent } from "./utils/tracking";
 import { startSwCheckPoller } from "./utils/updateSw";
-import type { OpenChatConfig } from "./config";
-import { LiveState } from "./liveState";
-import { getTypingString, startTyping, stopTyping } from "./utils/chat";
-import { indexIsInRanges } from "./utils/range";
-import type {
-    CreatedUser,
-    IdentityState,
-    ThreadSyncDetails,
-    WebRtcMessage,
-    ChatSummary,
-    EventWrapper,
-    Message,
-    GroupChatSummary,
-    MemberRole,
-    Rules,
-    EventsResponse,
-    ChatEvent,
-    ThreadSummary,
-    DataContent,
-    SendMessageSuccess,
-    TransferSuccess,
-    User,
-    RemoteUserToggledReaction,
-    RemoteUserSentMessage,
-    CheckUsernameResponse,
-    UserSummary,
-    RegisterUserResponse,
-    CurrentUserResponse,
-    RemoveMemberResponse,
-    RegisterProposalVoteResponse,
-    GroupInvite,
-    SearchDirectChatResponse,
-    SearchGroupChatResponse,
-    ThreadPreview,
-    UsersArgs,
-    UsersResponse,
-    PublicProfile,
-    SetUsernameResponse,
-    SetBioResponse,
-    PendingCryptocurrencyWithdrawal,
-    WithdrawCryptocurrencyResponse,
-    InviteCodeResponse,
-    EnableInviteCodeResponse,
-    DisableInviteCodeResponse,
-    ResetInviteCodeResponse,
-    UpdateGroupResponse,
-    CandidateGroupChat,
-    CreateGroupResponse,
-    Notification,
-    Logger,
-    ChatFrozenEvent,
-    ChatUnfrozenEvent,
-    UserStatus,
-    ThreadRead,
-    DiamondMembershipDuration,
-    DiamondMembershipFees,
-    UpdateMarketMakerConfigArgs,
-    UpdateMarketMakerConfigResponse,
-    UpdatedEvent,
-    AccessGate,
-    ProposalVoteDetails,
-    MessageReminderCreatedContent,
-    CommunityPermissions,
-    CommunitySummary,
-    CreateCommunityResponse,
-    GroupSearchResponse,
-    ChatPermissions,
-    ChatIdentifier,
-    GroupChatIdentifier,
-    DirectChatIdentifier,
-    CommunityIdentifier,
-    ExploreCommunitiesResponse,
-    MultiUserChatIdentifier,
-    MultiUserChat,
-    ChatListScope,
-    ChannelIdentifier,
-    ExploreChannelsResponse,
-    CommunityInvite,
-    ModerationFlag,
-    ChannelSummary,
-    GroupMoved,
-    CryptocurrencyContent,
-    CryptocurrencyDetails,
-    CryptocurrencyTransfer,
-    Mention,
-    SetDisplayNameResponse,
-    UserGroupDetails,
-    CreateUserGroupResponse,
-    UpdateUserGroupResponse,
-    SetMemberDisplayNameResponse,
-    UserOrUserGroup,
-    AttachmentContent,
-    MessageContent,
-    MessageContext,
-    UpdatedRules,
-    PendingCryptocurrencyTransfer,
-    TipMessageResponse,
-    NamedAccount,
-    SaveCryptoAccountResponse,
-    CandidateProposal,
-    GroupSubtype,
-    NervousSystemDetails,
-    OptionUpdate,
-    AccountTransactionResult,
-    MessagePermission,
-    OptionalChatPermissions,
-    ExpiredEventsRange,
-    UpdatesResult,
-    DexId,
-    SwapTokensResponse,
-    TokenSwapStatusResponse,
-    Member,
-    Level,
-    VersionedRules,
-    DiamondMembershipStatus,
-    Success,
-    Failure,
-    AcceptP2PSwapResponse,
-    CancelP2PSwapResponse,
-    CommunityDetailsResponse,
-    GroupChatDetailsResponse,
-    CandidateTranslations,
-    ProposeResponse,
-    RejectReason,
-    JoinVideoCallResponse,
-    AccessTokenType,
-    ApproveAccessGatePaymentResponse,
-    ClientJoinGroupResponse,
-    ClientJoinCommunityResponse,
-    GenerateMagicLinkResponse,
-    HandleMagicLinkResponse,
-    SiwePrepareLoginResponse,
-    SiwsPrepareLoginResponse,
-    VideoCallPresence,
-    VideoCallParticipant,
-    AcceptedRules,
-    ClaimDailyChitResponse,
-    VerifiedCredentialArgs,
-    VideoCallContent,
-    ChitEventsRequest,
-    ChitEventsResponse,
-    GenerateChallengeResponse,
-    ChallengeAttempt,
-    PreprocessedGate,
-    SubmitProofOfUniquePersonhoodResponse,
-    Achievement,
-    PayForDiamondMembershipResponse,
-    LinkIdentitiesResponse,
-    RemoveIdentityLinkResponse,
-    AddMembersToChannelResponse,
-    WalletConfig,
-    AirdropChannelDetails,
-    ChitLeaderboardResponse,
-    AuthenticationPrincipal,
-    AccessGateConfig,
-    Verification,
-    EnhancedAccessGate,
-    PaymentGateApproval,
-    PaymentGateApprovals,
-    MessageActivityFeedResponse,
-    ApproveTransferResponse,
-    BotCommandInstance,
-    InternalBotCommandInstance,
-    ExternalBotCommandInstance,
-    CaptionedContent,
-    ExploreBotsResponse,
-    ExternalBot,
-    ExternalBotPermissions,
-    ConnectToWorkerResponse,
-    FromWorker,
-    WorkerResponse,
-    WorkerError,
-    WorkerRequest,
-    WorkerResult,
-    MarkReadRequest,
-    ChatEventsArgs,
-    ChatEventsResponse,
-    BotDefinitionResponse,
-    BotCommandResponse,
-    BotDefinition,
-    BotMessageContext,
-    BotClientConfigData,
-    CompletedCryptocurrencyTransfer,
-    GenerateBotKeyResponse,
-    WebAuthnKey,
-    WebAuthnKeyFull,
-    BotInstallationLocation,
-    BotActionScope,
-    CkbtcMinterDepositInfo,
-    CkbtcMinterWithdrawalInfo,
-    WithdrawBtcResponse,
-    PayForStreakInsuranceResponse,
-} from "openchat-shared";
-import {
-    Stream,
-    AuthProvider,
-    missingUserIds,
-    getTimeUntilSessionExpiryMs,
-    userIdsFromEvents,
-    getContentAsFormattedText,
-    indexRangeForChat,
-    getDisplayDate,
-    userStatus,
-    compareRoles,
-    E8S_PER_TOKEN,
-    ChatMap,
-    chatIdentifiersEqual,
-    chatIdentifierToString,
-    MessageContextMap,
-    messageContextsEqual,
-    communityRoles,
-    isNeuronGate,
-    toTitleCase,
-    CommonResponses,
-    defaultChatRules,
-    userOrUserGroupName,
-    userOrUserGroupId,
-    extractUserIdsFromMentions,
-    isMessageNotification,
-    userIdsFromTransactions,
-    contentTypeToPermission,
-    mapAcceptP2PSwapResponseToStatus,
-    mapCancelP2PSwapResponseToStatus,
-    anonymousUser,
-    ANON_USER_ID,
-    isPaymentGate,
-    ONE_DAY,
-    ONE_MINUTE_MILLIS,
-    ONE_HOUR,
-    LEDGER_CANISTER_CHAT,
-    OPENCHAT_VIDEO_CALL_USER_ID,
-    IdentityStorage,
-    NoMeetingToJoin,
-    featureRestricted,
-    buildDelegationIdentity,
-    toDer,
-    updateCreatedUser,
-    LARGE_GROUP_THRESHOLD,
-    isCompositeGate,
-    shouldPreprocessGate,
-    deletedUser,
-    OPENCHAT_BOT_USER_ID,
-    isEditableContent,
-    isCaptionedContent,
-    parseBigInt,
-    random64,
-    random128,
-    WEBAUTHN_ORIGINATING_CANISTER,
-    publish,
-} from "openchat-shared";
-import { AIRDROP_BOT_USER_ID } from "./constants";
-import { failedMessagesStore } from "./stores/failedMessages";
-import { diamondDurationToMs } from "./stores/diamond";
-import {
-    addCommunityPreview,
-    communityPreviewsStore,
-    communityStateStore,
-    nextCommunityIndex,
-    removeCommunityPreview,
-} from "./stores/community";
-import {
-    globalStateStore,
-    setGlobalState,
-    chatListScopeStore,
-    chitStateStore,
-    mergeCombinedUnreadCounts,
-} from "./stores/global";
-import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
-import { hasFlag } from "./stores/flagStore";
-import { hasOwnerRights } from "./utils/permissions";
-import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
-import { verifyCredential } from "./utils/credentials";
-import { messageFiltersStore, type MessageFilter } from "./stores/messageFilters";
-import { draftMessagesStore } from "./stores/draftMessages";
-import {
-    disableLinksInText,
-    extractDisabledLinks,
-    extractEnabledLinks,
-    stripLinkDisabledMarker,
-} from "./utils/linkPreviews";
-import type { SendMessageResponse } from "openchat-shared";
-import { applyTranslationCorrection } from "./stores/i18n";
-import { getUserCountryCode } from "./utils/location";
-import { isBalanceGate, isCredentialGate } from "openchat-shared";
-import {
-    DelegationChain,
-    DelegationIdentity,
-    ECDSAKeyIdentity,
-    type JsonnableDelegationChain,
-    WebAuthnIdentity,
-} from "@dfinity/identity";
-import {
-    capturePinNumberStore,
-    pinNumberFailureStore,
-    pinNumberRequiredStore,
-} from "./stores/pinNumber";
-import { captureRulesAcceptanceStore } from "./stores/rules";
-import type { SetPinNumberResponse } from "openchat-shared";
-import type { PinNumberFailures, MessageFormatter } from "openchat-shared";
-import { canRetryMessage, isTransfer } from "openchat-shared";
-import { initialiseMostRecentSentMessageTimes, shouldThrottle } from "./stores/throttling";
-import { storeEmailSignInSession } from "openchat-shared";
-import { getEmailSignInSession } from "openchat-shared";
-import { removeEmailSignInSession } from "openchat-shared";
-import { localGlobalUpdates } from "./stores/localGlobalUpdates";
-import { identityState } from "./stores/identity";
 import { addQueryStringParam } from "./utils/url";
+import {
+    buildUsernameList,
+    compareIsNotYouThenUsername,
+    compareUsername,
+    formatLastOnlineDate,
+    nullUser,
+    userAvatarUrl,
+} from "./utils/user";
+import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 import { createWebAuthnIdentity, MultiWebAuthnIdentity } from "./utils/webAuthn";
-import { ephemeralMessages } from "./stores/ephemeralMessages";
-import { minutesOnlineStore } from "./stores/minutesOnline";
-import { Semaphore } from "./utils/semaphore";
-import { snapshot } from "./snapshot.svelte";
-import { remoteVideoCallStartedEvent } from "./events";
-import { botState } from "./state/bots.svelte";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -672,7 +682,7 @@ export class OpenChat {
 
     async #loadedAuthenticationIdentity(id: Identity, authProvider: AuthProvider | undefined) {
         currentUser.set(anonymousUser());
-        chatsInitialised.set(false);
+        app.chatsInitialised = false;
         const anon = id.getPrincipal().isAnonymous();
         const authPrincipal = id.getPrincipal().toString();
         this.#authPrincipal = anon ? undefined : authPrincipal;
@@ -702,6 +712,8 @@ export class OpenChat {
         } else {
             await this.#ocIdentityStorage.remove();
         }
+
+        configureEffects(this);
 
         this.#loadUser();
     }
@@ -1628,18 +1640,15 @@ export class OpenChat {
             newAchievement,
         }).then((resp) => {
             if (resp === "success") {
-                communityStateStore.updateProp(id, "members", (ms) => {
-                    const userId = this.#liveState.user.userId;
-                    if (userId !== undefined) {
-                        const m = ms.get(userId);
-                        if (m !== undefined) {
-                            ms.set(userId, { ...m, displayName });
-                            return new Map(ms);
-                        }
+                const userId = this.#liveState.user.userId;
+                if (userId !== undefined) {
+                    const m = app.selectedCommunityDetails.members.get(userId);
+                    if (m !== undefined) {
+                        communityLocalUpdates.updateMember(id, userId, { ...m, displayName });
                     }
-                    return ms;
-                });
+                }
 
+                // TODO - we also need to deal with this
                 localCommunitySummaryUpdates.updateDisplayName(id, displayName);
             }
             return resp;
@@ -2478,14 +2487,14 @@ export class OpenChat {
         return true;
     }
 
-    async #updateUserStoreFromCommunityState(id: CommunityIdentifier): Promise<void> {
+    async #updateUserStoreFromCommunityState(community: CommunityMergedState): Promise<void> {
         const allUserIds = new Set<string>();
-        this.#getTruncatedUserIdsFromMembers([
-            ...communityStateStore.getProp(id, "members").values(),
-        ]).forEach((m) => allUserIds.add(m.userId));
-        communityStateStore.getProp(id, "blockedUsers").forEach((u) => allUserIds.add(u));
-        communityStateStore.getProp(id, "invitedUsers").forEach((u) => allUserIds.add(u));
-        communityStateStore.getProp(id, "referrals").forEach((u) => allUserIds.add(u));
+        this.#getTruncatedUserIdsFromMembers([...community.members.values()]).forEach((m) =>
+            allUserIds.add(m.userId),
+        );
+        community.blockedUsers.forEach((u) => allUserIds.add(u));
+        community.invitedUsers.forEach((u) => allUserIds.add(u));
+        community.referrals.forEach((u) => allUserIds.add(u));
         await this.getMissingUsers(allUserIds);
     }
 
@@ -2535,36 +2544,6 @@ export class OpenChat {
     compareIsNotYouThenUsername = compareIsNotYouThenUsername;
     compareUsername = compareUsername;
 
-    #blockCommunityUserLocally(id: CommunityIdentifier, userId: string): void {
-        communityStateStore.updateProp(id, "blockedUsers", (b) => new Set([...b, userId]));
-        communityStateStore.updateProp(id, "members", (ms) => {
-            ms.delete(userId);
-            return new Map(ms);
-        });
-    }
-
-    #unblockCommunityUserLocally(
-        id: CommunityIdentifier,
-        userId: string,
-        addToMembers: boolean,
-    ): void {
-        communityStateStore.updateProp(id, "blockedUsers", (b) => {
-            return new Set([...b].filter((u) => u !== userId));
-        });
-        if (addToMembers) {
-            communityStateStore.updateProp(id, "members", (ms) => {
-                ms.set(userId, {
-                    role: "member",
-                    userId,
-                    displayName: undefined,
-                    lapsed: false,
-                });
-                return new Map(ms);
-                return ms;
-            });
-        }
-    }
-
     #blockUserLocally(chatId: ChatIdentifier, userId: string): void {
         chatStateStore.updateProp(chatId, "blockedUsers", (b) => new Set([...b, userId]));
         chatStateStore.updateProp(chatId, "members", (p) => p.filter((p) => p.userId !== userId));
@@ -2588,33 +2567,36 @@ export class OpenChat {
     }
 
     blockCommunityUser(id: CommunityIdentifier, userId: string): Promise<boolean> {
-        this.#blockCommunityUserLocally(id, userId);
+        const blockUndo = communityLocalUpdates.blockUser(id, userId);
+        const membersUndo = communityLocalUpdates.removeMember(id, userId);
         return this.#sendRequest({ kind: "blockCommunityUser", id, userId })
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    this.#unblockCommunityUserLocally(id, userId, true);
+                    blockUndo();
+                    membersUndo();
                     return false;
                 }
                 return true;
             })
             .catch(() => {
-                this.#unblockCommunityUserLocally(id, userId, true);
+                blockUndo();
+                membersUndo();
                 return false;
             });
     }
 
     unblockCommunityUser(id: CommunityIdentifier, userId: string): Promise<boolean> {
-        this.#unblockCommunityUserLocally(id, userId, false);
+        const undo = communityLocalUpdates.unblockUser(id, userId);
         return this.#sendRequest({ kind: "unblockCommunityUser", id, userId })
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    this.#blockCommunityUserLocally(id, userId);
+                    undo();
                     return false;
                 }
                 return true;
             })
             .catch(() => {
-                this.#blockCommunityUserLocally(id, userId);
+                undo();
                 return false;
             });
     }
@@ -3151,36 +3133,30 @@ export class OpenChat {
     }
 
     async #loadCommunityDetails(community: CommunitySummary): Promise<void> {
+        const id = community.id;
         const resp: CommunityDetailsResponse = await this.#sendRequest({
             kind: "getCommunityDetails",
-            id: community.id,
+            id,
             communityLastUpdated: community.lastUpdated,
         }).catch(() => "failure");
         if (resp !== "failure") {
             const [lapsed, members] = partition(resp.members, (m) => m.lapsed);
-            communityStateStore.setProp(
-                community.id,
-                "members",
+            app.setSelectedCommunityDetails(
+                id,
+                resp.userGroups,
                 new Map(members.map((m) => [m.userId, m])),
-            );
-            communityStateStore.setProp(community.id, "blockedUsers", resp.blockedUsers);
-            communityStateStore.setProp(
-                community.id,
-                "lapsedMembers",
+                resp.blockedUsers,
                 new Set(lapsed.map((m) => m.userId)),
-            );
-            communityStateStore.setProp(community.id, "invitedUsers", resp.invitedUsers);
-            communityStateStore.setProp(community.id, "rules", resp.rules);
-            communityStateStore.setProp(community.id, "userGroups", resp.userGroups);
-            communityStateStore.setProp(community.id, "referrals", resp.referrals);
-            communityStateStore.setProp(
-                community.id,
-                "bots",
+                resp.invitedUsers,
+                resp.referrals,
                 resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
+                resp.apiKeys,
+                resp.rules,
             );
-            communityStateStore.setProp(community.id, "apiKeys", resp.apiKeys);
+            if (app.selectedCommunityDetails) {
+                this.#updateUserStoreFromCommunityState(app.selectedCommunityDetails);
+            }
         }
-        await this.#updateUserStoreFromCommunityState(community.id);
     }
 
     async #loadChatDetails(serverChat: ChatSummary): Promise<void> {
@@ -3912,7 +3888,7 @@ export class OpenChat {
             return false;
         }
 
-        const communityRules = this.#liveState.currentCommunityRules;
+        const communityRules = app.selectedCommunityDetails.rules;
         const community = this.#liveState.selectedCommunity;
 
         console.debug(
@@ -4674,7 +4650,7 @@ export class OpenChat {
                     // are already in a map
                     const existing =
                         level === "community"
-                            ? this.#liveState.currentCommunityMembers
+                            ? app.selectedCommunityDetails.members
                             : new Map(this.#liveState.currentChatMembers.map((m) => [m.userId, m]));
 
                     // Remove any existing members from the global matches until there are at most `maxResults`
@@ -4713,7 +4689,7 @@ export class OpenChat {
     ): UserSummary[] {
         const termLower = term.toLowerCase();
         const matches: UserSummary[] = [];
-        for (const [userId, member] of this.#liveState.currentCommunityMembers) {
+        for (const [userId, member] of app.selectedCommunityDetails.members) {
             let user = this.#liveState.userStore.get(userId);
             if (user?.username !== undefined) {
                 const displayName = member.displayName ?? user.displayName;
@@ -4746,9 +4722,8 @@ export class OpenChat {
         this.#referralCode = code;
     }
 
-    #extractReferralCodeFromPath(): string | undefined {
-        const qs = new URLSearchParams(window.location.search);
-        return qs.get("ref") ?? undefined;
+    #extractReferralCodeFromPath(): string | null {
+        return pathState.querystringReferral;
     }
 
     captureReferralCode(): boolean {
@@ -4879,13 +4854,13 @@ export class OpenChat {
         });
     }
 
-    getDisplayNameById(userId: string, communityMembers?: Map<string, Member>): string {
+    getDisplayNameById(userId: string, communityMembers?: IReadonlyMap<string, Member>): string {
         return this.getDisplayName(this.#liveState.userStore.get(userId), communityMembers);
     }
 
     getDisplayName(
         user: { userId: string; username: string; displayName?: string } | undefined,
-        communityMembers?: Map<string, Member>,
+        communityMembers?: IReadonlyMap<string, Member>,
     ): string {
         if (user !== undefined) {
             const member = communityMembers?.get(user.userId);
@@ -4915,7 +4890,7 @@ export class OpenChat {
         userIds: string[],
     ): void {
         if (id.kind === "community") {
-            communityStateStore.updateProp(id, "invitedUsers", (b) => new Set([...b, ...userIds]));
+            communityLocalUpdates.inviteUsers(id, userIds);
         } else {
             chatStateStore.updateProp(id, "invitedUsers", (b) => new Set([...b, ...userIds]));
         }
@@ -4926,10 +4901,7 @@ export class OpenChat {
         userIds: string[],
     ): void {
         if (id.kind === "community") {
-            communityStateStore.updateProp(id, "invitedUsers", (b) => {
-                return new Set([...b].filter((u) => !userIds.includes(u)));
-            });
-
+            communityLocalUpdates.uninviteUsers(id, userIds);
             const community = this.#liveState.communities.get({
                 kind: "community",
                 communityId: id.communityId,
@@ -5008,13 +4980,18 @@ export class OpenChat {
     }
 
     removeCommunityMember(id: CommunityIdentifier, userId: string): Promise<RemoveMemberResponse> {
-        communityStateStore.updateProp(id, "members", (ms) => {
-            ms.delete(userId);
-            return new Map(ms);
-        });
-        return this.#sendRequest({ kind: "removeCommunityMember", id, userId }).catch(
-            () => "failure",
-        );
+        const undo = communityLocalUpdates.removeMember(id, userId);
+        return this.#sendRequest({ kind: "removeCommunityMember", id, userId })
+            .then((resp) => {
+                if (resp !== "success") {
+                    undo();
+                }
+                return resp;
+            })
+            .catch(() => {
+                undo();
+                return "failure";
+            });
     }
 
     removeMember(chatId: MultiUserChatIdentifier, userId: string): Promise<RemoveMemberResponse> {
@@ -5030,15 +5007,11 @@ export class OpenChat {
     ): Promise<boolean> {
         if (newRole === oldRole) return Promise.resolve(true);
 
-        // Update the local store
-        communityStateStore.updateProp(id, "members", (ms) => {
-            const m = ms.get(userId);
-            if (m !== undefined) {
-                ms.set(userId, { ...m, role: newRole });
-                return new Map(ms);
-            }
-            return ms;
-        });
+        const m = app.selectedCommunityDetails.members.get(userId);
+        let undo = undefined;
+        if (m !== undefined) {
+            undo = communityLocalUpdates.updateMember(id, userId, { ...m, role: newRole });
+        }
 
         return this.#sendRequest({ kind: "changeCommunityRole", id, userId, newRole })
             .then((resp) => {
@@ -5047,15 +5020,7 @@ export class OpenChat {
             .catch(() => false)
             .then((success) => {
                 if (!success) {
-                    // Revert the local store
-                    communityStateStore.updateProp(id, "members", (ms) => {
-                        const m = ms.get(userId);
-                        if (m !== undefined) {
-                            ms.set(userId, { ...m, role: oldRole });
-                            return new Map(ms);
-                        }
-                        return ms;
-                    });
+                    undo?.();
                 }
                 return success;
             });
@@ -6045,7 +6010,7 @@ export class OpenChat {
 
             pinNumberRequiredStore.set(chatsResponse.state.pinNumberSettings !== undefined);
 
-            chatsInitialised.set(true);
+            app.chatsInitialised = true;
 
             publish("chatsUpdated");
 
@@ -6095,8 +6060,8 @@ export class OpenChat {
         });
     }
     async #loadChats() {
-        const initialLoad = !this.#liveState.chatsInitialised;
-        chatsLoading.set(initialLoad);
+        const initialLoad = !app.chatsInitialised;
+        app.chatsLoading = initialLoad;
 
         const updateRegistryTask = initialLoad ? this.#updateRegistry() : undefined;
 
@@ -6108,10 +6073,10 @@ export class OpenChat {
                 onResult: async (resp) => {
                     await this.#handleChatsResponse(
                         updateRegistryTask,
-                        !this.#liveState.chatsInitialised,
+                        !app.chatsInitialised,
                         resp as UpdatesResult,
                     );
-                    chatsLoading.set(!this.#liveState.chatsInitialised);
+                    app.chatsLoading = !app.chatsInitialised;
                 },
                 onError: (err) => {
                     console.warn("getUpdates threw an error: ", err);
@@ -6743,7 +6708,7 @@ export class OpenChat {
                         ...user,
                         displayName: this.getDisplayName(
                             user,
-                            this.#liveState.currentCommunityMembers,
+                            app.selectedCommunityDetails.members,
                         ),
                     };
                 }
@@ -7016,7 +6981,7 @@ export class OpenChat {
         // * return it to the front end
         const displayName = this.getDisplayName(
             this.#liveState.user,
-            this.#liveState.currentCommunityMembers,
+            app.selectedCommunityDetails.members,
         );
         const user = this.#liveState.user;
         const username = user.username;
@@ -7560,16 +7525,12 @@ export class OpenChat {
         }
     }
 
-    async setSelectedCommunity(
-        id: CommunityIdentifier,
-        inviteCode: string | null,
-        clearChat = true,
-    ): Promise<boolean> {
+    async setSelectedCommunity(id: CommunityIdentifier, clearChat = true): Promise<boolean> {
         let community = this.#liveState.communities.get(id);
         if (community === undefined) {
             // if we don't have the community it means we're not a member and we need to look it up
-            if (inviteCode) {
-                await this.setCommunityInvite({ id, code: inviteCode });
+            if (pathState.querystringCode) {
+                await this.setCommunityInvite({ id, code: pathState.querystringCode });
             }
 
             const referredBy = this.#extractReferralCodeFromPath() ?? this.#referralCode;
@@ -7589,6 +7550,7 @@ export class OpenChat {
             } else {
                 // if we get here it means we're not a member of the community and we can't look it up
                 // it may be private and we may not be invited.
+                publish("noAccess");
                 return false;
             }
         }
@@ -7600,7 +7562,19 @@ export class OpenChat {
         if (community !== undefined) {
             this.#loadCommunityDetails(community);
         }
+
         return true;
+    }
+
+    selectFirstChat(): boolean {
+        if (!ui.mobileWidth) {
+            const first = this.#liveState.chatSummariesList.find((c) => !c.membership.archived);
+            if (first !== undefined) {
+                pageRedirect(routeForChatIdentifier(this.#liveState.chatListScope.kind, first.id));
+                return true;
+            }
+        }
+        return false;
     }
 
     importToCommunity(
@@ -7825,7 +7799,7 @@ export class OpenChat {
                         return g;
                     });
                     if (rules !== undefined && resp.rulesVersion !== undefined) {
-                        communityStateStore.setProp(community.id, "rules", {
+                        communityLocalUpdates.updateRules(community.id, {
                             text: rules.text,
                             enabled: rules.enabled,
                             version: resp.rulesVersion,
@@ -7852,22 +7826,8 @@ export class OpenChat {
             .catch(() => undefined);
     }
 
-    #deleteUserGroupLocally(id: CommunityIdentifier, userGroup: UserGroupDetails) {
-        communityStateStore.updateProp(id, "userGroups", (groups) => {
-            groups.delete(userGroup.id);
-            return new Map(groups);
-        });
-    }
-
-    #undeleteUserGroupLocally(id: CommunityIdentifier, userGroup: UserGroupDetails) {
-        communityStateStore.updateProp(id, "userGroups", (groups) => {
-            groups.set(userGroup.id, userGroup);
-            return new Map(groups);
-        });
-    }
-
     deleteUserGroup(id: CommunityIdentifier, userGroup: UserGroupDetails): Promise<boolean> {
-        this.#deleteUserGroupLocally(id, userGroup);
+        const undo = communityLocalUpdates.deleteUserGroup(id, userGroup.id);
         return this.#sendRequest({
             kind: "deleteUserGroups",
             communityId: id.communityId,
@@ -7875,12 +7835,12 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    this.#undeleteUserGroupLocally(id, userGroup);
+                    undo();
                 }
                 return resp.kind === "success";
             })
             .catch(() => {
-                this.#undeleteUserGroupLocally(id, userGroup);
+                undo();
                 return false;
             });
     }
@@ -7897,9 +7857,9 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    communityStateStore.updateProp(id, "userGroups", (groups) => {
-                        groups.set(resp.userGroupId, { ...userGroup, id: resp.userGroupId });
-                        return new Map(groups);
+                    communityLocalUpdates.addOrUpdateUserGroup(id, {
+                        ...userGroup,
+                        id: resp.userGroupId,
                     });
                 }
                 return resp;
@@ -7929,22 +7889,21 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    communityStateStore.updateProp(id, "userGroups", (groups) => {
-                        groups.set(userGroup.id, userGroup);
-                        return new Map(groups);
-                    });
+                    communityLocalUpdates.addOrUpdateUserGroup(id, userGroup);
                 }
                 return resp;
             })
             .catch(() => CommonResponses.failure());
     }
 
-    setChatListScope(scope: ChatListScope): void {
-        if (scope.kind === "none") {
+    setChatListScopeAndRedirect(route: RouteParams): boolean {
+        if (route.kind === "home_route") {
             chatListScopeStore.set(this.getDefaultScope());
-        } else if (this.#liveState.chatListScope !== scope) {
-            chatListScopeStore.set(scope);
+            return this.selectFirstChat();
+        } else {
+            chatListScopeStore.set(route.scope);
         }
+        return false;
     }
 
     getDefaultScope(): ChatListScope {
@@ -8043,9 +8002,8 @@ export class OpenChat {
                             acceptedRules.chat = this.#liveState.currentChatRules?.version;
                         }
 
-                        if (this.#liveState.currentCommunityRules?.enabled ?? false) {
-                            acceptedRules.community =
-                                this.#liveState.currentCommunityRules?.version;
+                        if (app.selectedCommunityDetails.rules?.enabled ?? false) {
+                            acceptedRules.community = app.selectedCommunityDetails.rules?.version;
                         }
                     }
 
@@ -8292,8 +8250,11 @@ export class OpenChat {
         let perm: ExternalBotPermissions | undefined;
         switch (id.kind) {
             case "community":
-                perm = this.#liveState.currentCommunityBots.get(botId);
-                localCommunitySummaryUpdates.removeBot(id, botId);
+                perm = app.selectedCommunityDetails.bots.get(botId);
+                // TODO - when chat state and global state are done
+                // the same way, we can return the undo fn here which
+                // will be better.
+                communityLocalUpdates.removeBot(id, botId);
                 break;
             case "group_chat":
                 perm = this.#liveState.currentChatBots.get(botId);
@@ -8317,8 +8278,8 @@ export class OpenChat {
         switch (id.kind) {
             case "community":
                 if (perm === undefined) return perm;
-                previousPermissions = this.#liveState.currentCommunityBots.get(botId);
-                localCommunitySummaryUpdates.installBot(id, botId, perm);
+                previousPermissions = app.selectedCommunityDetails.bots.get(botId);
+                communityLocalUpdates.installBot(id, botId, perm);
                 break;
             case "group_chat":
                 if (perm === undefined) return perm;

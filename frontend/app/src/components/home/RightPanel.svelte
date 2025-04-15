@@ -13,6 +13,7 @@
         UserSummary,
     } from "openchat-client";
     import {
+        app,
         compareRoles,
         currentChatApiKeys,
         currentChatBlockedUsers as currentChatBlocked,
@@ -21,14 +22,9 @@
         currentChatLapsedMembers,
         currentChatMembers,
         currentChatPinnedMessages,
-        currentCommunityApiKeys,
-        currentCommunityBlockedUsers as currentCommunityBlocked,
-        currentCommunityBots,
-        currentCommunityInvitedUsers as currentCommunityInvited,
-        currentCommunityLapsedMembers as currentCommunityLapsed,
-        currentCommunityMembers,
         currentUser,
         eventsStore,
+        pageReplace,
         pathState,
         publish,
         selectedChatStore as selectedChat,
@@ -41,7 +37,6 @@
     import { _ } from "svelte-i18n";
     import type { Readable } from "svelte/store";
     import { i18nKey } from "../../i18n/i18n";
-    import { pageReplace } from "../../routes";
     import { toastStore } from "../../stores/toast";
     import { activeVideoCall } from "../../stores/video";
     import { currentTheme } from "../../theme/themes";
@@ -461,13 +456,13 @@
             <Members
                 {closeIcon}
                 collection={$selectedCommunity}
-                invited={$currentCommunityInvited}
-                members={[...$currentCommunityMembers.values()]}
-                blocked={$currentCommunityBlocked}
-                lapsed={$currentCommunityLapsed}
+                invited={app.selectedCommunityDetails.invitedUsers}
+                members={[...app.selectedCommunityDetails.members.values()]}
+                blocked={app.selectedCommunityDetails.blockedUsers}
+                lapsed={app.selectedCommunityDetails.lapsedMembers}
                 initialUsergroup={ui.lastRightPanelState.userGroupId}
-                installedBots={$currentCommunityBots}
-                apiKeys={$currentCommunityApiKeys}
+                installedBots={app.selectedCommunityDetails.bots}
+                apiKeys={app.selectedCommunityDetails.apiKeys}
                 onClose={ui.popRightPanelHistory}
                 onBlockUser={onBlockCommunityUser}
                 onUnblockUser={onUnblockCommunityUser}

@@ -1,13 +1,13 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
     import {
+        app,
         AvatarSize,
         type BotMessageContext as BotMessageContextType,
         type ChatIdentifier,
         chatListScopeStore as chatListScope,
         currentChatMembersMap as chatMembersMap,
         type ChatType,
-        currentCommunityMembers as communityMembers,
         currentChatBlockedUsers,
         currentUser,
         type Dimensions,
@@ -17,6 +17,7 @@
         type MessageContent,
         type MessageReminderCreatedContent,
         OpenChat,
+        pageReplace,
         pathState,
         publish,
         routeForMessage,
@@ -35,7 +36,6 @@
     import { fade } from "svelte/transition";
     import { longpress } from "../../actions/longpress";
     import { i18nKey } from "../../i18n/i18n";
-    import { pageReplace } from "../../routes";
     import { quickReactions } from "../../stores/quickReactions";
     import { rtlStore } from "../../stores/rtl";
     import { dclickReply } from "../../stores/settings";
@@ -476,7 +476,9 @@
         (!inert || canRevealDeleted || canRevealBlocked) && !readonly && !ephemeral,
     );
     let canUndelete = $derived(msg.deleted && msg.content.kind !== "deleted_content");
-    let senderDisplayName = $derived(client.getDisplayName(sender, $communityMembers));
+    let senderDisplayName = $derived(
+        client.getDisplayName(sender, app.selectedCommunityDetails.members),
+    );
     let tips = $derived(msg.tips ? Object.entries(msg.tips) : []);
     let canBlockUser = $derived(canBlockUsers && !$currentChatBlockedUsers.has(msg.sender));
     let edited = $derived(msg.edited && !botContext?.finalised);
@@ -617,7 +619,8 @@
                                             <WithRole
                                                 userId={sender.userId}
                                                 chatMembers={$chatMembersMap}
-                                                communityMembers={$communityMembers}>
+                                                communityMembers={app.selectedCommunityDetails
+                                                    .members}>
                                                 {#snippet children(communityRole, chatRole)}
                                                     <RoleIcon
                                                         level="community"

@@ -4,6 +4,7 @@
         identityState,
         OpenChat,
         pathState,
+        routeForScope,
         ui,
     } from "openchat-client";
     import page from "page";
@@ -16,7 +17,6 @@
     import Blog from "svelte-material-icons/PostOutline.svelte";
     import Road from "svelte-material-icons/RoadVariant.svelte";
     import Shopping from "svelte-material-icons/ShoppingOutline.svelte";
-    import { routeForScope } from "../../routes";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
 

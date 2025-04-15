@@ -102,7 +102,7 @@ export class SafeMap<K, V> {
 
 // This is a bit weird
 export class GlobalMap<V> extends SafeMap<"global", V> {
-    constructor(_map: Map<"global", V> = new Map<"global", V>()) {
+    constructor(_map?: Map<"global", V>) {
         super(
             (_: "global") => "global",
             (_: string) => "global",
@@ -112,7 +112,7 @@ export class GlobalMap<V> extends SafeMap<"global", V> {
 }
 
 export class ChatMap<V> extends SafeMap<ChatIdentifier, V> {
-    constructor(_map: Map<string, V> = new Map<string, V>()) {
+    constructor(_map?: Map<string, V>) {
         super(
             (k: ChatIdentifier) => JSON.stringify(k),
             (k: string) => JSON.parse(k) as ChatIdentifier,
@@ -137,7 +137,7 @@ export class ChatMap<V> extends SafeMap<ChatIdentifier, V> {
 }
 
 export class MessageContextMap<V> extends SafeMap<MessageContext, V> {
-    constructor(_map: Map<string, V> = new Map<string, V>()) {
+    constructor(_map?: Map<string, V>) {
         super(
             (k: MessageContext) => JSON.stringify(k),
             (k: string) => JSON.parse(k) as MessageContext,

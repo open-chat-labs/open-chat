@@ -7,18 +7,18 @@
 </script>
 
 <script lang="ts">
-    import Home from "./Home.svelte";
-    import { identityState, chatsLoading } from "openchat-client";
+    import { app, identityState } from "openchat-client";
+    import type { Component } from "svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
     import LandingPage from "../landingpages/LandingPage.svelte";
-    import type { Component } from "svelte";
+    import Home from "./Home.svelte";
 
     let { showLandingPage }: HomeProps = $props();
 
     let showLoader = $derived(
         $identityState.kind !== "registering" &&
             $identityState.kind !== "challenging" &&
-            ($chatsLoading || $identityState.kind === "loading_user"),
+            (app.chatsLoading || $identityState.kind === "loading_user"),
     );
 </script>
 

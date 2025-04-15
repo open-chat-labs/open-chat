@@ -5,16 +5,6 @@
 <script lang="ts">
     import { identityState, pathState, ui, type CreatedUser, type OpenChat } from "openchat-client";
     import { getContext, type Component } from "svelte";
-    import {
-        isArchitectureRoute,
-        isBlogRoute,
-        isDiamondRoute,
-        isFaqRoute,
-        isGuidelinesRoute,
-        isRoadmapRoute,
-        isTermsRoute,
-        isWhitepaperRoute,
-    } from "../../routes";
     import { showMenuForLandingRoute } from "../../utils/urls";
     import Loading from "../Loading.svelte";
     import Overlay from "../Overlay.svelte";
@@ -53,7 +43,7 @@
             <FeaturesPage />
         {:else}
             <Content>
-                {#if isBlogRoute(pathState.route)}
+                {#if pathState.isBlogRoute(pathState.route)}
                     {#if pathState.route.slug !== undefined}
                         {#await import("./BlogPostPage.svelte")}
                             <div class="loading">
@@ -65,7 +55,7 @@
                     {:else}
                         <BlogPage />
                     {/if}
-                {:else if isRoadmapRoute(pathState.route)}
+                {:else if pathState.isRoadmapRoute(pathState.route)}
                     {#await import("./RoadmapPage.svelte")}
                         <div class="loading">
                             <Loading />
@@ -73,7 +63,7 @@
                     {:then { default: RoadmapPage }}
                         <RoadmapPage />
                     {/await}
-                {:else if isWhitepaperRoute(pathState.route)}
+                {:else if pathState.isWhitepaperRoute(pathState.route)}
                     {#await import("./WhitepaperPage.svelte")}
                         <div class="loading">
                             <Loading />
@@ -81,7 +71,7 @@
                     {:then { default: WhitepaperPage }}
                         <WhitepaperPage />
                     {/await}
-                {:else if isArchitectureRoute(pathState.route)}
+                {:else if pathState.isArchitectureRoute(pathState.route)}
                     {#await import("./ArchitecturePage.svelte")}
                         <div class="loading">
                             <Loading />
@@ -89,7 +79,7 @@
                     {:then { default: ArchitecturePage }}
                         <ArchitecturePage />
                     {/await}
-                {:else if isGuidelinesRoute(pathState.route)}
+                {:else if pathState.isGuidelinesRoute(pathState.route)}
                     {#await import("./GuidelinesPage.svelte")}
                         <div class="loading">
                             <Loading />
@@ -97,7 +87,7 @@
                     {:then { default: GuidelinesPage }}
                         <GuidelinesPage />
                     {/await}
-                {:else if isTermsRoute(pathState.route)}
+                {:else if pathState.isTermsRoute(pathState.route)}
                     {#await import("./TermsPage.svelte")}
                         <div class="loading">
                             <Loading />
@@ -105,7 +95,7 @@
                     {:then { default: TermsPage }}
                         <TermsPage />
                     {/await}
-                {:else if isFaqRoute(pathState.route)}
+                {:else if pathState.isFaqRoute(pathState.route)}
                     {#await import("./FAQPage.svelte")}
                         <div class="loading">
                             <Loading />
@@ -113,7 +103,7 @@
                     {:then { default: FAQPage }}
                         <FAQPage />
                     {/await}
-                {:else if isDiamondRoute(pathState.route)}
+                {:else if pathState.isDiamondRoute(pathState.route)}
                     {#await import("./DiamondPage.svelte")}
                         <div class="loading">
                             <Loading />

@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { ui } from "openchat-client";
-    import { pageReplace } from "../../routes";
+    import { pageReplace, ui } from "openchat-client";
     import { rtlStore } from "../../stores/rtl";
     import { removeQueryStringParam } from "../../utils/urls";
     import Overlay from "../Overlay.svelte";

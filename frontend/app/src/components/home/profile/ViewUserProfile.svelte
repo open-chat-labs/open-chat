@@ -4,16 +4,16 @@
         AvatarSize,
         type ChatSummary,
         type CommunitySummary,
+        type IReadonlySet,
         type OpenChat,
         type PublicProfile,
         type ResourceKey,
         type UserSummary,
+        app,
         blockedUsers,
         currentChatMembersMap as chatMembersMap,
-        currentCommunityMembers as communityMembers,
         currentUser as createdUser,
         currentChatBlockedUsers,
-        currentCommunityBlockedUsers,
         platformModerator,
         selectedChatStore as selectedChat,
         selectedCommunity,
@@ -157,7 +157,7 @@
         community: CommunitySummary | undefined,
         blockedUsers: Set<string>,
         blockedChatUsers: Set<string>,
-        blockedCommunityUsers: Set<string>,
+        blockedCommunityUsers: IReadonlySet<string>,
     ) {
         if (me || inGlobalContext) return false;
 
@@ -177,7 +177,7 @@
         community: CommunitySummary | undefined,
         blockedUsers: Set<string>,
         blockedChatUsers: Set<string>,
-        blockedCommunityUsers: Set<string>,
+        blockedCommunityUsers: IReadonlySet<string>,
     ) {
         if (me || inGlobalContext) return false;
         if (chat !== undefined) {
@@ -263,7 +263,7 @@
                 username: profile?.username ?? "",
                 displayName: profile?.displayName,
             },
-            inGlobalContext ? undefined : $communityMembers,
+            inGlobalContext ? undefined : app.selectedCommunityDetails.members,
         ),
     );
     let canBlock = $derived(
@@ -272,7 +272,7 @@
             $selectedCommunity,
             $blockedUsers,
             $currentChatBlockedUsers,
-            $currentCommunityBlockedUsers,
+            app.selectedCommunityDetails.blockedUsers,
         ),
     );
     let canUnblock = $derived(
@@ -281,7 +281,7 @@
             $selectedCommunity,
             $blockedUsers,
             $currentChatBlockedUsers,
-            $currentCommunityBlockedUsers,
+            app.selectedCommunityDetails.blockedUsers,
         ),
     );
 </script>
@@ -318,7 +318,7 @@
                                 <WithRole
                                     userId={user.userId}
                                     chatMembers={$chatMembersMap}
-                                    communityMembers={$communityMembers}>
+                                    communityMembers={app.selectedCommunityDetails.members}>
                                     {#snippet children(communityRole, chatRole)}
                                         <RoleIcon level="community" popup role={communityRole} />
                                         <RoleIcon

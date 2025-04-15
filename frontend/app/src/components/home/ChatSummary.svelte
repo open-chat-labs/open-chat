@@ -18,6 +18,7 @@
         messagesRead,
         pathState,
         publish,
+        routeForScope,
         selectedChatId,
         selectedCommunity,
         suspendedUser,
@@ -41,7 +42,6 @@
     import PinIcon from "svelte-material-icons/Pin.svelte";
     import PinOffIcon from "svelte-material-icons/PinOff.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
-    import { routeForScope } from "../../routes";
     import { rtlStore } from "../../stores/rtl";
     import { now } from "../../stores/time";
     import { toastStore } from "../../stores/toast";

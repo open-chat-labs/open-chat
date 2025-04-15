@@ -1,47 +1,48 @@
 <script lang="ts">
-    import Alarm from "svelte-material-icons/Alarm.svelte";
-    import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
-    import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
-    import Cancel from "svelte-material-icons/Cancel.svelte";
-    import { _ } from "svelte-i18n";
-    import Search from "../../Search.svelte";
-    import Member from "./Member.svelte";
-    import BlockedUser from "./BlockedUser.svelte";
-    import MembersHeader from "./MembersHeader.svelte";
-    import VirtualList from "../../VirtualList.svelte";
+    import BotInstaller from "@src/components/bots/install/BotInstaller.svelte";
     import {
-        type FullMember,
-        type Member as MemberType,
-        type OpenChat,
-        type UserSummary,
-        type UserLookup,
-        type CommunitySummary,
-        type MultiUserChat,
+        type BotMatch as BotMatchType,
         type CommunityIdentifier,
-        type MultiUserChatIdentifier,
-        chatIdentifiersEqual,
-        LARGE_GROUP_THRESHOLD,
-        userStore,
-        currentUser as user,
+        type CommunitySummary,
+        type EnhancedExternalBot,
         type ExternalBot,
         type ExternalBotPermissions,
-        type BotMatch as BotMatchType,
-        type PublicApiKeyDetails,
-        type EnhancedExternalBot,
+        type FullMember,
+        type IReadonlyMap,
+        type IReadonlySet,
         type MemberRole,
+        type Member as MemberType,
+        type MultiUserChat,
+        type MultiUserChatIdentifier,
+        type OpenChat,
+        type PublicApiKeyDetails,
+        type UserLookup,
+        type UserSummary,
         botState,
+        chatIdentifiersEqual,
+        LARGE_GROUP_THRESHOLD,
+        currentUser as user,
+        userStore,
     } from "openchat-client";
     import { getContext } from "svelte";
-    import InvitedUser from "./InvitedUser.svelte";
+    import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
+    import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
+    import Alarm from "svelte-material-icons/Alarm.svelte";
+    import Cancel from "svelte-material-icons/Cancel.svelte";
     import { menuCloser } from "../../../actions/closeMenu";
-    import UserGroups from "../communities/details/UserGroups.svelte";
-    import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { trimLeadingAtSymbol } from "../../../utils/user";
-    import User from "./User.svelte";
     import BotExplorer from "../../bots/BotExplorer.svelte";
     import BotMember from "../../bots/BotMember.svelte";
-    import BotInstaller from "@src/components/bots/install/BotInstaller.svelte";
+    import Search from "../../Search.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import VirtualList from "../../VirtualList.svelte";
+    import UserGroups from "../communities/details/UserGroups.svelte";
+    import BlockedUser from "./BlockedUser.svelte";
+    import InvitedUser from "./InvitedUser.svelte";
+    import Member from "./Member.svelte";
+    import MembersHeader from "./MembersHeader.svelte";
+    import User from "./User.svelte";
 
     const MAX_SEARCH_RESULTS = 255; // irritatingly this is a nat8 in the candid
     const client = getContext<OpenChat>("client");
@@ -49,14 +50,14 @@
     interface Props {
         closeIcon: "close" | "back";
         collection: CommunitySummary | MultiUserChat;
-        invited: Set<string>;
+        invited: IReadonlySet<string>;
         members: MemberType[];
-        blocked: Set<string>;
-        lapsed: Set<string>;
-        installedBots: Map<string, ExternalBotPermissions>;
+        blocked: IReadonlySet<string>;
+        lapsed: IReadonlySet<string>;
+        installedBots: IReadonlyMap<string, ExternalBotPermissions>;
         initialUsergroup?: number | undefined;
         showHeader?: boolean;
-        apiKeys: Map<string, PublicApiKeyDetails>;
+        apiKeys: IReadonlyMap<string, PublicApiKeyDetails>;
         onClose: () => void;
         onShowInviteUsers: () => void;
         onChangeRole?: (args: { userId: string; newRole: MemberRole; oldRole: MemberRole }) => void;
@@ -95,7 +96,7 @@
     let installingBot: BotMatchType | undefined = undefined;
 
     function hydrateBots(
-        bots: Map<string, ExternalBotPermissions>,
+        bots: IReadonlyMap<string, ExternalBotPermissions>,
         allBots: Map<string, ExternalBot>,
     ): EnhancedExternalBot[] {
         return [...bots.entries()].reduce((bots, [id, perm]) => {
@@ -113,7 +114,7 @@
     function matchingUsers(
         term: string,
         users: UserLookup,
-        ids: Set<string>,
+        ids: IReadonlySet<string>,
         includeMe = false,
     ): UserSummary[] {
         return Array.from(ids).reduce((matching, id) => {

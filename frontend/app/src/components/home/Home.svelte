@@ -21,27 +21,30 @@
         OpenChat,
         PubSubEvents,
         ResourceKey,
+        RouteParams,
         Rules,
         UpdatedRules,
     } from "openchat-client";
     import {
         anonUser,
+        app,
         chatIdentifiersEqual,
         chatListScopeStore as chatListScope,
-        chatsInitialised,
         chatSummariesListStore,
         chatSummariesStore,
         communities,
-        currentCommunityRules,
         defaultChatRules,
         draftMessagesStore,
         identityState,
         nullMembership,
         offlineStore,
+        pageRedirect,
+        pageReplace,
         pathState,
         capturePinNumberStore as pinNumberStore,
         routeForChatIdentifier,
         routeForMessage,
+        routeForScope,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
         selectedChatId,
         selectedChatStore,
@@ -55,11 +58,8 @@
     import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
-    import type { RouteParams } from "../../routes";
-    import { pageRedirect, pageReplace, routeForScope } from "../../routes";
     import { createCandidateCommunity } from "../../stores/community";
     import { messageToForwardStore } from "../../stores/messageToForward";
-    import { eventListScrollTop } from "../../stores/scrollPos";
     import { chitPopup, disableChit } from "../../stores/settings";
     import { toastStore } from "../../stores/toast";
     import { activeVideoCall, incomingVideoCall } from "../../stores/video";
@@ -238,6 +238,7 @@
             subscribe("remoteVideoCallStarted", remoteVideoCallStarted),
             subscribe("remoteVideoCallEnded", remoteVideoCallEnded),
             subscribe("notification", (n) => client.notificationReceived(n)),
+            subscribe("noAccess", () => (modal = { kind: "no_access" })),
         ];
         //TODO push all of this inside the OC client itself
         initialiseNotifications(client);
@@ -403,7 +404,7 @@
 
             // if it's a known chat let's select it
             closeNotificationsForChat(chat.id);
-            $eventListScrollTop = undefined;
+            ui.eventListScrollTop = undefined;
             client.setSelectedChat(chat.id, messageIndex, threadMessageIndex);
             resetRightPanel();
 
@@ -424,31 +425,6 @@
         }
     }
 
-    async function selectCommunity(id: CommunityIdentifier, clearChat = true): Promise<boolean> {
-        const found = await client.setSelectedCommunity(
-            id,
-            pathState.querystring.get("code"),
-            clearChat,
-        );
-        if (!found) {
-            modal = { kind: "no_access" };
-        }
-        return found;
-    }
-
-    function selectFirstChat(): boolean {
-        if (!ui.mobileWidth) {
-            const first = $chatSummariesListStore.find((c) => !c.membership.archived);
-            if (first !== undefined) {
-                pageRedirect(routeForChatIdentifier($chatListScope.kind, first.id));
-                return true;
-            }
-        }
-        return false;
-    }
-
-    let communityLoaded = false;
-
     async function routeChange(initialised: boolean, route: RouteParams): Promise<void> {
         // wrap the whole thing in untrack because we don't want it to react to everything it reads in here
         untrack(async () => {
@@ -457,7 +433,7 @@
                 ui.filterRightPanelHistory((state) => state.kind !== "community_filters");
                 if (
                     $anonUser &&
-                    route.kind === "chat_list_route" &&
+                    pathState.isChatListRoute(route) &&
                     (route.scope.kind === "direct_chat" || route.scope.kind === "favourite")
                 ) {
                     client.updateIdentityState({ kind: "logging_in" });
@@ -465,41 +441,28 @@
                     return;
                 }
 
-                if ("scope" in route) {
-                    client.setChatListScope(route.scope);
+                if (client.setChatListScopeAndRedirect(route)) {
+                    return;
                 }
 
                 // When we have a middle panel and this route is for a chat list then select the first chat
-                if (route.kind === "chat_list_route" && selectFirstChat()) {
+                if (pathState.isChatListRoute(route) && client.selectFirstChat()) {
                     return;
                 }
 
                 // first close any open thread
                 closeThread();
 
-                if (route.kind === "home_route") {
+                if (pathState.isHomeRoute(route)) {
                     client.clearSelectedChat();
                     filterChatSpecificRightPanelStates();
-                } else if (route.kind === "communities_route") {
+                } else if (pathState.isCommunitiesRoute(route)) {
                     client.clearSelectedChat();
                     ui.rightPanelHistory = ui.fullWidth ? [{ kind: "community_filters" }] : [];
-                } else if (route.kind === "selected_community_route") {
-                    await selectCommunity(route.communityId);
-                    if (selectFirstChat()) {
-                        communityLoaded = true;
-                        return;
-                    }
                 } else if (
-                    route.kind === "global_chat_selected_route" ||
-                    route.kind === "selected_channel_route"
+                    pathState.isGlobalChatSelectedRoute(route) ||
+                    pathState.isSelectedChannelRoute(route)
                 ) {
-                    if (route.kind === "selected_channel_route") {
-                        if (!communityLoaded) {
-                            await selectCommunity(route.communityId, false);
-                        }
-                        communityLoaded = false;
-                    }
-
                     // if the chat in the url is different from the chat we already have selected
                     if (!chatIdentifiersEqual(route.chatId, $selectedChatId)) {
                         newChatSelected(route.chatId, route.messageIndex, route.threadMessageIndex);
@@ -517,7 +480,7 @@
                     }
                     filterChatSpecificRightPanelStates();
 
-                    if (route.kind === "share_route") {
+                    if (pathState.isShareRoute(route)) {
                         share = {
                             title: route.title,
                             text: route.text,
@@ -1103,7 +1066,7 @@
         modal = {
             kind: "edit_community",
             community,
-            communityRules: $currentCommunityRules ?? defaultChatRules("community"),
+            communityRules: app.selectedCommunityDetails.rules ?? defaultChatRules("community"),
         };
     }
 
@@ -1168,6 +1131,7 @@
     );
     let nervousSystem = $derived(client.tryGetNervousSystem(governanceCanisterId));
     // $: nervousSystem = client.tryGetNervousSystem("rrkah-fqaaa-aaaaa-aaaaq-cai");
+
     trackedEffect("identity-state", () => {
         if ($identityState.kind === "registering") {
             modal = { kind: "registering" };
@@ -1182,7 +1146,7 @@
         if (
             $identityState.kind === "logged_in" &&
             $identityState.postLogin?.kind === "join_group" &&
-            $chatsInitialised
+            app.chatsInitialised
         ) {
             const join = { ...$identityState.postLogin };
             client.clearPostLoginState();
@@ -1190,7 +1154,7 @@
         }
     });
     trackedEffect("route-change", () => {
-        routeChange($chatsInitialised, pathState.route);
+        routeChange(app.chatsInitialised, pathState.route);
     });
     let bgHeight = $derived(ui.dimensions.height * 0.9);
     let bgClip = $derived(((ui.dimensions.height - 32) / bgHeight) * 361);

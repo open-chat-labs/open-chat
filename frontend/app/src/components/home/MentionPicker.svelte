@@ -1,12 +1,6 @@
 <script lang="ts">
     import type { OpenChat, UserOrUserGroup } from "openchat-client";
-    import {
-        AvatarSize,
-        currentCommunityMembers as communityMembers,
-        currentUser,
-        ui,
-        userStore,
-    } from "openchat-client";
+    import { app, AvatarSize, currentUser, ui, userStore } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import Avatar from "../Avatar.svelte";
@@ -202,7 +196,10 @@
                                     </span>
                                 {:else}
                                     <span class="display-name">
-                                        {client.getDisplayName(item, $communityMembers)}
+                                        {client.getDisplayName(
+                                            item,
+                                            app.selectedCommunityDetails.members,
+                                        )}
                                     </span>
                                     <span class="username">
                                         @{item.username}
