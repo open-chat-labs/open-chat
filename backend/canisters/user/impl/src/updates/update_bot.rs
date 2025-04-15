@@ -3,18 +3,14 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
 use types::OCResult;
-use user_canister::update_bot::{Response::*, *};
+use user_canister::update_bot::*;
 
 #[update(msgpack = true)]
 #[trace]
 fn update_bot(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| update_bot_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| update_bot_impl(args, state)).into()
 }
 
 fn update_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {

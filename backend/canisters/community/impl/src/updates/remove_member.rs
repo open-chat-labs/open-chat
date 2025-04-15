@@ -1,16 +1,15 @@
-use std::collections::HashMap;
-
 use crate::{
     activity_notifications::handle_activity_notification, model::events::CommunityEventInternal, mutate_state, read_state,
     run_regular_jobs, RuntimeState,
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use community_canister::remove_member::{Response::*, *};
+use community_canister::remove_member::*;
 use fire_and_forget_handler::FireAndForgetHandler;
 use local_user_index_canister_c2c_client::lookup_user;
 use msgpack::serialize_then_unwrap;
 use oc_error_codes::OCErrorCode;
+use std::collections::HashMap;
 use types::{CanisterId, CommunityMembersRemoved, CommunityRole, CommunityUsersBlocked, OCResult, UserId};
 use user_canister::c2c_remove_from_community;
 
@@ -20,10 +19,10 @@ async fn block_user(args: community_canister::block_user::Args) -> community_can
     run_regular_jobs();
 
     if !read_state(|state| state.data.is_public.value) {
-        return community_canister::block_user::Response::Error(OCErrorCode::CommunityNotPublic.into());
+        return Response::Error(OCErrorCode::CommunityNotPublic.into());
     }
 
-    remove_member_impl(args.user_id, true).await.into()
+    remove_member_impl(args.user_id, true).await
 }
 
 #[update(msgpack = true)]
@@ -38,7 +37,7 @@ async fn remove_member_impl(user_id: UserId, block: bool) -> Response {
     // Check the caller can remove the user
     let prepare_result = match read_state(|state| prepare(user_id, block, state)) {
         Ok(ok) => ok,
-        Err(error) => return Error(error),
+        Err(error) => return Response::Error(error),
     };
 
     // If the user is an owner of the community then call the local_user_index
@@ -47,15 +46,15 @@ async fn remove_member_impl(user_id: UserId, block: bool) -> Response {
     if prepare_result.is_user_to_remove_an_owner {
         match lookup_user(user_id.into(), prepare_result.local_user_index_canister_id).await {
             Ok(Some(user)) if !user.is_platform_moderator => (),
-            Ok(_) => return Error(OCErrorCode::InitiatorNotAuthorized.into()),
-            Err(error) => return Error(error.into()),
+            Ok(_) => return Response::Error(OCErrorCode::InitiatorNotAuthorized.into()),
+            Err(error) => return Response::Error(error.into()),
         }
     }
 
     // Remove the user from the community
     mutate_state(|state| commit(user_id, block, prepare_result.removed_by, state));
 
-    Success
+    Response::Success
 }
 
 struct PrepareResult {

@@ -1,14 +1,4 @@
-use candid::Deserialize;
-use oc_error_codes::OCError;
-use serde::Serialize;
-use ts_export::ts_export;
-use types::Empty;
+use types::{Empty, EmptySuccessOrError};
 
 pub type Args = Empty;
-
-#[ts_export(user, update_btc_balance)]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum Response {
-    Success,
-    Error(OCError),
-}
+pub type Response = EmptySuccessOrError;

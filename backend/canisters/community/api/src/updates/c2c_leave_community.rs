@@ -1,14 +1,10 @@
 use candid::{CandidType, Principal};
-use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
+use types::EmptySuccessOrError;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub principal: Principal,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    Error(OCError),
-}
+pub type Response = EmptySuccessOrError;

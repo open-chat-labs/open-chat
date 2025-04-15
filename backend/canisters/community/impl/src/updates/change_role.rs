@@ -4,7 +4,7 @@ use crate::{
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use community_canister::change_role::{Response::*, *};
+use community_canister::change_role::*;
 use group_community_common::ExpiringMember;
 use oc_error_codes::OCErrorCode;
 use types::{CanisterId, CommunityRole, CommunityRoleChanged, OCResult, UserId};
@@ -22,7 +22,7 @@ async fn change_role(args: Args) -> Response {
         is_user_owner,
     } = match read_state(|state| prepare(args.user_id, state)) {
         Ok(result) => result,
-        Err(error) => return Error(error),
+        Err(error) => return Response::Error(error),
     };
 
     // Either lookup whether the caller is a platform moderator so they can promote themselves to owner
@@ -44,12 +44,12 @@ async fn change_role(args: Args) -> Response {
                     }
                 }
             }
-            Ok(_) => return Error(OCErrorCode::InitiatorNotAuthorized.into()),
-            Err(error) => return Error(error.into()),
+            Ok(_) => return Response::Error(OCErrorCode::InitiatorNotAuthorized.into()),
+            Err(error) => return Response::Error(error.into()),
         };
     }
 
-    if let Err(error) = mutate_state(|state| {
+    mutate_state(|state| {
         change_role_impl(
             args,
             caller_id,
@@ -57,11 +57,8 @@ async fn change_role(args: Args) -> Response {
             is_user_platform_moderator,
             state,
         )
-    }) {
-        Error(error)
-    } else {
-        Success
-    }
+    })
+    .into()
 }
 
 struct PrepareResult {

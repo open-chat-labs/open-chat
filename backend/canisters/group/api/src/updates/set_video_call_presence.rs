@@ -1,8 +1,7 @@
 use candid::CandidType;
-use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{MessageId, VideoCallPresence};
+use types::{EmptySuccessOrError, MessageId, VideoCallPresence};
 
 #[ts_export(group, set_video_call_presence)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -12,9 +11,4 @@ pub struct Args {
     pub new_achievement: bool,
 }
 
-#[ts_export(group, set_video_call_presence)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    Error(OCError),
-}
+pub type Response = EmptySuccessOrError;

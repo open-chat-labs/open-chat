@@ -1,7 +1,7 @@
 use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use community_canister::leave_channel::{Response::*, *};
+use community_canister::leave_channel::*;
 use types::OCResult;
 
 #[update(candid = true, msgpack = true)]
@@ -9,11 +9,7 @@ use types::OCResult;
 fn leave_channel(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| leave_channel_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| leave_channel_impl(args, state)).into()
 }
 
 fn leave_channel_impl(args: Args, state: &mut RuntimeState) -> OCResult {

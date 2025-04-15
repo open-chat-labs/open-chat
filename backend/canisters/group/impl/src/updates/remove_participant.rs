@@ -3,7 +3,7 @@ use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use fire_and_forget_handler::FireAndForgetHandler;
-use group_canister::remove_participant::{Response::*, *};
+use group_canister::remove_participant::*;
 use group_chat_core::GroupRoleInternal;
 use local_user_index_canister_c2c_client::lookup_user;
 use msgpack::serialize_then_unwrap;
@@ -15,7 +15,7 @@ use user_canister::c2c_remove_from_group;
 #[trace]
 async fn block_user(args: group_canister::block_user::Args) -> group_canister::block_user::Response {
     if !read_state(|state| state.data.chat.is_public.value) {
-        return group_canister::block_user::Response::Error(OCErrorCode::ChatNotPublic.into());
+        return Response::Error(OCErrorCode::ChatNotPublic.into());
     }
 
     remove_participant_impl(args.user_id, true).await.into()
@@ -24,34 +24,28 @@ async fn block_user(args: group_canister::block_user::Args) -> group_canister::b
 #[update(msgpack = true)]
 #[trace]
 async fn remove_participant(args: Args) -> Response {
-    remove_participant_impl(args.user_id, false).await
+    remove_participant_impl(args.user_id, false).await.into()
 }
 
-async fn remove_participant_impl(user_to_remove: UserId, block: bool) -> Response {
+async fn remove_participant_impl(user_to_remove: UserId, block: bool) -> OCResult {
     // Check the caller can remove the user
-    let prepare_result = match read_state(|state| prepare(user_to_remove, block, state)) {
-        Ok(Some(ok)) => ok,
-        Ok(None) => return Success,
-        Err(error) => return Error(error),
+    let prepare_result = match read_state(|state| prepare(user_to_remove, block, state))? {
+        Some(ok) => ok,
+        None => return Ok(()),
     };
 
     // If the user is an owner of the group then call the local_user_index
     // to check whether they are a "platform moderator" in which case this removal
     // is not authorized
     if prepare_result.is_user_to_remove_an_owner {
-        match lookup_user(user_to_remove.into(), prepare_result.local_user_index_canister_id).await {
-            Ok(Some(user)) if !user.is_platform_moderator => (),
-            Ok(_) => return Error(OCErrorCode::InitiatorNotAuthorized.into()),
-            Err(error) => return Error(error.into()),
+        match lookup_user(user_to_remove.into(), prepare_result.local_user_index_canister_id).await? {
+            Some(user) if !user.is_platform_moderator => (),
+            _ => return Err(OCErrorCode::InitiatorNotAuthorized.into()),
         }
     }
 
     // Remove the user from the group
-    if let Err(error) = mutate_state(|state| commit(user_to_remove, block, prepare_result.removed_by, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| commit(user_to_remove, block, prepare_result.removed_by, state))
 }
 
 struct PrepareResult {

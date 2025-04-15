@@ -6,7 +6,7 @@ use canister_tracing_macros::trace;
 use chat_events::DeleteUndeleteMessagesArgs;
 use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use types::{Achievement, EventIndex, OCResult};
-use user_canister::delete_messages::{Response::*, *};
+use user_canister::delete_messages::*;
 use user_canister::UserCanisterEvent;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -14,11 +14,7 @@ use user_canister::UserCanisterEvent;
 fn delete_messages(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| delete_messages_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| delete_messages_impl(args, state)).into()
 }
 
 fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {

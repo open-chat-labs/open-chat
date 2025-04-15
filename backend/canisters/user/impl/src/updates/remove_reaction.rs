@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::AddRemoveReactionArgs;
 use types::{EventIndex, OCResult};
-use user_canister::remove_reaction::{Response::*, *};
+use user_canister::remove_reaction::*;
 use user_canister::{ToggleReactionArgs, UserCanisterEvent};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -12,11 +12,7 @@ use user_canister::{ToggleReactionArgs, UserCanisterEvent};
 fn remove_reaction(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| remove_reaction_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| remove_reaction_impl(args, state)).into()
 }
 
 fn remove_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {

@@ -1,8 +1,7 @@
 use candid::CandidType;
-use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{MessageId, MessageIndex, UserId};
+use types::{EmptySuccessOrError, MessageId, MessageIndex, UserId};
 
 #[ts_export(user, report_message)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -13,9 +12,4 @@ pub struct Args {
     pub delete: bool,
 }
 
-#[ts_export(user, report_message)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    Error(OCError),
-}
+pub type Response = EmptySuccessOrError;

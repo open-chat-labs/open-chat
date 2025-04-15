@@ -11,7 +11,7 @@ use types::{
     DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, Notification, OCResult, UserId,
     UserType, VideoCallPresence, VideoCallType,
 };
-use user_canister::start_video_call_v2::{Response::*, *};
+use user_canister::start_video_call_v2::*;
 use user_canister::{StartVideoCallArgs, UserCanisterEvent};
 
 #[update(guard = "caller_is_video_call_operator")]
@@ -19,11 +19,7 @@ use user_canister::{StartVideoCallArgs, UserCanisterEvent};
 fn start_video_call_v2(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| start_video_call_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| start_video_call_impl(args, state)).into()
 }
 
 fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {

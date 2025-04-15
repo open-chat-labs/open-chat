@@ -2,7 +2,7 @@ use crate::guards::caller_is_user_index;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use community_canister::c2c_set_user_suspended::{Response::*, *};
+use community_canister::c2c_set_user_suspended::*;
 use oc_error_codes::OCErrorCode;
 
 #[update(guard = "caller_is_user_index", msgpack = true)]
@@ -21,8 +21,8 @@ fn c2c_set_user_suspended_impl(args: Args, state: &mut RuntimeState) -> Response
                 channel.chat.members.set_suspended(args.user_id, args.suspended, now);
             }
         }
-        Success
+        Response::Success
     } else {
-        Error(OCErrorCode::TargetUserNotInCommunity.into())
+        Response::Error(OCErrorCode::TargetUserNotInCommunity.into())
     }
 }

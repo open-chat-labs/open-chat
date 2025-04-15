@@ -1,5 +1,4 @@
 use crate::guards::caller_is_owner;
-use crate::updates::set_avatar::Response::*;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -13,11 +12,7 @@ use utils::document::validate_avatar;
 fn set_avatar(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| set_avatar_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| set_avatar_impl(args, state)).into()
 }
 
 fn set_avatar_impl(args: Args, state: &mut RuntimeState) -> OCResult {
