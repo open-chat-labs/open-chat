@@ -203,7 +203,7 @@ import type {
     ExternalAchievement,
     PayForStreakInsuranceResponse,
 } from "./chit";
-import type { DelegationChain, JsonnableDelegationChain } from "@dfinity/identity";
+import type { JsonnableDelegationChain } from "@dfinity/identity";
 import type { Verification } from "./wallet";
 import type {
     BotCommandResponse,
@@ -1522,7 +1522,7 @@ type RemoveIdentityLink = {
 type DeleteUser = {
     kind: "deleteUser";
     userId: string;
-    delegation: DelegationChain;
+    delegation: JsonnableDelegationChain;
 };
 
 type WithdrawFromIcpSwap = {
