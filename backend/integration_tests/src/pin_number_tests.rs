@@ -1,3 +1,4 @@
+use crate::client::register_user_and_include_auth;
 use crate::env::ENV;
 use crate::utils::now_nanos;
 use crate::{client, TestEnv};
@@ -40,7 +41,7 @@ fn can_set_pin_number_by_providing_recent_delegation(within_5_minutes: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let (user, delegation) = client::register_user_and_include_delegation(env, canister_ids);
+    let (user, user_auth) = register_user_and_include_auth(env, canister_ids);
 
     client::user::happy_path::set_pin_number(env, &user, None, Some("1000".to_string()));
 
@@ -58,7 +59,7 @@ fn can_set_pin_number_by_providing_recent_delegation(within_5_minutes: bool) {
         user.canister(),
         &user_canister::set_pin_number::Args {
             new: None,
-            verification: PinNumberVerification::Delegation(delegation),
+            verification: PinNumberVerification::Delegation(user_auth.delegation),
         },
     );
 
