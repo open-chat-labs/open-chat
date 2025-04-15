@@ -2,9 +2,9 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::{MessageContentInternal, Reader, RecordProposalVoteResult};
+use chat_events::{MessageContentInternal, Reader};
 use group_canister::register_proposal_vote::{Response::*, *};
-use types::{CanisterId, EventIndex, ProposalId, UserId};
+use types::{CanisterId, EventIndex, OCResult, ProposalId, UserId};
 
 #[update(msgpack = true)]
 #[trace]
@@ -30,8 +30,11 @@ async fn register_proposal_vote(args: Args) -> Response {
     match user_canister_c2c_client::c2c_vote_on_proposal(user_id.into(), &c2c_args).await {
         Ok(response) => match response {
             user_canister::c2c_vote_on_proposal::Response::Success => {
-                mutate_state(|state| commit(user_id, args, state));
-                Success
+                if let Err(error) = mutate_state(|state| commit(user_id, args, state)) {
+                    Error(error)
+                } else {
+                    Success
+                }
             }
             user_canister::c2c_vote_on_proposal::Response::NoEligibleNeurons => NoEligibleNeurons,
             user_canister::c2c_vote_on_proposal::Response::ProposalNotFound => ProposalNotFound,
@@ -92,25 +95,20 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     }
 }
 
-fn commit(user_id: UserId, args: Args, state: &mut RuntimeState) -> Response {
-    match state
+fn commit(user_id: UserId, args: Args, state: &mut RuntimeState) -> OCResult {
+    state
         .data
         .chat
         .events
-        .record_proposal_vote(user_id, EventIndex::default(), args.message_index, args.adopt)
-    {
-        RecordProposalVoteResult::Success => {
-            let now = state.env.now();
-            state
-                .data
-                .chat
-                .members
-                .register_proposal_vote(&user_id, args.message_index, now);
+        .record_proposal_vote(user_id, EventIndex::default(), args.message_index, args.adopt)?;
 
-            handle_activity_notification(state);
-            Success
-        }
-        RecordProposalVoteResult::AlreadyVoted(vote) => AlreadyVoted(vote),
-        RecordProposalVoteResult::ProposalNotFound => ProposalNotFound,
-    }
+    let now = state.env.now();
+    state
+        .data
+        .chat
+        .members
+        .register_proposal_vote(&user_id, args.message_index, now);
+
+    handle_activity_notification(state);
+    Ok(())
 }

@@ -15,9 +15,6 @@ pub struct Args {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(String),
-    NotAuthorized,
-    NotFound,
-    ChannelNotFound,
     Error(OCError),
 }
 
@@ -25,9 +22,6 @@ impl From<Response> for types::c2c_bot_api_key::Response {
     fn from(value: Response) -> Self {
         match value {
             Response::Success(s) => types::c2c_bot_api_key::Response::Success(s),
-            Response::NotAuthorized => types::c2c_bot_api_key::Response::NotAuthorized,
-            Response::NotFound => types::c2c_bot_api_key::Response::NotFound,
-            Response::ChannelNotFound => types::c2c_bot_api_key::Response::NotFound,
             Response::Error(error) => types::c2c_bot_api_key::Response::Error(error),
         }
     }

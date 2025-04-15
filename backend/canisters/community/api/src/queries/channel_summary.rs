@@ -17,8 +17,5 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(CommunityCanisterChannelSummary),
-    PrivateCommunity,
-    ChannelNotFound,
-    PrivateChannel,
     Error(OCError),
 }

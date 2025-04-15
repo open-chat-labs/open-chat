@@ -24,7 +24,6 @@ impl From<types::c2c_uninstall_bot::Response> for Response {
         match response {
             types::c2c_uninstall_bot::Response::Success => Response::Success,
             types::c2c_uninstall_bot::Response::Error(error) => Response::Error(error),
-            types::c2c_uninstall_bot::Response::NotAuthorized => Response::NotAuthorized,
         }
     }
 }

@@ -152,11 +152,17 @@ pub enum OCErrorCode {
     PollOptionNotFound = 308,
     CannotChangeVote = 309,
     AlreadyImportingIntoAnotherCommunity = 310,
+    InvalidSignature = 311,
+    TransferFailed = 312,
+    GroupAlreadyBeingImported = 313,
+    BannerTooBig = 314,
+    CannotChangeRoleOfLastOwner = 315,
+    CannotMakeBotOwner = 316,
 
     // InternalError
     C2CError = 500,
 
-    // Impossible
+    // Impossible (supposedly)
     Impossible = 600,
 }
 

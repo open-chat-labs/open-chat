@@ -22,13 +22,8 @@ async fn delete_community(args: Args) -> Response {
                 mutate_state(|state| state.data.remove_community(args.community_id, state.env.now()));
                 Success
             }
-            c2c_delete_community::Response::NotAuthorized => NotAuthorized,
-            c2c_delete_community::Response::CommunityFrozen => CommunityFrozen,
-            c2c_delete_community::Response::UserSuspended => UserSuspended,
-            c2c_delete_community::Response::UserLapsed => UserLapsed,
-            c2c_delete_community::Response::InternalError(error) => InternalError(error),
             c2c_delete_community::Response::Error(error) => Error(error),
         },
-        Err(error) => InternalError(format!("{error:?}")),
+        Err(error) => Error(error.into()),
     }
 }

@@ -22,14 +22,7 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(Box<GroupCanisterGroupChatSummary>),
-    AlreadyInGroup,
     AlreadyInGroupV2(Box<GroupCanisterGroupChatSummary>),
     GateCheckFailed(GateCheckFailedReason),
-    GroupNotPublic,
-    NotInvited,
-    Blocked,
-    ParticipantLimitReached(u32),
-    ChatFrozen,
-    InternalError(String),
     Error(OCError),
 }

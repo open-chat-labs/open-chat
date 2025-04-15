@@ -57,8 +57,9 @@ async fn delete_community(group_index_canister_id: CanisterId, args: &c2c_delete
     let buffer = 1_000_000_000; // 1B
     let cycles = ic_cdk::api::canister_liquid_cycle_balance().saturating_sub(c2c_cost + buffer);
 
-    match make_c2c_call_raw(group_index_canister_id, method_name, &payload, cycles, None).await {
-        Ok(_) => Success,
-        Err(error) => InternalError(format!("{error:?}")),
+    if let Err(error) = make_c2c_call_raw(group_index_canister_id, method_name, &payload, cycles, None).await {
+        Error(error.into())
+    } else {
+        Success
     }
 }

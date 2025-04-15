@@ -20,7 +20,7 @@ async fn block_user(args: community_canister::block_user::Args) -> community_can
     run_regular_jobs();
 
     if !read_state(|state| state.data.is_public.value) {
-        return community_canister::block_user::Response::CommunityNotPublic;
+        return community_canister::block_user::Response::Error(OCErrorCode::CommunityNotPublic.into());
     }
 
     remove_member_impl(args.user_id, true).await.into()

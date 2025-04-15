@@ -43,10 +43,6 @@ impl From<Args> for create_channel::Args {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    NotAuthorized,
-    CommunityFrozen,
-    InvalidRequest(String),
-    InternalError(String),
     Error(OCError),
 }
 
@@ -57,32 +53,6 @@ impl From<create_channel::Response> for Response {
         match value {
             create_channel::Response::Success(r) => Success(r),
             create_channel::Response::Error(error) => Error(error),
-            create_channel::Response::NameTooShort(r) => {
-                InvalidRequest(format!("Name too short, min: {:?} chars", r.min_length))
-            }
-            create_channel::Response::NameTooLong(r) => InvalidRequest(format!("Name too long, max: {:?} chars", r.max_length)),
-            create_channel::Response::NameReserved => InvalidRequest("Name reserved".to_string()),
-            create_channel::Response::DescriptionTooLong(r) => {
-                InvalidRequest(format!("Description too long, max: {:?} chars", r.max_length))
-            }
-            create_channel::Response::RulesTooShort(r) => {
-                InvalidRequest(format!("Rules too short, min: {:?} chars", r.min_length))
-            }
-            create_channel::Response::RulesTooLong(r) => {
-                InvalidRequest(format!("Rules too long, max: {:?} chars", r.max_length))
-            }
-            create_channel::Response::AvatarTooBig(r) => {
-                InvalidRequest(format!("Avatar too big, max: {:?} bytes", r.max_length))
-            }
-            create_channel::Response::AccessGateInvalid => InvalidRequest("Access gate invalid".to_string()),
-            create_channel::Response::MaxChannelsCreated(r) => InvalidRequest(format!("Max channels created: {:?}", r)),
-            create_channel::Response::NameTaken => InvalidRequest("Name taken".to_string()),
-            create_channel::Response::ExternalUrlInvalid => InvalidRequest("External URL invalid".to_string()),
-            create_channel::Response::UserLapsed
-            | create_channel::Response::UserSuspended
-            | create_channel::Response::NotAuthorized => NotAuthorized,
-            create_channel::Response::CommunityFrozen => CommunityFrozen,
-            create_channel::Response::InternalError(r) => InternalError(r),
         }
     }
 }

@@ -6,6 +6,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use group_canister::delete_messages::{Response::*, *};
+use oc_error_codes::OCErrorCode;
 use types::{Achievement, CanisterId, OCResult, UserId};
 use user_index_canister_c2c_client::lookup_user;
 
@@ -26,8 +27,8 @@ async fn delete_messages(args: Args) -> Response {
     if args.as_platform_moderator.unwrap_or_default() && caller != user_index_canister_id {
         match lookup_user(caller, user_index_canister_id).await {
             Ok(Some(u)) if u.is_platform_moderator => {}
-            Ok(_) => return NotPlatformModerator,
-            Err(error) => return InternalError(format!("{error:?}")),
+            Ok(_) => return Error(OCErrorCode::InitiatorNotAuthorized.into()),
+            Err(error) => return Error(error.into()),
         }
     }
 

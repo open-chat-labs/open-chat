@@ -41,17 +41,9 @@ async fn join_channel(args: Args) -> Response {
                 }
                 SuccessJoinedCommunity(s)
             }
+            community_canister::c2c_join_channel::Response::GateCheckFailed(reason) => GateCheckFailed(reason),
             community_canister::c2c_join_channel::Response::Error(error) => Error(error),
-            community_canister::c2c_join_channel::Response::GateCheckFailed(msg) => GateCheckFailed(msg),
-            community_canister::c2c_join_channel::Response::UserNotInCommunity => CommunityNotPublic,
-            community_canister::c2c_join_channel::Response::ChannelNotFound => ChannelNotFound,
-            community_canister::c2c_join_channel::Response::UserSuspended => UserSuspended,
-            community_canister::c2c_join_channel::Response::UserBlocked => UserBlocked,
-            community_canister::c2c_join_channel::Response::MemberLimitReached(l) => MemberLimitReached(l),
-            community_canister::c2c_join_channel::Response::CommunityFrozen => CommunityFrozen,
-            community_canister::c2c_join_channel::Response::NotInvited => NotInvited,
-            community_canister::c2c_join_channel::Response::InternalError(error) => InternalError(error),
         },
-        Err(error) => InternalError(format!("Failed to call 'community::c2c_join_channel': {error:?}")),
+        Err(error) => Error(error.into()),
     }
 }

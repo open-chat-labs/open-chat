@@ -16,6 +16,5 @@ pub struct Args {
 pub enum Response {
     Success(SelectedGroupUpdates),
     SuccessNoUpdates(TimestampMillis),
-    CallerNotInGroup,
     Error(OCError),
 }

@@ -2,6 +2,7 @@ use crate::env::ENV;
 use crate::utils::tick_many;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
+use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
@@ -100,7 +101,7 @@ fn block_user_fails_for_private_communities() {
 
     assert!(matches!(
         block_user_response,
-        community_canister::block_user::Response::CommunityNotPublic
+        community_canister::block_user::Response::Error(e) if e.matches_code(OCErrorCode::CommunityNotPublic)
     ));
 }
 

@@ -18,7 +18,6 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     SuccessNoUpdates,
-    CallerNotInGroup,
     Error(OCError),
 }
 

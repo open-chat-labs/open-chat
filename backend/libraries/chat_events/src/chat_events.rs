@@ -672,15 +672,13 @@ impl ChatEvents {
         min_visible_event_index: EventIndex,
         message_index: MessageIndex,
         adopt: bool,
-    ) -> RecordProposalVoteResult {
-        use RecordProposalVoteResult::*;
-
+    ) -> OCResult {
         match self.update_message(None, message_index.into(), min_visible_event_index, None, |message, _| {
             Self::record_proposal_vote_inner(message, user_id, adopt)
         }) {
-            Ok(_) => Success,
-            Err(UpdateEventError::NoChange(vote)) => AlreadyVoted(vote),
-            Err(UpdateEventError::NotFound) => ProposalNotFound,
+            Ok(_) => Ok(()),
+            Err(UpdateEventError::NoChange(_)) => Err(OCErrorCode::NoChange.into()),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::PollNotFound.into()),
         }
     }
 
@@ -2313,7 +2311,7 @@ pub enum EndPollResult {
 pub enum RecordProposalVoteResult {
     Success,
     AlreadyVoted(bool),
-    ProposalNotFound,
+    Error(OCError),
 }
 
 pub struct AddRemoveReactionArgs {
