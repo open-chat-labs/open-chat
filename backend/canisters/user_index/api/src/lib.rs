@@ -31,6 +31,7 @@ pub enum LocalUserIndexEvent {
     UserBlocked(UserId, UserId),
     UserUnblocked(UserId, UserId),
     SetMaxStreak(UserId, u16),
+    NotifyOfUserDeleted(CanisterId, UserId),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

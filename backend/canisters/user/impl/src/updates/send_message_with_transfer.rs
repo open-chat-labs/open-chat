@@ -111,21 +111,6 @@ async fn send_message_with_transfer_to_channel(
                 })
             }
             Response::Error(error) => Error(error),
-            Response::UserNotInCommunity => UserNotInCommunity(Some(completed_transaction)),
-            Response::UserNotInChannel => UserNotInChannel(completed_transaction),
-            Response::ChannelNotFound => ChannelNotFound(completed_transaction),
-            Response::UserSuspended => UserSuspended,
-            Response::UserLapsed => UserLapsed,
-            Response::CommunityFrozen => CommunityFrozen,
-            Response::RulesNotAccepted => RulesNotAccepted,
-            Response::MessageAlreadyExists => MessageAlreadyExists,
-            Response::CommunityRulesNotAccepted => CommunityRulesNotAccepted,
-            Response::MessageEmpty
-            | Response::InvalidPoll(_)
-            | Response::NotAuthorized
-            | Response::ThreadMessageNotFound
-            | Response::InvalidRequest(_)
-            | Response::TextTooLong(_) => unreachable!(),
         },
         Err(error) => {
             mutate_state(|state| {
@@ -236,19 +221,7 @@ async fn send_message_with_transfer_to_group(
                     transfer: completed_transaction,
                 })
             }
-            Response::CallerNotInGroup => CallerNotInGroup(Some(completed_transaction)),
             Response::Error(error) => Error(error),
-            Response::UserSuspended => UserSuspended,
-            Response::UserLapsed => UserLapsed,
-            Response::ChatFrozen => ChatFrozen,
-            Response::RulesNotAccepted => RulesNotAccepted,
-            Response::MessageAlreadyExists => MessageAlreadyExists,
-            Response::MessageEmpty
-            | Response::InvalidPoll(_)
-            | Response::NotAuthorized
-            | Response::ThreadMessageNotFound
-            | Response::InvalidRequest(_)
-            | Response::TextTooLong(_) => unreachable!(),
         },
         Err(error) => {
             mutate_state(|state| {

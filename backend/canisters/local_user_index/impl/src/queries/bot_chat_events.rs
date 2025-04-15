@@ -49,6 +49,7 @@ async fn bot_chat_events_impl(args: Args) -> Response {
         EventsResponse::Success(response) => Success(response.into()),
         EventsResponse::NotFound => NotFound,
         EventsResponse::InternalError(error) => InternalError(error),
+        EventsResponse::Error(error) => Error(error),
         EventsResponse::ReplicaNotUpToDate(_) => unreachable!(),
     }
 }

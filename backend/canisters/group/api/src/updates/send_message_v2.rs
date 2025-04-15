@@ -2,10 +2,7 @@ use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{
-    EventIndex, GroupReplyContext, InvalidPollReason, MessageContentInitial, MessageId, MessageIndex, TimestampMillis, User,
-    Version,
-};
+use types::{EventIndex, GroupReplyContext, MessageContentInitial, MessageId, MessageIndex, TimestampMillis, User, Version};
 
 #[ts_export(group, send_message)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -29,18 +26,6 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    ThreadMessageNotFound,
-    MessageEmpty,
-    TextTooLong(u32),
-    InvalidPoll(InvalidPollReason),
-    NotAuthorized,
-    CallerNotInGroup,
-    UserSuspended,
-    UserLapsed,
-    InvalidRequest(String),
-    ChatFrozen,
-    RulesNotAccepted,
-    MessageAlreadyExists,
     Error(OCError),
 }
 

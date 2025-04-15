@@ -6,6 +6,7 @@ use canister_tracing_macros::trace;
 use group_canister::change_role::*;
 use group_chat_core::GroupRoleInternal;
 use group_community_common::ExpiringMember;
+use oc_error_codes::OCErrorCode;
 use types::{CanisterId, GroupRole, OCResult, UserId};
 use user_index_canister_c2c_client::lookup_user;
 
@@ -43,8 +44,8 @@ async fn change_role(args: Args) -> Response {
                     }
                 }
             }
-            Ok(_) => return NotAuthorized,
-            Err(error) => return InternalError(format!("{error:?}")),
+            Ok(_) => return Error(OCErrorCode::InitiatorNotAuthorized.into()),
+            Err(error) => return Error(error.into()),
         };
     }
 

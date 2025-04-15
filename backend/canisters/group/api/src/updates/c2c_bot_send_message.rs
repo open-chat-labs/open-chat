@@ -39,11 +39,6 @@ impl From<Args> for send_message_v2::Args {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    NotAuthorized,
-    ChatFrozen,
-    ThreadNotFound,
-    InvalidRequest(String),
-    MessageAlreadyFinalised,
     Error(OCError),
 }
 
@@ -54,18 +49,6 @@ impl From<send_message_v2::Response> for Response {
         match value {
             send_message_v2::Response::Success(success_result) => Success(success_result),
             send_message_v2::Response::Error(error) => Error(error),
-            send_message_v2::Response::ThreadMessageNotFound => ThreadNotFound,
-            send_message_v2::Response::MessageEmpty => InvalidRequest("Message empty".to_string()),
-            send_message_v2::Response::TextTooLong(max) => InvalidRequest(format!("Text too long, max: {max}")),
-            send_message_v2::Response::InvalidPoll(reason) => InvalidRequest(format!("Invalid poll, reason: {reason:?}")),
-            send_message_v2::Response::InvalidRequest(reason) => InvalidRequest(reason),
-            send_message_v2::Response::ChatFrozen => ChatFrozen,
-            send_message_v2::Response::MessageAlreadyExists => MessageAlreadyFinalised,
-            send_message_v2::Response::NotAuthorized
-            | send_message_v2::Response::CallerNotInGroup
-            | send_message_v2::Response::RulesNotAccepted
-            | send_message_v2::Response::UserLapsed
-            | send_message_v2::Response::UserSuspended => NotAuthorized,
         }
     }
 }

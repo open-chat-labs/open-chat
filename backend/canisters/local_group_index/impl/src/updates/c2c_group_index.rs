@@ -67,5 +67,12 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 **now,
             );
         }
+        GroupIndexEvent::NotifyOfUserDeleted(canister_id, user_id) => {
+            if state.data.local_groups.get(&canister_id.into()).is_some() {
+                state.push_event_to_group(canister_id, GroupEvent::UserDeleted(user_id), **now);
+            } else if state.data.local_communities.get(&canister_id.into()).is_some() {
+                state.push_event_to_community(canister_id, CommunityEvent::UserDeleted(user_id), **now)
+            }
+        }
     }
 }
