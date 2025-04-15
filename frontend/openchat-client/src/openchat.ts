@@ -7895,8 +7895,14 @@ export class OpenChat {
             .catch(() => CommonResponses.failure());
     }
 
-    setChatListScope(route: RouteParams): void {
-        chatListScopeStore.set(route.scope);
+    setChatListScopeAndRedirect(route: RouteParams): boolean {
+        if (route.kind === "home_route") {
+            chatListScopeStore.set(this.getDefaultScope());
+            return this.selectFirstChat();
+        } else {
+            chatListScopeStore.set(route.scope);
+        }
+        return false;
     }
 
     getDefaultScope(): ChatListScope {

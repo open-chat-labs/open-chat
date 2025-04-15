@@ -440,7 +440,9 @@
                     return;
                 }
 
-                client.setChatListScope(route);
+                if (client.setChatListScopeAndRedirect(route)) {
+                    return;
+                }
 
                 // When we have a middle panel and this route is for a chat list then select the first chat
                 if (pathState.isChatListRoute(route) && client.selectFirstChat()) {
