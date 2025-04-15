@@ -4,7 +4,8 @@ use canister_client::make_c2c_call_raw;
 use canister_tracing_macros::trace;
 use community_canister::c2c_delete_community::{Response::*, *};
 use group_index_canister::c2c_delete_community;
-use types::{CanisterId, UserId};
+use oc_error_codes::OCErrorCode;
+use types::{CanisterId, OCResult, UserId};
 
 #[update(msgpack = true)]
 #[trace]
@@ -13,7 +14,7 @@ async fn c2c_delete_community(_args: Args) -> Response {
 
     let prepare_result = match read_state(prepare) {
         Ok(ok) => ok,
-        Err(response) => return response,
+        Err(error) => return Error(error),
     };
 
     let group_index_canister_id = prepare_result.group_index_canister_id;
@@ -33,29 +34,19 @@ struct PrepareResult {
     members: Vec<UserId>,
 }
 
-fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if state.data.is_frozen() {
-        return Err(CommunityFrozen);
-    }
+fn prepare(state: &RuntimeState) -> OCResult<PrepareResult> {
+    state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-    if let Some(member) = state.data.members.get(caller) {
-        if member.suspended().value {
-            Err(UserSuspended)
-        } else if member.lapsed().value {
-            Err(UserLapsed)
-        } else if !member.role().can_delete_community() {
-            Err(NotAuthorized)
-        } else {
-            Ok(PrepareResult {
-                group_index_canister_id: state.data.group_index_canister_id,
-                deleted_by: member.user_id,
-                community_name: state.data.name.value.clone(),
-                members: state.data.members.iter_member_ids().collect(),
-            })
-        }
+    let member = state.get_calling_member(true)?;
+    if !member.role().can_delete_community() {
+        Err(OCErrorCode::InitiatorNotAuthorized.into())
     } else {
-        Err(NotAuthorized)
+        Ok(PrepareResult {
+            group_index_canister_id: state.data.group_index_canister_id,
+            deleted_by: member.user_id,
+            community_name: state.data.name.value.clone(),
+            members: state.data.members.iter_member_ids().collect(),
+        })
     }
 }
 

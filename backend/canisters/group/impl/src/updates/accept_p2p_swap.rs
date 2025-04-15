@@ -22,69 +22,65 @@ async fn accept_p2p_swap(args: Args) -> Response {
         Err(response) => return Error(response),
     };
 
-    let result = match user_canister_c2c_client::c2c_accept_p2p_swap(user_id.into(), &c2c_args).await {
-        Ok(user_canister::c2c_accept_p2p_swap::Response::Success(transaction_index)) => {
-            NotifyEscrowCanisterOfDepositJob::run(
-                user_id,
-                c2c_args.swap_id,
-                thread_root_message_index,
-                message_id,
-                transaction_index,
-            );
+    let result =
+        match user_canister_c2c_client::c2c_accept_p2p_swap(user_id.into(), &c2c_args).await {
+            Ok(user_canister::c2c_accept_p2p_swap::Response::Success(transaction_index)) => {
+                NotifyEscrowCanisterOfDepositJob::run(
+                    user_id,
+                    c2c_args.swap_id,
+                    thread_root_message_index,
+                    message_id,
+                    transaction_index,
+                );
 
-            mutate_state(|state| {
-                let now = state.env.now();
-                if new_achievement {
-                    state.notify_user_of_achievement(user_id, Achievement::AcceptedP2PSwapOffer, now);
-                }
-
-                if let Some((message, event_index)) =
-                    state
-                        .data
-                        .chat
-                        .events
-                        .message_internal(EventIndex::default(), thread_root_message_index, message_id.into())
-                {
-                    if state
-                        .data
-                        .chat
-                        .members
-                        .get(&message.sender)
-                        .is_some_and(|m| !m.user_type().is_bot())
-                    {
-                        state.push_event_to_user(
-                            message.sender,
-                            GroupCanisterEvent::MessageActivity(MessageActivityEvent {
-                                chat: Chat::Group(state.env.canister_id().into()),
-                                thread_root_message_index,
-                                message_index: message.message_index,
-                                message_id: message.message_id,
-                                event_index,
-                                activity: MessageActivity::P2PSwapAccepted,
-                                timestamp: now,
-                                user_id: Some(user_id),
-                            }),
-                            now,
-                        );
+                mutate_state(|state| {
+                    let now = state.env.now();
+                    if new_achievement {
+                        state.notify_user_of_achievement(user_id, Achievement::AcceptedP2PSwapOffer, now);
                     }
-                }
 
-                handle_activity_notification(state);
-            });
+                    if let Some((message, event_index)) = state.data.chat.events.message_internal(
+                        EventIndex::default(),
+                        thread_root_message_index,
+                        message_id.into(),
+                    ) {
+                        if state
+                            .data
+                            .chat
+                            .members
+                            .get(&message.sender)
+                            .is_some_and(|m| !m.user_type().is_bot())
+                        {
+                            state.push_event_to_user(
+                                message.sender,
+                                GroupCanisterEvent::MessageActivity(MessageActivityEvent {
+                                    chat: Chat::Group(state.env.canister_id().into()),
+                                    thread_root_message_index,
+                                    message_index: message.message_index,
+                                    message_id: message.message_id,
+                                    event_index,
+                                    activity: MessageActivity::P2PSwapAccepted,
+                                    timestamp: now,
+                                    user_id: Some(user_id),
+                                }),
+                                now,
+                            );
+                        }
+                    }
 
-            Success(AcceptSwapSuccess {
-                token1_txn_in: transaction_index,
-            })
-        }
-        Ok(user_canister::c2c_accept_p2p_swap::Response::TransferError(TransferError::InsufficientFunds { .. })) => {
-            InsufficientFunds
-        }
-        Ok(user_canister::c2c_accept_p2p_swap::Response::PinRequired) => PinRequired,
-        Ok(user_canister::c2c_accept_p2p_swap::Response::PinIncorrect(delay)) => PinIncorrect(delay),
-        Ok(user_canister::c2c_accept_p2p_swap::Response::TooManyFailedPinAttempts(delay)) => TooManyFailedPinAttempts(delay),
-        Ok(response) => InternalError(format!("{response:?}")),
-        Err(error) => InternalError(format!("{error:?}")),
-    };
+                    handle_activity_notification(state);
+                });
+
+                Success(AcceptSwapSuccess {
+                    token1_txn_in: transaction_index,
+                })
+            }
+            Ok(user_canister::c2c_accept_p2p_swap::Response::TransferError(TransferError::InsufficientFunds { .. })) => {
+                InsufficientFunds
+            }
+            Ok(response) => InternalError(format!("{response:?}")),
+            Err(error) => InternalError(format!("{error:?}")),
+        };
 
     if !matches!(result, Success(_)) {
         mutate_state(|state| rollback(user_id, thread_root_message_index, message_id, state));
@@ -101,19 +97,13 @@ struct ReserveP2PSwapResult {
 fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> OCResult<ReserveP2PSwapResult> {
     state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-    let member = state.data.get_verified_member(caller)?;
-    let user_id = member.user_id();
-    let min_visible_event_index = member.min_visible_event_index();
+    let user_id = state.get_caller_user_id()?;
     let now = state.env.now();
 
-    let result = state.data.chat.events.reserve_p2p_swap(
-        user_id,
-        args.thread_root_message_index,
-        args.message_id,
-        min_visible_event_index,
-        now,
-    )?;
+    let result = state
+        .data
+        .chat
+        .reserve_p2p_swap(user_id, args.thread_root_message_index, args.message_id, now)?;
 
     handle_activity_notification(state);
 

@@ -20,11 +20,9 @@ fn update_channel(args: Args) -> Response {
 }
 
 fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> OCResult<SuccessResult> {
-    clean_args(&mut args);
+    state.data.verify_not_frozen()?;
 
-    if state.data.is_frozen() {
-        return Err(OCErrorCode::CommunityFrozen.into());
-    }
+    clean_args(&mut args);
 
     if let OptionUpdate::SetToSome(external_url) = &args.external_url {
         if Url::parse(external_url).is_err() {
@@ -44,69 +42,60 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> OCResult<Suc
         }
     }
 
-    if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-        let caller = state.env.caller();
+    let member = state.get_calling_member(true)?;
+    let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
+    let now = state.env.now();
+    let has_gate_config_updates = args.gate_config.has_update();
+    let prev_gate_config = channel.chat.gate_config.value.clone();
 
-        if let Some(member) = state.data.members.get(caller) {
-            let now = state.env.now();
-            let has_gate_config_updates = args.gate_config.has_update();
+    let result = channel.chat.update(
+        member.user_id,
+        args.name,
+        args.description,
+        args.rules,
+        args.avatar,
+        args.permissions_v2,
+        args.gate_config.map(|gc| gc.into()),
+        args.public,
+        args.messages_visible_to_non_members,
+        args.events_ttl,
+        args.external_url,
+        now,
+    )?;
 
-            let prev_gate_config = channel.chat.gate_config.value.clone();
+    if channel.chat.is_public.value && channel.chat.gate_config.is_none() {
+        // If the channel has just been made public or had its gate removed, add
+        // all existing community members to the channel, except those who have
+        // been in the channel before and then left
+        if result.newly_public || matches!(result.gate_config_update, OptionUpdate::SetToNone) {
+            let channel_id = channel.id;
+            let mut user_ids = Vec::with_capacity(state.data.members.len());
+            user_ids.extend(
+                state
+                    .data
+                    .members
+                    .iter_member_ids()
+                    .filter(|user_id| !state.data.members.member_channel_links_removed_contains(*user_id, channel_id)),
+            );
 
-            let result = channel.chat.update(
-                member.user_id,
-                args.name,
-                args.description,
-                args.rules,
-                args.avatar,
-                args.permissions_v2,
-                args.gate_config.map(|gc| gc.into()),
-                args.public,
-                args.messages_visible_to_non_members,
-                args.events_ttl,
-                args.external_url,
-                now,
-            )?;
-
-            if channel.chat.is_public.value && channel.chat.gate_config.is_none() {
-                // If the channel has just been made public or had its gate removed, add
-                // all existing community members to the channel, except those who have
-                // been in the channel before and then left
-                if result.newly_public || matches!(result.gate_config_update, OptionUpdate::SetToNone) {
-                    let channel_id = channel.id;
-                    let mut user_ids = Vec::with_capacity(state.data.members.len());
-                    user_ids.extend(
-                        state
-                            .data
-                            .members
-                            .iter_member_ids()
-                            .filter(|user_id| !state.data.members.member_channel_links_removed_contains(*user_id, channel_id)),
-                    );
-
-                    JoinMembersToPublicChannelJob {
-                        channel_id,
-                        members: user_ids,
-                    }
-                    .execute_with_state(state);
-                }
+            JoinMembersToPublicChannelJob {
+                channel_id,
+                members: user_ids,
             }
-
-            if has_gate_config_updates {
-                state.data.update_member_expiry(Some(args.channel_id), &prev_gate_config, now);
-                jobs::expire_members::restart_job(state);
-            }
-
-            handle_activity_notification(state);
-
-            Ok(SuccessResult {
-                rules_version: result.rules_version,
-            })
-        } else {
-            Err(OCErrorCode::InitiatorNotInCommunity.into())
+            .execute_with_state(state);
         }
-    } else {
-        Err(OCErrorCode::ChatNotFound.into())
     }
+
+    if has_gate_config_updates {
+        state.data.update_member_expiry(Some(args.channel_id), &prev_gate_config, now);
+        jobs::expire_members::restart_job(state);
+    }
+
+    handle_activity_notification(state);
+
+    Ok(SuccessResult {
+        rules_version: result.rules_version,
+    })
 }
 
 fn clean_args(args: &mut Args) {

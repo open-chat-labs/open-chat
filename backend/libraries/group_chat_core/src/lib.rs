@@ -1,6 +1,7 @@
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteUndeleteMessagesArgs, EditMessageArgs,
-    GroupGateUpdatedInternal, MessageContentInternal, PushMessageArgs, Reader, RemoveExpiredEventsResult, TipMessageArgs,
+    GroupGateUpdatedInternal, MessageContentInternal, PushMessageArgs, Reader, RegisterPollVoteArgs, RegisterPollVoteSuccess,
+    RemoveExpiredEventsResult, ReservePrizeSuccess, TipMessageArgs,
 };
 use event_store_producer::{EventStoreClient, Runtime};
 use event_store_producer_cdk_runtime::CdkRuntime;
@@ -20,9 +21,9 @@ use types::{
     GroupSubtype, GroupVisibilityChanged, HydratedMention, MemberLeft, MembersRemoved, Message, MessageContent, MessageId,
     MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds,
     MultiUserChat, OCResult, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged,
-    PushEventResult, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped,
-    UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall,
-    MAX_RETURNED_MENTIONS,
+    PushEventResult, Reaction, ReserveP2PSwapSuccess, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis,
+    Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall,
+    VideoCallPresence, VoteOperation, MAX_RETURNED_MENTIONS,
 };
 use utils::document::validate_avatar;
 use utils::text_validation::{
@@ -131,13 +132,21 @@ impl GroupChatCore {
         }
     }
 
+    pub fn verify_is_accessible(&self, user_id: Option<UserId>) -> Result<(), OCErrorCode> {
+        if self.is_accessible(user_id) {
+            Ok(())
+        } else {
+            Err(OCErrorCode::InitiatorNotInChat)
+        }
+    }
+
     pub fn min_visible_event_index(&self, user_id: Option<UserId>) -> OCResult<EventIndex> {
         let hidden_for_non_members = !self.is_public.value || !self.messages_visible_to_non_members.value;
         let event_index_for_new_members = self.min_visible_indexes_for_new_members.map(|(e, _)| e).unwrap_or_default();
 
         // Fast path to skip looking up the member
         if !hidden_for_non_members && event_index_for_new_members == EventIndex::default() {
-            return Ok(event_index_for_new_members);
+            return Ok(EventIndex::default());
         }
 
         if let Some(user_id) = user_id {
@@ -273,17 +282,8 @@ impl GroupChatCore {
         since: TimestampMillis,
         last_updated: TimestampMillis,
         user_id: Option<UserId>,
-    ) -> Option<SelectedGroupUpdates> {
-        let min_visible_event_index = if self.is_public.value {
-            EventIndex::default()
-        } else if let Some(member) = user_id.and_then(|user_id| self.members.get(&user_id)) {
-            member.min_visible_event_index()
-        } else if let Some(invited_user) = user_id.and_then(|user_id| self.invited_users.get(&user_id)) {
-            invited_user.min_visible_event_index
-        } else {
-            return None;
-        };
-
+    ) -> OCResult<SelectedGroupUpdates> {
+        let min_visible_event_index = self.min_visible_event_index(user_id)?;
         let events_reader = self.events.visible_main_events_reader(min_visible_event_index);
         let latest_event_index = events_reader.latest_event_index().unwrap();
         let invited_users = if self.invited_users.last_updated() > since { Some(self.invited_users.users()) } else { None };
@@ -341,7 +341,7 @@ impl GroupChatCore {
             }
         }
 
-        Some(result)
+        Ok(result)
     }
 
     pub fn events(
@@ -456,9 +456,7 @@ impl GroupChatCore {
         user_id: UserId,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
-    ) -> DeletedMessageResult {
-        use DeletedMessageResult::*;
-
+    ) -> OCResult<MessageContent> {
         if let Some(member) = self.members.get(&user_id) {
             let min_visible_event_index = member.min_visible_event_index();
 
@@ -469,41 +467,35 @@ impl GroupChatCore {
                 if let Some(message) = events_reader.message_internal(message_id.into()) {
                     return if let Some(deleted_by) = &message.deleted_by {
                         if matches!(message.content, MessageContentInternal::Deleted(_)) {
-                            MessageHardDeleted
+                            Err(OCErrorCode::MessageHardDeleted.into())
                         } else if user_id == message.sender
                             || (deleted_by.deleted_by != message.sender && member.role().can_delete_messages(&self.permissions))
                         {
-                            Success(Box::new(message.content.hydrate(Some(user_id))))
+                            Ok(message.content.hydrate(Some(user_id)))
                         } else {
-                            NotAuthorized
+                            Err(OCErrorCode::InitiatorNotAuthorized.into())
                         }
                     } else {
-                        Success(Box::new(message.content.hydrate(Some(user_id))))
+                        Ok(message.content.hydrate(Some(user_id)))
                     };
                 }
             }
 
-            MessageNotFound
+            Err(OCErrorCode::MessageNotFound.into())
         } else {
-            UserNotInGroup
+            Err(OCErrorCode::InitiatorNotInChat.into())
         }
     }
 
-    pub fn thread_previews(&self, user_id: UserId, threads: Vec<MessageIndex>) -> ThreadPreviewsResult {
-        use ThreadPreviewsResult::*;
+    pub fn thread_previews(&self, user_id: UserId, threads: Vec<MessageIndex>) -> OCResult<Vec<ThreadPreview>> {
+        let member = self.members.get(&user_id).ok_or(OCErrorCode::InitiatorNotInChat)?;
 
-        if let Some(member) = self.members.get(&user_id) {
-            Success(
-                threads
-                    .into_iter()
-                    .filter_map(|root_message_index| {
-                        self.build_thread_preview(member.user_id(), member.min_visible_event_index(), root_message_index)
-                    })
-                    .collect(),
-            )
-        } else {
-            UserNotInGroup
-        }
+        Ok(threads
+            .into_iter()
+            .filter_map(|root_message_index| {
+                self.build_thread_preview(user_id, member.min_visible_event_index(), root_message_index)
+            })
+            .collect())
     }
 
     pub fn search(
@@ -512,9 +504,7 @@ impl GroupChatCore {
         search_term: String,
         users: Option<HashSet<UserId>>,
         max_results: u8,
-    ) -> SearchResults {
-        use SearchResults::*;
-
+    ) -> OCResult<Vec<MessageMatch>> {
         const MIN_TERM_LENGTH: u8 = 3;
         const MAX_TERM_LENGTH: u8 = 30;
         const MAX_USERS: u8 = 5;
@@ -523,19 +513,19 @@ impl GroupChatCore {
         let users = users.unwrap_or_default();
 
         if users.is_empty() && term_length < MIN_TERM_LENGTH {
-            return TermTooShort(MIN_TERM_LENGTH);
+            return Err(OCErrorCode::TermTooShort.with_message(MIN_TERM_LENGTH));
         }
 
         if term_length > MAX_TERM_LENGTH {
-            return TermTooLong(MAX_TERM_LENGTH);
+            return Err(OCErrorCode::TermTooLong.with_message(MAX_TERM_LENGTH));
         }
 
         if users.len() as u8 > MAX_USERS {
-            return TooManyUsers(MAX_USERS);
+            return Err(OCErrorCode::TooManyUsers.with_message(MAX_USERS));
         }
 
         let member = match self.members.get(&user_id) {
-            None => return UserNotInGroup,
+            None => return Err(OCErrorCode::InitiatorNotInChat.into()),
             Some(p) => p,
         };
 
@@ -545,7 +535,7 @@ impl GroupChatCore {
             .events
             .search_messages(member.min_visible_message_index(), query, users, max_results);
 
-        Success(matches)
+        Ok(matches)
     }
 
     pub fn send_message<R: Runtime + Send + 'static>(
@@ -1659,6 +1649,84 @@ impl GroupChatCore {
         Ok(())
     }
 
+    pub fn register_poll_vote(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_index: MessageIndex,
+        option_index: u32,
+        operation: VoteOperation,
+        now: TimestampMillis,
+    ) -> OCResult<RegisterPollVoteSuccess> {
+        let member = self.members.get_verified_member(user_id)?;
+        let min_visible_event_index = member.min_visible_event_index();
+
+        self.events.register_poll_vote(RegisterPollVoteArgs {
+            user_id,
+            min_visible_event_index,
+            thread_root_message_index,
+            message_index,
+            option_index,
+            operation,
+            now,
+        })
+    }
+
+    pub fn reserve_prize(
+        &mut self,
+        user_id: UserId,
+        message_id: MessageId,
+        now: TimestampMillis,
+    ) -> OCResult<ReservePrizeSuccess> {
+        let member = self.members.get_verified_member(user_id)?;
+        let min_visible_event_index = member.min_visible_event_index();
+
+        self.events.reserve_prize(user_id, min_visible_event_index, message_id, now)
+    }
+
+    pub fn reserve_p2p_swap(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        now: TimestampMillis,
+    ) -> OCResult<ReserveP2PSwapSuccess> {
+        let member = self.members.get_verified_member(user_id)?;
+        let min_visible_event_index = member.min_visible_event_index();
+
+        self.events
+            .reserve_p2p_swap(user_id, thread_root_message_index, message_id, min_visible_event_index, now)
+    }
+
+    pub fn cancel_p2p_swap(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        now: TimestampMillis,
+    ) -> OCResult<u32> {
+        if self.members.contains(&user_id) {
+            self.events
+                .cancel_p2p_swap(user_id, thread_root_message_index, message_id, now)
+        } else {
+            Err(OCErrorCode::InitiatorNotInChat.into())
+        }
+    }
+
+    pub fn set_video_call_presence(
+        &mut self,
+        user_id: UserId,
+        message_id: MessageId,
+        presence: VideoCallPresence,
+        now: TimestampMillis,
+    ) -> OCResult {
+        let member = self.members.get(&user_id).ok_or(OCErrorCode::InitiatorNotInChat)?;
+        let min_visible_event_index = member.min_visible_event_index();
+
+        self.events
+            .set_video_call_presence(user_id, message_id, presence, min_visible_event_index, now)
+    }
+
     pub fn remove_expired_events(&mut self, now: TimestampMillis) -> RemoveExpiredEventsResult {
         let result = self.events.remove_expired_events(now);
 
@@ -1863,28 +1931,6 @@ pub enum MakePrivateResult {
     UserNotInGroup,
     NotAuthorized,
     AlreadyPrivate,
-}
-
-pub enum DeletedMessageResult {
-    Success(Box<MessageContent>),
-    UserNotInGroup,
-    NotAuthorized,
-    MessageNotFound,
-    MessageHardDeleted,
-}
-
-pub enum ThreadPreviewsResult {
-    Success(Vec<ThreadPreview>),
-    UserNotInGroup,
-}
-
-pub enum SearchResults {
-    Success(Vec<MessageMatch>),
-    InvalidTerm,
-    TermTooLong(u8),
-    TermTooShort(u8),
-    TooManyUsers(u8),
-    UserNotInGroup,
 }
 
 pub struct InvitedUsersSuccess {

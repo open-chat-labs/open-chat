@@ -1,6 +1,7 @@
 use crate::env::ENV;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
+use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use testing::rng::random_string;
@@ -94,7 +95,7 @@ fn cannot_leave_community_if_last_owner() {
 
     assert!(matches!(
         leave_community_response,
-        user_canister::leave_community::Response::LastOwnerCannotLeave
+        user_canister::leave_community::Response::Error(e) if e.matches_code(OCErrorCode::LastOwnerCannotLeave)
     ));
 
     let initial_state = client::user::happy_path::initial_state(env, &user1);
@@ -131,7 +132,7 @@ fn cannot_leave_community_if_last_owner_of_a_channel() {
 
     assert!(matches!(
         leave_community_response,
-        user_canister::leave_community::Response::LastOwnerCannotLeave
+        user_canister::leave_community::Response::Error(e) if e.matches_code(OCErrorCode::LastOwnerCannotLeave)
     ));
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);

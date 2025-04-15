@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Notify Communities when user deleted ([#7781](https://github.com/open-chat-labs/open-chat/pull/7781))
 
+### Changed
+
+- Switch more canister endpoints over to the new `OCError` response type ([#7793](https://github.com/open-chat-labs/open-chat/pull/7793))
+
 ### Removed
 
 - Remove response types that are no longer used ([#7788](https://github.com/open-chat-labs/open-chat/pull/7788))

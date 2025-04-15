@@ -19,8 +19,7 @@ fn follow_thread(args: Args) -> Response {
 fn follow_thread_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-    let member = state.data.get_verified_member(caller)?;
+    let member = state.get_calling_member(true)?;
     let user_id = member.user_id();
     let now = state.env.now();
 

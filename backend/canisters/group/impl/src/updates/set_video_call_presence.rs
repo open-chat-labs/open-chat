@@ -19,19 +19,15 @@ fn set_video_call_presence(args: Args) -> Response {
 pub(crate) fn set_video_call_presence_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-    let member = state.data.get_verified_member(caller)?;
-    let user_id = member.user_id();
+    let user_id = state.get_caller_user_id()?;
     let now = state.env.now();
 
-    let min_visible_event_index = state.data.chat.min_visible_event_index(Some(user_id))?;
     state
         .data
         .chat
-        .events
-        .set_video_call_presence(user_id, args.message_id, args.presence, min_visible_event_index, now)?;
+        .set_video_call_presence(user_id, args.message_id, args.presence, now)?;
 
-    if args.new_achievement && !member.user_type().is_bot() {
+    if args.new_achievement && !state.data.chat.members.bots().contains_key(&user_id) {
         state.notify_user_of_achievement(user_id, Achievement::JoinedCall, now);
     }
 

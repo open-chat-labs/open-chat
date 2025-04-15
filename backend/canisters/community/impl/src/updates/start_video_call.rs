@@ -23,13 +23,9 @@ fn start_video_call_v2(args: Args) -> Response {
 }
 
 fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    if state.data.is_frozen() {
-        return Err(OCErrorCode::InitiatorNotAuthorized.into());
-    }
+    state.data.verify_not_frozen()?;
 
-    let Some(channel) = state.data.channels.get_mut(&args.channel_id) else {
-        return Err(OCErrorCode::ChatNotFound.into());
-    };
+    let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
 
     if matches!(
         (args.call_type, channel.chat.is_public.value, state.data.is_public.value),

@@ -499,7 +499,7 @@ impl ChatEvents {
 
         if deleted_by == args.caller || (args.is_admin && message.sender != deleted_by) {
             match message.content {
-                MessageContentInternal::Deleted(_) => Err(UpdateEventError::NoChange(OCErrorCode::HardDeleted)),
+                MessageContentInternal::Deleted(_) => Err(UpdateEventError::NoChange(OCErrorCode::MessageHardDeleted)),
                 MessageContentInternal::Crypto(_) => Err(UpdateEventError::NoChange(OCErrorCode::InvalidMessageType)),
                 _ => {
                     let sender = message.sender;
@@ -544,7 +544,7 @@ impl ChatEvents {
         Ok((content, sender))
     }
 
-    pub fn register_poll_vote(&mut self, args: RegisterPollVoteArgs) -> RegisterPollVoteResult {
+    pub fn register_poll_vote(&mut self, args: RegisterPollVoteArgs) -> OCResult<RegisterPollVoteSuccess> {
         match self.update_message(
             args.thread_root_message_index,
             args.message_index.into(),
@@ -552,41 +552,42 @@ impl ChatEvents {
             Some(args.now),
             |message, _| Self::register_poll_vote_inner(message, &args),
         ) {
-            Ok((votes, existing_vote_removed, creator)) => {
-                match args.operation {
-                    VoteOperation::RegisterVote => {
-                        if !existing_vote_removed {
+            Ok(result) => {
+                if result.updated {
+                    match args.operation {
+                        VoteOperation::RegisterVote => {
+                            if !result.existing_vote_removed {
+                                add_to_metrics(
+                                    &mut self.metrics,
+                                    &mut self.per_user_metrics,
+                                    args.user_id,
+                                    |m| m.incr(MetricKey::PollVotes, 1),
+                                    args.now,
+                                );
+                            }
+                        }
+                        VoteOperation::DeleteVote => {
                             add_to_metrics(
                                 &mut self.metrics,
                                 &mut self.per_user_metrics,
                                 args.user_id,
-                                |m| m.incr(MetricKey::PollVotes, 1),
+                                |m| m.decr(MetricKey::PollVotes, 1),
                                 args.now,
                             );
                         }
                     }
-                    VoteOperation::DeleteVote => {
-                        add_to_metrics(
-                            &mut self.metrics,
-                            &mut self.per_user_metrics,
-                            args.user_id,
-                            |m| m.decr(MetricKey::PollVotes, 1),
-                            args.now,
-                        );
-                    }
                 }
-
-                RegisterPollVoteResult::Success(votes, creator)
+                Ok(result)
             }
-            Err(UpdateEventError::NoChange(result)) => result,
-            Err(UpdateEventError::NotFound) => RegisterPollVoteResult::PollNotFound,
+            Err(UpdateEventError::NoChange(error)) => Err(error.into()),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::PollNotFound.into()),
         }
     }
 
     fn register_poll_vote_inner(
         message: &mut MessageInternal,
         args: &RegisterPollVoteArgs,
-    ) -> Result<(PollVotes, bool, UserId), UpdateEventError<RegisterPollVoteResult>> {
+    ) -> Result<RegisterPollVoteSuccess, UpdateEventError<OCErrorCode>> {
         let MessageContentInternal::Poll(p) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
         };
@@ -594,19 +595,21 @@ impl ChatEvents {
         let result = p.register_vote(args.user_id, args.option_index, args.operation);
 
         match result {
-            RegisterVoteResult::Success(existing_vote_removed) => {
-                Ok((p.votes(Some(args.user_id)), existing_vote_removed, message.sender))
-            }
-            RegisterVoteResult::SuccessNoChange => Err(UpdateEventError::NoChange(RegisterPollVoteResult::SuccessNoChange(
-                p.votes(Some(args.user_id)),
-            ))),
-            RegisterVoteResult::PollEnded => Err(UpdateEventError::NoChange(RegisterPollVoteResult::PollEnded)),
-            RegisterVoteResult::OptionIndexOutOfRange => {
-                Err(UpdateEventError::NoChange(RegisterPollVoteResult::OptionIndexOutOfRange))
-            }
-            RegisterVoteResult::UserCannotChangeVote => {
-                Err(UpdateEventError::NoChange(RegisterPollVoteResult::UserCannotChangeVote))
-            }
+            RegisterVoteResult::Success(existing_vote_removed) => Ok(RegisterPollVoteSuccess {
+                poll_creator: message.sender,
+                votes: p.votes(Some(args.user_id)),
+                existing_vote_removed,
+                updated: true,
+            }),
+            RegisterVoteResult::SuccessNoChange => Ok(RegisterPollVoteSuccess {
+                poll_creator: message.sender,
+                votes: p.votes(Some(args.user_id)),
+                existing_vote_removed: false,
+                updated: false,
+            }),
+            RegisterVoteResult::PollEnded => Err(UpdateEventError::NoChange(OCErrorCode::PollEnded)),
+            RegisterVoteResult::OptionIndexOutOfRange => Err(UpdateEventError::NoChange(OCErrorCode::PollOptionNotFound)),
+            RegisterVoteResult::UserCannotChangeVote => Err(UpdateEventError::NoChange(OCErrorCode::CannotChangeVote)),
         }
     }
 
@@ -926,16 +929,17 @@ impl ChatEvents {
 
     pub fn reserve_prize(
         &mut self,
-        message_id: MessageId,
-        min_visible_event_index: EventIndex,
         user_id: UserId,
+        min_visible_event_index: EventIndex,
+        message_id: MessageId,
         now: TimestampMillis,
-    ) -> ReservePrizeResult {
+    ) -> OCResult<ReservePrizeSuccess> {
         match self.update_message(None, message_id.into(), min_visible_event_index, Some(now), |message, _| {
             Self::reserve_prize_inner(message, user_id, now)
         }) {
-            Ok(result) | Err(UpdateEventError::NoChange(result)) => result,
-            Err(UpdateEventError::NotFound) => ReservePrizeResult::MessageNotFound,
+            Ok(result) => Ok(result),
+            Err(UpdateEventError::NoChange(error)) => Err(error.into()),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::PrizeNotFound.into()),
         }
     }
 
@@ -943,25 +947,25 @@ impl ChatEvents {
         message: &mut MessageInternal,
         user_id: UserId,
         now: TimestampMillis,
-    ) -> Result<ReservePrizeResult, UpdateEventError<ReservePrizeResult>> {
+    ) -> Result<ReservePrizeSuccess, UpdateEventError<OCErrorCode>> {
         let MessageContentInternal::Prize(content) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
         };
 
         if content.end_date < now {
-            return Err(UpdateEventError::NoChange(ReservePrizeResult::PrizeEnded));
+            return Err(UpdateEventError::NoChange(OCErrorCode::PrizeEnded));
         }
 
         if content.prizes_remaining.is_empty() {
-            return Err(UpdateEventError::NoChange(ReservePrizeResult::PrizeFullyClaimed));
+            return Err(UpdateEventError::NoChange(OCErrorCode::PrizeFullyClaimed));
         }
 
         if content.winners.contains(&user_id) || content.reservations.contains(&user_id) {
-            return Err(UpdateEventError::NoChange(ReservePrizeResult::AlreadyClaimed));
+            return Err(UpdateEventError::NoChange(OCErrorCode::PrizeAlreadyClaimed));
         }
 
         if content.ledger_error {
-            return Err(UpdateEventError::NoChange(ReservePrizeResult::LedgerError));
+            return Err(UpdateEventError::NoChange(OCErrorCode::PrizeLedgerError));
         }
 
         // Pop the last prize and reserve it
@@ -971,13 +975,13 @@ impl ChatEvents {
 
         content.reservations.insert(user_id);
 
-        Ok(ReservePrizeResult::Success(ReservePriceSuccess {
+        Ok(ReservePrizeSuccess {
             token_symbol: content.transaction.token().token_symbol().to_string(),
             ledger_canister_id,
             amount,
             fee,
             message_index: message.message_index,
-        }))
+        })
     }
 
     pub fn claim_prize<R: Runtime + Send + 'static>(
@@ -2290,17 +2294,14 @@ pub struct RegisterPollVoteArgs {
     pub message_index: MessageIndex,
     pub option_index: u32,
     pub operation: VoteOperation,
-    pub correlation_id: u64,
     pub now: TimestampMillis,
 }
 
-pub enum RegisterPollVoteResult {
-    Success(PollVotes, UserId),
-    SuccessNoChange(PollVotes),
-    PollEnded,
-    PollNotFound,
-    OptionIndexOutOfRange,
-    UserCannotChangeVote,
+pub struct RegisterPollVoteSuccess {
+    pub poll_creator: UserId,
+    pub votes: PollVotes,
+    pub existing_vote_removed: bool,
+    pub updated: bool,
 }
 
 pub enum EndPollResult {
@@ -2336,16 +2337,7 @@ pub struct TipMessageArgs {
     pub now: TimestampMillis,
 }
 
-pub enum ReservePrizeResult {
-    Success(ReservePriceSuccess),
-    MessageNotFound,
-    AlreadyClaimed,
-    PrizeFullyClaimed,
-    PrizeEnded,
-    LedgerError,
-}
-
-pub struct ReservePriceSuccess {
+pub struct ReservePrizeSuccess {
     pub token_symbol: String,
     pub ledger_canister_id: CanisterId,
     pub amount: u128,

@@ -424,25 +424,18 @@ impl CommunityMembers {
     }
 
     pub fn get(&self, user_id_or_principal: Principal) -> Option<CommunityMemberInternal> {
-        let user_id = user_id_or_principal.into();
-
-        let user_id = self.principal_to_user_id_map.get(&user_id_or_principal).unwrap_or(user_id);
+        let user_id = self
+            .principal_to_user_id_map
+            .get(&user_id_or_principal)
+            .unwrap_or(user_id_or_principal.into());
 
         self.members_map.get(&user_id)
     }
 
     pub fn get_verified_member(&self, user_id_or_principal: Principal) -> Result<CommunityMemberInternal, OCErrorCode> {
-        let Some(member) = self.get(user_id_or_principal) else {
-            return Err(OCErrorCode::InitiatorNotInCommunity);
-        };
-
-        if member.suspended.value {
-            Err(OCErrorCode::InitiatorSuspended)
-        } else if member.lapsed.value {
-            Err(OCErrorCode::InitiatorLapsed)
-        } else {
-            Ok(member)
-        }
+        let member = self.get(user_id_or_principal).ok_or(OCErrorCode::InitiatorNotInChat)?;
+        member.verify()?;
+        Ok(member)
     }
 
     pub fn get_by_user_id(&self, user_id: &UserId) -> Option<CommunityMemberInternal> {
@@ -760,6 +753,16 @@ impl CommunityMemberInternal {
     pub fn remove_referral(&mut self, user_id: UserId) {
         if self.referrals.remove(&user_id) {
             self.referrals_removed.insert(user_id);
+        }
+    }
+
+    pub fn verify(&self) -> Result<(), OCErrorCode> {
+        if self.suspended.value {
+            Err(OCErrorCode::InitiatorSuspended)
+        } else if self.lapsed.value {
+            Err(OCErrorCode::InitiatorLapsed)
+        } else {
+            Ok(())
         }
     }
 }

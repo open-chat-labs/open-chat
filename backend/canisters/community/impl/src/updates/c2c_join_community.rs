@@ -12,7 +12,7 @@ use gated_groups::{
 };
 use group_community_common::ExpiringMember;
 use oc_error_codes::OCErrorCode;
-use types::{AccessGate, ChannelId, UsersUnblocked};
+use types::{AccessGate, ChannelId, CommunityCanisterCommunitySummary, OCResult, UsersUnblocked};
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
@@ -24,13 +24,16 @@ async fn c2c_join_community(args: Args) -> Response {
 
 pub(crate) async fn join_community(args: Args) -> Response {
     let payments = match read_state(|state| is_permitted_to_join(&args, state)) {
-        Ok(Some((gate, check_gate_args))) => match check_if_passes_gate(gate, check_gate_args).await {
-            CheckIfPassesGateResult::Success(payments) => payments,
-            CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
-            CheckIfPassesGateResult::Error(error) => return Error(error),
-        },
-        Ok(None) => Vec::new(),
-        Err(response) => return response,
+        Ok(IsPermittedToJoinSuccess::NoGate) => Vec::new(),
+        Ok(IsPermittedToJoinSuccess::RequiresGate(gate, check_gate_args)) => {
+            match check_if_passes_gate(gate, *check_gate_args).await {
+                CheckIfPassesGateResult::Success(payments) => payments,
+                CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
+                CheckIfPassesGateResult::Error(error) => return Error(error),
+            }
+        }
+        Ok(IsPermittedToJoinSuccess::AlreadyInCommunity(summary)) => return AlreadyInCommunity(summary),
+        Err(error) => return Error(error),
     };
 
     match mutate_state(|state| join_community_impl(&args, payments, state)) {
@@ -55,31 +58,37 @@ pub(crate) async fn join_community(args: Args) -> Response {
     }
 }
 
-fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(AccessGate, CheckGateArgs)>, Response> {
+enum IsPermittedToJoinSuccess {
+    NoGate,
+    RequiresGate(AccessGate, Box<CheckGateArgs>),
+    AlreadyInCommunity(Box<CommunityCanisterCommunitySummary>),
+}
+
+fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> OCResult<IsPermittedToJoinSuccess> {
     let caller = state.env.caller();
 
-    if state.data.is_frozen() {
-        return Err(Error(OCErrorCode::CommunityFrozen.into()));
-    }
+    state.data.verify_not_frozen()?;
 
     if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
         if !member.lapsed().value {
-            return Err(AlreadyInCommunity(Box::new(state.summary(Some(&member), None))));
+            return Ok(IsPermittedToJoinSuccess::AlreadyInCommunity(Box::new(
+                state.summary(Some(&member), None),
+            )));
         }
     } else if state.data.members.is_blocked(&args.user_id) {
-        return Err(Error(OCErrorCode::InitiatorBlocked.into()));
+        return Err(OCErrorCode::InitiatorBlocked.into());
     } else if let Some(limit) = state.data.members.user_limit_reached() {
-        return Err(Error(OCErrorCode::UserLimitReached.with_message(limit)));
+        return Err(OCErrorCode::UserLimitReached.with_message(limit));
     } else if caller == state.data.user_index_canister_id || state.data.is_invited(args.principal) {
-        return Ok(None);
+        return Ok(IsPermittedToJoinSuccess::NoGate);
     } else if !state.data.is_public.value && !state.data.is_invite_code_valid(args.invite_code) {
-        return Err(Error(OCErrorCode::NotInvited.into()));
+        return Err(OCErrorCode::NotInvited.into());
     }
 
-    Ok(state.data.gate_config.as_ref().map(|g| {
-        (
-            g.gate.clone(),
-            CheckGateArgs {
+    Ok(if let Some(gate_config) = state.data.gate_config.as_ref() {
+        IsPermittedToJoinSuccess::RequiresGate(
+            gate_config.gate.clone(),
+            Box::new(CheckGateArgs {
                 user_id: args.user_id,
                 diamond_membership_expires_at: args.diamond_membership_expires_at,
                 this_canister: state.env.canister_id(),
@@ -98,9 +107,11 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(Acc
                     .referred_by
                     .is_some_and(|user_id| state.data.members.get_by_user_id(&user_id).is_some()),
                 now: state.env.now(),
-            },
+            }),
         )
-    }))
+    } else {
+        IsPermittedToJoinSuccess::NoGate
+    })
 }
 
 pub(crate) fn join_community_impl(

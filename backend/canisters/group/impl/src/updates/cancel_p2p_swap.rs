@@ -3,7 +3,6 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::cancel_p2p_swap::{Response::*, *};
-use oc_error_codes::OCErrorCode;
 use types::OCResult;
 
 #[update(msgpack = true)]
@@ -23,15 +22,11 @@ fn cancel_p2p_swap(args: Args) -> Response {
 fn cancel_p2p_swap_impl(args: Args, state: &mut RuntimeState) -> OCResult<u32> {
     state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-    if let Some(member) = state.data.get_member(caller) {
-        let now = state.env.now();
-        state
-            .data
-            .chat
-            .events
-            .cancel_p2p_swap(member.user_id(), args.thread_root_message_index, args.message_id, now)
-    } else {
-        Err(OCErrorCode::InitiatorNotInChat.into())
-    }
+    let user_id = state.get_caller_user_id()?;
+    let now = state.env.now();
+    state
+        .data
+        .chat
+        .events
+        .cancel_p2p_swap(user_id, args.thread_root_message_index, args.message_id, now)
 }

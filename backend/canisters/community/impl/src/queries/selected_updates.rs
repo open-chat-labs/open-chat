@@ -3,6 +3,7 @@ use canister_api_macros::query;
 use community_canister::selected_updates_v2::{Response::*, *};
 use group_community_common::MemberUpdate;
 use installed_bots::BotUpdate;
+use oc_error_codes::OCErrorCode;
 use std::cell::LazyCell;
 use std::collections::HashSet;
 use types::{InstalledBotDetails, UserId};
@@ -20,7 +21,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         && !state.data.is_invite_code_valid(args.invite_code)
         && !state.data.is_accessible(*caller, None)
     {
-        return PrivateCommunity;
+        return Error(OCErrorCode::InitiatorNotInCommunity.into());
     }
 
     let data = &state.data;

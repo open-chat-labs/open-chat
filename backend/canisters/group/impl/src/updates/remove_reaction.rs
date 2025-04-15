@@ -2,7 +2,6 @@ use crate::{activity_notifications::handle_activity_notification, mutate_state, 
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::remove_reaction::{Response::*, *};
-use oc_error_codes::OCErrorCode;
 use types::OCResult;
 
 #[update(candid = true, msgpack = true)]
@@ -18,22 +17,16 @@ fn remove_reaction(args: Args) -> Response {
 }
 
 fn remove_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    if state.data.is_frozen() {
-        return Err(OCErrorCode::ChatFrozen.into());
-    }
+    state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-    if let Some(user_id) = state.data.lookup_user_id(caller) {
-        let now = state.env.now();
+    let user_id = state.get_caller_user_id()?;
+    let now = state.env.now();
 
-        state
-            .data
-            .chat
-            .remove_reaction(user_id, args.thread_root_message_index, args.message_id, args.reaction, now)?;
+    state
+        .data
+        .chat
+        .remove_reaction(user_id, args.thread_root_message_index, args.message_id, args.reaction, now)?;
 
-        handle_activity_notification(state);
-        Ok(())
-    } else {
-        Err(OCErrorCode::InitiatorNotInChat.into())
-    }
+    handle_activity_notification(state);
+    Ok(())
 }

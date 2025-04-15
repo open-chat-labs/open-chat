@@ -8,7 +8,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::change_role::{Response::*, *};
 use group_community_common::ExpiringMember;
-use types::{CanisterId, CommunityRole, CommunityRoleChanged, UserId};
+use types::{CanisterId, CommunityRole, CommunityRoleChanged, OCResult, UserId};
 use user_index_canister_c2c_client::lookup_user;
 
 #[update(msgpack = true)]
@@ -23,7 +23,7 @@ async fn change_role(args: Args) -> Response {
         is_user_owner,
     } = match read_state(|state| prepare(args.user_id, state)) {
         Ok(result) => result,
-        Err(response) => return response,
+        Err(error) => return Error(error),
     };
 
     // Either lookup whether the caller is a platform moderator so they can promote themselves to owner
@@ -68,28 +68,19 @@ struct PrepareResult {
     is_user_owner: bool,
 }
 
-fn prepare(user_id: UserId, state: &RuntimeState) -> Result<PrepareResult, Response> {
-    let caller = state.env.caller();
-    if let Some(member) = state.data.members.get(caller) {
-        if member.suspended().value {
-            Err(UserSuspended)
-        } else if member.lapsed().value {
-            Err(UserLapsed)
-        } else {
-            Ok(PrepareResult {
-                caller_id: member.user_id,
-                user_index_canister_id: state.data.user_index_canister_id,
-                is_caller_owner: member.role().is_owner(),
-                is_user_owner: state
-                    .data
-                    .members
-                    .get_by_user_id(&user_id)
-                    .is_some_and(|p| p.role().is_owner()),
-            })
-        }
-    } else {
-        Err(UserNotInCommunity)
-    }
+fn prepare(user_id: UserId, state: &RuntimeState) -> OCResult<PrepareResult> {
+    let member = state.get_calling_member(true)?;
+
+    Ok(PrepareResult {
+        caller_id: member.user_id,
+        user_index_canister_id: state.data.user_index_canister_id,
+        is_caller_owner: member.role().is_owner(),
+        is_user_owner: state
+            .data
+            .members
+            .get_by_user_id(&user_id)
+            .is_some_and(|p| p.role().is_owner()),
+    })
 }
 
 fn change_role_impl(

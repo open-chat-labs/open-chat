@@ -1,18 +1,20 @@
 use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
 use community_canister::lookup_members::{Response::*, *};
+use types::OCResult;
 
 #[query(candid = true, msgpack = true)]
 fn lookup_members(args: Args) -> Response {
-    read_state(|state| lookup_members_impl(args, state))
+    match read_state(|state| lookup_members_impl(args, state)) {
+        Ok(result) => Success(result),
+        Err(error) => Error(error),
+    }
 }
 
-fn lookup_members_impl(args: Args, state: &RuntimeState) -> Response {
+fn lookup_members_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessResult> {
     if !state.data.is_public.value {
         let caller = state.env.caller();
-        if !state.data.is_accessible(caller, None) {
-            return PrivateCommunity;
-        }
+        state.data.verify_is_accessible(caller, None)?;
     }
 
     let members = args
@@ -22,5 +24,5 @@ fn lookup_members_impl(args: Args, state: &RuntimeState) -> Response {
         .map(|member| member.clone().into())
         .collect();
 
-    Success(SuccessResult { members })
+    Ok(SuccessResult { members })
 }
