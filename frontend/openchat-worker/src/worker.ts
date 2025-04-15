@@ -1988,7 +1988,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.deleteUser(payload.userId, payload.delegation),
+                    agent.deleteUser(payload.userId, DelegationChain.fromJSON(payload.delegation)),
                 );
                 break;
 
