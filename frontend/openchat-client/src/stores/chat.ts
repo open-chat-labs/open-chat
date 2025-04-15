@@ -24,7 +24,7 @@ import {
     messageContextsEqual,
     nullMembership,
 } from "openchat-shared";
-import { derived, get, type Readable, writable, type Writable } from "svelte/store";
+import { derived, get, type Readable, type Writable } from "svelte/store";
 import type { OpenChat } from "../openchat";
 import { app } from "../state/app.svelte";
 import {
@@ -430,9 +430,6 @@ export const userMetrics = derived([allServerChats], ([$chats]) => {
         .map((c) => c.membership?.myMetrics ?? emptyChatMetrics())
         .reduce(mergeChatMetrics, emptyChatMetrics());
 });
-
-export const chatsLoading = writable(true);
-export const chatsInitialised = writable(false);
 
 export const selectedServerChatStore = derived(
     [serverChatSummariesStore, selectedChatId],

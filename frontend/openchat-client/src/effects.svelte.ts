@@ -15,8 +15,7 @@ export function configureEffects(client: OpenChat) {
     $effect.root(() => {
         // set selected community when communityId changes
         $effect(() => {
-            if (app.selectedCommunityId !== undefined) {
-                console.log("Setting selected community from an effect");
+            if (app.chatsInitialised && app.selectedCommunityId !== undefined) {
                 // TODO - we need to trigger the no_access modal if the community is not found and cannot be previewed
                 // modal = { kind: "no_access" };
                 const id = app.selectedCommunityId;
@@ -30,8 +29,6 @@ export function configureEffects(client: OpenChat) {
                         }
                     });
                 });
-            } else {
-                console.log("Setting selected community to undefined");
             }
         });
 

@@ -30,7 +30,6 @@
         app,
         chatIdentifiersEqual,
         chatListScopeStore as chatListScope,
-        chatsInitialised,
         chatSummariesListStore,
         chatSummariesStore,
         communities,
@@ -1144,7 +1143,7 @@
         if (
             $identityState.kind === "logged_in" &&
             $identityState.postLogin?.kind === "join_group" &&
-            $chatsInitialised
+            app.chatsInitialised
         ) {
             const join = { ...$identityState.postLogin };
             client.clearPostLoginState();
@@ -1152,7 +1151,7 @@
         }
     });
     trackedEffect("route-change", () => {
-        routeChange($chatsInitialised, pathState.route);
+        routeChange(app.chatsInitialised, pathState.route);
     });
     let bgHeight = $derived(ui.dimensions.height * 0.9);
     let bgClip = $derived(((ui.dimensions.height - 32) / bgHeight) * 361);

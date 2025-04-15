@@ -34,8 +34,6 @@ import {
     allChats,
     chatSummariesListStore,
     chatSummariesStore,
-    chatsInitialised,
-    chatsLoading,
     confirmedThreadEventIndexesLoadedStore,
     currentChatBots,
     currentChatMembers,
@@ -109,8 +107,6 @@ export class LiveState {
     currentChatRules!: VersionedRules | undefined;
     currentChatUserIds!: Set<string>;
     selectedThreadRootMessageIndex: number | undefined;
-    chatsInitialised!: boolean;
-    chatsLoading!: boolean;
     blockedUsers!: Set<string>;
     diamondStatus!: DiamondMembershipStatus;
     isDiamond!: boolean;
@@ -179,8 +175,6 @@ export class LiveState {
         selectedThreadRootMessageIndex.subscribe(
             (data) => (this.selectedThreadRootMessageIndex = data),
         );
-        chatsInitialised.subscribe((data) => (this.chatsInitialised = data));
-        chatsLoading.subscribe((data) => (this.chatsLoading = data));
         blockedUsers.subscribe((data) => (this.blockedUsers = data));
         diamondStatus.subscribe((data) => (this.diamondStatus = data));
         isDiamond.subscribe((data) => (this.isDiamond = data));

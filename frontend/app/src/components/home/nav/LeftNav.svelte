@@ -65,6 +65,7 @@
     // we don't want drag n drop to monkey around with the key
     type CommunityItem = CommunitySummary & { _id: string };
     let communityItems: CommunityItem[] = $state([]);
+
     let dragging = $state<boolean>(false);
 
     onMount(() => {

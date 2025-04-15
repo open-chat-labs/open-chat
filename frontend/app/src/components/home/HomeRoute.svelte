@@ -7,7 +7,7 @@
 </script>
 
 <script lang="ts">
-    import { chatsLoading, identityState } from "openchat-client";
+    import { app, identityState } from "openchat-client";
     import type { Component } from "svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
     import LandingPage from "../landingpages/LandingPage.svelte";
@@ -18,7 +18,7 @@
     let showLoader = $derived(
         $identityState.kind !== "registering" &&
             $identityState.kind !== "challenging" &&
-            ($chatsLoading || $identityState.kind === "loading_user"),
+            (app.chatsLoading || $identityState.kind === "loading_user"),
     );
 </script>
 

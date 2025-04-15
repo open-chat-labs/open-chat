@@ -282,8 +282,6 @@ import { ui } from "./state/ui.svelte";
 import { blockedUsers } from "./stores/blockedUsers";
 import {
     addGroupPreview,
-    chatsInitialised,
-    chatsLoading,
     chatStateStore,
     clearSelectedChat,
     clearServerEvents,
@@ -683,7 +681,7 @@ export class OpenChat {
 
     async #loadedAuthenticationIdentity(id: Identity, authProvider: AuthProvider | undefined) {
         currentUser.set(anonymousUser());
-        chatsInitialised.set(false);
+        app.chatsInitialised = false;
         const anon = id.getPrincipal().isAnonymous();
         const authPrincipal = id.getPrincipal().toString();
         this.#authPrincipal = anon ? undefined : authPrincipal;
@@ -3142,7 +3140,6 @@ export class OpenChat {
         }).catch(() => "failure");
         if (resp !== "failure") {
             const [lapsed, members] = partition(resp.members, (m) => m.lapsed);
-            console.log("Setting community details");
             app.setSelectedCommunityDetails(
                 id,
                 resp.userGroups,
@@ -3153,6 +3150,7 @@ export class OpenChat {
                 resp.referrals,
                 resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
                 resp.apiKeys,
+                resp.rules,
             );
             if (app.selectedCommunityDetails) {
                 this.#updateUserStoreFromCommunityState(app.selectedCommunityDetails);
@@ -6011,7 +6009,7 @@ export class OpenChat {
 
             pinNumberRequiredStore.set(chatsResponse.state.pinNumberSettings !== undefined);
 
-            chatsInitialised.set(true);
+            app.chatsInitialised = true;
 
             publish("chatsUpdated");
 
@@ -6061,8 +6059,8 @@ export class OpenChat {
         });
     }
     async #loadChats() {
-        const initialLoad = !this.#liveState.chatsInitialised;
-        chatsLoading.set(initialLoad);
+        const initialLoad = !app.chatsInitialised;
+        app.chatsLoading = initialLoad;
 
         const updateRegistryTask = initialLoad ? this.#updateRegistry() : undefined;
 
@@ -6074,10 +6072,10 @@ export class OpenChat {
                 onResult: async (resp) => {
                     await this.#handleChatsResponse(
                         updateRegistryTask,
-                        !this.#liveState.chatsInitialised,
+                        !app.chatsInitialised,
                         resp as UpdatesResult,
                     );
-                    chatsLoading.set(!this.#liveState.chatsInitialised);
+                    app.chatsLoading = !app.chatsInitialised;
                 },
                 onError: (err) => {
                     console.warn("getUpdates threw an error: ", err);

@@ -7,13 +7,11 @@ import {
     type UserGroupDetails,
     type VersionedRules,
 } from "openchat-shared";
-import { CommunityMergedState, CommunityServerState } from "./community.svelte";
+import { CommunityMergedState } from "./community_details/merged.svelte";
+import { CommunityServerState } from "./community_details/server";
 import { pathState } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
 
-/**
- * AppState is basically all data that comes from the backend
- */
 class AppState {
     constructor() {
         $effect.root(() => {
@@ -26,6 +24,9 @@ class AppState {
             });
         });
     }
+
+    #chatsInitialised = $state(false);
+    #chatsLoading = $state(false);
 
     #selectedCommunityId = $derived.by<CommunityIdentifier | undefined>(
         withEqCheck(() => {
@@ -43,6 +44,22 @@ class AppState {
     #selectedCommunityDetails = $state<CommunityMergedState>(
         new CommunityMergedState(CommunityServerState.empty()),
     );
+
+    get chatsInitialised() {
+        return this.#chatsInitialised;
+    }
+
+    set chatsInitialised(val: boolean) {
+        this.#chatsInitialised = val;
+    }
+
+    get chatsLoading() {
+        return this.#chatsLoading;
+    }
+
+    set chatsLoading(val: boolean) {
+        this.#chatsLoading = val;
+    }
 
     get selectedCommunityId() {
         return this.#selectedCommunityId;
