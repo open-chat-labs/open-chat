@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        debouncedDerived,
         OpenChat,
         ui,
         userStore,
@@ -15,7 +16,6 @@
     import Reload from "svelte-material-icons/Reload.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
-    import { debouncedDerived } from "../../utils/reactivity.svelte";
     import Checkbox from "../Checkbox.svelte";
     import EditableAvatar from "../EditableAvatar.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";

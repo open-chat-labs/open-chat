@@ -1,28 +1,23 @@
 <script lang="ts">
     import {
-        OpenChat,
+        app,
         type ChannelSummary,
         type CommunitySummary,
-        currentChatMembers,
-        currentChatInvitedUsers as currentChatInvited,
-        currentChatBlockedUsers as currentChatBlocked,
-        currentChatLapsedMembers as currentChatLapsed,
-        currentCommunityMembers,
-        currentCommunityInvitedUsers as currentCommunityInvited,
-        currentCommunityBlockedUsers as currentCommunityBlocked,
-        currentCommunityLapsedMembers as currentCommunityLapsed,
-        currentCommunityBots,
-        currentCommunityApiKeys,
         currentChatApiKeys,
-        type UserSummary,
+        currentChatBlockedUsers as currentChatBlocked,
+        currentChatInvitedUsers as currentChatInvited,
+        currentChatLapsedMembers as currentChatLapsed,
+        currentChatMembers,
         type MemberRole,
+        OpenChat,
         publish,
+        type UserSummary,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import ScopeToggle from "./communities/ScopeToggle.svelte";
     import Members from "./groupdetails/Members.svelte";
     import MembersHeader from "./groupdetails/MembersHeader.svelte";
-    import ScopeToggle from "./communities/ScopeToggle.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -110,12 +105,12 @@
             showHeader={false}
             {closeIcon}
             collection={community}
-            invited={$currentCommunityInvited}
-            members={[...$currentCommunityMembers.values()]}
-            blocked={$currentCommunityBlocked}
-            lapsed={$currentCommunityLapsed}
-            installedBots={$currentCommunityBots}
-            apiKeys={$currentCommunityApiKeys}
+            invited={app.selectedCommunityDetails.invitedUsers}
+            members={[...app.selectedCommunityDetails.members.values()]}
+            blocked={app.selectedCommunityDetails.blockedUsers}
+            lapsed={app.selectedCommunityDetails.lapsedMembers}
+            installedBots={app.selectedCommunityDetails.bots}
+            apiKeys={app.selectedCommunityDetails.apiKeys}
             {onClose}
             onBlockUser={onBlockCommunityUser}
             onUnblockUser={onUnblockCommunityUser}
@@ -134,7 +129,7 @@
             members={$currentChatMembers}
             blocked={$currentChatBlocked}
             lapsed={$currentChatLapsed}
-            installedBots={$currentCommunityBots}
+            installedBots={app.selectedCommunityDetails.bots}
             apiKeys={$currentChatApiKeys}
             {onClose}
             onBlockUser={onBlockGroupUser}

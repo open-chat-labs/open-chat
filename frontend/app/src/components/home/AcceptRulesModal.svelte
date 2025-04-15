@@ -1,13 +1,13 @@
 <script lang="ts">
-    import AreYouSure from "../AreYouSure.svelte";
-    import { getContext } from "svelte";
     import {
         type OpenChat,
+        app,
         currentChatRules,
-        currentCommunityRules,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
     } from "openchat-client";
+    import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import AreYouSure from "../AreYouSure.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -19,7 +19,9 @@
 
 <AreYouSure
     title={i18nKey("rules.acceptTitle")}
-    message={i18nKey(client.combineRulesText($currentChatRules, $currentCommunityRules))}
+    message={i18nKey(
+        client.combineRulesText($currentChatRules, app.selectedCommunityDetails.rules),
+    )}
     yesLabel={i18nKey("rules.accept")}
     noLabel={i18nKey("rules.reject")}
     action={onAction} />

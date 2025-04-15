@@ -6,6 +6,7 @@
         type OpenChat,
         chatIdentifiersEqual,
         chatListScopeStore as chatListScope,
+        routeForScope,
         ui,
     } from "openchat-client";
     import page from "page";
@@ -13,7 +14,6 @@
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import { routeForScope } from "../../routes";
     import { rtlStore } from "../../stores/rtl";
     import { type RemoteData, mapRemoteData } from "../../utils/remoteData";
     import Button from "../Button.svelte";

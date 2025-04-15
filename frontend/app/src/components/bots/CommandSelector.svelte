@@ -1,37 +1,36 @@
 <script lang="ts">
-    import Close from "svelte-material-icons/Close.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
-    import { hasEveryRequiredPermission, random64, type FlattenedCommand } from "openchat-shared";
-    import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
-    import ErrorMessage from "../ErrorMessage.svelte";
-    import { getContext, onMount } from "svelte";
-    import Logo from "../Logo.svelte";
     import type {
+        ChatPermissions,
         ChatSummary,
         CommunitySummary,
+        ExternalBotPermissions,
+        IReadonlyMap,
         MessageContext,
         OpenChat,
         PermissionRole,
-        ExternalBotPermissions,
-        ChatPermissions,
     } from "openchat-client";
     import {
-        currentCommunityBots,
+        app,
+        botState,
         currentChatBots,
+        installedDirectBots,
         isPermitted,
+        messagePermissionsForSelectedChat,
         selectedChatStore,
         selectedCommunity,
         selectedMessageContext,
-        installedDirectBots,
-        botState,
-    } from "openchat-client";
-    import {
-        messagePermissionsForSelectedChat,
         threadPermissionsForSelectedChat,
     } from "openchat-client";
+    import { hasEveryRequiredPermission, random64, type FlattenedCommand } from "openchat-shared";
+    import { getContext, onMount } from "svelte";
+    import Close from "svelte-material-icons/Close.svelte";
+    import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
+    import ErrorMessage from "../ErrorMessage.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
+    import Logo from "../Logo.svelte";
     import Tooltip from "../tooltip/Tooltip.svelte";
+    import Translatable from "../Translatable.svelte";
     import BotAvatar from "./BotAvatar.svelte";
 
     interface Props {
@@ -51,7 +50,7 @@
     let installedBots = $derived.by(() => {
         switch (messageContext.chatId.kind) {
             case "channel":
-                return $currentCommunityBots;
+                return app.selectedCommunityDetails.bots;
             case "direct_chat":
                 return $installedDirectBots;
             default:
@@ -139,7 +138,7 @@
 
     function hasPermissionForCommand(
         command: FlattenedCommand,
-        installedBots: Map<string, ExternalBotPermissions>,
+        installedBots: IReadonlyMap<string, ExternalBotPermissions>,
         chat: ChatSummary | undefined,
         community: CommunitySummary | undefined,
     ): boolean {

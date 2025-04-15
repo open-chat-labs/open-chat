@@ -30,3 +30,31 @@ export function debouncedDerived<T>(
     });
     return () => value;
 }
+
+/**
+ * This can be used with a derived expression to allow us to provide a custom equality check
+ * to make sure that if the derived result has not actually changed we will return the existing
+ * value. This will ensure that downstream effects will not fire unnecessarily. Would be much
+ * nicer if svelte provided this capability directly
+ */
+export function withEqCheck<T>(
+    next: () => T,
+    eq: (a: T, b: T) => boolean = (a: T, b: T) => a === b,
+): () => T {
+    let prev: T | undefined = undefined;
+
+    return () => {
+        const n = next();
+        if (prev === undefined) {
+            prev = n;
+            return n;
+        } else {
+            if (eq(prev as T, n)) {
+                return prev as T;
+            } else {
+                prev = n;
+                return n;
+            }
+        }
+    };
+}

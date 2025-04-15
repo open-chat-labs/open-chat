@@ -1,20 +1,14 @@
 <script lang="ts">
+    import { type OpenChat, app, defaultChatRules, selectedCommunity } from "openchat-client";
+    import { getContext } from "svelte";
     import CommunityCard from "../explore/CommunityCard.svelte";
     import CommunityDetails from "./CommunityDetails.svelte";
-    import {
-        type OpenChat,
-        defaultChatRules,
-        selectedCommunity,
-        currentCommunityRules,
-        currentCommunityReferrals,
-    } from "openchat-client";
     import CommunityDetailsHeader from "./CommunityDetailsHeader.svelte";
-    import { getContext } from "svelte";
 
     const client = getContext<OpenChat>("client");
 
     let frozen = $derived(client.isCommunityFrozen($selectedCommunity?.id));
-    let rules = $derived($currentCommunityRules ?? defaultChatRules("community"));
+    let rules = $derived(app.selectedCommunityDetails.rules ?? defaultChatRules("community"));
     let canDelete = $derived(
         $selectedCommunity !== undefined &&
             !frozen &&
@@ -52,7 +46,7 @@
             {rules}
             metrics={$selectedCommunity.metrics}
             community={$selectedCommunity}
-            referrals={$currentCommunityReferrals} />
+            referrals={app.selectedCommunityDetails.referrals} />
     </div>
 {/if}
 

@@ -1,6 +1,6 @@
 // https://stackoverflow.com/questions/10687099/how-to-test-if-a-url-string-is-absolute-or-relative
 
-import type { RouteParams, RouteType } from "../routes";
+import type { RouteParams, RouteType } from "openchat-client";
 
 const regex = new RegExp("^(?:[a-z]+:)?//", "i");
 

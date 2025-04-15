@@ -1,19 +1,19 @@
 <script lang="ts">
-    import { getContext } from "svelte";
-    import Button from "../Button.svelte";
     import {
         isLocked,
         type MultiUserChat,
         type OpenChat,
         platformModerator,
-        selectedCommunity,
         publish,
+        routeForScope,
+        selectedCommunity,
     } from "openchat-client";
-    import { toastStore } from "../../stores/toast";
     import page from "page";
-    import { routeForScope } from "../../routes";
-    import Translatable from "../Translatable.svelte";
+    import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import { toastStore } from "../../stores/toast";
+    import Button from "../Button.svelte";
+    import Translatable from "../Translatable.svelte";
     import AccessGateIconsForChat from "./access/AccessGateIconsForChat.svelte";
 
     const client = getContext<OpenChat>("client");

@@ -129,6 +129,10 @@ export class UIState {
         window.addEventListener("resize", this.#resize);
         this.popRightPanelHistory = this.popRightPanelHistory.bind(this);
     }
+    #eventListScrollTop = $state<number | undefined>();
+    #eventListLastScrolled = $state<number>(0);
+    #eventListScrolling = $state<boolean>(false);
+    #communityListScrollTop = $state<number | undefined>();
     #getDimensions = () => {
         return { width: window.innerWidth, height: window.innerHeight };
     };
@@ -381,6 +385,38 @@ export class UIState {
 
     public get availableHeight() {
         return this.#availableHeight;
+    }
+
+    public get eventListScrollTop() {
+        return this.#eventListScrollTop;
+    }
+
+    public set eventListScrollTop(val: number | undefined) {
+        this.#eventListScrollTop = val;
+    }
+
+    public get communityListScrollTop() {
+        return this.#communityListScrollTop;
+    }
+
+    public set communityListScrollTop(val: number | undefined) {
+        this.#communityListScrollTop = val;
+    }
+
+    public get eventListLastScrolled(): number {
+        return this.#eventListLastScrolled;
+    }
+
+    public set eventListLastScrolled(val: number) {
+        this.#eventListLastScrolled = val;
+    }
+
+    public get eventListScrolling(): boolean {
+        return this.#eventListScrolling;
+    }
+
+    public set eventListScrolling(val: boolean) {
+        this.#eventListScrolling = val;
     }
 }
 

@@ -1,5 +1,11 @@
 <script lang="ts">
-    import { type Rules, type Metrics, type CommunitySummary } from "openchat-client";
+    import {
+        type CommunitySummary,
+        type IReadonlySet,
+        type Metrics,
+        type Rules,
+    } from "openchat-client";
+    import { i18nKey } from "../../../../i18n/i18n";
     import {
         communityAdvancedOpen,
         communityInviteUsersOpen,
@@ -8,17 +14,16 @@
         communityStatsOpen,
         communityVisibilityOpen,
     } from "../../../../stores/settings";
+    import CollapsibleCard from "../../../CollapsibleCard.svelte";
+    import Translatable from "../../../Translatable.svelte";
+    import InviteUsersWithLink from "../../InviteUsersWithLink.svelte";
     import Markdown from "../../Markdown.svelte";
+    import Stats from "../../Stats.svelte";
+    import AccessGateExpiry from "../../access/AccessGateExpiry.svelte";
     import AccessGateSummary from "../../access/AccessGateSummary.svelte";
+    import ReferredUsersList from "../../profile/ReferredUsersList.svelte";
     import PermissionsViewer from "../PermissionsViewer.svelte";
     import AdvancedSection from "./AdvancedSection.svelte";
-    import CollapsibleCard from "../../../CollapsibleCard.svelte";
-    import Stats from "../../Stats.svelte";
-    import InviteUsersWithLink from "../../InviteUsersWithLink.svelte";
-    import { i18nKey } from "../../../../i18n/i18n";
-    import Translatable from "../../../Translatable.svelte";
-    import ReferredUsersList from "../../profile/ReferredUsersList.svelte";
-    import AccessGateExpiry from "../../access/AccessGateExpiry.svelte";
 
     interface Props {
         community: CommunitySummary;
@@ -26,7 +31,7 @@
         metrics: Metrics;
         canDelete: boolean;
         canInvite: boolean;
-        referrals: Set<string>;
+        referrals: IReadonlySet<string>;
     }
 
     let {

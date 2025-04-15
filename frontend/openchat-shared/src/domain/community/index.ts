@@ -1,19 +1,19 @@
 import type { AccessControlled, AccessGateConfig, VersionedRules } from "../access";
-import type { InstalledBotDetails, ExternalBotPermissions } from "../bots";
+import type { ExternalBotPermissions, InstalledBotDetails } from "../bots";
 import type {
+    CanisterNotFound,
+    ChannelIdentifier,
+    ChannelSummary,
+    EventWrapper,
     GateCheckFailed,
     GateCheckFailedReason,
+    GroupMembershipUpdates,
+    GroupSubtype,
     Member,
     Message,
     MessageContent,
-    ChannelSummary,
     Metrics,
-    ChannelIdentifier,
-    GroupSubtype,
-    EventWrapper,
     UpdatedEvent,
-    CanisterNotFound,
-    GroupMembershipUpdates,
 } from "../chat";
 import type { DataContent } from "../data";
 import type { OCError } from "../error";
@@ -357,3 +357,12 @@ export type UnfreezeCommunityResponse =
     | "not_authorized"
     | "internal_error"
     | "offline";
+
+export function communityIdentifiersEqual(
+    a?: CommunityIdentifier,
+    b?: CommunityIdentifier,
+): boolean {
+    if (a === undefined && b === undefined) return true;
+    if (a === undefined || b === undefined) return false;
+    return a.communityId === b.communityId;
+}

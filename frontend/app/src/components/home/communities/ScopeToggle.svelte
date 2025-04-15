@@ -94,7 +94,6 @@
     .body {
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
         flex: auto;
         @include nice-scrollbar();
     }

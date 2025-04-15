@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { currentTheme } from "../../theme/themes";
+    import { ui } from "openchat-client";
     import { onMount } from "svelte";
-    import { eventListScrolling } from "../../stores/scrollPos";
+    import { currentTheme } from "../../theme/themes";
 
     interface Props {
         intersecting: boolean;
@@ -23,7 +23,7 @@
     $effect(() => {
         if (
             intersecting &&
-            !$eventListScrolling &&
+            !ui.eventListScrolling &&
             tweetWrapper !== undefined &&
             !rendering &&
             supported

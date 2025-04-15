@@ -1,13 +1,12 @@
 <script lang="ts">
-    import { onMount, getContext, tick } from "svelte";
     import type { OpenChat } from "openchat-client";
-    import { _ } from "svelte-i18n";
+    import { pageReplace } from "openchat-client";
+    import page from "page";
+    import { getContext, onMount, tick } from "svelte";
     import { i18nKey } from "../i18n/i18n";
-    import Translatable from "./Translatable.svelte";
     import FancyLoader from "./icons/FancyLoader.svelte";
     import ModalContent from "./ModalContent.svelte";
-    import { pageReplace } from "../routes";
-    import page from "page";
+    import Translatable from "./Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
