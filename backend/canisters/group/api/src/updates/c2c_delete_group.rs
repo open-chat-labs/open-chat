@@ -1,4 +1,4 @@
-use types::{Empty, EmptySuccessOrError};
+use types::{Empty, UnitResult};
 
 pub type Args = Empty;
-pub type Response = EmptySuccessOrError;
+pub type Response = UnitResult;

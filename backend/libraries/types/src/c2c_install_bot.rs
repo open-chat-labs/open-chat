@@ -1,4 +1,4 @@
-use crate::{BotPermissions, EmptySuccessOrError, UserId};
+use crate::{BotPermissions, UnitResult, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -9,4 +9,4 @@ pub struct Args {
     pub granted_permissions: BotPermissions,
 }
 
-pub type Response = EmptySuccessOrError;
+pub type Response = UnitResult;

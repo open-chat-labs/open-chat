@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{EmptySuccessOrError, MessageId, MessageIndex};
+use types::{MessageId, MessageIndex, UnitResult};
 
 #[ts_export(group, delete_messages)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -13,4 +13,4 @@ pub struct Args {
     pub correlation_id: u64,
 }
 
-pub type Response = EmptySuccessOrError;
+pub type Response = UnitResult;

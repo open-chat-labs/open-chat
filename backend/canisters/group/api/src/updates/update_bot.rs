@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{BotPermissions, EmptySuccessOrError, UserId};
+use types::{BotPermissions, UnitResult, UserId};
 
 #[ts_export(group, update_bot)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -10,4 +10,4 @@ pub struct Args {
     pub granted_permissions: BotPermissions,
 }
 
-pub type Response = EmptySuccessOrError;
+pub type Response = UnitResult;

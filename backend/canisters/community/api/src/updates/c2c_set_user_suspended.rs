@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{EmptySuccessOrError, UserId};
+use types::{UnitResult, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -8,4 +8,4 @@ pub struct Args {
     pub suspended: bool,
 }
 
-pub type Response = EmptySuccessOrError;
+pub type Response = UnitResult;

@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{EmptySuccessOrError, MessageId, Milliseconds, UserId, VideoCallType};
+use types::{MessageId, Milliseconds, UnitResult, UserId, VideoCallType};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -12,4 +12,4 @@ pub struct Args {
     pub call_type: VideoCallType,
 }
 
-pub type Response = EmptySuccessOrError;
+pub type Response = UnitResult;

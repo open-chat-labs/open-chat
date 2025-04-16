@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChannelId, EmptySuccessOrError, ProposalUpdate};
+use types::{ChannelId, ProposalUpdate, UnitResult};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -8,4 +8,4 @@ pub struct Args {
     pub proposals: Vec<ProposalUpdate>,
 }
 
-pub type Response = EmptySuccessOrError;
+pub type Response = UnitResult;

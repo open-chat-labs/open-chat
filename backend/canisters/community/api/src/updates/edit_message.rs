@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{ChannelId, EmptySuccessOrError, MessageContentInitial, MessageId, MessageIndex};
+use types::{ChannelId, MessageContentInitial, MessageId, MessageIndex, UnitResult};
 
 #[ts_export(community, edit_message)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -14,4 +14,4 @@ pub struct Args {
     pub new_achievement: bool,
 }
 
-pub type Response = EmptySuccessOrError;
+pub type Response = UnitResult;

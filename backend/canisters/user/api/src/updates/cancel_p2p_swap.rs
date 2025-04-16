@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{EmptySuccessOrError, MessageId, UserId};
+use types::{MessageId, UnitResult, UserId};
 
 #[ts_export(user, cancel_p2p_swap)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -10,4 +10,4 @@ pub struct Args {
     pub message_id: MessageId,
 }
 
-pub type Response = EmptySuccessOrError;
+pub type Response = UnitResult;

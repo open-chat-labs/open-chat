@@ -1,5 +1,5 @@
 use crate::NamedAccount;
-use types::EmptySuccessOrError;
+use types::UnitResult;
 
 pub type Args = NamedAccount;
-pub type Response = EmptySuccessOrError;
+pub type Response = UnitResult;

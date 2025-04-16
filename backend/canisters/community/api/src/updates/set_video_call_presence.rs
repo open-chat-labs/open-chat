@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{ChannelId, EmptySuccessOrError, MessageId, VideoCallPresence};
+use types::{ChannelId, MessageId, UnitResult, VideoCallPresence};
 
 #[ts_export(community, set_video_call_presence)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -12,4 +12,4 @@ pub struct Args {
     pub new_achievement: bool,
 }
 
-pub type Response = EmptySuccessOrError;
+pub type Response = UnitResult;

@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use types::{BotInitiator, ChannelId, EmptySuccessOrError, UserId};
+use types::{BotInitiator, ChannelId, UnitResult, UserId};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -8,4 +8,4 @@ pub struct Args {
     pub channel_id: ChannelId,
 }
 
-pub type Response = EmptySuccessOrError;
+pub type Response = UnitResult;

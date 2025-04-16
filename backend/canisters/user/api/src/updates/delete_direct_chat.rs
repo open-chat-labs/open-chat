@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{EmptySuccessOrError, UserId};
+use types::{UnitResult, UserId};
 
 #[ts_export(user, delete_direct_chat)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -10,4 +10,4 @@ pub struct Args {
     pub block_user: bool,
 }
 
-pub type Response = EmptySuccessOrError;
+pub type Response = UnitResult;

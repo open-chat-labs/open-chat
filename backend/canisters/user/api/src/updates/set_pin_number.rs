@@ -2,7 +2,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use ts_export::ts_export;
-use types::{EmptySuccessOrError, PinNumberWrapper, SignedDelegation};
+use types::{PinNumberWrapper, SignedDelegation, UnitResult};
 
 #[ts_export(user, set_pin_number)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -19,4 +19,4 @@ pub enum PinNumberVerification {
     Delegation(SignedDelegation),
 }
 
-pub type Response = EmptySuccessOrError;
+pub type Response = UnitResult;

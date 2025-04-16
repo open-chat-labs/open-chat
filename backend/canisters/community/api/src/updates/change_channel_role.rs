@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{ChannelId, EmptySuccessOrError, GroupRole, UserId};
+use types::{ChannelId, GroupRole, UnitResult, UserId};
 
 #[ts_export(community, change_channel_role)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -11,4 +11,4 @@ pub struct Args {
     pub new_role: GroupRole,
 }
 
-pub type Response = EmptySuccessOrError;
+pub type Response = UnitResult;

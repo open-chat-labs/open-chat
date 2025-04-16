@@ -180,16 +180,16 @@ pub type OCResult<T = ()> = Result<T, OCError>;
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum EmptySuccessOrError {
+pub enum UnitResult {
     Success,
     Error(OCError),
 }
 
-impl<T> From<OCResult<T>> for EmptySuccessOrError {
+impl<T> From<OCResult<T>> for UnitResult {
     fn from(value: OCResult<T>) -> Self {
         match value {
-            Ok(_) => EmptySuccessOrError::Success,
-            Err(error) => EmptySuccessOrError::Error(error),
+            Ok(_) => UnitResult::Success,
+            Err(error) => UnitResult::Error(error),
         }
     }
 }

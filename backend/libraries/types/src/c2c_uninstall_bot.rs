@@ -1,4 +1,4 @@
-use crate::{EmptySuccessOrError, UserId};
+use crate::{UnitResult, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -8,4 +8,4 @@ pub struct Args {
     pub caller: UserId,
 }
 
-pub type Response = EmptySuccessOrError;
+pub type Response = UnitResult;
