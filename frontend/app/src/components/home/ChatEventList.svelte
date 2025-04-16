@@ -97,7 +97,7 @@
     let userId = $derived($user.userId);
     let threadSummary = $derived(threadRootEvent?.event.thread);
     let messageContext = $derived({
-        chatId: chat.id,
+        chatId: chat?.id,
         threadRootMessageIndex: threadRootEvent?.event.messageIndex,
     });
 

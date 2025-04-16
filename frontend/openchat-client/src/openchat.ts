@@ -251,6 +251,7 @@ import {
     random64,
     removeEmailSignInSession,
     routeForChatIdentifier,
+    routeForMessage,
     shouldPreprocessGate,
     storeEmailSignInSession,
     Stream,
@@ -267,6 +268,7 @@ import {
     ErrorCode,
     isSuccessfulEventsResponse,
 } from "openchat-shared";
+import page from "page";
 import { get } from "svelte/store";
 import type { OpenChatConfig } from "./config";
 import { AIRDROP_BOT_USER_ID } from "./constants";
@@ -297,7 +299,7 @@ import {
     removeGroupPreview,
     removeUninitializedDirectChat,
     selectedMessageContext,
-    setSelectedChat,
+    setChatSpecificState,
     threadServerEventsStore,
 } from "./stores/chat";
 import {
@@ -322,6 +324,7 @@ import { failedMessagesStore } from "./stores/failedMessages";
 import {
     disableAllProposalFilters,
     enableAllProposalFilters,
+    resetFilteredProposalsStore,
     toggleProposalFilter,
     toggleProposalFilterMessageExpansion,
 } from "./stores/filteredProposals";
@@ -350,6 +353,7 @@ import { minutesOnlineStore } from "./stores/minutesOnline";
 import {
     askForNotificationPermission,
     initNotificationStores,
+    notificationStatus,
     setSoftDisabled,
 } from "./stores/notifications";
 import {
@@ -360,6 +364,7 @@ import {
 import { proposalTallies } from "./stores/proposalTallies";
 import { recommendedGroupExclusions } from "./stores/recommendedGroupExclusions";
 import { captureRulesAcceptanceStore } from "./stores/rules";
+import { snsFunctions } from "./stores/snsFunctions";
 import { storageStore, updateStorageLimit } from "./stores/storage";
 import { initialiseMostRecentSentMessageTimes, shouldThrottle } from "./stores/throttling";
 import { isTyping, typing } from "./stores/typing";
@@ -489,7 +494,7 @@ import { Poller } from "./utils/poller";
 import { showTrace } from "./utils/profiling";
 import { indexIsInRanges } from "./utils/range";
 import { RecentlyActiveUsersTracker } from "./utils/recentlyActiveUsersTracker";
-import { pageRedirect } from "./utils/routes";
+import { pageRedirect, pageReplace } from "./utils/routes";
 import {
     createRemoteVideoStartedEvent,
     filterWebRtcMessage,
@@ -531,6 +536,8 @@ const REGISTRY_UPDATE_INTERVAL = 2 * ONE_MINUTE_MILLIS;
 const EXCHANGE_RATE_UPDATE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
+const PUBLIC_VAPID_KEY =
+    "BD8RU5tDBbFTDFybDoWhFzlL5+mYptojI6qqqqiit68KSt17+vt33jcqLTHKhAXdSzu6pXntfT9e4LccBv+iV3A=";
 
 type UnresolvedRequest = {
     kind: string;
@@ -2676,7 +2683,110 @@ export class OpenChat {
         return bot !== undefined && this.#liveState.installedDirectBots.get(botId) === undefined;
     }
 
-    setSelectedChat(
+    async setSelectedChat(
+        chatId: ChatIdentifier,
+        messageIndex?: number,
+        threadMessageIndex?: number,
+    ): Promise<void> {
+        let chat = this.#liveState.chatSummaries.get(chatId);
+        const scope = this.#liveState.chatListScope;
+        let autojoin = false;
+
+        // if this is an unknown chat let's preview it
+        if (chat === undefined) {
+            // if the scope is favourite let's redirect to the non-favourite counterpart and try again
+            // this is necessary if the link is no longer in our favourites or came from another user and was *never* in our favourites.
+            if (scope.kind === "favourite") {
+                pageRedirect(
+                    routeForChatIdentifier(
+                        scope.communityId === undefined ? "group_chat" : "community",
+                        chatId,
+                    ),
+                );
+                return;
+            }
+            if (chatId.kind === "direct_chat") {
+                if (!(await this.createDirectChat(chatId))) {
+                    publish("notFound");
+                } else {
+                    page(routeForChatIdentifier("direct_chat", chatId));
+                }
+            } else if (chatId.kind === "group_chat" || chatId.kind === "channel") {
+                autojoin = pathState.querystring.has("autojoin");
+                const code = pathState.querystring.get("code");
+                if (code) {
+                    this.groupInvite = {
+                        chatId,
+                        code,
+                    };
+                }
+                const preview = await this.previewChat(chatId);
+                if (preview.kind === "group_moved") {
+                    if (messageIndex !== undefined) {
+                        if (threadMessageIndex !== undefined) {
+                            pageReplace(
+                                routeForMessage(
+                                    "community",
+                                    {
+                                        chatId: preview.location,
+                                        threadRootMessageIndex: messageIndex,
+                                    },
+                                    threadMessageIndex,
+                                ),
+                            );
+                        } else {
+                            pageReplace(
+                                routeForMessage(
+                                    "community",
+                                    { chatId: preview.location },
+                                    messageIndex,
+                                ),
+                            );
+                        }
+                    } else {
+                        pageReplace(routeForChatIdentifier(scope.kind, preview.location));
+                    }
+                } else if (preview.kind === "failure") {
+                    publish("notFound");
+                    return;
+                }
+            }
+            chat = this.#liveState.chatSummaries.get(chatId);
+        }
+
+        if (chat !== undefined) {
+            // If an archived chat has been explicitly selected (for example by searching for it) then un-archive it
+            if (chat.membership.archived) {
+                this.unarchiveChat(chat.id);
+            }
+
+            // if it's a known chat let's select it
+            this.closeNotificationsForChat(chat.id);
+            ui.eventListScrollTop = undefined;
+            this.#setSelectedChat(chat.id, messageIndex, threadMessageIndex);
+            ui.filterRightPanelHistoryByChatType(chat);
+
+            if (autojoin && chat.kind !== "direct_chat") {
+                publish("joinGroup", { group: chat, select: true });
+            }
+        }
+    }
+
+    #loadSnsFunctionsForChat(chat: ChatSummary) {
+        if (
+            (chat.kind === "group_chat" || chat.kind === "channel") &&
+            chat.subtype !== undefined &&
+            chat.subtype.kind === "governance_proposals" &&
+            !chat.subtype.isNns
+        ) {
+            const { governanceCanisterId } = chat.subtype;
+            this.listNervousSystemFunctions(governanceCanisterId).then((val) => {
+                snsFunctions.set(governanceCanisterId, val.functions);
+            });
+        }
+    }
+
+    #setSelectedChat(
         chatId: ChatIdentifier,
         messageIndex?: number,
         threadMessageIndex?: number,
@@ -2688,23 +2798,52 @@ export class OpenChat {
             return;
         }
 
-        setSelectedChat(this, clientChat, serverChat, messageIndex, threadMessageIndex);
+        this.#loadSnsFunctionsForChat(clientChat);
 
+        setChatSpecificState(clientChat, messageIndex, threadMessageIndex);
+
+        if (messageIndex === undefined) {
+            messageIndex = isPreviewing(clientChat)
+                ? undefined
+                : messagesRead.getFirstUnreadMessageIndex(
+                      clientChat.id,
+                      clientChat.latestMessage?.event.messageIndex,
+                  );
+
+            if (messageIndex !== undefined) {
+                const latestServerMessageIndex = serverChat?.latestMessage?.event.messageIndex ?? 0;
+
+                if (messageIndex > latestServerMessageIndex) {
+                    messageIndex = undefined;
+                }
+            }
+        }
+
+        // TODO - we might be able to get rid of this
+        resetFilteredProposalsStore(clientChat);
+
+        // TODO - this might belong as a derivation in the selected chat state
         this.#userLookupForMentions = undefined;
 
-        const { selectedChat, focusMessageIndex } = this.#liveState;
+        const { selectedChat } = this.#liveState;
         if (selectedChat !== undefined) {
             if (!this.#uninstalledBotChat(selectedChat)) {
-                if (focusMessageIndex !== undefined) {
-                    this.loadEventWindow(chatId, focusMessageIndex, undefined, true).then(() => {
+                if (messageIndex !== undefined) {
+                    this.loadEventWindow(chatId, messageIndex, undefined, true).then(() => {
                         if (serverChat !== undefined) {
-                            this.#loadChatDetails(serverChat);
+                            this.#loadChatDetails(serverChat, messageIndex, threadMessageIndex);
                         }
                     });
                 } else {
+                    // TODO - this is awkward because the server events are loaded *before* we have
+                    // loaded the chat details.
+                    // Why do we do it in that order I wonder?
+                    // I guess it is because we don't want anything to delay the events.
+                    // But having things split like this is where it gets a bit race condition-y
+
                     this.loadPreviousMessages(chatId, undefined, true).then(() => {
                         if (serverChat !== undefined) {
-                            this.#loadChatDetails(serverChat);
+                            this.#loadChatDetails(serverChat, messageIndex, threadMessageIndex);
                         }
                     });
                 }
@@ -3156,7 +3295,11 @@ export class OpenChat {
         }
     }
 
-    async #loadChatDetails(serverChat: ChatSummary): Promise<void> {
+    async #loadChatDetails(
+        serverChat: ChatSummary,
+        _focusMessageIndex?: number,
+        _focusThreadMessageIndex?: number,
+    ): Promise<void> {
         // currently this is only meaningful for group chats, but we'll set it up generically just in case
         if (serverChat.kind === "group_chat" || serverChat.kind === "channel") {
             const resp: GroupChatDetailsResponse = await this.#sendRequest({
@@ -4867,15 +5010,15 @@ export class OpenChat {
         return this.config.i18nFormatter("unknownUser");
     }
 
-    subscriptionExists(p256dh_key: string): Promise<boolean> {
+    #subscriptionExists(p256dh_key: string): Promise<boolean> {
         return this.#sendRequest({ kind: "subscriptionExists", p256dh_key }).catch(() => false);
     }
 
-    pushSubscription(subscription: PushSubscriptionJSON): Promise<void> {
+    #pushSubscription(subscription: PushSubscriptionJSON): Promise<void> {
         return this.#sendRequest({ kind: "pushSubscription", subscription });
     }
 
-    removeSubscription(subscription: PushSubscriptionJSON): Promise<void> {
+    #removeSubscription(subscription: PushSubscriptionJSON): Promise<void> {
         return this.#sendRequest({ kind: "removeSubscription", subscription });
     }
 
@@ -6001,7 +6144,7 @@ export class OpenChat {
 
             app.chatsInitialised = true;
 
-            publish("chatsUpdated");
+            this.#closeNotificationsIfNecessary();
 
             if (chatsResponse.newAchievements.length > 0) {
                 const filtered = chatsResponse.newAchievements.filter(
@@ -8872,6 +9015,214 @@ export class OpenChat {
                 console.log("Failed to pay for streak insurance: ", err);
                 return CommonResponses.failure();
             });
+    }
+
+    async initialiseNotifications(): Promise<boolean> {
+        if (!ui.notificationsSupported) {
+            console.debug("PUSH: notifications not supported");
+            return false;
+        }
+
+        if (import.meta.env.OC_BUILD_ENV !== "development") {
+            // Register a service worker if it hasn't already been done
+            const registration = await this.#registerServiceWorker();
+            if (registration == null) {
+                return false;
+            }
+            // Ensure the service worker is updated to the latest version
+            registration.update();
+        }
+
+        navigator.serviceWorker.addEventListener("message", (event) => {
+            if (event.data.type === "NOTIFICATION_RECEIVED") {
+                console.debug(
+                    "PUSH: received push notification from the service worker",
+                    event.data,
+                );
+                publish("notification", event.data.data as Notification);
+            } else if (event.data.type === "NOTIFICATION_CLICKED") {
+                console.debug(
+                    "PUSH: notification clicked existing client routing to: ",
+                    event.data.path,
+                );
+                page(event.data.path);
+            }
+        });
+
+        notificationStatus.subscribe((status) => {
+            switch (status) {
+                case "granted":
+                    this.#trySubscribe();
+                    break;
+                case "pending-init":
+                    break;
+                default:
+                    this.#unsubscribeNotifications();
+                    break;
+            }
+        });
+
+        return true;
+    }
+
+    async #registerServiceWorker(): Promise<ServiceWorkerRegistration | undefined> {
+        // Does the browser have all the support needed for web push
+        if (!ui.notificationsSupported) {
+            return undefined;
+        }
+
+        await this.#unregisterOldServiceWorker();
+
+        try {
+            return await navigator.serviceWorker.register(import.meta.env.OC_SERVICE_WORKER_PATH, {
+                type: "module",
+            });
+        } catch (e) {
+            console.log(e);
+            return undefined;
+        }
+    }
+
+    async #trySubscribe(): Promise<boolean> {
+        console.debug("PUSH: checking user's subscription status");
+        const registration = await this.#getRegistration();
+        if (registration === undefined) {
+            console.debug("PUSH: couldn't find push notifications service worker");
+            return false;
+        }
+
+        // Check if the user has subscribed already
+        let pushSubscription = await registration.pushManager.getSubscription();
+        if (pushSubscription) {
+            console.debug("PUSH: found existing push subscription");
+            // Check if the subscription has already been pushed to the notifications canister
+            if (await this.#subscriptionExists(this.#extract_p256dh_key(pushSubscription))) {
+                console.debug("PUSH: subscription exists in the backend");
+                return true;
+            }
+        } else {
+            // Subscribe the user to webpush notifications
+            console.debug("PUSH: creating a new subscription");
+            pushSubscription = await this.#subscribeUserToPush(registration);
+            if (pushSubscription == null) {
+                return false;
+            }
+        }
+
+        // Add the subscription to the user record on the notifications canister
+        try {
+            console.debug(
+                "PUSH: saving new subscription",
+                pushSubscription,
+                pushSubscription.toJSON(),
+            );
+            await this.#pushSubscription(pushSubscription.toJSON());
+            return true;
+        } catch (e) {
+            console.log("PUSH: Push subscription failed: ", e);
+            return false;
+        }
+    }
+
+    async #getRegistration(): Promise<ServiceWorkerRegistration | undefined> {
+        if (!ui.notificationsSupported) return undefined;
+        return await navigator.serviceWorker.getRegistration(
+            import.meta.env.OC_SERVICE_WORKER_PATH,
+        );
+    }
+
+    async #subscribeUserToPush(
+        registration: ServiceWorkerRegistration,
+    ): Promise<PushSubscription | null> {
+        const subscribeOptions = {
+            userVisibleOnly: true,
+            applicationServerKey: this.#toUint8Array(PUBLIC_VAPID_KEY),
+        };
+
+        try {
+            const pushSubscription = await registration.pushManager.subscribe(subscribeOptions);
+            return pushSubscription;
+        } catch (e) {
+            console.log(e);
+            return null;
+        }
+    }
+
+    #toUint8Array(base64String: string): Uint8Array {
+        return Uint8Array.from(atob(base64String), (c) => c.charCodeAt(0));
+    }
+
+    #extract_p256dh_key(subscription: PushSubscription): string {
+        const json = subscription.toJSON();
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const key = json.keys!["p256dh"];
+        return key;
+    }
+    async #unsubscribeNotifications(): Promise<void> {
+        console.debug("PUSH: unsubscribing from notifications");
+        const registration = await this.#getRegistration();
+        if (registration !== undefined) {
+            const pushSubscription = await registration.pushManager.getSubscription();
+            if (pushSubscription) {
+                if (await this.#subscriptionExists(this.#extract_p256dh_key(pushSubscription))) {
+                    console.debug("PUSH: removing push subscription");
+                    await this.#removeSubscription(pushSubscription.toJSON());
+                }
+            }
+        }
+    }
+    async #unregisterOldServiceWorker() {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        registrations.forEach((reg) => {
+            if (reg.active && reg.active.scriptURL.endsWith("sw.js")) {
+                console.debug("SW_CLIENT: unregistering old service worker");
+                return reg.unregister();
+            }
+        });
+    }
+
+    async closeNotificationsForChat(chatId: ChatIdentifier): Promise<void> {
+        const registration = await this.#getRegistration();
+        if (registration !== undefined) {
+            const notifications = await registration.getNotifications();
+            for (const notification of notifications) {
+                const url = routeForChatIdentifier("none", chatId);
+                if (notification.data?.path.startsWith(url)) {
+                    notification.close();
+                }
+            }
+        }
+    }
+
+    #shouldCloseNotification(notification: Notification) {
+        if (
+            notification.kind === "channel_notification" ||
+            notification.kind === "direct_notification" ||
+            notification.kind === "group_notification"
+        ) {
+            return this.isMessageRead(
+                {
+                    chatId: notification.chatId,
+                },
+                notification.messageIndex,
+                undefined,
+            );
+        }
+
+        return false;
+    }
+
+    async #closeNotificationsIfNecessary(): Promise<void> {
+        const registration = await this.#getRegistration();
+        if (registration !== undefined) {
+            const notifications = await registration.getNotifications();
+            for (const notification of notifications) {
+                const raw = notification?.data?.notification as Notification;
+                if (raw !== undefined && this.#shouldCloseNotification(raw)) {
+                    notification.close();
+                }
+            }
+        }
     }
 }
 

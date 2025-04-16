@@ -1,8 +1,17 @@
 import type DRange from "drange";
+import { emptyChatMetrics } from "../../utils";
+import type { AccessControlled, AccessGateConfig, UpdatedRules, VersionedRules } from "../access";
+import type { CommandArg, ExternalBotPermissions, InstalledBotDetails } from "../bots";
+import type { ChitEarned } from "../chit";
+import type {
+    CommunityCanisterCommunitySummaryUpdates,
+    CommunityIdentifier,
+    CommunitySummary,
+} from "../community";
+import type { WalletConfig } from "../crypto";
 import type { DataContent } from "../data/data";
-import type { Referral, UserSummary } from "../user/user";
+import type { OCError } from "../error";
 import type { OptionUpdate } from "../optionUpdate";
-import type { AccessControlled, VersionedRules, UpdatedRules, AccessGateConfig } from "../access";
 import type {
     ChatPermissionRole,
     ChatPermissions,
@@ -12,29 +21,25 @@ import type {
     Permissioned,
     PublicApiKeyDetails,
 } from "../permission";
-import type { ChatListScope, HasLevel } from "../structure";
 import type {
-    NotAuthorised,
-    Success,
-    SuccessNoUpdates,
-    UserSuspended,
     ChatFrozen,
     Failure,
     TransferFailed,
+    CommunityFrozen,
+    Failure,
     InternalError,
+    NoChange,
+    NotAuthorised,
     Offline,
+    Success,
+    SuccessNoUpdates,
+    TransferFailed,
+    UserBlocked,
     UserLapsed,
+    UserSuspended,
 } from "../response";
-import { emptyChatMetrics } from "../../utils";
-import type {
-    CommunityCanisterCommunitySummaryUpdates,
-    CommunityIdentifier,
-    CommunitySummary,
-} from "../community";
-import type { ChitEarned } from "../chit";
-import type { WalletConfig } from "../crypto";
-import type { InstalledBotDetails, ExternalBotPermissions, CommandArg } from "../bots";
-import type { OCError } from "../error";
+import type { ChatListScope, HasLevel } from "../structure";
+import type { Referral, UserSummary } from "../user/user";
 
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
 export type CanisterNotFound = { kind: "canister_not_found" };
@@ -615,6 +620,20 @@ export function messageContextFromString(ctxStr: string): MessageContext {
 
 export function messageContextToString(ctx: MessageContext): string {
     return JSON.stringify(ctx);
+}
+
+export function messageContextToChatListScope(ctx: MessageContext): ChatListScope {
+    switch (ctx.chatId.kind) {
+        case "channel":
+            return {
+                kind: "community",
+                id: { kind: "community", communityId: ctx.chatId.communityId },
+            };
+        case "direct_chat":
+            return { kind: "direct_chat" };
+        case "group_chat":
+            return { kind: "group_chat" };
+    }
 }
 
 export type RawReplyContext = {

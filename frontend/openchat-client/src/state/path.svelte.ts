@@ -15,6 +15,7 @@ export class PathState {
     #route = $state<RouteParams>({ scope: noScope, kind: "not_found_route" });
     #querystringCode = $derived(this.#querystring.get("code"));
     #querystringReferralCode = $derived(this.#querystring.get("ref"));
+    #routeKind = $derived(this.#route.kind);
 
     set routerReady(val: boolean) {
         this.#routerReady = val;
@@ -33,6 +34,9 @@ export class PathState {
     }
     set notFound(val: boolean) {
         this.#notFound = val;
+    }
+    get routeKind() {
+        return this.#routeKind;
     }
     get route(): Readonly<RouteParams> {
         return this.#route;
