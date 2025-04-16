@@ -245,25 +245,3 @@ export enum ErrorCode {
     // Impossible (supposedly)
     Impossible = 600,
 }
-
-export function pinNumberFailureFromError(error: OCError): PinNumberFailures | undefined {
-    switch (error.code) {
-        case ErrorCode.PinRequired:
-            return { kind: "pin_required" };
-
-        case ErrorCode.PinIncorrect:
-            return {
-                kind: "pin_incorrect",
-                nextRetryAt: parseBigInt(error.message ?? "0") ?? BigInt(0),
-            };
-
-        case ErrorCode.TooManyFailedPinAttempts:
-            return {
-                kind: "too_main_failed_pin_attempts",
-                nextRetryAt: parseBigInt(error.message ?? "0") ?? BigInt(0),
-            };
-
-        default:
-            return undefined;
-    }
-}
