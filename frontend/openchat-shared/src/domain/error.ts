@@ -1,6 +1,3 @@
-import type { PinNumberFailures } from "./chat";
-import { parseBigInt } from "../utils";
-
 export type OCError = {
     kind: "error";
     code: number;
