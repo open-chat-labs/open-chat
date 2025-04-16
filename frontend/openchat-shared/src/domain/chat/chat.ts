@@ -24,17 +24,11 @@ import type {
 import type {
     ChatFrozen,
     Failure,
-    TransferFailed,
-    CommunityFrozen,
-    Failure,
     InternalError,
-    NoChange,
     NotAuthorised,
     Offline,
     Success,
     SuccessNoUpdates,
-    TransferFailed,
-    UserBlocked,
     UserLapsed,
     UserSuspended,
 } from "../response";
@@ -1821,7 +1815,6 @@ export type SendMessageResponse =
     | TransferCannotBeZero
     | TransferCannotBeToSelf
     | SendMessageRecipientNotFound
-    | TransferFailed
     | TransferLimitExceeded
     | TransferSuccess
     | InvalidPoll
