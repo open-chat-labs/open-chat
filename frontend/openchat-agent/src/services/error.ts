@@ -1,5 +1,5 @@
 import type { Identity } from "@dfinity/agent";
-import { ResponseTooLargeError } from "openchat-shared";
+import { ResponseTooLargeError, type OCError } from "openchat-shared";
 import {
     getTimeUntilSessionExpiryMs,
     HttpError,
@@ -92,4 +92,8 @@ export function toCanisterResponseError(
     }
 
     return code === 401 || code === 403 ? new AuthError(code, error) : new HttpError(code, error);
+}
+
+export function isError(value: unknown): value is OCError {
+    return value != null && typeof value === "object" && "kind" in value && value.kind === "error";
 }

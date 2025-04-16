@@ -53,6 +53,7 @@ import {
     ONE_DAY,
     updateCreatedUser,
 } from "openchat-shared";
+import { isError } from "../services/error";
 
 const CACHE_VERSION = 131;
 const EARLIEST_SUPPORTED_MIGRATION = 125;
@@ -873,7 +874,7 @@ export async function setCachedEvents(
     resp: EventsResponse<ChatEvent>,
     threadRootMessageIndex: number | undefined,
 ): Promise<void> {
-    if (resp === "events_failed") return;
+    if (isError(resp)) return;
     const store = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
 
     const tx = (await db).transaction([store], "readwrite", {

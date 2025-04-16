@@ -1,65 +1,38 @@
 import type {
-    CommunityEventsResponse,
-    CommunityMessagesByMessageIndexResponse,
-    GroupBlockUserResponse,
     GroupCanisterGroupChatSummary as TGroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates as TGroupCanisterGroupChatSummaryUpdates,
-    GroupConvertIntoCommunityResponse,
-    GroupEventsResponse,
-    GroupFollowThreadResponse,
-    GroupMessagesByMessageIndexResponse,
-    GroupRemoveParticipantResponse,
-    GroupReportMessageResponse,
     GroupRole,
-    GroupSendMessageResponse,
-    GroupSummaryResponse,
     GroupSummaryUpdatesResponse,
-    GroupUnblockUserResponse,
-    GroupUnfollowThreadResponse,
     OptionalGroupPermissions as TOptionalGroupPermissions,
     OptionalMessagePermissions as TOptionalMessagePermissions,
     UpdatedRules as TUpdatedRules,
     GroupMembershipUpdates as TGroupMembershipUpdates,
+    GroupConvertIntoCommunitySuccessResult,
 } from "../../typebox";
 import type {
-    ChatEvent,
-    EventsResponse,
-    SendMessageResponse,
-    RemoveMemberResponse,
-    BlockUserResponse,
-    UnblockUserResponse,
     MemberRole,
-    Message,
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
-    GroupCanisterSummaryResponse,
     GroupCanisterSummaryUpdatesResponse,
-    ChatIdentifier,
-    MultiUserChatIdentifier,
     ConvertToCommunityResponse,
     UpdatedRules,
-    FollowThreadResponse,
     OptionalChatPermissions,
     OptionalMessagePermissions,
     GroupMembershipUpdates,
 } from "openchat-shared";
-import { toBigInt32, CommonResponses, emptyChatMetrics } from "openchat-shared";
+import { toBigInt32, emptyChatMetrics } from "openchat-shared";
 import {
     accessGateConfig,
     apiPermissionRole,
     chatMetrics,
-    eventsSuccessResponse,
     groupPermissions,
-    groupSubtype,
+    groupSubtype, mapResult,
     memberRole,
     mentions,
     messageEvent,
-    messagesSuccessResponse,
-    ocError,
     threadSyncDetails,
     updatedEvent,
 } from "../common/chatMappersV2";
-import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import {
     apiOptionUpdateV2,
     identity,
@@ -67,9 +40,6 @@ import {
     optionUpdateV2,
     principalBytesToString,
 } from "../../utils/mapping";
-import type { Principal } from "@dfinity/principal";
-import { ReplicaNotUpToDateError } from "../error";
-import { mapCommonResponses } from "../common/commonResponseMapper";
 
 export function apiRole(role: MemberRole): GroupRole | undefined {
     switch (role) {
@@ -84,18 +54,6 @@ export function apiRole(role: MemberRole): GroupRole | undefined {
         default:
             return undefined;
     }
-}
-
-export function summaryResponse(value: GroupSummaryResponse): GroupCanisterSummaryResponse {
-    if (typeof value === "object" && "Success" in value) {
-        return groupChatSummary(value.Success.summary);
-    }
-    if (typeof value === "object" && "Error" in value) {
-        return ocError(value.Error);
-    }
-    return {
-        kind: mapCommonResponses(value, "GroupSummaryResponse"),
-    };
 }
 
 export function groupChatSummary(
@@ -155,15 +113,10 @@ export function groupChatSummary(
 export function summaryUpdatesResponse(
     value: GroupSummaryUpdatesResponse,
 ): GroupCanisterSummaryUpdatesResponse {
-    if (typeof value === "object" && "Success" in value) {
-        return groupChatSummaryUpdates(value.Success.updates);
+    if (value === "SuccessNoUpdates") {
+        return { kind: "success_no_updates" };
     }
-    if (typeof value === "object" && "Error" in value) {
-        return ocError(value.Error);
-    }
-    return {
-        kind: mapCommonResponses(value, "GroupSummaryUpdates"),
-    };
+    return mapResult(value, (s) => groupChatSummaryUpdates(s.updates));
 }
 
 export function groupMembershipUpdates(value: TGroupMembershipUpdates): GroupMembershipUpdates {
@@ -260,137 +213,17 @@ function apiOptionalMessagePermissions(
     };
 }
 
-export function unblockUserResponse(value: GroupUnblockUserResponse): UnblockUserResponse {
-    if (value === "CannotUnblockSelf") {
-        return "cannot_unblock_self";
-    }
-    if (typeof value === "object" && "Error" in value) {
-        return ocError(value.Error);
-    }
-    return mapCommonResponses(value, "GroupUnblockUser");
-}
-
-export function blockUserResponse(value: GroupBlockUserResponse): BlockUserResponse {
-    if (value === "CannotBlockSelf") {
-        return "cannot_block_self";
-    }
-    if (value === "CannotBlockUser") {
-        return "cannot_block_user";
-    }
-    if (typeof value === "object" && "Error" in value) {
-        return ocError(value.Error);
-    }
-    return mapCommonResponses(value, "GroupBlockUser");
-}
-
-export function sendMessageResponse(value: GroupSendMessageResponse): SendMessageResponse {
-    if (typeof value === "object") {
-        if ("Success" in value) {
-            return {
-                kind: "success",
-                timestamp: value.Success.timestamp,
-                messageIndex: value.Success.message_index,
-                eventIndex: value.Success.event_index,
-                expiresAt: mapOptional(value.Success.expires_at, Number),
-            };
-        }
-        if ("TextTooLong" in value) {
-            return { kind: "text_too_long" };
-        }
-        if ("InvalidRequest" in value) {
-            return { kind: "invalid_request", reason: value.InvalidRequest };
-        }
-        if ("InvalidPoll" in value) {
-            return { kind: "invalid_poll" };
-        }
-        if ("Error" in value) {
-            return ocError(value.Error);
-        }
-    }
-    if (value === "MessageEmpty") {
-        return { kind: "message_empty" };
-    }
-    if (value === "RulesNotAccepted") {
-        return { kind: "rules_not_accepted" };
-    }
-    return {
-        kind: mapCommonResponses(value, "GroupSendMessage"),
-    };
-}
-
-export function removeMemberResponse(value: GroupRemoveParticipantResponse): RemoveMemberResponse {
-    if (value === "Success") {
-        return "success";
-    } else {
-        console.warn("RemoveMember failed with ", value);
-        return "failure";
-    }
-}
-
-export async function getMessagesByMessageIndexResponse(
-    principal: Principal,
-    value: GroupMessagesByMessageIndexResponse | CommunityMessagesByMessageIndexResponse,
-    chatId: MultiUserChatIdentifier,
-    latestKnownUpdatePreRequest: bigint | undefined,
-): Promise<EventsResponse<Message>> {
-    if (typeof value === "object") {
-        if ("Success" in value) {
-            await ensureReplicaIsUpToDate(principal, chatId, value.Success.chat_last_updated);
-
-            return messagesSuccessResponse(value.Success);
-        }
-        if ("ReplicaNotUpToDateV2" in value) {
-            throw ReplicaNotUpToDateError.byTimestamp(
-                value.ReplicaNotUpToDateV2,
-                latestKnownUpdatePreRequest ?? BigInt(-1),
-                false,
-            );
-        }
-    }
-    console.warn("MessagesByMessageIndex failed with ", value);
-    return "events_failed";
-}
-
-export async function getEventsResponse(
-    principal: Principal,
-    value: GroupEventsResponse | CommunityEventsResponse,
-    chatId: ChatIdentifier,
-    latestKnownUpdatePreRequest: bigint | undefined,
-): Promise<EventsResponse<ChatEvent>> {
-    if (typeof value === "object") {
-        if ("Success" in value) {
-            await ensureReplicaIsUpToDate(principal, chatId, value.Success.chat_last_updated);
-
-            return eventsSuccessResponse(value.Success);
-        }
-        if ("ReplicaNotUpToDateV2" in value) {
-            throw ReplicaNotUpToDateError.byTimestamp(
-                value.ReplicaNotUpToDateV2,
-                latestKnownUpdatePreRequest ?? BigInt(-1),
-                false,
-            );
-        }
-    }
-    console.warn("GetGroupChatEvents failed with ", value);
-    return "events_failed";
-}
-
-export function convertToCommunityResponse(
-    value: GroupConvertIntoCommunityResponse,
+export function convertToCommunitySuccess(
+    value: GroupConvertIntoCommunitySuccessResult,
 ): ConvertToCommunityResponse {
-    if (typeof value === "object" && "Success" in value) {
-        return {
-            kind: "success",
-            id: {
-                kind: "channel",
-                communityId: principalBytesToString(value.Success.community_id),
-                channelId: Number(toBigInt32(value.Success.channel_id)),
-            },
-        };
-    } else {
-        console.warn("ConvertToCommunity failed with ", value);
-        return CommonResponses.failure();
-    }
+    return {
+        kind: "success",
+        id: {
+            kind: "channel",
+            communityId: principalBytesToString(value.community_id),
+            channelId: Number(toBigInt32(value.channel_id)),
+        },
+    };
 }
 
 export function apiUpdatedRules(rules: UpdatedRules): TUpdatedRules {
@@ -399,22 +232,4 @@ export function apiUpdatedRules(rules: UpdatedRules): TUpdatedRules {
         enabled: rules.enabled,
         new_version: rules.newVersion,
     };
-}
-
-export function followThreadResponse(
-    value: GroupFollowThreadResponse | GroupUnfollowThreadResponse,
-): FollowThreadResponse {
-    if (value === "Success") {
-        return "success";
-    }
-    if (value === "AlreadyFollowing" || value === "NotFollowing") {
-        return "unchanged";
-    } else {
-        console.warn("followThread failed with", value);
-        return "failed";
-    }
-}
-
-export function reportMessageResponse(value: GroupReportMessageResponse): boolean {
-    return value === "Success" || value === "AlreadyReported";
 }

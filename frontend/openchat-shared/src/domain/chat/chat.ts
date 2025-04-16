@@ -20,8 +20,6 @@ import type {
     UserSuspended,
     ChatFrozen,
     Failure,
-    CommunityFrozen,
-    NoChange,
     UserBlocked,
     TransferFailed,
     InternalError,
@@ -239,11 +237,10 @@ export type FailedCryptocurrencyWithdrawal = {
 };
 
 export type WithdrawCryptocurrencyResponse =
-    | { kind: "currency_not_supported" }
     | FailedCryptocurrencyWithdrawal
     | CompletedCryptocurrencyWithdrawal
-    | Offline
-    | PinNumberFailures;
+    | OCError
+    | Offline;
 
 export type CryptocurrencyWithdrawal =
     | PendingCryptocurrencyWithdrawal
@@ -764,7 +761,7 @@ export type LocalMessageUpdates = {
     lastUpdated: number;
 };
 
-export type EventsResponse<T extends ChatEvent> = "events_failed" | EventsSuccessResult<T>;
+export type EventsResponse<T extends ChatEvent> = EventsSuccessResult<T> | OCError;
 
 export type ChatEvent =
     | Message
@@ -1441,7 +1438,7 @@ export type Member = {
 
 export type FullMember = Member & UserSummary;
 
-export type GroupChatDetailsResponse = "failure" | GroupChatDetails;
+export type GroupChatDetailsResponse = GroupChatDetails | OCError;
 
 export type GroupChatDetailsUpdatesResponse =
     | ({ kind: "success" } & GroupChatDetailsUpdates)
@@ -1730,28 +1727,7 @@ export type CandidateGroupChat = AccessControlled &
 
 export type CandidateChannel = CandidateGroupChat;
 
-// todo - there are all sorts of error conditions here that we need to deal with but - later
-export type CreateGroupResponse =
-    | CreateGroupSuccess
-    | CreateGroupInternalError
-    | CreateGroupNameTooShort
-    | CreateGroupNameTooLong
-    | CreateGroupNameReserved
-    | CreateGroupDescriptionTooLong
-    | GroupNameTaken
-    | AvatarTooBig
-    | MaxGroupsCreated
-    | CreateGroupThrottled
-    | GroupRulesTooShort
-    | GroupRulesTooLong
-    | UnauthorizedToCreatePublicGroup
-    | NotAuthorised
-    | CommunityFrozen
-    | UserSuspended
-    | UserLapsed
-    | { kind: "access_gate_invalid" }
-    | Offline
-    | { kind: "external_url_invalid" };
+export type CreateGroupResponse = CreateGroupSuccess | OCError | Offline;
 
 export type CreateGroupSuccess = {
     kind: "success";
@@ -1812,7 +1788,7 @@ export type MemberLimitReached = {
     kind: "member_limit_reached";
 };
 
-export type EditMessageResponse = "success" | "failure";
+export type EditMessageResponse = Success | OCError | Offline;
 
 export type SendMessageResponse =
     | SendMessageSuccess
@@ -2013,47 +1989,13 @@ export type ExternalUrlUpdated = {
     updatedBy: string;
 };
 
-export type SetAvatarResponse =
-    | "avatar_too_big"
-    | "success"
-    | "internal_error"
-    | "user_suspended"
-    | OCError;
-
-export type ChangeRoleResponse = "failure" | "success" | "offline";
-
-export type DeleteGroupResponse = "success" | "failure" | "offline";
-
-export type RemoveMemberResponse = "success" | "failure" | "offline";
-
-export type BlockUserResponse =
-    | "success"
-    | "group_not_public"
-    | "user_not_in_group"
-    | "caller_not_in_group"
-    | "not_authorized"
-    | "internal_error"
-    | "cannot_block_self"
-    | "cannot_block_user"
-    | "user_suspended"
-    | "user_lapsed"
-    | "chat_frozen"
-    | "offline"
-    | OCError;
-
-export type UnblockUserResponse =
-    | "success"
-    | "group_not_public"
-    | "cannot_unblock_self"
-    | "caller_not_in_group"
-    | "not_authorized"
-    | "user_suspended"
-    | "user_lapsed"
-    | "chat_frozen"
-    | "offline"
-    | OCError;
-
-export type LeaveGroupResponse = "success" | "owner_cannot_leave" | "failure" | "offline";
+export type SetAvatarResponse = Success | OCError | Offline;
+export type ChangeRoleResponse = Success | OCError | Offline;
+export type DeleteGroupResponse = Success | OCError | Offline;
+export type RemoveMemberResponse = Success | OCError | Offline;
+export type BlockUserResponse = Success | OCError | Offline;
+export type UnblockUserResponse = Success | OCError | Offline;
+export type LeaveGroupResponse = Success | OCError | Offline;
 
 export type JoinGroupResponse =
     | (Success & { group: MultiUserChat })
@@ -2116,36 +2058,33 @@ export type UpdatePermissionsResponse =
     | "chat_frozen"
     | "offline";
 
-export type AddRemoveReactionResponse = Success | Failure | Offline;
-
-export type DeleteMessageResponse = "success" | "failure" | "offline";
+export type AddRemoveReactionResponse = Success | OCError | Offline;
+export type DeleteMessageResponse = Success | OCError | Offline;
 
 export type UndeleteMessageResponse =
     | {
           kind: "success";
           message: Message;
-      }
+    }
     | Failure
+    | OCError
     | Offline;
 
-export type UnpinMessageResponse = "failure" | "success" | "offline";
+export type PushEventSuccess = {
+    kind: "success";
+    eventIndex: number;
+    timestamp: bigint;
+}
 
-export type PinMessageResponse =
-    | {
-          kind: "success";
-          eventIndex: number;
-          timestamp: bigint;
-      }
-    | NoChange
-    | Failure
-    | Offline;
+export type UnpinMessageResponse = PushEventSuccess | OCError | Offline;
+export type PinMessageResponse = PushEventSuccess | OCError | Offline;
 
 export type DeletedGroupMessageResponse =
     | {
           kind: "success";
           content: MessageContent;
       }
-    | Failure
+    | OCError
     | Offline;
 
 export type DeletedDirectMessageResponse =
@@ -2153,40 +2092,33 @@ export type DeletedDirectMessageResponse =
           kind: "success";
           content: MessageContent;
       }
-    | { kind: "chat_not_found" }
-    | { kind: "not_authorized" }
-    | { kind: "message_not_found" }
-    | { kind: "message_not_deleted" }
-    | { kind: "message_hard_deleted" }
     | OCError
     | Offline;
 
-export type RegisterPollVoteResponse = "success" | "failure" | "offline";
-
-export type InviteCodeResponse = InviteCodeSuccess | NotAuthorised | Failure | Offline;
+export type RegisterPollVoteResponse = Success | OCError | Offline;
+export type InviteCodeResponse = InviteCodeSuccess | OCError | Offline;
 
 export type InviteCodeSuccess = {
     kind: "success";
     code?: string;
 };
 
-export type EnableInviteCodeResponse = EnableInviteCodeSuccess | NotAuthorised | Failure | Offline;
+export type EnableInviteCodeResponse = EnableInviteCodeSuccess | OCError | Offline;
 
 export type EnableInviteCodeSuccess = {
     kind: "success";
     code: string;
 };
 
-export type DisableInviteCodeResponse = "not_authorized" | "failure" | "success" | "offline";
-
-export type ResetInviteCodeResponse = ResetInviteCodeSuccess | NotAuthorised | Failure | Offline;
+export type DisableInviteCodeResponse = Success | OCError | Offline;
+export type ResetInviteCodeResponse = ResetInviteCodeSuccess | OCError | Offline;
 
 export type ResetInviteCodeSuccess = {
     kind: "success";
     code: string;
 };
 
-export type ThreadPreviewsResponse = Failure | ThreadPreviewsSuccess | Offline;
+export type ThreadPreviewsResponse = ThreadPreviewsSuccess | OCError | Offline;
 
 export type ThreadPreviewsSuccess = {
     kind: "thread_previews_success";
@@ -2221,23 +2153,7 @@ export type Metrics = {
     reactions: number;
 };
 
-export type RegisterProposalVoteResponse =
-    | "success"
-    | "already_voted"
-    | "caller_not_in_group"
-    | "user_not_in_channel"
-    | "channel_not_found"
-    | "user_not_in_community"
-    | "community_frozen"
-    | "no_eligible_neurons"
-    | "proposal_message_not_found"
-    | "proposal_not_found"
-    | "proposal_not_accepting_votes"
-    | "chat_frozen"
-    | "user_suspended"
-    | "user_lapsed"
-    | "internal_error"
-    | "offline";
+export type RegisterProposalVoteResponse = Success | OCError | Offline;
 
 export type ListNervousSystemFunctionsResponse = {
     reservedIds: bigint[];
@@ -2325,20 +2241,20 @@ export type SetCommunityModerationFlagsResponse =
     | "internal_error"
     | "offline";
 
-export type MarkPinnedMessagesReadResponse = "success" | "chat_frozen" | "offline";
-
-export type ClaimPrizeResponse = Success | Failure | Offline;
-
-export type DeclineInvitationResponse = "success" | "failure" | "offline";
+export type MarkPinnedMessagesReadResponse = Success | OCError | Offline;
+export type ClaimPrizeResponse = Success | OCError | Failure | Offline;
+export type DeclineInvitationResponse = Success | OCError | Offline;
 
 export type PublicGroupSummaryResponse =
     | (Success & { group: GroupChatSummary })
+    | OCError
     | Failure
+    | Offline
     | GroupMoved;
 
 export type GroupMoved = { kind: "group_moved"; location: ChannelIdentifier };
 
-export type TipMessageResponse = Success | Failure | PinNumberFailures;
+export type TipMessageResponse = Success | OCError | Failure;
 
 export type GroupAndCommunitySummaryUpdatesArgs = {
     canisterId: string;
@@ -2417,68 +2333,14 @@ export type ChatEventsResponse =
 
 export type AcceptP2PSwapResponse =
     | { kind: "success"; token1TxnIn: TransactionId }
-    | { kind: "already_reserved"; reservedBy: string }
-    | {
-          kind: "already_accepted";
-          acceptedBy: string;
-          token1TxnIn: TransactionId;
-      }
-    | {
-          kind: "already_completed";
-          acceptedBy: string;
-          token1TxnIn: TransactionId;
-          token0TxnOut: TransactionId;
-          token1TxnOut: TransactionId;
-      }
-    | { kind: "swap_cancelled"; token0TxnOut?: TransactionId }
-    | { kind: "swap_expired"; token0TxnOut?: TransactionId }
-    | { kind: "swap_not_found" }
-    | { kind: "channel_not_found" }
-    | { kind: "chat_not_found" }
-    | { kind: "user_suspended" }
-    | { kind: "user_lapsed" }
-    | { kind: "user_not_in_group" }
-    | { kind: "user_not_in_community" }
-    | { kind: "user_not_in_channel" }
-    | { kind: "chat_frozen" }
-    | { kind: "insufficient_funds" }
-    | PinNumberFailures
-    | { kind: "internal_error"; text: string }
     | OCError;
 
-export type CancelP2PSwapResponse =
-    | { kind: "success" }
-    | { kind: "already_reserved"; reservedBy: string }
-    | {
-          kind: "already_accepted";
-          acceptedBy: string;
-          token1TxnIn: TransactionId;
-      }
-    | {
-          kind: "already_completed";
-          acceptedBy: string;
-          token1TxnIn: TransactionId;
-          token0TxnOut: TransactionId;
-          token1TxnOut: TransactionId;
-      }
-    | { kind: "swap_cancelled"; token0TxnOut?: TransactionId }
-    | { kind: "swap_expired"; token0TxnOut?: TransactionId }
-    | { kind: "swap_not_found" }
-    | { kind: "chat_not_found" }
-    | { kind: "channel_not_found" }
-    | { kind: "user_suspended" }
-    | { kind: "user_not_in_group" }
-    | { kind: "user_not_in_community" }
-    | { kind: "user_not_in_channel" }
-    | { kind: "chat_frozen" }
-    | { kind: "internal_error"; text: string }
-    | OCError;
-
-export type JoinVideoCallResponse = "success" | "failure" | "ended";
+export type CancelP2PSwapResponse = Success | OCError;
+export type JoinVideoCallResponse = Success | OCError | Offline;
 
 export type VideoCallPresence = "default" | "owner" | "hidden";
 
-export type SetVideoCallPresenceResponse = "success" | "failure";
+export type SetVideoCallPresenceResponse = Success | OCError | Offline;
 
 export type VideoCallParticipants = {
     participants: VideoCallParticipant[];
@@ -2486,7 +2348,7 @@ export type VideoCallParticipants = {
     lastUpdated: bigint;
 };
 
-export type VideoCallParticipantsResponse = Failure | (Success & VideoCallParticipants);
+export type VideoCallParticipantsResponse = (Success & VideoCallParticipants) | OCError | Offline;
 
 export type SetPinNumberResponse =
     | Success

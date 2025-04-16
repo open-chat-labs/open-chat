@@ -14,65 +14,43 @@ import {
     apiCommunityRole,
     apiMemberRole,
     apiOptionalCommunityPermissions,
-    blockUserResponse,
-    changeRoleResponse,
     communityChannelSummaryResponse,
     communityDetailsResponse,
     communityDetailsUpdatesResponse,
-    createUserGroupResponse,
-    deleteUserGroupsResponse,
+    createUserGroupSuccess,
     exploreChannelsResponse,
-    followThreadResponse,
-    importGroupResponse,
-    removeMemberFromChannelResponse,
-    removeMemberResponse,
-    reportMessageResponse,
-    sendMessageResponse as sendMessageResponseV2,
-    setMemberDisplayNameResponse,
+    importGroupSuccess,
     summaryResponse,
     summaryUpdatesResponse,
-    unblockUserResponse,
-    updateCommunityResponse,
-    updateUserGroupResponse,
+    updateCommunitySuccess,
 } from "./mappersV2";
 import {
-    acceptP2PSwapResponse,
     apiAccessGateConfig,
-    addRemoveReactionResponse,
     apiExternalBotPermissions,
     apiGroupPermissions,
     apiMessageContent,
     apiUser as apiUserV2,
     apiVideoCallPresence,
-    cancelP2PSwapResponse,
-    changeRoleResponse as changeChannelRoleResponse,
-    claimPrizeResponse,
-    createGroupResponse,
-    declineInvitationResponse,
-    deletedMessageResponse,
-    deleteGroupResponse,
-    deleteMessageResponse,
-    disableInviteCodeResponse,
-    editMessageResponse,
-    enableOrResetInviteCodeResponse,
-    groupDetailsResponse,
+    groupDetailsSuccess,
     groupDetailsUpdatesResponse,
-    inviteCodeResponse,
-    joinVideoCallResponse,
-    leaveGroupResponse,
-    pinMessageResponse,
-    registerPollVoteResponse,
-    registerProposalVoteResponse,
     searchGroupChatResponse,
-    setVideoCallPresence,
-    threadPreviewsResponse,
-    undeleteMessageResponse,
-    unpinMessageResponse,
-    updateGroupResponse,
-    videoCallParticipantsResponse,
+    threadPreviewsSuccess,
     apiMaybeAccessGateConfig,
-    updateBotResponse,
-    generateApiKeyResponse,
+    unitResult,
+    mapResult,
+    createGroupSuccess,
+    deletedMessageSuccess,
+    enableOrResetInviteCodeSuccess,
+    inviteCodeSuccess,
+    pushEventSuccess,
+    undeleteMessageSuccess,
+    updateGroupSuccess,
+    acceptP2PSwapSuccess,
+    videoCallParticipantsSuccess,
+    generateApiKeySuccess,
+    sendMessageSuccess,
+    getEventsSuccess,
+    getMessagesSuccess,
 } from "../common/chatMappersV2";
 import type {
     AddMembersToChannelResponse,
@@ -157,8 +135,6 @@ import {
 import {
     apiOptionalGroupPermissions,
     apiUpdatedRules,
-    getEventsResponse,
-    getMessagesByMessageIndexResponse,
 } from "../group/mappersV2";
 import { DataClient } from "../data/data.client";
 import {
@@ -179,7 +155,6 @@ import {
     setCachedMessageFromSendResponse,
 } from "../../utils/caching";
 import { mergeCommunityDetails, mergeGroupChatDetails } from "../../utils/chat";
-import { toggleNotificationsResponse } from "../notifications/mappers";
 import type { CancelP2PSwapResponse } from "openchat-shared";
 import {
     chunkedChatEventsFromBackend,
@@ -191,38 +166,25 @@ import {
     CommunityAddMembersToChannelArgs,
     CommunityAddMembersToChannelResponse,
     CommunityAddReactionArgs,
-    CommunityAddReactionResponse,
     CommunityBlockUserArgs,
-    CommunityBlockUserResponse,
     CommunityCancelInvitesArgs,
-    CommunityCancelInvitesResponse,
     CommunityCancelP2pSwapArgs,
-    CommunityCancelP2pSwapResponse,
     CommunityChangeChannelRoleArgs,
-    CommunityChangeChannelRoleResponse,
     CommunityChangeRoleArgs,
-    CommunityChangeRoleResponse,
     CommunityChannelSummaryArgs,
     CommunityChannelSummaryResponse,
     CommunityClaimPrizeArgs,
-    CommunityClaimPrizeResponse,
     CommunityCreateChannelArgs,
     CommunityCreateChannelResponse,
     CommunityCreateUserGroupArgs,
     CommunityCreateUserGroupResponse,
     CommunityDeclineInvitationArgs,
-    CommunityDeclineInvitationResponse,
     CommunityDeleteChannelArgs,
-    CommunityDeleteChannelResponse,
     CommunityDeletedMessageArgs,
     CommunityDeletedMessageResponse,
     CommunityDeleteMessagesArgs,
-    CommunityDeleteMessagesResponse,
     CommunityDeleteUserGroupsArgs,
-    CommunityDeleteUserGroupsResponse,
-    CommunityDisableInviteCodeResponse,
     CommunityEditMessageArgs,
-    CommunityEditMessageResponse,
     CommunityEnableInviteCodeResponse,
     CommunityEventsArgs,
     CommunityEventsByIndexArgs,
@@ -231,13 +193,11 @@ import {
     CommunityExploreChannelsArgs,
     CommunityExploreChannelsResponse,
     CommunityFollowThreadArgs,
-    CommunityFollowThreadResponse,
     CommunityImportGroupArgs,
     CommunityImportGroupResponse,
     CommunityInviteCodeResponse,
     CommunityJoinVideoCallArgs,
     CommunityLeaveChannelArgs,
-    CommunityLeaveChannelResponse,
     CommunityLocalUserIndexResponse,
     CommunityMessagesByMessageIndexArgs,
     CommunityMessagesByMessageIndexResponse,
@@ -246,15 +206,10 @@ import {
     CommunityRegisterPollVoteArgs,
     CommunityRegisterPollVoteResponse,
     CommunityRegisterProposalVoteArgs,
-    CommunityRegisterProposalVoteResponse,
     CommunityRemoveMemberArgs,
     CommunityRemoveMemberFromChannelArgs,
-    CommunityRemoveMemberFromChannelResponse,
-    CommunityRemoveMemberResponse,
     CommunityRemoveReactionArgs,
-    CommunityRemoveReactionResponse,
     CommunityReportMessageArgs,
-    CommunityReportMessageResponse,
     CommunitySearchChannelArgs,
     CommunitySearchChannelResponse,
     CommunitySelectedChannelInitialArgs,
@@ -268,9 +223,7 @@ import {
     CommunitySendMessageArgs,
     CommunitySendMessageResponse,
     CommunitySetMemberDisplayNameArgs,
-    CommunitySetMemberDisplayNameResponse,
     CommunitySetVideoCallPresenceArgs,
-    CommunitySetVideoCallPresenceResponse,
     CommunitySummaryArgs,
     CommunitySummaryResponse as TCommunitySummaryResponse,
     CommunitySummaryUpdatesArgs,
@@ -278,9 +231,7 @@ import {
     CommunityThreadPreviewsArgs,
     CommunityThreadPreviewsResponse,
     CommunityToggleMuteNotificationsArgs,
-    CommunityToggleMuteNotificationsResponse,
     CommunityUnblockUserArgs,
-    CommunityUnblockUserResponse,
     CommunityUndeleteMessagesArgs,
     CommunityUndeleteMessagesResponse,
     CommunityUpdateChannelArgs,
@@ -288,17 +239,17 @@ import {
     CommunityUpdateCommunityArgs,
     CommunityUpdateCommunityResponse,
     CommunityUpdateUserGroupArgs,
-    CommunityUpdateUserGroupResponse,
     CommunityVideoCallParticipantsArgs,
     CommunityVideoCallParticipantsResponse,
     Empty as TEmpty,
     CommunityUpdateBotArgs,
-    CommunityUpdateBotResponse,
     CommunityGenerateBotApiKeyArgs,
     CommunityGenerateBotApiKeyResponse,
     CommunityApiKeyResponse,
     CommunityApiKeyArgs,
+    UnitResult,
 } from "../../typebox";
+import { isError } from "../error";
 
 export class CommunityClient extends MsgpackCanisterAgent {
     constructor(
@@ -319,9 +270,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 channel_id: toBigInt32(channelId),
                 message_id: messageId,
             },
-            claimPrizeResponse,
+            unitResult,
             CommunityClaimPrizeArgs,
-            CommunityClaimPrizeResponse,
+            UnitResult,
         );
     }
 
@@ -365,9 +316,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 reaction,
                 new_achievement: newAchievement,
             },
-            addRemoveReactionResponse,
+            unitResult,
             CommunityAddReactionArgs,
-            CommunityAddReactionResponse,
+            UnitResult,
         );
     }
 
@@ -377,9 +328,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
             {
                 user_id: principalStringToBytes(userId),
             },
-            blockUserResponse,
+            unitResult,
             CommunityBlockUserArgs,
-            CommunityBlockUserResponse,
+            UnitResult,
         );
     }
 
@@ -395,9 +346,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 user_id: principalStringToBytes(userId),
                 new_role: apiMemberRole(newRole),
             },
-            changeChannelRoleResponse,
+            unitResult,
             CommunityChangeChannelRoleArgs,
-            CommunityChangeChannelRoleResponse,
+            UnitResult,
         );
     }
 
@@ -408,9 +359,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 user_id: principalStringToBytes(userId),
                 new_role: apiCommunityRole(newRole),
             },
-            changeRoleResponse,
+            unitResult,
             CommunityChangeRoleArgs,
-            CommunityChangeRoleResponse,
+            UnitResult,
         );
     }
 
@@ -436,7 +387,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 gate_config: apiMaybeAccessGateConfig(channel.gateConfig),
                 messages_visible_to_non_members: channel.messagesVisibleToNonMembers,
             },
-            (resp) => createGroupResponse(resp, channel.id),
+            (resp) => mapResult(resp, (value) => createGroupSuccess(value, channel.id)),
             CommunityCreateChannelArgs,
             CommunityCreateChannelResponse,
         );
@@ -448,9 +399,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
             {
                 channel_id: toBigInt32(chatId.channelId),
             },
-            declineInvitationResponse,
+            unitResult,
             CommunityDeclineInvitationArgs,
-            CommunityDeclineInvitationResponse,
+            UnitResult,
         );
     }
 
@@ -460,9 +411,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
             {
                 channel_id: toBigInt32(chatId.channelId),
             },
-            deleteGroupResponse,
+            unitResult,
             CommunityDeleteChannelArgs,
-            CommunityDeleteChannelResponse,
+            UnitResult,
         );
     }
 
@@ -478,7 +429,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 message_id: messageId,
                 thread_root_message_index: threadRootMessageIndex,
             },
-            deletedMessageResponse,
+            (resp) => mapResult(resp, deletedMessageSuccess),
             CommunityDeletedMessageArgs,
             CommunityDeletedMessageResponse,
         );
@@ -500,9 +451,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 thread_root_message_index: threadRootMessageIndex,
                 new_achievement: newAchievement,
             },
-            deleteMessageResponse,
+            unitResult,
             CommunityDeleteMessagesArgs,
-            CommunityDeleteMessagesResponse,
+            UnitResult,
         );
     }
 
@@ -510,9 +461,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
         return this.executeMsgpackUpdate(
             "disable_invite_code",
             {},
-            disableInviteCodeResponse,
+            unitResult,
             TEmpty,
-            CommunityDisableInviteCodeResponse,
+            UnitResult,
         );
     }
 
@@ -536,9 +487,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
                         block_level_markdown: blockLevelMarkdown,
                         new_achievement: newAchievement,
                     },
-                    editMessageResponse,
+                    unitResult,
                     CommunityEditMessageArgs,
-                    CommunityEditMessageResponse,
+                    UnitResult,
                 );
             });
     }
@@ -547,7 +498,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
         return this.executeMsgpackUpdate(
             "enable_invite_code",
             {},
-            enableOrResetInviteCodeResponse,
+            (resp) => mapResult(resp, enableOrResetInviteCodeSuccess),
             TEmpty,
             CommunityEnableInviteCodeResponse,
         );
@@ -637,9 +588,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "events",
             args,
-            (res) => {
-                return getEventsResponse(this.principal, res, chatId, latestKnownUpdate);
-            },
+            (resp) => mapResult(resp, getEventsSuccess),
             CommunityEventsArgs,
             CommunityEventsResponse,
         );
@@ -684,9 +633,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "events_by_index",
             args,
-            (res) => {
-                return getEventsResponse(this.principal, res, chatId, latestKnownUpdate);
-            },
+            (resp) => mapResult(resp, getEventsSuccess),
             CommunityEventsByIndexArgs,
             CommunityEventsResponse,
         );
@@ -780,7 +727,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "events_window",
             args,
-            (res) => getEventsResponse(this.principal, res, chatId, latestKnownUpdate),
+            (resp) => mapResult(resp, getEventsSuccess),
             CommunityEventsWindowArgs,
             CommunityEventsResponse,
         );
@@ -801,14 +748,14 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 latestKnownUpdate,
             ).then((resp) => this.setCachedEvents(chatId, resp));
 
-            return resp === "events_failed"
+            return isError(resp)
                 ? resp
                 : {
                       events: [...fromCache.messageEvents, ...resp.events],
                       expiredEventRanges: [],
                       expiredMessageRanges: [],
                       latestEventIndex: resp.latestEventIndex,
-                  };
+                };
         }
         return {
             events: fromCache.messageEvents,
@@ -834,8 +781,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "messages_by_message_index",
             args,
-            (resp) =>
-                getMessagesByMessageIndexResponse(this.principal, resp, chatId, latestKnownUpdate),
+            (resp) => mapResult(resp, getMessagesSuccess),
             CommunityMessagesByMessageIndexArgs,
             CommunityMessagesByMessageIndexResponse,
         );
@@ -858,7 +804,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
             )
                 .then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex))
                 .then((resp) => {
-                    if (resp !== "events_failed") {
+                    if (!isError(resp)) {
                         return mergeSuccessResponses(cachedEvents, resp);
                     }
                     return resp;
@@ -881,7 +827,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "invite_code",
             {},
-            inviteCodeResponse,
+            (resp) => mapResult(resp, inviteCodeSuccess),
             TEmpty,
             CommunityInviteCodeResponse,
         );
@@ -893,9 +839,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
             {
                 channel_id: toBigInt32(chatId.channelId),
             },
-            leaveGroupResponse,
+            unitResult,
             CommunityLeaveChannelArgs,
-            CommunityLeaveChannelResponse,
+            UnitResult,
         );
     }
 
@@ -916,7 +862,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 channel_id: toBigInt32(chatId.channelId),
                 message_index: messageIndex,
             },
-            unpinMessageResponse,
+            (resp) => mapResult(resp, pushEventSuccess),
             CommunityPinMessageArgs,
             CommunityPinMessageResponse,
         );
@@ -929,7 +875,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 channel_id: toBigInt32(chatId.channelId),
                 message_index: messageIndex,
             },
-            pinMessageResponse,
+            (resp) => mapResult(resp, pushEventSuccess),
             CommunityPinMessageArgs,
             CommunityPinMessageResponse,
         );
@@ -941,9 +887,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
             {
                 user_id: principalStringToBytes(userId),
             },
-            removeMemberResponse,
+            unitResult,
             CommunityRemoveMemberArgs,
-            CommunityRemoveMemberResponse,
+            UnitResult,
         );
     }
 
@@ -957,9 +903,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 channel_id: toBigInt32(chatId.channelId),
                 user_id: principalStringToBytes(userId),
             },
-            removeMemberFromChannelResponse,
+            unitResult,
             CommunityRemoveMemberFromChannelArgs,
-            CommunityRemoveMemberFromChannelResponse,
+            UnitResult,
         );
     }
 
@@ -977,9 +923,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 reaction,
                 thread_root_message_index: threadRootMessageIndex,
             },
-            addRemoveReactionResponse,
+            unitResult,
             CommunityRemoveReactionArgs,
-            CommunityRemoveReactionResponse,
+            UnitResult,
         );
     }
 
@@ -987,7 +933,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
         return this.executeMsgpackUpdate(
             "reset_invite_code",
             {},
-            enableOrResetInviteCodeResponse,
+            (resp) => mapResult(resp, enableOrResetInviteCodeSuccess),
             TEmpty,
             CommunityEnableInviteCodeResponse,
         );
@@ -1103,7 +1049,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
         }
 
         const response = await this.getChannelDetailsFromBackend(chatId);
-        if (response !== "failure") {
+        if (!isError(response)) {
             await setCachedGroupDetails(this.db, cacheKey, response);
         }
         return response;
@@ -1117,7 +1063,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
             {
                 channel_id: toBigInt32(chatId.channelId),
             },
-            groupDetailsResponse,
+            (resp) => mapResult(resp, groupDetailsSuccess),
             CommunitySelectedChannelInitialArgs,
             CommunitySelectedChannelInitialResponse,
         );
@@ -1209,7 +1155,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
             return this.executeMsgpackUpdate(
                 "send_message",
                 args,
-                sendMessageResponseV2,
+                (resp) => mapResult(resp, sendMessageSuccess),
                 CommunitySendMessageArgs,
                 CommunitySendMessageResponse,
                 onRequestAccepted,
@@ -1249,7 +1195,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 message_index: messageIdx,
                 new_achievement: newAchievement,
             },
-            registerPollVoteResponse,
+            unitResult,
             CommunityRegisterPollVoteArgs,
             CommunityRegisterPollVoteResponse,
         );
@@ -1280,7 +1226,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
             {
                 group_id: principalStringToBytes(id.groupId),
             },
-            (resp) => importGroupResponse(this.communityId, resp),
+            (resp) => mapResult(resp, (value) => importGroupSuccess(value, this.communityId)),
             CommunityImportGroupArgs,
             CommunityImportGroupResponse,
         );
@@ -1340,9 +1286,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 channel_id: chatId ? toBigInt32(chatId.channelId) : undefined,
                 mute,
             },
-            toggleNotificationsResponse,
+            unitResult,
             CommunityToggleMuteNotificationsArgs,
-            CommunityToggleMuteNotificationsResponse,
+            UnitResult,
         );
     }
 
@@ -1352,9 +1298,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
             {
                 user_id: principalStringToBytes(userId),
             },
-            unblockUserResponse,
+            unitResult,
             CommunityUnblockUserArgs,
-            CommunityUnblockUserResponse,
+            UnitResult,
         );
     }
 
@@ -1370,7 +1316,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 thread_root_message_index: threadRootMessageIndex,
                 message_ids: [messageId],
             },
-            undeleteMessageResponse,
+            (resp) => mapResult(resp, undeleteMessageSuccess),
             CommunityUndeleteMessagesArgs,
             CommunityUndeleteMessagesResponse,
         );
@@ -1388,7 +1334,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 threads: threadRootMessageIndexes,
                 latest_client_thread_update: latestClientThreadUpdate,
             },
-            (resp) => threadPreviewsResponse(resp, chatId, latestClientThreadUpdate),
+            (resp) => mapResult(resp, (value) => threadPreviewsSuccess(value, chatId)),
             CommunityThreadPreviewsArgs,
             CommunityThreadPreviewsResponse,
         );
@@ -1406,9 +1352,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 adopt,
                 message_index: messageIdx,
             },
-            registerProposalVoteResponse,
+            unitResult,
             CommunityRegisterProposalVoteArgs,
-            CommunityRegisterProposalVoteResponse,
+            UnitResult,
         );
     }
 
@@ -1456,7 +1402,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
                           },
                 messages_visible_to_non_members: messagesVisibleToNonMembers,
             },
-            updateGroupResponse,
+            (resp) => mapResult(resp, updateGroupSuccess),
             CommunityUpdateChannelArgs,
             CommunityUpdateChannelResponse,
         );
@@ -1511,7 +1457,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
                               },
                           },
             },
-            updateCommunityResponse,
+            (resp) => mapResult(resp, updateCommunitySuccess),
             CommunityUpdateCommunityArgs,
             CommunityUpdateCommunityResponse,
         );
@@ -1524,7 +1470,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 name,
                 user_ids: users.map(principalStringToBytes),
             },
-            createUserGroupResponse,
+            (resp) => mapResult(resp, createUserGroupSuccess),
             CommunityCreateUserGroupArgs,
             CommunityCreateUserGroupResponse,
         );
@@ -1544,9 +1490,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 users_to_add: usersToAdd.map(principalStringToBytes),
                 users_to_remove: usersToRemove.map(principalStringToBytes),
             },
-            updateUserGroupResponse,
+            unitResult,
             CommunityUpdateUserGroupArgs,
-            CommunityUpdateUserGroupResponse,
+            UnitResult,
         );
     }
 
@@ -1560,9 +1506,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 display_name: displayName,
                 new_achievement: newAchievement,
             },
-            setMemberDisplayNameResponse,
+            unitResult,
             CommunitySetMemberDisplayNameArgs,
-            CommunitySetMemberDisplayNameResponse,
+            UnitResult,
         );
     }
 
@@ -1572,9 +1518,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
             {
                 user_group_ids: userGroupIds,
             },
-            deleteUserGroupsResponse,
+            unitResult,
             CommunityDeleteUserGroupsArgs,
-            CommunityDeleteUserGroupsResponse,
+            UnitResult,
         );
     }
 
@@ -1592,9 +1538,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
         return this.executeMsgpackUpdate(
             follow ? "follow_thread" : "unfollow_thread",
             args,
-            followThreadResponse,
+            unitResult,
             CommunityFollowThreadArgs,
-            CommunityFollowThreadResponse,
+            UnitResult,
         );
     }
 
@@ -1612,9 +1558,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 message_id: messageId,
                 delete: deleteMessage,
             },
-            reportMessageResponse,
+            (resp) => resp === "Success",
             CommunityReportMessageArgs,
-            CommunityReportMessageResponse,
+            UnitResult,
         );
     }
 
@@ -1634,7 +1580,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 pin,
                 new_achievement: newAchievement,
             },
-            acceptP2PSwapResponse,
+            (resp) => mapResult(resp, acceptP2PSwapSuccess),
             CommunityAcceptP2pSwapArgs,
             CommunityAcceptP2pSwapResponse,
         );
@@ -1652,9 +1598,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 thread_root_message_index: threadRootMessageIndex,
                 message_id: messageId,
             },
-            cancelP2PSwapResponse,
+            unitResult,
             CommunityCancelP2pSwapArgs,
-            CommunityCancelP2pSwapResponse,
+            UnitResult,
         );
     }
 
@@ -1670,9 +1616,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 channel_id: toBigInt32(channelId),
                 new_achievement: newAchievement,
             },
-            joinVideoCallResponse,
+            unitResult,
             CommunityJoinVideoCallArgs,
-            CommunitySetVideoCallPresenceResponse,
+            UnitResult,
         );
     }
 
@@ -1690,9 +1636,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 presence: apiVideoCallPresence(presence),
                 new_achievement: newAchievement,
             },
-            setVideoCallPresence,
+            unitResult,
             CommunitySetVideoCallPresenceArgs,
-            CommunitySetVideoCallPresenceResponse,
+            UnitResult,
         );
     }
 
@@ -1708,7 +1654,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 message_id: messageId,
                 updated_since: updatesSince,
             },
-            videoCallParticipantsResponse,
+            (resp) => mapResult(resp, videoCallParticipantsSuccess),
             CommunityVideoCallParticipantsArgs,
             CommunityVideoCallParticipantsResponse,
         );
@@ -1721,9 +1667,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 channel_id: mapOptional(channelId, (cid) => toBigInt32(cid)),
                 user_ids: userIds.map(principalStringToBytes),
             },
-            (value) => value === "Success",
+            (resp) => resp === "Success",
             CommunityCancelInvitesArgs,
-            CommunityCancelInvitesResponse,
+            UnitResult,
         );
     }
 
@@ -1737,9 +1683,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 bot_id: principalStringToBytes(botId),
                 granted_permissions: apiExternalBotPermissions(grantedPermissions),
             },
-            updateBotResponse,
+            (resp) => resp === "Success",
             CommunityUpdateBotArgs,
-            CommunityUpdateBotResponse,
+            UnitResult,
         );
     }
 
@@ -1755,7 +1701,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 requested_permissions: apiExternalBotPermissions(permissions),
                 channel_id: mapOptional(channelId, toBigInt32),
             },
-            generateApiKeyResponse,
+            (resp) => mapResult(resp, generateApiKeySuccess),
             CommunityGenerateBotApiKeyArgs,
             CommunityGenerateBotApiKeyResponse,
         );

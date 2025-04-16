@@ -1,8 +1,9 @@
 import type { ExternalBotPermissions, CommandArg } from "./bots";
 import type { ChatIdentifier, VideoCallType } from "./chat";
 import type { CommunityIdentifier } from "./community";
+import type { OCError } from "./error";
 import type { OptionUpdate } from "./optionUpdate";
-import type { Failure, Success } from "./response";
+import type { Success } from "./response";
 
 export const allRoles = ["none", "owner", "admin", "moderator", "member"] as const;
 export const chatRoles = allRoles;
@@ -239,7 +240,7 @@ export type BotActionByCommand = {
     scope: BotActionScope;
 };
 
-export type GenerateBotKeyResponse = (Success & { apiKey: string }) | Failure;
+export type GenerateBotKeyResponse = (Success & { apiKey: string }) | OCError;
 
 export type PublicApiKeyDetails = {
     botId: string;

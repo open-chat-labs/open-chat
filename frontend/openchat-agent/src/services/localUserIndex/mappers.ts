@@ -51,8 +51,8 @@ import {
     apiChatIdentifier,
     communityChannelSummary,
     communitySummary,
-    eventsSuccessResponse,
     gateCheckFailedReason,
+    getEventsSuccess,
     ocError,
 } from "../common/chatMappersV2";
 import { groupChatSummary, groupChatSummaryUpdates } from "../group/mappersV2";
@@ -311,7 +311,7 @@ export async function chatEventsBatchResponse(
             responses.push(
                 error ?? {
                     kind: "success",
-                    result: eventsSuccessResponse(response.Success),
+                    result: getEventsSuccess(response.Success),
                 },
             );
         } else if ("ReplicaNotUpToDate" in response) {
@@ -320,11 +320,16 @@ export async function chatEventsBatchResponse(
                 replicaTimestamp: response.ReplicaNotUpToDate,
                 clientTimestamp: args.latestKnownUpdate ?? BigInt(-1),
             });
-        } else {
+        } else if ("InternalError" in response) {
             responses.push({
                 kind: "internal_error",
                 error: response.InternalError,
             });
+        } else {
+            responses.push({
+                kind: "internal_error",
+                error: JSON.stringify(response),
+            })
         }
     }
     return {
