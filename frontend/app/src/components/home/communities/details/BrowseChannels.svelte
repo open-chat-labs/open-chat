@@ -1,13 +1,19 @@
 <script lang="ts">
-    import { ChatMap, publish, type ChannelMatch, type OpenChat } from "openchat-client";
-    import Button from "../../../Button.svelte";
+    import {
+        ChatMap,
+        chatSummariesListStore,
+        publish,
+        selectedCommunity,
+        type ChannelMatch,
+        type OpenChat,
+    } from "openchat-client";
     import { getContext } from "svelte";
-    import ChannelCard from "./ChannelCard.svelte";
-    import CollapsibleCard from "../../../CollapsibleCard.svelte";
-    import { browseChannels } from "../../../../stores/settings";
     import { i18nKey } from "../../../../i18n/i18n";
+    import { browseChannels } from "../../../../stores/settings";
+    import Button from "../../../Button.svelte";
+    import CollapsibleCard from "../../../CollapsibleCard.svelte";
     import Translatable from "../../../Translatable.svelte";
-    import { selectedCommunity, chatSummariesListStore } from "openchat-client";
+    import ChannelCard from "./ChannelCard.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -98,8 +104,8 @@
 {#if filteredResults.length > 0}
     <div class="channels-section">
         <CollapsibleCard
-            fill
             first
+            fill
             onToggle={browseChannels.toggle}
             open={$browseChannels || autoOpen}
             headerText={i18nKey("communities.otherChannels")}>
@@ -133,6 +139,13 @@
 <style lang="scss">
     :global(.channels-section .card.open) {
         border-bottom: none;
+    }
+
+    :global(.channels-section .card .header) {
+        @include mobile() {
+            padding-left: toRem(10);
+            padding-right: toRem(10);
+        }
     }
 
     .channels {
