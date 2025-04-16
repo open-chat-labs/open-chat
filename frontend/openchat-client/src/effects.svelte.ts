@@ -2,6 +2,7 @@ import { untrack } from "svelte";
 import type { OpenChat } from "./openchat";
 import { app } from "./state/app.svelte";
 import { pathState } from "./state/path.svelte";
+import { chatListScopeStore } from "./stores";
 
 /**
  * The idea here is to respond to changes in reactive state in ways that require side-effects
@@ -70,7 +71,7 @@ export function configureEffects(client: OpenChat) {
 
         // this exists only to syncronise the legacy chatListScopeStore until we can get rid of it
         $effect(() => {
-            client.setChatListScopeAndRedirect(pathState.route);
+            chatListScopeStore.set(pathState.route.scope);
         });
     });
 }
