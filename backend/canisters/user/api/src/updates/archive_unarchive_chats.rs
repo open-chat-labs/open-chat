@@ -16,8 +16,6 @@ pub struct Args {
 pub enum Response {
     Success,
     PartialSuccess(PartialSuccessResult),
-    Failure,
-    UserSuspended,
     Error(OCError),
 }
 

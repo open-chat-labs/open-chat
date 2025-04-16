@@ -7,6 +7,7 @@ use constants::{MEMO_P2P_SWAP_ACCEPT, NANOS_PER_MILLISECOND};
 use escrow_canister::deposit_subaccount;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
+use oc_error_codes::OCErrorCode;
 use types::{CanisterId, OCResult, TimestampMillis, UserId};
 use user_canister::c2c_accept_p2p_swap::{Response::*, *};
 
@@ -56,8 +57,8 @@ async fn c2c_accept_p2p_swap(args: Args) -> Response {
             });
             Success(index_nat.0.try_into().unwrap())
         }
-        Ok(Err(error)) => TransferError(error),
-        Err(error) => InternalError(format!("{error:?}")),
+        Ok(Err(error)) => Error(OCErrorCode::TransferFailed.with_json(&error)),
+        Err(error) => Error(error.into()),
     }
 }
 

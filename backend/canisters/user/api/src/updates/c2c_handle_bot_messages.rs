@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{BotMessage, ContentValidationError};
 
@@ -12,6 +13,6 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
-    Blocked,
     ContentValidationError(ContentValidationError),
+    Error(OCError),
 }

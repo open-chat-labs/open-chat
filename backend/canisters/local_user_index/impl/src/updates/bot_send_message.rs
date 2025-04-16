@@ -237,10 +237,6 @@ async fn send_message_to_user(
                 expires_at: result.expires_at,
             }),
             user_canister::c2c_bot_send_message::Response::Error(error) => Error(error),
-            user_canister::c2c_bot_send_message::Response::NotAuthorized => NotAuthorized,
-            user_canister::c2c_bot_send_message::Response::ThreadNotFound => ThreadNotFound,
-            user_canister::c2c_bot_send_message::Response::InvalidRequest(message) => InvalidRequest(message),
-            user_canister::c2c_bot_send_message::Response::MessageAlreadyFinalised => MessageAlreadyFinalised,
         },
         Err(error) => C2CError(error.reject_code() as i32, error.message().to_string()),
     }

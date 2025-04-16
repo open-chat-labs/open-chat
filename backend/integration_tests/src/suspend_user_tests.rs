@@ -64,7 +64,7 @@ fn suspend_user() {
     );
     assert!(matches!(
         direct_message_response1,
-        user_canister::send_message_v2::Response::UserSuspended
+        user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorSuspended)
     ));
 
     let group_message_response1 = client::group::send_message_v2(

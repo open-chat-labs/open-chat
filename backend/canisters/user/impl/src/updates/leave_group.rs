@@ -11,16 +11,15 @@ use user_canister::leave_group::{Response::*, *};
 async fn leave_group(args: Args) -> Response {
     run_regular_jobs();
 
-    let Ok(principal) = read_state(
-        |state| {
-            if state.data.suspended.value {
-                Err(())
-            } else {
-                Ok(state.data.owner)
-            }
-        },
-    ) else {
-        return UserSuspended;
+    let principal = match read_state(|state| {
+        if state.data.suspended.value {
+            Err(OCErrorCode::InitiatorSuspended.into())
+        } else {
+            Ok(state.data.owner)
+        }
+    }) {
+        Ok(ok) => ok,
+        Err(error) => return Error(error),
     };
 
     let c2c_args = c2c_leave_group::Args { principal };
@@ -33,10 +32,10 @@ async fn leave_group(args: Args) -> Response {
             }
             c2c_leave_group::Response::Error(error) if error.matches_code(OCErrorCode::InitiatorNotInChat) => {
                 mutate_state(|state| state.data.remove_group(args.chat_id, state.env.now()));
-                CallerNotInGroup
+                Error(OCErrorCode::InitiatorNotInChat.into())
             }
             c2c_leave_group::Response::Error(error) => Error(error),
         },
-        Err(error) => InternalError(format!("{error:?}")),
+        Err(error) => Error(error.into()),
     }
 }

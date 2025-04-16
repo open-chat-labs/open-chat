@@ -3,6 +3,7 @@ use crate::{mutate_state, read_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_delete_community;
+use oc_error_codes::OCErrorCode;
 use user_canister::delete_community::{Response::*, *};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -11,7 +12,7 @@ async fn delete_community(args: Args) -> Response {
     run_regular_jobs();
 
     if read_state(|state| state.data.suspended.value) {
-        return UserSuspended;
+        return Error(OCErrorCode::InitiatorSuspended.into());
     }
 
     let c2c_args = c2c_delete_community::Args {};

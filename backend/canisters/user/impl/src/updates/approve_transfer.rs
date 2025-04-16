@@ -36,7 +36,7 @@ async fn approve_transfer(args: Args) -> Response {
     .await
     {
         Ok(Ok(_)) => Success,
-        Ok(Err(err)) => ApproveError(err),
+        Ok(Err(error)) => Error(OCErrorCode::ApprovalFailed.with_json(&error)),
         Err(error) => Error(OCErrorCode::C2CError.with_message(format!("{error:?}"))),
     }
 }

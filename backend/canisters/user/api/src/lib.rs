@@ -26,9 +26,6 @@ use ts_export::ts_export;
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum EventsResponse {
     Success(types::EventsResponse),
-    ChatNotFound,
-    ThreadMessageNotFound,
-    ReplicaNotUpToDateV2(TimestampMillis),
     Error(OCError),
 }
 

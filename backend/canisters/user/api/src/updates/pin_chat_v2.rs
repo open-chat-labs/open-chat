@@ -14,6 +14,5 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
-    ChatNotFound,
     Error(OCError),
 }

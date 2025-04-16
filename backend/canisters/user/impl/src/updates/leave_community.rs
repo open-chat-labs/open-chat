@@ -11,16 +11,15 @@ use user_canister::leave_community::{Response::*, *};
 async fn leave_community(args: Args) -> Response {
     run_regular_jobs();
 
-    let Ok(principal) = read_state(
-        |state| {
-            if state.data.suspended.value {
-                Err(())
-            } else {
-                Ok(state.data.owner)
-            }
-        },
-    ) else {
-        return UserSuspended;
+    let principal = match read_state(|state| {
+        if state.data.suspended.value {
+            Err(OCErrorCode::InitiatorSuspended.into())
+        } else {
+            Ok(state.data.owner)
+        }
+    }) {
+        Ok(ok) => ok,
+        Err(error) => return Error(error),
     };
 
     let c2c_args = c2c_leave_community::Args { principal };
@@ -33,7 +32,7 @@ async fn leave_community(args: Args) -> Response {
             }
             c2c_leave_community::Response::Error(error) if error.matches_code(OCErrorCode::InitiatorNotInCommunity) => {
                 mutate_state(|state| state.data.remove_community(args.community_id, state.env.now()));
-                UserNotInCommunity
+                Error(OCErrorCode::InitiatorNotInCommunity.into())
             }
             c2c_leave_community::Response::Error(error) => Error(error),
         },

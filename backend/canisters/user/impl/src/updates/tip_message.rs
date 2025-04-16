@@ -37,8 +37,8 @@ async fn tip_message(args: Args) -> Response {
     // Make the crypto transfer
     match process_transaction(pending_transfer).await {
         Ok(Ok(_)) => {}
-        Ok(Err(failed)) => return TransferFailed(failed.error_message().to_string()),
-        Err(error) => return InternalError(format!("{error:?}")),
+        Ok(Err(failed)) => return Error(OCErrorCode::TransferFailed.with_message(failed.error_message())),
+        Err(error) => return Error(error.into()),
     }
 
     mutate_state(|state| state.award_achievement_and_notify(Achievement::TippedMessage, state.env.now()));

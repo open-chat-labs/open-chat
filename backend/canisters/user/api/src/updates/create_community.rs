@@ -2,7 +2,7 @@ use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{AccessGateConfig, CommunityId, CommunityPermissions, Document, FieldTooLongResult, FieldTooShortResult, Rules};
+use types::{AccessGateConfig, CommunityId, CommunityPermissions, Document, Rules};
 
 #[ts_export(user, create_community)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -25,22 +25,6 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    NameTooShort(FieldTooShortResult),
-    NameTooLong(FieldTooLongResult),
-    NameReserved,
-    DescriptionTooLong(FieldTooLongResult),
-    RulesTooShort(FieldTooShortResult),
-    RulesTooLong(FieldTooLongResult),
-    AvatarTooBig(FieldTooLongResult),
-    BannerTooBig(FieldTooLongResult),
-    AccessGateInvalid,
-    MaxCommunitiesCreated(u32),
-    NameTaken,
-    Throttled,
-    UserSuspended,
-    Unauthorized,
-    DefaultChannelsInvalid,
-    InternalError(String),
     Error(OCError),
 }
 

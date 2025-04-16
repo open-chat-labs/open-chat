@@ -635,8 +635,10 @@ fn p2p_swap_blocked_if_token_disabled(input_token: bool) {
         },
     );
 
-    if let user_canister::send_message_with_transfer_to_group::Response::InvalidRequest(error) = send_message_response {
-        assert!(error.contains(if input_token { "Input" } else { "Output" }))
+    if let user_canister::send_message_with_transfer_to_group::Response::Error(error) = send_message_response {
+        assert!(error
+            .message()
+            .is_some_and(|m| m.contains(if input_token { "Input" } else { "Output" })));
     } else {
         panic!("Unexpected response: {:?}", send_message_response);
     }

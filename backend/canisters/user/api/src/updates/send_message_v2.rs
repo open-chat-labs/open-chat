@@ -3,8 +3,8 @@ use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
-    ChatId, CompletedCryptoTransaction, EventIndex, InvalidPollReason, MessageContentInitial, MessageId, MessageIndex,
-    Milliseconds, PinNumberWrapper, ReplyContext, TimestampMillis, UserId,
+    ChatId, CompletedCryptoTransaction, EventIndex, MessageContentInitial, MessageId, MessageIndex, PinNumberWrapper,
+    ReplyContext, TimestampMillis, UserId,
 };
 
 #[ts_export(user, send_message)]
@@ -28,22 +28,6 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     TransferSuccessV2(TransferSuccessV2Result),
-    MessageEmpty,
-    TextTooLong(u32),
-    RecipientBlocked,
-    RecipientNotFound,
-    InvalidPoll(InvalidPollReason),
-    InvalidRequest(String),
-    TransferFailed(String),
-    TransferCannotBeZero,
-    TransferCannotBeToSelf,
-    P2PSwapSetUpFailed(String),
-    DuplicateMessageId,
-    UserSuspended,
-    PinRequired,
-    PinIncorrect(Milliseconds),
-    TooManyFailedPinAttempts(Milliseconds),
-    InternalError(String),
     Error(OCError),
 }
 

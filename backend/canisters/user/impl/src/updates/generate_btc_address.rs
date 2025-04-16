@@ -25,6 +25,6 @@ async fn generate_btc_address(_args: Args) -> Response {
             mutate_state(|state| state.data.btc_address = Some(Timestamped::new(btc_address.clone(), state.env.now())));
             Success(btc_address)
         }
-        Err(error) => InternalError(format!("{error:?}")),
+        Err(error) => Error(error.into()),
     }
 }
