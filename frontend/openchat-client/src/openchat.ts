@@ -6343,10 +6343,13 @@ export class OpenChat {
             newAchievement,
         })
             .then((resp) => {
-                // localMessageUpdates.setP2PSwapStatus(
-                //     messageId,
-                //     mapAcceptP2PSwapResponseToStatus(resp, this.#liveState.user.userId),
-                // );
+                if (resp.kind === "success") {
+                    localMessageUpdates.setP2PSwapStatus(messageId, {
+                        kind: "p2p_swap_accepted",
+                        acceptedBy: this.#liveState.user.userId,
+                        token1TxnIn: resp.token1TxnIn
+                    });
+                }
 
                 if (resp.kind === "error") {
                     const pinNumberFailure = pinNumberFailureFromError(resp);
@@ -6378,10 +6381,11 @@ export class OpenChat {
             messageId,
         })
             .then((resp) => {
-                // localMessageUpdates.setP2PSwapStatus(
-                //     messageId,
-                //     mapCancelP2PSwapResponseToStatus(resp),
-                // );
+                if (resp.kind === "success") {
+                    localMessageUpdates.setP2PSwapStatus(messageId, {
+                        kind: "p2p_swap_cancelled",
+                    });
+                }
                 return resp;
             })
             .catch((err) => {
