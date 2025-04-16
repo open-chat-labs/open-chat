@@ -3,7 +3,7 @@ use crate::guards::caller_is_proposals_bot;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use community_canister::c2c_update_proposals::{Response::*, *};
+use community_canister::c2c_update_proposals::*;
 use oc_error_codes::OCErrorCode;
 use types::OCResult;
 
@@ -12,11 +12,7 @@ use types::OCResult;
 async fn c2c_update_proposals(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| c2c_update_proposals_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| c2c_update_proposals_impl(args, state)).into()
 }
 
 fn c2c_update_proposals_impl(args: Args, state: &mut RuntimeState) -> OCResult {

@@ -1,7 +1,7 @@
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use community_canister::follow_thread::{Response::*, *};
+use community_canister::follow_thread::*;
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, OCResult};
 
@@ -10,11 +10,7 @@ use types::{Achievement, OCResult};
 fn follow_thread(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| follow_thread_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| follow_thread_impl(args, state)).into()
 }
 
 fn follow_thread_impl(args: Args, state: &mut RuntimeState) -> OCResult {

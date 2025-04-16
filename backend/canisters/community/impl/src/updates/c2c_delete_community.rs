@@ -2,7 +2,7 @@ use crate::{read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_client::make_c2c_call_raw;
 use canister_tracing_macros::trace;
-use community_canister::c2c_delete_community::{Response::*, *};
+use community_canister::c2c_delete_community::*;
 use group_index_canister::c2c_delete_community;
 use oc_error_codes::OCErrorCode;
 use types::{CanisterId, OCResult, UserId};
@@ -14,7 +14,7 @@ async fn c2c_delete_community(_args: Args) -> Response {
 
     let prepare_result = match read_state(prepare) {
         Ok(ok) => ok,
-        Err(error) => return Error(error),
+        Err(error) => return Response::Error(error),
     };
 
     let group_index_canister_id = prepare_result.group_index_canister_id;
@@ -58,8 +58,8 @@ async fn delete_community(group_index_canister_id: CanisterId, args: &c2c_delete
     let cycles = ic_cdk::api::canister_liquid_cycle_balance().saturating_sub(c2c_cost + buffer);
 
     if let Err(error) = make_c2c_call_raw(group_index_canister_id, method_name, &payload, cycles, None).await {
-        Error(error.into())
+        Response::Error(error.into())
     } else {
-        Success
+        Response::Success
     }
 }

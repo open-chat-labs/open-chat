@@ -1,8 +1,7 @@
 use candid::CandidType;
-use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{MessageId, UserId};
+use types::{MessageId, UnitResult, UserId};
 
 #[ts_export(user, end_video_call)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -11,9 +10,4 @@ pub struct Args {
     pub message_id: MessageId,
 }
 
-#[ts_export(user, end_video_call)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    Error(OCError),
-}
+pub type Response = UnitResult;

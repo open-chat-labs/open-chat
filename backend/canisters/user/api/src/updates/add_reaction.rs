@@ -1,8 +1,7 @@
 use candid::CandidType;
-use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{MessageId, MessageIndex, Reaction, UserId};
+use types::{MessageId, MessageIndex, Reaction, UnitResult, UserId};
 
 #[ts_export(user, add_reaction)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -14,9 +13,4 @@ pub struct Args {
     pub correlation_id: u64,
 }
 
-#[ts_export(user, add_reaction)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    Error(OCError),
-}
+pub type Response = UnitResult;

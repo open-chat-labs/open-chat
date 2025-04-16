@@ -1,14 +1,4 @@
-use candid::CandidType;
-use oc_error_codes::OCError;
-use serde::{Deserialize, Serialize};
-use ts_export::ts_export;
-use types::Empty;
+use types::{Empty, UnitResult};
 
 pub type Args = Empty;
-
-#[ts_export(community, disable_invite_code)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    Error(OCError),
-}
+pub type Response = UnitResult;

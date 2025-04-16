@@ -9,7 +9,7 @@ use oc_error_codes::OCErrorCode;
 use serde::Serialize;
 use tracing::error;
 use types::Achievement;
-use user_canister::update_btc_balance::{Response::*, *};
+use user_canister::update_btc_balance::*;
 
 #[update(msgpack = true)]
 #[trace]
@@ -71,17 +71,17 @@ Error: {error:?}",
                 }
             });
 
-            Success
+            Response::Success
         }
         Ok(Err(error)) => {
             if matches!(error, UpdateBalanceError::NoNewUtxos(_)) {
-                Error(OCErrorCode::NoChange.into())
+                Response::Error(OCErrorCode::NoChange.into())
             } else {
                 error!(?error, "Failed to update BTC balance");
-                Error(OCErrorCode::Unknown.with_json(&error))
+                Response::Error(OCErrorCode::Unknown.with_json(&error))
             }
         }
-        Err(error) => Error(error.into()),
+        Err(error) => Response::Error(error.into()),
     }
 }
 

@@ -3,7 +3,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
-use user_canister::delete_direct_chat::{Response::*, *};
+use user_canister::delete_direct_chat::*;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
@@ -15,8 +15,9 @@ fn delete_direct_chat(args: Args) -> Response {
 
 fn delete_direct_chat_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
-    match state.delete_direct_chat(args.user_id, args.block_user, now) {
-        true => Success,
-        false => Error(OCErrorCode::ChatNotFound.into()),
+    if state.delete_direct_chat(args.user_id, args.block_user, now) {
+        Response::Success
+    } else {
+        Response::Error(OCErrorCode::ChatNotFound.into())
     }
 }

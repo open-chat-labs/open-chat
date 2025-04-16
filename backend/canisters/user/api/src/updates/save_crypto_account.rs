@@ -1,14 +1,5 @@
 use crate::NamedAccount;
-use candid::CandidType;
-use oc_error_codes::OCError;
-use serde::{Deserialize, Serialize};
-use ts_export::ts_export;
+use types::UnitResult;
 
 pub type Args = NamedAccount;
-
-#[ts_export(user, save_crypto_account)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    Error(OCError),
-}
+pub type Response = UnitResult;

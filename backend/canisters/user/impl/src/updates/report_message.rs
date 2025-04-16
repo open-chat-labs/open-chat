@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use chat_events::{DeleteUndeleteMessagesArgs, Reader};
 use oc_error_codes::OCErrorCode;
 use types::{CanisterId, Chat, EventIndex, OCResult, UserId};
-use user_canister::report_message::{Response::*, *};
+use user_canister::report_message::*;
 use user_index_canister::c2c_report_message;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -15,7 +15,7 @@ async fn report_message(args: Args) -> Response {
 
     let (c2c_args, user_index_canister) = match read_state(|state| build_c2c_args(&args, state)) {
         Ok(ok) => ok,
-        Err(error) => return Error(error),
+        Err(error) => return Response::Error(error),
     };
 
     match user_index_canister_c2c_client::c2c_report_message(user_index_canister, &c2c_args).await {
@@ -25,11 +25,11 @@ async fn report_message(args: Args) -> Response {
             }
 
             match result {
-                c2c_report_message::Response::Success => Success,
-                c2c_report_message::Response::AlreadyReported => Error(OCErrorCode::AlreadyReported.into()),
+                c2c_report_message::Response::Success => Response::Success,
+                c2c_report_message::Response::AlreadyReported => Response::Error(OCErrorCode::AlreadyReported.into()),
             }
         }
-        Err(error) => Error(error.into()),
+        Err(error) => Response::Error(error.into()),
     }
 }
 

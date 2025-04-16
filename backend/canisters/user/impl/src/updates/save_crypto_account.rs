@@ -6,18 +6,14 @@ use canister_tracing_macros::trace;
 use ic_ledger_types::AccountIdentifier;
 use oc_error_codes::OCErrorCode;
 use types::OCResult;
-use user_canister::save_crypto_account::{Response::*, *};
+use user_canister::save_crypto_account::*;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn save_crypto_account(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| save_crypto_account_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| save_crypto_account_impl(args, state)).into()
 }
 
 fn save_crypto_account_impl(mut args: Args, state: &mut RuntimeState) -> OCResult {

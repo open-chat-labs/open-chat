@@ -3,7 +3,7 @@ use crate::{mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use types::Achievement;
-use user_canister::manage_favourite_chats::{Response::*, *};
+use user_canister::manage_favourite_chats::*;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
@@ -27,6 +27,6 @@ fn manage_favourite_chats(args: Args) -> Response {
             state.award_achievement_and_notify(Achievement::FavouritedChat, now);
         }
 
-        Success
+        Response::Success
     })
 }
