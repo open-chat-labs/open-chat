@@ -126,4 +126,5 @@ export type PubSubEvents = {
     remoteVideoCallEnded: bigint;
     notification: Notification;
     noAccess: undefined;
+    notFound: undefined;
 };

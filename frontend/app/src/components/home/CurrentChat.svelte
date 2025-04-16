@@ -40,7 +40,6 @@
     import { i18nKey } from "../../i18n/i18n";
     import { messageToForwardStore } from "../../stores/messageToForward";
     import { toastStore } from "../../stores/toast";
-    import { closeNotificationsForChat } from "../../utils/notifications";
     import { randomSentence } from "../../utils/randomMsg";
     import AreYouSure from "../AreYouSure.svelte";
     import DirectChatHeader from "../bots/DirectChatHeader.svelte";
@@ -156,7 +155,7 @@
     }
 
     function onWindowFocus() {
-        closeNotificationsForChat(chat.id);
+        client.closeNotificationsForChat(chat.id);
     }
 
     function createPoll() {

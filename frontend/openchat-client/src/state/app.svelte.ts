@@ -1,11 +1,15 @@
 import {
-    communityIdentifiersEqual,
+    type ChatIdentifier,
     type CommunityIdentifier,
     type ExternalBotPermissions,
     type Member,
+    type MessageContext,
     type PublicApiKeyDetails,
     type UserGroupDetails,
     type VersionedRules,
+    chatIdentifiersEqual,
+    communityIdentifiersEqual,
+    messageContextsEqual,
 } from "openchat-shared";
 import { CommunityMergedState } from "./community_details/merged.svelte";
 import { CommunityServerState } from "./community_details/server";
@@ -22,11 +26,41 @@ class AppState {
                     );
                 }
             });
+
+            $effect(() => {
+                if (this.#selectedChatId === undefined) {
+                    console.log("SelectedChatId is undefined - clear state");
+                }
+            });
         });
     }
 
     #chatsInitialised = $state(false);
     #chatsLoading = $state(false);
+
+    // TODO - not sure this currently works with *starting* threads
+    // I feel uneasy about this as a *concept* because if I have a chat open *and* a thread open then there are two
+    // selected message contexts. So this is at best misleading and at worst meaningless.
+    #selectedMessageContext = $derived.by<MessageContext | undefined>(
+        withEqCheck(() => {
+            switch (pathState.route.kind) {
+                case "selected_channel_route":
+                case "global_chat_selected_route":
+                    return {
+                        chatId: pathState.route.chatId,
+                        threadRootMessageIndex: pathState.route.open
+                            ? pathState.route.messageIndex
+                            : undefined,
+                    };
+                default:
+                    return undefined;
+            }
+        }, messageContextsEqual),
+    );
+
+    #selectedChatId = $derived.by<ChatIdentifier | undefined>(
+        withEqCheck(() => this.#selectedMessageContext?.chatId, chatIdentifiersEqual),
+    );
 
     #selectedCommunityId = $derived.by<CommunityIdentifier | undefined>(
         withEqCheck(() => {
@@ -63,6 +97,14 @@ class AppState {
 
     get selectedCommunityId() {
         return this.#selectedCommunityId;
+    }
+
+    get selectedChatId() {
+        return this.#selectedChatId;
+    }
+
+    get selectedMessageContext() {
+        return this.#selectedMessageContext;
     }
 
     get selectedCommunityDetails() {

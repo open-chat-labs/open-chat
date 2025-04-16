@@ -1,6 +1,7 @@
 import { untrack } from "svelte";
 import type { OpenChat } from "./openchat";
 import { app } from "./state/app.svelte";
+import { pathState } from "./state/path.svelte";
 
 /**
  * The idea here is to respond to changes in reactive state in ways that require side-effects
@@ -26,6 +27,23 @@ export function configureEffects(client: OpenChat) {
                             client.selectFirstChat();
                         }
                     });
+                });
+            }
+        });
+
+        $effect(() => {
+            if (
+                app.chatsInitialised &&
+                app.selectedChatId !== undefined &&
+                (pathState.route.kind === "selected_channel_route" ||
+                    pathState.route.kind === "global_chat_selected_route")
+            ) {
+                const id = app.selectedChatId;
+                const messageIndex = pathState.route.messageIndex;
+                const threadMessageIndex = pathState.route.threadMessageIndex;
+
+                untrack(() => {
+                    client.setSelectedChat(id, messageIndex, threadMessageIndex);
                 });
             }
         });

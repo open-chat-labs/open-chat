@@ -25,7 +25,6 @@ import {
     nullMembership,
 } from "openchat-shared";
 import { derived, get, type Readable, type Writable } from "svelte/store";
-import type { OpenChat } from "../openchat";
 import { app } from "../state/app.svelte";
 import {
     getNextEventAndMessageIndexes,
@@ -638,27 +637,12 @@ export function confirmedEventIndexesLoaded(chatId: ChatIdentifier): DRange {
         : new DRange();
 }
 
-export function setSelectedChat(
-    api: OpenChat,
+export function setChatSpecificState(
     clientChat: ChatSummary,
     serverChat: ChatSummary | undefined,
     messageIndex?: number,
     threadMessageIndex?: number,
 ): void {
-    // TODO don't think this should be in here really
-    if (
-        (clientChat.kind === "group_chat" || clientChat.kind === "channel") &&
-        clientChat.subtype !== undefined &&
-        clientChat.subtype.kind === "governance_proposals" &&
-        !clientChat.subtype.isNns
-    ) {
-        const { governanceCanisterId } = clientChat.subtype;
-        api.listNervousSystemFunctions(governanceCanisterId).then((val) => {
-            snsFunctions.set(governanceCanisterId, val.functions);
-            return val;
-        });
-    }
-
     if (messageIndex === undefined) {
         messageIndex = isPreviewing(clientChat)
             ? undefined

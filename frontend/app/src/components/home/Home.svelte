@@ -43,7 +43,6 @@
         pathState,
         capturePinNumberStore as pinNumberStore,
         routeForChatIdentifier,
-        routeForMessage,
         routeForScope,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
         selectedChatId,
@@ -69,11 +68,6 @@
         preferredDarkThemeName,
         themeType,
     } from "../../theme/themes";
-    import {
-        closeNotifications,
-        closeNotificationsForChat,
-        initialiseNotifications,
-    } from "../../utils/notifications";
     import { scream } from "../../utils/scream";
     import type { Share } from "../../utils/share";
     import { removeQueryStringParam } from "../../utils/urls";
@@ -239,9 +233,9 @@
             subscribe("remoteVideoCallEnded", remoteVideoCallEnded),
             subscribe("notification", (n) => client.notificationReceived(n)),
             subscribe("noAccess", () => (modal = { kind: "no_access" })),
+            subscribe("notFound", () => (modal = { kind: "not_found" })),
         ];
-        //TODO push all of this inside the OC client itself
-        initialiseNotifications(client);
+        client.initialiseNotifications();
         document.body.addEventListener("profile-clicked", (event) => {
             profileLinkClicked(event as CustomEvent<ProfileLinkClickedEvent>);
         });
@@ -255,8 +249,10 @@
         };
     });
 
+    $inspect(app.selectedMessageContext).with(console.trace);
+
     function chatsUpdated() {
-        closeNotifications((notification: Notification) => {
+        client.closeNotifications((notification: Notification) => {
             if (
                 notification.kind === "channel_notification" ||
                 notification.kind === "direct_notification" ||
@@ -330,90 +326,6 @@
         incomingVideoCall.set(ev);
     }
 
-    async function newChatSelected(
-        chatId: ChatIdentifier,
-        messageIndex?: number,
-        threadMessageIndex?: number,
-    ): Promise<void> {
-        let chat = $chatSummariesStore.get(chatId);
-        let autojoin = false;
-
-        // if this is an unknown chat let's preview it
-        if (chat === undefined) {
-            // if the scope is favourite let's redirect to the non-favourite counterpart and try again
-            // this is necessary if the link is no longer in our favourites or came from another user and was *never* in our favourites.
-            if ($chatListScope.kind === "favourite") {
-                pageRedirect(
-                    routeForChatIdentifier(
-                        $chatListScope.communityId === undefined ? "group_chat" : "community",
-                        chatId,
-                    ),
-                );
-                return;
-            }
-            if (chatId.kind === "direct_chat") {
-                await createDirectChat(chatId);
-            } else if (chatId.kind === "group_chat" || chatId.kind === "channel") {
-                autojoin = pathState.querystring.has("autojoin");
-                const code = pathState.querystring.get("code");
-                if (code) {
-                    client.groupInvite = {
-                        chatId: chatId,
-                        code,
-                    };
-                }
-                const preview = await client.previewChat(chatId);
-                if (preview.kind === "group_moved") {
-                    if (messageIndex !== undefined) {
-                        if (threadMessageIndex !== undefined) {
-                            pageReplace(
-                                routeForMessage(
-                                    "community",
-                                    {
-                                        chatId: preview.location,
-                                        threadRootMessageIndex: messageIndex,
-                                    },
-                                    threadMessageIndex,
-                                ),
-                            );
-                        } else {
-                            pageReplace(
-                                routeForMessage(
-                                    "community",
-                                    { chatId: preview.location },
-                                    messageIndex,
-                                ),
-                            );
-                        }
-                    } else {
-                        pageReplace(routeForChatIdentifier($chatListScope.kind, preview.location));
-                    }
-                } else if (preview.kind === "failure") {
-                    modal = { kind: "not_found" };
-                    return;
-                }
-            }
-            chat = $chatSummariesStore.get(chatId);
-        }
-
-        if (chat !== undefined) {
-            // If an archived chat has been explicitly selected (for example by searching for it) then un-archive it
-            if (chat?.membership.archived) {
-                unarchiveChat(chat.id);
-            }
-
-            // if it's a known chat let's select it
-            closeNotificationsForChat(chat.id);
-            ui.eventListScrollTop = undefined;
-            client.setSelectedChat(chat.id, messageIndex, threadMessageIndex);
-            resetRightPanel();
-
-            if (autojoin && chat.kind !== "direct_chat") {
-                joinGroup({ group: chat, select: true });
-            }
-        }
-    }
-
     // the currentChatMessages component may not exist straight away
     async function waitAndScrollToMessageIndex(index: number, preserveFocus: boolean, retries = 0) {
         if (!currentChatMessages && retries < 5) {
@@ -465,7 +377,12 @@
                 ) {
                     // if the chat in the url is different from the chat we already have selected
                     if (!chatIdentifiersEqual(route.chatId, $selectedChatId)) {
-                        newChatSelected(route.chatId, route.messageIndex, route.threadMessageIndex);
+                        // Note - this is now done automatically as an effect of the route change
+                        // client.setSelectedChat(
+                        //     route.chatId,
+                        //     route.messageIndex,
+                        //     route.threadMessageIndex,
+                        // );
                     } else {
                         // if the chat in the url is *the same* as the selected chat
                         // *and* if we have a messageIndex specified in the url
@@ -555,10 +472,6 @@
             activeVideoCall?.threadOpen(false);
             ui.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
         });
-    }
-
-    function resetRightPanel() {
-        ui.filterRightPanelHistoryByChatType($selectedChatStore);
     }
 
     function goToMessageIndex(detail: { index: number; preserveFocus: boolean }) {
