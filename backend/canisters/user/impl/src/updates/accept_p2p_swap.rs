@@ -52,14 +52,12 @@ async fn accept_p2p_swap(args: Args) -> Response {
             let index: u64 = index_nat.0.try_into().unwrap();
             Ok(index)
         }
-        Ok(Err(error)) => {
-            if matches!(error, TransferError::InsufficientFunds { .. }) {
-                Err(InsufficientFunds)
-            } else {
-                Err(InternalError(format!("{error:?}")))
-            }
-        }
-        Err(error) => Err(InternalError(format!("{error:?}"))),
+        Ok(Err(error)) => Err(if matches!(error, TransferError::InsufficientFunds { .. }) {
+            OCErrorCode::InsufficientFunds.into()
+        } else {
+            OCErrorCode::TransferFailed.with_json(&error)
+        }),
+        Err(error) => Err(error.into()),
     };
 
     match transfer_result {
@@ -96,14 +94,14 @@ async fn accept_p2p_swap(args: Args) -> Response {
 
             Success(AcceptSwapSuccess { token1_txn_in: index })
         }
-        Err(response) => {
+        Err(error) => {
             mutate_state(|state| {
                 if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
                     let now = state.env.now();
                     chat.events.unreserve_p2p_swap(my_user_id, None, args.message_id, now);
                 }
             });
-            response
+            Error(error)
         }
     }
 }

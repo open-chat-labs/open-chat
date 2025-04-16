@@ -73,7 +73,7 @@ fn can_set_pin_number_by_providing_recent_delegation(within_5_minutes: bool) {
     } else {
         assert!(matches!(
             set_pin_number_response,
-            user_canister::set_pin_number::Response::DelegationTooOld
+            user_canister::set_pin_number::Response::Error(e) if e.matches_code(OCErrorCode::DelegationTooOld)
         ));
         assert!(initial_state2.pin_number_settings.is_some());
     }

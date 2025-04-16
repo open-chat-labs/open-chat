@@ -1,9 +1,9 @@
 use crate::guards::caller_is_owner;
-use crate::updates::set_avatar::Response::*;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use types::{Achievement, CanisterId, Timestamped};
+use oc_error_codes::OCErrorCode;
+use types::{Achievement, CanisterId, OCResult, Timestamped};
 use user_canister::set_avatar::*;
 use utils::document::validate_avatar;
 
@@ -12,28 +12,25 @@ use utils::document::validate_avatar;
 fn set_avatar(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| set_avatar_impl(args, state))
+    mutate_state(|state| set_avatar_impl(args, state)).into()
 }
 
-fn set_avatar_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.suspended.value {
-        return UserSuspended;
-    }
+fn set_avatar_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    state.data.verify_not_suspended()?;
 
     if let Err(error) = validate_avatar(args.avatar.as_ref()) {
-        return AvatarTooBig(error);
+        return Err(OCErrorCode::AvatarTooBig.with_json(&error));
     }
 
     let id = args.avatar.as_ref().map(|a| a.id);
     let now = state.env.now();
 
     state.data.avatar = Timestamped::new(args.avatar, now);
-
     state.award_achievement_and_notify(Achievement::SetAvatar, now);
 
     ic_cdk::futures::spawn(update_index_canister(state.data.user_index_canister_id, id));
 
-    Success
+    Ok(())
 }
 
 async fn update_index_canister(user_index_canister_id: CanisterId, avatar_id: Option<u128>) {

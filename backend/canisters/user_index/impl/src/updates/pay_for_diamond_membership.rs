@@ -58,8 +58,9 @@ pub(crate) async fn pay_for_diamond_membership_impl(args: Args, user_id: UserId,
             user_canister::c2c_charge_user_account::Response::TransferError(error) => process_error(error),
             user_canister::c2c_charge_user_account::Response::TransferErrorV2(error) => process_error_v2(error),
             user_canister::c2c_charge_user_account::Response::InternalError(error) => InternalError(error),
+            user_canister::c2c_charge_user_account::Response::Error(error) => Error(error),
         },
-        Err(error) => InternalError(format!("{error:?}")),
+        Err(error) => Error(error.into()),
     };
     if !matches!(response, Success(_)) {
         mutate_state(|state| {

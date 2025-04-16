@@ -1,5 +1,4 @@
 use candid::CandidType;
-use icrc_ledger_types::icrc1::transfer::TransferError;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{P2PSwapLocation, PinNumberWrapper, TimestampMillis, TokenInfo, UserId};
@@ -22,7 +21,5 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(u64),
-    TransferError(TransferError),
-    InternalError(String),
     Error(OCError),
 }

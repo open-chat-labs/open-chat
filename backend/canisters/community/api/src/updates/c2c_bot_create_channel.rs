@@ -1,8 +1,6 @@
-use oc_error_codes::OCError;
+use crate::create_channel;
 use serde::{Deserialize, Serialize};
 use types::{AccessGateConfig, BotInitiator, Document, GroupPermissions, Milliseconds, Rules, UserId};
-
-use super::create_channel::{self, SuccessResult};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -40,19 +38,4 @@ impl From<Args> for create_channel::Args {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success(SuccessResult),
-    Error(OCError),
-}
-
-impl From<create_channel::Response> for Response {
-    fn from(value: create_channel::Response) -> Self {
-        use Response::*;
-
-        match value {
-            create_channel::Response::Success(r) => Success(r),
-            create_channel::Response::Error(error) => Error(error),
-        }
-    }
-}
+pub type Response = create_channel::Response;

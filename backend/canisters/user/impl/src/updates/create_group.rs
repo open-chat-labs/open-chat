@@ -7,7 +7,7 @@ use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_group;
 use oc_error_codes::OCErrorCode;
 use tracing::error;
-use types::{CanisterId, ChatId};
+use types::{CanisterId, ChatId, OCResult};
 use user_canister::create_group::{Response::*, *};
 use utils::document::validate_avatar;
 use utils::text_validation::{
@@ -25,7 +25,7 @@ async fn create_group(mut args: Args) -> Response {
 
     let prepare_result = match read_state(|state| prepare(args, state)) {
         Ok(ok) => ok,
-        Err(response) => return response,
+        Err(error) => return Error(error),
     };
 
     match group_index_canister_c2c_client::c2c_create_group(
@@ -57,7 +57,9 @@ struct PrepareResult {
     create_group_args: c2c_create_group::Args,
 }
 
-fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
+fn prepare(args: Args, state: &RuntimeState) -> OCResult<PrepareResult> {
+    state.data.verify_not_suspended()?;
+
     fn is_throttled() -> bool {
         // TODO check here that the user hasn't created too many groups in succession
         false
@@ -67,36 +69,34 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
     let is_diamond_member = state.data.is_diamond_member(now);
     let group_creation_limit = if is_diamond_member { PREMIUM_GROUP_CREATION_LIMIT } else { BASIC_GROUP_CREATION_LIMIT };
 
-    if state.data.suspended.value {
-        Err(UserSuspended)
-    } else if !is_diamond_member && args.is_public {
-        Err(UnauthorizedToCreatePublicGroup)
+    if !is_diamond_member && args.is_public {
+        Err(OCErrorCode::NotDiamondMember.into())
     } else if state.data.group_chats.groups_created() >= group_creation_limit {
-        Err(MaxGroupsCreated(group_creation_limit))
+        Err(OCErrorCode::MaxGroupsCreated.with_message(group_creation_limit))
     } else if is_throttled() {
-        Err(Throttled)
+        Err(OCErrorCode::Throttled.into())
     } else if let Err(error) = validate_group_name(&args.name, args.is_public, None) {
         Err(match error {
-            NameValidationError::TooShort(s) => NameTooShort(s),
-            NameValidationError::TooLong(l) => NameTooLong(l),
-            NameValidationError::Reserved => NameReserved,
+            NameValidationError::TooShort(s) => OCErrorCode::NameTooShort.with_json(&s),
+            NameValidationError::TooLong(l) => OCErrorCode::NameTooLong.with_json(&l),
+            NameValidationError::Reserved => OCErrorCode::NameReserved.into(),
         })
     } else if let Err(error) = validate_description(&args.description) {
-        Err(DescriptionTooLong(error))
+        Err(OCErrorCode::DescriptionTooLong.with_json(&error))
     } else if let Err(error) = validate_rules(args.rules.enabled, &args.rules.text) {
         return Err(match error {
-            RulesValidationError::TooShort(s) => RulesTooShort(s),
-            RulesValidationError::TooLong(l) => RulesTooLong(l),
+            RulesValidationError::TooShort(s) => OCErrorCode::RulesTooShort.with_json(&s),
+            RulesValidationError::TooLong(l) => OCErrorCode::RulesTooLong.with_json(&l),
         });
     } else if let Err(error) = validate_avatar(args.avatar.as_ref()) {
-        Err(AvatarTooBig(error))
+        Err(OCErrorCode::AvatarTooBig.with_json(&error))
     } else if args
         .gate_config
         .as_ref()
         .map(|g| !g.validate(state.data.test_mode))
         .unwrap_or_default()
     {
-        Err(AccessGateInvalid)
+        Err(OCErrorCode::InvalidAccessGate.into())
     } else {
         let create_group_args = c2c_create_group::Args {
             is_public: args.is_public,

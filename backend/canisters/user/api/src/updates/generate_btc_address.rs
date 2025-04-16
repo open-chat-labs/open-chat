@@ -10,6 +10,5 @@ pub type Args = Empty;
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(String),
-    InternalError(String),
     Error(OCError),
 }

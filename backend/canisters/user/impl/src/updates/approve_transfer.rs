@@ -6,7 +6,7 @@ use constants::NANOS_PER_MILLISECOND;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
 use oc_error_codes::OCErrorCode;
 use types::{OCResult, TimestampNanos};
-use user_canister::approve_transfer::{Response::*, *};
+use user_canister::approve_transfer::*;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
@@ -15,7 +15,7 @@ async fn approve_transfer(args: Args) -> Response {
 
     let now_nanos = match mutate_state(|state| prepare(&args, state)) {
         Ok(ts) => ts,
-        Err(response) => return Error(response),
+        Err(error) => return Response::Error(error),
     };
 
     match icrc_ledger_canister_c2c_client::icrc2_approve(
@@ -35,9 +35,9 @@ async fn approve_transfer(args: Args) -> Response {
     )
     .await
     {
-        Ok(Ok(_)) => Success,
-        Ok(Err(err)) => ApproveError(err),
-        Err(error) => Error(OCErrorCode::C2CError.with_message(format!("{error:?}"))),
+        Ok(Ok(_)) => Response::Success,
+        Ok(Err(error)) => Response::Error(OCErrorCode::ApprovalFailed.with_json(&error)),
+        Err(error) => Response::Error(error.into()),
     }
 }
 

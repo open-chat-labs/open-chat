@@ -16,10 +16,6 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    InvalidTerm,
-    TermTooLong(u8),
-    TermTooShort(u8),
-    ChatNotFound,
     Error(OCError),
 }
 

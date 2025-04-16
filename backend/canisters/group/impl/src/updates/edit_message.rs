@@ -3,7 +3,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::EditMessageArgs;
-use group_canister::edit_message_v2::{Response::*, *};
+use group_canister::edit_message_v2::*;
 use types::{Achievement, OCResult};
 
 #[update(candid = true, msgpack = true)]
@@ -11,11 +11,7 @@ use types::{Achievement, OCResult};
 fn edit_message_v2(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| edit_message_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| edit_message_impl(args, state)).into()
 }
 
 fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {

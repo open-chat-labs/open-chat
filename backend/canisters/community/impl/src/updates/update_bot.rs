@@ -1,7 +1,7 @@
 use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use community_canister::update_bot::{Response::*, *};
+use community_canister::update_bot::*;
 use oc_error_codes::OCErrorCode;
 use types::{BotGroupConfig, OCResult};
 
@@ -10,11 +10,7 @@ use types::{BotGroupConfig, OCResult};
 fn update_bot(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| update_bot_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| update_bot_impl(args, state)).into()
 }
 
 fn update_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {

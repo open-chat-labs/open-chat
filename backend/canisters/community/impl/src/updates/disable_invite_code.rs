@@ -4,7 +4,7 @@ use crate::{
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use community_canister::disable_invite_code::{Response::*, *};
+use community_canister::disable_invite_code::*;
 use oc_error_codes::OCErrorCode;
 use types::{GroupInviteCodeChange, GroupInviteCodeChanged, OCResult, Timestamped};
 
@@ -13,11 +13,7 @@ use types::{GroupInviteCodeChange, GroupInviteCodeChanged, OCResult, Timestamped
 fn disable_invite_code(_args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(disable_invite_code_impl) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(disable_invite_code_impl).into()
 }
 
 fn disable_invite_code_impl(state: &mut RuntimeState) -> OCResult {

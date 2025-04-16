@@ -3,7 +3,7 @@ use crate::guards::caller_is_video_call_operator;
 use crate::timer_job_types::TimerJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use community_canister::end_video_call_v2::{Response::*, *};
+use community_canister::end_video_call_v2::*;
 use ic_cdk::update;
 use oc_error_codes::OCErrorCode;
 use types::OCResult;
@@ -13,11 +13,7 @@ use types::OCResult;
 fn end_video_call_v2(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| end_video_call_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| end_video_call_impl(args, state)).into()
 }
 
 pub(crate) fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
