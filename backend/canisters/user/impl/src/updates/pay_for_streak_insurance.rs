@@ -17,7 +17,7 @@ async fn pay_for_streak_insurance(args: Args) -> Response {
 
     let PrepareOk { days_currently_insured } = match mutate_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
-        Err(response) => return Error(response),
+        Err(error) => return Response::Error(error),
     };
 
     let transfer_result = make_transfer(
@@ -50,10 +50,10 @@ async fn pay_for_streak_insurance(args: Args) -> Response {
                     new_days_insured: days_currently_insured + args.additional_days,
                     transaction_index,
                 });
-                Success
+                Response::Success
             }
-            Ok(Err(error)) => PaymentFailed(format!("{error:?}")),
-            Err(error) => InternalError(format!("{error:?}")),
+            Ok(Err(error)) => Response::Error(OCErrorCode::TransferFailed.with_message(error)),
+            Err(error) => Response::Error(error.into()),
         }
     })
 }
