@@ -718,7 +718,11 @@ impl GroupChatCore {
     ) -> Vec<UserId> {
         let message = &message_event.event;
         let message_index = message.message_index;
-        let sender = message.sender;
+        let initiator = message
+            .bot_context
+            .as_ref()
+            .and_then(|b| b.command.as_ref().map(|c| c.initiator))
+            .unwrap_or(message.sender);
         let message_id = message.message_id;
 
         let user_being_replied_to = replies_to
@@ -744,7 +748,7 @@ impl GroupChatCore {
                             m.followed_threads.insert(root_message_index, now);
 
                             let user_id = m.user_id();
-                            if user_id != sender {
+                            if user_id != initiator {
                                 let mentioned =
                                     mentions.contains(&user_id) || (is_first_reply && user_id == root_message_sender);
 
@@ -771,7 +775,7 @@ impl GroupChatCore {
                 if everyone_mentioned {
                     self.at_everyone_mentions.insert(
                         now,
-                        AtEveryoneMention::new(sender, message_event.event.message_id, message_event.event.message_index),
+                        AtEveryoneMention::new(initiator, message_event.event.message_id, message_event.event.message_index),
                     );
                     // Notify everyone
                     users_to_notify.extend(self.members.member_ids().iter().copied());
@@ -783,7 +787,7 @@ impl GroupChatCore {
         }
 
         // Exclude the sender, bots, lapsed members, and suspended members from notifications
-        users_to_notify.remove(&sender);
+        users_to_notify.remove(&initiator);
         for bot in self.members.bots().keys() {
             users_to_notify.remove(bot);
         }
