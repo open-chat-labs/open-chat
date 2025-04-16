@@ -8,6 +8,7 @@ import {
     type UserGroupDetails,
     type VersionedRules,
     chatIdentifiersEqual,
+    chatListScopesEqual,
     communityIdentifiersEqual,
     messageContextsEqual,
 } from "openchat-shared";
@@ -37,6 +38,9 @@ class AppState {
 
     #chatsInitialised = $state(false);
     #chatsLoading = $state(false);
+
+    // TODO - this does not seem to be working as intended - investigate why
+    #chatListScope = $derived.by(withEqCheck(() => pathState.route.scope, chatListScopesEqual));
 
     // TODO - not sure this currently works with *starting* threads
     // I feel uneasy about this as a *concept* because if I have a chat open *and* a thread open then there are two
@@ -81,6 +85,10 @@ class AppState {
 
     get chatsInitialised() {
         return this.#chatsInitialised;
+    }
+
+    get chatListScope() {
+        return this.#chatListScope;
     }
 
     set chatsInitialised(val: boolean) {

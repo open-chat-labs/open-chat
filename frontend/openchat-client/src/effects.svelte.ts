@@ -10,6 +10,8 @@ import { pathState } from "./state/path.svelte";
  *
  * Currently we handle this in the Home component but this is arbitrary - it really has nothing to
  * do with the component hierarchy.
+ *
+ * Question: Are these effects going to get out of hand and become impossible to reason about?
  */
 
 export function configureEffects(client: OpenChat) {
@@ -22,33 +24,48 @@ export function configureEffects(client: OpenChat) {
                 // this untrack is not really necessary in this case but it's probably a good pattern to follow to
                 // make double sure we are only reacting to the things we want to react to
                 untrack(() => {
-                    client.setSelectedCommunity(id, true).then((found) => {
-                        if (found) {
-                            client.selectFirstChat();
-                        }
-                    });
+                    client.setSelectedCommunity(id, true);
                 });
             }
         });
 
         $effect(() => {
+            // we have to be *so* careful with the reactivity here. Is this actually better?
             if (
                 app.chatsInitialised &&
                 app.selectedChatId !== undefined &&
-                (pathState.route.kind === "selected_channel_route" ||
-                    pathState.route.kind === "global_chat_selected_route")
+                (pathState.routeKind === "selected_channel_route" ||
+                    pathState.routeKind === "global_chat_selected_route")
             ) {
-                const id = app.selectedChatId;
-                const messageIndex = pathState.route.messageIndex;
-                const threadMessageIndex = pathState.route.threadMessageIndex;
-
                 untrack(() => {
-                    client.setSelectedChat(id, messageIndex, threadMessageIndex);
+                    if (
+                        pathState.route.kind === "selected_channel_route" ||
+                        pathState.route.kind === "global_chat_selected_route"
+                    ) {
+                        const id = app.selectedChatId;
+                        const messageIndex = pathState.route.messageIndex;
+                        const threadMessageIndex = pathState.route.threadMessageIndex;
+                        if (id !== undefined) {
+                            client.setSelectedChat(id, messageIndex, threadMessageIndex);
+                        }
+                    }
                 });
             }
         });
 
-        //TODO - imagine we also had an effect here track selectedChatId, we would then have two things potentially
-        // loading the selected chat. We'll cross that bridge when we come to it.
+        $effect(() => {
+            if (app.selectedChatId === undefined) {
+                client.clearSelectedChat();
+            }
+        });
+
+        // TODO - this seems to be a reasonable approach, but it causes a flicker of No Chat Selected for some reason
+        // so we might need to rethink - ok for now though.
+        // Actually this is already the case on webtest & prod so it's no worse - but could it be better?
+        $effect(() => {
+            if (app.selectedChatId === undefined && pathState.route.scope.kind !== "none") {
+                client.selectFirstChat();
+            }
+        });
     });
 }

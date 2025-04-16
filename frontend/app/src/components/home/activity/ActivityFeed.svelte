@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
         globalStateStore as global,
+        messageContextToChatListScope,
         messageContextToString,
         OpenChat,
         routeForMessage,
@@ -40,7 +41,13 @@
 
     function selectEvent(ev: MessageActivityEvent, idx: number) {
         selectedEventIndex = idx;
-        page(routeForMessage("none", ev.messageContext, ev.messageIndex));
+        page(
+            routeForMessage(
+                messageContextToChatListScope(ev.messageContext).kind,
+                ev.messageContext,
+                ev.messageIndex,
+            ),
+        );
     }
 
     function eventKey(event: MessageActivityEvent): string {

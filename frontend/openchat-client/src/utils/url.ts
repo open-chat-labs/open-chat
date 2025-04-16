@@ -25,3 +25,10 @@ export function addQueryStringParam(name: string, val: string): string {
 
 // detect whether the user is on a canister based url of the form https://6hsbt-vqaaa-aaaaf-aaafq-cai.ic0.app/
 export const isCanisterUrl = /https:\/\/.*\.ic0\.app/.test(window.location.origin);
+
+export function removeQueryStringParam(name: string): string {
+    const path = window.location.pathname;
+    const qs = new URLSearchParams(window.location.search);
+    qs.delete(name);
+    return [...qs.keys()].length > 0 ? `${path}?${qs}` : path;
+}

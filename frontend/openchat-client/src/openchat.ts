@@ -268,6 +268,7 @@ import {
     userStatus,
     WEBAUTHN_ORIGINATING_CANISTER,
 } from "openchat-shared";
+import page from "page";
 import { get } from "svelte/store";
 import type { OpenChatConfig } from "./config";
 import { AIRDROP_BOT_USER_ID } from "./constants";
@@ -323,6 +324,7 @@ import { failedMessagesStore } from "./stores/failedMessages";
 import {
     disableAllProposalFilters,
     enableAllProposalFilters,
+    resetFilteredProposalsStore,
     toggleProposalFilter,
     toggleProposalFilterMessageExpansion,
 } from "./stores/filteredProposals";
@@ -2773,6 +2775,20 @@ export class OpenChat {
         }
     }
 
+    #loadSnsFunctionsForChat(chat: ChatSummary) {
+        if (
+            (chat.kind === "group_chat" || chat.kind === "channel") &&
+            chat.subtype !== undefined &&
+            chat.subtype.kind === "governance_proposals" &&
+            !chat.subtype.isNns
+        ) {
+            const { governanceCanisterId } = chat.subtype;
+            this.listNervousSystemFunctions(governanceCanisterId).then((val) => {
+                snsFunctions.set(governanceCanisterId, val.functions);
+            });
+        }
+    }
+
     #setSelectedChat(
         chatId: ChatIdentifier,
         messageIndex?: number,
@@ -2785,35 +2801,52 @@ export class OpenChat {
             return;
         }
 
-        if (
-            (clientChat.kind === "group_chat" || clientChat.kind === "channel") &&
-            clientChat.subtype !== undefined &&
-            clientChat.subtype.kind === "governance_proposals" &&
-            !clientChat.subtype.isNns
-        ) {
-            const { governanceCanisterId } = clientChat.subtype;
-            this.listNervousSystemFunctions(governanceCanisterId).then((val) => {
-                snsFunctions.set(governanceCanisterId, val.functions);
-            });
+        this.#loadSnsFunctionsForChat(clientChat);
+
+        setChatSpecificState(clientChat, messageIndex, threadMessageIndex);
+
+        if (messageIndex === undefined) {
+            messageIndex = isPreviewing(clientChat)
+                ? undefined
+                : messagesRead.getFirstUnreadMessageIndex(
+                      clientChat.id,
+                      clientChat.latestMessage?.event.messageIndex,
+                  );
+
+            if (messageIndex !== undefined) {
+                const latestServerMessageIndex = serverChat?.latestMessage?.event.messageIndex ?? 0;
+
+                if (messageIndex > latestServerMessageIndex) {
+                    messageIndex = undefined;
+                }
+            }
         }
 
-        setChatSpecificState(clientChat, serverChat, messageIndex, threadMessageIndex);
+        // TODO - we might be able to get rid of this
+        resetFilteredProposalsStore(clientChat);
 
+        // TODO - this might belong as a derivation in the selected chat state
         this.#userLookupForMentions = undefined;
 
-        const { selectedChat, focusMessageIndex } = this.#liveState;
+        const { selectedChat } = this.#liveState;
         if (selectedChat !== undefined) {
             if (!this.#uninstalledBotChat(selectedChat)) {
-                if (focusMessageIndex !== undefined) {
-                    this.loadEventWindow(chatId, focusMessageIndex, undefined, true).then(() => {
+                if (messageIndex !== undefined) {
+                    this.loadEventWindow(chatId, messageIndex, undefined, true).then(() => {
                         if (serverChat !== undefined) {
-                            this.#loadChatDetails(serverChat);
+                            this.#loadChatDetails(serverChat, messageIndex, threadMessageIndex);
                         }
                     });
                 } else {
+                    // TODO - this is awkward because the server events are loaded *before* we have
+                    // loaded the chat details.
+                    // Why do we do it in that order I wonder?
+                    // I guess it is because we don't want anything to delay the events.
+                    // But having things split like this is where it gets a bit race condition-y
+
                     this.loadPreviousMessages(chatId, undefined, true).then(() => {
                         if (serverChat !== undefined) {
-                            this.#loadChatDetails(serverChat);
+                            this.#loadChatDetails(serverChat, messageIndex, threadMessageIndex);
                         }
                     });
                 }
@@ -3265,7 +3298,11 @@ export class OpenChat {
         }
     }
 
-    async #loadChatDetails(serverChat: ChatSummary): Promise<void> {
+    async #loadChatDetails(
+        serverChat: ChatSummary,
+        focusMessageIndex?: number,
+        focusThreadMessageIndex?: number,
+    ): Promise<void> {
         // currently this is only meaningful for group chats, but we'll set it up generically just in case
         if (serverChat.kind === "group_chat" || serverChat.kind === "channel") {
             const resp: GroupChatDetailsResponse = await this.#sendRequest({
@@ -6118,7 +6155,7 @@ export class OpenChat {
 
             app.chatsInitialised = true;
 
-            publish("chatsUpdated");
+            this.#closeNotificationsIfNecessary();
 
             if (chatsResponse.newAchievements.length > 0) {
                 const filtered = chatsResponse.newAchievements.filter(
@@ -9173,13 +9210,31 @@ export class OpenChat {
         }
     }
 
-    async closeNotifications(shouldClose: (notification: Notification) => boolean): Promise<void> {
+    #shouldCloseNotification(notification: Notification) {
+        if (
+            notification.kind === "channel_notification" ||
+            notification.kind === "direct_notification" ||
+            notification.kind === "group_notification"
+        ) {
+            return this.isMessageRead(
+                {
+                    chatId: notification.chatId,
+                },
+                notification.messageIndex,
+                undefined,
+            );
+        }
+
+        return false;
+    }
+
+    async #closeNotificationsIfNecessary(): Promise<void> {
         const registration = await this.#getRegistration();
         if (registration !== undefined) {
             const notifications = await registration.getNotifications();
             for (const notification of notifications) {
                 const raw = notification?.data?.notification as Notification;
-                if (raw !== undefined && shouldClose(raw)) {
+                if (raw !== undefined && this.#shouldCloseNotification(raw)) {
                     notification.close();
                 }
             }

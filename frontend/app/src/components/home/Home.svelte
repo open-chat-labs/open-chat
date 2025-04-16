@@ -17,7 +17,6 @@
         MultiUserChat,
         MultiUserChatIdentifier,
         NervousSystemDetails,
-        Notification,
         OpenChat,
         PubSubEvents,
         ResourceKey,
@@ -219,7 +218,6 @@
             subscribe("convertGroupToCommunity", convertGroupToCommunity),
             subscribe("clearSelection", () => page(routeForScope($chatListScope))),
             subscribe("editGroup", editGroup),
-            subscribe("chatsUpdated", chatsUpdated),
             subscribe("userSuspensionChanged", () => window.location.reload()),
             subscribe("selectedChatInvalid", selectedChatInvalid),
             subscribe("sendMessageFailed", sendMessageFailed),
@@ -249,28 +247,6 @@
         };
     });
 
-    $inspect(app.selectedMessageContext).with(console.trace);
-
-    function chatsUpdated() {
-        client.closeNotifications((notification: Notification) => {
-            if (
-                notification.kind === "channel_notification" ||
-                notification.kind === "direct_notification" ||
-                notification.kind === "group_notification"
-            ) {
-                return client.isMessageRead(
-                    {
-                        chatId: notification.chatId,
-                    },
-                    notification.messageIndex,
-                    undefined,
-                );
-            }
-
-            return false;
-        });
-    }
-
     function selectedChatInvalid() {
         pageReplace(routeForScope(client.getDefaultScope()));
     }
@@ -292,6 +268,8 @@
     function removeBot() {
         modal = { kind: "remove_bot" };
     }
+
+    $inspect(modal).with(console.trace);
 
     function summonWitch() {
         const isHalloweenTheme = $currentThemeName === "halloween";
@@ -376,7 +354,7 @@
                     pathState.isSelectedChannelRoute(route)
                 ) {
                     // if the chat in the url is different from the chat we already have selected
-                    if (!chatIdentifiersEqual(route.chatId, $selectedChatId)) {
+                    if (!chatIdentifiersEqual(route.chatId, app.selectedChatId)) {
                         // Note - this is now done automatically as an effect of the route change
                         // client.setSelectedChat(
                         //     route.chatId,
@@ -386,17 +364,13 @@
                     } else {
                         // if the chat in the url is *the same* as the selected chat
                         // *and* if we have a messageIndex specified in the url
+
                         if (route.messageIndex !== undefined) {
                             waitAndScrollToMessageIndex(route.messageIndex, false);
                         }
                     }
                 } else {
                     // any other route with no associated chat therefore we must clear any selected chat and potentially close the right panel
-                    if ($selectedChatId !== undefined) {
-                        client.clearSelectedChat();
-                    }
-                    filterChatSpecificRightPanelStates();
-
                     if (pathState.isShareRoute(route)) {
                         share = {
                             title: route.title,
@@ -407,43 +381,6 @@
                         pageReplace(routeForScope(client.getDefaultScope()));
                         modal = { kind: "select_chat" };
                     }
-                }
-
-                // regardless of the path params, we *always* check the query string
-                const diamond = pathState.querystring.get("diamond");
-                if (diamond !== null) {
-                    showUpgrade = true;
-                    pageReplace(removeQueryStringParam("diamond"));
-                }
-
-                const wallet = pathState.querystring.get("wallet");
-                if (wallet !== null) {
-                    modal = { kind: "wallet" };
-                    pageReplace(removeQueryStringParam("wallet"));
-                }
-
-                const faq = pathState.querystring.get("faq");
-                if (faq !== null) {
-                    pageReplace(`/faq?q=${faq}`);
-                }
-
-                const hof = pathState.querystring.get("hof");
-                if (hof !== null) {
-                    modal = { kind: "hall_of_fame" };
-                    pageReplace(removeQueryStringParam("hof"));
-                }
-
-                const everyone = pathState.querystring.get("everyone");
-                if (everyone !== null) {
-                    ui.rightPanelHistory = [{ kind: "show_group_members" }];
-                    pageReplace(removeQueryStringParam("everyone"));
-                }
-
-                const usergroup = pathState.querystring.get("usergroup");
-                if (usergroup !== null) {
-                    const userGroupId = Number(usergroup);
-                    ui.rightPanelHistory = [{ kind: "show_community_members", userGroupId }];
-                    pageReplace(removeQueryStringParam("usergroup"));
                 }
 
                 if (client.captureReferralCode()) {
@@ -849,6 +786,7 @@
     }
 
     function showWallet() {
+        console.log("show wallet");
         modal = { kind: "wallet" };
     }
 
@@ -1066,8 +1004,40 @@
             tick().then(() => joinGroup(join));
         }
     });
+
     trackedEffect("route-change", () => {
         routeChange(app.chatsInitialised, pathState.route);
+    });
+
+    $effect(() => {
+        if (app.chatsInitialised) {
+            if (pathState.querystring.get("diamond") !== null) {
+                showUpgrade = true;
+                pageReplace(removeQueryStringParam("diamond"));
+            }
+            const faq = pathState.querystring.get("faq");
+            if (faq !== null) {
+                pageReplace(`/faq?q=${faq}`);
+            }
+            if (pathState.querystring.get("wallet") !== null) {
+                showWallet();
+                pageReplace(removeQueryStringParam("wallet"));
+            }
+            if (pathState.querystring.get("hof") !== null) {
+                modal = { kind: "hall_of_fame" };
+                pageReplace(removeQueryStringParam("hof"));
+            }
+            if (pathState.querystring.get("everyone") !== null) {
+                ui.rightPanelHistory = [{ kind: "show_group_members" }];
+                pageReplace(removeQueryStringParam("everyone"));
+            }
+            const usergroup = pathState.querystring.get("usergroup");
+            if (usergroup !== null) {
+                const userGroupId = Number(usergroup);
+                ui.rightPanelHistory = [{ kind: "show_community_members", userGroupId }];
+                pageReplace(removeQueryStringParam("usergroup"));
+            }
+        }
     });
     let bgHeight = $derived(ui.dimensions.height * 0.9);
     let bgClip = $derived(((ui.dimensions.height - 32) / bgHeight) * 361);
