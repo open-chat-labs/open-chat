@@ -2693,7 +2693,6 @@ export class OpenChat {
     ): Promise<void> {
         let chat = this.#liveState.chatSummaries.get(chatId);
         const scope = this.#liveState.chatListScope;
-        console.log("ChatListScope: ", scope);
         let autojoin = false;
 
         // if this is an unknown chat let's preview it
