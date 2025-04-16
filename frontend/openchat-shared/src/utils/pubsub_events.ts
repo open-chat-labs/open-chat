@@ -81,7 +81,6 @@ export type PubSubEvents = {
         context: MessageContext;
         event: EventWrapper<Message>;
     };
-    chatsUpdated: undefined;
     userLoggedIn: string;
     reactionSelected: { messageId: bigint; kind: "add" | "remove" };
     userSuspensionChanged: undefined;
@@ -126,4 +125,5 @@ export type PubSubEvents = {
     remoteVideoCallEnded: bigint;
     notification: Notification;
     noAccess: undefined;
+    notFound: undefined;
 };

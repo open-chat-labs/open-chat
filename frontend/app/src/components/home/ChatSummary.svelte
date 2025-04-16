@@ -45,7 +45,6 @@
     import { rtlStore } from "../../stores/rtl";
     import { now } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
-    import { notificationsSupported } from "../../utils/notifications";
     import { pop } from "../../utils/transition";
     import { buildDisplayName } from "../../utils/user";
     import Avatar from "../Avatar.svelte";
@@ -411,7 +410,7 @@
             <!-- this date formatting is OK for now but we might want to use something like this:
             https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
             <div class:rtl={$rtlStore} class="chat-date">
-                {#if muted && notificationsSupported}
+                {#if muted && ui.notificationsSupported}
                     <div class="mute icon" class:rtl={$rtlStore}>
                         <MutedIcon size={"1em"} color={"var(--icon-txt)"} />
                     </div>
@@ -521,7 +520,7 @@
                                             {/snippet}
                                         </MenuItem>
                                     {/if}
-                                    {#if notificationsSupported && !externalContent}
+                                    {#if ui.notificationsSupported && !externalContent}
                                         {#if muted}
                                             <MenuItem
                                                 onclick={() => toggleMuteNotifications(false)}>

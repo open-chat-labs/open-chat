@@ -37,7 +37,6 @@
     import { rtlStore } from "../../stores/rtl";
     import { toastStore } from "../../stores/toast";
     import { activeVideoCall } from "../../stores/video";
-    import { notificationsSupported } from "../../utils/notifications";
     import HoverIcon from "../HoverIcon.svelte";
     import ConvertToCommunity from "../icons/ConvertToCommunity.svelte";
     import HeartMinus from "../icons/HeartMinus.svelte";
@@ -456,7 +455,7 @@
                         {/if}
                     {/if}
 
-                    {#if notificationsSupported}
+                    {#if ui.notificationsSupported}
                         {#if selectedChatSummary.membership.notificationsMuted === true}
                             <MenuItem onclick={() => toggleMuteNotifications(false)}>
                                 {#snippet icon()}
@@ -563,7 +562,7 @@
                             {/snippet}
                         </MenuItem>
                     {/if}
-                    {#if notificationsSupported}
+                    {#if ui.notificationsSupported}
                         {#if selectedChatSummary.membership.notificationsMuted === true}
                             <MenuItem onclick={() => toggleMuteNotifications(false)}>
                                 {#snippet icon()}

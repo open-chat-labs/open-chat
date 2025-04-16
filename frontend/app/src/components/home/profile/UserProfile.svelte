@@ -54,7 +54,6 @@
     import { toastStore } from "../../../stores/toast";
     import { uniquePersonGate } from "../../../utils/access";
     import { isTouchDevice } from "../../../utils/devices";
-    import { notificationsSupported } from "../../../utils/notifications";
     import Avatar from "../../Avatar.svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -505,7 +504,7 @@
                         onChange={() => dclickReply.toggle()}
                         label={i18nKey(isTouchDevice ? "doubleTapReply" : "doubleClickReply")}
                         checked={$dclickReply} />
-                    {#if notificationsSupported}
+                    {#if ui.notificationsSupported}
                         <Toggle
                             id={"notifications"}
                             small
