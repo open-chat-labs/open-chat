@@ -5,7 +5,7 @@ import {
     type EventsResponse,
     type EventsSuccessResult,
     type IndexRange,
-    isError,
+    isSuccessfulEventsResponse,
 } from "openchat-shared";
 
 function mergeEventsResponse<T extends ChatEvent>(
@@ -45,7 +45,7 @@ export async function chunkedChatEventsFromBackend(
             const resp = await eventsFn(index, chunkSize);
 
             // if we get any failures we will need to bail otherwise things are going to get very messed up
-            if (isError(resp)) return resp;
+            if (!isSuccessfulEventsResponse(resp)) return resp;
 
             aggregatedResponse = ascending
                 ? mergeEventsResponse(aggregatedResponse, resp)
@@ -100,7 +100,7 @@ export async function chunkedChatEventsWindowFromBackend(
                 const resp = await eventsWindowFn(lowIndex, chunkSize);
 
                 // if we get any failures we will need to bail otherwise things are going to get very messed up
-                if (isError(resp)) return resp;
+                if (!isSuccessfulEventsResponse(resp)) return resp;
 
                 aggregatedResponse = mergeEventsResponse(aggregatedResponse, resp);
             } else {
@@ -108,7 +108,7 @@ export async function chunkedChatEventsWindowFromBackend(
                 if (lowIndex >= minIndex) {
                     const above = await eventsFn(lowIndex, false, chunkSize);
 
-                    if (isError(above)) return above;
+                    if (!isSuccessfulEventsResponse(above)) return above;
 
                     aggregatedResponse = mergeEventsResponse(above, aggregatedResponse);
                 }
@@ -116,7 +116,7 @@ export async function chunkedChatEventsWindowFromBackend(
                 if (highIndex <= maxIndex) {
                     const below = await eventsFn(highIndex, true, chunkSize);
 
-                    if (isError(below)) return below;
+                    if (!isSuccessfulEventsResponse(below)) return below;
 
                     aggregatedResponse = mergeEventsResponse(aggregatedResponse, below);
                 }

@@ -122,7 +122,7 @@ import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
 import { setCachedMessageFromSendResponse } from "../../utils/caching";
 import type { CancelP2PSwapResponse } from "openchat-shared";
-import { ResponseTooLargeError, isError } from "openchat-shared";
+import { ResponseTooLargeError, isSuccessfulEventsResponse } from "openchat-shared";
 import {
     chunkedChatEventsFromBackend,
     chunkedChatEventsWindowFromBackend,
@@ -281,7 +281,7 @@ export class GroupClient extends MsgpackCanisterAgent {
             )
                 .then((resp) => this.setCachedEvents(resp, threadRootMessageIndex))
                 .then((resp) => {
-                    if (!isError(resp)) {
+                    if (isSuccessfulEventsResponse(resp)) {
                         return mergeSuccessResponses(cachedEvents, resp);
                     }
                     return resp;
@@ -780,7 +780,7 @@ export class GroupClient extends MsgpackCanisterAgent {
         }
 
         const response = await this.getGroupDetailsFromBackend();
-        if (!isError(response)) {
+        if (typeof response === "object" && "members" in response) {
             await setCachedGroupDetails(this.db, this.chatId.groupId, response);
         }
         return response;
@@ -856,14 +856,14 @@ export class GroupClient extends MsgpackCanisterAgent {
                 latestKnownUpdate,
             ).then((resp) => this.setCachedEvents(resp));
 
-            return isError(resp)
-                ? resp
-                : {
+            return isSuccessfulEventsResponse(resp)
+                ? {
                       events: [...fromCache.messageEvents, ...resp.events],
                       expiredEventRanges: [],
                       expiredMessageRanges: [],
                       latestEventIndex: resp.latestEventIndex,
-                };
+                }
+                : resp
         }
         return {
             events: fromCache.messageEvents,

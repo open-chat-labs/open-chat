@@ -135,7 +135,6 @@ import type {
     PaymentGateApprovals,
     PendingCryptocurrencyTransfer,
     PendingCryptocurrencyWithdrawal,
-    PinNumberFailures,
     PreprocessedGate,
     ProposalVoteDetails,
     ProposeResponse,
@@ -237,8 +236,6 @@ import {
     isTransfer,
     LARGE_GROUP_THRESHOLD,
     LEDGER_CANISTER_CHAT,
-    mapAcceptP2PSwapResponseToStatus,
-    mapCancelP2PSwapResponseToStatus,
     MessageContextMap,
     messageContextsEqual,
     missingUserIds,
@@ -266,6 +263,9 @@ import {
     userOrUserGroupName,
     userStatus,
     WEBAUTHN_ORIGINATING_CANISTER,
+    pinNumberFailureFromError,
+    ErrorCode,
+    isSuccessfulEventsResponse,
 } from "openchat-shared";
 import { get } from "svelte/store";
 import type { OpenChatConfig } from "./config";
@@ -1180,7 +1180,7 @@ export class OpenChat {
                         }
                         return CommonResponses.failure();
                     })
-                    .catch(() => CommonResponses.failure());
+                    .catch(CommonResponses.failure);
         }
     }
 
@@ -1188,10 +1188,10 @@ export class OpenChat {
         localChatSummaryUpdates.markUpdated(chatId, { notificationsMuted: muted });
         return this.#sendRequest({ kind: "toggleMuteNotifications", id: chatId, muted })
             .then((resp) => {
-                if (resp !== "success") {
+                if (resp.kind !== "success") {
                     localChatSummaryUpdates.markUpdated(chatId, { notificationsMuted: undefined });
                 }
-                return resp === "success";
+                return resp.kind === "success";
             })
             .catch(() => {
                 localChatSummaryUpdates.markUpdated(chatId, { notificationsMuted: undefined });
@@ -1211,14 +1211,14 @@ export class OpenChat {
 
         return this.#sendRequest({ kind: "toggleMuteNotifications", id: communityId, muted: true })
             .then((resp) => {
-                if (resp !== "success") {
+                if (resp.kind !== "success") {
                     community.channels.forEach((c) =>
                         localChatSummaryUpdates.markUpdated(c.id, {
                             notificationsMuted: undefined,
                         }),
                     );
                 }
-                return resp === "success";
+                return resp.kind === "success";
             })
             .catch(() => {
                 community.channels.forEach((c) =>
@@ -1232,7 +1232,7 @@ export class OpenChat {
         localChatSummaryUpdates.markUpdated(chatId, { archived: true });
         return this.#sendRequest({ kind: "archiveChat", chatId })
             .then((resp) => {
-                return resp === "success";
+                return resp.kind === "success";
             })
             .catch(() => {
                 localChatSummaryUpdates.markUpdated(chatId, { archived: undefined });
@@ -1243,7 +1243,7 @@ export class OpenChat {
     unarchiveChat(chatId: ChatIdentifier): Promise<boolean> {
         localChatSummaryUpdates.markUpdated(chatId, { archived: false });
         return this.#sendRequest({ kind: "unarchiveChat", chatId })
-            .then((resp) => resp === "success")
+            .then((resp) => resp.kind === "success")
             .catch(() => {
                 localChatSummaryUpdates.markUpdated(chatId, { archived: undefined });
                 return false;
@@ -1264,10 +1264,10 @@ export class OpenChat {
             favourite: scope === "favourite",
         })
             .then((resp) => {
-                if (resp !== "success") {
+                if (resp.kind !== "success") {
                     localChatSummaryUpdates.unpin(chatId, scope);
                 }
-                return resp === "success";
+                return resp.kind === "success";
             })
             .catch(() => {
                 localChatSummaryUpdates.unpin(chatId, scope);
@@ -1285,10 +1285,10 @@ export class OpenChat {
             favourite: scope === "favourite",
         })
             .then((resp) => {
-                if (resp !== "success") {
+                if (resp.kind !== "success") {
                     localChatSummaryUpdates.pin(chatId, scope);
                 }
-                return resp === "success";
+                return resp.kind === "success";
             })
             .catch(() => {
                 localChatSummaryUpdates.pin(chatId, scope);
@@ -1301,7 +1301,7 @@ export class OpenChat {
         rtcConnectionsManager.disconnectFromUser(userId);
         return this.#sendRequest({ kind: "blockUserFromDirectChat", userId })
             .then((resp) => {
-                return resp === "success";
+                return resp.kind === "success";
             })
             .catch(() => {
                 blockedUsers.delete(userId);
@@ -1313,7 +1313,7 @@ export class OpenChat {
         blockedUsers.delete(userId);
         return this.#sendRequest({ kind: "unblockUserFromDirectChat", userId })
             .then((resp) => {
-                return resp === "success";
+                return resp.kind === "success";
             })
             .catch(() => {
                 blockedUsers.add(userId);
@@ -1340,7 +1340,7 @@ export class OpenChat {
         // TODO we don't use the local updates mechanism here at the moment for some reason. Probably should.
         return this.#sendRequest({ kind: "deleteGroup", chatId })
             .then((resp) => {
-                if (resp === "success") {
+                if (resp.kind === "success") {
                     this.removeChat(chatId);
                     return true;
                 } else {
@@ -1372,14 +1372,14 @@ export class OpenChat {
         localChatSummaryUpdates.markRemoved(chatId);
         return this.#sendRequest({ kind: "leaveGroup", chatId })
             .then((resp) => {
-                if (resp === "success") {
+                if (resp.kind === "success") {
                     return "success";
                 } else {
                     const chat = this.#liveState.chatSummaries.get(chatId);
                     if (chat) {
                         localChatSummaryUpdates.markAdded(chat);
                     }
-                    if (resp === "owner_cannot_leave") {
+                    if (resp.kind === "error" && resp.code === ErrorCode.LastOwnerCannotLeave) {
                         return "owner_cannot_leave";
                     } else {
                         return "failure";
@@ -1496,14 +1496,13 @@ export class OpenChat {
             pin,
         })
             .then((response) => {
-                if (response.kind === "approve_error" || response.kind === "internal_error") {
-                    this.#logger.error("Unable to approve transfer", response.error);
-                } else if (
-                    response.kind === "pin_incorrect" ||
-                    response.kind === "pin_required" ||
-                    response.kind === "too_main_failed_pin_attempts"
-                ) {
-                    pinNumberFailureStore.set(response as PinNumberFailures);
+                if (response.kind === "error") {
+                    const pinNumberFailure = pinNumberFailureFromError(response);
+                    if (pinNumberFailure !== undefined) {
+                        pinNumberFailureStore.set(pinNumberFailure);
+                    } else {
+                        this.#logger.error("Unable to approve transfer", response);
+                    }
                 }
 
                 return response;
@@ -1529,20 +1528,18 @@ export class OpenChat {
             pin,
         })
             .then((response) => {
-                if (response.kind === "approve_error" || response.kind === "internal_error") {
-                    this.#logger.error("Unable to approve transfer", response.error);
-                    return CommonResponses.failure();
-                } else if (
-                    response.kind === "pin_incorrect" ||
-                    response.kind === "pin_required" ||
-                    response.kind === "too_main_failed_pin_attempts"
-                ) {
-                    pinNumberFailureStore.set(response as PinNumberFailures);
+                if (response.kind === "error") {
+                    const pinNumberFailure = pinNumberFailureFromError(response);
+                    if (pinNumberFailure !== undefined) {
+                        pinNumberFailureStore.set(pinNumberFailure);
+                    } else {
+                        this.#logger.error("Unable to approve transfer", response);
+                    }
                 }
 
                 return response;
             })
-            .catch(() => CommonResponses.failure());
+            .catch(CommonResponses.failure);
     }
 
     async joinGroup(
@@ -1590,7 +1587,7 @@ export class OpenChat {
                         removeCommunityPreview(resp.community.id);
                     }
                 } else {
-                    if (resp.kind === "user_blocked") {
+                    if (resp.kind === "error" && resp.code === ErrorCode.InitiatorBlocked) {
                         return CommonResponses.blocked();
                     } else if (resp.kind === "gate_check_failed") {
                         return resp;
@@ -1607,7 +1604,7 @@ export class OpenChat {
                 }
                 return resp;
             })
-            .catch(() => CommonResponses.failure());
+            .catch(CommonResponses.failure);
     }
 
     #buildVerifiedCredentialArgs(credentials: string[]): VerifiedCredentialArgs | undefined {
@@ -1639,7 +1636,7 @@ export class OpenChat {
             displayName,
             newAchievement,
         }).then((resp) => {
-            if (resp === "success") {
+            if (resp.kind === "success") {
                 const userId = this.#liveState.user.userId;
                 if (userId !== undefined) {
                     const m = app.selectedCommunityDetails.members.get(userId);
@@ -1673,7 +1670,7 @@ export class OpenChat {
             newAchievement,
         })
             .then((resp) => {
-                if (resp === "failed") {
+                if (resp.kind !== "success") {
                     localMessageUpdates.markThreadSummaryUpdated(message.messageId, {
                         followedByMe: !follow,
                     });
@@ -2143,7 +2140,7 @@ export class OpenChat {
             threadRootMessageIndex,
             newAchievement,
         })
-            .then((resp) => resp === "success")
+            .then((resp) => resp.kind === "success")
             .catch(() => false);
     }
 
@@ -2195,7 +2192,7 @@ export class OpenChat {
             newAchievement,
         })
             .then((resp) => {
-                const success = resp === "success";
+                const success = resp.kind === "success";
                 if (!success) {
                     _undelete();
                 }
@@ -2382,9 +2379,9 @@ export class OpenChat {
             messageIndex,
             threadRootMessageIndex: threadRootEvent.event.messageIndex,
             latestKnownUpdate: chat.lastUpdated,
-        }).catch(() => "events_failed");
+        }).catch(CommonResponses.failure);
 
-        if (eventsResponse === undefined || eventsResponse === "events_failed") {
+        if (!isSuccessfulEventsResponse(eventsResponse)) {
             return undefined;
         }
 
@@ -2436,9 +2433,9 @@ export class OpenChat {
                 messageIndex,
                 threadRootMessageIndex: undefined,
                 latestKnownUpdate: serverChat?.lastUpdated,
-            }).catch(() => "events_failed");
+            }).catch(CommonResponses.failure);
 
-            if (eventsResponse === undefined || eventsResponse === "events_failed") {
+            if (!isSuccessfulEventsResponse(eventsResponse)) {
                 return undefined;
             }
 
@@ -2462,7 +2459,7 @@ export class OpenChat {
         resp: EventsResponse<ChatEvent>,
         keepCurrentEvents = true,
     ): Promise<boolean> {
-        if (resp === "events_failed") return false;
+        if (!isSuccessfulEventsResponse(resp)) return false;
 
         if (!keepCurrentEvents) {
             clearServerEvents(chat.id);
@@ -2605,7 +2602,7 @@ export class OpenChat {
         this.#blockUserLocally(chatId, userId);
         return this.#sendRequest({ kind: "blockUserFromGroupChat", chatId, userId })
             .then((resp) => {
-                if (resp !== "success") {
+                if (resp.kind !== "success") {
                     this.#unblockUserLocally(chatId, userId, true);
                     return false;
                 }
@@ -2621,7 +2618,7 @@ export class OpenChat {
         this.#unblockUserLocally(chatId, userId, false);
         return this.#sendRequest({ kind: "unblockUserFromGroupChat", chatId, userId })
             .then((resp) => {
-                if (resp !== "success") {
+                if (resp.kind !== "success") {
                     this.#blockUserLocally(chatId, userId);
                     return false;
                 }
@@ -2805,14 +2802,14 @@ export class OpenChat {
             ascending,
             threadRootMessageIndex,
             latestKnownUpdate: chat.lastUpdated,
-        }).catch(() => "events_failed");
+        }).catch(CommonResponses.failure);
 
         if (!messageContextsEqual(context, this.#liveState.selectedMessageContext)) {
             // the selected thread has changed while we were loading the messages
             return;
         }
 
-        if (eventsResponse !== undefined && eventsResponse !== "events_failed") {
+        if (isSuccessfulEventsResponse(eventsResponse)) {
             if (clearEvents) {
                 threadServerEventsStore.set([]);
             }
@@ -2845,7 +2842,7 @@ export class OpenChat {
         threadRootMessageIndex: number,
         resp: EventsResponse<ChatEvent>,
     ): Promise<EventWrapper<ChatEvent>[]> {
-        if (resp === "events_failed") return [];
+        if (!isSuccessfulEventsResponse(resp)) return [];
 
         const context = { chatId, threadRootMessageIndex };
 
@@ -3001,7 +2998,7 @@ export class OpenChat {
             ? await this.#loadEvents(serverChat, criteria[0], criteria[1])
             : undefined;
 
-        if (eventsResponse === undefined || eventsResponse === "events_failed") {
+        if (!isSuccessfulEventsResponse(eventsResponse)) {
             return;
         }
 
@@ -3027,7 +3024,7 @@ export class OpenChat {
             ascending,
             threadRootMessageIndex: undefined,
             latestKnownUpdate: serverChat.lastUpdated,
-        }).catch(() => "events_failed");
+        }).catch(CommonResponses.failure);
     }
 
     #previousMessagesCriteria(serverChat: ChatSummary): [number, boolean] | undefined {
@@ -3083,7 +3080,7 @@ export class OpenChat {
             ? await this.#loadEvents(serverChat, criteria[0], criteria[1])
             : undefined;
 
-        if (eventsResponse === undefined || eventsResponse === "events_failed") {
+        if (!isSuccessfulEventsResponse(eventsResponse)) {
             return;
         }
 
@@ -3166,8 +3163,8 @@ export class OpenChat {
                 kind: "getGroupDetails",
                 chatId: serverChat.id,
                 chatLastUpdated: serverChat.lastUpdated,
-            }).catch(() => "failure");
-            if (resp !== "failure") {
+            }).catch(CommonResponses.failure);
+            if ("members" in resp) {
                 const members = resp.members.filter((m) => !m.lapsed);
                 const lapsed = new Set(resp.members.filter((m) => m.lapsed).map((m) => m.userId));
                 chatStateStore.setProp(serverChat.id, "lapsedMembers", lapsed);
@@ -3263,16 +3260,16 @@ export class OpenChat {
                             eventIndexes: currentChatEvents,
                             threadRootMessageIndex: undefined,
                             latestKnownUpdate: serverChat.lastUpdated,
-                        }).catch(() => "events_failed" as EventsResponse<ChatEvent>)
+                        }).catch(CommonResponses.failure)
                       : this.#sendRequest({
                             kind: "chatEventsByEventIndex",
                             chatId: serverChat.id,
                             eventIndexes: currentChatEvents,
                             threadRootMessageIndex: undefined,
                             latestKnownUpdate: serverChat.lastUpdated,
-                        }).catch(() => "events_failed" as EventsResponse<ChatEvent>)
+                        }).catch(CommonResponses.failure)
                   ).then((resp) => {
-                      if (resp !== "events_failed") {
+                      if (isSuccessfulEventsResponse(resp)) {
                           resp.events.forEach((e) => {
                               if (
                                   e.event.kind === "message" &&
@@ -3297,16 +3294,16 @@ export class OpenChat {
                       eventIndexes: currentThreadEvents,
                       threadRootMessageIndex: selectedThreadRootMessageIndex,
                       latestKnownUpdate: serverChat.lastUpdated,
-                  })
-                      .catch(() => "events_failed" as EventsResponse<ChatEvent>)
-                      .then((resp) =>
-                          this.#handleThreadEventsResponse(
-                              serverChat.id,
-                              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                              selectedThreadRootMessageIndex!,
-                              resp,
-                          ),
-                      );
+                })
+                    .then((resp) =>
+                        this.#handleThreadEventsResponse(
+                            serverChat.id,
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                            selectedThreadRootMessageIndex!,
+                            resp,
+                        ),
+                    )
+                    .catch(CommonResponses.failure);
 
         await Promise.all([chatEventsPromise, threadEventPromise]);
         return;
@@ -3373,7 +3370,7 @@ export class OpenChat {
         this.#removePinnedMessage(chatId, messageIndex);
         return this.#sendRequest({ kind: "unpinMessage", chatId, messageIndex })
             .then((resp) => {
-                if (resp !== "success") {
+                if (resp.kind !== "success") {
                     this.#addPinnedMessage(chatId, messageIndex);
                     return false;
                 }
@@ -3393,7 +3390,7 @@ export class OpenChat {
             messageIndex,
         })
             .then((resp) => {
-                if (resp.kind !== "success" && resp.kind !== "no_change") {
+                if (resp.kind !== "success") {
                     this.#removePinnedMessage(chatId, messageIndex);
                     return false;
                 }
@@ -3711,17 +3708,14 @@ export class OpenChat {
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
                         const event = mergeSendMessageResponse(msg, resp);
                         this.#addServerEventsToStores(chat.id, [event], threadRootMessageIndex, []);
-                    } else {
-                        if (resp.kind == "rules_not_accepted") {
+                    } else if (resp.kind === "error") {
+                        const pinNumberFailure = pinNumberFailureFromError(resp);
+                        if (pinNumberFailure !== undefined) {
+                            pinNumberFailureStore.set(pinNumberFailure);
+                        } else if (resp.code === ErrorCode.ChatRulesNotAccepted) {
                             this.#markChatRulesAcceptedLocally(false);
-                        } else if (resp.kind == "community_rules_not_accepted") {
+                        } else if (resp.code === ErrorCode.CommunityRulesNotAccepted) {
                             this.#markCommunityRulesAcceptedLocally(false);
-                        } else if (
-                            resp.kind === "pin_incorrect" ||
-                            resp.kind === "pin_required" ||
-                            resp.kind === "too_main_failed_pin_attempts"
-                        ) {
-                            pinNumberFailureStore.set(resp as PinNumberFailures);
                         }
 
                         this.#onSendMessageFailure(
@@ -4184,7 +4178,7 @@ export class OpenChat {
                 newAchievement,
             })
                 .then((resp) => {
-                    if (resp !== "success") {
+                    if (resp.kind !== "success") {
                         localMessageUpdates.revertEditedContent(msg.messageId);
                         return false;
                     }
@@ -4223,14 +4217,14 @@ export class OpenChat {
             newAchievement: false,
         })
             .then((resp) => {
-                if (resp !== "success") {
+                if (resp.kind !== "success") {
                     localMessageUpdates.revertLinkRemoved(msg.messageId);
                     return false;
                 }
                 return true;
             })
             .catch(() => {
-                localMessageUpdates.revertEditedContent(msg.messageId);
+                localMessageUpdates.revertLinkRemoved(msg.messageId);
                 return false;
             });
     }
@@ -4287,7 +4281,7 @@ export class OpenChat {
             latestKnownUpdate: serverChat.lastUpdated,
         })
             .then((resp) => {
-                if (resp === "events_failed") return resp;
+                if (!isSuccessfulEventsResponse(resp)) return resp;
                 if (!this.isChatPrivate(serverChat)) return resp;
 
                 const ev = resp.events.find((e) => e.index === eventIndex);
@@ -4983,20 +4977,20 @@ export class OpenChat {
         const undo = communityLocalUpdates.removeMember(id, userId);
         return this.#sendRequest({ kind: "removeCommunityMember", id, userId })
             .then((resp) => {
-                if (resp !== "success") {
+                if (resp.kind !== "success") {
                     undo();
                 }
                 return resp;
             })
             .catch(() => {
                 undo();
-                return "failure";
+                return CommonResponses.failure();
             });
     }
 
     removeMember(chatId: MultiUserChatIdentifier, userId: string): Promise<RemoveMemberResponse> {
         chatStateStore.updateProp(chatId, "members", (ps) => ps.filter((p) => p.userId !== userId));
-        return this.#sendRequest({ kind: "removeMember", chatId, userId }).catch(() => "failure");
+        return this.#sendRequest({ kind: "removeMember", chatId, userId }).catch(CommonResponses.failure);
     }
 
     changeCommunityRole(
@@ -5015,7 +5009,7 @@ export class OpenChat {
 
         return this.#sendRequest({ kind: "changeCommunityRole", id, userId, newRole })
             .then((resp) => {
-                return resp === "success";
+                return resp.kind === "success";
             })
             .catch(() => false)
             .then((success) => {
@@ -5040,7 +5034,7 @@ export class OpenChat {
         );
         return this.#sendRequest({ kind: "changeRole", chatId, userId, newRole })
             .then((resp) => {
-                return resp === "success";
+                return resp.kind === "success";
             })
             .catch(() => false)
             .then((success) => {
@@ -5068,7 +5062,7 @@ export class OpenChat {
             },
             false,
             2 * DEFAULT_WORKER_TIMEOUT,
-        ).catch(() => "internal_error");
+        ).catch(CommonResponses.failure);
     }
 
     getProposalVoteDetails(
@@ -5459,12 +5453,11 @@ export class OpenChat {
         }
 
         return this.#sendRequest({ kind: "withdrawCryptocurrency", domain, pin }).then((resp) => {
-            if (
-                resp.kind === "pin_incorrect" ||
-                resp.kind === "pin_required" ||
-                resp.kind === "too_main_failed_pin_attempts"
-            ) {
-                pinNumberFailureStore.set(resp as PinNumberFailures);
+            if (resp.kind === "error") {
+                const pinNumberFailure = pinNumberFailureFromError(resp);
+                if (pinNumberFailure !== undefined) {
+                    pinNumberFailureStore.set(pinNumberFailure);
+                }
             }
 
             return resp;
@@ -5484,39 +5477,35 @@ export class OpenChat {
                 messageIndexes,
                 latestKnownUpdate: serverChat?.lastUpdated,
             });
-            if (resp !== "events_failed") {
+            if (isSuccessfulEventsResponse(resp)) {
                 await this.#updateUserStoreFromEvents(chatId, resp.events);
             }
             return resp;
         } catch {
-            return "events_failed";
+            return CommonResponses.failure();
         }
     }
 
     getInviteCode(id: GroupChatIdentifier | CommunityIdentifier): Promise<InviteCodeResponse> {
-        return this.#sendRequest({ kind: "getInviteCode", id }).catch(() => ({ kind: "failure" }));
+        return this.#sendRequest({ kind: "getInviteCode", id }).catch(CommonResponses.failure);
     }
 
     enableInviteCode(
         id: GroupChatIdentifier | CommunityIdentifier,
     ): Promise<EnableInviteCodeResponse> {
-        return this.#sendRequest({ kind: "enableInviteCode", id }).catch(() => ({
-            kind: "failure",
-        }));
+        return this.#sendRequest({ kind: "enableInviteCode", id }).catch(CommonResponses.failure);
     }
 
     disableInviteCode(
         id: GroupChatIdentifier | CommunityIdentifier,
     ): Promise<DisableInviteCodeResponse> {
-        return this.#sendRequest({ kind: "disableInviteCode", id }).catch(() => "failure");
+        return this.#sendRequest({ kind: "disableInviteCode", id }).catch(CommonResponses.failure);
     }
 
     resetInviteCode(
         id: GroupChatIdentifier | CommunityIdentifier,
     ): Promise<ResetInviteCodeResponse> {
-        return this.#sendRequest({ kind: "resetInviteCode", id }).catch(() => ({
-            kind: "failure",
-        }));
+        return this.#sendRequest({ kind: "resetInviteCode", id }).catch(CommonResponses.failure);
     }
 
     updateGroup(
@@ -6211,17 +6200,16 @@ export class OpenChat {
             newAchievement,
         })
             .then((resp) => {
-                localMessageUpdates.setP2PSwapStatus(
-                    messageId,
-                    mapAcceptP2PSwapResponseToStatus(resp, this.#liveState.user.userId),
-                );
+                // localMessageUpdates.setP2PSwapStatus(
+                //     messageId,
+                //     mapAcceptP2PSwapResponseToStatus(resp, this.#liveState.user.userId),
+                // );
 
-                if (
-                    resp.kind === "pin_incorrect" ||
-                    resp.kind === "pin_required" ||
-                    resp.kind === "too_main_failed_pin_attempts"
-                ) {
-                    pinNumberFailureStore.set(resp as PinNumberFailures);
+                if (resp.kind === "error") {
+                    const pinNumberFailure = pinNumberFailureFromError(resp);
+                    if (pinNumberFailure !== undefined) {
+                        pinNumberFailureStore.set(pinNumberFailure);
+                    }
                 }
 
                 return resp;
@@ -6247,10 +6235,10 @@ export class OpenChat {
             messageId,
         })
             .then((resp) => {
-                localMessageUpdates.setP2PSwapStatus(
-                    messageId,
-                    mapCancelP2PSwapResponseToStatus(resp),
-                );
+                // localMessageUpdates.setP2PSwapStatus(
+                //     messageId,
+                //     mapCancelP2PSwapResponseToStatus(resp),
+                // );
                 return resp;
             })
             .catch((err) => {
@@ -6284,7 +6272,7 @@ export class OpenChat {
             presence,
             newAchievement,
         })
-            .then((resp) => resp === "success")
+            .then((resp) => resp.kind === "success")
             .catch(() => false);
     }
 
@@ -6452,7 +6440,7 @@ export class OpenChat {
             threadRootMessageIndex,
         })
             .then((res) => {
-                return res === "success";
+                return res.kind === "success";
             })
             .catch(() => false);
     }
@@ -6489,7 +6477,7 @@ export class OpenChat {
     declineInvitation(chatId: MultiUserChatIdentifier): Promise<boolean> {
         return this.#sendRequest({ kind: "declineInvitation", chatId })
             .then((res) => {
-                return res === "success";
+                return res.kind === "success";
             })
             .catch(() => false);
     }
@@ -6570,12 +6558,11 @@ export class OpenChat {
                 if (resp.kind !== "success") {
                     undoLocally();
 
-                    if (
-                        resp.kind === "pin_incorrect" ||
-                        resp.kind === "pin_required" ||
-                        resp.kind === "too_main_failed_pin_attempts"
-                    ) {
-                        pinNumberFailureStore.set(resp as PinNumberFailures);
+                    if (resp.kind === "error") {
+                        const pinNumberFailure = pinNumberFailureFromError(resp);
+                        if (pinNumberFailure !== undefined) {
+                            pinNumberFailureStore.set(pinNumberFailure);
+                        }
                     }
                 }
 
@@ -6852,12 +6839,11 @@ export class OpenChat {
             false,
             1000 * 60 * 3,
         ).then((resp) => {
-            if (
-                resp.kind === "pin_incorrect" ||
-                resp.kind === "pin_required" ||
-                resp.kind === "too_main_failed_pin_attempts"
-            ) {
-                pinNumberFailureStore.set(resp as PinNumberFailures);
+            if (resp.kind === "error") {
+                const pinNumberFailure = pinNumberFailureFromError(resp);
+                if (pinNumberFailure !== undefined) {
+                    pinNumberFailureStore.set(pinNumberFailure);
+                }
             }
 
             return resp;
@@ -7172,12 +7158,11 @@ export class OpenChat {
             pin,
         });
 
-        if (
-            response.kind === "pin_incorrect" ||
-            response.kind === "pin_required" ||
-            response.kind === "too_main_failed_pin_attempts"
-        ) {
-            pinNumberFailureStore.set(response as PinNumberFailures);
+        if (response.kind === "error") {
+            const pinNumberFailure = pinNumberFailureFromError(response);
+            if (pinNumberFailure !== undefined) {
+                pinNumberFailureStore.set(pinNumberFailure);
+            }
         }
         return response;
     }
@@ -7682,10 +7667,10 @@ export class OpenChat {
 
         return this.#sendRequest({ kind: "deleteCommunity", id })
             .then((resp) => {
-                if (resp !== "success") {
+                if (resp.kind !== "success") {
                     this.#addCommunityLocally(community);
                 }
-                return resp === "success";
+                return resp.kind === "success";
             })
             .catch(() => false);
     }
@@ -7698,10 +7683,10 @@ export class OpenChat {
 
         return this.#sendRequest({ kind: "leaveCommunity", id })
             .then((resp) => {
-                if (resp !== "success") {
+                if (resp.kind !== "success") {
                     this.#addCommunityLocally(community);
                 }
-                return resp === "success";
+                return resp.kind === "success";
             })
             .catch(() => false);
     }
@@ -7737,10 +7722,10 @@ export class OpenChat {
         localChatSummaryUpdates.favourite(chatId);
         return this.#sendRequest({ kind: "addToFavourites", chatId })
             .then((resp) => {
-                if (resp !== "success") {
+                if (resp.kind !== "success") {
                     localChatSummaryUpdates.unfavourite(chatId);
                 }
-                return resp === "success";
+                return resp.kind === "success";
             })
             .catch(() => {
                 localChatSummaryUpdates.unfavourite(chatId);
@@ -7756,10 +7741,10 @@ export class OpenChat {
 
         return this.#sendRequest({ kind: "removeFromFavourites", chatId })
             .then((resp) => {
-                if (resp !== "success") {
+                if (resp.kind !== "success") {
                     localChatSummaryUpdates.favourite(chatId);
                 }
-                return resp === "success";
+                return resp.kind === "success";
             })
             .catch(() => {
                 localChatSummaryUpdates.favourite(chatId);
@@ -7956,12 +7941,11 @@ export class OpenChat {
         return this.#sendRequest({ kind: "setPinNumber", verification, newPin }).then((resp) => {
             if (resp.kind === "success") {
                 pinNumberRequiredStore.set(newPin !== undefined);
-            } else if (
-                resp.kind === "pin_incorrect" ||
-                resp.kind === "pin_required" ||
-                resp.kind === "too_main_failed_pin_attempts"
-            ) {
-                pinNumberFailureStore.set(resp as PinNumberFailures);
+            } else if (resp.kind === "error") {
+                const pinNumberFailure = pinNumberFailureFromError(resp);
+                if (pinNumberFailure !== undefined) {
+                    pinNumberFailureStore.set(pinNumberFailure);
+                }
             }
 
             return resp;
@@ -8875,7 +8859,7 @@ export class OpenChat {
             expectedPrice,
         })
             .then((resp) => {
-                if (resp === "success") {
+                if (resp.kind === "success") {
                     localGlobalUpdates.updateStreakInsurance({
                         ...this.#liveState.serverStreakInsurance,
                         daysInsured:
@@ -8886,7 +8870,7 @@ export class OpenChat {
             })
             .catch((err) => {
                 console.log("Failed to pay for streak insurance: ", err);
-                return "failure";
+                return CommonResponses.failure();
             });
     }
 }

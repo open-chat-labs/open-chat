@@ -427,7 +427,7 @@ export type NamedAccount = {
     account: string;
 };
 
-export type SaveCryptoAccountResponse = Success | OCError;
+export type SaveCryptoAccountResponse = Success | OCError | Failure;
 
 export type SubmitProposalResponse =
     | Success
@@ -484,9 +484,7 @@ export type TokenSwapStatusResponse =
       }
     | OCError;
 
-export type ApproveTransferResponse =
-    | Success
-    | OCError;
+export type ApproveTransferResponse = Success | OCError | InternalError;
 
 export type DiamondMembershipFees = {
     token: "CHAT" | "ICP";

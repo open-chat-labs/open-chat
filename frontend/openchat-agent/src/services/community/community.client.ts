@@ -131,7 +131,7 @@ import {
     MAX_MESSAGES,
     MAX_MISSING,
     ResponseTooLargeError,
-    isError,
+    isSuccessfulEventsResponse,
 } from "openchat-shared";
 import {
     apiOptionalGroupPermissions,
@@ -748,14 +748,14 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 latestKnownUpdate,
             ).then((resp) => this.setCachedEvents(chatId, resp));
 
-            return isError(resp)
-                ? resp
-                : {
+            return isSuccessfulEventsResponse(resp)
+                ? {
                       events: [...fromCache.messageEvents, ...resp.events],
                       expiredEventRanges: [],
                       expiredMessageRanges: [],
                       latestEventIndex: resp.latestEventIndex,
-                };
+                }
+                : resp
         }
         return {
             events: fromCache.messageEvents,
@@ -804,7 +804,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
             )
                 .then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex))
                 .then((resp) => {
-                    if (!isError(resp)) {
+                    if (isSuccessfulEventsResponse(resp)) {
                         return mergeSuccessResponses(cachedEvents, resp);
                     }
                     return resp;
@@ -1049,7 +1049,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
         }
 
         const response = await this.getChannelDetailsFromBackend(chatId);
-        if (!isError(response)) {
+        if (typeof response === "object" && "members" in response) {
             await setCachedGroupDetails(this.db, cacheKey, response);
         }
         return response;

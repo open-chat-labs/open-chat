@@ -211,7 +211,7 @@ import {
     Stream,
     UnsupportedValueError,
     waitAll,
-    isError,
+    isSuccessfulEventsResponse,
 } from "openchat-shared";
 import type { AgentConfig } from "../config";
 import {
@@ -1310,9 +1310,7 @@ export class OpenChatAgent extends EventTarget {
         context: MessageContext,
         resp: EventsResponse<T>,
     ): [MessageContext, EventWrapper<Message>[]] {
-        if (isError(resp)) {
-            return [context, []];
-        } else {
+        if (isSuccessfulEventsResponse(resp)) {
             return [
                 context,
                 resp.events.reduce((msgs, ev) => {
@@ -1322,6 +1320,8 @@ export class OpenChatAgent extends EventTarget {
                     return msgs;
                 }, [] as EventWrapper<Message>[]),
             ];
+        } else {
+            return [context, []];
         }
     }
 
@@ -1439,7 +1439,7 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<EventsResponse<T>> {
         const resp = await eventsPromise;
 
-        if (isError(resp)) {
+        if (!isSuccessfulEventsResponse(resp)) {
             return resp;
         }
 

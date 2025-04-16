@@ -20,7 +20,6 @@ import type {
     UserSuspended,
     ChatFrozen,
     Failure,
-    UserBlocked,
     TransferFailed,
     InternalError,
     Offline,
@@ -761,7 +760,11 @@ export type LocalMessageUpdates = {
     lastUpdated: number;
 };
 
-export type EventsResponse<T extends ChatEvent> = EventsSuccessResult<T> | OCError;
+export type EventsResponse<T extends ChatEvent> = EventsSuccessResult<T> | OCError | Failure;
+
+export function isSuccessfulEventsResponse<T extends ChatEvent>(response: EventsResponse<T> | undefined): response is EventsSuccessResult<T> {
+    return response !== undefined && typeof response === "object" && "events" in response;
+}
 
 export type ChatEvent =
     | Message
@@ -1438,7 +1441,7 @@ export type Member = {
 
 export type FullMember = Member & UserSummary;
 
-export type GroupChatDetailsResponse = GroupChatDetails | OCError;
+export type GroupChatDetailsResponse = GroupChatDetails | OCError | Failure;
 
 export type GroupChatDetailsUpdatesResponse =
     | ({ kind: "success" } & GroupChatDetailsUpdates)
@@ -1992,7 +1995,7 @@ export type ExternalUrlUpdated = {
 export type SetAvatarResponse = Success | OCError | Offline;
 export type ChangeRoleResponse = Success | OCError | Offline;
 export type DeleteGroupResponse = Success | OCError | Offline;
-export type RemoveMemberResponse = Success | OCError | Offline;
+export type RemoveMemberResponse = Success | OCError | Offline | Failure;
 export type BlockUserResponse = Success | OCError | Offline;
 export type UnblockUserResponse = Success | OCError | Offline;
 export type LeaveGroupResponse = Success | OCError | Offline;
@@ -2001,9 +2004,9 @@ export type JoinGroupResponse =
     | (Success & { group: MultiUserChat })
     | SuccessJoinedCommunity
     | GateCheckFailed
-    | UserBlocked
     | Failure
-    | Offline;
+    | Offline
+    | OCError;
 
 export type SuccessJoinedCommunity = {
     kind: "success_joined_community";
@@ -2096,22 +2099,22 @@ export type DeletedDirectMessageResponse =
     | Offline;
 
 export type RegisterPollVoteResponse = Success | OCError | Offline;
-export type InviteCodeResponse = InviteCodeSuccess | OCError | Offline;
+export type InviteCodeResponse = InviteCodeSuccess | OCError | Offline | Failure;
 
 export type InviteCodeSuccess = {
     kind: "success";
     code?: string;
 };
 
-export type EnableInviteCodeResponse = EnableInviteCodeSuccess | OCError | Offline;
+export type EnableInviteCodeResponse = EnableInviteCodeSuccess | OCError | Offline | Failure;
 
 export type EnableInviteCodeSuccess = {
     kind: "success";
     code: string;
 };
 
-export type DisableInviteCodeResponse = Success | OCError | Offline;
-export type ResetInviteCodeResponse = ResetInviteCodeSuccess | OCError | Offline;
+export type DisableInviteCodeResponse = Success | OCError | Offline | Failure;
+export type ResetInviteCodeResponse = ResetInviteCodeSuccess | OCError | Offline | Failure;
 
 export type ResetInviteCodeSuccess = {
     kind: "success";
@@ -2153,7 +2156,7 @@ export type Metrics = {
     reactions: number;
 };
 
-export type RegisterProposalVoteResponse = Success | OCError | Offline;
+export type RegisterProposalVoteResponse = Success | OCError | Offline | Failure;
 
 export type ListNervousSystemFunctionsResponse = {
     reservedIds: bigint[];
@@ -2333,9 +2336,10 @@ export type ChatEventsResponse =
 
 export type AcceptP2PSwapResponse =
     | { kind: "success"; token1TxnIn: TransactionId }
-    | OCError;
+    | OCError
+    | { kind: "internal_error"; text: string };
 
-export type CancelP2PSwapResponse = Success | OCError;
+export type CancelP2PSwapResponse = Success | OCError | { kind: "internal_error"; text: string };
 export type JoinVideoCallResponse = Success | OCError | Offline;
 
 export type VideoCallPresence = "default" | "owner" | "hidden";

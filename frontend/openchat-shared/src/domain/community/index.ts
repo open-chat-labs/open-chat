@@ -27,7 +27,7 @@ import type {
     PublicApiKeyDetails,
 } from "../permission";
 import type {
-    Failure,
+    Failure, InternalError,
     Offline,
     Success,
     SuccessNoUpdates,
@@ -119,6 +119,7 @@ export type AddMembersToChannelResponse =
     | Success
     | AddMembersToChannelFailed
     | AddMembersToChannelPartialSuccess
+    | InternalError
     | OCError;
 
 export type BlockCommunityUserResponse = Success | OCError | Offline;
@@ -289,9 +290,10 @@ export type ImportGroupResponse = (Success & { channelId: ChannelIdentifier }) |
 export type CreateUserGroupResponse =
     | { kind: "success"; userGroupId: number }
     | OCError
+    | Failure
     | Offline;
 
-export type UpdateUserGroupResponse = Success | OCError | Offline;
+export type UpdateUserGroupResponse = Success | OCError | Offline | Failure;
 export type DeleteUserGroupsResponse = Success | OCError | Offline;
 export type SetMemberDisplayNameResponse = Success | OCError | Offline;
 export type FollowThreadResponse = Success | OCError | Offline;

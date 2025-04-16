@@ -2562,14 +2562,12 @@ export function joinGroupResponse(value: LocalUserIndexJoinGroupResponse): JoinG
                 kind: "gate_check_failed",
                 reason: gateCheckFailedReason(value.GateCheckFailed),
             };
+        } else if ("Error" in value) {
+            return ocError(value.Error);
         }
     }
-    if (value === "Blocked") {
-        return CommonResponses.userBlocked();
-    } else {
-        console.warn("Join group failed with: ", value);
-        return CommonResponses.failure();
-    }
+    console.warn("Join group failed with: ", value);
+    return CommonResponses.failure();
 }
 
 export function searchGroupChatResponse(

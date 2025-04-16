@@ -137,7 +137,7 @@ import {
     MAX_MESSAGES,
     MAX_MISSING,
     ResponseTooLargeError,
-    isError,
+    isSuccessfulEventsResponse,
 } from "openchat-shared";
 import {
     chunkedChatEventsFromBackend,
@@ -289,7 +289,7 @@ export class UserClient extends MsgpackCanisterAgent {
             )
                 .then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex))
                 .then((resp) => {
-                    if (!isError(resp)) {
+                    if (isSuccessfulEventsResponse(resp)) {
                         return mergeSuccessResponses(cachedEvents, resp);
                     }
                     return resp;

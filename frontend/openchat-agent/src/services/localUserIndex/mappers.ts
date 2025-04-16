@@ -360,15 +360,13 @@ export function joinChannelResponse(
                 kind: "gate_check_failed",
                 reason: gateCheckFailedReason(value.GateCheckFailed),
             };
+        } else if ("Error" in value) {
+            return ocError(value.Error);
         }
     }
 
-    if (value === "UserBlocked") {
-        return CommonResponses.userBlocked();
-    } else {
-        console.warn("Join group failed with: ", value);
-        return CommonResponses.failure();
-    }
+    console.warn("Join group failed with: ", value);
+    return CommonResponses.failure();
 }
 
 export function registerUserResponse(
