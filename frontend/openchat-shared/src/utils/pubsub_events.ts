@@ -1,3 +1,4 @@
+import type { Readable } from "svelte/store";
 import type {
     ChannelIdentifier,
     ChatIdentifier,
@@ -126,4 +127,9 @@ export type PubSubEvents = {
     notification: Notification;
     noAccess: undefined;
     notFound: undefined;
+    showFailureToast: {
+        resourceKey: ResourceKey | Readable<ResourceKey | undefined>;
+        err?: unknown;
+    };
+    showSuccessToast: ResourceKey;
 };
