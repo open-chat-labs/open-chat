@@ -1154,7 +1154,7 @@ impl ChatEvents {
             |message, event| Self::reserve_p2p_swap_inner(message, event.timestamp, user_id, now),
         ) {
             Ok(success) => Ok(success),
-            Err(UpdateEventError::NoChange(status)) => Err(OCErrorCode::SwapStatusError.with_json(&status)),
+            Err(UpdateEventError::NoChange(error)) => Err(error.into()),
             Err(UpdateEventError::NotFound) => Err(OCErrorCode::SwapNotFound.into()),
         }
     }
@@ -1164,7 +1164,7 @@ impl ChatEvents {
         message_timestamp: TimestampMillis,
         user_id: UserId,
         now: TimestampMillis,
-    ) -> Result<ReserveP2PSwapSuccess, UpdateEventError<P2PSwapStatus>> {
+    ) -> Result<ReserveP2PSwapSuccess, UpdateEventError<OCErrorCode>> {
         let MessageContentInternal::P2PSwap(content) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
         };
@@ -1176,7 +1176,7 @@ impl ChatEvents {
                 created_by: message.sender,
             })
         } else {
-            Err(UpdateEventError::NoChange(content.status.clone()))
+            Err(UpdateEventError::NoChange(content.status.error_code()))
         }
     }
 
@@ -1196,7 +1196,7 @@ impl ChatEvents {
             |message, _| Self::accept_p2p_swap_inner(message, user_id, token1_txn_in),
         ) {
             Ok(success) => Ok(success),
-            Err(UpdateEventError::NoChange(status)) => Err(OCErrorCode::SwapStatusError.with_json(&status)),
+            Err(UpdateEventError::NoChange(error)) => Err(error.into()),
             Err(UpdateEventError::NotFound) => Err(OCErrorCode::SwapNotFound.into()),
         }
     }
@@ -1205,7 +1205,7 @@ impl ChatEvents {
         message: &mut MessageInternal,
         user_id: UserId,
         token1_txn_in: u64,
-    ) -> Result<P2PSwapAccepted, UpdateEventError<P2PSwapStatus>> {
+    ) -> Result<P2PSwapAccepted, UpdateEventError<OCErrorCode>> {
         let MessageContentInternal::P2PSwap(content) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
         };
@@ -1216,7 +1216,7 @@ impl ChatEvents {
                 token1_txn_in,
             })
         } else {
-            Err(UpdateEventError::NoChange(content.status.clone()))
+            Err(UpdateEventError::NoChange(content.status.error_code()))
         }
     }
 
@@ -1253,7 +1253,7 @@ impl ChatEvents {
             },
         ) {
             Ok(status) => Ok(status),
-            Err(UpdateEventError::NoChange(status)) => Err(OCErrorCode::SwapStatusError.with_json(&status)),
+            Err(UpdateEventError::NoChange(error)) => Err(error.into()),
             Err(UpdateEventError::NotFound) => Err(OCErrorCode::SwapNotFound.into()),
         }
     }
@@ -1268,7 +1268,7 @@ impl ChatEvents {
         chat: Chat,
         anonymized_id: String,
         event_store_client: &mut EventStoreClient<R>,
-    ) -> Result<P2PSwapCompleted, UpdateEventError<P2PSwapStatus>> {
+    ) -> Result<P2PSwapCompleted, UpdateEventError<OCErrorCode>> {
         let MessageContentInternal::P2PSwap(content) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
         };
@@ -1293,7 +1293,7 @@ impl ChatEvents {
 
             Ok(status)
         } else {
-            Err(UpdateEventError::NoChange(content.status.clone()))
+            Err(UpdateEventError::NoChange(content.status.error_code()))
         }
     }
 
@@ -1340,19 +1340,19 @@ impl ChatEvents {
             |message, _| Self::cancel_p2p_swap_inner(message, user_id),
         ) {
             Ok(swap_id) => Ok(swap_id),
-            Err(UpdateEventError::NoChange(status)) => Err(OCErrorCode::SwapStatusError.with_json(&status)),
+            Err(UpdateEventError::NoChange(error)) => Err(error.into()),
             Err(UpdateEventError::NotFound) => Err(OCErrorCode::SwapNotFound.into()),
         }
     }
 
-    fn cancel_p2p_swap_inner(message: &mut MessageInternal, user_id: UserId) -> Result<u32, UpdateEventError<P2PSwapStatus>> {
+    fn cancel_p2p_swap_inner(message: &mut MessageInternal, user_id: UserId) -> Result<u32, UpdateEventError<OCErrorCode>> {
         if message.sender == user_id {
             if let MessageContentInternal::P2PSwap(content) = &mut message.content {
                 return if content.cancel() {
                     let swap_id = content.swap_id;
                     Ok(swap_id)
                 } else {
-                    Err(UpdateEventError::NoChange(content.status.clone()))
+                    Err(UpdateEventError::NoChange(content.status.error_code()))
                 };
             }
         }

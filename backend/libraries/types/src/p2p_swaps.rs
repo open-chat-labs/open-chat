@@ -1,5 +1,6 @@
 use crate::{Chat, MessageId, MessageIndex, P2PSwapContent, TimestampMillis, UserId};
 use candid::CandidType;
+use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 
@@ -12,6 +13,19 @@ pub enum P2PSwapStatus {
     Reserved(P2PSwapReserved),
     Accepted(P2PSwapAccepted),
     Completed(P2PSwapCompleted),
+}
+
+impl P2PSwapStatus {
+    pub fn error_code(&self) -> OCErrorCode {
+        match self {
+            P2PSwapStatus::Open => OCErrorCode::SwapStatusOpen,
+            P2PSwapStatus::Cancelled(_) => OCErrorCode::SwapStatusCancelled,
+            P2PSwapStatus::Expired(_) => OCErrorCode::SwapStatusExpired,
+            P2PSwapStatus::Reserved(_) => OCErrorCode::SwapStatusReserved,
+            P2PSwapStatus::Accepted(_) => OCErrorCode::SwapStatusAccepted,
+            P2PSwapStatus::Completed(_) => OCErrorCode::SwapStatusCompleted,
+        }
+    }
 }
 
 pub enum UpdateP2PSwapResult<T> {

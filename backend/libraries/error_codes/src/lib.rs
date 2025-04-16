@@ -97,7 +97,7 @@ pub enum OCErrorCode {
     NotDiamondMember = 253,
     UnexpectedIndex = 254,
     NoChange = 255,
-    SwapStatusError = 256,
+
     CyclesBalanceTooLow = 257,
     AlreadyInProgress = 258,
     InvalidPublicKey = 259,
@@ -169,6 +169,12 @@ pub enum OCErrorCode {
     SwapFailed = 325,
     PinTooShort = 326,
     PinTooLong = 327,
+    SwapStatusOpen = 328,
+    SwapStatusCancelled = 329,
+    SwapStatusExpired = 330,
+    SwapStatusReserved = 331,
+    SwapStatusAccepted = 332,
+    SwapStatusCompleted = 333,
 
     // InternalError
     C2CError = 500,
