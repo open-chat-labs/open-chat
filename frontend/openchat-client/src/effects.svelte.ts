@@ -67,5 +67,10 @@ export function configureEffects(client: OpenChat) {
                 client.selectFirstChat();
             }
         });
+
+        // this exists only to syncronise the legacy chatListScopeStore until we can get rid of it
+        $effect(() => {
+            client.setChatListScopeAndRedirect(pathState.route);
+        });
     });
 }
