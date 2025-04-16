@@ -1,5 +1,5 @@
-import type {PinNumberFailures} from "./chat";
-import {parseBigInt} from "../utils";
+import type { PinNumberFailures } from "./chat";
+import { parseBigInt } from "../utils";
 
 export type OCError = {
     kind: "error";
@@ -235,6 +235,9 @@ export enum ErrorCode {
     SwapStatusReserved = 331,
     SwapStatusAccepted = 332,
     SwapStatusCompleted = 333,
+    NoEligibleNeurons = 334,
+    ProposalNotFound = 335,
+    ProposalNotAcceptingVotes = 336,
 
     // InternalError
     C2CError = 500,

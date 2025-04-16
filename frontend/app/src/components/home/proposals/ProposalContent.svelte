@@ -11,6 +11,7 @@
         currentUser as user,
         proposalTopicsStore,
     } from "openchat-client";
+    import { ErrorCode } from "openchat-shared";
     import Markdown from "../Markdown.svelte";
     import { now } from "../../../stores/time";
     import ExpandIcon from "svelte-material-icons/ArrowExpandDown.svelte";
@@ -78,11 +79,11 @@
         client
             .registerProposalVote(chatId, messageIndex, adopt)
             .then((resp) => {
-                if (resp === "success") {
+                if (resp.kind === "success") {
                     success = true;
                     proposalVotes.insert(mId, adopt ? "adopted" : "rejected");
                     client.getProposalVoteDetails(content.governanceCanisterId, proposal.id, isNns);
-                } else if (resp === "no_eligible_neurons") {
+                } else if (resp.kind === "error" && resp.code === ErrorCode.NoEligibleNeurons) {
                     showNeuronInfo = true;
                 } else {
                     const err = registerProposalVoteErrorMessage(resp);
@@ -103,8 +104,8 @@
     function registerProposalVoteErrorMessage(
         resp: RegisterProposalVoteResponse,
     ): string | undefined {
-        if (resp === "already_voted") return "alreadyVoted";
-        if (resp === "proposal_not_accepting_votes") return "proposalNotAcceptingVotes";
+        if (resp.kind === "error" && resp.code === ErrorCode.NoChange) return "alreadyVoted";
+        if (resp.kind === "error" && resp.code === ErrorCode.ProposalNotAcceptingVotes) return "proposalNotAcceptingVotes";
         return "voteFailed";
     }
 

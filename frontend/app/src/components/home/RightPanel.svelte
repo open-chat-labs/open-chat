@@ -259,7 +259,7 @@
         return client
             .removeCommunityMember(id, userId)
             .then((resp) => {
-                if (resp !== "success") {
+                if (resp.kind !== "success") {
                     toastStore.showFailureToast(i18nKey("removeMemberFailed"));
                 }
             })
@@ -273,7 +273,7 @@
         return client
             .removeMember(chatId, userId)
             .then((resp) => {
-                if (resp !== "success") {
+                if (resp.kind !== "success") {
                     toastStore.showFailureToast(i18nKey("removeMemberFailed"));
                 }
             })

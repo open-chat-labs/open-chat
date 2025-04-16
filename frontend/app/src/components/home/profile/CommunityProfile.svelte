@@ -1,6 +1,7 @@
 <script lang="ts">
     import { getContext } from "svelte";
     import type { CommunitySummary, OpenChat } from "openchat-client";
+    import { ErrorCode } from "openchat-shared";
     import Legend from "../../Legend.svelte";
     import DisplayNameInput from "../../DisplayNameInput.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
@@ -38,12 +39,12 @@
         client
             .setMemberDisplayName(community.id, displayName)
             .then((resp) => {
-                if (resp !== "success") {
-                    if (resp === "display_name_too_short") {
+                if (resp.kind === "error") {
+                    if (resp.code === ErrorCode.DisplayNameTooShort) {
                         displayNameError = "register.displayNameTooShort";
-                    } else if (resp === "display_name_too_long") {
+                    } else if (resp.code === ErrorCode.DisplayNameTooLong) {
                         displayNameError = "register.displayNameTooLong";
-                    } else if (resp === "display_name_invalid") {
+                    } else if (resp.code === ErrorCode.InvalidDisplayName) {
                         displayNameError = "register.displayNameInvalid";
                     } else {
                         displayNameError = "unexpectedError";

@@ -21,6 +21,7 @@
         ui,
         userMetrics,
     } from "openchat-client";
+    import { ErrorCode } from "openchat-shared";
     import { getContext, onMount } from "svelte";
     import { _, locale } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -181,7 +182,7 @@
                 client
                     .setBio(userbio)
                     .then((resp) => {
-                        if (resp === "bio_too_long") {
+                        if (resp.kind === "error" && resp.code === ErrorCode.TextTooLong) {
                             bioError = "register.bioTooLong";
                         } else {
                             originalBio = userbio;
