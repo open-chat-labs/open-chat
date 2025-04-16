@@ -31,6 +31,7 @@ async fn register_proposal_vote(args: Args) -> Response {
     match user_canister_c2c_client::c2c_vote_on_proposal(user_id.into(), &c2c_args).await {
         Ok(response) => match response {
             user_canister::c2c_vote_on_proposal::Response::Success => mutate_state(|state| commit(user_id, args, state)).into(),
+            user_canister::c2c_vote_on_proposal::Response::Error(error) => Response::Error(error),
             response => Response::Error(OCErrorCode::Unknown.with_json(&response)),
         },
         Err(error) => Response::Error(error.into()),
