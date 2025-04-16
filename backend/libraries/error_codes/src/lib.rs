@@ -175,6 +175,9 @@ pub enum OCErrorCode {
     SwapStatusReserved = 331,
     SwapStatusAccepted = 332,
     SwapStatusCompleted = 333,
+    NoEligibleNeurons = 334,
+    ProposalNotFound = 335,
+    ProposalNotAcceptingVotes = 336,
 
     // InternalError
     C2CError = 500,

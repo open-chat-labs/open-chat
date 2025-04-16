@@ -21,7 +21,7 @@ fn set_bio_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     let length_provided = args.text.chars().count() as u32;
     if length_provided > MAX_BIO_LEN {
-        return Err(OCErrorCode::TermTooLong.with_json(&FieldTooLongResult {
+        return Err(OCErrorCode::TextTooLong.with_json(&FieldTooLongResult {
             length_provided,
             max_length: MAX_BIO_LEN,
         }));

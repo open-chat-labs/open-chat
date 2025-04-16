@@ -3,16 +3,18 @@
         type ChatIdentifier,
         draftMessagesStore,
         routeForChatIdentifier,
+        subscribe,
         ui,
     } from "openchat-client";
     import page from "page";
+    import { onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Bug from "svelte-material-icons/Bug.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { sineIn } from "svelte/easing";
     import { fly } from "svelte/transition";
     import { i18nKey, interpolate } from "../i18n/i18n";
-    import { toastStore, ToastType } from "../stores/toast";
+    import { toastStore } from "../stores/toast";
     import Tooltip from "./tooltip/Tooltip.svelte";
     import Translatable from "./Translatable.svelte";
 
@@ -21,7 +23,7 @@
     function report() {
         if (
             $toastStore &&
-            $toastStore.type === ToastType.Failure &&
+            $toastStore.kind === "failure" &&
             $toastStore.err !== undefined &&
             $reactiveResourceKey !== undefined
         ) {
@@ -37,16 +39,30 @@
             toastStore.hideToast();
         }
     }
+
+    onMount(() => {
+        const unsubs = [
+            subscribe("showFailureToast", ({ resourceKey, err }) =>
+                toastStore.showFailureToast(resourceKey, err),
+            ),
+            subscribe("showSuccessToast", (resourceKey) =>
+                toastStore.showSuccessToast(resourceKey),
+            ),
+        ];
+        return () => {
+            unsubs.forEach((u) => u());
+        };
+    });
 </script>
 
 {#if $toastStore && $reactiveResourceKey}
     <div class="toast" transition:fly={{ y: 200, duration: 200, easing: sineIn }}>
         <div
             class="message"
-            class:failure={$toastStore.type === ToastType.Failure}
-            class:success={$toastStore.type === ToastType.Success}>
+            class:failure={$toastStore.kind === "failure"}
+            class:success={$toastStore.kind === "success"}>
             <div class="text"><Translatable resourceKey={$reactiveResourceKey} /></div>
-            {#if $toastStore.type === ToastType.Failure}
+            {#if $toastStore.kind === "failure"}
                 {#if $toastStore.err !== undefined}
                     <Tooltip position="top" align="middle">
                         <div class="report" onclick={report}>

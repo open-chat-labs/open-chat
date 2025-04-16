@@ -37,6 +37,7 @@ async fn register_proposal_vote(args: Args) -> Response {
                     Response::Success
                 }
             }
+            user_canister::c2c_vote_on_proposal::Response::Error(error) => Response::Error(error),
             response => Response::Error(OCErrorCode::Unknown.with_json(&response)),
         },
         Err(error) => Response::Error(error.into()),
