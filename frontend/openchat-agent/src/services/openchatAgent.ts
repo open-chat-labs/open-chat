@@ -211,6 +211,7 @@ import {
     Stream,
     UnsupportedValueError,
     waitAll,
+    isError,
 } from "openchat-shared";
 import type { AgentConfig } from "../config";
 import {
@@ -290,7 +291,6 @@ import { TranslationsClient } from "./translations/translations.client";
 import { AnonUserClient } from "./user/anonUser.client";
 import { UserClient } from "./user/user.client";
 import { UserIndexClient } from "./userIndex/userIndex.client";
-import { isError } from "./error";
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;

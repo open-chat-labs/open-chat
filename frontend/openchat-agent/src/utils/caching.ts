@@ -52,8 +52,8 @@ import {
     MessageContextMap,
     ONE_DAY,
     updateCreatedUser,
+    isError,
 } from "openchat-shared";
-import { isError } from "../services/error";
 
 const CACHE_VERSION = 131;
 const EARLIEST_SUPPORTED_MIGRATION = 125;

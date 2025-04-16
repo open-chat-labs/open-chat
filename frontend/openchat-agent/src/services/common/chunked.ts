@@ -5,8 +5,8 @@ import {
     type EventsResponse,
     type EventsSuccessResult,
     type IndexRange,
+    isError,
 } from "openchat-shared";
-import { isError } from "../error";
 
 function mergeEventsResponse<T extends ChatEvent>(
     a: EventsSuccessResult<T>,

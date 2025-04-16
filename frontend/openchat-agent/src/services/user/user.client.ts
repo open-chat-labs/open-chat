@@ -117,7 +117,10 @@ import {
     mapResult,
     undeleteMessageSuccess,
     unitResult,
-    createGroupSuccess, generateApiKeySuccess, acceptP2PSwapSuccess, deletedMessageSuccess,
+    createGroupSuccess,
+    generateApiKeySuccess,
+    acceptP2PSwapSuccess,
+    deletedMessageSuccess,
 } from "../common/chatMappersV2";
 import { DataClient } from "../data/data.client";
 import {
@@ -134,6 +137,7 @@ import {
     MAX_MESSAGES,
     MAX_MISSING,
     ResponseTooLargeError,
+    isError,
 } from "openchat-shared";
 import {
     chunkedChatEventsFromBackend,
@@ -240,7 +244,6 @@ import {
     UserWithdrawBtcResponse,
     UserPayForStreakInsuranceArgs,
 } from "../../typebox";
-import { isError } from "../error";
 
 export class UserClient extends MsgpackCanisterAgent {
     userId: string;

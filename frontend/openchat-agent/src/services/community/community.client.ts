@@ -131,6 +131,7 @@ import {
     MAX_MESSAGES,
     MAX_MISSING,
     ResponseTooLargeError,
+    isError,
 } from "openchat-shared";
 import {
     apiOptionalGroupPermissions,
@@ -249,7 +250,6 @@ import {
     CommunityApiKeyArgs,
     UnitResult,
 } from "../../typebox";
-import { isError } from "../error";
 
 export class CommunityClient extends MsgpackCanisterAgent {
     constructor(

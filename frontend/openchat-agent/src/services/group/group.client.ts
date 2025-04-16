@@ -122,7 +122,7 @@ import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
 import { setCachedMessageFromSendResponse } from "../../utils/caching";
 import type { CancelP2PSwapResponse } from "openchat-shared";
-import { ResponseTooLargeError } from "openchat-shared";
+import { ResponseTooLargeError, isError } from "openchat-shared";
 import {
     chunkedChatEventsFromBackend,
     chunkedChatEventsWindowFromBackend,
@@ -198,7 +198,6 @@ import {
     GroupApiKeyResponse,
     UnitResult,
 } from "../../typebox";
-import { isError } from "../error";
 
 export class GroupClient extends MsgpackCanisterAgent {
     constructor(
