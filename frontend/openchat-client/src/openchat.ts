@@ -3300,8 +3300,8 @@ export class OpenChat {
 
     async #loadChatDetails(
         serverChat: ChatSummary,
-        focusMessageIndex?: number,
-        focusThreadMessageIndex?: number,
+        _focusMessageIndex?: number,
+        _focusThreadMessageIndex?: number,
     ): Promise<void> {
         // currently this is only meaningful for group chats, but we'll set it up generically just in case
         if (serverChat.kind === "group_chat" || serverChat.kind === "channel") {
