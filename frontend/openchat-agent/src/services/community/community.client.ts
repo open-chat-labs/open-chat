@@ -588,7 +588,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "events",
             args,
-            (resp) => mapResult(resp, getEventsSuccess),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
             CommunityEventsArgs,
             CommunityEventsResponse,
         );
@@ -633,7 +633,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "events_by_index",
             args,
-            (resp) => mapResult(resp, getEventsSuccess),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
             CommunityEventsByIndexArgs,
             CommunityEventsResponse,
         );
@@ -727,7 +727,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "events_window",
             args,
-            (resp) => mapResult(resp, getEventsSuccess),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
             CommunityEventsWindowArgs,
             CommunityEventsResponse,
         );
@@ -781,7 +781,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "messages_by_message_index",
             args,
-            (resp) => mapResult(resp, getMessagesSuccess),
+            (resp) => mapResult(resp, (value) => getMessagesSuccess(value, this.principal, chatId)),
             CommunityMessagesByMessageIndexArgs,
             CommunityMessagesByMessageIndexResponse,
         );

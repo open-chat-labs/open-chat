@@ -760,7 +760,7 @@ export type LocalMessageUpdates = {
     lastUpdated: number;
 };
 
-export type EventsResponse<T extends ChatEvent> = EventsSuccessResult<T> | OCError | Failure;
+export type EventsResponse<T extends ChatEvent> = EventsSuccessResult<T> | ReplicaNotUpToDate | OCError | Failure;
 
 export function isSuccessfulEventsResponse<T extends ChatEvent>(response: EventsResponse<T> | undefined): response is EventsSuccessResult<T> {
     return response !== undefined && typeof response === "object" && "events" in response;
@@ -2332,7 +2332,9 @@ export type ChatEventsResponse =
       }
     | ReplicaNotUpToDate
     | { kind: "not_found" }
-    | { kind: "internal_error"; error: string };
+    | { kind: "internal_error"; error: string }
+    | Failure
+    | OCError;
 
 export type AcceptP2PSwapResponse =
     | { kind: "success"; token1TxnIn: TransactionId }

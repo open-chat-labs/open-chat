@@ -303,7 +303,7 @@ export class GroupClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "events_by_index",
             args,
-            (resp) => mapResult(resp, getEventsSuccess),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
             GroupEventsByIndexArgs,
             GroupEventsResponse,
         );
@@ -392,7 +392,7 @@ export class GroupClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "events_window",
             args,
-            (resp) => mapResult(resp, getEventsSuccess),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
             GroupEventsWindowArgs,
             GroupEventsResponse,
         );
@@ -474,7 +474,7 @@ export class GroupClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "events",
             args,
-            (resp) => mapResult(resp, getEventsSuccess),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
             GroupEventsArgs,
             GroupEventsResponse,
         );
@@ -887,7 +887,7 @@ export class GroupClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "messages_by_message_index",
             args,
-            (resp) => mapResult(resp, getMessagesSuccess),
+            (resp) => mapResult(resp, (value) => getMessagesSuccess(value, this.principal, this.chatId)),
             GroupMessagesByMessageIndexArgs,
             GroupMessagesByMessageIndexResponse,
         );

@@ -1,3 +1,4 @@
+import type { Principal } from "@dfinity/principal";
 import {
     bigintToBytes,
     bytesToBigint,
@@ -12,7 +13,7 @@ import {
 import type {
     Message,
     ChatEvent,
-    EventsSuccessResult,
+    EventsResponse,
     ThreadSummary,
     // StaleMessage,
     MessageContent,
@@ -256,6 +257,7 @@ import type {
     UserDeletedMessageSuccessResult,
 } from "../../typebox";
 import type { ApiPrincipal } from "../index";
+import { ensureReplicaIsUpToDate } from "./replicaUpToDateChecker";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
@@ -268,8 +270,20 @@ export function generateApiKeySuccess(
     return { kind: "success", apiKey: value.api_key };
 }
 
-export function getEventsSuccess(value: TEventsResponse): EventsSuccessResult<ChatEvent> {
-    return {
+export async function getEventsSuccess(
+    value: TEventsResponse,
+    principal: Principal,
+    chatId: ChatIdentifier,
+    suppressError = false
+): Promise<EventsResponse<ChatEvent>> {
+    const error = await ensureReplicaIsUpToDate(
+        principal,
+        chatId,
+        value.chat_last_updated,
+        suppressError,
+    );
+
+    return error ?? {
         events: value.events.map(eventWrapper),
         expiredEventRanges: value.expired_event_ranges.map(expiredEventsRange),
         expiredMessageRanges: value.expired_message_ranges.map(expiredMessagesRange),
@@ -2316,8 +2330,20 @@ export function groupSubtype(subtype: TGroupSubtype): GroupSubtype {
     };
 }
 
-export function getMessagesSuccess(value: TMessagesResponse): EventsSuccessResult<Message> {
-    return {
+export async function getMessagesSuccess(
+    value: TMessagesResponse,
+    principal: Principal,
+    chatId: ChatIdentifier,
+    suppressError = false
+): Promise<EventsResponse<Message>> {
+    const error = await ensureReplicaIsUpToDate(
+        principal,
+        chatId,
+        value.chat_last_updated,
+        suppressError,
+    );
+
+    return error ?? {
         events: value.messages.map(messageEvent),
         expiredEventRanges: [],
         expiredMessageRanges: [],

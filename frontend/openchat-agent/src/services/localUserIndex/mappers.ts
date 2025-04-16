@@ -41,6 +41,7 @@ import {
     MAX_EVENTS,
     MAX_MESSAGES,
     UnsupportedValueError,
+    isSuccessfulEventsResponse,
 } from "openchat-shared";
 import {
     bytesToHexString,
@@ -57,7 +58,6 @@ import {
 } from "../common/chatMappersV2";
 import { groupChatSummary, groupChatSummaryUpdates } from "../group/mappersV2";
 import { communitySummaryUpdates } from "../community/mappersV2";
-import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 
 export function apiAccessTokenType(domain: AccessTokenType): LocalUserIndexAccessTokenV2Args {
     switch (domain.kind) {
@@ -301,19 +301,13 @@ export async function chatEventsBatchResponse(
                 kind: "not_found",
             });
         } else if ("Success" in response) {
-            const error = await ensureReplicaIsUpToDate(
+            const result = await getEventsSuccess(
+                response.Success,
                 principal,
                 args.context.chatId,
-                response.Success.chat_last_updated,
-                true,
+                true
             );
-
-            responses.push(
-                error ?? {
-                    kind: "success",
-                    result: getEventsSuccess(response.Success),
-                },
-            );
+            responses.push(isSuccessfulEventsResponse(result) ? { kind: "success", result } : result);
         } else if ("ReplicaNotUpToDate" in response) {
             responses.push({
                 kind: "replica_not_up_to_date",
@@ -326,10 +320,7 @@ export async function chatEventsBatchResponse(
                 error: response.InternalError,
             });
         } else {
-            responses.push({
-                kind: "internal_error",
-                error: JSON.stringify(response),
-            })
+            responses.push(ocError(response.Error));
         }
     }
     return {

@@ -466,7 +466,7 @@ export class UserClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "events_by_index",
             args,
-            (resp) => mapResult(resp, getEventsSuccess),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
             UserEventsByIndexArgs,
             UserEventsResponse,
         );
@@ -549,7 +549,7 @@ export class UserClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "events_window",
             args,
-            (resp) => mapResult(resp, getEventsSuccess),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
             UserEventsWindowArgs,
             UserEventsResponse,
         );
@@ -640,7 +640,7 @@ export class UserClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "events",
             args,
-            (resp) => mapResult(resp, getEventsSuccess),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
             UserEventsArgs,
             UserEventsResponse,
         );
