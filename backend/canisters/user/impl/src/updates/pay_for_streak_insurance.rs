@@ -8,7 +8,7 @@ use icrc_ledger_types::icrc1::transfer::TransferArg;
 use ledger_utils::icrc1::make_transfer;
 use oc_error_codes::OCErrorCode;
 use types::{OCResult, UserCanisterStreakInsurancePayment};
-use user_canister::pay_for_streak_insurance::{Response::*, *};
+use user_canister::pay_for_streak_insurance::*;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
