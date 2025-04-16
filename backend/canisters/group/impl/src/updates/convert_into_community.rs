@@ -59,7 +59,7 @@ async fn convert_into_community(args: Args) -> Response {
         }
         Err(error) => {
             mutate_state(rollback);
-            Error(OCErrorCode::C2CError.with_message(format!("{error:?}")))
+            Error(error.into())
         }
     }
 }

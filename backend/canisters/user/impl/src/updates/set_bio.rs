@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, FieldTooLongResult, OCResult, Timestamped};
-use user_canister::set_bio::{Response::*, *};
+use user_canister::set_bio::*;
 
 const MAX_BIO_LEN: u32 = 2000;
 
@@ -13,11 +13,7 @@ const MAX_BIO_LEN: u32 = 2000;
 fn set_bio(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| set_bio_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| set_bio_impl(args, state)).into()
 }
 
 fn set_bio_impl(args: Args, state: &mut RuntimeState) -> OCResult {

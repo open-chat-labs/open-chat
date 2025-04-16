@@ -2,7 +2,7 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use community_canister::update_user_group::{Response::*, *};
+use community_canister::update_user_group::*;
 use oc_error_codes::OCErrorCode;
 use types::OCResult;
 use utils::text_validation::{validate_user_group_name, UsernameValidationError};
@@ -12,11 +12,7 @@ use utils::text_validation::{validate_user_group_name, UsernameValidationError};
 fn update_user_group(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| update_user_group_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| update_user_group_impl(args, state)).into()
 }
 
 fn update_user_group_impl(args: Args, state: &mut RuntimeState) -> OCResult {

@@ -4,7 +4,7 @@ use crate::timer_job_types::{MarkVideoCallEndedJob, TimerJob};
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{CallParticipantInternal, MessageContentInternal, VideoCallContentInternal};
-use community_canister::start_video_call_v2::{Response::*, *};
+use community_canister::start_video_call_v2::*;
 use constants::HOUR_IN_MS;
 use ic_cdk::update;
 use oc_error_codes::OCErrorCode;
@@ -15,11 +15,7 @@ use types::{Caller, ChannelMessageNotification, Notification, OCResult, UserId, 
 fn start_video_call_v2(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| start_video_call_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| start_video_call_impl(args, state)).into()
 }
 
 fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {

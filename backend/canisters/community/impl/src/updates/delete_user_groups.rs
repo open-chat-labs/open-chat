@@ -2,7 +2,7 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use community_canister::delete_user_groups::{Response::*, *};
+use community_canister::delete_user_groups::*;
 use oc_error_codes::OCErrorCode;
 use types::OCResult;
 
@@ -11,11 +11,7 @@ use types::OCResult;
 fn delete_user_groups(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| delete_user_groups_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| delete_user_groups_impl(args, state)).into()
 }
 
 fn delete_user_groups_impl(args: Args, state: &mut RuntimeState) -> OCResult {

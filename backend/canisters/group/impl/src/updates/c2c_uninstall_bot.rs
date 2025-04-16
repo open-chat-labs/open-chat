@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
 use oc_error_codes::OCErrorCode;
-use types::c2c_uninstall_bot::{Response::*, *};
+use types::c2c_uninstall_bot::*;
 use types::OCResult;
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
@@ -12,11 +12,7 @@ use types::OCResult;
 fn c2c_uninstall_bot(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| c2c_uninstall_bot_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| c2c_uninstall_bot_impl(args, state)).into()
 }
 
 fn c2c_uninstall_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {

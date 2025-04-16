@@ -2,7 +2,7 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use group_canister::register_proposal_vote_v2::{Response::*, *};
+use group_canister::register_proposal_vote_v2::*;
 use types::OCResult;
 
 #[update(msgpack = true)]
@@ -10,11 +10,7 @@ use types::OCResult;
 fn register_proposal_vote_v2(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| register_proposal_vote_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| register_proposal_vote_impl(args, state)).into()
 }
 
 fn register_proposal_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult {

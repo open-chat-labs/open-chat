@@ -3,7 +3,7 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, Reader};
-use community_canister::register_proposal_vote::{Response::*, *};
+use community_canister::register_proposal_vote::*;
 use oc_error_codes::OCErrorCode;
 use types::{CanisterId, ChannelId, OCResult, ProposalId, UserId};
 
@@ -19,7 +19,7 @@ async fn register_proposal_vote(args: Args) -> Response {
         proposal_id,
     } = match read_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
-        Err(error) => return Error(error),
+        Err(error) => return Response::Error(error),
     };
 
     let c2c_args = user_canister::c2c_vote_on_proposal::Args {
@@ -32,14 +32,14 @@ async fn register_proposal_vote(args: Args) -> Response {
         Ok(response) => match response {
             user_canister::c2c_vote_on_proposal::Response::Success => {
                 if let Err(error) = mutate_state(|state| commit(args.channel_id, user_id, args, state)) {
-                    Error(error)
+                    Response::Error(error)
                 } else {
-                    Success
+                    Response::Success
                 }
             }
-            response => Error(OCErrorCode::Unknown.with_json(&response)),
+            response => Response::Error(OCErrorCode::Unknown.with_json(&response)),
         },
-        Err(error) => Error(error.into()),
+        Err(error) => Response::Error(error.into()),
     }
 }
 

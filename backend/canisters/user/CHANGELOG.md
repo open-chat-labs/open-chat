@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Use accurate freezing threshold rather than an approximation ([#7771](https://github.com/open-chat-labs/open-chat/pull/7771))
 - Migrate more endpoints to returning standardised error codes ([#7797](https://github.com/open-chat-labs/open-chat/pull/7797))
 - Migrate more endpoints to returning standardised error codes ([#7799](https://github.com/open-chat-labs/open-chat/pull/7799))
+- Introduce `UnitResult` type to reduce duplication ([#7800](https://github.com/open-chat-labs/open-chat/pull/7800))
 
 ### Fixed
 

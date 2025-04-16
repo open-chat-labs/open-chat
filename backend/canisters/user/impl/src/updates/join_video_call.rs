@@ -4,21 +4,14 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, EventIndex, OCResult, UserId, VideoCallPresence};
-use user_canister::{
-    join_video_call::{Response::*, *},
-    JoinVideoCall, UserCanisterEvent,
-};
+use user_canister::{join_video_call::*, JoinVideoCall, UserCanisterEvent};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn join_video_call(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| join_video_call_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| join_video_call_impl(args, state)).into()
 }
 
 fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {

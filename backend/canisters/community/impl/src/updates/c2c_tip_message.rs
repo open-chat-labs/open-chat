@@ -3,7 +3,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::TipMessageArgs;
-use community_canister::c2c_tip_message::{Response::*, *};
+use community_canister::c2c_tip_message::*;
 use ledger_utils::format_crypto_amount_with_symbol;
 use types::{Achievement, ChannelMessageTipped, Chat, EventIndex, Notification, OCResult};
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
@@ -13,11 +13,7 @@ use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEven
 fn c2c_tip_message(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| c2c_tip_message_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| c2c_tip_message_impl(args, state)).into()
 }
 
 fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {

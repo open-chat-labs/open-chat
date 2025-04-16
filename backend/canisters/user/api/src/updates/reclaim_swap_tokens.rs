@@ -1,3 +1,4 @@
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{CanisterId, ExchangeId};
@@ -17,4 +18,5 @@ pub struct Args {
 pub enum Response {
     Success,
     Failed(String),
+    Error(OCError),
 }

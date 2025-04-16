@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
-use types::c2c_install_bot::{Response::*, *};
+use types::c2c_install_bot::*;
 use types::{OCResult, UserType};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
@@ -12,11 +12,7 @@ use types::{OCResult, UserType};
 fn c2c_install_bot(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| c2c_install_bot_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| c2c_install_bot_impl(args, state)).into()
 }
 
 fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {

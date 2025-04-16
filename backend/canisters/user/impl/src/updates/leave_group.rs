@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_leave_group;
 use oc_error_codes::OCErrorCode;
-use user_canister::leave_group::{Response::*, *};
+use user_canister::leave_group::*;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
@@ -19,7 +19,7 @@ async fn leave_group(args: Args) -> Response {
         }
     }) {
         Ok(ok) => ok,
-        Err(error) => return Error(error),
+        Err(error) => return Response::Error(error),
     };
 
     let c2c_args = c2c_leave_group::Args { principal };
@@ -28,14 +28,14 @@ async fn leave_group(args: Args) -> Response {
         Ok(result) => match result {
             c2c_leave_group::Response::Success(_) => {
                 mutate_state(|state| state.data.remove_group(args.chat_id, state.env.now()));
-                Success
+                Response::Success
             }
             c2c_leave_group::Response::Error(error) if error.matches_code(OCErrorCode::InitiatorNotInChat) => {
                 mutate_state(|state| state.data.remove_group(args.chat_id, state.env.now()));
-                Error(OCErrorCode::InitiatorNotInChat.into())
+                Response::Error(OCErrorCode::InitiatorNotInChat.into())
             }
-            c2c_leave_group::Response::Error(error) => Error(error),
+            c2c_leave_group::Response::Error(error) => Response::Error(error),
         },
-        Err(error) => Error(error.into()),
+        Err(error) => Response::Error(error.into()),
     }
 }
