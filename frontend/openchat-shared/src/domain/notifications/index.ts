@@ -1,4 +1,6 @@
 import type { ChannelIdentifier, DirectChatIdentifier, GroupChatIdentifier } from "../chat/chat";
+import type { OCError } from "../error";
+import type { Offline, Success } from "../response";
 
 export type Notification =
     | AddedToChannelNotification
@@ -147,4 +149,4 @@ export type NotificationStatus =
     | "hard-denied"
     | "granted";
 
-export type ToggleMuteNotificationResponse = "success" | "failure" | "offline";
+export type ToggleMuteNotificationResponse = Success | OCError | Offline;

@@ -92,7 +92,6 @@
     import Convert from "./communities/Convert.svelte";
     import EditCommunity from "./communities/edit/Edit.svelte";
     import CreateOrUpdateGroup from "./createOrUpdateGroup/CreateOrUpdateGroup.svelte";
-    import type CurrentChatMessages from "./CurrentChatMessages.svelte";
     import DailyChitModal from "./DailyChitModal.svelte";
     import LeftPanel from "./LeftPanel.svelte";
     import LoggingInModal from "./LoggingInModal.svelte";
@@ -186,7 +185,6 @@
     let share: Share = { title: "", text: "", url: "", files: [] };
     let messageToForward: Message | undefined = undefined;
     let creatingThread = false;
-    let currentChatMessages: CurrentChatMessages | undefined = $state();
 
     onMount(() => {
         const unsubEvents = [
@@ -304,17 +302,6 @@
         incomingVideoCall.set(ev);
     }
 
-    // the currentChatMessages component may not exist straight away
-    async function waitAndScrollToMessageIndex(index: number, preserveFocus: boolean, retries = 0) {
-        if (!currentChatMessages && retries < 5) {
-            window.requestAnimationFrame(() =>
-                waitAndScrollToMessageIndex(index, preserveFocus, retries + 1),
-            );
-        } else {
-            currentChatMessages?.scrollToMessageIndex(index, preserveFocus);
-        }
-    }
-
     async function routeChange(initialised: boolean, route: RouteParams): Promise<void> {
         // wrap the whole thing in untrack because we don't want it to react to everything it reads in here
         untrack(async () => {
@@ -389,10 +376,6 @@
             activeVideoCall?.threadOpen(false);
             ui.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
         });
-    }
-
-    function goToMessageIndex(detail: { index: number; preserveFocus: boolean }) {
-        waitAndScrollToMessageIndex(detail.index, detail.preserveFocus);
     }
 
     function leaderboard() {
@@ -1040,8 +1023,8 @@
 <main class:anon={$anonUser} class:offline={$offlineStore}>
     <LeftNav />
     <LeftPanel />
-    <MiddlePanel {joining} bind:currentChatMessages onGoToMessageIndex={goToMessageIndex} />
-    <RightPanel onGoToMessageIndex={goToMessageIndex} />
+    <MiddlePanel {joining} />
+    <RightPanel />
 </main>
 
 {#if $anonUser}

@@ -55,7 +55,7 @@
         client
             .payForStreakInsurance(additionalDays, priceE8s)
             .then((resp) => {
-                if (resp !== "success") {
+                if (resp.kind !== "success") {
                     toastStore.showFailureToast(i18nKey("streakInsurance.failure"));
                 } else {
                     onClose();

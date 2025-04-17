@@ -72,42 +72,25 @@ import type {
 } from "openchat-shared";
 import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import {
-    deleteMessageResponse,
-    undeleteMessageResponse,
-    getEventsResponse,
     getUpdatesResponse,
     initialStateResponse,
-    searchDirectChatResponse,
-    setAvatarResponse,
-    setBioResponse,
-    withdrawBtcResponse,
+    searchDirectChatSuccess,
     withdrawCryptoResponse,
     sendMessageResponse,
     sendMessageWithTransferToChannelResponse,
     sendMessageWithTransferToGroupResponse,
     publicProfileResponse,
-    pinChatResponse,
     archiveChatResponse,
-    deletedMessageResponse,
-    setMessageReminderResponse,
-    createCommunityResponse,
-    manageFavouritesResponse,
-    leaveCommunityResponse,
-    deleteCommunityResponse,
     tipMessageResponse,
     savedCryptoAccountsResponse,
-    saveCryptoAccountResponse,
-    reportMessageResponse,
-    swapTokensResponse,
     tokenSwapStatusResponse,
-    approveTransferResponse,
     apiExchangeArgs,
     chitEventsResponse,
     claimDailyChitResponse,
     apiWalletConfig,
     apiVerification,
     messageActivityFeedResponse,
-    payForStreakInsuranceResponse,
+    createCommunitySuccess, swapTokensSuccess,
 } from "./mappersV2";
 import {
     type Database,
@@ -125,21 +108,19 @@ import {
     apiExternalBotPermissions,
     apiGroupPermissions,
     apiMessageContent,
-    editMessageResponse,
     apiPendingCryptocurrencyWithdrawal,
     apiReplyContextArgs,
-    addRemoveReactionResponse,
-    createGroupResponse,
-    leaveGroupResponse,
-    deleteGroupResponse,
     apiChatIdentifier,
-    acceptP2PSwapResponse,
-    cancelP2PSwapResponse,
-    joinVideoCallResponse,
-    setPinNumberResponse,
     apiMaybeAccessGateConfig,
-    updateBotResponse,
-    generateApiKeyResponse,
+    isSuccess,
+    getEventsSuccess,
+    mapResult,
+    undeleteMessageSuccess,
+    unitResult,
+    createGroupSuccess,
+    generateApiKeySuccess,
+    acceptP2PSwapSuccess,
+    deletedMessageSuccess,
 } from "../common/chatMappersV2";
 import { DataClient } from "../data/data.client";
 import {
@@ -156,6 +137,7 @@ import {
     MAX_MESSAGES,
     MAX_MISSING,
     ResponseTooLargeError,
+    isSuccessfulEventsResponse,
 } from "openchat-shared";
 import {
     chunkedChatEventsFromBackend,
@@ -165,23 +147,20 @@ import type { SetPinNumberResponse } from "openchat-shared";
 import { setChitInfoInCache } from "../../utils/userCache";
 import {
     Empty as TEmpty,
+    UnitResult,
     UserAcceptP2pSwapArgs,
     UserAcceptP2pSwapResponse,
     UserAddHotGroupExclusionsArgs,
     UserAddHotGroupExclusionsResponse,
     UserAddReactionArgs,
-    UserAddReactionResponse,
     UserApproveTransferArgs,
-    UserApproveTransferResponse,
     UserArchiveUnarchiveChatsArgs,
     UserArchiveUnarchiveChatsResponse,
     UserBioResponse,
     UserBlockUserArgs,
-    UserBlockUserResponse,
     UserCancelMessageReminderArgs,
     UserCancelMessageReminderResponse,
     UserCancelP2pSwapArgs,
-    UserCancelP2pSwapResponse,
     UserChatInList,
     UserChitEventsArgs,
     UserChitEventsResponse,
@@ -193,31 +172,22 @@ import {
     UserCreateGroupArgs,
     UserCreateGroupResponse,
     UserDeleteCommunityArgs,
-    UserDeleteCommunityResponse,
     UserDeleteDirectChatArgs,
-    UserDeleteDirectChatResponse,
     UserDeletedMessageArgs,
     UserDeletedMessageResponse,
     UserDeleteGroupArgs,
-    UserDeleteGroupResponse,
     UserDeleteMessagesArgs,
-    UserDeleteMessagesResponse,
     UserEditMessageArgs,
-    UserEditMessageResponse,
     UserEventsArgs,
     UserEventsByIndexArgs,
     UserEventsResponse,
     UserEventsWindowArgs,
     UserInitialStateResponse,
     UserJoinVideoCallArgs,
-    UserJoinVideoCallResponse,
     UserLeaveCommunityArgs,
-    UserLeaveCommunityResponse,
     UserLeaveGroupArgs,
-    UserLeaveGroupResponse,
     UserLocalUserIndexResponse,
     UserManageFavouriteChatsArgs,
-    UserManageFavouriteChatsResponse,
     UserMarkAchievementsSeenArgs,
     UserMarkAchievementsSeenResponse,
     UserMarkReadArgs,
@@ -225,16 +195,11 @@ import {
     UserMarkReadChatMessagesRead,
     UserMarkReadResponse,
     UserMuteNotificationsArgs,
-    UserMuteNotificationsResponse,
     UserNamedAccount,
     UserPinChatArgs,
-    UserPinChatResponse,
     UserPublicProfileResponse,
     UserRemoveReactionArgs,
-    UserRemoveReactionResponse,
     UserReportMessageArgs,
-    UserReportMessageResponse,
-    UserSaveCryptoAccountResponse,
     UserSavedCryptoAccountsResponse,
     UserSearchMessagesArgs,
     UserSearchMessagesResponse,
@@ -245,15 +210,12 @@ import {
     UserSendMessageWithTransferToGroupArgs,
     UserSendMessageWithTransferToGroupResponse,
     UserSetAvatarArgs,
-    UserSetAvatarResponse,
     UserSetBioArgs,
-    UserSetBioResponse,
     UserSetCommunityIndexesArgs,
     UserSetCommunityIndexesResponse,
     UserSetMessageReminderArgs,
     UserSetMessageReminderResponse,
     UserSetPinNumberArgs,
-    UserSetPinNumberResponse,
     UserSwapTokensArgs,
     UserSwapTokensResponse,
     UserTipMessageArgs,
@@ -261,12 +223,9 @@ import {
     UserTokenSwapStatusArgs,
     UserTokenSwapStatusResponse,
     UserUnblockUserArgs,
-    UserUnblockUserResponse,
     UserUndeleteMessagesArgs,
     UserUndeleteMessagesResponse,
     UserUnpinChatArgs,
-    UserUnpinChatResponse,
-    UserUpdateBtcBalanceResponse,
     UserUpdatesArgs,
     UserUpdatesResponse,
     UserWithdrawCryptoArgs,
@@ -276,7 +235,6 @@ import {
     UserMessageActivityFeedArgs,
     UserMessageActivityFeedResponse,
     UserUpdateBotArgs,
-    UserUpdateBotResponse,
     UserGenerateBotApiKeyArgs,
     UserGenerateBotApiKeyResponse,
     UserGenerateBtcAddressResponse,
@@ -285,9 +243,7 @@ import {
     UserWithdrawBtcArgs,
     UserWithdrawBtcResponse,
     UserPayForStreakInsuranceArgs,
-    UserPayForStreakInsuranceResponse,
 } from "../../typebox";
-import { toggleNotificationsResponse } from "../notifications/mappers";
 
 export class UserClient extends MsgpackCanisterAgent {
     userId: string;
@@ -333,7 +289,7 @@ export class UserClient extends MsgpackCanisterAgent {
             )
                 .then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex))
                 .then((resp) => {
-                    if (resp !== "events_failed") {
+                    if (isSuccessfulEventsResponse(resp)) {
                         return mergeSuccessResponses(cachedEvents, resp);
                     }
                     return resp;
@@ -351,9 +307,9 @@ export class UserClient extends MsgpackCanisterAgent {
                 to_add: toAdd.map(apiChatIdentifier),
                 to_remove: toRemove.map(apiChatIdentifier),
             },
-            manageFavouritesResponse,
+            unitResult,
             UserManageFavouriteChatsArgs,
-            UserManageFavouriteChatsResponse,
+            UnitResult,
         );
     }
 
@@ -414,7 +370,7 @@ export class UserClient extends MsgpackCanisterAgent {
                 default_channel_rules: defaultChannelRules,
                 primary_language: community.primaryLanguage,
             },
-            createCommunityResponse,
+            (resp) => mapResult(resp, createCommunitySuccess),
             UserCreateCommunityArgs,
             UserCreateCommunityResponse,
         );
@@ -441,7 +397,7 @@ export class UserClient extends MsgpackCanisterAgent {
                 events_ttl: group.eventsTTL,
                 messages_visible_to_non_members: group.messagesVisibleToNonMembers,
             },
-            (resp) => createGroupResponse(resp, group.id),
+            (resp) => mapResult(resp, (value) => createGroupSuccess(value, group.id)),
             UserCreateGroupArgs,
             UserCreateGroupResponse,
         );
@@ -453,9 +409,9 @@ export class UserClient extends MsgpackCanisterAgent {
             {
                 chat_id: principalStringToBytes(chatId),
             },
-            deleteGroupResponse,
+            unitResult,
             UserDeleteGroupArgs,
-            UserDeleteGroupResponse,
+            UnitResult,
         );
     }
 
@@ -465,9 +421,9 @@ export class UserClient extends MsgpackCanisterAgent {
             {
                 community_id: principalStringToBytes(id.communityId),
             },
-            deleteCommunityResponse,
+            unitResult,
             UserDeleteCommunityArgs,
-            UserDeleteCommunityResponse,
+            UnitResult,
         );
     }
 
@@ -510,7 +466,7 @@ export class UserClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "events_by_index",
             args,
-            (resp) => getEventsResponse(this.principal, resp, chatId, latestKnownUpdate),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
             UserEventsByIndexArgs,
             UserEventsResponse,
         );
@@ -593,7 +549,7 @@ export class UserClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "events_window",
             args,
-            (resp) => getEventsResponse(this.principal, resp, chatId, latestKnownUpdate),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
             UserEventsWindowArgs,
             UserEventsResponse,
         );
@@ -684,7 +640,7 @@ export class UserClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "events",
             args,
-            (resp) => getEventsResponse(this.principal, resp, chatId, latestKnownUpdate),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
             UserEventsArgs,
             UserEventsResponse,
         );
@@ -701,11 +657,11 @@ export class UserClient extends MsgpackCanisterAgent {
                     mime_type: "image/jpg",
                 },
             },
-            setAvatarResponse,
+            isSuccess,
             UserSetAvatarArgs,
-            UserSetAvatarResponse,
-        ).then((resp) => {
-            if (resp === "success") {
+            UnitResult,
+        ).then((success) => {
+            if (success) {
                 return {
                     blobId,
                     canisterId: this.userId,
@@ -735,9 +691,9 @@ export class UserClient extends MsgpackCanisterAgent {
                 return this.executeMsgpackUpdate(
                     "edit_message_v2",
                     req,
-                    editMessageResponse,
+                    unitResult,
                     UserEditMessageArgs,
-                    UserEditMessageResponse,
+                    UnitResult,
                 );
             });
     }
@@ -882,9 +838,9 @@ export class UserClient extends MsgpackCanisterAgent {
                 name,
                 account,
             },
-            saveCryptoAccountResponse,
+            unitResult,
             UserNamedAccount,
-            UserSaveCryptoAccountResponse,
+            UnitResult,
         );
     }
 
@@ -965,9 +921,9 @@ export class UserClient extends MsgpackCanisterAgent {
             {
                 user_id: principalStringToBytes(userId),
             },
-            (_) => "success",
+            unitResult,
             UserBlockUserArgs,
-            UserBlockUserResponse,
+            UnitResult,
         );
     }
 
@@ -977,9 +933,9 @@ export class UserClient extends MsgpackCanisterAgent {
             {
                 user_id: principalStringToBytes(userId),
             },
-            (_) => "success",
+            unitResult,
             UserUnblockUserArgs,
-            UserUnblockUserResponse,
+            UnitResult,
         );
     }
 
@@ -989,9 +945,9 @@ export class UserClient extends MsgpackCanisterAgent {
             {
                 chat_id: principalStringToBytes(chatId),
             },
-            leaveGroupResponse,
+            unitResult,
             UserLeaveGroupArgs,
-            UserLeaveGroupResponse,
+            UnitResult,
         );
     }
 
@@ -1001,9 +957,9 @@ export class UserClient extends MsgpackCanisterAgent {
             {
                 community_id: principalStringToBytes(id.communityId),
             },
-            leaveCommunityResponse,
+            unitResult,
             UserLeaveCommunityArgs,
-            UserLeaveCommunityResponse,
+            UnitResult,
         );
     }
 
@@ -1123,9 +1079,9 @@ export class UserClient extends MsgpackCanisterAgent {
                 reaction,
                 correlation_id: generateUint64(),
             },
-            addRemoveReactionResponse,
+            unitResult,
             UserAddReactionArgs,
-            UserAddReactionResponse,
+            UnitResult,
         );
     }
 
@@ -1144,9 +1100,9 @@ export class UserClient extends MsgpackCanisterAgent {
                 reaction,
                 correlation_id: generateUint64(),
             },
-            addRemoveReactionResponse,
+            unitResult,
             UserRemoveReactionArgs,
-            UserRemoveReactionResponse,
+            UnitResult,
         );
     }
 
@@ -1163,9 +1119,9 @@ export class UserClient extends MsgpackCanisterAgent {
                 message_ids: [messageId],
                 correlation_id: generateUint64(),
             },
-            deleteMessageResponse,
+            unitResult,
             UserDeleteMessagesArgs,
-            UserDeleteMessagesResponse,
+            UnitResult,
         );
     }
 
@@ -1182,7 +1138,7 @@ export class UserClient extends MsgpackCanisterAgent {
                 message_ids: [messageId],
                 correlation_id: generateUint64(),
             },
-            undeleteMessageResponse,
+            (resp) => mapResult(resp, undeleteMessageSuccess),
             UserUndeleteMessagesArgs,
             UserUndeleteMessagesResponse,
         );
@@ -1201,7 +1157,7 @@ export class UserClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "search_messages",
             args,
-            (res) => searchDirectChatResponse(res, chatId),
+            (resp) => mapResult(resp, (value) => searchDirectChatSuccess(value, chatId)),
             UserSearchMessagesArgs,
             UserSearchMessagesResponse,
         );
@@ -1217,9 +1173,9 @@ export class UserClient extends MsgpackCanisterAgent {
         return this.executeMsgpackUpdate(
             muted ? "mute_notifications" : "unmute_notifications",
             args,
-            toggleNotificationsResponse,
+            unitResult,
             UserMuteNotificationsArgs,
-            UserMuteNotificationsResponse,
+            UnitResult,
         );
     }
 
@@ -1260,9 +1216,9 @@ export class UserClient extends MsgpackCanisterAgent {
         return this.executeMsgpackUpdate(
             "set_bio",
             { text: bio },
-            setBioResponse,
+            unitResult,
             UserSetBioArgs,
-            UserSetBioResponse,
+            UnitResult,
         );
     }
 
@@ -1308,9 +1264,9 @@ export class UserClient extends MsgpackCanisterAgent {
             {
                 chat: this.toChatInList(chatId, favourite),
             },
-            pinChatResponse,
+            unitResult,
             UserPinChatArgs,
-            UserPinChatResponse,
+            UnitResult,
         );
     }
 
@@ -1320,9 +1276,9 @@ export class UserClient extends MsgpackCanisterAgent {
             {
                 chat: this.toChatInList(chatId, favourite),
             },
-            pinChatResponse,
+            unitResult,
             UserUnpinChatArgs,
-            UserUnpinChatResponse,
+            UnitResult,
         );
     }
 
@@ -1359,7 +1315,7 @@ export class UserClient extends MsgpackCanisterAgent {
                 user_id: principalStringToBytes(userId),
                 message_id: messageId,
             },
-            deletedMessageResponse,
+            (resp) => mapResult(resp, deletedMessageSuccess),
             UserDeletedMessageArgs,
             UserDeletedMessageResponse,
         );
@@ -1381,7 +1337,7 @@ export class UserClient extends MsgpackCanisterAgent {
                 thread_root_message_index: threadRootMessageIndex,
                 event_index: eventIndex,
             },
-            setMessageReminderResponse,
+            unitResult,
             UserSetMessageReminderArgs,
             UserSetMessageReminderResponse,
         );
@@ -1426,9 +1382,9 @@ export class UserClient extends MsgpackCanisterAgent {
                 delete: deleteMessage,
                 thread_root_message_index: threadRootMessageIndex,
             },
-            reportMessageResponse,
+            isSuccess,
             UserReportMessageArgs,
-            UserReportMessageResponse,
+            UnitResult,
         );
     }
 
@@ -1462,7 +1418,7 @@ export class UserClient extends MsgpackCanisterAgent {
                 min_output_amount: minAmountOut,
                 pin,
             },
-            swapTokensResponse,
+            (resp) => mapResult(resp, swapTokensSuccess),
             UserSwapTokensArgs,
             UserSwapTokensResponse,
         );
@@ -1500,9 +1456,9 @@ export class UserClient extends MsgpackCanisterAgent {
                 expires_in: expiresIn,
                 pin,
             },
-            approveTransferResponse,
+            unitResult,
             UserApproveTransferArgs,
-            UserApproveTransferResponse,
+            UnitResult,
         );
     }
 
@@ -1515,7 +1471,7 @@ export class UserClient extends MsgpackCanisterAgent {
             },
             (resp) => resp === "Success",
             UserDeleteDirectChatArgs,
-            UserDeleteDirectChatResponse,
+            UnitResult,
         );
     }
 
@@ -1533,7 +1489,7 @@ export class UserClient extends MsgpackCanisterAgent {
                 thread_root_message_index: threadRootMessageIndex,
                 pin,
             },
-            acceptP2PSwapResponse,
+            (resp) => mapResult(resp, acceptP2PSwapSuccess),
             UserAcceptP2pSwapArgs,
             UserAcceptP2pSwapResponse,
         );
@@ -1546,9 +1502,9 @@ export class UserClient extends MsgpackCanisterAgent {
                 user_id: principalStringToBytes(userId),
                 message_id: messageId,
             },
-            cancelP2PSwapResponse,
+            unitResult,
             UserCancelP2pSwapArgs,
-            UserCancelP2pSwapResponse,
+            UnitResult,
         );
     }
 
@@ -1559,9 +1515,9 @@ export class UserClient extends MsgpackCanisterAgent {
                 user_id: principalStringToBytes(userId),
                 message_id: messageId,
             },
-            joinVideoCallResponse,
+            unitResult,
             UserJoinVideoCallArgs,
-            UserJoinVideoCallResponse,
+            UnitResult,
         );
     }
 
@@ -1585,9 +1541,9 @@ export class UserClient extends MsgpackCanisterAgent {
                 verification: apiVerification(verification),
                 new: newPin,
             },
-            setPinNumberResponse,
+            unitResult,
             UserSetPinNumberArgs,
-            UserSetPinNumberResponse,
+            UnitResult,
         );
     }
 
@@ -1679,9 +1635,9 @@ export class UserClient extends MsgpackCanisterAgent {
                 bot_id: principalStringToBytes(botId),
                 granted_permissions: apiExternalBotPermissions(grantedPermissions),
             },
-            updateBotResponse,
+            isSuccess,
             UserUpdateBotArgs,
-            UserUpdateBotResponse,
+            UnitResult,
         );
     }
 
@@ -1695,7 +1651,7 @@ export class UserClient extends MsgpackCanisterAgent {
                 bot_id: principalStringToBytes(botId),
                 requested_permissions: apiExternalBotPermissions(permissions),
             },
-            generateApiKeyResponse,
+            (resp) => mapResult(resp, generateApiKeySuccess),
             UserGenerateBotApiKeyArgs,
             UserGenerateBotApiKeyResponse,
         );
@@ -1739,9 +1695,9 @@ export class UserClient extends MsgpackCanisterAgent {
         return this.executeMsgpackUpdate(
             "update_btc_balance",
             {},
-            (resp) => resp === "Success",
+            isSuccess,
             TEmpty,
-            UserUpdateBtcBalanceResponse,
+            UnitResult,
         );
     }
 
@@ -1757,7 +1713,7 @@ export class UserClient extends MsgpackCanisterAgent {
                 amount,
                 pin,
             },
-            withdrawBtcResponse,
+            unitResult,
             UserWithdrawBtcArgs,
             UserWithdrawBtcResponse,
         );
@@ -1773,9 +1729,9 @@ export class UserClient extends MsgpackCanisterAgent {
                 additional_days: additionalDays,
                 expected_price: expectedPrice,
             },
-            payForStreakInsuranceResponse,
+            unitResult,
             UserPayForStreakInsuranceArgs,
-            UserPayForStreakInsuranceResponse,
+            UnitResult,
         );
     }
 }

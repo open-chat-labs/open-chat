@@ -1,3 +1,4 @@
+import type { Principal } from "@dfinity/principal";
 import {
     bigintToBytes,
     bytesToBigint,
@@ -12,7 +13,7 @@ import {
 import type {
     Message,
     ChatEvent,
-    EventsSuccessResult,
+    EventsResponse,
     ThreadSummary,
     // StaleMessage,
     MessageContent,
@@ -57,44 +58,28 @@ import type {
     CommunityPermissionRole,
     CommunityPermissions,
     ChatIdentifier,
-    AddRemoveReactionResponse,
     ChannelSummary,
     CommunitySummary,
-    // GroupCanisterThreadDetails,
     Mention,
     EventWrapper,
     UpdateGroupResponse,
-    CreateGroupResponse,
     MultiUserChatIdentifier,
     ChannelIdentifier,
     GroupChatIdentifier,
-    DeleteGroupResponse,
     PinMessageResponse,
-    UnpinMessageResponse,
     GroupChatDetailsResponse,
     Member,
     GroupChatDetailsUpdatesResponse,
-    EditMessageResponse,
-    DeclineInvitationResponse,
-    LeaveGroupResponse,
-    DeleteMessageResponse,
     DeletedGroupMessageResponse,
     UndeleteMessageResponse,
     ThreadPreview,
     ThreadPreviewsResponse,
-    ChangeRoleResponse,
-    RegisterPollVoteResponse,
     JoinGroupResponse,
     SearchGroupChatResponse,
-    InviteCodeResponse,
-    EnableInviteCodeResponse,
-    DisableInviteCodeResponse,
     ThreadSyncDetails,
-    RegisterProposalVoteResponse,
     UserGroupSummary,
     TipsReceived,
     PrizeContentInitial,
-    ClaimPrizeResponse,
     MessagePermissions,
     ExpiredEventsRange,
     ExpiredMessagesRange,
@@ -102,13 +87,10 @@ import type {
     P2PSwapContent,
     P2PSwapStatus,
     TokenInfo,
-    CancelP2PSwapResponse,
     GroupInviteCodeChange,
     VideoCallContent,
-    JoinVideoCallResponse,
     VideoCallType,
     VideoCallPresence,
-    SetVideoCallPresenceResponse,
     VideoCallParticipantsResponse,
     VideoCallParticipant,
     LeafGate,
@@ -118,7 +100,6 @@ import type {
     MessageMatch,
     AcceptP2PSwapResponse,
     AccessGateConfig,
-    SetPinNumberResponse,
     ExternalBotPermissions,
     InstalledBotDetails,
     BotDefinition,
@@ -130,6 +111,12 @@ import type {
     GenerateBotKeyResponse,
     PublicApiKeyDetails,
     OCError,
+    Success,
+    CreateGroupSuccess,
+    InviteCodeSuccess,
+    EnableInviteCodeSuccess,
+    SendMessageResponse,
+    ClaimPrizeResponse,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -147,9 +134,7 @@ import {
     botChatPermissionList,
     messagePermissionsList,
 } from "openchat-shared";
-import { pinNumberFailureResponseV2 } from "./pinNumberErrorMapper";
 import { toRecord2 } from "../../utils/list";
-import { ReplicaNotUpToDateError } from "../error";
 import type {
     AccessGate as TAccessGate,
     AccessGateConfig as TAccessGateConfig,
@@ -161,38 +146,13 @@ import type {
     Chat as TChat,
     ChatEvent as TChatEvent,
     ChatMetrics as TChatMetrics,
-    CommunityAcceptP2pSwapResponse,
-    CommunityAddReactionResponse,
-    CommunityCancelP2pSwapResponse,
     CommunityCanisterChannelSummary as TCommunityCanisterChannelSummary,
     CommunityCanisterCommunitySummary as TCommunityCanisterCommunitySummary,
-    CommunityChangeChannelRoleResponse,
-    CommunityClaimPrizeResponse,
-    CommunityCreateChannelResponse,
-    CommunityDeclineInvitationResponse,
-    CommunityDeleteChannelResponse,
-    CommunityDeleteMessagesResponse,
-    CommunityDeletedMessageResponse,
-    CommunityDisableInviteCodeResponse,
-    CommunityEditMessageResponse,
-    CommunityEnableInviteCodeResponse,
-    CommunityInviteCodeResponse,
-    CommunityLeaveChannelResponse,
     CommunityPermissionRole as TCommunityPermissionRole,
     CommunityPermissions as TCommunityPermissions,
-    CommunityPinMessageResponse,
-    CommunityRegisterPollVoteResponse,
-    CommunityRegisterProposalVoteResponse,
-    CommunityRemoveReactionResponse,
     CommunityRole as TCommunityRole,
     CommunitySearchChannelResponse,
-    CommunitySelectedChannelInitialResponse,
     CommunitySelectedChannelUpdatesResponse,
-    CommunitySetVideoCallPresenceResponse,
-    CommunityThreadPreviewsResponse,
-    CommunityUndeleteMessagesResponse,
-    CommunityUpdateChannelResponse,
-    CommunityVideoCallParticipantsResponse,
     CompletedCryptoTransaction as TCompletedCryptoTransaction,
     CryptoContent as TCryptoContent,
     CryptoTransaction as TCryptoTransaction,
@@ -207,38 +167,15 @@ import type {
     GateCheckFailedReason as TGateCheckFailedReason,
     GiphyContent as TGiphyContent,
     GiphyImageVariant as TGiphyImageVariant,
-    GroupAcceptP2pSwapResponse,
-    GroupAddReactionResponse,
-    GroupCancelP2pSwapResponse,
     GroupCanisterGroupChatSummary as TGroupCanisterGroupChatSummary,
     GroupCanisterThreadDetails as TGroupCanisterThreadDetails,
-    GroupChangeRoleResponse,
-    GroupClaimPrizeResponse,
-    GroupDeclineInvitiationResponse,
-    GroupDeleteMessagesResponse,
-    GroupDeletedMessageResponse,
-    GroupDisableInviteCodeResponse,
-    GroupEditMessageResponse,
-    GroupEnableInviteCodeResponse,
-    GroupInviteCodeResponse,
     GroupMember as TGroupMember,
     GroupPermissionRole as TGroupPermissionRole,
     GroupPermissions as TGroupPermissions,
-    GroupPinMessageResponse,
-    GroupRegisterPollVoteResponse,
-    GroupRegisterProposalVoteResponse,
-    GroupRemoveReactionResponse,
     GroupRole as TGroupRole,
     GroupSearchMessagesResponse,
-    GroupSelectedInitialResponse,
     GroupSelectedUpdatesResponse,
-    GroupSetVideoCallPresenceResponse,
     GroupSubtype as TGroupSubtype,
-    GroupThreadPreviewsResponse,
-    GroupUndeleteMessagesResponse,
-    GroupUnpinMessageResponse,
-    GroupUpdateGroupResponse,
-    GroupVideoCallParticipantsResponse,
     HydratedMention as TMention,
     ImageContent as TImageContent,
     LocalUserIndexJoinGroupResponse,
@@ -269,7 +206,6 @@ import type {
     ProposalRewardStatus as TProposalRewardStatus,
     ReplyContext as TReplyContext,
     ReportedMessage as TReportedMessage,
-    SwapStatusError as TSwapStatusError,
     TextContent as TTextContent,
     ThreadPreview as TThreadPreview,
     ThreadSummary as TThreadSummary,
@@ -277,56 +213,77 @@ import type {
     Tokens as TTokens,
     TotalVotes as TTotalVotes,
     User as TUser,
-    UserAcceptP2pSwapResponse,
-    UserAddReactionResponse,
-    UserCancelP2pSwapResponse,
-    UserCreateGroupResponse,
-    UserDeleteGroupResponse,
-    UserEditMessageResponse,
     UserGroupSummary as TUserGroupSummary,
-    UserJoinVideoCallResponse,
-    UserLeaveGroupResponse,
-    UserRemoveReactionResponse,
-    UserSetPinNumberResponse,
     UserWithdrawCryptoArgs,
     VideoCallContent as TVideoCallContent,
     VideoCallPresence as TVideoCallPresence,
     VideoCallType as TVideoCallType,
     VideoContent as TVideoContent,
     BotPermissions as ApiExternalBotPermissions,
-    CommunityUpdateBotResponse,
-    GroupUpdateBotResponse,
     BotCommandDefinition as ApiCommandDefinition,
     BotCommandParamType as ApiCommandParamType,
     BotCommandParam as ApiCommandParam,
     BotCommandArg,
     BotDefinition as ApiBotDefinition,
-    CommunityGenerateBotApiKeyResponse,
-    GroupGenerateBotApiKeyResponse,
     PublicApiKeyDetails as ApiPublicApiKeyDetails,
-    UserUpdateBotResponse,
     InstalledBotDetails as ApiInstalledBotDetails,
-    UserGenerateBotApiKeyResponse,
+    UserCreateGroupSuccessResult,
+    CommunityCreateChannelSuccessResult,
+    GroupDeletedMessageSuccessResult,
+    CommunityDeletedMessageSuccessResult,
+    GroupEnableInviteCodeSuccessResult,
+    CommunityEnableInviteCodeSuccessResult,
+    GroupInviteCodeSuccessResult,
+    CommunityInviteCodeSuccessResult,
+    PushEventResult,
+    GroupUndeleteMessagesSuccessResult,
+    CommunityUndeleteMessagesSuccessResult,
+    GroupUpdateGroupSuccessResult,
+    CommunityUpdateChannelSuccessResult,
+    AcceptSwapSuccess,
+    VideoCallParticipants,
+    CommunityGenerateBotApiKeySuccessResult,
+    GroupGenerateBotApiKeySuccessResult,
+    UserGenerateBotApiKeySuccessResult,
+    CommunitySendMessageSuccessResult,
+    GroupSelectedInitialSuccessResult,
+    CommunitySelectedChannelInitialSuccessResult,
+    GroupClaimPrizeResponse,
+    CommunityClaimPrizeResponse,
+    GroupThreadPreviewsSuccessResult,
+    CommunityThreadPreviewsSuccessResult,
+    GroupSendMessageSuccessResult,
+    UserUndeleteMessagesSuccessResult,
+    UserDeletedMessageSuccessResult,
 } from "../../typebox";
 import type { ApiPrincipal } from "../index";
+import { ensureReplicaIsUpToDate } from "./replicaUpToDateChecker";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
-export function generateApiKeyResponse(
+export function generateApiKeySuccess(
     value:
-        | CommunityGenerateBotApiKeyResponse
-        | GroupGenerateBotApiKeyResponse
-        | UserGenerateBotApiKeyResponse,
+        | CommunityGenerateBotApiKeySuccessResult
+        | GroupGenerateBotApiKeySuccessResult
+        | UserGenerateBotApiKeySuccessResult,
 ): GenerateBotKeyResponse {
-    console.log("Bot api key: ", value);
-    if (typeof value === "object" && "Success" in value) {
-        return { kind: "success", apiKey: value.Success.api_key };
-    }
-    return CommonResponses.failure();
+    return { kind: "success", apiKey: value.api_key };
 }
 
-export function eventsSuccessResponse(value: TEventsResponse): EventsSuccessResult<ChatEvent> {
-    return {
+export async function getEventsSuccess(
+    value: TEventsResponse,
+    principal: Principal,
+    chatId: ChatIdentifier,
+    suppressError = false
+): Promise<EventsResponse<ChatEvent>> {
+    const error = await ensureReplicaIsUpToDate(
+        principal,
+        chatId,
+        value.chat_last_updated,
+        suppressError,
+    );
+
+    return error ?? {
         events: value.events.map(eventWrapper),
         expiredEventRanges: value.expired_event_ranges.map(expiredEventsRange),
         expiredMessageRanges: value.expired_message_ranges.map(expiredMessagesRange),
@@ -339,6 +296,16 @@ export function eventWrapper(value: TEventWrapperChatEvent): EventWrapper<ChatEv
         event: event(value.event),
         index: value.index,
         timestamp: value.timestamp,
+        expiresAt: mapOptional(value.expires_at, Number),
+    };
+}
+
+export function sendMessageSuccess(value: CommunitySendMessageSuccessResult | GroupSendMessageSuccessResult): SendMessageResponse {
+    return {
+        kind: "success",
+        timestamp: value.timestamp,
+        messageIndex: value.message_index,
+        eventIndex: value.event_index,
         expiresAt: mapOptional(value.expires_at, Number),
     };
 }
@@ -2353,27 +2320,6 @@ export function gateCheckFailedReason(value: TGateCheckFailedReason): GateCheckF
     throw new UnsupportedValueError("Unexpected ApiGateCheckFailedReason type received", value);
 }
 
-export function addRemoveReactionResponse(
-    value:
-        | UserAddReactionResponse
-        | UserRemoveReactionResponse
-        | GroupAddReactionResponse
-        | GroupRemoveReactionResponse
-        | CommunityAddReactionResponse
-        | CommunityRemoveReactionResponse,
-): AddRemoveReactionResponse {
-    if (
-        value === "Success" ||
-        value === "NoChange" ||
-        (typeof value === "object" && "SuccessV2" in value)
-    ) {
-        return CommonResponses.success();
-    } else {
-        console.warn("AddRemoveReaction failed with: ", value);
-        return CommonResponses.failure();
-    }
-}
-
 export function groupSubtype(subtype: TGroupSubtype): GroupSubtype {
     return {
         kind: "governance_proposals",
@@ -2384,8 +2330,20 @@ export function groupSubtype(subtype: TGroupSubtype): GroupSubtype {
     };
 }
 
-export function messagesSuccessResponse(value: TMessagesResponse): EventsSuccessResult<Message> {
-    return {
+export async function getMessagesSuccess(
+    value: TMessagesResponse,
+    principal: Principal,
+    chatId: ChatIdentifier,
+    suppressError = false
+): Promise<EventsResponse<Message>> {
+    const error = await ensureReplicaIsUpToDate(
+        principal,
+        chatId,
+        value.chat_last_updated,
+        suppressError,
+    );
+
+    return error ?? {
         events: value.messages.map(messageEvent),
         expiredEventRanges: [],
         expiredMessageRanges: [],
@@ -2430,263 +2388,83 @@ export function expiredMessagesRange([start, end]: [number, number]): ExpiredMes
     };
 }
 
-export function updateGroupResponse(
-    value: GroupUpdateGroupResponse | CommunityUpdateChannelResponse,
+export function updateGroupSuccess(
+    value: GroupUpdateGroupSuccessResult | CommunityUpdateChannelSuccessResult,
 ): UpdateGroupResponse {
-    if (typeof value === "object") {
-        if ("SuccessV2" in value) {
-            return {
-                kind: "success",
-                rulesVersion: value.SuccessV2.rules_version,
-            };
-        }
-        if ("DescriptionTooLong" in value) {
-            return { kind: "desc_too_long" };
-        }
-        if ("NameTooLong" in value) {
-            return { kind: "name_too_long" };
-        }
-        if ("NameTooShort" in value) {
-            return { kind: "name_too_short" };
-        }
-        if ("AvatarTooBig" in value) {
-            return { kind: "avatar_too_big" };
-        }
-        if ("RulesTooLong" in value) {
-            return { kind: "rules_too_long" };
-        }
-        if ("RulesTooShort" in value) {
-            return { kind: "rules_too_short" };
-        }
-        if ("Error" in value) {
-            return ocError(value.Error);
-        }
-    }
-
-    console.log("Failed to update group: ", value);
-
-    if (value === "NameReserved") {
-        return { kind: "name_reserved" };
-    }
-    if (value === "NotAuthorized") {
-        return { kind: "not_authorized" };
-    }
-    if (value === "NameTaken") {
-        return { kind: "name_taken" };
-    }
-    if (value === "CallerNotInGroup") {
-        return { kind: "not_in_group" };
-    }
-    if (value === "UserSuspended") {
-        return { kind: "user_suspended" };
-    }
-    if (value === "UserLapsed") {
-        return { kind: "user_lapsed" };
-    }
-    if (value === "ChatFrozen") {
-        return { kind: "chat_frozen" };
-    }
-    if (value === "AccessGateInvalid") {
-        return { kind: "access_gate_invalid" };
-    }
-    if (
-        value === "UserNotInChannel" ||
-        value === "ChannelNotFound" ||
-        value === "UserNotInCommunity" ||
-        value === "CommunityFrozen" ||
-        value === "ExternalUrlInvalid"
-    ) {
-        console.warn("UpdateGroupResponse failed with: ", value);
-        return { kind: "failure" };
-    }
-    if (value === "InternalError") {
-        return { kind: "internal_error" };
-    }
-    throw new UnsupportedValueError("Unexpected ApiUpdateGroupResponse type received", value);
+    return {
+        kind: "success",
+        rulesVersion: value.rules_version,
+    };
 }
 
-export function createGroupResponse(
-    value: UserCreateGroupResponse | CommunityCreateChannelResponse,
+export function createGroupSuccess(
+    value: UserCreateGroupSuccessResult | CommunityCreateChannelSuccessResult,
     id: MultiUserChatIdentifier,
-): CreateGroupResponse {
-    if (typeof value === "object") {
-        if ("Success" in value) {
-            if ("channel_id" in value.Success && id.kind === "channel") {
-                const canisterId: ChannelIdentifier = {
-                    kind: "channel",
-                    communityId: id.communityId,
-                    channelId: Number(toBigInt32(value.Success.channel_id)),
-                };
-                return { kind: "success", canisterId };
-            }
-            if ("chat_id" in value.Success && id.kind === "group_chat") {
-                const canisterId: GroupChatIdentifier = {
-                    kind: "group_chat",
-                    groupId: principalBytesToString(value.Success.chat_id),
-                };
-                return { kind: "success", canisterId };
-            }
-            throw new Error("Unexpected CreateGroup success response: " + value.Success);
-        }
-        if ("NameTooLong" in value) {
-            return { kind: "name_too_long" };
-        }
-        if ("NameTooShort" in value) {
-            return { kind: "name_too_short" };
-        }
-        if ("DescriptionTooLong" in value) {
-            return { kind: "description_too_long" };
-        }
-        if ("InternalError" in value || "Error" in value) {
-            return { kind: "internal_error" };
-        }
-        if ("RulesTooLong" in value) {
-            return { kind: "rules_too_long" };
-        }
-        if ("RulesTooShort" in value) {
-            return { kind: "rules_too_short" };
-        }
-        if ("AvatarTooBig" in value) {
-            return { kind: "avatar_too_big" };
-        }
-        if ("MaxGroupsCreated" in value || "MaxChannelsCreated" in value) {
-            // todo - make sure we handle this in the UI
-            return { kind: "max_groups_created" };
-        }
+): CreateGroupSuccess {
+    if ("channel_id" in value && id.kind === "channel") {
+        const canisterId: ChannelIdentifier = {
+            kind: "channel",
+            communityId: id.communityId,
+            channelId: Number(toBigInt32(value.channel_id)),
+        };
+        return { kind: "success", canisterId };
     }
-
-    if (value === "NameTaken") {
-        return { kind: "group_name_taken" };
+    if ("chat_id" in value && id.kind === "group_chat") {
+        const canisterId: GroupChatIdentifier = {
+            kind: "group_chat",
+            groupId: principalBytesToString(value.chat_id),
+        };
+        return { kind: "success", canisterId };
     }
-    if (value === "NameReserved") {
-        return { kind: "name_reserved" };
-    }
-    if (value === "Throttled") {
-        return { kind: "throttled" };
-    }
-    if (value === "UserSuspended") {
-        return { kind: "user_suspended" };
-    }
-    if (value === "UserLapsed") {
-        return { kind: "user_lapsed" };
-    }
-    if (value === "UnauthorizedToCreatePublicGroup") {
-        return { kind: "unauthorized_to_create_public_group" };
-    }
-    if (value === "NotAuthorized") {
-        return CommonResponses.notAuthorized();
-    }
-    if (value === "CommunityFrozen") {
-        return CommonResponses.communityFrozen();
-    }
-    if (value === "AccessGateInvalid") {
-        return { kind: "access_gate_invalid" };
-    }
-    if (value === "ExternalUrlInvalid") {
-        return { kind: "external_url_invalid" };
-    }
-    if (value === "InternalError") {
-        return { kind: "internal_error" };
-    }
-
-    throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", value);
+    throw new Error("Unexpected CreateGroup success response: " + value);
 }
 
-export function deleteGroupResponse(
-    value: UserDeleteGroupResponse | CommunityDeleteChannelResponse,
-): DeleteGroupResponse {
-    if (value === "Success") {
-        return "success";
-    } else {
-        console.warn("DeleteGroupResponse failed with: ", value);
-        return "failure";
-    }
-}
-
-export function pinMessageResponse(
-    value: GroupPinMessageResponse | CommunityPinMessageResponse,
+export function pushEventSuccess(
+    value: PushEventResult,
 ): PinMessageResponse {
-    if (typeof value === "object" && "Success" in value) {
-        return {
-            kind: "success",
-            eventIndex: value.Success.index,
-            timestamp: value.Success.timestamp,
-        };
-    } else if (value === "NoChange") {
-        return CommonResponses.noChange();
-    } else {
-        console.warn("PinMessageResponse failed with: ", value);
-        return CommonResponses.failure();
-    }
+    return {
+        kind: "success",
+        eventIndex: value.index,
+        timestamp: value.timestamp,
+    };
 }
 
-export function unpinMessageResponse(
-    value: GroupUnpinMessageResponse | CommunityPinMessageResponse,
-): UnpinMessageResponse {
-    if (typeof value === "object") {
-        if ("Success" in value || "SuccessV2" in value) {
-            return "success";
-        }
-    }
-    if (value === "NoChange") {
-        return "success";
-    } else {
-        console.warn("UnpinMessageResponse failed with: ", value);
-        return "failure";
-    }
-}
-
-export function groupDetailsResponse(
-    value: GroupSelectedInitialResponse | CommunitySelectedChannelInitialResponse,
+export function groupDetailsSuccess(
+    value: GroupSelectedInitialSuccessResult | CommunitySelectedChannelInitialSuccessResult,
 ): GroupChatDetailsResponse {
-    if (
-        value === "CallerNotInGroup" ||
-        value === "PrivateCommunity" ||
-        value === "PrivateChannel" ||
-        value === "ChannelNotFound" ||
-        "UserNotInChannel" in value ||
-        "UserNotInCommunity" in value ||
-        "Error" in value
-    ) {
-        console.warn("GetGroupDetails failed with ", value);
-        return "failure";
-    }
-    if ("Success" in value) {
-        console.log("Group details: ", value.Success);
-        const members = (
-            "participants" in value.Success ? value.Success.participants : value.Success.members
-        ).map(member);
+    console.log("Group details: ", value);
+    const members = (
+        "participants" in value ? value.participants : value.members
+    ).map(member);
 
-        const basicMembers = "basic_members" in value.Success ? value.Success.basic_members : [];
-        const membersSet = new Set<string>();
-        members.forEach((m) => membersSet.add(m.userId));
-        for (const id of basicMembers) {
-            const userId = principalBytesToString(id);
-            if (membersSet.add(userId)) {
-                members.push({
-                    role: "member",
-                    userId,
-                    displayName: undefined,
-                    lapsed: false,
-                });
-            }
+    const basicMembers = "basic_members" in value ? value.basic_members : [];
+    const membersSet = new Set<string>();
+    members.forEach((m) => membersSet.add(m.userId));
+    for (const id of basicMembers) {
+        const userId = principalBytesToString(id);
+        if (membersSet.add(userId)) {
+            members.push({
+                role: "member",
+                userId,
+                displayName: undefined,
+                lapsed: false,
+            });
         }
-        const bots = "bots" in value.Success ? value.Success.bots : [];
-        return {
-            members,
-            blockedUsers: new Set(value.Success.blocked_users.map(principalBytesToString)),
-            invitedUsers: new Set(value.Success.invited_users.map(principalBytesToString)),
-            pinnedMessages: new Set(value.Success.pinned_messages),
-            rules: value.Success.chat_rules,
-            timestamp: value.Success.timestamp,
-            bots: bots.map(installedBotDetails),
-            apiKeys: value.Success.api_keys.map(publicApiKeyDetails).reduce((m, k) => {
-                m.set(k.botId, k);
-                return m;
-            }, new Map<string, PublicApiKeyDetails>()),
-        };
     }
-    throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", value);
+    const bots = "bots" in value ? value.bots : [];
+    return {
+        members,
+        blockedUsers: new Set(value.blocked_users.map(principalBytesToString)),
+        invitedUsers: new Set(value.invited_users.map(principalBytesToString)),
+        pinnedMessages: new Set(value.pinned_messages),
+        rules: value.chat_rules,
+        timestamp: value.timestamp,
+        bots: bots.map(installedBotDetails),
+        apiKeys: value.api_keys.map(publicApiKeyDetails).reduce((m, k) => {
+            m.set(k.botId, k);
+            return m;
+        }, new Map<string, PublicApiKeyDetails>()),
+    };
 }
 
 export function publicApiKeyDetails(value: ApiPublicApiKeyDetails): PublicApiKeyDetails {
@@ -2745,111 +2523,36 @@ export function member(value: TGroupMember): Member {
     };
 }
 
-export function editMessageResponse(
-    value: UserEditMessageResponse | GroupEditMessageResponse | CommunityEditMessageResponse,
-): EditMessageResponse {
-    if (value === "Success") {
-        return "success";
-    } else {
-        console.warn("EditMessageResponse failed with: ", value);
-        return "failure";
-    }
-}
-
-export function declineInvitationResponse(
-    value: GroupDeclineInvitiationResponse | CommunityDeclineInvitationResponse,
-): DeclineInvitationResponse {
-    if (value === "Success") {
-        return "success";
-    } else {
-        console.warn("DeclineInvitationResponse failed with: ", value);
-        return "failure";
-    }
-}
-
-export function leaveGroupResponse(
-    value: UserLeaveGroupResponse | CommunityLeaveChannelResponse,
-): LeaveGroupResponse {
-    if (
-        value === "Success" ||
-        value === "GroupNotFound" ||
-        value === "CallerNotInGroup" ||
-        value === "UserNotInChannel" ||
-        value === "ChannelNotFound"
-    ) {
-        return "success";
-    }
-    if (value === "LastOwnerCannotLeave") {
-        return "owner_cannot_leave";
-    }
-    return "failure";
-}
-
-export function deleteMessageResponse(
-    value: GroupDeleteMessagesResponse | CommunityDeleteMessagesResponse,
-): DeleteMessageResponse {
-    if (value === "Success") {
-        return "success";
-    } else {
-        console.warn("DeleteMessageResponse failed with: ", value);
-        return "failure";
-    }
-}
-
-export function deletedMessageResponse(
-    value: GroupDeletedMessageResponse | CommunityDeletedMessageResponse,
+export function deletedMessageSuccess(
+    value: GroupDeletedMessageSuccessResult | CommunityDeletedMessageSuccessResult | UserDeletedMessageSuccessResult,
 ): DeletedGroupMessageResponse {
-    if (typeof value === "object" && "Success" in value) {
+    return {
+        kind: "success",
+        content: messageContent(value.content, "unknown"),
+    };
+}
+
+export function undeleteMessageSuccess(
+    value: GroupUndeleteMessagesSuccessResult | CommunityUndeleteMessagesSuccessResult | UserUndeleteMessagesSuccessResult,
+): UndeleteMessageResponse {
+    if (value.messages.length == 0) {
+        return CommonResponses.failure();
+    } else {
         return {
             kind: "success",
-            content: messageContent(value.Success.content, "unknown"),
+            message: message(value.messages[0]),
         };
-    } else {
-        console.warn("DeletedMessageResponse failed with: ", value);
-        return CommonResponses.failure();
     }
 }
 
-export function undeleteMessageResponse(
-    value: GroupUndeleteMessagesResponse | CommunityUndeleteMessagesResponse,
-): UndeleteMessageResponse {
-    if (typeof value === "object" && "Success" in value) {
-        if (value.Success.messages.length == 0) {
-            return CommonResponses.failure();
-        } else {
-            return {
-                kind: "success",
-                message: message(value.Success.messages[0]),
-            };
-        }
-    } else {
-        console.warn("UndeleteMessageResponse failed with: ", value);
-        return CommonResponses.failure();
-    }
-}
-
-export function threadPreviewsResponse(
-    value: GroupThreadPreviewsResponse | CommunityThreadPreviewsResponse,
+export function threadPreviewsSuccess(
+    value: GroupThreadPreviewsSuccessResult | CommunityThreadPreviewsSuccessResult,
     chatId: ChatIdentifier,
-    latestClientThreadUpdate: bigint | undefined,
 ): ThreadPreviewsResponse {
-    if (typeof value === "object") {
-        if ("Success" in value) {
-            return {
-                kind: "thread_previews_success",
-                threads: value.Success.threads.map((t) => threadPreview(chatId, t)),
-            };
-        }
-        if ("ReplicaNotUpToDate" in value) {
-            throw ReplicaNotUpToDateError.byTimestamp(
-                value.ReplicaNotUpToDate,
-                latestClientThreadUpdate ?? BigInt(-1),
-                false,
-            );
-        }
-    }
-    console.warn("ThreadPreviewsResponse failed with: ", value);
-    return CommonResponses.failure();
+    return {
+        kind: "thread_previews_success",
+        threads: value.threads.map((t) => threadPreview(chatId, t)),
+    };
 }
 
 export function threadPreview(chatId: ChatIdentifier, value: TThreadPreview): ThreadPreview {
@@ -2859,28 +2562,6 @@ export function threadPreview(chatId: ChatIdentifier, value: TThreadPreview): Th
         totalReplies: value.total_replies,
         rootMessage: messageEvent(value.root_message),
     };
-}
-
-export function changeRoleResponse(
-    value: GroupChangeRoleResponse | CommunityChangeChannelRoleResponse,
-): ChangeRoleResponse {
-    if (value === "Success") {
-        return "success";
-    } else {
-        console.warn("ChangeRoleResponse failed with: ", value);
-        return "failure";
-    }
-}
-
-export function registerPollVoteResponse(
-    value: GroupRegisterPollVoteResponse | CommunityRegisterPollVoteResponse,
-): RegisterPollVoteResponse {
-    if (typeof value === "object" && "Success" in value) {
-        return "success";
-    } else {
-        console.warn("RegisterPollVoteResponse failed with: ", value);
-        return "failure";
-    }
 }
 
 export function apiChatIdentifier(chatId: ChatIdentifier): TChat {
@@ -2907,14 +2588,12 @@ export function joinGroupResponse(value: LocalUserIndexJoinGroupResponse): JoinG
                 kind: "gate_check_failed",
                 reason: gateCheckFailedReason(value.GateCheckFailed),
             };
+        } else if ("Error" in value) {
+            return ocError(value.Error);
         }
     }
-    if (value === "Blocked") {
-        return CommonResponses.userBlocked();
-    } else {
-        console.warn("Join group failed with: ", value);
-        return CommonResponses.failure();
-    }
+    console.warn("Join group failed with: ", value);
+    return CommonResponses.failure();
 }
 
 export function searchGroupChatResponse(
@@ -2940,244 +2619,40 @@ export function messageMatch(value: TMessageMatch, chatId: ChatIdentifier): Mess
     };
 }
 
-export function inviteCodeResponse(
-    value: GroupInviteCodeResponse | CommunityInviteCodeResponse,
-): InviteCodeResponse {
-    if (typeof value === "object") {
-        if ("Success" in value) {
-            return {
-                kind: "success",
-                code: mapOptional(value.Success.code, codeToText),
-            };
-        }
-    }
-    if (value === "NotAuthorized") {
-        return {
-            kind: "not_authorized",
-        };
-    } else {
-        console.warn("InviteCode failed with ", value);
-        return CommonResponses.failure();
-    }
+export function inviteCodeSuccess(
+    value: GroupInviteCodeSuccessResult | CommunityInviteCodeSuccessResult,
+): InviteCodeSuccess {
+    return {
+        kind: "success",
+        code: mapOptional(value.code, codeToText),
+    };
 }
 
-export function enableOrResetInviteCodeResponse(
-    value: GroupEnableInviteCodeResponse | CommunityEnableInviteCodeResponse,
-): EnableInviteCodeResponse {
-    if (typeof value === "object") {
-        if ("Success" in value) {
-            return {
-                kind: "success",
-                code: codeToText(value.Success.code),
-            };
-        } else if ("NotAuthorized" in value) {
-            return {
-                kind: "not_authorized",
-            };
-        }
-    }
-    console.warn("ResetInviteCode failed with ", value);
-    return CommonResponses.failure();
-}
-
-export function disableInviteCodeResponse(
-    value: GroupDisableInviteCodeResponse | CommunityDisableInviteCodeResponse,
-): DisableInviteCodeResponse {
-    if (value === "Success") {
-        return "success";
-    } else if (value === "NotAuthorized") {
-        return "not_authorized";
-    }
-    console.warn("DisableInviteCode failed with ", value);
-    return "failure";
-}
-
-export function registerProposalVoteResponse(
-    value: GroupRegisterProposalVoteResponse | CommunityRegisterProposalVoteResponse,
-): RegisterProposalVoteResponse {
-    if (typeof value === "object") {
-        if ("AlreadyVoted" in value) {
-            return "already_voted";
-        }
-        if ("InternalError" in value) {
-            return "internal_error";
-        }
-        if ("Error" in value) {
-            return "internal_error";
-        }
-    }
-    if (value === "Success") {
-        return "success";
-    }
-    if (value === "CallerNotInGroup") {
-        return "caller_not_in_group";
-    }
-    if (value === "UserNotInChannel") {
-        return "user_not_in_channel";
-    }
-    if (value === "ChannelNotFound") {
-        return "channel_not_found";
-    }
-    if (value === "UserNotInCommunity") {
-        return "user_not_in_community";
-    }
-    if (value === "CommunityFrozen") {
-        return "community_frozen";
-    }
-    if (value === "NoEligibleNeurons") {
-        return "no_eligible_neurons";
-    }
-    if (value === "ProposalNotAcceptingVotes") {
-        return "proposal_not_accepting_votes";
-    }
-    if (value === "ProposalNotFound") {
-        return "proposal_not_found";
-    }
-    if (value === "ProposalMessageNotFound") {
-        return "proposal_message_not_found";
-    }
-    if (value === "UserSuspended") {
-        return "user_suspended";
-    }
-    if (value === "UserLapsed") {
-        return "user_lapsed";
-    }
-    if (value === "ChatFrozen") {
-        return "chat_frozen";
-    }
-
-    throw new UnsupportedValueError(
-        "Unexpected ApiRegisterProposalVoteResponse type received",
-        value,
-    );
+export function enableOrResetInviteCodeSuccess(
+    value: GroupEnableInviteCodeSuccessResult | CommunityEnableInviteCodeSuccessResult,
+): EnableInviteCodeSuccess {
+    return {
+        kind: "success",
+        code: codeToText(value.code),
+    };
 }
 
 export function claimPrizeResponse(
     value: GroupClaimPrizeResponse | CommunityClaimPrizeResponse,
 ): ClaimPrizeResponse {
-    if (value === "Success") {
-        return CommonResponses.success();
-    } else {
-        console.warn("ClaimPrize failed with ", value);
-        return CommonResponses.failure();
-    }
-}
-
-export function statusError(
-    value: TSwapStatusError,
-): AcceptP2PSwapResponse & CancelP2PSwapResponse {
-    if ("Reserved" in value) {
-        return {
-            kind: "already_reserved",
-            reservedBy: principalBytesToString(value.Reserved.reserved_by),
-        };
-    }
-    if ("Accepted" in value) {
-        return {
-            kind: "already_accepted",
-            acceptedBy: principalBytesToString(value.Accepted.accepted_by),
-            token1TxnIn: value.Accepted.token1_txn_in,
-        };
-    }
-    if ("Completed" in value) {
-        const { accepted_by, token1_txn_in, token0_txn_out, token1_txn_out } = value.Completed;
-        return {
-            kind: "already_completed",
-            acceptedBy: principalBytesToString(accepted_by),
-            token1TxnIn: token1_txn_in,
-            token0TxnOut: token0_txn_out,
-            token1TxnOut: token1_txn_out,
-        };
-    }
-    if ("Cancelled" in value) {
-        return {
-            kind: "swap_cancelled",
-            token0TxnOut: value.Cancelled.token0_txn_out,
-        };
-    }
-    if ("Expired" in value) {
-        return {
-            kind: "swap_expired",
-            token0TxnOut: value.Expired.token0_txn_out,
-        };
-    }
-
-    throw new UnsupportedValueError("Unexpected SwapStatusError type received", value);
-}
-
-export function acceptP2PSwapResponse(
-    value: UserAcceptP2pSwapResponse | GroupAcceptP2pSwapResponse | CommunityAcceptP2pSwapResponse,
-): AcceptP2PSwapResponse {
     if (typeof value === "object") {
-        if ("Success" in value) {
-            return { kind: "success", token1TxnIn: value.Success.token1_txn_in };
-        }
-        if ("StatusError" in value) {
-            return statusError(value.StatusError);
-        }
-        if ("InternalError" in value) {
-            return { kind: "internal_error", text: value.InternalError };
-        }
-        if ("PinIncorrect" in value || "TooManyFailedPinAttempts" in value) {
-            return pinNumberFailureResponseV2(value);
-        }
-        if ("Error" in value) {
-            return ocError(value.Error);
+        if ("TransferFailed" in value || "FailedAfterTransfer" in value) {
+            console.warn("ClaimPrize failed with ", value);
+            return CommonResponses.failure();
         }
     }
-    if (value === "ChatNotFound") return { kind: "chat_not_found" };
-    if (value === "UserNotInGroup") return { kind: "user_not_in_group" };
-    if (value === "UserNotInCommunity") return { kind: "user_not_in_community" };
-    if (value === "UserNotInChannel") return { kind: "user_not_in_channel" };
-    if (value === "ChannelNotFound") return { kind: "channel_not_found" };
-    if (value === "SwapNotFound") return { kind: "swap_not_found" };
-    if (value === "ChatFrozen") return { kind: "chat_frozen" };
-    if (value === "UserSuspended") return { kind: "user_suspended" };
-    if (value === "UserLapsed") return { kind: "user_lapsed" };
-    if (value === "InsufficientFunds") return { kind: "insufficient_funds" };
-    if (value === "PinRequired") return { kind: "pin_required" };
-
-    throw new UnsupportedValueError("Unexpected ApiAcceptP2PSwapResponse type received", value);
+    return unitResult(value);
 }
 
-export function cancelP2PSwapResponse(
-    value: UserCancelP2pSwapResponse | GroupCancelP2pSwapResponse | CommunityCancelP2pSwapResponse,
-): CancelP2PSwapResponse {
-    if (value === "Success") {
-        return { kind: "success" };
-    }
-    if (typeof value === "object" && "StatusError" in value) {
-        return statusError(value.StatusError);
-    }
-    if (typeof value === "object" && "Error" in value) {
-        return ocError(value.Error);
-    }
-    if (value === "ChatNotFound") return { kind: "chat_not_found" };
-    if (value === "UserNotInGroup") return { kind: "user_not_in_group" };
-    if (value === "UserNotInCommunity") return { kind: "user_not_in_community" };
-    if (value === "UserNotInChannel") return { kind: "user_not_in_channel" };
-    if (value === "ChannelNotFound") return { kind: "channel_not_found" };
-    if (value === "ChatFrozen") return { kind: "chat_frozen" };
-    if (value === "SwapNotFound") return { kind: "swap_not_found" };
-    if (value === "UserSuspended") return { kind: "user_suspended" };
-
-    throw new UnsupportedValueError("Unexpected ApiCancelP2PSwapResponse type received", value);
-}
-
-export function joinVideoCallResponse(
-    value:
-        | UserJoinVideoCallResponse
-        | GroupSetVideoCallPresenceResponse
-        | CommunitySetVideoCallPresenceResponse,
-): JoinVideoCallResponse {
-    if (value === "Success") {
-        return "success";
-    }
-    if (value === "AlreadyEnded") {
-        return "ended";
-    }
-    console.warn("JoinVideoCall failed with ", value);
-    return "failure";
+export function acceptP2PSwapSuccess(
+    value: AcceptSwapSuccess,
+): AcceptP2PSwapResponse {
+    return { kind: "success", token1TxnIn: value.token1_txn_in };
 }
 
 export function apiVideoCallPresence(domain: VideoCallPresence): TVideoCallPresence {
@@ -3191,59 +2666,15 @@ export function apiVideoCallPresence(domain: VideoCallPresence): TVideoCallPrese
     }
 }
 
-export function setVideoCallPresence(
-    value: GroupSetVideoCallPresenceResponse | CommunitySetVideoCallPresenceResponse,
-): SetVideoCallPresenceResponse {
-    if (value === "Success") return "success";
-    console.warn("SetVideoCallPresence failed with: ", value);
-    return "failure";
-}
-
-export function videoCallParticipantsResponse(
-    value: GroupVideoCallParticipantsResponse | CommunityVideoCallParticipantsResponse,
+export function videoCallParticipantsSuccess(
+    value: VideoCallParticipants,
 ): VideoCallParticipantsResponse {
-    if (typeof value === "object" && "Success" in value) {
-        return {
-            kind: "success",
-            participants: value.Success.participants.map(videoCallParticipant),
-            hidden: value.Success.hidden.map(videoCallParticipant),
-            lastUpdated: value.Success.last_updated,
-        };
-    }
-    console.warn("VideoCallParticipants failed with: ", value);
-    return CommonResponses.failure();
-}
-
-export function setPinNumberResponse(value: UserSetPinNumberResponse): SetPinNumberResponse {
-    if (value === "Success") {
-        return CommonResponses.success();
-    }
-    if (typeof value === "object") {
-        if ("PinIncorrect" in value || "TooManyFailedPinAttempts" in value) {
-            return pinNumberFailureResponseV2(value);
-        }
-        if ("TooShort" in value) {
-            return { kind: "too_short", minLength: value.TooShort.min_length };
-        }
-        if ("TooLong" in value) {
-            return { kind: "too_long", maxLength: value.TooLong.max_length };
-        }
-
-        if ("MalformedSignature" in value) {
-            return { kind: "malformed_signature" };
-        }
-        if ("Error" in value) {
-            return ocError(value.Error);
-        }
-    }
-    if (value === "PinRequired") {
-        return { kind: "pin_required" };
-    }
-    if (value === "DelegationTooOld") {
-        return { kind: "delegation_too_old" };
-    }
-
-    throw new UnsupportedValueError("Unexpected ApiSetPinNumberResponse type received", value);
+    return {
+        kind: "success",
+        participants: value.participants.map(videoCallParticipant),
+        hidden: value.hidden.map(videoCallParticipant),
+        lastUpdated: value.last_updated,
+    };
 }
 
 export function apiDexId(dex: DexId): TExchangeId {
@@ -3296,16 +2727,6 @@ function permissionsToBits<T>(permissions: T[], allPermissions: T[]): number {
         }
     }
     return bits;
-}
-
-export function updateBotResponse(
-    value: CommunityUpdateBotResponse | GroupUpdateBotResponse | UserUpdateBotResponse,
-): boolean {
-    if (value === "Success") {
-        return true;
-    }
-    console.warn("Community|GroupUpdateBotResponse|UserUpdateBotResponse failed with ", value);
-    return false;
 }
 
 export function installedBotDetails(value: ApiInstalledBotDetails): InstalledBotDetails {
@@ -3392,6 +2813,37 @@ export function principalToIcrcAccount(principal: string): AccountICRC1 {
         owner: principalStringToBytes(principal),
         subaccount: undefined,
     };
+}
+
+export function unitResult(value: "Success" | { Success: unknown } | { SuccessV2: unknown } | { Error: TOCError }): Success | OCError {
+    if (value === "Success") return CommonResponses.success();
+    return mapResult(value, CommonResponses.success);
+}
+
+export function mapResult<I, O>(value: { Success: I } | { SuccessV2: I } | { Error: TOCError }, mapper: (input: I) => O): O | OCError {
+    if (typeof value === "object") {
+        if ("Success" in value) {
+            return mapper(value.Success);
+        }
+        if ("SuccessV2" in value) {
+            return mapper(value.SuccessV2);
+        }
+        if ("Error" in value) {
+            return ocError(value.Error);
+        }
+    }
+    console.error("Unexpected response type", value);
+    return {
+        kind: "error",
+        code: -1,
+        message: JSON.stringify(value),
+    }
+}
+
+export function isSuccess(value: "Success" | { Success: unknown } | { SuccessV2: unknown } | { Error: TOCError }): boolean {
+    if (value === "Success") return true;
+    if (typeof value !== "object") return false;
+    return "Success" in value || "SuccessV2" in value;
 }
 
 export function ocError(error: TOCError): OCError {

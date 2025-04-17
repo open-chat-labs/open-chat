@@ -6,6 +6,7 @@
         type UserGroupDetails,
         type UserSummary,
     } from "openchat-client";
+    import { ErrorCode } from "openchat-shared";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
@@ -66,7 +67,7 @@
                 if (resp.kind === "success") {
                     cancel();
                 } else {
-                    if (resp.kind === "name_taken") {
+                    if (resp.kind === "error" && resp.code === ErrorCode.NameTaken) {
                         toastStore.showFailureToast(
                             i18nKey("communities.errors.userGroupNameTaken"),
                         );

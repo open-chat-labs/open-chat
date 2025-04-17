@@ -27,21 +27,10 @@ import type {
     PublicApiKeyDetails,
 } from "../permission";
 import type {
-    ChannelNotFound,
-    ChatNotFound,
-    CommunityFrozen,
-    CommunityPublic,
-    Failure,
-    InternalError,
-    NotAuthorised,
+    Failure, InternalError,
     Offline,
     Success,
     SuccessNoUpdates,
-    UserLapsed,
-    UserLimitReached,
-    UserNotInChannel,
-    UserNotInCommunity,
-    UserSuspended,
 } from "../response";
 import type { HasLevel } from "../structure";
 import type { UserGroupDetails, UserGroupSummary } from "../user";
@@ -118,6 +107,7 @@ export type AddMembersToChannelFailed = {
     usersAlreadyInChannel: string[];
     usersFailedWithError: UserFailedError[];
 };
+
 export interface AddMembersToChannelPartialSuccess {
     kind: "add_to_channel_partial_success";
     usersLimitReached: string[];
@@ -126,35 +116,15 @@ export interface AddMembersToChannelPartialSuccess {
     usersAdded: string[];
 }
 export type AddMembersToChannelResponse =
+    | Success
     | AddMembersToChannelFailed
     | AddMembersToChannelPartialSuccess
-    | UserNotInChannel
-    | ChannelNotFound
-    | UserLimitReached
-    | NotAuthorised
-    | Success
-    | UserNotInCommunity
-    | UserSuspended
-    | UserLapsed
-    | CommunityFrozen
     | InternalError
-    | Offline
-    | CommunityPublic
     | OCError;
 
-export type BlockCommunityUserResponse = Success | Failure | Offline;
-
-export type ChangeCommunityRoleResponse = "success" | "failure" | "offline";
-
-export type DeleteChannelResponse =
-    | UserNotInChannel
-    | ChatNotFound
-    | NotAuthorised
-    | Success
-    | UserNotInCommunity
-    | UserSuspended
-    | CommunityFrozen
-    | Offline;
+export type BlockCommunityUserResponse = Success | OCError | Offline;
+export type ChangeCommunityRoleResponse = Success | OCError | Offline;
+export type DeleteChannelResponse = Success | OCError | Offline;
 
 export type ChannelMessageMatch = {
     content: MessageContent;
@@ -163,20 +133,20 @@ export type ChannelMessageMatch = {
     messageIndex: number;
 };
 
-export type UnblockCommunityUserResponse = Failure | Success | Offline;
+export type UnblockCommunityUserResponse = Success | OCError | Offline;
 
 export type UpdateCommunityResponse =
-    | Failure
-    | Offline
-    | { kind: "success"; rulesVersion: number | undefined };
+    | { kind: "success"; rulesVersion: number | undefined }
+    | OCError
+    | Offline;
 
-export type ToggleMuteCommunityNotificationsResponse = Failure | Success | Offline;
+export type ToggleMuteCommunityNotificationsResponse = Success | OCError | Offline;
 
 export type CreateCommunityResponse =
     | Offline
     | Failure
-    | (Success & { id: string })
-    | { kind: "name_taken" };
+    | OCError
+    | (Success & { id: string });
 
 export type JoinCommunityResponse =
     | Failure
@@ -300,10 +270,8 @@ export type CommunityDetailsUpdates = {
 };
 
 export type ChannelSummaryResponse = Failure | ChannelSummary | CanisterNotFound;
-
-export type LeaveCommunityResponse = "success" | "failure" | "offline";
-
-export type DeleteCommunityResponse = "success" | "failure" | "offline";
+export type LeaveCommunityResponse = Success | OCError | Offline;
+export type DeleteCommunityResponse = Success | OCError | Offline;
 
 export type LocalCommunitySummaryUpdates = {
     installedBots?: Map<string, ExternalBotPermissions>;
@@ -316,31 +284,19 @@ export type LocalCommunitySummaryUpdates = {
     rulesAccepted?: boolean;
 };
 
-export type ConvertToCommunityResponse = (Success & { id: ChannelIdentifier }) | Failure | Offline;
-
-export type ImportGroupResponse = (Success & { channelId: ChannelIdentifier }) | Failure | Offline;
+export type ConvertToCommunityResponse = (Success & { id: ChannelIdentifier }) | OCError | Offline;
+export type ImportGroupResponse = (Success & { channelId: ChannelIdentifier }) | OCError | Offline;
 
 export type CreateUserGroupResponse =
     | { kind: "success"; userGroupId: number }
-    | { kind: "name_taken" }
+    | OCError
     | Failure
     | Offline;
-export type UpdateUserGroupResponse = Success | { kind: "name_taken" } | Failure | Offline;
-export type DeleteUserGroupsResponse = Success | Failure | Offline;
 
-export type SetMemberDisplayNameResponse =
-    | "success"
-    | "user_not_in_community"
-    | "user_suspended"
-    | "user_lapsed"
-    | "community_frozen"
-    | "display_name_too_short"
-    | "display_name_too_long"
-    | "display_name_invalid"
-    | "offline"
-    | OCError;
-
-export type FollowThreadResponse = "success" | "unchanged" | "failed" | "offline";
+export type UpdateUserGroupResponse = Success | OCError | Offline | Failure;
+export type DeleteUserGroupsResponse = Success | OCError | Offline;
+export type SetMemberDisplayNameResponse = Success | OCError | Offline;
+export type FollowThreadResponse = Success | OCError | Offline;
 
 export type FreezeCommunityResponse =
     | "success"

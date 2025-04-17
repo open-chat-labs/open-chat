@@ -10,6 +10,7 @@
         ui,
         currentUser as user,
     } from "openchat-client";
+    import { ErrorCode } from "openchat-shared";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
@@ -70,7 +71,7 @@
                     ready = true;
                     checked = resp.code !== undefined;
                     code = resp.code;
-                } else if (resp.kind === "not_authorized") {
+                } else if (resp.kind === "error" && resp.code === ErrorCode.InitiatorNotAuthorized) {
                     error = unauthorized;
                     client.logMessage("Unauthorized response calling getInviteCode");
                 } else {

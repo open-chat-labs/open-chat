@@ -56,13 +56,8 @@
     import Thread from "./thread/Thread.svelte";
     import ActiveCallParticipants from "./video/ActiveCallParticipants.svelte";
 
-    interface Props {
-        onGoToMessageIndex: (details: { index: number; preserveFocus: boolean }) => void;
-    }
-
     const client = getContext<OpenChat>("client");
 
-    let { onGoToMessageIndex }: Props = $props();
     let invitingUsers = $state(false);
     let section: HTMLElement | undefined = $state();
     let resized = $state(false);
@@ -185,13 +180,6 @@
         }
     }
 
-    function goToMessageIndex(detail: { index: number; preserveFocus: boolean }): void {
-        onGoToMessageIndex(detail);
-        if (modal) {
-            ui.popRightPanelHistory();
-        }
-    }
-
     function stripThreadFromUrl(path: string) {
         if (
             (pathState.route.kind === "global_chat_selected_route" ||
@@ -259,7 +247,7 @@
         return client
             .removeCommunityMember(id, userId)
             .then((resp) => {
-                if (resp !== "success") {
+                if (resp.kind !== "success") {
                     toastStore.showFailureToast(i18nKey("removeMemberFailed"));
                 }
             })
@@ -273,7 +261,7 @@
         return client
             .removeMember(chatId, userId)
             .then((resp) => {
-                if (resp !== "success") {
+                if (resp.kind !== "success") {
                     toastStore.showFailureToast(i18nKey("removeMemberFailed"));
                 }
             })
@@ -533,7 +521,6 @@
             {onCancelCommunityInvite} />
     {:else if ui.lastRightPanelState.kind === "show_pinned" && $selectedChatId !== undefined && ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel") && $multiUserChat !== undefined}
         <PinnedMessages
-            onGoToMessageIndex={goToMessageIndex}
             chatId={$selectedChatId}
             pinned={$currentChatPinnedMessages}
             dateLastPinned={$multiUserChat.dateLastPinned}

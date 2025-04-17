@@ -5,6 +5,7 @@
         OpenChat,
         ResourceKey,
     } from "openchat-client";
+    import { ErrorCode } from "openchat-shared";
     import {
         BTC_SYMBOL,
         cryptoBalance as cryptoBalanceStore,
@@ -123,7 +124,7 @@
                 .then((resp) => {
                     if (resp.kind === "success") {
                         onClose();
-                    } else if (resp.kind === "name_taken") {
+                    } else if (resp.kind === "error" && resp.code === ErrorCode.NameTaken) {
                         error = i18nKey("tokenTransfer.accountNameTaken");
                     } else {
                         error = i18nKey("tokenTransfer.failedToSaveAccount");
@@ -175,7 +176,7 @@
                         onClose();
                         targetAccount = "";
                     }
-                } else if (resp.kind === "failed" || resp.kind === "currency_not_supported") {
+                } else if (resp.kind === "failed" || resp.kind === "error") {
                     error = i18nKey("cryptoAccount.sendFailed", { symbol });
                     client.logMessage(`Unable to withdraw ${symbol}`, resp);
                 }
