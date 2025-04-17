@@ -72,7 +72,7 @@ import type {
     TokenSwapStatusResponse,
     ApproveTransferResponse,
 } from "openchat-shared";
-import { ANON_USER_ID } from "openchat-shared";
+import { ANON_USER_ID, CommonResponses } from "openchat-shared";
 import { AnonymousOperationError } from "openchat-shared";
 
 export class AnonUserClient {
@@ -89,7 +89,7 @@ export class AnonUserClient {
         _toAdd: ChatIdentifier[],
         _toRemove: ChatIdentifier[],
     ): Promise<ManageFavouritesResponse> {
-        return Promise.resolve("success");
+        return Promise.resolve(CommonResponses.success());
     }
 
     getInitialState(): Promise<InitialStateResponse> {

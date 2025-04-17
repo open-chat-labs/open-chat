@@ -1,3 +1,5 @@
+import type { OCError } from "./error";
+import type { Failure, Success } from "./response";
 import type { ReferralStatus } from "./user";
 
 export type ClaimDailyChitResponse =
@@ -160,4 +162,4 @@ export type ExternalAchievement = {
     budgetExhausted: boolean;
 };
 
-export type PayForStreakInsuranceResponse = "success" | "failure";
+export type PayForStreakInsuranceResponse = Success | OCError | Failure;

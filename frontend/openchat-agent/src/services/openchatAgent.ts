@@ -211,6 +211,7 @@ import {
     Stream,
     UnsupportedValueError,
     waitAll,
+    isSuccessfulEventsResponse,
 } from "openchat-shared";
 import type { AgentConfig } from "../config";
 import {
@@ -540,7 +541,7 @@ export class OpenChatAgent extends EventTarget {
         blockLevelMarkdown: boolean | undefined,
         newAchievement: boolean,
     ): Promise<EditMessageResponse> {
-        if (offline()) return Promise.resolve("failure");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "direct_chat":
@@ -1309,7 +1310,7 @@ export class OpenChatAgent extends EventTarget {
         context: MessageContext,
         resp: EventsResponse<T>,
     ): [MessageContext, EventWrapper<Message>[]] {
-        if (resp !== "events_failed") {
+        if (isSuccessfulEventsResponse(resp)) {
             return [
                 context,
                 resp.events.reduce((msgs, ev) => {
@@ -1438,7 +1439,7 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<EventsResponse<T>> {
         const resp = await eventsPromise;
 
-        if (resp === "events_failed") {
+        if (!isSuccessfulEventsResponse(resp)) {
             return resp;
         }
 
@@ -2234,7 +2235,7 @@ export class OpenChatAgent extends EventTarget {
         userId: string,
         newRole: MemberRole,
     ): Promise<ChangeRoleResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "group_chat":
@@ -2249,7 +2250,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     deleteGroup(chatId: MultiUserChatIdentifier): Promise<DeleteGroupResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "group_chat":
@@ -2260,7 +2261,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     removeMember(chatId: MultiUserChatIdentifier, userId: string): Promise<RemoveMemberResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "group_chat":
@@ -2274,7 +2275,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     blockUserFromDirectChat(userId: string): Promise<BlockUserResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.userClient.blockUser(userId);
     }
@@ -2283,7 +2284,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: MultiUserChatIdentifier,
         userId: string,
     ): Promise<BlockUserResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         if (chatId.kind === "channel")
             throw new Error("TODO - blockUserFromChannel not implemented");
@@ -2294,7 +2295,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: MultiUserChatIdentifier,
         userId: string,
     ): Promise<UnblockUserResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         if (chatId.kind === "channel")
             throw new Error("TODO - unblockUserFromChannel not implemented");
@@ -2302,13 +2303,13 @@ export class OpenChatAgent extends EventTarget {
     }
 
     unblockUserFromDirectChat(userId: string): Promise<UnblockUserResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.userClient.unblockUser(userId);
     }
 
     leaveGroup(chatId: MultiUserChatIdentifier): Promise<LeaveGroupResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         if (chatIdentifiersEqual(this._groupInvite?.chatId, chatId)) {
             this._groupInvite = undefined;
@@ -2487,7 +2488,7 @@ export class OpenChatAgent extends EventTarget {
         asPlatformModerator: boolean | undefined,
         newAchievement: boolean,
     ): Promise<DeleteMessageResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "group_chat":
@@ -2520,7 +2521,7 @@ export class OpenChatAgent extends EventTarget {
         asPlatformModerator: boolean | undefined,
         newAchievement: boolean,
     ): Promise<DeleteMessageResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.communityClient(chatId.communityId).deleteMessages(
             chatId,
@@ -2538,7 +2539,7 @@ export class OpenChatAgent extends EventTarget {
         asPlatformModerator: boolean | undefined,
         newAchievement: boolean,
     ): Promise<DeleteMessageResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.getGroupClient(chatId).deleteMessage(
             messageId,
@@ -2553,7 +2554,7 @@ export class OpenChatAgent extends EventTarget {
         messageId: bigint,
         threadRootMessageIndex?: number,
     ): Promise<DeleteMessageResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.userClient.deleteMessage(otherUserId, messageId, threadRootMessageIndex);
     }
@@ -2614,7 +2615,7 @@ export class OpenChatAgent extends EventTarget {
         id: ChatIdentifier | CommunityIdentifier,
         muted: boolean,
     ): Promise<ToggleMuteNotificationResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (id.kind) {
             case "group_chat":
@@ -2713,7 +2714,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     setBio(bio: string): Promise<SetBioResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.userClient.setBio(bio);
     }
@@ -2803,7 +2804,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: MultiUserChatIdentifier,
         messageIndex: number,
     ): Promise<UnpinMessageResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "group_chat":
@@ -2821,7 +2822,7 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         newAchievement: boolean,
     ): Promise<RegisterPollVoteResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "group_chat":
@@ -2880,7 +2881,7 @@ export class OpenChatAgent extends EventTarget {
     disableInviteCode(
         id: GroupChatIdentifier | CommunityIdentifier,
     ): Promise<DisableInviteCodeResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (id.kind) {
             case "community":
@@ -2904,25 +2905,25 @@ export class OpenChatAgent extends EventTarget {
     }
 
     pinChat(chatId: ChatIdentifier, favourite: boolean): Promise<PinChatResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.userClient.pinChat(chatId, favourite);
     }
 
     unpinChat(chatId: ChatIdentifier, favourite: boolean): Promise<UnpinChatResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.userClient.unpinChat(chatId, favourite);
     }
 
     archiveChat(chatId: ChatIdentifier): Promise<ArchiveChatResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.userClient.archiveChat(chatId);
     }
 
     unarchiveChat(chatId: ChatIdentifier): Promise<ArchiveChatResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.userClient.unarchiveChat(chatId);
     }
@@ -2932,7 +2933,7 @@ export class OpenChatAgent extends EventTarget {
         messageIndex: number,
         adopt: boolean,
     ): Promise<RegisterProposalVoteResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "group_chat":
@@ -3273,7 +3274,7 @@ export class OpenChatAgent extends EventTarget {
         notes?: string,
         threadRootMessageIndex?: number,
     ): Promise<SetMessageReminderResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.userClient.setMessageReminder(
             chatId,
@@ -3291,7 +3292,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     declineInvitation(chatId: MultiUserChatIdentifier): Promise<DeclineInvitationResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "group_chat":
@@ -3403,7 +3404,7 @@ export class OpenChatAgent extends EventTarget {
         display_name: string | undefined,
         newAchievement: boolean,
     ): Promise<SetMemberDisplayNameResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.communityClient(communityId).setMemberDisplayName(display_name, newAchievement);
     }
@@ -3427,7 +3428,7 @@ export class OpenChatAgent extends EventTarget {
         follow: boolean,
         newAchievement: boolean,
     ): Promise<FollowThreadResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         if (chatId.kind === "channel") {
             return this.communityClient(chatId.communityId).followThread(
