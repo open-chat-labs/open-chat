@@ -17,10 +17,9 @@
         chatId: MultiUserChatIdentifier;
         dateLastPinned: bigint | undefined;
         onClose: () => void;
-        onGoToMessageIndex: (args: { index: number; preserveFocus: boolean }) => void;
     }
 
-    let { pinned, chatId, dateLastPinned, onClose, onGoToMessageIndex }: Props = $props();
+    let { pinned, chatId, dateLastPinned, onClose }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -126,8 +125,7 @@
                         timestamp={message.timestamp}
                         user={$user}
                         senderId={message.event.sender}
-                        msg={message.event}
-                        {onGoToMessageIndex} />
+                        msg={message.event} />
                 {/each}
             </div>
         {/each}
