@@ -718,6 +718,11 @@ impl GroupChatCore {
     ) -> Vec<UserId> {
         let message = &message_event.event;
         let message_index = message.message_index;
+        let initiator = message
+            .bot_context
+            .as_ref()
+            .and_then(|b| b.command.as_ref().map(|c| c.initiator))
+            .unwrap_or(message.sender);
         let message_id = message.message_id;
 
         let user_being_replied_to = replies_to
@@ -781,16 +786,9 @@ impl GroupChatCore {
             }
         }
 
-        // Exclude the sender, bot command initiator, bots, lapsed members, and suspended members
-        // from notifications
+        // Exclude the sender, bots, lapsed members, and suspended members from notifications
         users_to_notify.remove(&message.sender);
-        if let Some(initiator) = message
-            .bot_context
-            .as_ref()
-            .and_then(|bc| bc.command.as_ref().map(|c| c.initiator))
-        {
-            users_to_notify.remove(&initiator);
-        }
+        users_to_notify.remove(&initiator);
         for bot in self.members.bots().keys() {
             users_to_notify.remove(bot);
         }
