@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { EventWrapper, Message, MultiUserChatIdentifier, OpenChat } from "openchat-client";
     import { messagesRead, subscribe, ui, currentUser as user } from "openchat-client";
+    import { isSuccessfulEventsResponse } from "openchat-shared";
     import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -57,7 +58,7 @@
                 client
                     .getGroupMessagesByMessageIndex(chatId, pinned)
                     .then((resp) => {
-                        if (resp === "events_failed") {
+                        if (!isSuccessfulEventsResponse(resp)) {
                             messages = { kind: "error", error: "Unable to load pinned messages" };
                         } else {
                             messages = {
