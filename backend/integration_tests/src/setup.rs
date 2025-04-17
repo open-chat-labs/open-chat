@@ -14,7 +14,8 @@ use sha256::sha256;
 use std::collections::{HashMap, HashSet};
 use std::env;
 use std::path::Path;
-use std::sync::{Mutex, OnceLock};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::OnceLock;
 use std::time::Instant;
 use storage_index_canister::init::CyclesDispenserConfig;
 use testing::NNS_INTERNET_IDENTITY_CANISTER_ID;
@@ -24,7 +25,8 @@ pub static POCKET_IC_BIN: &str = "./pocket-ic";
 
 // This is set to true as soon as the first thread starts initializing the environment to ensure
 // that the full initialization only happens once.
-static INIT_STARTED_LOCK: Mutex<bool> = Mutex::new(false);
+static INIT_STARTED: AtomicBool = AtomicBool::new(false);
+
 // This base state is set at the end of the initialization process, so each thread (other than
 // the one doing the initialization) waits until the state is available at which point they
 // create their own PocketIC instance which is initialized with this state.
@@ -34,11 +36,11 @@ pub fn setup_new_env(seed: Option<Hash>) -> TestEnv {
     verify_pocket_ic_exists();
 
     let controller = Principal::from_text("xuxyr-xopen-chatx-xxxbu-cai").unwrap();
-    let mut init_started = INIT_STARTED_LOCK.lock().unwrap();
 
-    if !*init_started {
-        *init_started = true;
-
+    if !INIT_STARTED
+        .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
+        .unwrap()
+    {
         initialize_base_state(controller, seed);
     };
 
