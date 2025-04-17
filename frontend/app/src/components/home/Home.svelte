@@ -349,26 +349,6 @@
                 } else if (pathState.isCommunitiesRoute(route)) {
                     client.clearSelectedChat();
                     ui.rightPanelHistory = ui.fullWidth ? [{ kind: "community_filters" }] : [];
-                } else if (
-                    pathState.isGlobalChatSelectedRoute(route) ||
-                    pathState.isSelectedChannelRoute(route)
-                ) {
-                    // if the chat in the url is different from the chat we already have selected
-                    if (!chatIdentifiersEqual(route.chatId, app.selectedChatId)) {
-                        // Note - this is now done automatically as an effect of the route change
-                        // client.setSelectedChat(
-                        //     route.chatId,
-                        //     route.messageIndex,
-                        //     route.threadMessageIndex,
-                        // );
-                    } else {
-                        // if the chat in the url is *the same* as the selected chat
-                        // *and* if we have a messageIndex specified in the url
-
-                        if (route.messageIndex !== undefined) {
-                            waitAndScrollToMessageIndex(route.messageIndex, false);
-                        }
-                    }
                 } else {
                     // any other route with no associated chat therefore we must clear any selected chat and potentially close the right panel
                     if (pathState.isShareRoute(route)) {
@@ -1039,6 +1019,7 @@
             }
         }
     });
+
     let bgHeight = $derived(ui.dimensions.height * 0.9);
     let bgClip = $derived(((ui.dimensions.height - 32) / bgHeight) * 361);
 </script>
