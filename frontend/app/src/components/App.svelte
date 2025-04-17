@@ -485,6 +485,14 @@
     }
 
     function unhandledError(ev: Event) {
+        if (
+            ev instanceof ErrorEvent &&
+            (ev.message.includes("ResizeObserver loop completed with undelivered notifications") ||
+                ev.message.includes("ResizeObserver loop limit exceeded"))
+        ) {
+            return;
+        }
+
         logger?.error("Unhandled error: ", ev);
         if (
             ev instanceof PromiseRejectionEvent &&

@@ -16,9 +16,15 @@ export class PathState {
     #querystringCode = $derived(this.#querystring.get("code"));
     #querystringReferralCode = $derived(this.#querystring.get("ref"));
     #routeKind = $derived(this.#route.kind);
+    #messageIndex = $derived(
+        this.hasMessageIndex(this.#route) ? this.#route.messageIndex : undefined,
+    );
 
     set routerReady(val: boolean) {
         this.#routerReady = val;
+    }
+    get messageIndex() {
+        return this.#messageIndex;
     }
     get querystring(): URLSearchParams {
         return this.#querystring;
@@ -112,6 +118,14 @@ export class PathState {
     isDiamondRoute(route: RouteParams): route is DiamondRoute {
         return route.kind === "diamond_route";
     }
+
+    hasMessageIndex(route: RouteParams): route is MessageIndexRoute {
+        return (
+            route.kind === "global_chat_selected_route" ||
+            route.kind === "favourites_route" ||
+            route.kind === "selected_channel_route"
+        );
+    }
 }
 
 import type {
@@ -151,6 +165,8 @@ export type RouteParams =
     | NotFound
     | HotGroupsRoute
     | AdminRoute;
+
+export type MessageIndexRoute = GlobalSelectedChatRoute | FavouritesRoute | SelectedChannelRoute;
 
 type Scoped = { scope: ChatListScope };
 type NoScope = { scope: { kind: "none" } };
