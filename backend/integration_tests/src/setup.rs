@@ -37,9 +37,9 @@ pub fn setup_new_env(seed: Option<Hash>) -> TestEnv {
 
     let controller = Principal::from_text("xuxyr-xopen-chatx-xxxbu-cai").unwrap();
 
-    if !INIT_STARTED
+    if INIT_STARTED
         .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
-        .unwrap()
+        .unwrap_or_default()
     {
         initialize_base_state(controller, seed);
     };
