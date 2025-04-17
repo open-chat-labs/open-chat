@@ -60,6 +60,7 @@ fn initialize_base_state(controller: Principal, seed: Option<Hash>) {
         .with_nns_subnet()
         .with_sns_subnet()
         .with_application_subnet()
+        .with_state(PocketIcState::new())
         .build();
 
     let ticks: u8 = seed.map_or(0, |s| StdRng::from_seed(s).gen());
