@@ -1041,7 +1041,7 @@
     <LeftNav />
     <LeftPanel />
     <MiddlePanel {joining} bind:currentChatMessages onGoToMessageIndex={goToMessageIndex} />
-    <RightPanel onGoToMessageIndex={goToMessageIndex} />
+    <RightPanel />
 </main>
 
 {#if $anonUser}
