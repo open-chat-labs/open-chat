@@ -229,10 +229,10 @@ lazy_static = "1.4.0"
 num-traits = "0.2.19"
 openssl = "0.10.72"
 p256 = { version = "0.13.2" }
-pocket-ic = { git = "https://github.com/dfinity/ic", rev = "4833f30d3b5afd84a385dfb146581580285d8a7e" }
+pocket-ic = { git = "https://github.com/dfinity/ic", rev = "579b8ba3a31341f354f4ddb3d60ac44548a91bc2" }
 proc-macro2 = "1.0.83"
 prometheus = "0.13.4"
-proptest = "1.5.0"
+proptest = "1.6.0"
 pulldown-cmark = { version = "0.12.0", default-features = false, features = [
     "html",
 ] }
