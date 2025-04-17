@@ -1,40 +1,42 @@
 <script lang="ts">
-    import { getContext } from "svelte";
-    import ChatEvent from "./ChatEvent.svelte";
+    import { trackedEffect } from "@src/utils/effects.svelte";
     import {
-        type EventWrapper,
-        type EnhancedReplyContext,
         type ChatEvent as ChatEventType,
-        type Message,
-        type Mention,
+        type ChatIdentifier,
         type ChatSummary,
+        type EnhancedReplyContext,
+        type EventWrapper,
+        type Mention,
+        type Message,
         type OpenChat,
         FilteredProposals,
+        app,
         chatIdentifiersEqual,
-        type ChatIdentifier,
-        routeForChatIdentifier,
-        currentUser as user,
+        chatListScopeStore as chatListScope,
+        chatStateStore,
         currentChatEditingEvent,
         currentChatPinnedMessages,
-        messagesRead,
-        unconfirmed,
-        failedMessagesStore,
-        userGroupKeys,
         draftMessagesStore,
-        focusMessageIndex,
-        chatListScopeStore as chatListScope,
-        selectedCommunity,
-        expandedDeletedMessages,
         eventsStore,
-        chatStateStore,
+        expandedDeletedMessages,
+        failedMessagesStore,
+        focusMessageIndex,
+        messagesRead,
+        pathState,
+        routeForChatIdentifier,
+        selectedCommunity,
+        unconfirmed,
+        currentUser as user,
+        userGroupKeys,
     } from "openchat-client";
-    import InitialChatMessage from "./InitialChatMessage.svelte";
     import page from "page";
+    import { getContext, untrack } from "svelte";
+    import Witch from "../Witch.svelte";
+    import ChatEvent from "./ChatEvent.svelte";
     import ChatEventList from "./ChatEventList.svelte";
+    import InitialChatMessage from "./InitialChatMessage.svelte";
     import PrivatePreview from "./PrivatePreview.svelte";
     import TimelineDate from "./TimelineDate.svelte";
-    import Witch from "../Witch.svelte";
-    import { trackedEffect } from "@src/utils/effects.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -257,7 +259,7 @@
         }
     });
     let showAvatar = $derived(initialised && shouldShowAvatar(chat, $eventsStore[0]?.index));
-    let messageContext = $derived({ chatId: chat.id, threadRootMessageIndex: undefined });
+    let messageContext = $derived({ chatId: chat?.id, threadRootMessageIndex: undefined });
     let timeline = $derived(
         client.groupEvents(
             [...$eventsStore].reverse(),
@@ -266,6 +268,22 @@
             groupInner(filteredProposals),
         ),
     );
+
+    // if the messageIndex has changed but the chatId has not, scroll to the specified message
+    let previousChatId: ChatIdentifier | undefined = undefined;
+    $effect(() => {
+        if (
+            app.chatsInitialised &&
+            pathState.messageIndex !== undefined &&
+            chatIdentifiersEqual(app.selectedChatId, previousChatId)
+        ) {
+            const idx = pathState.messageIndex;
+            untrack(() => {
+                scrollToMessageIndex(idx, false);
+            });
+        }
+        previousChatId = app.selectedChatId;
+    });
 </script>
 
 <Witch />
