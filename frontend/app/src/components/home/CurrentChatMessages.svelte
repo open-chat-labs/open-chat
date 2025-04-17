@@ -30,7 +30,7 @@
         userGroupKeys,
     } from "openchat-client";
     import page from "page";
-    import { getContext } from "svelte";
+    import { getContext, untrack } from "svelte";
     import Witch from "../Witch.svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import ChatEventList from "./ChatEventList.svelte";
@@ -277,7 +277,10 @@
             pathState.messageIndex !== undefined &&
             chatIdentifiersEqual(app.selectedChatId, previousChatId)
         ) {
-            scrollToMessageIndex(pathState.messageIndex, false);
+            const idx = pathState.messageIndex;
+            untrack(() => {
+                scrollToMessageIndex(idx, false);
+            });
         }
         previousChatId = app.selectedChatId;
     });

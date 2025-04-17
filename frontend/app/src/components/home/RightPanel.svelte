@@ -56,13 +56,8 @@
     import Thread from "./thread/Thread.svelte";
     import ActiveCallParticipants from "./video/ActiveCallParticipants.svelte";
 
-    interface Props {
-        onGoToMessageIndex: (details: { index: number; preserveFocus: boolean }) => void;
-    }
-
     const client = getContext<OpenChat>("client");
 
-    let { onGoToMessageIndex }: Props = $props();
     let invitingUsers = $state(false);
     let section: HTMLElement | undefined = $state();
     let resized = $state(false);
@@ -182,13 +177,6 @@
                 });
 
             invitingUsers = false;
-        }
-    }
-
-    function goToMessageIndex(detail: { index: number; preserveFocus: boolean }): void {
-        onGoToMessageIndex(detail);
-        if (modal) {
-            ui.popRightPanelHistory();
         }
     }
 
@@ -533,7 +521,6 @@
             {onCancelCommunityInvite} />
     {:else if ui.lastRightPanelState.kind === "show_pinned" && $selectedChatId !== undefined && ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel") && $multiUserChat !== undefined}
         <PinnedMessages
-            onGoToMessageIndex={goToMessageIndex}
             chatId={$selectedChatId}
             pinned={$currentChatPinnedMessages}
             dateLastPinned={$multiUserChat.dateLastPinned}
