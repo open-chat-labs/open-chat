@@ -153,6 +153,7 @@ export interface BotCommandDefinition {
   'default_role' : [] | [GroupRole],
   'name' : string,
   'description' : [] | [string],
+  'direct_messages' : [] | [boolean],
   'placeholder' : [] | [string],
   'params' : Array<BotCommandParam>,
 }
@@ -216,6 +217,7 @@ export interface CanisterWasm {
 export type ChannelId = number;
 export interface ChannelMatch {
   'id' : ChannelId,
+  'is_public' : boolean,
   'gate_config' : [] | [AccessGateConfig],
   'subtype' : [] | [GroupSubtype],
   'gate' : [] | [AccessGate],

@@ -5,6 +5,7 @@ import {
     type EventsResponse,
     type EventsSuccessResult,
     type IndexRange,
+    isSuccessfulEventsResponse,
 } from "openchat-shared";
 
 function mergeEventsResponse<T extends ChatEvent>(
@@ -44,7 +45,7 @@ export async function chunkedChatEventsFromBackend(
             const resp = await eventsFn(index, chunkSize);
 
             // if we get any failures we will need to bail otherwise things are going to get very messed up
-            if (resp === "events_failed") return resp;
+            if (!isSuccessfulEventsResponse(resp)) return resp;
 
             aggregatedResponse = ascending
                 ? mergeEventsResponse(aggregatedResponse, resp)
@@ -99,7 +100,7 @@ export async function chunkedChatEventsWindowFromBackend(
                 const resp = await eventsWindowFn(lowIndex, chunkSize);
 
                 // if we get any failures we will need to bail otherwise things are going to get very messed up
-                if (resp === "events_failed") return resp;
+                if (!isSuccessfulEventsResponse(resp)) return resp;
 
                 aggregatedResponse = mergeEventsResponse(aggregatedResponse, resp);
             } else {
@@ -107,7 +108,7 @@ export async function chunkedChatEventsWindowFromBackend(
                 if (lowIndex >= minIndex) {
                     const above = await eventsFn(lowIndex, false, chunkSize);
 
-                    if (above === "events_failed") return "events_failed";
+                    if (!isSuccessfulEventsResponse(above)) return above;
 
                     aggregatedResponse = mergeEventsResponse(above, aggregatedResponse);
                 }
@@ -115,7 +116,7 @@ export async function chunkedChatEventsWindowFromBackend(
                 if (highIndex <= maxIndex) {
                     const below = await eventsFn(highIndex, true, chunkSize);
 
-                    if (below === "events_failed") return "events_failed";
+                    if (!isSuccessfulEventsResponse(below)) return below;
 
                     aggregatedResponse = mergeEventsResponse(aggregatedResponse, below);
                 }

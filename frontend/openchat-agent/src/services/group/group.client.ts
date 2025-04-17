@@ -64,20 +64,12 @@ import {
 import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import {
     apiRole,
-    getEventsResponse,
-    removeMemberResponse,
-    blockUserResponse,
-    unblockUserResponse,
-    getMessagesByMessageIndexResponse,
     apiOptionalGroupPermissions,
-    summaryResponse,
     summaryUpdatesResponse,
-    convertToCommunityResponse,
     apiUpdatedRules,
-    followThreadResponse,
-    reportMessageResponse,
+    convertToCommunitySuccess,
+    groupChatSummary,
 } from "./mappersV2";
-import { sendMessageResponse } from "./mappersV2";
 import {
     type Database,
     getCachedEvents,
@@ -92,42 +84,33 @@ import {
     setCachedGroupDetails,
 } from "../../utils/caching";
 import {
-    acceptP2PSwapResponse,
-    addRemoveReactionResponse,
+    acceptP2PSwapSuccess,
     apiAccessGateConfig,
     apiExternalBotPermissions,
     apiMessageContent,
     apiUser as apiUserV2,
-    apiVideoCallPresence,
-    cancelP2PSwapResponse,
-    changeRoleResponse,
-    claimPrizeResponse,
-    declineInvitationResponse,
-    deleteMessageResponse,
-    deletedMessageResponse,
-    disableInviteCodeResponse,
-    editMessageResponse,
-    enableOrResetInviteCodeResponse,
-    generateApiKeyResponse,
-    groupDetailsResponse,
+    apiVideoCallPresence, claimPrizeResponse,
+    deletedMessageSuccess,
+    unitResult,
+    enableOrResetInviteCodeSuccess,
+    generateApiKeySuccess, getEventsSuccess,
+    getMessagesSuccess,
+    groupDetailsSuccess,
     groupDetailsUpdatesResponse,
-    inviteCodeResponse,
-    joinVideoCallResponse,
-    pinMessageResponse,
-    registerPollVoteResponse,
-    registerProposalVoteResponse,
+    inviteCodeSuccess,
+    isSuccess,
+    mapResult,
+    pushEventSuccess,
     searchGroupChatResponse,
-    setVideoCallPresence,
-    threadPreviewsResponse,
-    undeleteMessageResponse,
-    unpinMessageResponse,
-    updateBotResponse,
-    updateGroupResponse,
-    videoCallParticipantsResponse,
+    sendMessageSuccess,
+    threadPreviewsSuccess,
+    undeleteMessageSuccess,
+    updateGroupSuccess,
+    videoCallParticipantsSuccess,
 } from "../common/chatMappersV2";
 import { DataClient } from "../data/data.client";
 import { mergeGroupChatDetails } from "../../utils/chat";
-import { publicSummaryResponse } from "../common/publicSummaryMapperV2";
+import { publicSummarySuccess } from "../common/publicSummaryMapperV2";
 import {
     apiOptionUpdateV2,
     identity,
@@ -138,9 +121,8 @@ import {
 import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
 import { setCachedMessageFromSendResponse } from "../../utils/caching";
-import { toggleNotificationsResponse } from "../notifications/mappers";
 import type { CancelP2PSwapResponse } from "openchat-shared";
-import { ResponseTooLargeError } from "openchat-shared";
+import { ResponseTooLargeError, isSuccessfulEventsResponse } from "openchat-shared";
 import {
     chunkedChatEventsFromBackend,
     chunkedChatEventsWindowFromBackend,
@@ -150,28 +132,19 @@ import {
     GroupAcceptP2pSwapArgs,
     GroupAcceptP2pSwapResponse,
     GroupAddReactionArgs,
-    GroupAddReactionResponse,
     GroupBlockUserArgs,
-    GroupBlockUserResponse,
     GroupCancelInvitesArgs,
-    GroupCancelInvitesResponse,
     GroupCancelP2pSwapArgs,
-    GroupCancelP2pSwapResponse,
     GroupChangeRoleArgs,
-    GroupChangeRoleResponse,
     GroupClaimPrizeArgs,
     GroupClaimPrizeResponse,
     GroupConvertIntoCommunityArgs,
     GroupConvertIntoCommunityResponse,
-    GroupDeclineInvitiationResponse,
     GroupDeletedMessageArgs,
     GroupDeletedMessageResponse,
     GroupDeleteMessagesArgs,
-    GroupDeleteMessagesResponse,
     GroupDisableInviteCodeArgs,
-    GroupDisableInviteCodeResponse,
     GroupEditMessageArgs,
-    GroupEditMessageResponse,
     GroupEnableInviteCodeArgs,
     GroupEnableInviteCodeResponse,
     GroupEventsArgs,
@@ -179,7 +152,6 @@ import {
     GroupEventsResponse,
     GroupEventsWindowArgs,
     GroupFollowThreadArgs,
-    GroupFollowThreadResponse,
     GroupInviteCodeResponse,
     GroupJoinVideoCallArgs,
     GroupLocalUserIndexResponse,
@@ -192,15 +164,10 @@ import {
     GroupRegisterPollVoteArgs,
     GroupRegisterPollVoteResponse,
     GroupRegisterProposalVoteArgs,
-    GroupRegisterProposalVoteResponse,
     GroupRegisterProposalVoteV2Args,
-    GroupRegisterProposalVoteV2Response,
     GroupRemoveParticipantArgs,
-    GroupRemoveParticipantResponse,
     GroupRemoveReactionArgs,
-    GroupRemoveReactionResponse,
     GroupReportMessageArgs,
-    GroupReportMessageResponse,
     GroupSearchMessagesArgs,
     GroupSearchMessagesResponse,
     GroupSelectedInitialResponse,
@@ -209,16 +176,13 @@ import {
     GroupSendMessageArgs,
     GroupSendMessageResponse,
     GroupSetVideoCallPresenceArgs,
-    GroupSetVideoCallPresenceResponse,
     GroupSummaryResponse,
     GroupSummaryUpdatesArgs,
     GroupSummaryUpdatesResponse,
     GroupThreadPreviewsArgs,
     GroupThreadPreviewsResponse,
     GroupToggleMuteNotificationsArgs,
-    GroupToggleMuteNotificationsResponse,
     GroupUnblockUserArgs,
-    GroupUnblockUserResponse,
     GroupUndeleteMessagesArgs,
     GroupUndeleteMessagesResponse,
     GroupUnpinMessageArgs,
@@ -228,11 +192,11 @@ import {
     GroupVideoCallParticipantsArgs,
     GroupVideoCallParticipantsResponse,
     GroupUpdateBotArgs,
-    GroupUpdateBotResponse,
     GroupGenerateBotApiKeyArgs,
     GroupGenerateBotApiKeyResponse,
     GroupApiKeyArgs,
     GroupApiKeyResponse,
+    UnitResult,
 } from "../../typebox";
 
 export class GroupClient extends MsgpackCanisterAgent {
@@ -251,7 +215,7 @@ export class GroupClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "summary",
             {},
-            summaryResponse,
+            (resp) => mapResult(resp, (value) => groupChatSummary(value.summary)),
             TEmpty,
             GroupSummaryResponse,
         ).catch((err) => {
@@ -317,7 +281,7 @@ export class GroupClient extends MsgpackCanisterAgent {
             )
                 .then((resp) => this.setCachedEvents(resp, threadRootMessageIndex))
                 .then((resp) => {
-                    if (resp !== "events_failed") {
+                    if (isSuccessfulEventsResponse(resp)) {
                         return mergeSuccessResponses(cachedEvents, resp);
                     }
                     return resp;
@@ -339,7 +303,7 @@ export class GroupClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "events_by_index",
             args,
-            (resp) => getEventsResponse(this.principal, resp, this.chatId, latestKnownUpdate),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
             GroupEventsByIndexArgs,
             GroupEventsResponse,
         );
@@ -428,7 +392,7 @@ export class GroupClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "events_window",
             args,
-            (resp) => getEventsResponse(this.principal, resp, this.chatId, latestKnownUpdate),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
             GroupEventsWindowArgs,
             GroupEventsResponse,
         );
@@ -510,7 +474,7 @@ export class GroupClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "events",
             args,
-            (resp) => getEventsResponse(this.principal, resp, this.chatId, latestKnownUpdate),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
             GroupEventsArgs,
             GroupEventsResponse,
         );
@@ -528,9 +492,9 @@ export class GroupClient extends MsgpackCanisterAgent {
                 new_role,
                 correlation_id: generateUint64(),
             },
-            changeRoleResponse,
+            unitResult,
             GroupChangeRoleArgs,
-            GroupChangeRoleResponse,
+            UnitResult,
         );
     }
 
@@ -541,9 +505,9 @@ export class GroupClient extends MsgpackCanisterAgent {
                 user_id: principalStringToBytes(userId),
                 correlation_id: generateUint64(),
             },
-            removeMemberResponse,
+            unitResult,
             GroupRemoveParticipantArgs,
-            GroupRemoveParticipantResponse,
+            UnitResult,
         );
     }
 
@@ -567,9 +531,9 @@ export class GroupClient extends MsgpackCanisterAgent {
                 return this.executeMsgpackUpdate(
                     "edit_message_v2",
                     args,
-                    editMessageResponse,
+                    unitResult,
                     GroupEditMessageArgs,
-                    GroupEditMessageResponse,
+                    UnitResult,
                 );
             });
     }
@@ -630,7 +594,7 @@ export class GroupClient extends MsgpackCanisterAgent {
             return this.executeMsgpackUpdate(
                 "send_message_v2",
                 args,
-                sendMessageResponse,
+                (resp) => mapResult(resp, sendMessageSuccess),
                 GroupSendMessageArgs,
                 GroupSendMessageResponse,
                 onRequestAccepted,
@@ -691,7 +655,7 @@ export class GroupClient extends MsgpackCanisterAgent {
                           : { SetToSome: apiAccessGateConfig(gateConfig) },
                 messages_visible_to_non_members: messagesVisibleToNonMembers,
             },
-            updateGroupResponse,
+            (resp) => mapResult(resp, updateGroupSuccess),
             GroupUpdateGroupArgs,
             GroupUpdateGroupResponse,
         );
@@ -716,9 +680,9 @@ export class GroupClient extends MsgpackCanisterAgent {
                 correlation_id: generateUint64(),
                 new_achievement: newAchievement,
             },
-            addRemoveReactionResponse,
+            unitResult,
             GroupAddReactionArgs,
-            GroupAddReactionResponse,
+            UnitResult,
         );
     }
 
@@ -735,9 +699,9 @@ export class GroupClient extends MsgpackCanisterAgent {
                 reaction,
                 correlation_id: generateUint64(),
             },
-            addRemoveReactionResponse,
+            unitResult,
             GroupRemoveReactionArgs,
-            GroupRemoveReactionResponse,
+            UnitResult,
         );
     }
 
@@ -756,9 +720,9 @@ export class GroupClient extends MsgpackCanisterAgent {
                 as_platform_moderator: asPlatformModerator,
                 new_achievement: newAchievement,
             },
-            deleteMessageResponse,
+            unitResult,
             GroupDeleteMessagesArgs,
-            GroupDeleteMessagesResponse,
+            UnitResult,
         );
     }
 
@@ -773,7 +737,7 @@ export class GroupClient extends MsgpackCanisterAgent {
                 message_ids: [messageId],
                 correlation_id: generateUint64(),
             },
-            undeleteMessageResponse,
+            (resp) => mapResult(resp, undeleteMessageSuccess),
             GroupUndeleteMessagesArgs,
             GroupUndeleteMessagesResponse,
         );
@@ -786,9 +750,9 @@ export class GroupClient extends MsgpackCanisterAgent {
                 user_id: principalStringToBytes(userId),
                 correlation_id: generateUint64(),
             },
-            blockUserResponse,
+            unitResult,
             GroupBlockUserArgs,
-            GroupBlockUserResponse,
+            UnitResult,
         );
     }
 
@@ -799,9 +763,9 @@ export class GroupClient extends MsgpackCanisterAgent {
                 user_id: principalStringToBytes(userId),
                 correlation_id: generateUint64(),
             },
-            unblockUserResponse,
+            unitResult,
             GroupUnblockUserArgs,
-            GroupUnblockUserResponse,
+            UnitResult,
         );
     }
 
@@ -816,7 +780,7 @@ export class GroupClient extends MsgpackCanisterAgent {
         }
 
         const response = await this.getGroupDetailsFromBackend();
-        if (response !== "failure") {
+        if (typeof response === "object" && "members" in response) {
             await setCachedGroupDetails(this.db, this.chatId.groupId, response);
         }
         return response;
@@ -826,7 +790,7 @@ export class GroupClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "selected_initial",
             {},
-            groupDetailsResponse,
+            (resp) => mapResult(resp, groupDetailsSuccess),
             TEmpty,
             GroupSelectedInitialResponse,
         );
@@ -873,7 +837,7 @@ export class GroupClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "public_summary",
             args,
-            publicSummaryResponse,
+            (resp) => mapResult(resp, publicSummarySuccess),
             GroupPublicSummaryArgs,
             GroupPublicSummaryResponse,
         );
@@ -892,14 +856,14 @@ export class GroupClient extends MsgpackCanisterAgent {
                 latestKnownUpdate,
             ).then((resp) => this.setCachedEvents(resp));
 
-            return resp === "events_failed"
-                ? resp
-                : {
+            return isSuccessfulEventsResponse(resp)
+                ? {
                       events: [...fromCache.messageEvents, ...resp.events],
                       expiredEventRanges: [],
                       expiredMessageRanges: [],
                       latestEventIndex: resp.latestEventIndex,
-                  };
+                }
+                : resp
         }
         return {
             events: fromCache.messageEvents,
@@ -923,13 +887,7 @@ export class GroupClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "messages_by_message_index",
             args,
-            (resp) =>
-                getMessagesByMessageIndexResponse(
-                    this.principal,
-                    resp,
-                    this.chatId,
-                    latestKnownUpdate,
-                ),
+            (resp) => mapResult(resp, (value) => getMessagesSuccess(value, this.principal, this.chatId)),
             GroupMessagesByMessageIndexArgs,
             GroupMessagesByMessageIndexResponse,
         );
@@ -945,7 +903,7 @@ export class GroupClient extends MsgpackCanisterAgent {
                 message_id: messageId,
                 thread_root_message_index: threadRootMessageIndex,
             },
-            deletedMessageResponse,
+            (resp) => mapResult(resp, deletedMessageSuccess),
             GroupDeletedMessageArgs,
             GroupDeletedMessageResponse,
         );
@@ -958,7 +916,7 @@ export class GroupClient extends MsgpackCanisterAgent {
                 message_index: messageIndex,
                 correlation_id: generateUint64(),
             },
-            pinMessageResponse,
+            (resp) => mapResult(resp, pushEventSuccess),
             GroupPinMessageArgs,
             GroupPinMessageResponse,
         );
@@ -971,7 +929,7 @@ export class GroupClient extends MsgpackCanisterAgent {
                 message_index: messageIndex,
                 correlation_id: generateUint64(),
             },
-            unpinMessageResponse,
+            (resp) => mapResult(resp, pushEventSuccess),
             GroupUnpinMessageArgs,
             GroupUnpinMessageResponse,
         );
@@ -994,7 +952,7 @@ export class GroupClient extends MsgpackCanisterAgent {
                 new_achievement: newAchievement,
                 correlation_id: generateUint64(),
             },
-            registerPollVoteResponse,
+            unitResult,
             GroupRegisterPollVoteArgs,
             GroupRegisterPollVoteResponse,
         );
@@ -1023,7 +981,7 @@ export class GroupClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "invite_code",
             {},
-            inviteCodeResponse,
+            (resp) => mapResult(resp, inviteCodeSuccess),
             TEmpty,
             GroupInviteCodeResponse,
         );
@@ -1035,7 +993,7 @@ export class GroupClient extends MsgpackCanisterAgent {
             {
                 correlation_id: generateUint64(),
             },
-            enableOrResetInviteCodeResponse,
+            (resp) => mapResult(resp, enableOrResetInviteCodeSuccess),
             GroupEnableInviteCodeArgs,
             GroupEnableInviteCodeResponse,
         );
@@ -1047,9 +1005,9 @@ export class GroupClient extends MsgpackCanisterAgent {
             {
                 correlation_id: generateUint64(),
             },
-            disableInviteCodeResponse,
+            unitResult,
             GroupDisableInviteCodeArgs,
-            GroupDisableInviteCodeResponse,
+            UnitResult,
         );
     }
 
@@ -1059,7 +1017,7 @@ export class GroupClient extends MsgpackCanisterAgent {
             {
                 correlation_id: generateUint64(),
             },
-            enableOrResetInviteCodeResponse,
+            (resp) => mapResult(resp, enableOrResetInviteCodeSuccess),
             GroupEnableInviteCodeArgs,
             GroupEnableInviteCodeResponse,
         );
@@ -1075,7 +1033,7 @@ export class GroupClient extends MsgpackCanisterAgent {
                 threads: threadRootMessageIndexes,
                 latest_client_thread_update: latestClientThreadUpdate,
             },
-            (resp) => threadPreviewsResponse(resp, this.chatId, latestClientThreadUpdate),
+            (resp) => mapResult(resp, (value) => threadPreviewsSuccess(value, this.chatId)),
             GroupThreadPreviewsArgs,
             GroupThreadPreviewsResponse,
         );
@@ -1091,9 +1049,9 @@ export class GroupClient extends MsgpackCanisterAgent {
                 adopt,
                 message_index: messageIdx,
             },
-            registerProposalVoteResponse,
+            unitResult,
             GroupRegisterProposalVoteArgs,
-            GroupRegisterProposalVoteResponse,
+            UnitResult,
         );
     }
 
@@ -1107,9 +1065,9 @@ export class GroupClient extends MsgpackCanisterAgent {
                 adopt,
                 message_index: messageIdx,
             },
-            registerProposalVoteResponse,
+            unitResult,
             GroupRegisterProposalVoteV2Args,
-            GroupRegisterProposalVoteV2Response,
+            UnitResult,
         );
     }
 
@@ -1127,9 +1085,9 @@ export class GroupClient extends MsgpackCanisterAgent {
         return this.executeMsgpackUpdate(
             "decline_invitation",
             {},
-            declineInvitationResponse,
+            unitResult,
             TEmpty,
-            GroupDeclineInvitiationResponse,
+            UnitResult,
         );
     }
 
@@ -1137,9 +1095,9 @@ export class GroupClient extends MsgpackCanisterAgent {
         return this.executeMsgpackUpdate(
             "toggle_mute_notifications",
             { mute },
-            toggleNotificationsResponse,
+            unitResult,
             GroupToggleMuteNotificationsArgs,
-            GroupToggleMuteNotificationsResponse,
+            UnitResult,
         );
     }
 
@@ -1152,7 +1110,7 @@ export class GroupClient extends MsgpackCanisterAgent {
                 permissions: undefined,
                 rules,
             },
-            convertToCommunityResponse,
+            (resp) => mapResult(resp, convertToCommunitySuccess),
             GroupConvertIntoCommunityArgs,
             GroupConvertIntoCommunityResponse,
         );
@@ -1170,9 +1128,9 @@ export class GroupClient extends MsgpackCanisterAgent {
         return this.executeMsgpackUpdate(
             follow ? "follow_thread" : "unfollow_thread",
             args,
-            followThreadResponse,
+            unitResult,
             GroupFollowThreadArgs,
-            GroupFollowThreadResponse,
+            UnitResult,
         );
     }
 
@@ -1188,9 +1146,9 @@ export class GroupClient extends MsgpackCanisterAgent {
                 message_id: messageId,
                 delete: deleteMessage,
             },
-            reportMessageResponse,
+            isSuccess,
             GroupReportMessageArgs,
-            GroupReportMessageResponse,
+            UnitResult,
         );
     }
 
@@ -1208,7 +1166,7 @@ export class GroupClient extends MsgpackCanisterAgent {
                 pin,
                 new_achievement: newAchievement,
             },
-            acceptP2PSwapResponse,
+            (resp) => mapResult(resp, acceptP2PSwapSuccess),
             GroupAcceptP2pSwapArgs,
             GroupAcceptP2pSwapResponse,
         );
@@ -1224,9 +1182,9 @@ export class GroupClient extends MsgpackCanisterAgent {
                 thread_root_message_index: threadRootMessageIndex,
                 message_id: messageId,
             },
-            cancelP2PSwapResponse,
+            unitResult,
             GroupCancelP2pSwapArgs,
-            GroupCancelP2pSwapResponse,
+            UnitResult,
         );
     }
 
@@ -1237,9 +1195,9 @@ export class GroupClient extends MsgpackCanisterAgent {
                 message_id: messageId,
                 new_achievement: newAchievement,
             },
-            joinVideoCallResponse,
+            unitResult,
             GroupJoinVideoCallArgs,
-            GroupSetVideoCallPresenceResponse,
+            UnitResult,
         );
     }
 
@@ -1255,9 +1213,9 @@ export class GroupClient extends MsgpackCanisterAgent {
                 presence: apiVideoCallPresence(presence),
                 new_achievement: newAchievement,
             },
-            setVideoCallPresence,
+            unitResult,
             GroupSetVideoCallPresenceArgs,
-            GroupSetVideoCallPresenceResponse,
+            UnitResult,
         );
     }
 
@@ -1271,7 +1229,7 @@ export class GroupClient extends MsgpackCanisterAgent {
                 message_id: messageId,
                 updated_since: updatesSince,
             },
-            videoCallParticipantsResponse,
+            (resp) => mapResult(resp, videoCallParticipantsSuccess),
             GroupVideoCallParticipantsArgs,
             GroupVideoCallParticipantsResponse,
         );
@@ -1283,9 +1241,9 @@ export class GroupClient extends MsgpackCanisterAgent {
             {
                 user_ids: userIds.map(principalStringToBytes),
             },
-            (value) => value === "Success",
+            isSuccess,
             GroupCancelInvitesArgs,
-            GroupCancelInvitesResponse,
+            UnitResult,
         );
     }
 
@@ -1299,9 +1257,9 @@ export class GroupClient extends MsgpackCanisterAgent {
                 bot_id: principalStringToBytes(botId),
                 granted_permissions: apiExternalBotPermissions(grantedPermissions),
             },
-            updateBotResponse,
+            isSuccess,
             GroupUpdateBotArgs,
-            GroupUpdateBotResponse,
+            UnitResult,
         );
     }
 
@@ -1315,7 +1273,7 @@ export class GroupClient extends MsgpackCanisterAgent {
                 bot_id: principalStringToBytes(botId),
                 requested_permissions: apiExternalBotPermissions(permissions),
             },
-            generateApiKeyResponse,
+            (resp) => mapResult(resp, generateApiKeySuccess),
             GroupGenerateBotApiKeyArgs,
             GroupGenerateBotApiKeyResponse,
         );

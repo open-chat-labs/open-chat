@@ -59,20 +59,12 @@
     interface Props {
         joining: MultiUserChat | undefined;
         chat: ChatSummary;
-        currentChatMessages: CurrentChatMessages | undefined;
         filteredProposals: FilteredProposals | undefined;
-        onGoToMessageIndex: (args: { index: number; preserveFocus: boolean }) => void;
     }
 
-    let {
-        joining,
-        chat,
-        currentChatMessages = $bindable(),
-        filteredProposals,
-        onGoToMessageIndex,
-    }: Props = $props();
+    let { joining, chat, filteredProposals }: Props = $props();
 
-    currentChatMessages;
+    let currentChatMessages = $state<CurrentChatMessages>();
 
     const client = getContext<OpenChat>("client");
 
@@ -339,6 +331,10 @@
     let bot = $derived(
         chat.kind === "direct_chat" ? botState.externalBots.get(chat.them.userId) : undefined,
     );
+
+    function onGoToMessageIndex(args: { index: number; preserveFocus: boolean }) {
+        currentChatMessages?.scrollToMessageIndex(args.index, args.preserveFocus);
+    }
 </script>
 
 <svelte:window onfocus={onWindowFocus} />

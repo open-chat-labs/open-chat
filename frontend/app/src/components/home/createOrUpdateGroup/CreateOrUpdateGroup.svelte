@@ -15,6 +15,7 @@
         selectedCommunity,
         ui,
     } from "openchat-client";
+    import { ErrorCode } from "openchat-shared";
     import page from "page";
     import { getContext, tick } from "svelte";
     import { menuCloser } from "../../../actions/closeMenu";
@@ -116,23 +117,24 @@
     ): ResourceKey | undefined {
         if (resp.kind === "success") return undefined;
         if (resp.kind === "offline") return i18nKey("offlineError");
-        if (resp.kind === "internal_error") return i18nKey("groupCreationFailed");
-        if (resp.kind === "name_too_short") return i18nKey("groupNameTooShort");
-        if (resp.kind === "name_too_long") return i18nKey("groupNameTooLong");
-        if (resp.kind === "name_reserved") return i18nKey("groupNameReserved");
-        if (resp.kind === "description_too_long") return i18nKey("groupDescTooLong");
-        if (resp.kind === "group_name_taken" && level === "group")
-            return i18nKey("groupAlreadyExists");
-        if (resp.kind === "group_name_taken") return i18nKey("channelAlreadyExists");
-        if (resp.kind === "avatar_too_big") return i18nKey("groupAvatarTooBig");
-        if (resp.kind === "max_groups_created") return i18nKey("maxGroupsCreated");
-        if (resp.kind === "throttled") return i18nKey("groupCreationFailed");
-        if (resp.kind === "rules_too_short") return i18nKey("groupRulesTooShort");
-        if (resp.kind === "rules_too_long") return i18nKey("groupRulesTooLong");
-        if (resp.kind === "user_suspended") return i18nKey("userSuspended");
-        if (resp.kind === "unauthorized_to_create_public_group")
-            return i18nKey("unauthorizedToCreatePublicGroup");
-        if (resp.kind === "access_gate_invalid") return i18nKey("access.gateInvalid");
+        if (resp.kind === "error") {
+            if (resp.code === ErrorCode.NameTooShort) return i18nKey("groupNameTooShort");
+            if (resp.code === ErrorCode.NameTooLong) return i18nKey("groupNameTooLong");
+            if (resp.code === ErrorCode.NameReserved) return i18nKey("groupNameReserved");
+            if (resp.code === ErrorCode.DescriptionTooLong) return i18nKey("groupDescTooLong");
+            if (resp.code === ErrorCode.NameTaken && level === "group")
+                return i18nKey("groupAlreadyExists");
+            if (resp.code === ErrorCode.NameTaken) return i18nKey("channelAlreadyExists");
+            if (resp.code === ErrorCode.AvatarTooBig) return i18nKey("groupAvatarTooBig");
+            if (resp.code === ErrorCode.MaxGroupsCreated) return i18nKey("maxGroupsCreated");
+            if (resp.code === ErrorCode.Throttled) return i18nKey("groupCreationFailed");
+            if (resp.code === ErrorCode.RulesTooShort) return i18nKey("groupRulesTooShort");
+            if (resp.code === ErrorCode.RulesTooLong) return i18nKey("groupRulesTooLong");
+            if (resp.code === ErrorCode.InitiatorSuspended) return i18nKey("userSuspended");
+            if (resp.code === ErrorCode.NotDiamondMember)
+                return i18nKey("unauthorizedToCreatePublicGroup");
+            if (resp.code === ErrorCode.InvalidAccessGate) return i18nKey("access.gateInvalid");
+        }
         return i18nKey("groupCreationFailed");
     }
 
