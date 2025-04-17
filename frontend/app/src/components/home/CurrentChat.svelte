@@ -59,7 +59,6 @@
     interface Props {
         joining: MultiUserChat | undefined;
         chat: ChatSummary;
-        currentChatMessages: CurrentChatMessages | undefined;
         filteredProposals: FilteredProposals | undefined;
     }
 
