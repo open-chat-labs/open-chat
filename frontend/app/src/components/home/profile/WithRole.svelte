@@ -5,7 +5,7 @@
     interface Props {
         userId: string | undefined;
         communityMembers: IReadonlyMap<string, Member>;
-        chatMembers: Map<string, Member>;
+        chatMembers: IReadonlyMap<string, Member>;
         children?: Snippet<[MemberRole, MemberRole]>;
     }
 

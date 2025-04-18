@@ -15,7 +15,6 @@ import type {
     EnhancedReplyContext,
     EventWrapper,
     ExternalBotPermissions,
-    Member,
     MessageContext,
     MultiUserChat,
     ObjectSet,
@@ -23,7 +22,6 @@ import type {
     StreakInsurance,
     ThreadSyncDetails,
     UserLookup,
-    VersionedRules,
     WalletConfig,
 } from "openchat-shared";
 import { locale } from "svelte-i18n";
@@ -35,10 +33,7 @@ import {
     chatSummariesListStore,
     chatSummariesStore,
     confirmedThreadEventIndexesLoadedStore,
-    currentChatBots,
-    currentChatMembers,
     currentChatReplyingTo,
-    currentChatRules,
     currentChatUserIds,
     eventsStore,
     favouritesStore,
@@ -103,8 +98,6 @@ export class LiveState {
     threadEvents!: EventWrapper<ChatEvent>[];
     selectedMessageContext: MessageContext | undefined;
     threadsFollowedByMe!: ChatMap<Set<number>>;
-    currentChatMembers!: Member[];
-    currentChatRules!: VersionedRules | undefined;
     currentChatUserIds!: Set<string>;
     selectedThreadRootMessageIndex: number | undefined;
     blockedUsers!: Set<string>;
@@ -131,12 +124,10 @@ export class LiveState {
     chitState!: ChitState;
     walletConfig!: WalletConfig;
     installedDirectBots!: Map<string, ExternalBotPermissions>;
-    currentChatBots!: Map<string, ExternalBotPermissions>;
     serverStreakInsurance!: StreakInsurance;
 
     constructor() {
         serverStreakInsuranceStore.subscribe((state) => (this.serverStreakInsurance = state));
-        currentChatBots.subscribe((state) => (this.currentChatBots = state));
         installedDirectBots.subscribe((state) => (this.installedDirectBots = state));
         chitStateStore.subscribe((state) => (this.chitState = state));
         offlineStore.subscribe((offline) => (this.offlineStore = offline));
@@ -169,8 +160,6 @@ export class LiveState {
         threadEvents.subscribe((data) => (this.threadEvents = data));
         selectedMessageContext.subscribe((data) => (this.selectedMessageContext = data));
         threadsFollowedByMeStore.subscribe((data) => (this.threadsFollowedByMe = data));
-        currentChatMembers.subscribe((data) => (this.currentChatMembers = data));
-        currentChatRules.subscribe((data) => (this.currentChatRules = data));
         currentChatUserIds.subscribe((data) => (this.currentChatUserIds = data));
         selectedThreadRootMessageIndex.subscribe(
             (data) => (this.selectedThreadRootMessageIndex = data),

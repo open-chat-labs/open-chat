@@ -1,7 +1,6 @@
 <script lang="ts">
     import {
         app,
-        currentChatRules,
         defaultChatRules,
         OpenChat,
         publish,
@@ -48,7 +47,10 @@
         if (canEditChannel) {
             publish("editGroup", {
                 chat: channel,
-                rules: { ...($currentChatRules ?? defaultChatRules("channel")), newVersion: false },
+                rules: {
+                    ...(app.selectedChatDetails.rules ?? defaultChatRules("channel")),
+                    newVersion: false,
+                },
             });
         }
     }

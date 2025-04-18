@@ -11,7 +11,6 @@
         type UserSummary,
         app,
         blockedUsers,
-        currentChatMembersMap as chatMembersMap,
         currentUser as createdUser,
         currentChatBlockedUsers,
         platformModerator,
@@ -317,7 +316,7 @@
                             {#if user !== undefined && $selectedChat !== undefined && $selectedChat.kind !== "direct_chat"}
                                 <WithRole
                                     userId={user.userId}
-                                    chatMembers={$chatMembersMap}
+                                    chatMembers={app.selectedChatDetails.members}
                                     communityMembers={app.selectedCommunityDetails.members}>
                                     {#snippet children(communityRole, chatRole)}
                                         <RoleIcon level="community" popup role={communityRole} />

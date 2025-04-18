@@ -6,7 +6,6 @@
         type BotMessageContext as BotMessageContextType,
         type ChatIdentifier,
         chatListScopeStore as chatListScope,
-        currentChatMembersMap as chatMembersMap,
         type ChatType,
         currentChatBlockedUsers,
         currentUser,
@@ -618,7 +617,7 @@
                                         {#if sender !== undefined && multiUserChat}
                                             <WithRole
                                                 userId={sender.userId}
-                                                chatMembers={$chatMembersMap}
+                                                chatMembers={app.selectedChatDetails.members}
                                                 communityMembers={app.selectedCommunityDetails
                                                     .members}>
                                                 {#snippet children(communityRole, chatRole)}

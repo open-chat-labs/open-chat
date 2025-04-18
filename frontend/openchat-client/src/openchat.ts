@@ -217,6 +217,7 @@ import {
     defaultChatRules,
     deletedUser,
     E8S_PER_TOKEN,
+    ErrorCode,
     extractUserIdsFromMentions,
     featureRestricted,
     getContentAsFormattedText,
@@ -233,6 +234,7 @@ import {
     isMessageNotification,
     isNeuronGate,
     isPaymentGate,
+    isSuccessfulEventsResponse,
     isTransfer,
     LARGE_GROUP_THRESHOLD,
     LEDGER_CANISTER_CHAT,
@@ -246,6 +248,7 @@ import {
     OPENCHAT_BOT_USER_ID,
     OPENCHAT_VIDEO_CALL_USER_ID,
     parseBigInt,
+    pinNumberFailureFromError,
     publish,
     random128,
     random64,
@@ -264,9 +267,6 @@ import {
     userOrUserGroupName,
     userStatus,
     WEBAUTHN_ORIGINATING_CANISTER,
-    pinNumberFailureFromError,
-    ErrorCode,
-    isSuccessfulEventsResponse,
 } from "openchat-shared";
 import page from "page";
 import { get } from "svelte/store";
@@ -278,10 +278,13 @@ import { LiveState } from "./liveState";
 import { snapshot } from "./snapshot.svelte";
 import { app } from "./state/app.svelte";
 import { botState } from "./state/bots.svelte";
+import { chatDetailsLocalUpdates } from "./state/chat_details";
 import { communityLocalUpdates, type CommunityMergedState } from "./state/community_details";
 import type { IReadonlyMap } from "./state/map";
 import { pathState, type RouteParams } from "./state/path.svelte";
+import type { IReadonlySet } from "./state/set";
 import { ui } from "./state/ui.svelte";
+import type { UndoLocalUpdate } from "./state/undo";
 import { blockedUsers } from "./stores/blockedUsers";
 import {
     addGroupPreview,
@@ -2517,11 +2520,11 @@ export class OpenChat {
     ): Promise<void> {
         const userId = this.#liveState.user.userId;
         const allUserIds = new Set<string>();
-        this.#getTruncatedUserIdsFromMembers(chatStateStore.getProp(chatId, "members")).forEach(
+        this.#getTruncatedUserIdsFromMembers([...app.selectedChatDetails.members.values()]).forEach(
             (m) => allUserIds.add(m.userId),
         );
         chatStateStore.getProp(chatId, "blockedUsers").forEach((u) => allUserIds.add(u));
-        chatStateStore.getProp(chatId, "invitedUsers").forEach((u) => allUserIds.add(u));
+        app.selectedChatDetails.invitedUsers.forEach((u) => allUserIds.add(u));
         for (const u of userIdsFromEvents(events)) {
             allUserIds.add(u);
         }
@@ -2548,9 +2551,9 @@ export class OpenChat {
     compareIsNotYouThenUsername = compareIsNotYouThenUsername;
     compareUsername = compareUsername;
 
-    #blockUserLocally(chatId: ChatIdentifier, userId: string): void {
+    #blockUserLocally(chatId: ChatIdentifier, userId: string): UndoLocalUpdate {
         chatStateStore.updateProp(chatId, "blockedUsers", (b) => new Set([...b, userId]));
-        chatStateStore.updateProp(chatId, "members", (p) => p.filter((p) => p.userId !== userId));
+        return chatDetailsLocalUpdates.removeMember(chatId, userId);
     }
 
     #unblockUserLocally(chatId: ChatIdentifier, userId: string, addToMembers: boolean): void {
@@ -2558,15 +2561,12 @@ export class OpenChat {
             return new Set([...b].filter((u) => u !== userId));
         });
         if (addToMembers) {
-            chatStateStore.updateProp(chatId, "members", (p) => [
-                ...p,
-                {
-                    role: "member",
-                    userId,
-                    displayName: undefined,
-                    lapsed: false,
-                },
-            ]);
+            chatDetailsLocalUpdates.addMember(chatId, {
+                role: "member",
+                userId,
+                displayName: undefined,
+                lapsed: false,
+            });
         }
     }
 
@@ -3310,26 +3310,17 @@ export class OpenChat {
             if ("members" in resp) {
                 const members = resp.members.filter((m) => !m.lapsed);
                 const lapsed = new Set(resp.members.filter((m) => m.lapsed).map((m) => m.userId));
-                chatStateStore.setProp(serverChat.id, "lapsedMembers", lapsed);
-                chatStateStore.setProp(serverChat.id, "members", members);
-                chatStateStore.setProp(
+                app.setSelectedChatDetails(
                     serverChat.id,
-                    "membersMap",
-                    resp.members.reduce((all, m) => {
-                        all.set(m.userId, m);
-                        return all;
-                    }, new Map()),
+                    new Map(members.map((m) => [m.userId, m])),
+                    lapsed,
+                    resp.invitedUsers,
+                    resp.pinnedMessages,
+                    resp.rules,
+                    resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
+                    resp.apiKeys,
                 );
                 chatStateStore.setProp(serverChat.id, "blockedUsers", resp.blockedUsers);
-                chatStateStore.setProp(serverChat.id, "invitedUsers", resp.invitedUsers);
-                chatStateStore.setProp(serverChat.id, "pinnedMessages", resp.pinnedMessages);
-                chatStateStore.setProp(serverChat.id, "rules", resp.rules);
-                chatStateStore.setProp(
-                    serverChat.id,
-                    "bots",
-                    resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
-                );
-                chatStateStore.setProp(serverChat.id, "apiKeys", resp.apiKeys);
             }
             await this.#updateUserStoreFromEvents(serverChat.id, []);
         }
@@ -3437,16 +3428,16 @@ export class OpenChat {
                       eventIndexes: currentThreadEvents,
                       threadRootMessageIndex: selectedThreadRootMessageIndex,
                       latestKnownUpdate: serverChat.lastUpdated,
-                })
-                    .then((resp) =>
-                        this.#handleThreadEventsResponse(
-                            serverChat.id,
-                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                            selectedThreadRootMessageIndex!,
-                            resp,
-                        ),
-                    )
-                    .catch(CommonResponses.failure);
+                  })
+                      .then((resp) =>
+                          this.#handleThreadEventsResponse(
+                              serverChat.id,
+                              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                              selectedThreadRootMessageIndex!,
+                              resp,
+                          ),
+                      )
+                      .catch(CommonResponses.failure);
 
         await Promise.all([chatEventsPromise, threadEventPromise]);
         return;
@@ -3497,36 +3488,24 @@ export class OpenChat {
         return chat !== undefined && messageIsReadByThem(chat, messageIndex);
     }
 
-    #addPinnedMessage(chatId: ChatIdentifier, messageIndex: number): void {
-        chatStateStore.updateProp(chatId, "pinnedMessages", (s) => {
-            return new Set([...s, messageIndex]);
-        });
-    }
-
-    #removePinnedMessage(chatId: ChatIdentifier, messageIndex: number): void {
-        chatStateStore.updateProp(chatId, "pinnedMessages", (s) => {
-            return new Set([...s].filter((idx) => idx !== messageIndex));
-        });
-    }
-
     unpinMessage(chatId: MultiUserChatIdentifier, messageIndex: number): Promise<boolean> {
-        this.#removePinnedMessage(chatId, messageIndex);
+        const undo = chatDetailsLocalUpdates.unpinMessage(chatId, messageIndex);
         return this.#sendRequest({ kind: "unpinMessage", chatId, messageIndex })
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    this.#addPinnedMessage(chatId, messageIndex);
+                    undo();
                     return false;
                 }
                 return true;
             })
             .catch(() => {
-                this.#addPinnedMessage(chatId, messageIndex);
+                undo();
                 return false;
             });
     }
 
     pinMessage(chatId: MultiUserChatIdentifier, messageIndex: number): Promise<boolean> {
-        this.#addPinnedMessage(chatId, messageIndex);
+        const undo = chatDetailsLocalUpdates.pinMessage(chatId, messageIndex);
         return this.#sendRequest({
             kind: "pinMessage",
             chatId,
@@ -3534,7 +3513,7 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    this.#removePinnedMessage(chatId, messageIndex);
+                    undo();
                     return false;
                 }
                 if (resp.kind === "success") {
@@ -3543,7 +3522,7 @@ export class OpenChat {
                 return true;
             })
             .catch(() => {
-                this.#removePinnedMessage(chatId, messageIndex);
+                undo();
                 return false;
             });
     }
@@ -4019,7 +3998,7 @@ export class OpenChat {
     }
 
     #rulesNeedAccepting(): boolean {
-        const chatRules = this.#liveState.currentChatRules;
+        const chatRules = app.selectedChatDetails.rules;
         const chat = this.#liveState.selectedChat;
         if (chat === undefined || chatRules === undefined) {
             return false;
@@ -4739,9 +4718,7 @@ export class OpenChat {
     ): Promise<[UserSummary[], UserSummary[]]> {
         if (level === "channel") {
             // Put the existing channel members into a map for quick lookup
-            const channelMembers = newGroup
-                ? undefined
-                : new Map(this.#liveState.currentChatMembers.map((m) => [m.userId, m]));
+            const channelMembers = newGroup ? undefined : app.selectedChatDetails.members;
 
             // First try searching the community members and return immediately if there are already enough matches
             // or if the caller does not have permission to invite users to the community
@@ -4788,7 +4765,7 @@ export class OpenChat {
                     const existing =
                         level === "community"
                             ? app.selectedCommunityDetails.members
-                            : new Map(this.#liveState.currentChatMembers.map((m) => [m.userId, m]));
+                            : app.selectedChatDetails.members;
 
                     // Remove any existing members from the global matches until there are at most `maxResults`
                     // TODO: Ideally we would return the total number of matches from the server and use that
@@ -4804,16 +4781,11 @@ export class OpenChat {
         searchTerm: string,
         maxResults: number,
     ): Promise<[UserSummary[], UserSummary[]]> {
-        // Put the existing channel members into a map for quick lookup
-        const channelMembers = new Map(
-            this.#liveState.currentChatMembers.map((m) => [m.userId, m]),
-        );
-
         // Search the community members excluding the existing channel members
         const communityMatches = this.#searchCommunityUsersForChannelInvite(
             searchTerm,
             maxResults,
-            channelMembers,
+            app.selectedChatDetails.members,
         );
 
         return Promise.resolve([communityMatches, []]);
@@ -4822,7 +4794,7 @@ export class OpenChat {
     #searchCommunityUsersForChannelInvite(
         term: string,
         maxResults: number,
-        channelMembers: Map<string, Member> | undefined,
+        channelMembers: IReadonlyMap<string, Member> | undefined,
     ): UserSummary[] {
         const termLower = term.toLowerCase();
         const matches: UserSummary[] = [];
@@ -5025,11 +4997,11 @@ export class OpenChat {
     #inviteUsersLocally(
         id: MultiUserChatIdentifier | CommunityIdentifier,
         userIds: string[],
-    ): void {
+    ): UndoLocalUpdate {
         if (id.kind === "community") {
-            communityLocalUpdates.inviteUsers(id, userIds);
+            return communityLocalUpdates.inviteUsers(id, userIds);
         } else {
-            chatStateStore.updateProp(id, "invitedUsers", (b) => new Set([...b, ...userIds]));
+            return chatDetailsLocalUpdates.inviteUsers(id, userIds);
         }
     }
 
@@ -5050,9 +5022,7 @@ export class OpenChat {
                 }
             }
         } else {
-            chatStateStore.updateProp(id, "invitedUsers", (b) => {
-                return new Set([...b].filter((u) => !userIds.includes(u)));
-            });
+            chatDetailsLocalUpdates.uninviteUsers(id, userIds);
         }
     }
 
@@ -5060,7 +5030,7 @@ export class OpenChat {
         id: MultiUserChatIdentifier | CommunityIdentifier,
         userIds: string[],
     ): Promise<boolean> {
-        this.#inviteUsersLocally(id, userIds);
+        const undo = this.#inviteUsersLocally(id, userIds);
         return this.#sendRequest({
             kind: "inviteUsers",
             id,
@@ -5069,12 +5039,12 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (!resp) {
-                    this.#uninviteUsersLocally(id, userIds);
+                    undo();
                 }
                 return resp;
             })
             .catch(() => {
-                this.#uninviteUsersLocally(id, userIds);
+                undo();
                 return false;
             });
     }
@@ -5132,8 +5102,18 @@ export class OpenChat {
     }
 
     removeMember(chatId: MultiUserChatIdentifier, userId: string): Promise<RemoveMemberResponse> {
-        chatStateStore.updateProp(chatId, "members", (ps) => ps.filter((p) => p.userId !== userId));
-        return this.#sendRequest({ kind: "removeMember", chatId, userId }).catch(CommonResponses.failure);
+        const undo = chatDetailsLocalUpdates.removeMember(chatId, userId);
+        return this.#sendRequest({ kind: "removeMember", chatId, userId })
+            .then((resp) => {
+                if (resp.kind !== "success") {
+                    undo();
+                }
+                return resp;
+            })
+            .catch(() => {
+                undo();
+                return CommonResponses.failure();
+            });
     }
 
     changeCommunityRole(
@@ -5171,9 +5151,11 @@ export class OpenChat {
     ): Promise<boolean> {
         if (newRole === oldRole) return Promise.resolve(true);
 
-        // Update the local store
-        chatStateStore.updateProp(chatId, "members", (ps) =>
-            ps.map((p) => (p.userId === userId ? { ...p, role: newRole } : p)),
+        const undo = chatDetailsLocalUpdates.updateMember(
+            chatId,
+            userId,
+            app.selectedChatDetails.members.get(userId),
+            (m) => ({ ...m, role: newRole }),
         );
         return this.#sendRequest({ kind: "changeRole", chatId, userId, newRole })
             .then((resp) => {
@@ -5182,10 +5164,7 @@ export class OpenChat {
             .catch(() => false)
             .then((success) => {
                 if (!success) {
-                    // Revert the local store
-                    chatStateStore.updateProp(chatId, "members", (ps) =>
-                        ps.map((p) => (p.userId === userId ? { ...p, role: oldRole } : p)),
-                    );
+                    undo();
                 }
                 return success;
             });
@@ -5609,7 +5588,7 @@ export class OpenChat {
 
     async getGroupMessagesByMessageIndex(
         chatId: MultiUserChatIdentifier,
-        messageIndexes: Set<number>,
+        messageIndexes: IReadonlySet<number>,
     ): Promise<EventsResponse<Message>> {
         const serverChat = this.#liveState.serverChatSummaries.get(chatId);
 
@@ -5617,7 +5596,7 @@ export class OpenChat {
             const resp = await this.#sendRequest({
                 kind: "getGroupMessagesByMessageIndex",
                 chatId,
-                messageIndexes,
+                messageIndexes: new Set(messageIndexes),
                 latestKnownUpdate: serverChat?.lastUpdated,
             });
             if (isSuccessfulEventsResponse(resp)) {
@@ -5690,7 +5669,7 @@ export class OpenChat {
                     });
 
                     if (rules !== undefined && resp.rulesVersion !== undefined) {
-                        chatStateStore.setProp(chatId, "rules", {
+                        chatDetailsLocalUpdates.updateRules(chatId, {
                             text: rules.text,
                             enabled: rules.enabled,
                             version: resp.rulesVersion,
@@ -6345,7 +6324,7 @@ export class OpenChat {
                     localMessageUpdates.setP2PSwapStatus(messageId, {
                         kind: "p2p_swap_accepted",
                         acceptedBy: this.#liveState.user.userId,
-                        token1TxnIn: resp.token1TxnIn
+                        token1TxnIn: resp.token1TxnIn,
                     });
                 }
 
@@ -6832,8 +6811,7 @@ export class OpenChat {
         if (this.#userLookupForMentions === undefined) {
             const lookup = {} as Record<string, UserOrUserGroup>;
             const userStore = this.#liveState.userStore;
-            for (const member of this.#liveState.currentChatMembers) {
-                const userId = member.userId;
+            for (const [userId] of app.selectedChatDetails.members) {
                 let user = userStore.get(userId);
                 if (user !== undefined && this.#liveState.selectedChat?.kind === "channel") {
                     user = {
@@ -7071,9 +7049,7 @@ export class OpenChat {
             if (chat.kind === "direct_chat") {
                 userIds.push(chat.them.userId);
             } else if (this.isChatPrivate(chat)) {
-                userIds = this.#liveState.currentChatMembers
-                    .map((m) => m.userId)
-                    .filter((id) => id !== me);
+                userIds = [...app.selectedChatDetails.members.keys()].filter((id) => id !== me);
             }
             if (userIds.length > 0) {
                 await Promise.all(
@@ -8125,8 +8101,8 @@ export class OpenChat {
                             community: undefined,
                         };
 
-                        if (this.#liveState.currentChatRules?.enabled ?? false) {
-                            acceptedRules.chat = this.#liveState.currentChatRules?.version;
+                        if (app.selectedChatDetails.rules?.enabled ?? false) {
+                            acceptedRules.chat = app.selectedChatDetails.rules?.version;
                         }
 
                         if (app.selectedCommunityDetails.rules?.enabled ?? false) {
@@ -8384,7 +8360,7 @@ export class OpenChat {
                 communityLocalUpdates.removeBot(id, botId);
                 break;
             case "group_chat":
-                perm = this.#liveState.currentChatBots.get(botId);
+                perm = app.selectedChatDetails.bots.get(botId);
                 localChatSummaryUpdates.removeBot(id, botId);
                 break;
             case "direct_chat":
@@ -8410,7 +8386,7 @@ export class OpenChat {
                 break;
             case "group_chat":
                 if (perm === undefined) return perm;
-                previousPermissions = this.#liveState.currentChatBots.get(botId);
+                previousPermissions = app.selectedChatDetails.bots.get(botId);
                 localChatSummaryUpdates.installBot(id, botId, perm);
                 break;
             case "direct_chat":

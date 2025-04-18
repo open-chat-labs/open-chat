@@ -6,6 +6,7 @@
         type ChatSummary,
         type EnhancedReplyContext,
         type EventWrapper,
+        type IReadonlySet,
         type Mention,
         type Message,
         type OpenChat,
@@ -15,7 +16,6 @@
         chatListScopeStore as chatListScope,
         chatStateStore,
         currentChatEditingEvent,
-        currentChatPinnedMessages,
         draftMessagesStore,
         eventsStore,
         expandedDeletedMessages,
@@ -162,7 +162,7 @@
         return false;
     }
 
-    function isPinned(store: Set<number>, evt: EventWrapper<ChatEventType>): boolean {
+    function isPinned(store: IReadonlySet<number>, evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
             return store.has(evt.event.messageIndex);
         }
@@ -346,7 +346,7 @@
                                 publicGroup={(chat.kind === "group_chat" ||
                                     chat.kind === "channel") &&
                                     chat.public}
-                                pinned={isPinned($currentChatPinnedMessages, evt)}
+                                pinned={isPinned(app.selectedChatDetails.pinnedMessages, evt)}
                                 editing={$currentChatEditingEvent === evt}
                                 onReplyTo={replyTo}
                                 {onRemovePreview}

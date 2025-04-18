@@ -1,12 +1,6 @@
 <script lang="ts">
     import type { MultiUserChat, OpenChat } from "openchat-client";
-    import {
-        app,
-        AvatarSize,
-        currentChatRules,
-        currentUser,
-        selectedCommunity,
-    } from "openchat-client";
+    import { app, AvatarSize, currentUser, selectedCommunity } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import {
@@ -48,7 +42,10 @@
     let avatarSrc = $derived(client.groupAvatarUrl(chat, $selectedCommunity));
     let combinedRulesText = $derived(
         canSend
-            ? client.combineRulesText($currentChatRules, app.selectedCommunityDetails.rules)
+            ? client.combineRulesText(
+                  app.selectedChatDetails.rules,
+                  app.selectedCommunityDetails.rules,
+              )
             : "",
     );
     let externalUrl = $derived(chat.kind === "channel" ? chat.externalUrl : undefined);

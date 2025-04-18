@@ -12,6 +12,8 @@ import {
     communityIdentifiersEqual,
     messageContextsEqual,
 } from "openchat-shared";
+import { ChatDetailsMergedState } from "./chat_details";
+import { ChatDetailsServerState } from "./chat_details/server";
 import { CommunityMergedState } from "./community_details/merged.svelte";
 import { CommunityServerState } from "./community_details/server";
 import { pathState } from "./path.svelte";
@@ -82,6 +84,10 @@ class AppState {
         new CommunityMergedState(CommunityServerState.empty()),
     );
 
+    #selectedChatDetails = $state<ChatDetailsMergedState>(
+        new ChatDetailsMergedState(ChatDetailsServerState.empty()),
+    );
+
     get chatsInitialised() {
         return this.#chatsInitialised;
     }
@@ -108,6 +114,36 @@ class AppState {
 
     get selectedCommunityDetails() {
         return this.#selectedCommunityDetails;
+    }
+
+    get selectedChatDetails() {
+        return this.#selectedChatDetails;
+    }
+
+    setSelectedChatDetails(
+        chatId: ChatIdentifier,
+        members: Map<string, Member>,
+        lapsedMembers: Set<string>,
+        invitedUsers: Set<string>,
+        pinnedMessages: Set<number>,
+        rules: VersionedRules,
+        bots: Map<string, ExternalBotPermissions>,
+        apiKeys: Map<string, PublicApiKeyDetails>,
+    ) {
+        if (chatIdentifiersEqual(chatId, this.#selectedChatId)) {
+            this.#selectedChatDetails = new ChatDetailsMergedState(
+                new ChatDetailsServerState(
+                    chatId,
+                    members,
+                    lapsedMembers,
+                    invitedUsers,
+                    pinnedMessages,
+                    rules,
+                    bots,
+                    apiKeys,
+                ),
+            );
+        }
     }
 
     setSelectedCommunityDetails(

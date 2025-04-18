@@ -15,13 +15,7 @@
     import {
         app,
         compareRoles,
-        currentChatApiKeys,
         currentChatBlockedUsers as currentChatBlocked,
-        currentChatBots,
-        currentChatInvitedUsers as currentChatInvited,
-        currentChatLapsedMembers,
-        currentChatMembers,
-        currentChatPinnedMessages,
         currentUser,
         eventsStore,
         pageReplace,
@@ -382,14 +376,14 @@
         {#if $multiUserChat.kind === "channel" && $selectedCommunity !== undefined}
             <ChannelOrCommunitySummary
                 channel={$multiUserChat}
-                memberCount={$currentChatMembers.length}
+                memberCount={app.selectedChatDetails.members.size}
                 community={$selectedCommunity}
                 selectedTab="channel"
                 onClose={ui.popRightPanelHistory} />
         {:else}
             <GroupDetails
                 chat={$multiUserChat}
-                memberCount={$currentChatMembers.length}
+                memberCount={app.selectedChatDetails.members.size}
                 onClose={ui.popRightPanelHistory} />
         {/if}
     {:else if ui.lastRightPanelState.kind === "call_participants_panel"}
@@ -488,12 +482,12 @@
         <Members
             {closeIcon}
             collection={$multiUserChat}
-            invited={$currentChatInvited}
-            members={$currentChatMembers}
+            invited={app.selectedChatDetails.invitedUsers}
+            members={[...app.selectedChatDetails.members.values()]}
             blocked={$currentChatBlocked}
-            lapsed={$currentChatLapsedMembers}
-            installedBots={$currentChatBots}
-            apiKeys={$currentChatApiKeys}
+            lapsed={app.selectedChatDetails.lapsedMembers}
+            installedBots={app.selectedChatDetails.bots}
+            apiKeys={app.selectedChatDetails.apiKeys}
             onClose={ui.popRightPanelHistory}
             onBlockUser={onBlockGroupUser}
             onUnblockUser={onUnblockGroupUser}
@@ -522,7 +516,7 @@
     {:else if ui.lastRightPanelState.kind === "show_pinned" && $selectedChatId !== undefined && ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel") && $multiUserChat !== undefined}
         <PinnedMessages
             chatId={$selectedChatId}
-            pinned={$currentChatPinnedMessages}
+            pinned={app.selectedChatDetails.pinnedMessages}
             dateLastPinned={$multiUserChat.dateLastPinned}
             onClose={ui.popRightPanelHistory} />
     {:else if ui.lastRightPanelState.kind === "user_profile"}
@@ -539,7 +533,7 @@
             <ChannelOrCommunitySummary
                 channel={$multiUserChat}
                 community={$selectedCommunity}
-                memberCount={$currentChatMembers.length}
+                memberCount={app.selectedChatDetails.members.size}
                 selectedTab="community"
                 onClose={ui.popRightPanelHistory} />
         {:else}

@@ -10,7 +10,6 @@ import type {
     DirectChatSummary,
     EventWrapper,
     ExpiredEventsRange,
-    ExternalBotPermissions,
     MessageContext,
     MultiUserChat,
     ThreadSyncDetails,
@@ -100,32 +99,6 @@ export const serverEventsStore = createDerivedPropStore<ChatSpecificState, "serv
     () => [],
 );
 
-const currentServerChatBots = createDerivedPropStore<ChatSpecificState, "bots">(
-    chatStateStore,
-    "bots",
-    () => new Map<string, ExternalBotPermissions>(),
-);
-export const currentChatBots = derived(
-    [selectedChatId, currentServerChatBots, localChatSummaryUpdates],
-    ([$chatId, $serverBots, $local]) => {
-        if ($chatId === undefined) return $serverBots;
-        const clone = new Map($serverBots);
-        const localInstalled = [...($local.get($chatId)?.installedBots?.entries() ?? [])];
-        const localDeleted = [...($local.get($chatId)?.removedBots?.values() ?? [])];
-        localInstalled.forEach(([id, perm]) => {
-            clone.set(id, perm);
-        });
-        localDeleted.forEach((id) => clone.delete(id));
-        return clone;
-    },
-);
-
-export const currentChatApiKeys = createDerivedPropStore<ChatSpecificState, "apiKeys">(
-    chatStateStore,
-    "apiKeys",
-    () => new Map(),
-);
-
 export const currentChatUserIds = createDerivedPropStore<ChatSpecificState, "userIds">(
     chatStateStore,
     "userIds",
@@ -154,47 +127,12 @@ export const userGroupKeys = createDerivedPropStore<ChatSpecificState, "userGrou
     () => new Set<string>(),
 );
 
-export const currentChatRules = createDerivedPropStore<ChatSpecificState, "rules">(
-    chatStateStore,
-    "rules",
-    () => undefined,
-);
-
-export const currentChatMembers = createDerivedPropStore<ChatSpecificState, "members">(
-    chatStateStore,
-    "members",
-    () => [],
-);
-
-export const currentChatMembersMap = createDerivedPropStore<ChatSpecificState, "membersMap">(
-    chatStateStore,
-    "membersMap",
-    () => new Map(),
-);
-
-export const currentChatLapsedMembers = createDerivedPropStore<ChatSpecificState, "lapsedMembers">(
-    chatStateStore,
-    "lapsedMembers",
-    () => new Set<string>(),
-    setsAreEqual,
-);
-
 export const currentChatBlockedUsers = createDerivedPropStore<ChatSpecificState, "blockedUsers">(
     chatStateStore,
     "blockedUsers",
     () => new Set<string>(),
     setsAreEqual,
 );
-export const currentChatInvitedUsers = createDerivedPropStore<ChatSpecificState, "invitedUsers">(
-    chatStateStore,
-    "invitedUsers",
-    () => new Set<string>(),
-    setsAreEqual,
-);
-export const currentChatPinnedMessages = createDerivedPropStore<
-    ChatSpecificState,
-    "pinnedMessages"
->(chatStateStore, "pinnedMessages", () => new Set<number>(), setsAreEqual);
 
 export const expiredEventRangesStore = createDerivedPropStore<
     ChatSpecificState,

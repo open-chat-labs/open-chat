@@ -12,7 +12,6 @@
     import {
         app,
         botState,
-        currentChatBots,
         installedDirectBots,
         isPermitted,
         messagePermissionsForSelectedChat,
@@ -54,7 +53,7 @@
             case "direct_chat":
                 return $installedDirectBots;
             default:
-                return $currentChatBots;
+                return app.selectedChatDetails.bots;
         }
     });
 

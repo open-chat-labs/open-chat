@@ -3,11 +3,7 @@
         app,
         type ChannelSummary,
         type CommunitySummary,
-        currentChatApiKeys,
         currentChatBlockedUsers as currentChatBlocked,
-        currentChatInvitedUsers as currentChatInvited,
-        currentChatLapsedMembers as currentChatLapsed,
-        currentChatMembers,
         type MemberRole,
         OpenChat,
         publish,
@@ -125,12 +121,12 @@
             showHeader={false}
             {closeIcon}
             collection={channel}
-            invited={$currentChatInvited}
-            members={$currentChatMembers}
+            invited={app.selectedChatDetails.invitedUsers}
+            members={[...app.selectedChatDetails.members.values()]}
             blocked={$currentChatBlocked}
-            lapsed={$currentChatLapsed}
+            lapsed={app.selectedChatDetails.lapsedMembers}
             installedBots={app.selectedCommunityDetails.bots}
-            apiKeys={$currentChatApiKeys}
+            apiKeys={app.selectedChatDetails.apiKeys}
             {onClose}
             onBlockUser={onBlockGroupUser}
             onUnblockUser={onUnblockGroupUser}

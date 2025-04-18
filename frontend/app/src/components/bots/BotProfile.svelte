@@ -11,7 +11,6 @@
     import {
         app,
         botState,
-        currentChatBots,
         emptyExternalBotPermissions,
         flattenCommandPermissions,
     } from "openchat-client";
@@ -23,7 +22,7 @@
         if (chatId.kind === "channel") {
             return app.selectedCommunityDetails.bots.get(botId) ?? emptyExternalBotPermissions();
         } else {
-            return $currentChatBots.get(botId) ?? emptyExternalBotPermissions();
+            return app.selectedChatDetails.bots.get(botId) ?? emptyExternalBotPermissions();
         }
     });
     let bot = $derived(botState.externalBots.get(botId));
