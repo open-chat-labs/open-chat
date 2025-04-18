@@ -6,15 +6,8 @@ import { chatListScopeStore } from "./stores";
 
 /**
  * The idea here is to respond to changes in reactive state in ways that require side-effects
- *
  * For example: the route changes (a state change) and we need to load some data (a side-effect)
- *
- * Currently we handle this in the Home component but this is arbitrary - it really has nothing to
- * do with the component hierarchy.
- *
- * Question: Are these effects going to get out of hand and become impossible to reason about?
  */
-
 export function configureEffects(client: OpenChat) {
     $effect.root(() => {
         // set selected community when communityId changes
@@ -25,7 +18,12 @@ export function configureEffects(client: OpenChat) {
                 // this untrack is not really necessary in this case but it's probably a good pattern to follow to
                 // make double sure we are only reacting to the things we want to react to
                 untrack(() => {
-                    client.setSelectedCommunity(id, true);
+                    client.setSelectedCommunity(id).then((preview) => {
+                        if (preview) {
+                            // if we are previewing the community we need to select the first chat manually
+                            client.selectFirstChat();
+                        }
+                    });
                 });
             }
         });

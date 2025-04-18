@@ -37,7 +37,6 @@ class AppState {
     }
 
     #chatsInitialised = $state(false);
-    #chatsLoading = $state(false);
 
     // TODO - this does not seem to be working as intended - investigate why
     #chatListScope = $derived.by(withEqCheck(() => pathState.route.scope, chatListScopesEqual));
@@ -93,14 +92,6 @@ class AppState {
 
     set chatsInitialised(val: boolean) {
         this.#chatsInitialised = val;
-    }
-
-    get chatsLoading() {
-        return this.#chatsLoading;
-    }
-
-    set chatsLoading(val: boolean) {
-        this.#chatsLoading = val;
     }
 
     get selectedCommunityId() {

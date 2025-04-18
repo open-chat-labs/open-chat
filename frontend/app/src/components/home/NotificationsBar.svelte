@@ -1,13 +1,13 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
-    import { notificationStatus, anonUser } from "openchat-client";
+    import { anonUser, notificationStatus } from "openchat-client";
     import { getContext } from "svelte";
-    import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import Overlay from "../Overlay.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
     import Button from "../Button.svelte";
+    import ButtonGroup from "../ButtonGroup.svelte";
+    import ModalContent from "../ModalContent.svelte";
+    import Overlay from "../Overlay.svelte";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
