@@ -36,9 +36,9 @@ export class ChatDetailsServerState {
         // readonly focusThreadMessageIndex?: number,
     ) {}
 
-    static empty() {
+    static empty(chatId?: ChatIdentifier) {
         return new ChatDetailsServerState(
-            undefined,
+            chatId,
             new Map(),
             new Set(),
             new Set(),

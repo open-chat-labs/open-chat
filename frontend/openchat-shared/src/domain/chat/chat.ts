@@ -1481,12 +1481,11 @@ export type GroupChatDetails = {
 /**
  * This will hold all chat specific state
  * All properties are optional but individual derived stores can provide their own default values
+ * TODO - the goal is to get rid of all of these
  */
 export type ChatSpecificState = {
     blockedUsers: Set<string>;
     userIds: Set<string>;
-    focusMessageIndex?: number;
-    focusThreadMessageIndex?: number;
     confirmedEventIndexesLoaded: DRange;
     userGroupKeys: Set<string>;
     serverEvents: EventWrapper<ChatEvent>[];

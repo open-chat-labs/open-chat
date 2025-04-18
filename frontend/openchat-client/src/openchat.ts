@@ -2800,7 +2800,7 @@ export class OpenChat {
 
         this.#loadSnsFunctionsForChat(clientChat);
 
-        setChatSpecificState(clientChat, messageIndex, threadMessageIndex);
+        setChatSpecificState(clientChat);
 
         if (messageIndex === undefined) {
             messageIndex = isPreviewing(clientChat)
@@ -2885,10 +2885,10 @@ export class OpenChat {
         const context = this.#liveState.selectedMessageContext;
         if (context) {
             if (!initiating) {
-                if (this.#liveState.focusThreadMessageIndex !== undefined) {
+                if (app.selectedChatDetails.focusThreadMessageIndex !== undefined) {
                     this.loadEventWindow(
                         context.chatId,
-                        this.#liveState.focusThreadMessageIndex,
+                        app.selectedChatDetails.focusThreadMessageIndex,
                         threadRootEvent,
                         true,
                     );
@@ -3297,32 +3297,41 @@ export class OpenChat {
 
     async #loadChatDetails(
         serverChat: ChatSummary,
-        _focusMessageIndex?: number,
-        _focusThreadMessageIndex?: number,
+        focusMessageIndex?: number,
+        focusThreadMessageIndex?: number,
     ): Promise<void> {
-        // currently this is only meaningful for group chats, but we'll set it up generically just in case
-        if (serverChat.kind === "group_chat" || serverChat.kind === "channel") {
-            const resp: GroupChatDetailsResponse = await this.#sendRequest({
-                kind: "getGroupDetails",
-                chatId: serverChat.id,
-                chatLastUpdated: serverChat.lastUpdated,
-            }).catch(CommonResponses.failure);
-            if ("members" in resp) {
-                const members = resp.members.filter((m) => !m.lapsed);
-                const lapsed = new Set(resp.members.filter((m) => m.lapsed).map((m) => m.userId));
-                app.setSelectedChatDetails(
-                    serverChat.id,
-                    new Map(members.map((m) => [m.userId, m])),
-                    lapsed,
-                    resp.invitedUsers,
-                    resp.pinnedMessages,
-                    resp.rules,
-                    resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
-                    resp.apiKeys,
-                );
-                chatStateStore.setProp(serverChat.id, "blockedUsers", resp.blockedUsers);
-            }
-            await this.#updateUserStoreFromEvents(serverChat.id, []);
+        switch (serverChat.kind) {
+            case "group_chat":
+            case "channel":
+                const resp: GroupChatDetailsResponse = await this.#sendRequest({
+                    kind: "getGroupDetails",
+                    chatId: serverChat.id,
+                    chatLastUpdated: serverChat.lastUpdated,
+                }).catch(CommonResponses.failure);
+                if ("members" in resp) {
+                    const members = resp.members.filter((m) => !m.lapsed);
+                    const lapsed = new Set(
+                        resp.members.filter((m) => m.lapsed).map((m) => m.userId),
+                    );
+                    app.setSelectedChatDetails(
+                        serverChat.id,
+                        new Map(members.map((m) => [m.userId, m])),
+                        lapsed,
+                        resp.invitedUsers,
+                        resp.pinnedMessages,
+                        resp.rules,
+                        resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
+                        resp.apiKeys,
+                        focusMessageIndex,
+                        focusThreadMessageIndex,
+                    );
+                    chatStateStore.setProp(serverChat.id, "blockedUsers", resp.blockedUsers);
+                }
+                await this.#updateUserStoreFromEvents(serverChat.id, []);
+                break;
+            case "direct_chat":
+                app.setDirectChatDetails(serverChat.id, focusMessageIndex, focusThreadMessageIndex);
+                break;
         }
     }
 
@@ -4467,11 +4476,11 @@ export class OpenChat {
     }
 
     setFocusMessageIndex(chatId: ChatIdentifier, messageIndex: number | undefined): void {
-        chatStateStore.setProp(chatId, "focusMessageIndex", messageIndex);
+        chatDetailsLocalUpdates.setFocusMessageIndex(chatId, messageIndex);
     }
 
     setFocusThreadMessageIndex(chatId: ChatIdentifier, messageIndex: number | undefined): void {
-        chatStateStore.setProp(chatId, "focusThreadMessageIndex", messageIndex);
+        chatDetailsLocalUpdates.setFocusThreadMessageIndex(chatId, messageIndex);
     }
 
     expandDeletedMessages(chatId: ChatIdentifier, messageIndexes: Set<number>): void {

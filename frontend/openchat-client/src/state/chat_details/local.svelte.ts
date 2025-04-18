@@ -3,7 +3,6 @@ import type {
     ExternalBotPermissions,
     Member,
     PublicApiKeyDetails,
-    UserGroupDetails,
     VersionedRules,
 } from "openchat-shared";
 import { SvelteMap } from "svelte/reactivity";
@@ -14,13 +13,14 @@ import { scheduleUndo, type UndoLocalUpdate } from "../undo";
 export class ChatDetailsLocalState {
     #rules = $state<VersionedRules | undefined>();
 
+    // Should these index props really be handled by the same merging mechanism? There *is no* server state in this case - only local state. I guess that makes sense still.
+    #focusMessageIndex = $state<number | undefined>();
+    #focusThreadMessageIndex = $state<number | undefined>();
+
     readonly pinnedMessages = new LocalSet<number>();
     readonly invitedUsers = new LocalSet<string>();
     readonly blockedUsers = new LocalSet<string>();
-    readonly referrals = new LocalSet<string>();
-    readonly lapsedMembers = new LocalSet<string>();
     readonly members = new LocalMap<string, Member>();
-    readonly userGroups = new LocalMap<number, UserGroupDetails>();
     readonly bots = new LocalMap<string, ExternalBotPermissions>();
     readonly apiKeys = new LocalMap<string, PublicApiKeyDetails>();
 
@@ -29,6 +29,22 @@ export class ChatDetailsLocalState {
     }
     set rules(val: VersionedRules | undefined) {
         this.#rules = val;
+    }
+
+    get focusMessageIndex() {
+        return this.#focusMessageIndex;
+    }
+
+    get focusThreadMessageIndex() {
+        return this.#focusThreadMessageIndex;
+    }
+
+    set focusMessageIndex(val: number | undefined) {
+        this.#focusMessageIndex = val;
+    }
+
+    set focusThreadMessageIndex(val: number | undefined) {
+        this.#focusThreadMessageIndex = val;
     }
 }
 
@@ -106,6 +122,36 @@ export class ChatDetailsLocalStateManager {
         return scheduleUndo(() => {
             state.rules = previous;
         });
+    }
+
+    removeBot(id: ChatIdentifier, botId: string): UndoLocalUpdate {
+        return this.#getOrCreate(id).bots.remove(botId);
+    }
+
+    installBot(id: ChatIdentifier, botId: string, perm: ExternalBotPermissions): UndoLocalUpdate {
+        return this.#getOrCreate(id).bots.addOrUpdate(botId, perm);
+    }
+
+    setFocusMessageIndex(id: ChatIdentifier, val?: number) {
+        const state = this.#getOrCreate(id);
+        const previous = state.focusMessageIndex;
+        state.focusMessageIndex = val;
+
+        // in this case we don't want to schedule an automatic undo of this state
+        return () => {
+            state.focusMessageIndex = previous;
+        };
+    }
+
+    setFocusThreadMessageIndex(id: ChatIdentifier, val?: number) {
+        const state = this.#getOrCreate(id);
+        const previous = state.focusThreadMessageIndex;
+        state.focusThreadMessageIndex = val;
+
+        // in this case we don't want to schedule an automatic undo of this state
+        return () => {
+            state.focusThreadMessageIndex = previous;
+        };
     }
 }
 

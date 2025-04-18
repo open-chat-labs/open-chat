@@ -105,17 +105,6 @@ export const currentChatUserIds = createDerivedPropStore<ChatSpecificState, "use
     () => new Set<string>(),
 );
 
-export const focusMessageIndex = createDerivedPropStore<ChatSpecificState, "focusMessageIndex">(
-    chatStateStore,
-    "focusMessageIndex",
-    () => undefined,
-);
-
-export const focusThreadMessageIndex = createDerivedPropStore<
-    ChatSpecificState,
-    "focusThreadMessageIndex"
->(chatStateStore, "focusThreadMessageIndex", () => undefined);
-
 export const expandedDeletedMessages = createDerivedPropStore<
     ChatSpecificState,
     "expandedDeletedMessages"
@@ -573,17 +562,11 @@ export function confirmedEventIndexesLoaded(chatId: ChatIdentifier): DRange {
         : new DRange();
 }
 
-export function setChatSpecificState(
-    clientChat: ChatSummary,
-    messageIndex?: number,
-    threadMessageIndex?: number,
-): void {
+export function setChatSpecificState(clientChat: ChatSummary): void {
     clearSelectedChat(clientChat.id);
 
     // initialise a bunch of stores
     chatStateStore.clear(clientChat.id);
-    chatStateStore.setProp(clientChat.id, "focusMessageIndex", messageIndex);
-    chatStateStore.setProp(clientChat.id, "focusThreadMessageIndex", threadMessageIndex);
     chatStateStore.setProp(clientChat.id, "expandedDeletedMessages", new Set());
     chatStateStore.setProp(
         clientChat.id,

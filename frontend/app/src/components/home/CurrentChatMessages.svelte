@@ -20,7 +20,6 @@
         eventsStore,
         expandedDeletedMessages,
         failedMessagesStore,
-        focusMessageIndex,
         messagesRead,
         pathState,
         routeForChatIdentifier,
@@ -320,7 +319,8 @@
                             <ChatEvent
                                 observer={messageObserver}
                                 focused={evt.event.kind === "message" &&
-                                    evt.event.messageIndex === $focusMessageIndex &&
+                                    evt.event.messageIndex ===
+                                        app.selectedChatDetails.focusMessageIndex &&
                                     !isFailed($failedMessagesStore, evt)}
                                 accepted={isAccepted($unconfirmed, evt)}
                                 confirmed={isConfirmed($unconfirmed, evt)}

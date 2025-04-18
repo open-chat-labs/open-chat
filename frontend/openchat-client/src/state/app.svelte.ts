@@ -1,6 +1,7 @@
 import {
     type ChatIdentifier,
     type CommunityIdentifier,
+    type DirectChatIdentifier,
     type ExternalBotPermissions,
     type Member,
     type MessageContext,
@@ -12,7 +13,7 @@ import {
     communityIdentifiersEqual,
     messageContextsEqual,
 } from "openchat-shared";
-import { ChatDetailsMergedState } from "./chat_details";
+import { chatDetailsLocalUpdates, ChatDetailsMergedState } from "./chat_details";
 import { ChatDetailsServerState } from "./chat_details/server";
 import { CommunityMergedState } from "./community_details/merged.svelte";
 import { CommunityServerState } from "./community_details/server";
@@ -33,6 +34,9 @@ class AppState {
             $effect(() => {
                 if (this.#selectedChatId === undefined) {
                     console.log("SelectedChatId is undefined - clear state");
+                    this.#selectedChatDetails = new ChatDetailsMergedState(
+                        ChatDetailsServerState.empty(),
+                    );
                 }
             });
         });
@@ -120,6 +124,20 @@ class AppState {
         return this.#selectedChatDetails;
     }
 
+    setDirectChatDetails(
+        chatId: DirectChatIdentifier,
+        focusMessageIndex?: number,
+        focusThreadMessageIndex?: number,
+    ) {
+        if (chatIdentifiersEqual(chatId, this.#selectedChatId)) {
+            this.#selectedChatDetails = new ChatDetailsMergedState(
+                ChatDetailsServerState.empty(chatId),
+            );
+            chatDetailsLocalUpdates.setFocusMessageIndex(chatId, focusMessageIndex);
+            chatDetailsLocalUpdates.setFocusThreadMessageIndex(chatId, focusThreadMessageIndex);
+        }
+    }
+
     setSelectedChatDetails(
         chatId: ChatIdentifier,
         members: Map<string, Member>,
@@ -129,6 +147,8 @@ class AppState {
         rules: VersionedRules,
         bots: Map<string, ExternalBotPermissions>,
         apiKeys: Map<string, PublicApiKeyDetails>,
+        focusMessageIndex?: number,
+        focusThreadMessageIndex?: number,
     ) {
         if (chatIdentifiersEqual(chatId, this.#selectedChatId)) {
             this.#selectedChatDetails = new ChatDetailsMergedState(
@@ -143,6 +163,8 @@ class AppState {
                     apiKeys,
                 ),
             );
+            chatDetailsLocalUpdates.setFocusMessageIndex(chatId, focusMessageIndex);
+            chatDetailsLocalUpdates.setFocusThreadMessageIndex(chatId, focusThreadMessageIndex);
         }
     }
 

@@ -37,8 +37,6 @@ import {
     currentChatUserIds,
     eventsStore,
     favouritesStore,
-    focusMessageIndex,
-    focusThreadMessageIndex,
     groupPreviewsStore,
     myServerChatSummariesStore,
     pinnedChatsStore,
@@ -93,8 +91,6 @@ export class LiveState {
     selectedChatId: ChatIdentifier | undefined;
     chatSummariesList!: ChatSummary[];
     threadsByChat!: ChatMap<ThreadSyncDetails[]>;
-    focusMessageIndex: number | undefined;
-    focusThreadMessageIndex: number | undefined;
     threadEvents!: EventWrapper<ChatEvent>[];
     selectedMessageContext: MessageContext | undefined;
     threadsFollowedByMe!: ChatMap<Set<number>>;
@@ -155,8 +151,6 @@ export class LiveState {
         currentChatReplyingTo.subscribe((data) => (this.currentChatReplyingTo = data));
         chatSummariesListStore.subscribe((data) => (this.chatSummariesList = data));
         threadsByChatStore.subscribe((data) => (this.threadsByChat = data));
-        focusMessageIndex.subscribe((data) => (this.focusMessageIndex = data));
-        focusThreadMessageIndex.subscribe((data) => (this.focusThreadMessageIndex = data));
         threadEvents.subscribe((data) => (this.threadEvents = data));
         selectedMessageContext.subscribe((data) => (this.selectedMessageContext = data));
         threadsFollowedByMeStore.subscribe((data) => (this.threadsFollowedByMe = data));

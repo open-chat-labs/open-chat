@@ -9,9 +9,6 @@ export class ChatDetailsMergedState {
     #server: ChatDetailsServerState | undefined;
 
     #members = $derived(this.#mergeMap(this.server.members, this.#local?.members));
-    #lapsedMembers = $derived(
-        this.#mergeSet(this.server.lapsedMembers, this.#local?.lapsedMembers),
-    );
     #bots = $derived(this.#mergeMap(this.server.bots, this.#local?.bots));
     #apiKeys = $derived(this.#mergeMap(this.server.apiKeys, this.#local?.apiKeys));
     #invitedUsers = $derived(this.#mergeSet(this.server.invitedUsers, this.#local?.invitedUsers));
@@ -48,7 +45,7 @@ export class ChatDetailsMergedState {
     }
 
     get lapsedMembers() {
-        return this.#lapsedMembers;
+        return this.server.lapsedMembers;
     }
 
     get bots() {
@@ -69,5 +66,13 @@ export class ChatDetailsMergedState {
 
     get pinnedMessages() {
         return this.#pinnedMessages;
+    }
+
+    get focusThreadMessageIndex() {
+        return this.#local?.focusThreadMessageIndex;
+    }
+
+    get focusMessageIndex() {
+        return this.#local?.focusMessageIndex;
     }
 }
