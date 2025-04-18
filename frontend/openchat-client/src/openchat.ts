@@ -6193,7 +6193,6 @@ export class OpenChat {
     }
     async #loadChats() {
         const initialLoad = !app.chatsInitialised;
-        app.chatsLoading = initialLoad;
 
         const updateRegistryTask = initialLoad ? this.#updateRegistry() : undefined;
 
@@ -6208,7 +6207,6 @@ export class OpenChat {
                         !app.chatsInitialised,
                         resp as UpdatesResult,
                     );
-                    app.chatsLoading = !app.chatsInitialised;
                 },
                 onError: (err) => {
                     console.warn("getUpdates threw an error: ", err);
@@ -7657,8 +7655,9 @@ export class OpenChat {
         }
     }
 
-    async setSelectedCommunity(id: CommunityIdentifier, clearChat = true): Promise<boolean> {
+    async setSelectedCommunity(id: CommunityIdentifier): Promise<boolean> {
         let community = this.#liveState.communities.get(id);
+        let preview = false;
         if (community === undefined) {
             // if we don't have the community it means we're not a member and we need to look it up
             if (pathState.querystringCode) {
@@ -7679,6 +7678,7 @@ export class OpenChat {
                 resp.membership.index = nextCommunityIndex();
                 community = resp;
                 addCommunityPreview(community);
+                preview = true;
             } else {
                 // if we get here it means we're not a member of the community and we can't look it up
                 // it may be private and we may not be invited.
@@ -7687,15 +7687,11 @@ export class OpenChat {
             }
         }
 
-        if (clearChat) {
-            this.clearSelectedChat();
-        }
-
         if (community !== undefined) {
             this.#loadCommunityDetails(community);
         }
 
-        return true;
+        return preview;
     }
 
     selectFirstChat(): boolean {

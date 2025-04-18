@@ -267,8 +267,6 @@
         modal = { kind: "remove_bot" };
     }
 
-    $inspect(modal).with(console.trace);
-
     function summonWitch() {
         const isHalloweenTheme = $currentThemeName === "halloween";
         if (!isHalloweenTheme) {
