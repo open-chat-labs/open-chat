@@ -34,7 +34,6 @@ import {
     chatSummariesStore,
     confirmedThreadEventIndexesLoadedStore,
     currentChatReplyingTo,
-    currentChatUserIds,
     eventsStore,
     favouritesStore,
     groupPreviewsStore,
@@ -94,7 +93,6 @@ export class LiveState {
     threadEvents!: EventWrapper<ChatEvent>[];
     selectedMessageContext: MessageContext | undefined;
     threadsFollowedByMe!: ChatMap<Set<number>>;
-    currentChatUserIds!: Set<string>;
     selectedThreadRootMessageIndex: number | undefined;
     blockedUsers!: Set<string>;
     diamondStatus!: DiamondMembershipStatus;
@@ -154,7 +152,6 @@ export class LiveState {
         threadEvents.subscribe((data) => (this.threadEvents = data));
         selectedMessageContext.subscribe((data) => (this.selectedMessageContext = data));
         threadsFollowedByMeStore.subscribe((data) => (this.threadsFollowedByMe = data));
-        currentChatUserIds.subscribe((data) => (this.currentChatUserIds = data));
         selectedThreadRootMessageIndex.subscribe(
             (data) => (this.selectedThreadRootMessageIndex = data),
         );

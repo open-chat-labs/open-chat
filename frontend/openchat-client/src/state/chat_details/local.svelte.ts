@@ -5,7 +5,7 @@ import type {
     PublicApiKeyDetails,
     VersionedRules,
 } from "openchat-shared";
-import { SvelteMap } from "svelte/reactivity";
+import { SvelteMap, SvelteSet } from "svelte/reactivity";
 import { LocalMap } from "../map";
 import { LocalSet } from "../set";
 import { scheduleUndo, type UndoLocalUpdate } from "../undo";
@@ -17,6 +17,7 @@ export class ChatDetailsLocalState {
     #focusMessageIndex = $state<number | undefined>();
     #focusThreadMessageIndex = $state<number | undefined>();
 
+    readonly userIds = new SvelteSet<string>();
     readonly pinnedMessages = new LocalSet<number>();
     readonly invitedUsers = new LocalSet<string>();
     readonly blockedUsers = new LocalSet<string>();
@@ -152,6 +153,11 @@ export class ChatDetailsLocalStateManager {
         return () => {
             state.focusThreadMessageIndex = previous;
         };
+    }
+
+    addUserIds(id: ChatIdentifier, userIds: string[]) {
+        const current = this.#getOrCreate(id).userIds;
+        userIds.forEach((u) => current.add(u));
     }
 }
 

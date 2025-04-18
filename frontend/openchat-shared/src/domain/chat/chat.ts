@@ -1485,7 +1485,6 @@ export type GroupChatDetails = {
  */
 export type ChatSpecificState = {
     blockedUsers: Set<string>;
-    userIds: Set<string>;
     confirmedEventIndexesLoaded: DRange;
     userGroupKeys: Set<string>;
     serverEvents: EventWrapper<ChatEvent>[];

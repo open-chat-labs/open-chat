@@ -99,12 +99,6 @@ export const serverEventsStore = createDerivedPropStore<ChatSpecificState, "serv
     () => [],
 );
 
-export const currentChatUserIds = createDerivedPropStore<ChatSpecificState, "userIds">(
-    chatStateStore,
-    "userIds",
-    () => new Set<string>(),
-);
-
 export const expandedDeletedMessages = createDerivedPropStore<
     ChatSpecificState,
     "expandedDeletedMessages"

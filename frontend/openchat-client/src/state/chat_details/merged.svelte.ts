@@ -75,4 +75,8 @@ export class ChatDetailsMergedState {
     get focusMessageIndex() {
         return this.#local?.focusMessageIndex;
     }
+
+    get userIds() {
+        return this.#local?.userIds ?? new Set<string>();
+    }
 }

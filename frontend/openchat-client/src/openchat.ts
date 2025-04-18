@@ -2170,7 +2170,7 @@ export class OpenChat {
         localMessageUpdates.markDeleted(messageId, userId);
         undeletingMessagesStore.delete(messageId);
 
-        const recipients = [...chatStateStore.getProp(id, "userIds")];
+        const recipients = [...app.selectedChatDetails.userIds];
 
         rtcConnectionsManager.sendMessage(recipients, {
             kind: "remote_user_deleted_message",
@@ -2359,7 +2359,7 @@ export class OpenChat {
                 return false;
             });
 
-        this.#sendRtcMessage([...this.#liveState.currentChatUserIds], {
+        this.#sendRtcMessage([...app.selectedChatDetails.userIds], {
             kind: "remote_user_toggled_reaction",
             id: chatId,
             messageId: messageId,
@@ -2529,15 +2529,10 @@ export class OpenChat {
             allUserIds.add(u);
         }
 
-        chatStateStore.updateProp(chatId, "userIds", (userIds) => {
-            allUserIds.forEach((u) => {
-                if (u !== userId) {
-                    userIds.add(u);
-                }
-            });
-            return userIds;
-        });
-
+        chatDetailsLocalUpdates.addUserIds(
+            chatId,
+            [...allUserIds].filter((u) => u !== userId),
+        );
         await this.getMissingUsers(allUserIds);
     }
 
@@ -3543,7 +3538,7 @@ export class OpenChat {
         threadRootMessageIndex: number | undefined,
     ): void {
         if (userId === this.#liveState.user.userId) {
-            const userIds = chatStateStore.getProp(chatId, "userIds");
+            const userIds = app.selectedChatDetails.userIds;
             rtcConnectionsManager.sendMessage([...userIds], {
                 kind: "remote_user_removed_message",
                 id: chatId,
@@ -3706,7 +3701,7 @@ export class OpenChat {
         messageEvent: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
     ): Promise<void> {
-        rtcConnectionsManager.sendMessage([...chatStateStore.getProp(clientChat.id, "userIds")], {
+        rtcConnectionsManager.sendMessage([...app.selectedChatDetails.userIds], {
             kind: "remote_user_sent_message",
             id: clientChat.id,
             messageEvent: serialiseMessageForRtc(messageEvent),
