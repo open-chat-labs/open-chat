@@ -1,5 +1,6 @@
+import { SvelteSet } from "svelte/reactivity";
 import { LocalMap, ReadonlyMap } from "../map";
-import { ReadonlySet, type LocalSet } from "../set";
+import { ReadonlySet, type IReadonlySet, type LocalSet } from "../set";
 import { chatDetailsLocalUpdates } from "./local.svelte";
 import { ChatDetailsServerState } from "./server";
 
@@ -8,6 +9,9 @@ const empty = ChatDetailsServerState.empty();
 export class ChatDetailsMergedState {
     #server: ChatDetailsServerState | undefined;
 
+    #focusMessageIndex = $state<number | undefined>();
+    #focusThreadMessageIndex = $state<number | undefined>();
+    #userIds = new SvelteSet<string>();
     #members = $derived(this.#mergeMap(this.server.members, this.#local?.members));
     #bots = $derived(this.#mergeMap(this.server.bots, this.#local?.bots));
     #apiKeys = $derived(this.#mergeMap(this.server.apiKeys, this.#local?.apiKeys));
@@ -69,14 +73,26 @@ export class ChatDetailsMergedState {
     }
 
     get focusThreadMessageIndex() {
-        return this.#local?.focusThreadMessageIndex;
+        return this.#focusThreadMessageIndex;
     }
 
     get focusMessageIndex() {
-        return this.#local?.focusMessageIndex;
+        return this.#focusMessageIndex;
     }
 
-    get userIds() {
-        return this.#local?.userIds ?? new Set<string>();
+    set focusMessageIndex(val: number | undefined) {
+        this.#focusMessageIndex = val;
+    }
+
+    set focusThreadMessageIndex(val: number | undefined) {
+        this.#focusThreadMessageIndex = val;
+    }
+
+    addUserIds(userIds: string[]) {
+        userIds.forEach((u) => this.#userIds.add(u));
+    }
+
+    get userIds(): IReadonlySet<string> {
+        return this.#userIds;
     }
 }

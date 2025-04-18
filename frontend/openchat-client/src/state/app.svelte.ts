@@ -13,7 +13,7 @@ import {
     communityIdentifiersEqual,
     messageContextsEqual,
 } from "openchat-shared";
-import { chatDetailsLocalUpdates, ChatDetailsMergedState } from "./chat_details";
+import { ChatDetailsMergedState } from "./chat_details";
 import { ChatDetailsServerState } from "./chat_details/server";
 import { CommunityMergedState } from "./community_details/merged.svelte";
 import { CommunityServerState } from "./community_details/server";
@@ -133,8 +133,8 @@ class AppState {
             this.#selectedChatDetails = new ChatDetailsMergedState(
                 ChatDetailsServerState.empty(chatId),
             );
-            chatDetailsLocalUpdates.setFocusMessageIndex(chatId, focusMessageIndex);
-            chatDetailsLocalUpdates.setFocusThreadMessageIndex(chatId, focusThreadMessageIndex);
+            this.#selectedChatDetails.focusMessageIndex = focusMessageIndex;
+            this.#selectedChatDetails.focusThreadMessageIndex = focusThreadMessageIndex;
         }
     }
 
@@ -163,8 +163,8 @@ class AppState {
                     apiKeys,
                 ),
             );
-            chatDetailsLocalUpdates.setFocusMessageIndex(chatId, focusMessageIndex);
-            chatDetailsLocalUpdates.setFocusThreadMessageIndex(chatId, focusThreadMessageIndex);
+            this.#selectedChatDetails.focusMessageIndex = focusMessageIndex;
+            this.#selectedChatDetails.focusThreadMessageIndex = focusThreadMessageIndex;
         }
     }
 

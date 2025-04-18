@@ -5,7 +5,7 @@ import type {
     PublicApiKeyDetails,
     VersionedRules,
 } from "openchat-shared";
-import { SvelteMap, SvelteSet } from "svelte/reactivity";
+import { SvelteMap } from "svelte/reactivity";
 import { LocalMap } from "../map";
 import { LocalSet } from "../set";
 import { scheduleUndo, type UndoLocalUpdate } from "../undo";
@@ -13,11 +13,6 @@ import { scheduleUndo, type UndoLocalUpdate } from "../undo";
 export class ChatDetailsLocalState {
     #rules = $state<VersionedRules | undefined>();
 
-    // Should these index props really be handled by the same merging mechanism? There *is no* server state in this case - only local state. I guess that makes sense still.
-    #focusMessageIndex = $state<number | undefined>();
-    #focusThreadMessageIndex = $state<number | undefined>();
-
-    readonly userIds = new SvelteSet<string>();
     readonly pinnedMessages = new LocalSet<number>();
     readonly invitedUsers = new LocalSet<string>();
     readonly blockedUsers = new LocalSet<string>();
@@ -30,22 +25,6 @@ export class ChatDetailsLocalState {
     }
     set rules(val: VersionedRules | undefined) {
         this.#rules = val;
-    }
-
-    get focusMessageIndex() {
-        return this.#focusMessageIndex;
-    }
-
-    get focusThreadMessageIndex() {
-        return this.#focusThreadMessageIndex;
-    }
-
-    set focusMessageIndex(val: number | undefined) {
-        this.#focusMessageIndex = val;
-    }
-
-    set focusThreadMessageIndex(val: number | undefined) {
-        this.#focusThreadMessageIndex = val;
     }
 }
 
@@ -131,33 +110,6 @@ export class ChatDetailsLocalStateManager {
 
     installBot(id: ChatIdentifier, botId: string, perm: ExternalBotPermissions): UndoLocalUpdate {
         return this.#getOrCreate(id).bots.addOrUpdate(botId, perm);
-    }
-
-    setFocusMessageIndex(id: ChatIdentifier, val?: number) {
-        const state = this.#getOrCreate(id);
-        const previous = state.focusMessageIndex;
-        state.focusMessageIndex = val;
-
-        // in this case we don't want to schedule an automatic undo of this state
-        return () => {
-            state.focusMessageIndex = previous;
-        };
-    }
-
-    setFocusThreadMessageIndex(id: ChatIdentifier, val?: number) {
-        const state = this.#getOrCreate(id);
-        const previous = state.focusThreadMessageIndex;
-        state.focusThreadMessageIndex = val;
-
-        // in this case we don't want to schedule an automatic undo of this state
-        return () => {
-            state.focusThreadMessageIndex = previous;
-        };
-    }
-
-    addUserIds(id: ChatIdentifier, userIds: string[]) {
-        const current = this.#getOrCreate(id).userIds;
-        userIds.forEach((u) => current.add(u));
     }
 }
 

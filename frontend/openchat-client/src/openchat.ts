@@ -2529,10 +2529,7 @@ export class OpenChat {
             allUserIds.add(u);
         }
 
-        chatDetailsLocalUpdates.addUserIds(
-            chatId,
-            [...allUserIds].filter((u) => u !== userId),
-        );
+        app.selectedChatDetails.addUserIds([...allUserIds].filter((u) => u !== userId));
         await this.getMissingUsers(allUserIds);
     }
 
@@ -4470,12 +4467,12 @@ export class OpenChat {
         });
     }
 
-    setFocusMessageIndex(chatId: ChatIdentifier, messageIndex: number | undefined): void {
-        chatDetailsLocalUpdates.setFocusMessageIndex(chatId, messageIndex);
+    setFocusMessageIndex(messageIndex: number | undefined): void {
+        app.selectedChatDetails.focusMessageIndex = messageIndex;
     }
 
-    setFocusThreadMessageIndex(chatId: ChatIdentifier, messageIndex: number | undefined): void {
-        chatDetailsLocalUpdates.setFocusThreadMessageIndex(chatId, messageIndex);
+    setFocusThreadMessageIndex(messageIndex: number | undefined): void {
+        app.selectedChatDetails.focusThreadMessageIndex = messageIndex;
     }
 
     expandDeletedMessages(chatId: ChatIdentifier, messageIndexes: Set<number>): void {
