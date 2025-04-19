@@ -1,7 +1,7 @@
 <script lang="ts">
     import type {
         CommunitySummary,
-        IReadonlyMap,
+        ReadonlyMap,
         Member,
         OpenChat,
         UserGroupDetails,
@@ -46,7 +46,7 @@
     });
 
     function createLookup(
-        members: IReadonlyMap<string, Member>,
+        members: ReadonlyMap<string, Member>,
         allUsers: UserLookup,
     ): Record<string, UserSummary> {
         return [...members.values()].reduce(

@@ -1,10 +1,10 @@
 <script lang="ts">
     import type {
         EventWrapper,
-        IReadonlySet,
         Message,
         MultiUserChatIdentifier,
         OpenChat,
+        ReadonlySet,
     } from "openchat-client";
     import { messagesRead, subscribe, ui, currentUser as user } from "openchat-client";
     import { isSuccessfulEventsResponse } from "openchat-shared";
@@ -20,7 +20,7 @@
     import PinnedMessage from "./PinnedMessage.svelte";
 
     interface Props {
-        pinned: IReadonlySet<number>;
+        pinned: ReadonlySet<number>;
         chatId: MultiUserChatIdentifier;
         dateLastPinned: bigint | undefined;
         onClose: () => void;
@@ -55,7 +55,7 @@
         }
     }
 
-    function reloadPinned(pinned: IReadonlySet<number>): void {
+    function reloadPinned(pinned: ReadonlySet<number>): void {
         untrack(() => {
             if (pinned.size > 0) {
                 if (messages.kind !== "success") {

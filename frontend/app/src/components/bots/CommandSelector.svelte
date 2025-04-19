@@ -4,7 +4,7 @@
         ChatSummary,
         CommunitySummary,
         ExternalBotPermissions,
-        IReadonlyMap,
+        ReadonlyMap,
         MessageContext,
         OpenChat,
         PermissionRole,
@@ -137,7 +137,7 @@
 
     function hasPermissionForCommand(
         command: FlattenedCommand,
-        installedBots: IReadonlyMap<string, ExternalBotPermissions>,
+        installedBots: ReadonlyMap<string, ExternalBotPermissions>,
         chat: ChatSummary | undefined,
         community: CommunitySummary | undefined,
     ): boolean {

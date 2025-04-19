@@ -6,7 +6,7 @@
         type ChatSummary,
         type EnhancedReplyContext,
         type EventWrapper,
-        type IReadonlySet,
+        type ReadonlySet,
         type Mention,
         type Message,
         type OpenChat,
@@ -156,7 +156,7 @@
         return false;
     }
 
-    function isPinned(store: IReadonlySet<number>, evt: EventWrapper<ChatEventType>): boolean {
+    function isPinned(store: ReadonlySet<number>, evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
             return store.has(evt.event.messageIndex);
         }

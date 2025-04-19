@@ -280,9 +280,9 @@ import { app } from "./state/app.svelte";
 import { botState } from "./state/bots.svelte";
 import { chatDetailsLocalUpdates } from "./state/chat_details";
 import { communityLocalUpdates, type CommunityMergedState } from "./state/community_details";
-import type { IReadonlyMap } from "./state/map";
+import type { ReadonlyMap } from "./state/map";
 import { pathState, type RouteParams } from "./state/path.svelte";
-import type { IReadonlySet } from "./state/set";
+import type { ReadonlySet } from "./state/set";
 import { ui } from "./state/ui.svelte";
 import type { UndoLocalUpdate } from "./state/undo";
 import { blockedUsers } from "./stores/blockedUsers";
@@ -4810,7 +4810,7 @@ export class OpenChat {
     #searchCommunityUsersForChannelInvite(
         term: string,
         maxResults: number,
-        channelMembers: IReadonlyMap<string, Member> | undefined,
+        channelMembers: ReadonlyMap<string, Member> | undefined,
     ): UserSummary[] {
         const termLower = term.toLowerCase();
         const matches: UserSummary[] = [];
@@ -4979,13 +4979,13 @@ export class OpenChat {
         });
     }
 
-    getDisplayNameById(userId: string, communityMembers?: IReadonlyMap<string, Member>): string {
+    getDisplayNameById(userId: string, communityMembers?: ReadonlyMap<string, Member>): string {
         return this.getDisplayName(this.#liveState.userStore.get(userId), communityMembers);
     }
 
     getDisplayName(
         user: { userId: string; username: string; displayName?: string } | undefined,
-        communityMembers?: IReadonlyMap<string, Member>,
+        communityMembers?: ReadonlyMap<string, Member>,
     ): string {
         if (user !== undefined) {
             const member = communityMembers?.get(user.userId);
@@ -5604,7 +5604,7 @@ export class OpenChat {
 
     async getGroupMessagesByMessageIndex(
         chatId: MultiUserChatIdentifier,
-        messageIndexes: IReadonlySet<number>,
+        messageIndexes: ReadonlySet<number>,
     ): Promise<EventsResponse<Message>> {
         const serverChat = this.#liveState.serverChatSummaries.get(chatId);
 

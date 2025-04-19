@@ -1,6 +1,6 @@
 import { SvelteSet } from "svelte/reactivity";
-import { LocalMap, ReadonlyMap } from "../map";
-import { ReadonlySet, type IReadonlySet, type LocalSet } from "../set";
+import { LocalMap, type ReadonlyMap } from "../map";
+import { type LocalSet, type ReadonlySet } from "../set";
 import { chatDetailsLocalUpdates } from "./local.svelte";
 import { ChatDetailsServerState } from "./server";
 
@@ -28,11 +28,11 @@ export class ChatDetailsMergedState {
     }
 
     #mergeSet<T>(server: Set<T>, local?: LocalSet<T>): ReadonlySet<T> {
-        return new ReadonlySet(local ? local.apply(server) : server);
+        return local ? local.apply(server) : server;
     }
 
     #mergeMap<K, V>(server: Map<K, V>, local?: LocalMap<K, V>): ReadonlyMap<K, V> {
-        return new ReadonlyMap(local ? local.apply(server) : server);
+        return local ? local.apply(server) : server;
     }
 
     get chatId() {
@@ -110,7 +110,7 @@ export class ChatDetailsMergedState {
         userIds.forEach((u) => this.#userIds.add(u));
     }
 
-    get userIds(): IReadonlySet<string> {
+    get userIds(): ReadonlySet<string> {
         return this.#userIds;
     }
 
@@ -118,7 +118,7 @@ export class ChatDetailsMergedState {
         this.#userGroupKeys.add(key);
     }
 
-    get userGroupKeys(): IReadonlySet<string> {
+    get userGroupKeys(): ReadonlySet<string> {
         return this.#userGroupKeys;
     }
 
@@ -126,7 +126,7 @@ export class ChatDetailsMergedState {
         messageIndexes.forEach((i) => this.#expandedDeletedMessages.add(i));
     }
 
-    get expandedDeletedMessages(): IReadonlySet<number> {
+    get expandedDeletedMessages(): ReadonlySet<number> {
         return this.#expandedDeletedMessages;
     }
 }

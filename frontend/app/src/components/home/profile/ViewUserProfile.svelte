@@ -4,7 +4,7 @@
         AvatarSize,
         type ChatSummary,
         type CommunitySummary,
-        type IReadonlySet,
+        type ReadonlySet,
         type OpenChat,
         type PublicProfile,
         type ResourceKey,
@@ -154,8 +154,8 @@
         chat: ChatSummary | undefined,
         community: CommunitySummary | undefined,
         blockedUsers: Set<string>,
-        blockedChatUsers: IReadonlySet<string>,
-        blockedCommunityUsers: IReadonlySet<string>,
+        blockedChatUsers: ReadonlySet<string>,
+        blockedCommunityUsers: ReadonlySet<string>,
     ) {
         if (me || inGlobalContext) return false;
 
@@ -174,8 +174,8 @@
         chat: ChatSummary | undefined,
         community: CommunitySummary | undefined,
         blockedUsers: Set<string>,
-        blockedChatUsers: IReadonlySet<string>,
-        blockedCommunityUsers: IReadonlySet<string>,
+        blockedChatUsers: ReadonlySet<string>,
+        blockedCommunityUsers: ReadonlySet<string>,
     ) {
         if (me || inGlobalContext) return false;
         if (chat !== undefined) {

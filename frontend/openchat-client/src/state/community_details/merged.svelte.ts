@@ -1,5 +1,5 @@
-import { ReadonlyMap, type LocalMap } from "../map";
-import { LocalSet, ReadonlySet } from "../set";
+import { type LocalMap, type ReadonlyMap } from "../map";
+import { LocalSet, type ReadonlySet } from "../set";
 import { communityLocalUpdates } from "./local.svelte";
 import { CommunityServerState } from "./server";
 
@@ -20,11 +20,11 @@ export class CommunityMergedState {
     #rules = $derived(this.#local?.rules ?? this.server.rules);
 
     #mergeSet<T>(server: Set<T>, local?: LocalSet<T>): ReadonlySet<T> {
-        return new ReadonlySet(local ? local.apply(server) : server);
+        return local ? local.apply(server) : server;
     }
 
     #mergeMap<K, V>(server: Map<K, V>, local?: LocalMap<K, V>): ReadonlyMap<K, V> {
-        return new ReadonlyMap(local ? local.apply(server) : server);
+        return local ? local.apply(server) : server;
     }
 
     get #local() {

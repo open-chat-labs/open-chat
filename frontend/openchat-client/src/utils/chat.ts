@@ -72,7 +72,7 @@ import {
 } from "openchat-shared";
 import { get } from "svelte/store";
 import { app } from "../state/app.svelte";
-import type { IReadonlySet } from "../state/set";
+import type { ReadonlySet } from "../state/set";
 import { cryptoLookup } from "../stores/crypto";
 import type { MessageFilter } from "../stores/messageFilters";
 import { tallyKey } from "../stores/proposalTallies";
@@ -644,7 +644,7 @@ export function groupBySender<T extends ChatEvent>(events: EventWrapper<T>[]): E
 export function groupEvents(
     events: EventWrapper<ChatEvent>[],
     myUserId: string,
-    expandedDeletedMessages: IReadonlySet<number>,
+    expandedDeletedMessages: ReadonlySet<number>,
     groupInner?: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][],
 ): TimelineItem<ChatEvent>[] {
     return flattenTimeline(
@@ -690,7 +690,7 @@ export function isEventKindHidden(kind: ChatEvent["kind"]): boolean {
 function reduceJoinedOrLeft(
     events: EventWrapper<ChatEvent>[],
     myUserId: string,
-    expandedDeletedMessages: IReadonlySet<number>,
+    expandedDeletedMessages: ReadonlySet<number>,
 ): EventWrapper<ChatEvent>[] {
     function getLatestAggregateEventIfExists(
         events: EventWrapper<ChatEvent>[],
@@ -783,7 +783,7 @@ function reduceJoinedOrLeft(
 function messageIsHidden(
     message: Message,
     myUserId: string,
-    expandedDeletedMessages: IReadonlySet<number>,
+    expandedDeletedMessages: ReadonlySet<number>,
 ) {
     if (message.content.kind === "message_reminder_created_content" && message.content.hidden) {
         return true;
