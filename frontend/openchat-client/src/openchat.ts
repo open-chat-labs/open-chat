@@ -8374,7 +8374,7 @@ export class OpenChat {
                 break;
             case "group_chat":
                 perm = app.selectedChat.bots.get(botId);
-                localChatSummaryUpdates.removeBot(id, botId);
+                chatDetailsLocalUpdates.removeBot(id, botId);
                 break;
             case "direct_chat":
                 perm = this.#liveState.installedDirectBots.get(botId);
@@ -8400,7 +8400,7 @@ export class OpenChat {
             case "group_chat":
                 if (perm === undefined) return perm;
                 previousPermissions = app.selectedChat.bots.get(botId);
-                localChatSummaryUpdates.installBot(id, botId, perm);
+                chatDetailsLocalUpdates.installBot(id, botId, perm);
                 break;
             case "direct_chat":
                 if (perm === undefined) return perm;
