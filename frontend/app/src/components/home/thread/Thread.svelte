@@ -15,9 +15,7 @@
     } from "openchat-client";
     import {
         app,
-        currentChatBlockedUsers,
         draftMessagesStore,
-        expandedDeletedMessages,
         failedMessagesStore,
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
@@ -78,7 +76,7 @@
     let messageContext = $derived({ chatId: chat.id, threadRootMessageIndex });
     let threadRootMessage = $derived(rootEvent.event);
     let blocked = $derived(
-        chat.kind === "direct_chat" && $currentChatBlockedUsers.has(chat.them.userId),
+        chat.kind === "direct_chat" && app.selectedChat.blockedUsers.has(chat.them.userId),
     );
     let draftMessage = $derived($draftMessagesStore.get(messageContext));
     let textContent = $derived(draftMessage?.textContent);
@@ -93,7 +91,7 @@
         client.groupEvents(
             [...events].reverse(),
             $user.userId,
-            $expandedDeletedMessages,
+            app.selectedChat.expandedDeletedMessages,
         ) as TimelineItem<Message>[],
     );
     let readonly = $derived(client.isChatReadOnly(chat.id));
@@ -390,7 +388,7 @@
                                     isReadByMe($messagesRead, evt)}
                                 observer={messageObserver}
                                 focused={evt.event.kind === "message" &&
-                                    app.selectedChatDetails.focusThreadMessageIndex ===
+                                    app.selectedChat.focusThreadMessageIndex ===
                                         evt.event.messageIndex}
                                 {readonly}
                                 {threadRootMessage}

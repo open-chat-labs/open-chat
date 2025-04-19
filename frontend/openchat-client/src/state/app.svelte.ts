@@ -25,7 +25,7 @@ class AppState {
         $effect.root(() => {
             $effect(() => {
                 if (this.#selectedCommunityId === undefined) {
-                    this.#selectedCommunityDetails = new CommunityMergedState(
+                    this.#selectedCommunity = new CommunityMergedState(
                         CommunityServerState.empty(),
                     );
                 }
@@ -34,9 +34,7 @@ class AppState {
             $effect(() => {
                 if (this.#selectedChatId === undefined) {
                     console.log("SelectedChatId is undefined - clear state");
-                    this.#selectedChatDetails = new ChatDetailsMergedState(
-                        ChatDetailsServerState.empty(),
-                    );
+                    this.#selectedChat = new ChatDetailsMergedState(ChatDetailsServerState.empty());
                 }
             });
         });
@@ -84,11 +82,11 @@ class AppState {
         }, communityIdentifiersEqual),
     );
 
-    #selectedCommunityDetails = $state<CommunityMergedState>(
+    #selectedCommunity = $state<CommunityMergedState>(
         new CommunityMergedState(CommunityServerState.empty()),
     );
 
-    #selectedChatDetails = $state<ChatDetailsMergedState>(
+    #selectedChat = $state<ChatDetailsMergedState>(
         new ChatDetailsMergedState(ChatDetailsServerState.empty()),
     );
 
@@ -116,32 +114,33 @@ class AppState {
         return this.#selectedMessageContext;
     }
 
-    get selectedCommunityDetails() {
-        return this.#selectedCommunityDetails;
+    get selectedCommunity() {
+        return this.#selectedCommunity;
     }
 
-    get selectedChatDetails() {
-        return this.#selectedChatDetails;
+    get selectedChat() {
+        return this.#selectedChat;
     }
 
     setDirectChatDetails(
         chatId: DirectChatIdentifier,
+        currentUserId: string,
         focusMessageIndex?: number,
         focusThreadMessageIndex?: number,
     ) {
         if (chatIdentifiersEqual(chatId, this.#selectedChatId)) {
-            this.#selectedChatDetails = new ChatDetailsMergedState(
-                ChatDetailsServerState.empty(chatId),
-            );
-            this.#selectedChatDetails.focusMessageIndex = focusMessageIndex;
-            this.#selectedChatDetails.focusThreadMessageIndex = focusThreadMessageIndex;
+            this.#selectedChat = new ChatDetailsMergedState(ChatDetailsServerState.empty(chatId));
+            this.#selectedChat.focusMessageIndex = focusMessageIndex;
+            this.#selectedChat.focusThreadMessageIndex = focusThreadMessageIndex;
+            this.#selectedChat.addUserIds([currentUserId]);
         }
     }
 
-    setSelectedChatDetails(
+    setChatDetailsFromServer(
         chatId: ChatIdentifier,
         members: Map<string, Member>,
         lapsedMembers: Set<string>,
+        blockedUsers: Set<string>,
         invitedUsers: Set<string>,
         pinnedMessages: Set<number>,
         rules: VersionedRules,
@@ -150,25 +149,23 @@ class AppState {
         focusMessageIndex?: number,
         focusThreadMessageIndex?: number,
     ) {
-        if (chatIdentifiersEqual(chatId, this.#selectedChatId)) {
-            this.#selectedChatDetails = new ChatDetailsMergedState(
-                new ChatDetailsServerState(
-                    chatId,
-                    members,
-                    lapsedMembers,
-                    invitedUsers,
-                    pinnedMessages,
-                    rules,
-                    bots,
-                    apiKeys,
-                ),
-            );
-            this.#selectedChatDetails.focusMessageIndex = focusMessageIndex;
-            this.#selectedChatDetails.focusThreadMessageIndex = focusThreadMessageIndex;
-        }
+        const serverState = new ChatDetailsServerState(
+            chatId,
+            members,
+            lapsedMembers,
+            blockedUsers,
+            invitedUsers,
+            pinnedMessages,
+            rules,
+            bots,
+            apiKeys,
+        );
+        this.#selectedChat.overwriteServerState(serverState);
+        this.#selectedChat.focusMessageIndex = focusMessageIndex;
+        this.#selectedChat.focusThreadMessageIndex = focusThreadMessageIndex;
     }
 
-    setSelectedCommunityDetails(
+    setCommunityDetailsFromServer(
         communityId: CommunityIdentifier,
         userGroups: Map<number, UserGroupDetails>,
         members: Map<string, Member>,
@@ -180,22 +177,19 @@ class AppState {
         apiKeys: Map<string, PublicApiKeyDetails>,
         rules?: VersionedRules,
     ) {
-        if (communityId.communityId === this.#selectedCommunityId?.communityId) {
-            this.#selectedCommunityDetails = new CommunityMergedState(
-                new CommunityServerState(
-                    communityId,
-                    userGroups,
-                    members,
-                    blockedUsers,
-                    lapsedMembers,
-                    invitedUsers,
-                    referrals,
-                    bots,
-                    apiKeys,
-                    rules,
-                ),
-            );
-        }
+        const serverState = new CommunityServerState(
+            communityId,
+            userGroups,
+            members,
+            blockedUsers,
+            lapsedMembers,
+            invitedUsers,
+            referrals,
+            bots,
+            apiKeys,
+            rules,
+        );
+        this.#selectedCommunity.overwriteServerState(serverState);
     }
 }
 

@@ -72,6 +72,7 @@ import {
 } from "openchat-shared";
 import { get } from "svelte/store";
 import { app } from "../state/app.svelte";
+import type { IReadonlySet } from "../state/set";
 import { cryptoLookup } from "../stores/crypto";
 import type { MessageFilter } from "../stores/messageFilters";
 import { tallyKey } from "../stores/proposalTallies";
@@ -643,7 +644,7 @@ export function groupBySender<T extends ChatEvent>(events: EventWrapper<T>[]): E
 export function groupEvents(
     events: EventWrapper<ChatEvent>[],
     myUserId: string,
-    expandedDeletedMessages: Set<number>,
+    expandedDeletedMessages: IReadonlySet<number>,
     groupInner?: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][],
 ): TimelineItem<ChatEvent>[] {
     return flattenTimeline(
@@ -689,7 +690,7 @@ export function isEventKindHidden(kind: ChatEvent["kind"]): boolean {
 function reduceJoinedOrLeft(
     events: EventWrapper<ChatEvent>[],
     myUserId: string,
-    expandedDeletedMessages: Set<number>,
+    expandedDeletedMessages: IReadonlySet<number>,
 ): EventWrapper<ChatEvent>[] {
     function getLatestAggregateEventIfExists(
         events: EventWrapper<ChatEvent>[],
@@ -779,7 +780,11 @@ function reduceJoinedOrLeft(
     }, []);
 }
 
-function messageIsHidden(message: Message, myUserId: string, expandedDeletedMessages: Set<number>) {
+function messageIsHidden(
+    message: Message,
+    myUserId: string,
+    expandedDeletedMessages: IReadonlySet<number>,
+) {
     if (message.content.kind === "message_reminder_created_content" && message.content.hidden) {
         return true;
     }
@@ -1912,7 +1917,7 @@ export function stopTyping(
     userId: string,
     threadRootMessageIndex?: number,
 ): void {
-    rtcConnectionsManager.sendMessage([...app.selectedChatDetails.userIds], {
+    rtcConnectionsManager.sendMessage([...app.selectedChat.userIds], {
         kind: "remote_user_stopped_typing",
         id,
         userId,
@@ -1925,7 +1930,7 @@ export function startTyping(
     userId: string,
     threadRootMessageIndex?: number,
 ): void {
-    rtcConnectionsManager.sendMessage([...app.selectedChatDetails.userIds], {
+    rtcConnectionsManager.sendMessage([...app.selectedChat.userIds], {
         kind: "remote_user_typing",
         id,
         userId,

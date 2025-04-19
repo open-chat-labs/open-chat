@@ -318,7 +318,7 @@
 
     function formatUserGroupMentions(text: string): string {
         return text.replace(/@UserGroup\(([\d\w-]+)\)/g, (match, p1) => {
-            const u = app.selectedCommunityDetails.userGroups.get(Number(p1));
+            const u = app.selectedCommunity.userGroups.get(Number(p1));
             if (u !== undefined) {
                 return `@${u.name}`;
             }

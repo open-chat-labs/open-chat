@@ -1484,11 +1484,9 @@ export type GroupChatDetails = {
  * TODO - the goal is to get rid of all of these
  */
 export type ChatSpecificState = {
-    blockedUsers: Set<string>;
+    // blockedUsers: Set<string>;
     confirmedEventIndexesLoaded: DRange;
-    userGroupKeys: Set<string>;
     serverEvents: EventWrapper<ChatEvent>[];
-    expandedDeletedMessages: Set<number>;
     expiredEventRanges: DRange;
 };
 

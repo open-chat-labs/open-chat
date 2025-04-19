@@ -1,38 +1,38 @@
 <script lang="ts">
-    import ChatMessage from "./ChatMessage.svelte";
-    import GroupChatCreatedEvent from "./GroupChatCreatedEvent.svelte";
-    import DirectChatCreatedEvent from "./DirectChatCreatedEvent.svelte";
-    import MembersChangedEvent from "./MembersChangedEvent.svelte";
-    import PermissionsChangedEvent from "./PermissionsChangedEvent.svelte";
-    import AggregateCommonEvents from "./AggregateCommonEvents.svelte";
     import {
+        chatListScopeStore,
+        currentUser,
+        routeForMessage,
+        typing,
+        userStore,
         type ChatEvent,
-        type EventWrapper,
-        type Message,
-        type OpenChat,
         type ChatIdentifier,
         type ChatType,
-        type Level,
-        userStore,
-        chatListScopeStore,
-        typing,
-        routeForMessage,
         type EnhancedReplyContext,
-        currentUser,
+        type EventWrapper,
+        type Level,
+        type Message,
+        type OpenChat,
         type UserSummary,
     } from "openchat-client";
-    import GroupChangedEvent from "./GroupChangedEvent.svelte";
-    import GroupRulesChangedEvent from "./GroupRulesChangedEvent.svelte";
-    import { _ } from "svelte-i18n";
-    import { getContext } from "svelte";
-    import GroupVisibilityChangedEvent from "./GroupVisibilityChangedEvent.svelte";
-    import GroupInviteCodeChangedEvent from "./GroupInviteCodeChangedEvent.svelte";
-    import DisappearingMessageTimeUpdated from "./DisappearingMessageTimeUpdated.svelte";
-    import ChatFrozenEvent from "./ChatFrozenEvent.svelte";
-    import ChatUnfrozenEvent from "./ChatUnfrozenEvent.svelte";
     import page from "page";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../../i18n/i18n";
+    import AggregateCommonEvents from "./AggregateCommonEvents.svelte";
     import BotChangedEvent from "./BotChangedEvent.svelte";
+    import ChatFrozenEvent from "./ChatFrozenEvent.svelte";
+    import ChatMessage from "./ChatMessage.svelte";
+    import ChatUnfrozenEvent from "./ChatUnfrozenEvent.svelte";
+    import DirectChatCreatedEvent from "./DirectChatCreatedEvent.svelte";
+    import DisappearingMessageTimeUpdated from "./DisappearingMessageTimeUpdated.svelte";
+    import GroupChangedEvent from "./GroupChangedEvent.svelte";
+    import GroupChatCreatedEvent from "./GroupChatCreatedEvent.svelte";
+    import GroupInviteCodeChangedEvent from "./GroupInviteCodeChangedEvent.svelte";
+    import GroupRulesChangedEvent from "./GroupRulesChangedEvent.svelte";
+    import GroupVisibilityChangedEvent from "./GroupVisibilityChangedEvent.svelte";
+    import MembersChangedEvent from "./MembersChangedEvent.svelte";
+    import PermissionsChangedEvent from "./PermissionsChangedEvent.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -244,7 +244,6 @@
 {:else if event.event.kind === "aggregate_common_events"}
     <AggregateCommonEvents
         level={levelType}
-        {chatId}
         {observer}
         {readByMe}
         user={userSummary}

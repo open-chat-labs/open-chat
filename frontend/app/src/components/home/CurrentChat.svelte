@@ -402,7 +402,7 @@
                 {blocked}
                 {readonly}
                 selectedChatSummary={chat}
-                hasPinned={app.selectedChatDetails.pinnedMessages.size > 0} />
+                hasPinned={app.selectedChat.pinnedMessages.size > 0} />
         {/if}
     {/if}
     {#if externalUrl !== undefined}

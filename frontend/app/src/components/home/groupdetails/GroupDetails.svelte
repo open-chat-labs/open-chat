@@ -16,7 +16,7 @@
     let { chat, memberCount, onClose }: Props = $props();
 
     let canEdit = $derived(client.canEditGroupDetails(chat.id));
-    let rules = $derived(app.selectedChatDetails.rules ?? defaultChatRules(chat.level));
+    let rules = $derived(app.selectedChat.rules ?? defaultChatRules(chat.level));
 
     function editGroup() {
         if (canEdit) {

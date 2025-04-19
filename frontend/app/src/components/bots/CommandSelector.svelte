@@ -49,11 +49,11 @@
     let installedBots = $derived.by(() => {
         switch (messageContext.chatId.kind) {
             case "channel":
-                return app.selectedCommunityDetails.bots;
+                return app.selectedCommunity.bots;
             case "direct_chat":
                 return $installedDirectBots;
             default:
-                return app.selectedChatDetails.bots;
+                return app.selectedChat.bots;
         }
     });
 

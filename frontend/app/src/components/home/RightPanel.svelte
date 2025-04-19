@@ -15,7 +15,6 @@
     import {
         app,
         compareRoles,
-        currentChatBlockedUsers as currentChatBlocked,
         currentUser,
         eventsStore,
         pageReplace,
@@ -376,14 +375,14 @@
         {#if $multiUserChat.kind === "channel" && $selectedCommunity !== undefined}
             <ChannelOrCommunitySummary
                 channel={$multiUserChat}
-                memberCount={app.selectedChatDetails.members.size}
+                memberCount={app.selectedChat.members.size}
                 community={$selectedCommunity}
                 selectedTab="channel"
                 onClose={ui.popRightPanelHistory} />
         {:else}
             <GroupDetails
                 chat={$multiUserChat}
-                memberCount={app.selectedChatDetails.members.size}
+                memberCount={app.selectedChat.members.size}
                 onClose={ui.popRightPanelHistory} />
         {/if}
     {:else if ui.lastRightPanelState.kind === "call_participants_panel"}
@@ -438,13 +437,13 @@
             <Members
                 {closeIcon}
                 collection={$selectedCommunity}
-                invited={app.selectedCommunityDetails.invitedUsers}
-                members={[...app.selectedCommunityDetails.members.values()]}
-                blocked={app.selectedCommunityDetails.blockedUsers}
-                lapsed={app.selectedCommunityDetails.lapsedMembers}
+                invited={app.selectedCommunity.invitedUsers}
+                members={[...app.selectedCommunity.members.values()]}
+                blocked={app.selectedCommunity.blockedUsers}
+                lapsed={app.selectedCommunity.lapsedMembers}
                 initialUsergroup={ui.lastRightPanelState.userGroupId}
-                installedBots={app.selectedCommunityDetails.bots}
-                apiKeys={app.selectedCommunityDetails.apiKeys}
+                installedBots={app.selectedCommunity.bots}
+                apiKeys={app.selectedCommunity.apiKeys}
                 onClose={ui.popRightPanelHistory}
                 onBlockUser={onBlockCommunityUser}
                 onUnblockUser={onUnblockCommunityUser}
@@ -482,12 +481,12 @@
         <Members
             {closeIcon}
             collection={$multiUserChat}
-            invited={app.selectedChatDetails.invitedUsers}
-            members={[...app.selectedChatDetails.members.values()]}
-            blocked={$currentChatBlocked}
-            lapsed={app.selectedChatDetails.lapsedMembers}
-            installedBots={app.selectedChatDetails.bots}
-            apiKeys={app.selectedChatDetails.apiKeys}
+            invited={app.selectedChat.invitedUsers}
+            members={[...app.selectedChat.members.values()]}
+            blocked={app.selectedChat.blockedUsers}
+            lapsed={app.selectedChat.lapsedMembers}
+            installedBots={app.selectedChat.bots}
+            apiKeys={app.selectedChat.apiKeys}
             onClose={ui.popRightPanelHistory}
             onBlockUser={onBlockGroupUser}
             onUnblockUser={onUnblockGroupUser}
@@ -516,7 +515,7 @@
     {:else if ui.lastRightPanelState.kind === "show_pinned" && $selectedChatId !== undefined && ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel") && $multiUserChat !== undefined}
         <PinnedMessages
             chatId={$selectedChatId}
-            pinned={app.selectedChatDetails.pinnedMessages}
+            pinned={app.selectedChat.pinnedMessages}
             dateLastPinned={$multiUserChat.dateLastPinned}
             onClose={ui.popRightPanelHistory} />
     {:else if ui.lastRightPanelState.kind === "user_profile"}
@@ -533,7 +532,7 @@
             <ChannelOrCommunitySummary
                 channel={$multiUserChat}
                 community={$selectedCommunity}
-                memberCount={app.selectedChatDetails.members.size}
+                memberCount={app.selectedChat.members.size}
                 selectedTab="community"
                 onClose={ui.popRightPanelHistory} />
         {:else}

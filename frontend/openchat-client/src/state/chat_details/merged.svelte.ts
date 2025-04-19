@@ -7,14 +7,16 @@ import { ChatDetailsServerState } from "./server";
 const empty = ChatDetailsServerState.empty();
 
 export class ChatDetailsMergedState {
-    #server: ChatDetailsServerState | undefined;
-
+    #server = $state<ChatDetailsServerState | undefined>();
     #focusMessageIndex = $state<number | undefined>();
     #focusThreadMessageIndex = $state<number | undefined>();
     #userIds = new SvelteSet<string>();
+    #userGroupKeys = new SvelteSet<string>();
+    #expandedDeletedMessages = new SvelteSet<number>();
     #members = $derived(this.#mergeMap(this.server.members, this.#local?.members));
     #bots = $derived(this.#mergeMap(this.server.bots, this.#local?.bots));
     #apiKeys = $derived(this.#mergeMap(this.server.apiKeys, this.#local?.apiKeys));
+    #blockedUsers = $derived(this.#mergeSet(this.server.blockedUsers, this.#local?.blockedUsers));
     #invitedUsers = $derived(this.#mergeSet(this.server.invitedUsers, this.#local?.invitedUsers));
     #rules = $derived(this.#local?.rules ?? this.server.rules);
     #pinnedMessages = $derived(
@@ -33,6 +35,14 @@ export class ChatDetailsMergedState {
         return new ReadonlyMap(local ? local.apply(server) : server);
     }
 
+    get chatId() {
+        return this.#server?.chatId;
+    }
+
+    get empty() {
+        return this.#server === undefined || this.#server.isEmpty;
+    }
+
     get #local() {
         const id = this.server.chatId;
         if (id) {
@@ -42,6 +52,10 @@ export class ChatDetailsMergedState {
 
     private get server() {
         return this.#server ?? empty;
+    }
+
+    overwriteServerState(val: ChatDetailsServerState) {
+        this.#server = val;
     }
 
     get members() {
@@ -62,6 +76,10 @@ export class ChatDetailsMergedState {
 
     get invitedUsers() {
         return this.#invitedUsers;
+    }
+
+    get blockedUsers() {
+        return this.#blockedUsers;
     }
 
     get rules() {
@@ -94,5 +112,21 @@ export class ChatDetailsMergedState {
 
     get userIds(): IReadonlySet<string> {
         return this.#userIds;
+    }
+
+    addUserGroupKey(key: string) {
+        this.#userGroupKeys.add(key);
+    }
+
+    get userGroupKeys(): IReadonlySet<string> {
+        return this.#userGroupKeys;
+    }
+
+    expandDeletedMessages(messageIndexes: Set<number>): void {
+        messageIndexes.forEach((i) => this.#expandedDeletedMessages.add(i));
+    }
+
+    get expandedDeletedMessages(): IReadonlySet<number> {
+        return this.#expandedDeletedMessages;
     }
 }

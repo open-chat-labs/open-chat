@@ -41,12 +41,7 @@
     );
     let avatarSrc = $derived(client.groupAvatarUrl(chat, $selectedCommunity));
     let combinedRulesText = $derived(
-        canSend
-            ? client.combineRulesText(
-                  app.selectedChatDetails.rules,
-                  app.selectedCommunityDetails.rules,
-              )
-            : "",
+        canSend ? client.combineRulesText(app.selectedChat.rules, app.selectedCommunity.rules) : "",
     );
     let externalUrl = $derived(chat.kind === "channel" ? chat.externalUrl : undefined);
     let externalContent = $derived(externalUrl !== undefined);

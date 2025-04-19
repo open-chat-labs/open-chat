@@ -25,7 +25,7 @@
     let displayName = $derived(
         userOrGroup.kind === "user_group" || userOrGroup.kind === "everyone"
             ? undefined
-            : client.getDisplayName(userOrGroup, app.selectedCommunityDetails.members),
+            : client.getDisplayName(userOrGroup, app.selectedCommunity.members),
     );
 </script>
 

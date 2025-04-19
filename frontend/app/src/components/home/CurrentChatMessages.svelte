@@ -14,11 +14,9 @@
         app,
         chatIdentifiersEqual,
         chatListScopeStore as chatListScope,
-        chatStateStore,
         currentChatEditingEvent,
         draftMessagesStore,
         eventsStore,
-        expandedDeletedMessages,
         failedMessagesStore,
         messagesRead,
         pathState,
@@ -26,7 +24,6 @@
         selectedCommunity,
         unconfirmed,
         currentUser as user,
-        userGroupKeys,
     } from "openchat-client";
     import page from "page";
     import { getContext, untrack } from "svelte";
@@ -135,7 +132,7 @@
             const key =
                 prefix +
                 (evt.event.kind === "message" ? `${evt.index}_${evt.event.messageId}` : evt.index);
-            if ($userGroupKeys.has(key)) {
+            if (app.selectedChat.userGroupKeys.has(key)) {
                 return key;
             }
         }
@@ -144,10 +141,8 @@
             (first.event.kind === "message"
                 ? `${first.index}_${first.event.messageId}`
                 : first.index);
-        chatStateStore.updateProp(chat.id, "userGroupKeys", (keys) => {
-            keys.add(firstKey);
-            return keys;
-        });
+
+        app.selectedChat.addUserGroupKey(firstKey);
         return firstKey;
     }
 
@@ -263,7 +258,7 @@
         client.groupEvents(
             [...$eventsStore].reverse(),
             $user.userId,
-            $expandedDeletedMessages,
+            app.selectedChat.expandedDeletedMessages,
             groupInner(filteredProposals),
         ),
     );
@@ -319,8 +314,7 @@
                             <ChatEvent
                                 observer={messageObserver}
                                 focused={evt.event.kind === "message" &&
-                                    evt.event.messageIndex ===
-                                        app.selectedChatDetails.focusMessageIndex &&
+                                    evt.event.messageIndex === app.selectedChat.focusMessageIndex &&
                                     !isFailed($failedMessagesStore, evt)}
                                 accepted={isAccepted($unconfirmed, evt)}
                                 confirmed={isConfirmed($unconfirmed, evt)}
@@ -346,7 +340,7 @@
                                 publicGroup={(chat.kind === "group_chat" ||
                                     chat.kind === "channel") &&
                                     chat.public}
-                                pinned={isPinned(app.selectedChatDetails.pinnedMessages, evt)}
+                                pinned={isPinned(app.selectedChat.pinnedMessages, evt)}
                                 editing={$currentChatEditingEvent === evt}
                                 onReplyTo={replyTo}
                                 {onRemovePreview}

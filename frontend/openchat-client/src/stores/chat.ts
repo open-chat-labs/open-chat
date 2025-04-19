@@ -19,7 +19,6 @@ import {
     ChatMap,
     compareChats,
     emptyChatMetrics,
-    emptyRules,
     messageContextsEqual,
     nullMembership,
 } from "openchat-shared";
@@ -33,7 +32,6 @@ import {
     mergeUnconfirmedIntoSummary,
 } from "../utils/chat";
 import { configKeys } from "../utils/config";
-import { setsAreEqual } from "../utils/set";
 import { blockedUsers } from "./blockedUsers";
 import { communityPreviewsStore } from "./community";
 import { createChatSpecificObjectStore } from "./dataByChatFactory";
@@ -75,21 +73,10 @@ export const selectedChatId = derived(selectedMessageContext, ($messageContext) 
 export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>(
     selectedChatId,
     () => ({
-        lapsedMembers: new Set<string>(),
-        members: [],
-        membersMap: new Map(),
         blockedUsers: new Set<string>(),
-        invitedUsers: new Set<string>(),
-        pinnedMessages: new Set<number>(),
-        rules: emptyRules(),
-        userIds: new Set<string>(),
-        userGroupKeys: new Set<string>(),
         confirmedEventIndexesLoaded: new DRange(),
         serverEvents: [],
-        expandedDeletedMessages: new Set(),
         expiredEventRanges: new DRange(),
-        bots: new Map(),
-        apiKeys: new Map(),
     }),
 );
 
@@ -97,24 +84,6 @@ export const serverEventsStore = createDerivedPropStore<ChatSpecificState, "serv
     chatStateStore,
     "serverEvents",
     () => [],
-);
-
-export const expandedDeletedMessages = createDerivedPropStore<
-    ChatSpecificState,
-    "expandedDeletedMessages"
->(chatStateStore, "expandedDeletedMessages", () => new Set());
-
-export const userGroupKeys = createDerivedPropStore<ChatSpecificState, "userGroupKeys">(
-    chatStateStore,
-    "userGroupKeys",
-    () => new Set<string>(),
-);
-
-export const currentChatBlockedUsers = createDerivedPropStore<ChatSpecificState, "blockedUsers">(
-    chatStateStore,
-    "blockedUsers",
-    () => new Set<string>(),
-    setsAreEqual,
 );
 
 export const expiredEventRangesStore = createDerivedPropStore<
@@ -125,12 +94,12 @@ export const expiredEventRangesStore = createDerivedPropStore<
 export const hideMessagesFromDirectBlocked = createLsBoolStore(configKeys.hideBlocked, false);
 
 export const currentChatBlockedOrSuspendedUsers = derived(
-    [currentChatBlockedUsers, suspendedUsers, blockedUsers, hideMessagesFromDirectBlocked],
-    ([chatBlocked, suspended, directBlocked, hideBlocked]) => {
+    [suspendedUsers, blockedUsers, hideMessagesFromDirectBlocked],
+    ([suspended, directBlocked, hideBlocked]) => {
         const direct = hideBlocked ? directBlocked : [];
         return new Set<string>([
-            ...chatBlocked,
-            ...app.selectedCommunityDetails.blockedUsers, //TODO This is no longer reactive - not ideal but probably liveable with short term
+            ...app.selectedChat.blockedUsers, //TODO This is no longer reactive - not ideal but probably liveable with short term
+            ...app.selectedCommunity.blockedUsers, //TODO This is no longer reactive - not ideal but probably liveable with short term
             ...suspended,
             ...direct,
         ]);
@@ -561,12 +530,6 @@ export function setChatSpecificState(clientChat: ChatSummary): void {
 
     // initialise a bunch of stores
     chatStateStore.clear(clientChat.id);
-    chatStateStore.setProp(clientChat.id, "expandedDeletedMessages", new Set());
-    chatStateStore.setProp(
-        clientChat.id,
-        "userIds",
-        new Set<string>(clientChat.kind === "direct_chat" ? [clientChat.id.userId] : []),
-    );
     resetFilteredProposalsStore(clientChat);
 }
 

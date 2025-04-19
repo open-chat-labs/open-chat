@@ -12,29 +12,17 @@ export class ChatDetailsServerState {
         readonly chatId: ChatIdentifier | undefined,
         readonly members: Map<string, Member>,
         readonly lapsedMembers: Set<string>,
+        readonly blockedUsers: Set<string>,
         readonly invitedUsers: Set<string>,
         readonly pinnedMessages: Set<number>,
         readonly rules: VersionedRules,
         readonly bots: Map<string, ExternalBotPermissions>,
         readonly apiKeys: Map<string, PublicApiKeyDetails>,
-        // readonly expiredEventRanges: DRange,
-        // readonly expandedDeletedMessages: Set<number>,
-        // readonly serverEvents: EventWrapper<ChatEvent>[],
-        // readonly userIds: Set<string>,
-        // readonly userGroupKeys: Set<string>,
-        // readonly confirmedEventIndexesLoaded: DRange,
-        // readonly pinnedMessages: Set<number>,
-        // readonly userGroups: Map<number, UserGroupDetails>,
-        // readonly blockedUsers: Set<string>,
-        // readonly lapsedMembers: Set<string>,
-        // readonly invitedUsers: Set<string>,
-        // readonly referrals: Set<string>,
-        // readonly bots: Map<string, ExternalBotPermissions>,
-        // readonly apiKeys: Map<string, PublicApiKeyDetails>,
-        // readonly rules?: VersionedRules,
-        // readonly focusMessageIndex?: number,
-        // readonly focusThreadMessageIndex?: number,
     ) {}
+
+    get isEmpty() {
+        return this.chatId === undefined;
+    }
 
     static empty(chatId?: ChatIdentifier) {
         return new ChatDetailsServerState(
@@ -43,23 +31,10 @@ export class ChatDetailsServerState {
             new Set(),
             new Set(),
             new Set(),
+            new Set(),
             emptyRules(),
             new Map(),
             new Map(),
-            // new DRange(),
-            // new Set(),
-            // [],
-            // new Set(),
-            // new DRange(),
-            // new Set(),
-            // new Map(),
-            // new Set(),
-            // new Set(),
-            // new Set(),
-            // new Set(),
-            // new Map(),
-            // new Map(),
-            // emptyRules(),
         );
     }
 }

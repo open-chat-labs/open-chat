@@ -20,9 +20,9 @@
 
     let grantedPermissions = $derived.by(() => {
         if (chatId.kind === "channel") {
-            return app.selectedCommunityDetails.bots.get(botId) ?? emptyExternalBotPermissions();
+            return app.selectedCommunity.bots.get(botId) ?? emptyExternalBotPermissions();
         } else {
-            return app.selectedChatDetails.bots.get(botId) ?? emptyExternalBotPermissions();
+            return app.selectedChat.bots.get(botId) ?? emptyExternalBotPermissions();
         }
     });
     let bot = $derived(botState.externalBots.get(botId));

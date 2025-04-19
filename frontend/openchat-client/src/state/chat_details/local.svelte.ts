@@ -59,6 +59,14 @@ export class ChatDetailsLocalStateManager {
         return noop;
     }
 
+    blockUser(id: ChatIdentifier, userId: string): UndoLocalUpdate {
+        return this.#getOrCreate(id).blockedUsers.add(userId);
+    }
+
+    unblockUser(id: ChatIdentifier, userId: string): UndoLocalUpdate {
+        return this.#getOrCreate(id).blockedUsers.remove(userId);
+    }
+
     removeMember(id: ChatIdentifier, userId: string): UndoLocalUpdate {
         return this.#getOrCreate(id).members.remove(userId);
     }

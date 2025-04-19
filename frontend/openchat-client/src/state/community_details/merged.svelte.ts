@@ -6,7 +6,7 @@ import { CommunityServerState } from "./server";
 const empty = CommunityServerState.empty();
 
 export class CommunityMergedState {
-    #server: CommunityServerState | undefined;
+    #server = $state<CommunityServerState | undefined>();
     #userGroups = $derived(this.#mergeMap(this.server.userGroups, this.#local?.userGroups));
     #members = $derived(this.#mergeMap(this.server.members, this.#local?.members));
     #bots = $derived(this.#mergeMap(this.server.bots, this.#local?.bots));
@@ -40,6 +40,10 @@ export class CommunityMergedState {
 
     constructor(server: CommunityServerState) {
         this.#server = server;
+    }
+
+    overwriteServerState(val: CommunityServerState) {
+        this.#server = val;
     }
 
     get userGroups() {

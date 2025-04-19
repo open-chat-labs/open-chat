@@ -7,7 +7,6 @@
         type ChatIdentifier,
         chatListScopeStore as chatListScope,
         type ChatType,
-        currentChatBlockedUsers,
         currentUser,
         type Dimensions,
         type EnhancedReplyContext,
@@ -475,11 +474,9 @@
         (!inert || canRevealDeleted || canRevealBlocked) && !readonly && !ephemeral,
     );
     let canUndelete = $derived(msg.deleted && msg.content.kind !== "deleted_content");
-    let senderDisplayName = $derived(
-        client.getDisplayName(sender, app.selectedCommunityDetails.members),
-    );
+    let senderDisplayName = $derived(client.getDisplayName(sender, app.selectedCommunity.members));
     let tips = $derived(msg.tips ? Object.entries(msg.tips) : []);
-    let canBlockUser = $derived(canBlockUsers && !$currentChatBlockedUsers.has(msg.sender));
+    let canBlockUser = $derived(canBlockUsers && !app.selectedChat.blockedUsers.has(msg.sender));
     let edited = $derived(msg.edited && !botContext?.finalised);
     let canShare = $derived(canShareMessage(msg.content));
     let canForward = $derived(client.canForward(msg.content));
@@ -617,9 +614,8 @@
                                         {#if sender !== undefined && multiUserChat}
                                             <WithRole
                                                 userId={sender.userId}
-                                                chatMembers={app.selectedChatDetails.members}
-                                                communityMembers={app.selectedCommunityDetails
-                                                    .members}>
+                                                chatMembers={app.selectedChat.members}
+                                                communityMembers={app.selectedCommunity.members}>
                                                 {#snippet children(communityRole, chatRole)}
                                                     <RoleIcon
                                                         level="community"

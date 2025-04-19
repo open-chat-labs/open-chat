@@ -1649,7 +1649,7 @@ export class OpenChat {
             if (resp.kind === "success") {
                 const userId = this.#liveState.user.userId;
                 if (userId !== undefined) {
-                    const m = app.selectedCommunityDetails.members.get(userId);
+                    const m = app.selectedCommunity.members.get(userId);
                     if (m !== undefined) {
                         communityLocalUpdates.updateMember(id, userId, { ...m, displayName });
                     }
@@ -2170,7 +2170,7 @@ export class OpenChat {
         localMessageUpdates.markDeleted(messageId, userId);
         undeletingMessagesStore.delete(messageId);
 
-        const recipients = [...app.selectedChatDetails.userIds];
+        const recipients = [...app.selectedChat.userIds];
 
         rtcConnectionsManager.sendMessage(recipients, {
             kind: "remote_user_deleted_message",
@@ -2359,7 +2359,7 @@ export class OpenChat {
                 return false;
             });
 
-        this.#sendRtcMessage([...app.selectedChatDetails.userIds], {
+        this.#sendRtcMessage([...app.selectedChat.userIds], {
             kind: "remote_user_toggled_reaction",
             id: chatId,
             messageId: messageId,
@@ -2473,10 +2473,9 @@ export class OpenChat {
 
         if (!keepCurrentEvents) {
             clearServerEvents(chat.id);
-            chatStateStore.setProp(chat.id, "userGroupKeys", new Set<string>());
         }
 
-        await this.#updateUserStoreFromEvents(chat.id, resp.events);
+        await this.#updateUserStoreFromEvents(resp.events);
 
         this.#addServerEventsToStores(chat.id, resp.events, undefined, resp.expiredEventRanges);
 
@@ -2514,22 +2513,19 @@ export class OpenChat {
         return [...elevated, ...rest];
     }
 
-    async #updateUserStoreFromEvents(
-        chatId: ChatIdentifier,
-        events: EventWrapper<ChatEvent>[],
-    ): Promise<void> {
+    async #updateUserStoreFromEvents(events: EventWrapper<ChatEvent>[]): Promise<void> {
         const userId = this.#liveState.user.userId;
         const allUserIds = new Set<string>();
-        this.#getTruncatedUserIdsFromMembers([...app.selectedChatDetails.members.values()]).forEach(
-            (m) => allUserIds.add(m.userId),
+        this.#getTruncatedUserIdsFromMembers([...app.selectedChat.members.values()]).forEach((m) =>
+            allUserIds.add(m.userId),
         );
-        chatStateStore.getProp(chatId, "blockedUsers").forEach((u) => allUserIds.add(u));
-        app.selectedChatDetails.invitedUsers.forEach((u) => allUserIds.add(u));
+        app.selectedChat.blockedUsers.forEach((u) => allUserIds.add(u));
+        app.selectedChat.invitedUsers.forEach((u) => allUserIds.add(u));
         for (const u of userIdsFromEvents(events)) {
             allUserIds.add(u);
         }
 
-        app.selectedChatDetails.addUserIds([...allUserIds].filter((u) => u !== userId));
+        app.selectedChat.addUserIds([...allUserIds].filter((u) => u !== userId));
         await this.getMissingUsers(allUserIds);
     }
 
@@ -2544,22 +2540,34 @@ export class OpenChat {
     compareUsername = compareUsername;
 
     #blockUserLocally(chatId: ChatIdentifier, userId: string): UndoLocalUpdate {
-        chatStateStore.updateProp(chatId, "blockedUsers", (b) => new Set([...b, userId]));
-        return chatDetailsLocalUpdates.removeMember(chatId, userId);
+        const undos = [
+            chatDetailsLocalUpdates.blockUser(chatId, userId),
+            chatDetailsLocalUpdates.removeMember(chatId, userId),
+        ];
+        return () => {
+            undos.forEach((u) => u());
+        };
     }
 
-    #unblockUserLocally(chatId: ChatIdentifier, userId: string, addToMembers: boolean): void {
-        chatStateStore.updateProp(chatId, "blockedUsers", (b) => {
-            return new Set([...b].filter((u) => u !== userId));
-        });
+    #unblockUserLocally(
+        chatId: ChatIdentifier,
+        userId: string,
+        addToMembers: boolean,
+    ): UndoLocalUpdate {
+        const undos = [chatDetailsLocalUpdates.unblockUser(chatId, userId)];
         if (addToMembers) {
-            chatDetailsLocalUpdates.addMember(chatId, {
-                role: "member",
-                userId,
-                displayName: undefined,
-                lapsed: false,
-            });
+            undos.push(
+                chatDetailsLocalUpdates.addMember(chatId, {
+                    role: "member",
+                    userId,
+                    displayName: undefined,
+                    lapsed: false,
+                }),
+            );
         }
+        return () => {
+            undos.forEach((u) => u());
+        };
     }
 
     blockCommunityUser(id: CommunityIdentifier, userId: string): Promise<boolean> {
@@ -2598,33 +2606,33 @@ export class OpenChat {
     }
 
     blockUser(chatId: MultiUserChatIdentifier, userId: string): Promise<boolean> {
-        this.#blockUserLocally(chatId, userId);
+        const undo = this.#blockUserLocally(chatId, userId);
         return this.#sendRequest({ kind: "blockUserFromGroupChat", chatId, userId })
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    this.#unblockUserLocally(chatId, userId, true);
+                    undo();
                     return false;
                 }
                 return true;
             })
             .catch(() => {
-                this.#unblockUserLocally(chatId, userId, true);
+                undo();
                 return false;
             });
     }
 
     unblockUser(chatId: MultiUserChatIdentifier, userId: string): Promise<boolean> {
-        this.#unblockUserLocally(chatId, userId, false);
+        const undo = this.#unblockUserLocally(chatId, userId, false);
         return this.#sendRequest({ kind: "unblockUserFromGroupChat", chatId, userId })
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    this.#blockUserLocally(chatId, userId);
+                    undo();
                     return false;
                 }
                 return true;
             })
             .catch(() => {
-                this.#blockUserLocally(chatId, userId);
+                undo();
                 return false;
             });
     }
@@ -2877,10 +2885,10 @@ export class OpenChat {
         const context = this.#liveState.selectedMessageContext;
         if (context) {
             if (!initiating) {
-                if (app.selectedChatDetails.focusThreadMessageIndex !== undefined) {
+                if (app.selectedChat.focusThreadMessageIndex !== undefined) {
                     this.loadEventWindow(
                         context.chatId,
-                        app.selectedChatDetails.focusThreadMessageIndex,
+                        app.selectedChat.focusThreadMessageIndex,
                         threadRootEvent,
                         true,
                     );
@@ -2980,7 +2988,7 @@ export class OpenChat {
         // make sure that the message context (chatId or threadRootMessageIndex) has not changed
         if (!messageContextsEqual(context, this.#liveState.selectedMessageContext)) return [];
 
-        await this.#updateUserStoreFromEvents(chatId, resp.events);
+        await this.#updateUserStoreFromEvents(resp.events);
 
         this.#addServerEventsToStores(chatId, resp.events, threadRootMessageIndex, []);
 
@@ -3269,7 +3277,7 @@ export class OpenChat {
         }).catch(() => "failure");
         if (resp !== "failure") {
             const [lapsed, members] = partition(resp.members, (m) => m.lapsed);
-            app.setSelectedCommunityDetails(
+            app.setCommunityDetailsFromServer(
                 id,
                 resp.userGroups,
                 new Map(members.map((m) => [m.userId, m])),
@@ -3281,12 +3289,16 @@ export class OpenChat {
                 resp.apiKeys,
                 resp.rules,
             );
-            if (app.selectedCommunityDetails) {
-                this.#updateUserStoreFromCommunityState(app.selectedCommunityDetails);
+            if (app.selectedCommunity) {
+                this.#updateUserStoreFromCommunityState(app.selectedCommunity);
             }
         }
     }
 
+    // TODO - we need to deal with the fact that this runs on every iteration of the event loop
+    // not just when the chat changes, we need to know the difference. Possibly we don't want
+    // to create a new instance of ChatDetailsMerged but rather always just update the existing
+    // instance. Yes that's probably the answer.
     async #loadChatDetails(
         serverChat: ChatSummary,
         focusMessageIndex?: number,
@@ -3305,10 +3317,11 @@ export class OpenChat {
                     const lapsed = new Set(
                         resp.members.filter((m) => m.lapsed).map((m) => m.userId),
                     );
-                    app.setSelectedChatDetails(
+                    app.setChatDetailsFromServer(
                         serverChat.id,
                         new Map(members.map((m) => [m.userId, m])),
                         lapsed,
+                        resp.blockedUsers,
                         resp.invitedUsers,
                         resp.pinnedMessages,
                         resp.rules,
@@ -3317,12 +3330,16 @@ export class OpenChat {
                         focusMessageIndex,
                         focusThreadMessageIndex,
                     );
-                    chatStateStore.setProp(serverChat.id, "blockedUsers", resp.blockedUsers);
                 }
-                await this.#updateUserStoreFromEvents(serverChat.id, []);
+                await this.#updateUserStoreFromEvents([]);
                 break;
             case "direct_chat":
-                app.setDirectChatDetails(serverChat.id, focusMessageIndex, focusThreadMessageIndex);
+                app.setDirectChatDetails(
+                    serverChat.id,
+                    this.#liveState.user.userId,
+                    focusMessageIndex,
+                    focusThreadMessageIndex,
+                );
                 break;
         }
     }
@@ -3535,7 +3552,7 @@ export class OpenChat {
         threadRootMessageIndex: number | undefined,
     ): void {
         if (userId === this.#liveState.user.userId) {
-            const userIds = app.selectedChatDetails.userIds;
+            const userIds = app.selectedChat.userIds;
             rtcConnectionsManager.sendMessage([...userIds], {
                 kind: "remote_user_removed_message",
                 id: chatId,
@@ -3698,7 +3715,7 @@ export class OpenChat {
         messageEvent: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
     ): Promise<void> {
-        rtcConnectionsManager.sendMessage([...app.selectedChatDetails.userIds], {
+        rtcConnectionsManager.sendMessage([...app.selectedChat.userIds], {
             kind: "remote_user_sent_message",
             id: clientChat.id,
             messageEvent: serialiseMessageForRtc(messageEvent),
@@ -3999,13 +4016,13 @@ export class OpenChat {
     }
 
     #rulesNeedAccepting(): boolean {
-        const chatRules = app.selectedChatDetails.rules;
+        const chatRules = app.selectedChat.rules;
         const chat = this.#liveState.selectedChat;
         if (chat === undefined || chatRules === undefined) {
             return false;
         }
 
-        const communityRules = app.selectedCommunityDetails.rules;
+        const communityRules = app.selectedCommunity.rules;
         const community = this.#liveState.selectedCommunity;
 
         console.debug(
@@ -4468,17 +4485,15 @@ export class OpenChat {
     }
 
     setFocusMessageIndex(messageIndex: number | undefined): void {
-        app.selectedChatDetails.focusMessageIndex = messageIndex;
+        app.selectedChat.focusMessageIndex = messageIndex;
     }
 
     setFocusThreadMessageIndex(messageIndex: number | undefined): void {
-        app.selectedChatDetails.focusThreadMessageIndex = messageIndex;
+        app.selectedChat.focusThreadMessageIndex = messageIndex;
     }
 
-    expandDeletedMessages(chatId: ChatIdentifier, messageIndexes: Set<number>): void {
-        chatStateStore.updateProp(chatId, "expandedDeletedMessages", (data) => {
-            return new Set([...messageIndexes, ...data]);
-        });
+    expandDeletedMessages(messageIndexes: Set<number>): void {
+        app.selectedChat.expandDeletedMessages(messageIndexes);
     }
 
     remoteUserToggledReaction(
@@ -4719,7 +4734,7 @@ export class OpenChat {
     ): Promise<[UserSummary[], UserSummary[]]> {
         if (level === "channel") {
             // Put the existing channel members into a map for quick lookup
-            const channelMembers = newGroup ? undefined : app.selectedChatDetails.members;
+            const channelMembers = newGroup ? undefined : app.selectedChat.members;
 
             // First try searching the community members and return immediately if there are already enough matches
             // or if the caller does not have permission to invite users to the community
@@ -4765,8 +4780,8 @@ export class OpenChat {
                     // are already in a map
                     const existing =
                         level === "community"
-                            ? app.selectedCommunityDetails.members
-                            : app.selectedChatDetails.members;
+                            ? app.selectedCommunity.members
+                            : app.selectedChat.members;
 
                     // Remove any existing members from the global matches until there are at most `maxResults`
                     // TODO: Ideally we would return the total number of matches from the server and use that
@@ -4786,7 +4801,7 @@ export class OpenChat {
         const communityMatches = this.#searchCommunityUsersForChannelInvite(
             searchTerm,
             maxResults,
-            app.selectedChatDetails.members,
+            app.selectedChat.members,
         );
 
         return Promise.resolve([communityMatches, []]);
@@ -4799,7 +4814,7 @@ export class OpenChat {
     ): UserSummary[] {
         const termLower = term.toLowerCase();
         const matches: UserSummary[] = [];
-        for (const [userId, member] of app.selectedCommunityDetails.members) {
+        for (const [userId, member] of app.selectedCommunity.members) {
             let user = this.#liveState.userStore.get(userId);
             if (user?.username !== undefined) {
                 const displayName = member.displayName ?? user.displayName;
@@ -5125,7 +5140,7 @@ export class OpenChat {
     ): Promise<boolean> {
         if (newRole === oldRole) return Promise.resolve(true);
 
-        const m = app.selectedCommunityDetails.members.get(userId);
+        const m = app.selectedCommunity.members.get(userId);
         let undo = undefined;
         if (m !== undefined) {
             undo = communityLocalUpdates.updateMember(id, userId, { ...m, role: newRole });
@@ -5155,7 +5170,7 @@ export class OpenChat {
         const undo = chatDetailsLocalUpdates.updateMember(
             chatId,
             userId,
-            app.selectedChatDetails.members.get(userId),
+            app.selectedChat.members.get(userId),
             (m) => ({ ...m, role: newRole }),
         );
         return this.#sendRequest({ kind: "changeRole", chatId, userId, newRole })
@@ -5601,7 +5616,7 @@ export class OpenChat {
                 latestKnownUpdate: serverChat?.lastUpdated,
             });
             if (isSuccessfulEventsResponse(resp)) {
-                await this.#updateUserStoreFromEvents(chatId, resp.events);
+                await this.#updateUserStoreFromEvents(resp.events);
             }
             return resp;
         } catch {
@@ -6812,15 +6827,12 @@ export class OpenChat {
         if (this.#userLookupForMentions === undefined) {
             const lookup = {} as Record<string, UserOrUserGroup>;
             const userStore = this.#liveState.userStore;
-            for (const [userId] of app.selectedChatDetails.members) {
+            for (const [userId] of app.selectedChat.members) {
                 let user = userStore.get(userId);
                 if (user !== undefined && this.#liveState.selectedChat?.kind === "channel") {
                     user = {
                         ...user,
-                        displayName: this.getDisplayName(
-                            user,
-                            app.selectedCommunityDetails.members,
-                        ),
+                        displayName: this.getDisplayName(user, app.selectedCommunity.members),
                     };
                 }
                 if (user?.username !== undefined) {
@@ -7050,7 +7062,7 @@ export class OpenChat {
             if (chat.kind === "direct_chat") {
                 userIds.push(chat.them.userId);
             } else if (this.isChatPrivate(chat)) {
-                userIds = [...app.selectedChatDetails.members.keys()].filter((id) => id !== me);
+                userIds = [...app.selectedChat.members.keys()].filter((id) => id !== me);
             }
             if (userIds.length > 0) {
                 await Promise.all(
@@ -7089,7 +7101,7 @@ export class OpenChat {
         // * return it to the front end
         const displayName = this.getDisplayName(
             this.#liveState.user,
-            app.selectedCommunityDetails.members,
+            app.selectedCommunity.members,
         );
         const user = this.#liveState.user;
         const username = user.username;
@@ -8102,12 +8114,12 @@ export class OpenChat {
                             community: undefined,
                         };
 
-                        if (app.selectedChatDetails.rules?.enabled ?? false) {
-                            acceptedRules.chat = app.selectedChatDetails.rules?.version;
+                        if (app.selectedChat.rules?.enabled ?? false) {
+                            acceptedRules.chat = app.selectedChat.rules?.version;
                         }
 
-                        if (app.selectedCommunityDetails.rules?.enabled ?? false) {
-                            acceptedRules.community = app.selectedCommunityDetails.rules?.version;
+                        if (app.selectedCommunity.rules?.enabled ?? false) {
+                            acceptedRules.community = app.selectedCommunity.rules?.version;
                         }
                     }
 
@@ -8354,14 +8366,14 @@ export class OpenChat {
         let perm: ExternalBotPermissions | undefined;
         switch (id.kind) {
             case "community":
-                perm = app.selectedCommunityDetails.bots.get(botId);
+                perm = app.selectedCommunity.bots.get(botId);
                 // TODO - when chat state and global state are done
                 // the same way, we can return the undo fn here which
                 // will be better.
                 communityLocalUpdates.removeBot(id, botId);
                 break;
             case "group_chat":
-                perm = app.selectedChatDetails.bots.get(botId);
+                perm = app.selectedChat.bots.get(botId);
                 localChatSummaryUpdates.removeBot(id, botId);
                 break;
             case "direct_chat":
@@ -8382,12 +8394,12 @@ export class OpenChat {
         switch (id.kind) {
             case "community":
                 if (perm === undefined) return perm;
-                previousPermissions = app.selectedCommunityDetails.bots.get(botId);
+                previousPermissions = app.selectedCommunity.bots.get(botId);
                 communityLocalUpdates.installBot(id, botId, perm);
                 break;
             case "group_chat":
                 if (perm === undefined) return perm;
-                previousPermissions = app.selectedChatDetails.bots.get(botId);
+                previousPermissions = app.selectedChat.bots.get(botId);
                 localChatSummaryUpdates.installBot(id, botId, perm);
                 break;
             case "direct_chat":
