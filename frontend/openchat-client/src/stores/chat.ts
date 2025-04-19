@@ -73,7 +73,6 @@ export const selectedChatId = derived(selectedMessageContext, ($messageContext) 
 export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>(
     selectedChatId,
     () => ({
-        blockedUsers: new Set<string>(),
         confirmedEventIndexesLoaded: new DRange(),
         serverEvents: [],
         expiredEventRanges: new DRange(),
