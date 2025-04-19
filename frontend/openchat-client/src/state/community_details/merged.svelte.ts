@@ -34,6 +34,10 @@ export class CommunityMergedState {
         }
     }
 
+    get communityId() {
+        return this.#server?.communityId;
+    }
+
     private get server() {
         return this.#server ?? empty;
     }

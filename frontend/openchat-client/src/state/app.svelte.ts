@@ -128,12 +128,15 @@ class AppState {
         focusMessageIndex?: number,
         focusThreadMessageIndex?: number,
     ) {
-        if (chatIdentifiersEqual(chatId, this.#selectedChatId)) {
-            this.#selectedChat = new ChatDetailsMergedState(ChatDetailsServerState.empty(chatId));
-            this.#selectedChat.focusMessageIndex = focusMessageIndex;
-            this.#selectedChat.focusThreadMessageIndex = focusThreadMessageIndex;
-            this.#selectedChat.addUserIds([currentUserId]);
+        const serverState = ChatDetailsServerState.empty(chatId);
+        if (chatIdentifiersEqual(chatId, this.#selectedChat.chatId)) {
+            this.#selectedChat.overwriteServerState(serverState);
+        } else {
+            this.#selectedChat = new ChatDetailsMergedState(serverState);
         }
+        this.#selectedChat.focusMessageIndex = focusMessageIndex;
+        this.#selectedChat.focusThreadMessageIndex = focusThreadMessageIndex;
+        this.#selectedChat.addUserIds([currentUserId]);
     }
 
     setChatDetailsFromServer(
@@ -160,7 +163,13 @@ class AppState {
             bots,
             apiKeys,
         );
-        this.#selectedChat.overwriteServerState(serverState);
+
+        // if the chatId is still the same just overwrite the server state, otherwise splat the whole thing
+        if (chatIdentifiersEqual(chatId, this.#selectedChat.chatId)) {
+            this.#selectedChat.overwriteServerState(serverState);
+        } else {
+            this.#selectedChat = new ChatDetailsMergedState(serverState);
+        }
         this.#selectedChat.focusMessageIndex = focusMessageIndex;
         this.#selectedChat.focusThreadMessageIndex = focusThreadMessageIndex;
     }
@@ -189,7 +198,11 @@ class AppState {
             apiKeys,
             rules,
         );
-        this.#selectedCommunity.overwriteServerState(serverState);
+        if (communityIdentifiersEqual(communityId, this.#selectedCommunity.communityId)) {
+            this.#selectedCommunity.overwriteServerState(serverState);
+        } else {
+            this.#selectedCommunity = new CommunityMergedState(serverState);
+        }
     }
 }
 
