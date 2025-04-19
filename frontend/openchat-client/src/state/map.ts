@@ -1,7 +1,7 @@
 import { SvelteMap, SvelteSet } from "svelte/reactivity";
 import { scheduleUndo, type UndoLocalUpdate } from "./undo";
 
-export interface IReadonlyMap<K, V> {
+export interface ReadonlyMap<K, V> {
     get(key: K): V | undefined;
     has(key: K): boolean;
     get size(): number;
@@ -9,47 +9,7 @@ export interface IReadonlyMap<K, V> {
     entries(): IterableIterator<[K, V]>;
     keys(): IterableIterator<K>;
     values(): IterableIterator<V>;
-    forEach(callback: (value: V, key: K, map: IReadonlyMap<K, V>) => void): void;
-}
-
-export class ReadonlyMap<K, V> implements Iterable<[K, V]> {
-    #map: Map<K, V>;
-
-    constructor(map: Map<K, V>) {
-        this.#map = map;
-    }
-
-    get(key: K): V | undefined {
-        return this.#map.get(key);
-    }
-
-    has(key: K): boolean {
-        return this.#map.has(key);
-    }
-
-    get size(): number {
-        return this.#map.size;
-    }
-
-    [Symbol.iterator](): Iterator<[K, V]> {
-        return this.#map[Symbol.iterator]();
-    }
-
-    entries(): IterableIterator<[K, V]> {
-        return this.#map.entries();
-    }
-
-    keys(): IterableIterator<K> {
-        return this.#map.keys();
-    }
-
-    values(): IterableIterator<V> {
-        return this.#map.values();
-    }
-
-    forEach(callback: (value: V, key: K, map: ReadonlyMap<K, V>) => void): void {
-        this.#map.forEach((value, key) => callback(value, key, this));
-    }
+    forEach(callback: (value: V, key: K, map: ReadonlyMap<K, V>) => void): void;
 }
 
 export class LocalMap<K, V> {

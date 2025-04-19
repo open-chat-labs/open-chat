@@ -1,49 +1,14 @@
 import { SvelteSet } from "svelte/reactivity";
 import { scheduleUndo, type UndoLocalUpdate } from "./undo";
 
-export interface IReadonlySet<T> {
+export interface ReadonlySet<T> {
     has(item: T): boolean;
     get size(): number;
     [Symbol.iterator](): Iterator<T>;
     values(): IterableIterator<T>;
     keys(): IterableIterator<T>;
     entries(): IterableIterator<[T, T]>;
-    forEach(callback: (value: T, value2: T, set: IReadonlySet<T>) => void): void;
-}
-
-/**
- * This is used for the ultimate result of merging server & local state since we want the set itself to be readonly
- * to prevent accidental mutation rather than just the property being readonly.
- */
-export class ReadonlySet<T> implements IReadonlySet<T> {
-    #set: Set<T>;
-    constructor(s: Set<T>) {
-        this.#set = s;
-    }
-    has(item: T): boolean {
-        return this.#set.has(item);
-    }
-    get size() {
-        return this.#set.size;
-    }
-    [Symbol.iterator](): Iterator<T> {
-        return this.#set[Symbol.iterator]();
-    }
-    values(): IterableIterator<T> {
-        return this.#set.values();
-    }
-
-    keys(): IterableIterator<T> {
-        return this.#set.keys();
-    }
-
-    entries(): IterableIterator<[T, T]> {
-        return this.#set.entries();
-    }
-
-    forEach(callback: (value: T, value2: T, set: ReadonlySet<T>) => void): void {
-        this.#set.forEach((v) => callback(v, v, this));
-    }
+    forEach(callback: (value: T, value2: T, set: ReadonlySet<T>) => void): void;
 }
 
 /**

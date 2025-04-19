@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { IReadonlySet, OpenChat } from "openchat-client";
+    import type { OpenChat, ReadonlySet } from "openchat-client";
     import { AvatarSize, userStore } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -13,7 +13,7 @@
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        referrals: IReadonlySet<string>;
+        referrals: ReadonlySet<string>;
     }
 
     let { referrals }: Props = $props();

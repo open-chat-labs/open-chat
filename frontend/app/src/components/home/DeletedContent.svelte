@@ -20,7 +20,7 @@
         `${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`,
     );
     let username = $derived(
-        client.getDisplayNameById(content.deletedBy, app.selectedCommunityDetails.members),
+        client.getDisplayNameById(content.deletedBy, app.selectedCommunity.members),
     );
 </script>
 

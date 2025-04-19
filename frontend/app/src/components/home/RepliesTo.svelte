@@ -38,7 +38,7 @@
     let displayName = $derived(
         me
             ? client.toTitleCase($_("you"))
-            : client.getDisplayNameById(repliesTo.senderId, app.selectedCommunityDetails.members),
+            : client.getDisplayNameById(repliesTo.senderId, app.selectedCommunity.members),
     );
 
     function getUrl() {

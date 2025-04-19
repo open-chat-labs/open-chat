@@ -36,7 +36,7 @@
 
     let hovering = $state(false);
 
-    let displayName = $derived(client.getDisplayName(user, app.selectedCommunityDetails.members));
+    let displayName = $derived(client.getDisplayName(user, app.selectedCommunity.members));
 
     function click(ev: Event) {
         if (profile) {

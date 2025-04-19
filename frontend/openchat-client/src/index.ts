@@ -6,10 +6,10 @@ export * from "./stores";
 
 export { app } from "./state/app.svelte";
 export { botState } from "./state/bots.svelte";
-export { type IReadonlyMap } from "./state/map";
+export { type ReadonlyMap } from "./state/map";
 export * from "./state/path.svelte";
 export { debouncedDerived } from "./state/reactivity.svelte";
-export { type IReadonlySet } from "./state/set";
+export { type ReadonlySet } from "./state/set";
 export { ScreenHeight, ScreenWidth, ui, type Layout } from "./state/ui.svelte";
 export * from "./state/undo";
 export type { FailedMessages } from "./stores/failedMessages";

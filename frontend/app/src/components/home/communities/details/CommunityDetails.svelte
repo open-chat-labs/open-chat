@@ -1,8 +1,8 @@
 <script lang="ts">
     import {
         type CommunitySummary,
-        type IReadonlySet,
         type Metrics,
+        type ReadonlySet,
         type Rules,
     } from "openchat-client";
     import { i18nKey } from "../../../../i18n/i18n";
@@ -31,7 +31,7 @@
         metrics: Metrics;
         canDelete: boolean;
         canInvite: boolean;
-        referrals: IReadonlySet<string>;
+        referrals: ReadonlySet<string>;
     }
 
     let {

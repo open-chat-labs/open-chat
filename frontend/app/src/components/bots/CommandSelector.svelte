@@ -4,7 +4,7 @@
         ChatSummary,
         CommunitySummary,
         ExternalBotPermissions,
-        IReadonlyMap,
+        ReadonlyMap,
         MessageContext,
         OpenChat,
         PermissionRole,
@@ -12,7 +12,6 @@
     import {
         app,
         botState,
-        currentChatBots,
         installedDirectBots,
         isPermitted,
         messagePermissionsForSelectedChat,
@@ -50,11 +49,11 @@
     let installedBots = $derived.by(() => {
         switch (messageContext.chatId.kind) {
             case "channel":
-                return app.selectedCommunityDetails.bots;
+                return app.selectedCommunity.bots;
             case "direct_chat":
                 return $installedDirectBots;
             default:
-                return $currentChatBots;
+                return app.selectedChat.bots;
         }
     });
 
@@ -138,7 +137,7 @@
 
     function hasPermissionForCommand(
         command: FlattenedCommand,
-        installedBots: IReadonlyMap<string, ExternalBotPermissions>,
+        installedBots: ReadonlyMap<string, ExternalBotPermissions>,
         chat: ChatSummary | undefined,
         community: CommunitySummary | undefined,
     ): boolean {

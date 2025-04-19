@@ -25,7 +25,7 @@
     let displayName = $derived(
         me
             ? client.toTitleCase($_("you"))
-            : client.getDisplayName(replyingTo.sender, app.selectedCommunityDetails.members),
+            : client.getDisplayName(replyingTo.sender, app.selectedCommunity.members),
     );
 </script>
 

@@ -1,7 +1,7 @@
 <script lang="ts">
     import type {
         CommunitySummary,
-        IReadonlyMap,
+        ReadonlyMap,
         Member,
         OpenChat,
         UserGroupDetails,
@@ -41,12 +41,12 @@
     let communityUsersList: UserSummary[] = $state([]);
 
     onMount(() => {
-        communityUsers = createLookup(app.selectedCommunityDetails.members, $userStore);
+        communityUsers = createLookup(app.selectedCommunity.members, $userStore);
         communityUsersList = Object.values(communityUsers);
     });
 
     function createLookup(
-        members: IReadonlyMap<string, Member>,
+        members: ReadonlyMap<string, Member>,
         allUsers: UserLookup,
     ): Record<string, UserSummary> {
         return [...members.values()].reduce(
@@ -119,7 +119,7 @@
         openedGroupId = undefined;
     }
     let searchTermLower = $derived(searchTerm.toLowerCase());
-    let userGroups = $derived([...app.selectedCommunityDetails.userGroups.values()]);
+    let userGroups = $derived([...app.selectedCommunity.userGroups.values()]);
     let canManageUserGroups = $derived(client.canManageUserGroups(community.id));
     let matchingGroups = $derived(userGroups.filter((ug) => matchesSearch(searchTermLower, ug)));
 </script>

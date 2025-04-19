@@ -1,87 +1,89 @@
-import { compareUsername, nullUser } from "./user";
-import type {
-    ChatSummary,
-    EventWrapper,
-    GroupChatSummary,
-    MessageContent,
-    ChatEvent,
-    ReplyContext,
-    Reaction,
-    Message,
-    Mention,
-    CandidateGroupChat,
-    PollVotes,
-    PollContent,
-    MemberRole,
-    CryptocurrencyContent,
-    AggregateCommonEvents,
-    Metrics,
-    SendMessageSuccess,
-    TransferSuccess,
-    UserLookup,
-    UserSummary,
-    LocalChatSummaryUpdates,
-    LocalMessageUpdates,
-    LocalReaction,
-    LocalPollVote,
-    CryptocurrencyTransfer,
-    Tally,
-    AccessControlled,
-    HasMembershipRole,
-    MessageContext,
-    MultiUserChatIdentifier,
-    MultiUserChat,
-    ChatListScope,
-    CryptocurrencyDetails,
-    TimelineItem,
-    TipsReceived,
-    ThreadSummary,
-    MessagePermission,
-    ChatPermissions,
-    OptionalChatPermissions,
-    MessagePermissions,
-    OptionalMessagePermissions,
-    OptionUpdate,
-    GovernanceProposalsSubtype,
-    CreatedUser,
-    ChannelSummary,
-    MessageFormatter,
-} from "openchat-shared";
-import {
-    emptyChatMetrics,
-    nullMembership,
-    ChatMap,
-    MessageMap,
-    isAttachmentContent,
-    applyOptionUpdate,
-    updateFromOptions,
-    defaultOptionalMessagePermissions,
-    defaultOptionalChatPermissions,
-    getContentAsFormattedText,
-    getContentAsText,
-    messageContextsEqual,
-    random64,
-    OPENCHAT_VIDEO_CALL_AVATAR_URL,
-    OPENCHAT_VIDEO_CALL_USER_ID,
-    OPENCHAT_BOT_USER_ID,
-    OPENCHAT_BOT_AVATAR_URL,
-} from "openchat-shared";
-import { distinctBy, groupWhile, toRecordFiltered } from "../utils/list";
-import { areOnSameDay } from "../utils/date";
 import DRange from "drange";
 import Identicon from "identicon.js";
 import md5 from "md5";
-import { rtcConnectionsManager } from "../utils/rtcConnectionsManager";
-import type { UnconfirmedMessages } from "../stores/unconfirmed";
+import type {
+    AccessControlled,
+    AggregateCommonEvents,
+    CandidateGroupChat,
+    ChannelSummary,
+    ChatEvent,
+    ChatListScope,
+    ChatPermissions,
+    ChatSummary,
+    CreatedUser,
+    CryptocurrencyContent,
+    CryptocurrencyDetails,
+    CryptocurrencyTransfer,
+    EventWrapper,
+    GovernanceProposalsSubtype,
+    GroupChatSummary,
+    HasMembershipRole,
+    LocalChatSummaryUpdates,
+    LocalMessageUpdates,
+    LocalPollVote,
+    LocalReaction,
+    MemberRole,
+    Mention,
+    Message,
+    MessageContent,
+    MessageContext,
+    MessageFormatter,
+    MessagePermission,
+    MessagePermissions,
+    Metrics,
+    MultiUserChat,
+    MultiUserChatIdentifier,
+    OptionalChatPermissions,
+    OptionalMessagePermissions,
+    OptionUpdate,
+    PollContent,
+    PollVotes,
+    Reaction,
+    ReplyContext,
+    SendMessageSuccess,
+    Tally,
+    ThreadSummary,
+    TimelineItem,
+    TipsReceived,
+    TransferSuccess,
+    UserLookup,
+    UserSummary,
+} from "openchat-shared";
+import {
+    applyOptionUpdate,
+    bigIntMax,
+    ChatMap,
+    defaultOptionalChatPermissions,
+    defaultOptionalMessagePermissions,
+    emptyChatMetrics,
+    getContentAsFormattedText,
+    getContentAsText,
+    isAttachmentContent,
+    messageContextsEqual,
+    MessageMap,
+    messagePermissionsList,
+    nullMembership,
+    OPENCHAT_BOT_AVATAR_URL,
+    OPENCHAT_BOT_USER_ID,
+    OPENCHAT_VIDEO_CALL_AVATAR_URL,
+    OPENCHAT_VIDEO_CALL_USER_ID,
+    random64,
+    updateFromOptions,
+} from "openchat-shared";
 import { get } from "svelte/store";
-import { formatTokens } from "./cryptoFormatter";
-import { currentChatUserIds } from "../stores/chat";
-import type { TypersByKey } from "../stores/typing";
-import { tallyKey } from "../stores/proposalTallies";
-import { hasOwnerRights, isPermitted } from "./permissions";
+import { app } from "../state/app.svelte";
+import type { ReadonlySet } from "../state/set";
 import { cryptoLookup } from "../stores/crypto";
-import { bigIntMax, messagePermissionsList } from "openchat-shared";
 import type { MessageFilter } from "../stores/messageFilters";
+import { tallyKey } from "../stores/proposalTallies";
+import type { TypersByKey } from "../stores/typing";
+import type { UnconfirmedMessages } from "../stores/unconfirmed";
+import { areOnSameDay } from "../utils/date";
+import { distinctBy, groupWhile, toRecordFiltered } from "../utils/list";
+import { rtcConnectionsManager } from "../utils/rtcConnectionsManager";
+import { formatTokens } from "./cryptoFormatter";
+import { hasOwnerRights, isPermitted } from "./permissions";
+import { compareUsername, nullUser } from "./user";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -642,7 +644,7 @@ export function groupBySender<T extends ChatEvent>(events: EventWrapper<T>[]): E
 export function groupEvents(
     events: EventWrapper<ChatEvent>[],
     myUserId: string,
-    expandedDeletedMessages: Set<number>,
+    expandedDeletedMessages: ReadonlySet<number>,
     groupInner?: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][],
 ): TimelineItem<ChatEvent>[] {
     return flattenTimeline(
@@ -688,7 +690,7 @@ export function isEventKindHidden(kind: ChatEvent["kind"]): boolean {
 function reduceJoinedOrLeft(
     events: EventWrapper<ChatEvent>[],
     myUserId: string,
-    expandedDeletedMessages: Set<number>,
+    expandedDeletedMessages: ReadonlySet<number>,
 ): EventWrapper<ChatEvent>[] {
     function getLatestAggregateEventIfExists(
         events: EventWrapper<ChatEvent>[],
@@ -778,7 +780,11 @@ function reduceJoinedOrLeft(
     }, []);
 }
 
-function messageIsHidden(message: Message, myUserId: string, expandedDeletedMessages: Set<number>) {
+function messageIsHidden(
+    message: Message,
+    myUserId: string,
+    expandedDeletedMessages: ReadonlySet<number>,
+) {
     if (message.content.kind === "message_reminder_created_content" && message.content.hidden) {
         return true;
     }
@@ -1911,7 +1917,7 @@ export function stopTyping(
     userId: string,
     threadRootMessageIndex?: number,
 ): void {
-    rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], {
+    rtcConnectionsManager.sendMessage([...app.selectedChat.userIds], {
         kind: "remote_user_stopped_typing",
         id,
         userId,
@@ -1924,7 +1930,7 @@ export function startTyping(
     userId: string,
     threadRootMessageIndex?: number,
 ): void {
-    rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], {
+    rtcConnectionsManager.sendMessage([...app.selectedChat.userIds], {
         kind: "remote_user_typing",
         id,
         userId,

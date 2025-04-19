@@ -196,10 +196,7 @@
                                     </span>
                                 {:else}
                                     <span class="display-name">
-                                        {client.getDisplayName(
-                                            item,
-                                            app.selectedCommunityDetails.members,
-                                        )}
+                                        {client.getDisplayName(item, app.selectedCommunity.members)}
                                     </span>
                                     <span class="username">
                                         @{item.username}

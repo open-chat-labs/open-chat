@@ -1,48 +1,48 @@
 <script lang="ts">
-    import ThreadHeader from "./ThreadHeader.svelte";
-    import Footer from "../Footer.svelte";
     import type {
         AttachmentContent,
-        ChatSummary,
         ChatEvent as ChatEventType,
+        ChatIdentifier,
+        ChatSummary,
         EnhancedReplyContext,
         EventWrapper,
         Message,
-        OpenChat,
-        User,
-        TimelineItem,
         MessageContent,
         MessageContext,
-        ChatIdentifier,
+        OpenChat,
+        TimelineItem,
+        User,
     } from "openchat-client";
-    import { LEDGER_CANISTER_ICP, messageContextsEqual, subscribe } from "openchat-client";
+    import {
+        app,
+        draftMessagesStore,
+        failedMessagesStore,
+        lastCryptoSent,
+        LEDGER_CANISTER_ICP,
+        messageContextsEqual,
+        messagesRead,
+        subscribe,
+        threadEvents,
+        threadsFollowedByMeStore,
+        unconfirmed,
+        currentUser as user,
+    } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import Loading from "../../Loading.svelte";
-    import PollBuilder from "../PollBuilder.svelte";
-    import GiphySelector from "../GiphySelector.svelte";
-    import MemeBuilder from "../MemeBuilder.svelte";
-    import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
+    import { randomSentence } from "../../../utils/randomMsg";
+    import AreYouSure from "../../AreYouSure.svelte";
+    import Loading from "../../Loading.svelte";
     import ChatEvent from "../ChatEvent.svelte";
     import ChatEventList from "../ChatEventList.svelte";
-    import { randomSentence } from "../../../utils/randomMsg";
-    import TimelineDate from "../TimelineDate.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
+    import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
+    import Footer from "../Footer.svelte";
+    import GiphySelector from "../GiphySelector.svelte";
+    import MemeBuilder from "../MemeBuilder.svelte";
     import P2PSwapContentBuilder from "../P2PSwapContentBuilder.svelte";
-    import AreYouSure from "../../AreYouSure.svelte";
-    import {
-        currentUser as user,
-        focusThreadMessageIndex as focusMessageIndex,
-        lastCryptoSent,
-        draftMessagesStore,
-        unconfirmed,
-        messagesRead,
-        currentChatBlockedUsers,
-        threadEvents,
-        failedMessagesStore,
-        expandedDeletedMessages,
-        threadsFollowedByMeStore,
-    } from "openchat-client";
+    import PollBuilder from "../PollBuilder.svelte";
+    import TimelineDate from "../TimelineDate.svelte";
+    import ThreadHeader from "./ThreadHeader.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -76,7 +76,7 @@
     let messageContext = $derived({ chatId: chat.id, threadRootMessageIndex });
     let threadRootMessage = $derived(rootEvent.event);
     let blocked = $derived(
-        chat.kind === "direct_chat" && $currentChatBlockedUsers.has(chat.them.userId),
+        chat.kind === "direct_chat" && app.selectedChat.blockedUsers.has(chat.them.userId),
     );
     let draftMessage = $derived($draftMessagesStore.get(messageContext));
     let textContent = $derived(draftMessage?.textContent);
@@ -91,7 +91,7 @@
         client.groupEvents(
             [...events].reverse(),
             $user.userId,
-            $expandedDeletedMessages,
+            app.selectedChat.expandedDeletedMessages,
         ) as TimelineItem<Message>[],
     );
     let readonly = $derived(client.isChatReadOnly(chat.id));
@@ -388,7 +388,8 @@
                                     isReadByMe($messagesRead, evt)}
                                 observer={messageObserver}
                                 focused={evt.event.kind === "message" &&
-                                    $focusMessageIndex === evt.event.messageIndex}
+                                    app.selectedChat.focusThreadMessageIndex ===
+                                        evt.event.messageIndex}
                                 {readonly}
                                 {threadRootMessage}
                                 pinned={false}

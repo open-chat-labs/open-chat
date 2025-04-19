@@ -878,7 +878,7 @@
         modal = {
             kind: "edit_community",
             community,
-            communityRules: app.selectedCommunityDetails.rules ?? defaultChatRules("community"),
+            communityRules: app.selectedCommunity.rules ?? defaultChatRules("community"),
         };
     }
 
