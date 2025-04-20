@@ -236,12 +236,14 @@
             });
         });
 
-        heightObserver.observe(messagesDiv!, {
-            attributes: true,
-            childList: true,
-            subtree: true,
-            attributeFilter: ["scrollHeight"],
-        });
+        if (messagesDiv) {
+            heightObserver.observe(messagesDiv!, {
+                attributes: true,
+                childList: true,
+                subtree: true,
+                attributeFilter: ["scrollHeight"],
+            });
+        }
 
         messageObserver = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
             entries.forEach((entry) => {
@@ -538,7 +540,7 @@
                     pathState.route.kind === "selected_channel_route") &&
                 (pathState.route.open || pathState.route.threadMessageIndex !== undefined)
             ) {
-                client.setFocusThreadMessageIndex(chat.id, pathState.route.threadMessageIndex);
+                client.setFocusThreadMessageIndex(pathState.route.threadMessageIndex);
                 client.openThread(msgEvent, false);
             } else {
                 client.closeThread();
@@ -723,9 +725,9 @@
 
     function setFocusMessageIndex(messageIndex: number | undefined) {
         if (threadRootEvent === undefined) {
-            client.setFocusMessageIndex(chat.id, messageIndex);
+            client.setFocusMessageIndex(messageIndex);
         } else {
-            client.setFocusThreadMessageIndex(chat.id, messageIndex);
+            client.setFocusThreadMessageIndex(messageIndex);
         }
     }
 </script>

@@ -8,14 +8,14 @@
         type ExternalBot,
         type ExternalBotPermissions,
         type FullMember,
-        type IReadonlyMap,
-        type IReadonlySet,
         type MemberRole,
         type Member as MemberType,
         type MultiUserChat,
         type MultiUserChatIdentifier,
         type OpenChat,
         type PublicApiKeyDetails,
+        type ReadonlyMap,
+        type ReadonlySet,
         type UserLookup,
         type UserSummary,
         botState,
@@ -50,14 +50,14 @@
     interface Props {
         closeIcon: "close" | "back";
         collection: CommunitySummary | MultiUserChat;
-        invited: IReadonlySet<string>;
+        invited: ReadonlySet<string>;
         members: MemberType[];
-        blocked: IReadonlySet<string>;
-        lapsed: IReadonlySet<string>;
-        installedBots: IReadonlyMap<string, ExternalBotPermissions>;
+        blocked: ReadonlySet<string>;
+        lapsed: ReadonlySet<string>;
+        installedBots: ReadonlyMap<string, ExternalBotPermissions>;
         initialUsergroup?: number | undefined;
         showHeader?: boolean;
-        apiKeys: IReadonlyMap<string, PublicApiKeyDetails>;
+        apiKeys: ReadonlyMap<string, PublicApiKeyDetails>;
         onClose: () => void;
         onShowInviteUsers: () => void;
         onChangeRole?: (args: { userId: string; newRole: MemberRole; oldRole: MemberRole }) => void;
@@ -96,7 +96,7 @@
     let installingBot: BotMatchType | undefined = undefined;
 
     function hydrateBots(
-        bots: IReadonlyMap<string, ExternalBotPermissions>,
+        bots: ReadonlyMap<string, ExternalBotPermissions>,
         allBots: Map<string, ExternalBot>,
     ): EnhancedExternalBot[] {
         return [...bots.entries()].reduce((bots, [id, perm]) => {
@@ -114,7 +114,7 @@
     function matchingUsers(
         term: string,
         users: UserLookup,
-        ids: IReadonlySet<string>,
+        ids: ReadonlySet<string>,
         includeMe = false,
     ): UserSummary[] {
         return Array.from(ids).reduce((matching, id) => {

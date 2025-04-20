@@ -1,6 +1,7 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
     import {
+        app,
         type AttachmentContent,
         botState,
         type ChatIdentifier,
@@ -11,7 +12,6 @@
         type CommunitySummary,
         currentChatAttachment,
         currentChatEditingEvent,
-        currentChatPinnedMessages,
         currentChatReplyingTo,
         currentChatTextContent,
         blockedUsers as directlyBlockedUsers,
@@ -402,7 +402,7 @@
                 {blocked}
                 {readonly}
                 selectedChatSummary={chat}
-                hasPinned={$currentChatPinnedMessages.size > 0} />
+                hasPinned={app.selectedChat.pinnedMessages.size > 0} />
         {/if}
     {/if}
     {#if externalUrl !== undefined}

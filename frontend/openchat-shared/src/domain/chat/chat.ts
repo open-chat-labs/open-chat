@@ -773,9 +773,15 @@ export type LocalMessageUpdates = {
     lastUpdated: number;
 };
 
-export type EventsResponse<T extends ChatEvent> = EventsSuccessResult<T> | ReplicaNotUpToDate | OCError | Failure;
+export type EventsResponse<T extends ChatEvent> =
+    | EventsSuccessResult<T>
+    | ReplicaNotUpToDate
+    | OCError
+    | Failure;
 
-export function isSuccessfulEventsResponse<T extends ChatEvent>(response: EventsResponse<T> | undefined): response is EventsSuccessResult<T> {
+export function isSuccessfulEventsResponse<T extends ChatEvent>(
+    response: EventsResponse<T> | undefined,
+): response is EventsSuccessResult<T> {
     return response !== undefined && typeof response === "object" && "events" in response;
 }
 
@@ -1475,25 +1481,12 @@ export type GroupChatDetails = {
 /**
  * This will hold all chat specific state
  * All properties are optional but individual derived stores can provide their own default values
+ * TODO - the goal is to get rid of all of these
  */
 export type ChatSpecificState = {
-    lapsedMembers: Set<string>;
-    members: Member[];
-    membersMap: Map<string, Member>;
-    blockedUsers: Set<string>;
-    invitedUsers: Set<string>;
-    pinnedMessages: Set<number>;
-    rules?: VersionedRules;
-    userIds: Set<string>;
-    focusMessageIndex?: number;
-    focusThreadMessageIndex?: number;
     confirmedEventIndexesLoaded: DRange;
-    userGroupKeys: Set<string>;
     serverEvents: EventWrapper<ChatEvent>[];
-    expandedDeletedMessages: Set<number>;
     expiredEventRanges: DRange;
-    bots: Map<string, ExternalBotPermissions>;
-    apiKeys: Map<string, PublicApiKeyDetails>;
 };
 
 export type GroupChatDetailsUpdates = {
@@ -2080,7 +2073,7 @@ export type UndeleteMessageResponse =
     | {
           kind: "success";
           message: Message;
-    }
+      }
     | Failure
     | OCError
     | Offline;
@@ -2089,7 +2082,7 @@ export type PushEventSuccess = {
     kind: "success";
     eventIndex: number;
     timestamp: bigint;
-}
+};
 
 export type UnpinMessageResponse = PushEventSuccess | OCError | Offline;
 export type PinMessageResponse = PushEventSuccess | OCError | Offline;

@@ -28,9 +28,7 @@
 
     let { content, messageIndex, timestamp, senderId }: Props = $props();
 
-    let displayName = $derived(
-        client.getDisplayNameById(senderId, app.selectedCommunityDetails.members),
-    );
+    let displayName = $derived(client.getDisplayNameById(senderId, app.selectedCommunity.members));
     let incall = $derived(
         $activeVideoCall !== undefined &&
             $selectedChat !== undefined &&

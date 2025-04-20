@@ -8,7 +8,7 @@
     const client = getContext<OpenChat>("client");
 
     let frozen = $derived(client.isCommunityFrozen($selectedCommunity?.id));
-    let rules = $derived(app.selectedCommunityDetails.rules ?? defaultChatRules("community"));
+    let rules = $derived(app.selectedCommunity.rules ?? defaultChatRules("community"));
     let canDelete = $derived(
         $selectedCommunity !== undefined &&
             !frozen &&
@@ -46,7 +46,7 @@
             {rules}
             metrics={$selectedCommunity.metrics}
             community={$selectedCommunity}
-            referrals={app.selectedCommunityDetails.referrals} />
+            referrals={app.selectedCommunity.referrals} />
     </div>
 {/if}
 

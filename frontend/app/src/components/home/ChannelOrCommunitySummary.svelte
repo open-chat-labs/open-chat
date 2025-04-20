@@ -1,7 +1,6 @@
 <script lang="ts">
     import {
         app,
-        currentChatRules,
         defaultChatRules,
         OpenChat,
         publish,
@@ -40,7 +39,7 @@
     let canEditChannel = $derived(
         !channelFrozen && !communityFrozen && client.canEditGroupDetails(channel.id),
     );
-    let rules = $derived(app.selectedCommunityDetails.rules ?? defaultChatRules("community"));
+    let rules = $derived(app.selectedCommunity.rules ?? defaultChatRules("community"));
     let canDeleteCommunity = $derived(client.canDeleteCommunity(community.id));
     let canInviteToCommunity = $derived(!communityFrozen && client.canInviteUsers(community.id));
 
@@ -48,7 +47,10 @@
         if (canEditChannel) {
             publish("editGroup", {
                 chat: channel,
-                rules: { ...($currentChatRules ?? defaultChatRules("channel")), newVersion: false },
+                rules: {
+                    ...(app.selectedChat.rules ?? defaultChatRules("channel")),
+                    newVersion: false,
+                },
             });
         }
     }
@@ -89,6 +91,6 @@
             {rules}
             metrics={community.metrics}
             {community}
-            referrals={app.selectedCommunityDetails.referrals} />
+            referrals={app.selectedCommunity.referrals} />
     {/snippet}
 </ScopeToggle>

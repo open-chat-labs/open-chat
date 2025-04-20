@@ -1,9 +1,8 @@
 import type {
-    CommunityIdentifier,
+    ChatIdentifier,
     ExternalBotPermissions,
     Member,
     PublicApiKeyDetails,
-    UserGroupDetails,
     VersionedRules,
 } from "openchat-shared";
 import { SvelteMap } from "svelte/reactivity";
@@ -14,12 +13,10 @@ import { scheduleUndo, type UndoLocalUpdate } from "../undo";
 export class ChatDetailsLocalState {
     #rules = $state<VersionedRules | undefined>();
 
+    readonly pinnedMessages = new LocalSet<number>();
     readonly invitedUsers = new LocalSet<string>();
     readonly blockedUsers = new LocalSet<string>();
-    readonly referrals = new LocalSet<string>();
-    readonly lapsedMembers = new LocalSet<string>();
     readonly members = new LocalMap<string, Member>();
-    readonly userGroups = new LocalMap<number, UserGroupDetails>();
     readonly bots = new LocalMap<string, ExternalBotPermissions>();
     readonly apiKeys = new LocalMap<string, PublicApiKeyDetails>();
 
@@ -31,39 +28,62 @@ export class ChatDetailsLocalState {
     }
 }
 
+const noop = () => {};
+
 export class ChatDetailsLocalStateManager {
     #data = new SvelteMap<string, ChatDetailsLocalState>();
 
-    get(id: CommunityIdentifier): ChatDetailsLocalState | undefined {
-        return this.#data.get(id.communityId);
+    get(id: ChatIdentifier): ChatDetailsLocalState | undefined {
+        return this.#data.get(JSON.stringify(id));
     }
 
-    #getOrCreate(id: CommunityIdentifier): ChatDetailsLocalState {
-        let state = this.#data.get(id.communityId);
+    #getOrCreate(id: ChatIdentifier): ChatDetailsLocalState {
+        const key = JSON.stringify(id);
+        let state = this.#data.get(key);
         if (state === undefined) {
             state = new ChatDetailsLocalState();
-            this.#data.set(id.communityId, state);
+            this.#data.set(key, state);
         }
         return state;
     }
 
-    updateMember(id: CommunityIdentifier, userId: string, member: Member) {
-        return this.#getOrCreate(id).members.addOrUpdate(userId, member);
+    updateMember(
+        id: ChatIdentifier,
+        userId: string,
+        existing: Member | undefined,
+        updater: (m: Member) => Member,
+    ) {
+        if (existing !== undefined) {
+            return this.#getOrCreate(id).members.addOrUpdate(userId, updater(existing));
+        }
+        return noop;
     }
 
-    blockUser(id: CommunityIdentifier, userId: string): UndoLocalUpdate {
+    blockUser(id: ChatIdentifier, userId: string): UndoLocalUpdate {
         return this.#getOrCreate(id).blockedUsers.add(userId);
     }
 
-    unblockUser(id: CommunityIdentifier, userId: string): UndoLocalUpdate {
+    unblockUser(id: ChatIdentifier, userId: string): UndoLocalUpdate {
         return this.#getOrCreate(id).blockedUsers.remove(userId);
     }
 
-    removeMember(id: CommunityIdentifier, userId: string): UndoLocalUpdate {
+    removeMember(id: ChatIdentifier, userId: string): UndoLocalUpdate {
         return this.#getOrCreate(id).members.remove(userId);
     }
 
-    inviteUsers(id: CommunityIdentifier, userIds: string[]): UndoLocalUpdate {
+    addMember(id: ChatIdentifier, member: Member): UndoLocalUpdate {
+        return this.#getOrCreate(id).members.addOrUpdate(member.userId, member);
+    }
+
+    pinMessage(id: ChatIdentifier, messageIndex: number): UndoLocalUpdate {
+        return this.#getOrCreate(id).pinnedMessages.add(messageIndex);
+    }
+
+    unpinMessage(id: ChatIdentifier, messageIndex: number): UndoLocalUpdate {
+        return this.#getOrCreate(id).pinnedMessages.remove(messageIndex);
+    }
+
+    inviteUsers(id: ChatIdentifier, userIds: string[]): UndoLocalUpdate {
         const invited = this.#getOrCreate(id).invitedUsers;
         const undos = userIds.map((u) => invited.add(u));
         return () => {
@@ -73,7 +93,7 @@ export class ChatDetailsLocalStateManager {
         };
     }
 
-    uninviteUsers(id: CommunityIdentifier, userIds: string[]): UndoLocalUpdate {
+    uninviteUsers(id: ChatIdentifier, userIds: string[]): UndoLocalUpdate {
         const invited = this.#getOrCreate(id).invitedUsers;
         const undos = userIds.map((u) => invited.remove(u));
         return () => {
@@ -83,7 +103,7 @@ export class ChatDetailsLocalStateManager {
         };
     }
 
-    updateRules(id: CommunityIdentifier, rules: VersionedRules): UndoLocalUpdate {
+    updateRules(id: ChatIdentifier, rules: VersionedRules): UndoLocalUpdate {
         const state = this.#getOrCreate(id);
         const previous = state.rules;
         state.rules = rules;
@@ -92,23 +112,11 @@ export class ChatDetailsLocalStateManager {
         });
     }
 
-    deleteUserGroup(id: CommunityIdentifier, userGroupId: number): UndoLocalUpdate {
-        return this.#getOrCreate(id).userGroups.remove(userGroupId);
-    }
-
-    addOrUpdateUserGroup(id: CommunityIdentifier, userGroup: UserGroupDetails): UndoLocalUpdate {
-        return this.#getOrCreate(id).userGroups.addOrUpdate(userGroup.id, userGroup);
-    }
-
-    removeBot(id: CommunityIdentifier, botId: string): UndoLocalUpdate {
+    removeBot(id: ChatIdentifier, botId: string): UndoLocalUpdate {
         return this.#getOrCreate(id).bots.remove(botId);
     }
 
-    installBot(
-        id: CommunityIdentifier,
-        botId: string,
-        perm: ExternalBotPermissions,
-    ): UndoLocalUpdate {
+    installBot(id: ChatIdentifier, botId: string, perm: ExternalBotPermissions): UndoLocalUpdate {
         return this.#getOrCreate(id).bots.addOrUpdate(botId, perm);
     }
 }

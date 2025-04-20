@@ -10,7 +10,6 @@ import type {
     DirectChatSummary,
     EventWrapper,
     ExpiredEventsRange,
-    ExternalBotPermissions,
     MessageContext,
     MultiUserChat,
     ThreadSyncDetails,
@@ -20,7 +19,6 @@ import {
     ChatMap,
     compareChats,
     emptyChatMetrics,
-    emptyRules,
     messageContextsEqual,
     nullMembership,
 } from "openchat-shared";
@@ -34,7 +32,6 @@ import {
     mergeUnconfirmedIntoSummary,
 } from "../utils/chat";
 import { configKeys } from "../utils/config";
-import { setsAreEqual } from "../utils/set";
 import { blockedUsers } from "./blockedUsers";
 import { communityPreviewsStore } from "./community";
 import { createChatSpecificObjectStore } from "./dataByChatFactory";
@@ -76,21 +73,9 @@ export const selectedChatId = derived(selectedMessageContext, ($messageContext) 
 export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>(
     selectedChatId,
     () => ({
-        lapsedMembers: new Set<string>(),
-        members: [],
-        membersMap: new Map(),
-        blockedUsers: new Set<string>(),
-        invitedUsers: new Set<string>(),
-        pinnedMessages: new Set<number>(),
-        rules: emptyRules(),
-        userIds: new Set<string>(),
-        userGroupKeys: new Set<string>(),
         confirmedEventIndexesLoaded: new DRange(),
         serverEvents: [],
-        expandedDeletedMessages: new Set(),
         expiredEventRanges: new DRange(),
-        bots: new Map(),
-        apiKeys: new Map(),
     }),
 );
 
@@ -100,102 +85,6 @@ export const serverEventsStore = createDerivedPropStore<ChatSpecificState, "serv
     () => [],
 );
 
-const currentServerChatBots = createDerivedPropStore<ChatSpecificState, "bots">(
-    chatStateStore,
-    "bots",
-    () => new Map<string, ExternalBotPermissions>(),
-);
-export const currentChatBots = derived(
-    [selectedChatId, currentServerChatBots, localChatSummaryUpdates],
-    ([$chatId, $serverBots, $local]) => {
-        if ($chatId === undefined) return $serverBots;
-        const clone = new Map($serverBots);
-        const localInstalled = [...($local.get($chatId)?.installedBots?.entries() ?? [])];
-        const localDeleted = [...($local.get($chatId)?.removedBots?.values() ?? [])];
-        localInstalled.forEach(([id, perm]) => {
-            clone.set(id, perm);
-        });
-        localDeleted.forEach((id) => clone.delete(id));
-        return clone;
-    },
-);
-
-export const currentChatApiKeys = createDerivedPropStore<ChatSpecificState, "apiKeys">(
-    chatStateStore,
-    "apiKeys",
-    () => new Map(),
-);
-
-export const currentChatUserIds = createDerivedPropStore<ChatSpecificState, "userIds">(
-    chatStateStore,
-    "userIds",
-    () => new Set<string>(),
-);
-
-export const focusMessageIndex = createDerivedPropStore<ChatSpecificState, "focusMessageIndex">(
-    chatStateStore,
-    "focusMessageIndex",
-    () => undefined,
-);
-
-export const focusThreadMessageIndex = createDerivedPropStore<
-    ChatSpecificState,
-    "focusThreadMessageIndex"
->(chatStateStore, "focusThreadMessageIndex", () => undefined);
-
-export const expandedDeletedMessages = createDerivedPropStore<
-    ChatSpecificState,
-    "expandedDeletedMessages"
->(chatStateStore, "expandedDeletedMessages", () => new Set());
-
-export const userGroupKeys = createDerivedPropStore<ChatSpecificState, "userGroupKeys">(
-    chatStateStore,
-    "userGroupKeys",
-    () => new Set<string>(),
-);
-
-export const currentChatRules = createDerivedPropStore<ChatSpecificState, "rules">(
-    chatStateStore,
-    "rules",
-    () => undefined,
-);
-
-export const currentChatMembers = createDerivedPropStore<ChatSpecificState, "members">(
-    chatStateStore,
-    "members",
-    () => [],
-);
-
-export const currentChatMembersMap = createDerivedPropStore<ChatSpecificState, "membersMap">(
-    chatStateStore,
-    "membersMap",
-    () => new Map(),
-);
-
-export const currentChatLapsedMembers = createDerivedPropStore<ChatSpecificState, "lapsedMembers">(
-    chatStateStore,
-    "lapsedMembers",
-    () => new Set<string>(),
-    setsAreEqual,
-);
-
-export const currentChatBlockedUsers = createDerivedPropStore<ChatSpecificState, "blockedUsers">(
-    chatStateStore,
-    "blockedUsers",
-    () => new Set<string>(),
-    setsAreEqual,
-);
-export const currentChatInvitedUsers = createDerivedPropStore<ChatSpecificState, "invitedUsers">(
-    chatStateStore,
-    "invitedUsers",
-    () => new Set<string>(),
-    setsAreEqual,
-);
-export const currentChatPinnedMessages = createDerivedPropStore<
-    ChatSpecificState,
-    "pinnedMessages"
->(chatStateStore, "pinnedMessages", () => new Set<number>(), setsAreEqual);
-
 export const expiredEventRangesStore = createDerivedPropStore<
     ChatSpecificState,
     "expiredEventRanges"
@@ -204,12 +93,12 @@ export const expiredEventRangesStore = createDerivedPropStore<
 export const hideMessagesFromDirectBlocked = createLsBoolStore(configKeys.hideBlocked, false);
 
 export const currentChatBlockedOrSuspendedUsers = derived(
-    [currentChatBlockedUsers, suspendedUsers, blockedUsers, hideMessagesFromDirectBlocked],
-    ([chatBlocked, suspended, directBlocked, hideBlocked]) => {
+    [suspendedUsers, blockedUsers, hideMessagesFromDirectBlocked],
+    ([suspended, directBlocked, hideBlocked]) => {
         const direct = hideBlocked ? directBlocked : [];
         return new Set<string>([
-            ...chatBlocked,
-            ...app.selectedCommunityDetails.blockedUsers, //TODO This is no longer reactive - not ideal but probably liveable with short term
+            ...app.selectedChat.blockedUsers, //TODO This is no longer reactive - not ideal but probably liveable with short term
+            ...app.selectedCommunity.blockedUsers, //TODO This is no longer reactive - not ideal but probably liveable with short term
             ...suspended,
             ...direct,
         ]);
@@ -635,23 +524,11 @@ export function confirmedEventIndexesLoaded(chatId: ChatIdentifier): DRange {
         : new DRange();
 }
 
-export function setChatSpecificState(
-    clientChat: ChatSummary,
-    messageIndex?: number,
-    threadMessageIndex?: number,
-): void {
+export function setChatSpecificState(clientChat: ChatSummary): void {
     clearSelectedChat(clientChat.id);
 
     // initialise a bunch of stores
     chatStateStore.clear(clientChat.id);
-    chatStateStore.setProp(clientChat.id, "focusMessageIndex", messageIndex);
-    chatStateStore.setProp(clientChat.id, "focusThreadMessageIndex", threadMessageIndex);
-    chatStateStore.setProp(clientChat.id, "expandedDeletedMessages", new Set());
-    chatStateStore.setProp(
-        clientChat.id,
-        "userIds",
-        new Set<string>(clientChat.kind === "direct_chat" ? [clientChat.id.userId] : []),
-    );
     resetFilteredProposalsStore(clientChat);
 }
 

@@ -1,172 +1,96 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { HttpAgent, Identity } from "@dfinity/agent";
-import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
-import {
-    apiOptionUpdateV2,
-    identity,
-    mapOptional,
-    principalBytesToString,
-    principalStringToBytes,
-} from "../../utils/mapping";
-import type { AgentConfig } from "../../config";
-import {
-    addMembersToChannelResponse,
-    apiCommunityRole,
-    apiMemberRole,
-    apiOptionalCommunityPermissions,
-    communityChannelSummaryResponse,
-    communityDetailsResponse,
-    communityDetailsUpdatesResponse,
-    createUserGroupSuccess,
-    exploreChannelsResponse,
-    importGroupSuccess,
-    summaryResponse,
-    summaryUpdatesResponse,
-    updateCommunitySuccess,
-} from "./mappersV2";
-import {
-    apiAccessGateConfig,
-    apiExternalBotPermissions,
-    apiGroupPermissions,
-    apiMessageContent,
-    apiUser as apiUserV2,
-    apiVideoCallPresence,
-    groupDetailsSuccess,
-    groupDetailsUpdatesResponse,
-    searchGroupChatResponse,
-    threadPreviewsSuccess,
-    apiMaybeAccessGateConfig,
-    unitResult,
-    mapResult,
-    createGroupSuccess,
-    deletedMessageSuccess,
-    enableOrResetInviteCodeSuccess,
-    inviteCodeSuccess,
-    pushEventSuccess,
-    undeleteMessageSuccess,
-    updateGroupSuccess,
-    acceptP2PSwapSuccess,
-    videoCallParticipantsSuccess,
-    generateApiKeySuccess,
-    sendMessageSuccess,
-    getEventsSuccess,
-    getMessagesSuccess,
-} from "../common/chatMappersV2";
 import type {
+    AcceptP2PSwapResponse,
+    AccessGateConfig,
     AddMembersToChannelResponse,
+    AddRemoveReactionResponse,
     BlockCommunityUserResponse,
+    CancelP2PSwapResponse,
     CandidateChannel,
     ChangeCommunityRoleResponse,
-    CommunityPermissions,
-    EventWrapper,
-    EventsResponse,
-    MemberRole,
-    Message,
-    UnblockCommunityUserResponse,
-    UpdateCommunityResponse,
-    User,
+    ChangeRoleResponse,
     ChannelIdentifier,
-    AddRemoveReactionResponse,
+    ChannelSummaryResponse,
+    ChatEvent,
+    ClaimPrizeResponse,
+    CommunityDetails,
+    CommunityDetailsResponse,
+    CommunityIdentifier,
+    CommunityPermissions,
     CommunitySummaryResponse,
     CommunitySummaryUpdatesResponse,
-    SendMessageResponse,
-    UpdateGroupResponse,
     CreateGroupResponse,
-    DeleteGroupResponse,
-    PinMessageResponse,
-    UnpinMessageResponse,
-    GroupChatDetailsResponse,
-    GroupChatDetails,
-    IndexRange,
-    ChatEvent,
-    EventsSuccessResult,
-    EditMessageResponse,
+    CreateUserGroupResponse,
     DeclineInvitationResponse,
-    CommunityIdentifier,
-    CommunityDetailsResponse,
-    CommunityDetails,
-    LeaveGroupResponse,
+    DeleteGroupResponse,
     DeleteMessageResponse,
+    DeleteUserGroupsResponse,
     DeletedGroupMessageResponse,
-    UndeleteMessageResponse,
-    ThreadPreviewsResponse,
-    ChangeRoleResponse,
-    ChannelSummaryResponse,
-    RegisterPollVoteResponse,
-    ToggleMuteNotificationResponse,
+    DisableInviteCodeResponse,
+    EditMessageResponse,
+    EnableInviteCodeResponse,
+    EventWrapper,
+    EventsResponse,
+    EventsSuccessResult,
     ExploreChannelsResponse,
+    ExternalBotPermissions,
+    FollowThreadResponse,
+    GenerateBotKeyResponse,
+    GroupChatDetails,
+    GroupChatDetailsResponse,
     GroupChatIdentifier,
     ImportGroupResponse,
-    RemoveMemberResponse,
-    SearchGroupChatResponse,
+    IndexRange,
     InviteCodeResponse,
-    EnableInviteCodeResponse,
-    DisableInviteCodeResponse,
-    ResetInviteCodeResponse,
-    RegisterProposalVoteResponse,
-    CreateUserGroupResponse,
-    UpdateUserGroupResponse,
-    DeleteUserGroupsResponse,
-    SetMemberDisplayNameResponse,
-    UpdatedRules,
-    FollowThreadResponse,
-    OptionUpdate,
-    ClaimPrizeResponse,
-    OptionalChatPermissions,
-    AcceptP2PSwapResponse,
     JoinVideoCallResponse,
-    VideoCallPresence,
+    LeaveGroupResponse,
+    MemberRole,
+    Message,
+    OptionUpdate,
+    OptionalChatPermissions,
+    PinMessageResponse,
+    RegisterPollVoteResponse,
+    RegisterProposalVoteResponse,
+    RemoveMemberResponse,
+    ResetInviteCodeResponse,
+    SearchGroupChatResponse,
+    SendMessageResponse,
+    SetMemberDisplayNameResponse,
     SetVideoCallPresenceResponse,
+    ThreadPreviewsResponse,
+    ToggleMuteNotificationResponse,
+    UnblockCommunityUserResponse,
+    UndeleteMessageResponse,
+    UnpinMessageResponse,
+    UpdateCommunityResponse,
+    UpdateGroupResponse,
+    UpdateUserGroupResponse,
+    UpdatedRules,
+    User,
     VideoCallParticipantsResponse,
-    AccessGateConfig,
-    ExternalBotPermissions,
-    GenerateBotKeyResponse,
+    VideoCallPresence,
 } from "openchat-shared";
 import {
-    textToCode,
-    toBigInt32,
     DestinationInvalidError,
-    offline,
     MAX_EVENTS,
     MAX_MESSAGES,
     MAX_MISSING,
     ResponseTooLargeError,
     isSuccessfulEventsResponse,
+    offline,
+    textToCode,
+    toBigInt32,
 } from "openchat-shared";
-import {
-    apiOptionalGroupPermissions,
-    apiUpdatedRules,
-} from "../group/mappersV2";
-import { DataClient } from "../data/data.client";
-import {
-    type Database,
-    getCachedCommunityDetails,
-    getCachedEvents,
-    getCachedEventsByIndex,
-    getCachedEventsWindowByMessageIndex,
-    getCachedGroupDetails,
-    loadMessagesByMessageIndex,
-    mergeSuccessResponses,
-    recordFailedMessage,
-    removeCachedChannelApiKeys,
-    removeFailedMessage,
-    setCachedCommunityDetails,
-    setCachedEvents,
-    setCachedGroupDetails,
-    setCachedMessageFromSendResponse,
-} from "../../utils/caching";
-import { mergeCommunityDetails, mergeGroupChatDetails } from "../../utils/chat";
-import type { CancelP2PSwapResponse } from "openchat-shared";
-import {
-    chunkedChatEventsFromBackend,
-    chunkedChatEventsWindowFromBackend,
-} from "../common/chunked";
+import type { AgentConfig } from "../../config";
 import {
     CommunityAcceptP2pSwapArgs,
     CommunityAcceptP2pSwapResponse,
     CommunityAddMembersToChannelArgs,
     CommunityAddMembersToChannelResponse,
     CommunityAddReactionArgs,
+    CommunityApiKeyArgs,
+    CommunityApiKeyResponse,
     CommunityBlockUserArgs,
     CommunityCancelInvitesArgs,
     CommunityCancelP2pSwapArgs,
@@ -181,10 +105,10 @@ import {
     CommunityCreateUserGroupResponse,
     CommunityDeclineInvitationArgs,
     CommunityDeleteChannelArgs,
-    CommunityDeletedMessageArgs,
-    CommunityDeletedMessageResponse,
     CommunityDeleteMessagesArgs,
     CommunityDeleteUserGroupsArgs,
+    CommunityDeletedMessageArgs,
+    CommunityDeletedMessageResponse,
     CommunityEditMessageArgs,
     CommunityEnableInviteCodeResponse,
     CommunityEventsArgs,
@@ -194,6 +118,8 @@ import {
     CommunityExploreChannelsArgs,
     CommunityExploreChannelsResponse,
     CommunityFollowThreadArgs,
+    CommunityGenerateBotApiKeyArgs,
+    CommunityGenerateBotApiKeyResponse,
     CommunityImportGroupArgs,
     CommunityImportGroupResponse,
     CommunityInviteCodeResponse,
@@ -226,15 +152,14 @@ import {
     CommunitySetMemberDisplayNameArgs,
     CommunitySetVideoCallPresenceArgs,
     CommunitySummaryArgs,
-    CommunitySummaryResponse as TCommunitySummaryResponse,
     CommunitySummaryUpdatesArgs,
-    CommunitySummaryUpdatesResponse as TCommunitySummaryUpdatesResponse,
     CommunityThreadPreviewsArgs,
     CommunityThreadPreviewsResponse,
     CommunityToggleMuteNotificationsArgs,
     CommunityUnblockUserArgs,
     CommunityUndeleteMessagesArgs,
     CommunityUndeleteMessagesResponse,
+    CommunityUpdateBotArgs,
     CommunityUpdateChannelArgs,
     CommunityUpdateChannelResponse,
     CommunityUpdateCommunityArgs,
@@ -242,14 +167,86 @@ import {
     CommunityUpdateUserGroupArgs,
     CommunityVideoCallParticipantsArgs,
     CommunityVideoCallParticipantsResponse,
+    CommunitySummaryResponse as TCommunitySummaryResponse,
+    CommunitySummaryUpdatesResponse as TCommunitySummaryUpdatesResponse,
     Empty as TEmpty,
-    CommunityUpdateBotArgs,
-    CommunityGenerateBotApiKeyArgs,
-    CommunityGenerateBotApiKeyResponse,
-    CommunityApiKeyResponse,
-    CommunityApiKeyArgs,
     UnitResult,
 } from "../../typebox";
+import {
+    type Database,
+    getCachedCommunityDetails,
+    getCachedEvents,
+    getCachedEventsByIndex,
+    getCachedEventsWindowByMessageIndex,
+    getCachedGroupDetails,
+    loadMessagesByMessageIndex,
+    mergeSuccessResponses,
+    recordFailedMessage,
+    removeCachedChannelApiKeys,
+    removeFailedMessage,
+    setCachedCommunityDetails,
+    setCachedEvents,
+    setCachedGroupDetails,
+    setCachedMessageFromSendResponse,
+} from "../../utils/caching";
+import { mergeCommunityDetails, mergeGroupChatDetails } from "../../utils/chat";
+import {
+    apiOptionUpdateV2,
+    identity,
+    mapOptional,
+    principalBytesToString,
+    principalStringToBytes,
+} from "../../utils/mapping";
+import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
+import {
+    acceptP2PSwapSuccess,
+    apiAccessGateConfig,
+    apiExternalBotPermissions,
+    apiGroupPermissions,
+    apiMaybeAccessGateConfig,
+    apiMessageContent,
+    apiUser as apiUserV2,
+    apiVideoCallPresence,
+    createGroupSuccess,
+    deletedMessageSuccess,
+    enableOrResetInviteCodeSuccess,
+    generateApiKeySuccess,
+    getEventsSuccess,
+    getMessagesSuccess,
+    groupDetailsSuccess,
+    groupDetailsUpdatesResponse,
+    inviteCodeSuccess,
+    mapResult,
+    pushEventSuccess,
+    searchGroupChatResponse,
+    sendMessageSuccess,
+    threadPreviewsSuccess,
+    undeleteMessageSuccess,
+    unitResult,
+    updateGroupSuccess,
+    videoCallParticipantsSuccess,
+} from "../common/chatMappersV2";
+import {
+    chunkedChatEventsFromBackend,
+    chunkedChatEventsWindowFromBackend,
+} from "../common/chunked";
+import { DataClient } from "../data/data.client";
+import { apiOptionalGroupPermissions, apiUpdatedRules } from "../group/mappersV2";
+import {
+    addMembersToChannelResponse,
+    apiCommunityRole,
+    apiMemberRole,
+    apiOptionalCommunityPermissions,
+    communityChannelSummaryResponse,
+    communityDetailsResponse,
+    communityDetailsUpdatesResponse,
+    createUserGroupSuccess,
+    exploreChannelsResponse,
+    importGroupSuccess,
+    summaryResponse,
+    summaryUpdatesResponse,
+    updateCommunitySuccess,
+} from "./mappersV2";
 
 export class CommunityClient extends MsgpackCanisterAgent {
     constructor(
@@ -458,13 +455,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
     }
 
     disableInviteCode(): Promise<DisableInviteCodeResponse> {
-        return this.executeMsgpackUpdate(
-            "disable_invite_code",
-            {},
-            unitResult,
-            TEmpty,
-            UnitResult,
-        );
+        return this.executeMsgpackUpdate("disable_invite_code", {}, unitResult, TEmpty, UnitResult);
     }
 
     editMessage(
@@ -754,8 +745,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
                       expiredEventRanges: [],
                       expiredMessageRanges: [],
                       latestEventIndex: resp.latestEventIndex,
-                }
-                : resp
+                  }
+                : resp;
         }
         return {
             events: fromCache.messageEvents,
@@ -1386,10 +1377,10 @@ export class CommunityClient extends MsgpackCanisterAgent {
                     gateConfig === undefined
                         ? "NoChange"
                         : gateConfig.gate.kind === "no_gate"
-                          ? "SetToNone"
-                          : {
-                                SetToSome: apiAccessGateConfig(gateConfig),
-                            },
+                        ? "SetToNone"
+                        : {
+                              SetToSome: apiAccessGateConfig(gateConfig),
+                          },
                 avatar:
                     avatar === undefined
                         ? "NoChange"
@@ -1432,10 +1423,10 @@ export class CommunityClient extends MsgpackCanisterAgent {
                     gateConfig === undefined
                         ? "NoChange"
                         : gateConfig.gate.kind === "no_gate"
-                          ? "SetToNone"
-                          : {
-                                SetToSome: apiAccessGateConfig(gateConfig),
-                            },
+                        ? "SetToNone"
+                        : {
+                              SetToSome: apiAccessGateConfig(gateConfig),
+                          },
                 avatar:
                     avatar === undefined
                         ? "NoChange"

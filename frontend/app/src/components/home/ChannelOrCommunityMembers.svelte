@@ -3,11 +3,6 @@
         app,
         type ChannelSummary,
         type CommunitySummary,
-        currentChatApiKeys,
-        currentChatBlockedUsers as currentChatBlocked,
-        currentChatInvitedUsers as currentChatInvited,
-        currentChatLapsedMembers as currentChatLapsed,
-        currentChatMembers,
         type MemberRole,
         OpenChat,
         publish,
@@ -105,12 +100,12 @@
             showHeader={false}
             {closeIcon}
             collection={community}
-            invited={app.selectedCommunityDetails.invitedUsers}
-            members={[...app.selectedCommunityDetails.members.values()]}
-            blocked={app.selectedCommunityDetails.blockedUsers}
-            lapsed={app.selectedCommunityDetails.lapsedMembers}
-            installedBots={app.selectedCommunityDetails.bots}
-            apiKeys={app.selectedCommunityDetails.apiKeys}
+            invited={app.selectedCommunity.invitedUsers}
+            members={[...app.selectedCommunity.members.values()]}
+            blocked={app.selectedCommunity.blockedUsers}
+            lapsed={app.selectedCommunity.lapsedMembers}
+            installedBots={app.selectedCommunity.bots}
+            apiKeys={app.selectedCommunity.apiKeys}
             {onClose}
             onBlockUser={onBlockCommunityUser}
             onUnblockUser={onUnblockCommunityUser}
@@ -125,12 +120,12 @@
             showHeader={false}
             {closeIcon}
             collection={channel}
-            invited={$currentChatInvited}
-            members={$currentChatMembers}
-            blocked={$currentChatBlocked}
-            lapsed={$currentChatLapsed}
-            installedBots={app.selectedCommunityDetails.bots}
-            apiKeys={$currentChatApiKeys}
+            invited={app.selectedChat.invitedUsers}
+            members={[...app.selectedChat.members.values()]}
+            blocked={app.selectedChat.blockedUsers}
+            lapsed={app.selectedChat.lapsedMembers}
+            installedBots={app.selectedCommunity.bots}
+            apiKeys={app.selectedChat.apiKeys}
             {onClose}
             onBlockUser={onBlockGroupUser}
             onUnblockUser={onUnblockGroupUser}

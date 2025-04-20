@@ -1,12 +1,12 @@
-import { ReadonlyMap, type LocalMap } from "../map";
-import { LocalSet, ReadonlySet } from "../set";
+import { type LocalMap, type ReadonlyMap } from "../map";
+import { LocalSet, type ReadonlySet } from "../set";
 import { communityLocalUpdates } from "./local.svelte";
 import { CommunityServerState } from "./server";
 
 const empty = CommunityServerState.empty();
 
 export class CommunityMergedState {
-    #server: CommunityServerState | undefined;
+    #server = $state<CommunityServerState | undefined>();
     #userGroups = $derived(this.#mergeMap(this.server.userGroups, this.#local?.userGroups));
     #members = $derived(this.#mergeMap(this.server.members, this.#local?.members));
     #bots = $derived(this.#mergeMap(this.server.bots, this.#local?.bots));
@@ -20,11 +20,11 @@ export class CommunityMergedState {
     #rules = $derived(this.#local?.rules ?? this.server.rules);
 
     #mergeSet<T>(server: Set<T>, local?: LocalSet<T>): ReadonlySet<T> {
-        return new ReadonlySet(local ? local.apply(server) : server);
+        return local ? local.apply(server) : server;
     }
 
     #mergeMap<K, V>(server: Map<K, V>, local?: LocalMap<K, V>): ReadonlyMap<K, V> {
-        return new ReadonlyMap(local ? local.apply(server) : server);
+        return local ? local.apply(server) : server;
     }
 
     get #local() {
@@ -34,12 +34,20 @@ export class CommunityMergedState {
         }
     }
 
+    get communityId() {
+        return this.#server?.communityId;
+    }
+
     private get server() {
         return this.#server ?? empty;
     }
 
     constructor(server: CommunityServerState) {
         this.#server = server;
+    }
+
+    overwriteServerState(val: CommunityServerState) {
+        this.#server = val;
     }
 
     get userGroups() {

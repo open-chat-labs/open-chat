@@ -51,7 +51,7 @@ describe("app state", () => {
 
         describe("setting community details", () => {
             beforeEach(() => {
-                app.setSelectedCommunityDetails(
+                app.setCommunityDetailsFromServer(
                     communityId,
                     new Map(),
                     new Map([
@@ -75,11 +75,11 @@ describe("app state", () => {
             });
 
             test("local map updates - remove member", () => {
-                expect(app.selectedCommunityDetails.members.has("user_one")).toBe(true);
+                expect(app.selectedCommunity.members.has("user_one")).toBe(true);
                 const undo = communityLocalUpdates.removeMember(communityId, "user_one");
-                expect(app.selectedCommunityDetails.members.has("user_one")).toBe(false);
+                expect(app.selectedCommunity.members.has("user_one")).toBe(false);
                 undo();
-                expect(app.selectedCommunityDetails.members.has("user_one")).toBe(true);
+                expect(app.selectedCommunity.members.has("user_one")).toBe(true);
             });
 
             test("local map updates - update member", () => {
@@ -89,32 +89,32 @@ describe("app state", () => {
                     displayName: "Mr One",
                     lapsed: false,
                 };
-                expect(app.selectedCommunityDetails.members.has("user_two")).toBe(false);
+                expect(app.selectedCommunity.members.has("user_two")).toBe(false);
                 const undo = communityLocalUpdates.updateMember(communityId, "user_one", updated);
-                expect(app.selectedCommunityDetails.members.get("user_one")?.displayName).toEqual(
+                expect(app.selectedCommunity.members.get("user_one")?.displayName).toEqual(
                     "Mr One",
                 );
                 undo();
-                expect(app.selectedCommunityDetails.members.get("user_one")?.displayName).toEqual(
+                expect(app.selectedCommunity.members.get("user_one")?.displayName).toEqual(
                     "User One",
                 );
             });
 
             test("local set updates", () => {
-                expect(app.selectedCommunityDetails.blockedUsers.has("a")).toBe(true);
-                expect(app.selectedCommunityDetails.blockedUsers.has("d")).toBe(false);
+                expect(app.selectedCommunity.blockedUsers.has("a")).toBe(true);
+                expect(app.selectedCommunity.blockedUsers.has("d")).toBe(false);
 
                 // check that local updates work and are correctly merged with server state
                 const undo = communityLocalUpdates.blockUser(communityId, "d");
-                expect(app.selectedCommunityDetails.blockedUsers.has("d")).toBe(true);
+                expect(app.selectedCommunity.blockedUsers.has("d")).toBe(true);
 
                 // undo the local update
                 undo();
-                expect(app.selectedCommunityDetails.blockedUsers.has("d")).toBe(false);
+                expect(app.selectedCommunity.blockedUsers.has("d")).toBe(false);
 
                 // try unblock
                 communityLocalUpdates.unblockUser(communityId, "a");
-                expect(app.selectedCommunityDetails.blockedUsers.has("a")).toBe(false);
+                expect(app.selectedCommunity.blockedUsers.has("a")).toBe(false);
             });
         });
     });
