@@ -86,7 +86,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
                 this_canister_id: state.env.canister_id(),
                 user_index_canister_id: state.data.user_index_canister_id,
                 ledger_canister_id: ns.ledger_canister_id(),
-                nonce: state.env.rng().gen(),
+                nonce: state.env.rng().r#gen(),
                 dissolve_delay_seconds: (ns.min_dissolve_delay_to_vote() / 1000) as u32 + 1,
             })
         }

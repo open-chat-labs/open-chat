@@ -280,7 +280,7 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
                 let chat = state
                     .data
                     .direct_chats
-                    .get_or_create(bot_id, UserType::BotV2, || state.env.rng().gen(), now);
+                    .get_or_create(bot_id, UserType::BotV2, || state.env.rng().r#gen(), now);
 
                 chat.push_message::<NullRuntime>(
                     true,
@@ -450,7 +450,7 @@ fn send_message_impl(
     let chat = state
         .data
         .direct_chats
-        .get_or_create(recipient, recipient_type.into(), || state.env.rng().gen(), now);
+        .get_or_create(recipient, recipient_type.into(), || state.env.rng().r#gen(), now);
 
     let message_event = chat.push_message(true, push_message_args, None, Some(&mut state.data.event_store_client));
 
@@ -551,7 +551,7 @@ async fn send_to_bot_canister(
                         let push_message_args = PushMessageArgs {
                             sender: recipient,
                             thread_root_message_index: None,
-                            message_id: message.message_id.unwrap_or_else(|| state.env.rng().gen()),
+                            message_id: message.message_id.unwrap_or_else(|| state.env.rng().r#gen()),
                             content: message.content.into(),
                             mentioned: Vec::new(),
                             replies_to: None,

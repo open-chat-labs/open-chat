@@ -63,7 +63,7 @@ fn initialize_base_state(controller: Principal, seed: Option<Hash>) {
         .with_state(PocketIcState::new())
         .build();
 
-    let ticks: u8 = seed.map_or(0, |s| StdRng::from_seed(s).gen());
+    let ticks: u8 = seed.map_or(0, |s| StdRng::from_seed(s).r#gen());
     tick_many(&mut env, ticks as usize);
 
     let canister_ids = install_canisters(&mut env, controller);

@@ -65,7 +65,7 @@ impl Channels {
                         created_by_user_type,
                         default_channel_rules.clone(),
                         is_community_public,
-                        rng.gen(),
+                        rng.r#gen(),
                         now,
                     ),
                 )

@@ -147,7 +147,7 @@ pub(crate) fn handle_message_impl(
     let chat = state
         .data
         .direct_chats
-        .get_or_create(args.sender, args.sender_user_type, || state.env.rng().gen(), args.now);
+        .get_or_create(args.sender, args.sender_user_type, || state.env.rng().r#gen(), args.now);
 
     let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
 
@@ -157,7 +157,7 @@ pub(crate) fn handle_message_impl(
         None
     };
 
-    let message_id = args.message_id.unwrap_or_else(|| state.env.rng().gen());
+    let message_id = args.message_id.unwrap_or_else(|| state.env.rng().r#gen());
 
     let push_message_args = PushMessageArgs {
         thread_root_message_index,

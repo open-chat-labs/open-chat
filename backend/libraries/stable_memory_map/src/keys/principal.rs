@@ -69,7 +69,7 @@ mod tests {
     #[test]
     fn user_storage_record_key_e2e() {
         for _ in 0..100 {
-            let principal_bytes: [u8; 29] = thread_rng().gen();
+            let principal_bytes: [u8; 29] = thread_rng().r#gen();
             let principal = Principal::from_slice(&principal_bytes);
             let prefix = PrincipalKeyPrefix::new_for_storage_record();
             let key = BaseKey::from(prefix.create_key(&principal));

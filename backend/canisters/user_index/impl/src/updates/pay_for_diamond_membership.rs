@@ -199,7 +199,7 @@ fn process_charge(
             fee: transfer_fee,
             timestamp: now_nanos,
             recipient_account,
-            memo: state.env.rng().gen(),
+            memo: state.env.rng().r#gen(),
             reason,
         };
         state.queue_payment(treasury_payment);

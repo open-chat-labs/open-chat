@@ -33,11 +33,11 @@ fn get_active_exchanges(state: &RuntimeState) -> Vec<(ExchangeId, Box<dyn Exchan
         .filter(|(_, c)| c.enabled)
         // Exclude exchanges where there are orders in progress, unless those orders have been
         // pending for more than 10 minutes, since realistically that means they have failed.
-        .filter(|(&id, _)| {
+        .filter(|(id, _)| {
             state
                 .data
                 .market_makers_in_progress
-                .get(&id)
+                .get(id)
                 .is_none_or(|ts| now.saturating_sub(*ts) > 10 * MINUTE_IN_MS)
         })
         .filter_map(|(&id, c)| state.get_exchange_client(id).map(|e| (id, e, c.clone())))

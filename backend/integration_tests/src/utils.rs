@@ -35,7 +35,7 @@ pub fn local_bin() -> PathBuf {
 
 pub fn generate_seed() -> Hash {
     let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64;
-    StdRng::seed_from_u64(now).gen()
+    StdRng::seed_from_u64(now).r#gen()
 }
 
 pub fn chat_token_info() -> TokenInfo {

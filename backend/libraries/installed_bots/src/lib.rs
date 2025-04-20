@@ -121,7 +121,7 @@ impl BotApiKeys {
         now: TimestampMillis,
         rng: &mut StdRng,
     ) -> String {
-        let key = rng.gen::<u128>().to_string();
+        let key = rng.r#gen::<u128>().to_string();
         self.keys.insert(
             user_id,
             ApiKey {

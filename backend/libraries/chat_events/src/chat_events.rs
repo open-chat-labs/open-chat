@@ -1002,7 +1002,7 @@ impl ChatEvents {
                     PushMessageArgs {
                         sender: OPENCHAT_BOT_USER_ID,
                         thread_root_message_index: Some(message_index),
-                        message_id: rng.gen(),
+                        message_id: rng.r#gen(),
                         content: MessageContentInternal::PrizeWinner(PrizeWinnerContentInternal {
                             winner,
                             ledger: transaction.ledger_canister_id(),

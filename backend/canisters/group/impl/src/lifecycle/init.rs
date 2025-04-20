@@ -45,7 +45,7 @@ fn init(args: Args) {
         args.gate_config.map(|g| g.into()),
         args.video_call_operators,
         args.ic_root_key,
-        env.rng().gen(),
+        env.rng().r#gen(),
     );
 
     init_state(env, data, args.wasm_version);

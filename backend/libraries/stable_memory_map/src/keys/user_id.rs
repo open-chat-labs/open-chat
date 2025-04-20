@@ -109,7 +109,7 @@ mod tests {
     #[test]
     fn group_chat_member_key_e2e() {
         for _ in 0..100 {
-            let user_id_bytes: [u8; 10] = thread_rng().gen();
+            let user_id_bytes: [u8; 10] = thread_rng().r#gen();
             let user_id = UserId::from(Principal::from_slice(&user_id_bytes));
             let prefix = UserIdKeyPrefix::new_from_group();
             let key = BaseKey::from(prefix.create_key(&user_id));
@@ -132,7 +132,7 @@ mod tests {
     fn channel_member_key_e2e() {
         for _ in 0..100 {
             let channel_id = ChannelId::from(thread_rng().next_u32());
-            let user_id_bytes: [u8; 10] = thread_rng().gen();
+            let user_id_bytes: [u8; 10] = thread_rng().r#gen();
             let user_id = UserId::from(Principal::from_slice(&user_id_bytes));
             let prefix = UserIdKeyPrefix::new_from_channel(channel_id);
             let key = BaseKey::from(prefix.create_key(&user_id));
@@ -154,7 +154,7 @@ mod tests {
     #[test]
     fn community_member_key_e2e() {
         for _ in 0..100 {
-            let user_id_bytes: [u8; 10] = thread_rng().gen();
+            let user_id_bytes: [u8; 10] = thread_rng().r#gen();
             let user_id = UserId::from(Principal::from_slice(&user_id_bytes));
             let prefix = UserIdKeyPrefix::new_from_community();
             let key = BaseKey::from(prefix.create_key(&user_id));
@@ -176,9 +176,9 @@ mod tests {
     #[test]
     fn blocked_users_key_e2e() {
         for _ in 0..100 {
-            let user_id1_bytes: [u8; 10] = thread_rng().gen();
+            let user_id1_bytes: [u8; 10] = thread_rng().r#gen();
             let user_id1 = UserId::from(Principal::from_slice(&user_id1_bytes));
-            let user_id2_bytes: [u8; 10] = thread_rng().gen();
+            let user_id2_bytes: [u8; 10] = thread_rng().r#gen();
             let user_id2 = UserId::from(Principal::from_slice(&user_id2_bytes));
             let prefix = UserIdsKeyPrefix::new_for_blocked_users();
             let key = BaseKey::from(prefix.create_key(&(user_id1, user_id2)));

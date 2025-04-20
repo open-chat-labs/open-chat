@@ -36,7 +36,7 @@ impl Challenges {
             if let std::collections::hash_map::Entry::Vacant(e) = self.inflight.entry(key) {
                 // Create the CAPTCHA
                 let builder = ic_captcha::CaptchaBuilder::new();
-                let seed: [u8; 32] = rng.gen();
+                let seed: [u8; 32] = rng.r#gen();
                 let captcha = builder.generate(&seed, None);
 
                 // Remember the solution

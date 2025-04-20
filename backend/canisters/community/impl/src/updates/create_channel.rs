@@ -182,7 +182,7 @@ fn create_channel_impl(
         args.gate_config.clone().map(|gc| gc.into()),
         args.events_ttl,
         (&caller).into(),
-        state.env.rng().gen(),
+        state.env.rng().r#gen(),
         args.external_url,
         now,
     );

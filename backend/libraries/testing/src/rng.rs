@@ -50,7 +50,7 @@ pub mod deterministic {
 
     pub fn random_delegated_principal<R: RngCore>(rng: &mut R, originating_canister_id: CanisterId) -> (Principal, Vec<u8>) {
         let algorithm_bytes = [48u8, 60, 48, 12, 6, 10, 43, 6, 1, 4, 1, 131, 184, 67, 1, 2, 3, 44, 0];
-        let random_bytes: [u8; 32] = rng.gen();
+        let random_bytes: [u8; 32] = rng.r#gen();
 
         let mut public_key = Vec::from(algorithm_bytes);
         public_key.push(originating_canister_id.as_slice().len() as u8);
@@ -70,7 +70,7 @@ pub mod deterministic {
     }
 
     pub fn random_from_u128<R: RngCore, T: From<u128>>(rng: &mut R) -> T {
-        let value: u128 = rng.gen();
+        let value: u128 = rng.r#gen();
         value.into()
     }
 }

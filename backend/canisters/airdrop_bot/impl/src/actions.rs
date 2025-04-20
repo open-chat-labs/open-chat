@@ -253,7 +253,7 @@ async fn handle_lottery_message_action(action: AirdropMessage) -> Result<(), boo
             .data
             .airdrops
             .current(state.env.now())
-            .map(|c| (c.community_id, c.channel_id, state.env.rng().gen()))
+            .map(|c| (c.community_id, c.channel_id, state.env.rng().r#gen()))
     }) else {
         return Err(false);
     };

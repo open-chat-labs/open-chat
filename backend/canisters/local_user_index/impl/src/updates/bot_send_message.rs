@@ -93,7 +93,7 @@ fn extract_message_access_context(args: &Args, state: &mut RuntimeState) -> Resu
                 return Err(InvalidRequest("Channel must be specified for community scope".to_string()));
             };
             let chat = Chat::Channel(details.community_id, channel_id);
-            let message_id = args.message_id.unwrap_or_else(|| state.env.rng().gen::<u64>().into());
+            let message_id = args.message_id.unwrap_or_else(|| state.env.rng().r#gen::<u64>().into());
             (chat, None, message_id, None)
         }
     };

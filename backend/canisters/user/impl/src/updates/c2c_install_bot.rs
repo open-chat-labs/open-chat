@@ -34,7 +34,7 @@ fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state
         .data
         .direct_chats
-        .get_or_create(args.bot_id, UserType::BotV2, || state.env.rng().gen(), now);
+        .get_or_create(args.bot_id, UserType::BotV2, || state.env.rng().r#gen(), now);
 
     Ok(())
 }

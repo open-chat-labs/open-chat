@@ -22,7 +22,7 @@ pub trait Environment {
     fn entropy(&mut self) -> Hash {
         let mut bytes = Vec::new();
 
-        bytes.extend(self.rng().gen::<Hash>());
+        bytes.extend(self.rng().r#gen::<Hash>());
         bytes.extend(self.canister_id().as_slice());
         bytes.extend(self.caller().as_slice());
         bytes.extend(self.now_nanos().to_ne_bytes());

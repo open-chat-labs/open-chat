@@ -688,8 +688,8 @@ impl PollContentInternal {
                     let mut existing_vote_removed = false;
                     if !self.config.allow_multiple_votes_per_user {
                         // If the user has already left a vote, remove it
-                        for (_, votes) in self.votes.iter_mut().filter(|(&o, _)| o != option_index) {
-                            if let Some((index, _)) = votes.iter().enumerate().find(|(_, &u)| u == user_id) {
+                        for (_, votes) in self.votes.iter_mut().filter(|(o, _)| **o != option_index) {
+                            if let Some((index, _)) = votes.iter().enumerate().find(|(_, u)| **u == user_id) {
                                 // if the poll does not permit users to change vote then this is an error
                                 if !self.config.allow_user_to_change_vote {
                                     return RegisterVoteResult::UserCannotChangeVote;
@@ -705,7 +705,7 @@ impl PollContentInternal {
                 }
                 VoteOperation::DeleteVote => {
                     if let Some(votes) = self.votes.get_mut(&option_index) {
-                        if let Some((index, _)) = votes.iter().enumerate().find(|(_, &u)| u == user_id) {
+                        if let Some((index, _)) = votes.iter().enumerate().find(|(_, u)| **u == user_id) {
                             votes.remove(index);
                             return RegisterVoteResult::Success(true);
                         }

@@ -50,7 +50,7 @@ impl RuntimeState {
         method_name: String,
         args: A,
     ) -> CanisterEcdsaRequest {
-        let nonce: [u8; 8] = self.env.rng().gen();
+        let nonce: [u8; 8] = self.env.rng().r#gen();
 
         let envelope_content = EnvelopeContent::Call {
             nonce: Some(nonce.to_vec()),
