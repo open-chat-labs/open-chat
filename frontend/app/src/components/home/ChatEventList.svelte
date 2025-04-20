@@ -37,7 +37,6 @@
     import { pop } from "../../utils/transition";
     import Fab from "../Fab.svelte";
     import TimelineDate from "./TimelineDate.svelte";
-    import { KEY_STORAGE_KEY } from "@dfinity/auth-client";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_READ_THRESHOLD = 500;
