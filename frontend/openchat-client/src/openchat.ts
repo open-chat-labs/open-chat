@@ -4484,12 +4484,16 @@ export class OpenChat {
         });
     }
 
-    setFocusMessageIndex(messageIndex: number | undefined): void {
-        app.selectedChat.focusMessageIndex = messageIndex;
+    setFocusMessageIndex(context: MessageContext, messageIndex: number | undefined): void {
+        if (chatIdentifiersEqual(app.selectedChat.chatId, context.chatId)) {
+            app.selectedChat.focusMessageIndex = messageIndex;
+        }
     }
 
-    setFocusThreadMessageIndex(messageIndex: number | undefined): void {
-        app.selectedChat.focusThreadMessageIndex = messageIndex;
+    setFocusThreadMessageIndex(context: MessageContext, messageIndex: number | undefined): void {
+        if (chatIdentifiersEqual(app.selectedChat.chatId, context.chatId)) {
+            app.selectedChat.focusThreadMessageIndex = messageIndex;
+        }
     }
 
     expandDeletedMessages(messageIndexes: Set<number>): void {

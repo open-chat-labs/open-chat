@@ -540,7 +540,10 @@
                     pathState.route.kind === "selected_channel_route") &&
                 (pathState.route.open || pathState.route.threadMessageIndex !== undefined)
             ) {
-                client.setFocusThreadMessageIndex(pathState.route.threadMessageIndex);
+                client.setFocusThreadMessageIndex(
+                    messageContext,
+                    pathState.route.threadMessageIndex,
+                );
                 client.openThread(msgEvent, false);
             } else {
                 client.closeThread();
@@ -559,7 +562,7 @@
         if (!messageContextsEqual(context, messageContext)) return Promise.resolve();
 
         if (index < 0) {
-            setFocusMessageIndex(undefined);
+            setFocusMessageIndex(context, undefined);
             return Promise.resolve();
         }
 
@@ -567,7 +570,7 @@
 
         const element = findElementWithMessageIndex(index);
         if (element) {
-            setFocusMessageIndex(index);
+            setFocusMessageIndex(context, index);
             await scrollToElement(element);
             if (!messageContextsEqual(context, messageContext)) return Promise.resolve();
             if (!filling) {
@@ -580,7 +583,7 @@
                 if (!preserveFocus) {
                     window.setTimeout(() => {
                         if (messageContextsEqual(context, messageContext)) {
-                            setFocusMessageIndex(undefined);
+                            setFocusMessageIndex(context, undefined);
                         }
                     }, 200);
                 }
@@ -723,11 +726,11 @@
         }, delay);
     }
 
-    function setFocusMessageIndex(messageIndex: number | undefined) {
+    function setFocusMessageIndex(context: MessageContext, messageIndex: number | undefined) {
         if (threadRootEvent === undefined) {
-            client.setFocusMessageIndex(messageIndex);
+            client.setFocusMessageIndex(context, messageIndex);
         } else {
-            client.setFocusThreadMessageIndex(messageIndex);
+            client.setFocusThreadMessageIndex(context, messageIndex);
         }
     }
 </script>
