@@ -1,3 +1,4 @@
+import { chatIdentifiersEqual, type ChatIdentifier } from "openchat-shared";
 import { untrack } from "svelte";
 import type { OpenChat } from "./openchat";
 import { app } from "./state/app.svelte";
@@ -50,6 +51,23 @@ export function configureEffects(client: OpenChat) {
                     }
                 });
             }
+        });
+
+        let previousChatId: ChatIdentifier | undefined = undefined;
+        $effect(() => {
+            if (
+                pathState.threadOpen &&
+                pathState.messageIndex !== undefined &&
+                app.selectedChatId !== undefined &&
+                chatIdentifiersEqual(previousChatId, app.selectedChatId)
+            ) {
+                const chatId = app.selectedChatId;
+                const idx = pathState.messageIndex;
+                untrack(() => {
+                    client.openThreadFromMessageIndex(chatId, idx);
+                });
+            }
+            previousChatId = app.selectedChatId;
         });
 
         $effect(() => {

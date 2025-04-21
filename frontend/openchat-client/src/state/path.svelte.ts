@@ -19,9 +19,18 @@ export class PathState {
     #messageIndex = $derived(
         this.hasMessageIndex(this.#route) ? this.#route.messageIndex : undefined,
     );
+    #threadOpen = $derived(
+        (this.#route.kind === "global_chat_selected_route" ||
+            this.#route.kind === "selected_channel_route") &&
+            this.#route.messageIndex !== undefined &&
+            this.#route.open,
+    );
 
     set routerReady(val: boolean) {
         this.#routerReady = val;
+    }
+    get threadOpen() {
+        return this.#threadOpen;
     }
     get messageIndex() {
         return this.#messageIndex;
