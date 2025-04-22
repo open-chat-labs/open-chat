@@ -30,26 +30,48 @@
     let previewPromise: Promise<LinkInfo | undefined> | undefined = $state();
 
     async function loadPreview(url: string): Promise<LinkInfo | undefined> {
-        const response = await fetch(
-            `${import.meta.env.OC_PREVIEW_PROXY_URL}/preview?url=${encodeURIComponent(url)}`,
-        );
+        const isImage = (pathname: string) => /\.jpg|\.png|\.gif|\.webp/.test(pathname);
+        
+        try {
+            const response = await fetch(
+                `${import.meta.env.OC_PREVIEW_PROXY_URL}/preview?url=${encodeURIComponent(url)}`,
+            );
 
-        const checkIfMetaEmpty = (meta: Omit<LinkInfo, "url">) =>
-            !meta.title && !meta.description && !meta.image && !meta.imageAlt;
+            const checkIfMetaEmpty = (meta: Omit<LinkInfo, "url">) =>
+                !meta.title && !meta.description && !meta.image && !meta.imageAlt;
 
-        if (response.ok) {
-            const meta = await response.json();
-            const metaIsEmpty = checkIfMetaEmpty(meta);
+            if (response.ok) {
+                const meta = await response.json();
+                const metaIsEmpty = checkIfMetaEmpty(meta);
 
-            if (!metaIsEmpty) {
+                if (!metaIsEmpty) {
+                    return {
+                        url,
+                        title: meta.title,
+                        description: meta.description,
+                        image: meta.image ? new URL(meta.image, url).toString() : undefined,
+                        imageAlt: meta.imageAlt,
+                    };
+                }
+            }
+            else {
                 return {
                     url,
-                    title: meta.title,
-                    description: meta.description,
-                    image: meta.image ? new URL(meta.image, url).toString() : undefined,
-                    imageAlt: meta.imageAlt,
+                    title: '',
+                    description: '',
+                    image: isImage((new URL(url)).pathname)? url: undefined,
+                    imageAlt: '',
                 };
             }
+        }
+        catch {
+            return {
+                url,
+                title: '',
+                description: '',
+                image: isImage((new URL(url)).pathname)? url: undefined,
+                imageAlt: '',
+            };
         }
     }
 
