@@ -122,20 +122,13 @@ class AppState {
         return this.#selectedChat;
     }
 
-    setDirectChatDetails(
-        chatId: DirectChatIdentifier,
-        currentUserId: string,
-        focusMessageIndex?: number,
-        focusThreadMessageIndex?: number,
-    ) {
+    setDirectChatDetails(chatId: DirectChatIdentifier, currentUserId: string) {
         const serverState = ChatDetailsServerState.empty(chatId);
         if (chatIdentifiersEqual(chatId, this.#selectedChat.chatId)) {
             this.#selectedChat.overwriteServerState(serverState);
         } else {
             this.#selectedChat = new ChatDetailsMergedState(serverState);
         }
-        this.#selectedChat.focusMessageIndex = focusMessageIndex;
-        this.#selectedChat.focusThreadMessageIndex = focusThreadMessageIndex;
         this.#selectedChat.addUserIds([currentUserId]);
     }
 
@@ -149,8 +142,6 @@ class AppState {
         rules: VersionedRules,
         bots: Map<string, ExternalBotPermissions>,
         apiKeys: Map<string, PublicApiKeyDetails>,
-        focusMessageIndex?: number,
-        focusThreadMessageIndex?: number,
     ) {
         const serverState = new ChatDetailsServerState(
             chatId,
@@ -170,8 +161,6 @@ class AppState {
         } else {
             this.#selectedChat = new ChatDetailsMergedState(serverState);
         }
-        this.#selectedChat.focusMessageIndex = focusMessageIndex;
-        this.#selectedChat.focusThreadMessageIndex = focusThreadMessageIndex;
     }
 
     setCommunityDetailsFromServer(

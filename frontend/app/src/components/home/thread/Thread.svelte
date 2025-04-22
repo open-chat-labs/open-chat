@@ -363,6 +363,7 @@
         isReadByMe,
         messageObserver,
         labelObserver,
+        focusIndex,
     })}
         {#if loading}
             <Loading />
@@ -388,8 +389,7 @@
                                     isReadByMe($messagesRead, evt)}
                                 observer={messageObserver}
                                 focused={evt.event.kind === "message" &&
-                                    app.selectedChat.focusThreadMessageIndex ===
-                                        evt.event.messageIndex}
+                                    focusIndex === evt.event.messageIndex}
                                 {readonly}
                                 {threadRootMessage}
                                 pinned={false}
