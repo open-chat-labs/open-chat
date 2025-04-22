@@ -14,7 +14,6 @@ use sha256::sha256;
 use std::collections::{HashMap, HashSet};
 use std::env;
 use std::path::Path;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::OnceLock;
 use std::time::Instant;
 use storage_index_canister::init::CyclesDispenserConfig;
@@ -22,10 +21,6 @@ use testing::NNS_INTERNET_IDENTITY_CANISTER_ID;
 use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
 
 pub static POCKET_IC_BIN: &str = "./pocket-ic";
-
-// This is set to true as soon as the first thread starts initializing the environment to ensure
-// that the full initialization only happens once.
-static INIT_STARTED: AtomicBool = AtomicBool::new(false);
 
 // This base state is set at the end of the initialization process, so each thread (other than
 // the one doing the initialization) waits until the state is available at which point they
@@ -37,20 +32,18 @@ pub fn setup_new_env(seed: Option<Hash>) -> TestEnv {
 
     let controller = Principal::from_text("xuxyr-xopen-chatx-xxxbu-cai").unwrap();
 
-    if INIT_STARTED.compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst) == Ok(false) {
-        initialize_base_state(controller, seed);
-    };
+    let (state, canister_ids) = BASE_STATE.get_or_init(|| initialize_base_state(controller, seed));
 
-    let (env, canister_ids) = wait_for_initialization();
+    let env = PocketIcBuilder::new().with_read_only_state(state).build();
 
     TestEnv {
         env,
-        canister_ids,
+        canister_ids: canister_ids.clone(),
         controller,
     }
 }
 
-fn initialize_base_state(controller: Principal, seed: Option<Hash>) {
+fn initialize_base_state(controller: Principal, seed: Option<Hash>) -> (PocketIcState, CanisterIds) {
     let started = Instant::now();
 
     // This thread is first, so it is the only one which will run the full initialization
@@ -73,9 +66,7 @@ fn initialize_base_state(controller: Principal, seed: Option<Hash>) {
 
     let state = env.drop_and_take_state().unwrap();
 
-    BASE_STATE
-        .set((state, canister_ids.clone()))
-        .unwrap_or_else(|_| panic!("Failed to set base state"));
+    (state, canister_ids)
 }
 
 fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
@@ -618,18 +609,6 @@ pub fn install_icrc_ledger(
     install_canister(env, controller, canister_id, wasms::ICRC_LEDGER.clone(), args);
 
     canister_id
-}
-
-fn wait_for_initialization() -> (PocketIc, CanisterIds) {
-    loop {
-        if let Some((state, canister_ids)) = BASE_STATE.get() {
-            return (
-                PocketIcBuilder::new().with_read_only_state(state).build(),
-                canister_ids.clone(),
-            );
-        }
-        std::thread::sleep(std::time::Duration::from_secs(1));
-    }
 }
 
 fn verify_pocket_ic_exists() {
