@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { pageReplace, ui, type OpenChat } from "openchat-client";
-    import { getContext } from "svelte";
+    import { app, pageReplace, routeForMessage, ui } from "openchat-client";
+    import page from "page";
     import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
@@ -18,8 +18,6 @@
     import MenuItem from "../../MenuItem.svelte";
     import Translatable from "../../Translatable.svelte";
     import type { VideoCallChat } from "./callChat";
-
-    const client = getContext<OpenChat>("client");
 
     interface Props {
         askedToSpeak: boolean;
@@ -43,7 +41,13 @@
                 ui.popRightPanelHistory();
                 pageReplace(removeQueryStringParam("open"));
             } else {
-                client.openThreadFromMessageIndex(chat.chatId, chat.messageIndex);
+                page(
+                    `${routeForMessage(
+                        app.chatListScope.kind,
+                        { chatId: chat.chatId },
+                        chat.messageIndex,
+                    )}?open=true`,
+                );
             }
             activeVideoCall.threadOpen(!threadOpen);
         }

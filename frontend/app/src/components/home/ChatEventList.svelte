@@ -566,7 +566,6 @@
 
         const element = findElementWithMessageIndex(index);
         if (element) {
-            console.log("XX: Element found: ", context, index);
             focusIndex = index;
             await scrollToElement(element);
             if (!messageContextsEqual(context, messageContext)) return Promise.resolve();

@@ -112,7 +112,6 @@
         onEditMessage?: () => void;
         onCollapseMessage?: () => void;
         onRetrySend?: () => void;
-        onInitiateThread?: () => void;
         onDeleteFailedMessage?: () => void;
         onRemovePreview?: (url: string) => void;
         onGoToMessageIndex?: (args: { index: number }) => void;
@@ -157,7 +156,6 @@
         onEditMessage,
         onCollapseMessage,
         onRetrySend,
-        onInitiateThread,
         onDeleteFailedMessage,
         onRemovePreview,
         onGoToMessageIndex,
@@ -766,7 +764,6 @@
                                 {onCollapseMessage}
                                 onReply={reply}
                                 {onRetrySend}
-                                {onInitiateThread}
                                 {onDeleteFailedMessage}
                                 onReplyPrivately={replyPrivately}
                                 onEditMessage={editMessage}

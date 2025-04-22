@@ -1,8 +1,6 @@
 <script lang="ts">
     import {
-        chatListScopeStore,
         currentUser,
-        routeForMessage,
         typing,
         userStore,
         type ChatEvent,
@@ -15,7 +13,6 @@
         type OpenChat,
         type UserSummary,
     } from "openchat-client";
-    import page from "page";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../../i18n/i18n";
@@ -149,29 +146,6 @@
     function retrySend() {
         client.retrySendMessage(messageContext, event as EventWrapper<Message>);
     }
-
-    function initiateThread() {
-        if (event.event.kind === "message") {
-            page(
-                `${routeForMessage(
-                    $chatListScopeStore.kind,
-                    { chatId },
-                    event.event.messageIndex,
-                )}?open=true`,
-            );
-            // if (event.event.thread !== undefined) {
-            //     page(
-            //         `${routeForMessage(
-            //             $chatListScopeStore.kind,
-            //             { chatId },
-            //             event.event.messageIndex,
-            //         )}?open=true`,
-            //     );
-            // } else {
-            //     client.openThread(event as EventWrapper<Message>, true);
-            // }
-        }
-    }
 </script>
 
 {#if event.event.kind === "message"}
@@ -213,7 +187,6 @@
             {onExpandMessage}
             {onCollapseMessage}
             onRemovePreview={(url) => onRemovePreview(event as EventWrapper<Message>, url)}
-            onInitiateThread={initiateThread}
             onDeleteFailedMessage={deleteFailedMessage}
             eventIndex={event.index}
             timestamp={event.timestamp}

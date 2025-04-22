@@ -189,8 +189,6 @@
         activeVideoCall.threadOpen(false);
     }
 
-    $inspect(ui.rightPanelHistory).with(console.trace);
-
     function findMessage(
         events: EventWrapper<ChatEvent>[],
         messageId: bigint,
