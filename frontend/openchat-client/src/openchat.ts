@@ -2763,7 +2763,7 @@ export class OpenChat {
             // if it's a known chat let's select it
             this.closeNotificationsForChat(chat.id);
             ui.eventListScrollTop = undefined;
-            this.#setSelectedChat(chat.id, messageIndex, threadMessageIndex);
+            this.#setSelectedChat(chat.id, messageIndex);
             ui.filterRightPanelHistoryByChatType(chat);
 
             if (autojoin && chat.kind !== "direct_chat") {
@@ -2786,11 +2786,7 @@ export class OpenChat {
         }
     }
 
-    #setSelectedChat(
-        chatId: ChatIdentifier,
-        messageIndex?: number,
-        threadMessageIndex?: number,
-    ): void {
+    #setSelectedChat(chatId: ChatIdentifier, messageIndex?: number): void {
         const clientChat = this.#liveState.chatSummaries.get(chatId);
         const serverChat = this.#liveState.serverChatSummaries.get(chatId);
 
