@@ -9,11 +9,13 @@ generate_query_call!(get_delegation);
 // Updates
 generate_update_call!(approve_identity_link);
 generate_update_call!(create_identity);
+generate_update_call!(delete_user);
 generate_update_call!(initiate_identity_link);
 generate_update_call!(prepare_delegation);
 generate_update_call!(remove_identity_link);
 
 pub mod happy_path {
+    use crate::UserAuth;
     use candid::Principal;
     use identity_canister::auth_principals::UserPrincipal;
     use pocket_ic::PocketIc;
@@ -172,5 +174,19 @@ pub mod happy_path {
             identity_canister::auth_principals::Response::Success(auth_principals) => auth_principals,
             response => panic!("'auth_principals' error: {response:?}"),
         }
+    }
+
+    pub fn delete_user(env: &mut PocketIc, user: &UserAuth, identity_canister_id: CanisterId) {
+        let response = super::delete_user(
+            env,
+            user.auth_principal,
+            identity_canister_id,
+            &identity_canister::delete_user::Args {
+                public_key: user.public_key.clone(),
+                delegation: user.delegation.clone(),
+            },
+        );
+
+        assert!(matches!(response, identity_canister::delete_user::Response::Success));
     }
 }

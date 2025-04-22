@@ -83,6 +83,10 @@ impl RuntimeState {
         self.data.governance_principals.contains(&caller)
     }
 
+    pub fn is_caller_identity_canister(&self) -> bool {
+        self.env.caller() == self.data.identity_canister_id
+    }
+
     pub fn is_caller_registry_canister(&self) -> bool {
         self.env.caller() == self.data.registry_canister_id
     }
@@ -200,6 +204,7 @@ impl RuntimeState {
                 timestamp: now,
             });
 
+            // TODO remove this once the website switches to deleting accounts via the Identity canister
             self.data.identity_canister_user_sync_queue.push_back((user.principal, None));
             jobs::sync_users_to_identity_canister::try_run_now(self);
 
