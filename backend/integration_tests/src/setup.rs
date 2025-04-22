@@ -1,15 +1,15 @@
 use crate::client::{create_canister, create_canister_with_id, install_canister};
 use crate::env::VIDEO_CALL_OPERATOR;
 use crate::utils::tick_many;
-use crate::{client, wasms, CanisterIds, TestEnv, T};
+use crate::{CanisterIds, T, TestEnv, client, wasms};
 use candid::{CandidType, Nat, Principal};
 use constants::{CHAT_LEDGER_CANISTER_ID, CHAT_SYMBOL, CHAT_TRANSFER_FEE, SNS_GOVERNANCE_CANISTER_ID};
-use ic_ledger_types::{AccountIdentifier, BlockIndex, Tokens, DEFAULT_SUBACCOUNT};
+use ic_ledger_types::{AccountIdentifier, BlockIndex, DEFAULT_SUBACCOUNT, Tokens};
 use icrc_ledger_types::icrc::generic_metadata_value::MetadataValue;
 use icrc_ledger_types::icrc1::account::Account;
 use identity_canister::WEBAUTHN_ORIGINATING_CANISTER;
 use pocket_ic::{PocketIc, PocketIcBuilder, PocketIcState};
-use rand::{rngs::StdRng, Rng, SeedableRng};
+use rand::{Rng, SeedableRng, rngs::StdRng};
 use sha256::sha256;
 use std::collections::{HashMap, HashSet};
 use std::env;
@@ -614,7 +614,9 @@ pub fn install_icrc_ledger(
 fn verify_pocket_ic_exists() {
     let path = match env::var_os("POCKET_IC_BIN") {
         None => {
-            env::set_var("POCKET_IC_BIN", POCKET_IC_BIN);
+            unsafe {
+                env::set_var("POCKET_IC_BIN", POCKET_IC_BIN);
+            }
             POCKET_IC_BIN.to_string()
         }
         Some(path) => path

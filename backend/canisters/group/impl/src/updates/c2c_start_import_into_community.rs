@@ -1,5 +1,5 @@
 use crate::guards::caller_is_group_index_or_local_group_index;
-use crate::{mutate_state, run_regular_jobs, CommunityBeingImportedInto, RuntimeState};
+use crate::{CommunityBeingImportedInto, RuntimeState, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_start_import_into_community::{Response::*, *};

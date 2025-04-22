@@ -1,7 +1,7 @@
 use crate::guards::caller_is_community_canister;
 use crate::updates::c2c_delete_group::delete_group;
 use crate::updates::c2c_mark_community_active::c2c_mark_community_active_impl;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;

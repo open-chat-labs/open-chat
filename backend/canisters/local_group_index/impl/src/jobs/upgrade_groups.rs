@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use constants::min_cycles_balance;
 use ic_cdk::management_canister::CanisterInstallMode;
 use ic_cdk_timers::TimerId;
@@ -8,7 +8,7 @@ use std::time::Duration;
 use tracing::trace;
 use types::{BuildVersion, CanisterId, ChatId, Cycles, CyclesTopUp};
 use utils::canister;
-use utils::canister::{install, ChunkedWasmToInstall, FailedUpgrade, WasmToInstall};
+use utils::canister::{ChunkedWasmToInstall, FailedUpgrade, WasmToInstall, install};
 
 type CanisterToUpgrade = canister::CanisterToInstall<group_canister::post_upgrade::Args>;
 

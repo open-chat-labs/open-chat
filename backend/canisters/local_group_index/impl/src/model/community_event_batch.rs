@@ -1,6 +1,6 @@
-use crate::updates::c2c_notify_low_balance::top_up_canister;
 use crate::CommunityEvent;
-use timer_job_queues::{grouped_timer_job_batch, TimerJobItem};
+use crate::updates::c2c_notify_low_balance::top_up_canister;
+use timer_job_queues::{TimerJobItem, grouped_timer_job_batch};
 use types::{CanisterId, IdempotentEnvelope};
 use utils::canister::{is_out_of_cycles_error, should_retry_failed_c2c_call};
 

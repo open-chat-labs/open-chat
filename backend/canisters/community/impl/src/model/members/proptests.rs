@@ -1,7 +1,7 @@
 use crate::model::members::CommunityMembers;
 use candid::Principal;
-use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
 use ic_stable_structures::DefaultMemoryImpl;
+use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
 use proptest::collection::vec as pvec;
 use proptest::prelude::*;
 use proptest::prop_oneof;

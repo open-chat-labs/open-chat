@@ -1,6 +1,6 @@
 use crate::guards::caller_is_group_index;
 use crate::timer_job_types::TimerJob;
-use crate::{mutate_state, openchat_bot, run_regular_jobs, Data, RuntimeState};
+use crate::{Data, RuntimeState, mutate_state, openchat_bot, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::ChatInternal;

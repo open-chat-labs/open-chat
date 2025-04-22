@@ -1,11 +1,11 @@
 use crate::exchanges::Exchange;
-use crate::{mutate_state, read_state, Config, RuntimeState};
+use crate::{Config, RuntimeState, mutate_state, read_state};
 use constants::MINUTE_IN_MS;
 use itertools::Itertools;
 use market_maker_canister::ExchangeId;
-use std::cmp::{max, min, Reverse};
-use std::collections::btree_map::Entry::Occupied;
+use std::cmp::{Reverse, max, min};
 use std::collections::BTreeMap;
+use std::collections::btree_map::Entry::Occupied;
 use std::time::Duration;
 use tracing::{error, trace};
 use types::{AggregatedOrders, C2CError, CancelOrderRequest, MakeOrderRequest, Milliseconds, Order, OrderType};

@@ -1,6 +1,6 @@
 use crate::guards::caller_is_local_user_index;
 use crate::queries::check_replica_up_to_date;
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use candid::Principal;
 use canister_api_macros::query;
 use community_canister::c2c_events_by_index::Args as C2CArgs;

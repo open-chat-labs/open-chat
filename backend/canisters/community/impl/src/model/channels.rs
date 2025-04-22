@@ -7,13 +7,13 @@ use rand::rngs::StdRng;
 use rand::{Rng, RngCore};
 use search::weighted::*;
 use serde::{Deserialize, Serialize};
-use std::cmp::{max, Reverse};
+use std::cmp::{Reverse, max};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeSet, HashMap, HashSet};
 use types::{
     ChannelId, ChannelMatch, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, CommunityId,
-    GroupMembership, GroupMembershipUpdates, GroupPermissionRole, GroupPermissions, MultiUserChat, Rules, TimestampMillis,
-    UserId, UserType, MAX_THREADS_IN_SUMMARY,
+    GroupMembership, GroupMembershipUpdates, GroupPermissionRole, GroupPermissions, MAX_THREADS_IN_SUMMARY, MultiUserChat,
+    Rules, TimestampMillis, UserId, UserType,
 };
 
 #[derive(Serialize, Deserialize, Default)]
@@ -135,11 +135,7 @@ impl Channels {
             .iter_mut()
             .filter_map(
                 |(id, c)| {
-                    if let Ok(m) = c.chat.leave(user_id, now) {
-                        Some((*id, m))
-                    } else {
-                        None
-                    }
+                    if let Ok(m) = c.chat.leave(user_id, now) { Some((*id, m)) } else { None }
                 },
             )
             .collect()

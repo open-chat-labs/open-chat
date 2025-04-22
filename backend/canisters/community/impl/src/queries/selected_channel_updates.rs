@@ -1,4 +1,4 @@
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use community_canister::selected_channel_updates_v2::{Response::*, *};
 use types::OCResult;

@@ -1,4 +1,4 @@
-use crate::{mutate_state, read_state, Data, RuntimeState};
+use crate::{Data, RuntimeState, mutate_state, read_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -27,11 +27,7 @@ pub(crate) async fn verify_caller(authorizer: Option<CanisterId>) -> Result<Prin
             match c2c_can_push_notifications(authorizer, &CanPushNotificationsArgs { principal: caller }).await {
                 Ok(CanPushNotificationsResponse::Success(authorized)) => {
                     mutate_state(|state| state.data.authorized_principals.add_principal(caller, authorized));
-                    if authorized {
-                        Ok(caller)
-                    } else {
-                        Err(Blocked)
-                    }
+                    if authorized { Ok(caller) } else { Err(Blocked) }
                 }
                 Err(error) => Err(InternalError(format!("{:?}", error))),
             }

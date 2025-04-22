@@ -2,7 +2,7 @@ use crate::client::community::STABLE_MEMORY_MAP_MEMORY_ID;
 use crate::env::ENV;
 use crate::stable_memory::get_stable_memory_map;
 use crate::utils::now_millis;
-use crate::{client, CanisterIds, TestEnv, User};
+use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
@@ -54,11 +54,13 @@ fn delete_channel_succeeds(as_owner: bool) {
 
     let summary_updates = client::community::happy_path::summary_updates(env, user1.principal, community_id, start);
     if as_owner {
-        assert!(summary_updates
-            .unwrap()
-            .channels_removed
-            .first()
-            .is_some_and(|c| *c == channel_id1));
+        assert!(
+            summary_updates
+                .unwrap()
+                .channels_removed
+                .first()
+                .is_some_and(|c| *c == channel_id1)
+        );
     } else {
         assert!(summary_updates.is_none());
     }

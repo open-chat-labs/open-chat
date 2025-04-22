@@ -12,22 +12,22 @@ use oc_error_codes::OCErrorCode;
 use regex_lite::Regex;
 use search::simple::Query;
 use serde::{Deserialize, Serialize};
-use std::cmp::{max, min, Reverse};
+use std::cmp::{Reverse, max, min};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use types::{
     AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, Caller, Chat, CustomPermission,
     Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsCaller, EventsResponse, ExternalUrlUpdated,
     GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged,
-    GroupSubtype, GroupVisibilityChanged, HydratedMention, MemberLeft, MembersRemoved, Message, MessageContent, MessageId,
-    MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds,
-    MultiUserChat, OCResult, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged,
-    PushEventResult, Reaction, ReserveP2PSwapSuccess, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis,
-    Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall,
-    VideoCallPresence, VoteOperation, MAX_RETURNED_MENTIONS,
+    GroupSubtype, GroupVisibilityChanged, HydratedMention, MAX_RETURNED_MENTIONS, MemberLeft, MembersRemoved, Message,
+    MessageContent, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned,
+    MessagesResponse, Milliseconds, MultiUserChat, OCResult, OptionUpdate, OptionalGroupPermissions,
+    OptionalMessagePermissions, PermissionsChanged, PushEventResult, Reaction, ReserveP2PSwapSuccess, RoleChanged, Rules,
+    SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked,
+    UsersInvited, Version, Versioned, VersionedRules, VideoCall, VideoCallPresence, VoteOperation,
 };
 use utils::document::validate_avatar;
 use utils::text_validation::{
-    validate_channel_name, validate_description, validate_group_name, validate_rules, StringLengthValidationError,
+    StringLengthValidationError, validate_channel_name, validate_description, validate_group_name, validate_rules,
 };
 
 mod invited_users;
@@ -133,11 +133,7 @@ impl GroupChatCore {
     }
 
     pub fn verify_is_accessible(&self, user_id: Option<UserId>) -> Result<(), OCErrorCode> {
-        if self.is_accessible(user_id) {
-            Ok(())
-        } else {
-            Err(OCErrorCode::InitiatorNotInChat)
-        }
+        if self.is_accessible(user_id) { Ok(()) } else { Err(OCErrorCode::InitiatorNotInChat) }
     }
 
     pub fn min_visible_event_index(&self, user_id: Option<UserId>) -> OCResult<EventIndex> {

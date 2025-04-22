@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -8,7 +8,7 @@ use icrc_ledger_types::icrc1::transfer::TransferArg;
 use proposals_bot_canister::top_up_neuron::{Response::*, *};
 use sns_governance_canister::types::manage_neuron::claim_or_refresh::By;
 use sns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
-use sns_governance_canister::types::{manage_neuron_response, Empty, ManageNeuron};
+use sns_governance_canister::types::{Empty, ManageNeuron, manage_neuron_response};
 use types::{C2CError, CanisterId, SnsNeuronId};
 
 #[update(msgpack = true)]

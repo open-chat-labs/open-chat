@@ -1,10 +1,11 @@
 use crate::{
+    RuntimeState,
     guards::caller_is_user_canister_or_group_index,
     model::{
         pending_modclub_submissions_queue::PendingModclubSubmission,
-        reported_messages::{build_message_to_reporter, AddReportArgs, AddReportResult},
+        reported_messages::{AddReportArgs, AddReportResult, build_message_to_reporter},
     },
-    mutate_state, RuntimeState,
+    mutate_state,
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;

@@ -157,7 +157,7 @@ impl ChatEventKey {
 mod tests {
     use super::*;
     use crate::{BaseKey, Key};
-    use rand::{thread_rng, Rng, RngCore};
+    use rand::{Rng, RngCore, thread_rng};
     use types::{ChannelId, Chat, EventIndex, MessageIndex};
 
     #[test]

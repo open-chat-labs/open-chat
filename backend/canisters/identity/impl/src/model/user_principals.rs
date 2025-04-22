@@ -3,7 +3,7 @@ use identity_canister::remove_identity_link::Response as RemovePrincipalResponse
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::collections::HashMap;
-use types::{is_default, CanisterId, PushIfNotContains, TimestampMillis, UserId};
+use types::{CanisterId, PushIfNotContains, TimestampMillis, UserId, is_default};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserPrincipals {

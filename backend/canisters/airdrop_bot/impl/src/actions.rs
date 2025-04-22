@@ -1,5 +1,5 @@
 use crate::jobs::execute_airdrop::start_airdrop_timer;
-use crate::{mutate_state, read_state, USERNAME};
+use crate::{USERNAME, mutate_state, read_state};
 use candid::Deserialize;
 use constants::{CHAT_TRANSFER_FEE, MEMO_CHIT_FOR_CHAT_AIRDROP, MEMO_CHIT_FOR_CHAT_LOTTERY};
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
@@ -13,7 +13,7 @@ use types::{
     MessageContentInitial, UserId,
 };
 use utils::canister::should_retry_failed_c2c_call;
-use utils::time::{MonthKey, MONTHS};
+use utils::time::{MONTHS, MonthKey};
 
 impl TimerJobItem for Action {
     async fn process(&self) -> Result<(), bool> {

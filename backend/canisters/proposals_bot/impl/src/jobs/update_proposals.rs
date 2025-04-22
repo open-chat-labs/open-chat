@@ -1,5 +1,5 @@
 use crate::model::nervous_systems::ProposalsToUpdate;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use ic_cdk::call::RejectCode;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;

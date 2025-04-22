@@ -8,7 +8,7 @@ use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStore
 use event_store_producer_cdk_runtime::CdkRuntime;
 use event_store_utils::EventDeduper;
 use fire_and_forget_handler::FireAndForgetHandler;
-use jwt::{verify_and_decode, Claims};
+use jwt::{Claims, verify_and_decode};
 use local_user_index_canister::{ChildCanisterType, GlobalUser};
 use model::bots_map::BotsMap;
 use model::global_user_map::GlobalUserMap;

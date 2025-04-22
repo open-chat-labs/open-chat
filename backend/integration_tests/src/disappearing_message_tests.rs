@@ -3,7 +3,7 @@ use crate::client::group::CHAT_EVENTS_MEMORY_ID;
 use crate::env::ENV;
 use crate::stable_memory::get_stable_memory_map;
 use crate::utils::tick_many;
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::random_string;

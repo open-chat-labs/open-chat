@@ -1,7 +1,7 @@
 use crate::guards::caller_is_governance_principal;
 use crate::model::buckets::BucketRecord;
 use crate::read_state;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use storage_index_canister::add_bucket_canister::{Response::*, *};

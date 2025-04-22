@@ -1,5 +1,5 @@
 use crate::guards::caller_is_openchat_user;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use user_index_canister::update_diamond_membership_subscription::{Response::*, *};

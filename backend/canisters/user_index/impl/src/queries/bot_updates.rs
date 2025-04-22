@@ -1,5 +1,5 @@
 use crate::model::user_map::BotUpdate;
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use std::cmp::max;
 use std::collections::{HashMap, HashSet};

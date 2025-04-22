@@ -1,4 +1,4 @@
-use crate::{guards::caller_is_openchat_user, mutate_state, read_state, UserIndexEvent};
+use crate::{UserIndexEvent, guards::caller_is_openchat_user, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_client::generate_c2c_call;
 use canister_tracing_macros::trace;

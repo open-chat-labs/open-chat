@@ -5,7 +5,7 @@ use serde::Deserialize;
 use serde_tokenstream::from_tokenstream;
 use std::fmt::Formatter;
 use syn::parse::{Parse, ParseStream};
-use syn::{parse_macro_input, Block, FnArg, Ident, ItemFn, LitBool, Pat, PatIdent, PatType, ReturnType, Signature, Token};
+use syn::{Block, FnArg, Ident, ItemFn, LitBool, Pat, PatIdent, PatType, ReturnType, Signature, Token, parse_macro_input};
 
 enum MethodType {
     Update,

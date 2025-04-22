@@ -1,6 +1,6 @@
 use crate::{
-    guards::caller_is_governance_principal, model::public_group_and_community_names::CheckNameResult, mutate_state,
-    RuntimeState,
+    RuntimeState, guards::caller_is_governance_principal, model::public_group_and_community_names::CheckNameResult,
+    mutate_state,
 };
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;

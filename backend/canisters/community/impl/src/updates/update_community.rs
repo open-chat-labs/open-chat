@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::model::events::CommunityEventInternal;
-use crate::{jobs, mutate_state, read_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, jobs, mutate_state, read_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::GroupGateUpdatedInternal;
@@ -15,7 +15,7 @@ use types::{
 };
 use utils::document::{validate_avatar, validate_banner};
 use utils::text_validation::{
-    validate_community_name, validate_description, validate_rules, NameValidationError, RulesValidationError,
+    NameValidationError, RulesValidationError, validate_community_name, validate_description, validate_rules,
 };
 
 #[update(msgpack = true)]

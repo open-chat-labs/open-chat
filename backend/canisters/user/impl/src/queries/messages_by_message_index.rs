@@ -1,6 +1,6 @@
 use crate::guards::caller_is_owner;
 use crate::queries::check_replica_up_to_date;
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use chat_events::Reader;
 use oc_error_codes::OCErrorCode;

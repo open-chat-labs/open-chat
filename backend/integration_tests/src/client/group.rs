@@ -43,9 +43,9 @@ generate_msgpack_update_call!(update_bot);
 generate_msgpack_update_call!(update_group_v2);
 
 pub mod happy_path {
+    use crate::User;
     use crate::client::user;
     use crate::env::VIDEO_CALL_OPERATOR;
-    use crate::User;
     use candid::Principal;
     use pocket_ic::PocketIc;
     use testing::rng::random_from_u128;

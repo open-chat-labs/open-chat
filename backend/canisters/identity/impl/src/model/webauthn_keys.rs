@@ -2,8 +2,8 @@ use candid::Deserialize;
 use identity_canister::WebAuthnKey;
 use serde::Serialize;
 use serde_bytes::ByteBuf;
-use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
+use std::collections::hash_map::Entry::Vacant;
 use types::TimestampMillis;
 
 #[derive(Serialize, Deserialize, Default)]

@@ -2,7 +2,7 @@ use crate::model::users::FileStatusInternal;
 use crate::mutate_state;
 use candid::Deserialize;
 use serde::Serialize;
-use timer_job_queues::{timer_job_batch, TimerJobItem};
+use timer_job_queues::{TimerJobItem, timer_job_batch};
 use types::{CanisterId, FileAdded, FileRemoved};
 use utils::canister::should_retry_failed_c2c_call;
 

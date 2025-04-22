@@ -1,4 +1,4 @@
-use canister_agent_utils::{get_dfx_identity, CanisterName};
+use canister_agent_utils::{CanisterName, get_dfx_identity};
 use canister_upgrader::*;
 use clap::Parser;
 use types::{BuildVersion, CanisterId};

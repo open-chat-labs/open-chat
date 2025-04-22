@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState, UserIndexEvent, UserToDelete};
+use crate::{RuntimeState, UserIndexEvent, UserToDelete, mutate_state};
 use constants::SECOND_IN_MS;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;

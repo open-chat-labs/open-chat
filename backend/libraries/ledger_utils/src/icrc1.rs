@@ -3,8 +3,8 @@ use icrc_ledger_types::icrc1::transfer::TransferError;
 use tracing::error;
 use types::icrc1::Account;
 use types::{
-    icrc1::{CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction},
     C2CError, CanisterId,
+    icrc1::{CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction},
 };
 
 pub async fn process_transaction(

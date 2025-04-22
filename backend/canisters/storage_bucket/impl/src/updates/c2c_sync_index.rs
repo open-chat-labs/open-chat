@@ -1,7 +1,7 @@
 use crate::guards::caller_is_storage_index_canister;
 use crate::model::files::RemoveFileResult;
 use crate::model::index_event_batch::EventToSync;
-use crate::{mutate_state, RuntimeState, MAX_EVENTS_TO_SYNC_PER_BATCH};
+use crate::{MAX_EVENTS_TO_SYNC_PER_BATCH, RuntimeState, mutate_state};
 use canister_tracing_macros::trace;
 use ic_cdk::update;
 use storage_bucket_canister::c2c_sync_index::{Response::*, *};

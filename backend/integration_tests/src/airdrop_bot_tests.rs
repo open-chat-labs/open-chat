@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
 use airdrop_bot_canister::{AirdropAlgorithm, V1Algorithm, V2Algorithm};
 use itertools::Itertools;
 use std::ops::Deref;

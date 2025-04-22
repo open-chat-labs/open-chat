@@ -3,7 +3,7 @@ use constants::{
     CHAT_LEDGER_CANISTER_ID, CHAT_SYMBOL, CHAT_TRANSFER_FEE, ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE,
 };
 use pocket_ic::PocketIc;
-use rand::{rngs::StdRng, Rng, SeedableRng};
+use rand::{Rng, SeedableRng, rngs::StdRng};
 use std::time::SystemTime;
 use std::{path::PathBuf, time::UNIX_EPOCH};
 use types::{Hash, TimestampMillis, TimestampNanos, TokenInfo};

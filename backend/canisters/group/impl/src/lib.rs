@@ -10,7 +10,7 @@ use constants::{DAY_IN_MS, HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, MINUTE_IN_MS, OPE
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
-use gated_groups::{calculate_gate_payments, GatePayment};
+use gated_groups::{GatePayment, calculate_gate_payments};
 use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersSuccess, UserInvitation};
 use group_community_common::{
     Achievements, ExpiringMemberActions, ExpiringMembers, PaymentReceipts, PaymentRecipient, PendingPayment,
@@ -37,8 +37,8 @@ use types::{
     AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotEventsCaller, BotGroupConfig, BotInitiator, BotPermissions,
     BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics, CommunityId, Cycles, Document, Empty,
     EventIndex, EventsCaller, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype,
-    IdempotentEnvelope, MessageIndex, Milliseconds, MultiUserChat, Notification, OCResult, Rules, TimestampMillis, Timestamped,
-    UserId, UserType, MAX_THREADS_IN_SUMMARY,
+    IdempotentEnvelope, MAX_THREADS_IN_SUMMARY, MessageIndex, Milliseconds, MultiUserChat, Notification, OCResult, Rules,
+    TimestampMillis, Timestamped, UserId, UserType,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
@@ -641,11 +641,7 @@ impl Data {
     }
 
     pub fn verify_not_frozen(&self) -> Result<(), OCErrorCode> {
-        if self.is_frozen() {
-            Err(OCErrorCode::ChatFrozen)
-        } else {
-            Ok(())
-        }
+        if self.is_frozen() { Err(OCErrorCode::ChatFrozen) } else { Ok(()) }
     }
 
     pub fn is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> bool {

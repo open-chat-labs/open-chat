@@ -1,5 +1,5 @@
 use crate::timer_job_types::{ExpireSwapJob, TimerJob};
-use crate::{mutate_state, Data, RuntimeState};
+use crate::{Data, RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use escrow_canister::create_swap::{Response::*, *};

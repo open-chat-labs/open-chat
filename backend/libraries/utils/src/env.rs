@@ -1,6 +1,6 @@
 use candid::Principal;
-use rand::rngs::StdRng;
 use rand::Rng;
+use rand::rngs::StdRng;
 use sha256::sha256;
 use types::{CanisterId, Cycles, Hash, TimestampMillis, TimestampNanos};
 

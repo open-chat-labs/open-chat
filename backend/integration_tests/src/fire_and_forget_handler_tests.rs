@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::utils::tick_many;
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;

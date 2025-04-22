@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -11,7 +11,7 @@ use rand::Rng;
 use sns_governance_canister::types::manage_neuron::claim_or_refresh::{By, MemoAndController};
 use sns_governance_canister::types::manage_neuron::configure::Operation;
 use sns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command, IncreaseDissolveDelay};
-use sns_governance_canister::types::{manage_neuron_response, ManageNeuron};
+use sns_governance_canister::types::{ManageNeuron, manage_neuron_response};
 use sns_governance_canister_c2c_client::configure_neuron;
 use types::{C2CError, CanisterId, SnsNeuronId};
 

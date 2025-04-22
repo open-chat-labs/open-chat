@@ -1,7 +1,7 @@
+use crate::RuntimeState;
 use crate::guards::caller_is_local_user_index;
 use crate::guards::caller_is_owner;
 use crate::read_state;
-use crate::RuntimeState;
 use canister_api_macros::query;
 use oc_error_codes::OCErrorCode;
 use types::AccessTokenScope;

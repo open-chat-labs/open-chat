@@ -1,10 +1,10 @@
 use crate::guards::caller_is_user_index_canister;
-use crate::{mutate_state, read_state, Data, RuntimeState};
+use crate::{Data, RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use itertools::Itertools;
-use local_user_index_canister::c2c_upgrade_user_canister_wasm::*;
 use local_user_index_canister::ChildCanisterType;
+use local_user_index_canister::c2c_upgrade_user_canister_wasm::*;
 use sha256::sha256;
 use std::cmp::Reverse;
 use std::collections::HashSet;

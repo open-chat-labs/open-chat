@@ -1,12 +1,12 @@
 use crate::guards::caller_is_governance_principal;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use ic_cdk::call::RejectCode;
 use tracing::{error, info};
 use types::{C2CError, CanisterId, CanisterWasm, Hash, UpgradeChunkedCanisterWasmResponse::*, UpgradesFilter};
-use user_index_canister::upgrade_user_canister_wasm::*;
 use user_index_canister::ChildCanisterType;
+use user_index_canister::upgrade_user_canister_wasm::*;
 use utils::canister::build_filter_map;
 
 #[proposal(guard = "caller_is_governance_principal")]

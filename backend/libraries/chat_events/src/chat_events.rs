@@ -7,8 +7,8 @@ use crate::*;
 use constants::{ONE_MB, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventBuilder, EventStoreClient, Runtime};
 use oc_error_codes::{OCError, OCErrorCode};
-use rand::rngs::StdRng;
 use rand::Rng;
+use rand::rngs::StdRng;
 use search::simple::{Document, Query};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
@@ -1318,11 +1318,7 @@ impl ChatEvents {
             return Err(UpdateEventError::NotFound);
         };
 
-        if content.unreserve(user_id) {
-            Ok(())
-        } else {
-            Err(UpdateEventError::NoChange(()))
-        }
+        if content.unreserve(user_id) { Ok(()) } else { Err(UpdateEventError::NoChange(())) }
     }
 
     pub fn cancel_p2p_swap(
@@ -1379,11 +1375,7 @@ impl ChatEvents {
             return Err(UpdateEventError::NotFound);
         };
 
-        if content.mark_expired() {
-            Ok(())
-        } else {
-            Err(UpdateEventError::NoChange(()))
-        }
+        if content.mark_expired() { Ok(()) } else { Err(UpdateEventError::NoChange(())) }
     }
 
     pub fn set_p2p_swap_status(
@@ -1596,11 +1588,7 @@ impl ChatEvents {
             return Err(UpdateEventError::NotFound);
         };
 
-        if update_fn(summary, root_message.sender) {
-            Ok(())
-        } else {
-            Err(UpdateEventError::NoChange(()))
-        }
+        if update_fn(summary, root_message.sender) { Ok(()) } else { Err(UpdateEventError::NoChange(())) }
     }
 
     // Note: this method assumes that if there is some thread_root_message_index then the thread exists

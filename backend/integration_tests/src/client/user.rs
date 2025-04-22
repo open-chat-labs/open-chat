@@ -47,8 +47,8 @@ generate_msgpack_update_call!(unblock_user);
 generate_msgpack_update_call!(undelete_messages);
 
 pub mod happy_path {
-    use crate::env::VIDEO_CALL_OPERATOR;
     use crate::User;
+    use crate::env::VIDEO_CALL_OPERATOR;
     use pocket_ic::PocketIc;
     use testing::rng::random_from_u128;
     use types::{

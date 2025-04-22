@@ -1,5 +1,5 @@
 use crate::updates::c2c_notify_low_balance::top_up_user;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use candid::Nat;
 use constants::DAY_IN_MS;
 use ic_cdk::management_canister::CanisterStatusArgs;

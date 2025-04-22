@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::utils::{chat_token_info, icp_token_info, now_millis, now_nanos, tick_many};
-use crate::{client, CanisterIds, TestEnv, User};
+use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use constants::{DAY_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE};
 use event_store_canister::TimestampMillis;

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
-use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
+use std::collections::hash_map::Entry::Vacant;
 use types::{ChannelId, ChatId, EventContext, TimestampMillis, Timestamped, UserId};
 
 #[derive(Serialize, Deserialize, Default)]

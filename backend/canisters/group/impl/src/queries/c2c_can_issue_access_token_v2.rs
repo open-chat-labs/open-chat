@@ -1,10 +1,10 @@
+use crate::RuntimeState;
 use crate::guards::caller_is_local_user_index;
 use crate::read_state;
-use crate::RuntimeState;
 use canister_api_macros::query;
 use group_canister::c2c_can_issue_access_token_v2::*;
-use types::c2c_can_issue_access_token::AccessTypeArgs;
 use types::BotPermissions;
+use types::c2c_can_issue_access_token::AccessTypeArgs;
 
 #[query(guard = "caller_is_local_user_index", msgpack = true)]
 fn c2c_can_issue_access_token_v2(args: Args) -> Response {

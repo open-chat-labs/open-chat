@@ -1,9 +1,9 @@
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
 use constants::{CHAT_TRANSFER_FEE, DAY_IN_MS, ICP_TRANSFER_FEE, MINUTE_IN_MS, SNS_GOVERNANCE_CANISTER_ID};
-use jwt::{verify_and_decode, Claims};
+use jwt::{Claims, verify_and_decode};
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
@@ -70,12 +70,14 @@ fn can_upgrade_to_diamond(pay_in_chat: bool, lifetime: bool) {
         user_response.diamond_membership_details.as_ref().unwrap().expires_at,
         expected_expiry
     );
-    assert!(!user_response
-        .diamond_membership_details
-        .as_ref()
-        .unwrap()
-        .subscription
-        .is_active());
+    assert!(
+        !user_response
+            .diamond_membership_details
+            .as_ref()
+            .unwrap()
+            .subscription
+            .is_active()
+    );
 
     let fees = DiamondMembershipFees::default();
 
@@ -135,12 +137,14 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
         user_response.diamond_membership_details.as_ref().unwrap().expires_at,
         start_time + (2 * one_month_millis)
     );
-    assert!(user_response
-        .diamond_membership_details
-        .as_ref()
-        .unwrap()
-        .subscription
-        .is_active());
+    assert!(
+        user_response
+            .diamond_membership_details
+            .as_ref()
+            .unwrap()
+            .subscription
+            .is_active()
+    );
 
     let new_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
     let fees = DiamondMembershipFees::default();
@@ -191,14 +195,16 @@ fn referrer_awarded_chit_when_referred_gets_diamond() {
     //
     let user_state = client::user::happy_path::initial_state(env, &user_a);
 
-    assert!(user_state
-        .achievements
-        .iter()
-        .any(|ev| if let ChitEarnedReason::Achievement(a) = &ev.reason {
-            matches!(a, Achievement::Referred1stUser)
-        } else {
-            false
-        }));
+    assert!(
+        user_state
+            .achievements
+            .iter()
+            .any(|ev| if let ChitEarnedReason::Achievement(a) = &ev.reason {
+                matches!(a, Achievement::Referred1stUser)
+            } else {
+                false
+            })
+    );
 
     assert_eq!(user_state.referrals.len(), 1);
     assert_eq!(user_state.referrals[0].user_id, user_b.user_id);

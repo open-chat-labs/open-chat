@@ -1,5 +1,5 @@
 use crate::guards::caller_is_proposals_bot;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use registry_canister::c2c_set_submitting_proposals_enabled::{Response::*, *};

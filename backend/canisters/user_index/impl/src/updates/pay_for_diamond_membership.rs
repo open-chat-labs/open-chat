@@ -1,7 +1,7 @@
 use crate::guards::caller_is_openchat_user;
 use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
 use crate::timer_job_types::{RecurringDiamondMembershipPayment, TimerJob};
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{
@@ -12,13 +12,13 @@ use event_store_producer::EventBuilder;
 use ic_ledger_types::{BlockIndex, TransferError};
 use icrc_ledger_types::icrc1;
 use icrc_ledger_types::icrc1::account::Account;
-use jwt::{sign_and_encode_token, Claims};
+use jwt::{Claims, sign_and_encode_token};
 use local_user_index_canister::{DiamondMembershipPaymentReceived, UserIndexEvent};
 use rand::Rng;
 use serde::Serialize;
 use storage_index_canister::add_or_update_users::UserConfig;
 use tracing::error;
-use types::{DiamondMembershipPlanDuration, UserId, ICP};
+use types::{DiamondMembershipPlanDuration, ICP, UserId};
 use user_index_canister::pay_for_diamond_membership::{Response::*, *};
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]

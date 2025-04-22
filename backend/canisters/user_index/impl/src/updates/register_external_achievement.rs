@@ -1,5 +1,5 @@
 use crate::guards::caller_is_governance_principal;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use candid::Principal;
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
@@ -7,8 +7,8 @@ use constants::{CHAT_LEDGER_CANISTER_ID, CHAT_TRANSFER_FEE};
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use tracing::error;
 use types::{CanisterId, TimestampNanos};
-use user_index_canister::register_external_achievement::{Response::*, *};
 use user_index_canister::ExternalAchievementInitial;
+use user_index_canister::register_external_achievement::{Response::*, *};
 
 const CHAT_FEE_PER_CHIT_AWARD: u128 = 20_000; // 1/5000th of a CHAT
 const MIN_REWARD: u32 = 5000;

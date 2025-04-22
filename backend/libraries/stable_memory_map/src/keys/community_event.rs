@@ -40,7 +40,7 @@ impl CommunityEventKey {
 mod tests {
     use super::*;
     use crate::{BaseKey, Key};
-    use rand::{thread_rng, RngCore};
+    use rand::{RngCore, thread_rng};
     use types::EventIndex;
 
     #[test]

@@ -1,9 +1,9 @@
 use crate::guards::caller_is_governance_principal;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
-use group_index_canister::upgrade_community_canister_wasm::*;
 use group_index_canister::ChildCanisterType;
+use group_index_canister::upgrade_community_canister_wasm::*;
 use ic_cdk::call::RejectCode;
 use tracing::{error, info};
 use types::{C2CError, CanisterId, CanisterWasm, Hash, UpgradeChunkedCanisterWasmResponse::*, UpgradesFilter};

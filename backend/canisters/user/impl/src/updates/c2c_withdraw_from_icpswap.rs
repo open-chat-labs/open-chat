@@ -1,7 +1,7 @@
 use crate::guards::caller_is_local_user_index;
 use crate::model::token_swaps::TokenSwap;
 use crate::updates::swap_tokens::mark_withdrawal_success;
-use crate::{mutate_state, read_state, run_regular_jobs, token_swaps, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state, run_regular_jobs, token_swaps};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use types::{CanisterId, Timestamped};

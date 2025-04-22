@@ -66,11 +66,7 @@ impl MultiUserChat {
     }
 
     pub fn group_id(&self) -> Option<ChatId> {
-        if let MultiUserChat::Group(group_id) = self {
-            Some(*group_id)
-        } else {
-            None
-        }
+        if let MultiUserChat::Group(group_id) = self { Some(*group_id) } else { None }
     }
 }
 

@@ -117,7 +117,7 @@ impl FilesPerAccessorKey {
 mod tests {
     use super::*;
     use crate::{BaseKey, Key};
-    use rand::{thread_rng, Rng};
+    use rand::{Rng, thread_rng};
 
     #[test]
     fn file_id_to_file_key_e2e() {

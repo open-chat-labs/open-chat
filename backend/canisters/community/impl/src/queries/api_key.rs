@@ -1,6 +1,6 @@
+use crate::RuntimeState;
 use crate::guards::caller_is_local_user_index;
 use crate::read_state;
-use crate::RuntimeState;
 use candid::Principal;
 use canister_api_macros::query;
 use community_canister::api_key::{Response::*, *};

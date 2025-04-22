@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, COMMUNITY_CREATION_LIMIT};
+use crate::{COMMUNITY_CREATION_LIMIT, RuntimeState, mutate_state, read_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_community;
@@ -9,8 +9,8 @@ use types::{CanisterId, CommunityId, OCResult};
 use user_canister::create_community::{Response::*, *};
 use utils::document::{validate_avatar, validate_banner};
 use utils::text_validation::{
-    validate_channel_name, validate_community_name, validate_description, validate_rules, NameValidationError,
-    RulesValidationError,
+    NameValidationError, RulesValidationError, validate_channel_name, validate_community_name, validate_description,
+    validate_rules,
 };
 
 #[update(guard = "caller_is_owner", msgpack = true)]

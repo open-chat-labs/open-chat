@@ -104,7 +104,7 @@ impl UserIdsKey {
 mod tests {
     use super::*;
     use crate::{BaseKey, Key};
-    use rand::{thread_rng, Rng, RngCore};
+    use rand::{Rng, RngCore, thread_rng};
 
     #[test]
     fn group_chat_member_key_e2e() {

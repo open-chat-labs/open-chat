@@ -1,4 +1,4 @@
-use ic_cbor::{parse_cbor, CborValue, CertificateToCbor};
+use ic_cbor::{CborValue, CertificateToCbor, parse_cbor};
 use ic_certification::Certificate;
 
 pub fn extract_certificate(signature: &[u8]) -> Result<Certificate, String> {

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use types::{is_default, TimestampMillis, UserId};
+use types::{TimestampMillis, UserId, is_default};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserCache {

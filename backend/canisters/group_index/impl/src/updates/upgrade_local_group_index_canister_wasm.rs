@@ -1,9 +1,9 @@
 use crate::guards::caller_is_governance_principal;
-use crate::{mutate_state, Data, RuntimeState};
+use crate::{Data, RuntimeState, mutate_state};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
-use group_index_canister::upgrade_local_group_index_canister_wasm::*;
 use group_index_canister::ChildCanisterType;
+use group_index_canister::upgrade_local_group_index_canister_wasm::*;
 use tracing::{error, info};
 use types::{BuildVersion, CanisterWasm, UpgradeChunkedCanisterWasmResponse::*};
 use utils::canister::should_perform_upgrade;

@@ -9,18 +9,18 @@ use serde_bytes::ByteBuf;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use types::icrc1::{Account, CryptoAccount};
 use types::{
-    is_default, AudioContent, BlobReference, CallParticipant, CanisterId, CompletedCryptoTransaction, ContentValidationError,
+    AudioContent, BlobReference, CallParticipant, CanisterId, CompletedCryptoTransaction, ContentValidationError,
     ContentWithCaptionEventPayload, CryptoContent, CryptoContentEventPayload, CryptoTransaction, Cryptocurrency, CustomContent,
     FileContent, FileContentEventPayload, GiphyContent, GiphyImageVariant, GovernanceProposalContentEventPayload, ImageContent,
-    ImageOrVideoContentEventPayload, MessageContent, MessageContentEventPayload, MessageContentInitial, MessageContentType,
-    MessageIndex, MessageReminderContent, MessageReminderContentEventPayload, MessageReminderCreatedContent, MessageReport,
-    P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent, P2PSwapContentEventPayload, P2PSwapContentInitial,
-    P2PSwapExpired, P2PSwapReserved, P2PSwapStatus, PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload,
-    PollVotes, PrizeContent, PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload,
-    Proposal, ProposalContent, RegisterVoteResult, ReportedMessage, ReportedMessageContentEventPayload, TextContent,
+    ImageOrVideoContentEventPayload, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE, MessageContent, MessageContentEventPayload,
+    MessageContentInitial, MessageContentType, MessageIndex, MessageReminderContent, MessageReminderContentEventPayload,
+    MessageReminderCreatedContent, MessageReport, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent,
+    P2PSwapContentEventPayload, P2PSwapContentInitial, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus,
+    PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload, PollVotes, PrizeContent,
+    PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal,
+    ProposalContent, RegisterVoteResult, ReportedMessage, ReportedMessageContentEventPayload, TextContent,
     TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos, TokenInfo, TotalVotes, TransactionHash, UserId,
-    UserType, VideoCallContent, VideoCallPresence, VideoCallType, VideoContent, VoteOperation, MAX_TEXT_LENGTH,
-    MAX_TEXT_LENGTH_USIZE,
+    UserType, VideoCallContent, VideoCallPresence, VideoCallType, VideoContent, VoteOperation, is_default,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

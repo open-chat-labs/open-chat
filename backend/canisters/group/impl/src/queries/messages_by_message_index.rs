@@ -1,5 +1,5 @@
 use crate::queries::check_replica_up_to_date;
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use group_canister::messages_by_message_index::{Response::*, *};
 use oc_error_codes::OCErrorCode;

@@ -1,4 +1,4 @@
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use ledger_utils::default_ledger_account;
 use types::{BuildVersion, CanisterUpgradeStatus};

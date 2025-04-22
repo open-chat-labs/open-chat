@@ -1,8 +1,8 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_tracing_macros::trace;
 use constants::{DAY_IN_MS, NANOS_PER_MILLISECOND};
 use ic_canister_sig_creation::signature_map::CanisterSigInputs;
-use ic_canister_sig_creation::{delegation_signature_msg, DELEGATION_SIG_DOMAIN};
+use ic_canister_sig_creation::{DELEGATION_SIG_DOMAIN, delegation_signature_msg};
 use ic_cdk::update;
 use identity_canister::prepare_delegation::{Response::*, *};
 use types::Nanoseconds;

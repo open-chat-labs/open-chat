@@ -1,7 +1,7 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_local_user_index;
 use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, FinalPrizePaymentsJob, MarkP2PSwapExpiredJob};
-use crate::{mutate_state, read_state, run_regular_jobs, Data, RuntimeState, TimerJob};
+use crate::{Data, RuntimeState, TimerJob, mutate_state, read_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, ValidateNewMessageContentResult};

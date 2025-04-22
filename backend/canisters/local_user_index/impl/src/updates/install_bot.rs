@@ -1,9 +1,9 @@
-use crate::{guards::caller_is_openchat_user, mutate_state, read_state, RuntimeState, UserIndexEvent};
+use crate::{RuntimeState, UserIndexEvent, guards::caller_is_openchat_user, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_client::generate_c2c_call;
 use canister_tracing_macros::trace;
 use local_user_index_canister::install_bot::{Response::*, *};
-use types::{c2c_install_bot, BotRegistrationStatus, UserId};
+use types::{BotRegistrationStatus, UserId, c2c_install_bot};
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]

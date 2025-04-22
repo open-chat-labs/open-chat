@@ -43,7 +43,7 @@ impl PrincipalKey {
 mod tests {
     use super::*;
     use crate::{BaseKey, Key};
-    use rand::{thread_rng, Rng, RngCore};
+    use rand::{Rng, RngCore, thread_rng};
 
     #[test]
     fn principal_to_user_id_key_e2e() {

@@ -1,7 +1,7 @@
 use super::user::SuspensionDetails;
+use crate::DiamondMembershipUserMetrics;
 use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use crate::model::user::User;
-use crate::DiamondMembershipUserMetrics;
 use candid::Principal;
 use search::weighted::{Document as SearchDocument, Query};
 use serde::{Deserialize, Serialize};

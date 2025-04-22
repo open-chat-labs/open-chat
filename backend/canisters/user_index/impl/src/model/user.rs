@@ -1,11 +1,11 @@
 use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
-use crate::{model::account_billing::AccountBilling, TIME_UNTIL_SUSPENDED_ACCOUNT_IS_DELETED_MILLIS};
+use crate::{TIME_UNTIL_SUSPENDED_ACCOUNT_IS_DELETED_MILLIS, model::account_billing::AccountBilling};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use types::{
-    is_default, CyclesTopUp, CyclesTopUpInternal, PhoneNumber, RegistrationFee, SuspensionAction, SuspensionDuration,
-    TimestampMillis, UniquePersonProof, UserId, UserSummary, UserSummaryStable, UserSummaryV2, UserSummaryVolatile, UserType,
+    CyclesTopUp, CyclesTopUpInternal, PhoneNumber, RegistrationFee, SuspensionAction, SuspensionDuration, TimestampMillis,
+    UniquePersonProof, UserId, UserSummary, UserSummaryStable, UserSummaryV2, UserSummaryVolatile, UserType, is_default,
 };
 use utils::time::MonthKey;
 
@@ -169,11 +169,7 @@ impl User {
     }
 
     pub fn streak(&self, now: TimestampMillis) -> u16 {
-        if self.streak_ends > now {
-            self.streak
-        } else {
-            0
-        }
+        if self.streak_ends > now { self.streak } else { 0 }
     }
 
     pub fn set_avatar_id(&mut self, avatar_id: Option<u128>, now: TimestampMillis) {

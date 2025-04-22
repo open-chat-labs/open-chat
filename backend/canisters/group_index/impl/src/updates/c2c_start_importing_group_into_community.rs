@@ -1,5 +1,5 @@
 use crate::guards::caller_is_community_canister;
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_start_importing_group_into_community::{Response::*, *};

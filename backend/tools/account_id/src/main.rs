@@ -1,4 +1,4 @@
-use account_id::{run, Config};
+use account_id::{Config, run};
 use clap::Parser;
 
 fn main() {

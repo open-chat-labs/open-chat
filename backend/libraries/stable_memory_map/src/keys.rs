@@ -1,5 +1,5 @@
-use ic_stable_structures::storable::Bound;
 use ic_stable_structures::Storable;
+use ic_stable_structures::storable::Bound;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 

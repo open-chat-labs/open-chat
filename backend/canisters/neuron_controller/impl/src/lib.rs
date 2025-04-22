@@ -1,10 +1,10 @@
-use crate::ecdsa::{get_key_id, CanisterEcdsaRequest};
+use crate::ecdsa::{CanisterEcdsaRequest, get_key_id};
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
 use constants::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 use ic_transport_types::EnvelopeContent;
-use k256::pkcs8::EncodePublicKey;
 use k256::PublicKey;
+use k256::pkcs8::EncodePublicKey;
 use nns_governance_canister::types::Neuron;
 use rand::Rng;
 use serde::{Deserialize, Serialize};

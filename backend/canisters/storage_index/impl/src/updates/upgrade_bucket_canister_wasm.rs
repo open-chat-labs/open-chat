@@ -1,5 +1,5 @@
 use crate::guards::caller_is_governance_principal;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use storage_index_canister::upgrade_bucket_canister_wasm::{Response::*, *};

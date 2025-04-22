@@ -5,8 +5,8 @@ use crate::mutate_state;
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use neuron_controller_canister::manage_nns_neuron::{Response::*, *};
-use nns_governance_canister::types::manage_neuron::Command;
 use nns_governance_canister::types::ManageNeuron;
+use nns_governance_canister::types::manage_neuron::Command;
 use std::time::Duration;
 
 #[proposal(guard = "caller_is_governance_principal")]

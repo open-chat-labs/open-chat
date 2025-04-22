@@ -1,4 +1,4 @@
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use candid::Principal;
 use constants::{
     MEMO_GROUP_IMPORT_INTO_COMMUNITY, MEMO_JOINING_FEE, OPENCHAT_TREASURY_CANISTER_ID, SNS_GOVERNANCE_CANISTER_ID,

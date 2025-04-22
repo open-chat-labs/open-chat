@@ -1,6 +1,6 @@
 use crate::NNS_INTERNET_IDENTITY_CANISTER_ID;
 use candid::Principal;
-use rand::{thread_rng, Rng, RngCore};
+use rand::{Rng, RngCore, thread_rng};
 use types::CanisterId;
 
 pub fn random_principal() -> Principal {

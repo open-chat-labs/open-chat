@@ -1,5 +1,5 @@
 use crate::guards::caller_is_group_index;
-use crate::{mutate_state, openchat_bot, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, mutate_state, openchat_bot, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use user_canister::c2c_notify_community_deleted::{Response::*, *};

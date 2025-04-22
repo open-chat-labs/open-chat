@@ -1,6 +1,6 @@
+use crate::RuntimeState;
 use crate::model::channels::ChannelUpdates;
 use crate::read_state;
-use crate::RuntimeState;
 use canister_api_macros::query;
 use community_canister::channel_summary_updates::{Response::*, *};
 use types::OCResult;

@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::utils::now_millis;
-use crate::{client, TestEnv, User};
+use crate::{TestEnv, User, client};
 use constants::DAY_IN_MS;
 use itertools::Itertools;
 use pocket_ic::PocketIc;
@@ -226,14 +226,16 @@ fn chit_streak_maintained_if_insured(days_insured: u8) {
         days_insured as usize
     );
     // Check that CHIT days never have both a DailyClaim event and a StreakInsuranceClaim event
-    assert!(chit_events
-        .iter()
-        .filter(|e| matches!(
-            e.reason,
-            ChitEarnedReason::DailyClaim | ChitEarnedReason::StreakInsuranceClaim
-        ))
-        .map(|e| timestamp_to_day(e.timestamp))
-        .all_unique());
+    assert!(
+        chit_events
+            .iter()
+            .filter(|e| matches!(
+                e.reason,
+                ChitEarnedReason::DailyClaim | ChitEarnedReason::StreakInsuranceClaim
+            ))
+            .map(|e| timestamp_to_day(e.timestamp))
+            .all_unique()
+    );
 }
 
 #[test_case(1)]

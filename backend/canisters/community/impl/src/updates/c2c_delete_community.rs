@@ -1,4 +1,4 @@
-use crate::{read_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, read_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_client::make_c2c_call_raw;
 use canister_tracing_macros::trace;

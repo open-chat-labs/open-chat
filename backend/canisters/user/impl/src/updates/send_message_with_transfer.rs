@@ -1,7 +1,7 @@
 use crate::guards::caller_is_owner;
 use crate::model::p2p_swaps::P2PSwap;
 use crate::timer_job_types::{NotifyEscrowCanisterOfDepositJob, SendMessageToChannelJob, SendMessageToGroupJob, TimerJob};
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
@@ -11,9 +11,9 @@ use oc_error_codes::{OCError, OCErrorCode};
 use tracing::error;
 use types::icrc1::Account;
 use types::{
-    icrc1, Achievement, C2CError, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, MessageContentInitial,
-    MessageId, MessageIndex, OCResult, P2PSwapLocation, PendingCryptoTransaction, TimestampMillis, UserId, MAX_TEXT_LENGTH,
-    MAX_TEXT_LENGTH_USIZE,
+    Achievement, C2CError, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, MAX_TEXT_LENGTH,
+    MAX_TEXT_LENGTH_USIZE, MessageContentInitial, MessageId, MessageIndex, OCResult, P2PSwapLocation, PendingCryptoTransaction,
+    TimestampMillis, UserId, icrc1,
 };
 use user_canister::send_message_with_transfer_to_channel;
 use user_canister::send_message_with_transfer_to_group;

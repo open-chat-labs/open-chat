@@ -1,5 +1,5 @@
-use crate::read_state;
 use crate::RuntimeState;
+use crate::read_state;
 use canister_api_macros::query;
 use group_canister::rules::{Response::*, *};
 use oc_error_codes::OCErrorCode;

@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::utils::tick_many;
-use crate::{client, CanisterIds, TestEnv, User};
+use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
@@ -71,11 +71,13 @@ fn user_canister_notified_of_community_deleted() {
     env.tick();
 
     let initial_state1 = client::user::happy_path::initial_state(env, &user1);
-    assert!(!initial_state1
-        .communities
-        .summaries
-        .iter()
-        .any(|c| c.community_id == community_id));
+    assert!(
+        !initial_state1
+            .communities
+            .summaries
+            .iter()
+            .any(|c| c.community_id == community_id)
+    );
 
     env.advance_time(Duration::from_secs(9 * 60));
 
@@ -87,11 +89,13 @@ fn user_canister_notified_of_community_deleted() {
     env.tick();
 
     let initial_state2 = client::user::happy_path::initial_state(env, &user1);
-    assert!(!initial_state2
-        .communities
-        .summaries
-        .iter()
-        .any(|c| c.community_id == community_id));
+    assert!(
+        !initial_state2
+            .communities
+            .summaries
+            .iter()
+            .any(|c| c.community_id == community_id)
+    );
 
     env.advance_time(Duration::from_secs(2 * 60));
 
@@ -104,11 +108,13 @@ fn user_canister_notified_of_community_deleted() {
 
     // Only retry for 10 minutes so the notification shouldn't have made it to user3's canister
     let initial_state3 = client::user::happy_path::initial_state(env, &user3);
-    assert!(initial_state3
-        .communities
-        .summaries
-        .iter()
-        .any(|c| c.community_id == community_id));
+    assert!(
+        initial_state3
+            .communities
+            .summaries
+            .iter()
+            .any(|c| c.community_id == community_id)
+    );
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {

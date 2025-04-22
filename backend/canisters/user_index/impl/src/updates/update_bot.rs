@@ -1,6 +1,7 @@
 use crate::{
-    model::{user_map::UpdateUserResult, MAX_AVATAR_SIZE, MAX_COMMANDS, MAX_DESCRIPTION_LEN},
-    mutate_state, RuntimeState,
+    RuntimeState,
+    model::{MAX_AVATAR_SIZE, MAX_COMMANDS, MAX_DESCRIPTION_LEN, user_map::UpdateUserResult},
+    mutate_state,
 };
 use candid::Principal;
 use canister_api_macros::update;

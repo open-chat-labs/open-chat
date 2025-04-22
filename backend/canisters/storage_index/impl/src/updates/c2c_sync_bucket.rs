@@ -1,5 +1,5 @@
 use crate::guards::caller_is_bucket;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_tracing_macros::trace;
 use constants::ONE_GB;
 use ic_cdk::update;

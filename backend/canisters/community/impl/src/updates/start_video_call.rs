@@ -1,7 +1,7 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_video_call_operator;
 use crate::timer_job_types::{MarkVideoCallEndedJob, TimerJob};
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, mutate_state, run_regular_jobs};
 use canister_tracing_macros::trace;
 use chat_events::{CallParticipantInternal, MessageContentInternal, VideoCallContentInternal};
 use community_canister::start_video_call_v2::*;

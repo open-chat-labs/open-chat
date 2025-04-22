@@ -3,7 +3,7 @@ use crate::guards::caller_is_local_user_index;
 use crate::guards::caller_is_owner;
 use crate::timer_job_types::{DeleteFileReferencesJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob};
 use crate::updates::send_message_with_transfer::set_up_p2p_swap;
-use crate::{mutate_state, read_state, run_regular_jobs, Data, RuntimeState, TimerJob};
+use crate::{Data, RuntimeState, TimerJob, mutate_state, read_state, run_regular_jobs};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -30,8 +30,8 @@ use user_canister::c2c_bot_send_message;
 use user_canister::send_message_v2::{Response::*, *};
 use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent};
 
-use super::c2c_send_messages::handle_message_impl;
 use super::c2c_send_messages::HandleMessageArgs;
+use super::c2c_send_messages::handle_message_impl;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
@@ -57,7 +57,7 @@ async fn send_message_v2(args: Args) -> Response {
         match local_user_index_canister_c2c_client::c2c_lookup_user(local_user_index_canister_id, &c2c_args).await {
             Ok(local_user_index_canister::c2c_lookup_user::Response::Success(result)) => RecipientType::Other(result.user_type),
             Ok(local_user_index_canister::c2c_lookup_user::Response::UserNotFound) => {
-                return Error(OCErrorCode::TargetUserNotFound.into())
+                return Error(OCErrorCode::TargetUserNotFound.into());
             }
             Err(error) => return Error(error.into()),
         }

@@ -1,4 +1,4 @@
-use crate::memory::{get_blobs_memory, Memory};
+use crate::memory::{Memory, get_blobs_memory};
 use ic_stable_structures::storable::Bound;
 use ic_stable_structures::{StableBTreeMap, Storable};
 use serde::{Deserialize, Serialize};

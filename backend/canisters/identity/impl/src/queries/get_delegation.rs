@@ -1,6 +1,6 @@
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use ic_canister_sig_creation::signature_map::CanisterSigInputs;
-use ic_canister_sig_creation::{delegation_signature_msg, DELEGATION_SIG_DOMAIN};
+use ic_canister_sig_creation::{DELEGATION_SIG_DOMAIN, delegation_signature_msg};
 use ic_cdk::query;
 use identity_canister::get_delegation::{Response::*, *};
 use types::{Delegation, SignedDelegation};
