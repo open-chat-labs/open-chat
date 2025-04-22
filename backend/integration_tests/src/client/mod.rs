@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use crate::identity_tests::sign_in_with_email;
 use crate::utils::tick_many;
-use crate::{CanisterIds, User, UserAuth, T};
+use crate::{CanisterIds, T, User, UserAuth};
 use candid::{CandidType, Principal};
 use pocket_ic::{PocketIc, RejectResponse};
 use rand::random;
