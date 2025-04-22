@@ -532,6 +532,7 @@ export function setChatSpecificState(clientChat: ChatSummary): void {
     resetFilteredProposalsStore(clientChat);
 }
 
+// TODO - get rid of this
 export function clearSelectedChat(newSelectedChatId?: ChatIdentifier): void {
     filteredProposalsStore.set(undefined);
     selectedMessageContext.update((context) => {
