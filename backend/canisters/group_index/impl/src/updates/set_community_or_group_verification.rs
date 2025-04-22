@@ -6,17 +6,24 @@ use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use group_index_canister::{set_community_verification, set_group_verification};
 use rand::Rng;
+use tracing::info;
 
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
 fn set_community_verification(args: set_community_verification::Args) -> set_community_verification::Response {
-    mutate_state(|state| set_community_verification_impl(args, state))
+    let community_id = args.community_id;
+    let result = mutate_state(|state| set_community_verification_impl(args, state));
+    info!(%community_id, ?result, "Set community verification completed");
+    result
 }
 
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
 fn set_group_verification(args: set_group_verification::Args) -> set_group_verification::Response {
-    mutate_state(|state| set_group_verification_impl(args, state))
+    let group_id = args.group_id;
+    let result = mutate_state(|state| set_group_verification_impl(args, state));
+    info!(%group_id, ?result, "Set group verification completed");
+    result
 }
 
 fn set_community_verification_impl(

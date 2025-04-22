@@ -206,13 +206,13 @@ fn calculate_price_limits(
         if increase_required % 2 == 0 || latest_ask_taken.is_some() {
             max_bid_price = max_bid_price.saturating_sub((increase_required / 2) * config.price_increment);
         } else {
-            max_bid_price = max_bid_price.saturating_sub(((increase_required + 1) / 2) * config.price_increment);
+            max_bid_price = max_bid_price.saturating_sub(increase_required.div_ceil(2) * config.price_increment);
         }
 
         if increase_required % 2 == 0 || latest_ask_taken.is_none() {
             min_ask_price = min_ask_price.saturating_add((increase_required / 2) * config.price_increment);
         } else {
-            min_ask_price = min_ask_price.saturating_add(((increase_required + 1) / 2) * config.price_increment);
+            min_ask_price = min_ask_price.saturating_add(increase_required.div_ceil(2) * config.price_increment);
         }
     }
 
