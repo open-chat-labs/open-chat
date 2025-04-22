@@ -14,6 +14,7 @@
     let y2 = new Tween(55, options);
 
     let destroyed = false;
+    let animating = $state(false);
 
     onMount(() => {
         return () => (destroyed = true);
@@ -33,7 +34,8 @@
     let fill = $derived(enabled ? "url(#grad1)" : "transparent");
     let stroke = $derived(enabled ? "rgb(247, 28, 255)" : "var(--icon-txt)");
     $effect(() => {
-        if (enabled) {
+        if (enabled && !animating) {
+            animating = true;
             animate(55, 155);
         }
     });

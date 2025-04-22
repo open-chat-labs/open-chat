@@ -33,7 +33,6 @@
         communities,
         defaultChatRules,
         draftMessagesStore,
-        identityState,
         nullMembership,
         offlineStore,
         pageRedirect,
@@ -908,22 +907,22 @@
     // $: nervousSystem = client.tryGetNervousSystem("rrkah-fqaaa-aaaaa-aaaaq-cai");
 
     trackedEffect("identity-state", () => {
-        if ($identityState.kind === "registering") {
+        if (app.identityState.kind === "registering") {
             modal = { kind: "registering" };
-        } else if ($identityState.kind === "logging_in") {
+        } else if (app.identityState.kind === "logging_in") {
             modal = { kind: "logging_in" };
-        } else if ($identityState.kind === "logged_in" && modal.kind === "registering") {
+        } else if (app.identityState.kind === "logged_in" && modal.kind === "registering") {
             console.log("We are now logged in so we are closing the register modal");
             closeModal();
-        } else if ($identityState.kind === "challenging") {
+        } else if (app.identityState.kind === "challenging") {
             modal = { kind: "challenge" };
         }
         if (
-            $identityState.kind === "logged_in" &&
-            $identityState.postLogin?.kind === "join_group" &&
+            app.identityState.kind === "logged_in" &&
+            app.identityState.postLogin?.kind === "join_group" &&
             app.chatsInitialised
         ) {
-            const join = { ...$identityState.postLogin };
+            const join = { ...app.identityState.postLogin };
             client.clearPostLoginState();
             tick().then(() => joinGroup(join));
         }

@@ -3,7 +3,7 @@
 </script>
 
 <script lang="ts">
-    import { identityState, pathState, ui, type CreatedUser, type OpenChat } from "openchat-client";
+    import { app, pathState, ui, type CreatedUser, type OpenChat } from "openchat-client";
     import { getContext, type Component } from "svelte";
     import { showMenuForLandingRoute } from "../../utils/urls";
     import Loading from "../Loading.svelte";
@@ -25,7 +25,7 @@
     }
 </script>
 
-{#if $identityState.kind === "registering"}
+{#if app.identityState.kind === "registering"}
     <Overlay>
         <Register onCreatedUser={createdUser} />
     </Overlay>
