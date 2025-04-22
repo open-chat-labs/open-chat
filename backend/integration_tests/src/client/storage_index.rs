@@ -16,7 +16,7 @@ pub mod happy_path {
     use crate::utils::tick_many;
     use candid::Principal;
     use pocket_ic::PocketIc;
-    use rand::{thread_rng, RngCore};
+    use rand::{RngCore, thread_rng};
     use storage_index_canister::add_or_update_users::UserConfig;
     use storage_index_canister::user::UserRecord;
     use types::{AccessorId, BlobReference, CanisterId, CanisterWasm};

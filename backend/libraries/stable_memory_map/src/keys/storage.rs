@@ -117,12 +117,12 @@ impl FilesPerAccessorKey {
 mod tests {
     use super::*;
     use crate::{BaseKey, Key};
-    use rand::{thread_rng, Rng};
+    use rand::{Rng, thread_rng};
 
     #[test]
     fn file_id_to_file_key_e2e() {
         for _ in 0..100 {
-            let file_id: u128 = thread_rng().gen();
+            let file_id: u128 = thread_rng().r#gen();
             let prefix = FileIdToFileKeyPrefix::new();
             let key = BaseKey::from(prefix.create_key(&file_id));
             let file_key = FileIdToFileKey::try_from(key.clone()).unwrap();
@@ -143,7 +143,7 @@ mod tests {
     #[test]
     fn file_reference_count_key_e2e() {
         for _ in 0..100 {
-            let hash: [u8; 32] = thread_rng().gen();
+            let hash: [u8; 32] = thread_rng().r#gen();
             let prefix = FileReferenceCountKeyPrefix::new();
             let key = BaseKey::from(prefix.create_key(&hash));
             let reference_count_key = FileReferenceCountKey::try_from(key.clone()).unwrap();
@@ -164,9 +164,9 @@ mod tests {
     #[test]
     fn files_per_accessor_key_e2e() {
         for _ in 0..100 {
-            let accessor_id_bytes: [u8; 10] = thread_rng().gen();
+            let accessor_id_bytes: [u8; 10] = thread_rng().r#gen();
             let accessor_id = AccessorId::from_slice(&accessor_id_bytes);
-            let file_id: u128 = thread_rng().gen();
+            let file_id: u128 = thread_rng().r#gen();
             let prefix = FilesPerAccessorKeyPrefix::new();
             let key = BaseKey::from(prefix.create_key(&(accessor_id, file_id)));
             let member_key = FilesPerAccessorKey::try_from(key.clone()).unwrap();

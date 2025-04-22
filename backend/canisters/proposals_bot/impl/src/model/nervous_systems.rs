@@ -1,4 +1,4 @@
-use crate::{generate_message_id, NervousSystemMetrics};
+use crate::{NervousSystemMetrics, generate_message_id};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;

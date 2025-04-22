@@ -1,5 +1,5 @@
 use crate::guards::caller_can_upload_wasm_chunks;
-use crate::{mutate_state, State};
+use crate::{State, mutate_state};
 use canister_tracing_macros::trace;
 use ic_cdk::update;
 use openchat_installer_canister::upload_wasm_chunk::{Response::*, *};

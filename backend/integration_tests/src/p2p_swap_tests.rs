@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::utils::{chat_token_info, icp_token_info, tick_many};
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
 use candid::Principal;
 use constants::{CHAT_TRANSFER_FEE, DAY_IN_MS, MINUTE_IN_MS};
 use std::ops::Deref;
@@ -636,9 +636,11 @@ fn p2p_swap_blocked_if_token_disabled(input_token: bool) {
     );
 
     if let user_canister::send_message_with_transfer_to_group::Response::Error(error) = send_message_response {
-        assert!(error
-            .message()
-            .is_some_and(|m| m.contains(if input_token { "Input" } else { "Output" })));
+        assert!(
+            error
+                .message()
+                .is_some_and(|m| m.contains(if input_token { "Input" } else { "Output" }))
+        );
     } else {
         panic!("Unexpected response: {:?}", send_message_response);
     }

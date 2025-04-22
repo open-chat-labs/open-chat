@@ -1,6 +1,6 @@
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use dataurl::DataUrl;
-use http_request::{build_json_response, encode_logs, extract_route, Route};
+use http_request::{Route, build_json_response, encode_logs, extract_route};
 use ic_cdk::query;
 use std::collections::HashMap;
 use std::str::FromStr;

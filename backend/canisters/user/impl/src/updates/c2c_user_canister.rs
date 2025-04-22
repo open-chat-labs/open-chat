@@ -1,7 +1,7 @@
 use crate::timer_job_types::{HardDeleteMessageContentJob, TimerJob};
-use crate::updates::c2c_send_messages::{get_sender_status, handle_message_impl, verify_user, HandleMessageArgs};
+use crate::updates::c2c_send_messages::{HandleMessageArgs, get_sender_status, handle_message_impl, verify_user};
 use crate::updates::start_video_call::handle_start_video_call;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{

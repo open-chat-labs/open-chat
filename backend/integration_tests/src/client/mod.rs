@@ -1,14 +1,15 @@
 #![allow(dead_code)]
+use crate::identity_tests::sign_in_with_email;
 use crate::utils::tick_many;
-use crate::{CanisterIds, User, T};
+use crate::{CanisterIds, T, User, UserAuth};
 use candid::{CandidType, Principal};
 use pocket_ic::{PocketIc, RejectResponse};
 use rand::random;
-use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 use std::time::Duration;
 use testing::rng::random_internet_identity_principal;
-use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration, SignedDelegation};
+use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration};
 
 mod macros;
 
@@ -130,13 +131,19 @@ pub fn register_user(env: &mut PocketIc, canister_ids: &CanisterIds) -> User {
 }
 
 pub fn register_user_with_referrer(env: &mut PocketIc, canister_ids: &CanisterIds, referral_code: Option<String>) -> User {
-    let (user, _) = register_user_internal(env, canister_ids, referral_code, false);
-    user
+    let (auth_principal, public_key) = random_internet_identity_principal();
+    register_user_internal(env, canister_ids, referral_code, auth_principal, public_key)
 }
 
-pub fn register_user_and_include_delegation(env: &mut PocketIc, canister_ids: &CanisterIds) -> (User, SignedDelegation) {
-    let (user, delegation) = register_user_internal(env, canister_ids, None, true);
-    (user, delegation.unwrap())
+pub fn register_user_and_include_auth(env: &mut PocketIc, canister_ids: &CanisterIds) -> (User, UserAuth) {
+    let (auth_principal, public_key, delegation) = sign_in_with_email(env, canister_ids);
+    let user = register_user_internal(env, canister_ids, None, auth_principal, public_key.clone());
+    let user_auth = UserAuth {
+        auth_principal,
+        public_key,
+        delegation,
+    };
+    (user, user_auth)
 }
 
 pub fn register_diamond_user(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> User {
@@ -178,9 +185,9 @@ fn register_user_internal(
     env: &mut PocketIc,
     canister_ids: &CanisterIds,
     referral_code: Option<String>,
-    get_delegation: bool,
-) -> (User, Option<SignedDelegation>) {
-    let (auth_principal, public_key) = random_internet_identity_principal();
+    auth_principal: Principal,
+    public_key: Vec<u8>,
+) -> User {
     let session_key = random::<[u8; 32]>().to_vec();
     let create_identity_result = identity::happy_path::create_identity(
         env,
@@ -193,27 +200,13 @@ fn register_user_internal(
 
     let local_user_index = user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
 
-    let user = local_user_index::happy_path::register_user_with_referrer(
+    local_user_index::happy_path::register_user_with_referrer(
         env,
         Principal::self_authenticating(&create_identity_result.user_key),
         local_user_index,
         create_identity_result.user_key,
         referral_code,
-    );
-
-    let delegation = if get_delegation {
-        Some(identity::happy_path::get_delegation(
-            env,
-            auth_principal,
-            canister_ids.identity,
-            session_key,
-            create_identity_result.expiration,
-        ))
-    } else {
-        None
-    };
-
-    (user, delegation)
+    )
 }
 
 fn unwrap_response<R: CandidType + DeserializeOwned>(response: Result<Vec<u8>, RejectResponse>) -> R {

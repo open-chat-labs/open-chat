@@ -1,6 +1,6 @@
 use crate::guards::caller_is_group_canister;
 use crate::updates::c2c_create_community::create_community_impl;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_convert_group_into_community::{Response::*, *};

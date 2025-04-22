@@ -2,7 +2,7 @@ use crate::actions::Action;
 use crate::guards::caller_is_admin;
 use crate::jobs::execute_airdrop::start_airdrop_timer;
 use crate::model::airdrops::SetNextResult;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use airdrop_bot_canister::set_airdrop::*;
 use canister_tracing_macros::trace;
 use ic_cdk::update;

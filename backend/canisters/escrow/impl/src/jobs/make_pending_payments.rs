@@ -1,8 +1,8 @@
 use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use candid::Principal;
 use constants::NANOS_PER_MILLISECOND;
-use escrow_canister::{deposit_subaccount, SwapStatus};
+use escrow_canister::{SwapStatus, deposit_subaccount};
 use ic_cdk_timers::TimerId;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use ledger_utils::icrc1::make_transfer;

@@ -1,6 +1,6 @@
 use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
-use crate::{mutate_state, RuntimeState};
-use crate::{read_state, LocalUserIndexEvent};
+use crate::{LocalUserIndexEvent, read_state};
+use crate::{RuntimeState, mutate_state};
 use constants::{CHAT_LEDGER_CANISTER_ID, SNS_ROOT_CANISTER_ID};
 use ic_cdk_timers::TimerId;
 use ic_ledger_types::{BlockIndex, Tokens};
@@ -80,7 +80,12 @@ fn inform_referrer(pending_payment: &PendingPayment, block_index: BlockIndex, st
         amount_text = format!("[{}]({})", amount_text, link);
     }
 
-    let message = MessageContent::Text(TextContent { text: format!("You have received a referral reward of {}. This is because one of the users you referred has made a Diamond membership payment.", amount_text) });
+    let message = MessageContent::Text(TextContent {
+        text: format!(
+            "You have received a referral reward of {}. This is because one of the users you referred has made a Diamond membership payment.",
+            amount_text
+        ),
+    });
 
     state.push_event_to_local_user_index(
         user_id,

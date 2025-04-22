@@ -1,4 +1,4 @@
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use airdrop_bot_canister::c2c_online_users::{OnlineForMinutes, OnlineUsersEvent};
 use candid::Principal;
 use canister_api_macros::update;

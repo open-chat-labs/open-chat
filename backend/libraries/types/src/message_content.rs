@@ -294,11 +294,7 @@ impl MessageContentInitial {
             _ => return None,
         };
 
-        if let CryptoTransaction::Pending(pending) = transfer {
-            Some(pending)
-        } else {
-            None
-        }
+        if let CryptoTransaction::Pending(pending) = transfer { Some(pending) } else { None }
     }
 }
 

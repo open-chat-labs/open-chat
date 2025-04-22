@@ -1,12 +1,12 @@
 use crate::{ChatEventInternal, EventsMap};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
-use stable_memory_map::{with_map, with_map_mut, ChatEventKey, ChatEventKeyPrefix, KeyPrefix, StableMemoryMap};
+use stable_memory_map::{ChatEventKey, ChatEventKeyPrefix, KeyPrefix, StableMemoryMap, with_map, with_map_mut};
 use std::cmp::min;
 use std::collections::VecDeque;
 use std::ops::RangeBounds;
 use types::{
-    Chat, EventContext, EventIndex, EventWrapperInternal, MessageIndex, TimestampMillis, MAX_EVENT_INDEX, MIN_EVENT_INDEX,
+    Chat, EventContext, EventIndex, EventWrapperInternal, MAX_EVENT_INDEX, MIN_EVENT_INDEX, MessageIndex, TimestampMillis,
 };
 
 #[cfg(test)]

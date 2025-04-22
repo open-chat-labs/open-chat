@@ -1,12 +1,12 @@
 use crate::{
+    RuntimeState,
     guards::caller_is_modclub,
     model::{
-        reported_messages::{build_message_to_reporter, build_message_to_sender, RecordOutcomeResult, ReportOutcome},
+        reported_messages::{RecordOutcomeResult, ReportOutcome, build_message_to_reporter, build_message_to_sender},
         user::SuspensionDetails,
     },
     mutate_state,
     timer_job_types::{SetUserSuspended, TimerJob},
-    RuntimeState,
 };
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;

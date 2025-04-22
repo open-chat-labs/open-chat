@@ -1,6 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
-use crate::{read_state, Data};
+use crate::{Data, read_state};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use group_canister::post_upgrade::Args;

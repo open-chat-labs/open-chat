@@ -3,7 +3,7 @@ use ic_cdk::management_canister::{
     self, EcdsaCurve, EcdsaKeyId, EcdsaPublicKeyArgs, HttpHeader, HttpMethod, HttpRequestArgs, SignCallError,
     SignWithEcdsaArgs, TransformContext, TransformFunc,
 };
-use ic_transport_types::{to_request_id, EnvelopeContent};
+use ic_transport_types::{EnvelopeContent, to_request_id};
 use serde::Serialize;
 use sha256::sha256;
 use tracing::{error, info};

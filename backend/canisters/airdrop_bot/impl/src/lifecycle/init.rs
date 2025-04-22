@@ -1,5 +1,5 @@
-use crate::lifecycle::{init_env, init_state};
 use crate::Data;
+use crate::lifecycle::{init_env, init_state};
 use airdrop_bot_canister::init::Args;
 use canister_tracing_macros::trace;
 use ic_cdk::init;

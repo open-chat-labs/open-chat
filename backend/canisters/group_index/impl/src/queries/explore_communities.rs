@@ -1,4 +1,4 @@
-use crate::{model::moderation_flags::ModerationFlags, read_state, RuntimeState};
+use crate::{RuntimeState, model::moderation_flags::ModerationFlags, read_state};
 use canister_api_macros::query;
 use group_index_canister::explore_communities::{Response::*, *};
 

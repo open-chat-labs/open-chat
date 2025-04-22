@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::utils::now_millis;
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
 use constants::OPENCHAT_BOT_USER_ID;
 use std::ops::Deref;
 use std::time::Duration;

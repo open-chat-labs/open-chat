@@ -14,11 +14,7 @@ pub const CHUNK_STORE_CHUNK_SIZE: usize = ONE_MB as usize;
 
 // This only applies to the 'top level' canisters (ie. not user + group canisters)
 pub fn min_cycles_balance(test_mode: bool) -> Cycles {
-    if test_mode {
-        MIN_CYCLES_BALANCE_TEST
-    } else {
-        MIN_CYCLES_BALANCE
-    }
+    if test_mode { MIN_CYCLES_BALANCE_TEST } else { MIN_CYCLES_BALANCE }
 }
 
 const MIN_CYCLES_BALANCE: Cycles = 50_000_000_000_000; // 50T

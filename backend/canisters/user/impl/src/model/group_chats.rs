@@ -1,7 +1,7 @@
 use crate::model::group_chat::GroupChat;
 use serde::{Deserialize, Serialize};
-use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
+use std::collections::hash_map::Entry::{Occupied, Vacant};
 use types::{CanisterId, ChatId, MessageIndex, TimestampMillis, Timestamped};
 
 #[derive(Serialize, Deserialize, Default)]

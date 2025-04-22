@@ -1,9 +1,9 @@
 use crate::canister_id_from_u64;
-use canbench_rs::{bench, bench_fn, BenchResult};
+use canbench_rs::{BenchResult, bench, bench_fn};
 use chat_events::{AddRemoveReactionArgs, ChatEvents, MessageContentInternal, PushMessageArgs, TextContentInternal};
 use event_store_producer::NullRuntime;
-use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
 use ic_stable_structures::DefaultMemoryImpl;
+use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
 use types::{EventIndex, MessageId, MultiUserChat, Reaction};
 
 #[bench(raw)]

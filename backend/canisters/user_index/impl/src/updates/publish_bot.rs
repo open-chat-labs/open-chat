@@ -1,5 +1,5 @@
 use crate::guards::caller_is_governance_principal;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_api_macros::{proposal, update};
 use canister_tracing_macros::trace;
 use local_user_index_canister::{BotPublished, UserIndexEvent};
@@ -16,11 +16,7 @@ fn publish_bot(args: Args) -> Response {
 fn publish_bot(args: Args) -> Response {
     mutate_state(
         |state| {
-            if state.data.test_mode {
-                publish_bot_impl(args, state)
-            } else {
-                Response::NotAuthorised
-            }
+            if state.data.test_mode { publish_bot_impl(args, state) } else { Response::NotAuthorised }
         },
     )
 }

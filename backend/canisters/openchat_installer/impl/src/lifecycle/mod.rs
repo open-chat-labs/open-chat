@@ -1,10 +1,10 @@
-use crate::{mutate_state, Data, State, WASM_VERSION};
+use crate::{Data, State, WASM_VERSION, mutate_state};
 use std::time::Duration;
 use tracing::trace;
 use types::{BuildVersion, Timestamped};
 use utils::canister::get_random_seed;
-use utils::env::canister::CanisterEnv;
 use utils::env::Environment;
+use utils::env::canister::CanisterEnv;
 
 mod init;
 mod post_upgrade;

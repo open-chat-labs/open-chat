@@ -1,7 +1,7 @@
 use crate::guards::caller_is_owner_or_local_user_index;
 use crate::model::direct_chat::DirectChat;
 use crate::queries::check_replica_up_to_date;
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use chat_events::{ChatEventsListReader, Reader};
 use oc_error_codes::OCErrorCode;

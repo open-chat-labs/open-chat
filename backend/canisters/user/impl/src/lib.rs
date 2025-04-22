@@ -520,11 +520,7 @@ impl Data {
     }
 
     pub fn verify_not_suspended(&self) -> Result<(), OCErrorCode> {
-        if self.suspended.value {
-            Err(OCErrorCode::InitiatorSuspended)
-        } else {
-            Ok(())
-        }
+        if self.suspended.value { Err(OCErrorCode::InitiatorSuspended) } else { Ok(()) }
     }
 
     pub fn remove_group(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<GroupChat> {

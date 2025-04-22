@@ -1,4 +1,4 @@
-use crate::{mutate_state, LocalUserIndexEvent, RuntimeState};
+use crate::{LocalUserIndexEvent, RuntimeState, mutate_state};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;

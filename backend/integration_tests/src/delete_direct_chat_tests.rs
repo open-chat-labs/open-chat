@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::random_string;
@@ -43,16 +43,20 @@ fn delete_direct_chat_succeeds() {
     assert_eq!(user1_updates.unwrap().direct_chats.removed, vec![ChatId::from(user2.user_id)]);
 
     let user1_initial_state = client::user::happy_path::initial_state(env, &user1);
-    assert!(!user1_initial_state
-        .direct_chats
-        .summaries
-        .iter()
-        .any(|c| c.them == user2.user_id));
+    assert!(
+        !user1_initial_state
+            .direct_chats
+            .summaries
+            .iter()
+            .any(|c| c.them == user2.user_id)
+    );
 
     let user2_initial_state = client::user::happy_path::initial_state(env, &user2);
-    assert!(!user2_initial_state
-        .direct_chats
-        .summaries
-        .iter()
-        .any(|c| c.them == user2.user_id));
+    assert!(
+        !user2_initial_state
+            .direct_chats
+            .summaries
+            .iter()
+            .any(|c| c.them == user2.user_id)
+    );
 }

@@ -5,14 +5,14 @@ use serde::{Deserialize, Serialize};
 use std::cell::{Cell, RefCell};
 use std::collections::VecDeque;
 use std::io::Write;
-use tracing::level_filters::LevelFilter;
 use tracing::Level;
+use tracing::level_filters::LevelFilter;
 use tracing_subscriber::fmt::format::Writer;
 use tracing_subscriber::fmt::time::FormatTime;
 use tracing_subscriber::fmt::writer::MakeWriterExt;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
-use tracing_subscriber::{fmt, Layer, Registry};
+use tracing_subscriber::{Layer, Registry, fmt};
 
 thread_local! {
     static INITIALIZED: Cell<bool> = Cell::default();

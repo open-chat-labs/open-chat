@@ -1,6 +1,6 @@
 use crate::guards::caller_is_platform_moderator;
 use crate::timer_job_types::{SetUserSuspendedInCommunity, SetUserSuspendedInGroup, TimerJob};
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use types::{ChatId, CommunityId, UserId};

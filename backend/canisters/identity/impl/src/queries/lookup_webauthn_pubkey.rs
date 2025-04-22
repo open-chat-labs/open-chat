@@ -1,4 +1,4 @@
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use ic_cdk::query;
 use identity_canister::lookup_webauthn_pubkey::{Response::*, *};
 

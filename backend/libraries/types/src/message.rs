@@ -5,7 +5,7 @@ use crate::{
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::ops::{Deref, DerefMut};
-use ts_export::{ts_export, TSPrincipal};
+use ts_export::{TSPrincipal, ts_export};
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

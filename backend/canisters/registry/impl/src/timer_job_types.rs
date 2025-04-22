@@ -5,7 +5,7 @@ use canister_timer_jobs::Job;
 use constants::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 use cycles_minting_canister::notify_create_canister::{Subnet, SubnetSelection};
 use ic_cdk::call::RejectCode;
-use ic_ledger_types::{AccountIdentifier, Memo, Subaccount, Timestamp, Tokens, TransferArgs, DEFAULT_FEE};
+use ic_ledger_types::{AccountIdentifier, DEFAULT_FEE, Memo, Subaccount, Timestamp, Tokens, TransferArgs};
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{C2CError, CanisterId, TimestampMillis};

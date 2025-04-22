@@ -2,7 +2,7 @@ use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::model::channels::Channel;
 use crate::model::members::CommunityMembers;
 use crate::updates::c2c_join_community::join_community;
-use crate::{activity_notifications::handle_activity_notification, mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, read_state};
 use crate::{jobs, run_regular_jobs};
 use candid::Principal;
 use canister_api_macros::update;
@@ -10,8 +10,8 @@ use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use community_canister::c2c_join_channel::{Response::*, *};
 use gated_groups::{
-    check_if_passes_gate, check_if_passes_gate_synchronously, CheckGateArgs, CheckIfPassesGateResult,
-    CheckVerifiedCredentialGateArgs, GatePayment,
+    CheckGateArgs, CheckIfPassesGateResult, CheckVerifiedCredentialGateArgs, GatePayment, check_if_passes_gate,
+    check_if_passes_gate_synchronously,
 };
 use group_chat_core::{AddMemberSuccess, AddResult};
 use group_community_common::ExpiringMember;

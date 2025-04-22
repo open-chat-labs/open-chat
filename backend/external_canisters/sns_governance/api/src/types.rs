@@ -974,11 +974,11 @@ pub struct RewardEvent {
     /// reasons that rewards might not be distributed in a given round.
     ///
     /// 1. "Missed" rounds: there was a long period when we did calculate rewards
-    ///     (longer than 1 round). (I.e. distribute_rewards was not called by
-    ///     heartbeat for whatever reason, most likely some kind of bug.)
+    ///    (longer than 1 round). (I.e. distribute_rewards was not called by
+    ///    heartbeat for whatever reason, most likely some kind of bug.)
     ///
     /// 2. Rollover: We tried to distribute rewards, but there were no proposals
-    ///     settled to distribute rewards for.
+    ///    settled to distribute rewards for.
     ///
     /// In both of these cases, the rewards purse rolls over into the next round.
     pub rounds_since_last_distribution: Option<u64>,

@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::utils::tick_many;
-use crate::{client, CanisterIds, TestEnv, User};
+use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
@@ -38,11 +38,13 @@ fn join_public_channel_succeeds() {
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 
-    assert!(initial_state
-        .communities
-        .summaries
-        .iter()
-        .any(|c| c.community_id == community_id));
+    assert!(
+        initial_state
+            .communities
+            .summaries
+            .iter()
+            .any(|c| c.community_id == community_id)
+    );
 }
 
 #[test]

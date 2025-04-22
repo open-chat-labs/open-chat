@@ -1,9 +1,9 @@
+use crate::AccessRulesInternal;
 use crate::members::stable_memory::MembersStableStorage;
 use crate::mentions::Mentions;
 use crate::roles::GroupRoleInternal;
-use crate::AccessRulesInternal;
 use candid::Principal;
-use constants::{calculate_summary_updates_data_removal_cutoff, ONE_MB};
+use constants::{ONE_MB, calculate_summary_updates_data_removal_cutoff};
 use group_community_common::{Member, MemberUpdate, Members};
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
@@ -14,8 +14,8 @@ use std::cmp::max;
 use std::collections::{BTreeMap, BTreeSet};
 use std::ops::Deref;
 use types::{
-    is_default, EventIndex, GroupMember, GroupPermissions, MessageIndex, MultiUserChat, OCResult, TimestampMillis, Timestamped,
-    UserId, UserType, Version,
+    EventIndex, GroupMember, GroupPermissions, MessageIndex, MultiUserChat, OCResult, TimestampMillis, Timestamped, UserId,
+    UserType, Version, is_default,
 };
 use utils::timestamped_set::TimestampedSet;
 

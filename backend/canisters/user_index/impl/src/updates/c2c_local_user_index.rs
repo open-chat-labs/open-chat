@@ -1,5 +1,5 @@
 use crate::guards::caller_is_local_user_index_canister;
-use crate::{mutate_state, RuntimeState, UserRegisteredEventPayload};
+use crate::{RuntimeState, UserRegisteredEventPayload, mutate_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_time::now_millis;
@@ -15,8 +15,8 @@ use rand::RngCore;
 use std::cell::LazyCell;
 use storage_index_canister::add_or_update_users::UserConfig;
 use types::{CanisterId, IdempotentEnvelope, MessageContent, TextContent, TimestampMillis, UserId, UserType};
-use user_index_canister::c2c_local_user_index::{Response::*, *};
 use user_index_canister::LocalUserIndexEvent;
+use user_index_canister::c2c_local_user_index::{Response::*, *};
 
 #[update(guard = "caller_is_local_user_index_canister", msgpack = true)]
 #[trace]

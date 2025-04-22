@@ -1,6 +1,6 @@
 use crate::model::nervous_systems::ValidateSubmitProposalPaymentError;
 use crate::timer_job_types::{ProcessUserRefundJob, SubmitProposalJob, TimerJob};
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_timer_jobs::Job;
@@ -12,11 +12,11 @@ use proposals_bot_canister::{ProposalToSubmit, ProposalToSubmitAction, Treasury}
 use sns_governance_canister::types::manage_neuron::Command;
 use sns_governance_canister::types::proposal::Action;
 use sns_governance_canister::types::{
-    manage_neuron_response, AdvanceSnsTargetVersion, ExecuteGenericNervousSystemFunction, MintSnsTokens, Motion, Proposal,
-    Subaccount, TransferSnsTreasuryFunds, UpgradeSnsControlledCanister, UpgradeSnsToNextVersion,
+    AdvanceSnsTargetVersion, ExecuteGenericNervousSystemFunction, MintSnsTokens, Motion, Proposal, Subaccount,
+    TransferSnsTreasuryFunds, UpgradeSnsControlledCanister, UpgradeSnsToNextVersion, manage_neuron_response,
 };
 use tracing::{error, info};
-use types::{icrc2, CanisterId, MultiUserChat, SnsNeuronId, UserDetails, UserId};
+use types::{CanisterId, MultiUserChat, SnsNeuronId, UserDetails, UserId, icrc2};
 use user_index_canister_c2c_client::lookup_user;
 
 const OC_ROOT_URL: &str = "https://oc.app/";

@@ -1,7 +1,7 @@
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
 use crate::utils::{now_nanos, tick_many};
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
 use constants::{ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE};
 use std::ops::Deref;
 use std::time::Duration;

@@ -2,8 +2,8 @@ use candid::CandidType;
 use ic_ledger_types::{BlockIndex, TransferError};
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
-use types::nns::Tokens;
 use types::CanisterId;
+use types::nns::Tokens;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {

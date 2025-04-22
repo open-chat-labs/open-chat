@@ -1,5 +1,5 @@
 use crate::model::user_principals::UserPrincipal;
-use crate::{mutate_state, RuntimeState, VerifyNewIdentityArgs, VerifyNewIdentityError, VerifyNewIdentitySuccess};
+use crate::{RuntimeState, VerifyNewIdentityArgs, VerifyNewIdentityError, VerifyNewIdentitySuccess, mutate_state};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk::update;
@@ -29,7 +29,7 @@ fn initiate_identity_link_impl(args: Args, state: &mut RuntimeState) -> Response
                 VerifyNewIdentityError::AlreadyRegistered => AlreadyRegistered,
                 VerifyNewIdentityError::PublicKeyInvalid(e) => PublicKeyInvalid(e),
                 VerifyNewIdentityError::OriginatingCanisterInvalid(c) => OriginatingCanisterInvalid(c),
-            }
+            };
         }
     };
 

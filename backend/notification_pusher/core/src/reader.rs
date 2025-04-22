@@ -1,6 +1,6 @@
+use crate::Notification;
 use crate::ic_agent::IcAgent;
 use crate::metrics::write_metrics;
-use crate::Notification;
 use async_channel::Sender;
 use base64::Engine;
 use index_store::IndexStore;

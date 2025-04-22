@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
+use std::collections::hash_map::Entry::{Occupied, Vacant};
 use types::{SubscriptionInfo, TimestampMillis, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Default)]

@@ -1,6 +1,6 @@
 use ic_stable_structures::{
-    memory_manager::{MemoryId, MemoryManager, VirtualMemory},
     DefaultMemoryImpl, Memory as memoryTrait,
+    memory_manager::{MemoryId, MemoryManager, VirtualMemory},
 };
 use std::collections::BTreeMap;
 

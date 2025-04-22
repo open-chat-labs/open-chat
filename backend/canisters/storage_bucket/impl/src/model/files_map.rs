@@ -40,7 +40,7 @@ impl FilesMap {
 
     #[cfg(test)]
     pub fn get_all(&self) -> Vec<(FileId, File)> {
-        use stable_memory_map::{with_map, KeyPrefix};
+        use stable_memory_map::{KeyPrefix, with_map};
         with_map(|m| {
             m.range(self.prefix.create_key(&0)..)
                 .map(|(k, v)| (k.file_id(), bytes_to_file(v)))

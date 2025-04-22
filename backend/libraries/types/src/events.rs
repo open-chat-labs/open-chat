@@ -77,11 +77,7 @@ type Unauthorized = Vec<EventIndex>;
 
 impl EventOrExpiredRange {
     pub fn as_event(&self) -> Option<&EventWrapper<ChatEvent>> {
-        if let EventOrExpiredRange::Event(event) = self {
-            Some(event)
-        } else {
-            None
-        }
+        if let EventOrExpiredRange::Event(event) = self { Some(event) } else { None }
     }
 
     pub fn split(events_and_expired_ranges: Vec<EventOrExpiredRange>) -> (Events, ExpiredEventRanges, Unauthorized) {

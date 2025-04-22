@@ -1,5 +1,5 @@
 use crate::guards::caller_is_governance_principal;
-use crate::{mutate_state, State};
+use crate::{State, mutate_state};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use cycles_dispenser_canister::update_config::{Response::*, *};

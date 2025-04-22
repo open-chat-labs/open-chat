@@ -1,5 +1,5 @@
 use crate::ic_agent::IcAgent;
-use crate::metrics::{collect_metrics, Metrics};
+use crate::metrics::{Metrics, collect_metrics};
 use crate::processor::Processor;
 use crate::pusher::Pusher;
 use crate::reader::Reader;

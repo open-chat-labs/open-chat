@@ -1,12 +1,12 @@
 use crate::guards::caller_is_group_index_canister;
-use crate::{mutate_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION};
+use crate::{GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION, RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use constants::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
+use constants::{CREATE_CANISTER_CYCLES_FEE, min_cycles_balance};
 use event_store_producer::EventBuilder;
 use group_canister::init::Args as InitGroupCanisterArgs;
-use local_group_index_canister::c2c_create_group::{Response::*, *};
 use local_group_index_canister::ChildCanisterType;
+use local_group_index_canister::c2c_create_group::{Response::*, *};
 use types::{BuildVersion, CanisterId, CanisterWasm, ChatId, Cycles, GroupCreatedEventPayload, UserId, UserType};
 use utils::canister;
 

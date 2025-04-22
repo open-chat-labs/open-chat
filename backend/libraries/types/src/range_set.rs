@@ -1,5 +1,5 @@
-use candid::types::Serializer;
 use candid::CandidType;
+use candid::types::Serializer;
 use serde::{Deserialize, Deserializer, Serialize};
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;

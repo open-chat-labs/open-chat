@@ -1,6 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_stable_memory_map_memory;
-use crate::{mutate_state, openchat_bot, Data};
+use crate::{Data, mutate_state, openchat_bot};
 use canister_tracing_macros::trace;
 use ic_cdk::init;
 use tracing::info;

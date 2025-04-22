@@ -1,6 +1,6 @@
 use crate::jobs;
 use crate::timer_job_types::JoinMembersToPublicChannelJob;
-use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::update_channel::{Response::*, *};

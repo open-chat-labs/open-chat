@@ -1,12 +1,12 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_local_group_index;
 use crate::model::events::CommunityEventInternal;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_time::now_millis;
 use canister_tracing_macros::trace;
-use community_canister::c2c_local_group_index::*;
 use community_canister::LocalGroupIndexEvent;
+use community_canister::c2c_local_group_index::*;
 use constants::OPENCHAT_BOT_USER_ID;
 use std::cell::LazyCell;
 use types::{GroupNameChanged, TimestampMillis, Timestamped};

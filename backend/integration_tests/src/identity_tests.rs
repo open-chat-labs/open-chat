@@ -1,5 +1,6 @@
+use crate::client::register_user_and_include_auth;
 use crate::env::ENV;
-use crate::{client, CanisterIds, TestEnv};
+use crate::{CanisterIds, TestEnv, client};
 use candid::Principal;
 use constants::NANOS_PER_MILLISECOND;
 use pocket_ic::PocketIc;
@@ -16,31 +17,10 @@ fn link_and_unlink_auth_identities(delay: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let (auth_principal1, public_key1, delegation1) = sign_in_with_email(env, canister_ids);
+    let (user, user_auth) = register_user_and_include_auth(env, canister_ids);
     let (auth_principal2, public_key2) = random_internet_identity_principal();
 
-    let session_key1 = random::<[u8; 32]>().to_vec();
     let session_key2 = random::<[u8; 32]>().to_vec();
-
-    let create_identity_result = client::identity::happy_path::create_identity(
-        env,
-        auth_principal1,
-        canister_ids.identity,
-        public_key1.clone(),
-        session_key1.clone(),
-        false,
-    );
-
-    let oc_principal1 = Principal::self_authenticating(create_identity_result.user_key.clone());
-    let user_registration_canister = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
-    client::local_user_index::happy_path::register_user(
-        env,
-        oc_principal1,
-        user_registration_canister,
-        create_identity_result.user_key,
-    );
-
-    env.tick();
 
     client::identity::happy_path::initiate_identity_link(
         env,
@@ -48,7 +28,7 @@ fn link_and_unlink_auth_identities(delay: bool) {
         canister_ids.identity,
         public_key2,
         true,
-        auth_principal1,
+        user_auth.auth_principal,
     );
 
     if delay {
@@ -57,11 +37,11 @@ fn link_and_unlink_auth_identities(delay: bool) {
 
     let approve_identity_link_response = client::identity::approve_identity_link(
         env,
-        auth_principal1,
+        user_auth.auth_principal,
         canister_ids.identity,
         &identity_canister::approve_identity_link::Args {
-            delegation: delegation1,
-            public_key: public_key1,
+            delegation: user_auth.delegation,
+            public_key: user_auth.public_key,
             link_initiated_by: auth_principal2,
         },
     );
@@ -73,7 +53,7 @@ fn link_and_unlink_auth_identities(delay: bool) {
 
             let oc_principal2 = Principal::self_authenticating(prepare_delegation_response.user_key);
 
-            assert_eq!(oc_principal1, oc_principal2);
+            assert_eq!(user.principal, oc_principal2);
         }
         identity_canister::approve_identity_link::Response::DelegationTooOld if delay => {}
         response => panic!("{response:?}"),
@@ -85,7 +65,7 @@ fn link_and_unlink_auth_identities(delay: bool) {
 
     let remove_identity_link_response = client::identity::remove_identity_link(
         env,
-        auth_principal1,
+        user_auth.auth_principal,
         canister_ids.identity,
         &identity_canister::remove_identity_link::Args {
             linked_principal: auth_principal2,
@@ -135,7 +115,7 @@ fn flag_ii_principal(is_ii_principal: bool) {
     assert_eq!(auth_principals_response.first().unwrap().is_ii_principal, is_ii_principal);
 }
 
-fn sign_in_with_email(env: &mut PocketIc, canister_ids: &CanisterIds) -> (Principal, Vec<u8>, SignedDelegation) {
+pub(crate) fn sign_in_with_email(env: &mut PocketIc, canister_ids: &CanisterIds) -> (Principal, Vec<u8>, SignedDelegation) {
     let email = format!("{}@test.com", random_string());
     let session_key = random::<[u8; 32]>().to_vec();
 

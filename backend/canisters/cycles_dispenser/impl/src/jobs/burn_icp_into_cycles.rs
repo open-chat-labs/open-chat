@@ -1,4 +1,4 @@
-use crate::{mutate_state, State};
+use crate::{State, mutate_state};
 use constants::NANOS_PER_MILLISECOND;
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Memo, Subaccount, Timestamp, Tokens, TransferArgs};
 use std::time::Duration;

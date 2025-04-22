@@ -282,7 +282,7 @@ impl Airdrops {
 #[cfg(test)]
 mod tests {
     use testing::rng::random_principal;
-    use utils::env::{test::TestEnv, Environment};
+    use utils::env::{Environment, test::TestEnv};
 
     use super::*;
 

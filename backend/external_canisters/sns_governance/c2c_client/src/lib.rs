@@ -4,7 +4,7 @@ use canister_client::generate_candid_c2c_call;
 use ic_cdk::call::RejectCode;
 use sns_governance_canister::types::manage_neuron::configure::Operation;
 use sns_governance_canister::types::manage_neuron::{Command, Configure};
-use sns_governance_canister::types::{manage_neuron_response, ManageNeuron};
+use sns_governance_canister::types::{ManageNeuron, manage_neuron_response};
 use sns_governance_canister::*;
 
 // Queries

@@ -23,8 +23,8 @@ generate_msgpack_update_call!(report_message_v2);
 generate_msgpack_update_call!(uninstall_bot);
 
 pub mod happy_path {
-    use crate::utils::{principal_to_username, tick_many};
     use crate::User;
+    use crate::utils::{principal_to_username, tick_many};
     use candid::Principal;
     use local_user_index_canister::{install_bot, uninstall_bot};
     use pocket_ic::PocketIc;

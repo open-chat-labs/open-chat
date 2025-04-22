@@ -1,10 +1,10 @@
 use candid::CandidType;
-use canister_agent_utils::{build_ic_agent, get_canister_wasm, CanisterName};
+use canister_agent_utils::{CanisterName, build_ic_agent, get_canister_wasm};
 use ic_agent::Identity;
 use ic_utils::call::AsyncCall;
-use ic_utils::interfaces::management_canister::builders::InstallMode;
-use ic_utils::interfaces::management_canister::CanisterStatus;
 use ic_utils::interfaces::ManagementCanister;
+use ic_utils::interfaces::management_canister::CanisterStatus;
+use ic_utils::interfaces::management_canister::builders::InstallMode;
 use sha256::sha256;
 use types::{BuildVersion, CanisterId, CanisterWasm, UpgradeCanisterWasmArgs, UpgradeChunkedCanisterWasmArgs};
 

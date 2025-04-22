@@ -1,4 +1,4 @@
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use group_canister::deleted_message::{Response::*, *};
 use types::{MessageContent, OCResult};

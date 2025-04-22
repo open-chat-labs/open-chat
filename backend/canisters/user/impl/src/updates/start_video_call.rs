@@ -1,6 +1,6 @@
 use crate::guards::caller_is_video_call_operator;
 use crate::timer_job_types::{MarkVideoCallEndedJob, TimerJob};
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, mutate_state, run_regular_jobs};
 use canister_tracing_macros::trace;
 use chat_events::{CallParticipantInternal, MessageContentInternal, PushMessageArgs, VideoCallContentInternal};
 use constants::HOUR_IN_MS;
@@ -112,7 +112,7 @@ pub fn handle_start_video_call(
     let chat = state
         .data
         .direct_chats
-        .get_or_create(other, UserType::User, || state.env.rng().gen(), now);
+        .get_or_create(other, UserType::User, || state.env.rng().r#gen(), now);
 
     let mute_notification = their_message_index.is_some() || chat.notifications_muted.value;
 

@@ -2,8 +2,8 @@ use candid::Principal;
 use constants::MINUTE_IN_MS;
 use identity_canister::WebAuthnKey;
 use serde::{Deserialize, Serialize};
-use std::collections::hash_map::Entry::Occupied;
 use std::collections::HashMap;
+use std::collections::hash_map::Entry::Occupied;
 use types::{CanisterId, TimestampMillis};
 
 #[derive(Serialize, Deserialize, Default)]

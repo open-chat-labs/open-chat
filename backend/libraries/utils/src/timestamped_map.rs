@@ -46,7 +46,7 @@ impl<K: Eq + Hash + Clone, V> TimestampedMap<K, V> {
         self.by_last_updated
             .iter()
             .rev()
-            .take_while(move |(&k, _)| k > since)
+            .take_while(move |(k, _)| **k > since)
             .flat_map(|(_, v)| v.iter())
             .filter_map(|k| self.map.get(k).map(|v| (k, v)))
     }

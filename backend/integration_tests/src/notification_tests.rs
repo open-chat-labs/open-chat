@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::utils::tick_many;
-use crate::{client, CanisterIds, TestEnv, User};
+use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use itertools::Itertools;
 use pocket_ic::PocketIc;

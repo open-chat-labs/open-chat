@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{with_map, with_map_mut, FilesPerAccessorKeyPrefix, KeyPrefix};
+use stable_memory_map::{FilesPerAccessorKeyPrefix, KeyPrefix, with_map, with_map_mut};
 use types::{AccessorId, FileId};
 
 #[derive(Serialize, Deserialize, Default)]

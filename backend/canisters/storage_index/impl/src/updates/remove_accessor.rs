@@ -1,6 +1,6 @@
 use crate::guards::caller_is_user_controller;
 use crate::model::bucket_event_batch::EventToSync;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_tracing_macros::trace;
 use ic_cdk::update;
 use storage_index_canister::remove_accessors::*;

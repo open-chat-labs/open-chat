@@ -3,7 +3,7 @@ use candid::Deserialize;
 use serde::Serialize;
 use stable_memory_map::{StableMemoryMap, UserIdKeyPrefix};
 use std::collections::BTreeSet;
-use types::{is_default, CommunityRole, TimestampMillis, Timestamped, UserId, UserType, Version};
+use types::{CommunityRole, TimestampMillis, Timestamped, UserId, UserType, Version, is_default};
 
 #[derive(Serialize, Deserialize)]
 pub struct MembersStableStorage {
@@ -34,7 +34,7 @@ impl MembersStableStorage {
     #[cfg(test)]
     pub fn all_members(&self) -> Vec<CommunityMemberInternal> {
         use candid::Principal;
-        use stable_memory_map::{with_map, Key, KeyPrefix};
+        use stable_memory_map::{Key, KeyPrefix, with_map};
 
         with_map(|m| {
             m.range(self.prefix.create_key(&Principal::from_slice(&[]).into())..)

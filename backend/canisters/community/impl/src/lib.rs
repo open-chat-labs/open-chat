@@ -13,7 +13,7 @@ use constants::{ICP_LEDGER_CANISTER_ID, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
-use gated_groups::{calculate_gate_payments, GatePayment};
+use gated_groups::{GatePayment, calculate_gate_payments};
 use group_chat_core::{AccessRulesInternal, AddResult};
 use group_community_common::{
     Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, Members, PaymentReceipts, PendingPaymentsQueue,
@@ -27,8 +27,8 @@ use model::{events::CommunityEvents, invited_users::InvitedUsers, members::Commu
 use msgpack::serialize_then_unwrap;
 use notifications_canister_c2c_client::{NotificationPusherState, NotificationsBatch};
 use oc_error_codes::OCErrorCode;
-use rand::rngs::StdRng;
 use rand::RngCore;
+use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
@@ -550,11 +550,7 @@ impl Data {
     }
 
     pub fn verify_not_frozen(&self) -> Result<(), OCErrorCode> {
-        if self.is_frozen() {
-            Err(OCErrorCode::CommunityFrozen)
-        } else {
-            Ok(())
-        }
+        if self.is_frozen() { Err(OCErrorCode::CommunityFrozen) } else { Ok(()) }
     }
 
     pub fn is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> bool {

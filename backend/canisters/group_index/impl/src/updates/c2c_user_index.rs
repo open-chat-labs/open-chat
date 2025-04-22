@@ -1,10 +1,10 @@
 use crate::guards::caller_is_user_index_canister;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_time::now_millis;
 use canister_tracing_macros::trace;
-use group_index_canister::c2c_user_index::{Response::*, *};
 use group_index_canister::UserIndexEvent;
+use group_index_canister::c2c_user_index::{Response::*, *};
 use local_group_index_canister::GroupIndexEvent;
 use std::cell::LazyCell;
 use types::TimestampMillis;

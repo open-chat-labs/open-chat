@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::utils::{now_millis, now_nanos, tick_many};
-use crate::{client, CanisterIds, TestEnv, User};
+use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use constants::{HOUR_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE};
 use itertools::Itertools;
@@ -8,8 +8,8 @@ use pocket_ic::PocketIc;
 use std::ops::Deref;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    icrc1, Chat, ChatEvent, ChatId, CommunityId, CryptoTransaction, EventIndex, MessageContentInitial,
-    PendingCryptoTransaction, PrizeContentInitial, ReplyContext, TextContent,
+    Chat, ChatEvent, ChatId, CommunityId, CryptoTransaction, EventIndex, MessageContentInitial, PendingCryptoTransaction,
+    PrizeContentInitial, ReplyContext, TextContent, icrc1,
 };
 use user_canister::mark_read::ChatMessagesRead;
 

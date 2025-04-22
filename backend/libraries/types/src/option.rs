@@ -14,11 +14,7 @@ pub enum OptionUpdate<T> {
 
 impl<T> OptionUpdate<T> {
     pub fn from_update(option: Option<T>) -> OptionUpdate<T> {
-        if let Some(value) = option {
-            OptionUpdate::SetToSome(value)
-        } else {
-            OptionUpdate::SetToNone
-        }
+        if let Some(value) = option { OptionUpdate::SetToSome(value) } else { OptionUpdate::SetToNone }
     }
 
     pub fn expand(self) -> Option<Option<T>> {

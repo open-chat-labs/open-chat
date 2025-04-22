@@ -103,11 +103,7 @@ impl Streak {
     }
 
     pub fn can_claim(&self, now: TimestampMillis) -> bool {
-        if let Some(today) = Streak::timestamp_to_day(now) {
-            today > self.end_day
-        } else {
-            false
-        }
+        if let Some(today) = Streak::timestamp_to_day(now) { today > self.end_day } else { false }
     }
 
     pub fn max_streak(&self) -> u16 {

@@ -1,5 +1,5 @@
 use crate::guards::caller_is_local_group_or_community_canister;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_tracing_macros::trace;
 use ic_cdk::update;
 use local_group_index_canister::push_events::Args;

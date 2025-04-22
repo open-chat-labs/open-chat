@@ -1,5 +1,5 @@
 use crate::LocalGroupIndexEvent;
-use timer_job_queues::{grouped_timer_job_batch, TimerJobItem};
+use timer_job_queues::{TimerJobItem, grouped_timer_job_batch};
 use types::{CanisterId, IdempotentEnvelope};
 use utils::canister::should_retry_failed_c2c_call;
 

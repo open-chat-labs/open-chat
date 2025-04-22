@@ -1,16 +1,17 @@
-use crate::metrics::{ChatMetricsInternal, MetricKey};
 use crate::MessageContentInternal;
+use crate::metrics::{ChatMetricsInternal, MetricKey};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 use std::ops::DerefMut;
 use types::{
-    is_default, AccessGate, AccessGateConfigInternal, AvatarChanged, BotAdded, BotMessageContext, BotRemoved, BotUpdated,
-    ChannelId, Chat, ChatEventType, ChatId, CommunityId, DeletedBy, DirectChatCreated, EventIndex, EventWrapperInternal,
+    AccessGate, AccessGateConfigInternal, AvatarChanged, BotAdded, BotMessageContext, BotRemoved, BotUpdated, ChannelId, Chat,
+    ChatEventType, ChatId, CommunityId, DeletedBy, DirectChatCreated, EventIndex, EventWrapperInternal,
     EventsTimeToLiveUpdated, ExternalUrlUpdated, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated,
     GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged,
     MemberJoinedInternal, MemberLeft, MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, Message, MessageContent,
     MessageId, MessageIndex, MessagePinned, MessageUnpinned, MultiUserChat, PermissionsChanged, PushIfNotContains, Reaction,
     ReplyContext, RoleChanged, ThreadSummary, TimestampMillis, Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
+    is_default,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -135,19 +136,11 @@ impl ChatEventInternal {
     }
 
     pub fn as_message_mut(&mut self) -> Option<&mut MessageInternal> {
-        if let ChatEventInternal::Message(m) = self {
-            Some(m.deref_mut())
-        } else {
-            None
-        }
+        if let ChatEventInternal::Message(m) = self { Some(m.deref_mut()) } else { None }
     }
 
     pub fn into_message(self) -> Option<MessageInternal> {
-        if let ChatEventInternal::Message(m) = self {
-            Some(*m)
-        } else {
-            None
-        }
+        if let ChatEventInternal::Message(m) = self { Some(*m) } else { None }
     }
 
     pub fn event_type(&self) -> Option<ChatEventType> {
@@ -194,19 +187,11 @@ pub enum EventOrExpiredRangeInternal {
 
 impl EventOrExpiredRangeInternal {
     pub fn into_event(self) -> Option<EventWrapperInternal<ChatEventInternal>> {
-        if let EventOrExpiredRangeInternal::Event(event) = self {
-            Some(event)
-        } else {
-            None
-        }
+        if let EventOrExpiredRangeInternal::Event(event) = self { Some(event) } else { None }
     }
 
     pub fn is_message(&self) -> bool {
-        if let EventOrExpiredRangeInternal::Event(event) = self {
-            event.event.is_message()
-        } else {
-            false
-        }
+        if let EventOrExpiredRangeInternal::Event(event) = self { event.event.is_message() } else { false }
     }
 }
 

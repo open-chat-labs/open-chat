@@ -1,4 +1,4 @@
-use crate::{bots::extract_access_context, mutate_state, RuntimeState};
+use crate::{RuntimeState, bots::extract_access_context, mutate_state};
 use canister_api_macros::update;
 use local_user_index_canister::bot_send_message::*;
 use rand::Rng;
@@ -93,7 +93,7 @@ fn extract_message_access_context(args: &Args, state: &mut RuntimeState) -> Resu
                 return Err(InvalidRequest("Channel must be specified for community scope".to_string()));
             };
             let chat = Chat::Channel(details.community_id, channel_id);
-            let message_id = args.message_id.unwrap_or_else(|| state.env.rng().gen::<u64>().into());
+            let message_id = args.message_id.unwrap_or_else(|| state.env.rng().r#gen::<u64>().into());
             (chat, None, message_id, None)
         }
     };

@@ -1,11 +1,11 @@
 use crate::guards::caller_is_openchat_user;
 use crate::model::user_map::UpdateUserResult;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::{UserIndexEvent, UsernameChanged};
 use user_index_canister::set_username::{Response::*, *};
-use utils::text_validation::{validate_username, UsernameValidationError};
+use utils::text_validation::{UsernameValidationError, validate_username};
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
@@ -52,8 +52,8 @@ fn set_username_impl(args: Args, state: &mut RuntimeState) -> Response {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::{PhoneStatus, User};
     use crate::Data;
+    use crate::model::user::{PhoneStatus, User};
     use candid::Principal;
     use types::PhoneNumber;
     use utils::env::test::TestEnv;
