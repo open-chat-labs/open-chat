@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Log outcome after each call to set community as verified ([#7818](https://github.com/open-chat-labs/open-chat/pull/7818))
 - Trigger call to mark JADE 8 community verified ([#7820](https://github.com/open-chat-labs/open-chat/pull/7820))
+- Make GroupIndex canister logs public ([#7822](https://github.com/open-chat-labs/open-chat/pull/7822))
 
 ## [[2.0.1703](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1703-group_index)] - 2025-04-15
 
