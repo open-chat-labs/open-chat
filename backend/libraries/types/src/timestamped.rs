@@ -17,11 +17,7 @@ impl<T> Timestamped<T> {
     }
 
     pub fn if_set_after(&self, timestamp: TimestampMillis) -> Option<&T> {
-        if self.timestamp > timestamp {
-            Some(&self.value)
-        } else {
-            None
-        }
+        if self.timestamp > timestamp { Some(&self.value) } else { None }
     }
 
     pub fn update<F: FnOnce(&mut T) -> bool>(&mut self, update_fn: F, now: TimestampMillis) -> bool {

@@ -1,95 +1,72 @@
 use crate::client::{create_canister, create_canister_with_id, install_canister};
 use crate::env::VIDEO_CALL_OPERATOR;
-use crate::utils::{copy_dir_all, tick_many};
-use crate::{client, wasms, CanisterIds, TestEnv, T};
+use crate::utils::tick_many;
+use crate::{CanisterIds, T, TestEnv, client, wasms};
 use candid::{CandidType, Nat, Principal};
 use constants::{CHAT_LEDGER_CANISTER_ID, CHAT_SYMBOL, CHAT_TRANSFER_FEE, SNS_GOVERNANCE_CANISTER_ID};
-use ic_ledger_types::{AccountIdentifier, BlockIndex, Tokens, DEFAULT_SUBACCOUNT};
+use ic_ledger_types::{AccountIdentifier, BlockIndex, DEFAULT_SUBACCOUNT, Tokens};
 use icrc_ledger_types::icrc::generic_metadata_value::MetadataValue;
 use icrc_ledger_types::icrc1::account::Account;
 use identity_canister::WEBAUTHN_ORIGINATING_CANISTER;
-use pocket_ic::{PocketIc, PocketIcBuilder};
-use rand::{rngs::StdRng, Rng, SeedableRng};
+use pocket_ic::{PocketIc, PocketIcBuilder, PocketIcState};
+use rand::{Rng, SeedableRng, rngs::StdRng};
 use sha256::sha256;
 use std::collections::{HashMap, HashSet};
 use std::env;
 use std::path::Path;
-use std::sync::{Mutex, OnceLock};
+use std::sync::OnceLock;
 use std::time::Instant;
 use storage_index_canister::init::CyclesDispenserConfig;
-use testing::rng::random_string;
 use testing::NNS_INTERNET_IDENTITY_CANISTER_ID;
 use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
 
 pub static POCKET_IC_BIN: &str = "./pocket-ic";
 
-// This is set to true as soon as the first thread starts initializing the environment to ensure
-// that the full initialization only happens once.
-static INIT_STARTED_LOCK: Mutex<bool> = Mutex::new(false);
-// These canister Ids are set at the end of the initialization process, so each thread (other than
-// the one doing the initialization) waits until the canister Ids are available at which point they
-// make their own copy of the initialized PocketIC state.
-static CANISTER_IDS: OnceLock<CanisterIds> = OnceLock::new();
+// This base state is set at the end of the initialization process, so each thread (other than
+// the one doing the initialization) waits until the state is available at which point they
+// create their own PocketIC instance which is initialized with this state.
+static BASE_STATE: OnceLock<(PocketIcState, CanisterIds)> = OnceLock::new();
 
 pub fn setup_new_env(seed: Option<Hash>) -> TestEnv {
     verify_pocket_ic_exists();
 
     let controller = Principal::from_text("xuxyr-xopen-chatx-xxxbu-cai").unwrap();
-    let pocket_ic_state_dir = env::current_dir().unwrap().join("pocket_ic_state");
-    let pocket_ic_state_base_dir = pocket_ic_state_dir.join("base");
 
-    let mut init_started = INIT_STARTED_LOCK.lock().unwrap();
+    let (state, canister_ids) = BASE_STATE.get_or_init(|| initialize_base_state(controller, seed));
 
-    let canister_ids = if !*init_started {
-        *init_started = true;
-
-        let started = Instant::now();
-
-        // This thread is first, so it is the only one which will run the full initialization
-        println!("Initialization starting");
-
-        if std::fs::exists(&pocket_ic_state_dir).unwrap() {
-            std::fs::remove_dir_all(&pocket_ic_state_dir).unwrap();
-        }
-        std::fs::create_dir(&pocket_ic_state_dir).unwrap();
-
-        let mut env = PocketIcBuilder::new()
-            .with_nns_subnet()
-            .with_sns_subnet()
-            .with_application_subnet()
-            .with_state_dir(pocket_ic_state_base_dir.clone())
-            .build();
-
-        let ticks: u8 = seed.map_or(0, |s| StdRng::from_seed(s).gen());
-        tick_many(&mut env, ticks as usize);
-
-        let canister_ids = install_canisters(&mut env, controller);
-        let duration = Instant::now().duration_since(started);
-
-        println!("Initialization complete. Took: {}s", duration.as_secs());
-
-        CANISTER_IDS.set(canister_ids.clone()).unwrap();
-
-        canister_ids
-    } else {
-        wait_for_initialization()
-    };
-
-    let random_id = random_string();
-
-    let pocket_ic_state_dir_copy = pocket_ic_state_dir.join(random_id);
-
-    // Make a copy of the initialized environment
-    copy_dir_all(pocket_ic_state_base_dir, &pocket_ic_state_dir_copy).unwrap();
-
-    // Load the copied initialized environment into a new PocketIC instance
-    let env = PocketIcBuilder::new().with_state_dir(pocket_ic_state_dir_copy).build();
+    let env = PocketIcBuilder::new().with_read_only_state(state).build();
 
     TestEnv {
         env,
-        canister_ids,
+        canister_ids: canister_ids.clone(),
         controller,
     }
+}
+
+fn initialize_base_state(controller: Principal, seed: Option<Hash>) -> (PocketIcState, CanisterIds) {
+    let started = Instant::now();
+
+    // This thread is first, so it is the only one which will run the full initialization
+    println!("Initialization starting");
+
+    let mut env = PocketIcBuilder::new()
+        .with_nns_subnet()
+        .with_sns_subnet()
+        .with_application_subnet()
+        .with_state(PocketIcState::new())
+        .build();
+
+    let ticks: u8 = seed.map_or(0, |s| StdRng::from_seed(s).r#gen());
+    tick_many(&mut env, ticks as usize);
+
+    let canister_ids = install_canisters(&mut env, controller);
+    let duration = Instant::now().duration_since(started);
+
+    println!("Initialization complete. Took: {}s", duration.as_secs());
+
+    let state = env.drop_and_take_state().unwrap();
+
+    (state, canister_ids)
 }
 
 fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
@@ -634,19 +611,12 @@ pub fn install_icrc_ledger(
     canister_id
 }
 
-fn wait_for_initialization() -> CanisterIds {
-    loop {
-        if let Some(canister_ids) = CANISTER_IDS.get() {
-            return canister_ids.clone();
-        }
-        std::thread::sleep(std::time::Duration::from_secs(1));
-    }
-}
-
 fn verify_pocket_ic_exists() {
     let path = match env::var_os("POCKET_IC_BIN") {
         None => {
-            env::set_var("POCKET_IC_BIN", POCKET_IC_BIN);
+            unsafe {
+                env::set_var("POCKET_IC_BIN", POCKET_IC_BIN);
+            }
             POCKET_IC_BIN.to_string()
         }
         Some(path) => path

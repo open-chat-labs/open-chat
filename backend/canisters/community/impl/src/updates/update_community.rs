@@ -1,20 +1,21 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::model::events::CommunityEventInternal;
-use crate::{jobs, mutate_state, read_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, jobs, mutate_state, read_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::GroupGateUpdatedInternal;
 use community_canister::update_community::{Response::*, *};
 use group_index_canister::{c2c_make_community_private, c2c_update_community};
+use oc_error_codes::OCErrorCode;
 use tracing::error;
 use types::{
     AccessGateConfigInternal, AvatarChanged, BannerChanged, CanisterId, CommunityId, CommunityPermissions,
     CommunityPermissionsChanged, CommunityVisibilityChanged, Document, GroupDescriptionChanged, GroupNameChanged,
-    GroupRulesChanged, OptionUpdate, OptionalCommunityPermissions, PrimaryLanguageChanged, Timestamped, UserId,
+    GroupRulesChanged, OCResult, OptionUpdate, OptionalCommunityPermissions, PrimaryLanguageChanged, Timestamped, UserId,
 };
 use utils::document::{validate_avatar, validate_banner};
 use utils::text_validation::{
-    validate_community_name, validate_description, validate_rules, NameValidationError, RulesValidationError,
+    NameValidationError, RulesValidationError, validate_community_name, validate_description, validate_rules,
 };
 
 #[update(msgpack = true)]
@@ -26,7 +27,7 @@ async fn update_community(mut args: Args) -> Response {
 
     let prepare_result = match read_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
-        Err(response) => return response,
+        Err(error) => return Error(error),
     };
 
     let group_index_canister_id = prepare_result.group_index_canister_id;
@@ -43,7 +44,7 @@ async fn update_community(mut args: Args) -> Response {
             Ok(response) => match response {
                 c2c_make_community_private::Response::CommunityNotFound => {
                     error!(chat_id = %prepare_result.community_id, "Community not found in index");
-                    return InternalError;
+                    return Error(OCErrorCode::Impossible.with_message("Community not found in index"));
                 }
                 c2c_make_community_private::Response::Error(error) => {
                     error!(chat_id = %prepare_result.community_id, "Error updating community: {error:?}");
@@ -51,7 +52,7 @@ async fn update_community(mut args: Args) -> Response {
                 }
                 c2c_make_community_private::Response::Success => {}
             },
-            Err(_) => return InternalError,
+            Err(error) => return Error(error.into()),
         }
     } else if prepare_result.is_public
         && (args.name.is_some()
@@ -75,13 +76,13 @@ async fn update_community(mut args: Args) -> Response {
         match group_index_canister_c2c_client::c2c_update_community(group_index_canister_id, &c2c_update_community_args).await {
             Ok(response) => match response {
                 c2c_update_community::Response::Success => {}
-                c2c_update_community::Response::NameTaken => return NameTaken,
+                c2c_update_community::Response::NameTaken => return Error(OCErrorCode::NameTaken.into()),
                 c2c_update_community::Response::CommunityNotFound => {
                     error!(chat_id = %prepare_result.community_id, "Community not found in index");
-                    return InternalError;
+                    return Error(OCErrorCode::Impossible.with_message("Community not found in index"));
                 }
             },
-            Err(_) => return InternalError,
+            Err(error) => return Error(error.into()),
         };
     }
 
@@ -111,18 +112,25 @@ struct PrepareResult {
     channel_count: u32,
 }
 
-fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if state.data.is_frozen() {
-        return Err(CommunityFrozen);
+fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
+    state.data.verify_not_frozen()?;
+
+    let member = state.get_calling_member(true)?;
+
+    let permissions = &state.data.permissions;
+    if !member.role().can_update_details(permissions)
+        || (args.permissions.is_some() && !member.role().can_change_permissions())
+        || (args.public.is_some() && !member.role().can_change_community_visibility())
+    {
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
     if let OptionUpdate::SetToSome(gate_config) = &args.gate_config {
         if !gate_config.validate(state.data.test_mode) {
-            return Err(AccessGateInvalid);
+            return Err(OCErrorCode::InvalidAccessGate.into());
         }
     }
 
-    let caller = state.env.caller();
     let avatar_update = args.avatar.as_ref().expand();
     let banner_update = args.banner.as_ref().expand();
     let gate_config = args
@@ -134,73 +142,55 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     if let Some(name) = &args.name {
         if let Err(error) = validate_community_name(name, state.data.is_public.value) {
             return Err(match error {
-                NameValidationError::TooShort(s) => NameTooShort(s),
-                NameValidationError::TooLong(l) => NameTooLong(l),
-                NameValidationError::Reserved => NameReserved,
+                NameValidationError::TooShort(s) => OCErrorCode::NameTooShort.with_json(&s),
+                NameValidationError::TooLong(l) => OCErrorCode::NameTooLong.with_json(&l),
+                NameValidationError::Reserved => OCErrorCode::NameReserved.into(),
             });
         }
     }
 
     if let Some(description) = &args.description {
         if let Err(error) = validate_description(description) {
-            return Err(DescriptionTooLong(error));
+            return Err(OCErrorCode::DescriptionTooLong.with_json(&error));
         }
     }
 
     if let Some(rules) = &args.rules {
         if let Err(error) = validate_rules(rules.enabled, &rules.text) {
             return Err(match error {
-                RulesValidationError::TooShort(s) => RulesTooShort(s),
-                RulesValidationError::TooLong(l) => RulesTooLong(l),
+                RulesValidationError::TooShort(s) => OCErrorCode::RulesTooShort.with_json(&s),
+                RulesValidationError::TooLong(l) => OCErrorCode::RulesTooLong.with_json(&l),
             });
         }
     }
 
     if let Err(error) = avatar_update.map_or(Ok(()), validate_avatar) {
-        return Err(AvatarTooBig(error));
+        return Err(OCErrorCode::AvatarTooBig.with_json(&error));
     }
 
     if let Err(error) = banner_update.map_or(Ok(()), validate_banner) {
-        return Err(BannerTooBig(error));
+        return Err(OCErrorCode::BannerTooBig.with_json(&error));
     }
 
     if let Some(lang) = &args.primary_language {
         if lang.len() != 2 {
-            return Err(InvalidLanguage);
+            return Err(OCErrorCode::InvalidLanguage.into());
         }
     }
 
-    if let Some(member) = state.data.members.get(caller) {
-        if member.suspended().value {
-            return Err(UserSuspended);
-        } else if member.lapsed().value {
-            return Err(UserLapsed);
-        }
-
-        let permissions = &state.data.permissions;
-        if !member.role().can_update_details(permissions)
-            || (args.permissions.is_some() && !member.role().can_change_permissions())
-            || (args.public.is_some() && !member.role().can_change_community_visibility())
-        {
-            Err(NotAuthorized)
-        } else {
-            Ok(PrepareResult {
-                my_user_id: member.user_id,
-                group_index_canister_id: state.data.group_index_canister_id,
-                is_public: args.public.unwrap_or(state.data.is_public.value),
-                community_id: state.env.canister_id().into(),
-                name: args.name.as_ref().unwrap_or(&state.data.name).clone(),
-                description: args.description.as_ref().unwrap_or(&state.data.description).clone(),
-                avatar_id: avatar_update.map_or(Document::id(&state.data.avatar), |avatar| avatar.map(|a| a.id)),
-                banner_id: banner_update.map_or(Document::id(&state.data.banner), |banner| banner.map(|a| a.id)),
-                gate_config,
-                primary_language: args.primary_language.as_ref().unwrap_or(&state.data.primary_language).clone(),
-                channel_count: state.data.channels.public_channel_ids().len() as u32,
-            })
-        }
-    } else {
-        Err(UserNotInCommunity)
-    }
+    Ok(PrepareResult {
+        my_user_id: member.user_id,
+        group_index_canister_id: state.data.group_index_canister_id,
+        is_public: args.public.unwrap_or(state.data.is_public.value),
+        community_id: state.env.canister_id().into(),
+        name: args.name.as_ref().unwrap_or(&state.data.name).clone(),
+        description: args.description.as_ref().unwrap_or(&state.data.description).clone(),
+        avatar_id: avatar_update.map_or(Document::id(&state.data.avatar), |avatar| avatar.map(|a| a.id)),
+        banner_id: banner_update.map_or(Document::id(&state.data.banner), |banner| banner.map(|a| a.id)),
+        gate_config,
+        primary_language: args.primary_language.as_ref().unwrap_or(&state.data.primary_language).clone(),
+        channel_count: state.data.channels.public_channel_ids().len() as u32,
+    })
 }
 
 fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessResult {

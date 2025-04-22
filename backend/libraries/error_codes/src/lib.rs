@@ -97,7 +97,7 @@ pub enum OCErrorCode {
     NotDiamondMember = 253,
     UnexpectedIndex = 254,
     NoChange = 255,
-    SwapStatusError = 256,
+
     CyclesBalanceTooLow = 257,
     AlreadyInProgress = 258,
     InvalidPublicKey = 259,
@@ -153,11 +153,36 @@ pub enum OCErrorCode {
     CannotChangeVote = 309,
     AlreadyImportingIntoAnotherCommunity = 310,
     InvalidSignature = 311,
+    TransferFailed = 312,
+    GroupAlreadyBeingImported = 313,
+    BannerTooBig = 314,
+    CannotChangeRoleOfLastOwner = 315,
+    CannotMakeBotOwner = 316,
+    MessageAlreadyFinalized = 317,
+    MaxGroupsCreated = 318,
+    MaxCommunitiesCreated = 319,
+    Throttled = 320,
+    InvalidChannelName = 321,
+    ApprovalFailed = 322,
+    TransferCannotBeToSelf = 323,
+    DateInThePast = 324,
+    SwapFailed = 325,
+    PinTooShort = 326,
+    PinTooLong = 327,
+    SwapStatusOpen = 328,
+    SwapStatusCancelled = 329,
+    SwapStatusExpired = 330,
+    SwapStatusReserved = 331,
+    SwapStatusAccepted = 332,
+    SwapStatusCompleted = 333,
+    NoEligibleNeurons = 334,
+    ProposalNotFound = 335,
+    ProposalNotAcceptingVotes = 336,
 
     // InternalError
     C2CError = 500,
 
-    // Impossible
+    // Impossible (supposedly)
     Impossible = 600,
 }
 

@@ -1,21 +1,13 @@
 <script lang="ts">
-    import type {
-        ChatIdentifier,
-        MemberRole,
-        Level,
-        OpenChat,
-        UserLookup,
-        UserSummary,
-    } from "openchat-client";
+    import type { Level, MemberRole, OpenChat, UserLookup, UserSummary } from "openchat-client";
     import { userStore } from "openchat-client";
     import { getContext, onDestroy, onMount } from "svelte";
-    import { buildDisplayName } from "../../utils/user";
     import { _ } from "svelte-i18n";
-    import Markdown from "./Markdown.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
+    import { buildDisplayName } from "../../utils/user";
+    import Markdown from "./Markdown.svelte";
 
     interface Props {
-        chatId: ChatIdentifier;
         user: UserSummary | undefined;
         joined: Set<string>;
         messagesDeleted: number[];
@@ -25,7 +17,7 @@
         level: Level;
     }
 
-    let { chatId, user, joined, messagesDeleted, rolesChanged, observer, readByMe, level }: Props =
+    let { user, joined, messagesDeleted, rolesChanged, observer, readByMe, level }: Props =
         $props();
 
     let deletedMessagesElement: HTMLElement | undefined = $state();
@@ -117,7 +109,7 @@
     }
 
     function expandDeletedMessages() {
-        client.expandDeletedMessages(chatId, new Set(messagesDeleted));
+        client.expandDeletedMessages(new Set(messagesDeleted));
     }
     let joinedText = $derived(buildJoinedText($userStore, joined));
     let deletedText = $derived(

@@ -19,6 +19,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Include more details in failed c2c call errors ([#7749](https://github.com/open-chat-labs/open-chat/pull/7749))
 - Simplify responses and reduce mapping by using standardised error codes ([#7754](https://github.com/open-chat-labs/open-chat/pull/7754))
 - Use accurate freezing threshold rather than an approximation ([#7771](https://github.com/open-chat-labs/open-chat/pull/7771))
+- Migrate more endpoints to returning standardised error codes ([#7797](https://github.com/open-chat-labs/open-chat/pull/7797))
+- Migrate more endpoints to returning standardised error codes ([#7799](https://github.com/open-chat-labs/open-chat/pull/7799))
+- Introduce `UnitResult` type to reduce duplication ([#7800](https://github.com/open-chat-labs/open-chat/pull/7800))
+- Use more fine grained error codes for P2P swaps ([#7801](https://github.com/open-chat-labs/open-chat/pull/7801))
 
 ### Fixed
 

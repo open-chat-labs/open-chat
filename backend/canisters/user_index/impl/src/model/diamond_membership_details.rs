@@ -2,8 +2,8 @@ use constants::{CHAT_LEDGER_CANISTER_ID, DAY_IN_MS, LIFETIME_DIAMOND_TIMESTAMP};
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use types::{
-    is_default, CanisterId, DiamondMembershipDetails, DiamondMembershipPlanDuration, DiamondMembershipStatus,
-    DiamondMembershipStatusFull, DiamondMembershipSubscription, TimestampMillis,
+    CanisterId, DiamondMembershipDetails, DiamondMembershipPlanDuration, DiamondMembershipStatus, DiamondMembershipStatusFull,
+    DiamondMembershipSubscription, TimestampMillis, is_default,
 };
 
 #[derive(Serialize, Deserialize, Clone, Default)]

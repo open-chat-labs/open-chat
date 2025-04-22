@@ -1,5 +1,5 @@
-use crate::guards::caller_is_community_being_imported_into;
 use crate::RuntimeState;
+use crate::guards::caller_is_community_being_imported_into;
 use crate::{read_state, run_regular_jobs};
 use canister_api_macros::update;
 use group_canister::c2c_export_group_members::{Response::*, *};

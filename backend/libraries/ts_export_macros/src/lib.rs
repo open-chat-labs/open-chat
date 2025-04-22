@@ -1,8 +1,8 @@
 use proc_macro::TokenStream;
-use quote::{format_ident, quote, ToTokens};
+use quote::{ToTokens, format_ident, quote};
 use std::fmt::Write;
 use syn::punctuated::Punctuated;
-use syn::{parse_macro_input, parse_quote, Attribute, Field, Fields, Ident, Item, PathSegment, Token, Type};
+use syn::{Attribute, Field, Fields, Ident, Item, PathSegment, Token, Type, parse_macro_input, parse_quote};
 
 struct MethodAttribute {
     canister_name: String,

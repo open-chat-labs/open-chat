@@ -12,22 +12,22 @@ use oc_error_codes::OCErrorCode;
 use regex_lite::Regex;
 use search::simple::Query;
 use serde::{Deserialize, Serialize};
-use std::cmp::{max, min, Reverse};
+use std::cmp::{Reverse, max, min};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use types::{
     AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, Caller, Chat, CustomPermission,
     Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsCaller, EventsResponse, ExternalUrlUpdated,
     GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged,
-    GroupSubtype, GroupVisibilityChanged, HydratedMention, MemberLeft, MembersRemoved, Message, MessageContent, MessageId,
-    MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds,
-    MultiUserChat, OCResult, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged,
-    PushEventResult, Reaction, ReserveP2PSwapSuccess, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis,
-    Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall,
-    VideoCallPresence, VoteOperation, MAX_RETURNED_MENTIONS,
+    GroupSubtype, GroupVisibilityChanged, HydratedMention, MAX_RETURNED_MENTIONS, MemberLeft, MembersRemoved, Message,
+    MessageContent, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned,
+    MessagesResponse, Milliseconds, MultiUserChat, OCResult, OptionUpdate, OptionalGroupPermissions,
+    OptionalMessagePermissions, PermissionsChanged, PushEventResult, Reaction, ReserveP2PSwapSuccess, RoleChanged, Rules,
+    SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked,
+    UsersInvited, Version, Versioned, VersionedRules, VideoCall, VideoCallPresence, VoteOperation,
 };
 use utils::document::validate_avatar;
 use utils::text_validation::{
-    validate_channel_name, validate_description, validate_group_name, validate_rules, StringLengthValidationError,
+    StringLengthValidationError, validate_channel_name, validate_description, validate_group_name, validate_rules,
 };
 
 mod invited_users;
@@ -133,11 +133,7 @@ impl GroupChatCore {
     }
 
     pub fn verify_is_accessible(&self, user_id: Option<UserId>) -> Result<(), OCErrorCode> {
-        if self.is_accessible(user_id) {
-            Ok(())
-        } else {
-            Err(OCErrorCode::InitiatorNotInChat)
-        }
+        if self.is_accessible(user_id) { Ok(()) } else { Err(OCErrorCode::InitiatorNotInChat) }
     }
 
     pub fn min_visible_event_index(&self, user_id: Option<UserId>) -> OCResult<EventIndex> {
@@ -718,7 +714,11 @@ impl GroupChatCore {
     ) -> Vec<UserId> {
         let message = &message_event.event;
         let message_index = message.message_index;
-        let sender = message.sender;
+        let initiator = message
+            .bot_context
+            .as_ref()
+            .and_then(|b| b.command.as_ref().map(|c| c.initiator))
+            .unwrap_or(message.sender);
         let message_id = message.message_id;
 
         let user_being_replied_to = replies_to
@@ -744,7 +744,7 @@ impl GroupChatCore {
                             m.followed_threads.insert(root_message_index, now);
 
                             let user_id = m.user_id();
-                            if user_id != sender {
+                            if user_id != initiator {
                                 let mentioned =
                                     mentions.contains(&user_id) || (is_first_reply && user_id == root_message_sender);
 
@@ -771,7 +771,7 @@ impl GroupChatCore {
                 if everyone_mentioned {
                     self.at_everyone_mentions.insert(
                         now,
-                        AtEveryoneMention::new(sender, message_event.event.message_id, message_event.event.message_index),
+                        AtEveryoneMention::new(initiator, message_event.event.message_id, message_event.event.message_index),
                     );
                     // Notify everyone
                     users_to_notify.extend(self.members.member_ids().iter().copied());
@@ -783,7 +783,8 @@ impl GroupChatCore {
         }
 
         // Exclude the sender, bots, lapsed members, and suspended members from notifications
-        users_to_notify.remove(&sender);
+        users_to_notify.remove(&message.sender);
+        users_to_notify.remove(&initiator);
         for bot in self.members.bots().keys() {
             users_to_notify.remove(bot);
         }
@@ -1765,8 +1766,8 @@ impl GroupChatCore {
         self.at_everyone_mentions
             .iter()
             .rev()
-            .take_while(move |(&ts, m)| {
-                since.as_ref().is_none_or(|s| ts > *s) && m.message_index() >= min_visible_message_index
+            .take_while(move |(ts, m)| {
+                since.as_ref().is_none_or(|s| **ts > *s) && m.message_index() >= min_visible_message_index
             })
             .filter(move |(_, m)| m.sender() != user_id)
             .filter_map(|(_, m)| {

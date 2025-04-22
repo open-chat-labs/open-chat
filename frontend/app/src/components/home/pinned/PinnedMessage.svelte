@@ -1,11 +1,7 @@
 <script lang="ts">
     import type { CreatedUser, Message, MultiUserChatIdentifier, OpenChat } from "openchat-client";
-    import {
-        AvatarSize,
-        currentCommunityMembers as communityMembers,
-        ui,
-        userStore,
-    } from "openchat-client";
+    import { AvatarSize, app, routeForMessage, ui, userStore } from "openchat-client";
+    import page from "page";
     import { getContext } from "svelte";
     import { rtlStore } from "../../../stores/rtl";
     import Avatar from "../../Avatar.svelte";
@@ -24,18 +20,18 @@
         senderId: string;
         msg: Message;
         timestamp: bigint;
-        onGoToMessageIndex: (args: { index: number; preserveFocus: boolean }) => void;
     }
 
-    let { chatId, user, senderId, msg, timestamp, onGoToMessageIndex }: Props = $props();
+    let { chatId, user, senderId, msg, timestamp }: Props = $props();
 
     let crypto = msg.content.kind === "crypto_content";
 
     let sender = $derived($userStore.get(senderId));
-    let username = $derived(client.getDisplayName(sender, $communityMembers));
+    let username = $derived(client.getDisplayName(sender, app.selectedCommunity.members));
     let deleted = $derived(msg.content.kind === "deleted_content");
     let fill = $derived(client.fillMessage(msg));
     let me = $derived(user.userId === senderId);
+    let modal = $derived(!ui.fullWidth);
 
     function openUserProfile(e: Event) {
         if (!sender) return;
@@ -54,10 +50,18 @@
     }
 
     function goToMessageIndex() {
-        onGoToMessageIndex({
-            index: msg.messageIndex,
-            preserveFocus: false,
-        });
+        if (app.selectedMessageContext !== undefined) {
+            if (modal) {
+                ui.popRightPanelHistory();
+            }
+            page(
+                routeForMessage(
+                    app.chatListScope.kind,
+                    app.selectedMessageContext,
+                    msg.messageIndex,
+                ),
+            );
+        }
     }
 </script>
 

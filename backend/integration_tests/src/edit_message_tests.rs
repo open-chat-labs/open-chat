@@ -1,5 +1,5 @@
 use crate::env::ENV;
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
 use std::ops::Deref;
 use test_case::test_case;
 use testing::rng::random_from_u128;

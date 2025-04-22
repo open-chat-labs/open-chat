@@ -1,4 +1,5 @@
 import type { ChatSummary, MultiUserChatIdentifier } from "openchat-shared";
+import { isCanisterUrl } from "../utils/url";
 import { pathState, type RouteParams } from "./path.svelte";
 
 export type FontScale = 0 | 1 | 2 | 3 | 4;
@@ -129,6 +130,16 @@ export class UIState {
         window.addEventListener("resize", this.#resize);
         this.popRightPanelHistory = this.popRightPanelHistory.bind(this);
     }
+    #notificationsSupported = $state(
+        !isCanisterUrl &&
+            "serviceWorker" in navigator &&
+            "PushManager" in window &&
+            "Notification" in window,
+    );
+    #eventListScrollTop = $state<number | undefined>();
+    #eventListLastScrolled = $state<number>(0);
+    #eventListScrolling = $state<boolean>(false);
+    #communityListScrollTop = $state<number | undefined>();
     #getDimensions = () => {
         return { width: window.innerWidth, height: window.innerHeight };
     };
@@ -234,58 +245,62 @@ export class UIState {
         );
     }
 
-    public set fontScale(scale: FontScale) {
+    get notificationsSupported() {
+        return this.#notificationsSupported;
+    }
+
+    set fontScale(scale: FontScale) {
         this.#fontScale = scale;
         localStorage.setItem("openchat_font_size", scale.toString());
     }
 
-    public get fontScale() {
+    get fontScale() {
         return this.#fontScale;
     }
 
-    public get showNav(): boolean {
+    get showNav(): boolean {
         return this.#layout.showNav;
     }
 
-    public get showLeft(): boolean {
+    get showLeft(): boolean {
         return this.#layout.showLeft;
     }
 
-    public get showMiddle(): boolean {
+    get showMiddle(): boolean {
         return this.#layout.showMiddle;
     }
 
-    public get rightPanelMode(): RightPanelMode {
+    get rightPanelMode(): RightPanelMode {
         return this.#layout.rightPanel;
     }
 
-    public get navOpen(): boolean {
+    get navOpen(): boolean {
         return this.#navOpen;
     }
 
-    public toggleNav() {
+    toggleNav() {
         this.#navOpen = !this.#navOpen;
     }
 
-    public closeNavIfOpen() {
+    closeNavIfOpen() {
         if (this.#navOpen) {
             this.#navOpen = false;
         }
     }
 
-    public get layout(): Readonly<Layout> {
+    get layout(): Readonly<Layout> {
         return this.#layout;
     }
 
-    public filterRightPanelHistory(fn: (state: RightPanelContent) => boolean) {
+    filterRightPanelHistory(fn: (state: RightPanelContent) => boolean) {
         this.#rightPanelHistory = this.#rightPanelHistory.filter(fn);
     }
 
-    public get fontSize() {
+    get fontSize() {
         return this.#fontSize;
     }
 
-    public filterRightPanelHistoryByChatType(chat?: ChatSummary) {
+    filterRightPanelHistoryByChatType(chat?: ChatSummary) {
         if (chat === undefined) return;
 
         return this.filterRightPanelHistory((p) => {
@@ -303,34 +318,34 @@ export class UIState {
         });
     }
 
-    public set rightPanelHistory(val: RightPanelContent[]) {
+    set rightPanelHistory(val: RightPanelContent[]) {
         this.#rightPanelHistory = val;
     }
 
-    public get rightPanelHistory() {
+    get rightPanelHistory() {
         return this.#rightPanelHistory;
     }
 
-    public pushRightPanelHistory(val: RightPanelContent) {
+    pushRightPanelHistory(val: RightPanelContent) {
         this.#rightPanelHistory.push(val);
     }
 
-    public popRightPanelHistory() {
+    popRightPanelHistory() {
         this.#rightPanelHistory = this.#rightPanelHistory.slice(
             0,
             this.#rightPanelHistory.length - 1,
         );
     }
 
-    public rightPanelContains(kind: RightPanelContent["kind"]) {
+    rightPanelContains(kind: RightPanelContent["kind"]) {
         return this.#rightPanelHistory.find((p) => p.kind === kind) !== undefined;
     }
 
-    public get lastRightPanelState() {
+    get lastRightPanelState() {
         return this.#lastRightPanelState;
     }
 
-    public set rightPanelWidth(val: number | undefined) {
+    set rightPanelWidth(val: number | undefined) {
         if (val === undefined) {
             localStorage.removeItem("openchat_right_panel_width");
         } else {
@@ -339,48 +354,80 @@ export class UIState {
         this.#rightPanelWidth = val;
     }
 
-    public get rightPanelWidth() {
+    get rightPanelWidth() {
         return this.#rightPanelWidth;
     }
 
-    public set disableLeftNav(val: boolean) {
+    set disableLeftNav(val: boolean) {
         this.#disableLeftNav = val;
     }
 
-    public get disableLeftNav() {
+    get disableLeftNav() {
         return this.#disableLeftNav;
     }
 
-    public get runningInIframe() {
+    get runningInIframe() {
         return this.#runningInIframe;
     }
 
-    public get iconSize() {
+    get iconSize() {
         return this.#iconSize;
     }
 
-    public get dimensions(): Readonly<Dimensions> {
+    get dimensions(): Readonly<Dimensions> {
         return this.#dimensions;
     }
 
-    public get screenWidth() {
+    get screenWidth() {
         return this.#screenWidth;
     }
 
-    public get mobileWidth() {
+    get mobileWidth() {
         return this.#mobileWidth;
     }
 
-    public get fullWidth() {
+    get fullWidth() {
         return this.#fullWidth;
     }
 
-    public get ipadWidth() {
+    get ipadWidth() {
         return this.#ipadWidth;
     }
 
-    public get availableHeight() {
+    get availableHeight() {
         return this.#availableHeight;
+    }
+
+    get eventListScrollTop() {
+        return this.#eventListScrollTop;
+    }
+
+    set eventListScrollTop(val: number | undefined) {
+        this.#eventListScrollTop = val;
+    }
+
+    get communityListScrollTop() {
+        return this.#communityListScrollTop;
+    }
+
+    set communityListScrollTop(val: number | undefined) {
+        this.#communityListScrollTop = val;
+    }
+
+    get eventListLastScrolled(): number {
+        return this.#eventListLastScrolled;
+    }
+
+    set eventListLastScrolled(val: number) {
+        this.#eventListLastScrolled = val;
+    }
+
+    get eventListScrolling(): boolean {
+        return this.#eventListScrolling;
+    }
+
+    set eventListScrolling(val: boolean) {
+        this.#eventListScrolling = val;
     }
 }
 

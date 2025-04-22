@@ -1,5 +1,6 @@
 use crate::model::direct_chat::DirectChat;
 use chat_events::{ChatInternal, ChatMetricsInternal};
+use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use types::{ChatId, MessageIndex, TimestampMillis, Timestamped, UserId, UserType};
@@ -21,8 +22,16 @@ impl DirectChats {
         self.direct_chats.get(chat_id)
     }
 
+    pub fn get_or_err(&self, chat_id: &ChatId) -> Result<&DirectChat, OCErrorCode> {
+        self.get(chat_id).ok_or(OCErrorCode::ChatNotFound)
+    }
+
     pub fn get_mut(&mut self, chat_id: &ChatId) -> Option<&mut DirectChat> {
         self.direct_chats.get_mut(chat_id)
+    }
+
+    pub fn get_mut_or_err(&mut self, chat_id: &ChatId) -> Result<&mut DirectChat, OCErrorCode> {
+        self.get_mut(chat_id).ok_or(OCErrorCode::ChatNotFound)
     }
 
     pub fn get_or_create<F: FnOnce() -> u128>(

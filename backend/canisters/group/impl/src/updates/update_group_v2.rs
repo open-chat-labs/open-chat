@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::updates::update_group_v2::Response::*;
-use crate::{jobs, mutate_state, read_state, run_regular_jobs, Data, RuntimeState};
+use crate::{Data, RuntimeState, jobs, mutate_state, read_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::update_group_v2::*;
@@ -33,7 +33,7 @@ async fn update_group_v2(mut args: Args) -> Response {
             Ok(response) => match response {
                 c2c_make_private::Response::ChatNotFound => {
                     error!(chat_id = %prepare_result.chat_id, "Group not found in index");
-                    return InternalError;
+                    return Error(OCErrorCode::Impossible.with_message("Group not found in index"));
                 }
                 c2c_make_private::Response::Error(error) => {
                     error!("Failed to make group private: {error:?}");
@@ -41,7 +41,7 @@ async fn update_group_v2(mut args: Args) -> Response {
                 }
                 c2c_make_private::Response::Success => {}
             },
-            Err(_) => return InternalError,
+            Err(error) => return Error(error.into()),
         }
     } else if prepare_result.is_public
         && (args.name.is_some()
@@ -60,13 +60,13 @@ async fn update_group_v2(mut args: Args) -> Response {
         match group_index_canister_c2c_client::c2c_update_group(group_index_canister_id, &c2c_update_group_args).await {
             Ok(response) => match response {
                 c2c_update_group::Response::Success => {}
-                c2c_update_group::Response::NameTaken => return NameTaken,
+                c2c_update_group::Response::NameTaken => return Error(OCErrorCode::NameTaken.into()),
                 c2c_update_group::Response::ChatNotFound => {
                     error!(chat_id = %prepare_result.chat_id, "Group not found in index");
-                    return InternalError;
+                    return Error(OCErrorCode::Impossible.with_message("Group not found in index"));
                 }
             },
-            Err(_) => return InternalError,
+            Err(error) => return Error(error.into()),
         };
     }
 

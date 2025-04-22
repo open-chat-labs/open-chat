@@ -17,8 +17,5 @@ pub struct Args {
 pub enum Response {
     Success(SelectedGroupUpdates),
     SuccessNoUpdates(TimestampMillis),
-    PrivateCommunity,
-    ChannelNotFound,
-    PrivateChannel,
     Error(OCError),
 }

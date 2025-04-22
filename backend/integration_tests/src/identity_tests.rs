@@ -1,6 +1,6 @@
 use crate::client::register_user_and_include_auth;
 use crate::env::ENV;
-use crate::{client, CanisterIds, TestEnv};
+use crate::{CanisterIds, TestEnv, client};
 use candid::Principal;
 use constants::NANOS_PER_MILLISECOND;
 use pocket_ic::PocketIc;

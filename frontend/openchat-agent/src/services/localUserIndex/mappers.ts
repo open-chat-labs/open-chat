@@ -41,6 +41,7 @@ import {
     MAX_EVENTS,
     MAX_MESSAGES,
     UnsupportedValueError,
+    isSuccessfulEventsResponse,
 } from "openchat-shared";
 import {
     bytesToHexString,
@@ -51,13 +52,12 @@ import {
     apiChatIdentifier,
     communityChannelSummary,
     communitySummary,
-    eventsSuccessResponse,
     gateCheckFailedReason,
+    getEventsSuccess,
     ocError,
 } from "../common/chatMappersV2";
 import { groupChatSummary, groupChatSummaryUpdates } from "../group/mappersV2";
 import { communitySummaryUpdates } from "../community/mappersV2";
-import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 
 export function apiAccessTokenType(domain: AccessTokenType): LocalUserIndexAccessTokenV2Args {
     switch (domain.kind) {
@@ -301,30 +301,26 @@ export async function chatEventsBatchResponse(
                 kind: "not_found",
             });
         } else if ("Success" in response) {
-            const error = await ensureReplicaIsUpToDate(
+            const result = await getEventsSuccess(
+                response.Success,
                 principal,
                 args.context.chatId,
-                response.Success.chat_last_updated,
-                true,
+                true
             );
-
-            responses.push(
-                error ?? {
-                    kind: "success",
-                    result: eventsSuccessResponse(response.Success),
-                },
-            );
+            responses.push(isSuccessfulEventsResponse(result) ? { kind: "success", result } : result);
         } else if ("ReplicaNotUpToDate" in response) {
             responses.push({
                 kind: "replica_not_up_to_date",
                 replicaTimestamp: response.ReplicaNotUpToDate,
                 clientTimestamp: args.latestKnownUpdate ?? BigInt(-1),
             });
-        } else {
+        } else if ("InternalError" in response) {
             responses.push({
                 kind: "internal_error",
                 error: response.InternalError,
             });
+        } else {
+            responses.push(ocError(response.Error));
         }
     }
     return {
@@ -355,15 +351,13 @@ export function joinChannelResponse(
                 kind: "gate_check_failed",
                 reason: gateCheckFailedReason(value.GateCheckFailed),
             };
+        } else if ("Error" in value) {
+            return ocError(value.Error);
         }
     }
 
-    if (value === "UserBlocked") {
-        return CommonResponses.userBlocked();
-    } else {
-        console.warn("Join group failed with: ", value);
-        return CommonResponses.failure();
-    }
+    console.warn("Join group failed with: ", value);
+    return CommonResponses.failure();
 }
 
 export function registerUserResponse(

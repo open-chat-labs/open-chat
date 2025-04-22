@@ -2,7 +2,7 @@ use crate::model::files_map::FilesMap;
 use crate::model::files_per_accessor_map::FilesPerAccessorStableMap;
 use crate::model::reference_counts::ReferenceCountsStableMap;
 use crate::model::stable_blob_storage::StableBlobStorage;
-use crate::{calc_chunk_count, MAX_BLOB_SIZE_BYTES};
+use crate::{MAX_BLOB_SIZE_BYTES, calc_chunk_count};
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::StableMemoryMap;
@@ -121,11 +121,7 @@ impl Files {
                     AddChunkResult::ChunkAlreadyExists => return PutChunkResult::ChunkAlreadyExists,
                     AddChunkResult::ChunkSizeMismatch(m) => return PutChunkResult::ChunkSizeMismatch(m),
                 }
-                if pending_file.is_completed() {
-                    Some(e.remove())
-                } else {
-                    None
-                }
+                if pending_file.is_completed() { Some(e.remove()) } else { None }
             }
         };
 

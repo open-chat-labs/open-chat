@@ -1,4 +1,4 @@
-use crate::{is_default, EventIndex, TimestampMillis};
+use crate::{EventIndex, TimestampMillis, is_default};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;

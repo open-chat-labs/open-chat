@@ -1,6 +1,6 @@
 use crate::guards::caller_is_governance_principal;
 use crate::timer_job_types::ExpandOntoSubnetJob;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_api_macros::proposal;
 use canister_timer_jobs::Job;
 use canister_tracing_macros::trace;

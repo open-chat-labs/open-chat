@@ -17,12 +17,12 @@ import type {
     WalletConfig,
 } from "openchat-shared";
 import { ChatMap, CommunityMap, ObjectSet, chatScopesEqual } from "openchat-shared";
-import { immutableStore } from "./immutable";
 import { derived } from "svelte/store";
+import { serverWalletConfigStore } from "./crypto";
+import { immutableStore } from "./immutable";
+import { localGlobalUpdates } from "./localGlobalUpdates";
 import { messageActivityFeedReadUpToLocally, messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
-import { serverWalletConfigStore } from "./crypto";
-import { localGlobalUpdates } from "./localGlobalUpdates";
 import { serverStreakInsuranceStore } from "./streakInsurance";
 
 export type PinnedByScope = Map<ChatListScope["kind"], ChatIdentifier[]>;
@@ -84,6 +84,7 @@ export const globalStateStore = immutableStore<GlobalState>({
     },
 });
 
+// TODO this should really be derived from the route shouldn't it?
 export const chatListScopeStore = safeWritable<ChatListScope>({ kind: "none" }, chatScopesEqual);
 
 export type CombinedUnreadCounts = {

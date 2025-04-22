@@ -4,16 +4,14 @@
         AvatarSize,
         type ChatSummary,
         type CommunitySummary,
+        type ReadonlySet,
         type OpenChat,
         type PublicProfile,
         type ResourceKey,
         type UserSummary,
+        app,
         blockedUsers,
-        currentChatMembersMap as chatMembersMap,
-        currentCommunityMembers as communityMembers,
         currentUser as createdUser,
-        currentChatBlockedUsers,
-        currentCommunityBlockedUsers,
         platformModerator,
         selectedChatStore as selectedChat,
         selectedCommunity,
@@ -156,8 +154,8 @@
         chat: ChatSummary | undefined,
         community: CommunitySummary | undefined,
         blockedUsers: Set<string>,
-        blockedChatUsers: Set<string>,
-        blockedCommunityUsers: Set<string>,
+        blockedChatUsers: ReadonlySet<string>,
+        blockedCommunityUsers: ReadonlySet<string>,
     ) {
         if (me || inGlobalContext) return false;
 
@@ -176,8 +174,8 @@
         chat: ChatSummary | undefined,
         community: CommunitySummary | undefined,
         blockedUsers: Set<string>,
-        blockedChatUsers: Set<string>,
-        blockedCommunityUsers: Set<string>,
+        blockedChatUsers: ReadonlySet<string>,
+        blockedCommunityUsers: ReadonlySet<string>,
     ) {
         if (me || inGlobalContext) return false;
         if (chat !== undefined) {
@@ -263,7 +261,7 @@
                 username: profile?.username ?? "",
                 displayName: profile?.displayName,
             },
-            inGlobalContext ? undefined : $communityMembers,
+            inGlobalContext ? undefined : app.selectedCommunity.members,
         ),
     );
     let canBlock = $derived(
@@ -271,8 +269,8 @@
             $selectedChat,
             $selectedCommunity,
             $blockedUsers,
-            $currentChatBlockedUsers,
-            $currentCommunityBlockedUsers,
+            app.selectedChat.blockedUsers,
+            app.selectedCommunity.blockedUsers,
         ),
     );
     let canUnblock = $derived(
@@ -280,8 +278,8 @@
             $selectedChat,
             $selectedCommunity,
             $blockedUsers,
-            $currentChatBlockedUsers,
-            $currentCommunityBlockedUsers,
+            app.selectedChat.blockedUsers,
+            app.selectedCommunity.blockedUsers,
         ),
     );
 </script>
@@ -317,8 +315,8 @@
                             {#if user !== undefined && $selectedChat !== undefined && $selectedChat.kind !== "direct_chat"}
                                 <WithRole
                                     userId={user.userId}
-                                    chatMembers={$chatMembersMap}
-                                    communityMembers={$communityMembers}>
+                                    chatMembers={app.selectedChat.members}
+                                    communityMembers={app.selectedCommunity.members}>
                                     {#snippet children(communityRole, chatRole)}
                                         <RoleIcon level="community" popup role={communityRole} />
                                         <RoleIcon

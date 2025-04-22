@@ -1,5 +1,5 @@
 use crate::updates::c2c_unfreeze_group::c2c_unfreeze_group_impl;
-use crate::{mutate_state, read_state, run_regular_jobs, CommunityBeingImportedInto, RuntimeState};
+use crate::{CommunityBeingImportedInto, RuntimeState, mutate_state, read_state, run_regular_jobs};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -59,7 +59,7 @@ async fn convert_into_community(args: Args) -> Response {
         }
         Err(error) => {
             mutate_state(rollback);
-            Error(OCErrorCode::C2CError.with_message(format!("{error:?}")))
+            Error(error.into())
         }
     }
 }

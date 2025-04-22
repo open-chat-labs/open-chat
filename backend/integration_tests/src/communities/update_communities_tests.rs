@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::utils::tick_many;
-use crate::{client, CanisterIds, TestEnv, User};
+use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
@@ -52,9 +52,11 @@ fn change_casing_of_community_name_succeeds() {
 
     // Find the community in the group_index and check that the name has changed
     let communities = client::group_index::happy_path::explore_communities(env, user2.principal, canister_ids.group_index);
-    assert!(communities
-        .iter()
-        .any(|m| m.id == community_id && m.name == new_community_name));
+    assert!(
+        communities
+            .iter()
+            .any(|m| m.id == community_id && m.name == new_community_name)
+    );
 }
 
 #[test]

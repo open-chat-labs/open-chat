@@ -1,8 +1,8 @@
-use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::EditMessageArgs;
-use community_canister::edit_message::{Response::*, *};
+use community_canister::edit_message::*;
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, OCResult};
 
@@ -11,11 +11,7 @@ use types::{Achievement, OCResult};
 fn edit_message(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| edit_message_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| edit_message_impl(args, state)).into()
 }
 
 fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {

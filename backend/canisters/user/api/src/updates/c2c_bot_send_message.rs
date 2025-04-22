@@ -37,10 +37,6 @@ impl From<Args> for send_message_v2::Args {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    NotAuthorized,
-    ThreadNotFound,
-    InvalidRequest(String),
-    MessageAlreadyFinalised,
     Error(OCError),
 }
 
@@ -51,23 +47,7 @@ impl From<send_message_v2::Response> for Response {
         match value {
             send_message_v2::Response::Success(success_result) => Success(success_result),
             send_message_v2::Response::Error(error) => Error(error),
-            send_message_v2::Response::MessageEmpty => InvalidRequest("Message empty".to_string()),
-            send_message_v2::Response::TextTooLong(max) => InvalidRequest(format!("Text too long, max: {max}")),
-            send_message_v2::Response::InvalidPoll(reason) => InvalidRequest(format!("Invalid poll, reason: {reason:?}")),
-            send_message_v2::Response::InvalidRequest(reason) => InvalidRequest(reason),
-            send_message_v2::Response::UserSuspended => NotAuthorized,
-            send_message_v2::Response::RecipientBlocked => NotAuthorized,
-            send_message_v2::Response::RecipientNotFound => NotAuthorized,
-            send_message_v2::Response::DuplicateMessageId => MessageAlreadyFinalised,
-            send_message_v2::Response::TransferCannotBeZero
-            | send_message_v2::Response::PinRequired
-            | send_message_v2::Response::PinIncorrect(_)
-            | send_message_v2::Response::TooManyFailedPinAttempts(_)
-            | send_message_v2::Response::TransferCannotBeToSelf
-            | send_message_v2::Response::P2PSwapSetUpFailed(_)
-            | send_message_v2::Response::InternalError(_)
-            | send_message_v2::Response::TransferFailed(_)
-            | send_message_v2::Response::TransferSuccessV2(_) => unreachable!(), // TODO: We need to support this at some point soon
+            send_message_v2::Response::TransferSuccessV2(_) => unreachable!(), // TODO: We need to support this at some point soon
         }
     }
 }

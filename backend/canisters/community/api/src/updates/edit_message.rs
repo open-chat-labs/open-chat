@@ -1,8 +1,7 @@
 use candid::CandidType;
-use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{ChannelId, MessageContentInitial, MessageId, MessageIndex};
+use types::{ChannelId, MessageContentInitial, MessageId, MessageIndex, UnitResult};
 
 #[ts_export(community, edit_message)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -15,9 +14,4 @@ pub struct Args {
     pub new_achievement: bool,
 }
 
-#[ts_export(community, edit_message)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    Error(OCError),
-}
+pub type Response = UnitResult;

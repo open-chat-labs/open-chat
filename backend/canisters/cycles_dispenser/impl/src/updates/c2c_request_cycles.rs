@@ -1,4 +1,4 @@
-use crate::{mutate_state, State};
+use crate::{State, mutate_state};
 use canister_tracing_macros::trace;
 use cycles_dispenser_canister::c2c_request_cycles::{Response::*, *};
 use ic_cdk::update;

@@ -1,3 +1,4 @@
+import type { Readable } from "svelte/store";
 import type {
     ChannelIdentifier,
     ChatIdentifier,
@@ -14,9 +15,9 @@ import type {
     MessageContext,
     MultiUserChat,
     MultiUserChatIdentifier,
+    Notification,
     ResourceKey,
     UpdatedRules,
-    Notification,
 } from "..";
 
 export type PubSubEvents = {
@@ -81,7 +82,6 @@ export type PubSubEvents = {
         context: MessageContext;
         event: EventWrapper<Message>;
     };
-    chatsUpdated: undefined;
     userLoggedIn: string;
     reactionSelected: { messageId: bigint; kind: "add" | "remove" };
     userSuspensionChanged: undefined;
@@ -125,4 +125,11 @@ export type PubSubEvents = {
     };
     remoteVideoCallEnded: bigint;
     notification: Notification;
+    noAccess: undefined;
+    notFound: undefined;
+    showFailureToast: {
+        resourceKey: ResourceKey | Readable<ResourceKey | undefined>;
+        err?: unknown;
+    };
+    showSuccessToast: ResourceKey;
 };

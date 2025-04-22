@@ -1,7 +1,7 @@
-use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use community_canister::c2c_leave_community::{Response::*, *};
+use community_canister::c2c_leave_community::*;
 use oc_error_codes::OCErrorCode;
 use types::OCResult;
 
@@ -11,11 +11,7 @@ use types::OCResult;
 fn c2c_leave_community(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| c2c_leave_community_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| c2c_leave_community_impl(args, state)).into()
 }
 
 fn c2c_leave_community_impl(args: Args, state: &mut RuntimeState) -> OCResult {

@@ -1,4 +1,4 @@
-use crate::{bots::extract_access_context, mutate_state, RuntimeState};
+use crate::{RuntimeState, bots::extract_access_context, mutate_state};
 use canister_api_macros::update;
 use local_user_index_canister::bot_send_message::*;
 use rand::Rng;
@@ -93,7 +93,7 @@ fn extract_message_access_context(args: &Args, state: &mut RuntimeState) -> Resu
                 return Err(InvalidRequest("Channel must be specified for community scope".to_string()));
             };
             let chat = Chat::Channel(details.community_id, channel_id);
-            let message_id = args.message_id.unwrap_or_else(|| state.env.rng().gen::<u64>().into());
+            let message_id = args.message_id.unwrap_or_else(|| state.env.rng().r#gen::<u64>().into());
             (chat, None, message_id, None)
         }
     };
@@ -149,9 +149,8 @@ async fn send_message_to_channel(
                 expires_at: result.expires_at,
             }),
             community_canister::c2c_bot_send_message::Response::Error(error) => Error(error),
-            community_canister::c2c_bot_send_message::Response::NotAuthorized => NotAuthorized,
         },
-        Err(error) => C2CError(error.reject_code() as i32, error.message().to_string()),
+        Err(error) => Error(error.into()),
     }
 }
 
@@ -238,10 +237,6 @@ async fn send_message_to_user(
                 expires_at: result.expires_at,
             }),
             user_canister::c2c_bot_send_message::Response::Error(error) => Error(error),
-            user_canister::c2c_bot_send_message::Response::NotAuthorized => NotAuthorized,
-            user_canister::c2c_bot_send_message::Response::ThreadNotFound => ThreadNotFound,
-            user_canister::c2c_bot_send_message::Response::InvalidRequest(message) => InvalidRequest(message),
-            user_canister::c2c_bot_send_message::Response::MessageAlreadyFinalised => MessageAlreadyFinalised,
         },
         Err(error) => C2CError(error.reject_code() as i32, error.message().to_string()),
     }

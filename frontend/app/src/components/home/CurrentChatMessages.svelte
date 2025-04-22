@@ -1,40 +1,38 @@
 <script lang="ts">
-    import { getContext } from "svelte";
-    import ChatEvent from "./ChatEvent.svelte";
+    import { trackedEffect } from "@src/utils/effects.svelte";
     import {
-        type EventWrapper,
-        type EnhancedReplyContext,
         type ChatEvent as ChatEventType,
-        type Message,
-        type Mention,
-        type ChatSummary,
-        type OpenChat,
-        FilteredProposals,
-        chatIdentifiersEqual,
         type ChatIdentifier,
-        routeForChatIdentifier,
-        currentUser as user,
-        currentChatEditingEvent,
-        currentChatPinnedMessages,
-        messagesRead,
-        unconfirmed,
-        failedMessagesStore,
-        userGroupKeys,
-        draftMessagesStore,
-        focusMessageIndex,
+        type ChatSummary,
+        type EnhancedReplyContext,
+        type EventWrapper,
+        type Mention,
+        type Message,
+        type OpenChat,
+        type ReadonlySet,
+        FilteredProposals,
+        app,
+        chatIdentifiersEqual,
         chatListScopeStore as chatListScope,
-        selectedCommunity,
-        expandedDeletedMessages,
+        currentChatEditingEvent,
+        draftMessagesStore,
         eventsStore,
-        chatStateStore,
+        failedMessagesStore,
+        messagesRead,
+        pathState,
+        routeForChatIdentifier,
+        selectedCommunity,
+        unconfirmed,
+        currentUser as user,
     } from "openchat-client";
-    import InitialChatMessage from "./InitialChatMessage.svelte";
     import page from "page";
+    import { getContext, untrack } from "svelte";
+    import Witch from "../Witch.svelte";
+    import ChatEvent from "./ChatEvent.svelte";
     import ChatEventList from "./ChatEventList.svelte";
+    import InitialChatMessage from "./InitialChatMessage.svelte";
     import PrivatePreview from "./PrivatePreview.svelte";
     import TimelineDate from "./TimelineDate.svelte";
-    import Witch from "../Witch.svelte";
-    import { trackedEffect } from "@src/utils/effects.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -123,32 +121,30 @@
 
     // Checks if a key already exists for this group, if so, that key will be reused so that Svelte is able to match the
     // new version with the old version, if not, a new key will be created for the group.
-    function userGroupKey(group: EventWrapper<ChatEventType>[]): string {
-        const first = group[0];
-        let prefix = "";
-        if (first.event.kind === "message") {
-            const sender = first.event.sender;
-            prefix = sender + "_";
-        }
-        for (const evt of group) {
-            const key =
-                prefix +
-                (evt.event.kind === "message" ? `${evt.index}_${evt.event.messageId}` : evt.index);
-            if ($userGroupKeys.has(key)) {
-                return key;
-            }
-        }
-        const firstKey =
-            prefix +
-            (first.event.kind === "message"
-                ? `${first.index}_${first.event.messageId}`
-                : first.index);
-        chatStateStore.updateProp(chat.id, "userGroupKeys", (keys) => {
-            keys.add(firstKey);
-            return keys;
-        });
-        return firstKey;
-    }
+    // function userGroupKey(group: EventWrapper<ChatEventType>[]): string {
+    //     const first = group[0];
+    //     let prefix = "";
+    //     if (first.event.kind === "message") {
+    //         const sender = first.event.sender;
+    //         prefix = sender + "_";
+    //     }
+    //     for (const evt of group) {
+    //         const key =
+    //             prefix +
+    //             (evt.event.kind === "message" ? `${evt.index}_${evt.event.messageId}` : evt.index);
+    //         if (app.selectedChat.userGroupKeys.has(key)) {
+    //             return key;
+    //         }
+    //     }
+    //     const firstKey =
+    //         prefix +
+    //         (first.event.kind === "message"
+    //             ? `${first.index}_${first.event.messageId}`
+    //             : first.index);
+
+    //     setTimeout(() => app.selectedChat.addUserGroupKey(firstKey), 0);
+    //     return firstKey;
+    // }
 
     function isMe(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
@@ -160,7 +156,7 @@
         return false;
     }
 
-    function isPinned(store: Set<number>, evt: EventWrapper<ChatEventType>): boolean {
+    function isPinned(store: ReadonlySet<number>, evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
             return store.has(evt.event.messageIndex);
         }
@@ -257,15 +253,31 @@
         }
     });
     let showAvatar = $derived(initialised && shouldShowAvatar(chat, $eventsStore[0]?.index));
-    let messageContext = $derived({ chatId: chat.id, threadRootMessageIndex: undefined });
+    let messageContext = $derived({ chatId: chat?.id, threadRootMessageIndex: undefined });
     let timeline = $derived(
         client.groupEvents(
             [...$eventsStore].reverse(),
             $user.userId,
-            $expandedDeletedMessages,
+            app.selectedChat.expandedDeletedMessages,
             groupInner(filteredProposals),
         ),
     );
+
+    // if the messageIndex has changed but the chatId has not, scroll to the specified message
+    let previousChatId: ChatIdentifier | undefined = undefined;
+    $effect(() => {
+        if (
+            app.chatsInitialised &&
+            pathState.messageIndex !== undefined &&
+            chatIdentifiersEqual(app.selectedChatId, previousChatId)
+        ) {
+            const idx = pathState.messageIndex;
+            untrack(() => {
+                scrollToMessageIndex(idx, false);
+            });
+        }
+        previousChatId = app.selectedChatId;
+    });
 </script>
 
 <Witch />
@@ -297,12 +309,12 @@
                 {#if timelineItem.kind === "timeline_date"}
                     <TimelineDate observer={labelObserver} timestamp={timelineItem.timestamp} />
                 {:else}
-                    {#each timelineItem.group as innerGroup (userGroupKey(innerGroup))}
+                    {#each timelineItem.group as innerGroup}
                         {#each innerGroup as evt, i (eventKey(evt))}
                             <ChatEvent
                                 observer={messageObserver}
                                 focused={evt.event.kind === "message" &&
-                                    evt.event.messageIndex === $focusMessageIndex &&
+                                    evt.event.messageIndex === app.selectedChat.focusMessageIndex &&
                                     !isFailed($failedMessagesStore, evt)}
                                 accepted={isAccepted($unconfirmed, evt)}
                                 confirmed={isConfirmed($unconfirmed, evt)}
@@ -328,7 +340,7 @@
                                 publicGroup={(chat.kind === "group_chat" ||
                                     chat.kind === "channel") &&
                                     chat.public}
-                                pinned={isPinned($currentChatPinnedMessages, evt)}
+                                pinned={isPinned(app.selectedChat.pinnedMessages, evt)}
                                 editing={$currentChatEditingEvent === evt}
                                 onReplyTo={replyTo}
                                 {onRemovePreview}

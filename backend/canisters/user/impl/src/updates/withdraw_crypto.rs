@@ -4,6 +4,7 @@ use crate::{mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::MEMO_SEND;
+use oc_error_codes::OCErrorCode;
 use user_canister::withdraw_crypto_v2::{Response::*, *};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -16,8 +17,8 @@ async fn withdraw_crypto_v2(args: Args) -> Response {
     }
 
     match process_transaction(args.withdrawal.set_memo(&MEMO_SEND)).await {
-        Ok(Ok(completed_withdrawal)) => Success(completed_withdrawal),
-        Ok(Err(failed_withdrawal)) => TransactionFailed(failed_withdrawal),
-        Err(error) => InternalError(format!("{error:?}")),
+        Ok(Ok(completed_withdrawal)) => Success(Box::new(completed_withdrawal)),
+        Ok(Err(failed_withdrawal)) => Error(OCErrorCode::TransferFailed.with_json(&failed_withdrawal)),
+        Err(error) => Error(error.into()),
     }
 }

@@ -1,21 +1,19 @@
 <script lang="ts">
     import {
+        app,
         defaultChatRules,
         OpenChat,
+        publish,
         type ChannelSummary,
         type CommunitySummary,
-        currentChatRules,
-        currentCommunityRules,
-        currentCommunityReferrals,
-        publish,
     } from "openchat-client";
-    import ScopeToggle from "./communities/ScopeToggle.svelte";
     import { getContext } from "svelte";
-    import CommunityDetailsHeader from "./communities/details/CommunityDetailsHeader.svelte";
-    import GroupDetailsHeader from "./groupdetails/GroupDetailsHeader.svelte";
-    import GroupDetailsBody from "./groupdetails/GroupDetailsBody.svelte";
-    import CommunityCard from "./communities/explore/CommunityCard.svelte";
     import CommunityDetails from "./communities/details/CommunityDetails.svelte";
+    import CommunityDetailsHeader from "./communities/details/CommunityDetailsHeader.svelte";
+    import CommunityCard from "./communities/explore/CommunityCard.svelte";
+    import ScopeToggle from "./communities/ScopeToggle.svelte";
+    import GroupDetailsBody from "./groupdetails/GroupDetailsBody.svelte";
+    import GroupDetailsHeader from "./groupdetails/GroupDetailsHeader.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -41,7 +39,7 @@
     let canEditChannel = $derived(
         !channelFrozen && !communityFrozen && client.canEditGroupDetails(channel.id),
     );
-    let rules = $derived($currentCommunityRules ?? defaultChatRules("community"));
+    let rules = $derived(app.selectedCommunity.rules ?? defaultChatRules("community"));
     let canDeleteCommunity = $derived(client.canDeleteCommunity(community.id));
     let canInviteToCommunity = $derived(!communityFrozen && client.canInviteUsers(community.id));
 
@@ -49,7 +47,10 @@
         if (canEditChannel) {
             publish("editGroup", {
                 chat: channel,
-                rules: { ...($currentChatRules ?? defaultChatRules("channel")), newVersion: false },
+                rules: {
+                    ...(app.selectedChat.rules ?? defaultChatRules("channel")),
+                    newVersion: false,
+                },
             });
         }
     }
@@ -90,6 +91,6 @@
             {rules}
             metrics={community.metrics}
             {community}
-            referrals={$currentCommunityReferrals} />
+            referrals={app.selectedCommunity.referrals} />
     {/snippet}
 </ScopeToggle>

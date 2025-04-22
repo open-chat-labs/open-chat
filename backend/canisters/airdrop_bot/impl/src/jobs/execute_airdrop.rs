@@ -1,5 +1,5 @@
 use crate::actions::{Action, AirdropTransfer, AirdropType, LotteryAirdrop, MainAirdrop};
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use airdrop_bot_canister::{AirdropAlgorithm, AirdropConfig};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
@@ -14,11 +14,7 @@ thread_local! {
 }
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
-    if TIMER_ID.get().is_none() {
-        start_airdrop_timer(state)
-    } else {
-        false
-    }
+    if TIMER_ID.get().is_none() { start_airdrop_timer(state) } else { false }
 }
 
 pub(crate) fn start_airdrop_timer(state: &RuntimeState) -> bool {

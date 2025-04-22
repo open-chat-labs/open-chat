@@ -5,10 +5,11 @@ use ckbtc_minter_canister::update_balance::{UpdateBalanceError, UtxoStatus};
 use ckbtc_minter_canister::{CKBTC_MINTER_CANISTER_ID, TESTNET_CKBTC_MINTER_CANISTER_ID};
 use event_store_producer::EventBuilder;
 use ledger_utils::format_crypto_amount;
+use oc_error_codes::OCErrorCode;
 use serde::Serialize;
 use tracing::error;
 use types::Achievement;
-use user_canister::update_btc_balance::{Response::*, *};
+use user_canister::update_btc_balance::*;
 
 #[update(msgpack = true)]
 #[trace]
@@ -70,17 +71,17 @@ Error: {error:?}",
                 }
             });
 
-            Success
+            Response::Success
         }
         Ok(Err(error)) => {
             if matches!(error, UpdateBalanceError::NoNewUtxos(_)) {
-                NoUpdates
+                Response::Error(OCErrorCode::NoChange.into())
             } else {
                 error!(?error, "Failed to update BTC balance");
-                Error(format!("{error:?}"))
+                Response::Error(OCErrorCode::Unknown.with_json(&error))
             }
         }
-        Err(error) => Error(format!("{error:?}")),
+        Err(error) => Response::Error(error.into()),
     }
 }
 

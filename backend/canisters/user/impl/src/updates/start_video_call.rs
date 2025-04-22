@@ -1,16 +1,17 @@
 use crate::guards::caller_is_video_call_operator;
 use crate::timer_job_types::{MarkVideoCallEndedJob, TimerJob};
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, mutate_state, run_regular_jobs};
 use canister_tracing_macros::trace;
 use chat_events::{CallParticipantInternal, MessageContentInternal, PushMessageArgs, VideoCallContentInternal};
 use constants::HOUR_IN_MS;
 use ic_cdk::update;
+use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use types::{
-    DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, Notification, UserId, UserType,
-    VideoCallPresence, VideoCallType,
+    DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, Notification, OCResult, UserId,
+    UserType, VideoCallPresence, VideoCallType,
 };
-use user_canister::start_video_call_v2::{Response::*, *};
+use user_canister::start_video_call_v2::*;
 use user_canister::{StartVideoCallArgs, UserCanisterEvent};
 
 #[update(guard = "caller_is_video_call_operator")]
@@ -18,18 +19,19 @@ use user_canister::{StartVideoCallArgs, UserCanisterEvent};
 fn start_video_call_v2(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| start_video_call_impl(args, state))
+    mutate_state(|state| start_video_call_impl(args, state)).into()
 }
 
-fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
+fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let sender = args.initiator;
     let my_user_id = state.env.canister_id().into();
-    if state.data.suspended.value || state.data.blocked_users.contains(&sender) || sender == my_user_id {
-        return NotAuthorized;
-    }
 
-    if matches!(args.call_type, VideoCallType::Broadcast) {
-        return NotAuthorized;
+    if state.data.suspended.value
+        || state.data.blocked_users.contains(&sender)
+        || sender == my_user_id
+        || matches!(args.call_type, VideoCallType::Broadcast)
+    {
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
     let max_duration = args.max_duration.unwrap_or(HOUR_IN_MS);
@@ -66,7 +68,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         })),
     );
 
-    Success
+    Ok(())
 }
 
 pub fn handle_start_video_call(
@@ -110,7 +112,7 @@ pub fn handle_start_video_call(
     let chat = state
         .data
         .direct_chats
-        .get_or_create(other, UserType::User, || state.env.rng().gen(), now);
+        .get_or_create(other, UserType::User, || state.env.rng().r#gen(), now);
 
     let mute_notification = their_message_index.is_some() || chat.notifications_muted.value;
 

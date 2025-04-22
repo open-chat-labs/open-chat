@@ -1,6 +1,13 @@
 <script lang="ts">
-    import type { EventWrapper, Message, MultiUserChatIdentifier, OpenChat } from "openchat-client";
+    import type {
+        EventWrapper,
+        Message,
+        MultiUserChatIdentifier,
+        OpenChat,
+        ReadonlySet,
+    } from "openchat-client";
     import { messagesRead, subscribe, ui, currentUser as user } from "openchat-client";
+    import { isSuccessfulEventsResponse } from "openchat-shared";
     import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -13,14 +20,13 @@
     import PinnedMessage from "./PinnedMessage.svelte";
 
     interface Props {
-        pinned: Set<number>;
+        pinned: ReadonlySet<number>;
         chatId: MultiUserChatIdentifier;
         dateLastPinned: bigint | undefined;
         onClose: () => void;
-        onGoToMessageIndex: (args: { index: number; preserveFocus: boolean }) => void;
     }
 
-    let { pinned, chatId, dateLastPinned, onClose, onGoToMessageIndex }: Props = $props();
+    let { pinned, chatId, dateLastPinned, onClose }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -49,7 +55,7 @@
         }
     }
 
-    function reloadPinned(pinned: Set<number>): void {
+    function reloadPinned(pinned: ReadonlySet<number>): void {
         untrack(() => {
             if (pinned.size > 0) {
                 if (messages.kind !== "success") {
@@ -58,7 +64,7 @@
                 client
                     .getGroupMessagesByMessageIndex(chatId, pinned)
                     .then((resp) => {
-                        if (resp === "events_failed") {
+                        if (!isSuccessfulEventsResponse(resp)) {
                             messages = { kind: "error", error: "Unable to load pinned messages" };
                         } else {
                             messages = {
@@ -126,8 +132,7 @@
                         timestamp={message.timestamp}
                         user={$user}
                         senderId={message.event.sender}
-                        msg={message.event}
-                        {onGoToMessageIndex} />
+                        msg={message.event} />
                 {/each}
             </div>
         {/each}

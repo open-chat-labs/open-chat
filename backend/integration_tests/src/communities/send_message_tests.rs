@@ -2,7 +2,7 @@ use crate::client::ledger::happy_path::balance_of;
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
 use crate::utils::{now_millis, now_nanos, tick_many};
-use crate::{client, CanisterIds, TestEnv, User};
+use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use constants::{ICP_SYMBOL, PRIZE_FEE_PERCENT};
 use ledger_utils::create_pending_transaction;

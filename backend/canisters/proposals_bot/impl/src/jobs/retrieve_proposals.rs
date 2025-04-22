@@ -1,7 +1,7 @@
 use crate::jobs::{push_proposals, update_proposals};
-use crate::proposals::{RawProposal, REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READY_TO_SETTLE};
+use crate::proposals::{REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READY_TO_SETTLE, RawProposal};
 use crate::timer_job_types::{ProcessUserRefundJob, TimerJob, TopUpNeuronJob, VoteOnNnsProposalJob};
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_timer_jobs::Job;
 use constants::MINUTE_IN_MS;
 use nns_governance_canister::types::{ListProposalInfo, ProposalInfo};

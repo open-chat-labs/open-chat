@@ -1,33 +1,28 @@
-use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use community_canister::update_bot::{Response::*, *};
-use types::BotGroupConfig;
+use community_canister::update_bot::*;
+use oc_error_codes::OCErrorCode;
+use types::{BotGroupConfig, OCResult};
 
 #[update(msgpack = true)]
 #[trace]
 fn update_bot(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| update_bot_impl(args, state))
+    mutate_state(|state| update_bot_impl(args, state)).into()
 }
 
-fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return CommunityFrozen;
+fn update_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    state.data.verify_not_frozen()?;
+
+    let member = state.get_calling_member(true)?;
+
+    if !member.role().is_owner() {
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
-    let caller = state.env.caller();
-
-    let Some(member) = state.data.members.get(caller) else {
-        return NotAuthorized;
-    };
-
-    if member.suspended().value || !member.role().is_owner() {
-        return NotAuthorized;
-    }
-
-    if !state.data.update_bot(
+    if state.data.update_bot(
         member.user_id,
         args.bot_id,
         BotGroupConfig {
@@ -35,9 +30,9 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
         },
         state.env.now(),
     ) {
-        return NotFound;
+        handle_activity_notification(state);
+        Ok(())
+    } else {
+        Err(OCErrorCode::BotNotFound.into())
     }
-
-    handle_activity_notification(state);
-    Success
 }

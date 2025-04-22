@@ -1,5 +1,6 @@
 use crate::env::ENV;
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
+use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
 use testing::rng::{random_principal, random_string};
 use types::Empty;
@@ -37,7 +38,9 @@ fn save_crypto_account_invalid() {
     let named_account = NamedAccount { name, account };
 
     let response = client::user::save_crypto_account(env, user.principal, user.canister(), &named_account);
-    assert!(matches!(response, user_canister::save_crypto_account::Response::Invalid));
+    assert!(
+        matches!(response, user_canister::save_crypto_account::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest))
+    );
 }
 
 #[test]
@@ -61,7 +64,9 @@ fn save_crypto_account_name_taken() {
     let named_account2 = NamedAccount { name, account: account2 };
 
     let response = client::user::save_crypto_account(env, user.principal, user.canister(), &named_account2);
-    assert!(matches!(response, user_canister::save_crypto_account::Response::NameTaken));
+    assert!(
+        matches!(response, user_canister::save_crypto_account::Response::Error(e) if e.matches_code(OCErrorCode::NameTaken))
+    );
 }
 
 #[test]

@@ -19,7 +19,6 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     SuccessNoUpdates(TimestampMillis),
-    PrivateCommunity,
     Error(OCError),
 }
 

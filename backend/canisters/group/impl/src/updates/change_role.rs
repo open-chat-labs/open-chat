@@ -1,6 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::updates::change_role::Response::*;
-use crate::{jobs, mutate_state, read_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, jobs, mutate_state, read_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::change_role::*;
@@ -22,7 +21,7 @@ async fn change_role(args: Args) -> Response {
         is_user_owner,
     } = match read_state(|state| prepare(args.user_id, state)) {
         Ok(result) => result,
-        Err(response) => return Error(response),
+        Err(response) => return Response::Error(response),
     };
 
     // Either lookup whether the caller is a platform moderator so they can promote themselves to owner
@@ -44,12 +43,12 @@ async fn change_role(args: Args) -> Response {
                     }
                 }
             }
-            Ok(_) => return Error(OCErrorCode::InitiatorNotAuthorized.into()),
-            Err(error) => return Error(error.into()),
+            Ok(_) => return Response::Error(OCErrorCode::InitiatorNotAuthorized.into()),
+            Err(error) => return Response::Error(error.into()),
         };
     }
 
-    if let Err(error) = mutate_state(|state| {
+    mutate_state(|state| {
         change_role_impl(
             args,
             caller_id,
@@ -57,11 +56,8 @@ async fn change_role(args: Args) -> Response {
             is_user_platform_moderator,
             state,
         )
-    }) {
-        Error(error)
-    } else {
-        Success
-    }
+    })
+    .into()
 }
 
 struct PrepareResult {

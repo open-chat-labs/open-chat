@@ -5,12 +5,13 @@ use crate::token_swaps::icpswap::ICPSwapClient;
 use crate::token_swaps::kongswap::KongSwapClient;
 use crate::token_swaps::sonic::SonicClient;
 use crate::token_swaps::swap_client::SwapClient;
-use crate::{mutate_state, read_state, run_regular_jobs, Data, RuntimeState};
+use crate::{Data, RuntimeState, mutate_state, read_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{MEMO_SWAP, MEMO_SWAP_APPROVAL, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
+use oc_error_codes::OCErrorCode;
 use tracing::{error, info};
 use types::{Achievement, OCResult, TimestampMillis, Timestamped};
 use user_canister::swap_tokens::{Response::*, *};
@@ -78,7 +79,7 @@ pub(crate) async fn process_token_swap(
                     state.data.token_swaps.upsert(token_swap);
                 });
                 log_error("Failed to get deposit account", msg.as_str(), &args, attempt);
-                return InternalError(msg);
+                return Error(error.into());
             }
         }
     };
@@ -102,8 +103,8 @@ pub(crate) async fn process_token_swap(
             .await
             {
                 Ok(Ok(index)) => Ok(index),
-                Ok(Err(error)) => Err(format!("{error:?}")),
-                Err(error) => Err(format!("{error:?}")),
+                Ok(Err(error)) => Err(OCErrorCode::TransferFailed.with_json(&error)),
+                Err(error) => Err(error.into()),
             }
         } else {
             match icrc_ledger_canister_c2c_client::icrc2_approve(
@@ -122,8 +123,8 @@ pub(crate) async fn process_token_swap(
             .await
             {
                 Ok(Ok(index)) => Ok(index),
-                Ok(Err(error)) => Err(format!("{error:?}")),
-                Err(error) => Err(format!("{error:?}")),
+                Ok(Err(error)) => Err(OCErrorCode::ApprovalFailed.with_json(&error)),
+                Err(error) => Err(error.into()),
             }
         };
 
@@ -135,7 +136,8 @@ pub(crate) async fn process_token_swap(
                     state.data.token_swaps.upsert(token_swap.clone());
                 });
             }
-            Err(msg) => {
+            Err(error) => {
+                let msg = format!("{error:?}");
                 mutate_state(|state| {
                     let now = state.env.now();
                     token_swap.transfer_or_approval = Some(Timestamped::new(Err(msg.clone()), now));
@@ -143,7 +145,7 @@ pub(crate) async fn process_token_swap(
                     state.data.token_swaps.upsert(token_swap);
                 });
                 log_error("Failed to transfer tokens", msg.as_str(), &args, attempt);
-                return InternalError(msg);
+                return Error(error);
             }
         }
     }
@@ -158,7 +160,7 @@ pub(crate) async fn process_token_swap(
                 enqueue_token_swap(token_swap, attempt, now, &mut state.data);
             });
             log_error("Failed to deposit tokens", msg.as_str(), &args, attempt);
-            return InternalError(msg);
+            return Error(error.into());
         } else {
             mutate_state(|state| {
                 let now = state.env.now();
@@ -197,7 +199,7 @@ pub(crate) async fn process_token_swap(
                     enqueue_token_swap(token_swap, attempt, now, &mut state.data);
                 });
                 log_error("Failed to swap tokens", msg.as_str(), &args, attempt);
-                return InternalError(msg);
+                return Error(error.into());
             }
         }
     };
@@ -220,7 +222,7 @@ pub(crate) async fn process_token_swap(
                 enqueue_token_swap(token_swap, attempt, now, &mut state.data);
             });
             log_error("Failed to withdraw tokens", msg.as_str(), &args, attempt);
-            return InternalError(msg);
+            return Error(error.into());
         } else {
             mutate_state(|state| {
                 mark_withdrawal_success(token_swap, successful_swap, amount_out, debug, state);
@@ -234,7 +236,7 @@ pub(crate) async fn process_token_swap(
         });
         Success(SuccessResult { amount_out })
     } else {
-        SwapFailed
+        Error(OCErrorCode::SwapFailed.into())
     }
 }
 

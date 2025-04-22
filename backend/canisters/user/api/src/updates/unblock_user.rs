@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::UserId;
+use types::{UnitResult, UserId};
 
 #[ts_export(user, unblock_user)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -9,9 +9,4 @@ pub struct Args {
     pub user_id: UserId,
 }
 
-#[ts_export(user, unblock_user)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    UserSuspended,
-}
+pub type Response = UnitResult;

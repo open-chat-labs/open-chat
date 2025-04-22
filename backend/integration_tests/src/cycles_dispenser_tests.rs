@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::utils::tick_many;
-use crate::{client, TestEnv, T};
+use crate::{T, TestEnv, client};
 use ic_ledger_types::Tokens;
 use std::ops::Deref;
 use std::time::Duration;

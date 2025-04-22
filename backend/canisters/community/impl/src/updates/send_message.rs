@@ -3,7 +3,7 @@ use crate::guards::caller_is_local_user_index;
 use crate::model::members::CommunityMembers;
 use crate::model::user_groups::UserGroup;
 use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, FinalPrizePaymentsJob, MarkP2PSwapExpiredJob, TimerJob};
-use crate::{mutate_state, read_state, run_regular_jobs, Data, RuntimeState};
+use crate::{Data, RuntimeState, mutate_state, read_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, ValidateNewMessageContentResult};
@@ -92,46 +92,43 @@ pub(crate) fn send_message_impl(
             _ => return Err(OCErrorCode::InvalidRequest.with_message("Message type not supported")),
         };
 
-    if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-        if channel.chat.external_url.is_some() {
-            return Err(OCErrorCode::InitiatorNotAuthorized.into());
-        }
-
-        let users_mentioned = extract_users_mentioned(args.mentioned, content.text(), &state.data.members);
-
-        let result = channel.chat.send_message(
-            &caller,
-            args.thread_root_message_index,
-            args.message_id,
-            content,
-            args.replies_to,
-            &users_mentioned.all_users_mentioned,
-            args.forwarding,
-            args.channel_rules_accepted,
-            args.message_filter_failed.is_some(),
-            args.block_level_markdown,
-            &mut state.data.event_store_client,
-            finalised,
-            now,
-        )?;
-
-        Ok(process_send_message_result(
-            result,
-            &caller,
-            args.sender_name,
-            display_name.or(args.sender_display_name),
-            channel.id,
-            channel.chat.name.value.clone(),
-            channel.chat.avatar.as_ref().map(|d| d.id),
-            args.thread_root_message_index,
-            users_mentioned,
-            args.new_achievement,
-            now,
-            state,
-        ))
-    } else {
-        Err(OCErrorCode::ChatNotFound.into())
+    let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
+    if channel.chat.external_url.is_some() {
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
+
+    let users_mentioned = extract_users_mentioned(args.mentioned, content.text(), &state.data.members);
+
+    let result = channel.chat.send_message(
+        &caller,
+        args.thread_root_message_index,
+        args.message_id,
+        content,
+        args.replies_to,
+        &users_mentioned.all_users_mentioned,
+        args.forwarding,
+        args.channel_rules_accepted,
+        args.message_filter_failed.is_some(),
+        args.block_level_markdown,
+        &mut state.data.event_store_client,
+        finalised,
+        now,
+    )?;
+
+    Ok(process_send_message_result(
+        result,
+        &caller,
+        args.sender_name,
+        display_name.or(args.sender_display_name),
+        channel.id,
+        channel.chat.name.value.clone(),
+        channel.chat.avatar.as_ref().map(|d| d.id),
+        args.thread_root_message_index,
+        users_mentioned,
+        args.new_achievement,
+        now,
+        state,
+    ))
 }
 
 fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> OCResult<SuccessResult> {

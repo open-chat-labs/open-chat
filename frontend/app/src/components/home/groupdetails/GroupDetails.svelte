@@ -1,9 +1,9 @@
 <script lang="ts">
-    import GroupDetailsHeader from "./GroupDetailsHeader.svelte";
+    import type { MultiUserChat, OpenChat } from "openchat-client";
+    import { app, defaultChatRules, publish } from "openchat-client";
     import { getContext } from "svelte";
-    import type { OpenChat, MultiUserChat } from "openchat-client";
     import GroupDetailsBody from "./GroupDetailsBody.svelte";
-    import { currentChatRules, defaultChatRules, publish } from "openchat-client";
+    import GroupDetailsHeader from "./GroupDetailsHeader.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -16,7 +16,7 @@
     let { chat, memberCount, onClose }: Props = $props();
 
     let canEdit = $derived(client.canEditGroupDetails(chat.id));
-    let rules = $derived($currentChatRules ?? defaultChatRules(chat.level));
+    let rules = $derived(app.selectedChat.rules ?? defaultChatRules(chat.level));
 
     function editGroup() {
         if (canEdit) {

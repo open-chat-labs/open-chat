@@ -1,7 +1,7 @@
 use crate::client::register_user_and_include_auth;
 use crate::env::ENV;
 use crate::utils::now_nanos;
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
 use constants::{ICP_SYMBOL, ICP_TRANSFER_FEE, MINUTE_IN_MS};
 use ledger_utils::create_pending_transaction;
 use oc_error_codes::OCErrorCode;
@@ -74,7 +74,7 @@ fn can_set_pin_number_by_providing_recent_delegation(within_5_minutes: bool) {
     } else {
         assert!(matches!(
             set_pin_number_response,
-            user_canister::set_pin_number::Response::DelegationTooOld
+            user_canister::set_pin_number::Response::Error(e) if e.matches_code(OCErrorCode::DelegationTooOld)
         ));
         assert!(initial_state2.pin_number_settings.is_some());
     }

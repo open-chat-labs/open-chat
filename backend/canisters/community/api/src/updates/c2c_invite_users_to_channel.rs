@@ -15,14 +15,6 @@ pub enum Response {
     Success(SuccessResult),
     PartialSuccess(PartialSuccessResult),
     Failed(FailedResult),
-    CommunityFrozen,
-    UserNotInCommunity,
-    ChannelNotFound,
-    UserNotInChannel,
-    UserSuspended,
-    UserLapsed,
-    NotAuthorized,
-    TooManyInvites(u32),
     Error(OCError),
 }
 

@@ -1,12 +1,12 @@
 use crate::guards::caller_is_local_user_index;
 use crate::{
-    activity_notifications::handle_activity_notification, model::events::CommunityEventInternal, mutate_state,
-    run_regular_jobs, RuntimeState,
+    RuntimeState, activity_notifications::handle_activity_notification, model::events::CommunityEventInternal, mutate_state,
+    run_regular_jobs,
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_bot_delete_channel;
-use community_canister::delete_channel::{Response::*, *};
+use community_canister::delete_channel::*;
 use group_community_common::Member;
 use oc_error_codes::OCErrorCode;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix, UserIdKeyPrefix};
@@ -17,11 +17,7 @@ use types::{BotCaller, Caller, ChannelDeleted, ChannelId, OCResult};
 fn delete_channel(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| delete_channel_impl(args.channel_id, None, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| delete_channel_impl(args.channel_id, None, state)).into()
 }
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
@@ -34,11 +30,7 @@ fn c2c_bot_delete_channel(args: c2c_bot_delete_channel::Args) -> c2c_bot_delete_
         initiator: args.initiator.clone(),
     };
 
-    if let Err(error) = mutate_state(|state| delete_channel_impl(args.channel_id, Some(bot_caller), state)) {
-        c2c_bot_delete_channel::Response::Error(error)
-    } else {
-        c2c_bot_delete_channel::Response::Success
-    }
+    mutate_state(|state| delete_channel_impl(args.channel_id, Some(bot_caller), state)).into()
 }
 
 fn delete_channel_impl(channel_id: ChannelId, bot_caller: Option<BotCaller>, state: &mut RuntimeState) -> OCResult {

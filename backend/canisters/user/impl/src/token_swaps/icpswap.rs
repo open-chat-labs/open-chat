@@ -34,19 +34,11 @@ impl ICPSwapClient {
     }
 
     fn input_token(&self) -> &TokenInfo {
-        if self.zero_for_one {
-            &self.token0
-        } else {
-            &self.token1
-        }
+        if self.zero_for_one { &self.token0 } else { &self.token1 }
     }
 
     fn output_token(&self) -> &TokenInfo {
-        if self.zero_for_one {
-            &self.token1
-        } else {
-            &self.token0
-        }
+        if self.zero_for_one { &self.token1 } else { &self.token0 }
     }
 }
 

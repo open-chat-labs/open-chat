@@ -24,10 +24,5 @@ pub enum Response {
     Success(Box<CommunityCanisterCommunitySummary>),
     AlreadyInCommunity(Box<CommunityCanisterCommunitySummary>),
     GateCheckFailed(GateCheckFailedReason),
-    NotInvited,
-    UserBlocked,
-    MemberLimitReached(u32),
-    CommunityFrozen,
-    InternalError(String),
     Error(OCError),
 }

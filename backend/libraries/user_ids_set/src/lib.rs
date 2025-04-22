@@ -1,6 +1,6 @@
 use ic_principal::Principal;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{with_map, KeyPrefix, LazyValue, StableMemoryMap, UserIdsKeyPrefix};
+use stable_memory_map::{KeyPrefix, LazyValue, StableMemoryMap, UserIdsKeyPrefix, with_map};
 use std::collections::HashMap;
 use types::{CanisterId, UserId};
 

@@ -1,4 +1,4 @@
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use group_index_canister::lookup_channel_by_group_id::{Response::*, *};
 

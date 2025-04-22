@@ -1,14 +1,14 @@
 use crate::guards::caller_is_governance_principal;
-use crate::{read_state, State};
+use crate::{State, read_state};
 use candid::CandidType;
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use ic_cdk::management_canister::CanisterInstallMode;
-use openchat_installer_canister::upgrade_canister::*;
 use openchat_installer_canister::CanisterType;
+use openchat_installer_canister::upgrade_canister::*;
 use types::{BuildVersion, CanisterId, CanisterWasmBytes, UpgradeChunkedCanisterWasmArgs, UpgradeChunkedCanisterWasmResponse};
 use utils::canister::{
-    clear_chunk_store, install, upload_wasm_in_chunks, CanisterToInstall, ChunkedWasmToInstall, WasmToInstall,
+    CanisterToInstall, ChunkedWasmToInstall, WasmToInstall, clear_chunk_store, install, upload_wasm_in_chunks,
 };
 
 #[proposal(guard = "caller_is_governance_principal")]

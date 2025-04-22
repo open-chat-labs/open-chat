@@ -352,7 +352,7 @@ export type SetDisplayNameResponse =
 
 export type InvalidCurrency = { kind: "invalid_currency" };
 
-export type SetBioResponse = "success" | "bio_too_long" | "user_suspended" | "offline" | OCError;
+export type SetBioResponse = Success | OCError | Offline;
 
 export type RegisterUserResponse =
     | {
@@ -377,13 +377,10 @@ export type RegisterUserResponse =
     | OCError
     | Offline;
 
-export type PinChatResponse = "success" | "failure" | "offline";
-
-export type UnpinChatResponse = "success" | "failure" | "offline";
-
-export type ArchiveChatResponse = "failure" | "success" | "offline";
-
-export type ManageFavouritesResponse = "success" | "failure" | "offline";
+export type PinChatResponse = Success | OCError | Offline;
+export type UnpinChatResponse = Success | OCError | Offline;
+export type ArchiveChatResponse = Success | OCError | Offline | Failure;
+export type ManageFavouritesResponse = Success | OCError | Offline;
 
 export type SuspendUserResponse =
     | "success"
@@ -415,7 +412,7 @@ export type PayForDiamondMembershipResponse =
 
 export type SetUserUpgradeConcurrencyResponse = "success" | "offline";
 
-export type SetMessageReminderResponse = "failure" | "success" | "offline";
+export type SetMessageReminderResponse = Success | OCError | Offline;
 
 export type ModerationFlag = 1 | 2 | 4;
 
@@ -430,7 +427,7 @@ export type NamedAccount = {
     account: string;
 };
 
-export type SaveCryptoAccountResponse = { kind: "name_taken" } | Success | Failure;
+export type SaveCryptoAccountResponse = Success | OCError | Failure;
 
 export type SubmitProposalResponse =
     | Success
@@ -487,11 +484,7 @@ export type TokenSwapStatusResponse =
       }
     | OCError;
 
-export type ApproveTransferResponse =
-    | Success
-    | { kind: "approve_error"; error: string }
-    | PinNumberFailures
-    | InternalError;
+export type ApproveTransferResponse = Success | OCError | InternalError;
 
 export type DiamondMembershipFees = {
     token: "CHAT" | "ICP";

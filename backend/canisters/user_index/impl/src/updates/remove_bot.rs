@@ -1,5 +1,5 @@
 use crate::guards::caller_is_governance_principal;
-use crate::{jobs, mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, jobs, mutate_state, read_state};
 use canister_api_macros::{proposal, update};
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;

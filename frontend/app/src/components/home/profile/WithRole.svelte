@@ -1,11 +1,11 @@
 <script lang="ts">
-    import type { Member, MemberRole } from "openchat-client";
+    import type { ReadonlyMap, Member, MemberRole } from "openchat-client";
     import type { Snippet } from "svelte";
 
     interface Props {
         userId: string | undefined;
-        communityMembers: Map<string, Member>;
-        chatMembers: Map<string, Member>;
+        communityMembers: ReadonlyMap<string, Member>;
+        chatMembers: ReadonlyMap<string, Member>;
         children?: Snippet<[MemberRole, MemberRole]>;
     }
 

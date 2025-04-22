@@ -3,7 +3,7 @@ use crate::{mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use types::{ChatId, Timestamped};
-use user_canister::mute_notifications::{Response::*, *};
+use user_canister::mute_notifications::*;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
@@ -26,5 +26,5 @@ fn toggle_mute_notifications_impl(chat_id: ChatId, mute: bool) -> Response {
         }
     });
 
-    Success
+    Response::Success
 }

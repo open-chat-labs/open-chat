@@ -544,8 +544,8 @@ pub mod icrc1 {
 
 pub mod icrc2 {
     use super::*;
-    use icrc1::Account;
     use icrc_ledger_types::icrc1::transfer::Memo;
+    use icrc1::Account;
 
     #[ts_export]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

@@ -1,5 +1,5 @@
 use crate::guards::caller_is_authorized_to_add_canister;
-use crate::{mutate_state, State};
+use crate::{State, mutate_state};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use cycles_dispenser_canister::add_canister::{Response::*, *};
@@ -12,9 +12,5 @@ fn add_canister(args: Args) -> Response {
 
 fn add_canister_impl(args: Args, state: &mut State) -> Response {
     let now = state.env.now();
-    if state.data.canisters.add(args.canister_id, now) {
-        Success
-    } else {
-        AlreadyAdded
-    }
+    if state.data.canisters.add(args.canister_id, now) { Success } else { AlreadyAdded }
 }

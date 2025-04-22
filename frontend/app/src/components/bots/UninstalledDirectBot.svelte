@@ -1,17 +1,17 @@
 <script lang="ts">
-    import page from "page";
     import {
+        botState,
         chatIdentifiersEqual,
-        OpenChat,
         chatListScopeStore as chatListScope,
-        type DirectChatIdentifier,
         currentUser,
         installedDirectBots,
-        botState,
+        OpenChat,
         pathState,
+        routeForScope,
+        type DirectChatIdentifier,
     } from "openchat-client";
+    import page from "page";
     import { getContext, tick } from "svelte";
-    import { routeForScope } from "../../routes";
     import BotInstaller from "./install/BotInstaller.svelte";
 
     const client = getContext<OpenChat>("client");

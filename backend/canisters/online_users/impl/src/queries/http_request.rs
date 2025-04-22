@@ -1,6 +1,6 @@
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use candid::Principal;
-use http_request::{build_json_response, encode_logs, extract_route, Route};
+use http_request::{Route, build_json_response, encode_logs, extract_route};
 use ic_cdk::query;
 use serde::Serialize;
 use std::collections::HashMap;

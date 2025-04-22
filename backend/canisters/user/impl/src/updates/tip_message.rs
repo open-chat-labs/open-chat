@@ -1,6 +1,6 @@
 use crate::crypto::process_transaction;
 use crate::guards::caller_is_owner;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, mutate_state, run_regular_jobs};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -9,11 +9,11 @@ use constants::{MEMO_TIP, NANOS_PER_MILLISECOND};
 use oc_error_codes::OCErrorCode;
 use serde::Serialize;
 use types::{
-    icrc1, Achievement, CanisterId, Chat, ChatId, CommunityId, EventIndex, OCResult, PendingCryptoTransaction, TimestampNanos,
-    UserId,
+    Achievement, CanisterId, Chat, ChatId, CommunityId, EventIndex, OCResult, PendingCryptoTransaction, TimestampNanos, UserId,
+    icrc1,
 };
-use user_canister::tip_message::{Response::*, *};
 use user_canister::UserCanisterEvent;
+use user_canister::tip_message::{Response::*, *};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
@@ -37,8 +37,8 @@ async fn tip_message(args: Args) -> Response {
     // Make the crypto transfer
     match process_transaction(pending_transfer).await {
         Ok(Ok(_)) => {}
-        Ok(Err(failed)) => return TransferFailed(failed.error_message().to_string()),
-        Err(error) => return InternalError(format!("{error:?}")),
+        Ok(Err(failed)) => return Error(OCErrorCode::TransferFailed.with_message(failed.error_message())),
+        Err(error) => return Error(error.into()),
     }
 
     mutate_state(|state| state.award_achievement_and_notify(Achievement::TippedMessage, state.env.now()));
@@ -52,14 +52,6 @@ async fn tip_message(args: Args) -> Response {
             match group_canister_c2c_client::c2c_tip_message(group_id.into(), &c2c_args).await {
                 Ok(Response::Success) => Success,
                 Ok(Response::Error(error)) => Error(error),
-                Ok(Response::MessageNotFound) => MessageNotFound,
-                Ok(Response::CannotTipSelf) => CannotTipSelf,
-                Ok(Response::RecipientMismatch) => TransferNotToMessageSender,
-                Ok(Response::NotAuthorized) => NotAuthorized,
-                Ok(Response::GroupFrozen) => ChatFrozen,
-                Ok(Response::UserNotInGroup) => ChatNotFound,
-                Ok(Response::UserSuspended) => UserSuspended,
-                Ok(Response::UserLapsed) => UserLapsed,
                 Err(error) => {
                     mutate_state(|state| fire_and_forget_c2c_tip_message(group_id.into(), &c2c_args, state));
                     Retrying(format!("{error:?}"))
@@ -71,14 +63,6 @@ async fn tip_message(args: Args) -> Response {
             match community_canister_c2c_client::c2c_tip_message(community_id.into(), &c2c_args).await {
                 Ok(Response::Success) => Success,
                 Ok(Response::Error(error)) => Error(error),
-                Ok(Response::MessageNotFound) => MessageNotFound,
-                Ok(Response::CannotTipSelf) => CannotTipSelf,
-                Ok(Response::RecipientMismatch) => TransferNotToMessageSender,
-                Ok(Response::NotAuthorized) => NotAuthorized,
-                Ok(Response::CommunityFrozen) => ChatFrozen,
-                Ok(Response::UserSuspended) => UserSuspended,
-                Ok(Response::UserLapsed) => UserLapsed,
-                Ok(Response::UserNotInCommunity | Response::ChannelNotFound) => ChatNotFound,
                 Err(error) => {
                     mutate_state(|state| fire_and_forget_c2c_tip_message(community_id.into(), &c2c_args, state));
                     Retrying(format!("{error:?}"))

@@ -1,7 +1,7 @@
 use crate::env::ENV;
 use crate::p2p_swap_tests::verify_swap_status;
 use crate::utils::{chat_token_info, icp_token_info, tick_many};
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
 use candid::Principal;
 use constants::{CHAT_TRANSFER_FEE, DAY_IN_MS, MINUTE_IN_MS};
 use std::ops::Deref;

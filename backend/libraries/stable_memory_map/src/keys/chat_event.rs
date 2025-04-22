@@ -157,14 +157,14 @@ impl ChatEventKey {
 mod tests {
     use super::*;
     use crate::{BaseKey, Key};
-    use rand::{thread_rng, Rng, RngCore};
+    use rand::{Rng, RngCore, thread_rng};
     use types::{ChannelId, Chat, EventIndex, MessageIndex};
 
     #[test]
     fn direct_chat_event_key_e2e() {
         for thread in [false, true] {
             for _ in 0..100 {
-                let user_id_bytes: [u8; 10] = thread_rng().gen();
+                let user_id_bytes: [u8; 10] = thread_rng().r#gen();
                 let user_id = Principal::from_slice(&user_id_bytes);
                 let thread_root_message_index = thread.then(|| MessageIndex::from(thread_rng().next_u32()));
                 let prefix = ChatEventKeyPrefix::new_from_direct_chat(user_id.into(), thread_root_message_index);

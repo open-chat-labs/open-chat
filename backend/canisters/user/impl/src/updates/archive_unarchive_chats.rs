@@ -1,7 +1,8 @@
 use crate::guards::caller_is_owner;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use oc_error_codes::OCErrorCode;
 use types::{Chat, TimestampMillis, Timestamped};
 use user_canister::archive_unarchive_chats::{Response::*, *};
 
@@ -30,7 +31,7 @@ fn archive_unarchive_chats(args: Args) -> Response {
         if chats_not_found.is_empty() {
             Success
         } else if chats_not_found.len() == chats_to_update {
-            Failure
+            Error(OCErrorCode::NoChange.into())
         } else {
             PartialSuccess(PartialSuccessResult { chats_not_found })
         }

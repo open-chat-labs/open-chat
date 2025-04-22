@@ -2,7 +2,7 @@ use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::model::channels::Channel;
 use crate::model::members::CommunityMembers;
 use crate::updates::c2c_join_community::join_community;
-use crate::{activity_notifications::handle_activity_notification, mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, read_state};
 use crate::{jobs, run_regular_jobs};
 use candid::Principal;
 use canister_api_macros::update;
@@ -10,8 +10,8 @@ use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use community_canister::c2c_join_channel::{Response::*, *};
 use gated_groups::{
-    check_if_passes_gate, check_if_passes_gate_synchronously, CheckGateArgs, CheckIfPassesGateResult,
-    CheckVerifiedCredentialGateArgs, GatePayment,
+    CheckGateArgs, CheckIfPassesGateResult, CheckVerifiedCredentialGateArgs, GatePayment, check_if_passes_gate,
+    check_if_passes_gate_synchronously,
 };
 use group_chat_core::{AddMemberSuccess, AddResult};
 use group_community_common::ExpiringMember;
@@ -63,16 +63,7 @@ async fn c2c_join_channel(args: Args) -> Response {
             community_canister::c2c_join_community::Response::AlreadyInCommunity(_) => {
                 check_gate_then_join_channel(&args).await
             }
-            community_canister::c2c_join_community::Response::GateCheckFailed(r) => GateCheckFailed(r),
-            community_canister::c2c_join_community::Response::NotInvited => Error(OCErrorCode::NotInvited.into()),
-            community_canister::c2c_join_community::Response::UserBlocked => Error(OCErrorCode::InitiatorBlocked.into()),
-            community_canister::c2c_join_community::Response::MemberLimitReached(l) => {
-                Error(OCErrorCode::UserLimitReached.with_message(l))
-            }
-            community_canister::c2c_join_community::Response::CommunityFrozen => Error(OCErrorCode::CommunityFrozen.into()),
-            community_canister::c2c_join_community::Response::InternalError(error) => {
-                Error(OCErrorCode::Unknown.with_message(error))
-            }
+            community_canister::c2c_join_community::Response::GateCheckFailed(reason) => GateCheckFailed(reason),
             community_canister::c2c_join_community::Response::Error(error) => Error(error),
         }
     }

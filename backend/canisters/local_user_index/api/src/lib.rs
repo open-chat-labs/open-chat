@@ -2,11 +2,11 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::nns::CryptoAmount;
 use types::{
-    is_default, AutonomousConfig, BotCommandDefinition, BotDefinition, BotInstallationLocation, CanisterId,
-    ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, DiamondMembershipPlanDuration, MessageContent,
-    MessageContentInitial, MessageId, MessageIndex, NotifyChit, PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis,
-    UniquePersonProof, UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment,
-    UserId, UserType,
+    AutonomousConfig, BotCommandDefinition, BotDefinition, BotInstallationLocation, CanisterId, ChannelLatestMessageIndex,
+    ChatId, ChitEarnedReason, CommunityId, DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId,
+    MessageIndex, NotifyChit, PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis, UniquePersonProof,
+    UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserType,
+    is_default,
 };
 
 mod lifecycle;

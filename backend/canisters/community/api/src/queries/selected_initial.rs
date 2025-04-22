@@ -18,7 +18,6 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    PrivateCommunity,
     Error(OCError),
 }
 

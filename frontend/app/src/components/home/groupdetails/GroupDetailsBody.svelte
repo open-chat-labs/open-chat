@@ -1,11 +1,8 @@
 <script lang="ts">
-    import Avatar from "../../Avatar.svelte";
-    import Stats from "../Stats.svelte";
+    import type { MultiUserChat, OpenChat } from "openchat-client";
+    import { app, AvatarSize, currentUser, selectedCommunity } from "openchat-client";
     import { getContext } from "svelte";
-    import CollapsibleCard from "../../CollapsibleCard.svelte";
-    import GroupPermissionsViewer from "../GroupPermissionsViewer.svelte";
-    import Legend from "../../Legend.svelte";
-    import Markdown from "../Markdown.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
     import {
         groupAdvancedOpen,
         groupInfoOpen,
@@ -15,22 +12,19 @@
         groupStatsOpen,
         groupVisibilityOpen,
     } from "../../../stores/settings";
-    import AdvancedSection from "./AdvancedSection.svelte";
-    import InviteUsersWithLink from "../InviteUsersWithLink.svelte";
-    import type { OpenChat, MultiUserChat } from "openchat-client";
-    import {
-        AvatarSize,
-        currentUser,
-        selectedCommunity,
-        currentChatRules,
-        currentCommunityRules,
-    } from "openchat-client";
-    import AccessGateSummary from "../access/AccessGateSummary.svelte";
-    import DisappearingMessagesSummary from "../DisappearingMessagesSummary.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
+    import Avatar from "../../Avatar.svelte";
+    import CollapsibleCard from "../../CollapsibleCard.svelte";
+    import WithVerifiedBadge from "../../icons/WithVerifiedBadge.svelte";
+    import Legend from "../../Legend.svelte";
     import Translatable from "../../Translatable.svelte";
     import AccessGateExpiry from "../access/AccessGateExpiry.svelte";
-    import WithVerifiedBadge from "../../icons/WithVerifiedBadge.svelte";
+    import AccessGateSummary from "../access/AccessGateSummary.svelte";
+    import DisappearingMessagesSummary from "../DisappearingMessagesSummary.svelte";
+    import GroupPermissionsViewer from "../GroupPermissionsViewer.svelte";
+    import InviteUsersWithLink from "../InviteUsersWithLink.svelte";
+    import Markdown from "../Markdown.svelte";
+    import Stats from "../Stats.svelte";
+    import AdvancedSection from "./AdvancedSection.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -47,7 +41,7 @@
     );
     let avatarSrc = $derived(client.groupAvatarUrl(chat, $selectedCommunity));
     let combinedRulesText = $derived(
-        canSend ? client.combineRulesText($currentChatRules, $currentCommunityRules) : "",
+        canSend ? client.combineRulesText(app.selectedChat.rules, app.selectedCommunity.rules) : "",
     );
     let externalUrl = $derived(chat.kind === "channel" ? chat.externalUrl : undefined);
     let externalContent = $derived(externalUrl !== undefined);

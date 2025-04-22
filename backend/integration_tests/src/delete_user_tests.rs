@@ -1,7 +1,7 @@
 use crate::client::register_user_and_include_auth;
 use crate::env::ENV;
 use crate::utils::tick_many;
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
 use candid::Principal;
 use oc_error_codes::OCErrorCode;
 use std::ops::Deref;

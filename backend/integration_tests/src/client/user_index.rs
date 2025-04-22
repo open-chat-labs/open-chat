@@ -49,8 +49,8 @@ pub mod happy_path {
         BotDefinition, BotInstallationLocation, CanisterId, CanisterWasm, Chit, DiamondMembershipFees,
         DiamondMembershipPlanDuration, Empty, OptionUpdate, SignedDelegation, UserId, UserSummary,
     };
-    use user_index_canister::users::UserGroup;
     use user_index_canister::ChildCanisterType;
+    use user_index_canister::users::UserGroup;
 
     pub fn current_user(
         env: &PocketIc,

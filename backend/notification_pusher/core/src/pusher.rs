@@ -1,5 +1,5 @@
 use crate::metrics::write_metrics;
-use crate::{timestamp, NotificationToPush};
+use crate::{NotificationToPush, timestamp};
 use async_channel::{Receiver, Sender};
 use std::collections::{BinaryHeap, HashMap};
 use std::sync::{Arc, RwLock};

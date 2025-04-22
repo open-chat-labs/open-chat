@@ -1,5 +1,5 @@
 use crate::guards::caller_can_push_events;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_tracing_macros::trace;
 use event_relay_canister::push_events::Args;
 use ic_cdk::update;

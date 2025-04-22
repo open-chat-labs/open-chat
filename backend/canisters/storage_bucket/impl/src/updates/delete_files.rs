@@ -1,5 +1,5 @@
 use crate::model::files::RemoveFileResult;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use storage_bucket_canister::delete_files::*;

@@ -1,7 +1,7 @@
 use crate::guards::caller_is_openchat_user;
 use crate::model::user_map::Bot;
 use crate::model::{MAX_AVATAR_SIZE, MAX_COMMANDS, MAX_DESCRIPTION_LEN};
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -16,7 +16,7 @@ use types::{UserId, UserType};
 use url::Url;
 use user_index_canister::register_bot::{Response::*, *};
 use utils::document::try_parse_data_url;
-use utils::text_validation::{validate_username, UsernameValidationError};
+use utils::text_validation::{UsernameValidationError, validate_username};
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]

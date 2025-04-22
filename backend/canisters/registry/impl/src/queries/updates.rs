@@ -1,8 +1,8 @@
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use canister_tracing_macros::trace;
-use registry_canister::updates::{Response::*, *};
 use registry_canister::TokenDetails;
+use registry_canister::updates::{Response::*, *};
 use types::{CanisterId, OptionUpdate};
 
 #[query(candid = true, msgpack = true)]

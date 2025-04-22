@@ -1,19 +1,19 @@
 <script lang="ts">
-    import { getContext } from "svelte";
-    import type { OpenChat } from "openchat-client";
+    import type { OpenChat, ReadonlySet } from "openchat-client";
     import { AvatarSize, userStore } from "openchat-client";
-    import Avatar from "../../Avatar.svelte";
-    import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
+    import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import Badges from "./Badges.svelte";
-    import LinkButton from "../../LinkButton.svelte";
-    import CollapsibleCard from "../../CollapsibleCard.svelte";
     import { referredUsersOpen } from "../../../stores/settings";
+    import Avatar from "../../Avatar.svelte";
+    import CollapsibleCard from "../../CollapsibleCard.svelte";
+    import LinkButton from "../../LinkButton.svelte";
+    import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
+    import Badges from "./Badges.svelte";
 
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        referrals: Set<string>;
+        referrals: ReadonlySet<string>;
     }
 
     let { referrals }: Props = $props();

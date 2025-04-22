@@ -2,7 +2,7 @@ use crate::client::community::STABLE_MEMORY_MAP_MEMORY_ID;
 use crate::env::ENV;
 use crate::stable_memory::get_stable_memory_map;
 use crate::utils::tick_many;
-use crate::{client, CanisterIds, TestEnv, User};
+use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use chat_events::ChatEventInternal;
 use itertools::Itertools;

@@ -1,8 +1,7 @@
 use candid::CandidType;
-use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{ChannelId, MessageIndex};
+use types::{ChannelId, MessageIndex, UnitResult};
 
 #[ts_export(community, register_proposal_vote)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -12,21 +11,4 @@ pub struct Args {
     pub adopt: bool,
 }
 
-#[ts_export(community, register_proposal_vote)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    AlreadyVoted(bool),
-    CommunityFrozen,
-    UserNotInCommunity,
-    UserSuspended,
-    ChannelNotFound,
-    UserNotInChannel,
-    NoEligibleNeurons,
-    ProposalMessageNotFound,
-    ProposalNotFound,
-    ProposalNotAcceptingVotes,
-    InternalError(String),
-    UserLapsed,
-    Error(OCError),
-}
+pub type Response = UnitResult;

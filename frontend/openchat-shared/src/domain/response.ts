@@ -1,4 +1,5 @@
-import type { GateCheckFailed, PinNumberFailures } from "./chat";
+import type { GateCheckFailed } from "./chat";
+import type { OCError } from "./error";
 import type { UserNotFound } from "./user";
 
 export type UserNotInChannel = { kind: "user_not_in_channel" };
@@ -89,13 +90,14 @@ export type Blocked = {
     kind: "blocked";
 };
 
-export type ApproveAccessGatePaymentResponse = Success | PinNumberFailures | Failure;
+export type ApproveAccessGatePaymentResponse = Success | OCError | Failure | InternalError;
 
 export type ClientJoinGroupResponse =
     | Success
-    | Blocked
     | GateCheckFailed
-    | PinNumberFailures
-    | Failure;
+    | OCError
+    | Blocked
+    | Failure
+    | InternalError;
 
-export type ClientJoinCommunityResponse = Success | GateCheckFailed | PinNumberFailures | Failure;
+export type ClientJoinCommunityResponse = Success | OCError | GateCheckFailed | Failure | InternalError;

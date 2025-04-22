@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{CHAT_LEDGER_CANISTER_ID, MEMO_STREAK_INSURANCE, SNS_GOVERNANCE_CANISTER_ID};
@@ -8,7 +8,7 @@ use icrc_ledger_types::icrc1::transfer::TransferArg;
 use ledger_utils::icrc1::make_transfer;
 use oc_error_codes::OCErrorCode;
 use types::{OCResult, UserCanisterStreakInsurancePayment};
-use user_canister::pay_for_streak_insurance::{Response::*, *};
+use user_canister::pay_for_streak_insurance::*;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
@@ -17,7 +17,7 @@ async fn pay_for_streak_insurance(args: Args) -> Response {
 
     let PrepareOk { days_currently_insured } = match mutate_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
-        Err(response) => return Error(response),
+        Err(error) => return Response::Error(error),
     };
 
     let transfer_result = make_transfer(
@@ -50,10 +50,10 @@ async fn pay_for_streak_insurance(args: Args) -> Response {
                     new_days_insured: days_currently_insured + args.additional_days,
                     transaction_index,
                 });
-                Success
+                Response::Success
             }
-            Ok(Err(error)) => PaymentFailed(format!("{error:?}")),
-            Err(error) => InternalError(format!("{error:?}")),
+            Ok(Err(error)) => Response::Error(OCErrorCode::TransferFailed.with_message(error)),
+            Err(error) => Response::Error(error.into()),
         }
     })
 }

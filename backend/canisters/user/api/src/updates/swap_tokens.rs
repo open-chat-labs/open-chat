@@ -2,7 +2,7 @@ use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{CanisterId, ExchangeId, Milliseconds, PinNumberWrapper, TokenInfo};
+use types::{CanisterId, ExchangeId, PinNumberWrapper, TokenInfo};
 
 #[ts_export(user, swap_tokens)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -56,11 +56,6 @@ pub type KongSwapArgs = ICPSwapArgs;
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    SwapFailed,
-    PinRequired,
-    PinIncorrect(Milliseconds),
-    TooManyFailedPinAttempts(Milliseconds),
-    InternalError(String),
     Error(OCError),
 }
 

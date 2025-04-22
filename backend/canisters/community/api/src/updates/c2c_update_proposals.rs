@@ -1,7 +1,6 @@
 use candid::CandidType;
-use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
-use types::{ChannelId, ProposalUpdate};
+use types::{ChannelId, ProposalUpdate, UnitResult};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -9,12 +8,4 @@ pub struct Args {
     pub proposals: Vec<ProposalUpdate>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    CommunityFrozen,
-    UserNotInCommunity,
-    ChannelNotFound,
-    UserNotInChannel,
-    Error(OCError),
-}
+pub type Response = UnitResult;

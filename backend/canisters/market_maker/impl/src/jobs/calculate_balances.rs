@@ -1,5 +1,5 @@
 use crate::exchanges::Exchange;
-use crate::{mutate_state, read_state, CanisterBalances, RuntimeState};
+use crate::{CanisterBalances, RuntimeState, mutate_state, read_state};
 use constants::HOUR_IN_MS;
 use std::collections::BTreeMap;
 use std::time::Duration;

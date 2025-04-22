@@ -1,11 +1,11 @@
 use crate::guards::caller_is_owner;
 use crate::timer_job_types::CancelP2PSwapInEscrowCanisterJob;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
 use types::OCResult;
-use user_canister::cancel_p2p_swap::{Response::*, *};
+use user_canister::cancel_p2p_swap::*;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
@@ -15,9 +15,9 @@ fn cancel_p2p_swap(args: Args) -> Response {
     match mutate_state(|state| cancel_p2p_swap_impl(args, state)) {
         Ok(swap_id) => {
             CancelP2PSwapInEscrowCanisterJob::run(swap_id);
-            Success
+            Response::Success
         }
-        Err(response) => Error(response),
+        Err(error) => Response::Error(error),
     }
 }
 

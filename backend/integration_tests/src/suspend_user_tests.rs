@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::utils::now_millis;
-use crate::{client, CanisterIds, TestEnv, User};
+use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use itertools::Itertools;
 use oc_error_codes::OCErrorCode;
@@ -64,7 +64,7 @@ fn suspend_user() {
     );
     assert!(matches!(
         direct_message_response1,
-        user_canister::send_message_v2::Response::UserSuspended
+        user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorSuspended)
     ));
 
     let group_message_response1 = client::group::send_message_v2(

@@ -1,6 +1,6 @@
 use candid::Principal;
-use ic_verifiable_credentials::issuer_api::CredentialSpec;
 use ic_verifiable_credentials::VcFlowSigners;
+use ic_verifiable_credentials::issuer_api::CredentialSpec;
 use types::{CanisterId, TimestampMillis, UniquePersonProof, UniquePersonProofProvider};
 
 const ISSUER_CANISTER_ID: CanisterId = CanisterId::from_slice(&[0, 0, 0, 0, 0, 240, 24, 173, 1, 1]);

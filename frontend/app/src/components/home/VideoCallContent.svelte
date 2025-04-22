@@ -1,22 +1,21 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import {
         AvatarSize,
         OpenChat,
+        app,
         chatIdentifiersEqual,
-        type VideoCallContent,
-        userStore,
-        selectedChatStore as selectedChat,
-        currentCommunityMembers as communityMembers,
-        currentUser as user,
         publish,
+        selectedChatStore as selectedChat,
+        currentUser as user,
+        userStore,
+        type VideoCallContent,
     } from "openchat-client";
-    import Avatar from "../Avatar.svelte";
     import { getContext } from "svelte";
-    import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import Button from "../Button.svelte";
     import { activeVideoCall } from "../../stores/video";
+    import Avatar from "../Avatar.svelte";
+    import Button from "../Button.svelte";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -29,7 +28,7 @@
 
     let { content, messageIndex, timestamp, senderId }: Props = $props();
 
-    let displayName = $derived(client.getDisplayNameById(senderId, $communityMembers));
+    let displayName = $derived(client.getDisplayNameById(senderId, app.selectedCommunity.members));
     let incall = $derived(
         $activeVideoCall !== undefined &&
             $selectedChat !== undefined &&

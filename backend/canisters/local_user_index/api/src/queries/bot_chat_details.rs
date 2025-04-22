@@ -31,7 +31,6 @@ impl From<c2c_bot_group_details::Response> for Response {
     fn from(r: c2c_bot_group_details::Response) -> Self {
         match r {
             c2c_bot_group_details::Response::Success(details) => Response::Success(details),
-            c2c_bot_group_details::Response::NotAuthorized => Response::NotAuthorized,
             c2c_bot_group_details::Response::Error(error) => Response::Error(error),
         }
     }
@@ -41,7 +40,6 @@ impl From<c2c_bot_channel_details::Response> for Response {
     fn from(r: c2c_bot_channel_details::Response) -> Self {
         match r {
             c2c_bot_channel_details::Response::Success(details) => Response::Success(details),
-            c2c_bot_channel_details::Response::NotAuthorized => Response::NotAuthorized,
             c2c_bot_channel_details::Response::Error(error) => Response::Error(error),
         }
     }

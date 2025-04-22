@@ -1,10 +1,11 @@
 use crate::guards::caller_is_owner_or_local_user_index;
 use crate::model::direct_chat::DirectChat;
 use crate::queries::check_replica_up_to_date;
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use chat_events::{ChatEventsListReader, Reader};
-use types::{EventIndex, EventOrExpiredRange, EventsResponse, MessageIndex, TimestampMillis, UserId};
+use oc_error_codes::OCErrorCode;
+use types::{EventIndex, EventOrExpiredRange, EventsResponse, MessageIndex, OCResult, TimestampMillis, UserId};
 use user_canister::events::{Response::*, *};
 
 #[query(guard = "caller_is_owner_or_local_user_index", msgpack = true)]
@@ -45,7 +46,7 @@ pub(crate) fn read_events<A, F: FnOnce(A, UserId, ChatEventsListReader) -> Vec<E
         my_user_id,
     } = match prepare(latest_known_update, user_id, thread_root_message_index, state) {
         Ok(ok) => ok,
-        Err(response) => return response,
+        Err(error) => return Error(error),
     };
 
     let latest_event_index = events_reader.latest_event_index().unwrap_or_default();
@@ -65,14 +66,12 @@ fn prepare(
     user_id: UserId,
     thread_root_message_index: Option<MessageIndex>,
     state: &RuntimeState,
-) -> Result<PrepareResult, Response> {
+) -> OCResult<PrepareResult> {
     if let Err(now) = check_replica_up_to_date(latest_known_update, state) {
-        return Err(ReplicaNotUpToDateV2(now));
+        return Err(OCErrorCode::ReplicaNotUpToDate.with_message(now));
     }
 
-    let Some(chat) = state.data.direct_chats.get(&user_id.into()) else {
-        return Err(ChatNotFound);
-    };
+    let chat = state.data.direct_chats.get_or_err(&user_id.into())?;
 
     if let Some(events_reader) = chat
         .events
@@ -84,7 +83,7 @@ fn prepare(
             my_user_id: state.env.canister_id().into(),
         })
     } else {
-        Err(ThreadMessageNotFound)
+        Err(OCErrorCode::ThreadNotFound.into())
     }
 }
 

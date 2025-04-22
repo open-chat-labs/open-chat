@@ -1,4 +1,4 @@
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use canister_tracing_macros::trace;
 use online_users_canister::minutes_online::{Response::*, *};

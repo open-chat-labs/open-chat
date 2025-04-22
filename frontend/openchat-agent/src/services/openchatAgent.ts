@@ -1,75 +1,68 @@
 /* eslint-disable no-case-declarations */
 import { HttpAgent, type Identity } from "@dfinity/agent";
-import {
-    type Database,
-    getCachedChats,
-    getCachePrimerTimestamps,
-    initDb,
-    loadFailedMessages,
-    removeFailedMessage,
-    setCachedChats,
-    setCachedMessageIfNotExists,
-    recordFailedMessage,
-    cacheLocalUserIndexForUser,
-    getLocalUserIndexForUser,
-    clearCache,
-    getCachedExternalAchievements,
-    setCachedExternalAchievements,
-    getActivityFeedEvents,
-    setActivityFeedEvents,
-    getCachedBots,
-    setCachedBots,
-    deleteEventsForChat,
-} from "../utils/caching";
-import { isMainnet } from "../utils/network";
-import { getAllUsers, clearCache as clearUserCache, isUserIdDeleted } from "../utils/userCache";
-import { getCachedRegistry, setCachedRegistry } from "../utils/registryCache";
-import { UserIndexClient } from "./userIndex/userIndex.client";
-import { UserClient } from "./user/user.client";
-import { GroupClient } from "./group/group.client";
-import { LocalUserIndexClient } from "./localUserIndex/localUserIndex.client";
-import { NotificationsClient } from "./notifications/notifications.client";
-import { ProposalsBotClient } from "./proposalsBot/proposalsBot.client";
-import { OnlineClient } from "./online/online.client";
-import { DataClient } from "./data/data.client";
-import { LedgerClient } from "./ledger/ledger.client";
-import { LedgerIndexClient } from "./ledgerIndex/ledgerIndex.client";
-import { GroupIndexClient } from "./groupIndex/groupIndex.client";
-import { MarketMakerClient } from "./marketMaker/marketMaker.client";
-import { RegistryClient } from "./registry/registry.client";
-import { DexesAgent } from "./dexes";
-import { chunk, distinctBy, toRecord, toRecord2 } from "../utils/list";
-import { measure } from "./common/profiling";
-import {
-    buildBlobUrl,
-    buildUserAvatarUrl,
-    getUpdatedEvents,
-    mergeDirectChatUpdates,
-    mergeGroupChats,
-    mergeGroupChatUpdates,
-} from "../utils/chat";
-import { NnsGovernanceClient } from "./nnsGovernance/nns.governance.client";
-import { SnsGovernanceClient } from "./snsGovernance/sns.governance.client";
-import type { AgentConfig } from "../config";
+import type { DelegationChain } from "@dfinity/identity";
+import type { Principal } from "@dfinity/principal";
 import type {
-    Logger,
+    AcceptedRules,
+    AcceptP2PSwapResponse,
+    AccessGateConfig,
+    AccessTokenType,
+    AccountTransactionResult,
+    AddHotGroupExclusionResponse,
     AddRemoveReactionResponse,
+    ApproveTransferResponse,
     ArchiveChatResponse,
     BlobReference,
     BlockUserResponse,
+    BotCommandResponse,
+    BotDefinition,
+    BotInstallationLocation,
+    BotsResponse,
+    CancelP2PSwapResponse,
     CandidateGroupChat,
+    CandidateProposal,
     ChangeRoleResponse,
+    ChannelIdentifier,
+    ChannelSummaryResponse,
     ChatEvent,
+    ChatEventsArgs,
+    ChatEventsResponse,
+    ChatIdentifier,
+    ChatStateFull,
+    ChatSummary,
     CheckUsernameResponse,
+    ChitEarned,
+    ChitEventsRequest,
+    ChitEventsResponse,
+    ChitLeaderboardResponse,
+    ChitState,
+    CkbtcMinterDepositInfo,
+    CkbtcMinterWithdrawalInfo,
+    ClaimDailyChitResponse,
+    ClaimPrizeResponse,
+    CommunityCanisterCommunitySummaryUpdates,
+    CommunityIdentifier,
+    CommunityInvite,
+    CommunitySummary,
+    CommunitySummaryResponse,
+    ConvertToCommunityResponse,
     CreatedUser,
     CreateGroupResponse,
+    CreateUserGroupResponse,
+    CryptocurrencyDetails,
     CurrentUserResponse,
     DataContent,
+    DeclineInvitationResponse,
+    DeletedDirectMessageResponse,
+    DeletedGroupMessageResponse,
     DeleteFrozenGroupResponse,
     DeleteGroupResponse,
     DeleteMessageResponse,
+    DeleteUserGroupsResponse,
     DexId,
+    DiamondMembershipDuration,
     DiamondMembershipFees,
+    DirectChatIdentifier,
     DirectChatSummary,
     DirectChatSummaryUpdates,
     DisableInviteCodeResponse,
@@ -78,218 +71,226 @@ import type {
     EventsResponse,
     EventWrapper,
     ExchangeTokenSwapArgs,
+    ExploreBotsResponse,
+    ExploreChannelsResponse,
+    ExploreCommunitiesResponse,
+    ExternalAchievement,
+    ExternalAchievementsSuccess,
+    ExternalBot,
+    ExternalBotPermissions,
+    FollowThreadResponse,
+    FreezeCommunityResponse,
+    FreezeGroupResponse,
+    GenerateBotKeyResponse,
+    GenerateMagicLinkResponse,
+    GetDelegationResponse,
+    GroupAndCommunitySummaryUpdatesArgs,
+    GroupAndCommunitySummaryUpdatesResponse,
+    GroupCanisterGroupChatSummary,
+    GroupCanisterGroupChatSummaryUpdates,
     GroupChatDetailsResponse,
+    GroupChatIdentifier,
     GroupChatSummary,
     GroupInvite,
-    Rules,
+    GroupSearchResponse,
     IndexRange,
     InviteCodeResponse,
+    JoinCommunityResponse,
     JoinGroupResponse,
+    JoinVideoCallResponse,
     LeaveGroupResponse,
     ListNervousSystemFunctionsResponse,
+    Logger,
     MarkReadRequest,
     MarkReadResponse,
     MemberRole,
     Message,
+    MessageActivityEvent,
+    MessageActivityFeedResponse,
+    MessageActivitySummary,
     MessageContent,
+    MessageContext,
+    MultiUserChatIdentifier,
+    OptionalChatPermissions,
     OptionUpdate,
+    PayForDiamondMembershipResponse,
+    PayForStreakInsuranceResponse,
     PendingCryptocurrencyWithdrawal,
     PinChatResponse,
     PinMessageResponse,
+    PinNumberSettings,
+    PrepareDelegationResponse,
+    ProposalVoteDetails,
+    PublicApiKeyDetails,
+    PublicGroupSummaryResponse,
     PublicProfile,
+    Referral,
     RegisterPollVoteResponse,
     RegisterProposalVoteResponse,
     RegisterUserResponse,
+    RegistryValue,
+    RemoveHotGroupExclusionResponse,
     RemoveMemberResponse,
     ResetInviteCodeResponse,
+    Rules,
     SearchDirectChatResponse,
     SearchGroupChatResponse,
     SendMessageResponse,
     SetBioResponse,
+    SetCommunityModerationFlagsResponse,
+    SetDisplayNameResponse,
+    SetGroupUpgradeConcurrencyResponse,
+    SetMemberDisplayNameResponse,
+    SetMessageReminderResponse,
+    SetPinNumberResponse,
     SetUsernameResponse,
+    SetUserUpgradeConcurrencyResponse,
+    SetVideoCallPresenceResponse,
+    SiwePrepareLoginResponse,
+    SiwsPrepareLoginResponse,
     StakeNeuronForSubmittingProposalsResponse,
     StorageStatus,
+    StreakInsurance,
+    SubmitProofOfUniquePersonhoodResponse,
+    SubmitProposalResponse,
     SuspendUserResponse,
     SwapTokensResponse,
     ThreadPreview,
     ThreadPreviewsResponse,
     ThreadSyncDetails,
-    TokenSwapStatusResponse,
     ToggleMuteNotificationResponse,
+    TokenExchangeRates,
+    TokenSwapPool,
+    TokenSwapStatusResponse,
+    TopUpNeuronResponse,
     UnblockUserResponse,
     UndeleteMessageResponse,
+    UnfreezeCommunityResponse,
+    UnfreezeGroupResponse,
     UnpinChatResponse,
     UnpinMessageResponse,
+    UnsuspendUserResponse,
+    UpdatedRules,
     UpdateGroupResponse,
+    UpdateMarketMakerConfigArgs,
+    UpdateMarketMakerConfigResponse,
+    UpdatesResult,
+    UpdatesSuccessResponse,
+    UpdateUserGroupResponse,
     User,
-    UserCanisterGroupChatSummary,
-    UserCanisterGroupChatSummaryUpdates,
     UserCanisterCommunitySummary,
     UserCanisterCommunitySummaryUpdates,
+    UserCanisterGroupChatSummary,
+    UserCanisterGroupChatSummaryUpdates,
     UserLookup,
     UsersArgs,
     UsersResponse,
     UserSummary,
-    WithdrawCryptocurrencyResponse,
-    FreezeGroupResponse,
-    UnfreezeGroupResponse,
-    UnsuspendUserResponse,
-    ChatStateFull,
-    ChatSummary,
-    UpdatesResult,
-    DeletedGroupMessageResponse,
-    DeletedDirectMessageResponse,
-    ClaimPrizeResponse,
-    DiamondMembershipDuration,
-    PayForDiamondMembershipResponse,
-    AddHotGroupExclusionResponse,
-    RemoveHotGroupExclusionResponse,
-    SetCommunityModerationFlagsResponse,
-    SetGroupUpgradeConcurrencyResponse,
-    SetUserUpgradeConcurrencyResponse,
-    UpdateMarketMakerConfigArgs,
-    UpdateMarketMakerConfigResponse,
-    ProposalVoteDetails,
-    SetMessageReminderResponse,
-    DeclineInvitationResponse,
-    JoinCommunityResponse,
-    GroupSearchResponse,
-    ChatIdentifier,
-    DirectChatIdentifier,
-    GroupChatIdentifier,
-    MessageContext,
-    CommunitySummary,
-    ExploreCommunitiesResponse,
-    ChannelIdentifier,
-    MultiUserChatIdentifier,
-    CommunityIdentifier,
-    CommunitySummaryResponse,
-    UpdatesSuccessResponse,
-    ConvertToCommunityResponse,
-    ExploreChannelsResponse,
-    CommunityInvite,
-    RegistryValue,
-    PublicGroupSummaryResponse,
-    SetDisplayNameResponse,
-    CreateUserGroupResponse,
-    UpdateUserGroupResponse,
-    DeleteUserGroupsResponse,
-    SetMemberDisplayNameResponse,
-    UpdatedRules,
-    FollowThreadResponse,
-    CandidateProposal,
-    SubmitProposalResponse,
-    AccountTransactionResult,
-    OptionalChatPermissions,
-    CryptocurrencyDetails,
-    ApproveTransferResponse,
-    TokenSwapPool,
-    TokenExchangeRates,
-    GroupAndCommunitySummaryUpdatesArgs,
-    GroupAndCommunitySummaryUpdatesResponse,
-    GroupCanisterGroupChatSummary,
-    GroupCanisterGroupChatSummaryUpdates,
-    CommunityCanisterCommunitySummaryUpdates,
-    AcceptP2PSwapResponse,
-    CancelP2PSwapResponse,
-    ChatEventsArgs,
-    ChatEventsResponse,
-    JoinVideoCallResponse,
-    AccessTokenType,
-    GenerateMagicLinkResponse,
-    GetDelegationResponse,
-    PrepareDelegationResponse,
-    SiwePrepareLoginResponse,
-    SiwsPrepareLoginResponse,
-    VideoCallPresence,
-    SetVideoCallPresenceResponse,
-    VideoCallParticipantsResponse,
-    AcceptedRules,
-    VerifiedCredentialArgs,
-    ChitEventsRequest,
-    ChitEventsResponse,
-    ChitEarned,
-    ChitState,
-    SubmitProofOfUniquePersonhoodResponse,
-    TopUpNeuronResponse,
-    Referral,
-    WalletConfig,
-    ExternalAchievement,
-    ExternalAchievementsSuccess,
-    ChitLeaderboardResponse,
-    AccessGateConfig,
     Verification,
-    MessageActivitySummary,
-    MessageActivityFeedResponse,
-    MessageActivityEvent,
-    FreezeCommunityResponse,
-    UnfreezeCommunityResponse,
-    ChannelSummaryResponse,
-    ExploreBotsResponse,
-    ExternalBot,
-    ExternalBotPermissions,
-    BotsResponse,
-    BotDefinition,
-    GenerateBotKeyResponse,
-    BotCommandResponse,
-    BotInstallationLocation,
-    PublicApiKeyDetails,
-    CkbtcMinterDepositInfo,
-    CkbtcMinterWithdrawalInfo,
+    VerifiedCredentialArgs,
+    VideoCallParticipantsResponse,
+    VideoCallPresence,
+    WalletConfig,
     WithdrawBtcResponse,
-    PayForStreakInsuranceResponse,
-    StreakInsurance,
+    WithdrawCryptocurrencyResponse,
 } from "openchat-shared";
 import {
-    UnsupportedValueError,
-    ChatMap,
-    chatIdentifiersEqual,
-    DestinationInvalidError,
-    CommonResponses,
-    applyOptionUpdate,
     ANON_USER_ID,
+    applyOptionUpdate,
+    chatIdentifiersEqual,
+    ChatMap,
+    CommonResponses,
+    DestinationInvalidError,
+    getOrAdd,
+    Lazy,
+    MAX_ACTIVITY_EVENTS,
+    MessageContextMap,
+    messageContextToString,
+    MessageMap,
     offline,
     Stream,
-    getOrAdd,
+    UnsupportedValueError,
     waitAll,
-    Lazy,
-    MessageMap,
-    MAX_ACTIVITY_EVENTS,
-    messageContextToString,
-    MessageContextMap,
+    isSuccessfulEventsResponse,
 } from "openchat-shared";
-import type { Principal } from "@dfinity/principal";
-import { AsyncMessageContextMap } from "../utils/messageContext";
-import { CommunityClient } from "./community/community.client";
+import type { AgentConfig } from "../config";
+import {
+    cacheLocalUserIndexForUser,
+    clearCache,
+    type Database,
+    deleteEventsForChat,
+    getActivityFeedEvents,
+    getCachedBots,
+    getCachedChats,
+    getCachedExternalAchievements,
+    getCachePrimerTimestamps,
+    getLocalUserIndexForUser,
+    initDb,
+    loadFailedMessages,
+    recordFailedMessage,
+    removeFailedMessage,
+    setActivityFeedEvents,
+    setCachedBots,
+    setCachedChats,
+    setCachedExternalAchievements,
+    setCachedMessageIfNotExists,
+} from "../utils/caching";
+import {
+    buildBlobUrl,
+    buildUserAvatarUrl,
+    getUpdatedEvents,
+    mergeDirectChatUpdates,
+    mergeGroupChats,
+    mergeGroupChatUpdates,
+} from "../utils/chat";
 import {
     isSuccessfulCommunitySummaryResponse,
     mergeCommunities,
     mergeCommunityUpdates,
 } from "../utils/community";
-import { AnonUserClient } from "./user/anonUser.client";
-import { excludeLatestKnownUpdateIfBeforeFix } from "./common/replicaUpToDateChecker";
-import { IcpCoinsClient } from "./icpcoins/icpCoinsClient";
-import { IcpSwapClient } from "./icpSwap/icpSwapClient";
-import { IcpLedgerIndexClient } from "./icpLedgerIndex/icpLedgerIndex.client";
-import { TranslationsClient } from "./translations/translations.client";
+import { createHttpAgentSync } from "../utils/httpAgent";
+import { chunk, distinctBy, toRecord, toRecord2 } from "../utils/list";
+import { bytesToHexString } from "../utils/mapping";
+import { mean } from "../utils/maths";
+import { AsyncMessageContextMap } from "../utils/messageContext";
+import { isMainnet } from "../utils/network";
+import {
+    clearCache as clearReferralCache,
+    deleteCommunityReferral,
+    getCommunityReferral,
+} from "../utils/referralCache";
+import { getCachedRegistry, setCachedRegistry } from "../utils/registryCache";
+import { clearCache as clearUserCache, getAllUsers, isUserIdDeleted } from "../utils/userCache";
+import { BitcoinClient } from "./bitcoin/bitcoin.client";
 import { CkbtcMinterClient } from "./ckbtcMinter/ckbtcMinter.client";
+import { measure } from "./common/profiling";
+import { excludeLatestKnownUpdateIfBeforeFix } from "./common/replicaUpToDateChecker";
+import { CommunityClient } from "./community/community.client";
+import { DataClient } from "./data/data.client";
+import { DexesAgent } from "./dexes";
+import { callBotCommandEndpoint } from "./externalBot/externalBot";
+import { GroupClient } from "./group/group.client";
+import { GroupIndexClient } from "./groupIndex/groupIndex.client";
+import { IcpCoinsClient } from "./icpcoins/icpCoinsClient";
+import { IcpLedgerIndexClient } from "./icpLedgerIndex/icpLedgerIndex.client";
+import { IcpSwapClient } from "./icpSwap/icpSwapClient";
+import { LedgerClient } from "./ledger/ledger.client";
+import { LedgerIndexClient } from "./ledgerIndex/ledgerIndex.client";
+import { LocalUserIndexClient } from "./localUserIndex/localUserIndex.client";
+import { MarketMakerClient } from "./marketMaker/marketMaker.client";
+import { NnsGovernanceClient } from "./nnsGovernance/nns.governance.client";
+import { NotificationsClient } from "./notifications/notifications.client";
+import { OnlineClient } from "./online/online.client";
+import { ProposalsBotClient } from "./proposalsBot/proposalsBot.client";
+import { RegistryClient } from "./registry/registry.client";
 import { SignInWithEmailClient } from "./signInWithEmail/signInWithEmail.client";
 import { SignInWithEthereumClient } from "./signInWithEthereum/signInWithEthereum.client";
 import { SignInWithSolanaClient } from "./signInWithSolana/signInWithSolana.client";
-import type { SetPinNumberResponse } from "openchat-shared";
-import type { PinNumberSettings } from "openchat-shared";
-import type { ClaimDailyChitResponse } from "openchat-shared";
-import { createHttpAgentSync } from "../utils/httpAgent";
-import {
-    deleteCommunityReferral,
-    clearCache as clearReferralCache,
-    getCommunityReferral,
-} from "../utils/referralCache";
-import { mean } from "../utils/maths";
-import type { DelegationChain } from "@dfinity/identity";
-import { callBotCommandEndpoint } from "./externalBot/externalBot";
-import { BitcoinClient } from "./bitcoin/bitcoin.client";
-import { bytesToHexString } from "../utils/mapping";
+import { SnsGovernanceClient } from "./snsGovernance/sns.governance.client";
+import { TranslationsClient } from "./translations/translations.client";
+import { AnonUserClient } from "./user/anonUser.client";
+import { UserClient } from "./user/user.client";
+import { UserIndexClient } from "./userIndex/userIndex.client";
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
@@ -540,7 +541,7 @@ export class OpenChatAgent extends EventTarget {
         blockLevelMarkdown: boolean | undefined,
         newAchievement: boolean,
     ): Promise<EditMessageResponse> {
-        if (offline()) return Promise.resolve("failure");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "direct_chat":
@@ -1309,7 +1310,7 @@ export class OpenChatAgent extends EventTarget {
         context: MessageContext,
         resp: EventsResponse<T>,
     ): [MessageContext, EventWrapper<Message>[]] {
-        if (resp !== "events_failed") {
+        if (isSuccessfulEventsResponse(resp)) {
             return [
                 context,
                 resp.events.reduce((msgs, ev) => {
@@ -1438,7 +1439,7 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<EventsResponse<T>> {
         const resp = await eventsPromise;
 
-        if (resp === "events_failed") {
+        if (!isSuccessfulEventsResponse(resp)) {
             return resp;
         }
 
@@ -2234,7 +2235,7 @@ export class OpenChatAgent extends EventTarget {
         userId: string,
         newRole: MemberRole,
     ): Promise<ChangeRoleResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "group_chat":
@@ -2249,7 +2250,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     deleteGroup(chatId: MultiUserChatIdentifier): Promise<DeleteGroupResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "group_chat":
@@ -2260,7 +2261,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     removeMember(chatId: MultiUserChatIdentifier, userId: string): Promise<RemoveMemberResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "group_chat":
@@ -2274,7 +2275,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     blockUserFromDirectChat(userId: string): Promise<BlockUserResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.userClient.blockUser(userId);
     }
@@ -2283,7 +2284,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: MultiUserChatIdentifier,
         userId: string,
     ): Promise<BlockUserResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         if (chatId.kind === "channel")
             throw new Error("TODO - blockUserFromChannel not implemented");
@@ -2294,7 +2295,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: MultiUserChatIdentifier,
         userId: string,
     ): Promise<UnblockUserResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         if (chatId.kind === "channel")
             throw new Error("TODO - unblockUserFromChannel not implemented");
@@ -2302,13 +2303,13 @@ export class OpenChatAgent extends EventTarget {
     }
 
     unblockUserFromDirectChat(userId: string): Promise<UnblockUserResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.userClient.unblockUser(userId);
     }
 
     leaveGroup(chatId: MultiUserChatIdentifier): Promise<LeaveGroupResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         if (chatIdentifiersEqual(this._groupInvite?.chatId, chatId)) {
             this._groupInvite = undefined;
@@ -2487,7 +2488,7 @@ export class OpenChatAgent extends EventTarget {
         asPlatformModerator: boolean | undefined,
         newAchievement: boolean,
     ): Promise<DeleteMessageResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "group_chat":
@@ -2520,7 +2521,7 @@ export class OpenChatAgent extends EventTarget {
         asPlatformModerator: boolean | undefined,
         newAchievement: boolean,
     ): Promise<DeleteMessageResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.communityClient(chatId.communityId).deleteMessages(
             chatId,
@@ -2538,7 +2539,7 @@ export class OpenChatAgent extends EventTarget {
         asPlatformModerator: boolean | undefined,
         newAchievement: boolean,
     ): Promise<DeleteMessageResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.getGroupClient(chatId).deleteMessage(
             messageId,
@@ -2553,7 +2554,7 @@ export class OpenChatAgent extends EventTarget {
         messageId: bigint,
         threadRootMessageIndex?: number,
     ): Promise<DeleteMessageResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.userClient.deleteMessage(otherUserId, messageId, threadRootMessageIndex);
     }
@@ -2614,7 +2615,7 @@ export class OpenChatAgent extends EventTarget {
         id: ChatIdentifier | CommunityIdentifier,
         muted: boolean,
     ): Promise<ToggleMuteNotificationResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (id.kind) {
             case "group_chat":
@@ -2713,7 +2714,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     setBio(bio: string): Promise<SetBioResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.userClient.setBio(bio);
     }
@@ -2803,7 +2804,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: MultiUserChatIdentifier,
         messageIndex: number,
     ): Promise<UnpinMessageResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "group_chat":
@@ -2821,7 +2822,7 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         newAchievement: boolean,
     ): Promise<RegisterPollVoteResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "group_chat":
@@ -2880,7 +2881,7 @@ export class OpenChatAgent extends EventTarget {
     disableInviteCode(
         id: GroupChatIdentifier | CommunityIdentifier,
     ): Promise<DisableInviteCodeResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (id.kind) {
             case "community":
@@ -2904,25 +2905,25 @@ export class OpenChatAgent extends EventTarget {
     }
 
     pinChat(chatId: ChatIdentifier, favourite: boolean): Promise<PinChatResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.userClient.pinChat(chatId, favourite);
     }
 
     unpinChat(chatId: ChatIdentifier, favourite: boolean): Promise<UnpinChatResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.userClient.unpinChat(chatId, favourite);
     }
 
     archiveChat(chatId: ChatIdentifier): Promise<ArchiveChatResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.userClient.archiveChat(chatId);
     }
 
     unarchiveChat(chatId: ChatIdentifier): Promise<ArchiveChatResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.userClient.unarchiveChat(chatId);
     }
@@ -2932,7 +2933,7 @@ export class OpenChatAgent extends EventTarget {
         messageIndex: number,
         adopt: boolean,
     ): Promise<RegisterProposalVoteResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "group_chat":
@@ -3273,7 +3274,7 @@ export class OpenChatAgent extends EventTarget {
         notes?: string,
         threadRootMessageIndex?: number,
     ): Promise<SetMessageReminderResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.userClient.setMessageReminder(
             chatId,
@@ -3291,7 +3292,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     declineInvitation(chatId: MultiUserChatIdentifier): Promise<DeclineInvitationResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "group_chat":
@@ -3329,7 +3330,7 @@ export class OpenChatAgent extends EventTarget {
                             tokenDetails: distinctBy(
                                 [...updates.tokenDetails, ...(current?.tokenDetails ?? [])],
                                 (t) => t.ledger,
-                            ).filter((t) => !updates.tokensUninstalled.includes(t.ledger)),
+                            ),
                             nervousSystemSummary: distinctBy(
                                 [
                                     ...updates.nervousSystemSummary,
@@ -3342,7 +3343,10 @@ export class OpenChatAgent extends EventTarget {
                                 ...(current?.messageFilters ?? []),
                                 ...updates.messageFiltersAdded,
                             ].filter((f) => !updates.messageFiltersRemoved.includes(f.id)),
-                            currentAirdropChannel: applyOptionUpdate(current?.currentAirdropChannel, updates.currentAirdropChannel),
+                            currentAirdropChannel: applyOptionUpdate(
+                                current?.currentAirdropChannel,
+                                updates.currentAirdropChannel,
+                            ),
                         };
                         setCachedRegistry(updated);
                         this._registryValue = updated;
@@ -3400,7 +3404,7 @@ export class OpenChatAgent extends EventTarget {
         display_name: string | undefined,
         newAchievement: boolean,
     ): Promise<SetMemberDisplayNameResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.communityClient(communityId).setMemberDisplayName(display_name, newAchievement);
     }
@@ -3424,7 +3428,7 @@ export class OpenChatAgent extends EventTarget {
         follow: boolean,
         newAchievement: boolean,
     ): Promise<FollowThreadResponse> {
-        if (offline()) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         if (chatId.kind === "channel") {
             return this.communityClient(chatId.communityId).followThread(

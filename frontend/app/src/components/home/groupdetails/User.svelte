@@ -1,13 +1,13 @@
 <script lang="ts">
-    import Avatar from "../../Avatar.svelte";
-    import { getContext, type Snippet } from "svelte";
     import type { OpenChat } from "openchat-client";
-    import { AvatarSize, currentCommunityMembers as communityMembers } from "openchat-client";
-    import FilteredUsername from "../../FilteredUsername.svelte";
+    import { AvatarSize, app } from "openchat-client";
     import type { UserSummary } from "openchat-shared";
-    import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
-    import Translatable from "../../Translatable.svelte";
+    import { getContext, type Snippet } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import Avatar from "../../Avatar.svelte";
+    import FilteredUsername from "../../FilteredUsername.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
     import Badges from "../profile/Badges.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -36,7 +36,7 @@
 
     let hovering = $state(false);
 
-    let displayName = $derived(client.getDisplayName(user, $communityMembers));
+    let displayName = $derived(client.getDisplayName(user, app.selectedCommunity.members));
 
     function click(ev: Event) {
         if (profile) {

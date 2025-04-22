@@ -1,21 +1,17 @@
-use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use community_canister::set_member_display_name::{Response::*, *};
+use community_canister::set_member_display_name::*;
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, OCResult};
-use utils::text_validation::{validate_display_name, UsernameValidationError};
+use utils::text_validation::{UsernameValidationError, validate_display_name};
 
 #[update(msgpack = true)]
 #[trace]
 fn set_member_display_name(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| set_member_display_name_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| set_member_display_name_impl(args, state)).into()
 }
 
 fn set_member_display_name_impl(args: Args, state: &mut RuntimeState) -> OCResult {

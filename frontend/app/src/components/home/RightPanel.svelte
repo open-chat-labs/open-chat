@@ -13,22 +13,11 @@
         UserSummary,
     } from "openchat-client";
     import {
+        app,
         compareRoles,
-        currentChatApiKeys,
-        currentChatBlockedUsers as currentChatBlocked,
-        currentChatBots,
-        currentChatInvitedUsers as currentChatInvited,
-        currentChatLapsedMembers,
-        currentChatMembers,
-        currentChatPinnedMessages,
-        currentCommunityApiKeys,
-        currentCommunityBlockedUsers as currentCommunityBlocked,
-        currentCommunityBots,
-        currentCommunityInvitedUsers as currentCommunityInvited,
-        currentCommunityLapsedMembers as currentCommunityLapsed,
-        currentCommunityMembers,
         currentUser,
         eventsStore,
+        pageReplace,
         pathState,
         publish,
         selectedChatStore as selectedChat,
@@ -41,7 +30,6 @@
     import { _ } from "svelte-i18n";
     import type { Readable } from "svelte/store";
     import { i18nKey } from "../../i18n/i18n";
-    import { pageReplace } from "../../routes";
     import { toastStore } from "../../stores/toast";
     import { activeVideoCall } from "../../stores/video";
     import { currentTheme } from "../../theme/themes";
@@ -61,13 +49,8 @@
     import Thread from "./thread/Thread.svelte";
     import ActiveCallParticipants from "./video/ActiveCallParticipants.svelte";
 
-    interface Props {
-        onGoToMessageIndex: (details: { index: number; preserveFocus: boolean }) => void;
-    }
-
     const client = getContext<OpenChat>("client");
 
-    let { onGoToMessageIndex }: Props = $props();
     let invitingUsers = $state(false);
     let section: HTMLElement | undefined = $state();
     let resized = $state(false);
@@ -190,13 +173,6 @@
         }
     }
 
-    function goToMessageIndex(detail: { index: number; preserveFocus: boolean }): void {
-        onGoToMessageIndex(detail);
-        if (modal) {
-            ui.popRightPanelHistory();
-        }
-    }
-
     function stripThreadFromUrl(path: string) {
         if (
             (pathState.route.kind === "global_chat_selected_route" ||
@@ -264,7 +240,7 @@
         return client
             .removeCommunityMember(id, userId)
             .then((resp) => {
-                if (resp !== "success") {
+                if (resp.kind !== "success") {
                     toastStore.showFailureToast(i18nKey("removeMemberFailed"));
                 }
             })
@@ -278,7 +254,7 @@
         return client
             .removeMember(chatId, userId)
             .then((resp) => {
-                if (resp !== "success") {
+                if (resp.kind !== "success") {
                     toastStore.showFailureToast(i18nKey("removeMemberFailed"));
                 }
             })
@@ -399,14 +375,14 @@
         {#if $multiUserChat.kind === "channel" && $selectedCommunity !== undefined}
             <ChannelOrCommunitySummary
                 channel={$multiUserChat}
-                memberCount={$currentChatMembers.length}
+                memberCount={app.selectedChat.members.size}
                 community={$selectedCommunity}
                 selectedTab="channel"
                 onClose={ui.popRightPanelHistory} />
         {:else}
             <GroupDetails
                 chat={$multiUserChat}
-                memberCount={$currentChatMembers.length}
+                memberCount={app.selectedChat.members.size}
                 onClose={ui.popRightPanelHistory} />
         {/if}
     {:else if ui.lastRightPanelState.kind === "call_participants_panel"}
@@ -461,13 +437,13 @@
             <Members
                 {closeIcon}
                 collection={$selectedCommunity}
-                invited={$currentCommunityInvited}
-                members={[...$currentCommunityMembers.values()]}
-                blocked={$currentCommunityBlocked}
-                lapsed={$currentCommunityLapsed}
+                invited={app.selectedCommunity.invitedUsers}
+                members={[...app.selectedCommunity.members.values()]}
+                blocked={app.selectedCommunity.blockedUsers}
+                lapsed={app.selectedCommunity.lapsedMembers}
                 initialUsergroup={ui.lastRightPanelState.userGroupId}
-                installedBots={$currentCommunityBots}
-                apiKeys={$currentCommunityApiKeys}
+                installedBots={app.selectedCommunity.bots}
+                apiKeys={app.selectedCommunity.apiKeys}
                 onClose={ui.popRightPanelHistory}
                 onBlockUser={onBlockCommunityUser}
                 onUnblockUser={onUnblockCommunityUser}
@@ -505,12 +481,12 @@
         <Members
             {closeIcon}
             collection={$multiUserChat}
-            invited={$currentChatInvited}
-            members={$currentChatMembers}
-            blocked={$currentChatBlocked}
-            lapsed={$currentChatLapsedMembers}
-            installedBots={$currentChatBots}
-            apiKeys={$currentChatApiKeys}
+            invited={app.selectedChat.invitedUsers}
+            members={[...app.selectedChat.members.values()]}
+            blocked={app.selectedChat.blockedUsers}
+            lapsed={app.selectedChat.lapsedMembers}
+            installedBots={app.selectedChat.bots}
+            apiKeys={app.selectedChat.apiKeys}
             onClose={ui.popRightPanelHistory}
             onBlockUser={onBlockGroupUser}
             onUnblockUser={onUnblockGroupUser}
@@ -538,9 +514,8 @@
             {onCancelCommunityInvite} />
     {:else if ui.lastRightPanelState.kind === "show_pinned" && $selectedChatId !== undefined && ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel") && $multiUserChat !== undefined}
         <PinnedMessages
-            onGoToMessageIndex={goToMessageIndex}
             chatId={$selectedChatId}
-            pinned={$currentChatPinnedMessages}
+            pinned={app.selectedChat.pinnedMessages}
             dateLastPinned={$multiUserChat.dateLastPinned}
             onClose={ui.popRightPanelHistory} />
     {:else if ui.lastRightPanelState.kind === "user_profile"}
@@ -557,7 +532,7 @@
             <ChannelOrCommunitySummary
                 channel={$multiUserChat}
                 community={$selectedCommunity}
-                memberCount={$currentChatMembers.length}
+                memberCount={app.selectedChat.members.size}
                 selectedTab="community"
                 onClose={ui.popRightPanelHistory} />
         {:else}

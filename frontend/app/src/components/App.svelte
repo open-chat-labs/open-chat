@@ -5,7 +5,6 @@
     import "@components/web-components/profileLink";
     import "@i18n/i18n";
     import { reviewingTranslations } from "@i18n/i18n";
-    import { pageReplace, routeForScope } from "@src/routes";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import { menuStore } from "@stores/menu";
     import { rtlStore } from "@stores/rtl";
@@ -34,8 +33,10 @@
         chatListScopeStore as chatListScope,
         identityState,
         inititaliseLogger,
+        pageReplace,
         pathState,
         routeForChatIdentifier,
+        routeForScope,
         subscribe,
         ui,
     } from "openchat-client";
@@ -484,6 +485,14 @@
     }
 
     function unhandledError(ev: Event) {
+        if (
+            ev instanceof ErrorEvent &&
+            (ev.message.includes("ResizeObserver loop completed with undelivered notifications") ||
+                ev.message.includes("ResizeObserver loop limit exceeded"))
+        ) {
+            return;
+        }
+
         logger?.error("Unhandled error: ", ev);
         if (
             ev instanceof PromiseRejectionEvent &&

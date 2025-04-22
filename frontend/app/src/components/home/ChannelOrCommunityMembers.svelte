@@ -1,28 +1,18 @@
 <script lang="ts">
     import {
-        OpenChat,
+        app,
         type ChannelSummary,
         type CommunitySummary,
-        currentChatMembers,
-        currentChatInvitedUsers as currentChatInvited,
-        currentChatBlockedUsers as currentChatBlocked,
-        currentChatLapsedMembers as currentChatLapsed,
-        currentCommunityMembers,
-        currentCommunityInvitedUsers as currentCommunityInvited,
-        currentCommunityBlockedUsers as currentCommunityBlocked,
-        currentCommunityLapsedMembers as currentCommunityLapsed,
-        currentCommunityBots,
-        currentCommunityApiKeys,
-        currentChatApiKeys,
-        type UserSummary,
         type MemberRole,
+        OpenChat,
         publish,
+        type UserSummary,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import ScopeToggle from "./communities/ScopeToggle.svelte";
     import Members from "./groupdetails/Members.svelte";
     import MembersHeader from "./groupdetails/MembersHeader.svelte";
-    import ScopeToggle from "./communities/ScopeToggle.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -110,12 +100,12 @@
             showHeader={false}
             {closeIcon}
             collection={community}
-            invited={$currentCommunityInvited}
-            members={[...$currentCommunityMembers.values()]}
-            blocked={$currentCommunityBlocked}
-            lapsed={$currentCommunityLapsed}
-            installedBots={$currentCommunityBots}
-            apiKeys={$currentCommunityApiKeys}
+            invited={app.selectedCommunity.invitedUsers}
+            members={[...app.selectedCommunity.members.values()]}
+            blocked={app.selectedCommunity.blockedUsers}
+            lapsed={app.selectedCommunity.lapsedMembers}
+            installedBots={app.selectedCommunity.bots}
+            apiKeys={app.selectedCommunity.apiKeys}
             {onClose}
             onBlockUser={onBlockCommunityUser}
             onUnblockUser={onUnblockCommunityUser}
@@ -130,12 +120,12 @@
             showHeader={false}
             {closeIcon}
             collection={channel}
-            invited={$currentChatInvited}
-            members={$currentChatMembers}
-            blocked={$currentChatBlocked}
-            lapsed={$currentChatLapsed}
-            installedBots={$currentCommunityBots}
-            apiKeys={$currentChatApiKeys}
+            invited={app.selectedChat.invitedUsers}
+            members={[...app.selectedChat.members.values()]}
+            blocked={app.selectedChat.blockedUsers}
+            lapsed={app.selectedChat.lapsedMembers}
+            installedBots={app.selectedCommunity.bots}
+            apiKeys={app.selectedChat.apiKeys}
             {onClose}
             onBlockUser={onBlockGroupUser}
             onUnblockUser={onUnblockGroupUser}

@@ -5,10 +5,9 @@ import {
     nullMembership,
     type GroupChatSummary,
     type PublicGroupSummaryResponse,
-    CommonResponses,
 } from "openchat-shared";
 import type {
-    GroupPublicSummaryResponse,
+    GroupPublicSummarySuccessResult,
     PublicGroupSummary as TPublicGroupSummary,
 } from "../../typebox";
 
@@ -72,16 +71,11 @@ export function publicGroupSummary(
     };
 }
 
-export function publicSummaryResponse(
-    value: GroupPublicSummaryResponse,
+export function publicSummarySuccess(
+    value: GroupPublicSummarySuccessResult,
 ): PublicGroupSummaryResponse {
-    if (typeof value === "object" && "Success" in value) {
-        return {
-            kind: "success",
-            group: publicGroupSummary(value.Success.summary, value.Success.is_invited),
-        };
-    } else {
-        console.warn("ApiPublicSummaryResponse failed with ", value);
-        return CommonResponses.failure();
-    }
+    return {
+        kind: "success",
+        group: publicGroupSummary(value.summary, value.is_invited),
+    };
 }

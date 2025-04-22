@@ -1,7 +1,7 @@
-use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use community_canister::set_video_call_presence::{Response::*, *};
+use community_canister::set_video_call_presence::*;
 use types::{Achievement, OCResult};
 
 #[update(msgpack = true)]
@@ -9,11 +9,7 @@ use types::{Achievement, OCResult};
 fn set_video_call_presence(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| set_video_call_presence_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| set_video_call_presence_impl(args, state)).into()
 }
 
 pub(crate) fn set_video_call_presence_impl(args: Args, state: &mut RuntimeState) -> OCResult {

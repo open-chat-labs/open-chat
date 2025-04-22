@@ -27,7 +27,7 @@ impl HotGroupExclusions {
     pub fn get_all(&self, now: TimestampMillis) -> impl Iterator<Item = &ChatId> {
         self.exclusions
             .iter()
-            .filter(move |(_, &expiry)| expiry > now)
+            .filter(move |(_, expiry)| **expiry > now)
             .map(|(chat_id, _)| chat_id)
     }
 

@@ -1,5 +1,5 @@
-use crate::lifecycle::{init_env, init_state};
 use crate::Data;
+use crate::lifecycle::{init_env, init_state};
 use canister_tracing_macros::trace;
 use cycles_dispenser_canister::init::Args;
 use ic_cdk::init;

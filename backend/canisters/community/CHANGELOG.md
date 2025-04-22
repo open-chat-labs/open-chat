@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Migrate more endpoints to returning standardised error codes ([#7797](https://github.com/open-chat-labs/open-chat/pull/7797))
+- Introduce `UnitResult` type to reduce duplication ([#7800](https://github.com/open-chat-labs/open-chat/pull/7800))
+- Use more fine grained error codes for P2P swaps ([#7801](https://github.com/open-chat-labs/open-chat/pull/7801))
+
+### Fixed
+
+- Avoid sending notification to initiator of bot command ([#7808](https://github.com/open-chat-labs/open-chat/pull/7808))
+
+## [[2.0.1701](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1701-community)] - 2025-04-15
+
 ### Added
 
 - Notify Communities when user deleted ([#7781](https://github.com/open-chat-labs/open-chat/pull/7781))

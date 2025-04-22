@@ -1,5 +1,5 @@
 use crate::guards::caller_is_governance_principal;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use local_user_index_canister::{PlatformModeratorStatusChanged, UserIndexEvent};

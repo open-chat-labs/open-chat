@@ -1,17 +1,16 @@
 use crate::guards::caller_is_owner;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, COMMUNITY_CREATION_LIMIT};
+use crate::{COMMUNITY_CREATION_LIMIT, RuntimeState, mutate_state, read_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_community;
 use oc_error_codes::OCErrorCode;
 use std::collections::HashSet;
-use tracing::error;
-use types::{CanisterId, CommunityId};
+use types::{CanisterId, CommunityId, OCResult};
 use user_canister::create_community::{Response::*, *};
 use utils::document::{validate_avatar, validate_banner};
 use utils::text_validation::{
-    validate_channel_name, validate_community_name, validate_description, validate_rules, NameValidationError,
-    RulesValidationError,
+    NameValidationError, RulesValidationError, validate_channel_name, validate_community_name, validate_description,
+    validate_rules,
 };
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -26,7 +25,7 @@ async fn create_community(mut args: Args) -> Response {
 
     let prepare_result = match read_state(|state| prepare(args, state)) {
         Ok(ok) => ok,
-        Err(response) => return response,
+        Err(error) => return Error(error),
     };
 
     match group_index_canister_c2c_client::c2c_create_community(
@@ -47,10 +46,7 @@ async fn create_community(mut args: Args) -> Response {
             c2c_create_community::Response::InternalError(error) => Error(OCErrorCode::Unknown.with_message(error)),
             c2c_create_community::Response::Error(error) => Error(error),
         },
-        Err(error) => {
-            error!(?error, "Error calling create community");
-            InternalError(format!("{error:?}"))
-        }
+        Err(error) => Error(error.into()),
     }
 }
 
@@ -59,7 +55,9 @@ struct PrepareResult {
     create_community_args: c2c_create_community::Args,
 }
 
-fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
+fn prepare(args: Args, state: &RuntimeState) -> OCResult<PrepareResult> {
+    state.data.verify_not_suspended()?;
+
     fn is_throttled() -> bool {
         // TODO check here that the user hasn't created too many communities in succession
         false
@@ -68,40 +66,38 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
     let now = state.env.now();
     let is_diamond_member = state.data.is_diamond_member(now);
 
-    if state.data.suspended.value {
-        Err(UserSuspended)
-    } else if !is_diamond_member {
-        Err(Unauthorized)
+    if !is_diamond_member {
+        Err(OCErrorCode::NotDiamondMember.into())
     } else if state.data.communities.communities_created() >= COMMUNITY_CREATION_LIMIT {
-        Err(MaxCommunitiesCreated(COMMUNITY_CREATION_LIMIT))
+        Err(OCErrorCode::MaxCommunitiesCreated.with_message(COMMUNITY_CREATION_LIMIT))
     } else if is_throttled() {
-        Err(Throttled)
+        Err(OCErrorCode::Throttled.into())
     } else if let Err(error) = validate_community_name(&args.name, args.is_public) {
         Err(match error {
-            NameValidationError::TooShort(s) => NameTooShort(s),
-            NameValidationError::TooLong(l) => NameTooLong(l),
-            NameValidationError::Reserved => NameReserved,
+            NameValidationError::TooShort(s) => OCErrorCode::NameTooShort.with_json(&s),
+            NameValidationError::TooLong(l) => OCErrorCode::NameTooLong.with_json(&l),
+            NameValidationError::Reserved => OCErrorCode::NameReserved.into(),
         })
     } else if let Err(error) = validate_description(&args.description) {
-        Err(DescriptionTooLong(error))
+        Err(OCErrorCode::DescriptionTooLong.with_json(&error))
     } else if let Err(error) = validate_rules(args.rules.enabled, &args.rules.text) {
         return Err(match error {
-            RulesValidationError::TooShort(s) => RulesTooShort(s),
-            RulesValidationError::TooLong(l) => RulesTooLong(l),
+            RulesValidationError::TooShort(s) => OCErrorCode::RulesTooShort.with_json(&s),
+            RulesValidationError::TooLong(l) => OCErrorCode::RulesTooLong.with_json(&l),
         });
     } else if let Err(error) = validate_avatar(args.avatar.as_ref()) {
-        Err(AvatarTooBig(error))
+        Err(OCErrorCode::AvatarTooBig.with_json(&error))
     } else if let Err(error) = validate_banner(args.banner.as_ref()) {
-        Err(BannerTooBig(error))
+        Err(OCErrorCode::BannerTooBig.with_json(&error))
     } else if args
         .gate_config
         .as_ref()
         .map(|g| !g.validate(state.data.test_mode))
         .unwrap_or_default()
     {
-        Err(AccessGateInvalid)
+        Err(OCErrorCode::InvalidAccessGate.into())
     } else if !default_channels_valid(&args.default_channels) {
-        Err(DefaultChannelsInvalid)
+        Err(OCErrorCode::InvalidChannelName.into())
     } else {
         let create_community_args = c2c_create_community::Args {
             is_public: args.is_public,

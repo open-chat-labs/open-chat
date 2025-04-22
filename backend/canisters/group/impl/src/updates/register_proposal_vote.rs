@@ -1,10 +1,11 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::{MessageContentInternal, Reader, RecordProposalVoteResult};
-use group_canister::register_proposal_vote::{Response::*, *};
-use types::{CanisterId, EventIndex, ProposalId, UserId};
+use chat_events::{MessageContentInternal, Reader};
+use group_canister::register_proposal_vote::*;
+use oc_error_codes::OCErrorCode;
+use types::{CanisterId, EventIndex, OCResult, ProposalId, UserId};
 
 #[update(msgpack = true)]
 #[trace]
@@ -18,7 +19,7 @@ async fn register_proposal_vote(args: Args) -> Response {
         proposal_id,
     } = match read_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
-        Err(response) => return response,
+        Err(error) => return Response::Error(error),
     };
 
     let c2c_args = user_canister::c2c_vote_on_proposal::Args {
@@ -29,16 +30,11 @@ async fn register_proposal_vote(args: Args) -> Response {
     };
     match user_canister_c2c_client::c2c_vote_on_proposal(user_id.into(), &c2c_args).await {
         Ok(response) => match response {
-            user_canister::c2c_vote_on_proposal::Response::Success => {
-                mutate_state(|state| commit(user_id, args, state));
-                Success
-            }
-            user_canister::c2c_vote_on_proposal::Response::NoEligibleNeurons => NoEligibleNeurons,
-            user_canister::c2c_vote_on_proposal::Response::ProposalNotFound => ProposalNotFound,
-            user_canister::c2c_vote_on_proposal::Response::ProposalNotAcceptingVotes => ProposalNotAcceptingVotes,
-            user_canister::c2c_vote_on_proposal::Response::InternalError(error) => InternalError(error),
+            user_canister::c2c_vote_on_proposal::Response::Success => mutate_state(|state| commit(user_id, args, state)).into(),
+            user_canister::c2c_vote_on_proposal::Response::Error(error) => Response::Error(error),
+            response => Response::Error(OCErrorCode::Unknown.with_json(&response)),
         },
-        Err(error) => InternalError(format!("{error:?}")),
+        Err(error) => Response::Error(error.into()),
     }
 }
 
@@ -49,24 +45,10 @@ struct PrepareResult {
     proposal_id: ProposalId,
 }
 
-fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if state.data.is_frozen() {
-        return Err(ChatFrozen);
-    }
+fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
+    state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-
-    let member = match state.data.get_member(caller) {
-        Some(p) => p,
-        None => return Err(CallerNotInGroup),
-    };
-
-    if member.suspended().value {
-        return Err(UserSuspended);
-    } else if member.lapsed().value {
-        return Err(UserLapsed);
-    }
-
+    let member = state.get_calling_member(true)?;
     let min_visible_event_index = member.min_visible_event_index();
 
     if let Some(proposal) = state
@@ -77,8 +59,8 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         .message_internal(args.message_index.into())
         .and_then(|m| if let MessageContentInternal::GovernanceProposal(p) = m.content { Some(p) } else { None })
     {
-        if let Some(vote) = proposal.votes.get(&member.user_id()) {
-            Err(AlreadyVoted(*vote))
+        if proposal.votes.contains_key(&member.user_id()) {
+            Err(OCErrorCode::NoChange.into())
         } else {
             Ok(PrepareResult {
                 user_id: member.user_id(),
@@ -88,29 +70,24 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
             })
         }
     } else {
-        Err(ProposalMessageNotFound)
+        Err(OCErrorCode::MessageNotFound.into())
     }
 }
 
-fn commit(user_id: UserId, args: Args, state: &mut RuntimeState) -> Response {
-    match state
+fn commit(user_id: UserId, args: Args, state: &mut RuntimeState) -> OCResult {
+    state
         .data
         .chat
         .events
-        .record_proposal_vote(user_id, EventIndex::default(), args.message_index, args.adopt)
-    {
-        RecordProposalVoteResult::Success => {
-            let now = state.env.now();
-            state
-                .data
-                .chat
-                .members
-                .register_proposal_vote(&user_id, args.message_index, now);
+        .record_proposal_vote(user_id, EventIndex::default(), args.message_index, args.adopt)?;
 
-            handle_activity_notification(state);
-            Success
-        }
-        RecordProposalVoteResult::AlreadyVoted(vote) => AlreadyVoted(vote),
-        RecordProposalVoteResult::ProposalNotFound => ProposalNotFound,
-    }
+    let now = state.env.now();
+    state
+        .data
+        .chat
+        .members
+        .register_proposal_vote(&user_id, args.message_index, now);
+
+    handle_activity_notification(state);
+    Ok(())
 }

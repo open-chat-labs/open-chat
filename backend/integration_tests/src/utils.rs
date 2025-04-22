@@ -3,8 +3,7 @@ use constants::{
     CHAT_LEDGER_CANISTER_ID, CHAT_SYMBOL, CHAT_TRANSFER_FEE, ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE,
 };
 use pocket_ic::PocketIc;
-use rand::{rngs::StdRng, Rng, SeedableRng};
-use std::path::Path;
+use rand::{Rng, SeedableRng, rngs::StdRng};
 use std::time::SystemTime;
 use std::{path::PathBuf, time::UNIX_EPOCH};
 use types::{Hash, TimestampMillis, TimestampNanos, TokenInfo};
@@ -34,24 +33,9 @@ pub fn local_bin() -> PathBuf {
     file_path
 }
 
-pub fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> std::io::Result<()> {
-    std::fs::create_dir_all(&dst)?;
-    for entry in std::fs::read_dir(src)? {
-        let entry = entry?;
-        let ty = entry.file_type()?;
-        if ty.is_dir() {
-            copy_dir_all(entry.path(), dst.as_ref().join(entry.file_name()))?;
-        } else {
-            std::fs::copy(entry.path(), dst.as_ref().join(entry.file_name()))?;
-        }
-    }
-    Ok(())
-}
-
-#[allow(dead_code)]
 pub fn generate_seed() -> Hash {
     let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64;
-    StdRng::seed_from_u64(now).gen()
+    StdRng::seed_from_u64(now).r#gen()
 }
 
 pub fn chat_token_info() -> TokenInfo {

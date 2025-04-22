@@ -1,15 +1,9 @@
 <script lang="ts">
-    import { ui } from "openchat-client";
-    import { pageReplace } from "../../routes";
+    import { pageReplace, ui } from "openchat-client";
     import { rtlStore } from "../../stores/rtl";
     import { removeQueryStringParam } from "../../utils/urls";
     import Overlay from "../Overlay.svelte";
     import RightPanel from "./RightPanel.svelte";
-
-    interface Props {
-        onGoToMessageIndex: (details: { index: number; preserveFocus: boolean }) => void;
-    }
-    let { onGoToMessageIndex }: Props = $props();
 
     function closeRightPanel() {
         if (ui.rightPanelContains("message_thread_panel")) {
@@ -24,7 +18,7 @@
 </script>
 
 {#if ui.rightPanelMode === "inline"}
-    <RightPanel {onGoToMessageIndex} />
+    <RightPanel />
 {/if}
 
 {#if ui.rightPanelMode === "floating"}
@@ -32,7 +26,7 @@
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <div {onclick} class="right-wrapper" class:rtl={$rtlStore}>
-            <RightPanel {onGoToMessageIndex} />
+            <RightPanel />
         </div>
     </Overlay>
 {/if}

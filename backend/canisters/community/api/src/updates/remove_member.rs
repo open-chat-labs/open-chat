@@ -1,8 +1,7 @@
 use candid::CandidType;
-use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::UserId;
+use types::{UnitResult, UserId};
 
 #[ts_export(community, remove_member)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -10,18 +9,4 @@ pub struct Args {
     pub user_id: UserId,
 }
 
-#[ts_export(community, remove_member)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    UserNotInCommunity,
-    CannotRemoveSelf,
-    CannotRemoveUser,
-    NotAuthorized,
-    TargetUserNotInCommunity,
-    UserSuspended,
-    CommunityFrozen,
-    InternalError(String),
-    UserLapsed,
-    Error(OCError),
-}
+pub type Response = UnitResult;

@@ -1,7 +1,6 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
-    import { eventListScrolling } from "../../stores/scrollPos";
-    import { offlineStore } from "openchat-client";
+    import { offlineStore, ui } from "openchat-client";
 
     type LinkInfo = {
         url: string;
@@ -60,11 +59,11 @@
         }
     }
     trackedEffect("generic-preview", () => {
-        if (intersecting && !$eventListScrolling && !rendered && !$offlineStore) {
+        if (intersecting && !ui.eventListScrolling && !rendered && !$offlineStore) {
             // make sure we only actually *load* the preview once
             previewPromise = previewPromise ?? loadPreview(url);
             previewPromise.then((preview) => {
-                if (preview && intersecting && !$eventListScrolling) {
+                if (preview && intersecting && !ui.eventListScrolling) {
                     rendered = true;
                     onRendered(url);
                 }

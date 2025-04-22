@@ -1,7 +1,7 @@
 use crate::model::members::CommunityMembers;
 use candid::Principal;
-use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
 use ic_stable_structures::DefaultMemoryImpl;
+use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
 use proptest::collection::vec as pvec;
 use proptest::prelude::*;
 use proptest::prop_oneof;
@@ -103,7 +103,7 @@ fn execute_operation(members: &mut CommunityMembers, op: Operation, timestamp: T
         } => {
             let owner = get_from_set(&members.owners, owner_index);
             let user_id = get_from_map(&members.members_and_channels, user_index);
-            members.change_role(
+            let _ = members.change_role(
                 owner,
                 user_id,
                 role,

@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Introduce `UnitResult` type to reduce duplication ([#7800](https://github.com/open-chat-labs/open-chat/pull/7800))
+- Use more fine grained error codes for P2P swaps ([#7801](https://github.com/open-chat-labs/open-chat/pull/7801))
+
+### Fixed
+
+- Avoid sending notification to initiator of bot command ([#7808](https://github.com/open-chat-labs/open-chat/pull/7808))
+
+## [[2.0.1704](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1704-group)] - 2025-04-15
+
 ### Added
 
 - Notify Groups when user deleted ([#7781](https://github.com/open-chat-labs/open-chat/pull/7781))
@@ -13,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Switch more canister endpoints over to the new `OCError` response type ([#7793](https://github.com/open-chat-labs/open-chat/pull/7793))
+- Migrate more endpoints to returning standardised error codes ([#7797](https://github.com/open-chat-labs/open-chat/pull/7797))
 
 ### Removed
 

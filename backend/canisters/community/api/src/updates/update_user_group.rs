@@ -1,8 +1,7 @@
 use candid::CandidType;
-use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{FieldTooLongResult, FieldTooShortResult, UserId};
+use types::{UnitResult, UserId};
 
 #[ts_export(community, update_user_group)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -13,18 +12,4 @@ pub struct Args {
     pub users_to_remove: Vec<UserId>,
 }
 
-#[ts_export(community, update_user_group)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    UserGroupNotFound,
-    NameTooShort(FieldTooShortResult),
-    NameTooLong(FieldTooLongResult),
-    NameInvalid,
-    NameTaken,
-    NotAuthorized,
-    CommunityFrozen,
-    UserSuspended,
-    UserLapsed,
-    Error(OCError),
-}
+pub type Response = UnitResult;

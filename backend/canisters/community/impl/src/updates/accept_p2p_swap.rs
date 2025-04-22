@@ -1,11 +1,9 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::timer_job_types::NotifyEscrowCanisterOfDepositJob;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::accept_p2p_swap::{Response::*, *};
-use icrc_ledger_types::icrc1::transfer::TransferError;
-use oc_error_codes::OCErrorCode;
 use types::{
     AcceptSwapSuccess, Achievement, ChannelId, Chat, EventIndex, MessageId, MessageIndex, OCResult, P2PSwapLocation, UserId,
 };
@@ -82,10 +80,7 @@ async fn accept_p2p_swap(args: Args) -> Response {
                 token1_txn_in: transaction_index,
             })
         }
-        Ok(user_canister::c2c_accept_p2p_swap::Response::TransferError(TransferError::InsufficientFunds { .. })) => {
-            Error(OCErrorCode::InsufficientFunds.into())
-        }
-        Ok(response) => Error(OCErrorCode::Unknown.with_message(format!("{response:?}"))),
+        Ok(user_canister::c2c_accept_p2p_swap::Response::Error(error)) => Error(error),
         Err(error) => Error(error.into()),
     };
 

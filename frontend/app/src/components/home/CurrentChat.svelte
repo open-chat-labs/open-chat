@@ -1,6 +1,7 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
     import {
+        app,
         type AttachmentContent,
         botState,
         type ChatIdentifier,
@@ -11,7 +12,6 @@
         type CommunitySummary,
         currentChatAttachment,
         currentChatEditingEvent,
-        currentChatPinnedMessages,
         currentChatReplyingTo,
         currentChatTextContent,
         blockedUsers as directlyBlockedUsers,
@@ -40,7 +40,6 @@
     import { i18nKey } from "../../i18n/i18n";
     import { messageToForwardStore } from "../../stores/messageToForward";
     import { toastStore } from "../../stores/toast";
-    import { closeNotificationsForChat } from "../../utils/notifications";
     import { randomSentence } from "../../utils/randomMsg";
     import AreYouSure from "../AreYouSure.svelte";
     import DirectChatHeader from "../bots/DirectChatHeader.svelte";
@@ -60,20 +59,12 @@
     interface Props {
         joining: MultiUserChat | undefined;
         chat: ChatSummary;
-        currentChatMessages: CurrentChatMessages | undefined;
         filteredProposals: FilteredProposals | undefined;
-        onGoToMessageIndex: (args: { index: number; preserveFocus: boolean }) => void;
     }
 
-    let {
-        joining,
-        chat,
-        currentChatMessages = $bindable(),
-        filteredProposals,
-        onGoToMessageIndex,
-    }: Props = $props();
+    let { joining, chat, filteredProposals }: Props = $props();
 
-    currentChatMessages;
+    let currentChatMessages = $state<CurrentChatMessages>();
 
     const client = getContext<OpenChat>("client");
 
@@ -156,7 +147,7 @@
     }
 
     function onWindowFocus() {
-        closeNotificationsForChat(chat.id);
+        client.closeNotificationsForChat(chat.id);
     }
 
     function createPoll() {
@@ -340,6 +331,10 @@
     let bot = $derived(
         chat.kind === "direct_chat" ? botState.externalBots.get(chat.them.userId) : undefined,
     );
+
+    function onGoToMessageIndex(args: { index: number; preserveFocus: boolean }) {
+        currentChatMessages?.scrollToMessageIndex(args.index, args.preserveFocus);
+    }
 </script>
 
 <svelte:window onfocus={onWindowFocus} />
@@ -407,7 +402,7 @@
                 {blocked}
                 {readonly}
                 selectedChatSummary={chat}
-                hasPinned={$currentChatPinnedMessages.size > 0} />
+                hasPinned={app.selectedChat.pinnedMessages.size > 0} />
         {/if}
     {/if}
     {#if externalUrl !== undefined}

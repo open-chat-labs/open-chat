@@ -1,9 +1,9 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::Reader;
-use community_canister::report_message::{Response::*, *};
+use community_canister::report_message::*;
 use group_index_canister::c2c_report_message;
 use oc_error_codes::OCErrorCode;
 use types::{CanisterId, MultiUserChat, OCResult, UserId};
@@ -15,7 +15,7 @@ async fn report_message(args: Args) -> Response {
 
     let (c2c_args, group_index_canister) = match read_state(|state| build_c2c_args(&args, state)) {
         Ok(ok) => ok,
-        Err(error) => return Error(error),
+        Err(error) => return Response::Error(error),
     };
 
     match group_index_canister_c2c_client::c2c_report_message(group_index_canister, &c2c_args).await {
@@ -25,13 +25,13 @@ async fn report_message(args: Args) -> Response {
             }
 
             match result {
-                c2c_report_message::Response::Success => Success,
-                c2c_report_message::Response::AlreadyReported => AlreadyReported,
-                c2c_report_message::Response::InternalError(error) => InternalError(error),
-                c2c_report_message::Response::Error(error) => Error(error),
+                c2c_report_message::Response::Success => Response::Success,
+                c2c_report_message::Response::AlreadyReported => Response::Error(OCErrorCode::AlreadyReported.into()),
+                c2c_report_message::Response::InternalError(error) => Response::Error(OCErrorCode::Unknown.with_message(error)),
+                c2c_report_message::Response::Error(error) => Response::Error(error),
             }
         }
-        Err(err) => InternalError(format!("{err:?}")),
+        Err(error) => Response::Error(error.into()),
     }
 }
 

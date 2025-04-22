@@ -1,5 +1,5 @@
 use crate::updates::manage_nns_neuron::manage_nns_neuron_impl;
-use crate::{mutate_state, read_state, Neurons};
+use crate::{Neurons, mutate_state, read_state};
 use constants::{DAY_IN_MS, MINUTE_IN_MS, SNS_GOVERNANCE_CANISTER_ID};
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
 use icrc_ledger_types::icrc1::account::Account;

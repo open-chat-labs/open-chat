@@ -1,8 +1,9 @@
-use crate::read_state;
 use crate::RuntimeState;
+use crate::read_state;
 use canister_api_macros::query;
 use chat_events::Reader;
 use group_canister::public_summary::{Response::*, *};
+use oc_error_codes::OCErrorCode;
 use types::{BuildVersion, Document, PublicGroupSummary};
 
 #[query(candid = true, msgpack = true)]
@@ -14,7 +15,7 @@ fn public_summary_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
 
     if !state.data.is_accessible(caller, args.invite_code) {
-        return NotAuthorized;
+        return Error(OCErrorCode::InitiatorNotInChat.into());
     }
 
     let is_public = state.data.chat.is_public.value;

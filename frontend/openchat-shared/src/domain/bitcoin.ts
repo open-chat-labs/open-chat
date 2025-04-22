@@ -1,4 +1,5 @@
-import type { PinNumberFailures } from "./chat";
+import type { OCError } from "./error";
+import type { Success } from "./response";
 
 export type Utxo = {
     height: number;
@@ -9,10 +10,7 @@ export type Utxo = {
     };
 };
 
-export type WithdrawBtcResponse =
-    | { kind: "success" }
-    | PinNumberFailures
-    | { kind: "failure", message: string };
+export type WithdrawBtcResponse = Success | OCError;
 
 export type CkbtcMinterDepositInfo = {
     minConfirmations: number;

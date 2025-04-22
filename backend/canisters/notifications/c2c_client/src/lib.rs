@@ -2,7 +2,7 @@ use canister_client::generate_c2c_call;
 use notifications_canister::c2c_push_notifications::Notification;
 use notifications_canister::*;
 use serde::{Deserialize, Serialize};
-use timer_job_queues::{timer_job_batch, TimerJobItem};
+use timer_job_queues::{TimerJobItem, timer_job_batch};
 use types::{CanisterId, IdempotentEnvelope};
 use utils::canister::should_retry_failed_c2c_call;
 

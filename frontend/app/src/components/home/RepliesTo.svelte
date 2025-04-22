@@ -1,20 +1,20 @@
 <script lang="ts">
     import {
+        type ChatIdentifier,
         type RehydratedReplyContext,
+        app,
+        chatIdentifiersEqual,
+        chatListScopeStore as chatListScope,
+        currentUser,
         OpenChat,
         routeForChatIdentifier,
-        chatIdentifiersEqual,
-        type ChatIdentifier,
-        currentUser,
-        chatListScopeStore as chatListScope,
-        currentCommunityMembers as communityMembers,
     } from "openchat-client";
+    import page from "page";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import Link from "../Link.svelte";
-    import { _ } from "svelte-i18n";
     import ChatMessageContent from "./ChatMessageContent.svelte";
-    import { getContext } from "svelte";
-    import page from "page";
 
     const client = getContext<OpenChat>("client");
 
@@ -38,7 +38,7 @@
     let displayName = $derived(
         me
             ? client.toTitleCase($_("you"))
-            : client.getDisplayNameById(repliesTo.senderId, $communityMembers),
+            : client.getDisplayNameById(repliesTo.senderId, app.selectedCommunity.members),
     );
 
     function getUrl() {

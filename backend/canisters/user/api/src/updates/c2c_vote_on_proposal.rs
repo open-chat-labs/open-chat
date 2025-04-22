@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::CanisterId;
 
@@ -17,4 +18,5 @@ pub enum Response {
     ProposalNotFound,
     ProposalNotAcceptingVotes,
     InternalError(String),
+    Error(OCError),
 }

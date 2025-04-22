@@ -1,11 +1,11 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_video_call_operator;
 use crate::timer_job_types::{MarkVideoCallEndedJob, RemoveExpiredEventsJob};
-use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
+use crate::{RuntimeState, TimerJob, mutate_state, run_regular_jobs};
 use canister_tracing_macros::trace;
 use chat_events::{CallParticipantInternal, MessageContentInternal, VideoCallContentInternal};
 use constants::HOUR_IN_MS;
-use group_canister::start_video_call_v2::{Response::*, *};
+use group_canister::start_video_call_v2::*;
 use ic_cdk::update;
 use oc_error_codes::OCErrorCode;
 use types::{Caller, GroupMessageNotification, Notification, OCResult, VideoCallPresence, VideoCallType};
@@ -15,11 +15,7 @@ use types::{Caller, GroupMessageNotification, Notification, OCResult, VideoCallP
 fn start_video_call_v2(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| start_video_call_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| start_video_call_impl(args, state)).into()
 }
 
 fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {

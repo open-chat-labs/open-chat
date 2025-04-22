@@ -1,4 +1,4 @@
-use crate::{CanisterId, Cycles, TimestampMillis, ICP};
+use crate::{CanisterId, Cycles, ICP, TimestampMillis};
 use candid::CandidType;
 use ic_ledger_types::AccountIdentifier;
 use serde::{Deserialize, Serialize};

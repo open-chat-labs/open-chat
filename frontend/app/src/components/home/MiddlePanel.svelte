@@ -20,17 +20,14 @@
     import Loading from "../Loading.svelte";
     import ExploreCommunities from "./communities/explore/Explore.svelte";
     import CurrentChat from "./CurrentChat.svelte";
-    import type CurrentChatMessages from "./CurrentChatMessages.svelte";
     import NoChatSelected from "./NoChatSelected.svelte";
     import RecommendedGroups from "./RecommendedGroups.svelte";
 
     interface Props {
         joining: MultiUserChat | undefined;
-        currentChatMessages: CurrentChatMessages | undefined;
-        onGoToMessageIndex: (details: { index: number; preserveFocus: boolean }) => void;
     }
 
-    let { joining, currentChatMessages = $bindable(), onGoToMessageIndex }: Props = $props();
+    let { joining }: Props = $props();
 
     let middlePanel: HTMLElement | undefined;
 
@@ -132,11 +129,9 @@
             {botId} />
     {:else if $selectedChatStore !== undefined}
         <CurrentChat
-            bind:currentChatMessages
             {joining}
             chat={$selectedChatStore}
-            filteredProposals={$filteredProposalsStore}
-            {onGoToMessageIndex} />
+            filteredProposals={$filteredProposalsStore} />
     {/if}
 </section>
 

@@ -1,8 +1,7 @@
 use candid::CandidType;
-use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{MessageId, MessageIndex};
+use types::{MessageId, MessageIndex, UnitResult};
 
 #[ts_export(group, delete_messages)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -14,16 +13,4 @@ pub struct Args {
     pub correlation_id: u64,
 }
 
-#[ts_export(group, delete_messages)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    CallerNotInGroup,
-    MessageNotFound,
-    UserSuspended,
-    UserLapsed,
-    ChatFrozen,
-    NotPlatformModerator,
-    InternalError(String),
-    Error(OCError),
-}
+pub type Response = UnitResult;

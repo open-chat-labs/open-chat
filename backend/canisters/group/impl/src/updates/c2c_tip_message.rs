@@ -1,9 +1,9 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::TipMessageArgs;
-use group_canister::c2c_tip_message::{Response::*, *};
+use group_canister::c2c_tip_message::*;
 use ledger_utils::format_crypto_amount_with_symbol;
 use types::{Achievement, Chat, EventIndex, GroupMessageTipped, Notification, OCResult};
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
@@ -13,11 +13,7 @@ use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 fn c2c_tip_message(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| c2c_tip_message_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| c2c_tip_message_impl(args, state)).into()
 }
 
 fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {

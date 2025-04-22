@@ -1,4 +1,4 @@
-use crate::{guards::caller_is_translations_canister, mutate_state, RuntimeState};
+use crate::{RuntimeState, guards::caller_is_translations_canister, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::{OpenChatBotMessage, UserIndexEvent};

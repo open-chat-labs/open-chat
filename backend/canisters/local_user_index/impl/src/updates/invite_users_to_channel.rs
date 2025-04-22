@@ -1,5 +1,5 @@
 use crate::guards::caller_is_openchat_user;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_invite_users_to_channel;
@@ -64,14 +64,6 @@ async fn invite_users_to_channel(args: Args) -> Response {
                 failed_users: r.failed_users,
             }),
             c2c_invite_users_to_channel::Response::Error(error) => Error(error),
-            c2c_invite_users_to_channel::Response::UserNotInCommunity => UserNotInCommunity,
-            c2c_invite_users_to_channel::Response::ChannelNotFound => ChannelNotFound,
-            c2c_invite_users_to_channel::Response::UserNotInChannel => UserNotInChannel,
-            c2c_invite_users_to_channel::Response::NotAuthorized => NotAuthorized,
-            c2c_invite_users_to_channel::Response::CommunityFrozen => CommunityFrozen,
-            c2c_invite_users_to_channel::Response::TooManyInvites(l) => TooManyInvites(l),
-            c2c_invite_users_to_channel::Response::UserSuspended => UserSuspended,
-            c2c_invite_users_to_channel::Response::UserLapsed => UserLapsed,
         },
         Err(error) => InternalError(format!("Failed to call 'community::c2c_invite_users_to_channel': {error:?}")),
     }

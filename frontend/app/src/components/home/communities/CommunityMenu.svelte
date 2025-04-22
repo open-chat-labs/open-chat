@@ -17,7 +17,6 @@
     import PlaylistPlus from "svelte-material-icons/PlaylistPlus.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
-    import { notificationsSupported } from "../../../utils/notifications";
     import HoverIcon from "../../HoverIcon.svelte";
     import Menu from "../../Menu.svelte";
     import MenuIcon from "../../MenuIcon.svelte";
@@ -197,7 +196,7 @@
                     <span><Translatable resourceKey={i18nKey("markAllRead")} /></span>
                 {/snippet}
             </MenuItem>
-            {#if notificationsSupported && !isCommunityMuted}
+            {#if ui.notificationsSupported && !isCommunityMuted}
                 <MenuItem onclick={muteAllChannels}>
                     {#snippet icon()}
                         <BellOff size={ui.iconSize} color={"var(--icon-inverted-txt)"} />

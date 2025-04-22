@@ -1,4 +1,4 @@
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use escrow_canister::SwapStatusChange;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;

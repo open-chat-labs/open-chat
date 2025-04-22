@@ -1,5 +1,5 @@
 use crate::guards::caller_is_notifications_canister;
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_can_push_notifications::*;

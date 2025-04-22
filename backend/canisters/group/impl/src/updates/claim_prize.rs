@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::MEMO_PRIZE_CLAIM;
@@ -42,7 +42,7 @@ async fn claim_prize(args: Args) -> Response {
         }
         Err(error) => {
             mutate_state(|state| rollback(args, prepare_result.user_id, prize_amount, false, state));
-            InternalError(format!("{error:?}"))
+            Error(error.into())
         }
     }
 }

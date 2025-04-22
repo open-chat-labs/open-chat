@@ -1,7 +1,7 @@
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::punctuated::Punctuated;
-use syn::{parse_macro_input, Ident, Token};
+use syn::{Ident, Token, parse_macro_input};
 
 struct MethodAttribute {
     canister_name: String,

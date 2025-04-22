@@ -1,7 +1,7 @@
-use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use community_canister::change_channel_role::{Response::*, *};
+use community_canister::change_channel_role::*;
 use group_chat_core::GroupRoleInternal;
 use group_community_common::ExpiringMember;
 use types::{GroupRole, OCResult};
@@ -11,11 +11,7 @@ use types::{GroupRole, OCResult};
 fn change_channel_role(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| change_channel_role_impl(args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| change_channel_role_impl(args, state)).into()
 }
 
 fn change_channel_role_impl(args: Args, state: &mut RuntimeState) -> OCResult {

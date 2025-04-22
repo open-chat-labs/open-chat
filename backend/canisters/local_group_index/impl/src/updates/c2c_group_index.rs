@@ -1,6 +1,6 @@
 use crate::guards::caller_is_group_index_canister;
-use crate::{mutate_state, RuntimeState};
 use crate::{CommunityEvent, GroupEvent};
+use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_time::now_millis;
 use canister_tracing_macros::trace;
@@ -8,8 +8,8 @@ use community_canister::NameChanged as CommunityNameChanged;
 use community_canister::VerifiedChanged as CommunityVerifiedChanged;
 use group_canister::NameChanged as GroupNameChanged;
 use group_canister::VerifiedChanged as GroupVerifiedChanged;
-use local_group_index_canister::c2c_group_index::{Response::*, *};
 use local_group_index_canister::GroupIndexEvent;
+use local_group_index_canister::c2c_group_index::{Response::*, *};
 use std::cell::LazyCell;
 use types::TimestampMillis;
 

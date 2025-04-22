@@ -3,7 +3,7 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::guards::{caller_is_local_user_index, caller_is_proposals_bot};
 use crate::model::channels::Channel;
 use crate::timer_job_types::JoinMembersToPublicChannelJob;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::create_channel::{Response::*, *};
@@ -14,7 +14,7 @@ use rand::Rng;
 use types::{BotCaller, BotPermissions, Caller, CommunityPermission, MultiUserChat, OCResult, UserType};
 use url::Url;
 use utils::document::validate_avatar;
-use utils::text_validation::{validate_channel_name, validate_description, validate_rules, StringLengthValidationError};
+use utils::text_validation::{StringLengthValidationError, validate_channel_name, validate_description, validate_rules};
 
 #[update(msgpack = true)]
 #[trace]
@@ -182,7 +182,7 @@ fn create_channel_impl(
         args.gate_config.clone().map(|gc| gc.into()),
         args.events_ttl,
         (&caller).into(),
-        state.env.rng().gen(),
+        state.env.rng().r#gen(),
         args.external_url,
         now,
     );

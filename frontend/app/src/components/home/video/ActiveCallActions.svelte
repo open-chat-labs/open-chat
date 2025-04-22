@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui, type OpenChat } from "openchat-client";
+    import { pageReplace, ui, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
@@ -10,7 +10,6 @@
     import WindowMaximize from "svelte-material-icons/WindowMaximize.svelte";
     import WindowMinimize from "svelte-material-icons/WindowMinimize.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import { pageReplace } from "../../../routes";
     import { activeVideoCall, hasPresence } from "../../../stores/video";
     import { removeQueryStringParam } from "../../../utils/urls";
     import HoverIcon from "../../HoverIcon.svelte";

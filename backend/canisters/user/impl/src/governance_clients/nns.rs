@@ -1,5 +1,5 @@
 use super::nns::manage_neuron::RegisterVote;
-use nns_governance_canister::types::{manage_neuron, manage_neuron_response, GovernanceError, ListProposalInfo, ManageNeuron};
+use nns_governance_canister::types::{GovernanceError, ListProposalInfo, ManageNeuron, manage_neuron, manage_neuron_response};
 use tracing::error;
 use types::{C2CError, CanisterId, NnsNeuronId, ProposalId};
 

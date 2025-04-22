@@ -21,6 +21,7 @@
         ui,
         userMetrics,
     } from "openchat-client";
+    import { ErrorCode } from "openchat-shared";
     import { getContext, onMount } from "svelte";
     import { _, locale } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -54,7 +55,6 @@
     import { toastStore } from "../../../stores/toast";
     import { uniquePersonGate } from "../../../utils/access";
     import { isTouchDevice } from "../../../utils/devices";
-    import { notificationsSupported } from "../../../utils/notifications";
     import Avatar from "../../Avatar.svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -182,7 +182,7 @@
                 client
                     .setBio(userbio)
                     .then((resp) => {
-                        if (resp === "bio_too_long") {
+                        if (resp.kind === "error" && resp.code === ErrorCode.TextTooLong) {
                             bioError = "register.bioTooLong";
                         } else {
                             originalBio = userbio;
@@ -505,7 +505,7 @@
                         onChange={() => dclickReply.toggle()}
                         label={i18nKey(isTouchDevice ? "doubleTapReply" : "doubleClickReply")}
                         checked={$dclickReply} />
-                    {#if notificationsSupported}
+                    {#if ui.notificationsSupported}
                         <Toggle
                             id={"notifications"}
                             small

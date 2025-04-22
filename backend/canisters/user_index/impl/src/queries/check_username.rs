@@ -1,7 +1,7 @@
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use user_index_canister::check_username::{Response::*, *};
-use utils::text_validation::{validate_username, UsernameValidationError};
+use utils::text_validation::{UsernameValidationError, validate_username};
 
 #[query(candid = true, msgpack = true)]
 fn check_username(args: Args) -> Response {

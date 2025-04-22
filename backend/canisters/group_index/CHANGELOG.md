@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Log outcome after each call to set community as verified ([#7818](https://github.com/open-chat-labs/open-chat/pull/7818))
+
+## [[2.0.1703](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1703-group_index)] - 2025-04-15
+
 ### Added
 
 - Notify Groups/Communities when user deleted ([#7781](https://github.com/open-chat-labs/open-chat/pull/7781))

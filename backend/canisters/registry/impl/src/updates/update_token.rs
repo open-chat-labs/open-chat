@@ -1,5 +1,5 @@
 use crate::guards::caller_is_governance_principal;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use registry_canister::update_token::{Response::*, *};
@@ -12,9 +12,5 @@ fn update_token(args: Args) -> Response {
 
 fn update_token_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
-    if state.data.tokens.update(args, now) {
-        Success
-    } else {
-        TokenNotFound
-    }
+    if state.data.tokens.update(args, now) { Success } else { TokenNotFound }
 }

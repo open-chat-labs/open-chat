@@ -1,5 +1,5 @@
 use crate::env::ENV;
-use crate::{client, CanisterIds, TestEnv, User};
+use crate::{CanisterIds, TestEnv, User, client};
 use itertools::Itertools;
 use pocket_ic::PocketIc;
 use std::collections::HashMap;

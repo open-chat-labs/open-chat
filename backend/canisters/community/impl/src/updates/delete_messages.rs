@@ -1,10 +1,10 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::timer_job_types::HardDeleteMessageContentJob;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, TimerJob};
+use crate::{RuntimeState, TimerJob, mutate_state, read_state, run_regular_jobs};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use community_canister::delete_messages::{Response::*, *};
+use community_canister::delete_messages::*;
 use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, CanisterId, OCResult, UserId};
@@ -21,22 +21,18 @@ async fn delete_messages(args: Args) -> Response {
         user_index_canister_id,
     } = match read_state(prepare) {
         Ok(ok) => ok,
-        Err(response) => return Error(response),
+        Err(error) => return Response::Error(error),
     };
 
     if args.as_platform_moderator.unwrap_or_default() && caller != user_index_canister_id {
         match lookup_user(caller, user_index_canister_id).await {
             Ok(Some(u)) if u.is_platform_moderator => {}
-            Ok(_) => return Error(OCErrorCode::InitiatorNotAuthorized.into()),
-            Err(error) => return Error(error.into()),
+            Ok(_) => return Response::Error(OCErrorCode::InitiatorNotAuthorized.into()),
+            Err(error) => return Response::Error(error.into()),
         }
     }
 
-    if let Err(error) = mutate_state(|state| delete_messages_impl(user_id, args, state)) {
-        Error(error)
-    } else {
-        Success
-    }
+    mutate_state(|state| delete_messages_impl(user_id, args, state)).into()
 }
 
 struct PrepareResult {
@@ -80,11 +76,7 @@ fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -
     for message_id in
         results.into_iter().filter_map(
             |(message_id, result)| {
-                if let Ok(sender) = result {
-                    (sender == user_id).then_some(message_id)
-                } else {
-                    None
-                }
+                if let Ok(sender) = result { (sender == user_id).then_some(message_id) } else { None }
             },
         )
     {

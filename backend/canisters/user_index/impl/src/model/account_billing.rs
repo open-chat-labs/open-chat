@@ -1,7 +1,7 @@
 use candid::CandidType;
 use ic_ledger_types::BlockIndex;
 use serde::{Deserialize, Serialize};
-use types::{TimestampMillis, ICP};
+use types::{ICP, TimestampMillis};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq)]
 pub struct AccountBilling {

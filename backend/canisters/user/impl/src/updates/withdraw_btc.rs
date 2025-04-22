@@ -6,6 +6,7 @@ use canister_tracing_macros::trace;
 use ckbtc_minter_canister::CKBTC_MINTER_CANISTER_ID;
 use constants::{CKBTC_LEDGER_CANISTER_ID, MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 use event_store_producer::EventBuilder;
+use oc_error_codes::OCErrorCode;
 use user_canister::withdraw_btc::{Response::*, *};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -35,8 +36,8 @@ async fn withdraw_btc(args: Args) -> Response {
     .await
     {
         Ok(Ok(_)) => {}
-        Ok(Err(error)) => return ApproveError(format!("{error:?}")),
-        Err(error) => return InternalError(format!("{error:?}")),
+        Ok(Err(error)) => return Error(OCErrorCode::ApprovalFailed.with_json(&error)),
+        Err(error) => return Error(error.into()),
     }
 
     match ckbtc_minter_canister_c2c_client::retrieve_btc_with_approval(
@@ -63,7 +64,7 @@ async fn withdraw_btc(args: Args) -> Response {
             });
             Success(result.block_index)
         }
-        Ok(Err(error)) => RetrieveBtcError(format!("{error:?}")),
-        Err(error) => InternalError(format!("{error:?}")),
+        Ok(Err(error)) => Error(OCErrorCode::Unknown.with_json(&error)),
+        Err(error) => Error(error.into()),
     }
 }

@@ -33,11 +33,6 @@
     import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
     import { menuStore } from "../../stores/menu";
     import { rtlStore } from "../../stores/rtl";
-    import {
-        eventListLastScrolled,
-        eventListScrollTop,
-        eventListScrolling,
-    } from "../../stores/scrollPos";
     import { tooltipStore } from "../../stores/tooltip";
     import { pop } from "../../utils/transition";
     import Fab from "../Fab.svelte";
@@ -102,7 +97,7 @@
     let userId = $derived($user.userId);
     let threadSummary = $derived(threadRootEvent?.event.thread);
     let messageContext = $derived({
-        chatId: chat.id,
+        chatId: chat?.id,
         threadRootMessageIndex: threadRootEvent?.event.messageIndex,
     });
 
@@ -241,12 +236,14 @@
             });
         });
 
-        heightObserver.observe(messagesDiv!, {
-            attributes: true,
-            childList: true,
-            subtree: true,
-            attributeFilter: ["scrollHeight"],
-        });
+        if (messagesDiv) {
+            heightObserver.observe(messagesDiv!, {
+                attributes: true,
+                childList: true,
+                subtree: true,
+                attributeFilter: ["scrollHeight"],
+            });
+        }
 
         messageObserver = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
             entries.forEach((entry) => {
@@ -308,11 +305,11 @@
             }
         }, labelObserverOptions);
 
-        if ($eventListScrollTop !== undefined && maintainScroll) {
+        if (ui.eventListScrollTop !== undefined && maintainScroll) {
             interruptScroll((el) => {
-                if ($eventListScrollTop !== undefined) {
+                if (ui.eventListScrollTop !== undefined) {
                     initialised = true;
-                    el.scrollTop = $eventListScrollTop;
+                    el.scrollTop = ui.eventListScrollTop;
                 }
             });
         }
@@ -543,7 +540,10 @@
                     pathState.route.kind === "selected_channel_route") &&
                 (pathState.route.open || pathState.route.threadMessageIndex !== undefined)
             ) {
-                client.setFocusThreadMessageIndex(chat.id, pathState.route.threadMessageIndex);
+                client.setFocusThreadMessageIndex(
+                    messageContext,
+                    pathState.route.threadMessageIndex,
+                );
                 client.openThread(msgEvent, false);
             } else {
                 client.closeThread();
@@ -562,7 +562,7 @@
         if (!messageContextsEqual(context, messageContext)) return Promise.resolve();
 
         if (index < 0) {
-            setFocusMessageIndex(undefined);
+            setFocusMessageIndex(context, undefined);
             return Promise.resolve();
         }
 
@@ -570,7 +570,7 @@
 
         const element = findElementWithMessageIndex(index);
         if (element) {
-            setFocusMessageIndex(index);
+            setFocusMessageIndex(context, index);
             await scrollToElement(element);
             if (!messageContextsEqual(context, messageContext)) return Promise.resolve();
             if (!filling) {
@@ -583,7 +583,7 @@
                 if (!preserveFocus) {
                     window.setTimeout(() => {
                         if (messageContextsEqual(context, messageContext)) {
-                            setFocusMessageIndex(undefined);
+                            setFocusMessageIndex(context, undefined);
                         }
                     }, 200);
                 }
@@ -682,13 +682,13 @@
     function onUserScroll() {
         trackScrollStop(SCROLL_THRESHOLD);
         if (maintainScroll) {
-            $eventListScrollTop = messagesDiv?.scrollTop;
+            ui.eventListScrollTop = messagesDiv?.scrollTop;
         }
         updateShowGoToBottom();
         updateShowGoToTop();
         menuStore.hideMenu();
         tooltipStore.hide();
-        eventListLastScrolled.set(Date.now());
+        ui.eventListLastScrolled = Date.now();
 
         if (!initialised || interrupt || loadingFromUserScroll) return;
 
@@ -719,18 +719,18 @@
 
     let scrollTimeout: number | undefined = undefined;
     function trackScrollStop(delay: number) {
-        eventListScrolling.set(true);
+        ui.eventListScrolling = true;
         clearTimeout(scrollTimeout);
         scrollTimeout = window.setTimeout(() => {
-            eventListScrolling.set(false);
+            ui.eventListScrolling = false;
         }, delay);
     }
 
-    function setFocusMessageIndex(messageIndex: number | undefined) {
+    function setFocusMessageIndex(context: MessageContext, messageIndex: number | undefined) {
         if (threadRootEvent === undefined) {
-            client.setFocusMessageIndex(chat.id, messageIndex);
+            client.setFocusMessageIndex(context, messageIndex);
         } else {
-            client.setFocusThreadMessageIndex(chat.id, messageIndex);
+            client.setFocusThreadMessageIndex(context, messageIndex);
         }
     }
 </script>

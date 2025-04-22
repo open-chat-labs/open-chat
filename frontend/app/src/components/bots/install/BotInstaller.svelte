@@ -6,6 +6,7 @@
         type ExternalBotLike,
         type ExternalBotPermissions,
         flattenCommandPermissions,
+        type ReadonlyMap,
         type Level,
         OpenChat,
         type ResourceKey,
@@ -38,7 +39,7 @@
         level: Level;
         bot: ExternalBotLike;
         onClose: (installed: boolean) => void;
-        installedBots: Map<string, ExternalBotPermissions>;
+        installedBots: ReadonlyMap<string, ExternalBotPermissions>;
     }
 
     let { location, bot, onClose, level, installedBots }: Props = $props();
