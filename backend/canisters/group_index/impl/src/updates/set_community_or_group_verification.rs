@@ -26,7 +26,7 @@ fn set_group_verification(args: set_group_verification::Args) -> set_group_verif
     result
 }
 
-fn set_community_verification_impl(
+pub(crate) fn set_community_verification_impl(
     args: set_community_verification::Args,
     state: &mut RuntimeState,
 ) -> set_community_verification::Response {
