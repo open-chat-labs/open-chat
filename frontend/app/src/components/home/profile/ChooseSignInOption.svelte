@@ -1,14 +1,12 @@
 <script lang="ts">
-    import SendIcon from "svelte-material-icons/Send.svelte";
+    import { AuthProvider, selectedAuthProviderStore } from "openchat-client";
     import EmailIcon from "svelte-material-icons/EmailOutline.svelte";
-    import { AuthProvider } from "openchat-client";
-    import { configKeys } from "../../../utils/config";
-    import Input from "../../Input.svelte";
+    import SendIcon from "svelte-material-icons/Send.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
+    import Input from "../../Input.svelte";
     import Translatable from "../../Translatable.svelte";
     import SignInOption from "./SignInOption.svelte";
-    import { selectedAuthProviderStore } from "openchat-client";
 
     interface Props {
         mode?: "signin" | "signup";
@@ -69,10 +67,6 @@
             let i = options.findIndex((p) => p === selected);
 
             if (i >= 0) {
-                if (selected === AuthProvider.EMAIL) {
-                    email = localStorage.getItem(configKeys.selectedAuthEmail) ?? "";
-                }
-
                 options.splice(i, 1);
                 options.splice(0, 0, selected);
             }

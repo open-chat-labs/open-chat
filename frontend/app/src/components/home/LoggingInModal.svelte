@@ -30,7 +30,7 @@
 
     let loginState = $state<"options" | "logging-in">("options");
     let mode: "signin" | "signup" = $state("signin");
-    let email = $state("");
+    let email = $state(localStorage.getItem(configKeys.selectedAuthEmail) ?? "");
     let error: string | undefined = $state(undefined);
     let verificationCode: string | undefined = $state(undefined);
     let emailInvalid = $state(false);
