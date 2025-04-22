@@ -303,6 +303,7 @@
         isReadByMe,
         messageObserver,
         labelObserver,
+        focusIndex,
     })}
         {#if !privatePreview}
             {#each timeline as timelineItem}
@@ -314,7 +315,7 @@
                             <ChatEvent
                                 observer={messageObserver}
                                 focused={evt.event.kind === "message" &&
-                                    evt.event.messageIndex === app.selectedChat.focusMessageIndex &&
+                                    evt.event.messageIndex === focusIndex &&
                                     !isFailed($failedMessagesStore, evt)}
                                 accepted={isAccepted($unconfirmed, evt)}
                                 confirmed={isConfirmed($unconfirmed, evt)}

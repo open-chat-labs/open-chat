@@ -112,7 +112,6 @@
         onEditMessage?: () => void;
         onCollapseMessage?: () => void;
         onRetrySend?: () => void;
-        onInitiateThread?: () => void;
         onDeleteFailedMessage?: () => void;
         onRemovePreview?: (url: string) => void;
         onGoToMessageIndex?: (args: { index: number }) => void;
@@ -157,7 +156,6 @@
         onEditMessage,
         onCollapseMessage,
         onRetrySend,
-        onInitiateThread,
         onDeleteFailedMessage,
         onRemovePreview,
         onGoToMessageIndex,
@@ -766,7 +764,6 @@
                                 {onCollapseMessage}
                                 onReply={reply}
                                 {onRetrySend}
-                                {onInitiateThread}
                                 {onDeleteFailedMessage}
                                 onReplyPrivately={replyPrivately}
                                 onEditMessage={editMessage}
@@ -1028,7 +1025,7 @@
         $radius: var(--currentChat-msg-r1);
         $inner-radius: var(--currentChat-msg-r2);
         transition:
-            box-shadow ease-in-out 200ms,
+            box-shadow ease-out 500ms,
             background-color ease-in-out 200ms,
             border ease-in-out 300ms,
             transform ease-in-out 200ms;
@@ -1104,6 +1101,10 @@
 
         &.focused {
             box-shadow: 0 0 0 4px var(--notificationBar-bg);
+            transition:
+                background-color ease-in-out 200ms,
+                border ease-in-out 300ms,
+                transform ease-in-out 200ms;
         }
 
         &.editing {

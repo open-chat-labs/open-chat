@@ -24,6 +24,7 @@
         "@dfinity/identity": "^2.4.1",
         "@dfinity/principal": "^2.4.1",
         "borc": "^3.0.0",
+        "dequal": "^2.0.3",
         "drange": "^2.0.1",
         "identicon.js": "^2.3.3",
         "md5": "^2.3.0",

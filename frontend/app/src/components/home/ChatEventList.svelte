@@ -6,6 +6,7 @@
         isReadByMe: (_store: unknown, evt: EventWrapper<ChatEventType>) => boolean;
         messageObserver: IntersectionObserver | undefined;
         labelObserver: IntersectionObserver | undefined;
+        focusIndex: number | undefined;
     };
 </script>
 
@@ -79,6 +80,7 @@
         children,
     }: Props = $props();
 
+    let focusIndex = $state<number | undefined>();
     let interrupt = $state(false);
     let morePrevAvailable = false;
     let moreNewAvailable = false;
@@ -540,13 +542,7 @@
                     pathState.route.kind === "selected_channel_route") &&
                 (pathState.route.open || pathState.route.threadMessageIndex !== undefined)
             ) {
-                client.setFocusThreadMessageIndex(
-                    messageContext,
-                    pathState.route.threadMessageIndex,
-                );
-                client.openThread(msgEvent, false);
-            } else {
-                client.closeThread();
+                client.openThread(msgEvent, false, pathState.route.threadMessageIndex);
             }
         }
     }
@@ -562,7 +558,7 @@
         if (!messageContextsEqual(context, messageContext)) return Promise.resolve();
 
         if (index < 0) {
-            setFocusMessageIndex(context, undefined);
+            focusIndex = undefined;
             return Promise.resolve();
         }
 
@@ -570,7 +566,7 @@
 
         const element = findElementWithMessageIndex(index);
         if (element) {
-            setFocusMessageIndex(context, index);
+            focusIndex = index;
             await scrollToElement(element);
             if (!messageContextsEqual(context, messageContext)) return Promise.resolve();
             if (!filling) {
@@ -583,9 +579,9 @@
                 if (!preserveFocus) {
                     window.setTimeout(() => {
                         if (messageContextsEqual(context, messageContext)) {
-                            setFocusMessageIndex(context, undefined);
+                            focusIndex = undefined;
                         }
-                    }, 200);
+                    }, 500);
                 }
                 scrollingToMessage = false;
                 return Promise.resolve();
@@ -725,14 +721,6 @@
             ui.eventListScrolling = false;
         }, delay);
     }
-
-    function setFocusMessageIndex(context: MessageContext, messageIndex: number | undefined) {
-        if (threadRootEvent === undefined) {
-            client.setFocusMessageIndex(context, messageIndex);
-        } else {
-            client.setFocusThreadMessageIndex(context, messageIndex);
-        }
-    }
 </script>
 
 {#if floatingTimestamp !== undefined && labelObserver !== undefined}
@@ -752,6 +740,7 @@
         isReadByMe,
         messageObserver,
         labelObserver,
+        focusIndex,
     })}
 </div>
 

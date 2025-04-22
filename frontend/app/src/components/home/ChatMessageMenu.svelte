@@ -1,10 +1,12 @@
 <script lang="ts">
     import {
+        app,
         cryptoLookup,
         isDiamond,
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
         publish,
+        routeForMessage,
         threadsFollowedByMeStore,
         translationStore,
         ui,
@@ -14,6 +16,7 @@
         type MessageReminderCreatedContent,
         type OpenChat,
     } from "openchat-client";
+    import page from "page";
     import { getContext } from "svelte";
     import { _, locale } from "svelte-i18n";
     import CollapseIcon from "svelte-material-icons/ArrowCollapseUp.svelte";
@@ -90,7 +93,6 @@
         onCollapseMessage?: () => void;
         onRemindMe: () => void;
         onCancelReminder: (content: MessageReminderCreatedContent) => void;
-        onInitiateThread?: () => void;
         onRetrySend?: () => void;
         onReportMessage: () => void;
         onDeleteFailedMessage?: () => void;
@@ -133,7 +135,6 @@
         onCollapseMessage,
         onRemindMe,
         onCancelReminder,
-        onInitiateThread,
         onRetrySend,
         onReportMessage,
         onDeleteFailedMessage,
@@ -309,6 +310,10 @@
             }
         });
     }
+
+    function initiateThread() {
+        page(`${routeForMessage(app.chatListScope.kind, { chatId }, msg.messageIndex)}?open=true`);
+    }
 </script>
 
 <div class="menu" class:touch={isTouchOnlyDevice} class:inert class:rtl={$rtlStore}>
@@ -329,7 +334,7 @@
         {/if}
         {#if confirmed && supportsReply && !failed}
             {#if !inThread && canStartThread}
-                <HoverIcon compact onclick={onInitiateThread} title={$_("thread.menu")}>
+                <HoverIcon compact onclick={initiateThread} title={$_("thread.menu")}>
                     <div class="quick-reaction">
                         <ChatPlusOutline size={quickReactionIconSize} color={"var(--menu-txt)"} />
                     </div>
@@ -495,7 +500,7 @@
                         </MenuItem>
                     {/if}
                     {#if !inThread && canStartThread}
-                        <MenuItem onclick={onInitiateThread}>
+                        <MenuItem onclick={initiateThread}>
                             {#snippet icon()}
                                 <ChatPlusOutline
                                     size={ui.iconSize}

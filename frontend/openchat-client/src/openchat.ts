@@ -2763,7 +2763,7 @@ export class OpenChat {
             // if it's a known chat let's select it
             this.closeNotificationsForChat(chat.id);
             ui.eventListScrollTop = undefined;
-            this.#setSelectedChat(chat.id, messageIndex, threadMessageIndex);
+            this.#setSelectedChat(chat.id, messageIndex);
             ui.filterRightPanelHistoryByChatType(chat);
 
             if (autojoin && chat.kind !== "direct_chat") {
@@ -2786,11 +2786,7 @@ export class OpenChat {
         }
     }
 
-    #setSelectedChat(
-        chatId: ChatIdentifier,
-        messageIndex?: number,
-        threadMessageIndex?: number,
-    ): void {
+    #setSelectedChat(chatId: ChatIdentifier, messageIndex?: number): void {
         const clientChat = this.#liveState.chatSummaries.get(chatId);
         const serverChat = this.#liveState.serverChatSummaries.get(chatId);
 
@@ -2831,7 +2827,7 @@ export class OpenChat {
                 if (messageIndex !== undefined) {
                     this.loadEventWindow(chatId, messageIndex, undefined, true).then(() => {
                         if (serverChat !== undefined) {
-                            this.#loadChatDetails(serverChat, messageIndex, threadMessageIndex);
+                            this.#loadChatDetails(serverChat);
                         }
                     });
                 } else {
@@ -2843,7 +2839,7 @@ export class OpenChat {
 
                     this.loadPreviousMessages(chatId, undefined, true).then(() => {
                         if (serverChat !== undefined) {
-                            this.#loadChatDetails(serverChat, messageIndex, threadMessageIndex);
+                            this.#loadChatDetails(serverChat);
                         }
                     });
                 }
@@ -2861,16 +2857,24 @@ export class OpenChat {
         }
     }
 
-    openThreadFromMessageIndex(_chatId: ChatIdentifier, messageIndex: number): void {
+    openThreadFromMessageIndex(
+        _chatId: ChatIdentifier,
+        messageIndex: number,
+        threadMessageIndex?: number,
+    ): void {
         const event = this.#liveState.events.find(
             (ev) => ev.event.kind === "message" && ev.event.messageIndex === messageIndex,
         ) as EventWrapper<Message> | undefined;
         if (event !== undefined) {
-            this.openThread(event, event.event.thread === undefined);
+            this.openThread(event, event.event.thread === undefined, threadMessageIndex);
         }
     }
 
-    openThread(threadRootEvent: EventWrapper<Message>, initiating: boolean): void {
+    openThread(
+        threadRootEvent: EventWrapper<Message>,
+        initiating: boolean,
+        focusThreadMessageIndex?: number,
+    ): void {
         this.clearThreadEvents();
         selectedMessageContext.update((context) => {
             if (context) {
@@ -2885,10 +2889,10 @@ export class OpenChat {
         const context = this.#liveState.selectedMessageContext;
         if (context) {
             if (!initiating) {
-                if (app.selectedChat.focusThreadMessageIndex !== undefined) {
+                if (focusThreadMessageIndex !== undefined) {
                     this.loadEventWindow(
                         context.chatId,
-                        app.selectedChat.focusThreadMessageIndex,
+                        focusThreadMessageIndex,
                         threadRootEvent,
                         true,
                     );
@@ -2896,17 +2900,14 @@ export class OpenChat {
                     this.loadPreviousMessages(context.chatId, threadRootEvent, true);
                 }
             }
-            publish("threadSelected", { threadRootEvent, initiating });
+            ui.rightPanelHistory = [
+                {
+                    kind: "message_thread_panel",
+                    threadRootMessageIndex: threadRootEvent.event.messageIndex,
+                    threadRootMessageId: threadRootEvent.event.messageId,
+                },
+            ];
         }
-    }
-
-    closeThread(): void {
-        selectedMessageContext.update((context) => {
-            if (context) {
-                return { chatId: context.chatId };
-            }
-        });
-        publish("threadClosed");
     }
 
     clearThreadEvents(): void {
@@ -3299,11 +3300,7 @@ export class OpenChat {
     // not just when the chat changes, we need to know the difference. Possibly we don't want
     // to create a new instance of ChatDetailsMerged but rather always just update the existing
     // instance. Yes that's probably the answer.
-    async #loadChatDetails(
-        serverChat: ChatSummary,
-        focusMessageIndex?: number,
-        focusThreadMessageIndex?: number,
-    ): Promise<void> {
+    async #loadChatDetails(serverChat: ChatSummary): Promise<void> {
         switch (serverChat.kind) {
             case "group_chat":
             case "channel":
@@ -3327,19 +3324,12 @@ export class OpenChat {
                         resp.rules,
                         resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
                         resp.apiKeys,
-                        focusMessageIndex,
-                        focusThreadMessageIndex,
                     );
                 }
                 await this.#updateUserStoreFromEvents([]);
                 break;
             case "direct_chat":
-                app.setDirectChatDetails(
-                    serverChat.id,
-                    this.#liveState.user.userId,
-                    focusMessageIndex,
-                    focusThreadMessageIndex,
-                );
+                app.setDirectChatDetails(serverChat.id, this.#liveState.user.userId);
                 break;
         }
     }
@@ -4482,18 +4472,6 @@ export class OpenChat {
                 latestEventIndex: undefined,
             });
         });
-    }
-
-    setFocusMessageIndex(context: MessageContext, messageIndex: number | undefined): void {
-        if (chatIdentifiersEqual(app.selectedChat.chatId, context.chatId)) {
-            app.selectedChat.focusMessageIndex = messageIndex;
-        }
-    }
-
-    setFocusThreadMessageIndex(context: MessageContext, messageIndex: number | undefined): void {
-        if (chatIdentifiersEqual(app.selectedChat.chatId, context.chatId)) {
-            app.selectedChat.focusThreadMessageIndex = messageIndex;
-        }
     }
 
     expandDeletedMessages(messageIndexes: Set<number>): void {

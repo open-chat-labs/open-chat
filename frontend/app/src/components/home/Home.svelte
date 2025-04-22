@@ -9,7 +9,6 @@
         DirectChatIdentifier,
         EnhancedAccessGate,
         EnhancedReplyContext,
-        EventWrapper,
         GateCheckSucceeded,
         GroupChatSummary,
         Level,
@@ -184,7 +183,6 @@
     let showUpgrade: boolean = $state(false);
     let share: Share = { title: "", text: "", url: "", files: [] };
     let messageToForward: Message | undefined = undefined;
-    let creatingThread = false;
 
     onMount(() => {
         const unsubEvents = [
@@ -223,8 +221,6 @@
             subscribe("registerBot", registerBot),
             subscribe("updateBot", updateBot),
             subscribe("removeBot", removeBot),
-            subscribe("threadSelected", openThread),
-            subscribe("threadClosed", closeThread),
             subscribe("remoteVideoCallStarted", remoteVideoCallStarted),
             subscribe("remoteVideoCallEnded", remoteVideoCallEnded),
             subscribe("notification", (n) => client.notificationReceived(n)),
@@ -325,9 +321,6 @@
                     return;
                 }
 
-                // first close any open thread
-                closeThread();
-
                 if (pathState.isHomeRoute(route)) {
                     client.clearSelectedChat();
                     filterChatSpecificRightPanelStates();
@@ -363,17 +356,6 @@
     // statement because we don't want that reactive statement to execute in reponse to changes in rightPanelHistory :puke:
     function filterChatSpecificRightPanelStates() {
         ui.filterRightPanelHistory((panel) => panel.kind === "user_profile");
-    }
-
-    function closeThread() {
-        if (creatingThread) {
-            creatingThread = false;
-            return;
-        }
-        tick().then(() => {
-            activeVideoCall?.threadOpen(false);
-            ui.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
-        });
     }
 
     function leaderboard() {
@@ -567,25 +549,6 @@
             pageReplace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
         }
         ui.rightPanelHistory = [{ kind: "user_profile" }];
-    }
-
-    function openThread(ev: { threadRootEvent: EventWrapper<Message>; initiating: boolean }) {
-        if ($selectedChatId !== undefined) {
-            if (ev.initiating) {
-                creatingThread = true;
-                pageReplace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
-            }
-
-            tick().then(() => {
-                ui.rightPanelHistory = [
-                    {
-                        kind: "message_thread_panel",
-                        threadRootMessageIndex: ev.threadRootEvent.event.messageIndex,
-                        threadRootMessageId: ev.threadRootEvent.event.messageId,
-                    },
-                ];
-            });
-        }
     }
 
     function communityDetails(_: CommunitySummary) {

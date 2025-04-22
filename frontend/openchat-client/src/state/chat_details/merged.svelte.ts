@@ -8,8 +8,6 @@ const empty = ChatDetailsServerState.empty();
 
 export class ChatDetailsMergedState {
     #server = $state<ChatDetailsServerState | undefined>();
-    #focusMessageIndex = $state<number | undefined>();
-    #focusThreadMessageIndex = $state<number | undefined>();
     #userIds = new SvelteSet<string>();
     #userGroupKeys = new SvelteSet<string>();
     #expandedDeletedMessages = new SvelteSet<number>();
@@ -88,22 +86,6 @@ export class ChatDetailsMergedState {
 
     get pinnedMessages() {
         return this.#pinnedMessages;
-    }
-
-    get focusThreadMessageIndex() {
-        return this.#focusThreadMessageIndex;
-    }
-
-    get focusMessageIndex() {
-        return this.#focusMessageIndex;
-    }
-
-    set focusMessageIndex(val: number | undefined) {
-        this.#focusMessageIndex = val;
-    }
-
-    set focusThreadMessageIndex(val: number | undefined) {
-        this.#focusThreadMessageIndex = val;
     }
 
     addUserIds(userIds: string[]) {
