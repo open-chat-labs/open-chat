@@ -9,7 +9,6 @@
         DirectChatIdentifier,
         EnhancedAccessGate,
         EnhancedReplyContext,
-        EventWrapper,
         GateCheckSucceeded,
         GroupChatSummary,
         Level,
@@ -184,7 +183,6 @@
     let showUpgrade: boolean = $state(false);
     let share: Share = { title: "", text: "", url: "", files: [] };
     let messageToForward: Message | undefined = undefined;
-    let creatingThread = false;
 
     onMount(() => {
         const unsubEvents = [
@@ -223,7 +221,6 @@
             subscribe("registerBot", registerBot),
             subscribe("updateBot", updateBot),
             subscribe("removeBot", removeBot),
-            subscribe("threadSelected", openThread),
             subscribe("remoteVideoCallStarted", remoteVideoCallStarted),
             subscribe("remoteVideoCallEnded", remoteVideoCallEnded),
             subscribe("notification", (n) => client.notificationReceived(n)),
@@ -552,25 +549,6 @@
             pageReplace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
         }
         ui.rightPanelHistory = [{ kind: "user_profile" }];
-    }
-
-    function openThread(ev: { threadRootEvent: EventWrapper<Message>; initiating: boolean }) {
-        if ($selectedChatId !== undefined) {
-            if (ev.initiating) {
-                creatingThread = true;
-                pageReplace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
-            }
-
-            tick().then(() => {
-                ui.rightPanelHistory = [
-                    {
-                        kind: "message_thread_panel",
-                        threadRootMessageIndex: ev.threadRootEvent.event.messageIndex,
-                        threadRootMessageId: ev.threadRootEvent.event.messageId,
-                    },
-                ];
-            });
-        }
     }
 
     function communityDetails(_: CommunitySummary) {

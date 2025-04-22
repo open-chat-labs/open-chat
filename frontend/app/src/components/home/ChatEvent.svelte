@@ -152,17 +152,24 @@
 
     function initiateThread() {
         if (event.event.kind === "message") {
-            if (event.event.thread !== undefined) {
-                page(
-                    `${routeForMessage(
-                        $chatListScopeStore.kind,
-                        { chatId },
-                        event.event.messageIndex,
-                    )}?open=true`,
-                );
-            } else {
-                client.openThread(event as EventWrapper<Message>, true);
-            }
+            page(
+                `${routeForMessage(
+                    $chatListScopeStore.kind,
+                    { chatId },
+                    event.event.messageIndex,
+                )}?open=true`,
+            );
+            // if (event.event.thread !== undefined) {
+            //     page(
+            //         `${routeForMessage(
+            //             $chatListScopeStore.kind,
+            //             { chatId },
+            //             event.event.messageIndex,
+            //         )}?open=true`,
+            //     );
+            // } else {
+            //     client.openThread(event as EventWrapper<Message>, true);
+            // }
         }
     }
 </script>

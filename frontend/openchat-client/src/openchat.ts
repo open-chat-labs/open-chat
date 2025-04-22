@@ -2904,7 +2904,13 @@ export class OpenChat {
                     this.loadPreviousMessages(context.chatId, threadRootEvent, true);
                 }
             }
-            publish("threadSelected", { threadRootEvent, initiating });
+            ui.rightPanelHistory = [
+                {
+                    kind: "message_thread_panel",
+                    threadRootMessageIndex: threadRootEvent.event.messageIndex,
+                    threadRootMessageId: threadRootEvent.event.messageId,
+                },
+            ];
         }
     }
 
