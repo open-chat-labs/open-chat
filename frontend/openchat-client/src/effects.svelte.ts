@@ -57,13 +57,13 @@ function onSelectedChatChanged(client: OpenChat) {
     });
 }
 
-function onSelectedMessageChanged(client: OpenChat) {
-    $effect(() => {
-        // we will do all the stuff that depends on the selected message
-        // if the message is undefined we load the previous messages
-        // if we have a message id then we load the event window
-    });
-}
+// function onSelectedMessageChanged(client: OpenChat) {
+//     $effect(() => {
+//         // we will do all the stuff that depends on the selected message
+//         // if the message is undefined we load the previous messages
+//         // if we have a message id then we load the event window
+//     });
+// }
 
 function onThreadClosed() {
     $effect(() => {
