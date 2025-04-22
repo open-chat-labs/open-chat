@@ -49,6 +49,7 @@ jwt = { path = "../../../libraries/jwt" }
 local_user_index_canister = { path = "../../local_user_index/api" }
 local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_client" }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
+oc_error_codes = { path = "../../../libraries/error_codes" }
 p256_key_pair = { path = "../../../libraries/p256_key_pair" }
 modclub_canister = { path = "../../../external_canisters/modclub/api" }
 modclub_canister_c2c_client = { path = "../../../external_canisters/modclub/c2c_client" }

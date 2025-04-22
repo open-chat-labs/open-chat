@@ -4186,6 +4186,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen",
+ "oc_error_codes",
  "serde",
  "serde_bytes",
  "types",
@@ -4224,6 +4225,7 @@ dependencies = [
  "identity_canister",
  "identity_utils",
  "msgpack",
+ "oc_error_codes",
  "rand 0.8.5",
  "serde",
  "serde_bytes",
@@ -4231,6 +4233,8 @@ dependencies = [
  "stable_memory",
  "tracing",
  "types",
+ "user_index_canister",
+ "user_index_canister_c2c_client",
  "utils 0.1.0",
  "x509-parser",
 ]
@@ -9124,6 +9128,7 @@ dependencies = [
  "msgpack",
  "notifications_index_canister",
  "notifications_index_canister_c2c_client",
+ "oc_error_codes",
  "online_users_canister",
  "online_users_canister_c2c_client",
  "p256_key_pair",

@@ -5,7 +5,7 @@ use candid::Principal;
 use pocket_ic::PocketIc;
 use registry_canister::subnets::Subnet;
 use std::fmt::{Debug, Formatter};
-use types::{CanisterId, Cycles, UserId};
+use types::{CanisterId, Cycles, SignedDelegation, UserId};
 
 mod airdrop_bot_tests;
 mod batched_summary_and_event_tests;
@@ -70,6 +70,13 @@ pub struct User {
     pub user_id: UserId,
     pub public_key: Vec<u8>,
     pub local_user_index: CanisterId,
+}
+
+#[derive(Debug)]
+pub struct UserAuth {
+    pub auth_principal: Principal,
+    pub public_key: Vec<u8>,
+    pub delegation: SignedDelegation,
 }
 
 impl User {
