@@ -1,6 +1,6 @@
 use crate::guards::caller_is_owner;
 use crate::{
-    mutate_state, read_state, run_regular_jobs, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT,
+    BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT, RuntimeState, mutate_state, read_state, run_regular_jobs,
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -11,7 +11,7 @@ use types::{CanisterId, ChatId, OCResult};
 use user_canister::create_group::{Response::*, *};
 use utils::document::validate_avatar;
 use utils::text_validation::{
-    validate_description, validate_group_name, validate_rules, NameValidationError, RulesValidationError,
+    NameValidationError, RulesValidationError, validate_description, validate_group_name, validate_rules,
 };
 
 #[update(guard = "caller_is_owner", msgpack = true)]

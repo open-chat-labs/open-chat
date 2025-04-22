@@ -1,14 +1,14 @@
 use crate::guards::caller_is_registry_canister;
 use crate::updates::upgrade_user_canister_wasm::upgrade_user_wasm_in_local_user_index;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ic_cdk::management_canister::CanisterInfoArgs;
 use local_user_index_canister::{UserDetailsFull, UserIndexEvent};
 use tracing::info;
 use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
-use user_index_canister::add_local_user_index_canister::{Response::*, *};
 use user_index_canister::ChildCanisterType;
+use user_index_canister::add_local_user_index_canister::{Response::*, *};
 use utils::canister::{install_basic, set_controllers};
 
 #[update(guard = "caller_is_registry_canister", msgpack = true)]

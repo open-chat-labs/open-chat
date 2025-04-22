@@ -1,4 +1,4 @@
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use ic_cdk::query;
 use user_index_canister::public_key::{Response::*, *};
 

@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::utils::tick_many;
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
 use std::ops::Deref;
 use std::time::Duration;
 use storage_index_canister::add_or_update_users::UserConfig;

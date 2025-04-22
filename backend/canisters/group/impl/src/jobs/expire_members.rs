@@ -1,7 +1,7 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::jobs::process_expire_member_actions;
-use crate::{mutate_state, RuntimeState};
-use gated_groups::{check_if_passes_gate_synchronously, CheckGateArgs};
+use crate::{RuntimeState, mutate_state};
+use gated_groups::{CheckGateArgs, check_if_passes_gate_synchronously};
 use group_community_common::{ExpiringMember, ExpiringMemberAction, ExpiringMemberActionDetails, Members};
 use ic_cdk_timers::TimerId;
 use std::time::Duration;

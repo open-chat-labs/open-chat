@@ -2,7 +2,7 @@ use crate::guards::caller_is_known_user;
 use crate::model::files::{PutChunkArgs, PutChunkResult};
 use crate::model::index_event_batch::EventToSync;
 use crate::model::users::{FileStatusInternal, IndexSyncComplete};
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use storage_bucket_canister::upload_chunk_v2::{Response::*, *};
@@ -30,7 +30,7 @@ fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(status) = user.file_status(&file_id) {
         match status {
             FileStatusInternal::Complete(_) | FileStatusInternal::Rejected(RejectedReason::HashMismatch) => {
-                return FileAlreadyExists
+                return FileAlreadyExists;
             }
             FileStatusInternal::Rejected(RejectedReason::AllowanceExceeded) => return AllowanceExceeded,
             FileStatusInternal::Rejected(RejectedReason::UserNotFound) => return UserNotFound,

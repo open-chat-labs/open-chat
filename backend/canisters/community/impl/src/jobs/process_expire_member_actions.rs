@@ -1,6 +1,6 @@
 use super::expire_members;
-use crate::{activity_notifications::handle_activity_notification, mutate_state, read_state, RuntimeState};
-use gated_groups::{check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult};
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, read_state};
+use gated_groups::{CheckGateArgs, CheckIfPassesGateResult, check_if_passes_gate};
 use group_community_common::{ExpiringMember, ExpiringMemberAction, ExpiringMemberActionDetails};
 use ic_cdk_timers::TimerId;
 use local_user_index_canister_c2c_client::lookup_users;

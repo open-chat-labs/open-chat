@@ -1,5 +1,5 @@
-use crate::notify_top_up::CanisterId;
 use crate::NotifyError;
+use crate::notify_top_up::CanisterId;
 use candid::{CandidType, Principal};
 
 #[derive(CandidType)]

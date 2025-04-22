@@ -1,4 +1,4 @@
-use crate::{mutate_state, read_state, RuntimeState, BUCKET_CANISTER_TOP_UP_AMOUNT, MIN_CYCLES_BALANCE};
+use crate::{BUCKET_CANISTER_TOP_UP_AMOUNT, MIN_CYCLES_BALANCE, RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use storage_index_canister::c2c_notify_low_balance::*;

@@ -1,4 +1,4 @@
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use canister_tracing_macros::trace;
 use ic_cdk::query;
 use registry_canister::subnets::{Response::*, *};

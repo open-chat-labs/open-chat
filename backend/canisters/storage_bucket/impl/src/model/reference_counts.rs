@@ -44,7 +44,7 @@ impl ReferenceCountsStableMap {
 
     #[cfg(test)]
     pub fn get_all(&self) -> std::collections::BTreeMap<Hash, u32> {
-        use stable_memory_map::{with_map, KeyPrefix};
+        use stable_memory_map::{KeyPrefix, with_map};
 
         with_map(|m| {
             m.range(self.prefix.create_key(&[0; 32])..)

@@ -1,4 +1,4 @@
-use crate::{read_state, State};
+use crate::{State, read_state};
 use canister_logger::LogEntry;
 use ic_cdk::query;
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};

@@ -1,6 +1,6 @@
 use crate::guards::caller_is_owner;
 use crate::timer_job_types::TimerJob;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
@@ -16,11 +16,7 @@ fn cancel_message_reminder(args: Args) -> Response {
 
 fn cancel_message_reminder_impl(reminder_id: u64, state: &mut RuntimeState) -> Response {
     let cancelled = state.data.timer_jobs.cancel_jobs(|j| {
-        if let TimerJob::MessageReminder(job) = j {
-            job.reminder_id == reminder_id
-        } else {
-            false
-        }
+        if let TimerJob::MessageReminder(job) = j { job.reminder_id == reminder_id } else { false }
     });
 
     if !cancelled.is_empty() {

@@ -1,5 +1,5 @@
-use crate::read_state;
 use crate::RuntimeState;
+use crate::read_state;
 use canister_api_macros::query;
 use chat_events::Reader;
 use group_canister::public_summary::{Response::*, *};

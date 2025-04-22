@@ -2,7 +2,7 @@ use crate::client::ledger;
 use crate::env::ENV;
 use crate::setup::install_icrc_ledger;
 use crate::utils::now_millis;
-use crate::{client, CanisterIds, TestEnv, User};
+use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use constants::{CHAT_LEDGER_CANISTER_ID, CHAT_TRANSFER_FEE};
 use pocket_ic::PocketIc;

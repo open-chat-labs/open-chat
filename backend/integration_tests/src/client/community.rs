@@ -49,7 +49,7 @@ generate_msgpack_update_call!(update_community);
 generate_msgpack_update_call!(update_user_group);
 
 pub mod happy_path {
-    use crate::{client::user, User};
+    use crate::{User, client::user};
     use candid::Principal;
     use pocket_ic::PocketIc;
     use testing::rng::random_from_u128;

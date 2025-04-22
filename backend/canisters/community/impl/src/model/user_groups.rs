@@ -92,7 +92,7 @@ impl UserGroups {
         self.deleted
             .iter()
             .rev()
-            .take_while(|(&k, _)| k > since)
+            .take_while(|(k, _)| **k > since)
             .flat_map(|(_, v)| v)
             .copied()
             .collect()

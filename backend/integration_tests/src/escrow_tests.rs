@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::utils::{chat_token_info, icp_token_info, now_millis, tick_many};
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
 use constants::DAY_IN_MS;
 use escrow_canister::deposit_subaccount;
 use icrc_ledger_types::icrc1::account::Account;

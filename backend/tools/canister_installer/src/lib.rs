@@ -1,5 +1,5 @@
 use candid::{Encode, Principal};
-use canister_agent_utils::{build_ic_agent, get_canister_wasm, install_wasm, set_controllers, CanisterIds, CanisterName};
+use canister_agent_utils::{CanisterIds, CanisterName, build_ic_agent, get_canister_wasm, install_wasm, set_controllers};
 use constants::{CHAT_LEDGER_CANISTER_ID, SNS_GOVERNANCE_CANISTER_ID};
 use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;

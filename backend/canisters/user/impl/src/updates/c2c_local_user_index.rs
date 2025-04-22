@@ -1,5 +1,5 @@
 use crate::guards::caller_is_local_user_index;
-use crate::{mutate_state, openchat_bot, RuntimeState};
+use crate::{RuntimeState, mutate_state, openchat_bot};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use types::{Achievement, DiamondMembershipPlanDuration, MessageContentInitial, ReferralStatus, Timestamped};

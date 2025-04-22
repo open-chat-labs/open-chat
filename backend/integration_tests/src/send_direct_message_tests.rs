@@ -1,6 +1,6 @@
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
 use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
 use std::time::Duration;

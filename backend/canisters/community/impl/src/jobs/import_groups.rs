@@ -7,7 +7,7 @@ use crate::timer_job_types::{
     FinalizeGroupImportJob, JoinMembersToPublicChannelJob, ProcessGroupImportChannelMembersJob, TimerJob,
 };
 use crate::updates::c2c_join_channel::join_channel_unchecked;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use chat_events::ChatEvents;
 use constants::OPENCHAT_BOT_USER_ID;
 use group_canister::c2c_export_group::{Args, Response};

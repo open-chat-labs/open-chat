@@ -2,7 +2,7 @@ use candid::Encode;
 use canister_agent_utils::CanisterName;
 use clap::Parser;
 use sha256::sha256;
-use sns_governance_canister::types::{proposal, ExecuteGenericNervousSystemFunction, Proposal};
+use sns_governance_canister::types::{ExecuteGenericNervousSystemFunction, Proposal, proposal};
 use std::error::Error;
 use std::fs;
 use types::{BuildVersion, CanisterWasm, UpgradeCanisterWasmArgs, UpgradeChunkedCanisterWasmArgs};

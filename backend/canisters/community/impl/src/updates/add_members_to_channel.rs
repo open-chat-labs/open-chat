@@ -1,6 +1,6 @@
 use crate::{
-    activity_notifications::handle_activity_notification, jobs, mutate_state, read_state, run_regular_jobs,
-    AddUsersToChannelResult, RuntimeState,
+    AddUsersToChannelResult, RuntimeState, activity_notifications::handle_activity_notification, jobs, mutate_state,
+    read_state, run_regular_jobs,
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;

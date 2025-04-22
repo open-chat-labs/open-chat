@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use ic_cdk::management_canister::CanisterInstallMode;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
@@ -6,7 +6,7 @@ use std::time::Duration;
 use tracing::trace;
 use types::{BuildVersion, CanisterId, CanisterWasm};
 use user_index_canister::ChildCanisterType;
-use utils::canister::{install, upload_wasm_in_chunks, CanisterToInstall, ChunkedWasmToInstall, FailedUpgrade, WasmToInstall};
+use utils::canister::{CanisterToInstall, ChunkedWasmToInstall, FailedUpgrade, WasmToInstall, install, upload_wasm_in_chunks};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();

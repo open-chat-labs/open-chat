@@ -1,5 +1,5 @@
-use crate::{read_state, RuntimeState};
-use http_request::{build_json_response, encode_logs, extract_route, Route};
+use crate::{RuntimeState, read_state};
+use http_request::{Route, build_json_response, encode_logs, extract_route};
 use ic_cdk::query;
 use types::{HttpRequest, HttpResponse, TimestampMillis};
 

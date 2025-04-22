@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use oc_error_codes::OCErrorCode;
 use search::simple::Query;

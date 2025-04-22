@@ -2,7 +2,7 @@ use crate::ProposalToSubmit;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{icrc2, CanisterId};
+use types::{CanisterId, icrc2};
 
 #[ts_export(proposals_bot, submit_proposal)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]

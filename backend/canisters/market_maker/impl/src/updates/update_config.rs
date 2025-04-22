@@ -1,4 +1,4 @@
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use canister_tracing_macros::trace;
 use ic_cdk::update;
 use market_maker_canister::update_config::{Response::*, *};

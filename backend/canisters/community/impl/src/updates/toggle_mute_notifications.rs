@@ -1,4 +1,4 @@
-use crate::{model::channels::MuteChannelResult, mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, model::channels::MuteChannelResult, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::toggle_mute_notifications::*;

@@ -1,7 +1,7 @@
 use crate::model::events::CommunityEventInternal;
 use candid::Deserialize;
 use serde::Serialize;
-use stable_memory_map::{with_map_mut, CommunityEventKeyPrefix, KeyPrefix};
+use stable_memory_map::{CommunityEventKeyPrefix, KeyPrefix, with_map_mut};
 use types::EventWrapperInternal;
 
 #[derive(Serialize, Deserialize, Default)]

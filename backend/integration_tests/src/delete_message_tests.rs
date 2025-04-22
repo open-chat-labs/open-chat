@@ -1,5 +1,5 @@
 use crate::env::ENV;
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
 use constants::MINUTE_IN_MS;
 use oc_error_codes::OCErrorCode;
 use std::ops::Deref;

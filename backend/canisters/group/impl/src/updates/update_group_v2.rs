@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::updates::update_group_v2::Response::*;
-use crate::{jobs, mutate_state, read_state, run_regular_jobs, Data, RuntimeState};
+use crate::{Data, RuntimeState, jobs, mutate_state, read_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::update_group_v2::*;

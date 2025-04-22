@@ -1,7 +1,7 @@
+use crate::{Data, mutate_state};
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
 use crate::updates::set_community_or_group_verification::set_community_verification_impl;
-use crate::{Data, mutate_state};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use group_index_canister::post_upgrade::Args;

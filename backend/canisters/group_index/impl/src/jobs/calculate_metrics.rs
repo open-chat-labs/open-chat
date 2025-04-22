@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use constants::MINUTE_IN_MS;
 use std::time::Duration;
 use types::Milliseconds;

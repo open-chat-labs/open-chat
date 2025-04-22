@@ -1,7 +1,7 @@
+use crate::RuntimeState;
 use crate::guards::caller_is_deployment_operator;
 use crate::model::translations::DecisionSummary;
 use crate::mutate_state;
-use crate::RuntimeState;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use translations_canister::mark_deployed::{Response::*, *};

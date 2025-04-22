@@ -1,4 +1,4 @@
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use community_canister::video_call_participants::{Response::*, *};
 use oc_error_codes::OCErrorCode;

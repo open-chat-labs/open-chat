@@ -1,7 +1,7 @@
 use ic_cdk::stable::WASM_PAGE_SIZE_IN_BYTES;
+use ic_stable_structures::Memory;
 use ic_stable_structures::reader::{BufferedReader, Reader};
 use ic_stable_structures::writer::{BufferedWriter, Writer};
-use ic_stable_structures::Memory;
 use std::cmp::min;
 use std::io::{Read, Write};
 

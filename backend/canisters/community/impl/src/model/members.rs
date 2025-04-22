@@ -11,8 +11,8 @@ use stable_memory_map::StableMemoryMap;
 use std::collections::btree_map::Entry::Vacant;
 use std::collections::{BTreeMap, BTreeSet};
 use types::{
-    is_default, ChannelId, CommunityMember, CommunityPermissions, CommunityRole, OCResult, PushIfNotContains, TimestampMillis,
-    Timestamped, UserId, UserType, Version,
+    ChannelId, CommunityMember, CommunityPermissions, CommunityRole, OCResult, PushIfNotContains, TimestampMillis, Timestamped,
+    UserId, UserType, Version, is_default,
 };
 
 #[cfg(test)]
@@ -822,8 +822,8 @@ impl From<&CommunityMemberInternal> for CommunityMember {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use ic_stable_structures::DefaultMemoryImpl;
+    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use test_case::test_case;
     use types::CanisterId;
 

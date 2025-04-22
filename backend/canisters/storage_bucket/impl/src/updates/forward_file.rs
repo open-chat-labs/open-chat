@@ -2,7 +2,7 @@ use crate::guards::caller_is_known_user;
 use crate::model::files::ForwardFileResult;
 use crate::model::index_event_batch::EventToSync;
 use crate::model::users::{FileStatusInternal, IndexSyncComplete};
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use rand::Rng;
@@ -18,7 +18,7 @@ fn forward_file_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     let now = state.env.now();
     let canister_id = state.env.canister_id();
-    let file_id_seed: u128 = state.env.rng().gen();
+    let file_id_seed: u128 = state.env.rng().r#gen();
     let accessors = args.accessors.into_iter().collect();
 
     match state

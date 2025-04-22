@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -11,7 +11,7 @@ use rand::Rng;
 use sns_governance_canister::types::manage_neuron::claim_or_refresh::{By, MemoAndController};
 use sns_governance_canister::types::manage_neuron::configure::Operation;
 use sns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command, IncreaseDissolveDelay};
-use sns_governance_canister::types::{manage_neuron_response, ManageNeuron};
+use sns_governance_canister::types::{ManageNeuron, manage_neuron_response};
 use sns_governance_canister_c2c_client::configure_neuron;
 use types::{C2CError, CanisterId, SnsNeuronId};
 
@@ -86,7 +86,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
                 this_canister_id: state.env.canister_id(),
                 user_index_canister_id: state.data.user_index_canister_id,
                 ledger_canister_id: ns.ledger_canister_id(),
-                nonce: state.env.rng().gen(),
+                nonce: state.env.rng().r#gen(),
                 dissolve_delay_seconds: (ns.min_dissolve_delay_to_vote() / 1000) as u32 + 1,
             })
         }

@@ -17,11 +17,7 @@ async fn c2c_vote_on_proposal(args: Args) -> Response {
         sns::vote_on_proposal(args.governance_canister_id, args.proposal_id, args.adopt).await
     };
 
-    if let Err(error) = result {
-        Error(error)
-    } else {
-        Success
-    }
+    if let Err(error) = result { Error(error) } else { Success }
 }
 
 mod nns {

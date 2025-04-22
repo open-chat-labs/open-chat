@@ -1,6 +1,6 @@
 use crate::crypto::process_transaction;
 use crate::guards::caller_is_owner;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, mutate_state, run_regular_jobs};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -9,11 +9,11 @@ use constants::{MEMO_TIP, NANOS_PER_MILLISECOND};
 use oc_error_codes::OCErrorCode;
 use serde::Serialize;
 use types::{
-    icrc1, Achievement, CanisterId, Chat, ChatId, CommunityId, EventIndex, OCResult, PendingCryptoTransaction, TimestampNanos,
-    UserId,
+    Achievement, CanisterId, Chat, ChatId, CommunityId, EventIndex, OCResult, PendingCryptoTransaction, TimestampNanos, UserId,
+    icrc1,
 };
-use user_canister::tip_message::{Response::*, *};
 use user_canister::UserCanisterEvent;
+use user_canister::tip_message::{Response::*, *};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]

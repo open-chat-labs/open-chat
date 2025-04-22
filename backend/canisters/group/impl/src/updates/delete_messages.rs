@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::timer_job_types::HardDeleteMessageContentJob;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, TimerJob};
+use crate::{RuntimeState, TimerJob, mutate_state, read_state, run_regular_jobs};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -81,11 +81,7 @@ fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -
     for message_id in
         results.into_iter().filter_map(
             |(message_id, result)| {
-                if let Ok(sender) = result {
-                    (sender == user_id).then_some(message_id)
-                } else {
-                    None
-                }
+                if let Ok(sender) = result { (sender == user_id).then_some(message_id) } else { None }
             },
         )
     {

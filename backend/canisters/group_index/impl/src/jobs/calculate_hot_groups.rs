@@ -1,5 +1,5 @@
 use crate::model::cached_hot_groups::CachedPublicGroupSummary;
-use crate::{mutate_state, RuntimeState, FIVE_MINUTES_IN_MS};
+use crate::{FIVE_MINUTES_IN_MS, RuntimeState, mutate_state};
 use std::time::Duration;
 use types::{ChatId, Milliseconds};
 use utils::canister_timers::run_now_then_interval;

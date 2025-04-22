@@ -1,5 +1,5 @@
 use crate::guards::caller_is_local_group_index;
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use chat_events::Reader;
 use group_canister::c2c_events_internal::{Response::*, *};

@@ -1,18 +1,18 @@
 use crate::model::referral_codes::{ReferralCode, ReferralCodeError};
-use crate::{mutate_state, RuntimeState, UserEvent, UserIndexEvent, USER_CANISTER_INITIAL_CYCLES_BALANCE};
+use crate::{RuntimeState, USER_CANISTER_INITIAL_CYCLES_BALANCE, UserEvent, UserIndexEvent, mutate_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use constants::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE, USER_LIMIT};
+use constants::{CREATE_CANISTER_CYCLES_FEE, USER_LIMIT, min_cycles_balance};
 use ledger_utils::default_ledger_account;
-use local_user_index_canister::register_user::{Response::*, *};
 use local_user_index_canister::ChildCanisterType;
+use local_user_index_canister::register_user::{Response::*, *};
 use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, MessageContentInitial, TextContent, UserId, UserType};
-use user_canister::init::Args as InitUserCanisterArgs;
 use user_canister::ReferredUserRegistered;
+use user_canister::init::Args as InitUserCanisterArgs;
 use user_index_canister::UserRegistered;
 use utils::canister;
-use utils::text_validation::{validate_username, UsernameValidationError};
+use utils::text_validation::{UsernameValidationError, validate_username};
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
 #[update(candid = true, msgpack = true)]
@@ -111,7 +111,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
                     ReferralCodeError::NotFound => ReferralCodeInvalid,
                     ReferralCodeError::AlreadyClaimed => ReferralCodeAlreadyClaimed,
                     ReferralCodeError::Expired => ReferralCodeExpired,
-                })
+                });
             }
         }
     }

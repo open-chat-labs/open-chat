@@ -1,5 +1,5 @@
 use crate::bots::extract_access_context;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_api_macros::{query, update};
 use canister_tracing_macros::trace;
 use local_user_index_canister::bot_chat_details::{Response::*, *};

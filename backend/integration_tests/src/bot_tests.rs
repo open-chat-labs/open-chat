@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
-use crate::{client, TestEnv, User};
+use crate::{TestEnv, User, client};
 use candid::Principal;
 use jwt::Claims;
 use local_user_index_canister::access_token_v2::{self, BotActionByCommandArgs, BotCommandInitial};

@@ -1,5 +1,5 @@
 use crate::guards::caller_is_platform_moderator;
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use ic_cdk::query;
 use user_index_canister::reported_messages::{Response::*, *};
 

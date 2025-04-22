@@ -1,5 +1,5 @@
 use candid::Principal;
-use ic_ledger_types::{AccountIdentifier, Subaccount, DEFAULT_SUBACCOUNT};
+use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT, Subaccount};
 use sha2::{Digest, Sha256};
 use types::{
     C2CError, CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, TimestampNanos, UserId,

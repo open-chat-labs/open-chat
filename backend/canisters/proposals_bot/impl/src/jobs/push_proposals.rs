@@ -1,9 +1,9 @@
 use crate::model::nervous_systems::ProposalToPush;
-use crate::{generate_message_id, mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, generate_message_id, mutate_state, read_state};
 use chat_events::{MessageContentInternal, ProposalContentInternal};
 use ic_cdk::call::RejectCode;
 use ic_cdk_timers::TimerId;
-use sns_governance_canister::types::{get_proposal_response, ProposalId};
+use sns_governance_canister::types::{ProposalId, get_proposal_response};
 use std::cell::Cell;
 use std::collections::BTreeMap;
 use std::fmt::Debug;

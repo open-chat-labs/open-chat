@@ -1,7 +1,7 @@
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use ic_cdk_timers::TimerId;
-use sns_governance_canister::types::manage_neuron::configure::Operation;
 use sns_governance_canister::types::manage_neuron::IncreaseDissolveDelay;
+use sns_governance_canister::types::manage_neuron::configure::Operation;
 use sns_governance_canister_c2c_client::configure_neuron;
 use std::cell::Cell;
 use std::time::Duration;

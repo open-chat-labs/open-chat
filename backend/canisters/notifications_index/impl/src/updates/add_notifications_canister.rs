@@ -1,5 +1,5 @@
 use crate::guards::caller_is_registry_canister;
-use crate::{mutate_state, read_state, NotificationsCanister, RuntimeState};
+use crate::{NotificationsCanister, RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use notifications_index_canister::add_notifications_canister::{Response::*, *};

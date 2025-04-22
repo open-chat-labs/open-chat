@@ -13,7 +13,7 @@ fn pre_upgrade() {
     info!("Pre-upgrade starting");
 
     let mut state = take_state();
-    state.data.rng_seed = state.env.rng().gen();
+    state.data.rng_seed = state.env.rng().r#gen();
 
     let errors = canister_logger::export_errors();
     let logs = canister_logger::export_logs();

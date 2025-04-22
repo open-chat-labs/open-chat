@@ -8,8 +8,8 @@ use group_community_common::{PaymentRecipient, PendingPayment, PendingPaymentRea
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use oc_error_codes::{OCError, OCErrorCode};
-use sns_governance_canister::types::neuron::DissolveState;
 use sns_governance_canister::types::Neuron;
+use sns_governance_canister::types::neuron::DissolveState;
 use types::{
     AccessGate, AccessGateNonComposite, AccessGateScope, CanisterId, CompositeGate, GateCheckFailedReason, PaymentGate,
     SnsNeuronGate, TimestampMillis, TokenBalanceGate, UserId, VerifiedCredentialGate,

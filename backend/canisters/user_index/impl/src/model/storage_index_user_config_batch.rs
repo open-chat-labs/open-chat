@@ -1,5 +1,5 @@
 use storage_index_canister::add_or_update_users::UserConfig;
-use timer_job_queues::{timer_job_batch, TimerJobItem};
+use timer_job_queues::{TimerJobItem, timer_job_batch};
 use types::CanisterId;
 use utils::canister::should_retry_failed_c2c_call;
 

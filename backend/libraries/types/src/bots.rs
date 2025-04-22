@@ -382,11 +382,7 @@ pub enum BotCommandArgValue {
 
 impl BotCommandArgValue {
     pub fn as_string(&self) -> Option<&str> {
-        if let Self::String(s) = self {
-            Some(s)
-        } else {
-            None
-        }
+        if let Self::String(s) = self { Some(s) } else { None }
     }
 }
 

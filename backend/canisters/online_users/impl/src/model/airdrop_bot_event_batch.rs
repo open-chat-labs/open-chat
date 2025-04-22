@@ -1,5 +1,5 @@
 use airdrop_bot_canister::c2c_online_users::OnlineUsersEvent;
-use timer_job_queues::{timer_job_batch, TimerJobItem};
+use timer_job_queues::{TimerJobItem, timer_job_batch};
 use types::{CanisterId, IdempotentEnvelope};
 use utils::canister::should_retry_failed_c2c_call;
 

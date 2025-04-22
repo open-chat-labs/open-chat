@@ -1,7 +1,7 @@
 use crate::env::Environment;
 use candid::Principal;
-use rand::rngs::StdRng;
 use rand::SeedableRng;
+use rand::rngs::StdRng;
 use types::{CanisterId, Cycles, TimestampNanos};
 
 pub struct TestEnv {

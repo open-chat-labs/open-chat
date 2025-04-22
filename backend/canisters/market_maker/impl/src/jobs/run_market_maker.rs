@@ -1,11 +1,11 @@
 use crate::exchanges::Exchange;
-use crate::{mutate_state, read_state, Config, RuntimeState};
+use crate::{Config, RuntimeState, mutate_state, read_state};
 use constants::MINUTE_IN_MS;
 use itertools::Itertools;
 use market_maker_canister::ExchangeId;
-use std::cmp::{max, min, Reverse};
-use std::collections::btree_map::Entry::Occupied;
+use std::cmp::{Reverse, max, min};
 use std::collections::BTreeMap;
+use std::collections::btree_map::Entry::Occupied;
 use std::time::Duration;
 use tracing::{error, trace};
 use types::{AggregatedOrders, C2CError, CancelOrderRequest, MakeOrderRequest, Milliseconds, Order, OrderType};
@@ -33,11 +33,11 @@ fn get_active_exchanges(state: &RuntimeState) -> Vec<(ExchangeId, Box<dyn Exchan
         .filter(|(_, c)| c.enabled)
         // Exclude exchanges where there are orders in progress, unless those orders have been
         // pending for more than 10 minutes, since realistically that means they have failed.
-        .filter(|(&id, _)| {
+        .filter(|(id, _)| {
             state
                 .data
                 .market_makers_in_progress
-                .get(&id)
+                .get(id)
                 .is_none_or(|ts| now.saturating_sub(*ts) > 10 * MINUTE_IN_MS)
         })
         .filter_map(|(&id, c)| state.get_exchange_client(id).map(|e| (id, e, c.clone())))

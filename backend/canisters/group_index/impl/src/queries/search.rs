@@ -1,4 +1,4 @@
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use group_index_canister::search::{Response::*, *};
 
@@ -114,7 +114,11 @@ mod tests {
             (1, "Sausages", "Sausages, chips, and beans"),
             (2, "Fry-up", "Sausages, chips, and beans"),
             (3, "sAusAges?", "sausages, chips, and beans"),
-            (4, "sausages!!", "sausages, chips, beans, eggs, bacon, hash browns, black-pudding, haggis, mushrooms, buttered toast, fried tomatoes"),
+            (
+                4,
+                "sausages!!",
+                "sausages, chips, beans, eggs, bacon, hash browns, black-pudding, haggis, mushrooms, buttered toast, fried tomatoes",
+            ),
             (5, "Small fry", "Chips, sausages, and beans"),
             (6, "Buffet", "Croissant, yoghurt, cheese slices, baguette"),
             (7, "Small sausages", "Weeners"),

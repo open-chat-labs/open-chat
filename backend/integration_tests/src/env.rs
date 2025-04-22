@@ -1,5 +1,5 @@
-use crate::setup::setup_new_env;
 use crate::TestEnv;
+use crate::setup::setup_new_env;
 use candid::Principal;
 use lazy_static::lazy_static;
 use std::ops::Deref;

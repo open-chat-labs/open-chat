@@ -11,11 +11,7 @@ pub enum SuspensionDuration {
 
 impl From<SuspensionDuration> for Option<Milliseconds> {
     fn from(value: SuspensionDuration) -> Self {
-        if let SuspensionDuration::Duration(duration) = value {
-            Some(duration)
-        } else {
-            None
-        }
+        if let SuspensionDuration::Duration(duration) = value { Some(duration) } else { None }
     }
 }
 

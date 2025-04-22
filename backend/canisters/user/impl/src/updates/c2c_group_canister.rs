@@ -1,9 +1,9 @@
 use crate::guards::caller_is_known_group_canister;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use user_canister::c2c_group_canister::{Response::*, *};
 use user_canister::GroupCanisterEvent;
+use user_canister::c2c_group_canister::{Response::*, *};
 
 #[update(guard = "caller_is_known_group_canister", msgpack = true)]
 #[trace]

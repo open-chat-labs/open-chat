@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
 use rand::RngCore;
 use std::time::Duration;

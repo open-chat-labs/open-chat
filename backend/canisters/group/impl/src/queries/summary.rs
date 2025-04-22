@@ -1,5 +1,5 @@
-use crate::read_state;
 use crate::RuntimeState;
+use crate::read_state;
 use candid::Principal;
 use canister_api_macros::query;
 use group_canister::summary::{Response::*, *};

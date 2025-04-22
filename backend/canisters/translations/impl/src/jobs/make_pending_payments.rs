@@ -1,5 +1,5 @@
 use crate::model::pending_payments_queue::PendingPayment;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use constants::{MEMO_TRANSLATION_PAYMENT, NANOS_PER_MILLISECOND};
 use ic_cdk_timers::TimerId;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
