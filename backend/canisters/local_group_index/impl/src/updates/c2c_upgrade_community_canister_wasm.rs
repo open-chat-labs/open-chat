@@ -1,9 +1,9 @@
 use crate::guards::caller_is_group_index_canister;
-use crate::{mutate_state, read_state, Data, RuntimeState};
+use crate::{Data, RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use local_group_index_canister::c2c_upgrade_community_canister_wasm::*;
 use local_group_index_canister::ChildCanisterType;
+use local_group_index_canister::c2c_upgrade_community_canister_wasm::*;
 use sha256::sha256;
 use tracing::info;
 use types::{BuildVersion, CanisterId, CanisterWasm, ChunkedCanisterWasm, Hash, UpgradeChunkedCanisterWasmResponse::*};

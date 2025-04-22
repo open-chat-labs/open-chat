@@ -1,6 +1,6 @@
 use candid::Principal;
-use rand::rngs::StdRng;
 use rand::Rng;
+use rand::rngs::StdRng;
 use sha256::sha256;
 use types::{CanisterId, Cycles, Hash, TimestampMillis, TimestampNanos};
 
@@ -22,7 +22,7 @@ pub trait Environment {
     fn entropy(&mut self) -> Hash {
         let mut bytes = Vec::new();
 
-        bytes.extend(self.rng().gen::<Hash>());
+        bytes.extend(self.rng().r#gen::<Hash>());
         bytes.extend(self.canister_id().as_slice());
         bytes.extend(self.caller().as_slice());
         bytes.extend(self.now_nanos().to_ne_bytes());

@@ -7,7 +7,7 @@ use proposals_bot_canister::ProposalToSubmit;
 use serde::{Deserialize, Serialize};
 use sns_governance_canister::types::manage_neuron::claim_or_refresh::By;
 use sns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
-use sns_governance_canister::types::{manage_neuron_response, Empty, ManageNeuron};
+use sns_governance_canister::types::{Empty, ManageNeuron, manage_neuron_response};
 use tracing::error;
 use types::{CanisterId, NnsNeuronId, ProposalId, SnsNeuronId, UserId};
 

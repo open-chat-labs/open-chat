@@ -5,7 +5,7 @@ use crate::token_swaps::icpswap::ICPSwapClient;
 use crate::token_swaps::kongswap::KongSwapClient;
 use crate::token_swaps::sonic::SonicClient;
 use crate::token_swaps::swap_client::SwapClient;
-use crate::{mutate_state, read_state, run_regular_jobs, Data, RuntimeState};
+use crate::{Data, RuntimeState, mutate_state, read_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{MEMO_SWAP, MEMO_SWAP_APPROVAL, NANOS_PER_MILLISECOND, SECOND_IN_MS};

@@ -1,7 +1,7 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_video_call_operator;
 use crate::timer_job_types::{MarkVideoCallEndedJob, RemoveExpiredEventsJob};
-use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
+use crate::{RuntimeState, TimerJob, mutate_state, run_regular_jobs};
 use canister_tracing_macros::trace;
 use chat_events::{CallParticipantInternal, MessageContentInternal, VideoCallContentInternal};
 use constants::HOUR_IN_MS;

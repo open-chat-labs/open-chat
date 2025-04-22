@@ -1,4 +1,4 @@
-use crate::{model::moderation_flags::ModerationFlags, mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, model::moderation_flags::ModerationFlags, mutate_state, read_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;

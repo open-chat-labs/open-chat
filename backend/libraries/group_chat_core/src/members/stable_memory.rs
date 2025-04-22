@@ -2,7 +2,7 @@ use crate::{GroupMemberInternal, GroupMemberStableStorage};
 use candid::{Deserialize, Principal};
 use serde::Serialize;
 use serde_bytes::ByteBuf;
-use stable_memory_map::{with_map, with_map_mut, Key, KeyPrefix, StableMemoryMap, UserIdKeyPrefix};
+use stable_memory_map::{Key, KeyPrefix, StableMemoryMap, UserIdKeyPrefix, with_map, with_map_mut};
 use types::{MultiUserChat, UserId};
 
 #[derive(Serialize, Deserialize)]

@@ -1,5 +1,5 @@
 use crate::guards::caller_is_proposals_bot;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::import_group::{Response::*, *};

@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{icrc1::Account, CanisterId};
+use types::{CanisterId, icrc1::Account};
 
 #[ts_export(proposals_bot)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

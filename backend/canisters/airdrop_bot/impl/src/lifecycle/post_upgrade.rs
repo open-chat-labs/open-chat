@@ -1,6 +1,6 @@
+use crate::Data;
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::Data;
 use airdrop_bot_canister::post_upgrade::Args;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;

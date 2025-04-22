@@ -1,5 +1,5 @@
 use crate::guards::caller_is_user_index_canister;
-use crate::{jobs, mutate_state, RuntimeState, UserEvent, UserToDelete};
+use crate::{RuntimeState, UserEvent, UserToDelete, jobs, mutate_state};
 use canister_api_macros::update;
 use canister_time::now_millis;
 use canister_tracing_macros::trace;
@@ -11,7 +11,7 @@ use p256_key_pair::P256KeyPair;
 use std::cell::LazyCell;
 use std::cmp::min;
 use tracing::info;
-use types::{c2c_uninstall_bot, TimestampMillis};
+use types::{TimestampMillis, c2c_uninstall_bot};
 use user_canister::{
     DiamondMembershipPaymentReceived, DisplayNameChanged, ExternalAchievementAwarded, OpenChatBotMessageV2,
     PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserJoinedCommunityOrChannel, UserJoinedGroup,

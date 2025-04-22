@@ -1,7 +1,7 @@
 use crate::guards::caller_is_local_user_index;
 use crate::{
-    activity_notifications::handle_activity_notification, model::events::CommunityEventInternal, mutate_state,
-    run_regular_jobs, RuntimeState,
+    RuntimeState, activity_notifications::handle_activity_notification, model::events::CommunityEventInternal, mutate_state,
+    run_regular_jobs,
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;

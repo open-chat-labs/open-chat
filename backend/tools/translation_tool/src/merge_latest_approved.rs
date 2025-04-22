@@ -4,7 +4,7 @@ use serde::Serialize;
 use serde_json::{Map, Value};
 use std::{
     cmp::Ordering,
-    collections::{hash_map::Entry, HashMap},
+    collections::{HashMap, hash_map::Entry},
     error::Error,
     fs,
 };

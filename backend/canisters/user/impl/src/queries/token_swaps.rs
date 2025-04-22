@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use types::Timestamped;
 use user_canister::token_swaps::{Response::*, *};

@@ -1,5 +1,5 @@
-use crate::lifecycle::{init_cycles_dispenser_client, init_env, init_state};
 use crate::Data;
+use crate::lifecycle::{init_cycles_dispenser_client, init_env, init_state};
 use canister_tracing_macros::trace;
 use ic_cdk::init;
 use storage_index_canister::init::Args;

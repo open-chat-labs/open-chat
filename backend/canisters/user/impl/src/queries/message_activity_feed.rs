@@ -1,5 +1,5 @@
 use crate::read_state;
-use crate::{guards::caller_is_owner, RuntimeState};
+use crate::{RuntimeState, guards::caller_is_owner};
 use canister_api_macros::query;
 use user_canister::message_activity_feed::{Response::*, *};
 

@@ -1,4 +1,4 @@
-use crate::{mutate_state, LocalUserIndexEvent, RuntimeState};
+use crate::{LocalUserIndexEvent, RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;

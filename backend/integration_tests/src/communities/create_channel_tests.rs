@@ -1,5 +1,5 @@
 use crate::env::ENV;
-use crate::{client, CanisterIds, TestEnv, User};
+use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
@@ -27,10 +27,12 @@ fn create_channel_succeeds(is_public: bool) {
     let summary = client::community::happy_path::summary(env, user.principal, community_id);
 
     assert_eq!(summary.channels.len(), 2);
-    assert!(summary
-        .channels
-        .iter()
-        .any(|c| c.channel_id == channel_id && c.is_public == is_public && c.name == channel_name));
+    assert!(
+        summary
+            .channels
+            .iter()
+            .any(|c| c.channel_id == channel_id && c.is_public == is_public && c.name == channel_name)
+    );
 }
 
 #[test]

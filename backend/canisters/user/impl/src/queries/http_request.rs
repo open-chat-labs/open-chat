@@ -1,6 +1,6 @@
 use crate::model::streak::Streak;
-use crate::{read_state, RuntimeState};
-use http_request::{build_json_response, encode_logs, extract_route, get_document, Route};
+use crate::{RuntimeState, read_state};
+use http_request::{Route, build_json_response, encode_logs, extract_route, get_document};
 use ic_cdk::query;
 use itertools::Itertools;
 use types::{ChitEarnedReason, HttpRequest, HttpResponse, TimestampMillis};

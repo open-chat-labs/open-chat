@@ -1,5 +1,5 @@
-use crate::{mutate_state, read_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE};
-use constants::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
+use crate::{GROUP_CANISTER_INITIAL_CYCLES_BALANCE, RuntimeState, mutate_state, read_state};
+use constants::{CREATE_CANISTER_CYCLES_FEE, min_cycles_balance};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;

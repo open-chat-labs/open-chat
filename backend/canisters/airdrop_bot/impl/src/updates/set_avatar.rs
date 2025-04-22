@@ -1,6 +1,6 @@
 use crate::guards::caller_is_admin;
 use crate::updates::set_avatar::Response::*;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use airdrop_bot_canister::set_avatar::*;
 use canister_tracing_macros::trace;
 use ic_cdk::update;

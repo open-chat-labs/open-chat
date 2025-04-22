@@ -1,4 +1,4 @@
-use crate::{guards::caller_is_governance_principal, mutate_state, RuntimeState};
+use crate::{RuntimeState, guards::caller_is_governance_principal, mutate_state};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use group_index_canister::revoke_community_verification::{Response::*, *};

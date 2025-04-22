@@ -1,11 +1,11 @@
 use crate::guards::caller_is_registry_canister;
 use crate::updates::upgrade_community_canister_wasm::upgrade_community_wasm_in_local_group_index;
 use crate::updates::upgrade_group_canister_wasm::upgrade_group_wasm_in_local_group_index;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use group_index_canister::add_local_group_index_canister::{Response::*, *};
 use group_index_canister::ChildCanisterType;
+use group_index_canister::add_local_group_index_canister::{Response::*, *};
 use ic_cdk::management_canister::CanisterInfoArgs;
 use tracing::info;
 use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
@@ -119,9 +119,5 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
 }
 
 fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut RuntimeState) -> Response {
-    if state.data.local_index_map.add_index(canister_id, wasm_version) {
-        Success
-    } else {
-        AlreadyAdded
-    }
+    if state.data.local_index_map.add_index(canister_id, wasm_version) { Success } else { AlreadyAdded }
 }

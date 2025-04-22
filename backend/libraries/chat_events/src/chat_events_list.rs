@@ -627,8 +627,8 @@ mod tests {
     use crate::{ChatEvents, MessageContentInternal, PushMessageArgs, TextContentInternal};
     use candid::Principal;
     use event_store_producer::NullRuntime;
-    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use ic_stable_structures::DefaultMemoryImpl;
+    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use rand::random;
     use std::mem::size_of;
     use types::{EventsTimeToLiveUpdated, Milliseconds};

@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use group_index_canister::ChildCanisterType;
 use ic_cdk::management_canister::CanisterInstallMode;
 use ic_cdk_timers::TimerId;
@@ -6,7 +6,7 @@ use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
 use types::{BuildVersion, CanisterId};
-use utils::canister::{install, FailedUpgrade, WasmToInstall};
+use utils::canister::{FailedUpgrade, WasmToInstall, install};
 
 type CanisterToUpgrade = utils::canister::CanisterToInstall<local_group_index_canister::post_upgrade::Args>;
 

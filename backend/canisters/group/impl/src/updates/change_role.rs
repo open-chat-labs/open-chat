@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{jobs, mutate_state, read_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, jobs, mutate_state, read_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::change_role::*;

@@ -1,4 +1,4 @@
-use crate::memory::{get_last_online_dates_memory, Memory};
+use crate::memory::{Memory, get_last_online_dates_memory};
 use candid::Principal;
 use ic_stable_structures::StableBTreeMap;
 use serde::{Deserialize, Serialize};

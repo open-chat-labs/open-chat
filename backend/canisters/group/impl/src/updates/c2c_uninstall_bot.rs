@@ -1,11 +1,11 @@
 use crate::guards::caller_is_local_user_index;
-use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
 use oc_error_codes::OCErrorCode;
-use types::c2c_uninstall_bot::*;
 use types::OCResult;
+use types::c2c_uninstall_bot::*;
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]

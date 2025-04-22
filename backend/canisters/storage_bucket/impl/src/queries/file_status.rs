@@ -1,6 +1,6 @@
 use crate::guards::caller_is_known_user;
 use crate::model::users::{FileStatusInternal, IndexSyncComplete};
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use canister_tracing_macros::trace;
 use storage_bucket_canister::file_status::{Response::*, *};

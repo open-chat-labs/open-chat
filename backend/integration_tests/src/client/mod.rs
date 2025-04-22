@@ -1,11 +1,11 @@
 #![allow(dead_code)]
 use crate::utils::tick_many;
-use crate::{CanisterIds, User, T};
+use crate::{CanisterIds, T, User};
 use candid::{CandidType, Principal};
 use pocket_ic::{PocketIc, RejectResponse};
 use rand::random;
-use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 use std::time::Duration;
 use testing::rng::random_internet_identity_principal;
 use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration, SignedDelegation};

@@ -3,7 +3,7 @@ use candid::Principal;
 use escrow_canister::{SwapStatus, SwapStatusAccepted, SwapStatusCancelled, SwapStatusCompleted, SwapStatusExpired};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use types::{icrc1::CompletedCryptoTransaction, CanisterId, P2PSwapLocation, TimestampMillis, TokenInfo, UserId};
+use types::{CanisterId, P2PSwapLocation, TimestampMillis, TokenInfo, UserId, icrc1::CompletedCryptoTransaction};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Swaps {

@@ -1,7 +1,7 @@
 use crate::client::user_index;
 use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
-use crate::{client, CanisterIds, TestEnv, User};
+use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use event_store_canister::{Milliseconds, TimestampMillis};
 use pocket_ic::PocketIc;

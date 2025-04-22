@@ -1,7 +1,7 @@
 use crate::model::community::Community;
 use serde::{Deserialize, Serialize};
-use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
+use std::collections::hash_map::Entry::{Occupied, Vacant};
 use types::{CanisterId, CommunityId, TimestampMillis};
 
 #[derive(Serialize, Deserialize, Default)]

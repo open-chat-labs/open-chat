@@ -1,5 +1,5 @@
 use crate::guards::caller_is_online_users_canister;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use airdrop_bot_canister::c2c_online_users::{Response::*, *};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;

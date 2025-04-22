@@ -1,5 +1,5 @@
 use crate::guards::caller_is_user_index_canister;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_tracing_macros::trace;
 use ic_cdk::update;
 use online_users_canister::c2c_remove_user::{Response::*, *};

@@ -1,5 +1,5 @@
 use crate::model::index_event_batch::EventToSync;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;

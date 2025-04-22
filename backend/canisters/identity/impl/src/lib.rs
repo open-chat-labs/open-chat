@@ -5,10 +5,10 @@ use crate::model::user_principals::UserPrincipals;
 use crate::model::webauthn_keys::WebAuthnKeys;
 use candid::Principal;
 use canister_state_macros::canister_state;
-use ic_canister_sig_creation::signature_map::{SignatureMap, LABEL_SIG};
 use ic_canister_sig_creation::CanisterSigPublicKey;
+use ic_canister_sig_creation::signature_map::{LABEL_SIG, SignatureMap};
 use ic_cdk::api::certified_data_set;
-use identity_canister::{WebAuthnKey, WEBAUTHN_ORIGINATING_CANISTER};
+use identity_canister::{WEBAUTHN_ORIGINATING_CANISTER, WebAuthnKey};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use sha256::sha256;
@@ -224,11 +224,7 @@ impl Data {
 
 fn check_public_key(caller: Principal, public_key: &[u8]) -> Result<(), String> {
     let expected_caller = Principal::self_authenticating(public_key);
-    if caller == expected_caller {
-        Ok(())
-    } else {
-        Err("PublicKey does not match caller".to_string())
-    }
+    if caller == expected_caller { Ok(()) } else { Err("PublicKey does not match caller".to_string()) }
 }
 
 fn extract_originating_canister(public_key: &[u8]) -> Result<CanisterId, String> {

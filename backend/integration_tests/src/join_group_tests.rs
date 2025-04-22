@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::utils::now_millis;
-use crate::{client, CanisterIds, TestEnv, User};
+use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;

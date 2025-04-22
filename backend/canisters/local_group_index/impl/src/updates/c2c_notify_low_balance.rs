@@ -1,5 +1,5 @@
 use crate::guards::caller_is_local_group_or_community_canister;
-use crate::{mutate_state, read_state, RuntimeState, COMMUNITY_CANISTER_TOP_UP_AMOUNT, GROUP_CANISTER_TOP_UP_AMOUNT};
+use crate::{COMMUNITY_CANISTER_TOP_UP_AMOUNT, GROUP_CANISTER_TOP_UP_AMOUNT, RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::min_cycles_balance;

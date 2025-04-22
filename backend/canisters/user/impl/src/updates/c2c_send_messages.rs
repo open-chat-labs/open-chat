@@ -1,5 +1,5 @@
 use crate::updates::send_message::register_timer_jobs;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal, ValidateNewMessageContentResult};
 use ic_cdk::update;
@@ -21,7 +21,7 @@ async fn c2c_handle_bot_messages(
     let (sender, sender_user_type) = match sender_status {
         SenderStatus::Ok(user_id, user_type) => (user_id, user_type),
         SenderStatus::Blocked => {
-            return user_canister::c2c_handle_bot_messages::Response::Error(OCErrorCode::InitiatorBlocked.into())
+            return user_canister::c2c_handle_bot_messages::Response::Error(OCErrorCode::InitiatorBlocked.into());
         }
         SenderStatus::UnknownUser(local_user_index_canister_id, user_id) => {
             let user_type = match verify_user(local_user_index_canister_id, user_id).await {
@@ -147,7 +147,7 @@ pub(crate) fn handle_message_impl(
     let chat = state
         .data
         .direct_chats
-        .get_or_create(args.sender, args.sender_user_type, || state.env.rng().gen(), args.now);
+        .get_or_create(args.sender, args.sender_user_type, || state.env.rng().r#gen(), args.now);
 
     let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
 
@@ -157,7 +157,7 @@ pub(crate) fn handle_message_impl(
         None
     };
 
-    let message_id = args.message_id.unwrap_or_else(|| state.env.rng().gen());
+    let message_id = args.message_id.unwrap_or_else(|| state.env.rng().r#gen());
 
     let push_message_args = PushMessageArgs {
         thread_root_message_index,

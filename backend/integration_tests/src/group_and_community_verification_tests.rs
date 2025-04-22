@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
 use candid::Principal;
 use group_index_canister::{revoke_community_verification, revoke_group_verification, set_group_verification};
 use pocket_ic::PocketIc;

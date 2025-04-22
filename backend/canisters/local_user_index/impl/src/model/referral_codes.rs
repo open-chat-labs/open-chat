@@ -1,6 +1,6 @@
 use candid::{Deserialize, Principal};
 use serde::Serialize;
-use std::collections::{hash_map::Entry, HashMap};
+use std::collections::{HashMap, hash_map::Entry};
 use types::{ReferralType, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Clone)]

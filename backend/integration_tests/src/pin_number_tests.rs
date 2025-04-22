@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::utils::now_nanos;
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
 use constants::{ICP_SYMBOL, ICP_TRANSFER_FEE, MINUTE_IN_MS};
 use ledger_utils::create_pending_transaction;
 use oc_error_codes::OCErrorCode;

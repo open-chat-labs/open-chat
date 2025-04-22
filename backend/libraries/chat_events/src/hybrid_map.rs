@@ -3,7 +3,7 @@ use crate::{ChatEventInternal, EventsMap};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::ops::RangeBounds;
-use types::{Chat, EventIndex, EventWrapperInternal, MessageIndex, MAX_EVENT_INDEX, MIN_EVENT_INDEX};
+use types::{Chat, EventIndex, EventWrapperInternal, MAX_EVENT_INDEX, MIN_EVENT_INDEX, MessageIndex};
 
 #[cfg(test)]
 thread_local! {

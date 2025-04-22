@@ -1,5 +1,5 @@
 use crate::guards::caller_is_push_service;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_tracing_macros::trace;
 use ic_cdk::update;
 use notifications_canister::remove_notifications::{Response::*, *};

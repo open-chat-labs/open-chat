@@ -1,5 +1,5 @@
 use crate::guards::caller_is_registry_canister;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use event_relay_canister::authorize_principals::{Response::*, *};

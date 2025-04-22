@@ -1,5 +1,5 @@
 use crate::env::ENV;
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
 use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
 use testing::rng::{random_principal, random_string};

@@ -1,5 +1,5 @@
-use crate::guards::caller_is_deployment_operator;
 use crate::RuntimeState;
+use crate::guards::caller_is_deployment_operator;
 use crate::{model::translations::TranslationStatus, read_state};
 use canister_api_macros::query;
 use canister_tracing_macros::trace;

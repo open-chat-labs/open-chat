@@ -1,5 +1,5 @@
 use crate::jobs::update_proposals;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use ic_cdk_timers::TimerId;
 use nns_governance_canister::types::ListProposalInfo;
 use sns_governance_canister::types::ListProposals;

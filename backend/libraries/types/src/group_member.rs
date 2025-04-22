@@ -1,6 +1,6 @@
-use crate::group_roles::GroupRole;
 use crate::TimestampMillis;
 use crate::UserId;
+use crate::group_roles::GroupRole;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;

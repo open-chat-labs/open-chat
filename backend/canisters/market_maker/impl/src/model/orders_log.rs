@@ -1,4 +1,4 @@
-use crate::memory::{get_orders_log_data_memory, get_orders_log_index_memory, Memory};
+use crate::memory::{Memory, get_orders_log_data_memory, get_orders_log_index_memory};
 use ic_stable_structures::storable::Bound;
 use ic_stable_structures::{StableLog, Storable};
 use market_maker_canister::ExchangeId;

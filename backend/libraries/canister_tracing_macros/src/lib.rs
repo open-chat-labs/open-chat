@@ -1,7 +1,7 @@
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
 use quote::{format_ident, quote};
-use syn::{parse_macro_input, FnArg, ItemFn, Pat, PatIdent, PatType, Signature};
+use syn::{FnArg, ItemFn, Pat, PatIdent, PatType, Signature, parse_macro_input};
 
 #[proc_macro_attribute]
 pub fn trace(_: TokenStream, item: TokenStream) -> TokenStream {

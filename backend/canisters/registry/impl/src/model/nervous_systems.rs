@@ -1,7 +1,7 @@
 use registry_canister::NervousSystemDetails;
 use serde::{Deserialize, Serialize};
-use sns_governance_canister::types::governance::SnsMetadata;
 use sns_governance_canister::types::NervousSystemParameters;
+use sns_governance_canister::types::governance::SnsMetadata;
 use types::{CanisterId, Milliseconds, TimestampMillis};
 
 #[derive(Serialize, Deserialize, Default)]

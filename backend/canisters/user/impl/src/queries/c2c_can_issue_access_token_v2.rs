@@ -1,6 +1,6 @@
+use crate::RuntimeState;
 use crate::guards::caller_is_local_user_index;
 use crate::read_state;
-use crate::RuntimeState;
 use canister_api_macros::query;
 use types::c2c_can_issue_access_token::AccessTypeArgs;
 use user_canister::c2c_can_issue_access_token_v2::*;

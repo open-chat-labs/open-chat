@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{icrc1::Account, CanisterId, Milliseconds, PinNumberWrapper, UnitResult};
+use types::{CanisterId, Milliseconds, PinNumberWrapper, UnitResult, icrc1::Account};
 
 #[ts_export(user, approve_transfer)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]

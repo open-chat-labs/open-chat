@@ -1,4 +1,4 @@
-use canister_agent_utils::{build_ic_agent, get_canister_wasm, CanisterName};
+use canister_agent_utils::{CanisterName, build_ic_agent, get_canister_wasm};
 use ic_agent::Identity;
 use types::{BuildVersion, CanisterId};
 

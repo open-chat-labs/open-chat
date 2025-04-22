@@ -1,19 +1,19 @@
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::query;
 use canister_tracing_macros::trace;
 use community_canister::c2c_can_issue_access_token;
 use jwt::Claims;
 use local_user_index_canister::access_token_v2::{self, Response::*, *};
-use rand::rngs::StdRng;
 use rand::SeedableRng;
+use rand::rngs::StdRng;
 use serde::Serialize;
 use types::c2c_can_issue_access_token::{
     AccessTypeArgs, BotActionByApiKeyArgs, BotActionByCommandArgs, JoinVideoCallArgs, MarkVideoCallAsEndedArgs,
     StartVideoCallArgs,
 };
 use types::{
-    c2c_bot_api_key, AccessTokenScope, BotActionByApiKeyClaims, BotActionByCommandClaims, BotApiKeyToken, BotCommand,
-    BotCommandArg, BotCommandArgValue, BotPermissions, Chat, GroupRole, JoinOrEndVideoCallClaims, StartVideoCallClaims,
+    AccessTokenScope, BotActionByApiKeyClaims, BotActionByCommandClaims, BotApiKeyToken, BotCommand, BotCommandArg,
+    BotCommandArgValue, BotPermissions, Chat, GroupRole, JoinOrEndVideoCallClaims, StartVideoCallClaims, c2c_bot_api_key,
 };
 use utils::base64;
 

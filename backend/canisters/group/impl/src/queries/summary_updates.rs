@@ -1,10 +1,10 @@
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use candid::Principal;
 use canister_api_macros::query;
 use group_canister::summary_updates::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use types::{
-    GroupCanisterGroupChatSummaryUpdates, GroupMembershipUpdates, OptionUpdate, TimestampMillis, MAX_THREADS_IN_SUMMARY,
+    GroupCanisterGroupChatSummaryUpdates, GroupMembershipUpdates, MAX_THREADS_IN_SUMMARY, OptionUpdate, TimestampMillis,
 };
 
 #[query(candid = true, msgpack = true)]

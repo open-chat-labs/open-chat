@@ -1,5 +1,5 @@
 use crate::guards::caller_is_openchat_user;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_invite_users_to_channel;

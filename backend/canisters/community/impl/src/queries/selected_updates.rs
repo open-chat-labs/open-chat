@@ -1,4 +1,4 @@
-use crate::{model::members::CommunityMembers, read_state, RuntimeState};
+use crate::{RuntimeState, model::members::CommunityMembers, read_state};
 use canister_api_macros::query;
 use community_canister::selected_updates_v2::{Response::*, *};
 use group_community_common::MemberUpdate;

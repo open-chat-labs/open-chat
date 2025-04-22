@@ -1,14 +1,14 @@
 use crate::env::ENV;
 use crate::utils::{now_millis, now_nanos, tick_many};
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
 use constants::{HOUR_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE, MINUTE_IN_MS, PRIZE_FEE_PERCENT};
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    icrc1, ChatEvent, CryptoTransaction, EventIndex, MessageContent, MessageContentInitial, OptionUpdate,
-    PendingCryptoTransaction, PrizeContentInitial,
+    ChatEvent, CryptoTransaction, EventIndex, MessageContent, MessageContentInitial, OptionUpdate, PendingCryptoTransaction,
+    PrizeContentInitial, icrc1,
 };
 
 #[test]

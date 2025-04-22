@@ -1,9 +1,8 @@
 use p256::pkcs8::DecodePrivateKey;
 use p256::{
-    ecdsa,
-    elliptic_curve::{rand_core::CryptoRngCore, subtle::CtOption, NonZeroScalar},
+    NistP256, ecdsa,
+    elliptic_curve::{NonZeroScalar, rand_core::CryptoRngCore, subtle::CtOption},
     pkcs8::{EncodePrivateKey, EncodePublicKey},
-    NistP256,
 };
 use serde::{Deserialize, Serialize};
 use std::error::Error;
