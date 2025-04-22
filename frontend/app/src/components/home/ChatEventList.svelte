@@ -721,15 +721,6 @@
             ui.eventListScrolling = false;
         }, delay);
     }
-
-    // function setFocusMessageIndex(messageIndex: number | undefined) {
-    //     focusIndex = messageIndex;
-    //     // if (threadRootEvent === undefined) {
-    //     //     client.setFocusMessageIndex(context, messageIndex);
-    //     // } else {
-    //     //     client.setFocusThreadMessageIndex(context, messageIndex);
-    //     // }
-    // }
 </script>
 
 {#if floatingTimestamp !== undefined && labelObserver !== undefined}
