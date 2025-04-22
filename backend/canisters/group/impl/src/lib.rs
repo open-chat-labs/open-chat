@@ -16,7 +16,7 @@ use group_community_common::{
     Achievements, ExpiringMemberActions, ExpiringMembers, PaymentReceipts, PaymentRecipient, PendingPayment,
     PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
-use installed_bots::{BotApiKeys, InstalledBots};
+use installed_bots::{BotApiKeys, InstalledBots, Webhooks};
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use model::user_event_batch::UserEventBatch;
 use msgpack::serialize_then_unwrap;
@@ -506,6 +506,8 @@ struct Data {
     pub bot_api_keys: BotApiKeys,
     idempotency_checker: IdempotencyChecker,
     notifications_queue: BatchedTimerJobQueue<NotificationsBatch>,
+    #[serde(default)]
+    webhooks: Webhooks,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -607,6 +609,7 @@ impl Data {
             verified: Timestamped::default(),
             bots: InstalledBots::default(),
             bot_api_keys: BotApiKeys::default(),
+            webhooks: Webhooks::default(),
             idempotency_checker: IdempotencyChecker::default(),
             notifications_queue: BatchedTimerJobQueue::new(
                 NotificationPusherState {

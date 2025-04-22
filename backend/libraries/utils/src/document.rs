@@ -1,5 +1,5 @@
 use dataurl::DataUrl;
-use sha256::sha256;
+use twox_hash::xxhash3_128::Hasher;
 use types::{Document, FieldTooLongResult};
 
 const MAX_AVATAR_SIZE: u32 = 1024 * 800; // 800KB
@@ -25,13 +25,11 @@ pub fn validate_document(avatar: Option<&Document>, max_size: u32) -> Result<(),
     }
 }
 
-pub fn try_parse_data_url(data_url: &str) -> Option<Document> {
-    let url = DataUrl::parse(data_url).ok()?;
-    let id = u128::from_be_bytes(sha256(data_url.as_bytes())[..16].try_into().unwrap());
+pub fn try_parse_data_url(data_url: &str) -> Result<Document, String> {
+    let url = DataUrl::parse(&data_url).map_err(|err| format!("Invalid data URL: {:?}", err))?;
+    let mime_type = url.get_media_type().to_string();
+    let data = url.get_data().to_vec();
+    let id = Hasher::oneshot(&data);
 
-    Some(Document {
-        id,
-        mime_type: url.get_media_type().to_string(),
-        data: url.get_data().to_vec(),
-    })
+    Ok(Document { id, mime_type, data })
 }

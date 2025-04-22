@@ -28,4 +28,5 @@ sha256 = { path = "../sha256" }
 sha3 = { workspace = true }
 time = { workspace = true }
 tracing = { workspace = true }
+twox-hash = { workspace = true }
 types = { path = "../types" }

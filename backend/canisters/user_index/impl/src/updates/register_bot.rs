@@ -44,10 +44,8 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let avatar = if let Some(data_url) = args.avatar.as_ref() {
         match try_parse_data_url(data_url) {
-            Some(a) => Some(a),
-            None => {
-                return InvalidRequest("invalid avatar".to_string());
-            }
+            Ok(a) => Some(a),
+            Err(e) => return InvalidRequest(e),
         }
     } else {
         None
