@@ -5,8 +5,10 @@ use crate::{Data, mutate_state};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use group_index_canister::post_upgrade::Args;
+use ic_cdk::management_canister::{CanisterSettings, LogVisibility, UpdateSettingsArgs};
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
+use std::time::Duration;
 use tracing::info;
 use types::CanisterId;
 use utils::cycles::init_cycles_dispenser_client;
@@ -31,7 +33,21 @@ fn post_upgrade(args: Args) {
     info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");
 
     if !test_mode {
-        mark_jade8_community_verified();
+        ic_cdk_timers::set_timer(Duration::ZERO, || {
+            ic_cdk::futures::spawn(async move {
+                ic_cdk::management_canister::update_settings(&UpdateSettingsArgs {
+                    canister_id: ic_cdk::api::canister_self(),
+                    settings: CanisterSettings {
+                        log_visibility: Some(LogVisibility::Public),
+                        ..Default::default()
+                    },
+                })
+                .await
+                .unwrap();
+
+                mark_jade8_community_verified();
+            })
+        });
     }
 }
 
