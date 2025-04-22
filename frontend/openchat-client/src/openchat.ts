@@ -2861,12 +2861,16 @@ export class OpenChat {
         }
     }
 
-    openThreadFromMessageIndex(_chatId: ChatIdentifier, messageIndex: number): void {
+    openThreadFromMessageIndex(
+        _chatId: ChatIdentifier,
+        messageIndex: number,
+        threadMessageIndex?: number,
+    ): void {
         const event = this.#liveState.events.find(
             (ev) => ev.event.kind === "message" && ev.event.messageIndex === messageIndex,
         ) as EventWrapper<Message> | undefined;
         if (event !== undefined) {
-            this.openThread(event, event.event.thread === undefined);
+            this.openThread(event, event.event.thread === undefined, threadMessageIndex);
         }
     }
 
@@ -2902,15 +2906,6 @@ export class OpenChat {
             }
             publish("threadSelected", { threadRootEvent, initiating });
         }
-    }
-
-    closeThread(): void {
-        selectedMessageContext.update((context) => {
-            if (context) {
-                return { chatId: context.chatId };
-            }
-        });
-        publish("threadClosed");
     }
 
     clearThreadEvents(): void {

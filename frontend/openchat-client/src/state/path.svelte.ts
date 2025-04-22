@@ -1,6 +1,12 @@
+import { dequal } from "dequal";
 import "page";
+import { SvelteURLSearchParams } from "svelte/reactivity";
 
 const noScope: NullScope = { kind: "none" };
+
+function routesAreEqual(r1: RouteParams, r2: RouteParams) {
+    return dequal(r1, r2);
+}
 
 export class PathState {
     #notFound = $state<boolean>(false);
@@ -9,8 +15,8 @@ export class PathState {
     #location = $derived(this.#pathContextStore ? this.#pathContextStore.routePath : "");
     #querystring = $derived(
         this.#pathContextStore
-            ? new URLSearchParams(this.#pathContextStore.querystring)
-            : new URLSearchParams(),
+            ? new SvelteURLSearchParams(this.#pathContextStore.querystring)
+            : new SvelteURLSearchParams(),
     );
     #route = $state<RouteParams>({ scope: noScope, kind: "not_found_route" });
     #querystringCode = $derived(this.#querystring.get("code"));
@@ -18,6 +24,9 @@ export class PathState {
     #routeKind = $derived(this.#route.kind);
     #messageIndex = $derived(
         this.hasMessageIndex(this.#route) ? this.#route.messageIndex : undefined,
+    );
+    #threadMessageIndex = $derived(
+        this.hasMessageIndex(this.#route) ? this.#route.threadMessageIndex : undefined,
     );
     #threadOpen = $derived(
         (this.#route.kind === "global_chat_selected_route" ||
@@ -34,6 +43,9 @@ export class PathState {
     }
     get messageIndex() {
         return this.#messageIndex;
+    }
+    get threadMessageIndex() {
+        return this.#threadMessageIndex;
     }
     get querystring(): URLSearchParams {
         return this.#querystring;
@@ -63,7 +75,9 @@ export class PathState {
         return this.#querystringReferralCode;
     }
     setRouteParams(ctx: PageJS.Context, p: RouteParams) {
-        this.#route = p;
+        if (!routesAreEqual(this.#route, p)) {
+            this.#route = p;
+        }
         this.#pathContextStore = ctx;
         this.#notFound = false;
     }

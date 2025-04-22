@@ -3,6 +3,7 @@ import { untrack } from "svelte";
 import type { OpenChat } from "./openchat";
 import { app } from "./state/app.svelte";
 import { pathState } from "./state/path.svelte";
+import { ui } from "./state/ui.svelte";
 import { chatListScopeStore } from "./stores";
 
 function onSelectedCommunityChanged(client: OpenChat) {
@@ -64,9 +65,11 @@ function onSelectedMessageChanged(client: OpenChat) {
     });
 }
 
-function onSelectedThreadChanged(client: OpenChat) {
+function onThreadClosed() {
     $effect(() => {
-        // this is where we control opening and closing threads and loading the corresponding events
+        if (!pathState.threadOpen) {
+            ui.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
+        }
     });
 }
 
@@ -81,8 +84,9 @@ function onThreadStateChanged(client: OpenChat) {
         ) {
             const chatId = app.selectedChatId;
             const idx = pathState.messageIndex;
+            const threadIdx = pathState.threadMessageIndex;
             untrack(() => {
-                client.openThreadFromMessageIndex(chatId, idx);
+                client.openThreadFromMessageIndex(chatId, idx, threadIdx);
             });
         }
         previousChatId = app.selectedChatId;
@@ -96,6 +100,8 @@ export function configureEffects(client: OpenChat) {
         onSelectedChatChanged(client);
 
         onThreadStateChanged(client);
+
+        onThreadClosed();
 
         // TODO - this seems to be a reasonable approach, but it causes a flicker of No Chat Selected for some reason
         // so we might need to rethink - ok for now though.

@@ -224,7 +224,6 @@
             subscribe("updateBot", updateBot),
             subscribe("removeBot", removeBot),
             subscribe("threadSelected", openThread),
-            subscribe("threadClosed", closeThread),
             subscribe("remoteVideoCallStarted", remoteVideoCallStarted),
             subscribe("remoteVideoCallEnded", remoteVideoCallEnded),
             subscribe("notification", (n) => client.notificationReceived(n)),
@@ -325,9 +324,6 @@
                     return;
                 }
 
-                // first close any open thread
-                closeThread();
-
                 if (pathState.isHomeRoute(route)) {
                     client.clearSelectedChat();
                     filterChatSpecificRightPanelStates();
@@ -363,17 +359,6 @@
     // statement because we don't want that reactive statement to execute in reponse to changes in rightPanelHistory :puke:
     function filterChatSpecificRightPanelStates() {
         ui.filterRightPanelHistory((panel) => panel.kind === "user_profile");
-    }
-
-    function closeThread() {
-        if (creatingThread) {
-            creatingThread = false;
-            return;
-        }
-        tick().then(() => {
-            activeVideoCall?.threadOpen(false);
-            ui.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
-        });
     }
 
     function leaderboard() {

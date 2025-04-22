@@ -543,8 +543,6 @@
                 (pathState.route.open || pathState.route.threadMessageIndex !== undefined)
             ) {
                 client.openThread(msgEvent, false, pathState.route.threadMessageIndex);
-            } else {
-                client.closeThread();
             }
         }
     }

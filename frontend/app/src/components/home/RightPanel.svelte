@@ -185,10 +185,11 @@
     }
 
     function closeThread(_id: ChatIdentifier) {
-        ui.popRightPanelHistory();
         pageReplace(stripThreadFromUrl(removeQueryStringParam("open")));
         activeVideoCall.threadOpen(false);
     }
+
+    $inspect(ui.rightPanelHistory).with(console.trace);
 
     function findMessage(
         events: EventWrapper<ChatEvent>[],

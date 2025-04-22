@@ -101,7 +101,6 @@ export type PubSubEvents = {
         initiating: boolean;
         threadRootEvent: EventWrapper<Message>;
     };
-    threadClosed: undefined;
     loadedNewMessages: MessageContext;
     loadedPreviousMessages: {
         context: MessageContext;
