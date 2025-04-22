@@ -68,7 +68,9 @@ function onSelectedChatChanged(client: OpenChat) {
 function onThreadClosed() {
     $effect(() => {
         if (!pathState.threadOpen) {
-            ui.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
+            untrack(() => {
+                ui.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
+            });
         }
     });
 }

@@ -1,25 +1,24 @@
 <script lang="ts">
-    import ModalContent from "../ModalContent.svelte";
-    import { getContext, onMount } from "svelte";
-    import { _ } from "svelte-i18n";
     import {
         AuthProvider,
         type OpenChat,
         anonUser,
-        identityState,
+        app,
         pathState,
         selectedAuthProviderStore,
     } from "openchat-client";
+    import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import Translatable from "../Translatable.svelte";
-    import FancyLoader from "../icons/FancyLoader.svelte";
-    import Button from "../Button.svelte";
     import { configKeys } from "../../utils/config";
+    import { EmailPollerError, EmailSigninHandler } from "../../utils/signin";
+    import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import ChooseSignInOption from "./profile/ChooseSignInOption.svelte";
-    import { EmailPollerError, EmailSigninHandler } from "../../utils/signin";
+    import ModalContent from "../ModalContent.svelte";
+    import Translatable from "../Translatable.svelte";
+    import FancyLoader from "../icons/FancyLoader.svelte";
     import EmailSigninFeedback from "./EmailSigninFeedback.svelte";
+    import ChooseSignInOption from "./profile/ChooseSignInOption.svelte";
 
     interface Props {
         onClose: () => void;
@@ -59,7 +58,7 @@
         emailSigninHandler.addEventListener("email_signin_event", emailEvent);
         client.gaTrack("opened_signin_modal", "registration");
         return () => {
-            if ($anonUser && $identityState.kind === "logging_in") {
+            if ($anonUser && app.identityState.kind === "logging_in") {
                 client.updateIdentityState({ kind: "anon" });
             }
             emailSigninHandler.removeEventListener("email_signin_event", emailEvent);
@@ -74,16 +73,16 @@
     }
 
     $effect(() => {
-        if ($identityState.kind === "anon" && loginState === "logging-in") {
+        if (app.identityState.kind === "anon" && loginState === "logging-in") {
             onClose();
         }
-        if ($identityState.kind === "logged_in" || $identityState.kind === "challenging") {
+        if (app.identityState.kind === "logged_in" || app.identityState.kind === "challenging") {
             onClose();
         }
     });
 
     function cancel() {
-        if ($anonUser && $identityState.kind === "logging_in") {
+        if ($anonUser && app.identityState.kind === "logging_in") {
             client.updateIdentityState({ kind: "anon" });
         }
         onClose();

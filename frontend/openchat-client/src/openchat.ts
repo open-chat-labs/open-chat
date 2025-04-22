@@ -340,7 +340,6 @@ import {
     setGlobalState,
 } from "./stores/global";
 import { applyTranslationCorrection } from "./stores/i18n";
-import { identityState } from "./stores/identity";
 import { lastOnlineDates } from "./stores/lastOnlineDates";
 import { localChatSummaryUpdates } from "./stores/localChatSummaryUpdates";
 import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
@@ -678,11 +677,11 @@ export class OpenChat {
     }
 
     clearPostLoginState() {
-        identityState.update((state) => ({ ...state, postLogin: undefined }));
+        app.updateIdentityState((state) => ({ ...state, postLogin: undefined }));
     }
 
     updateIdentityState(newState: IdentityState) {
-        identityState.update((previous) => {
+        app.updateIdentityState((previous) => {
             return {
                 ...newState,
                 postLogin: newState.postLogin ?? previous.postLogin,

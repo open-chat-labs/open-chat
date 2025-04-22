@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
-    import { identityState, routeForScope } from "openchat-client";
+    import { app, routeForScope } from "openchat-client";
     import { getContext } from "svelte";
 
     const client = getContext<OpenChat>("client");
@@ -17,9 +17,9 @@
         login = false,
     }: Props = $props();
 
-    let url = $derived($identityState.kind === "logged_in" ? rootPath : "/communities");
+    let url = $derived(app.identityState.kind === "logged_in" ? rootPath : "/communities");
     let busy = $derived(
-        $identityState.kind === "logging_in" || $identityState.kind === "loading_user",
+        app.identityState.kind === "logging_in" || app.identityState.kind === "loading_user",
     );
 </script>
 

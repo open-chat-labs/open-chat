@@ -1,11 +1,11 @@
 <script lang="ts">
-    import GateCheckFailed from "../access/AccessGateCheckFailed.svelte";
-    import Overlay from "../../Overlay.svelte";
-    import { getContext, tick, type Snippet } from "svelte";
-    import { toastStore } from "../../../stores/toast";
     import type { EnhancedAccessGate, GateCheckSucceeded, OpenChat } from "openchat-client";
-    import { anonUser, identityState, selectedCommunity } from "openchat-client";
+    import { anonUser, app, selectedCommunity } from "openchat-client";
+    import { getContext, tick, type Snippet } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import { toastStore } from "../../../stores/toast";
+    import Overlay from "../../Overlay.svelte";
+    import GateCheckFailed from "../access/AccessGateCheckFailed.svelte";
     import AccessGateEvaluator from "../access/AccessGateEvaluator.svelte";
     interface Props {
         children?: Snippet<[boolean, () => void]>;
@@ -91,8 +91,8 @@
     );
     $effect(() => {
         if (
-            $identityState.kind === "logged_in" &&
-            $identityState.postLogin?.kind === "join_community"
+            app.identityState.kind === "logged_in" &&
+            app.identityState.postLogin?.kind === "join_community"
         ) {
             client.clearPostLoginState();
             tick().then(() => joinCommunity());

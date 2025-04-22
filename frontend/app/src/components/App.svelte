@@ -29,9 +29,9 @@
         OpenChat,
         type UpdateMarketMakerConfigArgs,
         anonUser,
+        app,
         botState,
         chatListScopeStore as chatListScope,
-        identityState,
         inititaliseLogger,
         pageReplace,
         pathState,
@@ -108,7 +108,7 @@
     let landingPageRoute = $derived(isLandingPageRoute(pathState.route));
     let homeRoute = $derived(pathState.route.kind === "home_route");
     let showLandingPage = $derived(
-        landingPageRoute || (homeRoute && $identityState.kind === "anon" && $anonUser),
+        landingPageRoute || (homeRoute && app.identityState.kind === "anon" && $anonUser),
     );
     let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
     let burstPath = $derived(
@@ -118,7 +118,7 @@
     let burstFixed = $derived(isScrollingRoute(pathState.route));
 
     let upgrading = $derived(
-        $identityState.kind === "upgrading_user" || $identityState.kind === "upgrade_user",
+        app.identityState.kind === "upgrading_user" || app.identityState.kind === "upgrade_user",
     );
 
     let lastScrollY = $state(window.scrollY);
@@ -560,7 +560,7 @@
     <SwitchDomain />
 {:else if upgrading}
     <Upgrading />
-{:else if $identityState.kind === "anon" || $identityState.kind === "logging_in" || $identityState.kind === "registering" || $identityState.kind === "logged_in" || $identityState.kind === "loading_user" || $identityState.kind === "challenging"}
+{:else if app.identityState.kind === "anon" || app.identityState.kind === "logging_in" || app.identityState.kind === "registering" || app.identityState.kind === "logged_in" || app.identityState.kind === "loading_user" || app.identityState.kind === "challenging"}
     {#if !$isLoading || $reviewingTranslations}
         <Router {showLandingPage} />
     {/if}

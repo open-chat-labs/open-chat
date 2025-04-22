@@ -1,8 +1,8 @@
 <script lang="ts">
-    import Link from "./Link.svelte";
-    import Launch from "./Launch.svelte";
+    import { app, OpenChat, pathState } from "openchat-client";
     import { getContext } from "svelte";
-    import { identityState, OpenChat, pathState } from "openchat-client";
+    import Launch from "./Launch.svelte";
+    import Link from "./Link.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -48,7 +48,7 @@
             <Link selected={pathState.location.startsWith("/faq")} mode={"menu"} path="faq"
                 >FAQs</Link>
         </div>
-        {#if $identityState.kind === "logged_in"}
+        {#if app.identityState.kind === "logged_in"}
             <Link onLinkClicked={() => client.logout()} mode={"menu"}>Logout</Link>
         {/if}
         <div class="menu-item">

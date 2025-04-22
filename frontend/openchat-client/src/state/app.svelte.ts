@@ -3,6 +3,7 @@ import {
     type CommunityIdentifier,
     type DirectChatIdentifier,
     type ExternalBotPermissions,
+    type IdentityState,
     type Member,
     type MessageContext,
     type PublicApiKeyDetails,
@@ -39,6 +40,8 @@ class AppState {
             });
         });
     }
+
+    #identityState = $state<IdentityState>({ kind: "loading_user" });
 
     #chatsInitialised = $state(false);
 
@@ -89,6 +92,14 @@ class AppState {
     #selectedChat = $state<ChatDetailsMergedState>(
         new ChatDetailsMergedState(ChatDetailsServerState.empty()),
     );
+
+    get identityState(): Readonly<IdentityState> {
+        return this.#identityState;
+    }
+
+    updateIdentityState(fn: (prev: IdentityState) => IdentityState) {
+        this.#identityState = fn(this.#identityState);
+    }
 
     get chatsInitialised() {
         return this.#chatsInitialised;

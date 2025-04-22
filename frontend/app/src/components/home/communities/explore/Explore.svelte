@@ -2,7 +2,7 @@
     import type { OpenChat } from "openchat-client";
     import {
         anonUser,
-        identityState,
+        app,
         isDiamond,
         offlineStore,
         publish,
@@ -127,8 +127,8 @@
 
     $effect(() => {
         if (
-            $identityState.kind === "logged_in" &&
-            $identityState.postLogin?.kind === "create_community"
+            app.identityState.kind === "logged_in" &&
+            app.identityState.postLogin?.kind === "create_community"
         ) {
             client.clearPostLoginState();
             tick().then(() => createCommunity());
