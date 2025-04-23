@@ -1,7 +1,7 @@
 use candid::{CandidType, Deserialize, Principal};
 use serde::Serialize;
 use ts_export::ts_export;
-use types::SignedDelegation;
+use types::{SignedDelegation, UnitResult};
 
 #[ts_export(identity, approve_identity_link)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -12,14 +12,4 @@ pub struct Args {
     pub link_initiated_by: Principal,
 }
 
-#[ts_export(identity, approve_identity_link)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    CallerNotRecognised,
-    LinkRequestNotFound,
-    PrincipalAlreadyLinkedToAnotherOcUser,
-    MalformedSignature(String),
-    InvalidSignature,
-    DelegationTooOld,
-}
+pub type Response = UnitResult;
