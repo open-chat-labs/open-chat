@@ -102,6 +102,7 @@
         chatId: chat?.id,
         threadRootMessageIndex: threadRootEvent?.event.messageIndex,
     });
+    let inThread = $derived(threadRootEvent !== undefined);
 
     // use this when it's critical that we get the live value from the dom and
     // not a potentially stale value from the captured variable
@@ -187,9 +188,12 @@
         heightObserver = new MutationObserver((_: MutationRecord[]) => {
             withScrollableElement(async (el) => {
                 const previousScrollHeightVal = previousScrollHeight.get(messageContext);
+                previousScrollHeight.set(messageContext, el.scrollHeight);
                 if (
-                    el.scrollHeight !== previousScrollHeightVal &&
-                    previousScrollHeightVal !== undefined
+                    (inThread || ui.showMiddle) &&
+                    previousScrollHeightVal !== undefined &&
+                    previousScrollHeightVal > 0 &&
+                    el.scrollHeight !== previousScrollHeightVal
                 ) {
                     const scrollHeightDiff = el.scrollHeight - previousScrollHeightVal;
                     const scrollTopByHeight = previousScrollTopByHeight.get(messageContext) ?? {};
@@ -234,7 +238,7 @@
                         await loadMoreIfRequired(loadingFromUserScroll);
                     }
                 }
-                previousScrollHeight.set(messageContext, el.scrollHeight);
+                // previousScrollHeight.set(messageContext, el.scrollHeight);
             });
         });
 
@@ -477,7 +481,7 @@
 
     function scrollToElement(
         element: Element | null,
-        behavior: ScrollBehavior = "auto",
+        behavior: ScrollBehavior = "instant",
     ): Promise<void> {
         return interruptScroll(() => {
             element?.scrollIntoView({ behavior, block: "center" });
@@ -686,7 +690,8 @@
         tooltipStore.hide();
         ui.eventListLastScrolled = Date.now();
 
-        if (!initialised || interrupt || loadingFromUserScroll) return;
+        if (!initialised || interrupt || loadingFromUserScroll || (!inThread && !ui.showMiddle))
+            return;
 
         loadMoreIfRequired(true);
     }
