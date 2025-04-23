@@ -7,6 +7,7 @@ mod updates;
 
 pub use lifecycle::*;
 pub use queries::*;
+use ts_export::ts_export;
 use types::CanisterId;
 pub use updates::*;
 
@@ -15,18 +16,21 @@ pub const WEBAUTHN_ORIGINATING_CANISTER: CanisterId = CanisterId::from_slice(&[1
 
 pub type ChallengeKey = u32;
 
+#[ts_export(identity)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Challenge {
     pub key: ChallengeKey,
     pub png_base64: String,
 }
 
+#[ts_export(identity)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct ChallengeAttempt {
     pub key: ChallengeKey,
     pub chars: String,
 }
 
+#[ts_export(identity)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct WebAuthnKey {
     #[serde(with = "serde_bytes")]
