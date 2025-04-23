@@ -2,9 +2,6 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR
 
-didc bind ../../backend/canisters/identity/api/can.did -t ts > ./src/services/identity/candid/types.d.ts
-didc bind ../../backend/canisters/identity/api/can.did -t js > ./src/services/identity/candid/idl.js
-
 didc bind ../../backend/canisters/market_maker/api/can.did -t ts > ./src/services/marketMaker/candid/types.d.ts
 didc bind ../../backend/canisters/market_maker/api/can.did -t js > ./src/services/marketMaker/candid/idl.js
 
