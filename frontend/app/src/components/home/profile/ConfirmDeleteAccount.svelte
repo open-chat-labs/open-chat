@@ -32,7 +32,7 @@
         deleting = true;
         authenticating = false;
         return client
-            .deleteCurrentUser(detail.delegation.toJSON())
+            .deleteCurrentUser(detail.key.getKeyPair(), detail.delegation.toJSON())
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("danger.deleteAccountFailed"));

@@ -6,6 +6,7 @@ import {
     IdentityCheckAuthPrincipalV2Response,
     IdentityCreateIdentityArgs,
     IdentityCreateIdentityResponse,
+    IdentityDeleteUserArgs,
     IdentityGenerateChallengeResponse,
     IdentityGetDelegationArgs,
     IdentityGetDelegationResponse,
@@ -28,8 +29,10 @@ import type {
     GenerateChallengeResponse,
     GetDelegationResponse,
     InitiateIdentityLinkResponse,
+    OCError,
     PrepareDelegationResponse,
     RemoveIdentityLinkResponse,
+    Success,
     WebAuthnKeyFull,
 } from "openchat-shared";
 import {
@@ -125,7 +128,7 @@ export class IdentityClient extends MsgpackCanisterAgent {
             {},
             generateChallengeResponse,
             Empty,
-            IdentityGenerateChallengeResponse
+            IdentityGenerateChallengeResponse,
         );
     }
 
@@ -174,6 +177,19 @@ export class IdentityClient extends MsgpackCanisterAgent {
         );
     }
 
+    deleteUser(): Promise<Success | OCError> {
+        return this.executeMsgpackUpdate(
+            "delete_user",
+            {
+                public_key: this.publicKey(),
+                delegation: signedDelegation((this.identity as DelegationIdentity).getDelegation()),
+            },
+            unitResult,
+            IdentityDeleteUserArgs,
+            TUnitResult,
+        );
+    }
+    
     getAuthenticationPrincipals(): Promise<AuthenticationPrincipalsResponse> {
         return this.executeMsgpackQuery(
             "auth_principals",
