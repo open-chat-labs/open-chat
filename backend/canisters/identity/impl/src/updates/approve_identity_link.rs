@@ -1,13 +1,13 @@
 use crate::{RuntimeState, mutate_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
-use ic_cdk::update;
 use ic_certificate_verification::VerifyCertificate;
 use identity_canister::WEBAUTHN_ORIGINATING_CANISTER;
 use identity_canister::approve_identity_link::{Response::*, *};
 use identity_utils::extract_certificate;
 
-#[update]
+#[update(msgpack = true, candid = true)]
 #[trace]
 fn approve_identity_link(args: Args) -> Response {
     mutate_state(|state| approve_identity_link_impl(args, state))

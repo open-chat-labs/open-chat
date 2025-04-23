@@ -1,11 +1,11 @@
 use crate::updates::prepare_delegation::prepare_delegation_inner;
 use crate::{RuntimeState, VerifyNewIdentityArgs, VerifyNewIdentityError, VerifyNewIdentitySuccess, mutate_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::DAY_IN_MS;
-use ic_cdk::update;
 use identity_canister::create_identity::{Response::*, *};
 
-#[update]
+#[update(msgpack = true, candid = true)]
 #[trace]
 fn create_identity(args: Args) -> Response {
     mutate_state(|state| create_identity_impl(args, state))

@@ -1,13 +1,13 @@
 use crate::model::user_principals::UserPrincipal;
 use crate::{RuntimeState, VerifyNewIdentityArgs, VerifyNewIdentityError, VerifyNewIdentitySuccess, mutate_state};
 use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use identity_canister::initiate_identity_link::{Response::*, *};
 
 const MAX_LINKED_IDENTITIES: usize = 10;
 
-#[update]
+#[update(msgpack = true, candid = true)]
 #[trace]
 fn initiate_identity_link(args: Args) -> Response {
     mutate_state(|state| initiate_identity_link_impl(args, state))

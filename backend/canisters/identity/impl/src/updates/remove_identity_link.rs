@@ -1,9 +1,9 @@
 use crate::{RuntimeState, mutate_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use identity_canister::remove_identity_link::{Args, Response};
 
-#[update]
+#[update(msgpack = true, candid = true)]
 #[trace]
 fn remove_identity_link(args: Args) -> Response {
     mutate_state(|state| remove_identity_link_impl(args, state))
