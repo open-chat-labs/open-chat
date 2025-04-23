@@ -16,7 +16,7 @@ async fn delete_user(args: Args) -> Response {
         user_id,
     } = match read_state(|state| prepare(args, state)) {
         Ok(ok) => ok,
-        Err(error) => return Error(error),
+        Err(error) => return Response::Error(error),
     };
 
     match user_index_canister_c2c_client::c2c_delete_user(
@@ -27,10 +27,10 @@ async fn delete_user(args: Args) -> Response {
     {
         Ok(user_index_canister::c2c_delete_user::Response::Success) => {
             mutate_state(|state| state.data.user_principals.set_user_id(principal, None));
-            Success
+            Response::Success
         }
-        Ok(user_index_canister::c2c_delete_user::Response::Error(error)) => Error(error),
-        Err(error) => Error(error.into()),
+        Ok(user_index_canister::c2c_delete_user::Response::Error(error)) => Response::Error(error),
+        Err(error) => Response::Error(error.into()),
     }
 }
 
