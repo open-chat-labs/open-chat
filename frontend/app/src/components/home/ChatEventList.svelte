@@ -238,7 +238,6 @@
                         await loadMoreIfRequired(loadingFromUserScroll);
                     }
                 }
-                // previousScrollHeight.set(messageContext, el.scrollHeight);
             });
         });
 
