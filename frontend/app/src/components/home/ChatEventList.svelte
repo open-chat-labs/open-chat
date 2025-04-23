@@ -151,6 +151,7 @@
     let floatingTimestamp: bigint | undefined = $state(undefined);
     let loadingNewMessages = false;
     let loadingPrevMessages = false;
+    let inThread = $derived(threadRootEvent !== undefined);
 
     $effect.pre(() => {
         withScrollableElement((el) => {
@@ -187,9 +188,12 @@
         heightObserver = new MutationObserver((_: MutationRecord[]) => {
             withScrollableElement(async (el) => {
                 const previousScrollHeightVal = previousScrollHeight.get(messageContext);
+                previousScrollHeight.set(messageContext, el.scrollHeight);
                 if (
-                    el.scrollHeight !== previousScrollHeightVal &&
-                    previousScrollHeightVal !== undefined
+                    (inThread || ui.showMiddle) &&
+                    previousScrollHeightVal !== undefined &&
+                    previousScrollHeightVal > 0 &&
+                    el.scrollHeight !== previousScrollHeightVal
                 ) {
                     const scrollHeightDiff = el.scrollHeight - previousScrollHeightVal;
                     const scrollTopByHeight = previousScrollTopByHeight.get(messageContext) ?? {};
@@ -234,7 +238,6 @@
                         await loadMoreIfRequired(loadingFromUserScroll);
                     }
                 }
-                previousScrollHeight.set(messageContext, el.scrollHeight);
             });
         });
 
@@ -686,7 +689,8 @@
         tooltipStore.hide();
         ui.eventListLastScrolled = Date.now();
 
-        if (!initialised || interrupt || loadingFromUserScroll) return;
+        if (!initialised || interrupt || loadingFromUserScroll || (!inThread && !ui.showMiddle))
+            return;
 
         loadMoreIfRequired(true);
     }
