@@ -849,6 +849,7 @@ impl Data {
             self.chat.details_last_updated(),
             self.bots.last_updated(),
             self.bot_api_keys.last_updated(),
+            self.webhooks.last_updated(),
         ];
 
         timestamps.into_iter().max().unwrap_or_default()

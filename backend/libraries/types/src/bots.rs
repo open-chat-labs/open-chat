@@ -327,6 +327,15 @@ pub struct InstalledBotDetails {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct WebhookDetails {
+    pub id: UserId,
+    pub name: String,
+    pub avatar_id: Option<u128>,
+    pub url: String,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct PublicApiKeyDetails {
     pub bot_id: UserId,
     pub granted_permissions: BotPermissions,

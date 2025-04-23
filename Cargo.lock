@@ -4441,6 +4441,7 @@ dependencies = [
  "serde",
  "serde_repr",
  "types",
+ "urlencoding",
  "utils 0.1.0",
 ]
 

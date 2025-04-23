@@ -2,7 +2,7 @@ use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use group_canister::selected_initial::{Response::*, *};
 use std::collections::HashSet;
-use types::{GroupMember, InstalledBotDetails, OCResult};
+use types::{GroupMember, InstalledBotDetails, OCResult, WebhookDetails};
 
 #[query(candid = true, msgpack = true)]
 fn selected_initial(_args: Args) -> Response {
@@ -50,6 +50,18 @@ fn selected_initial_impl(state: &RuntimeState) -> OCResult<SuccessResult> {
 
     let api_keys = state.data.bot_api_keys.generated_since(0);
 
+    let webhooks = state
+        .data
+        .webhooks
+        .iter()
+        .map(|(id, webhook)| WebhookDetails {
+            id: (*id).into(),
+            name: webhook.name.clone(),
+            avatar_id: webhook.avatar.as_ref().map(|avatar| avatar.id),
+            url: format!("/group/{}/webhook/{}/{}", state.env.canister_id(), *id, webhook.secret),
+        })
+        .collect();
+
     Ok(SuccessResult {
         timestamp: last_updated,
         last_updated,
@@ -57,6 +69,7 @@ fn selected_initial_impl(state: &RuntimeState) -> OCResult<SuccessResult> {
         participants: members,
         bots,
         api_keys,
+        webhooks,
         basic_members,
         blocked_users: chat.members.blocked(),
         invited_users: chat.invited_users.users(),

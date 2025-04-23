@@ -4,6 +4,7 @@ use rand::{rngs::StdRng, Rng};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use types::{Document, OptionUpdate, TimestampMillis};
+use urlencoding::encode;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Webhooks {
@@ -12,10 +13,10 @@ pub struct Webhooks {
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Webhook {
-    name: String,
-    avatar: Option<Document>,
-    secret: String,
-    updated: TimestampMillis,
+    pub name: String,
+    pub avatar: Option<Document>,
+    pub secret: String,
+    pub last_updated: TimestampMillis,
 }
 
 impl Webhooks {
@@ -24,13 +25,16 @@ impl Webhooks {
             return false;
         }
 
+        let id = Self::generate_random_id(rng);
+        let secret = encode(&rng.gen::<u128>().to_string()).to_string();
+
         self.map.insert(
-            Self::generate_random_id(rng),
+            id,
             Webhook {
                 name,
                 avatar,
-                secret: rng.gen::<u128>().to_string(),
-                updated: now,
+                secret,
+                last_updated: now,
             },
         );
 
@@ -40,7 +44,7 @@ impl Webhooks {
     pub fn regenerate(&mut self, id: Principal, rng: &mut StdRng, now: TimestampMillis) -> bool {
         if let Some(webhook) = self.map.get_mut(&id) {
             webhook.secret = rng.gen::<u128>().to_string();
-            webhook.updated = now;
+            webhook.last_updated = now;
             true
         } else {
             false
@@ -65,7 +69,7 @@ impl Webhooks {
                 OptionUpdate::NoChange => {}
             }
 
-            webhook.updated = now;
+            webhook.last_updated = now;
             true
         } else {
             false
@@ -82,6 +86,10 @@ impl Webhooks {
 
     pub fn iter(&self) -> impl Iterator<Item = (&Principal, &Webhook)> {
         self.map.iter()
+    }
+
+    pub fn last_updated(&self) -> TimestampMillis {
+        self.map.values().map(|k| k.last_updated).max().unwrap_or_default()
     }
 
     fn generate_random_id(rng: &mut StdRng) -> Principal {
