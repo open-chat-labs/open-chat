@@ -3,7 +3,7 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::MINUTE_IN_MS;
-use identity_canister::delete_user::{Response::*, *};
+use identity_canister::delete_user::*;
 use oc_error_codes::OCErrorCode;
 use types::{CanisterId, OCResult, UserId};
 
