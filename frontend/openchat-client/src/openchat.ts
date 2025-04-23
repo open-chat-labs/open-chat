@@ -635,11 +635,11 @@ export class OpenChat {
         });
     }
 
-    deleteCurrentUser(delegation: JsonnableDelegationChain): Promise<boolean> {
+    deleteCurrentUser(identityKey: CryptoKeyPair, delegation: JsonnableDelegationChain): Promise<boolean> {
         if (!this.#liveState.anonUser) {
             return this.#sendRequest({
                 kind: "deleteUser",
-                userId: this.#liveState.user.userId,
+                identityKey,
                 delegation,
             }).then((success) => {
                 if (success) {

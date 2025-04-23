@@ -85,8 +85,6 @@ import {
     UserIndexCheckUsernameResponse,
     UserIndexChitLeaderboardResponse,
     UserIndexCurrentUserResponse,
-    UserIndexDeleteUserArgs,
-    UserIndexDeleteUserResponse,
     UserIndexDiamondMembershipFeesResponse,
     UserIndexExploreBotsArgs,
     UserIndexExploreBotsResponse,
@@ -125,8 +123,6 @@ import {
     UserIndexUsersArgs,
     UserIndexUsersResponse,
 } from "../../typebox";
-import type { DelegationChain } from "@dfinity/identity";
-import { signedDelegation } from "../../utils/id";
 
 export class UserIndexClient extends MsgpackCanisterAgent {
     constructor(
@@ -609,16 +605,6 @@ export class UserIndexClient extends MsgpackCanisterAgent {
             externalAchievementsResponse,
             UserIndexExternalAchievementsArgs,
             UserIndexExternalAchievementsResponse,
-        );
-    }
-
-    deleteUser(userId: string, delegation: DelegationChain): Promise<boolean> {
-        return this.executeMsgpackUpdate(
-            "delete_user",
-            { user_id: principalStringToBytes(userId), delegation: signedDelegation(delegation) },
-            (resp) => resp === "Success",
-            UserIndexDeleteUserArgs,
-            UserIndexDeleteUserResponse,
         );
     }
 

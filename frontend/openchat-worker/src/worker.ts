@@ -1988,7 +1988,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.deleteUser(payload.userId, DelegationChain.fromJSON(payload.delegation)),
+                    deleteUser(payload.identityKey, payload.delegation),
                 );
                 break;
 
@@ -2112,4 +2112,19 @@ async function removeIdentityLink(linked_principal: string): Promise<RemoveIdent
     }
 
     throw new Error("IdentityAgent not initialized");
+}
+
+async function deleteUser(identityKey: CryptoKeyPair, delegation: JsonnableDelegationChain): Promise<boolean> {
+    const identity = DelegationIdentity.fromDelegation(
+        await ECDSAKeyIdentity.fromKeyPair(identityKey),
+        DelegationChain.fromJSON(delegation),
+    );
+    const identityAgent = await IdentityAgent.create(
+        identity,
+        identityCanister,
+        icUrl,
+        undefined,
+    );
+    const response = await identityAgent.deleteUser();
+    return response.kind === "success";
 }
