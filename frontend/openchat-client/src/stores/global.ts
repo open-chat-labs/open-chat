@@ -65,6 +65,7 @@ export const chitStateStore = immutableStore<ChitState>({
 });
 
 export const globalStateStore = immutableStore<GlobalState>({
+    // TODO - we need to extract this from here and have it as a standalone store that is synced with rune via an effect
     communities: new CommunityMap<CommunitySummary>(),
     directChats: new ChatMap<DirectChatSummary>(),
     groupChats: new ChatMap<GroupChatSummary>(),

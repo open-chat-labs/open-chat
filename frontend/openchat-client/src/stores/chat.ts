@@ -22,8 +22,9 @@ import {
     messageContextsEqual,
     nullMembership,
 } from "openchat-shared";
-import { derived, get, type Readable, type Writable } from "svelte/store";
+import { derived, get, writable, type Readable, type Writable } from "svelte/store";
 import { app } from "../state/app.svelte";
+import { globalLocalUpdates } from "../state/global";
 import {
     getNextEventAndMessageIndexes,
     mergeChatMetrics,
@@ -33,7 +34,6 @@ import {
 } from "../utils/chat";
 import { configKeys } from "../utils/config";
 import { blockedUsers } from "./blockedUsers";
-import { communityPreviewsStore } from "./community";
 import { createChatSpecificObjectStore } from "./dataByChatFactory";
 import { createDerivedPropStore } from "./derived";
 import { draftMessagesStore } from "./draftMessages";
@@ -56,6 +56,8 @@ import { currentUser, currentUserIdStore, suspendedUsers } from "./user";
 
 let currentScope: ChatListScope = { kind: "direct_chat" };
 chatListScopeStore.subscribe((s) => (currentScope = s));
+
+export const dummyCommunityPreviewStore = writable(0);
 
 export const selectedMessageContext = safeWritable<MessageContext | undefined>(
     undefined,
@@ -192,25 +194,25 @@ export const serverChatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         myServerChatSummariesStore,
         uninitializedDirectChats,
         groupPreviewsStore,
-        communityPreviewsStore,
+        dummyCommunityPreviewStore,
     ],
-    ([summaries, directChats, previews, communityPreviews]) => {
+    ([summaries, directChats, previews, _]) => {
         let all = [...summaries.entries()];
-        if (currentScope.kind === "none" || currentScope.kind === "direct_chat") {
+        if (app.chatListScope.kind === "none" || app.chatListScope.kind === "direct_chat") {
             all = all.concat([...directChats.entries()]);
         }
-        if (currentScope.kind === "none") {
+        if (app.chatListScope.kind === "none") {
             all = (previews.entries() as ChatEntry[]).concat(all);
         }
-        if (currentScope.kind === "group_chat") {
+        if (app.chatListScope.kind === "group_chat") {
             all = (previews.filter((c) => c.kind === "group_chat").entries() as ChatEntry[]).concat(
                 all,
             );
         }
-        if (currentScope.kind === "community") {
-            const communityId = currentScope.id.communityId;
+        if (app.chatListScope.kind === "community") {
+            const communityId = app.chatListScope.id.communityId;
             const previewChannels = ChatMap.fromList(
-                communityPreviews.get(currentScope.id)?.channels ?? [],
+                globalLocalUpdates.getPreviewingCommunity(app.chatListScope.id)?.channels ?? [],
             );
             all = (previewChannels.entries() as ChatEntry[])
                 .concat(

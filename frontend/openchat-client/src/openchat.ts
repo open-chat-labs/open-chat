@@ -307,11 +307,6 @@ import {
     threadServerEventsStore,
 } from "./stores/chat";
 import {
-    addCommunityPreview,
-    communityPreviewsStore,
-    removeCommunityPreview,
-} from "./stores/community";
-import {
     bitcoinAddress,
     cryptoBalance,
     cryptoLookup,
@@ -1398,17 +1393,12 @@ export class OpenChat {
             .catch(() => "failure");
     }
 
-    #addCommunityLocally(community: CommunitySummary): void {
-        globalLocalUpdates.addCommunity(community);
-        community.channels.forEach((c) => localChatSummaryUpdates.markAdded(c));
+    #addCommunityLocally(community: CommunitySummary) {
+        return globalLocalUpdates.addCommunity(community);
     }
 
-    #removeCommunityLocally(id: CommunityIdentifier): void {
-        globalLocalUpdates.removeCommunity(id);
-        const community = app.communities.get(id);
-        if (community !== undefined) {
-            community.channels.forEach((c) => localChatSummaryUpdates.markRemoved(c.id));
-        }
+    #removeCommunityLocally(id: CommunityIdentifier) {
+        return globalLocalUpdates.removeCommunity(id);
     }
 
     verifyAccessGate(gate: AccessGate, iiPrincipal: string): Promise<string | undefined> {
@@ -1574,7 +1564,9 @@ export class OpenChat {
                         undefined,
                     );
                 } else if (resp.kind === "success_joined_community") {
+                    resp.community.membership.index = app.nextCommunityIndex;
                     this.#addCommunityLocally(resp.community);
+
                     messagesRead.batchUpdate(() =>
                         resp.community.channels.forEach((c) => {
                             if (chatIdentifiersEqual(c.id, chat.id)) {
@@ -1589,8 +1581,8 @@ export class OpenChat {
                             }
                         }),
                     );
-                    if (this.#liveState.communityPreviews.has(resp.community.id)) {
-                        removeCommunityPreview(resp.community.id);
+                    if (globalLocalUpdates.isPreviewingCommunity(resp.community.id)) {
+                        globalLocalUpdates.removeCommunityPreview(resp.community.id);
                     }
                 } else {
                     if (resp.kind === "error" && resp.code === ErrorCode.InitiatorBlocked) {
@@ -6027,9 +6019,9 @@ export class OpenChat {
             for (const community of chatsResponse.state.communities) {
                 if (
                     community?.membership !== undefined &&
-                    this.#liveState.communityPreviews.has(community.id)
+                    globalLocalUpdates.isPreviewingCommunity(community.id)
                 ) {
-                    removeCommunityPreview(community.id);
+                    globalLocalUpdates.removeCommunityPreview(community.id);
                 }
             }
 
@@ -7593,26 +7585,9 @@ export class OpenChat {
             // Skip if index is unchanged
             if (community.membership.index === index) continue;
 
-            if (this.#liveState.communityPreviews.has(community.id)) {
-                communityPreviewsStore.update((state) =>
-                    state.set(community.id, {
-                        ...community,
-                        membership: {
-                            ...community.membership,
-                            index,
-                        },
-                    }),
-                );
-            } else {
-                localCommunitySummaryUpdates.updateIndex(
-                    {
-                        kind: "community",
-                        communityId: community.id.communityId,
-                    },
-                    index,
-                );
+            globalLocalUpdates.updateCommunityIndex(community.id, index);
 
-                // Queue the update to be sent to the canister
+            if (!globalLocalUpdates.isPreviewingCommunity(community.id)) {
                 updates[community.id.communityId] = index;
             }
         }
@@ -7642,11 +7617,9 @@ export class OpenChat {
             });
             if ("id" in resp) {
                 // Make the community appear at the top of the list
-                // TODO - come back to this
-                // resp.membership.index = nextCommunityIndex();
-                resp.membership.index = 0;
+                resp.membership.index = app.nextCommunityIndex;
                 community = resp;
-                addCommunityPreview(community);
+                globalLocalUpdates.addCommunityPreview(community);
                 preview = true;
             } else {
                 // if we get here it means we're not a member of the community and we can't look it up
@@ -7746,11 +7719,9 @@ export class OpenChat {
             .then((resp) => {
                 if (resp.kind === "success") {
                     // Make the community appear at the top of the list
-                    // TODO - come back to this - I *think* this is better done as a community scoped local update
-                    // resp.community.membership.index = nextCommunityIndex();
-                    resp.community.membership.index = 0;
+                    resp.community.membership.index = app.nextCommunityIndex;
                     this.#addCommunityLocally(resp.community);
-                    removeCommunityPreview(community.id);
+                    globalLocalUpdates.removeCommunityPreview(community.id);
                     this.#loadCommunityDetails(resp.community);
                     messagesRead.batchUpdate(() => {
                         resp.community.channels.forEach((c) => {
@@ -7777,32 +7748,38 @@ export class OpenChat {
         const community = app.communities.get(id);
         if (community === undefined) return Promise.resolve(false);
 
-        this.#removeCommunityLocally(id);
+        const undo = this.#removeCommunityLocally(id);
 
         return this.#sendRequest({ kind: "deleteCommunity", id })
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    this.#addCommunityLocally(community);
+                    undo?.();
                 }
                 return resp.kind === "success";
             })
-            .catch(() => false);
+            .catch(() => {
+                undo?.();
+                return false;
+            });
     }
 
     leaveCommunity(id: CommunityIdentifier): Promise<boolean> {
         const community = app.communities.get(id);
         if (community === undefined) return Promise.resolve(false);
 
-        this.#removeCommunityLocally(id);
+        const undo = this.#removeCommunityLocally(id);
 
         return this.#sendRequest({ kind: "leaveCommunity", id })
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    this.#addCommunityLocally(community);
+                    undo?.();
                 }
                 return resp.kind === "success";
             })
-            .catch(() => false);
+            .catch(() => {
+                undo?.();
+                return false;
+            });
     }
 
     createCommunity(

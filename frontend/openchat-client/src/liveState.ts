@@ -7,8 +7,6 @@ import type {
     ChatMap,
     ChatSummary,
     ChitState,
-    CommunityMap,
-    CommunitySummary,
     CreatedUser,
     DiamondMembershipStatus,
     DirectChatSummary,
@@ -50,7 +48,6 @@ import {
     threadsFollowedByMeStore,
     uninitializedDirectChats,
 } from "./stores/chat";
-import { communityPreviewsStore } from "./stores/community";
 import { walletConfigStore } from "./stores/crypto";
 import { diamondStatus, isDiamond, isLifetimeDiamond } from "./stores/diamond";
 import { type DraftMessages, draftMessagesStore } from "./stores/draftMessages";
@@ -86,7 +83,6 @@ export class LiveState {
     chatSummaries!: ChatMap<ChatSummary>;
     uninitializedDirectChats!: ChatMap<DirectChatSummary>;
     groupPreviews!: ChatMap<MultiUserChat>;
-    communityPreviews!: CommunityMap<CommunitySummary>;
     selectedChatId: ChatIdentifier | undefined;
     chatSummariesList!: ChatSummary[];
     threadsByChat!: ChatMap<ThreadSyncDetails[]>;
@@ -139,7 +135,6 @@ export class LiveState {
         chatSummariesStore.subscribe((data) => (this.chatSummaries = data));
         uninitializedDirectChats.subscribe((data) => (this.uninitializedDirectChats = data));
         groupPreviewsStore.subscribe((data) => (this.groupPreviews = data));
-        communityPreviewsStore.subscribe((data) => (this.communityPreviews = data));
         selectedChatId.subscribe((data) => (this.selectedChatId = data));
         eventsStore.subscribe((data) => (this.events = data));
         selectedChatStore.subscribe((data) => (this.selectedChat = data));

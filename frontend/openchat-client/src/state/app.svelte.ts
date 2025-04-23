@@ -49,7 +49,21 @@ class AppState {
     #serverCommunities = $state<CommunityMap<CommunitySummary>>(new CommunityMap());
 
     #communities = $derived.by(() => {
-        return globalLocalUpdates.communities.apply(this.#serverCommunities);
+        const merged = globalLocalUpdates.communities.apply(this.#serverCommunities);
+        globalLocalUpdates.previewCommunities.values().forEach((c) => merged.set(c.id, c));
+        return merged.map((k, v) => {
+            const index = globalLocalUpdates.communityIndexes.get(JSON.stringify(k));
+            if (index !== undefined) {
+                return {
+                    ...v,
+                    membership: {
+                        ...v.membership,
+                        index,
+                    },
+                };
+            }
+            return v;
+        });
     });
 
     #sortedCommunities = $derived.by(() => {
@@ -59,6 +73,8 @@ class AppState {
                 : b.membership.index - a.membership.index;
         });
     });
+
+    #nextCommunityIndex = $derived((this.#sortedCommunities[0]?.membership?.index ?? -1) + 1);
 
     #userGroupSummaries = $derived.by(() => {
         return this.#communities.values().reduce((map, community) => {
@@ -140,6 +156,10 @@ class AppState {
 
     updateIdentityState(fn: (prev: IdentityState) => IdentityState) {
         this.#identityState = fn(this.#identityState);
+    }
+
+    get nextCommunityIndex() {
+        return this.#nextCommunityIndex;
     }
 
     get chatsInitialised() {
@@ -266,6 +286,14 @@ class AppState {
 
     get userGroupSummaries(): ReadonlyMap<number, UserGroupSummary> {
         return this.#userGroupSummaries;
+    }
+
+    isPreviewingCommunity(id: CommunityIdentifier) {
+        return globalLocalUpdates.isPreviewingCommunity(id);
+    }
+
+    getPreviewingCommunity(id: CommunityIdentifier) {
+        return globalLocalUpdates.getPreviewingCommunity(id);
     }
 }
 

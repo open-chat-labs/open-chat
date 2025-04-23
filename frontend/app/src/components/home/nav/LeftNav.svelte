@@ -63,40 +63,26 @@
 
     // we don't want drag n drop to monkey around with the key
     type CommunityItem = CommunitySummary & { _id: string };
-    let communityItems: CommunityItem[] = $state([]);
 
-    let dragging = $state<boolean>(false);
+    let communityItems = $state<CommunityItem[]>([]);
+
+    $effect(() => {
+        communityItems = app.sortedCommunities.map((c) => ({ ...c, _id: c.id.communityId }));
+    });
 
     onMount(() => {
-        // TODO - this is not doing the same thing - need to check this out
-        initCommunitiesList(app.sortedCommunities);
-        // const unsub = communities.subscribe(initCommunitiesList);
         tick().then(() => (scrollingSection.scrollTop = ui.communityListScrollTop ?? 0));
-        // return unsub;
     });
 
     function onScroll() {
         ui.communityListScrollTop = scrollingSection.scrollTop;
     }
 
-    function initCommunitiesList(communities: CommunitySummary[]) {
-        // we don't want to allow the list to update if we're in the middle of dragging
-        if (dragging) return;
-
-        communityItems = communities.map((c) => ({
-            ...c,
-            _id: c.id.communityId,
-        }));
-    }
-
     function handleDndConsider(e: CustomEvent<DndEvent<CommunityItem>>) {
-        dragging = true;
         communityItems = e.detail.items;
     }
 
     function handleDndFinalize(e: CustomEvent<DndEvent<CommunityItem>>) {
-        dragging = false;
-        communityItems = e.detail.items;
         client.updateCommunityIndexes(e.detail.items);
     }
 
