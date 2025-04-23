@@ -58,7 +58,6 @@ fn selected_initial_impl(state: &RuntimeState) -> OCResult<SuccessResult> {
             id: (*id).into(),
             name: webhook.name.clone(),
             avatar_id: webhook.avatar.as_ref().map(|avatar| avatar.id),
-            url: format!("/group/{}/webhook/{}/{}", state.env.canister_id(), *id, webhook.secret),
         })
         .collect();
 

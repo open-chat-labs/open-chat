@@ -17,10 +17,7 @@ fn register_webhook(args: Args) -> Response {
 fn register_webhook_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
-    let member = state
-        .data
-        .get_member(state.env.caller())
-        .ok_or(OCErrorCode::InitiatorNotInChat)?;
+    let member = state.get_calling_member(true)?;
 
     if !member.role().is_owner() {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());

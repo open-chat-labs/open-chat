@@ -76,6 +76,7 @@ fn main() {
     generate_ts_method!(group, summary);
     generate_ts_method!(group, summary_updates);
     generate_ts_method!(group, video_call_participants);
+    generate_ts_method!(group, webhook);
 
     generate_ts_method!(group, accept_p2p_swap);
     generate_ts_method!(group, add_reaction);

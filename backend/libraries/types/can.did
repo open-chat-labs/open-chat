@@ -2236,7 +2236,6 @@ type WebhookDetails = record {
     id : UserId;
     name : text;
     avatar_id : opt nat;
-    url : text;
 };
 
 type BotMessageContext = record {

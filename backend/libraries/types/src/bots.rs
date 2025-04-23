@@ -331,7 +331,6 @@ pub struct WebhookDetails {
     pub id: UserId,
     pub name: String,
     pub avatar_id: Option<u128>,
-    pub url: String,
 }
 
 #[ts_export]
