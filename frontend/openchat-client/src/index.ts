@@ -6,7 +6,6 @@ export * from "./stores";
 
 export { app } from "./state/app.svelte";
 export { botState } from "./state/bots.svelte";
-export { global } from "./state/global";
 export { type ReadonlyMap } from "./state/map";
 export * from "./state/path.svelte";
 export { debouncedDerived } from "./state/reactivity.svelte";

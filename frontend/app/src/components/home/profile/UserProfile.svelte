@@ -7,8 +7,8 @@
         type OpenChat,
         type UserSummary,
         anonUser,
+        app,
         canExtendDiamond,
-        global,
         globalStateStore as globalState,
         hideMessagesFromDirectBlocked,
         isDiamond,
@@ -124,7 +124,7 @@
         client.hasModerationFlag($moderationFlags, ModerationFlags.UnderReview),
     );
     let selectedCommunity = $derived(
-        global.communities.get({
+        app.communities.get({
             kind: "community",
             communityId: selectedCommunityId,
         }),
@@ -681,7 +681,7 @@
         <Select bind:value={selectedCommunityId}>
             <option disabled selected value={""}
                 ><Translatable resourceKey={i18nKey("profile.selectCommunity")} /></option>
-            {#each global.sortedCommunities.filter((s) => s.membership?.role !== "none") as community}
+            {#each app.sortedCommunities.filter((s) => s.membership?.role !== "none") as community}
                 <option value={community.id.communityId}>{community.name}</option>
             {/each}
         </Select>

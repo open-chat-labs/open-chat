@@ -18,7 +18,6 @@
         type EnhancedReplyContext,
         type EventWrapper,
         type FilteredProposals,
-        global,
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
         type Mention,
@@ -130,7 +129,7 @@
     }
 
     function importToCommunity() {
-        importToCommunities = global.communities.filter((c) => c.membership.role === "owner");
+        importToCommunities = app.communities.filter((c) => c.membership.role === "owner");
         if (importToCommunities.size === 0) {
             toastStore.showFailureToast(i18nKey("communities.noOwned"));
             importToCommunities = undefined;

@@ -32,7 +32,6 @@
         chatSummariesStore,
         defaultChatRules,
         draftMessagesStore,
-        global,
         nullMembership,
         offlineStore,
         pageRedirect,
@@ -826,7 +825,7 @@
     }
 
     function createCommunity() {
-        const maxIndex = global.communities
+        const maxIndex = app.communities
             .values()
             .reduce((m, c) => (c.membership.index > m ? c.membership.index : m), 0);
         modal = {

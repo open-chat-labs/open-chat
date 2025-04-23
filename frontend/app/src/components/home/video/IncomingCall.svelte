@@ -2,7 +2,6 @@
     import {
         app,
         AvatarSize,
-        global,
         ui,
         userStore,
         type ChatIdentifier,
@@ -63,7 +62,7 @@
                         return {
                             chatId: chat.id,
                             name: `${
-                                global.communities.get({
+                                app.communities.get({
                                     kind: "community",
                                     communityId: chat.id.communityId,
                                 })?.name

@@ -1,8 +1,8 @@
 <script lang="ts">
     import type { Message, MessageActivityEvent, ResourceKey } from "openchat-client";
     import {
+        app,
         AvatarSize,
-        global,
         OpenChat,
         routeForMessageContext,
         currentUser as user,
@@ -45,7 +45,7 @@
                     parts.push(chat.name);
                     break;
                 case "channel":
-                    const community = global.communities.get({
+                    const community = app.communities.get({
                         kind: "community",
                         communityId: chat.id.communityId,
                     });

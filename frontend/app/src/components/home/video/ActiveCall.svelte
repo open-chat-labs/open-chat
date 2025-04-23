@@ -4,7 +4,6 @@
     import {
         app,
         chatIdentifiersEqual,
-        global,
         NoMeetingToJoin,
         OpenChat,
         selectedChatStore as selectedChat,
@@ -87,7 +86,7 @@
                         return {
                             chatId: chat.id,
                             name: `${
-                                global.communities.get({
+                                app.communities.get({
                                     kind: "community",
                                     communityId: chat.id.communityId,
                                 })?.name

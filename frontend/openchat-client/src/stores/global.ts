@@ -18,7 +18,7 @@ import type {
 } from "openchat-shared";
 import { ChatMap, CommunityMap, ObjectSet, chatScopesEqual } from "openchat-shared";
 import { derived } from "svelte/store";
-import { global } from "../state/global";
+import { app } from "../state/app.svelte";
 import { serverWalletConfigStore } from "./crypto";
 import { immutableStore } from "./immutable";
 import { localGlobalUpdates } from "./localGlobalUpdates";
@@ -349,7 +349,7 @@ export function setGlobalState(
         }
     });
 
-    global.serverCommunities = communitiesMap;
+    app.serverCommunities = communitiesMap;
 
     globalStateStore.set(state);
     chitStateStore.update((curr) => {

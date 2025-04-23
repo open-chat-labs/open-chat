@@ -2,6 +2,7 @@ import { dequal } from "dequal";
 import {
     type ChatIdentifier,
     type CommunityIdentifier,
+    CommunityMap,
     type CommunitySummary,
     type DirectChatIdentifier,
     type ExternalBotPermissions,
@@ -10,6 +11,7 @@ import {
     type MessageContext,
     type PublicApiKeyDetails,
     type UserGroupDetails,
+    type UserGroupSummary,
     type VersionedRules,
     chatIdentifiersEqual,
     chatListScopesEqual,
@@ -20,7 +22,7 @@ import { ChatDetailsMergedState } from "./chat_details";
 import { ChatDetailsServerState } from "./chat_details/server";
 import { CommunityMergedState } from "./community_details/merged.svelte";
 import { CommunityServerState } from "./community_details/server";
-import { global } from "./global/global.svelte";
+import { globalLocalUpdates } from "./global";
 import { pathState } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
 
@@ -43,6 +45,27 @@ class AppState {
             });
         });
     }
+
+    #serverCommunities = $state<CommunityMap<CommunitySummary>>(new CommunityMap());
+
+    #communities = $derived.by(() => {
+        return globalLocalUpdates.communities.apply(this.#serverCommunities);
+    });
+
+    #sortedCommunities = $derived.by(() => {
+        return this.#communities.values().toSorted((a, b) => {
+            return b.membership.index === a.membership.index
+                ? b.memberCount - a.memberCount
+                : b.membership.index - a.membership.index;
+        });
+    });
+
+    #userGroupSummaries = $derived.by(() => {
+        return this.#communities.values().reduce((map, community) => {
+            community.userGroups.forEach((ug) => map.set(ug.id, ug));
+            return map;
+        }, new Map<number, UserGroupSummary>());
+    });
 
     #identityState = $state<IdentityState>({ kind: "loading_user" });
 
@@ -91,12 +114,12 @@ class AppState {
     #selectedCommunitySummary = $derived.by<CommunitySummary | undefined>(
         withEqCheck(() => {
             if (this.#chatListScope.kind === "community") {
-                return global.communities.get(this.#chatListScope.id);
+                return this.#communities.get(this.#chatListScope.id);
             } else if (
                 this.#chatListScope.kind === "favourite" &&
                 this.#chatListScope.communityId
             ) {
-                return global.communities.get(this.#chatListScope.communityId);
+                return this.#communities.get(this.#chatListScope.communityId);
             } else {
                 return undefined;
             }
@@ -225,6 +248,24 @@ class AppState {
         } else {
             this.#selectedCommunity = new CommunityMergedState(serverState);
         }
+    }
+
+    set serverCommunities(val: CommunityMap<CommunitySummary>) {
+        if (!dequal(val, this.#serverCommunities)) {
+            this.#serverCommunities = val;
+        }
+    }
+
+    get communities() {
+        return this.#communities;
+    }
+
+    get sortedCommunities() {
+        return this.#sortedCommunities;
+    }
+
+    get userGroupSummaries(): ReadonlyMap<number, UserGroupSummary> {
+        return this.#userGroupSummaries;
     }
 }
 

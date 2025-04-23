@@ -15,7 +15,6 @@
         chatIdentifiersEqual,
         chatListScopeStore as chatListScope,
         favouritesStore,
-        global,
         messagesRead,
         pathState,
         publish,
@@ -86,7 +85,7 @@
     let displayDate = $derived(client.getDisplayDate(chatSummary));
     let community = $derived(
         chatSummary.kind === "channel"
-            ? global.communities.get({ kind: "community", communityId: chatSummary.id.communityId })
+            ? app.communities.get({ kind: "community", communityId: chatSummary.id.communityId })
             : undefined,
     );
     let blocked = $derived(

@@ -15,7 +15,7 @@ export type CommunityScope = { kind: "community"; id: CommunityIdentifier };
 export type NullScope = { kind: "none" };
 
 export function chatListScopesEqual(a: ChatListScope, b: ChatListScope): boolean {
-    if (a.kind !== a.kind) return false;
+    if (a.kind !== b.kind) return false;
     switch (a.kind) {
         case "community":
             return b.kind === "community" && b.id.communityId === a.id.communityId;

@@ -281,7 +281,6 @@ import { botState } from "./state/bots.svelte";
 import { chatDetailsLocalUpdates } from "./state/chat_details";
 import { communityLocalUpdates, type CommunityMergedState } from "./state/community_details";
 import { globalLocalUpdates } from "./state/global";
-import { global } from "./state/global/global.svelte";
 import type { ReadonlyMap } from "./state/map";
 import { pathState, type RouteParams } from "./state/path.svelte";
 import type { ReadonlySet } from "./state/set";
@@ -1210,7 +1209,7 @@ export class OpenChat {
     }
 
     muteAllChannels(communityId: CommunityIdentifier): Promise<boolean> {
-        const community = global.communities.get(communityId);
+        const community = app.communities.get(communityId);
         if (community === undefined) {
             return Promise.resolve(false);
         }
@@ -1406,7 +1405,7 @@ export class OpenChat {
 
     #removeCommunityLocally(id: CommunityIdentifier): void {
         globalLocalUpdates.removeCommunity(id);
-        const community = global.communities.get(id);
+        const community = app.communities.get(id);
         if (community !== undefined) {
             community.channels.forEach((c) => localChatSummaryUpdates.markRemoved(c.id));
         }
@@ -2096,7 +2095,7 @@ export class OpenChat {
         communityId: CommunityIdentifier,
         predicate: (community: CommunitySummary) => boolean,
     ): boolean {
-        const community = global.communities.get(communityId);
+        const community = app.communities.get(communityId);
         return community !== undefined && predicate(community);
     }
 
@@ -5006,7 +5005,7 @@ export class OpenChat {
     ): void {
         if (id.kind === "community") {
             communityLocalUpdates.uninviteUsers(id, userIds);
-            const community = global.communities.get({
+            const community = app.communities.get({
                 kind: "community",
                 communityId: id.communityId,
             });
@@ -6973,7 +6972,7 @@ export class OpenChat {
     }
 
     cachedLocalUserIndexForCommunity(communityId: string): string | undefined {
-        const community = global.communities.get({ kind: "community", communityId });
+        const community = app.communities.get({ kind: "community", communityId });
         return community !== undefined ? community.localUserIndex : undefined;
     }
 
@@ -7126,7 +7125,7 @@ export class OpenChat {
     }
 
     #getLocalUserIndexForCommunity(communityId: string): Promise<string> {
-        const community = global.communities.get({
+        const community = app.communities.get({
             kind: "community",
             communityId,
         });
@@ -7142,7 +7141,7 @@ export class OpenChat {
             case "group_chat":
                 return Promise.resolve(chat.localUserIndex);
             case "channel":
-                const community = global.communities.get({
+                const community = app.communities.get({
                     kind: "community",
                     communityId: chat.id.communityId,
                 });
@@ -7624,7 +7623,7 @@ export class OpenChat {
     }
 
     async setSelectedCommunity(id: CommunityIdentifier): Promise<boolean> {
-        let community = global.communities.get(id);
+        let community = app.communities.get(id);
         let preview = false;
         if (community === undefined) {
             // if we don't have the community it means we're not a member and we need to look it up
@@ -7775,7 +7774,7 @@ export class OpenChat {
     }
 
     deleteCommunity(id: CommunityIdentifier): Promise<boolean> {
-        const community = global.communities.get(id);
+        const community = app.communities.get(id);
         if (community === undefined) return Promise.resolve(false);
 
         this.#removeCommunityLocally(id);
@@ -7791,7 +7790,7 @@ export class OpenChat {
     }
 
     leaveCommunity(id: CommunityIdentifier): Promise<boolean> {
-        const community = global.communities.get(id);
+        const community = app.communities.get(id);
         if (community === undefined) return Promise.resolve(false);
 
         this.#removeCommunityLocally(id);
@@ -7968,7 +7967,7 @@ export class OpenChat {
     }
 
     getCommunityForChannel(id: ChannelIdentifier): CommunitySummary | undefined {
-        return global.communities.values().find((c) => {
+        return app.communities.values().find((c) => {
             return c.channels.findIndex((ch) => chatIdentifiersEqual(ch.id, id)) >= 0;
         });
     }

@@ -13,7 +13,6 @@
         emptyCombinedUnreadCounts,
         favouritesStore,
         favouritesVideoCallCounts,
-        global,
         globalStateStore as globalState,
         groupVideoCallCounts,
         pathState,
@@ -70,7 +69,7 @@
 
     onMount(() => {
         // TODO - this is not doing the same thing - need to check this out
-        initCommunitiesList(global.sortedCommunities);
+        initCommunitiesList(app.sortedCommunities);
         // const unsub = communities.subscribe(initCommunitiesList);
         tick().then(() => (scrollingSection.scrollTop = ui.communityListScrollTop ?? 0));
         // return unsub;
