@@ -1,8 +1,10 @@
 use crate::WebAuthnKey;
 use candid::{CandidType, Deserialize, Principal};
 use serde::Serialize;
+use ts_export::ts_export;
 use types::CanisterId;
 
+#[ts_export(identity, initiate_identity_link)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     #[serde(with = "serde_bytes")]
@@ -12,6 +14,7 @@ pub struct Args {
     pub link_to_principal: Principal,
 }
 
+#[ts_export(identity, initiate_identity_link)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,

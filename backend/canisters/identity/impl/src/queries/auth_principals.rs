@@ -1,8 +1,8 @@
 use crate::{RuntimeState, read_state};
-use ic_cdk::query;
+use canister_api_macros::query;
 use identity_canister::auth_principals::{Response::*, *};
 
-#[query]
+#[query(msgpack = true, candid = true)]
 fn auth_principals() -> Response {
     read_state(auth_principals_impl)
 }

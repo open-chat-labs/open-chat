@@ -4185,10 +4185,11 @@ name = "identity_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "candid_gen",
  "oc_error_codes",
  "serde",
  "serde_bytes",
+ "ts-rs",
+ "ts_export",
  "types",
 ]
 

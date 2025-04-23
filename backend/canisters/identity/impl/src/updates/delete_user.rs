@@ -1,8 +1,8 @@
 use crate::{RuntimeState, mutate_state, read_state};
 use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
-use ic_cdk::update;
 use ic_certificate_verification::VerifyCertificate;
 use identity_canister::WEBAUTHN_ORIGINATING_CANISTER;
 use identity_canister::delete_user::{Response::*, *};
@@ -10,7 +10,7 @@ use identity_utils::extract_certificate;
 use oc_error_codes::OCErrorCode;
 use types::{CanisterId, OCResult, UserId};
 
-#[update]
+#[update(msgpack = true, candid = true)]
 #[trace]
 async fn delete_user(args: Args) -> Response {
     let PrepareResult {
