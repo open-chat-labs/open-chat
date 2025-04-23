@@ -14,6 +14,22 @@ export class SafeMap<K, V> {
         protected _map: Map<string, V> = new Map<string, V>(),
     ) {}
 
+    [Symbol.iterator](): Iterator<[K, V]> {
+        const inner = this._map[Symbol.iterator]();
+        const deserialise = this.fromString;
+        return {
+            next(): IteratorResult<[K, V]> {
+                const result = inner.next();
+                if (result.done) return { done: true, value: undefined };
+                const [stringKey, value] = result.value;
+                return {
+                    done: false,
+                    value: [deserialise(stringKey), value],
+                };
+            },
+        };
+    }
+
     map<A>(fn: (key: K, val: V) => A): SafeMap<K, A> {
         const mapped = [...this._map.entries()].map(([k, v]) => {
             return [k, fn(this.fromString(k), v)] as [string, A];

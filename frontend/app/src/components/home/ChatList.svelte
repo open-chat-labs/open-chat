@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        app,
         type BotMatch,
         chatIdentifiersEqual,
         chatIdentifierToString,
@@ -18,7 +19,6 @@
         routeForChatIdentifier,
         routeForScope,
         selectedChatId,
-        selectedCommunity,
         ui,
         unreadCommunityChannelCounts,
         unreadDirectCounts,
@@ -98,8 +98,8 @@
     }
 
     function cancelPreview() {
-        if ($selectedCommunity) {
-            client.removeCommunity($selectedCommunity.id);
+        if (app.selectedCommunitySummary) {
+            client.removeCommunity(app.selectedCommunitySummary.id);
             page(routeForScope(client.getDefaultScope()));
         }
     }
@@ -183,7 +183,7 @@
     }
     let showPreview = $derived(
         ui.mobileWidth &&
-            $selectedCommunity?.membership.role === "none" &&
+            app.selectedCommunitySummary?.membership.role === "none" &&
             $selectedChatId === undefined,
     );
     let user = $derived($userStore.get($createdUser.userId));
@@ -244,8 +244,8 @@
         <GroupChatsHeader {canMarkAllRead} />
     {:else if $chatListScope.kind === "direct_chat"}
         <DirectChatsHeader {canMarkAllRead} />
-    {:else if $selectedCommunity && $chatListScope.kind === "community"}
-        <SelectedCommunityHeader community={$selectedCommunity} {canMarkAllRead} />
+    {:else if app.selectedCommunitySummary && $chatListScope.kind === "community"}
+        <SelectedCommunityHeader community={app.selectedCommunitySummary} {canMarkAllRead} />
     {/if}
 
     <ChatListSearch
@@ -357,7 +357,7 @@
                                                 ...group,
                                                 id: group.chatId,
                                             },
-                                            $selectedCommunity,
+                                            app.selectedCommunitySummary,
                                         )}
                                         onclick={() => selectGroup(group)}>
                                         <h4 class="search-item-title">

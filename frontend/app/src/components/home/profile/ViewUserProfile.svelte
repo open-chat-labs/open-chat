@@ -4,9 +4,9 @@
         AvatarSize,
         type ChatSummary,
         type CommunitySummary,
-        type ReadonlySet,
         type OpenChat,
         type PublicProfile,
+        type ReadonlySet,
         type ResourceKey,
         type UserSummary,
         app,
@@ -14,7 +14,6 @@
         currentUser as createdUser,
         platformModerator,
         selectedChatStore as selectedChat,
-        selectedCommunity,
         ui,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
@@ -99,9 +98,9 @@
                 return;
             }
         }
-        if ($selectedCommunity !== undefined) {
+        if (app.selectedCommunitySummary !== undefined) {
             client
-                .blockCommunityUser($selectedCommunity.id, userId)
+                .blockCommunityUser(app.selectedCommunitySummary.id, userId)
                 .then((success) =>
                     afterBlock(success, i18nKey("blockUserSucceeded"), i18nKey("blockUserFailed")),
                 );
@@ -135,9 +134,9 @@
                 return;
             }
         }
-        if ($selectedCommunity !== undefined) {
+        if (app.selectedCommunitySummary !== undefined) {
             client
-                .unblockCommunityUser($selectedCommunity.id, userId)
+                .unblockCommunityUser(app.selectedCommunitySummary.id, userId)
                 .then((success) =>
                     afterBlock(
                         success,
@@ -267,7 +266,7 @@
     let canBlock = $derived(
         canBlockUser(
             $selectedChat,
-            $selectedCommunity,
+            app.selectedCommunitySummary,
             $blockedUsers,
             app.selectedChat.blockedUsers,
             app.selectedCommunity.blockedUsers,
@@ -276,7 +275,7 @@
     let canUnblock = $derived(
         canUnblockUser(
             $selectedChat,
-            $selectedCommunity,
+            app.selectedCommunitySummary,
             $blockedUsers,
             app.selectedChat.blockedUsers,
             app.selectedCommunity.blockedUsers,

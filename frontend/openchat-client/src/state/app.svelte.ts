@@ -1,6 +1,8 @@
+import { dequal } from "dequal";
 import {
     type ChatIdentifier,
     type CommunityIdentifier,
+    type CommunitySummary,
     type DirectChatIdentifier,
     type ExternalBotPermissions,
     type IdentityState,
@@ -18,6 +20,7 @@ import { ChatDetailsMergedState } from "./chat_details";
 import { ChatDetailsServerState } from "./chat_details/server";
 import { CommunityMergedState } from "./community_details/merged.svelte";
 import { CommunityServerState } from "./community_details/server";
+import { global } from "./global/global.svelte";
 import { pathState } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
 
@@ -85,6 +88,21 @@ class AppState {
         }, communityIdentifiersEqual),
     );
 
+    #selectedCommunitySummary = $derived.by<CommunitySummary | undefined>(
+        withEqCheck(() => {
+            if (this.#chatListScope.kind === "community") {
+                return global.communities.get(this.#chatListScope.id);
+            } else if (
+                this.#chatListScope.kind === "favourite" &&
+                this.#chatListScope.communityId
+            ) {
+                return global.communities.get(this.#chatListScope.communityId);
+            } else {
+                return undefined;
+            }
+        }, dequal),
+    );
+
     #selectedCommunity = $state<CommunityMergedState>(
         new CommunityMergedState(CommunityServerState.empty()),
     );
@@ -127,6 +145,10 @@ class AppState {
 
     get selectedCommunity() {
         return this.#selectedCommunity;
+    }
+
+    get selectedCommunitySummary() {
+        return this.#selectedCommunitySummary;
     }
 
     get selectedChat() {

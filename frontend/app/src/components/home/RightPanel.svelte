@@ -22,7 +22,6 @@
         publish,
         selectedChatStore as selectedChat,
         selectedChatId,
-        selectedCommunity,
         ui,
         userStore,
     } from "openchat-client";
@@ -65,7 +64,8 @@
 
     function searchUsers(term: string): Promise<[UserSummary[], UserSummary[]]> {
         const canInvite =
-            $selectedCommunity !== undefined && client.canInviteUsers($selectedCommunity.id);
+            app.selectedCommunitySummary !== undefined &&
+            client.canInviteUsers(app.selectedCommunitySummary.id);
         return client.searchUsersForInvite(term, 20, level, false, canInvite);
     }
 
@@ -92,9 +92,9 @@
         newRole: MemberRole;
         oldRole: MemberRole;
     }): void {
-        if ($selectedCommunity !== undefined) {
+        if (app.selectedCommunitySummary !== undefined) {
             const { userId, newRole, oldRole } = args;
-            changeCommunityRole($selectedCommunity.id, userId, newRole, oldRole);
+            changeCommunityRole(app.selectedCommunitySummary.id, userId, newRole, oldRole);
         }
     }
 
@@ -108,18 +108,18 @@
     }
 
     function onRemoveCommunityMember(userId: string): void {
-        if ($selectedCommunity !== undefined) {
-            removeCommunityMember($selectedCommunity.id, userId);
+        if (app.selectedCommunitySummary !== undefined) {
+            removeCommunityMember(app.selectedCommunitySummary.id, userId);
         }
     }
 
     async function onInviteCommunityUsers(users: UserSummary[]) {
-        if ($selectedCommunity !== undefined) {
+        if (app.selectedCommunitySummary !== undefined) {
             const userIds = users.map((u) => u.userId);
 
             invitingUsers = true;
 
-            await client.inviteUsers($selectedCommunity.id, userIds).then((resp) => {
+            await client.inviteUsers(app.selectedCommunitySummary.id, userIds).then((resp) => {
                 if (resp) {
                     ui.popRightPanelHistory();
                     if ($multiUserChat?.public ?? false) {
@@ -278,8 +278,11 @@
     }
 
     async function onBlockCommunityUser(args: { userId: string }) {
-        if ($selectedCommunity !== undefined) {
-            const success = await client.blockCommunityUser($selectedCommunity.id, args.userId);
+        if (app.selectedCommunitySummary !== undefined) {
+            const success = await client.blockCommunityUser(
+                app.selectedCommunitySummary.id,
+                args.userId,
+            );
             if (success) {
                 toastStore.showSuccessToast(i18nKey("blockUserSucceeded"));
             } else {
@@ -303,8 +306,11 @@
     }
 
     async function onUnblockCommunityUser(user: UserSummary) {
-        if ($selectedCommunity !== undefined) {
-            const success = await client.unblockCommunityUser($selectedCommunity.id, user.userId);
+        if (app.selectedCommunitySummary !== undefined) {
+            const success = await client.unblockCommunityUser(
+                app.selectedCommunitySummary.id,
+                user.userId,
+            );
             if (success) {
                 toastStore.showSuccessToast(i18nKey("unblockUserSucceeded"));
             } else {
@@ -318,14 +324,14 @@
     }
 
     function showInviteCommunityUsers() {
-        if ($selectedCommunity !== undefined) {
+        if (app.selectedCommunitySummary !== undefined) {
             ui.rightPanelHistory = [{ kind: "invite_community_users" }];
         }
     }
 
     function onCancelCommunityInvite(userId: string) {
-        if ($selectedCommunity !== undefined) {
-            cancelInvite($selectedCommunity.id, userId);
+        if (app.selectedCommunitySummary !== undefined) {
+            cancelInvite(app.selectedCommunitySummary.id, userId);
         }
     }
 
@@ -371,11 +377,11 @@
     class:halloween={$currentTheme.name === "halloween"}
     class:empty>
     {#if ui.lastRightPanelState.kind === "group_details" && $selectedChatId !== undefined && $multiUserChat !== undefined}
-        {#if $multiUserChat.kind === "channel" && $selectedCommunity !== undefined}
+        {#if $multiUserChat.kind === "channel" && app.selectedCommunitySummary !== undefined}
             <ChannelOrCommunitySummary
                 channel={$multiUserChat}
                 memberCount={app.selectedChat.members.size}
-                community={$selectedCommunity}
+                community={app.selectedCommunitySummary}
                 selectedTab="channel"
                 onClose={ui.popRightPanelHistory} />
         {:else}
@@ -390,11 +396,11 @@
             chatId={ui.lastRightPanelState.chatId}
             onClose={ui.popRightPanelHistory}
             messageId={ui.lastRightPanelState.messageId} />
-    {:else if ui.lastRightPanelState.kind === "invite_community_users" && $selectedCommunity !== undefined}
-        {#if $multiUserChat !== undefined && $multiUserChat.kind === "channel" && $selectedCommunity !== undefined}
+    {:else if ui.lastRightPanelState.kind === "invite_community_users" && app.selectedCommunitySummary !== undefined}
+        {#if $multiUserChat !== undefined && $multiUserChat.kind === "channel" && app.selectedCommunitySummary !== undefined}
             <ChannelOrCommunityInvite
                 channel={$multiUserChat}
-                community={$selectedCommunity}
+                community={app.selectedCommunitySummary}
                 userLookup={searchUsers}
                 busy={invitingUsers}
                 {closeIcon}
@@ -405,19 +411,19 @@
         {:else}
             <InviteUsers
                 {level}
-                container={$selectedCommunity}
+                container={app.selectedCommunitySummary}
                 userLookup={searchUsers}
                 busy={invitingUsers}
                 {closeIcon}
-                isCommunityPublic={$selectedCommunity?.public ?? true}
+                isCommunityPublic={app.selectedCommunitySummary?.public ?? true}
                 onInviteUsers={onInviteCommunityUsers}
                 onCancelInviteUsers={ui.popRightPanelHistory} />
         {/if}
-    {:else if ui.lastRightPanelState.kind === "show_community_members" && $selectedCommunity !== undefined}
+    {:else if ui.lastRightPanelState.kind === "show_community_members" && app.selectedCommunitySummary !== undefined}
         {#if $multiUserChat !== undefined && $multiUserChat.kind === "channel"}
             <ChannelOrCommunityMembers
                 channel={$multiUserChat}
-                community={$selectedCommunity}
+                community={app.selectedCommunitySummary}
                 {closeIcon}
                 selectedTab="community"
                 onShowInviteCommunityUsers={showInviteCommunityUsers}
@@ -435,7 +441,7 @@
         {:else}
             <Members
                 {closeIcon}
-                collection={$selectedCommunity}
+                collection={app.selectedCommunitySummary}
                 invited={app.selectedCommunity.invitedUsers}
                 members={[...app.selectedCommunity.members.values()]}
                 blocked={app.selectedCommunity.blockedUsers}
@@ -452,10 +458,10 @@
                 onCancelInvite={onCancelCommunityInvite} />
         {/if}
     {:else if ui.lastRightPanelState.kind === "invite_group_users" && $multiUserChat !== undefined}
-        {#if $multiUserChat.kind === "channel" && $selectedCommunity !== undefined}
+        {#if $multiUserChat.kind === "channel" && app.selectedCommunitySummary !== undefined}
             <ChannelOrCommunityInvite
                 channel={$multiUserChat}
-                community={$selectedCommunity}
+                community={app.selectedCommunitySummary}
                 userLookup={searchUsers}
                 memberLookup={searchMembers}
                 busy={invitingUsers}
@@ -472,7 +478,7 @@
                 memberLookup={searchMembers}
                 busy={invitingUsers}
                 {closeIcon}
-                isCommunityPublic={$selectedCommunity?.public ?? true}
+                isCommunityPublic={app.selectedCommunitySummary?.public ?? true}
                 onInviteUsers={onInviteGroupUsers}
                 onCancelInviteUsers={ui.popRightPanelHistory} />
         {/if}
@@ -493,11 +499,11 @@
             onRemoveMember={onRemoveGroupMember}
             onChangeRole={onChangeGroupRole}
             onCancelInvite={onCancelGroupInvite} />
-    {:else if ui.lastRightPanelState.kind === "show_group_members" && $selectedChatId !== undefined && $multiUserChat !== undefined && $multiUserChat.kind === "channel" && $selectedCommunity !== undefined}
+    {:else if ui.lastRightPanelState.kind === "show_group_members" && $selectedChatId !== undefined && $multiUserChat !== undefined && $multiUserChat.kind === "channel" && app.selectedCommunitySummary !== undefined}
         <ChannelOrCommunityMembers
             selectedTab="channel"
             channel={$multiUserChat}
-            community={$selectedCommunity}
+            community={app.selectedCommunitySummary}
             {closeIcon}
             onShowInviteCommunityUsers={showInviteCommunityUsers}
             {onRemoveCommunityMember}
@@ -526,11 +532,11 @@
         <Thread rootEvent={threadRootEvent} chat={$selectedChat} onCloseThread={closeThread} />
     {:else if ui.lastRightPanelState.kind === "proposal_filters" && $selectedChat !== undefined}
         <ProposalGroupFilters selectedChat={$selectedChat} onClose={ui.popRightPanelHistory} />
-    {:else if ui.lastRightPanelState.kind === "community_details" && $selectedCommunity !== undefined}
+    {:else if ui.lastRightPanelState.kind === "community_details" && app.selectedCommunitySummary !== undefined}
         {#if $multiUserChat !== undefined && $multiUserChat.kind === "channel"}
             <ChannelOrCommunitySummary
                 channel={$multiUserChat}
-                community={$selectedCommunity}
+                community={app.selectedCommunitySummary}
                 memberCount={app.selectedChat.members.size}
                 selectedTab="community"
                 onClose={ui.popRightPanelHistory} />

@@ -4,20 +4,20 @@
         type CommunitySummary,
         type OpenChat,
         anonUser,
+        app,
         chatListScopeStore as chatListScope,
         chitStateStore as chitState,
-        communitiesList as communities,
         communityChannelVideoCallCounts,
         currentUser as createdUser,
         directVideoCallCounts,
         emptyCombinedUnreadCounts,
         favouritesStore,
         favouritesVideoCallCounts,
+        global,
         globalStateStore as globalState,
         groupVideoCallCounts,
         pathState,
         publish,
-        selectedCommunity,
         ui,
         unreadActivityCount,
         unreadCommunityChannelCounts,
@@ -56,7 +56,7 @@
     let user = $derived($userStore.get($createdUser.userId));
     let avatarSize = $derived(ui.mobileWidth ? AvatarSize.Small : AvatarSize.Default);
     let communityExplorer = $derived(pathState.route.kind === "communities_route");
-    let selectedCommunityId = $derived($selectedCommunity?.id.communityId);
+    let selectedCommunityId = $derived(app.selectedCommunitySummary?.id.communityId);
     let claimChitAvailable = $derived($chitState.nextDailyChitClaim < $now);
 
     let iconSize = ui.mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
@@ -69,9 +69,11 @@
     let dragging = $state<boolean>(false);
 
     onMount(() => {
-        const unsub = communities.subscribe(initCommunitiesList);
+        // TODO - this is not doing the same thing - need to check this out
+        initCommunitiesList(global.sortedCommunities);
+        // const unsub = communities.subscribe(initCommunitiesList);
         tick().then(() => (scrollingSection.scrollTop = ui.communityListScrollTop ?? 0));
-        return unsub;
+        // return unsub;
     });
 
     function onScroll() {

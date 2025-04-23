@@ -280,6 +280,8 @@ import { app } from "./state/app.svelte";
 import { botState } from "./state/bots.svelte";
 import { chatDetailsLocalUpdates } from "./state/chat_details";
 import { communityLocalUpdates, type CommunityMergedState } from "./state/community_details";
+import { globalLocalUpdates } from "./state/global";
+import { global } from "./state/global/global.svelte";
 import type { ReadonlyMap } from "./state/map";
 import { pathState, type RouteParams } from "./state/path.svelte";
 import type { ReadonlySet } from "./state/set";
@@ -308,7 +310,6 @@ import {
 import {
     addCommunityPreview,
     communityPreviewsStore,
-    nextCommunityIndex,
     removeCommunityPreview,
 } from "./stores/community";
 import {
@@ -1209,7 +1210,7 @@ export class OpenChat {
     }
 
     muteAllChannels(communityId: CommunityIdentifier): Promise<boolean> {
-        const community = this.#liveState.communities.get(communityId);
+        const community = global.communities.get(communityId);
         if (community === undefined) {
             return Promise.resolve(false);
         }
@@ -1399,16 +1400,13 @@ export class OpenChat {
     }
 
     #addCommunityLocally(community: CommunitySummary): void {
-        localCommunitySummaryUpdates.markAdded(community);
+        globalLocalUpdates.addCommunity(community);
         community.channels.forEach((c) => localChatSummaryUpdates.markAdded(c));
     }
 
     #removeCommunityLocally(id: CommunityIdentifier): void {
-        if (this.#liveState.communityPreviews.has(id)) {
-            removeCommunityPreview(id);
-        }
-        localCommunitySummaryUpdates.markRemoved(id);
-        const community = this.#liveState.communities.get(id);
+        globalLocalUpdates.removeCommunity(id);
+        const community = global.communities.get(id);
         if (community !== undefined) {
             community.channels.forEach((c) => localChatSummaryUpdates.markRemoved(c.id));
         }
@@ -2098,7 +2096,7 @@ export class OpenChat {
         communityId: CommunityIdentifier,
         predicate: (community: CommunitySummary) => boolean,
     ): boolean {
-        const community = this.#liveState.communities.get(communityId);
+        const community = global.communities.get(communityId);
         return community !== undefined && predicate(community);
     }
 
@@ -4012,7 +4010,7 @@ export class OpenChat {
         }
 
         const communityRules = app.selectedCommunity.rules;
-        const community = this.#liveState.selectedCommunity;
+        const community = app.selectedCommunitySummary;
 
         console.debug(
             "RULES: rulesNeedAccepting",
@@ -4048,7 +4046,7 @@ export class OpenChat {
     }
 
     #markCommunityRulesAcceptedLocally(rulesAccepted: boolean) {
-        const selectedCommunityId = this.#liveState.selectedCommunity?.id;
+        const selectedCommunityId = app.selectedCommunitySummary?.id;
         if (selectedCommunityId !== undefined) {
             localCommunitySummaryUpdates.updateRulesAccepted(selectedCommunityId, rulesAccepted);
         }
@@ -5008,7 +5006,7 @@ export class OpenChat {
     ): void {
         if (id.kind === "community") {
             communityLocalUpdates.uninviteUsers(id, userIds);
-            const community = this.#liveState.communities.get({
+            const community = global.communities.get({
                 kind: "community",
                 communityId: id.communityId,
             });
@@ -6012,7 +6010,7 @@ export class OpenChat {
             }
 
             // if the selected community has updates, reload the details
-            const selectedCommunity = this.#liveState.selectedCommunity;
+            const selectedCommunity = app.selectedCommunitySummary;
             if (selectedCommunity !== undefined) {
                 const updatedCommunity = chatsResponse.state.communities.find(
                     (c) => c.id.communityId === selectedCommunity.id.communityId,
@@ -6820,8 +6818,8 @@ export class OpenChat {
                     lookup[user.username.toLowerCase()] = user as UserSummary;
                 }
             }
-            if (this.#liveState.selectedCommunity !== undefined) {
-                const userGroups = [...this.#liveState.selectedCommunity.userGroups.values()];
+            if (app.selectedCommunitySummary !== undefined) {
+                const userGroups = [...app.selectedCommunitySummary.userGroups.values()];
                 userGroups.forEach((ug) => (lookup[ug.name.toLowerCase()] = ug));
             }
             if (
@@ -6975,7 +6973,7 @@ export class OpenChat {
     }
 
     cachedLocalUserIndexForCommunity(communityId: string): string | undefined {
-        const community = this.#liveState.communities.get({ kind: "community", communityId });
+        const community = global.communities.get({ kind: "community", communityId });
         return community !== undefined ? community.localUserIndex : undefined;
     }
 
@@ -7128,7 +7126,7 @@ export class OpenChat {
     }
 
     #getLocalUserIndexForCommunity(communityId: string): Promise<string> {
-        const community = this.#liveState.communities.get({
+        const community = global.communities.get({
             kind: "community",
             communityId,
         });
@@ -7144,7 +7142,7 @@ export class OpenChat {
             case "group_chat":
                 return Promise.resolve(chat.localUserIndex);
             case "channel":
-                const community = this.#liveState.communities.get({
+                const community = global.communities.get({
                     kind: "community",
                     communityId: chat.id.communityId,
                 });
@@ -7626,7 +7624,7 @@ export class OpenChat {
     }
 
     async setSelectedCommunity(id: CommunityIdentifier): Promise<boolean> {
-        let community = this.#liveState.communities.get(id);
+        let community = global.communities.get(id);
         let preview = false;
         if (community === undefined) {
             // if we don't have the community it means we're not a member and we need to look it up
@@ -7645,7 +7643,9 @@ export class OpenChat {
             });
             if ("id" in resp) {
                 // Make the community appear at the top of the list
-                resp.membership.index = nextCommunityIndex();
+                // TODO - come back to this
+                // resp.membership.index = nextCommunityIndex();
+                resp.membership.index = 0;
                 community = resp;
                 addCommunityPreview(community);
                 preview = true;
@@ -7747,7 +7747,9 @@ export class OpenChat {
             .then((resp) => {
                 if (resp.kind === "success") {
                     // Make the community appear at the top of the list
-                    resp.community.membership.index = nextCommunityIndex();
+                    // TODO - come back to this - I *think* this is better done as a community scoped local update
+                    // resp.community.membership.index = nextCommunityIndex();
+                    resp.community.membership.index = 0;
                     this.#addCommunityLocally(resp.community);
                     removeCommunityPreview(community.id);
                     this.#loadCommunityDetails(resp.community);
@@ -7773,7 +7775,7 @@ export class OpenChat {
     }
 
     deleteCommunity(id: CommunityIdentifier): Promise<boolean> {
-        const community = this.#liveState.communities.get(id);
+        const community = global.communities.get(id);
         if (community === undefined) return Promise.resolve(false);
 
         this.#removeCommunityLocally(id);
@@ -7789,7 +7791,7 @@ export class OpenChat {
     }
 
     leaveCommunity(id: CommunityIdentifier): Promise<boolean> {
-        const community = this.#liveState.communities.get(id);
+        const community = global.communities.get(id);
         if (community === undefined) return Promise.resolve(false);
 
         this.#removeCommunityLocally(id);
@@ -7966,7 +7968,7 @@ export class OpenChat {
     }
 
     getCommunityForChannel(id: ChannelIdentifier): CommunitySummary | undefined {
-        return this.#liveState.communities.values().find((c) => {
+        return global.communities.values().find((c) => {
             return c.channels.findIndex((ch) => chatIdentifiersEqual(ch.id, id)) >= 0;
         });
     }

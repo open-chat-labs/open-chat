@@ -1,26 +1,26 @@
 <script lang="ts">
+    import type { Message, MessageActivityEvent, ResourceKey } from "openchat-client";
     import {
         AvatarSize,
+        global,
         OpenChat,
         routeForMessageContext,
-        type MessageContext,
-        userStore,
         currentUser as user,
-        communities,
+        userStore,
+        type MessageContext,
     } from "openchat-client";
-    import type { Message, MessageActivityEvent, ResourceKey } from "openchat-client";
-    import Avatar from "../../Avatar.svelte";
-    import Markdown from "../Markdown.svelte";
-    import { _ } from "svelte-i18n";
-    import { getContext } from "svelte";
-    import { buildDisplayName } from "../../../utils/user";
-    import MessageReaction from "../MessageReaction.svelte";
-    import { i18nKey, interpolate } from "../../../i18n/i18n";
-    import TipThumbnail from "../TipThumbnail.svelte";
-    import Link from "../../Link.svelte";
-    import { activityFeedShowing } from "../../../stores/activity";
     import page from "page";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
+    import { i18nKey, interpolate } from "../../../i18n/i18n";
+    import { activityFeedShowing } from "../../../stores/activity";
+    import { buildDisplayName } from "../../../utils/user";
+    import Avatar from "../../Avatar.svelte";
+    import Link from "../../Link.svelte";
     import Translatable from "../../Translatable.svelte";
+    import Markdown from "../Markdown.svelte";
+    import MessageReaction from "../MessageReaction.svelte";
+    import TipThumbnail from "../TipThumbnail.svelte";
     import ActivityIcon from "./ActivityIcon.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -45,7 +45,7 @@
                     parts.push(chat.name);
                     break;
                 case "channel":
-                    const community = $communities.get({
+                    const community = global.communities.get({
                         kind: "community",
                         communityId: chat.id.communityId,
                     });

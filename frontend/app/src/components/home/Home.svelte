@@ -30,9 +30,9 @@
         chatListScopeStore as chatListScope,
         chatSummariesListStore,
         chatSummariesStore,
-        communities,
         defaultChatRules,
         draftMessagesStore,
+        global,
         nullMembership,
         offlineStore,
         pageRedirect,
@@ -826,7 +826,7 @@
     }
 
     function createCommunity() {
-        const maxIndex = $communities
+        const maxIndex = global.communities
             .values()
             .reduce((m, c) => (c.membership.index > m ? c.membership.index : m), 0);
         modal = {

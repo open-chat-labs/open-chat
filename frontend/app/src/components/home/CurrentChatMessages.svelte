@@ -21,7 +21,6 @@
         messagesRead,
         pathState,
         routeForChatIdentifier,
-        selectedCommunity,
         unconfirmed,
         currentUser as user,
     } from "openchat-client";
@@ -233,10 +232,11 @@
         return earliestLoadedEventIndex <= indexRequired;
     }
     let privateCommunityPreview = $derived(
-        $selectedCommunity !== undefined &&
-            ($selectedCommunity.membership.role === "none" ||
-                $selectedCommunity.membership.lapsed) &&
-            (!$selectedCommunity.public || $selectedCommunity.gateConfig.gate.kind !== "no_gate"),
+        app.selectedCommunitySummary !== undefined &&
+            (app.selectedCommunitySummary.membership.role === "none" ||
+                app.selectedCommunitySummary.membership.lapsed) &&
+            (!app.selectedCommunitySummary.public ||
+                app.selectedCommunitySummary.gateConfig.gate.kind !== "no_gate"),
     );
     let privatePreview = $derived(privateCommunityPreview || privateChatPreview);
     let isEmptyChat = $derived(chat.latestEventIndex <= 0 || privatePreview);

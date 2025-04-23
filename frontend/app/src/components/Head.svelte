@@ -1,18 +1,18 @@
 <script lang="ts">
     import {
+        type ChatListScope,
         type ChatSummary,
+        type CombinedUnreadCounts,
         type CommunitySummary,
         type OpenChat,
-        type CombinedUnreadCounts,
         type UserLookup,
-        routeForChatIdentifier,
-        type ChatListScope,
-        userStore,
+        app,
         chatListScopeStore,
         globalUnreadCount,
-        selectedChatStore,
-        selectedCommunity,
         pathState,
+        routeForChatIdentifier,
+        selectedChatStore,
+        userStore,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { mobileOperatingSystem } from "../utils/devices";
@@ -92,7 +92,7 @@
             $userStore,
             $globalUnreadCount,
             $selectedChatStore,
-            $selectedCommunity,
+            app.selectedCommunitySummary,
         ),
     );
 </script>

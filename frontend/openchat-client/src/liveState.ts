@@ -50,7 +50,7 @@ import {
     threadsFollowedByMeStore,
     uninitializedDirectChats,
 } from "./stores/chat";
-import { communities, communityPreviewsStore, selectedCommunity } from "./stores/community";
+import { communityPreviewsStore } from "./stores/community";
 import { walletConfigStore } from "./stores/crypto";
 import { diamondStatus, isDiamond, isLifetimeDiamond } from "./stores/diamond";
 import { type DraftMessages, draftMessagesStore } from "./stores/draftMessages";
@@ -99,13 +99,11 @@ export class LiveState {
     isDiamond!: boolean;
     isLifetimeDiamond!: boolean;
     confirmedThreadEventIndexesLoaded!: DRange;
-    communities!: CommunityMap<CommunitySummary>;
     chatListScope!: ChatListScope;
     globalState!: GlobalState;
     pinnedChats!: PinnedByScope;
     favourites!: ObjectSet<ChatIdentifier>;
     allChats!: ChatMap<ChatSummary>;
-    selectedCommunity!: CommunitySummary | undefined;
     draftMessages!: DraftMessages;
     user!: CreatedUser;
     anonUser!: boolean;
@@ -159,13 +157,11 @@ export class LiveState {
         diamondStatus.subscribe((data) => (this.diamondStatus = data));
         isDiamond.subscribe((data) => (this.isDiamond = data));
         isLifetimeDiamond.subscribe((data) => (this.isDiamond = data));
-        communities.subscribe((data) => (this.communities = data));
         chatListScopeStore.subscribe((scope) => (this.chatListScope = scope));
         globalStateStore.subscribe((data) => (this.globalState = data));
         pinnedChatsStore.subscribe((data) => (this.pinnedChats = data));
         favouritesStore.subscribe((data) => (this.favourites = data));
         allChats.subscribe((data) => (this.allChats = data));
-        selectedCommunity.subscribe((data) => (this.selectedCommunity = data));
         draftMessagesStore.subscribe((data) => (this.draftMessages = data));
         locale.subscribe((data) => (this.locale = data ?? "en"));
         pinNumberRequiredStore.subscribe((data) => (this.pinNumberRequired = data));

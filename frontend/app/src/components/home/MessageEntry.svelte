@@ -25,7 +25,6 @@
         draftMessagesStore,
         random64,
         ScreenWidth,
-        selectedCommunity,
         throttleDeadline,
         ui,
         userStore,
@@ -511,7 +510,7 @@
             attachment !== undefined,
     );
     let excessiveLinks = $derived(client.extractEnabledLinks(textContent ?? "").length > 5);
-    let frozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunity));
+    let frozen = $derived(client.isChatOrCommunityFrozen(chat, app.selectedCommunitySummary));
     trackedEffect("message-entry-inp", () => {
         if (inp) {
             if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {

@@ -18,6 +18,7 @@ import type {
 } from "openchat-shared";
 import { ChatMap, CommunityMap, ObjectSet, chatScopesEqual } from "openchat-shared";
 import { derived } from "svelte/store";
+import { global } from "../state/global";
 import { serverWalletConfigStore } from "./crypto";
 import { immutableStore } from "./immutable";
 import { localGlobalUpdates } from "./localGlobalUpdates";
@@ -326,8 +327,9 @@ export function setGlobalState(
 ): void {
     const [channels, directChats, groupChats] = partitionChats(allChats);
 
+    const communitiesMap = CommunityMap.fromList(communities);
     const state = {
-        communities: CommunityMap.fromList(communities),
+        communities: communitiesMap,
         directChats: ChatMap.fromList(directChats),
         groupChats: ChatMap.fromList(groupChats),
         favourites: ObjectSet.fromList(favourites),
@@ -338,14 +340,16 @@ export function setGlobalState(
     };
     Object.entries(channels).forEach(([communityId, channels]) => {
         const id: CommunityIdentifier = { kind: "community", communityId };
-        const community = state.communities.get(id);
+        const community = communitiesMap.get(id);
         if (community !== undefined) {
-            state.communities.set(id, {
+            communitiesMap.set(id, {
                 ...community,
                 channels,
             });
         }
     });
+
+    global.serverCommunities = communitiesMap;
 
     globalStateStore.set(state);
     chitStateStore.update((curr) => {

@@ -8,8 +8,7 @@
         type UserSummary,
         anonUser,
         canExtendDiamond,
-        communities,
-        communitiesList,
+        global,
         globalStateStore as globalState,
         hideMessagesFromDirectBlocked,
         isDiamond,
@@ -125,7 +124,7 @@
         client.hasModerationFlag($moderationFlags, ModerationFlags.UnderReview),
     );
     let selectedCommunity = $derived(
-        $communities.get({
+        global.communities.get({
             kind: "community",
             communityId: selectedCommunityId,
         }),
@@ -682,7 +681,7 @@
         <Select bind:value={selectedCommunityId}>
             <option disabled selected value={""}
                 ><Translatable resourceKey={i18nKey("profile.selectCommunity")} /></option>
-            {#each $communitiesList.filter((s) => s.membership?.role !== "none") as community}
+            {#each global.sortedCommunities.filter((s) => s.membership?.role !== "none") as community}
                 <option value={community.id.communityId}>{community.name}</option>
             {/each}
         </Select>

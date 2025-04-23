@@ -10,17 +10,17 @@
     import {
         AvatarSize,
         OpenChat,
+        app,
         blockedUsers,
         chatIdentifiersEqual,
         chatListScopeStore as chatListScope,
-        communities,
         favouritesStore,
+        global,
         messagesRead,
         pathState,
         publish,
         routeForScope,
         selectedChatId,
-        selectedCommunity,
         suspendedUser,
         byContext as typersByContext,
         ui,
@@ -86,7 +86,7 @@
     let displayDate = $derived(client.getDisplayDate(chatSummary));
     let community = $derived(
         chatSummary.kind === "channel"
-            ? $communities.get({ kind: "community", communityId: chatSummary.id.communityId })
+            ? global.communities.get({ kind: "community", communityId: chatSummary.id.communityId })
             : undefined,
     );
     let blocked = $derived(
@@ -139,7 +139,7 @@
                     name: chatSummary.name,
                     diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
                     streak: 0,
-                    avatarUrl: client.groupAvatarUrl(chatSummary, $selectedCommunity),
+                    avatarUrl: client.groupAvatarUrl(chatSummary, app.selectedCommunitySummary),
                     userId: undefined,
                     typing: client.getTypingString(
                         $_,

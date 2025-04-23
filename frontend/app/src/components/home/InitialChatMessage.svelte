@@ -1,26 +1,27 @@
 <script lang="ts">
-    import Avatar from "../Avatar.svelte";
     import {
+        app,
         AvatarSize,
+        botState,
+        type ChatSummary,
+        type CommandDefinition,
         emptyExternalBotPermissions,
+        type ExternalBotPermissions,
         installedDirectBots,
         isProposalGroup,
-        selectedCommunity,
-        type ExternalBotPermissions,
+        type OpenChat,
         type ResourceKey,
-        type CommandDefinition,
-        botState,
+        userStore,
     } from "openchat-client";
-    import { type ChatSummary, type OpenChat, userStore } from "openchat-client";
-    import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
-    import Markdown from "./Markdown.svelte";
-    import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import Avatar from "../Avatar.svelte";
+    import BotCommands from "../bots/BotCommands.svelte";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
     import ProposalBot from "../ProposalBot.svelte";
     import Robot from "../Robot.svelte";
-    import BotCommands from "../bots/BotCommands.svelte";
+    import Translatable from "../Translatable.svelte";
+    import Markdown from "./Markdown.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -71,7 +72,7 @@
                     title: i18nKey("group.welcome", { groupName: chat.name }),
                     verified: chat.kind === "group_chat" ? chat.verified : false,
                     description: chat.description,
-                    avatarUrl: client.groupAvatarUrl(chat, $selectedCommunity),
+                    avatarUrl: client.groupAvatarUrl(chat, app.selectedCommunitySummary),
                     subtitle: i18nKey(
                         chat.public ? "thisIsPublicGroupWithN" : "thisIsPrivateGroupWithN",
                         { number: chat.memberCount },

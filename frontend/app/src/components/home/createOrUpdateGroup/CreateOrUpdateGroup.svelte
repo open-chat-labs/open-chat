@@ -9,10 +9,10 @@
         UnsupportedValueError,
         type UpdateGroupResponse,
         type UserSummary,
+        app,
         chatIdentifierUnset,
         chatListScopeStore as chatListScope,
         routeForChatIdentifier,
-        selectedCommunity,
         ui,
     } from "openchat-client";
     import { ErrorCode } from "openchat-shared";
@@ -79,7 +79,8 @@
 
     function searchUsers(term: string): Promise<[UserSummary[], UserSummary[]]> {
         const canInvite =
-            $selectedCommunity === undefined || client.canInviteUsers($selectedCommunity.id);
+            app.selectedCommunitySummary === undefined ||
+            client.canInviteUsers(app.selectedCommunitySummary.id);
         return client.searchUsersForInvite(term, 20, candidateGroup.level, true, canInvite);
     }
 
@@ -406,14 +407,14 @@
                                 {editing}
                                 bind:permissions={candidateGroup.permissions}
                                 isPublic={candidateGroup.public}
-                                isCommunityPublic={$selectedCommunity?.public ?? true}
+                                isCommunityPublic={app.selectedCommunitySummary?.public ?? true}
                                 isChannel={candidateGroup.id.kind === "channel"} />
                         {:else}
                             <GroupPermissionsViewer
                                 {embeddedContent}
                                 permissions={candidateGroup.permissions}
                                 isPublic={candidateGroup.public}
-                                isCommunityPublic={$selectedCommunity?.public ?? true}
+                                isCommunityPublic={app.selectedCommunitySummary?.public ?? true}
                                 isChannel={candidateGroup.id.kind === "channel"} />
                         {/if}
                     </div>

@@ -85,30 +85,30 @@ export function mergeLocalUpdates(
 
     const merged = server.clone();
 
-    for (const [chatId, localUpdate] of localUpdates.entries()) {
+    for (const [communityId, localUpdate] of localUpdates.entries()) {
         if (localUpdate.added !== undefined) {
-            const current = merged.get(chatId);
+            const current = merged.get(communityId);
             if (
                 current === undefined ||
                 current.membership.role === "none" ||
                 current.membership.lapsed
             ) {
-                merged.set(chatId, localUpdate.added);
+                merged.set(communityId, localUpdate.added);
             }
         }
         if (localUpdate.removedAtTimestamp) {
-            const community = merged.get(chatId);
+            const community = merged.get(communityId);
             if (
                 community !== undefined &&
                 community.membership.joined < localUpdate.removedAtTimestamp
             ) {
-                merged.delete(chatId);
+                merged.delete(communityId);
             }
         }
         if (localUpdate.index !== undefined) {
-            const community = merged.get(chatId);
+            const community = merged.get(communityId);
             if (community !== undefined) {
-                merged.set(chatId, {
+                merged.set(communityId, {
                     ...community,
                     membership: {
                         ...community.membership,
@@ -118,9 +118,9 @@ export function mergeLocalUpdates(
             }
         }
         if (localUpdate.displayName !== undefined) {
-            const community = merged.get(chatId);
+            const community = merged.get(communityId);
             if (community !== undefined) {
-                merged.set(chatId, {
+                merged.set(communityId, {
                     ...community,
                     membership: {
                         ...community.membership,
@@ -133,9 +133,9 @@ export function mergeLocalUpdates(
             }
         }
         if (localUpdate.rulesAccepted !== undefined) {
-            const community = merged.get(chatId);
+            const community = merged.get(communityId);
             if (community !== undefined) {
-                merged.set(chatId, {
+                merged.set(communityId, {
                     ...community,
                     membership: {
                         ...community.membership,

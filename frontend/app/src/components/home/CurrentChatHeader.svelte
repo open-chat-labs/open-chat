@@ -2,12 +2,12 @@
     import type { ChatSummary, DiamondMembershipStatus, GroupChatSummary } from "openchat-client";
     import {
         anonUser,
+        app,
         AvatarSize,
         chatListScopeStore as chatListScope,
         publish,
         routeForChatIdentifier,
         selectedChatId,
-        selectedCommunity,
         byContext as typersByContext,
         ui,
         userStore,
@@ -113,7 +113,7 @@
                     name: chatSummary.name,
                     diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
                     streak: 0,
-                    avatarUrl: client.groupAvatarUrl(chatSummary, $selectedCommunity),
+                    avatarUrl: client.groupAvatarUrl(chatSummary, app.selectedCommunitySummary),
                     userId: undefined,
                     username: undefined,
                     typing: client.getTypingString(
@@ -144,13 +144,13 @@
     }
 
     function navigateToCommunity() {
-        if ($selectedCommunity !== undefined) {
-            page(`/community/${$selectedCommunity.id.communityId}`);
+        if (app.selectedCommunitySummary !== undefined) {
+            page(`/community/${app.selectedCommunitySummary.id.communityId}`);
         }
     }
 
     function navigateToChannel() {
-        if ($selectedCommunity !== undefined) {
+        if (app.selectedCommunitySummary !== undefined) {
             page(routeForChatIdentifier("community", selectedChatSummary.id));
         }
     }
@@ -189,9 +189,9 @@
             {#if isMultiUser && !readonly}
                 <WithVerifiedBadge {verified} size={"small"}>
                     <div class="title">
-                        {#if $selectedCommunity !== undefined && $chatListScope.kind === "favourite"}
+                        {#if app.selectedCommunitySummary !== undefined && $chatListScope.kind === "favourite"}
                             <span onclick={navigateToCommunity} class="pointer">
-                                {$selectedCommunity.name}
+                                {app.selectedCommunitySummary.name}
                             </span>
                             <span>{">"}</span>
                             <span onclick={navigateToChannel} class="pointer">
