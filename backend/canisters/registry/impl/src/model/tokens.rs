@@ -184,6 +184,7 @@ pub struct TokenMetrics {
     supported_standards: Vec<String>,
     added: TimestampMillis,
     enabled: bool,
+    uninstalled: bool,
     last_updated: TimestampMillis,
     payments: Vec<Payment>,
 }
@@ -203,6 +204,7 @@ impl From<&TokenDetails> for TokenMetrics {
             supported_standards: value.supported_standards.clone(),
             added: value.added,
             enabled: value.enabled,
+            uninstalled: value.uninstalled,
             last_updated: value.last_updated,
             payments: value.payments.clone(),
         }
