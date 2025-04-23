@@ -1,9 +1,9 @@
 use crate::{RuntimeState, mutate_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use identity_canister::generate_challenge::{Response::*, *};
 
-#[update]
+#[update(msgpack = true, candid = true)]
 #[trace]
 fn generate_challenge(_args: Args) -> Response {
     mutate_state(generate_challenge_impl)

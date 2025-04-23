@@ -178,7 +178,8 @@ pub enum OCErrorCode {
     NoEligibleNeurons = 334,
     ProposalNotFound = 335,
     ProposalNotAcceptingVotes = 336,
-    WebhookNotFound = 337,
+    IdentityLinkRequestNotFound = 337,
+    WebhookNotFound = 338,
 
     // InternalError
     C2CError = 500,

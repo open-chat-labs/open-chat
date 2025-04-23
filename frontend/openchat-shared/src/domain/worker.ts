@@ -1521,7 +1521,7 @@ type RemoveIdentityLink = {
 
 type DeleteUser = {
     kind: "deleteUser";
-    userId: string;
+    identityKey: CryptoKeyPair;
     delegation: JsonnableDelegationChain;
 };
 

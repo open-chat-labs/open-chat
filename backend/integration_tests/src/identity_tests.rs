@@ -3,6 +3,7 @@ use crate::env::ENV;
 use crate::{CanisterIds, TestEnv, client};
 use candid::Principal;
 use constants::NANOS_PER_MILLISECOND;
+use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use rand::random;
 use std::ops::Deref;
@@ -55,7 +56,8 @@ fn link_and_unlink_auth_identities(delay: bool) {
 
             assert_eq!(user.principal, oc_principal2);
         }
-        identity_canister::approve_identity_link::Response::DelegationTooOld if delay => {}
+        identity_canister::approve_identity_link::Response::Error(e)
+            if delay && e.matches_code(OCErrorCode::DelegationTooOld) => {}
         response => panic!("{response:?}"),
     };
 

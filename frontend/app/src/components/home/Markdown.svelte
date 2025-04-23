@@ -1,8 +1,8 @@
 <script lang="ts">
     import { marked } from "marked";
-    import { getContext } from "svelte";
     import type { OpenChat, UserGroupSummary } from "openchat-client";
-    import { userStore, userGroupSummaries as userGroups } from "openchat-client";
+    import { userGroupSummaries as userGroups, userStore } from "openchat-client";
+    import { getContext } from "svelte";
     import { DOMPurifyDefault, DOMPurifyOneLine } from "../../utils/domPurify";
     import { isSingleEmoji } from "../../utils/emojis";
 

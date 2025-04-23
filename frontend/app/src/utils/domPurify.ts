@@ -6,7 +6,7 @@ export const DOMPurifyOneLine = createOneLine();
 function createDefault(): DOMPurify.DOMPurify {
     const domPurify = DOMPurify();
     domPurify.setConfig({
-        ALLOWED_ATTR: ["target", "href", "class", "user-id", "suppress-links"],
+        ALLOWED_ATTR: ["target", "href", "class", "user-id", "suppress-links", "src", "alt"],
         CUSTOM_ELEMENT_HANDLING: {
             tagNameCheck: (tag) => tag === "profile-link",
             attributeNameCheck: (attr) => ["text", "userId"].includes(attr),
@@ -19,7 +19,7 @@ function createDefault(): DOMPurify.DOMPurify {
 function createOneLine(): DOMPurify.DOMPurify {
     const domPurify = DOMPurify();
     domPurify.setConfig({
-        ALLOWED_ATTR: ["target", "href", "class", "user-id", "suppress-links"],
+        ALLOWED_ATTR: ["target", "href", "class", "user-id", "suppress-links", "src", "alt"],
         FORBID_TAGS: ["br"],
         CUSTOM_ELEMENT_HANDLING: {
             tagNameCheck: (tag) => tag === "profile-link",
