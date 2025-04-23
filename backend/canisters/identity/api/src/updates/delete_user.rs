@@ -1,8 +1,7 @@
 use candid::{CandidType, Deserialize};
-use oc_error_codes::OCError;
 use serde::Serialize;
 use ts_export::ts_export;
-use types::SignedDelegation;
+use types::{SignedDelegation, UnitResult};
 
 #[ts_export(identity, delete_user)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -12,9 +11,4 @@ pub struct Args {
     pub public_key: Vec<u8>,
 }
 
-#[ts_export(identity, delete_user)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    Error(OCError),
-}
+pub type Response = UnitResult;

@@ -15,6 +15,7 @@ fn main() {
 
     generate_ts_method!(identity, approve_identity_link);
     generate_ts_method!(identity, create_identity);
+    generate_ts_method!(identity, delete_user);
     generate_ts_method!(identity, generate_challenge);
     generate_ts_method!(identity, initiate_identity_link);
     generate_ts_method!(identity, prepare_delegation);
