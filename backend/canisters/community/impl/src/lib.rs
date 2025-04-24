@@ -369,7 +369,7 @@ impl RuntimeState {
             UserType::User => Ok(Caller::User(member.user_id)),
             UserType::Bot => Ok(Caller::Bot(member.user_id)),
             UserType::OcControlledBot => Ok(Caller::OCBot(member.user_id)),
-            UserType::BotV2 | UserType::Webhook => Err(OCErrorCode::InitiatorNotFound.into()),
+            UserType::BotV2 | UserType::Webhook => Err(OCErrorCode::InitiatorNotFound),
         }
     }
 }
