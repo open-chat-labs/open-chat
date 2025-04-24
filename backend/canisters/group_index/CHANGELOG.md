@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
-## [[2.0.1705](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1705-group_index)] - 2025-04-22
+## [[2.0.1707](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1707-group_index)] - 2025-04-22
 
 ### Changed
 
