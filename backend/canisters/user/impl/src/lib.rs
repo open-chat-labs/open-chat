@@ -422,18 +422,7 @@ struct Data {
     pub idempotency_checker: IdempotencyChecker,
     pub bots: InstalledBots,
     bot_api_keys: BotApiKeys,
-    #[serde(default = "default_notifications_queue")]
     notifications_queue: BatchedTimerJobQueue<NotificationsBatch>,
-}
-
-fn default_notifications_queue() -> BatchedTimerJobQueue<NotificationsBatch> {
-    BatchedTimerJobQueue::new(
-        NotificationPusherState {
-            notifications_canister: CanisterId::anonymous(),
-            authorizer: CanisterId::anonymous(),
-        },
-        false,
-    )
 }
 
 impl Data {
