@@ -1,6 +1,7 @@
 pub mod bot_create_channel;
 pub mod bot_delete_channel;
 pub mod bot_send_message;
+pub mod bot_subscribe_to_chat_events;
 pub mod c2c_notify_low_balance;
 pub mod c2c_notify_user_index_events;
 pub mod c2c_push_wasm_chunk;

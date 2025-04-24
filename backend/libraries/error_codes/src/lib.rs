@@ -179,7 +179,8 @@ pub enum OCErrorCode {
     ProposalNotFound = 335,
     ProposalNotAcceptingVotes = 336,
     IdentityLinkRequestNotFound = 337,
-    WebhookNotFound = 338,
+    InvalidBotActionScope = 338,
+    WebhookNotFound = 339,
 
     // InternalError
     C2CError = 500,

@@ -5000,6 +5000,7 @@ dependencies = [
  "ledger_utils",
  "local_user_index_canister",
  "msgpack",
+ "oc_error_codes",
  "online_users_canister",
  "online_users_canister_c2c_client",
  "p256_key_pair",

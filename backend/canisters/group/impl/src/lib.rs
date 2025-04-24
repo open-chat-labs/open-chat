@@ -831,6 +831,7 @@ impl Data {
         }
 
         self.bot_api_keys.delete(bot_id);
+        self.chat.bot_unsubscribe_from_chat_events(bot_id, None);
 
         self.chat.events.push_main_event(
             ChatEventInternal::BotRemoved(Box::new(BotRemoved {
