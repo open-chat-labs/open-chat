@@ -120,18 +120,22 @@ impl BotApiKeys {
         granted_permissions: BotPermissions,
         now: TimestampMillis,
         rng: &mut StdRng,
-    ) -> String {
-        let key = rng.r#gen::<u128>().to_string();
-        self.keys.insert(
-            user_id,
-            ApiKey {
-                secret: key.clone(),
-                granted_permissions,
-                generated_by: user_id,
-                generated_at: now,
-            },
-        );
-        key
+    ) -> GenerateApiKeyResult {
+        let new_key = rng.r#gen::<u128>().to_string();
+        let old_key = self
+            .keys
+            .insert(
+                user_id,
+                ApiKey {
+                    secret: new_key.clone(),
+                    granted_permissions,
+                    generated_by: user_id,
+                    generated_at: now,
+                },
+            )
+            .map(|k| k.secret);
+
+        GenerateApiKeyResult { new_key, old_key }
     }
 
     pub fn delete(&mut self, bot_id: UserId) -> bool {
@@ -170,4 +174,9 @@ impl BotApiKeys {
     pub fn last_updated(&self) -> TimestampMillis {
         self.keys.values().map(|k| k.generated_at).max().unwrap_or_default()
     }
+}
+
+pub struct GenerateApiKeyResult {
+    pub new_key: String,
+    pub old_key: Option<String>,
 }

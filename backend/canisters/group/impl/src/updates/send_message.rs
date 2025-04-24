@@ -57,12 +57,12 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
             BotPermissions::from_message_permission((&args.content).into()),
         )
     }) {
-        return c2c_bot_send_message::Response::Error(OCErrorCode::InitiatorNotAuthorized.into());
+        return Error(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
     match mutate_state(|state| send_message_impl(args, Some(bot_caller), finalised, state)) {
-        Ok(result) => c2c_bot_send_message::Response::Success(result),
-        Err(error) => c2c_bot_send_message::Response::Error(error),
+        Ok(result) => Success(result),
+        Err(error) => Error(error),
     }
 }
 

@@ -3,6 +3,7 @@ use crate::{RuntimeState, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::generate_bot_api_key::{Response::*, *};
+use installed_bots::GenerateApiKeyResult;
 use oc_error_codes::OCErrorCode;
 use types::{AccessTokenScope, BotApiKeyToken, Chat, CommunityId, OCResult};
 use utils::base64;
@@ -38,16 +39,20 @@ fn generate_bot_api_key_impl(args: Args, state: &mut RuntimeState) -> OCResult<S
             return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
 
-        let api_key_secret =
+        let GenerateApiKeyResult { new_key, old_key } =
             channel
                 .bot_api_keys
                 .generate(args.bot_id, args.requested_permissions.clone(), now, state.env.rng());
+
+        if let Some(old_key) = old_key {
+            channel.chat.bot_unsubscribe_from_chat_events(args.bot_id, Some(&old_key));
+        }
 
         BotApiKeyToken {
             gateway: state.data.local_user_index_canister_id,
             bot_id: args.bot_id,
             scope: AccessTokenScope::Chat(Chat::Channel(community_id, channel.id)),
-            secret: api_key_secret,
+            secret: new_key,
             permissions: args.requested_permissions,
         }
     } else {
@@ -55,17 +60,23 @@ fn generate_bot_api_key_impl(args: Args, state: &mut RuntimeState) -> OCResult<S
             return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
 
-        let api_key_secret =
+        let GenerateApiKeyResult { new_key, old_key } =
             state
                 .data
                 .bot_api_keys
                 .generate(args.bot_id, args.requested_permissions.clone(), now, state.env.rng());
 
+        if let Some(old_key) = old_key {
+            for channel in state.data.channels.iter_mut() {
+                channel.chat.bot_unsubscribe_from_chat_events(args.bot_id, Some(&old_key));
+            }
+        }
+
         BotApiKeyToken {
             gateway: state.data.local_user_index_canister_id,
             bot_id: args.bot_id,
             scope: AccessTokenScope::Community(community_id),
-            secret: api_key_secret,
+            secret: new_key,
             permissions: args.requested_permissions,
         }
     };

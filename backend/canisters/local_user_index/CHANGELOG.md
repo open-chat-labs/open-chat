@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Notify Groups/Communities when user deleted (currently disabled) ([#7781](https://github.com/open-chat-labs/open-chat/pull/7781))
+- Allow bots to subscribe to chat events using ApiKeys ([#7836](https://github.com/open-chat-labs/open-chat/pull/7836))
 
 ### Changed
 
