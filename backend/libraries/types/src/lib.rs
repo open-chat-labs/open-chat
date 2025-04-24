@@ -194,6 +194,12 @@ impl<T> From<OCResult<T>> for UnitResult {
     }
 }
 
+impl From<Result<UnitResult, C2CError>> for UnitResult {
+    fn from(value: Result<UnitResult, C2CError>) -> Self {
+        value.unwrap_or_else(|error| UnitResult::Error(error.into()))
+    }
+}
+
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct Empty {}

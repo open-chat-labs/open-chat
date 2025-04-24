@@ -913,6 +913,9 @@ impl Data {
         }
 
         self.bot_api_keys.delete(bot_id);
+        for channel in self.channels.iter_mut() {
+            channel.chat.bot_unsubscribe_from_chat_events(bot_id, None);
+        }
 
         // Publish community event
         self.events.push_event(
