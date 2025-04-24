@@ -1,6 +1,5 @@
 use base64::Engine;
 use candid::Principal;
-use rand::RngCore;
 use rand::{rngs::StdRng, Rng};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -90,9 +89,7 @@ impl Webhooks {
     }
 
     fn generate_random_id(rng: &mut StdRng) -> Principal {
-        let mut id_bytes: [u8; 8] = [0; 8];
-        rng.fill_bytes(&mut id_bytes);
-        Principal::from_slice(&id_bytes)
+        Principal::from_slice(&rng.gen::<[u8; 8]>())
     }
 
     fn generate_secret(rng: &mut StdRng) -> String {
