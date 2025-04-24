@@ -76,6 +76,7 @@ fn main() {
     generate_ts_method!(group, summary);
     generate_ts_method!(group, summary_updates);
     generate_ts_method!(group, video_call_participants);
+    generate_ts_method!(group, webhook);
 
     generate_ts_method!(group, accept_p2p_swap);
     generate_ts_method!(group, add_reaction);
@@ -87,6 +88,7 @@ fn main() {
     generate_ts_method!(group, convert_into_community);
     generate_ts_method!(group, decline_invitation);
     generate_ts_method!(group, delete_messages);
+    generate_ts_method!(group, delete_webhook);
     generate_ts_method!(group, disable_invite_code);
     generate_ts_method!(group, edit_message_v2);
     generate_ts_method!(group, enable_invite_code);
@@ -94,9 +96,11 @@ fn main() {
     generate_ts_method!(group, generate_bot_api_key);
     generate_ts_method!(group, join_video_call);
     generate_ts_method!(group, pin_message_v2);
+    generate_ts_method!(group, regenerate_webhook);
     generate_ts_method!(group, register_poll_vote);
     generate_ts_method!(group, register_proposal_vote);
     generate_ts_method!(group, register_proposal_vote_v2);
+    generate_ts_method!(group, register_webhook);
     generate_ts_method!(group, remove_participant);
     generate_ts_method!(group, remove_reaction);
     generate_ts_method!(group, report_message);
@@ -110,6 +114,7 @@ fn main() {
     generate_ts_method!(group, unpin_message);
     generate_ts_method!(group, update_bot);
     generate_ts_method!(group, update_group_v2);
+    generate_ts_method!(group, update_webhook);
 
     candid::export_service!();
     std::print!("{}", __export_service());

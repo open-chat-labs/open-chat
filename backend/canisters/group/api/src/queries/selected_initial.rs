@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
     Empty, EventIndex, GroupMember, InstalledBotDetails, MessageIndex, PublicApiKeyDetails, TimestampMillis, UserId,
-    VersionedRules,
+    VersionedRules, WebhookDetails,
 };
 
 pub type Args = Empty;
@@ -26,6 +26,7 @@ pub struct SuccessResult {
     pub participants: Vec<GroupMember>,
     pub bots: Vec<InstalledBotDetails>,
     pub api_keys: Vec<PublicApiKeyDetails>,
+    pub webhooks: Vec<WebhookDetails>,
     pub basic_members: Vec<UserId>,
     pub blocked_users: Vec<UserId>,
     pub invited_users: Vec<UserId>,

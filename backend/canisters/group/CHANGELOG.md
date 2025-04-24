@@ -19,6 +19,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Avoid sending notification to initiator of bot command ([#7808](https://github.com/open-chat-labs/open-chat/pull/7808))
 
+### Added
+
+- Add endpoints to support webhooks ([#7825](https://github.com/open-chat-labs/open-chat/pull/7825))
+
 ## [[2.0.1704](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1704-group)] - 2025-04-15
 
 ### Added

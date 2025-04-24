@@ -4436,12 +4436,14 @@ dependencies = [
 name = "installed_bots"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
  "candid",
  "constants",
  "rand 0.8.5",
  "serde",
  "serde_repr",
  "types",
+ "urlencoding",
  "utils 0.1.0",
 ]
 
@@ -8790,6 +8792,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7b3e06c9b9d80ed6b745c7159c40b311ad2916abb34a49e9be2653b90db0d8dd"
 
 [[package]]
+name = "twox-hash"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e7b17f197b3050ba473acf9181f7b1d3b66d1cf7356c6cc57886662276e65908"
+dependencies = [
+ "rand 0.8.5",
+]
+
+[[package]]
 name = "typed-arena"
 version = "2.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9188,6 +9199,7 @@ dependencies = [
  "sha3",
  "time",
  "tracing",
+ "twox-hash",
  "types",
 ]
 

@@ -58,7 +58,7 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
             user.avatar_id = None;
         }
         OptionUpdate::SetToSome(avatar) => {
-            bot.avatar = try_parse_data_url(&avatar);
+            bot.avatar = try_parse_data_url(&avatar).ok();
             user.avatar_id = bot.avatar.as_ref().map(|a| a.id);
         }
     };
@@ -108,7 +108,7 @@ fn validate(args: &Args, state: &RuntimeState) -> Result<(), Response> {
             return Err(AvatarInvalid);
         }
 
-        if try_parse_data_url(avatar).is_none() {
+        if try_parse_data_url(avatar).is_err() {
             return Err(AvatarInvalid);
         }
     }
