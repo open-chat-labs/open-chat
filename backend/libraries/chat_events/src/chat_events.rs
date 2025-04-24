@@ -168,7 +168,7 @@ impl ChatEvents {
         &mut self,
         args: PushMessageArgs,
         mut event_store_client: Option<&mut EventStoreClient<R>>,
-    ) -> EventWrapper<Message> {
+    ) -> (EventWrapper<Message>, Option<BotNotification>) {
         let events_list = if let Some(root_message_index) = args.thread_root_message_index {
             self.threads
                 .entry(root_message_index)
@@ -265,13 +265,16 @@ impl ChatEvents {
             );
         }
 
-        EventWrapper {
-            index: push_event_result.index,
-            timestamp: args.now,
-            correlation_id: args.correlation_id,
-            expires_at: push_event_result.expires_at,
-            event: message,
-        }
+        (
+            EventWrapper {
+                index: push_event_result.index,
+                timestamp: args.now,
+                correlation_id: args.correlation_id,
+                expires_at: push_event_result.expires_at,
+                event: message,
+            },
+            push_event_result.bot_notification,
+        )
     }
 
     pub fn edit_message<R: Runtime + Send + 'static>(

@@ -15,12 +15,12 @@ use serde::{Deserialize, Serialize};
 use std::cmp::{Reverse, max, min};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use types::{
-    AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, Caller, Chat, CustomPermission,
-    Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsCaller, EventsResponse, ExternalUrlUpdated,
-    GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged,
-    GroupSubtype, GroupVisibilityChanged, HydratedMention, MAX_RETURNED_MENTIONS, MemberLeft, MembersRemoved, Message,
-    MessageContent, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned,
-    MessagesResponse, Milliseconds, MultiUserChat, OCResult, OptionUpdate, OptionalGroupPermissions,
+    AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, BotNotification, Caller, Chat,
+    CustomPermission, Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsCaller, EventsResponse,
+    ExternalUrlUpdated, GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole,
+    GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention, MAX_RETURNED_MENTIONS, MemberLeft,
+    MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned,
+    MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OCResult, OptionUpdate, OptionalGroupPermissions,
     OptionalMessagePermissions, PermissionsChanged, Reaction, ReserveP2PSwapSuccess, RoleChanged, Rules, SelectedGroupUpdates,
     ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version,
     Versioned, VersionedRules, VideoCall, VideoCallPresence, VoteOperation,
@@ -614,7 +614,7 @@ impl GroupChatCore {
             now,
         };
 
-        let message_event = self.events.push_message(push_message_args, Some(event_store_client));
+        let (message_event, bot_notification) = self.events.push_message(push_message_args, Some(event_store_client));
 
         let unfinalised_bot_message = if let Caller::BotV2(_) = caller { !finalised } else { false };
 
@@ -637,6 +637,7 @@ impl GroupChatCore {
             message_event,
             users_to_notify,
             unfinalised_bot_message,
+            bot_notification,
         })
     }
 
@@ -698,6 +699,7 @@ impl GroupChatCore {
             message_event,
             users_to_notify,
             unfinalised_bot_message: !finalise,
+            bot_notification: None,
         })
     }
 
@@ -1918,6 +1920,7 @@ pub struct SendMessageSuccess {
     pub message_event: EventWrapper<Message>,
     pub users_to_notify: Vec<UserId>,
     pub unfinalised_bot_message: bool,
+    pub bot_notification: Option<BotNotification>,
 }
 
 pub struct UpdateSuccessResult {
