@@ -1,10 +1,10 @@
+use base64::Engine;
 use candid::Principal;
 use rand::RngCore;
 use rand::{rngs::StdRng, Rng};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use types::{Document, OptionUpdate, TimestampMillis};
-use urlencoding::encode;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Webhooks {
@@ -25,15 +25,12 @@ impl Webhooks {
             return false;
         }
 
-        let id = Self::generate_random_id(rng);
-        let secret = encode(&rng.gen::<u128>().to_string()).to_string();
-
         self.map.insert(
-            id,
+            Self::generate_random_id(rng),
             Webhook {
                 name,
                 avatar,
-                secret,
+                secret: Self::generate_secret(rng),
                 last_updated: now,
             },
         );
@@ -96,5 +93,12 @@ impl Webhooks {
         let mut id_bytes: [u8; 8] = [0; 8];
         rng.fill_bytes(&mut id_bytes);
         Principal::from_slice(&id_bytes)
+    }
+
+    fn generate_secret(rng: &mut StdRng) -> String {
+        let secret_bytes = rng.gen::<[u8; 16]>();
+        let base64_encoded = base64::engine::general_purpose::STANDARD.encode(&secret_bytes);
+        let url_encoded = urlencoding::encode(&base64_encoded);
+        url_encoded.to_string()
     }
 }
