@@ -1,7 +1,7 @@
 use crate::{RuntimeState, read_state};
 use http_request::{AvatarRoute, Route, build_json_response, encode_logs, extract_route, get_document};
 use ic_cdk::query;
-use types::{HttpRequest, HttpResponse, TimestampMillis, UserId};
+use types::{HttpRequest, HttpResponse, TimestampMillis};
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
@@ -16,11 +16,6 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         };
 
         get_document(route.blob_id, avatar, &path)
-    }
-
-    fn get_webhook_avatar_impl(user_id: UserId, requested_avatar_id: Option<u128>, state: &RuntimeState) -> HttpResponse {
-        let avatar = state.data.webhooks.get(&user_id).and_then(|w| w.avatar.as_ref());
-        get_document(requested_avatar_id, avatar, &format!("avatar/{user_id}"))
     }
 
     fn get_errors_impl(since: Option<TimestampMillis>) -> HttpResponse {
