@@ -28,7 +28,7 @@
         type MessageContext,
         type OpenChat,
     } from "openchat-client";
-    import { getContext, onMount, tick, type Snippet } from "svelte";
+    import { getContext, onMount, tick, untrack, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
@@ -61,6 +61,7 @@
         maintainScroll: boolean;
         scrollTopButtonEnabled?: boolean;
         children?: Snippet<[ChatEventListArgs]>;
+        visible: boolean;
     }
 
     let {
@@ -78,6 +79,7 @@
         maintainScroll,
         scrollTopButtonEnabled = false,
         children,
+        visible,
     }: Props = $props();
 
     let focusIndex = $state<number | undefined>();
@@ -151,7 +153,6 @@
     let floatingTimestamp: bigint | undefined = $state(undefined);
     let loadingNewMessages = false;
     let loadingPrevMessages = false;
-    let inThread = $derived(threadRootEvent !== undefined);
 
     $effect.pre(() => {
         withScrollableElement((el) => {
@@ -164,6 +165,38 @@
     $effect(() => {
         updateShowGoToBottom();
         updateShowGoToTop();
+    });
+
+    $effect(() => {
+        // previously the component would have been destroyed when not showing the middle panel meaning all of
+        // these variables would have been re-initialised
+        if (!visible) {
+            initialised = false;
+            destroyed = true;
+            morePrevAvailable = false;
+            moreNewAvailable = false;
+            loadingFromUserScroll = false;
+            previousScrollHeight = new MessageContextMap();
+            previousScrollTopByHeight = new MessageContextMap();
+            scrollingToMessage = false;
+            scrollToBottomOnSend = false;
+        }
+    });
+
+    $effect(() => {
+        if (visible && maintainScroll) {
+            untrack(() => {
+                if (ui.eventListScrollTop !== undefined && maintainScroll) {
+                    interruptScroll((el) => {
+                        if (ui.eventListScrollTop !== undefined) {
+                            initialised = true;
+                            destroyed = false;
+                            el.scrollTop = ui.eventListScrollTop;
+                        }
+                    });
+                }
+            });
+        }
     });
 
     function elementIsOffTheTop(el: Element): boolean {
@@ -188,9 +221,11 @@
         heightObserver = new MutationObserver((_: MutationRecord[]) => {
             withScrollableElement(async (el) => {
                 const previousScrollHeightVal = previousScrollHeight.get(messageContext);
-                previousScrollHeight.set(messageContext, el.scrollHeight);
+                if (el.scrollHeight > 0) {
+                    previousScrollHeight.set(messageContext, el.scrollHeight);
+                }
                 if (
-                    (inThread || ui.showMiddle) &&
+                    visible &&
                     previousScrollHeightVal !== undefined &&
                     previousScrollHeightVal > 0 &&
                     el.scrollHeight !== previousScrollHeightVal
@@ -309,15 +344,6 @@
                 }
             }
         }, labelObserverOptions);
-
-        if (ui.eventListScrollTop !== undefined && maintainScroll) {
-            interruptScroll((el) => {
-                if (ui.eventListScrollTop !== undefined) {
-                    initialised = true;
-                    el.scrollTop = ui.eventListScrollTop;
-                }
-            });
-        }
 
         const unsubs = [
             subscribe("chatUpdated", chatsUpdated),
@@ -689,8 +715,7 @@
         tooltipStore.hide();
         ui.eventListLastScrolled = Date.now();
 
-        if (!initialised || interrupt || loadingFromUserScroll || (!inThread && !ui.showMiddle))
-            return;
+        if (!initialised || interrupt || loadingFromUserScroll || !visible) return;
 
         loadMoreIfRequired(true);
     }

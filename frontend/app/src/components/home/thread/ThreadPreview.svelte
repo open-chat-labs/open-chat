@@ -1,31 +1,31 @@
 <script lang="ts">
     import {
-        type ThreadPreview,
+        app,
+        AvatarSize,
+        chatSummariesStore,
         type EventWrapper,
         type Message,
+        messagesRead,
+        type MultiUserChat,
         OpenChat,
         routeForChatIdentifier,
-        type MultiUserChat,
-        userStore,
-        currentUser as user,
-        chatListScopeStore as chatListScope,
-        chatSummariesStore,
-        messagesRead,
         selectedCommunity,
+        type ThreadPreview,
+        currentUser as user,
+        userStore,
     } from "openchat-client";
-    import { pop } from "../../../utils/transition";
-    import { _ } from "svelte-i18n";
     import page from "page";
+    import { getContext, onMount } from "svelte";
+    import { _ } from "svelte-i18n";
+    import { i18nKey } from "../../../i18n/i18n";
+    import { pop } from "../../../utils/transition";
+    import Avatar from "../../Avatar.svelte";
+    import CollapsibleCard from "../../CollapsibleCard.svelte";
+    import LinkButton from "../../LinkButton.svelte";
+    import Translatable from "../../Translatable.svelte";
     import ChatMessage from "../ChatMessage.svelte";
     import IntersectionObserverComponent from "../IntersectionObserver.svelte";
-    import CollapsibleCard from "../../CollapsibleCard.svelte";
-    import { getContext, onMount } from "svelte";
-    import { AvatarSize } from "openchat-client";
     import Markdown from "../Markdown.svelte";
-    import Avatar from "../../Avatar.svelte";
-    import LinkButton from "../../LinkButton.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -97,7 +97,7 @@
 
     function selectThread() {
         page(
-            `${routeForChatIdentifier($chatListScope.kind, thread.chatId)}/${
+            `${routeForChatIdentifier(app.chatListScope.kind, thread.chatId)}/${
                 thread.rootMessage.event.messageIndex
             }?open=true`,
         );

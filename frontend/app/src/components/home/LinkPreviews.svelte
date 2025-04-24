@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { lowBandwidth } from "@src/stores/settings";
     import { ui, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import CloseIcon from "svelte-material-icons/Close.svelte";
@@ -48,7 +47,6 @@
 
     let { links, intersecting, pinned, fill, me, onRemove }: Props = $props();
 
-    let list: HTMLElement | null | undefined = undefined;
     let previousLinks: string[] = $state([]);
     let previews: Preview[] = $state([]);
 
@@ -100,34 +98,12 @@
         };
     }
 
-    function closestAncestor(
-        el: HTMLElement | null | undefined,
-        selector: string,
-    ): HTMLElement | null | undefined {
-        while (el) {
-            if (el.matches(selector)) {
-                return el;
-            }
-            el = el.parentElement;
-        }
-        return null;
-    }
-
     function renderPreview(url: string): void {
         for (const preview of previews) {
             if (preview.url === url && preview.container) {
                 preview.container.style.setProperty("display", "flex");
                 break;
             }
-        }
-    }
-
-    function adjustScroll(wrapper: HTMLElement) {
-        if ($lowBandwidth) return;
-
-        list = list || closestAncestor(wrapper, ".scrollable-list");
-        if (list) {
-            list.scrollTop = list.scrollTop + wrapper.offsetHeight;
         }
     }
 
@@ -159,7 +135,7 @@
         {/if}
         <div class="inner">
             {#if preview.kind === "twitter"}
-                <Tweet tweetId={preview.tweetId} {intersecting} onRendered={adjustScroll} />
+                <Tweet tweetId={preview.tweetId} {intersecting} />
             {:else if preview.kind === "youtube"}
                 <YouTubePreview
                     {pinned}
@@ -174,7 +150,6 @@
                 <GenericPreviewComponent
                     url={preview.url}
                     {intersecting}
-                    onImageLoaded={adjustScroll}
                     onRendered={renderPreview} />
             {/if}
         </div>

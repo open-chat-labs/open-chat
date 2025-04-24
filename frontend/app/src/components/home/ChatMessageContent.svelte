@@ -1,29 +1,28 @@
 <script lang="ts">
-    import ReportedMessageContent from "./ReportedMessageContent.svelte";
-    import VideoContent from "./VideoContent.svelte";
-    import VideoCallContent from "./VideoCallContent.svelte";
-    import ImageContent from "./ImageContent.svelte";
-    import GiphyContent from "./GiphyContent.svelte";
+    import type { MessageContent, MessageContext } from "openchat-client";
+    import { i18nKey } from "../../i18n/i18n";
     import AudioContent from "./AudioContent.svelte";
-    import PollContent from "./PollContent.svelte";
-    import FileContent from "./FileContent.svelte";
-    import TextContent from "./TextContent.svelte";
-    import PrizeContent from "./PrizeContent.svelte";
-    import UserReferralCardContent from "./UserReferralCardContent.svelte";
-    import PrizeWinnerContent from "./PrizeWinnerContent.svelte";
+    import BlockedContent from "./BlockedContent.svelte";
+    import BotPlaceholderContent from "./BotPlaceholderContent.svelte";
     import CryptoContent from "./CryptoContent.svelte";
     import DeletedContent from "./DeletedContent.svelte";
-    import BlockedContent from "./BlockedContent.svelte";
-    import PlaceholderContent from "./PlaceholderContent.svelte";
+    import FileContent from "./FileContent.svelte";
+    import GiphyContent from "./GiphyContent.svelte";
+    import ImageContent from "./ImageContent.svelte";
+    import MessageContentInitial from "./MessageContentInitial.svelte";
     import MessageReminderContent from "./MessageReminderContent.svelte";
     import MessageReminderCreatedContent from "./MessageReminderCreatedContent.svelte";
-    import ProposalContent from "./proposals/ProposalContent.svelte";
-    import type { MessageContent, MessageContext } from "openchat-client";
-    import { _ } from "svelte-i18n";
-    import MessageContentInitial from "./MessageContentInitial.svelte";
     import P2PSwapContent from "./P2PSwapContent.svelte";
-    import { i18nKey } from "../../i18n/i18n";
-    import BotPlaceholderContent from "./BotPlaceholderContent.svelte";
+    import PlaceholderContent from "./PlaceholderContent.svelte";
+    import PollContent from "./PollContent.svelte";
+    import PrizeContent from "./PrizeContent.svelte";
+    import PrizeWinnerContent from "./PrizeWinnerContent.svelte";
+    import ProposalContent from "./proposals/ProposalContent.svelte";
+    import ReportedMessageContent from "./ReportedMessageContent.svelte";
+    import TextContent from "./TextContent.svelte";
+    import UserReferralCardContent from "./UserReferralCardContent.svelte";
+    import VideoCallContent from "./VideoCallContent.svelte";
+    import VideoContent from "./VideoContent.svelte";
 
     interface Props {
         content: MessageContent;

@@ -185,6 +185,7 @@
     }
 
     function closeThread(_id: ChatIdentifier) {
+        ui.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
         pageReplace(stripThreadFromUrl(removeQueryStringParam("open")));
         activeVideoCall.threadOpen(false);
     }
