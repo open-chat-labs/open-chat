@@ -12,6 +12,13 @@ pub struct Args {
 #[ts_export(group, webhook)]
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success(String),
+    Success(SuccessResult),
     Error(OCError),
+}
+
+#[ts_export]
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SuccessResult {
+    pub id: UserId,
+    pub secret: String,
 }

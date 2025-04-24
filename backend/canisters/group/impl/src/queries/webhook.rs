@@ -13,7 +13,7 @@ fn webhook(args: Args) -> Response {
     }
 }
 
-fn webhook_impl(args: Args, state: &RuntimeState) -> OCResult<String> {
+fn webhook_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessResult> {
     let member = state.get_calling_member(true)?;
 
     if !member.role().is_owner() {
@@ -22,10 +22,8 @@ fn webhook_impl(args: Args, state: &RuntimeState) -> OCResult<String> {
 
     let webhook = state.data.webhooks.get(&args.id).ok_or(OCErrorCode::WebhookNotFound)?;
 
-    Ok(format!(
-        "https://{}.icp0.io/webhook/{}/{}",
-        state.env.canister_id(),
-        args.id,
-        webhook.secret
-    ))
+    Ok(SuccessResult {
+        id: args.id,
+        secret: webhook.secret.clone(),
+    })
 }
