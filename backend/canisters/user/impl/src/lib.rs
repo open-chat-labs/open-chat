@@ -41,7 +41,7 @@ use types::{
     Achievement, BotInitiator, BotPermissions, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned,
     ChitEarnedReason, CommunityId, Cycles, Document, IdempotentEnvelope, Milliseconds, Notification, NotifyChit,
     TimestampMillis, Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment,
-    UserId,
+    UserId, UserNotification, UserNotificationPayload,
 };
 use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
 use utils::env::Environment;
@@ -120,17 +120,15 @@ impl RuntimeState {
         self.data.video_call_operators.iter().any(|o| *o == caller)
     }
 
-    pub fn push_notification(&mut self, sender: Option<UserId>, recipient: UserId, notification: Notification) {
+    pub fn push_notification(&mut self, sender: Option<UserId>, recipient: UserId, notification: UserNotificationPayload) {
         self.data.notifications_queue.push(IdempotentEnvelope {
             created_at: self.env.now(),
             idempotency_id: self.env.rng().next_u64(),
-            value: notifications_canister::c2c_push_notifications::Notification::User(
-                notifications_canister::c2c_push_notifications::UserNotification {
-                    sender,
-                    recipients: vec![recipient],
-                    notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
-                },
-            ),
+            value: Notification::User(UserNotification {
+                sender,
+                recipients: vec![recipient],
+                notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
+            }),
         })
     }
 

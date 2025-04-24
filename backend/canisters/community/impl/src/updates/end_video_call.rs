@@ -24,11 +24,15 @@ pub(crate) fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> OCRes
     );
 
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-        channel.chat.events.end_video_call(
+        let result = channel.chat.events.end_video_call(
             args.message_id.into(),
             state.env.now(),
             Some(&mut state.data.event_store_client),
         )?;
+
+        if let Some(bot_notification) = result.bot_notification {
+            state.push_bot_notification(bot_notification);
+        }
 
         handle_activity_notification(state);
         Ok(())

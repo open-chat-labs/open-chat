@@ -6,8 +6,8 @@ use notifications_canister::c2c_push_notifications::{Response::*, *};
 use serde_bytes::ByteBuf;
 use std::collections::HashSet;
 use types::{
-    BotNotificationEnvelope, CanPushNotificationsArgs, CanPushNotificationsResponse, CanisterId, IdempotentEnvelope,
-    NotificationEnvelope, TimestampMillis, UserId, UserNotificationEnvelope,
+    BotNotification, BotNotificationEnvelope, CanPushNotificationsArgs, CanPushNotificationsResponse, CanisterId,
+    IdempotentEnvelope, Notification, NotificationEnvelope, TimestampMillis, UserId, UserNotificationEnvelope,
 };
 
 #[update(msgpack = true)]

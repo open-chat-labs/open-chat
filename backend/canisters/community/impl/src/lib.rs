@@ -7,7 +7,7 @@ use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::{ChatEventInternal, ChatMetricsInternal};
+use chat_events::{ChatEventInternal, ChatMetricsInternal, UpdateMessageSuccess};
 use community_canister::add_members_to_channel::UserFailedError;
 use constants::{ICP_LEDGER_CANISTER_ID, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
@@ -40,10 +40,10 @@ use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::CommunityId;
 use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotEventsCaller, BotGroupConfig, BotInitiator,
-    BotPermissions, BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChannelId, ChatMetrics,
+    BotNotification, BotPermissions, BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChannelId, ChatMetrics,
     CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cycles, Document, Empty, EventIndex,
     EventsCaller, FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules,
-    TimestampMillis, Timestamped, UserId, UserType,
+    TimestampMillis, Timestamped, UserId, UserNotification, UserNotificationPayload, UserType,
 };
 use user_canister::CommunityCanisterEvent;
 use utils::env::Environment;
@@ -128,20 +128,41 @@ impl RuntimeState {
         Ok(member)
     }
 
-    pub fn push_notification(&mut self, sender: Option<UserId>, recipients: Vec<UserId>, notification: Notification) {
+    pub fn push_notification(
+        &mut self,
+        sender: Option<UserId>,
+        recipients: Vec<UserId>,
+        notification: UserNotificationPayload,
+    ) {
         if !recipients.is_empty() {
-            self.data.notifications_queue.push(IdempotentEnvelope {
-                created_at: self.env.now(),
-                idempotency_id: self.env.rng().next_u64(),
-                value: notifications_canister::c2c_push_notifications::Notification::User(
-                    notifications_canister::c2c_push_notifications::UserNotification {
-                        sender,
-                        recipients,
-                        notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
-                    },
-                ),
+            let notification = Notification::User(UserNotification {
+                sender,
+                recipients,
+                notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
             });
+            self.push_notification_inner(notification);
         }
+    }
+
+    pub fn push_bot_notification(&mut self, notification: BotNotification) {
+        if !notification.recipients.is_empty() {
+            self.push_notification_inner(Notification::Bot(notification));
+        }
+    }
+
+    fn push_notification_inner(&mut self, notification: Notification) {
+        self.data.notifications_queue.push(IdempotentEnvelope {
+            created_at: self.env.now(),
+            idempotency_id: self.env.rng().next_u64(),
+            value: notification,
+        });
+    }
+
+    pub fn process_message_updated<T>(&mut self, result: UpdateMessageSuccess<T>) -> T {
+        if let Some(bot_notification) = result.bot_notification {
+            self.push_bot_notification(bot_notification);
+        }
+        result.value
     }
 
     pub fn queue_access_gate_payments(&mut self, payment: GatePayment) {
@@ -805,6 +826,7 @@ impl Data {
         let mut users_added: Vec<UserId> = Vec::new();
         let mut users_already_in_channel: Vec<UserId> = Vec::new();
         let mut users_limit_reached: Vec<UserId> = Vec::new();
+        let mut bot_notification = None;
 
         if let Some(channel) = self.channels.get_mut(channel_id) {
             let (min_visible_event_index, min_visible_message_index) = channel.chat.min_visible_indexes_for_new_members();
@@ -853,10 +875,12 @@ impl Data {
                     unblocked: Vec::new(),
                 };
 
-                channel
+                let result = channel
                     .chat
                     .events
                     .push_main_event(ChatEventInternal::ParticipantsAdded(Box::new(event)), 0, now);
+
+                bot_notification = result.bot_notification;
             }
 
             channel_name = Some(channel.chat.name.value.clone());
@@ -870,6 +894,7 @@ impl Data {
             users_added,
             users_already_in_channel,
             users_limit_reached,
+            bot_notification,
         }
     }
 
@@ -914,7 +939,7 @@ impl Data {
 
         self.bot_api_keys.delete(bot_id);
         for channel in self.channels.iter_mut() {
-            channel.chat.bot_unsubscribe_from_chat_events(bot_id, None);
+            channel.chat.events.unsubscribe_bot_from_events(bot_id, None);
         }
 
         // Publish community event
@@ -1088,6 +1113,7 @@ pub struct AddUsersToChannelResult {
     pub users_added: Vec<UserId>,
     pub users_already_in_channel: Vec<UserId>,
     pub users_limit_reached: Vec<UserId>,
+    pub bot_notification: Option<BotNotification>,
 }
 
 pub enum CallerResult {

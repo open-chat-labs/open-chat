@@ -8,7 +8,7 @@ use community_canister::start_video_call_v2::*;
 use constants::HOUR_IN_MS;
 use ic_cdk::update;
 use oc_error_codes::OCErrorCode;
-use types::{Caller, ChannelMessageNotification, Notification, OCResult, UserId, VideoCallPresence, VideoCallType};
+use types::{Caller, ChannelMessageNotification, OCResult, UserId, UserNotificationPayload, VideoCallPresence, VideoCallType};
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
@@ -73,7 +73,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         .filter(|u| state.data.members.get_by_user_id(u).is_some_and(|m| !m.suspended().value))
         .collect();
 
-    let notification = Notification::ChannelMessage(ChannelMessageNotification {
+    let notification = UserNotificationPayload::ChannelMessage(ChannelMessageNotification {
         community_id: state.env.canister_id().into(),
         channel_id: args.channel_id,
         thread_root_message_index: None,

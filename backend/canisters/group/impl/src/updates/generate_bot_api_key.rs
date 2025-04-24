@@ -40,7 +40,11 @@ fn generate_bot_api_key_impl(args: Args, state: &mut RuntimeState) -> OCResult<S
             .generate(args.bot_id, args.requested_permissions.clone(), now, state.env.rng());
 
     if let Some(old_key) = old_key {
-        state.data.chat.bot_unsubscribe_from_chat_events(args.bot_id, Some(&old_key));
+        state
+            .data
+            .chat
+            .events
+            .unsubscribe_bot_from_events(args.bot_id, Some(&old_key));
     }
 
     let api_key_token = BotApiKeyToken {

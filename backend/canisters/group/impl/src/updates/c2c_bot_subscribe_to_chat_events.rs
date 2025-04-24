@@ -36,7 +36,8 @@ fn c2c_bot_subscribe_to_chat_events_impl(args: Args, state: &mut RuntimeState) -
     state
         .data
         .chat
-        .bot_subscribe_to_chat_events(args.bot_id, args.api_key_secret, args.event_types);
+        .events
+        .subscribe_bot_to_events(args.bot_id, args.api_key_secret, args.event_types);
 
     Ok(())
 }

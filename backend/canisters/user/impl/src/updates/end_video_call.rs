@@ -35,7 +35,8 @@ pub(crate) fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> OCRes
             args.message_id.into(),
             state.env.now(),
             was_started_by_me.then_some(&mut state.data.event_store_client),
-        )
+        )?;
+        Ok(())
     } else {
         Err(OCErrorCode::MessageNotFound.into())
     }

@@ -32,8 +32,8 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult<Pol
         now,
     )?;
 
-    if result.updated {
-        if result.poll_creator != user_id {
+    if result.value.updated {
+        if result.value.poll_creator != user_id {
             if args.new_achievement {
                 state.notify_user_of_achievement(user_id, Achievement::VotedOnPoll, now);
             }
@@ -47,11 +47,11 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult<Pol
                     .data
                     .chat
                     .members
-                    .get(&result.poll_creator)
+                    .get(&result.value.poll_creator)
                     .is_some_and(|m| !m.user_type().is_bot())
                 {
                     state.push_event_to_user(
-                        result.poll_creator,
+                        result.value.poll_creator,
                         GroupCanisterEvent::MessageActivity(MessageActivityEvent {
                             chat: Chat::Group(state.env.canister_id().into()),
                             thread_root_message_index: args.thread_root_message_index,
@@ -60,7 +60,7 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult<Pol
                             event_index,
                             activity: MessageActivity::PollVote,
                             timestamp: now,
-                            user_id: matches!(result.votes.total, TotalVotes::Visible(_)).then_some(user_id),
+                            user_id: matches!(result.value.votes.total, TotalVotes::Visible(_)).then_some(user_id),
                         }),
                         now,
                     );
@@ -70,5 +70,5 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult<Pol
 
         handle_activity_notification(state);
     }
-    Ok(result.votes)
+    Ok(result.value.votes)
 }

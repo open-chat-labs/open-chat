@@ -8,6 +8,50 @@ use serde_bytes::ByteBuf;
 use std::fmt::{Debug, Formatter};
 use ts_export::ts_export;
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum Notification {
+    #[serde(rename = "u")]
+    User(UserNotification),
+    #[serde(rename = "b")]
+    Bot(BotNotification),
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct UserNotification {
+    #[serde(rename = "s")]
+    pub sender: Option<UserId>,
+    #[serde(rename = "r")]
+    pub recipients: Vec<UserId>,
+    #[serde(rename = "n")]
+    pub notification_bytes: ByteBuf,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BotNotification {
+    #[serde(rename = "e")]
+    pub event_type: ChatEventType,
+    #[serde(rename = "r")]
+    pub recipients: Vec<UserId>,
+    #[serde(rename = "c")]
+    pub chat: Chat,
+    #[serde(rename = "t")]
+    pub thread: Option<MessageIndex>,
+    #[serde(rename = "i")]
+    pub event_index: EventIndex,
+    #[serde(rename = "l")]
+    pub latest_event_index: EventIndex,
+}
+
+impl Debug for UserNotification {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("UserNotification")
+            .field("sender", &self.sender)
+            .field("recipients", &self.recipients)
+            .field("notification_bytes_length", &self.notification_bytes.len())
+            .finish()
+    }
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum NotificationEnvelope {
     User(UserNotificationEnvelope),
@@ -67,7 +111,7 @@ impl BotNotificationEnvelope {
 
 #[ts_export]
 #[derive(Serialize)]
-pub enum Notification {
+pub enum UserNotificationPayload {
     #[serde(rename = "ac")]
     AddedToChannel(AddedToChannelNotification),
     #[serde(rename = "dm")]
