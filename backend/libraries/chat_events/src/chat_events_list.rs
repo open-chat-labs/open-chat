@@ -810,7 +810,7 @@ mod tests {
                     content: MessageContentInternal::Text(TextContentInternal {
                         text: "hello".to_string(),
                     }),
-                    bot_context: None,
+                    sender_context: None,
                     mentioned: Vec::new(),
                     replies_to: None,
                     now,

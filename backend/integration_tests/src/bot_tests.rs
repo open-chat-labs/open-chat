@@ -168,8 +168,8 @@ fn e2e_command_bot_test() {
     };
     assert_eq!(text_content.text, text);
     assert!(!message.edited);
-    assert!(message.bot_context.is_some());
-    assert!(!message.bot_context.as_ref().unwrap().finalised);
+    assert!(message.bot_context().is_some());
+    assert!(!message.bot_context().as_ref().unwrap().finalised);
 
     // Call execute_bot_action as bot - finalised message
     let text = "Hello world".to_string();
@@ -205,8 +205,8 @@ fn e2e_command_bot_test() {
     assert_eq!(text_content.text, text);
 
     assert!(message.edited);
-    assert!(message.bot_context.is_some());
-    assert!(message.bot_context.as_ref().unwrap().finalised);
+    assert!(message.bot_context().is_some());
+    assert!(message.bot_context().as_ref().unwrap().finalised);
 
     // Update the bot endpoint
     let new_endpoint = "https://123.bot.xyz/".to_string();
@@ -895,7 +895,7 @@ fn send_direct_message() {
         panic!("Expected message to be text");
     };
     assert_eq!(&text_content.text, &message_text);
-    assert!(message.bot_context.is_none());
+    assert!(message.bot_context().is_none());
 
     let bot_event = &response.events[2];
     let ChatEvent::Message(message) = &bot_event.event else {
@@ -905,7 +905,7 @@ fn send_direct_message() {
         panic!("Expected message to be text");
     };
     assert_eq!(&text_content.text, &message_text);
-    assert!(message.bot_context.is_none());
+    assert!(message.bot_context().is_none());
 }
 
 #[test_case(ChatType::Direct)]
@@ -1066,8 +1066,8 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
     assert_eq!(text_content.text, text);
 
     assert!(message.edited);
-    assert!(message.bot_context.is_some());
-    assert!(message.bot_context.as_ref().unwrap().finalised);
+    assert!(message.bot_context().is_some());
+    assert!(message.bot_context().as_ref().unwrap().finalised);
 
     // Try updating the same message again but expect it to fail
     let text = format!("Hello 4 {username}");

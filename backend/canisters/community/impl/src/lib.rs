@@ -39,11 +39,10 @@ use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::CommunityId;
 use types::{
-    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotEventsCaller, BotGroupConfig, BotInitiator,
-    BotPermissions, BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChannelId, ChatMetrics,
-    CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cycles, Document, Empty, EventIndex,
-    EventsCaller, FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules,
-    TimestampMillis, Timestamped, UserId, UserType,
+    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotEventsCaller, BotGroupConfig, BotInitiator, BotPermissions,
+    BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary,
+    CommunityMembership, CommunityPermissions, Cycles, Document, Empty, EventIndex, EventsCaller, FrozenGroupInfo, GroupRole,
+    IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId, UserType,
 };
 use user_canister::CommunityCanisterEvent;
 use utils::env::Environment;
@@ -336,22 +335,26 @@ impl RuntimeState {
         }
     }
 
-    pub fn verified_caller(&self, bot_caller: Option<BotCaller>) -> Result<Caller, OCErrorCode> {
-        if let Some(bot_caller) = bot_caller {
-            if let Some(initiator) = &bot_caller.initiator.user() {
-                // Check the user who initiated the command is a valid member
-                let Some(member) = self.data.members.get_by_user_id(initiator) else {
-                    return Err(OCErrorCode::InitiatorNotInCommunity);
-                };
+    pub fn verified_caller(&self, ext_caller: Option<Caller>) -> Result<Caller, OCErrorCode> {
+        match ext_caller {
+            Some(Caller::BotV2(bot_caller)) => {
+                if let Some(initiator) = &bot_caller.initiator.user() {
+                    // Check the user who initiated the command is a valid member
+                    let Some(member) = self.data.members.get_by_user_id(initiator) else {
+                        return Err(OCErrorCode::InitiatorNotInCommunity);
+                    };
 
-                if member.suspended().value {
-                    return Err(OCErrorCode::InitiatorSuspended);
-                } else if member.lapsed().value {
-                    return Err(OCErrorCode::InitiatorLapsed);
+                    if member.suspended().value {
+                        return Err(OCErrorCode::InitiatorSuspended);
+                    } else if member.lapsed().value {
+                        return Err(OCErrorCode::InitiatorLapsed);
+                    }
                 }
-            }
 
-            return Ok(Caller::BotV2(bot_caller));
+                return Ok(Caller::BotV2(bot_caller));
+            }
+            //Some(Caller::Webhook(user_id)) => return Ok(Caller::Webhook(user_id)),
+            _ => {}
         }
 
         let caller = self.env.caller();
@@ -364,9 +367,9 @@ impl RuntimeState {
 
         match member.user_type {
             UserType::User => Ok(Caller::User(member.user_id)),
-            UserType::BotV2 => Err(OCErrorCode::InitiatorNotFound),
             UserType::Bot => Ok(Caller::Bot(member.user_id)),
             UserType::OcControlledBot => Ok(Caller::OCBot(member.user_id)),
+            UserType::BotV2 | UserType::Webhook => Err(OCErrorCode::InitiatorNotFound.into()),
         }
     }
 }

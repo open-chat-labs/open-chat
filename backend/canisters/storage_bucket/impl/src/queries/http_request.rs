@@ -74,6 +74,7 @@ fn start_streaming_file(file_id: FileId, state: &RuntimeState) -> HttpResponse {
                 ],
                 body: chunk_bytes,
                 streaming_strategy,
+                upgrade: None,
             };
         }
     }

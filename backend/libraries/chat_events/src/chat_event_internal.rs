@@ -10,8 +10,8 @@ use types::{
     GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged,
     MemberJoinedInternal, MemberLeft, MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, Message, MessageContent,
     MessageId, MessageIndex, MessagePinned, MessageUnpinned, MultiUserChat, PermissionsChanged, PushIfNotContains, Reaction,
-    ReplyContext, RoleChanged, ThreadSummary, TimestampMillis, Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
-    is_default,
+    ReplyContext, RoleChanged, SenderContext, ThreadSummary, TimestampMillis, Tips, UserId, UsersBlocked, UsersInvited,
+    UsersUnblocked, is_default,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -207,6 +207,8 @@ pub struct MessageInternal {
     pub content: MessageContentInternal,
     #[serde(rename = "bc", default, skip_serializing_if = "Option::is_none")]
     pub bot_context: Option<BotMessageContext>,
+    #[serde(rename = "sc", default, skip_serializing_if = "Option::is_none")]
+    pub sender_context: Option<SenderContext>,
     #[serde(rename = "p", default, skip_serializing_if = "Option::is_none")]
     pub replies_to: Option<ReplyContextInternal>,
     #[serde(rename = "r", default, skip_serializing_if = "Vec::is_empty")]
@@ -236,7 +238,8 @@ impl MessageInternal {
             } else {
                 self.content.hydrate(my_user_id)
             },
-            bot_context: self.bot_context.clone(),
+            bot_context: self.sender_context.as_ref().and_then(|c| c.bot_context().cloned()),
+            sender_context: self.sender_context,
             replies_to: self.replies_to.as_ref().map(|r| r.hydrate()),
             reactions: self
                 .reactions
@@ -306,6 +309,14 @@ impl MessageInternal {
                 metrics.incr(MetricKey::CustomTypeMessages, 1);
             }
         }
+    }
+
+    pub fn bot_context_mut(&mut self) -> Option<&mut BotMessageContext> {
+        if let Some(SenderContext::Bot(bc)) = &mut self.sender_context { Some(bc) } else { None }
+    }
+
+    pub fn bot_context(&self) -> Option<&BotMessageContext> {
+        if let Some(SenderContext::Bot(bc)) = &self.sender_context { Some(bc) } else { None }
     }
 }
 
@@ -510,6 +521,7 @@ mod tests {
             sender: Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap().into(),
             content: MessageContentInternal::Text(TextContentInternal { text: "123".to_string() }),
             bot_context: None,
+            sender_context: None,
             replies_to: None,
             reactions: Vec::new(),
             tips: Tips::default(),

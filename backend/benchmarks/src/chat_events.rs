@@ -31,7 +31,7 @@ fn push_simple_text_messages() -> BenchResult {
             content: MessageContentInternal::Text(TextContentInternal {
                 text: "1".repeat(i as usize),
             }),
-            bot_context: None,
+            sender_context: None,
             mentioned: Vec::new(),
             replies_to: None,
             forwarded: false,
@@ -74,7 +74,7 @@ fn add_reactions() -> BenchResult {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInternal::Text(TextContentInternal { text: "1".to_string() }),
-            bot_context: None,
+            sender_context: None,
             mentioned: Vec::new(),
             replies_to: None,
             forwarded: false,

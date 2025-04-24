@@ -181,6 +181,7 @@ pub enum OCErrorCode {
     IdentityLinkRequestNotFound = 337,
     InvalidBotActionScope = 338,
     WebhookNotFound = 339,
+    WebhookInvalid = 340,
 
     // InternalError
     C2CError = 500,

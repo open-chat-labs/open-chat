@@ -7,7 +7,7 @@ use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use types::{
     BotCaller, BotMessageContext, CanisterId, Chat, ContentValidationError, DirectMessageNotification, EventWrapper, Message,
-    MessageContent, MessageId, MessageIndex, Notification, TimestampMillis, User, UserId, UserType,
+    MessageContent, MessageId, MessageIndex, Notification, SenderContext, TimestampMillis, User, UserId, UserType,
 };
 use user_canister::{C2CReplyContext, MessageActivity, MessageActivityEvent};
 
@@ -171,7 +171,7 @@ pub(crate) fn handle_message_impl(
         block_level_markdown: args.block_level_markdown,
         correlation_id: 0,
         now: args.now,
-        bot_context: bot_caller.map(|bot| BotMessageContext::from(&bot, finalised)),
+        sender_context: bot_caller.map(|bot| SenderContext::Bot(BotMessageContext::from(&bot, finalised))),
     };
 
     let message_event = chat.push_message(
