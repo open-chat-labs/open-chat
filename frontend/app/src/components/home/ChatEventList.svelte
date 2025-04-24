@@ -61,6 +61,7 @@
         maintainScroll: boolean;
         scrollTopButtonEnabled?: boolean;
         children?: Snippet<[ChatEventListArgs]>;
+        visible: boolean;
     }
 
     let {
@@ -78,6 +79,7 @@
         maintainScroll,
         scrollTopButtonEnabled = false,
         children,
+        visible,
     }: Props = $props();
 
     let focusIndex = $state<number | undefined>();
@@ -151,7 +153,6 @@
     let floatingTimestamp: bigint | undefined = $state(undefined);
     let loadingNewMessages = false;
     let loadingPrevMessages = false;
-    let inThread = $derived(threadRootEvent !== undefined);
 
     $effect.pre(() => {
         withScrollableElement((el) => {
@@ -167,14 +168,23 @@
     });
 
     $effect(() => {
-        if (!ui.showMiddle) {
+        // previously the component would have been destroyed when not showing the middle panel meaning all of
+        // these variables would have been re-initialised
+        if (!visible) {
             initialised = false;
             destroyed = true;
+            morePrevAvailable = false;
+            moreNewAvailable = false;
+            loadingFromUserScroll = false;
+            previousScrollHeight = new MessageContextMap();
+            previousScrollTopByHeight = new MessageContextMap();
+            scrollingToMessage = false;
+            scrollToBottomOnSend = false;
         }
     });
 
     $effect(() => {
-        if (ui.showMiddle) {
+        if (visible && maintainScroll) {
             untrack(() => {
                 if (ui.eventListScrollTop !== undefined && maintainScroll) {
                     interruptScroll((el) => {
@@ -215,7 +225,7 @@
                     previousScrollHeight.set(messageContext, el.scrollHeight);
                 }
                 if (
-                    (inThread || ui.showMiddle) &&
+                    visible &&
                     previousScrollHeightVal !== undefined &&
                     previousScrollHeightVal > 0 &&
                     el.scrollHeight !== previousScrollHeightVal
@@ -705,8 +715,7 @@
         tooltipStore.hide();
         ui.eventListLastScrolled = Date.now();
 
-        if (!initialised || interrupt || loadingFromUserScroll || (!inThread && !ui.showMiddle))
-            return;
+        if (!initialised || interrupt || loadingFromUserScroll || !visible) return;
 
         loadMoreIfRequired(true);
     }

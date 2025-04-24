@@ -22,6 +22,7 @@
         pathState,
         routeForChatIdentifier,
         selectedCommunity,
+        ui,
         unconfirmed,
         currentUser as user,
     } from "openchat-client";
@@ -288,6 +289,7 @@
     rootSelector={"chat-messages"}
     threadRootEvent={undefined}
     maintainScroll
+    visible={ui.showMiddle}
     {readonly}
     {unreadMessages}
     {firstUnreadMention}

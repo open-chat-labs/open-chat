@@ -14,19 +14,11 @@
         url: string;
         intersecting: boolean;
         rendered?: boolean;
-        onImageLoaded: (el: HTMLElement) => void;
         onRendered: (url: string) => void;
     }
 
-    let {
-        url,
-        intersecting,
-        rendered = $bindable(false),
-        onImageLoaded,
-        onRendered,
-    }: Props = $props();
+    let { url, intersecting, rendered = $bindable(false), onRendered }: Props = $props();
 
-    let previewWrapper: HTMLElement | undefined = $state();
     let previewPromise: Promise<LinkInfo | undefined> | undefined = $state();
 
     async function loadPreview(url: string): Promise<LinkInfo | undefined> {
@@ -53,11 +45,6 @@
         }
     }
 
-    function imageLoaded() {
-        if (previewWrapper) {
-            onImageLoaded(previewWrapper);
-        }
-    }
     trackedEffect("generic-preview", () => {
         if (intersecting && !ui.eventListScrolling && !rendered && !$offlineStore) {
             // make sure we only actually *load* the preview once
@@ -75,7 +62,7 @@
 {#if rendered}
     {#await previewPromise then preview}
         {#if preview}
-            <div bind:this={previewWrapper}>
+            <div>
                 {#if preview.title}
                     <a class="title" href={preview.url} target="_blank">{preview.title}</a>
                 {/if}
@@ -85,8 +72,6 @@
                 {#if preview.image}
                     <a href={preview.url} target="_blank">
                         <img
-                            onload={imageLoaded}
-                            onerror={imageLoaded}
                             class="image"
                             src={preview.image}
                             alt={preview.imageAlt ?? "link preview image"} />

@@ -6,10 +6,9 @@
     interface Props {
         intersecting: boolean;
         tweetId: string;
-        onRendered: (el: HTMLDivElement) => void;
     }
 
-    let { intersecting, tweetId, onRendered }: Props = $props();
+    let { intersecting, tweetId }: Props = $props();
 
     let tweetWrapper: HTMLDivElement | undefined = $state();
     let supported = $state(false);
@@ -35,14 +34,10 @@
                 theme: $currentTheme.mode,
             }) as Promise<any>;
 
-            rendering
-                .then(() => {
-                    onRendered(tweetWrapper!);
-                })
-                .catch((err: any) => {
-                    console.log("Failed to render tweet: ", err);
-                    rendering = undefined;
-                });
+            rendering.catch((err: any) => {
+                console.log("Failed to render tweet: ", err);
+                rendering = undefined;
+            });
         }
     });
 </script>

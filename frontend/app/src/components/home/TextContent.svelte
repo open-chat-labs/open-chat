@@ -1,12 +1,12 @@
 <script lang="ts">
-    import Markdown from "./Markdown.svelte";
-    import IntersectionObserver from "./IntersectionObserver.svelte";
-    import { _ } from "svelte-i18n";
     import type { OpenChat, TextContent } from "openchat-client";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
     import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
     import { lowBandwidth, renderPreviews } from "../../stores/settings";
+    import IntersectionObserver from "./IntersectionObserver.svelte";
     import LinkPreviews from "./LinkPreviews.svelte";
-    import { getContext } from "svelte";
+    import Markdown from "./Markdown.svelte";
 
     const SIZE_LIMIT = 1000;
     const client = getContext<OpenChat>("client");
