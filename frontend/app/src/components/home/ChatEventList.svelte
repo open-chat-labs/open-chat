@@ -20,6 +20,7 @@
         ui,
         unconfirmed,
         currentUser as user,
+        withEqCheck,
         type ChatEvent as ChatEventType,
         type ChatSummary,
         type EventWrapper,
@@ -100,10 +101,15 @@
 
     let userId = $derived($user.userId);
     let threadSummary = $derived(threadRootEvent?.event.thread);
-    let messageContext = $derived({
-        chatId: chat?.id,
-        threadRootMessageIndex: threadRootEvent?.event.messageIndex,
-    });
+    let messageContext = $derived.by(
+        withEqCheck(
+            () => ({
+                chatId: chat?.id,
+                threadRootMessageIndex: threadRootEvent?.event.messageIndex,
+            }),
+            messageContextsEqual,
+        ),
+    );
 
     // use this when it's critical that we get the live value from the dom and
     // not a potentially stale value from the captured variable
@@ -154,12 +160,17 @@
     let loadingNewMessages = false;
     let loadingPrevMessages = false;
 
+    let eventsLength = $derived(events.length);
+
     $effect.pre(() => {
-        withScrollableElement((el) => {
-            const scrollTopByHeight = previousScrollTopByHeight.get(messageContext) ?? {};
-            scrollTopByHeight[el.scrollHeight] = el.scrollTop;
-            previousScrollTopByHeight.set(messageContext, scrollTopByHeight);
-        });
+        // HACK we only want to capture this one when the events length has changed and *before* the dom is updated
+        if (eventsLength > 0) {
+            withScrollableElement((el) => {
+                const scrollTopByHeight = previousScrollTopByHeight.get(messageContext) ?? {};
+                scrollTopByHeight[el.scrollHeight] = el.scrollTop;
+                previousScrollTopByHeight.set(messageContext, scrollTopByHeight);
+            });
+        }
     });
 
     $effect(() => {
@@ -221,6 +232,7 @@
         heightObserver = new MutationObserver((_: MutationRecord[]) => {
             withScrollableElement(async (el) => {
                 const previousScrollHeightVal = previousScrollHeight.get(messageContext);
+
                 if (el.scrollHeight > 0) {
                     previousScrollHeight.set(messageContext, el.scrollHeight);
                 }
@@ -461,7 +473,7 @@
         loadingFromUserScroll = loadingNewMessages && fromScroll;
         const loadPromises = [];
         if (loadingNewMessages) {
-            console.debug("SCROLL: about to load new message");
+            console.debug("SCROLL: about to load new message", fromScroll);
             loadPromises.push(client.loadNewMessages(chat.id, threadRootEvent));
         }
         if (loadPromises.length > 0) {
@@ -476,7 +488,7 @@
         loadingFromUserScroll = (loadingPrevMessages || loadingNewMessages) && fromScroll;
         const loadPromises = [];
         if (loadingNewMessages) {
-            console.debug("SCROLL: about to load new message");
+            console.debug("SCROLL: about to load new message", fromScroll);
             loadPromises.push(client.loadNewMessages(chat.id, threadRootEvent));
         }
         if (loadingPrevMessages) {
