@@ -23,7 +23,7 @@ fn webhook_impl(args: Args, state: &RuntimeState) -> OCResult<String> {
     let webhook = state.data.webhooks.get(&args.id).ok_or(OCErrorCode::WebhookNotFound)?;
 
     Ok(format!(
-        "/group/{}/webhook/{}/{}",
+        "https://{}.icp0.io/webhook/{}/{}",
         state.env.canister_id(),
         args.id,
         webhook.secret
