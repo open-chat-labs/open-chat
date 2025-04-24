@@ -8,7 +8,7 @@ use canister_tracing_macros::trace;
 use constants::{ONE_GB, USER_LIMIT};
 use event_store_producer::EventBuilder;
 use local_user_index_canister::{BotRegistered, UserIndexEvent};
-use rand::RngCore;
+use rand::Rng;
 use std::collections::HashMap;
 use storage_index_canister::add_or_update_users::UserConfig;
 use types::BotRegistrationStatus;
@@ -44,10 +44,8 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let avatar = if let Some(data_url) = args.avatar.as_ref() {
         match try_parse_data_url(data_url) {
-            Some(a) => Some(a),
-            None => {
-                return InvalidRequest("invalid avatar".to_string());
-            }
+            Ok(a) => Some(a),
+            Err(e) => return InvalidRequest(e),
         }
     } else {
         None
@@ -174,11 +172,8 @@ fn validate_request(args: &Args, owner_id: UserId, state: &RuntimeState) -> Resu
 }
 
 fn generate_random_user_id(state: &mut RuntimeState) -> Option<UserId> {
-    let mut user_id_bytes: [u8; 8] = [0; 8];
-
     for _ in 0..10 {
-        state.env.rng().fill_bytes(&mut user_id_bytes);
-        let user_id = Principal::from_slice(&user_id_bytes).into();
+        let user_id = Principal::from_slice(&state.env.rng().r#gen::<[u8; 8]>()).into();
         if state.data.users.get_by_user_id(&user_id).is_none() {
             return Some(user_id);
         }

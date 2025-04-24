@@ -1,12 +1,17 @@
 use crate::{RuntimeState, read_state};
 use http_request::{Route, build_json_response, encode_logs, extract_route, get_document};
 use ic_cdk::query;
-use types::{HttpRequest, HttpResponse, TimestampMillis};
+use types::{HttpRequest, HttpResponse, TimestampMillis, UserId};
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
     fn get_avatar_impl(requested_avatar_id: Option<u128>, state: &RuntimeState) -> HttpResponse {
         get_document(requested_avatar_id, state.data.chat.avatar.as_ref(), "avatar")
+    }
+
+    fn get_webhook_avatar_impl(user_id: UserId, requested_avatar_id: Option<u128>, state: &RuntimeState) -> HttpResponse {
+        let avatar = state.data.webhooks.get(&user_id).and_then(|w| w.avatar.as_ref());
+        get_document(requested_avatar_id, avatar, &format!("avatar/{user_id}"))
     }
 
     fn get_errors_impl(since: Option<TimestampMillis>) -> HttpResponse {
@@ -42,6 +47,9 @@ fn http_request(request: HttpRequest) -> HttpResponse {
 
     match extract_route(&request.url) {
         Route::Avatar(requested_avatar_id) => read_state(|state| get_avatar_impl(requested_avatar_id, state)),
+        Route::BotAvatar(user_id, requested_avatar_id) => {
+            read_state(|state| get_webhook_avatar_impl(user_id, requested_avatar_id, state))
+        }
         Route::Errors(since) => get_errors_impl(since),
         Route::Logs(since) => get_logs_impl(since),
         Route::Traces(since) => get_traces_impl(since),

@@ -61,6 +61,17 @@ impl<T> OptionUpdate<T> {
     }
 }
 
+impl<T, E> OptionUpdate<Result<T, E>> {
+    /// Transposes an `OptionUpdate` of a [`Result`] into a [`Result`] of an `OptionUpdate`.
+    pub fn transpose(self) -> Result<OptionUpdate<T>, E> {
+        match self {
+            OptionUpdate::NoChange => Ok(OptionUpdate::NoChange),
+            OptionUpdate::SetToNone => Ok(OptionUpdate::SetToNone),
+            OptionUpdate::SetToSome(value) => value.map(OptionUpdate::SetToSome),
+        }
+    }
+}
+
 macro_rules! option_update {
     ($name:ident, $event_type:ty) => {
         #[ts_export]

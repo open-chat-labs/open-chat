@@ -3,7 +3,7 @@ use canister_api_macros::query;
 use group_canister::selected_updates_v2::{Response::*, *};
 use installed_bots::BotUpdate;
 use std::collections::HashSet;
-use types::{InstalledBotDetails, OCResult};
+use types::{InstalledBotDetails, OCResult, WebhookDetails};
 
 #[query(candid = true, msgpack = true)]
 fn selected_updates_v2(args: Args) -> Response {
@@ -47,6 +47,21 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> OCResult<Response>
     }
 
     results.api_keys_generated = state.data.bot_api_keys.generated_since(args.updates_since);
+
+    if state.data.webhooks.last_updated() > args.updates_since {
+        results.webhooks = Some(
+            state
+                .data
+                .webhooks
+                .iter()
+                .map(|(id, webhook)| WebhookDetails {
+                    id: (*id).into(),
+                    name: webhook.name.clone(),
+                    avatar_id: webhook.avatar.as_ref().map(|avatar| avatar.id),
+                })
+                .collect(),
+        );
+    }
 
     Ok(if results.has_updates() { Success(results) } else { SuccessNoUpdates(last_updated) })
 }
