@@ -28,7 +28,7 @@
         type MessageContext,
         type OpenChat,
     } from "openchat-client";
-    import { getContext, onMount, tick, type Snippet } from "svelte";
+    import { getContext, onMount, tick, untrack, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
@@ -166,6 +166,29 @@
         updateShowGoToTop();
     });
 
+    $effect(() => {
+        if (!ui.showMiddle) {
+            initialised = false;
+            destroyed = true;
+        }
+    });
+
+    $effect(() => {
+        if (ui.showMiddle) {
+            untrack(() => {
+                if (ui.eventListScrollTop !== undefined && maintainScroll) {
+                    interruptScroll((el) => {
+                        if (ui.eventListScrollTop !== undefined) {
+                            initialised = true;
+                            destroyed = false;
+                            el.scrollTop = ui.eventListScrollTop;
+                        }
+                    });
+                }
+            });
+        }
+    });
+
     function elementIsOffTheTop(el: Element): boolean {
         return el.getBoundingClientRect().top < 95;
     }
@@ -188,7 +211,9 @@
         heightObserver = new MutationObserver((_: MutationRecord[]) => {
             withScrollableElement(async (el) => {
                 const previousScrollHeightVal = previousScrollHeight.get(messageContext);
-                previousScrollHeight.set(messageContext, el.scrollHeight);
+                if (el.scrollHeight > 0) {
+                    previousScrollHeight.set(messageContext, el.scrollHeight);
+                }
                 if (
                     (inThread || ui.showMiddle) &&
                     previousScrollHeightVal !== undefined &&
@@ -309,15 +334,6 @@
                 }
             }
         }, labelObserverOptions);
-
-        if (ui.eventListScrollTop !== undefined && maintainScroll) {
-            interruptScroll((el) => {
-                if (ui.eventListScrollTop !== undefined) {
-                    initialised = true;
-                    el.scrollTop = ui.eventListScrollTop;
-                }
-            });
-        }
 
         const unsubs = [
             subscribe("chatUpdated", chatsUpdated),
