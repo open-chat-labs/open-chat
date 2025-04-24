@@ -457,6 +457,13 @@ impl BotInitiator {
             _ => None,
         }
     }
+
+    pub fn api_key_secret(&self) -> Option<&str> {
+        match self {
+            BotInitiator::ApiKeySecret(s) => Some(s),
+            _ => None,
+        }
+    }
 }
 
 impl From<BotMessageContent> for MessageContentInitial {

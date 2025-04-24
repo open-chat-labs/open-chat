@@ -44,7 +44,7 @@ pub enum ChatEvent {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(u8)]
 pub enum ChatEventType {
     Message = 0,           // Messages + edits, reaction, tips, etc.

@@ -13,14 +13,14 @@ use regex_lite::Regex;
 use search::simple::Query;
 use serde::{Deserialize, Serialize};
 use std::cmp::{Reverse, max, min};
-use std::collections::{BTreeMap, BTreeSet, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use types::{
-    AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, Caller, Chat, CustomPermission,
-    Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsCaller, EventsResponse, ExternalUrlUpdated,
-    GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged,
-    GroupSubtype, GroupVisibilityChanged, HydratedMention, MAX_RETURNED_MENTIONS, MemberLeft, MembersRemoved, Message,
-    MessageContent, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned,
-    MessagesResponse, Milliseconds, MultiUserChat, OCResult, OptionUpdate, OptionalGroupPermissions,
+    AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, Caller, Chat, ChatEventType,
+    CustomPermission, Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsCaller, EventsResponse,
+    ExternalUrlUpdated, GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole,
+    GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention, MAX_RETURNED_MENTIONS, MemberLeft,
+    MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned,
+    MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OCResult, OptionUpdate, OptionalGroupPermissions,
     OptionalMessagePermissions, PermissionsChanged, PushEventResult, Reaction, ReserveP2PSwapSuccess, RoleChanged, Rules,
     SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked,
     UsersInvited, Version, Versioned, VersionedRules, VideoCall, VideoCallPresence, VoteOperation,
@@ -63,6 +63,8 @@ pub struct GroupChatCore {
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
     pub external_url: Timestamped<Option<String>>,
     at_everyone_mentions: BTreeMap<TimestampMillis, AtEveryoneMention>,
+    #[serde(default)]
+    pub bot_chat_event_subscriptions: BTreeMap<ChatEventType, HashMap<String, UserId>>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -119,6 +121,7 @@ impl GroupChatCore {
             min_visible_indexes_for_new_members: None,
             external_url: Timestamped::new(external_url, now),
             at_everyone_mentions: BTreeMap::new(),
+            bot_chat_event_subscriptions: BTreeMap::new(),
         }
     }
 
@@ -1739,6 +1742,33 @@ impl GroupChatCore {
         }
 
         result
+    }
+
+    pub fn bot_subscribe_to_chat_events(&mut self, bot_id: UserId, api_key: String, event_types: Vec<ChatEventType>) {
+        // Remove any existing subscriptions
+        self.bot_unsubscribe_from_chat_events(bot_id, Some(api_key.as_str()));
+
+        // Add the new subscriptions (if any)
+        for event_type in event_types {
+            self.bot_chat_event_subscriptions
+                .entry(event_type)
+                .or_default()
+                .insert(api_key.clone(), bot_id);
+        }
+    }
+
+    pub fn bot_unsubscribe_from_chat_events(&mut self, bot_id: UserId, api_key: Option<&str>) {
+        if let Some(api_key) = api_key {
+            for existing in self.bot_chat_event_subscriptions.values_mut() {
+                existing.remove(api_key);
+            }
+        } else {
+            for subscriptions in self.bot_chat_event_subscriptions.values_mut() {
+                subscriptions.retain(|_, b| *b != bot_id);
+            }
+        }
+        self.bot_chat_event_subscriptions
+            .retain(|_, subscriptions| !subscriptions.is_empty());
     }
 
     pub fn most_recent_mentions(&self, member: &GroupMemberInternal, since: Option<TimestampMillis>) -> Vec<HydratedMention> {
