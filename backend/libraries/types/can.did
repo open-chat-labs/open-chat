@@ -601,6 +601,7 @@ type Message = record {
     sender : UserId;
     content : MessageContent;
     bot_context : opt BotMessageContext;
+    sender_context : opt SenderContext;
     replies_to : opt ReplyContext;
     reactions : vec record { text; vec UserId };
     tips : vec record { CanisterId; vec record { UserId; nat } };
@@ -2241,6 +2242,11 @@ type WebhookDetails = record {
 type BotMessageContext = record {
     command : opt BotCommand;
     finalised : bool;
+};
+
+type SenderContext = variant {
+    Bot : BotMessageContext;
+    Webhook;
 };
 
 type BotCommand = record {
