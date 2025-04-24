@@ -452,9 +452,7 @@ impl Job for MarkP2PSwapExpiredJob {
                         .events
                         .mark_p2p_swap_expired(self.thread_root_message_index, self.message_id, state.env.now())
                 {
-                    if let Some(bot_notification) = result.bot_notification {
-                        state.push_bot_notification(bot_notification);
-                    }
+                    state.process_message_updated(result);
                 }
             }
         });

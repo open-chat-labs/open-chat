@@ -70,5 +70,7 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult<Pol
 
         handle_activity_notification(state);
     }
-    Ok(result.value.votes)
+
+    let votes = state.process_message_updated(result).votes;
+    Ok(votes)
 }

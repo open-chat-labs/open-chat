@@ -29,10 +29,5 @@ fn cancel_p2p_swap_impl(args: Args, state: &mut RuntimeState) -> OCResult<u32> {
     channel
         .chat
         .cancel_p2p_swap(member.user_id, args.thread_root_message_index, args.message_id, now)
-        .map(|result| {
-            if let Some(bot_notification) = result.bot_notification {
-                state.push_bot_notification(bot_notification);
-            }
-            result.value
-        })
+        .map(|result| state.process_message_updated(result))
 }
