@@ -82,6 +82,7 @@ pub enum UserType {
     BotV2,
     Bot,
     OcControlledBot,
+    Webhook,
 }
 
 impl UserType {

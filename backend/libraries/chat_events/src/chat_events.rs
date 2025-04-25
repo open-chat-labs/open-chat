@@ -20,15 +20,15 @@ use std::mem;
 use std::ops::DerefMut;
 use tracing::error;
 use types::{
-    BlobReference, BotMessageContext, CallParticipant, CanisterId, Chat, ChatEventType, ChatType, CompletedCryptoTransaction,
-    DirectChatCreated, EventContext, EventIndex, EventMetaData, EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated,
+    BlobReference, CallParticipant, CanisterId, Chat, ChatEventType, ChatType, CompletedCryptoTransaction, DirectChatCreated,
+    EventContext, EventIndex, EventMetaData, EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated,
     GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message,
     MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageReport,
     MessageTippedEventPayload, Milliseconds, MultiUserChat, OCResult, P2PSwapAccepted, P2PSwapCompleted,
     P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate,
-    PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess, TimestampMillis,
-    TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence,
-    VoteOperation,
+    PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess, SenderContext,
+    TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants,
+    VideoCallPresence, VoteOperation,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -199,7 +199,8 @@ impl ChatEvents {
             message_id: args.message_id,
             sender: args.sender,
             content: args.content,
-            bot_context: args.bot_context,
+            bot_context: args.sender_context.as_ref().and_then(|c| c.bot_context().cloned()),
+            sender_context: args.sender_context,
             replies_to: args.replies_to,
             reactions: Vec::new(),
             tips: Tips::default(),
@@ -346,7 +347,7 @@ impl ChatEvents {
                 message.last_edited = Some(args.now);
 
                 if args.finalise_bot_message {
-                    if let Some(bot_context) = message.bot_context.as_mut() {
+                    if let Some(bot_context) = message.bot_context_mut() {
                         bot_context.finalised = true;
                     }
                 }
@@ -1012,7 +1013,7 @@ impl ChatEvents {
                             block_index: transaction.index(),
                             prize_message: message_index,
                         }),
-                        bot_context: None,
+                        sender_context: None,
                         mentioned: Vec::new(),
                         replies_to: None,
                         forwarded: false,
@@ -1481,7 +1482,7 @@ impl ChatEvents {
                             notes,
                         }],
                     }),
-                    bot_context: None,
+                    sender_context: None,
                     mentioned: Vec::new(),
                     replies_to: Some(ReplyContextInternal {
                         chat_if_other: Some((chat.into(), thread_root_message_index)),
@@ -1761,7 +1762,7 @@ impl ChatEvents {
         is_v2_bot: bool,
     ) -> bool {
         if let Some((message, _)) = self.message_internal(EventIndex::default(), thread_root_message_index, message_id.into()) {
-            !is_v2_bot || message.bot_context.is_none_or(|b| b.finalised)
+            !is_v2_bot || message.bot_context().is_none_or(|b| b.finalised)
         } else {
             false
         }
@@ -2221,7 +2222,7 @@ pub struct PushMessageArgs {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
     pub content: MessageContentInternal,
-    pub bot_context: Option<BotMessageContext>,
+    pub sender_context: Option<SenderContext>,
     pub mentioned: Vec<UserId>,
     pub replies_to: Option<ReplyContextInternal>,
     pub forwarded: bool,
