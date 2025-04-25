@@ -73,7 +73,14 @@
         selectedAuthProviderStore.set(provider);
         error = undefined;
 
-        if (provider === AuthProvider.EMAIL) {
+        if (provider === AuthProvider.PASSKEY) {
+            const [key, delegation] = await client.reSignInWithCurrentWebAuthnIdentity();
+            onSuccess({
+                key,
+                delegation,
+                provider,
+            });
+        } else if (provider === AuthProvider.EMAIL) {
             authStep = "signing_in_with_email";
             emailSigninHandler.generateMagicLink(email).then((resp) => {
                 if (resp.kind === "success") {

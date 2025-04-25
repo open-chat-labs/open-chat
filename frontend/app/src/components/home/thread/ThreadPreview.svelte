@@ -2,7 +2,6 @@
     import {
         app,
         AvatarSize,
-        chatListScopeStore as chatListScope,
         chatSummariesStore,
         type EventWrapper,
         type Message,
@@ -97,7 +96,7 @@
 
     function selectThread() {
         page(
-            `${routeForChatIdentifier($chatListScope.kind, thread.chatId)}/${
+            `${routeForChatIdentifier(app.chatListScope.kind, thread.chatId)}/${
                 thread.rootMessage.event.messageIndex
             }?open=true`,
         );

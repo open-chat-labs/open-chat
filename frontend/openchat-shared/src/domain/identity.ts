@@ -1,6 +1,8 @@
 import { Delegation } from "@dfinity/identity";
 import type { Identity, Signature } from "@dfinity/agent";
 import type { Address } from "openchat-agent/src/services/signInWithSolana/candid/types";
+import type { OCError } from "./error";
+import type { Success } from "./response";
 
 export type HasIdentity = {
     id: string;
@@ -101,14 +103,7 @@ export type InitiateIdentityLinkResponse =
     | "originating_canister_invalid"
     | "linked_identities_limit_reached";
 
-export type ApproveIdentityLinkResponse =
-    | "success"
-    | "caller_not_recognised"
-    | "link_request_not_found"
-    | "already_linked_to_principal"
-    | "principal_linked_to_another_oc_user"
-    | "invalid_signature"
-    | "delegation_too_old";
+export type ApproveIdentityLinkResponse = Success | OCError;
 
 export type LinkIdentitiesResponse =
     | InitiateIdentityLinkResponse

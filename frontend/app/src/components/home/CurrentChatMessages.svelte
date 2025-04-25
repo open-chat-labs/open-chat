@@ -21,6 +21,7 @@
         messagesRead,
         pathState,
         routeForChatIdentifier,
+        ui,
         unconfirmed,
         currentUser as user,
     } from "openchat-client";
@@ -120,30 +121,30 @@
 
     // Checks if a key already exists for this group, if so, that key will be reused so that Svelte is able to match the
     // new version with the old version, if not, a new key will be created for the group.
-    // function userGroupKey(group: EventWrapper<ChatEventType>[]): string {
-    //     const first = group[0];
-    //     let prefix = "";
-    //     if (first.event.kind === "message") {
-    //         const sender = first.event.sender;
-    //         prefix = sender + "_";
-    //     }
-    //     for (const evt of group) {
-    //         const key =
-    //             prefix +
-    //             (evt.event.kind === "message" ? `${evt.index}_${evt.event.messageId}` : evt.index);
-    //         if (app.selectedChat.userGroupKeys.has(key)) {
-    //             return key;
-    //         }
-    //     }
-    //     const firstKey =
-    //         prefix +
-    //         (first.event.kind === "message"
-    //             ? `${first.index}_${first.event.messageId}`
-    //             : first.index);
+    function userGroupKey(group: EventWrapper<ChatEventType>[]): string {
+        const first = group[0];
+        let prefix = "";
+        if (first.event.kind === "message") {
+            const sender = first.event.sender;
+            prefix = sender + "_";
+        }
+        for (const evt of group) {
+            const key =
+                prefix +
+                (evt.event.kind === "message" ? `${evt.index}_${evt.event.messageId}` : evt.index);
+            if (app.selectedChat.userGroupKeys.has(key)) {
+                return key;
+            }
+        }
+        const firstKey =
+            prefix +
+            (first.event.kind === "message"
+                ? `${first.index}_${first.event.messageId}`
+                : first.index);
 
-    //     setTimeout(() => app.selectedChat.addUserGroupKey(firstKey), 0);
-    //     return firstKey;
-    // }
+        setTimeout(() => app.selectedChat.addUserGroupKey(firstKey), 0);
+        return firstKey;
+    }
 
     function isMe(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
@@ -288,6 +289,7 @@
     rootSelector={"chat-messages"}
     threadRootEvent={undefined}
     maintainScroll
+    visible={ui.showMiddle}
     {readonly}
     {unreadMessages}
     {firstUnreadMention}
@@ -311,7 +313,7 @@
                 {#if timelineItem.kind === "timeline_date"}
                     <TimelineDate observer={labelObserver} timestamp={timelineItem.timestamp} />
                 {:else}
-                    {#each timelineItem.group as innerGroup}
+                    {#each timelineItem.group as innerGroup (userGroupKey(innerGroup))}
                         {#each innerGroup as evt, i (eventKey(evt))}
                             <ChatEvent
                                 observer={messageObserver}

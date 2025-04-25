@@ -9,7 +9,9 @@ import type {
     CreateOpenChatIdentityError,
     GenerateChallengeResponse,
     InitiateIdentityLinkResponse,
+    OCError,
     RemoveIdentityLinkResponse,
+    Success,
     WebAuthnKeyFull,
 } from "openchat-shared";
 import { buildDelegationIdentity, toDer } from "openchat-shared";
@@ -118,6 +120,10 @@ export class IdentityAgent {
 
     removeIdentityLink(linked_principal: string): Promise<RemoveIdentityLinkResponse> {
         return this._identityClient.removeIdentityLink(linked_principal);
+    }
+
+    deleteUser(): Promise<Success | OCError> {
+        return this._identityClient.deleteUser();
     }
 
     getAuthenticationPrincipals(): Promise<AuthenticationPrincipalsResponse> {

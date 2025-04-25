@@ -213,7 +213,7 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
             );
         }
         if (args.kind === "window") {
-            const [cached, missing, _] = await getCachedEventsWindowByMessageIndex(
+            const [cached, missing] = await getCachedEventsWindowByMessageIndex(
                 this.db,
                 args.eventIndexRange,
                 context,

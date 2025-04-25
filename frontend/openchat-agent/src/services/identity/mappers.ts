@@ -1,100 +1,98 @@
 import type {
-    ApiApproveIdentityLinkResponse,
-    ApiAuthPrincipalsResponse,
-    ApiCheckAuthPrincipalResponse,
-    ApiCreateIdentityResponse,
-    ApiGenerateChallengeResponse,
-    ApiGetDelegationResponse,
-    ApiInitiateIdentityLinkResponse,
-    ApiPrepareDelegationResponse,
-    ApiRemoveIdentityLinkResponse,
-    ApiWebAuthnKey,
-} from "./candid/idl";
-import {
-    type ApproveIdentityLinkResponse,
-    type AuthenticationPrincipalsResponse,
-    type CheckAuthPrincipalResponse,
-    type CreateIdentityResponse,
-    type GenerateChallengeResponse,
-    type GetDelegationResponse,
-    type InitiateIdentityLinkResponse,
-    type PrepareDelegationResponse,
-    type PrepareDelegationSuccess,
-    type RemoveIdentityLinkResponse,
-    type WebAuthnKeyFull,
-    UnsupportedValueError,
+    IdentityAuthPrincipalsResponse,
+    IdentityCheckAuthPrincipalV2Response,
+    IdentityCreateIdentityResponse,
+    IdentityGenerateChallengeResponse,
+    IdentityGetDelegationResponse,
+    IdentityInitiateIdentityLinkResponse,
+    IdentityPrepareDelegationResponse,
+    IdentityRemoveIdentityLinkResponse,
+    IdentityWebAuthnKey,
+    SignedDelegation
+} from "../../typebox";
+import type {
+    AuthenticationPrincipalsResponse,
+    CheckAuthPrincipalResponse,
+    CreateIdentityResponse,
+    GenerateChallengeResponse,
+    GetDelegationResponse,
+    InitiateIdentityLinkResponse,
+    PrepareDelegationResponse,
+    PrepareDelegationSuccess,
+    RemoveIdentityLinkResponse,
+    WebAuthnKeyFull,
 } from "openchat-shared";
-import { consolidateBytes, optional } from "../../utils/mapping";
+import { UnsupportedValueError } from "openchat-shared";
+import { consolidateBytes, mapOptional, principalBytesToString } from "../../utils/mapping";
 import type { Signature } from "@dfinity/agent";
 import { Delegation } from "@dfinity/identity";
-import type { PublicKey, SignedDelegation } from "./candid/types";
 
-export function createIdentityResponse(candid: ApiCreateIdentityResponse): CreateIdentityResponse {
-    if ("Success" in candid) {
-        return prepareDelegationSuccess(candid.Success);
-    }
-    if ("AlreadyRegistered" in candid) {
+export function createIdentityResponse(value: IdentityCreateIdentityResponse): CreateIdentityResponse {
+    if (value === "AlreadyRegistered") {
         return { kind: "already_registered" };
     }
-    if ("PublicKeyInvalid" in candid) {
-        return { kind: "public_key_invalid" };
-    }
-    if ("OriginatingCanisterInvalid" in candid) {
-        return { kind: "originating_canister_invalid" };
-    }
-    if ("ChallengeFailed" in candid) {
+    if (value === "ChallengeFailed") {
         return { kind: "challenge_failed" };
     }
-    if ("ChallengeRequired" in candid) {
+    if (value === "ChallengeRequired") {
         return { kind: "challenge_required" };
     }
-    throw new UnsupportedValueError("Unexpected ApiCreateIdentityResponse type received", candid);
+    if ("Success" in value) {
+        return prepareDelegationSuccess(value.Success);
+    }
+    if ("PublicKeyInvalid" in value) {
+        return { kind: "public_key_invalid" };
+    }
+    if ("OriginatingCanisterInvalid" in value) {
+        return { kind: "originating_canister_invalid" };
+    }
+    throw new UnsupportedValueError("Unexpected ApiCreateIdentityResponse type received", value);
 }
 
 export function checkAuthPrincipalResponse(
-    candid: ApiCheckAuthPrincipalResponse,
+    value: IdentityCheckAuthPrincipalV2Response,
 ): CheckAuthPrincipalResponse {
-    if ("Success" in candid) {
+    if (value === "NotFound") {
+        return { kind: "not_found" };
+    }
+    if ("Success" in value) {
         return {
             kind: "success",
-            userId: optional(candid.Success.user_id, (p) => p.toString()),
-            webAuthnKey: optional(candid.Success.webauthn_key, webAuthnKey),
-            originatingCanister: candid.Success.originating_canister.toString(),
-            isIIPrincipal: candid.Success.is_ii_principal,
+            userId: mapOptional(value.Success.user_id, principalBytesToString),
+            webAuthnKey: mapOptional(value.Success.webauthn_key, webAuthnKey),
+            originatingCanister: principalBytesToString(value.Success.originating_canister),
+            isIIPrincipal: value.Success.is_ii_principal,
         };
-    }
-    if ("NotFound" in candid) {
-        return { kind: "not_found" };
     }
     throw new UnsupportedValueError(
         "Unexpected ApiCheckAuthPrincipalResponse type received",
-        candid,
+        value,
     );
 }
 
 export function prepareDelegationResponse(
-    candid: ApiPrepareDelegationResponse,
+    value: IdentityPrepareDelegationResponse,
 ): PrepareDelegationResponse {
-    if ("Success" in candid) {
-        return prepareDelegationSuccess(candid.Success);
-    }
-    if ("NotFound" in candid) {
+    if (value === "NotFound") {
         return { kind: "not_found" };
+    }
+    if ("Success" in value) {
+        return prepareDelegationSuccess(value.Success);
     }
     throw new UnsupportedValueError(
         "Unexpected ApiPrepareDelegationResponse type received",
-        candid,
+        value,
     );
 }
 
-export function getDelegationResponse(candid: ApiGetDelegationResponse): GetDelegationResponse {
-    if ("Success" in candid) {
-        return signedDelegation(candid.Success);
-    }
-    if ("NotFound" in candid) {
+export function getDelegationResponse(value: IdentityGetDelegationResponse | { NotFound: null }): GetDelegationResponse {
+    if (value === "NotFound" || "NotFound" in value) {
         return { kind: "not_found" };
     }
-    throw new UnsupportedValueError("Unexpected ApiGetDelegationResponse type received", candid);
+    if ("Success" in value) {
+        return signedDelegation(value.Success);
+    }
+    throw new UnsupportedValueError("Unexpected ApiGetDelegationResponse type received", value);
 }
 
 export function signedDelegation(signedDelegation: SignedDelegation): GetDelegationResponse {
@@ -108,141 +106,111 @@ export function signedDelegation(signedDelegation: SignedDelegation): GetDelegat
     };
 }
 
-function prepareDelegationSuccess(candid: {
-    user_key: PublicKey;
+function prepareDelegationSuccess(value: {
+    user_key: Uint8Array | number[];
     expiration: bigint;
 }): PrepareDelegationSuccess {
     return {
         kind: "success",
-        userKey: consolidateBytes(candid.user_key),
-        expiration: candid.expiration,
+        userKey: consolidateBytes(value.user_key),
+        expiration: value.expiration,
     };
 }
 
 export function generateChallengeResponse(
-    candid: ApiGenerateChallengeResponse,
+    value: IdentityGenerateChallengeResponse,
 ): GenerateChallengeResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            key: candid.Success.key,
-            pngBase64: candid.Success.png_base64,
-        };
-    }
-    if ("AlreadyRegistered" in candid) {
+    if (value === "AlreadyRegistered") {
         return { kind: "already_registered" };
     }
-    if ("Throttled" in candid) {
+    if (value === "Throttled") {
         return { kind: "throttled" };
+    }
+    if ("Success" in value) {
+        return {
+            kind: "success",
+            key: value.Success.key,
+            pngBase64: value.Success.png_base64,
+        };
     }
     throw new UnsupportedValueError(
         "Unexpected ApiGenerateChallengeResponse type received",
-        candid,
+        value,
     );
 }
 
 export function initiateIdentityLinkResponse(
-    candid: ApiInitiateIdentityLinkResponse,
+    value: IdentityInitiateIdentityLinkResponse,
 ): InitiateIdentityLinkResponse {
-    if ("Success" in candid) {
+    if (value === "Success") {
         return "success";
     }
-    if ("AlreadyRegistered" in candid) {
+    if (value === "AlreadyRegistered") {
         return "already_registered";
     }
-    if ("AlreadyLinkedToPrincipal" in candid) {
+    if (value === "AlreadyLinkedToPrincipal") {
         return "already_linked_to_principal";
     }
-    if ("TargetUserNotFound" in candid) {
+    if (value === "TargetUserNotFound") {
         return "target_user_not_found";
     }
-    if ("PublicKeyInvalid" in candid) {
+    if ("PublicKeyInvalid" in value) {
         return "public_key_invalid";
     }
-    if ("OriginatingCanisterInvalid" in candid) {
+    if ("OriginatingCanisterInvalid" in value) {
         return "originating_canister_invalid";
     }
-    if ("LinkedIdentitiesLimitReached" in candid) {
+    if ("LinkedIdentitiesLimitReached" in value) {
         return "linked_identities_limit_reached";
     }
     throw new UnsupportedValueError(
         "Unexpected ApiInitiateIdentityLinkResponse type received",
-        candid,
+        value,
     );
 }
 
 export function authPrincipalsResponse(
-    candid: ApiAuthPrincipalsResponse,
+    value: IdentityAuthPrincipalsResponse,
 ): AuthenticationPrincipalsResponse {
-    if ("NotFound" in candid) {
+    if (value === "NotFound") {
         return [];
     }
 
-    if ("Success" in candid) {
-        return candid.Success.map((p) => ({
-            principal: p.principal.toString(),
-            originatingCanister: p.originating_canister.toString(),
+    if ("Success" in value) {
+        return value.Success.map((p) => ({
+            principal: principalBytesToString(p.principal),
+            originatingCanister: principalBytesToString(p.originating_canister),
             isIIPrincipal: p.is_ii_principal,
             isCurrentIdentity: p.is_current_identity,
-            webAuthnKey: optional(p.webauthn_key, webAuthnKey),
+            webAuthnKey: mapOptional(p.webauthn_key, webAuthnKey),
         }));
     }
 
-    throw new UnsupportedValueError("Unexpected ApiAuthPrincipalResponse type received", candid);
-}
-
-export function approveIdentityLinkResponse(
-    candid: ApiApproveIdentityLinkResponse,
-): ApproveIdentityLinkResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("CallerNotRecognised" in candid) {
-        return "caller_not_recognised";
-    }
-    if ("LinkRequestNotFound" in candid) {
-        return "link_request_not_found";
-    }
-    if ("PrincipalAlreadyLinkedToAnotherOcUser" in candid) {
-        return "principal_linked_to_another_oc_user";
-    }
-    if ("MalformedSignature" in candid || "InvalidSignature" in candid) {
-        return "invalid_signature";
-    }
-    if ("DelegationTooOld" in candid) {
-        return "delegation_too_old";
-    }
-    if ("PrincipalAlreadyLinkedToAnotherOcUser" in candid) {
-        return "principal_linked_to_another_oc_user";
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiApproveIdentityLinkResponse type received",
-        candid,
-    );
+    throw new UnsupportedValueError("Unexpected ApiAuthPrincipalResponse type received", value);
 }
 
 export function removeIdentityLinkResponse(
-    candid: ApiRemoveIdentityLinkResponse,
+    value: IdentityRemoveIdentityLinkResponse,
 ): RemoveIdentityLinkResponse {
-    if ("Success" in candid) {
+    if (value === "Success") {
         return "success";
     }
-    if ("CannotUnlinkActivePrincipal" in candid) {
+    if (value === "CannotUnlinkActivePrincipal") {
         return "cannot_unlink_active_principal";
     }
-    if ("IdentityLinkNotFound" in candid) {
+    if (value === "IdentityLinkNotFound") {
         return "identity_link_not_found";
     }
-    if ("UserNotFound" in candid) {
+    if (value === "UserNotFound") {
         return "user_not_found";
     }
     throw new UnsupportedValueError(
         "Unexpected ApiRemoveIdentityLinkResponse type received",
-        candid,
+        value,
     );
 }
 
-function webAuthnKey(key: ApiWebAuthnKey): WebAuthnKeyFull {
+function webAuthnKey(key: IdentityWebAuthnKey): WebAuthnKeyFull {
     return {
         publicKey: consolidateBytes(key.public_key),
         credentialId: consolidateBytes(key.credential_id),
@@ -252,12 +220,14 @@ function webAuthnKey(key: ApiWebAuthnKey): WebAuthnKeyFull {
     };
 }
 
-export function apiWebAuthnKey(key: WebAuthnKeyFull): ApiWebAuthnKey {
+export function apiWebAuthnKey(key: WebAuthnKeyFull): IdentityWebAuthnKey {
     return {
         public_key: key.publicKey,
         credential_id: key.credentialId,
         origin: key.origin,
         cross_platform: key.crossPlatform,
-        aaguid: key.aaguid,
+        aaguid: [...key.aaguid.values()] as [
+            number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number
+        ],
     };
 }

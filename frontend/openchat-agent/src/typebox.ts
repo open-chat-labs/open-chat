@@ -136,6 +136,41 @@ export const ProposalsBotCanisterInstallMode = Type.Union([
 export type ProposalsBotTreasury = Static<typeof ProposalsBotTreasury>;
 export const ProposalsBotTreasury = Type.Union([Type.Literal("ICP"), Type.Literal("SNS")]);
 
+export type IdentityChallenge = Static<typeof IdentityChallenge>;
+export const IdentityChallenge = Type.Object({
+    key: Type.Number(),
+    png_base64: Type.String(),
+});
+
+export type IdentityRemoveIdentityLinkResponse = Static<typeof IdentityRemoveIdentityLinkResponse>;
+export const IdentityRemoveIdentityLinkResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("CannotUnlinkActivePrincipal"),
+    Type.Literal("IdentityLinkNotFound"),
+    Type.Literal("UserNotFound"),
+]);
+
+export type IdentityChallengeAttempt = Static<typeof IdentityChallengeAttempt>;
+export const IdentityChallengeAttempt = Type.Object({
+    key: Type.Number(),
+    chars: Type.String(),
+});
+
+export type IdentityGenerateChallengeResponse = Static<typeof IdentityGenerateChallengeResponse>;
+export const IdentityGenerateChallengeResponse = Type.Union([
+    Type.Object({
+        Success: IdentityChallenge,
+    }),
+    Type.Literal("AlreadyRegistered"),
+    Type.Literal("Throttled"),
+]);
+
+export type IdentityCheckAuthPrincipalResponse = Static<typeof IdentityCheckAuthPrincipalResponse>;
+export const IdentityCheckAuthPrincipalResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("NotFound"),
+]);
+
 export type OnlineUsersMinutesOnlineArgs = Static<typeof OnlineUsersMinutesOnlineArgs>;
 export const OnlineUsersMinutesOnlineArgs = Type.Object({
     year: Type.Number(),
@@ -3414,6 +3449,133 @@ export const ProposalsBotUpgradeSnsControlledCanister = Type.Object({
     mode: ProposalsBotCanisterInstallMode,
 });
 
+export type IdentityInitiateIdentityLinkResponse = Static<
+    typeof IdentityInitiateIdentityLinkResponse
+>;
+export const IdentityInitiateIdentityLinkResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("AlreadyRegistered"),
+    Type.Literal("AlreadyLinkedToPrincipal"),
+    Type.Literal("TargetUserNotFound"),
+    Type.Object({
+        PublicKeyInvalid: Type.String(),
+    }),
+    Type.Object({
+        OriginatingCanisterInvalid: TSPrincipal,
+    }),
+    Type.Object({
+        LinkedIdentitiesLimitReached: Type.Number(),
+    }),
+]);
+
+export type IdentityLookupWebauthnPubkeySuccessResult = Static<
+    typeof IdentityLookupWebauthnPubkeySuccessResult
+>;
+export const IdentityLookupWebauthnPubkeySuccessResult = Type.Object({
+    pubkey: TSBytes,
+});
+
+export type IdentityLookupWebauthnPubkeyArgs = Static<typeof IdentityLookupWebauthnPubkeyArgs>;
+export const IdentityLookupWebauthnPubkeyArgs = Type.Object({
+    credential_id: TSBytes,
+});
+
+export type IdentityLookupWebauthnPubkeyResponse = Static<
+    typeof IdentityLookupWebauthnPubkeyResponse
+>;
+export const IdentityLookupWebauthnPubkeyResponse = Type.Union([
+    Type.Object({
+        Success: IdentityLookupWebauthnPubkeySuccessResult,
+    }),
+    Type.Literal("NotFound"),
+]);
+
+export type IdentityRemoveIdentityLinkArgs = Static<typeof IdentityRemoveIdentityLinkArgs>;
+export const IdentityRemoveIdentityLinkArgs = Type.Object({
+    linked_principal: TSPrincipal,
+});
+
+export type IdentityPrepareDelegationSuccessResult = Static<
+    typeof IdentityPrepareDelegationSuccessResult
+>;
+export const IdentityPrepareDelegationSuccessResult = Type.Object({
+    user_key: TSBytes,
+    expiration: Type.BigInt(),
+});
+
+export type IdentityPrepareDelegationResponse = Static<typeof IdentityPrepareDelegationResponse>;
+export const IdentityPrepareDelegationResponse = Type.Union([
+    Type.Object({
+        Success: IdentityPrepareDelegationSuccessResult,
+    }),
+    Type.Literal("NotFound"),
+]);
+
+export type IdentityPrepareDelegationArgs = Static<typeof IdentityPrepareDelegationArgs>;
+export const IdentityPrepareDelegationArgs = Type.Object({
+    session_key: TSBytes,
+    is_ii_principal: Type.Optional(Type.Boolean()),
+    max_time_to_live: Type.Optional(Type.BigInt()),
+});
+
+export type IdentityGetDelegationArgs = Static<typeof IdentityGetDelegationArgs>;
+export const IdentityGetDelegationArgs = Type.Object({
+    session_key: TSBytes,
+    expiration: Type.BigInt(),
+});
+
+export type IdentityWebAuthnKey = Static<typeof IdentityWebAuthnKey>;
+export const IdentityWebAuthnKey = Type.Object({
+    public_key: TSBytes,
+    credential_id: TSBytes,
+    origin: Type.String(),
+    cross_platform: Type.Boolean(),
+    aaguid: Type.Tuple([
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+    ]),
+});
+
+export type IdentityCreateIdentityResponse = Static<typeof IdentityCreateIdentityResponse>;
+export const IdentityCreateIdentityResponse = Type.Union([
+    Type.Object({
+        Success: IdentityPrepareDelegationSuccessResult,
+    }),
+    Type.Literal("AlreadyRegistered"),
+    Type.Object({
+        PublicKeyInvalid: Type.String(),
+    }),
+    Type.Object({
+        OriginatingCanisterInvalid: TSPrincipal,
+    }),
+    Type.Literal("ChallengeRequired"),
+    Type.Literal("ChallengeFailed"),
+]);
+
+export type IdentityCreateIdentityArgs = Static<typeof IdentityCreateIdentityArgs>;
+export const IdentityCreateIdentityArgs = Type.Object({
+    public_key: TSBytes,
+    session_key: TSBytes,
+    webauthn_key: Type.Optional(IdentityWebAuthnKey),
+    is_ii_principal: Type.Optional(Type.Boolean()),
+    max_time_to_live: Type.Optional(Type.BigInt()),
+    challenge_attempt: Type.Optional(IdentityChallengeAttempt),
+});
+
 export type OnlineUsersLastOnlineArgs = Static<typeof OnlineUsersLastOnlineArgs>;
 export const OnlineUsersLastOnlineArgs = Type.Object({
     user_ids: Type.Array(UserId),
@@ -5924,6 +6086,46 @@ export const ProposalsBotMintSnsTokens = Type.Object({
     memo: Type.Optional(Type.BigInt()),
 });
 
+export type IdentityInitiateIdentityLinkArgs = Static<typeof IdentityInitiateIdentityLinkArgs>;
+export const IdentityInitiateIdentityLinkArgs = Type.Object({
+    public_key: TSBytes,
+    webauthn_key: Type.Optional(IdentityWebAuthnKey),
+    is_ii_principal: Type.Optional(Type.Boolean()),
+    link_to_principal: TSPrincipal,
+});
+
+export type IdentityAuthPrincipalsUserPrincipal = Static<
+    typeof IdentityAuthPrincipalsUserPrincipal
+>;
+export const IdentityAuthPrincipalsUserPrincipal = Type.Object({
+    principal: TSPrincipal,
+    originating_canister: TSPrincipal,
+    is_ii_principal: Type.Boolean(),
+    is_current_identity: Type.Boolean(),
+    webauthn_key: Type.Optional(IdentityWebAuthnKey),
+    last_used: Type.BigInt(),
+});
+
+export type IdentityCheckAuthPrincipalV2SuccessResult = Static<
+    typeof IdentityCheckAuthPrincipalV2SuccessResult
+>;
+export const IdentityCheckAuthPrincipalV2SuccessResult = Type.Object({
+    user_id: Type.Optional(UserId),
+    originating_canister: TSPrincipal,
+    webauthn_key: Type.Optional(IdentityWebAuthnKey),
+    is_ii_principal: Type.Boolean(),
+});
+
+export type IdentityCheckAuthPrincipalV2Response = Static<
+    typeof IdentityCheckAuthPrincipalV2Response
+>;
+export const IdentityCheckAuthPrincipalV2Response = Type.Union([
+    Type.Object({
+        Success: IdentityCheckAuthPrincipalV2SuccessResult,
+    }),
+    Type.Literal("NotFound"),
+]);
+
 export type OnlineUsersLastOnlineResponse = Static<typeof OnlineUsersLastOnlineResponse>;
 export const OnlineUsersLastOnlineResponse = Type.Object({
     Success: Type.Array(OnlineUsersLastOnlineUserLastOnline),
@@ -6827,6 +7029,35 @@ export const ProposalsBotProposalToSubmit = Type.Object({
     summary: Type.String(),
     url: Type.String(),
     action: ProposalsBotProposalToSubmitAction,
+});
+
+export type IdentityAuthPrincipalsResponse = Static<typeof IdentityAuthPrincipalsResponse>;
+export const IdentityAuthPrincipalsResponse = Type.Union([
+    Type.Object({
+        Success: Type.Array(IdentityAuthPrincipalsUserPrincipal),
+    }),
+    Type.Literal("NotFound"),
+]);
+
+export type IdentityGetDelegationResponse = Static<typeof IdentityGetDelegationResponse>;
+export const IdentityGetDelegationResponse = Type.Union([
+    Type.Object({
+        Success: SignedDelegation,
+    }),
+    Type.Literal("NotFound"),
+]);
+
+export type IdentityDeleteUserArgs = Static<typeof IdentityDeleteUserArgs>;
+export const IdentityDeleteUserArgs = Type.Object({
+    delegation: SignedDelegation,
+    public_key: TSBytes,
+});
+
+export type IdentityApproveIdentityLinkArgs = Static<typeof IdentityApproveIdentityLinkArgs>;
+export const IdentityApproveIdentityLinkArgs = Type.Object({
+    delegation: SignedDelegation,
+    public_key: TSBytes,
+    link_initiated_by: TSPrincipal,
 });
 
 export type GroupClaimPrizeResponse = Static<typeof GroupClaimPrizeResponse>;

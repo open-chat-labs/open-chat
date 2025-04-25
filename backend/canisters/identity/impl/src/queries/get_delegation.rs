@@ -1,11 +1,11 @@
 use crate::{RuntimeState, read_state};
+use canister_api_macros::query;
 use ic_canister_sig_creation::signature_map::CanisterSigInputs;
 use ic_canister_sig_creation::{DELEGATION_SIG_DOMAIN, delegation_signature_msg};
-use ic_cdk::query;
 use identity_canister::get_delegation::{Response::*, *};
 use types::{Delegation, SignedDelegation};
 
-#[query]
+#[query(msgpack = true, candid = true)]
 fn get_delegation(args: Args) -> Response {
     read_state(|state| get_delegation_impl(args, state))
 }

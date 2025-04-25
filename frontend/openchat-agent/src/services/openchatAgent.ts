@@ -1,6 +1,5 @@
 /* eslint-disable no-case-declarations */
 import { HttpAgent, type Identity } from "@dfinity/agent";
-import type { DelegationChain } from "@dfinity/identity";
 import type { Principal } from "@dfinity/principal";
 import type {
     AcceptedRules,
@@ -4176,10 +4175,6 @@ export class OpenChatAgent extends EventTarget {
             })),
             allMissing,
         ];
-    }
-
-    deleteUser(userId: string, delegation: DelegationChain): Promise<boolean> {
-        return this._userIndexClient.deleteUser(userId, delegation);
     }
 
     getChannelSummary(channelId: ChannelIdentifier): Promise<ChannelSummaryResponse> {
