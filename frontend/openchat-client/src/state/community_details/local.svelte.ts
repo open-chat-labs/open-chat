@@ -41,9 +41,6 @@ export class CommunityLocalState {
     }
 }
 
-// TODO - get rid of this and change CommunityLocalState so that it contains things like:
-// invitedUsers = new CommunityMap<LocalSet<string>>
-// this would be more efficient and simpler, but we need a reactive version of CommunityMap
 export class CommunityLocalStateManager {
     #data = new ReactiveCommunityMap<CommunityLocalState>();
 
