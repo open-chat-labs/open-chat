@@ -23,6 +23,7 @@ pub struct AvatarRoute {
     pub blob_id: Option<u128>,
 }
 
+#[derive(Debug)]
 pub struct WebhookRoute {
     pub channel_id: Option<ChannelId>,
     pub webhook_id: UserId,
