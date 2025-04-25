@@ -8,7 +8,8 @@ import { LocalUpdatesStore } from "./localUpdatesStore";
 
 class LocalCommunitySummaryUpdatesStore extends LocalUpdatesStore<
     CommunityIdentifier,
-    LocalCommunitySummaryUpdates
+    LocalCommunitySummaryUpdates,
+    string
 > {
     constructor() {
         super(new CommunityMap<LocalCommunitySummaryUpdates>());

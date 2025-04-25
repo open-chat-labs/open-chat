@@ -630,7 +630,10 @@ export class OpenChat {
         });
     }
 
-    deleteCurrentUser(identityKey: CryptoKeyPair, delegation: JsonnableDelegationChain): Promise<boolean> {
+    deleteCurrentUser(
+        identityKey: CryptoKeyPair,
+        delegation: JsonnableDelegationChain,
+    ): Promise<boolean> {
         if (!this.#liveState.anonUser) {
             return this.#sendRequest({
                 kind: "deleteUser",
@@ -5390,15 +5393,16 @@ export class OpenChat {
         threadsByChat: ChatMap<ThreadSyncDetails[]>,
         serverChatSummaries: ChatMap<ChatSummary>,
     ): Promise<ThreadPreview[]> {
-        const request: ChatMap<[ThreadSyncDetails[], bigint | undefined]> = threadsByChat
-            .entries()
-            .reduce((map, [chatId, threads]) => {
+        const request: ChatMap<[ThreadSyncDetails[], bigint | undefined]> = threadsByChat.reduce(
+            (map, [chatId, threads]) => {
                 if (chatId.kind === "group_chat" || chatId.kind === "channel") {
                     const latestKnownUpdate = serverChatSummaries.get(chatId)?.lastUpdated;
                     map.set(chatId, [threads, latestKnownUpdate]);
                 }
                 return map;
-            }, new ChatMap<[ThreadSyncDetails[], bigint | undefined]>());
+            },
+            new ChatMap<[ThreadSyncDetails[], bigint | undefined]>(),
+        );
 
         return this.#sendRequest({
             kind: "threadPreviews",
@@ -7944,7 +7948,7 @@ export class OpenChat {
     }
 
     getCommunityForChannel(id: ChannelIdentifier): CommunitySummary | undefined {
-        return app.communities.values().find((c) => {
+        return [...app.communities.values()].find((c) => {
             return c.channels.findIndex((ch) => chatIdentifiersEqual(ch.id, id)) >= 0;
         });
     }

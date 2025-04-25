@@ -1,13 +1,18 @@
 import {
+    CommunityMap,
+    emptyChatMetrics,
     emptyRules,
     type ChatIdentifier,
     type CommunityIdentifier,
+    type CommunityPermissions,
+    type CommunitySummary,
     type Member,
 } from "openchat-shared";
 import { vi } from "vitest";
 import { app } from "./app.svelte";
 import { chatDetailsLocalUpdates } from "./chat_details";
 import { communityLocalUpdates } from "./community_details/local.svelte";
+import { globalLocalUpdates } from "./global";
 import { pathState } from "./path.svelte";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -227,4 +232,67 @@ describe("app state", () => {
             });
         });
     });
+
+    describe("global state", () => {
+        beforeEach(() => {
+            app.serverCommunities = CommunityMap.fromList([
+                createCommunitySummary("123456", 1),
+                createCommunitySummary("654321", 2),
+            ]);
+        });
+        test("community indexes", () => {
+            const id: CommunityIdentifier = { kind: "community", communityId: "123456" };
+            expect(app.communities.size).toEqual(2);
+            expect(app.communities.get(id)?.membership.index).toEqual(1);
+            globalLocalUpdates.updateCommunityIndex(id, 3);
+            expect(app.communities.get(id)?.membership.index).toEqual(3);
+        });
+    });
 });
+
+function createCommunitySummary(id: string, index: number): CommunitySummary {
+    return {
+        kind: "community",
+        id: { kind: "community", communityId: id },
+        name: "",
+        description: "",
+        memberCount: 0,
+        avatar: {},
+        banner: {},
+        gateConfig: { gate: { kind: "no_gate" }, expiry: undefined },
+        public: true,
+        permissions: defaultPermissions,
+        historyVisible: true,
+        frozen: false,
+        level: "community",
+        lastUpdated: BigInt(0),
+        latestEventIndex: 0,
+        channels: [],
+        membership: {
+            role: "owner",
+            joined: BigInt(0),
+            archived: false,
+            pinned: [],
+            index,
+            displayName: undefined,
+            rulesAccepted: false,
+            lapsed: false,
+        },
+        primaryLanguage: "en",
+        metrics: emptyChatMetrics(),
+        userGroups: new Map(),
+        localUserIndex: "",
+        isInvited: false,
+        verified: false,
+    };
+}
+
+const defaultPermissions: CommunityPermissions = {
+    changeRoles: "admin",
+    updateDetails: "admin",
+    inviteUsers: "admin",
+    removeMembers: "admin",
+    createPublicChannel: "admin",
+    createPrivateChannel: "admin",
+    manageUserGroups: "admin",
+};

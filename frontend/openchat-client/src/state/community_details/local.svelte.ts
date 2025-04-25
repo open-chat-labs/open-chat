@@ -1,27 +1,27 @@
-import type {
-    CommunityIdentifier,
-    ExternalBotPermissions,
-    Member,
-    PublicApiKeyDetails,
-    UserGroupDetails,
-    VersionedRules,
+import {
+    identity,
+    type CommunityIdentifier,
+    type ExternalBotPermissions,
+    type Member,
+    type PublicApiKeyDetails,
+    type UserGroupDetails,
+    type VersionedRules,
 } from "openchat-shared";
-import { SvelteMap } from "svelte/reactivity";
-import { LocalMap } from "../map";
+import { LocalMap, ReactiveCommunityMap } from "../map";
 import { LocalSet } from "../set";
 import { scheduleUndo, type UndoLocalUpdate } from "../undo";
 
 export class CommunityLocalState {
     #rules = $state<VersionedRules | undefined>();
 
-    readonly invitedUsers = new LocalSet<string>();
-    readonly blockedUsers = new LocalSet<string>();
-    readonly referrals = new LocalSet<string>();
-    readonly lapsedMembers = new LocalSet<string>();
-    readonly members = new LocalMap<string, Member>();
-    readonly userGroups = new LocalMap<number, UserGroupDetails>();
-    readonly bots = new LocalMap<string, ExternalBotPermissions>();
-    readonly apiKeys = new LocalMap<string, PublicApiKeyDetails>();
+    readonly invitedUsers = new LocalSet<string>(identity);
+    readonly blockedUsers = new LocalSet<string>(identity);
+    readonly referrals = new LocalSet<string>(identity);
+    readonly lapsedMembers = new LocalSet<string>(identity);
+    readonly members = new LocalMap<string, Member, string>(identity, identity);
+    readonly userGroups = new LocalMap<number, UserGroupDetails, number>(identity, identity);
+    readonly bots = new LocalMap<string, ExternalBotPermissions, string>(identity, identity);
+    readonly apiKeys = new LocalMap<string, PublicApiKeyDetails, string>(identity, identity);
 
     get rules() {
         return this.#rules;
@@ -35,17 +35,17 @@ export class CommunityLocalState {
 // invitedUsers = new CommunityMap<LocalSet<string>>
 // this would be more efficient and simpler, but we need a reactive version of CommunityMap
 export class CommunityLocalStateManager {
-    #data = new SvelteMap<string, CommunityLocalState>();
+    #data = new ReactiveCommunityMap<CommunityLocalState>();
 
     get(id: CommunityIdentifier): CommunityLocalState | undefined {
-        return this.#data.get(id.communityId);
+        return this.#data.get(id);
     }
 
     #getOrCreate(id: CommunityIdentifier): CommunityLocalState {
-        let state = this.#data.get(id.communityId);
+        let state = this.#data.get(id);
         if (state === undefined) {
             state = new CommunityLocalState();
-            this.#data.set(id.communityId, state);
+            this.#data.set(id, state);
         }
         return state;
     }

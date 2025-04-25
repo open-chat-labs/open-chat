@@ -7,7 +7,7 @@ import {
 } from "openchat-shared";
 import { LocalUpdatesStore } from "./localUpdatesStore";
 
-class LocalGlobalUpdatesStore extends LocalUpdatesStore<"global", LocalGlobalUpdates> {
+class LocalGlobalUpdatesStore extends LocalUpdatesStore<"global", LocalGlobalUpdates, string> {
     constructor() {
         super(new GlobalMap());
     }

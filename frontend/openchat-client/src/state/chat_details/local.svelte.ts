@@ -1,24 +1,24 @@
-import type {
-    ChatIdentifier,
-    ExternalBotPermissions,
-    Member,
-    PublicApiKeyDetails,
-    VersionedRules,
+import {
+    identity,
+    type ChatIdentifier,
+    type ExternalBotPermissions,
+    type Member,
+    type PublicApiKeyDetails,
+    type VersionedRules,
 } from "openchat-shared";
-import { SvelteMap } from "svelte/reactivity";
-import { LocalMap } from "../map";
+import { LocalMap, ReactiveChatMap } from "../map";
 import { LocalSet } from "../set";
 import { scheduleUndo, type UndoLocalUpdate } from "../undo";
 
 export class ChatDetailsLocalState {
     #rules = $state<VersionedRules | undefined>();
 
-    readonly pinnedMessages = new LocalSet<number>();
-    readonly invitedUsers = new LocalSet<string>();
-    readonly blockedUsers = new LocalSet<string>();
-    readonly members = new LocalMap<string, Member>();
-    readonly bots = new LocalMap<string, ExternalBotPermissions>();
-    readonly apiKeys = new LocalMap<string, PublicApiKeyDetails>();
+    readonly pinnedMessages = new LocalSet<number>(identity);
+    readonly invitedUsers = new LocalSet<string>(identity);
+    readonly blockedUsers = new LocalSet<string>(identity);
+    readonly members = new LocalMap<string, Member, string>(identity, identity);
+    readonly bots = new LocalMap<string, ExternalBotPermissions, string>(identity, identity);
+    readonly apiKeys = new LocalMap<string, PublicApiKeyDetails, string>(identity, identity);
 
     get rules() {
         return this.#rules;
@@ -31,18 +31,17 @@ export class ChatDetailsLocalState {
 const noop = () => {};
 
 export class ChatDetailsLocalStateManager {
-    #data = new SvelteMap<string, ChatDetailsLocalState>();
+    #data = new ReactiveChatMap<ChatDetailsLocalState>();
 
     get(id: ChatIdentifier): ChatDetailsLocalState | undefined {
-        return this.#data.get(JSON.stringify(id));
+        return this.#data.get(id);
     }
 
     #getOrCreate(id: ChatIdentifier): ChatDetailsLocalState {
-        const key = JSON.stringify(id);
-        let state = this.#data.get(key);
+        let state = this.#data.get(id);
         if (state === undefined) {
             state = new ChatDetailsLocalState();
-            this.#data.set(key, state);
+            this.#data.set(id, state);
         }
         return state;
     }

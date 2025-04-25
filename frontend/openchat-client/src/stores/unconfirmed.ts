@@ -1,5 +1,3 @@
-import { writable } from "svelte/store";
-import { createSetStore } from "./setStore";
 import {
     type BotMessageContext,
     type EventWrapper,
@@ -8,7 +6,9 @@ import {
     type MessageContext,
     MessageContextMap,
 } from "openchat-shared";
+import { writable } from "svelte/store";
 import { recentlySentMessagesStore } from "./recentlySentMessages";
+import { createSetStore } from "./setStore";
 
 export type UnconfirmedState = {
     messages: EventWrapper<Message>[];
@@ -32,7 +32,7 @@ function createUnconfirmedStore() {
         if (storeValue.size > 0) {
             const oneMinuteAgo = BigInt(Date.now() - 60000);
             store.update((state) => {
-                return state.entries().reduce((result, [key, s]) => {
+                return state.reduce((result, [key, s]) => {
                     const newState = filterMessages(s, (m) => m.timestamp > oneMinuteAgo);
                     if (newState.messageIds.size > 0) {
                         result.set(key, newState);

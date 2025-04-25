@@ -50,9 +50,11 @@ class AppState {
 
     #communities = $derived.by(() => {
         const merged = globalLocalUpdates.communities.apply(this.#serverCommunities);
-        globalLocalUpdates.previewCommunities.values().forEach((c) => merged.set(c.id, c));
+        for (const c of globalLocalUpdates.previewCommunities.values()) {
+            merged.set(c.id, c);
+        }
         return merged.map((k, v) => {
-            const index = globalLocalUpdates.communityIndexes.get(JSON.stringify(k));
+            const index = globalLocalUpdates.communityIndexes.get(k);
             if (index !== undefined) {
                 return {
                     ...v,
@@ -67,7 +69,7 @@ class AppState {
     });
 
     #sortedCommunities = $derived.by(() => {
-        return this.#communities.values().toSorted((a, b) => {
+        return [...this.#communities.values()].toSorted((a, b) => {
             return b.membership.index === a.membership.index
                 ? b.memberCount - a.memberCount
                 : b.membership.index - a.membership.index;
@@ -77,7 +79,7 @@ class AppState {
     #nextCommunityIndex = $derived((this.#sortedCommunities[0]?.membership?.index ?? -1) + 1);
 
     #userGroupSummaries = $derived.by(() => {
-        return this.#communities.values().reduce((map, community) => {
+        return [...this.#communities.values()].reduce((map, community) => {
             community.userGroups.forEach((ug) => map.set(ug.id, ug));
             return map;
         }, new Map<number, UserGroupSummary>());

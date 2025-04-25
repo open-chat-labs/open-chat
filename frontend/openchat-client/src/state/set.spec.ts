@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
+import { identity } from "openchat-shared";
 import { vi } from "vitest";
 import { LocalSet } from "./set";
 
@@ -18,7 +19,7 @@ describe("LocalSet", () => {
     let set: TestSet<string>;
 
     beforeEach(() => {
-        set = new TestSet();
+        set = new TestSet(identity);
     });
 
     it("make sure that automatic undo works", () => {

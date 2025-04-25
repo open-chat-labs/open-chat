@@ -4,13 +4,17 @@ import {
     type LocalPollVote,
     type LocalReaction,
     type MessageContent,
-    type ThreadSummary,
     type P2PSwapStatus,
+    type ThreadSummary,
 } from "openchat-shared";
-import { LocalUpdatesStore } from "./localUpdatesStore";
 import { isEmpty } from "../utils/object";
+import { LocalUpdatesStore } from "./localUpdatesStore";
 
-export class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMessageUpdates> {
+export class LocalMessageUpdatesStore extends LocalUpdatesStore<
+    bigint,
+    LocalMessageUpdates,
+    string
+> {
     markCancelled(messageId: bigint, content: MessageContent): void {
         this.applyUpdate(messageId, (_) => ({
             cancelledReminder: content,

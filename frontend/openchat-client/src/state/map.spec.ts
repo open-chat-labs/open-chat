@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
+import { identity, type Primitive } from "openchat-shared";
 import { vi } from "vitest";
 import { LocalMap } from "./map";
 
 vi.useFakeTimers();
 
-class TestLocalMap<K, V> extends LocalMap<K, V> {
+class TestLocalMap<K, V, P extends Primitive> extends LocalMap<K, V, P> {
     addedOrUpdated(key: K) {
         return super.addedOrUpdated(key);
     }
@@ -15,10 +16,10 @@ class TestLocalMap<K, V> extends LocalMap<K, V> {
 }
 
 describe("LocalSet", () => {
-    let map: TestLocalMap<string, string>;
+    let map: TestLocalMap<string, string, string>;
 
     beforeEach(() => {
-        map = new TestLocalMap();
+        map = new TestLocalMap(identity, identity);
     });
 
     it("make sure that automatic undo works", () => {
