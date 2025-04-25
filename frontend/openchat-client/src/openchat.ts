@@ -1631,6 +1631,8 @@ export class OpenChat {
             "set_community_display_name",
         );
 
+        const undo = globalLocalUpdates.updateCommunityDisplayName(id, displayName);
+
         return this.#sendRequest({
             kind: "setMemberDisplayName",
             communityId: id.communityId,
@@ -1645,9 +1647,8 @@ export class OpenChat {
                         communityLocalUpdates.updateMember(id, userId, { ...m, displayName });
                     }
                 }
-
-                // TODO - we also need to deal with this
-                localCommunitySummaryUpdates.updateDisplayName(id, displayName);
+            } else {
+                undo();
             }
             return resp;
         });

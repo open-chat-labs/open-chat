@@ -3,6 +3,7 @@ import {
     type CommunityIdentifier,
     type ExternalBotPermissions,
     type Member,
+    type OptionUpdate,
     type PublicApiKeyDetails,
     type UserGroupDetails,
     type VersionedRules,
@@ -13,6 +14,7 @@ import { scheduleUndo, type UndoLocalUpdate } from "../undo";
 
 export class CommunityLocalState {
     #rules = $state<VersionedRules | undefined>();
+    #displayName = $state<OptionUpdate<string>>();
 
     readonly invitedUsers = new LocalSet<string>(identity);
     readonly blockedUsers = new LocalSet<string>(identity);
@@ -28,6 +30,14 @@ export class CommunityLocalState {
     }
     set rules(val: VersionedRules | undefined) {
         this.#rules = val;
+    }
+
+    get displayName() {
+        return this.#displayName;
+    }
+
+    set displayName(val: OptionUpdate<string>) {
+        this.#displayName = val;
     }
 }
 
@@ -84,6 +94,15 @@ export class CommunityLocalStateManager {
                 u();
             });
         };
+    }
+
+    updateDisplayName(id: CommunityIdentifier, name?: string) {
+        const state = this.#getOrCreate(id);
+        const previous = state.displayName;
+        state.displayName = name !== undefined ? { value: name } : "set_to_none";
+        return scheduleUndo(() => {
+            state.displayName = previous;
+        });
     }
 
     updateRules(id: CommunityIdentifier, rules: VersionedRules): UndoLocalUpdate {

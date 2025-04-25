@@ -247,6 +247,12 @@ describe("app state", () => {
             globalLocalUpdates.updateCommunityIndex(id, 3);
             expect(app.communities.get(id)?.membership.index).toEqual(3);
         });
+        test("community display name", () => {
+            const id: CommunityIdentifier = { kind: "community", communityId: "123456" };
+            expect(app.communities.get(id)?.membership.displayName).toBeUndefined();
+            globalLocalUpdates.updateCommunityDisplayName(id, "Mr. OpenChat");
+            expect(app.communities.get(id)?.membership.displayName).toEqual("Mr. OpenChat");
+        });
     });
 });
 

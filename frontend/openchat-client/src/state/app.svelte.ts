@@ -13,6 +13,7 @@ import {
     type UserGroupDetails,
     type UserGroupSummary,
     type VersionedRules,
+    applyOptionUpdate,
     chatIdentifiersEqual,
     chatListScopesEqual,
     communityIdentifiersEqual,
@@ -20,6 +21,7 @@ import {
 } from "openchat-shared";
 import { ChatDetailsMergedState } from "./chat_details";
 import { ChatDetailsServerState } from "./chat_details/server";
+import { communityLocalUpdates } from "./community_details";
 import { CommunityMergedState } from "./community_details/merged.svelte";
 import { CommunityServerState } from "./community_details/server";
 import { globalLocalUpdates } from "./global";
@@ -53,18 +55,16 @@ class AppState {
         for (const c of globalLocalUpdates.previewCommunities.values()) {
             merged.set(c.id, c);
         }
-        return merged.map((k, v) => {
-            const index = globalLocalUpdates.communityIndexes.get(k);
+        return merged.map((communityId, community) => {
+            const index = globalLocalUpdates.communityIndexes.get(communityId);
             if (index !== undefined) {
-                return {
-                    ...v,
-                    membership: {
-                        ...v.membership,
-                        index,
-                    },
-                };
+                community.membership.index = index;
             }
-            return v;
+            community.membership.displayName = applyOptionUpdate(
+                community.membership.displayName,
+                communityLocalUpdates.get(communityId)?.displayName,
+            );
+            return community;
         });
     });
 
