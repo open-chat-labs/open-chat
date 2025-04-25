@@ -69,7 +69,7 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
         return Error(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
-    match mutate_state(|state| send_message_impl(args, Some(bot_caller), finalised, state)) {
+    match mutate_state(|state| send_message_impl(args, Some(Caller::BotV2(bot_caller)), finalised, state)) {
         Ok(result) => Success(result),
         Err(error) => Error(error),
     }
@@ -77,11 +77,11 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
 
 pub(crate) fn send_message_impl(
     args: Args,
-    bot: Option<BotCaller>,
+    ext_caller: Option<Caller>,
     finalised: bool,
     state: &mut RuntimeState,
 ) -> OCResult<SuccessResult> {
-    let caller = state.verified_caller(bot)?;
+    let caller = state.verified_caller(ext_caller)?;
 
     let display_name = prepare(&caller, args.community_rules_accepted, state)?;
 

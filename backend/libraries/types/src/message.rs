@@ -15,6 +15,7 @@ pub struct Message {
     pub sender: UserId,
     pub content: MessageContent,
     pub bot_context: Option<BotMessageContext>,
+    pub sender_context: Option<SenderContext>,
     pub replies_to: Option<ReplyContext>,
     pub reactions: Vec<(Reaction, Vec<UserId>)>,
     pub tips: Tips,
@@ -47,6 +48,14 @@ impl Message {
         }
 
         achievements
+    }
+
+    pub fn bot_context(&self) -> Option<&BotMessageContext> {
+        if let Some(SenderContext::Bot(bot_context)) = &self.sender_context {
+            Some(bot_context)
+        } else {
+            None
+        }
     }
 }
 
@@ -245,6 +254,19 @@ pub struct P2PSwapContentEventPayload {
 pub type DeletedContentEventPayload = ();
 pub type VideoCallContentEventPayload = ();
 pub type CustomContentEventPayload = ();
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum SenderContext {
+    Bot(BotMessageContext),
+    Webhook,
+}
+
+impl SenderContext {
+    pub fn bot_context(&self) -> Option<&BotMessageContext> {
+        if let SenderContext::Bot(bot_context) = self { Some(bot_context) } else { None }
+    }
+}
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

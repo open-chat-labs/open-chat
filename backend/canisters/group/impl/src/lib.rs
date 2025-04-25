@@ -34,7 +34,7 @@ use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotEventsCaller, BotGroupConfig, BotInitiator, BotNotification,
+    AccessGateConfigInternal, Achievement, BotAdded, BotEventsCaller, BotGroupConfig, BotInitiator, BotNotification,
     BotPermissions, BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics, CommunityId, Cycles,
     Document, Empty, EventIndex, EventsCaller, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership,
     GroupPermissions, GroupSubtype, IdempotentEnvelope, MAX_THREADS_IN_SUMMARY, MessageIndex, Milliseconds, MultiUserChat,
@@ -459,9 +459,11 @@ impl RuntimeState {
         }
     }
 
-    pub fn verified_caller(&self, bot_caller: Option<BotCaller>) -> OCResult<Caller> {
-        if let Some(bot_caller) = bot_caller {
-            return Ok(Caller::BotV2(bot_caller));
+    pub fn verified_caller(&self, ext_caller: Option<Caller>) -> OCResult<Caller> {
+        match ext_caller {
+            Some(Caller::BotV2(bot)) => return Ok(Caller::BotV2(bot)),
+            Some(Caller::Webhook(user_id)) => return Ok(Caller::Webhook(user_id)),
+            _ => {}
         }
 
         let caller = self.env.caller();
@@ -478,9 +480,9 @@ impl RuntimeState {
 
         match member.user_type() {
             UserType::User => Ok(Caller::User(member.user_id())),
-            UserType::BotV2 => Err(OCErrorCode::InitiatorNotFound.into()),
             UserType::Bot => Ok(Caller::Bot(member.user_id())),
             UserType::OcControlledBot => Ok(Caller::OCBot(member.user_id())),
+            UserType::BotV2 | UserType::Webhook => Err(OCErrorCode::InitiatorNotFound.into()),
         }
     }
 }

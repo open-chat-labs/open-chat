@@ -106,7 +106,7 @@ pub fn handle_start_video_call(
         block_level_markdown: false,
         correlation_id: 0,
         now,
-        bot_context: None,
+        sender_context: None,
     };
 
     let chat = state

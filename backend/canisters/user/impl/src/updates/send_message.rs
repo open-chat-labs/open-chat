@@ -212,7 +212,7 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
             {
                 // If the message id of a bot message matches an existing unfinalised bot message
                 // then edit this message instead of pushing a new one
-                if let Some(bot_message) = message.bot_context {
+                if let Some(bot_message) = message.bot_context() {
                     if bot_caller.bot == message.sender
                         && bot_caller.initiator.user() == bot_message.command.as_ref().map(|c| c.initiator)
                         && bot_caller.initiator.command() == bot_message.command.as_ref()
@@ -296,7 +296,7 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
                         block_level_markdown: args.block_level_markdown,
                         correlation_id: 0,
                         now,
-                        bot_context: None,
+                        sender_context: None,
                     },
                     None,
                     None,
@@ -444,7 +444,7 @@ fn send_message_impl(
         block_level_markdown,
         correlation_id: 0,
         now,
-        bot_context: None,
+        sender_context: None,
     };
 
     let chat = state
@@ -560,7 +560,7 @@ async fn send_to_bot_canister(
                             block_level_markdown: args.block_level_markdown,
                             correlation_id: 0,
                             now,
-                            bot_context: None,
+                            sender_context: None,
                         };
                         chat.push_message(false, push_message_args, None, Some(&mut state.data.event_store_client));
 

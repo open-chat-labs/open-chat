@@ -37,7 +37,7 @@ fn c2c_bot_create_channel(args: c2c_bot_create_channel::Args) -> c2c_bot_create_
         initiator: args.initiator.clone(),
     };
 
-    match mutate_state(|state| create_channel_impl(args.into(), false, Some(bot_caller), state)) {
+    match mutate_state(|state| create_channel_impl(args.into(), false, Some(Caller::BotV2(bot_caller)), state)) {
         Ok(result) => c2c_bot_create_channel::Response::Success(result),
         Err(error) => c2c_bot_create_channel::Response::Error(error),
     }
@@ -85,7 +85,7 @@ fn c2c_create_proposals_channel(args: Args) -> Response {
 fn create_channel_impl(
     args: Args,
     is_proposals_channel: bool,
-    bot_caller: Option<BotCaller>,
+    ext_caller: Option<Caller>,
     state: &mut RuntimeState,
 ) -> OCResult<SuccessResult> {
     state.data.verify_not_frozen()?;
@@ -96,7 +96,7 @@ fn create_channel_impl(
         }
     }
 
-    let caller = state.verified_caller(bot_caller)?;
+    let caller = state.verified_caller(ext_caller)?;
 
     let messages_visible_to_non_members =
         args.is_public && args.messages_visible_to_non_members.unwrap_or(args.gate_config.is_none());

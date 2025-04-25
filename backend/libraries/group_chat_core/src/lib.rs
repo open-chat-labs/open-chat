@@ -22,8 +22,8 @@ use types::{
     MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned,
     MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OCResult, OptionUpdate, OptionalGroupPermissions,
     OptionalMessagePermissions, PermissionsChanged, Reaction, ReserveP2PSwapSuccess, RoleChanged, Rules, SelectedGroupUpdates,
-    ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version,
-    Versioned, VersionedRules, VideoCall, VideoCallPresence, VoteOperation,
+    SenderContext, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited,
+    Version, Versioned, VersionedRules, VideoCall, VideoCallPresence, VoteOperation,
 };
 use utils::document::validate_avatar;
 use utils::text_validation::{
@@ -557,7 +557,7 @@ impl GroupChatCore {
                 .message_internal(EventIndex::default(), thread_root_message_index, message_id.into())
         {
             if let Caller::BotV2(bot_now) = &caller {
-                if let Some(bot_message) = message.bot_context {
+                if let Some(bot_message) = message.bot_context() {
                     if bot_now.bot == message.sender
                         && bot_now.initiator.user() == bot_message.command.as_ref().map(|c| c.initiator)
                         && bot_now.initiator.command() == bot_message.command.as_ref()
@@ -599,12 +599,18 @@ impl GroupChatCore {
 
         let sender = caller.agent();
 
+        let sender_context = match caller {
+            Caller::BotV2(bot) => Some(SenderContext::Bot(BotMessageContext::from(bot, finalised))),
+            Caller::Webhook(_) => Some(SenderContext::Webhook),
+            _ => None,
+        };
+
         let push_message_args = PushMessageArgs {
             sender,
             thread_root_message_index,
             message_id,
             content,
-            bot_context: if let Caller::BotV2(bot) = caller { Some(BotMessageContext::from(bot, finalised)) } else { None },
+            sender_context,
             mentioned: if !suppressed { mentioned.to_vec() } else { Vec::new() },
             replies_to: replies_to.as_ref().map(|r| r.into()),
             forwarded: forwarding,
@@ -717,8 +723,7 @@ impl GroupChatCore {
         let message = &message_event.event;
         let message_index = message.message_index;
         let initiator = message
-            .bot_context
-            .as_ref()
+            .bot_context()
             .and_then(|b| b.command.as_ref().map(|c| c.initiator))
             .unwrap_or(message.sender);
         let message_id = message.message_id;

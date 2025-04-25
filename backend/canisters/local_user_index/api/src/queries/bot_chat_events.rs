@@ -4,13 +4,13 @@ use oc_error_codes::OCError;
 use serde::Serialize;
 use ts_export::ts_export;
 use types::{
-    AudioContent, AuthToken, AvatarChanged, BotAdded, BotMessageContext, BotRemoved, BotUpdated, ChannelId, CryptoContent,
-    CustomContent, DeletedBy, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated, ExternalUrlUpdated,
-    FileContent, GiphyContent, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged,
+    AudioContent, AuthToken, AvatarChanged, BotAdded, BotRemoved, BotUpdated, ChannelId, CryptoContent, CustomContent,
+    DeletedBy, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated, ExternalUrlUpdated, FileContent,
+    GiphyContent, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged,
     GroupNameChanged, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, ImageContent, MemberJoined, MemberLeft,
     MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, MessageId, MessageIndex, MessagePinned, MessageUnpinned,
-    PermissionsChanged, PollContent, Reaction, ReplyContext, RoleChanged, TextContent, ThreadSummary, TimestampMillis, Tips,
-    UserId, UsersBlocked, UsersInvited, UsersUnblocked, VideoContent,
+    PermissionsChanged, PollContent, Reaction, ReplyContext, RoleChanged, SenderContext, TextContent, ThreadSummary,
+    TimestampMillis, Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked, VideoContent,
 };
 use user_canister::token_swap_status::CandidType;
 
@@ -88,7 +88,8 @@ pub struct Message {
     pub message_id: MessageId,
     pub sender: UserId,
     pub content: MessageContent,
-    pub bot_context: Option<BotMessageContext>,
+    //pub bot_context: Option<BotMessageContext>,
+    pub sender_context: Option<SenderContext>,
     pub replies_to: Option<ReplyContext>,
     pub reactions: Vec<(Reaction, Vec<UserId>)>,
     pub tips: Tips,
@@ -198,7 +199,7 @@ impl From<types::Message> for Message {
             message_id: value.message_id,
             sender: value.sender,
             content: value.content.into(),
-            bot_context: value.bot_context,
+            sender_context: value.sender_context,
             replies_to: value.replies_to,
             reactions: value.reactions,
             tips: value.tips,

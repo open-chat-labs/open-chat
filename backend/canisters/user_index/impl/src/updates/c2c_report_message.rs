@@ -194,6 +194,7 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
             edited: false,
             forwarded: false,
             block_level_markdown: false,
+            sender_context: None,
             bot_context: None,
         };
 
@@ -231,6 +232,7 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
             edited: false,
             forwarded: false,
             block_level_markdown: false,
+            sender_context: None,
             bot_context: None,
         };
 
@@ -272,6 +274,7 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
             edited: false,
             forwarded: false,
             block_level_markdown: false,
+            sender_context: None,
             bot_context: None,
         };
 
