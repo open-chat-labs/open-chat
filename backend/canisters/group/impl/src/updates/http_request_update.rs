@@ -4,7 +4,7 @@ use ic_cdk::update;
 use types::{HttpRequest, HttpResponse};
 
 #[update]
-fn http_request(request: HttpRequest) -> HttpResponse {
+fn http_request_update(request: HttpRequest) -> HttpResponse {
     fn handle_webhook(route: WebhookRoute, body: Vec<u8>) -> HttpResponse {
         let Some(message) = String::from_utf8(body).ok() else {
             return HttpResponse::bad_request("Invalid UTF-8");

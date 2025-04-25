@@ -22,7 +22,7 @@ fn handle_webhook_impl(args: Args, state: &mut RuntimeState) -> OCResult<Success
     };
 
     if webhook.secret != args.secret {
-        return Err(OCErrorCode::WebhookInvalid.into());
+        return Err(OCErrorCode::InvalidWebhook.into());
     }
 
     let send_message_args = group_canister::send_message_v2::Args {
