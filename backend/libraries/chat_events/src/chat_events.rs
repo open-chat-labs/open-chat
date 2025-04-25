@@ -325,6 +325,7 @@ impl ChatEvents {
         }
     }
 
+    #[allow(clippy::type_complexity)]
     fn edit_message_inner<R: Runtime + Send + 'static>(
         message: &mut MessageInternal,
         event: EventMetaData,
