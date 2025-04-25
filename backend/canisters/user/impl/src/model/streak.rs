@@ -14,6 +14,7 @@ pub struct Streak {
     insurance_last_updated: TimestampMillis,
     days_insured: u8,
     days_missed: u8,
+    #[serde(skip_deserializing)]
     payment_lock: bool,
     payments: Vec<UserCanisterStreakInsurancePayment>,
     claims: Vec<UserCanisterStreakInsuranceClaim>,

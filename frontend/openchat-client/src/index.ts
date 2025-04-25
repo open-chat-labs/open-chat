@@ -8,7 +8,7 @@ export { app } from "./state/app.svelte";
 export { botState } from "./state/bots.svelte";
 export { type ReadonlyMap } from "./state/map";
 export * from "./state/path.svelte";
-export { debouncedDerived } from "./state/reactivity.svelte";
+export { debouncedDerived, withEqCheck } from "./state/reactivity.svelte";
 export { type ReadonlySet } from "./state/set";
 export { ScreenHeight, ScreenWidth, ui, type Layout } from "./state/ui.svelte";
 export * from "./state/undo";
@@ -31,3 +31,4 @@ export type { Dimensions } from "./utils/media";
 export { isPermitted } from "./utils/permissions";
 export { Poller } from "./utils/poller";
 export * from "./utils/routes";
+

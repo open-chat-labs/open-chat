@@ -82,10 +82,10 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
 
     if price != args.expected_price {
         Err(OCErrorCode::PriceMismatch.with_message(price))
-    } else if !state.data.streak.acquire_payment_lock() {
-        Err(OCErrorCode::AlreadyInProgress.into())
     } else if let Err(error) = state.data.pin_number.verify(args.pin.as_deref(), now) {
         Err(error.into())
+    } else if !state.data.streak.acquire_payment_lock() {
+        Err(OCErrorCode::AlreadyInProgress.into())
     } else {
         Ok(PrepareOk { days_currently_insured })
     }

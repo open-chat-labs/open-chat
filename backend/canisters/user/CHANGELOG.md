@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Skip notification when reacting on your own message in direct chat ([#7841](https://github.com/open-chat-labs/open-chat/pull/7841))
+- Only acquire streak insurance payment lock after verifying PIN number ([#7845](https://github.com/open-chat-labs/open-chat/pull/7845))
 
 ## [[2.0.1714-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1714-user)] - 2025-04-23
 
