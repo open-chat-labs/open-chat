@@ -2046,7 +2046,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.payForStreakInsurance(payload.additionalDays, payload.expectedPrice),
+                    agent.payForStreakInsurance(payload.additionalDays, payload.expectedPrice, payload.pin),
                 );
                 break;
 

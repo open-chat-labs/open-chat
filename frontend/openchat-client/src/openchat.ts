@@ -8962,14 +8962,20 @@ export class OpenChat {
         return total;
     }
 
-    payForStreakInsurance(
+    async payForStreakInsurance(
         additionalDays: number,
         expectedPrice: bigint,
     ): Promise<PayForStreakInsuranceResponse> {
+        let pin: string | undefined = undefined;
+        if (this.#liveState.pinNumberRequired) {
+            pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
+        }
+
         return this.#sendRequest({
             kind: "payForStreakInsurance",
             additionalDays,
             expectedPrice,
+            pin,
         })
             .then((resp) => {
                 if (resp.kind === "success") {

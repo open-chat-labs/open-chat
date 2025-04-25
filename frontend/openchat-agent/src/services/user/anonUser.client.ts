@@ -534,6 +534,7 @@ export class AnonUserClient {
     payForStreakInsurance(
         _additionalDays: number,
         _expectedPrice: bigint,
+        _pin: string | undefined,
     ): Promise<PayForStreakInsuranceResponse> {
         throw new AnonymousOperationError();
     }

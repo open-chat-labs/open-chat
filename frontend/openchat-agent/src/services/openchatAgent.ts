@@ -4354,8 +4354,9 @@ export class OpenChatAgent extends EventTarget {
     payForStreakInsurance(
         additionalDays: number,
         expectedPrice: bigint,
+        pin: string | undefined,
     ): Promise<PayForStreakInsuranceResponse> {
-        return this.userClient.payForStreakInsurance(additionalDays, expectedPrice);
+        return this.userClient.payForStreakInsurance(additionalDays, expectedPrice, pin);
     }
 }
 
