@@ -154,7 +154,7 @@ pub struct CanisterIds {
 
 #[test]
 fn notification_length() {
-    let notification = types::Notification::DirectMessage(types::DirectMessageNotification {
+    let notification = types::UserNotificationPayload::DirectMessage(types::DirectMessageNotification {
         sender: Principal::from_text("cbopz-duaaa-aaaaa-qaaka-cai").unwrap().into(),
         thread_root_message_index: None,
         message_index: 1.into(),

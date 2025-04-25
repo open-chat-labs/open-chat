@@ -24,5 +24,5 @@ fn pin_message_impl(args: Args, state: &mut RuntimeState) -> OCResult<PushEventR
     let result = state.data.chat.pin_message(user_id, args.message_index, now)?;
 
     handle_activity_notification(state);
-    Ok(result)
+    Ok(result.into())
 }

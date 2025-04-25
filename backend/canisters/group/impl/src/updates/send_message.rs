@@ -12,7 +12,7 @@ use group_chat_core::SendMessageSuccess;
 use oc_error_codes::OCErrorCode;
 use types::{
     Achievement, BotCaller, BotPermissions, Caller, Chat, EventIndex, EventWrapper, GroupMessageNotification, Message,
-    MessageContent, MessageIndex, Notification, OCResult, TimestampMillis, User,
+    MessageContent, MessageIndex, OCResult, TimestampMillis, User, UserNotificationPayload,
 };
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -187,7 +187,7 @@ fn process_send_message_result(
         let content = &message_event.event.content;
         let chat_id = state.env.canister_id().into();
 
-        let notification = Notification::GroupMessage(GroupMessageNotification {
+        let notification = UserNotificationPayload::GroupMessage(GroupMessageNotification {
             chat_id,
             thread_root_message_index,
             message_index,
@@ -279,6 +279,10 @@ fn process_send_message_result(
                 now,
             );
         }
+    }
+
+    if let Some(bot_notification) = result.bot_notification {
+        state.push_bot_notification(bot_notification);
     }
 
     handle_activity_notification(state);

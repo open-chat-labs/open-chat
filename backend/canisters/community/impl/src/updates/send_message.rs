@@ -19,7 +19,8 @@ use regex_lite::Regex;
 use std::str::FromStr;
 use types::{
     Achievement, BotCaller, BotPermissions, Caller, ChannelId, ChannelMessageNotification, Chat, EventIndex, EventWrapper,
-    IdempotentEnvelope, Message, MessageContent, MessageIndex, Notification, OCResult, TimestampMillis, User, UserId, Version,
+    IdempotentEnvelope, Message, MessageContent, MessageIndex, OCResult, TimestampMillis, User, UserId,
+    UserNotificationPayload, Version,
 };
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -65,12 +66,12 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
             BotPermissions::from_message_permission((&args.content).into()),
         )
     }) {
-        return c2c_bot_send_message::Response::Error(OCErrorCode::InitiatorNotAuthorized.into());
+        return Error(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
     match mutate_state(|state| send_message_impl(args, Some(Caller::BotV2(bot_caller)), finalised, state)) {
-        Ok(result) => c2c_bot_send_message::Response::Success(result),
-        Err(error) => c2c_bot_send_message::Response::Error(error),
+        Ok(result) => Success(result),
+        Err(error) => Error(error),
     }
 }
 
@@ -240,7 +241,7 @@ fn process_send_message_result(
 
     if !result.unfinalised_bot_message {
         let sender = caller.agent();
-        let notification = Notification::ChannelMessage(ChannelMessageNotification {
+        let notification = UserNotificationPayload::ChannelMessage(ChannelMessageNotification {
             community_id,
             channel_id,
             thread_root_message_index,
@@ -340,6 +341,10 @@ fn process_send_message_result(
                 },
             );
         }
+    }
+
+    if let Some(bot_notification) = result.bot_notification {
+        state.push_bot_notification(bot_notification);
     }
 
     handle_activity_notification(state);

@@ -1,7 +1,7 @@
 use crate::hybrid_map::HybridMap;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::stable_memory::ChatEventsStableStorage;
-use crate::{ChatEventInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal};
+use crate::{ChatEventInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal, UpdateEventError};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
@@ -262,11 +262,6 @@ impl ChatEventsList {
 
         Err((previous_key, next_key))
     }
-}
-
-pub enum UpdateEventError<E = ()> {
-    NoChange(E),
-    NotFound,
 }
 
 pub struct ChatEventsListReader<'r> {

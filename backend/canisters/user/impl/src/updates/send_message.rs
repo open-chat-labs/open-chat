@@ -16,16 +16,15 @@ use event_store_producer_cdk_runtime::CdkRuntime;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use std::ops::Not;
-use types::BotPermissions;
 use types::DirectMessageNotification;
 use types::EventIndex;
-use types::Notification;
 use types::{
     BlobReference, CanisterId, Chat, ChatId, CompletedCryptoTransaction, CryptoTransaction, EventWrapper, Message,
     MessageContent, MessageContentInitial, MessageId, MessageIndex, P2PSwapLocation, ReplyContext, TimestampMillis, UserId,
     UserType,
 };
 use types::{BotCaller, OCResult};
+use types::{BotPermissions, UserNotificationPayload};
 use user_canister::c2c_bot_send_message;
 use user_canister::send_message_v2::{Response::*, *};
 use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent};
@@ -230,15 +229,16 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
                             now,
                         };
 
-                        let Ok(EditMessageSuccess { message_index, event }) =
-                            chat.events.edit_message::<CdkRuntime>(edit_message_args, None)
+                        let Ok(EditMessageSuccess {
+                            message_index, event, ..
+                        }) = chat.events.edit_message::<CdkRuntime>(edit_message_args, None)
                         else {
                             // Shouldn't happen
                             return c2c_bot_send_message::Response::Error(OCErrorCode::InitiatorNotAuthorized.into());
                         };
 
                         if finalised && !chat.notifications_muted.value {
-                            let notification = Notification::DirectMessage(DirectMessageNotification {
+                            let notification = UserNotificationPayload::DirectMessage(DirectMessageNotification {
                                 sender: bot_id,
                                 thread_root_message_index: args.thread_root_message_index,
                                 message_index,

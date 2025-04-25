@@ -1,7 +1,7 @@
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteUndeleteMessagesArgs, EditMessageArgs,
-    GroupGateUpdatedInternal, MessageContentInternal, PushMessageArgs, Reader, RegisterPollVoteArgs, RegisterPollVoteSuccess,
-    RemoveExpiredEventsResult, ReservePrizeSuccess, TipMessageArgs,
+    GroupGateUpdatedInternal, MessageContentInternal, PushEventResultInternal, PushMessageArgs, Reader, RegisterPollVoteArgs,
+    RegisterPollVoteSuccess, RemoveExpiredEventsResult, ReservePrizeSuccess, TipMessageArgs, UpdateMessageSuccess,
 };
 use event_store_producer::{EventStoreClient, Runtime};
 use event_store_producer_cdk_runtime::CdkRuntime;
@@ -13,17 +13,17 @@ use regex_lite::Regex;
 use search::simple::Query;
 use serde::{Deserialize, Serialize};
 use std::cmp::{Reverse, max, min};
-use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 use types::{
-    AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, Caller, Chat, ChatEventType,
+    AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, BotNotification, Caller, Chat,
     CustomPermission, Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsCaller, EventsResponse,
     ExternalUrlUpdated, GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole,
     GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention, MAX_RETURNED_MENTIONS, MemberLeft,
     MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned,
     MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OCResult, OptionUpdate, OptionalGroupPermissions,
-    OptionalMessagePermissions, PermissionsChanged, PushEventResult, Reaction, ReserveP2PSwapSuccess, RoleChanged, Rules,
-    SelectedGroupUpdates, SenderContext, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UserType,
-    UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall, VideoCallPresence, VoteOperation,
+    OptionalMessagePermissions, PermissionsChanged, Reaction, ReserveP2PSwapSuccess, RoleChanged, Rules, SelectedGroupUpdates,
+    SenderContext, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited,
+    Version, Versioned, VersionedRules, VideoCall, VideoCallPresence, VoteOperation,
 };
 use utils::document::validate_avatar;
 use utils::text_validation::{
@@ -63,8 +63,6 @@ pub struct GroupChatCore {
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
     pub external_url: Timestamped<Option<String>>,
     at_everyone_mentions: BTreeMap<TimestampMillis, AtEveryoneMention>,
-    #[serde(default)]
-    pub bot_chat_event_subscriptions: BTreeMap<ChatEventType, HashMap<String, UserId>>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -121,7 +119,6 @@ impl GroupChatCore {
             min_visible_indexes_for_new_members: None,
             external_url: Timestamped::new(external_url, now),
             at_everyone_mentions: BTreeMap::new(),
-            bot_chat_event_subscriptions: BTreeMap::new(),
         }
     }
 
@@ -623,7 +620,7 @@ impl GroupChatCore {
             now,
         };
 
-        let message_event = self.events.push_message(push_message_args, Some(event_store_client));
+        let (message_event, bot_notification) = self.events.push_message(push_message_args, Some(event_store_client));
 
         let unfinalised_bot_message = if let Caller::BotV2(_) = caller { !finalised } else { false };
 
@@ -646,6 +643,7 @@ impl GroupChatCore {
             message_event,
             users_to_notify,
             unfinalised_bot_message,
+            bot_notification,
         })
     }
 
@@ -707,6 +705,7 @@ impl GroupChatCore {
             message_event,
             users_to_notify,
             unfinalised_bot_message: !finalise,
+            bot_notification: None,
         })
     }
 
@@ -866,7 +865,7 @@ impl GroupChatCore {
         reaction: Reaction,
         now: TimestampMillis,
         event_store_client: &mut EventStoreClient<R>,
-    ) -> OCResult {
+    ) -> OCResult<UpdateMessageSuccess> {
         let member = self.members.get_verified_member(user_id)?;
 
         if !member.role().can_react_to_messages(&self.permissions) {
@@ -895,7 +894,7 @@ impl GroupChatCore {
         message_id: MessageId,
         reaction: Reaction,
         now: TimestampMillis,
-    ) -> OCResult {
+    ) -> OCResult<UpdateMessageSuccess> {
         let member = self.members.get_verified_member(user_id)?;
 
         if !member.role().can_react_to_messages(&self.permissions) {
@@ -918,7 +917,7 @@ impl GroupChatCore {
         &mut self,
         args: TipMessageArgs,
         event_store_client: &mut EventStoreClient<R>,
-    ) -> OCResult {
+    ) -> OCResult<UpdateMessageSuccess> {
         let member = self.members.get_verified_member(args.user_id)?;
 
         if !member.role().can_react_to_messages(&self.permissions) {
@@ -1068,7 +1067,7 @@ impl GroupChatCore {
         user_id: UserId,
         message_index: MessageIndex,
         now: TimestampMillis,
-    ) -> OCResult<PushEventResult> {
+    ) -> OCResult<PushEventResultInternal> {
         let member = self.members.get_verified_member(user_id)?;
 
         if !member.role().can_pin_messages(&self.permissions) {
@@ -1104,7 +1103,7 @@ impl GroupChatCore {
         user_id: UserId,
         message_index: MessageIndex,
         now: TimestampMillis,
-    ) -> OCResult<PushEventResult> {
+    ) -> OCResult<PushEventResultInternal> {
         let member = self.members.get_verified_member(user_id)?;
 
         if !member.role().can_pin_messages(&self.permissions) {
@@ -1666,7 +1665,7 @@ impl GroupChatCore {
         option_index: u32,
         operation: VoteOperation,
         now: TimestampMillis,
-    ) -> OCResult<RegisterPollVoteSuccess> {
+    ) -> OCResult<UpdateMessageSuccess<RegisterPollVoteSuccess>> {
         let member = self.members.get_verified_member(user_id)?;
         let min_visible_event_index = member.min_visible_event_index();
 
@@ -1713,7 +1712,7 @@ impl GroupChatCore {
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         now: TimestampMillis,
-    ) -> OCResult<u32> {
+    ) -> OCResult<UpdateMessageSuccess<u32>> {
         if self.members.contains(&user_id) {
             self.events
                 .cancel_p2p_swap(user_id, thread_root_message_index, message_id, now)
@@ -1728,7 +1727,7 @@ impl GroupChatCore {
         message_id: MessageId,
         presence: VideoCallPresence,
         now: TimestampMillis,
-    ) -> OCResult {
+    ) -> OCResult<UpdateMessageSuccess> {
         let member = self.members.get(&user_id).ok_or(OCErrorCode::InitiatorNotInChat)?;
         let min_visible_event_index = member.min_visible_event_index();
 
@@ -1747,33 +1746,6 @@ impl GroupChatCore {
         }
 
         result
-    }
-
-    pub fn bot_subscribe_to_chat_events(&mut self, bot_id: UserId, api_key: String, event_types: Vec<ChatEventType>) {
-        // Remove any existing subscriptions
-        self.bot_unsubscribe_from_chat_events(bot_id, Some(api_key.as_str()));
-
-        // Add the new subscriptions (if any)
-        for event_type in event_types {
-            self.bot_chat_event_subscriptions
-                .entry(event_type)
-                .or_default()
-                .insert(api_key.clone(), bot_id);
-        }
-    }
-
-    pub fn bot_unsubscribe_from_chat_events(&mut self, bot_id: UserId, api_key: Option<&str>) {
-        if let Some(api_key) = api_key {
-            for existing in self.bot_chat_event_subscriptions.values_mut() {
-                existing.remove(api_key);
-            }
-        } else {
-            for subscriptions in self.bot_chat_event_subscriptions.values_mut() {
-                subscriptions.retain(|_, b| *b != bot_id);
-            }
-        }
-        self.bot_chat_event_subscriptions
-            .retain(|_, subscriptions| !subscriptions.is_empty());
     }
 
     pub fn most_recent_mentions(&self, member: &GroupMemberInternal, since: Option<TimestampMillis>) -> Vec<HydratedMention> {
@@ -1953,6 +1925,7 @@ pub struct SendMessageSuccess {
     pub message_event: EventWrapper<Message>,
     pub users_to_notify: Vec<UserId>,
     pub unfinalised_bot_message: bool,
+    pub bot_notification: Option<BotNotification>,
 }
 
 pub struct UpdateSuccessResult {

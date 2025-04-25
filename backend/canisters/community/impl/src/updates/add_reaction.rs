@@ -3,7 +3,7 @@ use crate::{RuntimeState, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::add_reaction::*;
-use types::{Achievement, ChannelReactionAddedNotification, Chat, EventIndex, Notification, OCResult};
+use types::{Achievement, ChannelReactionAddedNotification, Chat, EventIndex, OCResult, UserNotificationPayload};
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
 #[update(msgpack = true)]
@@ -23,7 +23,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
     let now = state.env.now();
 
-    channel.chat.add_reaction(
+    let result = channel.chat.add_reaction(
         user_id,
         args.thread_root_message_index,
         args.message_id,
@@ -49,7 +49,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                     .is_none_or(|m| m.notifications_muted().value || m.suspended().value);
 
                 if !notifications_muted {
-                    let notification = Notification::ChannelReactionAdded(ChannelReactionAddedNotification {
+                    let notification = UserNotificationPayload::ChannelReactionAdded(ChannelReactionAddedNotification {
                         community_id,
                         channel_id: args.channel_id,
                         thread_root_message_index: args.thread_root_message_index,
@@ -92,6 +92,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         }
     }
 
+    state.process_message_updated(result);
     handle_activity_notification(state);
     Ok(())
 }

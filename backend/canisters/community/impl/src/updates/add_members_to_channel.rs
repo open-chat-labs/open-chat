@@ -6,7 +6,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::add_members_to_channel::{Response::*, *};
 use oc_error_codes::OCErrorCode;
-use types::{AddedToChannelNotification, ChannelId, Notification, OCResult, UserId, UserType};
+use types::{AddedToChannelNotification, ChannelId, OCResult, UserId, UserNotificationPayload, UserType};
 
 #[update(msgpack = true)]
 #[trace]
@@ -94,6 +94,7 @@ fn commit(
         users_already_in_channel,
         users_limit_reached,
         users_failed_with_error,
+        bot_notification,
     } = state.data.add_members_to_channel(&channel_id, users_to_add, added_by, now);
 
     let Some(channel_name) = channel_name else {
@@ -108,7 +109,7 @@ fn commit(
         });
     }
 
-    let notification = Notification::AddedToChannel(AddedToChannelNotification {
+    let notification = UserNotificationPayload::AddedToChannel(AddedToChannelNotification {
         community_id: state.env.canister_id().into(),
         community_name: state.data.name.value.clone(),
         channel_id,
@@ -121,6 +122,10 @@ fn commit(
     });
 
     state.push_notification(Some(added_by), users_added.clone(), notification);
+
+    if let Some(bot_notification) = bot_notification {
+        state.push_bot_notification(bot_notification);
+    }
 
     jobs::expire_members::start_job_if_required(state);
 

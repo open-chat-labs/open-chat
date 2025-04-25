@@ -3,7 +3,7 @@ use crate::{RuntimeState, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::add_reaction::*;
-use types::{Achievement, Chat, EventIndex, GroupReactionAddedNotification, Notification, OCResult};
+use types::{Achievement, Chat, EventIndex, GroupReactionAddedNotification, OCResult, UserNotificationPayload};
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
 #[update(candid = true, msgpack = true)]
@@ -52,7 +52,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                     state.push_notification(
                         Some(user_id),
                         vec![message.sender],
-                        Notification::GroupReactionAdded(GroupReactionAddedNotification {
+                        UserNotificationPayload::GroupReactionAdded(GroupReactionAddedNotification {
                             chat_id,
                             thread_root_message_index,
                             message_index: message.message_index,
