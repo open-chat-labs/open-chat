@@ -13,9 +13,9 @@ import { scheduleUndo, type UndoLocalUpdate } from "../undo";
 export class ChatDetailsLocalState {
     #rules = $state<VersionedRules | undefined>();
 
-    readonly pinnedMessages = new LocalSet<number>(identity);
-    readonly invitedUsers = new LocalSet<string>(identity);
-    readonly blockedUsers = new LocalSet<string>(identity);
+    readonly pinnedMessages = new LocalSet<number>();
+    readonly invitedUsers = new LocalSet<string>();
+    readonly blockedUsers = new LocalSet<string>();
     readonly members = new LocalMap<string, Member, string>(identity, identity);
     readonly bots = new LocalMap<string, ExternalBotPermissions, string>(identity, identity);
     readonly apiKeys = new LocalMap<string, PublicApiKeyDetails, string>(identity, identity);

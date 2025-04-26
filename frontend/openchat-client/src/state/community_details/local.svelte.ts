@@ -18,10 +18,10 @@ export class CommunityLocalState {
     #rulesAccepted = $state<boolean | undefined>();
     #index = $state<number>();
 
-    readonly invitedUsers = new LocalSet<string>(identity);
-    readonly blockedUsers = new LocalSet<string>(identity);
-    readonly referrals = new LocalSet<string>(identity);
-    readonly lapsedMembers = new LocalSet<string>(identity);
+    readonly invitedUsers = new LocalSet<string>();
+    readonly blockedUsers = new LocalSet<string>();
+    readonly referrals = new LocalSet<string>();
+    readonly lapsedMembers = new LocalSet<string>();
     readonly members = new LocalMap<string, Member, string>(identity, identity);
     readonly userGroups = new LocalMap<number, UserGroupDetails, number>(identity, identity);
     readonly bots = new LocalMap<string, ExternalBotPermissions, string>(identity, identity);

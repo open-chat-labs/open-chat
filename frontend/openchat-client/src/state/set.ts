@@ -1,4 +1,4 @@
-import type { Primitive } from "openchat-shared";
+import { defaultSerialiser, type Primitive } from "openchat-shared";
 import { SvelteMap, SvelteSet } from "svelte/reactivity";
 import { scheduleUndo, type UndoLocalUpdate } from "./undo";
 
@@ -19,7 +19,7 @@ export class LocalSet<T> {
     #added: ReactiveSafeSet<T>;
     #removed: ReactiveSafeSet<T>;
 
-    constructor(serialiser: (thing: T) => Primitive) {
+    constructor(serialiser: (x: T) => Primitive = defaultSerialiser) {
         this.#added = new ReactiveSafeSet(serialiser);
         this.#removed = new ReactiveSafeSet(serialiser);
     }
@@ -68,7 +68,7 @@ export class ReactiveSafeSet<K> {
     #set = new SvelteSet<Primitive>();
     #valueMap = new SvelteMap<Primitive, K>();
 
-    constructor(private _serialize: (value: K) => Primitive) {}
+    constructor(private _serialize: (value: K) => Primitive = defaultSerialiser) {}
 
     add(value: K): this {
         const svalue = this._serialize(value);
