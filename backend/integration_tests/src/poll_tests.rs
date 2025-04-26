@@ -75,7 +75,8 @@ fn polls_ended_correctly() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let current_time = env.get_time().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis() as u64;
+    let system_time: SystemTime = env.get_time().try_into().unwrap();
+    let current_time = system_time.duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis() as u64;
 
     let poll_config1 = PollConfig {
         text: None,

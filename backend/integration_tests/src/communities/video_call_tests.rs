@@ -24,7 +24,7 @@ fn access_token_valid() {
         ..
     } = wrapper.env();
 
-    env.set_time(SystemTime::now());
+    env.set_time(SystemTime::now().into());
 
     let TestData {
         user1,
