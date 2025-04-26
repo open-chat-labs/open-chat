@@ -201,6 +201,7 @@ import {
     CommonResponses,
     DestinationInvalidError,
     getOrAdd,
+    isSuccessfulEventsResponse,
     Lazy,
     MAX_ACTIVITY_EVENTS,
     MessageContextMap,
@@ -210,7 +211,6 @@ import {
     Stream,
     UnsupportedValueError,
     waitAll,
-    isSuccessfulEventsResponse,
 } from "openchat-shared";
 import type { AgentConfig } from "../config";
 import {
@@ -323,10 +323,7 @@ export class OpenChatAgent extends EventTarget {
     private _signInWithSolanaClient: Lazy<SignInWithSolanaClient>;
     private _translationsClient: Lazy<TranslationsClient>;
 
-    constructor(
-        private identity: Identity,
-        private config: AgentConfig,
-    ) {
+    constructor(private identity: Identity, private config: AgentConfig) {
         super();
         this._logger = config.logger;
         this._agent = createHttpAgentSync(identity, config.icUrl);
@@ -1466,9 +1463,9 @@ export class OpenChatAgent extends EventTarget {
                         ? "/assets/bot_avatar.svg"
                         : `${this.config.blobUrlPattern
                               .replace("{canisterId}", this.config.userIndexCanister)
-                              .replace("{blobType}", "avatar")}/${
-                              userSummary.userId
-                          }/${ref?.blobId}`,
+                              .replace("{blobType}", "avatar")}/${userSummary.userId}/${
+                              ref?.blobId
+                          }`,
             };
         }
         return userSummary.blobUrl
@@ -2743,8 +2740,9 @@ export class OpenChatAgent extends EventTarget {
         principal: string,
         fromId?: bigint,
     ): Promise<AccountTransactionResult> {
-        const icpLedgerIndex = this._registryValue?.nervousSystemSummary.find((ns) => ns.isNns)
-            ?.indexCanisterId;
+        const icpLedgerIndex = this._registryValue?.nervousSystemSummary.find(
+            (ns) => ns.isNns,
+        )?.indexCanisterId;
 
         if (ledgerIndex === icpLedgerIndex) {
             return new IcpLedgerIndexClient(
@@ -2987,9 +2985,8 @@ export class OpenChatAgent extends EventTarget {
         }
 
         return Promise.all(
-            ChatMap.fromMap(threadsByChat)
-                .entries()
-                .map(([chatId, [threadSyncs, latestKnownUpdate]]) => {
+            [...ChatMap.fromMap(threadsByChat).entries()].map(
+                ([chatId, [threadSyncs, latestKnownUpdate]]) => {
                     latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
 
                     const latestClientThreadUpdate = threadSyncs.reduce(
@@ -3030,7 +3027,8 @@ export class OpenChatAgent extends EventTarget {
                         case "direct_chat":
                             throw new Error("direct chat thread previews not supported");
                     }
-                }),
+                },
+            ),
         ).then((responses) =>
             Promise.all(
                 responses.map(([r, latestKnownUpdate]) => {

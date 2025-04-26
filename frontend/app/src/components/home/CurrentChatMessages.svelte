@@ -13,7 +13,6 @@
         FilteredProposals,
         app,
         chatIdentifiersEqual,
-        chatListScopeStore as chatListScope,
         currentChatEditingEvent,
         draftMessagesStore,
         eventsStore,
@@ -86,7 +85,7 @@
     }
 
     function doGoToMessageIndex(index: number): void {
-        page(routeForChatIdentifier($chatListScope.kind, chat.id));
+        page(routeForChatIdentifier(app.chatListScope.kind, chat.id));
         chatEventList?.scrollToMessageIndex(messageContext, index, false);
     }
 

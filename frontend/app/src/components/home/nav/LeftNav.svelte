@@ -5,7 +5,6 @@
         type OpenChat,
         anonUser,
         app,
-        chatListScopeStore as chatListScope,
         chitStateStore as chitState,
         communityChannelVideoCallCounts,
         currentUser as createdUser,
@@ -157,7 +156,7 @@
             </LeftNavItem>
         {/if}
         <LeftNavItem
-            selected={$chatListScope.kind === "direct_chat" && !communityExplorer}
+            selected={app.chatListScope.kind === "direct_chat" && !communityExplorer}
             label={i18nKey("communities.directChats")}
             unread={$unreadDirectCounts.chats}
             video={$directVideoCallCounts}
@@ -167,7 +166,7 @@
             </div>
         </LeftNavItem>
         <LeftNavItem
-            selected={$chatListScope.kind === "group_chat" && !communityExplorer}
+            selected={app.chatListScope.kind === "group_chat" && !communityExplorer}
             label={i18nKey("communities.groupChats")}
             unread={client.mergeCombinedUnreadCounts($unreadGroupCounts)}
             video={$groupVideoCallCounts}
@@ -178,7 +177,7 @@
         </LeftNavItem>
         {#if $favouritesStore.size > 0}
             <LeftNavItem
-                selected={$chatListScope.kind === "favourite" && !communityExplorer}
+                selected={app.chatListScope.kind === "favourite" && !communityExplorer}
                 label={i18nKey("communities.favourites")}
                 unread={client.mergeCombinedUnreadCounts($unreadFavouriteCounts)}
                 video={$favouritesVideoCallCounts}
@@ -231,7 +230,7 @@
             <div animate:flip={{ duration: flipDurationMs }}>
                 <LeftNavItem
                     selected={community.id.communityId === selectedCommunityId &&
-                        $chatListScope.kind !== "favourite" &&
+                        app.chatListScope.kind !== "favourite" &&
                         !communityExplorer}
                     video={$communityChannelVideoCallCounts.get(community.id) ?? {
                         muted: 0,
@@ -246,7 +245,7 @@
                     onClick={() => selectCommunity(community)}>
                     <Avatar
                         selected={community.id.communityId === selectedCommunityId &&
-                            $chatListScope.kind !== "favourite" &&
+                            app.chatListScope.kind !== "favourite" &&
                             !communityExplorer}
                         url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
                         size={avatarSize} />

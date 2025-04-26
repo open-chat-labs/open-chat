@@ -1,19 +1,19 @@
 <script lang="ts">
     import {
+        app,
         chatIdentifiersEqual,
+        publish,
         routeForMessage,
-        type OpenChat,
-        chatListScopeStore as chatListScope,
         selectedChatStore as selectedChat,
         selectedMessageContext,
-        publish,
+        type OpenChat,
     } from "openchat-client";
+    import page from "page";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
-    import Button from "../../Button.svelte";
     import { activeVideoCall } from "../../../stores/video";
-    import page from "page";
+    import Button from "../../Button.svelte";
+    import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -30,7 +30,7 @@
         ) {
             page(
                 routeForMessage(
-                    $chatListScope.kind,
+                    app.chatListScope.kind,
                     $selectedMessageContext,
                     $selectedChat?.videoCallInProgress,
                 ),

@@ -4,7 +4,6 @@
         type RehydratedReplyContext,
         app,
         chatIdentifiersEqual,
-        chatListScopeStore as chatListScope,
         currentUser,
         OpenChat,
         routeForChatIdentifier,
@@ -43,7 +42,7 @@
 
     function getUrl() {
         const path = [
-            routeForChatIdentifier($chatListScope.kind, repliesTo.sourceContext.chatId),
+            routeForChatIdentifier(app.chatListScope.kind, repliesTo.sourceContext.chatId),
             repliesTo.sourceContext.threadRootMessageIndex ?? repliesTo.messageIndex,
         ];
         if (repliesTo.sourceContext.threadRootMessageIndex !== undefined) {

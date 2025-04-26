@@ -27,7 +27,6 @@
         anonUser,
         app,
         chatIdentifiersEqual,
-        chatListScopeStore as chatListScope,
         chatSummariesListStore,
         chatSummariesStore,
         defaultChatRules,
@@ -210,7 +209,7 @@
             subscribe("successfulImport", successfulImport),
             subscribe("showProposalFilters", showProposalFilters),
             subscribe("convertGroupToCommunity", convertGroupToCommunity),
-            subscribe("clearSelection", () => page(routeForScope($chatListScope))),
+            subscribe("clearSelection", () => page(routeForScope(app.chatListScope))),
             subscribe("editGroup", editGroup),
             subscribe("userSuspensionChanged", () => window.location.reload()),
             subscribe("selectedChatInvalid", selectedChatInvalid),
@@ -433,14 +432,14 @@
         if (chatId.kind === "channel") {
             page(`/community/${chatId.communityId}`);
         } else {
-            page(routeForScope($chatListScope));
+            page(routeForScope(app.chatListScope));
         }
         return client.deleteGroup(chatId).then((success) => {
             if (success) {
                 toastStore.showSuccessToast(i18nKey("deleteGroupSuccess", undefined, level));
             } else {
                 toastStore.showFailureToast(i18nKey("deleteGroupFailure", undefined, level, true));
-                page(routeForChatIdentifier($chatListScope.kind, chatId));
+                page(routeForChatIdentifier(app.chatListScope.kind, chatId));
             }
         });
     }
@@ -472,7 +471,7 @@
     }
 
     function leaveGroup(chatId: MultiUserChatIdentifier, level: Level): Promise<void> {
-        page(routeForScope($chatListScope));
+        page(routeForScope(app.chatListScope));
 
         client.leaveGroup(chatId).then((resp) => {
             if (resp !== "success") {
@@ -483,7 +482,7 @@
                         i18nKey("failedToLeaveGroup", undefined, level, true),
                     );
                 }
-                page(routeForChatIdentifier($chatListScope.kind, chatId));
+                page(routeForChatIdentifier(app.chatListScope.kind, chatId));
             }
         });
 
@@ -495,7 +494,7 @@
             return c.kind === "direct_chat" && c.them === chatId;
         });
 
-        page(routeForChatIdentifier(chat ? $chatListScope.kind : "direct_chat", chatId));
+        page(routeForChatIdentifier(chat ? app.chatListScope.kind : "direct_chat", chatId));
     }
 
     function showInviteGroupUsers(show: boolean) {
@@ -525,7 +524,7 @@
         draftMessagesStore.setTextContent({ chatId }, "");
         draftMessagesStore.setReplyingTo({ chatId }, context);
         if (chat) {
-            page(routeForChatIdentifier($chatListScope.kind, chatId));
+            page(routeForChatIdentifier(app.chatListScope.kind, chatId));
         } else {
             createDirectChat(chatId as DirectChatIdentifier);
         }
@@ -544,7 +543,7 @@
 
     function showProfile() {
         if ($selectedChatId !== undefined) {
-            pageReplace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
+            pageReplace(routeForChatIdentifier(app.chatListScope.kind, $selectedChatId));
         }
         ui.rightPanelHistory = [{ kind: "user_profile" }];
     }
@@ -552,14 +551,14 @@
     function communityDetails(_: CommunitySummary) {
         // what do we do here if the community is not selected
         // do we select it?
-        if ($chatListScope.kind === "community") {
+        if (app.chatListScope.kind === "community") {
             ui.rightPanelHistory = [{ kind: "community_details" }];
         }
     }
 
     function showProposalFilters() {
         if ($selectedChatId !== undefined) {
-            pageReplace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
+            pageReplace(routeForChatIdentifier(app.chatListScope.kind, $selectedChatId));
             ui.rightPanelHistory = [
                 {
                     kind: "proposal_filters",
@@ -656,7 +655,7 @@
                     joining = undefined;
                 } else if (select) {
                     joining = undefined;
-                    page(routeForChatIdentifier($chatListScope.kind, group.id));
+                    page(routeForChatIdentifier(app.chatListScope.kind, group.id));
                 } else {
                     joining = undefined;
                 }
@@ -684,12 +683,12 @@
     }
 
     function forwardToChat(chatId: ChatIdentifier) {
-        page(routeForChatIdentifier($chatListScope.kind, chatId));
+        page(routeForChatIdentifier(app.chatListScope.kind, chatId));
         messageToForwardStore.set(messageToForward);
     }
 
     function shareWithChat(chatId: ChatIdentifier) {
-        page(routeForChatIdentifier($chatListScope.kind, chatId));
+        page(routeForChatIdentifier(app.chatListScope.kind, chatId));
 
         const shareText = share.text ?? "";
         const shareTitle = share.title ?? "";
@@ -717,12 +716,12 @@
     }
 
     function newGroup(level: Level = "group", embeddedContent: boolean = false) {
-        if (level === "channel" && $chatListScope.kind !== "community") {
+        if (level === "channel" && app.chatListScope.kind !== "community") {
             return;
         }
         const id: MultiUserChatIdentifier =
-            level === "channel" && $chatListScope.kind === "community"
-                ? { kind: "channel", communityId: $chatListScope.id.communityId, channelId: 0 }
+            level === "channel" && app.chatListScope.kind === "community"
+                ? { kind: "channel", communityId: app.chatListScope.id.communityId, channelId: 0 }
                 : { kind: "group_chat", groupId: "" };
 
         modal = {
@@ -825,9 +824,10 @@
     }
 
     function createCommunity() {
-        const maxIndex = app.communities
-            .values()
-            .reduce((m, c) => (c.membership.index > m ? c.membership.index : m), 0);
+        const maxIndex = app.communities.reduce(
+            (m, [_, c]) => (c.membership.index > m ? c.membership.index : m),
+            0,
+        );
         modal = {
             kind: "edit_community",
             community: createCandidateCommunity("", maxIndex + 1),

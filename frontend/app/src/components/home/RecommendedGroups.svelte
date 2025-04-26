@@ -4,8 +4,8 @@
         type GroupChatSummary,
         type MultiUserChat,
         type OpenChat,
+        app,
         chatIdentifiersEqual,
-        chatListScopeStore as chatListScope,
         routeForScope,
         ui,
     } from "openchat-client";
@@ -37,7 +37,7 @@
     onMount(loadData);
 
     function cancelRecommendations() {
-        page(routeForScope($chatListScope));
+        page(routeForScope(app.chatListScope));
     }
 
     function onDismissRecommendation(id: GroupChatIdentifier) {

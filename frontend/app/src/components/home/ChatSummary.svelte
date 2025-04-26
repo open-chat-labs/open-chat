@@ -13,7 +13,6 @@
         app,
         blockedUsers,
         chatIdentifiersEqual,
-        chatListScopeStore as chatListScope,
         favouritesStore,
         messagesRead,
         pathState,
@@ -93,7 +92,7 @@
     );
     let readonly = $derived(client.isChatReadOnly(chatSummary.id));
     let canDelete = $derived(getCanDelete(chatSummary, community));
-    let pinned = $derived(client.pinned($chatListScope.kind, chatSummary.id));
+    let pinned = $derived(client.pinned(app.chatListScope.kind, chatSummary.id));
     let muted = $derived(chatSummary.membership.notificationsMuted);
     const maxDelOffset = -60;
     let delOffset = $state(maxDelOffset);
@@ -106,7 +105,7 @@
     });
 
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
-        const fav = $chatListScope.kind !== "favourite" && $favouritesStore.has(chatSummary.id);
+        const fav = app.chatListScope.kind !== "favourite" && $favouritesStore.has(chatSummary.id);
         const muted = chatSummary.membership.notificationsMuted;
         const video = chatSummary.videoCallInProgress
             ? { muted: muted ? 1 : 0, unmuted: muted ? 0 : 1 }
@@ -233,7 +232,7 @@
             pathState.route.kind === "global_chat_selected_route" &&
             chatIdentifiersEqual(chatSummary.id, pathState.route.chatId)
         ) {
-            page(routeForScope($chatListScope));
+            page(routeForScope(app.chatListScope));
         }
         tick().then(() => client.removeChat(chatSummary.id));
         delOffset = -60;
@@ -299,7 +298,7 @@
             }
         });
         if (chatSummary.id === $selectedChatId) {
-            page(routeForScope($chatListScope));
+            page(routeForScope(app.chatListScope));
         }
     }
 
@@ -384,7 +383,7 @@
                     {/if}
                     <WithVerifiedBadge {verified} size={"small"}>
                         <h4>
-                            {#if community !== undefined && $chatListScope.kind === "favourite"}
+                            {#if community !== undefined && app.chatListScope.kind === "favourite"}
                                 <span>{community.name}</span>
                                 <span>{">"}</span>
                             {/if}
