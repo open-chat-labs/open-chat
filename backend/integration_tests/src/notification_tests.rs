@@ -26,7 +26,7 @@ fn direct_message_notification_succeeds() {
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
 
-    let notifications_response = client::notifications::happy_path::notifications(
+    let notifications_response = client::notifications::happy_path::notifications_v2(
         env,
         *controller,
         notifications_canister,
@@ -63,7 +63,7 @@ fn group_message_notification_succeeds() {
 
     client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
 
-    let notifications_response = client::notifications::happy_path::notifications(
+    let notifications_response = client::notifications::happy_path::notifications_v2(
         env,
         *controller,
         notifications_canister,
@@ -102,7 +102,7 @@ fn direct_message_notification_muted() {
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
 
-    let notifications_response = client::notifications::happy_path::notifications(
+    let notifications_response = client::notifications::happy_path::notifications_v2(
         env,
         *controller,
         notifications_canister,
@@ -183,7 +183,7 @@ fn group_message_notification_muted(case: u32) {
         },
     );
 
-    let notifications_response = client::notifications::happy_path::notifications(
+    let notifications_response = client::notifications::happy_path::notifications_v2(
         env,
         *controller,
         notifications_canister,
@@ -227,7 +227,7 @@ fn only_store_up_to_10_subscriptions_per_user() {
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
 
-    let mut notifications_response = client::notifications::happy_path::notifications(
+    let mut notifications_response = client::notifications::happy_path::notifications_v2(
         env,
         *controller,
         notifications_canister,
@@ -268,7 +268,7 @@ fn notifications_blocked_from_blocked_users() {
 
     client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
 
-    let notifications_response = client::notifications::happy_path::notifications(
+    let notifications_response = client::notifications::happy_path::notifications_v2(
         env,
         *controller,
         notifications_canister,
@@ -284,7 +284,7 @@ fn notifications_blocked_from_blocked_users() {
 
     client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
 
-    let notifications_response = client::notifications::happy_path::notifications(
+    let notifications_response = client::notifications::happy_path::notifications_v2(
         env,
         *controller,
         notifications_canister,
@@ -299,7 +299,7 @@ fn notifications_blocked_from_blocked_users() {
 
     client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
 
-    let notifications_response = client::notifications::happy_path::notifications(
+    let notifications_response = client::notifications::happy_path::notifications_v2(
         env,
         *controller,
         notifications_canister,

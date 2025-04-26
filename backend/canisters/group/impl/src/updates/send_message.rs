@@ -12,7 +12,7 @@ use group_chat_core::SendMessageSuccess;
 use oc_error_codes::OCErrorCode;
 use types::{
     Achievement, BotCaller, BotPermissions, Caller, Chat, EventIndex, EventWrapper, GroupMessageNotification, Message,
-    MessageContent, MessageIndex, Notification, OCResult, TimestampMillis, User,
+    MessageContent, MessageIndex, OCResult, TimestampMillis, User, UserNotificationPayload,
 };
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -60,7 +60,7 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
         return Error(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
-    match mutate_state(|state| send_message_impl(args, Some(bot_caller), finalised, state)) {
+    match mutate_state(|state| send_message_impl(args, Some(Caller::BotV2(bot_caller)), finalised, state)) {
         Ok(result) => Success(result),
         Err(error) => Error(error),
     }
@@ -68,7 +68,7 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
 
 pub(crate) fn send_message_impl(
     args: Args,
-    bot: Option<BotCaller>,
+    ext_caller: Option<Caller>,
     finalised: bool,
     state: &mut RuntimeState,
 ) -> OCResult<SuccessResult> {
@@ -78,7 +78,7 @@ pub(crate) fn send_message_impl(
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
-    let caller = state.verified_caller(bot)?;
+    let caller = state.verified_caller(ext_caller)?;
 
     let now = state.env.now();
     let mentioned: Vec<_> = args.mentioned.iter().map(|u| u.user_id).collect();
@@ -187,7 +187,7 @@ fn process_send_message_result(
         let content = &message_event.event.content;
         let chat_id = state.env.canister_id().into();
 
-        let notification = Notification::GroupMessage(GroupMessageNotification {
+        let notification = UserNotificationPayload::GroupMessage(GroupMessageNotification {
             chat_id,
             thread_root_message_index,
             message_index,
@@ -279,6 +279,10 @@ fn process_send_message_result(
                 now,
             );
         }
+    }
+
+    if let Some(bot_notification) = result.bot_notification {
+        state.push_bot_notification(bot_notification);
     }
 
     handle_activity_notification(state);

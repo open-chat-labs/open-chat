@@ -21,6 +21,7 @@ pub struct HttpResponse {
     #[serde(with = "serde_bytes")]
     pub body: Vec<u8>,
     pub streaming_strategy: Option<StreamingStrategy>,
+    pub upgrade: Option<bool>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
@@ -60,6 +61,7 @@ impl HttpResponse {
             headers: Vec::new(),
             body: Vec::new(),
             streaming_strategy: None,
+            upgrade: None,
         }
     }
 
@@ -69,6 +71,26 @@ impl HttpResponse {
 
     pub fn not_found() -> HttpResponse {
         HttpResponse::status_code(404)
+    }
+
+    pub fn bad_request(text: &str) -> HttpResponse {
+        HttpResponse {
+            status_code: 400,
+            headers: Vec::new(),
+            body: text.as_bytes().to_vec(),
+            streaming_strategy: None,
+            upgrade: None,
+        }
+    }
+
+    pub fn upgrade() -> HttpResponse {
+        HttpResponse {
+            status_code: 200,
+            headers: Vec::new(),
+            body: Vec::new(),
+            streaming_strategy: None,
+            upgrade: Some(true),
+        }
     }
 
     pub fn moved_permanently(location: &str) -> HttpResponse {
@@ -92,6 +114,7 @@ impl HttpResponse {
             headers,
             body: Vec::new(),
             streaming_strategy: None,
+            upgrade: None,
         }
     }
 }

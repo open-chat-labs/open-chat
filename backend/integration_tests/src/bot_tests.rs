@@ -14,8 +14,9 @@ use testing::rng::{random_from_u128, random_string};
 use types::{
     AccessTokenScope, AuthToken, AutonomousConfig, BotActionByCommandClaims, BotActionChatDetails, BotActionScope,
     BotApiKeyToken, BotCommandArg, BotCommandArgValue, BotCommandDefinition, BotCommandParam, BotCommandParamType,
-    BotDefinition, BotInstallationLocation, BotMessageContent, BotPermissions, CanisterId, Chat, ChatEvent, ChatPermission,
-    ChatType, CommunityPermission, MessageContent, MessageId, MessagePermission, Rules, StringParam, TextContent, UserId,
+    BotDefinition, BotInstallationLocation, BotMessageContent, BotPermissions, CanisterId, Chat, ChatEvent, ChatEventType,
+    ChatPermission, ChatType, CommunityPermission, MessageContent, MessageId, MessagePermission, NotificationEnvelope, Rules,
+    StringParam, TextContent, UserId,
 };
 use utils::base64;
 
@@ -168,8 +169,8 @@ fn e2e_command_bot_test() {
     };
     assert_eq!(text_content.text, text);
     assert!(!message.edited);
-    assert!(message.bot_context.is_some());
-    assert!(!message.bot_context.as_ref().unwrap().finalised);
+    assert!(message.bot_context().is_some());
+    assert!(!message.bot_context().as_ref().unwrap().finalised);
 
     // Call execute_bot_action as bot - finalised message
     let text = "Hello world".to_string();
@@ -205,8 +206,8 @@ fn e2e_command_bot_test() {
     assert_eq!(text_content.text, text);
 
     assert!(message.edited);
-    assert!(message.bot_context.is_some());
-    assert!(message.bot_context.as_ref().unwrap().finalised);
+    assert!(message.bot_context().is_some());
+    assert!(message.bot_context().as_ref().unwrap().finalised);
 
     // Update the bot endpoint
     let new_endpoint = "https://123.bot.xyz/".to_string();
@@ -297,6 +298,10 @@ fn e2e_autonomous_bot_test() {
     let command_name = random_string();
     let (bot_id, bot_principal) = register_bot(env, &owner, canister_ids.user_index, bot_name.clone(), command_name.clone());
 
+    let permissions = BotPermissions::default()
+        .with_message(&HashSet::from_iter([MessagePermission::Text]))
+        .with_chat(&HashSet::from_iter([ChatPermission::ReadMessages]));
+
     // Add bot to community
     client::local_user_index::happy_path::install_bot(
         env,
@@ -304,7 +309,7 @@ fn e2e_autonomous_bot_test() {
         canister_ids.local_user_index(env, community_id),
         BotInstallationLocation::Community(community_id),
         bot_id,
-        BotPermissions::text_only(),
+        permissions.clone(),
     );
 
     let initial_time = now_millis(env);
@@ -318,7 +323,7 @@ fn e2e_autonomous_bot_test() {
         community_id.into(),
         &community_canister::generate_bot_api_key::Args {
             bot_id,
-            requested_permissions: BotPermissions::text_only(),
+            requested_permissions: permissions,
             channel_id: Some(channel_id),
         },
     ) {
@@ -353,9 +358,35 @@ fn e2e_autonomous_bot_test() {
     assert_eq!(response.api_keys_generated.len(), 1);
     assert_eq!(response.api_keys_generated[0].bot_id, bot_id);
 
-    // Call execute_bot_action
+    let latest_notification_index_at_start = client::notifications::happy_path::latest_notification_index(
+        env,
+        *controller,
+        canister_ids.notifications(env, community_id),
+    );
+
+    // Call bot_subscribe_to_chat_events
+    let subscribe_response = client::local_user_index::bot_subscribe_to_chat_events(
+        env,
+        bot_principal,
+        canister_ids.local_user_index(env, community_id),
+        &local_user_index_canister::bot_subscribe_to_chat_events::Args {
+            channel_id: None,
+            event_types: vec![ChatEventType::Message],
+            api_key: api_key.clone(),
+        },
+    );
+
+    assert!(
+        matches!(
+            subscribe_response,
+            local_user_index_canister::bot_subscribe_to_chat_events::Response::Success
+        ),
+        "'bot_subscribe_to_chat_events' error: {subscribe_response:?}"
+    );
+
+    // Call bot_send_message
     let text = "Hello world".to_string();
-    let response = client::local_user_index::bot_send_message(
+    let send_message_response = client::local_user_index::bot_send_message(
         env,
         bot_principal,
         canister_ids.local_user_index(env, community_id),
@@ -369,9 +400,30 @@ fn e2e_autonomous_bot_test() {
         },
     );
 
-    if !matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)) {
-        panic!("'bot_send_message' error: {response:?}");
-    }
+    assert!(
+        matches!(
+            send_message_response,
+            local_user_index_canister::bot_send_message::Response::Success(_)
+        ),
+        "'bot_send_message' error: {send_message_response:?}"
+    );
+
+    tick_many(env, 5);
+
+    let notifications = client::notifications::happy_path::notifications_v2(
+        env,
+        *controller,
+        canister_ids.notifications(env, community_id),
+        latest_notification_index_at_start + 1,
+    );
+
+    assert!(notifications.bot_endpoints.contains_key(&bot_id));
+    assert!(
+        notifications
+            .notifications
+            .iter()
+            .any(|n| matches!(&n.value, NotificationEnvelope::Bot(n) if n.recipients.contains(&bot_id)))
+    );
 }
 
 #[test_case(ChatType::Direct)]
@@ -895,7 +947,7 @@ fn send_direct_message() {
         panic!("Expected message to be text");
     };
     assert_eq!(&text_content.text, &message_text);
-    assert!(message.bot_context.is_none());
+    assert!(message.bot_context().is_none());
 
     let bot_event = &response.events[2];
     let ChatEvent::Message(message) = &bot_event.event else {
@@ -905,7 +957,7 @@ fn send_direct_message() {
         panic!("Expected message to be text");
     };
     assert_eq!(&text_content.text, &message_text);
-    assert!(message.bot_context.is_none());
+    assert!(message.bot_context().is_none());
 }
 
 #[test_case(ChatType::Direct)]
@@ -1066,8 +1118,8 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
     assert_eq!(text_content.text, text);
 
     assert!(message.edited);
-    assert!(message.bot_context.is_some());
-    assert!(message.bot_context.as_ref().unwrap().finalised);
+    assert!(message.bot_context().is_some());
+    assert!(message.bot_context().as_ref().unwrap().finalised);
 
     // Try updating the same message again but expect it to fail
     let text = format!("Hello 4 {username}");

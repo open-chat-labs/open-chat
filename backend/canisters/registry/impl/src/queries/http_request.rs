@@ -54,6 +54,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
                 ],
                 body: url.get_data().to_vec(),
                 streaming_strategy: None,
+                upgrade: None,
             }
         } else {
             let ledger = token.ledger_canister_id;
@@ -83,6 +84,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
             ],
             body,
             streaming_strategy: None,
+            upgrade: None,
         }
     }
 

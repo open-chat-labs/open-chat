@@ -56,6 +56,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         Route::Traces(since) => get_traces_impl(since),
         Route::Metrics => read_state(get_metrics_impl),
         Route::Other(p, _) if p == "timer_jobs" => read_state(get_timer_jobs),
+        Route::Webhook(_) if request.method.eq_ignore_ascii_case("POST") => HttpResponse::upgrade(),
         _ => HttpResponse::not_found(),
     }
 }

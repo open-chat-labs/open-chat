@@ -34,12 +34,12 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult<Pol
         now,
     )?;
 
-    if result.updated {
-        if result.poll_creator != user_id {
+    if result.value.updated {
+        if result.value.poll_creator != user_id {
             if channel
                 .chat
                 .members
-                .get(&result.poll_creator)
+                .get(&result.value.poll_creator)
                 .is_some_and(|m| !m.user_type().is_bot())
             {
                 if let Some((message, event_index)) = channel.chat.events.message_internal(
@@ -55,9 +55,9 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult<Pol
                         event_index,
                         activity: MessageActivity::PollVote,
                         timestamp: now,
-                        user_id: matches!(result.votes.total, TotalVotes::Visible(_)).then_some(user_id),
+                        user_id: matches!(result.value.votes.total, TotalVotes::Visible(_)).then_some(user_id),
                     });
-                    state.push_event_to_user(result.poll_creator, event, now);
+                    state.push_event_to_user(result.value.poll_creator, event, now);
                 }
             }
 
@@ -68,5 +68,7 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult<Pol
 
         handle_activity_notification(state);
     }
-    Ok(result.votes)
+
+    let votes = state.process_message_updated(result).votes;
+    Ok(votes)
 }

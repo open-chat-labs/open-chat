@@ -1722,12 +1722,14 @@ export class UserClient extends MsgpackCanisterAgent {
     payForStreakInsurance(
         additionalDays: number,
         expectedPrice: bigint,
+        pin: string | undefined,
     ): Promise<PayForStreakInsuranceResponse> {
         return this.executeMsgpackUpdate(
             "pay_for_streak_insurance",
             {
                 additional_days: additionalDays,
                 expected_price: expectedPrice,
+                pin,
             },
             unitResult,
             UserPayForStreakInsuranceArgs,

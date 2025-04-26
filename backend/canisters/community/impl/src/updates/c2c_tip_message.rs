@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use chat_events::TipMessageArgs;
 use community_canister::c2c_tip_message::*;
 use ledger_utils::format_crypto_amount_with_symbol;
-use types::{Achievement, ChannelMessageTipped, Chat, EventIndex, Notification, OCResult};
+use types::{Achievement, ChannelMessageTipped, Chat, EventIndex, OCResult, UserNotificationPayload};
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
 #[update(msgpack = true)]
@@ -58,7 +58,7 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                     user_id: Some(user_id),
                 });
 
-                let notification = Notification::ChannelMessageTipped(ChannelMessageTipped {
+                let notification = UserNotificationPayload::ChannelMessageTipped(ChannelMessageTipped {
                     community_id,
                     channel_id: channel.id,
                     thread_root_message_index: args.thread_root_message_index,

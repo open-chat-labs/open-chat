@@ -5,7 +5,7 @@ use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::{ChatEventInternal, Reader};
+use chat_events::{ChatEventInternal, Reader, UpdateMessageSuccess};
 use constants::{DAY_IN_MS, HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
@@ -34,11 +34,11 @@ use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotEventsCaller, BotGroupConfig, BotInitiator, BotPermissions,
-    BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics, CommunityId, Cycles, Document, Empty,
-    EventIndex, EventsCaller, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype,
-    IdempotentEnvelope, MAX_THREADS_IN_SUMMARY, MessageIndex, Milliseconds, MultiUserChat, Notification, OCResult, Rules,
-    TimestampMillis, Timestamped, UserId, UserType,
+    AccessGateConfigInternal, Achievement, BotAdded, BotEventsCaller, BotGroupConfig, BotInitiator, BotNotification,
+    BotPermissions, BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics, CommunityId, Cycles,
+    Document, Empty, EventIndex, EventsCaller, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership,
+    GroupPermissions, GroupSubtype, IdempotentEnvelope, MAX_THREADS_IN_SUMMARY, MessageIndex, Milliseconds, MultiUserChat,
+    Notification, OCResult, Rules, TimestampMillis, Timestamped, UserId, UserNotification, UserNotificationPayload, UserType,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
@@ -128,20 +128,41 @@ impl RuntimeState {
         Ok(member)
     }
 
-    pub fn push_notification(&mut self, sender: Option<UserId>, recipients: Vec<UserId>, notification: Notification) {
+    pub fn push_notification(
+        &mut self,
+        sender: Option<UserId>,
+        recipients: Vec<UserId>,
+        notification: UserNotificationPayload,
+    ) {
         if !recipients.is_empty() {
-            self.data.notifications_queue.push(IdempotentEnvelope {
-                created_at: self.env.now(),
-                idempotency_id: self.env.rng().next_u64(),
-                value: notifications_canister::c2c_push_notifications::Notification::User(
-                    notifications_canister::c2c_push_notifications::UserNotification {
-                        sender,
-                        recipients,
-                        notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
-                    },
-                ),
+            let notification = Notification::User(UserNotification {
+                sender,
+                recipients,
+                notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
             });
+            self.push_notification_inner(notification);
         }
+    }
+
+    pub fn push_bot_notification(&mut self, notification: BotNotification) {
+        if !notification.recipients.is_empty() {
+            self.push_notification_inner(Notification::Bot(notification));
+        }
+    }
+
+    fn push_notification_inner(&mut self, notification: Notification) {
+        self.data.notifications_queue.push(IdempotentEnvelope {
+            created_at: self.env.now(),
+            idempotency_id: self.env.rng().next_u64(),
+            value: notification,
+        });
+    }
+
+    pub fn process_message_updated<T>(&mut self, result: UpdateMessageSuccess<T>) -> T {
+        if let Some(bot_notification) = result.bot_notification {
+            self.push_bot_notification(bot_notification);
+        }
+        result.value
     }
 
     pub fn queue_access_gate_payments(&mut self, payment: GatePayment) {
@@ -438,9 +459,11 @@ impl RuntimeState {
         }
     }
 
-    pub fn verified_caller(&self, bot_caller: Option<BotCaller>) -> OCResult<Caller> {
-        if let Some(bot_caller) = bot_caller {
-            return Ok(Caller::BotV2(bot_caller));
+    pub fn verified_caller(&self, ext_caller: Option<Caller>) -> OCResult<Caller> {
+        match ext_caller {
+            Some(Caller::BotV2(bot)) => return Ok(Caller::BotV2(bot)),
+            Some(Caller::Webhook(user_id)) => return Ok(Caller::Webhook(user_id)),
+            _ => {}
         }
 
         let caller = self.env.caller();
@@ -457,9 +480,9 @@ impl RuntimeState {
 
         match member.user_type() {
             UserType::User => Ok(Caller::User(member.user_id())),
-            UserType::BotV2 => Err(OCErrorCode::InitiatorNotFound.into()),
             UserType::Bot => Ok(Caller::Bot(member.user_id())),
             UserType::OcControlledBot => Ok(Caller::OCBot(member.user_id())),
+            UserType::BotV2 | UserType::Webhook => Err(OCErrorCode::InitiatorNotFound.into()),
         }
     }
 }
@@ -831,7 +854,7 @@ impl Data {
         }
 
         self.bot_api_keys.delete(bot_id);
-        self.chat.bot_unsubscribe_from_chat_events(bot_id, None);
+        self.chat.events.unsubscribe_bot_from_events(bot_id, None);
 
         self.chat.events.push_main_event(
             ChatEventInternal::BotRemoved(Box::new(BotRemoved {

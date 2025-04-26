@@ -8,8 +8,8 @@ use ic_cdk::update;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use types::{
-    DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, Notification, OCResult, UserId,
-    UserType, VideoCallPresence, VideoCallType,
+    DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, OCResult, UserId,
+    UserNotificationPayload, UserType, VideoCallPresence, VideoCallType,
 };
 use user_canister::start_video_call_v2::*;
 use user_canister::{StartVideoCallArgs, UserCanisterEvent};
@@ -42,7 +42,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     } = handle_start_video_call(args.message_id, None, sender, sender, max_duration, state);
 
     if !mute_notification {
-        let notification = Notification::DirectMessage(DirectMessageNotification {
+        let notification = UserNotificationPayload::DirectMessage(DirectMessageNotification {
             sender,
             thread_root_message_index: None,
             message_index: message_event.event.message_index,
@@ -106,7 +106,7 @@ pub fn handle_start_video_call(
         block_level_markdown: false,
         correlation_id: 0,
         now,
-        bot_context: None,
+        sender_context: None,
     };
 
     let chat = state

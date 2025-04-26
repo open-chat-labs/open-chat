@@ -98,6 +98,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
                     ],
                     body: url.get_data().to_vec(),
                     streaming_strategy: None,
+                    upgrade: None,
                 };
             }
             _ => (),

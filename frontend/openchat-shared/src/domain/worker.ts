@@ -455,6 +455,7 @@ type PayForStreakInsurance = {
     kind: "payForStreakInsurance";
     additionalDays: number;
     expectedPrice: bigint;
+    pin: string | undefined;
 };
 
 type GetApiKey = {

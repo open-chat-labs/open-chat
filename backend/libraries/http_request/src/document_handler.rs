@@ -14,6 +14,7 @@ pub fn get_document(requested_document_id: Option<u128>, document: Option<&Docum
                     ],
                     body: document.data.clone(),
                     streaming_strategy: None,
+                    upgrade: None,
                 }
             } else {
                 let location = build_document_location(path, document.id);
