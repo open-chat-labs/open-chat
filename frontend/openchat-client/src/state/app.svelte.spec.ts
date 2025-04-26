@@ -10,9 +10,8 @@ import {
 } from "openchat-shared";
 import { vi } from "vitest";
 import { app } from "./app.svelte";
-import { chatDetailsLocalUpdates } from "./chat_details";
 import { communityLocalUpdates } from "./community_details/local.svelte";
-import { globalLocalUpdates } from "./global";
+import { localUpdates } from "./global";
 import { pathState } from "./path.svelte";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -120,7 +119,7 @@ describe("app state", () => {
 
             test("make sure local updates are merged", () => {
                 expect(app.selectedChat.members.has("user_one")).toBe(true);
-                const undo = chatDetailsLocalUpdates.removeMember(chatId, "user_one");
+                const undo = localUpdates.removeChatMember(chatId, "user_one");
                 expect(app.selectedChat.members.has("user_one")).toBe(false);
                 undo();
                 expect(app.selectedChat.members.has("user_one")).toBe(true);
@@ -244,13 +243,13 @@ describe("app state", () => {
             const id: CommunityIdentifier = { kind: "community", communityId: "123456" };
             expect(app.communities.size).toEqual(2);
             expect(app.communities.get(id)?.membership.index).toEqual(1);
-            globalLocalUpdates.updateCommunityIndex(id, 3);
+            localUpdates.updateCommunityIndex(id, 3);
             expect(app.communities.get(id)?.membership.index).toEqual(3);
         });
         test("community display name", () => {
             const id: CommunityIdentifier = { kind: "community", communityId: "123456" };
             expect(app.communities.get(id)?.membership.displayName).toBeUndefined();
-            globalLocalUpdates.updateCommunityDisplayName(id, "Mr. OpenChat");
+            localUpdates.updateCommunityDisplayName(id, "Mr. OpenChat");
             expect(app.communities.get(id)?.membership.displayName).toEqual("Mr. OpenChat");
         });
     });

@@ -2,7 +2,7 @@ import { chatIdentifiersEqual, type ChatIdentifier } from "openchat-shared";
 import { untrack } from "svelte";
 import type { OpenChat } from "./openchat";
 import { app } from "./state/app.svelte";
-import { globalLocalUpdates } from "./state/global";
+import { localUpdates } from "./state/global";
 import { pathState } from "./state/path.svelte";
 import { ui } from "./state/ui.svelte";
 import { chatListScopeStore, dummyCommunityPreviewStore } from "./stores";
@@ -100,7 +100,7 @@ function onThreadStateChanged(client: OpenChat) {
 // runes and Svelte 4 stores in sync. The easiest way to do this is with effects
 function syncState() {
     $effect(() => {
-        dummyCommunityPreviewStore.set(globalLocalUpdates.previewCommunities.size);
+        dummyCommunityPreviewStore.set(localUpdates.previewCommunities.size);
     });
 
     $effect(() => {

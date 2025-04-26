@@ -1,1 +1,1 @@
-export { globalLocalUpdates } from "./local.svelte";
+export { localUpdates } from "./local.svelte";

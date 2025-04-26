@@ -15,6 +15,8 @@ import { scheduleUndo, type UndoLocalUpdate } from "../undo";
 export class CommunityLocalState {
     #rules = $state<VersionedRules | undefined>();
     #displayName = $state<OptionUpdate<string>>();
+    #rulesAccepted = $state<boolean | undefined>();
+    #index = $state<number>();
 
     readonly invitedUsers = new LocalSet<string>(identity);
     readonly blockedUsers = new LocalSet<string>(identity);
@@ -24,6 +26,14 @@ export class CommunityLocalState {
     readonly userGroups = new LocalMap<number, UserGroupDetails, number>(identity, identity);
     readonly bots = new LocalMap<string, ExternalBotPermissions, string>(identity, identity);
     readonly apiKeys = new LocalMap<string, PublicApiKeyDetails, string>(identity, identity);
+
+    get index() {
+        return this.#index;
+    }
+
+    set index(val: number | undefined) {
+        this.#index = val;
+    }
 
     get rules() {
         return this.#rules;
@@ -38,6 +48,14 @@ export class CommunityLocalState {
 
     set displayName(val: OptionUpdate<string>) {
         this.#displayName = val;
+    }
+
+    get rulesAccepted() {
+        return this.#rulesAccepted;
+    }
+
+    set rulesAccepted(val: boolean | undefined) {
+        this.#rulesAccepted = val;
     }
 }
 
@@ -93,6 +111,15 @@ export class CommunityLocalStateManager {
         };
     }
 
+    updateRulesAccepted(id: CommunityIdentifier, accepted?: boolean) {
+        const state = this.#getOrCreate(id);
+        const previous = state.rulesAccepted;
+        state.rulesAccepted = accepted;
+        return scheduleUndo(() => {
+            state.rulesAccepted = previous;
+        });
+    }
+
     updateDisplayName(id: CommunityIdentifier, name?: string) {
         const state = this.#getOrCreate(id);
         const previous = state.displayName;
@@ -108,6 +135,15 @@ export class CommunityLocalStateManager {
         state.rules = rules;
         return scheduleUndo(() => {
             state.rules = previous;
+        });
+    }
+
+    updateIndex(id: CommunityIdentifier, index?: number): UndoLocalUpdate {
+        const state = this.#getOrCreate(id);
+        const previous = state.index;
+        state.index = index;
+        return scheduleUndo(() => {
+            state.index = previous;
         });
     }
 

@@ -278,9 +278,8 @@ import { LiveState } from "./liveState";
 import { snapshot } from "./snapshot.svelte";
 import { app } from "./state/app.svelte";
 import { botState } from "./state/bots.svelte";
-import { chatDetailsLocalUpdates } from "./state/chat_details";
-import { communityLocalUpdates, type CommunityMergedState } from "./state/community_details";
-import { globalLocalUpdates } from "./state/global";
+import { type CommunityMergedState } from "./state/community_details";
+import { localUpdates } from "./state/global";
 import type { ReadonlyMap } from "./state/map";
 import { pathState, type RouteParams } from "./state/path.svelte";
 import type { ReadonlySet } from "./state/set";
@@ -337,7 +336,6 @@ import {
 import { applyTranslationCorrection } from "./stores/i18n";
 import { lastOnlineDates } from "./stores/lastOnlineDates";
 import { localChatSummaryUpdates } from "./stores/localChatSummaryUpdates";
-import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
 import { localGlobalUpdates } from "./stores/localGlobalUpdates";
 import { localMessageUpdates } from "./stores/localMessageUpdates";
 import {
@@ -1397,11 +1395,11 @@ export class OpenChat {
     }
 
     #addCommunityLocally(community: CommunitySummary) {
-        return globalLocalUpdates.addCommunity(community);
+        return localUpdates.addCommunity(community);
     }
 
     #removeCommunityLocally(id: CommunityIdentifier) {
-        return globalLocalUpdates.removeCommunity(id);
+        return localUpdates.removeCommunity(id);
     }
 
     verifyAccessGate(gate: AccessGate, iiPrincipal: string): Promise<string | undefined> {
@@ -1584,8 +1582,8 @@ export class OpenChat {
                             }
                         }),
                     );
-                    if (globalLocalUpdates.isPreviewingCommunity(resp.community.id)) {
-                        globalLocalUpdates.removeCommunityPreview(resp.community.id);
+                    if (localUpdates.isPreviewingCommunity(resp.community.id)) {
+                        localUpdates.removeCommunityPreview(resp.community.id);
                     }
                 } else {
                     if (resp.kind === "error" && resp.code === ErrorCode.InitiatorBlocked) {
@@ -1631,7 +1629,7 @@ export class OpenChat {
             "set_community_display_name",
         );
 
-        const undo = globalLocalUpdates.updateCommunityDisplayName(id, displayName);
+        const undo = localUpdates.updateCommunityDisplayName(id, displayName);
 
         return this.#sendRequest({
             kind: "setMemberDisplayName",
@@ -1644,7 +1642,7 @@ export class OpenChat {
                 if (userId !== undefined) {
                     const m = app.selectedCommunity.members.get(userId);
                     if (m !== undefined) {
-                        communityLocalUpdates.updateMember(id, userId, { ...m, displayName });
+                        localUpdates.updateCommunityMember(id, userId, { ...m, displayName });
                     }
                 }
             } else {
@@ -2533,8 +2531,8 @@ export class OpenChat {
 
     #blockUserLocally(chatId: ChatIdentifier, userId: string): UndoLocalUpdate {
         const undos = [
-            chatDetailsLocalUpdates.blockUser(chatId, userId),
-            chatDetailsLocalUpdates.removeMember(chatId, userId),
+            localUpdates.blockChatUser(chatId, userId),
+            localUpdates.removeChatMember(chatId, userId),
         ];
         return () => {
             undos.forEach((u) => u());
@@ -2546,10 +2544,10 @@ export class OpenChat {
         userId: string,
         addToMembers: boolean,
     ): UndoLocalUpdate {
-        const undos = [chatDetailsLocalUpdates.unblockUser(chatId, userId)];
+        const undos = [localUpdates.unblockChatUser(chatId, userId)];
         if (addToMembers) {
             undos.push(
-                chatDetailsLocalUpdates.addMember(chatId, {
+                localUpdates.addChatMember(chatId, {
                     role: "member",
                     userId,
                     displayName: undefined,
@@ -2563,8 +2561,8 @@ export class OpenChat {
     }
 
     blockCommunityUser(id: CommunityIdentifier, userId: string): Promise<boolean> {
-        const blockUndo = communityLocalUpdates.blockUser(id, userId);
-        const membersUndo = communityLocalUpdates.removeMember(id, userId);
+        const blockUndo = localUpdates.blockCommunityUser(id, userId);
+        const membersUndo = localUpdates.removeCommunityMember(id, userId);
         return this.#sendRequest({ kind: "blockCommunityUser", id, userId })
             .then((resp) => {
                 if (resp.kind !== "success") {
@@ -2582,7 +2580,7 @@ export class OpenChat {
     }
 
     unblockCommunityUser(id: CommunityIdentifier, userId: string): Promise<boolean> {
-        const undo = communityLocalUpdates.unblockUser(id, userId);
+        const undo = localUpdates.unblockCommunityUser(id, userId);
         return this.#sendRequest({ kind: "unblockCommunityUser", id, userId })
             .then((resp) => {
                 if (resp.kind !== "success") {
@@ -3489,7 +3487,7 @@ export class OpenChat {
     }
 
     unpinMessage(chatId: MultiUserChatIdentifier, messageIndex: number): Promise<boolean> {
-        const undo = chatDetailsLocalUpdates.unpinMessage(chatId, messageIndex);
+        const undo = localUpdates.unpinMessage(chatId, messageIndex);
         return this.#sendRequest({ kind: "unpinMessage", chatId, messageIndex })
             .then((resp) => {
                 if (resp.kind !== "success") {
@@ -3505,7 +3503,7 @@ export class OpenChat {
     }
 
     pinMessage(chatId: MultiUserChatIdentifier, messageIndex: number): Promise<boolean> {
-        const undo = chatDetailsLocalUpdates.pinMessage(chatId, messageIndex);
+        const undo = localUpdates.pinMessage(chatId, messageIndex);
         return this.#sendRequest({
             kind: "pinMessage",
             chatId,
@@ -4043,7 +4041,7 @@ export class OpenChat {
     #markCommunityRulesAcceptedLocally(rulesAccepted: boolean) {
         const selectedCommunityId = app.selectedCommunitySummary?.id;
         if (selectedCommunityId !== undefined) {
-            localCommunitySummaryUpdates.updateRulesAccepted(selectedCommunityId, rulesAccepted);
+            localUpdates.updateCommunityRulesAccepted(selectedCommunityId, rulesAccepted);
         }
     }
 
@@ -4989,9 +4987,9 @@ export class OpenChat {
         userIds: string[],
     ): UndoLocalUpdate {
         if (id.kind === "community") {
-            return communityLocalUpdates.inviteUsers(id, userIds);
+            return localUpdates.inviteCommunityUsers(id, userIds);
         } else {
-            return chatDetailsLocalUpdates.inviteUsers(id, userIds);
+            return localUpdates.inviteChatUsers(id, userIds);
         }
     }
 
@@ -5000,7 +4998,7 @@ export class OpenChat {
         userIds: string[],
     ): void {
         if (id.kind === "community") {
-            communityLocalUpdates.uninviteUsers(id, userIds);
+            localUpdates.uninviteCommunityUsers(id, userIds);
             const community = app.communities.get({
                 kind: "community",
                 communityId: id.communityId,
@@ -5012,7 +5010,7 @@ export class OpenChat {
                 }
             }
         } else {
-            chatDetailsLocalUpdates.uninviteUsers(id, userIds);
+            localUpdates.uninviteChatUsers(id, userIds);
         }
     }
 
@@ -5077,7 +5075,7 @@ export class OpenChat {
     }
 
     removeCommunityMember(id: CommunityIdentifier, userId: string): Promise<RemoveMemberResponse> {
-        const undo = communityLocalUpdates.removeMember(id, userId);
+        const undo = localUpdates.removeCommunityMember(id, userId);
         return this.#sendRequest({ kind: "removeCommunityMember", id, userId })
             .then((resp) => {
                 if (resp.kind !== "success") {
@@ -5092,7 +5090,7 @@ export class OpenChat {
     }
 
     removeMember(chatId: MultiUserChatIdentifier, userId: string): Promise<RemoveMemberResponse> {
-        const undo = chatDetailsLocalUpdates.removeMember(chatId, userId);
+        const undo = localUpdates.removeChatMember(chatId, userId);
         return this.#sendRequest({ kind: "removeMember", chatId, userId })
             .then((resp) => {
                 if (resp.kind !== "success") {
@@ -5117,7 +5115,7 @@ export class OpenChat {
         const m = app.selectedCommunity.members.get(userId);
         let undo = undefined;
         if (m !== undefined) {
-            undo = communityLocalUpdates.updateMember(id, userId, { ...m, role: newRole });
+            undo = localUpdates.updateCommunityMember(id, userId, { ...m, role: newRole });
         }
 
         return this.#sendRequest({ kind: "changeCommunityRole", id, userId, newRole })
@@ -5141,7 +5139,7 @@ export class OpenChat {
     ): Promise<boolean> {
         if (newRole === oldRole) return Promise.resolve(true);
 
-        const undo = chatDetailsLocalUpdates.updateMember(
+        const undo = localUpdates.updateChatMember(
             chatId,
             userId,
             app.selectedChat.members.get(userId),
@@ -5660,7 +5658,7 @@ export class OpenChat {
                     });
 
                     if (rules !== undefined && resp.rulesVersion !== undefined) {
-                        chatDetailsLocalUpdates.updateRules(chatId, {
+                        localUpdates.updateChatRules(chatId, {
                             text: rules.text,
                             enabled: rules.enabled,
                             version: resp.rulesVersion,
@@ -6024,9 +6022,9 @@ export class OpenChat {
             for (const community of chatsResponse.state.communities) {
                 if (
                     community?.membership !== undefined &&
-                    globalLocalUpdates.isPreviewingCommunity(community.id)
+                    localUpdates.isPreviewingCommunity(community.id)
                 ) {
-                    globalLocalUpdates.removeCommunityPreview(community.id);
+                    localUpdates.removeCommunityPreview(community.id);
                 }
             }
 
@@ -7590,9 +7588,9 @@ export class OpenChat {
             // Skip if index is unchanged
             if (community.membership.index === index) continue;
 
-            globalLocalUpdates.updateCommunityIndex(community.id, index);
+            localUpdates.updateCommunityIndex(community.id, index);
 
-            if (!globalLocalUpdates.isPreviewingCommunity(community.id)) {
+            if (!localUpdates.isPreviewingCommunity(community.id)) {
                 updates[community.id.communityId] = index;
             }
         }
@@ -7624,7 +7622,7 @@ export class OpenChat {
                 // Make the community appear at the top of the list
                 resp.membership.index = app.nextCommunityIndex;
                 community = resp;
-                globalLocalUpdates.addCommunityPreview(community);
+                localUpdates.addCommunityPreview(community);
                 preview = true;
             } else {
                 // if we get here it means we're not a member of the community and we can't look it up
@@ -7726,7 +7724,7 @@ export class OpenChat {
                     // Make the community appear at the top of the list
                     resp.community.membership.index = app.nextCommunityIndex;
                     this.#addCommunityLocally(resp.community);
-                    globalLocalUpdates.removeCommunityPreview(community.id);
+                    localUpdates.removeCommunityPreview(community.id);
                     this.#loadCommunityDetails(resp.community);
                     messagesRead.batchUpdate(() => {
                         resp.community.channels.forEach((c) => {
@@ -7880,7 +7878,7 @@ export class OpenChat {
                         return g;
                     });
                     if (rules !== undefined && resp.rulesVersion !== undefined) {
-                        communityLocalUpdates.updateRules(community.id, {
+                        localUpdates.updateCommunityRules(community.id, {
                             text: rules.text,
                             enabled: rules.enabled,
                             version: resp.rulesVersion,
@@ -7908,7 +7906,7 @@ export class OpenChat {
     }
 
     deleteUserGroup(id: CommunityIdentifier, userGroup: UserGroupDetails): Promise<boolean> {
-        const undo = communityLocalUpdates.deleteUserGroup(id, userGroup.id);
+        const undo = localUpdates.deleteUserGroup(id, userGroup.id);
         return this.#sendRequest({
             kind: "deleteUserGroups",
             communityId: id.communityId,
@@ -7938,7 +7936,7 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    communityLocalUpdates.addOrUpdateUserGroup(id, {
+                    localUpdates.addOrUpdateUserGroup(id, {
                         ...userGroup,
                         id: resp.userGroupId,
                     });
@@ -7970,7 +7968,7 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    communityLocalUpdates.addOrUpdateUserGroup(id, userGroup);
+                    localUpdates.addOrUpdateUserGroup(id, userGroup);
                 }
                 return resp;
             })
@@ -8334,11 +8332,11 @@ export class OpenChat {
                 // TODO - when chat state and global state are done
                 // the same way, we can return the undo fn here which
                 // will be better.
-                communityLocalUpdates.removeBot(id, botId);
+                localUpdates.removeBotFromCommunity(id, botId);
                 break;
             case "group_chat":
                 perm = app.selectedChat.bots.get(botId);
-                chatDetailsLocalUpdates.removeBot(id, botId);
+                localUpdates.removeBotFromChat(id, botId);
                 break;
             case "direct_chat":
                 perm = this.#liveState.installedDirectBots.get(botId);
@@ -8359,12 +8357,12 @@ export class OpenChat {
             case "community":
                 if (perm === undefined) return perm;
                 previousPermissions = app.selectedCommunity.bots.get(botId);
-                communityLocalUpdates.installBot(id, botId, perm);
+                localUpdates.installBotInCommunity(id, botId, perm);
                 break;
             case "group_chat":
                 if (perm === undefined) return perm;
                 previousPermissions = app.selectedChat.bots.get(botId);
-                chatDetailsLocalUpdates.installBot(id, botId, perm);
+                localUpdates.installBotInChat(id, botId, perm);
                 break;
             case "direct_chat":
                 if (perm === undefined) return perm;

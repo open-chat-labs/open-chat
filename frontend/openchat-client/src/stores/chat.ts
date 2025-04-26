@@ -24,7 +24,7 @@ import {
 } from "openchat-shared";
 import { derived, get, writable, type Readable, type Writable } from "svelte/store";
 import { app } from "../state/app.svelte";
-import { globalLocalUpdates } from "../state/global";
+import { localUpdates } from "../state/global";
 import {
     getNextEventAndMessageIndexes,
     mergeChatMetrics,
@@ -212,7 +212,7 @@ export const serverChatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         if (app.chatListScope.kind === "community") {
             const communityId = app.chatListScope.id.communityId;
             const previewChannels = ChatMap.fromList(
-                globalLocalUpdates.getPreviewingCommunity(app.chatListScope.id)?.channels ?? [],
+                localUpdates.getPreviewingCommunity(app.chatListScope.id)?.channels ?? [],
             );
             all = ([...previewChannels.entries()] as ChatEntry[])
                 .concat([

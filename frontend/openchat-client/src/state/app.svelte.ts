@@ -24,7 +24,7 @@ import { ChatDetailsServerState } from "./chat_details/server";
 import { communityLocalUpdates } from "./community_details";
 import { CommunityMergedState } from "./community_details/merged.svelte";
 import { CommunityServerState } from "./community_details/server";
-import { globalLocalUpdates } from "./global";
+import { localUpdates } from "./global";
 import { pathState } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
 
@@ -51,19 +51,22 @@ class AppState {
     #serverCommunities = $state<CommunityMap<CommunitySummary>>(new CommunityMap());
 
     #communities = $derived.by(() => {
-        const merged = globalLocalUpdates.communities.apply(this.#serverCommunities);
-        for (const c of globalLocalUpdates.previewCommunities.values()) {
+        const merged = localUpdates.communities.apply(this.#serverCommunities);
+        for (const c of localUpdates.previewCommunities.values()) {
             merged.set(c.id, c);
         }
         return merged.map((communityId, community) => {
-            const index = globalLocalUpdates.communityIndexes.get(communityId);
+            const updates = communityLocalUpdates.get(communityId);
+            const index = updates?.index;
             if (index !== undefined) {
                 community.membership.index = index;
             }
             community.membership.displayName = applyOptionUpdate(
                 community.membership.displayName,
-                communityLocalUpdates.get(communityId)?.displayName,
+                updates?.displayName,
             );
+            community.membership.rulesAccepted =
+                updates?.rulesAccepted ?? community.membership.rulesAccepted;
             return community;
         });
     });
@@ -291,11 +294,11 @@ class AppState {
     }
 
     isPreviewingCommunity(id: CommunityIdentifier) {
-        return globalLocalUpdates.isPreviewingCommunity(id);
+        return localUpdates.isPreviewingCommunity(id);
     }
 
     getPreviewingCommunity(id: CommunityIdentifier) {
-        return globalLocalUpdates.getPreviewingCommunity(id);
+        return localUpdates.getPreviewingCommunity(id);
     }
 }
 

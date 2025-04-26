@@ -1,9 +1,4 @@
-import type {
-    CommunityMap,
-    CommunitySummary,
-    LocalCommunitySummaryUpdates,
-    MemberRole,
-} from "openchat-shared";
+import type { CommunitySummary, MemberRole } from "openchat-shared";
 import { hasOwnerRights, isPermitted } from "./permissions";
 
 export function canChangeRoles(
@@ -75,76 +70,4 @@ export function canInviteUsers(community: CommunitySummary): boolean {
 
 export function canRemoveMembers(community: CommunitySummary): boolean {
     return isPermitted(community.membership.role, community.permissions.removeMembers);
-}
-
-export function mergeLocalUpdates(
-    server: CommunityMap<CommunitySummary>,
-    localUpdates: CommunityMap<LocalCommunitySummaryUpdates>,
-): CommunityMap<CommunitySummary> {
-    if (Object.keys(localUpdates).length === 0) return server;
-
-    const merged = server.clone();
-
-    for (const [communityId, localUpdate] of localUpdates.entries()) {
-        if (localUpdate.added !== undefined) {
-            const current = merged.get(communityId);
-            if (
-                current === undefined ||
-                current.membership.role === "none" ||
-                current.membership.lapsed
-            ) {
-                merged.set(communityId, localUpdate.added);
-            }
-        }
-        if (localUpdate.removedAtTimestamp) {
-            const community = merged.get(communityId);
-            if (
-                community !== undefined &&
-                community.membership.joined < localUpdate.removedAtTimestamp
-            ) {
-                merged.delete(communityId);
-            }
-        }
-        if (localUpdate.index !== undefined) {
-            const community = merged.get(communityId);
-            if (community !== undefined) {
-                merged.set(communityId, {
-                    ...community,
-                    membership: {
-                        ...community.membership,
-                        index: localUpdate.index,
-                    },
-                });
-            }
-        }
-        if (localUpdate.displayName !== undefined) {
-            const community = merged.get(communityId);
-            if (community !== undefined) {
-                merged.set(communityId, {
-                    ...community,
-                    membership: {
-                        ...community.membership,
-                        displayName:
-                            localUpdate.displayName !== "set_to_none"
-                                ? localUpdate.displayName.value
-                                : undefined,
-                    },
-                });
-            }
-        }
-        if (localUpdate.rulesAccepted !== undefined) {
-            const community = merged.get(communityId);
-            if (community !== undefined) {
-                merged.set(communityId, {
-                    ...community,
-                    membership: {
-                        ...community.membership,
-                        rulesAccepted: localUpdate.rulesAccepted,
-                    },
-                });
-            }
-        }
-    }
-
-    return merged;
 }
