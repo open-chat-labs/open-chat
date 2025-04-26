@@ -10,11 +10,7 @@ import {
 import { isEmpty } from "../utils/object";
 import { LocalUpdatesStore } from "./localUpdatesStore";
 
-export class LocalMessageUpdatesStore extends LocalUpdatesStore<
-    bigint,
-    LocalMessageUpdates,
-    string
-> {
+export class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMessageUpdates> {
     markCancelled(messageId: bigint, content: MessageContent): void {
         this.applyUpdate(messageId, (_) => ({
             cancelledReminder: content,

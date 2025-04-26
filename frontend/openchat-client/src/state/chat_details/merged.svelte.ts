@@ -1,4 +1,3 @@
-import type { Primitive } from "openchat-shared";
 import { SvelteSet } from "svelte/reactivity";
 import { LocalMap, type ReadonlyMap } from "../map";
 import { type LocalSet, type ReadonlySet } from "../set";
@@ -30,10 +29,7 @@ export class ChatDetailsMergedState {
         return local ? local.apply(server) : server;
     }
 
-    #mergeMap<K, V, P extends Primitive>(
-        server: Map<K, V>,
-        local?: LocalMap<K, V, P>,
-    ): ReadonlyMap<K, V> {
+    #mergeMap<K, V>(server: Map<K, V>, local?: LocalMap<K, V>): ReadonlyMap<K, V> {
         return local ? local.apply(server) : server;
     }
 

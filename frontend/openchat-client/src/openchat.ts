@@ -5405,7 +5405,10 @@ export class OpenChat {
 
         return this.#sendRequest({
             kind: "threadPreviews",
-            threadsByChat: request.toMap(),
+            threadsByChat: request.toMap() as Map<
+                string,
+                [ThreadSyncDetails[], bigint | undefined]
+            >,
         })
             .then((threads) => {
                 const events = threads.flatMap((t) => [t.rootMessage, ...t.latestReplies]);

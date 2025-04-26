@@ -1,4 +1,6 @@
 import {
+    defaultDeserialiser,
+    defaultSerialiser,
     SafeMap,
     type ChatIdentifier,
     type CommunityIdentifier,
@@ -19,13 +21,13 @@ export interface ReadonlyMap<K, V> {
     forEach(callback: (value: V, key: K, map: ReadonlyMap<K, V>) => void): void;
 }
 
-export class LocalMap<K, V, P extends Primitive> {
-    #addedOrUpdated: ReactiveSafeMap<K, V, P>;
+export class LocalMap<K, V> {
+    #addedOrUpdated: ReactiveSafeMap<K, V>;
     #removed: ReactiveSafeSet<K>;
 
     constructor(
-        private serialiser: (k: K) => P,
-        private deserialiser: (p: P) => K,
+        private serialiser: (k: K) => Primitive = defaultSerialiser,
+        private deserialiser: (p: Primitive) => K = defaultDeserialiser,
     ) {
         this.#addedOrUpdated = new ReactiveSafeMap(serialiser, deserialiser);
         this.#removed = new ReactiveSafeSet(serialiser);
@@ -64,8 +66,8 @@ export class LocalMap<K, V, P extends Primitive> {
         });
     }
 
-    apply(original: ReadonlyMap<K, V>): SafeMap<K, V, P> {
-        const merged = new SafeMap<K, V, P>(this.serialiser, this.deserialiser);
+    apply(original: ReadonlyMap<K, V>): SafeMap<K, V> {
+        const merged = new SafeMap<K, V>(this.serialiser, this.deserialiser);
         for (const [k, v] of original) {
             merged.set(k, v);
         }
@@ -75,10 +77,10 @@ export class LocalMap<K, V, P extends Primitive> {
     }
 }
 
-export class ReactiveSafeMap<K, V, P extends Primitive> {
-    #keyMap = new Map<P, K>();
-    #map = new SvelteMap<P, V>();
-    #deserialise(k: P): K {
+export class ReactiveSafeMap<K, V> {
+    #keyMap = new Map<Primitive, K>();
+    #map = new SvelteMap<Primitive, V>();
+    #deserialise(k: Primitive): K {
         let key = this.#keyMap.get(k);
         if (key === undefined) {
             key = this._deserialise(k);
@@ -88,30 +90,30 @@ export class ReactiveSafeMap<K, V, P extends Primitive> {
     }
 
     constructor(
-        private _serialise: (key: K) => P,
-        private _deserialise: (primitive: P) => K,
+        private _serialise: (key: K) => Primitive,
+        private _deserialise: (primitive: Primitive) => K,
     ) {}
 
     [Symbol.iterator](): Iterator<[K, V]> {
         return this.entries();
     }
 
-    map<A>(fn: (key: K, val: V) => A): ReactiveSafeMap<K, A, P> {
-        const mapped = new ReactiveSafeMap<K, A, P>(this._serialise, this._deserialise);
+    map<A>(fn: (key: K, val: V) => A): ReactiveSafeMap<K, A> {
+        const mapped = new ReactiveSafeMap<K, A>(this._serialise, this._deserialise);
         for (const [k, v] of this.entries()) {
             mapped.set(k, fn(k, v));
         }
         return mapped;
     }
 
-    merge(other: ReactiveSafeMap<K, V, P>): ReactiveSafeMap<K, V, P> {
+    merge(other: ReactiveSafeMap<K, V>): ReactiveSafeMap<K, V> {
         other.forEach((val, key) => {
             this.set(key, val);
         });
         return this;
     }
 
-    filter(fn: (value: V, key: K) => boolean): ReactiveSafeMap<K, V, P> {
+    filter(fn: (value: V, key: K) => boolean): ReactiveSafeMap<K, V> {
         return [...this.entries()]
             .filter(([k, v]) => {
                 return fn(v, k);
@@ -121,7 +123,7 @@ export class ReactiveSafeMap<K, V, P extends Primitive> {
                     agg.set(k, v);
                     return agg;
                 },
-                new ReactiveSafeMap<K, V, P>(this._serialise, this._deserialise),
+                new ReactiveSafeMap<K, V>(this._serialise, this._deserialise),
             );
     }
 
@@ -133,16 +135,16 @@ export class ReactiveSafeMap<K, V, P extends Primitive> {
         return acc;
     }
 
-    clone(): ReactiveSafeMap<K, V, P> {
-        const cloned = new ReactiveSafeMap<K, V, P>(this._serialise, this._deserialise);
+    clone(): ReactiveSafeMap<K, V> {
+        const cloned = new ReactiveSafeMap<K, V>(this._serialise, this._deserialise);
         for (const [key, value] of this) {
             cloned.set(key, value);
         }
         return cloned;
     }
 
-    empty(): ReactiveSafeMap<K, V, P> {
-        return new ReactiveSafeMap<K, V, P>(this._serialise, this._deserialise);
+    empty(): ReactiveSafeMap<K, V> {
+        return new ReactiveSafeMap<K, V>(this._serialise, this._deserialise);
     }
 
     clear(): void {
@@ -160,7 +162,7 @@ export class ReactiveSafeMap<K, V, P extends Primitive> {
 
     entries(): IterableIterator<[K, V]> {
         const map = this.#map;
-        const keyMap = this.#keyMap;
+        const deserialise = (s: Primitive) => this.#deserialise(s);
         const it = map.entries();
         return {
             [Symbol.iterator]() {
@@ -170,7 +172,7 @@ export class ReactiveSafeMap<K, V, P extends Primitive> {
                 const result = it.next();
                 if (result.done) return { done: true, value: undefined };
                 const [serialisedKey, value] = result.value;
-                const originalKey = keyMap.get(serialisedKey)!;
+                const originalKey = deserialise(serialisedKey);
                 return { done: false, value: [originalKey, value] };
             },
         };
@@ -186,7 +188,7 @@ export class ReactiveSafeMap<K, V, P extends Primitive> {
         return false;
     }
 
-    forEach(callbackfn: (value: V, key: K, map: ReactiveSafeMap<K, V, P>) => void): void {
+    forEach(callbackfn: (value: V, key: K, map: ReactiveSafeMap<K, V>) => void): void {
         for (const [k, value] of this.#map.entries()) {
             callbackfn(value, this.#deserialise(k), this);
         }
@@ -213,34 +215,34 @@ export class ReactiveSafeMap<K, V, P extends Primitive> {
         return this.#map.size;
     }
 
-    toMap(): Map<P, V> {
+    toMap(): Map<Primitive, V> {
         return this.#map;
     }
 }
 
-export class ReactiveCommunityMap<V> extends ReactiveSafeMap<CommunityIdentifier, V, string> {
+export class ReactiveCommunityMap<V> extends ReactiveSafeMap<CommunityIdentifier, V> {
     constructor() {
         super(
             (id) => id.communityId,
-            (k) => ({ kind: "community", communityId: k }),
+            (k) => ({ kind: "community", communityId: String(k) }),
         );
     }
 }
 
-export class ReactiveChatMap<V> extends ReactiveSafeMap<ChatIdentifier, V, string> {
+export class ReactiveChatMap<V> extends ReactiveSafeMap<ChatIdentifier, V> {
     constructor() {
         super(
             (id) => JSON.stringify(id),
-            (k) => JSON.parse(k) as ChatIdentifier,
+            (k) => JSON.parse(String(k)) as ChatIdentifier,
         );
     }
 }
 
-export class LocalCommunityMap<V> extends LocalMap<CommunityIdentifier, V, string> {
+export class LocalCommunityMap<V> extends LocalMap<CommunityIdentifier, V> {
     constructor() {
         super(
             (id) => id.communityId,
-            (k) => ({ kind: "community", communityId: k }),
+            (k) => ({ kind: "community", communityId: String(k) }),
         );
     }
 }

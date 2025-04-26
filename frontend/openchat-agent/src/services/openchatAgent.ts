@@ -169,6 +169,7 @@ import type {
     UnpinChatResponse,
     UnpinMessageResponse,
     UnsuspendUserResponse,
+    UpdatedEvent,
     UpdatedRules,
     UpdateGroupResponse,
     UpdateMarketMakerConfigArgs,
@@ -2103,7 +2104,7 @@ export class OpenChatAgent extends EventTarget {
 
         return {
             state: this.hydrateChatState(state),
-            updatedEvents: updatedEvents.toMap(),
+            updatedEvents: updatedEvents.toMap() as Map<string, UpdatedEvent[]>,
             anyUpdates,
             suspensionChanged,
             newAchievements,
@@ -3162,7 +3163,9 @@ export class OpenChatAgent extends EventTarget {
     }
 
     loadFailedMessages(): Promise<Map<string, Record<number, EventWrapper<Message>>>> {
-        return loadFailedMessages(this.db).then((messages) => messages.toMap());
+        return loadFailedMessages(this.db).then(
+            (messages) => messages.toMap() as Map<string, Record<number, EventWrapper<Message>>>,
+        );
     }
 
     deleteFailedMessage(
@@ -4073,7 +4076,9 @@ export class OpenChatAgent extends EventTarget {
 
         if (anyMissing) {
             this.getMessagesByMessageContext(
-                new AsyncMessageContextMap(missing.map((_, v) => [...v]).toMap()),
+                new AsyncMessageContextMap(
+                    missing.map((_, v) => [...v]).toMap() as Map<string, number[]>,
+                ),
                 withCachedMessages,
                 "missing",
             ).then(([withServerMessages]) => callback(withServerMessages, true));

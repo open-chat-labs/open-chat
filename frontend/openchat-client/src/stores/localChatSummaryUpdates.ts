@@ -9,8 +9,7 @@ import { LocalUpdatesStore } from "./localUpdatesStore";
 
 class LocalChatSummaryUpdatesStore extends LocalUpdatesStore<
     ChatIdentifier,
-    LocalChatSummaryUpdates,
-    string
+    LocalChatSummaryUpdates
 > {
     constructor() {
         super(new ChatMap<LocalChatSummaryUpdates>());

@@ -1,5 +1,4 @@
 import {
-    identity,
     type CommunityIdentifier,
     type ExternalBotPermissions,
     type Member,
@@ -22,10 +21,10 @@ export class CommunityLocalState {
     readonly blockedUsers = new LocalSet<string>();
     readonly referrals = new LocalSet<string>();
     readonly lapsedMembers = new LocalSet<string>();
-    readonly members = new LocalMap<string, Member, string>(identity, identity);
-    readonly userGroups = new LocalMap<number, UserGroupDetails, number>(identity, identity);
-    readonly bots = new LocalMap<string, ExternalBotPermissions, string>(identity, identity);
-    readonly apiKeys = new LocalMap<string, PublicApiKeyDetails, string>(identity, identity);
+    readonly members = new LocalMap<string, Member>();
+    readonly userGroups = new LocalMap<number, UserGroupDetails>();
+    readonly bots = new LocalMap<string, ExternalBotPermissions>();
+    readonly apiKeys = new LocalMap<string, PublicApiKeyDetails>();
 
     get index() {
         return this.#index;

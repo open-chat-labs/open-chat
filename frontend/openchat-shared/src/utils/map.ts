@@ -9,9 +9,9 @@ import type { ChatIdentifier, MessageContext } from "../domain/chat";
 
 // TODO - this is basically identical to the ReactiveSafeMap except the underlying data is held in a Map rather than a SvelteMap
 // Can we consolidate that
-export class SafeMap<K, V, P extends Primitive> {
-    #keyMap = new Map<P, K>();
-    #deserialise(k: P): K {
+export class SafeMap<K, V> {
+    #keyMap = new Map<Primitive, K>();
+    #deserialise(k: Primitive): K {
         let key = this.#keyMap.get(k);
         if (key === undefined) {
             key = this._deserialise(k);
@@ -21,31 +21,31 @@ export class SafeMap<K, V, P extends Primitive> {
     }
 
     constructor(
-        private _serialise: (key: K) => P,
-        private _deserialise: (primitive: P) => K,
-        protected _map: Map<P, V> = new Map<P, V>(),
+        private _serialise: (key: K) => Primitive,
+        private _deserialise: (primitive: Primitive) => K,
+        protected _map: Map<Primitive, V> = new Map<Primitive, V>(),
     ) {}
 
     [Symbol.iterator](): Iterator<[K, V]> {
         return this.entries();
     }
 
-    map<A>(fn: (key: K, val: V) => A): SafeMap<K, A, P> {
-        const mapped = new SafeMap<K, A, P>(this._serialise, this._deserialise);
+    map<A>(fn: (key: K, val: V) => A): SafeMap<K, A> {
+        const mapped = new SafeMap<K, A>(this._serialise, this._deserialise);
         for (const [k, v] of this.entries()) {
             mapped.set(k, fn(k, v));
         }
         return mapped;
     }
 
-    merge(other: SafeMap<K, V, P>): SafeMap<K, V, P> {
+    merge(other: SafeMap<K, V>): SafeMap<K, V> {
         other.forEach((val, key) => {
             this.set(key, val);
         });
         return this;
     }
 
-    filter(fn: (value: V, key: K) => boolean): SafeMap<K, V, P> {
+    filter(fn: (value: V, key: K) => boolean): SafeMap<K, V> {
         return [...this.entries()]
             .filter(([k, v]) => {
                 return fn(v, k);
@@ -55,7 +55,7 @@ export class SafeMap<K, V, P extends Primitive> {
                     agg.set(k, v);
                     return agg;
                 },
-                new SafeMap<K, V, P>(this._serialise, this._deserialise),
+                new SafeMap<K, V>(this._serialise, this._deserialise),
             );
     }
 
@@ -67,16 +67,16 @@ export class SafeMap<K, V, P extends Primitive> {
         return acc;
     }
 
-    clone(): SafeMap<K, V, P> {
-        const cloned = new SafeMap<K, V, P>(this._serialise, this._deserialise);
+    clone(): SafeMap<K, V> {
+        const cloned = new SafeMap<K, V>(this._serialise, this._deserialise);
         for (const [key, value] of this) {
             cloned.set(key, value);
         }
         return cloned;
     }
 
-    empty(): SafeMap<K, V, P> {
-        return new SafeMap<K, V, P>(this._serialise, this._deserialise);
+    empty(): SafeMap<K, V> {
+        return new SafeMap<K, V>(this._serialise, this._deserialise);
     }
 
     clear(): void {
@@ -94,7 +94,7 @@ export class SafeMap<K, V, P extends Primitive> {
 
     entries(): IterableIterator<[K, V]> {
         const map = this._map;
-        const keyMap = this.#keyMap;
+        const deserialise = (s: Primitive) => this.#deserialise(s);
         const it = map.entries();
         return {
             [Symbol.iterator]() {
@@ -104,7 +104,7 @@ export class SafeMap<K, V, P extends Primitive> {
                 const result = it.next();
                 if (result.done) return { done: true, value: undefined };
                 const [serialisedKey, value] = result.value;
-                const originalKey = keyMap.get(serialisedKey)!;
+                const originalKey = deserialise(serialisedKey);
                 return { done: false, value: [originalKey, value] };
             },
         };
@@ -120,7 +120,7 @@ export class SafeMap<K, V, P extends Primitive> {
         return false;
     }
 
-    forEach(callbackfn: (value: V, key: K, map: SafeMap<K, V, P>) => void): void {
+    forEach(callbackfn: (value: V, key: K, map: SafeMap<K, V>) => void): void {
         for (const [k, value] of this._map.entries()) {
             callbackfn(value, this.#deserialise(k), this);
         }
@@ -147,13 +147,13 @@ export class SafeMap<K, V, P extends Primitive> {
         return this._map.size;
     }
 
-    toMap(): Map<P, V> {
+    toMap(): Map<Primitive, V> {
         return this._map;
     }
 }
 
 // This is a bit weird
-export class GlobalMap<V> extends SafeMap<"global", V, string> {
+export class GlobalMap<V> extends SafeMap<"global", V> {
     constructor(_map?: Map<"global", V>) {
         super(
             (_: "global") => "global",
@@ -163,9 +163,13 @@ export class GlobalMap<V> extends SafeMap<"global", V, string> {
     }
 }
 
-export class ChatMap<V> extends SafeMap<ChatIdentifier, V, string> {
+export class ChatMap<V> extends SafeMap<ChatIdentifier, V> {
     constructor(_map?: Map<string, V>) {
-        super(JSON.stringify, (k) => JSON.parse(String(k)) as ChatIdentifier, _map);
+        super(
+            (k) => JSON.stringify(k),
+            (k) => JSON.parse(String(k)) as ChatIdentifier,
+            _map,
+        );
     }
 
     static fromList<T extends { id: ChatIdentifier }>(things: T[]): ChatMap<T> {
@@ -176,6 +180,7 @@ export class ChatMap<V> extends SafeMap<ChatIdentifier, V, string> {
     }
 
     static fromMap<V>(map: Map<string, V>): ChatMap<V> {
+        console.log("From map: ", map);
         return new ChatMap<V>(map);
     }
 
@@ -184,9 +189,13 @@ export class ChatMap<V> extends SafeMap<ChatIdentifier, V, string> {
     }
 }
 
-export class MessageContextMap<V> extends SafeMap<MessageContext, V, string> {
+export class MessageContextMap<V> extends SafeMap<MessageContext, V> {
     constructor(_map?: Map<string, V>) {
-        super(JSON.stringify, (k) => JSON.parse(k) as MessageContext, _map);
+        super(
+            (k) => JSON.stringify(k),
+            (k) => JSON.parse(String(k)) as MessageContext,
+            _map,
+        );
     }
 
     static fromMap<V>(map: Map<string, V>): MessageContextMap<V> {
@@ -194,11 +203,11 @@ export class MessageContextMap<V> extends SafeMap<MessageContext, V, string> {
     }
 }
 
-export class CommunityMap<V> extends SafeMap<CommunityIdentifier, V, string> {
+export class CommunityMap<V> extends SafeMap<CommunityIdentifier, V> {
     constructor() {
         super(
             (k) => k.communityId,
-            (k) => ({ kind: "community", communityId: k }),
+            (k) => ({ kind: "community", communityId: String(k) }),
         );
     }
 
@@ -210,7 +219,7 @@ export class CommunityMap<V> extends SafeMap<CommunityIdentifier, V, string> {
     }
 }
 
-export class MessageMap<V> extends SafeMap<bigint, V, string> {
+export class MessageMap<V> extends SafeMap<bigint, V> {
     constructor(entries?: readonly (readonly [bigint, V])[] | undefined) {
         super(
             (k) => k.toString(),

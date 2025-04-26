@@ -1,5 +1,4 @@
 import {
-    identity,
     type ChatIdentifier,
     type ExternalBotPermissions,
     type Member,
@@ -16,9 +15,9 @@ export class ChatDetailsLocalState {
     readonly pinnedMessages = new LocalSet<number>();
     readonly invitedUsers = new LocalSet<string>();
     readonly blockedUsers = new LocalSet<string>();
-    readonly members = new LocalMap<string, Member, string>(identity, identity);
-    readonly bots = new LocalMap<string, ExternalBotPermissions, string>(identity, identity);
-    readonly apiKeys = new LocalMap<string, PublicApiKeyDetails, string>(identity, identity);
+    readonly members = new LocalMap<string, Member>();
+    readonly bots = new LocalMap<string, ExternalBotPermissions>();
+    readonly apiKeys = new LocalMap<string, PublicApiKeyDetails>();
 
     get rules() {
         return this.#rules;

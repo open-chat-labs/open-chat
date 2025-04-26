@@ -12,3 +12,7 @@ export function defaultSerialiser<T>(x: T): Primitive {
             return JSON.stringify(x);
     }
 }
+
+export function defaultDeserialiser<T>(x: Primitive): T {
+    return x as T;
+}

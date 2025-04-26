@@ -1,4 +1,4 @@
-import type { Primitive, SafeMap } from "openchat-shared";
+import type { SafeMap } from "openchat-shared";
 import { type Writable, writable } from "svelte/store";
 
 const PRUNE_LOCAL_UPDATES_INTERVAL: number = 30 * 1000;
@@ -7,14 +7,14 @@ export interface LocalUpdates {
     lastUpdated: number;
 }
 
-export abstract class LocalUpdatesStore<K, T extends LocalUpdates, P extends Primitive> {
-    private store: Writable<SafeMap<K, T, P>>;
-    private storeValue: SafeMap<K, T, P>;
+export abstract class LocalUpdatesStore<K, T extends LocalUpdates> {
+    private store: Writable<SafeMap<K, T>>;
+    private storeValue: SafeMap<K, T>;
 
     subscribe: typeof this.store.subscribe;
 
-    constructor(initialValue: SafeMap<K, T, P>) {
-        this.store = writable<SafeMap<K, T, P>>(initialValue);
+    constructor(initialValue: SafeMap<K, T>) {
+        this.store = writable<SafeMap<K, T>>(initialValue);
         this.storeValue = initialValue;
         this.store.subscribe((value) => (this.storeValue = value));
         this.subscribe = this.store.subscribe;
