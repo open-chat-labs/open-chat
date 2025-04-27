@@ -26,8 +26,8 @@ export class LocalMap<K, V> {
     #removed: ReactiveSafeSet<K>;
 
     constructor(
-        private serialiser: (k: K) => Primitive = defaultSerialiser,
-        private deserialiser: (p: Primitive) => K = defaultDeserialiser,
+        private serialiser?: (k: K) => Primitive,
+        private deserialiser?: (p: Primitive) => K,
     ) {
         this.#addedOrUpdated = new ReactiveSafeMap(serialiser, deserialiser);
         this.#removed = new ReactiveSafeSet(serialiser);
@@ -78,28 +78,29 @@ export class LocalMap<K, V> {
 }
 
 export class ReactiveSafeMap<K, V> {
-    #keyMap = new Map<Primitive, K>();
+    #isPrimitive: boolean;
+    #serialise: (key: K) => Primitive;
+    #deserialise: (key: Primitive) => K;
     #map = new SvelteMap<Primitive, V>();
-    #deserialise(k: Primitive): K {
-        let key = this.#keyMap.get(k);
-        if (key === undefined) {
-            key = this._deserialise(k);
-            this.#keyMap.set(k, key);
-        }
-        return key;
+
+    #newMap<A>(): ReactiveSafeMap<K, A> {
+        return this.#isPrimitive
+            ? new ReactiveSafeMap<K, A>()
+            : new ReactiveSafeMap<K, A>(this.#serialise, this.#deserialise);
     }
 
-    constructor(
-        private _serialise: (key: K) => Primitive,
-        private _deserialise: (primitive: Primitive) => K,
-    ) {}
+    constructor(serialiser?: (key: K) => Primitive, deserialiser?: (primitive: Primitive) => K) {
+        this.#isPrimitive = serialiser === undefined && deserialiser === undefined;
+        this.#serialise = serialiser ?? defaultSerialiser;
+        this.#deserialise = deserialiser ?? defaultDeserialiser;
+    }
 
     [Symbol.iterator](): Iterator<[K, V]> {
         return this.entries();
     }
 
     map<A>(fn: (key: K, val: V) => A): ReactiveSafeMap<K, A> {
-        const mapped = new ReactiveSafeMap<K, A>(this._serialise, this._deserialise);
+        const mapped = this.#newMap<A>();
         for (const [k, v] of this.entries()) {
             mapped.set(k, fn(k, v));
         }
@@ -118,13 +119,10 @@ export class ReactiveSafeMap<K, V> {
             .filter(([k, v]) => {
                 return fn(v, k);
             })
-            .reduce(
-                (agg, [k, v]) => {
-                    agg.set(k, v);
-                    return agg;
-                },
-                new ReactiveSafeMap<K, V>(this._serialise, this._deserialise),
-            );
+            .reduce((agg, [k, v]) => {
+                agg.set(k, v);
+                return agg;
+            }, this.#newMap<V>());
     }
 
     reduce<U>(reducer: (acc: U, [k, v]: [K, V], map: this) => U, initialValue: U): U {
@@ -136,7 +134,7 @@ export class ReactiveSafeMap<K, V> {
     }
 
     clone(): ReactiveSafeMap<K, V> {
-        const cloned = new ReactiveSafeMap<K, V>(this._serialise, this._deserialise);
+        const cloned = this.#newMap<V>();
         for (const [key, value] of this) {
             cloned.set(key, value);
         }
@@ -144,11 +142,10 @@ export class ReactiveSafeMap<K, V> {
     }
 
     empty(): ReactiveSafeMap<K, V> {
-        return new ReactiveSafeMap<K, V>(this._serialise, this._deserialise);
+        return this.#newMap<V>();
     }
 
     clear(): void {
-        this.#keyMap.clear();
         this.#map.clear();
     }
 
@@ -157,7 +154,17 @@ export class ReactiveSafeMap<K, V> {
     }
 
     keys(): IterableIterator<K> {
-        return this.#keyMap.values();
+        const entryIter = this[Symbol.iterator]();
+        return {
+            [Symbol.iterator]() {
+                return this;
+            },
+            next(): IteratorResult<K> {
+                const { done, value } = entryIter.next();
+                if (done) return { done, value: undefined };
+                return { done: false, value: value[0] };
+            },
+        };
     }
 
     entries(): IterableIterator<[K, V]> {
@@ -180,12 +187,7 @@ export class ReactiveSafeMap<K, V> {
 
     delete(key: K): boolean {
         if (this.#map.size === 0) return false;
-        const k = this._serialise(key);
-        if (this.#map.has(k)) {
-            this.#keyMap.delete(k);
-            return this.#map.delete(k);
-        }
-        return false;
+        return this.#map.delete(this.#serialise(key));
     }
 
     forEach(callbackfn: (value: V, key: K, map: ReactiveSafeMap<K, V>) => void): void {
@@ -196,18 +198,16 @@ export class ReactiveSafeMap<K, V> {
 
     get(key: K): V | undefined {
         if (this.#map.size === 0) return undefined;
-        return this.#map.get(this._serialise(key));
+        return this.#map.get(this.#serialise(key));
     }
 
     has(key: K): boolean {
         if (this.#map.size === 0) return false;
-        return this.#map.has(this._serialise(key));
+        return this.#map.has(this.#serialise(key));
     }
 
     set(key: K, value: V): this {
-        const k = this._serialise(key);
-        this.#map.set(k, value);
-        this.#keyMap.set(k, key);
+        this.#map.set(this.#serialise(key), value);
         return this;
     }
 

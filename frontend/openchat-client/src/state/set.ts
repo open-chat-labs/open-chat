@@ -1,5 +1,5 @@
-import { defaultSerialiser, type Primitive } from "openchat-shared";
-import { SvelteMap, SvelteSet } from "svelte/reactivity";
+import { defaultDeserialiser, defaultSerialiser, type Primitive } from "openchat-shared";
+import { SvelteSet } from "svelte/reactivity";
 import { scheduleUndo, type UndoLocalUpdate } from "./undo";
 
 export interface ReadonlySet<T> {
@@ -65,57 +65,64 @@ export class LocalSet<T> {
 }
 
 export class ReactiveSafeSet<K> {
+    // #isPrimitive: boolean;
+    #serialise: (key: K) => Primitive;
+    #deserialise: (key: Primitive) => K;
     #set = new SvelteSet<Primitive>();
-    #valueMap = new SvelteMap<Primitive, K>();
 
-    constructor(private _serialize: (value: K) => Primitive = defaultSerialiser) {}
+    constructor(serialiser?: (key: K) => Primitive, deserialiser?: (primitive: Primitive) => K) {
+        // this.#isPrimitive = serialiser === undefined && deserialiser === undefined;
+        this.#serialise = serialiser ?? defaultSerialiser;
+        this.#deserialise = deserialiser ?? defaultDeserialiser;
+    }
 
     add(value: K): this {
-        const svalue = this._serialize(value);
+        const svalue = this.#serialise(value);
         this.#set.add(svalue);
-        this.#valueMap.set(svalue, value);
         return this;
     }
 
     has(key: K): boolean {
-        return this.#set.has(this._serialize(key));
+        return this.#set.has(this.#serialise(key));
     }
 
     delete(key: K): boolean {
-        const svalue = this._serialize(key);
-        this.#valueMap.delete(svalue);
+        const svalue = this.#serialise(key);
         return this.#set.delete(svalue);
     }
 
     clear(): void {
         this.#set.clear();
-        this.#valueMap.clear();
     }
 
     values(): IterableIterator<K> {
-        return this.#valueMap.values();
+        return this.entries();
     }
 
     keys(): IterableIterator<K> {
         return this.values();
     }
 
-    entries(): IterableIterator<[K, K]> {
-        const it = this.#valueMap.values();
+    entries(): IterableIterator<K> {
+        const set = this.#set;
+        const deserialise = (s: Primitive) => this.#deserialise(s);
+        const it = set.entries();
         return {
             [Symbol.iterator]() {
                 return this;
             },
-            next(): IteratorResult<[K, K]> {
+            next(): IteratorResult<K> {
                 const result = it.next();
                 if (result.done) return { done: true, value: undefined };
-                return { done: false, value: [result.value, result.value] };
+                const [serialisedVal] = result.value;
+                const originalVal = deserialise(serialisedVal);
+                return { done: false, value: originalVal };
             },
         };
     }
 
     forEach(callback: (value: K, value2: K, set: this) => void): void {
-        for (const value of this.#valueMap.values()) {
+        for (const value of this.values()) {
             callback(value, value, this);
         }
     }
