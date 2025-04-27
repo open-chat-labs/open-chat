@@ -12,29 +12,47 @@ import {
 } from "../domain";
 import type { ChatIdentifier, MessageContext } from "../domain/chat";
 
+export interface MapLike<K, V> {
+    set(key: K, value: V): this;
+    get(key: K): V | undefined;
+    has(key: K): boolean;
+    delete(key: K): boolean;
+    clear(): void;
+    get size(): number;
+    keys(): IterableIterator<K>;
+    values(): IterableIterator<V>;
+    entries(): IterableIterator<[K, V]>;
+    [Symbol.iterator](): IterableIterator<[K, V]>;
+}
+
+export type MapFactory<K> = <V>() => MapLike<K, V>;
+
 // TODO - this is basically identical to the ReactiveSafeMap except the underlying data is held in a Map rather than a SvelteMap
 // Can we consolidate that
 export class SafeMap<K, V> {
     #isPrimitive: boolean;
     #serialise: (key: K) => Primitive;
     #deserialise: (key: Primitive) => K;
-    #map: Map<Primitive, V>;
+    #map: MapLike<Primitive, V>;
+    #mapFactory: MapFactory<Primitive>;
 
     #newMap<A>(): SafeMap<K, A> {
         return this.#isPrimitive
-            ? new SafeMap<K, A>()
-            : new SafeMap<K, A>(this.#serialise, this.#deserialise);
+            ? new SafeMap<K, A>(undefined, undefined, this.#mapFactory)
+            : new SafeMap<K, A>(this.#serialise, this.#deserialise, this.#mapFactory);
     }
 
     constructor(
         serialiser?: (key: K) => Primitive,
         deserialiser?: (primitive: Primitive) => K,
-        map?: Map<Primitive, V>,
+        mapFactory?: MapFactory<Primitive>,
+        map?: MapLike<Primitive, V>,
     ) {
         this.#isPrimitive = serialiser === undefined && deserialiser === undefined;
         this.#serialise = serialiser ?? defaultSerialiser;
         this.#deserialise = deserialiser ?? defaultDeserialiser;
-        this.#map = map ?? new Map<Primitive, V>();
+        this.#mapFactory = mapFactory ?? (<V>() => new Map<Primitive, V>());
+        this.#map = map ?? (mapFactory ? mapFactory() : new Map<Primitive, V>());
     }
 
     [Symbol.iterator](): Iterator<[K, V]> {
@@ -110,9 +128,8 @@ export class SafeMap<K, V> {
     }
 
     entries(): IterableIterator<[K, V]> {
-        const map = this.#map;
         const deserialise = (s: Primitive) => this.#deserialise(s);
-        const it = map.entries();
+        const it = this.#map.entries();
         return {
             [Symbol.iterator]() {
                 return this;
@@ -157,7 +174,7 @@ export class SafeMap<K, V> {
         return this.#map.size;
     }
 
-    toMap(): Map<Primitive, V> {
+    toMap(): MapLike<Primitive, V> {
         return this.#map;
     }
 }
@@ -168,6 +185,7 @@ export class GlobalMap<V> extends SafeMap<"global", V> {
         super(
             (_: "global") => "global",
             (_) => "global",
+            undefined,
             _map,
         );
     }
@@ -178,6 +196,7 @@ export class ChatMap<V> extends SafeMap<ChatIdentifier, V> {
         super(
             (k) => JSON.stringify(k),
             (k) => JSON.parse(String(k)) as ChatIdentifier,
+            undefined,
             _map,
         );
     }
@@ -204,6 +223,7 @@ export class MessageContextMap<V> extends SafeMap<MessageContext, V> {
         super(
             (k) => JSON.stringify(k),
             (k) => JSON.parse(String(k)) as MessageContext,
+            undefined,
             _map,
         );
     }

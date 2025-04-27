@@ -350,6 +350,7 @@ export function setGlobalState(
         }
     });
 
+    console.log(communitiesMap);
     app.serverCommunities = communitiesMap;
 
     globalStateStore.set(state);

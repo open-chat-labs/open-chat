@@ -65,13 +65,11 @@ export class LocalSet<T> {
 }
 
 export class ReactiveSafeSet<K> {
-    // #isPrimitive: boolean;
     #serialise: (key: K) => Primitive;
     #deserialise: (key: Primitive) => K;
     #set = new SvelteSet<Primitive>();
 
     constructor(serialiser?: (key: K) => Primitive, deserialiser?: (primitive: Primitive) => K) {
-        // this.#isPrimitive = serialiser === undefined && deserialiser === undefined;
         this.#serialise = serialiser ?? defaultSerialiser;
         this.#deserialise = deserialiser ?? defaultDeserialiser;
     }

@@ -232,12 +232,25 @@ describe("app state", () => {
         });
     });
 
+    describe("CommunityMap from list", () => {
+        test("it works", () => {
+            const map = CommunityMap.fromList([
+                createCommunitySummary("123456", 1),
+                createCommunitySummary("654321", 2),
+            ]);
+            expect(map.size).toEqual(2);
+        });
+    });
+
     describe("global state", () => {
         beforeEach(() => {
             app.serverCommunities = CommunityMap.fromList([
                 createCommunitySummary("123456", 1),
                 createCommunitySummary("654321", 2),
             ]);
+        });
+        test("communities list", () => {
+            expect(app.serverCommunities.size).toEqual(2);
         });
         test("community indexes", () => {
             const id: CommunityIdentifier = { kind: "community", communityId: "123456" };

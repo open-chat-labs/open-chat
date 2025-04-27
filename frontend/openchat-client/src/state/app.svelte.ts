@@ -276,9 +276,11 @@ class AppState {
     }
 
     set serverCommunities(val: CommunityMap<CommunitySummary>) {
-        if (!dequal(val, this.#serverCommunities)) {
-            this.#serverCommunities = val;
-        }
+        this.#serverCommunities = val;
+    }
+
+    get serverCommunities() {
+        return this.#serverCommunities;
     }
 
     get communities() {

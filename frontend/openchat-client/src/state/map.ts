@@ -1,6 +1,4 @@
 import {
-    defaultDeserialiser,
-    defaultSerialiser,
     SafeMap,
     type ChatIdentifier,
     type CommunityIdentifier,
@@ -22,14 +20,14 @@ export interface ReadonlyMap<K, V> {
 }
 
 export class LocalMap<K, V> {
-    #addedOrUpdated: ReactiveSafeMap<K, V>;
+    #addedOrUpdated: SafeMap<K, V>;
     #removed: ReactiveSafeSet<K>;
 
     constructor(
         private serialiser?: (k: K) => Primitive,
         private deserialiser?: (p: Primitive) => K,
     ) {
-        this.#addedOrUpdated = new ReactiveSafeMap(serialiser, deserialiser);
+        this.#addedOrUpdated = new SafeMap(serialiser, deserialiser, () => new SvelteMap());
         this.#removed = new ReactiveSafeSet(serialiser);
     }
 
@@ -77,163 +75,22 @@ export class LocalMap<K, V> {
     }
 }
 
-export class ReactiveSafeMap<K, V> {
-    #isPrimitive: boolean;
-    #serialise: (key: K) => Primitive;
-    #deserialise: (key: Primitive) => K;
-    #map = new SvelteMap<Primitive, V>();
-
-    #newMap<A>(): ReactiveSafeMap<K, A> {
-        return this.#isPrimitive
-            ? new ReactiveSafeMap<K, A>()
-            : new ReactiveSafeMap<K, A>(this.#serialise, this.#deserialise);
-    }
-
-    constructor(serialiser?: (key: K) => Primitive, deserialiser?: (primitive: Primitive) => K) {
-        this.#isPrimitive = serialiser === undefined && deserialiser === undefined;
-        this.#serialise = serialiser ?? defaultSerialiser;
-        this.#deserialise = deserialiser ?? defaultDeserialiser;
-    }
-
-    [Symbol.iterator](): Iterator<[K, V]> {
-        return this.entries();
-    }
-
-    map<A>(fn: (key: K, val: V) => A): ReactiveSafeMap<K, A> {
-        const mapped = this.#newMap<A>();
-        for (const [k, v] of this.entries()) {
-            mapped.set(k, fn(k, v));
-        }
-        return mapped;
-    }
-
-    merge(other: ReactiveSafeMap<K, V>): ReactiveSafeMap<K, V> {
-        other.forEach((val, key) => {
-            this.set(key, val);
-        });
-        return this;
-    }
-
-    filter(fn: (value: V, key: K) => boolean): ReactiveSafeMap<K, V> {
-        return [...this.entries()]
-            .filter(([k, v]) => {
-                return fn(v, k);
-            })
-            .reduce((agg, [k, v]) => {
-                agg.set(k, v);
-                return agg;
-            }, this.#newMap<V>());
-    }
-
-    reduce<U>(reducer: (acc: U, [k, v]: [K, V], map: this) => U, initialValue: U): U {
-        let acc = initialValue;
-        for (const entry of this) {
-            acc = reducer(acc, entry, this);
-        }
-        return acc;
-    }
-
-    clone(): ReactiveSafeMap<K, V> {
-        const cloned = this.#newMap<V>();
-        for (const [key, value] of this) {
-            cloned.set(key, value);
-        }
-        return cloned;
-    }
-
-    empty(): ReactiveSafeMap<K, V> {
-        return this.#newMap<V>();
-    }
-
-    clear(): void {
-        this.#map.clear();
-    }
-
-    values(): IterableIterator<V> {
-        return this.#map.values();
-    }
-
-    keys(): IterableIterator<K> {
-        const entryIter = this[Symbol.iterator]();
-        return {
-            [Symbol.iterator]() {
-                return this;
-            },
-            next(): IteratorResult<K> {
-                const { done, value } = entryIter.next();
-                if (done) return { done, value: undefined };
-                return { done: false, value: value[0] };
-            },
-        };
-    }
-
-    entries(): IterableIterator<[K, V]> {
-        const map = this.#map;
-        const deserialise = (s: Primitive) => this.#deserialise(s);
-        const it = map.entries();
-        return {
-            [Symbol.iterator]() {
-                return this;
-            },
-            next(): IteratorResult<[K, V]> {
-                const result = it.next();
-                if (result.done) return { done: true, value: undefined };
-                const [serialisedKey, value] = result.value;
-                const originalKey = deserialise(serialisedKey);
-                return { done: false, value: [originalKey, value] };
-            },
-        };
-    }
-
-    delete(key: K): boolean {
-        if (this.#map.size === 0) return false;
-        return this.#map.delete(this.#serialise(key));
-    }
-
-    forEach(callbackfn: (value: V, key: K, map: ReactiveSafeMap<K, V>) => void): void {
-        for (const [k, value] of this.#map.entries()) {
-            callbackfn(value, this.#deserialise(k), this);
-        }
-    }
-
-    get(key: K): V | undefined {
-        if (this.#map.size === 0) return undefined;
-        return this.#map.get(this.#serialise(key));
-    }
-
-    has(key: K): boolean {
-        if (this.#map.size === 0) return false;
-        return this.#map.has(this.#serialise(key));
-    }
-
-    set(key: K, value: V): this {
-        this.#map.set(this.#serialise(key), value);
-        return this;
-    }
-
-    get size(): number {
-        return this.#map.size;
-    }
-
-    toMap(): Map<Primitive, V> {
-        return this.#map;
-    }
-}
-
-export class ReactiveCommunityMap<V> extends ReactiveSafeMap<CommunityIdentifier, V> {
+export class ReactiveCommunityMap<V> extends SafeMap<CommunityIdentifier, V> {
     constructor() {
         super(
             (id) => id.communityId,
             (k) => ({ kind: "community", communityId: String(k) }),
+            () => new SvelteMap(),
         );
     }
 }
 
-export class ReactiveChatMap<V> extends ReactiveSafeMap<ChatIdentifier, V> {
+export class ReactiveChatMap<V> extends SafeMap<ChatIdentifier, V> {
     constructor() {
         super(
             (id) => JSON.stringify(id),
             (k) => JSON.parse(String(k)) as ChatIdentifier,
+            () => new SvelteMap(),
         );
     }
 }
