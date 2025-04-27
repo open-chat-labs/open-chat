@@ -27,8 +27,6 @@ export interface MapLike<K, V> {
 
 export type MapFactory<K> = <V>() => MapLike<K, V>;
 
-// TODO - this is basically identical to the ReactiveSafeMap except the underlying data is held in a Map rather than a SvelteMap
-// Can we consolidate that
 export class SafeMap<K, V> {
     #isPrimitive: boolean;
     #serialise: (key: K) => Primitive;
