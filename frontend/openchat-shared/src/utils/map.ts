@@ -207,7 +207,6 @@ export class ChatMap<V> extends SafeMap<ChatIdentifier, V> {
     }
 
     static fromMap<V>(map: Map<string, V>): ChatMap<V> {
-        console.log("From map: ", map);
         return new ChatMap<V>(map);
     }
 
