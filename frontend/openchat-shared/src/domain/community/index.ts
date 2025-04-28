@@ -26,12 +26,7 @@ import type {
     Permissioned,
     PublicApiKeyDetails,
 } from "../permission";
-import type {
-    Failure, InternalError,
-    Offline,
-    Success,
-    SuccessNoUpdates,
-} from "../response";
+import type { Failure, InternalError, Offline, Success, SuccessNoUpdates } from "../response";
 import type { HasLevel } from "../structure";
 import type { UserGroupDetails, UserGroupSummary } from "../user";
 
@@ -142,11 +137,7 @@ export type UpdateCommunityResponse =
 
 export type ToggleMuteCommunityNotificationsResponse = Success | OCError | Offline;
 
-export type CreateCommunityResponse =
-    | Offline
-    | Failure
-    | OCError
-    | (Success & { id: string });
+export type CreateCommunityResponse = Offline | Failure | OCError | (Success & { id: string });
 
 export type JoinCommunityResponse =
     | Failure
@@ -274,8 +265,6 @@ export type LeaveCommunityResponse = Success | OCError | Offline;
 export type DeleteCommunityResponse = Success | OCError | Offline;
 
 export type LocalCommunitySummaryUpdates = {
-    installedBots?: Map<string, ExternalBotPermissions>;
-    removedBots?: Set<string>;
     added?: CommunitySummary;
     removedAtTimestamp?: bigint;
     lastUpdated: number;

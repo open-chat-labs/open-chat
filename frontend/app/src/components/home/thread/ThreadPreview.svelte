@@ -9,7 +9,6 @@
         type MultiUserChat,
         OpenChat,
         routeForChatIdentifier,
-        selectedCommunity,
         type ThreadPreview,
         currentUser as user,
         userStore,
@@ -56,7 +55,7 @@
     );
     let chatData = $derived({
         name: chat?.name,
-        avatarUrl: client.groupAvatarUrl(chat, $selectedCommunity),
+        avatarUrl: client.groupAvatarUrl(chat, app.selectedCommunitySummary),
     });
 
     let grouped = $derived(client.groupBySender(thread.latestReplies));

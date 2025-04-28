@@ -5,7 +5,6 @@
         AvatarSize,
         type BotMessageContext as BotMessageContextType,
         type ChatIdentifier,
-        chatListScopeStore as chatListScope,
         type ChatType,
         currentUser,
         type Dimensions,
@@ -446,7 +445,7 @@
     let translated = $derived($translationStore.has(msg.messageId));
     let threadSummary = $derived(msg.thread);
     let msgUrl = $derived(
-        `${routeForMessage($chatListScope.kind, { chatId }, msg.messageIndex)}?open=true`,
+        `${routeForMessage(app.chatListScope.kind, { chatId }, msg.messageIndex)}?open=true`,
     );
     let isProposal = $derived(msg.content.kind === "proposal_content");
     let isPrize = $derived(msg.content.kind === "prize_content");

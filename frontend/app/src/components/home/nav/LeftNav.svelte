@@ -4,9 +4,8 @@
         type CommunitySummary,
         type OpenChat,
         anonUser,
-        chatListScopeStore as chatListScope,
+        app,
         chitStateStore as chitState,
-        communitiesList as communities,
         communityChannelVideoCallCounts,
         currentUser as createdUser,
         directVideoCallCounts,
@@ -17,7 +16,6 @@
         groupVideoCallCounts,
         pathState,
         publish,
-        selectedCommunity,
         ui,
         unreadActivityCount,
         unreadCommunityChannelCounts,
@@ -56,7 +54,7 @@
     let user = $derived($userStore.get($createdUser.userId));
     let avatarSize = $derived(ui.mobileWidth ? AvatarSize.Small : AvatarSize.Default);
     let communityExplorer = $derived(pathState.route.kind === "communities_route");
-    let selectedCommunityId = $derived($selectedCommunity?.id.communityId);
+    let selectedCommunityId = $derived(app.selectedCommunitySummary?.id.communityId);
     let claimChitAvailable = $derived($chitState.nextDailyChitClaim < $now);
 
     let iconSize = ui.mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
@@ -64,38 +62,26 @@
 
     // we don't want drag n drop to monkey around with the key
     type CommunityItem = CommunitySummary & { _id: string };
-    let communityItems: CommunityItem[] = $state([]);
 
-    let dragging = $state<boolean>(false);
+    let communityItems = $state<CommunityItem[]>([]);
+
+    $effect(() => {
+        communityItems = app.sortedCommunities.map((c) => ({ ...c, _id: c.id.communityId }));
+    });
 
     onMount(() => {
-        const unsub = communities.subscribe(initCommunitiesList);
         tick().then(() => (scrollingSection.scrollTop = ui.communityListScrollTop ?? 0));
-        return unsub;
     });
 
     function onScroll() {
         ui.communityListScrollTop = scrollingSection.scrollTop;
     }
 
-    function initCommunitiesList(communities: CommunitySummary[]) {
-        // we don't want to allow the list to update if we're in the middle of dragging
-        if (dragging) return;
-
-        communityItems = communities.map((c) => ({
-            ...c,
-            _id: c.id.communityId,
-        }));
-    }
-
     function handleDndConsider(e: CustomEvent<DndEvent<CommunityItem>>) {
-        dragging = true;
         communityItems = e.detail.items;
     }
 
     function handleDndFinalize(e: CustomEvent<DndEvent<CommunityItem>>) {
-        dragging = false;
-        communityItems = e.detail.items;
         client.updateCommunityIndexes(e.detail.items);
     }
 
@@ -170,7 +156,7 @@
             </LeftNavItem>
         {/if}
         <LeftNavItem
-            selected={$chatListScope.kind === "direct_chat" && !communityExplorer}
+            selected={app.chatListScope.kind === "direct_chat" && !communityExplorer}
             label={i18nKey("communities.directChats")}
             unread={$unreadDirectCounts.chats}
             video={$directVideoCallCounts}
@@ -180,7 +166,7 @@
             </div>
         </LeftNavItem>
         <LeftNavItem
-            selected={$chatListScope.kind === "group_chat" && !communityExplorer}
+            selected={app.chatListScope.kind === "group_chat" && !communityExplorer}
             label={i18nKey("communities.groupChats")}
             unread={client.mergeCombinedUnreadCounts($unreadGroupCounts)}
             video={$groupVideoCallCounts}
@@ -191,7 +177,7 @@
         </LeftNavItem>
         {#if $favouritesStore.size > 0}
             <LeftNavItem
-                selected={$chatListScope.kind === "favourite" && !communityExplorer}
+                selected={app.chatListScope.kind === "favourite" && !communityExplorer}
                 label={i18nKey("communities.favourites")}
                 unread={client.mergeCombinedUnreadCounts($unreadFavouriteCounts)}
                 video={$favouritesVideoCallCounts}
@@ -244,7 +230,7 @@
             <div animate:flip={{ duration: flipDurationMs }}>
                 <LeftNavItem
                     selected={community.id.communityId === selectedCommunityId &&
-                        $chatListScope.kind !== "favourite" &&
+                        app.chatListScope.kind !== "favourite" &&
                         !communityExplorer}
                     video={$communityChannelVideoCallCounts.get(community.id) ?? {
                         muted: 0,
@@ -259,7 +245,7 @@
                     onClick={() => selectCommunity(community)}>
                     <Avatar
                         selected={community.id.communityId === selectedCommunityId &&
-                            $chatListScope.kind !== "favourite" &&
+                            app.chatListScope.kind !== "favourite" &&
                             !communityExplorer}
                         url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
                         size={avatarSize} />

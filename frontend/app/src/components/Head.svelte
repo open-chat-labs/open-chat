@@ -1,18 +1,17 @@
 <script lang="ts">
     import {
+        type ChatListScope,
         type ChatSummary,
+        type CombinedUnreadCounts,
         type CommunitySummary,
         type OpenChat,
-        type CombinedUnreadCounts,
         type UserLookup,
-        routeForChatIdentifier,
-        type ChatListScope,
-        userStore,
-        chatListScopeStore,
+        app,
         globalUnreadCount,
-        selectedChatStore,
-        selectedCommunity,
         pathState,
+        routeForChatIdentifier,
+        selectedChatStore,
+        userStore,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { mobileOperatingSystem } from "../utils/devices";
@@ -87,12 +86,12 @@
 
     let details = $derived(
         getDetails(
-            $chatListScopeStore,
+            app.chatListScope,
             pathState.location,
             $userStore,
             $globalUnreadCount,
             $selectedChatStore,
-            $selectedCommunity,
+            app.selectedCommunitySummary,
         ),
     );
 </script>

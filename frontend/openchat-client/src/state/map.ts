@@ -1,4 +1,11 @@
-import { SvelteMap, SvelteSet } from "svelte/reactivity";
+import {
+    SafeMap,
+    type ChatIdentifier,
+    type CommunityIdentifier,
+    type Primitive,
+} from "openchat-shared";
+import { SvelteMap } from "svelte/reactivity";
+import { ReactiveSafeSet } from "./set";
 import { scheduleUndo, type UndoLocalUpdate } from "./undo";
 
 export interface ReadonlyMap<K, V> {
@@ -13,8 +20,16 @@ export interface ReadonlyMap<K, V> {
 }
 
 export class LocalMap<K, V> {
-    #addedOrUpdated = new SvelteMap<K, V>();
-    #removed = new SvelteSet<K>();
+    #addedOrUpdated: SafeMap<K, V>;
+    #removed: ReactiveSafeSet<K>;
+
+    constructor(
+        private serialiser?: (k: K) => Primitive,
+        private deserialiser?: (p: Primitive) => K,
+    ) {
+        this.#addedOrUpdated = new SafeMap(serialiser, deserialiser, () => new SvelteMap());
+        this.#removed = new ReactiveSafeSet(serialiser);
+    }
 
     // for testing
     protected addedOrUpdated(key: K): boolean {
@@ -49,10 +64,42 @@ export class LocalMap<K, V> {
         });
     }
 
-    apply(original: Map<K, V>): Map<K, V> {
-        const merged = new Map<K, V>(original);
+    apply(original: ReadonlyMap<K, V>): SafeMap<K, V> {
+        const merged = new SafeMap<K, V>(this.serialiser, this.deserialiser);
+        for (const [k, v] of original) {
+            merged.set(k, v);
+        }
         this.#addedOrUpdated.forEach((v, k) => merged.set(k, v));
         this.#removed.forEach((k) => merged.delete(k));
         return merged;
+    }
+}
+
+export class ReactiveCommunityMap<V> extends SafeMap<CommunityIdentifier, V> {
+    constructor() {
+        super(
+            (id) => id.communityId,
+            (k) => ({ kind: "community", communityId: String(k) }),
+            () => new SvelteMap(),
+        );
+    }
+}
+
+export class ReactiveChatMap<V> extends SafeMap<ChatIdentifier, V> {
+    constructor() {
+        super(
+            (id) => JSON.stringify(id),
+            (k) => JSON.parse(String(k)) as ChatIdentifier,
+            () => new SvelteMap(),
+        );
+    }
+}
+
+export class LocalCommunityMap<V> extends LocalMap<CommunityIdentifier, V> {
+    constructor() {
+        super(
+            (id) => id.communityId,
+            (k) => ({ kind: "community", communityId: String(k) }),
+        );
     }
 }

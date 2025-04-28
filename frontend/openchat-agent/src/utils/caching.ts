@@ -47,12 +47,12 @@ import {
     chatIdentifiersEqual,
     chatIdentifierToString,
     ChatMap,
+    isSuccessfulEventsResponse,
     MAX_EVENTS,
     MAX_MESSAGES,
     MessageContextMap,
     ONE_DAY,
     updateCreatedUser,
-    isSuccessfulEventsResponse,
 } from "openchat-shared";
 
 const CACHE_VERSION = 131;
@@ -433,7 +433,7 @@ export async function setCachedChats(
     const eventsStore = tx.objectStore("chat_events");
     const threadsStore = tx.objectStore("thread_events");
 
-    const deleteRequests = updatedEvents.entries().flatMap(([chatId, indexes]) => {
+    const deleteRequests = [...updatedEvents.entries()].flatMap(([chatId, indexes]) => {
         return indexes.map((i) => {
             const key = createCacheKey(
                 { chatId, threadRootMessageIndex: i.threadRootMessageIndex },

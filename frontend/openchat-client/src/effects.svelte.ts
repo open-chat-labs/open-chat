@@ -2,9 +2,10 @@ import { chatIdentifiersEqual, type ChatIdentifier } from "openchat-shared";
 import { untrack } from "svelte";
 import type { OpenChat } from "./openchat";
 import { app } from "./state/app.svelte";
+import { localUpdates } from "./state/global";
 import { pathState } from "./state/path.svelte";
 import { ui } from "./state/ui.svelte";
-import { chatListScopeStore } from "./stores";
+import { chatListScopeStore, dummyCommunityPreviewStore } from "./stores";
 
 function onSelectedCommunityChanged(client: OpenChat) {
     $effect(() => {
@@ -95,6 +96,18 @@ function onThreadStateChanged(client: OpenChat) {
     });
 }
 
+// In the transition period we need to try to keep certain svelte 5
+// runes and Svelte 4 stores in sync. The easiest way to do this is with effects
+function syncState() {
+    $effect(() => {
+        dummyCommunityPreviewStore.set(localUpdates.previewCommunities.size);
+    });
+
+    $effect(() => {
+        chatListScopeStore.set(pathState.route.scope);
+    });
+}
+
 export function configureEffects(client: OpenChat) {
     $effect.root(() => {
         onSelectedCommunityChanged(client);
@@ -105,6 +118,8 @@ export function configureEffects(client: OpenChat) {
 
         onThreadClosed();
 
+        syncState();
+
         // TODO - this seems to be a reasonable approach, but it causes a flicker of No Chat Selected for some reason
         // so we might need to rethink - ok for now though.
         // Actually this is already the case on webtest & prod so it's no worse - but could it be better?
@@ -112,11 +127,6 @@ export function configureEffects(client: OpenChat) {
             if (app.selectedChatId === undefined && pathState.route.scope.kind !== "none") {
                 client.selectFirstChat();
             }
-        });
-
-        // this exists only to syncronise the legacy chatListScopeStore until we can get rid of it
-        $effect(() => {
-            chatListScopeStore.set(pathState.route.scope);
         });
     });
 }
