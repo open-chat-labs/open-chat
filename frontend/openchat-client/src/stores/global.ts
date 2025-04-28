@@ -30,7 +30,6 @@ import { app } from "../state/app.svelte";
 import { immutableStore } from "./immutable";
 import { messageActivityFeedReadUpToLocally, messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
-import { serverStreakInsuranceStore } from "./streakInsurance";
 
 export type PinnedByScope = Map<ChatListScope["kind"], ChatIdentifier[]>;
 
@@ -313,6 +312,9 @@ export function setGlobalState(
     app.directChatApiKeys = apiKeys;
     app.directChatBots = SafeMap.fromEntries(installedBots.entries());
     app.serverWalletConfig = walletConfig;
+    if (streakInsurance !== undefined) {
+        app.serverStreakInsurance = streakInsurance;
+    }
 
     globalStateStore.set(state);
     chitStateStore.update((curr) => {
@@ -320,9 +322,6 @@ export function setGlobalState(
         const skipUpdate = chitState.streakEnds < curr.streakEnds;
         return skipUpdate ? curr : chitState;
     });
-    if (streakInsurance !== undefined) {
-        serverStreakInsuranceStore.set(streakInsurance);
-    }
 }
 
 function partitionChats(

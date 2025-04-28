@@ -336,7 +336,6 @@ import {
 import { applyTranslationCorrection } from "./stores/i18n";
 import { lastOnlineDates } from "./stores/lastOnlineDates";
 import { localChatSummaryUpdates } from "./stores/localChatSummaryUpdates";
-import { localGlobalUpdates } from "./stores/localGlobalUpdates";
 import { localMessageUpdates } from "./stores/localMessageUpdates";
 import {
     messageActivityFeedReadUpToLocally,
@@ -8942,10 +8941,9 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    localGlobalUpdates.updateStreakInsurance({
-                        ...this.#liveState.serverStreakInsurance,
-                        daysInsured:
-                            this.#liveState.serverStreakInsurance.daysInsured + additionalDays,
+                    localUpdates.updateStreakInsurance({
+                        ...app.serverStreakInsurance,
+                        daysInsured: app.serverStreakInsurance.daysInsured + additionalDays,
                     });
                 }
                 return resp;

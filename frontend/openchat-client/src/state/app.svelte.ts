@@ -17,6 +17,7 @@ import {
     messageContextsEqual,
     type PublicApiKeyDetails,
     SafeMap,
+    type StreakInsurance,
     type UserGroupDetails,
     type UserGroupSummary,
     type VersionedRules,
@@ -53,6 +54,13 @@ class AppState {
             });
         });
     }
+
+    #serverStreakInsurance = $state<StreakInsurance>({
+        daysInsured: 0,
+        daysMissed: 0,
+    });
+
+    #streakInsurance = $derived(localUpdates.streakInsurance ?? this.#serverStreakInsurance);
 
     #serverWalletConfig = $state<WalletConfig>({
         kind: "auto_wallet",
@@ -212,6 +220,18 @@ class AppState {
     #selectedChat = $state<ChatDetailsMergedState>(
         new ChatDetailsMergedState(ChatDetailsServerState.empty()),
     );
+
+    get streakInsurance() {
+        return this.#streakInsurance;
+    }
+
+    set serverStreakInsurance(val: StreakInsurance) {
+        this.#serverStreakInsurance = val;
+    }
+
+    get serverStreakInsurance() {
+        return this.#serverStreakInsurance;
+    }
 
     set serverWalletConfig(val: WalletConfig) {
         this.#serverWalletConfig = val;

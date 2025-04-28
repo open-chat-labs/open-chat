@@ -15,12 +15,10 @@ import type {
     MultiUserChat,
     ObjectSet,
     PinNumberResolver,
-    StreakInsurance,
     ThreadSyncDetails,
     UserLookup,
 } from "openchat-shared";
 import { locale } from "svelte-i18n";
-import { serverStreakInsuranceStore } from "./stores";
 import { selectedAuthProviderStore } from "./stores/authProviders";
 import { blockedUsers } from "./stores/blockedUsers";
 import {
@@ -96,10 +94,8 @@ export class LiveState {
     pinNumberRequired!: boolean;
     capturePinNumber!: PinNumberResolver | undefined;
     chitState!: ChitState;
-    serverStreakInsurance!: StreakInsurance;
 
     constructor() {
-        serverStreakInsuranceStore.subscribe((state) => (this.serverStreakInsurance = state));
         chitStateStore.subscribe((state) => (this.chitState = state));
         offlineStore.subscribe((offline) => (this.offlineStore = offline));
         currentUser.subscribe((user) => (this.user = user));
