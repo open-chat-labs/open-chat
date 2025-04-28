@@ -707,7 +707,6 @@
     }
 
     function showWallet() {
-        console.log("show wallet");
         modal = { kind: "wallet" };
     }
 

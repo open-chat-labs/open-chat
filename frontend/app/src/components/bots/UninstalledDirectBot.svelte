@@ -4,7 +4,6 @@
         botState,
         chatIdentifiersEqual,
         currentUser,
-        installedDirectBots,
         OpenChat,
         pathState,
         routeForScope,
@@ -46,5 +45,5 @@
         location={{ kind: "direct_chat", userId: $currentUser.userId }}
         {bot}
         onClose={closeInstaller}
-        installedBots={$installedDirectBots} />
+        installedBots={app.directChatBots} />
 {/if}

@@ -16,11 +16,13 @@ import {
     type MessageContext,
     messageContextsEqual,
     type PublicApiKeyDetails,
+    SafeMap,
     type UserGroupDetails,
     type UserGroupSummary,
     type VersionedRules,
     type VideoCallCounts,
     videoCallsInProgressForChats,
+    type WalletConfig,
 } from "openchat-shared";
 import { chatDetailsLocalUpdates, ChatDetailsMergedState } from "./chat_details";
 import { ChatDetailsServerState } from "./chat_details/server";
@@ -51,6 +53,25 @@ class AppState {
             });
         });
     }
+
+    #serverWalletConfig = $state<WalletConfig>({
+        kind: "auto_wallet",
+        minDollarValue: 0,
+    });
+
+    #walletConfig = $derived(localUpdates.walletConfig ?? this.#serverWalletConfig);
+
+    #serverDirectChatBots = $state<SafeMap<string, ExternalBotPermissions>>(new SafeMap());
+
+    #directChatBots = $derived.by(() => {
+        return localUpdates.directChatBots.apply(this.#serverDirectChatBots);
+    });
+
+    #serverDirectChatApiKeys = $state<Map<string, PublicApiKeyDetails>>(new Map());
+
+    #directChatApiKeys = $derived.by(() => {
+        return this.#serverDirectChatApiKeys;
+    });
 
     #serverCommunities = $state<CommunityMap<CommunitySummary>>(new CommunityMap());
 
@@ -191,6 +212,30 @@ class AppState {
     #selectedChat = $state<ChatDetailsMergedState>(
         new ChatDetailsMergedState(ChatDetailsServerState.empty()),
     );
+
+    set serverWalletConfig(val: WalletConfig) {
+        this.#serverWalletConfig = val;
+    }
+
+    get walletConfig() {
+        return this.#walletConfig;
+    }
+
+    get directChatBots() {
+        return this.#directChatBots;
+    }
+
+    set directChatBots(val: SafeMap<string, ExternalBotPermissions>) {
+        this.#serverDirectChatBots = val;
+    }
+
+    get directChatApiKeys() {
+        return this.#directChatApiKeys;
+    }
+
+    set directChatApiKeys(val: Map<string, PublicApiKeyDetails>) {
+        this.#serverDirectChatApiKeys = val;
+    }
 
     get pinnedChats(): Map<ChatListScope["kind"], ChatIdentifier[]> {
         return this.#pinnedChats;

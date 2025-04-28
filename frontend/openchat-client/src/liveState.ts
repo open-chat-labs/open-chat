@@ -11,7 +11,6 @@ import type {
     DirectChatSummary,
     EnhancedReplyContext,
     EventWrapper,
-    ExternalBotPermissions,
     MessageContext,
     MultiUserChat,
     ObjectSet,
@@ -19,7 +18,6 @@ import type {
     StreakInsurance,
     ThreadSyncDetails,
     UserLookup,
-    WalletConfig,
 } from "openchat-shared";
 import { locale } from "svelte-i18n";
 import { serverStreakInsuranceStore } from "./stores";
@@ -46,15 +44,9 @@ import {
     threadsFollowedByMeStore,
     uninitializedDirectChats,
 } from "./stores/chat";
-import { walletConfigStore } from "./stores/crypto";
 import { diamondStatus, isDiamond, isLifetimeDiamond } from "./stores/diamond";
 import { type DraftMessages, draftMessagesStore } from "./stores/draftMessages";
-import {
-    type GlobalState,
-    chitStateStore,
-    globalStateStore,
-    installedDirectBots,
-} from "./stores/global";
+import { type GlobalState, chitStateStore, globalStateStore } from "./stores/global";
 import { offlineStore } from "./stores/network";
 import { capturePinNumberStore, pinNumberRequiredStore } from "./stores/pinNumber";
 import { remainingStorage } from "./stores/storage";
@@ -104,13 +96,10 @@ export class LiveState {
     pinNumberRequired!: boolean;
     capturePinNumber!: PinNumberResolver | undefined;
     chitState!: ChitState;
-    walletConfig!: WalletConfig;
-    installedDirectBots!: Map<string, ExternalBotPermissions>;
     serverStreakInsurance!: StreakInsurance;
 
     constructor() {
         serverStreakInsuranceStore.subscribe((state) => (this.serverStreakInsurance = state));
-        installedDirectBots.subscribe((state) => (this.installedDirectBots = state));
         chitStateStore.subscribe((state) => (this.chitState = state));
         offlineStore.subscribe((offline) => (this.offlineStore = offline));
         currentUser.subscribe((user) => (this.user = user));
@@ -153,6 +142,5 @@ export class LiveState {
         locale.subscribe((data) => (this.locale = data ?? "en"));
         pinNumberRequiredStore.subscribe((data) => (this.pinNumberRequired = data));
         capturePinNumberStore.subscribe((data) => (this.capturePinNumber = data));
-        walletConfigStore.subscribe((data) => (this.walletConfig = data));
     }
 }

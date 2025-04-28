@@ -1,17 +1,18 @@
-import { derived, writable } from "svelte/store";
-import { configKeys } from "../utils/config";
 import {
+    DEFAULT_TOKENS,
     type CryptocurrencyDetails,
     type EnhancedTokenDetails,
     type NervousSystemDetails,
-    DEFAULT_TOKENS,
     type TokenExchangeRates,
     type WalletConfig,
 } from "openchat-shared";
+import { derived, writable } from "svelte/store";
+import { app } from "../state/app.svelte";
+import { configKeys } from "../utils/config";
 import { toRecord } from "../utils/list";
-import { localGlobalUpdates } from "./localGlobalUpdates";
-import { createSetStore } from "./setStore";
+import { createDummyStore } from "./dummyStore";
 import { safeWritable } from "./safeWritable";
+import { createSetStore } from "./setStore";
 
 type LedgerCanister = string;
 type GovernanceCanister = string;
@@ -25,7 +26,7 @@ export const exchangeRatesLookupStore = writable<Record<string, TokenExchangeRat
 const cryptoBalanceStore = writable<BalanceByCrypto>({});
 const cryptoBalancesLastUpdated = new Map<string, number>();
 let cryptoBalanceStoreValue: BalanceByCrypto = {};
-cryptoBalanceStore.subscribe((v) => cryptoBalanceStoreValue = v);
+cryptoBalanceStore.subscribe((v) => (cryptoBalanceStoreValue = v));
 
 export const cryptoBalance = {
     subscribe: cryptoBalanceStore.subscribe,
@@ -44,7 +45,7 @@ export const cryptoBalance = {
         return Date.now() - lastUpdated < 5 * 60 * 1000
             ? cryptoBalanceStoreValue[ledger]
             : undefined;
-    }
+    },
 };
 
 export const bitcoinAddress = safeWritable<string | undefined>(undefined);
@@ -108,18 +109,6 @@ export const enhancedCryptoLookup = derived(
     },
 );
 
-export const serverWalletConfigStore = writable<WalletConfig>({
-    kind: "auto_wallet",
-    minDollarValue: 0,
-});
-
-export const walletConfigStore = derived(
-    [serverWalletConfigStore, localGlobalUpdates],
-    ([$serverWalletConfig, $localGlobalUpdates]) => {
-        return $localGlobalUpdates.get("global")?.walletConfig ?? $serverWalletConfig;
-    },
-);
-
 export const cryptoTokensSorted = derived([enhancedCryptoLookup], ([$lookup]) => {
     return Object.values($lookup)
         .filter((t) => t.enabled || !t.zero)
@@ -139,13 +128,15 @@ function meetsManualWalletCriteria(config: WalletConfig, token: EnhancedTokenDet
     return config.kind === "manual_wallet" && config.tokens.has(token.ledger);
 }
 
+export const dummyWalletConfigStore = createDummyStore();
+
 export const walletTokensSorted = derived(
-    [cryptoTokensSorted, walletConfigStore],
-    ([$tokens, $walletConfig]) => {
+    [cryptoTokensSorted, dummyWalletConfigStore],
+    ([$tokens, _]) => {
         return $tokens.filter(
             (t) =>
-                meetsAutoWalletCriteria($walletConfig, t) ||
-                meetsManualWalletCriteria($walletConfig, t),
+                meetsAutoWalletCriteria(app.walletConfig, t) ||
+                meetsManualWalletCriteria(app.walletConfig, t),
         );
     },
 );
