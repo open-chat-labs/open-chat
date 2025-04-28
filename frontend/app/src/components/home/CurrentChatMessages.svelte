@@ -263,13 +263,15 @@
         ),
     );
 
+    $inspect(pathState.messageIndex);
+
     // if the messageIndex has changed but the chatId has not, scroll to the specified message
     let previousChatId: ChatIdentifier | undefined = undefined;
     $effect(() => {
         if (
             app.chatsInitialised &&
             pathState.messageIndex !== undefined &&
-            !pathState.threadOpen &&
+            // !pathState.threadOpen &&
             chatIdentifiersEqual(app.selectedChatId, previousChatId)
         ) {
             const idx = pathState.messageIndex;

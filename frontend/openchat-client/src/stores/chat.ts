@@ -3,7 +3,6 @@ import DRange from "drange";
 import type {
     ChatEvent,
     ChatIdentifier,
-    ChatListScope,
     ChatSpecificState,
     ChatSummary,
     DirectChatIdentifier,
@@ -53,9 +52,6 @@ import { snsFunctions } from "./snsFunctions";
 import { translationStore } from "./translation";
 import { unconfirmed } from "./unconfirmed";
 import { currentUser, currentUserIdStore, suspendedUsers } from "./user";
-
-let currentScope: ChatListScope = { kind: "direct_chat" };
-chatListScopeStore.subscribe((s) => (currentScope = s));
 
 export const dummyCommunityPreviewStore = writable(0);
 
@@ -239,7 +235,7 @@ export const allChats = derived(
             result.set(chatId, summary);
             return result;
         }, new ChatMap<ChatSummary>());
-        return mergeLocalSummaryUpdates(currentScope, reduced, $localSummaryUpdates);
+        return mergeLocalSummaryUpdates(app.chatListScope, reduced, $localSummaryUpdates);
     },
 );
 
@@ -267,7 +263,7 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         $messageFilters,
     ]) => {
         const mergedSummaries = mergeLocalSummaryUpdates(
-            currentScope,
+            app.chatListScope,
             summaries,
             localSummaryUpdates,
         );
@@ -295,7 +291,7 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
 // This is annoying. If only the pinnedChatIndex was stored in the chatSummary...
 export const chatSummariesListStore = derived([chatSummariesStore], ([summaries]) => {
     const pinnedChats = get(pinnedChatsStore);
-    const pinnedByScope = pinnedChats.get(currentScope.kind) ?? [];
+    const pinnedByScope = pinnedChats.get(app.chatListScope.kind) ?? [];
     const pinned = pinnedByScope.reduce<ChatSummary[]>((result, id) => {
         const summary = summaries.get(id);
         if (summary !== undefined) {
