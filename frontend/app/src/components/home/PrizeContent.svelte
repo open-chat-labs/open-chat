@@ -1,36 +1,34 @@
 <script lang="ts">
     import {
+        app,
+        cryptoLookup,
+        isDiamond,
+        isLifetimeDiamond,
+        publish,
+        currentUser as user,
         type ChatIdentifier,
         type DiamondMembershipStatus,
         type OpenChat,
         type PrizeContent,
-        chitStateStore,
     } from "openchat-client";
-    import {
-        currentUser as user,
-        isDiamond,
-        isLifetimeDiamond,
-        cryptoLookup,
-        publish,
-    } from "openchat-client";
-    import { _ } from "svelte-i18n";
-    import Clock from "svelte-material-icons/Clock.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
     import { getContext } from "svelte";
     import { Confetti } from "svelte-confetti";
+    import { _ } from "svelte-i18n";
+    import Clock from "svelte-material-icons/Clock.svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import { claimsStore } from "../../stores/claims";
     import { rtlStore } from "../../stores/rtl";
     import { now500 } from "../../stores/time";
-    import SpinningToken from "../icons/SpinningToken.svelte";
     import { toastStore } from "../../stores/toast";
-    import { claimsStore } from "../../stores/claims";
-    import { i18nKey } from "../../i18n/i18n";
+    import ButtonGroup from "../ButtonGroup.svelte";
+    import Diamond from "../icons/Diamond.svelte";
+    import SpinningToken from "../icons/SpinningToken.svelte";
+    import Verified from "../icons/Verified.svelte";
+    import RotationChallenge from "../RotationChallenge.svelte";
+    import SecureButton from "../SecureButton.svelte";
     import Translatable from "../Translatable.svelte";
     import Badges from "./profile/Badges.svelte";
-    import Diamond from "../icons/Diamond.svelte";
-    import Verified from "../icons/Verified.svelte";
     import Streak from "./profile/Streak.svelte";
-    import SecureButton from "../SecureButton.svelte";
-    import RotationChallenge from "../RotationChallenge.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -90,7 +88,7 @@
         (!content.diamondOnly || $isDiamond) &&
             (!content.lifetimeDiamondOnly || $isLifetimeDiamond) &&
             (!content.uniquePersonOnly || $user.isUniquePerson) &&
-            content.streakOnly <= $chitStateStore.streak,
+            content.streakOnly <= app.chitState.streak,
     );
     let disabled = $derived(finished || claimedByYou || allClaimed || !userEligible);
     let timeRemaining = $derived(

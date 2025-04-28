@@ -1,23 +1,18 @@
 <script lang="ts">
-    import {
-        OpenChat,
-        type ChitEarned,
-        chitStateStore as chitState,
-        currentUser as user,
-    } from "openchat-client";
+    import CollapsibleCard from "@src/components/CollapsibleCard.svelte";
+    import { app, OpenChat, currentUser as user, type ChitEarned } from "openchat-client";
     import { getContext } from "svelte";
-    import { isSameDay } from "../../calendar/utils";
-    import ChitEventsForDay from "./ChitEventsForDay.svelte";
-    import ChitBalance from "./ChitBalance.svelte";
-    import Toggle from "../../Toggle.svelte";
+    import { menuCloser } from "../../../actions/closeMenu";
     import { i18nKey } from "../../../i18n/i18n";
     import { chitPopup, disableChit, hideChitIcon, utcMode } from "../../../stores/settings";
-    import Translatable from "../../Translatable.svelte";
-    import { menuCloser } from "../../../actions/closeMenu";
-    import { calendarState, type DateRange } from "../../calendar/calendarState.svelte";
     import Calendar from "../../calendar/Calendar.svelte";
-    import CollapsibleCard from "@src/components/CollapsibleCard.svelte";
+    import { calendarState, type DateRange } from "../../calendar/calendarState.svelte";
+    import { isSameDay } from "../../calendar/utils";
+    import Toggle from "../../Toggle.svelte";
+    import Translatable from "../../Translatable.svelte";
     import StreakInsuranceSummary from "../insurance/StreakInsuranceSummary.svelte";
+    import ChitBalance from "./ChitBalance.svelte";
+    import ChitEventsForDay from "./ChitEventsForDay.svelte";
 
     const client = getContext<OpenChat>("client");
     let events = $state<ChitEarned[]>([]);
@@ -102,8 +97,8 @@
                 <ChitBalance
                     size={"large"}
                     me
-                    balance={$chitState.chitBalance}
-                    totalEarned={$chitState.totalChitEarned} />
+                    balance={app.chitState.chitBalance}
+                    totalEarned={app.chitState.totalChitEarned} />
             </div>
             {#if streak > 0}
                 <CollapsibleCard headerText={i18nKey("streakInsurance.title")}>
