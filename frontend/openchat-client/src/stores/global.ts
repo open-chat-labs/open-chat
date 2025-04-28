@@ -41,7 +41,6 @@ export type GlobalState = {
     directChats: ChatMap<DirectChatSummary>;
     groupChats: ChatMap<GroupChatSummary>;
     favourites: ObjectSet<ChatIdentifier>;
-    // pinnedChats: PinnedByScope;
     achievements: Set<string>;
     referrals: Referral[];
     messageActivitySummary: MessageActivitySummary;

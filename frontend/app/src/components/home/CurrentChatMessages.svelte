@@ -269,7 +269,6 @@
         if (
             app.chatsInitialised &&
             pathState.messageIndex !== undefined &&
-            // !pathState.threadOpen &&
             chatIdentifiersEqual(app.selectedChatId, previousChatId)
         ) {
             const idx = pathState.messageIndex;
