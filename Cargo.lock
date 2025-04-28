@@ -4452,14 +4452,13 @@ dependencies = [
 name = "installed_bots"
 version = "0.1.0"
 dependencies = [
- "base64 0.22.1",
  "candid",
  "constants",
+ "hex",
  "rand 0.8.5",
  "serde",
  "serde_repr",
  "types",
- "urlencoding",
  "utils 0.1.0",
 ]
 

@@ -1,4 +1,3 @@
-use base64::Engine;
 use candid::Principal;
 use rand::{rngs::StdRng, Rng};
 use serde::{Deserialize, Serialize};
@@ -100,8 +99,6 @@ impl Webhooks {
 
     fn generate_secret(rng: &mut StdRng) -> String {
         let secret_bytes = rng.gen::<[u8; 16]>();
-        let base64_encoded = base64::engine::general_purpose::STANDARD.encode(secret_bytes);
-        let url_encoded = urlencoding::encode(&base64_encoded);
-        url_encoded.to_string()
+        hex::encode(secret_bytes)
     }
 }
