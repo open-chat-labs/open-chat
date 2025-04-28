@@ -20,11 +20,11 @@ pub struct TestEnvManager {
 impl TestEnvManager {
     pub fn get(&self) -> TestEnvWrapper {
         let mut lock = self.envs.lock().unwrap();
-        if let Some(env) = lock.pop() {
-            TestEnvWrapper::new(env)
-        } else {
-            TestEnvWrapper::new(setup_new_env(None))
-        }
+        if let Some(env) = lock.pop() { TestEnvWrapper::new(env) } else { self.create_new() }
+    }
+
+    pub fn create_new(&self) -> TestEnvWrapper {
+        TestEnvWrapper::new(setup_new_env(None))
     }
 
     #[allow(dead_code)]

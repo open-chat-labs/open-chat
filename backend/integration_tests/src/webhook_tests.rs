@@ -12,7 +12,7 @@ use types::{Chat, ChatEvent, ChatType, EventIndex, MessageContent, SenderContext
 
 #[test_case(ChatType::Group)]
 fn e2e_webhook_test(chat_type: ChatType) {
-    let mut wrapper = ENV.deref().get();
+    let mut wrapper = ENV.deref().create_new();
     let TestEnv {
         env,
         canister_ids,
