@@ -27,6 +27,7 @@ generate_msgpack_update_call!(convert_into_community);
 generate_msgpack_update_call!(delete_messages);
 generate_msgpack_update_call!(edit_message_v2);
 generate_msgpack_update_call!(enable_invite_code);
+generate_update_call!(end_video_call_v2);
 generate_msgpack_update_call!(generate_bot_api_key);
 generate_msgpack_update_call!(join_video_call);
 generate_msgpack_update_call!(pin_message_v2);
@@ -35,16 +36,13 @@ generate_msgpack_update_call!(register_webhook);
 generate_msgpack_update_call!(remove_participant);
 generate_msgpack_update_call!(remove_reaction);
 generate_msgpack_update_call!(send_message_v2);
+generate_update_call!(start_video_call_v2);
 generate_msgpack_update_call!(toggle_mute_notifications);
 generate_msgpack_update_call!(unblock_user);
 generate_msgpack_update_call!(undelete_messages);
 generate_msgpack_update_call!(unpin_message);
 generate_msgpack_update_call!(update_bot);
 generate_msgpack_update_call!(update_group_v2);
-
-generate_update_call!(end_video_call_v2);
-generate_update_call!(http_request_update);
-generate_update_call!(start_video_call_v2);
 
 pub mod happy_path {
     use crate::User;
