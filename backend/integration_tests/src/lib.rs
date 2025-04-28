@@ -57,6 +57,7 @@ mod update_profile_tests;
 mod utils;
 mod video_call_tests;
 mod wasms;
+mod webhook_tests;
 
 pub struct TestEnv {
     pub env: PocketIc,

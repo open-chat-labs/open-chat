@@ -87,7 +87,7 @@ pub enum UserType {
 
 impl UserType {
     pub fn is_bot(&self) -> bool {
-        matches!(self, UserType::BotV2 | UserType::Bot | UserType::OcControlledBot)
+        !matches!(self, UserType::User)
     }
 
     pub fn is_oc_controlled_bot(&self) -> bool {

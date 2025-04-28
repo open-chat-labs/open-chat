@@ -20,6 +20,7 @@ fn accept_if_valid(state: &RuntimeState) {
 
     let caller = state.env.caller();
     let is_valid = state.data.get_member(caller).is_some()
+        || method_name == "http_request_update"
         || state.data.get_invitation(caller).is_some() && method_name == "decline_invitation"
         || ((method_name == "start_video_call" || method_name == "end_video_call") && state.is_caller_video_call_operator());
 
