@@ -27,6 +27,7 @@ export * from "./proposalsBot";
 export * from "./registry";
 export * from "./response";
 export * from "./search/search";
+export * from "./serialisation";
 export * from "./stream";
 export * from "./structure";
 export * from "./toast";

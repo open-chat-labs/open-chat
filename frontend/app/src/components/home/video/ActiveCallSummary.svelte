@@ -1,38 +1,37 @@
 <script lang="ts">
     import {
-        routeForChatIdentifier,
-        type ChatIdentifier,
-        OpenChat,
+        app,
         AvatarSize,
         chatIdentifiersEqual,
-        userStore,
-        selectedChatId,
-        communities,
-        selectedCommunity,
+        OpenChat,
         publish,
+        routeForChatIdentifier,
+        selectedChatId,
+        userStore,
+        type ChatIdentifier,
     } from "openchat-client";
-    import {
-        activeVideoCall,
-        microphone,
-        camera,
-        sharing,
-        hasPresence,
-    } from "../../../stores/video";
     import page from "page";
     import { getContext } from "svelte";
-    import Avatar from "../../Avatar.svelte";
-    import FancyLoader from "../../icons/FancyLoader.svelte";
-    import Microphone from "svelte-material-icons/Microphone.svelte";
     import HandFrontLeft from "svelte-material-icons/HandFrontLeft.svelte";
+    import Microphone from "svelte-material-icons/Microphone.svelte";
     import MicrophoneOff from "svelte-material-icons/MicrophoneOff.svelte";
+    import MonitorOff from "svelte-material-icons/MonitorOff.svelte";
+    import MonitorShare from "svelte-material-icons/MonitorShare.svelte";
+    import PhoneHangup from "svelte-material-icons/PhoneHangup.svelte";
     import Video from "svelte-material-icons/Video.svelte";
     import VideoOff from "svelte-material-icons/VideoOff.svelte";
-    import MonitorShare from "svelte-material-icons/MonitorShare.svelte";
-    import MonitorOff from "svelte-material-icons/MonitorOff.svelte";
-    import PhoneHangup from "svelte-material-icons/PhoneHangup.svelte";
     import Tooltip from "../../../components/tooltip/Tooltip.svelte";
-    import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import {
+        activeVideoCall,
+        camera,
+        hasPresence,
+        microphone,
+        sharing,
+    } from "../../../stores/video";
+    import Avatar from "../../Avatar.svelte";
+    import FancyLoader from "../../icons/FancyLoader.svelte";
+    import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -80,12 +79,12 @@
                     case "channel":
                         return {
                             name: `${
-                                $communities.get({
+                                app.communities.get({
                                     kind: "community",
                                     communityId: chat.id.communityId,
                                 })?.name
                             } > ${chat.name}`,
-                            avatarUrl: client.groupAvatarUrl(chat, $selectedCommunity),
+                            avatarUrl: client.groupAvatarUrl(chat, app.selectedCommunitySummary),
                             userId: undefined,
                         };
                 }

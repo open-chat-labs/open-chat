@@ -1,13 +1,13 @@
 <script lang="ts">
-    import { getContext } from "svelte";
     import type { CommunitySummary, OpenChat } from "openchat-client";
     import { ErrorCode } from "openchat-shared";
-    import Legend from "../../Legend.svelte";
-    import DisplayNameInput from "../../DisplayNameInput.svelte";
-    import ErrorMessage from "../../ErrorMessage.svelte";
+    import { getContext } from "svelte";
+    import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import Button from "../../Button.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
+    import DisplayNameInput from "../../DisplayNameInput.svelte";
+    import ErrorMessage from "../../ErrorMessage.svelte";
+    import Legend from "../../Legend.svelte";
     import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");

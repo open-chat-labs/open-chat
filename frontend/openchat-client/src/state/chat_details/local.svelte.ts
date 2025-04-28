@@ -1,12 +1,11 @@
-import type {
-    ChatIdentifier,
-    ExternalBotPermissions,
-    Member,
-    PublicApiKeyDetails,
-    VersionedRules,
+import {
+    type ChatIdentifier,
+    type ExternalBotPermissions,
+    type Member,
+    type PublicApiKeyDetails,
+    type VersionedRules,
 } from "openchat-shared";
-import { SvelteMap } from "svelte/reactivity";
-import { LocalMap } from "../map";
+import { LocalMap, ReactiveChatMap } from "../map";
 import { LocalSet } from "../set";
 import { scheduleUndo, type UndoLocalUpdate } from "../undo";
 
@@ -31,18 +30,17 @@ export class ChatDetailsLocalState {
 const noop = () => {};
 
 export class ChatDetailsLocalStateManager {
-    #data = new SvelteMap<string, ChatDetailsLocalState>();
+    #data = new ReactiveChatMap<ChatDetailsLocalState>();
 
     get(id: ChatIdentifier): ChatDetailsLocalState | undefined {
-        return this.#data.get(JSON.stringify(id));
+        return this.#data.get(id);
     }
 
     #getOrCreate(id: ChatIdentifier): ChatDetailsLocalState {
-        const key = JSON.stringify(id);
-        let state = this.#data.get(key);
+        let state = this.#data.get(id);
         if (state === undefined) {
             state = new ChatDetailsLocalState();
-            this.#data.set(key, state);
+            this.#data.set(id, state);
         }
         return state;
     }

@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { EnhancedAccessGate, GateCheckSucceeded, OpenChat } from "openchat-client";
-    import { anonUser, app, selectedCommunity } from "openchat-client";
+    import { anonUser, app } from "openchat-client";
     import { getContext, tick, type Snippet } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
@@ -35,21 +35,21 @@
     }
 
     function doJoinCommunity(gateCheck: GateCheckSucceeded | undefined): Promise<void> {
-        if (previewingCommunity && $selectedCommunity) {
+        if (previewingCommunity && app.selectedCommunitySummary) {
             const credentials = gateCheck?.credentials ?? [];
             const paymentApprovals = gateCheck?.paymentApprovals ?? new Map();
             const gateConfigWithLevel: EnhancedAccessGate = {
-                ...$selectedCommunity.gateConfig.gate,
+                ...app.selectedCommunitySummary.gateConfig.gate,
                 level: "community",
-                expiry: $selectedCommunity.gateConfig.expiry,
+                expiry: app.selectedCommunitySummary.gateConfig.expiry,
             };
 
             if (gateCheck === undefined) {
                 if (
-                    $selectedCommunity.gateConfig.gate.kind !== "no_gate" &&
-                    !$selectedCommunity.isInvited
+                    app.selectedCommunitySummary.gateConfig.gate.kind !== "no_gate" &&
+                    !app.selectedCommunitySummary.isInvited
                 ) {
-                    const gateConfigs = [$selectedCommunity.gateConfig];
+                    const gateConfigs = [app.selectedCommunitySummary.gateConfig];
                     const gates = gateConfigs.map((gc) => gc.gate);
                     const passed = client.doesUserMeetAccessGates(gates);
                     if (!passed) {
@@ -69,7 +69,7 @@
             joiningCommunity = true;
 
             return client
-                .joinCommunity($selectedCommunity, credentials, paymentApprovals)
+                .joinCommunity(app.selectedCommunitySummary, credentials, paymentApprovals)
                 .then((resp) => {
                     if (resp.kind === "gate_check_failed") {
                         gateCheckFailed = gateConfigWithLevel;
@@ -87,7 +87,8 @@
         gateCheckFailed = undefined;
     }
     let previewingCommunity = $derived(
-        $selectedCommunity?.membership.role === "none" || $selectedCommunity?.membership.lapsed,
+        app.selectedCommunitySummary?.membership.role === "none" ||
+            app.selectedCommunitySummary?.membership.lapsed,
     );
     $effect(() => {
         if (

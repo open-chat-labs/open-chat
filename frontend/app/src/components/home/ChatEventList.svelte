@@ -518,7 +518,7 @@
 
     function scrollToElement(
         element: Element | null,
-        behavior: ScrollBehavior = "auto",
+        behavior: ScrollBehavior = "instant",
     ): Promise<void> {
         return interruptScroll(() => {
             element?.scrollIntoView({ behavior, block: "center" });

@@ -7,7 +7,6 @@
         type ChatIdentifier,
         chatIdentifiersEqual,
         type ChatSummary,
-        communities,
         CommunityMap,
         type CommunitySummary,
         currentChatAttachment,
@@ -29,7 +28,6 @@
         messagesRead,
         type MultiUserChat,
         type OpenChat,
-        selectedCommunity,
         subscribe,
         suspendedUser,
         ui,
@@ -131,7 +129,7 @@
     }
 
     function importToCommunity() {
-        importToCommunities = $communities.filter((c) => c.membership.role === "owner");
+        importToCommunities = app.communities.filter((c) => c.membership.role === "owner");
         if (importToCommunities.size === 0) {
             toastStore.showFailureToast(i18nKey("communities.noOwned"));
             importToCommunities = undefined;
@@ -315,7 +313,7 @@
     });
     let showFooter = $derived(!showSearchHeader && !$suspendedUser);
     let blocked = $derived(isBlocked(chat, $directlyBlockedUsers));
-    let frozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunity));
+    let frozen = $derived(client.isChatOrCommunityFrozen(chat, app.selectedCommunitySummary));
     let canSendAny = $derived(client.canSendMessage(chat.id, "message"));
     let preview = $derived(client.isPreviewing(chat.id));
     let lapsed = $derived(client.isLapsed(chat.id));

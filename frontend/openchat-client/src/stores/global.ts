@@ -18,6 +18,7 @@ import type {
 } from "openchat-shared";
 import { ChatMap, CommunityMap, ObjectSet, chatScopesEqual } from "openchat-shared";
 import { derived } from "svelte/store";
+import { app } from "../state/app.svelte";
 import { serverWalletConfigStore } from "./crypto";
 import { immutableStore } from "./immutable";
 import { localGlobalUpdates } from "./localGlobalUpdates";
@@ -43,7 +44,7 @@ const installedServerDirectBots = immutableStore<Map<string, ExternalBotPermissi
 export const installedDirectBots = derived(
     [installedServerDirectBots, localGlobalUpdates],
     ([$serverBots, $local]) => {
-        const clone = new Map($serverBots);
+        const clone = new Map<string, ExternalBotPermissions>($serverBots);
         const localInstalled = [...($local.get("global")?.installedDirectBots?.entries() ?? [])];
         const localDeleted = [...($local.get("global")?.removedDirectBots?.values() ?? [])];
         localInstalled.forEach(([id, perm]) => {
@@ -64,6 +65,7 @@ export const chitStateStore = immutableStore<ChitState>({
 });
 
 export const globalStateStore = immutableStore<GlobalState>({
+    // TODO - we need to extract this from here and have it as a standalone store that is synced with rune via an effect
     communities: new CommunityMap<CommunitySummary>(),
     directChats: new ChatMap<DirectChatSummary>(),
     groupChats: new ChatMap<GroupChatSummary>(),
@@ -224,18 +226,18 @@ export function mergePairOfUnreadCounts(a: UnreadCounts, b: UnreadCounts): Unrea
 export const unreadGroupCounts = derived(
     [globalStateStore, messagesRead],
     ([$global, _$messagesRead]) => {
-        return combinedUnreadCountForChats($global.groupChats.values());
+        return combinedUnreadCountForChats(Array.from($global.groupChats.values()));
     },
 );
 
 export const groupVideoCallCounts = derived([globalStateStore], ([$global]) => {
-    return videoCallsInProgressForChats($global.groupChats.values());
+    return videoCallsInProgressForChats(Array.from($global.groupChats.values()));
 });
 
 export const unreadDirectCounts = derived(
     [globalStateStore, messagesRead],
     ([$global, _$messagesRead]) => {
-        return combinedUnreadCountForChats($global.directChats.values());
+        return combinedUnreadCountForChats(Array.from($global.directChats.values()));
     },
 );
 
@@ -253,13 +255,13 @@ export const unreadActivityCount = derived(
 );
 
 export const directVideoCallCounts = derived([globalStateStore], ([$global]) => {
-    return videoCallsInProgressForChats($global.directChats.values());
+    return videoCallsInProgressForChats(Array.from($global.directChats.values()));
 });
 
 export function getAllServerChats(global: GlobalState): ChatMap<ChatSummary> {
     const groupChats = global.groupChats.values();
     const directChats = global.directChats.values();
-    const channels = global.communities.values().flatMap((c) => c.channels);
+    const channels = [...global.communities.values()].flatMap((c) => c.channels);
     return ChatMap.fromList([...groupChats, ...directChats, ...channels]);
 }
 
@@ -283,7 +285,7 @@ export const favouritesVideoCallCounts = derived([globalStateStore], ([$global])
 });
 
 export const communityChannelVideoCallCounts = derived([globalStateStore], ([$global]) => {
-    return $global.communities.values().reduce((map, community) => {
+    return [...$global.communities.values()].reduce((map, community) => {
         map.set(community.id, videoCallsInProgressForChats(community.channels));
         return map;
     }, new CommunityMap<VideoCallCounts>());
@@ -292,7 +294,7 @@ export const communityChannelVideoCallCounts = derived([globalStateStore], ([$gl
 export const unreadCommunityChannelCounts = derived(
     [globalStateStore, messagesRead],
     ([$global, _$messagesRead]) => {
-        return $global.communities.values().reduce((map, community) => {
+        return [...$global.communities.values()].reduce((map, community) => {
             map.set(community.id, combinedUnreadCountForChats(community.channels));
             return map;
         }, new CommunityMap<CombinedUnreadCounts>());
@@ -305,7 +307,7 @@ export const globalUnreadCount = derived(
         return mergeListOfCombinedUnreadCounts([
             $groupCounts,
             $directCounts,
-            mergeListOfCombinedUnreadCounts($communities.values()),
+            mergeListOfCombinedUnreadCounts(Array.from($communities.values())),
         ]);
     },
 );
@@ -326,8 +328,9 @@ export function setGlobalState(
 ): void {
     const [channels, directChats, groupChats] = partitionChats(allChats);
 
+    const communitiesMap = CommunityMap.fromList(communities);
     const state = {
-        communities: CommunityMap.fromList(communities),
+        communities: communitiesMap,
         directChats: ChatMap.fromList(directChats),
         groupChats: ChatMap.fromList(groupChats),
         favourites: ObjectSet.fromList(favourites),
@@ -338,14 +341,17 @@ export function setGlobalState(
     };
     Object.entries(channels).forEach(([communityId, channels]) => {
         const id: CommunityIdentifier = { kind: "community", communityId };
-        const community = state.communities.get(id);
+        const community = communitiesMap.get(id);
         if (community !== undefined) {
-            state.communities.set(id, {
+            communitiesMap.set(id, {
                 ...community,
                 channels,
             });
         }
     });
+
+    console.log(communitiesMap);
+    app.serverCommunities = communitiesMap;
 
     globalStateStore.set(state);
     chitStateStore.update((curr) => {

@@ -1,9 +1,9 @@
 <script lang="ts">
     import {
+        app,
         ChatMap,
         chatSummariesListStore,
         publish,
-        selectedCommunity,
         type ChannelMatch,
         type OpenChat,
     } from "openchat-client";
@@ -23,7 +23,7 @@
 
     let { searchTerm }: Props = $props();
 
-    let selectedCommunityId = $derived($selectedCommunity?.id.communityId);
+    let selectedCommunityId = $derived(app.selectedCommunitySummary?.id.communityId);
 
     let searching = $state(false);
     let pageIndex = 0;
