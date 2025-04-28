@@ -1,11 +1,11 @@
 <script lang="ts">
     import {
+        app,
         chatIdentifiersEqual,
         type ChatSummary,
         currentUser,
         favouritesStore,
         type GroupChatSummary,
-        installedDirectBots,
         isDiamond,
         isProposalGroup,
         messagesRead,
@@ -72,7 +72,7 @@
 
     let botIdToUninstall = $derived(
         selectedChatSummary.kind === "direct_chat" &&
-            $installedDirectBots.has(selectedChatSummary.them.userId)
+            app.directChatBots.has(selectedChatSummary.them.userId)
             ? selectedChatSummary.them.userId
             : undefined,
     );

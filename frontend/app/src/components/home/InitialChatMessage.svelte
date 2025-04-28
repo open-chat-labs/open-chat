@@ -7,7 +7,6 @@
         type CommandDefinition,
         emptyExternalBotPermissions,
         type ExternalBotPermissions,
-        installedDirectBots,
         isProposalGroup,
         type OpenChat,
         type ResourceKey,
@@ -56,7 +55,7 @@
                 };
                 const bot = botState.externalBots.get(chat.them.userId);
                 const perm =
-                    $installedDirectBots.get(chat.them.userId) ?? emptyExternalBotPermissions();
+                    app.directChatBots.get(chat.them.userId) ?? emptyExternalBotPermissions();
                 return bot === undefined
                     ? s
                     : {

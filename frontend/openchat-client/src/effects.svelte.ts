@@ -5,7 +5,12 @@ import { app } from "./state/app.svelte";
 import { localUpdates } from "./state/global";
 import { pathState } from "./state/path.svelte";
 import { ui } from "./state/ui.svelte";
-import { chatListScopeStore, dummyCommunityPreviewStore, dummyPinnedChatsStore } from "./stores";
+import {
+    chatListScopeStore,
+    dummyCommunityPreviewStore,
+    dummyPinnedChatsStore,
+    dummyWalletConfigStore,
+} from "./stores";
 
 function onSelectedCommunityChanged(client: OpenChat) {
     $effect(() => {
@@ -108,9 +113,13 @@ function syncState() {
     });
 
     $effect(() => {
-        if (app.pinnedChats) {
-            dummyPinnedChatsStore.set(Symbol());
-        }
+        void app.pinnedChats;
+        dummyPinnedChatsStore.set(Symbol());
+    });
+
+    $effect(() => {
+        void app.walletConfig;
+        dummyWalletConfigStore.set(Symbol());
     });
 }
 
