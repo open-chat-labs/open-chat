@@ -33,7 +33,7 @@ impl Caller {
             Caller::Bot(user_id) => Some(*user_id),
             Caller::BotV2(bot_caller) => bot_caller.initiator.user(),
             Caller::OCBot(user_id) => Some(*user_id),
-            Caller::Webhook(user_id) => Some(*user_id),
+            Caller::Webhook(_) => None,
         }
     }
 

@@ -1,4 +1,3 @@
-use base64::Engine;
 use candid::Principal;
 use rand::{rngs::StdRng, Rng};
 use serde::{Deserialize, Serialize};
@@ -8,6 +7,7 @@ use types::{Document, OptionUpdate, TimestampMillis};
 #[derive(Serialize, Deserialize, Default)]
 pub struct Webhooks {
     map: BTreeMap<Principal, Webhook>,
+    last_updated: TimestampMillis,
 }
 
 #[derive(Serialize, Deserialize, Default)]
@@ -15,7 +15,6 @@ pub struct Webhook {
     pub name: String,
     pub avatar: Option<Document>,
     pub secret: String,
-    pub last_updated: TimestampMillis,
 }
 
 impl Webhooks {
@@ -30,9 +29,10 @@ impl Webhooks {
                 name,
                 avatar,
                 secret: Self::generate_secret(rng),
-                last_updated: now,
             },
         );
+
+        self.last_updated = now;
 
         true
     }
@@ -40,7 +40,7 @@ impl Webhooks {
     pub fn regenerate(&mut self, id: Principal, rng: &mut StdRng, now: TimestampMillis) -> bool {
         if let Some(webhook) = self.map.get_mut(&id) {
             webhook.secret = rng.gen::<u128>().to_string();
-            webhook.last_updated = now;
+            self.last_updated = now;
             true
         } else {
             false
@@ -65,15 +65,20 @@ impl Webhooks {
                 OptionUpdate::NoChange => {}
             }
 
-            webhook.last_updated = now;
+            self.last_updated = now;
             true
         } else {
             false
         }
     }
 
-    pub fn remove(&mut self, id: &Principal) -> Option<Webhook> {
-        self.map.remove(id)
+    pub fn remove(&mut self, id: &Principal, now: TimestampMillis) -> Option<Webhook> {
+        if let Some(webhook) = self.map.remove(id) {
+            self.last_updated = now;
+            Some(webhook)
+        } else {
+            None
+        }
     }
 
     pub fn get(&self, id: &Principal) -> Option<&Webhook> {
@@ -85,7 +90,7 @@ impl Webhooks {
     }
 
     pub fn last_updated(&self) -> TimestampMillis {
-        self.map.values().map(|k| k.last_updated).max().unwrap_or_default()
+        self.last_updated
     }
 
     fn generate_random_id(rng: &mut StdRng) -> Principal {
@@ -94,8 +99,6 @@ impl Webhooks {
 
     fn generate_secret(rng: &mut StdRng) -> String {
         let secret_bytes = rng.gen::<[u8; 16]>();
-        let base64_encoded = base64::engine::general_purpose::STANDARD.encode(secret_bytes);
-        let url_encoded = urlencoding::encode(&base64_encoded);
-        url_encoded.to_string()
+        hex::encode(secret_bytes)
     }
 }
