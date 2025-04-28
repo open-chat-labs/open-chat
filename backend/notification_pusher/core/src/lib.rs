@@ -1,24 +1,19 @@
 use crate::ic_agent::IcAgent;
-use crate::metrics::{Metrics, collect_metrics};
-use crate::processor::Processor;
-use crate::pusher::Pusher;
 use crate::reader::Reader;
-use crate::subscription_remover::SubscriptionRemover;
+use crate::user_notifications::start_user_notifications_processor;
 use index_store::IndexStore;
 use prometheus::{Encoder, TextEncoder};
 use std::io::Write;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use tracing::info;
 use types::{CanisterId, TimestampMillis, UserId};
+use user_notifications::metrics::collect_metrics;
 use web_push::{SubscriptionInfo, WebPushMessage};
 
 pub mod ic_agent;
-mod metrics;
-mod processor;
-mod pusher;
 mod reader;
-mod subscription_remover;
+mod user_notifications;
 
 pub async fn run_notifications_pusher<I: IndexStore + 'static>(
     ic_agent: IcAgent,
@@ -30,51 +25,18 @@ pub async fn run_notifications_pusher<I: IndexStore + 'static>(
 ) {
     info!("Notifications pusher starting");
 
-    let (to_process_sender, to_process_receiver) = async_channel::bounded::<Notification>(200_000);
-    let (to_push_sender, to_push_receiver) = async_channel::bounded::<NotificationToPush>(200_000);
-    let (subscriptions_to_remove_sender, subscriptions_to_remove_receiver) = async_channel::bounded(20_000);
-
-    Metrics::init(
-        to_process_sender.clone(),
-        to_push_sender.clone(),
-        subscriptions_to_remove_sender.clone(),
-    );
+    let user_notifications_sender =
+        start_user_notifications_processor(ic_agent.clone(), index_canister_id, vapid_private_pem, pusher_count);
 
     for notification_canister_id in notifications_canister_ids {
         let reader = Reader::new(
             ic_agent.clone(),
             notification_canister_id,
             index_store.clone(),
-            to_process_sender.clone(),
+            user_notifications_sender.clone(),
         );
         tokio::spawn(reader.run());
     }
-
-    let invalid_subscriptions = Arc::new(RwLock::default());
-    let throttled_subscriptions = Arc::new(RwLock::default());
-
-    let processor = Processor::new(
-        to_process_receiver.clone(),
-        to_push_sender.clone(),
-        &vapid_private_pem,
-        invalid_subscriptions.clone(),
-        throttled_subscriptions.clone(),
-    );
-    tokio::spawn(processor.run());
-
-    for _ in 0..pusher_count {
-        let pusher = Pusher::new(
-            to_push_receiver.clone(),
-            subscriptions_to_remove_sender.clone(),
-            invalid_subscriptions.clone(),
-            throttled_subscriptions.clone(),
-        );
-        tokio::spawn(pusher.run());
-    }
-
-    let subscription_remover = SubscriptionRemover::new(ic_agent, index_canister_id, subscriptions_to_remove_receiver);
-
-    tokio::spawn(subscription_remover.run());
 
     info!("Notifications pusher started");
 
