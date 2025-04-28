@@ -23,7 +23,7 @@ pub fn now_millis(env: &PocketIc) -> TimestampMillis {
 }
 
 pub fn now_nanos(env: &PocketIc) -> TimestampNanos {
-    env.get_time().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_nanos() as u64
+    env.get_time().as_nanos_since_unix_epoch()
 }
 
 pub fn local_bin() -> PathBuf {

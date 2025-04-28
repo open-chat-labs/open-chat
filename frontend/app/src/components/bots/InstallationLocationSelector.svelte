@@ -6,14 +6,14 @@
         OpenChat,
         type BotInstallationLocation,
     } from "openchat-client";
-    import Legend from "../Legend.svelte";
-    import Search from "../Search.svelte";
-    import Translatable from "../Translatable.svelte";
     import { getContext, onMount } from "svelte";
-    import Menu from "../Menu.svelte";
-    import MenuItem from "../MenuItem.svelte";
     import Avatar from "../Avatar.svelte";
     import SelectedMatch from "../home/proposal/SelectedMatch.svelte";
+    import Legend from "../Legend.svelte";
+    import Menu from "../Menu.svelte";
+    import MenuItem from "../MenuItem.svelte";
+    import Search from "../Search.svelte";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -43,7 +43,7 @@
 
         const termLower = term.toLowerCase();
 
-        const communities: Match[] = globalState.communities.values()
+        const communities: Match[] = [...globalState.communities.values()]
             .filter((c) => termLower === "" || c.name.toLowerCase().includes(termLower))
             .map((c) => ({
                 avatarUrl: client.communityAvatarUrl(c.id.communityId, c.avatar),
@@ -52,7 +52,7 @@
                 isCommunity: true,
             }));
 
-        const groups: Match[] = globalState.groupChats.values()
+        const groups: Match[] = [...globalState.groupChats.values()]
             .filter((g) => termLower === "" || g.name.toLowerCase().includes(termLower))
             .map((g) => ({
                 avatarUrl: client.groupAvatarUrl(g),
@@ -88,7 +88,7 @@
     }
 
     function onBlur() {
-        window.setTimeout(() => focused = false, 100);
+        window.setTimeout(() => (focused = false), 100);
     }
 </script>
 
@@ -99,7 +99,15 @@
     {#if selected !== undefined}
         <SelectedMatch onRemove={() => reset()} match={selected}></SelectedMatch>
     {:else}
-        <Search inputStyle fill {placeholder} searching={false} {searchTerm} {onPerformSearch} {onFocus} {onBlur} />
+        <Search
+            inputStyle
+            fill
+            {placeholder}
+            searching={false}
+            {searchTerm}
+            {onPerformSearch}
+            {onFocus}
+            {onBlur} />
     {/if}
 
     {#if focused && results.length > 0}

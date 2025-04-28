@@ -1,10 +1,10 @@
 <script lang="ts">
     import {
+        app,
         type BotMatch,
         chatIdentifiersEqual,
         chatIdentifierToString,
         type ChatListScope,
-        chatListScopeStore as chatListScope,
         chatSummariesListStore,
         type ChatSummary as ChatSummaryType,
         type CombinedUnreadCounts,
@@ -18,7 +18,6 @@
         routeForChatIdentifier,
         routeForScope,
         selectedChatId,
-        selectedCommunity,
         ui,
         unreadCommunityChannelCounts,
         unreadDirectCounts,
@@ -61,7 +60,7 @@
     let searchTerm: string = $state("");
     let searchResultsAvailable: boolean = $state(false);
     let chatsScrollTop = $state<number | undefined>();
-    let previousScope: ChatListScope | undefined = $chatListScope;
+    let previousScope: ChatListScope | undefined = app.chatListScope;
     let previousView: "chats" | "threads" = $chatListView;
 
     let unreadCounts = $state(emptyCombinedUnreadCounts());
@@ -71,7 +70,7 @@
     // Probably can just be done in a more explicit way but it's not urgent
     $effect.pre(() => {
         if (
-            previousScope === $chatListScope &&
+            previousScope === app.chatListScope &&
             $chatListView !== "chats" &&
             previousView === "chats"
         ) {
@@ -80,7 +79,7 @@
     });
 
     $effect(() => {
-        if (previousScope !== $chatListScope) {
+        if (previousScope !== app.chatListScope) {
             onScopeChanged();
         } else if (previousView !== $chatListView) {
             onViewChanged();
@@ -98,8 +97,8 @@
     }
 
     function cancelPreview() {
-        if ($selectedCommunity) {
-            client.removeCommunity($selectedCommunity.id);
+        if (app.selectedCommunitySummary) {
+            client.removeCommunity(app.selectedCommunitySummary.id);
             page(routeForScope(client.getDefaultScope()));
         }
     }
@@ -136,12 +135,12 @@
      * the routing will take care of the rest
      */
     function selectGroup({ chatId }: GroupMatch): void {
-        page(routeForChatIdentifier($chatListScope.kind, chatId));
+        page(routeForChatIdentifier(app.chatListScope.kind, chatId));
         searchTerm = "";
     }
 
     function chatSelected({ id }: ChatSummaryType): void {
-        const url = routeForChatIdentifier($chatListScope.kind, id);
+        const url = routeForChatIdentifier(app.chatListScope.kind, id);
         page(url);
         searchTerm = "";
     }
@@ -157,7 +156,7 @@
     }
 
     function onScopeChanged() {
-        previousScope = $chatListScope;
+        previousScope = app.chatListScope;
         chatListView.set("chats");
         chatsScrollTop = 0;
         onViewChanged();
@@ -183,19 +182,19 @@
     }
     let showPreview = $derived(
         ui.mobileWidth &&
-            $selectedCommunity?.membership.role === "none" &&
+            app.selectedCommunitySummary?.membership.role === "none" &&
             $selectedChatId === undefined,
     );
     let user = $derived($userStore.get($createdUser.userId));
     let lowercaseSearch = $derived(searchTerm.toLowerCase());
     let showExploreGroups = $derived(
-        ($chatListScope.kind === "none" || $chatListScope.kind === "group_chat") &&
+        (app.chatListScope.kind === "none" || app.chatListScope.kind === "group_chat") &&
             !$exploreGroupsDismissed &&
             !searchResultsAvailable,
     );
-    let showBrowseChannnels = $derived($chatListScope.kind === "community");
+    let showBrowseChannnels = $derived(app.chatListScope.kind === "community");
     $effect(() => {
-        switch ($chatListScope.kind) {
+        switch (app.chatListScope.kind) {
             case "group_chat": {
                 unreadCounts = $unreadGroupCounts;
                 break;
@@ -210,7 +209,7 @@
             }
             case "community": {
                 unreadCounts =
-                    $unreadCommunityChannelCounts.get($chatListScope.id) ??
+                    $unreadCommunityChannelCounts.get(app.chatListScope.id) ??
                     emptyCombinedUnreadCounts();
                 break;
             }
@@ -238,14 +237,14 @@
 
 <!-- svelte-ignore missing_declaration -->
 {#if user}
-    {#if $chatListScope.kind === "favourite"}
+    {#if app.chatListScope.kind === "favourite"}
         <FavouriteChatsHeader {canMarkAllRead} />
-    {:else if $chatListScope.kind === "group_chat"}
+    {:else if app.chatListScope.kind === "group_chat"}
         <GroupChatsHeader {canMarkAllRead} />
-    {:else if $chatListScope.kind === "direct_chat"}
+    {:else if app.chatListScope.kind === "direct_chat"}
         <DirectChatsHeader {canMarkAllRead} />
-    {:else if $selectedCommunity && $chatListScope.kind === "community"}
-        <SelectedCommunityHeader community={$selectedCommunity} {canMarkAllRead} />
+    {:else if app.selectedCommunitySummary && app.chatListScope.kind === "community"}
+        <SelectedCommunityHeader community={app.selectedCommunitySummary} {canMarkAllRead} />
     {/if}
 
     <ChatListSearch
@@ -357,7 +356,7 @@
                                                 ...group,
                                                 id: group.chatId,
                                             },
-                                            $selectedCommunity,
+                                            app.selectedCommunitySummary,
                                         )}
                                         onclick={() => selectGroup(group)}>
                                         <h4 class="search-item-title">

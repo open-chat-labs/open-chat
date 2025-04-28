@@ -1,23 +1,34 @@
+import { dequal } from "dequal";
 import {
+    applyOptionUpdate,
     type ChatIdentifier,
+    chatIdentifiersEqual,
+    type ChatListScope,
+    chatListScopesEqual,
     type CommunityIdentifier,
+    communityIdentifiersEqual,
+    CommunityMap,
+    type CommunitySummary,
     type DirectChatIdentifier,
     type ExternalBotPermissions,
     type IdentityState,
     type Member,
     type MessageContext,
+    messageContextsEqual,
     type PublicApiKeyDetails,
     type UserGroupDetails,
+    type UserGroupSummary,
     type VersionedRules,
-    chatIdentifiersEqual,
-    chatListScopesEqual,
-    communityIdentifiersEqual,
-    messageContextsEqual,
+    type VideoCallCounts,
+    videoCallsInProgressForChats,
 } from "openchat-shared";
-import { ChatDetailsMergedState } from "./chat_details";
+import { chatDetailsLocalUpdates, ChatDetailsMergedState } from "./chat_details";
 import { ChatDetailsServerState } from "./chat_details/server";
+import { communityLocalUpdates } from "./community_details";
 import { CommunityMergedState } from "./community_details/merged.svelte";
 import { CommunityServerState } from "./community_details/server";
+import { localUpdates } from "./global";
+import { type ReadonlyMap } from "./map";
 import { pathState } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
 
@@ -40,6 +51,79 @@ class AppState {
             });
         });
     }
+
+    #serverCommunities = $state<CommunityMap<CommunitySummary>>(new CommunityMap());
+
+    #serverPinnedChats = $state<Map<ChatListScope["kind"], ChatIdentifier[]>>(new Map());
+
+    #pinnedChats = $derived.by(() => {
+        const mergedPinned = new Map(this.#serverPinnedChats);
+
+        for (const [chatId, localState] of chatDetailsLocalUpdates.entries()) {
+            const updates = localState.pinnedToScopes;
+            for (const scope of updates.added) {
+                const ids = mergedPinned.get(scope) ?? [];
+                if (!ids.find((id) => chatIdentifiersEqual(id, chatId))) {
+                    ids.unshift(chatId);
+                }
+                mergedPinned.set(scope, ids);
+            }
+            for (const scope of updates.removed) {
+                const ids = mergedPinned.get(scope) ?? [];
+                mergedPinned.set(
+                    scope,
+                    ids.filter((id) => !chatIdentifiersEqual(id, chatId)),
+                );
+            }
+        }
+
+        return mergedPinned;
+    });
+
+    #communities = $derived.by(() => {
+        const merged = localUpdates.communities.apply(this.#serverCommunities);
+        for (const c of localUpdates.previewCommunities.values()) {
+            merged.set(c.id, c);
+        }
+        return merged.map((communityId, community) => {
+            const updates = communityLocalUpdates.get(communityId);
+            const index = updates?.index;
+            if (index !== undefined) {
+                community.membership.index = index;
+            }
+            community.membership.displayName = applyOptionUpdate(
+                community.membership.displayName,
+                updates?.displayName,
+            );
+            community.membership.rulesAccepted =
+                updates?.rulesAccepted ?? community.membership.rulesAccepted;
+            return community;
+        });
+    });
+
+    #sortedCommunities = $derived.by(() => {
+        return [...this.#communities.values()].toSorted((a, b) => {
+            return b.membership.index === a.membership.index
+                ? b.memberCount - a.memberCount
+                : b.membership.index - a.membership.index;
+        });
+    });
+
+    #nextCommunityIndex = $derived((this.#sortedCommunities[0]?.membership?.index ?? -1) + 1);
+
+    #userGroupSummaries = $derived.by(() => {
+        return [...this.#communities.values()].reduce((map, community) => {
+            community.userGroups.forEach((ug) => map.set(ug.id, ug));
+            return map;
+        }, new Map<number, UserGroupSummary>());
+    });
+
+    #communityChannelVideoCallCounts = $derived.by(() => {
+        return this.#communities.reduce((map, [id, community]) => {
+            map.set(id, videoCallsInProgressForChats(community.channels));
+            return map;
+        }, new CommunityMap<VideoCallCounts>());
+    });
 
     #identityState = $state<IdentityState>({ kind: "loading_user" });
 
@@ -85,6 +169,21 @@ class AppState {
         }, communityIdentifiersEqual),
     );
 
+    #selectedCommunitySummary = $derived.by<CommunitySummary | undefined>(
+        withEqCheck(() => {
+            if (this.#chatListScope.kind === "community") {
+                return this.#communities.get(this.#chatListScope.id);
+            } else if (
+                this.#chatListScope.kind === "favourite" &&
+                this.#chatListScope.communityId
+            ) {
+                return this.#communities.get(this.#chatListScope.communityId);
+            } else {
+                return undefined;
+            }
+        }, dequal),
+    );
+
     #selectedCommunity = $state<CommunityMergedState>(
         new CommunityMergedState(CommunityServerState.empty()),
     );
@@ -93,12 +192,20 @@ class AppState {
         new ChatDetailsMergedState(ChatDetailsServerState.empty()),
     );
 
+    get pinnedChats(): Map<ChatListScope["kind"], ChatIdentifier[]> {
+        return this.#pinnedChats;
+    }
+
     get identityState(): Readonly<IdentityState> {
         return this.#identityState;
     }
 
     updateIdentityState(fn: (prev: IdentityState) => IdentityState) {
         this.#identityState = fn(this.#identityState);
+    }
+
+    get nextCommunityIndex() {
+        return this.#nextCommunityIndex;
     }
 
     get chatsInitialised() {
@@ -127,6 +234,10 @@ class AppState {
 
     get selectedCommunity() {
         return this.#selectedCommunity;
+    }
+
+    get selectedCommunitySummary() {
+        return this.#selectedCommunitySummary;
     }
 
     get selectedChat() {
@@ -203,6 +314,42 @@ class AppState {
         } else {
             this.#selectedCommunity = new CommunityMergedState(serverState);
         }
+    }
+
+    set serverCommunities(val: CommunityMap<CommunitySummary>) {
+        this.#serverCommunities = val;
+    }
+
+    set serverPinnedChats(val: Map<ChatListScope["kind"], ChatIdentifier[]>) {
+        this.#serverPinnedChats = val;
+    }
+
+    get serverCommunities() {
+        return this.#serverCommunities;
+    }
+
+    get communities() {
+        return this.#communities;
+    }
+
+    get sortedCommunities() {
+        return this.#sortedCommunities;
+    }
+
+    get userGroupSummaries(): ReadonlyMap<number, UserGroupSummary> {
+        return this.#userGroupSummaries;
+    }
+
+    get communityChannelVideoCallCounts(): ReadonlyMap<CommunityIdentifier, VideoCallCounts> {
+        return this.#communityChannelVideoCallCounts;
+    }
+
+    isPreviewingCommunity(id: CommunityIdentifier) {
+        return localUpdates.isPreviewingCommunity(id);
+    }
+
+    getPreviewingCommunity(id: CommunityIdentifier) {
+        return localUpdates.getPreviewingCommunity(id);
     }
 }
 

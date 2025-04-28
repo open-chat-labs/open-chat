@@ -1,8 +1,8 @@
 <script lang="ts">
     import {
+        app,
         botState,
         chatIdentifiersEqual,
-        chatListScopeStore as chatListScope,
         currentUser,
         installedDirectBots,
         OpenChat,
@@ -32,7 +32,7 @@
                 pathState.route.kind === "global_chat_selected_route" &&
                 chatIdentifiersEqual(chatId, pathState.route.chatId)
             ) {
-                page(routeForScope($chatListScope));
+                page(routeForScope(app.chatListScope));
             }
             tick().then(() => client.removeChat(chatId));
         }

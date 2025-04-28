@@ -1,5 +1,5 @@
-import { writable } from "svelte/store";
 import { MessageMap } from "openchat-shared";
+import { writable } from "svelte/store";
 
 type Lookup = MessageMap<string>;
 
@@ -10,11 +10,11 @@ export const translationStore = {
     translate: (messageId: bigint, translation: string): void =>
         store.update((lookup) => {
             lookup.set(messageId, translation);
-            return new MessageMap(lookup.entries());
+            return lookup.clone();
         }),
     untranslate: (messageId: bigint): void =>
         store.update((lookup) => {
             lookup.delete(messageId);
-            return new MessageMap(lookup.entries());
+            return lookup.clone();
         }),
 };

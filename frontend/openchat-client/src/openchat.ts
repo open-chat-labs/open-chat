@@ -278,8 +278,8 @@ import { LiveState } from "./liveState";
 import { snapshot } from "./snapshot.svelte";
 import { app } from "./state/app.svelte";
 import { botState } from "./state/bots.svelte";
-import { chatDetailsLocalUpdates } from "./state/chat_details";
-import { communityLocalUpdates, type CommunityMergedState } from "./state/community_details";
+import { type CommunityMergedState } from "./state/community_details";
+import { localUpdates } from "./state/global";
 import type { ReadonlyMap } from "./state/map";
 import { pathState, type RouteParams } from "./state/path.svelte";
 import type { ReadonlySet } from "./state/set";
@@ -305,12 +305,6 @@ import {
     setChatSpecificState,
     threadServerEventsStore,
 } from "./stores/chat";
-import {
-    addCommunityPreview,
-    communityPreviewsStore,
-    nextCommunityIndex,
-    removeCommunityPreview,
-} from "./stores/community";
 import {
     bitcoinAddress,
     cryptoBalance,
@@ -342,7 +336,6 @@ import {
 import { applyTranslationCorrection } from "./stores/i18n";
 import { lastOnlineDates } from "./stores/lastOnlineDates";
 import { localChatSummaryUpdates } from "./stores/localChatSummaryUpdates";
-import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
 import { localGlobalUpdates } from "./stores/localGlobalUpdates";
 import { localMessageUpdates } from "./stores/localMessageUpdates";
 import {
@@ -635,7 +628,10 @@ export class OpenChat {
         });
     }
 
-    deleteCurrentUser(identityKey: CryptoKeyPair, delegation: JsonnableDelegationChain): Promise<boolean> {
+    deleteCurrentUser(
+        identityKey: CryptoKeyPair,
+        delegation: JsonnableDelegationChain,
+    ): Promise<boolean> {
         if (!this.#liveState.anonUser) {
             return this.#sendRequest({
                 kind: "deleteUser",
@@ -1209,7 +1205,7 @@ export class OpenChat {
     }
 
     muteAllChannels(communityId: CommunityIdentifier): Promise<boolean> {
-        const community = this.#liveState.communities.get(communityId);
+        const community = app.communities.get(communityId);
         if (community === undefined) {
             return Promise.resolve(false);
         }
@@ -1260,13 +1256,14 @@ export class OpenChat {
     }
 
     pinned(scope: ChatListScope["kind"], chatId: ChatIdentifier): boolean {
-        const pinned = this.#liveState.pinnedChats;
-        return pinned.get(scope)?.find((id) => chatIdentifiersEqual(id, chatId)) !== undefined;
+        return (
+            app.pinnedChats.get(scope)?.find((id) => chatIdentifiersEqual(id, chatId)) !== undefined
+        );
     }
 
     pinChat(chatId: ChatIdentifier): Promise<boolean> {
-        const scope = this.#liveState.chatListScope.kind;
-        localChatSummaryUpdates.pin(chatId, scope);
+        const scope = app.chatListScope.kind;
+        const undo = localUpdates.pinToScope(chatId, scope);
         return this.#sendRequest({
             kind: "pinChat",
             chatId,
@@ -1274,20 +1271,19 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    localChatSummaryUpdates.unpin(chatId, scope);
+                    undo();
                 }
                 return resp.kind === "success";
             })
             .catch(() => {
-                localChatSummaryUpdates.unpin(chatId, scope);
-
+                undo();
                 return false;
             });
     }
 
     unpinChat(chatId: ChatIdentifier): Promise<boolean> {
-        const scope = this.#liveState.chatListScope.kind;
-        localChatSummaryUpdates.unpin(chatId, scope);
+        const scope = app.chatListScope.kind;
+        const undo = localUpdates.unpinFromScope(chatId, scope);
         return this.#sendRequest({
             kind: "unpinChat",
             chatId,
@@ -1295,12 +1291,12 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    localChatSummaryUpdates.pin(chatId, scope);
+                    undo();
                 }
                 return resp.kind === "success";
             })
             .catch(() => {
-                localChatSummaryUpdates.pin(chatId, scope);
+                undo();
                 return false;
             });
     }
@@ -1398,20 +1394,12 @@ export class OpenChat {
             .catch(() => "failure");
     }
 
-    #addCommunityLocally(community: CommunitySummary): void {
-        localCommunitySummaryUpdates.markAdded(community);
-        community.channels.forEach((c) => localChatSummaryUpdates.markAdded(c));
+    #addCommunityLocally(community: CommunitySummary) {
+        return localUpdates.addCommunity(community);
     }
 
-    #removeCommunityLocally(id: CommunityIdentifier): void {
-        if (this.#liveState.communityPreviews.has(id)) {
-            removeCommunityPreview(id);
-        }
-        localCommunitySummaryUpdates.markRemoved(id);
-        const community = this.#liveState.communities.get(id);
-        if (community !== undefined) {
-            community.channels.forEach((c) => localChatSummaryUpdates.markRemoved(c.id));
-        }
+    #removeCommunityLocally(id: CommunityIdentifier) {
+        return localUpdates.removeCommunity(id);
     }
 
     verifyAccessGate(gate: AccessGate, iiPrincipal: string): Promise<string | undefined> {
@@ -1577,7 +1565,9 @@ export class OpenChat {
                         undefined,
                     );
                 } else if (resp.kind === "success_joined_community") {
+                    resp.community.membership.index = app.nextCommunityIndex;
                     this.#addCommunityLocally(resp.community);
+
                     messagesRead.batchUpdate(() =>
                         resp.community.channels.forEach((c) => {
                             if (chatIdentifiersEqual(c.id, chat.id)) {
@@ -1592,8 +1582,8 @@ export class OpenChat {
                             }
                         }),
                     );
-                    if (this.#liveState.communityPreviews.has(resp.community.id)) {
-                        removeCommunityPreview(resp.community.id);
+                    if (localUpdates.isPreviewingCommunity(resp.community.id)) {
+                        localUpdates.removeCommunityPreview(resp.community.id);
                     }
                 } else {
                     if (resp.kind === "error" && resp.code === ErrorCode.InitiatorBlocked) {
@@ -1639,6 +1629,8 @@ export class OpenChat {
             "set_community_display_name",
         );
 
+        const undo = localUpdates.updateCommunityDisplayName(id, displayName);
+
         return this.#sendRequest({
             kind: "setMemberDisplayName",
             communityId: id.communityId,
@@ -1650,12 +1642,11 @@ export class OpenChat {
                 if (userId !== undefined) {
                     const m = app.selectedCommunity.members.get(userId);
                     if (m !== undefined) {
-                        communityLocalUpdates.updateMember(id, userId, { ...m, displayName });
+                        localUpdates.updateCommunityMember(id, userId, { ...m, displayName });
                     }
                 }
-
-                // TODO - we also need to deal with this
-                localCommunitySummaryUpdates.updateDisplayName(id, displayName);
+            } else {
+                undo();
             }
             return resp;
         });
@@ -2098,7 +2089,7 @@ export class OpenChat {
         communityId: CommunityIdentifier,
         predicate: (community: CommunitySummary) => boolean,
     ): boolean {
-        const community = this.#liveState.communities.get(communityId);
+        const community = app.communities.get(communityId);
         return community !== undefined && predicate(community);
     }
 
@@ -2540,8 +2531,8 @@ export class OpenChat {
 
     #blockUserLocally(chatId: ChatIdentifier, userId: string): UndoLocalUpdate {
         const undos = [
-            chatDetailsLocalUpdates.blockUser(chatId, userId),
-            chatDetailsLocalUpdates.removeMember(chatId, userId),
+            localUpdates.blockChatUser(chatId, userId),
+            localUpdates.removeChatMember(chatId, userId),
         ];
         return () => {
             undos.forEach((u) => u());
@@ -2553,10 +2544,10 @@ export class OpenChat {
         userId: string,
         addToMembers: boolean,
     ): UndoLocalUpdate {
-        const undos = [chatDetailsLocalUpdates.unblockUser(chatId, userId)];
+        const undos = [localUpdates.unblockChatUser(chatId, userId)];
         if (addToMembers) {
             undos.push(
-                chatDetailsLocalUpdates.addMember(chatId, {
+                localUpdates.addChatMember(chatId, {
                     role: "member",
                     userId,
                     displayName: undefined,
@@ -2570,8 +2561,8 @@ export class OpenChat {
     }
 
     blockCommunityUser(id: CommunityIdentifier, userId: string): Promise<boolean> {
-        const blockUndo = communityLocalUpdates.blockUser(id, userId);
-        const membersUndo = communityLocalUpdates.removeMember(id, userId);
+        const blockUndo = localUpdates.blockCommunityUser(id, userId);
+        const membersUndo = localUpdates.removeCommunityMember(id, userId);
         return this.#sendRequest({ kind: "blockCommunityUser", id, userId })
             .then((resp) => {
                 if (resp.kind !== "success") {
@@ -2589,7 +2580,7 @@ export class OpenChat {
     }
 
     unblockCommunityUser(id: CommunityIdentifier, userId: string): Promise<boolean> {
-        const undo = communityLocalUpdates.unblockUser(id, userId);
+        const undo = localUpdates.unblockCommunityUser(id, userId);
         return this.#sendRequest({ kind: "unblockCommunityUser", id, userId })
             .then((resp) => {
                 if (resp.kind !== "success") {
@@ -2688,7 +2679,7 @@ export class OpenChat {
         threadMessageIndex?: number,
     ): Promise<void> {
         let chat = this.#liveState.chatSummaries.get(chatId);
-        const scope = this.#liveState.chatListScope;
+        const scope = app.chatListScope;
         let autojoin = false;
 
         // if this is an unknown chat let's preview it
@@ -3496,7 +3487,7 @@ export class OpenChat {
     }
 
     unpinMessage(chatId: MultiUserChatIdentifier, messageIndex: number): Promise<boolean> {
-        const undo = chatDetailsLocalUpdates.unpinMessage(chatId, messageIndex);
+        const undo = localUpdates.unpinMessage(chatId, messageIndex);
         return this.#sendRequest({ kind: "unpinMessage", chatId, messageIndex })
             .then((resp) => {
                 if (resp.kind !== "success") {
@@ -3512,7 +3503,7 @@ export class OpenChat {
     }
 
     pinMessage(chatId: MultiUserChatIdentifier, messageIndex: number): Promise<boolean> {
-        const undo = chatDetailsLocalUpdates.pinMessage(chatId, messageIndex);
+        const undo = localUpdates.pinMessage(chatId, messageIndex);
         return this.#sendRequest({
             kind: "pinMessage",
             chatId,
@@ -4012,7 +4003,7 @@ export class OpenChat {
         }
 
         const communityRules = app.selectedCommunity.rules;
-        const community = this.#liveState.selectedCommunity;
+        const community = app.selectedCommunitySummary;
 
         console.debug(
             "RULES: rulesNeedAccepting",
@@ -4048,9 +4039,9 @@ export class OpenChat {
     }
 
     #markCommunityRulesAcceptedLocally(rulesAccepted: boolean) {
-        const selectedCommunityId = this.#liveState.selectedCommunity?.id;
+        const selectedCommunityId = app.selectedCommunitySummary?.id;
         if (selectedCommunityId !== undefined) {
-            localCommunitySummaryUpdates.updateRulesAccepted(selectedCommunityId, rulesAccepted);
+            localUpdates.updateCommunityRulesAccepted(selectedCommunityId, rulesAccepted);
         }
     }
 
@@ -4996,9 +4987,9 @@ export class OpenChat {
         userIds: string[],
     ): UndoLocalUpdate {
         if (id.kind === "community") {
-            return communityLocalUpdates.inviteUsers(id, userIds);
+            return localUpdates.inviteCommunityUsers(id, userIds);
         } else {
-            return chatDetailsLocalUpdates.inviteUsers(id, userIds);
+            return localUpdates.inviteChatUsers(id, userIds);
         }
     }
 
@@ -5007,8 +4998,8 @@ export class OpenChat {
         userIds: string[],
     ): void {
         if (id.kind === "community") {
-            communityLocalUpdates.uninviteUsers(id, userIds);
-            const community = this.#liveState.communities.get({
+            localUpdates.uninviteCommunityUsers(id, userIds);
+            const community = app.communities.get({
                 kind: "community",
                 communityId: id.communityId,
             });
@@ -5019,7 +5010,7 @@ export class OpenChat {
                 }
             }
         } else {
-            chatDetailsLocalUpdates.uninviteUsers(id, userIds);
+            localUpdates.uninviteChatUsers(id, userIds);
         }
     }
 
@@ -5084,7 +5075,7 @@ export class OpenChat {
     }
 
     removeCommunityMember(id: CommunityIdentifier, userId: string): Promise<RemoveMemberResponse> {
-        const undo = communityLocalUpdates.removeMember(id, userId);
+        const undo = localUpdates.removeCommunityMember(id, userId);
         return this.#sendRequest({ kind: "removeCommunityMember", id, userId })
             .then((resp) => {
                 if (resp.kind !== "success") {
@@ -5099,7 +5090,7 @@ export class OpenChat {
     }
 
     removeMember(chatId: MultiUserChatIdentifier, userId: string): Promise<RemoveMemberResponse> {
-        const undo = chatDetailsLocalUpdates.removeMember(chatId, userId);
+        const undo = localUpdates.removeChatMember(chatId, userId);
         return this.#sendRequest({ kind: "removeMember", chatId, userId })
             .then((resp) => {
                 if (resp.kind !== "success") {
@@ -5124,7 +5115,7 @@ export class OpenChat {
         const m = app.selectedCommunity.members.get(userId);
         let undo = undefined;
         if (m !== undefined) {
-            undo = communityLocalUpdates.updateMember(id, userId, { ...m, role: newRole });
+            undo = localUpdates.updateCommunityMember(id, userId, { ...m, role: newRole });
         }
 
         return this.#sendRequest({ kind: "changeCommunityRole", id, userId, newRole })
@@ -5148,7 +5139,7 @@ export class OpenChat {
     ): Promise<boolean> {
         if (newRole === oldRole) return Promise.resolve(true);
 
-        const undo = chatDetailsLocalUpdates.updateMember(
+        const undo = localUpdates.updateChatMember(
             chatId,
             userId,
             app.selectedChat.members.get(userId),
@@ -5401,19 +5392,23 @@ export class OpenChat {
         threadsByChat: ChatMap<ThreadSyncDetails[]>,
         serverChatSummaries: ChatMap<ChatSummary>,
     ): Promise<ThreadPreview[]> {
-        const request: ChatMap<[ThreadSyncDetails[], bigint | undefined]> = threadsByChat
-            .entries()
-            .reduce((map, [chatId, threads]) => {
+        const request: ChatMap<[ThreadSyncDetails[], bigint | undefined]> = threadsByChat.reduce(
+            (map, [chatId, threads]) => {
                 if (chatId.kind === "group_chat" || chatId.kind === "channel") {
                     const latestKnownUpdate = serverChatSummaries.get(chatId)?.lastUpdated;
                     map.set(chatId, [threads, latestKnownUpdate]);
                 }
                 return map;
-            }, new ChatMap<[ThreadSyncDetails[], bigint | undefined]>());
+            },
+            new ChatMap<[ThreadSyncDetails[], bigint | undefined]>(),
+        );
 
         return this.#sendRequest({
             kind: "threadPreviews",
-            threadsByChat: request.toMap(),
+            threadsByChat: request.toMap() as Map<
+                string,
+                [ThreadSyncDetails[], bigint | undefined]
+            >,
         })
             .then((threads) => {
                 const events = threads.flatMap((t) => [t.rootMessage, ...t.latestReplies]);
@@ -5666,7 +5661,7 @@ export class OpenChat {
                     });
 
                     if (rules !== undefined && resp.rulesVersion !== undefined) {
-                        chatDetailsLocalUpdates.updateRules(chatId, {
+                        localUpdates.updateChatRules(chatId, {
                             text: rules.text,
                             enabled: rules.enabled,
                             version: resp.rulesVersion,
@@ -6012,7 +6007,7 @@ export class OpenChat {
             }
 
             // if the selected community has updates, reload the details
-            const selectedCommunity = this.#liveState.selectedCommunity;
+            const selectedCommunity = app.selectedCommunitySummary;
             if (selectedCommunity !== undefined) {
                 const updatedCommunity = chatsResponse.state.communities.find(
                     (c) => c.id.communityId === selectedCommunity.id.communityId,
@@ -6030,9 +6025,9 @@ export class OpenChat {
             for (const community of chatsResponse.state.communities) {
                 if (
                     community?.membership !== undefined &&
-                    this.#liveState.communityPreviews.has(community.id)
+                    localUpdates.isPreviewingCommunity(community.id)
                 ) {
-                    removeCommunityPreview(community.id);
+                    localUpdates.removeCommunityPreview(community.id);
                 }
             }
 
@@ -6820,8 +6815,8 @@ export class OpenChat {
                     lookup[user.username.toLowerCase()] = user as UserSummary;
                 }
             }
-            if (this.#liveState.selectedCommunity !== undefined) {
-                const userGroups = [...this.#liveState.selectedCommunity.userGroups.values()];
+            if (app.selectedCommunitySummary !== undefined) {
+                const userGroups = [...app.selectedCommunitySummary.userGroups.values()];
                 userGroups.forEach((ug) => (lookup[ug.name.toLowerCase()] = ug));
             }
             if (
@@ -6975,7 +6970,7 @@ export class OpenChat {
     }
 
     cachedLocalUserIndexForCommunity(communityId: string): string | undefined {
-        const community = this.#liveState.communities.get({ kind: "community", communityId });
+        const community = app.communities.get({ kind: "community", communityId });
         return community !== undefined ? community.localUserIndex : undefined;
     }
 
@@ -7128,7 +7123,7 @@ export class OpenChat {
     }
 
     #getLocalUserIndexForCommunity(communityId: string): Promise<string> {
-        const community = this.#liveState.communities.get({
+        const community = app.communities.get({
             kind: "community",
             communityId,
         });
@@ -7144,7 +7139,7 @@ export class OpenChat {
             case "group_chat":
                 return Promise.resolve(chat.localUserIndex);
             case "channel":
-                const community = this.#liveState.communities.get({
+                const community = app.communities.get({
                     kind: "community",
                     communityId: chat.id.communityId,
                 });
@@ -7596,26 +7591,9 @@ export class OpenChat {
             // Skip if index is unchanged
             if (community.membership.index === index) continue;
 
-            if (this.#liveState.communityPreviews.has(community.id)) {
-                communityPreviewsStore.update((state) =>
-                    state.set(community.id, {
-                        ...community,
-                        membership: {
-                            ...community.membership,
-                            index,
-                        },
-                    }),
-                );
-            } else {
-                localCommunitySummaryUpdates.updateIndex(
-                    {
-                        kind: "community",
-                        communityId: community.id.communityId,
-                    },
-                    index,
-                );
+            localUpdates.updateCommunityIndex(community.id, index);
 
-                // Queue the update to be sent to the canister
+            if (!localUpdates.isPreviewingCommunity(community.id)) {
                 updates[community.id.communityId] = index;
             }
         }
@@ -7626,7 +7604,7 @@ export class OpenChat {
     }
 
     async setSelectedCommunity(id: CommunityIdentifier): Promise<boolean> {
-        let community = this.#liveState.communities.get(id);
+        let community = app.communities.get(id);
         let preview = false;
         if (community === undefined) {
             // if we don't have the community it means we're not a member and we need to look it up
@@ -7645,9 +7623,9 @@ export class OpenChat {
             });
             if ("id" in resp) {
                 // Make the community appear at the top of the list
-                resp.membership.index = nextCommunityIndex();
+                resp.membership.index = app.nextCommunityIndex;
                 community = resp;
-                addCommunityPreview(community);
+                localUpdates.addCommunityPreview(community);
                 preview = true;
             } else {
                 // if we get here it means we're not a member of the community and we can't look it up
@@ -7668,7 +7646,7 @@ export class OpenChat {
         if (!ui.mobileWidth) {
             const first = this.#liveState.chatSummariesList.find((c) => !c.membership.archived);
             if (first !== undefined) {
-                pageRedirect(routeForChatIdentifier(this.#liveState.chatListScope.kind, first.id));
+                pageRedirect(routeForChatIdentifier(app.chatListScope.kind, first.id));
                 return true;
             }
         }
@@ -7747,9 +7725,9 @@ export class OpenChat {
             .then((resp) => {
                 if (resp.kind === "success") {
                     // Make the community appear at the top of the list
-                    resp.community.membership.index = nextCommunityIndex();
+                    resp.community.membership.index = app.nextCommunityIndex;
                     this.#addCommunityLocally(resp.community);
-                    removeCommunityPreview(community.id);
+                    localUpdates.removeCommunityPreview(community.id);
                     this.#loadCommunityDetails(resp.community);
                     messagesRead.batchUpdate(() => {
                         resp.community.channels.forEach((c) => {
@@ -7773,35 +7751,41 @@ export class OpenChat {
     }
 
     deleteCommunity(id: CommunityIdentifier): Promise<boolean> {
-        const community = this.#liveState.communities.get(id);
+        const community = app.communities.get(id);
         if (community === undefined) return Promise.resolve(false);
 
-        this.#removeCommunityLocally(id);
+        const undo = this.#removeCommunityLocally(id);
 
         return this.#sendRequest({ kind: "deleteCommunity", id })
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    this.#addCommunityLocally(community);
+                    undo?.();
                 }
                 return resp.kind === "success";
             })
-            .catch(() => false);
+            .catch(() => {
+                undo?.();
+                return false;
+            });
     }
 
     leaveCommunity(id: CommunityIdentifier): Promise<boolean> {
-        const community = this.#liveState.communities.get(id);
+        const community = app.communities.get(id);
         if (community === undefined) return Promise.resolve(false);
 
-        this.#removeCommunityLocally(id);
+        const undo = this.#removeCommunityLocally(id);
 
         return this.#sendRequest({ kind: "leaveCommunity", id })
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    this.#addCommunityLocally(community);
+                    undo?.();
                 }
                 return resp.kind === "success";
             })
-            .catch(() => false);
+            .catch(() => {
+                undo?.();
+                return false;
+            });
     }
 
     createCommunity(
@@ -7897,7 +7881,7 @@ export class OpenChat {
                         return g;
                     });
                     if (rules !== undefined && resp.rulesVersion !== undefined) {
-                        communityLocalUpdates.updateRules(community.id, {
+                        localUpdates.updateCommunityRules(community.id, {
                             text: rules.text,
                             enabled: rules.enabled,
                             version: resp.rulesVersion,
@@ -7925,7 +7909,7 @@ export class OpenChat {
     }
 
     deleteUserGroup(id: CommunityIdentifier, userGroup: UserGroupDetails): Promise<boolean> {
-        const undo = communityLocalUpdates.deleteUserGroup(id, userGroup.id);
+        const undo = localUpdates.deleteUserGroup(id, userGroup.id);
         return this.#sendRequest({
             kind: "deleteUserGroups",
             communityId: id.communityId,
@@ -7955,7 +7939,7 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    communityLocalUpdates.addOrUpdateUserGroup(id, {
+                    localUpdates.addOrUpdateUserGroup(id, {
                         ...userGroup,
                         id: resp.userGroupId,
                     });
@@ -7966,7 +7950,7 @@ export class OpenChat {
     }
 
     getCommunityForChannel(id: ChannelIdentifier): CommunitySummary | undefined {
-        return this.#liveState.communities.values().find((c) => {
+        return [...app.communities.values()].find((c) => {
             return c.channels.findIndex((ch) => chatIdentifiersEqual(ch.id, id)) >= 0;
         });
     }
@@ -7987,7 +7971,7 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    communityLocalUpdates.addOrUpdateUserGroup(id, userGroup);
+                    localUpdates.addOrUpdateUserGroup(id, userGroup);
                 }
                 return resp;
             })
@@ -8351,11 +8335,11 @@ export class OpenChat {
                 // TODO - when chat state and global state are done
                 // the same way, we can return the undo fn here which
                 // will be better.
-                communityLocalUpdates.removeBot(id, botId);
+                localUpdates.removeBotFromCommunity(id, botId);
                 break;
             case "group_chat":
                 perm = app.selectedChat.bots.get(botId);
-                chatDetailsLocalUpdates.removeBot(id, botId);
+                localUpdates.removeBotFromChat(id, botId);
                 break;
             case "direct_chat":
                 perm = this.#liveState.installedDirectBots.get(botId);
@@ -8376,12 +8360,12 @@ export class OpenChat {
             case "community":
                 if (perm === undefined) return perm;
                 previousPermissions = app.selectedCommunity.bots.get(botId);
-                communityLocalUpdates.installBot(id, botId, perm);
+                localUpdates.installBotInCommunity(id, botId, perm);
                 break;
             case "group_chat":
                 if (perm === undefined) return perm;
                 previousPermissions = app.selectedChat.bots.get(botId);
-                chatDetailsLocalUpdates.installBot(id, botId, perm);
+                localUpdates.installBotInChat(id, botId, perm);
                 break;
             case "direct_chat":
                 if (perm === undefined) return perm;

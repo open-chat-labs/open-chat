@@ -3,7 +3,6 @@ import DRange from "drange";
 import type {
     ChatEvent,
     ChatIdentifier,
-    ChatListScope,
     ChatSpecificState,
     ChatSummary,
     DirectChatIdentifier,
@@ -22,8 +21,9 @@ import {
     messageContextsEqual,
     nullMembership,
 } from "openchat-shared";
-import { derived, get, type Readable, type Writable } from "svelte/store";
+import { derived, get, writable, type Readable, type Writable } from "svelte/store";
 import { app } from "../state/app.svelte";
+import { localUpdates } from "../state/global";
 import {
     getNextEventAndMessageIndexes,
     mergeChatMetrics,
@@ -33,10 +33,10 @@ import {
 } from "../utils/chat";
 import { configKeys } from "../utils/config";
 import { blockedUsers } from "./blockedUsers";
-import { communityPreviewsStore } from "./community";
 import { createChatSpecificObjectStore } from "./dataByChatFactory";
 import { createDerivedPropStore } from "./derived";
 import { draftMessagesStore } from "./draftMessages";
+import { createDummyStore } from "./dummyStore";
 import { ephemeralMessages } from "./ephemeralMessages";
 import { failedMessagesStore } from "./failedMessages";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
@@ -54,8 +54,7 @@ import { translationStore } from "./translation";
 import { unconfirmed } from "./unconfirmed";
 import { currentUser, currentUserIdStore, suspendedUsers } from "./user";
 
-let currentScope: ChatListScope = { kind: "direct_chat" };
-chatListScopeStore.subscribe((s) => (currentScope = s));
+export const dummyCommunityPreviewStore = writable(0);
 
 export const selectedMessageContext = safeWritable<MessageContext | undefined>(
     undefined,
@@ -109,45 +108,15 @@ export const favouritesStore = derived(
     [globalStateStore, localChatSummaryUpdates],
     ([$global, $localUpdates]) => {
         const mergedFavs = $global.favourites.clone();
-        $localUpdates.entries().forEach(([key, val]) => {
+        for (const [key, val] of $localUpdates.entries()) {
             if (val.favourited && !val.unfavourited) {
                 mergedFavs.add(key);
             }
             if (!val.favourited && val.unfavourited) {
                 mergedFavs.delete(key);
             }
-        });
+        }
         return mergedFavs;
-    },
-);
-
-export const pinnedChatsStore = derived(
-    [globalStateStore, localChatSummaryUpdates],
-    ([$global, $localUpdates]) => {
-        const mergedPinned = new Map($global.pinnedChats);
-
-        $localUpdates.forEach((val, key) => {
-            if (val.pinned !== undefined) {
-                val.pinned.forEach((scope) => {
-                    const ids = mergedPinned.get(scope) ?? [];
-                    if (!ids.find((id) => chatIdentifiersEqual(id, key))) {
-                        ids.unshift(key);
-                    }
-                    mergedPinned.set(scope, ids);
-                });
-            }
-            if (val.unpinned !== undefined) {
-                val.unpinned.forEach((scope) => {
-                    const ids = mergedPinned.get(scope) ?? [];
-                    mergedPinned.set(
-                        scope,
-                        ids.filter((id) => !chatIdentifiersEqual(id, key)),
-                    );
-                });
-            }
-        });
-
-        return mergedPinned;
     },
 );
 
@@ -192,32 +161,32 @@ export const serverChatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         myServerChatSummariesStore,
         uninitializedDirectChats,
         groupPreviewsStore,
-        communityPreviewsStore,
+        dummyCommunityPreviewStore,
     ],
-    ([summaries, directChats, previews, communityPreviews]) => {
+    ([summaries, directChats, previews, _]) => {
         let all = [...summaries.entries()];
-        if (currentScope.kind === "none" || currentScope.kind === "direct_chat") {
+        if (app.chatListScope.kind === "none" || app.chatListScope.kind === "direct_chat") {
             all = all.concat([...directChats.entries()]);
         }
-        if (currentScope.kind === "none") {
-            all = (previews.entries() as ChatEntry[]).concat(all);
+        if (app.chatListScope.kind === "none") {
+            all = ([...previews.entries()] as ChatEntry[]).concat(all);
         }
-        if (currentScope.kind === "group_chat") {
-            all = (previews.filter((c) => c.kind === "group_chat").entries() as ChatEntry[]).concat(
-                all,
-            );
+        if (app.chatListScope.kind === "group_chat") {
+            all = (
+                [...previews.filter((c) => c.kind === "group_chat").entries()] as ChatEntry[]
+            ).concat(all);
         }
-        if (currentScope.kind === "community") {
-            const communityId = currentScope.id.communityId;
+        if (app.chatListScope.kind === "community") {
+            const communityId = app.chatListScope.id.communityId;
             const previewChannels = ChatMap.fromList(
-                communityPreviews.get(currentScope.id)?.channels ?? [],
+                localUpdates.getPreviewingCommunity(app.chatListScope.id)?.channels ?? [],
             );
-            all = (previewChannels.entries() as ChatEntry[])
-                .concat(
-                    previews
+            all = ([...previewChannels.entries()] as ChatEntry[])
+                .concat([
+                    ...previews
                         .filter((c) => c.kind === "channel" && c.id.communityId === communityId)
-                        .entries() as ChatEntry[],
-                )
+                        .entries(),
+                ] as ChatEntry[])
                 .concat(all);
         }
         return all.reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
@@ -230,14 +199,14 @@ export const serverChatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
 export const allChats = derived(
     [allServerChats, uninitializedDirectChats, groupPreviewsStore, localChatSummaryUpdates],
     ([$all, $direct, $group, $localSummaryUpdates]) => {
-        const merged = ($direct.entries() as ChatEntry[])
-            .concat($group.entries() as ChatEntry[])
-            .concat($all.entries());
+        const merged = ([...$direct.entries()] as ChatEntry[])
+            .concat([...$group.entries()] as ChatEntry[])
+            .concat([...$all.entries()]);
         const reduced = merged.reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
             result.set(chatId, summary);
             return result;
         }, new ChatMap<ChatSummary>());
-        return mergeLocalSummaryUpdates(currentScope, reduced, $localSummaryUpdates);
+        return mergeLocalSummaryUpdates(app.chatListScope, reduced, $localSummaryUpdates);
     },
 );
 
@@ -265,54 +234,57 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         $messageFilters,
     ]) => {
         const mergedSummaries = mergeLocalSummaryUpdates(
-            currentScope,
+            app.chatListScope,
             summaries,
             localSummaryUpdates,
         );
 
-        return mergedSummaries
-            .entries()
-            .reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
-                result.set(
-                    chatId,
-                    mergeUnconfirmedIntoSummary(
-                        (k) => k,
-                        currentUser.userId,
-                        summary,
-                        unconfirmed,
-                        localUpdates,
-                        translations,
-                        blockedOrSuspendedUsers,
-                        $currentUserId,
-                        $messageFilters,
-                    ),
-                );
-                return result;
-            }, new ChatMap<ChatSummary>());
+        return mergedSummaries.reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
+            result.set(
+                chatId,
+                mergeUnconfirmedIntoSummary(
+                    (k) => k,
+                    currentUser.userId,
+                    summary,
+                    unconfirmed,
+                    localUpdates,
+                    translations,
+                    blockedOrSuspendedUsers,
+                    $currentUserId,
+                    $messageFilters,
+                ),
+            );
+            return result;
+        }, new ChatMap<ChatSummary>());
     },
 );
 
+// TODO - remove me when you can
+export const dummyPinnedChatsStore = createDummyStore();
+
 // This is annoying. If only the pinnedChatIndex was stored in the chatSummary...
-export const chatSummariesListStore = derived([chatSummariesStore], ([summaries]) => {
-    const pinnedChats = get(pinnedChatsStore);
-    const pinnedByScope = pinnedChats.get(currentScope.kind) ?? [];
-    const pinned = pinnedByScope.reduce<ChatSummary[]>((result, id) => {
-        const summary = summaries.get(id);
-        if (summary !== undefined) {
-            result.push(summary);
-        }
-        return result;
-    }, []);
-    const unpinned = summaries
-        .values()
-        .filter((chat) => pinnedByScope.findIndex((p) => chatIdentifiersEqual(p, chat.id)) === -1)
-        .sort(compareChats);
-    return pinned.concat(unpinned);
-});
+export const chatSummariesListStore = derived(
+    [chatSummariesStore, dummyPinnedChatsStore],
+    ([summaries, _]) => {
+        const pinnedByScope = app.pinnedChats.get(app.chatListScope.kind) ?? [];
+        const pinned = pinnedByScope.reduce<ChatSummary[]>((result, id) => {
+            const summary = summaries.get(id);
+            if (summary !== undefined) {
+                result.push(summary);
+            }
+            return result;
+        }, []);
+        const unpinned = [...summaries.values()]
+            .filter(
+                (chat) => pinnedByScope.findIndex((p) => chatIdentifiersEqual(p, chat.id)) === -1,
+            )
+            .sort(compareChats);
+        return pinned.concat(unpinned);
+    },
+);
 
 export const userMetrics = derived([allServerChats], ([$chats]) => {
-    return $chats
-        .values()
+    return [...$chats.values()]
         .map((c) => c.membership?.myMetrics ?? emptyChatMetrics())
         .reduce(mergeChatMetrics, emptyChatMetrics());
 });
@@ -386,7 +358,7 @@ export const threadsByChatStore = derived([chatSummariesListStore], ([summaries]
 });
 
 export const threadsFollowedByMeStore = derived([threadsByChatStore], ([threadsByChat]) => {
-    return threadsByChat.entries().reduce<ChatMap<Set<number>>>((result, [chatId, threads]) => {
+    return threadsByChat.reduce<ChatMap<Set<number>>>((result, [chatId, threads]) => {
         const set = new Set<number>();
         for (const thread of threads) {
             set.add(thread.threadRootMessageIndex);
@@ -434,10 +406,7 @@ export const proposalTopicsStore = derived(
 );
 
 function countThreads<T>(things: ChatMap<T[]>): number {
-    return things
-        .values()
-        .map((ts) => ts.length)
-        .reduce((total, n) => total + n, 0);
+    return things.map((_, ts) => ts.length).reduce((total, [_, n]) => total + n, 0);
 }
 
 // returns the total number of threads that we are involved in

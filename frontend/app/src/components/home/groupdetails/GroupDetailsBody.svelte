@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { MultiUserChat, OpenChat } from "openchat-client";
-    import { app, AvatarSize, currentUser, selectedCommunity } from "openchat-client";
+    import { app, AvatarSize, currentUser } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import {
@@ -39,7 +39,7 @@
     let canInvite = $derived(
         client.canInviteUsers(chat.id) && (chat.kind !== "channel" || !client.isChatPrivate(chat)),
     );
-    let avatarSrc = $derived(client.groupAvatarUrl(chat, $selectedCommunity));
+    let avatarSrc = $derived(client.groupAvatarUrl(chat, app.selectedCommunitySummary));
     let combinedRulesText = $derived(
         canSend ? client.combineRulesText(app.selectedChat.rules, app.selectedCommunity.rules) : "",
     );
@@ -178,7 +178,7 @@
                 embeddedContent={externalContent}
                 permissions={chat.permissions}
                 isPublic={chat.public}
-                isCommunityPublic={$selectedCommunity?.public ?? true}
+                isCommunityPublic={app.selectedCommunitySummary?.public ?? true}
                 isChannel={chat.id.kind === "channel"} />
         </CollapsibleCard>
         {#if !externalContent}

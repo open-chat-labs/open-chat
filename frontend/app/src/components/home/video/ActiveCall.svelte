@@ -2,12 +2,11 @@
     import type { DailyThemeConfig } from "@daily-co/daily-js";
     import daily, { type DailyCall } from "@daily-co/daily-js";
     import {
+        app,
         chatIdentifiersEqual,
-        communities,
         NoMeetingToJoin,
         OpenChat,
         selectedChatStore as selectedChat,
-        selectedCommunity,
         ui,
         currentUser as user,
         userStore,
@@ -87,12 +86,12 @@
                         return {
                             chatId: chat.id,
                             name: `${
-                                $communities.get({
+                                app.communities.get({
                                     kind: "community",
                                     communityId: chat.id.communityId,
                                 })?.name
                             } > ${chat.name}`,
-                            avatarUrl: client.groupAvatarUrl(chat, $selectedCommunity),
+                            avatarUrl: client.groupAvatarUrl(chat, app.selectedCommunitySummary),
                             userId: undefined,
                             messageIndex: chat.videoCallInProgress,
                         };

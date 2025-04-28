@@ -229,7 +229,7 @@ lazy_static = "1.4.0"
 num-traits = "0.2.19"
 openssl = "0.10.72"
 p256 = { version = "0.13.2" }
-pocket-ic = { git = "https://github.com/dfinity/ic", rev = "579b8ba3a31341f354f4ddb3d60ac44548a91bc2" }
+pocket-ic = "8.0.0"
 proc-macro2 = "1.0.83"
 prometheus = "0.13.4"
 proptest = "1.6.0"

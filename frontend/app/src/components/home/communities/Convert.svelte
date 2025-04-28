@@ -1,25 +1,25 @@
 <script lang="ts">
     import {
+        app,
+        defaultChatRules,
         routeForChatIdentifier,
         type ChannelIdentifier,
+        type ChatListScope,
         type GroupChatSummary,
         type OpenChat,
-        type ChatListScope,
-        defaultChatRules,
-        chatListScopeStore as chatListScope,
     } from "openchat-client";
+    import page from "page";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
+    import { i18nKey } from "../../../i18n/i18n";
+    import Button from "../../Button.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
+    import FancyLoader from "../../icons/FancyLoader.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
-    import Markdown from "../Markdown.svelte";
-    import Button from "../../Button.svelte";
-    import { _ } from "svelte-i18n";
-    import FancyLoader from "../../icons/FancyLoader.svelte";
-    import Congratulations from "../upgrade/Congratulations.svelte";
-    import { getContext } from "svelte";
-    import page from "page";
     import Translatable from "../../Translatable.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
+    import Markdown from "../Markdown.svelte";
+    import Congratulations from "../upgrade/Congratulations.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -37,7 +37,7 @@
     function convert() {
         if (group === undefined) return;
 
-        scope = $chatListScope.kind;
+        scope = app.chatListScope.kind;
         state = "converting";
         client.convertGroupToCommunity(group, defaultChatRules("community")).then((id) => {
             state = id ? "converted" : "error";
@@ -48,7 +48,7 @@
     function go() {
         if (channelId !== undefined) {
             close();
-            page(routeForChatIdentifier(scope ?? $chatListScope.kind, channelId));
+            page(routeForChatIdentifier(scope ?? app.chatListScope.kind, channelId));
         }
     }
 
