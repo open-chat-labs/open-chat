@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Split user notifications into separate module ([#7851](https://github.com/open-chat-labs/open-chat/pull/7851))
+
+## [[2.0.1610](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1610-notifications_pusher)] - 2024-02-27
+
 ### Added
 
 - Record notification pusher metrics using Prometheus ([#7434](https://github.com/open-chat-labs/open-chat/pull/7434))
