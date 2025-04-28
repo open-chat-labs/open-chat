@@ -3,7 +3,6 @@ import type {
     AuthProvider,
     ChatEvent,
     ChatIdentifier,
-    ChatListScope,
     ChatMap,
     ChatSummary,
     ChitState,
@@ -36,7 +35,6 @@ import {
     favouritesStore,
     groupPreviewsStore,
     myServerChatSummariesStore,
-    pinnedChatsStore,
     selectedChatId,
     selectedChatStore,
     selectedMessageContext,
@@ -53,8 +51,6 @@ import { diamondStatus, isDiamond, isLifetimeDiamond } from "./stores/diamond";
 import { type DraftMessages, draftMessagesStore } from "./stores/draftMessages";
 import {
     type GlobalState,
-    type PinnedByScope,
-    chatListScopeStore,
     chitStateStore,
     globalStateStore,
     installedDirectBots,
@@ -95,9 +91,7 @@ export class LiveState {
     isDiamond!: boolean;
     isLifetimeDiamond!: boolean;
     confirmedThreadEventIndexesLoaded!: DRange;
-    chatListScope!: ChatListScope;
     globalState!: GlobalState;
-    pinnedChats!: PinnedByScope;
     favourites!: ObjectSet<ChatIdentifier>;
     allChats!: ChatMap<ChatSummary>;
     draftMessages!: DraftMessages;
@@ -152,9 +146,7 @@ export class LiveState {
         diamondStatus.subscribe((data) => (this.diamondStatus = data));
         isDiamond.subscribe((data) => (this.isDiamond = data));
         isLifetimeDiamond.subscribe((data) => (this.isDiamond = data));
-        chatListScopeStore.subscribe((scope) => (this.chatListScope = scope));
         globalStateStore.subscribe((data) => (this.globalState = data));
-        pinnedChatsStore.subscribe((data) => (this.pinnedChats = data));
         favouritesStore.subscribe((data) => (this.favourites = data));
         allChats.subscribe((data) => (this.allChats = data));
         draftMessagesStore.subscribe((data) => (this.draftMessages = data));

@@ -1,5 +1,6 @@
 import {
     type ChatIdentifier,
+    type ChatListScope,
     type CommunityIdentifier,
     type CommunitySummary,
     type ExternalBotPermissions,
@@ -164,6 +165,14 @@ export class GlobalLocalState {
         perm: ExternalBotPermissions,
     ): UndoLocalUpdate {
         return chatDetailsLocalUpdates.installBot(id, botId, perm);
+    }
+
+    pinToScope(id: ChatIdentifier, scope: ChatListScope["kind"]): UndoLocalUpdate {
+        return chatDetailsLocalUpdates.pinToScope(id, scope);
+    }
+
+    unpinFromScope(id: ChatIdentifier, scope: ChatListScope["kind"]): UndoLocalUpdate {
+        return chatDetailsLocalUpdates.unpinFromScope(id, scope);
     }
 }
 

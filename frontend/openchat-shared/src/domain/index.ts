@@ -33,6 +33,7 @@ export * from "./structure";
 export * from "./toast";
 export * from "./user";
 export * from "./version";
+export * from "./video";
 export * from "./wallet";
 export * from "./webrtc/webrtc";
 export * from "./worker";

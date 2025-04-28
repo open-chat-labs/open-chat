@@ -5,50 +5,40 @@ import { LocalSet } from "./set";
 
 vi.useFakeTimers();
 
-class TestSet<T> extends LocalSet<T> {
-    added(thing: T) {
-        return super.added(thing);
-    }
-
-    removed(thing: T) {
-        return super.removed(thing);
-    }
-}
-
 describe("LocalSet", () => {
-    let set: TestSet<string>;
+    let set: LocalSet<string>;
 
     beforeEach(() => {
-        set = new TestSet(identity);
+        set = new LocalSet(identity);
     });
 
     it("make sure that automatic undo works", () => {
         set.add("a");
-        expect(set.added("a")).toBe(true);
-        expect(set.removed("a")).toBe(false);
+        expect(set.added.has("a")).toBe(true);
+        expect(set.removed.has("a")).toBe(false);
         vi.runAllTimers();
-        expect(set.added("a")).toBe(false);
+        expect(set.added.has("a")).toBe(false);
     });
 
     it("make sure manual undo works", () => {
         const undo = set.add("a");
-        expect(set.added("a")).toBe(true);
+        expect(set.added.has("a")).toBe(true);
         undo();
-        expect(set.added("a")).toBe(false);
+        expect(set.added.has("a")).toBe(false);
         vi.runAllTimers();
-        expect(set.added("a")).toBe(false);
+        expect(set.added.has("a")).toBe(false);
     });
 
     it("restores removed items on undo", () => {
         set.remove("a");
         const undo = set.add("a");
 
-        expect(set.added("a")).toBe(true);
-        expect(set.removed("a")).toBe(false);
+        expect(set.added.has("a")).toBe(true);
+        expect(set.removed.has("a")).toBe(false);
 
         undo();
 
-        expect(set.added("a")).toBe(false);
-        expect(set.removed("a")).toBe(true);
+        expect(set.added.has("a")).toBe(false);
+        expect(set.removed.has("a")).toBe(true);
     });
 });

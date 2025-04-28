@@ -5,7 +5,7 @@ import { app } from "./state/app.svelte";
 import { localUpdates } from "./state/global";
 import { pathState } from "./state/path.svelte";
 import { ui } from "./state/ui.svelte";
-import { chatListScopeStore, dummyCommunityPreviewStore } from "./stores";
+import { chatListScopeStore, dummyCommunityPreviewStore, dummyPinnedChatsStore } from "./stores";
 
 function onSelectedCommunityChanged(client: OpenChat) {
     $effect(() => {
@@ -105,6 +105,12 @@ function syncState() {
 
     $effect(() => {
         chatListScopeStore.set(pathState.route.scope);
+    });
+
+    $effect(() => {
+        if (app.pinnedChats) {
+            dummyPinnedChatsStore.set(Symbol());
+        }
     });
 }
 

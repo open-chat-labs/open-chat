@@ -24,14 +24,12 @@ export class LocalSet<T> {
         this.#removed = new ReactiveSafeSet(serialiser);
     }
 
-    // for testing
-    protected added(thing: T): boolean {
-        return this.#added.has(thing);
+    get added(): ReadonlySet<T> {
+        return this.#added;
     }
 
-    // for testing
-    protected removed(thing: T): boolean {
-        return this.#removed.has(thing);
+    get removed(): ReadonlySet<T> {
+        return this.#removed;
     }
 
     add(thing: T): UndoLocalUpdate {
@@ -94,14 +92,10 @@ export class ReactiveSafeSet<K> {
     }
 
     values(): IterableIterator<K> {
-        return this.entries();
+        return this.keys();
     }
 
     keys(): IterableIterator<K> {
-        return this.values();
-    }
-
-    entries(): IterableIterator<K> {
         const set = this.#set;
         const deserialise = (s: Primitive) => this.#deserialise(s);
         const it = set.entries();
@@ -115,6 +109,24 @@ export class ReactiveSafeSet<K> {
                 const [serialisedVal] = result.value;
                 const originalVal = deserialise(serialisedVal);
                 return { done: false, value: originalVal };
+            },
+        };
+    }
+
+    entries(): IterableIterator<[K, K]> {
+        const set = this.#set;
+        const deserialise = (s: Primitive) => this.#deserialise(s);
+        const it = set.entries();
+        return {
+            [Symbol.iterator]() {
+                return this;
+            },
+            next(): IteratorResult<[K, K]> {
+                const result = it.next();
+                if (result.done) return { done: true, value: undefined };
+                const [serialisedVal] = result.value;
+                const originalVal = deserialise(serialisedVal);
+                return { done: false, value: [originalVal, originalVal] };
             },
         };
     }

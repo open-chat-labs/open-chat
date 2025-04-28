@@ -1256,13 +1256,14 @@ export class OpenChat {
     }
 
     pinned(scope: ChatListScope["kind"], chatId: ChatIdentifier): boolean {
-        const pinned = this.#liveState.pinnedChats;
-        return pinned.get(scope)?.find((id) => chatIdentifiersEqual(id, chatId)) !== undefined;
+        return (
+            app.pinnedChats.get(scope)?.find((id) => chatIdentifiersEqual(id, chatId)) !== undefined
+        );
     }
 
     pinChat(chatId: ChatIdentifier): Promise<boolean> {
-        const scope = this.#liveState.chatListScope.kind;
-        localChatSummaryUpdates.pin(chatId, scope);
+        const scope = app.chatListScope.kind;
+        const undo = localUpdates.pinToScope(chatId, scope);
         return this.#sendRequest({
             kind: "pinChat",
             chatId,
@@ -1270,20 +1271,19 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    localChatSummaryUpdates.unpin(chatId, scope);
+                    undo();
                 }
                 return resp.kind === "success";
             })
             .catch(() => {
-                localChatSummaryUpdates.unpin(chatId, scope);
-
+                undo();
                 return false;
             });
     }
 
     unpinChat(chatId: ChatIdentifier): Promise<boolean> {
-        const scope = this.#liveState.chatListScope.kind;
-        localChatSummaryUpdates.unpin(chatId, scope);
+        const scope = app.chatListScope.kind;
+        const undo = localUpdates.unpinFromScope(chatId, scope);
         return this.#sendRequest({
             kind: "unpinChat",
             chatId,
@@ -1291,12 +1291,12 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    localChatSummaryUpdates.pin(chatId, scope);
+                    undo();
                 }
                 return resp.kind === "success";
             })
             .catch(() => {
-                localChatSummaryUpdates.pin(chatId, scope);
+                undo();
                 return false;
             });
     }
@@ -2679,7 +2679,7 @@ export class OpenChat {
         threadMessageIndex?: number,
     ): Promise<void> {
         let chat = this.#liveState.chatSummaries.get(chatId);
-        const scope = this.#liveState.chatListScope;
+        const scope = app.chatListScope;
         let autojoin = false;
 
         // if this is an unknown chat let's preview it
@@ -7646,7 +7646,7 @@ export class OpenChat {
         if (!ui.mobileWidth) {
             const first = this.#liveState.chatSummariesList.find((c) => !c.membership.archived);
             if (first !== undefined) {
-                pageRedirect(routeForChatIdentifier(this.#liveState.chatListScope.kind, first.id));
+                pageRedirect(routeForChatIdentifier(app.chatListScope.kind, first.id));
                 return true;
             }
         }
