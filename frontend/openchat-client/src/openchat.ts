@@ -328,7 +328,6 @@ import {
 import { hasFlag } from "./stores/flagStore";
 import {
     chatListScopeStore,
-    chitStateStore,
     globalStateStore,
     mergeCombinedUnreadCounts,
     setGlobalState,
@@ -336,7 +335,6 @@ import {
 import { applyTranslationCorrection } from "./stores/i18n";
 import { lastOnlineDates } from "./stores/lastOnlineDates";
 import { localChatSummaryUpdates } from "./stores/localChatSummaryUpdates";
-import { localGlobalUpdates } from "./stores/localGlobalUpdates";
 import { localMessageUpdates } from "./stores/localMessageUpdates";
 import {
     messageActivityFeedReadUpToLocally,
@@ -5448,7 +5446,7 @@ export class OpenChat {
 
         return this.#sendRequest({
             kind: "getUsers",
-            chitState: this.#liveState.chitState,
+            chitState: app.chitState,
             users: { userGroups },
             allowStale,
         })
@@ -5476,7 +5474,7 @@ export class OpenChat {
     getUser(userId: string, allowStale = false): Promise<UserSummary | undefined> {
         return this.#sendRequest({
             kind: "getUser",
-            chitState: this.#liveState.chitState,
+            chitState: app.chitState,
             userId,
             allowStale,
         })
@@ -8100,9 +8098,7 @@ export class OpenChat {
 
         if (userId === this.#liveState.user.userId) {
             const now = Date.now();
-            return this.#liveState.chitState.streakEnds < now
-                ? 0
-                : this.#liveState.chitState.streak;
+            return app.chitState.streakEnds < now ? 0 : app.chitState.streak;
         }
 
         return this.#liveState.userStore.get(userId)?.streak ?? 0;
@@ -8513,7 +8509,7 @@ export class OpenChat {
 
         return this.#sendRequest({ kind: "claimDailyChit" }).then((resp) => {
             if (resp.kind === "success") {
-                chitStateStore.update((state) => ({
+                app.updateChitState((state) => ({
                     chitBalance: resp.chitBalance,
                     streakEnds: resp.nextDailyChitClaim + BigInt(1000 * 60 * 60 * 24),
                     streak: resp.streak,
@@ -8526,7 +8522,7 @@ export class OpenChat {
                     streak: resp.streak,
                 }));
             } else if (resp.kind === "already_claimed") {
-                chitStateStore.update((state) => ({
+                app.updateChitState((state) => ({
                     ...state,
                     nextDailyChitClaim: resp.nextDailyChitClaim,
                 }));
@@ -8942,10 +8938,9 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    localGlobalUpdates.updateStreakInsurance({
-                        ...this.#liveState.serverStreakInsurance,
-                        daysInsured:
-                            this.#liveState.serverStreakInsurance.daysInsured + additionalDays,
+                    localUpdates.updateStreakInsurance({
+                        ...app.serverStreakInsurance,
+                        daysInsured: app.serverStreakInsurance.daysInsured + additionalDays,
                     });
                 }
                 return resp;

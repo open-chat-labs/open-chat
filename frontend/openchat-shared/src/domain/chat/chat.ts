@@ -710,11 +710,6 @@ export type LocalPollVote = {
     userId: string;
 };
 
-export type LocalGlobalUpdates = {
-    streakInsurance?: StreakInsurance;
-    lastUpdated: number;
-};
-
 export type LocalChatSummaryUpdates = {
     favourited?: boolean;
     unfavourited?: boolean;
