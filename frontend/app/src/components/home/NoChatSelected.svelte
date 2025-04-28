@@ -1,9 +1,8 @@
 <script lang="ts">
     import {
-        chatListScopeStore as chatListScope,
+        app,
         isLocked,
         routeForScope,
-        selectedCommunity,
         type ChatListScope,
         type OpenChat,
     } from "openchat-client";
@@ -18,8 +17,8 @@
     const client = getContext<OpenChat>("client");
 
     function cancelPreview() {
-        if ($selectedCommunity) {
-            client.removeCommunity($selectedCommunity.id);
+        if (app.selectedCommunitySummary) {
+            client.removeCommunity(app.selectedCommunitySummary.id);
             page(routeForScope(client.getDefaultScope()));
         }
     }
@@ -39,42 +38,45 @@
         }
     }
     let previewingCommunity = $derived(
-        $selectedCommunity?.membership.role === "none" || $selectedCommunity?.membership.lapsed,
+        app.selectedCommunitySummary?.membership.role === "none" ||
+            app.selectedCommunitySummary?.membership.lapsed,
     );
-    let locked = $derived(isLocked($selectedCommunity?.gateConfig?.gate));
-    let [title, message] = $derived(getMessageForScope($chatListScope.kind));
+    let locked = $derived(isLocked(app.selectedCommunitySummary?.gateConfig?.gate));
+    let [title, message] = $derived(getMessageForScope(app.chatListScope.kind));
 </script>
 
-{#if previewingCommunity && $selectedCommunity}
+{#if previewingCommunity && app.selectedCommunitySummary !== undefined}
     <div class="wrapper community">
         <PreviewWrapper>
             {#snippet children(joiningCommunity, joinCommunity)}
-                <CommunityCard
-                    id={$selectedCommunity.id.communityId}
-                    name={$selectedCommunity.name}
-                    description={$selectedCommunity.description}
-                    banner={$selectedCommunity.banner}
-                    memberCount={0}
-                    channelCount={0}
-                    language={$selectedCommunity.primaryLanguage}
-                    flags={0}
-                    header
-                    gateConfig={$selectedCommunity.gateConfig}
-                    avatar={$selectedCommunity.avatar}
-                    verified={$selectedCommunity.verified} />
-                <div class="join">
-                    <Button
-                        loading={joiningCommunity}
-                        disabled={locked || joiningCommunity}
-                        onClick={joinCommunity}
-                        ><Translatable
-                            resourceKey={locked
-                                ? i18nKey("access.lockedGate", undefined, "community", true)
-                                : i18nKey("communities.joinCommunity")} /></Button>
-                    <Button secondary small onClick={cancelPreview}>
-                        <Translatable resourceKey={i18nKey("leave")} />
-                    </Button>
-                </div>
+                {#if app.selectedCommunitySummary !== undefined}
+                    <CommunityCard
+                        id={app.selectedCommunitySummary.id.communityId}
+                        name={app.selectedCommunitySummary.name}
+                        description={app.selectedCommunitySummary.description}
+                        banner={app.selectedCommunitySummary.banner}
+                        memberCount={0}
+                        channelCount={0}
+                        language={app.selectedCommunitySummary.primaryLanguage}
+                        flags={0}
+                        header
+                        gateConfig={app.selectedCommunitySummary.gateConfig}
+                        avatar={app.selectedCommunitySummary.avatar}
+                        verified={app.selectedCommunitySummary.verified} />
+                    <div class="join">
+                        <Button
+                            loading={joiningCommunity}
+                            disabled={locked || joiningCommunity}
+                            onClick={joinCommunity}
+                            ><Translatable
+                                resourceKey={locked
+                                    ? i18nKey("access.lockedGate", undefined, "community", true)
+                                    : i18nKey("communities.joinCommunity")} /></Button>
+                        <Button secondary small onClick={cancelPreview}>
+                            <Translatable resourceKey={i18nKey("leave")} />
+                        </Button>
+                    </div>
+                {/if}
             {/snippet}
         </PreviewWrapper>
     </div>
@@ -82,9 +84,9 @@
     <div class="wrapper">
         <h2 class="title"><Translatable resourceKey={i18nKey(title)} /></h2>
         <p class="subtitle"><Translatable resourceKey={i18nKey(message)} /></p>
-        {#if $chatListScope.kind === "community"}
+        {#if app.chatListScope.kind === "community"}
             <Button><Translatable resourceKey={i18nKey("communities.browseChannels")} /></Button>
-        {:else if $chatListScope.kind === "group_chat"}
+        {:else if app.chatListScope.kind === "group_chat"}
             <Button onClick={() => page("/groups")}
                 ><Translatable resourceKey={i18nKey("discoverMoreGroups")} /></Button>
         {/if}

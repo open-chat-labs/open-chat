@@ -1,11 +1,10 @@
 <script lang="ts">
     import type { DirectChatSummary, ExternalBot } from "openchat-client";
     import {
+        app,
         AvatarSize,
-        directApiKeys,
         favouritesStore,
         flattenCommandPermissions,
-        installedDirectBots,
         type OpenChat,
         publish,
         ui,
@@ -47,9 +46,9 @@
 
     let { chat, bot, onSearchChat }: Props = $props();
     let botUser = $derived($userStore.get(chat.them.userId));
-    let apiKey = $derived($directApiKeys.get(bot.id));
+    let apiKey = $derived(app.directChatApiKeys.get(bot.id));
     let grantedPermissions = $derived(
-        $installedDirectBots.get(bot.id) ?? flattenCommandPermissions(bot.definition),
+        app.directChatBots.get(bot.id) ?? flattenCommandPermissions(bot.definition),
     );
 
     function addToFavourites() {

@@ -1,7 +1,7 @@
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteUndeleteMessagesArgs, EditMessageArgs,
-    GroupGateUpdatedInternal, MessageContentInternal, PushMessageArgs, Reader, RegisterPollVoteArgs, RegisterPollVoteSuccess,
-    RemoveExpiredEventsResult, ReservePrizeSuccess, TipMessageArgs,
+    GroupGateUpdatedInternal, MessageContentInternal, PushEventResultInternal, PushMessageArgs, Reader, RegisterPollVoteArgs,
+    RegisterPollVoteSuccess, RemoveExpiredEventsResult, ReservePrizeSuccess, TipMessageArgs, UpdateMessageSuccess,
 };
 use event_store_producer::{EventStoreClient, Runtime};
 use event_store_producer_cdk_runtime::CdkRuntime;
@@ -15,15 +15,15 @@ use serde::{Deserialize, Serialize};
 use std::cmp::{Reverse, max, min};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use types::{
-    AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, Caller, Chat, CustomPermission,
-    Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsCaller, EventsResponse, ExternalUrlUpdated,
-    GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged,
-    GroupSubtype, GroupVisibilityChanged, HydratedMention, MAX_RETURNED_MENTIONS, MemberLeft, MembersRemoved, Message,
-    MessageContent, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned,
-    MessagesResponse, Milliseconds, MultiUserChat, OCResult, OptionUpdate, OptionalGroupPermissions,
-    OptionalMessagePermissions, PermissionsChanged, PushEventResult, Reaction, ReserveP2PSwapSuccess, RoleChanged, Rules,
-    SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked,
-    UsersInvited, Version, Versioned, VersionedRules, VideoCall, VideoCallPresence, VoteOperation,
+    AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, BotNotification, Caller, Chat,
+    CustomPermission, Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsCaller, EventsResponse,
+    ExternalUrlUpdated, GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole,
+    GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention, MAX_RETURNED_MENTIONS, MemberLeft,
+    MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned,
+    MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OCResult, OptionUpdate, OptionalGroupPermissions,
+    OptionalMessagePermissions, PermissionsChanged, Reaction, ReserveP2PSwapSuccess, RoleChanged, Rules, SelectedGroupUpdates,
+    SenderContext, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited,
+    Version, Versioned, VersionedRules, VideoCall, VideoCallPresence, VoteOperation,
 };
 use utils::document::validate_avatar;
 use utils::text_validation::{
@@ -557,7 +557,7 @@ impl GroupChatCore {
                 .message_internal(EventIndex::default(), thread_root_message_index, message_id.into())
         {
             if let Caller::BotV2(bot_now) = &caller {
-                if let Some(bot_message) = message.bot_context {
+                if let Some(bot_message) = message.bot_context() {
                     if bot_now.bot == message.sender
                         && bot_now.initiator.user() == bot_message.command.as_ref().map(|c| c.initiator)
                         && bot_now.initiator.command() == bot_message.command.as_ref()
@@ -599,12 +599,18 @@ impl GroupChatCore {
 
         let sender = caller.agent();
 
+        let sender_context = match caller {
+            Caller::BotV2(bot) => Some(SenderContext::Bot(BotMessageContext::from(bot, finalised))),
+            Caller::Webhook(_) => Some(SenderContext::Webhook),
+            _ => None,
+        };
+
         let push_message_args = PushMessageArgs {
             sender,
             thread_root_message_index,
             message_id,
             content,
-            bot_context: if let Caller::BotV2(bot) = caller { Some(BotMessageContext::from(bot, finalised)) } else { None },
+            sender_context,
             mentioned: if !suppressed { mentioned.to_vec() } else { Vec::new() },
             replies_to: replies_to.as_ref().map(|r| r.into()),
             forwarded: forwarding,
@@ -614,7 +620,7 @@ impl GroupChatCore {
             now,
         };
 
-        let message_event = self.events.push_message(push_message_args, Some(event_store_client));
+        let (message_event, bot_notification) = self.events.push_message(push_message_args, Some(event_store_client));
 
         let unfinalised_bot_message = if let Caller::BotV2(_) = caller { !finalised } else { false };
 
@@ -637,6 +643,7 @@ impl GroupChatCore {
             message_event,
             users_to_notify,
             unfinalised_bot_message,
+            bot_notification,
         })
     }
 
@@ -698,6 +705,7 @@ impl GroupChatCore {
             message_event,
             users_to_notify,
             unfinalised_bot_message: !finalise,
+            bot_notification: None,
         })
     }
 
@@ -715,8 +723,7 @@ impl GroupChatCore {
         let message = &message_event.event;
         let message_index = message.message_index;
         let initiator = message
-            .bot_context
-            .as_ref()
+            .bot_context()
             .and_then(|b| b.command.as_ref().map(|c| c.initiator))
             .unwrap_or(message.sender);
         let message_id = message.message_id;
@@ -858,7 +865,7 @@ impl GroupChatCore {
         reaction: Reaction,
         now: TimestampMillis,
         event_store_client: &mut EventStoreClient<R>,
-    ) -> OCResult {
+    ) -> OCResult<UpdateMessageSuccess> {
         let member = self.members.get_verified_member(user_id)?;
 
         if !member.role().can_react_to_messages(&self.permissions) {
@@ -887,7 +894,7 @@ impl GroupChatCore {
         message_id: MessageId,
         reaction: Reaction,
         now: TimestampMillis,
-    ) -> OCResult {
+    ) -> OCResult<UpdateMessageSuccess> {
         let member = self.members.get_verified_member(user_id)?;
 
         if !member.role().can_react_to_messages(&self.permissions) {
@@ -910,7 +917,7 @@ impl GroupChatCore {
         &mut self,
         args: TipMessageArgs,
         event_store_client: &mut EventStoreClient<R>,
-    ) -> OCResult {
+    ) -> OCResult<UpdateMessageSuccess> {
         let member = self.members.get_verified_member(args.user_id)?;
 
         if !member.role().can_react_to_messages(&self.permissions) {
@@ -1060,7 +1067,7 @@ impl GroupChatCore {
         user_id: UserId,
         message_index: MessageIndex,
         now: TimestampMillis,
-    ) -> OCResult<PushEventResult> {
+    ) -> OCResult<PushEventResultInternal> {
         let member = self.members.get_verified_member(user_id)?;
 
         if !member.role().can_pin_messages(&self.permissions) {
@@ -1096,7 +1103,7 @@ impl GroupChatCore {
         user_id: UserId,
         message_index: MessageIndex,
         now: TimestampMillis,
-    ) -> OCResult<PushEventResult> {
+    ) -> OCResult<PushEventResultInternal> {
         let member = self.members.get_verified_member(user_id)?;
 
         if !member.role().can_pin_messages(&self.permissions) {
@@ -1658,7 +1665,7 @@ impl GroupChatCore {
         option_index: u32,
         operation: VoteOperation,
         now: TimestampMillis,
-    ) -> OCResult<RegisterPollVoteSuccess> {
+    ) -> OCResult<UpdateMessageSuccess<RegisterPollVoteSuccess>> {
         let member = self.members.get_verified_member(user_id)?;
         let min_visible_event_index = member.min_visible_event_index();
 
@@ -1705,7 +1712,7 @@ impl GroupChatCore {
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         now: TimestampMillis,
-    ) -> OCResult<u32> {
+    ) -> OCResult<UpdateMessageSuccess<u32>> {
         if self.members.contains(&user_id) {
             self.events
                 .cancel_p2p_swap(user_id, thread_root_message_index, message_id, now)
@@ -1720,7 +1727,7 @@ impl GroupChatCore {
         message_id: MessageId,
         presence: VideoCallPresence,
         now: TimestampMillis,
-    ) -> OCResult {
+    ) -> OCResult<UpdateMessageSuccess> {
         let member = self.members.get(&user_id).ok_or(OCErrorCode::InitiatorNotInChat)?;
         let min_visible_event_index = member.min_visible_event_index();
 
@@ -1918,6 +1925,7 @@ pub struct SendMessageSuccess {
     pub message_event: EventWrapper<Message>,
     pub users_to_notify: Vec<UserId>,
     pub unfinalised_bot_message: bool,
+    pub bot_notification: Option<BotNotification>,
 }
 
 pub struct UpdateSuccessResult {

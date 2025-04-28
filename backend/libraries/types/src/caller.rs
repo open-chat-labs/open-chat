@@ -7,6 +7,7 @@ pub enum Caller {
     Bot(UserId),
     BotV2(BotCaller),
     OCBot(UserId),
+    Webhook(UserId),
 }
 
 #[derive(Clone)]
@@ -22,6 +23,7 @@ impl Caller {
             Caller::Bot(user_id) => *user_id,
             Caller::BotV2(bot_caller) => bot_caller.bot,
             Caller::OCBot(user_id) => *user_id,
+            Caller::Webhook(user_id) => *user_id,
         }
     }
 
@@ -31,6 +33,7 @@ impl Caller {
             Caller::Bot(user_id) => Some(*user_id),
             Caller::BotV2(bot_caller) => bot_caller.initiator.user(),
             Caller::OCBot(user_id) => Some(*user_id),
+            Caller::Webhook(_) => None,
         }
     }
 
@@ -53,6 +56,7 @@ impl From<&Caller> for UserType {
             Caller::Bot(_) => UserType::Bot,
             Caller::BotV2(_) => UserType::BotV2,
             Caller::OCBot(_) => UserType::OcControlledBot,
+            Caller::Webhook(_) => UserType::Webhook,
         }
     }
 }

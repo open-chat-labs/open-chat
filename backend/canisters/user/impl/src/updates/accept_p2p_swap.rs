@@ -76,14 +76,14 @@ async fn accept_p2p_swap(args: Args) -> Response {
                 });
                 if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
                     let now = state.env.now();
-                    if let Ok(status) = chat.events.accept_p2p_swap(my_user_id, None, args.message_id, index, now) {
+                    if let Ok(result) = chat.events.accept_p2p_swap(my_user_id, None, args.message_id, index, now) {
                         let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
                         state.push_user_canister_event(
                             args.user_id.into(),
                             UserCanisterEvent::P2PSwapStatusChange(Box::new(P2PSwapStatusChange {
                                 thread_root_message_id,
                                 message_id: args.message_id,
-                                status: P2PSwapStatus::Accepted(status),
+                                status: P2PSwapStatus::Accepted(result.value),
                             })),
                         );
                         state.award_achievement_and_notify(Achievement::AcceptedP2PSwapOffer, now);

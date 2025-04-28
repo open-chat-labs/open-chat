@@ -1,20 +1,24 @@
 use crate::model::challenges::Challenges;
 use crate::model::identity_link_requests::IdentityLinkRequests;
 use crate::model::salt::Salt;
-use crate::model::user_principals::UserPrincipals;
+use crate::model::user_principals::{AuthPrincipal, UserPrincipals};
 use crate::model::webauthn_keys::WebAuthnKeys;
 use candid::Principal;
 use canister_state_macros::canister_state;
+use constants::NANOS_PER_MILLISECOND;
 use ic_canister_sig_creation::CanisterSigPublicKey;
 use ic_canister_sig_creation::signature_map::{LABEL_SIG, SignatureMap};
 use ic_cdk::api::certified_data_set;
+use ic_certificate_verification::VerifyCertificate;
 use identity_canister::{WEBAUTHN_ORIGINATING_CANISTER, WebAuthnKey};
+use identity_utils::extract_certificate;
+use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use sha256::sha256;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
-use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
+use types::{BuildVersion, CanisterId, Cycles, Milliseconds, OCResult, TimestampMillis, Timestamped};
 use utils::env::Environment;
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
@@ -219,6 +223,30 @@ impl Data {
 
     pub fn requires_captcha(&self, originating_canister_id: &CanisterId) -> bool {
         !self.skip_captcha_whitelist.contains(originating_canister_id)
+    }
+
+    pub fn verify_certificate_time(
+        &self,
+        auth_principal: &AuthPrincipal,
+        signature: &[u8],
+        now: TimestampMillis,
+        max_offset: Milliseconds,
+    ) -> OCResult {
+        if auth_principal.originating_canister != WEBAUTHN_ORIGINATING_CANISTER {
+            let certificate = extract_certificate(signature).map_err(|e| OCErrorCode::MalformedSignature.with_message(e))?;
+            certificate
+                .verify(auth_principal.originating_canister.as_slice(), self.ic_root_key.as_slice())
+                .map_err(|_| OCErrorCode::InvalidSignature)?;
+
+            let now_nanos = (now * NANOS_PER_MILLISECOND) as u128;
+            let max_offset_minutes = (max_offset * NANOS_PER_MILLISECOND) as u128;
+
+            ic_certificate_verification::validate_certificate_time(&certificate, &now_nanos, &max_offset_minutes)
+                .map_err(|_| OCErrorCode::DelegationTooOld.into())
+        } else {
+            // TODO verify WebAuthn signatures somehow
+            Ok(())
+        }
     }
 }
 

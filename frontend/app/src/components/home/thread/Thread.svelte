@@ -351,6 +351,7 @@
     unreadMessages={0}
     firstUnreadMention={undefined}
     footer
+    visible
     {events}
     {chat}
     bind:initialised

@@ -1,7 +1,7 @@
 use crate::{RuntimeState, read_state};
 use candid::Principal;
 use dataurl::DataUrl;
-use http_request::{Route, build_json_response, encode_logs, extract_route, get_document};
+use http_request::{AvatarRoute, Route, build_json_response, encode_logs, extract_route, get_document};
 use ic_cdk::query;
 use std::collections::BTreeMap;
 use types::{HeaderField, HttpRequest, HttpResponse, TimestampMillis, UserId};
@@ -9,9 +9,13 @@ use utils::time::MonthKey;
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
-    fn get_bot_avatar_impl(user_id: UserId, requested_avatar_id: Option<u128>, state: &RuntimeState) -> HttpResponse {
-        let avatar = state.data.users.get_bot(&user_id).and_then(|u| u.avatar.as_ref());
-        get_document(requested_avatar_id, avatar, &format!("avatar/{user_id}"))
+    fn get_avatar_impl(route: AvatarRoute, state: &RuntimeState) -> HttpResponse {
+        let Some(bot_id) = route.bot_id else {
+            return HttpResponse::not_found();
+        };
+
+        let avatar = state.data.users.get_bot(&bot_id).and_then(|u| u.avatar.as_ref());
+        get_document(route.blob_id, avatar, &format!("avatar/{bot_id}"))
     }
 
     fn get_errors_impl(since: Option<TimestampMillis>) -> HttpResponse {
@@ -94,6 +98,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
                     ],
                     body: url.get_data().to_vec(),
                     streaming_strategy: None,
+                    upgrade: None,
                 };
             }
             _ => (),
@@ -103,9 +108,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     }
 
     match extract_route(&request.url) {
-        Route::BotAvatar(user_id, requested_avatar_id) => {
-            read_state(|state| get_bot_avatar_impl(user_id, requested_avatar_id, state))
-        }
+        Route::Avatar(route) => read_state(|state| get_avatar_impl(route, state)),
         Route::Errors(since) => get_errors_impl(since),
         Route::Logs(since) => get_logs_impl(since),
         Route::Traces(since) => get_traces_impl(since),

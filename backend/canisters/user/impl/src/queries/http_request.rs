@@ -1,14 +1,14 @@
 use crate::model::streak::Streak;
 use crate::{RuntimeState, read_state};
-use http_request::{Route, build_json_response, encode_logs, extract_route, get_document};
+use http_request::{AvatarRoute, Route, build_json_response, encode_logs, extract_route, get_document};
 use ic_cdk::query;
 use itertools::Itertools;
 use types::{ChitEarnedReason, HttpRequest, HttpResponse, TimestampMillis};
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
-    fn get_avatar_impl(requested_avatar_id: Option<u128>, state: &RuntimeState) -> HttpResponse {
-        get_document(requested_avatar_id, state.data.avatar.as_ref(), "avatar")
+    fn get_avatar_impl(route: AvatarRoute, state: &RuntimeState) -> HttpResponse {
+        get_document(route.blob_id, state.data.avatar.as_ref(), "avatar")
     }
 
     fn get_errors_impl(since: Option<TimestampMillis>) -> HttpResponse {
@@ -49,7 +49,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     }
 
     match extract_route(&request.url) {
-        Route::Avatar(requested_avatar_id) => read_state(|state| get_avatar_impl(requested_avatar_id, state)),
+        Route::Avatar(route) => read_state(|state| get_avatar_impl(route, state)),
         Route::Errors(since) => get_errors_impl(since),
         Route::Logs(since) => get_logs_impl(since),
         Route::Traces(since) => get_traces_impl(since),

@@ -24,5 +24,6 @@ pub fn build_response(body: Vec<u8>, content_type: impl Into<String>) -> HttpRes
         ],
         body,
         streaming_strategy: None,
+        upgrade: None,
     }
 }

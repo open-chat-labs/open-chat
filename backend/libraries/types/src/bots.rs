@@ -327,6 +327,14 @@ pub struct InstalledBotDetails {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct WebhookDetails {
+    pub id: UserId,
+    pub name: String,
+    pub avatar_id: Option<u128>,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct PublicApiKeyDetails {
     pub bot_id: UserId,
     pub granted_permissions: BotPermissions,
@@ -454,6 +462,13 @@ impl BotInitiator {
     pub fn command(&self) -> Option<&BotCommand> {
         match self {
             BotInitiator::Command(bot_command) => Some(bot_command),
+            _ => None,
+        }
+    }
+
+    pub fn api_key_secret(&self) -> Option<&str> {
+        match self {
+            BotInitiator::ApiKeySecret(s) => Some(s),
             _ => None,
         }
     }

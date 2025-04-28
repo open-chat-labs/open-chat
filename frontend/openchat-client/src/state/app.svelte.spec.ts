@@ -1,13 +1,20 @@
 import {
+    CommunityMap,
+    emptyChatMetrics,
     emptyRules,
+    SafeMap,
     type ChatIdentifier,
     type CommunityIdentifier,
+    type CommunityPermissions,
+    type CommunitySummary,
+    type ExternalBotPermissions,
     type Member,
 } from "openchat-shared";
 import { vi } from "vitest";
 import { app } from "./app.svelte";
 import { chatDetailsLocalUpdates } from "./chat_details";
 import { communityLocalUpdates } from "./community_details/local.svelte";
+import { localUpdates } from "./global";
 import { pathState } from "./path.svelte";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -115,7 +122,7 @@ describe("app state", () => {
 
             test("make sure local updates are merged", () => {
                 expect(app.selectedChat.members.has("user_one")).toBe(true);
-                const undo = chatDetailsLocalUpdates.removeMember(chatId, "user_one");
+                const undo = localUpdates.removeChatMember(chatId, "user_one");
                 expect(app.selectedChat.members.has("user_one")).toBe(false);
                 undo();
                 expect(app.selectedChat.members.has("user_one")).toBe(true);
@@ -227,4 +234,161 @@ describe("app state", () => {
             });
         });
     });
+
+    describe("CommunityMap from list", () => {
+        test("it works", () => {
+            const map = CommunityMap.fromList([
+                createCommunitySummary("123456", 1),
+                createCommunitySummary("654321", 2),
+            ]);
+            expect(map.size).toEqual(2);
+        });
+    });
+
+    describe("global state", () => {
+        beforeEach(() => {
+            app.serverCommunities = CommunityMap.fromList([
+                createCommunitySummary("123456", 1),
+                createCommunitySummary("654321", 2),
+            ]);
+        });
+        test("communities list", () => {
+            expect(app.serverCommunities.size).toEqual(2);
+        });
+        test("community indexes", () => {
+            const id: CommunityIdentifier = { kind: "community", communityId: "123456" };
+            expect(app.communities.size).toEqual(2);
+            expect(app.communities.get(id)?.membership.index).toEqual(1);
+            localUpdates.updateCommunityIndex(id, 3);
+            expect(app.communities.get(id)?.membership.index).toEqual(3);
+        });
+        test("community display name", () => {
+            const id: CommunityIdentifier = { kind: "community", communityId: "123456" };
+            expect(app.communities.get(id)?.membership.displayName).toBeUndefined();
+            localUpdates.updateCommunityDisplayName(id, "Mr. OpenChat");
+            expect(app.communities.get(id)?.membership.displayName).toEqual("Mr. OpenChat");
+        });
+
+        describe("pinned chats", () => {
+            beforeEach(() => {
+                chatDetailsLocalUpdates.clearAll();
+                app.serverPinnedChats = new Map([
+                    [
+                        "direct_chat",
+                        [
+                            { kind: "direct_chat", userId: "123456" },
+                            { kind: "direct_chat", userId: "888888" },
+                        ],
+                    ],
+                    ["group_chat", [{ kind: "direct_chat", userId: "654321" }]],
+                ]);
+            });
+
+            test("add a pinned chat", () => {
+                const chatId: ChatIdentifier = { kind: "direct_chat", userId: "7777777" };
+                localUpdates.pinToScope(chatId, "favourite");
+                const favs = app.pinnedChats.get("favourite");
+                expect(favs).not.toBeUndefined();
+                expect(favs?.length).toEqual(1);
+                expect(favs?.[0]).toEqual(chatId);
+            });
+
+            test("added chat goes first", () => {
+                const chatId: ChatIdentifier = { kind: "direct_chat", userId: "7777777" };
+                localUpdates.pinToScope(chatId, "direct_chat");
+                const directs = app.pinnedChats.get("direct_chat");
+                expect(directs).not.toBeUndefined();
+                expect(directs?.length).toEqual(3);
+                expect(directs?.[0]).toEqual(chatId);
+            });
+
+            test("remove pinned chat", () => {
+                const chatId: ChatIdentifier = { kind: "direct_chat", userId: "123456" };
+                localUpdates.unpinFromScope(chatId, "direct_chat");
+                const directs = app.pinnedChats.get("direct_chat");
+                expect(directs).not.toBeUndefined();
+                expect(directs?.length).toEqual(1);
+                expect(directs?.[0]).toEqual({ kind: "direct_chat", userId: "888888" });
+            });
+        });
+
+        describe("direct chat bots", () => {
+            beforeEach(() => {
+                app.directChatBots = someBots([
+                    [
+                        "123456",
+                        { chatPermissions: [], communityPermissions: [], messagePermissions: [] },
+                    ],
+                ]);
+            });
+
+            test("install a bot works", () => {
+                localUpdates.installDirectChatBot("654321", {
+                    chatPermissions: [],
+                    communityPermissions: [],
+                    messagePermissions: [],
+                });
+                expect(app.directChatBots.has("654321")).toBe(true);
+            });
+
+            test("uninstall a bot works", () => {
+                localUpdates.removeDirectChatBot("123456");
+                expect(app.directChatBots.has("123456")).toBe(false);
+            });
+        });
+    });
 });
+
+function someBots(
+    entries: [[string, ExternalBotPermissions]],
+): SafeMap<string, ExternalBotPermissions> {
+    const m = new Map<string, ExternalBotPermissions>(entries);
+    return SafeMap.fromEntries(m.entries());
+}
+
+function createCommunitySummary(id: string, index: number): CommunitySummary {
+    return {
+        kind: "community",
+        id: { kind: "community", communityId: id },
+        name: "",
+        description: "",
+        memberCount: 0,
+        avatar: {},
+        banner: {},
+        gateConfig: { gate: { kind: "no_gate" }, expiry: undefined },
+        public: true,
+        permissions: defaultPermissions,
+        historyVisible: true,
+        frozen: false,
+        level: "community",
+        lastUpdated: BigInt(0),
+        latestEventIndex: 0,
+        channels: [],
+        membership: {
+            role: "owner",
+            joined: BigInt(0),
+            archived: false,
+            pinned: [],
+            index,
+            displayName: undefined,
+            rulesAccepted: false,
+            lapsed: false,
+        },
+        primaryLanguage: "en",
+        metrics: emptyChatMetrics(),
+        userGroups: new Map(),
+        localUserIndex: "",
+        isInvited: false,
+        verified: false,
+    };
+}
+
+const defaultPermissions: CommunityPermissions = {
+    changeRoles: "admin",
+    updateDetails: "admin",
+    inviteUsers: "admin",
+    removeMembers: "admin",
+    createPublicChannel: "admin",
+    createPrivateChannel: "admin",
+    manageUserGroups: "admin",
+};

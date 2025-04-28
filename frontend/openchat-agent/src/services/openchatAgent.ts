@@ -1,6 +1,5 @@
 /* eslint-disable no-case-declarations */
 import { HttpAgent, type Identity } from "@dfinity/agent";
-import type { DelegationChain } from "@dfinity/identity";
 import type { Principal } from "@dfinity/principal";
 import type {
     AcceptedRules,
@@ -170,6 +169,7 @@ import type {
     UnpinChatResponse,
     UnpinMessageResponse,
     UnsuspendUserResponse,
+    UpdatedEvent,
     UpdatedRules,
     UpdateGroupResponse,
     UpdateMarketMakerConfigArgs,
@@ -202,6 +202,7 @@ import {
     CommonResponses,
     DestinationInvalidError,
     getOrAdd,
+    isSuccessfulEventsResponse,
     Lazy,
     MAX_ACTIVITY_EVENTS,
     MessageContextMap,
@@ -211,7 +212,6 @@ import {
     Stream,
     UnsupportedValueError,
     waitAll,
-    isSuccessfulEventsResponse,
 } from "openchat-shared";
 import type { AgentConfig } from "../config";
 import {
@@ -324,10 +324,7 @@ export class OpenChatAgent extends EventTarget {
     private _signInWithSolanaClient: Lazy<SignInWithSolanaClient>;
     private _translationsClient: Lazy<TranslationsClient>;
 
-    constructor(
-        private identity: Identity,
-        private config: AgentConfig,
-    ) {
+    constructor(private identity: Identity, private config: AgentConfig) {
         super();
         this._logger = config.logger;
         this._agent = createHttpAgentSync(identity, config.icUrl);
@@ -1467,9 +1464,9 @@ export class OpenChatAgent extends EventTarget {
                         ? "/assets/bot_avatar.svg"
                         : `${this.config.blobUrlPattern
                               .replace("{canisterId}", this.config.userIndexCanister)
-                              .replace("{blobType}", "avatar")}/${
-                              userSummary.userId
-                          }/${ref?.blobId}`,
+                              .replace("{blobType}", "avatar")}/${userSummary.userId}/${
+                              ref?.blobId
+                          }`,
             };
         }
         return userSummary.blobUrl
@@ -2107,7 +2104,7 @@ export class OpenChatAgent extends EventTarget {
 
         return {
             state: this.hydrateChatState(state),
-            updatedEvents: updatedEvents.toMap(),
+            updatedEvents: updatedEvents.toMap() as Map<string, UpdatedEvent[]>,
             anyUpdates,
             suspensionChanged,
             newAchievements,
@@ -2744,8 +2741,9 @@ export class OpenChatAgent extends EventTarget {
         principal: string,
         fromId?: bigint,
     ): Promise<AccountTransactionResult> {
-        const icpLedgerIndex = this._registryValue?.nervousSystemSummary.find((ns) => ns.isNns)
-            ?.indexCanisterId;
+        const icpLedgerIndex = this._registryValue?.nervousSystemSummary.find(
+            (ns) => ns.isNns,
+        )?.indexCanisterId;
 
         if (ledgerIndex === icpLedgerIndex) {
             return new IcpLedgerIndexClient(
@@ -2988,9 +2986,8 @@ export class OpenChatAgent extends EventTarget {
         }
 
         return Promise.all(
-            ChatMap.fromMap(threadsByChat)
-                .entries()
-                .map(([chatId, [threadSyncs, latestKnownUpdate]]) => {
+            [...ChatMap.fromMap(threadsByChat).entries()].map(
+                ([chatId, [threadSyncs, latestKnownUpdate]]) => {
                     latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
 
                     const latestClientThreadUpdate = threadSyncs.reduce(
@@ -3031,7 +3028,8 @@ export class OpenChatAgent extends EventTarget {
                         case "direct_chat":
                             throw new Error("direct chat thread previews not supported");
                     }
-                }),
+                },
+            ),
         ).then((responses) =>
             Promise.all(
                 responses.map(([r, latestKnownUpdate]) => {
@@ -3165,7 +3163,9 @@ export class OpenChatAgent extends EventTarget {
     }
 
     loadFailedMessages(): Promise<Map<string, Record<number, EventWrapper<Message>>>> {
-        return loadFailedMessages(this.db).then((messages) => messages.toMap());
+        return loadFailedMessages(this.db).then(
+            (messages) => messages.toMap() as Map<string, Record<number, EventWrapper<Message>>>,
+        );
     }
 
     deleteFailedMessage(
@@ -4076,7 +4076,9 @@ export class OpenChatAgent extends EventTarget {
 
         if (anyMissing) {
             this.getMessagesByMessageContext(
-                new AsyncMessageContextMap(missing.map((_, v) => [...v]).toMap()),
+                new AsyncMessageContextMap(
+                    missing.map((_, v) => [...v]).toMap() as Map<string, number[]>,
+                ),
                 withCachedMessages,
                 "missing",
             ).then(([withServerMessages]) => callback(withServerMessages, true));
@@ -4176,10 +4178,6 @@ export class OpenChatAgent extends EventTarget {
             })),
             allMissing,
         ];
-    }
-
-    deleteUser(userId: string, delegation: DelegationChain): Promise<boolean> {
-        return this._userIndexClient.deleteUser(userId, delegation);
     }
 
     getChannelSummary(channelId: ChannelIdentifier): Promise<ChannelSummaryResponse> {
@@ -4359,8 +4357,9 @@ export class OpenChatAgent extends EventTarget {
     payForStreakInsurance(
         additionalDays: number,
         expectedPrice: bigint,
+        pin: string | undefined,
     ): Promise<PayForStreakInsuranceResponse> {
-        return this.userClient.payForStreakInsurance(additionalDays, expectedPrice);
+        return this.userClient.payForStreakInsurance(additionalDays, expectedPrice, pin);
     }
 }
 

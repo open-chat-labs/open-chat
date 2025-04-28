@@ -31,7 +31,6 @@
         anonUser,
         app,
         botState,
-        chatListScopeStore as chatListScope,
         inititaliseLogger,
         pageReplace,
         pathState,
@@ -543,7 +542,7 @@
 
 <ActiveCall
     {showLandingPage}
-    onClearSelection={() => page(routeForScope($chatListScope))}
+    onClearSelection={() => page(routeForScope(app.chatListScope))}
     bind:this={videoCallElement} />
 
 <VideoCallAccessRequests />

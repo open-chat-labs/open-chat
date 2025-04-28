@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { type Subscriber, type Unsubscriber, writable } from "svelte/store";
 import {
     ChatMap,
     MessageContextMap,
@@ -13,10 +12,11 @@ import {
     type ThreadRead,
     type ThreadSyncDetails,
 } from "openchat-shared";
-import { unconfirmed } from "./unconfirmed";
+import { writable, type Subscriber, type Unsubscriber } from "svelte/store";
 import type { OpenChat } from "../openchat";
-import { offlineStore } from "./network";
 import { ephemeralMessages } from "./ephemeralMessages";
+import { offlineStore } from "./network";
+import { unconfirmed } from "./unconfirmed";
 
 const MARK_READ_INTERVAL = 10 * 1000;
 
@@ -134,7 +134,7 @@ export class MessageReadTracker {
     }
 
     private sendToServer(api: OpenChat): void {
-        const req = this.state.entries().reduce<MarkReadRequest>((req, [chatId, data]) => {
+        const req = this.state.reduce<MarkReadRequest>((req, [chatId, data]) => {
             if (!data.empty()) {
                 req.push({
                     chatId,
@@ -256,7 +256,7 @@ export class MessageReadTracker {
     }
 
     staleThreadsCount(threads: ChatMap<ThreadSyncDetails[]>): number {
-        return threads.entries().reduce((total, [chatId, threads]) => {
+        return threads.reduce((total, [chatId, threads]) => {
             const forChat = this.staleThreadCountForChat(chatId, threads);
             return forChat > 0 ? total + forChat : total;
         }, 0);

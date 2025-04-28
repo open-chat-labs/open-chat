@@ -38,14 +38,13 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
 
                         let status = P2PSwapStatus::Expired(P2PSwapExpired { token0_txn_out });
 
-                        chat.events.set_p2p_swap_status(
-                            m.thread_root_message_index,
-                            m.message_id,
-                            status.clone(),
-                            state.env.now(),
-                        );
-
-                        status_to_push_c2c = Some(status);
+                        if chat
+                            .events
+                            .set_p2p_swap_status(m.thread_root_message_index, m.message_id, status.clone(), state.env.now())
+                            .is_ok()
+                        {
+                            status_to_push_c2c = Some(status);
+                        }
                     }
                 }
                 SwapStatus::Cancelled(c) => {
@@ -61,18 +60,17 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
 
                         let status = P2PSwapStatus::Cancelled(P2PSwapCancelled { token0_txn_out });
 
-                        chat.events.set_p2p_swap_status(
-                            m.thread_root_message_index,
-                            m.message_id,
-                            status.clone(),
-                            state.env.now(),
-                        );
-
-                        status_to_push_c2c = Some(status);
+                        if chat
+                            .events
+                            .set_p2p_swap_status(m.thread_root_message_index, m.message_id, status.clone(), state.env.now())
+                            .is_ok()
+                        {
+                            status_to_push_c2c = Some(status);
+                        }
                     }
                 }
                 SwapStatus::Completed(c) => {
-                    if let Ok(status) = chat.events.complete_p2p_swap(
+                    if let Ok(result) = chat.events.complete_p2p_swap(
                         c.accepted_by,
                         m.thread_root_message_index,
                         m.message_id,
@@ -81,7 +79,7 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                         state.env.now(),
                         &mut state.data.event_store_client,
                     ) {
-                        status_to_push_c2c = Some(P2PSwapStatus::Completed(status));
+                        status_to_push_c2c = Some(P2PSwapStatus::Completed(result.value));
                     }
                 }
                 _ => {}

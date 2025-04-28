@@ -1,10 +1,9 @@
 <script lang="ts">
     import {
+        app,
         botState,
         chatIdentifiersEqual,
-        chatListScopeStore as chatListScope,
         currentUser,
-        installedDirectBots,
         OpenChat,
         pathState,
         routeForScope,
@@ -32,7 +31,7 @@
                 pathState.route.kind === "global_chat_selected_route" &&
                 chatIdentifiersEqual(chatId, pathState.route.chatId)
             ) {
-                page(routeForScope($chatListScope));
+                page(routeForScope(app.chatListScope));
             }
             tick().then(() => client.removeChat(chatId));
         }
@@ -46,5 +45,5 @@
         location={{ kind: "direct_chat", userId: $currentUser.userId }}
         {bot}
         onClose={closeInstaller}
-        installedBots={$installedDirectBots} />
+        installedBots={app.directChatBots} />
 {/if}

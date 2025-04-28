@@ -14,29 +14,13 @@ pub struct Streak {
     insurance_last_updated: TimestampMillis,
     days_insured: u8,
     days_missed: u8,
+    #[serde(skip_deserializing)]
     payment_lock: bool,
     payments: Vec<UserCanisterStreakInsurancePayment>,
     claims: Vec<UserCanisterStreakInsuranceClaim>,
 }
 
 impl Streak {
-    // The timestamps should be the end of the day for which the claim applied to, as opposed to the
-    // start of the day after
-    pub fn fix_streak_claim_timestamps(&mut self) -> Vec<TimestampMillis> {
-        self.claims
-            .iter_mut()
-            .filter_map(|claim| {
-                let day = Self::timestamp_to_day(claim.timestamp).unwrap();
-                if claim.timestamp != Self::final_timestamp_of_day(day) {
-                    claim.timestamp = Self::final_timestamp_of_day(day - 1);
-                    Some(claim.timestamp)
-                } else {
-                    None
-                }
-            })
-            .collect()
-    }
-
     pub fn days(&self, now: TimestampMillis) -> u16 {
         if let Some(today) = Streak::timestamp_to_day(now) {
             if !self.is_new_streak(today) {

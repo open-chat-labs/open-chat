@@ -570,6 +570,7 @@ fn generate_value<R: RngCore>(content: MessageContentInternal, rng: &mut R) -> E
             }),
             forwarded: true,
             block_level_markdown: true,
+            sender_context: None,
             bot_context: None,
         })),
     }

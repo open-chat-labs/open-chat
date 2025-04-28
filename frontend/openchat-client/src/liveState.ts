@@ -3,18 +3,14 @@ import type {
     AuthProvider,
     ChatEvent,
     ChatIdentifier,
-    ChatListScope,
     ChatMap,
     ChatSummary,
     ChitState,
-    CommunityMap,
-    CommunitySummary,
     CreatedUser,
     DiamondMembershipStatus,
     DirectChatSummary,
     EnhancedReplyContext,
     EventWrapper,
-    ExternalBotPermissions,
     MessageContext,
     MultiUserChat,
     ObjectSet,
@@ -22,7 +18,6 @@ import type {
     StreakInsurance,
     ThreadSyncDetails,
     UserLookup,
-    WalletConfig,
 } from "openchat-shared";
 import { locale } from "svelte-i18n";
 import { serverStreakInsuranceStore } from "./stores";
@@ -38,7 +33,6 @@ import {
     favouritesStore,
     groupPreviewsStore,
     myServerChatSummariesStore,
-    pinnedChatsStore,
     selectedChatId,
     selectedChatStore,
     selectedMessageContext,
@@ -50,18 +44,9 @@ import {
     threadsFollowedByMeStore,
     uninitializedDirectChats,
 } from "./stores/chat";
-import { communities, communityPreviewsStore, selectedCommunity } from "./stores/community";
-import { walletConfigStore } from "./stores/crypto";
 import { diamondStatus, isDiamond, isLifetimeDiamond } from "./stores/diamond";
 import { type DraftMessages, draftMessagesStore } from "./stores/draftMessages";
-import {
-    type GlobalState,
-    type PinnedByScope,
-    chatListScopeStore,
-    chitStateStore,
-    globalStateStore,
-    installedDirectBots,
-} from "./stores/global";
+import { type GlobalState, chitStateStore, globalStateStore } from "./stores/global";
 import { offlineStore } from "./stores/network";
 import { capturePinNumberStore, pinNumberRequiredStore } from "./stores/pinNumber";
 import { remainingStorage } from "./stores/storage";
@@ -86,7 +71,6 @@ export class LiveState {
     chatSummaries!: ChatMap<ChatSummary>;
     uninitializedDirectChats!: ChatMap<DirectChatSummary>;
     groupPreviews!: ChatMap<MultiUserChat>;
-    communityPreviews!: CommunityMap<CommunitySummary>;
     selectedChatId: ChatIdentifier | undefined;
     chatSummariesList!: ChatSummary[];
     threadsByChat!: ChatMap<ThreadSyncDetails[]>;
@@ -99,13 +83,9 @@ export class LiveState {
     isDiamond!: boolean;
     isLifetimeDiamond!: boolean;
     confirmedThreadEventIndexesLoaded!: DRange;
-    communities!: CommunityMap<CommunitySummary>;
-    chatListScope!: ChatListScope;
     globalState!: GlobalState;
-    pinnedChats!: PinnedByScope;
     favourites!: ObjectSet<ChatIdentifier>;
     allChats!: ChatMap<ChatSummary>;
-    selectedCommunity!: CommunitySummary | undefined;
     draftMessages!: DraftMessages;
     user!: CreatedUser;
     anonUser!: boolean;
@@ -116,13 +96,10 @@ export class LiveState {
     pinNumberRequired!: boolean;
     capturePinNumber!: PinNumberResolver | undefined;
     chitState!: ChitState;
-    walletConfig!: WalletConfig;
-    installedDirectBots!: Map<string, ExternalBotPermissions>;
     serverStreakInsurance!: StreakInsurance;
 
     constructor() {
         serverStreakInsuranceStore.subscribe((state) => (this.serverStreakInsurance = state));
-        installedDirectBots.subscribe((state) => (this.installedDirectBots = state));
         chitStateStore.subscribe((state) => (this.chitState = state));
         offlineStore.subscribe((offline) => (this.offlineStore = offline));
         currentUser.subscribe((user) => (this.user = user));
@@ -141,7 +118,6 @@ export class LiveState {
         chatSummariesStore.subscribe((data) => (this.chatSummaries = data));
         uninitializedDirectChats.subscribe((data) => (this.uninitializedDirectChats = data));
         groupPreviewsStore.subscribe((data) => (this.groupPreviews = data));
-        communityPreviewsStore.subscribe((data) => (this.communityPreviews = data));
         selectedChatId.subscribe((data) => (this.selectedChatId = data));
         eventsStore.subscribe((data) => (this.events = data));
         selectedChatStore.subscribe((data) => (this.selectedChat = data));
@@ -159,17 +135,12 @@ export class LiveState {
         diamondStatus.subscribe((data) => (this.diamondStatus = data));
         isDiamond.subscribe((data) => (this.isDiamond = data));
         isLifetimeDiamond.subscribe((data) => (this.isDiamond = data));
-        communities.subscribe((data) => (this.communities = data));
-        chatListScopeStore.subscribe((scope) => (this.chatListScope = scope));
         globalStateStore.subscribe((data) => (this.globalState = data));
-        pinnedChatsStore.subscribe((data) => (this.pinnedChats = data));
         favouritesStore.subscribe((data) => (this.favourites = data));
         allChats.subscribe((data) => (this.allChats = data));
-        selectedCommunity.subscribe((data) => (this.selectedCommunity = data));
         draftMessagesStore.subscribe((data) => (this.draftMessages = data));
         locale.subscribe((data) => (this.locale = data ?? "en"));
         pinNumberRequiredStore.subscribe((data) => (this.pinNumberRequired = data));
         capturePinNumberStore.subscribe((data) => (this.capturePinNumber = data));
-        walletConfigStore.subscribe((data) => (this.walletConfig = data));
     }
 }

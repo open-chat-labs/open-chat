@@ -1,8 +1,6 @@
-use oc_error_codes::OCError;
+use crate::send_message;
 use serde::{Deserialize, Serialize};
 use types::{BotInitiator, BotMessageContent, ChannelId, MessageId, MessageIndex, UserId};
-
-use super::send_message::{self, SuccessResult};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -38,19 +36,4 @@ impl From<Args> for send_message::Args {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success(SuccessResult),
-    Error(OCError),
-}
-
-impl From<send_message::Response> for Response {
-    fn from(value: send_message::Response) -> Self {
-        use Response::*;
-
-        match value {
-            send_message::Response::Success(success_result) => Success(success_result),
-            send_message::Response::Error(error) => Error(error),
-        }
-    }
-}
+pub type Response = send_message::Response;

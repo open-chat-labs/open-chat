@@ -70,7 +70,7 @@ impl DirectChat {
         event_store_client: Option<&mut EventStoreClient<R>>,
     ) -> EventWrapper<Message> {
         let now = args.now;
-        let message_event = self.events.push_message(args, event_store_client);
+        let (message_event, _) = self.events.push_message(args, event_store_client);
 
         self.mark_read_up_to(message_event.event.message_index, sent_by_me, now);
 

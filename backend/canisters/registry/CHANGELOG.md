@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1715](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1715-registry)] - 2025-04-24
+
+### Changed
+
+- Mark which tokens are uninstalled in metrics ([#7828](https://github.com/open-chat-labs/open-chat/pull/7828))
+
+### Fixed
+
+- Fix check for if target canister is uninstalled ([#7834](https://github.com/open-chat-labs/open-chat/pull/7834))
+
+## [[2.0.1706](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1706-registry)] - 2025-04-22
+
 ### Changed
 
 - Include more details in failed c2c call errors ([#7749](https://github.com/open-chat-labs/open-chat/pull/7749))

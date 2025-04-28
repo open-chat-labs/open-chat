@@ -7,14 +7,7 @@
         OpenChat,
         TypersByKey,
     } from "openchat-client";
-    import {
-        AvatarSize,
-        byContext,
-        selectedCommunity,
-        ui,
-        UserStatus,
-        userStore,
-    } from "openchat-client";
+    import { app, AvatarSize, byContext, ui, UserStatus, userStore } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
@@ -68,7 +61,7 @@
         return {
             title: ui.mobileWidth ? chatSummary.name : $_("thread.title"),
             userStatus: UserStatus.None,
-            avatarUrl: client.groupAvatarUrl(chatSummary, $selectedCommunity),
+            avatarUrl: client.groupAvatarUrl(chatSummary, app.selectedCommunitySummary),
             userId: undefined,
             subtext,
             typing: someoneTyping !== undefined,

@@ -31,6 +31,7 @@
     import EmailSigninFeedback from "../EmailSigninFeedback.svelte";
     import ChooseSignInOption from "./ChooseSignInOption.svelte";
     import SignInOption from "./SignInOption.svelte";
+    import { ErrorCode } from "openchat-shared";
 
     const client = getContext<OpenChat>("client");
 
@@ -295,23 +296,35 @@
                 approver.delegation,
             )
             .then((resp) => {
-                if (resp === "success") {
-                    onProceed?.();
-                } else if (resp === "already_linked_to_principal") {
-                    console.log("Identity already linked by you: ", resp);
-                    error = "identity.failure.alreadyLinked";
-                } else if (resp === "already_registered") {
-                    console.log("Identity already linked by someone else: ", resp);
-                    error = "identity.failure.alreadyLinked";
-                    substep = { kind: "initiator" };
-                } else if (resp === "principal_linked_to_another_oc_user") {
-                    console.log("Identity already linked to another OpenChat account: ", resp);
-                    error = "identity.failure.alreadyLinked";
-                    substep = { kind: "initiator" };
+                if (typeof resp === "object") {
+                    if (resp.kind === "success") {
+                        onProceed?.();
+                    } else if (resp.code === ErrorCode.PrincipalAlreadyUsed) {
+                        console.log("Identity already linked to another OpenChat account: ", resp);
+                        error = "identity.failure.alreadyLinked";
+                        substep = { kind: "initiator" };
+                    } else {
+                        console.log("Failed to link identities: ", resp);
+                        error = "identity.failure.link";
+                        substep = { kind: "initiator" };
+                    }
                 } else {
-                    console.log("Failed to link identities: ", resp);
-                    error = "identity.failure.link";
-                    substep = { kind: "initiator" };
+                    // This branch will be removed once the Identity canister is fully
+                    // migrated over to returning the standardised error codes
+                    if (resp === "success") {
+                        onProceed?.();
+                    } else if (resp === "already_linked_to_principal") {
+                        console.log("Identity already linked by you: ", resp);
+                        error = "identity.failure.alreadyLinked";
+                    } else if (resp === "already_registered") {
+                        console.log("Identity already linked by someone else: ", resp);
+                        error = "identity.failure.alreadyLinked";
+                        substep = { kind: "initiator" };
+                    } else {
+                        console.log("Failed to link identities: ", resp);
+                        error = "identity.failure.link";
+                        substep = { kind: "initiator" };
+                    }
                 }
             })
             .finally(() => (linking = false));

@@ -1,6 +1,7 @@
 use crate::{RuntimeState, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use installed_bots::GenerateApiKeyResult;
 use oc_error_codes::OCErrorCode;
 use types::{AccessTokenScope, BotApiKeyToken, Chat, OCResult};
 use user_canister::generate_bot_api_key::{Response::*, *};
@@ -26,7 +27,7 @@ fn generate_bot_api_key_impl(args: Args, state: &mut RuntimeState) -> OCResult<S
 
     let now = state.env.now();
 
-    let api_key_secret =
+    let GenerateApiKeyResult { new_key, .. } =
         state
             .data
             .bot_api_keys
@@ -36,7 +37,7 @@ fn generate_bot_api_key_impl(args: Args, state: &mut RuntimeState) -> OCResult<S
         gateway: state.data.local_user_index_canister_id,
         bot_id: args.bot_id,
         scope: AccessTokenScope::Chat(Chat::Direct(state.env.canister_id().into())),
-        secret: api_key_secret,
+        secret: new_key,
         permissions: args.requested_permissions,
     };
 

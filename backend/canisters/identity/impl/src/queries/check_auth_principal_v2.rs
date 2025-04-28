@@ -1,9 +1,9 @@
 use crate::{RuntimeState, read_state};
-use ic_cdk::query;
+use canister_api_macros::query;
 use identity_canister::check_auth_principal_v2::{Response::*, *};
 
-#[query]
-fn check_auth_principal_v2() -> Response {
+#[query(msgpack = true, candid = true)]
+fn check_auth_principal_v2(_args: Args) -> Response {
     read_state(check_auth_principal_impl)
 }
 

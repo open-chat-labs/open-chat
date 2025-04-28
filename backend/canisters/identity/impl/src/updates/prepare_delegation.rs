@@ -1,16 +1,16 @@
 use crate::{RuntimeState, mutate_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{DAY_IN_MS, NANOS_PER_MILLISECOND};
 use ic_canister_sig_creation::signature_map::CanisterSigInputs;
 use ic_canister_sig_creation::{DELEGATION_SIG_DOMAIN, delegation_signature_msg};
-use ic_cdk::update;
 use identity_canister::prepare_delegation::{Response::*, *};
 use types::Nanoseconds;
 
 const DEFAULT_EXPIRATION_PERIOD: Nanoseconds = 30 * DAY_IN_MS * NANOS_PER_MILLISECOND;
 const MAX_EXPIRATION_PERIOD: Nanoseconds = 90 * DAY_IN_MS * NANOS_PER_MILLISECOND;
 
-#[update]
+#[update(msgpack = true, candid = true)]
 #[trace]
 fn prepare_delegation(args: Args) -> Response {
     mutate_state(|state| prepare_delegation_impl(args, state))

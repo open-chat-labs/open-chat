@@ -4,19 +4,17 @@
         ChatSummary,
         CommunitySummary,
         ExternalBotPermissions,
-        ReadonlyMap,
         MessageContext,
         OpenChat,
         PermissionRole,
+        ReadonlyMap,
     } from "openchat-client";
     import {
         app,
         botState,
-        installedDirectBots,
         isPermitted,
         messagePermissionsForSelectedChat,
         selectedChatStore,
-        selectedCommunity,
         selectedMessageContext,
         threadPermissionsForSelectedChat,
     } from "openchat-client";
@@ -51,7 +49,7 @@
             case "channel":
                 return app.selectedCommunity.bots;
             case "direct_chat":
-                return $installedDirectBots;
+                return app.directChatBots;
             default:
                 return app.selectedChat.bots;
         }
@@ -61,7 +59,12 @@
         return botState.commands.filter((c) => {
             return (
                 restrictByBotIfNecessary(c) &&
-                hasPermissionForCommand(c, installedBots, $selectedChatStore, $selectedCommunity)
+                hasPermissionForCommand(
+                    c,
+                    installedBots,
+                    $selectedChatStore,
+                    app.selectedCommunitySummary,
+                )
             );
         });
     });

@@ -47,7 +47,7 @@ export abstract class LocalUpdatesStore<K, T extends LocalUpdates> {
         const now = Date.now();
 
         let updated = false;
-        const newStoreValue = this.storeValue.entries().reduce((result, [key, updates]) => {
+        const newStoreValue = this.storeValue.reduce((result, [key, updates]) => {
             // Only keep updates which are < 30 seconds old
             if (now - updates.lastUpdated < 30 * 1000) {
                 result.set(key, updates);

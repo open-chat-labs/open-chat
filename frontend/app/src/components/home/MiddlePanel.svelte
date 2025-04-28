@@ -1,10 +1,10 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
     import {
+        app,
         botState,
         chatIdentifiersEqual,
         filteredProposalsStore,
-        installedDirectBots,
         pathState,
         selectedChatId,
         selectedChatStore,
@@ -38,7 +38,7 @@
     });
 
     let uninstalledBotId = $derived.by(() => {
-        return botId !== undefined && $installedDirectBots.get(botId) === undefined
+        return botId !== undefined && app.directChatBots.get(botId) === undefined
             ? botId
             : undefined;
     });

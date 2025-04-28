@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Allow bots to subscribe to chat events using ApiKeys ([#7836](https://github.com/open-chat-labs/open-chat/pull/7836))
+- Push chat event notifications to bots ([#7844](https://github.com/open-chat-labs/open-chat/pull/7844))
+
 ### Changed
 
 - Migrate more endpoints to returning standardised error codes ([#7797](https://github.com/open-chat-labs/open-chat/pull/7797))

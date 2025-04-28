@@ -1,7 +1,6 @@
 import {
     ChatMap,
     type ChatIdentifier,
-    type ChatListScope,
     type ChatSummary,
     type LocalChatSummaryUpdates,
 } from "openchat-shared";
@@ -27,32 +26,6 @@ class LocalChatSummaryUpdatesStore extends LocalUpdatesStore<
             favourited: undefined,
             unfavourited: true,
         }));
-    }
-
-    pin(id: ChatIdentifier, scope: ChatListScope["kind"]): void {
-        this.applyUpdate(id, (updates) => {
-            const pinned = updates.pinned ?? new Set<ChatListScope["kind"]>();
-            const unpinned = updates.unpinned ?? new Set<ChatListScope["kind"]>();
-            pinned.add(scope);
-            unpinned.delete(scope);
-            return {
-                pinned,
-                unpinned: unpinned.size > 0 ? unpinned : undefined,
-            };
-        });
-    }
-
-    unpin(id: ChatIdentifier, scope: ChatListScope["kind"]): void {
-        this.applyUpdate(id, (updates) => {
-            const pinned = updates.pinned ?? new Set<ChatListScope["kind"]>();
-            const unpinned = updates.unpinned ?? new Set<ChatListScope["kind"]>();
-            pinned.delete(scope);
-            unpinned.add(scope);
-            return {
-                unpinned,
-                pinned: pinned.size > 0 ? pinned : undefined,
-            };
-        });
     }
 
     markAdded(summary: ChatSummary): void {

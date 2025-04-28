@@ -40,5 +40,5 @@ fn pin_message_impl(args: Args, pin: bool, state: &mut RuntimeState) -> OCResult
     };
 
     handle_activity_notification(state);
-    Ok(result)
+    Ok(result.into())
 }

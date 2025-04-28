@@ -30,15 +30,15 @@ fn c2c_bot_delete_channel(args: c2c_bot_delete_channel::Args) -> c2c_bot_delete_
         initiator: args.initiator.clone(),
     };
 
-    mutate_state(|state| delete_channel_impl(args.channel_id, Some(bot_caller), state)).into()
+    mutate_state(|state| delete_channel_impl(args.channel_id, Some(Caller::BotV2(bot_caller)), state)).into()
 }
 
-fn delete_channel_impl(channel_id: ChannelId, bot_caller: Option<BotCaller>, state: &mut RuntimeState) -> OCResult {
+fn delete_channel_impl(channel_id: ChannelId, ext_caller: Option<Caller>, state: &mut RuntimeState) -> OCResult {
     if state.data.is_frozen() {
         return Err(OCErrorCode::CommunityFrozen.into());
     }
 
-    let caller = state.verified_caller(bot_caller)?;
+    let caller = state.verified_caller(ext_caller)?;
 
     let Some(channel) = state.data.channels.get(&channel_id) else {
         return Err(OCErrorCode::ChatNotFound.into());

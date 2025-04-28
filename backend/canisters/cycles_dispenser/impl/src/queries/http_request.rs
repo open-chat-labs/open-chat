@@ -35,6 +35,7 @@ fn encode_logs(logs: Vec<LogEntry>) -> HttpResponse {
         ],
         body,
         streaming_strategy: None,
+        upgrade: None,
     }
 }
 
@@ -49,6 +50,7 @@ fn to_json_response<T: Serialize>(data: &T) -> HttpResponse {
         ],
         body,
         streaming_strategy: None,
+        upgrade: None,
     }
 }
 
@@ -65,6 +67,7 @@ fn get_ledger_account_impl(state: &State) -> HttpResponse {
         ],
         body,
         streaming_strategy: None,
+        upgrade: None,
     }
 }
 

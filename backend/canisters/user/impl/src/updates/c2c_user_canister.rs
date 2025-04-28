@@ -12,7 +12,7 @@ use event_store_producer_cdk_runtime::CdkRuntime;
 use ledger_utils::format_crypto_amount_with_symbol;
 use types::{
     Achievement, Chat, ChitEarned, ChitEarnedReason, DirectMessageTipped, DirectReactionAddedNotification, EventIndex,
-    MessageContentInitial, Notification, P2PSwapStatus, UserId, UserType, VideoCallPresence,
+    MessageContentInitial, P2PSwapStatus, UserId, UserNotificationPayload, UserType, VideoCallPresence,
 };
 use user_canister::c2c_user_canister::{Response::*, *};
 use user_canister::{
@@ -286,8 +286,12 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
                     .main_events_reader()
                     .message_event_internal(args.message_id.into())
                 {
-                    if !state.data.suspended.value && !args.username.is_empty() && !chat.notifications_muted.value {
-                        let notification = Notification::DirectReactionAdded(DirectReactionAddedNotification {
+                    if message_event.event.sender != caller_user_id
+                        && !state.data.suspended.value
+                        && !args.username.is_empty()
+                        && !chat.notifications_muted.value
+                    {
+                        let notification = UserNotificationPayload::DirectReactionAdded(DirectReactionAddedNotification {
                             them: chat.them,
                             thread_root_message_index,
                             message_index: message_event.event.message_index,
@@ -332,9 +336,12 @@ fn p2p_swap_change_status(args: P2PSwapStatusChange, caller_user_id: UserId, sta
     let now = state.env.now();
     let completed = matches!(args.status, P2PSwapStatus::Completed(_));
 
-    chat.events.set_p2p_swap_status(None, args.message_id, args.status, now);
-
-    if completed {
+    if chat
+        .events
+        .set_p2p_swap_status(None, args.message_id, args.status, now)
+        .is_ok()
+        && completed
+    {
         if let Some(message_event) = chat
             .events
             .main_events_reader()
@@ -386,7 +393,7 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
                 .main_events_reader()
                 .message_event_internal(args.message_id.into())
             {
-                let notification = Notification::DirectMessageTipped(DirectMessageTipped {
+                let notification = UserNotificationPayload::DirectMessageTipped(DirectMessageTipped {
                     them: caller_user_id,
                     thread_root_message_index,
                     message_index: message_event.event.message_index,

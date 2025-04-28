@@ -446,10 +446,14 @@ impl Job for MarkP2PSwapExpiredJob {
     fn execute(self) {
         mutate_state(|state| {
             if let Some(channel) = state.data.channels.get_mut(&self.channel_id) {
-                channel
-                    .chat
-                    .events
-                    .mark_p2p_swap_expired(self.thread_root_message_index, self.message_id, state.env.now())
+                if let Ok(result) =
+                    channel
+                        .chat
+                        .events
+                        .mark_p2p_swap_expired(self.thread_root_message_index, self.message_id, state.env.now())
+                {
+                    state.process_message_updated(result);
+                }
             }
         });
     }
