@@ -5,7 +5,6 @@ import type {
     ChatIdentifier,
     ChatMap,
     ChatSummary,
-    ChitState,
     CreatedUser,
     DiamondMembershipStatus,
     DirectChatSummary,
@@ -44,7 +43,7 @@ import {
 } from "./stores/chat";
 import { diamondStatus, isDiamond, isLifetimeDiamond } from "./stores/diamond";
 import { type DraftMessages, draftMessagesStore } from "./stores/draftMessages";
-import { type GlobalState, chitStateStore, globalStateStore } from "./stores/global";
+import { type GlobalState, globalStateStore } from "./stores/global";
 import { offlineStore } from "./stores/network";
 import { capturePinNumberStore, pinNumberRequiredStore } from "./stores/pinNumber";
 import { remainingStorage } from "./stores/storage";
@@ -93,10 +92,8 @@ export class LiveState {
     locale!: string;
     pinNumberRequired!: boolean;
     capturePinNumber!: PinNumberResolver | undefined;
-    chitState!: ChitState;
 
     constructor() {
-        chitStateStore.subscribe((state) => (this.chitState = state));
         offlineStore.subscribe((offline) => (this.offlineStore = offline));
         currentUser.subscribe((user) => (this.user = user));
         anonUser.subscribe((anon) => (this.anonUser = anon));

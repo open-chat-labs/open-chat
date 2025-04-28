@@ -44,14 +44,6 @@ export type GlobalState = {
     messageActivitySummary: MessageActivitySummary;
 };
 
-export const chitStateStore = immutableStore<ChitState>({
-    chitBalance: 0,
-    totalChitEarned: 0,
-    streak: 0,
-    streakEnds: 0n,
-    nextDailyChitClaim: 0n,
-});
-
 export const globalStateStore = immutableStore<GlobalState>({
     communities: new CommunityMap<CommunitySummary>(),
     directChats: new ChatMap<DirectChatSummary>(),
@@ -317,7 +309,8 @@ export function setGlobalState(
     }
 
     globalStateStore.set(state);
-    chitStateStore.update((curr) => {
+
+    app.updateChitState((curr) => {
         // Skip the new update if it is behind what we already have locally
         const skipUpdate = chitState.streakEnds < curr.streakEnds;
         return skipUpdate ? curr : chitState;

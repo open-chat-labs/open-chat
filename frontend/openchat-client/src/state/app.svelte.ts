@@ -5,6 +5,7 @@ import {
     chatIdentifiersEqual,
     type ChatListScope,
     chatListScopesEqual,
+    type ChitState,
     type CommunityIdentifier,
     communityIdentifiersEqual,
     CommunityMap,
@@ -54,6 +55,14 @@ class AppState {
             });
         });
     }
+
+    #chitState = $state<ChitState>({
+        chitBalance: 0,
+        totalChitEarned: 0,
+        streak: 0,
+        streakEnds: 0n,
+        nextDailyChitClaim: 0n,
+    });
 
     #serverStreakInsurance = $state<StreakInsurance>({
         daysInsured: 0,
@@ -220,6 +229,14 @@ class AppState {
     #selectedChat = $state<ChatDetailsMergedState>(
         new ChatDetailsMergedState(ChatDetailsServerState.empty()),
     );
+
+    get chitState() {
+        return this.#chitState;
+    }
+
+    updateChitState(fn: (s: ChitState) => ChitState) {
+        this.#chitState = fn(this.#chitState);
+    }
 
     get streakInsurance() {
         return this.#streakInsurance;

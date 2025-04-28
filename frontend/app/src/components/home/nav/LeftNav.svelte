@@ -5,7 +5,6 @@
         type OpenChat,
         anonUser,
         app,
-        chitStateStore as chitState,
         currentUser as createdUser,
         directVideoCallCounts,
         emptyCombinedUnreadCounts,
@@ -54,7 +53,7 @@
     let avatarSize = $derived(ui.mobileWidth ? AvatarSize.Small : AvatarSize.Default);
     let communityExplorer = $derived(pathState.route.kind === "communities_route");
     let selectedCommunityId = $derived(app.selectedCommunitySummary?.id.communityId);
-    let claimChitAvailable = $derived($chitState.nextDailyChitClaim < $now);
+    let claimChitAvailable = $derived(app.chitState.nextDailyChitClaim < $now);
 
     let iconSize = ui.mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
     let scrollingSection: HTMLElement;
