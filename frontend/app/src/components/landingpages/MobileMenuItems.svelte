@@ -1,12 +1,5 @@
 <script lang="ts">
-    import {
-        app,
-        chatListScopeStore as chatListScope,
-        OpenChat,
-        pathState,
-        routeForScope,
-        ui,
-    } from "openchat-client";
+    import { app, OpenChat, pathState, routeForScope, ui } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
     import Graph from "svelte-material-icons/GraphOutline.svelte";
@@ -30,7 +23,7 @@
 
     function launch() {
         if (app.identityState.kind === "logged_in") {
-            page(routeForScope($chatListScope));
+            page(routeForScope(app.chatListScope));
         } else {
             page("/communities");
         }

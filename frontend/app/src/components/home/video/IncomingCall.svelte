@@ -1,8 +1,7 @@
 <script lang="ts">
     import {
+        app,
         AvatarSize,
-        communities,
-        selectedCommunity,
         ui,
         userStore,
         type ChatIdentifier,
@@ -63,12 +62,12 @@
                         return {
                             chatId: chat.id,
                             name: `${
-                                $communities.get({
+                                app.communities.get({
                                     kind: "community",
                                     communityId: chat.id.communityId,
                                 })?.name
                             } > ${chat.name}`,
-                            avatarUrl: client.groupAvatarUrl(chat, $selectedCommunity),
+                            avatarUrl: client.groupAvatarUrl(chat, app.selectedCommunitySummary),
                             initiator: initiator.username,
                         };
                 }

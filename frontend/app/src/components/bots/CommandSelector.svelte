@@ -4,10 +4,10 @@
         ChatSummary,
         CommunitySummary,
         ExternalBotPermissions,
-        ReadonlyMap,
         MessageContext,
         OpenChat,
         PermissionRole,
+        ReadonlyMap,
     } from "openchat-client";
     import {
         app,
@@ -16,7 +16,6 @@
         isPermitted,
         messagePermissionsForSelectedChat,
         selectedChatStore,
-        selectedCommunity,
         selectedMessageContext,
         threadPermissionsForSelectedChat,
     } from "openchat-client";
@@ -61,7 +60,12 @@
         return botState.commands.filter((c) => {
             return (
                 restrictByBotIfNecessary(c) &&
-                hasPermissionForCommand(c, installedBots, $selectedChatStore, $selectedCommunity)
+                hasPermissionForCommand(
+                    c,
+                    installedBots,
+                    $selectedChatStore,
+                    app.selectedCommunitySummary,
+                )
             );
         });
     });

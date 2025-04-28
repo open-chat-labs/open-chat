@@ -1,12 +1,12 @@
 <script lang="ts">
     import {
+        app,
         isLocked,
         type MultiUserChat,
         type OpenChat,
         platformModerator,
         publish,
         routeForScope,
-        selectedCommunity,
     } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
@@ -26,9 +26,10 @@
 
     let { chat, joining, lapsed }: Props = $props();
 
-    let isFrozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunity));
+    let isFrozen = $derived(client.isChatOrCommunityFrozen(chat, app.selectedCommunitySummary));
     let previewingCommunity = $derived(
-        $selectedCommunity?.membership.role === "none" || $selectedCommunity?.membership.lapsed,
+        app.selectedCommunitySummary?.membership.role === "none" ||
+            app.selectedCommunitySummary?.membership.lapsed,
     );
     let gates = $derived(client.accessGatesForChat(chat));
     let locked = $derived(gates.some((g) => isLocked(g)));
@@ -43,8 +44,8 @@
     }
 
     function cancelPreview() {
-        if (previewingCommunity && $selectedCommunity) {
-            client.removeCommunity($selectedCommunity.id);
+        if (previewingCommunity && app.selectedCommunitySummary) {
+            client.removeCommunity(app.selectedCommunitySummary.id);
         } else {
             if (!chat.public) {
                 client.declineInvitation(chat.id);
@@ -71,9 +72,9 @@
                 break;
 
             case "channel":
-                if ($selectedCommunity) {
+                if (app.selectedCommunitySummary) {
                     client
-                        .freezeCommunity($selectedCommunity.id, undefined)
+                        .freezeCommunity(app.selectedCommunitySummary.id, undefined)
                         .then((success) => {
                             if (!success) {
                                 toastStore.showFailureToast(i18nKey("failedToFreezeCommunity"));
@@ -104,9 +105,9 @@
                     .finally(() => (freezingInProgress = false));
 
             case "channel":
-                if ($selectedCommunity) {
+                if (app.selectedCommunitySummary) {
                     client
-                        .unfreezeCommunity($selectedCommunity.id)
+                        .unfreezeCommunity(app.selectedCommunitySummary.id)
                         .then((success) => {
                             if (!success) {
                                 toastStore.showFailureToast(i18nKey("failedToUnfreezeCommunity"));

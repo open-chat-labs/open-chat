@@ -1,4 +1,4 @@
-use crate::metrics::write_metrics;
+use crate::user_notifications::metrics::write_metrics;
 use crate::{Notification, NotificationToPush, timestamp};
 use async_channel::{Receiver, Sender};
 use std::collections::HashMap;

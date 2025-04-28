@@ -163,13 +163,13 @@
             favourites: [],
             communities: [],
         };
-        const direct = global.directChats.values().map((d) => ({
+        const direct = [...global.directChats.values()].map((d) => ({
             ...d,
             name: buildDisplayName($userStore, d.them.userId, false),
         }));
 
-        const group = global.groupChats.values();
-        const channels = global.communities.values().flatMap((c) => c.channels);
+        const group = [...global.groupChats.values()];
+        const channels = [...global.communities.values()].flatMap((c) => c.channels);
         const all = [...group, ...direct, ...channels];
         const favs = all.filter((c) => global.favourites.has(c.id));
         try {
@@ -177,7 +177,9 @@
             const groupChats = await targetsFromChatList(now, group, selectedChatId);
             const favourites = await targetsFromChatList(now, favs, selectedChatId);
             const communities = await Promise.all(
-                global.communities.values().map((c) => normaliseCommunity(now, selectedChatId, c)),
+                [...global.communities.values()].map((c) =>
+                    normaliseCommunity(now, selectedChatId, c),
+                ),
             );
             return {
                 directChats: chatMatchesSearch(directChats, searchTerm),

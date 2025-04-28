@@ -1,7 +1,6 @@
 export * from "./authProviders";
 export * from "./blockedUsers";
 export * from "./chat";
-export * from "./community";
 export * from "./crypto";
 export * from "./diamond";
 export * from "./draftMessages";

@@ -316,12 +316,16 @@ fn streak_insurance_updates_returned_in_summary_updates(final_day_manually_claim
 fn advance_to_next_month(env: &mut PocketIc) {
     let now = now_millis(env);
     let next_month = MonthKey::from_timestamp(now).next();
-    env.set_time(SystemTime::UNIX_EPOCH.add(Duration::from_millis(next_month.start_timestamp())));
+    env.set_time(
+        SystemTime::UNIX_EPOCH
+            .add(Duration::from_millis(next_month.start_timestamp()))
+            .into(),
+    );
 }
 
 fn ensure_time_at_least_day0(env: &mut PocketIc) {
     if now_millis(env) < DAY_ZERO {
-        env.set_time(SystemTime::now());
+        env.set_time(SystemTime::now().into());
     }
 }
 

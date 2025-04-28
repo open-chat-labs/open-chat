@@ -1,18 +1,19 @@
-import type {
-    ChatIdentifier,
-    ExternalBotPermissions,
-    Member,
-    PublicApiKeyDetails,
-    VersionedRules,
+import {
+    type ChatIdentifier,
+    type ChatListScope,
+    type ExternalBotPermissions,
+    type Member,
+    type PublicApiKeyDetails,
+    type VersionedRules,
 } from "openchat-shared";
-import { SvelteMap } from "svelte/reactivity";
-import { LocalMap } from "../map";
+import { LocalMap, ReactiveChatMap } from "../map";
 import { LocalSet } from "../set";
 import { scheduleUndo, type UndoLocalUpdate } from "../undo";
 
 export class ChatDetailsLocalState {
     #rules = $state<VersionedRules | undefined>();
 
+    readonly pinnedToScopes = new LocalSet<ChatListScope["kind"]>();
     readonly pinnedMessages = new LocalSet<number>();
     readonly invitedUsers = new LocalSet<string>();
     readonly blockedUsers = new LocalSet<string>();
@@ -31,20 +32,23 @@ export class ChatDetailsLocalState {
 const noop = () => {};
 
 export class ChatDetailsLocalStateManager {
-    #data = new SvelteMap<string, ChatDetailsLocalState>();
+    #data = new ReactiveChatMap<ChatDetailsLocalState>();
 
     get(id: ChatIdentifier): ChatDetailsLocalState | undefined {
-        return this.#data.get(JSON.stringify(id));
+        return this.#data.get(id);
     }
 
     #getOrCreate(id: ChatIdentifier): ChatDetailsLocalState {
-        const key = JSON.stringify(id);
-        let state = this.#data.get(key);
+        let state = this.#data.get(id);
         if (state === undefined) {
             state = new ChatDetailsLocalState();
-            this.#data.set(key, state);
+            this.#data.set(id, state);
         }
         return state;
+    }
+
+    entries(): IterableIterator<[ChatIdentifier, ChatDetailsLocalState]> {
+        return this.#data.entries();
     }
 
     updateMember(
@@ -73,6 +77,14 @@ export class ChatDetailsLocalStateManager {
 
     addMember(id: ChatIdentifier, member: Member): UndoLocalUpdate {
         return this.#getOrCreate(id).members.addOrUpdate(member.userId, member);
+    }
+
+    pinToScope(id: ChatIdentifier, scope: ChatListScope["kind"]): UndoLocalUpdate {
+        return this.#getOrCreate(id).pinnedToScopes.add(scope);
+    }
+
+    unpinFromScope(id: ChatIdentifier, scope: ChatListScope["kind"]): UndoLocalUpdate {
+        return this.#getOrCreate(id).pinnedToScopes.remove(scope);
     }
 
     pinMessage(id: ChatIdentifier, messageIndex: number): UndoLocalUpdate {
@@ -118,6 +130,11 @@ export class ChatDetailsLocalStateManager {
 
     installBot(id: ChatIdentifier, botId: string, perm: ExternalBotPermissions): UndoLocalUpdate {
         return this.#getOrCreate(id).bots.addOrUpdate(botId, perm);
+    }
+
+    // Only used for testing
+    clearAll() {
+        this.#data = new ReactiveChatMap<ChatDetailsLocalState>();
     }
 }
 

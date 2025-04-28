@@ -13,7 +13,6 @@
         FilteredProposals,
         app,
         chatIdentifiersEqual,
-        chatListScopeStore as chatListScope,
         currentChatEditingEvent,
         draftMessagesStore,
         eventsStore,
@@ -21,7 +20,6 @@
         messagesRead,
         pathState,
         routeForChatIdentifier,
-        selectedCommunity,
         ui,
         unconfirmed,
         currentUser as user,
@@ -87,7 +85,7 @@
     }
 
     function doGoToMessageIndex(index: number): void {
-        page(routeForChatIdentifier($chatListScope.kind, chat.id));
+        page(routeForChatIdentifier(app.chatListScope.kind, chat.id));
         chatEventList?.scrollToMessageIndex(messageContext, index, false);
     }
 
@@ -234,10 +232,11 @@
         return earliestLoadedEventIndex <= indexRequired;
     }
     let privateCommunityPreview = $derived(
-        $selectedCommunity !== undefined &&
-            ($selectedCommunity.membership.role === "none" ||
-                $selectedCommunity.membership.lapsed) &&
-            (!$selectedCommunity.public || $selectedCommunity.gateConfig.gate.kind !== "no_gate"),
+        app.selectedCommunitySummary !== undefined &&
+            (app.selectedCommunitySummary.membership.role === "none" ||
+                app.selectedCommunitySummary.membership.lapsed) &&
+            (!app.selectedCommunitySummary.public ||
+                app.selectedCommunitySummary.gateConfig.gate.kind !== "no_gate"),
     );
     let privatePreview = $derived(privateCommunityPreview || privateChatPreview);
     let isEmptyChat = $derived(chat.latestEventIndex <= 0 || privatePreview);
@@ -270,7 +269,6 @@
         if (
             app.chatsInitialised &&
             pathState.messageIndex !== undefined &&
-            !pathState.threadOpen &&
             chatIdentifiersEqual(app.selectedChatId, previousChatId)
         ) {
             const idx = pathState.messageIndex;

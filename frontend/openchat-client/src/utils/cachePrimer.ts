@@ -1,30 +1,28 @@
 import {
     type ChatEventsArgs,
     type ChatEventsResponse,
-    type ChatSummary,
-    MAX_MESSAGES,
-    type Message,
-    publish,
-    type VideoCallContent,
-} from "openchat-shared";
-import {
-    ChatMap,
-    compareChats,
-    missingUserIds,
-    userIdsFromEvents,
     chatIdentifiersEqual,
     chatIdentifierToString,
+    ChatMap,
+    type ChatSummary,
+    compareChats,
+    MAX_MESSAGES,
+    type Message,
+    missingUserIds,
+    publish,
+    userIdsFromEvents,
+    type VideoCallContent,
 } from "openchat-shared";
-import { Poller } from "./poller";
+import { get } from "svelte/store";
+import { remoteVideoCallEndedEvent, remoteVideoCallStartedEvent } from "../events";
+import type { OpenChat } from "../openchat";
+import { selectedChatId } from "../stores";
 import { boolFromLS } from "../stores/localStorageSetting";
 import { messagesRead } from "../stores/markRead";
 import { userStore } from "../stores/user";
-import { get } from "svelte/store";
-import type { OpenChat } from "../openchat";
 import { runOnceIdle } from "./backgroundTasks";
 import { isProposalsChat } from "./chat";
-import { remoteVideoCallEndedEvent, remoteVideoCallStartedEvent } from "../events";
-import { selectedChatId } from "../stores";
+import { Poller } from "./poller";
 
 const BATCH_SIZE = 20;
 
@@ -127,7 +125,7 @@ export class CachePrimer {
     }
 
     private getNextBatch(): [string, ChatEventsArgs[]] | undefined {
-        const sorted = this.pending.values().sort(compareChats);
+        const sorted = [...this.pending.values()].toSorted(compareChats);
         const batch: ChatEventsArgs[] = [];
         let localUserIndexForBatch: string | undefined = undefined;
 

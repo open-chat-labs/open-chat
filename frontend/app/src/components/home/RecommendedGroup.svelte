@@ -1,7 +1,7 @@
 <script lang="ts">
     import {
+        app,
         AvatarSize,
-        chatListScopeStore as chatListScope,
         chatSummariesStore,
         type GroupChatIdentifier,
         type GroupChatSummary,
@@ -10,7 +10,6 @@
         type OpenChat,
         publish,
         routeForChatIdentifier,
-        selectedCommunity,
         suspendedUser,
         ui,
     } from "openchat-client";
@@ -46,7 +45,7 @@
     }
 
     function gotoGroup({ id }: GroupChatSummary) {
-        page(routeForChatIdentifier($chatListScope.kind, id));
+        page(routeForChatIdentifier(app.chatListScope.kind, id));
     }
 
     function joinGroup(group: GroupChatSummary) {
@@ -65,7 +64,7 @@
         <div class="header">
             <div class="avatar">
                 <Avatar
-                    url={client.groupAvatarUrl(group, $selectedCommunity)}
+                    url={client.groupAvatarUrl(group, app.selectedCommunitySummary)}
                     size={ui.mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
             </div>
             <div class="group-title-line">

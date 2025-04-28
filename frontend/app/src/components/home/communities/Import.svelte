@@ -1,9 +1,4 @@
 <script lang="ts">
-    import Button from "../../Button.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
-    import Overlay from "../../Overlay.svelte";
-    import ModalContent from "../../ModalContent.svelte";
-    import { getContext, onMount } from "svelte";
     import {
         AvatarSize,
         type ChatIdentifier,
@@ -12,9 +7,14 @@
         type OpenChat,
         publish,
     } from "openchat-client";
-    import Avatar from "../../Avatar.svelte";
-    import { toastStore } from "../../../stores/toast";
+    import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import { toastStore } from "../../../stores/toast";
+    import Avatar from "../../Avatar.svelte";
+    import Button from "../../Button.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
+    import ModalContent from "../../ModalContent.svelte";
+    import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -27,7 +27,7 @@
 
     let { ownedCommunities, groupId, onCancel }: Props = $props();
 
-    let communitiesList = $derived(ownedCommunities.values());
+    let communitiesList = $derived([...ownedCommunities.values()]);
 
     let importing = $state(false);
     let selected: CommunitySummary | undefined = $state();
