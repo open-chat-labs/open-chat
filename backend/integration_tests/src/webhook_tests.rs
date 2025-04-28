@@ -142,5 +142,5 @@ fn post_message_to_webhook(
         .send()
         .map_err(|e| e.to_string())?;
 
-    Ok(response.json::<send_message_v2::Response>().map_err(|e| e.to_string())?)
+    response.json::<send_message_v2::Response>().map_err(|e| e.to_string())
 }
