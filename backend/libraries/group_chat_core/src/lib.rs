@@ -23,7 +23,7 @@ use types::{
     MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OCResult, OptionUpdate, OptionalGroupPermissions,
     OptionalMessagePermissions, PermissionsChanged, Reaction, ReserveP2PSwapSuccess, RoleChanged, Rules, SelectedGroupUpdates,
     SenderContext, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited,
-    Version, Versioned, VersionedRules, VideoCall, VideoCallPresence, VoteOperation,
+    Version, Versioned, VersionedRules, VideoCall, VideoCallPresence, VoteOperation, WebhookDetails,
 };
 use utils::document::validate_avatar;
 use utils::text_validation::{
@@ -34,11 +34,13 @@ mod invited_users;
 mod members;
 mod mentions;
 mod roles;
+mod webhooks;
 
 pub use invited_users::*;
 pub use members::*;
 pub use mentions::*;
 pub use roles::*;
+pub use webhooks::*;
 
 #[derive(Serialize, Deserialize)]
 pub struct GroupChatCore {
@@ -63,6 +65,8 @@ pub struct GroupChatCore {
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
     pub external_url: Timestamped<Option<String>>,
     at_everyone_mentions: BTreeMap<TimestampMillis, AtEveryoneMention>,
+    #[serde(default)]
+    pub webhooks: Webhooks,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -119,6 +123,7 @@ impl GroupChatCore {
             min_visible_indexes_for_new_members: None,
             external_url: Timestamped::new(external_url, now),
             at_everyone_mentions: BTreeMap::new(),
+            webhooks: Webhooks::default(),
         }
     }
 
@@ -163,6 +168,7 @@ impl GroupChatCore {
             self.events.last_updated().unwrap_or_default(),
             self.invited_users.last_updated(),
             self.members.last_updated().unwrap_or_default(),
+            self.webhooks.last_updated(),
         ]
         .into_iter()
         .max()
@@ -306,6 +312,19 @@ impl GroupChatCore {
             chat_rules: self.rules.if_set_after(since).map(|r| r.clone().into()),
             ..Default::default()
         };
+
+        if self.webhooks.last_updated() > since {
+            result.webhooks = Some(
+                self.webhooks
+                    .iter()
+                    .map(|(id, webhook)| WebhookDetails {
+                        id: (*id).into(),
+                        name: webhook.name.clone(),
+                        avatar_id: webhook.avatar.as_ref().map(|avatar| avatar.id),
+                    })
+                    .collect(),
+            );
+        }
 
         let mut users_added_updated_or_removed = HashSet::new();
         let mut users_blocked_or_unblocked = HashSet::new();
@@ -1918,6 +1937,17 @@ impl GroupChatCore {
                 .collect(),
             total_replies: thread_events_reader.next_message_index().into(),
         })
+    }
+
+    pub fn webhooks(&self) -> Vec<WebhookDetails> {
+        self.webhooks
+            .iter()
+            .map(|(id, webhook)| WebhookDetails {
+                id: (*id).into(),
+                name: webhook.name.clone(),
+                avatar_id: webhook.avatar.as_ref().map(|avatar| avatar.id),
+            })
+            .collect()
     }
 }
 

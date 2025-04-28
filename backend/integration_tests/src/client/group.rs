@@ -606,16 +606,11 @@ pub mod happy_path {
         }
     }
 
-    pub fn webhook(
-        env: &mut PocketIc,
-        caller: Principal,
-        group_id: ChatId,
-        id: UserId,
-    ) -> group_canister::webhook::SuccessResult {
+    pub fn webhook(env: &mut PocketIc, caller: Principal, group_id: ChatId, id: UserId) -> String {
         let response = super::webhook(env, caller, group_id.into(), &group_canister::webhook::Args { id });
 
         match response {
-            group_canister::webhook::Response::Success(result) => result,
+            group_canister::webhook::Response::Success(result) => result.secret,
             response => panic!("'webhook' error: {response:?}"),
         }
     }

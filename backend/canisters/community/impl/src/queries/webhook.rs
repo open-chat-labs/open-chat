@@ -1,7 +1,7 @@
 use crate::RuntimeState;
 use crate::read_state;
 use canister_api_macros::query;
-use group_canister::webhook::{Response::*, *};
+use community_canister::webhook::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use types::OCResult;
 
@@ -14,13 +14,15 @@ fn webhook(args: Args) -> Response {
 }
 
 fn webhook_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessResult> {
-    let member = state.get_calling_member(true)?;
+    let user_id = state.get_calling_member(true)?.user_id;
+    let channel = state.data.channels.get_or_err(&args.channel_id)?;
+    let member = channel.chat.members.get_verified_member(user_id)?;
 
     if !member.role().is_owner() {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
-    let webhook = state.data.chat.webhooks.get(&args.id).ok_or(OCErrorCode::WebhookNotFound)?;
+    let webhook = channel.chat.webhooks.get(&args.id).ok_or(OCErrorCode::WebhookNotFound)?;
 
     Ok(SuccessResult {
         id: args.id,

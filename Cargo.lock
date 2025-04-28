@@ -3068,6 +3068,7 @@ dependencies = [
  "event_store_producer",
  "event_store_producer_cdk_runtime",
  "group_community_common",
+ "hex",
  "ic-stable-structures",
  "itertools 0.13.0",
  "lazy_static",
@@ -4454,7 +4455,6 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "constants",
- "hex",
  "rand 0.8.5",
  "serde",
  "serde_repr",

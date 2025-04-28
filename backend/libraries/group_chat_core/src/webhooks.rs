@@ -1,5 +1,5 @@
 use candid::Principal;
-use rand::{rngs::StdRng, Rng};
+use rand::{Rng, rngs::StdRng};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use types::{Document, OptionUpdate, TimestampMillis};
@@ -39,7 +39,7 @@ impl Webhooks {
 
     pub fn regenerate(&mut self, id: Principal, rng: &mut StdRng, now: TimestampMillis) -> bool {
         if let Some(webhook) = self.map.get_mut(&id) {
-            webhook.secret = rng.gen::<u128>().to_string();
+            webhook.secret = rng.r#gen::<u128>().to_string();
             self.last_updated = now;
             true
         } else {
@@ -94,11 +94,11 @@ impl Webhooks {
     }
 
     fn generate_random_id(rng: &mut StdRng) -> Principal {
-        Principal::from_slice(&rng.gen::<[u8; 8]>())
+        Principal::from_slice(&rng.r#gen::<[u8; 8]>())
     }
 
     fn generate_secret(rng: &mut StdRng) -> String {
-        let secret_bytes = rng.gen::<[u8; 16]>();
+        let secret_bytes = rng.r#gen::<[u8; 16]>();
         hex::encode(secret_bytes)
     }
 }

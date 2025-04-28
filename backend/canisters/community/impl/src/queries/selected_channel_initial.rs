@@ -56,5 +56,6 @@ fn selected_channel_initial_impl(args: Args, state: &RuntimeState) -> OCResult<S
         pinned_messages: chat.pinned_messages(min_visible_message_index),
         chat_rules: chat.rules.value.clone().into(),
         api_keys: channel.bot_api_keys.generated_since(0),
+        webhooks: chat.webhooks(),
     })
 }

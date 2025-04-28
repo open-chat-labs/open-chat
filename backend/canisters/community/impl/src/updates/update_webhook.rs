@@ -1,7 +1,7 @@
 use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use group_canister::update_webhook::*;
+use community_canister::update_webhook::*;
 use oc_error_codes::OCErrorCode;
 use types::OCResult;
 use utils::document::try_parse_data_url;
@@ -17,7 +17,9 @@ fn update_webhook(args: Args) -> Response {
 fn update_webhook_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
-    let member = state.get_calling_member(true)?;
+    let user_id = state.get_calling_member(true)?.user_id;
+    let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
+    let member = channel.chat.members.get_verified_member(user_id)?;
 
     if !member.role().is_owner() {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
@@ -31,7 +33,7 @@ fn update_webhook_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     let now = state.env.now();
 
-    if !state.data.chat.webhooks.update(args.id, args.name, avatar, now) {
+    if !channel.chat.webhooks.update(args.id, args.name, avatar, now) {
         return Err(OCErrorCode::WebhookNotFound.into());
     }
 

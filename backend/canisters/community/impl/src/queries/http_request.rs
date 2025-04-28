@@ -8,11 +8,16 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     fn get_avatar_impl(route: AvatarRoute, state: &RuntimeState) -> HttpResponse {
         if let Some(channel_id) = route.channel_id {
             if let Some(channel) = state.data.channels.get(&channel_id) {
-                get_document(
-                    route.blob_id,
-                    channel.chat.avatar.as_ref(),
-                    &format!("channel/{channel_id}/avatar"),
-                )
+                let (avatar, path) = if let Some(id) = route.bot_id {
+                    (
+                        channel.chat.webhooks.get(&id).and_then(|w| w.avatar.as_ref()),
+                        format!("channel/{channel_id}/avatar/{id}"),
+                    )
+                } else {
+                    (channel.chat.avatar.as_ref(), format!("channel/{channel_id}/avatar"))
+                };
+
+                get_document(route.blob_id, avatar, &path)
             } else {
                 HttpResponse::not_found()
             }
@@ -64,6 +69,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         Route::Traces(since) => get_traces_impl(since),
         Route::Metrics => read_state(get_metrics_impl),
         Route::Other(p, _) if p == "timer_jobs" => read_state(get_timer_jobs),
+        Route::Webhook(_) if request.method.eq_ignore_ascii_case("POST") => HttpResponse::upgrade(),
         _ => HttpResponse::not_found(),
     }
 }

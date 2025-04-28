@@ -8,7 +8,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     fn get_avatar_impl(route: AvatarRoute, state: &RuntimeState) -> HttpResponse {
         let (avatar, path) = if let Some(id) = route.bot_id {
             (
-                state.data.webhooks.get(&id).and_then(|w| w.avatar.as_ref()),
+                state.data.chat.webhooks.get(&id).and_then(|w| w.avatar.as_ref()),
                 format!("avatar/{id}"),
             )
         } else {
