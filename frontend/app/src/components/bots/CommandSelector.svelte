@@ -12,7 +12,6 @@
     import {
         app,
         botState,
-        installedDirectBots,
         isPermitted,
         messagePermissionsForSelectedChat,
         selectedChatStore,
@@ -50,7 +49,7 @@
             case "channel":
                 return app.selectedCommunity.bots;
             case "direct_chat":
-                return $installedDirectBots;
+                return app.directChatBots;
             default:
                 return app.selectedChat.bots;
         }

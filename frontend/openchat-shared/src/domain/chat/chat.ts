@@ -712,8 +712,6 @@ export type LocalPollVote = {
 
 export type LocalGlobalUpdates = {
     walletConfig?: WalletConfig;
-    installedDirectBots?: Map<string, ExternalBotPermissions>;
-    removedDirectBots?: Set<string>;
     streakInsurance?: StreakInsurance;
     lastUpdated: number;
 };

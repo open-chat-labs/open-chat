@@ -11,7 +11,6 @@ import type {
     DirectChatSummary,
     EnhancedReplyContext,
     EventWrapper,
-    ExternalBotPermissions,
     MessageContext,
     MultiUserChat,
     ObjectSet,
@@ -49,12 +48,7 @@ import {
 import { walletConfigStore } from "./stores/crypto";
 import { diamondStatus, isDiamond, isLifetimeDiamond } from "./stores/diamond";
 import { type DraftMessages, draftMessagesStore } from "./stores/draftMessages";
-import {
-    type GlobalState,
-    chitStateStore,
-    globalStateStore,
-    installedDirectBots,
-} from "./stores/global";
+import { type GlobalState, chitStateStore, globalStateStore } from "./stores/global";
 import { offlineStore } from "./stores/network";
 import { capturePinNumberStore, pinNumberRequiredStore } from "./stores/pinNumber";
 import { remainingStorage } from "./stores/storage";
@@ -105,12 +99,10 @@ export class LiveState {
     capturePinNumber!: PinNumberResolver | undefined;
     chitState!: ChitState;
     walletConfig!: WalletConfig;
-    installedDirectBots!: Map<string, ExternalBotPermissions>;
     serverStreakInsurance!: StreakInsurance;
 
     constructor() {
         serverStreakInsuranceStore.subscribe((state) => (this.serverStreakInsurance = state));
-        installedDirectBots.subscribe((state) => (this.installedDirectBots = state));
         chitStateStore.subscribe((state) => (this.chitState = state));
         offlineStore.subscribe((offline) => (this.offlineStore = offline));
         currentUser.subscribe((user) => (this.user = user));

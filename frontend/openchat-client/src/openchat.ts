@@ -2670,7 +2670,7 @@ export class OpenChat {
         if (chat.kind !== "direct_chat") return false;
         const botId = chat.them.userId;
         const bot = botState.externalBots.get(botId);
-        return bot !== undefined && this.#liveState.installedDirectBots.get(botId) === undefined;
+        return bot !== undefined && app.directChatBots.get(botId) === undefined;
     }
 
     async setSelectedChat(
@@ -8289,7 +8289,7 @@ export class OpenChat {
         botId: string,
         grantedPermissions: ExternalBotPermissions,
     ): Promise<boolean> {
-        this.#installBotLocally(id, botId, grantedPermissions);
+        const undo = this.#installBotLocally(id, botId, grantedPermissions);
         return this.#sendRequest({
             kind: "installBot",
             id,
@@ -8298,11 +8298,12 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (!resp) {
-                    this.#uninstallBotLocally(id, botId);
+                    undo();
                 }
                 return resp;
             })
             .catch((err) => {
+                undo();
                 this.#logger.error("Error adding bot to group or community", err);
                 return false;
             });
@@ -8324,60 +8325,34 @@ export class OpenChat {
         });
     }
 
-    #uninstallBotLocally(
-        id: BotInstallationLocation,
-        botId: string,
-    ): ExternalBotPermissions | undefined {
-        let perm: ExternalBotPermissions | undefined;
+    #uninstallBotLocally(id: BotInstallationLocation, botId: string): UndoLocalUpdate {
         switch (id.kind) {
             case "community":
-                perm = app.selectedCommunity.bots.get(botId);
-                // TODO - when chat state and global state are done
-                // the same way, we can return the undo fn here which
-                // will be better.
-                localUpdates.removeBotFromCommunity(id, botId);
-                break;
+                return localUpdates.removeBotFromCommunity(id, botId);
             case "group_chat":
-                perm = app.selectedChat.bots.get(botId);
-                localUpdates.removeBotFromChat(id, botId);
-                break;
+                return localUpdates.removeBotFromChat(id, botId);
             case "direct_chat":
-                perm = this.#liveState.installedDirectBots.get(botId);
-                localGlobalUpdates.removeBot(botId);
-                this.removeChat({ kind: "direct_chat", userId: botId });
-                break;
+                return localUpdates.removeDirectChatBot(botId);
         }
-        return perm;
     }
 
     #installBotLocally(
         id: BotInstallationLocation,
         botId: string,
-        perm: ExternalBotPermissions | undefined,
-    ): ExternalBotPermissions | undefined {
-        let previousPermissions: ExternalBotPermissions | undefined = undefined;
+        perm: ExternalBotPermissions,
+    ): UndoLocalUpdate {
         switch (id.kind) {
             case "community":
-                if (perm === undefined) return perm;
-                previousPermissions = app.selectedCommunity.bots.get(botId);
-                localUpdates.installBotInCommunity(id, botId, perm);
-                break;
+                return localUpdates.installBotInCommunity(id, botId, perm);
             case "group_chat":
-                if (perm === undefined) return perm;
-                previousPermissions = app.selectedChat.bots.get(botId);
-                localUpdates.installBotInChat(id, botId, perm);
-                break;
+                return localUpdates.installBotInChat(id, botId, perm);
             case "direct_chat":
-                if (perm === undefined) return perm;
-                previousPermissions = this.#liveState.installedDirectBots.get(botId);
-                localGlobalUpdates.installBot(botId, perm);
-                break;
+                return localUpdates.installDirectChatBot(botId, perm);
         }
-        return previousPermissions;
     }
 
     uninstallBot(id: BotInstallationLocation, botId: string): Promise<boolean> {
-        const perm = this.#uninstallBotLocally(id, botId);
+        const undo = this.#uninstallBotLocally(id, botId);
         return this.#sendRequest({
             kind: "uninstallBot",
             id,
@@ -8385,11 +8360,12 @@ export class OpenChat {
         })
             .then((success) => {
                 if (!success) {
-                    this.#installBotLocally(id, botId, perm);
+                    undo();
                 }
                 return success;
             })
             .catch((err) => {
+                undo();
                 this.#logger.error("Error removing bot from group or community", err);
                 return false;
             });

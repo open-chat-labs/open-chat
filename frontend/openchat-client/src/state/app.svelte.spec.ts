@@ -2,10 +2,12 @@ import {
     CommunityMap,
     emptyChatMetrics,
     emptyRules,
+    SafeMap,
     type ChatIdentifier,
     type CommunityIdentifier,
     type CommunityPermissions,
     type CommunitySummary,
+    type ExternalBotPermissions,
     type Member,
 } from "openchat-shared";
 import { vi } from "vitest";
@@ -309,8 +311,40 @@ describe("app state", () => {
                 expect(directs?.[0]).toEqual({ kind: "direct_chat", userId: "888888" });
             });
         });
+
+        describe("direct chat bots", () => {
+            beforeEach(() => {
+                app.directChatBots = someBots([
+                    [
+                        "123456",
+                        { chatPermissions: [], communityPermissions: [], messagePermissions: [] },
+                    ],
+                ]);
+            });
+
+            test("install a bot works", () => {
+                localUpdates.installDirectChatBot("654321", {
+                    chatPermissions: [],
+                    communityPermissions: [],
+                    messagePermissions: [],
+                });
+                expect(app.directChatBots.has("654321")).toBe(true);
+            });
+
+            test("uninstall a bot works", () => {
+                localUpdates.removeDirectChatBot("123456");
+                expect(app.directChatBots.has("123456")).toBe(false);
+            });
+        });
     });
 });
+
+function someBots(
+    entries: [[string, ExternalBotPermissions]],
+): SafeMap<string, ExternalBotPermissions> {
+    const m = new Map<string, ExternalBotPermissions>(entries);
+    return SafeMap.fromEntries(m.entries());
+}
 
 function createCommunitySummary(id: string, index: number): CommunitySummary {
     return {

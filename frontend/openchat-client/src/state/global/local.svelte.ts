@@ -10,7 +10,7 @@ import {
 } from "openchat-shared";
 import { chatDetailsLocalUpdates } from "../chat_details";
 import { communityLocalUpdates } from "../community_details";
-import { LocalCommunityMap, ReactiveCommunityMap } from "../map";
+import { LocalCommunityMap, LocalMap, ReactiveCommunityMap } from "../map";
 import { type UndoLocalUpdate } from "../undo";
 
 // global local updates don't need the manager because they are not specific to a keyed entity (community, chat, message etc)
@@ -18,6 +18,7 @@ export class GlobalLocalState {
     // communities may be added or removed locally or they may be previewed. They are all handled by this.
     readonly communities = new LocalCommunityMap<CommunitySummary>();
     readonly previewCommunities = new ReactiveCommunityMap<CommunitySummary>();
+    readonly directChatBots = new LocalMap<string, ExternalBotPermissions>();
 
     isPreviewingCommunity(id: CommunityIdentifier) {
         return this.previewCommunities.has(id);
@@ -173,6 +174,14 @@ export class GlobalLocalState {
 
     unpinFromScope(id: ChatIdentifier, scope: ChatListScope["kind"]): UndoLocalUpdate {
         return chatDetailsLocalUpdates.unpinFromScope(id, scope);
+    }
+
+    removeDirectChatBot(botId: string): UndoLocalUpdate {
+        return this.directChatBots.remove(botId);
+    }
+
+    installDirectChatBot(botId: string, perm: ExternalBotPermissions): UndoLocalUpdate {
+        return this.directChatBots.addOrUpdate(botId, perm);
     }
 }
 

@@ -16,6 +16,7 @@ import {
     type MessageContext,
     messageContextsEqual,
     type PublicApiKeyDetails,
+    SafeMap,
     type UserGroupDetails,
     type UserGroupSummary,
     type VersionedRules,
@@ -51,6 +52,18 @@ class AppState {
             });
         });
     }
+
+    #serverDirectChatBots = $state<SafeMap<string, ExternalBotPermissions>>(new SafeMap());
+
+    #directChatBots = $derived.by(() => {
+        return localUpdates.directChatBots.apply(this.#serverDirectChatBots);
+    });
+
+    #serverDirectChatApiKeys = $state<Map<string, PublicApiKeyDetails>>(new Map());
+
+    #directChatApiKeys = $derived.by(() => {
+        return this.#serverDirectChatApiKeys;
+    });
 
     #serverCommunities = $state<CommunityMap<CommunitySummary>>(new CommunityMap());
 
@@ -191,6 +204,22 @@ class AppState {
     #selectedChat = $state<ChatDetailsMergedState>(
         new ChatDetailsMergedState(ChatDetailsServerState.empty()),
     );
+
+    get directChatBots() {
+        return this.#directChatBots;
+    }
+
+    set directChatBots(val: SafeMap<string, ExternalBotPermissions>) {
+        this.#serverDirectChatBots = val;
+    }
+
+    get directChatApiKeys() {
+        return this.#directChatApiKeys;
+    }
+
+    set directChatApiKeys(val: Map<string, PublicApiKeyDetails>) {
+        this.#serverDirectChatApiKeys = val;
+    }
 
     get pinnedChats(): Map<ChatListScope["kind"], ChatIdentifier[]> {
         return this.#pinnedChats;

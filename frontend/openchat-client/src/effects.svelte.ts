@@ -108,9 +108,8 @@ function syncState() {
     });
 
     $effect(() => {
-        if (app.pinnedChats) {
-            dummyPinnedChatsStore.set(Symbol());
-        }
+        void app.pinnedChats;
+        dummyPinnedChatsStore.set(Symbol());
     });
 }
 

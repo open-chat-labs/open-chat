@@ -21,6 +21,7 @@ import {
     ChatMap,
     CommunityMap,
     ObjectSet,
+    SafeMap,
     chatScopesEqual,
     videoCallsInProgressForChats,
 } from "openchat-shared";
@@ -28,7 +29,6 @@ import { derived } from "svelte/store";
 import { app } from "../state/app.svelte";
 import { serverWalletConfigStore } from "./crypto";
 import { immutableStore } from "./immutable";
-import { localGlobalUpdates } from "./localGlobalUpdates";
 import { messageActivityFeedReadUpToLocally, messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
 import { serverStreakInsuranceStore } from "./streakInsurance";
@@ -45,22 +45,6 @@ export type GlobalState = {
     referrals: Referral[];
     messageActivitySummary: MessageActivitySummary;
 };
-
-const installedServerDirectBots = immutableStore<Map<string, ExternalBotPermissions>>(new Map());
-export const installedDirectBots = derived(
-    [installedServerDirectBots, localGlobalUpdates],
-    ([$serverBots, $local]) => {
-        const clone = new Map<string, ExternalBotPermissions>($serverBots);
-        const localInstalled = [...($local.get("global")?.installedDirectBots?.entries() ?? [])];
-        const localDeleted = [...($local.get("global")?.removedDirectBots?.values() ?? [])];
-        localInstalled.forEach(([id, perm]) => {
-            clone.set(id, perm);
-        });
-        localDeleted.forEach((id) => clone.delete(id));
-        return clone;
-    },
-);
-export const directApiKeys = immutableStore<Map<string, PublicApiKeyDetails>>(new Map());
 
 export const chitStateStore = immutableStore<ChitState>({
     chitBalance: 0,
@@ -327,6 +311,8 @@ export function setGlobalState(
 
     app.serverCommunities = communitiesMap;
     app.serverPinnedChats = pinnedChats;
+    app.directChatApiKeys = apiKeys;
+    app.directChatBots = SafeMap.fromEntries(installedBots.entries());
 
     globalStateStore.set(state);
     chitStateStore.update((curr) => {
@@ -335,8 +321,6 @@ export function setGlobalState(
         return skipUpdate ? curr : chitState;
     });
     serverWalletConfigStore.set(walletConfig);
-    installedServerDirectBots.set(installedBots);
-    directApiKeys.set(apiKeys);
     if (streakInsurance !== undefined) {
         serverStreakInsuranceStore.set(streakInsurance);
     }

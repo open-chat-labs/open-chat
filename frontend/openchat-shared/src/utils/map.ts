@@ -175,6 +175,19 @@ export class SafeMap<K, V> {
     toMap(): MapLike<Primitive, V> {
         return this.#map;
     }
+
+    static fromEntries<K, V>(
+        entries: IterableIterator<[K, V]>,
+        serialiser?: (key: K) => Primitive,
+        deserialiser?: (primitive: Primitive) => K,
+        mapFactory?: MapFactory<Primitive>,
+    ): SafeMap<K, V> {
+        const map = new SafeMap<K, V>(serialiser, deserialiser, mapFactory);
+        for (const [k, v] of entries) {
+            map.set(k, v);
+        }
+        return map;
+    }
 }
 
 // This is a bit weird
