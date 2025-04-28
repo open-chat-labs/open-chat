@@ -141,6 +141,18 @@ fn post_message_to_webhook(
             );
             (domain, url)
         }
+        Chat::Channel(community_id, channel_id) => {
+            let domain = format!("{}.localhost", community_id);
+            let url = format!(
+                "http://{}:{}/channel/{}/webhook/{}/{}",
+                domain,
+                port,
+                channel_id.to_string(),
+                webhook_id.to_text(),
+                webhook_secret
+            );
+            (domain, url)
+        }
         _ => unreachable!(),
     };
 
@@ -155,6 +167,14 @@ fn post_message_to_webhook(
         .body(message)
         .send()
         .map_err(|e| e.to_string())?;
+
+    if response.status() != 200 {
+        return Err(format!(
+            "Failed to send message to webhook: {}: {:?}",
+            response.status(),
+            response.text()
+        ));
+    }
 
     response.json::<send_message_v2::Response>().map_err(|e| e.to_string())
 }

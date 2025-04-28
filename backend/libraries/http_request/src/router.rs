@@ -58,7 +58,7 @@ pub fn extract_route(path: &str) -> Route {
                     if sub_route == "avatar" {
                         return parse_avatar(&mut parts, Some(channel_id.into()));
                     } else if sub_route == "webhook" {
-                        if let Some(route) = parse_webhook(&mut parts, None) {
+                        if let Some(route) = parse_webhook(&mut parts, Some(channel_id.into())) {
                             return route;
                         }
                     }
