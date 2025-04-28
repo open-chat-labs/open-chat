@@ -711,7 +711,6 @@ export type LocalPollVote = {
 };
 
 export type LocalGlobalUpdates = {
-    walletConfig?: WalletConfig;
     streakInsurance?: StreakInsurance;
     lastUpdated: number;
 };

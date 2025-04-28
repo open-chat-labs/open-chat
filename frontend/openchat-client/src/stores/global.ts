@@ -27,7 +27,6 @@ import {
 } from "openchat-shared";
 import { derived } from "svelte/store";
 import { app } from "../state/app.svelte";
-import { serverWalletConfigStore } from "./crypto";
 import { immutableStore } from "./immutable";
 import { messageActivityFeedReadUpToLocally, messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
@@ -313,6 +312,7 @@ export function setGlobalState(
     app.serverPinnedChats = pinnedChats;
     app.directChatApiKeys = apiKeys;
     app.directChatBots = SafeMap.fromEntries(installedBots.entries());
+    app.serverWalletConfig = walletConfig;
 
     globalStateStore.set(state);
     chitStateStore.update((curr) => {
@@ -320,7 +320,6 @@ export function setGlobalState(
         const skipUpdate = chitState.streakEnds < curr.streakEnds;
         return skipUpdate ? curr : chitState;
     });
-    serverWalletConfigStore.set(walletConfig);
     if (streakInsurance !== undefined) {
         serverStreakInsuranceStore.set(streakInsurance);
     }

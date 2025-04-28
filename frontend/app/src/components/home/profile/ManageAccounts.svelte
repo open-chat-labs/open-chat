@@ -1,25 +1,25 @@
 <script lang="ts">
-    import Overlay from "../../Overlay.svelte";
-    import ModalContent from "../../ModalContent.svelte";
-    import { getContext, onMount } from "svelte";
     import {
+        cryptoTokensSorted as accountsSorted,
+        app,
+        cryptoLookup,
         DEFAULT_TOKENS,
         OpenChat,
         type CryptocurrencyDetails,
         type WalletConfig,
-        walletConfigStore as walletConfig,
-        cryptoTokensSorted as accountsSorted,
-        cryptoLookup,
     } from "openchat-client";
-    import Toggle from "../../Toggle.svelte";
-    import Search from "../../Search.svelte";
+    import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
-    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
+    import { toastStore } from "../../../stores/toast";
     import Input from "../../Input.svelte";
     import Legend from "../../Legend.svelte";
+    import ModalContent from "../../ModalContent.svelte";
     import MultiToggle, { type Option } from "../../MultiToggle.svelte";
-    import { toastStore } from "../../../stores/toast";
+    import Overlay from "../../Overlay.svelte";
+    import Search from "../../Search.svelte";
+    import Toggle from "../../Toggle.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -34,13 +34,13 @@
     let searchTerm = $state("");
     let searching = $state(false);
 
-    let config: WalletConfig = $state({ ...$walletConfig });
+    let config: WalletConfig = $state({ ...app.walletConfig });
 
     onMount(() => {
-        config = clone($walletConfig);
+        config = clone(app.walletConfig);
 
         return () => {
-            if (client.walletConfigChanged($walletConfig, config)) {
+            if (client.walletConfigChanged(app.walletConfig, config)) {
                 client.setWalletConfig(config).then((success) => {
                     if (!success) {
                         toastStore.showFailureToast(
@@ -98,14 +98,14 @@
         switch (kind) {
             case "auto_wallet":
                 config =
-                    $walletConfig.kind === "auto_wallet"
-                        ? $walletConfig
+                    app.walletConfig.kind === "auto_wallet"
+                        ? app.walletConfig
                         : { kind: "auto_wallet", minDollarValue: 0 };
                 break;
             case "manual_wallet":
                 config =
-                    $walletConfig.kind === "manual_wallet"
-                        ? $walletConfig
+                    app.walletConfig.kind === "manual_wallet"
+                        ? app.walletConfig
                         : { kind: "manual_wallet", tokens: defaultLedgers };
                 break;
         }

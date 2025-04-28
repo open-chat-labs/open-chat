@@ -1,20 +1,9 @@
-import {
-    GlobalMap,
-    type LocalGlobalUpdates,
-    type StreakInsurance,
-    type WalletConfig,
-} from "openchat-shared";
+import { GlobalMap, type LocalGlobalUpdates, type StreakInsurance } from "openchat-shared";
 import { LocalUpdatesStore } from "./localUpdatesStore";
 
 class LocalGlobalUpdatesStore extends LocalUpdatesStore<"global", LocalGlobalUpdates> {
     constructor() {
         super(new GlobalMap());
-    }
-
-    updateWallet(walletConfig: WalletConfig) {
-        this.applyUpdate("global", (_) => ({
-            walletConfig,
-        }));
     }
 
     updateStreakInsurance(streakInsurance: StreakInsurance) {

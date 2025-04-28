@@ -6766,7 +6766,7 @@ export class OpenChat {
     }
 
     async #refreshBalancesInSeries() {
-        const config = this.#liveState.walletConfig;
+        const config = app.walletConfig;
         for (const t of Object.values(get(cryptoLookup))) {
             if (config.kind === "auto_wallet" || config.tokens.has(t.ledger)) {
                 await this.refreshAccountBalance(t.ledger);
@@ -8644,7 +8644,7 @@ export class OpenChat {
     }
 
     removeTokenFromWallet(ledger: string) {
-        const config = this.#liveState.walletConfig;
+        const config = { ...app.walletConfig };
         if (config.kind === "manual_wallet") {
             if (config.tokens.delete(ledger)) {
                 return this.setWalletConfig(config);
@@ -8672,13 +8672,16 @@ export class OpenChat {
     }
 
     setWalletConfig(config: WalletConfig): Promise<boolean> {
-        localGlobalUpdates.updateWallet(config);
+        const undo = localUpdates.updateWalletConfig(config);
         return this.#sendRequest({
             kind: "configureWallet",
             config,
         })
             .then(() => true)
-            .catch(() => false);
+            .catch(() => {
+                undo();
+                return false;
+            });
     }
 
     withdrawFromIcpSwap(

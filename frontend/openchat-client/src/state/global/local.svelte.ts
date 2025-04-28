@@ -7,11 +7,12 @@ import {
     type Member,
     type UserGroupDetails,
     type VersionedRules,
+    type WalletConfig,
 } from "openchat-shared";
 import { chatDetailsLocalUpdates } from "../chat_details";
 import { communityLocalUpdates } from "../community_details";
 import { LocalCommunityMap, LocalMap, ReactiveCommunityMap } from "../map";
-import { type UndoLocalUpdate } from "../undo";
+import { scheduleUndo, type UndoLocalUpdate } from "../undo";
 
 // global local updates don't need the manager because they are not specific to a keyed entity (community, chat, message etc)
 export class GlobalLocalState {
@@ -19,6 +20,8 @@ export class GlobalLocalState {
     readonly communities = new LocalCommunityMap<CommunitySummary>();
     readonly previewCommunities = new ReactiveCommunityMap<CommunitySummary>();
     readonly directChatBots = new LocalMap<string, ExternalBotPermissions>();
+
+    #walletConfig = $state<WalletConfig | undefined>();
 
     isPreviewingCommunity(id: CommunityIdentifier) {
         return this.previewCommunities.has(id);
@@ -38,6 +41,18 @@ export class GlobalLocalState {
 
     addCommunity(val: CommunitySummary) {
         return this.communities.addOrUpdate(val.id, val);
+    }
+
+    get walletConfig() {
+        return this.#walletConfig;
+    }
+
+    updateWalletConfig(val: WalletConfig) {
+        const prev = this.#walletConfig;
+        this.#walletConfig = val;
+        return scheduleUndo(() => {
+            this.#walletConfig = prev;
+        });
     }
 
     updateRulesAccepted(id: CommunityIdentifier, accepted: boolean) {

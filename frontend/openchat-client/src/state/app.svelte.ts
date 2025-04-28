@@ -22,6 +22,7 @@ import {
     type VersionedRules,
     type VideoCallCounts,
     videoCallsInProgressForChats,
+    type WalletConfig,
 } from "openchat-shared";
 import { chatDetailsLocalUpdates, ChatDetailsMergedState } from "./chat_details";
 import { ChatDetailsServerState } from "./chat_details/server";
@@ -52,6 +53,13 @@ class AppState {
             });
         });
     }
+
+    #serverWalletConfig = $state<WalletConfig>({
+        kind: "auto_wallet",
+        minDollarValue: 0,
+    });
+
+    #walletConfig = $derived(localUpdates.walletConfig ?? this.#serverWalletConfig);
 
     #serverDirectChatBots = $state<SafeMap<string, ExternalBotPermissions>>(new SafeMap());
 
@@ -204,6 +212,14 @@ class AppState {
     #selectedChat = $state<ChatDetailsMergedState>(
         new ChatDetailsMergedState(ChatDetailsServerState.empty()),
     );
+
+    set serverWalletConfig(val: WalletConfig) {
+        this.#serverWalletConfig = val;
+    }
+
+    get walletConfig() {
+        return this.#walletConfig;
+    }
 
     get directChatBots() {
         return this.#directChatBots;

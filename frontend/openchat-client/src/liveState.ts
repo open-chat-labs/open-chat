@@ -18,7 +18,6 @@ import type {
     StreakInsurance,
     ThreadSyncDetails,
     UserLookup,
-    WalletConfig,
 } from "openchat-shared";
 import { locale } from "svelte-i18n";
 import { serverStreakInsuranceStore } from "./stores";
@@ -45,7 +44,6 @@ import {
     threadsFollowedByMeStore,
     uninitializedDirectChats,
 } from "./stores/chat";
-import { walletConfigStore } from "./stores/crypto";
 import { diamondStatus, isDiamond, isLifetimeDiamond } from "./stores/diamond";
 import { type DraftMessages, draftMessagesStore } from "./stores/draftMessages";
 import { type GlobalState, chitStateStore, globalStateStore } from "./stores/global";
@@ -98,7 +96,6 @@ export class LiveState {
     pinNumberRequired!: boolean;
     capturePinNumber!: PinNumberResolver | undefined;
     chitState!: ChitState;
-    walletConfig!: WalletConfig;
     serverStreakInsurance!: StreakInsurance;
 
     constructor() {
@@ -145,6 +142,5 @@ export class LiveState {
         locale.subscribe((data) => (this.locale = data ?? "en"));
         pinNumberRequiredStore.subscribe((data) => (this.pinNumberRequired = data));
         capturePinNumberStore.subscribe((data) => (this.capturePinNumber = data));
-        walletConfigStore.subscribe((data) => (this.walletConfig = data));
     }
 }
