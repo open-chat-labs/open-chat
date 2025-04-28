@@ -14,9 +14,16 @@ import type {
     PublicApiKeyDetails,
     Referral,
     StreakInsurance,
+    VideoCallCounts,
     WalletConfig,
 } from "openchat-shared";
-import { ChatMap, CommunityMap, ObjectSet, chatScopesEqual } from "openchat-shared";
+import {
+    ChatMap,
+    CommunityMap,
+    ObjectSet,
+    chatScopesEqual,
+    videoCallsInProgressForChats,
+} from "openchat-shared";
 import { derived } from "svelte/store";
 import { app } from "../state/app.svelte";
 import { serverWalletConfigStore } from "./crypto";
@@ -34,7 +41,6 @@ export type GlobalState = {
     directChats: ChatMap<DirectChatSummary>;
     groupChats: ChatMap<GroupChatSummary>;
     favourites: ObjectSet<ChatIdentifier>;
-    pinnedChats: PinnedByScope;
     achievements: Set<string>;
     referrals: Referral[];
     messageActivitySummary: MessageActivitySummary;
@@ -65,18 +71,10 @@ export const chitStateStore = immutableStore<ChitState>({
 });
 
 export const globalStateStore = immutableStore<GlobalState>({
-    // TODO - we need to extract this from here and have it as a standalone store that is synced with rune via an effect
     communities: new CommunityMap<CommunitySummary>(),
     directChats: new ChatMap<DirectChatSummary>(),
     groupChats: new ChatMap<GroupChatSummary>(),
     favourites: new ObjectSet<ChatIdentifier>(),
-    pinnedChats: new Map<ChatListScope["kind"], ChatIdentifier[]>([
-        ["group_chat", []],
-        ["direct_chat", []],
-        ["favourite", []],
-        ["community", []],
-        ["none", []],
-    ]),
     achievements: new Set(),
     referrals: [],
     messageActivitySummary: {
@@ -86,17 +84,12 @@ export const globalStateStore = immutableStore<GlobalState>({
     },
 });
 
-// TODO this should really be derived from the route shouldn't it?
+// This should always be referenced via app.chatListScope where possible - this store only exists for backward compatibility and will be removed
 export const chatListScopeStore = safeWritable<ChatListScope>({ kind: "none" }, chatScopesEqual);
 
 export type CombinedUnreadCounts = {
     threads: UnreadCounts;
     chats: UnreadCounts;
-};
-
-export type VideoCallCounts = {
-    muted: number;
-    unmuted: number;
 };
 
 export type UnreadCounts = {
@@ -142,23 +135,6 @@ function mergeUnreadCounts(
         unmuted: muted ? counts.unmuted : counts.unmuted + toAdd,
         muted: muted ? counts.muted + toAdd : counts.muted,
     };
-}
-
-function videoCallsInProgressForChats(chats: (ChatSummary | undefined)[]): VideoCallCounts {
-    return chats.reduce(
-        (counts, chat) => {
-            if (chat === undefined) return counts;
-            if (chat.videoCallInProgress) {
-                if (chat.membership.notificationsMuted) {
-                    counts.muted += 1;
-                } else {
-                    counts.unmuted += 1;
-                }
-            }
-            return counts;
-        },
-        { muted: 0, unmuted: 0 } as VideoCallCounts,
-    );
 }
 
 function combinedUnreadCountForChats(chats: (ChatSummary | undefined)[]): CombinedUnreadCounts {
@@ -334,7 +310,6 @@ export function setGlobalState(
         directChats: ChatMap.fromList(directChats),
         groupChats: ChatMap.fromList(groupChats),
         favourites: ObjectSet.fromList(favourites),
-        pinnedChats,
         achievements,
         referrals,
         messageActivitySummary,
@@ -350,8 +325,8 @@ export function setGlobalState(
         }
     });
 
-    console.log(communitiesMap);
     app.serverCommunities = communitiesMap;
+    app.serverPinnedChats = pinnedChats;
 
     globalStateStore.set(state);
     chitStateStore.update((curr) => {

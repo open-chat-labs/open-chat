@@ -237,6 +237,11 @@ export class UIState {
         }
     });
 
+    #showMiddle = $derived(this.#layout.showMiddle);
+    #showNav = $derived(this.#layout.showNav);
+    #showLeft = $derived(this.#layout.showLeft);
+    #rightPanel = $derived(this.#layout.rightPanel);
+
     #someHomeRoute(route: RouteParams["kind"]): boolean {
         return (
             route === "home_route" ||
@@ -259,19 +264,19 @@ export class UIState {
     }
 
     get showNav(): boolean {
-        return this.#layout.showNav;
+        return this.#showNav;
     }
 
     get showLeft(): boolean {
-        return this.#layout.showLeft;
+        return this.#showLeft;
     }
 
     get showMiddle(): boolean {
-        return this.#layout.showMiddle;
+        return this.#showMiddle;
     }
 
     get rightPanelMode(): RightPanelMode {
-        return this.#layout.rightPanel;
+        return this.#rightPanel;
     }
 
     get navOpen(): boolean {

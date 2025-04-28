@@ -10,6 +10,7 @@ import {
 } from "openchat-shared";
 import { vi } from "vitest";
 import { app } from "./app.svelte";
+import { chatDetailsLocalUpdates } from "./chat_details";
 import { communityLocalUpdates } from "./community_details/local.svelte";
 import { localUpdates } from "./global";
 import { pathState } from "./path.svelte";
@@ -264,6 +265,49 @@ describe("app state", () => {
             expect(app.communities.get(id)?.membership.displayName).toBeUndefined();
             localUpdates.updateCommunityDisplayName(id, "Mr. OpenChat");
             expect(app.communities.get(id)?.membership.displayName).toEqual("Mr. OpenChat");
+        });
+
+        describe("pinned chats", () => {
+            beforeEach(() => {
+                chatDetailsLocalUpdates.clearAll();
+                app.serverPinnedChats = new Map([
+                    [
+                        "direct_chat",
+                        [
+                            { kind: "direct_chat", userId: "123456" },
+                            { kind: "direct_chat", userId: "888888" },
+                        ],
+                    ],
+                    ["group_chat", [{ kind: "direct_chat", userId: "654321" }]],
+                ]);
+            });
+
+            test("add a pinned chat", () => {
+                const chatId: ChatIdentifier = { kind: "direct_chat", userId: "7777777" };
+                localUpdates.pinToScope(chatId, "favourite");
+                const favs = app.pinnedChats.get("favourite");
+                expect(favs).not.toBeUndefined();
+                expect(favs?.length).toEqual(1);
+                expect(favs?.[0]).toEqual(chatId);
+            });
+
+            test("added chat goes first", () => {
+                const chatId: ChatIdentifier = { kind: "direct_chat", userId: "7777777" };
+                localUpdates.pinToScope(chatId, "direct_chat");
+                const directs = app.pinnedChats.get("direct_chat");
+                expect(directs).not.toBeUndefined();
+                expect(directs?.length).toEqual(3);
+                expect(directs?.[0]).toEqual(chatId);
+            });
+
+            test("remove pinned chat", () => {
+                const chatId: ChatIdentifier = { kind: "direct_chat", userId: "123456" };
+                localUpdates.unpinFromScope(chatId, "direct_chat");
+                const directs = app.pinnedChats.get("direct_chat");
+                expect(directs).not.toBeUndefined();
+                expect(directs?.length).toEqual(1);
+                expect(directs?.[0]).toEqual({ kind: "direct_chat", userId: "888888" });
+            });
         });
     });
 });

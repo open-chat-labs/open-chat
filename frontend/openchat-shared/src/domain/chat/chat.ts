@@ -721,8 +721,6 @@ export type LocalGlobalUpdates = {
 export type LocalChatSummaryUpdates = {
     favourited?: boolean;
     unfavourited?: boolean;
-    pinned?: Set<ChatListScope["kind"]>;
-    unpinned?: Set<ChatListScope["kind"]>;
     added?: ChatSummary;
     installedBots?: Map<string, ExternalBotPermissions>;
     removedBots?: Set<string>;

@@ -3,7 +3,6 @@ import DRange from "drange";
 import type {
     ChatEvent,
     ChatIdentifier,
-    ChatListScope,
     ChatSpecificState,
     ChatSummary,
     DirectChatIdentifier,
@@ -37,6 +36,7 @@ import { blockedUsers } from "./blockedUsers";
 import { createChatSpecificObjectStore } from "./dataByChatFactory";
 import { createDerivedPropStore } from "./derived";
 import { draftMessagesStore } from "./draftMessages";
+import { createDummyStore } from "./dummyStore";
 import { ephemeralMessages } from "./ephemeralMessages";
 import { failedMessagesStore } from "./failedMessages";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
@@ -53,9 +53,6 @@ import { snsFunctions } from "./snsFunctions";
 import { translationStore } from "./translation";
 import { unconfirmed } from "./unconfirmed";
 import { currentUser, currentUserIdStore, suspendedUsers } from "./user";
-
-let currentScope: ChatListScope = { kind: "direct_chat" };
-chatListScopeStore.subscribe((s) => (currentScope = s));
 
 export const dummyCommunityPreviewStore = writable(0);
 
@@ -120,36 +117,6 @@ export const favouritesStore = derived(
             }
         }
         return mergedFavs;
-    },
-);
-
-export const pinnedChatsStore = derived(
-    [globalStateStore, localChatSummaryUpdates],
-    ([$global, $localUpdates]) => {
-        const mergedPinned = new Map($global.pinnedChats);
-
-        for (const [key, val] of $localUpdates.entries()) {
-            if (val.pinned !== undefined) {
-                val.pinned.forEach((scope) => {
-                    const ids = mergedPinned.get(scope) ?? [];
-                    if (!ids.find((id) => chatIdentifiersEqual(id, key))) {
-                        ids.unshift(key);
-                    }
-                    mergedPinned.set(scope, ids);
-                });
-            }
-            if (val.unpinned !== undefined) {
-                val.unpinned.forEach((scope) => {
-                    const ids = mergedPinned.get(scope) ?? [];
-                    mergedPinned.set(
-                        scope,
-                        ids.filter((id) => !chatIdentifiersEqual(id, key)),
-                    );
-                });
-            }
-        }
-
-        return mergedPinned;
     },
 );
 
@@ -239,7 +206,7 @@ export const allChats = derived(
             result.set(chatId, summary);
             return result;
         }, new ChatMap<ChatSummary>());
-        return mergeLocalSummaryUpdates(currentScope, reduced, $localSummaryUpdates);
+        return mergeLocalSummaryUpdates(app.chatListScope, reduced, $localSummaryUpdates);
     },
 );
 
@@ -267,7 +234,7 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         $messageFilters,
     ]) => {
         const mergedSummaries = mergeLocalSummaryUpdates(
-            currentScope,
+            app.chatListScope,
             summaries,
             localSummaryUpdates,
         );
@@ -292,22 +259,29 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
     },
 );
 
+// TODO - remove me when you can
+export const dummyPinnedChatsStore = createDummyStore();
+
 // This is annoying. If only the pinnedChatIndex was stored in the chatSummary...
-export const chatSummariesListStore = derived([chatSummariesStore], ([summaries]) => {
-    const pinnedChats = get(pinnedChatsStore);
-    const pinnedByScope = pinnedChats.get(currentScope.kind) ?? [];
-    const pinned = pinnedByScope.reduce<ChatSummary[]>((result, id) => {
-        const summary = summaries.get(id);
-        if (summary !== undefined) {
-            result.push(summary);
-        }
-        return result;
-    }, []);
-    const unpinned = [...summaries.values()]
-        .filter((chat) => pinnedByScope.findIndex((p) => chatIdentifiersEqual(p, chat.id)) === -1)
-        .sort(compareChats);
-    return pinned.concat(unpinned);
-});
+export const chatSummariesListStore = derived(
+    [chatSummariesStore, dummyPinnedChatsStore],
+    ([summaries, _]) => {
+        const pinnedByScope = app.pinnedChats.get(app.chatListScope.kind) ?? [];
+        const pinned = pinnedByScope.reduce<ChatSummary[]>((result, id) => {
+            const summary = summaries.get(id);
+            if (summary !== undefined) {
+                result.push(summary);
+            }
+            return result;
+        }, []);
+        const unpinned = [...summaries.values()]
+            .filter(
+                (chat) => pinnedByScope.findIndex((p) => chatIdentifiersEqual(p, chat.id)) === -1,
+            )
+            .sort(compareChats);
+        return pinned.concat(unpinned);
+    },
+);
 
 export const userMetrics = derived([allServerChats], ([$chats]) => {
     return [...$chats.values()]

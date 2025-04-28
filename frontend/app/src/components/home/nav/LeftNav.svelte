@@ -6,7 +6,6 @@
         anonUser,
         app,
         chitStateStore as chitState,
-        communityChannelVideoCallCounts,
         currentUser as createdUser,
         directVideoCallCounts,
         emptyCombinedUnreadCounts,
@@ -232,7 +231,7 @@
                     selected={community.id.communityId === selectedCommunityId &&
                         app.chatListScope.kind !== "favourite" &&
                         !communityExplorer}
-                    video={$communityChannelVideoCallCounts.get(community.id) ?? {
+                    video={app.communityChannelVideoCallCounts.get(community.id) ?? {
                         muted: 0,
                         unmuted: 0,
                     }}
