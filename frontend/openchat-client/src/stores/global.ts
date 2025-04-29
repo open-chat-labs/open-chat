@@ -30,7 +30,6 @@ import { app } from "../state/app.svelte";
 import { immutableStore } from "./immutable";
 import { messageActivityFeedReadUpToLocally, messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
-import { serverStreakInsuranceStore } from "./streakInsurance";
 
 export type PinnedByScope = Map<ChatListScope["kind"], ChatIdentifier[]>;
 
@@ -44,14 +43,6 @@ export type GlobalState = {
     referrals: Referral[];
     messageActivitySummary: MessageActivitySummary;
 };
-
-export const chitStateStore = immutableStore<ChitState>({
-    chitBalance: 0,
-    totalChitEarned: 0,
-    streak: 0,
-    streakEnds: 0n,
-    nextDailyChitClaim: 0n,
-});
 
 export const globalStateStore = immutableStore<GlobalState>({
     communities: new CommunityMap<CommunitySummary>(),
@@ -313,16 +304,17 @@ export function setGlobalState(
     app.directChatApiKeys = apiKeys;
     app.directChatBots = SafeMap.fromEntries(installedBots.entries());
     app.serverWalletConfig = walletConfig;
+    if (streakInsurance !== undefined) {
+        app.serverStreakInsurance = streakInsurance;
+    }
 
     globalStateStore.set(state);
-    chitStateStore.update((curr) => {
+
+    app.updateChitState((curr) => {
         // Skip the new update if it is behind what we already have locally
         const skipUpdate = chitState.streakEnds < curr.streakEnds;
         return skipUpdate ? curr : chitState;
     });
-    if (streakInsurance !== undefined) {
-        serverStreakInsuranceStore.set(streakInsurance);
-    }
 }
 
 function partitionChats(

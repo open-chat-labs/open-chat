@@ -23,7 +23,6 @@ export * from "./proposalTallies";
 export * from "./recentlySentMessages";
 export * from "./rules";
 export * from "./storage";
-export * from "./streakInsurance";
 export * from "./throttling";
 export * from "./translation";
 export * from "./typing";

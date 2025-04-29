@@ -1,23 +1,23 @@
 <script lang="ts">
-    import ShieldHalfFull from "svelte-material-icons/ShieldHalfFull.svelte";
-    import Equal from "svelte-material-icons/Equal.svelte";
-    import Minus from "svelte-material-icons/Minus.svelte";
-    import Overlay from "../../Overlay.svelte";
-    import ModalContent from "../../ModalContent.svelte";
+    import Button from "@src/components/Button.svelte";
+    import ButtonGroup from "@src/components/ButtonGroup.svelte";
+    import { toastStore } from "@src/stores/toast";
     import {
         LEDGER_CANISTER_CHAT,
         OpenChat,
+        app,
         cryptoBalance,
         cryptoLookup,
-        streakInsuranceStore,
     } from "openchat-client";
-    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
-    import Translatable from "../../Translatable.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
     import { getContext } from "svelte";
-    import ButtonGroup from "@src/components/ButtonGroup.svelte";
-    import Button from "@src/components/Button.svelte";
-    import { toastStore } from "@src/stores/toast";
+    import Equal from "svelte-material-icons/Equal.svelte";
+    import Minus from "svelte-material-icons/Minus.svelte";
+    import ShieldHalfFull from "svelte-material-icons/ShieldHalfFull.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
+    import ModalContent from "../../ModalContent.svelte";
+    import Overlay from "../../Overlay.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
 
     const client = getContext<OpenChat>("client");
     interface Props {
@@ -26,8 +26,8 @@
 
     const MAX_DAYS = 30;
     const ledger = LEDGER_CANISTER_CHAT;
-    const currentDaysInsured = $streakInsuranceStore.daysInsured;
-    const currentDaysMissed = $streakInsuranceStore.daysMissed;
+    const currentDaysInsured = app.streakInsurance.daysInsured;
+    const currentDaysMissed = app.streakInsurance.daysMissed;
     let { onClose }: Props = $props();
     let tokenDetails = $derived({
         symbol: $cryptoLookup[ledger],
@@ -37,16 +37,12 @@
     let confirming = $state(false);
     let confirmed = $state(false);
     let refreshingBalance = $state(false);
-    let priceE8s = $derived(
-        client.streakInsurancePrice(currentDaysInsured, additionalDays),
-    );
+    let priceE8s = $derived(client.streakInsurancePrice(currentDaysInsured, additionalDays));
     let price = $derived(priceE8s / 100_000_000n);
     let remainingBalance = $derived(tokenDetails.balance - priceE8s);
     let insufficientBalance = $derived(remainingBalance < 0);
     let paying = $state(false);
-    let remaining = $derived(
-        currentDaysInsured + additionalDays - currentDaysMissed,
-    );
+    let remaining = $derived(currentDaysInsured + additionalDays - currentDaysMissed);
     let totalDays = $derived(currentDaysInsured + additionalDays);
     let maxReached = $derived(totalDays >= MAX_DAYS);
 

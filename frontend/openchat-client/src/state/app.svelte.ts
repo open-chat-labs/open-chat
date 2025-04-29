@@ -5,6 +5,7 @@ import {
     chatIdentifiersEqual,
     type ChatListScope,
     chatListScopesEqual,
+    type ChitState,
     type CommunityIdentifier,
     communityIdentifiersEqual,
     CommunityMap,
@@ -17,6 +18,7 @@ import {
     messageContextsEqual,
     type PublicApiKeyDetails,
     SafeMap,
+    type StreakInsurance,
     type UserGroupDetails,
     type UserGroupSummary,
     type VersionedRules,
@@ -53,6 +55,21 @@ class AppState {
             });
         });
     }
+
+    #chitState = $state<ChitState>({
+        chitBalance: 0,
+        totalChitEarned: 0,
+        streak: 0,
+        streakEnds: 0n,
+        nextDailyChitClaim: 0n,
+    });
+
+    #serverStreakInsurance = $state<StreakInsurance>({
+        daysInsured: 0,
+        daysMissed: 0,
+    });
+
+    #streakInsurance = $derived(localUpdates.streakInsurance ?? this.#serverStreakInsurance);
 
     #serverWalletConfig = $state<WalletConfig>({
         kind: "auto_wallet",
@@ -212,6 +229,26 @@ class AppState {
     #selectedChat = $state<ChatDetailsMergedState>(
         new ChatDetailsMergedState(ChatDetailsServerState.empty()),
     );
+
+    get chitState() {
+        return this.#chitState;
+    }
+
+    updateChitState(fn: (s: ChitState) => ChitState) {
+        this.#chitState = fn(this.#chitState);
+    }
+
+    get streakInsurance() {
+        return this.#streakInsurance;
+    }
+
+    set serverStreakInsurance(val: StreakInsurance) {
+        this.#serverStreakInsurance = val;
+    }
+
+    get serverStreakInsurance() {
+        return this.#serverStreakInsurance;
+    }
 
     set serverWalletConfig(val: WalletConfig) {
         this.#serverWalletConfig = val;

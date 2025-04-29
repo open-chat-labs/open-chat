@@ -5,6 +5,7 @@ import {
     type CommunitySummary,
     type ExternalBotPermissions,
     type Member,
+    type StreakInsurance,
     type UserGroupDetails,
     type VersionedRules,
     type WalletConfig,
@@ -20,8 +21,8 @@ export class GlobalLocalState {
     readonly communities = new LocalCommunityMap<CommunitySummary>();
     readonly previewCommunities = new ReactiveCommunityMap<CommunitySummary>();
     readonly directChatBots = new LocalMap<string, ExternalBotPermissions>();
-
     #walletConfig = $state<WalletConfig | undefined>();
+    #streakInsurance = $state<StreakInsurance | undefined>();
 
     isPreviewingCommunity(id: CommunityIdentifier) {
         return this.previewCommunities.has(id);
@@ -52,6 +53,18 @@ export class GlobalLocalState {
         this.#walletConfig = val;
         return scheduleUndo(() => {
             this.#walletConfig = prev;
+        });
+    }
+
+    get streakInsurance() {
+        return this.#streakInsurance;
+    }
+
+    updateStreakInsurance(val: StreakInsurance) {
+        const prev = this.#streakInsurance;
+        this.#streakInsurance = val;
+        return scheduleUndo(() => {
+            this.#streakInsurance = prev;
         });
     }
 
