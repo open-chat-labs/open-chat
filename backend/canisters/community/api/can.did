@@ -123,6 +123,7 @@ type SelectedChannelInitialResponse = variant {
         pinned_messages : vec MessageIndex;
         chat_rules : VersionedRules;
         api_keys : vec PublicApiKeyDetails;
+        webhooks : vec WebhookDetails;
     };
     Error : OCError;
 };

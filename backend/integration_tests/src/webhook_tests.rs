@@ -11,6 +11,7 @@ use testing::rng::random_string;
 use types::{Chat, ChatEvent, ChatType, EventIndex, MessageContent, SenderContext, UserId};
 
 #[test_case(ChatType::Group)]
+#[test_case(ChatType::Channel)]
 fn e2e_webhook_test(chat_type: ChatType) {
     let mut wrapper = ENV.deref().create_new();
     let TestEnv {
@@ -51,6 +52,13 @@ fn e2e_webhook_test(chat_type: ChatType) {
             assert!(updates.is_some());
             updates.unwrap().webhooks
         }
+        Chat::Channel(community_id, channel_id) => {
+            client::community::happy_path::register_webhook(env, owner.principal, community_id, channel_id, name.clone(), None);
+            let updates =
+                client::community::happy_path::selected_channel_updates(env, owner.principal, community_id, channel_id, start);
+            assert!(updates.is_some());
+            updates.unwrap().webhooks
+        }
         _ => unreachable!(),
     };
 
@@ -61,15 +69,18 @@ fn e2e_webhook_test(chat_type: ChatType) {
     assert_eq!(webhook_details.name, name);
 
     // Get the webhook secret
-    let webhook = match chat {
+    let webhook_secret = match chat {
         Chat::Group(group_id) => client::group::happy_path::webhook(env, owner.principal, group_id, webhook_details.id),
+        Chat::Channel(community_id, channel_id) => {
+            client::community::happy_path::webhook(env, owner.principal, community_id, channel_id, webhook_details.id)
+        }
         _ => unreachable!(),
     };
 
     // Post a message to the webhook
     let message_text = random_string();
     let gateway_url = env.make_live(None);
-    let response = post_message_to_webhook(chat, webhook.id, webhook.secret.clone(), message_text.clone(), gateway_url);
+    let response = post_message_to_webhook(chat, webhook_details.id, webhook_secret, message_text.clone(), gateway_url);
     env.stop_live();
 
     let response = match response {
@@ -85,6 +96,9 @@ fn e2e_webhook_test(chat_type: ChatType) {
     let events_response = match chat {
         Chat::Group(group_id) => {
             client::group::happy_path::events(env, &owner, group_id, EventIndex::default(), true, 100, 100)
+        }
+        Chat::Channel(community_id, channel_id) => {
+            client::community::happy_path::events(env, &owner, community_id, channel_id, EventIndex::default(), true, 100, 100)
         }
         _ => unreachable!(),
     };
@@ -127,6 +141,18 @@ fn post_message_to_webhook(
             );
             (domain, url)
         }
+        Chat::Channel(community_id, channel_id) => {
+            let domain = format!("{}.localhost", community_id);
+            let url = format!(
+                "http://{}:{}/channel/{}/webhook/{}/{}",
+                domain,
+                port,
+                channel_id,
+                webhook_id.to_text(),
+                webhook_secret
+            );
+            (domain, url)
+        }
         _ => unreachable!(),
     };
 
@@ -141,6 +167,14 @@ fn post_message_to_webhook(
         .body(message)
         .send()
         .map_err(|e| e.to_string())?;
+
+    if response.status() != 200 {
+        return Err(format!(
+            "Failed to send message to webhook: {}: {:?}",
+            response.status(),
+            response.text()
+        ));
+    }
 
     response.json::<send_message_v2::Response>().map_err(|e| e.to_string())
 }

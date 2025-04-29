@@ -24,7 +24,7 @@ fn delete_webhook_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     let now = state.env.now();
 
-    if state.data.webhooks.remove(&args.id, now).is_none() {
+    if state.data.chat.webhooks.remove(&args.id, now).is_none() {
         return Err(OCErrorCode::WebhookNotFound.into());
     }
 

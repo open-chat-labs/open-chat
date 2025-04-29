@@ -359,6 +359,7 @@ impl RuntimeState {
 
     pub fn verified_caller(&self, ext_caller: Option<Caller>) -> Result<Caller, OCErrorCode> {
         match ext_caller {
+            Some(Caller::Webhook(user_id)) => return Ok(Caller::Webhook(user_id)),
             Some(Caller::BotV2(bot_caller)) => {
                 if let Some(initiator) = &bot_caller.initiator.user() {
                     // Check the user who initiated the command is a valid member
@@ -375,7 +376,6 @@ impl RuntimeState {
 
                 return Ok(Caller::BotV2(bot_caller));
             }
-            //Some(Caller::Webhook(user_id)) => return Ok(Caller::Webhook(user_id)),
             _ => {}
         }
 

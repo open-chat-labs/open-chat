@@ -57,6 +57,10 @@ pub fn extract_route(path: &str) -> Route {
                 if let Some(sub_route) = parts.pop_front() {
                     if sub_route == "avatar" {
                         return parse_avatar(&mut parts, Some(channel_id.into()));
+                    } else if sub_route == "webhook" {
+                        if let Some(route) = parse_webhook(&mut parts, Some(channel_id.into())) {
+                            return route;
+                        }
                     }
                 }
             }
@@ -75,14 +79,8 @@ pub fn extract_route(path: &str) -> Route {
             return Route::Traces(since);
         }
         "webhook" => {
-            if let Some(webhook_id) = parts.pop_front().and_then(|p| Principal::from_text(p).ok()).map(UserId::from) {
-                if let Some(secret) = parts.pop_front() {
-                    return Route::Webhook(WebhookRoute {
-                        channel_id: None,
-                        webhook_id,
-                        secret: secret.to_string(),
-                    });
-                }
+            if let Some(route) = parse_webhook(&mut parts, None) {
+                return route;
             }
         }
         _ => (),
@@ -108,6 +106,23 @@ fn parse_avatar(parts: &mut VecDeque<&str>, channel_id: Option<ChannelId>) -> Ro
     route.blob_id = next.and_then(|p| u128::from_str(p).ok());
 
     Route::Avatar(route)
+}
+
+fn parse_webhook(parts: &mut VecDeque<&str>, channel_id: Option<ChannelId>) -> Option<Route> {
+    let mut next = parts.pop_front();
+
+    if let Some(webhook_id) = next.and_then(|p| Principal::from_text(p).ok()).map(UserId::from) {
+        next = parts.pop_front();
+        if let Some(secret) = next {
+            return Some(Route::Webhook(WebhookRoute {
+                channel_id,
+                webhook_id,
+                secret: secret.to_string(),
+            }));
+        }
+    }
+
+    None
 }
 
 fn parse_query(query: &str) -> HashMap<String, String> {

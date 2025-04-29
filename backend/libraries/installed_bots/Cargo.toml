@@ -8,7 +8,6 @@ edition = "2021"
 [dependencies]
 candid = { workspace = true }
 constants = { path = "../constants" }
-hex = { workspace = true }
 rand = { workspace = true }
 serde = { workspace = true }
 serde_repr = { workspace = true }

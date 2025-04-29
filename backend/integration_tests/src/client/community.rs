@@ -16,6 +16,7 @@ generate_msgpack_query_call!(selected_initial);
 generate_msgpack_query_call!(selected_updates_v2);
 generate_msgpack_query_call!(summary);
 generate_msgpack_query_call!(summary_updates);
+generate_msgpack_query_call!(webhook);
 
 // Updates
 generate_msgpack_update_call!(accept_p2p_swap);
@@ -37,6 +38,7 @@ generate_msgpack_update_call!(generate_bot_api_key);
 generate_msgpack_update_call!(import_group);
 generate_msgpack_update_call!(leave_channel);
 generate_msgpack_update_call!(register_poll_vote);
+generate_msgpack_update_call!(register_webhook);
 generate_msgpack_update_call!(remove_member);
 generate_msgpack_update_call!(remove_member_from_channel);
 generate_msgpack_update_call!(remove_reaction);
@@ -740,5 +742,50 @@ pub mod happy_path {
             super::local_user_index(env, Principal::anonymous(), community_id.into(), &Empty {});
 
         local_user_index
+    }
+
+    pub fn register_webhook(
+        env: &mut PocketIc,
+        caller: Principal,
+        community_id: CommunityId,
+        channel_id: ChannelId,
+        name: String,
+        avatar: Option<String>,
+    ) {
+        let response = super::register_webhook(
+            env,
+            caller,
+            community_id.into(),
+            &community_canister::register_webhook::Args {
+                channel_id,
+                name,
+                avatar,
+            },
+        );
+
+        match response {
+            community_canister::register_webhook::Response::Success => (),
+            response => panic!("'register_webhook' error: {response:?}"),
+        }
+    }
+
+    pub fn webhook(
+        env: &mut PocketIc,
+        caller: Principal,
+        community_id: CommunityId,
+        channel_id: ChannelId,
+        id: UserId,
+    ) -> String {
+        let response = super::webhook(
+            env,
+            caller,
+            community_id.into(),
+            &community_canister::webhook::Args { channel_id, id },
+        );
+
+        match response {
+            community_canister::webhook::Response::Success(result) => result.secret,
+            response => panic!("'webhook' error: {response:?}"),
+        }
     }
 }

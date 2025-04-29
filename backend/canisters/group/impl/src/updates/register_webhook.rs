@@ -31,7 +31,7 @@ fn register_webhook_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     let now = state.env.now();
 
-    if !state.data.webhooks.register(args.name, avatar, state.env.rng(), now) {
+    if !state.data.chat.webhooks.register(args.name, avatar, state.env.rng(), now) {
         return Err(OCErrorCode::NameTaken.into());
     }
 
