@@ -37,7 +37,7 @@ import {
     videoCallsInProgressForChats,
     type WalletConfig,
 } from "openchat-shared";
-import { messagesRead, type PinnedByScope } from "../stores";
+import { type PinnedByScope } from "../stores";
 import { chatDetailsLocalUpdates, ChatDetailsMergedState } from "./chat_details";
 import { ChatDetailsServerState } from "./chat_details/server";
 import { communityLocalUpdates } from "./community_details";
@@ -46,6 +46,7 @@ import { CommunityServerState } from "./community_details/server";
 import { localUpdates } from "./global";
 import { pathState } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
+import { messagesRead } from "./unread/markRead.svelte";
 
 class AppState {
     constructor() {
@@ -147,7 +148,7 @@ class AppState {
         const chats = ChatMap.fromList(
             [...this.serverFavourites.values()]
                 .map((id) => this.#allServerChats.get(id))
-                .filter((chat) => chat !== undefined),
+                .filter((chat) => chat !== undefined) as ChatSummary[],
         );
         return messagesRead.combinedUnreadCountForChats(chats);
     });

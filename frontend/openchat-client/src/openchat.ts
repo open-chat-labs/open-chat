@@ -286,6 +286,7 @@ import { localUpdates } from "./state/global";
 import { pathState, type RouteParams } from "./state/path.svelte";
 import { ui } from "./state/ui.svelte";
 import type { UndoLocalUpdate } from "./state/undo";
+import { messagesRead, startMessagesReadTracker } from "./state/unread/markRead.svelte";
 import { blockedUsers } from "./stores/blockedUsers";
 import {
     addGroupPreview,
@@ -331,7 +332,6 @@ import { applyTranslationCorrection } from "./stores/i18n";
 import { lastOnlineDates } from "./stores/lastOnlineDates";
 import { localChatSummaryUpdates } from "./stores/localChatSummaryUpdates";
 import { localMessageUpdates } from "./stores/localMessageUpdates";
-import { messagesRead, startMessagesReadTracker } from "./stores/markRead.svelte";
 import { type MessageFilter, messageFiltersStore } from "./stores/messageFilters";
 import { minutesOnlineStore } from "./stores/minutesOnline";
 import {

@@ -16,11 +16,9 @@ import {
     type ThreadSyncDetails,
 } from "openchat-shared";
 import { type Unsubscriber } from "svelte/store";
-import type { OpenChat } from "../openchat";
-import { ReactiveChatMap } from "../state/map";
-import { ephemeralMessages } from "./ephemeralMessages";
-import { offlineStore } from "./network";
-import { unconfirmed } from "./unconfirmed";
+import type { OpenChat } from "../../openchat";
+import { ephemeralMessages, offlineStore, unconfirmed } from "../../stores";
+import { ReactiveChatMap } from "../map";
 
 const MARK_READ_INTERVAL = 10 * 1000;
 
@@ -95,7 +93,7 @@ export type MessageReadState = {
 export class MessageReadTracker {
     #timeout: number | undefined;
     #serverState: MessagesReadByChat = new ReactiveChatMap<MessagesRead>();
-    #localState: MessagesReadByChat = new ReactiveChatMap<MessagesRead>();
+    #state: MessagesReadByChat = new ReactiveChatMap<MessagesRead>();
 
     /**
      * The waiting structure is either keyed on chatId for normal chat messages or
@@ -106,7 +104,7 @@ export class MessageReadTracker {
     #messageReadState = $derived({
         serverState: this.#serverState,
         waiting: this.#waiting,
-        state: this.#localState,
+        state: this.#state,
     });
 
     #triggerLoop(api: OpenChat): void {
@@ -135,7 +133,7 @@ export class MessageReadTracker {
     }
 
     #sendToServer(api: OpenChat): void {
-        const req = this.#localState.reduce<MarkReadRequest>((req, [chatId, data]) => {
+        const req = this.#state.reduce<MarkReadRequest>((req, [chatId, data]) => {
             if (!data.empty()) {
                 req.push({
                     chatId,
@@ -160,10 +158,10 @@ export class MessageReadTracker {
     }
 
     #stateForId(chatId: ChatIdentifier): MessagesRead {
-        if (!this.#localState.has(chatId)) {
-            this.#localState.set(chatId, new MessagesRead());
+        if (!this.#state.has(chatId)) {
+            this.#state.set(chatId, new MessagesRead());
         }
-        return this.#localState.get(chatId)!;
+        return this.#state.get(chatId)!;
     }
 
     markMessageRead(
@@ -226,7 +224,7 @@ export class MessageReadTracker {
     }
 
     threadReadUpTo(chatId: ChatIdentifier, threadRootMessageIndex: number): number {
-        const local = this.#localState.get(chatId)?.threads[threadRootMessageIndex] ?? -1;
+        const local = this.#state.get(chatId)?.threads[threadRootMessageIndex] ?? -1;
         const server = this.#serverState.get(chatId)?.threads[threadRootMessageIndex] ?? -1;
         const unconfirmedReadCount =
             this.#waiting.get({ chatId, threadRootMessageIndex })?.size ?? 0;
@@ -259,7 +257,7 @@ export class MessageReadTracker {
         }
 
         const readUpToServer = this.#serverState.get(chatId)?.readUpTo;
-        const readUpToLocal = this.#localState.get(chatId)?.readUpTo;
+        const readUpToLocal = this.#state.get(chatId)?.readUpTo;
 
         const readUpToConfirmed = Math.max(readUpToServer ?? -1, readUpToLocal ?? -1);
         const readUnconfirmedCount = this.#waiting.get({ chatId })?.size ?? 0;
@@ -270,7 +268,7 @@ export class MessageReadTracker {
 
     unreadPinned(chatId: ChatIdentifier, dateLastPinned: bigint | undefined): boolean {
         const readServer = this.#serverState.get(chatId)?.dateReadPinned ?? BigInt(0);
-        const readLocal = this.#localState.get(chatId)?.dateReadPinned ?? BigInt(0);
+        const readLocal = this.#state.get(chatId)?.dateReadPinned ?? BigInt(0);
         const dateReadPinned = bigIntMax(readServer, readLocal);
         return (dateLastPinned ?? BigInt(0)) > dateReadPinned;
     }
@@ -283,7 +281,7 @@ export class MessageReadTracker {
             return undefined;
         }
         const readUpToServer = this.#serverState.get(chatId)?.readUpTo;
-        const readUpToLocal = this.#localState.get(chatId)?.readUpTo;
+        const readUpToLocal = this.#state.get(chatId)?.readUpTo;
 
         const readUpToConfirmed = Math.max(readUpToServer ?? -1, readUpToLocal ?? -1);
 
@@ -339,7 +337,7 @@ export class MessageReadTracker {
         serverState.markReadPinned(dateReadPinned);
         this.#serverState.set(chatId, serverState);
 
-        const state = this.#localState.get(chatId);
+        const state = this.#state.get(chatId);
         if (state) {
             if (
                 readUpTo !== undefined &&
@@ -377,14 +375,14 @@ export class MessageReadTracker {
             const serverState = this.#serverState.get(context.chatId);
             if ((serverState?.threads[context.threadRootMessageIndex] ?? -1) >= messageIndex)
                 return true;
-            const localState = this.#localState.get(context.chatId);
+            const localState = this.#state.get(context.chatId);
             if ((localState?.threads[context.threadRootMessageIndex] ?? -1) >= messageIndex)
                 return true;
         } else {
             const serverState = this.#serverState.get(context.chatId);
             if (serverState?.readUpTo !== undefined && serverState.readUpTo >= messageIndex)
                 return true;
-            const localState = this.#localState.get(context.chatId);
+            const localState = this.#state.get(context.chatId);
             if (localState?.readUpTo !== undefined && localState.readUpTo >= messageIndex)
                 return true;
         }

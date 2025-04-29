@@ -16,9 +16,9 @@ import {
 import { get } from "svelte/store";
 import { remoteVideoCallEndedEvent, remoteVideoCallStartedEvent } from "../events";
 import type { OpenChat } from "../openchat";
+import { messagesRead } from "../state/unread/markRead.svelte";
 import { selectedChatId } from "../stores";
 import { boolFromLS } from "../stores/localStorageSetting";
-import { messagesRead } from "../stores/markRead.svelte";
 import { userStore } from "../stores/user";
 import { runOnceIdle } from "./backgroundTasks";
 import { isProposalsChat } from "./chat";
