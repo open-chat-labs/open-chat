@@ -14,20 +14,6 @@ class LocalChatSummaryUpdatesStore extends LocalUpdatesStore<
         super(new ChatMap<LocalChatSummaryUpdates>());
     }
 
-    favourite(id: ChatIdentifier): void {
-        this.applyUpdate(id, (_) => ({
-            favourited: true,
-            unfavourited: undefined,
-        }));
-    }
-
-    unfavourite(id: ChatIdentifier): void {
-        this.applyUpdate(id, (_) => ({
-            favourited: undefined,
-            unfavourited: true,
-        }));
-    }
-
     markAdded(summary: ChatSummary): void {
         this.applyUpdate(summary.id, (_) => ({
             added: { ...summary, membership: { ...summary.membership, lapsed: false } },

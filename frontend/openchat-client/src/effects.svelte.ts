@@ -9,6 +9,11 @@ import {
     chatListScopeStore,
     dummyCommunityPreviewStore,
     dummyPinnedChatsStore,
+    dummyScopedServerChats,
+    dummyServerCommunities,
+    dummyServerDirectChats,
+    dummyServerFavourites,
+    dummyServerGroupChats,
     dummyWalletConfigStore,
 } from "./stores";
 
@@ -120,6 +125,31 @@ function syncState() {
     $effect(() => {
         void app.walletConfig;
         dummyWalletConfigStore.set(Symbol());
+    });
+
+    $effect(() => {
+        void app.serverCommunities;
+        dummyServerCommunities.set(Symbol());
+    });
+
+    $effect(() => {
+        void app.serverDirectChats;
+        dummyServerDirectChats.set(Symbol());
+    });
+
+    $effect(() => {
+        void app.serverGroupChats;
+        dummyServerGroupChats.set(Symbol());
+    });
+
+    $effect(() => {
+        void app.serverFavourites;
+        dummyServerFavourites.set(Symbol());
+    });
+
+    $effect(() => {
+        void app.scopedServerChats;
+        dummyScopedServerChats.set(Symbol());
     });
 }
 

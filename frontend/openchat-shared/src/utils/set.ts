@@ -57,14 +57,14 @@ export class SafeSet<V> {
 
     clone(): SafeSet<V> {
         const clone = this.#newSet();
-        for (const [val] of this) {
+        for (const val of this) {
             clone.add(val);
         }
         return clone;
     }
 
     forEach(callbackfn: (value: V, value2: V, set: ReadonlySet<V>) => void): void {
-        for (const [value] of this) {
+        for (const value of this) {
             callbackfn(value, value, this as unknown as ReadonlySet<V>);
         }
     }
@@ -109,8 +109,8 @@ export class SafeSet<V> {
         };
     }
 
-    [Symbol.iterator](): Iterator<[V, V]> {
-        return this.entries();
+    [Symbol.iterator](): IterableIterator<V> {
+        return this.values();
     }
 
     empty(): SafeSet<V> {

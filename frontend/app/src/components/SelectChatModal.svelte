@@ -8,14 +8,13 @@
         CommunitySummary,
         DiamondMembershipStatus,
         DirectChatSummary,
-        GlobalState,
         MultiUserChat,
         OpenChat,
     } from "openchat-client";
     import {
+        app,
         AvatarSize,
         chatIdentifiersEqual,
-        globalStateStore as globalState,
         selectedChatId,
         ui,
         userStore,
@@ -86,19 +85,9 @@
     });
 
     trackedEffect("select-chat-modal", () => {
-        if (initialGlobalState === undefined && $globalState !== undefined) {
-            initialGlobalState = $globalState;
-        }
-
-        if (initialGlobalState !== undefined) {
-            buildListOfTargets(initialGlobalState, $now, $selectedChatId, searchTermLower).then(
-                (t) => (targets = t),
-            );
-        }
+        buildListOfTargets($now, $selectedChatId, searchTermLower).then((t) => (targets = t));
     });
     let noTargets = $derived(getNumberOfTargets(targets) === 0);
-
-    let initialGlobalState: GlobalState | undefined = $state(undefined);
 
     function getNumberOfTargets(targets: ShareTo): number {
         return (
@@ -152,7 +141,6 @@
     }
 
     async function buildListOfTargets(
-        global: GlobalState,
         now: number,
         selectedChatId: ChatIdentifier | undefined,
         searchTerm: string,
@@ -163,21 +151,21 @@
             favourites: [],
             communities: [],
         };
-        const direct = [...global.directChats.values()].map((d) => ({
+        const direct = [...app.directChats.values()].map((d) => ({
             ...d,
             name: buildDisplayName($userStore, d.them.userId, false),
         }));
 
-        const group = [...global.groupChats.values()];
-        const channels = [...global.communities.values()].flatMap((c) => c.channels);
+        const group = [...app.groupChats.values()];
+        const channels = [...app.communities.values()].flatMap((c) => c.channels);
         const all = [...group, ...direct, ...channels];
-        const favs = all.filter((c) => global.favourites.has(c.id));
+        const favs = all.filter((c) => app.favourites.has(c.id));
         try {
             const directChats = await targetsFromChatList(now, direct, selectedChatId);
             const groupChats = await targetsFromChatList(now, group, selectedChatId);
             const favourites = await targetsFromChatList(now, favs, selectedChatId);
             const communities = await Promise.all(
-                [...global.communities.values()].map((c) =>
+                [...app.communities.values()].map((c) =>
                     normaliseCommunity(now, selectedChatId, c),
                 ),
             );

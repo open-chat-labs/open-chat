@@ -13,6 +13,7 @@ import {
 import { chatDetailsLocalUpdates } from "../chat_details";
 import { communityLocalUpdates } from "../community_details";
 import { LocalCommunityMap, LocalMap, ReactiveCommunityMap } from "../map";
+import { LocalSet } from "../set";
 import { scheduleUndo, type UndoLocalUpdate } from "../undo";
 
 // global local updates don't need the manager because they are not specific to a keyed entity (community, chat, message etc)
@@ -23,6 +24,10 @@ export class GlobalLocalState {
     readonly directChatBots = new LocalMap<string, ExternalBotPermissions>();
     #walletConfig = $state<WalletConfig | undefined>();
     #streakInsurance = $state<StreakInsurance | undefined>();
+    readonly favourites = new LocalSet<ChatIdentifier>(
+        (k) => JSON.stringify(k),
+        (k) => JSON.parse(String(k)),
+    );
 
     isPreviewingCommunity(id: CommunityIdentifier) {
         return this.previewCommunities.has(id);
@@ -118,6 +123,14 @@ export class GlobalLocalState {
 
     removeBotFromCommunity(id: CommunityIdentifier, botId: string): UndoLocalUpdate {
         return communityLocalUpdates.removeBot(id, botId);
+    }
+
+    favourite(id: ChatIdentifier): UndoLocalUpdate {
+        return this.favourites.add(id);
+    }
+
+    unfavourite(id: ChatIdentifier): UndoLocalUpdate {
+        return this.favourites.remove(id);
     }
 
     installBotInCommunity(

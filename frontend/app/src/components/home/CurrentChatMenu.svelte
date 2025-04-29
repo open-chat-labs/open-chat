@@ -4,7 +4,6 @@
         chatIdentifiersEqual,
         type ChatSummary,
         currentUser,
-        favouritesStore,
         type GroupChatSummary,
         isDiamond,
         isProposalGroup,
@@ -354,7 +353,7 @@
                         {/snippet}
                     </MenuItem>
                 {/if}
-                {#if !$favouritesStore.has(selectedChatSummary.id)}
+                {#if !app.favourites.has(selectedChatSummary.id)}
                     <MenuItem onclick={addToFavourites}>
                         {#snippet icon()}
                             <HeartPlus size={ui.iconSize} color={"var(--menu-warn)"} />

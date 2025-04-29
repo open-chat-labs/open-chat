@@ -4,7 +4,6 @@ import type {
     ChatEvent,
     ChatIdentifier,
     ChatMap,
-    ChatSet,
     ChatSummary,
     CreatedUser,
     DiamondMembershipStatus,
@@ -27,9 +26,7 @@ import {
     confirmedThreadEventIndexesLoadedStore,
     currentChatReplyingTo,
     eventsStore,
-    favouritesStore,
     groupPreviewsStore,
-    myServerChatSummariesStore,
     selectedChatId,
     selectedChatStore,
     selectedMessageContext,
@@ -64,7 +61,6 @@ export class LiveState {
     remainingStorage!: number;
     currentChatReplyingTo: EnhancedReplyContext | undefined;
     serverChatSummaries!: ChatMap<ChatSummary>;
-    myServerChatSummaries!: ChatMap<ChatSummary>;
     chatSummaries!: ChatMap<ChatSummary>;
     uninitializedDirectChats!: ChatMap<DirectChatSummary>;
     groupPreviews!: ChatMap<MultiUserChat>;
@@ -81,7 +77,6 @@ export class LiveState {
     isLifetimeDiamond!: boolean;
     confirmedThreadEventIndexesLoaded!: DRange;
     globalState!: GlobalState;
-    favourites!: ChatSet;
     allChats!: ChatMap<ChatSummary>;
     draftMessages!: DraftMessages;
     user!: CreatedUser;
@@ -107,7 +102,6 @@ export class LiveState {
         userCreatedStore.subscribe((data) => (this.userCreated = data));
         selectedAuthProviderStore.subscribe((data) => (this.selectedAuthProvider = data));
         serverChatSummariesStore.subscribe((data) => (this.serverChatSummaries = data));
-        myServerChatSummariesStore.subscribe((data) => (this.myServerChatSummaries = data));
         chatSummariesStore.subscribe((data) => (this.chatSummaries = data));
         uninitializedDirectChats.subscribe((data) => (this.uninitializedDirectChats = data));
         groupPreviewsStore.subscribe((data) => (this.groupPreviews = data));
@@ -129,7 +123,6 @@ export class LiveState {
         isDiamond.subscribe((data) => (this.isDiamond = data));
         isLifetimeDiamond.subscribe((data) => (this.isDiamond = data));
         globalStateStore.subscribe((data) => (this.globalState = data));
-        favouritesStore.subscribe((data) => (this.favourites = data));
         allChats.subscribe((data) => (this.allChats = data));
         draftMessagesStore.subscribe((data) => (this.draftMessages = data));
         locale.subscribe((data) => (this.locale = data ?? "en"));

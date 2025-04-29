@@ -40,7 +40,7 @@ import { createDummyStore } from "./dummyStore";
 import { ephemeralMessages } from "./ephemeralMessages";
 import { failedMessagesStore } from "./failedMessages";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
-import { allServerChats, chatListScopeStore, getAllServerChats, globalStateStore } from "./global";
+import { allServerChats } from "./global";
 import { immutableStore } from "./immutable";
 import { localChatSummaryUpdates } from "./localChatSummaryUpdates";
 import { localMessageUpdates } from "./localMessageUpdates";
@@ -104,46 +104,7 @@ export const currentChatBlockedOrSuspendedUsers = derived(
     },
 );
 
-export const favouritesStore = derived(
-    [globalStateStore, localChatSummaryUpdates],
-    ([$global, $localUpdates]) => {
-        const mergedFavs = $global.favourites.clone();
-        for (const [key, val] of $localUpdates.entries()) {
-            if (val.favourited && !val.unfavourited) {
-                mergedFavs.add(key);
-            }
-            if (!val.favourited && val.unfavourited) {
-                mergedFavs.delete(key);
-            }
-        }
-        return mergedFavs;
-    },
-);
-
-export const myServerChatSummariesStore = derived(
-    [globalStateStore, chatListScopeStore, favouritesStore],
-    ([$allState, $scope, $favourites]) => {
-        const allChats = getAllServerChats($allState);
-        if ($scope.kind === "community") {
-            const community = app.serverCommunities.get($scope.id);
-            return community ? ChatMap.fromList(community.channels) : new ChatMap<ChatSummary>();
-        } else if ($scope.kind === "group_chat") {
-            return $allState.groupChats;
-        } else if ($scope.kind === "direct_chat") {
-            return $allState.directChats;
-        } else if ($scope.kind === "favourite") {
-            return [...$favourites.values()].reduce((favs, chatId) => {
-                const chat = allChats.get(chatId);
-                if (chat !== undefined) {
-                    favs.set(chat.id, chat);
-                }
-                return favs;
-            }, new ChatMap<ChatSummary>());
-        } else {
-            return new ChatMap<ChatSummary>();
-        }
-    },
-);
+export const dummyScopedServerChats = createDummyStore();
 
 export const uninitializedDirectChats: Writable<ChatMap<DirectChatSummary>> = immutableStore(
     new ChatMap<DirectChatSummary>(),
@@ -158,13 +119,13 @@ type ChatEntry = [ChatIdentifier, ChatSummary];
 
 export const serverChatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
     [
-        myServerChatSummariesStore,
+        dummyScopedServerChats,
         uninitializedDirectChats,
         groupPreviewsStore,
         dummyCommunityPreviewStore,
     ],
-    ([summaries, directChats, previews, _]) => {
-        let all = [...summaries.entries()];
+    ([_, directChats, previews]) => {
+        let all = [...app.scopedServerChats.entries()];
         if (app.chatListScope.kind === "none" || app.chatListScope.kind === "direct_chat") {
             all = all.concat([...directChats.entries()]);
         }

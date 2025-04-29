@@ -3,7 +3,6 @@
     import {
         app,
         AvatarSize,
-        favouritesStore,
         flattenCommandPermissions,
         type OpenChat,
         publish,
@@ -135,7 +134,7 @@
                     {/snippet}
                     {#snippet menuItems()}
                         <Menu>
-                            {#if !$favouritesStore.has(chat.id)}
+                            {#if !app.favourites.has(chat.id)}
                                 <MenuItem onclick={addToFavourites}>
                                     {#snippet icon()}
                                         <HeartPlus size={ui.iconSize} color={"var(--menu-warn)"} />
