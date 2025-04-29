@@ -13,7 +13,7 @@ export * from "./state/undo";
 export type { FailedMessages } from "./stores/failedMessages";
 export { FilteredProposals } from "./stores/filteredProposals";
 export { emptyCombinedUnreadCounts, emptyUnreadCounts } from "./stores/global";
-export type { CombinedUnreadCounts, GlobalState, UnreadCounts } from "./stores/global";
+export type { CombinedUnreadCounts, UnreadCounts } from "./stores/global";
 export { immutableStore } from "./stores/immutable";
 export { createMapStore } from "./stores/mapStore";
 export type { MessageReadState } from "./stores/markRead";

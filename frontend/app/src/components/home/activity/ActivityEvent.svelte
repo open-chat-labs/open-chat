@@ -5,6 +5,7 @@
         AvatarSize,
         OpenChat,
         routeForMessageContext,
+        ui,
         currentUser as user,
         userStore,
         type MessageContext,
@@ -13,7 +14,6 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
-    import { activityFeedShowing } from "../../../stores/activity";
     import { buildDisplayName } from "../../../utils/user";
     import Avatar from "../../Avatar.svelte";
     import Link from "../../Link.svelte";
@@ -147,7 +147,7 @@
     }
 
     function goToEventContext() {
-        activityFeedShowing.set(false);
+        ui.activityFeedShowing = false;
         page(routeForMessageContext("none", event.messageContext, true));
     }
     let userId = $derived($user.userId);

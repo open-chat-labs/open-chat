@@ -1,6 +1,7 @@
 import { dequal } from "dequal";
 import {
     applyOptionUpdate,
+    type ChannelSummary,
     type ChatIdentifier,
     chatIdentifiersEqual,
     type ChatListScope,
@@ -19,10 +20,12 @@ import {
     type GroupChatSummary,
     type IdentityState,
     type Member,
+    type MessageActivitySummary,
     type MessageContext,
     messageContextsEqual,
     type PublicApiKeyDetails,
     type ReadonlyMap,
+    type Referral,
     SafeMap,
     type StreakInsurance,
     type UserGroupDetails,
@@ -32,6 +35,7 @@ import {
     videoCallsInProgressForChats,
     type WalletConfig,
 } from "openchat-shared";
+import type { PinnedByScope } from "../stores";
 import { chatDetailsLocalUpdates, ChatDetailsMergedState } from "./chat_details";
 import { ChatDetailsServerState } from "./chat_details/server";
 import { communityLocalUpdates } from "./community_details";
@@ -60,6 +64,30 @@ class AppState {
             });
         });
     }
+
+    #achievements = $state<Set<string>>(new Set());
+
+    #referrals = $state<Referral[]>([]);
+
+    #serverMessageActivitySummary = $state<MessageActivitySummary>({
+        readUpToTimestamp: 0n,
+        latestTimestamp: 0n,
+        unreadCount: 0,
+    });
+
+    #messageActivitySummary = $derived.by(() => {
+        if (
+            localUpdates.messageActivityFeedReadUpTo !== undefined &&
+            localUpdates.messageActivityFeedReadUpTo >=
+                this.#serverMessageActivitySummary.latestTimestamp
+        ) {
+            return {
+                ...this.#serverMessageActivitySummary,
+                unreadCount: 0,
+            };
+        }
+        return this.#serverMessageActivitySummary;
+    });
 
     #chitState = $state<ChitState>({
         chitBalance: 0,
@@ -293,6 +321,30 @@ class AppState {
     #selectedChat = $state<ChatDetailsMergedState>(
         new ChatDetailsMergedState(ChatDetailsServerState.empty()),
     );
+
+    set serverMessageActivitySummary(val: MessageActivitySummary) {
+        this.#serverMessageActivitySummary = val;
+    }
+
+    get achievements() {
+        return this.#achievements;
+    }
+
+    set achievements(val: Set<string>) {
+        this.#achievements = val;
+    }
+
+    get referrals() {
+        return this.#referrals;
+    }
+
+    set referrals(val: Referral[]) {
+        this.#referrals = val;
+    }
+
+    get messageActivitySummary() {
+        return this.#messageActivitySummary;
+    }
 
     get chitState() {
         return this.#chitState;
@@ -551,6 +603,93 @@ class AppState {
     getPreviewingCommunity(id: CommunityIdentifier) {
         return localUpdates.getPreviewingCommunity(id);
     }
+
+    setGlobalState(
+        communities: CommunitySummary[],
+        allChats: ChatSummary[],
+        favourites: ChatIdentifier[],
+        pinnedChats: PinnedByScope,
+        achievements: Set<string>,
+        chitState: ChitState,
+        referrals: Referral[],
+        walletConfig: WalletConfig,
+        messageActivitySummary: MessageActivitySummary,
+        installedBots: Map<string, ExternalBotPermissions>,
+        apiKeys: Map<string, PublicApiKeyDetails>,
+        streakInsurance: StreakInsurance | undefined,
+    ): void {
+        const [channelsMap, directChats, groupChats] = partitionChats(allChats);
+
+        const communitiesMap = CommunityMap.fromList(communities);
+        const directChatsMap = ChatMap.fromList(directChats);
+        const groupChatsMap = ChatMap.fromList(groupChats);
+        const favouritesSet = new ChatSet(favourites);
+        for (const [communityId, channels] of channelsMap) {
+            const community = communitiesMap.get(communityId);
+            if (community !== undefined) {
+                community.channels = channels;
+            }
+        }
+
+        // ideally we would get rid of the setters for all of these server runes because setting
+        // them individually is a mistake. But we also want to be able to set them from tests.
+        // I'll try to lock this down a bit more later.
+        this.#serverMessageActivitySummary = messageActivitySummary;
+        this.#achievements = achievements;
+        this.#referrals = referrals;
+        this.#serverDirectChats = directChatsMap;
+        this.#serverGroupChats = groupChatsMap;
+        this.#serverFavourites = favouritesSet;
+        this.#serverCommunities = communitiesMap;
+        this.#serverPinnedChats = pinnedChats;
+        this.#directChatApiKeys = apiKeys;
+        this.#directChatBots = SafeMap.fromEntries(installedBots.entries());
+        this.#serverWalletConfig = walletConfig;
+        if (streakInsurance !== undefined) {
+            this.#serverStreakInsurance = streakInsurance;
+        }
+        this.updateChitState((curr) => {
+            // Skip the new update if it is behind what we already have locally
+            const skipUpdate = chitState.streakEnds < curr.streakEnds;
+            return skipUpdate ? curr : chitState;
+        });
+    }
 }
 
 export const app = new AppState();
+
+function partitionChats(
+    allChats: ChatSummary[],
+): [CommunityMap<ChannelSummary[]>, DirectChatSummary[], GroupChatSummary[]] {
+    const [channels, direct, group] = allChats.reduce(
+        ([channels, direct, group], chat) => {
+            switch (chat.kind) {
+                case "channel":
+                    channels.push(chat);
+                    break;
+                case "direct_chat":
+                    direct.push(chat);
+                    break;
+                case "group_chat":
+                    group.push(chat);
+                    break;
+            }
+            return [channels, direct, group];
+        },
+        [[], [], []] as [ChannelSummary[], DirectChatSummary[], GroupChatSummary[]],
+    );
+    return [channelsByCommunityId(channels), direct, group];
+}
+
+function channelsByCommunityId(chats: ChannelSummary[]): CommunityMap<ChannelSummary[]> {
+    return chats.reduce((acc, chat) => {
+        const communityId: CommunityIdentifier = {
+            kind: "community",
+            communityId: chat.id.communityId,
+        };
+        const channels = acc.get(communityId) ?? [];
+        channels.push(chat);
+        acc.set(communityId, channels);
+        return acc;
+    }, new CommunityMap<ChannelSummary[]>());
+}

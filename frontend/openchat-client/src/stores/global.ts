@@ -1,31 +1,16 @@
 /* eslint-disable no-case-declarations */
 import {
     ChatMap,
-    ChatSet,
     CommunityMap,
-    SafeMap,
     chatScopesEqual,
-    type ChannelSummary,
     type ChatIdentifier,
     type ChatListScope,
     type ChatSummary,
-    type ChitState,
-    type CommunityIdentifier,
-    type CommunitySummary,
-    type DirectChatSummary,
-    type ExternalBotPermissions,
-    type GroupChatSummary,
-    type MessageActivitySummary,
-    type PublicApiKeyDetails,
-    type Referral,
-    type StreakInsurance,
-    type WalletConfig,
 } from "openchat-shared";
 import { derived } from "svelte/store";
 import { app } from "../state/app.svelte";
 import { createDummyStore } from "./dummyStore";
-import { immutableStore } from "./immutable";
-import { messageActivityFeedReadUpToLocally, messagesRead } from "./markRead";
+import { messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
 
 // These dummy stores only exist to help us keep things in sync while we migrate stuff
@@ -35,23 +20,6 @@ export const dummyServerGroupChats = createDummyStore();
 export const dummyServerFavourites = createDummyStore();
 
 export type PinnedByScope = Map<ChatListScope["kind"], ChatIdentifier[]>;
-
-// This will contain all state.
-export type GlobalState = {
-    achievements: Set<string>;
-    referrals: Referral[];
-    messageActivitySummary: MessageActivitySummary;
-};
-
-export const globalStateStore = immutableStore<GlobalState>({
-    achievements: new Set(),
-    referrals: [],
-    messageActivitySummary: {
-        readUpToTimestamp: 0n,
-        latestTimestamp: 0n,
-        unreadCount: 0,
-    },
-});
 
 // This should always be referenced via app.chatListScope where possible - this store only exists for backward compatibility and will be removed
 export const chatListScopeStore = safeWritable<ChatListScope>({ kind: "none" }, chatScopesEqual);
@@ -182,19 +150,6 @@ export const unreadDirectCounts = derived(
     },
 );
 
-export const unreadActivityCount = derived(
-    [globalStateStore, messageActivityFeedReadUpToLocally],
-    ([$global, readUpToLocally]) => {
-        if (
-            readUpToLocally !== undefined &&
-            readUpToLocally >= $global.messageActivitySummary.latestTimestamp
-        ) {
-            return 0;
-        }
-        return $global.messageActivitySummary.unreadCount;
-    },
-);
-
 export function getAllServerChats(): ChatMap<ChatSummary> {
     const groupChats = app.serverGroupChats.values();
     const directChats = app.serverDirectChats.values();
@@ -241,98 +196,3 @@ export const globalUnreadCount = derived(
         ]);
     },
 );
-
-export function setGlobalState(
-    communities: CommunitySummary[],
-    allChats: ChatSummary[],
-    favourites: ChatIdentifier[],
-    pinnedChats: PinnedByScope,
-    achievements: Set<string>,
-    chitState: ChitState,
-    referrals: Referral[],
-    walletConfig: WalletConfig,
-    messageActivitySummary: MessageActivitySummary,
-    installedBots: Map<string, ExternalBotPermissions>,
-    apiKeys: Map<string, PublicApiKeyDetails>,
-    streakInsurance: StreakInsurance | undefined,
-): void {
-    const [channels, directChats, groupChats] = partitionChats(allChats);
-
-    const communitiesMap = CommunityMap.fromList(communities);
-    const directChatsMap = ChatMap.fromList(directChats);
-    const groupChatsMap = ChatMap.fromList(groupChats);
-    const favouritesSet = new ChatSet(favourites);
-    const state = {
-        achievements,
-        referrals,
-        messageActivitySummary,
-    };
-    Object.entries(channels).forEach(([communityId, channels]) => {
-        const id: CommunityIdentifier = { kind: "community", communityId };
-        const community = communitiesMap.get(id);
-        if (community !== undefined) {
-            communitiesMap.set(id, {
-                ...community,
-                channels,
-            });
-        }
-    });
-
-    app.serverDirectChats = directChatsMap;
-    app.serverGroupChats = groupChatsMap;
-    app.serverFavourites = favouritesSet;
-    app.serverCommunities = communitiesMap;
-    app.serverPinnedChats = pinnedChats;
-    app.directChatApiKeys = apiKeys;
-    app.directChatBots = SafeMap.fromEntries(installedBots.entries());
-    app.serverWalletConfig = walletConfig;
-    if (streakInsurance !== undefined) {
-        app.serverStreakInsurance = streakInsurance;
-    }
-
-    globalStateStore.set(state);
-
-    app.updateChitState((curr) => {
-        // Skip the new update if it is behind what we already have locally
-        const skipUpdate = chitState.streakEnds < curr.streakEnds;
-        return skipUpdate ? curr : chitState;
-    });
-}
-
-function partitionChats(
-    allChats: ChatSummary[],
-): [Record<string, ChannelSummary[]>, DirectChatSummary[], GroupChatSummary[]] {
-    const [channels, direct, group] = allChats.reduce(
-        ([channels, direct, group], chat) => {
-            switch (chat.kind) {
-                case "channel":
-                    channels.push(chat);
-                    break;
-                case "direct_chat":
-                    direct.push(chat);
-                    break;
-                case "group_chat":
-                    group.push(chat);
-                    break;
-            }
-            return [channels, direct, group];
-        },
-        [[], [], []] as [ChannelSummary[], DirectChatSummary[], GroupChatSummary[]],
-    );
-    return [channelsByCommunityId(channels), direct, group];
-}
-
-function channelsByCommunityId(chats: ChannelSummary[]): Record<string, ChannelSummary[]> {
-    return chats.reduce(
-        (acc, chat) => {
-            const communityId = chat.id.communityId;
-            const channels = acc[communityId] ?? [];
-            channels.push(chat);
-            return {
-                ...acc,
-                [communityId]: channels,
-            };
-        },
-        {} as Record<string, ChannelSummary[]>,
-    );
-}

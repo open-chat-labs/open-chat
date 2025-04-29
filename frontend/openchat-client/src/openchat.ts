@@ -326,16 +326,12 @@ import {
     toggleProposalFilterMessageExpansion,
 } from "./stores/filteredProposals";
 import { hasFlag } from "./stores/flagStore";
-import { chatListScopeStore, mergeCombinedUnreadCounts, setGlobalState } from "./stores/global";
+import { mergeCombinedUnreadCounts } from "./stores/global";
 import { applyTranslationCorrection } from "./stores/i18n";
 import { lastOnlineDates } from "./stores/lastOnlineDates";
 import { localChatSummaryUpdates } from "./stores/localChatSummaryUpdates";
 import { localMessageUpdates } from "./stores/localMessageUpdates";
-import {
-    messageActivityFeedReadUpToLocally,
-    messagesRead,
-    startMessagesReadTracker,
-} from "./stores/markRead";
+import { messagesRead, startMessagesReadTracker } from "./stores/markRead";
 import { type MessageFilter, messageFiltersStore } from "./stores/messageFilters";
 import { minutesOnlineStore } from "./stores/minutesOnline";
 import {
@@ -482,7 +478,7 @@ import { Poller } from "./utils/poller";
 import { showTrace } from "./utils/profiling";
 import { indexIsInRanges } from "./utils/range";
 import { RecentlyActiveUsersTracker } from "./utils/recentlyActiveUsersTracker";
-import { pageRedirect, pageReplace } from "./utils/routes";
+import { pageRedirect, pageReplace, routeForScope } from "./utils/routes";
 import {
     createRemoteVideoStartedEvent,
     filterWebRtcMessage,
@@ -1439,11 +1435,11 @@ export class OpenChat {
     }
 
     markActivityFeedRead(readUpTo: bigint) {
-        messageActivityFeedReadUpToLocally.set(readUpTo);
+        const undo = localUpdates.setMessageActivityFeedReadUpTo(readUpTo);
         return this.#sendRequest({
             kind: "markActivityFeedRead",
             readUpTo,
-        });
+        }).catch(undo);
     }
 
     subscribeToMessageActivityFeed(
@@ -1451,7 +1447,7 @@ export class OpenChat {
     ) {
         this.#sendStreamRequest({
             kind: "messageActivityFeed",
-            since: this.#liveState.globalState.messageActivitySummary.readUpToTimestamp,
+            since: app.messageActivitySummary.readUpToTimestamp,
         }).subscribe({
             onResult: (response, final) => {
                 const userIds = new Set<string>();
@@ -1618,9 +1614,7 @@ export class OpenChat {
         id: CommunityIdentifier,
         displayName: string | undefined,
     ): Promise<SetMemberDisplayNameResponse> {
-        const newAchievement = !this.#liveState.globalState.achievements.has(
-            "set_community_display_name",
-        );
+        const newAchievement = !app.achievements.has("set_community_display_name");
 
         const undo = localUpdates.updateCommunityDisplayName(id, displayName);
 
@@ -1653,7 +1647,7 @@ export class OpenChat {
             followedByMe: follow,
         });
 
-        const newAchievement = !this.#liveState.globalState.achievements.has("followed_thread");
+        const newAchievement = !app.achievements.has("followed_thread");
 
         return this.#sendRequest({
             kind: "followThread",
@@ -2122,7 +2116,7 @@ export class OpenChat {
             userId,
         });
 
-        const newAchievement = !this.#liveState.globalState.achievements.has("voted_on_poll");
+        const newAchievement = !app.achievements.has("voted_on_poll");
 
         return this.#sendRequest({
             kind: "registerPollVote",
@@ -2174,7 +2168,7 @@ export class OpenChat {
             localMessageUpdates.markUndeleted(messageId);
         }
 
-        const newAchievement = !this.#liveState.globalState.achievements.has("deleted_message");
+        const newAchievement = !app.achievements.has("deleted_message");
 
         return this.#sendRequest({
             kind: "deleteMessage",
@@ -2308,7 +2302,7 @@ export class OpenChat {
 
         publish("reactionSelected", { messageId, kind });
 
-        const newAchievement = !this.#liveState.globalState.achievements.has("reacted_to_message");
+        const newAchievement = !app.achievements.has("reacted_to_message");
 
         const result = (
             kind == "add"
@@ -3980,7 +3974,7 @@ export class OpenChat {
         }
 
         for (const a of achievements.values()) {
-            if (!this.#liveState.globalState.achievements.has(a as Achievement)) {
+            if (!app.achievements.has(a as Achievement)) {
                 return true;
             }
         }
@@ -4280,7 +4274,7 @@ export class OpenChat {
                 localMessageUpdates.setBlockLevelMarkdown(msg.messageId, updatedBlockLevelMarkdown);
             }
 
-            const newAchievement = !this.#liveState.globalState.achievements.has("edited_message");
+            const newAchievement = !app.achievements.has("edited_message");
 
             return this.#sendRequest({
                 kind: "editMessage",
@@ -6032,7 +6026,7 @@ export class OpenChat {
                 }
             }
 
-            setGlobalState(
+            app.setGlobalState(
                 chatsResponse.state.communities,
                 chats,
                 chatsResponse.state.favouriteChats,
@@ -6294,7 +6288,7 @@ export class OpenChat {
             reservedBy: this.#liveState.user.userId,
         });
 
-        const newAchievement = !this.#liveState.globalState.achievements.has("accepted_swap_offer");
+        const newAchievement = !app.achievements.has("accepted_swap_offer");
 
         return this.#sendRequest({
             kind: "acceptP2PSwap",
@@ -6357,7 +6351,7 @@ export class OpenChat {
     }
 
     joinVideoCall(chatId: ChatIdentifier, messageId: bigint): Promise<JoinVideoCallResponse> {
-        const newAchievement = !this.#liveState.globalState.achievements.has("joined_call");
+        const newAchievement = !app.achievements.has("joined_call");
 
         return this.#sendRequest({
             kind: "joinVideoCall",
@@ -6372,7 +6366,7 @@ export class OpenChat {
         messageId: bigint,
         presence: VideoCallPresence,
     ): Promise<boolean> {
-        const newAchievement = !this.#liveState.globalState.achievements.has("joined_call");
+        const newAchievement = !app.achievements.has("joined_call");
 
         return this.#sendRequest({
             kind: "setVideoCallPresence",
@@ -7825,7 +7819,8 @@ export class OpenChat {
 
     removeFromFavourites(chatId: ChatIdentifier): Promise<boolean> {
         const undo = localUpdates.unfavourite(chatId);
-        if (this.#liveState.chatSummariesList.length === 0) {
+        // TODO this should be scopedChats not scopedServerChats but it's close enough for now
+        if (app.scopedServerChats.size === 0) {
             publish("selectedChatInvalid");
         }
 
@@ -7970,10 +7965,8 @@ export class OpenChat {
 
     setChatListScopeAndRedirect(route: RouteParams): boolean {
         if (route.kind === "home_route") {
-            chatListScopeStore.set(this.getDefaultScope());
-            return this.selectFirstChat();
-        } else {
-            chatListScopeStore.set(route.scope);
+            page(routeForScope(this.getDefaultScope()));
+            return true;
         }
         return false;
     }

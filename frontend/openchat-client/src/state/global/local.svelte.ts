@@ -24,6 +24,7 @@ export class GlobalLocalState {
     readonly directChatBots = new LocalMap<string, ExternalBotPermissions>();
     #walletConfig = $state<WalletConfig | undefined>();
     #streakInsurance = $state<StreakInsurance | undefined>();
+    #messageActivityFeedReadUpTo = $state<bigint | undefined>();
     readonly favourites = new LocalSet<ChatIdentifier>(
         (k) => JSON.stringify(k),
         (k) => JSON.parse(String(k)),
@@ -47,6 +48,18 @@ export class GlobalLocalState {
 
     addCommunity(val: CommunitySummary) {
         return this.communities.addOrUpdate(val.id, val);
+    }
+
+    get messageActivityFeedReadUpTo() {
+        return this.#messageActivityFeedReadUpTo;
+    }
+
+    setMessageActivityFeedReadUpTo(val: bigint) {
+        const prev = this.#messageActivityFeedReadUpTo;
+        this.#messageActivityFeedReadUpTo = val;
+        return scheduleUndo(() => {
+            this.#messageActivityFeedReadUpTo = prev;
+        });
     }
 
     get walletConfig() {
