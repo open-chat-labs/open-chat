@@ -117,7 +117,7 @@
         ids: ReadonlySet<string>,
         includeMe = false,
     ): UserSummary[] {
-        return Array.from(ids).reduce((matching, id) => {
+        return Array.from<string>(ids).reduce((matching, id) => {
             const user = users.get(id);
             if (user && matchesSearch(term, user) && (user.userId !== userId || includeMe)) {
                 matching.push(user);

@@ -139,6 +139,8 @@ import type {
     ProposalVoteDetails,
     ProposeResponse,
     PublicProfile,
+    ReadonlyMap,
+    ReadonlySet,
     RegisterProposalVoteResponse,
     RegisterUserResponse,
     RejectReason,
@@ -280,9 +282,7 @@ import { app } from "./state/app.svelte";
 import { botState } from "./state/bots.svelte";
 import { type CommunityMergedState } from "./state/community_details";
 import { localUpdates } from "./state/global";
-import type { ReadonlyMap } from "./state/map";
 import { pathState, type RouteParams } from "./state/path.svelte";
-import type { ReadonlySet } from "./state/set";
 import { ui } from "./state/ui.svelte";
 import type { UndoLocalUpdate } from "./state/undo";
 import { blockedUsers } from "./stores/blockedUsers";

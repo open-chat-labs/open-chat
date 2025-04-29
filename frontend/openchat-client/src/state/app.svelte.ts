@@ -17,6 +17,7 @@ import {
     type MessageContext,
     messageContextsEqual,
     type PublicApiKeyDetails,
+    type ReadonlyMap,
     SafeMap,
     type StreakInsurance,
     type UserGroupDetails,
@@ -32,7 +33,6 @@ import { communityLocalUpdates } from "./community_details";
 import { CommunityMergedState } from "./community_details/merged.svelte";
 import { CommunityServerState } from "./community_details/server";
 import { localUpdates } from "./global";
-import { type ReadonlyMap } from "./map";
 import { pathState } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
 
@@ -89,6 +89,12 @@ class AppState {
     #directChatApiKeys = $derived.by(() => {
         return this.#serverDirectChatApiKeys;
     });
+
+    // #serverDirectChats = $state<ChatMap<DirectChatSummary>>(new ChatMap());
+
+    // #serverGroupChats = $state<ChatMap<GroupChatSummary>>(new ChatMap());
+
+    // #serverFavourites = $state<ChatSet<ChatIdentifier>>(new ChatSet());
 
     #serverCommunities = $state<CommunityMap<CommunitySummary>>(new CommunityMap());
 

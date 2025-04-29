@@ -1,29 +1,27 @@
 /* eslint-disable no-case-declarations */
-import type {
-    ChannelSummary,
-    ChatIdentifier,
-    ChatListScope,
-    ChatSummary,
-    ChitState,
-    CommunityIdentifier,
-    CommunitySummary,
-    DirectChatSummary,
-    ExternalBotPermissions,
-    GroupChatSummary,
-    MessageActivitySummary,
-    PublicApiKeyDetails,
-    Referral,
-    StreakInsurance,
-    VideoCallCounts,
-    WalletConfig,
-} from "openchat-shared";
 import {
     ChatMap,
+    ChatSet,
     CommunityMap,
-    ObjectSet,
     SafeMap,
     chatScopesEqual,
     videoCallsInProgressForChats,
+    type ChannelSummary,
+    type ChatIdentifier,
+    type ChatListScope,
+    type ChatSummary,
+    type ChitState,
+    type CommunityIdentifier,
+    type CommunitySummary,
+    type DirectChatSummary,
+    type ExternalBotPermissions,
+    type GroupChatSummary,
+    type MessageActivitySummary,
+    type PublicApiKeyDetails,
+    type Referral,
+    type StreakInsurance,
+    type VideoCallCounts,
+    type WalletConfig,
 } from "openchat-shared";
 import { derived } from "svelte/store";
 import { app } from "../state/app.svelte";
@@ -38,7 +36,7 @@ export type GlobalState = {
     communities: CommunityMap<CommunitySummary>;
     directChats: ChatMap<DirectChatSummary>;
     groupChats: ChatMap<GroupChatSummary>;
-    favourites: ObjectSet<ChatIdentifier>;
+    favourites: ChatSet;
     achievements: Set<string>;
     referrals: Referral[];
     messageActivitySummary: MessageActivitySummary;
@@ -48,7 +46,7 @@ export const globalStateStore = immutableStore<GlobalState>({
     communities: new CommunityMap<CommunitySummary>(),
     directChats: new ChatMap<DirectChatSummary>(),
     groupChats: new ChatMap<GroupChatSummary>(),
-    favourites: new ObjectSet<ChatIdentifier>(),
+    favourites: new ChatSet(),
     achievements: new Set(),
     referrals: [],
     messageActivitySummary: {
@@ -223,14 +221,14 @@ export const unreadFavouriteCounts = derived(
     [globalStateStore, messagesRead],
     ([$global, _$messagesRead]) => {
         const allChats = getAllServerChats($global);
-        const chats = $global.favourites.values().map((id) => allChats.get(id));
+        const chats = [...$global.favourites.values()].map((id) => allChats.get(id));
         return combinedUnreadCountForChats(chats);
     },
 );
 
 export const favouritesVideoCallCounts = derived([globalStateStore], ([$global]) => {
     const allChats = getAllServerChats($global);
-    const chats = $global.favourites.values().map((id) => allChats.get(id));
+    const chats = [...$global.favourites.values()].map((id) => allChats.get(id));
     return videoCallsInProgressForChats(chats);
 });
 
@@ -283,7 +281,7 @@ export function setGlobalState(
         communities: communitiesMap,
         directChats: ChatMap.fromList(directChats),
         groupChats: ChatMap.fromList(groupChats),
-        favourites: ObjectSet.fromList(favourites),
+        favourites: new ChatSet(favourites),
         achievements,
         referrals,
         messageActivitySummary,

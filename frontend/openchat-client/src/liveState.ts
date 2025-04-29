@@ -4,6 +4,7 @@ import type {
     ChatEvent,
     ChatIdentifier,
     ChatMap,
+    ChatSet,
     ChatSummary,
     CreatedUser,
     DiamondMembershipStatus,
@@ -12,7 +13,6 @@ import type {
     EventWrapper,
     MessageContext,
     MultiUserChat,
-    ObjectSet,
     PinNumberResolver,
     ThreadSyncDetails,
     UserLookup,
@@ -81,7 +81,7 @@ export class LiveState {
     isLifetimeDiamond!: boolean;
     confirmedThreadEventIndexesLoaded!: DRange;
     globalState!: GlobalState;
-    favourites!: ObjectSet<ChatIdentifier>;
+    favourites!: ChatSet;
     allChats!: ChatMap<ChatSummary>;
     draftMessages!: DraftMessages;
     user!: CreatedUser;

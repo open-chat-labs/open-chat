@@ -125,14 +125,14 @@ export const myServerChatSummariesStore = derived(
     ([$allState, $scope, $favourites]) => {
         const allChats = getAllServerChats($allState);
         if ($scope.kind === "community") {
-            const community = $allState.communities.get($scope.id);
+            const community = app.serverCommunities.get($scope.id);
             return community ? ChatMap.fromList(community.channels) : new ChatMap<ChatSummary>();
         } else if ($scope.kind === "group_chat") {
             return $allState.groupChats;
         } else if ($scope.kind === "direct_chat") {
             return $allState.directChats;
         } else if ($scope.kind === "favourite") {
-            return $favourites.values().reduce((favs, chatId) => {
+            return [...$favourites.values()].reduce((favs, chatId) => {
                 const chat = allChats.get(chatId);
                 if (chat !== undefined) {
                     favs.set(chat.id, chat);
