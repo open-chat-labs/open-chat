@@ -5,7 +5,6 @@ use crate::{Data, mutate_state};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use group_index_canister::post_upgrade::Args;
-use ic_cdk::management_canister::{CanisterSettings, LogVisibility, UpdateSettingsArgs};
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
 use std::time::Duration;
