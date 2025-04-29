@@ -69,6 +69,7 @@
     import AreYouSure from "../AreYouSure.svelte";
     import BackgroundLogo from "../BackgroundLogo.svelte";
     import BotBuilderModal from "../bots/BotBuilderModal.svelte";
+    import WebhookModal from "../bots/WebhookModal.svelte";
     import EditLabel from "../EditLabel.svelte";
     import NotFound from "../NotFound.svelte";
     import OfflineFooter from "../OfflineFooter.svelte";
@@ -153,6 +154,8 @@
         | { kind: "register_bot" }
         | { kind: "update_bot" }
         | { kind: "remove_bot" }
+        | { kind: "register_webhook" }
+        | { kind: "update_webhook" }
         | { kind: "suspended" }
         | { kind: "no_access" }
         | { kind: "new_group"; embeddedContent: boolean; candidate: CandidateGroupChat }
@@ -216,6 +219,7 @@
             subscribe("sendMessageFailed", sendMessageFailed),
             subscribe("summonWitch", summonWitch),
             subscribe("registerBot", registerBot),
+            subscribe("registerWebhook", registerWebhook),
             subscribe("updateBot", updateBot),
             subscribe("removeBot", removeBot),
             subscribe("remoteVideoCallStarted", remoteVideoCallStarted),
@@ -250,6 +254,10 @@
 
     function registerBot() {
         modal = { kind: "register_bot" };
+    }
+
+    function registerWebhook() {
+        modal = { kind: "register_webhook" };
     }
 
     function updateBot() {
@@ -1029,6 +1037,10 @@
             <BotBuilderModal mode={"update"} onClose={closeModal} />
         {:else if modal.kind === "remove_bot"}
             <BotBuilderModal mode={"remove"} onClose={closeModal} />
+        {:else if modal.kind === "register_webhook"}
+            <WebhookModal mode={"register"} onClose={closeModal} />
+        {:else if modal.kind === "update_webhook"}
+            <WebhookModal mode={"update"} onClose={closeModal} />
         {:else if modal.kind === "no_access"}
             <NoAccess onClose={closeNoAccess} />
         {:else if modal.kind === "not_found"}

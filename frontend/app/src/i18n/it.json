@@ -375,7 +375,10 @@
             "desc": "Crea un sondaggio nella chat corrente"
         },
         "register_bot": {
-            "desc": "Avvia una proposta per descrivere e registrare un nuovo bot con OpenChat"
+            "desc": "Registra un nuovo bot con OpenChat"
+        },
+        "register_webhook": {
+            "desc": "Registra un webhook in questa chat"
         },
         "search": {
             "desc": "Avvia una ricerca nella chat corrente",

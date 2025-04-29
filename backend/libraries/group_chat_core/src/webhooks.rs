@@ -2,11 +2,11 @@ use candid::Principal;
 use rand::{Rng, rngs::StdRng};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use types::{Document, OptionUpdate, TimestampMillis};
+use types::{Document, OptionUpdate, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Webhooks {
-    map: BTreeMap<Principal, Webhook>,
+    map: BTreeMap<UserId, Webhook>,
     last_updated: TimestampMillis,
 }
 
@@ -37,7 +37,7 @@ impl Webhooks {
         true
     }
 
-    pub fn regenerate(&mut self, id: Principal, rng: &mut StdRng, now: TimestampMillis) -> bool {
+    pub fn regenerate(&mut self, id: UserId, rng: &mut StdRng, now: TimestampMillis) -> bool {
         if let Some(webhook) = self.map.get_mut(&id) {
             webhook.secret = rng.r#gen::<u128>().to_string();
             self.last_updated = now;
@@ -47,13 +47,7 @@ impl Webhooks {
         }
     }
 
-    pub fn update(
-        &mut self,
-        id: Principal,
-        name: Option<String>,
-        avatar: OptionUpdate<Document>,
-        now: TimestampMillis,
-    ) -> bool {
+    pub fn update(&mut self, id: UserId, name: Option<String>, avatar: OptionUpdate<Document>, now: TimestampMillis) -> bool {
         if let Some(webhook) = self.map.get_mut(&id) {
             if let Some(name) = name {
                 webhook.name = name;
@@ -72,7 +66,7 @@ impl Webhooks {
         }
     }
 
-    pub fn remove(&mut self, id: &Principal, now: TimestampMillis) -> Option<Webhook> {
+    pub fn remove(&mut self, id: &UserId, now: TimestampMillis) -> Option<Webhook> {
         if let Some(webhook) = self.map.remove(id) {
             self.last_updated = now;
             Some(webhook)
@@ -81,11 +75,11 @@ impl Webhooks {
         }
     }
 
-    pub fn get(&self, id: &Principal) -> Option<&Webhook> {
+    pub fn get(&self, id: &UserId) -> Option<&Webhook> {
         self.map.get(id)
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (&Principal, &Webhook)> {
+    pub fn iter(&self) -> impl Iterator<Item = (&UserId, &Webhook)> {
         self.map.iter()
     }
 
@@ -93,8 +87,8 @@ impl Webhooks {
         self.last_updated
     }
 
-    fn generate_random_id(rng: &mut StdRng) -> Principal {
-        Principal::from_slice(&rng.r#gen::<[u8; 8]>())
+    fn generate_random_id(rng: &mut StdRng) -> UserId {
+        Principal::from_slice(&rng.r#gen::<[u8; 8]>()).into()
     }
 
     fn generate_secret(rng: &mut StdRng) -> String {

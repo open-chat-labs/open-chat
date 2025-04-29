@@ -375,7 +375,10 @@
             "desc": "在当前聊天中创建投票"
         },
         "register_bot": {
-            "desc": "发起一个提案来描述和注册一个使用 OpenChat 的新机器人"
+            "desc": "使用 OpenChat 注册一个新的机器人"
+        },
+        "register_webhook": {
+            "desc": "在此聊天中注册一个 webhook"
         },
         "search": {
             "desc": "在当前聊天中发起搜索",

@@ -244,6 +244,12 @@ export const GroupRulesSuccessResult = Type.Object({
     rules: Type.Optional(Type.String()),
 });
 
+export type GroupRegisterWebhookArgs = Static<typeof GroupRegisterWebhookArgs>;
+export const GroupRegisterWebhookArgs = Type.Object({
+    name: Type.String(),
+    avatar: Type.Optional(Type.String()),
+});
+
 export type GroupSelectedUpdatesArgs = Static<typeof GroupSelectedUpdatesArgs>;
 export const GroupSelectedUpdatesArgs = Type.Object({
     updates_since: Type.BigInt(),
@@ -2632,6 +2638,28 @@ export const CommunitySummaryUpdatesArgs = Type.Object({
     updates_since: Type.BigInt(),
 });
 
+export type CommunityWebhookArgs = Static<typeof CommunityWebhookArgs>;
+export const CommunityWebhookArgs = Type.Object({
+    channel_id: ChannelId,
+    id: UserId,
+});
+
+export type CommunityWebhookSuccessResult = Static<typeof CommunityWebhookSuccessResult>;
+export const CommunityWebhookSuccessResult = Type.Object({
+    id: UserId,
+    secret: Type.String(),
+});
+
+export type CommunityWebhookResponse = Static<typeof CommunityWebhookResponse>;
+export const CommunityWebhookResponse = Type.Union([
+    Type.Object({
+        Success: CommunityWebhookSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
 export type CommunitySelectedChannelUpdatesArgs = Static<
     typeof CommunitySelectedChannelUpdatesArgs
 >;
@@ -2668,6 +2696,12 @@ export type CommunityCancelInvitesArgs = Static<typeof CommunityCancelInvitesArg
 export const CommunityCancelInvitesArgs = Type.Object({
     channel_id: Type.Optional(ChannelId),
     user_ids: Type.Array(UserId),
+});
+
+export type CommunityRegenerateWebhookArgs = Static<typeof CommunityRegenerateWebhookArgs>;
+export const CommunityRegenerateWebhookArgs = Type.Object({
+    channel_id: ChannelId,
+    id: UserId,
 });
 
 export type CommunityCreateUserGroupArgs = Static<typeof CommunityCreateUserGroupArgs>;
@@ -2882,6 +2916,14 @@ export const CommunityCommunityMembersSuccessResult = Type.Object({
     members: Type.Array(CommunityMember),
 });
 
+export type CommunityUpdateWebhookArgs = Static<typeof CommunityUpdateWebhookArgs>;
+export const CommunityUpdateWebhookArgs = Type.Object({
+    channel_id: ChannelId,
+    id: UserId,
+    name: Type.Optional(Type.String()),
+    avatar: OptionUpdateString,
+});
+
 export type CommunityRegisterProposalVoteArgs = Static<typeof CommunityRegisterProposalVoteArgs>;
 export const CommunityRegisterProposalVoteArgs = Type.Object({
     channel_id: ChannelId,
@@ -2922,6 +2964,12 @@ export const CommunityAddMembersToChannelFailedResult = Type.Object({
     users_already_in_channel: Type.Array(UserId),
     users_limit_reached: Type.Array(UserId),
     users_failed_with_error: Type.Array(CommunityAddMembersToChannelUserFailedError),
+});
+
+export type CommunityDeleteWebhookArgs = Static<typeof CommunityDeleteWebhookArgs>;
+export const CommunityDeleteWebhookArgs = Type.Object({
+    channel_id: ChannelId,
+    id: UserId,
 });
 
 export type CommunityChannelSummaryArgs = Static<typeof CommunityChannelSummaryArgs>;
@@ -3070,6 +3118,13 @@ export const CommunityVideoCallParticipantsArgs = Type.Object({
     channel_id: ChannelId,
     message_id: MessageId,
     updated_since: Type.Optional(Type.BigInt()),
+});
+
+export type CommunityRegisterWebhookArgs = Static<typeof CommunityRegisterWebhookArgs>;
+export const CommunityRegisterWebhookArgs = Type.Object({
+    channel_id: ChannelId,
+    name: Type.String(),
+    avatar: Type.Optional(Type.String()),
 });
 
 export type CommunitySendMessageSuccessResult = Static<typeof CommunitySendMessageSuccessResult>;
@@ -3623,6 +3678,27 @@ export const GroupSearchMessagesResponse = Type.Union([
     }),
 ]);
 
+export type GroupWebhookSuccessResult = Static<typeof GroupWebhookSuccessResult>;
+export const GroupWebhookSuccessResult = Type.Object({
+    id: UserId,
+    secret: Type.String(),
+});
+
+export type GroupWebhookResponse = Static<typeof GroupWebhookResponse>;
+export const GroupWebhookResponse = Type.Union([
+    Type.Object({
+        Success: GroupWebhookSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
+export type GroupWebhookArgs = Static<typeof GroupWebhookArgs>;
+export const GroupWebhookArgs = Type.Object({
+    id: UserId,
+});
+
 export type GroupConvertIntoCommunitySuccessResult = Static<
     typeof GroupConvertIntoCommunitySuccessResult
 >;
@@ -3658,6 +3734,11 @@ export const GroupClaimPrizeArgs = Type.Object({
 export type GroupCancelInvitesArgs = Static<typeof GroupCancelInvitesArgs>;
 export const GroupCancelInvitesArgs = Type.Object({
     user_ids: Type.Array(UserId),
+});
+
+export type GroupRegenerateWebhookArgs = Static<typeof GroupRegenerateWebhookArgs>;
+export const GroupRegenerateWebhookArgs = Type.Object({
+    id: UserId,
 });
 
 export type GroupJoinVideoCallArgs = Static<typeof GroupJoinVideoCallArgs>;
@@ -3763,10 +3844,22 @@ export const GroupUpdateGroupSuccessResult = Type.Object({
     rules_version: Type.Optional(Version),
 });
 
+export type GroupUpdateWebhookArgs = Static<typeof GroupUpdateWebhookArgs>;
+export const GroupUpdateWebhookArgs = Type.Object({
+    id: UserId,
+    name: Type.Optional(Type.String()),
+    avatar: OptionUpdateString,
+});
+
 export type GroupRegisterProposalVoteArgs = Static<typeof GroupRegisterProposalVoteArgs>;
 export const GroupRegisterProposalVoteArgs = Type.Object({
     message_index: MessageIndex,
     adopt: Type.Boolean(),
+});
+
+export type GroupDeleteWebhookArgs = Static<typeof GroupDeleteWebhookArgs>;
+export const GroupDeleteWebhookArgs = Type.Object({
+    id: UserId,
 });
 
 export type GroupGenerateBotApiKeyArgs = Static<typeof GroupGenerateBotApiKeyArgs>;
@@ -4758,6 +4851,13 @@ export const P2PSwapCompleted = Type.Object({
     token1_txn_out: Type.BigInt(),
 });
 
+export type WebhookDetails = Static<typeof WebhookDetails>;
+export const WebhookDetails = Type.Object({
+    id: UserId,
+    name: Type.String(),
+    avatar_id: Type.Optional(Type.BigInt()),
+});
+
 export type InstalledBotDetails = Static<typeof InstalledBotDetails>;
 export const InstalledBotDetails = Type.Object({
     user_id: UserId,
@@ -5248,6 +5348,7 @@ export const SelectedGroupUpdates = Type.Object({
     bots_added_or_updated: Type.Array(InstalledBotDetails),
     bots_removed: Type.Array(UserId),
     api_keys_generated: Type.Array(PublicApiKeyDetails),
+    webhooks: Type.Optional(Type.Array(WebhookDetails)),
     blocked_users_added: Type.Array(UserId),
     blocked_users_removed: Type.Array(UserId),
     invited_users: Type.Optional(Type.Array(UserId)),
@@ -5936,6 +6037,7 @@ export const CommunitySelectedChannelInitialSuccessResult = Type.Object({
     pinned_messages: Type.Array(MessageIndex),
     chat_rules: VersionedRules,
     api_keys: Type.Array(PublicApiKeyDetails),
+    webhooks: Type.Array(WebhookDetails),
 });
 
 export type CommunityCommunityMembersResponse = Static<typeof CommunityCommunityMembersResponse>;
@@ -6149,6 +6251,7 @@ export const GroupSelectedInitialSuccessResult = Type.Object({
     participants: Type.Array(GroupMember),
     bots: Type.Array(InstalledBotDetails),
     api_keys: Type.Array(PublicApiKeyDetails),
+    webhooks: Type.Array(WebhookDetails),
     basic_members: Type.Array(UserId),
     blocked_users: Type.Array(UserId),
     invited_users: Type.Array(UserId),
@@ -7302,6 +7405,14 @@ export const CurrentUserSummary = Type.Object({
     is_unique_person: Type.Boolean(),
 });
 
+export type SenderContext = Static<typeof SenderContext>;
+export const SenderContext = Type.Union([
+    Type.Object({
+        Bot: BotMessageContext,
+    }),
+    Type.Literal("Webhook"),
+]);
+
 export type BotMatch = Static<typeof BotMatch>;
 export const BotMatch = Type.Object({
     id: UserId,
@@ -8000,6 +8111,7 @@ export const Message = Type.Object({
     sender: UserId,
     content: MessageContent,
     bot_context: Type.Optional(BotMessageContext),
+    sender_context: Type.Optional(SenderContext),
     replies_to: Type.Optional(ReplyContext),
     reactions: Type.Array(Type.Tuple([Reaction, Type.Array(UserId)])),
     tips: Tips,

@@ -806,3 +806,10 @@ export function directMessageCommandInstance(
         };
     }
 }
+
+export type Webhook = {
+    kind: "webhook";
+    id: string;
+    name: string;
+    avatarUrl?: string;
+};

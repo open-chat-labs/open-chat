@@ -1,137 +1,76 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import type {
-    EventsResponse,
-    Message,
-    SendMessageResponse,
-    RemoveMemberResponse,
-    UpdateGroupResponse,
+    AcceptP2PSwapResponse,
+    AccessGateConfig,
     AddRemoveReactionResponse,
-    IndexRange,
-    DeleteMessageResponse,
-    UndeleteMessageResponse,
-    EditMessageResponse,
     BlockUserResponse,
+    CancelP2PSwapResponse,
     ChangeRoleResponse,
-    GroupChatDetails,
-    GroupChatDetailsResponse,
-    UnblockUserResponse,
-    MemberRole,
-    PinMessageResponse,
-    UnpinMessageResponse,
-    RegisterPollVoteResponse,
-    InviteCodeResponse,
-    EnableInviteCodeResponse,
+    ChatEvent,
+    ClaimPrizeResponse,
+    ConvertToCommunityResponse,
+    DeclineInvitationResponse,
+    DeletedGroupMessageResponse,
+    DeleteMessageResponse,
     DisableInviteCodeResponse,
-    ResetInviteCodeResponse,
-    ThreadPreviewsResponse,
-    RegisterProposalVoteResponse,
-    Rules,
-    SearchGroupChatResponse,
-    User,
+    EditMessageResponse,
+    EnableInviteCodeResponse,
+    EventsResponse,
+    EventsSuccessResult,
+    EventWrapper,
+    ExternalBotPermissions,
+    FollowThreadResponse,
+    GenerateBotKeyResponse,
     GroupCanisterSummaryResponse,
     GroupCanisterSummaryUpdatesResponse,
-    DeletedGroupMessageResponse,
-    EventWrapper,
-    OptionUpdate,
-    ClaimPrizeResponse,
-    DeclineInvitationResponse,
-    EventsSuccessResult,
-    ChatEvent,
+    GroupChatDetails,
+    GroupChatDetailsResponse,
     GroupChatIdentifier,
-    ConvertToCommunityResponse,
-    PublicGroupSummaryResponse,
-    UpdatedRules,
-    FollowThreadResponse,
-    OptionalChatPermissions,
-    ToggleMuteNotificationResponse,
-    AcceptP2PSwapResponse,
+    IndexRange,
+    InviteCodeResponse,
     JoinVideoCallResponse,
+    MemberRole,
+    Message,
+    OptionalChatPermissions,
+    OptionUpdate,
+    PinMessageResponse,
+    PublicGroupSummaryResponse,
+    RegisterPollVoteResponse,
+    RegisterProposalVoteResponse,
+    RemoveMemberResponse,
+    ResetInviteCodeResponse,
+    Rules,
+    SearchGroupChatResponse,
+    SendMessageResponse,
     SetVideoCallPresenceResponse,
-    VideoCallPresence,
+    ThreadPreviewsResponse,
+    ToggleMuteNotificationResponse,
+    UnblockUserResponse,
+    UndeleteMessageResponse,
+    UnpinMessageResponse,
+    UpdatedRules,
+    UpdateGroupResponse,
+    User,
     VideoCallParticipantsResponse,
-    AccessGateConfig,
-    ExternalBotPermissions,
-    GenerateBotKeyResponse,
+    VideoCallPresence,
 } from "openchat-shared";
 import {
     DestinationInvalidError,
-    offline,
-    textToCode,
+    isSuccessfulEventsResponse,
     MAX_EVENTS,
     MAX_MESSAGES,
     MAX_MISSING,
+    offline,
+    ResponseTooLargeError,
+    textToCode,
 } from "openchat-shared";
-import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
-import {
-    apiRole,
-    apiOptionalGroupPermissions,
-    summaryUpdatesResponse,
-    apiUpdatedRules,
-    convertToCommunitySuccess,
-    groupChatSummary,
-} from "./mappersV2";
-import {
-    type Database,
-    getCachedEvents,
-    getCachedEventsByIndex,
-    getCachedEventsWindowByMessageIndex,
-    getCachedGroupDetails,
-    loadMessagesByMessageIndex,
-    mergeSuccessResponses,
-    recordFailedMessage,
-    removeFailedMessage,
-    setCachedEvents,
-    setCachedGroupDetails,
-} from "../../utils/caching";
-import {
-    acceptP2PSwapSuccess,
-    apiAccessGateConfig,
-    apiExternalBotPermissions,
-    apiMessageContent,
-    apiUser as apiUserV2,
-    apiVideoCallPresence, claimPrizeResponse,
-    deletedMessageSuccess,
-    unitResult,
-    enableOrResetInviteCodeSuccess,
-    generateApiKeySuccess, getEventsSuccess,
-    getMessagesSuccess,
-    groupDetailsSuccess,
-    groupDetailsUpdatesResponse,
-    inviteCodeSuccess,
-    isSuccess,
-    mapResult,
-    pushEventSuccess,
-    searchGroupChatResponse,
-    sendMessageSuccess,
-    threadPreviewsSuccess,
-    undeleteMessageSuccess,
-    updateGroupSuccess,
-    videoCallParticipantsSuccess,
-} from "../common/chatMappersV2";
-import { DataClient } from "../data/data.client";
-import { mergeGroupChatDetails } from "../../utils/chat";
-import { publicSummarySuccess } from "../common/publicSummaryMapperV2";
-import {
-    apiOptionUpdateV2,
-    identity,
-    mapOptional,
-    principalBytesToString,
-    principalStringToBytes,
-} from "../../utils/mapping";
-import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
-import { setCachedMessageFromSendResponse } from "../../utils/caching";
-import type { CancelP2PSwapResponse } from "openchat-shared";
-import { ResponseTooLargeError, isSuccessfulEventsResponse } from "openchat-shared";
 import {
-    chunkedChatEventsFromBackend,
-    chunkedChatEventsWindowFromBackend,
-} from "../common/chunked";
-import {
-    Empty as TEmpty,
     GroupAcceptP2pSwapArgs,
     GroupAcceptP2pSwapResponse,
     GroupAddReactionArgs,
+    GroupApiKeyArgs,
+    GroupApiKeyResponse,
     GroupBlockUserArgs,
     GroupCancelInvitesArgs,
     GroupCancelP2pSwapArgs,
@@ -143,6 +82,7 @@ import {
     GroupDeletedMessageArgs,
     GroupDeletedMessageResponse,
     GroupDeleteMessagesArgs,
+    GroupDeleteWebhookArgs,
     GroupDisableInviteCodeArgs,
     GroupEditMessageArgs,
     GroupEnableInviteCodeArgs,
@@ -152,6 +92,8 @@ import {
     GroupEventsResponse,
     GroupEventsWindowArgs,
     GroupFollowThreadArgs,
+    GroupGenerateBotApiKeyArgs,
+    GroupGenerateBotApiKeyResponse,
     GroupInviteCodeResponse,
     GroupJoinVideoCallArgs,
     GroupLocalUserIndexResponse,
@@ -161,10 +103,12 @@ import {
     GroupPinMessageResponse,
     GroupPublicSummaryArgs,
     GroupPublicSummaryResponse,
+    GroupRegenerateWebhookArgs,
     GroupRegisterPollVoteArgs,
     GroupRegisterPollVoteResponse,
     GroupRegisterProposalVoteArgs,
     GroupRegisterProposalVoteV2Args,
+    GroupRegisterWebhookArgs,
     GroupRemoveParticipantArgs,
     GroupRemoveReactionArgs,
     GroupReportMessageArgs,
@@ -187,17 +131,82 @@ import {
     GroupUndeleteMessagesResponse,
     GroupUnpinMessageArgs,
     GroupUnpinMessageResponse,
+    GroupUpdateBotArgs,
     GroupUpdateGroupArgs,
     GroupUpdateGroupResponse,
+    GroupUpdateWebhookArgs,
     GroupVideoCallParticipantsArgs,
     GroupVideoCallParticipantsResponse,
-    GroupUpdateBotArgs,
-    GroupGenerateBotApiKeyArgs,
-    GroupGenerateBotApiKeyResponse,
-    GroupApiKeyArgs,
-    GroupApiKeyResponse,
+    GroupWebhookArgs,
+    GroupWebhookResponse,
+    Empty as TEmpty,
     UnitResult,
 } from "../../typebox";
+import {
+    type Database,
+    getCachedEvents,
+    getCachedEventsByIndex,
+    getCachedEventsWindowByMessageIndex,
+    getCachedGroupDetails,
+    loadMessagesByMessageIndex,
+    mergeSuccessResponses,
+    recordFailedMessage,
+    removeFailedMessage,
+    setCachedEvents,
+    setCachedGroupDetails,
+    setCachedMessageFromSendResponse,
+} from "../../utils/caching";
+import { mergeGroupChatDetails } from "../../utils/chat";
+import {
+    apiOptionUpdateV2,
+    identity,
+    mapOptional,
+    principalBytesToString,
+    principalStringToBytes,
+} from "../../utils/mapping";
+import { generateUint64 } from "../../utils/rng";
+import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
+import {
+    acceptP2PSwapSuccess,
+    apiAccessGateConfig,
+    apiExternalBotPermissions,
+    apiMessageContent,
+    apiUser as apiUserV2,
+    apiVideoCallPresence,
+    claimPrizeResponse,
+    deletedMessageSuccess,
+    enableOrResetInviteCodeSuccess,
+    generateApiKeySuccess,
+    getEventsSuccess,
+    getMessagesSuccess,
+    groupDetailsSuccess,
+    groupDetailsUpdatesResponse,
+    inviteCodeSuccess,
+    isSuccess,
+    mapResult,
+    pushEventSuccess,
+    searchGroupChatResponse,
+    sendMessageSuccess,
+    threadPreviewsSuccess,
+    undeleteMessageSuccess,
+    unitResult,
+    updateGroupSuccess,
+    videoCallParticipantsSuccess,
+} from "../common/chatMappersV2";
+import {
+    chunkedChatEventsFromBackend,
+    chunkedChatEventsWindowFromBackend,
+} from "../common/chunked";
+import { publicSummarySuccess } from "../common/publicSummaryMapperV2";
+import { DataClient } from "../data/data.client";
+import {
+    apiOptionalGroupPermissions,
+    apiRole,
+    apiUpdatedRules,
+    convertToCommunitySuccess,
+    groupChatSummary,
+    summaryUpdatesResponse,
+} from "./mappersV2";
 
 export class GroupClient extends MsgpackCanisterAgent {
     constructor(
@@ -303,7 +312,8 @@ export class GroupClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "events_by_index",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
+            (resp) =>
+                mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
             GroupEventsByIndexArgs,
             GroupEventsResponse,
         );
@@ -392,7 +402,8 @@ export class GroupClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "events_window",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
+            (resp) =>
+                mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
             GroupEventsWindowArgs,
             GroupEventsResponse,
         );
@@ -474,7 +485,8 @@ export class GroupClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "events",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
+            (resp) =>
+                mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
             GroupEventsArgs,
             GroupEventsResponse,
         );
@@ -651,8 +663,8 @@ export class GroupClient extends MsgpackCanisterAgent {
                     gateConfig === undefined
                         ? "NoChange"
                         : gateConfig.gate.kind === "no_gate"
-                          ? "SetToNone"
-                          : { SetToSome: apiAccessGateConfig(gateConfig) },
+                        ? "SetToNone"
+                        : { SetToSome: apiAccessGateConfig(gateConfig) },
                 messages_visible_to_non_members: messagesVisibleToNonMembers,
             },
             (resp) => mapResult(resp, updateGroupSuccess),
@@ -862,8 +874,8 @@ export class GroupClient extends MsgpackCanisterAgent {
                       expiredEventRanges: [],
                       expiredMessageRanges: [],
                       latestEventIndex: resp.latestEventIndex,
-                }
-                : resp
+                  }
+                : resp;
         }
         return {
             events: fromCache.messageEvents,
@@ -887,7 +899,8 @@ export class GroupClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "messages_by_message_index",
             args,
-            (resp) => mapResult(resp, (value) => getMessagesSuccess(value, this.principal, this.chatId)),
+            (resp) =>
+                mapResult(resp, (value) => getMessagesSuccess(value, this.principal, this.chatId)),
             GroupMessagesByMessageIndexArgs,
             GroupMessagesByMessageIndexResponse,
         );
@@ -1082,13 +1095,7 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     declineInvitation(): Promise<DeclineInvitationResponse> {
-        return this.executeMsgpackUpdate(
-            "decline_invitation",
-            {},
-            unitResult,
-            TEmpty,
-            UnitResult,
-        );
+        return this.executeMsgpackUpdate("decline_invitation", {}, unitResult, TEmpty, UnitResult);
     }
 
     toggleMuteNotifications(mute: boolean): Promise<ToggleMuteNotificationResponse> {
@@ -1289,11 +1296,84 @@ export class GroupClient extends MsgpackCanisterAgent {
                 if (typeof resp === "object" && "Success" in resp) {
                     return resp.Success;
                 }
-                console.log("Failed to get community api key: ", botId, resp);
+                console.log("Failed to get group api key: ", botId, resp);
                 return undefined;
             },
             GroupApiKeyArgs,
             GroupApiKeyResponse,
+        );
+    }
+
+    registerWebhook(name: string, avatar: string | undefined): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "register_webhook",
+            {
+                name,
+                avatar,
+            },
+            isSuccess,
+            GroupRegisterWebhookArgs,
+            UnitResult,
+        );
+    }
+
+    updateWebhook(
+        id: string,
+        name: string | undefined,
+        avatar: OptionUpdate<string>,
+    ): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "update_webhook",
+            {
+                id: principalStringToBytes(id),
+                name,
+                avatar: apiOptionUpdateV2(identity, avatar),
+            },
+            isSuccess,
+            GroupUpdateWebhookArgs,
+            UnitResult,
+        );
+    }
+
+    regenerateWebhook(id: string): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "regenerate_webhook",
+            {
+                id: principalStringToBytes(id),
+            },
+            isSuccess,
+            GroupRegenerateWebhookArgs,
+            UnitResult,
+        );
+    }
+
+    deleteWebhook(id: string): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "delete_webhook",
+            {
+                id: principalStringToBytes(id),
+            },
+            isSuccess,
+            GroupDeleteWebhookArgs,
+            UnitResult,
+        );
+    }
+
+    getWebhook(id: string): Promise<string | undefined> {
+        return this.executeMsgpackQuery(
+            "webhook",
+            {
+                id: principalStringToBytes(id),
+            },
+            (resp) => {
+                if (typeof resp === "object" && "Success" in resp) {
+                    return resp.Success.secret;
+                }
+                console.log("Failed to get group webhook: ", id, resp);
+                return undefined;
+            },
+            GroupWebhookArgs,
+            GroupWebhookResponse,
         );
     }
 }

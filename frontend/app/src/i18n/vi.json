@@ -375,7 +375,10 @@
             "desc": "Tạo một cuộc thăm dò trong cuộc trò chuyện hiện tại"
         },
         "register_bot": {
-            "desc": "Bắt đầu đề xuất mô tả và đăng ký bot mới với OpenChat"
+            "desc": "Đăng ký bot mới với OpenChat"
+        },
+        "register_webhook": {
+            "desc": "Đăng ký webhook trong cuộc trò chuyện này"
         },
         "search": {
             "desc": "Bắt đầu tìm kiếm trong cuộc trò chuyện hiện tại",

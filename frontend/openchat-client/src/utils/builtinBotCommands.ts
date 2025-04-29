@@ -1,4 +1,4 @@
-import type { InternalBot, ExternalBotPermissions } from "openchat-shared";
+import type { ExternalBotPermissions, InternalBot } from "openchat-shared";
 
 export const emptyPermissions: ExternalBotPermissions = {
     chatPermissions: [],
@@ -192,6 +192,15 @@ export const builtinBot: InternalBot = {
                 permissions: emptyPermissions,
                 params: [],
                 directBotDisabled: false,
+            },
+            {
+                name: "register_webhook",
+                defaultRole: "owner",
+                directMessages: false,
+                description: "bots.register_webhook.desc",
+                permissions: emptyPermissions,
+                params: [],
+                directBotDisabled: true,
             },
             {
                 name: "search",

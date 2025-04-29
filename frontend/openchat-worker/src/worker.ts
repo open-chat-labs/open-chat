@@ -7,32 +7,32 @@ import {
 } from "@dfinity/identity";
 import { Principal } from "@dfinity/principal";
 import {
+    getBotDefinition,
     IdentityAgent,
     OpenChatAgent,
-    setCommunityReferral,
-    getBotDefinition,
     setCachedWebAuthnKey,
+    setCommunityReferral,
 } from "openchat-agent";
 import {
-    type CorrelatedWorkerRequest,
-    type Init,
-    type Logger,
+    AuthProvider,
+    IdentityStorage,
+    inititaliseLogger,
     MessagesReadFromServer,
     StorageUpdated,
-    UsersLoaded,
-    type WorkerEvent,
-    inititaliseLogger,
-    type WorkerResponseInner,
-    type WorkerRequest,
     Stream,
-    IdentityStorage,
-    type GetOpenChatIdentityResponse,
+    UsersLoaded,
     type ChallengeAttempt,
+    type CorrelatedWorkerRequest,
     type CreateOpenChatIdentityError,
+    type GetOpenChatIdentityResponse,
+    type Init,
     type LinkIdentitiesResponse,
-    AuthProvider,
+    type Logger,
     type RemoveIdentityLinkResponse,
     type WebAuthnKey,
+    type WorkerEvent,
+    type WorkerRequest,
+    type WorkerResponseInner,
 } from "openchat-shared";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -1757,6 +1757,46 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "registerWebhook":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.registerWebhook(payload.chatId, payload.name, payload.avatar),
+                );
+                break;
+
+            case "updateWebhook":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.updateWebhook(payload.chatId, payload.id, payload.name, payload.avatar),
+                );
+                break;
+
+            case "regenerateWebhook":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.regenerateWebhook(payload.chatId, payload.id),
+                );
+                break;
+
+            case "deleteWebhook":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.deleteWebhook(payload.chatId, payload.id),
+                );
+                break;
+
+            case "getWebhook":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getWebhook(payload.chatId, payload.id),
+                );
+                break;
+
             case "getLocalUserIndexForUser":
                 executeThenReply(
                     payload,
@@ -2046,7 +2086,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.payForStreakInsurance(payload.additionalDays, payload.expectedPrice, payload.pin),
+                    agent.payForStreakInsurance(
+                        payload.additionalDays,
+                        payload.expectedPrice,
+                        payload.pin,
+                    ),
                 );
                 break;
 
@@ -2114,17 +2158,15 @@ async function removeIdentityLink(linked_principal: string): Promise<RemoveIdent
     throw new Error("IdentityAgent not initialized");
 }
 
-async function deleteUser(identityKey: CryptoKeyPair, delegation: JsonnableDelegationChain): Promise<boolean> {
+async function deleteUser(
+    identityKey: CryptoKeyPair,
+    delegation: JsonnableDelegationChain,
+): Promise<boolean> {
     const identity = DelegationIdentity.fromDelegation(
         await ECDSAKeyIdentity.fromKeyPair(identityKey),
         DelegationChain.fromJSON(delegation),
     );
-    const identityAgent = await IdentityAgent.create(
-        identity,
-        identityCanister,
-        icUrl,
-        undefined,
-    );
+    const identityAgent = await IdentityAgent.create(identity, identityCanister, icUrl, undefined);
     const response = await identityAgent.deleteUser();
     return response.kind === "success";
 }

@@ -92,6 +92,10 @@ export type PubSubEvents = {
     registerBot: undefined;
     updateBot: undefined;
     removeBot: undefined;
+    registerWebhook: undefined;
+    updateWebhook: undefined;
+    regnerateWebhook: undefined;
+    deleteWebhook: undefined;
     loadedMessageWindow: {
         context: MessageContext;
         messageIndex: number;

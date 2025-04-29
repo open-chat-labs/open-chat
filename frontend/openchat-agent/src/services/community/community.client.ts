@@ -107,6 +107,7 @@ import {
     CommunityDeleteChannelArgs,
     CommunityDeleteMessagesArgs,
     CommunityDeleteUserGroupsArgs,
+    CommunityDeleteWebhookArgs,
     CommunityDeletedMessageArgs,
     CommunityDeletedMessageResponse,
     CommunityEditMessageArgs,
@@ -130,9 +131,11 @@ import {
     CommunityMessagesByMessageIndexResponse,
     CommunityPinMessageArgs,
     CommunityPinMessageResponse,
+    CommunityRegenerateWebhookArgs,
     CommunityRegisterPollVoteArgs,
     CommunityRegisterPollVoteResponse,
     CommunityRegisterProposalVoteArgs,
+    CommunityRegisterWebhookArgs,
     CommunityRemoveMemberArgs,
     CommunityRemoveMemberFromChannelArgs,
     CommunityRemoveReactionArgs,
@@ -165,8 +168,11 @@ import {
     CommunityUpdateCommunityArgs,
     CommunityUpdateCommunityResponse,
     CommunityUpdateUserGroupArgs,
+    CommunityUpdateWebhookArgs,
     CommunityVideoCallParticipantsArgs,
     CommunityVideoCallParticipantsResponse,
+    CommunityWebhookArgs,
+    CommunityWebhookResponse,
     CommunitySummaryResponse as TCommunitySummaryResponse,
     CommunitySummaryUpdatesResponse as TCommunitySummaryUpdatesResponse,
     Empty as TEmpty,
@@ -216,6 +222,7 @@ import {
     groupDetailsSuccess,
     groupDetailsUpdatesResponse,
     inviteCodeSuccess,
+    isSuccess,
     mapResult,
     pushEventSuccess,
     searchGroupChatResponse,
@@ -1714,6 +1721,85 @@ export class CommunityClient extends MsgpackCanisterAgent {
             },
             CommunityApiKeyArgs,
             CommunityApiKeyResponse,
+        );
+    }
+
+    registerWebhook(channelId: number, name: string, avatar: string | undefined): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "register_webhook",
+            {
+                channel_id: toBigInt32(channelId),
+                name,
+                avatar,
+            },
+            isSuccess,
+            CommunityRegisterWebhookArgs,
+            UnitResult,
+        );
+    }
+
+    updateWebhook(
+        channelId: number,
+        id: string,
+        name: string | undefined,
+        avatar: OptionUpdate<string>,
+    ): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "update_webhook",
+            {
+                channel_id: toBigInt32(channelId),
+                id: principalStringToBytes(id),
+                name,
+                avatar: apiOptionUpdateV2(identity, avatar),
+            },
+            isSuccess,
+            CommunityUpdateWebhookArgs,
+            UnitResult,
+        );
+    }
+
+    regenerateWebhook(channelId: number, id: string): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "regenerate_webhook",
+            {
+                channel_id: toBigInt32(channelId),
+                id: principalStringToBytes(id),
+            },
+            isSuccess,
+            CommunityRegenerateWebhookArgs,
+            UnitResult,
+        );
+    }
+
+    deleteWebhook(channelId: number, id: string): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "delete_webhook",
+            {
+                channel_id: toBigInt32(channelId),
+                id: principalStringToBytes(id),
+            },
+            isSuccess,
+            CommunityDeleteWebhookArgs,
+            UnitResult,
+        );
+    }
+
+    getWebhook(channelId: number, id: string): Promise<string | undefined> {
+        return this.executeMsgpackQuery(
+            "webhook",
+            {
+                channel_id: toBigInt32(channelId),
+                id: principalStringToBytes(id),
+            },
+            (resp) => {
+                if (typeof resp === "object" && "Success" in resp) {
+                    return resp.Success.secret;
+                }
+                console.log("Failed to get community webhook: ", id, resp);
+                return undefined;
+            },
+            CommunityWebhookArgs,
+            CommunityWebhookResponse,
         );
     }
 }

@@ -375,7 +375,10 @@
             "desc": "Create a poll in the current chat"
         },
         "register_bot": {
-            "desc": "Start a proposal to describe and register a new bot with OpenChat"
+            "desc": "Register a new bot with OpenChat"
+        },
+        "register_webhook": {
+            "desc": "Register a webhook in this chat"
         },
         "search": {
             "desc": "Initiate a search in the current chat",

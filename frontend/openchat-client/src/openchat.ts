@@ -8146,6 +8146,73 @@ export class OpenChat {
         });
     }
 
+    registerWebhook(
+        chatId: MultiUserChatIdentifier,
+        name: string,
+        avatar: string | undefined,
+    ): Promise<boolean> {
+        return this.#sendRequest({
+            kind: "registerWebhook",
+            chatId,
+            name,
+            avatar,
+        }).catch((err) => {
+            this.#logger.error("Failed to register webhook", err);
+            return false;
+        });
+    }
+
+    updateWebhook(
+        chatId: MultiUserChatIdentifier,
+        id: string,
+        name: string,
+        avatar: OptionUpdate<string>,
+    ): Promise<boolean> {
+        return this.#sendRequest({
+            kind: "updateWebhook",
+            chatId,
+            id,
+            name,
+            avatar,
+        }).catch((err) => {
+            this.#logger.error("Failed to update webhook", err);
+            return false;
+        });
+    }
+
+    regenerateWebhook(chatId: MultiUserChatIdentifier, id: string): Promise<boolean> {
+        return this.#sendRequest({
+            kind: "regenerateWebhook",
+            chatId,
+            id,
+        }).catch((err) => {
+            this.#logger.error("Failed to regenerate webhook", err);
+            return false;
+        });
+    }
+
+    deleteWebhook(chatId: MultiUserChatIdentifier, id: string): Promise<boolean> {
+        return this.#sendRequest({
+            kind: "deleteWebhook",
+            chatId,
+            id,
+        }).catch((err) => {
+            this.#logger.error("Failed to delete webhook", err);
+            return false;
+        });
+    }
+
+    getWebhook(chatId: MultiUserChatIdentifier, id: string): Promise<string | undefined> {
+        return this.#sendRequest({
+            kind: "getWebhook",
+            chatId,
+            id,
+        }).catch((err) => {
+            this.#logger.error("Failed to get webhook", err);
+            return undefined;
+        });
+    }
+
     executeInternalBotCommand(
         scope: BotActionScope,
         bot: InternalBotCommandInstance,
@@ -8162,6 +8229,8 @@ export class OpenChat {
             publish("summonWitch");
         } else if (bot.command.name === "register_bot") {
             publish("registerBot");
+        } else if (bot.command.name === "register_webhook") {
+            publish("registerWebhook");
         } else if (bot.command.name === "update_bot") {
             publish("updateBot");
         } else if (bot.command.name === "remove_bot") {

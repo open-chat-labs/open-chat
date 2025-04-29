@@ -375,7 +375,10 @@
             "desc": "現在のチャットでアンケートを作成する"
         },
         "register_bot": {
-            "desc": "OpenChatで新しいボットを説明して登録するための提案を開始する"
+            "desc": "OpenChatに新しいボットを登録する"
+        },
+        "register_webhook": {
+            "desc": "このチャットにWebhookを登録する"
         },
         "search": {
             "desc": "現在のチャットで検索を開始する",

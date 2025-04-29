@@ -4361,6 +4361,72 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<PayForStreakInsuranceResponse> {
         return this.userClient.payForStreakInsurance(additionalDays, expectedPrice, pin);
     }
+
+    registerWebhook(
+        chatId: MultiUserChatIdentifier,
+        name: string,
+        avatar: string | undefined,
+    ): Promise<boolean> {
+        switch (chatId.kind) {
+            case "channel":
+                return this.communityClient(chatId.communityId).registerWebhook(
+                    chatId.channelId,
+                    name,
+                    avatar,
+                );
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).registerWebhook(name, avatar);
+        }
+    }
+
+    updateWebhook(
+        chatId: MultiUserChatIdentifier,
+        id: string,
+        name: string,
+        avatar: OptionUpdate<string>,
+    ): Promise<boolean> {
+        switch (chatId.kind) {
+            case "channel":
+                return this.communityClient(chatId.communityId).updateWebhook(
+                    chatId.channelId,
+                    id,
+                    name,
+                    avatar,
+                );
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).updateWebhook(id, name, avatar);
+        }
+    }
+
+    regenerateWebhook(chatId: MultiUserChatIdentifier, id: string): Promise<boolean> {
+        switch (chatId.kind) {
+            case "channel":
+                return this.communityClient(chatId.communityId).regenerateWebhook(
+                    chatId.channelId,
+                    id,
+                );
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).regenerateWebhook(id);
+        }
+    }
+
+    deleteWebhook(chatId: MultiUserChatIdentifier, id: string): Promise<boolean> {
+        switch (chatId.kind) {
+            case "channel":
+                return this.communityClient(chatId.communityId).deleteWebhook(chatId.channelId, id);
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).deleteWebhook(id);
+        }
+    }
+
+    getWebhook(chatId: MultiUserChatIdentifier, id: string): Promise<string | undefined> {
+        switch (chatId.kind) {
+            case "channel":
+                return this.communityClient(chatId.communityId).getWebhook(chatId.channelId, id);
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).getWebhook(id);
+        }
+    }
 }
 
 export interface ExchangeRateClient {

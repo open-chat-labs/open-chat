@@ -449,6 +449,11 @@ export type WorkerRequest =
     | WithdrawFromIcpSwap
     | GenerateBotApiKey
     | GetApiKey
+    | RegisterWebhook
+    | UpdateWebhook
+    | RegenerateWebhook
+    | DeleteWebhook
+    | GetWebhook
     | PayForStreakInsurance;
 
 type PayForStreakInsurance = {
@@ -469,6 +474,39 @@ type GenerateBotApiKey = {
     id: ChatIdentifier | CommunityIdentifier;
     botId: string;
     permissions: ExternalBotPermissions;
+};
+
+type RegisterWebhook = {
+    kind: "registerWebhook";
+    chatId: MultiUserChatIdentifier;
+    name: string;
+    avatar: string | undefined;
+};
+
+type UpdateWebhook = {
+    kind: "updateWebhook";
+    chatId: MultiUserChatIdentifier;
+    id: string;
+    name: string;
+    avatar: OptionUpdate<string>;
+};
+
+type RegenerateWebhook = {
+    kind: "regenerateWebhook";
+    chatId: MultiUserChatIdentifier;
+    id: string;
+};
+
+type DeleteWebhook = {
+    kind: "deleteWebhook";
+    chatId: MultiUserChatIdentifier;
+    id: string;
+};
+
+type GetWebhook = {
+    kind: "getWebhook";
+    chatId: MultiUserChatIdentifier;
+    id: string;
 };
 
 type CallBotCommandEndpoint = {
@@ -2449,6 +2487,16 @@ export type WorkerResult<T> = T extends Init
     : T extends GenerateBotApiKey
     ? GenerateBotKeyResponse
     : T extends GetApiKey
+    ? string | undefined
+    : T extends RegisterWebhook
+    ? boolean
+    : T extends UpdateWebhook
+    ? boolean
+    : T extends RegenerateWebhook
+    ? boolean
+    : T extends DeleteWebhook
+    ? boolean
+    : T extends GetWebhook
     ? string | undefined
     : T extends PayForStreakInsurance
     ? PayForStreakInsuranceResponse

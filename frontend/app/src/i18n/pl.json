@@ -375,7 +375,10 @@
             "desc": "Utwórz ankietę w bieżącym czacie"
         },
         "register_bot": {
-            "desc": "Rozpocznij propozycję opisania i zarejestrowania nowego bota w OpenChat"
+            "desc": "Zarejestruj nowego bota w OpenChat"
+        },
+        "register_webhook": {
+            "desc": "Zarejestruj webhook w tym czacie"
         },
         "search": {
             "desc": "Rozpocznij wyszukiwanie w bieżącym czacie",
