@@ -1,6 +1,6 @@
-use crate::Notification;
 use crate::ic_agent::IcAgent;
-use crate::user_notifications::metrics::write_metrics;
+use crate::metrics::write_metrics;
+use crate::{BotNotification, BotNotificationPayload, UserNotification};
 use async_channel::Sender;
 use base64::Engine;
 use index_store::IndexStore;
@@ -9,23 +9,31 @@ use std::sync::Arc;
 use std::time::Instant;
 use tokio::time;
 use tracing::{error, info};
-use types::{CanisterId, Error, Timestamped, UserId};
+use types::{CanisterId, Error, NotificationEnvelope, Timestamped, UserId};
 use web_push::{SubscriptionInfo, SubscriptionKeys};
 
 pub struct Reader<I: IndexStore> {
     ic_agent: IcAgent,
     notifications_canister_id: CanisterId,
     index_store: I,
-    sender: Sender<Notification>,
+    user_notification_sender: Sender<UserNotification>,
+    bot_notification_sender: Sender<BotNotification>,
 }
 
 impl<I: IndexStore> Reader<I> {
-    pub fn new(ic_agent: IcAgent, notifications_canister_id: CanisterId, index_store: I, sender: Sender<Notification>) -> Self {
+    pub fn new(
+        ic_agent: IcAgent,
+        notifications_canister_id: CanisterId,
+        index_store: I,
+        user_notification_sender: Sender<UserNotification>,
+        bot_notification_sender: Sender<BotNotification>,
+    ) -> Self {
         Self {
             ic_agent,
             notifications_canister_id,
             index_store,
-            sender,
+            user_notification_sender,
+            bot_notification_sender,
         }
     }
 
@@ -34,7 +42,7 @@ impl<I: IndexStore> Reader<I> {
 
         let mut interval = time::interval(time::Duration::from_secs(1));
         loop {
-            if self.sender.is_full() {
+            if self.user_notification_sender.is_full() {
                 error!("Notifications queue is full");
                 interval.tick().await;
             } else {
@@ -57,9 +65,10 @@ impl<I: IndexStore> Reader<I> {
         let from_notification_index = self.index_processed_up_to().await? + 1;
         let ic_response = self
             .ic_agent
-            .notifications(&self.notifications_canister_id, from_notification_index)
+            .notifications_v2(&self.notifications_canister_id, from_notification_index)
             .await?;
 
+        let first_read_at = Instant::now();
         let subscriptions_map: HashMap<UserId, Vec<SubscriptionInfo>> = ic_response
             .subscriptions
             .into_iter()
@@ -67,39 +76,71 @@ impl<I: IndexStore> Reader<I> {
             .collect();
 
         let mut latest_index_processed = None;
-        for indexed_notification in ic_response.notifications.into_iter() {
-            let notification = indexed_notification.value;
-            let available_capacity = self.sender.capacity().unwrap().saturating_sub(self.sender.len());
-            if available_capacity < notification.recipients.len() {
-                error!(
-                    available_capacity,
-                    notifications = notification.recipients.len(),
-                    "Not enough available capacity to enqueue notifications",
-                );
-                break;
-            }
+        for indexed_notification in ic_response.notifications {
+            match indexed_notification.value {
+                NotificationEnvelope::User(notification) => {
+                    let available_capacity = self
+                        .user_notification_sender
+                        .capacity()
+                        .unwrap()
+                        .saturating_sub(self.user_notification_sender.len());
+                    if available_capacity < notification.recipients.len() {
+                        error!(
+                            available_capacity,
+                            notifications = notification.recipients.len(),
+                            "Not enough available capacity to enqueue notifications",
+                        );
+                        break;
+                    }
 
-            let first_read_at = Instant::now();
-            let base64 = base64::engine::general_purpose::STANDARD_NO_PAD.encode(notification.notification_bytes);
-            let payload = Arc::new(serde_json::to_vec(&Timestamped::new(base64, notification.timestamp)).unwrap());
+                    let base64 = base64::engine::general_purpose::STANDARD_NO_PAD.encode(notification.notification_bytes);
+                    let payload = Arc::new(serde_json::to_vec(&Timestamped::new(base64, notification.timestamp)).unwrap());
 
-            for user_id in notification.recipients {
-                if let Some(subscriptions) = subscriptions_map.get(&user_id) {
-                    for subscription_info in subscriptions.iter().cloned() {
-                        // Wait here if needed to ensure the notification is pushed to all
-                        // subscriptions to avoid partially processed notifications
-                        self.sender
-                            .send(Notification {
-                                notifications_canister: self.notifications_canister_id,
-                                index: indexed_notification.index,
-                                timestamp: notification.timestamp,
-                                recipient: user_id,
-                                payload: payload.clone(),
-                                subscription_info,
-                                first_read_at,
-                            })
-                            .await
-                            .unwrap();
+                    for user_id in notification.recipients {
+                        if let Some(subscriptions) = subscriptions_map.get(&user_id) {
+                            for subscription_info in subscriptions.iter().cloned() {
+                                // Wait here if needed to ensure the notification is pushed to all
+                                // subscriptions to avoid partially processed notifications
+                                self.user_notification_sender
+                                    .send(UserNotification {
+                                        notifications_canister: self.notifications_canister_id,
+                                        index: indexed_notification.index,
+                                        timestamp: notification.timestamp,
+                                        recipient: user_id,
+                                        payload: payload.clone(),
+                                        subscription_info,
+                                        first_read_at,
+                                    })
+                                    .await
+                                    .unwrap();
+                            }
+                        }
+                    }
+                }
+                NotificationEnvelope::Bot(notification) => {
+                    let payload = candid::encode_one(&BotNotificationPayload {
+                        event_type: notification.event_type,
+                        chat: notification.chat,
+                        thread: notification.thread,
+                        event_index: notification.event_index,
+                        latest_event_index: notification.latest_event_index,
+                    })
+                    .unwrap();
+
+                    for bot in notification.recipients {
+                        if let Some(endpoint) = ic_response.bot_endpoints.get(&bot) {
+                            self.bot_notification_sender
+                                .send(BotNotification {
+                                    notifications_canister: self.notifications_canister_id,
+                                    index: indexed_notification.index,
+                                    timestamp: notification.timestamp,
+                                    endpoint: endpoint.to_string(),
+                                    payload: payload.clone(),
+                                    first_read_at,
+                                })
+                                .await
+                                .unwrap();
+                        }
                     }
                 }
             }

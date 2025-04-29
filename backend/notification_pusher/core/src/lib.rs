@@ -1,17 +1,21 @@
+use crate::bot_notifications::start_bot_notifications_processor;
 use crate::ic_agent::IcAgent;
+use crate::metrics::{Metrics, collect_metrics};
 use crate::reader::Reader;
 use crate::user_notifications::start_user_notifications_processor;
+use candid::CandidType;
 use index_store::IndexStore;
 use prometheus::{Encoder, TextEncoder};
 use std::io::Write;
 use std::sync::Arc;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use tracing::info;
-use types::{CanisterId, TimestampMillis, UserId};
-use user_notifications::metrics::collect_metrics;
+use types::{CanisterId, Chat, ChatEventType, EventIndex, MessageIndex, TimestampMillis, UserId};
 use web_push::{SubscriptionInfo, WebPushMessage};
 
+mod bot_notifications;
 pub mod ic_agent;
+mod metrics;
 mod reader;
 mod user_notifications;
 
@@ -25,8 +29,12 @@ pub async fn run_notifications_pusher<I: IndexStore + 'static>(
 ) {
     info!("Notifications pusher starting");
 
+    Metrics::init();
+
     let user_notifications_sender =
         start_user_notifications_processor(ic_agent.clone(), index_canister_id, vapid_private_pem, pusher_count);
+
+    let bot_notifications_sender = start_bot_notifications_processor();
 
     for notification_canister_id in notifications_canister_ids {
         let reader = Reader::new(
@@ -34,6 +42,7 @@ pub async fn run_notifications_pusher<I: IndexStore + 'static>(
             notification_canister_id,
             index_store.clone(),
             user_notifications_sender.clone(),
+            bot_notifications_sender.clone(),
         );
         tokio::spawn(reader.run());
     }
@@ -50,7 +59,7 @@ pub fn write_metrics<W: Write>(w: &mut W) {
     encoder.encode(&metrics, w).unwrap();
 }
 
-pub struct Notification {
+pub struct UserNotification {
     notifications_canister: CanisterId,
     index: u64,
     timestamp: TimestampMillis,
@@ -60,9 +69,27 @@ pub struct Notification {
     first_read_at: Instant,
 }
 
-pub struct NotificationToPush {
-    notification: Notification,
+pub struct UserNotificationToPush {
+    notification: UserNotification,
     message: WebPushMessage,
+}
+
+pub struct BotNotification {
+    notifications_canister: CanisterId,
+    index: u64,
+    timestamp: TimestampMillis,
+    endpoint: String,
+    payload: Vec<u8>,
+    first_read_at: Instant,
+}
+
+#[derive(CandidType)]
+pub struct BotNotificationPayload {
+    event_type: ChatEventType,
+    chat: Chat,
+    thread: Option<MessageIndex>,
+    event_index: EventIndex,
+    latest_event_index: EventIndex,
 }
 
 fn timestamp() -> TimestampMillis {
