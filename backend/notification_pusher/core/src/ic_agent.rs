@@ -1,6 +1,6 @@
 use ic_agent::identity::{BasicIdentity, Secp256k1Identity};
 use ic_agent::{Agent, Identity};
-use notifications_canister::{latest_notification_index, notifications, remove_notifications};
+use notifications_canister::{latest_notification_index, notifications_v2, remove_notifications};
 use notifications_index_canister::remove_subscriptions;
 use std::collections::HashMap;
 use tracing::trace;
@@ -28,19 +28,19 @@ impl IcAgent {
         Ok(IcAgent { agent })
     }
 
-    pub async fn notifications(
+    pub async fn notifications_v2(
         &self,
         notifications_canister_id: &CanisterId,
         from_notification_index: u64,
-    ) -> Result<notifications::SuccessResult, Error> {
-        let args = notifications::Args { from_notification_index };
+    ) -> Result<notifications_v2::SuccessResult, Error> {
+        let args = notifications_v2::Args { from_notification_index };
 
-        trace!(?args, "notifications::args");
+        trace!(?args, "notifications_v2::args");
 
-        let notifications::Response::Success(result) =
-            notifications_canister_client::notifications(&self.agent, notifications_canister_id, &args).await?;
+        let notifications_v2::Response::Success(result) =
+            notifications_canister_client::notifications_v2(&self.agent, notifications_canister_id, &args).await?;
 
-        trace!(?result, "notifications::result");
+        trace!(?result, "notifications_v2::result");
 
         Ok(result)
     }
