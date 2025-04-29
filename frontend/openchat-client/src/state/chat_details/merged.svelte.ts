@@ -1,6 +1,7 @@
+import { type ReadonlyMap, type ReadonlySet } from "openchat-shared";
 import { SvelteSet } from "svelte/reactivity";
-import { LocalMap, type ReadonlyMap } from "../map";
-import { type LocalSet, type ReadonlySet } from "../set";
+import { LocalMap } from "../map";
+import { type LocalSet } from "../set";
 import { chatDetailsLocalUpdates } from "./local.svelte";
 import { ChatDetailsServerState } from "./server";
 

@@ -1,51 +1,162 @@
-export class ObjectSet<V> {
-    public constructor(protected _set: Set<string> = new Set<string>()) {}
+import {
+    defaultDeserialiser,
+    defaultSerialiser,
+    type ChatIdentifier,
+    type Primitive,
+} from "../domain";
 
-    private toString(value: V): string {
-        return JSON.stringify(value);
+export interface ReadonlySet<V> extends Iterable<V> {
+    has(item: V): boolean;
+    get size(): number;
+    values(): IterableIterator<V>;
+    keys(): IterableIterator<V>;
+    entries(): IterableIterator<[V, V]>;
+    forEach(callbackfn: (value: V, value2: V, set: ReadonlySet<V>) => void): void;
+    [Symbol.iterator](): IterableIterator<V>;
+}
+
+export interface SetLike<V> {
+    add(value: V): this;
+    has(value: V): boolean;
+    delete(value: V): boolean;
+    clear(): void;
+    get size(): number;
+    keys(): IterableIterator<V>;
+    values(): IterableIterator<V>;
+    entries(): IterableIterator<[V, V]>;
+    [Symbol.iterator](): IterableIterator<V>;
+}
+
+export type SetFactory = () => SetLike<Primitive>;
+
+export class SafeSet<V> {
+    #isPrimitive: boolean;
+    #serialise: (key: V) => Primitive;
+    #deserialise: (key: Primitive) => V;
+    #set: SetLike<Primitive>;
+    #setFactory: SetFactory;
+
+    #newSet(): SafeSet<V> {
+        return this.#isPrimitive
+            ? new SafeSet<V>(undefined, undefined, this.#setFactory)
+            : new SafeSet<V>(this.#serialise, this.#deserialise, this.#setFactory);
     }
 
-    clone(): ObjectSet<V> {
-        const clone = new ObjectSet<V>(new Set(this._set));
+    public constructor(
+        serialiser?: (v: V) => Primitive,
+        deserialiser?: (primitive: Primitive) => V,
+        setFactory?: SetFactory,
+        set?: SetLike<Primitive>,
+    ) {
+        this.#isPrimitive = serialiser === undefined && deserialiser === undefined;
+        this.#serialise = serialiser ?? defaultSerialiser;
+        this.#deserialise = deserialiser ?? defaultDeserialiser;
+        this.#setFactory = setFactory ?? (() => new Set<Primitive>());
+        this.#set = set ?? (setFactory ? setFactory() : new Set<Primitive>());
+    }
+
+    clone(): SafeSet<V> {
+        const clone = this.#newSet();
+        for (const val of this) {
+            clone.add(val);
+        }
         return clone;
     }
 
-    empty(): ObjectSet<V> {
-        return new ObjectSet<V>();
+    forEach(callbackfn: (value: V, value2: V, set: ReadonlySet<V>) => void): void {
+        for (const value of this) {
+            callbackfn(value, value, this as unknown as ReadonlySet<V>);
+        }
+    }
+
+    entries(): IterableIterator<[V, V]> {
+        const set = this.#set;
+        const deserialise = (s: Primitive) => this.#deserialise(s);
+        const it = set.entries();
+        return {
+            [Symbol.iterator]() {
+                return this;
+            },
+            next(): IteratorResult<[V, V]> {
+                const result = it.next();
+                if (result.done) return { done: true, value: undefined };
+                const [serialisedVal] = result.value;
+                const originalVal = deserialise(serialisedVal);
+                return { done: false, value: [originalVal, originalVal] };
+            },
+        };
+    }
+
+    values(): IterableIterator<V> {
+        return this.keys();
+    }
+
+    keys(): IterableIterator<V> {
+        const set = this.#set;
+        const deserialise = (s: Primitive) => this.#deserialise(s);
+        const it = set.entries();
+        return {
+            [Symbol.iterator]() {
+                return this;
+            },
+            next(): IteratorResult<V> {
+                const result = it.next();
+                if (result.done) return { done: true, value: undefined };
+                const [serialisedVal] = result.value;
+                const originalVal = deserialise(serialisedVal);
+                return { done: false, value: originalVal };
+            },
+        };
+    }
+
+    [Symbol.iterator](): IterableIterator<V> {
+        return this.values();
+    }
+
+    empty(): SafeSet<V> {
+        return this.#newSet();
     }
 
     clear(): void {
-        this._set.clear();
-    }
-
-    values(): V[] {
-        return Array.from(this._set).map((value) => JSON.parse(value));
+        this.#set.clear();
     }
 
     delete(value: V): boolean {
-        return this._set.delete(this.toString(value));
+        const svalue = this.#serialise(value);
+        return this.#set.delete(svalue);
     }
 
     has(value: V): boolean {
-        return this._set.has(this.toString(value));
+        return this.#set.has(this.#serialise(value));
     }
 
     add(value: V): this {
-        this._set.add(this.toString(value));
+        const svalue = this.#serialise(value);
+        this.#set.add(svalue);
         return this;
     }
 
     get size(): number {
-        return this._set.size;
+        return this.#set.size;
     }
 
-    toSet(): Set<string> {
-        return this._set;
+    toSet(): SetLike<Primitive> {
+        return this.#set;
     }
 
-    static fromList<V>(values: V[]): ObjectSet<V> {
-        const set = new ObjectSet<V>();
+    static fromList<V>(values: V[]): SafeSet<V> {
+        const set = new SafeSet<V>();
         values.forEach((value) => set.add(value));
         return set;
+    }
+}
+
+export class ChatSet extends SafeSet<ChatIdentifier> {
+    constructor(values?: ChatIdentifier[]) {
+        super(
+            (k) => JSON.stringify(k),
+            (k) => JSON.parse(String(k)) as ChatIdentifier,
+        );
+        values?.forEach((v) => this.add(v));
     }
 }

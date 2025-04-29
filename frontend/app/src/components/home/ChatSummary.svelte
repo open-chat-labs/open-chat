@@ -13,7 +13,6 @@
         app,
         blockedUsers,
         chatIdentifiersEqual,
-        favouritesStore,
         messagesRead,
         pathState,
         publish,
@@ -105,7 +104,7 @@
     });
 
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
-        const fav = app.chatListScope.kind !== "favourite" && $favouritesStore.has(chatSummary.id);
+        const fav = app.chatListScope.kind !== "favourite" && app.favourites.has(chatSummary.id);
         const muted = chatSummary.membership.notificationsMuted;
         const video = chatSummary.videoCallInProgress
             ? { muted: muted ? 1 : 0, unmuted: muted ? 0 : 1 }
@@ -462,7 +461,7 @@
                             {/snippet}
                             {#snippet menuItems()}
                                 <Menu>
-                                    {#if !$favouritesStore.has(chatSummary.id)}
+                                    {#if !app.favourites.has(chatSummary.id)}
                                         <MenuItem onclick={addToFavourites}>
                                             {#snippet icon()}
                                                 <HeartPlus

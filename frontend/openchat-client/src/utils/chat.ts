@@ -68,11 +68,11 @@ import {
     OPENCHAT_VIDEO_CALL_AVATAR_URL,
     OPENCHAT_VIDEO_CALL_USER_ID,
     random64,
+    type ReadonlySet,
     updateFromOptions,
 } from "openchat-shared";
 import { get } from "svelte/store";
 import { app } from "../state/app.svelte";
-import type { ReadonlySet } from "../state/set";
 import { cryptoLookup } from "../stores/crypto";
 import type { MessageFilter } from "../stores/messageFilters";
 import { tallyKey } from "../stores/proposalTallies";

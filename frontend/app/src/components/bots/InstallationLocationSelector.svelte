@@ -1,7 +1,7 @@
 <script lang="ts">
     import {
+        app,
         AvatarSize,
-        globalStateStore,
         i18nKey,
         OpenChat,
         type BotInstallationLocation,
@@ -39,11 +39,9 @@
     onMount(() => onPerformSearch(""));
 
     function onPerformSearch(term: string) {
-        const globalState = $globalStateStore;
-
         const termLower = term.toLowerCase();
 
-        const communities: Match[] = [...globalState.communities.values()]
+        const communities: Match[] = [...app.communities.values()]
             .filter((c) => termLower === "" || c.name.toLowerCase().includes(termLower))
             .map((c) => ({
                 avatarUrl: client.communityAvatarUrl(c.id.communityId, c.avatar),
@@ -52,7 +50,7 @@
                 isCommunity: true,
             }));
 
-        const groups: Match[] = [...globalState.groupChats.values()]
+        const groups: Match[] = [...app.groupChats.values()]
             .filter((g) => termLower === "" || g.name.toLowerCase().includes(termLower))
             .map((g) => ({
                 avatarUrl: client.groupAvatarUrl(g),

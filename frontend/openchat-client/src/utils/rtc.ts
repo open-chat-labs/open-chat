@@ -4,15 +4,15 @@ import {
     toBigInt64,
     type ChatIdentifier,
     type ChatSummary,
-    type MessageContent,
-    type WebRtcMessage,
     type CommunityIdentifier,
+    type MessageContent,
     type RemoteVideoCallStarted,
+    type WebRtcMessage,
 } from "openchat-shared";
-import { selectedChatStore } from "../stores/chat";
 import { get } from "svelte/store";
+import { app } from "../state/app.svelte";
 import { blockedUsers } from "../stores/blockedUsers";
-import { globalStateStore } from "../stores/global";
+import { selectedChatStore } from "../stores/chat";
 
 export function messageIsForSelectedChat(msg: WebRtcMessage): boolean {
     const chat = findChatByChatType(msg);
@@ -37,18 +37,17 @@ export function createRemoteVideoStartedEvent(msg: RemoteVideoCallStarted) {
 }
 
 function findChatByChatType(msg: WebRtcMessage): ChatSummary | undefined {
-    const state = get(globalStateStore);
     switch (msg.id.kind) {
         case "direct_chat":
-            return state.directChats.get({ kind: "direct_chat", userId: msg.userId });
+            return app.directChats.get({ kind: "direct_chat", userId: msg.userId });
         case "group_chat":
-            return state.groupChats.get(msg.id);
+            return app.groupChats.get(msg.id);
         case "channel":
             const communityId: CommunityIdentifier = {
                 kind: "community",
                 communityId: msg.id.communityId,
             };
-            const channels = state.communities.get(communityId)?.channels ?? [];
+            const channels = app.communities.get(communityId)?.channels ?? [];
             const channelId = msg.id.channelId;
             return channels.find((c) => c.id.channelId === channelId);
     }

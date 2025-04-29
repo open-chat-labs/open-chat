@@ -6,12 +6,8 @@
         anonUser,
         app,
         currentUser as createdUser,
-        directVideoCallCounts,
         emptyCombinedUnreadCounts,
-        favouritesStore,
-        favouritesVideoCallCounts,
         globalStateStore as globalState,
-        groupVideoCallCounts,
         pathState,
         publish,
         ui,
@@ -157,7 +153,7 @@
             selected={app.chatListScope.kind === "direct_chat" && !communityExplorer}
             label={i18nKey("communities.directChats")}
             unread={$unreadDirectCounts.chats}
-            video={$directVideoCallCounts}
+            video={app.directVideoCallCounts}
             onClick={directChats}>
             <div class="hover direct">
                 <MessageOutline size={iconSize} color={"var(--icon-txt)"} />
@@ -167,18 +163,18 @@
             selected={app.chatListScope.kind === "group_chat" && !communityExplorer}
             label={i18nKey("communities.groupChats")}
             unread={client.mergeCombinedUnreadCounts($unreadGroupCounts)}
-            video={$groupVideoCallCounts}
+            video={app.groupVideoCallCounts}
             onClick={groupChats}>
             <div class="hover direct">
                 <ForumOutline size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
-        {#if $favouritesStore.size > 0}
+        {#if app.favourites.size > 0}
             <LeftNavItem
                 selected={app.chatListScope.kind === "favourite" && !communityExplorer}
                 label={i18nKey("communities.favourites")}
                 unread={client.mergeCombinedUnreadCounts($unreadFavouriteCounts)}
-                video={$favouritesVideoCallCounts}
+                video={app.favouritesVideoCallCounts}
                 onClick={favouriteChats}>
                 <div class="hover favs">
                     <HeartOutline size={iconSize} color={"var(--icon-txt)"} />

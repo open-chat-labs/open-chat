@@ -139,6 +139,8 @@ import type {
     ProposalVoteDetails,
     ProposeResponse,
     PublicProfile,
+    ReadonlyMap,
+    ReadonlySet,
     RegisterProposalVoteResponse,
     RegisterUserResponse,
     RejectReason,
@@ -280,9 +282,7 @@ import { app } from "./state/app.svelte";
 import { botState } from "./state/bots.svelte";
 import { type CommunityMergedState } from "./state/community_details";
 import { localUpdates } from "./state/global";
-import type { ReadonlyMap } from "./state/map";
 import { pathState, type RouteParams } from "./state/path.svelte";
-import type { ReadonlySet } from "./state/set";
 import { ui } from "./state/ui.svelte";
 import type { UndoLocalUpdate } from "./state/undo";
 import { blockedUsers } from "./stores/blockedUsers";
@@ -326,12 +326,7 @@ import {
     toggleProposalFilterMessageExpansion,
 } from "./stores/filteredProposals";
 import { hasFlag } from "./stores/flagStore";
-import {
-    chatListScopeStore,
-    globalStateStore,
-    mergeCombinedUnreadCounts,
-    setGlobalState,
-} from "./stores/global";
+import { chatListScopeStore, mergeCombinedUnreadCounts, setGlobalState } from "./stores/global";
 import { applyTranslationCorrection } from "./stores/i18n";
 import { lastOnlineDates } from "./stores/lastOnlineDates";
 import { localChatSummaryUpdates } from "./stores/localChatSummaryUpdates";
@@ -7814,22 +7809,22 @@ export class OpenChat {
     }
 
     addToFavourites(chatId: ChatIdentifier): Promise<boolean> {
-        localChatSummaryUpdates.favourite(chatId);
+        const undo = localUpdates.favourite(chatId);
         return this.#sendRequest({ kind: "addToFavourites", chatId })
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    localChatSummaryUpdates.unfavourite(chatId);
+                    undo();
                 }
                 return resp.kind === "success";
             })
             .catch(() => {
-                localChatSummaryUpdates.unfavourite(chatId);
+                undo();
                 return false;
             });
     }
 
     removeFromFavourites(chatId: ChatIdentifier): Promise<boolean> {
-        localChatSummaryUpdates.unfavourite(chatId);
+        const undo = localUpdates.unfavourite(chatId);
         if (this.#liveState.chatSummariesList.length === 0) {
             publish("selectedChatInvalid");
         }
@@ -7837,12 +7832,12 @@ export class OpenChat {
         return this.#sendRequest({ kind: "removeFromFavourites", chatId })
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    localChatSummaryUpdates.favourite(chatId);
+                    undo();
                 }
                 return resp.kind === "success";
             })
             .catch(() => {
-                localChatSummaryUpdates.favourite(chatId);
+                undo();
                 return false;
             });
     }
@@ -7874,10 +7869,7 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    globalStateStore.update((g) => {
-                        g.communities.set(community.id, community);
-                        return g;
-                    });
+                    localUpdates.addCommunity(community);
                     if (rules !== undefined && resp.rulesVersion !== undefined) {
                         localUpdates.updateCommunityRules(community.id, {
                             text: rules.text,
@@ -7994,10 +7986,9 @@ export class OpenChat {
         // we actually need to direct the user to one of the global scopes "direct", "group" or "favourites"
         // which one we choose is kind of unclear and probably depends on the state
 
-        const global = this.#liveState.globalState;
-        const favourites = this.#liveState.favourites;
+        const favourites = app.favourites;
         if (favourites.size > 0) return { kind: "favourite" };
-        if (global.groupChats.size > 0) return { kind: "group_chat" };
+        if (app.groupChats.size > 0) return { kind: "group_chat" };
         return { kind: "direct_chat" };
     }
 

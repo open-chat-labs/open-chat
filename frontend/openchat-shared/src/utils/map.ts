@@ -12,6 +12,17 @@ import {
 } from "../domain";
 import type { ChatIdentifier, MessageContext } from "../domain/chat";
 
+export interface ReadonlyMap<K, V> {
+    get(key: K): V | undefined;
+    has(key: K): boolean;
+    get size(): number;
+    [Symbol.iterator](): Iterator<[K, V]>;
+    entries(): IterableIterator<[K, V]>;
+    keys(): IterableIterator<K>;
+    values(): IterableIterator<V>;
+    forEach(callback: (value: V, key: K, map: ReadonlyMap<K, V>) => void): void;
+}
+
 export interface MapLike<K, V> {
     set(key: K, value: V): this;
     get(key: K): V | undefined;

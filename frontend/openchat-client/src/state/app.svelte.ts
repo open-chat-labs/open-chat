@@ -5,18 +5,24 @@ import {
     chatIdentifiersEqual,
     type ChatListScope,
     chatListScopesEqual,
+    ChatMap,
+    ChatSet,
+    type ChatSummary,
     type ChitState,
     type CommunityIdentifier,
     communityIdentifiersEqual,
     CommunityMap,
     type CommunitySummary,
     type DirectChatIdentifier,
+    type DirectChatSummary,
     type ExternalBotPermissions,
+    type GroupChatSummary,
     type IdentityState,
     type Member,
     type MessageContext,
     messageContextsEqual,
     type PublicApiKeyDetails,
+    type ReadonlyMap,
     SafeMap,
     type StreakInsurance,
     type UserGroupDetails,
@@ -32,7 +38,6 @@ import { communityLocalUpdates } from "./community_details";
 import { CommunityMergedState } from "./community_details/merged.svelte";
 import { CommunityServerState } from "./community_details/server";
 import { localUpdates } from "./global";
-import { type ReadonlyMap } from "./map";
 import { pathState } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
 
@@ -90,7 +95,43 @@ class AppState {
         return this.#serverDirectChatApiKeys;
     });
 
+    #serverDirectChats = $state<ChatMap<DirectChatSummary>>(new ChatMap());
+
+    #serverGroupChats = $state<ChatMap<GroupChatSummary>>(new ChatMap());
+
+    #serverFavourites = $state<ChatSet>(new ChatSet());
+
+    #favourites = $derived.by(() => {
+        return localUpdates.favourites.apply(this.#serverFavourites);
+    });
+
     #serverCommunities = $state<CommunityMap<CommunitySummary>>(new CommunityMap());
+
+    #scopedServerChats = $derived.by(() => {
+        switch (this.#chatListScope.kind) {
+            case "community": {
+                const community = this.serverCommunities.get(this.#chatListScope.id);
+                return community
+                    ? ChatMap.fromList(community.channels)
+                    : new ChatMap<ChatSummary>();
+            }
+            case "group_chat":
+                return this.serverGroupChats;
+            case "direct_chat":
+                return this.serverDirectChats;
+            case "favourite": {
+                return [...this.favourites.values()].reduce((favs, chatId) => {
+                    const chat = this.#allServerChats.get(chatId);
+                    if (chat !== undefined) {
+                        favs.set(chat.id, chat);
+                    }
+                    return favs;
+                }, new ChatMap<ChatSummary>());
+            }
+            default:
+                return new ChatMap<ChatSummary>();
+        }
+    });
 
     #serverPinnedChats = $state<Map<ChatListScope["kind"], ChatIdentifier[]>>(new Map());
 
@@ -161,6 +202,29 @@ class AppState {
             map.set(id, videoCallsInProgressForChats(community.channels));
             return map;
         }, new CommunityMap<VideoCallCounts>());
+    });
+
+    #allServerChats = $derived.by(() => {
+        const groupChats = this.#serverGroupChats.values();
+        const directChats = this.#serverDirectChats.values();
+        const channels = [...this.#serverCommunities.values()].flatMap((c) => c.channels);
+        return ChatMap.fromList([...groupChats, ...directChats, ...channels]);
+    });
+
+    //TODO should this be operating on merged group chats?
+    #groupVideoCallCounts = $derived.by(() => {
+        return videoCallsInProgressForChats([...this.#serverGroupChats.values()]);
+    });
+
+    //TODO should this be operating on merged group chats?
+    #directVideoCallCounts = $derived.by(() => {
+        return videoCallsInProgressForChats([...this.#serverDirectChats.values()]);
+    });
+
+    //TODO should this be operating on merged group chats?
+    #favouritesVideoCallCounts = $derived.by(() => {
+        const chats = [...this.#favourites.values()].map((id) => this.#allServerChats.get(id));
+        return videoCallsInProgressForChats(chats);
     });
 
     #identityState = $state<IdentityState>({ kind: "loading_user" });
@@ -398,6 +462,44 @@ class AppState {
         }
     }
 
+    get serverDirectChats() {
+        return this.#serverDirectChats;
+    }
+
+    set serverDirectChats(val: ChatMap<DirectChatSummary>) {
+        this.#serverDirectChats = val;
+    }
+
+    get serverGroupChats() {
+        return this.#serverGroupChats;
+    }
+
+    set serverGroupChats(val: ChatMap<GroupChatSummary>) {
+        this.#serverGroupChats = val;
+    }
+
+    get serverFavourites() {
+        return this.#serverFavourites;
+    }
+
+    get favourites() {
+        return this.#favourites;
+    }
+
+    get groupChats() {
+        // TODO - this will ultimately include local updates
+        return this.#serverGroupChats;
+    }
+
+    get directChats() {
+        // TODO - this will ultimately include local updates
+        return this.#serverDirectChats;
+    }
+
+    set serverFavourites(val: ChatSet) {
+        this.#serverFavourites = val;
+    }
+
     set serverCommunities(val: CommunityMap<CommunitySummary>) {
         this.#serverCommunities = val;
     }
@@ -408,6 +510,10 @@ class AppState {
 
     get serverCommunities() {
         return this.#serverCommunities;
+    }
+
+    get scopedServerChats() {
+        return this.#scopedServerChats;
     }
 
     get communities() {
@@ -424,6 +530,18 @@ class AppState {
 
     get communityChannelVideoCallCounts(): ReadonlyMap<CommunityIdentifier, VideoCallCounts> {
         return this.#communityChannelVideoCallCounts;
+    }
+
+    get groupVideoCallCounts(): VideoCallCounts {
+        return this.#groupVideoCallCounts;
+    }
+
+    get directVideoCallCounts(): VideoCallCounts {
+        return this.#directVideoCallCounts;
+    }
+
+    get favouritesVideoCallCounts(): VideoCallCounts {
+        return this.#favouritesVideoCallCounts;
     }
 
     isPreviewingCommunity(id: CommunityIdentifier) {

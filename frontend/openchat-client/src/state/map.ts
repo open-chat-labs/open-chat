@@ -1,34 +1,24 @@
 import {
     SafeMap,
+    SafeSet,
     type ChatIdentifier,
     type CommunityIdentifier,
     type Primitive,
+    type ReadonlyMap,
 } from "openchat-shared";
-import { SvelteMap } from "svelte/reactivity";
-import { ReactiveSafeSet } from "./set";
+import { SvelteMap, SvelteSet } from "svelte/reactivity";
 import { scheduleUndo, type UndoLocalUpdate } from "./undo";
-
-export interface ReadonlyMap<K, V> {
-    get(key: K): V | undefined;
-    has(key: K): boolean;
-    get size(): number;
-    [Symbol.iterator](): Iterator<[K, V]>;
-    entries(): IterableIterator<[K, V]>;
-    keys(): IterableIterator<K>;
-    values(): IterableIterator<V>;
-    forEach(callback: (value: V, key: K, map: ReadonlyMap<K, V>) => void): void;
-}
 
 export class LocalMap<K, V> {
     #addedOrUpdated: SafeMap<K, V>;
-    #removed: ReactiveSafeSet<K>;
+    #removed: SafeSet<K>;
 
     constructor(
         private serialiser?: (k: K) => Primitive,
         private deserialiser?: (p: Primitive) => K,
     ) {
         this.#addedOrUpdated = new SafeMap(serialiser, deserialiser, () => new SvelteMap());
-        this.#removed = new ReactiveSafeSet(serialiser);
+        this.#removed = new SafeSet(serialiser, deserialiser, () => new SvelteSet());
     }
 
     // for testing
