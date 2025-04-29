@@ -3,7 +3,7 @@
         isAccepted: (_unconf: unknown, evt: EventWrapper<ChatEventType>) => boolean;
         isConfirmed: (_unconf: unknown, evt: EventWrapper<ChatEventType>) => boolean;
         isFailed: (_failed: unknown, evt: EventWrapper<ChatEventType>) => boolean;
-        isReadByMe: (_store: unknown, evt: EventWrapper<ChatEventType>) => boolean;
+        isReadByMe: (evt: EventWrapper<ChatEventType>) => boolean;
         messageObserver: IntersectionObserver | undefined;
         labelObserver: IntersectionObserver | undefined;
         focusIndex: number | undefined;
@@ -560,7 +560,7 @@
         return false;
     }
 
-    function isReadByMe(_store: unknown, evt: EventWrapper<ChatEventType>): boolean {
+    function isReadByMe(evt: EventWrapper<ChatEventType>): boolean {
         if (readonly || (evt.event.kind === "message" && evt.event.sender === userId)) return true;
 
         if (evt.event.kind === "message" || evt.event.kind === "aggregate_common_events") {

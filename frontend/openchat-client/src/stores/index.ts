@@ -11,7 +11,7 @@ export * from "./flagStore";
 export * from "./global";
 export * from "./localMessageUpdates";
 export * from "./localStorageSetting";
-export * from "./markRead";
+export * from "./markRead.svelte";
 export * from "./messageFilters";
 export * from "./minutesOnline";
 export * from "./network";

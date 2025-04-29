@@ -10,6 +10,7 @@ import {
     ChatSet,
     type ChatSummary,
     type ChitState,
+    type CombinedUnreadCounts,
     type CommunityIdentifier,
     communityIdentifiersEqual,
     CommunityMap,
@@ -20,6 +21,7 @@ import {
     type GroupChatSummary,
     type IdentityState,
     type Member,
+    mergeListOfCombinedUnreadCounts,
     type MessageActivitySummary,
     type MessageContext,
     messageContextsEqual,
@@ -35,7 +37,7 @@ import {
     videoCallsInProgressForChats,
     type WalletConfig,
 } from "openchat-shared";
-import type { PinnedByScope } from "../stores";
+import { messagesRead, type PinnedByScope } from "../stores";
 import { chatDetailsLocalUpdates, ChatDetailsMergedState } from "./chat_details";
 import { ChatDetailsServerState } from "./chat_details/server";
 import { communityLocalUpdates } from "./community_details";
@@ -131,6 +133,43 @@ class AppState {
 
     #favourites = $derived.by(() => {
         return localUpdates.favourites.apply(this.#serverFavourites);
+    });
+
+    #unreadGroupCounts = $derived.by(() => {
+        return messagesRead.combinedUnreadCountForChats(this.#serverGroupChats);
+    });
+
+    #unreadDirectCounts = $derived.by(() => {
+        return messagesRead.combinedUnreadCountForChats(this.#serverDirectChats);
+    });
+
+    #unreadFavouriteCounts = $derived.by(() => {
+        const chats = ChatMap.fromList(
+            [...this.serverFavourites.values()]
+                .map((id) => this.#allServerChats.get(id))
+                .filter((chat) => chat !== undefined),
+        );
+        return messagesRead.combinedUnreadCountForChats(chats);
+    });
+
+    #unreadCommunityChannelCounts = $derived.by(() => {
+        return this.#serverCommunities.reduce((map, [id, community]) => {
+            map.set(
+                id,
+                messagesRead.combinedUnreadCountForChats(ChatMap.fromList(community.channels)),
+            );
+            return map;
+        }, new CommunityMap<CombinedUnreadCounts>());
+    });
+
+    #globalUnreadCount = $derived.by(() => {
+        return mergeListOfCombinedUnreadCounts([
+            this.#unreadGroupCounts,
+            this.#unreadDirectCounts,
+            mergeListOfCombinedUnreadCounts(
+                Array.from(this.#unreadCommunityChannelCounts.values()),
+            ),
+        ]);
     });
 
     #serverCommunities = $state<CommunityMap<CommunitySummary>>(new CommunityMap());
@@ -321,6 +360,26 @@ class AppState {
     #selectedChat = $state<ChatDetailsMergedState>(
         new ChatDetailsMergedState(ChatDetailsServerState.empty()),
     );
+
+    get unreadGroupCounts() {
+        return this.#unreadGroupCounts;
+    }
+
+    get unreadDirectCounts() {
+        return this.#unreadDirectCounts;
+    }
+
+    get unreadFavouriteCounts() {
+        return this.#unreadFavouriteCounts;
+    }
+
+    get unreadCommunityChannelCounts() {
+        return this.#unreadCommunityChannelCounts;
+    }
+
+    get globalUnreadCount() {
+        return this.#globalUnreadCount;
+    }
 
     set serverMessageActivitySummary(val: MessageActivitySummary) {
         this.#serverMessageActivitySummary = val;

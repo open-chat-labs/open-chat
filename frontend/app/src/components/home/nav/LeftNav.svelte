@@ -10,10 +10,6 @@
         pathState,
         publish,
         ui,
-        unreadCommunityChannelCounts,
-        unreadDirectCounts,
-        unreadFavouriteCounts,
-        unreadGroupCounts,
         userStore,
     } from "openchat-client";
     import page from "page";
@@ -149,7 +145,7 @@
         <LeftNavItem
             selected={app.chatListScope.kind === "direct_chat" && !communityExplorer}
             label={i18nKey("communities.directChats")}
-            unread={$unreadDirectCounts.chats}
+            unread={app.unreadDirectCounts.chats}
             video={app.directVideoCallCounts}
             onClick={directChats}>
             <div class="hover direct">
@@ -159,7 +155,7 @@
         <LeftNavItem
             selected={app.chatListScope.kind === "group_chat" && !communityExplorer}
             label={i18nKey("communities.groupChats")}
-            unread={client.mergeCombinedUnreadCounts($unreadGroupCounts)}
+            unread={client.mergeCombinedUnreadCounts(app.unreadGroupCounts)}
             video={app.groupVideoCallCounts}
             onClick={groupChats}>
             <div class="hover direct">
@@ -170,7 +166,7 @@
             <LeftNavItem
                 selected={app.chatListScope.kind === "favourite" && !communityExplorer}
                 label={i18nKey("communities.favourites")}
-                unread={client.mergeCombinedUnreadCounts($unreadFavouriteCounts)}
+                unread={client.mergeCombinedUnreadCounts(app.unreadFavouriteCounts)}
                 video={app.favouritesVideoCallCounts}
                 onClick={favouriteChats}>
                 <div class="hover favs">
@@ -232,7 +228,7 @@
                         unmuted: 0,
                     }}
                     unread={client.mergeCombinedUnreadCounts(
-                        $unreadCommunityChannelCounts.get(community.id) ??
+                        app.unreadCommunityChannelCounts.get(community.id) ??
                             emptyCombinedUnreadCounts(),
                     )}
                     label={i18nKey(community.name)}

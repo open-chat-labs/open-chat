@@ -1,5 +1,3 @@
-import { MessageReadTracker, MessagesRead } from "./markRead";
-import { type UnconfirmedState, unconfirmed } from "./unconfirmed";
 import {
     MessageContextMap,
     type EventWrapper,
@@ -7,6 +5,8 @@ import {
     type Message,
 } from "openchat-shared";
 import { vi } from "vitest";
+import { MessageReadTracker, MessagesRead } from "./markRead.svelte";
+import { unconfirmed, type UnconfirmedState } from "./unconfirmed";
 
 const abcId: GroupChatIdentifier = { kind: "group_chat", groupId: "abc" };
 
@@ -40,35 +40,35 @@ describe("mark messages read", () => {
         vi.useFakeTimers();
         const mockedUnconfirmed = new MessageContextMap<UnconfirmedState>();
         unconfirmed.clear(mockedUnconfirmed);
-        if (markRead.waiting.get({ chatId: abcId }) !== undefined) {
-            markRead.waiting.get({ chatId: abcId })?.clear();
+        if (markRead.#waiting.get({ chatId: abcId }) !== undefined) {
+            markRead.#waiting.get({ chatId: abcId })?.clear();
         }
-        markRead.state.set(abcId, new MessagesRead());
-        markRead.serverState.set(abcId, new MessagesRead());
+        markRead.#localState.set(abcId, new MessagesRead());
+        markRead.#serverState.set(abcId, new MessagesRead());
         markRead.publish();
     });
 
     test("mark unconfirmed message as read", () => {
         unconfirmed.add({ chatId: abcId }, createDummyMessage(BigInt(100)));
         markRead.markMessageRead({ chatId: abcId }, 200, BigInt(100));
-        expect(markRead.waiting.get({ chatId: abcId })?.has(BigInt(100))).toBe(true);
+        expect(markRead.#waiting.get({ chatId: abcId })?.has(BigInt(100))).toBe(true);
     });
 
     test("mark confirmed message as read", () => {
         const mr = new MessagesRead();
         mr.readUpTo = 199;
-        markRead.state.set(abcId, mr);
+        markRead.#localState.set(abcId, mr);
         markRead.markMessageRead({ chatId: abcId }, 200, BigInt(500));
-        expect(markRead.waiting.get({ chatId: abcId })?.has(BigInt(500))).toBe(false);
-        expect(markRead.state.get(abcId)?.readUpTo).toBe(200);
+        expect(markRead.#waiting.get({ chatId: abcId })?.has(BigInt(500))).toBe(false);
+        expect(markRead.#localState.get(abcId)?.readUpTo).toBe(200);
     });
 
     test("confirm message", () => {
-        markRead.waiting.get({ chatId: abcId })?.set(BigInt(100), 100);
+        markRead.#waiting.get({ chatId: abcId })?.set(BigInt(100), 100);
         markRead.markMessageRead({ chatId: abcId }, 200, BigInt(100));
         markRead.confirmMessage({ chatId: abcId }, 200, BigInt(100));
-        expect(markRead.waiting.get({ chatId: abcId })?.has(BigInt(100))).toBe(false);
-        expect(markRead.state.get(abcId)?.readUpTo).toBe(200);
+        expect(markRead.#waiting.get({ chatId: abcId })?.has(BigInt(100))).toBe(false);
+        expect(markRead.#localState.get(abcId)?.readUpTo).toBe(200);
     });
 
     describe("thread stuff", () => {
@@ -87,8 +87,8 @@ describe("mark messages read", () => {
             },
         ];
         beforeEach(() => {
-            markRead.state.set(abcId, new MessagesRead());
-            markRead.serverState.set(abcId, new MessagesRead());
+            markRead.#localState.set(abcId, new MessagesRead());
+            markRead.#serverState.set(abcId, new MessagesRead());
         });
 
         describe("unread message count", () => {
@@ -201,10 +201,10 @@ describe("mark messages read", () => {
     describe("unread message count", () => {
         describe("when all messages are confirmed", () => {
             test("with no latest message + waiting local messages", () => {
-                markRead.waiting.set({ chatId: abcId }, new Map<bigint, number>());
-                markRead.waiting.get({ chatId: abcId })?.set(BigInt(0), 0);
-                markRead.waiting.get({ chatId: abcId })?.set(BigInt(1), 1);
-                markRead.waiting.get({ chatId: abcId })?.set(BigInt(2), 2);
+                markRead.#waiting.set({ chatId: abcId }, new Map<bigint, number>());
+                markRead.#waiting.get({ chatId: abcId })?.set(BigInt(0), 0);
+                markRead.#waiting.get({ chatId: abcId })?.set(BigInt(1), 1);
+                markRead.#waiting.get({ chatId: abcId })?.set(BigInt(2), 2);
                 expect(markRead.unreadMessageCount(abcId, undefined)).toEqual(0);
             });
             test("with no latest message", () => {
@@ -216,13 +216,13 @@ describe("mark messages read", () => {
             test("with server state only", () => {
                 const mr = new MessagesRead();
                 mr.readUpTo = 20;
-                markRead.serverState.set(abcId, mr);
+                markRead.#serverState.set(abcId, mr);
                 expect(markRead.unreadMessageCount(abcId, 50)).toEqual(30);
             });
             test("with local state only", () => {
                 const mr = new MessagesRead();
                 mr.readUpTo = 30;
-                markRead.state.set(abcId, mr);
+                markRead.#localState.set(abcId, mr);
                 expect(markRead.unreadMessageCount(abcId, 50)).toEqual(20);
             });
             test("with server state ahead of local state", () => {
@@ -230,8 +230,8 @@ describe("mark messages read", () => {
                 mr.readUpTo = 90;
                 const ms = new MessagesRead();
                 ms.readUpTo = 50;
-                markRead.serverState.set(abcId, mr);
-                markRead.state.set(abcId, ms);
+                markRead.#serverState.set(abcId, mr);
+                markRead.#localState.set(abcId, ms);
                 expect(markRead.unreadMessageCount(abcId, 100)).toEqual(10);
             });
             test("with local state ahead of server state", () => {
@@ -239,19 +239,19 @@ describe("mark messages read", () => {
                 mr.readUpTo = 90;
                 const ms = new MessagesRead();
                 ms.readUpTo = 50;
-                markRead.serverState.set(abcId, mr);
-                markRead.state.set(abcId, ms);
+                markRead.#serverState.set(abcId, mr);
+                markRead.#localState.set(abcId, ms);
                 expect(markRead.unreadMessageCount(abcId, 100)).toEqual(10);
             });
         });
         describe("when some messages are unconfirmed", () => {
             test("with multiple gaps", () => {
-                markRead.waiting.get({ chatId: abcId })?.set(BigInt(1), 11);
-                markRead.waiting.get({ chatId: abcId })?.set(BigInt(2), 12);
-                markRead.waiting.get({ chatId: abcId })?.set(BigInt(3), 13);
+                markRead.#waiting.get({ chatId: abcId })?.set(BigInt(1), 11);
+                markRead.#waiting.get({ chatId: abcId })?.set(BigInt(2), 12);
+                markRead.#waiting.get({ chatId: abcId })?.set(BigInt(3), 13);
                 const mr = new MessagesRead();
                 mr.readUpTo = 10;
-                markRead.serverState.set(abcId, mr);
+                markRead.#serverState.set(abcId, mr);
                 expect(markRead.unreadMessageCount(abcId, 100)).toEqual(87);
             });
         });
