@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Implement pushing notifications to bots ([#7857](https://github.com/open-chat-labs/open-chat/pull/7857))
+
 ### Changed
 
 - Split user notifications into separate module ([#7851](https://github.com/open-chat-labs/open-chat/pull/7851))
