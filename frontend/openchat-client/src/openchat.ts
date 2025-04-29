@@ -326,7 +326,7 @@ import {
     toggleProposalFilterMessageExpansion,
 } from "./stores/filteredProposals";
 import { hasFlag } from "./stores/flagStore";
-import { chatListScopeStore, mergeCombinedUnreadCounts, setGlobalState } from "./stores/global";
+import { chatListScopeStore, mergeCombinedUnreadCounts } from "./stores/global";
 import { applyTranslationCorrection } from "./stores/i18n";
 import { lastOnlineDates } from "./stores/lastOnlineDates";
 import { localChatSummaryUpdates } from "./stores/localChatSummaryUpdates";
@@ -6026,7 +6026,7 @@ export class OpenChat {
                 }
             }
 
-            setGlobalState(
+            app.setGlobalState(
                 chatsResponse.state.communities,
                 chats,
                 chatsResponse.state.favouriteChats,

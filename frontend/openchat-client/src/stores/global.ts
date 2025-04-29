@@ -1,25 +1,11 @@
 /* eslint-disable no-case-declarations */
 import {
     ChatMap,
-    ChatSet,
     CommunityMap,
-    SafeMap,
     chatScopesEqual,
-    type ChannelSummary,
     type ChatIdentifier,
     type ChatListScope,
     type ChatSummary,
-    type ChitState,
-    type CommunityIdentifier,
-    type CommunitySummary,
-    type DirectChatSummary,
-    type ExternalBotPermissions,
-    type GroupChatSummary,
-    type MessageActivitySummary,
-    type PublicApiKeyDetails,
-    type Referral,
-    type StreakInsurance,
-    type WalletConfig,
 } from "openchat-shared";
 import { derived } from "svelte/store";
 import { app } from "../state/app.svelte";
@@ -210,87 +196,3 @@ export const globalUnreadCount = derived(
         ]);
     },
 );
-
-export function setGlobalState(
-    communities: CommunitySummary[],
-    allChats: ChatSummary[],
-    favourites: ChatIdentifier[],
-    pinnedChats: PinnedByScope,
-    achievements: Set<string>,
-    chitState: ChitState,
-    referrals: Referral[],
-    walletConfig: WalletConfig,
-    messageActivitySummary: MessageActivitySummary,
-    installedBots: Map<string, ExternalBotPermissions>,
-    apiKeys: Map<string, PublicApiKeyDetails>,
-    streakInsurance: StreakInsurance | undefined,
-): void {
-    const [channelsMap, directChats, groupChats] = partitionChats(allChats);
-
-    const communitiesMap = CommunityMap.fromList(communities);
-    const directChatsMap = ChatMap.fromList(directChats);
-    const groupChatsMap = ChatMap.fromList(groupChats);
-    const favouritesSet = new ChatSet(favourites);
-    for (const [communityId, channels] of channelsMap) {
-        const community = communitiesMap.get(communityId);
-        if (community !== undefined) {
-            community.channels = channels;
-        }
-    }
-
-    app.serverMessageActivitySummary = messageActivitySummary;
-    app.achievements = achievements;
-    app.referrals = referrals;
-    app.serverDirectChats = directChatsMap;
-    app.serverGroupChats = groupChatsMap;
-    app.serverFavourites = favouritesSet;
-    app.serverCommunities = communitiesMap;
-    app.serverPinnedChats = pinnedChats;
-    app.directChatApiKeys = apiKeys;
-    app.directChatBots = SafeMap.fromEntries(installedBots.entries());
-    app.serverWalletConfig = walletConfig;
-    if (streakInsurance !== undefined) {
-        app.serverStreakInsurance = streakInsurance;
-    }
-    app.updateChitState((curr) => {
-        // Skip the new update if it is behind what we already have locally
-        const skipUpdate = chitState.streakEnds < curr.streakEnds;
-        return skipUpdate ? curr : chitState;
-    });
-}
-
-function partitionChats(
-    allChats: ChatSummary[],
-): [CommunityMap<ChannelSummary[]>, DirectChatSummary[], GroupChatSummary[]] {
-    const [channels, direct, group] = allChats.reduce(
-        ([channels, direct, group], chat) => {
-            switch (chat.kind) {
-                case "channel":
-                    channels.push(chat);
-                    break;
-                case "direct_chat":
-                    direct.push(chat);
-                    break;
-                case "group_chat":
-                    group.push(chat);
-                    break;
-            }
-            return [channels, direct, group];
-        },
-        [[], [], []] as [ChannelSummary[], DirectChatSummary[], GroupChatSummary[]],
-    );
-    return [channelsByCommunityId(channels), direct, group];
-}
-
-function channelsByCommunityId(chats: ChannelSummary[]): CommunityMap<ChannelSummary[]> {
-    return chats.reduce((acc, chat) => {
-        const communityId: CommunityIdentifier = {
-            kind: "community",
-            communityId: chat.id.communityId,
-        };
-        const channels = acc.get(communityId) ?? [];
-        channels.push(chat);
-        acc.set(communityId, channels);
-        return acc;
-    }, new CommunityMap<ChannelSummary[]>());
-}
