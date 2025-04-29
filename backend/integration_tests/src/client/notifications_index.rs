@@ -47,7 +47,8 @@ pub mod happy_path {
             notifications_index_canister_id,
             &notifications_index_canister::add_notifications_canister::Args {
                 canister_id: notifications_canister_id,
-                authorizers: vec![local_user_index_canister_id, local_group_index_canister_id],
+                local_user_index_canister_id,
+                local_group_index_canister_id,
             },
         );
 

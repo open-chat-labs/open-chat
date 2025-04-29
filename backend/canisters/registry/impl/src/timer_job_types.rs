@@ -181,7 +181,8 @@ impl ExpandOntoSubnetJob {
                     self.notifications_index,
                     &notifications_index_canister::add_notifications_canister::Args {
                         canister_id: ids.notifications_canister,
-                        authorizers: vec![ids.local_user_index, ids.local_group_index],
+                        local_user_index_canister_id: ids.local_user_index,
+                        local_group_index_canister_id: ids.local_group_index,
                     },
                 )
                 .await?;

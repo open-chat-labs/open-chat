@@ -62,6 +62,8 @@ impl RuntimeState {
             stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 notifications_index: self.data.notifications_index_canister_id,
+                local_user_index: self.data.local_user_index_canister_id,
+                local_group_index: self.data.local_group_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
         }
@@ -73,6 +75,10 @@ struct Data {
     pub notifications_index_canister_id: CanisterId,
     pub push_service_principals: HashSet<Principal>,
     pub authorized_principals: AuthorizedPrincipals,
+    #[serde(default = "CanisterId::anonymous")]
+    pub local_user_index_canister_id: CanisterId,
+    #[serde(default = "CanisterId::anonymous")]
+    pub local_group_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub notifications: EventStream<NotificationEnvelope>,
     pub subscriptions: Subscriptions,
@@ -87,14 +93,17 @@ impl Data {
     pub fn new(
         notifications_index_canister_id: CanisterId,
         push_service_principals: Vec<Principal>,
-        authorizers: Vec<CanisterId>,
+        local_user_index_canister_id: CanisterId,
+        local_group_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
         Data {
             notifications_index_canister_id,
             push_service_principals: push_service_principals.into_iter().collect(),
-            authorized_principals: AuthorizedPrincipals::new(authorizers.into_iter().collect()),
+            authorized_principals: AuthorizedPrincipals::default(),
+            local_user_index_canister_id,
+            local_group_index_canister_id,
             cycles_dispenser_canister_id,
             notifications: EventStream::default(),
             subscriptions: Subscriptions::default(),
@@ -113,7 +122,9 @@ impl Default for Data {
         Data {
             notifications_index_canister_id: CanisterId::anonymous(),
             push_service_principals: HashSet::new(),
-            authorized_principals: AuthorizedPrincipals::new(HashSet::new()),
+            authorized_principals: AuthorizedPrincipals::default(),
+            local_user_index_canister_id: CanisterId::anonymous(),
+            local_group_index_canister_id: CanisterId::anonymous(),
             cycles_dispenser_canister_id: CanisterId::anonymous(),
             notifications: EventStream::default(),
             subscriptions: Subscriptions::default(),
@@ -149,6 +160,8 @@ pub struct Metrics {
 #[derive(Serialize, Debug)]
 pub struct CanisterIds {
     pub notifications_index: CanisterId,
+    pub local_user_index: CanisterId,
+    pub local_group_index: CanisterId,
     pub cycles_dispenser: CanisterId,
 }
 

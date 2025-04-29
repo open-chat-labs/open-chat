@@ -48,7 +48,7 @@ fn can_push_notifications(authorizer: Option<CanisterId>, state: &RuntimeState) 
             return CanPushNotificationsResult::Authorized(caller);
         }
     } else if let Some(authorizer) = authorizer {
-        if state.data.authorized_principals.is_authorizer(&authorizer) {
+        if authorizer == state.data.local_user_index_canister_id || authorizer == state.data.local_group_index_canister_id {
             return CanPushNotificationsResult::Unknown(caller, authorizer);
         }
     }
