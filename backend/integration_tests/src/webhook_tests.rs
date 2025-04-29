@@ -147,7 +147,7 @@ fn post_message_to_webhook(
                 "http://{}:{}/channel/{}/webhook/{}/{}",
                 domain,
                 port,
-                channel_id.to_string(),
+                channel_id,
                 webhook_id.to_text(),
                 webhook_secret
             );
