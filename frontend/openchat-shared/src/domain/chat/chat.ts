@@ -1466,6 +1466,7 @@ export type GroupChatDetails = {
     timestamp: bigint;
     bots: InstalledBotDetails[];
     apiKeys: Map<string, PublicApiKeyDetails>;
+    webhooks: WebhookDetails[];
 };
 
 /**
@@ -1492,6 +1493,7 @@ export type GroupChatDetailsUpdates = {
     botsAddedOrUpdated: InstalledBotDetails[];
     botsRemoved: Set<string>;
     apiKeysGenerated: PublicApiKeyDetails[];
+    webhooks?: WebhookDetails[];
 };
 
 export type ChatSummary = DirectChatSummary | MultiUserChat;
@@ -2361,3 +2363,9 @@ export type SetPinNumberResponse =
     | OCError;
 
 export type PinNumberFailures = PinRequired | PinIncorrect | TooManyFailedPinAttempts;
+
+export type WebhookDetails = {
+    id: string;
+    name: string;
+    avatarId?: bigint;
+};

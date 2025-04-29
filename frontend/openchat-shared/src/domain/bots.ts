@@ -813,3 +813,11 @@ export type Webhook = {
     name: string;
     avatarUrl?: string;
 };
+
+export function emptyWebhookInstance(): Webhook {
+    return {
+        kind: "webhook",
+        id: "",
+        name: "",
+    };
+}
