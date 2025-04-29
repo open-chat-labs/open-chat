@@ -130,6 +130,7 @@ export class UIState {
         window.addEventListener("resize", this.#resize);
         this.popRightPanelHistory = this.popRightPanelHistory.bind(this);
     }
+    #activityFeedShowing = $state(false);
     #notificationsSupported = $state(
         !isCanisterUrl &&
             "serviceWorker" in navigator &&
@@ -248,6 +249,14 @@ export class UIState {
             route === "chat_list_route" ||
             route === "selected_community_route"
         );
+    }
+
+    get activityFeedShowing() {
+        return this.#activityFeedShowing;
+    }
+
+    set activityFeedShowing(val: boolean) {
+        this.#activityFeedShowing = val;
     }
 
     get notificationsSupported() {

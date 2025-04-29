@@ -2,7 +2,7 @@
     import {
         OpenChat,
         achievements,
-        globalStateStore as globalState,
+        app,
         ui,
         currentUser as user,
         type Achievement,
@@ -86,7 +86,7 @@
     let selectedTab: "todo" | "done" | "external" = $state("todo");
 
     function filter(achievement: Achievement): boolean {
-        return enabled.has(achievement) || $globalState.achievements.has(achievement);
+        return enabled.has(achievement) || app.achievements.has(achievement);
     }
 
     function selectTab(tab: "todo" | "done" | "external") {
@@ -100,13 +100,13 @@
     });
     let filtered = $derived([...achievements].filter(filter));
     let [internalAchieved, internalNotAchieved] = $derived(
-        client.partition(filtered, (a) => $globalState.achievements.has(a)),
+        client.partition(filtered, (a) => app.achievements.has(a)),
     );
     let externalAchievements: ExternalAchievement[] = $state([]);
     let totalAchievements = $derived(filtered.length + externalAchievements.length);
     let [externalAchieved, externalNotAchieved] = $derived(
         client.partition(externalAchievements, (a) => {
-            return $globalState.achievements.has(a.name);
+            return app.achievements.has(a.name);
         }),
     );
     let achieved = $derived([

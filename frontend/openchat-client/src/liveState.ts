@@ -40,7 +40,6 @@ import {
 } from "./stores/chat";
 import { diamondStatus, isDiamond, isLifetimeDiamond } from "./stores/diamond";
 import { type DraftMessages, draftMessagesStore } from "./stores/draftMessages";
-import { type GlobalState, globalStateStore } from "./stores/global";
 import { offlineStore } from "./stores/network";
 import { capturePinNumberStore, pinNumberRequiredStore } from "./stores/pinNumber";
 import { remainingStorage } from "./stores/storage";
@@ -76,7 +75,6 @@ export class LiveState {
     isDiamond!: boolean;
     isLifetimeDiamond!: boolean;
     confirmedThreadEventIndexesLoaded!: DRange;
-    globalState!: GlobalState;
     allChats!: ChatMap<ChatSummary>;
     draftMessages!: DraftMessages;
     user!: CreatedUser;
@@ -122,7 +120,6 @@ export class LiveState {
         diamondStatus.subscribe((data) => (this.diamondStatus = data));
         isDiamond.subscribe((data) => (this.isDiamond = data));
         isLifetimeDiamond.subscribe((data) => (this.isDiamond = data));
-        globalStateStore.subscribe((data) => (this.globalState = data));
         allChats.subscribe((data) => (this.allChats = data));
         draftMessagesStore.subscribe((data) => (this.draftMessages = data));
         locale.subscribe((data) => (this.locale = data ?? "en"));
