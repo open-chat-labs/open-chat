@@ -326,7 +326,7 @@ import {
     toggleProposalFilterMessageExpansion,
 } from "./stores/filteredProposals";
 import { hasFlag } from "./stores/flagStore";
-import { chatListScopeStore, mergeCombinedUnreadCounts } from "./stores/global";
+import { mergeCombinedUnreadCounts } from "./stores/global";
 import { applyTranslationCorrection } from "./stores/i18n";
 import { lastOnlineDates } from "./stores/lastOnlineDates";
 import { localChatSummaryUpdates } from "./stores/localChatSummaryUpdates";
@@ -478,7 +478,7 @@ import { Poller } from "./utils/poller";
 import { showTrace } from "./utils/profiling";
 import { indexIsInRanges } from "./utils/range";
 import { RecentlyActiveUsersTracker } from "./utils/recentlyActiveUsersTracker";
-import { pageRedirect, pageReplace } from "./utils/routes";
+import { pageRedirect, pageReplace, routeForScope } from "./utils/routes";
 import {
     createRemoteVideoStartedEvent,
     filterWebRtcMessage,
@@ -7965,10 +7965,8 @@ export class OpenChat {
 
     setChatListScopeAndRedirect(route: RouteParams): boolean {
         if (route.kind === "home_route") {
-            chatListScopeStore.set(this.getDefaultScope());
-            return this.selectFirstChat();
-        } else {
-            chatListScopeStore.set(route.scope);
+            page(routeForScope(this.getDefaultScope()));
+            return true;
         }
         return false;
     }
