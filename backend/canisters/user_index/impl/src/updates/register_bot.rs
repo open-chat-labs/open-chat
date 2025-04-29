@@ -128,7 +128,7 @@ fn validate_request(args: &Args, owner_id: UserId, state: &RuntimeState) -> Resu
     match validate_username(&args.name) {
         Ok(_) => {}
         Err(UsernameValidationError::TooShort(_)) => return Err("name too short".to_string()),
-        Err(UsernameValidationError::TooLong(_)) => return Err("name too short".to_string()),
+        Err(UsernameValidationError::TooLong(_)) => return Err("name too long".to_string()),
         Err(UsernameValidationError::Invalid) => return Err("name invalid".to_string()),
     };
 

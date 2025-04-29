@@ -18,7 +18,7 @@ import type {
 } from "./permission";
 import type { BotMatch } from "./search/search";
 
-export const MIN_NAME_LENGTH = 3;
+export const MIN_NAME_LENGTH = 5;
 export const MIN_PARAM_NAME_LENGTH = 1;
 
 export type InstalledBotDetails = {

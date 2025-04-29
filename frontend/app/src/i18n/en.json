@@ -378,7 +378,13 @@
             "desc": "Register a new bot with OpenChat"
         },
         "register_webhook": {
-            "desc": "Register a webhook in this chat"
+            "action": "Register",
+            "desc": "Register a webhook in this chat",
+            "iconLabel": "Avatar",
+            "nameLabel": "Name",
+            "namePlaceholder": "Enter webhook name",
+            "nameRules": "Must be unique in this chat and contain alphanumeric characters and underscores only",
+            "title": "Register a webhook"
         },
         "search": {
             "desc": "Initiate a search in the current chat",
@@ -398,6 +404,11 @@
             "remove": "Select bot to remove",
             "removeDesc": "Remove an existing OpenChat bot if you are the owner",
             "select": "Select bot to update",
+            "title": "Update {name}"
+        },
+        "update_webhook": {
+            "action": "Update",
+            "select": "Select webhook to update",
             "title": "Update {name}"
         },
         "view": {

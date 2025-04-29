@@ -46,7 +46,7 @@
                 .registerBot(principal, botState.current)
                 .then((success) => {
                     if (!success) {
-                        toastStore.showFailureToast(i18nKey("Unable to register test bot"));
+                        toastStore.showFailureToast(i18nKey("Unable to register bot"));
                     } else {
                         console.log("Bot registered");
                         onClose();
