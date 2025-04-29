@@ -16,7 +16,7 @@ pub struct Metrics {
     end_to_end_latency_ms: HistogramVec,
     end_to_end_internal_latency_ms: HistogramVec,
     processing_duration_ms: HistogramVec,
-    send_web_push_message_duration_ms: HistogramVec,
+    http_post_notification_duration_ms: HistogramVec,
     notification_payload_sizes: HistogramVec,
 }
 
@@ -81,9 +81,9 @@ impl Metrics {
         )
         .unwrap();
 
-        let send_web_push_message_duration_ms = HistogramVec::new(
-            HistogramOpts::new("send_web_push_message_duration", "In milliseconds").buckets(calc_buckets(10.0)),
-            &["success"],
+        let http_post_notification_duration_ms = HistogramVec::new(
+            HistogramOpts::new("http_post_notification_duration", "In milliseconds").buckets(calc_buckets(10.0)),
+            &["type", "success"],
         )
         .unwrap();
 
@@ -103,7 +103,7 @@ impl Metrics {
         registry.register(Box::new(end_to_end_internal_latency_ms.clone())).unwrap();
         registry.register(Box::new(processing_duration_ms.clone())).unwrap();
         registry
-            .register(Box::new(send_web_push_message_duration_ms.clone()))
+            .register(Box::new(http_post_notification_duration_ms.clone()))
             .unwrap();
         registry.register(Box::new(notification_payload_sizes.clone())).unwrap();
 
@@ -115,7 +115,7 @@ impl Metrics {
             end_to_end_latency_ms,
             end_to_end_internal_latency_ms,
             processing_duration_ms,
-            send_web_push_message_duration_ms,
+            http_post_notification_duration_ms,
             notification_payload_sizes,
         }
     }
@@ -160,9 +160,9 @@ impl Metrics {
             .observe(latency as f64);
     }
 
-    pub fn observe_send_web_push_message_duration(&self, latency: Milliseconds, success: bool) {
-        self.send_web_push_message_duration_ms
-            .with_label_values(&[&success.to_string()])
+    pub fn observe_http_post_notification_duration(&self, latency: Milliseconds, user_notification: bool, success: bool) {
+        self.http_post_notification_duration_ms
+            .with_label_values(&[type_label(user_notification), &success.to_string()])
             .observe(latency as f64);
     }
 

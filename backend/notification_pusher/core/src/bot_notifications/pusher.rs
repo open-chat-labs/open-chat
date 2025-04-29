@@ -37,7 +37,7 @@ impl Pusher {
                 }
                 m.observe_end_to_end_latency(end_to_end_latency, false, notification.notifications_canister);
                 m.observe_end_to_end_internal_latency(end_to_end_internal_latency, false);
-                m.observe_send_web_push_message_duration(push_duration, success);
+                m.observe_http_post_notification_duration(push_duration, false, success);
             });
         }
     }

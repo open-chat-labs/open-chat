@@ -78,6 +78,7 @@ impl Pusher {
             let timestamp = timestamp();
             let end_to_end_latency = timestamp.saturating_sub(notification.timestamp);
             let end_to_end_internal_latency = end.saturating_duration_since(notification.first_read_at).as_millis() as u64;
+
             write_metrics(|m| {
                 if success {
                     m.observe_notification_payload_size(payload_size, true);
@@ -85,7 +86,7 @@ impl Pusher {
                 }
                 m.observe_end_to_end_latency(end_to_end_latency, true, notification.notifications_canister);
                 m.observe_end_to_end_internal_latency(end_to_end_internal_latency, true);
-                m.observe_send_web_push_message_duration(push_duration, success);
+                m.observe_http_post_notification_duration(push_duration, true, success);
             });
         }
     }
