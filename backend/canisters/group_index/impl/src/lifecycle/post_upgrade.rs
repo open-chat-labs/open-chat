@@ -33,21 +33,7 @@ fn post_upgrade(args: Args) {
     info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");
 
     if !test_mode {
-        ic_cdk_timers::set_timer(Duration::ZERO, || {
-            ic_cdk::futures::spawn(async move {
-                ic_cdk::management_canister::update_settings(&UpdateSettingsArgs {
-                    canister_id: ic_cdk::api::canister_self(),
-                    settings: CanisterSettings {
-                        log_visibility: Some(LogVisibility::Public),
-                        ..Default::default()
-                    },
-                })
-                .await
-                .unwrap();
-
-                mark_jade8_community_verified();
-            })
-        });
+        ic_cdk_timers::set_timer(Duration::ZERO, mark_jade8_community_verified);
     }
 }
 
