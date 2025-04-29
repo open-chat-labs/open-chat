@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Allow bots to subscribe to chat events using ApiKeys ([#7836](https://github.com/open-chat-labs/open-chat/pull/7836))
 - Push chat event notifications to bots ([#7844](https://github.com/open-chat-labs/open-chat/pull/7844))
+- Add support for webhooks ([#7825](https://github.com/open-chat-labs/open-chat/pull/7825))
 
 ### Changed
 
@@ -19,10 +20,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Avoid sending notification to initiator of bot command ([#7808](https://github.com/open-chat-labs/open-chat/pull/7808))
-
-### Added
-
-- Add endpoints to support webhooks ([#7825](https://github.com/open-chat-labs/open-chat/pull/7825))
 
 ## [[2.0.1704](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1704-group)] - 2025-04-15
 

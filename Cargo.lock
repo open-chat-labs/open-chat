@@ -5439,6 +5439,7 @@ version = "0.1.0"
 dependencies = [
  "async-channel 2.2.0",
  "base64 0.22.1",
+ "candid",
  "ic-agent",
  "index_store",
  "notifications_canister",
@@ -5447,6 +5448,7 @@ dependencies = [
  "notifications_index_canister_client",
  "openssl",
  "prometheus",
+ "reqwest",
  "serde",
  "serde_json",
  "tokio",

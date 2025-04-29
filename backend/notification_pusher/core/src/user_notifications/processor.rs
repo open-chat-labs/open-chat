@@ -1,5 +1,5 @@
-use crate::user_notifications::metrics::write_metrics;
-use crate::{Notification, NotificationToPush, timestamp};
+use crate::metrics::write_metrics;
+use crate::{UserNotification, UserNotificationToPush, timestamp};
 use async_channel::{Receiver, Sender};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
@@ -14,8 +14,8 @@ use web_push::{
 const MAX_PAYLOAD_LENGTH_BYTES: u32 = 3 * 1000; // Just under 3KB
 
 pub struct Processor {
-    receiver: Receiver<Notification>,
-    sender: Sender<NotificationToPush>,
+    receiver: Receiver<UserNotification>,
+    sender: Sender<UserNotificationToPush>,
     sig_builder: PartialVapidSignatureBuilder,
     invalid_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
     throttled_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
@@ -23,8 +23,8 @@ pub struct Processor {
 
 impl Processor {
     pub fn new(
-        receiver: Receiver<Notification>,
-        sender: Sender<NotificationToPush>,
+        receiver: Receiver<UserNotification>,
+        sender: Sender<UserNotificationToPush>,
         vapid_private_pem: &str,
         invalid_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
         throttled_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
@@ -47,7 +47,10 @@ impl Processor {
             let result = self.process_notification(&notification);
             let success = result.is_ok();
             if let Ok(message) = result {
-                self.sender.send(NotificationToPush { notification, message }).await.unwrap();
+                self.sender
+                    .send(UserNotificationToPush { notification, message })
+                    .await
+                    .unwrap();
             }
             let end = Instant::now();
             let duration = end.saturating_duration_since(start).as_millis() as u64;
@@ -58,7 +61,7 @@ impl Processor {
         }
     }
 
-    fn process_notification(&self, notification: &Notification) -> Result<WebPushMessage, ProcessNotificationError> {
+    fn process_notification(&self, notification: &UserNotification) -> Result<WebPushMessage, ProcessNotificationError> {
         if let Ok(map) = self.invalid_subscriptions.read() {
             if map.contains_key(&notification.subscription_info.endpoint) {
                 return Err(ProcessNotificationError::SubscriptionInvalid);

@@ -1,5 +1,5 @@
-use crate::user_notifications::metrics::write_metrics;
-use crate::{NotificationToPush, timestamp};
+use crate::metrics::write_metrics;
+use crate::{UserNotificationToPush, timestamp};
 use async_channel::{Receiver, Sender};
 use std::collections::{BinaryHeap, HashMap};
 use std::sync::{Arc, RwLock};
@@ -11,7 +11,7 @@ use web_push::{HyperWebPushClient, WebPushClient, WebPushError};
 const ONE_MINUTE: Milliseconds = 60 * 1000;
 
 pub struct Pusher {
-    receiver: Receiver<NotificationToPush>,
+    receiver: Receiver<UserNotificationToPush>,
     web_push_client: HyperWebPushClient,
     subscriptions_to_remove_sender: Sender<(UserId, String)>,
     invalid_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
@@ -20,7 +20,7 @@ pub struct Pusher {
 
 impl Pusher {
     pub fn new(
-        receiver: Receiver<NotificationToPush>,
+        receiver: Receiver<UserNotificationToPush>,
         subscriptions_to_remove_sender: Sender<(UserId, String)>,
         invalid_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
         throttled_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
@@ -35,7 +35,7 @@ impl Pusher {
     }
 
     pub async fn run(self) {
-        while let Ok(NotificationToPush { notification, message }) = self.receiver.recv().await {
+        while let Ok(UserNotificationToPush { notification, message }) = self.receiver.recv().await {
             let payload_size = message.payload.as_ref().map_or(0, |p| p.content.len()) as u64;
             let start = Instant::now();
             let push_result = self.web_push_client.send(message).await;
@@ -78,14 +78,15 @@ impl Pusher {
             let timestamp = timestamp();
             let end_to_end_latency = timestamp.saturating_sub(notification.timestamp);
             let end_to_end_internal_latency = end.saturating_duration_since(notification.first_read_at).as_millis() as u64;
+
             write_metrics(|m| {
                 if success {
-                    m.observe_notification_payload_size(payload_size);
+                    m.observe_notification_payload_size(payload_size, true);
                     m.set_latest_notification_index_pushed(notification.index, notification.notifications_canister);
                 }
-                m.observe_end_to_end_latency(end_to_end_latency, notification.notifications_canister);
-                m.observe_end_to_end_internal_latency(end_to_end_internal_latency);
-                m.observe_send_web_push_message_duration(push_duration, success);
+                m.observe_end_to_end_latency(end_to_end_latency, true, notification.notifications_canister);
+                m.observe_end_to_end_internal_latency(end_to_end_internal_latency, true);
+                m.observe_http_post_notification_duration(push_duration, true, success);
             });
         }
     }
