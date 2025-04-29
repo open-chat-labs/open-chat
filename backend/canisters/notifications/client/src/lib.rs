@@ -3,7 +3,7 @@ use notifications_canister::*;
 
 // Queries
 generate_candid_query_call!(latest_notification_index);
-generate_candid_query_call!(notifications);
+generate_candid_query_call!(notifications_v2);
 
 // Updates
 generate_candid_update_call!(remove_notifications);
