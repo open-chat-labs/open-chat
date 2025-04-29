@@ -24,8 +24,7 @@ import {
 import { derived } from "svelte/store";
 import { app } from "../state/app.svelte";
 import { createDummyStore } from "./dummyStore";
-import { immutableStore } from "./immutable";
-import { messageActivityFeedReadUpToLocally, messagesRead } from "./markRead";
+import { messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
 
 // These dummy stores only exist to help us keep things in sync while we migrate stuff
@@ -35,23 +34,6 @@ export const dummyServerGroupChats = createDummyStore();
 export const dummyServerFavourites = createDummyStore();
 
 export type PinnedByScope = Map<ChatListScope["kind"], ChatIdentifier[]>;
-
-// This will contain all state.
-export type GlobalState = {
-    achievements: Set<string>;
-    referrals: Referral[];
-    messageActivitySummary: MessageActivitySummary;
-};
-
-export const globalStateStore = immutableStore<GlobalState>({
-    achievements: new Set(),
-    referrals: [],
-    messageActivitySummary: {
-        readUpToTimestamp: 0n,
-        latestTimestamp: 0n,
-        unreadCount: 0,
-    },
-});
 
 // This should always be referenced via app.chatListScope where possible - this store only exists for backward compatibility and will be removed
 export const chatListScopeStore = safeWritable<ChatListScope>({ kind: "none" }, chatScopesEqual);
@@ -182,19 +164,6 @@ export const unreadDirectCounts = derived(
     },
 );
 
-export const unreadActivityCount = derived(
-    [globalStateStore, messageActivityFeedReadUpToLocally],
-    ([$global, readUpToLocally]) => {
-        if (
-            readUpToLocally !== undefined &&
-            readUpToLocally >= $global.messageActivitySummary.latestTimestamp
-        ) {
-            return 0;
-        }
-        return $global.messageActivitySummary.unreadCount;
-    },
-);
-
 export function getAllServerChats(): ChatMap<ChatSummary> {
     const groupChats = app.serverGroupChats.values();
     const directChats = app.serverDirectChats.values();
@@ -256,28 +225,22 @@ export function setGlobalState(
     apiKeys: Map<string, PublicApiKeyDetails>,
     streakInsurance: StreakInsurance | undefined,
 ): void {
-    const [channels, directChats, groupChats] = partitionChats(allChats);
+    const [channelsMap, directChats, groupChats] = partitionChats(allChats);
 
     const communitiesMap = CommunityMap.fromList(communities);
     const directChatsMap = ChatMap.fromList(directChats);
     const groupChatsMap = ChatMap.fromList(groupChats);
     const favouritesSet = new ChatSet(favourites);
-    const state = {
-        achievements,
-        referrals,
-        messageActivitySummary,
-    };
-    Object.entries(channels).forEach(([communityId, channels]) => {
-        const id: CommunityIdentifier = { kind: "community", communityId };
-        const community = communitiesMap.get(id);
+    for (const [communityId, channels] of channelsMap) {
+        const community = communitiesMap.get(communityId);
         if (community !== undefined) {
-            communitiesMap.set(id, {
-                ...community,
-                channels,
-            });
+            community.channels = channels;
         }
-    });
+    }
 
+    app.serverMessageActivitySummary = messageActivitySummary;
+    app.achievements = achievements;
+    app.referrals = referrals;
     app.serverDirectChats = directChatsMap;
     app.serverGroupChats = groupChatsMap;
     app.serverFavourites = favouritesSet;
@@ -289,9 +252,6 @@ export function setGlobalState(
     if (streakInsurance !== undefined) {
         app.serverStreakInsurance = streakInsurance;
     }
-
-    globalStateStore.set(state);
-
     app.updateChitState((curr) => {
         // Skip the new update if it is behind what we already have locally
         const skipUpdate = chitState.streakEnds < curr.streakEnds;
@@ -301,7 +261,7 @@ export function setGlobalState(
 
 function partitionChats(
     allChats: ChatSummary[],
-): [Record<string, ChannelSummary[]>, DirectChatSummary[], GroupChatSummary[]] {
+): [CommunityMap<ChannelSummary[]>, DirectChatSummary[], GroupChatSummary[]] {
     const [channels, direct, group] = allChats.reduce(
         ([channels, direct, group], chat) => {
             switch (chat.kind) {
@@ -322,17 +282,15 @@ function partitionChats(
     return [channelsByCommunityId(channels), direct, group];
 }
 
-function channelsByCommunityId(chats: ChannelSummary[]): Record<string, ChannelSummary[]> {
-    return chats.reduce(
-        (acc, chat) => {
-            const communityId = chat.id.communityId;
-            const channels = acc[communityId] ?? [];
-            channels.push(chat);
-            return {
-                ...acc,
-                [communityId]: channels,
-            };
-        },
-        {} as Record<string, ChannelSummary[]>,
-    );
+function channelsByCommunityId(chats: ChannelSummary[]): CommunityMap<ChannelSummary[]> {
+    return chats.reduce((acc, chat) => {
+        const communityId: CommunityIdentifier = {
+            kind: "community",
+            communityId: chat.id.communityId,
+        };
+        const channels = acc.get(communityId) ?? [];
+        channels.push(chat);
+        acc.set(communityId, channels);
+        return acc;
+    }, new CommunityMap<ChannelSummary[]>());
 }

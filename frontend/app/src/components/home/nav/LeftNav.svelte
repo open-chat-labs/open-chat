@@ -7,11 +7,9 @@
         app,
         currentUser as createdUser,
         emptyCombinedUnreadCounts,
-        globalStateStore as globalState,
         pathState,
         publish,
         ui,
-        unreadActivityCount,
         unreadCommunityChannelCounts,
         unreadDirectCounts,
         unreadFavouriteCounts,
@@ -30,7 +28,6 @@
     import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
     import { flip } from "svelte/animate";
     import { i18nKey } from "../../../i18n/i18n";
-    import { activityFeedShowing } from "../../../stores/activity";
     import { rtlStore } from "../../../stores/rtl";
     import { disableChit, hideChitIcon } from "../../../stores/settings";
     import { now } from "../../../stores/time";
@@ -85,32 +82,32 @@
     }
 
     function viewProfile() {
-        activityFeedShowing.set(false);
+        ui.activityFeedShowing = false;
         publish("profile");
     }
 
     function exploreCommunities() {
-        activityFeedShowing.set(false);
+        ui.activityFeedShowing = false;
         page("/communities");
     }
 
     function directChats() {
-        activityFeedShowing.set(false);
+        ui.activityFeedShowing = false;
         page("/user");
     }
 
     function groupChats() {
-        activityFeedShowing.set(false);
+        ui.activityFeedShowing = false;
         page("/group");
     }
 
     function favouriteChats() {
-        activityFeedShowing.set(false);
+        ui.activityFeedShowing = false;
         page("/favourite");
     }
 
     function selectCommunity(community: CommunitySummary) {
-        activityFeedShowing.set(false);
+        ui.activityFeedShowing = false;
         page(`/community/${community.id.communityId}`);
     }
 
@@ -122,7 +119,7 @@
         if (pathState.route.kind === "communities_route") {
             page("/");
         }
-        activityFeedShowing.set(true);
+        ui.activityFeedShowing = true;
     }
 </script>
 
@@ -193,12 +190,16 @@
                     </div>
                 </LeftNavItem>
             {/if}
-            {#if $globalState.messageActivitySummary.latestTimestamp > 0n}
+            {#if app.messageActivitySummary.latestTimestamp > 0n}
                 <LeftNavItem
                     separator
-                    selected={$activityFeedShowing}
+                    selected={ui.activityFeedShowing}
                     label={i18nKey("activity.navLabel")}
-                    unread={{ muted: 0, unmuted: $unreadActivityCount, mentions: false }}
+                    unread={{
+                        muted: 0,
+                        unmuted: app.messageActivitySummary.unreadCount,
+                        mentions: false,
+                    }}
                     onClick={showActivityFeed}>
                     <div class="hover activity">
                         <BellRingOutline size={iconSize} color={"var(--icon-txt)"} />

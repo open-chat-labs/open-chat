@@ -9,7 +9,6 @@
         anonUser,
         app,
         canExtendDiamond,
-        globalStateStore as globalState,
         hideMessagesFromDirectBlocked,
         isDiamond,
         isLifetimeDiamond,
@@ -151,8 +150,7 @@
             !readonly,
     );
     let canEditTranslations = $derived(!$locale?.startsWith("en"));
-    let referrals = $derived($globalState.referrals);
-    let referredUserIds = $derived(new Set(referrals.map((r) => r.userId)));
+    let referredUserIds = $derived(new Set(app.referrals.map((r) => r.userId)));
 
     onMount(() => {
         if (!$anonUser) {

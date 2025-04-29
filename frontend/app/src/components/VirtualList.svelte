@@ -153,7 +153,9 @@
 
     // whenever `items` changes, invalidate the current heightmap
     trackedEffect("virtual-list", () => {
-        if (mounted) refresh(items, viewport_height, itemHeight);
+        if (mounted) {
+            refresh(items, viewport_height, itemHeight);
+        }
     });
 </script>
 

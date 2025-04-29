@@ -19,10 +19,12 @@ import {
     type GroupChatSummary,
     type IdentityState,
     type Member,
+    type MessageActivitySummary,
     type MessageContext,
     messageContextsEqual,
     type PublicApiKeyDetails,
     type ReadonlyMap,
+    type Referral,
     SafeMap,
     type StreakInsurance,
     type UserGroupDetails,
@@ -60,6 +62,30 @@ class AppState {
             });
         });
     }
+
+    #achievements = $state<Set<string>>(new Set());
+
+    #referrals = $state<Referral[]>([]);
+
+    #serverMessageActivitySummary = $state<MessageActivitySummary>({
+        readUpToTimestamp: 0n,
+        latestTimestamp: 0n,
+        unreadCount: 0,
+    });
+
+    #messageActivitySummary = $derived.by(() => {
+        if (
+            localUpdates.messageActivityFeedReadUpTo !== undefined &&
+            localUpdates.messageActivityFeedReadUpTo >=
+                this.#serverMessageActivitySummary.latestTimestamp
+        ) {
+            return {
+                ...this.#serverMessageActivitySummary,
+                unreadCount: 0,
+            };
+        }
+        return this.#serverMessageActivitySummary;
+    });
 
     #chitState = $state<ChitState>({
         chitBalance: 0,
@@ -293,6 +319,30 @@ class AppState {
     #selectedChat = $state<ChatDetailsMergedState>(
         new ChatDetailsMergedState(ChatDetailsServerState.empty()),
     );
+
+    set serverMessageActivitySummary(val: MessageActivitySummary) {
+        this.#serverMessageActivitySummary = val;
+    }
+
+    get achievements() {
+        return this.#achievements;
+    }
+
+    set achievements(val: Set<string>) {
+        this.#achievements = val;
+    }
+
+    get referrals() {
+        return this.#referrals;
+    }
+
+    set referrals(val: Referral[]) {
+        this.#referrals = val;
+    }
+
+    get messageActivitySummary() {
+        return this.#messageActivitySummary;
+    }
 
     get chitState() {
         return this.#chitState;
