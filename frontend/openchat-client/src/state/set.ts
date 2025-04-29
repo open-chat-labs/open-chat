@@ -9,7 +9,10 @@ export class LocalSet<T> {
     #added: SafeSet<T>;
     #removed: SafeSet<T>;
 
-    constructor(serialiser?: (x: T) => Primitive, deserialiser?: (x: Primitive) => T) {
+    constructor(
+        private serialiser?: (x: T) => Primitive,
+        private deserialiser?: (x: Primitive) => T,
+    ) {
         this.#added = new SafeSet(serialiser, deserialiser, () => new SvelteSet());
         this.#removed = new SafeSet(serialiser, deserialiser, () => new SvelteSet());
     }
@@ -44,8 +47,11 @@ export class LocalSet<T> {
         });
     }
 
-    apply(original: ReadonlySet<T>): Set<T> {
-        const merged = new Set<T>(original);
+    apply(original: ReadonlySet<T>): SafeSet<T> {
+        const merged = new SafeSet<T>(this.serialiser, this.deserialiser);
+        for (const v of original) {
+            merged.add(v);
+        }
         this.#added.forEach((t) => merged.add(t));
         this.#removed.forEach((t) => merged.delete(t));
         return merged;

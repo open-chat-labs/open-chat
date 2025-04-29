@@ -1,9 +1,20 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { identity } from "openchat-shared";
+import { ChatSet, identity } from "openchat-shared";
 import { vi } from "vitest";
 import { LocalSet } from "./set";
 
 vi.useFakeTimers();
+
+describe("ChatSet", () => {
+    test("basic test", () => {
+        const set = new ChatSet();
+        set.add({ kind: "group_chat", groupId: "123" });
+        set.add({ kind: "group_chat", groupId: "456" });
+
+        expect(set.has({ kind: "group_chat", groupId: "123" })).toBe(true);
+        expect(set.has({ kind: "direct_chat", userId: "456" })).toBe(false);
+    });
+});
 
 describe("LocalSet", () => {
     let set: LocalSet<string>;
