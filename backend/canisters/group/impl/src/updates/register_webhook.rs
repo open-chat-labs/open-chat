@@ -48,13 +48,15 @@ fn register_webhook_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succe
         return Err(OCErrorCode::NameTaken.into());
     };
 
-    handle_activity_notification(state);
-
     let webhook = state.data.chat.webhooks.get(&webhook_id).unwrap();
 
-    Ok(SuccessResult {
+    let result = SuccessResult {
         id: webhook_id,
         secret: webhook.secret.clone(),
         avatar_id: webhook.avatar.as_ref().map(|a| a.id),
-    })
+    };
+
+    handle_activity_notification(state);
+
+    Ok(result)
 }

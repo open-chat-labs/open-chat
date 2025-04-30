@@ -60,7 +60,7 @@
         initialUsergroup?: number | undefined;
         showHeader?: boolean;
         apiKeys: ReadonlyMap<string, PublicApiKeyDetails>;
-        webhooks: WebhookDetails[];
+        webhooks?: WebhookDetails[];
         onClose: () => void;
         onShowInviteUsers: () => void;
         onChangeRole?: (args: { userId: string; newRole: MemberRole; oldRole: MemberRole }) => void;
@@ -413,7 +413,7 @@
             {/each}
         {/if}
 
-        {#if webhooks.length > 0 && me?.role === "owner" && collection.kind !== "community"}
+        {#if webhooks !== undefined && webhooks.length > 0 && me?.role === "owner" && collection.kind !== "community"}
             <h4 class="member_type_label">
                 <Translatable resourceKey={i18nKey("bots.member.webhooks")}></Translatable>
             </h4>
@@ -422,7 +422,7 @@
             {/each}
         {/if}
 
-        {#if (bots.length > 0 || webhooks.length > 0) && fullMembers.length > 0}
+        {#if (bots.length > 0 || (webhooks !== undefined && webhooks.length > 0)) && fullMembers.length > 0}
             <h4 class="member_type_label">
                 <Translatable resourceKey={i18nKey("bots.member.people")}></Translatable>
             </h4>
