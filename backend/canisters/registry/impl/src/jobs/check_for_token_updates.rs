@@ -6,7 +6,7 @@ use icrc_ledger_types::icrc::generic_metadata_value::MetadataValue;
 use std::time::Duration;
 use tracing::{error, info};
 use types::{C2CError, CanisterId};
-use utils::canister::is_target_canister_uninstalled;
+use utils::canister::is_target_canister_uninstalled_or_deleted;
 use utils::canister_timers::run_now_then_interval;
 
 pub fn start_job() {
@@ -91,7 +91,7 @@ async fn get_metadata(ledger_canister_id: CanisterId) -> Result<Vec<(String, Met
     match icrc_ledger_canister_c2c_client::icrc1_metadata(ledger_canister_id).await {
         Ok(metadata) => Ok(metadata),
         Err(error) => {
-            if is_target_canister_uninstalled(error.reject_code(), error.message()) {
+            if is_target_canister_uninstalled_or_deleted(error.reject_code(), error.message()) {
                 mutate_state(|state| {
                     state.data.tokens.mark_uninstalled(ledger_canister_id, state.env.now());
                 });

@@ -25,11 +25,12 @@ fn run() {
     trace!("'update_controllers' job running");
 
     if let Some((canister_id, controllers)) = mutate_state(|state| {
-        state
-            .data
-            .update_controllers_queue
-            .pop_front()
-            .map(|c| (c, vec![state.data.local_user_index_canister_id, state.env.canister_id()]))
+        if let Some(next) = state.data.update_controllers_queue.pop_front() {
+            Some((next, vec![state.data.local_user_index_canister_id, state.env.canister_id()]))
+        } else {
+            state.data.controllers_updated = true;
+            None
+        }
     }) {
         ic_cdk::futures::spawn(run_single(canister_id, controllers));
     } else if let Some(timer_id) = TIMER_ID.take() {
