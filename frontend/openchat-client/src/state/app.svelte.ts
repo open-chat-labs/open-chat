@@ -45,7 +45,7 @@ import { chatDetailsLocalUpdates, ChatDetailsMergedState } from "./chat_details"
 import { ChatDetailsServerState } from "./chat_details/server.svelte";
 import { communityLocalUpdates } from "./community_details";
 import { CommunityMergedState } from "./community_details/merged.svelte";
-import { CommunityServerState } from "./community_details/server";
+import { CommunityServerState } from "./community_details/server.svelte";
 import { localUpdates } from "./global";
 import { pathState } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
@@ -525,6 +525,13 @@ class AppState {
     }
 
     setSelectedChat(chatId: ChatIdentifier) {
+        if (chatIdentifiersEqual(chatId, this.#selectedChat.chatId)) {
+            console.warn(
+                "We are trying to setSelectedChat for the same chat we already have selected. This probably indicates that some effect is firing when it shouldn't",
+                chatId,
+            );
+            return;
+        }
         const serverState = ChatDetailsServerState.empty(chatId);
         this.#selectedChat = new ChatDetailsMergedState(serverState);
     }
@@ -567,6 +574,11 @@ class AppState {
         );
     }
 
+    setSelectedCommunity(communityId: CommunityIdentifier) {
+        const serverState = CommunityServerState.empty(communityId);
+        this.#selectedCommunity = new CommunityMergedState(serverState);
+    }
+
     setCommunityDetailsFromServer(
         communityId: CommunityIdentifier,
         userGroups: Map<number, UserGroupDetails>,
@@ -579,7 +591,13 @@ class AppState {
         apiKeys: Map<string, PublicApiKeyDetails>,
         rules?: VersionedRules,
     ) {
-        const serverState = new CommunityServerState(
+        if (!communityIdentifiersEqual(communityId, this.#selectedCommunity.communityId)) {
+            throw new Error(
+                "We should never be setting community details for a different community - investigate why this is happening",
+            );
+        }
+
+        this.#selectedCommunity.overwriteCommunityDetails(
             communityId,
             userGroups,
             members,
@@ -591,11 +609,6 @@ class AppState {
             apiKeys,
             rules,
         );
-        if (communityIdentifiersEqual(communityId, this.#selectedCommunity.communityId)) {
-            this.#selectedCommunity.overwriteServerState(serverState);
-        } else {
-            this.#selectedCommunity = new CommunityMergedState(serverState);
-        }
     }
 
     get serverDirectChats() {

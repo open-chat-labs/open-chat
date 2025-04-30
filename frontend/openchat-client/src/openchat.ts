@@ -7613,6 +7613,7 @@ export class OpenChat {
         }
 
         if (community !== undefined) {
+            app.setSelectedCommunity(id);
             this.#loadCommunityDetails(community);
         }
 

@@ -238,8 +238,6 @@
         };
     });
 
-    $inspect(app.selectedChat.serverEvents).with(console.trace);
-
     function selectedChatInvalid() {
         pageReplace(routeForScope(client.getDefaultScope()));
     }
