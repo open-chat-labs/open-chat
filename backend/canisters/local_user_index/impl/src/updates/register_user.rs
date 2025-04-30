@@ -36,6 +36,7 @@ async fn register_user(args: Args) -> Response {
 
     match canister::create_and_install(
         canister_id,
+        None,
         canister_wasm,
         init_canister_args,
         cycles_to_use,

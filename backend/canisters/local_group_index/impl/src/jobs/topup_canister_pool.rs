@@ -25,13 +25,19 @@ fn run() {
     trace!("'topup_canister_pool' job running");
     TIMER_ID.set(None);
 
-    let (is_full, test_mode) = read_state(|state| (is_pool_full(state), state.data.test_mode));
+    let (is_full, local_user_index_canister_id, test_mode) = read_state(|state| {
+        (
+            is_pool_full(state),
+            state.data.local_user_index_canister_id,
+            state.data.test_mode,
+        )
+    });
     if !is_full {
         let cycles_to_use = GROUP_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
 
         // Only create the new canister if it won't result in the cycles balance being too low
         if utils::cycles::can_spend_cycles(cycles_to_use, min_cycles_balance(test_mode)) {
-            ic_cdk::futures::spawn(add_new_canister(cycles_to_use));
+            ic_cdk::futures::spawn(add_new_canister(cycles_to_use, local_user_index_canister_id));
         } else {
             read_state(|state| start_job_if_required(state, Some(Duration::from_secs(300))));
         }
@@ -42,8 +48,8 @@ fn is_pool_full(state: &RuntimeState) -> bool {
     state.data.canister_pool.is_full()
 }
 
-async fn add_new_canister(cycles_to_use: Cycles) {
-    if let Ok(canister_id) = create(cycles_to_use).await {
+async fn add_new_canister(cycles_to_use: Cycles, local_user_index_canister_id: CanisterId) {
+    if let Ok(canister_id) = create(cycles_to_use, Some(local_user_index_canister_id)).await {
         mutate_state(|state| add_canister_to_pool(canister_id, cycles_to_use, state));
     }
     read_state(|state| start_job_if_required(state, None));

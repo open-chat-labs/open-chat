@@ -6,6 +6,7 @@ use types::{C2CError, CanisterId, CanisterWasm, Cycles};
 
 pub async fn create_and_install<A: CandidType>(
     existing_canister_id: Option<CanisterId>,
+    additional_controller: Option<Principal>,
     wasm: CanisterWasm,
     init_args: A,
     cycles_to_use: Cycles,
@@ -13,7 +14,7 @@ pub async fn create_and_install<A: CandidType>(
 ) -> Result<CanisterId, (Option<CanisterId>, C2CError)> {
     let canister_id = match existing_canister_id {
         Some(id) => id,
-        None => match create(cycles_to_use).await {
+        None => match create(cycles_to_use, additional_controller).await {
             Err(error) => {
                 return Err((None, error));
             }
@@ -30,11 +31,15 @@ pub async fn create_and_install<A: CandidType>(
     }
 }
 
-pub async fn create(cycles_to_use: Cycles) -> Result<Principal, C2CError> {
+pub async fn create(cycles_to_use: Cycles, additional_controller: Option<Principal>) -> Result<Principal, C2CError> {
+    let mut controllers = vec![ic_cdk::api::canister_self()];
+    if let Some(controller) = additional_controller {
+        controllers.push(controller);
+    }
     match management_canister::create_canister_with_extra_cycles(
         &CreateCanisterArgs {
             settings: Some(CanisterSettings {
-                controllers: Some(vec![ic_cdk::api::canister_self()]),
+                controllers: Some(controllers),
                 ..Default::default()
             }),
         },
