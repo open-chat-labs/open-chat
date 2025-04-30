@@ -31,6 +31,7 @@ async fn c2c_create_community(args: Args) -> Response {
 
     match canister::create_and_install(
         prepare_ok.canister_id,
+        Some(prepare_ok.local_user_index_canister_id),
         prepare_ok.canister_wasm,
         prepare_ok.init_canister_args,
         prepare_ok.cycles_to_use,
