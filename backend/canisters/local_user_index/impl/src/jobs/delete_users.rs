@@ -41,7 +41,7 @@ async fn process_user(user: UserToDelete) {
         let user_id = user.user_id;
         let is_err = result.is_err();
         match result {
-            Ok(DeleteUserSuccess::Deleted(_canisters_to_notify)) => {
+            Ok(DeleteUserSuccess::Deleted(canisters_to_notify)) => {
                 state.data.global_users.remove(&user_id);
                 state.data.local_users.remove(&user_id);
 
@@ -51,11 +51,9 @@ async fn process_user(user: UserToDelete) {
                     state.push_event_to_user_index(UserIndexEvent::UserDeleted(Box::new(UserDeleted { user_id })), now);
                 }
 
-                // TODO uncomment this once Groups, Communities, UserIndex, GroupIndex and
-                // LocalGroupIndex have been upgraded
-                // for canister_id in canisters_to_notify {
-                //     state.push_event_to_user_index(UserIndexEvent::NotifyOfUserDeleted(canister_id, user_id), now);
-                // }
+                for canister_id in canisters_to_notify {
+                    state.push_event_to_user_index(UserIndexEvent::NotifyOfUserDeleted(canister_id, user_id), now);
+                }
             }
             Ok(DeleteUserSuccess::Skipped) => {}
             Err(_) => {
