@@ -516,6 +516,7 @@ mod tests {
 
     #[test]
     fn serialize_with_max_defaults() {
+        #[allow(deprecated)]
         let message = MessageInternal {
             message_index: 1.into(),
             message_id: 1u64.into(),
