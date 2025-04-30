@@ -2789,7 +2789,12 @@ export class OpenChat {
         // TODO - this might belong as a derivation in the selected chat state
         this.#userLookupForMentions = undefined;
 
+        // this has the effect of clearing any state for any previously selected chat and
+        // creating an empty container for the new chat's state
+        app.setSelectedChat(chatId);
+
         const { selectedChat } = this.#liveState;
+        // what is the purpose of this check - to make sure that the selectedChat is ... the selectedChat ???
         if (selectedChat !== undefined) {
             if (!this.#uninstalledBotChat(selectedChat)) {
                 if (messageIndex !== undefined) {
@@ -3634,7 +3639,9 @@ export class OpenChat {
         }
 
         if (threadRootMessageIndex === undefined) {
-            app.updateServerEvents((events) => mergeServerEvents(events, newEvents, context));
+            app.updateServerEvents(chatId, (events) =>
+                mergeServerEvents(events, newEvents, context),
+            );
             if (newLatestMessage !== undefined) {
                 localChatSummaryUpdates.markUpdated(chatId, { latestMessage: newLatestMessage });
             }

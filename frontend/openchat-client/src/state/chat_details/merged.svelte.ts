@@ -1,9 +1,14 @@
 import DRange from "drange";
 import {
     type ChatEvent,
+    type ChatIdentifier,
     type EventWrapper,
+    type ExternalBotPermissions,
+    type Member,
+    type PublicApiKeyDetails,
     type ReadonlyMap,
     type ReadonlySet,
+    type VersionedRules,
 } from "openchat-shared";
 import { SvelteSet } from "svelte/reactivity";
 import { LocalMap } from "../map";
@@ -32,11 +37,11 @@ export class ChatDetailsMergedState {
         this.#server = server;
     }
 
-    #mergeSet<T>(server: Set<T>, local?: LocalSet<T>): ReadonlySet<T> {
+    #mergeSet<T>(server: ReadonlySet<T>, local?: LocalSet<T>): ReadonlySet<T> {
         return local ? local.apply(server) : server;
     }
 
-    #mergeMap<K, V>(server: Map<K, V>, local?: LocalMap<K, V>): ReadonlyMap<K, V> {
+    #mergeMap<K, V>(server: ReadonlyMap<K, V>, local?: LocalMap<K, V>): ReadonlyMap<K, V> {
         return local ? local.apply(server) : server;
     }
 
@@ -63,8 +68,11 @@ export class ChatDetailsMergedState {
         this.#server = val;
     }
 
-    updateServerEvents(fn: (existing: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[]) {
-        this.#server?.updateEvents(fn);
+    updateServerEvents(
+        chatId: ChatIdentifier,
+        fn: (existing: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[],
+    ) {
+        this.#server?.updateEvents(chatId, fn);
     }
 
     updateServerExpiredEventRanges(fn: (existing: DRange) => DRange) {
@@ -121,6 +129,30 @@ export class ChatDetailsMergedState {
 
     addUserIds(userIds: string[]) {
         userIds.forEach((u) => this.#userIds.add(u));
+    }
+
+    overwriteChatDetails(
+        chatId: ChatIdentifier,
+        members: Map<string, Member>,
+        lapsedMembers: Set<string>,
+        blockedUsers: Set<string>,
+        invitedUsers: Set<string>,
+        pinnedMessages: Set<number>,
+        rules: VersionedRules,
+        bots: Map<string, ExternalBotPermissions>,
+        apiKeys: Map<string, PublicApiKeyDetails>,
+    ) {
+        this.#server?.overwriteChatDetails(
+            chatId,
+            members,
+            lapsedMembers,
+            blockedUsers,
+            invitedUsers,
+            pinnedMessages,
+            rules,
+            bots,
+            apiKeys,
+        );
     }
 
     get userIds(): ReadonlySet<string> {

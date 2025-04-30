@@ -505,18 +505,11 @@ class AppState {
         return this.#selectedChat;
     }
 
-    setDirectChatDetails(chatId: DirectChatIdentifier, currentUserId: string) {
-        const serverState = ChatDetailsServerState.empty(chatId);
-        if (chatIdentifiersEqual(chatId, this.#selectedChat.chatId)) {
-            this.#selectedChat.overwriteServerState(serverState);
-        } else {
-            this.#selectedChat = new ChatDetailsMergedState(serverState);
-        }
-        this.#selectedChat.addUserIds([currentUserId]);
-    }
-
-    updateServerEvents(fn: (existing: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[]) {
-        this.#selectedChat.updateServerEvents(fn);
+    updateServerEvents(
+        chatId: ChatIdentifier,
+        fn: (existing: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[],
+    ) {
+        this.#selectedChat.updateServerEvents(chatId, fn);
     }
 
     updateServerExpiredEventRanges(fn: (existing: DRange) => DRange) {
@@ -531,6 +524,20 @@ class AppState {
         this.#selectedChat = new ChatDetailsMergedState(ChatDetailsServerState.empty());
     }
 
+    setSelectedChat(chatId: ChatIdentifier) {
+        const serverState = ChatDetailsServerState.empty(chatId);
+        this.#selectedChat = new ChatDetailsMergedState(serverState);
+    }
+
+    setDirectChatDetails(chatId: DirectChatIdentifier, currentUserId: string) {
+        if (!chatIdentifiersEqual(chatId, this.#selectedChat.chatId)) {
+            throw new Error(
+                "We should never be setting direct chat details for a different chat - investigate why this is happening",
+            );
+        }
+        this.#selectedChat.addUserIds([currentUserId]);
+    }
+
     setChatDetailsFromServer(
         chatId: ChatIdentifier,
         members: Map<string, Member>,
@@ -542,7 +549,12 @@ class AppState {
         bots: Map<string, ExternalBotPermissions>,
         apiKeys: Map<string, PublicApiKeyDetails>,
     ) {
-        const serverState = new ChatDetailsServerState(
+        if (!chatIdentifiersEqual(chatId, this.#selectedChat.chatId)) {
+            throw new Error(
+                "We should never be setting chat details for a different chat - investigate why this is happening",
+            );
+        }
+        this.#selectedChat.overwriteChatDetails(
             chatId,
             members,
             lapsedMembers,
@@ -553,13 +565,6 @@ class AppState {
             bots,
             apiKeys,
         );
-
-        // if the chatId is still the same just overwrite the server state, otherwise splat the whole thing
-        if (chatIdentifiersEqual(chatId, this.#selectedChat.chatId)) {
-            this.#selectedChat.overwriteServerState(serverState);
-        } else {
-            this.#selectedChat = new ChatDetailsMergedState(serverState);
-        }
     }
 
     setCommunityDetailsFromServer(

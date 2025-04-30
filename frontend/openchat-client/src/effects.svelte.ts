@@ -53,6 +53,7 @@ function onSelectedChatChanged(client: OpenChat) {
                     pathState.route.kind === "selected_channel_route" ||
                     pathState.route.kind === "global_chat_selected_route"
                 ) {
+                    selectedChatId.set(app.selectedChatId);
                     const id = app.selectedChatId;
                     const messageIndex = pathState.route.messageIndex;
                     const threadMessageIndex = pathState.route.threadMessageIndex;
@@ -163,10 +164,6 @@ function syncState() {
     $effect(() => {
         void app.selectedChat.expiredEventRanges;
         dummyExpiredEventRangeStore.set(Symbol());
-    });
-
-    $effect(() => {
-        selectedChatId.set(app.selectedChatId);
     });
 }
 
