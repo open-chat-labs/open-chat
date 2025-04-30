@@ -15,7 +15,6 @@
         isPermitted,
         messagePermissionsForSelectedChat,
         selectedChatStore,
-        selectedMessageContext,
         threadPermissionsForSelectedChat,
     } from "openchat-client";
     import { hasEveryRequiredPermission, random64, type FlattenedCommand } from "openchat-shared";
@@ -160,23 +159,18 @@
     }
 
     function selectCommand(command: FlattenedCommand) {
-        botState.setSelectedCommand(commands, command);
+        botState.setSelectedCommand(messageContext, commands, command);
         sendCommandIfValid();
     }
 
     function sendCommandIfValid() {
-        if (
-            botState.selectedCommand &&
-            botState.instanceValid &&
-            $selectedChatStore &&
-            $selectedMessageContext
-        ) {
+        if (botState.selectedCommand && botState.instanceValid && $selectedChatStore) {
             client
                 .executeBotCommand(
                     {
                         kind: "chat_scope",
-                        chatId: $selectedMessageContext.chatId,
-                        threadRootMessageIndex: $selectedMessageContext.threadRootMessageIndex,
+                        chatId: messageContext.chatId,
+                        threadRootMessageIndex: messageContext.threadRootMessageIndex,
                         messageId: random64(),
                     },
                     botState.createBotInstance(botState.selectedCommand),
@@ -216,7 +210,7 @@
                 break;
             case "Enter":
                 if (!botState.showingBuilder) {
-                    botState.setSelectedCommand(commands);
+                    botState.setSelectedCommand(messageContext, commands);
                     sendCommandIfValid();
                     ev.preventDefault();
                 }

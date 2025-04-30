@@ -3,6 +3,7 @@ import {
     SafeSet,
     type ChatIdentifier,
     type CommunityIdentifier,
+    type MessageContext,
     type Primitive,
     type ReadonlyMap,
 } from "openchat-shared";
@@ -80,6 +81,16 @@ export class ReactiveChatMap<V> extends SafeMap<ChatIdentifier, V> {
         super(
             (id) => JSON.stringify(id),
             (k) => JSON.parse(String(k)) as ChatIdentifier,
+            () => new SvelteMap(),
+        );
+    }
+}
+
+export class ReactiveMessageContextMap<V> extends SafeMap<MessageContext, V> {
+    constructor() {
+        super(
+            (k) => JSON.stringify(k),
+            (k) => JSON.parse(String(k)) as MessageContext,
             () => new SvelteMap(),
         );
     }

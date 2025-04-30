@@ -20,7 +20,6 @@
         type FilteredProposals,
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
-        type Mention,
         type Message,
         type MessageContent,
         type MessageContext,
@@ -67,8 +66,8 @@
     const client = getContext<OpenChat>("client");
 
     let previousChatId: ChatIdentifier | undefined = $state(undefined);
-    let unreadMessages = $state(0);
-    let firstUnreadMention: Mention | undefined = $state();
+    let unreadMessages = $derived(getUnreadMessageCount(chat));
+    let firstUnreadMention = $derived(client.getFirstUnreadMention(chat));
     let creatingPoll = $state(false);
     let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = $state(undefined);
     let creatingPrizeMessage = $state(false);
@@ -89,10 +88,6 @@
 
     onMount(() => {
         const unsubs = [
-            messagesRead.subscribe(() => {
-                unreadMessages = getUnreadMessageCount(chat);
-                firstUnreadMention = client.getFirstUnreadMention(chat);
-            }),
             subscribe("createPoll", onCreatePoll),
             subscribe("attachGif", onAttachGif),
             subscribe("tokenTransfer", onTokenTransfer),
@@ -300,9 +295,6 @@
         if (previousChatId === undefined || !chatIdentifiersEqual(chat.id, previousChatId)) {
             previousChatId = chat.id;
             showSearchHeader = false;
-            unreadMessages = getUnreadMessageCount(chat);
-            firstUnreadMention = client.getFirstUnreadMention(chat);
-
             tick().then(() => {
                 if ($messageToForwardStore !== undefined) {
                     forwardMessage($messageToForwardStore);
