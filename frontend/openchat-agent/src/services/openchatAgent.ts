@@ -264,7 +264,6 @@ import { clearCache as clearUserCache, getAllUsers, isUserIdDeleted } from "../u
 import { BitcoinClient } from "./bitcoin/bitcoin.client";
 import { CkbtcMinterClient } from "./ckbtcMinter/ckbtcMinter.client";
 import { measure } from "./common/profiling";
-import { excludeLatestKnownUpdateIfBeforeFix } from "./common/replicaUpToDateChecker";
 import { CommunityClient } from "./community/community.client";
 import { DataClient } from "./data/data.client";
 import { DexesAgent } from "./dexes";
@@ -911,8 +910,6 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
-        latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
-
         console.debug("CHAT EVENTS: Getting events window", {
             chatId,
             threadRootMessageIndex,
@@ -973,8 +970,6 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
-        latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
-
         console.debug("CHAT EVENTS: Getting chat events", {
             chatId,
             threadRootMessageIndex,
@@ -1149,8 +1144,6 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
-        latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
-
         console.debug("CHAT EVENTS: Getting chat events by index", {
             chatId,
             threadRootMessageIndex,
@@ -1524,8 +1517,6 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventWrapper<Message>> {
-        latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
-
         const missing = await this.resolveMissingIndexes(
             chatId,
             [message],
@@ -2760,8 +2751,6 @@ export class OpenChatAgent extends EventTarget {
         messageIndexes: Set<number>,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<Message>> {
-        latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
-
         switch (chatId.kind) {
             case "group_chat":
                 return this.rehydrateEventResponse(
@@ -2988,8 +2977,6 @@ export class OpenChatAgent extends EventTarget {
         return Promise.all(
             [...ChatMap.fromMap(threadsByChat).entries()].map(
                 ([chatId, [threadSyncs, latestKnownUpdate]]) => {
-                    latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
-
                     const latestClientThreadUpdate = threadSyncs.reduce(
                         (curr, next) => (next.lastUpdated > curr ? next.lastUpdated : curr),
                         BigInt(0),
