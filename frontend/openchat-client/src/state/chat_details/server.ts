@@ -5,6 +5,7 @@ import {
     type Member,
     type PublicApiKeyDetails,
     type VersionedRules,
+    type WebhookDetails,
 } from "openchat-shared";
 
 export class ChatDetailsServerState {
@@ -18,6 +19,7 @@ export class ChatDetailsServerState {
         readonly rules: VersionedRules,
         readonly bots: Map<string, ExternalBotPermissions>,
         readonly apiKeys: Map<string, PublicApiKeyDetails>,
+        readonly webhooks: WebhookDetails[],
     ) {}
 
     get isEmpty() {
@@ -35,6 +37,7 @@ export class ChatDetailsServerState {
             emptyRules(),
             new Map(),
             new Map(),
+            [],
         );
     }
 }

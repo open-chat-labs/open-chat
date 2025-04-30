@@ -2367,5 +2367,6 @@ export type PinNumberFailures = PinRequired | PinIncorrect | TooManyFailedPinAtt
 export type WebhookDetails = {
     id: string;
     name: string;
-    avatarId?: bigint;
+    //avatarId?: bigint;
+    avatarUrl?: string;
 };

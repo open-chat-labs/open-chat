@@ -802,7 +802,10 @@ export class GroupClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "selected_initial",
             {},
-            (resp) => mapResult(resp, groupDetailsSuccess),
+            (resp) =>
+                mapResult(resp, (value) =>
+                    groupDetailsSuccess(value, this.config.blobUrlPattern, this.chatId.groupId),
+                ),
             TEmpty,
             GroupSelectedInitialResponse,
         );
@@ -825,7 +828,8 @@ export class GroupClient extends MsgpackCanisterAgent {
         const updatesResponse = await this.executeMsgpackQuery(
             "selected_updates_v2",
             args,
-            groupDetailsUpdatesResponse,
+            (value) =>
+                groupDetailsUpdatesResponse(value, this.config.blobUrlPattern, this.chatId.groupId),
             GroupSelectedUpdatesArgs,
             GroupSelectedUpdatesResponse,
         );

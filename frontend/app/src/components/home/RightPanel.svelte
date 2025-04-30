@@ -493,6 +493,7 @@
             lapsed={app.selectedChat.lapsedMembers}
             installedBots={app.selectedChat.bots}
             apiKeys={app.selectedChat.apiKeys}
+            webhooks={app.selectedChat.webhooks}
             onClose={ui.popRightPanelHistory}
             onBlockUser={onBlockGroupUser}
             onUnblockUser={onUnblockGroupUser}

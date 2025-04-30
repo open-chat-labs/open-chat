@@ -2428,6 +2428,9 @@ export function pushEventSuccess(value: PushEventResult): PinMessageResponse {
 
 export function groupDetailsSuccess(
     value: GroupSelectedInitialSuccessResult | CommunitySelectedChannelInitialSuccessResult,
+    blobUrlPattern: string,
+    canisterId: string,
+    channelId?: number,
 ): GroupChatDetailsResponse {
     console.log("Group details: ", value);
     const members = ("participants" in value ? value.participants : value.members).map(member);
@@ -2459,7 +2462,9 @@ export function groupDetailsSuccess(
             m.set(k.botId, k);
             return m;
         }, new Map<string, PublicApiKeyDetails>()),
-        webhooks: value.webhooks.map(webhookDetails),
+        webhooks: value.webhooks.map((v) =>
+            webhookDetails(v, blobUrlPattern, canisterId, channelId),
+        ),
     };
 }
 
@@ -2474,6 +2479,9 @@ export function publicApiKeyDetails(value: ApiPublicApiKeyDetails): PublicApiKey
 
 export function groupDetailsUpdatesResponse(
     value: GroupSelectedUpdatesResponse | CommunitySelectedChannelUpdatesResponse,
+    blobUrlPattern: string,
+    canisterId: string,
+    channelId?: number,
 ): GroupChatDetailsUpdatesResponse {
     if (typeof value === "object") {
         if ("Success" in value) {
@@ -2498,7 +2506,9 @@ export function groupDetailsUpdatesResponse(
                 botsAddedOrUpdated: value.Success.bots_added_or_updated.map(installedBotDetails),
                 botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
                 apiKeysGenerated: value.Success.api_keys_generated.map(publicApiKeyDetails),
-                webhooks: mapOptional(value.Success.webhooks, (whs) => whs.map(webhookDetails)),
+                webhooks: mapOptional(value.Success.webhooks, (whs) =>
+                    whs.map((v) => webhookDetails(v, blobUrlPattern, canisterId, channelId)),
+                ),
             };
         } else if ("SuccessNoUpdates" in value) {
             return {
@@ -2737,11 +2747,27 @@ export function installedBotDetails(value: ApiInstalledBotDetails): InstalledBot
     };
 }
 
-export function webhookDetails(value: ApiWebhookDetails): WebhookDetails {
+export function webhookDetails(
+    value: ApiWebhookDetails,
+    blobUrlPattern: string,
+    canisterId: string,
+    channelId?: number,
+): WebhookDetails {
+    const webhookId = principalBytesToString(value.id);
+
     return {
-        id: principalBytesToString(value.id),
+        id: webhookId,
         name: value.name,
-        avatarId: value.avatar_id,
+        avatarUrl: mapOptional(
+            value.avatar_id,
+            (avatarId) =>
+                `${blobUrlPattern
+                    .replace("{canisterId}", canisterId)
+                    .replace(
+                        "{blobType}",
+                        channelId === undefined ? "avatar" : `channel/${channelId}/avatar`,
+                    )}/${webhookId}/${avatarId}`,
+        ),
     };
 }
 

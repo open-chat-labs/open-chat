@@ -369,7 +369,8 @@
         "matchingCommands": "Matching commands",
         "member": {
             "bots": "Bots",
-            "people": "People"
+            "people": "People",
+            "webhooks": "Webhooks"
         },
         "poll": {
             "desc": "Create a poll in the current chat"

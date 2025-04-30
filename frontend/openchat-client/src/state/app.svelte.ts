@@ -34,6 +34,7 @@ import {
     type VideoCallCounts,
     videoCallsInProgressForChats,
     type WalletConfig,
+    type WebhookDetails,
 } from "openchat-shared";
 import type { PinnedByScope } from "../stores";
 import { chatDetailsLocalUpdates, ChatDetailsMergedState } from "./chat_details";
@@ -462,6 +463,7 @@ class AppState {
         rules: VersionedRules,
         bots: Map<string, ExternalBotPermissions>,
         apiKeys: Map<string, PublicApiKeyDetails>,
+        webhooks: WebhookDetails[],
     ) {
         const serverState = new ChatDetailsServerState(
             chatId,
@@ -473,6 +475,7 @@ class AppState {
             rules,
             bots,
             apiKeys,
+            webhooks,
         );
 
         // if the chatId is still the same just overwrite the server state, otherwise splat the whole thing

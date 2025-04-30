@@ -18,6 +18,7 @@
         type ReadonlySet,
         type UserLookup,
         type UserSummary,
+        type WebhookDetails,
         botState,
         chatIdentifiersEqual,
         LARGE_GROUP_THRESHOLD,
@@ -58,6 +59,7 @@
         initialUsergroup?: number | undefined;
         showHeader?: boolean;
         apiKeys: ReadonlyMap<string, PublicApiKeyDetails>;
+        webhooks: WebhookDetails[];
         onClose: () => void;
         onShowInviteUsers: () => void;
         onChangeRole?: (args: { userId: string; newRole: MemberRole; oldRole: MemberRole }) => void;
@@ -78,6 +80,7 @@
         initialUsergroup = $bindable(undefined),
         showHeader = true,
         apiKeys,
+        webhooks,
         onClose,
         onShowInviteUsers,
         onChangeRole,
@@ -407,12 +410,21 @@
                     canManage={canManageBots}
                     {searchTerm} />
             {/each}
+        {/if}
 
-            {#if fullMembers.length > 0}
-                <h4 class="member_type_label">
-                    <Translatable resourceKey={i18nKey("bots.member.people")}></Translatable>
-                </h4>
-            {/if}
+        {#if webhooks.length > 0 && me?.role === "owner"}
+            <h4 class="member_type_label">
+                <Translatable resourceKey={i18nKey("bots.member.webhooks")}></Translatable>
+            </h4>
+            {#each webhooks as webhook}
+                <WebhookMember {collection} {webhook} {searchTerm} />
+            {/each}
+        {/if}
+
+        {#if (bots.length > 0 || webhooks.length > 0) && fullMembers.length > 0}
+            <h4 class="member_type_label">
+                <Translatable resourceKey={i18nKey("bots.member.people")}></Translatable>
+            </h4>
         {/if}
 
         <VirtualList bind:this={membersList} keyFn={(user) => user.userId} items={fullMembers}>

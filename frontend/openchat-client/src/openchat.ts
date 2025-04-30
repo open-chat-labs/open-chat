@@ -3301,6 +3301,7 @@ export class OpenChat {
                         resp.rules,
                         resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
                         resp.apiKeys,
+                        resp.webhooks,
                     );
                 }
                 await this.#updateUserStoreFromEvents([]);

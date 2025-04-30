@@ -73,6 +73,10 @@ export class ChatDetailsMergedState {
         return this.#apiKeys;
     }
 
+    get webhooks() {
+        return this.server.webhooks;
+    }
+
     get invitedUsers() {
         return this.#invitedUsers;
     }

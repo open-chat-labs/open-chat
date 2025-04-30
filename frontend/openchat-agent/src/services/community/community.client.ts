@@ -1061,7 +1061,15 @@ export class CommunityClient extends MsgpackCanisterAgent {
             {
                 channel_id: toBigInt32(chatId.channelId),
             },
-            (resp) => mapResult(resp, groupDetailsSuccess),
+            (resp) =>
+                mapResult(resp, (value) =>
+                    groupDetailsSuccess(
+                        value,
+                        this.config.blobUrlPattern,
+                        chatId.communityId,
+                        chatId.channelId,
+                    ),
+                ),
             CommunitySelectedChannelInitialArgs,
             CommunitySelectedChannelInitialResponse,
         );
@@ -1089,7 +1097,13 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 channel_id: toBigInt32(chatId.channelId),
                 updates_since: previous.timestamp,
             },
-            groupDetailsUpdatesResponse,
+            (value) =>
+                groupDetailsUpdatesResponse(
+                    value,
+                    this.config.blobUrlPattern,
+                    chatId.communityId,
+                    chatId.channelId,
+                ),
             CommunitySelectedChannelUpdatesArgs,
             CommunitySelectedChannelUpdatesResponse,
         );
