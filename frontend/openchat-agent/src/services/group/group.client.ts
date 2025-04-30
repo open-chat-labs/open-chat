@@ -20,6 +20,7 @@ import type {
     EventWrapper,
     ExternalBotPermissions,
     FollowThreadResponse,
+    FullWebhookDetails,
     GenerateBotKeyResponse,
     GroupCanisterSummaryResponse,
     GroupCanisterSummaryUpdatesResponse,
@@ -109,6 +110,7 @@ import {
     GroupRegisterProposalVoteArgs,
     GroupRegisterProposalVoteV2Args,
     GroupRegisterWebhookArgs,
+    GroupRegisterWebhookResponse,
     GroupRemoveParticipantArgs,
     GroupRemoveReactionArgs,
     GroupReportMessageArgs,
@@ -192,6 +194,7 @@ import {
     unitResult,
     updateGroupSuccess,
     videoCallParticipantsSuccess,
+    webhookDetails,
 } from "../common/chatMappersV2";
 import {
     chunkedChatEventsFromBackend,
@@ -1308,16 +1311,37 @@ export class GroupClient extends MsgpackCanisterAgent {
         );
     }
 
-    registerWebhook(name: string, avatar: string | undefined): Promise<boolean> {
+    registerWebhook(
+        name: string,
+        avatar: string | undefined,
+    ): Promise<FullWebhookDetails | undefined> {
         return this.executeMsgpackUpdate(
             "register_webhook",
             {
                 name,
                 avatar,
             },
-            isSuccess,
+            (resp) => {
+                if (typeof resp === "object" && "Success" in resp) {
+                    return {
+                        id: principalBytesToString(resp.Success.id),
+                        name,
+                        avatar: webhookDetails(
+                            {
+                                id: resp.Success.id,
+                                name,
+                                avatar_id: resp.Success.avatar_id,
+                            },
+                            this.config.blobUrlPattern,
+                            this.chatId.groupId,
+                        ),
+                        secret: resp.Success.secret,
+                    };
+                }
+                return undefined;
+            },
             GroupRegisterWebhookArgs,
-            UnitResult,
+            GroupRegisterWebhookResponse,
         );
     }
 

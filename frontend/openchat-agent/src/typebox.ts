@@ -3127,6 +3127,15 @@ export const CommunityRegisterWebhookArgs = Type.Object({
     avatar: Type.Optional(Type.String()),
 });
 
+export type CommunityRegisterWebhookSuccessResult = Static<
+    typeof CommunityRegisterWebhookSuccessResult
+>;
+export const CommunityRegisterWebhookSuccessResult = Type.Object({
+    id: UserId,
+    secret: Type.String(),
+    avatar_id: Type.Optional(Type.BigInt()),
+});
+
 export type CommunitySendMessageSuccessResult = Static<typeof CommunitySendMessageSuccessResult>;
 export const CommunitySendMessageSuccessResult = Type.Object({
     event_index: EventIndex,
@@ -3973,6 +3982,13 @@ export type GroupVideoCallParticipantsArgs = Static<typeof GroupVideoCallPartici
 export const GroupVideoCallParticipantsArgs = Type.Object({
     message_id: MessageId,
     updated_since: Type.Optional(Type.BigInt()),
+});
+
+export type GroupRegisterWebhookSuccessResult = Static<typeof GroupRegisterWebhookSuccessResult>;
+export const GroupRegisterWebhookSuccessResult = Type.Object({
+    id: UserId,
+    secret: Type.String(),
+    avatar_id: Type.Optional(Type.BigInt()),
 });
 
 export type GroupSendMessageSuccessResult = Static<typeof GroupSendMessageSuccessResult>;
@@ -6106,6 +6122,16 @@ export const CommunityVideoCallParticipantsResponse = Type.Union([
     }),
 ]);
 
+export type CommunityRegisterWebhookResponse = Static<typeof CommunityRegisterWebhookResponse>;
+export const CommunityRegisterWebhookResponse = Type.Union([
+    Type.Object({
+        Success: CommunityRegisterWebhookSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
 export type CommunityCreateChannelResponse = Static<typeof CommunityCreateChannelResponse>;
 export const CommunityCreateChannelResponse = Type.Union([
     Type.Object({
@@ -6273,6 +6299,16 @@ export type GroupVideoCallParticipantsResponse = Static<typeof GroupVideoCallPar
 export const GroupVideoCallParticipantsResponse = Type.Union([
     Type.Object({
         Success: VideoCallParticipants,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
+export type GroupRegisterWebhookResponse = Static<typeof GroupRegisterWebhookResponse>;
+export const GroupRegisterWebhookResponse = Type.Union([
+    Type.Object({
+        Success: GroupRegisterWebhookSuccessResult,
     }),
     Type.Object({
         Error: OCError,

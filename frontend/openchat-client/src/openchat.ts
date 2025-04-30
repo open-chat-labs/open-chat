@@ -92,6 +92,7 @@ import type {
     ExternalBotPermissions,
     Failure,
     FromWorker,
+    FullWebhookDetails,
     GenerateBotKeyResponse,
     GenerateChallengeResponse,
     GenerateMagicLinkResponse,
@@ -8133,7 +8134,7 @@ export class OpenChat {
         chatId: MultiUserChatIdentifier,
         name: string,
         avatar: string | undefined,
-    ): Promise<boolean> {
+    ): Promise<FullWebhookDetails | undefined> {
         return this.#sendRequest({
             kind: "registerWebhook",
             chatId,
@@ -8141,7 +8142,7 @@ export class OpenChat {
             avatar,
         }).catch((err) => {
             this.#logger.error("Failed to register webhook", err);
-            return false;
+            return undefined;
         });
     }
 

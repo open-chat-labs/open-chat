@@ -80,6 +80,7 @@ import type {
     FollowThreadResponse,
     FreezeCommunityResponse,
     FreezeGroupResponse,
+    FullWebhookDetails,
     GenerateBotKeyResponse,
     GenerateMagicLinkResponse,
     GetDelegationResponse,
@@ -4353,7 +4354,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: MultiUserChatIdentifier,
         name: string,
         avatar: string | undefined,
-    ): Promise<boolean> {
+    ): Promise<FullWebhookDetails | undefined> {
         switch (chatId.kind) {
             case "channel":
                 return this.communityClient(chatId.communityId).registerWebhook(

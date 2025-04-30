@@ -1,7 +1,12 @@
 import type DRange from "drange";
 import { emptyChatMetrics } from "../../utils";
 import type { AccessControlled, AccessGateConfig, UpdatedRules, VersionedRules } from "../access";
-import type { CommandArg, ExternalBotPermissions, InstalledBotDetails } from "../bots";
+import type {
+    CommandArg,
+    ExternalBotPermissions,
+    InstalledBotDetails,
+    WebhookDetails,
+} from "../bots";
 import type { ChitEarned } from "../chit";
 import type {
     CommunityCanisterCommunitySummaryUpdates,
@@ -2363,10 +2368,3 @@ export type SetPinNumberResponse =
     | OCError;
 
 export type PinNumberFailures = PinRequired | PinIncorrect | TooManyFailedPinAttempts;
-
-export type WebhookDetails = {
-    id: string;
-    name: string;
-    //avatarId?: bigint;
-    avatarUrl?: string;
-};

@@ -13,6 +13,7 @@ import type {
     BotsResponse,
     ExternalBot,
     ExternalBotPermissions,
+    FullWebhookDetails,
 } from "./bots";
 import type {
     AcceptedRules,
@@ -1741,7 +1742,8 @@ export type WorkerResponseInner =
     | BotDefinitionResponse
     | BotCommandResponse
     | GenerateBotKeyResponse
-    | PayForStreakInsuranceResponse;
+    | PayForStreakInsuranceResponse
+    | FullWebhookDetails;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -2489,7 +2491,7 @@ export type WorkerResult<T> = T extends Init
     : T extends GetApiKey
     ? string | undefined
     : T extends RegisterWebhook
-    ? boolean
+    ? FullWebhookDetails | undefined
     : T extends UpdateWebhook
     ? boolean
     : T extends RegenerateWebhook

@@ -807,17 +807,19 @@ export function directMessageCommandInstance(
     }
 }
 
-export type Webhook = {
-    kind: "webhook";
+export type WebhookDetails = {
     id: string;
     name: string;
     avatarUrl?: string;
 };
 
-export function emptyWebhookInstance(): Webhook {
+export function emptyWebhookInstance(): WebhookDetails {
     return {
-        kind: "webhook",
         id: "",
         name: "",
     };
 }
+
+export type FullWebhookDetails = WebhookDetails & {
+    secret: string;
+};

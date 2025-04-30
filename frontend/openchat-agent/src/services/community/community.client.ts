@@ -36,6 +36,7 @@ import type {
     ExploreChannelsResponse,
     ExternalBotPermissions,
     FollowThreadResponse,
+    FullWebhookDetails,
     GenerateBotKeyResponse,
     GroupChatDetails,
     GroupChatDetailsResponse,
@@ -136,6 +137,7 @@ import {
     CommunityRegisterPollVoteResponse,
     CommunityRegisterProposalVoteArgs,
     CommunityRegisterWebhookArgs,
+    CommunityRegisterWebhookResponse,
     CommunityRemoveMemberArgs,
     CommunityRemoveMemberFromChannelArgs,
     CommunityRemoveReactionArgs,
@@ -232,6 +234,7 @@ import {
     unitResult,
     updateGroupSuccess,
     videoCallParticipantsSuccess,
+    webhookDetails,
 } from "../common/chatMappersV2";
 import {
     chunkedChatEventsFromBackend,
@@ -1738,7 +1741,11 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
     }
 
-    registerWebhook(channelId: number, name: string, avatar: string | undefined): Promise<boolean> {
+    registerWebhook(
+        channelId: number,
+        name: string,
+        avatar: string | undefined,
+    ): Promise<FullWebhookDetails | undefined> {
         return this.executeMsgpackUpdate(
             "register_webhook",
             {
@@ -1746,9 +1753,28 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 name,
                 avatar,
             },
-            isSuccess,
+            (resp) => {
+                if (typeof resp === "object" && "Success" in resp) {
+                    return {
+                        id: principalBytesToString(resp.Success.id),
+                        name,
+                        avatar: webhookDetails(
+                            {
+                                id: resp.Success.id,
+                                name,
+                                avatar_id: resp.Success.avatar_id,
+                            },
+                            this.config.blobUrlPattern,
+                            this.communityId,
+                            channelId,
+                        ),
+                        secret: resp.Success.secret,
+                    };
+                }
+                return undefined;
+            },
             CommunityRegisterWebhookArgs,
-            UnitResult,
+            CommunityRegisterWebhookResponse,
         );
     }
 
