@@ -8,8 +8,6 @@ import {
     type ReplicaNotUpToDate,
 } from "openchat-shared";
 
-const DATE_FIXED = BigInt(1699800000000);
-
 export async function ensureReplicaIsUpToDate(
     principal: Principal,
     chatId: ChatIdentifier,
@@ -20,8 +18,7 @@ export async function ensureReplicaIsUpToDate(
 
     if (
         clientChat !== undefined &&
-        replicaChatLastUpdated < clientChat.lastUpdated &&
-        clientChat.lastUpdated > DATE_FIXED
+        replicaChatLastUpdated < clientChat.lastUpdated
     ) {
         if (suppressError) {
             return {
@@ -36,16 +33,6 @@ export async function ensureReplicaIsUpToDate(
             true,
         );
     }
-}
-
-export function excludeLatestKnownUpdateIfBeforeFix(
-    latestKnownUpdate: bigint | undefined,
-): bigint | undefined {
-    if (latestKnownUpdate !== undefined && latestKnownUpdate < DATE_FIXED) {
-        return undefined;
-    }
-
-    return latestKnownUpdate;
 }
 
 async function getChat(
