@@ -66,12 +66,6 @@ function onSelectedChatChanged(client: OpenChat) {
             });
         }
     });
-
-    // $effect(() => {
-    //     if (app.selectedChatId === undefined) {
-    //         // app.clearSelectedChat();
-    //     }
-    // });
 }
 
 // function onSelectedMessageChanged(client: OpenChat) {

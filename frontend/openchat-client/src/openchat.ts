@@ -2789,7 +2789,6 @@ export class OpenChat {
         app.setSelectedChat(chatId);
 
         const { selectedChat } = this.#liveState;
-        // what is the purpose of this check - to make sure that the selectedChat is ... the selectedChat ???
         if (selectedChat !== undefined) {
             if (!this.#uninstalledBotChat(selectedChat)) {
                 if (messageIndex !== undefined) {
@@ -2799,15 +2798,6 @@ export class OpenChat {
                         }
                     });
                 } else {
-                    // TODO - this is awkward because the server events are loaded *before* we have
-                    // loaded the chat details.
-                    // Why do we do it in that order I wonder?
-                    // I guess it is because we don't want anything to delay the events.
-                    // But having things split like this is where it gets a bit race condition-y
-
-                    // So we have to ensure that it is the loading of events that dictates the creation of the
-                    // new state object, not the loading of chat details
-
                     this.loadPreviousMessages(chatId, undefined, true).then(() => {
                         if (serverChat !== undefined) {
                             this.#loadChatDetails(serverChat);
