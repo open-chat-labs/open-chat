@@ -3,8 +3,11 @@ import {
     ChatMap,
     MessageContextMap,
     bigIntMax,
+    emptyUnreadCounts,
+    mergeUnreadCounts,
     type ChatIdentifier,
     type ChatSummary,
+    type CombinedUnreadCounts,
     type MarkReadRequest,
     type MarkReadResponse,
     type Mention,
@@ -12,11 +15,11 @@ import {
     type ThreadRead,
     type ThreadSyncDetails,
 } from "openchat-shared";
-import { writable, type Subscriber, type Unsubscriber } from "svelte/store";
-import type { OpenChat } from "../openchat";
-import { ephemeralMessages } from "./ephemeralMessages";
-import { offlineStore } from "./network";
-import { unconfirmed } from "./unconfirmed";
+import { SvelteMap } from "svelte/reactivity";
+import { type Unsubscriber } from "svelte/store";
+import type { OpenChat } from "../../openchat";
+import { ephemeralMessages, offlineStore, unconfirmed } from "../../stores";
+import { ReactiveChatMap, ReactiveMessageContextMap } from "../map";
 
 const MARK_READ_INTERVAL = 10 * 1000;
 
@@ -25,54 +28,71 @@ export interface MarkMessagesRead {
 }
 
 export class MessagesRead {
-    public readUpTo: number | undefined;
-    public threads: Record<number, number>;
-    public dateReadPinned: bigint | undefined;
+    #readUpTo = $state<number | undefined>();
+    #threads = new SvelteMap<number, number>();
+    #dateReadPinned = $state<bigint | undefined>();
 
-    constructor() {
-        this.readUpTo = undefined;
-        this.threads = {};
-        this.dateReadPinned = undefined;
-    }
-
-    get threadsList(): ThreadRead[] {
-        return Object.entries(this.threads).map(([threadRootMessageIndex, readUpTo]) => ({
+    #threadsList = $derived.by(() => {
+        return [...this.threads.entries()].map(([threadRootMessageIndex, readUpTo]) => ({
             threadRootMessageIndex: Number(threadRootMessageIndex),
             readUpTo,
         }));
+    });
+
+    #empty = $derived(
+        this.#readUpTo === undefined &&
+            this.#threads.size === 0 &&
+            this.#dateReadPinned === undefined,
+    );
+
+    get readUpTo() {
+        return this.#readUpTo;
     }
 
-    empty(): boolean {
-        return (
-            this.readUpTo === undefined &&
-            Object.keys(this.threads).length === 0 &&
-            this.dateReadPinned === undefined
-        );
+    set readUpTo(val: number | undefined) {
+        this.#readUpTo = val;
+    }
+
+    get threads() {
+        return this.#threads;
+    }
+
+    get dateReadPinned() {
+        return this.#dateReadPinned;
+    }
+
+    set dateReadPinned(val: bigint | undefined) {
+        this.#dateReadPinned = val;
+    }
+
+    get threadsList(): ThreadRead[] {
+        return this.#threadsList;
+    }
+
+    get empty() {
+        return this.#empty;
     }
 
     markReadUpTo(index: number): void {
-        this.readUpTo = Math.max(this.readUpTo ?? 0, index);
+        this.#readUpTo = Math.max(this.#readUpTo ?? 0, index);
     }
 
     updateThread(rootIndex: number, readUpTo: number): void {
-        const current = this.threads[rootIndex];
+        const current = this.#threads.get(rootIndex);
         if (current === undefined || current < readUpTo) {
-            this.threads[rootIndex] = readUpTo;
+            this.#threads.set(rootIndex, readUpTo);
         }
     }
 
     setThreads(threads: ThreadRead[]): void {
-        this.threads = threads.reduce(
-            (rec, t) => {
-                rec[t.threadRootMessageIndex] = t.readUpTo;
-                return rec;
-            },
-            {} as Record<number, number>,
-        );
+        this.#threads = threads.reduce((rec, t) => {
+            rec.set(t.threadRootMessageIndex, t.readUpTo);
+            return rec;
+        }, new SvelteMap<number, number>());
     }
 
     markReadPinned(dateReadPinned: bigint | undefined): void {
-        this.dateReadPinned = dateReadPinned;
+        this.#dateReadPinned = dateReadPinned;
     }
 }
 
@@ -84,58 +104,57 @@ export type MessageReadState = {
     state: MessagesReadByChat;
 };
 
+/**
+ * Let's try to leave this logic alone as much as we can
+ * and just focus on converting the actual underlying state to svelte 5 runes
+ */
 export class MessageReadTracker {
-    private timeout: number | undefined;
-    public serverState: MessagesReadByChat = new ChatMap<MessagesRead>();
+    #timeout: number | undefined;
+    #serverState: MessagesReadByChat = new ReactiveChatMap<MessagesRead>();
+    #state: MessagesReadByChat = new ReactiveChatMap<MessagesRead>();
 
     /**
      * The waiting structure is either keyed on chatId for normal chat messages or
      * of chatId_threadRootMessageIndex for thread messages
      */
-    public waiting: MessageContextMap<Map<bigint, number>> = new MessageContextMap<
-        Map<bigint, number>
+    #waiting: MessageContextMap<SvelteMap<bigint, number>> = new ReactiveMessageContextMap<
+        SvelteMap<bigint, number>
     >(); // The map is messageId -> (unconfirmed) messageIndex
-    public state: MessagesReadByChat = new ChatMap<MessagesRead>();
-    private subscribers: Subscriber<MessageReadState>[] = [];
-    private executingBatch = false;
-    private publishRequired = false;
 
-    public subscribe(sub: Subscriber<MessageReadState>): Unsubscriber {
-        this.subscribers.push(sub);
-        sub({
-            serverState: this.serverState,
-            waiting: this.waiting,
-            state: this.state,
-        });
-        return () => {
-            this.subscribers = this.subscribers.filter((s) => s !== sub);
-        };
+    #messageReadState = $derived({
+        serverState: this.#serverState,
+        waiting: this.#waiting,
+        state: this.#state,
+    });
+
+    #triggerLoop(api: OpenChat): void {
+        this.#timeout = window.setTimeout(() => this.#sendToServer(api), MARK_READ_INTERVAL);
     }
 
-    private triggerLoop(api: OpenChat): void {
-        this.timeout = window.setTimeout(() => this.sendToServer(api), MARK_READ_INTERVAL);
+    get messageReadState() {
+        return this.#messageReadState;
     }
 
     start(api: OpenChat): void {
         console.log("starting the mark read poller");
         if (import.meta.env.OC_NODE_ENV !== "test") {
-            this.triggerLoop(api);
+            this.#triggerLoop(api);
         }
         if (import.meta.env.OC_NODE_ENV !== "test") {
-            window.onbeforeunload = () => this.sendToServer(api);
+            window.onbeforeunload = () => this.#sendToServer(api);
         }
     }
 
     stop(): void {
         console.log("stopping the mark read poller");
-        if (this.timeout !== undefined) {
-            window.clearTimeout(this.timeout);
+        if (this.#timeout !== undefined) {
+            window.clearTimeout(this.#timeout);
         }
     }
 
-    private sendToServer(api: OpenChat): void {
-        const req = this.state.reduce<MarkReadRequest>((req, [chatId, data]) => {
-            if (!data.empty()) {
+    #sendToServer(api: OpenChat): void {
+        const req = this.#state.reduce<MarkReadRequest>((req, [chatId, data]) => {
+            if (!data.empty) {
                 req.push({
                     chatId,
                     readUpTo: data.readUpTo,
@@ -152,33 +171,17 @@ export class MessageReadTracker {
                 .catch((err) => {
                     console.log("Error calling markMessagesRead", err);
                 })
-                .finally(() => this.triggerLoop(api));
+                .finally(() => this.#triggerLoop(api));
         } else {
-            this.triggerLoop(api);
+            this.#triggerLoop(api);
         }
     }
 
-    /** this will notify all subscribers that something that affects the unread message count has changed */
-    public publish(): void {
-        if (this.executingBatch) {
-            this.publishRequired = true;
-            return;
+    #stateForId(chatId: ChatIdentifier): MessagesRead {
+        if (!this.#state.has(chatId)) {
+            this.#state.set(chatId, new MessagesRead());
         }
-        this.subscribers.forEach((sub) => {
-            sub({
-                serverState: this.serverState,
-                waiting: this.waiting,
-                state: this.state,
-            });
-        });
-        this.publishRequired = false;
-    }
-
-    private stateForId(chatId: ChatIdentifier): MessagesRead {
-        if (!this.state.has(chatId)) {
-            this.state.set(chatId, new MessagesRead());
-        }
-        return this.state.get(chatId)!;
+        return this.#state.get(chatId)!;
     }
 
     markMessageRead(
@@ -186,38 +189,32 @@ export class MessageReadTracker {
         messageIndex: number,
         messageId: bigint | undefined,
     ): void {
-        const chatState = this.stateForId(context.chatId);
-        if (!this.state.has(context.chatId)) {
-            this.state.set(context.chatId, new MessagesRead());
-        }
+        const chatState = this.#stateForId(context.chatId);
         if (messageId !== undefined && unconfirmed.contains(context, messageId)) {
             // if a message is unconfirmed we will just tuck it away until we are told it has been confirmed
-            if (!this.waiting.has(context)) {
-                this.waiting.set(context, new Map<bigint, number>());
+            if (!this.#waiting.has(context)) {
+                this.#waiting.set(context, new SvelteMap<bigint, number>());
             }
-            this.waiting.get(context)?.set(messageId, messageIndex);
+            this.#waiting.get(context)?.set(messageId, messageIndex);
         } else if (context.threadRootMessageIndex !== undefined) {
             chatState.updateThread(context.threadRootMessageIndex, messageIndex);
         } else {
             // Mark the chat as read up to the new messageIndex
             chatState.markReadUpTo(messageIndex);
         }
-        this.publish();
     }
 
-    markReadUpTo(context: MessageContext, to: number): void {
-        const chatState = this.stateForId(context.chatId);
+    markReadUpTo(context: MessageContext, index: number): void {
+        const chatState = this.#stateForId(context.chatId);
         if (context.threadRootMessageIndex !== undefined) {
-            chatState.updateThread(context.threadRootMessageIndex, to);
+            chatState.updateThread(context.threadRootMessageIndex, index);
         } else {
-            chatState.markReadUpTo(to);
+            chatState.markReadUpTo(index);
         }
-        this.publish();
     }
 
     markPinnedMessagesRead(chatId: ChatIdentifier, dateLastPinned: bigint): void {
-        this.stateForId(chatId).markReadPinned(dateLastPinned);
-        this.publish();
+        this.#stateForId(chatId).markReadPinned(dateLastPinned);
     }
 
     confirmMessage(context: MessageContext, messageIndex: number, messageId: bigint): boolean {
@@ -232,7 +229,7 @@ export class MessageReadTracker {
     }
 
     removeUnconfirmedMessage(context: MessageContext, messageId: bigint): boolean {
-        return this.waiting.get(context)?.delete(messageId) ?? false;
+        return this.#waiting.get(context)?.delete(messageId) ?? false;
     }
 
     staleThreadCountForChat(chatId: ChatIdentifier, threads: ThreadSyncDetails[]): number {
@@ -247,10 +244,10 @@ export class MessageReadTracker {
     }
 
     threadReadUpTo(chatId: ChatIdentifier, threadRootMessageIndex: number): number {
-        const local = this.state.get(chatId)?.threads[threadRootMessageIndex] ?? -1;
-        const server = this.serverState.get(chatId)?.threads[threadRootMessageIndex] ?? -1;
+        const local = this.#state.get(chatId)?.threads.get(threadRootMessageIndex) ?? -1;
+        const server = this.#serverState.get(chatId)?.threads.get(threadRootMessageIndex) ?? -1;
         const unconfirmedReadCount =
-            this.waiting.get({ chatId, threadRootMessageIndex })?.size ?? 0;
+            this.#waiting.get({ chatId, threadRootMessageIndex })?.size ?? 0;
 
         return Math.max(local + unconfirmedReadCount, server);
     }
@@ -275,23 +272,23 @@ export class MessageReadTracker {
 
     unreadMessageCount(chatId: ChatIdentifier, latestMessageIndex: number | undefined): number {
         // previewed chats will not exist in this.serverState
-        if (latestMessageIndex === undefined || !this.serverState.has(chatId)) {
+        if (latestMessageIndex === undefined || !this.#serverState.has(chatId)) {
             return 0;
         }
 
-        const readUpToServer = this.serverState.get(chatId)?.readUpTo;
-        const readUpToLocal = this.state.get(chatId)?.readUpTo;
+        const readUpToServer = this.#serverState.get(chatId)?.readUpTo;
+        const readUpToLocal = this.#state.get(chatId)?.readUpTo;
 
         const readUpToConfirmed = Math.max(readUpToServer ?? -1, readUpToLocal ?? -1);
-        const readUnconfirmedCount = this.waiting.get({ chatId })?.size ?? 0;
+        const readUnconfirmedCount = this.#waiting.get({ chatId })?.size ?? 0;
 
         const total = latestMessageIndex - readUpToConfirmed - readUnconfirmedCount;
         return Math.max(total, 0);
     }
 
     unreadPinned(chatId: ChatIdentifier, dateLastPinned: bigint | undefined): boolean {
-        const readServer = this.serverState.get(chatId)?.dateReadPinned ?? BigInt(0);
-        const readLocal = this.state.get(chatId)?.dateReadPinned ?? BigInt(0);
+        const readServer = this.#serverState.get(chatId)?.dateReadPinned ?? BigInt(0);
+        const readLocal = this.#state.get(chatId)?.dateReadPinned ?? BigInt(0);
         const dateReadPinned = bigIntMax(readServer, readLocal);
         return (dateLastPinned ?? BigInt(0)) > dateReadPinned;
     }
@@ -303,13 +300,13 @@ export class MessageReadTracker {
         if (latestMessageIndex === undefined) {
             return undefined;
         }
-        const readUpToServer = this.serverState.get(chatId)?.readUpTo;
-        const readUpToLocal = this.state.get(chatId)?.readUpTo;
+        const readUpToServer = this.#serverState.get(chatId)?.readUpTo;
+        const readUpToLocal = this.#state.get(chatId)?.readUpTo;
 
         const readUpToConfirmed = Math.max(readUpToServer ?? -1, readUpToLocal ?? -1);
 
         if (readUpToConfirmed < latestMessageIndex) {
-            const readUnconfirmed = this.waiting.get({ chatId }) ?? new Map();
+            const readUnconfirmed = this.#waiting.get({ chatId }) ?? new Map();
             const unconfirmedMessageIndexes = [...readUnconfirmed.values()];
 
             for (let i = readUpToConfirmed + 1; i <= latestMessageIndex; i++) {
@@ -348,20 +345,6 @@ export class MessageReadTracker {
         }
     }
 
-    // some operations can be called in a loop. We only want to publish at the end of the
-    // loop so that downstream derived stores are not re-computed unnecessarily
-    batchUpdate(fn: () => void): void {
-        this.executingBatch = true;
-        try {
-            fn();
-        } finally {
-            this.executingBatch = false;
-            if (this.publishRequired) {
-                this.publish();
-            }
-        }
-    }
-
     syncWithServer(
         chatId: ChatIdentifier,
         readUpTo: number | undefined,
@@ -372,9 +355,9 @@ export class MessageReadTracker {
         serverState.readUpTo = readUpTo;
         serverState.setThreads(threads);
         serverState.markReadPinned(dateReadPinned);
-        this.serverState.set(chatId, serverState);
+        this.#serverState.set(chatId, serverState);
 
-        const state = this.state.get(chatId);
+        const state = this.#state.get(chatId);
         if (state) {
             if (
                 readUpTo !== undefined &&
@@ -387,9 +370,9 @@ export class MessageReadTracker {
             // for each thread we get from the server
             // remove the corresponding thread data from the client state unless the client state is more recent
             threads.forEach((t) => {
-                const readUpTo = state.threads[t.threadRootMessageIndex];
+                const readUpTo = state.threads.get(t.threadRootMessageIndex);
                 if (readUpTo !== undefined && readUpTo <= t.readUpTo) {
-                    delete state.threads[t.threadRootMessageIndex];
+                    state.threads.delete(t.threadRootMessageIndex);
                 }
             });
 
@@ -401,35 +384,75 @@ export class MessageReadTracker {
                 state.dateReadPinned = undefined;
             }
         }
-        this.publish();
     }
 
     isRead(context: MessageContext, messageIndex: number, messageId: bigint | undefined): boolean {
         if (messageId !== undefined && unconfirmed.contains(context, messageId)) {
-            return this.waiting.get(context)?.has(messageId) ?? false;
+            return this.#waiting.get(context)?.has(messageId) ?? false;
         } else if (messageId !== undefined && ephemeralMessages.contains(context, messageId)) {
             return true;
         } else if (context.threadRootMessageIndex !== undefined) {
-            const serverState = this.serverState.get(context.chatId);
-            if ((serverState?.threads[context.threadRootMessageIndex] ?? -1) >= messageIndex)
+            const serverState = this.#serverState.get(context.chatId);
+            if ((serverState?.threads.get(context.threadRootMessageIndex) ?? -1) >= messageIndex)
                 return true;
-            const localState = this.state.get(context.chatId);
-            if ((localState?.threads[context.threadRootMessageIndex] ?? -1) >= messageIndex)
+            const localState = this.#state.get(context.chatId);
+            if ((localState?.threads.get(context.threadRootMessageIndex) ?? -1) >= messageIndex)
                 return true;
         } else {
-            const serverState = this.serverState.get(context.chatId);
+            const serverState = this.#serverState.get(context.chatId);
             if (serverState?.readUpTo !== undefined && serverState.readUpTo >= messageIndex)
                 return true;
-            const localState = this.state.get(context.chatId);
+            const localState = this.#state.get(context.chatId);
             if (localState?.readUpTo !== undefined && localState.readUpTo >= messageIndex)
                 return true;
         }
         return false;
     }
+
+    combinedUnreadCountForChats(chats: ChatMap<ChatSummary>): CombinedUnreadCounts {
+        return chats.reduce(
+            (counts, [id, chat]) => {
+                if (chat === undefined) return counts;
+
+                const muted = chat.membership.notificationsMuted;
+                const unreadMessages = this.unreadMessageCount(
+                    id,
+                    chat.latestMessage?.event.messageIndex,
+                );
+                const mentions = unreadMessages > 0 && this.#hasUnreadMentions(chat);
+                const unreadThreads = this.staleThreadCountForChat(
+                    id,
+                    chat.membership.latestThreads,
+                );
+                return {
+                    chats: mergeUnreadCounts(unreadMessages, muted, mentions, counts.chats),
+                    threads: mergeUnreadCounts(
+                        unreadThreads,
+                        muted,
+                        false,
+                        counts.threads,
+                        unreadThreads,
+                    ),
+                };
+            },
+            {
+                chats: emptyUnreadCounts(),
+                threads: emptyUnreadCounts(),
+            } as CombinedUnreadCounts,
+        );
+    }
+
+    #hasUnreadMentions(chat: ChatSummary): boolean {
+        if (chat.kind === "direct_chat") return false;
+        return (
+            chat.membership.mentions.filter(
+                (m) => !this.isRead({ chatId: chat.id }, m.messageIndex, m.messageId),
+            ).length > 0
+        );
+    }
 }
 
 export const messagesRead = new MessageReadTracker();
-export const messageActivityFeedReadUpToLocally = writable<bigint>();
 
 let networkUnsub: Unsubscriber | undefined;
 

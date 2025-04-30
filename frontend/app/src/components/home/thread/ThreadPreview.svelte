@@ -5,7 +5,6 @@
         chatSummariesStore,
         type EventWrapper,
         type Message,
-        messagesRead,
         type MultiUserChat,
         OpenChat,
         routeForChatIdentifier,
@@ -14,7 +13,7 @@
         userStore,
     } from "openchat-client";
     import page from "page";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
     import { pop } from "../../../utils/transition";
@@ -81,18 +80,6 @@
             }
         }
     }
-
-    onMount(() => {
-        return messagesRead.subscribe(() => {
-            if (syncDetails !== undefined) {
-                unreadCount = client.unreadThreadMessageCount(
-                    thread.chatId,
-                    threadRootMessageIndex,
-                    syncDetails.latestMessageIndex,
-                );
-            }
-        });
-    });
 
     function selectThread() {
         page(

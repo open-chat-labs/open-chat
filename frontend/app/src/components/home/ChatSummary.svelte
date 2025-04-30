@@ -13,7 +13,6 @@
         app,
         blockedUsers,
         chatIdentifiersEqual,
-        messagesRead,
         pathState,
         publish,
         routeForScope,
@@ -25,7 +24,7 @@
         userStore,
     } from "openchat-client";
     import page from "page";
-    import { getContext, onMount, tick, untrack } from "svelte";
+    import { getContext, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import ArchiveIcon from "svelte-material-icons/Archive.svelte";
     import BellIcon from "svelte-material-icons/Bell.svelte";
@@ -76,8 +75,10 @@
     );
     let verified = $derived(chatSummary.kind === "group_chat" && chatSummary.verified);
     let hovering = $state(false);
-    let unreadMessages: number = $state(0);
-    let unreadMentions: number = $state(0);
+    let unreadMessages = $derived(
+        client.unreadMessageCount(chatSummary.id, chatSummary.latestMessage?.event.messageIndex),
+    );
+    let unreadMentions = $derived(getUnreadMentionCount(chatSummary));
     let chat = $derived(normaliseChatSummary($now, chatSummary, $typersByContext));
     let lastMessage = $derived(formatLatestMessage(chatSummary, $userStore));
     let displayDate = $derived(client.getDisplayDate(chatSummary));
@@ -96,12 +97,6 @@
     const maxDelOffset = -60;
     let delOffset = $state(maxDelOffset);
     let swiped = $state(false);
-
-    trackedEffect("unread-counts", () => updateUnreadCounts(chatSummary));
-
-    onMount(() => {
-        return messagesRead.subscribe(() => updateUnreadCounts(chatSummary));
-    });
 
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         const fav = app.chatListScope.kind !== "favourite" && app.favourites.has(chatSummary.id);
@@ -205,24 +200,11 @@
         return `${user}: ${latestMessageText}`;
     }
 
-    /***
-     * This needs to be called both when the chatSummary changes (because that may have changed the latestMessage)
-     * and when the internal state of the MessageReadTracker changes. Both are necessary to get the right value
-     * at all times.
-     */
-    function updateUnreadCounts(chatSummary: ChatSummary) {
-        untrack(() => {
-            unreadMessages = client.unreadMessageCount(
-                chatSummary.id,
-                chatSummary.latestMessage?.event.messageIndex,
-            );
-            unreadMentions = getUnreadMentionCount(chatSummary);
-
-            if (chatSummary.membership.archived && unreadMessages > 0 && !chat.bot) {
-                unarchiveChat();
-            }
-        });
-    }
+    trackedEffect("unarchive-chat", () => {
+        if (chatSummary.membership.archived && unreadMessages > 0 && !chat.bot) {
+            unarchiveChat();
+        }
+    });
 
     function deleteDirectChat(e: Event) {
         e.stopPropagation();
