@@ -1,5 +1,6 @@
 <script lang="ts">
     import BotInstaller from "@src/components/bots/install/BotInstaller.svelte";
+    import WebhookMember from "@src/components/bots/WebhookMember.svelte";
     import {
         type BotMatch as BotMatchType,
         type CommunityIdentifier,
@@ -412,12 +413,12 @@
             {/each}
         {/if}
 
-        {#if webhooks.length > 0 && me?.role === "owner"}
+        {#if webhooks.length > 0 && me?.role === "owner" && collection.kind !== "community"}
             <h4 class="member_type_label">
                 <Translatable resourceKey={i18nKey("bots.member.webhooks")}></Translatable>
             </h4>
             {#each webhooks as webhook}
-                <WebhookMember {collection} {webhook} {searchTerm} />
+                <WebhookMember chat={collection} {webhook} {searchTerm} />
             {/each}
         {/if}
 

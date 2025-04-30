@@ -104,6 +104,11 @@
     import RightPanel from "./RightPanelWrapper.svelte";
     import Upgrade from "./upgrade/Upgrade.svelte";
 
+    // $inspect(
+    //     app.serverGroupChats.get({ kind: "group_chat", groupId: "weosr-yh777-77774-qaaoa-cai" })
+    //         ?.lastUpdated,
+    // ).with(console.trace);
+
     type ViewProfileConfig = {
         userId: string;
         chatButton: boolean;

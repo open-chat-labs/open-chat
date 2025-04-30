@@ -1,157 +1,80 @@
 <script lang="ts">
-    import { type CommunitySummary, type MultiUserChat, ui } from "openchat-client";
+    import { toastStore } from "@src/stores/toast";
+    import { type MultiUserChat, OpenChat, ui } from "openchat-client";
     import { type WebhookDetails } from "openchat-shared";
+    import { getContext } from "svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
-    import KeyPlus from "svelte-material-icons/KeyPlus.svelte";
-    import KeyRemove from "svelte-material-icons/KeyRemove.svelte";
-    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import TextBoxOutline from "svelte-material-icons/TextBoxOutline.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import FilteredUsername from "../FilteredUsername.svelte";
     import HoverIcon from "../HoverIcon.svelte";
-    import InfoIcon from "../InfoIcon.svelte";
-    import Link from "../Link.svelte";
     import Menu from "../Menu.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import MenuItem from "../MenuItem.svelte";
     import Translatable from "../Translatable.svelte";
     import BotAvatar from "./BotAvatar.svelte";
-    import WithBotManagement from "./WithBotManagement.svelte";
+
+    const client = getContext<OpenChat>("client");
 
     interface Props {
-        collection: CommunitySummary | MultiUserChat;
+        chat: MultiUserChat;
         webhook: WebhookDetails;
         searchTerm: string;
     }
 
-    let { collection, webhook, searchTerm }: Props = $props();
+    let { chat, webhook, searchTerm }: Props = $props();
+
+    function deleteWebhook() {
+        client.deleteWebhook(chat.id, webhook.id).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast(i18nKey("bots.manage.removeWebhookFailed"));
+            }
+        });
+    }
+
+    function viewEditWebhook() {}
 </script>
 
-<WithBotManagement {collection} {bot} {canManage} {grantedPermissions} {apiKey}>
-    {#snippet contents({
-        canGenerateKey,
-        reviewApiKey,
-        generateApiKey,
-        removeBot,
-        reviewCommandPermissions,
-        viewBotDetails,
-        apiKeyPermissions,
-        generatingKey,
-    })}
-        <div class="bot_member" role="button">
-            <span class="avatar">
-                <BotAvatar {bot} />
-            </span>
-            <div class="details">
-                <div class="bot_name">
-                    <h4>
-                        <FilteredUsername {searchTerm} username={bot.name} />
-                    </h4>
-                </div>
-                <div class="bot_description">
-                    <FilteredUsername {searchTerm} username={bot.definition.description} />
-                </div>
-                {#if canGenerateKey}
-                    <div class="apikey">
-                        <Link
-                            onClick={apiKeyPermissions !== undefined
-                                ? reviewApiKey
-                                : generateApiKey}
-                            underline="never">
-                            <Translatable
-                                resourceKey={apiKeyPermissions !== undefined
-                                    ? i18nKey("bots.manage.reviewApiKey")
-                                    : i18nKey("bots.manage.generateApiKey")}></Translatable>
-                        </Link>
-                        {#if generatingKey}
-                            <div class="spinner"></div>
-                        {:else}
-                            <InfoIcon>
-                                <Translatable
-                                    resourceKey={apiKeyPermissions !== undefined
-                                        ? i18nKey("bots.manage.reviewApiKeyInfo")
-                                        : i18nKey("bots.manage.apiKeyInfo")}></Translatable>
-                            </InfoIcon>
-                        {/if}
-                    </div>
-                {/if}
-            </div>
-            <MenuIcon position={"bottom"} align={"end"}>
-                {#snippet menuIcon()}
-                    <HoverIcon>
-                        <ChevronDown size={ui.iconSize} color={"var(--icon-txt)"} />
-                    </HoverIcon>
-                {/snippet}
-                {#snippet menuItems()}
-                    <Menu>
-                        {#if canManage}
-                            <MenuItem onclick={() => removeBot()}>
-                                {#snippet icon()}
-                                    <DeleteOutline
-                                        size={ui.iconSize}
-                                        color={"var(--icon-inverted-txt)"} />
-                                {/snippet}
-                                {#snippet text()}
-                                    <Translatable resourceKey={i18nKey("bots.manage.remove")} />
-                                {/snippet}
-                            </MenuItem>
-                            {#if bot.definition.commands.length > 0}
-                                <MenuItem onclick={() => reviewCommandPermissions()}>
-                                    {#snippet icon()}
-                                        <PencilOutline
-                                            size={ui.iconSize}
-                                            color={"var(--icon-inverted-txt)"} />
-                                    {/snippet}
-                                    {#snippet text()}
-                                        <Translatable resourceKey={i18nKey("bots.manage.review")} />
-                                    {/snippet}
-                                </MenuItem>
-                            {/if}
-                        {/if}
-                        {#if canGenerateKey}
-                            {#if apiKeyPermissions !== undefined}
-                                <MenuItem onclick={reviewApiKey}>
-                                    {#snippet icon()}
-                                        <KeyRemove
-                                            size={ui.iconSize}
-                                            color={"var(--icon-inverted-txt)"} />
-                                    {/snippet}
-                                    {#snippet text()}
-                                        <Translatable
-                                            resourceKey={i18nKey("bots.manage.reviewApiKey")} />
-                                    {/snippet}
-                                </MenuItem>
-                            {:else}
-                                <MenuItem onclick={() => generateApiKey()}>
-                                    {#snippet icon()}
-                                        <KeyPlus
-                                            size={ui.iconSize}
-                                            color={"var(--icon-inverted-txt)"} />
-                                    {/snippet}
-                                    {#snippet text()}
-                                        <Translatable
-                                            resourceKey={i18nKey("bots.manage.generateApiKey")} />
-                                    {/snippet}
-                                </MenuItem>
-                            {/if}
-                        {/if}
-                        <MenuItem onclick={() => viewBotDetails()}>
-                            {#snippet icon()}
-                                <TextBoxOutline
-                                    size={ui.iconSize}
-                                    color={"var(--icon-inverted-txt)"} />
-                            {/snippet}
-                            {#snippet text()}
-                                <Translatable resourceKey={i18nKey("bots.manage.view")} />
-                            {/snippet}
-                        </MenuItem>
-                    </Menu>
-                {/snippet}
-            </MenuIcon>
+<div class="bot_member" role="button">
+    <span class="avatar">
+        <BotAvatar bot={webhook} />
+    </span>
+    <div class="details">
+        <div class="bot_name">
+            <h4>
+                <FilteredUsername {searchTerm} username={webhook.name} />
+            </h4>
         </div>
-    {/snippet}
-</WithBotManagement>
+    </div>
+    <MenuIcon position={"bottom"} align={"end"}>
+        {#snippet menuIcon()}
+            <HoverIcon>
+                <ChevronDown size={ui.iconSize} color={"var(--icon-txt)"} />
+            </HoverIcon>
+        {/snippet}
+        {#snippet menuItems()}
+            <Menu>
+                <MenuItem onclick={() => viewEditWebhook()}>
+                    {#snippet icon()}
+                        <TextBoxOutline size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                    {/snippet}
+                    {#snippet text()}
+                        <Translatable resourceKey={i18nKey("bots.manage.viewEditWebhook")} />
+                    {/snippet}
+                </MenuItem>
+                <MenuItem onclick={() => deleteWebhook()}>
+                    {#snippet icon()}
+                        <DeleteOutline size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                    {/snippet}
+                    {#snippet text()}
+                        <Translatable resourceKey={i18nKey("bots.manage.removeWebhook")} />
+                    {/snippet}
+                </MenuItem>
+            </Menu>
+        {/snippet}
+    </MenuIcon>
+</div>
 
 <style lang="scss">
     .bot_member {
@@ -198,23 +121,5 @@
                 gap: $sp2;
             }
         }
-
-        .bot_description {
-            font-weight: 200;
-            color: var(--txt-light);
-            @include clamp(2);
-        }
-
-        .apikey {
-            display: flex;
-            gap: $sp2;
-            align-items: center;
-            @include font(book, normal, fs-80);
-        }
-    }
-
-    .spinner {
-        @include loading-spinner(1em, 0.5em, var(--button-spinner), "/assets/plain-spinner.svg");
-        flex: 0 0 toRem(24);
     }
 </style>

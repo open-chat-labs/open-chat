@@ -357,14 +357,17 @@
             "regenerate": "Re-generate API key",
             "regenerateWarning": "Re-generating the API key will revoke access to the previously generated API key. Are you sure you want to proceed?",
             "remove": "Remove bot",
+            "removeWebhook": "Remove webhook",
             "removeFailed": "Sorry we were unable to remove the bot",
+            "removeWebhookFailed": "Sorry we were unable to remove the webhook",
             "removeReason": "Reason for removing bot",
             "removeReasonPlaceholder": "Please provide reasons / evidence supporting the removal of the bot",
             "removeSearch": "Search for the bot to remove",
             "review": "Review bot permissions",
             "reviewApiKey": "Review API key",
             "reviewApiKeyInfo": "Retrieve your existing api key or generate a new one",
-            "view": "View bot details"
+            "view": "View bot details",
+            "viewEditWebhook": "View/edit webhook details"
         },
         "matchingCommands": "Matching commands",
         "member": {
@@ -409,7 +412,6 @@
         },
         "update_webhook": {
             "action": "Update",
-            "select": "Select webhook to update",
             "title": "Update {name}"
         },
         "view": {
