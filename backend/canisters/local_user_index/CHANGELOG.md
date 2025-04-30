@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Enable notifying groups/communities of deleted users ([#7869](https://github.com/open-chat-labs/open-chat/pull/7869))
+
 ### Changed
 
 - Store LocalGroupIndex canisterId in each LocalUserIndex ([#7868](https://github.com/open-chat-labs/open-chat/pull/7868))
