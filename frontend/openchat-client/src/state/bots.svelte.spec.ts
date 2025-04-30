@@ -41,7 +41,7 @@ describe("bot state", () => {
                     botState.commands[0],
                 );
                 expect(botState.selectedCommand).toEqual(botState.commands[0]);
-                expect(botState.showingBuilder).toBe(false);
+                expect(botState.showingBuilder).toBeUndefined();
             });
             test("set selected command - with params", () => {
                 botState.prefix = "faq";
@@ -51,7 +51,7 @@ describe("bot state", () => {
                     botState.commands[0],
                 );
                 expect(botState.selectedCommand).toEqual(botState.commands[0]);
-                expect(botState.showingBuilder).toBe(true);
+                expect(botState.showingBuilder).toEqual(messageContext);
                 expect(botState.selectedCommandArgs.length).toEqual(1);
                 expect(botState.selectedCommandArgs[0]).toMatchObject({
                     name: "bots.faq.params.topic.name",
