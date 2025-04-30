@@ -43,7 +43,7 @@ fn is_pool_full(state: &RuntimeState) -> bool {
 }
 
 async fn add_new_canister(cycles_to_use: Cycles) {
-    if let Ok(canister_id) = create(cycles_to_use).await {
+    if let Ok(canister_id) = create(cycles_to_use, None).await {
         mutate_state(|state| add_canister_to_pool(canister_id, cycles_to_use, state));
     }
     read_state(|state| start_job_if_required(state, None));
