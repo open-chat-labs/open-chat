@@ -14,10 +14,13 @@ use utils::{
 fn register_webhook(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| register_webhook_impl(args, state)).into()
+    match mutate_state(|state| register_webhook_impl(args, state)) {
+        Ok(result) => Response::Success(result),
+        Err(error) => Response::Error(error),
+    }
 }
 
-fn register_webhook_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+fn register_webhook_impl(args: Args, state: &mut RuntimeState) -> OCResult<SuccessResult> {
     state.data.verify_not_frozen()?;
 
     let member = state.get_calling_member(true)?;
@@ -41,10 +44,17 @@ fn register_webhook_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     let now = state.env.now();
 
-    if !state.data.chat.webhooks.register(args.name, avatar, state.env.rng(), now) {
+    let Some(webhook_id) = state.data.chat.webhooks.register(args.name, avatar, state.env.rng(), now) else {
         return Err(OCErrorCode::NameTaken.into());
-    }
+    };
 
     handle_activity_notification(state);
-    Ok(())
+
+    let webhook = state.data.chat.webhooks.get(&webhook_id).unwrap();
+
+    Ok(SuccessResult {
+        id: webhook_id,
+        secret: webhook.secret.clone(),
+        avatar_id: webhook.avatar.as_ref().map(|a| a.id),
+    })
 }

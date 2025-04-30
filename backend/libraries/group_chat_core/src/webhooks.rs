@@ -18,13 +18,21 @@ pub struct Webhook {
 }
 
 impl Webhooks {
-    pub fn register(&mut self, name: String, avatar: Option<Document>, rng: &mut StdRng, now: TimestampMillis) -> bool {
+    pub fn register(
+        &mut self,
+        name: String,
+        avatar: Option<Document>,
+        rng: &mut StdRng,
+        now: TimestampMillis,
+    ) -> Option<UserId> {
         if self.map.values().any(|webhook| webhook.name == name) {
-            return false;
+            return None;
         }
 
+        let id = Self::generate_random_id(rng);
+
         self.map.insert(
-            Self::generate_random_id(rng),
+            id,
             Webhook {
                 name,
                 avatar,
@@ -34,7 +42,7 @@ impl Webhooks {
 
         self.last_updated = now;
 
-        true
+        Some(id)
     }
 
     pub fn regenerate(&mut self, id: UserId, rng: &mut StdRng, now: TimestampMillis) -> bool {
