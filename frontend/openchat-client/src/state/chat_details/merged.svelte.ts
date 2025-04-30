@@ -75,6 +75,13 @@ export class ChatDetailsMergedState {
         this.#server?.updateEvents(chatId, fn);
     }
 
+    updateServerThreadEvents(
+        chatId: ChatIdentifier,
+        fn: (existing: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[],
+    ) {
+        this.#server?.updateThreadEvents(chatId, fn);
+    }
+
     updateServerExpiredEventRanges(fn: (existing: DRange) => DRange) {
         this.#server?.updateExpiredEventRanges(fn);
     }
@@ -83,12 +90,24 @@ export class ChatDetailsMergedState {
         this.#server?.clearEvents();
     }
 
+    clearServerThreadEvents() {
+        this.#server?.clearThreadEvents();
+    }
+
     get confirmedEventIndexesLoaded() {
         return this.#server?.confirmedEventIndexesLoaded ?? new DRange();
     }
 
+    get confirmedThreadEventIndexesLoaded() {
+        return this.#server?.confirmedThreadEventIndexesLoaded ?? new DRange();
+    }
+
     get serverEvents() {
         return this.#server?.events ?? [];
+    }
+
+    get serverThreadEvents() {
+        return this.#server?.threadEvents ?? [];
     }
 
     get expiredEventRanges() {

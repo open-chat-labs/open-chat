@@ -291,7 +291,6 @@ import { blockedUsers } from "./stores/blockedUsers";
 import {
     addGroupPreview,
     confirmedEventIndexesLoaded,
-    confirmedThreadEventIndexesLoadedStore,
     createDirectChat,
     groupPreviewsStore,
     isContiguous,
@@ -301,7 +300,6 @@ import {
     removeGroupPreview,
     removeUninitializedDirectChat,
     selectedMessageContext,
-    threadServerEventsStore,
 } from "./stores/chat";
 import {
     bitcoinAddress,
@@ -2834,7 +2832,7 @@ export class OpenChat {
     }
 
     openThreadFromMessageIndex(
-        _chatId: ChatIdentifier,
+        chatId: ChatIdentifier,
         messageIndex: number,
         threadMessageIndex?: number,
     ): void {
@@ -2842,16 +2840,19 @@ export class OpenChat {
             (ev) => ev.event.kind === "message" && ev.event.messageIndex === messageIndex,
         ) as EventWrapper<Message> | undefined;
         if (event !== undefined) {
-            this.openThread(event, event.event.thread === undefined, threadMessageIndex);
+            this.openThread(chatId, event, event.event.thread === undefined, threadMessageIndex);
         }
     }
 
     openThread(
+        chatId: ChatIdentifier,
         threadRootEvent: EventWrapper<Message>,
         initiating: boolean,
         focusThreadMessageIndex?: number,
     ): void {
         this.clearThreadEvents();
+
+        // TODO we do need to sort out this mess with selected message context
         selectedMessageContext.update((context) => {
             if (context) {
                 return {
@@ -2866,14 +2867,9 @@ export class OpenChat {
         if (context) {
             if (!initiating) {
                 if (focusThreadMessageIndex !== undefined) {
-                    this.loadEventWindow(
-                        context.chatId,
-                        focusThreadMessageIndex,
-                        threadRootEvent,
-                        true,
-                    );
+                    this.loadEventWindow(chatId, focusThreadMessageIndex, threadRootEvent, true);
                 } else {
-                    this.loadPreviousMessages(context.chatId, threadRootEvent, true);
+                    this.loadPreviousMessages(chatId, threadRootEvent, true);
                 }
             }
             ui.rightPanelHistory = [
@@ -2887,7 +2883,7 @@ export class OpenChat {
     }
 
     clearThreadEvents(): void {
-        threadServerEventsStore.set([]);
+        app.clearServerThreadEvents();
     }
 
     async loadThreadMessages(
@@ -2927,7 +2923,7 @@ export class OpenChat {
 
         if (isSuccessfulEventsResponse(eventsResponse)) {
             if (clearEvents) {
-                threadServerEventsStore.set([]);
+                app.clearServerThreadEvents();
             }
             await this.#handleThreadEventsResponse(chatId, threadRootMessageIndex, eventsResponse);
 
@@ -3341,7 +3337,7 @@ export class OpenChat {
         updatedEvents: UpdatedEvent[],
     ): Promise<void> {
         const confirmedLoaded = confirmedEventIndexesLoaded(serverChat.id);
-        const confirmedThreadLoaded = this.#liveState.confirmedThreadEventIndexesLoaded;
+        const confirmedThreadLoaded = app.selectedChat.confirmedThreadEventIndexesLoaded;
         const selectedThreadRootMessageIndex =
             this.#liveState.selectedMessageContext?.threadRootMessageIndex;
         const selectedChatId = this.#liveState.selectedChatId;
@@ -3459,7 +3455,7 @@ export class OpenChat {
     }
 
     #confirmedThreadUpToEventIndex(): number | undefined {
-        const ranges = get(confirmedThreadEventIndexesLoadedStore).subranges();
+        const ranges = app.selectedChat.confirmedThreadEventIndexesLoaded.subranges();
         if (ranges.length > 0) {
             return ranges[0].high;
         }
@@ -3660,7 +3656,7 @@ export class OpenChat {
                 }
             }
         } else if (messageContextsEqual(context, this.#liveState.selectedMessageContext)) {
-            threadServerEventsStore.update((events) =>
+            app.updateServerThreadEvents(context.chatId, (events) =>
                 mergeServerEvents(events, newEvents, context),
             );
         }

@@ -16,8 +16,10 @@ import {
     dummyServerEventsStore,
     dummyServerFavourites,
     dummyServerGroupChats,
+    dummyThreadEventsStore,
     dummyWalletConfigStore,
     selectedChatId,
+    selectedMessageContext,
 } from "./stores";
 
 function onSelectedCommunityChanged(client: OpenChat) {
@@ -162,8 +164,17 @@ function syncState() {
     });
 
     $effect(() => {
+        void app.selectedChat.serverThreadEvents;
+        dummyThreadEventsStore.set(Symbol());
+    });
+
+    $effect(() => {
         void app.selectedChat.expiredEventRanges;
         dummyExpiredEventRangeStore.set(Symbol());
+    });
+
+    $effect(() => {
+        selectedMessageContext.set(app.selectedMessageContext);
     });
 }
 

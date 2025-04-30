@@ -352,10 +352,11 @@ export const numberOfThreadsStore = derived([threadsByChatStore], ([threads]) =>
     countThreads(threads),
 );
 
-export const threadServerEventsStore: Writable<EventWrapper<ChatEvent>[]> = immutableStore([]);
+export const dummyThreadEventsStore = createDummyStore();
+
 export const threadEvents = derived(
     [
-        threadServerEventsStore,
+        dummyThreadEventsStore,
         unconfirmed,
         localMessageUpdates,
         selectedMessageContext,
@@ -369,7 +370,7 @@ export const threadEvents = derived(
         ephemeralMessages,
     ],
     ([
-        $serverEvents,
+        _,
         $unconfirmed,
         $localUpdates,
         $messageContext,
@@ -391,7 +392,7 @@ export const threadEvents = derived(
         const unconfirmed = $unconfirmed.get($messageContext)?.messages ?? [];
         const ephemeral = [...($ephemeralMessages.get($messageContext)?.values() ?? [])];
         return mergeEventsAndLocalUpdates(
-            $serverEvents,
+            app.selectedChat.serverThreadEvents,
             [...unconfirmed, ...failed, ...ephemeral],
             $localUpdates,
             new DRange(),
@@ -405,17 +406,8 @@ export const threadEvents = derived(
     },
 );
 
-export const confirmedThreadEventIndexesLoadedStore = derived(
-    [threadServerEventsStore],
-    ([serverEvents]) => {
-        const ranges = new DRange();
-        serverEvents.forEach((e) => ranges.add(e.index));
-        return ranges;
-    },
-);
-
 export function confirmedEventIndexesLoaded(chatId: ChatIdentifier): DRange {
-    const selected = get(selectedChatId);
+    const selected = app.selectedChatId;
     return selected !== undefined && chatIdentifiersEqual(selected, chatId)
         ? app.selectedChat.confirmedEventIndexesLoaded
         : new DRange();
@@ -547,7 +539,7 @@ function isContiguousInternal(
 }
 
 export function isContiguousInThread(events: EventWrapper<ChatEvent>[]): boolean {
-    return isContiguousInternal(get(confirmedThreadEventIndexesLoadedStore), events, []);
+    return isContiguousInternal(app.selectedChat.confirmedThreadEventIndexesLoaded, events, []);
 }
 
 export function isContiguous(

@@ -505,6 +505,13 @@ class AppState {
         return this.#selectedChat;
     }
 
+    updateServerThreadEvents(
+        chatId: ChatIdentifier,
+        fn: (existing: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[],
+    ) {
+        this.#selectedChat.updateServerThreadEvents(chatId, fn);
+    }
+
     updateServerEvents(
         chatId: ChatIdentifier,
         fn: (existing: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[],
@@ -518,6 +525,10 @@ class AppState {
 
     clearServerEvents() {
         this.#selectedChat.clearServerEvents();
+    }
+
+    clearServerThreadEvents() {
+        this.#selectedChat.clearServerThreadEvents();
     }
 
     clearSelectedChat() {
