@@ -17,7 +17,6 @@
         draftMessagesStore,
         eventsStore,
         failedMessagesStore,
-        messagesRead,
         pathState,
         routeForChatIdentifier,
         ui,
@@ -321,7 +320,7 @@
                                 accepted={isAccepted($unconfirmed, evt)}
                                 confirmed={isConfirmed($unconfirmed, evt)}
                                 failed={isFailed($failedMessagesStore, evt)}
-                                readByMe={isReadByMe($messagesRead, evt)}
+                                readByMe={isReadByMe(evt)}
                                 chatId={chat.id}
                                 chatType={chat.kind}
                                 me={isMe(evt)}

@@ -19,10 +19,6 @@
         routeForScope,
         selectedChatId,
         ui,
-        unreadCommunityChannelCounts,
-        unreadDirectCounts,
-        unreadFavouriteCounts,
-        unreadGroupCounts,
         userStore,
         type UserSummary,
     } from "openchat-client";
@@ -62,8 +58,6 @@
     let chatsScrollTop = $state<number | undefined>();
     let previousScope: ChatListScope | undefined = app.chatListScope;
     let previousView: "chats" | "threads" = $chatListView;
-
-    let unreadCounts = $state(emptyCombinedUnreadCounts());
 
     // TODO this doesn't work properly and I think it's to do with the way
     // effect dependencies are worked out when you have conditional code
@@ -193,28 +187,25 @@
             !searchResultsAvailable,
     );
     let showBrowseChannnels = $derived(app.chatListScope.kind === "community");
-    $effect(() => {
+    let unreadCounts = $derived.by(() => {
         switch (app.chatListScope.kind) {
             case "group_chat": {
-                unreadCounts = $unreadGroupCounts;
-                break;
+                return app.unreadGroupCounts;
             }
             case "direct_chat": {
-                unreadCounts = $unreadDirectCounts;
-                break;
+                return app.unreadDirectCounts;
             }
             case "favourite": {
-                unreadCounts = $unreadFavouriteCounts;
-                break;
+                return app.unreadFavouriteCounts;
             }
             case "community": {
-                unreadCounts =
-                    $unreadCommunityChannelCounts.get(app.chatListScope.id) ??
-                    emptyCombinedUnreadCounts();
-                break;
+                return (
+                    app.unreadCommunityChannelCounts.get(app.chatListScope.id) ??
+                    emptyCombinedUnreadCounts()
+                );
             }
             default:
-                unreadCounts = emptyCombinedUnreadCounts();
+                return emptyCombinedUnreadCounts();
         }
     });
     let canMarkAllRead = $derived(anythingUnread(unreadCounts));

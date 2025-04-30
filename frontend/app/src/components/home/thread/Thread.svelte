@@ -20,7 +20,6 @@
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
         messageContextsEqual,
-        messagesRead,
         subscribe,
         threadEvents,
         threadsFollowedByMeStore,
@@ -387,7 +386,7 @@
                                 failed={isFailed($failedMessagesStore, evt)}
                                 readByMe={evt.event.messageId === rootEvent.event.messageId ||
                                     !isFollowedByMe ||
-                                    isReadByMe($messagesRead, evt)}
+                                    isReadByMe(evt)}
                                 observer={messageObserver}
                                 focused={evt.event.kind === "message" &&
                                     focusIndex === evt.event.messageIndex}

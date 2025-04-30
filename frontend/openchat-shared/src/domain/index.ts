@@ -31,6 +31,7 @@ export * from "./serialisation";
 export * from "./stream";
 export * from "./structure";
 export * from "./toast";
+export * from "./unread";
 export * from "./user";
 export * from "./version";
 export * from "./video";

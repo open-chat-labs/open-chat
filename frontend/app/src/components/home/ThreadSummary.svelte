@@ -1,13 +1,7 @@
 <script lang="ts">
     import type { ChatIdentifier, OpenChat, ThreadSummary } from "openchat-client";
-    import {
-        AvatarSize,
-        messagesRead,
-        threadsFollowedByMeStore,
-        ui,
-        userStore,
-    } from "openchat-client";
-    import { getContext, onMount } from "svelte";
+    import { AvatarSize, threadsFollowedByMeStore, ui, userStore } from "openchat-client";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
     import Avatar from "../Avatar.svelte";
@@ -34,16 +28,6 @@
     let unreadCount = $derived(
         client.unreadThreadMessageCount(chatId, threadRootMessageIndex, lastMessageIndex),
     );
-
-    onMount(() => {
-        return messagesRead.subscribe(() => {
-            unreadCount = client.unreadThreadMessageCount(
-                chatId,
-                threadRootMessageIndex,
-                lastMessageIndex,
-            );
-        });
-    });
 </script>
 
 <div class="thread-summary-wrapper" class:me class:indent>
