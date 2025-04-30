@@ -206,6 +206,7 @@ pub struct MessageInternal {
     #[serde(rename = "c")]
     pub content: MessageContentInternal,
     #[serde(rename = "bc", default, skip_serializing_if = "Option::is_none")]
+    #[deprecated]
     pub bot_context: Option<BotMessageContext>,
     #[serde(rename = "sc", default, skip_serializing_if = "Option::is_none")]
     pub sender_context: Option<SenderContext>,
