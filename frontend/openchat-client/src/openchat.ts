@@ -271,6 +271,7 @@ import {
     WEBAUTHN_ORIGINATING_CANISTER,
 } from "openchat-shared";
 import page from "page";
+import { tick } from "svelte";
 import { get } from "svelte/store";
 import type { OpenChatConfig } from "./config";
 import { AIRDROP_BOT_USER_ID } from "./constants";
@@ -6046,7 +6047,10 @@ export class OpenChat {
 
             pinNumberRequiredStore.set(chatsResponse.state.pinNumberSettings !== undefined);
 
-            app.chatsInitialised = true;
+            // This is horrible - we need the tick to make sure that all the derived data is ready
+            tick().then(() => {
+                app.chatsInitialised = true;
+            });
 
             this.#closeNotificationsIfNecessary();
 
