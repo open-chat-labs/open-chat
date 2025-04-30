@@ -77,9 +77,8 @@ export async function chunkedChatEventsWindowFromBackend(
     eventsWindowFn: (index: number, chunkSize: number) => Promise<EventsResponse<ChatEvent>>,
     [minIndex, maxIndex]: IndexRange,
     messageIndex: number,
+    chunkSize = MAX_EVENTS / 5,
 ): Promise<EventsResponse<ChatEvent>> {
-    const chunkSize = MAX_EVENTS / 5;
-
     let highIndex = messageIndex;
     let lowIndex = messageIndex;
 
@@ -132,6 +131,15 @@ export async function chunkedChatEventsWindowFromBackend(
                 // Possible that we still have a size problem. If so, just log the error and bail out
                 // if we see this condition we will have to think again but I'd rather avoid the complexity if we don't need it
                 console.error("Response size still too large with chunk size: ", chunkSize);
+                if (chunkSize >= 50) {
+                    return chunkedChatEventsWindowFromBackend(
+                        eventsFn,
+                        eventsWindowFn,
+                        [minIndex, maxIndex],
+                        messageIndex,
+                        chunkSize / 10
+                    );
+                }
             }
             throw err;
         }
