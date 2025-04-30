@@ -8,13 +8,18 @@ import { ui } from "./state/ui.svelte";
 import {
     chatListScopeStore,
     dummyCommunityPreviewStore,
+    dummyExpiredEventRangeStore,
     dummyPinnedChatsStore,
     dummyScopedServerChats,
     dummyServerCommunities,
     dummyServerDirectChats,
+    dummyServerEventsStore,
     dummyServerFavourites,
     dummyServerGroupChats,
+    dummyThreadEventsStore,
     dummyWalletConfigStore,
+    selectedChatId,
+    selectedMessageContext,
 } from "./stores";
 
 function onSelectedCommunityChanged(client: OpenChat) {
@@ -50,6 +55,7 @@ function onSelectedChatChanged(client: OpenChat) {
                     pathState.route.kind === "selected_channel_route" ||
                     pathState.route.kind === "global_chat_selected_route"
                 ) {
+                    selectedChatId.set(app.selectedChatId);
                     const id = app.selectedChatId;
                     const messageIndex = pathState.route.messageIndex;
                     const threadMessageIndex = pathState.route.threadMessageIndex;
@@ -58,12 +64,6 @@ function onSelectedChatChanged(client: OpenChat) {
                     }
                 }
             });
-        }
-    });
-
-    $effect(() => {
-        if (app.selectedChatId === undefined) {
-            client.clearSelectedChat();
         }
     });
 }
@@ -150,6 +150,25 @@ function syncState() {
     $effect(() => {
         void app.scopedServerChats;
         dummyScopedServerChats.set(Symbol());
+    });
+
+    $effect(() => {
+        void app.selectedChat.serverEvents;
+        dummyServerEventsStore.set(Symbol());
+    });
+
+    $effect(() => {
+        void app.selectedChat.serverThreadEvents;
+        dummyThreadEventsStore.set(Symbol());
+    });
+
+    $effect(() => {
+        void app.selectedChat.expiredEventRanges;
+        dummyExpiredEventRangeStore.set(Symbol());
+    });
+
+    $effect(() => {
+        selectedMessageContext.set(app.selectedMessageContext);
     });
 }
 
