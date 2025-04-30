@@ -271,6 +271,7 @@ import {
     WEBAUTHN_ORIGINATING_CANISTER,
 } from "openchat-shared";
 import page from "page";
+import { tick } from "svelte";
 import { get } from "svelte/store";
 import type { OpenChatConfig } from "./config";
 import { AIRDROP_BOT_USER_ID } from "./constants";
@@ -6046,7 +6047,11 @@ export class OpenChat {
 
             pinNumberRequiredStore.set(chatsResponse.state.pinNumberSettings !== undefined);
 
-            app.chatsInitialised = true;
+            // horribly enough - we need to slightly defer this so that all the cascade of derived stuff is complete
+            // I am hopeful that we can remove this when we aren't manually synchronising runes & stores
+            tick().then(() => {
+                app.chatsInitialised = true;
+            });
 
             this.#closeNotificationsIfNecessary();
 
