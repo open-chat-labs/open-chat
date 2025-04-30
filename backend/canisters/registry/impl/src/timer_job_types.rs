@@ -210,6 +210,7 @@ impl ExpandOntoSubnetJob {
                     self.user_index,
                     &user_index_canister::add_local_user_index_canister::Args {
                         canister_id: ids.local_user_index,
+                        local_group_index_canister_id: ids.local_group_index,
                         notifications_canister_id: ids.notifications_canister,
                     },
                 )
