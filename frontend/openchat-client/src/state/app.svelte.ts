@@ -592,6 +592,7 @@ class AppState {
         rules?: VersionedRules,
     ) {
         if (!communityIdentifiersEqual(communityId, this.#selectedCommunity.communityId)) {
+            console.trace(communityId, this.#selectedCommunity.communityId);
             throw new Error(
                 "We should never be setting community details for a different community - investigate why this is happening",
             );
