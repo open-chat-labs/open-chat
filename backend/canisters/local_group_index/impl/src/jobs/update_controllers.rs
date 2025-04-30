@@ -34,6 +34,7 @@ fn run() {
         ic_cdk::futures::spawn(run_single(canister_id, controllers));
     } else if let Some(timer_id) = TIMER_ID.take() {
         ic_cdk_timers::clear_timer(timer_id);
+        mutate_state(|state| state.data.controllers_updated = true);
     }
 }
 
