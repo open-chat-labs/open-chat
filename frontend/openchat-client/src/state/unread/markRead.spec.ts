@@ -4,6 +4,7 @@ import {
     type GroupChatIdentifier,
     type Message,
 } from "openchat-shared";
+import { SvelteMap } from "svelte/reactivity";
 import { vi } from "vitest";
 import { unconfirmed, type UnconfirmedState } from "../../stores";
 import { MessageReadTracker, MessagesRead } from "./markRead.svelte";
@@ -206,7 +207,10 @@ describe("mark messages read", () => {
     describe("unread message count", () => {
         describe("when all messages are confirmed", () => {
             test("with no latest message + waiting local messages", () => {
-                markRead.messageReadState.waiting.set({ chatId: abcId }, new Map<bigint, number>());
+                markRead.messageReadState.waiting.set(
+                    { chatId: abcId },
+                    new SvelteMap<bigint, number>(),
+                );
                 markRead.messageReadState.waiting.get({ chatId: abcId })?.set(BigInt(0), 0);
                 markRead.messageReadState.waiting.get({ chatId: abcId })?.set(BigInt(1), 1);
                 markRead.messageReadState.waiting.get({ chatId: abcId })?.set(BigInt(2), 2);

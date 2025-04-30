@@ -31,6 +31,7 @@
         chatSummariesStore,
         defaultChatRules,
         draftMessagesStore,
+        messagesRead,
         nullMembership,
         offlineStore,
         pageRedirect,
@@ -180,6 +181,9 @@
     let showUpgrade: boolean = $state(false);
     let share: Share = { title: "", text: "", url: "", files: [] };
     let messageToForward: Message | undefined = undefined;
+
+    $inspect(messagesRead.messageReadState);
+    $inspect(app.unreadGroupCounts);
 
     onMount(() => {
         const unsubEvents = [
