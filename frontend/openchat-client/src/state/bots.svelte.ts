@@ -6,6 +6,7 @@ import {
     type CommandParam,
     type ExternalBot,
     type FlattenedCommand,
+    type MessageContext,
     type MessageFormatter,
 } from "openchat-shared";
 import { builtinBot } from "../utils/builtinBotCommands";
@@ -76,7 +77,7 @@ export class BotState {
     #focusedCommandIndex = $state(0);
     #selectedCommandArgs = $state<CommandArg[]>([]);
     #externalBots = $state<Map<string, ExternalBot>>(new Map());
-    #showingBuilder = $state<boolean>(false);
+    #showingBuilder = $state<MessageContext | undefined>();
     #prefixParts = $derived(parseCommand(this.#prefix));
     #maybeArgs = $derived(this.#prefixParts.slice(1) ?? []);
     #parsedPrefix = $derived(this.#prefixParts[0]?.slice(1)?.toLocaleLowerCase() ?? "");
@@ -149,7 +150,7 @@ export class BotState {
         return this.#instanceValid;
     }
 
-    public get showingBuilder(): boolean {
+    public get showingBuilder(): MessageContext | undefined {
         return this.#showingBuilder;
     }
 
@@ -198,7 +199,11 @@ export class BotState {
             (this.#focusedCommandIndex - 1 + this.#commands.length) % this.#commands.length;
     }
 
-    setSelectedCommand(commands: FlattenedCommand[], cmd?: FlattenedCommand) {
+    setSelectedCommand(
+        messageContext: MessageContext,
+        commands: FlattenedCommand[],
+        cmd?: FlattenedCommand,
+    ) {
         cmd = cmd ?? commands[this.#focusedCommandIndex];
 
         // make sure that we don't set the same command twice
@@ -210,7 +215,7 @@ export class BotState {
                     this.#selectedCommandArgs = createArgsFromSchema(cmd.params, this.#maybeArgs);
                 }
                 // if the instance is not already valid (via inline params) show the builder modal
-                this.#showingBuilder = !this.#instanceValid;
+                this.#showingBuilder = !this.#instanceValid ? messageContext : undefined;
             }
         }
         return this.#selectedCommand;
@@ -222,7 +227,7 @@ export class BotState {
         this.#prefix = "";
         this.#focusedCommandIndex = 0;
         this.#selectedCommandArgs = [];
-        this.#showingBuilder = false;
+        this.#showingBuilder = undefined;
     }
 
     createBotInstance(command: FlattenedCommand): BotCommandInstance {

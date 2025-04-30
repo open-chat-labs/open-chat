@@ -1,4 +1,7 @@
+import type { MessageContext } from "openchat-shared";
 import { botState } from "./bots.svelte";
+
+const messageContext: MessageContext = { chatId: { kind: "group_chat", groupId: "123456" } };
 
 describe("bot state", () => {
     beforeAll(() => {
@@ -32,13 +35,21 @@ describe("bot state", () => {
         describe("set selected command", () => {
             test("set selected command - no params", () => {
                 botState.prefix = "register";
-                botState.setSelectedCommand(botState.commands, botState.commands[0]);
+                botState.setSelectedCommand(
+                    messageContext,
+                    botState.commands,
+                    botState.commands[0],
+                );
                 expect(botState.selectedCommand).toEqual(botState.commands[0]);
                 expect(botState.showingBuilder).toBe(false);
             });
             test("set selected command - with params", () => {
                 botState.prefix = "faq";
-                botState.setSelectedCommand(botState.commands, botState.commands[0]);
+                botState.setSelectedCommand(
+                    messageContext,
+                    botState.commands,
+                    botState.commands[0],
+                );
                 expect(botState.selectedCommand).toEqual(botState.commands[0]);
                 expect(botState.showingBuilder).toBe(true);
                 expect(botState.selectedCommandArgs.length).toEqual(1);
