@@ -518,6 +518,7 @@ fn generate_then_serialize_value<R: RngCore>(content: MessageContentInternal, rn
 }
 
 fn generate_value<R: RngCore>(content: MessageContentInternal, rng: &mut R) -> EventWrapperInternal<ChatEventInternal> {
+    #[allow(deprecated)]
     EventWrapperInternal {
         index: random_from_u32(rng),
         timestamp: rng.r#gen(),

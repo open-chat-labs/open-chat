@@ -76,6 +76,7 @@ async fn create_bucket(args: CreateBucketArgs) {
 
     let result = create_and_install(
         None,
+        None,
         args.canister_wasm,
         args.init_canister_args,
         args.cycles_to_use,

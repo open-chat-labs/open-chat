@@ -9,7 +9,7 @@ use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use types::{
     Chat, ChatEvent, ChatEventType, EventIndex, EventOrExpiredRange, EventWrapper, EventWrapperInternal, HydratedMention,
-    Mention, Message, MessageId, MessageIndex, TimestampMillis, UserId,
+    Mention, Message, MessageId, MessageIndex, SenderContext, TimestampMillis, UserId,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -22,6 +22,30 @@ pub struct ChatEventsList {
 }
 
 impl ChatEventsList {
+    pub fn migrate_bot_contexts(&mut self, cutoff: TimestampMillis) -> usize {
+        if self.latest_event_timestamp.as_ref().is_none_or(|ts| *ts < cutoff) {
+            return 0;
+        }
+
+        let mut updates = Vec::new();
+
+        for mut event_wrapper in self.events_map.iter().rev().take_while(|e| e.timestamp > cutoff) {
+            if let ChatEventInternal::Message(message) = &mut event_wrapper.event {
+                #[allow(deprecated)]
+                if let Some(bot_context) = message.bot_context.take() {
+                    message.sender_context = Some(SenderContext::Bot(bot_context));
+                    updates.push(event_wrapper);
+                }
+            }
+        }
+
+        let count = updates.len();
+        for event in updates {
+            self.events_map.insert(event);
+        }
+        count
+    }
+
     pub fn set_stable_memory_prefix(&mut self, chat: Chat, thread_root_message_index: Option<MessageIndex>) {
         self.events_map.set_stable_memory_prefix(chat, thread_root_message_index);
     }

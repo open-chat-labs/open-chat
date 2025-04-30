@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Migrate `bot_context` to `sender_context` ([#7870](https://github.com/open-chat-labs/open-chat/pull/7870))
+
 ### Fixed
 
 - Skip notification when reacting on your own message in direct chat ([#7841](https://github.com/open-chat-labs/open-chat/pull/7841))
