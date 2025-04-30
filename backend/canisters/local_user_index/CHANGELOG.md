@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Store LocalGroupIndex canisterId in each LocalUserIndex ([#7868](https://github.com/open-chat-labs/open-chat/pull/7868))
+
 ## [[2.0.1713](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1713-local_user_index)] - 2025-04-23
 
 ### Added
