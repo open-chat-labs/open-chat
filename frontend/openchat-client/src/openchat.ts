@@ -290,9 +290,6 @@ import { messagesRead, startMessagesReadTracker } from "./state/unread/markRead.
 import { blockedUsers } from "./stores/blockedUsers";
 import {
     addGroupPreview,
-    chatStateStore,
-    clearSelectedChat,
-    clearServerEvents,
     confirmedEventIndexesLoaded,
     confirmedThreadEventIndexesLoadedStore,
     createDirectChat,
@@ -304,7 +301,6 @@ import {
     removeGroupPreview,
     removeUninitializedDirectChat,
     selectedMessageContext,
-    setChatSpecificState,
     threadServerEventsStore,
 } from "./stores/chat";
 import {
@@ -2447,7 +2443,7 @@ export class OpenChat {
         if (!isSuccessfulEventsResponse(resp)) return false;
 
         if (!keepCurrentEvents) {
-            clearServerEvents(chat.id);
+            app.clearServerEvents();
         }
 
         await this.#updateUserStoreFromEvents(resp.events);
@@ -2771,7 +2767,7 @@ export class OpenChat {
 
         this.#loadSnsFunctionsForChat(clientChat);
 
-        setChatSpecificState(clientChat);
+        resetFilteredProposalsStore(clientChat);
 
         if (messageIndex === undefined) {
             messageIndex = isPreviewing(clientChat)
@@ -2789,9 +2785,6 @@ export class OpenChat {
                 }
             }
         }
-
-        // TODO - we might be able to get rid of this
-        resetFilteredProposalsStore(clientChat);
 
         // TODO - this might belong as a derivation in the selected chat state
         this.#userLookupForMentions = undefined;
@@ -2811,6 +2804,9 @@ export class OpenChat {
                     // Why do we do it in that order I wonder?
                     // I guess it is because we don't want anything to delay the events.
                     // But having things split like this is where it gets a bit race condition-y
+
+                    // So we have to ensure that it is the loading of events that dictates the creation of the
+                    // new state object, not the loading of chat details
 
                     this.loadPreviousMessages(chatId, undefined, true).then(() => {
                         if (serverChat !== undefined) {
@@ -2987,7 +2983,6 @@ export class OpenChat {
         this.#removeCommunityLocally(id);
     }
 
-    clearSelectedChat = clearSelectedChat;
     diffGroupPermissions = diffGroupPermissions;
 
     messageContentFromFile(file: File): Promise<AttachmentContent> {
@@ -3639,9 +3634,7 @@ export class OpenChat {
         }
 
         if (threadRootMessageIndex === undefined) {
-            chatStateStore.updateProp(chatId, "serverEvents", (events) =>
-                mergeServerEvents(events, newEvents, context),
-            );
+            app.updateServerEvents((events) => mergeServerEvents(events, newEvents, context));
             if (newLatestMessage !== undefined) {
                 localChatSummaryUpdates.markUpdated(chatId, { latestMessage: newLatestMessage });
             }
@@ -3666,7 +3659,7 @@ export class OpenChat {
         }
 
         if (expiredEventRanges.length > 0) {
-            chatStateStore.updateProp(chatId, "expiredEventRanges", (ranges) => {
+            app.updateServerExpiredEventRanges((ranges) => {
                 const merged = new DRange();
                 merged.add(ranges);
                 expiredEventRanges.forEach((r) => merged.add(r.start, r.end));
@@ -6049,7 +6042,6 @@ export class OpenChat {
 
             if (selectedChatId !== undefined) {
                 if (this.#liveState.chatSummaries.get(selectedChatId) === undefined) {
-                    clearSelectedChat();
                     publish("selectedChatInvalid");
                 } else {
                     const updatedEvents = ChatMap.fromMap(chatsResponse.updatedEvents);

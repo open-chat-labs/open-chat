@@ -238,6 +238,8 @@
         };
     });
 
+    $inspect(app.selectedChat.serverEvents).with(console.trace);
+
     function selectedChatInvalid() {
         pageReplace(routeForScope(client.getDefaultScope()));
     }
@@ -319,10 +321,8 @@
                 }
 
                 if (pathState.isHomeRoute(route)) {
-                    client.clearSelectedChat();
                     filterChatSpecificRightPanelStates();
                 } else if (pathState.isCommunitiesRoute(route)) {
-                    client.clearSelectedChat();
                     ui.rightPanelHistory = ui.fullWidth ? [{ kind: "community_filters" }] : [];
                 } else {
                     // any other route with no associated chat therefore we must clear any selected chat and potentially close the right panel

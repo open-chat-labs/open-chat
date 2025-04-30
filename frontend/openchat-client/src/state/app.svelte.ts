@@ -1,7 +1,9 @@
 import { dequal } from "dequal";
+import type DRange from "drange";
 import {
     applyOptionUpdate,
     type ChannelSummary,
+    type ChatEvent,
     type ChatIdentifier,
     chatIdentifiersEqual,
     type ChatListScope,
@@ -17,6 +19,7 @@ import {
     type CommunitySummary,
     type DirectChatIdentifier,
     type DirectChatSummary,
+    type EventWrapper,
     type ExternalBotPermissions,
     type GroupChatSummary,
     type IdentityState,
@@ -39,7 +42,7 @@ import {
 } from "openchat-shared";
 import { type PinnedByScope } from "../stores";
 import { chatDetailsLocalUpdates, ChatDetailsMergedState } from "./chat_details";
-import { ChatDetailsServerState } from "./chat_details/server";
+import { ChatDetailsServerState } from "./chat_details/server.svelte";
 import { communityLocalUpdates } from "./community_details";
 import { CommunityMergedState } from "./community_details/merged.svelte";
 import { CommunityServerState } from "./community_details/server";
@@ -510,6 +513,22 @@ class AppState {
             this.#selectedChat = new ChatDetailsMergedState(serverState);
         }
         this.#selectedChat.addUserIds([currentUserId]);
+    }
+
+    updateServerEvents(fn: (existing: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[]) {
+        this.#selectedChat.updateServerEvents(fn);
+    }
+
+    updateServerExpiredEventRanges(fn: (existing: DRange) => DRange) {
+        this.#selectedChat.updateServerExpiredEventRanges(fn);
+    }
+
+    clearServerEvents() {
+        this.#selectedChat.clearServerEvents();
+    }
+
+    clearSelectedChat() {
+        this.#selectedChat = new ChatDetailsMergedState(ChatDetailsServerState.empty());
     }
 
     setChatDetailsFromServer(

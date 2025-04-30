@@ -3,7 +3,6 @@ import DRange from "drange";
 import type {
     ChatEvent,
     ChatIdentifier,
-    ChatSpecificState,
     ChatSummary,
     DirectChatIdentifier,
     DirectChatSummary,
@@ -33,13 +32,11 @@ import {
 } from "../utils/chat";
 import { configKeys } from "../utils/config";
 import { blockedUsers } from "./blockedUsers";
-import { createChatSpecificObjectStore } from "./dataByChatFactory";
 import { createDerivedPropStore } from "./derived";
 import { draftMessagesStore } from "./draftMessages";
 import { createDummyStore } from "./dummyStore";
 import { ephemeralMessages } from "./ephemeralMessages";
 import { failedMessagesStore } from "./failedMessages";
-import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
 import { allServerChats } from "./global";
 import { immutableStore } from "./immutable";
 import { localChatSummaryUpdates } from "./localChatSummaryUpdates";
@@ -56,6 +53,10 @@ import { currentUser, currentUserIdStore, suspendedUsers } from "./user";
 
 export const dummyCommunityPreviewStore = writable(0);
 
+// TODO - this will be synced from the Svelte5 rune for now and ultimately removed
+export const selectedChatId = writable<ChatIdentifier | undefined>(undefined);
+
+// TODO - get rid of this - it's dangerous at best
 export const selectedMessageContext = safeWritable<MessageContext | undefined>(
     undefined,
     messageContextsEqual,
@@ -64,30 +65,6 @@ export const selectedMessageContext = safeWritable<MessageContext | undefined>(
 export const selectedThreadRootMessageIndex = derived(selectedMessageContext, ($messageContext) => {
     return $messageContext?.threadRootMessageIndex;
 });
-
-export const selectedChatId = derived(selectedMessageContext, ($messageContext) => {
-    return $messageContext?.chatId;
-});
-
-export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>(
-    selectedChatId,
-    () => ({
-        confirmedEventIndexesLoaded: new DRange(),
-        serverEvents: [],
-        expiredEventRanges: new DRange(),
-    }),
-);
-
-export const serverEventsStore = createDerivedPropStore<ChatSpecificState, "serverEvents">(
-    chatStateStore,
-    "serverEvents",
-    () => [],
-);
-
-export const expiredEventRangesStore = createDerivedPropStore<
-    ChatSpecificState,
-    "expiredEventRanges"
->(chatStateStore, "expiredEventRanges", () => new DRange());
 
 export const hideMessagesFromDirectBlocked = createLsBoolStore(configKeys.hideBlocked, false);
 
@@ -437,40 +414,11 @@ export const confirmedThreadEventIndexesLoadedStore = derived(
     },
 );
 
-const confirmedEventIndexesLoadedStore = derived(
-    [serverEventsStore, expiredEventRangesStore],
-    ([serverEvents, expiredEventRanges]) => {
-        const ranges = new DRange();
-        serverEvents.forEach((e) => ranges.add(e.index));
-        ranges.add(expiredEventRanges);
-        return ranges;
-    },
-);
-
 export function confirmedEventIndexesLoaded(chatId: ChatIdentifier): DRange {
     const selected = get(selectedChatId);
     return selected !== undefined && chatIdentifiersEqual(selected, chatId)
-        ? get(confirmedEventIndexesLoadedStore)
+        ? app.selectedChat.confirmedEventIndexesLoaded
         : new DRange();
-}
-
-export function setChatSpecificState(clientChat: ChatSummary): void {
-    clearSelectedChat(clientChat.id);
-
-    // initialise a bunch of stores
-    chatStateStore.clear(clientChat.id);
-    resetFilteredProposalsStore(clientChat);
-}
-
-// TODO - get rid of this
-export function clearSelectedChat(newSelectedChatId?: ChatIdentifier): void {
-    filteredProposalsStore.set(undefined);
-    selectedMessageContext.update((context) => {
-        if (context !== undefined) {
-            chatStateStore.clear(context.chatId);
-        }
-        return newSelectedChatId ? { chatId: newSelectedChatId } : undefined;
-    });
 }
 
 export function createDirectChat(chatId: DirectChatIdentifier): void {
@@ -519,12 +467,15 @@ export function removeGroupPreview(chatId: ChatIdentifier): void {
     });
 }
 
+export const dummyServerEventsStore = createDummyStore();
+export const dummyExpiredEventRangeStore = createDummyStore();
+
 export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
     [
-        serverEventsStore,
+        dummyServerEventsStore,
         unconfirmed,
         localMessageUpdates,
-        expiredEventRangesStore,
+        dummyExpiredEventRangeStore,
         failedMessagesStore,
         proposalTallies,
         translationStore,
@@ -535,10 +486,10 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         ephemeralMessages,
     ],
     ([
-        $serverEventsForSelectedChat,
+        _serverEvents,
         $unconfirmed,
         $localMessageUpdates,
-        $expiredEventRanges,
+        _expiredEventRanges,
         $failedMessages,
         $proposalTallies,
         $translationStore,
@@ -555,10 +506,10 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         const unconfirmed = $unconfirmed.get({ chatId })?.messages ?? [];
         const ephemeral = [...($ephemeralMessages.get({ chatId })?.values() ?? [])];
         return mergeEventsAndLocalUpdates(
-            $serverEventsForSelectedChat,
+            app.selectedChat.serverEvents,
             [...unconfirmed, ...failed, ...ephemeral],
             $localMessageUpdates,
-            $expiredEventRanges,
+            app.selectedChat.expiredEventRanges,
             $proposalTallies,
             $translationStore,
             $blockedOrSuspendedUsers,
@@ -605,11 +556,6 @@ export function isContiguous(
     expiredEventRanges: ExpiredEventsRange[],
 ): boolean {
     return isContiguousInternal(confirmedEventIndexesLoaded(chatId), events, expiredEventRanges);
-}
-
-export function clearServerEvents(id: ChatIdentifier): void {
-    chatStateStore.setProp(id, "serverEvents", []);
-    chatStateStore.setProp(id, "expiredEventRanges", new DRange());
 }
 
 export const currentChatDraftMessage = derived(

@@ -1,9 +1,15 @@
-import { type ReadonlyMap, type ReadonlySet } from "openchat-shared";
+import DRange from "drange";
+import {
+    type ChatEvent,
+    type EventWrapper,
+    type ReadonlyMap,
+    type ReadonlySet,
+} from "openchat-shared";
 import { SvelteSet } from "svelte/reactivity";
 import { LocalMap } from "../map";
 import { type LocalSet } from "../set";
 import { chatDetailsLocalUpdates } from "./local.svelte";
-import { ChatDetailsServerState } from "./server";
+import { ChatDetailsServerState } from "./server.svelte";
 
 const empty = ChatDetailsServerState.empty();
 
@@ -55,6 +61,30 @@ export class ChatDetailsMergedState {
 
     overwriteServerState(val: ChatDetailsServerState) {
         this.#server = val;
+    }
+
+    updateServerEvents(fn: (existing: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[]) {
+        this.#server?.updateEvents(fn);
+    }
+
+    updateServerExpiredEventRanges(fn: (existing: DRange) => DRange) {
+        this.#server?.updateExpiredEventRanges(fn);
+    }
+
+    clearServerEvents() {
+        this.#server?.clearEvents();
+    }
+
+    get confirmedEventIndexesLoaded() {
+        return this.#server?.confirmedEventIndexesLoaded ?? new DRange();
+    }
+
+    get serverEvents() {
+        return this.#server?.events ?? [];
+    }
+
+    get expiredEventRanges() {
+        return this.#server?.expiredEventRanges ?? new DRange();
     }
 
     get members() {

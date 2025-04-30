@@ -8,13 +8,16 @@ import { ui } from "./state/ui.svelte";
 import {
     chatListScopeStore,
     dummyCommunityPreviewStore,
+    dummyExpiredEventRangeStore,
     dummyPinnedChatsStore,
     dummyScopedServerChats,
     dummyServerCommunities,
     dummyServerDirectChats,
+    dummyServerEventsStore,
     dummyServerFavourites,
     dummyServerGroupChats,
     dummyWalletConfigStore,
+    selectedChatId,
 } from "./stores";
 
 function onSelectedCommunityChanged(client: OpenChat) {
@@ -61,11 +64,11 @@ function onSelectedChatChanged(client: OpenChat) {
         }
     });
 
-    $effect(() => {
-        if (app.selectedChatId === undefined) {
-            client.clearSelectedChat();
-        }
-    });
+    // $effect(() => {
+    //     if (app.selectedChatId === undefined) {
+    //         // app.clearSelectedChat();
+    //     }
+    // });
 }
 
 // function onSelectedMessageChanged(client: OpenChat) {
@@ -150,6 +153,20 @@ function syncState() {
     $effect(() => {
         void app.scopedServerChats;
         dummyScopedServerChats.set(Symbol());
+    });
+
+    $effect(() => {
+        void app.selectedChat.serverEvents;
+        dummyServerEventsStore.set(Symbol());
+    });
+
+    $effect(() => {
+        void app.selectedChat.expiredEventRanges;
+        dummyExpiredEventRangeStore.set(Symbol());
+    });
+
+    $effect(() => {
+        selectedChatId.set(app.selectedChatId);
     });
 }
 
