@@ -8,6 +8,7 @@ import {
     type PublicApiKeyDetails,
     type ReadonlyMap,
     type ReadonlySet,
+    type ThreadIdentifier,
     type VersionedRules,
 } from "openchat-shared";
 import { SvelteSet } from "svelte/reactivity";
@@ -75,11 +76,15 @@ export class ChatDetailsMergedState {
         this.#server?.updateEvents(chatId, fn);
     }
 
+    setSelectedThread(id: ThreadIdentifier) {
+        this.#server?.setSelectedThread(id);
+    }
+
     updateServerThreadEvents(
-        chatId: ChatIdentifier,
+        id: ThreadIdentifier,
         fn: (existing: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[],
     ) {
-        this.#server?.updateThreadEvents(chatId, fn);
+        this.#server?.updateThreadEvents(id, fn);
     }
 
     updateServerExpiredEventRanges(fn: (existing: DRange) => DRange) {
@@ -88,10 +93,6 @@ export class ChatDetailsMergedState {
 
     clearServerEvents() {
         this.#server?.clearEvents();
-    }
-
-    clearServerThreadEvents() {
-        this.#server?.clearThreadEvents();
     }
 
     get confirmedEventIndexesLoaded() {

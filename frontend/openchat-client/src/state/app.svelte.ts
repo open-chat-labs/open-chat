@@ -33,6 +33,7 @@ import {
     type Referral,
     SafeMap,
     type StreakInsurance,
+    type ThreadIdentifier,
     type UserGroupDetails,
     type UserGroupSummary,
     type VersionedRules,
@@ -505,11 +506,15 @@ class AppState {
         return this.#selectedChat;
     }
 
+    setSelectedThread(id: ThreadIdentifier) {
+        this.#selectedChat.setSelectedThread(id);
+    }
+
     updateServerThreadEvents(
-        chatId: ChatIdentifier,
+        id: ThreadIdentifier,
         fn: (existing: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[],
     ) {
-        this.#selectedChat.updateServerThreadEvents(chatId, fn);
+        this.#selectedChat.updateServerThreadEvents(id, fn);
     }
 
     updateServerEvents(
@@ -525,10 +530,6 @@ class AppState {
 
     clearServerEvents() {
         this.#selectedChat.clearServerEvents();
-    }
-
-    clearServerThreadEvents() {
-        this.#selectedChat.clearServerThreadEvents();
     }
 
     clearSelectedChat() {

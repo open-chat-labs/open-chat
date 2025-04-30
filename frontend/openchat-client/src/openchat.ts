@@ -242,7 +242,6 @@ import {
     LEDGER_CANISTER_CHAT,
     mergeCombinedUnreadCounts,
     MessageContextMap,
-    messageContextsEqual,
     missingUserIds,
     NoMeetingToJoin,
     ONE_DAY,
@@ -299,7 +298,6 @@ import {
     nextEventAndMessageIndexesForThread,
     removeGroupPreview,
     removeUninitializedDirectChat,
-    selectedMessageContext,
 } from "./stores/chat";
 import {
     bitcoinAddress,
@@ -2364,7 +2362,6 @@ export class OpenChat {
             return undefined;
         }
 
-        this.clearThreadEvents();
         await this.#handleThreadEventsResponse(chatId, threadRootMessageIndex, eventsResponse);
 
         publish("loadedMessageWindow", {
@@ -2850,40 +2847,25 @@ export class OpenChat {
         initiating: boolean,
         focusThreadMessageIndex?: number,
     ): void {
-        this.clearThreadEvents();
-
-        // TODO we do need to sort out this mess with selected message context
-        selectedMessageContext.update((context) => {
-            if (context) {
-                return {
-                    ...context,
-                    threadRootMessageIndex: threadRootEvent.event.messageIndex,
-                };
-            }
-            return context;
+        app.setSelectedThread({
+            chatId,
+            threadRootMessageIndex: threadRootEvent.event.messageIndex,
         });
 
-        const context = this.#liveState.selectedMessageContext;
-        if (context) {
-            if (!initiating) {
-                if (focusThreadMessageIndex !== undefined) {
-                    this.loadEventWindow(chatId, focusThreadMessageIndex, threadRootEvent, true);
-                } else {
-                    this.loadPreviousMessages(chatId, threadRootEvent, true);
-                }
+        if (!initiating) {
+            if (focusThreadMessageIndex !== undefined) {
+                this.loadEventWindow(chatId, focusThreadMessageIndex, threadRootEvent, true);
+            } else {
+                this.loadPreviousMessages(chatId, threadRootEvent, true);
             }
-            ui.rightPanelHistory = [
-                {
-                    kind: "message_thread_panel",
-                    threadRootMessageIndex: threadRootEvent.event.messageIndex,
-                    threadRootMessageId: threadRootEvent.event.messageId,
-                },
-            ];
         }
-    }
-
-    clearThreadEvents(): void {
-        app.clearServerThreadEvents();
+        ui.rightPanelHistory = [
+            {
+                kind: "message_thread_panel",
+                threadRootMessageIndex: threadRootEvent.event.messageIndex,
+                threadRootMessageId: threadRootEvent.event.messageId,
+            },
+        ];
     }
 
     async loadThreadMessages(
@@ -2892,7 +2874,6 @@ export class OpenChat {
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number,
-        clearEvents: boolean,
         initialLoad = false,
     ): Promise<void> {
         const chat = this.#liveState.chatSummaries.get(chatId);
@@ -2900,10 +2881,6 @@ export class OpenChat {
         if (chat === undefined) {
             return Promise.resolve();
         }
-
-        const context = { chatId, threadRootMessageIndex };
-
-        if (!messageContextsEqual(context, this.#liveState.selectedMessageContext)) return;
 
         const eventsResponse: EventsResponse<ChatEvent> = await this.#sendRequest({
             kind: "chatEvents",
@@ -2916,15 +2893,7 @@ export class OpenChat {
             latestKnownUpdate: chat.lastUpdated,
         }).catch(CommonResponses.failure);
 
-        if (!messageContextsEqual(context, this.#liveState.selectedMessageContext)) {
-            // the selected thread has changed while we were loading the messages
-            return;
-        }
-
         if (isSuccessfulEventsResponse(eventsResponse)) {
-            if (clearEvents) {
-                app.clearServerThreadEvents();
-            }
             await this.#handleThreadEventsResponse(chatId, threadRootMessageIndex, eventsResponse);
 
             if (!this.#liveState.offlineStore) {
@@ -2955,11 +2924,6 @@ export class OpenChat {
         resp: EventsResponse<ChatEvent>,
     ): Promise<EventWrapper<ChatEvent>[]> {
         if (!isSuccessfulEventsResponse(resp)) return [];
-
-        const context = { chatId, threadRootMessageIndex };
-
-        // make sure that the message context (chatId or threadRootMessageIndex) has not changed
-        if (!messageContextsEqual(context, this.#liveState.selectedMessageContext)) return [];
 
         await this.#updateUserStoreFromEvents(resp.events);
 
@@ -3098,7 +3062,6 @@ export class OpenChat {
                 index,
                 ascending,
                 threadRootEvent.event.messageIndex,
-                false,
                 initialLoad,
             );
         }
@@ -3655,8 +3618,8 @@ export class OpenChat {
                     });
                 }
             }
-        } else if (messageContextsEqual(context, this.#liveState.selectedMessageContext)) {
-            app.updateServerThreadEvents(context.chatId, (events) =>
+        } else {
+            app.updateServerThreadEvents({ chatId, threadRootMessageIndex }, (events) =>
                 mergeServerEvents(events, newEvents, context),
             );
         }

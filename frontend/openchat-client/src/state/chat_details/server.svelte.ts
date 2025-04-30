@@ -10,13 +10,13 @@ import {
     type PublicApiKeyDetails,
     type ReadonlyMap,
     type ReadonlySet,
+    type ThreadIdentifier,
     type VersionedRules,
 } from "openchat-shared";
-
-// TODO I think we probably need a SelectedThread class that contains the thread events and the message context
-// so that we can be sure that we are not accepting events for the wrong thread. At the moment this *might* be possible
+import { ThreadServerState } from "../thread/server.svelte";
 
 export class ChatDetailsServerState {
+    #thread = $state<ThreadServerState | undefined>();
     #chatId = $state<ChatIdentifier | undefined>();
     #members = $state<ReadonlyMap<string, Member>>(new Map());
     #lapsedMembers = $state<ReadonlySet<string>>(new Set());
@@ -27,17 +27,11 @@ export class ChatDetailsServerState {
     #bots = $state<ReadonlyMap<string, ExternalBotPermissions>>(new Map());
     #apiKeys = $state<ReadonlyMap<string, PublicApiKeyDetails>>(new Map());
     #events = $state<EventWrapper<ChatEvent>[]>([]);
-    #threadEvents = $state<EventWrapper<ChatEvent>[]>([]);
     #expiredEventRanges = $state<DRange>(new DRange());
     #confirmedEventIndexesLoaded = $derived.by(() => {
         const ranges = new DRange();
         this.#events.forEach((e) => ranges.add(e.index));
         ranges.add(this.#expiredEventRanges);
-        return ranges;
-    });
-    #confirmedThreadEventIndexesLoaded = $derived.by(() => {
-        const ranges = new DRange();
-        this.#threadEvents.forEach((e) => ranges.add(e.index));
         return ranges;
     });
 
@@ -90,7 +84,7 @@ export class ChatDetailsServerState {
     }
 
     get confirmedThreadEventIndexesLoaded() {
-        return this.#confirmedThreadEventIndexesLoaded;
+        return this.#thread?.confirmedEventIndexesLoaded;
     }
 
     get events() {
@@ -98,7 +92,7 @@ export class ChatDetailsServerState {
     }
 
     get threadEvents() {
-        return this.#threadEvents;
+        return this.#thread?.events ?? [];
     }
 
     get expiredEventRanges() {
@@ -115,16 +109,15 @@ export class ChatDetailsServerState {
         this.#events = fn(this.#events);
     }
 
+    setSelectedThread(id: ThreadIdentifier) {
+        this.#thread = ThreadServerState.empty(id);
+    }
+
     updateThreadEvents(
-        chatId: ChatIdentifier,
+        id: ThreadIdentifier,
         fn: (existing: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[],
     ) {
-        if (!chatIdentifiersEqual(chatId, this.#chatId)) {
-            throw new Error(
-                "We should not be getting thread events for the wrong chat - investigate",
-            );
-        }
-        this.#threadEvents = fn(this.#threadEvents);
+        this.#thread?.updateEvents(id, fn);
     }
 
     updateExpiredEventRanges(fn: (existing: DRange) => DRange) {
@@ -134,10 +127,6 @@ export class ChatDetailsServerState {
     clearEvents() {
         this.#events = [];
         this.#expiredEventRanges = new DRange();
-    }
-
-    clearThreadEvents() {
-        this.#threadEvents = [];
     }
 
     overwriteChatDetails(

@@ -1187,6 +1187,11 @@ export function chatIdentifiersEqual(
     }
 }
 
+export type ThreadIdentifier = {
+    chatId: ChatIdentifier;
+    threadRootMessageIndex: number;
+};
+
 export type DirectChatIdentifier = {
     kind: "direct_chat";
     userId: string;
