@@ -23,6 +23,7 @@
         currentUser,
         directMessageCommandInstance,
         draftMessagesStore,
+        messageContextsEqual,
         random64,
         ScreenWidth,
         throttleDeadline,
@@ -583,7 +584,7 @@
         warning={i18nKey("bots.direct.warning")} />
 {/if}
 
-{#if botState.selectedCommand && botState.showingBuilder}
+{#if botState.selectedCommand && messageContextsEqual(botState.showingBuilder, messageContext)}
     <CommandBuilder
         {messageContext}
         onCommandSent={() => cancelCommandSelector(true)}
