@@ -5768,17 +5768,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "online_users_canister_client"
-version = "0.1.0"
-dependencies = [
- "candid",
- "canister_client",
- "ic-agent",
- "online_users_canister",
- "types",
-]
-
-[[package]]
 name = "online_users_canister_impl"
 version = "0.1.0"
 dependencies = [
