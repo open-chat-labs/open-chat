@@ -1,5 +1,4 @@
-import type { Logger } from "openchat-shared";
-import type { GroupInvite, MessageFormatter } from "openchat-shared";
+import type { CommunityInvite, GroupInvite, Logger, MessageFormatter } from "openchat-shared";
 
 export type OpenChatConfig = {
     icUrl?: string;
@@ -33,4 +32,5 @@ export type OpenChatConfig = {
     env: string;
     bitcoinMainnetEnabled: boolean;
     groupInvite?: GroupInvite;
+    communityInvite?: CommunityInvite;
 };
