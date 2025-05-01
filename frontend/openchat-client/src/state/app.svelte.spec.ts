@@ -57,6 +57,7 @@ describe("app state", () => {
                 open: false,
                 scope: { kind: "community", id: communityId },
             });
+            app.setSelectedChat(chatId);
         });
 
         test("selected message context is set", () => {
@@ -94,6 +95,7 @@ describe("app state", () => {
         });
 
         function setChatDetails(chatId: ChatIdentifier) {
+            app.setSelectedChat(chatId);
             app.setChatDetailsFromServer(
                 chatId,
                 new Map([
@@ -153,6 +155,7 @@ describe("app state", () => {
                 communityId,
                 scope: { kind: "community", id: communityId },
             });
+            app.setSelectedCommunity(communityId);
         });
 
         test("selected community id is set", () => {

@@ -1,4 +1,3 @@
-import type DRange from "drange";
 import type {
     AuthProvider,
     ChatEvent,
@@ -23,7 +22,6 @@ import {
     allChats,
     chatSummariesListStore,
     chatSummariesStore,
-    confirmedThreadEventIndexesLoadedStore,
     currentChatReplyingTo,
     eventsStore,
     groupPreviewsStore,
@@ -74,7 +72,6 @@ export class LiveState {
     diamondStatus!: DiamondMembershipStatus;
     isDiamond!: boolean;
     isLifetimeDiamond!: boolean;
-    confirmedThreadEventIndexesLoaded!: DRange;
     allChats!: ChatMap<ChatSummary>;
     draftMessages!: DraftMessages;
     user!: CreatedUser;
@@ -92,9 +89,6 @@ export class LiveState {
         anonUser.subscribe((anon) => (this.anonUser = anon));
         suspendedUser.subscribe((suspended) => (this.suspendedUser = suspended));
         platformModerator.subscribe((mod) => (this.platformModerator = mod));
-        confirmedThreadEventIndexesLoadedStore.subscribe(
-            (data) => (this.confirmedThreadEventIndexesLoaded = data),
-        );
         remainingStorage.subscribe((data) => (this.remainingStorage = data));
         userStore.subscribe((data) => (this.userStore = data));
         userCreatedStore.subscribe((data) => (this.userCreated = data));

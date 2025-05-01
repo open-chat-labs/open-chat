@@ -1,3 +1,4 @@
+use local_user_index_canister::LocalGroup;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{BuildVersion, ChatId, CyclesTopUp};
@@ -40,35 +41,5 @@ impl LocalGroupMap {
 
     pub fn len(&self) -> usize {
         self.groups.len()
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct LocalGroup {
-    pub wasm_version: BuildVersion,
-    pub upgrade_in_progress: bool,
-    pub cycle_top_ups: Vec<CyclesTopUp>,
-}
-
-impl LocalGroup {
-    pub fn set_canister_upgrade_status(&mut self, upgrade_in_progress: bool, new_version: Option<BuildVersion>) {
-        self.upgrade_in_progress = upgrade_in_progress;
-        if let Some(version) = new_version {
-            self.wasm_version = version;
-        }
-    }
-
-    pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
-        self.cycle_top_ups.push(top_up)
-    }
-}
-
-impl LocalGroup {
-    pub fn new(wasm_version: BuildVersion) -> LocalGroup {
-        LocalGroup {
-            wasm_version,
-            upgrade_in_progress: false,
-            cycle_top_ups: Vec::new(),
-        }
     }
 }

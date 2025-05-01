@@ -327,16 +327,9 @@
                     return;
                 }
 
-                // When we have a middle panel and this route is for a chat list then select the first chat
-                if (pathState.isChatListRoute(route) && client.selectFirstChat()) {
-                    return;
-                }
-
                 if (pathState.isHomeRoute(route)) {
-                    client.clearSelectedChat();
                     filterChatSpecificRightPanelStates();
                 } else if (pathState.isCommunitiesRoute(route)) {
-                    client.clearSelectedChat();
                     ui.rightPanelHistory = ui.fullWidth ? [{ kind: "community_filters" }] : [];
                 } else {
                     // any other route with no associated chat therefore we must clear any selected chat and potentially close the right panel
@@ -350,10 +343,6 @@
                         pageReplace(routeForScope(client.getDefaultScope()));
                         modal = { kind: "select_chat" };
                     }
-                }
-
-                if (client.captureReferralCode()) {
-                    pageReplace(removeQueryStringParam("ref"));
                 }
 
                 if (modal?.kind === "claim_daily_chit") {

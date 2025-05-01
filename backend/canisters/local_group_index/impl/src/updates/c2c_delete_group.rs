@@ -3,7 +3,9 @@ use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_group_index_canister::c2c_delete_group::{Response::*, *};
-use types::CanisterId;
+use local_user_index_canister::LocalGroupIndexEvent;
+use rand::RngCore;
+use types::{CanisterId, IdempotentEnvelope};
 use utils::canister::{delete, stop};
 
 #[update(guard = "caller_is_group_index_canister", msgpack = true)]
@@ -14,6 +16,11 @@ fn c2c_delete_group(args: Args) -> Response {
 
 fn c2c_delete_group_impl(args: Args, state: &mut RuntimeState) -> Response {
     if state.data.local_groups.delete(&args.chat_id) {
+        state.data.local_user_index_sync_queue.push(IdempotentEnvelope {
+            created_at: state.env.now(),
+            idempotency_id: state.env.rng().next_u64(),
+            value: LocalGroupIndexEvent::GroupRemoved(args.chat_id),
+        });
         ic_cdk::futures::spawn(delete_canister(args.chat_id.into()));
         Success
     } else {

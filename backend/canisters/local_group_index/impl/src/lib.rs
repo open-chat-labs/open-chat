@@ -1,4 +1,5 @@
 use crate::model::local_community_map::LocalCommunityMap;
+use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use community_canister::LocalGroupIndexEvent as CommunityEvent;
@@ -16,7 +17,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, VecDeque};
 use std::time::Duration;
-use timer_job_queues::GroupedTimerJobQueue;
+use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     BuildVersion, CanisterId, ChildCanisterWasms, Cycles, IdempotentEnvelope, Milliseconds, TimestampMillis, Timestamped,
     UserId,
@@ -117,11 +118,11 @@ impl RuntimeState {
             local_group_count: self.data.local_groups.len() as u64,
             local_community_count: self.data.local_communities.len() as u64,
             group_upgrades_completed: group_upgrades_metrics.completed,
-            group_upgrades_pending: group_upgrades_metrics.pending as u64,
-            group_upgrades_in_progress: group_upgrades_metrics.in_progress as u64,
+            group_upgrades_pending: group_upgrades_metrics.pending,
+            group_upgrades_in_progress: group_upgrades_metrics.in_progress,
             community_upgrades_completed: community_upgrades_metrics.completed,
-            community_upgrades_pending: community_upgrades_metrics.pending as u64,
-            community_upgrades_in_progress: community_upgrades_metrics.in_progress as u64,
+            community_upgrades_pending: community_upgrades_metrics.pending,
+            community_upgrades_in_progress: community_upgrades_metrics.in_progress,
             group_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::Group).wasm.version,
             community_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::Community).wasm.version,
             max_concurrent_group_upgrades: self.data.max_concurrent_group_upgrades,
@@ -147,8 +148,6 @@ impl RuntimeState {
             stable_memory_sizes: memory::memory_sizes(),
             recent_group_upgrades: group_upgrades_metrics.recently_competed,
             recent_community_upgrades: community_upgrades_metrics.recently_competed,
-            update_controllers_queue_len: self.data.update_controllers_queue.len() as u32,
-            controllers_updated: self.data.controllers_updated,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -196,10 +195,12 @@ struct Data {
     pub group_event_sync_queue: GroupedTimerJobQueue<GroupEventBatch>,
     pub community_event_sync_queue: GroupedTimerJobQueue<CommunityEventBatch>,
     pub idempotency_checker: IdempotencyChecker,
-    #[serde(default)]
-    pub update_controllers_queue: VecDeque<CanisterId>,
-    #[serde(default)]
-    pub controllers_updated: bool,
+    #[serde(default = "default_local_user_index_sync_queue")]
+    pub local_user_index_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
+}
+
+fn default_local_user_index_sync_queue() -> BatchedTimerJobQueue<LocalUserIndexEventBatch> {
+    BatchedTimerJobQueue::new(CanisterId::anonymous(), false)
 }
 
 impl Data {
@@ -251,8 +252,7 @@ impl Data {
             group_event_sync_queue: GroupedTimerJobQueue::new(10, false),
             community_event_sync_queue: GroupedTimerJobQueue::new(10, false),
             idempotency_checker: IdempotencyChecker::default(),
-            update_controllers_queue: VecDeque::new(),
-            controllers_updated: true,
+            local_user_index_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, false),
         }
     }
 }
@@ -290,8 +290,6 @@ pub struct Metrics {
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub recent_group_upgrades: Vec<CanisterId>,
     pub recent_community_upgrades: Vec<CanisterId>,
-    pub update_controllers_queue_len: u32,
-    pub controllers_updated: bool,
     pub canister_ids: CanisterIds,
 }
 

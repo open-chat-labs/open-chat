@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Sync Group and Community data to LocalUserIndex ([#7878](https://github.com/open-chat-labs/open-chat/pull/7878))
+
+## [[2.0.1721](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1721-local_group_index)] - 2025-04-30
+
 ### Changed
 
 - Add LocalUserIndex as a controller to groups and communities ([#7871](https://github.com/open-chat-labs/open-chat/pull/7871))

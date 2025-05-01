@@ -243,7 +243,6 @@ import {
     LEDGER_CANISTER_CHAT,
     mergeCombinedUnreadCounts,
     MessageContextMap,
-    messageContextsEqual,
     missingUserIds,
     NoMeetingToJoin,
     ONE_DAY,
@@ -273,6 +272,7 @@ import {
     WEBAUTHN_ORIGINATING_CANISTER,
 } from "openchat-shared";
 import page from "page";
+import { tick } from "svelte";
 import { get } from "svelte/store";
 import type { OpenChatConfig } from "./config";
 import { AIRDROP_BOT_USER_ID } from "./constants";
@@ -291,11 +291,7 @@ import { messagesRead, startMessagesReadTracker } from "./state/unread/markRead.
 import { blockedUsers } from "./stores/blockedUsers";
 import {
     addGroupPreview,
-    chatStateStore,
-    clearSelectedChat,
-    clearServerEvents,
     confirmedEventIndexesLoaded,
-    confirmedThreadEventIndexesLoadedStore,
     createDirectChat,
     groupPreviewsStore,
     isContiguous,
@@ -304,9 +300,6 @@ import {
     nextEventAndMessageIndexesForThread,
     removeGroupPreview,
     removeUninitializedDirectChat,
-    selectedMessageContext,
-    setChatSpecificState,
-    threadServerEventsStore,
 } from "./stores/chat";
 import {
     bitcoinAddress,
@@ -2371,7 +2364,6 @@ export class OpenChat {
             return undefined;
         }
 
-        this.clearThreadEvents();
         await this.#handleThreadEventsResponse(chatId, threadRootMessageIndex, eventsResponse);
 
         publish("loadedMessageWindow", {
@@ -2448,7 +2440,7 @@ export class OpenChat {
         if (!isSuccessfulEventsResponse(resp)) return false;
 
         if (!keepCurrentEvents) {
-            clearServerEvents(chat.id);
+            app.clearServerEvents();
         }
 
         await this.#updateUserStoreFromEvents(resp.events);
@@ -2772,7 +2764,7 @@ export class OpenChat {
 
         this.#loadSnsFunctionsForChat(clientChat);
 
-        setChatSpecificState(clientChat);
+        resetFilteredProposalsStore(clientChat);
 
         if (messageIndex === undefined) {
             messageIndex = isPreviewing(clientChat)
@@ -2791,11 +2783,12 @@ export class OpenChat {
             }
         }
 
-        // TODO - we might be able to get rid of this
-        resetFilteredProposalsStore(clientChat);
-
         // TODO - this might belong as a derivation in the selected chat state
         this.#userLookupForMentions = undefined;
+
+        // this has the effect of clearing any state for any previously selected chat and
+        // creating an empty container for the new chat's state
+        app.setSelectedChat(chatId);
 
         const { selectedChat } = this.#liveState;
         if (selectedChat !== undefined) {
@@ -2807,12 +2800,6 @@ export class OpenChat {
                         }
                     });
                 } else {
-                    // TODO - this is awkward because the server events are loaded *before* we have
-                    // loaded the chat details.
-                    // Why do we do it in that order I wonder?
-                    // I guess it is because we don't want anything to delay the events.
-                    // But having things split like this is where it gets a bit race condition-y
-
                     this.loadPreviousMessages(chatId, undefined, true).then(() => {
                         if (serverChat !== undefined) {
                             this.#loadChatDetails(serverChat);
@@ -2834,7 +2821,7 @@ export class OpenChat {
     }
 
     openThreadFromMessageIndex(
-        _chatId: ChatIdentifier,
+        chatId: ChatIdentifier,
         messageIndex: number,
         threadMessageIndex?: number,
     ): void {
@@ -2842,52 +2829,35 @@ export class OpenChat {
             (ev) => ev.event.kind === "message" && ev.event.messageIndex === messageIndex,
         ) as EventWrapper<Message> | undefined;
         if (event !== undefined) {
-            this.openThread(event, event.event.thread === undefined, threadMessageIndex);
+            this.openThread(chatId, event, event.event.thread === undefined, threadMessageIndex);
         }
     }
 
     openThread(
+        chatId: ChatIdentifier,
         threadRootEvent: EventWrapper<Message>,
         initiating: boolean,
         focusThreadMessageIndex?: number,
     ): void {
-        this.clearThreadEvents();
-        selectedMessageContext.update((context) => {
-            if (context) {
-                return {
-                    ...context,
-                    threadRootMessageIndex: threadRootEvent.event.messageIndex,
-                };
-            }
-            return context;
+        app.setSelectedThread({
+            chatId,
+            threadRootMessageIndex: threadRootEvent.event.messageIndex,
         });
 
-        const context = this.#liveState.selectedMessageContext;
-        if (context) {
-            if (!initiating) {
-                if (focusThreadMessageIndex !== undefined) {
-                    this.loadEventWindow(
-                        context.chatId,
-                        focusThreadMessageIndex,
-                        threadRootEvent,
-                        true,
-                    );
-                } else {
-                    this.loadPreviousMessages(context.chatId, threadRootEvent, true);
-                }
+        if (!initiating) {
+            if (focusThreadMessageIndex !== undefined) {
+                this.loadEventWindow(chatId, focusThreadMessageIndex, threadRootEvent, true);
+            } else {
+                this.loadPreviousMessages(chatId, threadRootEvent, true);
             }
-            ui.rightPanelHistory = [
-                {
-                    kind: "message_thread_panel",
-                    threadRootMessageIndex: threadRootEvent.event.messageIndex,
-                    threadRootMessageId: threadRootEvent.event.messageId,
-                },
-            ];
         }
-    }
-
-    clearThreadEvents(): void {
-        threadServerEventsStore.set([]);
+        ui.rightPanelHistory = [
+            {
+                kind: "message_thread_panel",
+                threadRootMessageIndex: threadRootEvent.event.messageIndex,
+                threadRootMessageId: threadRootEvent.event.messageId,
+            },
+        ];
     }
 
     async loadThreadMessages(
@@ -2896,7 +2866,6 @@ export class OpenChat {
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number,
-        clearEvents: boolean,
         initialLoad = false,
     ): Promise<void> {
         const chat = this.#liveState.chatSummaries.get(chatId);
@@ -2904,10 +2873,6 @@ export class OpenChat {
         if (chat === undefined) {
             return Promise.resolve();
         }
-
-        const context = { chatId, threadRootMessageIndex };
-
-        if (!messageContextsEqual(context, this.#liveState.selectedMessageContext)) return;
 
         const eventsResponse: EventsResponse<ChatEvent> = await this.#sendRequest({
             kind: "chatEvents",
@@ -2920,15 +2885,7 @@ export class OpenChat {
             latestKnownUpdate: chat.lastUpdated,
         }).catch(CommonResponses.failure);
 
-        if (!messageContextsEqual(context, this.#liveState.selectedMessageContext)) {
-            // the selected thread has changed while we were loading the messages
-            return;
-        }
-
         if (isSuccessfulEventsResponse(eventsResponse)) {
-            if (clearEvents) {
-                threadServerEventsStore.set([]);
-            }
             await this.#handleThreadEventsResponse(chatId, threadRootMessageIndex, eventsResponse);
 
             if (!this.#liveState.offlineStore) {
@@ -2960,11 +2917,6 @@ export class OpenChat {
     ): Promise<EventWrapper<ChatEvent>[]> {
         if (!isSuccessfulEventsResponse(resp)) return [];
 
-        const context = { chatId, threadRootMessageIndex };
-
-        // make sure that the message context (chatId or threadRootMessageIndex) has not changed
-        if (!messageContextsEqual(context, this.#liveState.selectedMessageContext)) return [];
-
         await this.#updateUserStoreFromEvents(resp.events);
 
         this.#addServerEventsToStores(chatId, resp.events, threadRootMessageIndex, []);
@@ -2988,7 +2940,6 @@ export class OpenChat {
         this.#removeCommunityLocally(id);
     }
 
-    clearSelectedChat = clearSelectedChat;
     diffGroupPermissions = diffGroupPermissions;
 
     messageContentFromFile(file: File): Promise<AttachmentContent> {
@@ -3103,7 +3054,6 @@ export class OpenChat {
                 index,
                 ascending,
                 threadRootEvent.event.messageIndex,
-                false,
                 initialLoad,
             );
         }
@@ -3343,7 +3293,7 @@ export class OpenChat {
         updatedEvents: UpdatedEvent[],
     ): Promise<void> {
         const confirmedLoaded = confirmedEventIndexesLoaded(serverChat.id);
-        const confirmedThreadLoaded = this.#liveState.confirmedThreadEventIndexesLoaded;
+        const confirmedThreadLoaded = app.selectedChat.confirmedThreadEventIndexesLoaded;
         const selectedThreadRootMessageIndex =
             this.#liveState.selectedMessageContext?.threadRootMessageIndex;
         const selectedChatId = this.#liveState.selectedChatId;
@@ -3461,7 +3411,7 @@ export class OpenChat {
     }
 
     #confirmedThreadUpToEventIndex(): number | undefined {
-        const ranges = get(confirmedThreadEventIndexesLoadedStore).subranges();
+        const ranges = app.selectedChat.confirmedThreadEventIndexesLoaded.subranges();
         if (ranges.length > 0) {
             return ranges[0].high;
         }
@@ -3641,7 +3591,7 @@ export class OpenChat {
         }
 
         if (threadRootMessageIndex === undefined) {
-            chatStateStore.updateProp(chatId, "serverEvents", (events) =>
+            app.updateServerEvents(chatId, (events) =>
                 mergeServerEvents(events, newEvents, context),
             );
             if (newLatestMessage !== undefined) {
@@ -3661,14 +3611,14 @@ export class OpenChat {
                     });
                 }
             }
-        } else if (messageContextsEqual(context, this.#liveState.selectedMessageContext)) {
-            threadServerEventsStore.update((events) =>
+        } else {
+            app.updateServerThreadEvents({ chatId, threadRootMessageIndex }, (events) =>
                 mergeServerEvents(events, newEvents, context),
             );
         }
 
         if (expiredEventRanges.length > 0) {
-            chatStateStore.updateProp(chatId, "expiredEventRanges", (ranges) => {
+            app.updateServerExpiredEventRanges((ranges) => {
                 const merged = new DRange();
                 merged.add(ranges);
                 expiredEventRanges.forEach((r) => merged.add(r.start, r.end));
@@ -5260,6 +5210,7 @@ export class OpenChat {
     }
 
     setCommunityInvite(value: CommunityInvite): Promise<void> {
+        this.config.communityInvite = value;
         return this.#sendRequest({
             kind: "communityInvite",
             value,
@@ -6051,7 +6002,6 @@ export class OpenChat {
 
             if (selectedChatId !== undefined) {
                 if (this.#liveState.chatSummaries.get(selectedChatId) === undefined) {
-                    clearSelectedChat();
                     publish("selectedChatInvalid");
                 } else {
                     const updatedEvents = ChatMap.fromMap(chatsResponse.updatedEvents);
@@ -6100,7 +6050,11 @@ export class OpenChat {
 
             pinNumberRequiredStore.set(chatsResponse.state.pinNumberSettings !== undefined);
 
-            app.chatsInitialised = true;
+            // horribly enough - we need to slightly defer this so that all the cascade of derived stuff is complete
+            // I am hopeful that we can remove this when we aren't manually synchronising runes & stores
+            tick().then(() => {
+                app.chatsInitialised = true;
+            });
 
             this.#closeNotificationsIfNecessary();
 
@@ -7616,6 +7570,7 @@ export class OpenChat {
         }
 
         if (community !== undefined) {
+            app.setSelectedCommunity(id);
             this.#loadCommunityDetails(community);
         }
 
@@ -8787,6 +8742,7 @@ export class OpenChat {
                     env: this.config.env,
                     bitcoinMainnetEnabled: this.config.bitcoinMainnetEnabled,
                     groupInvite: this.config.groupInvite,
+                    communityInvite: this.config.communityInvite,
                 },
                 true,
             ).then((resp) => {

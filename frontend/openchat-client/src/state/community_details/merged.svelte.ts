@@ -1,8 +1,17 @@
-import type { ReadonlyMap, ReadonlySet } from "openchat-shared";
+import type {
+    CommunityIdentifier,
+    ExternalBotPermissions,
+    Member,
+    PublicApiKeyDetails,
+    ReadonlyMap,
+    ReadonlySet,
+    UserGroupDetails,
+    VersionedRules,
+} from "openchat-shared";
 import { type LocalMap } from "../map";
 import { LocalSet } from "../set";
 import { communityLocalUpdates } from "./local.svelte";
-import { CommunityServerState } from "./server";
+import { CommunityServerState } from "./server.svelte";
 
 const empty = CommunityServerState.empty();
 
@@ -20,11 +29,11 @@ export class CommunityMergedState {
     #referrals = $derived(this.#mergeSet(this.server.referrals, this.#local?.referrals));
     #rules = $derived(this.#local?.rules ?? this.server.rules);
 
-    #mergeSet<T>(server: Set<T>, local?: LocalSet<T>): ReadonlySet<T> {
+    #mergeSet<T>(server: ReadonlySet<T>, local?: LocalSet<T>): ReadonlySet<T> {
         return local ? local.apply(server) : server;
     }
 
-    #mergeMap<K, V>(server: Map<K, V>, local?: LocalMap<K, V>): ReadonlyMap<K, V> {
+    #mergeMap<K, V>(server: ReadonlyMap<K, V>, local?: LocalMap<K, V>): ReadonlyMap<K, V> {
         return local ? local.apply(server) : server;
     }
 
@@ -77,5 +86,31 @@ export class CommunityMergedState {
     }
     get rules() {
         return this.#rules;
+    }
+
+    overwriteCommunityDetails(
+        communityId: CommunityIdentifier,
+        userGroups: Map<number, UserGroupDetails>,
+        members: Map<string, Member>,
+        blockedUsers: Set<string>,
+        lapsedMembers: Set<string>,
+        invitedUsers: Set<string>,
+        referrals: Set<string>,
+        bots: Map<string, ExternalBotPermissions>,
+        apiKeys: Map<string, PublicApiKeyDetails>,
+        rules?: VersionedRules,
+    ) {
+        this.#server?.overwriteCommunityDetails(
+            communityId,
+            userGroups,
+            members,
+            blockedUsers,
+            lapsedMembers,
+            invitedUsers,
+            referrals,
+            bots,
+            apiKeys,
+            rules,
+        );
     }
 }

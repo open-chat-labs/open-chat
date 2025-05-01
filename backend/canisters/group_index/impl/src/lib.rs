@@ -241,8 +241,8 @@ impl RuntimeState {
             public_community_gates: self.data.cached_metrics.public_community_gates.clone(),
             canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_failed: canister_upgrades_metrics.failed,
-            canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
-            canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
+            canister_upgrades_pending: canister_upgrades_metrics.pending,
+            canister_upgrades_in_progress: canister_upgrades_metrics.in_progress,
             governance_principals: self.data.governance_principals.iter().copied().collect(),
             local_group_index_wasm_version: self
                 .data

@@ -1,4 +1,3 @@
-import type DRange from "drange";
 import { emptyChatMetrics } from "../../utils";
 import type { AccessControlled, AccessGateConfig, UpdatedRules, VersionedRules } from "../access";
 import type {
@@ -1193,6 +1192,11 @@ export function chatIdentifiersEqual(
     }
 }
 
+export type ThreadIdentifier = {
+    chatId: ChatIdentifier;
+    threadRootMessageIndex: number;
+};
+
 export type DirectChatIdentifier = {
     kind: "direct_chat";
     userId: string;
@@ -1472,17 +1476,6 @@ export type GroupChatDetails = {
     bots: InstalledBotDetails[];
     apiKeys: Map<string, PublicApiKeyDetails>;
     webhooks: WebhookDetails[];
-};
-
-/**
- * This will hold all chat specific state
- * All properties are optional but individual derived stores can provide their own default values
- * TODO - the goal is to get rid of all of these
- */
-export type ChatSpecificState = {
-    confirmedEventIndexesLoaded: DRange;
-    serverEvents: EventWrapper<ChatEvent>[];
-    expiredEventRanges: DRange;
 };
 
 export type GroupChatDetailsUpdates = {

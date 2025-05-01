@@ -583,7 +583,7 @@
                     pathState.route.kind === "selected_channel_route") &&
                 (pathState.route.open || pathState.route.threadMessageIndex !== undefined)
             ) {
-                client.openThread(msgEvent, false, pathState.route.threadMessageIndex);
+                client.openThread(chat.id, msgEvent, false, pathState.route.threadMessageIndex);
             }
         }
     }

@@ -1,3 +1,4 @@
+use local_user_index_canister::LocalCommunity;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{BuildVersion, CommunityId, CyclesTopUp};
@@ -40,35 +41,5 @@ impl LocalCommunityMap {
 
     pub fn len(&self) -> usize {
         self.communities.len()
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct LocalCommunity {
-    pub wasm_version: BuildVersion,
-    pub upgrade_in_progress: bool,
-    pub cycle_top_ups: Vec<CyclesTopUp>,
-}
-
-impl LocalCommunity {
-    pub fn set_canister_upgrade_status(&mut self, upgrade_in_progress: bool, new_version: Option<BuildVersion>) {
-        self.upgrade_in_progress = upgrade_in_progress;
-        if let Some(version) = new_version {
-            self.wasm_version = version;
-        }
-    }
-
-    pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
-        self.cycle_top_ups.push(top_up)
-    }
-}
-
-impl LocalCommunity {
-    pub fn new(wasm_version: BuildVersion) -> LocalCommunity {
-        LocalCommunity {
-            wasm_version,
-            upgrade_in_progress: false,
-            cycle_top_ups: Vec::new(),
-        }
     }
 }

@@ -1,9 +1,22 @@
-import { type ReadonlyMap, type ReadonlySet } from "openchat-shared";
+import DRange from "drange";
+import {
+    type ChatEvent,
+    type ChatIdentifier,
+    type EventWrapper,
+    type ExternalBotPermissions,
+    type Member,
+    type PublicApiKeyDetails,
+    type ReadonlyMap,
+    type ReadonlySet,
+    type ThreadIdentifier,
+    type VersionedRules,
+    type WebhookDetails,
+} from "openchat-shared";
 import { SvelteSet } from "svelte/reactivity";
 import { LocalMap } from "../map";
 import { type LocalSet } from "../set";
 import { chatDetailsLocalUpdates } from "./local.svelte";
-import { ChatDetailsServerState } from "./server";
+import { ChatDetailsServerState } from "./server.svelte";
 
 const empty = ChatDetailsServerState.empty();
 
@@ -15,6 +28,7 @@ export class ChatDetailsMergedState {
     #members = $derived(this.#mergeMap(this.server.members, this.#local?.members));
     #bots = $derived(this.#mergeMap(this.server.bots, this.#local?.bots));
     #apiKeys = $derived(this.#mergeMap(this.server.apiKeys, this.#local?.apiKeys));
+    #webhooks = $derived(this.server.webhooks);
     #blockedUsers = $derived(this.#mergeSet(this.server.blockedUsers, this.#local?.blockedUsers));
     #invitedUsers = $derived(this.#mergeSet(this.server.invitedUsers, this.#local?.invitedUsers));
     #rules = $derived(this.#local?.rules ?? this.server.rules);
@@ -26,11 +40,11 @@ export class ChatDetailsMergedState {
         this.#server = server;
     }
 
-    #mergeSet<T>(server: Set<T>, local?: LocalSet<T>): ReadonlySet<T> {
+    #mergeSet<T>(server: ReadonlySet<T>, local?: LocalSet<T>): ReadonlySet<T> {
         return local ? local.apply(server) : server;
     }
 
-    #mergeMap<K, V>(server: Map<K, V>, local?: LocalMap<K, V>): ReadonlyMap<K, V> {
+    #mergeMap<K, V>(server: ReadonlyMap<K, V>, local?: LocalMap<K, V>): ReadonlyMap<K, V> {
         return local ? local.apply(server) : server;
     }
 
@@ -57,6 +71,52 @@ export class ChatDetailsMergedState {
         this.#server = val;
     }
 
+    updateServerEvents(
+        chatId: ChatIdentifier,
+        fn: (existing: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[],
+    ) {
+        this.#server?.updateEvents(chatId, fn);
+    }
+
+    setSelectedThread(id: ThreadIdentifier) {
+        this.#server?.setSelectedThread(id);
+    }
+
+    updateServerThreadEvents(
+        id: ThreadIdentifier,
+        fn: (existing: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[],
+    ) {
+        this.#server?.updateThreadEvents(id, fn);
+    }
+
+    updateServerExpiredEventRanges(fn: (existing: DRange) => DRange) {
+        this.#server?.updateExpiredEventRanges(fn);
+    }
+
+    clearServerEvents() {
+        this.#server?.clearEvents();
+    }
+
+    get confirmedEventIndexesLoaded() {
+        return this.#server?.confirmedEventIndexesLoaded ?? new DRange();
+    }
+
+    get confirmedThreadEventIndexesLoaded() {
+        return this.#server?.confirmedThreadEventIndexesLoaded ?? new DRange();
+    }
+
+    get serverEvents() {
+        return this.#server?.events ?? [];
+    }
+
+    get serverThreadEvents() {
+        return this.#server?.threadEvents ?? [];
+    }
+
+    get expiredEventRanges() {
+        return this.#server?.expiredEventRanges ?? new DRange();
+    }
+
     get members() {
         return this.#members;
     }
@@ -74,7 +134,7 @@ export class ChatDetailsMergedState {
     }
 
     get webhooks() {
-        return this.server.webhooks;
+        return this.#webhooks;
     }
 
     get invitedUsers() {
@@ -95,6 +155,32 @@ export class ChatDetailsMergedState {
 
     addUserIds(userIds: string[]) {
         userIds.forEach((u) => this.#userIds.add(u));
+    }
+
+    overwriteChatDetails(
+        chatId: ChatIdentifier,
+        members: Map<string, Member>,
+        lapsedMembers: Set<string>,
+        blockedUsers: Set<string>,
+        invitedUsers: Set<string>,
+        pinnedMessages: Set<number>,
+        rules: VersionedRules,
+        bots: Map<string, ExternalBotPermissions>,
+        apiKeys: Map<string, PublicApiKeyDetails>,
+        webhooks: WebhookDetails[],
+    ) {
+        this.#server?.overwriteChatDetails(
+            chatId,
+            members,
+            lapsedMembers,
+            blockedUsers,
+            invitedUsers,
+            pinnedMessages,
+            rules,
+            bots,
+            apiKeys,
+            webhooks,
+        );
     }
 
     get userIds(): ReadonlySet<string> {
