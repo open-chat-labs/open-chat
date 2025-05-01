@@ -70,7 +70,7 @@ fn commit(
     active_users_filter: Option<HashSet<UserId>>,
     state: &mut RuntimeState,
 ) -> Response {
-    state.data.canisters_requiring_upgrade.clear();
+    state.data.users_requiring_upgrade.clear();
     let version = args.version;
     let wasm_hash = args.wasm_hash;
 
@@ -93,17 +93,17 @@ fn commit(
         .map(|(user_id, _)| CanisterId::from(*user_id))
         .sorted_by_key(|&c| Reverse(state.data.global_users.diamond_membership_expiry_date(&c.into())))
     {
-        state.data.canisters_requiring_upgrade.enqueue(canister_id, false);
+        state.data.users_requiring_upgrade.enqueue(canister_id, false);
     }
-    crate::jobs::upgrade_canisters::start_job_if_required(state);
+    crate::jobs::upgrade_users::start_job_if_required(state);
 
-    state.data.canisters_requiring_upgrade.clear_failed(BuildVersion {
+    state.data.users_requiring_upgrade.clear_failed(BuildVersion {
         major: version.major,
         minor: version.minor,
         patch: version.patch.saturating_sub(100),
     });
 
-    let canisters_queued_for_upgrade = state.data.canisters_requiring_upgrade.count_pending();
+    let canisters_queued_for_upgrade = state.data.users_requiring_upgrade.count_pending();
     info!(%version, canisters_queued_for_upgrade, "User canister wasm upgraded");
     Success
 }

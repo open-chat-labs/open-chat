@@ -87,8 +87,8 @@ impl CanistersRequiringUpgrade {
         failed.sort_unstable_by_key(|f| (f.from_version, f.to_version));
 
         Metrics {
-            pending: self.pending.len(),
-            in_progress: self.in_progress.len(),
+            pending: self.pending.len() as u64,
+            in_progress: self.in_progress.len() as u64,
             failed,
             completed: self.completed,
             recently_competed: self.recently_competed.iter().copied().collect(),
@@ -105,8 +105,8 @@ impl CanistersRequiringUpgrade {
 pub struct Metrics {
     pub completed: u64,
     pub failed: Vec<FailedUpgradeCount>,
-    pub pending: usize,
-    pub in_progress: usize,
+    pub pending: u64,
+    pub in_progress: u64,
     pub recently_competed: Vec<CanisterId>,
 }
 

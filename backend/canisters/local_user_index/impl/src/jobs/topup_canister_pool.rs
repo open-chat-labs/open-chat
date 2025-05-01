@@ -1,4 +1,4 @@
-use crate::{RuntimeState, USER_CANISTER_INITIAL_CYCLES_BALANCE, mutate_state, read_state};
+use crate::{CHILD_CANISTER_INITIAL_CYCLES_BALANCE, RuntimeState, mutate_state, read_state};
 use constants::{CREATE_CANISTER_CYCLES_FEE, min_cycles_balance};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
@@ -27,7 +27,7 @@ fn run() {
 
     let (is_full, test_mode) = read_state(|state| (is_pool_full(state), state.data.test_mode));
     if !is_full {
-        let cycles_to_use = USER_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
+        let cycles_to_use = CHILD_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
 
         // Only create the new canister if it won't result in the cycles balance being too low
         if utils::cycles::can_spend_cycles(cycles_to_use, min_cycles_balance(test_mode)) {
