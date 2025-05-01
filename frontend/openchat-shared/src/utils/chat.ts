@@ -1,19 +1,19 @@
 import type {
+    AccountTransaction,
+    AttachmentContent,
     ChatEvent,
-    Metrics,
+    ChatIdentifier,
+    ChatListScope,
     ChatSummary,
+    CryptocurrencyDetails,
     EventWrapper,
     IndexRange,
     MemberRole,
     MessageContent,
-    ChatIdentifier,
     MessageContext,
-    ChatListScope,
-    CryptocurrencyDetails,
-    VersionedRules,
-    AccountTransaction,
-    AttachmentContent,
     MessagePermission,
+    Metrics,
+    VersionedRules,
 } from "../domain";
 import { extractUserIdsFromMentions, UnsupportedValueError } from "../domain";
 import type { MessageFormatter } from "./i18n";
