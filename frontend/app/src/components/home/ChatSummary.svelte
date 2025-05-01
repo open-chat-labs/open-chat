@@ -12,8 +12,6 @@
         OpenChat,
         app,
         blockedUsers,
-        chatIdentifiersEqual,
-        pathState,
         publish,
         routeForScope,
         selectedChatId,
@@ -24,7 +22,7 @@
         userStore,
     } from "openchat-client";
     import page from "page";
-    import { getContext, tick } from "svelte";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ArchiveIcon from "svelte-material-icons/Archive.svelte";
     import BellIcon from "svelte-material-icons/Bell.svelte";
@@ -209,13 +207,8 @@
     function deleteDirectChat(e: Event) {
         e.stopPropagation();
         e.preventDefault();
-        if (
-            pathState.route.kind === "global_chat_selected_route" &&
-            chatIdentifiersEqual(chatSummary.id, pathState.route.chatId)
-        ) {
-            page(routeForScope(app.chatListScope));
-        }
-        tick().then(() => client.removeChat(chatSummary.id));
+        client.removeChat(chatSummary.id);
+        page(routeForScope(app.chatListScope));
         delOffset = -60;
     }
 
