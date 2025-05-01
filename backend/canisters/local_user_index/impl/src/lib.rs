@@ -1,3 +1,5 @@
+use crate::model::local_community_map::LocalCommunityMap;
+use crate::model::local_group_map::LocalGroupMap;
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use crate::model::user_event_batch::UserEventBatch;
 use crate::model::user_index_event_batch::UserIndexEventBatch;
@@ -129,6 +131,11 @@ impl RuntimeState {
     pub fn is_caller_local_user_canister(&self) -> bool {
         let caller = self.env.caller();
         self.data.local_users.get(&caller.into()).is_some()
+    }
+
+    pub fn is_caller_local_group_index(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.local_group_index_canister_id == caller
     }
 
     pub fn is_caller_notifications_canister(&self) -> bool {
@@ -275,6 +282,8 @@ impl RuntimeState {
             total_cycles_spent_on_canisters: self.data.total_cycles_spent_on_canisters,
             canisters_in_pool: self.data.canister_pool.len() as u16,
             local_user_count: self.data.local_users.len() as u64,
+            local_group_count: self.data.local_groups.len() as u64,
+            local_community_count: self.data.local_communities.len() as u64,
             global_user_count: self.data.global_users.len() as u64,
             bot_user_count: self.data.global_users.legacy_bots().len() as u64,
             oc_controlled_bots: self.data.global_users.oc_controlled_bots().iter().copied().collect(),
@@ -331,6 +340,10 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub local_users: LocalUserMap,
+    #[serde(default)]
+    pub local_groups: LocalGroupMap,
+    #[serde(default)]
+    pub local_communities: LocalCommunityMap,
     pub global_users: GlobalUserMap,
     pub bots: BotsMap,
     pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
@@ -406,6 +419,8 @@ impl Data {
     ) -> Self {
         Data {
             local_users: LocalUserMap::default(),
+            local_groups: LocalGroupMap::default(),
+            local_communities: LocalCommunityMap::default(),
             global_users: GlobalUserMap::default(),
             child_canister_wasms: ChildCanisterWasms::default(),
             user_index_canister_id,
@@ -459,6 +474,8 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub total_cycles_spent_on_canisters: Cycles,
     pub local_user_count: u64,
+    pub local_group_count: u64,
+    pub local_community_count: u64,
     pub global_user_count: u64,
     pub bot_user_count: u64,
     pub oc_controlled_bots: Vec<UserId>,

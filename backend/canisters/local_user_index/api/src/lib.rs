@@ -2,11 +2,11 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::nns::CryptoAmount;
 use types::{
-    AutonomousConfig, BotCommandDefinition, BotDefinition, BotInstallationLocation, CanisterId, ChannelLatestMessageIndex,
-    ChatId, ChitEarnedReason, CommunityId, DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId,
-    MessageIndex, NotifyChit, PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis, UniquePersonProof,
-    UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserType,
-    is_default,
+    AutonomousConfig, BotCommandDefinition, BotDefinition, BotInstallationLocation, BuildVersion, CanisterId,
+    ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, CyclesTopUp, DiamondMembershipPlanDuration,
+    MessageContent, MessageContentInitial, MessageId, MessageIndex, NotifyChit, PhoneNumber, ReferralType, SuspensionDuration,
+    TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim,
+    UserCanisterStreakInsurancePayment, UserId, UserType, is_default,
 };
 
 mod lifecycle;
@@ -47,6 +47,15 @@ pub enum UserIndexEvent {
     AddCanisterToPool(CanisterId),
     ExternalAchievementAwarded(ExternalAchievementAwarded),
     SyncExistingUser(UserDetailsFull),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum LocalGroupIndexEvent {
+    MigrateGroup(ChatId, LocalGroup),
+    MigrateCommunity(CommunityId, LocalCommunity),
+    GroupRemoved(ChatId),
+    CommunityRemoved(CommunityId),
+    MarkTopUp(CanisterId, CyclesTopUp),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -280,4 +289,60 @@ pub enum UserEvent {
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum ChildCanisterType {
     User,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct LocalGroup {
+    pub wasm_version: BuildVersion,
+    pub upgrade_in_progress: bool,
+    pub cycle_top_ups: Vec<CyclesTopUp>,
+}
+
+impl LocalGroup {
+    pub fn new(wasm_version: BuildVersion) -> LocalGroup {
+        LocalGroup {
+            wasm_version,
+            upgrade_in_progress: false,
+            cycle_top_ups: Vec::new(),
+        }
+    }
+
+    pub fn set_canister_upgrade_status(&mut self, upgrade_in_progress: bool, new_version: Option<BuildVersion>) {
+        self.upgrade_in_progress = upgrade_in_progress;
+        if let Some(version) = new_version {
+            self.wasm_version = version;
+        }
+    }
+
+    pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
+        self.cycle_top_ups.push(top_up)
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct LocalCommunity {
+    pub wasm_version: BuildVersion,
+    pub upgrade_in_progress: bool,
+    pub cycle_top_ups: Vec<CyclesTopUp>,
+}
+
+impl LocalCommunity {
+    pub fn new(wasm_version: BuildVersion) -> LocalCommunity {
+        LocalCommunity {
+            wasm_version,
+            upgrade_in_progress: false,
+            cycle_top_ups: Vec::new(),
+        }
+    }
+
+    pub fn set_canister_upgrade_status(&mut self, upgrade_in_progress: bool, new_version: Option<BuildVersion>) {
+        self.upgrade_in_progress = upgrade_in_progress;
+        if let Some(version) = new_version {
+            self.wasm_version = version;
+        }
+    }
+
+    pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
+        self.cycle_top_ups.push(top_up)
+    }
 }
