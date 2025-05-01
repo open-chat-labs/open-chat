@@ -135,8 +135,8 @@
     },
     "event_store": {
       "type": "custom",
-      "candid": "https://github.com/open-chat-labs/event-store/releases/download/v0.5.0/can.did",
-      "wasm": "https://github.com/open-chat-labs/event-store/releases/download/v0.5.0/event_store.wasm.gz"
+      "candid": "https://github.com/open-chat-labs/event-store/releases/download/v0.7.0/can.did",
+      "wasm": "https://github.com/open-chat-labs/event-store/releases/download/v0.7.0/event_store.wasm.gz"
     },
     "sign_in_with_email": {
       "type": "custom",
