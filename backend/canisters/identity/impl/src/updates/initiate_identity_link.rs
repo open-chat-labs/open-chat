@@ -1,6 +1,4 @@
-use crate::model::user_principals::UserPrincipal;
 use crate::{RuntimeState, VerifyNewIdentityArgs, VerifyNewIdentityError, VerifyNewIdentitySuccess, mutate_state};
-use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use identity_canister::initiate_identity_link::{Response::*, *};
@@ -34,16 +32,19 @@ fn initiate_identity_link_impl(args: Args, state: &mut RuntimeState) -> Response
         }
     };
 
-    match get_user_principal_for_oc_user(&args.link_to_principal, state) {
-        Some(user_principal) if user_principal.auth_principals.len() >= MAX_LINKED_IDENTITIES => {
+    if let Some(existing_user_principal) = state
+        .data
+        .user_principals
+        .get_by_auth_principal(&args.link_to_principal)
+        .filter(|u| u.user_id.is_some())
+    {
+        if existing_user_principal.auth_principals.len() >= MAX_LINKED_IDENTITIES {
             return LinkedIdentitiesLimitReached(MAX_LINKED_IDENTITIES as u32);
+        } else if existing_user_principal.auth_principals.contains(&auth_principal) {
+            return AlreadyLinkedToPrincipal;
         }
-        Some(_) => {}
-        None => return TargetUserNotFound,
-    };
-
-    if let Err(response) = check_if_auth_principal_already_exists(&auth_principal, &args.link_to_principal, state) {
-        return response;
+    } else {
+        return TargetUserNotFound;
     }
 
     state.data.identity_link_requests.push(
@@ -56,28 +57,4 @@ fn initiate_identity_link_impl(args: Args, state: &mut RuntimeState) -> Response
     );
 
     Success
-}
-
-fn check_if_auth_principal_already_exists(
-    auth_principal: &Principal,
-    link_to_principal: &Principal,
-    state: &RuntimeState,
-) -> Result<(), Response> {
-    let Some(user) = get_user_principal_for_oc_user(auth_principal, state) else {
-        return Ok(());
-    };
-
-    Err(if user.auth_principals.contains(link_to_principal) {
-        AlreadyLinkedToPrincipal
-    } else {
-        AlreadyRegistered
-    })
-}
-
-fn get_user_principal_for_oc_user(auth_principal: &Principal, state: &RuntimeState) -> Option<UserPrincipal> {
-    state
-        .data
-        .user_principals
-        .get_by_auth_principal(auth_principal)
-        .filter(|u| u.user_id.is_some())
 }
