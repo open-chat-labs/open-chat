@@ -289,6 +289,8 @@ pub enum UserEvent {
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum ChildCanisterType {
     User,
+    Group,
+    Community,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
