@@ -7,7 +7,12 @@ use constants::{CREATE_CANISTER_CYCLES_FEE, min_cycles_balance};
 use event_store_producer::EventBuilder;
 use local_group_index_canister::ChildCanisterType;
 use local_group_index_canister::c2c_create_community::{Response::*, *};
-use types::{BuildVersion, CanisterId, CanisterWasm, CommunityCreatedEventPayload, CommunityId, Cycles, UserId, UserType};
+use local_user_index_canister::{LocalCommunity, LocalGroupIndexEvent};
+use rand::RngCore;
+use types::{
+    BuildVersion, CanisterId, CanisterWasm, CommunityCreatedEventPayload, CommunityId, Cycles, IdempotentEnvelope, UserId,
+    UserType,
+};
 use utils::canister;
 
 #[update(guard = "caller_is_group_index_canister", msgpack = true)]
@@ -137,10 +142,16 @@ fn commit(
     wasm_version: BuildVersion,
     state: &mut RuntimeState,
 ) {
+    let now = state.env.now();
     state.data.local_communities.add(community_id, wasm_version);
+    state.data.local_user_index_sync_queue.push(IdempotentEnvelope {
+        created_at: now,
+        idempotency_id: state.env.rng().next_u64(),
+        value: LocalGroupIndexEvent::MigrateCommunity(community_id, LocalCommunity::new(wasm_version)),
+    });
 
     state.data.event_store_client.push(
-        EventBuilder::new("community_created", state.env.now())
+        EventBuilder::new("community_created", now)
             .with_user(created_by.to_string(), true)
             .with_source(state.env.canister_id().to_string(), false)
             .with_json_payload(&event_payload)

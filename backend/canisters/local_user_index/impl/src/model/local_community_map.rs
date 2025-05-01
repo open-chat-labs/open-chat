@@ -8,7 +8,12 @@ pub struct LocalCommunityMap {
     communities: HashMap<CommunityId, LocalCommunity>,
 }
 
+#[allow(dead_code)]
 impl LocalCommunityMap {
+    pub fn add_existing(&mut self, community_id: CommunityId, community: LocalCommunity) {
+        self.communities.insert(community_id, community);
+    }
+
     pub fn add(&mut self, community_id: CommunityId, wasm_version: BuildVersion) {
         let community = LocalCommunity::new(wasm_version);
         self.communities.insert(community_id, community);

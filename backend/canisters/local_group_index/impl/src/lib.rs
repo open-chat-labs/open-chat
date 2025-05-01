@@ -1,4 +1,5 @@
 use crate::model::local_community_map::LocalCommunityMap;
+use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use community_canister::LocalGroupIndexEvent as CommunityEvent;
@@ -16,7 +17,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, VecDeque};
 use std::time::Duration;
-use timer_job_queues::GroupedTimerJobQueue;
+use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     BuildVersion, CanisterId, ChildCanisterWasms, Cycles, IdempotentEnvelope, Milliseconds, TimestampMillis, Timestamped,
     UserId,
@@ -200,6 +201,12 @@ struct Data {
     pub update_controllers_queue: VecDeque<CanisterId>,
     #[serde(default)]
     pub controllers_updated: bool,
+    #[serde(default = "default_local_user_index_sync_queue")]
+    pub local_user_index_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
+}
+
+fn default_local_user_index_sync_queue() -> BatchedTimerJobQueue<LocalUserIndexEventBatch> {
+    BatchedTimerJobQueue::new(CanisterId::anonymous(), false)
 }
 
 impl Data {
@@ -253,6 +260,7 @@ impl Data {
             idempotency_checker: IdempotencyChecker::default(),
             update_controllers_queue: VecDeque::new(),
             controllers_updated: true,
+            local_user_index_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, false),
         }
     }
 }

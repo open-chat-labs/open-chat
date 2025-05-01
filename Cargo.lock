@@ -4938,6 +4938,8 @@ dependencies = [
  "ic-cdk-timers",
  "ic-stable-structures",
  "local_group_index_canister",
+ "local_user_index_canister",
+ "local_user_index_canister_c2c_client",
  "msgpack",
  "rand 0.8.5",
  "serde",
