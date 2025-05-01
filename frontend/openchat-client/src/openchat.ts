@@ -5208,6 +5208,7 @@ export class OpenChat {
     }
 
     setCommunityInvite(value: CommunityInvite): Promise<void> {
+        this.config.communityInvite = value;
         return this.#sendRequest({
             kind: "communityInvite",
             value,
@@ -8670,6 +8671,7 @@ export class OpenChat {
                     env: this.config.env,
                     bitcoinMainnetEnabled: this.config.bitcoinMainnetEnabled,
                     groupInvite: this.config.groupInvite,
+                    communityInvite: this.config.communityInvite,
                 },
                 true,
             ).then((resp) => {
