@@ -18,12 +18,12 @@ thread_local! {
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none()
         && state.data.user_upgrade_concurrency > 0
-        && (state.data.canisters_requiring_upgrade.count_pending() > 0
-            || state.data.canisters_requiring_upgrade.count_in_progress() > 0)
+        && (state.data.users_requiring_upgrade.count_pending() > 0
+            || state.data.users_requiring_upgrade.count_in_progress() > 0)
     {
         let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
         TIMER_ID.set(Some(timer_id));
-        trace!("'upgrade_canisters' job started");
+        trace!("'upgrade_users' job started");
         true
     } else {
         false
@@ -37,7 +37,7 @@ fn run() {
         }
     } else if let Some(timer_id) = TIMER_ID.take() {
         ic_cdk_timers::clear_timer(timer_id);
-        trace!("'upgrade_canisters' job stopped");
+        trace!("'upgrade_users' job stopped");
     }
 }
 
@@ -48,8 +48,8 @@ fn next_batch(state: &mut RuntimeState) -> Option<Vec<CanisterToUpgrade>> {
         return None;
     }
 
-    let count_in_progress = state.data.canisters_requiring_upgrade.count_in_progress();
-    let count_pending = state.data.canisters_requiring_upgrade.count_pending();
+    let count_in_progress = state.data.users_requiring_upgrade.count_in_progress();
+    let count_pending = state.data.users_requiring_upgrade.count_pending();
 
     if count_in_progress == 0 && count_pending == 0 {
         None
@@ -65,10 +65,10 @@ fn next_batch(state: &mut RuntimeState) -> Option<Vec<CanisterToUpgrade>> {
 }
 
 fn try_get_next(state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
-    let (canister_id, force) = state.data.canisters_requiring_upgrade.try_take_next()?;
+    let (canister_id, force) = state.data.users_requiring_upgrade.try_take_next()?;
 
     initialize_upgrade(canister_id, force, state).or_else(|| {
-        state.data.canisters_requiring_upgrade.mark_skipped(&canister_id);
+        state.data.users_requiring_upgrade.mark_skipped(&canister_id);
         None
     })
 }
@@ -144,13 +144,13 @@ fn on_success(canister_id: CanisterId, to_version: BuildVersion, top_up: Option<
         );
     }
 
-    state.data.canisters_requiring_upgrade.mark_success(&canister_id);
+    state.data.users_requiring_upgrade.mark_success(&canister_id);
 }
 
 fn on_failure(canister_id: CanisterId, from_version: BuildVersion, to_version: BuildVersion, state: &mut RuntimeState) {
     mark_upgrade_complete(canister_id.into(), None, state);
 
-    state.data.canisters_requiring_upgrade.mark_failure(FailedUpgrade {
+    state.data.users_requiring_upgrade.mark_failure(FailedUpgrade {
         canister_id,
         from_version,
         to_version,

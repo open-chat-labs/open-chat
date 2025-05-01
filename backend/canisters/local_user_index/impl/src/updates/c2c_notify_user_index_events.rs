@@ -119,13 +119,13 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 .set_platform_moderator(ev.user_id, ev.is_platform_moderator);
         }
         UserIndexEvent::MaxConcurrentCanisterUpgradesChanged(ev) => {
-            state.data.max_concurrent_canister_upgrades = ev.value;
+            state.data.max_concurrent_user_upgrades = ev.value;
             info!("Max concurrent canister upgrades set to {}", ev.value);
         }
         UserIndexEvent::UserUpgradeConcurrencyChanged(ev) => {
-            state.data.user_upgrade_concurrency = min(state.data.max_concurrent_canister_upgrades, ev.value);
+            state.data.user_upgrade_concurrency = min(state.data.max_concurrent_user_upgrades, ev.value);
             if state.data.user_upgrade_concurrency > 0 {
-                jobs::upgrade_canisters::start_job_if_required(state);
+                jobs::upgrade_users::start_job_if_required(state);
             }
             info!("User upgrade concurrency set to {}", ev.value);
         }
