@@ -7,7 +7,6 @@ import type {
     CandidateGroupChat,
     ChannelSummary,
     ChatEvent,
-    ChatListScope,
     ChatPermissions,
     ChatSummary,
     CreatedUser,
@@ -18,7 +17,6 @@ import type {
     GovernanceProposalsSubtype,
     GroupChatSummary,
     HasMembershipRole,
-    LocalChatSummaryUpdates,
     LocalMessageUpdates,
     LocalPollVote,
     LocalReaction,
@@ -52,7 +50,6 @@ import type {
 import {
     applyOptionUpdate,
     bigIntMax,
-    ChatMap,
     defaultOptionalChatPermissions,
     defaultOptionalMessagePermissions,
     emptyChatMetrics,
@@ -344,119 +341,6 @@ export function mergeUnconfirmedThreadsIntoSummary<T extends GroupChatSummary | 
             }),
         },
     };
-}
-
-function scopeMatchesChat(scope: ChatListScope, chat: ChatSummary): boolean {
-    switch (scope.kind) {
-        case "community":
-            return chat.kind === "channel" && chat.id.communityId === scope.id.communityId;
-        case "group_chat":
-            return chat.kind === "group_chat";
-        case "direct_chat":
-            return chat.kind === "direct_chat";
-        case "favourite":
-            return false;
-        default:
-            return true;
-    }
-}
-
-export function mergeLocalSummaryUpdates(
-    scope: ChatListScope,
-    server: ChatMap<ChatSummary>,
-    localUpdates: ChatMap<LocalChatSummaryUpdates>,
-): ChatMap<ChatSummary> {
-    if (Object.keys(localUpdates).length === 0) return server;
-
-    const merged = server.clone();
-
-    for (const [chatId, localUpdate] of localUpdates.entries()) {
-        if (localUpdate.added !== undefined && scopeMatchesChat(scope, localUpdate.added)) {
-            const current = merged.get(chatId);
-            if (
-                current === undefined ||
-                isLapsed(current) ||
-                (current.kind === "group_chat" && isPreviewing(current))
-            ) {
-                merged.set(chatId, localUpdate.added);
-            }
-        }
-        if (localUpdate.updated !== undefined) {
-            const current = merged.get(chatId);
-            const updated = localUpdate.updated;
-            if (current !== undefined) {
-                const latestMessage =
-                    (updated.latestMessage?.timestamp ?? BigInt(-1)) >
-                    (current.latestMessage?.timestamp ?? BigInt(-1))
-                        ? updated.latestMessage
-                        : current.latestMessage;
-                const latestEventIndex = Math.max(
-                    latestMessage?.index ?? 0,
-                    current.latestEventIndex,
-                );
-
-                if (updated.kind === undefined) {
-                    merged.set(chatId, {
-                        ...current,
-                        latestMessage,
-                        latestMessageIndex: latestMessage?.event.messageIndex,
-                        latestEventIndex,
-                        membership: {
-                            ...current.membership,
-                            notificationsMuted:
-                                updated.notificationsMuted ?? current.membership.notificationsMuted,
-                            archived: updated.archived ?? current.membership.archived,
-                            rulesAccepted:
-                                updated.rulesAccepted ?? current.membership.rulesAccepted,
-                        },
-                    });
-                } else if (current.kind === updated.kind) {
-                    const mergedGate = { ...current.gateConfig.gate, ...updated.gateConfig?.gate };
-                    merged.set(chatId, {
-                        ...current,
-                        latestMessage,
-                        latestMessageIndex: latestMessage?.event.messageIndex,
-                        latestEventIndex,
-                        name: updated.name ?? current.name,
-                        description: updated.description ?? current.description,
-                        public: updated.public ?? current.public,
-                        permissions: mergePermissions(current.permissions, updated.permissions),
-                        gateConfig: {
-                            gate: mergedGate,
-                            expiry: updated.gateConfig?.expiry ?? current.gateConfig.expiry,
-                        },
-                        membership: {
-                            ...current.membership,
-                            notificationsMuted:
-                                updated.notificationsMuted ?? current.membership.notificationsMuted,
-                            archived: updated.archived ?? current.membership.archived,
-                            rulesAccepted:
-                                updated.rulesAccepted ?? current.membership.rulesAccepted,
-                        },
-                        eventsTTL: updated.eventsTTL
-                            ? updated.eventsTTL === "set_to_none"
-                                ? undefined
-                                : updated.eventsTTL.value
-                            : current.eventsTTL,
-                    });
-                }
-            }
-        }
-        if (localUpdate.removedAtTimestamp) {
-            const chat = merged.get(chatId);
-            if (
-                chat !== undefined &&
-                ((chat.kind === "direct_chat" &&
-                    chat.dateCreated < localUpdate.removedAtTimestamp) ||
-                    ((chat.kind === "group_chat" || chat.kind === "channel") &&
-                        (chat.membership?.joined ?? BigInt(0)) < localUpdate.removedAtTimestamp))
-            ) {
-                merged.delete(chatId);
-            }
-        }
-    }
-
-    return merged;
 }
 
 export function mergeUnconfirmedIntoSummary(

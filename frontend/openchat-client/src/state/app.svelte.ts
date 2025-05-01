@@ -54,8 +54,6 @@ import { pathState } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
 import { messagesRead } from "./unread/markRead.svelte";
 
-type ChatEntry = [ChatIdentifier, ChatSummary];
-
 class AppState {
     constructor() {
         $effect.root(() => {
@@ -69,7 +67,6 @@ class AppState {
 
             $effect(() => {
                 if (this.#selectedChatId === undefined) {
-                    console.log("SelectedChatId is undefined - clear state");
                     this.#selectedChat = new ChatDetailsMergedState(ChatDetailsServerState.empty());
                 }
             });

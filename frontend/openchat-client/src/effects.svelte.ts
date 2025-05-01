@@ -149,16 +149,15 @@ function syncState() {
 }
 
 export function configureEffects(client: OpenChat) {
+    // Note that the order of these effects is important
     $effect.root(() => {
-        onSelectedCommunityChanged(client);
+        syncState();
 
-        onSelectedChatChanged(client);
+        onSelectedCommunityChanged(client);
 
         onThreadStateChanged(client);
 
         onThreadClosed();
-
-        syncState();
 
         // TODO - this seems to be a reasonable approach, but it causes a flicker of No Chat Selected for some reason
         // so we might need to rethink - ok for now though.
@@ -168,5 +167,7 @@ export function configureEffects(client: OpenChat) {
                 client.selectFirstChat();
             }
         });
+
+        onSelectedChatChanged(client);
     });
 }
