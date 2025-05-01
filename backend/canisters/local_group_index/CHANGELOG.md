@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Add LocalUserIndex as a controller to groups and communities ([#7871](https://github.com/open-chat-labs/open-chat/pull/7871))
+- Migrate pending canisters in canister pool to LocalUserIndex ([#7883](https://github.com/open-chat-labs/open-chat/pull/7883))
 
 ## [[2.0.1711](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1711-local_group_index)] - 2025-04-23
 
