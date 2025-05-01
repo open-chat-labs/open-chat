@@ -9,7 +9,7 @@ use local_user_index_canister::LocalGroupIndexEvent;
 use rand::RngCore;
 use stable_memory::get_reader;
 use tracing::info;
-use types::{CanisterId, IdempotentEnvelope};
+use types::IdempotentEnvelope;
 use utils::cycles::init_cycles_dispenser_client;
 use utils::env::Environment;
 
@@ -25,13 +25,6 @@ fn post_upgrade(args: Args) {
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
     let mut env = init_env(data.rng_seed);
-
-    if !data.controllers_updated && data.update_controllers_queue.is_empty() {
-        data.update_controllers_queue
-            .extend(data.local_groups.iter().map(|(g, _)| CanisterId::from(*g)));
-        data.update_controllers_queue
-            .extend(data.local_communities.iter().map(|(c, _)| CanisterId::from(*c)));
-    }
 
     data.local_user_index_sync_queue.set_defer_processing(true);
     data.local_user_index_sync_queue.set_state(data.local_user_index_canister_id);
