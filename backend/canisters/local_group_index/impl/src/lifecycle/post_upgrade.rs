@@ -9,7 +9,7 @@ use local_user_index_canister::LocalGroupIndexEvent;
 use rand::RngCore;
 use stable_memory::get_reader;
 use tracing::info;
-use types::{CanisterId, IdempotentEnvelope};
+use types::IdempotentEnvelope;
 use utils::cycles::init_cycles_dispenser_client;
 use utils::env::Environment;
 
