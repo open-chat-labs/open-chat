@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Enable notifying groups/communities of deleted users ([#7869](https://github.com/open-chat-labs/open-chat/pull/7869))
 - Sync Group and Community data from LocalGroupIndex ([#7878](https://github.com/open-chat-labs/open-chat/pull/7878))
+- Support creating/deleting/upgrading groups and communities ([#7880](https://github.com/open-chat-labs/open-chat/pull/7880))
 
 ### Changed
 

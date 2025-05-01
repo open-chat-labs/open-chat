@@ -31,6 +31,10 @@ impl LocalCommunityMap {
         self.communities.get_mut(community_id)
     }
 
+    pub fn contains(&self, community_id: &CommunityId) -> bool {
+        self.communities.contains_key(community_id)
+    }
+
     pub fn mark_cycles_top_up(&mut self, community_id: &CommunityId, top_up: CyclesTopUp) -> bool {
         if let Some(community) = self.communities.get_mut(community_id) {
             community.mark_cycles_top_up(top_up);
