@@ -53,6 +53,7 @@ pub enum UserIndexEvent {
 pub enum LocalGroupIndexEvent {
     MigrateGroup(ChatId, LocalGroup),
     MigrateCommunity(CommunityId, LocalCommunity),
+    MigrateEmptyCanister(CanisterId),
     GroupRemoved(ChatId),
     CommunityRemoved(CommunityId),
     MarkTopUp(CanisterId, CyclesTopUp),
