@@ -14,7 +14,6 @@
         blockedUsers,
         publish,
         routeForScope,
-        selectedChatId,
         suspendedUser,
         byContext as typersByContext,
         ui,
@@ -271,7 +270,7 @@
                 toastStore.showFailureToast(i18nKey("archiveChatFailed"));
             }
         });
-        if (chatSummary.id === $selectedChatId) {
+        if (chatSummary.id === app.selectedChatId) {
             page(routeForScope(app.chatListScope));
         }
     }

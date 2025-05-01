@@ -11,7 +11,7 @@ import type {
     ThreadSyncDetails,
 } from "openchat-shared";
 import { chatIdentifiersEqual, ChatMap, compareChats, messageContextsEqual } from "openchat-shared";
-import { derived, get, writable, type Readable } from "svelte/store";
+import { derived, writable, type Readable } from "svelte/store";
 import { app } from "../state/app.svelte";
 import { localUpdates } from "../state/global";
 import {
@@ -409,7 +409,7 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         $recentlySentMessagesStore,
         $ephemeralMessages,
     ]) => {
-        const chatId = get(selectedChatId) ?? { kind: "group_chat", groupId: "" };
+        const chatId = app.selectedChatId ?? { kind: "group_chat", groupId: "" };
         const failedForChat = $failedMessages.get({ chatId });
         // for the purpose of merging, unconfirmed and failed can be treated the same
         const failed = failedForChat ? Object.values(failedForChat) : [];
