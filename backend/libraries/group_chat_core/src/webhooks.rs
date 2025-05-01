@@ -47,7 +47,7 @@ impl Webhooks {
 
     pub fn regenerate(&mut self, id: UserId, rng: &mut StdRng, now: TimestampMillis) -> bool {
         if let Some(webhook) = self.map.get_mut(&id) {
-            webhook.secret = rng.r#gen::<u128>().to_string();
+            webhook.secret = Self::generate_secret(rng);
             self.last_updated = now;
             true
         } else {
