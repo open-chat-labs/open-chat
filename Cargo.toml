@@ -47,7 +47,6 @@ members = [
     "backend/canisters/notifications_index/impl",
     "backend/canisters/online_users/api",
     "backend/canisters/online_users/c2c_client",
-    "backend/canisters/online_users/client",
     "backend/canisters/online_users/impl",
     "backend/canisters/openchat_installer/api",
     "backend/canisters/openchat_installer/client",

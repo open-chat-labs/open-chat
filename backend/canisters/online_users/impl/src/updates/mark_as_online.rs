@@ -79,5 +79,6 @@ fn mark_as_online_impl(user_id: UserId, state: &mut RuntimeState) -> Response {
         year: month_key.year(),
         month: month_key.month(),
         minutes_online: state.data.user_online_minutes.get(user_id, month_key),
+        minutes_online_last_month: state.data.user_online_minutes.get(user_id, month_key.previous()),
     })
 }
