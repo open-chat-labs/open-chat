@@ -26,13 +26,6 @@ fn post_upgrade(args: Args) {
 
     let mut env = init_env(data.rng_seed);
 
-    if !data.controllers_updated && data.update_controllers_queue.is_empty() {
-        data.update_controllers_queue
-            .extend(data.local_groups.iter().map(|(g, _)| CanisterId::from(*g)));
-        data.update_controllers_queue
-            .extend(data.local_communities.iter().map(|(c, _)| CanisterId::from(*c)));
-    }
-
     data.local_user_index_sync_queue.set_defer_processing(true);
     data.local_user_index_sync_queue.set_state(data.local_user_index_canister_id);
 
