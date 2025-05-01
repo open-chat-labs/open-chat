@@ -8149,7 +8149,7 @@ export class OpenChat {
     updateWebhook(
         chatId: MultiUserChatIdentifier,
         id: string,
-        name: string,
+        name: string | undefined,
         avatar: OptionUpdate<string>,
     ): Promise<boolean> {
         return this.#sendRequest({
@@ -8164,14 +8164,14 @@ export class OpenChat {
         });
     }
 
-    regenerateWebhook(chatId: MultiUserChatIdentifier, id: string): Promise<boolean> {
+    regenerateWebhook(chatId: MultiUserChatIdentifier, id: string): Promise<string | undefined> {
         return this.#sendRequest({
             kind: "regenerateWebhook",
             chatId,
             id,
         }).catch((err) => {
             this.#logger.error("Failed to regenerate webhook", err);
-            return false;
+            return undefined;
         });
     }
 

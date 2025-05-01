@@ -202,6 +202,13 @@ export const GroupToggleMuteNotificationsArgs = Type.Object({
     mute: Type.Boolean(),
 });
 
+export type GroupRegenerateWebhookSuccessResult = Static<
+    typeof GroupRegenerateWebhookSuccessResult
+>;
+export const GroupRegenerateWebhookSuccessResult = Type.Object({
+    secret: Type.String(),
+});
+
 export type GroupInviteCodeSuccessResult = Static<typeof GroupInviteCodeSuccessResult>;
 export const GroupInviteCodeSuccessResult = Type.Object({
     code: Type.Optional(Type.BigInt()),
@@ -2704,6 +2711,23 @@ export const CommunityRegenerateWebhookArgs = Type.Object({
     id: UserId,
 });
 
+export type CommunityRegenerateWebhookSuccessResult = Static<
+    typeof CommunityRegenerateWebhookSuccessResult
+>;
+export const CommunityRegenerateWebhookSuccessResult = Type.Object({
+    secret: Type.String(),
+});
+
+export type CommunityRegenerateWebhookResponse = Static<typeof CommunityRegenerateWebhookResponse>;
+export const CommunityRegenerateWebhookResponse = Type.Union([
+    Type.Object({
+        Success: CommunityRegenerateWebhookSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
 export type CommunityCreateUserGroupArgs = Static<typeof CommunityCreateUserGroupArgs>;
 export const CommunityCreateUserGroupArgs = Type.Object({
     name: Type.String(),
@@ -3744,6 +3768,16 @@ export type GroupCancelInvitesArgs = Static<typeof GroupCancelInvitesArgs>;
 export const GroupCancelInvitesArgs = Type.Object({
     user_ids: Type.Array(UserId),
 });
+
+export type GroupRegenerateWebhookResponse = Static<typeof GroupRegenerateWebhookResponse>;
+export const GroupRegenerateWebhookResponse = Type.Union([
+    Type.Object({
+        Success: GroupRegenerateWebhookSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
 
 export type GroupRegenerateWebhookArgs = Static<typeof GroupRegenerateWebhookArgs>;
 export const GroupRegenerateWebhookArgs = Type.Object({

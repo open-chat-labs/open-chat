@@ -9,6 +9,7 @@
         DirectChatIdentifier,
         EnhancedAccessGate,
         EnhancedReplyContext,
+        FullWebhookDetails,
         GateCheckSucceeded,
         GroupChatSummary,
         Level,
@@ -104,11 +105,6 @@
     import RightPanel from "./RightPanelWrapper.svelte";
     import Upgrade from "./upgrade/Upgrade.svelte";
 
-    // $inspect(
-    //     app.serverGroupChats.get({ kind: "group_chat", groupId: "weosr-yh777-77774-qaaoa-cai" })
-    //         ?.lastUpdated,
-    // ).with(console.trace);
-
     type ViewProfileConfig = {
         userId: string;
         chatButton: boolean;
@@ -160,7 +156,7 @@
         | { kind: "update_bot" }
         | { kind: "remove_bot" }
         | { kind: "register_webhook" }
-        | { kind: "update_webhook" }
+        | { kind: "update_webhook"; webhook: FullWebhookDetails }
         | { kind: "suspended" }
         | { kind: "no_access" }
         | { kind: "new_group"; embeddedContent: boolean; candidate: CandidateGroupChat }
@@ -224,9 +220,10 @@
             subscribe("sendMessageFailed", sendMessageFailed),
             subscribe("summonWitch", summonWitch),
             subscribe("registerBot", registerBot),
-            subscribe("registerWebhook", registerWebhook),
             subscribe("updateBot", updateBot),
             subscribe("removeBot", removeBot),
+            subscribe("registerWebhook", registerWebhook),
+            subscribe("updateWebhook", updateWebhook),
             subscribe("remoteVideoCallStarted", remoteVideoCallStarted),
             subscribe("remoteVideoCallEnded", remoteVideoCallEnded),
             subscribe("notification", (n) => client.notificationReceived(n)),
@@ -263,6 +260,10 @@
 
     function registerWebhook() {
         modal = { kind: "register_webhook" };
+    }
+
+    function updateWebhook(webhook: FullWebhookDetails) {
+        modal = { kind: "update_webhook", webhook };
     }
 
     function updateBot() {
@@ -1042,10 +1043,16 @@
             <BotBuilderModal mode={"update"} onClose={closeModal} />
         {:else if modal.kind === "remove_bot"}
             <BotBuilderModal mode={"remove"} onClose={closeModal} />
-        {:else if modal.kind === "register_webhook"}
-            <WebhookModal mode={"register"} onClose={closeModal} />
-        {:else if modal.kind === "update_webhook"}
-            <WebhookModal mode={"update"} onClose={closeModal} />
+        {:else if modal.kind === "register_webhook" && ($selectedChatId?.kind === "group_chat" || $selectedChatId?.kind === "channel")}
+            <WebhookModal
+                chatId={$selectedChatId}
+                mode={{ kind: "register" }}
+                onClose={closeModal} />
+        {:else if modal.kind === "update_webhook" && ($selectedChatId?.kind === "group_chat" || $selectedChatId?.kind === "channel")}
+            <WebhookModal
+                chatId={$selectedChatId}
+                mode={{ kind: "update", webhook: modal.webhook }}
+                onClose={closeModal} />
         {:else if modal.kind === "no_access"}
             <NoAccess onClose={closeNoAccess} />
         {:else if modal.kind === "not_found"}

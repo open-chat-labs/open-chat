@@ -488,7 +488,7 @@ type UpdateWebhook = {
     kind: "updateWebhook";
     chatId: MultiUserChatIdentifier;
     id: string;
-    name: string;
+    name: string | undefined;
     avatar: OptionUpdate<string>;
 };
 
@@ -2495,7 +2495,7 @@ export type WorkerResult<T> = T extends Init
     : T extends UpdateWebhook
     ? boolean
     : T extends RegenerateWebhook
-    ? boolean
+    ? string | undefined
     : T extends DeleteWebhook
     ? boolean
     : T extends GetWebhook

@@ -9,6 +9,7 @@ import type {
     DirectChatIdentifier,
     EnhancedReplyContext,
     EventWrapper,
+    FullWebhookDetails,
     GroupChatSummary,
     Level,
     Message,
@@ -93,8 +94,7 @@ export type PubSubEvents = {
     updateBot: undefined;
     removeBot: undefined;
     registerWebhook: undefined;
-    updateWebhook: undefined;
-    regnerateWebhook: undefined;
+    updateWebhook: FullWebhookDetails;
     deleteWebhook: undefined;
     loadedMessageWindow: {
         context: MessageContext;

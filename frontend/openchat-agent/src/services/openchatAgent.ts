@@ -4370,7 +4370,7 @@ export class OpenChatAgent extends EventTarget {
     updateWebhook(
         chatId: MultiUserChatIdentifier,
         id: string,
-        name: string,
+        name: string | undefined,
         avatar: OptionUpdate<string>,
     ): Promise<boolean> {
         switch (chatId.kind) {
@@ -4386,7 +4386,7 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    regenerateWebhook(chatId: MultiUserChatIdentifier, id: string): Promise<boolean> {
+    regenerateWebhook(chatId: MultiUserChatIdentifier, id: string): Promise<string | undefined> {
         switch (chatId.kind) {
             case "channel":
                 return this.communityClient(chatId.communityId).regenerateWebhook(

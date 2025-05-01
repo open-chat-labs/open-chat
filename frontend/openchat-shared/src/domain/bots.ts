@@ -813,7 +813,7 @@ export type WebhookDetails = {
     avatarUrl?: string;
 };
 
-export function emptyWebhookInstance(): WebhookDetails {
+export function emptyWebhookInstance(): FullWebhookDetails {
     return {
         id: "",
         name: "",
@@ -821,5 +821,5 @@ export function emptyWebhookInstance(): WebhookDetails {
 }
 
 export type FullWebhookDetails = WebhookDetails & {
-    secret: string;
+    secret?: string;
 };

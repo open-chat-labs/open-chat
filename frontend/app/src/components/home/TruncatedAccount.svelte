@@ -26,7 +26,7 @@
     function copy() {
         copyToClipboard(account).then((success) => {
             if (success) {
-                toastStore.showSuccessToast(i18nKey("copiedToClipboard"));
+                toastStore.showSuccessToast(i18nKey("accountCopiedToClipboard"));
             } else {
                 toastStore.showFailureToast(
                     i18nKey("failedToCopyToClipboard", {

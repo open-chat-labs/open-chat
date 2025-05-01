@@ -105,6 +105,7 @@
         "visibility": "Access"
     },
     "account": "Account",
+    "accountCopiedToClipboard": "Account address copied to clipboard!",
     "accounts": "Accounts",
     "accountSuspended": "Account suspended",
     "activity": {
@@ -357,17 +358,14 @@
             "regenerate": "Re-generate API key",
             "regenerateWarning": "Re-generating the API key will revoke access to the previously generated API key. Are you sure you want to proceed?",
             "remove": "Remove bot",
-            "removeWebhook": "Remove webhook",
             "removeFailed": "Sorry we were unable to remove the bot",
-            "removeWebhookFailed": "Sorry we were unable to remove the webhook",
             "removeReason": "Reason for removing bot",
             "removeReasonPlaceholder": "Please provide reasons / evidence supporting the removal of the bot",
             "removeSearch": "Search for the bot to remove",
             "review": "Review bot permissions",
             "reviewApiKey": "Review API key",
             "reviewApiKeyInfo": "Retrieve your existing api key or generate a new one",
-            "view": "View bot details",
-            "viewEditWebhook": "View/edit webhook details"
+            "view": "View bot details"
         },
         "matchingCommands": "Matching commands",
         "member": {
@@ -380,15 +378,6 @@
         },
         "register_bot": {
             "desc": "Register a new bot with OpenChat"
-        },
-        "register_webhook": {
-            "action": "Register",
-            "desc": "Register a webhook in this chat",
-            "iconLabel": "Avatar",
-            "nameLabel": "Name",
-            "namePlaceholder": "Enter webhook name",
-            "nameRules": "Must be unique in this chat and contain alphanumeric characters and underscores only",
-            "title": "Register a webhook"
         },
         "search": {
             "desc": "Initiate a search in the current chat",
@@ -408,10 +397,6 @@
             "remove": "Select bot to remove",
             "removeDesc": "Remove an existing OpenChat bot if you are the owner",
             "select": "Select bot to update",
-            "title": "Update {name}"
-        },
-        "update_webhook": {
-            "action": "Update",
             "title": "Update {name}"
         },
         "view": {
@@ -584,7 +569,7 @@
     "confirmMakeGroupPublic": "Do you definitely want to make this {level} public?\n\nExisting messages will remain private, all new messages will be public.",
     "confirmMembers": "Confirm members",
     "congratulations": "Congratulations!",
-    "copiedToClipboard": "Account address copied to clipboard!",
+    "copiedToClipboard": "Copied to clipboard!",
     "copy": "Copy",
     "copyGroupUrl": "Copy group url",
     "copyInviteCode": "Copy invite code",
@@ -2011,6 +1996,22 @@
     "viewer": "viewer",
     "wallet": "Wallet",
     "walletSettings": "Wallet settings",
+    "webhook": {
+        "avatarLabel": "Avatar",
+        "nameLabel": "Name",
+        "namePlaceholder": "Enter webhook name",
+        "nameRules": "Must be unique in this chat and contain alphanumeric characters and underscores only",
+        "regenerateAction": "Regenerate",
+        "registerAction": "Register",
+        "registerDesc": "Register a webhook in this chat",
+        "registerTitle": "Register a webhook",
+        "removeAction": "Remove webhook",
+        "removeFailed": "Sorry we were unable to remove the webhook",
+        "updateAction": "Update",
+        "updateTitle": "Update {name}",
+        "urlLabel": "Webhook URL",
+        "viewEditAction": "View/edit webhook details"
+    },
     "websiteVersion": "of the website",
     "weeks": "Weeks",
     "whatsHot": "What's hot?",

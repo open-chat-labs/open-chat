@@ -105,6 +105,7 @@ import {
     GroupPublicSummaryArgs,
     GroupPublicSummaryResponse,
     GroupRegenerateWebhookArgs,
+    GroupRegenerateWebhookResponse,
     GroupRegisterPollVoteArgs,
     GroupRegisterPollVoteResponse,
     GroupRegisterProposalVoteArgs,
@@ -1323,18 +1324,18 @@ export class GroupClient extends MsgpackCanisterAgent {
             },
             (resp) => {
                 if (typeof resp === "object" && "Success" in resp) {
+                    const result = webhookDetails(
+                        {
+                            id: resp.Success.id,
+                            name,
+                            avatar_id: resp.Success.avatar_id,
+                        },
+                        this.config.blobUrlPattern,
+                        this.chatId.groupId,
+                    );
+
                     return {
-                        id: principalBytesToString(resp.Success.id),
-                        name,
-                        avatar: webhookDetails(
-                            {
-                                id: resp.Success.id,
-                                name,
-                                avatar_id: resp.Success.avatar_id,
-                            },
-                            this.config.blobUrlPattern,
-                            this.chatId.groupId,
-                        ),
+                        ...result,
                         secret: resp.Success.secret,
                     };
                 }
@@ -1363,15 +1364,19 @@ export class GroupClient extends MsgpackCanisterAgent {
         );
     }
 
-    regenerateWebhook(id: string): Promise<boolean> {
+    regenerateWebhook(id: string): Promise<string | undefined> {
         return this.executeMsgpackUpdate(
             "regenerate_webhook",
             {
                 id: principalStringToBytes(id),
             },
-            isSuccess,
+            (resp) => {
+                return typeof resp === "object" && "Success" in resp
+                    ? resp.Success.secret
+                    : undefined;
+            },
             GroupRegenerateWebhookArgs,
-            UnitResult,
+            GroupRegenerateWebhookResponse,
         );
     }
 

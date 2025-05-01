@@ -1,7 +1,7 @@
 <script lang="ts">
     import { toastStore } from "@src/stores/toast";
     import { type MultiUserChat, OpenChat, ui } from "openchat-client";
-    import { type WebhookDetails } from "openchat-shared";
+    import { publish, type WebhookDetails } from "openchat-shared";
     import { getContext } from "svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
@@ -28,12 +28,21 @@
     function deleteWebhook() {
         client.deleteWebhook(chat.id, webhook.id).then((success) => {
             if (!success) {
-                toastStore.showFailureToast(i18nKey("bots.manage.removeWebhookFailed"));
+                toastStore.showFailureToast(i18nKey("webhook.removeFailed"));
             }
         });
     }
 
-    function viewEditWebhook() {}
+    function viewEditWebhook() {
+        client.getWebhook(chat.id, webhook.id).then((secret) => {
+            if (secret !== undefined) {
+                publish("updateWebhook", {
+                    ...webhook,
+                    secret,
+                });
+            }
+        });
+    }
 </script>
 
 <div class="bot_member" role="button">
@@ -60,7 +69,7 @@
                         <TextBoxOutline size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
                     {/snippet}
                     {#snippet text()}
-                        <Translatable resourceKey={i18nKey("bots.manage.viewEditWebhook")} />
+                        <Translatable resourceKey={i18nKey("webhook.viewEditAction")} />
                     {/snippet}
                 </MenuItem>
                 <MenuItem onclick={() => deleteWebhook()}>
@@ -68,7 +77,7 @@
                         <DeleteOutline size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
                     {/snippet}
                     {#snippet text()}
-                        <Translatable resourceKey={i18nKey("bots.manage.removeWebhook")} />
+                        <Translatable resourceKey={i18nKey("webhook.removeAction")} />
                     {/snippet}
                 </MenuItem>
             </Menu>

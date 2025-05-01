@@ -133,6 +133,7 @@ import {
     CommunityPinMessageArgs,
     CommunityPinMessageResponse,
     CommunityRegenerateWebhookArgs,
+    CommunityRegenerateWebhookResponse,
     CommunityRegisterPollVoteArgs,
     CommunityRegisterPollVoteResponse,
     CommunityRegisterProposalVoteArgs,
@@ -1755,19 +1756,19 @@ export class CommunityClient extends MsgpackCanisterAgent {
             },
             (resp) => {
                 if (typeof resp === "object" && "Success" in resp) {
+                    const result = webhookDetails(
+                        {
+                            id: resp.Success.id,
+                            name,
+                            avatar_id: resp.Success.avatar_id,
+                        },
+                        this.config.blobUrlPattern,
+                        this.communityId,
+                        channelId,
+                    );
+
                     return {
-                        id: principalBytesToString(resp.Success.id),
-                        name,
-                        avatar: webhookDetails(
-                            {
-                                id: resp.Success.id,
-                                name,
-                                avatar_id: resp.Success.avatar_id,
-                            },
-                            this.config.blobUrlPattern,
-                            this.communityId,
-                            channelId,
-                        ),
+                        ...result,
                         secret: resp.Success.secret,
                     };
                 }
@@ -1798,16 +1799,20 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
     }
 
-    regenerateWebhook(channelId: number, id: string): Promise<boolean> {
+    regenerateWebhook(channelId: number, id: string): Promise<string | undefined> {
         return this.executeMsgpackUpdate(
             "regenerate_webhook",
             {
                 channel_id: toBigInt32(channelId),
                 id: principalStringToBytes(id),
             },
-            isSuccess,
+            (resp) => {
+                return typeof resp === "object" && "Success" in resp
+                    ? resp.Success.secret
+                    : undefined;
+            },
             CommunityRegenerateWebhookArgs,
-            UnitResult,
+            CommunityRegenerateWebhookResponse,
         );
     }
 
