@@ -35,8 +35,13 @@ export class ThreadServerState {
         id: ThreadIdentifier,
         fn: (existing: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[],
     ) {
-        if (!messageContextsEqual(this.#id, id)) {
-            throw new Error("We should not be getting events for the wrong thread - investigate");
+        if (!messageContextsEqual(id, this.#id)) {
+            console.warn(
+                "Attempting to updateThreadEvents for the wrong thread - probably a stale response",
+                id,
+                this.#id,
+            );
+            return;
         }
         this.#events = fn(this.#events);
     }

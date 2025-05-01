@@ -549,10 +549,13 @@ class AppState {
     }
 
     setDirectChatDetails(chatId: DirectChatIdentifier, currentUserId: string) {
-        if (!chatIdentifiersEqual(chatId, this.#selectedChat.chatId)) {
-            throw new Error(
-                "We should never be setting direct chat details for a different chat - investigate why this is happening",
+        if (!chatIdentifiersEqual(chatId, this.#selectedChatId)) {
+            console.warn(
+                "Attempting to set direct chat details on the wrong chat - probably a stale response",
+                chatId,
+                this.#selectedChatId,
             );
+            return;
         }
         this.#selectedChat.addUserIds([currentUserId]);
     }
@@ -568,10 +571,13 @@ class AppState {
         bots: Map<string, ExternalBotPermissions>,
         apiKeys: Map<string, PublicApiKeyDetails>,
     ) {
-        if (!chatIdentifiersEqual(chatId, this.#selectedChat.chatId)) {
-            throw new Error(
-                "We should never be setting chat details for a different chat - investigate why this is happening",
+        if (!chatIdentifiersEqual(chatId, this.#selectedChatId)) {
+            console.warn(
+                "Attempting to set chat details on the wrong chat - probably a stale response",
+                chatId,
+                this.#selectedChatId,
             );
+            return;
         }
         this.#selectedChat.overwriteChatDetails(
             chatId,
@@ -603,11 +609,13 @@ class AppState {
         apiKeys: Map<string, PublicApiKeyDetails>,
         rules?: VersionedRules,
     ) {
-        if (!communityIdentifiersEqual(communityId, this.#selectedCommunity.communityId)) {
-            console.trace(communityId, this.#selectedCommunity.communityId);
-            throw new Error(
-                "We should never be setting community details for a different community - investigate why this is happening",
+        if (!communityIdentifiersEqual(communityId, this.#selectedCommunityId)) {
+            console.warn(
+                "Attempting to set community details on the wrong community - probably a stale response",
+                communityId,
+                this.#selectedCommunityId,
             );
+            return;
         }
 
         this.#selectedCommunity.overwriteCommunityDetails(
