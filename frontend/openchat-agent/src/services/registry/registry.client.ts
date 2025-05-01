@@ -2,7 +2,7 @@ import type { HttpAgent, Identity } from "@dfinity/agent";
 import type { DexId, RegistryUpdatesResponse } from "openchat-shared";
 import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import { updatesResponse } from "./mappers";
-import { principalStringToBytes } from "../../utils/mapping";
+import { mapOptional, principalStringToBytes } from "../../utils/mapping";
 import {
     RegistryAddMessageFilterArgs,
     RegistryAddMessageFilterResponse,
@@ -81,10 +81,13 @@ export class RegistryClient extends MsgpackCanisterAgent {
         );
     }
 
-    setAirdropConfig(channelId: number, channelName: string): Promise<boolean> {
+    setAirdropConfig(channelId: number, channelName: string, communityId?: string, communityName?: string): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "set_airdrop_config",
             {
+                enabled: true,
+                community_id: mapOptional(communityId, principalStringToBytes),
+                community_name: communityName,
                 channel_id: BigInt(channelId),
                 channel_name: channelName,
             },

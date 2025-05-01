@@ -5757,8 +5757,8 @@ export class OpenChat {
         return this.#sendRequest({ kind: "setDiamondMembershipFees", fees }).catch(() => false);
     }
 
-    setAirdropConfig(channelId: number, channelName: string): Promise<boolean> {
-        return this.#sendRequest({ kind: "setAirdropConfig", channelId, channelName });
+    setAirdropConfig(channelId: number, channelName: string, communityId?: string, communityName?: string): Promise<boolean> {
+        return this.#sendRequest({ kind: "setAirdropConfig", channelId, channelName, communityId, communityName });
     }
 
     setTokenEnabled(ledger: string, enabled: boolean): Promise<boolean> {
