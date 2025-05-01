@@ -32,12 +32,7 @@ fn initiate_identity_link_impl(args: Args, state: &mut RuntimeState) -> Response
         }
     };
 
-    if let Some(existing_user_principal) = state
-        .data
-        .user_principals
-        .get_by_auth_principal(&args.link_to_principal)
-        .filter(|u| u.user_id.is_some())
-    {
+    if let Some(existing_user_principal) = state.data.user_principals.get_by_auth_principal(&args.link_to_principal) {
         if existing_user_principal.auth_principals.len() >= MAX_LINKED_IDENTITIES {
             return LinkedIdentitiesLimitReached(MAX_LINKED_IDENTITIES as u32);
         } else if existing_user_principal.auth_principals.contains(&auth_principal) {
