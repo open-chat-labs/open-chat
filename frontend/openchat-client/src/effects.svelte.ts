@@ -2,12 +2,10 @@ import { chatIdentifiersEqual, type ChatIdentifier } from "openchat-shared";
 import { untrack } from "svelte";
 import type { OpenChat } from "./openchat";
 import { app } from "./state/app.svelte";
-import { localUpdates } from "./state/global";
 import { pathState } from "./state/path.svelte";
 import { ui } from "./state/ui.svelte";
 import {
     chatListScopeStore,
-    dummyCommunityPreviewStore,
     dummyExpiredEventRangeStore,
     dummyPinnedChatsStore,
     dummyScopedChats,
@@ -111,10 +109,6 @@ function onThreadStateChanged(client: OpenChat) {
 // In the transition period we need to try to keep certain svelte 5
 // runes and Svelte 4 stores in sync. The easiest way to do this is with effects
 function syncState() {
-    $effect(() => {
-        dummyCommunityPreviewStore.set(localUpdates.previewCommunities.size);
-    });
-
     $effect(() => {
         chatListScopeStore.set(pathState.route.scope);
     });

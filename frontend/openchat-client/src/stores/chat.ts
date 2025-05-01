@@ -37,8 +37,6 @@ import { translationStore } from "./translation";
 import { unconfirmed } from "./unconfirmed";
 import { currentUser, currentUserIdStore, suspendedUsers } from "./user";
 
-export const dummyCommunityPreviewStore = writable(0);
-
 // TODO - this will be synced from the Svelte5 rune for now and ultimately removed
 export const selectedChatId = writable<ChatIdentifier | undefined>(undefined);
 
@@ -66,62 +64,6 @@ export const currentChatBlockedOrSuspendedUsers = derived(
         ]);
     },
 );
-
-// type ChatEntry = [ChatIdentifier, ChatSummary];
-
-// export const serverChatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
-//     [
-//         dummyScopedServerChats,
-//         uninitializedDirectChats,
-//         groupPreviewsStore,
-//         dummyCommunityPreviewStore,
-//     ],
-//     ([_, directChats, previews]) => {
-//         let all = [...app.scopedChats.entries()];
-//         if (app.chatListScope.kind === "none" || app.chatListScope.kind === "direct_chat") {
-//             all = all.concat([...directChats.entries()]);
-//         }
-//         if (app.chatListScope.kind === "none") {
-//             all = ([...previews.entries()] as ChatEntry[]).concat(all);
-//         }
-//         if (app.chatListScope.kind === "group_chat") {
-//             all = (
-//                 [...previews.filter((c) => c.kind === "group_chat").entries()] as ChatEntry[]
-//             ).concat(all);
-//         }
-//         if (app.chatListScope.kind === "community") {
-//             const communityId = app.chatListScope.id.communityId;
-//             const previewChannels = ChatMap.fromList(
-//                 localUpdates.getPreviewingCommunity(app.chatListScope.id)?.channels ?? [],
-//             );
-//             all = ([...previewChannels.entries()] as ChatEntry[])
-//                 .concat([
-//                     ...previews
-//                         .filter((c) => c.kind === "channel" && c.id.communityId === communityId)
-//                         .entries(),
-//                 ] as ChatEntry[])
-//                 .concat(all);
-//         }
-//         return all.reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
-//             result.set(chatId, summary);
-//             return result;
-//         }, new ChatMap<ChatSummary>());
-//     },
-// );
-
-// export const allChats = derived(
-//     [allServerChats, uninitializedDirectChats, groupPreviewsStore, localChatSummaryUpdates],
-//     ([$all, $direct, $group, $localSummaryUpdates]) => {
-//         const merged = ([...$direct.entries()] as ChatEntry[])
-//             .concat([...$group.entries()] as ChatEntry[])
-//             .concat([...$all.entries()]);
-//         const reduced = merged.reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
-//             result.set(chatId, summary);
-//             return result;
-//         }, new ChatMap<ChatSummary>());
-//         return mergeLocalSummaryUpdates(app.chatListScope, reduced, $localSummaryUpdates);
-//     },
-// );
 
 export const dummyScopedChats = createDummyStore();
 
