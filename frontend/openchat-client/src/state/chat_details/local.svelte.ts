@@ -1,8 +1,13 @@
 import {
+    type AccessGateConfig,
     type ChatIdentifier,
     type ChatListScope,
+    type EventWrapper,
     type ExternalBotPermissions,
     type Member,
+    type Message,
+    type OptionalChatPermissions,
+    type OptionUpdate,
     type PublicApiKeyDetails,
     type VersionedRules,
 } from "openchat-shared";
@@ -12,6 +17,16 @@ import { scheduleUndo, type UndoLocalUpdate } from "../undo";
 
 export class ChatDetailsLocalState {
     #rules = $state<VersionedRules | undefined>();
+    #notificationsMuted = $state<boolean | undefined>();
+    #archived = $state<boolean | undefined>();
+    #latestMessage = $state<EventWrapper<Message> | undefined>();
+    #rulesAccepted = $state<boolean | undefined>();
+    #name = $state<string | undefined>();
+    #description = $state<string | undefined>();
+    #permissions = $state<OptionalChatPermissions | undefined>();
+    #gateConfig = $state<AccessGateConfig | undefined>();
+    #eventsTTL = $state<OptionUpdate<bigint> | undefined>();
+    #frozen = $state<boolean | undefined>();
 
     readonly pinnedToScopes = new LocalSet<ChatListScope["kind"]>();
     readonly pinnedMessages = new LocalSet<number>();
@@ -26,6 +41,86 @@ export class ChatDetailsLocalState {
     }
     set rules(val: VersionedRules | undefined) {
         this.#rules = val;
+    }
+
+    get notificationsMuted() {
+        return this.#notificationsMuted;
+    }
+
+    set notificationsMuted(val: boolean | undefined) {
+        this.#notificationsMuted = val;
+    }
+
+    get archived() {
+        return this.#archived;
+    }
+
+    set archived(val: boolean | undefined) {
+        this.#archived = val;
+    }
+
+    get name() {
+        return this.#name;
+    }
+
+    set name(val: string | undefined) {
+        this.#name = val;
+    }
+
+    get description() {
+        return this.#description;
+    }
+
+    set description(val: string | undefined) {
+        this.#description = val;
+    }
+
+    get permissions() {
+        return this.#permissions;
+    }
+
+    set permissions(val: OptionalChatPermissions | undefined) {
+        this.#permissions = val;
+    }
+
+    get gateConfig() {
+        return this.#gateConfig;
+    }
+
+    set gateConfig(val: AccessGateConfig | undefined) {
+        this.#gateConfig = val;
+    }
+
+    get eventsTTL() {
+        return this.#eventsTTL;
+    }
+
+    set eventsTTL(val: OptionUpdate<bigint> | undefined) {
+        this.#eventsTTL = val;
+    }
+
+    get rulesAccepted() {
+        return this.#rulesAccepted;
+    }
+
+    set rulesAccepted(val: boolean | undefined) {
+        this.#rulesAccepted = val;
+    }
+
+    get frozen() {
+        return this.#frozen;
+    }
+
+    set frozen(val: boolean | undefined) {
+        this.#frozen = val;
+    }
+
+    get latestMessage() {
+        return this.#latestMessage;
+    }
+
+    set latestMessage(val: EventWrapper<Message> | undefined) {
+        this.#latestMessage = val;
     }
 }
 
@@ -51,6 +146,36 @@ export class ChatDetailsLocalStateManager {
         return this.#data.entries();
     }
 
+    updateChatProperties(
+        id: ChatIdentifier,
+        name?: string,
+        description?: string,
+        permissions?: OptionalChatPermissions,
+        gateConfig?: AccessGateConfig,
+        eventsTTL?: OptionUpdate<bigint>,
+    ) {
+        const state = this.#getOrCreate(id);
+        const prevName = state.name;
+        const prevDescription = state.description;
+        const prevPermissions = state.permissions;
+        const prevGateConfig = state.gateConfig;
+        const prevEventsTTL = state.eventsTTL;
+
+        state.name = name;
+        state.description = description;
+        state.permissions = permissions;
+        state.gateConfig = gateConfig;
+        state.eventsTTL = eventsTTL;
+
+        return scheduleUndo(() => {
+            state.name = prevName;
+            state.description = prevDescription;
+            state.permissions = prevPermissions;
+            state.gateConfig = prevGateConfig;
+            state.eventsTTL = prevEventsTTL;
+        });
+    }
+
     updateMember(
         id: ChatIdentifier,
         userId: string,
@@ -61,6 +186,51 @@ export class ChatDetailsLocalStateManager {
             return this.#getOrCreate(id).members.addOrUpdate(userId, updater(existing));
         }
         return noop;
+    }
+
+    updateLatestMessage(id: ChatIdentifier, message: EventWrapper<Message>): UndoLocalUpdate {
+        const state = this.#getOrCreate(id);
+        const previous = state.latestMessage;
+        state.latestMessage = message;
+        return scheduleUndo(() => {
+            state.latestMessage = previous;
+        });
+    }
+
+    updateRulesAccepted(id: ChatIdentifier, rulesAccepted: boolean): UndoLocalUpdate {
+        const state = this.#getOrCreate(id);
+        const previous = state.rulesAccepted;
+        state.rulesAccepted = rulesAccepted;
+        return scheduleUndo(() => {
+            state.rulesAccepted = previous;
+        });
+    }
+
+    updateNotificationsMuted(id: ChatIdentifier, muted: boolean): UndoLocalUpdate {
+        const state = this.#getOrCreate(id);
+        const previous = state.notificationsMuted;
+        state.notificationsMuted = muted;
+        return scheduleUndo(() => {
+            state.notificationsMuted = previous;
+        });
+    }
+
+    updateFrozen(id: ChatIdentifier, frozen: boolean): UndoLocalUpdate {
+        const state = this.#getOrCreate(id);
+        const previous = state.frozen;
+        state.frozen = frozen;
+        return scheduleUndo(() => {
+            state.frozen = previous;
+        });
+    }
+
+    updateArchived(id: ChatIdentifier, archived: boolean): UndoLocalUpdate {
+        const state = this.#getOrCreate(id);
+        const previous = state.archived;
+        state.archived = archived;
+        return scheduleUndo(() => {
+            state.archived = previous;
+        });
     }
 
     blockUser(id: ChatIdentifier, userId: string): UndoLocalUpdate {

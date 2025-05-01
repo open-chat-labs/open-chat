@@ -548,7 +548,7 @@ export function mergeUnconfirmedIntoSummary(
     }
 }
 
-function mergePermissions(
+export function mergePermissions(
     current: ChatPermissions,
     updated?: OptionalChatPermissions,
 ): ChatPermissions {

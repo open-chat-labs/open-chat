@@ -10,12 +10,8 @@ import {
     dummyCommunityPreviewStore,
     dummyExpiredEventRangeStore,
     dummyPinnedChatsStore,
-    dummyScopedServerChats,
-    dummyServerCommunities,
-    dummyServerDirectChats,
+    dummyScopedChats,
     dummyServerEventsStore,
-    dummyServerFavourites,
-    dummyServerGroupChats,
     dummyThreadEventsStore,
     dummyWalletConfigStore,
     selectedChatId,
@@ -134,28 +130,8 @@ function syncState() {
     });
 
     $effect(() => {
-        void app.serverCommunities;
-        dummyServerCommunities.set(Symbol());
-    });
-
-    $effect(() => {
-        void app.serverDirectChats;
-        dummyServerDirectChats.set(Symbol());
-    });
-
-    $effect(() => {
-        void app.serverGroupChats;
-        dummyServerGroupChats.set(Symbol());
-    });
-
-    $effect(() => {
-        void app.serverFavourites;
-        dummyServerFavourites.set(Symbol());
-    });
-
-    $effect(() => {
-        void app.scopedServerChats;
-        dummyScopedServerChats.set(Symbol());
+        void app.scopedChats;
+        dummyScopedChats.set(Symbol());
     });
 
     $effect(() => {
