@@ -104,7 +104,12 @@ export class ChatDetailsServerState {
         fn: (existing: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[],
     ) {
         if (!chatIdentifiersEqual(chatId, this.#chatId)) {
-            throw new Error("We should not be getting events for the wrong chat - investigate");
+            console.warn(
+                "Attempting to updateServerEvents for the wrong chat - probably a stale response",
+                chatId,
+                this.#chatId,
+            );
+            return;
         }
         this.#events = fn(this.#events);
     }

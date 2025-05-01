@@ -923,6 +923,8 @@
         routeChange(app.chatsInitialised, pathState.route);
     });
 
+    $inspect(app.chatListScope).with(console.trace);
+
     $effect(() => {
         if (app.chatsInitialised) {
             if (pathState.querystring.get("diamond") !== null) {
