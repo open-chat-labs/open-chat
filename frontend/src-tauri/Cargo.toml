@@ -2,7 +2,7 @@
 name = "open-chat"
 version = "0.1.0"
 description = "OpenChat native mobile apps"
-authors = ["Ivan"]
+authors = []
 license = ""
 repository = ""
 edition = "2021"
