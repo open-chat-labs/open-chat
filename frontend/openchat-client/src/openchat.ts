@@ -290,16 +290,11 @@ import type { UndoLocalUpdate } from "./state/undo";
 import { messagesRead, startMessagesReadTracker } from "./state/unread/markRead.svelte";
 import { blockedUsers } from "./stores/blockedUsers";
 import {
-    addGroupPreview,
     confirmedEventIndexesLoaded,
-    createDirectChat,
-    groupPreviewsStore,
     isContiguous,
     isContiguousInThread,
     nextEventAndMessageIndexes,
     nextEventAndMessageIndexesForThread,
-    removeGroupPreview,
-    removeUninitializedDirectChat,
 } from "./stores/chat";
 import {
     bitcoinAddress,
@@ -324,7 +319,6 @@ import {
 import { hasFlag } from "./stores/flagStore";
 import { applyTranslationCorrection } from "./stores/i18n";
 import { lastOnlineDates } from "./stores/lastOnlineDates";
-import { localChatSummaryUpdates } from "./stores/localChatSummaryUpdates";
 import { localMessageUpdates } from "./stores/localMessageUpdates";
 import { type MessageFilter, messageFiltersStore } from "./stores/messageFilters";
 import { minutesOnlineStore } from "./stores/minutesOnline";
@@ -632,14 +626,11 @@ export class OpenChat {
     }
 
     #chatUpdated(chatId: ChatIdentifier, updatedEvents: UpdatedEvent[]): void {
-        if (
-            this.#liveState.selectedChatId === undefined ||
-            !chatIdentifiersEqual(chatId, this.#liveState.selectedChatId)
-        ) {
+        if (app.selectedChatId === undefined || !chatIdentifiersEqual(chatId, app.selectedChatId)) {
             return;
         }
 
-        const serverChat = this.#liveState.selectedServerChat;
+        const serverChat = app.selectedServerChatSummary;
         if (serverChat === undefined) return;
         // The chat summary has been updated which means the latest message may be new
         const latestMessage = serverChat.latestMessage;
@@ -1149,7 +1140,7 @@ export class OpenChat {
                 return this.#sendRequest({ kind: "getPublicGroupSummary", chatId })
                     .then((resp) => {
                         if (resp.kind === "success" && !resp.group.frozen) {
-                            addGroupPreview(resp.group);
+                            localUpdates.addGroupPreview(resp.group);
                             return CommonResponses.success();
                         } else if (resp.kind === "group_moved") {
                             return resp;
@@ -1163,7 +1154,7 @@ export class OpenChat {
                 return this.#sendRequest({ kind: "getChannelSummary", chatId })
                     .then((resp) => {
                         if (resp.kind === "channel") {
-                            addGroupPreview(resp);
+                            localUpdates.addGroupPreview(resp);
                             return CommonResponses.success();
                         }
                         return CommonResponses.failure();
@@ -1173,16 +1164,16 @@ export class OpenChat {
     }
 
     toggleMuteNotifications(chatId: ChatIdentifier, muted: boolean): Promise<boolean> {
-        localChatSummaryUpdates.markUpdated(chatId, { notificationsMuted: muted });
+        const undo = localUpdates.updateNotificationsMuted(chatId, muted);
         return this.#sendRequest({ kind: "toggleMuteNotifications", id: chatId, muted })
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    localChatSummaryUpdates.markUpdated(chatId, { notificationsMuted: undefined });
+                    undo();
                 }
                 return resp.kind === "success";
             })
             .catch(() => {
-                localChatSummaryUpdates.markUpdated(chatId, { notificationsMuted: undefined });
+                undo();
                 return false;
             });
     }
@@ -1193,47 +1184,49 @@ export class OpenChat {
             return Promise.resolve(false);
         }
 
-        community.channels.forEach((c) =>
-            localChatSummaryUpdates.markUpdated(c.id, { notificationsMuted: true }),
+        const undos = community.channels.map((c) =>
+            localUpdates.updateNotificationsMuted(c.id, true),
         );
 
         return this.#sendRequest({ kind: "toggleMuteNotifications", id: communityId, muted: true })
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    community.channels.forEach((c) =>
-                        localChatSummaryUpdates.markUpdated(c.id, {
-                            notificationsMuted: undefined,
-                        }),
-                    );
+                    undos.forEach((undo) => undo());
                 }
                 return resp.kind === "success";
             })
             .catch(() => {
-                community.channels.forEach((c) =>
-                    localChatSummaryUpdates.markUpdated(c.id, { notificationsMuted: undefined }),
-                );
+                undos.forEach((undo) => undo());
                 return false;
             });
     }
 
     archiveChat(chatId: ChatIdentifier): Promise<boolean> {
-        localChatSummaryUpdates.markUpdated(chatId, { archived: true });
+        const undo = localUpdates.updateArchived(chatId, true);
         return this.#sendRequest({ kind: "archiveChat", chatId })
             .then((resp) => {
+                if (resp.kind !== "success") {
+                    undo();
+                }
                 return resp.kind === "success";
             })
             .catch(() => {
-                localChatSummaryUpdates.markUpdated(chatId, { archived: undefined });
+                undo();
                 return false;
             });
     }
 
     unarchiveChat(chatId: ChatIdentifier): Promise<boolean> {
-        localChatSummaryUpdates.markUpdated(chatId, { archived: false });
+        const undo = localUpdates.updateArchived(chatId, false);
         return this.#sendRequest({ kind: "unarchiveChat", chatId })
-            .then((resp) => resp.kind === "success")
+            .then((resp) => {
+                if (resp.kind !== "success") {
+                    undo();
+                }
+                return resp.kind === "success";
+            })
             .catch(() => {
-                localChatSummaryUpdates.markUpdated(chatId, { archived: undefined });
+                undo();
                 return false;
             });
     }
@@ -1340,33 +1333,30 @@ export class OpenChat {
 
     deleteDirectChat(userId: string, blockUser: boolean): Promise<boolean> {
         const chatId: ChatIdentifier = { kind: "direct_chat", userId };
-        localChatSummaryUpdates.markRemoved(chatId);
+        const undo = localUpdates.removeChat(chatId);
         return this.#sendRequest({ kind: "deleteDirectChat", userId, blockUser })
             .then((success) => {
                 if (!success) {
-                    const chat = this.#liveState.chatSummaries.get(chatId);
-                    if (chat !== undefined) {
-                        localChatSummaryUpdates.markAdded(chat);
-                    }
+                    undo();
                 }
                 return success;
             })
-            .catch(() => false);
+            .catch(() => {
+                undo();
+                return false;
+            });
     }
 
     leaveGroup(
         chatId: MultiUserChatIdentifier,
     ): Promise<"success" | "failure" | "owner_cannot_leave"> {
-        localChatSummaryUpdates.markRemoved(chatId);
+        const undo = localUpdates.removeChat(chatId);
         return this.#sendRequest({ kind: "leaveGroup", chatId })
             .then((resp) => {
                 if (resp.kind === "success") {
                     return "success";
                 } else {
-                    const chat = this.#liveState.chatSummaries.get(chatId);
-                    if (chat) {
-                        localChatSummaryUpdates.markAdded(chat);
-                    }
+                    undo();
                     if (resp.kind === "error" && resp.code === ErrorCode.LastOwnerCannotLeave) {
                         return "owner_cannot_leave";
                     } else {
@@ -1374,7 +1364,10 @@ export class OpenChat {
                     }
                 }
             })
-            .catch(() => "failure");
+            .catch(() => {
+                undo();
+                return "failure";
+            });
     }
 
     #addCommunityLocally(community: CommunitySummary) {
@@ -1539,7 +1532,7 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    localChatSummaryUpdates.markAdded(resp.group);
+                    localUpdates.addChat(resp.group);
                     this.#loadChatDetails(resp.group);
                     messagesRead.syncWithServer(
                         resp.group.id,
@@ -1553,7 +1546,7 @@ export class OpenChat {
 
                     resp.community.channels.forEach((c) => {
                         if (chatIdentifiersEqual(c.id, chat.id)) {
-                            localChatSummaryUpdates.markAdded(c);
+                            localUpdates.addChat(c);
                             this.#loadChatDetails(c);
                         }
                         if (c.latestMessage) {
@@ -1578,9 +1571,7 @@ export class OpenChat {
             })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    if (this.#liveState.groupPreviews.has(chat.id)) {
-                        removeGroupPreview(chat.id);
-                    }
+                    localUpdates.removeGroupPreview(chat.id);
                 }
                 return resp;
             })
@@ -1804,7 +1795,7 @@ export class OpenChat {
         chatId: ChatIdentifier,
         mode: "message" | "thread",
     ): Map<MessagePermission, boolean> {
-        const chat = this.#liveState.allChats.get(chatId);
+        const chat = app.allChats.get(chatId);
         if (chat !== undefined) {
             if (chat.kind === "direct_chat") {
                 const recipient = this.#liveState.userStore.get(chat.them.userId);
@@ -2060,7 +2051,7 @@ export class OpenChat {
     }
 
     #chatPredicate(chatId: ChatIdentifier, predicate: (chat: ChatSummary) => boolean): boolean {
-        const chat = this.#liveState.allChats.get(chatId);
+        const chat = app.allChats.get(chatId);
         return chat !== undefined && predicate(chat);
     }
 
@@ -2382,7 +2373,7 @@ export class OpenChat {
         initialLoad = false,
     ): Promise<number | undefined> {
         const clientChat = this.#liveState.chatSummaries.get(chatId);
-        const serverChat = this.#liveState.serverChatSummaries.get(chatId);
+        const serverChat = app.allServerChats.get(chatId);
 
         if (clientChat === undefined || this.#isPrivatePreview(clientChat)) {
             return Promise.resolve(undefined);
@@ -2636,7 +2627,7 @@ export class OpenChat {
                 return false;
             }
         }
-        createDirectChat(chatId);
+        localUpdates.addUninitialisedDirectChat(chatId);
         return true;
     }
 
@@ -2756,7 +2747,7 @@ export class OpenChat {
 
     #setSelectedChat(chatId: ChatIdentifier, messageIndex?: number): void {
         const clientChat = this.#liveState.chatSummaries.get(chatId);
-        const serverChat = this.#liveState.serverChatSummaries.get(chatId);
+        const serverChat = app.allServerChats.get(chatId);
 
         if (clientChat === undefined) {
             return;
@@ -2925,15 +2916,9 @@ export class OpenChat {
     }
 
     removeChat(chatId: ChatIdentifier): void {
-        if (this.#liveState.uninitializedDirectChats.has(chatId)) {
-            removeUninitializedDirectChat(chatId);
-        }
-        if (this.#liveState.groupPreviews.has(chatId)) {
-            removeGroupPreview(chatId);
-        }
-        if (this.#liveState.chatSummaries.has(chatId)) {
-            localChatSummaryUpdates.markRemoved(chatId);
-        }
+        localUpdates.removeUninitialisedDirectChat(chatId);
+        localUpdates.removeGroupPreview(chatId);
+        localUpdates.removeChat(chatId);
     }
 
     removeCommunity(id: CommunityIdentifier): void {
@@ -3039,7 +3024,7 @@ export class OpenChat {
         threadRootEvent?: EventWrapper<Message>,
         initialLoad = false,
     ): Promise<void> {
-        const serverChat = this.#liveState.serverChatSummaries.get(chatId);
+        const serverChat = app.allServerChats.get(chatId);
 
         if (serverChat === undefined || this.#isPrivatePreview(serverChat)) {
             return Promise.resolve();
@@ -3121,7 +3106,7 @@ export class OpenChat {
         chatId: ChatIdentifier,
         threadRootEvent?: EventWrapper<Message>,
     ): Promise<void> {
-        const serverChat = this.#liveState.serverChatSummaries.get(chatId);
+        const serverChat = app.allServerChats.get(chatId);
 
         if (serverChat === undefined || this.#isPrivatePreview(serverChat)) {
             return Promise.resolve();
@@ -3187,7 +3172,7 @@ export class OpenChat {
                 threadRootEvent.event.thread.latestEventIndex
             );
         }
-        const serverChat = this.#liveState.serverChatSummaries.get(chatId);
+        const serverChat = app.allServerChats.get(chatId);
 
         return (
             serverChat !== undefined &&
@@ -3313,7 +3298,6 @@ export class OpenChat {
         const confirmedThreadLoaded = app.selectedChat.confirmedThreadEventIndexesLoaded;
         const selectedThreadRootMessageIndex =
             this.#liveState.selectedMessageContext?.threadRootMessageIndex;
-        const selectedChatId = this.#liveState.selectedChatId;
 
         // Partition the updated events into those that belong to the currently selected thread and those that don't
         const [currentChatEvents, currentThreadEvents] = updatedEvents.reduce(
@@ -3321,7 +3305,7 @@ export class OpenChat {
                 if (e.threadRootMessageIndex !== undefined) {
                     if (
                         e.threadRootMessageIndex === selectedThreadRootMessageIndex &&
-                        chatIdentifiersEqual(serverChat.id, selectedChatId) &&
+                        chatIdentifiersEqual(serverChat.id, app.selectedChatId) &&
                         indexIsInRanges(e.eventIndex, confirmedThreadLoaded)
                     ) {
                         thread.push(e.eventIndex);
@@ -3544,7 +3528,7 @@ export class OpenChat {
         // now a new latest message and if so, mark it as a local chat summary update.
         let latestMessageIndex =
             threadRootMessageIndex === undefined
-                ? this.#liveState.serverChatSummaries.get(chatId)?.latestMessageIndex ?? -1
+                ? app.allServerChats.get(chatId)?.latestMessageIndex ?? -1
                 : undefined;
         let newLatestMessage: EventWrapper<Message> | undefined = undefined;
 
@@ -3612,7 +3596,7 @@ export class OpenChat {
                 mergeServerEvents(events, newEvents, context),
             );
             if (newLatestMessage !== undefined) {
-                localChatSummaryUpdates.markUpdated(chatId, { latestMessage: newLatestMessage });
+                localUpdates.updateLatestMessage(chatId, newLatestMessage);
             }
             const selectedThreadRootMessageIndex = this.#liveState.selectedThreadRootMessageIndex;
             if (selectedThreadRootMessageIndex !== undefined) {
@@ -3635,7 +3619,7 @@ export class OpenChat {
         }
 
         if (expiredEventRanges.length > 0) {
-            app.updateServerExpiredEventRanges((ranges) => {
+            app.updateServerExpiredEventRanges(chatId, (ranges) => {
                 const merged = new DRange();
                 merged.add(ranges);
                 expiredEventRanges.forEach((r) => merged.add(r.start, r.end));
@@ -3787,7 +3771,7 @@ export class OpenChat {
                         if (pinNumberFailure !== undefined) {
                             pinNumberFailureStore.set(pinNumberFailure);
                         } else if (resp.code === ErrorCode.ChatRulesNotAccepted) {
-                            this.#markChatRulesAcceptedLocally(false);
+                            localUpdates.updateChatRulesAccepted(chat.id, false);
                         } else if (resp.code === ErrorCode.CommunityRulesNotAccepted) {
                             this.#markCommunityRulesAcceptedLocally(false);
                         }
@@ -3847,7 +3831,7 @@ export class OpenChat {
                 }
 
                 if (acceptedRules?.chat !== undefined) {
-                    this.#markChatRulesAcceptedLocally(true);
+                    localUpdates.updateChatRulesAccepted(chat.id, true);
                 }
                 if (acceptedRules?.community !== undefined) {
                     this.#markCommunityRulesAcceptedLocally(true);
@@ -3983,13 +3967,6 @@ export class OpenChat {
         const communityRulesText = communityRulesEnabled ? communityRules?.text : "";
         const lineBreak = chatRulesEnabled && communityRulesEnabled ? "\n" : "";
         return chatRulesText + lineBreak + communityRulesText;
-    }
-
-    #markChatRulesAcceptedLocally(rulesAccepted: boolean) {
-        const selectedChatId = this.#liveState.selectedChatId;
-        if (selectedChatId !== undefined) {
-            localChatSummaryUpdates.markUpdated(selectedChatId, { rulesAccepted });
-        }
     }
 
     #markCommunityRulesAcceptedLocally(rulesAccepted: boolean) {
@@ -4329,7 +4306,7 @@ export class OpenChat {
                 return;
         }
 
-        const serverChat = this.#liveState.serverChatSummaries.get(chatId);
+        const serverChat = app.allServerChats.get(chatId);
         if (serverChat === undefined) {
             return;
         }
@@ -4648,7 +4625,7 @@ export class OpenChat {
     }
 
     lookupChatSummary(chatId: ChatIdentifier): ChatSummary | undefined {
-        return this.#liveState.allChats.get(chatId);
+        return app.allChats.get(chatId);
     }
 
     searchUsersForInvite(
@@ -5342,15 +5319,11 @@ export class OpenChat {
             .catch(() => ({ kind: "failure" }));
     }
 
-    async threadPreviews(
-        _chatId: ChatIdentifier | undefined,
-        threadsByChat: ChatMap<ThreadSyncDetails[]>,
-        serverChatSummaries: ChatMap<ChatSummary>,
-    ): Promise<ThreadPreview[]> {
+    async threadPreviews(threadsByChat: ChatMap<ThreadSyncDetails[]>): Promise<ThreadPreview[]> {
         const request: ChatMap<[ThreadSyncDetails[], bigint | undefined]> = threadsByChat.reduce(
             (map, [chatId, threads]) => {
                 if (chatId.kind === "group_chat" || chatId.kind === "channel") {
-                    const latestKnownUpdate = serverChatSummaries.get(chatId)?.lastUpdated;
+                    const latestKnownUpdate = app.allServerChats.get(chatId)?.lastUpdated;
                     map.set(chatId, [threads, latestKnownUpdate]);
                 }
                 return map;
@@ -5537,7 +5510,7 @@ export class OpenChat {
         chatId: MultiUserChatIdentifier,
         messageIndexes: ReadonlySet<number>,
     ): Promise<EventsResponse<Message>> {
-        const serverChat = this.#liveState.serverChatSummaries.get(chatId);
+        const serverChat = app.allServerChats.get(chatId);
 
         try {
             const resp = await this.#sendRequest({
@@ -5606,14 +5579,14 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    localChatSummaryUpdates.markUpdated(chatId, {
-                        kind: chatId.kind,
+                    localUpdates.updateChatProperties(
+                        chatId,
                         name,
-                        description: desc,
+                        desc,
                         permissions,
-                        gateConfig: gateConfig,
-                        eventsTTL: eventsTimeToLive,
-                    });
+                        gateConfig,
+                        eventsTimeToLive,
+                    );
 
                     if (rules !== undefined && resp.rulesVersion !== undefined) {
                         localUpdates.updateChatRules(chatId, {
@@ -5647,7 +5620,7 @@ export class OpenChat {
         return this.#sendRequest({ kind: "createGroupChat", candidate }).then((resp) => {
             if (resp.kind === "success") {
                 const group = groupChatFromCandidate(resp.canisterId, candidate);
-                localChatSummaryUpdates.markAdded(group);
+                localUpdates.addChat(group);
             }
             return resp;
         });
@@ -5827,20 +5800,12 @@ export class OpenChat {
     ): void {
         const frozen = event.event.kind === "chat_frozen";
         if (this.isPreviewing(chatId)) {
-            groupPreviewsStore.update((summaries) => {
-                const summary = summaries.get(chatId);
-                if (summary === undefined) {
-                    return summaries;
-                }
-                const clone = summaries.clone();
-                clone.set(chatId, {
-                    ...summary,
-                    frozen,
-                });
-                return clone as ChatMap<GroupChatSummary>;
-            });
+            const summary = localUpdates.groupChatPreviews.get(chatId);
+            if (summary !== undefined) {
+                localUpdates.addGroupPreview({ ...summary, frozen });
+            }
         } else {
-            localChatSummaryUpdates.markUpdated(chatId, { kind: "group_chat", frozen });
+            localUpdates.updateChatFrozen(chatId, frozen);
             this.#addServerEventsToStores(chatId, [event], undefined, []);
         }
     }
@@ -5997,12 +5962,8 @@ export class OpenChat {
                 }
             }
 
-            if (this.#liveState.uninitializedDirectChats.size > 0) {
-                for (const chat of chats) {
-                    if (this.#liveState.uninitializedDirectChats.has(chat.id)) {
-                        removeUninitializedDirectChat(chat.id);
-                    }
-                }
+            for (const chat of chats) {
+                localUpdates.removeUninitialisedDirectChat(chat.id);
             }
 
             app.setGlobalState(
@@ -6026,14 +5987,15 @@ export class OpenChat {
                 chatsResponse.state.streakInsurance,
             );
 
-            const selectedChatId = this.#liveState.selectedChatId;
-
-            if (selectedChatId !== undefined) {
-                if (this.#liveState.chatSummaries.get(selectedChatId) === undefined) {
+            if (app.selectedChatId !== undefined) {
+                if (this.#liveState.chatSummaries.get(app.selectedChatId) === undefined) {
                     publish("selectedChatInvalid");
                 } else {
                     const updatedEvents = ChatMap.fromMap(chatsResponse.updatedEvents);
-                    this.#chatUpdated(selectedChatId, updatedEvents.get(selectedChatId) ?? []);
+                    this.#chatUpdated(
+                        app.selectedChatId,
+                        updatedEvents.get(app.selectedChatId) ?? [],
+                    );
                 }
             }
 
@@ -6667,7 +6629,7 @@ export class OpenChat {
 
     isMemberOfAirdropChannel(): boolean {
         if (this.currentAirdropChannel === undefined) return false;
-        const airdropChannel = this.#liveState.allChats.get(this.currentAirdropChannel.id);
+        const airdropChannel = app.allChats.get(this.currentAirdropChannel.id);
         return (airdropChannel?.membership.role ?? "none") !== "none";
     }
 
@@ -6781,10 +6743,7 @@ export class OpenChat {
                 const userGroups = [...app.selectedCommunitySummary.userGroups.values()];
                 userGroups.forEach((ug) => (lookup[ug.name.toLowerCase()] = ug));
             }
-            if (
-                this.#liveState.selectedChatId !== undefined &&
-                this.canMentionAllMembers(this.#liveState.selectedChatId)
-            ) {
+            if (app.selectedChatId !== undefined && this.canMentionAllMembers(app.selectedChatId)) {
                 lookup["everyone"] = { kind: "everyone" };
             }
             this.#userLookupForMentions = lookup;
@@ -6990,7 +6949,7 @@ export class OpenChat {
     }
 
     async #sendVideoCallUsersWebRtcMessage(msg: WebRtcMessage, chatId: ChatIdentifier) {
-        const chat = this.#liveState.allChats.get(chatId);
+        const chat = app.allChats.get(chatId);
         if (chat === undefined) {
             throw new Error(`Unknown chat: ${chatId}`);
         }
@@ -7132,7 +7091,7 @@ export class OpenChat {
     }
 
     endVideoCall(chatId: ChatIdentifier, messageId?: bigint) {
-        const chat = this.#liveState.allChats.get(chatId);
+        const chat = app.allChats.get(chatId);
         if (chat === undefined) {
             throw new Error(`Unknown chat: ${chatId}`);
         }
@@ -7167,7 +7126,7 @@ export class OpenChat {
         chatId: ChatIdentifier,
         accessTokenType: AccessTokenType,
     ): Promise<{ token: string; roomName: string; messageId: bigint; joining: boolean }> {
-        const chat = this.#liveState.allChats.get(chatId);
+        const chat = app.allChats.get(chatId);
         if (chat === undefined) {
             throw new Error(`Unknown chat: ${chatId}`);
         }
@@ -7629,7 +7588,7 @@ export class OpenChat {
             .then((resp) => {
                 if (resp.kind === "success") {
                     if (group !== undefined) {
-                        localChatSummaryUpdates.markAdded({
+                        localUpdates.addChat({
                             ...group,
                             id: resp.channelId,
                             kind: "channel",
@@ -7793,8 +7752,7 @@ export class OpenChat {
 
     removeFromFavourites(chatId: ChatIdentifier): Promise<boolean> {
         const undo = localUpdates.unfavourite(chatId);
-        // TODO this should be scopedChats not scopedServerChats but it's close enough for now
-        if (app.scopedServerChats.size === 0) {
+        if (app.scopedChats.size === 0) {
             publish("selectedChatInvalid");
         }
 

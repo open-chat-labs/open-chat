@@ -41,7 +41,6 @@
         routeForChatIdentifier,
         routeForScope,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
-        selectedChatId,
         selectedChatStore,
         subscribe,
         suspendedUser,
@@ -501,7 +500,7 @@
     }
 
     function showInviteGroupUsers(show: boolean) {
-        if ($selectedChatId !== undefined) {
+        if (app.selectedChatId !== undefined) {
             if (show) {
                 ui.rightPanelHistory = [{ kind: "invite_group_users" }];
             } else {
@@ -539,14 +538,14 @@
     }
 
     function showGroupMembers() {
-        if ($selectedChatId !== undefined) {
+        if (app.selectedChatId !== undefined) {
             ui.rightPanelHistory = [{ kind: "show_group_members" }];
         }
     }
 
     function showProfile() {
-        if ($selectedChatId !== undefined) {
-            pageReplace(routeForChatIdentifier(app.chatListScope.kind, $selectedChatId));
+        if (app.selectedChatId !== undefined) {
+            pageReplace(routeForChatIdentifier(app.chatListScope.kind, app.selectedChatId));
         }
         ui.rightPanelHistory = [{ kind: "user_profile" }];
     }
@@ -560,8 +559,8 @@
     }
 
     function showProposalFilters() {
-        if ($selectedChatId !== undefined) {
-            pageReplace(routeForChatIdentifier(app.chatListScope.kind, $selectedChatId));
+        if (app.selectedChatId !== undefined) {
+            pageReplace(routeForChatIdentifier(app.chatListScope.kind, app.selectedChatId));
             ui.rightPanelHistory = [
                 {
                     kind: "proposal_filters",

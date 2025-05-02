@@ -17,7 +17,6 @@
         publish,
         suspendedUser,
         ui,
-        userMetrics,
     } from "openchat-client";
     import { ErrorCode } from "openchat-shared";
     import { getContext, onMount } from "svelte";
@@ -608,7 +607,7 @@
                     onToggle={statsSectionOpen.toggle}
                     open={$statsSectionOpen}
                     headerText={i18nKey("stats.userStats")}>
-                    <Stats showReported stats={$userMetrics} />
+                    <Stats showReported stats={app.userMetrics} />
                 </CollapsibleCard>
             </div>
         {/if}

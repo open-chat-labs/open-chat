@@ -17,7 +17,6 @@
         publish,
         routeForChatIdentifier,
         routeForScope,
-        selectedChatId,
         ui,
         userStore,
         type UserSummary,
@@ -177,7 +176,7 @@
     let showPreview = $derived(
         ui.mobileWidth &&
             app.selectedCommunitySummary?.membership.role === "none" &&
-            $selectedChatId === undefined,
+            app.selectedChatId === undefined,
     );
     let user = $derived($userStore.get($createdUser.userId));
     let lowercaseSearch = $derived(searchTerm.toLowerCase());
@@ -272,7 +271,7 @@
                 {#each chats as chatSummary (chatIdentifierToString(chatSummary.id))}
                     <ChatSummary
                         {chatSummary}
-                        selected={chatIdentifiersEqual($selectedChatId, chatSummary.id)}
+                        selected={chatIdentifiersEqual(app.selectedChatId, chatSummary.id)}
                         visible={searchTerm !== "" || !chatSummary.membership.archived}
                         onChatSelected={chatSelected} />
                 {/each}
