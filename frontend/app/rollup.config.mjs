@@ -122,6 +122,7 @@ export default {
 
         replace({
             preventAssignment: true,
+            "import.meta.env.OC_APP_TYPE": JSON.stringify(process.env.OC_APP_TYPE),
             "import.meta.env.OC_BUILD_ENV": JSON.stringify(process.env.OC_BUILD_ENV),
             "import.meta.env.OC_WEBAUTHN_ORIGIN": JSON.stringify(process.env.OC_WEBAUTHN_ORIGIN),
             "import.meta.env.OC_INTERNET_IDENTITY_URL": JSON.stringify(

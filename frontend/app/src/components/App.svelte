@@ -65,6 +65,7 @@
 
     function createOpenChatClient(): OpenChat {
         return new OpenChat({
+            appType: import.meta.env.OC_APP_TYPE,
             icUrl: import.meta.env.OC_IC_URL,
             webAuthnOrigin: import.meta.env.OC_WEBAUTHN_ORIGIN,
             iiDerivationOrigin: import.meta.env.OC_II_DERIVATION_ORIGIN,
@@ -557,7 +558,9 @@
 
 <Witch background />
 
-<InstallPrompt />
+{#if !client.isMobile()}
+    <InstallPrompt />
+{/if}
 
 <NotificationsBar />
 

@@ -493,6 +493,10 @@ import {
 } from "./utils/user";
 import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 import { createWebAuthnIdentity, MultiWebAuthnIdentity } from "./utils/webAuthn";
+import {
+    createAndroidWebAuthnPasskeyIdentity,
+    AndroidWebAuthnPasskeyIdentity,
+} from "./utils/androidWebAuthn";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -555,12 +559,14 @@ export class OpenChat {
     > = new Map();
     #refreshBalanceSemaphore: Semaphore = new Semaphore(10);
     #inflightBalanceRefreshPromises: Map<string, Promise<bigint>> = new Map();
+    #appType?: "android" | "ios" | "web" = undefined;
 
     currentAirdropChannel: AirdropChannelDetails | undefined = undefined;
 
     constructor(private config: OpenChatConfig) {
         this.#logger = config.logger;
         this.#liveState = new LiveState();
+        this.#appType = config.appType;
 
         console.log("OpenChatConfig: ", config);
 
@@ -596,6 +602,15 @@ export class OpenChat {
             throw new Error("Trying to access the _authPrincipal before it has been set up");
         }
         return this.#authPrincipal;
+    }
+
+    isAndroid() {
+        return this.#appType === "android";
+    }
+
+    isMobile() {
+        // TODO this will be updated to include iOS
+        return this.isAndroid();
     }
 
     clearCachedData() {
@@ -7220,6 +7235,20 @@ export class OpenChat {
         return await this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, assumeIdentity);
     }
 
+    async signUpWithAndroidWebAuthn(
+        assumeIdentity: boolean,
+    ): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
+        const webAuthnIdentity = await createAndroidWebAuthnPasskeyIdentity((key) =>
+            this.#storeWebAuthnKeyInCache(key),
+        );
+
+        // We create a temporary key so that the user doesn't have to reauthenticate via WebAuthn, we store this key
+        // in IndexedDb, it is valid for 30 days (the same as the other key delegations we use).
+        const tempKey = await ECDSAKeyIdentity.generate();
+
+        return await this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, assumeIdentity);
+    }
+
     async signInWithWebAuthn() {
         const webAuthnOrigin = this.config.webAuthnOrigin;
         if (webAuthnOrigin === undefined) throw new Error("WebAuthn origin not set");
@@ -7234,6 +7263,18 @@ export class OpenChat {
         );
     }
 
+    async signInWithAndroidWebAuthn(): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
+        const webAuthnIdentity = new AndroidWebAuthnPasskeyIdentity((credentialId) =>
+            this.lookupWebAuthnPubKey(credentialId),
+        );
+
+        return await this.#finaliseWebAuthnSignin(
+            webAuthnIdentity,
+            () => webAuthnIdentity.identity(),
+            true,
+        );
+    }
+
     async reSignInWithCurrentWebAuthnIdentity(): Promise<
         [ECDSAKeyIdentity, DelegationChain, WebAuthnKey]
     > {
@@ -7244,11 +7285,17 @@ export class OpenChat {
             }));
         if (webAuthnKey === undefined) throw new Error("WebAuthnKey not set");
 
+        const credentialId: Uint8Array = new Uint8Array(webAuthnKey.credentialId);
+        const cose: Uint8Array = unwrapDER(
+            new Uint8Array(webAuthnKey.publicKey).buffer,
+            DER_COSE_OID,
+        );
         const webAuthnIdentity = new WebAuthnIdentity(
-            webAuthnKey.credentialId,
-            unwrapDER(webAuthnKey.publicKey, DER_COSE_OID),
+            credentialId.buffer as ArrayBuffer,
+            cose.buffer as ArrayBuffer,
             undefined,
         );
+
         return await this.#finaliseWebAuthnSignin(webAuthnIdentity, () => webAuthnIdentity, false);
     }
 

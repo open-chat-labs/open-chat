@@ -96,7 +96,7 @@ export class MultiWebAuthnIdentity extends SignIdentity {
 
         this._actualIdentity = new WebAuthnIdentity(
             result.rawId,
-            unwrapDER(pubkey, DER_COSE_OID),
+            unwrapDER(pubkey.buffer as ArrayBuffer, DER_COSE_OID).buffer as ArrayBuffer,
             undefined,
         );
 

@@ -1093,6 +1093,14 @@
     "messageUrlCopiedToClipboard": "Message url copied to clipboard!",
     "minimumAmount": "Minimum: {amount} {symbol}",
     "minutes": "Minutes",
+    "mobile": {
+        "credentials": {
+            "errors": {
+                "genericSignUp": "Could not create a passkey.",
+                "genericSignIn": "Could not sign in with a passkey."
+            }
+        }
+    },
     "moderator": "moderator",
     "months": "Months",
     "mustBeFutureDateError": "You must select a future date",

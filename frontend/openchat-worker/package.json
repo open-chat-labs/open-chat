@@ -7,6 +7,7 @@
         "build": "rollup -c",
         "build:docker": "npm run build",
         "dev": "rollup -cw",
+        "dev:mobile": "npm run dev",
         "wait": "npm run clean && wait-on lib/worker.js",
         "clean": "rm -f lib/worker.js",
         "typecheck": "tsc --noEmit",

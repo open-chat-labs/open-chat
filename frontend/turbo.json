@@ -72,6 +72,11 @@
             "persistent": true,
             "dependsOn": ["^wait"]
         },
+        "dev:mobile": {
+            "cache": false,
+            "persistent": true,
+            "dependsOn": ["^wait"]
+        },
         "wait": {
             "cache": false
         },
