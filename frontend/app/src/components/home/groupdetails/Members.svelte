@@ -165,6 +165,11 @@
         );
     }
 
+    function webhookMatches(searchTermLower: string, webhook: WebhookDetails): boolean {
+        if (searchTermLower === "") return true;
+        return webhook.name.toLowerCase().includes(searchTermLower);
+    }
+
     function getKnownUsers(userStore: UserLookup, members: MemberType[]): FullMember[] {
         const users: FullMember[] = [];
         members.forEach((m) => {
@@ -248,6 +253,9 @@
     let blockedUsers = $derived(matchingUsers(searchTermLower, $userStore, blocked, true));
     let lapsedMembers = $derived(matchingUsers(searchTermLower, $userStore, lapsed, true));
     let invitedUsers = $derived(matchingUsers(searchTermLower, $userStore, invited, true));
+    let matchingWebhooks = $derived(
+        webhooks?.filter((w) => webhookMatches(searchTermLower, w)) ?? [],
+    );
     let showBlocked = $derived(blockedUsers.length > 0);
     let showInvited = $derived(invitedUsers.length > 0);
     let showLapsed = $derived(lapsedMembers.length > 0);
@@ -413,16 +421,16 @@
             {/each}
         {/if}
 
-        {#if webhooks !== undefined && webhooks.length > 0 && me?.role === "owner" && collection.kind !== "community"}
+        {#if matchingWebhooks !== undefined && matchingWebhooks.length > 0 && me?.role === "owner" && collection.kind !== "community"}
             <h4 class="member_type_label">
                 <Translatable resourceKey={i18nKey("bots.member.webhooks")}></Translatable>
             </h4>
-            {#each webhooks as webhook}
+            {#each matchingWebhooks as webhook}
                 <WebhookMember chat={collection} {webhook} {searchTerm} />
             {/each}
         {/if}
 
-        {#if (bots.length > 0 || (webhooks !== undefined && webhooks.length > 0)) && fullMembers.length > 0}
+        {#if (bots.length > 0 || (matchingWebhooks !== undefined && matchingWebhooks.length > 0)) && fullMembers.length > 0}
             <h4 class="member_type_label">
                 <Translatable resourceKey={i18nKey("bots.member.people")}></Translatable>
             </h4>

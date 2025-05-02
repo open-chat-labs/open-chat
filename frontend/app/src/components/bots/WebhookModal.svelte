@@ -211,13 +211,18 @@
     {#snippet footer()}
         <div class="footer">
             <ButtonGroup>
-                <Button secondary small={!ui.mobileWidth} tiny={ui.mobileWidth} onClick={onClose}>
+                <Button
+                    secondary={mode.kind === "register"}
+                    small={!ui.mobileWidth}
+                    tiny={ui.mobileWidth}
+                    onClick={onClose}>
                     <Translatable
                         resourceKey={mode.kind === "update"
                             ? i18nKey("close")
                             : i18nKey("cancel")} />
                 </Button>
                 <Button
+                    secondary={mode.kind === "update"}
                     onClick={mode.kind === "update" ? regenerate : register}
                     disabled={busy || (mode.kind === "register" && (!valid || !dirty))}
                     loading={busy}
