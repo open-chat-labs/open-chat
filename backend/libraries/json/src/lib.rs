@@ -59,3 +59,4 @@ impl serde_json::ser::Formatter for Formatter {
 pub fn serialize_empty() -> Vec<u8> {
     Vec::new()
 }
+pub fn deserialize_empty(_bytes: Vec<u8>) {}
