@@ -167,7 +167,7 @@
                 ></Legend>
                 <ValidatingInput
                     minlength={3}
-                    maxlength={25}
+                    maxlength={15}
                     disabled={step === "registered"}
                     invalid={name_errors.length > 0}
                     placeholder={i18nKey("webhook.namePlaceholder")}
