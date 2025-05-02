@@ -33,6 +33,7 @@
 
     let busy = $state(false);
     let busyUpdate = $state(false);
+    let step = $state(mode.kind as string);
 
     let webhook = $state({
         original: mode.kind === "update" ? mode.webhook : emptyWebhookInstance(),
@@ -47,11 +48,11 @@
     let url = $derived(client.webhookUrl(webhook.current, chatId));
 
     let titleKey = $derived.by(() => {
-        switch (mode.kind) {
-            case "register":
-                return i18nKey("webhook.registerTitle");
+        switch (step) {
             case "update":
                 return i18nKey("webhook.updateTitle", { name: webhook.current.name });
+            default:
+                return i18nKey("webhook.registerTitle");
         }
     });
 
@@ -71,7 +72,7 @@
                             avatarUrl: success.avatarUrl,
                         };
                         webhook.original = { ...webhook.current };
-                        mode = { kind: "update", webhook: webhook.original };
+                        step = "registered";
                     }
                 })
                 .finally(() => (busy = false));
@@ -162,10 +163,12 @@
                 <Legend
                     required
                     label={i18nKey("webhook.nameLabel")}
-                    rules={i18nKey("webhook.nameRules")}></Legend>
+                    rules={step !== "registered" ? i18nKey("webhook.nameRules") : undefined}
+                ></Legend>
                 <ValidatingInput
                     minlength={3}
                     maxlength={25}
+                    disabled={step === "registered"}
                     invalid={name_errors.length > 0}
                     placeholder={i18nKey("webhook.namePlaceholder")}
                     error={name_errors}
@@ -173,17 +176,19 @@
                 </ValidatingInput>
             </form>
 
-            {#if mode.kind === "update" && url !== undefined}
-                <ButtonGroup>
-                    <Button
-                        onClick={update}
-                        disabled={busyUpdate || !valid || !dirty}
-                        loading={busyUpdate}
-                        small={!ui.mobileWidth}
-                        tiny={ui.mobileWidth}>
-                        <Translatable resourceKey={i18nKey("webhook.updateAction")} />
-                    </Button>
-                </ButtonGroup>
+            {#if step !== "register" && url !== undefined}
+                {#if step === "update"}
+                    <ButtonGroup>
+                        <Button
+                            onClick={update}
+                            disabled={busyUpdate || !valid || !dirty}
+                            loading={busyUpdate}
+                            small={!ui.mobileWidth}
+                            tiny={ui.mobileWidth}>
+                            <Translatable resourceKey={i18nKey("webhook.updateAction")} />
+                        </Button>
+                    </ButtonGroup>
+                {/if}
                 <hr />
                 <div class="url">
                     <div class="title">
@@ -200,27 +205,24 @@
     {#snippet footer()}
         <div class="footer">
             <ButtonGroup>
-                <Button
-                    secondary={mode.kind === "register"}
-                    small={!ui.mobileWidth}
-                    tiny={ui.mobileWidth}
-                    onClick={onClose}>
+                <Button secondary small={!ui.mobileWidth} tiny={ui.mobileWidth} onClick={onClose}>
                     <Translatable
-                        resourceKey={mode.kind === "update"
+                        resourceKey={step !== "register" && !dirty
                             ? i18nKey("close")
                             : i18nKey("cancel")} />
                 </Button>
                 <Button
-                    secondary={mode.kind === "update"}
-                    onClick={mode.kind === "update" ? regenerate : register}
-                    disabled={busy || (mode.kind === "register" && (!valid || !dirty))}
+                    onClick={step === "update" ? regenerate : step === "register" ? register : copy}
+                    disabled={busy || (step === "register" && (!valid || !dirty))}
                     loading={busy}
                     small={!ui.mobileWidth}
                     tiny={ui.mobileWidth}>
                     <Translatable
-                        resourceKey={mode.kind === "update"
+                        resourceKey={step === "update"
                             ? i18nKey("webhook.regenerateAction")
-                            : i18nKey("webhook.registerAction")} />
+                            : step === "register"
+                              ? i18nKey("webhook.registerAction")
+                              : i18nKey("copy")} />
                 </Button>
             </ButtonGroup>
         </div>
