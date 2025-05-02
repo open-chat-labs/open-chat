@@ -7,6 +7,7 @@ import type {
     EventWrapper,
     ExpiredEventsRange,
     MessageContext,
+    ThreadIdentifier,
     ThreadSyncDetails,
 } from "openchat-shared";
 import { chatIdentifiersEqual, ChatMap, compareChats, messageContextsEqual } from "openchat-shared";
@@ -372,8 +373,8 @@ function isContiguousInternal(
     return isContiguous;
 }
 
-export function isContiguousInThread(context: MessageContext, events: EventWrapper<ChatEvent>[]): boolean {
-    return messageContextsEqual(context, app.selectedMessageContext)
+export function isContiguousInThread(threadId: ThreadIdentifier, events: EventWrapper<ChatEvent>[]): boolean {
+    return messageContextsEqual(threadId, app.selectedChat?.selectedThread?.id)
         && isContiguousInternal(app.selectedChat.confirmedThreadEventIndexesLoaded, events, []);
 }
 

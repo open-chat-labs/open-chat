@@ -76,6 +76,10 @@ export class ChatDetailsMergedState {
         this.#server?.updateEvents(chatId, fn);
     }
 
+    get selectedThread() {
+        return this.#server?.selectedThread
+    }
+
     setSelectedThread(id: ThreadIdentifier) {
         this.#server?.setSelectedThread(id);
     }

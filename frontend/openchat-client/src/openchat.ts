@@ -3577,7 +3577,7 @@ export class OpenChat {
                     }
                 }
             }
-        } else if (isContiguousInThread(context, newEvents)) {
+        } else if (isContiguousInThread({ chatId, threadRootMessageIndex }, newEvents)) {
             app.updateServerThreadEvents({ chatId, threadRootMessageIndex }, (events) =>
                 mergeServerEvents(events, newEvents, context),
             );
