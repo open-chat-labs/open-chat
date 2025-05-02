@@ -3600,7 +3600,7 @@ export class OpenChat {
         }
 
         if (expiredEventRanges.length > 0) {
-            app.updateServerExpiredEventRanges((ranges) => {
+            app.updateServerExpiredEventRanges(chatId, (ranges) => {
                 const merged = new DRange();
                 merged.add(ranges);
                 expiredEventRanges.forEach((r) => merged.add(r.start, r.end));

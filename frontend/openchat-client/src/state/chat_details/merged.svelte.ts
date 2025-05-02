@@ -87,8 +87,8 @@ export class ChatDetailsMergedState {
         this.#server?.updateThreadEvents(id, fn);
     }
 
-    updateServerExpiredEventRanges(fn: (existing: DRange) => DRange) {
-        this.#server?.updateExpiredEventRanges(fn);
+    updateServerExpiredEventRanges(chatId: ChatIdentifier, fn: (existing: DRange) => DRange) {
+        this.#server?.updateExpiredEventRanges(chatId, fn);
     }
 
     clearServerEvents() {

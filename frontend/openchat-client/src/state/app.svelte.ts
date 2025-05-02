@@ -594,8 +594,8 @@ export class AppState {
         this.#selectedChat.updateServerEvents(chatId, fn);
     }
 
-    updateServerExpiredEventRanges(fn: (existing: DRange) => DRange) {
-        this.#selectedChat.updateServerExpiredEventRanges(fn);
+    updateServerExpiredEventRanges(chatId: ChatIdentifier, fn: (existing: DRange) => DRange) {
+        this.#selectedChat.updateServerExpiredEventRanges(chatId, fn);
     }
 
     clearServerEvents() {
