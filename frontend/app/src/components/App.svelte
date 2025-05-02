@@ -28,7 +28,6 @@
         type DiamondMembershipFees,
         OpenChat,
         type UpdateMarketMakerConfigArgs,
-        anonUser,
         app,
         botState,
         inititaliseLogger,
@@ -107,7 +106,7 @@
     let landingPageRoute = $derived(isLandingPageRoute(pathState.route));
     let homeRoute = $derived(pathState.route.kind === "home_route");
     let showLandingPage = $derived(
-        landingPageRoute || (homeRoute && app.identityState.kind === "anon" && $anonUser),
+        landingPageRoute || (homeRoute && app.identityState.kind === "anon" && app.anonUser),
     );
     let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
     let burstPath = $derived(
@@ -406,14 +405,21 @@
         });
     }
 
-    function setAirdropConfig(channelId: number, channelName: string, communityId?: string, communityName?: string): void {
-        client.setAirdropConfig(channelId, channelName, communityId, communityName).then((success) => {
-            if (success) {
-                console.log("Airdrop config set");
-            } else {
-                console.log("Failed to set airdrop config");
-            }
-        });
+    function setAirdropConfig(
+        channelId: number,
+        channelName: string,
+        communityId?: string,
+        communityName?: string,
+    ): void {
+        client
+            .setAirdropConfig(channelId, channelName, communityId, communityName)
+            .then((success) => {
+                if (success) {
+                    console.log("Airdrop config set");
+                } else {
+                    console.log("Failed to set airdrop config");
+                }
+            });
     }
 
     function setDiamondMembershipFees(fees: DiamondMembershipFees[]): void {

@@ -6,7 +6,6 @@
         chatIdentifiersEqual,
         publish,
         selectedChatStore as selectedChat,
-        currentUser as user,
         userStore,
         type VideoCallContent,
     } from "openchat-client";
@@ -37,7 +36,8 @@
     );
     let endedDate = $derived(content.ended ? new Date(Number(content.ended)) : undefined);
     let missed = $derived(
-        content.ended && content.participants.find((p) => p.userId === $user.userId) === undefined,
+        content.ended &&
+            content.participants.find((p) => p.userId === app.currentUserId) === undefined,
     );
     let duration = $derived(
         content.ended !== undefined && timestamp !== undefined

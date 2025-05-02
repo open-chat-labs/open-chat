@@ -1,21 +1,21 @@
 <script lang="ts">
     import {
-        type BotInstallationLocation,
+        app,
+        type ChatSummary,
+        type CommunitySummary,
+        type ExternalBotPermissions,
+        type OpenChat,
+        type PublicApiKeyDetails,
+    } from "openchat-client";
+    import {
         flattenCommandPermissions,
+        type BotInstallationLocation,
         type BotSummaryMode,
         type ExternalBot,
         type Level,
     } from "openchat-shared";
-    import { i18nKey } from "../../i18n/i18n";
-    import {
-        type OpenChat,
-        type ExternalBotPermissions,
-        type CommunitySummary,
-        type PublicApiKeyDetails,
-        type ChatSummary,
-        currentUser,
-    } from "openchat-client";
     import { getContext, type Snippet } from "svelte";
+    import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
     import BotSummary from "./BotSummary.svelte";
 
@@ -55,7 +55,7 @@
             case "channel":
                 return { kind: "community", communityId: collection.id.communityId };
             case "direct_chat":
-                return { kind: "direct_chat", userId: $currentUser.userId };
+                return { kind: "direct_chat", userId: app.currentUserId };
             case "group_chat":
                 return collection.id;
             case "community":

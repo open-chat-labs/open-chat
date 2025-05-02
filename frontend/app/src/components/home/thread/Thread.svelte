@@ -24,7 +24,6 @@
         threadEvents,
         threadsFollowedByMeStore,
         unconfirmed,
-        currentUser as user,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -89,7 +88,7 @@
     let timeline = $derived(
         client.groupEvents(
             [...events].reverse(),
-            $user.userId,
+            app.currentUserId,
             app.selectedChat.expandedDeletedMessages,
         ) as TimelineItem<Message>[],
     );
@@ -206,11 +205,11 @@
     }
 
     function onStartTyping() {
-        client.startTyping(chat, $user.userId, threadRootMessageIndex);
+        client.startTyping(chat, app.currentUserId, threadRootMessageIndex);
     }
 
     function onStopTyping() {
-        client.stopTyping(chat, $user.userId, threadRootMessageIndex);
+        client.stopTyping(chat, app.currentUserId, threadRootMessageIndex);
     }
 
     function onFileSelected(content: AttachmentContent) {
@@ -380,7 +379,7 @@
                                 event={evt}
                                 first={i + 1 === userGroup.length}
                                 last={i === 0}
-                                me={evt.event.sender === $user.userId}
+                                me={evt.event.sender === app.currentUserId}
                                 accepted={isAccepted($unconfirmed, evt)}
                                 confirmed={isConfirmed($unconfirmed, evt)}
                                 failed={isFailed($failedMessagesStore, evt)}
@@ -428,7 +427,7 @@
         {editingEvent}
         {replyingTo}
         {textContent}
-        user={$user}
+        user={app.currentUser}
         joining={undefined}
         preview={false}
         lapsed={false}

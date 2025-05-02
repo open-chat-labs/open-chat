@@ -1,10 +1,10 @@
 <script lang="ts">
     import BotPublisher from "@src/components/bots/BotPublisher.svelte";
     import {
+        app,
         cryptoBalance as cryptoBalanceStore,
         routeForChatIdentifier,
         ui,
-        currentUser as user,
         type CandidateProposalAction,
         type MultiUserChat,
         type NervousSystemDetails,
@@ -217,7 +217,7 @@
                     functionId: BigInt(7000),
                     payload: createAddTokenPayload(
                         addOrUpdateTokenLedgerCanisterId,
-                        $user.userId,
+                        app.currentUserId,
                         addOrUpdateTokenInfoUrl,
                         addOrUpdateTokenTransactionUrlFormat,
                     ),
@@ -242,7 +242,7 @@
                     functionId: BigInt(1012),
                     payload: createRegisterExternalAchievementPayload(
                         random32(),
-                        $user.userId,
+                        app.currentUserId,
                         achivementName,
                         achievementUrl,
                         logo,
@@ -321,7 +321,7 @@
 
         return `${summary}
 
-> Submitted by [@${$user.username}](https://oc.app/user/${$user.userId}) on [OpenChat](https://oc.app${groupPath})`;
+> Submitted by [@${app.currentUser.username}](https://oc.app/user/${app.currentUserId}) on [OpenChat](https://oc.app${groupPath})`;
     }
 
     function isLogoValid(logo: string): boolean {

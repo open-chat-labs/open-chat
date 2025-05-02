@@ -1,17 +1,17 @@
 <script lang="ts">
-    import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
-    import Checkbox from "../Checkbox.svelte";
     import {
-        type OpenChat,
         type CandidateGroupChat,
         type CommunitySummary,
-        isDiamond,
+        type OpenChat,
+        app,
         publish,
     } from "openchat-client";
-    import Radio from "../Radio.svelte";
     import { getContext } from "svelte";
+    import { i18nKey } from "../../i18n/i18n";
     import Button from "../Button.svelte";
+    import Checkbox from "../Checkbox.svelte";
+    import Radio from "../Radio.svelte";
+    import Translatable from "../Translatable.svelte";
     import DurationPicker from "./DurationPicker.svelte";
     import AccessGateControl from "./access/AccessGateControl.svelte";
 
@@ -41,7 +41,7 @@
         candidate.kind === "candidate_group_chat" && candidate.eventsTTL !== undefined,
     );
 
-    let requiresUpgrade = $derived(!editing && !$isDiamond && candidate.level !== "channel");
+    let requiresUpgrade = $derived(!editing && !app.isDiamond && candidate.level !== "channel");
     let canChangeVisibility = $derived(!editing ? client.canChangeVisibility(candidate) : true);
 
     function gateUpdated() {

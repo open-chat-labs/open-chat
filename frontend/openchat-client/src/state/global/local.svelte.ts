@@ -30,6 +30,7 @@ import {
     ReactiveChatMap,
     ReactiveCommunityMap,
 } from "../map";
+import { messageLocalUpdates } from "../message/local.svelte";
 import { LocalSet } from "../set";
 import { scheduleUndo, type UndoLocalUpdate } from "../undo";
 
@@ -343,6 +344,11 @@ export class GlobalLocalState {
 
     updateChatFrozen(id: ChatIdentifier, frozen: boolean): UndoLocalUpdate {
         return chatDetailsLocalUpdates.updateFrozen(id, frozen);
+    }
+
+    // message updates
+    markMessageContentEdited(msg: Message): UndoLocalUpdate {
+        return messageLocalUpdates.markContentEdited(msg);
     }
 }
 

@@ -311,3 +311,7 @@ export function communityIdentifiersEqual(
     if (a === undefined || b === undefined) return false;
     return a.communityId === b.communityId;
 }
+
+export type CommunityFilter = {
+    languages: Set<string>;
+};

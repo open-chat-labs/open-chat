@@ -8,7 +8,6 @@
         OpenChat,
         selectedChatStore as selectedChat,
         ui,
-        currentUser as user,
         userStore,
         type AccessTokenType,
         type ChatIdentifier,
@@ -146,7 +145,7 @@
                     height: "100%",
                 },
                 url: `https://openchat.daily.co/${roomName}`,
-                userName: $user.username,
+                userName: app.currentUser.username,
                 theme: getThemeConfig($currentTheme),
             });
 
@@ -159,14 +158,14 @@
                     }
                     if (ev.data.kind === "demote_participant") {
                         const me = call?.participants().local.session_id;
-                        if (ev.data.participantId === me && $user.userId === ev.data.userId) {
+                        if (ev.data.participantId === me && app.currentUserId === ev.data.userId) {
                             askedToSpeak = false;
                             client.setVideoCallPresence(chat.id, BigInt(messageId), "hidden");
                         }
                     }
                     if (ev.data.kind === "ask_to_speak_response") {
                         const me = call?.participants().local.session_id;
-                        if (ev.data.participantId === me && $user.userId === ev.data.userId) {
+                        if (ev.data.participantId === me && app.currentUserId === ev.data.userId) {
                             askedToSpeak = false;
                             denied = !ev.data.approved;
                             if (ev.data.approved) {
@@ -208,7 +207,7 @@
                     sharing.set(ev?.participant.tracks.screenVideo.state !== "off");
                     hasPresence.set(ev?.participant.permissions.hasPresence);
                 } else {
-                    if (ev?.participant.user_name === $user.username) {
+                    if (ev?.participant.user_name === app.currentUser.username) {
                         // this means that I have joined the call from somewhere else e.g. another device
                         hangup();
                     }
@@ -277,7 +276,7 @@
     }
 
     export function askToSpeak() {
-        activeVideoCall.askToSpeak($user.userId);
+        activeVideoCall.askToSpeak(app.currentUserId);
         askedToSpeak = true;
     }
 

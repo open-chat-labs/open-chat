@@ -33,7 +33,7 @@ import { safeWritable } from "./safeWritable";
 import { snsFunctions } from "./snsFunctions";
 import { translationStore } from "./translation";
 import { unconfirmed } from "./unconfirmed";
-import { currentUser, currentUserIdStore, suspendedUsers } from "./user";
+import { suspendedUsers } from "./user";
 
 // TODO - this will be synced from the Svelte5 rune for now and ultimately removed
 export const selectedChatId = writable<ChatIdentifier | undefined>(undefined);
@@ -69,35 +69,24 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
     [
         dummyScopedChats,
         unconfirmed,
-        currentUser,
         localMessageUpdates,
         translationStore,
         currentChatBlockedOrSuspendedUsers,
-        currentUserIdStore,
         messageFiltersStore,
     ],
-    ([
-        _,
-        unconfirmed,
-        currentUser,
-        localUpdates,
-        translations,
-        blockedOrSuspendedUsers,
-        $currentUserId,
-        $messageFilters,
-    ]) => {
+    ([_, unconfirmed, localUpdates, translations, blockedOrSuspendedUsers, $messageFilters]) => {
         return app.scopedChats.reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
             result.set(
                 chatId,
                 mergeUnconfirmedIntoSummary(
                     (k) => k,
-                    currentUser.userId,
+                    app.currentUserId,
                     summary,
                     unconfirmed,
                     localUpdates,
                     translations,
                     blockedOrSuspendedUsers,
-                    $currentUserId,
+                    app.currentUserId,
                     $messageFilters,
                 ),
             );
@@ -259,7 +248,6 @@ export const threadEvents = derived(
         proposalTallies,
         translationStore,
         currentChatBlockedOrSuspendedUsers,
-        currentUserIdStore,
         messageFiltersStore,
         recentlySentMessagesStore,
         ephemeralMessages,
@@ -273,7 +261,6 @@ export const threadEvents = derived(
         $proposalTallies,
         $translationStore,
         $blockedOrSuspendedUsers,
-        $currentUserId,
         $messageFilters,
         $recentlySentMessagesStore,
         $ephemeralMessages,
@@ -294,7 +281,7 @@ export const threadEvents = derived(
             $proposalTallies,
             $translationStore,
             $blockedOrSuspendedUsers,
-            $currentUserId,
+            app.currentUserId,
             $messageFilters,
             $recentlySentMessagesStore,
         );
@@ -321,7 +308,6 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         proposalTallies,
         translationStore,
         currentChatBlockedOrSuspendedUsers,
-        currentUserIdStore,
         messageFiltersStore,
         recentlySentMessagesStore,
         ephemeralMessages,
@@ -335,7 +321,6 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         $proposalTallies,
         $translationStore,
         $blockedOrSuspendedUsers,
-        $currentUserId,
         $messageFilters,
         $recentlySentMessagesStore,
         $ephemeralMessages,
@@ -354,7 +339,7 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
             $proposalTallies,
             $translationStore,
             $blockedOrSuspendedUsers,
-            $currentUserId,
+            app.currentUserId,
             $messageFilters,
             $recentlySentMessagesStore,
         );

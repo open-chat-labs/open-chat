@@ -1,5 +1,4 @@
 <script lang="ts">
-    import Button from "../Button.svelte";
     import type {
         AcceptP2PSwapResponse,
         CancelP2PSwapResponse,
@@ -9,29 +8,29 @@
         ResourceKey,
     } from "openchat-client";
     import {
-        currentUser as user,
+        app,
         cryptoLookup,
-        isDiamond,
         exchangeRatesLookupStore as exchangeRatesLookup,
         publish,
     } from "openchat-client";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Clock from "svelte-material-icons/Clock.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
     import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
-    import { getContext } from "svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
     import { rtlStore } from "../../stores/rtl";
     import { now500 } from "../../stores/time";
-    import SpinningToken from "../icons/SpinningToken.svelte";
     import { toastStore } from "../../stores/toast";
-    import AreYouSure from "../AreYouSure.svelte";
-    import { i18nKey } from "../../i18n/i18n";
-    import Markdown from "./Markdown.svelte";
-    import AcceptP2PSwapModal from "./AcceptP2PSwapModal.svelte";
-    import Translatable from "../Translatable.svelte";
     import { calculateDollarAmount } from "../../utils/exchange";
+    import AreYouSure from "../AreYouSure.svelte";
+    import Button from "../Button.svelte";
+    import ButtonGroup from "../ButtonGroup.svelte";
+    import SpinningToken from "../icons/SpinningToken.svelte";
+    import Translatable from "../Translatable.svelte";
+    import AcceptP2PSwapModal from "./AcceptP2PSwapModal.svelte";
+    import Markdown from "./Markdown.svelte";
     import P2PSwapProgress from "./P2PSwapProgress.svelte";
-    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
 
     const client = getContext<OpenChat>("client");
 
@@ -60,10 +59,10 @@
     );
     let acceptedByYou = $derived(
         (content.status.kind === "p2p_swap_reserved" &&
-            content.status.reservedBy === $user.userId) ||
+            content.status.reservedBy === app.currentUserId) ||
             ((content.status.kind === "p2p_swap_accepted" ||
                 content.status.kind === "p2p_swap_completed") &&
-                content.status.acceptedBy === $user.userId),
+                content.status.acceptedBy === app.currentUserId),
     );
 
     let fromAmount = $derived(client.formatTokens(content.token0Amount, content.token0.decimals));
@@ -151,7 +150,7 @@
 
     function onAcceptOrCancel(e: MouseEvent) {
         if (e.isTrusted && !buttonDisabled) {
-            if (!me && !$isDiamond) {
+            if (!me && !app.isDiamond) {
                 publish("upgrade");
             } else {
                 confirming = true;

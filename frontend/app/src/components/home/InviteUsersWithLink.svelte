@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        app,
         type CommunityIdentifier,
         type CommunitySummary,
         type MultiUserChat,
@@ -8,7 +9,6 @@
         type ResourceKey,
         routeForChatIdentifier,
         ui,
-        currentUser as user,
     } from "openchat-client";
     import { ErrorCode } from "openchat-shared";
     import { getContext, onMount } from "svelte";
@@ -46,7 +46,7 @@
     let confirmReset = $state(false);
 
     function getLink(id: CommunityIdentifier | MultiUserChatIdentifier, code: string | undefined) {
-        const qs = `/?ref=${$user.userId}` + (!container.public ? `&code=${code}` : "");
+        const qs = `/?ref=${app.currentUserId}` + (!container.public ? `&code=${code}` : "");
         switch (id.kind) {
             case "community":
                 return `${window.location.origin}/community/${id.communityId}${qs}`;
@@ -71,7 +71,10 @@
                     ready = true;
                     checked = resp.code !== undefined;
                     code = resp.code;
-                } else if (resp.kind === "error" && resp.code === ErrorCode.InitiatorNotAuthorized) {
+                } else if (
+                    resp.kind === "error" &&
+                    resp.code === ErrorCode.InitiatorNotAuthorized
+                ) {
                     error = unauthorized;
                     client.logMessage("Unauthorized response calling getInviteCode");
                 } else {

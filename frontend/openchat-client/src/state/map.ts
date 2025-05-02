@@ -76,6 +76,16 @@ export class ReactiveCommunityMap<V> extends SafeMap<CommunityIdentifier, V> {
     }
 }
 
+export class ReactiveMessageMap<V> extends SafeMap<bigint, V> {
+    constructor() {
+        super(
+            (k) => k.toString(),
+            (k) => BigInt(k),
+            () => new SvelteMap(),
+        );
+    }
+}
+
 export class ReactiveChatMap<V> extends SafeMap<ChatIdentifier, V> {
     constructor() {
         super(

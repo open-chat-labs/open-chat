@@ -21,7 +21,6 @@
         routeForChatIdentifier,
         ui,
         unconfirmed,
-        currentUser as user,
     } from "openchat-client";
     import page from "page";
     import { getContext, untrack } from "svelte";
@@ -146,10 +145,10 @@
 
     function isMe(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            return evt.event.sender === $user.userId;
+            return evt.event.sender === app.currentUserId;
         }
         if (evt.event.kind === "group_chat_created") {
-            return evt.event.created_by === $user.userId;
+            return evt.event.created_by === app.currentUserId;
         }
         return false;
     }
@@ -256,7 +255,7 @@
     let timeline = $derived(
         client.groupEvents(
             [...$eventsStore].reverse(),
-            $user.userId,
+            app.currentUserId,
             app.selectedChat.expandedDeletedMessages,
             groupInner(filteredProposals),
         ),

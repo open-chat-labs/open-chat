@@ -6,7 +6,6 @@
         OpenChat,
         routeForMessageContext,
         ui,
-        currentUser as user,
         userStore,
         type MessageContext,
     } from "openchat-client";
@@ -67,7 +66,7 @@
         if (ev.message === undefined) return new Set();
         return new Set(
             ev.message.reactions.flatMap((r) =>
-                [...r.userIds].filter((u) => u !== ev.userId && u !== userId),
+                [...r.userIds].filter((u) => u !== ev.userId && u !== app.currentUserId),
             ),
         );
     }
@@ -109,7 +108,7 @@
                 const u = [...others][0];
                 return i18nKey(`activity.${root}Two`, {
                     username,
-                    other: buildDisplayName($userStore, u, u === userId),
+                    other: buildDisplayName($userStore, u, u === app.currentUserId),
                 });
             default:
                 return i18nKey(`activity.${root}N`, { username, n: others.size });
@@ -150,16 +149,19 @@
         ui.activityFeedShowing = false;
         page(routeForMessageContext("none", event.messageContext, true));
     }
-    let userId = $derived($user.userId);
     let sender = $derived(event.userId ? $userStore.get(event.userId) : undefined);
     let eventUsername = $derived(
         event.userId
-            ? buildDisplayName($userStore, event.userId, event.userId === userId)
+            ? buildDisplayName($userStore, event.userId, event.userId === app.currentUserId)
             : $_("activity.anon"),
     );
     let messageUsername = $derived(
         event.message
-            ? buildDisplayName($userStore, event.message.sender, event.message.sender === userId)
+            ? buildDisplayName(
+                  $userStore,
+                  event.message.sender,
+                  event.message.sender === app.currentUserId,
+              )
             : $_("activity.anon"),
     );
     let lastMessage = $derived(formatLatestMessage(event, messageUsername));

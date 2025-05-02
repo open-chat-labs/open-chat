@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import type { CryptocurrencyContent, OpenChat } from "openchat-client";
-    import { currentUser as user, cryptoLookup } from "openchat-client";
-    import Markdown from "./Markdown.svelte";
+    import { app, cryptoLookup } from "openchat-client";
     import { getContext } from "svelte";
-    import Translatable from "../Translatable.svelte";
+    import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
+    import Markdown from "./Markdown.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -20,7 +20,7 @@
 
     let logo = $derived($cryptoLookup[content.transfer.ledger].logo);
     let transferText = $derived(
-        client.buildCryptoTransferText($_, $user.userId, senderId, content, me),
+        client.buildCryptoTransferText($_, app.currentUserId, senderId, content, me),
     );
     let transactionLinkText = $derived(client.buildTransactionLink($_, content.transfer));
 </script>

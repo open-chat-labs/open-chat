@@ -315,7 +315,6 @@ import {
     toggleProposalFilter,
     toggleProposalFilterMessageExpansion,
 } from "./stores/filteredProposals";
-import { hasFlag } from "./stores/flagStore";
 import { applyTranslationCorrection } from "./stores/i18n";
 import { lastOnlineDates } from "./stores/lastOnlineDates";
 import { localMessageUpdates } from "./stores/localMessageUpdates";
@@ -344,7 +343,6 @@ import { undeletingMessagesStore } from "./stores/undeletingMessages";
 import {
     airdropBotUser,
     anonymousUserSummary,
-    currentUser,
     openChatBotUser,
     proposalsBotUser,
     specialUsers,
@@ -633,10 +631,7 @@ export class OpenChat {
         if (serverChat === undefined) return;
         // The chat summary has been updated which means the latest message may be new
         const latestMessage = serverChat.latestMessage;
-        if (
-            latestMessage !== undefined &&
-            latestMessage.event.sender !== this.#liveState.user.userId
-        ) {
+        if (latestMessage !== undefined && latestMessage.event.sender !== app.currentUserId) {
             this.#handleConfirmedMessageSentByOther(serverChat, latestMessage, undefined);
         }
 
@@ -659,7 +654,7 @@ export class OpenChat {
     }
 
     async #loadedAuthenticationIdentity(id: Identity, authProvider: AuthProvider | undefined) {
-        currentUser.set(anonymousUser());
+        app.setCurrentUser(anonymousUser());
         app.chatsInitialised = false;
         const anon = id.getPrincipal().isAnonymous();
         const authPrincipal = id.getPrincipal().toString();
@@ -858,7 +853,7 @@ export class OpenChat {
         const user = this.#liveState.userStore.get(userId);
         if (user === undefined || user.kind === "bot") return false;
 
-        if (userId === this.#liveState.user.userId) return this.#liveState.isDiamond;
+        if (userId === app.currentUserId) return this.#liveState.isDiamond;
 
         return user.diamondStatus !== "inactive";
     }
@@ -867,7 +862,7 @@ export class OpenChat {
         const user = this.#liveState.userStore.get(userId);
         if (user === undefined || user.kind === "bot") return false;
 
-        if (userId === this.#liveState.user.userId) return this.#liveState.isLifetimeDiamond;
+        if (userId === app.currentUserId) return this.#liveState.isLifetimeDiamond;
 
         return user.diamondStatus === "lifetime";
     }
@@ -930,7 +925,7 @@ export class OpenChat {
     }
 
     onCreatedUser(user: CreatedUser): void {
-        currentUser.set(user);
+        app.setCurrentUser(user);
         this.#setDiamondStatus(user.diamondStatus);
         initialiseMostRecentSentMessageTimes(this.#liveState.isDiamond);
         const id = this.#ocIdentity;
@@ -1101,7 +1096,7 @@ export class OpenChat {
                 kind: "remote_user_read_message",
                 messageId: messageId,
                 id: selectedChat.id,
-                userId: this.#liveState.user.userId,
+                userId: app.currentUserId,
             };
             this.#sendRtcMessage([selectedChat.id.userId], rtc);
         }
@@ -1124,13 +1119,11 @@ export class OpenChat {
     }
 
     #initWebRtc(): void {
-        rtcConnectionsManager
-            .init(this.#liveState.user.userId, this.config.meteredApiKey)
-            .then((_) => {
-                rtcConnectionsManager.subscribe((msg) =>
-                    this.#handleWebRtcMessage(msg as WebRtcMessage),
-                );
-            });
+        rtcConnectionsManager.init(app.currentUserId, this.config.meteredApiKey).then((_) => {
+            rtcConnectionsManager.subscribe((msg) =>
+                this.#handleWebRtcMessage(msg as WebRtcMessage),
+            );
+        });
     }
 
     previewChat(chatId: MultiUserChatIdentifier): Promise<Success | Failure | GroupMoved> {
@@ -1302,7 +1295,7 @@ export class OpenChat {
     }
 
     setUserAvatar(data: Uint8Array, url: string): Promise<boolean> {
-        const partialUser = this.#liveState.userStore.get(this.#liveState.user.userId);
+        const partialUser = this.#liveState.userStore.get(app.currentUserId);
         if (partialUser) {
             userStore.add({
                 ...partialUser,
@@ -1607,7 +1600,7 @@ export class OpenChat {
             newAchievement,
         }).then((resp) => {
             if (resp.kind === "success") {
-                const userId = this.#liveState.user.userId;
+                const userId = app.currentUserId;
                 if (userId !== undefined) {
                     const m = app.selectedCommunity.members.get(userId);
                     if (m !== undefined) {
@@ -1784,7 +1777,7 @@ export class OpenChat {
                     return false;
                 }
             } else {
-                return canSendGroupMessage(this.#liveState.user, chat, mode, permission);
+                return canSendGroupMessage(app.currentUser, chat, mode, permission);
             }
         });
     }
@@ -1806,7 +1799,7 @@ export class OpenChat {
                     );
                 }
             } else {
-                return permittedMessagesInGroup(this.#liveState.user, chat, mode);
+                return permittedMessagesInGroup(app.currentUser, chat, mode);
             }
         }
 
@@ -2090,12 +2083,10 @@ export class OpenChat {
         answerIdx: number,
         type: "register" | "delete",
     ): Promise<boolean> {
-        const userId = this.#liveState.user.userId;
-
         localMessageUpdates.markPollVote(messageId, {
             answerIndex: answerIdx,
             type,
-            userId,
+            userId: app.currentUserId,
         });
 
         const newAchievement = !app.achievements.has("voted_on_poll");
@@ -2125,7 +2116,7 @@ export class OpenChat {
             return Promise.resolve(false);
         }
 
-        const userId = this.#liveState.user.userId;
+        const userId = app.currentUserId;
         localMessageUpdates.markDeleted(messageId, userId);
         undeletingMessagesStore.delete(messageId);
 
@@ -2439,7 +2430,7 @@ export class OpenChat {
 
         if (!this.#liveState.offlineStore) {
             makeRtcConnections(
-                this.#liveState.user.userId,
+                app.currentUserId,
                 chat,
                 resp.events,
                 this.#liveState.userStore,
@@ -2472,7 +2463,7 @@ export class OpenChat {
     }
 
     async #updateUserStoreFromEvents(events: EventWrapper<ChatEvent>[]): Promise<void> {
-        const userId = this.#liveState.user.userId;
+        const userId = app.currentUserId;
         const allUserIds = new Set<string>();
         this.#getTruncatedUserIdsFromMembers([...app.selectedChat.members.values()]).forEach((m) =>
             allUserIds.add(m.userId),
@@ -2880,7 +2871,7 @@ export class OpenChat {
 
             if (!this.#liveState.offlineStore) {
                 makeRtcConnections(
-                    this.#liveState.user.userId,
+                    app.currentUserId,
                     chat,
                     this.#liveState.threadEvents,
                     this.#liveState.userStore,
@@ -3239,7 +3230,7 @@ export class OpenChat {
                 await this.#updateUserStoreFromEvents([]);
                 break;
             case "direct_chat":
-                app.setDirectChatDetails(serverChat.id, this.#liveState.user.userId);
+                app.setDirectChatDetails(serverChat.id, app.currentUserId);
                 break;
         }
     }
@@ -3450,7 +3441,7 @@ export class OpenChat {
         userId: string,
         threadRootMessageIndex: number | undefined,
     ): void {
-        if (userId === this.#liveState.user.userId) {
+        if (userId === app.currentUserId) {
             const userIds = app.selectedChat.userIds;
             rtcConnectionsManager.sendMessage([...userIds], {
                 kind: "remote_user_removed_message",
@@ -3501,7 +3492,7 @@ export class OpenChat {
         }
 
         const context = { chatId, threadRootMessageIndex };
-        const myUserId = this.#liveState.user.userId;
+        const myUserId = app.currentUserId;
         const now = BigInt(Date.now());
         const recentlyActiveCutOff = now - BigInt(12 * ONE_HOUR);
 
@@ -3618,7 +3609,7 @@ export class OpenChat {
             kind: "remote_user_sent_message",
             id: clientChat.id,
             messageEvent: serialiseMessageForRtc(messageEvent),
-            userId: this.#liveState.user.userId,
+            userId: app.currentUserId,
             threadRootMessageIndex,
         });
     }
@@ -3726,7 +3717,7 @@ export class OpenChat {
                     kind: "sendMessage",
                     chatType: chat.kind,
                     messageContext,
-                    user: this.#liveState.user,
+                    user: app.currentUser,
                     mentioned,
                     event: eventWrapper,
                     acceptedRules,
@@ -3998,7 +3989,7 @@ export class OpenChat {
         const msg = msgFn
             ? msgFn(nextMessageIndex)
             : this.#createMessage(
-                  this.#liveState.user.userId,
+                  app.currentUserId,
                   nextMessageIndex,
                   content,
                   blockLevelMarkdown,
@@ -4058,7 +4049,7 @@ export class OpenChat {
         canRetry: boolean,
         response?: SendMessageResponse,
     ) {
-        this.#removeMessage(chatId, messageId, this.#liveState.user.userId, threadRootMessageIndex);
+        this.#removeMessage(chatId, messageId, app.currentUserId, threadRootMessageIndex);
 
         if (canRetry) {
             failedMessagesStore.add({ chatId, threadRootMessageIndex }, event);
@@ -4326,7 +4317,7 @@ export class OpenChat {
                             "remoteVideoCallStarted",
                             remoteVideoCallStartedEvent(
                                 chatId,
-                                this.#liveState.user.userId,
+                                app.currentUserId,
                                 ev.event as Message<VideoCallContent>,
                                 ev.timestamp,
                             ),
@@ -4413,11 +4404,11 @@ export class OpenChat {
                 : gate.gates.some((g) => this.doesUserMeetAccessGate(g));
         } else {
             if (gate.kind === "diamond_gate") {
-                return this.#liveState.user.diamondStatus.kind !== "inactive";
+                return app.currentUser.diamondStatus.kind !== "inactive";
             } else if (gate.kind === "lifetime_diamond_gate") {
-                return this.#liveState.user.diamondStatus.kind === "lifetime";
+                return app.currentUser.diamondStatus.kind === "lifetime";
             } else if (gate.kind === "unique_person_gate") {
-                return this.#liveState.user.isUniquePerson;
+                return app.currentUser.isUniquePerson;
             } else {
                 return false;
             }
@@ -4845,7 +4836,7 @@ export class OpenChat {
                 onResult: (user) => {
                     if (user.kind === "created_user") {
                         userCreatedStore.set(true);
-                        currentUser.set(user);
+                        app.setCurrentUser(user);
                         this.#setDiamondStatus(user.diamondStatus);
                     }
                     if (!resolved) {
@@ -4935,7 +4926,7 @@ export class OpenChat {
             kind: "inviteUsers",
             id,
             userIds,
-            callerUsername: this.#liveState.user.username,
+            callerUsername: app.currentUser.username,
         })
             .then((resp) => {
                 if (!resp) {
@@ -4979,8 +4970,8 @@ export class OpenChat {
             kind: "addMembersToChannel",
             chatId,
             userIds,
-            username: this.#liveState.user.username,
-            displayName: this.#liveState.user.displayName,
+            username: app.currentUser.username,
+            displayName: app.currentUser.displayName,
         }).catch((err) => {
             return { kind: "internal_error", error: err.toString() };
         });
@@ -5194,7 +5185,7 @@ export class OpenChat {
 
     setCommunityReferral(communityId: CommunityIdentifier, referredBy: string) {
         // make sure that we can't refer ourselves
-        if (this.#liveState.user.userId !== referredBy) {
+        if (app.currentUserId !== referredBy) {
             return this.#sendRequest({
                 kind: "setCommunityReferral",
                 communityId,
@@ -5230,7 +5221,7 @@ export class OpenChat {
     }
 
     refreshAccountBalance(ledger: string, allowCached: boolean = false): Promise<bigint> {
-        const user = this.#liveState.user;
+        const user = app.currentUser;
         if (user === undefined) {
             return Promise.resolve(0n);
         }
@@ -5288,7 +5279,7 @@ export class OpenChat {
             kind: "getAccountTransactions",
             ledgerIndex: ledgerIndex,
             fromId,
-            principal: this.#liveState.user.userId,
+            principal: app.currentUserId,
         })
             .then(async (resp) => {
                 if (resp.kind === "success") {
@@ -5373,9 +5364,11 @@ export class OpenChat {
                     userStore.setUpdated(allOtherUsers, resp.serverTimestamp);
                 }
                 if (resp.currentUser) {
-                    currentUser.update((u) => {
-                        return resp.currentUser ? updateCreatedUser(u, resp.currentUser) : u;
-                    });
+                    app.setCurrentUser(
+                        resp.currentUser
+                            ? updateCreatedUser(app.currentUser, resp.currentUser)
+                            : app.currentUser,
+                    );
                 }
                 return resp;
             })
@@ -5408,7 +5401,7 @@ export class OpenChat {
         const user = this.#liveState.userStore.get(userId);
         if (user === undefined || user.kind === "bot") return undefined;
 
-        if (userId === this.#liveState.user.userId) return now;
+        if (userId === app.currentUserId) return now;
 
         const lastOnlineCached = lastOnlineDates.get(userId, now);
 
@@ -5432,10 +5425,10 @@ export class OpenChat {
     setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
         return this.#sendRequest({ kind: "setUsername", userId, username }).then((resp) => {
             if (resp === "success") {
-                currentUser.update((user) => ({
-                    ...user,
+                app.setCurrentUser({
+                    ...app.currentUser,
                     username,
-                }));
+                });
                 this.#overwriteUserInStore(userId, (user) => ({ ...user, username }));
             }
             return resp;
@@ -5448,10 +5441,10 @@ export class OpenChat {
     ): Promise<SetDisplayNameResponse> {
         return this.#sendRequest({ kind: "setDisplayName", userId, displayName }).then((resp) => {
             if (resp === "success") {
-                currentUser.update((user) => ({
-                    ...user,
+                app.setCurrentUser({
+                    ...app.currentUser,
                     displayName,
-                }));
+                });
                 this.#overwriteUserInStore(userId, (user) => ({ ...user, displayName }));
             }
             return resp;
@@ -5730,8 +5723,19 @@ export class OpenChat {
         return this.#sendRequest({ kind: "setDiamondMembershipFees", fees }).catch(() => false);
     }
 
-    setAirdropConfig(channelId: number, channelName: string, communityId?: string, communityName?: string): Promise<boolean> {
-        return this.#sendRequest({ kind: "setAirdropConfig", channelId, channelName, communityId, communityName });
+    setAirdropConfig(
+        channelId: number,
+        channelName: string,
+        communityId?: string,
+        communityName?: string,
+    ): Promise<boolean> {
+        return this.#sendRequest({
+            kind: "setAirdropConfig",
+            channelId,
+            channelName,
+            communityId,
+            communityName,
+        });
     }
 
     setTokenEnabled(ledger: string, enabled: boolean): Promise<boolean> {
@@ -5807,7 +5811,7 @@ export class OpenChat {
             const allUsers = this.#liveState.userStore;
             const usersToUpdate = new Set<string>();
             if (!this.#liveState.anonUser) {
-                usersToUpdate.add(this.#liveState.user.userId);
+                usersToUpdate.add(app.currentUserId);
             }
 
             const tenMinsAgo = now - BigInt(10 * ONE_MINUTE_MILLIS);
@@ -5884,7 +5888,7 @@ export class OpenChat {
             if (this.#cachePrimer === undefined && !this.#liveState.anonUser) {
                 this.#cachePrimer = new CachePrimer(
                     this,
-                    this.#liveState.user.userId,
+                    app.currentUserId,
                     chatsResponse.state.userCanisterLocalUserIndex,
                 );
             }
@@ -5899,7 +5903,7 @@ export class OpenChat {
                 }
             }
             if (!this.#liveState.anonUser) {
-                userIds.add(this.#liveState.user.userId);
+                userIds.add(app.currentUserId);
             }
             await this.getMissingUsers(userIds);
 
@@ -5969,14 +5973,14 @@ export class OpenChat {
                 }
             }
 
-            const currentUser = this.#liveState.userStore.get(this.#liveState.user.userId);
+            const currentUser = this.#liveState.userStore.get(app.currentUserId);
             const avatarId = currentUser?.blobReference?.blobId;
             if (chatsResponse.state.avatarId !== avatarId) {
                 const blobReference =
                     chatsResponse.state.avatarId === undefined
                         ? undefined
                         : {
-                              canisterId: this.#liveState.user.userId,
+                              canisterId: app.currentUserId,
                               blobId: chatsResponse.state.avatarId,
                           };
                 const dataContent = {
@@ -6000,7 +6004,7 @@ export class OpenChat {
                 const latestMessage = chat.latestMessage?.event;
                 if (
                     latestMessage !== undefined &&
-                    latestMessage.sender === this.#liveState.user.userId &&
+                    latestMessage.sender === app.currentUserId &&
                     (chat.membership?.readByMeUpTo ?? -1) < latestMessage.messageIndex &&
                     !unconfirmed.contains({ chatId: chat.id }, latestMessage.messageId)
                 ) {
@@ -6172,7 +6176,7 @@ export class OpenChat {
                 if (resp.kind !== "success") {
                     return false;
                 } else {
-                    localMessageUpdates.markPrizeClaimed(messageId, this.#liveState.user.userId);
+                    localMessageUpdates.markPrizeClaimed(messageId, app.currentUserId);
                     return true;
                 }
             })
@@ -6192,7 +6196,7 @@ export class OpenChat {
 
         localMessageUpdates.setP2PSwapStatus(messageId, {
             kind: "p2p_swap_reserved",
-            reservedBy: this.#liveState.user.userId,
+            reservedBy: app.currentUserId,
         });
 
         const newAchievement = !app.achievements.has("accepted_swap_offer");
@@ -6209,7 +6213,7 @@ export class OpenChat {
                 if (resp.kind === "success") {
                     localMessageUpdates.setP2PSwapStatus(messageId, {
                         kind: "p2p_swap_accepted",
-                        acceptedBy: this.#liveState.user.userId,
+                        acceptedBy: app.currentUserId,
                         token1TxnIn: resp.token1TxnIn,
                     });
                 }
@@ -6361,7 +6365,7 @@ export class OpenChat {
     }
 
     #updateDiamondStatusInUserStore(status: DiamondMembershipStatus): void {
-        this.#overwriteUserInStore(this.#liveState.user.userId, (user) => {
+        this.#overwriteUserInStore(app.currentUserId, (user) => {
             const changed = status.kind !== user.diamondStatus;
             return changed ? { ...user, diamondStatus: status.kind } : undefined;
         });
@@ -6381,7 +6385,7 @@ export class OpenChat {
                     () => {
                         this.getCurrentUser().then((user) => {
                             if (user.kind === "created_user") {
-                                currentUser.set(user);
+                                app.setCurrentUser(user);
                             } else {
                                 this.logout();
                             }
@@ -6415,7 +6419,7 @@ export class OpenChat {
     ): Promise<PayForDiamondMembershipResponse> {
         return this.#sendRequest({
             kind: "payForDiamondMembership",
-            userId: this.#liveState.user.userId,
+            userId: app.currentUserId,
             ledger,
             duration,
             recurring,
@@ -6423,10 +6427,10 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    currentUser.update((user) => ({
-                        ...user,
+                    app.setCurrentUser({
+                        ...app.currentUser,
                         diamondStatus: resp.status,
-                    }));
+                    });
                     this.#setDiamondStatus(resp.status);
                 }
                 return resp;
@@ -6505,15 +6509,15 @@ export class OpenChat {
     }
 
     hasModerationFlag(flags: number, flag: ModerationFlag): boolean {
-        return hasFlag(flags, flag);
+        return app.hasFlag(flags, flag);
     }
 
     setModerationFlags(flags: number): Promise<number> {
-        const previousValue = this.#liveState.user.moderationFlagsEnabled;
-        currentUser.update((user) => ({
-            ...user,
+        const previousValue = app.moderationFlagsEnabled;
+        app.setCurrentUser({
+            ...app.currentUser,
             moderationFlagsEnabled: flags,
-        }));
+        });
 
         return this.#sendRequest({
             kind: "setModerationFlags",
@@ -6521,10 +6525,10 @@ export class OpenChat {
         })
             .then((resp) => (resp === "success" ? flags : previousValue))
             .catch(() => {
-                currentUser.update((user) => ({
-                    ...user,
+                app.setCurrentUser({
+                    ...app.currentUser,
                     moderationFlagsEnabled: previousValue,
-                }));
+                });
                 return previousValue;
             });
     }
@@ -6546,7 +6550,7 @@ export class OpenChat {
             pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
-        const userId = this.#liveState.user.userId;
+        const userId = app.currentUserId;
         const totalTip = transfer.amountE8s + currentTip;
         const decimals = get(cryptoLookup)[transfer.ledger].decimals;
 
@@ -6732,7 +6736,7 @@ export class OpenChat {
             case "everyone":
                 return userOrGroup;
             default:
-                return includeSelf || userOrGroup.userId !== this.#liveState.user.userId
+                return includeSelf || userOrGroup.userId !== app.currentUserId
                     ? userOrGroup
                     : undefined;
         }
@@ -6755,7 +6759,7 @@ export class OpenChat {
         return this.#sendRequest(
             {
                 kind: "submitProposal",
-                currentUserId: this.#liveState.user.userId,
+                currentUserId: app.currentUserId,
                 governanceCanisterId,
                 proposal,
                 ledger: nervousSystem.token.ledger,
@@ -6924,7 +6928,7 @@ export class OpenChat {
             throw new Error(`Unknown chat: ${chatId}`);
         }
         let userIds: string[] = [];
-        const me = this.#liveState.user.userId;
+        const me = app.currentUserId;
         if (chat !== undefined) {
             if (chat.kind === "direct_chat") {
                 userIds.push(chat.them.userId);
@@ -6935,7 +6939,7 @@ export class OpenChat {
                 await Promise.all(
                     userIds.map((id) =>
                         rtcConnectionsManager.create(
-                            this.#liveState.user.userId,
+                            app.currentUserId,
                             id,
                             this.config.meteredApiKey,
                         ),
@@ -6951,7 +6955,7 @@ export class OpenChat {
             {
                 kind: "remote_video_call_started",
                 id: chatId,
-                userId: this.#liveState.user.userId,
+                userId: app.currentUserId,
                 messageId,
             },
             chatId,
@@ -6966,11 +6970,8 @@ export class OpenChat {
         // * create the room if necessary
         // * obtain an access token for the user
         // * return it to the front end
-        const displayName = this.getDisplayName(
-            this.#liveState.user,
-            app.selectedCommunity.members,
-        );
-        const user = this.#liveState.user;
+        const displayName = this.getDisplayName(app.currentUser, app.selectedCommunity.members);
+        const user = app.currentUser;
         const username = user.username;
         const avatarId = this.#liveState.userStore.get(user.userId)?.blobReference?.blobId;
         const headers = new Headers();
@@ -7042,7 +7043,7 @@ export class OpenChat {
             case "direct_chat":
                 return this.#sendRequest({
                     kind: "getLocalUserIndexForUser",
-                    userId: flipDirect ? this.#liveState.user.userId : chat.them.userId,
+                    userId: flipDirect ? app.currentUserId : chat.them.userId,
                 });
         }
     }
@@ -7070,7 +7071,7 @@ export class OpenChat {
                 {
                     kind: "remote_video_call_ended",
                     id: chatId,
-                    userId: this.#liveState.user.userId,
+                    userId: app.currentUserId,
                     messageId,
                 },
                 chatId,
@@ -7171,7 +7172,7 @@ export class OpenChat {
     async #updateBtcBalance(address: string): Promise<void> {
         await this.#sendRequest({
             kind: "updateBtcBalance",
-            userId: this.#liveState.user.userId,
+            userId: app.currentUserId,
             bitcoinAddress: address,
         });
     }
@@ -7582,11 +7583,11 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    currentUser.update((user) => ({
-                        ...user,
+                    app.setCurrentUser({
+                        ...app.currentUser,
                         isUniquePerson: true,
-                    }));
-                    this.#overwriteUserInStore(this.#liveState.user.userId, (u) => ({
+                    });
+                    this.#overwriteUserInStore(app.currentUserId, (u) => ({
                         ...u,
                         isUniquePerson: true,
                     }));
@@ -7907,7 +7908,7 @@ export class OpenChat {
     diamondDurationToMs = diamondDurationToMs;
 
     swapRestricted(): Promise<boolean> {
-        if (this.#liveState.user.isPlatformOperator) {
+        if (app.platformOperator) {
             return Promise.resolve(false);
         }
         return this.getUserLocation().then((location) => featureRestricted(location, "swap"));
@@ -7982,7 +7983,7 @@ export class OpenChat {
     getStreak(userId: string | undefined) {
         if (userId === undefined) return 0;
 
-        if (userId === this.#liveState.user.userId) {
+        if (userId === app.currentUserId) {
             const now = Date.now();
             return app.chitState.streakEnds < now ? 0 : app.chitState.streak;
         }
@@ -8142,11 +8143,11 @@ export class OpenChat {
                         scope.kind === "chat_scope" && scope.chatId.kind === "direct_chat"
                             ? {
                                   ...scope,
-                                  chatId: { ...scope.chatId, userId: this.#liveState.user.userId },
+                                  chatId: { ...scope.chatId, userId: app.currentUserId },
                               }
                             : scope,
                     command: {
-                        initiator: this.#liveState.user.userId,
+                        initiator: app.currentUserId,
                         commandName: bot.command.name,
                         arguments: bot.command.arguments,
                         meta: {
@@ -8321,7 +8322,7 @@ export class OpenChat {
                   command: {
                       name: bot.command.name,
                       args: bot.command.arguments,
-                      initiator: this.#liveState.user.userId,
+                      initiator: app.currentUserId,
                   },
               };
         let removePlaceholder: (() => void) | undefined = undefined;
@@ -8391,7 +8392,7 @@ export class OpenChat {
     }
 
     claimDailyChit(): Promise<ClaimDailyChitResponse> {
-        const userId = this.#liveState.user.userId;
+        const userId = app.currentUserId;
 
         return this.#sendRequest({ kind: "claimDailyChit" }).then((resp) => {
             if (resp.kind === "success") {

@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { CommunitySummary, OpenChat } from "openchat-client";
-    import { chatSummariesListStore, platformModerator, publish, ui } from "openchat-client";
+    import { app, chatSummariesListStore, publish, ui } from "openchat-client";
     import { getContext } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
@@ -235,7 +235,7 @@
                     </MenuItem>
                 {/if}
             {/if}
-            {#if $platformModerator}
+            {#if app.platformModerator}
                 {#if client.isCommunityFrozen(community.id)}
                     <MenuItem warning onclick={unfreezeCommunity}>
                         {#snippet icon()}
