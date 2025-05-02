@@ -1,8 +1,10 @@
+pub mod accept_identity_link_via_qr_code;
 pub mod approve_identity_link;
 pub mod c2c_set_user_ids;
 pub mod create_identity;
 pub mod delete_user;
 pub mod generate_challenge;
 pub mod initiate_identity_link;
+pub mod initiate_identity_link_via_qr_code;
 pub mod prepare_delegation;
 pub mod remove_identity_link;

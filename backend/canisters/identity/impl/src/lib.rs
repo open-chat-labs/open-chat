@@ -1,5 +1,6 @@
 use crate::model::challenges::Challenges;
 use crate::model::identity_link_requests::IdentityLinkRequests;
+use crate::model::identity_link_via_qr_code_requests::IdentityLinkViaQrCodeRequests;
 use crate::model::salt::Salt;
 use crate::model::user_principals::{AuthPrincipal, UserPrincipals};
 use crate::model::webauthn_keys::WebAuthnKeys;
@@ -170,6 +171,7 @@ struct Data {
     user_principals: UserPrincipals,
     identity_link_requests: IdentityLinkRequests,
     #[serde(default)]
+    identity_link_via_qr_code_requests: IdentityLinkViaQrCodeRequests,
     webauthn_keys: WebAuthnKeys,
     #[serde(skip)]
     signature_map: SignatureMap,
@@ -199,6 +201,7 @@ impl Data {
             skip_captcha_whitelist: skip_captcha_whitelist.into_iter().collect(),
             user_principals: UserPrincipals::default(),
             identity_link_requests: IdentityLinkRequests::default(),
+            identity_link_via_qr_code_requests: IdentityLinkViaQrCodeRequests::default(),
             webauthn_keys: WebAuthnKeys::default(),
             signature_map: SignatureMap::default(),
             ic_root_key,

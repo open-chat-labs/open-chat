@@ -1,18 +1,20 @@
-use crate::{generate_query_call, generate_update_call};
+use crate::{generate_msgpack_query_call, generate_msgpack_update_call};
 use identity_canister::*;
 
 // Queries
-generate_query_call!(auth_principals);
-generate_query_call!(check_auth_principal);
-generate_query_call!(get_delegation);
+generate_msgpack_query_call!(auth_principals);
+generate_msgpack_query_call!(check_auth_principal);
+generate_msgpack_query_call!(get_delegation);
 
 // Updates
-generate_update_call!(approve_identity_link);
-generate_update_call!(create_identity);
-generate_update_call!(delete_user);
-generate_update_call!(initiate_identity_link);
-generate_update_call!(prepare_delegation);
-generate_update_call!(remove_identity_link);
+generate_msgpack_update_call!(accept_identity_link_via_qr_code);
+generate_msgpack_update_call!(approve_identity_link);
+generate_msgpack_update_call!(create_identity);
+generate_msgpack_update_call!(delete_user);
+generate_msgpack_update_call!(initiate_identity_link);
+generate_msgpack_update_call!(initiate_identity_link_via_qr_code);
+generate_msgpack_update_call!(prepare_delegation);
+generate_msgpack_update_call!(remove_identity_link);
 
 pub mod happy_path {
     use crate::UserAuth;
@@ -159,6 +161,55 @@ pub mod happy_path {
         match response {
             identity_canister::remove_identity_link::Response::Success => (),
             response => panic!("'remove_identity_link' error: {response:?}"),
+        }
+    }
+
+    pub fn initiate_identity_link_via_qr_code(
+        env: &mut PocketIc,
+        user_auth: &UserAuth,
+        identity_canister_id: CanisterId,
+        link_code: u128,
+    ) {
+        let response = super::initiate_identity_link_via_qr_code(
+            env,
+            user_auth.auth_principal,
+            identity_canister_id,
+            &identity_canister::initiate_identity_link_via_qr_code::Args {
+                link_code,
+                public_key: user_auth.public_key.clone(),
+                delegation: user_auth.delegation.clone(),
+            },
+        );
+
+        match response {
+            identity_canister::initiate_identity_link_via_qr_code::Response::Success => (),
+            response => panic!("'initiate_identity_link' error: {response:?}"),
+        }
+    }
+
+    pub fn accept_identity_link_via_qr_code(
+        env: &mut PocketIc,
+        sender: Principal,
+        identity_canister_id: CanisterId,
+        link_code: u128,
+        public_key: Vec<u8>,
+        is_ii_principal: bool,
+    ) {
+        let response = super::accept_identity_link_via_qr_code(
+            env,
+            sender,
+            identity_canister_id,
+            &identity_canister::accept_identity_link_via_qr_code::Args {
+                link_code,
+                public_key,
+                webauthn_key: None,
+                is_ii_principal,
+            },
+        );
+
+        match response {
+            identity_canister::accept_identity_link_via_qr_code::Response::Success => (),
+            response => panic!("'accept_identity_link_via_qr_code' error: {response:?}"),
         }
     }
 
