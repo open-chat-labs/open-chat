@@ -23,6 +23,7 @@ fn c2c_local_group_index_impl(args: Args, state: &mut RuntimeState) -> Response 
                 LocalGroupIndexEvent::MigrateCommunity(community_id, community) => {
                     state.data.local_communities.add_existing(community_id, community)
                 }
+                LocalGroupIndexEvent::MigrateEmptyCanister(canister_id) => state.data.canister_pool.push(canister_id),
                 LocalGroupIndexEvent::GroupRemoved(chat_id) => {
                     state.data.local_groups.delete(&chat_id);
                 }

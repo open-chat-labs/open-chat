@@ -190,6 +190,7 @@ export const OnlineUsersMarkAsOnlineSuccessResult = Type.Object({
     year: Type.Number(),
     month: Type.Number(),
     minutes_online: Type.Number(),
+    minutes_online_last_month: Type.Number(),
 });
 
 export type GroupSummaryUpdatesArgs = Static<typeof GroupSummaryUpdatesArgs>;

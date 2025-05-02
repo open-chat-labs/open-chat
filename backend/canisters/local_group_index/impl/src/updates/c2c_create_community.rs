@@ -157,8 +157,6 @@ fn commit(
             .with_json_payload(&event_payload)
             .build(),
     );
-
-    crate::jobs::topup_canister_pool::start_job_if_required(state, None);
 }
 
 fn rollback(canister_id: Option<CanisterId>, state: &mut RuntimeState) {

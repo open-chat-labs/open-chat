@@ -86,7 +86,11 @@ impl RuntimeState {
 
         let caller = self.env.caller();
 
-        if self.data.user_principals.auth_principal_exists(&caller) {
+        if args.allow_existing_provided_not_linked_to_oc_account {
+            if self.data.user_principals.is_linked_to_oc_account(&caller) {
+                return Err(AlreadyRegistered);
+            }
+        } else if self.data.user_principals.auth_principal_exists(&caller) {
             return Err(AlreadyRegistered);
         }
 
@@ -112,7 +116,11 @@ impl RuntimeState {
             return Err(OriginatingCanisterInvalid(originating_canister));
         }
 
-        if self.data.user_principals.auth_principal_exists(&auth_principal) {
+        if args.allow_existing_provided_not_linked_to_oc_account {
+            if self.data.user_principals.is_linked_to_oc_account(&auth_principal) {
+                return Err(AlreadyRegistered);
+            }
+        } else if self.data.user_principals.auth_principal_exists(&auth_principal) {
             return Err(AlreadyRegistered);
         }
 
@@ -294,6 +302,7 @@ pub struct CanisterIds {
 struct VerifyNewIdentityArgs {
     public_key: Vec<u8>,
     webauthn_key: Option<WebAuthnKey>,
+    allow_existing_provided_not_linked_to_oc_account: bool,
 }
 
 struct VerifyNewIdentitySuccess {

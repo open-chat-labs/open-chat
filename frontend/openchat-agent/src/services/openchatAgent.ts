@@ -110,6 +110,7 @@ import type {
     MessageActivitySummary,
     MessageContent,
     MessageContext,
+    MinutesOnline,
     MultiUserChatIdentifier,
     OptionalChatPermissions,
     OptionUpdate,
@@ -2580,12 +2581,8 @@ export class OpenChatAgent extends EventTarget {
         return this._onlineClient.lastOnline(userIds);
     }
 
-    markAsOnline(): Promise<number> {
+    markAsOnline(): Promise<MinutesOnline> {
         return this._onlineClient.markAsOnline();
-    }
-
-    minutesOnline(year: number, month: number): Promise<number> {
-        return this._onlineClient.minutesOnline(year, month);
     }
 
     subscriptionExists(p256dh_key: string): Promise<boolean> {
@@ -3629,8 +3626,8 @@ export class OpenChatAgent extends EventTarget {
         return this._registryClient.removeMessageFilter(id);
     }
 
-    setAirdropConfig(channelId: number, channelName: string): Promise<boolean> {
-        return this._registryClient.setAirdropConfig(channelId, channelName);
+    setAirdropConfig(channelId: number, channelName: string, communityId?: string, communityName?: string): Promise<boolean> {
+        return this._registryClient.setAirdropConfig(channelId, channelName, communityId, communityName);
     }
 
     setTokenEnabled(ledger: string, enabled: boolean): Promise<boolean> {
