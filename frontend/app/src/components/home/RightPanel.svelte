@@ -21,7 +21,6 @@
         pathState,
         publish,
         selectedChatStore as selectedChat,
-        selectedChatId,
         ui,
         userStore,
     } from "openchat-client";
@@ -79,11 +78,11 @@
         oldRole: MemberRole;
     }): void {
         if (
-            $selectedChatId !== undefined &&
-            ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel")
+            app.selectedChatId !== undefined &&
+            (app.selectedChatId.kind === "group_chat" || app.selectedChatId.kind === "channel")
         ) {
             let { userId, newRole, oldRole } = args;
-            changeGroupRole($selectedChatId, userId, newRole, oldRole);
+            changeGroupRole(app.selectedChatId, userId, newRole, oldRole);
         }
     }
 
@@ -100,10 +99,10 @@
 
     function onRemoveGroupMember(userId: string): void {
         if (
-            $selectedChatId !== undefined &&
-            ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel")
+            app.selectedChatId !== undefined &&
+            (app.selectedChatId.kind === "group_chat" || app.selectedChatId.kind === "channel")
         ) {
-            removeGroupMember($selectedChatId, userId);
+            removeGroupMember(app.selectedChatId, userId);
         }
     }
 
@@ -266,10 +265,10 @@
 
     async function onBlockGroupUser(args: { userId: string }) {
         if (
-            $selectedChatId !== undefined &&
-            ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel")
+            app.selectedChatId !== undefined &&
+            (app.selectedChatId.kind === "group_chat" || app.selectedChatId.kind === "channel")
         ) {
-            const success = await client.blockUser($selectedChatId, args.userId);
+            const success = await client.blockUser(app.selectedChatId, args.userId);
             if (success) {
                 toastStore.showSuccessToast(i18nKey("blockUserSucceeded"));
             } else {
@@ -294,10 +293,10 @@
 
     async function onUnblockGroupUser(user: UserSummary) {
         if (
-            $selectedChatId !== undefined &&
-            ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel")
+            app.selectedChatId !== undefined &&
+            (app.selectedChatId.kind === "group_chat" || app.selectedChatId.kind === "channel")
         ) {
-            const success = await client.unblockUser($selectedChatId, user.userId);
+            const success = await client.unblockUser(app.selectedChatId, user.userId);
             if (success) {
                 toastStore.showSuccessToast(i18nKey("unblockUserSucceeded"));
             } else {
@@ -338,10 +337,10 @@
 
     async function onCancelGroupInvite(userId: string) {
         if (
-            $selectedChatId !== undefined &&
-            ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel")
+            app.selectedChatId !== undefined &&
+            (app.selectedChatId.kind === "group_chat" || app.selectedChatId.kind === "channel")
         ) {
-            cancelInvite($selectedChatId, userId);
+            cancelInvite(app.selectedChatId, userId);
         }
     }
 
@@ -355,7 +354,7 @@
     }
 
     let threadRootEvent = $derived(
-        ui.lastRightPanelState.kind === "message_thread_panel" && $selectedChatId !== undefined
+        ui.lastRightPanelState.kind === "message_thread_panel" && app.selectedChatId !== undefined
             ? findMessage($eventsStore, ui.lastRightPanelState.threadRootMessageId)
             : undefined,
     );
@@ -377,7 +376,7 @@
     style={`--resized-width: ${resizedWidth}`}
     class:halloween={$currentTheme.name === "halloween"}
     class:empty>
-    {#if ui.lastRightPanelState.kind === "group_details" && $selectedChatId !== undefined && $multiUserChat !== undefined}
+    {#if ui.lastRightPanelState.kind === "group_details" && app.selectedChatId !== undefined && $multiUserChat !== undefined}
         {#if $multiUserChat.kind === "channel" && app.selectedCommunitySummary !== undefined}
             <ChannelOrCommunitySummary
                 channel={$multiUserChat}
@@ -483,7 +482,7 @@
                 onInviteUsers={onInviteGroupUsers}
                 onCancelInviteUsers={ui.popRightPanelHistory} />
         {/if}
-    {:else if ui.lastRightPanelState.kind === "show_group_members" && $selectedChatId !== undefined && $multiUserChat !== undefined && $multiUserChat.kind === "group_chat"}
+    {:else if ui.lastRightPanelState.kind === "show_group_members" && app.selectedChatId !== undefined && $multiUserChat !== undefined && $multiUserChat.kind === "group_chat"}
         <Members
             {closeIcon}
             collection={$multiUserChat}
@@ -500,7 +499,7 @@
             onRemoveMember={onRemoveGroupMember}
             onChangeRole={onChangeGroupRole}
             onCancelInvite={onCancelGroupInvite} />
-    {:else if ui.lastRightPanelState.kind === "show_group_members" && $selectedChatId !== undefined && $multiUserChat !== undefined && $multiUserChat.kind === "channel" && app.selectedCommunitySummary !== undefined}
+    {:else if ui.lastRightPanelState.kind === "show_group_members" && app.selectedChatId !== undefined && $multiUserChat !== undefined && $multiUserChat.kind === "channel" && app.selectedCommunitySummary !== undefined}
         <ChannelOrCommunityMembers
             selectedTab="channel"
             channel={$multiUserChat}
@@ -518,9 +517,9 @@
             onClose={ui.popRightPanelHistory}
             {onCancelGroupInvite}
             {onCancelCommunityInvite} />
-    {:else if ui.lastRightPanelState.kind === "show_pinned" && $selectedChatId !== undefined && ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel") && $multiUserChat !== undefined}
+    {:else if ui.lastRightPanelState.kind === "show_pinned" && app.selectedChatId !== undefined && (app.selectedChatId.kind === "group_chat" || app.selectedChatId.kind === "channel") && $multiUserChat !== undefined}
         <PinnedMessages
-            chatId={$selectedChatId}
+            chatId={app.selectedChatId}
             pinned={app.selectedChat.pinnedMessages}
             dateLastPinned={$multiUserChat.dateLastPinned}
             onClose={ui.popRightPanelHistory} />

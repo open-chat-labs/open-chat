@@ -16,7 +16,6 @@ import type {
     ChatPermissions,
     HasMembershipRole,
     MemberRole,
-    OptionalChatPermissions,
     Permissioned,
     PublicApiKeyDetails,
 } from "../permission";
@@ -707,38 +706,6 @@ export type LocalPollVote = {
     answerIndex: number;
     type: "register" | "delete";
     userId: string;
-};
-
-export type LocalChatSummaryUpdates = {
-    favourited?: boolean;
-    unfavourited?: boolean;
-    added?: ChatSummary;
-    installedBots?: Map<string, ExternalBotPermissions>;
-    removedBots?: Set<string>;
-    updated?:
-        | {
-              kind?: undefined;
-              latestMessage?: EventWrapper<Message>;
-              notificationsMuted?: boolean;
-              archived?: boolean;
-              rulesAccepted?: boolean;
-          }
-        | {
-              kind: "group_chat" | "channel";
-              name?: string;
-              description?: string;
-              latestMessage?: EventWrapper<Message>;
-              public?: boolean;
-              permissions?: OptionalChatPermissions;
-              frozen?: boolean;
-              gateConfig?: AccessGateConfig;
-              notificationsMuted?: boolean;
-              archived?: boolean;
-              rulesAccepted?: boolean;
-              eventsTTL?: OptionUpdate<bigint>;
-          };
-    removedAtTimestamp?: bigint;
-    lastUpdated: number;
 };
 
 export type LocalMessageUpdates = {
