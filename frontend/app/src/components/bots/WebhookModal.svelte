@@ -85,7 +85,7 @@
             client
                 .updateWebhook(
                     chatId,
-                    webhook.current.id,
+                    webhook.current,
                     nameDirty ? webhook.current.name : undefined,
                     avatarDirty
                         ? webhook.current.avatarUrl !== undefined

@@ -4,6 +4,7 @@
         ChatSummary,
         CommunitySummary,
         DiamondMembershipStatus,
+        ReadonlyMap,
         TypersByKey,
         UserLookup,
         WebhookDetails,
@@ -156,7 +157,7 @@
     function formatLatestMessage(
         chatSummary: ChatSummary,
         users: UserLookup,
-        webhooks: WebhookDetails[],
+        webhooks: ReadonlyMap<string, WebhookDetails>,
     ): string {
         if (chatSummary.latestMessageIndex === undefined || externalContent) {
             return "";

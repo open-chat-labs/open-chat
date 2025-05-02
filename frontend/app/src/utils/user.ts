@@ -1,4 +1,4 @@
-import type { UserLookup, UserSummary, WebhookDetails } from "openchat-client";
+import type { ReadonlyMap, UserLookup, UserSummary, WebhookDetails } from "openchat-client";
 import { _ } from "svelte-i18n";
 import { get } from "svelte/store";
 
@@ -7,9 +7,9 @@ export function buildDisplayName(
     userId: string,
     me: boolean,
     bold = true,
-    webhooks: WebhookDetails[] | undefined = undefined,
+    webhooks: ReadonlyMap<string, WebhookDetails> | undefined = undefined,
 ): string {
-    const summary = findSender(userId, users, webhooks ?? []);
+    const summary = findSender(userId, users, webhooks ?? new Map());
     const name = me
         ? get(_)("you")
         : summary?.displayName ?? summary?.username ?? get(_)("unknownUser");
@@ -23,14 +23,14 @@ export function trimLeadingAtSymbol(term: string): string {
 export function findSender(
     senderId: string,
     users: UserLookup,
-    webhooks: WebhookDetails[],
+    webhooks: ReadonlyMap<string, WebhookDetails>,
 ): UserSummary | undefined {
     const user = users.get(senderId);
     if (user !== undefined) {
         return user;
     }
 
-    const webhook = webhooks.find((webhook) => webhook.id === senderId);
+    const webhook = webhooks.get(senderId);
     if (webhook === undefined) {
         return undefined;
     }

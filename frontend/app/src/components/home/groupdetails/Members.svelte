@@ -428,7 +428,7 @@
             <h4 class="member_type_label">
                 <Translatable resourceKey={i18nKey("bots.member.webhooks")}></Translatable>
             </h4>
-            {#each matchingWebhooks as webhook}
+            {#each matchingWebhooks.values() as webhook}
                 <WebhookMember chat={collection} {webhook} {searchTerm} />
             {/each}
         {/if}

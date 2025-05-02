@@ -27,7 +27,7 @@ export class ChatDetailsServerState {
     #rules = $state<VersionedRules>(emptyRules());
     #bots = $state<ReadonlyMap<string, ExternalBotPermissions>>(new Map());
     #apiKeys = $state<ReadonlyMap<string, PublicApiKeyDetails>>(new Map());
-    #webhooks = $state<WebhookDetails[]>([]);
+    #webhooks = $state<ReadonlyMap<string, WebhookDetails>>(new Map());
     #events = $state<EventWrapper<ChatEvent>[]>([]);
     #expiredEventRanges = $state<DRange>(new DRange());
     #confirmedEventIndexesLoaded = $derived.by(() => {
@@ -158,7 +158,7 @@ export class ChatDetailsServerState {
         rules: VersionedRules,
         bots: Map<string, ExternalBotPermissions>,
         apiKeys: Map<string, PublicApiKeyDetails>,
-        webhooks: WebhookDetails[],
+        webhooks: Map<string, WebhookDetails>,
     ) {
         this.#chatId = chatId;
         this.#members = members;

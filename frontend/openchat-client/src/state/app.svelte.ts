@@ -796,7 +796,7 @@ export class AppState {
         rules: VersionedRules,
         bots: Map<string, ExternalBotPermissions>,
         apiKeys: Map<string, PublicApiKeyDetails>,
-        webhooks: WebhookDetails[],
+        webhooks: Map<string, WebhookDetails>,
     ) {
         if (!chatIdentifiersEqual(chatId, this.#selectedChatId)) {
             console.warn(

@@ -28,7 +28,7 @@ export class ChatDetailsMergedState {
     #members = $derived(this.#mergeMap(this.server.members, this.#local?.members));
     #bots = $derived(this.#mergeMap(this.server.bots, this.#local?.bots));
     #apiKeys = $derived(this.#mergeMap(this.server.apiKeys, this.#local?.apiKeys));
-    #webhooks = $derived(this.server.webhooks);
+    #webhooks = $derived(this.#mergeMap(this.server.webhooks, this.#local?.webhooks));
     #blockedUsers = $derived(this.#mergeSet(this.server.blockedUsers, this.#local?.blockedUsers));
     #invitedUsers = $derived(this.#mergeSet(this.server.invitedUsers, this.#local?.invitedUsers));
     #rules = $derived(this.#local?.rules ?? this.server.rules);
@@ -167,7 +167,7 @@ export class ChatDetailsMergedState {
         rules: VersionedRules,
         bots: Map<string, ExternalBotPermissions>,
         apiKeys: Map<string, PublicApiKeyDetails>,
-        webhooks: WebhookDetails[],
+        webhooks: Map<string, WebhookDetails>,
     ) {
         this.#server?.overwriteChatDetails(
             chatId,

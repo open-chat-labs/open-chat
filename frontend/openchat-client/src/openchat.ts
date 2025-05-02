@@ -196,6 +196,7 @@ import type {
     WalletConfig,
     WebAuthnKey,
     WebAuthnKeyFull,
+    WebhookDetails,
     WebRtcMessage,
     WithdrawBtcResponse,
     WithdrawCryptocurrencyResponse,
@@ -3226,7 +3227,7 @@ export class OpenChat {
                         resp.rules,
                         resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
                         resp.apiKeys,
-                        resp.webhooks,
+                        new Map(resp.webhooks.map((w) => [w.id, w])),
                     );
                 }
                 await this.#updateUserStoreFromEvents([]);
@@ -8071,28 +8072,55 @@ export class OpenChat {
             chatId,
             name,
             avatar,
-        }).catch((err) => {
-            this.#logger.error("Failed to register webhook", err);
-            return undefined;
-        });
+        })
+            .then((resp) => {
+                if (resp !== undefined) {
+                    localUpdates.addWebhookToChat(chatId, resp);
+                }
+                return resp;
+            })
+            .catch((err) => {
+                this.#logger.error("Failed to register webhook", err);
+                return undefined;
+            });
     }
 
     updateWebhook(
         chatId: MultiUserChatIdentifier,
-        id: string,
+        existing: WebhookDetails,
         name: string | undefined,
         avatar: OptionUpdate<string>,
     ): Promise<boolean> {
+        const webhook = { ...existing };
+        if (name !== undefined) {
+            webhook.name = name;
+        }
+        if (avatar === "set_to_none") {
+            webhook.avatarUrl = undefined;
+        } else if (avatar !== undefined) {
+            webhook.avatarUrl = avatar.value;
+        }
+
+        const undo = localUpdates.updateWebhook(chatId, webhook);
+
         return this.#sendRequest({
             kind: "updateWebhook",
             chatId,
-            id,
+            id: webhook.id,
             name,
             avatar,
-        }).catch((err) => {
-            this.#logger.error("Failed to update webhook", err);
-            return false;
-        });
+        })
+            .then((resp) => {
+                if (!resp) {
+                    undo();
+                }
+                return resp;
+            })
+            .catch((err) => {
+                this.#logger.error("Failed to update webhook", err);
+                undo();
+                return false;
+            });
     }
 
     regenerateWebhook(chatId: MultiUserChatIdentifier, id: string): Promise<string | undefined> {
@@ -8107,14 +8135,24 @@ export class OpenChat {
     }
 
     deleteWebhook(chatId: MultiUserChatIdentifier, id: string): Promise<boolean> {
+        const undo = localUpdates.removeWebhookFromChat(chatId, id);
+
         return this.#sendRequest({
             kind: "deleteWebhook",
             chatId,
             id,
-        }).catch((err) => {
-            this.#logger.error("Failed to delete webhook", err);
-            return false;
-        });
+        })
+            .then((resp) => {
+                if (!resp) {
+                    undo();
+                }
+                return resp;
+            })
+            .catch((err) => {
+                undo();
+                this.#logger.error("Failed to delete webhook", err);
+                return false;
+            });
     }
 
     getWebhook(chatId: MultiUserChatIdentifier, id: string): Promise<string | undefined> {

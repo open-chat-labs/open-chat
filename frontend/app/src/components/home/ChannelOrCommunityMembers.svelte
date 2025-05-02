@@ -126,7 +126,7 @@
             lapsed={app.selectedChat.lapsedMembers}
             installedBots={app.selectedCommunity.bots}
             apiKeys={app.selectedChat.apiKeys}
-            webhooks={app.selectedChat.webhooks}
+            webhooks={Array.from(app.selectedChat.webhooks.values())}
             {onClose}
             onBlockUser={onBlockGroupUser}
             onUnblockUser={onUnblockGroupUser}

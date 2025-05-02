@@ -101,7 +101,7 @@ describe("app state", () => {
                 emptyRules(),
                 new Map(),
                 new Map(),
-                [],
+                new Map(),
             );
         }
 
