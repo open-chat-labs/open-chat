@@ -54,7 +54,7 @@ import { pathState } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
 import { messagesRead } from "./unread/markRead.svelte";
 
-class AppState {
+export class AppState {
     constructor() {
         $effect.root(() => {
             $effect(() => {
