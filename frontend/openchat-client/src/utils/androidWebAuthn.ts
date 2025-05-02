@@ -30,9 +30,9 @@ import {
 export async function createAndroidWebAuthnPasskeyIdentity(
     saveKeyInCacheFn: (key: WebAuthnKeyFull) => Promise<void>,
 ): Promise<WebAuthnIdentity> {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
         signUp()
-            .then(async (credential: Credential<SignUpCredential> | null) => {
+            .then((credential: Credential<SignUpCredential> | null) => {
                 if (!credential) {
                     reject("no credential");
                 } else {
@@ -48,16 +48,16 @@ export async function createAndroidWebAuthnPasskeyIdentity(
                     const aaguid = new Uint8Array(
                         credential.response.authenticatorData.slice(37, 53),
                     );
-                    await saveKeyInCacheFn({
+                    saveKeyInCacheFn({
                         publicKey: new Uint8Array(identity.getPublicKey().toDer()),
                         credentialId: credential.rawId,
                         origin: "oc.app",
                         crossPlatform: credential.authenticatorAttachment === "cross-platform",
                         aaguid,
+                    }).then(() => {
+                        // Resolve the identity
+                        resolve(identity);
                     });
-
-                    // Resolve the identity, and stop listening for the signup event!
-                    resolve(identity);
                 }
             })
             .catch((err: Error) => {
@@ -78,9 +78,9 @@ export async function createAndroidWebAuthnPasskeyIdentity(
 async function getExistingAndroidWebAuthnPasskey(
     challenge: ArrayBuffer,
 ): Promise<Credential<SignInCredential>> {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
         signIn({ challenge })
-            .then(async (credential: Credential<SignInCredential> | null) => {
+            .then((credential: Credential<SignInCredential> | null) => {
                 if (!credential) {
                     console.error("Passkey credential not available");
                     reject("no passkey");
@@ -104,7 +104,7 @@ async function getExistingAndroidWebAuthnPasskey(
 export class AndroidWebAuthnPasskeyIdentity extends SignIdentity {
     protected _identity?: WebAuthnIdentity;
 
-    public constructor(protected lookupPubKeyFn: (rawId: Uint8Array) => Promise<Uint8Array>) {
+    public constructor(readonly lookupPubKeyFn: (rawId: Uint8Array) => Promise<Uint8Array>) {
         super();
     }
 
