@@ -134,7 +134,7 @@
                 <div class="body">
                     <div class="root-msg">
                         <ChatMessage
-                            sender={$userStore.get(thread.rootMessage.event.sender)}
+                            sender={userStore.get(thread.rootMessage.event.sender)}
                             focused={false}
                             {observer}
                             accepted
@@ -178,7 +178,7 @@
                     {#each grouped as userGroup}
                         {#each userGroup as evt, i (evt.event.messageId)}
                             <ChatMessage
-                                sender={$userStore.get(evt.event.sender)}
+                                sender={userStore.get(evt.event.sender)}
                                 focused={false}
                                 {observer}
                                 accepted

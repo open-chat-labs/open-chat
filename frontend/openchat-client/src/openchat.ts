@@ -287,6 +287,7 @@ import { pathState, type RouteParams } from "./state/path.svelte";
 import { ui } from "./state/ui.svelte";
 import type { UndoLocalUpdate } from "./state/undo";
 import { messagesRead, startMessagesReadTracker } from "./state/unread/markRead.svelte";
+import { userStore } from "./state/users/users.svelte";
 import { blockedUsers } from "./stores/blockedUsers";
 import {
     confirmedEventIndexesLoaded,
@@ -345,8 +346,6 @@ import {
     anonymousUserSummary,
     openChatBotUser,
     proposalsBotUser,
-    specialUsers,
-    userStore,
     videoCallBotUser,
 } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
@@ -562,15 +561,13 @@ export class OpenChat {
 
         console.log("OpenChatConfig: ", config);
 
-        specialUsers.set(
-            new Map([
-                [OPENCHAT_BOT_USER_ID, openChatBotUser],
-                [OPENCHAT_VIDEO_CALL_USER_ID, videoCallBotUser],
-                [AIRDROP_BOT_USER_ID, airdropBotUser],
-                [ANON_USER_ID, anonymousUserSummary],
-                [config.proposalBotCanister, proposalsBotUser(config.proposalBotCanister)],
-            ]),
-        );
+        userStore.addSpecialUsers([
+            [OPENCHAT_BOT_USER_ID, openChatBotUser],
+            [OPENCHAT_VIDEO_CALL_USER_ID, videoCallBotUser],
+            [AIRDROP_BOT_USER_ID, airdropBotUser],
+            [ANON_USER_ID, anonymousUserSummary],
+            [config.proposalBotCanister, proposalsBotUser(config.proposalBotCanister)],
+        ]);
 
         initialiseTracking(config);
 
@@ -846,11 +843,11 @@ export class OpenChat {
                     this.logout();
                 }
             });
-        this.#sendRequest({ kind: "getAllCachedUsers" }).then((users) => userStore.set(users));
+        this.#sendRequest({ kind: "getAllCachedUsers" }).then((u) => userStore.setUsers(u));
     }
 
     userIsDiamond(userId: string): boolean {
-        const user = this.#liveState.userStore.get(userId);
+        const user = userStore.get(userId);
         if (user === undefined || user.kind === "bot") return false;
 
         if (userId === app.currentUserId) return this.#liveState.isDiamond;
@@ -859,7 +856,7 @@ export class OpenChat {
     }
 
     userIsLifetimeDiamond(userId: string): boolean {
-        const user = this.#liveState.userStore.get(userId);
+        const user = userStore.get(userId);
         if (user === undefined || user.kind === "bot") return false;
 
         if (userId === app.currentUserId) return this.#liveState.isLifetimeDiamond;
@@ -902,7 +899,7 @@ export class OpenChat {
 
     onRegisteredUser(user: CreatedUser) {
         this.onCreatedUser(user);
-        userStore.add({
+        userStore.addUser({
             kind: user.isBot ? "bot" : "user",
             userId: user.userId,
             username: user.username,
@@ -1295,9 +1292,9 @@ export class OpenChat {
     }
 
     setUserAvatar(data: Uint8Array, url: string): Promise<boolean> {
-        const partialUser = this.#liveState.userStore.get(app.currentUserId);
+        const partialUser = userStore.get(app.currentUserId);
         if (partialUser) {
-            userStore.add({
+            userStore.addUser({
                 ...partialUser,
                 blobData: data,
                 blobUrl: url,
@@ -1765,7 +1762,7 @@ export class OpenChat {
     ): boolean {
         return this.#chatPredicate(chatId, (chat) => {
             if (chat.kind === "direct_chat") {
-                const recipient = this.#liveState.userStore.get(chat.them.userId);
+                const recipient = userStore.get(chat.them.userId);
                 if (recipient !== undefined) {
                     return canSendDirectMessage(
                         recipient,
@@ -1790,7 +1787,7 @@ export class OpenChat {
         const chat = app.allChats.get(chatId);
         if (chat !== undefined) {
             if (chat.kind === "direct_chat") {
-                const recipient = this.#liveState.userStore.get(chat.them.userId);
+                const recipient = userStore.get(chat.them.userId);
                 if (recipient !== undefined) {
                     return permittedMessagesInDirectChat(
                         recipient,
@@ -1811,9 +1808,7 @@ export class OpenChat {
     }
 
     canStartVideoCalls(chatId: ChatIdentifier): boolean {
-        return this.#chatPredicate(chatId, (chat) =>
-            canStartVideoCalls(chat, this.#liveState.userStore),
-        );
+        return this.#chatPredicate(chatId, (chat) => canStartVideoCalls(chat, userStore.allUsers));
     }
 
     isChatPrivate(chat: ChatSummary): boolean {
@@ -2166,7 +2161,7 @@ export class OpenChat {
 
     directChatWithBot(chat: ChatSummary): string | undefined {
         if (chat.kind !== "direct_chat") return undefined;
-        const them = this.#liveState.userStore.get(chat.them.userId);
+        const them = userStore.get(chat.them.userId);
         return them?.kind === "bot" ? them.userId : undefined;
     }
 
@@ -2433,7 +2428,7 @@ export class OpenChat {
                 app.currentUserId,
                 chat,
                 resp.events,
-                this.#liveState.userStore,
+                userStore.allUsers,
                 this.#liveState.blockedUsers,
                 this.config.meteredApiKey,
             );
@@ -2611,7 +2606,7 @@ export class OpenChat {
     isUsernameValid = isUsernameValid;
 
     async createDirectChat(chatId: DirectChatIdentifier): Promise<boolean> {
-        if (!this.#liveState.userStore.has(chatId.userId)) {
+        if (!userStore.has(chatId.userId)) {
             const user = await this.getUser(chatId.userId);
             if (user === undefined) {
                 return false;
@@ -2789,7 +2784,7 @@ export class OpenChat {
                 }
             }
             if (selectedChat.kind === "direct_chat") {
-                const them = this.#liveState.userStore.get(selectedChat.them.userId);
+                const them = userStore.get(selectedChat.them.userId);
                 // Refresh user details if they are more than 5 minutes out of date
                 if (
                     them === undefined ||
@@ -2874,7 +2869,7 @@ export class OpenChat {
                     app.currentUserId,
                     chat,
                     this.#liveState.threadEvents,
-                    this.#liveState.userStore,
+                    userStore.allUsers,
                     this.#liveState.blockedUsers,
                     this.config.meteredApiKey,
                 );
@@ -3562,7 +3557,8 @@ export class OpenChat {
                     mergeServerEvents(events, newEvents, context),
                 );
 
-                const selectedThreadRootMessageIndex = this.#liveState.selectedThreadRootMessageIndex;
+                const selectedThreadRootMessageIndex =
+                    this.#liveState.selectedThreadRootMessageIndex;
                 if (selectedThreadRootMessageIndex !== undefined) {
                     const threadRootEvent = newEvents.find(
                         (e) =>
@@ -4683,7 +4679,7 @@ export class OpenChat {
         const termLower = term.toLowerCase();
         const matches: UserSummary[] = [];
         for (const [userId, member] of app.selectedCommunity.members) {
-            let user = this.#liveState.userStore.get(userId);
+            let user = userStore.get(userId);
             if (user?.username !== undefined) {
                 const displayName = member.displayName ?? user.displayName;
                 if (
@@ -4848,7 +4844,7 @@ export class OpenChat {
     }
 
     getDisplayNameById(userId: string, communityMembers?: ReadonlyMap<string, Member>): string {
-        return this.getDisplayName(this.#liveState.userStore.get(userId), communityMembers);
+        return this.getDisplayName(userStore.get(userId), communityMembers);
     }
 
     getDisplayName(
@@ -5318,7 +5314,7 @@ export class OpenChat {
             {
                 userGroups: [
                     {
-                        users: this.missingUserIds(this.#liveState.userStore, userIdsSet),
+                        users: this.missingUserIds(userStore.allUsers, userIdsSet),
                         updatedSince: BigInt(0),
                     },
                 ],
@@ -5327,8 +5323,8 @@ export class OpenChat {
         );
     }
 
-    getUsers(users: UsersArgs, allowStale = false): Promise<UsersResponse> {
-        const userGroups = users.userGroups
+    getUsers(userArgs: UsersArgs, allowStale = false): Promise<UsersResponse> {
+        const userGroups = userArgs.userGroups
             .map((g) => ({ ...g, users: g.users.filter((u) => u !== undefined) }))
             .filter((g) => g.users.length > 0);
 
@@ -5351,7 +5347,7 @@ export class OpenChat {
                 if (resp.serverTimestamp !== undefined) {
                     // If we went to the server, all users not returned are still up to date, so we mark them as such
                     const usersReturned = new Set<string>(resp.users.map((u) => u.userId));
-                    const allOtherUsers = users.userGroups.flatMap((g) =>
+                    const allOtherUsers = userArgs.userGroups.flatMap((g) =>
                         g.users.filter((u) => !usersReturned.has(u)),
                     );
                     userStore.setUpdated(allOtherUsers, resp.serverTimestamp);
@@ -5377,7 +5373,7 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp !== undefined) {
-                    userStore.add(resp);
+                    userStore.addUser(resp);
                 }
                 return resp;
             })
@@ -5391,7 +5387,7 @@ export class OpenChat {
     }
 
     async getLastOnlineDate(userId: string, now: number): Promise<number | undefined> {
-        const user = this.#liveState.userStore.get(userId);
+        const user = userStore.get(userId);
         if (user === undefined || user.kind === "bot") return undefined;
 
         if (userId === app.currentUserId) return now;
@@ -5801,7 +5797,7 @@ export class OpenChat {
     async #updateUsers() {
         try {
             const now = BigInt(Date.now());
-            const allUsers = this.#liveState.userStore;
+            const allUsers = userStore.allUsers;
             const usersToUpdate = new Set<string>();
             if (!this.#liveState.anonUser) {
                 usersToUpdate.add(app.currentUserId);
@@ -5836,7 +5832,7 @@ export class OpenChat {
                 }
             }
 
-            for (const userId of get(specialUsers).keys()) {
+            for (const userId of userStore.specialUsers.keys()) {
                 usersToUpdate.delete(userId);
             }
 
@@ -5966,7 +5962,7 @@ export class OpenChat {
                 }
             }
 
-            const currentUser = this.#liveState.userStore.get(app.currentUserId);
+            const currentUser = userStore.get(app.currentUserId);
             const avatarId = currentUser?.blobReference?.blobId;
             if (chatsResponse.state.avatarId !== avatarId) {
                 const blobReference =
@@ -5986,7 +5982,7 @@ export class OpenChat {
                         ...currentUser,
                         ...dataContent,
                     };
-                    userStore.add(this.#rehydrateDataContent(user, "avatar"));
+                    userStore.addUser(this.#rehydrateDataContent(user, "avatar"));
                 }
             }
 
@@ -6285,14 +6281,14 @@ export class OpenChat {
 
     // FIXME - should this input param be a Map
     #mapVideoCallParticipants(
-        users: Record<string, UserSummary>,
+        usrs: Record<string, UserSummary>,
         participant: VideoCallParticipant,
     ): Record<string, UserSummary> {
-        const user = this.#liveState.userStore.get(participant.userId);
+        const user = userStore.get(participant.userId);
         if (user) {
-            users[participant.userId] = user;
+            usrs[participant.userId] = user;
         }
-        return users;
+        return usrs;
     }
 
     videoCallParticipants(
@@ -6348,11 +6344,11 @@ export class OpenChat {
         userId: string,
         updater: (user: UserSummary) => UserSummary | undefined,
     ): void {
-        const user = this.#liveState.userStore.get(userId);
+        const user = userStore.get(userId);
         if (user !== undefined) {
             const updated = updater(user);
             if (updated !== undefined) {
-                userStore.add(updated);
+                userStore.addUser(updated);
             }
         }
     }
@@ -6693,7 +6689,6 @@ export class OpenChat {
     getUserLookupForMentions(): Record<string, UserOrUserGroup> {
         if (this.#userLookupForMentions === undefined) {
             const lookup = {} as Record<string, UserOrUserGroup>;
-            const userStore = this.#liveState.userStore;
             for (const [userId] of app.selectedChat.members) {
                 let user = userStore.get(userId);
                 if (user !== undefined && this.#liveState.selectedChat?.kind === "channel") {
@@ -6966,7 +6961,7 @@ export class OpenChat {
         const displayName = this.getDisplayName(app.currentUser, app.selectedCommunity.members);
         const user = app.currentUser;
         const username = user.username;
-        const avatarId = this.#liveState.userStore.get(user.userId)?.blobReference?.blobId;
+        const avatarId = userStore.get(user.userId)?.blobReference?.blobId;
         const headers = new Headers();
         headers.append("x-auth-jwt", authToken);
 
@@ -7981,7 +7976,7 @@ export class OpenChat {
             return app.chitState.streakEnds < now ? 0 : app.chitState.streak;
         }
 
-        return this.#liveState.userStore.get(userId)?.streak ?? 0;
+        return userStore.get(userId)?.streak ?? 0;
     }
 
     getBotDefinition(endpoint: string): Promise<BotDefinitionResponse> {

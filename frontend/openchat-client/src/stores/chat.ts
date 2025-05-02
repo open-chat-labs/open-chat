@@ -7,7 +7,6 @@ import type {
     EventWrapper,
     ExpiredEventsRange,
     MessageContext,
-    ThreadIdentifier,
     ThreadSyncDetails,
 } from "openchat-shared";
 import { chatIdentifiersEqual, ChatMap, compareChats, messageContextsEqual } from "openchat-shared";
@@ -373,9 +372,8 @@ function isContiguousInternal(
     return isContiguous;
 }
 
-export function isContiguousInThread(threadId: ThreadIdentifier, events: EventWrapper<ChatEvent>[]): boolean {
-    return messageContextsEqual(threadId, app.selectedChat?.selectedThread?.id)
-        && isContiguousInternal(app.selectedChat.confirmedThreadEventIndexesLoaded, events, []);
+export function isContiguousInThread(events: EventWrapper<ChatEvent>[]): boolean {
+    return isContiguousInternal(app.selectedChat.confirmedThreadEventIndexesLoaded, events, []);
 }
 
 export function isContiguous(
@@ -383,8 +381,7 @@ export function isContiguous(
     events: EventWrapper<ChatEvent>[],
     expiredEventRanges: ExpiredEventsRange[],
 ): boolean {
-    return chatIdentifiersEqual(chatId, app.selectedChat.chatId)
-        && isContiguousInternal(confirmedEventIndexesLoaded(chatId), events, expiredEventRanges);
+    return isContiguousInternal(confirmedEventIndexesLoaded(chatId), events, expiredEventRanges);
 }
 
 export const currentChatDraftMessage = derived(

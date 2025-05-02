@@ -951,7 +951,7 @@
 </script>
 
 {#if showProfileCard !== undefined}
-    {@const profileUser = $userStore.get(showProfileCard.userId)}
+    {@const profileUser = userStore.get(showProfileCard.userId)}
     {#if profileUser?.kind !== "bot"}
         <ViewUserProfile
             userId={showProfileCard.userId}

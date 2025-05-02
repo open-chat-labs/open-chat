@@ -26,7 +26,7 @@
 
     let crypto = msg.content.kind === "crypto_content";
 
-    let sender = $derived($userStore.get(senderId));
+    let sender = $derived(userStore.get(senderId));
     let username = $derived(client.getDisplayName(sender, app.selectedCommunity.members));
     let deleted = $derived(msg.content.kind === "deleted_content");
     let fill = $derived(client.fillMessage(msg));

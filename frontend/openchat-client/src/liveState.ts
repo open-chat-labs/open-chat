@@ -9,7 +9,6 @@ import type {
     MessageContext,
     PinNumberResolver,
     ThreadSyncDetails,
-    UserLookup,
 } from "openchat-shared";
 import { locale } from "svelte-i18n";
 import { selectedAuthProviderStore } from "./stores/authProviders";
@@ -30,7 +29,6 @@ import { type DraftMessages, draftMessagesStore } from "./stores/draftMessages";
 import { offlineStore } from "./stores/network";
 import { capturePinNumberStore, pinNumberRequiredStore } from "./stores/pinNumber";
 import { remainingStorage } from "./stores/storage";
-import { userStore } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
 
 /**
@@ -42,7 +40,6 @@ export class LiveState {
     events!: EventWrapper<ChatEvent>[];
     selectedAuthProvider!: AuthProvider | undefined;
     userCreated!: boolean;
-    userStore!: UserLookup;
     remainingStorage!: number;
     currentChatReplyingTo: EnhancedReplyContext | undefined;
     chatSummaries!: ChatMap<ChatSummary>;
@@ -68,7 +65,6 @@ export class LiveState {
     constructor() {
         offlineStore.subscribe((offline) => (this.offlineStore = offline));
         remainingStorage.subscribe((data) => (this.remainingStorage = data));
-        userStore.subscribe((data) => (this.userStore = data));
         userCreatedStore.subscribe((data) => (this.userCreated = data));
         selectedAuthProviderStore.subscribe((data) => (this.selectedAuthProvider = data));
         chatSummariesStore.subscribe((data) => (this.chatSummaries = data));

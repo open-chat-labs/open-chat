@@ -52,10 +52,10 @@
                         {#snippet text()}
                             <div class="theme-item">
                                 <div class="label">{theme.label}</div>
-                                {#if theme.author !== undefined && $userStore.get(theme.author) !== undefined}
+                                {#if theme.author !== undefined && userStore.get(theme.author) !== undefined}
                                     <div class="avatar">
                                         <Avatar
-                                            url={client.userAvatarUrl($userStore.get(theme.author))}
+                                            url={client.userAvatarUrl(userStore.get(theme.author))}
                                             userId={theme.author}
                                             size={AvatarSize.Tiny} />
                                     </div>

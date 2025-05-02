@@ -2,8 +2,6 @@ export * from "openchat-shared";
 export type { OpenChatConfig } from "./config";
 export * from "./events";
 export { OpenChat } from "./openchat";
-export * from "./stores";
-
 export { app } from "./state/app.svelte";
 export { botState } from "./state/bots.svelte";
 export * from "./state/path.svelte";
@@ -11,6 +9,8 @@ export { debouncedDerived, withEqCheck } from "./state/reactivity.svelte";
 export { ScreenHeight, ScreenWidth, ui, type Layout } from "./state/ui.svelte";
 export * from "./state/undo";
 export { messagesRead, type MessageReadState } from "./state/unread/markRead.svelte";
+export { userStore } from "./state/users/users.svelte";
+export * from "./stores";
 export type { FailedMessages } from "./stores/failedMessages";
 export { FilteredProposals } from "./stores/filteredProposals";
 export { immutableStore } from "./stores/immutable";

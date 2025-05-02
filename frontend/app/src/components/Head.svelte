@@ -87,7 +87,7 @@
         getDetails(
             app.chatListScope,
             pathState.location,
-            $userStore,
+            userStore.allUsers,
             app.globalUnreadCount,
             $selectedChatStore,
             app.selectedCommunitySummary,

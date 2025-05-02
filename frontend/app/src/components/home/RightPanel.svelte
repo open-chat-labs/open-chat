@@ -54,7 +54,7 @@
     let resizing = $state(false);
     let resizedWidth = $state("7");
 
-    let user = $derived($userStore.get(app.currentUserId) ?? client.nullUser("unknown"));
+    let user = $derived(userStore.get(app.currentUserId) ?? client.nullUser("unknown"));
     let modal = $derived(!ui.fullWidth);
     let multiUserChat = $derived(selectedChat as Readable<MultiUserChat>);
     let empty = $derived(ui.rightPanelHistory.length === 0);

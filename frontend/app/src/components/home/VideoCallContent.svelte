@@ -75,7 +75,7 @@
     <div class="avatars">
         {#each [...content.participants].slice(0, 5) as participantId}
             <Avatar
-                url={client.userAvatarUrl($userStore.get(participantId.userId))}
+                url={client.userAvatarUrl(userStore.get(participantId.userId))}
                 userId={participantId.userId}
                 size={AvatarSize.Small} />
         {/each}

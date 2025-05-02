@@ -4,6 +4,7 @@ import type { OpenChat } from "./openchat";
 import { app } from "./state/app.svelte";
 import { pathState } from "./state/path.svelte";
 import { ui } from "./state/ui.svelte";
+import { userStore } from "./state/users/users.svelte";
 import {
     chatListScopeStore,
     dummyCurrentUser,
@@ -12,6 +13,7 @@ import {
     dummyScopedChats,
     dummyServerEventsStore,
     dummyThreadEventsStore,
+    dummyUserStore,
     dummyWalletConfigStore,
     selectedChatId,
     selectedMessageContext,
@@ -151,6 +153,11 @@ function syncState() {
     $effect(() => {
         void app.currentUser;
         dummyCurrentUser.set(Symbol());
+    });
+
+    $effect(() => {
+        void userStore.allUsers;
+        dummyUserStore.set(Symbol());
     });
 }
 

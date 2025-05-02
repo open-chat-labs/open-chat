@@ -108,7 +108,7 @@
                 const u = [...others][0];
                 return i18nKey(`activity.${root}Two`, {
                     username,
-                    other: buildDisplayName($userStore, u, u === app.currentUserId),
+                    other: buildDisplayName(userStore.allUsers, u, u === app.currentUserId),
                 });
             default:
                 return i18nKey(`activity.${root}N`, { username, n: others.size });
@@ -149,16 +149,16 @@
         ui.activityFeedShowing = false;
         page(routeForMessageContext("none", event.messageContext, true));
     }
-    let sender = $derived(event.userId ? $userStore.get(event.userId) : undefined);
+    let sender = $derived(event.userId ? userStore.get(event.userId) : undefined);
     let eventUsername = $derived(
         event.userId
-            ? buildDisplayName($userStore, event.userId, event.userId === app.currentUserId)
+            ? buildDisplayName(userStore.allUsers, event.userId, event.userId === app.currentUserId)
             : $_("activity.anon"),
     );
     let messageUsername = $derived(
         event.message
             ? buildDisplayName(
-                  $userStore,
+                  userStore.allUsers,
                   event.message.sender,
                   event.message.sender === app.currentUserId,
               )

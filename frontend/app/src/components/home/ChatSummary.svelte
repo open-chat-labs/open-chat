@@ -74,7 +74,7 @@
     );
     let unreadMentions = $derived(getUnreadMentionCount(chatSummary));
     let chat = $derived(normaliseChatSummary($now, chatSummary, $typersByContext));
-    let lastMessage = $derived(formatLatestMessage(chatSummary, $userStore));
+    let lastMessage = $derived(formatLatestMessage(chatSummary, userStore.allUsers));
     let displayDate = $derived(client.getDisplayDate(chatSummary));
     let community = $derived(
         chatSummary.kind === "channel"
@@ -100,7 +100,7 @@
             : { muted: 0, unmuted: 0 };
         switch (chatSummary.kind) {
             case "direct_chat":
-                const them = $userStore.get(chatSummary.them.userId);
+                const them = userStore.get(chatSummary.them.userId);
                 return {
                     name: client.displayName(them),
                     diamondStatus: them?.diamondStatus ?? "inactive",
@@ -109,7 +109,7 @@
                     userId: chatSummary.them,
                     typing: client.getTypingString(
                         $_,
-                        $userStore,
+                        userStore.allUsers,
                         { chatId: chatSummary.id },
                         typing,
                     ),
@@ -129,7 +129,7 @@
                     userId: undefined,
                     typing: client.getTypingString(
                         $_,
-                        $userStore,
+                        userStore.allUsers,
                         { chatId: chatSummary.id },
                         typing,
                     ),

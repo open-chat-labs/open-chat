@@ -149,7 +149,7 @@
 </script>
 
 {#if event.event.kind === "message"}
-    {@const sender = $userStore.get(event.event.sender)}
+    {@const sender = userStore.get(event.event.sender)}
     {#if !hidden}
         <ChatMessage
             {sender}

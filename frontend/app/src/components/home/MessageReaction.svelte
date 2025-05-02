@@ -55,7 +55,9 @@
         }
     }
     let selected = $derived(userIds.has(app.currentUserId));
-    let usernames = $derived(buildReactionUsernames($userStore, userIds, app.currentUserId));
+    let usernames = $derived(
+        buildReactionUsernames(userStore.allUsers, userIds, app.currentUserId),
+    );
 </script>
 
 <Tooltip

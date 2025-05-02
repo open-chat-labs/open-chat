@@ -104,7 +104,7 @@
         }
 
         if (chat.kind === "direct_chat") {
-            const user = $userStore.get(chat.them.userId);
+            const user = userStore.get(chat.them.userId);
             if (user !== undefined) {
                 return (
                     user.username.toLowerCase().indexOf(lowercaseSearch) >= 0 ||
@@ -177,7 +177,7 @@
             app.selectedCommunitySummary?.membership.role === "none" &&
             app.selectedChatId === undefined,
     );
-    let user = $derived($userStore.get(app.currentUserId));
+    let user = $derived(userStore.get(app.currentUserId));
     let lowercaseSearch = $derived(searchTerm.toLowerCase());
     let showExploreGroups = $derived(
         (app.chatListScope.kind === "none" || app.chatListScope.kind === "group_chat") &&

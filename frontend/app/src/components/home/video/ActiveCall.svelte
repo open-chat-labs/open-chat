@@ -65,7 +65,7 @@
             if (chat) {
                 switch (chat.kind) {
                     case "direct_chat":
-                        const them = $userStore.get(chat.them.userId);
+                        const them = userStore.get(chat.them.userId);
                         return {
                             chatId: chat.id,
                             name: client.displayName(them),
