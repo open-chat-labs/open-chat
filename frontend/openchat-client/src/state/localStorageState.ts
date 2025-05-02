@@ -39,3 +39,13 @@ export class LocalStorageState<V> {
         this.#value = val;
     }
 }
+
+export class LocalStorageBoolState extends LocalStorageState<boolean> {
+    constructor(key: string, defVal: boolean) {
+        super(key, defVal);
+    }
+
+    toggle() {
+        this.value = !this.value;
+    }
+}

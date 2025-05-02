@@ -58,7 +58,9 @@ import { CommunityServerState } from "./community_details/server.svelte";
 import { localUpdates } from "./global";
 import { pathState } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
+import { ui } from "./ui.svelte";
 import { messagesRead } from "./unread/markRead.svelte";
+import { userStore } from "./users/users.svelte";
 
 export class AppState {
     constructor() {
@@ -211,6 +213,16 @@ export class AppState {
     #serverGroupChats = $state<ChatMap<GroupChatSummary>>(new ChatMap());
 
     #serverFavourites = $state<ChatSet>(new ChatSet());
+
+    #currentChatBlockedOrSuspendedUsers = $derived.by(() => {
+        const direct = ui.hideMessagesFromDirectBlocked ? [...userStore.blockedUsers] : [];
+        return new Set<string>([
+            ...this.#selectedChat.blockedUsers,
+            ...this.#selectedCommunity.blockedUsers,
+            ...userStore.suspendedUsers.keys(),
+            ...direct,
+        ]);
+    });
 
     #favourites = $derived.by(() => {
         return localUpdates.favourites.apply(this.#serverFavourites);
@@ -497,6 +509,10 @@ export class AppState {
 
     setCurrentUser(user: CreatedUser) {
         this.#currentUser = user;
+    }
+
+    get currentChatBlockedOrSuspendedUsers() {
+        return this.#currentChatBlockedOrSuspendedUsers;
     }
 
     get communityFilters() {

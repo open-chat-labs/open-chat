@@ -288,7 +288,6 @@ import { ui } from "./state/ui.svelte";
 import type { UndoLocalUpdate } from "./state/undo";
 import { messagesRead, startMessagesReadTracker } from "./state/unread/markRead.svelte";
 import { userStore } from "./state/users/users.svelte";
-import { blockedUsers } from "./stores/blockedUsers";
 import {
     confirmedEventIndexesLoaded,
     isContiguous,
@@ -1267,26 +1266,28 @@ export class OpenChat {
     }
 
     blockUserFromDirectChat(userId: string): Promise<boolean> {
-        blockedUsers.add(userId);
+        // TODO this should be done with local updates
+        userStore.blockUser(userId);
         rtcConnectionsManager.disconnectFromUser(userId);
         return this.#sendRequest({ kind: "blockUserFromDirectChat", userId })
             .then((resp) => {
                 return resp.kind === "success";
             })
             .catch(() => {
-                blockedUsers.delete(userId);
+                userStore.unblockUser(userId);
                 return false;
             });
     }
 
     unblockUserFromDirectChat(userId: string): Promise<boolean> {
-        blockedUsers.delete(userId);
+        // TODO this should be done with local updates
+        userStore.unblockUser(userId);
         return this.#sendRequest({ kind: "unblockUserFromDirectChat", userId })
             .then((resp) => {
                 return resp.kind === "success";
             })
             .catch(() => {
-                blockedUsers.add(userId);
+                userStore.blockUser(userId);
                 return false;
             });
     }
@@ -2429,7 +2430,7 @@ export class OpenChat {
                 chat,
                 resp.events,
                 userStore.allUsers,
-                this.#liveState.blockedUsers,
+                userStore.blockedUsers,
                 this.config.meteredApiKey,
             );
         }
@@ -2870,7 +2871,7 @@ export class OpenChat {
                     chat,
                     this.#liveState.threadEvents,
                     userStore.allUsers,
-                    this.#liveState.blockedUsers,
+                    userStore.blockedUsers,
                     this.config.meteredApiKey,
                 );
             }
@@ -4458,7 +4459,7 @@ export class OpenChat {
     }
 
     #handleWebRtcMessage(msg: WebRtcMessage): void {
-        if (this.#liveState.blockedUsers.has(msg.userId)) {
+        if (userStore.blockedUsers.has(msg.userId)) {
             return;
         }
 
@@ -5897,7 +5898,7 @@ export class OpenChat {
             await this.getMissingUsers(userIds);
 
             if (chatsResponse.state.blockedUsers !== undefined) {
-                blockedUsers.set(new Set(chatsResponse.state.blockedUsers));
+                userStore.setBlockedUsers(chatsResponse.state.blockedUsers);
             }
 
             // if the selected community has updates, reload the details

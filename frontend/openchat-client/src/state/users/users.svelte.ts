@@ -1,8 +1,14 @@
 // Not reallly sure whether to make this separate or not yet. Feels like a thing.
-import { type ReadonlyMap, type UserLookup, type UserSummary } from "openchat-shared";
-import { SvelteMap } from "svelte/reactivity";
+import {
+    type ReadonlyMap,
+    type ReadonlySet,
+    type UserLookup,
+    type UserSummary,
+} from "openchat-shared";
+import { SvelteMap, SvelteSet } from "svelte/reactivity";
 
 export class UsersState {
+    #blockedUsers = new SvelteSet<string>();
     #normalUsers = new SvelteMap<string, UserSummary>();
     #specialUsers = new SvelteMap<string, UserSummary>();
     #allUsers = $derived.by(() => {
@@ -20,6 +26,18 @@ export class UsersState {
         }
         return suspended;
     });
+
+    setBlockedUsers(userIds: string[]) {
+        this.#blockedUsers = new SvelteSet(userIds);
+    }
+
+    blockUser(userId: string) {
+        this.#blockedUsers.add(userId);
+    }
+
+    unblockUser(userId: string) {
+        this.#blockedUsers.delete(userId);
+    }
 
     setUsers(users: UserLookup) {
         this.#normalUsers = new SvelteMap(users);
@@ -48,6 +66,10 @@ export class UsersState {
 
     has(userId: string): boolean {
         return this.#allUsers.has(userId);
+    }
+
+    get blockedUsers(): ReadonlySet<string> {
+        return this.#blockedUsers;
     }
 
     get allUsers(): ReadonlyMap<string, UserSummary> {

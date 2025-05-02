@@ -7,6 +7,7 @@ import type {
     EventWrapper,
     ExpiredEventsRange,
     MessageContext,
+    ThreadIdentifier,
     ThreadSyncDetails,
 } from "openchat-shared";
 import { chatIdentifiersEqual, ChatMap, compareChats, messageContextsEqual } from "openchat-shared";
@@ -17,15 +18,12 @@ import {
     mergeEventsAndLocalUpdates,
     mergeUnconfirmedIntoSummary,
 } from "../utils/chat";
-import { configKeys } from "../utils/config";
-import { blockedUsers } from "./blockedUsers";
 import { createDerivedPropStore } from "./derived";
 import { draftMessagesStore } from "./draftMessages";
 import { createDummyStore } from "./dummyStore";
 import { ephemeralMessages } from "./ephemeralMessages";
 import { failedMessagesStore } from "./failedMessages";
 import { localMessageUpdates } from "./localMessageUpdates";
-import { createLsBoolStore } from "./localStorageSetting";
 import { messageFiltersStore } from "./messageFilters";
 import { proposalTallies } from "./proposalTallies";
 import { recentlySentMessagesStore } from "./recentlySentMessages";
@@ -33,7 +31,6 @@ import { safeWritable } from "./safeWritable";
 import { snsFunctions } from "./snsFunctions";
 import { translationStore } from "./translation";
 import { unconfirmed } from "./unconfirmed";
-import { suspendedUsers } from "./user";
 
 // TODO - this will be synced from the Svelte5 rune for now and ultimately removed
 export const selectedChatId = writable<ChatIdentifier | undefined>(undefined);
@@ -48,20 +45,19 @@ export const selectedThreadRootMessageIndex = derived(selectedMessageContext, ($
     return $messageContext?.threadRootMessageIndex;
 });
 
-export const hideMessagesFromDirectBlocked = createLsBoolStore(configKeys.hideBlocked, false);
-
-export const currentChatBlockedOrSuspendedUsers = derived(
-    [suspendedUsers, blockedUsers, hideMessagesFromDirectBlocked],
-    ([suspended, directBlocked, hideBlocked]) => {
-        const direct = hideBlocked ? directBlocked : [];
-        return new Set<string>([
-            ...app.selectedChat.blockedUsers, //TODO This is no longer reactive - not ideal but probably liveable with short term
-            ...app.selectedCommunity.blockedUsers, //TODO This is no longer reactive - not ideal but probably liveable with short term
-            ...suspended,
-            ...direct,
-        ]);
-    },
-);
+// TODO - this is the next thing to get rid of
+// export const currentChatBlockedOrSuspendedUsers = derived(
+//     [suspendedUsers, blockedUsers, hideMessagesFromDirectBlocked],
+//     ([suspended, directBlocked, hideBlocked]) => {
+//         const direct = hideBlocked ? directBlocked : [];
+//         return new Set<string>([
+//             ...app.selectedChat.blockedUsers, //TODO This is no longer reactive - not ideal but probably liveable with short term
+//             ...app.selectedCommunity.blockedUsers, //TODO This is no longer reactive - not ideal but probably liveable with short term
+//             ...suspended,
+//             ...direct,
+//         ]);
+//     },
+// );
 
 export const dummyScopedChats = createDummyStore();
 
@@ -372,8 +368,14 @@ function isContiguousInternal(
     return isContiguous;
 }
 
-export function isContiguousInThread(events: EventWrapper<ChatEvent>[]): boolean {
-    return isContiguousInternal(app.selectedChat.confirmedThreadEventIndexesLoaded, events, []);
+export function isContiguousInThread(
+    threadId: ThreadIdentifier,
+    events: EventWrapper<ChatEvent>[],
+): boolean {
+    return (
+        messageContextsEqual(threadId, app.selectedChat?.selectedThread?.id) &&
+        isContiguousInternal(app.selectedChat.confirmedThreadEventIndexesLoaded, events, [])
+    );
 }
 
 export function isContiguous(
@@ -381,7 +383,10 @@ export function isContiguous(
     events: EventWrapper<ChatEvent>[],
     expiredEventRanges: ExpiredEventsRange[],
 ): boolean {
-    return isContiguousInternal(confirmedEventIndexesLoaded(chatId), events, expiredEventRanges);
+    return (
+        chatIdentifiersEqual(chatId, app.selectedChat.chatId) &&
+        isContiguousInternal(confirmedEventIndexesLoaded(chatId), events, expiredEventRanges)
+    );
 }
 
 export const currentChatDraftMessage = derived(

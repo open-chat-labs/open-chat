@@ -7,7 +7,6 @@
         type OpenChat,
         type UserSummary,
         app,
-        hideMessagesFromDirectBlocked,
         notificationStatus,
         publish,
         ui,
@@ -515,9 +514,9 @@
                     <Toggle
                         id={"hide-blocked"}
                         small
-                        onChange={() => hideMessagesFromDirectBlocked.toggle()}
+                        onChange={() => ui.hideMessagesFromDirectBlocked.toggle()}
                         label={i18nKey("hideBlocked")}
-                        checked={$hideMessagesFromDirectBlocked} />
+                        checked={ui.hideMessagesFromDirectBlocked.value} />
                 </CollapsibleCard>
             </div>
             <div class="video">

@@ -11,7 +11,7 @@ import {
 } from "openchat-shared";
 import { get } from "svelte/store";
 import { app } from "../state/app.svelte";
-import { blockedUsers } from "../stores/blockedUsers";
+import { userStore } from "../state/users/users.svelte";
 import { selectedChatStore } from "../stores/chat";
 
 export function messageIsForSelectedChat(msg: WebRtcMessage): boolean {
@@ -58,7 +58,7 @@ function isDirectChatWith(chat: ChatSummary, userId: string): boolean {
 }
 
 function isBlockedUser(chat: ChatSummary): boolean {
-    return chat.kind === "direct_chat" && get(blockedUsers).has(chat.them.userId);
+    return chat.kind === "direct_chat" && userStore.blockedUsers.has(chat.them.userId);
 }
 
 export function filterWebRtcMessage(msg: WebRtcMessage): ChatIdentifier | undefined {

@@ -12,7 +12,6 @@ import type {
 } from "openchat-shared";
 import { locale } from "svelte-i18n";
 import { selectedAuthProviderStore } from "./stores/authProviders";
-import { blockedUsers } from "./stores/blockedUsers";
 import {
     chatSummariesListStore,
     chatSummariesStore,
@@ -49,7 +48,6 @@ export class LiveState {
     selectedMessageContext: MessageContext | undefined;
     threadsFollowedByMe!: ChatMap<Set<number>>;
     selectedThreadRootMessageIndex: number | undefined;
-    blockedUsers!: Set<string>;
     diamondStatus!: DiamondMembershipStatus;
     isDiamond!: boolean;
     isLifetimeDiamond!: boolean;
@@ -79,7 +77,6 @@ export class LiveState {
         selectedThreadRootMessageIndex.subscribe(
             (data) => (this.selectedThreadRootMessageIndex = data),
         );
-        blockedUsers.subscribe((data) => (this.blockedUsers = data));
         draftMessagesStore.subscribe((data) => (this.draftMessages = data));
         locale.subscribe((data) => (this.locale = data ?? "en"));
         pinNumberRequiredStore.subscribe((data) => (this.pinNumberRequired = data));

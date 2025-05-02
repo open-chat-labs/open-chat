@@ -133,7 +133,7 @@ export function getUsersToMakeRtcConnectionsWith(
     myUserId: string,
     chat: ChatSummary,
     events: EventWrapper<ChatEvent>[],
-    blocked: Set<string>,
+    blocked: ReadonlySet<string>,
 ): string[] {
     if (chat.kind === "direct_chat") {
         return blocked.has(chat.id.userId) ? [] : [chat.id.userId];
@@ -150,7 +150,7 @@ export function makeRtcConnections(
     chat: ChatSummary,
     events: EventWrapper<ChatEvent>[],
     lookup: UserLookup,
-    blocked: Set<string>,
+    blocked: ReadonlySet<string>,
     meteredApiKey: string,
 ): void {
     const userIds = getUsersToMakeRtcConnectionsWith(myUserId, chat, events, blocked);
