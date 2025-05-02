@@ -3,12 +3,9 @@
         app,
         chatIdentifiersEqual,
         type ChatSummary,
-        currentUser,
         type GroupChatSummary,
-        isDiamond,
         isProposalGroup,
         type OpenChat,
-        platformModerator,
         publish,
         ui,
         userStore,
@@ -201,7 +198,7 @@
     }
 
     function convertToCommunity() {
-        if (!$isDiamond) {
+        if (!app.isDiamond) {
             publish("upgrade");
         } else {
             if (selectedChatSummary.kind === "group_chat") {
@@ -263,7 +260,7 @@
 
     function removeBot(botId: string) {
         client
-            .uninstallBot({ kind: "direct_chat", userId: $currentUser.userId }, botId)
+            .uninstallBot({ kind: "direct_chat", userId: app.currentUserId }, botId)
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("bots.manage.removeFailed"));
@@ -479,7 +476,7 @@
                         </MenuItem>
                     {/if}
 
-                    {#if $platformModerator && selectedChatSummary.kind === "group_chat"}
+                    {#if app.platformModerator && selectedChatSummary.kind === "group_chat"}
                         {#if client.isChatFrozen(selectedChatSummary.id)}
                             <MenuItem warning onclick={unfreezeGroup}>
                                 {#snippet icon()}
@@ -591,7 +588,7 @@
                             {/snippet}
                         </MenuItem>
                     {/if}
-                    {#if $platformModerator}
+                    {#if app.platformModerator}
                         {#if isSuspended}
                             <MenuItem onclick={unsuspendUser}>
                                 {#snippet icon()}

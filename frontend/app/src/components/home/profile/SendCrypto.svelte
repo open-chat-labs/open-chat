@@ -5,16 +5,15 @@
         OpenChat,
         ResourceKey,
     } from "openchat-client";
-    import { ErrorCode } from "openchat-shared";
     import {
+        app,
         BTC_SYMBOL,
         cryptoBalance as cryptoBalanceStore,
         cryptoLookup,
         ICP_SYMBOL,
         ui,
-        currentUser as user,
     } from "openchat-client";
-    import { isAccountIdentifierValid, isPrincipalValid } from "openchat-shared";
+    import { ErrorCode, isAccountIdentifierValid, isPrincipalValid } from "openchat-shared";
     import { getContext, onMount } from "svelte";
     import QrcodeScan from "svelte-material-icons/QrcodeScan.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -60,7 +59,9 @@
 
     let cryptoBalance = $derived($cryptoBalanceStore[ledger] ?? BigInt(0));
     let tokenDetails = $derived($cryptoLookup[ledger]);
-    let account = $derived(tokenDetails.symbol === ICP_SYMBOL ? $user.cryptoAccount : $user.userId);
+    let account = $derived(
+        tokenDetails.symbol === ICP_SYMBOL ? app.currentUser.cryptoAccount : app.currentUserId,
+    );
     let symbol = $derived(tokenDetails.symbol);
     let selectedBtcNetwork = $state(BTC_SYMBOL);
     let isBtc = $derived(symbol === BTC_SYMBOL);

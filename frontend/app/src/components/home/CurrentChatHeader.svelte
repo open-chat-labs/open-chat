@@ -1,7 +1,6 @@
 <script lang="ts">
     import type { ChatSummary, DiamondMembershipStatus, GroupChatSummary } from "openchat-client";
     import {
-        anonUser,
         app,
         AvatarSize,
         publish,
@@ -231,7 +230,7 @@
         </div>
     </div>
     <ActiveVideoCallResume />
-    {#if !readonly && !$anonUser}
+    {#if !readonly && !app.anonUser}
         <CurrentChatMenu
             bind:showSuspendUserModal
             {hasPinned}

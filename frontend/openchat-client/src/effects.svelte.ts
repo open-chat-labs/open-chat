@@ -6,6 +6,7 @@ import { pathState } from "./state/path.svelte";
 import { ui } from "./state/ui.svelte";
 import {
     chatListScopeStore,
+    dummyCurrentUser,
     dummyExpiredEventRangeStore,
     dummyPinnedChatsStore,
     dummyScopedChats,
@@ -145,6 +146,11 @@ function syncState() {
 
     $effect(() => {
         selectedMessageContext.set(app.selectedMessageContext);
+    });
+
+    $effect(() => {
+        void app.currentUser;
+        dummyCurrentUser.set(Symbol());
     });
 }
 

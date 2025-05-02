@@ -6,7 +6,7 @@
         OpenChat,
         ReadonlySet,
     } from "openchat-client";
-    import { subscribe, ui, currentUser as user } from "openchat-client";
+    import { app, subscribe, ui } from "openchat-client";
     import { isSuccessfulEventsResponse } from "openchat-shared";
     import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
@@ -123,7 +123,7 @@
                     <PinnedMessage
                         {chatId}
                         timestamp={message.timestamp}
-                        user={$user}
+                        user={app.currentUser}
                         senderId={message.event.sender}
                         msg={message.event} />
                 {/each}

@@ -1,9 +1,8 @@
 <script lang="ts">
-    import { ui } from "openchat-client";
+    import { app, ui } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey, supportedLanguages } from "../../../../i18n/i18n";
-    import { communityFiltersStore } from "../../../../stores/communityFilters";
     import Checkbox from "../../../Checkbox.svelte";
     import CollapsibleCard from "../../../CollapsibleCard.svelte";
     import HoverIcon from "../../../HoverIcon.svelte";
@@ -32,9 +31,9 @@
             <div class="toggle">
                 <Checkbox
                     id={`language_${lang.code}`}
-                    onChange={() => communityFiltersStore.toggleLanguage(lang.code)}
+                    onChange={() => app.toggleCommunityFilterLanguage(lang.code)}
                     label={i18nKey(lang.name)}
-                    checked={$communityFiltersStore.languages.has(lang.code)} />
+                    checked={app.communityFilters.languages.has(lang.code)} />
             </div>
         {/each}
     </CollapsibleCard>

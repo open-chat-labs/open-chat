@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
-    import { anonUser, app, publish, ui } from "openchat-client";
+    import { app, publish, ui } from "openchat-client";
     import page from "page";
     import { getContext, tick } from "svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
@@ -23,7 +23,7 @@
     let { canMarkAllRead }: Props = $props();
 
     function newGroup() {
-        if ($anonUser) {
+        if (app.anonUser) {
             client.updateIdentityState({
                 kind: "logging_in",
                 postLogin: { kind: "create_group" },

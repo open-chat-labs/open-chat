@@ -11,8 +11,6 @@
         type UserSummary,
         app,
         blockedUsers,
-        currentUser as createdUser,
-        platformModerator,
         selectedChatStore as selectedChat,
         ui,
     } from "openchat-client";
@@ -233,7 +231,7 @@
         });
     }
     let diamondStatus = $derived(user?.diamondStatus);
-    let me = $derived(userId === $createdUser.userId);
+    let me = $derived(userId === app.currentUserId);
     let isSuspended = $derived(user?.suspended ?? false);
     let modal = $derived(ui.mobileWidth);
     let [status, online] = $derived(
@@ -384,7 +382,7 @@
                                 ><Translatable resourceKey={i18nKey("profile.unblock")} /></Button>
                         {/if}
                     </ButtonGroup>
-                    {#if $platformModerator}
+                    {#if app.platformModerator}
                         <div class="suspend">
                             <ButtonGroup align={"fill"}>
                                 {#if isSuspended}

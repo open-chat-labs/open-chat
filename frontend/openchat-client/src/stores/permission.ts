@@ -1,8 +1,9 @@
-import { derived } from "svelte/store";
-import { selectedChatStore } from "./chat";
-import { currentUser, userStore } from "./user";
-import { permittedMessagesInDirectChat, permittedMessagesInGroup } from "../utils/chat";
 import type { ChatSummary, CreatedUser, MessagePermission, UserLookup } from "openchat-shared";
+import { derived } from "svelte/store";
+import { app } from "../state/app.svelte";
+import { permittedMessagesInDirectChat, permittedMessagesInGroup } from "../utils/chat";
+import { selectedChatStore } from "./chat";
+import { dummyCurrentUser, userStore } from "./user";
 
 function toSet(map: Map<MessagePermission, boolean>): Set<MessagePermission> {
     return [...map.entries()].reduce((s, [k, v]) => {
@@ -39,15 +40,15 @@ function getMessagePermissionsForSelectedChat(
 }
 
 export const messagePermissionsForSelectedChat = derived(
-    [selectedChatStore, userStore, currentUser],
-    ([$chat, $userStore, $user]) => {
-        return getMessagePermissionsForSelectedChat($chat, $userStore, $user, "message");
+    [selectedChatStore, userStore, dummyCurrentUser],
+    ([$chat, $userStore, _]) => {
+        return getMessagePermissionsForSelectedChat($chat, $userStore, app.currentUser, "message");
     },
 );
 
 export const threadPermissionsForSelectedChat = derived(
-    [selectedChatStore, userStore, currentUser],
-    ([$chat, $userStore, $user]) => {
-        return getMessagePermissionsForSelectedChat($chat, $userStore, $user, "thread");
+    [selectedChatStore, userStore, dummyCurrentUser],
+    ([$chat, $userStore, _]) => {
+        return getMessagePermissionsForSelectedChat($chat, $userStore, app.currentUser, "thread");
     },
 );

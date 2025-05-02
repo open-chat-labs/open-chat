@@ -14,10 +14,8 @@
         blockedUsers,
         publish,
         routeForScope,
-        suspendedUser,
         byContext as typersByContext,
         ui,
-        currentUser as user,
         userStore,
     } from "openchat-client";
     import page from "page";
@@ -66,7 +64,6 @@
 
     let { chatSummary, selected, visible, onChatSelected }: Props = $props();
 
-    let userId = $derived($user.userId);
     let externalContent = $derived(
         chatSummary.kind === "channel" && chatSummary.externalUrl !== undefined,
     );
@@ -190,7 +187,7 @@
         const user = buildDisplayName(
             users,
             chatSummary.latestMessage.event.sender,
-            chatSummary.latestMessage.event.sender === userId,
+            chatSummary.latestMessage.event.sender === app.currentUserId,
             false,
         );
 
@@ -422,7 +419,7 @@
                         {unreadMessages > 999 ? "999+" : unreadMessages}
                     </div>
                 {/if}
-                {#if !$suspendedUser}
+                {#if !app.suspendedUser}
                     <div class="menu">
                         <MenuIcon position={"bottom"} align={"end"}>
                             {#snippet menuIcon()}

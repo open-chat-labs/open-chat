@@ -1,6 +1,8 @@
 import { dequal } from "dequal";
 import type DRange from "drange";
 import {
+    ANON_USER_ID,
+    anonymousUser,
     applyOptionUpdate,
     type ChannelSummary,
     type ChatEvent,
@@ -13,10 +15,12 @@ import {
     type ChatSummary,
     type ChitState,
     type CombinedUnreadCounts,
+    type CommunityFilter,
     type CommunityIdentifier,
     communityIdentifiersEqual,
     CommunityMap,
     type CommunitySummary,
+    type CreatedUser,
     type DirectChatIdentifier,
     type DirectChatSummary,
     emptyChatMetrics,
@@ -29,6 +33,8 @@ import {
     type MessageActivitySummary,
     type MessageContext,
     messageContextsEqual,
+    type ModerationFlag,
+    ModerationFlags,
     type PublicApiKeyDetails,
     type ReadonlyMap,
     type Referral,
@@ -73,9 +79,78 @@ export class AppState {
         });
     }
 
+    #communityFilterToString(filter: CommunityFilter): string {
+        return JSON.stringify({
+            ...filter,
+            languages: Array.from(filter.languages),
+        });
+    }
+
+    #communityFilterFromString(serialised: string | null): CommunityFilter | undefined {
+        if (!serialised) return undefined;
+        const parsed = JSON.parse(serialised);
+        return {
+            languages: new Set(parsed.languages),
+        };
+    }
+
+    #initialiseCommunityFilter() {
+        return (
+            this.#communityFilterFromString(localStorage.getItem("openchat_community_filters")) ?? {
+                languages: new Set<string>(),
+            }
+        );
+    }
+
+    #communityFilters = $state<CommunityFilter>(this.#initialiseCommunityFilter());
+
+    #currentUser = $state<CreatedUser>(anonymousUser());
+
+    #currentUserId = $derived(this.#currentUser.userId);
+
+    #anonUser = $derived(this.#currentUserId === ANON_USER_ID);
+
+    #suspendedUser = $derived(this.#currentUser.suspensionDetails !== undefined);
+
+    #platformModerator = $derived(this.#currentUser.isPlatformModerator);
+
+    #platformOperator = $derived(this.#currentUser.isPlatformOperator);
+
+    #diamondStatus = $derived(this.#currentUser.diamondStatus);
+
+    #isDiamond = $derived(
+        this.#diamondStatus.kind === "lifetime" ||
+            (this.#diamondStatus.kind === "active" && this.#diamondStatus.expiresAt > Date.now()),
+    );
+
+    #isLifetimeDiamond = $derived(this.#diamondStatus.kind === "lifetime");
+
+    #canExtendDiamond = $derived(this.#diamondStatus.kind === "active");
+
+    hasFlag(mask: number, flag: ModerationFlag): boolean {
+        return (mask & flag) !== 0;
+    }
+
+    #moderationFlagsEnabled = $derived(this.#currentUser.moderationFlagsEnabled);
+
+    #adultEnabled = $derived(this.hasFlag(this.#moderationFlagsEnabled, ModerationFlags.Adult));
+
+    #offensiveEnabled = $derived(
+        this.hasFlag(this.#moderationFlagsEnabled, ModerationFlags.Offensive),
+    );
+
+    #underReviewEnabled = $derived(
+        this.hasFlag(this.#moderationFlagsEnabled, ModerationFlags.UnderReview),
+    );
+
     #achievements = $state<Set<string>>(new Set());
 
     #referrals = $state<Referral[]>([]);
+
+    #exploreCommunitiesFilters = $derived({
+        languages: Array.from(this.#communityFilters.languages),
+        flags: this.#moderationFlagsEnabled,
+    });
 
     #serverMessageActivitySummary = $state<MessageActivitySummary>({
         readUpToTimestamp: 0n,
@@ -419,6 +494,86 @@ export class AppState {
     #selectedChat = $state<ChatDetailsMergedState>(
         new ChatDetailsMergedState(ChatDetailsServerState.empty()),
     );
+
+    setCurrentUser(user: CreatedUser) {
+        this.#currentUser = user;
+    }
+
+    get communityFilters() {
+        return this.#communityFilters;
+    }
+
+    get exploreCommunitiesFilters() {
+        return this.#exploreCommunitiesFilters;
+    }
+
+    toggleCommunityFilterLanguage(lang: string) {
+        if (this.#communityFilters.languages.has(lang)) {
+            this.#communityFilters.languages.delete(lang);
+        } else {
+            this.#communityFilters.languages.add(lang);
+        }
+        localStorage.setItem(
+            "openchat_community_filters",
+            this.#communityFilterToString(this.#communityFilters),
+        );
+    }
+
+    get currentUser() {
+        return this.#currentUser;
+    }
+
+    get currentUserId() {
+        return this.#currentUserId;
+    }
+
+    get anonUser() {
+        return this.#anonUser;
+    }
+
+    get suspendedUser() {
+        return this.#suspendedUser;
+    }
+
+    get platformModerator() {
+        return this.#platformModerator;
+    }
+
+    get platformOperator() {
+        return this.#platformOperator;
+    }
+
+    get diamondStatus() {
+        return this.#diamondStatus;
+    }
+
+    get isDiamond() {
+        return this.#isDiamond;
+    }
+
+    get isLifetimeDiamond() {
+        return this.#isLifetimeDiamond;
+    }
+
+    get canExtendDiamond() {
+        return this.#canExtendDiamond;
+    }
+
+    get moderationFlagsEnabled() {
+        return this.#moderationFlagsEnabled;
+    }
+
+    get adultEnabled() {
+        return this.#adultEnabled;
+    }
+
+    get offensiveEnabled() {
+        return this.#offensiveEnabled;
+    }
+
+    get underReviewEnabled() {
+        return this.#underReviewEnabled;
+    }
 
     get allServerChats() {
         return this.#allServerChats;

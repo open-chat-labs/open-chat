@@ -16,11 +16,9 @@
         UserOrUserGroup,
     } from "openchat-client";
     import {
-        anonUser,
         app,
         botState,
         chatIdentifiersEqual,
-        currentUser,
         directMessageCommandInstance,
         draftMessagesStore,
         messageContextsEqual,
@@ -274,7 +272,7 @@
                 undefined,
                 { kind: "text_content", text: txt },
                 userMessageId,
-                $currentUser.userId,
+                app.currentUserId,
                 $useBlockLevelMarkdown,
                 false,
             );
@@ -503,7 +501,7 @@
     let messageIsEmpty = $derived(
         (textContent?.trim() ?? "").length === 0 && attachment === undefined,
     );
-    let canSendAny = $derived(!$anonUser && client.canSendMessage(chat.id, mode));
+    let canSendAny = $derived(!app.anonUser && client.canSendMessage(chat.id, mode));
     let permittedMessages = $derived(client.permittedMessages(chat.id, mode));
     let canEnterText = $derived(
         (permittedMessages.get("text") ?? false) ||
@@ -642,7 +640,7 @@
         <div class="disabled">
             <Translatable
                 resourceKey={i18nKey(
-                    $anonUser
+                    app.anonUser
                         ? "sendMessageDisabledAnon"
                         : mode === "thread"
                           ? "readOnlyThread"

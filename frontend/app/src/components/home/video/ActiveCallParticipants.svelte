@@ -4,10 +4,10 @@
         type MultiUserChatIdentifier,
         type OpenChat,
         type UserSummary,
+        app,
         chatIdentifiersEqual,
         subscribe,
         ui,
-        currentUser as user,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -137,7 +137,9 @@
                     {isOwner}
                     callType={$activeVideoCall.callType}
                     onDemote={demote}
-                    presence={isOwner && participant.userId === $user.userId ? "owner" : "default"}
+                    presence={isOwner && participant.userId === app.currentUserId
+                        ? "owner"
+                        : "default"}
                     {participant} />
             {/each}
         {/if}

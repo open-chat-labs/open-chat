@@ -1,13 +1,13 @@
 <script lang="ts">
+    import { app } from "openchat-client";
+    import { onMount } from "svelte";
     import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
+    import { i18nKey } from "../../i18n/i18n";
     import { currentTheme } from "../../theme/themes";
     import type { Theme } from "../../theme/types";
     import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
-    import { onMount } from "svelte";
     import PrivatePreview from "./PrivatePreview.svelte";
-    import { currentUser as user } from "openchat-client";
 
     interface Props {
         externalUrl: string;
@@ -53,7 +53,7 @@
                 sendMessage(iframe, origin, {
                     kind: "initialise_external_content",
                     theme: $currentTheme,
-                    username: $user.username,
+                    username: app.currentUser.username,
                 });
             }
             connected = true;
