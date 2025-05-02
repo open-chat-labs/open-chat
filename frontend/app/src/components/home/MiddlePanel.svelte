@@ -6,7 +6,6 @@
         chatIdentifiersEqual,
         filteredProposalsStore,
         pathState,
-        selectedChatId,
         selectedChatStore,
         ui,
         type ChatIdentifier,
@@ -87,12 +86,12 @@
     }
 
     function resize() {
-        alignVideoCall($activeVideoCall, $selectedChatId);
+        alignVideoCall($activeVideoCall, app.selectedChatId);
     }
     let noChat = $derived(pathState.route.kind !== "global_chat_selected_route");
     trackedEffect("align-video-call", () => {
         if (middlePanel) {
-            alignVideoCall($activeVideoCall, $selectedChatId);
+            alignVideoCall($activeVideoCall, app.selectedChatId);
         }
     });
 </script>
@@ -116,16 +115,16 @@
         {:then { default: Admin }}
             <Admin />
         {/await}
-    {:else if $selectedChatId === undefined}
+    {:else if app.selectedChatId === undefined}
         {#if noChat}
             <div class="no-chat" in:fade>
                 <NoChatSelected />
             </div>
         {/if}
-    {:else if installingBot && botId && $selectedChatId.kind === "direct_chat"}
+    {:else if installingBot && botId && app.selectedChatId.kind === "direct_chat"}
         <UninstalledDirectBot
             onClose={() => (installingBot = false)}
-            chatId={$selectedChatId}
+            chatId={app.selectedChatId}
             {botId} />
     {:else if $selectedChatStore !== undefined}
         <CurrentChat

@@ -125,7 +125,15 @@ export class ChatDetailsServerState {
         this.#thread?.updateEvents(id, fn);
     }
 
-    updateExpiredEventRanges(fn: (existing: DRange) => DRange) {
+    updateExpiredEventRanges(chatId: ChatIdentifier, fn: (existing: DRange) => DRange) {
+        if (!chatIdentifiersEqual(chatId, this.#chatId)) {
+            console.warn(
+                "Attempting to updateExpiredEventRanges for the wrong chat - probably a stale response",
+                chatId,
+                this.#chatId,
+            );
+            return;
+        }
         this.#expiredEventRanges = fn(this.#expiredEventRanges);
     }
 

@@ -1,10 +1,21 @@
 import {
+    emptyChatMetrics,
+    nullMembership,
+    type AccessGateConfig,
     type ChatIdentifier,
     type ChatListScope,
+    type ChatSummary,
     type CommunityIdentifier,
     type CommunitySummary,
+    type DirectChatIdentifier,
+    type DirectChatSummary,
+    type EventWrapper,
     type ExternalBotPermissions,
     type Member,
+    type Message,
+    type MultiUserChat,
+    type OptionalChatPermissions,
+    type OptionUpdate,
     type StreakInsurance,
     type UserGroupDetails,
     type VersionedRules,
@@ -12,13 +23,19 @@ import {
 } from "openchat-shared";
 import { chatDetailsLocalUpdates } from "../chat_details";
 import { communityLocalUpdates } from "../community_details";
-import { LocalCommunityMap, LocalMap, ReactiveCommunityMap } from "../map";
+import {
+    LocalChatMap,
+    LocalCommunityMap,
+    LocalMap,
+    ReactiveChatMap,
+    ReactiveCommunityMap,
+} from "../map";
 import { LocalSet } from "../set";
 import { scheduleUndo, type UndoLocalUpdate } from "../undo";
 
 // global local updates don't need the manager because they are not specific to a keyed entity (community, chat, message etc)
 export class GlobalLocalState {
-    // communities may be added or removed locally or they may be previewed. They are all handled by this.
+    readonly chats = new LocalChatMap<ChatSummary>();
     readonly communities = new LocalCommunityMap<CommunitySummary>();
     readonly previewCommunities = new ReactiveCommunityMap<CommunitySummary>();
     readonly directChatBots = new LocalMap<string, ExternalBotPermissions>();
@@ -29,6 +46,54 @@ export class GlobalLocalState {
         (k) => JSON.stringify(k),
         (k) => JSON.parse(String(k)),
     );
+    #uninitialisedDirectChats = new ReactiveChatMap<DirectChatSummary>();
+    #groupChatPreviews = new ReactiveChatMap<MultiUserChat>();
+
+    get groupChatPreviews() {
+        return this.#groupChatPreviews;
+    }
+
+    get uninitialisedDirectChats() {
+        return this.#uninitialisedDirectChats;
+    }
+
+    addGroupPreview(chat: MultiUserChat) {
+        this.#groupChatPreviews.set(chat.id, chat);
+    }
+
+    removeGroupPreview(chatId: ChatIdentifier) {
+        if (this.#groupChatPreviews.has(chatId)) {
+            this.#groupChatPreviews.delete(chatId);
+        }
+    }
+
+    addUninitialisedDirectChat(chatId: DirectChatIdentifier) {
+        this.#uninitialisedDirectChats.set(chatId, {
+            kind: "direct_chat",
+            id: chatId,
+            them: chatId,
+            readByThemUpTo: undefined,
+            latestMessage: undefined,
+            latestEventIndex: 0,
+            latestMessageIndex: undefined,
+            lastUpdated: BigInt(Date.now()),
+            dateCreated: BigInt(Date.now()),
+            metrics: emptyChatMetrics(),
+            eventsTTL: undefined,
+            eventsTtlLastUpdated: BigInt(0),
+            membership: {
+                ...nullMembership(),
+                role: "owner",
+            },
+        });
+    }
+
+    removeUninitialisedDirectChat(chatId: ChatIdentifier): boolean {
+        if (this.#uninitialisedDirectChats.has(chatId)) {
+            return this.#uninitialisedDirectChats.delete(chatId);
+        }
+        return false;
+    }
 
     isPreviewingCommunity(id: CommunityIdentifier) {
         return this.previewCommunities.has(id);
@@ -40,6 +105,14 @@ export class GlobalLocalState {
 
     addCommunityPreview(val: CommunitySummary) {
         return this.previewCommunities.set(val.id, val);
+    }
+
+    removeChat(chatId: ChatIdentifier) {
+        return this.chats.remove(chatId);
+    }
+
+    addChat(chat: ChatSummary) {
+        return this.chats.addOrUpdate(chat.id, chat);
     }
 
     removeCommunityPreview(id: CommunityIdentifier) {
@@ -84,10 +157,6 @@ export class GlobalLocalState {
         return scheduleUndo(() => {
             this.#streakInsurance = prev;
         });
-    }
-
-    updateRulesAccepted(id: CommunityIdentifier, accepted: boolean) {
-        return communityLocalUpdates.updateRulesAccepted(id, accepted);
     }
 
     updateCommunityDisplayName(id: CommunityIdentifier, name?: string) {
@@ -236,6 +305,44 @@ export class GlobalLocalState {
 
     installDirectChatBot(botId: string, perm: ExternalBotPermissions): UndoLocalUpdate {
         return this.directChatBots.addOrUpdate(botId, perm);
+    }
+
+    updateNotificationsMuted(id: ChatIdentifier, muted: boolean): UndoLocalUpdate {
+        return chatDetailsLocalUpdates.updateNotificationsMuted(id, muted);
+    }
+
+    updateArchived(id: ChatIdentifier, archived: boolean): UndoLocalUpdate {
+        return chatDetailsLocalUpdates.updateArchived(id, archived);
+    }
+
+    updateLatestMessage(id: ChatIdentifier, message: EventWrapper<Message>): UndoLocalUpdate {
+        return chatDetailsLocalUpdates.updateLatestMessage(id, message);
+    }
+
+    updateChatRulesAccepted(id: ChatIdentifier, rulesAccepted: boolean): UndoLocalUpdate {
+        return chatDetailsLocalUpdates.updateRulesAccepted(id, rulesAccepted);
+    }
+
+    updateChatProperties(
+        id: ChatIdentifier,
+        name?: string,
+        description?: string,
+        permissions?: OptionalChatPermissions,
+        gateConfig?: AccessGateConfig,
+        eventsTTL?: OptionUpdate<bigint>,
+    ) {
+        return chatDetailsLocalUpdates.updateChatProperties(
+            id,
+            name,
+            description,
+            permissions,
+            gateConfig,
+            eventsTTL,
+        );
+    }
+
+    updateChatFrozen(id: ChatIdentifier, frozen: boolean): UndoLocalUpdate {
+        return chatDetailsLocalUpdates.updateFrozen(id, frozen);
     }
 }
 
