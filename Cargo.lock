@@ -2591,8 +2591,8 @@ dependencies = [
 
 [[package]]
 name = "event_store_canister"
-version = "0.6.0"
-source = "git+https://github.com/open-chat-labs/event-store?rev=6d818189fee50159408de2c2c14923a0aef78ffb#6d818189fee50159408de2c2c14923a0aef78ffb"
+version = "0.7.0"
+source = "git+https://github.com/open-chat-labs/event-store?tag=v0.7.0#ad18faf5634cc4b21cff7bf35d5357c77519f049"
 dependencies = [
  "candid",
  "serde",
@@ -2601,8 +2601,8 @@ dependencies = [
 
 [[package]]
 name = "event_store_producer"
-version = "0.6.0"
-source = "git+https://github.com/open-chat-labs/event-store?rev=6d818189fee50159408de2c2c14923a0aef78ffb#6d818189fee50159408de2c2c14923a0aef78ffb"
+version = "0.7.0"
+source = "git+https://github.com/open-chat-labs/event-store?tag=v0.7.0#ad18faf5634cc4b21cff7bf35d5357c77519f049"
 dependencies = [
  "event_store_canister",
  "ic_principal",
@@ -2612,8 +2612,8 @@ dependencies = [
 
 [[package]]
 name = "event_store_producer_cdk_runtime"
-version = "0.6.0"
-source = "git+https://github.com/open-chat-labs/event-store?rev=6d818189fee50159408de2c2c14923a0aef78ffb#6d818189fee50159408de2c2c14923a0aef78ffb"
+version = "0.7.0"
+source = "git+https://github.com/open-chat-labs/event-store?tag=v0.7.0#ad18faf5634cc4b21cff7bf35d5357c77519f049"
 dependencies = [
  "event_store_canister",
  "event_store_producer",
@@ -2627,8 +2627,8 @@ dependencies = [
 
 [[package]]
 name = "event_store_utils"
-version = "0.6.0"
-source = "git+https://github.com/open-chat-labs/event-store?rev=6d818189fee50159408de2c2c14923a0aef78ffb#6d818189fee50159408de2c2c14923a0aef78ffb"
+version = "0.7.0"
+source = "git+https://github.com/open-chat-labs/event-store?tag=v0.7.0#ad18faf5634cc4b21cff7bf35d5357c77519f049"
 dependencies = [
  "serde",
 ]
@@ -5768,17 +5768,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "online_users_canister_client"
-version = "0.1.0"
-dependencies = [
- "candid",
- "canister_client",
- "ic-agent",
- "online_users_canister",
- "types",
-]
-
-[[package]]
 name = "online_users_canister_impl"
 version = "0.1.0"
 dependencies = [
@@ -7413,9 +7402,9 @@ dependencies = [
 
 [[package]]
 name = "serde_bytes"
-version = "0.11.15"
+version = "0.11.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "387cc504cb06bb40a96c8e04e951fe01854cf6bc921053c954e4a606d9675c6a"
+checksum = "8437fd221bde2d4ca316d61b90e337e9e702b3820b87d63caa9ba6c02bd06d96"
 dependencies = [
  "serde",
 ]
@@ -7454,9 +7443,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.133"
+version = "1.0.140"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7fceb2473b9166b2294ef05efcb65a3db80803f0b03ef86a5fc88a2b85ee377"
+checksum = "20068b6e96dc6c9bd23e01df8827e6c7e1f2fddd43c21810382803c136b99373"
 dependencies = [
  "indexmap 2.2.3",
  "itoa",

@@ -1,5 +1,6 @@
 import type { OnlineUsersLastOnlineResponse, OnlineUsersMarkAsOnlineResponse } from "../../typebox";
 import { principalBytesToString } from "../../utils/mapping";
+import type { MinutesOnline } from "openchat-shared";
 
 export function lastOnlineResponse(value: OnlineUsersLastOnlineResponse): Record<string, number> {
     const now = Date.now();
@@ -13,9 +14,15 @@ export function lastOnlineResponse(value: OnlineUsersLastOnlineResponse): Record
     );
 }
 
-export function markAsOnlineResponse(value: OnlineUsersMarkAsOnlineResponse): number {
+export function markAsOnlineResponse(value: OnlineUsersMarkAsOnlineResponse): MinutesOnline {
     if (typeof value === "object" && "SuccessV2" in value) {
-        return value.SuccessV2.minutes_online;
+        return {
+            minutesOnlineThisMonth: value.SuccessV2.minutes_online,
+            minutesOnlineLastMonth: value.SuccessV2.minutes_online_last_month,
+        };
     }
-    return 0;
+    return {
+        minutesOnlineThisMonth: 0,
+        minutesOnlineLastMonth: 0,
+    };
 }

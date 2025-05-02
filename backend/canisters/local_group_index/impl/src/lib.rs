@@ -149,7 +149,7 @@ impl RuntimeState {
             recent_group_upgrades: group_upgrades_metrics.recently_competed,
             recent_community_upgrades: community_upgrades_metrics.recently_competed,
             update_controllers_queue_len: self.data.update_controllers_queue.len() as u32,
-            controllers_updated: self.data.controllers_updated,
+            controllers_updated: self.data.controllers_updated_v2,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -200,7 +200,7 @@ struct Data {
     #[serde(default)]
     pub update_controllers_queue: VecDeque<CanisterId>,
     #[serde(default)]
-    pub controllers_updated: bool,
+    pub controllers_updated_v2: bool,
     #[serde(default = "default_local_user_index_sync_queue")]
     pub local_user_index_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
 }
@@ -259,7 +259,7 @@ impl Data {
             community_event_sync_queue: GroupedTimerJobQueue::new(10, false),
             idempotency_checker: IdempotencyChecker::default(),
             update_controllers_queue: VecDeque::new(),
-            controllers_updated: true,
+            controllers_updated_v2: true,
             local_user_index_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, false),
         }
     }

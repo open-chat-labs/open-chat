@@ -28,7 +28,7 @@ fn run() {
         if let Some(next) = state.data.update_controllers_queue.pop_front() {
             Some((next, vec![state.data.local_user_index_canister_id, state.env.canister_id()]))
         } else {
-            state.data.controllers_updated = true;
+            state.data.controllers_updated_v2 = true;
             None
         }
     }) {
