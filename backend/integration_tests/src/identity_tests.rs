@@ -76,15 +76,39 @@ fn link_and_unlink_auth_identities(delay: bool) {
 
     match remove_identity_link_response {
         identity_canister::remove_identity_link::Response::Success => {
-            let response = client::identity::check_auth_principal(env, auth_principal2, canister_ids.identity, &Empty {});
+            let response = client::identity::check_auth_principal_v2(env, auth_principal2, canister_ids.identity, &Empty {});
 
             assert!(matches!(
                 response,
-                identity_canister::check_auth_principal::Response::NotFound
+                identity_canister::check_auth_principal_v2::Response::NotFound
             ));
         }
         response => panic!("{response:?}"),
     }
+}
+
+#[test]
+fn link_identities_via_qr_code() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let (_, user_auth) = register_user_and_include_auth(env, canister_ids);
+    let (auth_principal2, public_key2) = random_internet_identity_principal();
+    let link_code = random();
+
+    client::identity::happy_path::initiate_identity_link_via_qr_code(env, &user_auth, canister_ids.identity, link_code);
+    client::identity::happy_path::accept_identity_link_via_qr_code(
+        env,
+        auth_principal2,
+        canister_ids.identity,
+        link_code,
+        public_key2,
+        true,
+    );
+
+    let auth_principals = client::identity::happy_path::auth_principals(env, user_auth.auth_principal, canister_ids.identity);
+
+    assert_eq!(auth_principals.len(), 2);
 }
 
 #[test_case(false)]

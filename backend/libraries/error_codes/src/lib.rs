@@ -182,6 +182,7 @@ pub enum OCErrorCode {
     InvalidBotActionScope = 338,
     WebhookNotFound = 339,
     InvalidWebhook = 340,
+    InvalidOriginatingCanister = 341,
 
     // InternalError
     C2CError = 500,
