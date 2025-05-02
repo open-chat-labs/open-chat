@@ -20,13 +20,13 @@ process.env.OC_WEBSITE_VERSION = version;
 
 initEnv();
 
-const isIos = process.env.OC_APP_TYPE === "ios";
-const isAndroid = process.env.OC_APP_TYPE === "android";
-const isMobile = isIos || isAndroid;
+const isNativeIos = process.env.OC_APP_TYPE === "ios";
+const isNativeAndroid = process.env.OC_APP_TYPE === "android";
+const isNativeApp = isNativeIos || isNativeAndroid;
 // Setup to run mobile dev server is slightly different. Setting different ports
 // for web and mobile apps allows us to for example run web app in Docker, while
 // developing a mobile app.
-const port = isMobile ? 5003 : 5001;
+const port = isNativeApp ? 5003 : 5001;
 
 // TODO use vite for prod build!
 // https://vite.dev/config/
@@ -48,7 +48,7 @@ export default defineConfig({
             port,
             clientPort: port,
         },
-        proxy: isMobile
+        proxy: isNativeApp
             ? undefined
             : {
                   "/api": `http://${dfxJson.networks.local.bind}`,
@@ -57,7 +57,7 @@ export default defineConfig({
             "Cache-Control": "no-store",
         },
     },
-    build: isMobile
+    build: isNativeApp
         ? {
               // Tauri uses Chromium on Windows and WebKit on macOS and Linux
               target: "safari13",

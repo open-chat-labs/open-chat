@@ -16,7 +16,7 @@
     }
 
     function getStarted() {
-        if (client.isAndroid()) {
+        if (client.isNativeAndroid()) {
             console.log("TODO");
         }
     }

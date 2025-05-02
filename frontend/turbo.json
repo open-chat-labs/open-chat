@@ -38,7 +38,7 @@
             "dependsOn": ["^build", "openchat-service-worker#build", "openchat-worker#build"]
         },
         "build": {
-            "outputs": ["lib/**", "build/**"],
+            "outputs": ["lib/**", "build/**", "dist-js/**"],
             "dependsOn": ["^build"]
         },
         "build:ci": {

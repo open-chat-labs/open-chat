@@ -9,6 +9,6 @@
     "noImplicitAny": true,
     "noEmit": true
   },
-  "include": ["guest-js/*.ts", "guest-js/commands/*.ts"],
+  "include": ["guest-js/*.ts", "guest-js/**/*.ts"],
   "exclude": ["dist-js", "node_modules"]
 }

@@ -604,13 +604,13 @@ export class OpenChat {
         return this.#authPrincipal;
     }
 
-    isAndroid() {
+    isNativeAndroid() {
         return this.#appType === "android";
     }
 
-    isMobile() {
+    isNativeApp() {
         // TODO this will be updated to include iOS
-        return this.isAndroid();
+        return this.isNativeAndroid();
     }
 
     clearCachedData() {
@@ -3597,7 +3597,8 @@ export class OpenChat {
                     mergeServerEvents(events, newEvents, context),
                 );
 
-                const selectedThreadRootMessageIndex = this.#liveState.selectedThreadRootMessageIndex;
+                const selectedThreadRootMessageIndex =
+                    this.#liveState.selectedThreadRootMessageIndex;
                 if (selectedThreadRootMessageIndex !== undefined) {
                     const threadRootEvent = newEvents.find(
                         (e) =>

@@ -50,7 +50,7 @@
             if (mode === "signin") {
                 options.push(AuthProvider.NFID);
             }
-        } else if (client.isAndroid()) {
+        } else if (client.isNativeAndroid()) {
             options.push(AuthProvider.II);
         }
 

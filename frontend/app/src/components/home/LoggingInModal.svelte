@@ -185,7 +185,7 @@
     {/snippet}
     {#snippet body()}
         <div class="login">
-            {#if client.isAndroid()}
+            {#if client.isNativeAndroid()}
                 <AndroidSignIn {mode} />
                 <div class="android-signin-mode">
                     {@render changeModeView()}

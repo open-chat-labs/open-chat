@@ -26,7 +26,8 @@
         "openchat-client",
         "openchat-service-worker",
         "openchat-shared",
-        "openchat-worker"
+        "openchat-worker",
+        "tauri-plugin-oc"
     ],
     "devDependencies": {
         "@rollup/plugin-alias": "^5.0.0",

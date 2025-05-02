@@ -558,7 +558,7 @@
 
 <Witch background />
 
-{#if !client.isMobile()}
+{#if !client.isNativeApp()}
     <InstallPrompt />
 {/if}
 
