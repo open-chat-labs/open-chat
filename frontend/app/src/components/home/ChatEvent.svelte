@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { findSender } from "@src/utils/user";
     import {
         app,
         currentUser,
@@ -148,37 +149,11 @@
         client.retrySendMessage(messageContext, event as EventWrapper<Message>);
     }
 
-    let sender = $derived.by(() => {
-        if (event.event.kind !== "message") {
-            return undefined;
-        }
-
-        let senderId = event.event.sender;
-
-        let user = $userStore.get(senderId);
-        if (user !== undefined) {
-            return user;
-        }
-
-        app.selectedChat.webhooks.find((webhook) => {
-            if (webhook.id === senderId) {
-                return {
-                    kind: "bot",
-                    userId: webhook.id,
-                    username: webhook.name,
-                    blobUrl: webhook.avatarUrl,
-                    displayName: undefined,
-                    updated: BigInt(0),
-                    suspended: false,
-                    diamondStatus: "inactive",
-                    chitBalance: 0,
-                    streak: 0,
-                    isUniquePerson: false,
-                    totalChitEarned: 0,
-                } as UserSummary;
-            }
-        });
-    });
+    let sender = $derived(
+        event.event.kind === "message"
+            ? findSender(event.event.sender, $userStore, app.selectedChat.webhooks)
+            : undefined,
+    );
 </script>
 
 {#if event.event.kind === "message"}
