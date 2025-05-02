@@ -177,6 +177,7 @@ export type CommandDefinition = {
     defaultRole: MemberRole;
     directBotDisabled?: boolean;
     directMessages: boolean;
+    directChatsDisabled?: boolean;
 };
 
 export function emptyExternalBotPermissions(): ExternalBotPermissions {

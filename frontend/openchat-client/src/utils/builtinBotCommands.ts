@@ -201,6 +201,7 @@ export const builtinBot: InternalBot = {
                 permissions: emptyPermissions,
                 params: [],
                 directBotDisabled: true,
+                directChatsDisabled: true,
             },
             {
                 name: "search",
