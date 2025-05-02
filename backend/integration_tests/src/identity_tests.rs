@@ -76,11 +76,11 @@ fn link_and_unlink_auth_identities(delay: bool) {
 
     match remove_identity_link_response {
         identity_canister::remove_identity_link::Response::Success => {
-            let response = client::identity::check_auth_principal(env, auth_principal2, canister_ids.identity, &Empty {});
+            let response = client::identity::check_auth_principal_v2(env, auth_principal2, canister_ids.identity, &Empty {});
 
             assert!(matches!(
                 response,
-                identity_canister::check_auth_principal::Response::NotFound
+                identity_canister::check_auth_principal_v2::Response::NotFound
             ));
         }
         response => panic!("{response:?}"),
