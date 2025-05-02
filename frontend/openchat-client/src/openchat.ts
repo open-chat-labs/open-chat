@@ -3500,17 +3500,6 @@ export class OpenChat {
             return;
         }
 
-        if (
-            threadRootMessageIndex === undefined &&
-            !isContiguous(chatId, newEvents, expiredEventRanges)
-        ) {
-            return;
-        }
-
-        if (threadRootMessageIndex !== undefined && !isContiguousInThread(newEvents)) {
-            return;
-        }
-
         const context = { chatId, threadRootMessageIndex };
         const myUserId = app.currentUserId;
         const now = BigInt(Date.now());
@@ -3584,27 +3573,31 @@ export class OpenChat {
         }
 
         if (threadRootMessageIndex === undefined) {
-            app.updateServerEvents(chatId, (events) =>
-                mergeServerEvents(events, newEvents, context),
-            );
             if (newLatestMessage !== undefined) {
                 localUpdates.updateLatestMessage(chatId, newLatestMessage);
             }
-            const selectedThreadRootMessageIndex = this.#liveState.selectedThreadRootMessageIndex;
-            if (selectedThreadRootMessageIndex !== undefined) {
-                const threadRootEvent = newEvents.find(
-                    (e) =>
-                        e.event.kind === "message" &&
-                        e.event.messageIndex === selectedThreadRootMessageIndex,
+
+            if (isContiguous(chatId, newEvents, expiredEventRanges)) {
+                app.updateServerEvents(chatId, (events) =>
+                    mergeServerEvents(events, newEvents, context),
                 );
-                if (threadRootEvent !== undefined) {
-                    publish("chatUpdated", {
-                        chatId,
-                        threadRootMessageIndex: selectedThreadRootMessageIndex,
-                    });
+
+                const selectedThreadRootMessageIndex = this.#liveState.selectedThreadRootMessageIndex;
+                if (selectedThreadRootMessageIndex !== undefined) {
+                    const threadRootEvent = newEvents.find(
+                        (e) =>
+                            e.event.kind === "message" &&
+                            e.event.messageIndex === selectedThreadRootMessageIndex,
+                    );
+                    if (threadRootEvent !== undefined) {
+                        publish("chatUpdated", {
+                            chatId,
+                            threadRootMessageIndex: selectedThreadRootMessageIndex,
+                        });
+                    }
                 }
             }
-        } else {
+        } else if (isContiguousInThread({ chatId, threadRootMessageIndex }, newEvents)) {
             app.updateServerThreadEvents({ chatId, threadRootMessageIndex }, (events) =>
                 mergeServerEvents(events, newEvents, context),
             );

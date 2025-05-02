@@ -120,6 +120,10 @@ export class ChatDetailsServerState {
         this.#events = fn(this.#events);
     }
 
+    get selectedThread() {
+        return this.#thread;
+    }
+
     setSelectedThread(id: ThreadIdentifier) {
         this.#thread = ThreadServerState.empty(id);
     }
