@@ -491,6 +491,7 @@
             lapsed={app.selectedChat.lapsedMembers}
             installedBots={app.selectedChat.bots}
             apiKeys={app.selectedChat.apiKeys}
+            webhooks={Array.from(app.selectedChat.webhooks.values())}
             onClose={ui.popRightPanelHistory}
             onBlockUser={onBlockGroupUser}
             onUnblockUser={onUnblockGroupUser}

@@ -1,6 +1,6 @@
+import { marked } from "marked";
 import type { UserSummary } from "openchat-shared";
 import { buildDisplayName } from "./user";
-import { marked } from "marked";
 
 const userLookup = new Map<string, UserSummary>();
 userLookup.set("xyz", {

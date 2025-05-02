@@ -36,6 +36,7 @@ import type {
     ExploreChannelsResponse,
     ExternalBotPermissions,
     FollowThreadResponse,
+    FullWebhookDetails,
     GenerateBotKeyResponse,
     GroupChatDetails,
     GroupChatDetailsResponse,
@@ -107,6 +108,7 @@ import {
     CommunityDeleteChannelArgs,
     CommunityDeleteMessagesArgs,
     CommunityDeleteUserGroupsArgs,
+    CommunityDeleteWebhookArgs,
     CommunityDeletedMessageArgs,
     CommunityDeletedMessageResponse,
     CommunityEditMessageArgs,
@@ -130,9 +132,13 @@ import {
     CommunityMessagesByMessageIndexResponse,
     CommunityPinMessageArgs,
     CommunityPinMessageResponse,
+    CommunityRegenerateWebhookArgs,
+    CommunityRegenerateWebhookResponse,
     CommunityRegisterPollVoteArgs,
     CommunityRegisterPollVoteResponse,
     CommunityRegisterProposalVoteArgs,
+    CommunityRegisterWebhookArgs,
+    CommunityRegisterWebhookResponse,
     CommunityRemoveMemberArgs,
     CommunityRemoveMemberFromChannelArgs,
     CommunityRemoveReactionArgs,
@@ -165,8 +171,11 @@ import {
     CommunityUpdateCommunityArgs,
     CommunityUpdateCommunityResponse,
     CommunityUpdateUserGroupArgs,
+    CommunityUpdateWebhookArgs,
     CommunityVideoCallParticipantsArgs,
     CommunityVideoCallParticipantsResponse,
+    CommunityWebhookArgs,
+    CommunityWebhookResponse,
     CommunitySummaryResponse as TCommunitySummaryResponse,
     CommunitySummaryUpdatesResponse as TCommunitySummaryUpdatesResponse,
     Empty as TEmpty,
@@ -216,6 +225,7 @@ import {
     groupDetailsSuccess,
     groupDetailsUpdatesResponse,
     inviteCodeSuccess,
+    isSuccess,
     mapResult,
     pushEventSuccess,
     searchGroupChatResponse,
@@ -225,6 +235,7 @@ import {
     unitResult,
     updateGroupSuccess,
     videoCallParticipantsSuccess,
+    webhookDetails,
 } from "../common/chatMappersV2";
 import {
     chunkedChatEventsFromBackend,
@@ -1054,7 +1065,15 @@ export class CommunityClient extends MsgpackCanisterAgent {
             {
                 channel_id: toBigInt32(chatId.channelId),
             },
-            (resp) => mapResult(resp, groupDetailsSuccess),
+            (resp) =>
+                mapResult(resp, (value) =>
+                    groupDetailsSuccess(
+                        value,
+                        this.config.blobUrlPattern,
+                        chatId.communityId,
+                        chatId.channelId,
+                    ),
+                ),
             CommunitySelectedChannelInitialArgs,
             CommunitySelectedChannelInitialResponse,
         );
@@ -1082,7 +1101,13 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 channel_id: toBigInt32(chatId.channelId),
                 updates_since: previous.timestamp,
             },
-            groupDetailsUpdatesResponse,
+            (value) =>
+                groupDetailsUpdatesResponse(
+                    value,
+                    this.config.blobUrlPattern,
+                    chatId.communityId,
+                    chatId.channelId,
+                ),
             CommunitySelectedChannelUpdatesArgs,
             CommunitySelectedChannelUpdatesResponse,
         );
@@ -1714,6 +1739,112 @@ export class CommunityClient extends MsgpackCanisterAgent {
             },
             CommunityApiKeyArgs,
             CommunityApiKeyResponse,
+        );
+    }
+
+    registerWebhook(
+        channelId: number,
+        name: string,
+        avatar: string | undefined,
+    ): Promise<FullWebhookDetails | undefined> {
+        return this.executeMsgpackUpdate(
+            "register_webhook",
+            {
+                channel_id: toBigInt32(channelId),
+                name,
+                avatar,
+            },
+            (resp) => {
+                if (typeof resp === "object" && "Success" in resp) {
+                    const result = webhookDetails(
+                        {
+                            id: resp.Success.id,
+                            name,
+                            avatar_id: resp.Success.avatar_id,
+                        },
+                        this.config.blobUrlPattern,
+                        this.communityId,
+                        channelId,
+                    );
+
+                    return {
+                        ...result,
+                        secret: resp.Success.secret,
+                    };
+                }
+                return undefined;
+            },
+            CommunityRegisterWebhookArgs,
+            CommunityRegisterWebhookResponse,
+        );
+    }
+
+    updateWebhook(
+        channelId: number,
+        id: string,
+        name: string | undefined,
+        avatar: OptionUpdate<string>,
+    ): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "update_webhook",
+            {
+                channel_id: toBigInt32(channelId),
+                id: principalStringToBytes(id),
+                name,
+                avatar: apiOptionUpdateV2(identity, avatar),
+            },
+            isSuccess,
+            CommunityUpdateWebhookArgs,
+            UnitResult,
+        );
+    }
+
+    regenerateWebhook(channelId: number, id: string): Promise<string | undefined> {
+        return this.executeMsgpackUpdate(
+            "regenerate_webhook",
+            {
+                channel_id: toBigInt32(channelId),
+                id: principalStringToBytes(id),
+            },
+            (resp) => {
+                return typeof resp === "object" && "Success" in resp
+                    ? resp.Success.secret
+                    : undefined;
+            },
+            CommunityRegenerateWebhookArgs,
+            CommunityRegenerateWebhookResponse,
+        );
+    }
+
+    deleteWebhook(channelId: number, id: string): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "delete_webhook",
+            {
+                channel_id: toBigInt32(channelId),
+                id: principalStringToBytes(id),
+            },
+            isSuccess,
+            CommunityDeleteWebhookArgs,
+            UnitResult,
+        );
+    }
+
+    getWebhook(channelId: number, id: string): Promise<string | undefined> {
+        return this.executeMsgpackQuery(
+            "webhook",
+            {
+                channel_id: toBigInt32(channelId),
+                id: principalStringToBytes(id),
+            },
+            (resp) => {
+                if (typeof resp === "object" && "Success" in resp) {
+                    return resp.Success.secret;
+                }
+                console.log("Failed to get community webhook: ", id, resp);
+                return undefined;
+            },
+            CommunityWebhookArgs,
+            CommunityWebhookResponse,
         );
     }
 }

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { findSender } from "@src/utils/user";
     import {
         app,
         typing,
@@ -146,10 +147,15 @@
     function retrySend() {
         client.retrySendMessage(messageContext, event as EventWrapper<Message>);
     }
+
+    let sender = $derived(
+        event.event.kind === "message"
+            ? findSender(event.event.sender, $userStore, app.selectedChat.webhooks)
+            : undefined,
+    );
 </script>
 
 {#if event.event.kind === "message"}
-    {@const sender = $userStore.get(event.event.sender)}
     {#if !hidden}
         <ChatMessage
             {sender}
@@ -179,7 +185,7 @@
             {supportsEdit}
             {supportsReply}
             {collapsed}
-            botContext={event.event.botContext}
+            senderContext={event.event.senderContext}
             {onGoToMessageIndex}
             {onReplyTo}
             onRetrySend={retrySend}

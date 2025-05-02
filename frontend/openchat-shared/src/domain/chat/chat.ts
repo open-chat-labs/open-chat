@@ -1,6 +1,11 @@
 import { emptyChatMetrics } from "../../utils";
 import type { AccessControlled, AccessGateConfig, UpdatedRules, VersionedRules } from "../access";
-import type { CommandArg, ExternalBotPermissions, InstalledBotDetails } from "../bots";
+import type {
+    CommandArg,
+    ExternalBotPermissions,
+    InstalledBotDetails,
+    WebhookDetails,
+} from "../bots";
 import type { ChitEarned } from "../chit";
 import type {
     CommunityCanisterCommunitySummaryUpdates,
@@ -669,7 +674,7 @@ export type Message<T extends MessageContent = MessageContent> = {
     deleted: boolean;
     thread?: ThreadSummary;
     blockLevelMarkdown: boolean;
-    botContext?: BotMessageContext;
+    senderContext?: SenderContext;
 };
 
 export type BotContextCommand = {
@@ -679,9 +684,16 @@ export type BotContextCommand = {
 };
 
 export type BotMessageContext = {
+    kind: "bot";
     command?: BotContextCommand;
     finalised: boolean;
 };
+
+export type WebhookContext = {
+    kind: "webhook";
+};
+
+export type SenderContext = BotMessageContext | WebhookContext;
 
 export type ThreadSummary = {
     participantIds: Set<string>;
@@ -1437,6 +1449,7 @@ export type GroupChatDetails = {
     timestamp: bigint;
     bots: InstalledBotDetails[];
     apiKeys: Map<string, PublicApiKeyDetails>;
+    webhooks: WebhookDetails[];
 };
 
 export type GroupChatDetailsUpdates = {
@@ -1452,6 +1465,7 @@ export type GroupChatDetailsUpdates = {
     botsAddedOrUpdated: InstalledBotDetails[];
     botsRemoved: Set<string>;
     apiKeysGenerated: PublicApiKeyDetails[];
+    webhooks?: WebhookDetails[];
 };
 
 export type ChatSummary = DirectChatSummary | MultiUserChat;

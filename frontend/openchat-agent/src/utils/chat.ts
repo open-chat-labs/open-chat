@@ -1,30 +1,32 @@
+import Identicon from "identicon.js";
+import md5 from "md5";
 import type {
+    ChannelIdentifier,
     ChatEvent,
+    CommunityCanisterCommunitySummaryUpdates,
+    CommunityDetails,
+    CommunityDetailsUpdates,
     DirectChatSummary,
     DirectChatSummaryUpdates,
     EventWrapper,
+    GroupCanisterGroupChatSummary,
+    GroupCanisterGroupChatSummaryUpdates,
+    GroupCanisterThreadDetails,
     GroupChatDetails,
     GroupChatDetailsUpdates,
     GroupChatSummary,
     Member,
+    Metrics,
     ThreadSyncDetails,
-    GroupCanisterGroupChatSummary,
-    GroupCanisterGroupChatSummaryUpdates,
+    UpdatedEvent,
     UserCanisterGroupChatSummary,
     UserCanisterGroupChatSummaryUpdates,
-    GroupCanisterThreadDetails,
-    UpdatedEvent,
-    Metrics,
-    CommunityDetails,
-    CommunityDetailsUpdates,
-    CommunityCanisterCommunitySummaryUpdates,
-    ChannelIdentifier,
     UserGroupDetails,
 } from "openchat-shared";
 import {
-    ChatMap,
     applyOptionUpdate,
     bigIntMax,
+    ChatMap,
     mapOptionUpdate,
     OPENCHAT_BOT_AVATAR_URL,
     OPENCHAT_BOT_USER_ID,
@@ -33,8 +35,6 @@ import {
 } from "openchat-shared";
 import { toRecord } from "./list";
 import { identity } from "./mapping";
-import Identicon from "identicon.js";
-import md5 from "md5";
 
 // this is used to merge both the overall list of chats with updates and also the list of participants
 // within a group chat
@@ -174,6 +174,7 @@ export function mergeGroupChatDetails(
             m.set(k.botId, k);
             return m;
         }, previous.apiKeys),
+        webhooks: updates.webhooks ?? previous.webhooks,
     };
 }
 
@@ -471,10 +472,10 @@ export function buildUserAvatarUrl(pattern: string, userId: string, avatarId?: b
     return avatarId !== undefined
         ? buildBlobUrl(pattern, userId, avatarId, "avatar")
         : userId === OPENCHAT_BOT_USER_ID
-          ? OPENCHAT_BOT_AVATAR_URL
-          : userId === OPENCHAT_VIDEO_CALL_USER_ID
-            ? OPENCHAT_VIDEO_CALL_AVATAR_URL
-            : buildIdenticonUrl(userId);
+        ? OPENCHAT_BOT_AVATAR_URL
+        : userId === OPENCHAT_VIDEO_CALL_USER_ID
+        ? OPENCHAT_VIDEO_CALL_AVATAR_URL
+        : buildIdenticonUrl(userId);
 }
 
 export function buildIdenticonUrl(userId: string): string {

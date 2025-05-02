@@ -20,6 +20,7 @@ import {
     type UserGroupDetails,
     type VersionedRules,
     type WalletConfig,
+    type WebhookDetails,
 } from "openchat-shared";
 import { chatDetailsLocalUpdates } from "../chat_details";
 import { communityLocalUpdates } from "../community_details";
@@ -290,6 +291,18 @@ export class GlobalLocalState {
         perm: ExternalBotPermissions,
     ): UndoLocalUpdate {
         return chatDetailsLocalUpdates.installBot(id, botId, perm);
+    }
+
+    addWebhookToChat(id: ChatIdentifier, webhook: WebhookDetails): UndoLocalUpdate {
+        return chatDetailsLocalUpdates.addWebhook(id, webhook);
+    }
+
+    updateWebhook(id: ChatIdentifier, webhook: WebhookDetails): UndoLocalUpdate {
+        return chatDetailsLocalUpdates.updateWebhook(id, webhook);
+    }
+
+    removeWebhookFromChat(id: ChatIdentifier, webhookId: string): UndoLocalUpdate {
+        return chatDetailsLocalUpdates.removeWebhook(id, webhookId);
     }
 
     pinToScope(id: ChatIdentifier, scope: ChatListScope["kind"]): UndoLocalUpdate {

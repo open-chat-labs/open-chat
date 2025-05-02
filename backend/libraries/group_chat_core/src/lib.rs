@@ -318,7 +318,7 @@ impl GroupChatCore {
                 self.webhooks
                     .iter()
                     .map(|(id, webhook)| WebhookDetails {
-                        id: (*id).into(),
+                        id: *id,
                         name: webhook.name.clone(),
                         avatar_id: webhook.avatar.as_ref().map(|avatar| avatar.id),
                     })
@@ -1943,7 +1943,7 @@ impl GroupChatCore {
         self.webhooks
             .iter()
             .map(|(id, webhook)| WebhookDetails {
-                id: (*id).into(),
+                id: *id,
                 name: webhook.name.clone(),
                 avatar_id: webhook.avatar.as_ref().map(|avatar| avatar.id),
             })

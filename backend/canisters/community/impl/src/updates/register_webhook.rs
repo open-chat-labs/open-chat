@@ -11,10 +11,13 @@ use utils::document::try_parse_data_url;
 fn register_webhook(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| register_webhook_impl(args, state)).into()
+    match mutate_state(|state| register_webhook_impl(args, state)) {
+        Ok(result) => Response::Success(result),
+        Err(error) => Response::Error(error),
+    }
 }
 
-fn register_webhook_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+fn register_webhook_impl(args: Args, state: &mut RuntimeState) -> OCResult<SuccessResult> {
     state.data.verify_not_frozen()?;
 
     let user_id = state.get_calling_member(true)?.user_id;
@@ -33,10 +36,19 @@ fn register_webhook_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     let now = state.env.now();
 
-    if !channel.chat.webhooks.register(args.name, avatar, state.env.rng(), now) {
+    let Some(webhook_id) = channel.chat.webhooks.register(args.name, avatar, state.env.rng(), now) else {
         return Err(OCErrorCode::NameTaken.into());
-    }
+    };
+
+    let webhook = channel.chat.webhooks.get(&webhook_id).unwrap();
+
+    let result = SuccessResult {
+        id: webhook_id,
+        secret: webhook.secret.clone(),
+        avatar_id: webhook.avatar.as_ref().map(|a| a.id),
+    };
 
     handle_activity_notification(state);
-    Ok(())
+
+    Ok(result)
 }

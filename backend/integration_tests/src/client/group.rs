@@ -601,7 +601,7 @@ pub mod happy_path {
         );
 
         match response {
-            group_canister::register_webhook::Response::Success => (),
+            group_canister::register_webhook::Response::Success(_) => (),
             response => panic!("'register_webhook' error: {response:?}"),
         }
     }

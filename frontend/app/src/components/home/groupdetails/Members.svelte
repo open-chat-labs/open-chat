@@ -1,5 +1,6 @@
 <script lang="ts">
     import BotInstaller from "@src/components/bots/install/BotInstaller.svelte";
+    import WebhookMember from "@src/components/bots/WebhookMember.svelte";
     import {
         type BotMatch as BotMatchType,
         type CommunityIdentifier,
@@ -18,6 +19,7 @@
         type ReadonlySet,
         type UserLookup,
         type UserSummary,
+        type WebhookDetails,
         app,
         botState,
         chatIdentifiersEqual,
@@ -58,6 +60,7 @@
         initialUsergroup?: number | undefined;
         showHeader?: boolean;
         apiKeys: ReadonlyMap<string, PublicApiKeyDetails>;
+        webhooks?: WebhookDetails[];
         onClose: () => void;
         onShowInviteUsers: () => void;
         onChangeRole?: (args: { userId: string; newRole: MemberRole; oldRole: MemberRole }) => void;
@@ -78,6 +81,7 @@
         initialUsergroup = $bindable(undefined),
         showHeader = true,
         apiKeys,
+        webhooks,
         onClose,
         onShowInviteUsers,
         onChangeRole,
@@ -165,6 +169,11 @@
         );
     }
 
+    function webhookMatches(searchTermLower: string, webhook: WebhookDetails): boolean {
+        if (searchTermLower === "") return true;
+        return webhook.name.toLowerCase().includes(searchTermLower);
+    }
+
     function getKnownUsers(userStore: UserLookup, members: MemberType[]): FullMember[] {
         const users: FullMember[] = [];
         members.forEach((m) => {
@@ -247,6 +256,9 @@
     let blockedUsers = $derived(matchingUsers(searchTermLower, $userStore, blocked, true));
     let lapsedMembers = $derived(matchingUsers(searchTermLower, $userStore, lapsed, true));
     let invitedUsers = $derived(matchingUsers(searchTermLower, $userStore, invited, true));
+    let matchingWebhooks = $derived(
+        webhooks?.filter((w) => webhookMatches(searchTermLower, w)) ?? [],
+    );
     let showBlocked = $derived(blockedUsers.length > 0);
     let showInvited = $derived(invitedUsers.length > 0);
     let showLapsed = $derived(lapsedMembers.length > 0);
@@ -410,12 +422,21 @@
                     canManage={canManageBots}
                     {searchTerm} />
             {/each}
+        {/if}
 
-            {#if fullMembers.length > 0}
-                <h4 class="member_type_label">
-                    <Translatable resourceKey={i18nKey("bots.member.people")}></Translatable>
-                </h4>
-            {/if}
+        {#if matchingWebhooks !== undefined && matchingWebhooks.length > 0 && me?.role === "owner" && collection.kind !== "community"}
+            <h4 class="member_type_label">
+                <Translatable resourceKey={i18nKey("bots.member.webhooks")}></Translatable>
+            </h4>
+            {#each matchingWebhooks.values() as webhook}
+                <WebhookMember chat={collection} {webhook} {searchTerm} />
+            {/each}
+        {/if}
+
+        {#if (bots.length > 0 || (matchingWebhooks !== undefined && matchingWebhooks.length > 0)) && fullMembers.length > 0}
+            <h4 class="member_type_label">
+                <Translatable resourceKey={i18nKey("bots.member.people")}></Translatable>
+            </h4>
         {/if}
 
         <VirtualList bind:this={membersList} keyFn={(user) => user.userId} items={fullMembers}>

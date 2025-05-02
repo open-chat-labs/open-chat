@@ -60,7 +60,11 @@ pub fn validate_display_name(display_name: &str) -> Result<(), UsernameValidatio
 }
 
 pub fn validate_username(username: &str) -> Result<(), UsernameValidationError> {
-    match validate_string_length(username, MIN_USERNAME_LENGTH, MAX_USERNAME_LENGTH) {
+    validate_username_custom(username, MIN_USERNAME_LENGTH, MAX_USERNAME_LENGTH)
+}
+
+pub fn validate_username_custom(username: &str, min_length: u32, max_length: u32) -> Result<(), UsernameValidationError> {
+    match validate_string_length(username, min_length, max_length) {
         Ok(()) => {
             if username.starts_with('_')
                 || username.ends_with('_')

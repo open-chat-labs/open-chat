@@ -47,6 +47,7 @@ import {
     type VideoCallCounts,
     videoCallsInProgressForChats,
     type WalletConfig,
+    type WebhookDetails,
 } from "openchat-shared";
 import { type PinnedByScope } from "../stores";
 import { mergeChatMetrics, mergePermissions } from "../utils/chat";
@@ -795,6 +796,7 @@ export class AppState {
         rules: VersionedRules,
         bots: Map<string, ExternalBotPermissions>,
         apiKeys: Map<string, PublicApiKeyDetails>,
+        webhooks: Map<string, WebhookDetails>,
     ) {
         if (!chatIdentifiersEqual(chatId, this.#selectedChatId)) {
             console.warn(
@@ -814,6 +816,7 @@ export class AppState {
             rules,
             bots,
             apiKeys,
+            webhooks,
         );
     }
 

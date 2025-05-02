@@ -1749,6 +1749,46 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "registerWebhook":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.registerWebhook(payload.chatId, payload.name, payload.avatar),
+                );
+                break;
+
+            case "updateWebhook":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.updateWebhook(payload.chatId, payload.id, payload.name, payload.avatar),
+                );
+                break;
+
+            case "regenerateWebhook":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.regenerateWebhook(payload.chatId, payload.id),
+                );
+                break;
+
+            case "deleteWebhook":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.deleteWebhook(payload.chatId, payload.id),
+                );
+                break;
+
+            case "getWebhook":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getWebhook(payload.chatId, payload.id),
+                );
+                break;
+
             case "getLocalUserIndexForUser":
                 executeThenReply(
                     payload,

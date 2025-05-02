@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { findSender } from "@src/utils/user";
     import type { CreatedUser, Message, MultiUserChatIdentifier, OpenChat } from "openchat-client";
     import { AvatarSize, app, routeForMessage, ui, userStore } from "openchat-client";
     import page from "page";
@@ -26,7 +27,7 @@
 
     let crypto = msg.content.kind === "crypto_content";
 
-    let sender = $derived($userStore.get(senderId));
+    let sender = $derived(findSender(msg.sender, $userStore, app.selectedChat.webhooks));
     let username = $derived(client.getDisplayName(sender, app.selectedCommunity.members));
     let deleted = $derived(msg.content.kind === "deleted_content");
     let fill = $derived(client.fillMessage(msg));

@@ -3,7 +3,6 @@
     import {
         app,
         AvatarSize,
-        type BotMessageContext as BotMessageContextType,
         type ChatIdentifier,
         type ChatType,
         type Dimensions,
@@ -18,6 +17,7 @@
         publish,
         routeForMessage,
         ScreenWidth,
+        type SenderContext,
         translationStore,
         ui,
         unconfirmedReadByThem,
@@ -101,7 +101,7 @@
         dateFormatter?: (date: Date) => string;
         collapsed?: boolean;
         threadRootMessage: Message | undefined;
-        botContext: BotMessageContextType | undefined;
+        senderContext: SenderContext | undefined;
         onExpandMessage?: (() => void) | undefined;
         // this is not to do with permission - some messages (namely thread root messages) will simply not support replying or editing inside a thread
         supportsEdit: boolean;
@@ -146,7 +146,7 @@
         dateFormatter = (date) => client.toShortTimeString(date),
         collapsed = false,
         threadRootMessage,
-        botContext,
+        senderContext,
         onExpandMessage = undefined,
         supportsEdit,
         supportsReply,
@@ -473,7 +473,9 @@
     let senderDisplayName = $derived(client.getDisplayName(sender, app.selectedCommunity.members));
     let tips = $derived(msg.tips ? Object.entries(msg.tips) : []);
     let canBlockUser = $derived(canBlockUsers && !app.selectedChat.blockedUsers.has(msg.sender));
-    let edited = $derived(msg.edited && !botContext?.finalised);
+    let edited = $derived(
+        msg.edited && (senderContext?.kind !== "bot" || !senderContext.finalised),
+    );
     let canShare = $derived(canShareMessage(msg.content));
     let canForward = $derived(client.canForward(msg.content));
     let canTranslate = $derived((client.getMessageText(msg.content) ?? "").length > 0);
@@ -532,12 +534,12 @@
 
 {#if expiresAt === undefined || percentageExpired < 100}
     <div out:fade|local={{ duration: 1000 }} class="message-wrapper" class:last>
-        {#if botContext !== undefined && botContext.command !== undefined}
+        {#if senderContext?.kind === "bot" && senderContext.command !== undefined}
             <div class="bot-context">
                 <BotMessageContext
                     botName={senderDisplayName}
-                    botCommand={botContext.command}
-                    finalised={botContext.finalised} />
+                    botCommand={senderContext.command}
+                    finalised={senderContext.finalised} />
             </div>
         {/if}
         <IntersectionObserverComponent>
@@ -594,7 +596,7 @@
                             class:readByMe
                             class:crypto
                             class:failed
-                            class:bot={botContext !== undefined}
+                            class:bot={senderContext?.kind === "bot"}
                             class:thread={inThread}
                             class:rtl={$rtlStore}>
                             {#if first && !isProposal && !isPrize}
@@ -714,7 +716,7 @@
                                 <pre>timestamp: {timestamp}</pre>
                                 <pre>expiresAt: {expiresAt}</pre>
                                 <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
-                                <pre>botContext: {JSON.stringify(botContext, null, 4)}</pre>
+                                <pre>senderContext: {JSON.stringify(senderContext, null, 4)}</pre>
                                 <pre>inert: {inert}</pre>
                                 <pre>canRevealDeleted: {canRevealDeleted}</pre>
                                 <pre>canlRevealBlocked: {canRevealBlocked}</pre>

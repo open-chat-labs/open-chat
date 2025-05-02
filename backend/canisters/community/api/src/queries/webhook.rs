@@ -17,7 +17,7 @@ pub enum Response {
     Error(OCError),
 }
 
-#[ts_export]
+#[ts_export(community, webhook)]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub id: UserId,
