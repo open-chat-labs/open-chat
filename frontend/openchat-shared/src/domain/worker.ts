@@ -1291,6 +1291,8 @@ type RemoveMessageFilter = {
 type SetAirdropConfig = {
     channelId: number;
     channelName: string;
+    communityId?: string;
+    communityName?: string;
     kind: "setAirdropConfig";
 };
 

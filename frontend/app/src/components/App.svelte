@@ -406,8 +406,8 @@
         });
     }
 
-    function setAirdropConfig(channelId: number, channelName: string): void {
-        client.setAirdropConfig(channelId, channelName).then((success) => {
+    function setAirdropConfig(channelId: number, channelName: string, communityId?: string, communityName?: string): void {
+        client.setAirdropConfig(channelId, channelName, communityId, communityName).then((success) => {
             if (success) {
                 console.log("Airdrop config set");
             } else {
