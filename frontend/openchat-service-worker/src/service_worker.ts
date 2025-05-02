@@ -144,7 +144,7 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
     const isClientFocused = windowClients.some(
         (wc) => wc.focused && wc.visibilityState === "visible",
     );
-    if (isClientFocused && isMessageNotification(webPushNotification)) {
+    if (isClientFocused) {
         console.debug("SW: suppressing notification because client focused", id);
         return;
     }

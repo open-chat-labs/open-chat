@@ -104,3 +104,12 @@ export class LocalCommunityMap<V> extends LocalMap<CommunityIdentifier, V> {
         );
     }
 }
+
+export class LocalChatMap<V> extends LocalMap<ChatIdentifier, V> {
+    constructor() {
+        super(
+            (id) => JSON.stringify(id),
+            (k) => JSON.parse(String(k)) as ChatIdentifier,
+        );
+    }
+}

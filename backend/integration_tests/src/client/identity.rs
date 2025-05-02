@@ -3,7 +3,7 @@ use identity_canister::*;
 
 // Queries
 generate_msgpack_query_call!(auth_principals);
-generate_msgpack_query_call!(check_auth_principal);
+generate_msgpack_query_call!(check_auth_principal_v2);
 generate_msgpack_query_call!(get_delegation);
 
 // Updates

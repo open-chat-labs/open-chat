@@ -6,7 +6,6 @@
         AvatarSize,
         publish,
         routeForChatIdentifier,
-        selectedChatId,
         byContext as typersByContext,
         ui,
         userStore,
@@ -74,7 +73,7 @@
     }
 
     function showGroupDetails() {
-        if ($selectedChatId !== undefined) {
+        if (app.selectedChatId !== undefined) {
             ui.rightPanelHistory = [
                 {
                     kind: "group_details",
