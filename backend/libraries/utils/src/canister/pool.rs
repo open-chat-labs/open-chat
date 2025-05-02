@@ -10,6 +10,10 @@ pub struct Pool {
 }
 
 impl Pool {
+    pub fn iter(&self) -> impl Iterator<Item = &CanisterId> {
+        self.canister_ids.iter()
+    }
+
     pub fn new(target_size: u16) -> Pool {
         Pool {
             target_size,

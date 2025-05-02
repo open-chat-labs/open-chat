@@ -148,6 +148,8 @@ impl RuntimeState {
             stable_memory_sizes: memory::memory_sizes(),
             recent_group_upgrades: group_upgrades_metrics.recently_competed,
             recent_community_upgrades: community_upgrades_metrics.recently_competed,
+            update_controllers_queue_len: self.data.update_controllers_queue.len() as u32,
+            controllers_updated: self.data.controllers_updated_v2,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -195,6 +197,10 @@ struct Data {
     pub group_event_sync_queue: GroupedTimerJobQueue<GroupEventBatch>,
     pub community_event_sync_queue: GroupedTimerJobQueue<CommunityEventBatch>,
     pub idempotency_checker: IdempotencyChecker,
+    #[serde(default)]
+    pub update_controllers_queue: VecDeque<CanisterId>,
+    #[serde(default)]
+    pub controllers_updated_v2: bool,
     #[serde(default = "default_local_user_index_sync_queue")]
     pub local_user_index_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
 }
@@ -252,6 +258,8 @@ impl Data {
             group_event_sync_queue: GroupedTimerJobQueue::new(10, false),
             community_event_sync_queue: GroupedTimerJobQueue::new(10, false),
             idempotency_checker: IdempotencyChecker::default(),
+            update_controllers_queue: VecDeque::new(),
+            controllers_updated_v2: true,
             local_user_index_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, false),
         }
     }
@@ -290,6 +298,8 @@ pub struct Metrics {
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub recent_group_upgrades: Vec<CanisterId>,
     pub recent_community_upgrades: Vec<CanisterId>,
+    pub update_controllers_queue_len: u32,
+    pub controllers_updated: bool,
     pub canister_ids: CanisterIds,
 }
 

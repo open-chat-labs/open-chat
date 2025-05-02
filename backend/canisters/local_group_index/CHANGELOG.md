@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Sync Group and Community data to LocalUserIndex ([#7878](https://github.com/open-chat-labs/open-chat/pull/7878))
 
+### Changed
+
+- Re-run job to add LocalUserIndex as controller including pooled canisters ([#7889](https://github.com/open-chat-labs/open-chat/pull/7889))
+
 ## [[2.0.1721](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1721-local_group_index)] - 2025-04-30
 
 ### Changed
