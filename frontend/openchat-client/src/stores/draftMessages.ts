@@ -1,4 +1,3 @@
-import { get } from "svelte/store";
 import {
     getContentAsText,
     isAttachmentContent,
@@ -9,8 +8,8 @@ import {
     type MessageContext,
     type MessageContextMap,
 } from "openchat-shared";
+import { userStore } from "../state/users/users.svelte";
 import { createMessageContextSpecificObjectStore } from "./dataByMessageContextFactory";
-import { userStore } from "./user";
 
 export type DraftMessages = MessageContextMap<DraftMessage>;
 
@@ -31,7 +30,7 @@ function createDraftMessages() {
         setAttachment: (context: MessageContext, attachment: AttachmentContent | undefined): void =>
             store.update(context, (current) => ({ ...current, attachment })),
         setEditing: (context: MessageContext, editingEvent: EventWrapper<Message>): void => {
-            const users = get(userStore);
+            const users = userStore.allUsers;
             store.update(context, (_) => ({
                 textContent: getContentAsText(editingEvent.event.content),
                 editingEvent,
