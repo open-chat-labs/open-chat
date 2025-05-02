@@ -61,3 +61,4 @@ where
 pub fn serialize_empty() -> Vec<u8> {
     Vec::new()
 }
+pub fn deserialize_empty(_bytes: Vec<u8>) {}
