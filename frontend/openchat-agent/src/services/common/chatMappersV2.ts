@@ -86,6 +86,7 @@ import type {
     ReportedMessageContent,
     SearchGroupChatResponse,
     SendMessageResponse,
+    SenderContext,
     Success,
     TextContent,
     ThreadPreview,
@@ -227,6 +228,7 @@ import type {
     ProposalRewardStatus as TProposalRewardStatus,
     ReplyContext as TReplyContext,
     ReportedMessage as TReportedMessage,
+    SenderContext as TSenderContext,
     TextContent as TTextContent,
     ThreadPreview as TThreadPreview,
     ThreadSummary as TThreadSummary,
@@ -551,12 +553,23 @@ export function message(value: TMessage): Message {
         deleted: content.kind === "deleted_content",
         thread: mapOptional(value.thread_summary, threadSummary),
         blockLevelMarkdown: value.block_level_markdown,
-        botContext: mapOptional(value.bot_context, botMessageContext),
+        senderContext: mapOptional(value.sender_context, senderContext),
     };
+}
+
+export function senderContext(value: TSenderContext): SenderContext {
+    if (value === "Webhook") {
+        return {
+            kind: "webhook",
+        };
+    } else {
+        return botMessageContext(value.Bot);
+    }
 }
 
 export function botMessageContext(value: TBotMessageContext): BotMessageContext {
     return {
+        kind: "bot",
         finalised: value.finalised,
         command: mapOptional(value.command, (command) => ({
             name: command.name,

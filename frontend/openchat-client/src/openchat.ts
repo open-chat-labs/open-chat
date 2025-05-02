@@ -8409,7 +8409,7 @@ export class OpenChat {
                     forwarded: false,
                     deleted: false,
                     blockLevelMarkdown: blockLevelMarkdown,
-                    botContext,
+                    senderContext: botContext,
                 },
             };
             if (!ephemeral) {
@@ -8429,14 +8429,15 @@ export class OpenChat {
     ): Promise<"success" | "failure" | "too_many_requests"> {
         const botContext = direct
             ? undefined
-            : {
+            : ({
+                  kind: "bot",
                   finalised: false,
                   command: {
                       name: bot.command.name,
                       args: bot.command.arguments,
                       initiator: this.#liveState.user.userId,
                   },
-              };
+              } as BotMessageContext);
         let removePlaceholder: (() => void) | undefined = undefined;
         switch (bot.kind) {
             case "external_bot":
@@ -8476,7 +8477,11 @@ export class OpenChat {
                                 }
                                 removePlaceholder = this.sendPlaceholderBotMessage(
                                     scope,
-                                    { ...botContext, finalised: resp.message.finalised },
+                                    {
+                                        ...botContext,
+                                        finalised: resp.message.finalised,
+                                        kind: "bot",
+                                    },
                                     resp.message.messageContent,
                                     resp.message.messageId,
                                     bot.id,

@@ -675,7 +675,7 @@ export type Message<T extends MessageContent = MessageContent> = {
     deleted: boolean;
     thread?: ThreadSummary;
     blockLevelMarkdown: boolean;
-    botContext?: BotMessageContext;
+    senderContext?: SenderContext;
 };
 
 export type BotContextCommand = {
@@ -685,9 +685,16 @@ export type BotContextCommand = {
 };
 
 export type BotMessageContext = {
+    kind: "bot";
     command?: BotContextCommand;
     finalised: boolean;
 };
+
+export type WebhookContext = {
+    kind: "webhook";
+};
+
+export type SenderContext = BotMessageContext | WebhookContext;
 
 export type ThreadSummary = {
     participantIds: Set<string>;

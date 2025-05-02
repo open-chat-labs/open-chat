@@ -1,23 +1,24 @@
 import {
-    type UserSummary,
+    type CreatedUser,
     type UserLookup,
+    type UserSummary,
+    AIRDROP_BOT_AVATAR_URL,
+    AIRDROP_BOT_USERNAME,
+    ANON_AVATAR_URL,
+    ANON_DISPLAY_NAME,
     ANON_USER_ID,
     ANON_USERNAME,
-    ANON_DISPLAY_NAME,
-    ANON_AVATAR_URL,
-    type CreatedUser,
     anonymousUser,
-    OPENCHAT_VIDEO_CALL_USER_ID,
-    OPENCHAT_VIDEO_CALL_USERNAME,
-    OPENCHAT_VIDEO_CALL_AVATAR_URL,
-    AIRDROP_BOT_USERNAME,
-    AIRDROP_BOT_AVATAR_URL,
+    OPENCHAT_BOT_AVATAR_URL,
     OPENCHAT_BOT_USER_ID,
     OPENCHAT_BOT_USERNAME,
-    OPENCHAT_BOT_AVATAR_URL,
+    OPENCHAT_VIDEO_CALL_AVATAR_URL,
+    OPENCHAT_VIDEO_CALL_USER_ID,
+    OPENCHAT_VIDEO_CALL_USERNAME,
 } from "openchat-shared";
-import { AIRDROP_BOT_USER_ID } from "../constants";
 import { derived, writable } from "svelte/store";
+import { AIRDROP_BOT_USER_ID } from "../constants";
+import { selectedChatStore } from "./chat";
 import { createSetStore } from "./setStore";
 
 export const currentUserKey = Symbol();
@@ -160,6 +161,25 @@ export const userStore = {
         });
     },
 };
+
+//export type UserLookup = Map<string, UserSummary>;
+
+export const senderStore = derived([userStore, selectedChatStore], ([$users, $selectedChat]) => {
+    return function (userId: string): UserSummary | undefined {
+        const user = $users.get(userId);
+
+        if (user !== undefined) {
+            return user;
+        }
+
+        if (
+            $selectedChat !== undefined &&
+            ($selectedChat.kind === "group_chat" || $selectedChat.kind === "channel")
+        ) {
+            return undefined;
+        }
+    };
+});
 
 export const currentUser = writable<CreatedUser>(anonymousUser());
 

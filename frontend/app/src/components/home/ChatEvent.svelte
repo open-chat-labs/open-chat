@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        app,
         currentUser,
         typing,
         userStore,
@@ -146,10 +147,41 @@
     function retrySend() {
         client.retrySendMessage(messageContext, event as EventWrapper<Message>);
     }
+
+    let sender = $derived.by(() => {
+        if (event.event.kind !== "message") {
+            return undefined;
+        }
+
+        let senderId = event.event.sender;
+
+        let user = $userStore.get(senderId);
+        if (user !== undefined) {
+            return user;
+        }
+
+        app.selectedChat.webhooks.find((webhook) => {
+            if (webhook.id === senderId) {
+                return {
+                    kind: "bot",
+                    userId: webhook.id,
+                    username: webhook.name,
+                    blobUrl: webhook.avatarUrl,
+                    displayName: undefined,
+                    updated: BigInt(0),
+                    suspended: false,
+                    diamondStatus: "inactive",
+                    chitBalance: 0,
+                    streak: 0,
+                    isUniquePerson: false,
+                    totalChitEarned: 0,
+                } as UserSummary;
+            }
+        });
+    });
 </script>
 
 {#if event.event.kind === "message"}
-    {@const sender = $userStore.get(event.event.sender)}
     {#if !hidden}
         <ChatMessage
             {sender}
@@ -179,7 +211,7 @@
             {supportsEdit}
             {supportsReply}
             {collapsed}
-            botContext={event.event.botContext}
+            senderContext={event.event.senderContext}
             {onGoToMessageIndex}
             {onReplyTo}
             onRetrySend={retrySend}

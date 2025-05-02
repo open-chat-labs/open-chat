@@ -166,7 +166,7 @@
                             expiresAt={thread.rootMessage.expiresAt}
                             dateFormatter={(date) => client.toDatetimeString(date)}
                             msg={thread.rootMessage.event}
-                            botContext={thread.rootMessage.event.botContext} />
+                            senderContext={thread.rootMessage.event.senderContext} />
                     </div>
                     {#if missingMessages > 0}
                         <div class="separator">
@@ -210,7 +210,7 @@
                                 expiresAt={evt.expiresAt}
                                 dateFormatter={(date) => client.toDatetimeString(date)}
                                 msg={evt.event}
-                                botContext={evt.event.botContext} />
+                                senderContext={evt.event.senderContext} />
                         {/each}
                     {/each}
                     <LinkButton underline="hover" onClick={selectThread}

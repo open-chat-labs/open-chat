@@ -1,10 +1,10 @@
 import {
-    type BotMessageContext,
     type EventWrapper,
     type Message,
     type MessageContent,
     type MessageContext,
     MessageContextMap,
+    type SenderContext,
 } from "openchat-shared";
 import { writable } from "svelte/store";
 import { recentlySentMessagesStore } from "./recentlySentMessages";
@@ -78,7 +78,7 @@ function createUnconfirmedStore() {
             key: MessageContext,
             messageId: bigint,
             content: MessageContent,
-            botContext?: BotMessageContext,
+            senderContext?: SenderContext,
             blockLevelMarkdown?: boolean,
         ): void => {
             store.update((state) => {
@@ -91,7 +91,7 @@ function createUnconfirmedStore() {
                                   event: {
                                       ...m.event,
                                       content,
-                                      botContext,
+                                      senderContext,
                                       blockLevelMarkdown: blockLevelMarkdown ?? false,
                                   },
                               }
