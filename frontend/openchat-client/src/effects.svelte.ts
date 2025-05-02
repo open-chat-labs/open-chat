@@ -2,20 +2,14 @@ import { chatIdentifiersEqual, type ChatIdentifier } from "openchat-shared";
 import { untrack } from "svelte";
 import type { OpenChat } from "./openchat";
 import { app } from "./state/app.svelte";
-import { localUpdates } from "./state/global";
 import { pathState } from "./state/path.svelte";
 import { ui } from "./state/ui.svelte";
 import {
     chatListScopeStore,
-    dummyCommunityPreviewStore,
     dummyExpiredEventRangeStore,
     dummyPinnedChatsStore,
-    dummyScopedServerChats,
-    dummyServerCommunities,
-    dummyServerDirectChats,
+    dummyScopedChats,
     dummyServerEventsStore,
-    dummyServerFavourites,
-    dummyServerGroupChats,
     dummyThreadEventsStore,
     dummyWalletConfigStore,
     selectedChatId,
@@ -116,10 +110,6 @@ function onThreadStateChanged(client: OpenChat) {
 // runes and Svelte 4 stores in sync. The easiest way to do this is with effects
 function syncState() {
     $effect(() => {
-        dummyCommunityPreviewStore.set(localUpdates.previewCommunities.size);
-    });
-
-    $effect(() => {
         chatListScopeStore.set(pathState.route.scope);
     });
 
@@ -134,28 +124,8 @@ function syncState() {
     });
 
     $effect(() => {
-        void app.serverCommunities;
-        dummyServerCommunities.set(Symbol());
-    });
-
-    $effect(() => {
-        void app.serverDirectChats;
-        dummyServerDirectChats.set(Symbol());
-    });
-
-    $effect(() => {
-        void app.serverGroupChats;
-        dummyServerGroupChats.set(Symbol());
-    });
-
-    $effect(() => {
-        void app.serverFavourites;
-        dummyServerFavourites.set(Symbol());
-    });
-
-    $effect(() => {
-        void app.scopedServerChats;
-        dummyScopedServerChats.set(Symbol());
+        void app.scopedChats;
+        dummyScopedChats.set(Symbol());
     });
 
     $effect(() => {
@@ -179,16 +149,15 @@ function syncState() {
 }
 
 export function configureEffects(client: OpenChat) {
+    // Note that the order of these effects is important
     $effect.root(() => {
-        onSelectedCommunityChanged(client);
+        syncState();
 
-        onSelectedChatChanged(client);
+        onSelectedCommunityChanged(client);
 
         onThreadStateChanged(client);
 
         onThreadClosed();
-
-        syncState();
 
         // TODO - this seems to be a reasonable approach, but it causes a flicker of No Chat Selected for some reason
         // so we might need to rethink - ok for now though.
@@ -198,5 +167,7 @@ export function configureEffects(client: OpenChat) {
                 client.selectFirstChat();
             }
         });
+
+        onSelectedChatChanged(client);
     });
 }

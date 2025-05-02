@@ -4,30 +4,17 @@ import type {
     ChatEvent,
     ChatIdentifier,
     ChatSummary,
-    DirectChatIdentifier,
-    DirectChatSummary,
     EventWrapper,
     ExpiredEventsRange,
     MessageContext,
-    MultiUserChat,
     ThreadSyncDetails,
 } from "openchat-shared";
-import {
-    chatIdentifiersEqual,
-    ChatMap,
-    compareChats,
-    emptyChatMetrics,
-    messageContextsEqual,
-    nullMembership,
-} from "openchat-shared";
-import { derived, get, writable, type Readable, type Writable } from "svelte/store";
+import { chatIdentifiersEqual, ChatMap, compareChats, messageContextsEqual } from "openchat-shared";
+import { derived, writable, type Readable } from "svelte/store";
 import { app } from "../state/app.svelte";
-import { localUpdates } from "../state/global";
 import {
     getNextEventAndMessageIndexes,
-    mergeChatMetrics,
     mergeEventsAndLocalUpdates,
-    mergeLocalSummaryUpdates,
     mergeUnconfirmedIntoSummary,
 } from "../utils/chat";
 import { configKeys } from "../utils/config";
@@ -37,9 +24,6 @@ import { draftMessagesStore } from "./draftMessages";
 import { createDummyStore } from "./dummyStore";
 import { ephemeralMessages } from "./ephemeralMessages";
 import { failedMessagesStore } from "./failedMessages";
-import { allServerChats } from "./global";
-import { immutableStore } from "./immutable";
-import { localChatSummaryUpdates } from "./localChatSummaryUpdates";
 import { localMessageUpdates } from "./localMessageUpdates";
 import { createLsBoolStore } from "./localStorageSetting";
 import { messageFiltersStore } from "./messageFilters";
@@ -50,8 +34,6 @@ import { snsFunctions } from "./snsFunctions";
 import { translationStore } from "./translation";
 import { unconfirmed } from "./unconfirmed";
 import { currentUser, currentUserIdStore, suspendedUsers } from "./user";
-
-export const dummyCommunityPreviewStore = writable(0);
 
 // TODO - this will be synced from the Svelte5 rune for now and ultimately removed
 export const selectedChatId = writable<ChatIdentifier | undefined>(undefined);
@@ -81,77 +63,11 @@ export const currentChatBlockedOrSuspendedUsers = derived(
     },
 );
 
-export const dummyScopedServerChats = createDummyStore();
-
-export const uninitializedDirectChats: Writable<ChatMap<DirectChatSummary>> = immutableStore(
-    new ChatMap<DirectChatSummary>(),
-);
-
-// Groups which the current user is previewing
-export const groupPreviewsStore: Writable<ChatMap<MultiUserChat>> = immutableStore(
-    new ChatMap<MultiUserChat>(),
-);
-
-type ChatEntry = [ChatIdentifier, ChatSummary];
-
-export const serverChatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
-    [
-        dummyScopedServerChats,
-        uninitializedDirectChats,
-        groupPreviewsStore,
-        dummyCommunityPreviewStore,
-    ],
-    ([_, directChats, previews]) => {
-        let all = [...app.scopedServerChats.entries()];
-        if (app.chatListScope.kind === "none" || app.chatListScope.kind === "direct_chat") {
-            all = all.concat([...directChats.entries()]);
-        }
-        if (app.chatListScope.kind === "none") {
-            all = ([...previews.entries()] as ChatEntry[]).concat(all);
-        }
-        if (app.chatListScope.kind === "group_chat") {
-            all = (
-                [...previews.filter((c) => c.kind === "group_chat").entries()] as ChatEntry[]
-            ).concat(all);
-        }
-        if (app.chatListScope.kind === "community") {
-            const communityId = app.chatListScope.id.communityId;
-            const previewChannels = ChatMap.fromList(
-                localUpdates.getPreviewingCommunity(app.chatListScope.id)?.channels ?? [],
-            );
-            all = ([...previewChannels.entries()] as ChatEntry[])
-                .concat([
-                    ...previews
-                        .filter((c) => c.kind === "channel" && c.id.communityId === communityId)
-                        .entries(),
-                ] as ChatEntry[])
-                .concat(all);
-        }
-        return all.reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
-            result.set(chatId, summary);
-            return result;
-        }, new ChatMap<ChatSummary>());
-    },
-);
-
-export const allChats = derived(
-    [allServerChats, uninitializedDirectChats, groupPreviewsStore, localChatSummaryUpdates],
-    ([$all, $direct, $group, $localSummaryUpdates]) => {
-        const merged = ([...$direct.entries()] as ChatEntry[])
-            .concat([...$group.entries()] as ChatEntry[])
-            .concat([...$all.entries()]);
-        const reduced = merged.reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
-            result.set(chatId, summary);
-            return result;
-        }, new ChatMap<ChatSummary>());
-        return mergeLocalSummaryUpdates(app.chatListScope, reduced, $localSummaryUpdates);
-    },
-);
+export const dummyScopedChats = createDummyStore();
 
 export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
     [
-        serverChatSummariesStore,
-        localChatSummaryUpdates,
+        dummyScopedChats,
         unconfirmed,
         currentUser,
         localMessageUpdates,
@@ -161,8 +77,7 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         messageFiltersStore,
     ],
     ([
-        summaries,
-        localSummaryUpdates,
+        _,
         unconfirmed,
         currentUser,
         localUpdates,
@@ -171,13 +86,7 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         $currentUserId,
         $messageFilters,
     ]) => {
-        const mergedSummaries = mergeLocalSummaryUpdates(
-            app.chatListScope,
-            summaries,
-            localSummaryUpdates,
-        );
-
-        return mergedSummaries.reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
+        return app.scopedChats.reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
             result.set(
                 chatId,
                 mergeUnconfirmedIntoSummary(
@@ -221,20 +130,6 @@ export const chatSummariesListStore = derived(
     },
 );
 
-export const userMetrics = derived([allServerChats], ([$chats]) => {
-    return [...$chats.values()]
-        .map((c) => c.membership?.myMetrics ?? emptyChatMetrics())
-        .reduce(mergeChatMetrics, emptyChatMetrics());
-});
-
-export const selectedServerChatStore = derived(
-    [serverChatSummariesStore, selectedChatId],
-    ([$serverChats, $selectedChatId]) => {
-        if ($selectedChatId === undefined) return undefined;
-        return $serverChats.get($selectedChatId);
-    },
-);
-
 export const selectedChatStore = derived(
     [chatSummariesStore, selectedChatId],
     ([$chatSummaries, $selectedChatId]) => {
@@ -264,7 +159,7 @@ function sortByIndex(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): nu
 }
 
 export function nextEventAndMessageIndexes(): [number, number] {
-    const chat = get(selectedServerChatStore);
+    const chat = app.selectedServerChatSummary;
     if (chat === undefined) {
         return [0, 0];
     }
@@ -413,52 +308,6 @@ export function confirmedEventIndexesLoaded(chatId: ChatIdentifier): DRange {
         : new DRange();
 }
 
-export function createDirectChat(chatId: DirectChatIdentifier): void {
-    uninitializedDirectChats.update((chatSummaries) => {
-        chatSummaries.set(chatId, {
-            kind: "direct_chat",
-            id: chatId,
-            them: chatId,
-            readByThemUpTo: undefined,
-            latestMessage: undefined,
-            latestEventIndex: 0,
-            latestMessageIndex: undefined,
-            lastUpdated: BigInt(Date.now()),
-            dateCreated: BigInt(Date.now()),
-            metrics: emptyChatMetrics(),
-            eventsTTL: undefined,
-            eventsTtlLastUpdated: BigInt(0),
-            membership: {
-                ...nullMembership(),
-                role: "owner",
-            },
-        });
-        return chatSummaries;
-    });
-}
-
-export function addGroupPreview(chat: MultiUserChat): void {
-    localChatSummaryUpdates.delete(chat.id);
-    groupPreviewsStore.update((summaries) => {
-        summaries.set(chat.id, chat);
-        return summaries;
-    });
-}
-
-export function removeUninitializedDirectChat(chatId: ChatIdentifier): void {
-    uninitializedDirectChats.update((summaries) => {
-        summaries.delete(chatId);
-        return summaries;
-    });
-}
-
-export function removeGroupPreview(chatId: ChatIdentifier): void {
-    groupPreviewsStore.update((summaries) => {
-        summaries.delete(chatId);
-        return summaries;
-    });
-}
-
 export const dummyServerEventsStore = createDummyStore();
 export const dummyExpiredEventRangeStore = createDummyStore();
 
@@ -491,7 +340,7 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         $recentlySentMessagesStore,
         $ephemeralMessages,
     ]) => {
-        const chatId = get(selectedChatId) ?? { kind: "group_chat", groupId: "" };
+        const chatId = app.selectedChatId ?? { kind: "group_chat", groupId: "" };
         const failedForChat = $failedMessages.get({ chatId });
         // for the purpose of merging, unconfirmed and failed can be treated the same
         const failed = failedForChat ? Object.values(failedForChat) : [];

@@ -19,6 +19,7 @@ import {
     type CommunitySummary,
     type DirectChatIdentifier,
     type DirectChatSummary,
+    emptyChatMetrics,
     type EventWrapper,
     type ExternalBotPermissions,
     type GroupChatSummary,
@@ -43,6 +44,7 @@ import {
     type WebhookDetails,
 } from "openchat-shared";
 import { type PinnedByScope } from "../stores";
+import { mergeChatMetrics, mergePermissions } from "../utils/chat";
 import { chatDetailsLocalUpdates, ChatDetailsMergedState } from "./chat_details";
 import { ChatDetailsServerState } from "./chat_details/server.svelte";
 import { communityLocalUpdates } from "./community_details";
@@ -53,7 +55,7 @@ import { pathState } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
 import { messagesRead } from "./unread/markRead.svelte";
 
-class AppState {
+export class AppState {
     constructor() {
         $effect.root(() => {
             $effect(() => {
@@ -66,7 +68,6 @@ class AppState {
 
             $effect(() => {
                 if (this.#selectedChatId === undefined) {
-                    console.log("SelectedChatId is undefined - clear state");
                     this.#selectedChat = new ChatDetailsMergedState(ChatDetailsServerState.empty());
                 }
             });
@@ -180,21 +181,77 @@ class AppState {
 
     #serverCommunities = $state<CommunityMap<CommunitySummary>>(new CommunityMap());
 
-    #scopedServerChats = $derived.by(() => {
+    #allServerChats = $derived.by(() => {
+        const groupChats = this.#serverGroupChats.values();
+        const directChats = this.#serverDirectChats.values();
+        const channels = [...this.#serverCommunities.values()].flatMap((c) => c.channels);
+        return ChatMap.fromList([...groupChats, ...directChats, ...channels]);
+    });
+
+    #userMetrics = $derived.by(() => {
+        const empty = emptyChatMetrics();
+        return this.#allServerChats.reduce((res, [_, chat]) => {
+            return mergeChatMetrics(res, chat.membership?.myMetrics ?? empty);
+        }, empty);
+    });
+
+    #applyLocalUpdatesToChat(chat: ChatSummary): ChatSummary {
+        const local = chatDetailsLocalUpdates.get(chat.id);
+        chat.membership.notificationsMuted =
+            local?.notificationsMuted ?? chat.membership.notificationsMuted;
+        chat.membership.archived = local?.archived ?? chat.membership.archived;
+        chat.membership.rulesAccepted = local?.rulesAccepted ?? chat.membership.rulesAccepted;
+        const latestMessage =
+            (local?.latestMessage?.timestamp ?? BigInt(-1)) >
+            (chat.latestMessage?.timestamp ?? BigInt(-1))
+                ? local?.latestMessage
+                : chat.latestMessage;
+        const latestEventIndex = Math.max(latestMessage?.index ?? 0, chat.latestEventIndex);
+        chat.latestMessage = latestMessage;
+        chat.latestMessageIndex = latestMessage?.event?.messageIndex;
+        chat.latestEventIndex = latestEventIndex;
+        if (chat.kind !== "direct_chat") {
+            chat.frozen = local?.frozen ?? chat.frozen;
+            chat.name = local?.name ?? chat.name;
+            chat.description = local?.description ?? chat.description;
+            chat.permissions = mergePermissions(chat.permissions, local?.permissions);
+            chat.gateConfig.gate = { ...chat.gateConfig.gate, ...local?.gateConfig?.gate };
+            chat.gateConfig.expiry = local?.gateConfig?.expiry ?? chat.gateConfig.expiry;
+            chat.eventsTTL = local?.eventsTTL
+                ? applyOptionUpdate(chat.eventsTTL, local.eventsTTL)
+                : chat.eventsTTL;
+        }
+        return chat;
+    }
+
+    // this is all server chats + previews with local updates applied.
+    #allChats = $derived.by(() => {
+        const withPreviews = this.#allServerChats
+            .merge(localUpdates.uninitialisedDirectChats)
+            .merge(localUpdates.groupChatPreviews);
+        const withUpdates = localUpdates.chats.apply(withPreviews);
+        return withUpdates.reduce((result, [chatId, chat]) => {
+            result.set(chatId, this.#applyLocalUpdatesToChat(chat));
+            return result;
+        }, new ChatMap<ChatSummary>());
+    });
+
+    // all chats filtered by scope including previews and local updates
+    #scopedChats = $derived.by(() => {
         switch (this.#chatListScope.kind) {
             case "community": {
-                const community = this.serverCommunities.get(this.#chatListScope.id);
-                return community
-                    ? ChatMap.fromList(community.channels)
-                    : new ChatMap<ChatSummary>();
+                const communityId = this.#chatListScope.id.communityId;
+                return this.#allChats.filter(
+                    (c) => c.kind === "channel" && c.id.communityId === communityId,
+                );
             }
             case "group_chat":
-                return this.serverGroupChats;
+                return this.#allChats.filter((c) => c.kind === "group_chat");
             case "direct_chat":
-                return this.serverDirectChats;
+                return this.#allChats.filter((c) => c.kind === "direct_chat");
             case "favourite": {
                 return [...this.favourites.values()].reduce((favs, chatId) => {
-                    const chat = this.#allServerChats.get(chatId);
+                    const chat = this.#allChats.get(chatId);
                     if (chat !== undefined) {
                         favs.set(chat.id, chat);
                     }
@@ -277,13 +334,6 @@ class AppState {
         }, new CommunityMap<VideoCallCounts>());
     });
 
-    #allServerChats = $derived.by(() => {
-        const groupChats = this.#serverGroupChats.values();
-        const directChats = this.#serverDirectChats.values();
-        const channels = [...this.#serverCommunities.values()].flatMap((c) => c.channels);
-        return ChatMap.fromList([...groupChats, ...directChats, ...channels]);
-    });
-
     //TODO should this be operating on merged group chats?
     #groupVideoCallCounts = $derived.by(() => {
         return videoCallsInProgressForChats([...this.#serverGroupChats.values()]);
@@ -331,6 +381,10 @@ class AppState {
         withEqCheck(() => this.#selectedMessageContext?.chatId, chatIdentifiersEqual),
     );
 
+    #selectedServerChatSummary = $derived.by(() => {
+        return this.#selectedChatId ? this.#allServerChats.get(this.#selectedChatId) : undefined;
+    });
+
     #selectedCommunityId = $derived.by<CommunityIdentifier | undefined>(
         withEqCheck(() => {
             switch (pathState.route.scope.kind) {
@@ -366,6 +420,22 @@ class AppState {
     #selectedChat = $state<ChatDetailsMergedState>(
         new ChatDetailsMergedState(ChatDetailsServerState.empty()),
     );
+
+    get allServerChats() {
+        return this.#allServerChats;
+    }
+
+    get allChats() {
+        return this.#allChats;
+    }
+
+    get selectedServerChatSummary() {
+        return this.#selectedServerChatSummary;
+    }
+
+    get userMetrics() {
+        return this.#userMetrics;
+    }
 
     get unreadGroupCounts() {
         return this.#unreadGroupCounts;
@@ -525,8 +595,8 @@ class AppState {
         this.#selectedChat.updateServerEvents(chatId, fn);
     }
 
-    updateServerExpiredEventRanges(fn: (existing: DRange) => DRange) {
-        this.#selectedChat.updateServerExpiredEventRanges(fn);
+    updateServerExpiredEventRanges(chatId: ChatIdentifier, fn: (existing: DRange) => DRange) {
+        this.#selectedChat.updateServerExpiredEventRanges(chatId, fn);
     }
 
     clearServerEvents() {
@@ -685,8 +755,8 @@ class AppState {
         return this.#serverCommunities;
     }
 
-    get scopedServerChats() {
-        return this.#scopedServerChats;
+    get scopedChats() {
+        return this.#scopedChats;
     }
 
     get communities() {

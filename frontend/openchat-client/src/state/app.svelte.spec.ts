@@ -2,20 +2,25 @@ import {
     CommunityMap,
     emptyChatMetrics,
     emptyRules,
+    nullMembership,
     SafeMap,
     type ChatIdentifier,
     type CommunityIdentifier,
     type CommunityPermissions,
     type CommunitySummary,
     type ExternalBotPermissions,
+    type GroupChatIdentifier,
+    type GroupChatSummary,
     type Member,
 } from "openchat-shared";
 import { vi } from "vitest";
-import { app } from "./app.svelte";
+import { AppState } from "./app.svelte";
 import { chatDetailsLocalUpdates } from "./chat_details";
 import { communityLocalUpdates } from "./community_details/local.svelte";
 import { localUpdates } from "./global";
 import { pathState } from "./path.svelte";
+
+let app = new AppState();
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
@@ -35,6 +40,7 @@ const mockContext: PageJS.Context = {
 
 describe("app state", () => {
     beforeEach(() => {
+        app = new AppState();
         pathState.setRouteParams(mockContext, {
             kind: "home_route",
             scope: { kind: "group_chat" },
@@ -58,27 +64,6 @@ describe("app state", () => {
                 scope: { kind: "community", id: communityId },
             });
             app.setSelectedChat(chatId);
-        });
-
-        test("selected message context is set", () => {
-            expect(app.selectedMessageContext).toMatchObject({
-                chatId: chatId,
-                threadRootMessageIndex: undefined,
-            });
-
-            pathState.setRouteParams(mockContext, {
-                kind: "selected_channel_route",
-                chatId,
-                communityId,
-                messageIndex: 10,
-                open: true, // simulate opening the thread
-                scope: { kind: "community", id: communityId },
-            });
-
-            expect(app.selectedMessageContext).toMatchObject({
-                chatId: chatId,
-                threadRootMessageIndex: 10,
-            });
         });
 
         test("chat list scope is set", () => {
@@ -143,6 +128,78 @@ describe("app state", () => {
                 expect(app.selectedChat.expandedDeletedMessages.has(3)).toBe(true);
                 setChatDetails({ ...chatId, channelId: 654321 }); // reset the server state for a different chatId
                 expect(app.selectedChat.expandedDeletedMessages.has(3)).toBe(false);
+            });
+        });
+
+        describe("chat local updates", () => {
+            const groupId: GroupChatIdentifier = { kind: "group_chat", groupId: "123456" };
+
+            beforeEach(() => initialiseGlobalState());
+
+            describe("chat properties", () => {
+                test("chat found in all chats", () => {
+                    groupChatExpectation(groupId, (g) => {
+                        expect(g.name).toEqual("group chat one");
+                    });
+                });
+
+                test("notifications muted", () => {
+                    expect(app.allChats.get(groupId)?.membership.notificationsMuted).toEqual(false);
+                    localUpdates.updateNotificationsMuted(groupId, true);
+                    expect(app.allChats.get(groupId)?.membership.notificationsMuted).toEqual(true);
+                });
+
+                test("archived", () => {
+                    expect(app.allChats.get(groupId)?.membership.archived).toEqual(false);
+                    localUpdates.updateArchived(groupId, true);
+                    expect(app.allChats.get(groupId)?.membership.archived).toEqual(true);
+                });
+
+                test("name", () => {
+                    groupChatExpectation(groupId, (g) => {
+                        expect(g.name).toEqual("group chat one");
+                        localUpdates.updateChatProperties(groupId, "name updated");
+                        groupChatExpectation(groupId, (g) => {
+                            expect(g.name).toEqual("name updated");
+                        });
+                    });
+                });
+
+                test("scoping works as expected", () => {
+                    pathState.setRouteParams(mockContext, {
+                        kind: "home_route",
+                        scope: { kind: "group_chat" },
+                    });
+                    expect(app.allChats.get(groupId)).not.toBeUndefined();
+                    expect(app.scopedChats.get(groupId)).not.toBeUndefined();
+                    pathState.setRouteParams(mockContext, {
+                        kind: "home_route",
+                        scope: { kind: "direct_chat" },
+                    });
+                    expect(app.scopedChats.get(groupId)).toBeUndefined();
+                });
+            });
+
+            describe("add or remove chats", () => {
+                test("remove a chat", () => {
+                    localUpdates.removeChat(groupId);
+                    expect(app.allChats.get(groupId)).toBeUndefined();
+                });
+                test("add a chat", () => {
+                    expect(
+                        app.allChats.get({ kind: "group_chat", groupId: "654321" }),
+                    ).toBeUndefined();
+                    localUpdates.addChat(groupChat("654321"));
+                    expect(
+                        app.allChats.get({ kind: "group_chat", groupId: "654321" }),
+                    ).not.toBeUndefined();
+                });
+                test("preview a chat", () => {
+                    localUpdates.addGroupPreview(groupChat("654321"));
+                    expect(
+                        app.allChats.get({ kind: "group_chat", groupId: "654321" }),
+                    ).not.toBeUndefined();
+                });
             });
         });
     });
@@ -396,3 +453,97 @@ const defaultPermissions: CommunityPermissions = {
     createPrivateChannel: "admin",
     manageUserGroups: "admin",
 };
+
+function initialiseGlobalState() {
+    app.setGlobalState(
+        [],
+        [groupChat("123456")],
+        [],
+        new Map(),
+        new Set(),
+        chitState(),
+        [],
+        { kind: "auto_wallet", minDollarValue: 100 },
+        {
+            readUpToTimestamp: BigInt(Date.now() - 10_000),
+            latestTimestamp: BigInt(Date.now()),
+            unreadCount: 10,
+        },
+        new Map(),
+        new Map(),
+        undefined,
+    );
+}
+
+function groupChat(groupId: string): GroupChatSummary {
+    return {
+        id: { kind: "group_chat", groupId },
+        kind: "group_chat",
+        name: "group chat one",
+        description: "this is the first group chat",
+        historyVisible: true,
+        public: false,
+        frozen: false,
+        permissions: {
+            changeRoles: "admin",
+            removeMembers: "moderator",
+            deleteMessages: "moderator",
+            updateGroup: "admin",
+            pinMessages: "admin",
+            inviteUsers: "admin",
+            addMembers: "admin",
+            mentionAllMembers: "member",
+            reactToMessages: "member",
+            startVideoCall: "member",
+            messagePermissions: {
+                default: "member",
+                p2pSwap: "none",
+            },
+            threadPermissions: undefined,
+        },
+        gateConfig: { gate: { kind: "no_gate" }, expiry: undefined },
+        level: "group",
+        membership: {
+            ...nullMembership(),
+            role: "owner",
+        },
+        messagesVisibleToNonMembers: false,
+        verified: false,
+        lastUpdated: 1000n,
+        latestMessage: undefined,
+        latestEventIndex: 0,
+        latestMessageIndex: undefined,
+        metrics: emptyChatMetrics(),
+        eventsTTL: undefined,
+        eventsTtlLastUpdated: 0n,
+        videoCallInProgress: undefined,
+        minVisibleEventIndex: 0,
+        minVisibleMessageIndex: 0,
+        memberCount: 1000,
+        subtype: undefined,
+        previewed: false,
+        localUserIndex: "",
+        isInvited: false,
+        dateLastPinned: undefined,
+        dateReadPinned: undefined,
+    };
+}
+
+function groupChatExpectation(id: GroupChatIdentifier, fn: (g: GroupChatSummary) => void) {
+    const g = app.allChats.get(id);
+    if (g && g.kind === "group_chat") {
+        fn(g);
+    } else {
+        fail("Could not find expected group chat");
+    }
+}
+
+function chitState() {
+    return {
+        streak: 10,
+        streakEnds: BigInt(Date.now() + 1000 * 60 * 60 * 24),
+        nextDailyChitClaim: BigInt(Date.now() + 1000 * 60 * 60 * 24),
+        chitBalance: 10_000,
+        totalChitEarned: 50_000,
+    };
+}

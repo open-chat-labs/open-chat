@@ -1,16 +1,13 @@
 import type {
     AuthProvider,
     ChatEvent,
-    ChatIdentifier,
     ChatMap,
     ChatSummary,
     CreatedUser,
     DiamondMembershipStatus,
-    DirectChatSummary,
     EnhancedReplyContext,
     EventWrapper,
     MessageContext,
-    MultiUserChat,
     PinNumberResolver,
     ThreadSyncDetails,
     UserLookup,
@@ -19,22 +16,16 @@ import { locale } from "svelte-i18n";
 import { selectedAuthProviderStore } from "./stores/authProviders";
 import { blockedUsers } from "./stores/blockedUsers";
 import {
-    allChats,
     chatSummariesListStore,
     chatSummariesStore,
     currentChatReplyingTo,
     eventsStore,
-    groupPreviewsStore,
-    selectedChatId,
     selectedChatStore,
     selectedMessageContext,
-    selectedServerChatStore,
     selectedThreadRootMessageIndex,
-    serverChatSummariesStore,
     threadEvents,
     threadsByChatStore,
     threadsFollowedByMeStore,
-    uninitializedDirectChats,
 } from "./stores/chat";
 import { diamondStatus, isDiamond, isLifetimeDiamond } from "./stores/diamond";
 import { type DraftMessages, draftMessagesStore } from "./stores/draftMessages";
@@ -50,18 +41,13 @@ import { userCreatedStore } from "./stores/userCreated";
  */
 export class LiveState {
     selectedChat: ChatSummary | undefined;
-    selectedServerChat: ChatSummary | undefined;
     events!: EventWrapper<ChatEvent>[];
     selectedAuthProvider!: AuthProvider | undefined;
     userCreated!: boolean;
     userStore!: UserLookup;
     remainingStorage!: number;
     currentChatReplyingTo: EnhancedReplyContext | undefined;
-    serverChatSummaries!: ChatMap<ChatSummary>;
     chatSummaries!: ChatMap<ChatSummary>;
-    uninitializedDirectChats!: ChatMap<DirectChatSummary>;
-    groupPreviews!: ChatMap<MultiUserChat>;
-    selectedChatId: ChatIdentifier | undefined;
     chatSummariesList!: ChatSummary[];
     threadsByChat!: ChatMap<ThreadSyncDetails[]>;
     threadEvents!: EventWrapper<ChatEvent>[];
@@ -72,7 +58,6 @@ export class LiveState {
     diamondStatus!: DiamondMembershipStatus;
     isDiamond!: boolean;
     isLifetimeDiamond!: boolean;
-    allChats!: ChatMap<ChatSummary>;
     draftMessages!: DraftMessages;
     user!: CreatedUser;
     anonUser!: boolean;
@@ -93,14 +78,9 @@ export class LiveState {
         userStore.subscribe((data) => (this.userStore = data));
         userCreatedStore.subscribe((data) => (this.userCreated = data));
         selectedAuthProviderStore.subscribe((data) => (this.selectedAuthProvider = data));
-        serverChatSummariesStore.subscribe((data) => (this.serverChatSummaries = data));
         chatSummariesStore.subscribe((data) => (this.chatSummaries = data));
-        uninitializedDirectChats.subscribe((data) => (this.uninitializedDirectChats = data));
-        groupPreviewsStore.subscribe((data) => (this.groupPreviews = data));
-        selectedChatId.subscribe((data) => (this.selectedChatId = data));
         eventsStore.subscribe((data) => (this.events = data));
         selectedChatStore.subscribe((data) => (this.selectedChat = data));
-        selectedServerChatStore.subscribe((data) => (this.selectedServerChat = data));
         currentChatReplyingTo.subscribe((data) => (this.currentChatReplyingTo = data));
         chatSummariesListStore.subscribe((data) => (this.chatSummariesList = data));
         threadsByChatStore.subscribe((data) => (this.threadsByChat = data));
@@ -114,7 +94,6 @@ export class LiveState {
         diamondStatus.subscribe((data) => (this.diamondStatus = data));
         isDiamond.subscribe((data) => (this.isDiamond = data));
         isLifetimeDiamond.subscribe((data) => (this.isDiamond = data));
-        allChats.subscribe((data) => (this.allChats = data));
         draftMessagesStore.subscribe((data) => (this.draftMessages = data));
         locale.subscribe((data) => (this.locale = data ?? "en"));
         pinNumberRequiredStore.subscribe((data) => (this.pinNumberRequired = data));
