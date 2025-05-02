@@ -44,7 +44,7 @@
     let dirty = $derived(nameDirty || avatarDirty);
     let name_errors = $derived(validBotComponentName(webhook.current.name, 3));
     let valid = $derived(name_errors.length === 0);
-    let url = $derived.by(() => buildUrl(webhook.current));
+    let url = $derived(client.webhookUrl(webhook.current, chatId));
 
     let titleKey = $derived.by(() => {
         switch (mode.kind) {
@@ -124,17 +124,6 @@
 
     function avatarSelected(detail: { url: string; data: Uint8Array }) {
         webhook.current.avatarUrl = detail.url;
-    }
-
-    function buildUrl(webhook: { id: string; secret?: string }): string | undefined {
-        if (webhook.secret === undefined) {
-            return undefined;
-        }
-
-        const canisterId = chatId.kind === "channel" ? chatId.communityId : chatId.groupId;
-        const channelPart = chatId.kind === "channel" ? `/${chatId.channelId}` : "";
-        const domain = "icp0.io";
-        return `https://${canisterId}.${domain}/webhook${channelPart}/${webhook.id}/${webhook.secret}`;
     }
 
     function copy() {

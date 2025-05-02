@@ -3262,10 +3262,27 @@ export class OpenChat {
     }
 
     achievementLogo(id: number): string {
-        return `${this.config.achievementUrlPath.replace(
+        return `${this.config.canisterUrlPath.replace(
             "{canisterId}",
             this.config.userIndexCanister,
         )}/achievement_logo/${id}`;
+    }
+
+    webhookUrl(
+        webhook: { id: string; secret?: string },
+        chatId: MultiUserChatIdentifier,
+    ): string | undefined {
+        if (webhook.secret === undefined) {
+            return undefined;
+        }
+
+        const canisterId = chatId.kind === "channel" ? chatId.communityId : chatId.groupId;
+        const channelPart = chatId.kind === "channel" ? `/${chatId.channelId}` : "";
+
+        return (
+            this.config.canisterUrlPath.replace("{canisterId}", canisterId) +
+            `/webhook${channelPart}/${webhook.id}/${webhook.secret}`
+        );
     }
 
     // this is unavoidably duplicated from the agent
@@ -5759,8 +5776,19 @@ export class OpenChat {
         return this.#sendRequest({ kind: "setDiamondMembershipFees", fees }).catch(() => false);
     }
 
-    setAirdropConfig(channelId: number, channelName: string, communityId?: string, communityName?: string): Promise<boolean> {
-        return this.#sendRequest({ kind: "setAirdropConfig", channelId, channelName, communityId, communityName });
+    setAirdropConfig(
+        channelId: number,
+        channelName: string,
+        communityId?: string,
+        communityName?: string,
+    ): Promise<boolean> {
+        return this.#sendRequest({
+            kind: "setAirdropConfig",
+            channelId,
+            channelName,
+            communityId,
+            communityName,
+        });
     }
 
     setTokenEnabled(ledger: string, enabled: boolean): Promise<boolean> {
@@ -8736,7 +8764,7 @@ export class OpenChat {
                     userGeekApiKey: this.config.userGeekApiKey,
                     enableMultiCrypto: this.config.enableMultiCrypto,
                     blobUrlPattern: this.config.blobUrlPattern,
-                    achievementUrlPath: this.config.achievementUrlPath,
+                    canisterUrlPath: this.config.canisterUrlPath,
                     proposalBotCanister: this.config.proposalBotCanister,
                     marketMakerCanister: this.config.marketMakerCanister,
                     signInWithEmailCanister: this.config.signInWithEmailCanister,
