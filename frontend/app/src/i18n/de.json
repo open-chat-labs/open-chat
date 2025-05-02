@@ -105,6 +105,7 @@
         "visibility": "Zugang"
     },
     "account": "Konto",
+    "accountCopiedToClipboard": "Kontoadresse in die Zwischenablage kopiert!",
     "accounts": "Konten",
     "accountSuspended": "Konto gesperrt",
     "activity": {
@@ -369,16 +370,14 @@
         "matchingCommands": "Passende Befehle",
         "member": {
             "bots": "Bots",
-            "people": "Menschen"
+            "people": "Menschen",
+            "webhooks": "Webhooks"
         },
         "poll": {
             "desc": "Erstellen Sie eine Umfrage im aktuellen Chat"
         },
         "register_bot": {
             "desc": "Einen neuen Bot bei OpenChat registrieren"
-        },
-        "register_webhook": {
-            "desc": "Registrieren Sie einen Webhook in diesem Chat"
         },
         "search": {
             "desc": "Suche im aktuellen Chat starten",
@@ -1998,6 +1997,22 @@
     "viewer": "Zuschauer",
     "wallet": "Wallet",
     "walletSettings": "Wallet-Einstellungen",
+    "webhook": {
+        "avatarLabel": "Avatar",
+        "nameLabel": "Name",
+        "namePlaceholder": "Geben Sie den Webhook-Namen ein",
+        "nameRules": "Muss in diesem Chat eindeutig sein und darf nur alphanumerische Zeichen und Unterstriche enthalten",
+        "regenerateAction": "Regenerieren",
+        "registerAction": "Registrieren",
+        "registerDesc": "Registrieren Sie einen Webhook in diesem Chat",
+        "registerTitle": "Registrieren eines Webhooks",
+        "removeAction": "Webhook entfernen",
+        "removeFailed": "Leider konnten wir den Webhook nicht entfernen",
+        "updateAction": "Aktualisieren",
+        "updateTitle": "Aktualisieren Sie {name}",
+        "urlLabel": "Webhook-URL",
+        "viewEditAction": "Webhook-Details anzeigen/bearbeiten"
+    },
     "websiteVersion": "der Webseite",
     "weeks": "Wochen",
     "whatsHot": "Was läuft?",

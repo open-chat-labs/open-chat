@@ -105,6 +105,7 @@
         "visibility": "دسترسی داشته باشید"
     },
     "account": "حساب",
+    "accountCopiedToClipboard": "آدرس حساب در کلیپ‌بورد کپی شد!",
     "accounts": "حساب ها",
     "accountSuspended": "حساب معلق شده است",
     "activity": {
@@ -369,16 +370,14 @@
         "matchingCommands": "تطبیق دستورات",
         "member": {
             "bots": "ربات ها",
-            "people": "مردم"
+            "people": "مردم",
+            "webhooks": "وب هوک ها"
         },
         "poll": {
             "desc": "یک نظرسنجی در چت فعلی ایجاد کنید"
         },
         "register_bot": {
             "desc": "ثبت ربات جدید در OpenChat"
-        },
-        "register_webhook": {
-            "desc": "در این گفتگو یک وب‌هوک ثبت کنید"
         },
         "search": {
             "desc": "جستجو را در چت فعلی آغاز کنید",
@@ -1998,6 +1997,22 @@
     "viewer": "بیننده",
     "wallet": "کیف پول",
     "walletSettings": "تنظیمات کیف پول",
+    "webhook": {
+        "avatarLabel": "آواتار",
+        "nameLabel": "نام",
+        "namePlaceholder": "نام وب هوک را وارد کنید",
+        "nameRules": "باید در این گفتگو منحصر به فرد باشد و فقط شامل کاراکترهای الفبایی-عددی و زیرخط باشد",
+        "regenerateAction": "بازسازی",
+        "registerAction": "ثبت نام",
+        "registerDesc": "در این گفتگو یک وب‌هوک ثبت کنید",
+        "registerTitle": "ثبت یک وب هوک",
+        "removeAction": "حذف وب هوک",
+        "removeFailed": "متاسفیم که نتوانستیم وب‌هوک را حذف کنیم.",
+        "updateAction": "به‌روزرسانی",
+        "updateTitle": "به‌روزرسانی {name}",
+        "urlLabel": "آدرس وب هوک",
+        "viewEditAction": "مشاهده/ویرایش جزئیات وب‌هوک"
+    },
     "websiteVersion": "از وب سایت",
     "weeks": "هفته ها",
     "whatsHot": "چه داغ است؟",

@@ -105,6 +105,7 @@
         "visibility": "Dostęp"
     },
     "account": "Konto",
+    "accountCopiedToClipboard": "Adres konta został skopiowany do schowka!",
     "accounts": "Konta",
     "accountSuspended": "Konto zawieszone",
     "activity": {
@@ -369,16 +370,14 @@
         "matchingCommands": "Dopasowywanie poleceń",
         "member": {
             "bots": "Boty",
-            "people": "Ludzie"
+            "people": "Ludzie",
+            "webhooks": "Webhooki"
         },
         "poll": {
             "desc": "Utwórz ankietę w bieżącym czacie"
         },
         "register_bot": {
             "desc": "Zarejestruj nowego bota w OpenChat"
-        },
-        "register_webhook": {
-            "desc": "Zarejestruj webhook w tym czacie"
         },
         "search": {
             "desc": "Rozpocznij wyszukiwanie w bieżącym czacie",
@@ -1998,6 +1997,22 @@
     "viewer": "widz",
     "wallet": "Portfel",
     "walletSettings": "Ustawienia portfela",
+    "webhook": {
+        "avatarLabel": "Awatara",
+        "nameLabel": "Nazwa",
+        "namePlaceholder": "Wprowadź nazwę webhooka",
+        "nameRules": "Musi być unikalny w tym czacie i zawierać wyłącznie znaki alfanumeryczne i podkreślenia",
+        "regenerateAction": "Zregenerować",
+        "registerAction": "Rejestr",
+        "registerDesc": "Zarejestruj webhook w tym czacie",
+        "registerTitle": "Zarejestruj webhook",
+        "removeAction": "Usuń webhook",
+        "removeFailed": "Przepraszamy, nie udało nam się usunąć webhooka",
+        "updateAction": "Aktualizacja",
+        "updateTitle": "Aktualizacja {name}",
+        "urlLabel": "Adres URL webhooka",
+        "viewEditAction": "Wyświetl/edytuj szczegóły webhooka"
+    },
     "websiteVersion": "strony internetowej",
     "weeks": "Tygodnie",
     "whatsHot": "Co jest na topie?",

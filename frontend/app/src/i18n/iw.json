@@ -105,6 +105,7 @@
         "visibility": "גִישָׁה"
     },
     "account": "חֶשְׁבּוֹן",
+    "accountCopiedToClipboard": "כתובת החשבון הועתקה ללוח!",
     "accounts": "חשבונות",
     "accountSuspended": "חשבון מושעה",
     "activity": {
@@ -369,16 +370,14 @@
         "matchingCommands": "התאמת פקודות",
         "member": {
             "bots": "בוטים",
-            "people": "אֲנָשִׁים"
+            "people": "אֲנָשִׁים",
+            "webhooks": "וובים"
         },
         "poll": {
             "desc": "צור סקר בצ'אט הנוכחי"
         },
         "register_bot": {
             "desc": "רישום בוט חדש ב-OpenChat"
-        },
-        "register_webhook": {
-            "desc": "רשום וובהוק בצ'אט הזה"
         },
         "search": {
             "desc": "התחל חיפוש בצ'אט הנוכחי",
@@ -1998,6 +1997,22 @@
     "viewer": "צוֹפֶה",
     "wallet": "ארנק",
     "walletSettings": "הגדרות ארנק",
+    "webhook": {
+        "avatarLabel": "גִלגוּל",
+        "nameLabel": "שֵׁם",
+        "namePlaceholder": "הזן שם של וובהוק",
+        "nameRules": "חייב להיות ייחודי בצ'אט זה ולהכיל תווים אלפאנומריים וקו תחתון בלבד",
+        "regenerateAction": "לְהִתְחַדֵשׁ",
+        "registerAction": "לִרְשׁוֹם",
+        "registerDesc": "רשום וובהוק בצ'אט הזה",
+        "registerTitle": "רשום וובהוק",
+        "removeAction": "הסר וובהוק",
+        "removeFailed": "מצטערים, לא הצלחנו להסיר את ה-webhook",
+        "updateAction": "לְעַדְכֵּן",
+        "updateTitle": "עדכון {name}",
+        "urlLabel": "כתובת אתר של Webhook",
+        "viewEditAction": "הצג/ערוך פרטי webhook"
+    },
     "websiteVersion": "של האתר",
     "weeks": "שבועות",
     "whatsHot": "מה לוהט?",

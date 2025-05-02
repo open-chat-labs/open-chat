@@ -105,6 +105,7 @@
         "visibility": "وصول"
     },
     "account": "حساب",
+    "accountCopiedToClipboard": "تم نسخ عنوان الحساب إلى الحافظة!",
     "accounts": "الحسابات",
     "accountSuspended": "تم تعليق الحساب",
     "activity": {
@@ -369,16 +370,14 @@
         "matchingCommands": "أوامر المطابقة",
         "member": {
             "bots": "الروبوتات",
-            "people": "الناس"
+            "people": "الناس",
+            "webhooks": "خطافات الويب"
         },
         "poll": {
             "desc": "إنشاء استطلاع رأي في الدردشة الحالية"
         },
         "register_bot": {
             "desc": "سجل بوتًا جديدًا مع OpenChat"
-        },
-        "register_webhook": {
-            "desc": "سجل خطاف ويب في هذه الدردشة"
         },
         "search": {
             "desc": "ابدأ البحث في الدردشة الحالية",
@@ -1998,6 +1997,22 @@
     "viewer": "مشاهد",
     "wallet": "محفظة",
     "walletSettings": "إعدادات المحفظة",
+    "webhook": {
+        "avatarLabel": "الصورة الرمزية",
+        "nameLabel": "اسم",
+        "namePlaceholder": "أدخل اسم خطاف الويب",
+        "nameRules": "يجب أن تكون فريدة في هذه الدردشة وتحتوي على أحرف أبجدية رقمية وشرطات سفلية فقط",
+        "regenerateAction": "تجديد",
+        "registerAction": "يسجل",
+        "registerDesc": "سجل خطاف ويب في هذه الدردشة",
+        "registerTitle": "تسجيل خطاف ويب",
+        "removeAction": "إزالة خطاف الويب",
+        "removeFailed": "نأسف لأننا لم نتمكن من إزالة خطاف الويب",
+        "updateAction": "تحديث",
+        "updateTitle": "تحديث {name}",
+        "urlLabel": "عنوان URL لـ Webhook",
+        "viewEditAction": "عرض/تحرير تفاصيل خطاف الويب"
+    },
     "websiteVersion": "من الموقع",
     "weeks": "اسابيع",
     "whatsHot": "ما هو الساخن؟",
