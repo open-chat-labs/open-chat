@@ -3262,11 +3262,11 @@ export class OpenChat {
         }
 
         const canisterId = chatId.kind === "channel" ? chatId.communityId : chatId.groupId;
-        const channelPart = chatId.kind === "channel" ? `/${chatId.channelId}` : "";
+        const channelPart = chatId.kind === "channel" ? `/channel/${chatId.channelId}` : "";
 
         return (
             this.config.canisterUrlPath.replace("{canisterId}", canisterId) +
-            `/webhook${channelPart}/${webhook.id}/${webhook.secret}`
+            `${channelPart}/webhook/${webhook.id}/${webhook.secret}`
         );
     }
 
