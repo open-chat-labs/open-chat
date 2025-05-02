@@ -372,8 +372,9 @@ function isContiguousInternal(
     return isContiguous;
 }
 
-export function isContiguousInThread(events: EventWrapper<ChatEvent>[]): boolean {
-    return isContiguousInternal(app.selectedChat.confirmedThreadEventIndexesLoaded, events, []);
+export function isContiguousInThread(context: MessageContext, events: EventWrapper<ChatEvent>[]): boolean {
+    return messageContextsEqual(context, app.selectedMessageContext)
+        && isContiguousInternal(app.selectedChat.confirmedThreadEventIndexesLoaded, events, []);
 }
 
 export function isContiguous(
@@ -381,7 +382,8 @@ export function isContiguous(
     events: EventWrapper<ChatEvent>[],
     expiredEventRanges: ExpiredEventsRange[],
 ): boolean {
-    return isContiguousInternal(confirmedEventIndexesLoaded(chatId), events, expiredEventRanges);
+    return chatIdentifiersEqual(chatId, app.selectedChat.chatId)
+        && isContiguousInternal(confirmedEventIndexesLoaded(chatId), events, expiredEventRanges);
 }
 
 export const currentChatDraftMessage = derived(
