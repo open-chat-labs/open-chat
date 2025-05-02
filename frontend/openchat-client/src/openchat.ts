@@ -289,13 +289,11 @@ import type { UndoLocalUpdate } from "./state/undo";
 import { messagesRead, startMessagesReadTracker } from "./state/unread/markRead.svelte";
 import { blockedUsers } from "./stores/blockedUsers";
 import {
-    addGroupPreview,
     confirmedEventIndexesLoaded,
     isContiguous,
     isContiguousInThread,
     nextEventAndMessageIndexes,
     nextEventAndMessageIndexesForThread,
-    removeGroupPreview,
 } from "./stores/chat";
 import {
     bitcoinAddress,
@@ -1141,7 +1139,7 @@ export class OpenChat {
                 return this.#sendRequest({ kind: "getPublicGroupSummary", chatId })
                     .then((resp) => {
                         if (resp.kind === "success" && !resp.group.frozen) {
-                            addGroupPreview(resp.group);
+                            localUpdates.addGroupPreview(resp.group);
                             return CommonResponses.success();
                         } else if (resp.kind === "group_moved") {
                             return resp;
@@ -1155,7 +1153,7 @@ export class OpenChat {
                 return this.#sendRequest({ kind: "getChannelSummary", chatId })
                     .then((resp) => {
                         if (resp.kind === "channel") {
-                            addGroupPreview(resp);
+                            localUpdates.addGroupPreview(resp);
                             return CommonResponses.success();
                         }
                         return CommonResponses.failure();
@@ -1572,7 +1570,7 @@ export class OpenChat {
             })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    removeGroupPreview(chat.id);
+                    localUpdates.removeGroupPreview(chat.id);
                 }
                 return resp;
             })

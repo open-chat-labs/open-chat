@@ -7,13 +7,11 @@ import type {
     EventWrapper,
     ExpiredEventsRange,
     MessageContext,
-    MultiUserChat,
     ThreadSyncDetails,
 } from "openchat-shared";
 import { chatIdentifiersEqual, ChatMap, compareChats, messageContextsEqual } from "openchat-shared";
 import { derived, writable, type Readable } from "svelte/store";
 import { app } from "../state/app.svelte";
-import { localUpdates } from "../state/global";
 import {
     getNextEventAndMessageIndexes,
     mergeEventsAndLocalUpdates,
@@ -308,15 +306,6 @@ export function confirmedEventIndexesLoaded(chatId: ChatIdentifier): DRange {
     return selected !== undefined && chatIdentifiersEqual(selected, chatId)
         ? app.selectedChat.confirmedEventIndexesLoaded
         : new DRange();
-}
-
-export function addGroupPreview(chat: MultiUserChat): void {
-    localUpdates.removeChat(chat.id);
-    localUpdates.addGroupPreview(chat);
-}
-
-export function removeGroupPreview(chatId: ChatIdentifier): void {
-    localUpdates.removeGroupPreview(chatId);
 }
 
 export const dummyServerEventsStore = createDummyStore();

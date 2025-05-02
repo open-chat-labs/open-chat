@@ -193,6 +193,12 @@ describe("app state", () => {
                         app.allChats.get({ kind: "group_chat", groupId: "654321" }),
                     ).not.toBeUndefined();
                 });
+                test("preview a chat", () => {
+                    localUpdates.addGroupPreview(groupChat("654321"));
+                    expect(
+                        app.allChats.get({ kind: "group_chat", groupId: "654321" }),
+                    ).not.toBeUndefined();
+                });
             });
         });
     });
