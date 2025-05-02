@@ -25,7 +25,6 @@
         UpdatedRules,
     } from "openchat-client";
     import {
-        anonUser,
         app,
         chatIdentifiersEqual,
         chatSummariesListStore,
@@ -43,9 +42,7 @@
         captureRulesAcceptanceStore as rulesAcceptanceStore,
         selectedChatStore,
         subscribe,
-        suspendedUser,
         ui,
-        currentUser as user,
         userStore,
     } from "openchat-client";
     import page from "page";
@@ -234,7 +231,7 @@
             profileLinkClicked(event as CustomEvent<ProfileLinkClickedEvent>);
         });
 
-        if ($suspendedUser) {
+        if (app.suspendedUser) {
             modal = { kind: "suspended" };
         }
 
@@ -313,7 +310,7 @@
             if (initialised) {
                 ui.filterRightPanelHistory((state) => state.kind !== "community_filters");
                 if (
-                    $anonUser &&
+                    app.anonUser &&
                     pathState.isChatListRoute(route) &&
                     (route.scope.kind === "direct_chat" || route.scope.kind === "favourite")
                 ) {
@@ -576,7 +573,7 @@
     }
 
     async function joinGroup(detail: { group: MultiUserChat; select: boolean }): Promise<void> {
-        if ($anonUser) {
+        if (app.anonUser) {
             client.updateIdentityState({
                 kind: "logging_in",
                 postLogin: { kind: "join_group", ...detail },
@@ -980,14 +977,14 @@
     {/if}
 {/if}
 
-<main class:anon={$anonUser} class:offline={$offlineStore}>
+<main class:anon={app.anonUser} class:offline={$offlineStore}>
     <LeftNav />
     <LeftPanel />
     <MiddlePanel {joining} />
     <RightPanel />
 </main>
 
-{#if $anonUser}
+{#if app.anonUser}
     <AnonFooter />
 {/if}
 
@@ -1007,7 +1004,7 @@
 
 <Toast />
 
-{#if showUpgrade && $user}
+{#if showUpgrade && app.currentUser}
     <Upgrade onCancel={() => (showUpgrade = false)} />
 {/if}
 

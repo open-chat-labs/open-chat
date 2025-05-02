@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { currentUser, emptyBotInstance, OpenChat, ui, type ExternalBot } from "openchat-client";
+    import { app, emptyBotInstance, OpenChat, ui, type ExternalBot } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
@@ -29,8 +29,8 @@
     );
 
     let botState = $state({
-        original: emptyBotInstance($currentUser.userId),
-        current: emptyBotInstance($currentUser.userId),
+        original: emptyBotInstance(app.currentUserId),
+        current: emptyBotInstance(app.currentUserId),
     });
 
     let ownerDirty = $derived(botState.original.ownerId !== botState.current.ownerId);
@@ -99,7 +99,7 @@
     }
 
     function selectBot(bot: ExternalBot) {
-        if (bot.ownerId === $currentUser.userId) {
+        if (bot.ownerId === app.currentUserId) {
             botState.original = bot;
             botState.current = structuredClone(bot);
             if (mode === "update") {

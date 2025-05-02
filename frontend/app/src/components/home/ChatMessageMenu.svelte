@@ -2,7 +2,6 @@
     import {
         app,
         cryptoLookup,
-        isDiamond,
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
         publish,
@@ -10,7 +9,6 @@
         threadsFollowedByMeStore,
         translationStore,
         ui,
-        currentUser as user,
         type ChatIdentifier,
         type Message,
         type MessageReminderCreatedContent,
@@ -196,8 +194,8 @@
     function shareMessage() {
         shareFunctions.shareMessage(
             $_,
-            $user.userId,
-            msg.sender === $user.userId,
+            app.currentUserId,
+            msg.sender === app.currentUserId,
             msg,
             $cryptoLookup,
         );
@@ -264,7 +262,7 @@
     }
 
     function translateMessage() {
-        if (!$isDiamond) {
+        if (!app.isDiamond) {
             publish("upgrade");
         } else {
             const text = client.getMessageText(msg.content);

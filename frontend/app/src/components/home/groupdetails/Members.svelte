@@ -20,10 +20,10 @@
         type UserLookup,
         type UserSummary,
         type WebhookDetails,
+        app,
         botState,
         chatIdentifiersEqual,
         LARGE_GROUP_THRESHOLD,
-        currentUser as user,
         userStore,
     } from "openchat-client";
     import { getContext } from "svelte";
@@ -123,7 +123,11 @@
     ): UserSummary[] {
         return Array.from<string>(ids).reduce((matching, id) => {
             const user = users.get(id);
-            if (user && matchesSearch(term, user) && (user.userId !== userId || includeMe)) {
+            if (
+                user &&
+                matchesSearch(term, user) &&
+                (user.userId !== app.currentUserId || includeMe)
+            ) {
                 matching.push(user);
             }
             return matching;
@@ -239,15 +243,14 @@
             selectTab("users");
         }
     }
-    let userId = $derived($user.userId);
     let knownUsers = $derived(getKnownUsers($userStore, members));
     let largeGroup = $derived(members.length > LARGE_GROUP_THRESHOLD);
-    let me = $derived(knownUsers.find((u) => u.userId === userId));
+    let me = $derived(knownUsers.find((u) => u.userId === app.currentUserId));
     let searchTerm = $derived(trimLeadingAtSymbol(searchTermEntered));
     let searchTermLower = $derived(searchTerm.toLowerCase());
     let fullMembers = $derived(
         knownUsers
-            .filter((u) => matchesSearch(searchTermLower, u) && u.userId !== userId)
+            .filter((u) => matchesSearch(searchTermLower, u) && u.userId !== app.currentUserId)
             .sort(compareMembers),
     );
     let blockedUsers = $derived(matchingUsers(searchTermLower, $userStore, blocked, true));
@@ -459,7 +462,7 @@
         <div use:menuCloser class="user-list">
             {#each blockedUsers as user}
                 <BlockedUser
-                    me={user.userId === userId}
+                    me={user.userId === app.currentUserId}
                     {user}
                     {searchTerm}
                     canUnblockUser={client.canUnblockUsers(collection.id)}
@@ -470,7 +473,7 @@
         <div use:menuCloser class="user-list">
             {#each invitedUsers as user}
                 <InvitedUser
-                    me={user.userId === userId}
+                    me={user.userId === app.currentUserId}
                     {user}
                     {searchTerm}
                     canUninviteUser={client.canInviteUsers(collection.id)}
@@ -480,7 +483,7 @@
     {:else if memberView === "lapsed"}
         <div use:menuCloser class="user-list">
             {#each lapsedMembers as user}
-                <User me={user.userId === userId} {user} {searchTerm} />
+                <User me={user.userId === app.currentUserId} {user} {searchTerm} />
             {/each}
         </div>
     {/if}

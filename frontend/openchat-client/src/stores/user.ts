@@ -1,26 +1,26 @@
 import {
-    type UserSummary,
     type UserLookup,
+    type UserSummary,
+    AIRDROP_BOT_AVATAR_URL,
+    AIRDROP_BOT_USERNAME,
+    ANON_AVATAR_URL,
+    ANON_DISPLAY_NAME,
     ANON_USER_ID,
     ANON_USERNAME,
-    ANON_DISPLAY_NAME,
-    ANON_AVATAR_URL,
-    type CreatedUser,
-    anonymousUser,
-    OPENCHAT_VIDEO_CALL_USER_ID,
-    OPENCHAT_VIDEO_CALL_USERNAME,
-    OPENCHAT_VIDEO_CALL_AVATAR_URL,
-    AIRDROP_BOT_USERNAME,
-    AIRDROP_BOT_AVATAR_URL,
+    OPENCHAT_BOT_AVATAR_URL,
     OPENCHAT_BOT_USER_ID,
     OPENCHAT_BOT_USERNAME,
-    OPENCHAT_BOT_AVATAR_URL,
+    OPENCHAT_VIDEO_CALL_AVATAR_URL,
+    OPENCHAT_VIDEO_CALL_USER_ID,
+    OPENCHAT_VIDEO_CALL_USERNAME,
 } from "openchat-shared";
-import { AIRDROP_BOT_USER_ID } from "../constants";
 import { derived, writable } from "svelte/store";
+import { AIRDROP_BOT_USER_ID } from "../constants";
+import { createDummyStore } from "./dummyStore";
 import { createSetStore } from "./setStore";
 
-export const currentUserKey = Symbol();
+export const dummyCurrentUser = createDummyStore();
+
 export const airdropBotUser: UserSummary = {
     kind: "bot",
     userId: AIRDROP_BOT_USER_ID,
@@ -160,27 +160,6 @@ export const userStore = {
         });
     },
 };
-
-export const currentUser = writable<CreatedUser>(anonymousUser());
-
-export const currentUserIdStore = derived(currentUser, ($currentUser) => $currentUser.userId);
-
-export const anonUser = derived(
-    currentUser,
-    ($currentUser) => $currentUser.userId === ANON_USER_ID,
-);
-export const suspendedUser = derived(
-    currentUser,
-    ($currentUser) => $currentUser.suspensionDetails !== undefined,
-);
-export const platformModerator = derived(
-    currentUser,
-    ($currentUser) => $currentUser.isPlatformModerator,
-);
-
-export const platformOperator = derived(currentUser, ($currentUser) => {
-    return $currentUser.isPlatformOperator;
-});
 
 function partitionSuspendedUsers(users: UserSummary[]): [string[], string[]] {
     const suspended = [];

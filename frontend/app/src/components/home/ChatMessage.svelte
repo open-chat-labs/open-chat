@@ -5,7 +5,6 @@
         AvatarSize,
         type ChatIdentifier,
         type ChatType,
-        currentUser,
         type Dimensions,
         type EnhancedReplyContext,
         ephemeralMessages,
@@ -288,19 +287,19 @@
 
     function toggleReaction(isQuickReaction: boolean, reaction: string) {
         if (canReact) {
-            const kind = client.containsReaction($currentUser.userId, reaction, msg.reactions)
+            const kind = client.containsReaction(app.currentUserId, reaction, msg.reactions)
                 ? "remove"
                 : "add";
 
             client
                 .selectReaction(
                     chatId,
-                    $currentUser.userId,
+                    app.currentUserId,
                     threadRootMessageIndex,
                     msg.messageId,
                     reaction,
-                    $currentUser.username,
-                    $currentUser.displayName,
+                    app.currentUser.username,
+                    app.currentUser.displayName,
                     kind,
                 )
                 .then((success) => {
@@ -455,7 +454,7 @@
     );
     let undeleting = $derived($undeletingMessagesStore.has(msg.messageId));
     let deletedByMe = $derived(
-        msg.content.kind === "deleted_content" && msg.content.deletedBy == $currentUser.userId,
+        msg.content.kind === "deleted_content" && msg.content.deletedBy == app.currentUserId,
     );
     let permanentlyDeleted = $derived(
         deletedByMe &&

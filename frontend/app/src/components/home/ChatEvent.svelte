@@ -2,7 +2,6 @@
     import { findSender } from "@src/utils/user";
     import {
         app,
-        currentUser,
         typing,
         userStore,
         type ChatEvent,
@@ -109,15 +108,15 @@
 
     let userSummary = $derived<UserSummary>({
         kind: "user",
-        userId: $currentUser.userId,
-        username: $currentUser.username,
-        displayName: $currentUser.displayName,
+        userId: app.currentUser.userId,
+        username: app.currentUser.username,
+        displayName: app.currentUser.displayName,
         updated: BigInt(0),
         suspended: false,
         diamondStatus: "inactive",
         chitBalance: 0,
         streak: 0,
-        isUniquePerson: $currentUser.isUniquePerson,
+        isUniquePerson: app.currentUser.isUniquePerson,
         totalChitEarned: 0,
     });
 
@@ -327,21 +326,21 @@
         changedBy={event.event.addedBy}
         resourceKey={"bots.events.add"}
         event={event.event}
-        userId={$currentUser.userId}
+        userId={app.currentUserId}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "bot_removed"}
     <BotChangedEvent
         changedBy={event.event.removedBy}
         resourceKey={"bots.events.remove"}
         event={event.event}
-        userId={$currentUser.userId}
+        userId={app.currentUserId}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "bot_updated"}
     <BotChangedEvent
         changedBy={event.event.updatedBy}
         resourceKey={"bots.events.update"}
         event={event.event}
-        userId={$currentUser.userId}
+        userId={app.currentUserId}
         timestamp={event.timestamp} />
 {:else if !client.isEventKindHidden(event.event.kind)}
     <div>Unexpected event type: {event.event.kind}</div>

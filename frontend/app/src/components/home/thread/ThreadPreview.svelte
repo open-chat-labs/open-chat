@@ -9,7 +9,6 @@
         OpenChat,
         routeForChatIdentifier,
         type ThreadPreview,
-        currentUser as user,
         userStore,
     } from "openchat-client";
     import page from "page";
@@ -145,7 +144,7 @@
                             readByMe
                             chatId={thread.chatId}
                             chatType={chat.kind}
-                            me={thread.rootMessage.event.sender === $user.userId}
+                            me={thread.rootMessage.event.sender === app.currentUserId}
                             first
                             last
                             readonly
@@ -189,7 +188,7 @@
                                 readByMe
                                 chatId={thread.chatId}
                                 chatType={chat.kind}
-                                me={evt.event.sender === $user.userId}
+                                me={evt.event.sender === app.currentUserId}
                                 first={i === 0}
                                 last={i === userGroup.length - 1}
                                 readonly

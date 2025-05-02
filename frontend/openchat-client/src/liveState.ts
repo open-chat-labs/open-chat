@@ -3,7 +3,6 @@ import type {
     ChatEvent,
     ChatMap,
     ChatSummary,
-    CreatedUser,
     DiamondMembershipStatus,
     EnhancedReplyContext,
     EventWrapper,
@@ -27,12 +26,11 @@ import {
     threadsByChatStore,
     threadsFollowedByMeStore,
 } from "./stores/chat";
-import { diamondStatus, isDiamond, isLifetimeDiamond } from "./stores/diamond";
 import { type DraftMessages, draftMessagesStore } from "./stores/draftMessages";
 import { offlineStore } from "./stores/network";
 import { capturePinNumberStore, pinNumberRequiredStore } from "./stores/pinNumber";
 import { remainingStorage } from "./stores/storage";
-import { anonUser, currentUser, platformModerator, suspendedUser, userStore } from "./stores/user";
+import { userStore } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
 
 /**
@@ -59,7 +57,6 @@ export class LiveState {
     isDiamond!: boolean;
     isLifetimeDiamond!: boolean;
     draftMessages!: DraftMessages;
-    user!: CreatedUser;
     anonUser!: boolean;
     suspendedUser!: boolean;
     platformModerator!: boolean;
@@ -70,10 +67,6 @@ export class LiveState {
 
     constructor() {
         offlineStore.subscribe((offline) => (this.offlineStore = offline));
-        currentUser.subscribe((user) => (this.user = user));
-        anonUser.subscribe((anon) => (this.anonUser = anon));
-        suspendedUser.subscribe((suspended) => (this.suspendedUser = suspended));
-        platformModerator.subscribe((mod) => (this.platformModerator = mod));
         remainingStorage.subscribe((data) => (this.remainingStorage = data));
         userStore.subscribe((data) => (this.userStore = data));
         userCreatedStore.subscribe((data) => (this.userCreated = data));
@@ -91,9 +84,6 @@ export class LiveState {
             (data) => (this.selectedThreadRootMessageIndex = data),
         );
         blockedUsers.subscribe((data) => (this.blockedUsers = data));
-        diamondStatus.subscribe((data) => (this.diamondStatus = data));
-        isDiamond.subscribe((data) => (this.isDiamond = data));
-        isLifetimeDiamond.subscribe((data) => (this.isDiamond = data));
         draftMessagesStore.subscribe((data) => (this.draftMessages = data));
         locale.subscribe((data) => (this.locale = data ?? "en"));
         pinNumberRequiredStore.subscribe((data) => (this.pinNumberRequired = data));

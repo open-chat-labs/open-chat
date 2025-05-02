@@ -1,22 +1,21 @@
 <script lang="ts">
-    import Overlay from "../../Overlay.svelte";
-    import ModalContent from "../../ModalContent.svelte";
-    import Features from "./Features.svelte";
-    import Payment from "./Payment.svelte";
     import {
         LEDGER_CANISTER_CHAT,
         LEDGER_CANISTER_ICP,
-        isDiamond,
-        canExtendDiamond,
+        app,
         cryptoBalance,
         cryptoLookup,
     } from "openchat-client";
     import { onMount } from "svelte";
-    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
-    import Diamond from "../../icons/Diamond.svelte";
-    import CryptoSelector from "../CryptoSelector.svelte";
-    import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import Diamond from "../../icons/Diamond.svelte";
+    import ModalContent from "../../ModalContent.svelte";
+    import Overlay from "../../Overlay.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
+    import CryptoSelector from "../CryptoSelector.svelte";
+    import Features from "./Features.svelte";
+    import Payment from "./Payment.svelte";
 
     interface Props {
         onCancel: () => void;
@@ -48,7 +47,7 @@
     }
 
     onMount(() => {
-        if ($canExtendDiamond) {
+        if (app.canExtendDiamond) {
             step = "payment";
         }
     });
@@ -62,9 +61,9 @@
                     <div class="title">
                         <Diamond size={"1em"} show={"blue"} />
                         {#if step === "features"}
-                            {#if $canExtendDiamond}
+                            {#if app.canExtendDiamond}
                                 <Translatable resourceKey={i18nKey("upgrade.extend")} />
-                            {:else if $isDiamond}
+                            {:else if app.isDiamond}
                                 <Translatable resourceKey={i18nKey("upgrade.benefits")} />
                             {:else}
                                 <Translatable resourceKey={i18nKey("upgrade.featuresTitle")} />
@@ -95,8 +94,8 @@
             <div class="body">
                 {#if step === "features"}
                     <Features
-                        canExtend={$canExtendDiamond}
-                        isDiamond={$isDiamond}
+                        canExtend={app.canExtendDiamond}
+                        isDiamond={app.isDiamond}
                         {onCancel}
                         onUpgrade={() => (step = "payment")} />
                 {/if}

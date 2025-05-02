@@ -1,9 +1,9 @@
 <script lang="ts">
-    import ModalContent from "./ModalContent.svelte";
-    import { currentUser as user } from "openchat-client";
-    import Markdown from "./home/Markdown.svelte";
-    import Translatable from "./Translatable.svelte";
+    import { app } from "openchat-client";
     import { i18nKey } from "../i18n/i18n";
+    import Markdown from "./home/Markdown.svelte";
+    import ModalContent from "./ModalContent.svelte";
+    import Translatable from "./Translatable.svelte";
 
     interface Props {
         onClose: () => void;
@@ -12,7 +12,7 @@
     let { onClose }: Props = $props();
 
     function buildNoticeText(): string {
-        const suspensionDetails = $user.suspensionDetails!;
+        const suspensionDetails = app.currentUser.suspensionDetails!;
         const actionDate = new Date(Number(suspensionDetails.action.timestamp));
         const actionText =
             suspensionDetails.action.kind === "delete_action" ? "deleted" : "unsuspended";

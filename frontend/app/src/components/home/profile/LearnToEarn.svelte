@@ -4,7 +4,6 @@
         achievements,
         app,
         ui,
-        currentUser as user,
         type Achievement,
         type ExternalAchievement,
     } from "openchat-client";
@@ -238,7 +237,7 @@
                                             alt={achievement.name} />
                                         <ExternalLink
                                             iconColor={"var(--txt)"}
-                                            href={`${achievement.url}?oc_userid=${$user.userId}&oc_username=${$user.username}`}>
+                                            href={`${achievement.url}?oc_userid=${app.currentUserId}&oc_username=${app.currentUser.username}`}>
                                             {achievement.name}
                                         </ExternalLink>
                                         <div class="reward">

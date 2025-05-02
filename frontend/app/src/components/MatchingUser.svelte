@@ -1,11 +1,8 @@
 <script lang="ts">
-    import { AvatarSize } from "openchat-client";
-    import type { UserSummary } from "openchat-client";
-    import { currentUser as createdUser } from "openchat-client";
-    import Avatar from "./Avatar.svelte";
-    import { _ } from "svelte-i18n";
+    import type { OpenChat, UserSummary } from "openchat-client";
+    import { app, AvatarSize } from "openchat-client";
     import { getContext } from "svelte";
-    import type { OpenChat } from "openchat-client";
+    import Avatar from "./Avatar.svelte";
     import FilteredUsername from "./FilteredUsername.svelte";
     import Badges from "./home/profile/Badges.svelte";
 
@@ -48,7 +45,7 @@
         <h4>
             <FilteredUsername
                 {searchTerm}
-                me={user.userId === $createdUser.userId}
+                me={user.userId === app.currentUserId}
                 username={user.displayName ?? user.username} />
             <Badges
                 uniquePerson={user.isUniquePerson}

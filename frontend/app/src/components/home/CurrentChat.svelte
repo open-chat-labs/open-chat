@@ -28,10 +28,8 @@
         type MultiUserChat,
         type OpenChat,
         subscribe,
-        suspendedUser,
         ui,
         type User,
-        currentUser as user,
     } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -303,7 +301,7 @@
             });
         }
     });
-    let showFooter = $derived(!showSearchHeader && !$suspendedUser);
+    let showFooter = $derived(!showSearchHeader && !app.suspendedUser);
     let blocked = $derived(isBlocked(chat, $directlyBlockedUsers));
     let frozen = $derived(client.isChatOrCommunityFrozen(chat, app.selectedCommunitySummary));
     let canSendAny = $derived(client.canSendMessage(chat.id, "message"));
@@ -424,7 +422,7 @@
             editingEvent={$currentChatEditingEvent}
             replyingTo={$currentChatReplyingTo}
             textContent={$currentChatTextContent}
-            user={$user}
+            user={app.currentUser}
             mode={"message"}
             {joining}
             {preview}
@@ -437,8 +435,8 @@
                 draftMessagesStore.setAttachment({ chatId: chat.id }, undefined)}
             onCancelEdit={() => draftMessagesStore.delete({ chatId: chat.id })}
             {onSetTextContent}
-            onStartTyping={() => client.startTyping(chat, $user.userId)}
-            onStopTyping={() => client.stopTyping(chat, $user.userId)}
+            onStartTyping={() => client.startTyping(chat, app.currentUserId)}
+            onStopTyping={() => client.stopTyping(chat, app.currentUserId)}
             {onFileSelected}
             {onSendMessage}
             onAttachGif={attachGif}

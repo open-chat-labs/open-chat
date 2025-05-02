@@ -4,7 +4,6 @@
         isLocked,
         type MultiUserChat,
         type OpenChat,
-        platformModerator,
         publish,
         routeForScope,
     } from "openchat-client";
@@ -130,7 +129,7 @@
             <Translatable resourceKey={i18nKey("access.lapsed.label")} />
         </div>
     {/if}
-    {#if $platformModerator}
+    {#if app.platformModerator}
         {#if isFrozen}
             <Button loading={freezingInProgress} secondary small onClick={unfreeze}>
                 <Translatable
