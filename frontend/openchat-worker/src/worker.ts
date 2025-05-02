@@ -1059,7 +1059,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.setAirdropConfig(payload.channelId, payload.channelName),
+                    agent.setAirdropConfig(payload.channelId, payload.channelName, payload.communityId, payload.communityName),
                 );
                 break;
 
