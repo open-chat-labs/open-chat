@@ -1031,14 +1031,14 @@
             <BotBuilderModal mode={"update"} onClose={closeModal} />
         {:else if modal.kind === "remove_bot"}
             <BotBuilderModal mode={"remove"} onClose={closeModal} />
-        {:else if modal.kind === "register_webhook" && ($selectedChatId?.kind === "group_chat" || $selectedChatId?.kind === "channel")}
+        {:else if modal.kind === "register_webhook" && (app.selectedChatId?.kind === "group_chat" || app.selectedChatId?.kind === "channel")}
             <WebhookModal
-                chatId={$selectedChatId}
+                chatId={app.selectedChatId}
                 mode={{ kind: "register" }}
                 onClose={closeModal} />
-        {:else if modal.kind === "update_webhook" && ($selectedChatId?.kind === "group_chat" || $selectedChatId?.kind === "channel")}
+        {:else if modal.kind === "update_webhook" && (app.selectedChatId?.kind === "group_chat" || app.selectedChatId?.kind === "channel")}
             <WebhookModal
-                chatId={$selectedChatId}
+                chatId={app.selectedChatId}
                 mode={{ kind: "update", webhook: modal.webhook }}
                 onClose={closeModal} />
         {:else if modal.kind === "no_access"}
