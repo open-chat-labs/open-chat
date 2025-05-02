@@ -10,9 +10,9 @@
         type ResourceKey,
         type UserSummary,
         app,
-        blockedUsers,
         selectedChatStore as selectedChat,
         ui,
+        userStore,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
@@ -150,7 +150,7 @@
     function canBlockUser(
         chat: ChatSummary | undefined,
         community: CommunitySummary | undefined,
-        blockedUsers: Set<string>,
+        blockedUsers: ReadonlySet<string>,
         blockedChatUsers: ReadonlySet<string>,
         blockedCommunityUsers: ReadonlySet<string>,
     ) {
@@ -170,7 +170,7 @@
     function canUnblockUser(
         chat: ChatSummary | undefined,
         community: CommunitySummary | undefined,
-        blockedUsers: Set<string>,
+        blockedUsers: ReadonlySet<string>,
         blockedChatUsers: ReadonlySet<string>,
         blockedCommunityUsers: ReadonlySet<string>,
     ) {
@@ -265,7 +265,7 @@
         canBlockUser(
             $selectedChat,
             app.selectedCommunitySummary,
-            $blockedUsers,
+            userStore.blockedUsers,
             app.selectedChat.blockedUsers,
             app.selectedCommunity.blockedUsers,
         ),
@@ -274,7 +274,7 @@
         canUnblockUser(
             $selectedChat,
             app.selectedCommunitySummary,
-            $blockedUsers,
+            userStore.blockedUsers,
             app.selectedChat.blockedUsers,
             app.selectedCommunity.blockedUsers,
         ),

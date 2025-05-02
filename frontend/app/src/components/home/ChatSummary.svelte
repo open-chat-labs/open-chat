@@ -11,7 +11,6 @@
         AvatarSize,
         OpenChat,
         app,
-        blockedUsers,
         publish,
         routeForScope,
         byContext as typersByContext,
@@ -82,7 +81,7 @@
             : undefined,
     );
     let blocked = $derived(
-        chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them.userId),
+        chatSummary.kind === "direct_chat" && userStore.blockedUsers.has(chatSummary.them.userId),
     );
     let readonly = $derived(client.isChatReadOnly(chatSummary.id));
     let canDelete = $derived(getCanDelete(chatSummary, community));

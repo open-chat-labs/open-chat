@@ -13,7 +13,6 @@
         currentChatEditingEvent,
         currentChatReplyingTo,
         currentChatTextContent,
-        blockedUsers as directlyBlockedUsers,
         draftMessagesStore,
         type EnhancedReplyContext,
         type EventWrapper,
@@ -27,9 +26,11 @@
         messagesRead,
         type MultiUserChat,
         type OpenChat,
+        type ReadonlySet,
         subscribe,
         ui,
         type User,
+        userStore,
     } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -276,7 +277,7 @@
         return Promise.resolve();
     }
 
-    function isBlocked(chatSummary: ChatSummary, blockedUsers: Set<string>): boolean {
+    function isBlocked(chatSummary: ChatSummary, blockedUsers: ReadonlySet<string>): boolean {
         return chatSummary.kind === "direct_chat" && blockedUsers.has(chatSummary.them.userId);
     }
 
@@ -302,7 +303,7 @@
         }
     });
     let showFooter = $derived(!showSearchHeader && !app.suspendedUser);
-    let blocked = $derived(isBlocked(chat, $directlyBlockedUsers));
+    let blocked = $derived(isBlocked(chat, userStore.blockedUsers));
     let frozen = $derived(client.isChatOrCommunityFrozen(chat, app.selectedCommunitySummary));
     let canSendAny = $derived(client.canSendMessage(chat.id, "message"));
     let preview = $derived(client.isPreviewing(chat.id));

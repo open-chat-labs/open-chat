@@ -45,20 +45,6 @@ export const selectedThreadRootMessageIndex = derived(selectedMessageContext, ($
     return $messageContext?.threadRootMessageIndex;
 });
 
-// TODO - this is the next thing to get rid of
-// export const currentChatBlockedOrSuspendedUsers = derived(
-//     [suspendedUsers, blockedUsers, hideMessagesFromDirectBlocked],
-//     ([suspended, directBlocked, hideBlocked]) => {
-//         const direct = hideBlocked ? directBlocked : [];
-//         return new Set<string>([
-//             ...app.selectedChat.blockedUsers, //TODO This is no longer reactive - not ideal but probably liveable with short term
-//             ...app.selectedCommunity.blockedUsers, //TODO This is no longer reactive - not ideal but probably liveable with short term
-//             ...suspended,
-//             ...direct,
-//         ]);
-//     },
-// );
-
 export const dummyScopedChats = createDummyStore();
 
 export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
