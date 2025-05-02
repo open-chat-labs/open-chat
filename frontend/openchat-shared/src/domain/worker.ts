@@ -219,6 +219,7 @@ import type {
     UserSummary,
 } from "./user";
 import type { Verification } from "./wallet";
+import type { MinutesOnline } from "./online";
 
 /**
  * Worker request types
@@ -276,7 +277,6 @@ export type WorkerRequest =
     | ChatEventsWindow
     | LastOnline
     | MarkAsOnline
-    | MinutesOnline
     | GetGroupDetails
     | MarkMessagesRead
     | GetAllCachedUsers
@@ -1229,12 +1229,6 @@ type MarkAsOnline = {
     kind: "markAsOnline";
 };
 
-type MinutesOnline = {
-    year: number;
-    month: number;
-    kind: "minutesOnline";
-};
-
 type FreezeGroup = {
     chatId: GroupChatIdentifier;
     reason: string | undefined;
@@ -1291,6 +1285,8 @@ type RemoveMessageFilter = {
 type SetAirdropConfig = {
     channelId: number;
     channelName: string;
+    communityId?: string;
+    communityName?: string;
     kind: "setAirdropConfig";
 };
 
@@ -2057,9 +2053,7 @@ export type WorkerResult<T> = T extends Init
     : T extends LastOnline
     ? Record<string, number>
     : T extends MarkAsOnline
-    ? number
-    : T extends MinutesOnline
-    ? number
+    ? MinutesOnline
     : T extends ChatEventsBatch
     ? ChatEventsResponse[]
     : T extends ChatEventsWindow

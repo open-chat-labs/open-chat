@@ -20,6 +20,7 @@ export * from "./inviteCodes";
 export * from "./marketMaker";
 export * from "./newGroup";
 export * from "./notifications";
+export * from "./online";
 export * from "./optionUpdate";
 export * from "./permission";
 export * from "./proposals";
