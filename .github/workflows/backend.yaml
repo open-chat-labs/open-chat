@@ -23,6 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install system packages
+        run: sudo apt-get install libglib2.0-dev
       - uses: ./.github/workflows/setup-rust
         with:
           cache: read
@@ -39,6 +41,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install system packages
+        run: sudo apt-get install libglib2.0-dev
       - uses: ./.github/workflows/setup-rust
         with:
           cache: read
