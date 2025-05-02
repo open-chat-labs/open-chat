@@ -55,7 +55,7 @@ import {
     updateCreatedUser,
 } from "openchat-shared";
 
-const CACHE_VERSION = 131;
+const CACHE_VERSION = 132;
 const EARLIEST_SUPPORTED_MIGRATION = 125;
 const MAX_INDEX = 9999999999;
 
@@ -191,15 +191,15 @@ async function clearChatEventsStore(
 ) {
     await tx.objectStore("chat_events").clear();
 }
-//
-// async function clearGroupDetailsStore(
-//     _db: IDBPDatabase<ChatSchema>,
-//     _principal: Principal,
-//     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-// ) {
-//     await tx.objectStore("group_details").clear();
-// }
-//
+
+async function clearGroupDetailsStore(
+    _db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    await tx.objectStore("group_details").clear();
+}
+
 async function clearCommunityDetailsStore(
     _db: IDBPDatabase<ChatSchema>,
     _principal: Principal,
@@ -248,6 +248,7 @@ const migrations: Record<number, MigrationFunction<ChatSchema>> = {
     129: clearChatsStore,
     130: clearChatsStore,
     131: clearChatEventsStore,
+    132: clearGroupDetailsStore,
 };
 
 async function migrate(
