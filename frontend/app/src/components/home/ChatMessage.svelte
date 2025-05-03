@@ -18,7 +18,6 @@
         publish,
         routeForMessage,
         ScreenWidth,
-        translationStore,
         ui,
         unconfirmedReadByThem,
         undeletingMessagesStore,
@@ -441,7 +440,7 @@
     let mediaDimensions = $derived(extractDimensions(msg.content));
     let fill = $derived(client.fillMessage(msg));
     let showAvatar = $derived(ui.screenWidth !== ScreenWidth.ExtraExtraSmall);
-    let translated = $derived($translationStore.has(msg.messageId));
+    let translated = $derived(app.translations.has(msg.messageId));
     let threadSummary = $derived(msg.thread);
     let msgUrl = $derived(
         `${routeForMessage(app.chatListScope.kind, { chatId }, msg.messageIndex)}?open=true`,

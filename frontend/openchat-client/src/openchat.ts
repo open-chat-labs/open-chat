@@ -318,7 +318,7 @@ import {
 import { applyTranslationCorrection } from "./stores/i18n";
 import { lastOnlineDates } from "./stores/lastOnlineDates";
 import { localMessageUpdates } from "./stores/localMessageUpdates";
-import { type MessageFilter, messageFiltersStore } from "./stores/messageFilters";
+import { type MessageFilter } from "./stores/messageFilters";
 import { minutesOnlineStore } from "./stores/minutesOnline";
 import {
     askForNotificationPermission,
@@ -3688,10 +3688,7 @@ export class OpenChat {
 
         const canRetry = canRetryMessage(eventWrapper.event.content);
 
-        const messageFilterFailed = doesMessageFailFilter(
-            eventWrapper.event,
-            get(messageFiltersStore),
-        );
+        const messageFilterFailed = doesMessageFailFilter(eventWrapper.event, app.messageFilters);
 
         const messageId = eventWrapper.event.messageId;
         const newAchievement = this.#isNewSendMessageAchievement(
@@ -6620,17 +6617,15 @@ export class OpenChat {
 
                         cryptoLookup.set(cryptoRecord);
 
-                        messageFiltersStore.set(
-                            registry.messageFilters
-                                .map((f) => {
-                                    try {
-                                        return { id: f.id, regex: new RegExp(f.regex, "mi") };
-                                    } catch {
-                                        return undefined;
-                                    }
-                                })
-                                .filter((f) => f !== undefined) as MessageFilter[],
-                        );
+                        app.messageFilters = registry.messageFilters
+                            .map((f) => {
+                                try {
+                                    return { id: f.id, regex: new RegExp(f.regex, "mi") };
+                                } catch {
+                                    return undefined;
+                                }
+                            })
+                            .filter((f) => f !== undefined) as MessageFilter[];
                     }
 
                     // make sure we only resolve once so that we don't end up waiting for the downstream fetch

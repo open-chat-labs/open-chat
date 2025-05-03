@@ -33,6 +33,7 @@ import {
     type MessageActivitySummary,
     type MessageContext,
     messageContextsEqual,
+    type MessageFilter,
     type ModerationFlag,
     ModerationFlags,
     type PublicApiKeyDetails,
@@ -56,6 +57,7 @@ import { communityLocalUpdates } from "./community_details";
 import { CommunityMergedState } from "./community_details/merged.svelte";
 import { CommunityServerState } from "./community_details/server.svelte";
 import { localUpdates } from "./global";
+import { ReactiveMessageMap } from "./map";
 import { pathState } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
 import { ui } from "./ui.svelte";
@@ -80,6 +82,10 @@ export class AppState {
             });
         });
     }
+
+    #messageFilters = $state<MessageFilter[]>([]);
+
+    #translations = $state<ReactiveMessageMap<string>>(new ReactiveMessageMap());
 
     #communityFilterToString(filter: CommunityFilter): string {
         return JSON.stringify({
@@ -533,6 +539,26 @@ export class AppState {
             "openchat_community_filters",
             this.#communityFilterToString(this.#communityFilters),
         );
+    }
+
+    get translations() {
+        return this.#translations;
+    }
+
+    translate(messageId: bigint, translation: string) {
+        this.#translations.set(messageId, translation);
+    }
+
+    untranslate(messageId: bigint) {
+        this.#translations.delete(messageId);
+    }
+
+    get messageFilters() {
+        return this.#messageFilters;
+    }
+
+    set messageFilters(val: MessageFilter[]) {
+        this.#messageFilters = val;
     }
 
     get currentUser() {

@@ -2321,3 +2321,8 @@ export type SetPinNumberResponse =
     | OCError;
 
 export type PinNumberFailures = PinRequired | PinIncorrect | TooManyFailedPinAttempts;
+
+export type MessageFilter = {
+    id: bigint;
+    regex: RegExp;
+};

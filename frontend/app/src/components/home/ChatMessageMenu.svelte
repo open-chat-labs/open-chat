@@ -7,7 +7,6 @@
         publish,
         routeForMessage,
         threadsFollowedByMeStore,
-        translationStore,
         ui,
         type ChatIdentifier,
         type Message,
@@ -258,7 +257,7 @@
     }
 
     function untranslateMessage() {
-        translationStore.untranslate(msg.messageId);
+        app.untranslate(msg.messageId);
     }
 
     function translateMessage() {
@@ -284,7 +283,7 @@
             .then((resp) => resp.json())
             .then(({ data: { translations } }) => {
                 if (Array.isArray(translations) && translations.length > 0) {
-                    translationStore.translate(messageId, translations[0].translatedText);
+                    app.translate(messageId, translations[0].translatedText);
                 }
             })
             .catch((_err) => {
