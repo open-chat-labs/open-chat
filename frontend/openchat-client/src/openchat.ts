@@ -118,6 +118,7 @@ import type {
     MessageActivityFeedResponse,
     MessageContent,
     MessageContext,
+    MessageFilter,
     MessageFormatter,
     MessagePermission,
     MessageReminderCreatedContent,
@@ -318,7 +319,6 @@ import {
 import { applyTranslationCorrection } from "./stores/i18n";
 import { lastOnlineDates } from "./stores/lastOnlineDates";
 import { localMessageUpdates } from "./stores/localMessageUpdates";
-import { type MessageFilter } from "./stores/messageFilters";
 import { minutesOnlineStore } from "./stores/minutesOnline";
 import {
     askForNotificationPermission,
@@ -338,7 +338,7 @@ import { snsFunctions } from "./stores/snsFunctions";
 import { storageStore, updateStorageLimit } from "./stores/storage";
 import { initialiseMostRecentSentMessageTimes, shouldThrottle } from "./stores/throttling";
 import { isTyping, typing } from "./stores/typing";
-import { unconfirmed, unconfirmedReadByThem } from "./stores/unconfirmed";
+import { unconfirmedReadByThem } from "./stores/unconfirmed";
 import { undeletingMessagesStore } from "./stores/undeletingMessages";
 import {
     airdropBotUser,
@@ -3448,7 +3448,7 @@ export class OpenChat {
             });
         }
         const context = { chatId, threadRootMessageIndex };
-        unconfirmed.delete(context, messageId);
+        localUpdates.deleteUnconfirmed(context, messageId);
         messagesRead.removeUnconfirmedMessage(context, messageId);
     }
 
@@ -3525,7 +3525,7 @@ export class OpenChat {
                     }
                     inflightMessagePromise(result);
                 }
-                if (unconfirmed.delete(context, messageId)) {
+                if (localUpdates.deleteUnconfirmed(context, messageId)) {
                     messagesRead.confirmMessage(context, messageIndex, messageId);
                 }
                 // If the message was sent by the current user, mark it as read
@@ -3649,7 +3649,7 @@ export class OpenChat {
         };
 
         // add the *new* event to unconfirmed
-        unconfirmed.add(messageContext, retryEvent);
+        localUpdates.addUnconfirmed(messageContext, retryEvent);
 
         // TODO - what about mentions?
         this.#sendMessageCommon(chat, messageContext, retryEvent, [], true);
@@ -3717,7 +3717,7 @@ export class OpenChat {
             ).subscribe({
                 onResult: (response) => {
                     if (response === "accepted") {
-                        unconfirmed.markAccepted(messageContext, messageId);
+                        localUpdates.markUnconfirmedAccepted(messageContext, messageId);
                         return;
                     }
                     this.#inflightMessagePromises.delete(messageId);
@@ -4063,7 +4063,7 @@ export class OpenChat {
         // *before* the new message is added to the unconfirmed store. Is this nice? No it is not.
         window.setTimeout(() => {
             if (!isTransfer(messageEvent.event.content)) {
-                unconfirmed.add(context, messageEvent);
+                localUpdates.addUnconfirmed(context, messageEvent);
             }
 
             failedMessagesStore.delete(context, messageEvent.event.messageId);
@@ -4494,7 +4494,7 @@ export class OpenChat {
                 parsedMsg.kind === "remote_user_sent_message" &&
                 parsedMsg.threadRootMessageIndex === undefined
             ) {
-                unconfirmed.add({ chatId: fromChatId }, parsedMsg.messageEvent);
+                localUpdates.addUnconfirmed({ chatId: fromChatId }, parsedMsg.messageEvent);
             }
         }
     }
@@ -4557,7 +4557,7 @@ export class OpenChat {
         publish("sendingMessage", context);
 
         window.setTimeout(() => {
-            unconfirmed.add(context, {
+            localUpdates.addUnconfirmed(context, {
                 ...message.messageEvent,
                 index: eventIndex,
                 event: {
@@ -5993,7 +5993,7 @@ export class OpenChat {
                     latestMessage !== undefined &&
                     latestMessage.sender === app.currentUserId &&
                     (chat.membership?.readByMeUpTo ?? -1) < latestMessage.messageIndex &&
-                    !unconfirmed.contains({ chatId: chat.id }, latestMessage.messageId)
+                    !localUpdates.isUnconfirmed({ chatId: chat.id }, latestMessage.messageId)
                 ) {
                     messagesRead.markReadUpTo({ chatId: chat.id }, latestMessage.messageIndex);
                 }
@@ -8257,8 +8257,14 @@ export class OpenChat {
             threadRootMessageIndex: scope.threadRootMessageIndex,
         };
 
-        if (unconfirmed.contains(context, msgId)) {
-            unconfirmed.overwriteContent(context, msgId, content, botContext, blockLevelMarkdown);
+        if (localUpdates.isUnconfirmed(context, msgId)) {
+            localUpdates.overwriteUnconfirmedContent(
+                context,
+                msgId,
+                content,
+                botContext,
+                blockLevelMarkdown,
+            );
         } else {
             const currentEvents = this.#eventsForMessageContext(context);
             const [eventIndex, messageIndex] =
@@ -8285,13 +8291,13 @@ export class OpenChat {
                 },
             };
             if (!ephemeral) {
-                unconfirmed.add(context, event);
+                localUpdates.addUnconfirmed(context, event);
             } else {
                 ephemeralMessages.add(context, event);
             }
             publish("sentMessage", { context, event });
         }
-        return () => unconfirmed.delete(context, msgId);
+        return () => localUpdates.deleteUnconfirmed(context, msgId);
     }
 
     executeBotCommand(

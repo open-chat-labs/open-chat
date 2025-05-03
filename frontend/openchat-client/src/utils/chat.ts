@@ -25,6 +25,7 @@ import type {
     Message,
     MessageContent,
     MessageContext,
+    MessageFilter,
     MessageFormatter,
     MessagePermission,
     MessagePermissions,
@@ -70,11 +71,10 @@ import {
 } from "openchat-shared";
 import { get } from "svelte/store";
 import { app } from "../state/app.svelte";
+import { localUpdates } from "../state/global";
 import { cryptoLookup } from "../stores/crypto";
-import type { MessageFilter } from "../stores/messageFilters";
 import { tallyKey } from "../stores/proposalTallies";
 import type { TypersByKey } from "../stores/typing";
-import type { UnconfirmedMessages } from "../stores/unconfirmed";
 import { areOnSameDay } from "../utils/date";
 import { distinctBy, groupWhile, toRecordFiltered } from "../utils/list";
 import { rtcConnectionsManager } from "../utils/rtcConnectionsManager";
@@ -308,7 +308,6 @@ function mentionsFromMessages(
 
 export function mergeUnconfirmedThreadsIntoSummary<T extends GroupChatSummary | ChannelSummary>(
     chat: T,
-    unconfirmed: UnconfirmedMessages,
 ): T {
     if (chat.membership === undefined) return chat;
     return {
@@ -320,7 +319,7 @@ export function mergeUnconfirmedThreadsIntoSummary<T extends GroupChatSummary | 
                     chatId: chat.id,
                     threadRootMessageIndex: t.threadRootMessageIndex,
                 };
-                const unconfirmedMsgs = unconfirmed.get(context)?.messages ?? [];
+                const unconfirmedMsgs = localUpdates.unconfirmedMessages(context);
                 if (unconfirmedMsgs.length > 0) {
                     let msgIdx = t.latestMessageIndex;
                     let evtIdx = t.latestEventIndex;
@@ -347,8 +346,7 @@ export function mergeUnconfirmedIntoSummary(
     formatter: MessageFormatter,
     userId: string,
     chatSummary: ChatSummary,
-    unconfirmed: UnconfirmedMessages,
-    localUpdates: MessageMap<LocalMessageUpdates>,
+    localMessageUpdates: MessageMap<LocalMessageUpdates>,
     translations: MessageMap<string>,
     blockedUsers: Set<string>,
     currentUserId: string,
@@ -356,7 +354,7 @@ export function mergeUnconfirmedIntoSummary(
 ): ChatSummary {
     if (chatSummary.membership === undefined) return chatSummary;
 
-    const unconfirmedMessages = [...(unconfirmed.get({ chatId: chatSummary.id })?.messages ?? [])];
+    const unconfirmedMessages = localUpdates.unconfirmedMessages({ chatId: chatSummary.id });
 
     let latestMessage = chatSummary.latestMessage;
     let latestEventIndex = chatSummary.latestEventIndex;
@@ -376,7 +374,7 @@ export function mergeUnconfirmedIntoSummary(
         }
     }
     if (latestMessage !== undefined) {
-        const updates = localUpdates.get(latestMessage.event.messageId);
+        const updates = localMessageUpdates.get(latestMessage.event.messageId);
         const translation = translations.get(latestMessage.event.messageId);
         const senderBlocked = blockedUsers.has(latestMessage.event.sender);
 
@@ -411,7 +409,7 @@ export function mergeUnconfirmedIntoSummary(
 
     if (chatSummary.kind !== "direct_chat") {
         if (unconfirmedMessages !== undefined) {
-            chatSummary = mergeUnconfirmedThreadsIntoSummary(chatSummary, unconfirmed);
+            chatSummary = mergeUnconfirmedThreadsIntoSummary(chatSummary);
         }
         return {
             ...chatSummary,
@@ -1955,4 +1953,10 @@ export function isProposalsChat(chat: ChatSummary): chat is ChatSummary & {
     subtype: GovernanceProposalsSubtype;
 } {
     return chat.kind !== "direct_chat" && chat.subtype?.kind === "governance_proposals";
+}
+
+export function revokeObjectUrls(message: EventWrapper<Message>): void {
+    if ("blobUrl" in message.event.content && message.event.content.blobUrl !== undefined) {
+        URL.revokeObjectURL(message.event.content.blobUrl);
+    }
 }

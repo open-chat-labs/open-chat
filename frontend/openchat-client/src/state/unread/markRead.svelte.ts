@@ -18,7 +18,8 @@ import {
 import { SvelteMap } from "svelte/reactivity";
 import { type Unsubscriber } from "svelte/store";
 import type { OpenChat } from "../../openchat";
-import { ephemeralMessages, offlineStore, unconfirmed } from "../../stores";
+import { ephemeralMessages, offlineStore } from "../../stores";
+import { localUpdates } from "../global";
 import { ReactiveChatMap, ReactiveMessageContextMap } from "../map";
 
 const MARK_READ_INTERVAL = 10 * 1000;
@@ -190,7 +191,7 @@ export class MessageReadTracker {
         messageId: bigint | undefined,
     ): void {
         const chatState = this.#stateForId(context.chatId);
-        if (messageId !== undefined && unconfirmed.contains(context, messageId)) {
+        if (messageId !== undefined && localUpdates.isUnconfirmed(context, messageId)) {
             // if a message is unconfirmed we will just tuck it away until we are told it has been confirmed
             if (!this.#waiting.has(context)) {
                 this.#waiting.set(context, new SvelteMap<bigint, number>());
@@ -387,7 +388,7 @@ export class MessageReadTracker {
     }
 
     isRead(context: MessageContext, messageIndex: number, messageId: bigint | undefined): boolean {
-        if (messageId !== undefined && unconfirmed.contains(context, messageId)) {
+        if (messageId !== undefined && localUpdates.isUnconfirmed(context, messageId)) {
             return this.#waiting.get(context)?.has(messageId) ?? false;
         } else if (messageId !== undefined && ephemeralMessages.contains(context, messageId)) {
             return true;

@@ -2326,3 +2326,7 @@ export type MessageFilter = {
     id: bigint;
     regex: RegExp;
 };
+
+export type UnconfirmedMessageEvent = EventWrapper<Message> & { accepted: boolean };
+
+export type UnconfirmedState = Map<bigint, UnconfirmedMessageEvent>;

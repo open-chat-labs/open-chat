@@ -13,6 +13,7 @@ import type {
 import { chatIdentifiersEqual, ChatMap, compareChats, messageContextsEqual } from "openchat-shared";
 import { derived, writable, type Readable } from "svelte/store";
 import { app } from "../state/app.svelte";
+import { localUpdates } from "../state/global";
 import {
     getNextEventAndMessageIndexes,
     mergeEventsAndLocalUpdates,
@@ -28,7 +29,6 @@ import { proposalTallies } from "./proposalTallies";
 import { recentlySentMessagesStore } from "./recentlySentMessages";
 import { safeWritable } from "./safeWritable";
 import { snsFunctions } from "./snsFunctions";
-import { unconfirmed } from "./unconfirmed";
 
 // TODO - this will be synced from the Svelte5 rune for now and ultimately removed
 export const selectedChatId = writable<ChatIdentifier | undefined>(undefined);
@@ -134,7 +134,7 @@ export function nextEventAndMessageIndexes(): [number, number] {
     }
     return getNextEventAndMessageIndexes(
         chat,
-        unconfirmed.getMessages({ chatId: chat.id }).sort(sortByIndex),
+        localUpdates.unconfirmedMessages({ chatId: chat.id }).sort(sortByIndex),
     );
 }
 

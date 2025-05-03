@@ -23,7 +23,6 @@
         subscribe,
         threadEvents,
         threadsFollowedByMeStore,
-        unconfirmed,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -380,8 +379,8 @@
                                 first={i + 1 === userGroup.length}
                                 last={i === 0}
                                 me={evt.event.sender === app.currentUserId}
-                                accepted={isAccepted($unconfirmed, evt)}
-                                confirmed={isConfirmed($unconfirmed, evt)}
+                                accepted={isAccepted(evt)}
+                                confirmed={isConfirmed(evt)}
                                 failed={isFailed($failedMessagesStore, evt)}
                                 readByMe={evt.event.messageId === rootEvent.event.messageId ||
                                     !isFollowedByMe ||

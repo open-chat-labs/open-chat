@@ -2,6 +2,7 @@ import {
     emptyChatMetrics,
     nullMembership,
     type AccessGateConfig,
+    type BotMessageContext,
     type ChatIdentifier,
     type ChatListScope,
     type ChatSummary,
@@ -13,14 +14,20 @@ import {
     type ExternalBotPermissions,
     type Member,
     type Message,
+    type MessageContent,
+    type MessageContext,
     type MultiUserChat,
     type OptionalChatPermissions,
     type OptionUpdate,
     type StreakInsurance,
+    type UnconfirmedMessageEvent,
+    type UnconfirmedState,
     type UserGroupDetails,
     type VersionedRules,
     type WalletConfig,
 } from "openchat-shared";
+import { SvelteMap } from "svelte/reactivity";
+import { revokeObjectUrls } from "../../utils/chat";
 import { chatDetailsLocalUpdates } from "../chat_details";
 import { communityLocalUpdates } from "../community_details";
 import {
@@ -29,13 +36,23 @@ import {
     LocalMap,
     ReactiveChatMap,
     ReactiveCommunityMap,
+    ReactiveMessageContextMap,
 } from "../map";
 import { messageLocalUpdates } from "../message/local.svelte";
 import { LocalSet } from "../set";
 import { scheduleUndo, type UndoLocalUpdate } from "../undo";
 
+function emptyUnconfirmed(): UnconfirmedState {
+    return new SvelteMap<bigint, UnconfirmedMessageEvent>();
+}
+
+const noop = () => {};
+
 // global local updates don't need the manager because they are not specific to a keyed entity (community, chat, message etc)
 export class GlobalLocalState {
+    #unconfirmed = $state<ReactiveMessageContextMap<UnconfirmedState>>(
+        new ReactiveMessageContextMap(),
+    );
     readonly chats = new LocalChatMap<ChatSummary>();
     readonly communities = new LocalCommunityMap<CommunitySummary>();
     readonly previewCommunities = new ReactiveCommunityMap<CommunitySummary>();
@@ -49,6 +66,76 @@ export class GlobalLocalState {
     );
     #uninitialisedDirectChats = new ReactiveChatMap<DirectChatSummary>();
     #groupChatPreviews = new ReactiveChatMap<MultiUserChat>();
+
+    unconfirmedMessages(key: MessageContext): EventWrapper<Message>[] {
+        const state = this.#unconfirmed.get(key);
+        return state ? [...state.values()] : [];
+    }
+
+    addUnconfirmed(key: MessageContext, message: EventWrapper<Message>): UndoLocalUpdate {
+        const s = this.#unconfirmed.get(key) ?? emptyUnconfirmed();
+        if (!s.has(message.event.messageId)) {
+            s.set(message.event.messageId, { ...message, accepted: false });
+            this.#unconfirmed.set(key, s);
+            return scheduleUndo(() => {
+                this.deleteUnconfirmed(key, message.event.messageId);
+            }, 60_000);
+        }
+        return noop;
+    }
+
+    overwriteUnconfirmedContent(
+        key: MessageContext,
+        messageId: bigint,
+        content: MessageContent,
+        botContext?: BotMessageContext,
+        blockLevelMarkdown?: boolean,
+    ) {
+        const state = this.#unconfirmed.get(key);
+        if (state) {
+            const msg = state.get(messageId);
+            if (msg) {
+                state.set(messageId, {
+                    ...msg,
+                    event: {
+                        ...msg.event,
+                        content,
+                        botContext,
+                        blockLevelMarkdown: blockLevelMarkdown ?? false,
+                    },
+                });
+            }
+        }
+    }
+
+    deleteUnconfirmed(key: MessageContext, messageId: bigint) {
+        const state = this.#unconfirmed.get(key);
+        const msg = state?.get(messageId);
+        if (msg !== undefined) {
+            revokeObjectUrls(msg);
+            state?.delete(messageId);
+            if (state?.size === 0) {
+                this.#unconfirmed.delete(key);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    isUnconfirmed(key: MessageContext, messageId: bigint): boolean {
+        return this.#unconfirmed.get(key)?.has(messageId) ?? false;
+    }
+
+    isPendingAcceptance(key: MessageContext, messageId: bigint): boolean {
+        return this.#unconfirmed.get(key)?.get(messageId)?.accepted === false;
+    }
+
+    markUnconfirmedAccepted(key: MessageContext, messageId: bigint) {
+        const msg = this.#unconfirmed.get(key)?.get(messageId);
+        if (msg) {
+            msg.accepted = true;
+        }
+    }
 
     get groupChatPreviews() {
         return this.#groupChatPreviews;

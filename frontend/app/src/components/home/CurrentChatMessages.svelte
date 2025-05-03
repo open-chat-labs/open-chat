@@ -20,7 +20,6 @@
         pathState,
         routeForChatIdentifier,
         ui,
-        unconfirmed,
     } from "openchat-client";
     import page from "page";
     import { getContext, untrack } from "svelte";
@@ -316,8 +315,8 @@
                                 focused={evt.event.kind === "message" &&
                                     evt.event.messageIndex === focusIndex &&
                                     !isFailed($failedMessagesStore, evt)}
-                                accepted={isAccepted($unconfirmed, evt)}
-                                confirmed={isConfirmed($unconfirmed, evt)}
+                                accepted={isAccepted(evt)}
+                                confirmed={isConfirmed(evt)}
                                 failed={isFailed($failedMessagesStore, evt)}
                                 readByMe={isReadByMe(evt)}
                                 chatId={chat.id}

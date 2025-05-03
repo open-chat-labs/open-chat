@@ -11,6 +11,7 @@ import {
     type PublicApiKeyDetails,
     type VersionedRules,
 } from "openchat-shared";
+import { revokeObjectUrls } from "../../utils/chat";
 import { LocalMap, ReactiveChatMap } from "../map";
 import { LocalSet } from "../set";
 import { scheduleUndo, type UndoLocalUpdate } from "../undo";
@@ -193,6 +194,9 @@ export class ChatDetailsLocalStateManager {
         const previous = state.latestMessage;
         state.latestMessage = message;
         return scheduleUndo(() => {
+            if (state.latestMessage !== undefined) {
+                revokeObjectUrls(state.latestMessage);
+            }
             state.latestMessage = previous;
         });
     }

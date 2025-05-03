@@ -4,6 +4,7 @@ export * from "./events";
 export { OpenChat } from "./openchat";
 export { app } from "./state/app.svelte";
 export { botState } from "./state/bots.svelte";
+export { localUpdates } from "./state/global/local.svelte";
 export * from "./state/path.svelte";
 export { debouncedDerived, withEqCheck } from "./state/reactivity.svelte";
 export { ScreenHeight, ScreenWidth, ui, type Layout } from "./state/ui.svelte";
