@@ -1,7 +1,6 @@
 use ic_cdk::call::RejectCode;
 use ic_cdk::management_canister::{
-    self, EcdsaCurve, EcdsaKeyId, EcdsaPublicKeyArgs, HttpHeader, HttpMethod, HttpRequestArgs, SignCallError,
-    SignWithEcdsaArgs, TransformContext, TransformFunc,
+    self, EcdsaCurve, EcdsaKeyId, EcdsaPublicKeyArgs, HttpHeader, HttpMethod, HttpRequestArgs, SignCallError, SignWithEcdsaArgs,
 };
 use ic_transport_types::{EnvelopeContent, to_request_id};
 use serde::Serialize;
@@ -41,7 +40,6 @@ pub struct CanisterEcdsaRequest {
     pub request_url: String,
     pub public_key: Vec<u8>,
     pub key_id: EcdsaKeyId,
-    pub this_canister_id: CanisterId,
 }
 
 pub async fn make_canister_call_via_ecdsa(request: CanisterEcdsaRequest) -> Result<String, String> {
