@@ -6037,12 +6037,13 @@ export class OpenChat {
 
             if (chatsResponse.newAchievements.length > 0) {
                 const filtered = chatsResponse.newAchievements.filter(
-                    (a) => a.timestamp > chatsResponse.state.achievementsLastSeen,
+                    (a) => a.timestamp > app.achievementsSeenUpTo,
                 );
                 if (filtered.length > 0) {
                     publish("chitEarned", filtered);
                 }
             }
+            app.achievementsSeenUpTo = chatsResponse.state.latestUserCanisterUpdates;
 
             if (initialLoad) {
                 this.#startExchangeRatePoller();

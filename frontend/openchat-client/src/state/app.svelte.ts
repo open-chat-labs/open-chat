@@ -145,6 +145,7 @@ export class AppState {
     );
 
     #achievements = $state<Set<string>>(new Set());
+    #achievementsSeenUpTo = $state<bigint>(BigInt(0));
 
     #referrals = $state<Referral[]>([]);
 
@@ -622,6 +623,14 @@ export class AppState {
 
     set achievements(val: Set<string>) {
         this.#achievements = val;
+    }
+
+    get achievementsSeenUpTo() {
+        return this.#achievementsSeenUpTo;
+    }
+
+    set achievementsSeenUpTo(val: bigint) {
+        this.#achievementsSeenUpTo = val;
     }
 
     get referrals() {
