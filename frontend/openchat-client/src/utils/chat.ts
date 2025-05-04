@@ -17,7 +17,6 @@ import type {
     GovernanceProposalsSubtype,
     GroupChatSummary,
     HasMembershipRole,
-    LocalMessageUpdates,
     LocalPollVote,
     LocalReaction,
     MemberRole,
@@ -72,6 +71,7 @@ import {
 import { get } from "svelte/store";
 import { app } from "../state/app.svelte";
 import { localUpdates } from "../state/global";
+import type { LocalTipsReceived, MessageLocalState } from "../state/message/local.svelte";
 import { cryptoLookup } from "../stores/crypto";
 import { tallyKey } from "../stores/proposalTallies";
 import type { TypersByKey } from "../stores/typing";
@@ -346,7 +346,7 @@ export function mergeUnconfirmedIntoSummary(
     formatter: MessageFormatter,
     userId: string,
     chatSummary: ChatSummary,
-    localMessageUpdates: MessageMap<LocalMessageUpdates>,
+    localMessageUpdates: MessageMap<MessageLocalState>,
     translations: MessageMap<string>,
     blockedUsers: Set<string>,
     currentUserId: string,
@@ -1303,7 +1303,7 @@ export function mergeSendMessageResponse(
 export function mergeEventsAndLocalUpdates(
     events: EventWrapper<ChatEvent>[],
     unconfirmed: EventWrapper<Message>[],
-    localUpdates: MessageMap<LocalMessageUpdates>,
+    localUpdates: MessageMap<MessageLocalState>,
     expiredEventRanges: DRange,
     proposalTallies: Record<string, Tally>,
     translations: MessageMap<string>,
@@ -1429,8 +1429,8 @@ export function doesMessageFailFilter(
 
 function mergeLocalUpdates(
     message: Message,
-    localUpdates: LocalMessageUpdates | undefined,
-    replyContextLocalUpdates: LocalMessageUpdates | undefined,
+    localUpdates: MessageLocalState | undefined,
+    replyContextLocalUpdates: MessageLocalState | undefined,
     tallyUpdate: Tally | undefined,
     translation: string | undefined,
     replyTranslation: string | undefined,
@@ -1627,7 +1627,7 @@ function mergeLocalUpdates(
     return message;
 }
 
-export function mergeLocalTips(existing?: TipsReceived, local?: TipsReceived): TipsReceived {
+export function mergeLocalTips(existing?: TipsReceived, local?: LocalTipsReceived): TipsReceived {
     const merged: TipsReceived = {};
     for (const ledger in existing) {
         merged[ledger] = { ...existing[ledger] };
@@ -1636,8 +1636,8 @@ export function mergeLocalTips(existing?: TipsReceived, local?: TipsReceived): T
         if (!merged[ledger]) {
             merged[ledger] = {};
         }
-        for (const userId in local[ledger]) {
-            merged[ledger][userId] = local[ledger][userId];
+        for (const userId in local.get(ledger)) {
+            merged[ledger][userId] = local.get(ledger)?.get(userId) ?? 0n;
         }
     }
     return merged;

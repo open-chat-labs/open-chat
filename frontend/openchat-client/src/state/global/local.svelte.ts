@@ -72,6 +72,10 @@ export class GlobalLocalState {
     #uninitialisedDirectChats = new ReactiveChatMap<DirectChatSummary>();
     #groupChatPreviews = new ReactiveChatMap<MultiUserChat>();
 
+    get unconfirmed() {
+        return this.#unconfirmed;
+    }
+
     unconfirmedMessages(key: MessageContext): EventWrapper<Message>[] {
         const state = this.#unconfirmed.get(key);
         return state ? [...state.values()] : [];

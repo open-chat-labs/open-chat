@@ -50,7 +50,7 @@ import {
     type WalletConfig,
 } from "openchat-shared";
 import { type PinnedByScope } from "../stores";
-import { mergeChatMetrics, mergePermissions } from "../utils/chat";
+import { mergeChatMetrics, mergePermissions, mergeUnconfirmedIntoSummary } from "../utils/chat";
 import { chatDetailsLocalUpdates, ChatDetailsMergedState } from "./chat_details";
 import { ChatDetailsServerState } from "./chat_details/server.svelte";
 import { communityLocalUpdates } from "./community_details";
@@ -58,6 +58,7 @@ import { CommunityMergedState } from "./community_details/merged.svelte";
 import { CommunityServerState } from "./community_details/server.svelte";
 import { localUpdates } from "./global";
 import { ReactiveMessageMap } from "./map";
+import { messageLocalUpdates } from "./message/local.svelte";
 import { pathState } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
 import { ui } from "./ui.svelte";
@@ -353,6 +354,26 @@ export class AppState {
             default:
                 return new ChatMap<ChatSummary>();
         }
+    });
+
+    // the final client view of chat summaries with all updates merged in
+    #chatSummaries = $derived.by(() => {
+        return this.#scopedChats.reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
+            result.set(
+                chatId,
+                mergeUnconfirmedIntoSummary(
+                    (k) => k, // TODO - not sure what we do about this
+                    app.currentUserId,
+                    summary,
+                    messageLocalUpdates.data,
+                    this.#translations,
+                    this.#currentChatBlockedOrSuspendedUsers,
+                    app.currentUserId,
+                    this.#messageFilters,
+                ),
+            );
+            return result;
+        }, new ChatMap<ChatSummary>());
     });
 
     #serverPinnedChats = $state<Map<ChatListScope["kind"], ChatIdentifier[]>>(new Map());
@@ -951,6 +972,10 @@ export class AppState {
 
     get scopedChats() {
         return this.#scopedChats;
+    }
+
+    get chatSummaries() {
+        return this.#chatSummaries;
     }
 
     get communities() {

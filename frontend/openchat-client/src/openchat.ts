@@ -318,7 +318,6 @@ import {
 } from "./stores/filteredProposals";
 import { applyTranslationCorrection } from "./stores/i18n";
 import { lastOnlineDates } from "./stores/lastOnlineDates";
-import { localMessageUpdates } from "./stores/localMessageUpdates";
 import { minutesOnlineStore } from "./stores/minutesOnline";
 import {
     askForNotificationPermission,
@@ -2053,7 +2052,7 @@ export class OpenChat {
         chatId: MultiUserChatIdentifier,
         predicate: (chat: MultiUserChat) => boolean,
     ): boolean {
-        const chat = this.#liveState.chatSummaries.get(chatId);
+        const chat = app.chatSummaries.get(chatId);
         return (
             chat !== undefined &&
             (chat.kind === "group_chat" || chat.kind === "channel") &&
@@ -2104,7 +2103,7 @@ export class OpenChat {
         messageId: bigint,
         asPlatformModerator?: boolean,
     ): Promise<boolean> {
-        const chat = this.#liveState.chatSummaries.get(id);
+        const chat = app.chatSummaries.get(id);
 
         if (chat === undefined) {
             return Promise.resolve(false);
@@ -2169,7 +2168,7 @@ export class OpenChat {
         threadRootMessageIndex: number | undefined,
         msg: Message,
     ): Promise<boolean> {
-        const chat = this.#liveState.chatSummaries.get(chatId);
+        const chat = app.chatSummaries.get(chatId);
 
         if (chat === undefined || !msg.deleted) {
             return Promise.resolve(false);
@@ -2202,7 +2201,7 @@ export class OpenChat {
         messageId: bigint,
         threadRootMessageIndex: number | undefined,
     ): Promise<boolean> {
-        const chat = this.#liveState.chatSummaries.get(chatId);
+        const chat = app.chatSummaries.get(chatId);
 
         if (chat === undefined) {
             return Promise.resolve(false);
@@ -2247,7 +2246,7 @@ export class OpenChat {
         displayName: string | undefined,
         kind: "add" | "remove",
     ): Promise<boolean> {
-        const chat = this.#liveState.chatSummaries.get(chatId);
+        const chat = app.chatSummaries.get(chatId);
 
         if (chat === undefined) {
             return Promise.resolve(false);
@@ -2348,7 +2347,7 @@ export class OpenChat {
         threadRootEvent?: EventWrapper<Message>,
         initialLoad = false,
     ): Promise<number | undefined> {
-        const clientChat = this.#liveState.chatSummaries.get(chatId);
+        const clientChat = app.chatSummaries.get(chatId);
         const serverChat = app.allServerChats.get(chatId);
 
         if (clientChat === undefined || this.#isPrivatePreview(clientChat)) {
@@ -2623,7 +2622,7 @@ export class OpenChat {
         messageIndex?: number,
         threadMessageIndex?: number,
     ): Promise<void> {
-        let chat = this.#liveState.chatSummaries.get(chatId);
+        let chat = app.chatSummaries.get(chatId);
         const scope = app.chatListScope;
         let autojoin = false;
 
@@ -2686,7 +2685,7 @@ export class OpenChat {
                     return;
                 }
             }
-            chat = this.#liveState.chatSummaries.get(chatId);
+            chat = app.chatSummaries.get(chatId);
         }
 
         if (chat !== undefined) {
@@ -2722,7 +2721,7 @@ export class OpenChat {
     }
 
     #setSelectedChat(chatId: ChatIdentifier, messageIndex?: number): void {
-        const clientChat = this.#liveState.chatSummaries.get(chatId);
+        const clientChat = app.chatSummaries.get(chatId);
         const serverChat = app.allServerChats.get(chatId);
 
         if (clientChat === undefined) {
@@ -2835,7 +2834,7 @@ export class OpenChat {
         threadRootMessageIndex: number,
         initialLoad = false,
     ): Promise<void> {
-        const chat = this.#liveState.chatSummaries.get(chatId);
+        const chat = app.chatSummaries.get(chatId);
 
         if (chat === undefined) {
             return Promise.resolve();
@@ -3128,7 +3127,7 @@ export class OpenChat {
             return earliestIndex === undefined || earliestIndex > 0;
         }
 
-        const chat = this.#liveState.chatSummaries.get(chatId);
+        const chat = app.chatSummaries.get(chatId);
 
         return (
             chat !== undefined &&
@@ -3378,7 +3377,7 @@ export class OpenChat {
     }
 
     messageIsReadByThem(chatId: ChatIdentifier, messageIndex: number): boolean {
-        const chat = this.#liveState.chatSummaries.get(chatId);
+        const chat = app.chatSummaries.get(chatId);
         return chat !== undefined && messageIsReadByThem(chat, messageIndex);
     }
 
@@ -3613,7 +3612,7 @@ export class OpenChat {
         event: EventWrapper<Message>,
     ): Promise<void> {
         const { chatId, threadRootMessageIndex } = messageContext;
-        const chat = this.#liveState.chatSummaries.get(chatId);
+        const chat = app.chatSummaries.get(chatId);
         if (chat === undefined) {
             return;
         }
@@ -3951,7 +3950,7 @@ export class OpenChat {
         messageId: bigint = random64(),
     ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
-        const chat = this.#liveState.chatSummaries.get(chatId);
+        const chat = app.chatSummaries.get(chatId);
         if (chat === undefined) {
             return Promise.resolve(CommonResponses.failure());
         }
@@ -4135,7 +4134,7 @@ export class OpenChat {
         attachment: AttachmentContent | undefined,
         editingEvent: EventWrapper<Message>,
     ): Promise<boolean> {
-        const chat = this.#liveState.chatSummaries.get(messageContext.chatId);
+        const chat = app.chatSummaries.get(messageContext.chatId);
 
         if (chat === undefined) {
             return Promise.resolve(false);
@@ -5936,7 +5935,7 @@ export class OpenChat {
             );
 
             if (app.selectedChatId !== undefined) {
-                if (this.#liveState.chatSummaries.get(app.selectedChatId) === undefined) {
+                if (app.chatSummaries.get(app.selectedChatId) === undefined) {
                     publish("selectedChatInvalid");
                 } else {
                     const updatedEvents = ChatMap.fromMap(chatsResponse.updatedEvents);
@@ -6513,7 +6512,7 @@ export class OpenChat {
         transfer: PendingCryptocurrencyTransfer,
         currentTip: bigint,
     ): Promise<TipMessageResponse> {
-        const chat = this.#liveState.chatSummaries.get(messageContext.chatId);
+        const chat = app.chatSummaries.get(messageContext.chatId);
         if (chat === undefined) {
             return Promise.resolve({ kind: "failure" });
         }
@@ -7517,7 +7516,7 @@ export class OpenChat {
         groupId: GroupChatIdentifier,
         communityId: CommunityIdentifier,
     ): Promise<ChannelIdentifier | undefined> {
-        const group = this.#liveState.chatSummaries.get(groupId);
+        const group = app.chatSummaries.get(groupId);
         return this.#sendRequest({
             kind: "importGroupToCommunity",
             groupId,

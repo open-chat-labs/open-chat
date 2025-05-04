@@ -27,7 +27,6 @@
         app,
         chatIdentifiersEqual,
         chatSummariesListStore,
-        chatSummariesStore,
         defaultChatRules,
         draftMessagesStore,
         nullMembership,
@@ -571,7 +570,7 @@
         // it's possible that we got here via a postLogin capture in which case it's possible
         // that we are actually already a member of this group, so we should double check here
         // that we actually *need* to join the group
-        let chat = $chatSummariesStore.get(group.id);
+        let chat = app.chatSummaries.get(group.id);
         if (chat === undefined || chat.membership.role === "none" || client.isLapsed(chat.id)) {
             doJoinGroup(group, select, undefined);
         }

@@ -14,17 +14,12 @@ import { chatIdentifiersEqual, ChatMap, compareChats, messageContextsEqual } fro
 import { derived, writable, type Readable } from "svelte/store";
 import { app } from "../state/app.svelte";
 import { localUpdates } from "../state/global";
-import {
-    getNextEventAndMessageIndexes,
-    mergeEventsAndLocalUpdates,
-    mergeUnconfirmedIntoSummary,
-} from "../utils/chat";
+import { getNextEventAndMessageIndexes, mergeEventsAndLocalUpdates } from "../utils/chat";
 import { createDerivedPropStore } from "./derived";
 import { draftMessagesStore } from "./draftMessages";
 import { createDummyStore } from "./dummyStore";
 import { ephemeralMessages } from "./ephemeralMessages";
 import { failedMessagesStore } from "./failedMessages";
-import { localMessageUpdates } from "./localMessageUpdates";
 import { proposalTallies } from "./proposalTallies";
 import { recentlySentMessagesStore } from "./recentlySentMessages";
 import { safeWritable } from "./safeWritable";
@@ -42,38 +37,6 @@ export const selectedMessageContext = safeWritable<MessageContext | undefined>(
 export const selectedThreadRootMessageIndex = derived(selectedMessageContext, ($messageContext) => {
     return $messageContext?.threadRootMessageIndex;
 });
-
-export const dummyScopedChats = createDummyStore();
-
-export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
-    [
-        dummyScopedChats,
-        unconfirmed,
-        localMessageUpdates,
-        translationStore,
-        currentChatBlockedOrSuspendedUsers,
-        messageFiltersStore,
-    ],
-    ([_, unconfirmed, localUpdates, translations, blockedOrSuspendedUsers, $messageFilters]) => {
-        return app.scopedChats.reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
-            result.set(
-                chatId,
-                mergeUnconfirmedIntoSummary(
-                    (k) => k,
-                    app.currentUserId,
-                    summary,
-                    unconfirmed,
-                    localUpdates,
-                    translations,
-                    blockedOrSuspendedUsers,
-                    app.currentUserId,
-                    $messageFilters,
-                ),
-            );
-            return result;
-        }, new ChatMap<ChatSummary>());
-    },
-);
 
 // TODO - remove me when you can
 export const dummyPinnedChatsStore = createDummyStore();

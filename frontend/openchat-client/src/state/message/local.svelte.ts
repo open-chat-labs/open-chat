@@ -7,16 +7,16 @@ import {
     type P2PSwapStatus,
     type ThreadSummary,
 } from "openchat-shared";
+import { SvelteMap } from "svelte/reactivity";
 import { ReactiveMessageMap } from "../map";
 import { scheduleUndo, type UndoLocalUpdate } from "../undo";
-import { SvelteMap } from "svelte/reactivity";
 
 type MessageDeleted = {
     deletedBy: string;
     timestamp: bigint;
 };
 
-type TipsReceived = SvelteMap<string, SvelteMap<string, bigint>>;
+export type LocalTipsReceived = SvelteMap<string, SvelteMap<string, bigint>>;
 
 export class MessageLocalState {
     #deleted = $state<MessageDeleted | undefined>();
@@ -115,7 +115,7 @@ export class MessageLocalState {
     get tips() {
         return this.#tips;
     }
-    set tips(val: TipsReceived) {
+    set tips(val: LocalTipsReceived) {
         this.#tips = val;
     }
 
@@ -155,6 +155,10 @@ export class MessageLocalStateManager {
             this.#data.set(messageId, state);
         }
         return state;
+    }
+
+    get data() {
+        return this.#data;
     }
 
     entries(): IterableIterator<[bigint, MessageLocalState]> {
@@ -271,7 +275,7 @@ export class MessageLocalStateManager {
             state.tips.set(ledger, map);
         }
 
-        let currentAmount = map.get(userId);
+        const currentAmount = map.get(userId);
         if (currentAmount === undefined) {
             map.set(userId, amount);
         } else {
