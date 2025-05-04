@@ -20,6 +20,7 @@ import {
     communityIdentifiersEqual,
     CommunityMap,
     type CommunitySummary,
+    compareChats,
     type CreatedUser,
     type DirectChatIdentifier,
     type DirectChatSummary,
@@ -374,6 +375,28 @@ export class AppState {
             );
             return result;
         }, new ChatMap<ChatSummary>());
+    });
+
+    #chatSummariesList = $derived.by(() => {
+        const pinnedByScope = this.#pinnedChats.get(this.#chatListScope.kind) ?? [];
+        const pinned = pinnedByScope.reduce<ChatSummary[]>((result, id) => {
+            const summary = this.#chatSummaries.get(id);
+            if (summary !== undefined) {
+                result.push(summary);
+            }
+            return result;
+        }, []);
+        const unpinned = [...this.#chatSummaries.values()]
+            .filter(
+                (chat) => pinnedByScope.findIndex((p) => chatIdentifiersEqual(p, chat.id)) === -1,
+            )
+            .sort(compareChats);
+        return pinned.concat(unpinned);
+    });
+
+    #selectedChatSummary = $derived.by(() => {
+        if (this.#selectedChatId === undefined) return undefined;
+        return this.#chatSummaries.get(this.#selectedChatId);
     });
 
     #serverPinnedChats = $state<Map<ChatListScope["kind"], ChatIdentifier[]>>(new Map());
@@ -976,6 +999,14 @@ export class AppState {
 
     get chatSummaries() {
         return this.#chatSummaries;
+    }
+
+    get chatSummariesList() {
+        return this.#chatSummariesList;
+    }
+
+    get selectedChatSummary() {
+        return this.#selectedChatSummary;
     }
 
     get communities() {

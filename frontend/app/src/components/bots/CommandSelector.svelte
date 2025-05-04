@@ -14,7 +14,6 @@
         botState,
         isPermitted,
         messagePermissionsForSelectedChat,
-        selectedChatStore,
         threadPermissionsForSelectedChat,
     } from "openchat-client";
     import { hasEveryRequiredPermission, random64, type FlattenedCommand } from "openchat-shared";
@@ -61,7 +60,7 @@
                 hasPermissionForCommand(
                     c,
                     installedBots,
-                    $selectedChatStore,
+                    app.selectedChatSummary,
                     app.selectedCommunitySummary,
                 )
             );
@@ -164,7 +163,7 @@
     }
 
     function sendCommandIfValid() {
-        if (botState.selectedCommand && botState.instanceValid && $selectedChatStore) {
+        if (botState.selectedCommand && botState.instanceValid && app.selectedChatSummary) {
             client
                 .executeBotCommand(
                     {

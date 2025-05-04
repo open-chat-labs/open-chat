@@ -26,7 +26,6 @@
     import {
         app,
         chatIdentifiersEqual,
-        chatSummariesListStore,
         defaultChatRules,
         draftMessagesStore,
         nullMembership,
@@ -38,7 +37,6 @@
         routeForChatIdentifier,
         routeForScope,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
-        selectedChatStore,
         subscribe,
         ui,
         userStore,
@@ -474,7 +472,7 @@
     }
 
     function chatWith(chatId: DirectChatIdentifier) {
-        const chat = $chatSummariesListStore.find((c) => {
+        const chat = app.chatSummariesList.find((c) => {
             return c.kind === "direct_chat" && c.them === chatId;
         });
 
@@ -494,7 +492,7 @@
     function replyPrivatelyTo(context: EnhancedReplyContext) {
         if (context.sender === undefined) return;
 
-        const chat = $chatSummariesListStore.find((c) => {
+        const chat = app.chatSummariesList.find((c) => {
             return (
                 c.kind === "direct_chat" &&
                 chatIdentifiersEqual(c.them, {
@@ -876,8 +874,9 @@
 
     let confirmMessage = $derived(getConfirmMessage(confirmActionEvent));
     let selectedMultiUserChat = $derived(
-        $selectedChatStore?.kind === "group_chat" || $selectedChatStore?.kind === "channel"
-            ? $selectedChatStore
+        app.selectedChatSummary?.kind === "group_chat" ||
+            app.selectedChatSummary?.kind === "channel"
+            ? app.selectedChatSummary
             : undefined,
     );
     let governanceCanisterId = $derived(

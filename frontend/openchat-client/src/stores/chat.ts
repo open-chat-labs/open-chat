@@ -3,14 +3,13 @@ import DRange from "drange";
 import type {
     ChatEvent,
     ChatIdentifier,
-    ChatSummary,
     EventWrapper,
     ExpiredEventsRange,
     MessageContext,
     ThreadIdentifier,
     ThreadSyncDetails,
 } from "openchat-shared";
-import { chatIdentifiersEqual, ChatMap, compareChats, messageContextsEqual } from "openchat-shared";
+import { chatIdentifiersEqual, ChatMap, messageContextsEqual } from "openchat-shared";
 import { derived, writable, type Readable } from "svelte/store";
 import { app } from "../state/app.svelte";
 import { localUpdates } from "../state/global";
@@ -37,38 +36,6 @@ export const selectedMessageContext = safeWritable<MessageContext | undefined>(
 export const selectedThreadRootMessageIndex = derived(selectedMessageContext, ($messageContext) => {
     return $messageContext?.threadRootMessageIndex;
 });
-
-// TODO - remove me when you can
-export const dummyPinnedChatsStore = createDummyStore();
-
-// This is annoying. If only the pinnedChatIndex was stored in the chatSummary...
-export const chatSummariesListStore = derived(
-    [chatSummariesStore, dummyPinnedChatsStore],
-    ([summaries, _]) => {
-        const pinnedByScope = app.pinnedChats.get(app.chatListScope.kind) ?? [];
-        const pinned = pinnedByScope.reduce<ChatSummary[]>((result, id) => {
-            const summary = summaries.get(id);
-            if (summary !== undefined) {
-                result.push(summary);
-            }
-            return result;
-        }, []);
-        const unpinned = [...summaries.values()]
-            .filter(
-                (chat) => pinnedByScope.findIndex((p) => chatIdentifiersEqual(p, chat.id)) === -1,
-            )
-            .sort(compareChats);
-        return pinned.concat(unpinned);
-    },
-);
-
-export const selectedChatStore = derived(
-    [chatSummariesStore, selectedChatId],
-    ([$chatSummaries, $selectedChatId]) => {
-        if ($selectedChatId === undefined) return undefined;
-        return $chatSummaries.get($selectedChatId);
-    },
-);
 
 export function nextEventAndMessageIndexesForThread(
     events: EventWrapper<ChatEvent>[],

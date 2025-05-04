@@ -9,7 +9,6 @@
         app,
         pathState,
         routeForChatIdentifier,
-        selectedChatStore,
         userStore,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
@@ -89,7 +88,7 @@
             pathState.location,
             userStore.allUsers,
             app.globalUnreadCount,
-            $selectedChatStore,
+            app.selectedChatSummary,
             app.selectedCommunitySummary,
         ),
     );

@@ -4115,7 +4115,7 @@ export class OpenChat {
     }
 
     markAllReadForCurrentScope() {
-        this.#liveState.chatSummariesList.forEach((chat) => messagesRead.markAllRead(chat));
+        app.chatSummariesList.forEach((chat) => messagesRead.markAllRead(chat));
     }
 
     getDisplayDate = getDisplayDate;
@@ -5071,7 +5071,7 @@ export class OpenChat {
         // TODO get the list of exclusions from the user canister
 
         const exclusions = new Set<string>(
-            this.#liveState.chatSummariesList
+            app.chatSummariesList
                 .filter((c) => c.kind === "group_chat" && c.public)
                 .map((g) => chatIdentifierToString(g.id)),
         );
@@ -5799,7 +5799,7 @@ export class OpenChat {
             }
 
             // Update all users we have direct chats with
-            for (const chat of this.#liveState.chatSummariesList) {
+            for (const chat of app.chatSummariesList) {
                 if (chat.kind == "direct_chat") {
                     usersToUpdate.add(chat.them.userId);
                 }
@@ -7503,7 +7503,7 @@ export class OpenChat {
 
     selectFirstChat(): boolean {
         if (!ui.mobileWidth) {
-            const first = this.#liveState.chatSummariesList.find((c) => !c.membership.archived);
+            const first = app.chatSummariesList.find((c) => !c.membership.archived);
             if (first !== undefined) {
                 pageRedirect(routeForChatIdentifier(app.chatListScope.kind, first.id));
                 return true;

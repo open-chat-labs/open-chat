@@ -13,7 +13,6 @@ import type {
 import { locale } from "svelte-i18n";
 import { selectedAuthProviderStore } from "./stores/authProviders";
 import {
-    chatSummariesListStore,
     currentChatReplyingTo,
     eventsStore,
     selectedChatStore,
@@ -40,7 +39,6 @@ export class LiveState {
     userCreated!: boolean;
     remainingStorage!: number;
     currentChatReplyingTo: EnhancedReplyContext | undefined;
-    chatSummariesList!: ChatSummary[];
     threadsByChat!: ChatMap<ThreadSyncDetails[]>;
     threadEvents!: EventWrapper<ChatEvent>[];
     selectedMessageContext: MessageContext | undefined;
@@ -66,7 +64,6 @@ export class LiveState {
         eventsStore.subscribe((data) => (this.events = data));
         selectedChatStore.subscribe((data) => (this.selectedChat = data));
         currentChatReplyingTo.subscribe((data) => (this.currentChatReplyingTo = data));
-        chatSummariesListStore.subscribe((data) => (this.chatSummariesList = data));
         threadsByChatStore.subscribe((data) => (this.threadsByChat = data));
         threadEvents.subscribe((data) => (this.threadEvents = data));
         selectedMessageContext.subscribe((data) => (this.selectedMessageContext = data));

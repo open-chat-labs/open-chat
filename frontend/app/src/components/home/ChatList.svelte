@@ -5,7 +5,6 @@
         chatIdentifiersEqual,
         chatIdentifierToString,
         type ChatListScope,
-        chatSummariesListStore,
         type ChatSummary as ChatSummaryType,
         type CombinedUnreadCounts,
         emptyCombinedUnreadCounts,
@@ -218,9 +217,7 @@
         }
     });
     let chats = $derived(
-        searchTerm !== ""
-            ? $chatSummariesListStore.filter(chatMatchesSearch)
-            : $chatSummariesListStore,
+        searchTerm !== "" ? app.chatSummariesList.filter(chatMatchesSearch) : app.chatSummariesList,
     );
 </script>
 
