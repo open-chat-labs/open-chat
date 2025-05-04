@@ -1616,7 +1616,7 @@ export class OpenChat {
         const threadRootMessageIndex = message.messageIndex;
 
         // Assume it will succeed
-        localMessageUpdates.markThreadSummaryUpdated(message.messageId, {
+        const undo = localUpdates.markThreadSummaryUpdated(message.messageId, {
             followedByMe: follow,
         });
 
@@ -1631,9 +1631,7 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    localMessageUpdates.markThreadSummaryUpdated(message.messageId, {
-                        followedByMe: !follow,
-                    });
+                    undo();
                     return false;
                 }
                 if (message.thread !== undefined && message.thread.numberOfReplies > 0) {
@@ -2079,7 +2077,7 @@ export class OpenChat {
         answerIdx: number,
         type: "register" | "delete",
     ): Promise<boolean> {
-        localMessageUpdates.markPollVote(messageId, {
+        localUpdates.markPollVote(messageId, {
             answerIndex: answerIdx,
             type,
             userId: app.currentUserId,
@@ -2113,7 +2111,7 @@ export class OpenChat {
         }
 
         const userId = app.currentUserId;
-        localMessageUpdates.markDeleted(messageId, userId);
+        localUpdates.markMessageDeleted(messageId, userId);
         undeletingMessagesStore.delete(messageId);
 
         const recipients = [...app.selectedChat.userIds];
@@ -2134,7 +2132,7 @@ export class OpenChat {
                 userId,
                 threadRootMessageIndex,
             });
-            localMessageUpdates.markUndeleted(messageId);
+            localUpdates.markMessageUndeleted(messageId);
         }
 
         const newAchievement = !app.achievements.has("deleted_message");
@@ -2189,7 +2187,7 @@ export class OpenChat {
             .then((resp) => {
                 const success = resp.kind === "success";
                 if (success) {
-                    localMessageUpdates.markUndeleted(msg.messageId, resp.message.content);
+                    localUpdates.markMessageUndeleted(msg.messageId, resp.message.content);
                 }
                 return success;
             })
@@ -2228,7 +2226,7 @@ export class OpenChat {
             .then((resp) => {
                 const success = resp.kind === "success";
                 if (success) {
-                    localMessageUpdates.markContentRevealed(messageId, resp.content);
+                    localUpdates.markMessageContentRevealed(messageId, resp.content);
                 }
                 return success;
             })
@@ -2236,7 +2234,7 @@ export class OpenChat {
     }
 
     revealBlockedMessage(messageId: bigint) {
-        localMessageUpdates.markBlockedMessageRevealed(messageId);
+        localUpdates.markBlockedMessageRevealed(messageId);
     }
 
     selectReaction(
@@ -2255,19 +2253,11 @@ export class OpenChat {
             return Promise.resolve(false);
         }
 
-        localMessageUpdates.markReaction(messageId, {
+        const undo = localUpdates.markReaction(messageId, {
             reaction,
             kind,
             userId,
         });
-
-        function undoLocally() {
-            localMessageUpdates.markReaction(messageId, {
-                reaction,
-                kind: kind === "add" ? "remove" : "add",
-                userId,
-            });
-        }
 
         publish("reactionSelected", { messageId, kind });
 
@@ -2295,13 +2285,13 @@ export class OpenChat {
         )
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    undoLocally();
+                    undo();
                     return false;
                 }
                 return true;
             })
             .catch((_) => {
-                undoLocally();
+                undo();
                 return false;
             });
 
@@ -4168,14 +4158,11 @@ export class OpenChat {
                 edited: true,
                 content: this.#getMessageContent(textContent ?? undefined, captioned),
             };
-            localMessageUpdates.markContentEdited(msg.messageId, msg.content);
-            draftMessagesStore.delete(messageContext);
-
             const updatedBlockLevelMarkdown =
                 msg.blockLevelMarkdown === blockLevelMarkdown ? undefined : blockLevelMarkdown;
-            if (updatedBlockLevelMarkdown !== undefined) {
-                localMessageUpdates.setBlockLevelMarkdown(msg.messageId, updatedBlockLevelMarkdown);
-            }
+
+            const undo = localUpdates.markMessageContentEdited(msg, updatedBlockLevelMarkdown);
+            draftMessagesStore.delete(messageContext);
 
             const newAchievement = !app.achievements.has("edited_message");
 
@@ -4189,13 +4176,13 @@ export class OpenChat {
             })
                 .then((resp) => {
                     if (resp.kind !== "success") {
-                        localMessageUpdates.revertEditedContent(msg.messageId);
+                        undo();
                         return false;
                     }
                     return true;
                 })
                 .catch(() => {
-                    localMessageUpdates.revertEditedContent(msg.messageId);
+                    undo();
                     return false;
                 });
         }
@@ -4217,7 +4204,7 @@ export class OpenChat {
             ...event.event,
             content: this.#getMessageContent(text, undefined),
         };
-        localMessageUpdates.markLinkRemoved(msg.messageId, msg.content);
+        const undo = localUpdates.markLinkRemoved(msg.messageId, msg.content);
 
         return this.#sendRequest({
             kind: "editMessage",
@@ -4228,13 +4215,13 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    localMessageUpdates.revertLinkRemoved(msg.messageId);
+                    undo();
                     return false;
                 }
                 return true;
             })
             .catch(() => {
-                localMessageUpdates.revertLinkRemoved(msg.messageId);
+                undo();
                 return false;
             });
     }
@@ -4368,7 +4355,7 @@ export class OpenChat {
         if (matchingMessage !== undefined) {
             publish("reactionSelected", { messageId: message.messageId, kind });
 
-            localMessageUpdates.markReaction(message.messageId, {
+            localUpdates.markReaction(message.messageId, {
                 reaction: message.reaction,
                 kind: message.added ? "add" : "remove",
                 userId: message.userId,
@@ -4519,13 +4506,13 @@ export class OpenChat {
                 this.remoteUserToggledReaction(events, msg);
                 break;
             case "remote_user_deleted_message":
-                localMessageUpdates.markDeleted(msg.messageId, msg.userId);
+                localUpdates.markMessageDeleted(msg.messageId, msg.userId);
                 break;
             case "remote_user_removed_message":
                 this.#removeMessage(fromChatId, msg.messageId, msg.userId, threadRootMessageIndex);
                 break;
             case "remote_user_undeleted_message":
-                localMessageUpdates.markUndeleted(msg.messageId);
+                localUpdates.markMessageUndeleted(msg.messageId);
                 break;
             case "remote_user_sent_message":
                 this.#remoteUserSentMessage(fromChatId, msg, events, threadRootMessageIndex);
@@ -5588,7 +5575,7 @@ export class OpenChat {
     }
 
     markThreadSummaryUpdated(threadRootMessageId: bigint, summary: Partial<ThreadSummary>): void {
-        localMessageUpdates.markThreadSummaryUpdated(threadRootMessageId, summary);
+        localUpdates.markThreadSummaryUpdated(threadRootMessageId, summary);
     }
 
     freezeCommunity(id: CommunityIdentifier, reason: string | undefined): Promise<boolean> {
@@ -6163,7 +6150,7 @@ export class OpenChat {
                 if (resp.kind !== "success") {
                     return false;
                 } else {
-                    localMessageUpdates.markPrizeClaimed(messageId, app.currentUserId);
+                    localUpdates.markPrizeClaimed(messageId, app.currentUserId);
                     return true;
                 }
             })
@@ -6181,7 +6168,7 @@ export class OpenChat {
             pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
-        localMessageUpdates.setP2PSwapStatus(messageId, {
+        localUpdates.setP2PSwapStatus(messageId, {
             kind: "p2p_swap_reserved",
             reservedBy: app.currentUserId,
         });
@@ -6198,7 +6185,7 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    localMessageUpdates.setP2PSwapStatus(messageId, {
+                    localUpdates.setP2PSwapStatus(messageId, {
                         kind: "p2p_swap_accepted",
                         acceptedBy: app.currentUserId,
                         token1TxnIn: resp.token1TxnIn,
@@ -6215,7 +6202,7 @@ export class OpenChat {
                 return resp;
             })
             .catch((err) => {
-                localMessageUpdates.setP2PSwapStatus(messageId, { kind: "p2p_swap_open" });
+                localUpdates.setP2PSwapStatus(messageId, { kind: "p2p_swap_open" });
                 return { kind: "internal_error", text: err.toString() };
             });
     }
@@ -6225,7 +6212,7 @@ export class OpenChat {
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
     ): Promise<CancelP2PSwapResponse> {
-        localMessageUpdates.setP2PSwapStatus(messageId, {
+        localUpdates.setP2PSwapStatus(messageId, {
             kind: "p2p_swap_cancelled",
         });
         return this.#sendRequest({
@@ -6236,14 +6223,14 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    localMessageUpdates.setP2PSwapStatus(messageId, {
+                    localUpdates.setP2PSwapStatus(messageId, {
                         kind: "p2p_swap_cancelled",
                     });
                 }
                 return resp;
             })
             .catch((err) => {
-                localMessageUpdates.setP2PSwapStatus(messageId, { kind: "p2p_swap_open" });
+                localUpdates.setP2PSwapStatus(messageId, { kind: "p2p_swap_open" });
                 return { kind: "internal_error", text: err.toString() };
             });
     }
@@ -6450,12 +6437,12 @@ export class OpenChat {
         messageId: bigint,
         content: MessageReminderCreatedContent,
     ): Promise<boolean> {
-        localMessageUpdates.markCancelled(messageId, content);
+        const undo = localUpdates.markCancelledReminder(messageId, content);
         return this.#sendRequest({
             kind: "cancelMessageReminder",
             reminderId: content.reminderId,
         }).catch(() => {
-            localMessageUpdates.revertCancelled(messageId);
+            undo();
             return false;
         });
     }
@@ -6541,11 +6528,7 @@ export class OpenChat {
         const totalTip = transfer.amountE8s + currentTip;
         const decimals = get(cryptoLookup)[transfer.ledger].decimals;
 
-        localMessageUpdates.markTip(messageId, transfer.ledger, userId, totalTip);
-
-        function undoLocally() {
-            localMessageUpdates.markTip(messageId, transfer.ledger, userId, -totalTip);
-        }
+        const undo = localUpdates.markTip(messageId, transfer.ledger, userId, totalTip);
 
         return this.#sendRequest({
             kind: "tipMessage",
@@ -6557,7 +6540,7 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    undoLocally();
+                    undo();
 
                     if (resp.kind === "error") {
                         const pinNumberFailure = pinNumberFailureFromError(resp);
@@ -6570,7 +6553,7 @@ export class OpenChat {
                 return resp;
             })
             .catch((_) => {
-                undoLocally();
+                undo();
                 return { kind: "failure" };
             });
     }

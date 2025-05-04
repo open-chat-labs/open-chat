@@ -12,14 +12,19 @@ import {
     type DirectChatSummary,
     type EventWrapper,
     type ExternalBotPermissions,
+    type LocalPollVote,
+    type LocalReaction,
     type Member,
     type Message,
     type MessageContent,
     type MessageContext,
+    type MessageReminderCreatedContent,
     type MultiUserChat,
     type OptionalChatPermissions,
     type OptionUpdate,
+    type P2PSwapStatus,
     type StreakInsurance,
+    type ThreadSummary,
     type UnconfirmedMessageEvent,
     type UnconfirmedState,
     type UserGroupDetails,
@@ -434,8 +439,56 @@ export class GlobalLocalState {
     }
 
     // message updates
-    markMessageContentEdited(msg: Message): UndoLocalUpdate {
-        return messageLocalUpdates.markContentEdited(msg);
+    markMessageContentEdited(msg: Message, blockLevelMarkdown?: boolean): UndoLocalUpdate {
+        return messageLocalUpdates.markContentEdited(msg, blockLevelMarkdown);
+    }
+
+    markCancelledReminder(messageId: bigint, content: MessageReminderCreatedContent) {
+        return messageLocalUpdates.markCancelledReminder(messageId, content);
+    }
+
+    markMessageDeleted(messageId: bigint, userId: string) {
+        return messageLocalUpdates.markDeleted(messageId, userId);
+    }
+
+    markMessageUndeleted(messageId: bigint, content?: MessageContent) {
+        return messageLocalUpdates.markUndeleted(messageId, content);
+    }
+
+    markMessageContentRevealed(messageId: bigint, content: MessageContent) {
+        return messageLocalUpdates.markContentRevealed(messageId, content);
+    }
+
+    markBlockedMessageRevealed(messageId: bigint) {
+        return messageLocalUpdates.markBlockedMessageRevealed(messageId);
+    }
+
+    markLinkRemoved(messageId: bigint, content: MessageContent) {
+        return messageLocalUpdates.markLinkRemoved(messageId, content);
+    }
+
+    markReaction(messageId: bigint, reaction: LocalReaction) {
+        return messageLocalUpdates.markReaction(messageId, reaction);
+    }
+
+    markTip(messageId: bigint, ledger: string, userId: string, amount: bigint) {
+        return messageLocalUpdates.markTip(messageId, ledger, userId, amount);
+    }
+
+    markPrizeClaimed(messageId: bigint, userId: string) {
+        return messageLocalUpdates.markPrizeClaimed(messageId, userId);
+    }
+
+    setP2PSwapStatus(messageId: bigint, status: P2PSwapStatus) {
+        return messageLocalUpdates.setP2PSwapStatus(messageId, status);
+    }
+
+    markPollVote(messageId: bigint, vote: LocalPollVote) {
+        return messageLocalUpdates.markPollVote(messageId, vote);
+    }
+
+    markThreadSummaryUpdated(messageId: bigint, summaryUpdates: Partial<ThreadSummary>) {
+        return messageLocalUpdates.markThreadSummaryUpdated(messageId, summaryUpdates);
     }
 }
 
