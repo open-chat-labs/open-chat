@@ -57,6 +57,7 @@
         return botState.commands.filter((c) => {
             return (
                 restrictByBotIfNecessary(c) &&
+                restrictByChatIfNecessary(c) &&
                 hasPermissionForCommand(
                     c,
                     installedBots,
@@ -72,6 +73,12 @@
             selectedBotId === undefined ||
             (command.kind === "external_bot" && command.botId === selectedBotId) ||
             (command.kind === "internal_bot" && command.directBotDisabled === false)
+        );
+    }
+
+    function restrictByChatIfNecessary(command: FlattenedCommand): boolean {
+        return !(
+            messageContext.chatId.kind === "direct_chat" && command.directChatsDisabled === true
         );
     }
 

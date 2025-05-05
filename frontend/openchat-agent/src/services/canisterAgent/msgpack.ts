@@ -11,11 +11,11 @@ import {
     type v3ResponseBody,
 } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { toCanisterResponseError } from "../error";
 import type { Static, TSchema } from "@sinclair/typebox";
-import { CanisterAgent } from "./base";
-import { typeboxValidate } from "../../utils/typebox";
 import { deserializeFromMsgPack, serializeToMsgPack } from "../../utils/msgpack";
+import { typeboxValidate } from "../../utils/typebox";
+import { toCanisterResponseError } from "../error";
+import { CanisterAgent } from "./base";
 
 export abstract class MsgpackCanisterAgent extends CanisterAgent {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string, canisterName: string) {
@@ -92,7 +92,7 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
                 // const certTime = this.agent.replicaTime;
                 const certificate = await Certificate.create({
                     certificate: bufFromBufLike(cert),
-                    rootKey: this.agent.rootKey,
+                    rootKey: this.agent.rootKey!,
                     canisterId: Principal.from(canisterId),
                     blsVerify: undefined,
                 });

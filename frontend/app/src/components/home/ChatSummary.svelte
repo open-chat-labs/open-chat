@@ -4,8 +4,10 @@
         ChatSummary,
         CommunitySummary,
         DiamondMembershipStatus,
+        ReadonlyMap,
         TypersByKey,
         UserLookup,
+        WebhookDetails,
     } from "openchat-client";
     import {
         AvatarSize,
@@ -73,7 +75,9 @@
     );
     let unreadMentions = $derived(getUnreadMentionCount(chatSummary));
     let chat = $derived(normaliseChatSummary($now, chatSummary, $typersByContext));
-    let lastMessage = $derived(formatLatestMessage(chatSummary, userStore.allUsers));
+    let lastMessage = $derived(
+        formatLatestMessage(chatSummary, userStore.allUsers, app.selectedChat.webhooks),
+    );
     let displayDate = $derived(client.getDisplayDate(chatSummary));
     let community = $derived(
         chatSummary.kind === "channel"
@@ -149,7 +153,11 @@
         ).length;
     }
 
-    function formatLatestMessage(chatSummary: ChatSummary, users: UserLookup): string {
+    function formatLatestMessage(
+        chatSummary: ChatSummary,
+        users: UserLookup,
+        webhooks: ReadonlyMap<string, WebhookDetails>,
+    ): string {
         if (chatSummary.latestMessageIndex === undefined || externalContent) {
             return "";
         }
@@ -188,6 +196,7 @@
             chatSummary.latestMessage.event.sender,
             chatSummary.latestMessage.event.sender === app.currentUserId,
             false,
+            webhooks,
         );
 
         return `${user}: ${latestMessageText}`;

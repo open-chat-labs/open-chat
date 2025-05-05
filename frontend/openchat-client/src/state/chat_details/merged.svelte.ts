@@ -10,6 +10,7 @@ import {
     type ReadonlySet,
     type ThreadIdentifier,
     type VersionedRules,
+    type WebhookDetails,
 } from "openchat-shared";
 import { SvelteSet } from "svelte/reactivity";
 import { LocalMap } from "../map";
@@ -27,6 +28,7 @@ export class ChatDetailsMergedState {
     #members = $derived(this.#mergeMap(this.server.members, this.#local?.members));
     #bots = $derived(this.#mergeMap(this.server.bots, this.#local?.bots));
     #apiKeys = $derived(this.#mergeMap(this.server.apiKeys, this.#local?.apiKeys));
+    #webhooks = $derived(this.#mergeMap(this.server.webhooks, this.#local?.webhooks));
     #blockedUsers = $derived(this.#mergeSet(this.server.blockedUsers, this.#local?.blockedUsers));
     #invitedUsers = $derived(this.#mergeSet(this.server.invitedUsers, this.#local?.invitedUsers));
     #rules = $derived(this.#local?.rules ?? this.server.rules);
@@ -135,6 +137,10 @@ export class ChatDetailsMergedState {
         return this.#apiKeys;
     }
 
+    get webhooks() {
+        return this.#webhooks;
+    }
+
     get invitedUsers() {
         return this.#invitedUsers;
     }
@@ -165,6 +171,7 @@ export class ChatDetailsMergedState {
         rules: VersionedRules,
         bots: Map<string, ExternalBotPermissions>,
         apiKeys: Map<string, PublicApiKeyDetails>,
+        webhooks: Map<string, WebhookDetails>,
     ) {
         this.#server?.overwriteChatDetails(
             chatId,
@@ -176,6 +183,7 @@ export class ChatDetailsMergedState {
             rules,
             bots,
             apiKeys,
+            webhooks,
         );
     }
 

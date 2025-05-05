@@ -24,7 +24,7 @@ describe("bot state", () => {
         });
 
         test("filtered built in commands", () => {
-            botState.prefix = "register";
+            botState.prefix = "register_b";
             expect(botState.commands.length).toEqual(1);
             expect(botState.commands[0].name).toEqual("register_bot");
             botState.prefix = "gif";

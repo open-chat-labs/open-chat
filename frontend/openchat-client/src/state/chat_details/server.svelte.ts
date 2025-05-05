@@ -12,6 +12,7 @@ import {
     type ReadonlySet,
     type ThreadIdentifier,
     type VersionedRules,
+    type WebhookDetails,
 } from "openchat-shared";
 import { ThreadServerState } from "../thread/server.svelte";
 
@@ -26,6 +27,7 @@ export class ChatDetailsServerState {
     #rules = $state<VersionedRules>(emptyRules());
     #bots = $state<ReadonlyMap<string, ExternalBotPermissions>>(new Map());
     #apiKeys = $state<ReadonlyMap<string, PublicApiKeyDetails>>(new Map());
+    #webhooks = $state<ReadonlyMap<string, WebhookDetails>>(new Map());
     #events = $state<EventWrapper<ChatEvent>[]>([]);
     #expiredEventRanges = $state<DRange>(new DRange());
     #confirmedEventIndexesLoaded = $derived.by(() => {
@@ -73,6 +75,10 @@ export class ChatDetailsServerState {
 
     get apiKeys() {
         return this.#apiKeys;
+    }
+
+    get webhooks() {
+        return this.#webhooks;
     }
 
     get isEmpty() {
@@ -156,6 +162,7 @@ export class ChatDetailsServerState {
         rules: VersionedRules,
         bots: Map<string, ExternalBotPermissions>,
         apiKeys: Map<string, PublicApiKeyDetails>,
+        webhooks: Map<string, WebhookDetails>,
     ) {
         this.#chatId = chatId;
         this.#members = members;
@@ -166,6 +173,7 @@ export class ChatDetailsServerState {
         this.#rules = rules;
         this.#bots = bots;
         this.#apiKeys = apiKeys;
+        this.#webhooks = webhooks;
     }
 
     static empty(chatId?: ChatIdentifier) {

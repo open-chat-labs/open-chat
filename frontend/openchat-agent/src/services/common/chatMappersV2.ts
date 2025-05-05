@@ -1,147 +1,175 @@
 import type { Principal } from "@dfinity/principal";
-import {
-    bigintToBytes,
-    bytesToBigint,
-    bytesToHexString,
-    consolidateBytes,
-    hexStringToBytes,
-    identity,
-    mapOptional,
-    principalBytesToString,
-    principalStringToBytes,
-} from "../../utils/mapping";
 import type {
-    Message,
-    ChatEvent,
-    EventsResponse,
-    ThreadSummary,
-    // StaleMessage,
-    MessageContent,
-    // User,
-    ProposalContent,
-    Proposal,
-    GiphyContent,
-    GiphyImage,
-    PollContent,
-    PollConfig,
-    PollVotes,
-    TotalPollVotes,
-    DeletedContent,
-    CryptocurrencyContent,
-    CryptocurrencyTransfer,
-    PendingCryptocurrencyTransfer,
-    CompletedCryptocurrencyTransfer,
-    FailedCryptocurrencyTransfer,
-    ImageContent,
-    VideoContent,
-    AudioContent,
-    TextContent,
-    FileContent,
-    BlobReference,
-    ReplyContext,
-    Reaction,
-    ChatPermissions,
-    PermissionRole,
-    PendingCryptocurrencyWithdrawal,
-    Metrics,
-    MemberRole,
-    GroupSubtype,
-    PrizeContent,
-    PrizeWinnerContent,
+    AcceptP2PSwapResponse,
     AccessGate,
-    MessageReminderCreatedContent,
-    MessageReminderContent,
-    MessageContext,
-    ReportedMessageContent,
-    GroupChatSummary,
-    GateCheckFailedReason,
+    AccessGateConfig,
+    AudioContent,
+    BlobReference,
+    BotDefinition,
+    BotMessageContext,
+    ChannelIdentifier,
+    ChannelSummary,
+    ChatEvent,
+    ChatIdentifier,
+    ChatPermissions,
+    ClaimPrizeResponse,
+    CommandArg,
+    CommandDefinition,
+    CommandParam,
+    CommandParamType,
     CommunityPermissionRole,
     CommunityPermissions,
-    ChatIdentifier,
-    ChannelSummary,
     CommunitySummary,
-    Mention,
-    EventWrapper,
-    UpdateGroupResponse,
-    MultiUserChatIdentifier,
-    ChannelIdentifier,
-    GroupChatIdentifier,
-    PinMessageResponse,
-    GroupChatDetailsResponse,
-    Member,
-    GroupChatDetailsUpdatesResponse,
+    CompletedCryptocurrencyTransfer,
+    CreateGroupSuccess,
+    CryptocurrencyContent,
+    CryptocurrencyTransfer,
+    DeletedContent,
     DeletedGroupMessageResponse,
-    UndeleteMessageResponse,
-    ThreadPreview,
-    ThreadPreviewsResponse,
-    JoinGroupResponse,
-    SearchGroupChatResponse,
-    ThreadSyncDetails,
-    UserGroupSummary,
-    TipsReceived,
-    PrizeContentInitial,
-    MessagePermissions,
+    DexId,
+    EnableInviteCodeSuccess,
+    EventWrapper,
+    EventsResponse,
     ExpiredEventsRange,
     ExpiredMessagesRange,
-    P2PSwapContentInitial,
-    P2PSwapContent,
-    P2PSwapStatus,
-    TokenInfo,
+    ExternalBotPermissions,
+    FailedCryptocurrencyTransfer,
+    FileContent,
+    GateCheckFailedReason,
+    GenerateBotKeyResponse,
+    GiphyContent,
+    GiphyImage,
+    GroupChatDetailsResponse,
+    GroupChatDetailsUpdatesResponse,
+    GroupChatIdentifier,
+    GroupChatSummary,
     GroupInviteCodeChange,
-    VideoCallContent,
-    VideoCallType,
-    VideoCallPresence,
-    VideoCallParticipantsResponse,
-    VideoCallParticipant,
+    GroupSubtype,
+    ImageContent,
+    InstalledBotDetails,
+    InviteCodeSuccess,
+    JoinGroupResponse,
     LeafGate,
+    Member,
+    MemberRole,
+    Mention,
+    Message,
+    // StaleMessage,
+    MessageContent,
+    MessageContext,
+    MessageMatch,
+    MessagePermissions,
+    MessageReminderContent,
+    MessageReminderCreatedContent,
+    Metrics,
+    MultiUserChatIdentifier,
+    OCError,
+    P2PSwapContent,
+    P2PSwapContentInitial,
+    P2PSwapStatus,
+    PendingCryptocurrencyTransfer,
+    PendingCryptocurrencyWithdrawal,
+    PermissionRole,
+    PinMessageResponse,
+    PollConfig,
+    PollContent,
+    PollVotes,
+    PrizeContent,
+    PrizeContentInitial,
+    PrizeWinnerContent,
+    Proposal,
+    // User,
+    ProposalContent,
+    PublicApiKeyDetails,
+    Reaction,
+    ReplyContext,
+    ReportedMessageContent,
+    SearchGroupChatResponse,
+    SendMessageResponse,
+    SenderContext,
+    Success,
+    TextContent,
+    ThreadPreview,
+    ThreadPreviewsResponse,
+    ThreadSummary,
+    ThreadSyncDetails,
+    TipsReceived,
+    TokenInfo,
+    TotalPollVotes,
+    UndeleteMessageResponse,
+    UpdateGroupResponse,
     UpdatedEvent,
     User,
-    DexId,
-    MessageMatch,
-    AcceptP2PSwapResponse,
-    AccessGateConfig,
-    ExternalBotPermissions,
-    InstalledBotDetails,
-    BotDefinition,
-    CommandDefinition,
-    CommandParamType,
-    CommandParam,
-    BotMessageContext,
-    CommandArg,
-    GenerateBotKeyResponse,
-    PublicApiKeyDetails,
-    OCError,
-    Success,
-    CreateGroupSuccess,
-    InviteCodeSuccess,
-    EnableInviteCodeSuccess,
-    SendMessageResponse,
-    ClaimPrizeResponse,
+    UserGroupSummary,
+    VideoCallContent,
+    VideoCallParticipant,
+    VideoCallParticipantsResponse,
+    VideoCallPresence,
+    VideoCallType,
+    VideoContent,
+    WebhookDetails,
 } from "openchat-shared";
 import {
+    CommonResponses,
+    ICP_SYMBOL,
     ProposalDecisionStatus,
     ProposalRewardStatus,
     UnsupportedValueError,
-    CommonResponses,
+    botChatPermissionList,
     chatIdentifiersEqual,
     codeToText,
+    communityPermissionsList,
     emptyChatMetrics,
     isAccountIdentifierValid,
+    messagePermissionsList,
     toBigInt32,
     toBigInt64,
-    ICP_SYMBOL,
-    communityPermissionsList,
-    botChatPermissionList,
-    messagePermissionsList,
 } from "openchat-shared";
-import { toRecord2 } from "../../utils/list";
 import type {
+    AcceptSwapSuccess,
+    AccountICRC1,
+    BotDefinition as ApiBotDefinition,
+    BotCommandDefinition as ApiCommandDefinition,
+    BotCommandParam as ApiCommandParam,
+    BotCommandParamType as ApiCommandParamType,
+    BotPermissions as ApiExternalBotPermissions,
+    InstalledBotDetails as ApiInstalledBotDetails,
+    PublicApiKeyDetails as ApiPublicApiKeyDetails,
+    WebhookDetails as ApiWebhookDetails,
+    BotCommandArg,
+    CommunityClaimPrizeResponse,
+    CommunityCreateChannelSuccessResult,
+    CommunityDeletedMessageSuccessResult,
+    CommunityEnableInviteCodeSuccessResult,
+    CommunityGenerateBotApiKeySuccessResult,
+    CommunityInviteCodeSuccessResult,
+    CommunitySearchChannelResponse,
+    CommunitySelectedChannelInitialSuccessResult,
+    CommunitySelectedChannelUpdatesResponse,
+    CommunitySendMessageSuccessResult,
+    CommunityThreadPreviewsSuccessResult,
+    CommunityUndeleteMessagesSuccessResult,
+    CommunityUpdateChannelSuccessResult,
+    GroupClaimPrizeResponse,
+    GroupDeletedMessageSuccessResult,
+    GroupEnableInviteCodeSuccessResult,
+    GroupGenerateBotApiKeySuccessResult,
+    GroupInviteCodeSuccessResult,
+    GroupSearchMessagesResponse,
+    GroupSelectedInitialSuccessResult,
+    GroupSelectedUpdatesResponse,
+    GroupSendMessageSuccessResult,
+    GroupThreadPreviewsSuccessResult,
+    GroupUndeleteMessagesSuccessResult,
+    GroupUpdateGroupSuccessResult,
+    LocalUserIndexJoinGroupResponse,
+    PushEventResult,
     AccessGate as TAccessGate,
     AccessGateConfig as TAccessGateConfig,
     AccessGateNonComposite as TAccessGateNonComposite,
-    AccountICRC1,
     AudioContent as TAudioContent,
     BlobReference as TBlobReference,
+    BotMessageContext as TBotMessageContext,
     CallParticipant as TCallParticipant,
     Chat as TChat,
     ChatEvent as TChatEvent,
@@ -151,8 +179,6 @@ import type {
     CommunityPermissionRole as TCommunityPermissionRole,
     CommunityPermissions as TCommunityPermissions,
     CommunityRole as TCommunityRole,
-    CommunitySearchChannelResponse,
-    CommunitySelectedChannelUpdatesResponse,
     CompletedCryptoTransaction as TCompletedCryptoTransaction,
     CryptoContent as TCryptoContent,
     CryptoTransaction as TCryptoTransaction,
@@ -173,14 +199,10 @@ import type {
     GroupPermissionRole as TGroupPermissionRole,
     GroupPermissions as TGroupPermissions,
     GroupRole as TGroupRole,
-    GroupSearchMessagesResponse,
-    GroupSelectedUpdatesResponse,
     GroupSubtype as TGroupSubtype,
-    HydratedMention as TMention,
     ImageContent as TImageContent,
-    LocalUserIndexJoinGroupResponse,
+    HydratedMention as TMention,
     Message as TMessage,
-    BotMessageContext as TBotMessageContext,
     MessageContent as TMessageContent,
     MessageContentInitial as TMessageContentInitial,
     MessageMatch as TMessageMatch,
@@ -206,6 +228,7 @@ import type {
     ProposalRewardStatus as TProposalRewardStatus,
     ReplyContext as TReplyContext,
     ReportedMessage as TReportedMessage,
+    SenderContext as TSenderContext,
     TextContent as TTextContent,
     ThreadPreview as TThreadPreview,
     ThreadSummary as TThreadSummary,
@@ -214,48 +237,29 @@ import type {
     TotalVotes as TTotalVotes,
     User as TUser,
     UserGroupSummary as TUserGroupSummary,
-    UserWithdrawCryptoArgs,
     VideoCallContent as TVideoCallContent,
     VideoCallPresence as TVideoCallPresence,
     VideoCallType as TVideoCallType,
     VideoContent as TVideoContent,
-    BotPermissions as ApiExternalBotPermissions,
-    BotCommandDefinition as ApiCommandDefinition,
-    BotCommandParamType as ApiCommandParamType,
-    BotCommandParam as ApiCommandParam,
-    BotCommandArg,
-    BotDefinition as ApiBotDefinition,
-    PublicApiKeyDetails as ApiPublicApiKeyDetails,
-    InstalledBotDetails as ApiInstalledBotDetails,
     UserCreateGroupSuccessResult,
-    CommunityCreateChannelSuccessResult,
-    GroupDeletedMessageSuccessResult,
-    CommunityDeletedMessageSuccessResult,
-    GroupEnableInviteCodeSuccessResult,
-    CommunityEnableInviteCodeSuccessResult,
-    GroupInviteCodeSuccessResult,
-    CommunityInviteCodeSuccessResult,
-    PushEventResult,
-    GroupUndeleteMessagesSuccessResult,
-    CommunityUndeleteMessagesSuccessResult,
-    GroupUpdateGroupSuccessResult,
-    CommunityUpdateChannelSuccessResult,
-    AcceptSwapSuccess,
-    VideoCallParticipants,
-    CommunityGenerateBotApiKeySuccessResult,
-    GroupGenerateBotApiKeySuccessResult,
-    UserGenerateBotApiKeySuccessResult,
-    CommunitySendMessageSuccessResult,
-    GroupSelectedInitialSuccessResult,
-    CommunitySelectedChannelInitialSuccessResult,
-    GroupClaimPrizeResponse,
-    CommunityClaimPrizeResponse,
-    GroupThreadPreviewsSuccessResult,
-    CommunityThreadPreviewsSuccessResult,
-    GroupSendMessageSuccessResult,
-    UserUndeleteMessagesSuccessResult,
     UserDeletedMessageSuccessResult,
+    UserGenerateBotApiKeySuccessResult,
+    UserUndeleteMessagesSuccessResult,
+    UserWithdrawCryptoArgs,
+    VideoCallParticipants,
 } from "../../typebox";
+import { toRecord2 } from "../../utils/list";
+import {
+    bigintToBytes,
+    bytesToBigint,
+    bytesToHexString,
+    consolidateBytes,
+    hexStringToBytes,
+    identity,
+    mapOptional,
+    principalBytesToString,
+    principalStringToBytes,
+} from "../../utils/mapping";
 import type { ApiPrincipal } from "../index";
 import { ensureReplicaIsUpToDate } from "./replicaUpToDateChecker";
 
@@ -274,7 +278,7 @@ export async function getEventsSuccess(
     value: TEventsResponse,
     principal: Principal,
     chatId: ChatIdentifier,
-    suppressError = false
+    suppressError = false,
 ): Promise<EventsResponse<ChatEvent>> {
     const error = await ensureReplicaIsUpToDate(
         principal,
@@ -283,12 +287,14 @@ export async function getEventsSuccess(
         suppressError,
     );
 
-    return error ?? {
-        events: value.events.map(eventWrapper),
-        expiredEventRanges: value.expired_event_ranges.map(expiredEventsRange),
-        expiredMessageRanges: value.expired_message_ranges.map(expiredMessagesRange),
-        latestEventIndex: value.latest_event_index,
-    };
+    return (
+        error ?? {
+            events: value.events.map(eventWrapper),
+            expiredEventRanges: value.expired_event_ranges.map(expiredEventsRange),
+            expiredMessageRanges: value.expired_message_ranges.map(expiredMessagesRange),
+            latestEventIndex: value.latest_event_index,
+        }
+    );
 }
 
 export function eventWrapper(value: TEventWrapperChatEvent): EventWrapper<ChatEvent> {
@@ -300,7 +306,9 @@ export function eventWrapper(value: TEventWrapperChatEvent): EventWrapper<ChatEv
     };
 }
 
-export function sendMessageSuccess(value: CommunitySendMessageSuccessResult | GroupSendMessageSuccessResult): SendMessageResponse {
+export function sendMessageSuccess(
+    value: CommunitySendMessageSuccessResult | GroupSendMessageSuccessResult,
+): SendMessageResponse {
     return {
         kind: "success",
         timestamp: value.timestamp,
@@ -545,12 +553,23 @@ export function message(value: TMessage): Message {
         deleted: content.kind === "deleted_content",
         thread: mapOptional(value.thread_summary, threadSummary),
         blockLevelMarkdown: value.block_level_markdown,
-        botContext: mapOptional(value.bot_context, botMessageContext),
+        senderContext: mapOptional(value.sender_context, senderContext),
     };
+}
+
+export function senderContext(value: TSenderContext): SenderContext {
+    if (value === "Webhook") {
+        return {
+            kind: "webhook",
+        };
+    } else {
+        return botMessageContext(value.Bot);
+    }
 }
 
 export function botMessageContext(value: TBotMessageContext): BotMessageContext {
     return {
+        kind: "bot",
         finalised: value.finalised,
         command: mapOptional(value.command, (command) => ({
             name: command.name,
@@ -604,13 +623,10 @@ export function botCommandArg(api: BotCommandArg): CommandArg {
 
 export function tips(value: [ApiPrincipal, [ApiPrincipal, bigint][]][]): TipsReceived {
     return value.reduce((agg, [ledger, tips]) => {
-        agg[principalBytesToString(ledger)] = tips.reduce(
-            (userTips, [userId, amount]) => {
-                userTips[principalBytesToString(userId)] = amount;
-                return userTips;
-            },
-            {} as Record<string, bigint>,
-        );
+        agg[principalBytesToString(ledger)] = tips.reduce((userTips, [userId, amount]) => {
+            userTips[principalBytesToString(userId)] = amount;
+            return userTips;
+        }, {} as Record<string, bigint>);
         return agg;
     }, {} as TipsReceived);
 }
@@ -996,25 +1012,19 @@ function totalPollVotes(value: TTotalVotes): TotalPollVotes {
     if ("Anonymous" in value) {
         return {
             kind: "anonymous_poll_votes",
-            votes: Object.entries(value.Anonymous).reduce(
-                (agg, [idx, num]) => {
-                    agg[Number(idx)] = num;
-                    return agg;
-                },
-                {} as Record<number, number>,
-            ),
+            votes: Object.entries(value.Anonymous).reduce((agg, [idx, num]) => {
+                agg[Number(idx)] = num;
+                return agg;
+            }, {} as Record<number, number>),
         };
     }
     if ("Visible" in value) {
         return {
             kind: "visible_poll_votes",
-            votes: Object.entries(value.Visible).reduce(
-                (agg, [idx, userIds]) => {
-                    agg[Number(idx)] = userIds.map(principalBytesToString);
-                    return agg;
-                },
-                {} as Record<number, string[]>,
-            ),
+            votes: Object.entries(value.Visible).reduce((agg, [idx, userIds]) => {
+                agg[Number(idx)] = userIds.map(principalBytesToString);
+                return agg;
+            }, {} as Record<number, string[]>),
         };
     }
     if ("Hidden" in value) {
@@ -2334,7 +2344,7 @@ export async function getMessagesSuccess(
     value: TMessagesResponse,
     principal: Principal,
     chatId: ChatIdentifier,
-    suppressError = false
+    suppressError = false,
 ): Promise<EventsResponse<Message>> {
     const error = await ensureReplicaIsUpToDate(
         principal,
@@ -2343,12 +2353,14 @@ export async function getMessagesSuccess(
         suppressError,
     );
 
-    return error ?? {
-        events: value.messages.map(messageEvent),
-        expiredEventRanges: [],
-        expiredMessageRanges: [],
-        latestEventIndex: value.latest_event_index,
-    };
+    return (
+        error ?? {
+            events: value.messages.map(messageEvent),
+            expiredEventRanges: [],
+            expiredMessageRanges: [],
+            latestEventIndex: value.latest_event_index,
+        }
+    );
 }
 
 export function messageEvent(value: TEventWrapperMessage): EventWrapper<Message> {
@@ -2419,9 +2431,7 @@ export function createGroupSuccess(
     throw new Error("Unexpected CreateGroup success response: " + value);
 }
 
-export function pushEventSuccess(
-    value: PushEventResult,
-): PinMessageResponse {
+export function pushEventSuccess(value: PushEventResult): PinMessageResponse {
     return {
         kind: "success",
         eventIndex: value.index,
@@ -2431,11 +2441,12 @@ export function pushEventSuccess(
 
 export function groupDetailsSuccess(
     value: GroupSelectedInitialSuccessResult | CommunitySelectedChannelInitialSuccessResult,
+    blobUrlPattern: string,
+    canisterId: string,
+    channelId?: number,
 ): GroupChatDetailsResponse {
     console.log("Group details: ", value);
-    const members = (
-        "participants" in value ? value.participants : value.members
-    ).map(member);
+    const members = ("participants" in value ? value.participants : value.members).map(member);
 
     const basicMembers = "basic_members" in value ? value.basic_members : [];
     const membersSet = new Set<string>();
@@ -2464,6 +2475,9 @@ export function groupDetailsSuccess(
             m.set(k.botId, k);
             return m;
         }, new Map<string, PublicApiKeyDetails>()),
+        webhooks: value.webhooks.map((v) =>
+            webhookDetails(v, blobUrlPattern, canisterId, channelId),
+        ),
     };
 }
 
@@ -2478,6 +2492,9 @@ export function publicApiKeyDetails(value: ApiPublicApiKeyDetails): PublicApiKey
 
 export function groupDetailsUpdatesResponse(
     value: GroupSelectedUpdatesResponse | CommunitySelectedChannelUpdatesResponse,
+    blobUrlPattern: string,
+    canisterId: string,
+    channelId?: number,
 ): GroupChatDetailsUpdatesResponse {
     if (typeof value === "object") {
         if ("Success" in value) {
@@ -2502,6 +2519,9 @@ export function groupDetailsUpdatesResponse(
                 botsAddedOrUpdated: value.Success.bots_added_or_updated.map(installedBotDetails),
                 botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
                 apiKeysGenerated: value.Success.api_keys_generated.map(publicApiKeyDetails),
+                webhooks: mapOptional(value.Success.webhooks, (whs) =>
+                    whs.map((v) => webhookDetails(v, blobUrlPattern, canisterId, channelId)),
+                ),
             };
         } else if ("SuccessNoUpdates" in value) {
             return {
@@ -2524,7 +2544,10 @@ export function member(value: TGroupMember): Member {
 }
 
 export function deletedMessageSuccess(
-    value: GroupDeletedMessageSuccessResult | CommunityDeletedMessageSuccessResult | UserDeletedMessageSuccessResult,
+    value:
+        | GroupDeletedMessageSuccessResult
+        | CommunityDeletedMessageSuccessResult
+        | UserDeletedMessageSuccessResult,
 ): DeletedGroupMessageResponse {
     return {
         kind: "success",
@@ -2533,7 +2556,10 @@ export function deletedMessageSuccess(
 }
 
 export function undeleteMessageSuccess(
-    value: GroupUndeleteMessagesSuccessResult | CommunityUndeleteMessagesSuccessResult | UserUndeleteMessagesSuccessResult,
+    value:
+        | GroupUndeleteMessagesSuccessResult
+        | CommunityUndeleteMessagesSuccessResult
+        | UserUndeleteMessagesSuccessResult,
 ): UndeleteMessageResponse {
     if (value.messages.length == 0) {
         return CommonResponses.failure();
@@ -2649,9 +2675,7 @@ export function claimPrizeResponse(
     return unitResult(value);
 }
 
-export function acceptP2PSwapSuccess(
-    value: AcceptSwapSuccess,
-): AcceptP2PSwapResponse {
+export function acceptP2PSwapSuccess(value: AcceptSwapSuccess): AcceptP2PSwapResponse {
     return { kind: "success", token1TxnIn: value.token1_txn_in };
 }
 
@@ -2736,6 +2760,30 @@ export function installedBotDetails(value: ApiInstalledBotDetails): InstalledBot
     };
 }
 
+export function webhookDetails(
+    value: ApiWebhookDetails,
+    blobUrlPattern: string,
+    canisterId: string,
+    channelId?: number,
+): WebhookDetails {
+    const webhookId = principalBytesToString(value.id);
+
+    return {
+        id: webhookId,
+        name: value.name,
+        avatarUrl: mapOptional(
+            value.avatar_id,
+            (avatarId) =>
+                `${blobUrlPattern
+                    .replace("{canisterId}", canisterId)
+                    .replace(
+                        "{blobType}",
+                        channelId === undefined ? "avatar" : `channel/${channelId}/avatar`,
+                    )}/${webhookId}/${avatarId}`,
+        ),
+    };
+}
+
 export function externalBotDefinition(value: ApiBotDefinition): BotDefinition {
     return {
         kind: "bot_definition",
@@ -2815,12 +2863,17 @@ export function principalToIcrcAccount(principal: string): AccountICRC1 {
     };
 }
 
-export function unitResult(value: "Success" | { Success: unknown } | { SuccessV2: unknown } | { Error: TOCError }): Success | OCError {
+export function unitResult(
+    value: "Success" | { Success: unknown } | { SuccessV2: unknown } | { Error: TOCError },
+): Success | OCError {
     if (value === "Success") return CommonResponses.success();
     return mapResult(value, CommonResponses.success);
 }
 
-export function mapResult<I, O>(value: { Success: I } | { SuccessV2: I } | { Error: TOCError }, mapper: (input: I) => O): O | OCError {
+export function mapResult<I, O>(
+    value: { Success: I } | { SuccessV2: I } | { Error: TOCError },
+    mapper: (input: I) => O,
+): O | OCError {
     if (typeof value === "object") {
         if ("Success" in value) {
             return mapper(value.Success);
@@ -2837,10 +2890,12 @@ export function mapResult<I, O>(value: { Success: I } | { SuccessV2: I } | { Err
         kind: "error",
         code: -1,
         message: JSON.stringify(value),
-    }
+    };
 }
 
-export function isSuccess(value: "Success" | { Success: unknown } | { SuccessV2: unknown } | { Error: TOCError }): boolean {
+export function isSuccess(
+    value: "Success" | { Success: unknown } | { SuccessV2: unknown } | { Error: TOCError },
+): boolean {
     if (value === "Success") return true;
     if (typeof value !== "object") return false;
     return "Success" in value || "SuccessV2" in value;

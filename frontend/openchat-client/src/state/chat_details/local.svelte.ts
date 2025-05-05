@@ -10,6 +10,7 @@ import {
     type OptionUpdate,
     type PublicApiKeyDetails,
     type VersionedRules,
+    type WebhookDetails,
 } from "openchat-shared";
 import { revokeObjectUrls } from "../../utils/chat";
 import { LocalMap, ReactiveChatMap } from "../map";
@@ -36,6 +37,7 @@ export class ChatDetailsLocalState {
     readonly members = new LocalMap<string, Member>();
     readonly bots = new LocalMap<string, ExternalBotPermissions>();
     readonly apiKeys = new LocalMap<string, PublicApiKeyDetails>();
+    readonly webhooks = new LocalMap<string, WebhookDetails>();
 
     get rules() {
         return this.#rules;
@@ -304,6 +306,18 @@ export class ChatDetailsLocalStateManager {
 
     installBot(id: ChatIdentifier, botId: string, perm: ExternalBotPermissions): UndoLocalUpdate {
         return this.#getOrCreate(id).bots.addOrUpdate(botId, perm);
+    }
+
+    addWebhook(id: ChatIdentifier, webhook: WebhookDetails): UndoLocalUpdate {
+        return this.#getOrCreate(id).webhooks.addOrUpdate(webhook.id, webhook);
+    }
+
+    updateWebhook(id: ChatIdentifier, webhook: WebhookDetails): UndoLocalUpdate {
+        return this.#getOrCreate(id).webhooks.addOrUpdate(webhook.id, webhook);
+    }
+
+    removeWebhook(id: ChatIdentifier, webhookId: string): UndoLocalUpdate {
+        return this.#getOrCreate(id).webhooks.remove(webhookId);
     }
 
     // Only used for testing

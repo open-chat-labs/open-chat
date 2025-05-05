@@ -1,32 +1,32 @@
 /* eslint-disable no-undef */
-import svelte from "rollup-plugin-svelte";
-import { sveltePreprocess } from "svelte-preprocess";
+import alias from "@rollup/plugin-alias";
 import commonjs from "@rollup/plugin-commonjs";
 import html from "@rollup/plugin-html";
+import json from "@rollup/plugin-json";
 import resolve from "@rollup/plugin-node-resolve";
-import copy from "rollup-plugin-copy";
+import replace from "@rollup/plugin-replace";
 import terser from "@rollup/plugin-terser";
 import typescript from "@rollup/plugin-typescript";
-import inject from "rollup-plugin-inject";
-import json from "@rollup/plugin-json";
-import analyze from "rollup-plugin-analyzer";
-import filesize from "rollup-plugin-filesize";
-import execute from "rollup-plugin-shell";
-import styles from "rollup-styles";
-import alias from "@rollup/plugin-alias";
 import autoprefixer from "autoprefixer";
-import replace from "@rollup/plugin-replace";
 import fs from "fs-extra";
 import path from "path";
 import rimraf from "rimraf";
+import analyze from "rollup-plugin-analyzer";
+import copy from "rollup-plugin-copy";
+import filesize from "rollup-plugin-filesize";
+import inject from "rollup-plugin-inject";
+import execute from "rollup-plugin-shell";
+import svelte from "rollup-plugin-svelte";
+import styles from "rollup-styles";
+import { sveltePreprocess } from "svelte-preprocess";
 import { sourcemapNewline } from "../sourcemapNewline.mjs";
 import {
-    initEnv,
-    manualChunks,
+    __dirname,
     copyFile,
     generateCspForScripts,
+    initEnv,
+    manualChunks,
     maybeStringify,
-    __dirname,
 } from "./rollup.extras.mjs";
 
 // this is a bit ridiculous but there we are ...
@@ -182,8 +182,8 @@ export default {
                 process.env.OC_SIGN_IN_WITH_SOLANA_CANISTER,
             ),
             "import.meta.env.OC_BLOB_URL_PATTERN": JSON.stringify(process.env.OC_BLOB_URL_PATTERN),
-            "import.meta.env.OC_ACHIEVEMENT_URL_PATH": JSON.stringify(
-                process.env.OC_ACHIEVEMENT_URL_PATH,
+            "import.meta.env.OC_CANISTER_URL_PATH": JSON.stringify(
+                process.env.OC_CANISTER_URL_PATH,
             ),
             "import.meta.env.OC_USERGEEK_APIKEY": JSON.stringify(process.env.OC_USERGEEK_APIKEY),
             "import.meta.env.OC_VIDEO_BRIDGE_URL": JSON.stringify(process.env.OC_VIDEO_BRIDGE_URL),

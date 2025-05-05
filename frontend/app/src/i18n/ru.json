@@ -105,6 +105,7 @@
         "visibility": "Доступ"
     },
     "account": "Аккаунт",
+    "accountCopiedToClipboard": "Адрес счета скопирован в буфер обмена!",
     "accounts": "Счета",
     "accountSuspended": "Аккаунт заблокирован",
     "activity": {
@@ -369,13 +370,14 @@
         "matchingCommands": "Соответствующие команды",
         "member": {
             "bots": "Боты",
-            "people": "Люди"
+            "people": "Люди",
+            "webhooks": "Вебхуки"
         },
         "poll": {
             "desc": "Создать опрос в текущем чате"
         },
         "register_bot": {
-            "desc": "Начать предложение по описанию и регистрации нового бота в OpenChat"
+            "desc": "Зарегистрируйте нового бота в OpenChat"
         },
         "search": {
             "desc": "Начать поиск в текущем чате",
@@ -1995,6 +1997,22 @@
     "viewer": "зритель",
     "wallet": "Кошелек",
     "walletSettings": "Настройки кошелька",
+    "webhook": {
+        "avatarLabel": "Аватар",
+        "nameLabel": "Имя",
+        "namePlaceholder": "Введите имя вебхука",
+        "nameRules": "Должен быть уникальным в этом чате и содержать только буквенно-цифровые символы и подчеркивания.",
+        "regenerateAction": "Регенерировать",
+        "registerAction": "Зарегистрироваться",
+        "registerDesc": "Зарегистрируйте вебхук в этом чате",
+        "registerTitle": "Зарегистрировать вебхук",
+        "removeAction": "Удалить вебхук",
+        "removeFailed": "Извините, мы не смогли удалить вебхук.",
+        "updateAction": "Обновлять",
+        "updateTitle": "Обновление {name}",
+        "urlLabel": "URL-адрес веб-перехватчика",
+        "viewEditAction": "Просмотр/редактирование данных вебхука"
+    },
     "websiteVersion": "веб-сайта",
     "weeks": "Недели",
     "whatsHot": "Популярное",

@@ -105,6 +105,7 @@
         "visibility": "Truy cập"
     },
     "account": "Tài khoản",
+    "accountCopiedToClipboard": "Đã sao chép địa chỉ tài khoản vào bảng tạm!",
     "accounts": "Tài khoản",
     "accountSuspended": "Toàn khoản bị đình chỉ",
     "activity": {
@@ -369,13 +370,14 @@
         "matchingCommands": "Lệnh khớp",
         "member": {
             "bots": "Bots",
-            "people": "Mọi người"
+            "people": "Mọi người",
+            "webhooks": "Webhook"
         },
         "poll": {
             "desc": "Tạo một cuộc thăm dò trong cuộc trò chuyện hiện tại"
         },
         "register_bot": {
-            "desc": "Bắt đầu đề xuất mô tả và đăng ký bot mới với OpenChat"
+            "desc": "Đăng ký bot mới với OpenChat"
         },
         "search": {
             "desc": "Bắt đầu tìm kiếm trong cuộc trò chuyện hiện tại",
@@ -1995,6 +1997,22 @@
     "viewer": "người xem",
     "wallet": "Cái ví",
     "walletSettings": "Cài đặt ví",
+    "webhook": {
+        "avatarLabel": "Hình đại diện",
+        "nameLabel": "Tên",
+        "namePlaceholder": "Nhập tên webhook",
+        "nameRules": "Phải là duy nhất trong cuộc trò chuyện này và chỉ chứa các ký tự chữ và số và dấu gạch dưới",
+        "regenerateAction": "Tái tạo",
+        "registerAction": "Đăng ký",
+        "registerDesc": "Đăng ký webhook trong cuộc trò chuyện này",
+        "registerTitle": "Đăng ký webhook",
+        "removeAction": "Xóa webhook",
+        "removeFailed": "Xin lỗi, chúng tôi không thể xóa webhook",
+        "updateAction": "Cập nhật",
+        "updateTitle": "Cập nhật {name}",
+        "urlLabel": "URL Webhook",
+        "viewEditAction": "Xem/chỉnh sửa chi tiết webhook"
+    },
     "websiteVersion": "của trang web",
     "weeks": "Tuần",
     "whatsHot": "Nhóm đang HOT🔥",

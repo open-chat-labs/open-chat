@@ -92,6 +92,7 @@ import type {
     ExternalBotPermissions,
     Failure,
     FromWorker,
+    FullWebhookDetails,
     GenerateBotKeyResponse,
     GenerateChallengeResponse,
     GenerateMagicLinkResponse,
@@ -196,6 +197,7 @@ import type {
     WalletConfig,
     WebAuthnKey,
     WebAuthnKeyFull,
+    WebhookDetails,
     WebRtcMessage,
     WithdrawBtcResponse,
     WithdrawCryptocurrencyResponse,
@@ -3210,6 +3212,7 @@ export class OpenChat {
                         resp.rules,
                         resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
                         resp.apiKeys,
+                        new Map(resp.webhooks.map((w) => [w.id, w])),
                     );
                 }
                 await this.#updateUserStoreFromEvents([]);
@@ -3221,10 +3224,27 @@ export class OpenChat {
     }
 
     achievementLogo(id: number): string {
-        return `${this.config.achievementUrlPath.replace(
+        return `${this.config.canisterUrlPath.replace(
             "{canisterId}",
             this.config.userIndexCanister,
         )}/achievement_logo/${id}`;
+    }
+
+    webhookUrl(
+        webhook: { id: string; secret?: string },
+        chatId: MultiUserChatIdentifier,
+    ): string | undefined {
+        if (webhook.secret === undefined) {
+            return undefined;
+        }
+
+        const canisterId = chatId.kind === "channel" ? chatId.communityId : chatId.groupId;
+        const channelPart = chatId.kind === "channel" ? `/channel/${chatId.channelId}` : "";
+
+        return (
+            this.config.canisterUrlPath.replace("{canisterId}", canisterId) +
+            `${channelPart}/webhook/${webhook.id}/${webhook.secret}`
+        );
     }
 
     // this is unavoidably duplicated from the agent
@@ -8008,6 +8028,110 @@ export class OpenChat {
         });
     }
 
+    registerWebhook(
+        chatId: MultiUserChatIdentifier,
+        name: string,
+        avatar: string | undefined,
+    ): Promise<FullWebhookDetails | undefined> {
+        return this.#sendRequest({
+            kind: "registerWebhook",
+            chatId,
+            name,
+            avatar,
+        })
+            .then((resp) => {
+                if (resp !== undefined) {
+                    localUpdates.addWebhookToChat(chatId, resp);
+                }
+                return resp;
+            })
+            .catch((err) => {
+                this.#logger.error("Failed to register webhook", err);
+                return undefined;
+            });
+    }
+
+    updateWebhook(
+        chatId: MultiUserChatIdentifier,
+        existing: WebhookDetails,
+        name: string | undefined,
+        avatar: OptionUpdate<string>,
+    ): Promise<boolean> {
+        const webhook = { ...existing };
+        if (name !== undefined) {
+            webhook.name = name;
+        }
+        if (avatar === "set_to_none") {
+            webhook.avatarUrl = undefined;
+        } else if (avatar !== undefined) {
+            webhook.avatarUrl = avatar.value;
+        }
+
+        const undo = localUpdates.updateWebhook(chatId, webhook);
+
+        return this.#sendRequest({
+            kind: "updateWebhook",
+            chatId,
+            id: webhook.id,
+            name,
+            avatar,
+        })
+            .then((resp) => {
+                if (!resp) {
+                    undo();
+                }
+                return resp;
+            })
+            .catch((err) => {
+                this.#logger.error("Failed to update webhook", err);
+                undo();
+                return false;
+            });
+    }
+
+    regenerateWebhook(chatId: MultiUserChatIdentifier, id: string): Promise<string | undefined> {
+        return this.#sendRequest({
+            kind: "regenerateWebhook",
+            chatId,
+            id,
+        }).catch((err) => {
+            this.#logger.error("Failed to regenerate webhook", err);
+            return undefined;
+        });
+    }
+
+    deleteWebhook(chatId: MultiUserChatIdentifier, id: string): Promise<boolean> {
+        const undo = localUpdates.removeWebhookFromChat(chatId, id);
+
+        return this.#sendRequest({
+            kind: "deleteWebhook",
+            chatId,
+            id,
+        })
+            .then((resp) => {
+                if (!resp) {
+                    undo();
+                }
+                return resp;
+            })
+            .catch((err) => {
+                undo();
+                this.#logger.error("Failed to delete webhook", err);
+                return false;
+            });
+    }
+
+    getWebhook(chatId: MultiUserChatIdentifier, id: string): Promise<string | undefined> {
+        return this.#sendRequest({
+            kind: "getWebhook",
+            chatId,
+            id,
+        }).catch((err) => {
+            this.#logger.error("Failed to get webhook", err);
+            return undefined;
+        });
+    }
+
     executeInternalBotCommand(
         scope: BotActionScope,
         bot: InternalBotCommandInstance,
@@ -8024,6 +8148,8 @@ export class OpenChat {
             publish("summonWitch");
         } else if (bot.command.name === "register_bot") {
             publish("registerBot");
+        } else if (bot.command.name === "register_webhook") {
+            publish("registerWebhook");
         } else if (bot.command.name === "update_bot") {
             publish("updateBot");
         } else if (bot.command.name === "remove_bot") {
@@ -8269,7 +8395,7 @@ export class OpenChat {
                     forwarded: false,
                     deleted: false,
                     blockLevelMarkdown: blockLevelMarkdown,
-                    botContext,
+                    senderContext: botContext,
                 },
             };
             if (!ephemeral) {
@@ -8289,14 +8415,15 @@ export class OpenChat {
     ): Promise<"success" | "failure" | "too_many_requests"> {
         const botContext = direct
             ? undefined
-            : {
+            : ({
+                  kind: "bot",
                   finalised: false,
                   command: {
                       name: bot.command.name,
                       args: bot.command.arguments,
                       initiator: app.currentUserId,
                   },
-              };
+              } as BotMessageContext);
         let removePlaceholder: (() => void) | undefined = undefined;
         switch (bot.kind) {
             case "external_bot":
@@ -8336,7 +8463,11 @@ export class OpenChat {
                                 }
                                 removePlaceholder = this.sendPlaceholderBotMessage(
                                     scope,
-                                    { ...botContext, finalised: resp.message.finalised },
+                                    {
+                                        ...botContext,
+                                        finalised: resp.message.finalised,
+                                        kind: "bot",
+                                    },
                                     resp.message.messageContent,
                                     resp.message.messageId,
                                     bot.id,
@@ -8591,7 +8722,7 @@ export class OpenChat {
                     userGeekApiKey: this.config.userGeekApiKey,
                     enableMultiCrypto: this.config.enableMultiCrypto,
                     blobUrlPattern: this.config.blobUrlPattern,
-                    achievementUrlPath: this.config.achievementUrlPath,
+                    canisterUrlPath: this.config.canisterUrlPath,
                     proposalBotCanister: this.config.proposalBotCanister,
                     marketMakerCanister: this.config.marketMakerCanister,
                     signInWithEmailCanister: this.config.signInWithEmailCanister,

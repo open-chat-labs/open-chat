@@ -1,5 +1,5 @@
-import { AuthProvider, type GroupInvite } from "openchat-shared";
 import type { Logger } from "openchat-shared";
+import { AuthProvider, type GroupInvite } from "openchat-shared";
 
 export type AgentConfig = {
     authPrincipal: string;
@@ -19,7 +19,7 @@ export type AgentConfig = {
     userGeekApiKey: string;
     enableMultiCrypto?: boolean;
     blobUrlPattern: string;
-    achievementUrlPath: string;
+    canisterUrlPath: string;
     proposalBotCanister: string;
     marketMakerCanister: string;
     signInWithEmailCanister: string;

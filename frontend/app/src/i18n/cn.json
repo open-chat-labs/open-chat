@@ -105,6 +105,7 @@
         "visibility": "能见度"
     },
     "account": "账户",
+    "accountCopiedToClipboard": "帐户地址已复制到剪贴板！",
     "accounts": "账户",
     "accountSuspended": "帐户暂停",
     "activity": {
@@ -369,13 +370,14 @@
         "matchingCommands": "匹配命令",
         "member": {
             "bots": "机器人",
-            "people": "人们"
+            "people": "人们",
+            "webhooks": "Webhook"
         },
         "poll": {
             "desc": "在当前聊天中创建投票"
         },
         "register_bot": {
-            "desc": "发起一个提案来描述和注册一个使用 OpenChat 的新机器人"
+            "desc": "使用 OpenChat 注册一个新的机器人"
         },
         "search": {
             "desc": "在当前聊天中发起搜索",
@@ -1995,6 +1997,22 @@
     "viewer": "观众",
     "wallet": "钱包",
     "walletSettings": "钱包设置",
+    "webhook": {
+        "avatarLabel": "阿凡达",
+        "nameLabel": "姓名",
+        "namePlaceholder": "输入 webhook 名称",
+        "nameRules": "在此聊天中必须是唯一的，并且仅包含字母数字字符和下划线",
+        "regenerateAction": "再生",
+        "registerAction": "登记",
+        "registerDesc": "在此聊天中注册一个 webhook",
+        "registerTitle": "注册 webhook",
+        "removeAction": "删除 webhook",
+        "removeFailed": "抱歉，我们无法删除该 webhook",
+        "updateAction": "更新",
+        "updateTitle": "更新 {name}",
+        "urlLabel": "Webhook URL",
+        "viewEditAction": "查看/编辑 webhook 详细信息"
+    },
     "websiteVersion": "网站的",
     "weeks": "周数",
     "whatsHot": "热门群聊",

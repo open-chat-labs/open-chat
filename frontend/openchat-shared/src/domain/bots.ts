@@ -18,7 +18,7 @@ import type {
 } from "./permission";
 import type { BotMatch } from "./search/search";
 
-export const MIN_NAME_LENGTH = 3;
+export const MIN_NAME_LENGTH = 5;
 export const MIN_PARAM_NAME_LENGTH = 1;
 
 export type InstalledBotDetails = {
@@ -177,6 +177,7 @@ export type CommandDefinition = {
     defaultRole: MemberRole;
     directBotDisabled?: boolean;
     directMessages: boolean;
+    directChatsDisabled?: boolean;
 };
 
 export function emptyExternalBotPermissions(): ExternalBotPermissions {
@@ -806,3 +807,20 @@ export function directMessageCommandInstance(
         };
     }
 }
+
+export type WebhookDetails = {
+    id: string;
+    name: string;
+    avatarUrl?: string;
+};
+
+export function emptyWebhookInstance(): FullWebhookDetails {
+    return {
+        id: "",
+        name: "",
+    };
+}
+
+export type FullWebhookDetails = WebhookDetails & {
+    secret?: string;
+};
