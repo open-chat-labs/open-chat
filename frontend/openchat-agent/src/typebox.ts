@@ -165,12 +165,6 @@ export const IdentityGenerateChallengeResponse = Type.Union([
     Type.Literal("Throttled"),
 ]);
 
-export type IdentityCheckAuthPrincipalResponse = Static<typeof IdentityCheckAuthPrincipalResponse>;
-export const IdentityCheckAuthPrincipalResponse = Type.Union([
-    Type.Literal("Success"),
-    Type.Literal("NotFound"),
-]);
-
 export type OnlineUsersMinutesOnlineArgs = Static<typeof OnlineUsersMinutesOnlineArgs>;
 export const OnlineUsersMinutesOnlineArgs = Type.Object({
     year: Type.Number(),
@@ -6819,6 +6813,40 @@ export const BotActionScope = Type.Union([
     }),
 ]);
 
+export type UserNotificationPayload = Static<typeof UserNotificationPayload>;
+export const UserNotificationPayload = Type.Union([
+    Type.Object({
+        ac: AddedToChannelNotification,
+    }),
+    Type.Object({
+        dm: DirectMessageNotification,
+    }),
+    Type.Object({
+        gm: GroupMessageNotification,
+    }),
+    Type.Object({
+        cm: ChannelMessageNotification,
+    }),
+    Type.Object({
+        dr: DirectReactionAddedNotification,
+    }),
+    Type.Object({
+        gr: GroupReactionAddedNotification,
+    }),
+    Type.Object({
+        cr: ChannelReactionAddedNotification,
+    }),
+    Type.Object({
+        dt: DirectMessageTipped,
+    }),
+    Type.Object({
+        gt: GroupMessageTipped,
+    }),
+    Type.Object({
+        ct: ChannelMessageTipped,
+    }),
+]);
+
 export type UserSummaryV2 = Static<typeof UserSummaryV2>;
 export const UserSummaryV2 = Type.Object({
     user_id: UserId,
@@ -6914,40 +6942,6 @@ export const Proposal = Type.Union([
     }),
     Type.Object({
         SNS: SnsProposal,
-    }),
-]);
-
-export type Notification = Static<typeof Notification>;
-export const Notification = Type.Union([
-    Type.Object({
-        ac: AddedToChannelNotification,
-    }),
-    Type.Object({
-        dm: DirectMessageNotification,
-    }),
-    Type.Object({
-        gm: GroupMessageNotification,
-    }),
-    Type.Object({
-        cm: ChannelMessageNotification,
-    }),
-    Type.Object({
-        dr: DirectReactionAddedNotification,
-    }),
-    Type.Object({
-        gr: GroupReactionAddedNotification,
-    }),
-    Type.Object({
-        cr: ChannelReactionAddedNotification,
-    }),
-    Type.Object({
-        dt: DirectMessageTipped,
-    }),
-    Type.Object({
-        gt: GroupMessageTipped,
-    }),
-    Type.Object({
-        ct: ChannelMessageTipped,
     }),
 ]);
 

@@ -1,22 +1,20 @@
-import { MessageMap, type TipsReceived } from "openchat-shared";
+import { type TipsReceived } from "openchat-shared";
+import { SvelteMap } from "svelte/reactivity";
+import { messageLocalUpdates, type LocalTipsReceived } from "../state/message/local.svelte";
 import { mergeLocalTips } from "../utils/chat";
-import { LocalMessageUpdatesStore } from "./localMessageUpdates";
-import { get } from "svelte/store";
 
 type Message = {
     tips: TipsReceived;
 };
 
 describe("adding tips locally", () => {
-    let updates = new LocalMessageUpdatesStore(new MessageMap());
     beforeEach(() => {
-        updates = new LocalMessageUpdatesStore(new MessageMap());
+        messageLocalUpdates.clearAll();
     });
 
     test("add a local tip", () => {
-        updates.markTip(123n, "ledger1", "user1", 456n);
-        const store = get(updates);
-        const tips = store.get(BigInt(123))?.tips;
+        messageLocalUpdates.markTip(123n, "ledger1", "user1", 456n);
+        const tips = messageLocalUpdates.get(BigInt(123))?.tips;
         expect(tips).toMatchObject({
             ledger1: {
                 user1: 456n,
@@ -25,10 +23,9 @@ describe("adding tips locally", () => {
     });
 
     test("adding two local tips on the same ledger", () => {
-        updates.markTip(123n, "ledger1", "user1", 456n);
-        updates.markTip(123n, "ledger1", "user1", 100n);
-        const store = get(updates);
-        const tips = store.get(BigInt(123))?.tips;
+        messageLocalUpdates.markTip(123n, "ledger1", "user1", 456n);
+        messageLocalUpdates.markTip(123n, "ledger1", "user1", 100n);
+        const tips = messageLocalUpdates.get(BigInt(123))?.tips;
         expect(tips).toMatchObject({
             ledger1: {
                 user1: 556n,
@@ -37,10 +34,9 @@ describe("adding tips locally", () => {
     });
 
     test("adding two local tips on the different ledger", () => {
-        updates.markTip(123n, "ledger1", "user1", 456n);
-        updates.markTip(123n, "ledger2", "user1", 100n);
-        const store = get(updates);
-        const tips = store.get(BigInt(123))?.tips;
+        messageLocalUpdates.markTip(123n, "ledger1", "user1", 456n);
+        messageLocalUpdates.markTip(123n, "ledger2", "user1", 100n);
+        const tips = messageLocalUpdates.get(BigInt(123))?.tips;
         expect(tips).toMatchObject({
             ledger1: {
                 user1: 456n,
@@ -52,24 +48,26 @@ describe("adding tips locally", () => {
     });
 
     test("reverting a tip", () => {
-        updates.markTip(123n, "ledger1", "user1", 456n);
-        updates.markTip(123n, "ledger1", "user1", -456n);
-        const store = get(updates);
-        const tips = store.get(BigInt(123))?.tips;
+        messageLocalUpdates.markTip(123n, "ledger1", "user1", 456n);
+        messageLocalUpdates.markTip(123n, "ledger1", "user1", -456n);
+        const tips = messageLocalUpdates.get(BigInt(123))?.tips;
         expect(tips).toMatchObject({});
     });
 });
 
 describe("merging local tips", () => {
+    beforeEach(() => {
+        messageLocalUpdates.clearAll();
+    });
     test("no existing local updates", () => {
         const existing: Message = { tips: {} };
-        const local = { ledger1: { user1: 123n } };
+        const local = createLocalTips("ledger1", "user1", 123n);
         const merged = mergeLocalTips(existing.tips, local);
         expect(merged).toMatchObject(local);
     });
     test("adding nothing leaves things unchanged", () => {
         const existing: Message = { tips: { ledger1: { user1: 123n } } };
-        const local = {};
+        const local = new SvelteMap() as LocalTipsReceived;
         const merged = mergeLocalTips(existing.tips, local);
         expect(merged).toMatchObject({
             ledger1: { user1: 123n },
@@ -77,7 +75,7 @@ describe("merging local tips", () => {
     });
     test("local tip should override existing", () => {
         const existing: Message = { tips: { ledger1: { user1: 123n } } };
-        const local = { ledger1: { user1: 456n } };
+        const local = createLocalTips("ledger1", "user1", 456n);
         const merged = mergeLocalTips(existing.tips, local);
         expect(merged).toMatchObject({
             ledger1: { user1: 456n },
@@ -85,7 +83,7 @@ describe("merging local tips", () => {
     });
     test("adding a second local update for a different ledger", () => {
         const existing: Message = { tips: { ledger1: { user1: 123n } } };
-        const local = { ledger2: { user2: BigInt(456) } };
+        const local = createLocalTips("ledger2", "user2", 456n);
         const merged = mergeLocalTips(existing.tips, local);
         expect(merged).toMatchObject({
             ledger1: {
@@ -97,3 +95,11 @@ describe("merging local tips", () => {
         });
     });
 });
+
+function createLocalTips(ledger: string, userId: string, amount: bigint): LocalTipsReceived {
+    const ledgers = new SvelteMap<string, SvelteMap<string, bigint>>();
+    const users = new SvelteMap<string, bigint>();
+    users.set(userId, amount);
+    ledgers.set(ledger, users);
+    return ledgers;
+}

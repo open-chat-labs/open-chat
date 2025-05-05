@@ -9,7 +9,7 @@ import { SvelteMap, SvelteSet } from "svelte/reactivity";
 
 export class UsersState {
     #blockedUsers = new SvelteSet<string>();
-    #normalUsers = new SvelteMap<string, UserSummary>();
+    #normalUsers = $state(new SvelteMap<string, UserSummary>());
     #specialUsers = new SvelteMap<string, UserSummary>();
     #allUsers = $derived.by(() => {
         return [...this.#specialUsers.entries()].reduce((all, [k, v]) => {

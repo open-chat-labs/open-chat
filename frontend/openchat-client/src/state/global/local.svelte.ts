@@ -220,6 +220,11 @@ export class GlobalLocalState {
         }
     }
 
+    // only used for testing
+    clearUnconfirmed() {
+        this.#unconfirmed = new ReactiveMessageContextMap();
+    }
+
     get groupChatPreviews() {
         return this.#groupChatPreviews;
     }
