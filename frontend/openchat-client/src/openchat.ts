@@ -615,7 +615,7 @@ export class OpenChat {
         identityKey: CryptoKeyPair,
         delegation: JsonnableDelegationChain,
     ): Promise<boolean> {
-        if (!this.#liveState.anonUser) {
+        if (!app.anonUser) {
             return this.#sendRequest({
                 kind: "deleteUser",
                 identityKey,
@@ -762,7 +762,7 @@ export class OpenChat {
     // }
 
     #startSession(identity: Identity): Promise<void> {
-        if (this.#liveState.anonUser) {
+        if (app.anonUser) {
             return new Promise((_) => {
                 console.debug("ANON: creating an anon session which will never expire");
             });
@@ -958,7 +958,7 @@ export class OpenChat {
         this.#startUserUpdatePoller();
 
         initNotificationStores();
-        if (!this.#liveState.anonUser) {
+        if (!app.anonUser) {
             this.#startOnlinePoller();
             this.#startBtcBalanceUpdateJob();
             this.#sendRequest({ kind: "getUserStorageLimits" })
@@ -1014,7 +1014,7 @@ export class OpenChat {
     }
 
     #startOnlinePoller() {
-        if (!this.#liveState.anonUser) {
+        if (!app.anonUser) {
             new Poller(
                 () =>
                     (this.#sendRequest({ kind: "markAsOnline" }) ?? Promise.resolve()).then(
@@ -5824,7 +5824,7 @@ export class OpenChat {
             const now = BigInt(Date.now());
             const allUsers = userStore.allUsers;
             const usersToUpdate = new Set<string>();
-            if (!this.#liveState.anonUser) {
+            if (!app.anonUser) {
                 usersToUpdate.add(app.currentUserId);
             }
 
@@ -5899,7 +5899,7 @@ export class OpenChat {
 
             this.#updateReadUpToStore(chats);
 
-            if (this.#cachePrimer === undefined && !this.#liveState.anonUser) {
+            if (this.#cachePrimer === undefined && !app.anonUser) {
                 this.#cachePrimer = new CachePrimer(
                     this,
                     app.currentUserId,
@@ -5916,7 +5916,7 @@ export class OpenChat {
                     userIds.add(userId);
                 }
             }
-            if (!this.#liveState.anonUser) {
+            if (!app.anonUser) {
                 userIds.add(app.currentUserId);
             }
             await this.getMissingUsers(userIds);
@@ -6047,7 +6047,7 @@ export class OpenChat {
 
             if (initialLoad) {
                 this.#startExchangeRatePoller();
-                if (!this.#liveState.anonUser) {
+                if (!app.anonUser) {
                     this.#initWebRtc();
                     startMessagesReadTracker(this);
                     this.refreshSwappableTokens();
@@ -7914,7 +7914,7 @@ export class OpenChat {
     }
 
     getDefaultScope(): ChatListScope {
-        if (this.#liveState.anonUser) return { kind: "group_chat" };
+        if (app.anonUser) return { kind: "group_chat" };
 
         // sometimes we have to re-direct the user to home route "/"
         // However, with communities enabled it is not clear what this means

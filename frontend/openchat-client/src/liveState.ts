@@ -39,7 +39,6 @@ export class LiveState {
     isDiamond!: boolean;
     isLifetimeDiamond!: boolean;
     draftMessages!: DraftMessages;
-    anonUser!: boolean;
     suspendedUser!: boolean;
     platformModerator!: boolean;
     offlineStore!: boolean;
