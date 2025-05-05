@@ -1,8 +1,8 @@
-use tauri::{command, AppHandle, Runtime};
+use tauri::{AppHandle, Runtime, command};
 
-use crate::models::*;
 use crate::OcExt;
 use crate::Result;
+use crate::models::*;
 
 #[command]
 pub(crate) async fn open_url<R: Runtime>(
