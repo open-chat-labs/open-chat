@@ -55,7 +55,12 @@ import {
 } from "openchat-shared";
 import { SvelteMap } from "svelte/reactivity";
 import { type PinnedByScope } from "../stores";
-import { mergeChatMetrics, mergePermissions, mergeUnconfirmedIntoSummary } from "../utils/chat";
+import {
+    getMessagePermissionsForSelectedChat,
+    mergeChatMetrics,
+    mergePermissions,
+    mergeUnconfirmedIntoSummary,
+} from "../utils/chat";
 import { chatDetailsLocalUpdates, ChatDetailsMergedState } from "./chat_details";
 import { ChatDetailsServerState } from "./chat_details/server.svelte";
 import { communityLocalUpdates } from "./community_details";
@@ -596,6 +601,22 @@ export class AppState {
     #selectedChat = $state<ChatDetailsMergedState>(
         new ChatDetailsMergedState(ChatDetailsServerState.empty()),
     );
+
+    #messagePermissionsForSelectedChat = $derived.by(() => {
+        return getMessagePermissionsForSelectedChat(this.#selectedChatSummary, "message");
+    });
+
+    #threadPermissionsForSelectedChat = $derived.by(() => {
+        return getMessagePermissionsForSelectedChat(this.#selectedChatSummary, "thread");
+    });
+
+    get messagePermissionsForSelectedChat() {
+        return this.#messagePermissionsForSelectedChat;
+    }
+
+    get threadPermissionsForSelectedChat() {
+        return this.#threadPermissionsForSelectedChat;
+    }
 
     setCurrentUser(user: CreatedUser) {
         this.#currentUser = user;

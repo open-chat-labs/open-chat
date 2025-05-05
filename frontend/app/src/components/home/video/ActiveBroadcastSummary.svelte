@@ -4,7 +4,6 @@
         chatIdentifiersEqual,
         publish,
         routeForMessage,
-        selectedChatStore as selectedChat,
         selectedMessageContext,
         type OpenChat,
     } from "openchat-client";
@@ -18,33 +17,36 @@
     const client = getContext<OpenChat>("client");
 
     function join() {
-        if (!incall && $selectedChat) {
-            publish("startVideoCall", { chat: $selectedChat, join: true });
+        if (!incall && app.selectedChatSummary) {
+            publish("startVideoCall", { chat: app.selectedChatSummary, join: true });
         }
     }
 
     function goto() {
         if (
-            $selectedChat?.videoCallInProgress !== undefined &&
+            app.selectedChatSummary?.videoCallInProgress !== undefined &&
             $selectedMessageContext !== undefined
         ) {
             page(
                 routeForMessage(
                     app.chatListScope.kind,
                     $selectedMessageContext,
-                    $selectedChat?.videoCallInProgress,
+                    app.selectedChatSummary?.videoCallInProgress,
                 ),
             );
         }
     }
     let hasCall = $derived(
-        $selectedChat !== undefined && $selectedChat.videoCallInProgress !== undefined,
+        app.selectedChatSummary !== undefined &&
+            app.selectedChatSummary.videoCallInProgress !== undefined,
     );
-    let isPublic = $derived($selectedChat !== undefined && !client.isChatPrivate($selectedChat));
+    let isPublic = $derived(
+        app.selectedChatSummary !== undefined && !client.isChatPrivate(app.selectedChatSummary),
+    );
     let incall = $derived(
         $activeVideoCall !== undefined &&
-            $selectedChat !== undefined &&
-            chatIdentifiersEqual($activeVideoCall.chatId, $selectedChat?.id),
+            app.selectedChatSummary !== undefined &&
+            chatIdentifiersEqual($activeVideoCall.chatId, app.selectedChatSummary?.id),
     );
     let show = $derived(hasCall && isPublic && !incall);
 </script>

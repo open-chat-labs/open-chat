@@ -65,13 +65,18 @@ import {
     OPENCHAT_VIDEO_CALL_AVATAR_URL,
     OPENCHAT_VIDEO_CALL_USER_ID,
     random64,
-    type ReadonlySet,
     updateFromOptions,
+    type ReadonlySet,
 } from "openchat-shared";
 import { get } from "svelte/store";
 import { app } from "../state/app.svelte";
 import { localUpdates } from "../state/global";
-import type { LocalTipsReceived, MessageLocalState } from "../state/message/local.svelte";
+import {
+    messageLocalUpdates,
+    type LocalTipsReceived,
+    type MessageLocalState,
+} from "../state/message/local.svelte";
+import { userStore } from "../state/users/users.svelte";
 import { cryptoLookup } from "../stores/crypto";
 import type { TypersByKey } from "../stores/typing";
 import { areOnSameDay } from "../utils/date";
@@ -1130,6 +1135,38 @@ export function canSendGroupMessage(
     );
 }
 
+function toSet(map: Map<MessagePermission, boolean>): Set<MessagePermission> {
+    return [...map.entries()].reduce((s, [k, v]) => {
+        if (v) {
+            s.add(k);
+        }
+        return s;
+    }, new Set<MessagePermission>());
+}
+
+export function getMessagePermissionsForSelectedChat(
+    chat: ChatSummary | undefined,
+    mode: "thread" | "message",
+): Set<MessagePermission> {
+    if (chat !== undefined) {
+        if (chat.kind === "direct_chat") {
+            const recipient = userStore.get(chat.them.userId);
+            if (recipient !== undefined) {
+                return toSet(
+                    permittedMessagesInDirectChat(
+                        recipient,
+                        mode,
+                        import.meta.env.OC_PROPOSALS_BOT_CANISTER!,
+                    ),
+                );
+            }
+        } else {
+            return toSet(permittedMessagesInGroup(app.currentUser, chat, mode));
+        }
+    }
+    return new Set();
+}
+
 export function permittedMessagesInDirectChat(
     recipient: UserSummary,
     mode: "message" | "thread",
@@ -1302,14 +1339,7 @@ export function mergeSendMessageResponse(
 export function mergeEventsAndLocalUpdates(
     events: EventWrapper<ChatEvent>[],
     unconfirmed: EventWrapper<Message>[],
-    localUpdates: MessageMap<MessageLocalState>,
     expiredEventRanges: DRange,
-    proposalTallies: Record<string, Tally>,
-    translations: MessageMap<string>,
-    blockedUsers: Set<string>,
-    currentUserId: string,
-    messageFilters: MessageFilter[],
-    recentlySentMessages: Map<bigint, bigint>,
 ): EventWrapper<ChatEvent>[] {
     const eventIndexes = new DRange();
     eventIndexes.add(expiredEventRanges);
@@ -1320,8 +1350,8 @@ export function mergeEventsAndLocalUpdates(
 
         if (e.event.kind === "message") {
             confirmedMessageIds.add(e.event.messageId);
-            const updates = localUpdates.get(e.event.messageId);
-            const translation = translations.get(e.event.messageId);
+            const updates = messageLocalUpdates.get(e.event.messageId);
+            const translation = app.translations.get(e.event.messageId);
 
             const repliesTo =
                 e.event.repliesTo?.kind === "rehydrated_reply_context"
@@ -1330,7 +1360,7 @@ export function mergeEventsAndLocalUpdates(
 
             const [replyContextUpdates, replyTranslation] =
                 repliesTo !== undefined
-                    ? [localUpdates.get(repliesTo), translations.get(repliesTo)]
+                    ? [messageLocalUpdates.get(repliesTo), app.translations.get(repliesTo)]
                     : [undefined, undefined];
 
             const tallyUpdate =
@@ -1341,15 +1371,15 @@ export function mergeEventsAndLocalUpdates(
                       )
                     : undefined;
 
-            const senderBlocked = blockedUsers.has(e.event.sender);
+            const senderBlocked = app.currentChatBlockedOrSuspendedUsers.has(e.event.sender);
             const repliesToSenderBlocked =
                 e.event.repliesTo?.kind === "rehydrated_reply_context" &&
-                blockedUsers.has(e.event.repliesTo.senderId);
+                app.currentChatBlockedOrSuspendedUsers.has(e.event.repliesTo.senderId);
 
             // Don't hide the sender's own messages
             const failedMessageFilter =
-                e.event.sender !== currentUserId
-                    ? doesMessageFailFilter(e.event, messageFilters) !== undefined
+                e.event.sender !== app.currentUserId
+                    ? doesMessageFailFilter(e.event, app.messageFilters) !== undefined
                     : false;
 
             if (
@@ -1401,7 +1431,10 @@ export function mergeEventsAndLocalUpdates(
             }
         }
         if (unconfirmedAdded.size > 0) {
-            const sortFn = createMessageSortFunction(unconfirmedAdded, recentlySentMessages);
+            const sortFn = createMessageSortFunction(
+                unconfirmedAdded,
+                localUpdates.recentlySentMessages,
+            );
             merged.sort(sortFn);
         }
     }

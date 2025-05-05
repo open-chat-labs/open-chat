@@ -9,15 +9,13 @@ import {
     type RemoteVideoCallStarted,
     type WebRtcMessage,
 } from "openchat-shared";
-import { get } from "svelte/store";
 import { app } from "../state/app.svelte";
 import { userStore } from "../state/users/users.svelte";
-import { selectedChatStore } from "../stores/chat";
 
 export function messageIsForSelectedChat(msg: WebRtcMessage): boolean {
     const chat = findChatByChatType(msg);
     if (chat === undefined) return false;
-    const selectedChat = get(selectedChatStore);
+    const selectedChat = app.selectedChatSummary;
     if (selectedChat === undefined) return false;
     if (chat.id !== selectedChat.id) return false;
     return true;
@@ -63,7 +61,7 @@ function isBlockedUser(chat: ChatSummary): boolean {
 
 export function filterWebRtcMessage(msg: WebRtcMessage): ChatIdentifier | undefined {
     const fromChat = findChatByChatType(msg);
-    const selectedChat = get(selectedChatStore);
+    const selectedChat = app.selectedChatSummary;
 
     // if the chat can't be found - ignore
     if (fromChat === undefined || selectedChat === undefined) {

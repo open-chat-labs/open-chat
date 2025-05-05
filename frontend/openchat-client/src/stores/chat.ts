@@ -9,13 +9,12 @@ import type {
     ThreadIdentifier,
 } from "openchat-shared";
 import { chatIdentifiersEqual, messageContextsEqual } from "openchat-shared";
-import { derived, writable, type Readable } from "svelte/store";
+import { derived, writable } from "svelte/store";
 import { app } from "../state/app.svelte";
 import { localUpdates } from "../state/global";
-import { getNextEventAndMessageIndexes, mergeEventsAndLocalUpdates } from "../utils/chat";
+import { getNextEventAndMessageIndexes } from "../utils/chat";
 import { createDerivedPropStore } from "./derived";
 import { draftMessagesStore } from "./draftMessages";
-import { createDummyStore } from "./dummyStore";
 import { safeWritable } from "./safeWritable";
 import { snsFunctions } from "./snsFunctions";
 
@@ -64,14 +63,14 @@ export function nextEventAndMessageIndexes(): [number, number] {
 }
 
 export const proposalTopicsStore = derived(
-    [selectedChatStore, snsFunctions],
-    ([$selectedChat, $snsFunctions]): Map<number, string> => {
+    [snsFunctions],
+    ([$snsFunctions]): Map<number, string> => {
         if (
-            $selectedChat !== undefined &&
-            $selectedChat.kind !== "direct_chat" &&
-            $selectedChat.subtype !== undefined
+            app.selectedChatSummary !== undefined &&
+            app.selectedChatSummary.kind !== "direct_chat" &&
+            app.selectedChatSummary.subtype !== undefined
         ) {
-            if ($selectedChat.subtype.isNns) {
+            if (app.selectedChatSummary.subtype.isNns) {
                 return new Map([
                     [1, "Neuron Management"],
                     [3, "Network Economics"],
@@ -88,7 +87,7 @@ export const proposalTopicsStore = derived(
                 ]);
             } else {
                 const snsFunctionsMap = $snsFunctions.get(
-                    $selectedChat.subtype.governanceCanisterId,
+                    app.selectedChatSummary.subtype.governanceCanisterId,
                 );
                 if (snsFunctionsMap !== undefined) {
                     return new Map([...snsFunctionsMap].slice(1).map((e) => [e[0], e[1].name]));
@@ -100,115 +99,12 @@ export const proposalTopicsStore = derived(
     },
 );
 
-export const dummyThreadEventsStore = createDummyStore();
-
-export const threadEvents = derived(
-    [
-        dummyThreadEventsStore,
-        unconfirmed,
-        localMessageUpdates,
-        selectedMessageContext,
-        failedMessagesStore,
-        proposalTallies,
-        translationStore,
-        currentChatBlockedOrSuspendedUsers,
-        messageFiltersStore,
-        recentlySentMessagesStore,
-        ephemeralMessages,
-    ],
-    ([
-        _,
-        $unconfirmed,
-        $localUpdates,
-        $messageContext,
-        $failedMessages,
-        $proposalTallies,
-        $translationStore,
-        $blockedOrSuspendedUsers,
-        $messageFilters,
-        $recentlySentMessagesStore,
-        $ephemeralMessages,
-    ]) => {
-        if ($messageContext === undefined || $messageContext.threadRootMessageIndex === undefined)
-            return [];
-        const failed = $failedMessages.has($messageContext)
-            ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              Object.values($failedMessages.get($messageContext)!)
-            : [];
-        const unconfirmed = $unconfirmed.get($messageContext)?.messages ?? [];
-        const ephemeral = [...($ephemeralMessages.get($messageContext)?.values() ?? [])];
-        return mergeEventsAndLocalUpdates(
-            app.selectedChat.serverThreadEvents,
-            [...unconfirmed, ...failed, ...ephemeral],
-            $localUpdates,
-            new DRange(),
-            $proposalTallies,
-            $translationStore,
-            $blockedOrSuspendedUsers,
-            app.currentUserId,
-            $messageFilters,
-            $recentlySentMessagesStore,
-        );
-    },
-);
-
 export function confirmedEventIndexesLoaded(chatId: ChatIdentifier): DRange {
     const selected = app.selectedChatId;
     return selected !== undefined && chatIdentifiersEqual(selected, chatId)
         ? app.selectedChat.confirmedEventIndexesLoaded
         : new DRange();
 }
-
-export const dummyServerEventsStore = createDummyStore();
-export const dummyExpiredEventRangeStore = createDummyStore();
-
-export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
-    [
-        dummyServerEventsStore,
-        unconfirmed,
-        localMessageUpdates,
-        dummyExpiredEventRangeStore,
-        failedMessagesStore,
-        proposalTallies,
-        translationStore,
-        currentChatBlockedOrSuspendedUsers,
-        messageFiltersStore,
-        recentlySentMessagesStore,
-        ephemeralMessages,
-    ],
-    ([
-        _serverEvents,
-        $unconfirmed,
-        $localMessageUpdates,
-        _expiredEventRanges,
-        $failedMessages,
-        $proposalTallies,
-        $translationStore,
-        $blockedOrSuspendedUsers,
-        $messageFilters,
-        $recentlySentMessagesStore,
-        $ephemeralMessages,
-    ]) => {
-        const chatId = app.selectedChatId ?? { kind: "group_chat", groupId: "" };
-        const failedForChat = $failedMessages.get({ chatId });
-        // for the purpose of merging, unconfirmed and failed can be treated the same
-        const failed = failedForChat ? Object.values(failedForChat) : [];
-        const unconfirmed = $unconfirmed.get({ chatId })?.messages ?? [];
-        const ephemeral = [...($ephemeralMessages.get({ chatId })?.values() ?? [])];
-        return mergeEventsAndLocalUpdates(
-            app.selectedChat.serverEvents,
-            [...unconfirmed, ...failed, ...ephemeral],
-            $localMessageUpdates,
-            app.selectedChat.expiredEventRanges,
-            $proposalTallies,
-            $translationStore,
-            $blockedOrSuspendedUsers,
-            app.currentUserId,
-            $messageFilters,
-            $recentlySentMessagesStore,
-        );
-    },
-);
 
 function isContiguousInternal(
     range: DRange,

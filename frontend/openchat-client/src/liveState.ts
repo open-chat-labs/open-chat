@@ -1,9 +1,7 @@
 import type {
     AuthProvider,
-    ChatEvent,
     DiamondMembershipStatus,
     EnhancedReplyContext,
-    EventWrapper,
     MessageContext,
     PinNumberResolver,
 } from "openchat-shared";
@@ -11,10 +9,8 @@ import { locale } from "svelte-i18n";
 import { selectedAuthProviderStore } from "./stores/authProviders";
 import {
     currentChatReplyingTo,
-    eventsStore,
     selectedMessageContext,
     selectedThreadRootMessageIndex,
-    threadEvents,
 } from "./stores/chat";
 import { type DraftMessages, draftMessagesStore } from "./stores/draftMessages";
 import { offlineStore } from "./stores/network";
@@ -27,12 +23,10 @@ import { userCreatedStore } from "./stores/userCreated";
  * at hand without having to use svelte.get which will create and destroy a subscription every time
  */
 export class LiveState {
-    events!: EventWrapper<ChatEvent>[];
     selectedAuthProvider!: AuthProvider | undefined;
     userCreated!: boolean;
     remainingStorage!: number;
     currentChatReplyingTo: EnhancedReplyContext | undefined;
-    threadEvents!: EventWrapper<ChatEvent>[];
     selectedMessageContext: MessageContext | undefined;
     selectedThreadRootMessageIndex: number | undefined;
     diamondStatus!: DiamondMembershipStatus;
@@ -51,9 +45,7 @@ export class LiveState {
         remainingStorage.subscribe((data) => (this.remainingStorage = data));
         userCreatedStore.subscribe((data) => (this.userCreated = data));
         selectedAuthProviderStore.subscribe((data) => (this.selectedAuthProvider = data));
-        eventsStore.subscribe((data) => (this.events = data));
         currentChatReplyingTo.subscribe((data) => (this.currentChatReplyingTo = data));
-        threadEvents.subscribe((data) => (this.threadEvents = data));
         selectedMessageContext.subscribe((data) => (this.selectedMessageContext = data));
         selectedThreadRootMessageIndex.subscribe(
             (data) => (this.selectedThreadRootMessageIndex = data),

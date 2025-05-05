@@ -6,7 +6,6 @@
         chatIdentifiersEqual,
         NoMeetingToJoin,
         OpenChat,
-        selectedChatStore as selectedChat,
         ui,
         userStore,
         type AccessTokenType,
@@ -353,7 +352,7 @@
         !showLandingPage &&
         !(threadOpen && ui.mobileWidth) &&
         !(participantsOpen && ui.mobileWidth) &&
-        chatIdentifiersEqual($activeVideoCall.chatId, $selectedChat?.id)}>
+        chatIdentifiersEqual($activeVideoCall.chatId, app.selectedChatSummary?.id)}>
     {#if chat !== undefined}
         <ActiveCallHeader
             {onClearSelection}

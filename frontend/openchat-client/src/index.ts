@@ -12,7 +12,6 @@ export * from "./state/undo";
 export { messagesRead, type MessageReadState } from "./state/unread/markRead.svelte";
 export { userStore } from "./state/users/users.svelte";
 export * from "./stores";
-export type { FailedMessages } from "./stores/failedMessages";
 export { FilteredProposals } from "./stores/filteredProposals";
 export { immutableStore } from "./stores/immutable";
 export { createMapStore } from "./stores/mapStore";

@@ -11,7 +11,6 @@ export * from "./localStorageSetting";
 export * from "./minutesOnline";
 export * from "./network";
 export * from "./notifications";
-export * from "./permission";
 export * from "./pinNumber";
 export * from "./profiling";
 export * from "./rules";

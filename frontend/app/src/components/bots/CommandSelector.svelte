@@ -9,13 +9,7 @@
         PermissionRole,
         ReadonlyMap,
     } from "openchat-client";
-    import {
-        app,
-        botState,
-        isPermitted,
-        messagePermissionsForSelectedChat,
-        threadPermissionsForSelectedChat,
-    } from "openchat-client";
+    import { app, botState, isPermitted } from "openchat-client";
     import { hasEveryRequiredPermission, random64, type FlattenedCommand } from "openchat-shared";
     import { getContext, onMount } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
@@ -127,7 +121,7 @@
                     chatPermitted &&
                     communityPermitted &&
                     [...command.permissions.messagePermissions].every((p) =>
-                        $messagePermissionsForSelectedChat.has(p),
+                        app.messagePermissionsForSelectedChat.has(p),
                     )
                 );
             case "thread":
@@ -137,7 +131,7 @@
                     chatPermitted &&
                     communityPermitted &&
                     [...command.permissions.messagePermissions].every((p) =>
-                        $threadPermissionsForSelectedChat.has(p),
+                        app.threadPermissionsForSelectedChat.has(p),
                     )
                 );
         }

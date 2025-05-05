@@ -1,6 +1,6 @@
 import type { ChatSummary, MultiUserChatIdentifier } from "openchat-shared";
 import { isCanisterUrl } from "../utils/url";
-import { LocalStorageBoolState } from "./localStorageState";
+import { LocalStorageBoolState } from "./localStorageState.svelte";
 import { pathState, type RouteParams } from "./path.svelte";
 
 export type FontScale = 0 | 1 | 2 | 3 | 4;

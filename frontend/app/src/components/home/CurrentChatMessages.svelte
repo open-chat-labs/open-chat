@@ -15,7 +15,6 @@
         chatIdentifiersEqual,
         currentChatEditingEvent,
         draftMessagesStore,
-        eventsStore,
         pathState,
         routeForChatIdentifier,
         ui,
@@ -248,11 +247,13 @@
             }
         }
     });
-    let showAvatar = $derived(initialised && shouldShowAvatar(chat, $eventsStore[0]?.index));
+    let showAvatar = $derived(
+        initialised && shouldShowAvatar(chat, app.selectedChat.events[0]?.index),
+    );
     let messageContext = $derived({ chatId: chat?.id, threadRootMessageIndex: undefined });
     let timeline = $derived(
         client.groupEvents(
-            [...$eventsStore].reverse(),
+            [...app.selectedChat.events].reverse(),
             app.currentUserId,
             app.selectedChat.expandedDeletedMessages,
             groupInner(filteredProposals),
@@ -288,7 +289,7 @@
     {unreadMessages}
     {firstUnreadMention}
     {footer}
-    events={$eventsStore}
+    events={app.selectedChat.events}
     {chat}
     bind:initialised
     bind:messagesDiv

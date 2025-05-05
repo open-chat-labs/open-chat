@@ -20,7 +20,6 @@
         LEDGER_CANISTER_ICP,
         messageContextsEqual,
         subscribe,
-        threadEvents,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -80,8 +79,12 @@
     let editingEvent = $derived(draftMessage?.editingEvent);
     let canSendAny = $derived(client.canSendMessage(chat.id, "thread"));
     let canReact = $derived(client.canReactToMessages(chat.id));
-    let atRoot = $derived($threadEvents.length === 0 || $threadEvents[0]?.index === 0);
-    let events = $derived(atRoot ? [rootEvent, ...$threadEvents] : $threadEvents);
+    let atRoot = $derived(
+        app.selectedChat.threadEvents.length === 0 || app.selectedChat.threadEvents[0]?.index === 0,
+    );
+    let events = $derived(
+        atRoot ? [rootEvent, ...app.selectedChat.threadEvents] : app.selectedChat.threadEvents,
+    );
     let timeline = $derived(
         client.groupEvents(
             [...events].reverse(),
@@ -91,7 +94,9 @@
     );
     let readonly = $derived(client.isChatReadOnly(chat.id));
     let thread = $derived(rootEvent.event.thread);
-    let loading = $derived(!initialised && $threadEvents.length === 0 && thread !== undefined);
+    let loading = $derived(
+        !initialised && app.selectedChat.threadEvents.length === 0 && thread !== undefined,
+    );
     let isFollowedByMe = $derived(
         app.threadsFollowedByMe.get(chat.id)?.has(threadRootMessageIndex) ?? false,
     );

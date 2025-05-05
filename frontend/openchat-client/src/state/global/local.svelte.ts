@@ -113,7 +113,7 @@ export class GlobalLocalState {
     }
 
     deleteFailedMessage(key: MessageContext, messageId: bigint) {
-        this.#deleteLocalMessage(this.#failedMessages, key, messageId);
+        return this.#deleteLocalMessage(this.#failedMessages, key, messageId);
     }
 
     addEphemeral(key: MessageContext, message: EventWrapper<Message>) {
@@ -129,6 +129,11 @@ export class GlobalLocalState {
 
     isEphemeral(key: MessageContext, messageId: bigint): boolean {
         return this.#ephemeral.get(key)?.has(messageId) ?? false;
+    }
+
+    ephemeralMessages(key: MessageContext): EventWrapper<Message>[] {
+        const state = this.#ephemeral.get(key);
+        return state ? [...state.values()] : [];
     }
 
     #deleteLocalMessage(
@@ -166,6 +171,10 @@ export class GlobalLocalState {
             }, 60_000);
         }
         return noop;
+    }
+
+    get recentlySentMessages() {
+        return this.#recentlySentMessages;
     }
 
     overwriteUnconfirmedContent(

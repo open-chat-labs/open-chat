@@ -2813,7 +2813,7 @@ export class OpenChat {
         messageIndex: number,
         threadMessageIndex?: number,
     ): void {
-        const event = this.#liveState.events.find(
+        const event = app.selectedChat.events.find(
             (ev) => ev.event.kind === "message" && ev.event.messageIndex === messageIndex,
         ) as EventWrapper<Message> | undefined;
         if (event !== undefined) {
@@ -2880,7 +2880,7 @@ export class OpenChat {
                 makeRtcConnections(
                     app.currentUserId,
                     chat,
-                    this.#liveState.threadEvents,
+                    app.selectedChat.threadEvents,
                     userStore.allUsers,
                     userStore.blockedUsers,
                     this.config.meteredApiKey,
@@ -3003,9 +3003,9 @@ export class OpenChat {
     }
 
     earliestLoadedThreadIndex(): number | undefined {
-        return this.#liveState.threadEvents.length === 0
+        return app.selectedChat.threadEvents.length === 0
             ? undefined
-            : this.#liveState.threadEvents[0].index;
+            : app.selectedChat.threadEvents[0].index;
     }
 
     previousThreadMessagesCriteria(thread: ThreadSummary): [number, boolean] {
@@ -3967,8 +3967,8 @@ export class OpenChat {
     #eventsForMessageContext({
         threadRootMessageIndex,
     }: MessageContext): EventWrapper<ChatEvent>[] {
-        if (threadRootMessageIndex === undefined) return this.#liveState.events;
-        return this.#liveState.threadEvents;
+        if (threadRootMessageIndex === undefined) return app.selectedChat.events;
+        return app.selectedChat.threadEvents;
     }
 
     eventExpiry(chat: ChatSummary, timestamp: number): number | undefined {
@@ -4503,7 +4503,6 @@ export class OpenChat {
         // this means we have a selected chat but it doesn't mean it's the same as this message
         const parsedMsg = parseWebRtcMessage(fromChatId, msg);
         const selectedChat = app.selectedChatSummary;
-        const { threadEvents, events } = this.#liveState;
 
         if (
             selectedChat !== undefined &&
@@ -4513,7 +4512,9 @@ export class OpenChat {
             this.#handleWebRtcMessageInternal(
                 fromChatId,
                 parsedMsg,
-                parsedMsg.threadRootMessageIndex === undefined ? events : threadEvents,
+                parsedMsg.threadRootMessageIndex === undefined
+                    ? app.selectedChat.events
+                    : app.selectedChat.threadEvents,
                 parsedMsg.threadRootMessageIndex,
             );
         } else {

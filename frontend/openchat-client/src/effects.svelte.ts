@@ -8,11 +8,6 @@ import { userStore } from "./state/users/users.svelte";
 import {
     chatListScopeStore,
     dummyCurrentUser,
-    dummyExpiredEventRangeStore,
-    dummyPinnedChatsStore,
-    dummyScopedChats,
-    dummyServerEventsStore,
-    dummyThreadEventsStore,
     dummyUserStore,
     dummyWalletConfigStore,
     selectedChatId,
@@ -117,33 +112,8 @@ function syncState() {
     });
 
     $effect(() => {
-        void app.pinnedChats;
-        dummyPinnedChatsStore.set(Symbol());
-    });
-
-    $effect(() => {
         void app.walletConfig;
         dummyWalletConfigStore.set(Symbol());
-    });
-
-    $effect(() => {
-        void app.scopedChats;
-        dummyScopedChats.set(Symbol());
-    });
-
-    $effect(() => {
-        void app.selectedChat.serverEvents;
-        dummyServerEventsStore.set(Symbol());
-    });
-
-    $effect(() => {
-        void app.selectedChat.serverThreadEvents;
-        dummyThreadEventsStore.set(Symbol());
-    });
-
-    $effect(() => {
-        void app.selectedChat.expiredEventRanges;
-        dummyExpiredEventRangeStore.set(Symbol());
     });
 
     $effect(() => {
