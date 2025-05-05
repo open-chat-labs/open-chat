@@ -1,26 +1,20 @@
 import type {
     AuthProvider,
     ChatEvent,
-    ChatMap,
-    ChatSummary,
     DiamondMembershipStatus,
     EnhancedReplyContext,
     EventWrapper,
     MessageContext,
     PinNumberResolver,
-    ThreadSyncDetails,
 } from "openchat-shared";
 import { locale } from "svelte-i18n";
 import { selectedAuthProviderStore } from "./stores/authProviders";
 import {
     currentChatReplyingTo,
     eventsStore,
-    selectedChatStore,
     selectedMessageContext,
     selectedThreadRootMessageIndex,
     threadEvents,
-    threadsByChatStore,
-    threadsFollowedByMeStore,
 } from "./stores/chat";
 import { type DraftMessages, draftMessagesStore } from "./stores/draftMessages";
 import { offlineStore } from "./stores/network";
@@ -33,16 +27,13 @@ import { userCreatedStore } from "./stores/userCreated";
  * at hand without having to use svelte.get which will create and destroy a subscription every time
  */
 export class LiveState {
-    selectedChat: ChatSummary | undefined;
     events!: EventWrapper<ChatEvent>[];
     selectedAuthProvider!: AuthProvider | undefined;
     userCreated!: boolean;
     remainingStorage!: number;
     currentChatReplyingTo: EnhancedReplyContext | undefined;
-    threadsByChat!: ChatMap<ThreadSyncDetails[]>;
     threadEvents!: EventWrapper<ChatEvent>[];
     selectedMessageContext: MessageContext | undefined;
-    threadsFollowedByMe!: ChatMap<Set<number>>;
     selectedThreadRootMessageIndex: number | undefined;
     diamondStatus!: DiamondMembershipStatus;
     isDiamond!: boolean;
@@ -62,12 +53,9 @@ export class LiveState {
         userCreatedStore.subscribe((data) => (this.userCreated = data));
         selectedAuthProviderStore.subscribe((data) => (this.selectedAuthProvider = data));
         eventsStore.subscribe((data) => (this.events = data));
-        selectedChatStore.subscribe((data) => (this.selectedChat = data));
         currentChatReplyingTo.subscribe((data) => (this.currentChatReplyingTo = data));
-        threadsByChatStore.subscribe((data) => (this.threadsByChat = data));
         threadEvents.subscribe((data) => (this.threadEvents = data));
         selectedMessageContext.subscribe((data) => (this.selectedMessageContext = data));
-        threadsFollowedByMeStore.subscribe((data) => (this.threadsFollowedByMe = data));
         selectedThreadRootMessageIndex.subscribe(
             (data) => (this.selectedThreadRootMessageIndex = data),
         );

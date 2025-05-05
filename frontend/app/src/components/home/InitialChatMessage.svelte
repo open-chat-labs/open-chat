@@ -7,7 +7,6 @@
         type CommandDefinition,
         emptyExternalBotPermissions,
         type ExternalBotPermissions,
-        isProposalGroup,
         type OpenChat,
         type ResourceKey,
         userStore,
@@ -85,7 +84,7 @@
 </script>
 
 <div class="container">
-    {#if $isProposalGroup}
+    {#if app.isProposalGroup}
         <ProposalBot />
     {:else if chat.kind === "direct_chat" && client.isOpenChatBot(chat.them.userId)}
         <Robot />

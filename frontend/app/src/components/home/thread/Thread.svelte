@@ -22,7 +22,6 @@
         messageContextsEqual,
         subscribe,
         threadEvents,
-        threadsFollowedByMeStore,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -95,7 +94,7 @@
     let thread = $derived(rootEvent.event.thread);
     let loading = $derived(!initialised && $threadEvents.length === 0 && thread !== undefined);
     let isFollowedByMe = $derived(
-        $threadsFollowedByMeStore.get(chat.id)?.has(threadRootMessageIndex) ?? false,
+        app.threadsFollowedByMe.get(chat.id)?.has(threadRootMessageIndex) ?? false,
     );
 
     onMount(() => {

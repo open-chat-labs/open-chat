@@ -7,9 +7,8 @@ import type {
     ExpiredEventsRange,
     MessageContext,
     ThreadIdentifier,
-    ThreadSyncDetails,
 } from "openchat-shared";
-import { chatIdentifiersEqual, ChatMap, messageContextsEqual } from "openchat-shared";
+import { chatIdentifiersEqual, messageContextsEqual } from "openchat-shared";
 import { derived, writable, type Readable } from "svelte/store";
 import { app } from "../state/app.svelte";
 import { localUpdates } from "../state/global";
@@ -17,7 +16,6 @@ import { getNextEventAndMessageIndexes, mergeEventsAndLocalUpdates } from "../ut
 import { createDerivedPropStore } from "./derived";
 import { draftMessagesStore } from "./draftMessages";
 import { createDummyStore } from "./dummyStore";
-import { ephemeralMessages } from "./ephemeralMessages";
 import { failedMessagesStore } from "./failedMessages";
 import { proposalTallies } from "./proposalTallies";
 import { recentlySentMessagesStore } from "./recentlySentMessages";
@@ -68,38 +66,6 @@ export function nextEventAndMessageIndexes(): [number, number] {
     );
 }
 
-export const isProposalGroup = derived([selectedChatStore], ([$selectedChat]) => {
-    return (
-        $selectedChat !== undefined &&
-        $selectedChat.kind !== "direct_chat" &&
-        $selectedChat.subtype?.kind === "governance_proposals"
-    );
-});
-
-export const threadsByChatStore = derived([chatSummariesListStore], ([summaries]) => {
-    return summaries.reduce((result, chat) => {
-        if (
-            (chat.kind === "group_chat" || chat.kind === "channel") &&
-            chat.membership &&
-            chat.membership.latestThreads.length > 0
-        ) {
-            result.set(chat.id, chat.membership.latestThreads);
-        }
-        return result;
-    }, new ChatMap<ThreadSyncDetails[]>());
-});
-
-export const threadsFollowedByMeStore = derived([threadsByChatStore], ([threadsByChat]) => {
-    return threadsByChat.reduce<ChatMap<Set<number>>>((result, [chatId, threads]) => {
-        const set = new Set<number>();
-        for (const thread of threads) {
-            set.add(thread.threadRootMessageIndex);
-        }
-        result.set(chatId, set);
-        return result;
-    }, new ChatMap<Set<number>>());
-});
-
 export const proposalTopicsStore = derived(
     [selectedChatStore, snsFunctions],
     ([$selectedChat, $snsFunctions]): Map<number, string> => {
@@ -135,15 +101,6 @@ export const proposalTopicsStore = derived(
 
         return new Map();
     },
-);
-
-function countThreads<T>(things: ChatMap<T[]>): number {
-    return things.map((_, ts) => ts.length).reduce((total, [_, n]) => total + n, 0);
-}
-
-// returns the total number of threads that we are involved in
-export const numberOfThreadsStore = derived([threadsByChatStore], ([threads]) =>
-    countThreads(threads),
 );
 
 export const dummyThreadEventsStore = createDummyStore();

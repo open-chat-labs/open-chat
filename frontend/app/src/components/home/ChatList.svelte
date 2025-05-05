@@ -10,7 +10,6 @@
         emptyCombinedUnreadCounts,
         type GroupMatch,
         type GroupSearchResponse,
-        numberOfThreadsStore,
         OpenChat,
         publish,
         routeForChatIdentifier,
@@ -207,7 +206,7 @@
     });
     let canMarkAllRead = $derived(anythingUnread(unreadCounts));
     $effect(() => {
-        if ($numberOfThreadsStore === 0) {
+        if (app.numberOfThreads === 0) {
             chatListView.set("chats");
         }
     });
@@ -239,7 +238,7 @@
         bind:searchResultsAvailable
         bind:searchTerm />
 
-    {#if $numberOfThreadsStore > 0}
+    {#if app.numberOfThreads > 0}
         <div class="section-selector">
             <ChatListSectionButton
                 onClick={() => setView("chats")}

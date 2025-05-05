@@ -6,7 +6,6 @@
         LEDGER_CANISTER_ICP,
         publish,
         routeForMessage,
-        threadsFollowedByMeStore,
         ui,
         type ChatIdentifier,
         type Message,
@@ -164,7 +163,7 @@
     );
     let isFollowedByMe = $derived(
         threadRootMessage !== undefined &&
-            ($threadsFollowedByMeStore.get(chatId)?.has(threadRootMessage.messageIndex) ?? false),
+            (app.threadsFollowedByMe.get(chatId)?.has(threadRootMessage.messageIndex) ?? false),
     );
     let canFollow = $derived(threadRootMessage !== undefined && !isFollowedByMe);
     let canUnfollow = $derived(isFollowedByMe);

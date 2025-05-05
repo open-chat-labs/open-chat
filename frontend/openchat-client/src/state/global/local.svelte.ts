@@ -2,7 +2,6 @@ import {
     emptyChatMetrics,
     nullMembership,
     type AccessGateConfig,
-    type BotMessageContext,
     type ChatIdentifier,
     type ChatListScope,
     type ChatSummary,
@@ -23,6 +22,7 @@ import {
     type OptionalChatPermissions,
     type OptionUpdate,
     type P2PSwapStatus,
+    type SenderContext,
     type StreakInsurance,
     type ThreadSummary,
     type UnconfirmedMessageEvent,
@@ -52,10 +52,13 @@ function emptyUnconfirmed(): UnconfirmedState {
     return new SvelteMap<bigint, UnconfirmedMessageEvent>();
 }
 
+type EphemeralState = Map<bigint, EventWrapper<Message>>;
+
 const noop = () => {};
 
 // global local updates don't need the manager because they are not specific to a keyed entity (community, chat, message etc)
 export class GlobalLocalState {
+    #ephemeral = $state<ReactiveMessageContextMap<EphemeralState>>(new ReactiveMessageContextMap());
     #unconfirmed = $state<ReactiveMessageContextMap<UnconfirmedState>>(
         new ReactiveMessageContextMap(),
     );
@@ -77,6 +80,37 @@ export class GlobalLocalState {
         return this.#unconfirmed;
     }
 
+    addEphemeral(key: MessageContext, message: EventWrapper<Message>): UndoLocalUpdate {
+        const s = this.#ephemeral.get(key) ?? new SvelteMap<bigint, EventWrapper<Message>>();
+        s.set(message.event.messageId, message);
+        this.#ephemeral.set(key, s);
+        return scheduleUndo(() => {
+            this.#deleteLocalMessage(this.#ephemeral, key, message.event.messageId);
+        });
+    }
+
+    isEphemeral(key: MessageContext, messageId: bigint): boolean {
+        return this.#ephemeral.get(key)?.has(messageId) ?? false;
+    }
+
+    #deleteLocalMessage(
+        container: ReactiveMessageContextMap<Map<bigint, EventWrapper<Message>>>,
+        key: MessageContext,
+        messageId: bigint,
+    ) {
+        const state = container.get(key);
+        const msg = state?.get(messageId);
+        if (msg !== undefined) {
+            revokeObjectUrls(msg);
+            state?.delete(messageId);
+            if (state?.size === 0) {
+                container.delete(key);
+            }
+            return true;
+        }
+        return false;
+    }
+
     unconfirmedMessages(key: MessageContext): EventWrapper<Message>[] {
         const state = this.#unconfirmed.get(key);
         return state ? [...state.values()] : [];
@@ -88,7 +122,7 @@ export class GlobalLocalState {
             s.set(message.event.messageId, { ...message, accepted: false });
             this.#unconfirmed.set(key, s);
             return scheduleUndo(() => {
-                this.deleteUnconfirmed(key, message.event.messageId);
+                this.#deleteLocalMessage(this.#unconfirmed, key, message.event.messageId);
             }, 60_000);
         }
         return noop;
@@ -98,7 +132,7 @@ export class GlobalLocalState {
         key: MessageContext,
         messageId: bigint,
         content: MessageContent,
-        botContext?: BotMessageContext,
+        senderContext?: SenderContext,
         blockLevelMarkdown?: boolean,
     ) {
         const state = this.#unconfirmed.get(key);
@@ -110,7 +144,7 @@ export class GlobalLocalState {
                     event: {
                         ...msg.event,
                         content,
-                        botContext,
+                        senderContext,
                         blockLevelMarkdown: blockLevelMarkdown ?? false,
                     },
                 });

@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { ChatIdentifier, OpenChat, ThreadSummary } from "openchat-client";
-    import { AvatarSize, threadsFollowedByMeStore, ui, userStore } from "openchat-client";
+    import { app, AvatarSize, ui, userStore } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
@@ -22,7 +22,7 @@
         $props();
 
     let isFollowedByMe = $derived(
-        $threadsFollowedByMeStore.get(chatId)?.has(threadRootMessageIndex) ?? false,
+        app.threadsFollowedByMe.get(chatId)?.has(threadRootMessageIndex) ?? false,
     );
     let lastMessageIndex = $derived(threadSummary.numberOfReplies - 1); //using this as a surrogate for message index for now
     let unreadCount = $derived(

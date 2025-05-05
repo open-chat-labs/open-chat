@@ -43,6 +43,7 @@ import {
     SafeMap,
     type StreakInsurance,
     type ThreadIdentifier,
+    type ThreadSyncDetails,
     type UserGroupDetails,
     type UserGroupSummary,
     type VersionedRules,
@@ -398,6 +399,40 @@ export class AppState {
     #selectedChatSummary = $derived.by(() => {
         if (this.#selectedChatId === undefined) return undefined;
         return this.#chatSummaries.get(this.#selectedChatId);
+    });
+
+    #isProposalGroup = $derived(
+        this.#selectedChatSummary !== undefined &&
+            this.#selectedChatSummary.kind !== "direct_chat" &&
+            this.#selectedChatSummary.subtype?.kind === "governance_proposals",
+    );
+
+    #threadsByChat = $derived.by(() => {
+        return this.#chatSummariesList.reduce((result, chat) => {
+            if (
+                (chat.kind === "group_chat" || chat.kind === "channel") &&
+                chat.membership &&
+                chat.membership.latestThreads.length > 0
+            ) {
+                result.set(chat.id, chat.membership.latestThreads);
+            }
+            return result;
+        }, new ChatMap<ThreadSyncDetails[]>());
+    });
+
+    #numberOfThreads = $derived(
+        this.#threadsByChat.map((_, ts) => ts.length).reduce((total, [_, n]) => total + n, 0),
+    );
+
+    #threadsFollowedByMe = $derived.by(() => {
+        return this.#threadsByChat.reduce<ChatMap<Set<number>>>((result, [chatId, threads]) => {
+            const set = new Set<number>();
+            for (const thread of threads) {
+                set.add(thread.threadRootMessageIndex);
+            }
+            result.set(chatId, set);
+            return result;
+        }, new ChatMap<Set<number>>());
     });
 
     #serverPinnedChats = $state<Map<ChatListScope["kind"], ChatIdentifier[]>>(new Map());
@@ -1010,6 +1045,22 @@ export class AppState {
 
     get selectedChatSummary() {
         return this.#selectedChatSummary;
+    }
+
+    get isProposalGroup() {
+        return this.#isProposalGroup;
+    }
+
+    get threadsByChat() {
+        return this.#threadsByChat;
+    }
+
+    get numberOfThreads() {
+        return this.#numberOfThreads;
+    }
+
+    get threadsFollowedByMe() {
+        return this.#threadsFollowedByMe;
     }
 
     get communities() {

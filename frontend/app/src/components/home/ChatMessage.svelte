@@ -7,7 +7,7 @@
         type ChatType,
         type Dimensions,
         type EnhancedReplyContext,
-        ephemeralMessages,
+        localUpdates,
         type Message,
         type MessageContent,
         type MessageReminderCreatedContent,
@@ -464,7 +464,7 @@
     let canRevealDeleted = $derived(deletedByMe && !undeleting && !permanentlyDeleted);
     let canRevealBlocked = $derived(msg.content.kind === "blocked_content");
     let messageContext = $derived({ chatId, threadRootMessageIndex });
-    let ephemeral = $derived($ephemeralMessages.get(messageContext)?.has(msg.messageId) ?? false);
+    let ephemeral = $derived(localUpdates.isEphemeral(messageContext, msg.messageId));
     let showChatMenu = $derived(
         (!inert || canRevealDeleted || canRevealBlocked) && !readonly && !ephemeral,
     );

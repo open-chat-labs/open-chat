@@ -309,7 +309,6 @@ import {
 } from "./stores/crypto";
 import { diamondDurationToMs } from "./stores/diamond";
 import { draftMessagesStore } from "./stores/draftMessages";
-import { ephemeralMessages } from "./stores/ephemeralMessages";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
     disableAllProposalFilters,
@@ -1083,7 +1082,7 @@ export class OpenChat {
 
         messagesRead.markMessageRead(context, messageIndex, messageId);
 
-        const selectedChat = this.#liveState.selectedChat;
+        const selectedChat = app.selectedChatSummary;
         if (
             selectedChat?.id === context.chatId &&
             messageId !== undefined &&
@@ -2758,7 +2757,7 @@ export class OpenChat {
         // creating an empty container for the new chat's state
         app.setSelectedChat(chatId);
 
-        const { selectedChat } = this.#liveState;
+        const selectedChat = app.selectedChatSummary;
         if (selectedChat !== undefined) {
             if (!this.#uninstalledBotChat(selectedChat)) {
                 if (messageIndex !== undefined) {
@@ -3903,7 +3902,7 @@ export class OpenChat {
 
     #rulesNeedAccepting(): boolean {
         const chatRules = app.selectedChat.rules;
-        const chat = this.#liveState.selectedChat;
+        const chat = app.selectedChatSummary;
         if (chat === undefined || chatRules === undefined) {
             return false;
         }
@@ -4482,7 +4481,8 @@ export class OpenChat {
 
         // this means we have a selected chat but it doesn't mean it's the same as this message
         const parsedMsg = parseWebRtcMessage(fromChatId, msg);
-        const { selectedChat, threadEvents, events } = this.#liveState;
+        const selectedChat = app.selectedChatSummary;
+        const { threadEvents, events } = this.#liveState;
 
         if (
             selectedChat !== undefined &&
@@ -6689,7 +6689,7 @@ export class OpenChat {
             const lookup = {} as Record<string, UserOrUserGroup>;
             for (const [userId] of app.selectedChat.members) {
                 let user = userStore.get(userId);
-                if (user !== undefined && this.#liveState.selectedChat?.kind === "channel") {
+                if (user !== undefined && app.selectedChatSummary?.kind === "channel") {
                     user = {
                         ...user,
                         displayName: this.getDisplayName(user, app.selectedCommunity.members),
@@ -8401,7 +8401,7 @@ export class OpenChat {
             if (!ephemeral) {
                 localUpdates.addUnconfirmed(context, event);
             } else {
-                ephemeralMessages.add(context, event);
+                localUpdates.addEphemeral(context, event);
             }
             publish("sentMessage", { context, event });
         }

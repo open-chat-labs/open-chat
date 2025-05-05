@@ -18,7 +18,7 @@ import {
 import { SvelteMap } from "svelte/reactivity";
 import { type Unsubscriber } from "svelte/store";
 import type { OpenChat } from "../../openchat";
-import { ephemeralMessages, offlineStore } from "../../stores";
+import { offlineStore } from "../../stores";
 import { localUpdates } from "../global";
 import { ReactiveChatMap, ReactiveMessageContextMap } from "../map";
 
@@ -390,7 +390,7 @@ export class MessageReadTracker {
     isRead(context: MessageContext, messageIndex: number, messageId: bigint | undefined): boolean {
         if (messageId !== undefined && localUpdates.isUnconfirmed(context, messageId)) {
             return this.#waiting.get(context)?.has(messageId) ?? false;
-        } else if (messageId !== undefined && ephemeralMessages.contains(context, messageId)) {
+        } else if (messageId !== undefined && localUpdates.isEphemeral(context, messageId)) {
             return true;
         } else if (context.threadRootMessageIndex !== undefined) {
             const serverState = this.#serverState.get(context.chatId);
