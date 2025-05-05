@@ -17,3 +17,5 @@ runs:
       with:
         shared-key: 'build-debug'
         save-if: ${{ inputs.cache == 'write' }}
+    - name: Install additional libs
+      run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
