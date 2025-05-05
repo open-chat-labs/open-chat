@@ -169,6 +169,7 @@ members = [
     "backend/tools/principal_generator",
     "backend/tools/translation_tool",
     "backend/tools/ts_exporter",
+    "frontend/src-tauri",
 ]
 resolver = "2"
 
