@@ -20,6 +20,14 @@ process.env.OC_WEBSITE_VERSION = version;
 
 initEnv();
 
+const isNativeIos = process.env.OC_APP_TYPE === "ios";
+const isNativeAndroid = process.env.OC_APP_TYPE === "android";
+const isNativeApp = isNativeIos || isNativeAndroid;
+// Setup to run mobile dev server is slightly different. Setting different ports
+// for web and mobile apps allows us to for example run web app in Docker, while
+// developing a mobile app.
+const port = isNativeApp ? 5003 : 5001;
+
 // TODO use vite for prod build!
 // https://vite.dev/config/
 export default defineConfig({
@@ -31,18 +39,37 @@ export default defineConfig({
         "import.meta.env.OC_WEBSITE_VERSION": JSON.stringify(version),
     },
     server: {
+        host: true,
         cors: true,
+        port,
+        strictPort: true,
         hmr: {
-            host: "localhost",
             protocol: "ws",
+            port,
+            clientPort: port,
         },
-        proxy: {
-            "/api": `http://${dfxJson.networks.local.bind}`,
-        },
+        proxy: isNativeApp
+            ? undefined
+            : {
+                  "/api": `http://${dfxJson.networks.local.bind}`,
+              },
         headers: {
             "Cache-Control": "no-store",
-        }
+        },
     },
+    build: isNativeApp
+        ? {
+              // Tauri uses Chromium on Windows and WebKit on macOS and Linux
+              target: "safari13",
+              //   process.env.TAURI_ENV_PLATFORM == 'windows'
+              //     ? 'chrome105'
+              //     : 'safari13',
+              // don't minify for debug builds
+              minify: !process.env.TAURI_ENV_DEBUG ? "esbuild" : false,
+              // produce sourcemaps for debug builds
+              sourcemap: !!process.env.TAURI_ENV_DEBUG,
+          }
+        : undefined,
     plugins: [
         svelte() as PluginOption,
         replace({
@@ -101,9 +128,11 @@ export default defineConfig({
             },
         }),
         execute({
-            commands: [`../../scripts/get-public-key.sh ${process.env.OC_DFX_NETWORK} > ./public/public-key`],
+            commands: [
+                `../../scripts/get-public-key.sh ${process.env.OC_DFX_NETWORK} > ./public/public-key`,
+            ],
             hook: "buildStart",
-        })
+        }),
     ],
     resolve: {
         alias: {

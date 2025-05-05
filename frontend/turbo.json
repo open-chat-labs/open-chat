@@ -38,7 +38,7 @@
             "dependsOn": ["^build", "openchat-service-worker#build", "openchat-worker#build"]
         },
         "build": {
-            "outputs": ["lib/**", "build/**"],
+            "outputs": ["lib/**", "build/**", "dist-js/**"],
             "dependsOn": ["^build"]
         },
         "build:ci": {
@@ -68,6 +68,11 @@
             "inputs": ["src/**/*.ts"]
         },
         "dev": {
+            "cache": false,
+            "persistent": true,
+            "dependsOn": ["^wait"]
+        },
+        "dev:mobile": {
             "cache": false,
             "persistent": true,
             "dependsOn": ["^wait"]
