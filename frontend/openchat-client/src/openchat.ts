@@ -309,7 +309,6 @@ import {
 } from "./stores/crypto";
 import { diamondDurationToMs } from "./stores/diamond";
 import { draftMessagesStore } from "./stores/draftMessages";
-import { failedMessagesStore } from "./stores/failedMessages";
 import {
     disableAllProposalFilters,
     enableAllProposalFilters,
@@ -820,7 +819,15 @@ export class OpenChat {
         }
 
         this.#sendRequest({ kind: "loadFailedMessages" }).then((res) =>
-            failedMessagesStore.initialise(MessageContextMap.fromMap(res)),
+            localUpdates.initialiseFailedMessages(
+                MessageContextMap.fromMap(res).map((_, rec) => {
+                    const m = new Map<bigint, EventWrapper<Message>>();
+                    for (const [k, v] of Object.entries(rec)) {
+                        m.set(BigInt(k), v);
+                    }
+                    return m;
+                }),
+            ),
         );
 
         this.getCurrentUser()
@@ -3497,12 +3504,12 @@ export class OpenChat {
                 : undefined;
         let newLatestMessage: EventWrapper<Message> | undefined = undefined;
 
-        const anyFailedMessages = failedMessagesStore.has(context);
+        const anyFailedMessages = localUpdates.anyFailed(context);
 
         for (const event of newEvents) {
             if (event.event.kind === "message") {
                 const { content, messageIndex, messageId } = event.event;
-                if (anyFailedMessages && failedMessagesStore.delete(context, messageId)) {
+                if (anyFailedMessages && localUpdates.deleteFailedMessage(context, messageId)) {
                     this.#sendRequest({
                         kind: "deleteFailedMessage",
                         chatId,
@@ -3617,7 +3624,7 @@ export class OpenChat {
         event: EventWrapper<Message>,
         threadRootMessageIndex?: number,
     ): Promise<void> {
-        failedMessagesStore.delete({ chatId, threadRootMessageIndex }, event.event.messageId);
+        localUpdates.deleteFailedMessage({ chatId, threadRootMessageIndex }, event.event.messageId);
         return this.#sendRequest({
             kind: "deleteFailedMessage",
             chatId,
@@ -4047,7 +4054,7 @@ export class OpenChat {
         this.#removeMessage(chatId, messageId, app.currentUserId, threadRootMessageIndex);
 
         if (canRetry) {
-            failedMessagesStore.add({ chatId, threadRootMessageIndex }, event);
+            localUpdates.addFailedMessage({ chatId, threadRootMessageIndex }, event);
         }
 
         if (response !== undefined) {
@@ -4074,7 +4081,7 @@ export class OpenChat {
                 localUpdates.addUnconfirmed(context, messageEvent);
             }
 
-            failedMessagesStore.delete(context, messageEvent.event.messageId);
+            localUpdates.deleteFailedMessage(context, messageEvent.event.messageId);
 
             // mark our own messages as read manually since we will not be observing them
             messagesRead.markMessageRead(

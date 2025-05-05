@@ -16,7 +16,6 @@
     import {
         app,
         draftMessagesStore,
-        failedMessagesStore,
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
         messageContextsEqual,
@@ -380,7 +379,7 @@
                                 me={evt.event.sender === app.currentUserId}
                                 accepted={isAccepted(evt)}
                                 confirmed={isConfirmed(evt)}
-                                failed={isFailed($failedMessagesStore, evt)}
+                                failed={isFailed(evt)}
                                 readByMe={evt.event.messageId === rootEvent.event.messageId ||
                                     !isFollowedByMe ||
                                     isReadByMe(evt)}

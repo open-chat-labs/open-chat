@@ -16,7 +16,6 @@
         currentChatEditingEvent,
         draftMessagesStore,
         eventsStore,
-        failedMessagesStore,
         pathState,
         routeForChatIdentifier,
         ui,
@@ -314,10 +313,10 @@
                                 observer={messageObserver}
                                 focused={evt.event.kind === "message" &&
                                     evt.event.messageIndex === focusIndex &&
-                                    !isFailed($failedMessagesStore, evt)}
+                                    !isFailed(evt)}
                                 accepted={isAccepted(evt)}
                                 confirmed={isConfirmed(evt)}
-                                failed={isFailed($failedMessagesStore, evt)}
+                                failed={isFailed(evt)}
                                 readByMe={isReadByMe(evt)}
                                 chatId={chat.id}
                                 chatType={chat.kind}

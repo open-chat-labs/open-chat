@@ -2,7 +2,7 @@
     export type ChatEventListArgs = {
         isAccepted: (evt: EventWrapper<ChatEventType>) => boolean;
         isConfirmed: (evt: EventWrapper<ChatEventType>) => boolean;
-        isFailed: (_failed: unknown, evt: EventWrapper<ChatEventType>) => boolean;
+        isFailed: (evt: EventWrapper<ChatEventType>) => boolean;
         isReadByMe: (evt: EventWrapper<ChatEventType>) => boolean;
         messageObserver: IntersectionObserver | undefined;
         labelObserver: IntersectionObserver | undefined;
@@ -14,7 +14,6 @@
     import {
         MessageContextMap,
         app,
-        failedMessagesStore,
         localUpdates,
         messageContextsEqual,
         pathState,
@@ -530,7 +529,7 @@
                 ev.event.kind === "message" &&
                 ev.event.messageIndex === index &&
                 (messageContext === undefined ||
-                    !failedMessagesStore.contains(messageContext, ev.event.messageId)),
+                    !localUpdates.isFailed(messageContext, ev.event.messageId)),
         ) as EventWrapper<Message> | undefined;
     }
 
@@ -552,9 +551,9 @@
         return true;
     }
 
-    function isFailed(_failed: unknown, evt: EventWrapper<ChatEventType>): boolean {
+    function isFailed(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message" && messageContext) {
-            return failedMessagesStore.contains(messageContext, evt.event.messageId);
+            return localUpdates.isFailed(messageContext, evt.event.messageId);
         }
         return false;
     }

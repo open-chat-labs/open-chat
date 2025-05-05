@@ -16,9 +16,7 @@ import { getNextEventAndMessageIndexes, mergeEventsAndLocalUpdates } from "../ut
 import { createDerivedPropStore } from "./derived";
 import { draftMessagesStore } from "./draftMessages";
 import { createDummyStore } from "./dummyStore";
-import { failedMessagesStore } from "./failedMessages";
 import { proposalTallies } from "./proposalTallies";
-import { recentlySentMessagesStore } from "./recentlySentMessages";
 import { safeWritable } from "./safeWritable";
 import { snsFunctions } from "./snsFunctions";
 

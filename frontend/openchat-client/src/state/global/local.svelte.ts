@@ -1,5 +1,6 @@
 import {
     emptyChatMetrics,
+    MessageContextMap,
     nullMembership,
     type AccessGateConfig,
     type ChatIdentifier,
@@ -52,12 +53,17 @@ function emptyUnconfirmed(): UnconfirmedState {
     return new SvelteMap<bigint, UnconfirmedMessageEvent>();
 }
 
+type FailedMessageState = Map<bigint, EventWrapper<Message>>;
 type EphemeralState = Map<bigint, EventWrapper<Message>>;
 
 const noop = () => {};
 
 // global local updates don't need the manager because they are not specific to a keyed entity (community, chat, message etc)
 export class GlobalLocalState {
+    #failedMessages = $state<ReactiveMessageContextMap<FailedMessageState>>(
+        new ReactiveMessageContextMap(),
+    );
+    #recentlySentMessages = new SvelteMap<bigint, bigint>();
     #ephemeral = $state<ReactiveMessageContextMap<EphemeralState>>(new ReactiveMessageContextMap());
     #unconfirmed = $state<ReactiveMessageContextMap<UnconfirmedState>>(
         new ReactiveMessageContextMap(),
@@ -80,13 +86,45 @@ export class GlobalLocalState {
         return this.#unconfirmed;
     }
 
-    addEphemeral(key: MessageContext, message: EventWrapper<Message>): UndoLocalUpdate {
+    initialiseFailedMessages(messages: MessageContextMap<FailedMessageState>) {
+        this.#failedMessages = new ReactiveMessageContextMap();
+        for (const [k, v] of messages) {
+            this.#failedMessages.set(k, v);
+        }
+    }
+
+    addFailedMessage(key: MessageContext, message: EventWrapper<Message>) {
+        const s = this.#failedMessages.get(key) ?? new SvelteMap<bigint, EventWrapper<Message>>();
+        s.set(message.event.messageId, message);
+        this.#failedMessages.set(key, s);
+    }
+
+    anyFailed(key: MessageContext): boolean {
+        return (this.#failedMessages.get(key)?.size ?? 0) > 0;
+    }
+
+    isFailed(key: MessageContext, messageId: bigint): boolean {
+        return this.#failedMessages.get(key)?.has(messageId) ?? false;
+    }
+
+    failedMessages(key: MessageContext): EventWrapper<Message>[] {
+        const state = this.#failedMessages.get(key);
+        return state ? [...state.values()] : [];
+    }
+
+    deleteFailedMessage(key: MessageContext, messageId: bigint) {
+        this.#deleteLocalMessage(this.#failedMessages, key, messageId);
+    }
+
+    addEphemeral(key: MessageContext, message: EventWrapper<Message>) {
         const s = this.#ephemeral.get(key) ?? new SvelteMap<bigint, EventWrapper<Message>>();
         s.set(message.event.messageId, message);
         this.#ephemeral.set(key, s);
-        return scheduleUndo(() => {
-            this.#deleteLocalMessage(this.#ephemeral, key, message.event.messageId);
-        });
+        // TODO - I don't think that we want ephemeral messages to automatically disappear
+        // but we also don't want them to stay here forever do we?
+        // return scheduleUndo(() => {
+        //     this.#deleteLocalMessage(this.#ephemeral, key, message.event.messageId);
+        // });
     }
 
     isEphemeral(key: MessageContext, messageId: bigint): boolean {
@@ -121,8 +159,10 @@ export class GlobalLocalState {
         if (!s.has(message.event.messageId)) {
             s.set(message.event.messageId, { ...message, accepted: false });
             this.#unconfirmed.set(key, s);
+            this.#recentlySentMessages.set(message.event.messageId, message.timestamp);
             return scheduleUndo(() => {
                 this.#deleteLocalMessage(this.#unconfirmed, key, message.event.messageId);
+                this.#recentlySentMessages.delete(message.event.messageId);
             }, 60_000);
         }
         return noop;
@@ -153,17 +193,7 @@ export class GlobalLocalState {
     }
 
     deleteUnconfirmed(key: MessageContext, messageId: bigint) {
-        const state = this.#unconfirmed.get(key);
-        const msg = state?.get(messageId);
-        if (msg !== undefined) {
-            revokeObjectUrls(msg);
-            state?.delete(messageId);
-            if (state?.size === 0) {
-                this.#unconfirmed.delete(key);
-            }
-            return true;
-        }
-        return false;
+        return this.#deleteLocalMessage(this.#unconfirmed, key, messageId);
     }
 
     isUnconfirmed(key: MessageContext, messageId: bigint): boolean {
