@@ -18,6 +18,7 @@
     import FancyLoader from "../icons/FancyLoader.svelte";
     import EmailSigninFeedback from "./EmailSigninFeedback.svelte";
     import ChooseSignInOption from "./profile/ChooseSignInOption.svelte";
+    import AndroidSignIn from "../mobile/AndroidSignIn.svelte";
 
     interface Props {
         onClose: () => void;
@@ -148,6 +149,21 @@
     }
 </script>
 
+{#snippet changeModeView()}
+    <Translatable
+        resourceKey={i18nKey(
+            mode === "signin" ? "loginDialog.noAccount" : "loginDialog.haveAccount",
+        )} />
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_missing_attribute -->
+    <a role="button" tabindex="0" onclick={toggleMode}>
+        <Translatable
+            resourceKey={i18nKey(
+                mode === "signin" ? "loginDialog.signup" : "loginDialog.signin",
+            )} />
+    </a>
+{/snippet}
+
 <ModalContent hideFooter={!loggingInWithEmail} onClose={cancel} closeIcon>
     {#snippet header()}
         <div class="header login">
@@ -169,7 +185,12 @@
     {/snippet}
     {#snippet body()}
         <div class="login">
-            {#if loginState === "options"}
+            {#if client.isNativeAndroid()}
+                <AndroidSignIn {mode} />
+                <div class="android-signin-mode">
+                    {@render changeModeView()}
+                </div>
+            {:else if loginState === "options"}
                 <ChooseSignInOption
                     onLogin={login}
                     {mode}
@@ -178,18 +199,7 @@
                     bind:email />
 
                 <div class="change-mode">
-                    <Translatable
-                        resourceKey={i18nKey(
-                            mode === "signin" ? "loginDialog.noAccount" : "loginDialog.haveAccount",
-                        )} />
-                    <!-- svelte-ignore a11y_click_events_have_key_events -->
-                    <!-- svelte-ignore a11y_missing_attribute -->
-                    <a role="button" tabindex="0" onclick={toggleMode}>
-                        <Translatable
-                            resourceKey={i18nKey(
-                                mode === "signin" ? "loginDialog.signup" : "loginDialog.signin",
-                            )} />
-                    </a>
+                    {@render changeModeView()}
                 </div>
             {:else if loggingInWithEmail}
                 <EmailSigninFeedback
@@ -289,5 +299,9 @@
 
     .change-mode {
         margin-top: $sp4;
+    }
+
+    .android-signin-mode {
+        margin-bottom: $sp4;
     }
 </style>
