@@ -330,7 +330,6 @@ import {
     pinNumberFailureStore,
     pinNumberRequiredStore,
 } from "./stores/pinNumber";
-import { proposalTallies } from "./stores/proposalTallies";
 import { recommendedGroupExclusions } from "./stores/recommendedGroupExclusions";
 import { captureRulesAcceptanceStore } from "./stores/rules";
 import { snsFunctions } from "./stores/snsFunctions";
@@ -347,6 +346,10 @@ import {
     videoCallBotUser,
 } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
+import {
+    AndroidWebAuthnPasskeyIdentity,
+    createAndroidWebAuthnPasskeyIdentity,
+} from "./utils/androidWebAuthn";
 import { dataToBlobUrl } from "./utils/blob";
 import { CachePrimer } from "./utils/cachePrimer";
 import {
@@ -488,10 +491,6 @@ import {
 } from "./utils/user";
 import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 import { createWebAuthnIdentity, MultiWebAuthnIdentity } from "./utils/webAuthn";
-import {
-    createAndroidWebAuthnPasskeyIdentity,
-    AndroidWebAuthnPasskeyIdentity,
-} from "./utils/androidWebAuthn";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -5104,7 +5103,7 @@ export class OpenChat {
             proposalId,
             isNns,
         }).then((resp) => {
-            proposalTallies.setTally(governanceCanisterId, proposalId, resp.latestTally);
+            app.setProposalTally(governanceCanisterId, proposalId, resp.latestTally);
             return resp;
         });
     }

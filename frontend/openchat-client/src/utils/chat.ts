@@ -73,7 +73,6 @@ import { app } from "../state/app.svelte";
 import { localUpdates } from "../state/global";
 import type { LocalTipsReceived, MessageLocalState } from "../state/message/local.svelte";
 import { cryptoLookup } from "../stores/crypto";
-import { tallyKey } from "../stores/proposalTallies";
 import type { TypersByKey } from "../stores/typing";
 import { areOnSameDay } from "../utils/date";
 import { distinctBy, groupWhile, toRecordFiltered } from "../utils/list";
@@ -1336,12 +1335,10 @@ export function mergeEventsAndLocalUpdates(
 
             const tallyUpdate =
                 e.event.content.kind === "proposal_content"
-                    ? proposalTallies[
-                          tallyKey(
-                              e.event.content.governanceCanisterId,
-                              e.event.content.proposal.id,
-                          )
-                      ]
+                    ? app.getProposalTally(
+                          e.event.content.governanceCanisterId,
+                          e.event.content.proposal.id,
+                      )
                     : undefined;
 
             const senderBlocked = blockedUsers.has(e.event.sender);

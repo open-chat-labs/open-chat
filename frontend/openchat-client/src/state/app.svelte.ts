@@ -42,6 +42,7 @@ import {
     type Referral,
     SafeMap,
     type StreakInsurance,
+    type Tally,
     type ThreadIdentifier,
     type ThreadSyncDetails,
     type UserGroupDetails,
@@ -52,6 +53,7 @@ import {
     type WalletConfig,
     type WebhookDetails,
 } from "openchat-shared";
+import { SvelteMap } from "svelte/reactivity";
 import { type PinnedByScope } from "../stores";
 import { mergeChatMetrics, mergePermissions, mergeUnconfirmedIntoSummary } from "../utils/chat";
 import { chatDetailsLocalUpdates, ChatDetailsMergedState } from "./chat_details";
@@ -522,6 +524,8 @@ export class AppState {
         return videoCallsInProgressForChats(chats);
     });
 
+    #proposalTallies = new SvelteMap<string, Tally>();
+
     #identityState = $state<IdentityState>({ kind: "loading_user" });
 
     #chatsInitialised = $state(false);
@@ -595,6 +599,14 @@ export class AppState {
 
     setCurrentUser(user: CreatedUser) {
         this.#currentUser = user;
+    }
+
+    getProposalTally(governanceCanisterId: string, proposalId: bigint) {
+        return this.#proposalTallies.get(`${governanceCanisterId}_${proposalId}`);
+    }
+
+    setProposalTally(governanceCanisterId: string, proposalId: bigint, tally: Tally) {
+        this.#proposalTallies.set(`${governanceCanisterId}_${proposalId}`, tally);
     }
 
     get currentChatBlockedOrSuspendedUsers() {
