@@ -402,6 +402,7 @@ pub mod happy_path {
                 search_term,
                 page_index: 0,
                 page_size: 10,
+                exclude_installed: false,
             },
         );
 

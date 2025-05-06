@@ -5843,6 +5843,7 @@ export const UserIndexExploreBotsArgs = Type.Object({
     page_index: Type.Number(),
     page_size: Type.Number(),
     installation_location: Type.Optional(BotInstallationLocation),
+    exclude_installed: Type.Boolean(),
 });
 
 export type UserIndexChitLeaderboardSuccessResult = Static<

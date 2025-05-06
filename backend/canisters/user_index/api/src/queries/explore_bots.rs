@@ -11,6 +11,7 @@ pub struct Args {
     pub page_index: u32,
     pub page_size: u8,
     pub installation_location: Option<BotInstallationLocation>,
+    pub exclude_installed: bool,
 }
 
 #[ts_export(user_index, explore_bots)]

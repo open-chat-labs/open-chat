@@ -1,30 +1,29 @@
-import { groupBy } from "../../utils/list";
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import type {
+    BotDefinition,
+    BotInstallationLocation,
+    BotsResponse,
     CheckUsernameResponse,
+    ChitLeaderboardResponse,
+    ChitState,
     CurrentUserResponse,
+    DiamondMembershipDuration,
+    DiamondMembershipFees,
+    ExploreBotsResponse,
+    ExternalAchievementsResponse,
+    ExternalBot,
+    PayForDiamondMembershipResponse,
+    SetDisplayNameResponse,
     SetUsernameResponse,
+    SetUserUpgradeConcurrencyResponse,
+    SubmitProofOfUniquePersonhoodResponse,
+    SuspendUserResponse,
+    UnsuspendUserResponse,
+    UsersApiResponse,
     UsersArgs,
     UsersResponse,
     UserSummary,
-    SuspendUserResponse,
-    UnsuspendUserResponse,
-    DiamondMembershipDuration,
-    PayForDiamondMembershipResponse,
-    SetUserUpgradeConcurrencyResponse,
-    SetDisplayNameResponse,
-    DiamondMembershipFees,
-    UsersApiResponse,
     UserSummaryUpdate,
-    ChitState,
-    SubmitProofOfUniquePersonhoodResponse,
-    ChitLeaderboardResponse,
-    ExternalAchievementsResponse,
-    ExploreBotsResponse,
-    ExternalBot,
-    BotsResponse,
-    BotDefinition,
-    BotInstallationLocation,
 } from "openchat-shared";
 import {
     mergeUserSummaryWithUpdates,
@@ -32,51 +31,6 @@ import {
     Stream,
     userSummaryFromCurrentUserSummary,
 } from "openchat-shared";
-import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
-import {
-    checkUsernameResponse,
-    setUsernameResponse,
-    usersApiResponse,
-    suspendUserResponse,
-    unsuspendUserResponse,
-    payForDiamondMembershipResponse,
-    setDisplayNameResponse,
-    diamondMembershipFeesResponse,
-    chitLeaderboardResponse,
-    submitProofOfUniquePersonhoodResponse,
-    currentUserResponse,
-    userRegistrationCanisterResponse,
-    userSearchResponse,
-    apiJsonDiamondDuration,
-    externalAchievementsResponse,
-    exploreBotsResponse,
-    botUpdatesResponse,
-    apiBotDefinition,
-    apiBotInstallLocation,
-} from "./mappers";
-import {
-    getCachedUsers,
-    getCachedDeletedUserIds,
-    getSuspendedUsersSyncedUpTo,
-    setCachedDeletedUserIds,
-    setCachedUsers,
-    setDisplayNameInCache,
-    setSuspendedUsersSyncedUpTo,
-    setUserDiamondStatusInCache,
-    setUsernameInCache,
-} from "../../utils/userCache";
-import {
-    getCachedCurrentUser,
-    mergeCachedCurrentUser,
-    setCachedCurrentUser,
-    setCurrentUserDiamondStatusInCache,
-} from "../../utils/caching";
-import {
-    identity,
-    mapOptional,
-    principalBytesToString,
-    principalStringToBytes,
-} from "../../utils/mapping";
 import {
     Empty,
     UserIndexBotUpdatesArgs,
@@ -123,6 +77,52 @@ import {
     UserIndexUsersArgs,
     UserIndexUsersResponse,
 } from "../../typebox";
+import {
+    getCachedCurrentUser,
+    mergeCachedCurrentUser,
+    setCachedCurrentUser,
+    setCurrentUserDiamondStatusInCache,
+} from "../../utils/caching";
+import { groupBy } from "../../utils/list";
+import {
+    identity,
+    mapOptional,
+    principalBytesToString,
+    principalStringToBytes,
+} from "../../utils/mapping";
+import {
+    getCachedDeletedUserIds,
+    getCachedUsers,
+    getSuspendedUsersSyncedUpTo,
+    setCachedDeletedUserIds,
+    setCachedUsers,
+    setDisplayNameInCache,
+    setSuspendedUsersSyncedUpTo,
+    setUserDiamondStatusInCache,
+    setUsernameInCache,
+} from "../../utils/userCache";
+import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
+import {
+    apiBotDefinition,
+    apiBotInstallLocation,
+    apiJsonDiamondDuration,
+    botUpdatesResponse,
+    checkUsernameResponse,
+    chitLeaderboardResponse,
+    currentUserResponse,
+    diamondMembershipFeesResponse,
+    exploreBotsResponse,
+    externalAchievementsResponse,
+    payForDiamondMembershipResponse,
+    setDisplayNameResponse,
+    setUsernameResponse,
+    submitProofOfUniquePersonhoodResponse,
+    suspendUserResponse,
+    unsuspendUserResponse,
+    userRegistrationCanisterResponse,
+    usersApiResponse,
+    userSearchResponse,
+} from "./mappers";
 
 export class UserIndexClient extends MsgpackCanisterAgent {
     constructor(
@@ -612,7 +612,8 @@ export class UserIndexClient extends MsgpackCanisterAgent {
         searchTerm: string | undefined,
         pageIndex: number,
         pageSize: number,
-        location?: BotInstallationLocation,
+        location: BotInstallationLocation | undefined,
+        excludeInstalled: boolean,
     ): Promise<ExploreBotsResponse> {
         return this.executeMsgpackQuery(
             "explore_bots",
@@ -621,6 +622,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
                 page_index: pageIndex,
                 page_size: pageSize,
                 installation_location: mapOptional(location, apiBotInstallLocation),
+                exclude_installed: excludeInstalled,
             },
             (resp) => exploreBotsResponse(resp, this.blobUrlPattern, this.canisterId),
             UserIndexExploreBotsArgs,

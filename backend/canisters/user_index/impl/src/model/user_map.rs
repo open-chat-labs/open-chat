@@ -586,12 +586,20 @@ impl UserMap {
         page_size: u8,
         caller: Option<UserId>,
         installation_location: Option<BotInstallationLocation>,
+        exclude_installed: bool,
     ) -> (Vec<BotMatch>, u32) {
         let query = search_term.map(Query::parse);
 
         let mut matches: Vec<_> = self
             .bots
             .iter()
+            .filter(|(_, bot)| {
+                if let Some(loc) = installation_location {
+                    !exclude_installed || !bot.installations.contains_key(&loc)
+                } else {
+                    true
+                }
+            })
             .filter(|(_, bot)| match bot.registration_status {
                 BotRegistrationStatus::Public => true,
                 BotRegistrationStatus::Private(location) => match installation_location {
