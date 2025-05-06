@@ -5,6 +5,7 @@ import type {
     ChatEventsArgs,
     ChatEventsBatchResponse,
     ChatEventsResponse,
+    GroupAndCommunitySummaryUpdatesArgs,
     GroupAndCommunitySummaryUpdatesResponse,
     JoinCommunityResponse,
     JoinGroupResponse,
@@ -170,10 +171,14 @@ export function accessTokenResponse(
 }
 
 export function groupAndCommunitySummaryUpdates(
+    requests: GroupAndCommunitySummaryUpdatesArgs[],
     value: LocalUserIndexGroupAndCommunitySummaryUpdatesResponse,
 ): GroupAndCommunitySummaryUpdatesResponse[] {
     const results: GroupAndCommunitySummaryUpdatesResponse[] = [];
-    for (const result of value.Success) {
+    for (let i = 0; i < requests.length; i++) {
+        const request = requests[i];
+        const result = value.Success[i];
+
         if (result === "SuccessNoUpdates") {
             results.push({
                 kind: "no_updates",
@@ -206,11 +211,13 @@ export function groupAndCommunitySummaryUpdates(
             results.push({
                 kind: "error",
                 error: result.InternalError,
+                canisterId: request.canisterId,
             });
         } else if ("Error" in result) {
             results.push({
                 kind: "error",
                 error: JSON.stringify(result.Error),
+                canisterId: request.canisterId,
             });
         } else {
             throw new UnsupportedValueError(

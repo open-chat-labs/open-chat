@@ -1,5 +1,7 @@
 pub mod bots_map;
+pub mod community_event_batch;
 pub mod global_user_map;
+pub mod group_event_batch;
 pub mod local_community_map;
 pub mod local_group_map;
 pub mod local_user_map;

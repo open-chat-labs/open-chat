@@ -1738,7 +1738,6 @@ export class OpenChatAgent extends EventTarget {
         let bitcoinAddress: string | undefined = undefined;
         let streakInsurance: StreakInsurance | undefined;
 
-        let latestActiveGroupsCheck = BigInt(0);
         let latestUserCanisterUpdates: bigint;
         let anyUpdates = false;
 
@@ -1792,7 +1791,6 @@ export class OpenChatAgent extends EventTarget {
             directChats = current.directChats;
             currentGroups = current.groupChats;
             currentCommunities = current.communities;
-            latestActiveGroupsCheck = current.latestActiveGroupsCheck;
             installedBots = current.installedBots;
             apiKeys = current.apiKeys;
             bitcoinAddress = current.bitcoinAddress;
@@ -1901,16 +1899,33 @@ export class OpenChatAgent extends EventTarget {
             }
         }
 
-        const currentGroupChatIds = currentGroups.map((g) => g.id);
-        const currentCommunityIds = currentCommunities.map((c) => c.id);
+        // Set this to the minimum `latestSuccessfulUpdatesCheck` timestamp from the groups and communities to ensure
+        // no updates are missed
+        let checkActivityFromTimestamp: bigint | undefined = undefined;
+        const currentGroupChatIds: GroupChatIdentifier[] = [];
+        const currentCommunityIds: CommunityIdentifier[] = [];
+        for (const group of currentGroups) {
+            currentGroupChatIds.push(group.id);
+            if (checkActivityFromTimestamp === undefined || checkActivityFromTimestamp > group.latestSuccessfulUpdatesCheck) {
+                checkActivityFromTimestamp = group.latestSuccessfulUpdatesCheck;
+            }
+        }
+        for (const community of currentCommunities) {
+            currentCommunityIds.push(community.id);
+            if (checkActivityFromTimestamp === undefined || checkActivityFromTimestamp > community.latestSuccessfulUpdatesCheck) {
+                checkActivityFromTimestamp = community.latestSuccessfulUpdatesCheck;
+            }
+        }
 
-        if (currentGroupChatIds.length > 0 || currentCommunityIds.length > 0) {
+        let latestUpdatesCheck = latestUserCanisterUpdates;
+        if (checkActivityFromTimestamp !== undefined) {
             const groupIndexResponse = await this._groupIndexClient.activeGroups(
                 currentCommunityIds,
                 currentGroupChatIds,
-                latestActiveGroupsCheck,
+                checkActivityFromTimestamp,
             );
             numberOfAsyncCalls++;
+            latestUpdatesCheck = groupIndexResponse.timestamp;
 
             groupIndexResponse.activeGroups.forEach((g) => groupsToCheckForUpdates.add(g));
             groupIndexResponse.deletedGroups.forEach((g) => groupsRemoved.add(g.id));
@@ -1919,8 +1934,6 @@ export class OpenChatAgent extends EventTarget {
                 communitiesToCheckForUpdates.add(c),
             );
             groupIndexResponse.deletedCommunities.forEach((c) => groupsRemoved.add(c.id));
-
-            latestActiveGroupsCheck = groupIndexResponse.timestamp;
 
             // Also check for updates for recently joined groups and communities since it may take a few iterations
             // before the GroupIndex knows that they are active
@@ -2003,7 +2016,7 @@ export class OpenChatAgent extends EventTarget {
         const communityCanisterCommunitySummaries: CommunitySummary[] = [];
         const groupUpdates: GroupCanisterGroupChatSummaryUpdates[] = [];
         const communityUpdates: CommunityCanisterCommunitySummaryUpdates[] = [];
-        let anyErrors = summaryUpdatesResults.errors.length > 0;
+        const errors = new Set<string>();
 
         for (const response of summaryUpdatesResults.success) {
             for (const result of response) {
@@ -2026,7 +2039,7 @@ export class OpenChatAgent extends EventTarget {
                     }
                     case "error": {
                         if (!result.error.includes("DestinationInvalid")) {
-                            anyErrors = true;
+                            errors.add(result.canisterId);
                         }
                         break;
                     }
@@ -2038,16 +2051,18 @@ export class OpenChatAgent extends EventTarget {
             anyUpdates = true;
         }
 
-        const groupChats = mergeGroupChats(groupsAdded, groupCanisterGroupSummaries)
-            .concat(mergeGroupChatUpdates(currentGroups, userCanisterGroupUpdates, groupUpdates))
+        const groupChats = mergeGroupChats(groupsAdded, groupCanisterGroupSummaries, latestUpdatesCheck)
+            .concat(mergeGroupChatUpdates(currentGroups, userCanisterGroupUpdates, groupUpdates, latestUpdatesCheck, errors))
             .filter((g) => !groupsRemoved.has(g.id.groupId));
 
-        const communities = mergeCommunities(communitiesAdded, communityCanisterCommunitySummaries)
+        const communities = mergeCommunities(communitiesAdded, communityCanisterCommunitySummaries, latestUpdatesCheck)
             .concat(
                 mergeCommunityUpdates(
                     currentCommunities,
                     userCanisterCommunityUpdates,
                     communityUpdates,
+                    latestUpdatesCheck,
+                    errors,
                 ),
             )
             .filter((c) => !communitiesRemoved.has(c.id.communityId));
@@ -2058,7 +2073,6 @@ export class OpenChatAgent extends EventTarget {
 
         const state = {
             latestUserCanisterUpdates,
-            latestActiveGroupsCheck,
             directChats,
             groupChats,
             communities,
@@ -2085,7 +2099,7 @@ export class OpenChatAgent extends EventTarget {
 
         const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);
 
-        if (!anyErrors && this.userClient.userId !== ANON_USER_ID) {
+        if (this.userClient.userId !== ANON_USER_ID) {
             setCachedChats(this.db, this.principal, state, updatedEvents);
         }
 
