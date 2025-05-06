@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Store LocalGroupIndex canisterId in each LocalUserIndex ([#7868](https://github.com/open-chat-labs/open-chat/pull/7868))
+- Support exclusion of installed bots from `explore_bots` ([#7904](https://github.com/open-chat-labs/open-chat/pull/7904))
 
 ## [[2.0.1709](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1709-user_index)] - 2025-04-23
 

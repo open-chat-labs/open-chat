@@ -120,7 +120,7 @@
             userId: app.currentUserId,
         } as DirectChatIdentifier;
 
-        return client.exploreBots(term, 0, 10, location).then((result) => {
+        return client.exploreBots(term, 0, 10, location, false).then((result) => {
             return result.kind === "success" ? result.matches : [];
         });
     }

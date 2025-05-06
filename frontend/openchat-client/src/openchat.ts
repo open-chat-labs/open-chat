@@ -352,6 +352,10 @@ import {
     videoCallBotUser,
 } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
+import {
+    AndroidWebAuthnPasskeyIdentity,
+    createAndroidWebAuthnPasskeyIdentity,
+} from "./utils/androidWebAuthn";
 import { dataToBlobUrl } from "./utils/blob";
 import { CachePrimer } from "./utils/cachePrimer";
 import {
@@ -493,10 +497,6 @@ import {
 } from "./utils/user";
 import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 import { createWebAuthnIdentity, MultiWebAuthnIdentity } from "./utils/webAuthn";
-import {
-    createAndroidWebAuthnPasskeyIdentity,
-    AndroidWebAuthnPasskeyIdentity,
-} from "./utils/androidWebAuthn";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -5148,7 +5148,8 @@ export class OpenChat {
         searchTerm: string | undefined,
         pageIndex: number,
         pageSize: number,
-        location?: BotInstallationLocation,
+        location: BotInstallationLocation | undefined,
+        excludeInstalled: boolean,
     ): Promise<ExploreBotsResponse> {
         return this.#sendRequest({
             kind: "exploreBots",
@@ -5156,6 +5157,7 @@ export class OpenChat {
             pageIndex,
             pageSize,
             location,
+            excludeInstalled,
         });
     }
 
