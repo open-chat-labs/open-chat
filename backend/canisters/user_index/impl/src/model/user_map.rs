@@ -594,11 +594,7 @@ impl UserMap {
             .bots
             .iter()
             .filter(|(_, bot)| {
-                if let Some(loc) = installation_location {
-                    !exclude_installed || !bot.installations.contains_key(&loc)
-                } else {
-                    true
-                }
+                !exclude_installed || installation_location.is_none_or(|loc| bot.installations.contains_key(&loc))
             })
             .filter(|(_, bot)| match bot.registration_status {
                 BotRegistrationStatus::Public => true,
