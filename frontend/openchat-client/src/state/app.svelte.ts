@@ -20,6 +20,7 @@ import {
     communityIdentifiersEqual,
     CommunityMap,
     type CommunitySummary,
+    compareChats,
     type CreatedUser,
     type DirectChatIdentifier,
     type DirectChatSummary,
@@ -31,8 +32,8 @@ import {
     type Member,
     mergeListOfCombinedUnreadCounts,
     type MessageActivitySummary,
-    type MessageContext,
-    messageContextsEqual,
+    type MessageFilter,
+    type MessageFormatter,
     type ModerationFlag,
     ModerationFlags,
     type PublicApiKeyDetails,
@@ -40,7 +41,9 @@ import {
     type Referral,
     SafeMap,
     type StreakInsurance,
+    type Tally,
     type ThreadIdentifier,
+    type ThreadSyncDetails,
     type UserGroupDetails,
     type UserGroupSummary,
     type VersionedRules,
@@ -49,17 +52,27 @@ import {
     type WalletConfig,
     type WebhookDetails,
 } from "openchat-shared";
+import { SvelteMap } from "svelte/reactivity";
 import { type PinnedByScope } from "../stores";
-import { mergeChatMetrics, mergePermissions } from "../utils/chat";
+import {
+    getMessagePermissionsForSelectedChat,
+    mergeChatMetrics,
+    mergePermissions,
+    mergeUnconfirmedIntoSummary,
+} from "../utils/chat";
 import { chatDetailsLocalUpdates, ChatDetailsMergedState } from "./chat_details";
 import { ChatDetailsServerState } from "./chat_details/server.svelte";
 import { communityLocalUpdates } from "./community_details";
 import { CommunityMergedState } from "./community_details/merged.svelte";
 import { CommunityServerState } from "./community_details/server.svelte";
 import { localUpdates } from "./global";
+import { ReactiveMessageMap } from "./map";
+import { messageLocalUpdates } from "./message/local.svelte";
 import { pathState } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
+import { ui } from "./ui.svelte";
 import { messagesRead } from "./unread/markRead.svelte";
+import { userStore } from "./users/users.svelte";
 
 export class AppState {
     constructor() {
@@ -79,6 +92,10 @@ export class AppState {
             });
         });
     }
+
+    #messageFilters = $state<MessageFilter[]>([]);
+
+    #translations = $state<ReactiveMessageMap<string>>(new ReactiveMessageMap());
 
     #communityFilterToString(filter: CommunityFilter): string {
         return JSON.stringify({
@@ -102,6 +119,8 @@ export class AppState {
             }
         );
     }
+
+    #messageFormatter: MessageFormatter | undefined;
 
     #communityFilters = $state<CommunityFilter>(this.#initialiseCommunityFilter());
 
@@ -213,6 +232,16 @@ export class AppState {
 
     #serverFavourites = $state<ChatSet>(new ChatSet());
 
+    #currentChatBlockedOrSuspendedUsers = $derived.by(() => {
+        const direct = ui.hideMessagesFromDirectBlocked ? [...userStore.blockedUsers] : [];
+        return new Set<string>([
+            ...this.#selectedChat.blockedUsers,
+            ...this.#selectedCommunity.blockedUsers,
+            ...userStore.suspendedUsers.keys(),
+            ...direct,
+        ]);
+    });
+
     #favourites = $derived.by(() => {
         return localUpdates.favourites.apply(this.#serverFavourites);
     });
@@ -301,18 +330,35 @@ export class AppState {
 
     // this is all server chats + previews with local updates applied.
     #allChats = $derived.by(() => {
+        const previewChannels = ChatMap.fromList(
+            [...localUpdates.previewCommunities.values()].flatMap((c) => c.channels),
+        );
         const withPreviews = this.#allServerChats
             .merge(localUpdates.uninitialisedDirectChats)
-            .merge(localUpdates.groupChatPreviews);
+            .merge(localUpdates.groupChatPreviews)
+            .merge(previewChannels);
+
         const withUpdates = localUpdates.chats.apply(withPreviews);
         return withUpdates.reduce((result, [chatId, chat]) => {
-            result.set(chatId, this.#applyLocalUpdatesToChat(chat));
+            const withLocal = this.#applyLocalUpdatesToChat(chat);
+            const withUnconfirmed = mergeUnconfirmedIntoSummary(
+                this.#messageFormatter ?? ((k) => k),
+                this.#currentUserId,
+                withLocal,
+                messageLocalUpdates.data,
+                this.#translations,
+                this.#currentChatBlockedOrSuspendedUsers,
+                this.#currentUserId,
+                this.#messageFilters,
+            );
+            result.set(chatId, withUnconfirmed);
             return result;
         }, new ChatMap<ChatSummary>());
     });
 
     // all chats filtered by scope including previews and local updates
-    #scopedChats = $derived.by(() => {
+    // the final client view of chat summaries with all updates merged in
+    #chatSummaries = $derived.by(() => {
         switch (this.#chatListScope.kind) {
             case "community": {
                 const communityId = this.#chatListScope.id.communityId;
@@ -336,6 +382,62 @@ export class AppState {
             default:
                 return new ChatMap<ChatSummary>();
         }
+    });
+
+    #chatSummariesList = $derived.by(() => {
+        const pinnedByScope = this.#pinnedChats.get(this.#chatListScope.kind) ?? [];
+        const pinned = pinnedByScope.reduce<ChatSummary[]>((result, id) => {
+            const summary = this.#chatSummaries.get(id);
+            if (summary !== undefined) {
+                result.push(summary);
+            }
+            return result;
+        }, []);
+        const unpinned = [...this.#chatSummaries.values()]
+            .filter(
+                (chat) => pinnedByScope.findIndex((p) => chatIdentifiersEqual(p, chat.id)) === -1,
+            )
+            .sort(compareChats);
+        return pinned.concat(unpinned);
+    });
+
+    #selectedChatSummary = $derived.by(() => {
+        if (this.#selectedChatId === undefined) return undefined;
+        return this.#chatSummaries.get(this.#selectedChatId);
+    });
+
+    #isProposalGroup = $derived(
+        this.#selectedChatSummary !== undefined &&
+            this.#selectedChatSummary.kind !== "direct_chat" &&
+            this.#selectedChatSummary.subtype?.kind === "governance_proposals",
+    );
+
+    #threadsByChat = $derived.by(() => {
+        return this.#chatSummariesList.reduce((result, chat) => {
+            if (
+                (chat.kind === "group_chat" || chat.kind === "channel") &&
+                chat.membership &&
+                chat.membership.latestThreads.length > 0
+            ) {
+                result.set(chat.id, chat.membership.latestThreads);
+            }
+            return result;
+        }, new ChatMap<ThreadSyncDetails[]>());
+    });
+
+    #numberOfThreads = $derived(
+        this.#threadsByChat.map((_, ts) => ts.length).reduce((total, [_, n]) => total + n, 0),
+    );
+
+    #threadsFollowedByMe = $derived.by(() => {
+        return this.#threadsByChat.reduce<ChatMap<Set<number>>>((result, [chatId, threads]) => {
+            const set = new Set<number>();
+            for (const thread of threads) {
+                set.add(thread.threadRootMessageIndex);
+            }
+            result.set(chatId, set);
+            return result;
+        }, new ChatMap<Set<number>>());
     });
 
     #serverPinnedChats = $state<Map<ChatListScope["kind"], ChatIdentifier[]>>(new Map());
@@ -425,6 +527,8 @@ export class AppState {
         return videoCallsInProgressForChats(chats);
     });
 
+    #proposalTallies = new SvelteMap<string, Tally>();
+
     #identityState = $state<IdentityState>({ kind: "loading_user" });
 
     #chatsInitialised = $state(false);
@@ -432,28 +536,16 @@ export class AppState {
     // TODO - this does not seem to be working as intended - investigate why
     #chatListScope = $derived.by(withEqCheck(() => pathState.route.scope, chatListScopesEqual));
 
-    // TODO - not sure this currently works with *starting* threads
-    // I feel uneasy about this as a *concept* because if I have a chat open *and* a thread open then there are two
-    // selected message contexts. So this is at best misleading and at worst meaningless.
-    #selectedMessageContext = $derived.by<MessageContext | undefined>(
+    #selectedChatId = $derived.by(
         withEqCheck(() => {
             switch (pathState.route.kind) {
                 case "selected_channel_route":
                 case "global_chat_selected_route":
-                    return {
-                        chatId: pathState.route.chatId,
-                        threadRootMessageIndex: pathState.route.open
-                            ? pathState.route.messageIndex
-                            : undefined,
-                    };
+                    return pathState.route.chatId;
                 default:
                     return undefined;
             }
-        }, messageContextsEqual),
-    );
-
-    #selectedChatId = $derived.by<ChatIdentifier | undefined>(
-        withEqCheck(() => this.#selectedMessageContext?.chatId, chatIdentifiersEqual),
+        }, chatIdentifiersEqual),
     );
 
     #selectedServerChatSummary = $derived.by(() => {
@@ -496,8 +588,56 @@ export class AppState {
         new ChatDetailsMergedState(ChatDetailsServerState.empty()),
     );
 
+    #messagePermissionsForSelectedChat = $derived.by(() => {
+        return getMessagePermissionsForSelectedChat(this.#selectedChatSummary, "message");
+    });
+
+    #currentChatDraftMessage = $derived(
+        this.#selectedChatId
+            ? localUpdates.draftMessages.get({ chatId: this.#selectedChatId })
+            : undefined,
+    );
+
+    #currentThreadDraftMessage = $derived(
+        this.#selectedChat.selectedThread?.id
+            ? localUpdates.draftMessages.get(this.#selectedChat.selectedThread.id)
+            : undefined,
+    );
+
+    #threadPermissionsForSelectedChat = $derived.by(() => {
+        return getMessagePermissionsForSelectedChat(this.#selectedChatSummary, "thread");
+    });
+
+    get currentChatDraftMessage() {
+        return this.#currentChatDraftMessage;
+    }
+
+    get currentThreadDraftMessage() {
+        return this.#currentThreadDraftMessage;
+    }
+
+    get messagePermissionsForSelectedChat() {
+        return this.#messagePermissionsForSelectedChat;
+    }
+
+    get threadPermissionsForSelectedChat() {
+        return this.#threadPermissionsForSelectedChat;
+    }
+
     setCurrentUser(user: CreatedUser) {
         this.#currentUser = user;
+    }
+
+    getProposalTally(governanceCanisterId: string, proposalId: bigint) {
+        return this.#proposalTallies.get(`${governanceCanisterId}_${proposalId}`);
+    }
+
+    setProposalTally(governanceCanisterId: string, proposalId: bigint, tally: Tally) {
+        this.#proposalTallies.set(`${governanceCanisterId}_${proposalId}`, tally);
+    }
+
+    get currentChatBlockedOrSuspendedUsers() {
+        return this.#currentChatBlockedOrSuspendedUsers;
     }
 
     get communityFilters() {
@@ -518,6 +658,26 @@ export class AppState {
             "openchat_community_filters",
             this.#communityFilterToString(this.#communityFilters),
         );
+    }
+
+    get translations() {
+        return this.#translations;
+    }
+
+    translate(messageId: bigint, translation: string) {
+        this.#translations.set(messageId, translation);
+    }
+
+    untranslate(messageId: bigint) {
+        this.#translations.delete(messageId);
+    }
+
+    get messageFilters() {
+        return this.#messageFilters;
+    }
+
+    set messageFilters(val: MessageFilter[]) {
+        this.#messageFilters = val;
     }
 
     get currentUser() {
@@ -716,10 +876,6 @@ export class AppState {
         return this.#selectedChatId;
     }
 
-    get selectedMessageContext() {
-        return this.#selectedMessageContext;
-    }
-
     get selectedCommunity() {
         return this.#selectedCommunity;
     }
@@ -910,8 +1066,32 @@ export class AppState {
         return this.#serverCommunities;
     }
 
-    get scopedChats() {
-        return this.#scopedChats;
+    get chatSummaries() {
+        return this.#chatSummaries;
+    }
+
+    get chatSummariesList() {
+        return this.#chatSummariesList;
+    }
+
+    get selectedChatSummary() {
+        return this.#selectedChatSummary;
+    }
+
+    get isProposalGroup() {
+        return this.#isProposalGroup;
+    }
+
+    get threadsByChat() {
+        return this.#threadsByChat;
+    }
+
+    get numberOfThreads() {
+        return this.#numberOfThreads;
+    }
+
+    get threadsFollowedByMe() {
+        return this.#threadsFollowedByMe;
     }
 
     get communities() {
@@ -999,6 +1179,10 @@ export class AppState {
             const skipUpdate = chitState.streakEnds < curr.streakEnds;
             return skipUpdate ? curr : chitState;
         });
+    }
+
+    set messageFormatter(val: MessageFormatter) {
+        this.#messageFormatter = val;
     }
 }
 

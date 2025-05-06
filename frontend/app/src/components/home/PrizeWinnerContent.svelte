@@ -18,7 +18,7 @@
     function username(userId: string): string {
         return userId === app.currentUserId
             ? $_("you")
-            : `${$userStore.get(userId)?.username ?? $_("unknown")}`;
+            : `${userStore.get(userId)?.username ?? $_("unknown")}`;
     }
 
     function openUserProfile(ev: Event) {

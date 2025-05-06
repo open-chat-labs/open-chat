@@ -6,7 +6,6 @@
         chatIdentifiersEqual,
         NoMeetingToJoin,
         OpenChat,
-        selectedChatStore as selectedChat,
         ui,
         userStore,
         type AccessTokenType,
@@ -65,7 +64,7 @@
             if (chat) {
                 switch (chat.kind) {
                     case "direct_chat":
-                        const them = $userStore.get(chat.them.userId);
+                        const them = userStore.get(chat.them.userId);
                         return {
                             chatId: chat.id,
                             name: client.displayName(them),
@@ -353,7 +352,7 @@
         !showLandingPage &&
         !(threadOpen && ui.mobileWidth) &&
         !(participantsOpen && ui.mobileWidth) &&
-        chatIdentifiersEqual($activeVideoCall.chatId, $selectedChat?.id)}>
+        chatIdentifiersEqual($activeVideoCall.chatId, app.selectedChatSummary?.id)}>
     {#if chat !== undefined}
         <ActiveCallHeader
             {onClearSelection}

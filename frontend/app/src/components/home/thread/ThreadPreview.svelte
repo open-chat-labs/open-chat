@@ -2,7 +2,6 @@
     import {
         app,
         AvatarSize,
-        chatSummariesStore,
         type EventWrapper,
         type Message,
         type MultiUserChat,
@@ -35,7 +34,7 @@
 
     let missingMessages = $derived(thread.totalReplies - thread.latestReplies.length);
     let threadRootMessageIndex = $derived(thread.rootMessage.event.messageIndex);
-    let chat = $derived($chatSummariesStore.get(thread.chatId) as MultiUserChat | undefined);
+    let chat = $derived(app.chatSummaries.get(thread.chatId) as MultiUserChat | undefined);
     let muted = $derived(chat?.membership?.notificationsMuted || false);
     let syncDetails = $derived(
         chat?.membership?.latestThreads?.find(
@@ -134,7 +133,7 @@
                 <div class="body">
                     <div class="root-msg">
                         <ChatMessage
-                            sender={$userStore.get(thread.rootMessage.event.sender)}
+                            sender={userStore.get(thread.rootMessage.event.sender)}
                             focused={false}
                             {observer}
                             accepted
@@ -178,7 +177,7 @@
                     {#each grouped as userGroup}
                         {#each userGroup as evt, i (evt.event.messageId)}
                             <ChatMessage
-                                sender={$userStore.get(evt.event.sender)}
+                                sender={userStore.get(evt.event.sender)}
                                 focused={false}
                                 {observer}
                                 accepted

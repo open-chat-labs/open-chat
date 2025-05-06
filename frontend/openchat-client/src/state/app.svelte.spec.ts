@@ -8,10 +8,12 @@ import {
     type CommunityIdentifier,
     type CommunityPermissions,
     type CommunitySummary,
+    type EventWrapper,
     type ExternalBotPermissions,
     type GroupChatIdentifier,
     type GroupChatSummary,
     type Member,
+    type Message,
 } from "openchat-shared";
 import { vi } from "vitest";
 import { AppState } from "./app.svelte";
@@ -41,6 +43,7 @@ const mockContext: PageJS.Context = {
 describe("app state", () => {
     beforeEach(() => {
         app = new AppState();
+        localUpdates.clearAll();
         pathState.setRouteParams(mockContext, {
             kind: "home_route",
             scope: { kind: "group_chat" },
@@ -134,7 +137,32 @@ describe("app state", () => {
         describe("chat local updates", () => {
             const groupId: GroupChatIdentifier = { kind: "group_chat", groupId: "123456" };
 
-            beforeEach(() => initialiseGlobalState());
+            beforeEach(() => {
+                initialiseGlobalState();
+            });
+
+            describe("last message updates", () => {
+                beforeEach(() => {
+                    pathState.setRouteParams(mockContext, {
+                        kind: "home_route",
+                        scope: { kind: "group_chat" },
+                    });
+                    localUpdates.addChat(groupChat("654321", chatMessage()));
+                });
+                test("tips", () => {
+                    localUpdates.markTip(123456n, "ledger1", "user2", 123n);
+                    const chat = app.chatSummaries.get({
+                        kind: "group_chat",
+                        groupId: "654321",
+                    });
+                    expect(chat).not.toBeUndefined();
+                    expect(chat?.latestMessage?.event.tips).toMatchObject({
+                        ledger1: {
+                            user2: 123n,
+                        },
+                    });
+                });
+            });
 
             describe("chat properties", () => {
                 test("chat found in all chats", () => {
@@ -171,12 +199,12 @@ describe("app state", () => {
                         scope: { kind: "group_chat" },
                     });
                     expect(app.allChats.get(groupId)).not.toBeUndefined();
-                    expect(app.scopedChats.get(groupId)).not.toBeUndefined();
+                    expect(app.chatSummaries.get(groupId)).not.toBeUndefined();
                     pathState.setRouteParams(mockContext, {
                         kind: "home_route",
                         scope: { kind: "direct_chat" },
                     });
-                    expect(app.scopedChats.get(groupId)).toBeUndefined();
+                    expect(app.chatSummaries.get(groupId)).toBeUndefined();
                 });
             });
 
@@ -475,7 +503,7 @@ function initialiseGlobalState() {
     );
 }
 
-function groupChat(groupId: string): GroupChatSummary {
+function groupChat(groupId: string, lastMessage?: EventWrapper<Message>): GroupChatSummary {
     return {
         id: { kind: "group_chat", groupId },
         kind: "group_chat",
@@ -510,9 +538,9 @@ function groupChat(groupId: string): GroupChatSummary {
         messagesVisibleToNonMembers: false,
         verified: false,
         lastUpdated: 1000n,
-        latestMessage: undefined,
-        latestEventIndex: 0,
-        latestMessageIndex: undefined,
+        latestMessage: lastMessage,
+        latestEventIndex: lastMessage?.index ?? 0,
+        latestMessageIndex: lastMessage?.event?.messageIndex ?? 0,
         metrics: emptyChatMetrics(),
         eventsTTL: undefined,
         eventsTtlLastUpdated: 0n,
@@ -545,5 +573,26 @@ function chitState() {
         nextDailyChitClaim: BigInt(Date.now() + 1000 * 60 * 60 * 24),
         chitBalance: 10_000,
         totalChitEarned: 50_000,
+    };
+}
+
+function chatMessage(): EventWrapper<Message> {
+    return {
+        index: 0,
+        timestamp: BigInt(Date.now()),
+        expiresAt: undefined,
+        event: {
+            kind: "message",
+            messageId: 123456n,
+            messageIndex: 0,
+            content: { kind: "text_content", text: "hello there" },
+            sender: "user1",
+            reactions: [],
+            deleted: false,
+            edited: false,
+            forwarded: false,
+            blockLevelMarkdown: false,
+            tips: {},
+        },
     };
 }

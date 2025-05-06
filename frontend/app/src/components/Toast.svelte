@@ -1,7 +1,7 @@
 <script lang="ts">
     import {
         type ChatIdentifier,
-        draftMessagesStore,
+        localUpdates,
         routeForChatIdentifier,
         subscribe,
         ui,
@@ -35,7 +35,7 @@
                 channelId: 2235218862,
             } as ChatIdentifier;
             page(routeForChatIdentifier("community", chatId));
-            draftMessagesStore.setTextContent({ chatId }, withDetail);
+            localUpdates.draftMessages.setTextContent({ chatId }, withDetail);
             toastStore.hideToast();
         }
     }

@@ -4,7 +4,6 @@
         chatIdentifiersEqual,
         type ChatSummary,
         type GroupChatSummary,
-        isProposalGroup,
         type OpenChat,
         publish,
         ui,
@@ -83,8 +82,8 @@
     let userId = $derived(
         selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "",
     );
-    let isBot = $derived($userStore.get(userId)?.kind === "bot");
-    let isSuspended = $derived($userStore.get(userId)?.suspended ?? false);
+    let isBot = $derived(userStore.get(userId)?.kind === "bot");
+    let isSuspended = $derived(userStore.get(userId)?.suspended ?? false);
     let groupDetailsSelected = $derived(ui.lastRightPanelState.kind === "group_details");
     let pinnedSelected = $derived(ui.lastRightPanelState.kind === "show_pinned");
     let membersSelected = $derived(ui.lastRightPanelState.kind === "show_group_members");
@@ -270,7 +269,7 @@
 </script>
 
 {#if desktop}
-    {#if $isProposalGroup}
+    {#if app.isProposalGroup}
         <HoverIcon onclick={showProposalFilters} title={$_("showFilters")}>
             <Tune size={ui.iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
@@ -359,7 +358,7 @@
                     </MenuItem>
                 {/if}
                 {#if ui.mobileWidth}
-                    {#if $isProposalGroup}
+                    {#if app.isProposalGroup}
                         <MenuItem onclick={showProposalFilters}>
                             {#snippet icon()}
                                 <Tune size={ui.iconSize} color={"var(--icon-inverted-txt)"} />

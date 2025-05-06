@@ -1,5 +1,4 @@
 import {
-    type UserLookup,
     type UserSummary,
     AIRDROP_BOT_AVATAR_URL,
     AIRDROP_BOT_USERNAME,
@@ -14,12 +13,11 @@ import {
     OPENCHAT_VIDEO_CALL_USER_ID,
     OPENCHAT_VIDEO_CALL_USERNAME,
 } from "openchat-shared";
-import { derived, writable } from "svelte/store";
 import { AIRDROP_BOT_USER_ID } from "../constants";
 import { createDummyStore } from "./dummyStore";
-import { createSetStore } from "./setStore";
 
 export const dummyCurrentUser = createDummyStore();
+export const dummyUserStore = createDummyStore();
 
 export const airdropBotUser: UserSummary = {
     kind: "bot",
@@ -102,74 +100,74 @@ export function proposalsBotUser(userId: string): UserSummary {
     };
 }
 
-export const specialUsers = writable<UserLookup>(new Map());
-const normalUsers = writable<UserLookup>(new Map());
+// export const specialUsers = writable<UserLookup>(new Map());
+// const normalUsers = writable<UserLookup>(new Map());
 
-const allUsers = derived([specialUsers, normalUsers], ([$specialUsers, $normalUsers]) => {
-    return [...$specialUsers.entries()].reduce((all, [k, v]) => {
-        all.set(k, v);
-        return all;
-    }, $normalUsers);
-});
+// const allUsers = derived([specialUsers, normalUsers], ([$specialUsers, $normalUsers]) => {
+//     return [...$specialUsers.entries()].reduce((all, [k, v]) => {
+//         all.set(k, v);
+//         return all;
+//     }, $normalUsers);
+// });
 
-export const suspendedUsers = createSetStore(writable(new Set<string>()));
+// export const suspendedUsers = createSetStore(writable(new Set<string>()));
 
-export function overwriteUser(lookup: UserLookup, user: UserSummary): UserLookup {
-    lookup.set(user.userId, { ...user });
-    return lookup;
-}
+// export function overwriteUser(lookup: UserLookup, user: UserSummary): UserLookup {
+//     lookup.set(user.userId, { ...user });
+//     return lookup;
+// }
 
-export const userStore = {
-    subscribe: allUsers.subscribe,
-    set: (users: UserLookup): void => {
-        normalUsers.set(users);
-        const [suspended] = partitionSuspendedUsers([...users.values()]);
-        suspendedUsers.set(new Set(suspended));
-    },
-    add: (user: UserSummary): void => {
-        normalUsers.update((users) => {
-            const clone = new Map(users);
-            return overwriteUser(clone, user);
-        });
-        if (user.suspended) {
-            suspendedUsers.add(user.userId);
-        } else {
-            suspendedUsers.delete(user.userId);
-        }
-    },
-    addMany: (newUsers: UserSummary[]): void => {
-        if (newUsers.length > 0) {
-            normalUsers.update((users) => {
-                const clone = new Map(users);
-                return newUsers.reduce((lookup, user) => overwriteUser(lookup, user), clone);
-            });
-            const [suspended, notSuspended] = partitionSuspendedUsers(newUsers);
-            suspendedUsers.addMany(suspended);
-            suspendedUsers.deleteMany(notSuspended);
-        }
-    },
-    setUpdated: (userIds: string[], timestamp: bigint): void => {
-        normalUsers.update((users) => {
-            for (const userId of userIds) {
-                const user = users.get(userId);
-                if (user !== undefined) {
-                    user.updated = timestamp;
-                }
-            }
-            return users;
-        });
-    },
-};
+// export const userStore = {
+//     subscribe: allUsers.subscribe,
+//     set: (users: UserLookup): void => {
+//         normalUsers.set(users);
+//         const [suspended] = partitionSuspendedUsers([...users.values()]);
+//         suspendedUsers.set(new Set(suspended));
+//     },
+//     add: (user: UserSummary): void => {
+//         normalUsers.update((users) => {
+//             const clone = new Map(users);
+//             return overwriteUser(clone, user);
+//         });
+//         if (user.suspended) {
+//             suspendedUsers.add(user.userId);
+//         } else {
+//             suspendedUsers.delete(user.userId);
+//         }
+//     },
+//     addMany: (newUsers: UserSummary[]): void => {
+//         if (newUsers.length > 0) {
+//             normalUsers.update((users) => {
+//                 const clone = new Map(users);
+//                 return newUsers.reduce((lookup, user) => overwriteUser(lookup, user), clone);
+//             });
+//             const [suspended, notSuspended] = partitionSuspendedUsers(newUsers);
+//             suspendedUsers.addMany(suspended);
+//             suspendedUsers.deleteMany(notSuspended);
+//         }
+//     },
+//     setUpdated: (userIds: string[], timestamp: bigint): void => {
+//         normalUsers.update((users) => {
+//             for (const userId of userIds) {
+//                 const user = users.get(userId);
+//                 if (user !== undefined) {
+//                     user.updated = timestamp;
+//                 }
+//             }
+//             return users;
+//         });
+//     },
+// };
 
-function partitionSuspendedUsers(users: UserSummary[]): [string[], string[]] {
-    const suspended = [];
-    const notSuspended = [];
-    for (const user of users) {
-        if (user.suspended) {
-            suspended.push(user.userId);
-        } else {
-            notSuspended.push(user.userId);
-        }
-    }
-    return [suspended, notSuspended];
-}
+// function partitionSuspendedUsers(users: UserSummary[]): [string[], string[]] {
+//     const suspended = [];
+//     const notSuspended = [];
+//     for (const user of users) {
+//         if (user.suspended) {
+//             suspended.push(user.userId);
+//         } else {
+//             notSuspended.push(user.userId);
+//         }
+//     }
+//     return [suspended, notSuspended];
+// }

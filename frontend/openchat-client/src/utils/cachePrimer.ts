@@ -13,13 +13,12 @@ import {
     userIdsFromEvents,
     type VideoCallContent,
 } from "openchat-shared";
-import { get } from "svelte/store";
 import { remoteVideoCallEndedEvent, remoteVideoCallStartedEvent } from "../events";
 import type { OpenChat } from "../openchat";
+import { app } from "../state/app.svelte";
 import { messagesRead } from "../state/unread/markRead.svelte";
-import { selectedChatId } from "../stores";
+import { userStore } from "../state/users/users.svelte";
 import { boolFromLS } from "../stores/localStorageSetting";
-import { userStore } from "../stores/user";
 import { runOnceIdle } from "./backgroundTasks";
 import { isProposalsChat } from "./chat";
 import { Poller } from "./poller";
@@ -104,7 +103,7 @@ export class CachePrimer {
             }
 
             if (userIds.size > 0) {
-                const missing = missingUserIds(get(userStore), userIds);
+                const missing = missingUserIds(userStore.allUsers, userIds);
                 if (missing.length > 0) {
                     debug(`Loading ${missing.length} users`);
                     await this.api.getUsers(
@@ -161,7 +160,7 @@ export class CachePrimer {
         const args = [] as ChatEventsArgs[];
 
         if (
-            !chatIdentifiersEqual(get(selectedChatId), chat.id) &&
+            !chatIdentifiersEqual(app.selectedChatId, chat.id) &&
             messagesRead.unreadMessageCount(chat.id, chat.latestMessageIndex) > MAX_MESSAGES / 2
         ) {
             const firstUnreadMessage = messagesRead.getFirstUnreadMessageIndex(

@@ -6,8 +6,6 @@
         LEDGER_CANISTER_ICP,
         publish,
         routeForMessage,
-        threadsFollowedByMeStore,
-        translationStore,
         ui,
         type ChatIdentifier,
         type Message,
@@ -165,7 +163,7 @@
     );
     let isFollowedByMe = $derived(
         threadRootMessage !== undefined &&
-            ($threadsFollowedByMeStore.get(chatId)?.has(threadRootMessage.messageIndex) ?? false),
+            (app.threadsFollowedByMe.get(chatId)?.has(threadRootMessage.messageIndex) ?? false),
     );
     let canFollow = $derived(threadRootMessage !== undefined && !isFollowedByMe);
     let canUnfollow = $derived(isFollowedByMe);
@@ -258,7 +256,7 @@
     }
 
     function untranslateMessage() {
-        translationStore.untranslate(msg.messageId);
+        app.untranslate(msg.messageId);
     }
 
     function translateMessage() {
@@ -284,7 +282,7 @@
             .then((resp) => resp.json())
             .then(({ data: { translations } }) => {
                 if (Array.isArray(translations) && translations.length > 0) {
-                    translationStore.translate(messageId, translations[0].translatedText);
+                    app.translate(messageId, translations[0].translatedText);
                 }
             })
             .catch((_err) => {
