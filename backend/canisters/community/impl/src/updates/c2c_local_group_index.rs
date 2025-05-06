@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::guards::caller_is_local_group_index;
+use crate::guards::{caller_is_local_group_index, caller_is_local_user_index};
 use crate::model::events::CommunityEventInternal;
 use crate::{RuntimeState, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
@@ -10,6 +10,14 @@ use community_canister::c2c_local_group_index::*;
 use constants::OPENCHAT_BOT_USER_ID;
 use std::cell::LazyCell;
 use types::{GroupNameChanged, TimestampMillis, Timestamped};
+
+#[update(guard = "caller_is_local_user_index", msgpack = true)]
+#[trace]
+fn c2c_local_index(args: Args) -> Response {
+    run_regular_jobs();
+
+    mutate_state(|state| c2c_local_group_index_impl(args, state))
+}
 
 #[update(guard = "caller_is_local_group_index", msgpack = true)]
 #[trace]
