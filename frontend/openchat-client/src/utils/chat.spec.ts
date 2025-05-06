@@ -1,20 +1,19 @@
 import {
+    emptyChatMetrics,
     type GroupChatSummary,
     type PollConfig,
-    type PollVotes,
     type PollContent,
+    type PollVotes,
     type UserLookup,
     type UserSummary,
-    emptyChatMetrics,
-    MessageContextMap,
 } from "openchat-shared";
+import { localUpdates } from "../state/global";
 import {
     addVoteToPoll,
     getMembersString,
     mergeChatMetrics,
     mergeUnconfirmedThreadsIntoSummary,
 } from "./chat";
-import type { UnconfirmedState } from "../stores/unconfirmed";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
@@ -106,33 +105,28 @@ function createUser(userId: string, username: string): UserSummary {
 
 describe("thread utils", () => {
     test("merge unconfirmed thread message into summary", () => {
-        const unconf = new MessageContextMap<UnconfirmedState>();
-        unconf.set(
+        localUpdates.clearUnconfirmed();
+        localUpdates.addUnconfirmed(
             { chatId: { kind: "group_chat", groupId: "abc" }, threadRootMessageIndex: 1 },
             {
-                messages: [
-                    {
-                        index: 4,
-                        timestamp: BigInt(0),
-                        event: {
-                            kind: "message",
-                            messageId: BigInt(0),
-                            messageIndex: 5,
-                            sender: "",
-                            content: { kind: "placeholder_content" },
-                            reactions: [],
-                            tips: {},
-                            edited: false,
-                            forwarded: false,
-                            deleted: false,
-                            blockLevelMarkdown: false,
-                        },
-                    },
-                ],
-                messageIds: new Map(),
+                index: 4,
+                timestamp: BigInt(0),
+                event: {
+                    kind: "message",
+                    messageId: BigInt(0),
+                    messageIndex: 5,
+                    sender: "",
+                    content: { kind: "placeholder_content" },
+                    reactions: [],
+                    tips: {},
+                    edited: false,
+                    forwarded: false,
+                    deleted: false,
+                    blockLevelMarkdown: false,
+                },
             },
         );
-        const chat = mergeUnconfirmedThreadsIntoSummary(defaultGroupChat, unconf);
+        const chat = mergeUnconfirmedThreadsIntoSummary(defaultGroupChat);
         expect(chat.membership.latestThreads[0].latestEventIndex).toEqual(4);
         expect(chat.membership.latestThreads[0].latestMessageIndex).toEqual(5);
     });

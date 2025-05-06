@@ -1,6 +1,5 @@
 <script lang="ts">
-    import type { OpenChat, ThreadPreview } from "openchat-client";
-    import { threadsByChatStore as threadsByChat } from "openchat-client";
+    import { app, type OpenChat, type ThreadPreview } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
@@ -17,7 +16,7 @@
     $effect(() => {
         loading = true;
         client
-            .threadPreviews($threadsByChat)
+            .threadPreviews(app.threadsByChat)
             .then((t) => {
                 threads = t;
                 initialised = true;

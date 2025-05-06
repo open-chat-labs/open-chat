@@ -1,3 +1,18 @@
+import type {
+    AddedToChannelNotification,
+    ChannelMessageTipped,
+    ChannelNotification,
+    ChannelReaction,
+    CryptoTransferDetails,
+    DirectMessageTipped,
+    DirectNotification,
+    DirectReaction,
+    GroupMessageTipped,
+    GroupNotification,
+    GroupReaction,
+    Notification,
+} from "openchat-shared";
+import { toBigInt32 } from "openchat-shared";
 import {
     AddedToChannelNotification as TAddedToChannelNotification,
     ChannelMessageNotification as TChannelMessageNotification,
@@ -10,23 +25,8 @@ import {
     GroupMessageNotification as TGroupMessageNotification,
     GroupMessageTipped as TGroupMessageTipped,
     GroupReactionAddedNotification as TGroupReactionAddedNotification,
-    Notification as TNotification
+    UserNotificationPayload as TNotification,
 } from "../../typebox";
-import type {
-    Notification,
-    AddedToChannelNotification,
-    ChannelNotification,
-    GroupNotification,
-    DirectNotification,
-    ChannelReaction,
-    GroupReaction,
-    DirectReaction,
-    ChannelMessageTipped,
-    GroupMessageTipped,
-    DirectMessageTipped,
-    CryptoTransferDetails,
-} from "openchat-shared";
-import { toBigInt32 } from "openchat-shared";
 import { principalBytesToString } from "../../utils/mapping";
 
 export function notification(value: TNotification, timestamp: bigint): Notification {
@@ -109,9 +109,7 @@ export function channelNotification(
         imageUrl: value.i,
         communityAvatarId: value.ca,
         channelAvatarId: value.cha,
-        cryptoTransfer: value.ct !== undefined
-            ? cryptoTransfer(value.ct)
-            : undefined,
+        cryptoTransfer: value.ct !== undefined ? cryptoTransfer(value.ct) : undefined,
         timestamp,
     };
 }
@@ -134,9 +132,7 @@ export function groupNotification(
         messageText: value.tx,
         imageUrl: value.i,
         groupAvatarId: value.a,
-        cryptoTransfer: value.ct !== undefined
-            ? cryptoTransfer(value.ct)
-            : undefined,
+        cryptoTransfer: value.ct !== undefined ? cryptoTransfer(value.ct) : undefined,
         timestamp,
     };
 }
@@ -156,9 +152,7 @@ export function directNotification(
         messageText: value.tx,
         imageUrl: value.i,
         userAvatarId: value.a,
-        cryptoTransfer: value.ct !== undefined
-            ? cryptoTransfer(value.ct)
-            : undefined,
+        cryptoTransfer: value.ct !== undefined ? cryptoTransfer(value.ct) : undefined,
         timestamp,
     };
 }
@@ -252,10 +246,7 @@ function channelMessageTipped(
     };
 }
 
-function groupMessageTipped(
-    value: TGroupMessageTipped,
-    timestamp: bigint,
-): GroupMessageTipped {
+function groupMessageTipped(value: TGroupMessageTipped, timestamp: bigint): GroupMessageTipped {
     return {
         kind: "group_message_tipped",
         chatId: { kind: "group_chat", groupId: principalBytesToString(value.c) },
@@ -272,10 +263,7 @@ function groupMessageTipped(
     };
 }
 
-function directMessageTipped(
-    value: TDirectMessageTipped,
-    timestamp: bigint,
-): DirectMessageTipped {
+function directMessageTipped(value: TDirectMessageTipped, timestamp: bigint): DirectMessageTipped {
     return {
         kind: "direct_message_tipped",
         chatId: { kind: "direct_chat", userId: principalBytesToString(value.ti) },

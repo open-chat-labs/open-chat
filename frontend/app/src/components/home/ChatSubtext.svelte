@@ -3,11 +3,11 @@
     import { userStore } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import { now } from "../../stores/time";
-    import VisibilityLabel from "./VisibilityLabel.svelte";
-    import DisappearLabel from "./DisappearLabel.svelte";
-    import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import { now } from "../../stores/time";
+    import Translatable from "../Translatable.svelte";
+    import DisappearLabel from "./DisappearLabel.svelte";
+    import VisibilityLabel from "./VisibilityLabel.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -20,8 +20,8 @@
     let { chat, clickableMembers = false, onMembersClick }: Props = $props();
 
     let userId = $derived(chat.kind === "direct_chat" ? chat.them.userId : "");
-    let isBot = $derived($userStore.get(userId)?.kind === "bot");
-    let isSuspended = $derived($userStore.get(userId)?.suspended ?? false);
+    let isBot = $derived(userStore.get(userId)?.kind === "bot");
+    let isSuspended = $derived(userStore.get(userId)?.suspended ?? false);
     let subtext = $derived(isSuspended ? $_("accountSuspended") : "");
     let checkLastOnline = $derived(!isSuspended && !isBot && chat.kind === "direct_chat");
 

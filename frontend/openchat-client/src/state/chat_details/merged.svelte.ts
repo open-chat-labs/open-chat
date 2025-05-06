@@ -13,6 +13,8 @@ import {
     type WebhookDetails,
 } from "openchat-shared";
 import { SvelteSet } from "svelte/reactivity";
+import { mergeEventsAndLocalUpdates } from "../../utils/chat";
+import { localUpdates } from "../global";
 import { LocalMap } from "../map";
 import { type LocalSet } from "../set";
 import { chatDetailsLocalUpdates } from "./local.svelte";
@@ -36,6 +38,32 @@ export class ChatDetailsMergedState {
         this.#mergeSet(this.server.pinnedMessages, this.#local?.pinnedMessages),
     );
 
+    #events = $derived.by(() => {
+        const chatId = this.chatId!;
+        const ctx = { chatId };
+        const failed = localUpdates.failedMessages(ctx);
+        const unconfirmed = localUpdates.unconfirmedMessages(ctx);
+        const ephemeral = localUpdates.ephemeralMessages(ctx);
+        return mergeEventsAndLocalUpdates(
+            this.#server?.events ?? [],
+            [...unconfirmed, ...failed, ...ephemeral],
+            this.#server?.expiredEventRanges ?? new DRange(),
+        );
+    });
+
+    #threadEvents = $derived.by(() => {
+        if (this.#server?.threadId === undefined) return [];
+        const ctx = this.#server.threadId;
+        const failed = localUpdates.failedMessages(ctx);
+        const unconfirmed = localUpdates.unconfirmedMessages(ctx);
+        const ephemeral = localUpdates.ephemeralMessages(ctx);
+        return mergeEventsAndLocalUpdates(
+            this.#server?.threadEvents ?? [],
+            [...unconfirmed, ...failed, ...ephemeral],
+            new DRange(),
+        );
+    });
+
     constructor(server: ChatDetailsServerState) {
         this.#server = server;
     }
@@ -46,6 +74,14 @@ export class ChatDetailsMergedState {
 
     #mergeMap<K, V>(server: ReadonlyMap<K, V>, local?: LocalMap<K, V>): ReadonlyMap<K, V> {
         return local ? local.apply(server) : server;
+    }
+
+    get events() {
+        return this.#events;
+    }
+
+    get threadEvents() {
+        return this.#threadEvents;
     }
 
     get chatId() {
@@ -79,7 +115,7 @@ export class ChatDetailsMergedState {
     }
 
     get selectedThread() {
-        return this.#server?.selectedThread
+        return this.#server?.selectedThread;
     }
 
     setSelectedThread(id: ThreadIdentifier) {

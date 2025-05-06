@@ -77,7 +77,7 @@
             onClick?.();
         }
     }
-    let usernames = $derived(buildPollUsernames($userStore, voters, app.currentUserId));
+    let usernames = $derived(buildPollUsernames(userStore.allUsers, voters, app.currentUserId));
 </script>
 
 <Tooltip

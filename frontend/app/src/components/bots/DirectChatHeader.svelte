@@ -44,8 +44,7 @@
     }
 
     let { chat, bot, onSearchChat }: Props = $props();
-    // TODO: Why is this called botUser?
-    let botUser = $derived($userStore.get(chat.them.userId));
+    let botUser = $derived(userStore.get(chat.them.userId));
     let apiKey = $derived(app.directChatApiKeys.get(bot.id));
     let grantedPermissions = $derived(
         app.directChatBots.get(bot.id) ?? flattenCommandPermissions(bot.definition),

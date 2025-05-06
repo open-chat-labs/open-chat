@@ -86,7 +86,7 @@
     }
 
     function onBlur() {
-        window.setTimeout(() => (focused = false), 100);
+        window.setTimeout(() => (focused = false), 300);
     }
 </script>
 

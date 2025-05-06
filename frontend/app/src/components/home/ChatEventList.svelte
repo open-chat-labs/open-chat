@@ -1,8 +1,8 @@
 <script lang="ts" module>
     export type ChatEventListArgs = {
-        isAccepted: (_unconf: unknown, evt: EventWrapper<ChatEventType>) => boolean;
-        isConfirmed: (_unconf: unknown, evt: EventWrapper<ChatEventType>) => boolean;
-        isFailed: (_failed: unknown, evt: EventWrapper<ChatEventType>) => boolean;
+        isAccepted: (evt: EventWrapper<ChatEventType>) => boolean;
+        isConfirmed: (evt: EventWrapper<ChatEventType>) => boolean;
+        isFailed: (evt: EventWrapper<ChatEventType>) => boolean;
         isReadByMe: (evt: EventWrapper<ChatEventType>) => boolean;
         messageObserver: IntersectionObserver | undefined;
         labelObserver: IntersectionObserver | undefined;
@@ -14,12 +14,11 @@
     import {
         MessageContextMap,
         app,
-        failedMessagesStore,
+        localUpdates,
         messageContextsEqual,
         pathState,
         subscribe,
         ui,
-        unconfirmed,
         withEqCheck,
         type ChatEvent as ChatEventType,
         type ChatSummary,
@@ -530,7 +529,7 @@
                 ev.event.kind === "message" &&
                 ev.event.messageIndex === index &&
                 (messageContext === undefined ||
-                    !failedMessagesStore.contains(messageContext, ev.event.messageId)),
+                    !localUpdates.isFailed(messageContext, ev.event.messageId)),
         ) as EventWrapper<Message> | undefined;
     }
 
@@ -538,23 +537,23 @@
         return document.querySelector(`.${rootSelector} [data-index~='${index}']`);
     }
 
-    function isAccepted(_unconf: unknown, evt: EventWrapper<ChatEventType>): boolean {
+    function isAccepted(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message" && messageContext) {
-            return !unconfirmed.pendingAcceptance(messageContext, evt.event.messageId);
+            return !localUpdates.isPendingAcceptance(messageContext, evt.event.messageId);
         }
         return true;
     }
 
-    function isConfirmed(_unconf: unknown, evt: EventWrapper<ChatEventType>): boolean {
+    function isConfirmed(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message" && messageContext) {
-            return !unconfirmed.contains(messageContext, evt.event.messageId);
+            return !localUpdates.isUnconfirmed(messageContext, evt.event.messageId);
         }
         return true;
     }
 
-    function isFailed(_failed: unknown, evt: EventWrapper<ChatEventType>): boolean {
+    function isFailed(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message" && messageContext) {
-            return failedMessagesStore.contains(messageContext, evt.event.messageId);
+            return localUpdates.isFailed(messageContext, evt.event.messageId);
         }
         return false;
     }

@@ -36,9 +36,14 @@ export class ChatDetailsServerState {
         ranges.add(this.#expiredEventRanges);
         return ranges;
     });
+    #threadId = $derived(this.#thread?.id);
 
     constructor(chatId?: ChatIdentifier) {
         this.#chatId = chatId;
+    }
+
+    get threadId() {
+        return this.#threadId;
     }
 
     get chatId() {

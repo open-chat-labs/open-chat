@@ -13,14 +13,10 @@
         FilteredProposals,
         app,
         chatIdentifiersEqual,
-        currentChatEditingEvent,
-        draftMessagesStore,
-        eventsStore,
-        failedMessagesStore,
+        localUpdates,
         pathState,
         routeForChatIdentifier,
         ui,
-        unconfirmed,
     } from "openchat-client";
     import page from "page";
     import { getContext, untrack } from "svelte";
@@ -97,7 +93,7 @@
     }
 
     function onEditEvent(ev: EventWrapper<Message>) {
-        draftMessagesStore.setEditing({ chatId: chat.id }, ev);
+        localUpdates.draftMessages.setEditing({ chatId: chat.id }, ev);
     }
 
     function eventKey(e: EventWrapper<ChatEventType>): string {
@@ -250,11 +246,13 @@
             }
         }
     });
-    let showAvatar = $derived(initialised && shouldShowAvatar(chat, $eventsStore[0]?.index));
+    let showAvatar = $derived(
+        initialised && shouldShowAvatar(chat, app.selectedChat.events[0]?.index),
+    );
     let messageContext = $derived({ chatId: chat?.id, threadRootMessageIndex: undefined });
     let timeline = $derived(
         client.groupEvents(
-            [...$eventsStore].reverse(),
+            [...app.selectedChat.events].reverse(),
             app.currentUserId,
             app.selectedChat.expandedDeletedMessages,
             groupInner(filteredProposals),
@@ -290,7 +288,7 @@
     {unreadMessages}
     {firstUnreadMention}
     {footer}
-    events={$eventsStore}
+    events={app.selectedChat.events}
     {chat}
     bind:initialised
     bind:messagesDiv
@@ -315,10 +313,10 @@
                                 observer={messageObserver}
                                 focused={evt.event.kind === "message" &&
                                     evt.event.messageIndex === focusIndex &&
-                                    !isFailed($failedMessagesStore, evt)}
-                                accepted={isAccepted($unconfirmed, evt)}
-                                confirmed={isConfirmed($unconfirmed, evt)}
-                                failed={isFailed($failedMessagesStore, evt)}
+                                    !isFailed(evt)}
+                                accepted={isAccepted(evt)}
+                                confirmed={isConfirmed(evt)}
+                                failed={isFailed(evt)}
                                 readByMe={isReadByMe(evt)}
                                 chatId={chat.id}
                                 chatType={chat.kind}
@@ -341,7 +339,7 @@
                                     chat.kind === "channel") &&
                                     chat.public}
                                 pinned={isPinned(app.selectedChat.pinnedMessages, evt)}
-                                editing={$currentChatEditingEvent === evt}
+                                editing={app.currentChatDraftMessage?.editingEvent === evt}
                                 onReplyTo={replyTo}
                                 {onRemovePreview}
                                 {onEditEvent}

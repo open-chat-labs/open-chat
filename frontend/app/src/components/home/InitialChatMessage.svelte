@@ -7,7 +7,6 @@
         type CommandDefinition,
         emptyExternalBotPermissions,
         type ExternalBotPermissions,
-        isProposalGroup,
         type OpenChat,
         type ResourceKey,
         userStore,
@@ -47,11 +46,11 @@
     let state = $derived.by<State>(() => {
         switch (chat.kind) {
             case "direct_chat":
-                const them = $userStore.get(chat.them.userId);
+                const them = userStore.get(chat.them.userId);
                 const s: State = {
                     title: i18nKey(client.displayName(them)),
                     verified: false,
-                    avatarUrl: client.userAvatarUrl($userStore.get(chat.them.userId)),
+                    avatarUrl: client.userAvatarUrl(userStore.get(chat.them.userId)),
                 };
                 const bot = botState.externalBots.get(chat.them.userId);
                 const perm =
@@ -85,7 +84,7 @@
 </script>
 
 <div class="container">
-    {#if $isProposalGroup}
+    {#if app.isProposalGroup}
         <ProposalBot />
     {:else if chat.kind === "direct_chat" && client.isOpenChatBot(chat.them.userId)}
         <Robot />

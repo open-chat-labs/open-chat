@@ -56,7 +56,7 @@
 
     function replaceUserIds(text: string): string {
         return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
-            const u = $userStore.get(p1);
+            const u = userStore.get(p1);
             if (u !== undefined) {
                 return `<profile-link text="${u.username}" user-id="${u.userId}" suppress-links="${suppressLinks}"></profile-link>`;
             }
