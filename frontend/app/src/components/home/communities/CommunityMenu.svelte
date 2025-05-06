@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { CommunitySummary, OpenChat } from "openchat-client";
-    import { app, chatSummariesListStore, publish, ui } from "openchat-client";
+    import { app, publish, ui } from "openchat-client";
     import { getContext } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
@@ -40,7 +40,7 @@
     let canInvite = $derived(member && !frozen && client.canInviteUsers(community.id));
     let canCreateChannel = $derived(member && !frozen && client.canCreateChannel(community.id));
     let isCommunityMuted = $derived(
-        $chatSummariesListStore.every((c) => c.membership.notificationsMuted),
+        app.chatSummariesList.every((c) => c.membership.notificationsMuted),
     );
 
     function leaveCommunity() {

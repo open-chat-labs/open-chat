@@ -243,7 +243,7 @@
             selectTab("users");
         }
     }
-    let knownUsers = $derived(getKnownUsers($userStore, members));
+    let knownUsers = $derived(getKnownUsers(userStore.allUsers, members));
     let largeGroup = $derived(members.length > LARGE_GROUP_THRESHOLD);
     let me = $derived(knownUsers.find((u) => u.userId === app.currentUserId));
     let searchTerm = $derived(trimLeadingAtSymbol(searchTermEntered));
@@ -253,9 +253,9 @@
             .filter((u) => matchesSearch(searchTermLower, u) && u.userId !== app.currentUserId)
             .sort(compareMembers),
     );
-    let blockedUsers = $derived(matchingUsers(searchTermLower, $userStore, blocked, true));
-    let lapsedMembers = $derived(matchingUsers(searchTermLower, $userStore, lapsed, true));
-    let invitedUsers = $derived(matchingUsers(searchTermLower, $userStore, invited, true));
+    let blockedUsers = $derived(matchingUsers(searchTermLower, userStore.allUsers, blocked, true));
+    let lapsedMembers = $derived(matchingUsers(searchTermLower, userStore.allUsers, lapsed, true));
+    let invitedUsers = $derived(matchingUsers(searchTermLower, userStore.allUsers, invited, true));
     let matchingWebhooks = $derived(
         webhooks?.filter((w) => webhookMatches(searchTermLower, w)) ?? [],
     );

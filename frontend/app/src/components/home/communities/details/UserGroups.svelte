@@ -1,9 +1,9 @@
 <script lang="ts">
     import type {
         CommunitySummary,
-        ReadonlyMap,
         Member,
         OpenChat,
+        ReadonlyMap,
         UserGroupDetails,
         UserLookup,
         UserSummary,
@@ -41,7 +41,7 @@
     let communityUsersList: UserSummary[] = $state([]);
 
     onMount(() => {
-        communityUsers = createLookup(app.selectedCommunity.members, $userStore);
+        communityUsers = createLookup(app.selectedCommunity.members, userStore.allUsers);
         communityUsersList = Object.values(communityUsers);
     });
 

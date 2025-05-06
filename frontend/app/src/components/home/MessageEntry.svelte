@@ -20,7 +20,7 @@
         botState,
         chatIdentifiersEqual,
         directMessageCommandInstance,
-        draftMessagesStore,
+        localUpdates,
         messageContextsEqual,
         random64,
         ScreenWidth,
@@ -277,7 +277,7 @@
                 false,
             );
             client.executeBotCommand(scope, commandInstance, true);
-            draftMessagesStore.delete(messageContext);
+            localUpdates.draftMessages.delete(messageContext);
             afterSendMessage();
         } else {
             showDirectBotChatWarning = true;
@@ -305,7 +305,7 @@
 
     function formatUserMentions(text: string): string {
         return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
-            const u = $userStore.get(p1);
+            const u = userStore.get(p1);
             if (u?.username !== undefined) {
                 const username = u.username;
                 return `@${username}`;

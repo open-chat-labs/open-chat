@@ -269,7 +269,7 @@
             mentionSelf
             onUserSelected={(user) => (candidate.ownerId = user.userId)}
             onUserRemoved={() => (candidate.ownerId = "")}
-            selectedReceiver={$userStore.get(candidate.ownerId)}
+            selectedReceiver={userStore.get(candidate.ownerId)}
             placeholder={"bots.builder.ownerLabel"}
             autofocus={false} />
     {/if}

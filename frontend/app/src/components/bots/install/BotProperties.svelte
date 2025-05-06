@@ -30,7 +30,7 @@
         showCommands = true,
     }: Props = $props();
     let collapsed = $state(true);
-    let owner = $derived($userStore.get(bot.ownerId));
+    let owner = $derived(userStore.get(bot.ownerId));
     let isPublic = $derived(
         bot.kind === "external_bot" && bot.registrationStatus.kind === "public",
     );

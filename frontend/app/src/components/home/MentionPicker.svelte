@@ -178,7 +178,7 @@
                                     </div>
                                 {:else}
                                     <Avatar
-                                        url={client.userAvatarUrl($userStore.get(item.userId))}
+                                        url={client.userAvatarUrl(userStore.get(item.userId))}
                                         userId={item.userId}
                                         size={AvatarSize.Small} />
                                 {/if}

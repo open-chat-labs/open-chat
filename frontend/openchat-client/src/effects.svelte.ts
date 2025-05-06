@@ -4,17 +4,12 @@ import type { OpenChat } from "./openchat";
 import { app } from "./state/app.svelte";
 import { pathState } from "./state/path.svelte";
 import { ui } from "./state/ui.svelte";
+import { userStore } from "./state/users/users.svelte";
 import {
     chatListScopeStore,
     dummyCurrentUser,
-    dummyExpiredEventRangeStore,
-    dummyPinnedChatsStore,
-    dummyScopedChats,
-    dummyServerEventsStore,
-    dummyThreadEventsStore,
+    dummyUserStore,
     dummyWalletConfigStore,
-    selectedChatId,
-    selectedMessageContext,
 } from "./stores";
 
 function onSelectedCommunityChanged(client: OpenChat) {
@@ -50,7 +45,6 @@ function onSelectedChatChanged(client: OpenChat) {
                     pathState.route.kind === "selected_channel_route" ||
                     pathState.route.kind === "global_chat_selected_route"
                 ) {
-                    selectedChatId.set(app.selectedChatId);
                     const id = app.selectedChatId;
                     const messageIndex = pathState.route.messageIndex;
                     const threadMessageIndex = pathState.route.threadMessageIndex;
@@ -59,12 +53,6 @@ function onSelectedChatChanged(client: OpenChat) {
                     }
                 }
             });
-        }
-    });
-
-    $effect(() => {
-        if (app.selectedChatId === undefined) {
-            selectedChatId.set(undefined);
         }
     });
 }
@@ -115,42 +103,18 @@ function syncState() {
     });
 
     $effect(() => {
-        void app.pinnedChats;
-        dummyPinnedChatsStore.set(Symbol());
-    });
-
-    $effect(() => {
         void app.walletConfig;
         dummyWalletConfigStore.set(Symbol());
     });
 
     $effect(() => {
-        void app.scopedChats;
-        dummyScopedChats.set(Symbol());
-    });
-
-    $effect(() => {
-        void app.selectedChat.serverEvents;
-        dummyServerEventsStore.set(Symbol());
-    });
-
-    $effect(() => {
-        void app.selectedChat.serverThreadEvents;
-        dummyThreadEventsStore.set(Symbol());
-    });
-
-    $effect(() => {
-        void app.selectedChat.expiredEventRanges;
-        dummyExpiredEventRangeStore.set(Symbol());
-    });
-
-    $effect(() => {
-        selectedMessageContext.set(app.selectedMessageContext);
-    });
-
-    $effect(() => {
         void app.currentUser;
         dummyCurrentUser.set(Symbol());
+    });
+
+    $effect(() => {
+        void userStore.allUsers;
+        dummyUserStore.set(Symbol());
     });
 }
 

@@ -146,7 +146,7 @@
         };
         const direct = [...app.directChats.values()].map((d) => ({
             ...d,
-            name: buildDisplayName($userStore, d.them.userId, false),
+            name: buildDisplayName(userStore.allUsers, d.them.userId, false),
         }));
 
         const group = [...app.groupChats.values()];
@@ -195,7 +195,7 @@
         switch (chatSummary.kind) {
             case "direct_chat":
                 const description = await buildDirectChatDescription(chatSummary, now);
-                const them = $userStore.get(chatSummary.them.userId);
+                const them = userStore.get(chatSummary.them.userId);
                 return {
                     kind: "chat",
                     id: chatSummary.id,

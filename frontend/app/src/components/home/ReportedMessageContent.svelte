@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { i18nKey } from "../../i18n/i18n";
-    import Legend from "../Legend.svelte";
-    import TextArea from "../TextArea.svelte";
-    import Markdown from "./Markdown.svelte";
     import type { OpenChat, ReportedMessageContent } from "openchat-client";
     import { userStore } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
+    import { i18nKey } from "../../i18n/i18n";
+    import Legend from "../Legend.svelte";
+    import TextArea from "../TextArea.svelte";
+    import Markdown from "./Markdown.svelte";
 
     interface Props {
         content: ReportedMessageContent;
@@ -31,7 +31,7 @@
         $_("report.messageReport", {
             values: {
                 username:
-                    $userStore.get(report.reportedBy)?.username ??
+                    userStore.get(report.reportedBy)?.username ??
                     `unknown user (${report.reportedBy}))`,
                 timestamp: client.toDatetimeString(new Date(report.timestamp)),
                 reason: reasons[report.reasonCode],

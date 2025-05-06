@@ -2,9 +2,9 @@
     import {
         AvatarSize,
         OpenChat,
-        type NamedAccount,
-        type CreatedUser,
         userStore,
+        type CreatedUser,
+        type NamedAccount,
     } from "openchat-client";
     import { getContext } from "svelte";
     import Avatar from "../../Avatar.svelte";
@@ -20,9 +20,9 @@
 
     let user = $derived(
         address === currentUser.cryptoAccount
-            ? $userStore.get(currentUser.userId)
+            ? userStore.get(currentUser.userId)
             : address
-              ? $userStore.get(address)
+              ? userStore.get(address)
               : undefined,
     );
 </script>
