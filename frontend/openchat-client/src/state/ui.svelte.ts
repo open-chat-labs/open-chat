@@ -1,5 +1,6 @@
 import type { ChatSummary, MultiUserChatIdentifier } from "openchat-shared";
 import { isCanisterUrl } from "../utils/url";
+import { LocalStorageBoolState } from "./localStorageState.svelte";
 import { pathState, type RouteParams } from "./path.svelte";
 
 export type FontScale = 0 | 1 | 2 | 3 | 4;
@@ -130,6 +131,7 @@ export class UIState {
         window.addEventListener("resize", this.#resize);
         this.popRightPanelHistory = this.popRightPanelHistory.bind(this);
     }
+    #hideMessagesFromDirectBlocked = new LocalStorageBoolState("openchat_hideblocked", false);
     #activityFeedShowing = $state(false);
     #notificationsSupported = $state(
         !isCanisterUrl &&
@@ -249,6 +251,10 @@ export class UIState {
             route === "chat_list_route" ||
             route === "selected_community_route"
         );
+    }
+
+    get hideMessagesFromDirectBlocked() {
+        return this.#hideMessagesFromDirectBlocked;
     }
 
     get activityFeedShowing() {

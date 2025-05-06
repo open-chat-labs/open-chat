@@ -25,6 +25,12 @@ export class LocalSet<T> {
         return this.#removed;
     }
 
+    // only use for testing
+    clear() {
+        this.#added.clear();
+        this.#removed.clear();
+    }
+
     add(thing: T): UndoLocalUpdate {
         this.#added.add(thing);
         const removed = this.#removed.delete(thing);

@@ -1,12 +1,7 @@
-import {
-    MessageContextMap,
-    type EventWrapper,
-    type GroupChatIdentifier,
-    type Message,
-} from "openchat-shared";
+import { type EventWrapper, type GroupChatIdentifier, type Message } from "openchat-shared";
 import { SvelteMap } from "svelte/reactivity";
 import { vi } from "vitest";
-import { unconfirmed, type UnconfirmedState } from "../../stores";
+import { localUpdates } from "../global";
 import { MessageReadTracker, MessagesRead } from "./markRead.svelte";
 
 const abcId: GroupChatIdentifier = { kind: "group_chat", groupId: "abc" };
@@ -39,8 +34,7 @@ describe("mark messages read", () => {
 
     beforeEach(() => {
         vi.useFakeTimers();
-        const mockedUnconfirmed = new MessageContextMap<UnconfirmedState>();
-        unconfirmed.clear(mockedUnconfirmed);
+        localUpdates.clearUnconfirmed();
         if (markRead.messageReadState.waiting.get({ chatId: abcId }) !== undefined) {
             markRead.messageReadState.waiting.get({ chatId: abcId })?.clear();
         }
@@ -49,7 +43,7 @@ describe("mark messages read", () => {
     });
 
     test("mark unconfirmed message as read", () => {
-        unconfirmed.add({ chatId: abcId }, createDummyMessage(BigInt(100)));
+        localUpdates.addUnconfirmed({ chatId: abcId }, createDummyMessage(BigInt(100)));
         markRead.markMessageRead({ chatId: abcId }, 200, BigInt(100));
         expect(markRead.messageReadState.waiting.get({ chatId: abcId })?.has(BigInt(100))).toBe(
             true,

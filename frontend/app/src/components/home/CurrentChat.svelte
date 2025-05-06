@@ -9,17 +9,12 @@
         type ChatSummary,
         CommunityMap,
         type CommunitySummary,
-        currentChatAttachment,
-        currentChatEditingEvent,
-        currentChatReplyingTo,
-        currentChatTextContent,
-        blockedUsers as directlyBlockedUsers,
-        draftMessagesStore,
         type EnhancedReplyContext,
         type EventWrapper,
         type FilteredProposals,
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
+        localUpdates,
         type Message,
         type MessageContent,
         type MessageContext,
@@ -27,9 +22,11 @@
         messagesRead,
         type MultiUserChat,
         type OpenChat,
+        type ReadonlySet,
         subscribe,
         ui,
         type User,
+        userStore,
     } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -166,7 +163,7 @@
     }
 
     function onFileSelected(content: AttachmentContent) {
-        draftMessagesStore.setAttachment({ chatId: chat.id }, content);
+        localUpdates.draftMessages.setAttachment({ chatId: chat.id }, content);
     }
 
     function attachGif(search: string) {
@@ -185,7 +182,7 @@
 
     function replyTo(ctx: EnhancedReplyContext) {
         showSearchHeader = false;
-        draftMessagesStore.setReplyingTo({ chatId: chat.id }, ctx);
+        localUpdates.draftMessages.setReplyingTo({ chatId: chat.id }, ctx);
     }
 
     function searchChat(search: string) {
@@ -212,14 +209,14 @@
     function onSendMessage(detail: [string | undefined, User[], boolean]) {
         if (!canSendAny) return;
         let [text, mentioned, blockLevelMarkdown] = detail;
-        if ($currentChatEditingEvent !== undefined) {
+        if (app.currentChatDraftMessage?.editingEvent !== undefined) {
             client
                 .editMessageWithAttachment(
                     messageContext,
                     text,
                     blockLevelMarkdown,
-                    $currentChatAttachment,
-                    $currentChatEditingEvent,
+                    app.currentChatDraftMessage.attachment,
+                    app.currentChatDraftMessage.editingEvent,
                 )
                 .then((success) => {
                     if (!success) {
@@ -227,7 +224,12 @@
                     }
                 });
         } else {
-            sendMessageWithAttachment(text, blockLevelMarkdown, $currentChatAttachment, mentioned);
+            sendMessageWithAttachment(
+                text,
+                blockLevelMarkdown,
+                app.currentChatDraftMessage?.attachment,
+                mentioned,
+            );
         }
     }
 
@@ -251,7 +253,7 @@
     }
 
     function onSetTextContent(txt?: string): void {
-        draftMessagesStore.setTextContent({ chatId: chat.id }, txt);
+        localUpdates.draftMessages.setTextContent({ chatId: chat.id }, txt);
     }
 
     function onRemovePreview(event: EventWrapper<Message>, url: string): void {
@@ -276,12 +278,12 @@
         return Promise.resolve();
     }
 
-    function isBlocked(chatSummary: ChatSummary, blockedUsers: Set<string>): boolean {
+    function isBlocked(chatSummary: ChatSummary, blockedUsers: ReadonlySet<string>): boolean {
         return chatSummary.kind === "direct_chat" && blockedUsers.has(chatSummary.them.userId);
     }
 
     function defaultCryptoTransferReceiver(): string | undefined {
-        return $currentChatReplyingTo?.sender?.userId;
+        return app.currentChatDraftMessage?.replyingTo?.sender?.userId;
     }
 
     function onSendMessageWithContent(content: MessageContent) {
@@ -302,7 +304,7 @@
         }
     });
     let showFooter = $derived(!showSearchHeader && !app.suspendedUser);
-    let blocked = $derived(isBlocked(chat, $directlyBlockedUsers));
+    let blocked = $derived(isBlocked(chat, userStore.blockedUsers));
     let frozen = $derived(client.isChatOrCommunityFrozen(chat, app.selectedCommunitySummary));
     let canSendAny = $derived(client.canSendMessage(chat.id, "message"));
     let preview = $derived(client.isPreviewing(chat.id));
@@ -418,10 +420,10 @@
     {#if showFooter}
         <Footer
             {chat}
-            attachment={$currentChatAttachment}
-            editingEvent={$currentChatEditingEvent}
-            replyingTo={$currentChatReplyingTo}
-            textContent={$currentChatTextContent}
+            attachment={app.currentChatDraftMessage?.attachment}
+            editingEvent={app.currentChatDraftMessage?.editingEvent}
+            replyingTo={app.currentChatDraftMessage?.replyingTo}
+            textContent={app.currentChatDraftMessage?.textContent}
             user={app.currentUser}
             mode={"message"}
             {joining}
@@ -430,10 +432,11 @@
             {blocked}
             {messageContext}
             externalContent={externalUrl !== undefined}
-            onCancelReply={() => draftMessagesStore.setReplyingTo({ chatId: chat.id }, undefined)}
+            onCancelReply={() =>
+                localUpdates.draftMessages.setReplyingTo({ chatId: chat.id }, undefined)}
             onClearAttachment={() =>
-                draftMessagesStore.setAttachment({ chatId: chat.id }, undefined)}
-            onCancelEdit={() => draftMessagesStore.delete({ chatId: chat.id })}
+                localUpdates.draftMessages.setAttachment({ chatId: chat.id }, undefined)}
+            onCancelEdit={() => localUpdates.draftMessages.delete({ chatId: chat.id })}
             {onSetTextContent}
             onStartTyping={() => client.startTyping(chat, app.currentUserId)}
             onStopTyping={() => client.stopTyping(chat, app.currentUserId)}

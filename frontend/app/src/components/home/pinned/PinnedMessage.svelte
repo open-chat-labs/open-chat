@@ -27,7 +27,7 @@
 
     let crypto = msg.content.kind === "crypto_content";
 
-    let sender = $derived(findSender(msg.sender, $userStore, app.selectedChat.webhooks));
+    let sender = $derived(findSender(msg.sender, userStore.allUsers, app.selectedChat.webhooks));
     let username = $derived(client.getDisplayName(sender, app.selectedCommunity.members));
     let deleted = $derived(msg.content.kind === "deleted_content");
     let fill = $derived(client.fillMessage(msg));
@@ -51,14 +51,14 @@
     }
 
     function goToMessageIndex() {
-        if (app.selectedMessageContext !== undefined) {
+        if (app.selectedChatId !== undefined) {
             if (modal) {
                 ui.popRightPanelHistory();
             }
             page(
                 routeForMessage(
                     app.chatListScope.kind,
-                    app.selectedMessageContext,
+                    { chatId: app.selectedChatId },
                     msg.messageIndex,
                 ),
             );

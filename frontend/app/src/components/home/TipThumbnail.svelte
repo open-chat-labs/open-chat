@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { AvatarSize, type OpenChat, userStore, cryptoLookup } from "openchat-client";
+    import { AvatarSize, cryptoLookup, type OpenChat, userStore } from "openchat-client";
     import { getContext } from "svelte";
-    import Tooltip from "../tooltip/Tooltip.svelte";
     import Avatar from "../Avatar.svelte";
+    import Tooltip from "../tooltip/Tooltip.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -40,12 +40,12 @@
             {#each userTipsList as [userId, amount]}
                 <div class="avatar">
                     <Avatar
-                        url={client.userAvatarUrl($userStore.get(userId))}
+                        url={client.userAvatarUrl(userStore.get(userId))}
                         {userId}
                         size={AvatarSize.Tiny} />
                 </div>
                 <div class="username">
-                    @{$userStore.get(userId)?.username}
+                    @{userStore.get(userId)?.username}
                 </div>
                 <div class="amount">
                     {client.formatTokens(amount, tokenDetails.decimals)}

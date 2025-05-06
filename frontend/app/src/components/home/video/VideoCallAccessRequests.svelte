@@ -41,13 +41,13 @@
         class="message">
         <div class="avatar">
             <Avatar
-                url={client.userAvatarUrl($userStore.get(request.userId))}
+                url={client.userAvatarUrl(userStore.get(request.userId))}
                 userId={request.userId}
                 size={AvatarSize.Small} />
         </div>
         <Translatable
             resourceKey={i18nKey("videoCall.accessRequest", {
-                username: $userStore.get(request.userId)?.username,
+                username: userStore.get(request.userId)?.username,
             })} />
         <!-- svelte-ignore a11y_interactive_supports_focus -->
         <!-- svelte-ignore a11y_click_events_have_key_events -->
