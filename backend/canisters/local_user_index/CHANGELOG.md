@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Sync Group and Community data from LocalGroupIndex ([#7878](https://github.com/open-chat-labs/open-chat/pull/7878))
 - Support creating/deleting/upgrading groups and communities ([#7880](https://github.com/open-chat-labs/open-chat/pull/7880))
 - Add missing endpoints to support upgrading Groups/Communities ([#7906](https://github.com/open-chat-labs/open-chat/pull/7906))
+- Support relaying GroupIndex events to Groups/Communities ([#7913](https://github.com/open-chat-labs/open-chat/pull/7913))
 
 ### Changed
 
