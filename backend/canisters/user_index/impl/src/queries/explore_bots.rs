@@ -30,6 +30,7 @@ fn explore_bots_impl(args: Args, state: &RuntimeState) -> Response {
         args.page_size,
         user_id,
         args.installation_location,
+        args.exclude_installed,
     );
 
     Success(SuccessResult { matches, total })

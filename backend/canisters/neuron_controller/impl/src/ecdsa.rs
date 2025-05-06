@@ -1,7 +1,6 @@
 use ic_cdk::call::RejectCode;
 use ic_cdk::management_canister::{
-    self, EcdsaCurve, EcdsaKeyId, EcdsaPublicKeyArgs, HttpHeader, HttpMethod, HttpRequestArgs, SignCallError,
-    SignWithEcdsaArgs, TransformContext, TransformFunc,
+    self, EcdsaCurve, EcdsaKeyId, EcdsaPublicKeyArgs, HttpHeader, HttpMethod, HttpRequestArgs, SignCallError, SignWithEcdsaArgs,
 };
 use ic_transport_types::{EnvelopeContent, to_request_id};
 use serde::Serialize;
@@ -41,7 +40,6 @@ pub struct CanisterEcdsaRequest {
     pub request_url: String,
     pub public_key: Vec<u8>,
     pub key_id: EcdsaKeyId,
-    pub this_canister_id: CanisterId,
 }
 
 pub async fn make_canister_call_via_ecdsa(request: CanisterEcdsaRequest) -> Result<String, String> {
@@ -50,20 +48,23 @@ pub async fn make_canister_call_via_ecdsa(request: CanisterEcdsaRequest) -> Resu
         Err(error) => return Err(format!("Failed to sign envelope: {error:?}")),
     };
 
-    let response = management_canister::http_request(&HttpRequestArgs {
-        url: request.request_url,
-        max_response_bytes: Some(1024 * 1024), // 1 MB
-        method: HttpMethod::POST,
-        headers: vec![HttpHeader {
-            name: "content-type".to_string(),
-            value: "application/cbor".to_string(),
-        }],
-        body: Some(body),
-        transform: Some(TransformContext {
-            function: TransformFunc::new(request.this_canister_id, "transform_http_response".to_string()),
-            context: Vec::new(),
-        }),
-    })
+    let response = management_canister::http_request_with_closure(
+        &HttpRequestArgs {
+            url: request.request_url,
+            max_response_bytes: Some(1024 * 1024), // 1 MB
+            method: HttpMethod::POST,
+            headers: vec![HttpHeader {
+                name: "content-type".to_string(),
+                value: "application/cbor".to_string(),
+            }],
+            body: Some(body),
+            transform: None,
+        },
+        |mut response| {
+            response.headers.clear();
+            response
+        },
+    )
     .await
     .map_err(|error| format!("Failed to make http request: {error:?}"))?;
 

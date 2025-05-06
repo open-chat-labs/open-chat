@@ -496,7 +496,11 @@
     </div>
 {:else if selectedTab === "add-bots" && collection.kind !== "channel"}
     <div class="bot-explorer">
-        <BotExplorer location={botContainer} {installingBot} onSelect={onBotSelected}></BotExplorer>
+        <BotExplorer
+            location={botContainer}
+            {installingBot}
+            excludeInstalled
+            onSelect={onBotSelected}></BotExplorer>
     </div>
 {/if}
 
