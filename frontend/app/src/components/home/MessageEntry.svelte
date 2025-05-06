@@ -20,7 +20,7 @@
         botState,
         chatIdentifiersEqual,
         directMessageCommandInstance,
-        draftMessagesStore,
+        localUpdates,
         messageContextsEqual,
         random64,
         ScreenWidth,
@@ -277,7 +277,7 @@
                 false,
             );
             client.executeBotCommand(scope, commandInstance, true);
-            draftMessagesStore.delete(messageContext);
+            localUpdates.draftMessages.delete(messageContext);
             afterSendMessage();
         } else {
             showDirectBotChatWarning = true;

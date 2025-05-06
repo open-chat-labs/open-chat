@@ -308,7 +308,6 @@ import {
     swappableTokensStore,
 } from "./stores/crypto";
 import { diamondDurationToMs } from "./stores/diamond";
-import { draftMessagesStore } from "./stores/draftMessages";
 import {
     disableAllProposalFilters,
     enableAllProposalFilters,
@@ -870,7 +869,7 @@ export class OpenChat {
         const user = userStore.get(userId);
         if (user === undefined || user.kind === "bot") return false;
 
-        if (userId === app.currentUserId) return this.#liveState.isDiamond;
+        if (userId === app.currentUserId) return app.isDiamond;
 
         return user.diamondStatus !== "inactive";
     }
@@ -879,14 +878,14 @@ export class OpenChat {
         const user = userStore.get(userId);
         if (user === undefined || user.kind === "bot") return false;
 
-        if (userId === app.currentUserId) return this.#liveState.isLifetimeDiamond;
+        if (userId === app.currentUserId) return app.isLifetimeDiamond;
 
         return user.diamondStatus === "lifetime";
     }
 
     diamondExpiresIn(now: number, locale: string | null | undefined): string | undefined {
-        if (this.#liveState.diamondStatus.kind === "active") {
-            return formatRelativeTime(now, locale, this.#liveState.diamondStatus.expiresAt);
+        if (app.diamondStatus.kind === "active") {
+            return formatRelativeTime(now, locale, app.diamondStatus.expiresAt);
         }
     }
 
@@ -914,7 +913,7 @@ export class OpenChat {
     }
 
     maxMediaSizes(): MaxMediaSizes {
-        return this.#liveState.isDiamond ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
+        return app.isDiamond ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
     }
 
     onRegisteredUser(user: CreatedUser) {
@@ -944,7 +943,7 @@ export class OpenChat {
     onCreatedUser(user: CreatedUser): void {
         app.setCurrentUser(user);
         this.#setDiamondStatus(user.diamondStatus);
-        initialiseMostRecentSentMessageTimes(this.#liveState.isDiamond);
+        initialiseMostRecentSentMessageTimes(app.isDiamond);
         const id = this.#ocIdentity;
 
         this.#sendRequest({ kind: "createUserClient", userId: user.userId });
@@ -2054,7 +2053,7 @@ export class OpenChat {
 
     isChatReadOnly(chatId: ChatIdentifier): boolean {
         if (chatId.kind === "direct_chat") return false;
-        return this.#liveState.suspendedUser || this.isPreviewing(chatId);
+        return app.suspendedUser || this.isPreviewing(chatId);
     }
 
     #chatPredicate(chatId: ChatIdentifier, predicate: (chat: ChatSummary) => boolean): boolean {
@@ -2925,7 +2924,7 @@ export class OpenChat {
     diffGroupPermissions = diffGroupPermissions;
 
     messageContentFromFile(file: File): Promise<AttachmentContent> {
-        return messageContentFromFile(file, this.#liveState.isDiamond);
+        return messageContentFromFile(file, app.isDiamond);
     }
 
     formatFileSize = formatFileSize;
@@ -3294,7 +3293,7 @@ export class OpenChat {
         const confirmedLoaded = confirmedEventIndexesLoaded(serverChat.id);
         const confirmedThreadLoaded = app.selectedChat.confirmedThreadEventIndexesLoaded;
         const selectedThreadRootMessageIndex =
-            this.#liveState.selectedMessageContext?.threadRootMessageIndex;
+            app.selectedChat.selectedThread?.id?.threadRootMessageIndex;
 
         // Partition the updated events into those that belong to the currently selected thread and those that don't
         const [currentChatEvents, currentThreadEvents] = updatedEvents.reduce(
@@ -3588,7 +3587,7 @@ export class OpenChat {
                 );
 
                 const selectedThreadRootMessageIndex =
-                    this.#liveState.selectedThreadRootMessageIndex;
+                    app.selectedChat.selectedThread?.id?.threadRootMessageIndex;
                 if (selectedThreadRootMessageIndex !== undefined) {
                     const threadRootEvent = newEvents.find(
                         (e) =>
@@ -3995,7 +3994,7 @@ export class OpenChat {
             return Promise.resolve(CommonResponses.failure());
         }
 
-        const draftMessage = this.#liveState.draftMessages.get(messageContext);
+        const draftMessage = localUpdates.draftMessages.get(messageContext);
         const currentEvents = this.#eventsForMessageContext(messageContext);
         const [nextEventIndex, nextMessageIndex] =
             threadRootMessageIndex !== undefined
@@ -4026,7 +4025,7 @@ export class OpenChat {
     }
 
     #throttleSendMessage(): boolean {
-        return shouldThrottle(this.#liveState.isDiamond);
+        return shouldThrottle(app.isDiamond);
     }
 
     sendMessageWithAttachment(
@@ -4108,7 +4107,7 @@ export class OpenChat {
                 messagesRead.markReadUpTo(context, messageEvent.event.messageIndex - 1);
             }
 
-            draftMessagesStore.delete(context);
+            localUpdates.draftMessages.delete(context);
 
             if (!isTransfer(messageEvent.event.content)) {
                 this.#sendMessageWebRtc(chat, messageEvent, threadRootMessageIndex).then(() => {
@@ -4201,7 +4200,7 @@ export class OpenChat {
                 msg.blockLevelMarkdown === blockLevelMarkdown ? undefined : blockLevelMarkdown;
 
             const undo = localUpdates.markMessageContentEdited(msg, updatedBlockLevelMarkdown);
-            draftMessagesStore.delete(messageContext);
+            localUpdates.draftMessages.delete(messageContext);
 
             const newAchievement = !app.achievements.has("edited_message");
 
@@ -4507,7 +4506,8 @@ export class OpenChat {
         if (
             selectedChat !== undefined &&
             chatIdentifiersEqual(fromChatId, selectedChat.id) &&
-            parsedMsg.threadRootMessageIndex === this.#liveState.selectedThreadRootMessageIndex
+            parsedMsg.threadRootMessageIndex ===
+                app.selectedChat.selectedThread?.id?.threadRootMessageIndex
         ) {
             this.#handleWebRtcMessageInternal(
                 fromChatId,

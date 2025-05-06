@@ -13,8 +13,7 @@
         FilteredProposals,
         app,
         chatIdentifiersEqual,
-        currentChatEditingEvent,
-        draftMessagesStore,
+        localUpdates,
         pathState,
         routeForChatIdentifier,
         ui,
@@ -94,7 +93,7 @@
     }
 
     function onEditEvent(ev: EventWrapper<Message>) {
-        draftMessagesStore.setEditing({ chatId: chat.id }, ev);
+        localUpdates.draftMessages.setEditing({ chatId: chat.id }, ev);
     }
 
     function eventKey(e: EventWrapper<ChatEventType>): string {
@@ -340,7 +339,7 @@
                                     chat.kind === "channel") &&
                                     chat.public}
                                 pinned={isPinned(app.selectedChat.pinnedMessages, evt)}
-                                editing={$currentChatEditingEvent === evt}
+                                editing={app.currentChatDraftMessage?.editingEvent === evt}
                                 onReplyTo={replyTo}
                                 {onRemovePreview}
                                 {onEditEvent}

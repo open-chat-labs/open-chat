@@ -1,4 +1,5 @@
-import { addMessages } from "svelte-i18n";
+import { addMessages, format } from "svelte-i18n";
+import { app } from "../state/app.svelte";
 
 type LocaleDictionary = {
     [key: string]: LocaleDictionary | string | Array<string | LocaleDictionary> | null;
@@ -7,6 +8,8 @@ type LocaleDictionary = {
 export function applyTranslationCorrection(locale: string, key: string, value: string): void {
     addMessages(locale, toLocaleDictionary(key, value));
 }
+
+format.subscribe((fn) => (app.messageFormatter = fn));
 
 /**
  * This takes a record where the key is the dotted path e.g. "a.b.c" with a value and converts

@@ -4,7 +4,6 @@
         chatIdentifiersEqual,
         publish,
         routeForMessage,
-        selectedMessageContext,
         type OpenChat,
     } from "openchat-client";
     import page from "page";
@@ -23,14 +22,11 @@
     }
 
     function goto() {
-        if (
-            app.selectedChatSummary?.videoCallInProgress !== undefined &&
-            $selectedMessageContext !== undefined
-        ) {
+        if (app.selectedChatSummary?.videoCallInProgress !== undefined) {
             page(
                 routeForMessage(
                     app.chatListScope.kind,
-                    $selectedMessageContext,
+                    { chatId: app.selectedChatSummary.id },
                     app.selectedChatSummary?.videoCallInProgress,
                 ),
             );

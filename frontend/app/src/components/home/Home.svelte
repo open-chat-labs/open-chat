@@ -28,7 +28,7 @@
         app,
         chatIdentifiersEqual,
         defaultChatRules,
-        draftMessagesStore,
+        localUpdates,
         nullMembership,
         offlineStore,
         pageRedirect,
@@ -224,9 +224,7 @@
             subscribe("notFound", () => (modal = { kind: "not_found" })),
         ];
         client.initialiseNotifications();
-        document.body.addEventListener("profile-clicked", (event) => {
-            profileLinkClicked(event as CustomEvent<ProfileLinkClickedEvent>);
-        });
+        document.body.addEventListener("profile-clicked", profileClicked);
 
         if (app.suspendedUser) {
             modal = { kind: "suspended" };
@@ -234,8 +232,13 @@
 
         return () => {
             unsubEvents.forEach((u) => u());
+            document.body.removeEventListener("profile-clicked", profileClicked);
         };
     });
+
+    function profileClicked(event: Event) {
+        profileLinkClicked(event as CustomEvent<ProfileLinkClickedEvent>);
+    }
 
     function selectedChatInvalid() {
         pageReplace(routeForScope(client.getDefaultScope()));
@@ -517,8 +520,8 @@
         });
 
         const chatId = chat?.id ?? { kind: "direct_chat", userId: context.sender.userId };
-        draftMessagesStore.setTextContent({ chatId }, "");
-        draftMessagesStore.setReplyingTo({ chatId }, context);
+        localUpdates.draftMessages.setTextContent({ chatId }, "");
+        localUpdates.draftMessages.setReplyingTo({ chatId }, context);
         if (chat) {
             page(routeForChatIdentifier(app.chatListScope.kind, chatId));
         } else {
@@ -699,7 +702,7 @@
             text += shareUrl;
         }
 
-        draftMessagesStore.setTextContent({ chatId }, text);
+        localUpdates.draftMessages.setTextContent({ chatId }, text);
     }
 
     function showWallet() {

@@ -15,9 +15,9 @@
     } from "openchat-client";
     import {
         app,
-        draftMessagesStore,
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
+        localUpdates,
         messageContextsEqual,
         subscribe,
     } from "openchat-client";
@@ -72,11 +72,10 @@
     let blocked = $derived(
         chat.kind === "direct_chat" && app.selectedChat.blockedUsers.has(chat.them.userId),
     );
-    let draftMessage = $derived($draftMessagesStore.get(messageContext));
-    let textContent = $derived(draftMessage?.textContent);
-    let replyingTo = $derived(draftMessage?.replyingTo);
-    let attachment = $derived(draftMessage?.attachment);
-    let editingEvent = $derived(draftMessage?.editingEvent);
+    let textContent = $derived(app.currentThreadDraftMessage?.textContent);
+    let replyingTo = $derived(app.currentThreadDraftMessage?.replyingTo);
+    let attachment = $derived(app.currentThreadDraftMessage?.attachment);
+    let editingEvent = $derived(app.currentThreadDraftMessage?.editingEvent);
     let canSendAny = $derived(client.canSendMessage(chat.id, "thread"));
     let canReact = $derived(client.canReactToMessages(chat.id));
     let atRoot = $derived(
@@ -172,7 +171,7 @@
     }
 
     function editEvent(ev: EventWrapper<Message>): void {
-        draftMessagesStore.setEditing(messageContext, ev);
+        localUpdates.draftMessages.setEditing(messageContext, ev);
     }
 
     function sendMessageWithAttachment(
@@ -191,19 +190,19 @@
     }
 
     function onCancelReply() {
-        draftMessagesStore.setReplyingTo(messageContext, undefined);
+        localUpdates.draftMessages.setReplyingTo(messageContext, undefined);
     }
 
     function clearAttachment() {
-        draftMessagesStore.setAttachment(messageContext, undefined);
+        localUpdates.draftMessages.setAttachment(messageContext, undefined);
     }
 
     function cancelEditEvent() {
-        draftMessagesStore.delete(messageContext);
+        localUpdates.draftMessages.delete(messageContext);
     }
 
     function onSetTextContent(txt?: string) {
-        draftMessagesStore.setTextContent(messageContext, txt);
+        localUpdates.draftMessages.setTextContent(messageContext, txt);
     }
 
     function onStartTyping() {
@@ -217,7 +216,7 @@
     }
 
     function onFileSelected(content: AttachmentContent) {
-        draftMessagesStore.setAttachment(messageContext, content);
+        localUpdates.draftMessages.setAttachment(messageContext, content);
     }
 
     function tokenTransfer(detail: { ledger?: string; amount?: bigint }) {
@@ -251,7 +250,7 @@
     }
 
     function replyTo(replyContext: EnhancedReplyContext) {
-        draftMessagesStore.setReplyingTo(messageContext, replyContext);
+        localUpdates.draftMessages.setReplyingTo(messageContext, replyContext);
     }
 
     function defaultCryptoTransferReceiver(): string | undefined {

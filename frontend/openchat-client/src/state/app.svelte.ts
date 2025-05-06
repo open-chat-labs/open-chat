@@ -32,9 +32,8 @@ import {
     type Member,
     mergeListOfCombinedUnreadCounts,
     type MessageActivitySummary,
-    type MessageContext,
-    messageContextsEqual,
     type MessageFilter,
+    type MessageFormatter,
     type ModerationFlag,
     ModerationFlags,
     type PublicApiKeyDetails,
@@ -120,6 +119,8 @@ export class AppState {
             }
         );
     }
+
+    #messageFormatter: MessageFormatter | undefined;
 
     #communityFilters = $state<CommunityFilter>(this.#initialiseCommunityFilter());
 
@@ -341,7 +342,7 @@ export class AppState {
         return withUpdates.reduce((result, [chatId, chat]) => {
             const withLocal = this.#applyLocalUpdatesToChat(chat);
             const withUnconfirmed = mergeUnconfirmedIntoSummary(
-                (k) => k, // TODO - we need to do something about this e.g. inject the formatter from somewhere else
+                this.#messageFormatter ?? ((k) => k),
                 this.#currentUserId,
                 withLocal,
                 messageLocalUpdates.data,
@@ -535,28 +536,16 @@ export class AppState {
     // TODO - this does not seem to be working as intended - investigate why
     #chatListScope = $derived.by(withEqCheck(() => pathState.route.scope, chatListScopesEqual));
 
-    // TODO - not sure this currently works with *starting* threads
-    // I feel uneasy about this as a *concept* because if I have a chat open *and* a thread open then there are two
-    // selected message contexts. So this is at best misleading and at worst meaningless.
-    #selectedMessageContext = $derived.by<MessageContext | undefined>(
+    #selectedChatId = $derived.by(
         withEqCheck(() => {
             switch (pathState.route.kind) {
                 case "selected_channel_route":
                 case "global_chat_selected_route":
-                    return {
-                        chatId: pathState.route.chatId,
-                        threadRootMessageIndex: pathState.route.open
-                            ? pathState.route.messageIndex
-                            : undefined,
-                    };
+                    return pathState.route.chatId;
                 default:
                     return undefined;
             }
-        }, messageContextsEqual),
-    );
-
-    #selectedChatId = $derived.by<ChatIdentifier | undefined>(
-        withEqCheck(() => this.#selectedMessageContext?.chatId, chatIdentifiersEqual),
+        }, chatIdentifiersEqual),
     );
 
     #selectedServerChatSummary = $derived.by(() => {
@@ -603,9 +592,29 @@ export class AppState {
         return getMessagePermissionsForSelectedChat(this.#selectedChatSummary, "message");
     });
 
+    #currentChatDraftMessage = $derived(
+        this.#selectedChatId
+            ? localUpdates.draftMessages.get({ chatId: this.#selectedChatId })
+            : undefined,
+    );
+
+    #currentThreadDraftMessage = $derived(
+        this.#selectedChat.selectedThread?.id
+            ? localUpdates.draftMessages.get(this.#selectedChat.selectedThread.id)
+            : undefined,
+    );
+
     #threadPermissionsForSelectedChat = $derived.by(() => {
         return getMessagePermissionsForSelectedChat(this.#selectedChatSummary, "thread");
     });
+
+    get currentChatDraftMessage() {
+        return this.#currentChatDraftMessage;
+    }
+
+    get currentThreadDraftMessage() {
+        return this.#currentThreadDraftMessage;
+    }
 
     get messagePermissionsForSelectedChat() {
         return this.#messagePermissionsForSelectedChat;
@@ -865,10 +874,6 @@ export class AppState {
 
     get selectedChatId() {
         return this.#selectedChatId;
-    }
-
-    get selectedMessageContext() {
-        return this.#selectedMessageContext;
     }
 
     get selectedCommunity() {
@@ -1174,6 +1179,10 @@ export class AppState {
             const skipUpdate = chitState.streakEnds < curr.streakEnds;
             return skipUpdate ? curr : chitState;
         });
+    }
+
+    set messageFormatter(val: MessageFormatter) {
+        this.#messageFormatter = val;
     }
 }
 

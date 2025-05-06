@@ -51,14 +51,14 @@
     }
 
     function goToMessageIndex() {
-        if (app.selectedMessageContext !== undefined) {
+        if (app.selectedChatId !== undefined) {
             if (modal) {
                 ui.popRightPanelHistory();
             }
             page(
                 routeForMessage(
                     app.chatListScope.kind,
-                    app.selectedMessageContext,
+                    { chatId: app.selectedChatId },
                     msg.messageIndex,
                 ),
             );

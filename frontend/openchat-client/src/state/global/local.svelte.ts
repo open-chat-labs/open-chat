@@ -48,6 +48,7 @@ import {
 import { messageLocalUpdates } from "../message/local.svelte";
 import { LocalSet } from "../set";
 import { scheduleUndo, type UndoLocalUpdate } from "../undo";
+import { DraftMessages } from "./draft.svelte";
 
 function emptyUnconfirmed(): UnconfirmedState {
     return new SvelteMap<bigint, UnconfirmedMessageEvent>();
@@ -68,6 +69,7 @@ export class GlobalLocalState {
     #unconfirmed = $state<ReactiveMessageContextMap<UnconfirmedState>>(
         new ReactiveMessageContextMap(),
     );
+    #draftMessages = new DraftMessages();
     readonly chats = new LocalChatMap<ChatSummary>();
     readonly communities = new LocalCommunityMap<CommunitySummary>();
     readonly previewCommunities = new ReactiveCommunityMap<CommunitySummary>();
@@ -100,6 +102,10 @@ export class GlobalLocalState {
         this.#groupChatPreviews.clear();
         messageLocalUpdates.clearAll();
         chatDetailsLocalUpdates.clearAll();
+    }
+
+    get draftMessages() {
+        return this.#draftMessages;
     }
 
     get unconfirmed() {

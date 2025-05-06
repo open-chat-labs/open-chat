@@ -11,7 +11,6 @@ import {
     dummyUserStore,
     dummyWalletConfigStore,
     selectedChatId,
-    selectedMessageContext,
 } from "./stores";
 
 function onSelectedCommunityChanged(client: OpenChat) {
@@ -114,10 +113,6 @@ function syncState() {
     $effect(() => {
         void app.walletConfig;
         dummyWalletConfigStore.set(Symbol());
-    });
-
-    $effect(() => {
-        selectedMessageContext.set(app.selectedMessageContext);
     });
 
     $effect(() => {

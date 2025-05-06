@@ -2,7 +2,6 @@ export * from "./authProviders";
 export * from "./chat";
 export * from "./crypto";
 export * from "./diamond";
-export * from "./draftMessages";
 export * from "./filteredProposals";
 export * from "./flagStore";
 export * from "./global";

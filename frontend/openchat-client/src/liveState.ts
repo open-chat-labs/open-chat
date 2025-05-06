@@ -1,18 +1,6 @@
-import type {
-    AuthProvider,
-    DiamondMembershipStatus,
-    EnhancedReplyContext,
-    MessageContext,
-    PinNumberResolver,
-} from "openchat-shared";
+import type { AuthProvider, PinNumberResolver } from "openchat-shared";
 import { locale } from "svelte-i18n";
 import { selectedAuthProviderStore } from "./stores/authProviders";
-import {
-    currentChatReplyingTo,
-    selectedMessageContext,
-    selectedThreadRootMessageIndex,
-} from "./stores/chat";
-import { type DraftMessages, draftMessagesStore } from "./stores/draftMessages";
 import { offlineStore } from "./stores/network";
 import { capturePinNumberStore, pinNumberRequiredStore } from "./stores/pinNumber";
 import { remainingStorage } from "./stores/storage";
@@ -26,15 +14,6 @@ export class LiveState {
     selectedAuthProvider!: AuthProvider | undefined;
     userCreated!: boolean;
     remainingStorage!: number;
-    currentChatReplyingTo: EnhancedReplyContext | undefined;
-    selectedMessageContext: MessageContext | undefined;
-    selectedThreadRootMessageIndex: number | undefined;
-    diamondStatus!: DiamondMembershipStatus;
-    isDiamond!: boolean;
-    isLifetimeDiamond!: boolean;
-    draftMessages!: DraftMessages;
-    suspendedUser!: boolean;
-    platformModerator!: boolean;
     offlineStore!: boolean;
     locale!: string;
     pinNumberRequired!: boolean;
@@ -45,12 +24,6 @@ export class LiveState {
         remainingStorage.subscribe((data) => (this.remainingStorage = data));
         userCreatedStore.subscribe((data) => (this.userCreated = data));
         selectedAuthProviderStore.subscribe((data) => (this.selectedAuthProvider = data));
-        currentChatReplyingTo.subscribe((data) => (this.currentChatReplyingTo = data));
-        selectedMessageContext.subscribe((data) => (this.selectedMessageContext = data));
-        selectedThreadRootMessageIndex.subscribe(
-            (data) => (this.selectedThreadRootMessageIndex = data),
-        );
-        draftMessagesStore.subscribe((data) => (this.draftMessages = data));
         locale.subscribe((data) => (this.locale = data ?? "en"));
         pinNumberRequiredStore.subscribe((data) => (this.pinNumberRequired = data));
         capturePinNumberStore.subscribe((data) => (this.capturePinNumber = data));

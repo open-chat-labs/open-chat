@@ -5,7 +5,6 @@ import type {
     ChatIdentifier,
     EventWrapper,
     ExpiredEventsRange,
-    MessageContext,
     ThreadIdentifier,
 } from "openchat-shared";
 import { chatIdentifiersEqual, messageContextsEqual } from "openchat-shared";
@@ -13,23 +12,10 @@ import { derived, writable } from "svelte/store";
 import { app } from "../state/app.svelte";
 import { localUpdates } from "../state/global";
 import { getNextEventAndMessageIndexes } from "../utils/chat";
-import { createDerivedPropStore } from "./derived";
-import { draftMessagesStore } from "./draftMessages";
-import { safeWritable } from "./safeWritable";
 import { snsFunctions } from "./snsFunctions";
 
 // TODO - this will be synced from the Svelte5 rune for now and ultimately removed
 export const selectedChatId = writable<ChatIdentifier | undefined>(undefined);
-
-// TODO - get rid of this - it's dangerous at best
-export const selectedMessageContext = safeWritable<MessageContext | undefined>(
-    undefined,
-    messageContextsEqual,
-);
-
-export const selectedThreadRootMessageIndex = derived(selectedMessageContext, ($messageContext) => {
-    return $messageContext?.threadRootMessageIndex;
-});
 
 export function nextEventAndMessageIndexesForThread(
     events: EventWrapper<ChatEvent>[],
@@ -152,31 +138,3 @@ export function isContiguous(
         isContiguousInternal(confirmedEventIndexesLoaded(chatId), events, expiredEventRanges)
     );
 }
-
-export const currentChatDraftMessage = derived(
-    [draftMessagesStore, selectedChatId],
-    ([draftMessages, chatId]) => {
-        return chatId !== undefined ? draftMessages.get({ chatId }) ?? {} : {};
-    },
-);
-
-export const currentChatTextContent = createDerivedPropStore(
-    currentChatDraftMessage,
-    "textContent",
-    () => undefined,
-);
-export const currentChatReplyingTo = createDerivedPropStore(
-    currentChatDraftMessage,
-    "replyingTo",
-    () => undefined,
-);
-export const currentChatAttachment = createDerivedPropStore(
-    currentChatDraftMessage,
-    "attachment",
-    () => undefined,
-);
-export const currentChatEditingEvent = createDerivedPropStore(
-    currentChatDraftMessage,
-    "editingEvent",
-    () => undefined,
-);
