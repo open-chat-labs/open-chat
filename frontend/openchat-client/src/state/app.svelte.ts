@@ -324,6 +324,7 @@ export class AppState {
             chat.eventsTTL = local?.eventsTTL
                 ? applyOptionUpdate(chat.eventsTTL, local.eventsTTL)
                 : chat.eventsTTL;
+            chat.public = local?.isPublic ?? chat.public;
         }
         return chat;
     }
