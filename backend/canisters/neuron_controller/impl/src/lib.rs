@@ -66,7 +66,6 @@ impl RuntimeState {
             request_url: format!("{IC_URL}/api/v2/canister/{canister_id}/call"),
             public_key: self.data.get_public_key_der(),
             key_id: get_key_id(false),
-            this_canister_id: self.env.canister_id(),
         }
     }
 
