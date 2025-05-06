@@ -334,13 +334,25 @@ export class AppState {
             .merge(localUpdates.groupChatPreviews);
         const withUpdates = localUpdates.chats.apply(withPreviews);
         return withUpdates.reduce((result, [chatId, chat]) => {
-            result.set(chatId, this.#applyLocalUpdatesToChat(chat));
+            const withLocal = this.#applyLocalUpdatesToChat(chat);
+            const withUnconfirmed = mergeUnconfirmedIntoSummary(
+                (k) => k, // TODO - we need to do something about this e.g. inject the formatter from somewhere else
+                this.#currentUserId,
+                withLocal,
+                messageLocalUpdates.data,
+                this.#translations,
+                this.#currentChatBlockedOrSuspendedUsers,
+                this.#currentUserId,
+                this.#messageFilters,
+            );
+            result.set(chatId, withUnconfirmed);
             return result;
         }, new ChatMap<ChatSummary>());
     });
 
     // all chats filtered by scope including previews and local updates
-    #scopedChats = $derived.by(() => {
+    // the final client view of chat summaries with all updates merged in
+    #chatSummaries = $derived.by(() => {
         switch (this.#chatListScope.kind) {
             case "community": {
                 const communityId = this.#chatListScope.id.communityId;
@@ -364,26 +376,6 @@ export class AppState {
             default:
                 return new ChatMap<ChatSummary>();
         }
-    });
-
-    // the final client view of chat summaries with all updates merged in
-    #chatSummaries = $derived.by(() => {
-        return this.#scopedChats.reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
-            result.set(
-                chatId,
-                mergeUnconfirmedIntoSummary(
-                    (k) => k, // TODO - not sure what we do about this
-                    app.currentUserId,
-                    summary,
-                    messageLocalUpdates.data,
-                    this.#translations,
-                    this.#currentChatBlockedOrSuspendedUsers,
-                    app.currentUserId,
-                    this.#messageFilters,
-                ),
-            );
-            return result;
-        }, new ChatMap<ChatSummary>());
     });
 
     #chatSummariesList = $derived.by(() => {
@@ -1062,10 +1054,6 @@ export class AppState {
 
     get serverCommunities() {
         return this.#serverCommunities;
-    }
-
-    get scopedChats() {
-        return this.#scopedChats;
     }
 
     get chatSummaries() {

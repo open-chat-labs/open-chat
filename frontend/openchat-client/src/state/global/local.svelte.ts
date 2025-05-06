@@ -82,6 +82,26 @@ export class GlobalLocalState {
     #uninitialisedDirectChats = new ReactiveChatMap<DirectChatSummary>();
     #groupChatPreviews = new ReactiveChatMap<MultiUserChat>();
 
+    // only used for testing
+    clearAll() {
+        this.#failedMessages.clear();
+        this.#recentlySentMessages.clear();
+        this.#ephemeral.clear();
+        this.#unconfirmed.clear();
+        this.chats.clear();
+        this.communities.clear();
+        this.previewCommunities.clear();
+        this.directChatBots.clear();
+        this.#walletConfig = undefined;
+        this.#streakInsurance = undefined;
+        this.#messageActivityFeedReadUpTo = undefined;
+        this.favourites.clear();
+        this.#uninitialisedDirectChats.clear();
+        this.#groupChatPreviews.clear();
+        messageLocalUpdates.clearAll();
+        chatDetailsLocalUpdates.clearAll();
+    }
+
     get unconfirmed() {
         return this.#unconfirmed;
     }

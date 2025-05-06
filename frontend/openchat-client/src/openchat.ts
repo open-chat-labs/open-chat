@@ -7763,7 +7763,7 @@ export class OpenChat {
 
     removeFromFavourites(chatId: ChatIdentifier): Promise<boolean> {
         const undo = localUpdates.unfavourite(chatId);
-        if (app.scopedChats.size === 0) {
+        if (app.chatSummaries.size === 0) {
             publish("selectedChatInvalid");
         }
 

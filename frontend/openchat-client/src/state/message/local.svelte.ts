@@ -30,7 +30,7 @@ export class MessageLocalState {
     #reactions = $state<LocalReaction[]>([]);
     #pollVotes = $state<LocalPollVote[]>([]);
     #threadSummary = $state<Partial<ThreadSummary> | undefined>();
-    #tips = new SvelteMap<string, SvelteMap<string, bigint>>();
+    #tips = $state(new SvelteMap<string, SvelteMap<string, bigint>>());
     #hiddenMessageRevealed = $state<boolean | undefined>();
     #blockLevelMarkdown = $state<boolean | undefined>();
     #lastUpdated = $state<number>(0);
@@ -270,7 +270,7 @@ export class MessageLocalStateManager {
         const previous = state.tips;
 
         let map = state.tips.get(ledger);
-        if (!map) {
+        if (map === undefined) {
             map = new SvelteMap();
             state.tips.set(ledger, map);
         }
@@ -282,7 +282,7 @@ export class MessageLocalStateManager {
             map.set(userId, currentAmount + amount);
         }
 
-        if (map.get(userId) ?? 0 <= 0n) {
+        if ((map.get(userId) ?? 0) <= 0n) {
             map.delete(userId);
         }
 

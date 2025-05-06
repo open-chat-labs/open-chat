@@ -15,43 +15,29 @@ describe("adding tips locally", () => {
     test("add a local tip", () => {
         messageLocalUpdates.markTip(123n, "ledger1", "user1", 456n);
         const tips = messageLocalUpdates.get(BigInt(123))?.tips;
-        expect(tips).toMatchObject({
-            ledger1: {
-                user1: 456n,
-            },
-        });
+        expect(tips?.get("ledger1")?.get("user1")).toEqual(456n);
     });
 
     test("adding two local tips on the same ledger", () => {
         messageLocalUpdates.markTip(123n, "ledger1", "user1", 456n);
         messageLocalUpdates.markTip(123n, "ledger1", "user1", 100n);
         const tips = messageLocalUpdates.get(BigInt(123))?.tips;
-        expect(tips).toMatchObject({
-            ledger1: {
-                user1: 556n,
-            },
-        });
+        expect(tips?.get("ledger1")?.get("user1")).toEqual(556n);
     });
 
     test("adding two local tips on the different ledger", () => {
         messageLocalUpdates.markTip(123n, "ledger1", "user1", 456n);
         messageLocalUpdates.markTip(123n, "ledger2", "user1", 100n);
         const tips = messageLocalUpdates.get(BigInt(123))?.tips;
-        expect(tips).toMatchObject({
-            ledger1: {
-                user1: 456n,
-            },
-            ledger2: {
-                user1: 100n,
-            },
-        });
+        expect(tips?.get("ledger1")?.get("user1")).toEqual(456n);
+        expect(tips?.get("ledger2")?.get("user1")).toEqual(100n);
     });
 
     test("reverting a tip", () => {
         messageLocalUpdates.markTip(123n, "ledger1", "user1", 456n);
         messageLocalUpdates.markTip(123n, "ledger1", "user1", -456n);
         const tips = messageLocalUpdates.get(BigInt(123))?.tips;
-        expect(tips).toMatchObject({});
+        expect(tips?.get("ledger1")).toBeUndefined();
     });
 });
 

@@ -1662,12 +1662,18 @@ export function mergeLocalTips(existing?: TipsReceived, local?: LocalTipsReceive
     for (const ledger in existing) {
         merged[ledger] = { ...existing[ledger] };
     }
-    for (const ledger in local) {
-        if (!merged[ledger]) {
-            merged[ledger] = {};
-        }
-        for (const userId in local.get(ledger)) {
-            merged[ledger][userId] = local.get(ledger)?.get(userId) ?? 0n;
+
+    if (local !== undefined) {
+        for (const [ledger] of local) {
+            if (!merged[ledger]) {
+                merged[ledger] = {};
+            }
+            const users = local.get(ledger);
+            if (users !== undefined) {
+                for (const [userId] of users) {
+                    merged[ledger][userId] = local.get(ledger)?.get(userId) ?? 0n;
+                }
+            }
         }
     }
     return merged;
