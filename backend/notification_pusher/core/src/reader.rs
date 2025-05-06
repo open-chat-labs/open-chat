@@ -118,7 +118,7 @@ impl<I: IndexStore> Reader<I> {
                     }
                 }
                 NotificationEnvelope::Bot(notification) => {
-                    let payload = candid::encode_one(&BotNotificationPayload {
+                    let payload = serde_json::to_vec(&BotNotificationPayload {
                         event_type: notification.event_type,
                         chat: notification.chat,
                         thread: notification.thread,
