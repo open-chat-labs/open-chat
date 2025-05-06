@@ -3626,8 +3626,18 @@ export class OpenChatAgent extends EventTarget {
         return this._registryClient.removeMessageFilter(id);
     }
 
-    setAirdropConfig(channelId: number, channelName: string, communityId?: string, communityName?: string): Promise<boolean> {
-        return this._registryClient.setAirdropConfig(channelId, channelName, communityId, communityName);
+    setAirdropConfig(
+        channelId: number,
+        channelName: string,
+        communityId?: string,
+        communityName?: string,
+    ): Promise<boolean> {
+        return this._registryClient.setAirdropConfig(
+            channelId,
+            channelName,
+            communityId,
+            communityName,
+        );
     }
 
     setTokenEnabled(ledger: string, enabled: boolean): Promise<boolean> {
@@ -4180,11 +4190,18 @@ export class OpenChatAgent extends EventTarget {
         searchTerm: string | undefined,
         pageIndex: number,
         pageSize: number,
-        location?: BotInstallationLocation,
+        location: BotInstallationLocation | undefined,
+        excludeInstalled: boolean,
     ): Promise<ExploreBotsResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
-        return this._userIndexClient.exploreBots(searchTerm, pageIndex, pageSize, location);
+        return this._userIndexClient.exploreBots(
+            searchTerm,
+            pageIndex,
+            pageSize,
+            location,
+            excludeInstalled,
+        );
     }
 
     registerBot(principal: string, bot: ExternalBot): Promise<boolean> {

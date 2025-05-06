@@ -164,6 +164,7 @@ import type {
 import type { CommunityInvite, GroupInvite } from "./inviteCodes";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
 import type { ToggleMuteNotificationResponse } from "./notifications";
+import type { MinutesOnline } from "./online";
 import type { OptionUpdate } from "./optionUpdate";
 import type {
     AccessTokenType,
@@ -220,7 +221,6 @@ import type {
     UserSummary,
 } from "./user";
 import type { Verification } from "./wallet";
-import type { MinutesOnline } from "./online";
 
 /**
  * Worker request types
@@ -926,7 +926,8 @@ type ExploreBots = {
     searchTerm: string | undefined;
     pageIndex: number;
     pageSize: number;
-    location?: BotInstallationLocation;
+    location: BotInstallationLocation | undefined;
+    excludeInstalled: boolean;
     kind: "exploreBots";
 };
 

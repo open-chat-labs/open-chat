@@ -799,6 +799,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.pageIndex,
                         payload.pageSize,
                         payload.location,
+                        payload.excludeInstalled,
                     ),
                 );
                 break;
@@ -1059,7 +1060,12 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.setAirdropConfig(payload.channelId, payload.channelName, payload.communityId, payload.communityName),
+                    agent.setAirdropConfig(
+                        payload.channelId,
+                        payload.channelName,
+                        payload.communityId,
+                        payload.communityName,
+                    ),
                 );
                 break;
 

@@ -5134,7 +5134,8 @@ export class OpenChat {
         searchTerm: string | undefined,
         pageIndex: number,
         pageSize: number,
-        location?: BotInstallationLocation,
+        location: BotInstallationLocation | undefined,
+        excludeInstalled: boolean,
     ): Promise<ExploreBotsResponse> {
         return this.#sendRequest({
             kind: "exploreBots",
@@ -5142,6 +5143,7 @@ export class OpenChat {
             pageIndex,
             pageSize,
             location,
+            excludeInstalled,
         });
     }
 
