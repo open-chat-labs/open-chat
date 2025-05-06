@@ -29,6 +29,7 @@ export class ChatDetailsLocalState {
     #gateConfig = $state<AccessGateConfig | undefined>();
     #eventsTTL = $state<OptionUpdate<bigint> | undefined>();
     #frozen = $state<boolean | undefined>();
+    #isPublic = $state<boolean | undefined>();
 
     readonly pinnedToScopes = new LocalSet<ChatListScope["kind"]>();
     readonly pinnedMessages = new LocalSet<number>();
@@ -38,6 +39,14 @@ export class ChatDetailsLocalState {
     readonly bots = new LocalMap<string, ExternalBotPermissions>();
     readonly apiKeys = new LocalMap<string, PublicApiKeyDetails>();
     readonly webhooks = new LocalMap<string, WebhookDetails>();
+
+    get isPublic() {
+        return this.#isPublic;
+    }
+
+    set isPublic(val: boolean | undefined) {
+        this.#isPublic = val;
+    }
 
     get rules() {
         return this.#rules;
@@ -156,6 +165,7 @@ export class ChatDetailsLocalStateManager {
         permissions?: OptionalChatPermissions,
         gateConfig?: AccessGateConfig,
         eventsTTL?: OptionUpdate<bigint>,
+        isPublic?: boolean,
     ) {
         const state = this.#getOrCreate(id);
         const prevName = state.name;
@@ -163,12 +173,14 @@ export class ChatDetailsLocalStateManager {
         const prevPermissions = state.permissions;
         const prevGateConfig = state.gateConfig;
         const prevEventsTTL = state.eventsTTL;
+        const prevIsPublic = state.isPublic;
 
         state.name = name;
         state.description = description;
         state.permissions = permissions;
         state.gateConfig = gateConfig;
         state.eventsTTL = eventsTTL;
+        state.isPublic = isPublic;
 
         return scheduleUndo(() => {
             state.name = prevName;
@@ -176,6 +188,7 @@ export class ChatDetailsLocalStateManager {
             state.permissions = prevPermissions;
             state.gateConfig = prevGateConfig;
             state.eventsTTL = prevEventsTTL;
+            state.isPublic = prevIsPublic;
         });
     }
 

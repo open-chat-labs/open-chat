@@ -1286,28 +1286,36 @@ export class OpenChat {
     }
 
     blockUserFromDirectChat(userId: string): Promise<boolean> {
-        // TODO this should be done with local updates
-        userStore.blockUser(userId);
+        const undo = localUpdates.blockDirectUser(userId);
         rtcConnectionsManager.disconnectFromUser(userId);
         return this.#sendRequest({ kind: "blockUserFromDirectChat", userId })
             .then((resp) => {
+                if (resp.kind === "success") {
+                    userStore.blockUser(userId);
+                } else {
+                    undo();
+                }
                 return resp.kind === "success";
             })
             .catch(() => {
-                userStore.unblockUser(userId);
+                undo();
                 return false;
             });
     }
 
     unblockUserFromDirectChat(userId: string): Promise<boolean> {
-        // TODO this should be done with local updates
-        userStore.unblockUser(userId);
+        const undo = localUpdates.blockDirectUser(userId);
         return this.#sendRequest({ kind: "unblockUserFromDirectChat", userId })
             .then((resp) => {
+                if (resp.kind === "success") {
+                    userStore.unblockUser(userId);
+                } else {
+                    undo();
+                }
                 return resp.kind === "success";
             })
             .catch(() => {
-                userStore.blockUser(userId);
+                undo();
                 return false;
             });
     }
@@ -2911,10 +2919,10 @@ export class OpenChat {
         return resp.events;
     }
 
-    removeChat(chatId: ChatIdentifier): void {
+    removeChat(chatId: ChatIdentifier) {
         localUpdates.removeUninitialisedDirectChat(chatId);
         localUpdates.removeGroupPreview(chatId);
-        localUpdates.removeChat(chatId);
+        return localUpdates.removeChat(chatId);
     }
 
     removeCommunity(id: CommunityIdentifier): void {
@@ -3203,10 +3211,6 @@ export class OpenChat {
         }
     }
 
-    // TODO - we need to deal with the fact that this runs on every iteration of the event loop
-    // not just when the chat changes, we need to know the difference. Possibly we don't want
-    // to create a new instance of ChatDetailsMerged but rather always just update the existing
-    // instance. Yes that's probably the answer.
     async #loadChatDetails(serverChat: ChatSummary): Promise<void> {
         switch (serverChat.kind) {
             case "group_chat":
@@ -5577,6 +5581,7 @@ export class OpenChat {
                         permissions,
                         gateConfig,
                         eventsTimeToLive,
+                        isPublic,
                     );
 
                     if (rules !== undefined && resp.rulesVersion !== undefined) {
