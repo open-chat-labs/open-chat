@@ -177,7 +177,6 @@
             app.selectedChatId === undefined,
     );
     let user = $derived(userStore.get(app.currentUserId));
-    $inspect(user);
     let lowercaseSearch = $derived(searchTerm.toLowerCase());
     let showExploreGroups = $derived(
         (app.chatListScope.kind === "none" || app.chatListScope.kind === "group_chat") &&
