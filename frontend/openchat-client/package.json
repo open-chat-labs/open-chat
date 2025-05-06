@@ -8,6 +8,7 @@
         "build": "npm run clean && tsc",
         "build:docker": "npm run build",
         "dev": "npm run clean && tsc -w",
+        "dev:mobile": "npm run dev",
         "wait": "npm run clean && wait-on lib/index.js",
         "clean": "rm -rf lib",
         "typecheck": "tsc --noEmit",
@@ -31,6 +32,7 @@
         "openchat-shared": "*",
         "peerjs": "^1.4.7",
         "svelte-i18n": "^4.0.1",
+        "tauri-plugin-oc-api": "file:../tauri-plugin-oc",
         "usergeek-ic-js": "^1.0.6"
     },
     "devDependencies": {

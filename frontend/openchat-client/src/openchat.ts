@@ -493,6 +493,10 @@ import {
 } from "./utils/user";
 import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 import { createWebAuthnIdentity, MultiWebAuthnIdentity } from "./utils/webAuthn";
+import {
+    createAndroidWebAuthnPasskeyIdentity,
+    AndroidWebAuthnPasskeyIdentity,
+} from "./utils/androidWebAuthn";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -555,12 +559,14 @@ export class OpenChat {
     > = new Map();
     #refreshBalanceSemaphore: Semaphore = new Semaphore(10);
     #inflightBalanceRefreshPromises: Map<string, Promise<bigint>> = new Map();
+    #appType?: "android" | "ios" | "web" = undefined;
 
     currentAirdropChannel: AirdropChannelDetails | undefined = undefined;
 
     constructor(private config: OpenChatConfig) {
         this.#logger = config.logger;
         this.#liveState = new LiveState();
+        this.#appType = config.appType;
 
         console.log("OpenChatConfig: ", config);
 
@@ -598,6 +604,15 @@ export class OpenChat {
         return this.#authPrincipal;
     }
 
+    isNativeAndroid() {
+        return this.#appType === "android";
+    }
+
+    isNativeApp() {
+        // TODO this will be updated to include iOS
+        return this.isNativeAndroid();
+    }
+
     clearCachedData() {
         return this.#sendRequest({
             kind: "clearCachedData",
@@ -608,7 +623,7 @@ export class OpenChat {
         identityKey: CryptoKeyPair,
         delegation: JsonnableDelegationChain,
     ): Promise<boolean> {
-        if (!this.#liveState.anonUser) {
+        if (!app.anonUser) {
             return this.#sendRequest({
                 kind: "deleteUser",
                 identityKey,
@@ -755,7 +770,7 @@ export class OpenChat {
     // }
 
     #startSession(identity: Identity): Promise<void> {
-        if (this.#liveState.anonUser) {
+        if (app.anonUser) {
             return new Promise((_) => {
                 console.debug("ANON: creating an anon session which will never expire");
             });
@@ -943,7 +958,7 @@ export class OpenChat {
         this.#startUserUpdatePoller();
 
         initNotificationStores();
-        if (!this.#liveState.anonUser) {
+        if (!app.anonUser) {
             this.#startOnlinePoller();
             this.#startBtcBalanceUpdateJob();
             this.#sendRequest({ kind: "getUserStorageLimits" })
@@ -999,7 +1014,7 @@ export class OpenChat {
     }
 
     #startOnlinePoller() {
-        if (!this.#liveState.anonUser) {
+        if (!app.anonUser) {
             new Poller(
                 () =>
                     (this.#sendRequest({ kind: "markAsOnline" }) ?? Promise.resolve()).then(
@@ -3582,7 +3597,8 @@ export class OpenChat {
                     mergeServerEvents(events, newEvents, context),
                 );
 
-                const selectedThreadRootMessageIndex = this.#liveState.selectedThreadRootMessageIndex;
+                const selectedThreadRootMessageIndex =
+                    this.#liveState.selectedThreadRootMessageIndex;
                 if (selectedThreadRootMessageIndex !== undefined) {
                     const threadRootEvent = newEvents.find(
                         (e) =>
@@ -5823,7 +5839,7 @@ export class OpenChat {
             const now = BigInt(Date.now());
             const allUsers = this.#liveState.userStore;
             const usersToUpdate = new Set<string>();
-            if (!this.#liveState.anonUser) {
+            if (!app.anonUser) {
                 usersToUpdate.add(app.currentUserId);
             }
 
@@ -5898,7 +5914,7 @@ export class OpenChat {
 
             this.#updateReadUpToStore(chats);
 
-            if (this.#cachePrimer === undefined && !this.#liveState.anonUser) {
+            if (this.#cachePrimer === undefined && !app.anonUser) {
                 this.#cachePrimer = new CachePrimer(
                     this,
                     app.currentUserId,
@@ -5915,7 +5931,7 @@ export class OpenChat {
                     userIds.add(userId);
                 }
             }
-            if (!this.#liveState.anonUser) {
+            if (!app.anonUser) {
                 userIds.add(app.currentUserId);
             }
             await this.getMissingUsers(userIds);
@@ -6046,7 +6062,7 @@ export class OpenChat {
 
             if (initialLoad) {
                 this.#startExchangeRatePoller();
-                if (!this.#liveState.anonUser) {
+                if (!app.anonUser) {
                     this.#initWebRtc();
                     startMessagesReadTracker(this);
                     this.refreshSwappableTokens();
@@ -7220,6 +7236,20 @@ export class OpenChat {
         return await this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, assumeIdentity);
     }
 
+    async signUpWithAndroidWebAuthn(
+        assumeIdentity: boolean,
+    ): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
+        const webAuthnIdentity = await createAndroidWebAuthnPasskeyIdentity((key) =>
+            this.#storeWebAuthnKeyInCache(key),
+        );
+
+        // We create a temporary key so that the user doesn't have to reauthenticate via WebAuthn, we store this key
+        // in IndexedDb, it is valid for 30 days (the same as the other key delegations we use).
+        const tempKey = await ECDSAKeyIdentity.generate();
+
+        return await this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, assumeIdentity);
+    }
+
     async signInWithWebAuthn() {
         const webAuthnOrigin = this.config.webAuthnOrigin;
         if (webAuthnOrigin === undefined) throw new Error("WebAuthn origin not set");
@@ -7234,6 +7264,18 @@ export class OpenChat {
         );
     }
 
+    async signInWithAndroidWebAuthn(): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
+        const webAuthnIdentity = new AndroidWebAuthnPasskeyIdentity((credentialId) =>
+            this.lookupWebAuthnPubKey(credentialId),
+        );
+
+        return await this.#finaliseWebAuthnSignin(
+            webAuthnIdentity,
+            () => webAuthnIdentity.identity(),
+            true,
+        );
+    }
+
     async reSignInWithCurrentWebAuthnIdentity(): Promise<
         [ECDSAKeyIdentity, DelegationChain, WebAuthnKey]
     > {
@@ -7244,11 +7286,17 @@ export class OpenChat {
             }));
         if (webAuthnKey === undefined) throw new Error("WebAuthnKey not set");
 
+        const credentialId: Uint8Array = new Uint8Array(webAuthnKey.credentialId);
+        const cose: Uint8Array = unwrapDER(
+            new Uint8Array(webAuthnKey.publicKey).buffer,
+            DER_COSE_OID,
+        );
         const webAuthnIdentity = new WebAuthnIdentity(
-            webAuthnKey.credentialId,
-            unwrapDER(webAuthnKey.publicKey, DER_COSE_OID),
+            credentialId.buffer as ArrayBuffer,
+            cose.buffer as ArrayBuffer,
             undefined,
         );
+
         return await this.#finaliseWebAuthnSignin(webAuthnIdentity, () => webAuthnIdentity, false);
     }
 
@@ -7888,7 +7936,7 @@ export class OpenChat {
     }
 
     getDefaultScope(): ChatListScope {
-        if (this.#liveState.anonUser) return { kind: "group_chat" };
+        if (app.anonUser) return { kind: "group_chat" };
 
         // sometimes we have to re-direct the user to home route "/"
         // However, with communities enabled it is not clear what this means

@@ -14,7 +14,10 @@
         "deploy:testnet": "npm ci && dotenv -- turbo run deploy:testnet --cache-dir .turbo",
         "dev": "npm i && dotenv -- turbo run dev --cache-dir .turbo",
         "changelog": "auto-changelog --tag-pattern '-website' --file-pattern '^frontend'",
-        "verify": "dotenv -- turbo run verify --cache-dir .turbo"
+        "verify": "dotenv -- turbo run verify --cache-dir .turbo",
+        "tauri": "tauri",
+        "mobile": "cargo tauri android dev",
+        "dev:mobile": "npm ci && dotenv -- turbo run dev:mobile --cache-dir .turbo"
     },
     "author": "julian.jelfs@gmail.com",
     "workspaces": [
@@ -23,7 +26,8 @@
         "openchat-client",
         "openchat-service-worker",
         "openchat-shared",
-        "openchat-worker"
+        "openchat-worker",
+        "tauri-plugin-oc"
     ],
     "devDependencies": {
         "@rollup/plugin-alias": "^5.0.0",
@@ -35,6 +39,7 @@
         "@rollup/plugin-replace": "^5.0.5",
         "@rollup/plugin-terser": "^0.4.4",
         "@rollup/plugin-typescript": "^11.1.2",
+        "@tauri-apps/api": "^2.4.1",
         "@typescript-eslint/eslint-plugin": "^6.4.0",
         "@typescript-eslint/parser": "^6.4.0",
         "auto-changelog": "open-chat-labs/auto-changelog#master",
