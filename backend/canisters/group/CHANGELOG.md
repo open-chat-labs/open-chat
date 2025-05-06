@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Introduce `UnitResult` type to reduce duplication ([#7800](https://github.com/open-chat-labs/open-chat/pull/7800))
 - Use more fine grained error codes for P2P swaps ([#7801](https://github.com/open-chat-labs/open-chat/pull/7801))
 - Migrate `bot_context` to `sender_context` ([#7870](https://github.com/open-chat-labs/open-chat/pull/7870))
+- Allow LocalUserIndex to push events to Groups ([#7908](https://github.com/open-chat-labs/open-chat/pull/7908))
 
 ### Fixed
 
