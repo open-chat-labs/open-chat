@@ -10,7 +10,6 @@ import {
     dummyCurrentUser,
     dummyUserStore,
     dummyWalletConfigStore,
-    selectedChatId,
 } from "./stores";
 
 function onSelectedCommunityChanged(client: OpenChat) {
@@ -46,7 +45,6 @@ function onSelectedChatChanged(client: OpenChat) {
                     pathState.route.kind === "selected_channel_route" ||
                     pathState.route.kind === "global_chat_selected_route"
                 ) {
-                    selectedChatId.set(app.selectedChatId);
                     const id = app.selectedChatId;
                     const messageIndex = pathState.route.messageIndex;
                     const threadMessageIndex = pathState.route.threadMessageIndex;
@@ -55,12 +53,6 @@ function onSelectedChatChanged(client: OpenChat) {
                     }
                 }
             });
-        }
-    });
-
-    $effect(() => {
-        if (app.selectedChatId === undefined) {
-            selectedChatId.set(undefined);
         }
     });
 }

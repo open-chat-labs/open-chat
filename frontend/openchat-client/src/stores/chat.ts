@@ -8,14 +8,11 @@ import type {
     ThreadIdentifier,
 } from "openchat-shared";
 import { chatIdentifiersEqual, messageContextsEqual } from "openchat-shared";
-import { derived, writable } from "svelte/store";
+import { derived } from "svelte/store";
 import { app } from "../state/app.svelte";
 import { localUpdates } from "../state/global";
 import { getNextEventAndMessageIndexes } from "../utils/chat";
 import { snsFunctions } from "./snsFunctions";
-
-// TODO - this will be synced from the Svelte5 rune for now and ultimately removed
-export const selectedChatId = writable<ChatIdentifier | undefined>(undefined);
 
 export function nextEventAndMessageIndexesForThread(
     events: EventWrapper<ChatEvent>[],
