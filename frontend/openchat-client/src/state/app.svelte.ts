@@ -329,9 +329,14 @@ export class AppState {
 
     // this is all server chats + previews with local updates applied.
     #allChats = $derived.by(() => {
+        const previewChannels = ChatMap.fromList(
+            [...localUpdates.previewCommunities.values()].flatMap((c) => c.channels),
+        );
         const withPreviews = this.#allServerChats
             .merge(localUpdates.uninitialisedDirectChats)
-            .merge(localUpdates.groupChatPreviews);
+            .merge(localUpdates.groupChatPreviews)
+            .merge(previewChannels);
+
         const withUpdates = localUpdates.chats.apply(withPreviews);
         return withUpdates.reduce((result, [chatId, chat]) => {
             const withLocal = this.#applyLocalUpdatesToChat(chat);
