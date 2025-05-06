@@ -469,6 +469,7 @@ function createCommunitySummary(id: string, index: number): CommunitySummary {
         localUserIndex: "",
         isInvited: false,
         verified: false,
+        latestSuccessfulUpdatesCheck: BigInt(0),
     };
 }
 
@@ -554,6 +555,7 @@ function groupChat(groupId: string, lastMessage?: EventWrapper<Message>): GroupC
         isInvited: false,
         dateLastPinned: undefined,
         dateReadPinned: undefined,
+        latestSuccessfulUpdatesCheck: BigInt(0),
     };
 }
 
