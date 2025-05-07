@@ -13,6 +13,7 @@
         AvatarSize,
         OpenChat,
         app,
+        localUpdates,
         publish,
         routeForScope,
         byContext as typersByContext,
@@ -208,10 +209,12 @@
         }
     });
 
-    function deleteDirectChat(e: Event) {
+    function deleteEmptyChat(e: Event) {
         e.stopPropagation();
         e.preventDefault();
-        client.removeChat(chatSummary.id);
+        console.log("Removing previewed chat", localUpdates.groupChatPreviews.get(chatSummary.id));
+        client.removePreviewedChat(chatSummary.id);
+        console.log("Removed previewed chat", localUpdates.groupChatPreviews.get(chatSummary.id));
         page(routeForScope(app.chatListScope));
         delOffset = -60;
     }
@@ -606,7 +609,7 @@
                         ? `left: ${delOffset}px`
                         : `right: ${delOffset}px`
                     : ""}
-                onclick={deleteDirectChat}
+                onclick={deleteEmptyChat}
                 class:rtl={$rtlStore}
                 class="delete-chat">
                 <Delete size={ui.iconSize} color={"#fff"} />

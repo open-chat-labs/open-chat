@@ -285,11 +285,19 @@ export class AppState {
 
     #serverCommunities = $state<CommunityMap<CommunitySummary>>(new CommunityMap());
 
+    // this *includes* any preview chats since they come from the server too
     #allServerChats = $derived.by(() => {
         const groupChats = this.#serverGroupChats.values();
         const directChats = this.#serverDirectChats.values();
         const channels = [...this.#serverCommunities.values()].flatMap((c) => c.channels);
-        return ChatMap.fromList([...groupChats, ...directChats, ...channels]);
+        const all = ChatMap.fromList([...groupChats, ...directChats, ...channels]);
+        const previewChannels = ChatMap.fromList(
+            [...localUpdates.previewCommunities.values()].flatMap((c) => c.channels),
+        );
+        return all
+            .merge(localUpdates.uninitialisedDirectChats)
+            .merge(localUpdates.groupChatPreviews)
+            .merge(previewChannels);
     });
 
     #userMetrics = $derived.by(() => {
@@ -330,17 +338,9 @@ export class AppState {
         return chat;
     }
 
-    // this is all server chats + previews with local updates applied.
+    // this is all server chats (which already include previews) + local updates applied.
     #allChats = $derived.by(() => {
-        const previewChannels = ChatMap.fromList(
-            [...localUpdates.previewCommunities.values()].flatMap((c) => c.channels),
-        );
-        const withPreviews = this.#allServerChats
-            .merge(localUpdates.uninitialisedDirectChats)
-            .merge(localUpdates.groupChatPreviews)
-            .merge(previewChannels);
-
-        const withUpdates = localUpdates.chats.apply(withPreviews);
+        const withUpdates = localUpdates.chats.apply(this.#allServerChats);
         return withUpdates.reduce((result, [chatId, chat]) => {
             const withLocal = this.#applyLocalUpdatesToChat(chat);
             const withUnconfirmed = mergeUnconfirmedIntoSummary(

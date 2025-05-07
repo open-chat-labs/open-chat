@@ -2919,9 +2919,18 @@ export class OpenChat {
         return resp.events;
     }
 
+    removePreviewedChat(chatId: ChatIdentifier) {
+        switch (chatId.kind) {
+            case "direct_chat":
+                localUpdates.removeUninitialisedDirectChat(chatId);
+                break;
+            default:
+                localUpdates.removeGroupPreview(chatId);
+                break;
+        }
+    }
+
     removeChat(chatId: ChatIdentifier) {
-        localUpdates.removeUninitialisedDirectChat(chatId);
-        localUpdates.removeGroupPreview(chatId);
         return localUpdates.removeChat(chatId);
     }
 
