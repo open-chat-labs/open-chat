@@ -189,7 +189,7 @@ fn tip_group_message_retries_if_c2c_call_fails() {
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
     let message_id = random_from_u128();
     let tip_amount = 1_0000_0000;
-    let local_group_index = canister_ids.local_group_index(env, group_id);
+    let local_user_index = canister_ids.local_user_index(env, group_id);
 
     client::group::happy_path::join_group(env, user2.principal, group_id);
 
@@ -197,7 +197,7 @@ fn tip_group_message_retries_if_c2c_call_fails() {
         client::group::happy_path::send_text_message(env, &user2, group_id, None, random_string(), Some(message_id))
             .event_index;
 
-    env.stop_canister(group_id.into(), Some(local_group_index)).unwrap();
+    env.stop_canister(group_id.into(), Some(local_user_index)).unwrap();
 
     let tip_message_response = client::user::tip_message(
         env,
@@ -223,7 +223,7 @@ fn tip_group_message_retries_if_c2c_call_fails() {
     ));
 
     env.tick();
-    env.start_canister(group_id.into(), Some(local_group_index)).unwrap();
+    env.start_canister(group_id.into(), Some(local_user_index)).unwrap();
     env.advance_time(Duration::from_secs(10));
     env.tick();
 
@@ -256,7 +256,7 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
     let channel_id = client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
     let message_id = random_from_u128();
     let tip_amount = 1_0000_0000;
-    let local_group_index = canister_ids.local_group_index(env, community_id);
+    let local_user_index = canister_ids.local_user_index(env, community_id);
 
     client::community::happy_path::join_channel(env, user2.principal, community_id, channel_id);
 
@@ -271,7 +271,7 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
     )
     .event_index;
 
-    env.stop_canister(community_id.into(), Some(local_group_index)).unwrap();
+    env.stop_canister(community_id.into(), Some(local_user_index)).unwrap();
 
     let tip_message_response = client::user::tip_message(
         env,
@@ -297,7 +297,7 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
     ));
 
     env.tick();
-    env.start_canister(community_id.into(), Some(local_group_index)).unwrap();
+    env.start_canister(community_id.into(), Some(local_user_index)).unwrap();
     env.advance_time(Duration::from_secs(10));
     env.tick();
 

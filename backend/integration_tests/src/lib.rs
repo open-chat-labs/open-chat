@@ -128,10 +128,6 @@ impl CanisterIds {
         self.subnet(env, canister_id.into()).local_user_index
     }
 
-    pub fn local_group_index(&self, env: &PocketIc, canister_id: impl Into<CanisterId>) -> CanisterId {
-        self.subnet(env, canister_id.into()).local_group_index
-    }
-
     pub fn notifications(&self, env: &PocketIc, canister_id: impl Into<CanisterId>) -> CanisterId {
         self.subnet(env, canister_id.into()).notifications_canister
     }
