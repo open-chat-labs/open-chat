@@ -53,8 +53,8 @@ fn user_canister_notified_of_community_deleted() {
         community_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    stop_canister(env, user2.canister(), user2.local_user_index);
-    stop_canister(env, user3.canister(), user3.local_user_index);
+    stop_canister(env, user2.local_user_index, user2.canister());
+    stop_canister(env, user3.local_user_index, user3.canister());
 
     let delete_community_response = client::user::delete_community(
         env,

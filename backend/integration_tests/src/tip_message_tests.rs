@@ -198,7 +198,7 @@ fn tip_group_message_retries_if_c2c_call_fails() {
         client::group::happy_path::send_text_message(env, &user2, group_id, None, random_string(), Some(message_id))
             .event_index;
 
-    stop_canister(env, group_id.into(), local_user_index);
+    stop_canister(env, local_user_index, group_id.into());
 
     let tip_message_response = client::user::tip_message(
         env,
@@ -272,7 +272,7 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
     )
     .event_index;
 
-    stop_canister(env, community_id.into(), local_user_index);
+    stop_canister(env, local_user_index, community_id.into());
 
     let tip_message_response = client::user::tip_message(
         env,
