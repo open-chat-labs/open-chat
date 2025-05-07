@@ -52,7 +52,7 @@ import {
     type WalletConfig,
     type WebhookDetails,
 } from "openchat-shared";
-import { SvelteMap } from "svelte/reactivity";
+import { SvelteMap, SvelteSet } from "svelte/reactivity";
 import { type PinnedByScope } from "../stores";
 import {
     getMessagePermissionsForSelectedChat,
@@ -108,14 +108,14 @@ export class AppState {
         if (!serialised) return undefined;
         const parsed = JSON.parse(serialised);
         return {
-            languages: new Set(parsed.languages),
+            languages: new SvelteSet(parsed.languages),
         };
     }
 
     #initialiseCommunityFilter() {
         return (
             this.#communityFilterFromString(localStorage.getItem("openchat_community_filters")) ?? {
-                languages: new Set<string>(),
+                languages: new SvelteSet<string>(),
             }
         );
     }
@@ -285,11 +285,19 @@ export class AppState {
 
     #serverCommunities = $state<CommunityMap<CommunitySummary>>(new CommunityMap());
 
+    // this *includes* any preview chats since they come from the server too
     #allServerChats = $derived.by(() => {
         const groupChats = this.#serverGroupChats.values();
         const directChats = this.#serverDirectChats.values();
         const channels = [...this.#serverCommunities.values()].flatMap((c) => c.channels);
-        return ChatMap.fromList([...groupChats, ...directChats, ...channels]);
+        const all = ChatMap.fromList([...groupChats, ...directChats, ...channels]);
+        const previewChannels = ChatMap.fromList(
+            [...localUpdates.previewCommunities.values()].flatMap((c) => c.channels),
+        );
+        return all
+            .merge(localUpdates.uninitialisedDirectChats)
+            .merge(localUpdates.groupChatPreviews)
+            .merge(previewChannels);
     });
 
     #userMetrics = $derived.by(() => {
@@ -301,6 +309,8 @@ export class AppState {
 
     #applyLocalUpdatesToChat(chat: ChatSummary): ChatSummary {
         const local = chatDetailsLocalUpdates.get(chat.id);
+        if (local === undefined) return chat;
+
         chat.membership.notificationsMuted =
             local?.notificationsMuted ?? chat.membership.notificationsMuted;
         chat.membership.archived = local?.archived ?? chat.membership.archived;
@@ -319,8 +329,7 @@ export class AppState {
             chat.name = local?.name ?? chat.name;
             chat.description = local?.description ?? chat.description;
             chat.permissions = mergePermissions(chat.permissions, local?.permissions);
-            chat.gateConfig.gate = { ...chat.gateConfig.gate, ...local?.gateConfig?.gate };
-            chat.gateConfig.expiry = local?.gateConfig?.expiry ?? chat.gateConfig.expiry;
+            chat.gateConfig = local?.gateConfig ?? chat.gateConfig;
             chat.eventsTTL = local?.eventsTTL
                 ? applyOptionUpdate(chat.eventsTTL, local.eventsTTL)
                 : chat.eventsTTL;
@@ -329,17 +338,9 @@ export class AppState {
         return chat;
     }
 
-    // this is all server chats + previews with local updates applied.
+    // this is all server chats (which already include previews) + local updates applied.
     #allChats = $derived.by(() => {
-        const previewChannels = ChatMap.fromList(
-            [...localUpdates.previewCommunities.values()].flatMap((c) => c.channels),
-        );
-        const withPreviews = this.#allServerChats
-            .merge(localUpdates.uninitialisedDirectChats)
-            .merge(localUpdates.groupChatPreviews)
-            .merge(previewChannels);
-
-        const withUpdates = localUpdates.chats.apply(withPreviews);
+        const withUpdates = localUpdates.chats.apply(this.#allServerChats);
         return withUpdates.reduce((result, [chatId, chat]) => {
             const withLocal = this.#applyLocalUpdatesToChat(chat);
             const withUnconfirmed = mergeUnconfirmedIntoSummary(
@@ -829,10 +830,6 @@ export class AppState {
         return this.#directChatBots;
     }
 
-    set directChatBots(val: SafeMap<string, ExternalBotPermissions>) {
-        this.#serverDirectChatBots = val;
-    }
-
     get directChatApiKeys() {
         return this.#directChatApiKeys;
     }
@@ -1170,7 +1167,7 @@ export class AppState {
         this.#serverCommunities = communitiesMap;
         this.#serverPinnedChats = pinnedChats;
         this.#directChatApiKeys = apiKeys;
-        this.#directChatBots = SafeMap.fromEntries(installedBots.entries());
+        this.#serverDirectChatBots = SafeMap.fromEntries(installedBots.entries());
         this.#serverWalletConfig = walletConfig;
         if (streakInsurance !== undefined) {
             this.#serverStreakInsurance = streakInsurance;

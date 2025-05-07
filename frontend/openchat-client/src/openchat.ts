@@ -1211,6 +1211,9 @@ export class OpenChat {
 
     archiveChat(chatId: ChatIdentifier): Promise<boolean> {
         const undo = localUpdates.updateArchived(chatId, true);
+        if (chatIdentifiersEqual(chatId, app.selectedChatId)) {
+            this.selectFirstChat();
+        }
         return this.#sendRequest({ kind: "archiveChat", chatId })
             .then((resp) => {
                 if (resp.kind !== "success") {
@@ -1304,7 +1307,7 @@ export class OpenChat {
     }
 
     unblockUserFromDirectChat(userId: string): Promise<boolean> {
-        const undo = localUpdates.blockDirectUser(userId);
+        const undo = localUpdates.unblockDirectUser(userId);
         return this.#sendRequest({ kind: "unblockUserFromDirectChat", userId })
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -1341,6 +1344,9 @@ export class OpenChat {
             .then((resp) => {
                 if (resp.kind === "success") {
                     this.removeChat(chatId);
+                    if (chatIdentifiersEqual(chatId, app.selectedChatId)) {
+                        this.selectFirstChat();
+                    }
                     return true;
                 } else {
                     return false;
@@ -2919,9 +2925,18 @@ export class OpenChat {
         return resp.events;
     }
 
+    removePreviewedChat(chatId: ChatIdentifier) {
+        switch (chatId.kind) {
+            case "direct_chat":
+                localUpdates.removeUninitialisedDirectChat(chatId);
+                break;
+            default:
+                localUpdates.removeGroupPreview(chatId);
+                break;
+        }
+    }
+
     removeChat(chatId: ChatIdentifier) {
-        localUpdates.removeUninitialisedDirectChat(chatId);
-        localUpdates.removeGroupPreview(chatId);
         return localUpdates.removeChat(chatId);
     }
 
