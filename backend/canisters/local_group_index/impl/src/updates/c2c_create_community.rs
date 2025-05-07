@@ -105,7 +105,6 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         created_by_user_type: UserType::User,
         mark_active_duration: MARK_ACTIVE_DURATION,
         group_index_canister_id: state.data.group_index_canister_id,
-        local_group_index_canister_id: state.env.canister_id(),
         user_index_canister_id: state.data.user_index_canister_id,
         local_user_index_canister_id,
         notifications_canister_id: state.data.notifications_canister_id,

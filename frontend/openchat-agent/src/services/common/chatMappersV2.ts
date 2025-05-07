@@ -2142,6 +2142,7 @@ export function groupChatSummary(value: TGroupCanisterGroupChatSummary): GroupCh
         isInvited: false, // this is only applicable when we are not a member
         messagesVisibleToNonMembers: value.messages_visible_to_non_members,
         verified: value.verified,
+        latestSuccessfulUpdatesCheck: BigInt(Date.now()),
     };
 }
 
@@ -2194,6 +2195,7 @@ export function communitySummary(value: TCommunityCanisterCommunitySummary): Com
         localUserIndex,
         isInvited: value.is_invited ?? false,
         verified: value.verified,
+        latestSuccessfulUpdatesCheck: BigInt(Date.now()),
     };
 }
 

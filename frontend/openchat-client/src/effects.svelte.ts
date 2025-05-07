@@ -21,7 +21,7 @@ function onSelectedCommunityChanged(client: OpenChat) {
             // make double sure we are only reacting to the things we want to react to
             untrack(() => {
                 client.setSelectedCommunity(id).then((preview) => {
-                    if (preview) {
+                    if (preview && app.selectedChatId === undefined) {
                         // if we are previewing the community we need to select the first chat manually
                         client.selectFirstChat();
                     }

@@ -6,9 +6,11 @@ import {
     type UserSummary,
 } from "openchat-shared";
 import { SvelteMap, SvelteSet } from "svelte/reactivity";
+import { localUpdates } from "../global";
 
 export class UsersState {
-    #blockedUsers = new SvelteSet<string>();
+    #serverBlockedUsers = new SvelteSet<string>();
+    #blockedUsers = $derived(localUpdates.blockedDirectUsers.apply(this.#serverBlockedUsers));
     #normalUsers = $state(new SvelteMap<string, UserSummary>());
     #specialUsers = new SvelteMap<string, UserSummary>();
     #allUsers = $derived.by(() => {
@@ -28,15 +30,15 @@ export class UsersState {
     });
 
     setBlockedUsers(userIds: string[]) {
-        this.#blockedUsers = new SvelteSet(userIds);
+        this.#serverBlockedUsers = new SvelteSet(userIds);
     }
 
     blockUser(userId: string) {
-        this.#blockedUsers.add(userId);
+        this.#serverBlockedUsers.add(userId);
     }
 
     unblockUser(userId: string) {
-        this.#blockedUsers.delete(userId);
+        this.#serverBlockedUsers.delete(userId);
     }
 
     setUsers(users: UserLookup) {

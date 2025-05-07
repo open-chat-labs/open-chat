@@ -103,7 +103,7 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "group_and_community_summary_updates",
             args,
-            groupAndCommunitySummaryUpdates,
+            (resp) => groupAndCommunitySummaryUpdates(requests, resp),
             LocalUserIndexGroupAndCommunitySummaryUpdatesArgs,
             LocalUserIndexGroupAndCommunitySummaryUpdatesResponse,
         );

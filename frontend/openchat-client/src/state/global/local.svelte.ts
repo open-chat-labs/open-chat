@@ -61,6 +61,7 @@ const noop = () => {};
 
 // global local updates don't need the manager because they are not specific to a keyed entity (community, chat, message etc)
 export class GlobalLocalState {
+    #blockedDirectUsers = new LocalSet<string>();
     #failedMessages = $state<ReactiveMessageContextMap<FailedMessageState>>(
         new ReactiveMessageContextMap(),
     );
@@ -102,6 +103,18 @@ export class GlobalLocalState {
         this.#groupChatPreviews.clear();
         messageLocalUpdates.clearAll();
         chatDetailsLocalUpdates.clearAll();
+    }
+
+    blockDirectUser(userId: string) {
+        return this.#blockedDirectUsers.add(userId);
+    }
+
+    unblockDirectUser(userId: string) {
+        return this.#blockedDirectUsers.remove(userId);
+    }
+
+    get blockedDirectUsers() {
+        return this.#blockedDirectUsers;
     }
 
     get draftMessages() {
@@ -544,6 +557,7 @@ export class GlobalLocalState {
         permissions?: OptionalChatPermissions,
         gateConfig?: AccessGateConfig,
         eventsTTL?: OptionUpdate<bigint>,
+        isPublic?: boolean,
     ) {
         return chatDetailsLocalUpdates.updateChatProperties(
             id,
@@ -552,6 +566,7 @@ export class GlobalLocalState {
             permissions,
             gateConfig,
             eventsTTL,
+            isPublic,
         );
     }
 

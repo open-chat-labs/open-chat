@@ -85,10 +85,6 @@ impl RuntimeState {
         self.env.caller() == self.data.group_index_canister_id
     }
 
-    pub fn is_caller_local_group_index(&self) -> bool {
-        self.env.caller() == self.data.local_group_index_canister_id
-    }
-
     pub fn is_caller_escrow_canister(&self) -> bool {
         self.env.caller() == self.data.escrow_canister_id
     }
@@ -450,7 +446,6 @@ impl RuntimeState {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
-                local_group_index: self.data.local_group_index_canister_id,
                 notifications: self.data.notifications_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
                 escrow_canister_id: self.data.escrow_canister_id,
@@ -492,7 +487,6 @@ struct Data {
     pub chat: GroupChatCore,
     pub principal_to_user_id_map: PrincipalToUserIdMap,
     pub group_index_canister_id: CanisterId,
-    pub local_group_index_canister_id: CanisterId,
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
@@ -554,7 +548,6 @@ impl Data {
         now: TimestampMillis,
         mark_active_duration: Milliseconds,
         group_index_canister_id: CanisterId,
-        local_group_index_canister_id: CanisterId,
         user_index_canister_id: CanisterId,
         local_user_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
@@ -595,7 +588,6 @@ impl Data {
             chat,
             principal_to_user_id_map,
             group_index_canister_id,
-            local_group_index_canister_id,
             user_index_canister_id,
             local_user_index_canister_id,
             notifications_canister_id,
@@ -618,7 +610,7 @@ impl Data {
             total_payment_receipts: PaymentReceipts::default(),
             video_call_operators,
             ic_root_key,
-            event_store_client: EventStoreClientBuilder::new(local_group_index_canister_id, CdkRuntime::default())
+            event_store_client: EventStoreClientBuilder::new(local_user_index_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
                 .build(),
             achievements: Achievements::default(),
@@ -634,7 +626,7 @@ impl Data {
             notifications_queue: BatchedTimerJobQueue::new(
                 NotificationPusherState {
                     notifications_canister: notifications_canister_id,
-                    authorizer: local_group_index_canister_id,
+                    authorizer: local_user_index_canister_id,
                 },
                 false,
             ),
@@ -942,7 +934,6 @@ pub struct CanisterIds {
     pub user_index: CanisterId,
     pub group_index: CanisterId,
     pub local_user_index: CanisterId,
-    pub local_group_index: CanisterId,
     pub notifications: CanisterId,
     pub proposals_bot: CanisterId,
     pub escrow_canister_id: CanisterId,

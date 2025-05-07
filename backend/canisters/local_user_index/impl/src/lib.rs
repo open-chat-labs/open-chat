@@ -1,3 +1,5 @@
+use crate::model::community_event_batch::CommunityEventBatch;
+use crate::model::group_event_batch::GroupEventBatch;
 use crate::model::local_community_map::LocalCommunityMap;
 use crate::model::local_group_map::LocalGroupMap;
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
@@ -5,11 +7,13 @@ use crate::model::user_event_batch::UserEventBatch;
 use crate::model::user_index_event_batch::UserIndexEventBatch;
 use candid::Principal;
 use canister_state_macros::canister_state;
+use community_canister::LocalGroupIndexEvent as CommunityEvent;
 use constants::{CYCLES_REQUIRED_FOR_UPGRADE, MINUTE_IN_MS};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use event_store_utils::EventDeduper;
 use fire_and_forget_handler::FireAndForgetHandler;
+use group_canister::LocalGroupIndexEvent as GroupEvent;
 use jwt::{Claims, verify_and_decode};
 use local_user_index_canister::{ChildCanisterType, GlobalUser};
 use model::bots_map::BotsMap;
@@ -22,7 +26,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::time::Duration;
-use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
+use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue, TimerJobItemGroup};
 use types::{
     BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary,
     CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails, IdempotentEnvelope, MessageContent,
@@ -162,6 +166,14 @@ impl RuntimeState {
             .is_some_and(|u| u.is_platform_operator)
     }
 
+    pub fn push_event_to_user_index(&mut self, event: UserIndexEvent, now: TimestampMillis) {
+        self.data.user_index_event_sync_queue.push(IdempotentEnvelope {
+            created_at: now,
+            idempotency_id: self.env.rng().next_u64(),
+            value: event,
+        });
+    }
+
     pub fn push_event_to_user(&mut self, user_id: UserId, event: UserEvent, now: TimestampMillis) {
         self.data.user_event_sync_queue.push(
             user_id,
@@ -173,12 +185,26 @@ impl RuntimeState {
         );
     }
 
-    pub fn push_event_to_user_index(&mut self, event: UserIndexEvent, now: TimestampMillis) {
-        self.data.user_index_event_sync_queue.push(IdempotentEnvelope {
-            created_at: now,
-            idempotency_id: self.env.rng().next_u64(),
-            value: event,
-        });
+    pub fn push_event_to_group(&mut self, canister_id: CanisterId, event: GroupEvent, now: TimestampMillis) {
+        self.data.group_event_sync_queue.push(
+            canister_id,
+            IdempotentEnvelope {
+                created_at: now,
+                idempotency_id: self.env.rng().next_u64(),
+                value: event,
+            },
+        );
+    }
+
+    pub fn push_event_to_community(&mut self, canister_id: CanisterId, event: CommunityEvent, now: TimestampMillis) {
+        self.data.community_event_sync_queue.push(
+            canister_id,
+            IdempotentEnvelope {
+                created_at: now,
+                idempotency_id: self.env.rng().next_u64(),
+                value: event,
+            },
+        );
     }
 
     pub fn push_oc_bot_message_to_user(
@@ -403,8 +429,12 @@ struct Data {
     pub communities_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
-    pub user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     pub user_index_event_sync_queue: BatchedTimerJobQueue<UserIndexEventBatch>,
+    pub user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
+    #[serde(default = "default_event_sync_queue")]
+    pub group_event_sync_queue: GroupedTimerJobQueue<GroupEventBatch>,
+    #[serde(default = "default_event_sync_queue")]
+    pub community_event_sync_queue: GroupedTimerJobQueue<CommunityEventBatch>,
     pub test_mode: bool,
     #[serde(alias = "max_concurrent_canister_upgrades")]
     pub max_concurrent_user_upgrades: u32,
@@ -431,6 +461,14 @@ struct Data {
     pub cycles_balance_check_queue: VecDeque<CanisterId>,
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub idempotency_checker: IdempotencyChecker,
+}
+
+fn default_event_sync_queue<T>() -> GroupedTimerJobQueue<T>
+where
+    T: TimerJobItemGroup,
+    T::SharedState: Default,
+{
+    GroupedTimerJobQueue::new(10, false)
 }
 
 fn ten() -> u32 {
@@ -494,6 +532,8 @@ impl Data {
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
             user_event_sync_queue: GroupedTimerJobQueue::new(10, false),
+            group_event_sync_queue: GroupedTimerJobQueue::new(10, false),
+            community_event_sync_queue: GroupedTimerJobQueue::new(10, false),
             user_index_event_sync_queue: BatchedTimerJobQueue::new(user_index_canister_id, true),
             test_mode,
             max_concurrent_user_upgrades: 10,

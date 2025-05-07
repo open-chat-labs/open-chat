@@ -1,3 +1,4 @@
+use crate::jobs::clear_chunk_store_if_no_pending_upgrades;
 use crate::{RuntimeState, mutate_state};
 use constants::min_cycles_balance;
 use ic_cdk::management_canister::CanisterInstallMode;
@@ -39,6 +40,8 @@ fn run() {
     } else if let Some(timer_id) = TIMER_ID.take() {
         ic_cdk_timers::clear_timer(timer_id);
         trace!("'upgrade_groups' job stopped");
+
+        clear_chunk_store_if_no_pending_upgrades();
     }
 }
 

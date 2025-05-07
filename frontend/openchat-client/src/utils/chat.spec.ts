@@ -84,6 +84,7 @@ const defaultGroupChat: GroupChatSummary = {
     isInvited: false,
     messagesVisibleToNonMembers: false,
     verified: false,
+    latestSuccessfulUpdatesCheck: BigInt(0),
 };
 
 function createUser(userId: string, username: string): UserSummary {

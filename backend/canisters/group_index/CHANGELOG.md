@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Switch to using LocalUserIndexes instead of LocalGroupIndexes ([#7917](https://github.com/open-chat-labs/open-chat/pull/7917))
+
+## [[2.0.1720](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1720-group_index)] - 2025-04-29
+
+### Changed
+
 - Retry marking JADE 8 community as verified now that logs are visible ([#7858](https://github.com/open-chat-labs/open-chat/pull/7858))
 
 ## [[2.0.1707](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1707-group_index)] - 2025-04-22
