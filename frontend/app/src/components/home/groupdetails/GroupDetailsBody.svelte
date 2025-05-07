@@ -56,6 +56,8 @@
 
         return description;
     }
+
+    $inspect(chat.gateConfig).with(console.trace);
 </script>
 
 <div class="group-details">

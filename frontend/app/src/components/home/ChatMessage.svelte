@@ -682,10 +682,11 @@
                                 {onRegisterVote}
                                 {onExpandMessage} />
 
-                            {#if !inert && !isPrize}
+                            {#if !inert}
                                 <TimeAndTicks
                                     {pinned}
-                                    {fill}
+                                    prize={isPrize}
+                                    fill={fill && !isPrize}
                                     {timestamp}
                                     {expiresAt}
                                     {percentageExpired}

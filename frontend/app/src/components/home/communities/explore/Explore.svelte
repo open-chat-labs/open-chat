@@ -91,6 +91,9 @@
             }
             onScroll();
         });
+    });
+
+    $effect(() => {
         search(app.exploreCommunitiesFilters, true);
     });
 

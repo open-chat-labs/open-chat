@@ -52,7 +52,7 @@ import {
     type WalletConfig,
     type WebhookDetails,
 } from "openchat-shared";
-import { SvelteMap } from "svelte/reactivity";
+import { SvelteMap, SvelteSet } from "svelte/reactivity";
 import { type PinnedByScope } from "../stores";
 import {
     getMessagePermissionsForSelectedChat,
@@ -108,14 +108,14 @@ export class AppState {
         if (!serialised) return undefined;
         const parsed = JSON.parse(serialised);
         return {
-            languages: new Set(parsed.languages),
+            languages: new SvelteSet(parsed.languages),
         };
     }
 
     #initialiseCommunityFilter() {
         return (
             this.#communityFilterFromString(localStorage.getItem("openchat_community_filters")) ?? {
-                languages: new Set<string>(),
+                languages: new SvelteSet<string>(),
             }
         );
     }
@@ -301,6 +301,8 @@ export class AppState {
 
     #applyLocalUpdatesToChat(chat: ChatSummary): ChatSummary {
         const local = chatDetailsLocalUpdates.get(chat.id);
+        if (local === undefined) return chat;
+
         chat.membership.notificationsMuted =
             local?.notificationsMuted ?? chat.membership.notificationsMuted;
         chat.membership.archived = local?.archived ?? chat.membership.archived;
@@ -319,8 +321,7 @@ export class AppState {
             chat.name = local?.name ?? chat.name;
             chat.description = local?.description ?? chat.description;
             chat.permissions = mergePermissions(chat.permissions, local?.permissions);
-            chat.gateConfig.gate = { ...chat.gateConfig.gate, ...local?.gateConfig?.gate };
-            chat.gateConfig.expiry = local?.gateConfig?.expiry ?? chat.gateConfig.expiry;
+            chat.gateConfig = local?.gateConfig ?? chat.gateConfig;
             chat.eventsTTL = local?.eventsTTL
                 ? applyOptionUpdate(chat.eventsTTL, local.eventsTTL)
                 : chat.eventsTTL;
