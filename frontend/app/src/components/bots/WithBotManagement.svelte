@@ -1,6 +1,10 @@
 <script lang="ts">
+    import { toastStore } from "@src/stores/toast";
     import {
         app,
+        pageRedirect,
+        routeForScope,
+        ui,
         type ChatSummary,
         type CommunitySummary,
         type ExternalBotPermissions,
@@ -8,15 +12,17 @@
         type PublicApiKeyDetails,
     } from "openchat-client";
     import {
+        chatIdentifiersEqual,
         flattenCommandPermissions,
+        i18nKey,
+        routeForChatIdentifier,
         type BotInstallationLocation,
         type BotSummaryMode,
         type ExternalBot,
         type Level,
     } from "openchat-shared";
+    import page from "page";
     import { getContext, type Snippet } from "svelte";
-    import { i18nKey } from "../../i18n/i18n";
-    import { toastStore } from "../../stores/toast";
     import BotSummary from "./BotSummary.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -87,7 +93,24 @@
     }
 
     function removeBot() {
-        client.uninstallBot(commandContextId, bot.id).then((success) => {
+        const ctx = commandContextId;
+        const botId = bot.id;
+
+        if (commandContextId.kind === "direct_chat") {
+            if (ui.mobileWidth) {
+                page(routeForScope(app.chatListScope));
+            } else {
+                const first = app.chatSummariesList.find(
+                    (c) => !chatIdentifiersEqual(c.id, { kind: "direct_chat", userId: bot.id }),
+                );
+                if (first) {
+                    pageRedirect(routeForChatIdentifier(app.chatListScope.kind, first.id));
+                } else {
+                    page(routeForScope(client.getDefaultScope()));
+                }
+            }
+        }
+        client.uninstallBot(ctx, botId).then((success) => {
             if (!success) {
                 toastStore.showFailureToast(i18nKey("bots.manage.removeFailed"));
             }
