@@ -32,8 +32,6 @@ async fn c2c_upgrade_user_canister_wasm(args: Args) -> Response {
         None
     };
 
-    utils::canister::clear_chunk_store(this_canister_id).await.unwrap();
-
     let chunks = upload_wasm_in_chunks(&wasm.module, this_canister_id).await.unwrap();
 
     mutate_state(|state| commit(args, wasm, chunks, active_users_filter, state))
