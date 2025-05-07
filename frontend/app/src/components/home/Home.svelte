@@ -240,6 +240,8 @@
         profileLinkClicked(event as CustomEvent<ProfileLinkClickedEvent>);
     }
 
+    $inspect(app.chatSummaries).with(console.trace);
+
     function selectedChatInvalid() {
         pageReplace(routeForScope(client.getDefaultScope()));
     }

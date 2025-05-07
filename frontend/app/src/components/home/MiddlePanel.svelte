@@ -4,7 +4,6 @@
         app,
         botState,
         chatIdentifiersEqual,
-        filteredProposalsStore,
         pathState,
         ui,
         type ChatIdentifier,
@@ -129,7 +128,7 @@
         <CurrentChat
             {joining}
             chat={app.selectedChatSummary}
-            filteredProposals={$filteredProposalsStore} />
+            filteredProposals={app.filteredProposals} />
     {/if}
 </section>
 

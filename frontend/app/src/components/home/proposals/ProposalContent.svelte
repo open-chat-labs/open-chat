@@ -6,9 +6,8 @@
         ProposalDecisionStatus,
         type RegisterProposalVoteResponse,
         app,
-        proposalTopicsStore,
     } from "openchat-client";
-    import { ErrorCode } from "openchat-shared";
+    import { ErrorCode, type ReadonlyMap } from "openchat-shared";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ExpandIcon from "svelte-material-icons/ArrowExpandDown.svelte";
@@ -132,7 +131,7 @@
 
     export function getProposalTopicLabel(
         content: ProposalContent,
-        proposalTopics: Map<number, string>,
+        proposalTopics: ReadonlyMap<number, string>,
     ): string {
         return (
             proposalTopics.get(
@@ -173,7 +172,7 @@
     let votingEnded = $derived(proposal.deadline <= $now);
     let disable = $derived(readonly || reply || votingEnded);
     let votingDisabled = $derived(voteStatus !== undefined || disable);
-    let typeValue = $derived(getProposalTopicLabel(content, $proposalTopicsStore));
+    let typeValue = $derived(getProposalTopicLabel(content, app.proposalTopics));
     let showFullSummary = $derived(proposal.summary.length < 400);
     let payload = $derived(content.proposal.payloadTextRendering);
     let payloadEmpty = $derived(

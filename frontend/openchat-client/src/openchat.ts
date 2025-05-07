@@ -292,13 +292,6 @@ import type { UndoLocalUpdate } from "./state/undo";
 import { messagesRead, startMessagesReadTracker } from "./state/unread/markRead.svelte";
 import { userStore } from "./state/users/users.svelte";
 import {
-    confirmedEventIndexesLoaded,
-    isContiguous,
-    isContiguousInThread,
-    nextEventAndMessageIndexes,
-    nextEventAndMessageIndexesForThread,
-} from "./stores/chat";
-import {
     bitcoinAddress,
     cryptoBalance,
     cryptoLookup,
@@ -308,13 +301,6 @@ import {
     swappableTokensStore,
 } from "./stores/crypto";
 import { diamondDurationToMs } from "./stores/diamond";
-import {
-    disableAllProposalFilters,
-    enableAllProposalFilters,
-    resetFilteredProposalsStore,
-    toggleProposalFilter,
-    toggleProposalFilterMessageExpansion,
-} from "./stores/filteredProposals";
 import { applyTranslationCorrection } from "./stores/i18n";
 import { lastOnlineDates } from "./stores/lastOnlineDates";
 import { minutesOnlineStore } from "./stores/minutesOnline";
@@ -331,7 +317,6 @@ import {
 } from "./stores/pinNumber";
 import { recommendedGroupExclusions } from "./stores/recommendedGroupExclusions";
 import { captureRulesAcceptanceStore } from "./stores/rules";
-import { snsFunctions } from "./stores/snsFunctions";
 import { storageStore, updateStorageLimit } from "./stores/storage";
 import { initialiseMostRecentSentMessageTimes, shouldThrottle } from "./stores/throttling";
 import { isTyping, typing } from "./stores/typing";
@@ -380,6 +365,7 @@ import {
     canSendGroupMessage,
     canStartVideoCalls,
     canUnblockUsers,
+    confirmedEventIndexesLoaded,
     containsReaction,
     createMessage,
     diffGroupPermissions,
@@ -392,6 +378,8 @@ import {
     groupChatFromCandidate,
     groupEvents,
     groupMessagesByDate,
+    isContiguous,
+    isContiguousInThread,
     isEventKindHidden,
     isFrozen,
     isLapsed,
@@ -401,6 +389,8 @@ import {
     mergeServerEvents,
     messageIsReadByThem,
     metricsEqual,
+    nextEventAndMessageIndexes,
+    nextEventAndMessageIndexesForThread,
     permittedMessagesInDirectChat,
     permittedMessagesInGroup,
     sameUser,
@@ -2617,9 +2607,6 @@ export class OpenChat {
     durationFromMilliseconds = durationFromMilliseconds;
     nullUser = nullUser;
     toTitleCase = toTitleCase;
-    enableAllProposalFilters = enableAllProposalFilters;
-    disableAllProposalFilters = disableAllProposalFilters;
-    toggleProposalFilter = toggleProposalFilter;
     formatTimeRemaining = formatTimeRemaining;
     formatLastOnlineDate = formatLastOnlineDate;
     buildUserAvatarUrl = buildUserAvatarUrl;
@@ -2750,7 +2737,7 @@ export class OpenChat {
         ) {
             const { governanceCanisterId } = chat.subtype;
             this.listNervousSystemFunctions(governanceCanisterId).then((val) => {
-                snsFunctions.set(governanceCanisterId, val.functions);
+                app.setSnsFunctions(governanceCanisterId, val.functions);
             });
         }
     }
@@ -2764,8 +2751,6 @@ export class OpenChat {
         }
 
         this.#loadSnsFunctionsForChat(clientChat);
-
-        resetFilteredProposalsStore(clientChat);
 
         if (messageIndex === undefined) {
             messageIndex = isPreviewing(clientChat)
@@ -3498,8 +3483,6 @@ export class OpenChat {
         localUpdates.deleteUnconfirmed(context, messageId);
         messagesRead.removeUnconfirmedMessage(context, messageId);
     }
-
-    toggleProposalFilterMessageExpansion = toggleProposalFilterMessageExpansion;
     groupWhile = groupWhile;
     sameUser = sameUser;
 
