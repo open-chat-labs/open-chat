@@ -18,7 +18,8 @@ import type {
 } from "./permission";
 import type { BotMatch } from "./search/search";
 
-export const MIN_NAME_LENGTH = 5;
+export const MIN_BOT_NAME_LENGTH = 5;
+export const MIN_COMMAND_NAME_LENGTH = 3;
 export const MIN_PARAM_NAME_LENGTH = 1;
 
 export type InstalledBotDetails = {
@@ -543,7 +544,7 @@ export function validateBot(
     mode: "register" | "update",
 ): ValidationErrors {
     const errors = new ValidationErrors();
-    errors.addErrors(`bot_name`, validBotComponentName(bot.name, MIN_NAME_LENGTH));
+    errors.addErrors(`bot_name`, validBotComponentName(bot.name, MIN_BOT_NAME_LENGTH));
 
     if (bot.ownerId === "") {
         errors.addErrors("bot_owner", i18nKey("bots.builder.errors.owner"));
@@ -579,7 +580,7 @@ function validateCommand(
     errors: ValidationErrors,
 ): boolean {
     let valid = true;
-    const nameErrors = validBotComponentName(command.name, MIN_NAME_LENGTH);
+    const nameErrors = validBotComponentName(command.name, MIN_COMMAND_NAME_LENGTH);
     if (nameErrors.length > 0) {
         errors.addErrors(`${errorPath}_name`, nameErrors);
         valid = false;
@@ -652,7 +653,7 @@ function validateParameter(
     }
     if (param.kind === "decimal") {
         param.choices.forEach((c, i) => {
-            if (c.name.length < MIN_NAME_LENGTH) {
+            if (c.name.length < MIN_PARAM_NAME_LENGTH) {
                 errors.addErrors(
                     `${errorPath}_choices_${i}_name`,
                     i18nKey("bots.builder.errors.minLength", { n: MIN_PARAM_NAME_LENGTH }),
