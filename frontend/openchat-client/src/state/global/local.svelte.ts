@@ -527,7 +527,12 @@ export class GlobalLocalState {
     }
 
     removeDirectChatBot(botId: string): UndoLocalUpdate {
-        return this.directChatBots.remove(botId);
+        const undo1 = this.removeChat({ kind: "direct_chat", userId: botId });
+        const undo2 = this.directChatBots.remove(botId);
+        return () => {
+            undo1();
+            undo2();
+        };
     }
 
     installDirectChatBot(botId: string, perm: ExternalBotPermissions): UndoLocalUpdate {

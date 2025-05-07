@@ -189,7 +189,9 @@
         if (!readByMe) {
             tick().then(() => {
                 if (observer !== undefined && msgElement !== undefined) {
-                    observer.observe(msgElement);
+                    try {
+                        observer.observe(msgElement);
+                    } catch {}
                 }
             });
         }

@@ -13,7 +13,7 @@
         AvatarSize,
         OpenChat,
         app,
-        localUpdates,
+        botState,
         publish,
         routeForScope,
         byContext as typersByContext,
@@ -212,9 +212,15 @@
     function deleteEmptyChat(e: Event) {
         e.stopPropagation();
         e.preventDefault();
-        console.log("Removing previewed chat", localUpdates.groupChatPreviews.get(chatSummary.id));
-        client.removePreviewedChat(chatSummary.id);
-        console.log("Removed previewed chat", localUpdates.groupChatPreviews.get(chatSummary.id));
+        const directBot =
+            chatSummary.kind === "direct_chat"
+                ? botState.externalBots.get(chatSummary.them.userId)
+                : undefined;
+        if (directBot !== undefined) {
+            client.uninstallBot({ kind: "direct_chat", userId: app.currentUserId }, directBot.id);
+        } else {
+            client.removePreviewedChat(chatSummary.id);
+        }
         page(routeForScope(app.chatListScope));
         delOffset = -60;
     }

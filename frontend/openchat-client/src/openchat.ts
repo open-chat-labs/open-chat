@@ -1211,6 +1211,9 @@ export class OpenChat {
 
     archiveChat(chatId: ChatIdentifier): Promise<boolean> {
         const undo = localUpdates.updateArchived(chatId, true);
+        if (chatIdentifiersEqual(chatId, app.selectedChatId)) {
+            this.selectFirstChat();
+        }
         return this.#sendRequest({ kind: "archiveChat", chatId })
             .then((resp) => {
                 if (resp.kind !== "success") {

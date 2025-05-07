@@ -830,9 +830,9 @@ export class AppState {
         return this.#directChatBots;
     }
 
-    set directChatBots(val: SafeMap<string, ExternalBotPermissions>) {
-        this.#serverDirectChatBots = val;
-    }
+    // set directChatBots(val: SafeMap<string, ExternalBotPermissions>) {
+    //     this.#serverDirectChatBots = val;
+    // }
 
     get directChatApiKeys() {
         return this.#directChatApiKeys;
@@ -1171,7 +1171,7 @@ export class AppState {
         this.#serverCommunities = communitiesMap;
         this.#serverPinnedChats = pinnedChats;
         this.#directChatApiKeys = apiKeys;
-        this.#directChatBots = SafeMap.fromEntries(installedBots.entries());
+        this.#serverDirectChatBots = SafeMap.fromEntries(installedBots.entries());
         this.#serverWalletConfig = walletConfig;
         if (streakInsurance !== undefined) {
             this.#serverStreakInsurance = streakInsurance;
