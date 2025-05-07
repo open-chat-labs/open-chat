@@ -224,7 +224,7 @@ fn tip_group_message_retries_if_c2c_call_fails() {
     ));
 
     env.tick();
-    start_canister(env, group_id.into(), local_user_index);
+    start_canister(env, local_user_index, group_id.into());
     env.advance_time(Duration::from_secs(10));
     env.tick();
 
@@ -298,7 +298,7 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
     ));
 
     env.tick();
-    start_canister(env, community_id.into(), local_user_index);
+    start_canister(env, local_user_index, community_id.into());
     env.advance_time(Duration::from_secs(10));
     env.tick();
 

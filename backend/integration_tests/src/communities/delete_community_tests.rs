@@ -83,7 +83,7 @@ fn user_canister_notified_of_community_deleted() {
 
     env.tick();
 
-    start_canister(env, user2.user_id.into(), user2.local_user_index);
+    start_canister(env, user2.local_user_index, user2.user_id.into());
 
     env.tick();
 
@@ -98,7 +98,7 @@ fn user_canister_notified_of_community_deleted() {
 
     env.advance_time(Duration::from_secs(2 * 60));
     env.tick();
-    start_canister(env, user3.user_id.into(), user3.local_user_index);
+    start_canister(env, user3.local_user_index, user3.user_id.into());
     env.tick();
 
     // Only retry for 10 minutes so the notification shouldn't have made it to user3's canister
