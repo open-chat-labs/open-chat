@@ -49,8 +49,15 @@ function parseCommand(input: string): string[] {
     return result;
 }
 
-function sortByPrefix(prefix: string): (a: FlattenedCommand, b: FlattenedCommand) => number {
+function sortCommands(prefix: string): (a: FlattenedCommand, b: FlattenedCommand) => number {
     return (a, b) => {
+        if (prefix.length === 0) {
+            const compareBotNames = a.botName.localeCompare(b.botName);
+            if (compareBotNames !== 0) {
+                return compareBotNames;
+            }
+        }
+
         const aStartsWithPrefix = a.name.toLocaleLowerCase().startsWith(prefix);
         const bStartsWithPrefix = b.name.toLocaleLowerCase().startsWith(prefix);
 
@@ -131,7 +138,7 @@ export class BotState {
                             ) as FlattenedCommand[];
                 }
             })
-            .sort(sortByPrefix(this.#parsedPrefix));
+            .sort(sortCommands(this.#parsedPrefix));
     });
     #instanceValid = $derived.by(() => {
         if (this.#selectedCommand === undefined) return false;
