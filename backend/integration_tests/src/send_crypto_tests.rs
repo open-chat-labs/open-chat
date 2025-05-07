@@ -138,7 +138,7 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool, icrc2: boo
     let amount = 1_000_000;
     let fee = ICP_TRANSFER_FEE;
     let now_nanos = now_nanos(env);
-    let local_group_index = canister_ids.local_group_index(env, group_id);
+    let local_user_index = canister_ids.local_user_index(env, group_id);
 
     let transaction = if icrc2 {
         // Approve user1's canister to transfer some ICP
@@ -172,7 +172,7 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool, icrc2: boo
     };
 
     if with_c2c_error {
-        stop_canister(env, local_group_index, group_id.into());
+        stop_canister(env, local_user_index, group_id.into());
     }
 
     let send_message_result = client::user::send_message_with_transfer_to_group(
@@ -217,7 +217,7 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool, icrc2: boo
 
     if with_c2c_error {
         env.advance_time(Duration::from_secs(10));
-        start_canister(env, local_group_index, group_id.into());
+        start_canister(env, local_user_index, group_id.into());
     }
 
     let event = client::group::happy_path::events(env, &user2, group_id, 0.into(), true, 10, 10)
