@@ -21,6 +21,7 @@ export class PathState {
     #route = $state<RouteParams>({ scope: noScope, kind: "not_found_route" });
     #querystringCode = $derived(this.#querystring.get("code"));
     #querystringReferralCode = $derived(this.#querystring.get("ref"));
+    #exploring = $derived(this.#querystring.get("explore"));
     #routeKind = $derived(this.#route.kind);
     #messageIndex = $derived(
         this.hasMessageIndex(this.#route) ? this.#route.messageIndex : undefined,
@@ -35,6 +36,9 @@ export class PathState {
             this.#route.open,
     );
 
+    get exploring() {
+        return this.#exploring;
+    }
     set routerReady(val: boolean) {
         this.#routerReady = val;
     }

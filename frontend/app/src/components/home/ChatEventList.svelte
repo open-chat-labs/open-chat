@@ -458,12 +458,12 @@
 
     function shouldLoadPreviousMessages() {
         morePrevAvailable = client.morePreviousMessagesAvailable(chat.id, threadRootEvent);
-        return insideTopThreshold() && morePrevAvailable;
+        return visible && insideTopThreshold() && morePrevAvailable;
     }
 
     function shouldLoadNewMessages() {
         moreNewAvailable = client.moreNewMessagesAvailable(chat.id, threadRootEvent);
-        return insideBottomThreshold() && moreNewAvailable;
+        return visible && insideBottomThreshold() && moreNewAvailable;
     }
 
     async function loadNewMessagesIfRequired(fromScroll = false): Promise<boolean> {

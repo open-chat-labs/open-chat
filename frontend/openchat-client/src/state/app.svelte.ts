@@ -36,6 +36,7 @@ import {
     type MessageFormatter,
     type ModerationFlag,
     ModerationFlags,
+    type NervousSystemFunction,
     type PublicApiKeyDetails,
     type ReadonlyMap,
     type Referral,
@@ -52,10 +53,11 @@ import {
     type WalletConfig,
     type WebhookDetails,
 } from "openchat-shared";
-import { SvelteMap } from "svelte/reactivity";
+import { SvelteMap, SvelteSet } from "svelte/reactivity";
 import { type PinnedByScope } from "../stores";
 import {
     getMessagePermissionsForSelectedChat,
+    isProposalsChat,
     mergeChatMetrics,
     mergePermissions,
     mergeUnconfirmedIntoSummary,
@@ -65,11 +67,13 @@ import { ChatDetailsServerState } from "./chat_details/server.svelte";
 import { communityLocalUpdates } from "./community_details";
 import { CommunityMergedState } from "./community_details/merged.svelte";
 import { CommunityServerState } from "./community_details/server.svelte";
+import { FilteredProposals } from "./filteredProposals.svelte";
 import { localUpdates } from "./global";
 import { ReactiveMessageMap } from "./map";
 import { messageLocalUpdates } from "./message/local.svelte";
 import { pathState } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
+import { SnsFunctions } from "./snsFunctions.svelte";
 import { ui } from "./ui.svelte";
 import { messagesRead } from "./unread/markRead.svelte";
 import { userStore } from "./users/users.svelte";
@@ -108,17 +112,55 @@ export class AppState {
         if (!serialised) return undefined;
         const parsed = JSON.parse(serialised);
         return {
-            languages: new Set(parsed.languages),
+            languages: new SvelteSet(parsed.languages),
         };
     }
 
     #initialiseCommunityFilter() {
         return (
             this.#communityFilterFromString(localStorage.getItem("openchat_community_filters")) ?? {
-                languages: new Set<string>(),
+                languages: new SvelteSet<string>(),
             }
         );
     }
+
+    #snsFunctions = $state<SnsFunctions>(new SnsFunctions());
+
+    #proposalTopics = $derived.by(() => {
+        if (
+            this.#selectedChatSummary !== undefined &&
+            this.#selectedChatSummary.kind !== "direct_chat" &&
+            this.#selectedChatSummary.subtype !== undefined
+        ) {
+            if (this.#selectedChatSummary.subtype.isNns) {
+                return new Map([
+                    [1, "Neuron Management"],
+                    [3, "Network Economics"],
+                    [4, "Governance"],
+                    [5, "Node Admin"],
+                    [6, "Participant Management"],
+                    [7, "Subnet Management"],
+                    [8, "Network Canister Management"],
+                    [9, "KYC"],
+                    [10, "Node Provider Rewards"],
+                    [12, "Subnet Replica Version Management"],
+                    [13, "Replica Version Management"],
+                    [14, "SNS & Neurons' Fund"],
+                ]);
+            } else {
+                const snsFunctionsMap = this.#snsFunctions.get(
+                    this.#selectedChatSummary.subtype.governanceCanisterId,
+                );
+                if (snsFunctionsMap !== undefined) {
+                    return new Map([...snsFunctionsMap].slice(1).map((e) => [e[0], e[1].name]));
+                }
+            }
+        }
+
+        return new Map();
+    });
+
+    #filteredProposals = $state<FilteredProposals | undefined>();
 
     #messageFormatter: MessageFormatter | undefined;
 
@@ -285,11 +327,19 @@ export class AppState {
 
     #serverCommunities = $state<CommunityMap<CommunitySummary>>(new CommunityMap());
 
+    // this *includes* any preview chats since they come from the server too
     #allServerChats = $derived.by(() => {
         const groupChats = this.#serverGroupChats.values();
         const directChats = this.#serverDirectChats.values();
         const channels = [...this.#serverCommunities.values()].flatMap((c) => c.channels);
-        return ChatMap.fromList([...groupChats, ...directChats, ...channels]);
+        const all = ChatMap.fromList([...groupChats, ...directChats, ...channels]);
+        const previewChannels = ChatMap.fromList(
+            [...localUpdates.previewCommunities.values()].flatMap((c) => c.channels),
+        );
+        return all
+            .merge(localUpdates.uninitialisedDirectChats)
+            .merge(localUpdates.groupChatPreviews)
+            .merge(previewChannels);
     });
 
     #userMetrics = $derived.by(() => {
@@ -301,6 +351,8 @@ export class AppState {
 
     #applyLocalUpdatesToChat(chat: ChatSummary): ChatSummary {
         const local = chatDetailsLocalUpdates.get(chat.id);
+        if (local === undefined) return chat;
+
         chat.membership.notificationsMuted =
             local?.notificationsMuted ?? chat.membership.notificationsMuted;
         chat.membership.archived = local?.archived ?? chat.membership.archived;
@@ -319,8 +371,7 @@ export class AppState {
             chat.name = local?.name ?? chat.name;
             chat.description = local?.description ?? chat.description;
             chat.permissions = mergePermissions(chat.permissions, local?.permissions);
-            chat.gateConfig.gate = { ...chat.gateConfig.gate, ...local?.gateConfig?.gate };
-            chat.gateConfig.expiry = local?.gateConfig?.expiry ?? chat.gateConfig.expiry;
+            chat.gateConfig = local?.gateConfig ?? chat.gateConfig;
             chat.eventsTTL = local?.eventsTTL
                 ? applyOptionUpdate(chat.eventsTTL, local.eventsTTL)
                 : chat.eventsTTL;
@@ -329,17 +380,9 @@ export class AppState {
         return chat;
     }
 
-    // this is all server chats + previews with local updates applied.
+    // this is all server chats (which already include previews) + local updates applied.
     #allChats = $derived.by(() => {
-        const previewChannels = ChatMap.fromList(
-            [...localUpdates.previewCommunities.values()].flatMap((c) => c.channels),
-        );
-        const withPreviews = this.#allServerChats
-            .merge(localUpdates.uninitialisedDirectChats)
-            .merge(localUpdates.groupChatPreviews)
-            .merge(previewChannels);
-
-        const withUpdates = localUpdates.chats.apply(withPreviews);
+        const withUpdates = localUpdates.chats.apply(this.#allServerChats);
         return withUpdates.reduce((result, [chatId, chat]) => {
             const withLocal = this.#applyLocalUpdatesToChat(chat);
             const withUnconfirmed = mergeUnconfirmedIntoSummary(
@@ -609,6 +652,44 @@ export class AppState {
         return getMessagePermissionsForSelectedChat(this.#selectedChatSummary, "thread");
     });
 
+    setSnsFunctions(snsCanisterId: string, list: NervousSystemFunction[]) {
+        this.#snsFunctions.set(snsCanisterId, list);
+    }
+
+    get snsFunctions() {
+        return this.#snsFunctions;
+    }
+
+    get proposalTopics(): ReadonlyMap<number, string> {
+        return this.#proposalTopics;
+    }
+
+    get filteredProposals(): FilteredProposals | undefined {
+        return this.#filteredProposals;
+    }
+
+    enableAllProposalFilters() {
+        this.#filteredProposals?.enableAll();
+    }
+
+    disableAllProposalFilters(ids: number[]) {
+        this.#filteredProposals?.disableAll(ids);
+    }
+
+    toggleProposalFilter(topic: number) {
+        this.#filteredProposals?.toggleFilter(topic);
+    }
+
+    toggleProposalFilterMessageExpansion(messageId: bigint, expand: boolean) {
+        this.#filteredProposals?.toggleMessageExpansion(messageId, expand);
+    }
+
+    #resetFilteredProposals(chat: ChatSummary) {
+        this.#filteredProposals = isProposalsChat(chat)
+            ? FilteredProposals.fromStorage(chat.subtype.governanceCanisterId)
+            : undefined;
+    }
+
     get currentChatDraftMessage() {
         return this.#currentChatDraftMessage;
     }
@@ -829,10 +910,6 @@ export class AppState {
         return this.#directChatBots;
     }
 
-    set directChatBots(val: SafeMap<string, ExternalBotPermissions>) {
-        this.#serverDirectChatBots = val;
-    }
-
     get directChatApiKeys() {
         return this.#directChatApiKeys;
     }
@@ -929,6 +1006,9 @@ export class AppState {
         }
         const serverState = ChatDetailsServerState.empty(chatId);
         this.#selectedChat = new ChatDetailsMergedState(serverState);
+        if (this.#selectedChatSummary) {
+            this.#resetFilteredProposals(this.#selectedChatSummary);
+        }
     }
 
     setDirectChatDetails(chatId: DirectChatIdentifier, currentUserId: string) {
@@ -1170,7 +1250,7 @@ export class AppState {
         this.#serverCommunities = communitiesMap;
         this.#serverPinnedChats = pinnedChats;
         this.#directChatApiKeys = apiKeys;
-        this.#directChatBots = SafeMap.fromEntries(installedBots.entries());
+        this.#serverDirectChatBots = SafeMap.fromEntries(installedBots.entries());
         this.#serverWalletConfig = walletConfig;
         if (streakInsurance !== undefined) {
             this.#serverStreakInsurance = streakInsurance;

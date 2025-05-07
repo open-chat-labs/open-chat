@@ -3,13 +3,11 @@ import {
     emptyChatMetrics,
     emptyRules,
     nullMembership,
-    SafeMap,
     type ChatIdentifier,
     type CommunityIdentifier,
     type CommunityPermissions,
     type CommunitySummary,
     type EventWrapper,
-    type ExternalBotPermissions,
     type GroupChatIdentifier,
     type GroupChatSummary,
     type Member,
@@ -139,6 +137,27 @@ describe("app state", () => {
 
             beforeEach(() => {
                 initialiseGlobalState();
+            });
+
+            describe("direct chat bots", () => {
+                test("bots correctly initialised", () => {
+                    expect(app.directChatBots.has("123456")).toBe(true);
+                });
+
+                test("install a bot works", () => {
+                    localUpdates.installDirectChatBot("654321", {
+                        chatPermissions: [],
+                        communityPermissions: [],
+                        messagePermissions: [],
+                    });
+                    expect(app.directChatBots.has("654321")).toBe(true);
+                    expect(app.directChatBots.has("123456")).toBe(true);
+                });
+
+                test("uninstall a bot works", () => {
+                    localUpdates.removeDirectChatBot("123456");
+                    expect(app.directChatBots.has("123456")).toBe(false);
+                });
             });
 
             describe("last message updates", () => {
@@ -400,40 +419,8 @@ describe("app state", () => {
                 expect(directs?.[0]).toEqual({ kind: "direct_chat", userId: "888888" });
             });
         });
-
-        describe("direct chat bots", () => {
-            beforeEach(() => {
-                app.directChatBots = someBots([
-                    [
-                        "123456",
-                        { chatPermissions: [], communityPermissions: [], messagePermissions: [] },
-                    ],
-                ]);
-            });
-
-            test("install a bot works", () => {
-                localUpdates.installDirectChatBot("654321", {
-                    chatPermissions: [],
-                    communityPermissions: [],
-                    messagePermissions: [],
-                });
-                expect(app.directChatBots.has("654321")).toBe(true);
-            });
-
-            test("uninstall a bot works", () => {
-                localUpdates.removeDirectChatBot("123456");
-                expect(app.directChatBots.has("123456")).toBe(false);
-            });
-        });
     });
 });
-
-function someBots(
-    entries: [[string, ExternalBotPermissions]],
-): SafeMap<string, ExternalBotPermissions> {
-    const m = new Map<string, ExternalBotPermissions>(entries);
-    return SafeMap.fromEntries(m.entries());
-}
 
 function createCommunitySummary(id: string, index: number): CommunitySummary {
     return {
@@ -498,7 +485,12 @@ function initialiseGlobalState() {
             latestTimestamp: BigInt(Date.now()),
             unreadCount: 10,
         },
-        new Map(),
+        new Map([
+            [
+                "123456",
+                { chatPermissions: [], messagePermissions: ["text"], communityPermissions: [] },
+            ],
+        ]),
         new Map(),
         undefined,
     );

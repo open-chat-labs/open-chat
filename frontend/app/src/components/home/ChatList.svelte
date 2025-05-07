@@ -359,7 +359,7 @@
                 {/if}
             </div>
             {#if showExploreGroups}
-                <div class="explore-groups" onclick={() => page("/groups")}>
+                <div class="explore-groups" onclick={() => page("/groups?explore=true")}>
                     <div class="disc">
                         <Compass size={ui.iconSize} color={"var(--icon-txt)"} />
                     </div>

@@ -377,6 +377,7 @@
 
     .bottom {
         padding: $sp4;
+        padding-bottom: 0;
     }
     .image {
         height: auto;
