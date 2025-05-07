@@ -33,7 +33,6 @@ fn init(args: Args) {
         env.now(),
         args.mark_active_duration,
         args.group_index_canister_id,
-        args.local_group_index_canister_id,
         args.user_index_canister_id,
         args.local_user_index_canister_id,
         args.notifications_canister_id,
