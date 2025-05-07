@@ -1341,6 +1341,9 @@ export class OpenChat {
             .then((resp) => {
                 if (resp.kind === "success") {
                     this.removeChat(chatId);
+                    if (chatIdentifiersEqual(chatId, app.selectedChatId)) {
+                        this.selectFirstChat();
+                    }
                     return true;
                 } else {
                     return false;
