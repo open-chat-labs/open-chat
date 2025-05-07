@@ -133,7 +133,11 @@ export function configureEffects(client: OpenChat) {
         // so we might need to rethink - ok for now though.
         // Actually this is already the case on webtest & prod so it's no worse - but could it be better?
         $effect(() => {
-            if (app.selectedChatId === undefined && pathState.route.scope.kind !== "none") {
+            if (
+                app.selectedChatId === undefined &&
+                app.chatListScope.kind !== "none" &&
+                !pathState.exploring
+            ) {
                 client.selectFirstChat();
             }
         });
