@@ -830,10 +830,6 @@ export class AppState {
         return this.#directChatBots;
     }
 
-    // set directChatBots(val: SafeMap<string, ExternalBotPermissions>) {
-    //     this.#serverDirectChatBots = val;
-    // }
-
     get directChatApiKeys() {
         return this.#directChatApiKeys;
     }

@@ -33,7 +33,6 @@
             ) {
                 page(routeForScope(app.chatListScope));
             }
-            // tick().then(() => client.removeChat(chatId));
         }
         onClose();
     }
