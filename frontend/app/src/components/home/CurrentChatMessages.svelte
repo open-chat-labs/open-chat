@@ -166,7 +166,7 @@
 
     function toggleMessageExpansion(ew: EventWrapper<ChatEventType>, expand: boolean) {
         if (ew.event.kind === "message" && ew.event.content.kind === "proposal_content") {
-            client.toggleProposalFilterMessageExpansion(ew.event.messageId, expand);
+            app.toggleProposalFilterMessageExpansion(ew.event.messageId, expand);
         }
     }
 

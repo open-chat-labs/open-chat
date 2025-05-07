@@ -1,15 +1,15 @@
-import { writable } from "svelte/store";
 import type { NervousSystemFunction } from "openchat-shared";
+import { SvelteMap, SvelteSet } from "svelte/reactivity";
 
 const storageKeyPrefix = "sns_functions_";
 
 export class SnsFunctions {
-    private _functionsMap: Map<string, Map<number, NervousSystemFunction>>;
-    private _loaded: Set<string>;
+    private _functionsMap: SvelteMap<string, Map<number, NervousSystemFunction>>;
+    private _loaded: SvelteSet<string>;
 
     constructor() {
-        this._functionsMap = new Map();
-        this._loaded = new Set();
+        this._functionsMap = new SvelteMap();
+        this._loaded = new SvelteSet();
     }
 
     get(snsCanisterId: string): Map<number, NervousSystemFunction> | undefined {
@@ -24,13 +24,6 @@ export class SnsFunctions {
         const functions = new Map(list.map((f): [number, NervousSystemFunction] => [f.id, f]));
         this._functionsMap.set(snsCanisterId, functions);
         this.toStorage(snsCanisterId);
-    }
-
-    clone(): SnsFunctions {
-        const clone = new SnsFunctions();
-        clone._functionsMap = new Map(this._functionsMap);
-        clone._loaded = new Set(this._loaded);
-        return clone;
     }
 
     private fromStorage(snsCanisterId: string) {
@@ -50,15 +43,3 @@ export class SnsFunctions {
         localStorage.setItem(storageKeyPrefix + snsCanisterId, JSON.stringify([...functions]));
     }
 }
-
-const store = writable<SnsFunctions>(new SnsFunctions());
-
-export const snsFunctions = {
-    subscribe: store.subscribe,
-    set: (snsCanisterId: string, list: NervousSystemFunction[]): void =>
-        store.update((fs) => {
-            const clone = fs.clone();
-            clone.set(snsCanisterId, list);
-            return clone;
-        }),
-};

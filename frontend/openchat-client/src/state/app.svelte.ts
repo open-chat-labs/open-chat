@@ -36,6 +36,7 @@ import {
     type MessageFormatter,
     type ModerationFlag,
     ModerationFlags,
+    type NervousSystemFunction,
     type PublicApiKeyDetails,
     type ReadonlyMap,
     type Referral,
@@ -56,6 +57,7 @@ import { SvelteMap, SvelteSet } from "svelte/reactivity";
 import { type PinnedByScope } from "../stores";
 import {
     getMessagePermissionsForSelectedChat,
+    isProposalsChat,
     mergeChatMetrics,
     mergePermissions,
     mergeUnconfirmedIntoSummary,
@@ -65,11 +67,13 @@ import { ChatDetailsServerState } from "./chat_details/server.svelte";
 import { communityLocalUpdates } from "./community_details";
 import { CommunityMergedState } from "./community_details/merged.svelte";
 import { CommunityServerState } from "./community_details/server.svelte";
+import { FilteredProposals } from "./filteredProposals.svelte";
 import { localUpdates } from "./global";
 import { ReactiveMessageMap } from "./map";
 import { messageLocalUpdates } from "./message/local.svelte";
 import { pathState } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
+import { SnsFunctions } from "./snsFunctions.svelte";
 import { ui } from "./ui.svelte";
 import { messagesRead } from "./unread/markRead.svelte";
 import { userStore } from "./users/users.svelte";
@@ -119,6 +123,44 @@ export class AppState {
             }
         );
     }
+
+    #snsFunctions = $state<SnsFunctions>(new SnsFunctions());
+
+    #proposalTopics = $derived.by(() => {
+        if (
+            this.#selectedChatSummary !== undefined &&
+            this.#selectedChatSummary.kind !== "direct_chat" &&
+            this.#selectedChatSummary.subtype !== undefined
+        ) {
+            if (this.#selectedChatSummary.subtype.isNns) {
+                return new Map([
+                    [1, "Neuron Management"],
+                    [3, "Network Economics"],
+                    [4, "Governance"],
+                    [5, "Node Admin"],
+                    [6, "Participant Management"],
+                    [7, "Subnet Management"],
+                    [8, "Network Canister Management"],
+                    [9, "KYC"],
+                    [10, "Node Provider Rewards"],
+                    [12, "Subnet Replica Version Management"],
+                    [13, "Replica Version Management"],
+                    [14, "SNS & Neurons' Fund"],
+                ]);
+            } else {
+                const snsFunctionsMap = this.#snsFunctions.get(
+                    this.#selectedChatSummary.subtype.governanceCanisterId,
+                );
+                if (snsFunctionsMap !== undefined) {
+                    return new Map([...snsFunctionsMap].slice(1).map((e) => [e[0], e[1].name]));
+                }
+            }
+        }
+
+        return new Map();
+    });
+
+    #filteredProposals = $state<FilteredProposals | undefined>();
 
     #messageFormatter: MessageFormatter | undefined;
 
@@ -610,6 +652,44 @@ export class AppState {
         return getMessagePermissionsForSelectedChat(this.#selectedChatSummary, "thread");
     });
 
+    setSnsFunctions(snsCanisterId: string, list: NervousSystemFunction[]) {
+        this.#snsFunctions.set(snsCanisterId, list);
+    }
+
+    get snsFunctions() {
+        return this.#snsFunctions;
+    }
+
+    get proposalTopics(): ReadonlyMap<number, string> {
+        return this.#proposalTopics;
+    }
+
+    get filteredProposals(): FilteredProposals | undefined {
+        return this.#filteredProposals;
+    }
+
+    enableAllProposalFilters() {
+        this.#filteredProposals?.enableAll();
+    }
+
+    disableAllProposalFilters(ids: number[]) {
+        this.#filteredProposals?.disableAll(ids);
+    }
+
+    toggleProposalFilter(topic: number) {
+        this.#filteredProposals?.toggleFilter(topic);
+    }
+
+    toggleProposalFilterMessageExpansion(messageId: bigint, expand: boolean) {
+        this.#filteredProposals?.toggleMessageExpansion(messageId, expand);
+    }
+
+    #resetFilteredProposals(chat: ChatSummary) {
+        this.#filteredProposals = isProposalsChat(chat)
+            ? FilteredProposals.fromStorage(chat.subtype.governanceCanisterId)
+            : undefined;
+    }
+
     get currentChatDraftMessage() {
         return this.#currentChatDraftMessage;
     }
@@ -926,6 +1006,9 @@ export class AppState {
         }
         const serverState = ChatDetailsServerState.empty(chatId);
         this.#selectedChat = new ChatDetailsMergedState(serverState);
+        if (this.#selectedChatSummary) {
+            this.#resetFilteredProposals(this.#selectedChatSummary);
+        }
     }
 
     setDirectChatDetails(chatId: DirectChatIdentifier, currentUserId: string) {
