@@ -12,8 +12,10 @@ fn c2c_can_push_notifications(args: Args) -> Response {
 }
 
 fn c2c_can_push_notifications_impl(args: Args, state: &RuntimeState) -> Response {
-    let user_id: UserId = args.principal.into();
-    if state.data.local_users.get(&user_id).is_some() {
+    if state.data.local_users.contains(&args.principal.into())
+        || state.data.local_groups.contains(&args.principal.into())
+        || state.data.local_communities.contains(&args.principal.into())
+    {
         Response::Success(true)
     } else {
         Response::Success(false)
