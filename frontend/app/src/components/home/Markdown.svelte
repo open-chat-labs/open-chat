@@ -31,7 +31,7 @@
     let sanitized = $derived.by(() => {
         let parsed = replaceEveryone(
             replaceUserGroupIds(
-                replaceUserIds(replaceDatetimes(client.stripLinkDisabledMarker(text))),
+                replaceUserIds(replaceDatetimes(escapeBackwardSlashes(client.stripLinkDisabledMarker(text)))),
                 app.userGroupSummaries,
             ),
         );
@@ -88,6 +88,10 @@
         return text.replace(/@DateTime\((\d+)\)/g, (_, p1) => {
             return client.toDatetimeString(new Date(Number(p1)));
         });
+    }
+
+    function escapeBackwardSlashes(text: string): string {
+        return text.replaceAll("\\", "\\\\");
     }
 </script>
 
