@@ -1,11 +1,11 @@
-use crate::guards::caller_is_local_group_index;
+use crate::guards::caller_is_local_user_index;
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use chat_events::Reader;
 use group_canister::c2c_events_internal::{Response::*, *};
 use types::EventIndex;
 
-#[query(guard = "caller_is_local_group_index", msgpack = true)]
+#[query(guard = "caller_is_local_user_index", msgpack = true)]
 fn c2c_events_internal(args: Args) -> Response {
     read_state(|state| c2c_events_internal_impl(args, state))
 }

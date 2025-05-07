@@ -9,14 +9,7 @@
         PermissionRole,
         ReadonlyMap,
     } from "openchat-client";
-    import {
-        app,
-        botState,
-        isPermitted,
-        messagePermissionsForSelectedChat,
-        selectedChatStore,
-        threadPermissionsForSelectedChat,
-    } from "openchat-client";
+    import { app, botState, isPermitted } from "openchat-client";
     import { hasEveryRequiredPermission, random64, type FlattenedCommand } from "openchat-shared";
     import { getContext, onMount } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
@@ -62,7 +55,7 @@
                 hasPermissionForCommand(
                     c,
                     installedBots,
-                    $selectedChatStore,
+                    app.selectedChatSummary,
                     app.selectedCommunitySummary,
                 )
             );
@@ -128,7 +121,7 @@
                     chatPermitted &&
                     communityPermitted &&
                     [...command.permissions.messagePermissions].every((p) =>
-                        $messagePermissionsForSelectedChat.has(p),
+                        app.messagePermissionsForSelectedChat.has(p),
                     )
                 );
             case "thread":
@@ -138,7 +131,7 @@
                     chatPermitted &&
                     communityPermitted &&
                     [...command.permissions.messagePermissions].every((p) =>
-                        $threadPermissionsForSelectedChat.has(p),
+                        app.threadPermissionsForSelectedChat.has(p),
                     )
                 );
         }
@@ -171,7 +164,7 @@
     }
 
     function sendCommandIfValid() {
-        if (botState.selectedCommand && botState.instanceValid && $selectedChatStore) {
+        if (botState.selectedCommand && botState.instanceValid && app.selectedChatSummary) {
             client
                 .executeBotCommand(
                     {

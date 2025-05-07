@@ -1,5 +1,6 @@
 import {
     emptyChatMetrics,
+    MessageContextMap,
     nullMembership,
     type AccessGateConfig,
     type ChatIdentifier,
@@ -11,17 +12,29 @@ import {
     type DirectChatSummary,
     type EventWrapper,
     type ExternalBotPermissions,
+    type LocalPollVote,
+    type LocalReaction,
     type Member,
     type Message,
+    type MessageContent,
+    type MessageContext,
+    type MessageReminderCreatedContent,
     type MultiUserChat,
     type OptionalChatPermissions,
     type OptionUpdate,
+    type P2PSwapStatus,
+    type SenderContext,
     type StreakInsurance,
+    type ThreadSummary,
+    type UnconfirmedMessageEvent,
+    type UnconfirmedState,
     type UserGroupDetails,
     type VersionedRules,
     type WalletConfig,
     type WebhookDetails,
 } from "openchat-shared";
+import { SvelteMap } from "svelte/reactivity";
+import { revokeObjectUrls } from "../../utils/chat";
 import { chatDetailsLocalUpdates } from "../chat_details";
 import { communityLocalUpdates } from "../community_details";
 import {
@@ -30,13 +43,34 @@ import {
     LocalMap,
     ReactiveChatMap,
     ReactiveCommunityMap,
+    ReactiveMessageContextMap,
 } from "../map";
 import { messageLocalUpdates } from "../message/local.svelte";
 import { LocalSet } from "../set";
 import { scheduleUndo, type UndoLocalUpdate } from "../undo";
+import { DraftMessages } from "./draft.svelte";
+
+function emptyUnconfirmed(): UnconfirmedState {
+    return new SvelteMap<bigint, UnconfirmedMessageEvent>();
+}
+
+type FailedMessageState = Map<bigint, EventWrapper<Message>>;
+type EphemeralState = Map<bigint, EventWrapper<Message>>;
+
+const noop = () => {};
 
 // global local updates don't need the manager because they are not specific to a keyed entity (community, chat, message etc)
 export class GlobalLocalState {
+    #blockedDirectUsers = new LocalSet<string>();
+    #failedMessages = $state<ReactiveMessageContextMap<FailedMessageState>>(
+        new ReactiveMessageContextMap(),
+    );
+    #recentlySentMessages = new SvelteMap<bigint, bigint>();
+    #ephemeral = $state<ReactiveMessageContextMap<EphemeralState>>(new ReactiveMessageContextMap());
+    #unconfirmed = $state<ReactiveMessageContextMap<UnconfirmedState>>(
+        new ReactiveMessageContextMap(),
+    );
+    #draftMessages = new DraftMessages();
     readonly chats = new LocalChatMap<ChatSummary>();
     readonly communities = new LocalCommunityMap<CommunitySummary>();
     readonly previewCommunities = new ReactiveCommunityMap<CommunitySummary>();
@@ -50,6 +84,185 @@ export class GlobalLocalState {
     );
     #uninitialisedDirectChats = new ReactiveChatMap<DirectChatSummary>();
     #groupChatPreviews = new ReactiveChatMap<MultiUserChat>();
+
+    // only used for testing
+    clearAll() {
+        this.#failedMessages.clear();
+        this.#recentlySentMessages.clear();
+        this.#ephemeral.clear();
+        this.#unconfirmed.clear();
+        this.chats.clear();
+        this.communities.clear();
+        this.previewCommunities.clear();
+        this.directChatBots.clear();
+        this.#walletConfig = undefined;
+        this.#streakInsurance = undefined;
+        this.#messageActivityFeedReadUpTo = undefined;
+        this.favourites.clear();
+        this.#uninitialisedDirectChats.clear();
+        this.#groupChatPreviews.clear();
+        messageLocalUpdates.clearAll();
+        chatDetailsLocalUpdates.clearAll();
+    }
+
+    blockDirectUser(userId: string) {
+        return this.#blockedDirectUsers.add(userId);
+    }
+
+    unblockDirectUser(userId: string) {
+        return this.#blockedDirectUsers.remove(userId);
+    }
+
+    get blockedDirectUsers() {
+        return this.#blockedDirectUsers;
+    }
+
+    get draftMessages() {
+        return this.#draftMessages;
+    }
+
+    get unconfirmed() {
+        return this.#unconfirmed;
+    }
+
+    initialiseFailedMessages(messages: MessageContextMap<FailedMessageState>) {
+        this.#failedMessages = new ReactiveMessageContextMap();
+        for (const [k, v] of messages) {
+            this.#failedMessages.set(k, v);
+        }
+    }
+
+    addFailedMessage(key: MessageContext, message: EventWrapper<Message>) {
+        const s = this.#failedMessages.get(key) ?? new SvelteMap<bigint, EventWrapper<Message>>();
+        s.set(message.event.messageId, message);
+        this.#failedMessages.set(key, s);
+    }
+
+    anyFailed(key: MessageContext): boolean {
+        return (this.#failedMessages.get(key)?.size ?? 0) > 0;
+    }
+
+    isFailed(key: MessageContext, messageId: bigint): boolean {
+        return this.#failedMessages.get(key)?.has(messageId) ?? false;
+    }
+
+    failedMessages(key: MessageContext): EventWrapper<Message>[] {
+        const state = this.#failedMessages.get(key);
+        return state ? [...state.values()] : [];
+    }
+
+    deleteFailedMessage(key: MessageContext, messageId: bigint) {
+        return this.#deleteLocalMessage(this.#failedMessages, key, messageId);
+    }
+
+    addEphemeral(key: MessageContext, message: EventWrapper<Message>) {
+        const s = this.#ephemeral.get(key) ?? new SvelteMap<bigint, EventWrapper<Message>>();
+        s.set(message.event.messageId, message);
+        this.#ephemeral.set(key, s);
+        // TODO - I don't think that we want ephemeral messages to automatically disappear
+        // but we also don't want them to stay here forever do we?
+        // return scheduleUndo(() => {
+        //     this.#deleteLocalMessage(this.#ephemeral, key, message.event.messageId);
+        // });
+    }
+
+    isEphemeral(key: MessageContext, messageId: bigint): boolean {
+        return this.#ephemeral.get(key)?.has(messageId) ?? false;
+    }
+
+    ephemeralMessages(key: MessageContext): EventWrapper<Message>[] {
+        const state = this.#ephemeral.get(key);
+        return state ? [...state.values()] : [];
+    }
+
+    #deleteLocalMessage(
+        container: ReactiveMessageContextMap<Map<bigint, EventWrapper<Message>>>,
+        key: MessageContext,
+        messageId: bigint,
+    ) {
+        const state = container.get(key);
+        const msg = state?.get(messageId);
+        if (msg !== undefined) {
+            revokeObjectUrls(msg);
+            state?.delete(messageId);
+            if (state?.size === 0) {
+                container.delete(key);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    unconfirmedMessages(key: MessageContext): EventWrapper<Message>[] {
+        const state = this.#unconfirmed.get(key);
+        return state ? [...state.values()] : [];
+    }
+
+    addUnconfirmed(key: MessageContext, message: EventWrapper<Message>): UndoLocalUpdate {
+        const s = this.#unconfirmed.get(key) ?? emptyUnconfirmed();
+        if (!s.has(message.event.messageId)) {
+            s.set(message.event.messageId, { ...message, accepted: false });
+            this.#unconfirmed.set(key, s);
+            this.#recentlySentMessages.set(message.event.messageId, message.timestamp);
+            return scheduleUndo(() => {
+                this.#deleteLocalMessage(this.#unconfirmed, key, message.event.messageId);
+                this.#recentlySentMessages.delete(message.event.messageId);
+            }, 60_000);
+        }
+        return noop;
+    }
+
+    get recentlySentMessages() {
+        return this.#recentlySentMessages;
+    }
+
+    overwriteUnconfirmedContent(
+        key: MessageContext,
+        messageId: bigint,
+        content: MessageContent,
+        senderContext?: SenderContext,
+        blockLevelMarkdown?: boolean,
+    ) {
+        const state = this.#unconfirmed.get(key);
+        if (state) {
+            const msg = state.get(messageId);
+            if (msg) {
+                state.set(messageId, {
+                    ...msg,
+                    event: {
+                        ...msg.event,
+                        content,
+                        senderContext,
+                        blockLevelMarkdown: blockLevelMarkdown ?? false,
+                    },
+                });
+            }
+        }
+    }
+
+    deleteUnconfirmed(key: MessageContext, messageId: bigint) {
+        return this.#deleteLocalMessage(this.#unconfirmed, key, messageId);
+    }
+
+    isUnconfirmed(key: MessageContext, messageId: bigint): boolean {
+        return this.#unconfirmed.get(key)?.has(messageId) ?? false;
+    }
+
+    isPendingAcceptance(key: MessageContext, messageId: bigint): boolean {
+        return this.#unconfirmed.get(key)?.get(messageId)?.accepted === false;
+    }
+
+    markUnconfirmedAccepted(key: MessageContext, messageId: bigint) {
+        const msg = this.#unconfirmed.get(key)?.get(messageId);
+        if (msg) {
+            msg.accepted = true;
+        }
+    }
+
+    // only used for testing
+    clearUnconfirmed() {
+        this.#unconfirmed = new ReactiveMessageContextMap();
+    }
 
     get groupChatPreviews() {
         return this.#groupChatPreviews;
@@ -344,6 +557,7 @@ export class GlobalLocalState {
         permissions?: OptionalChatPermissions,
         gateConfig?: AccessGateConfig,
         eventsTTL?: OptionUpdate<bigint>,
+        isPublic?: boolean,
     ) {
         return chatDetailsLocalUpdates.updateChatProperties(
             id,
@@ -352,6 +566,7 @@ export class GlobalLocalState {
             permissions,
             gateConfig,
             eventsTTL,
+            isPublic,
         );
     }
 
@@ -360,8 +575,56 @@ export class GlobalLocalState {
     }
 
     // message updates
-    markMessageContentEdited(msg: Message): UndoLocalUpdate {
-        return messageLocalUpdates.markContentEdited(msg);
+    markMessageContentEdited(msg: Message, blockLevelMarkdown?: boolean): UndoLocalUpdate {
+        return messageLocalUpdates.markContentEdited(msg, blockLevelMarkdown);
+    }
+
+    markCancelledReminder(messageId: bigint, content: MessageReminderCreatedContent) {
+        return messageLocalUpdates.markCancelledReminder(messageId, content);
+    }
+
+    markMessageDeleted(messageId: bigint, userId: string) {
+        return messageLocalUpdates.markDeleted(messageId, userId);
+    }
+
+    markMessageUndeleted(messageId: bigint, content?: MessageContent) {
+        return messageLocalUpdates.markUndeleted(messageId, content);
+    }
+
+    markMessageContentRevealed(messageId: bigint, content: MessageContent) {
+        return messageLocalUpdates.markContentRevealed(messageId, content);
+    }
+
+    markBlockedMessageRevealed(messageId: bigint) {
+        return messageLocalUpdates.markBlockedMessageRevealed(messageId);
+    }
+
+    markLinkRemoved(messageId: bigint, content: MessageContent) {
+        return messageLocalUpdates.markLinkRemoved(messageId, content);
+    }
+
+    markReaction(messageId: bigint, reaction: LocalReaction) {
+        return messageLocalUpdates.markReaction(messageId, reaction);
+    }
+
+    markTip(messageId: bigint, ledger: string, userId: string, amount: bigint) {
+        return messageLocalUpdates.markTip(messageId, ledger, userId, amount);
+    }
+
+    markPrizeClaimed(messageId: bigint, userId: string) {
+        return messageLocalUpdates.markPrizeClaimed(messageId, userId);
+    }
+
+    setP2PSwapStatus(messageId: bigint, status: P2PSwapStatus) {
+        return messageLocalUpdates.setP2PSwapStatus(messageId, status);
+    }
+
+    markPollVote(messageId: bigint, vote: LocalPollVote) {
+        return messageLocalUpdates.markPollVote(messageId, vote);
+    }
+
+    markThreadSummaryUpdated(messageId: bigint, summaryUpdates: Partial<ThreadSummary>) {
+        return messageLocalUpdates.markThreadSummaryUpdated(messageId, summaryUpdates);
     }
 }
 

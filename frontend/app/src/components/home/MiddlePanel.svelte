@@ -6,7 +6,6 @@
         chatIdentifiersEqual,
         filteredProposalsStore,
         pathState,
-        selectedChatStore,
         ui,
         type ChatIdentifier,
         type MultiUserChat,
@@ -31,9 +30,9 @@
     let middlePanel: HTMLElement | undefined;
 
     let botId = $derived.by(() => {
-        if ($selectedChatStore === undefined) return undefined;
-        if ($selectedChatStore.kind !== "direct_chat") return undefined;
-        return botState.externalBots.get($selectedChatStore.them.userId)?.id;
+        if (app.selectedChatSummary === undefined) return undefined;
+        if (app.selectedChatSummary.kind !== "direct_chat") return undefined;
+        return botState.externalBots.get(app.selectedChatSummary.them.userId)?.id;
     });
 
     let uninstalledBotId = $derived.by(() => {
@@ -126,10 +125,10 @@
             onClose={() => (installingBot = false)}
             chatId={app.selectedChatId}
             {botId} />
-    {:else if $selectedChatStore !== undefined}
+    {:else if app.selectedChatSummary !== undefined}
         <CurrentChat
             {joining}
-            chat={$selectedChatStore}
+            chat={app.selectedChatSummary}
             filteredProposals={$filteredProposalsStore} />
     {/if}
 </section>

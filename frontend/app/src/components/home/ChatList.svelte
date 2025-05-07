@@ -5,13 +5,11 @@
         chatIdentifiersEqual,
         chatIdentifierToString,
         type ChatListScope,
-        chatSummariesListStore,
         type ChatSummary as ChatSummaryType,
         type CombinedUnreadCounts,
         emptyCombinedUnreadCounts,
         type GroupMatch,
         type GroupSearchResponse,
-        numberOfThreadsStore,
         OpenChat,
         publish,
         routeForChatIdentifier,
@@ -104,7 +102,7 @@
         }
 
         if (chat.kind === "direct_chat") {
-            const user = $userStore.get(chat.them.userId);
+            const user = userStore.get(chat.them.userId);
             if (user !== undefined) {
                 return (
                     user.username.toLowerCase().indexOf(lowercaseSearch) >= 0 ||
@@ -172,12 +170,13 @@
                 return match.userId;
         }
     }
+
     let showPreview = $derived(
         ui.mobileWidth &&
             app.selectedCommunitySummary?.membership.role === "none" &&
             app.selectedChatId === undefined,
     );
-    let user = $derived($userStore.get(app.currentUserId));
+    let user = $derived(userStore.get(app.currentUserId));
     let lowercaseSearch = $derived(searchTerm.toLowerCase());
     let showExploreGroups = $derived(
         (app.chatListScope.kind === "none" || app.chatListScope.kind === "group_chat") &&
@@ -208,7 +207,7 @@
     });
     let canMarkAllRead = $derived(anythingUnread(unreadCounts));
     $effect(() => {
-        if ($numberOfThreadsStore === 0) {
+        if (app.numberOfThreads === 0) {
             chatListView.set("chats");
         }
     });
@@ -218,9 +217,7 @@
         }
     });
     let chats = $derived(
-        searchTerm !== ""
-            ? $chatSummariesListStore.filter(chatMatchesSearch)
-            : $chatSummariesListStore,
+        searchTerm !== "" ? app.chatSummariesList.filter(chatMatchesSearch) : app.chatSummariesList,
     );
 </script>
 
@@ -242,7 +239,7 @@
         bind:searchResultsAvailable
         bind:searchTerm />
 
-    {#if $numberOfThreadsStore > 0}
+    {#if app.numberOfThreads > 0}
         <div class="section-selector">
             <ChatListSectionButton
                 onClick={() => setView("chats")}

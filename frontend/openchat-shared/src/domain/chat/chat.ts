@@ -1039,7 +1039,6 @@ export type UpdatesResult = {
 
 export type ChatStateFull = {
     latestUserCanisterUpdates: bigint;
-    latestActiveGroupsCheck: bigint;
     directChats: DirectChatSummary[];
     groupChats: GroupChatSummary[];
     communities: CommunitySummary[];
@@ -1534,6 +1533,7 @@ export type GroupChatSummary = DataContent &
         isInvited: boolean;
         messagesVisibleToNonMembers: boolean;
         verified: boolean;
+        latestSuccessfulUpdatesCheck: bigint;
     };
 
 export function nullMembership(): ChatMembership {
@@ -2258,7 +2258,7 @@ export type GroupAndCommunitySummaryUpdatesResponse =
     | {
           kind: "not_found";
       }
-    | { kind: "error"; error: string };
+    | { kind: "error"; error: string; canisterId: string; };
 
 export type ChatEventsArgs = {
     context: MessageContext;
@@ -2335,3 +2335,12 @@ export type SetPinNumberResponse =
     | OCError;
 
 export type PinNumberFailures = PinRequired | PinIncorrect | TooManyFailedPinAttempts;
+
+export type MessageFilter = {
+    id: bigint;
+    regex: RegExp;
+};
+
+export type UnconfirmedMessageEvent = EventWrapper<Message> & { accepted: boolean };
+
+export type UnconfirmedState = Map<bigint, UnconfirmedMessageEvent>;

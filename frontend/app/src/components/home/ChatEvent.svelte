@@ -150,7 +150,7 @@
 
     let sender = $derived(
         event.event.kind === "message"
-            ? findSender(event.event.sender, $userStore, app.selectedChat.webhooks)
+            ? findSender(event.event.sender, userStore.allUsers, app.selectedChat.webhooks)
             : undefined,
     );
 </script>

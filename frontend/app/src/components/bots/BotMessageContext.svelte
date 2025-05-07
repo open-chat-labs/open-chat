@@ -32,7 +32,7 @@
             return `@UserId(${botCommand.initiator}) used **/${botCommand.name}**`;
         }
     });
-    let user = $derived($userStore.get(botCommand.initiator));
+    let user = $derived(userStore.get(botCommand.initiator));
 
     function paramValue(param: CommandArg): string {
         switch (param.kind) {
@@ -44,7 +44,7 @@
             case "string":
                 return param.value ?? "null";
             case "user":
-                return param.userId ? $userStore.get(param.userId)?.username ?? "null" : "null";
+                return param.userId ? userStore.get(param.userId)?.username ?? "null" : "null";
             case "dateTime":
                 return param.value
                     ? client.toDatetimeString(new Date(Number(param.value)))

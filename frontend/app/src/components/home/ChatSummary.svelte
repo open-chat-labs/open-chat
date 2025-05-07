@@ -13,7 +13,6 @@
         AvatarSize,
         OpenChat,
         app,
-        blockedUsers,
         publish,
         routeForScope,
         byContext as typersByContext,
@@ -77,7 +76,7 @@
     let unreadMentions = $derived(getUnreadMentionCount(chatSummary));
     let chat = $derived(normaliseChatSummary($now, chatSummary, $typersByContext));
     let lastMessage = $derived(
-        formatLatestMessage(chatSummary, $userStore, app.selectedChat.webhooks),
+        formatLatestMessage(chatSummary, userStore.allUsers, app.selectedChat.webhooks),
     );
     let displayDate = $derived(client.getDisplayDate(chatSummary));
     let community = $derived(
@@ -86,7 +85,7 @@
             : undefined,
     );
     let blocked = $derived(
-        chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them.userId),
+        chatSummary.kind === "direct_chat" && userStore.blockedUsers.has(chatSummary.them.userId),
     );
     let readonly = $derived(client.isChatReadOnly(chatSummary.id));
     let canDelete = $derived(getCanDelete(chatSummary, community));
@@ -104,7 +103,7 @@
             : { muted: 0, unmuted: 0 };
         switch (chatSummary.kind) {
             case "direct_chat":
-                const them = $userStore.get(chatSummary.them.userId);
+                const them = userStore.get(chatSummary.them.userId);
                 return {
                     name: client.displayName(them),
                     diamondStatus: them?.diamondStatus ?? "inactive",
@@ -113,7 +112,7 @@
                     userId: chatSummary.them,
                     typing: client.getTypingString(
                         $_,
-                        $userStore,
+                        userStore.allUsers,
                         { chatId: chatSummary.id },
                         typing,
                     ),
@@ -133,7 +132,7 @@
                     userId: undefined,
                     typing: client.getTypingString(
                         $_,
-                        $userStore,
+                        userStore.allUsers,
                         { chatId: chatSummary.id },
                         typing,
                     ),

@@ -39,7 +39,7 @@
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         const someoneTyping = client.getTypingString(
             $_,
-            $userStore,
+            userStore.allUsers,
             { chatId: chatSummary.id, threadRootMessageIndex },
             typing,
         );
@@ -50,9 +50,9 @@
         if (chatSummary.kind === "direct_chat") {
             return {
                 title: ui.mobileWidth
-                    ? $userStore.get(chatSummary.them.userId)?.username
+                    ? userStore.get(chatSummary.them.userId)?.username
                     : $_("thread.title"),
-                avatarUrl: client.userAvatarUrl($userStore.get(chatSummary.them.userId)),
+                avatarUrl: client.userAvatarUrl(userStore.get(chatSummary.them.userId)),
                 userId: chatSummary.them.userId,
                 subtext,
                 typing: someoneTyping !== undefined,

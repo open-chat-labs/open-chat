@@ -32,6 +32,12 @@ export class LocalMap<K, V> {
         return this.#removed.has(key);
     }
 
+    // used for testing
+    clear() {
+        this.#addedOrUpdated.clear();
+        this.#removed.clear();
+    }
+
     addOrUpdate(key: K, value: V): UndoLocalUpdate {
         this.#addedOrUpdated.set(key, value);
         const removed = this.#removed.delete(key);

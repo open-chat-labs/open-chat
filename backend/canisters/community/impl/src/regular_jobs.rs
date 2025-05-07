@@ -11,7 +11,7 @@ pub(crate) fn build() -> RegularJobs<Data> {
 }
 
 fn check_cycles_balance(_: &dyn Environment, data: &mut Data) {
-    utils::cycles::check_cycles_balance(data.local_group_index_canister_id);
+    utils::cycles::check_cycles_balance(data.local_user_index_canister_id);
 }
 
 fn build_chat_metrics(env: &dyn Environment, data: &mut Data) {
