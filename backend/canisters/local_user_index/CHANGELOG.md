@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Remove `local_group_index_canister_id` from Group/Community init args ([#7917](https://github.com/open-chat-labs/open-chat/pull/7917))
+
+## [[2.0.1728](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1728-local_user_index)] - 2025-05-07
+
 ### Added
 
 - Enable notifying groups/communities of deleted users ([#7869](https://github.com/open-chat-labs/open-chat/pull/7869))
@@ -18,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Store LocalGroupIndex canisterId in each LocalUserIndex ([#7868](https://github.com/open-chat-labs/open-chat/pull/7868))
 - Migrate pending canisters in canister pool to LocalUserIndex ([#7883](https://github.com/open-chat-labs/open-chat/pull/7883))
+- Clear chunk store once all pending upgrades are completed ([#7915](https://github.com/open-chat-labs/open-chat/pull/7915))
 
 ## [[2.0.1713](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1713-local_user_index)] - 2025-04-23
 

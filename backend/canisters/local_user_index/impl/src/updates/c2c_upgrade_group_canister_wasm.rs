@@ -12,18 +12,10 @@ use utils::canister::{should_perform_upgrade, upload_wasm_in_chunks};
 #[update(guard = "caller_is_group_index_canister", msgpack = true)]
 #[trace]
 async fn c2c_upgrade_group_canister_wasm(args: Args) -> Response {
-    let PrepareResult {
-        this_canister_id,
-        clear_chunk_store,
-        wasm,
-    } = match read_state(|state| prepare(&args, state)) {
+    let PrepareResult { this_canister_id, wasm } = match read_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
-
-    if clear_chunk_store {
-        utils::canister::clear_chunk_store(this_canister_id).await.unwrap();
-    }
 
     let chunks = upload_wasm_in_chunks(&wasm.module, this_canister_id).await.unwrap();
 
@@ -32,7 +24,6 @@ async fn c2c_upgrade_group_canister_wasm(args: Args) -> Response {
 
 struct PrepareResult {
     this_canister_id: CanisterId,
-    clear_chunk_store: bool,
     wasm: CanisterWasm,
 }
 
@@ -47,7 +38,6 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     } else {
         Ok(PrepareResult {
             this_canister_id: state.env.canister_id(),
-            clear_chunk_store: state.data.communities_requiring_upgrade.is_empty(),
             wasm: CanisterWasm {
                 version: args.version,
                 module: wasm,
