@@ -376,7 +376,6 @@ struct Data {
     pub storage_index_user_sync_queue: BatchedTimerJobQueue<StorageIndexUserConfigBatch>,
     pub storage_index_users_to_remove_queue: BatchedTimerJobQueue<StorageIndexUsersToRemoveBatch>,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
-    #[serde(default = "default_group_index_event_sync_queue")]
     pub group_index_event_sync_queue: BatchedTimerJobQueue<GroupIndexEventBatch>,
     pub notifications_index_event_sync_queue: BatchedTimerJobQueue<NotificationsIndexEventBatch>,
     pub pending_payments_queue: PendingPaymentsQueue,
@@ -412,10 +411,6 @@ struct Data {
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
     pub streak_insurance_logs: StreakInsuranceLogs,
     pub idempotency_checker: IdempotencyChecker,
-}
-
-fn default_group_index_event_sync_queue() -> BatchedTimerJobQueue<GroupIndexEventBatch> {
-    BatchedTimerJobQueue::new(CanisterId::anonymous(), false)
 }
 
 impl Data {

@@ -170,7 +170,6 @@ struct Data {
     skip_captcha_whitelist: HashSet<CanisterId>,
     user_principals: UserPrincipals,
     identity_link_requests: IdentityLinkRequests,
-    #[serde(default)]
     identity_link_via_qr_code_requests: IdentityLinkViaQrCodeRequests,
     webauthn_keys: WebAuthnKeys,
     #[serde(skip)]

@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1725](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1725-identity)] - 2025-05-06
+
 ### Added
 
 - Implement ability to link new identity by scanning a QR code ([#7892](https://github.com/open-chat-labs/open-chat/pull/7892))
