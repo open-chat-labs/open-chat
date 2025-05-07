@@ -1304,7 +1304,7 @@ export class OpenChat {
     }
 
     unblockUserFromDirectChat(userId: string): Promise<boolean> {
-        const undo = localUpdates.blockDirectUser(userId);
+        const undo = localUpdates.unblockDirectUser(userId);
         return this.#sendRequest({ kind: "unblockUserFromDirectChat", userId })
             .then((resp) => {
                 if (resp.kind === "success") {
