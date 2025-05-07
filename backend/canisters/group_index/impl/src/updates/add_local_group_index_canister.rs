@@ -62,7 +62,7 @@ async fn add_local_group_index_canister(args: Args) -> Response {
             {
                 InternalError(format!("Failed to install community canister wasm: {error:?}"))
             } else {
-                let response = mutate_state(|state| commit(args.canister_id, wasm_version, state));
+                let response = mutate_state(|state| commit(args.local_user_index_canister_id, wasm_version, state));
                 info!(canister_id = %args.canister_id, "local group index canister added");
                 response
             }
@@ -118,6 +118,14 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     }
 }
 
-fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut RuntimeState) -> Response {
-    if state.data.local_index_map.add_index(canister_id, wasm_version) { Success } else { AlreadyAdded }
+fn commit(local_user_index_canister_id: CanisterId, wasm_version: BuildVersion, state: &mut RuntimeState) -> Response {
+    if state
+        .data
+        .local_index_map
+        .add_index(local_user_index_canister_id, wasm_version)
+    {
+        Success
+    } else {
+        AlreadyAdded
+    }
 }
