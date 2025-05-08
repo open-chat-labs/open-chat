@@ -4,8 +4,8 @@ use crate::stable_memory::tests::test_values::{
     FILE_CURRENT, FILE_PREV1, GIPHY_CURRENT, GIPHY_PREV1, GOVERNANCE_PROPOSAL_CURRENT, GOVERNANCE_PROPOSAL_PREV1,
     IMAGE_CURRENT, IMAGE_PREV1, MESSAGE_REMINDER_CREATED_CURRENT, MESSAGE_REMINDER_CREATED_PREV1, MESSAGE_REMINDER_CURRENT,
     MESSAGE_REMINDER_PREV1, P2P_SWAP_CURRENT, P2P_SWAP_PREV1, P2P_SWAP_PREV2, POLL_CURRENT, POLL_PREV1, PRIZE_CURRENT,
-    PRIZE_PREV1, PRIZE_WINNER_CURRENT, PRIZE_WINNER_PREV1, REPORTED_MESSAGE_CURRENT, REPORTED_MESSAGE_PREV1, TEXT_CURRENT,
-    TEXT_PREV1, VIDEO_CALL_CURRENT, VIDEO_CALL_PREV1, VIDEO_CURRENT, VIDEO_PREV1,
+    PRIZE_PREV1, PRIZE_PREV2, PRIZE_WINNER_CURRENT, PRIZE_WINNER_PREV1, REPORTED_MESSAGE_CURRENT, REPORTED_MESSAGE_PREV1,
+    TEXT_CURRENT, TEXT_PREV1, VIDEO_CALL_CURRENT, VIDEO_CALL_PREV1, VIDEO_CURRENT, VIDEO_PREV1,
 };
 use crate::stable_memory::{bytes_to_event, event_to_bytes};
 use crate::{
@@ -311,18 +311,19 @@ fn prize_content() {
         end_date: rng.r#gen(),
         caption: Some(random_string(&mut rng)),
         diamond_only: true,
-        lifetime_diamond_only: false,
-        unique_person_only: false,
-        streak_only: 0,
+        lifetime_diamond_only: true,
+        unique_person_only: true,
+        streak_only: 100,
         final_payments_started: true,
         ledger_error: true,
-        prizes_paid: 0,
-        fee_percent: 0,
+        prizes_paid: 10,
+        fee_percent: 5,
+        requires_captcha: true,
     });
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, PRIZE_CURRENT);
 
-    for test in [PRIZE_CURRENT, PRIZE_PREV1] {
+    for test in [PRIZE_CURRENT, PRIZE_PREV2, PRIZE_PREV1] {
         assert!(matches!(test_deserialization(test), MessageContentInternal::Prize(_)));
     }
 }

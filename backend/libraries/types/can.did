@@ -1517,7 +1517,8 @@ type PrizeContentInitial = record {
     diamond_only : bool;
     lifetime_diamond_only : bool;
     unique_person_only : bool;
-    streak_only: nat16;
+    streak_only : nat16;
+    requires_captcha : bool;
 };
 
 type PrizeContent = record {
@@ -1533,7 +1534,8 @@ type PrizeContent = record {
     diamond_only : bool;
     lifetime_diamond_only : bool;
     unique_person_only : bool;
-    streak_only: nat16;
+    streak_only : nat16;
+    requires_captcha : bool;
 };
 
 type PrizeWinnerContent = record {

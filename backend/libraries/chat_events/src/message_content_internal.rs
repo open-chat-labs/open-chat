@@ -1333,6 +1333,8 @@ pub struct PrizeContentInternal {
     pub prizes_paid: u128,
     #[serde(rename = "fp", default, skip_serializing_if = "is_default")]
     pub fee_percent: u8,
+    #[serde(rename = "rc", default, skip_serializing_if = "is_default")]
+    pub requires_captcha: bool,
 }
 
 impl PrizeContentInternal {
@@ -1352,6 +1354,7 @@ impl PrizeContentInternal {
             ledger_error: false,
             prizes_paid: 0,
             fee_percent: PRIZE_FEE_PERCENT,
+            requires_captcha: content.requires_captcha,
         }
     }
 
@@ -1423,6 +1426,7 @@ impl MessageContentInternalSubtype for PrizeContentInternal {
             lifetime_diamond_only: self.lifetime_diamond_only,
             unique_person_only: self.unique_person_only,
             streak_only: self.streak_only,
+            requires_captcha: self.requires_captcha,
         }
     }
 }

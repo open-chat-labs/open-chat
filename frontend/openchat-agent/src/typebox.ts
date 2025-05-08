@@ -7700,6 +7700,7 @@ export const PrizeContentInitial = Type.Object({
     lifetime_diamond_only: Type.Boolean(),
     unique_person_only: Type.Boolean(),
     streak_only: Type.Number(),
+    requires_captcha: Type.Boolean(),
 });
 
 export type OptionUpdateAccessGate = Static<typeof OptionUpdateAccessGate>;

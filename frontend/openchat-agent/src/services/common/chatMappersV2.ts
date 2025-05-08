@@ -1918,7 +1918,7 @@ export function apiPrizeContentInitial(domain: PrizeContentInitial): TPrizeConte
         unique_person_only: domain.uniquePersonOnly,
         streak_only: domain.streakOnly,
         prizes_v2: domain.prizes,
-        // requires_captcha: domain.requiresCaptcha,
+        requires_captcha: domain.requiresCaptcha,
     };
 }
 
