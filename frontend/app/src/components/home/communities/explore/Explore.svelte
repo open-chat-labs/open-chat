@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
-    import { app, offlineStore, publish, ScreenWidth, ui } from "openchat-client";
+    import { app, publish, ScreenWidth, ui } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
@@ -184,7 +184,7 @@
                     <FancyLoader />
                 </div>
             {:else if communitySearchState.results.length === 0}
-                {#if $offlineStore}
+                {#if app.offline}
                     <div class="no-match">
                         <CloudOffOutline size={"1.8em"} color={"var(--txt-light)"} />
                         <p class="sub-header">

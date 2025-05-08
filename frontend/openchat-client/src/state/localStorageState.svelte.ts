@@ -26,7 +26,7 @@ export class LocalStorageState<V> {
         this.#value = this.#initialise();
     }
 
-    get value() {
+    get value(): V {
         return this.#value ?? this.#defVal;
     }
 

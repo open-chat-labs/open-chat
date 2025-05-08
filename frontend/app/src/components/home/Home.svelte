@@ -30,11 +30,9 @@
         defaultChatRules,
         localUpdates,
         nullMembership,
-        offlineStore,
         pageRedirect,
         pageReplace,
         pathState,
-        capturePinNumberStore as pinNumberStore,
         routeForChatIdentifier,
         routeForScope,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
@@ -873,12 +871,12 @@
 
     function onPinNumberComplete(pin: string | undefined) {
         if (pin) {
-            $pinNumberStore?.resolve(pin);
+            app.pinNumberResolver?.resolve(pin);
         }
     }
 
     function onPinNumberClose() {
-        $pinNumberStore?.reject();
+        app.pinNumberResolver?.reject();
     }
 
     function verifyHumanity() {
@@ -978,7 +976,7 @@
     {/if}
 {/if}
 
-<main class:anon={app.anonUser} class:offline={$offlineStore}>
+<main class:anon={app.anonUser} class:offline={app.offline}>
     <LeftNav />
     <LeftPanel />
     <MiddlePanel {joining} />
@@ -989,7 +987,7 @@
     <AnonFooter />
 {/if}
 
-{#if $offlineStore}
+{#if app.offline}
     <OfflineFooter />
 {/if}
 
@@ -1106,7 +1104,7 @@
             onClose={() => (forgotPin = false)}
             type={{ kind: "forgot", while: { kind: "enter" } }} />
     </Overlay>
-{:else if $pinNumberStore !== undefined}
+{:else if app.pinNumberResolver !== undefined}
     <Overlay>
         <PinNumberModal
             onClose={onPinNumberClose}
