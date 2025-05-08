@@ -1093,6 +1093,14 @@
     "messageUrlCopiedToClipboard": "メッセージのURLがクリップボードにコピーされました！",
     "minimumAmount": "最小値: {amount} {symbol}",
     "minutes": "分",
+    "mobile": {
+        "credentials": {
+            "errors": {
+                "genericSignIn": "パスキーでサインインできませんでした。",
+                "genericSignUp": "パスキーを作成できませんでした。"
+            }
+        }
+    },
     "moderator": "モデレータ",
     "months": "月",
     "mustBeFutureDateError": "将来の日付を選択する必要があります",
@@ -2011,6 +2019,7 @@
         "updateAction": "アップデート",
         "updateTitle": "{name}を更新",
         "urlLabel": "ウェブフックURL",
+        "username": "ウェブフック",
         "viewEditAction": "Webhook の詳細を表示/編集する"
     },
     "websiteVersion": "ウェブサイト",

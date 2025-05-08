@@ -1093,6 +1093,14 @@
     "messageUrlCopiedToClipboard": "כתובת האתר של ההודעה הועתקה ללוח!",
     "minimumAmount": "מינימום: {amount} {symbol}",
     "minutes": "דקות",
+    "mobile": {
+        "credentials": {
+            "errors": {
+                "genericSignIn": "לא ניתן היה להיכנס באמצעות סיסמה.",
+                "genericSignUp": "לא ניתן היה ליצור סיסמה."
+            }
+        }
+    },
     "moderator": "מַנחֶה",
     "months": "חודשים",
     "mustBeFutureDateError": "עליך לבחור תאריך עתידי",
@@ -2011,6 +2019,7 @@
         "updateAction": "לְעַדְכֵּן",
         "updateTitle": "עדכון {name}",
         "urlLabel": "כתובת אתר של Webhook",
+        "username": "וובהוק",
         "viewEditAction": "הצג/ערוך פרטי webhook"
     },
     "websiteVersion": "של האתר",

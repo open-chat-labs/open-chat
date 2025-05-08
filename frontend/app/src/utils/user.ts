@@ -5,14 +5,25 @@ import { get } from "svelte/store";
 export function buildDisplayName(
     users: UserLookup,
     userId: string,
-    me: boolean,
+    userType: "user" | "me" | "webhook",
     bold = true,
-    webhooks: ReadonlyMap<string, WebhookDetails> | undefined = undefined,
 ): string {
-    const summary = findSender(userId, users, webhooks ?? new Map());
-    const name = me
-        ? get(_)("you")
-        : summary?.displayName ?? summary?.username ?? get(_)("unknownUser");
+    let name;
+    switch (userType) {
+        case "user": {
+            const summary = findSender(userId, users);
+            name = summary?.displayName ?? summary?.username ?? get(_)("unknownUser");
+            break;
+        }
+        case "me": {
+            name = get(_)("you");
+            break;
+        }
+        case "webhook": {
+            name = get(_)("webhook.username");
+            break;
+        }
+    }
     return bold ? `**${name}**` : name;
 }
 
@@ -23,14 +34,14 @@ export function trimLeadingAtSymbol(term: string): string {
 export function findSender(
     senderId: string,
     users: UserLookup,
-    webhooks: ReadonlyMap<string, WebhookDetails>,
+    webhooks: ReadonlyMap<string, WebhookDetails> | undefined = undefined,
 ): UserSummary | undefined {
     const user = users.get(senderId);
     if (user !== undefined) {
         return user;
     }
 
-    const webhook = webhooks.get(senderId);
+    const webhook = webhooks?.get(senderId);
     if (webhook === undefined) {
         return undefined;
     }

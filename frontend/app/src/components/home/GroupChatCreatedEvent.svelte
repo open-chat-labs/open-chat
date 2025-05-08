@@ -15,7 +15,9 @@
     let { me, event, timestamp, chatType }: Props = $props();
 
     let level = $derived($_(`level.${chatType === "channel" ? "channel" : "group"}`).toLowerCase());
-    let username = $derived(buildDisplayName(userStore.allUsers, event.created_by, me));
+    let username = $derived(
+        buildDisplayName(userStore.allUsers, event.created_by, me ? "me" : "user"),
+    );
     let text = $derived(
         $_("groupCreatedBy", {
             values: {
