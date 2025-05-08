@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Split `authorizers` into `local_user_index` and `local_group_index` ([#7861](https://github.com/open-chat-labs/open-chat/pull/7861))
+- Always use LocalUserIndex to authorize pushing notifications ([#7861](https://github.com/open-chat-labs/open-chat/pull/7861))
 
 ## [[2.0.1674](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1674-notifications)] - 2025-04-02
 
