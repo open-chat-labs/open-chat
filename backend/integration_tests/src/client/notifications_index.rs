@@ -39,7 +39,6 @@ pub mod happy_path {
         notifications_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
         local_user_index_canister_id: CanisterId,
-        local_group_index_canister_id: CanisterId,
     ) {
         let response = super::add_notifications_canister(
             env,
@@ -47,7 +46,7 @@ pub mod happy_path {
             notifications_index_canister_id,
             &notifications_index_canister::add_notifications_canister::Args {
                 canister_id: notifications_canister_id,
-                authorizers: vec![local_user_index_canister_id, local_group_index_canister_id],
+                local_user_index_canister_id,
             },
         );
 

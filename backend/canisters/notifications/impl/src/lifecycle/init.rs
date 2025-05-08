@@ -18,7 +18,7 @@ fn init(args: Args) {
     let data = Data::new(
         args.notifications_index_canister_id,
         args.push_service_principals,
-        args.authorizers,
+        args.local_user_index_canister_id,
         args.cycles_dispenser_canister_id,
         args.test_mode,
     );

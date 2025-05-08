@@ -12,7 +12,7 @@ use utils::canister::{install_basic, set_controllers};
 #[update(guard = "caller_is_registry_canister", msgpack = true)]
 #[trace]
 async fn add_notifications_canister(args: Args) -> Response {
-    match read_state(|state| prepare(args.canister_id, args.authorizers, state)) {
+    match read_state(|state| prepare(&args, state)) {
         Ok(result) => {
             let wasm_version = result.canister_wasm.version;
 
@@ -34,15 +34,15 @@ struct PrepareResult {
     init_args: notifications_canister::init::Args,
 }
 
-fn prepare(canister_id: CanisterId, authorizers: Vec<CanisterId>, state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if !state.data.notifications_canisters.contains_key(&canister_id) {
+fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
+    if !state.data.notifications_canisters.contains_key(&args.canister_id) {
         Ok(PrepareResult {
             this_canister_id: state.env.canister_id(),
             canister_wasm: state.data.notifications_canister_wasm_for_new_canisters.clone(),
             init_args: notifications_canister::init::Args {
                 notifications_index_canister_id: state.env.canister_id(),
                 push_service_principals: state.data.push_service_principals.iter().copied().collect(),
-                authorizers,
+                local_user_index_canister_id: args.local_user_index_canister_id,
                 cycles_dispenser_canister_id: state.data.cycles_dispenser_canister_id,
                 wasm_version: state.data.notifications_canister_wasm_for_new_canisters.version,
                 test_mode: state.data.test_mode,
