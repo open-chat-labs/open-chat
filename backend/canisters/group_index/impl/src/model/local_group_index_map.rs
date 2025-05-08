@@ -37,7 +37,7 @@ impl LocalGroupIndexMap {
             .collect();
     }
 
-    pub fn add_index(&mut self, index_id: CanisterId, wasm_version: BuildVersion) -> bool {
+    pub fn add_index(&mut self, index_id: CanisterId) -> bool {
         let exists = self.index_map.contains_key(&index_id);
         if !exists {
             self.index_map.insert(
@@ -46,7 +46,7 @@ impl LocalGroupIndexMap {
                     group_count: 0,
                     community_count: 0,
                     full: false,
-                    wasm_version,
+                    wasm_version: BuildVersion::default(),
                 },
             );
         }
