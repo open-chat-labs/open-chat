@@ -6,10 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
-### Changed
-
-- Remove `local_group_index_canister_id` from Group/Community init args ([#7917](https://github.com/open-chat-labs/open-chat/pull/7917))
-
 ### Fixed
 
 - Fix pushing events to Group/Community canisters ([#7921](https://github.com/open-chat-labs/open-chat/pull/7921))
