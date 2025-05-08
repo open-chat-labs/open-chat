@@ -48,10 +48,6 @@ fn post_upgrade(args: Args) {
         false,
     );
 
-    data.notifications_queue.set_state(NotificationPusherState {
-        notifications_canister: data.notifications_canister_id,
-    });
-
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
     let env = init_env(data.rng_seed);
