@@ -5,13 +5,14 @@
     import {
         AuthProvider,
         InMemoryAuthClientStorage,
-        selectedAuthProviderStore,
+        app,
         ui,
         type AuthenticationPrincipal,
         type OpenChat,
         type ResourceKey,
         type WebAuthnKey,
     } from "openchat-client";
+    import { ErrorCode } from "openchat-shared";
     import { getContext, onMount } from "svelte";
     import ArrowRightBoldOutline from "svelte-material-icons/ArrowRightBoldOutline.svelte";
     import LinkVariantPlus from "svelte-material-icons/LinkVariantPlus.svelte";
@@ -31,7 +32,6 @@
     import EmailSigninFeedback from "../EmailSigninFeedback.svelte";
     import ChooseSignInOption from "./ChooseSignInOption.svelte";
     import SignInOption from "./SignInOption.svelte";
-    import { ErrorCode } from "openchat-shared";
 
     const client = getContext<OpenChat>("client");
 
@@ -88,7 +88,7 @@
     let accounts: (AuthenticationPrincipal & { provider: AuthProvider })[] = $state([]);
 
     let currentIdentity = $derived(accounts.find((a) => a.isCurrentIdentity));
-    let currentProvider = $derived(currentIdentity?.provider ?? $selectedAuthProviderStore);
+    let currentProvider = $derived(currentIdentity?.provider ?? app.selectedAuthProvider);
     let restrictTo = $derived(
         substep.kind === "approver" && currentProvider !== undefined
             ? new Set<string>([currentProvider])

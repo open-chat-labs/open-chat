@@ -1,11 +1,5 @@
 <script lang="ts">
-    import {
-        AuthProvider,
-        type OpenChat,
-        app,
-        pathState,
-        selectedAuthProviderStore,
-    } from "openchat-client";
+    import { AuthProvider, type OpenChat, app, pathState } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { configKeys } from "../../utils/config";
@@ -16,9 +10,9 @@
     import ModalContent from "../ModalContent.svelte";
     import Translatable from "../Translatable.svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
+    import AndroidSignIn from "../mobile/AndroidSignIn.svelte";
     import EmailSigninFeedback from "./EmailSigninFeedback.svelte";
     import ChooseSignInOption from "./profile/ChooseSignInOption.svelte";
-    import AndroidSignIn from "../mobile/AndroidSignIn.svelte";
 
     interface Props {
         onClose: () => void;
@@ -39,19 +33,19 @@
 
     let restrictTo = $derived(new Set(pathState.querystring.getAll("auth")));
     let loggingInWithEmail = $derived(
-        loginState === "logging-in" && $selectedAuthProviderStore === AuthProvider.EMAIL,
+        loginState === "logging-in" && app.selectedAuthProvider === AuthProvider.EMAIL,
     );
     let loggingInWithEth = $derived(
-        loginState === "logging-in" && $selectedAuthProviderStore === AuthProvider.ETH,
+        loginState === "logging-in" && app.selectedAuthProvider === AuthProvider.ETH,
     );
     let loggingInWithSol = $derived(
-        loginState === "logging-in" && $selectedAuthProviderStore === AuthProvider.SOL,
+        loginState === "logging-in" && app.selectedAuthProvider === AuthProvider.SOL,
     );
     let spinning = $derived(
         loginState === "logging-in" &&
             error === undefined &&
-            $selectedAuthProviderStore !== AuthProvider.ETH &&
-            $selectedAuthProviderStore !== AuthProvider.SOL,
+            app.selectedAuthProvider !== AuthProvider.ETH &&
+            app.selectedAuthProvider !== AuthProvider.SOL,
     );
 
     onMount(() => {
@@ -100,7 +94,7 @@
         }
 
         localStorage.setItem(configKeys.selectedAuthEmail, email);
-        selectedAuthProviderStore.set(provider);
+        app.selectedAuthProvider = provider;
         loginState = "logging-in";
         error = undefined;
 

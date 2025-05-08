@@ -1,25 +1,25 @@
 <script lang="ts">
-    import { i18nKey } from "../../../i18n/i18n";
-    import ErrorMessage from "../../ErrorMessage.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import { AuthClient } from "@dfinity/auth-client";
+    import { DelegationChain, DelegationIdentity, ECDSAKeyIdentity } from "@dfinity/identity";
     import {
         AuthProvider,
         InMemoryAuthClientStorage,
         type OpenChat,
         type ResourceKey,
-        selectedAuthProviderStore,
+        app,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import ChooseSignInOption from "./ChooseSignInOption.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
     import { configKeys } from "../../../utils/config";
-    import { AuthClient } from "@dfinity/auth-client";
-    import { DelegationChain, ECDSAKeyIdentity, DelegationIdentity } from "@dfinity/identity";
     import {
         EmailPollerError,
         EmailPollerSuccess,
         EmailSigninHandler,
     } from "../../../utils/signin";
+    import ErrorMessage from "../../ErrorMessage.svelte";
+    import Translatable from "../../Translatable.svelte";
     import EmailSigninFeedback from "../EmailSigninFeedback.svelte";
+    import ChooseSignInOption from "./ChooseSignInOption.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -70,7 +70,7 @@
         }
 
         localStorage.setItem(configKeys.selectedAuthEmail, email);
-        selectedAuthProviderStore.set(provider);
+        app.selectedAuthProvider = provider;
         error = undefined;
 
         if (provider === AuthProvider.PASSKEY) {

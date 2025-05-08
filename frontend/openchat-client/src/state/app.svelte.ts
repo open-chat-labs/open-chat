@@ -4,6 +4,7 @@ import {
     ANON_USER_ID,
     anonymousUser,
     applyOptionUpdate,
+    AuthProvider,
     type ChannelSummary,
     type ChatEvent,
     type ChatIdentifier,
@@ -37,10 +38,13 @@ import {
     type ModerationFlag,
     ModerationFlags,
     type NervousSystemFunction,
+    type PinNumberFailures,
+    type PinNumberResolver,
     type PublicApiKeyDetails,
     type ReadonlyMap,
     type Referral,
     SafeMap,
+    type StorageStatus,
     type StreakInsurance,
     type Tally,
     type ThreadIdentifier,
@@ -53,8 +57,10 @@ import {
     type WalletConfig,
     type WebhookDetails,
 } from "openchat-shared";
+import { locale } from "svelte-i18n";
 import { SvelteMap, SvelteSet } from "svelte/reactivity";
-import { type PinnedByScope } from "../stores";
+import { offlineStore, type PinnedByScope } from "../stores";
+import { createDummyStore } from "../stores/dummyStore";
 import {
     getMessagePermissionsForSelectedChat,
     isProposalsChat,
@@ -62,6 +68,8 @@ import {
     mergePermissions,
     mergeUnconfirmedIntoSummary,
 } from "../utils/chat";
+import { configKeys } from "../utils/config";
+import { enumFromStringValue } from "../utils/enums";
 import { chatDetailsLocalUpdates, ChatDetailsMergedState } from "./chat_details";
 import { ChatDetailsServerState } from "./chat_details/server.svelte";
 import { communityLocalUpdates } from "./community_details";
@@ -69,6 +77,7 @@ import { CommunityMergedState } from "./community_details/merged.svelte";
 import { CommunityServerState } from "./community_details/server.svelte";
 import { FilteredProposals } from "./filteredProposals.svelte";
 import { localUpdates } from "./global";
+import { LocalStorageBoolState, LocalStorageState } from "./localStorageState.svelte";
 import { ReactiveMessageMap } from "./map";
 import { messageLocalUpdates } from "./message/local.svelte";
 import { pathState } from "./path.svelte";
@@ -77,6 +86,11 @@ import { SnsFunctions } from "./snsFunctions.svelte";
 import { ui } from "./ui.svelte";
 import { messagesRead } from "./unread/markRead.svelte";
 import { userStore } from "./users/users.svelte";
+
+export const ONE_MB = 1024 * 1024;
+export const ONE_GB = ONE_MB * 1024;
+
+export const dummyPinNumberFailureStore = createDummyStore();
 
 export class AppState {
     constructor() {
@@ -94,8 +108,53 @@ export class AppState {
                     this.#selectedChat = new ChatDetailsMergedState(ChatDetailsServerState.empty());
                 }
             });
+
+            $effect(() => {
+                void this.#pinNumberFailure;
+                dummyPinNumberFailureStore.set(Symbol());
+            });
         });
+
+        locale.subscribe((l) => (this.#locale = l ?? "en"));
+        offlineStore.subscribe((offline) => (this.#offline = offline));
     }
+
+    #pinNumberRequired = $state<boolean | undefined>();
+
+    #pinNumberResolver = $state<PinNumberResolver | undefined>();
+
+    #pinNumberFailure = $state<PinNumberFailures | undefined>();
+
+    #selectedAuthProvider = new LocalStorageState(
+        configKeys.selectedAuthProvider,
+        AuthProvider.II,
+        (a) => a,
+        (a) => enumFromStringValue(AuthProvider, a, AuthProvider.II),
+    );
+
+    #userCreated = new LocalStorageBoolState(configKeys.userCreated, false);
+
+    #storage = $state<StorageStatus>({
+        byteLimit: 0,
+        bytesUsed: 0,
+    });
+
+    #percentageStorageUsed = $derived(
+        Math.ceil((this.#storage.bytesUsed / this.#storage.byteLimit) * 100),
+    );
+
+    #percentageStorageRemaining = $derived(
+        Math.floor((1 - this.#storage.bytesUsed / this.#storage.byteLimit) * 100),
+    );
+
+    #storageInGB = $derived({
+        gbLimit: this.#storage.byteLimit / ONE_GB,
+        gbUsed: this.#storage.bytesUsed / ONE_GB,
+    });
+
+    #locale = $state<string>("en");
+
+    #offline = $state<boolean>(false);
 
     #messageFilters = $state<MessageFilter[]>([]);
 
@@ -752,6 +811,74 @@ export class AppState {
 
     untranslate(messageId: bigint) {
         this.#translations.delete(messageId);
+    }
+
+    set pinNumberFailure(val: PinNumberFailures | undefined) {
+        this.#pinNumberFailure = val;
+    }
+
+    get pinNumberFailure() {
+        return this.#pinNumberFailure;
+    }
+
+    set pinNumberResolver(val: PinNumberResolver | undefined) {
+        this.#pinNumberResolver = val;
+    }
+
+    get pinNumberResolver() {
+        return this.#pinNumberResolver;
+    }
+
+    set pinNumberRequired(val: boolean | undefined) {
+        this.#pinNumberRequired = val;
+    }
+
+    get pinNumberRequired() {
+        return this.#pinNumberRequired;
+    }
+
+    set selectedAuthProvider(p: AuthProvider) {
+        this.#selectedAuthProvider.value = p;
+    }
+
+    get selectedAuthProvider() {
+        return this.#selectedAuthProvider.value;
+    }
+
+    set userCreated(val: boolean) {
+        this.#userCreated.value = val;
+    }
+
+    get userCreated() {
+        return this.#userCreated.value;
+    }
+
+    set storage(val: StorageStatus) {
+        this.#storage = val;
+    }
+
+    get storage() {
+        return this.#storage;
+    }
+
+    get percentageStorageRemaining() {
+        return this.#percentageStorageRemaining;
+    }
+
+    get percentageStorageUsed() {
+        return this.#percentageStorageUsed;
+    }
+
+    get storageInGB() {
+        return this.#storageInGB;
+    }
+
+    get locale() {
+        return this.#locale;
+    }
+
+    get offline() {
+        return this.#offline;
     }
 
     get messageFilters() {
