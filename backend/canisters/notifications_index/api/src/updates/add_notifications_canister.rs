@@ -6,7 +6,6 @@ use types::CanisterId;
 pub struct Args {
     pub canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
-    pub local_group_index_canister_id: CanisterId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

@@ -555,7 +555,6 @@ impl Data {
             notifications_queue: BatchedTimerJobQueue::new(
                 NotificationPusherState {
                     notifications_canister: notifications_canister_id,
-                    authorizer: local_user_index_canister_id,
                 },
                 false,
             ),

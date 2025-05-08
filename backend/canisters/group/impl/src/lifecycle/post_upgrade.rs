@@ -49,7 +49,6 @@ fn post_upgrade(args: Args) {
 
     data.notifications_queue.set_state(NotificationPusherState {
         notifications_canister: data.notifications_canister_id,
-        authorizer: data.local_user_index_canister_id,
     });
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);

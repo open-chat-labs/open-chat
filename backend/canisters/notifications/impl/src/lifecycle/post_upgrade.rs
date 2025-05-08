@@ -25,20 +25,14 @@ fn post_upgrade(args: Args) {
         let canister_id = ic_cdk::api::canister_self();
         if canister_id == CanisterId::from_text("dobi3-tyaaa-aaaaf-adnna-cai").unwrap() {
             data.local_user_index_canister_id = CanisterId::from_text("nq4qv-wqaaa-aaaaf-bhdgq-cai").unwrap();
-            data.local_group_index_canister_id = CanisterId::from_text("suaf3-hqaaa-aaaaf-bfyoa-cai").unwrap();
         } else if canister_id == CanisterId::from_text("apmvt-5yaaa-aaaar-aaabq-cai").unwrap() {
             data.local_user_index_canister_id = CanisterId::from_text("aboy3-giaaa-aaaar-aaaaq-cai").unwrap();
-            data.local_group_index_canister_id = CanisterId::from_text("ainth-qaaaa-aaaar-aaaba-cai").unwrap();
         } else if canister_id == CanisterId::from_text("lwrre-xiaaa-aaaac-aadlq-cai").unwrap() {
             data.local_user_index_canister_id = CanisterId::from_text("lyt4m-myaaa-aaaac-aadkq-cai").unwrap();
-            data.local_group_index_canister_id = CanisterId::from_text("lrqxq-2qaaa-aaaac-aadla-cai").unwrap();
         } else if canister_id == CanisterId::from_text("dhcdh-fqaaa-aaaaf-adnmq-cai").unwrap() {
             data.local_user_index_canister_id = CanisterId::from_text("pecvb-tqaaa-aaaaf-bhdiq-cai").unwrap();
-            data.local_group_index_canister_id = CanisterId::from_text("sbhuw-gyaaa-aaaaf-bfynq-cai").unwrap();
         }
         assert_ne!(data.local_user_index_canister_id, CanisterId::anonymous());
-        assert_ne!(data.local_group_index_canister_id, CanisterId::anonymous());
-        assert_ne!(data.local_user_index_canister_id, data.local_group_index_canister_id);
     }
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);

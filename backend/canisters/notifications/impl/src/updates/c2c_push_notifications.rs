@@ -13,14 +13,14 @@ use types::{
 #[update(msgpack = true)]
 #[trace]
 async fn c2c_push_notifications(args: Args) -> Response {
-    match verify_caller(args.authorizer).await {
+    match verify_caller().await {
         Ok(caller) => mutate_state(|state| c2c_push_notifications_impl(caller, args.notifications, state)),
         Err(response) => response,
     }
 }
 
-pub(crate) async fn verify_caller(authorizer: Option<CanisterId>) -> Result<Principal, Response> {
-    match read_state(|state| can_push_notifications(authorizer, state)) {
+pub(crate) async fn verify_caller() -> Result<Principal, Response> {
+    match read_state(|state| can_push_notifications(state)) {
         CanPushNotificationsResult::Authorized(caller) => Ok(caller),
         CanPushNotificationsResult::Blocked => Err(Blocked),
         CanPushNotificationsResult::Unknown(caller, authorizer) => {
@@ -38,21 +38,16 @@ pub(crate) async fn verify_caller(authorizer: Option<CanisterId>) -> Result<Prin
 enum CanPushNotificationsResult {
     Authorized(Principal), // (Caller)
     Blocked,
-    Unknown(Principal, CanisterId), // (Caller, Authorizer)
+    Unknown(Principal, CanisterId), // (Caller, LocalUserIndex)
 }
 
-fn can_push_notifications(authorizer: Option<CanisterId>, state: &RuntimeState) -> CanPushNotificationsResult {
+fn can_push_notifications(state: &RuntimeState) -> CanPushNotificationsResult {
     let caller = state.env.caller();
-    if let Some(authorized) = state.data.authorized_principals.can_push_notifications(&caller) {
-        if authorized {
-            return CanPushNotificationsResult::Authorized(caller);
-        }
-    } else if let Some(authorizer) = authorizer {
-        if authorizer == state.data.local_user_index_canister_id || authorizer == state.data.local_group_index_canister_id {
-            return CanPushNotificationsResult::Unknown(caller, authorizer);
-        }
+    match state.data.authorized_principals.can_push_notifications(&caller) {
+        Some(true) => CanPushNotificationsResult::Authorized(caller),
+        Some(false) => CanPushNotificationsResult::Blocked,
+        None => CanPushNotificationsResult::Unknown(caller, state.data.local_user_index_canister_id),
     }
-    CanPushNotificationsResult::Blocked
 }
 
 fn c2c_push_notifications_impl(

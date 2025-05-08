@@ -21,7 +21,6 @@ timer_job_batch!(
 #[derive(Serialize, Deserialize, Clone)]
 pub struct NotificationPusherState {
     pub notifications_canister: CanisterId,
-    pub authorizer: CanisterId,
 }
 
 impl TimerJobItem for NotificationsBatch {
@@ -30,7 +29,6 @@ impl TimerJobItem for NotificationsBatch {
             self.state.notifications_canister,
             &c2c_push_notifications::Args {
                 notifications: self.items.clone(),
-                authorizer: Some(self.state.authorizer),
             },
         )
         .await;

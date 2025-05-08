@@ -43,7 +43,6 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 notifications_index_canister_id: state.env.canister_id(),
                 push_service_principals: state.data.push_service_principals.iter().copied().collect(),
                 local_user_index_canister_id: args.local_user_index_canister_id,
-                local_group_index_canister_id: args.local_group_index_canister_id,
                 cycles_dispenser_canister_id: state.data.cycles_dispenser_canister_id,
                 wasm_version: state.data.notifications_canister_wasm_for_new_canisters.version,
                 test_mode: state.data.test_mode,

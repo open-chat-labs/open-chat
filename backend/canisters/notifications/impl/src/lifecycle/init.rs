@@ -19,7 +19,6 @@ fn init(args: Args) {
         args.notifications_index_canister_id,
         args.push_service_principals,
         args.local_user_index_canister_id,
-        args.local_group_index_canister_id,
         args.cycles_dispenser_canister_id,
         args.test_mode,
     );
