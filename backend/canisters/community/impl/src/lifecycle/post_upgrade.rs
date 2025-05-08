@@ -10,7 +10,6 @@ use event_store_producer::{EventBuilder, EventStoreClientBuilder};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use ic_cdk::post_upgrade;
 use instruction_counts_log::InstructionCountFunctionId;
-use notifications_canister_c2c_client::NotificationPusherState;
 use stable_memory::get_reader;
 use std::time::Duration;
 use tracing::info;
