@@ -102,17 +102,19 @@ impl Job for ProcessUserRefundJob {
             amount: self.amount.into(),
         };
         ic_cdk::futures::spawn(async move {
-            if icrc_ledger_canister_c2c_client::icrc1_transfer(self.ledger_canister_id, &transfer_args)
-                .await
-                .is_err()
-            {
-                mutate_state(|state| {
+            match icrc_ledger_canister_c2c_client::icrc1_transfer(self.ledger_canister_id, &transfer_args).await {
+                Ok(Ok(_)) => {}
+                Ok(Err(error)) => {
+                    error!(user_id = %self.user_id, ledger = %self.ledger_canister_id, ?error, "Failed to refund user");
+                }
+                Err(error) => mutate_state(|state| {
+                    error!(user_id = %self.user_id, ledger = %self.ledger_canister_id, ?error, "Failed to refund user, retrying");
                     let now = state.env.now();
                     state
                         .data
                         .timer_jobs
                         .enqueue_job(TimerJob::ProcessUserRefund(self), now + (10 * SECOND_IN_MS), now)
-                })
+                }),
             }
         })
     }
