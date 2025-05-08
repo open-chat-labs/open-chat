@@ -1,25 +1,22 @@
-import type { ChatSummary, Proposal } from "openchat-shared";
-import { writable } from "svelte/store";
-import { isProposalsChat } from "../utils/chat";
+import type { Proposal } from "openchat-shared";
+import { SvelteMap, SvelteSet } from "svelte/reactivity";
 
 const storageKeyPrefix = "proposal_filters_";
 
 export class FilteredProposals {
     private _canisterId: string;
     // A map of messageId to boolean where true==collapsed
-    private _messageState: Map<bigint, boolean>;
-    private _filters: Set<number>;
+    private _messageState = $state<SvelteMap<bigint, boolean>>(new SvelteMap());
+    private _filters = $state<SvelteSet<number>>(new SvelteSet());
 
     constructor(canisterId: string) {
         this._canisterId = canisterId;
-        this._messageState = new Map();
-        this._filters = new Set();
     }
 
     static fromStorage(canisterId: string): FilteredProposals {
         const filteredProposals = new FilteredProposals(canisterId);
         const json = localStorage.getItem(storageKeyPrefix + canisterId);
-        filteredProposals._filters = new Set(json !== null ? <number[]>JSON.parse(json) : []);
+        filteredProposals._filters = new SvelteSet(json !== null ? <number[]>JSON.parse(json) : []);
         return filteredProposals;
     }
 
@@ -46,17 +43,17 @@ export class FilteredProposals {
         }
         // Clear all toggled messages when any filter changes.
         // TODO: Can improve by only clearing those messages that match the changed topic
-        this._messageState = new Map();
+        this._messageState = new SvelteMap();
         this.toStorage();
     }
 
     enableAll(): void {
-        this._filters = new Set<number>();
+        this._filters = new SvelteSet<number>();
         this.toStorage();
     }
 
     disableAll(ids: number[]): void {
-        this._filters = new Set<number>(ids);
+        this._filters = new SvelteSet<number>(ids);
         this.toStorage();
     }
 
@@ -70,53 +67,10 @@ export class FilteredProposals {
         }
     }
 
-    clone(): FilteredProposals {
-        const clone = new FilteredProposals(this._canisterId);
-        clone._messageState = new Map(this._messageState);
-        clone._filters = new Set(this._filters);
-        return clone;
-    }
-
     private toStorage() {
         localStorage.setItem(
             storageKeyPrefix + this._canisterId,
             JSON.stringify(Array.from(this._filters)),
         );
     }
-}
-
-export const filteredProposalsStore = writable<FilteredProposals | undefined>(undefined);
-
-function modifyFilteredProposals(fn: (fp: FilteredProposals) => void) {
-    filteredProposalsStore.update((fp) => {
-        if (fp !== undefined) {
-            const clone = fp.clone();
-            fn(clone);
-            return clone;
-        }
-    });
-}
-
-export function enableAllProposalFilters(): void {
-    modifyFilteredProposals((fp) => fp.enableAll());
-}
-
-export function disableAllProposalFilters(ids: number[]): void {
-    modifyFilteredProposals((fp) => fp.disableAll(ids));
-}
-
-export function toggleProposalFilter(topic: number): void {
-    modifyFilteredProposals((fp) => fp.toggleFilter(topic));
-}
-
-export function toggleProposalFilterMessageExpansion(messageId: bigint, expand: boolean): void {
-    modifyFilteredProposals((fp) => fp.toggleMessageExpansion(messageId, expand));
-}
-
-export function resetFilteredProposalsStore(chat: ChatSummary): void {
-    const filteredProposals = isProposalsChat(chat)
-        ? FilteredProposals.fromStorage(chat.subtype.governanceCanisterId)
-        : undefined;
-
-    filteredProposalsStore.update((_) => filteredProposals);
 }

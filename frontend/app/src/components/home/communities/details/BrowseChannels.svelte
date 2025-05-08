@@ -17,7 +17,6 @@
     let { searchTerm }: Props = $props();
 
     let selectedCommunityId = $derived(app.selectedCommunitySummary?.id.communityId);
-
     let searching = $state(false);
     let pageIndex = 0;
     let pageSize = 100;

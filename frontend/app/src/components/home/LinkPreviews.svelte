@@ -138,11 +138,13 @@
                 <Tweet tweetId={preview.tweetId} {intersecting} />
             {:else if preview.kind === "youtube"}
                 <YouTubePreview
+                    {intersecting}
                     {pinned}
                     fill={fill && previews.length === 1}
                     youtubeMatch={preview.regexMatch} />
             {:else if preview.kind === "spotify"}
                 <SpotifyPreviewComponent
+                    {intersecting}
                     {pinned}
                     fill={fill && previews.length === 1}
                     matches={preview.regexMatch} />

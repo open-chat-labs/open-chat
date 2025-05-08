@@ -176,7 +176,6 @@
 
 <div class="footer">
     <div class="footer-overlay">
-        <pre>{attachment}</pre>
         {#if editingEvent === undefined && (replyingTo || attachment !== undefined)}
             <div class="draft-container">
                 {#if replyingTo}

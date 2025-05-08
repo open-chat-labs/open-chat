@@ -1,12 +1,12 @@
 <script lang="ts">
-    import DeletedIcon from "svelte-material-icons/DeleteOutline.svelte";
-    import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
-    import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";
-    import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
-    import Pin from "svelte-material-icons/Pin.svelte";
-    import { rtlStore } from "../../stores/rtl";
     import type { ChatType, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
+    import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";
+    import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
+    import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
+    import DeletedIcon from "svelte-material-icons/DeleteOutline.svelte";
+    import Pin from "svelte-material-icons/Pin.svelte";
+    import { rtlStore } from "../../stores/rtl";
     import { currentTheme } from "../../theme/themes";
     import DisappearsAt from "./DisappearsAt.svelte";
 
@@ -28,6 +28,7 @@
         dateFormatter?: (date: Date) => string;
         deleted: boolean;
         undeleting: boolean;
+        prize: boolean;
     }
 
     let {
@@ -46,13 +47,14 @@
         dateFormatter = (date) => client.toShortTimeString(date),
         deleted,
         undeleting,
+        prize,
     }: Props = $props();
 
     let iconColor = me ? $currentTheme.time.me.icon : $currentTheme.time.icon;
     let pinnedColor = crypto || me || fill ? "#ffffff" : "var(--txt)";
 </script>
 
-<div class="time-and-ticks" class:me class:fill class:rtl={$rtlStore}>
+<div class="time-and-ticks" class:prize class:me class:fill class:rtl={$rtlStore}>
     <span class="time">
         {dateFormatter(new Date(Number(timestamp)))}
     </span>
@@ -141,6 +143,10 @@
                 right: unset;
                 border-radius: 0 $sp4 0 0;
             }
+        }
+
+        &.prize {
+            padding: $sp3;
         }
 
         .confirming {

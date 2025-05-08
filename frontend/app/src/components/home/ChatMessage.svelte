@@ -189,7 +189,9 @@
         if (!readByMe) {
             tick().then(() => {
                 if (observer !== undefined && msgElement !== undefined) {
-                    observer.observe(msgElement);
+                    try {
+                        observer.observe(msgElement);
+                    } catch {}
                 }
             });
         }
@@ -682,10 +684,11 @@
                                 {onRegisterVote}
                                 {onExpandMessage} />
 
-                            {#if !inert && !isPrize}
+                            {#if !inert}
                                 <TimeAndTicks
                                     {pinned}
-                                    {fill}
+                                    prize={isPrize}
+                                    fill={fill && !isPrize}
                                     {timestamp}
                                     {expiresAt}
                                     {percentageExpired}

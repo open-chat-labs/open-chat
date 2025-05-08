@@ -7,6 +7,7 @@ import type {
     CandidateGroupChat,
     ChannelSummary,
     ChatEvent,
+    ChatIdentifier,
     ChatPermissions,
     ChatSummary,
     CreatedUser,
@@ -14,6 +15,7 @@ import type {
     CryptocurrencyDetails,
     CryptocurrencyTransfer,
     EventWrapper,
+    ExpiredEventsRange,
     GovernanceProposalsSubtype,
     GroupChatSummary,
     HasMembershipRole,
@@ -40,6 +42,7 @@ import type {
     ReplyContext,
     SendMessageSuccess,
     Tally,
+    ThreadIdentifier,
     ThreadSummary,
     TimelineItem,
     TipsReceived,
@@ -50,6 +53,7 @@ import type {
 import {
     applyOptionUpdate,
     bigIntMax,
+    chatIdentifiersEqual,
     defaultOptionalChatPermissions,
     defaultOptionalMessagePermissions,
     emptyChatMetrics,
@@ -1995,4 +1999,89 @@ export function revokeObjectUrls(message: EventWrapper<Message>): void {
     if ("blobUrl" in message.event.content && message.event.content.blobUrl !== undefined) {
         URL.revokeObjectURL(message.event.content.blobUrl);
     }
+}
+
+export function nextEventAndMessageIndexesForThread(
+    events: EventWrapper<ChatEvent>[],
+): [number, number] {
+    return events.reduce(
+        ([maxEvtIdx, maxMsgIdx], evt) => {
+            const msgIdx =
+                evt.event.kind === "message"
+                    ? Math.max(evt.event.messageIndex + 1, maxMsgIdx)
+                    : maxMsgIdx;
+            const evtIdx = Math.max(evt.index + 1, maxEvtIdx);
+            return [evtIdx, msgIdx];
+        },
+        [0, 0],
+    );
+}
+
+function sortByIndex(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): number {
+    return a.index - b.index;
+}
+
+export function nextEventAndMessageIndexes(): [number, number] {
+    const chat = app.selectedServerChatSummary;
+    if (chat === undefined) {
+        return [0, 0];
+    }
+    return getNextEventAndMessageIndexes(
+        chat,
+        localUpdates.unconfirmedMessages({ chatId: chat.id }).sort(sortByIndex),
+    );
+}
+
+export function confirmedEventIndexesLoaded(chatId: ChatIdentifier): DRange {
+    const selected = app.selectedChatId;
+    return selected !== undefined && chatIdentifiersEqual(selected, chatId)
+        ? app.selectedChat.confirmedEventIndexesLoaded
+        : new DRange();
+}
+
+function isContiguousInternal(
+    range: DRange,
+    events: EventWrapper<ChatEvent>[],
+    expiredEventRanges: ExpiredEventsRange[],
+): boolean {
+    if (range.length === 0 || events.length === 0) return true;
+
+    const indexes = [events[0].index, events[events.length - 1].index];
+    const minIndex = Math.min(...indexes, ...expiredEventRanges.map((e) => e.start));
+    const maxIndex = Math.max(...indexes, ...expiredEventRanges.map((e) => e.end));
+    const contiguousCheck = new DRange(minIndex - 1, maxIndex + 1);
+
+    const isContiguous = range.clone().intersect(contiguousCheck).length > 0;
+
+    if (!isContiguous) {
+        console.log(
+            "Events in response are not contiguous with the loaded events",
+            range,
+            minIndex,
+            maxIndex,
+        );
+    }
+
+    return isContiguous;
+}
+
+export function isContiguousInThread(
+    threadId: ThreadIdentifier,
+    events: EventWrapper<ChatEvent>[],
+): boolean {
+    return (
+        messageContextsEqual(threadId, app.selectedChat?.selectedThread?.id) &&
+        isContiguousInternal(app.selectedChat.confirmedThreadEventIndexesLoaded, events, [])
+    );
+}
+
+export function isContiguous(
+    chatId: ChatIdentifier,
+    events: EventWrapper<ChatEvent>[],
+    expiredEventRanges: ExpiredEventsRange[],
+): boolean {
+    return (
+        chatIdentifiersEqual(chatId, app.selectedChat.chatId) &&
+        isContiguousInternal(confirmedEventIndexesLoaded(chatId), events, expiredEventRanges)
+    );
 }
