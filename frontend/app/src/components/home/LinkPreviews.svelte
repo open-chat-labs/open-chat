@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { offlineStore, ui, type OpenChat } from "openchat-client";
+    import { app, ui, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import { rtlStore } from "../../stores/rtl";
@@ -115,7 +115,7 @@
     }
 
     $effect(() => {
-        if (intersecting && !ui.eventListScrolling && !shouldRenderPreviews && !$offlineStore) {
+        if (intersecting && !ui.eventListScrolling && !shouldRenderPreviews && !app.offline) {
             shouldRenderPreviews = true;
         }
     });

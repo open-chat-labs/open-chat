@@ -30,7 +30,6 @@
         defaultChatRules,
         localUpdates,
         nullMembership,
-        offlineStore,
         pageRedirect,
         pageReplace,
         pathState,
@@ -978,7 +977,7 @@
     {/if}
 {/if}
 
-<main class:anon={app.anonUser} class:offline={$offlineStore}>
+<main class:anon={app.anonUser} class:offline={app.offline}>
     <LeftNav />
     <LeftPanel />
     <MiddlePanel {joining} />
@@ -989,7 +988,7 @@
     <AnonFooter />
 {/if}
 
-{#if $offlineStore}
+{#if app.offline}
     <OfflineFooter />
 {/if}
 
