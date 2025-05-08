@@ -134,7 +134,7 @@ fn neurons_to_refresh_voting_power(neurons: &[Neuron], now: TimestampMillis) -> 
             n.voting_power_refreshed_timestamp_seconds
                 .is_none_or(|ts| ts < cutoff_seconds)
         })
-        .filter_map(|n| n.id.as_ref().map(|id| (id.id)))
+        .filter_map(|n| n.id.as_ref().map(|id| id.id))
         .collect()
 }
 
