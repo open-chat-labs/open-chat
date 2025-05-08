@@ -20,7 +20,9 @@
 
     let showEvent = $derived(messagesVisibleToNonMembers !== undefined || isPublic !== undefined);
     let me = $derived(changedBy === user?.userId);
-    let changedByStr = $derived(buildDisplayName(userStore.allUsers, changedBy, me));
+    let changedByStr = $derived(
+        buildDisplayName(userStore.allUsers, changedBy, me ? "me" : "user"),
+    );
     let text = $derived(
         interpolate(
             $_,

@@ -1093,6 +1093,14 @@
     "messageUrlCopiedToClipboard": "消息网址已复制到剪贴板！",
     "minimumAmount": "最小值：{amount} {symbol}",
     "minutes": "分钟",
+    "mobile": {
+        "credentials": {
+            "errors": {
+                "genericSignIn": "无法使用密钥登录。",
+                "genericSignUp": "无法创建密钥。"
+            }
+        }
+    },
     "moderator": "版主",
     "months": "月份",
     "mustBeFutureDateError": "您必须选择一个未来日期",
@@ -2011,6 +2019,7 @@
         "updateAction": "更新",
         "updateTitle": "更新 {name}",
         "urlLabel": "Webhook URL",
+        "username": "网络钩子",
         "viewEditAction": "查看/编辑 webhook 详细信息"
     },
     "websiteVersion": "网站的",

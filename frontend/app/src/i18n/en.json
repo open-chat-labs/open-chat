@@ -1096,8 +1096,8 @@
     "mobile": {
         "credentials": {
             "errors": {
-                "genericSignUp": "Could not create a passkey.",
-                "genericSignIn": "Could not sign in with a passkey."
+                "genericSignIn": "Could not sign in with a passkey.",
+                "genericSignUp": "Could not create a passkey."
             }
         }
     },
@@ -2019,6 +2019,7 @@
         "updateAction": "Update",
         "updateTitle": "Update {name}",
         "urlLabel": "Webhook URL",
+        "username": "webhook",
         "viewEditAction": "View/edit webhook details"
     },
     "websiteVersion": "of the website",

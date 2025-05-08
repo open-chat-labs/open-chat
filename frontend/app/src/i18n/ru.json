@@ -1093,6 +1093,14 @@
     "messageUrlCopiedToClipboard": "Адрес сообщения скопирован в буфер обмена!",
     "minimumAmount": "Минимум: {amount} {symbol}",
     "minutes": "Минуты",
+    "mobile": {
+        "credentials": {
+            "errors": {
+                "genericSignIn": "Не удалось войти с помощью пароля.",
+                "genericSignUp": "Не удалось создать пароль."
+            }
+        }
+    },
     "moderator": "Модератор",
     "months": "Месяцы",
     "mustBeFutureDateError": "Вам необходимо выбрать будущую дату",
@@ -2011,6 +2019,7 @@
         "updateAction": "Обновлять",
         "updateTitle": "Обновление {name}",
         "urlLabel": "URL-адрес веб-перехватчика",
+        "username": "вебхук",
         "viewEditAction": "Просмотр/редактирование данных вебхука"
     },
     "websiteVersion": "веб-сайта",

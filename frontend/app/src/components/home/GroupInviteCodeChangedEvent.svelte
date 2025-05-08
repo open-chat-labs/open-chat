@@ -15,7 +15,9 @@
     let { user, change, changedBy, timestamp }: Props = $props();
 
     let me = $derived(changedBy === user?.userId);
-    let changedByStr = $derived(buildDisplayName(userStore.allUsers, changedBy, me));
+    let changedByStr = $derived(
+        buildDisplayName(userStore.allUsers, changedBy, me ? "me" : "user"),
+    );
     let changedStr = $derived($_(`invite.${change}`));
     let text = $derived(
         $_("groupInviteChangedBy", {

@@ -1093,6 +1093,14 @@
     "messageUrlCopiedToClipboard": "Đã sao chép url tin nhắn vào khay nhớ tạm!",
     "minimumAmount": "Tối thiểu: {amount} {symbol}",
     "minutes": "Phút",
+    "mobile": {
+        "credentials": {
+            "errors": {
+                "genericSignIn": "Không thể đăng nhập bằng mã khóa.",
+                "genericSignUp": "Không thể tạo mã khóa."
+            }
+        }
+    },
     "moderator": "người điều hành",
     "months": "Tháng",
     "mustBeFutureDateError": "Bạn phải chọn một ngày trong tương lai",
@@ -2011,6 +2019,7 @@
         "updateAction": "Cập nhật",
         "updateTitle": "Cập nhật {name}",
         "urlLabel": "URL Webhook",
+        "username": "móc treo",
         "viewEditAction": "Xem/chỉnh sửa chi tiết webhook"
     },
     "websiteVersion": "của trang web",
