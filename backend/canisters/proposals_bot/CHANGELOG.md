@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Log error details if user refund fails ([#7931](https://github.com/open-chat-labs/open-chat/pull/7931))
+
+## [[2.0.1730](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1730-proposals_bot)] - 2025-05-08
+
+### Changed
+
 - Include more details in failed c2c call errors ([#7749](https://github.com/open-chat-labs/open-chat/pull/7749))
 - Retry refunding user the proposal rejection fee ([#7912](https://github.com/open-chat-labs/open-chat/pull/7912))
 
