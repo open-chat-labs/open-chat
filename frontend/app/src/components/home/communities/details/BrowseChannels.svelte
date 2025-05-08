@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { app, ChatMap, publish, type ChannelMatch, type OpenChat } from "openchat-client";
+    import { app, publish, type ChannelMatch, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../../i18n/i18n";
     import { browseChannels } from "../../../../stores/settings";
@@ -17,8 +17,6 @@
     let { searchTerm }: Props = $props();
 
     let selectedCommunityId = $derived(app.selectedCommunitySummary?.id.communityId);
-    let allChannels = $derived(ChatMap.fromList(app.selectedCommunitySummary?.channels ?? []));
-
     let searching = $state(false);
     let pageIndex = 0;
     let pageSize = 100;
@@ -27,9 +25,7 @@
     let autoOpen = $state(false);
     let matchedCommunityId: string | undefined = undefined;
     let more = $derived(total > searchResults.length);
-    let filteredResults = $derived(
-        searchResults.filter((c) => !app.chatSummaries.has(c.id) && allChannels.has(c.id)),
-    );
+    let filteredResults = $derived(searchResults.filter((c) => !app.chatSummaries.has(c.id)));
 
     function search(term: string, reset = false) {
         const communityId = selectedCommunityId;
