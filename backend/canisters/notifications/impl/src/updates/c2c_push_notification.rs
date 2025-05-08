@@ -7,7 +7,7 @@ use notifications_canister::c2c_push_notification::*;
 #[update(msgpack = true)]
 #[trace]
 async fn c2c_push_notification(args: Args) -> Response {
-    if let Err(response) = verify_caller(args.authorizer).await {
+    if let Err(response) = verify_caller().await {
         return response;
     }
 
