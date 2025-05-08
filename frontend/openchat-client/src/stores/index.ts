@@ -2,7 +2,6 @@ export * from "./crypto";
 export * from "./diamond";
 export * from "./flagStore";
 export * from "./global";
-export * from "./localMessageUpdates";
 export * from "./localStorageSetting";
 export * from "./minutesOnline";
 export * from "./network";
