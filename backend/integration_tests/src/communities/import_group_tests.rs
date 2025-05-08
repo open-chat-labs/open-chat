@@ -210,6 +210,7 @@ fn pending_prizes_transferred_to_community() {
                 lifetime_diamond_only: false,
                 unique_person_only: false,
                 streak_only: 0,
+                requires_captcha: false,
             }),
             sender_name: user1.username(),
             sender_display_name: None,
