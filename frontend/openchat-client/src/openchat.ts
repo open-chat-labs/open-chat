@@ -941,7 +941,9 @@ export class OpenChat {
             this.#startOnlinePoller();
             this.#startBtcBalanceUpdateJob();
             this.#sendRequest({ kind: "getUserStorageLimits" })
-                .then((storage) => (app.storage = storage))
+                .then((storage) => {
+                    app.storage = storage;
+                })
                 .catch((err) => {
                     console.warn("Unable to retrieve user storage limits", err);
                 });

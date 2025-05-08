@@ -857,6 +857,10 @@ export class AppState {
         this.#storage = val;
     }
 
+    get storage() {
+        return this.#storage;
+    }
+
     get percentageStorageRemaining() {
         return this.#percentageStorageRemaining;
     }

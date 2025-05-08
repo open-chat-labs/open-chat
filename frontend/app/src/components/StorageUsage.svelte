@@ -3,6 +3,8 @@
     import { i18nKey } from "../i18n/i18n";
     import Progress from "./Progress.svelte";
     import Translatable from "./Translatable.svelte";
+
+    $inspect(app.storage);
 </script>
 
 <!-- don't display anything if the user hasn't got any storage -->
