@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui, type OpenChat } from "openchat-client";
+    import { offlineStore, ui, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import { rtlStore } from "../../stores/rtl";
@@ -49,6 +49,7 @@
 
     let previousLinks: string[] = $state([]);
     let previews: Preview[] = $state([]);
+    let shouldRenderPreviews = $state(false);
 
     function arraysAreEqual(a: string[], b: string[]) {
         if (a.length !== b.length) {
@@ -112,6 +113,13 @@
             onRemove?.(preview.url);
         }
     }
+
+    $effect(() => {
+        if (intersecting && !ui.eventListScrolling && !shouldRenderPreviews && !$offlineStore) {
+            shouldRenderPreviews = true;
+        }
+    });
+
     $effect(() => {
         if (!arraysAreEqual(previousLinks, links)) {
             previews = links.map(buildPreview);
@@ -134,25 +142,25 @@
             </div>
         {/if}
         <div class="inner">
-            {#if preview.kind === "twitter"}
-                <Tweet tweetId={preview.tweetId} {intersecting} />
-            {:else if preview.kind === "youtube"}
-                <YouTubePreview
-                    {intersecting}
-                    {pinned}
-                    fill={fill && previews.length === 1}
-                    youtubeMatch={preview.regexMatch} />
-            {:else if preview.kind === "spotify"}
-                <SpotifyPreviewComponent
-                    {intersecting}
-                    {pinned}
-                    fill={fill && previews.length === 1}
-                    matches={preview.regexMatch} />
-            {:else}
-                <GenericPreviewComponent
-                    url={preview.url}
-                    {intersecting}
-                    onRendered={renderPreview} />
+            {#if shouldRenderPreviews}
+                {#if preview.kind === "twitter"}
+                    <Tweet tweetId={preview.tweetId} />
+                {:else if preview.kind === "youtube"}
+                    <YouTubePreview
+                        {pinned}
+                        fill={fill && previews.length === 1}
+                        youtubeMatch={preview.regexMatch} />
+                {:else if preview.kind === "spotify"}
+                    <SpotifyPreviewComponent
+                        {pinned}
+                        fill={fill && previews.length === 1}
+                        matches={preview.regexMatch} />
+                {:else}
+                    <GenericPreviewComponent
+                        url={preview.url}
+                        {intersecting}
+                        onRendered={renderPreview} />
+                {/if}
             {/if}
         </div>
     </div>
