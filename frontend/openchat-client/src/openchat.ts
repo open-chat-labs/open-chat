@@ -280,7 +280,6 @@ import type { OpenChatConfig } from "./config";
 import { AIRDROP_BOT_USER_ID } from "./constants";
 import { configureEffects } from "./effects.svelte";
 import { remoteVideoCallStartedEvent } from "./events";
-import { LiveState } from "./liveState";
 import { snapshot } from "./snapshot.svelte";
 import { app } from "./state/app.svelte";
 import { botState } from "./state/bots.svelte";
@@ -310,14 +309,8 @@ import {
     notificationStatus,
     setSoftDisabled,
 } from "./stores/notifications";
-import {
-    capturePinNumberStore,
-    pinNumberFailureStore,
-    pinNumberRequiredStore,
-} from "./stores/pinNumber";
 import { recommendedGroupExclusions } from "./stores/recommendedGroupExclusions";
 import { captureRulesAcceptanceStore } from "./stores/rules";
-import { storageStore, updateStorageLimit } from "./stores/storage";
 import { initialiseMostRecentSentMessageTimes, shouldThrottle } from "./stores/throttling";
 import { isTyping, typing } from "./stores/typing";
 import { unconfirmedReadByThem } from "./stores/unconfirmed";
@@ -329,7 +322,6 @@ import {
     proposalsBotUser,
     videoCallBotUser,
 } from "./stores/user";
-import { userCreatedStore } from "./stores/userCreated";
 import {
     AndroidWebAuthnPasskeyIdentity,
     createAndroidWebAuthnPasskeyIdentity,
@@ -522,7 +514,6 @@ export class OpenChat {
     #webAuthnKey: WebAuthnKey | undefined = undefined;
     #ocIdentity: Identity | undefined;
     #userLocation: string | undefined;
-    #liveState: LiveState;
     #logger: Logger;
     #lastOnlineDatesPending = new Set<string>();
     #lastOnlineDatesPromise: Promise<Record<string, number>> | undefined;
@@ -548,7 +539,6 @@ export class OpenChat {
 
     constructor(private config: OpenChatConfig) {
         this.#logger = config.logger;
-        this.#liveState = new LiveState();
         this.#appType = config.appType;
 
         console.log("OpenChatConfig: ", config);
@@ -711,7 +701,7 @@ export class OpenChat {
 
     login(): void {
         this.updateIdentityState({ kind: "logging_in" });
-        const authProvider = this.#liveState.selectedAuthProvider!;
+        const authProvider = app.selectedAuthProvider!;
         this.#authClient.then((c) => {
             c.login({
                 ...this.getAuthClientOptions(authProvider),
@@ -951,7 +941,7 @@ export class OpenChat {
             this.#startOnlinePoller();
             this.#startBtcBalanceUpdateJob();
             this.#sendRequest({ kind: "getUserStorageLimits" })
-                .then(storageStore.set)
+                .then((storage) => (app.storage = storage))
                 .catch((err) => {
                     console.warn("Unable to retrieve user storage limits", err);
                 });
@@ -997,7 +987,7 @@ export class OpenChat {
         );
 
         // we need to load chats at least once if we are completely offline
-        if (this.#liveState.offlineStore) {
+        if (app.offline) {
             this.#loadChats();
         }
     }
@@ -1046,7 +1036,7 @@ export class OpenChat {
     async previouslySignedIn(): Promise<boolean> {
         const KEY_STORAGE_IDENTITY = "identity";
         const identity = await this.#authIdentityStorage.storage.get(KEY_STORAGE_IDENTITY);
-        return this.#liveState.userCreated && identity !== null;
+        return app.userCreated && identity !== null;
     }
 
     generateIdentityChallenge(): Promise<GenerateChallengeResponse> {
@@ -1415,7 +1405,7 @@ export class OpenChat {
         if (approvals.size === 0) return CommonResponses.success();
 
         let pin: string | undefined = undefined;
-        if (this.#liveState.pinNumberRequired) {
+        if (app.pinNumberRequired) {
             pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
@@ -1470,7 +1460,7 @@ export class OpenChat {
         expiresIn: bigint,
     ): Promise<ApproveTransferResponse> {
         let pin: string | undefined = undefined;
-        if (this.#liveState.pinNumberRequired) {
+        if (app.pinNumberRequired) {
             pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
@@ -1486,7 +1476,7 @@ export class OpenChat {
                 if (response.kind === "error") {
                     const pinNumberFailure = pinNumberFailureFromError(response);
                     if (pinNumberFailure !== undefined) {
-                        pinNumberFailureStore.set(pinNumberFailure);
+                        app.pinNumberFailure = pinNumberFailure;
                     } else {
                         this.#logger.error("Unable to approve transfer", response);
                     }
@@ -1518,7 +1508,7 @@ export class OpenChat {
                 if (response.kind === "error") {
                     const pinNumberFailure = pinNumberFailureFromError(response);
                     if (pinNumberFailure !== undefined) {
-                        pinNumberFailureStore.set(pinNumberFailure);
+                        app.pinNumberFailure = pinNumberFailure;
                     } else {
                         this.#logger.error("Unable to approve transfer", response);
                     }
@@ -1697,11 +1687,11 @@ export class OpenChat {
     }
 
     toShortTimeString(date: Date): string {
-        return toShortTimeString(date, this.#liveState.locale);
+        return toShortTimeString(date, app.locale);
     }
 
     toMonthString(date: Date): string {
-        return toMonthString(date, this.#liveState.locale);
+        return toMonthString(date, app.locale);
     }
 
     formatMessageDate(
@@ -1711,26 +1701,19 @@ export class OpenChat {
         timeIfToday = false,
         short = false,
     ): string {
-        return formatMessageDate(
-            timestamp,
-            today,
-            yesterday,
-            this.#liveState.locale,
-            timeIfToday,
-            short,
-        );
+        return formatMessageDate(timestamp, today, yesterday, app.locale, timeIfToday, short);
     }
 
     toDatetimeString(date: Date): string {
-        return toDatetimeString(date, this.#liveState.locale);
+        return toDatetimeString(date, app.locale);
     }
 
     toDateString(date: Date): string {
-        return toDateString(date, this.#liveState.locale);
+        return toDateString(date, app.locale);
     }
 
     toLongDateString(date: Date): string {
-        return toLongDateString(date, this.#liveState.locale);
+        return toLongDateString(date, app.locale);
     }
 
     /**
@@ -1738,7 +1721,6 @@ export class OpenChat {
      */
     showTrace = showTrace;
     userAvatarUrl = userAvatarUrl;
-    updateStorageLimit = updateStorageLimit;
     formatTokens = formatTokens;
     validateTokenInput = validateTokenInput;
     parseBigInt = parseBigInt;
@@ -2438,7 +2420,7 @@ export class OpenChat {
 
         this.#addServerEventsToStores(chat.id, resp.events, undefined, resp.expiredEventRanges);
 
-        if (!this.#liveState.offlineStore) {
+        if (!app.offline) {
             makeRtcConnections(
                 app.currentUserId,
                 chat,
@@ -2874,7 +2856,7 @@ export class OpenChat {
         if (isSuccessfulEventsResponse(eventsResponse)) {
             await this.#handleThreadEventsResponse(chatId, threadRootMessageIndex, eventsResponse);
 
-            if (!this.#liveState.offlineStore) {
+            if (!app.offline) {
                 makeRtcConnections(
                     app.currentUserId,
                     chat,
@@ -3704,7 +3686,7 @@ export class OpenChat {
 
         let pin: string | undefined = undefined;
 
-        if (this.#liveState.pinNumberRequired && isTransfer(eventWrapper.event.content)) {
+        if (app.pinNumberRequired && isTransfer(eventWrapper.event.content)) {
             pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
@@ -3758,7 +3740,7 @@ export class OpenChat {
                     } else if (resp.kind === "error") {
                         const pinNumberFailure = pinNumberFailureFromError(resp);
                         if (pinNumberFailure !== undefined) {
-                            pinNumberFailureStore.set(pinNumberFailure);
+                            app.pinNumberFailure = pinNumberFailure;
                         } else if (resp.code === ErrorCode.ChatRulesNotAccepted) {
                             localUpdates.updateChatRulesAccepted(chat.id, false);
                         } else if (resp.code === ErrorCode.CommunityRulesNotAccepted) {
@@ -4852,7 +4834,7 @@ export class OpenChat {
             this.#sendStreamRequest({ kind: "getCurrentUser" }).subscribe({
                 onResult: (user) => {
                     if (user.kind === "created_user") {
-                        userCreatedStore.set(true);
+                        app.userCreated = true;
                         app.setCurrentUser(user);
                         this.#setDiamondStatus(user.diamondStatus);
                     }
@@ -5483,7 +5465,7 @@ export class OpenChat {
     ): Promise<WithdrawCryptocurrencyResponse> {
         let pin: string | undefined = undefined;
 
-        if (this.#liveState.pinNumberRequired) {
+        if (app.pinNumberRequired) {
             pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
@@ -5491,7 +5473,7 @@ export class OpenChat {
             if (resp.kind === "error") {
                 const pinNumberFailure = pinNumberFailureFromError(resp);
                 if (pinNumberFailure !== undefined) {
-                    pinNumberFailureStore.set(pinNumberFailure);
+                    app.pinNumberFailure = pinNumberFailure;
                 }
             }
 
@@ -6032,7 +6014,7 @@ export class OpenChat {
                 }
             }
 
-            pinNumberRequiredStore.set(chatsResponse.state.pinNumberSettings !== undefined);
+            app.pinNumberRequired = chatsResponse.state.pinNumberSettings !== undefined;
 
             // horribly enough - we need to slightly defer this so that all the cascade of derived stuff is complete
             // I am hopeful that we can remove this when we aren't manually synchronising runes & stores
@@ -6210,7 +6192,7 @@ export class OpenChat {
     ): Promise<AcceptP2PSwapResponse> {
         let pin: string | undefined = undefined;
 
-        if (this.#liveState.pinNumberRequired) {
+        if (app.pinNumberRequired) {
             pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
@@ -6241,7 +6223,7 @@ export class OpenChat {
                 if (resp.kind === "error") {
                     const pinNumberFailure = pinNumberFailureFromError(resp);
                     if (pinNumberFailure !== undefined) {
-                        pinNumberFailureStore.set(pinNumberFailure);
+                        app.pinNumberFailure = pinNumberFailure;
                     }
                 }
 
@@ -6566,7 +6548,7 @@ export class OpenChat {
 
         let pin: string | undefined = undefined;
 
-        if (this.#liveState.pinNumberRequired) {
+        if (app.pinNumberRequired) {
             pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
@@ -6591,7 +6573,7 @@ export class OpenChat {
                     if (resp.kind === "error") {
                         const pinNumberFailure = pinNumberFailureFromError(resp);
                         if (pinNumberFailure !== undefined) {
-                            pinNumberFailureStore.set(pinNumberFailure);
+                            app.pinNumberFailure = pinNumberFailure;
                         }
                     }
                 }
@@ -6839,7 +6821,7 @@ export class OpenChat {
     ): Promise<SwapTokensResponse> {
         let pin: string | undefined = undefined;
 
-        if (this.#liveState.pinNumberRequired) {
+        if (app.pinNumberRequired) {
             pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
@@ -6862,7 +6844,7 @@ export class OpenChat {
             if (resp.kind === "error") {
                 const pinNumberFailure = pinNumberFailureFromError(resp);
                 if (pinNumberFailure !== undefined) {
-                    pinNumberFailureStore.set(pinNumberFailure);
+                    app.pinNumberFailure = pinNumberFailure;
                 }
             }
 
@@ -7162,7 +7144,7 @@ export class OpenChat {
     async withdrawBtc(address: string, amount: bigint): Promise<WithdrawBtcResponse> {
         let pin: string | undefined = undefined;
 
-        if (this.#liveState.pinNumberRequired) {
+        if (app.pinNumberRequired) {
             pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
@@ -7176,7 +7158,7 @@ export class OpenChat {
         if (response.kind === "error") {
             const pinNumberFailure = pinNumberFailureFromError(response);
             if (pinNumberFailure !== undefined) {
-                pinNumberFailureStore.set(pinNumberFailure);
+                app.pinNumberFailure = pinNumberFailure;
             }
         }
         return response;
@@ -7963,15 +7945,15 @@ export class OpenChat {
         verification: Verification,
         newPin: string | undefined,
     ): Promise<SetPinNumberResponse> {
-        pinNumberFailureStore.set(undefined);
+        app.pinNumberFailure = undefined;
 
         return this.#sendRequest({ kind: "setPinNumber", verification, newPin }).then((resp) => {
             if (resp.kind === "success") {
-                pinNumberRequiredStore.set(newPin !== undefined);
+                app.pinNumberRequired = newPin !== undefined;
             } else if (resp.kind === "error") {
                 const pinNumberFailure = pinNumberFailureFromError(resp);
                 if (pinNumberFailure !== undefined) {
-                    pinNumberFailureStore.set(pinNumberFailure);
+                    app.pinNumberFailure = pinNumberFailure;
                 }
             }
 
@@ -7980,20 +7962,20 @@ export class OpenChat {
     }
 
     #promptForCurrentPin(message: string | undefined): Promise<string> {
-        pinNumberFailureStore.set(undefined);
+        app.pinNumberFailure = undefined;
 
         return new Promise((resolve, reject) => {
-            capturePinNumberStore.set({
+            app.pinNumberResolver = {
                 resolve: (pin: string) => {
-                    capturePinNumberStore.set(undefined);
+                    app.pinNumberResolver = undefined;
                     resolve(pin);
                 },
                 reject: () => {
-                    capturePinNumberStore.set(undefined);
+                    app.pinNumberResolver = undefined;
                     reject("cancelled");
                 },
                 message,
-            });
+            };
         });
     }
 
@@ -8303,7 +8285,7 @@ export class OpenChat {
                         arguments: bot.command.arguments,
                         meta: {
                             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                            language: this.#liveState.locale.substring(0, 2),
+                            language: app.locale.substring(0, 2),
                         },
                     },
                 },
@@ -8819,7 +8801,7 @@ export class OpenChat {
                     );
                 }
                 if (data.event.subkind === "storage_updated") {
-                    storageStore.set(data.event.status);
+                    app.storage = data.event.status;
                 }
                 if (data.event.subkind === "users_loaded") {
                     userStore.addMany(data.event.users);
@@ -8976,7 +8958,7 @@ export class OpenChat {
         expectedPrice: bigint,
     ): Promise<PayForStreakInsuranceResponse> {
         let pin: string | undefined = undefined;
-        if (this.#liveState.pinNumberRequired) {
+        if (app.pinNumberRequired) {
             pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
         }
 

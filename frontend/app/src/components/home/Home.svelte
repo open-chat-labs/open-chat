@@ -33,7 +33,6 @@
         pageRedirect,
         pageReplace,
         pathState,
-        capturePinNumberStore as pinNumberStore,
         routeForChatIdentifier,
         routeForScope,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
@@ -872,12 +871,12 @@
 
     function onPinNumberComplete(pin: string | undefined) {
         if (pin) {
-            $pinNumberStore?.resolve(pin);
+            app.pinNumberResolver?.resolve(pin);
         }
     }
 
     function onPinNumberClose() {
-        $pinNumberStore?.reject();
+        app.pinNumberResolver?.reject();
     }
 
     function verifyHumanity() {
@@ -1105,7 +1104,7 @@
             onClose={() => (forgotPin = false)}
             type={{ kind: "forgot", while: { kind: "enter" } }} />
     </Overlay>
-{:else if $pinNumberStore !== undefined}
+{:else if app.pinNumberResolver !== undefined}
     <Overlay>
         <PinNumberModal
             onClose={onPinNumberClose}
