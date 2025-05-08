@@ -20,7 +20,7 @@ async fn c2c_push_notifications(args: Args) -> Response {
 }
 
 pub(crate) async fn verify_caller() -> Result<Principal, Response> {
-    match read_state(|state| can_push_notifications(state)) {
+    match read_state(can_push_notifications) {
         CanPushNotificationsResult::Authorized(caller) => Ok(caller),
         CanPushNotificationsResult::Blocked => Err(Blocked),
         CanPushNotificationsResult::Unknown(caller, authorizer) => {
