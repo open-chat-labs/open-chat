@@ -23,6 +23,7 @@ pub struct Args {
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
+    pub local_group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub bot_api_gateway_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
