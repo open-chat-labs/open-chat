@@ -20,14 +20,14 @@
 <script lang="ts">
     // TODO i18n localisation for the date picker!
 
-    import { _ } from "svelte-i18n";
-    import { interpolate, i18nKey } from "../i18n/i18n";
-    import SveltyPicker from "svelty-picker";
     import type { ResourceKey } from "openchat-client";
     import { onMount } from "svelte";
+    import { _ } from "svelte-i18n";
+    import Information from "svelte-material-icons/Information.svelte";
+    import SveltyPicker from "svelty-picker";
+    import { i18nKey, interpolate } from "../i18n/i18n";
     import Tooltip from "./tooltip/Tooltip.svelte";
     import Translatable from "./Translatable.svelte";
-    import Information from "svelte-material-icons/Information.svelte";
 
     let {
         align = "left",
