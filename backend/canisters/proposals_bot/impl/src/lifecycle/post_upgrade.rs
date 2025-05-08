@@ -20,14 +20,16 @@ fn post_upgrade(args: Args) {
     let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
-    data.nervous_systems.push_decided_user_submitted_proposal(
-        CanisterId::from_text("icx6s-lyaaa-aaaaq-aaeqa-cai").unwrap(),
-        UserSubmittedProposalResult {
-            proposal_id: 9,
-            user_id: CanisterId::from_text("ss6ab-3qaaa-aaaac-aq4wa-cai").unwrap().into(),
-            adopted: true,
-        },
-    );
+    if !data.test_mode {
+        data.nervous_systems.push_decided_user_submitted_proposal(
+            CanisterId::from_text("icx6s-lyaaa-aaaaq-aaeqa-cai").unwrap(),
+            UserSubmittedProposalResult {
+                proposal_id: 9,
+                user_id: CanisterId::from_text("ss6ab-3qaaa-aaaac-aq4wa-cai").unwrap().into(),
+                adopted: true,
+            },
+        );
+    }
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
