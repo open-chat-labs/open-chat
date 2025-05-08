@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Avoid having to specify `authorizer` when pushing notifications ([#7861](https://github.com/open-chat-labs/open-chat/pull/7861))
 - Switch to using LocalUserIndex instead of LocalGroupIndex ([#7917](https://github.com/open-chat-labs/open-chat/pull/7917))
 - Add `requires_captcha` field to prize messages ([#7932](https://github.com/open-chat-labs/open-chat/pull/7932))
 
