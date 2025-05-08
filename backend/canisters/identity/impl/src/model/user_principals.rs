@@ -3,6 +3,7 @@ use identity_canister::remove_identity_link::Response as RemovePrincipalResponse
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::collections::HashMap;
+use std::collections::hash_map::Entry::{Occupied, Vacant};
 use types::{CanisterId, PushIfNotContains, TimestampMillis, UserId, is_default};
 
 #[derive(Serialize, Deserialize, Default)]
@@ -121,17 +122,29 @@ impl UserPrincipals {
             false
         } else if let Some(user_principal) = self.user_principals.get_mut(user_principal_index as usize) {
             user_principal.auth_principals.push_if_not_contains(new_principal);
-            self.auth_principals.insert(
-                new_principal,
-                AuthPrincipalInternal {
-                    originating_canister,
-                    user_principal_index,
-                    webauthn_credential_id,
-                    is_ii_principal,
-                    last_used: now,
-                },
-            );
-            self.incr_originating_canister(originating_canister);
+
+            let auth_principal = AuthPrincipalInternal {
+                originating_canister,
+                user_principal_index,
+                webauthn_credential_id,
+                is_ii_principal,
+                last_used: now,
+            };
+
+            match self.auth_principals.entry(new_principal) {
+                Vacant(e) => {
+                    e.insert(auth_principal);
+                    self.incr_originating_canister(originating_canister);
+                }
+                Occupied(mut e) => {
+                    let previous_user_index = e.get().user_principal_index;
+                    e.insert(auth_principal);
+
+                    if let Some(user_principal) = self.user_principals.get_mut(previous_user_index as usize) {
+                        user_principal.auth_principals.retain(|p| *p != new_principal);
+                    }
+                }
+            }
             true
         } else {
             unreachable!()
@@ -175,6 +188,11 @@ impl UserPrincipals {
 
     pub fn auth_principal_exists(&self, auth_principal: &Principal) -> bool {
         self.auth_principals.contains_key(auth_principal)
+    }
+
+    pub fn is_linked_to_oc_account(&self, auth_principal: &Principal) -> bool {
+        self.get_by_auth_principal(auth_principal)
+            .is_some_and(|p| p.user_id.is_some())
     }
 
     // Returns the underlying auth principal if the caller is using a temp key, else returns the

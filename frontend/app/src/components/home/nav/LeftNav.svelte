@@ -3,19 +3,11 @@
         AvatarSize,
         type CommunitySummary,
         type OpenChat,
-        anonUser,
         app,
-        currentUser as createdUser,
         emptyCombinedUnreadCounts,
-        globalStateStore as globalState,
         pathState,
         publish,
         ui,
-        unreadActivityCount,
-        unreadCommunityChannelCounts,
-        unreadDirectCounts,
-        unreadFavouriteCounts,
-        unreadGroupCounts,
         userStore,
     } from "openchat-client";
     import page from "page";
@@ -30,7 +22,6 @@
     import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
     import { flip } from "svelte/animate";
     import { i18nKey } from "../../../i18n/i18n";
-    import { activityFeedShowing } from "../../../stores/activity";
     import { rtlStore } from "../../../stores/rtl";
     import { disableChit, hideChitIcon } from "../../../stores/settings";
     import { now } from "../../../stores/time";
@@ -45,7 +36,7 @@
     const client = getContext<OpenChat>("client");
     const flipDurationMs = 300;
 
-    let user = $derived($userStore.get($createdUser.userId));
+    let user = $derived(userStore.get(app.currentUserId));
     let avatarSize = $derived(ui.mobileWidth ? AvatarSize.Small : AvatarSize.Default);
     let communityExplorer = $derived(pathState.route.kind === "communities_route");
     let selectedCommunityId = $derived(app.selectedCommunitySummary?.id.communityId);
@@ -85,32 +76,32 @@
     }
 
     function viewProfile() {
-        activityFeedShowing.set(false);
+        ui.activityFeedShowing = false;
         publish("profile");
     }
 
     function exploreCommunities() {
-        activityFeedShowing.set(false);
+        ui.activityFeedShowing = false;
         page("/communities");
     }
 
     function directChats() {
-        activityFeedShowing.set(false);
+        ui.activityFeedShowing = false;
         page("/user");
     }
 
     function groupChats() {
-        activityFeedShowing.set(false);
+        ui.activityFeedShowing = false;
         page("/group");
     }
 
     function favouriteChats() {
-        activityFeedShowing.set(false);
+        ui.activityFeedShowing = false;
         page("/favourite");
     }
 
     function selectCommunity(community: CommunitySummary) {
-        activityFeedShowing.set(false);
+        ui.activityFeedShowing = false;
         page(`/community/${community.id.communityId}`);
     }
 
@@ -122,7 +113,7 @@
         if (pathState.route.kind === "communities_route") {
             page("/");
         }
-        activityFeedShowing.set(true);
+        ui.activityFeedShowing = true;
     }
 </script>
 
@@ -152,7 +143,7 @@
         <LeftNavItem
             selected={app.chatListScope.kind === "direct_chat" && !communityExplorer}
             label={i18nKey("communities.directChats")}
-            unread={$unreadDirectCounts.chats}
+            unread={app.unreadDirectCounts.chats}
             video={app.directVideoCallCounts}
             onClick={directChats}>
             <div class="hover direct">
@@ -162,7 +153,7 @@
         <LeftNavItem
             selected={app.chatListScope.kind === "group_chat" && !communityExplorer}
             label={i18nKey("communities.groupChats")}
-            unread={client.mergeCombinedUnreadCounts($unreadGroupCounts)}
+            unread={client.mergeCombinedUnreadCounts(app.unreadGroupCounts)}
             video={app.groupVideoCallCounts}
             onClick={groupChats}>
             <div class="hover direct">
@@ -173,7 +164,7 @@
             <LeftNavItem
                 selected={app.chatListScope.kind === "favourite" && !communityExplorer}
                 label={i18nKey("communities.favourites")}
-                unread={client.mergeCombinedUnreadCounts($unreadFavouriteCounts)}
+                unread={client.mergeCombinedUnreadCounts(app.unreadFavouriteCounts)}
                 video={app.favouritesVideoCallCounts}
                 onClick={favouriteChats}>
                 <div class="hover favs">
@@ -181,7 +172,7 @@
                 </div>
             </LeftNavItem>
         {/if}
-        {#if !$anonUser}
+        {#if !app.anonUser}
             {#if !$disableChit && (claimChitAvailable || !$hideChitIcon)}
                 <LeftNavItem
                     label={i18nKey(
@@ -193,12 +184,16 @@
                     </div>
                 </LeftNavItem>
             {/if}
-            {#if $globalState.messageActivitySummary.latestTimestamp > 0n}
+            {#if app.messageActivitySummary.latestTimestamp > 0n}
                 <LeftNavItem
                     separator
-                    selected={$activityFeedShowing}
+                    selected={ui.activityFeedShowing}
                     label={i18nKey("activity.navLabel")}
-                    unread={{ muted: 0, unmuted: $unreadActivityCount, mentions: false }}
+                    unread={{
+                        muted: 0,
+                        unmuted: app.messageActivitySummary.unreadCount,
+                        mentions: false,
+                    }}
                     onClick={showActivityFeed}>
                     <div class="hover activity">
                         <BellRingOutline size={iconSize} color={"var(--icon-txt)"} />
@@ -231,7 +226,7 @@
                         unmuted: 0,
                     }}
                     unread={client.mergeCombinedUnreadCounts(
-                        $unreadCommunityChannelCounts.get(community.id) ??
+                        app.unreadCommunityChannelCounts.get(community.id) ??
                             emptyCombinedUnreadCounts(),
                     )}
                     label={i18nKey(community.name)}

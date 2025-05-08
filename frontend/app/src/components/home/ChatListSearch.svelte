@@ -1,19 +1,19 @@
 <script lang="ts">
-    import { getContext, onMount } from "svelte";
-    import Search from "../Search.svelte";
-    import type {
-        BotMatch,
-        ChatListScope,
-        DirectChatIdentifier,
-        GroupSearchResponse,
-        OpenChat,
-        ResourceKey,
-        UserSummary,
+    import {
+        app,
+        chatListScopeStore as chatListScope,
+        type BotMatch,
+        type ChatListScope,
+        type DirectChatIdentifier,
+        type GroupSearchResponse,
+        type OpenChat,
+        type ResourceKey,
+        type UserSummary,
     } from "openchat-client";
-    import { chatListScopeStore as chatListScope, currentUser } from "openchat-client";
+    import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { trimLeadingAtSymbol } from "../../utils/user";
-    import { _ } from "svelte-i18n";
+    import Search from "../Search.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -117,10 +117,10 @@
         // available for direct chat.
         const location = {
             kind: "direct_chat",
-            userId: $currentUser.userId,
+            userId: app.currentUserId,
         } as DirectChatIdentifier;
 
-        return client.exploreBots(term, 0, 10, location).then((result) => {
+        return client.exploreBots(term, 0, 10, location, false).then((result) => {
             return result.kind === "success" ? result.matches : [];
         });
     }

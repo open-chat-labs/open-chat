@@ -1,6 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::mem;
 use types::{BuildVersion, CanisterId, ChatId, CommunityId};
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
@@ -19,7 +20,24 @@ pub struct LocalGroupIndex {
 }
 
 impl LocalGroupIndexMap {
-    pub fn add_index(&mut self, index_id: CanisterId, wasm_version: BuildVersion) -> bool {
+    pub fn switch_index_canisters(&mut self, replacements: HashMap<CanisterId, CanisterId>) {
+        self.index_map = mem::take(&mut self.index_map)
+            .into_iter()
+            .map(|(k, v)| (replacements.get(&k).copied().unwrap_or(k), v))
+            .collect();
+
+        self.group_to_index = mem::take(&mut self.group_to_index)
+            .into_iter()
+            .map(|(k, v)| (k, replacements.get(&v).copied().unwrap_or(v)))
+            .collect();
+
+        self.community_to_index = mem::take(&mut self.community_to_index)
+            .into_iter()
+            .map(|(k, v)| (k, replacements.get(&v).copied().unwrap_or(v)))
+            .collect();
+    }
+
+    pub fn add_index(&mut self, index_id: CanisterId) -> bool {
         let exists = self.index_map.contains_key(&index_id);
         if !exists {
             self.index_map.insert(
@@ -28,7 +46,7 @@ impl LocalGroupIndexMap {
                     group_count: 0,
                     community_count: 0,
                     full: false,
-                    wasm_version,
+                    wasm_version: BuildVersion::default(),
                 },
             );
         }

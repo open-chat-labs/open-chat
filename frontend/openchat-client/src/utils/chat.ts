@@ -7,7 +7,7 @@ import type {
     CandidateGroupChat,
     ChannelSummary,
     ChatEvent,
-    ChatListScope,
+    ChatIdentifier,
     ChatPermissions,
     ChatSummary,
     CreatedUser,
@@ -15,11 +15,10 @@ import type {
     CryptocurrencyDetails,
     CryptocurrencyTransfer,
     EventWrapper,
+    ExpiredEventsRange,
     GovernanceProposalsSubtype,
     GroupChatSummary,
     HasMembershipRole,
-    LocalChatSummaryUpdates,
-    LocalMessageUpdates,
     LocalPollVote,
     LocalReaction,
     MemberRole,
@@ -27,6 +26,7 @@ import type {
     Message,
     MessageContent,
     MessageContext,
+    MessageFilter,
     MessageFormatter,
     MessagePermission,
     MessagePermissions,
@@ -42,6 +42,7 @@ import type {
     ReplyContext,
     SendMessageSuccess,
     Tally,
+    ThreadIdentifier,
     ThreadSummary,
     TimelineItem,
     TipsReceived,
@@ -52,7 +53,7 @@ import type {
 import {
     applyOptionUpdate,
     bigIntMax,
-    ChatMap,
+    chatIdentifiersEqual,
     defaultOptionalChatPermissions,
     defaultOptionalMessagePermissions,
     emptyChatMetrics,
@@ -68,16 +69,20 @@ import {
     OPENCHAT_VIDEO_CALL_AVATAR_URL,
     OPENCHAT_VIDEO_CALL_USER_ID,
     random64,
-    type ReadonlySet,
     updateFromOptions,
+    type ReadonlySet,
 } from "openchat-shared";
 import { get } from "svelte/store";
 import { app } from "../state/app.svelte";
+import { localUpdates } from "../state/global";
+import {
+    messageLocalUpdates,
+    type LocalTipsReceived,
+    type MessageLocalState,
+} from "../state/message/local.svelte";
+import { userStore } from "../state/users/users.svelte";
 import { cryptoLookup } from "../stores/crypto";
-import type { MessageFilter } from "../stores/messageFilters";
-import { tallyKey } from "../stores/proposalTallies";
 import type { TypersByKey } from "../stores/typing";
-import type { UnconfirmedMessages } from "../stores/unconfirmed";
 import { areOnSameDay } from "../utils/date";
 import { distinctBy, groupWhile, toRecordFiltered } from "../utils/list";
 import { rtcConnectionsManager } from "../utils/rtcConnectionsManager";
@@ -136,7 +141,7 @@ export function getUsersToMakeRtcConnectionsWith(
     myUserId: string,
     chat: ChatSummary,
     events: EventWrapper<ChatEvent>[],
-    blocked: Set<string>,
+    blocked: ReadonlySet<string>,
 ): string[] {
     if (chat.kind === "direct_chat") {
         return blocked.has(chat.id.userId) ? [] : [chat.id.userId];
@@ -153,7 +158,7 @@ export function makeRtcConnections(
     chat: ChatSummary,
     events: EventWrapper<ChatEvent>[],
     lookup: UserLookup,
-    blocked: Set<string>,
+    blocked: ReadonlySet<string>,
     meteredApiKey: string,
 ): void {
     const userIds = getUsersToMakeRtcConnectionsWith(myUserId, chat, events, blocked);
@@ -311,7 +316,6 @@ function mentionsFromMessages(
 
 export function mergeUnconfirmedThreadsIntoSummary<T extends GroupChatSummary | ChannelSummary>(
     chat: T,
-    unconfirmed: UnconfirmedMessages,
 ): T {
     if (chat.membership === undefined) return chat;
     return {
@@ -323,7 +327,7 @@ export function mergeUnconfirmedThreadsIntoSummary<T extends GroupChatSummary | 
                     chatId: chat.id,
                     threadRootMessageIndex: t.threadRootMessageIndex,
                 };
-                const unconfirmedMsgs = unconfirmed.get(context)?.messages ?? [];
+                const unconfirmedMsgs = localUpdates.unconfirmedMessages(context);
                 if (unconfirmedMsgs.length > 0) {
                     let msgIdx = t.latestMessageIndex;
                     let evtIdx = t.latestEventIndex;
@@ -346,125 +350,11 @@ export function mergeUnconfirmedThreadsIntoSummary<T extends GroupChatSummary | 
     };
 }
 
-function scopeMatchesChat(scope: ChatListScope, chat: ChatSummary): boolean {
-    switch (scope.kind) {
-        case "community":
-            return chat.kind === "channel" && chat.id.communityId === scope.id.communityId;
-        case "group_chat":
-            return chat.kind === "group_chat";
-        case "direct_chat":
-            return chat.kind === "direct_chat";
-        case "favourite":
-            return false;
-        default:
-            return true;
-    }
-}
-
-export function mergeLocalSummaryUpdates(
-    scope: ChatListScope,
-    server: ChatMap<ChatSummary>,
-    localUpdates: ChatMap<LocalChatSummaryUpdates>,
-): ChatMap<ChatSummary> {
-    if (Object.keys(localUpdates).length === 0) return server;
-
-    const merged = server.clone();
-
-    for (const [chatId, localUpdate] of localUpdates.entries()) {
-        if (localUpdate.added !== undefined && scopeMatchesChat(scope, localUpdate.added)) {
-            const current = merged.get(chatId);
-            if (
-                current === undefined ||
-                isLapsed(current) ||
-                (current.kind === "group_chat" && isPreviewing(current))
-            ) {
-                merged.set(chatId, localUpdate.added);
-            }
-        }
-        if (localUpdate.updated !== undefined) {
-            const current = merged.get(chatId);
-            const updated = localUpdate.updated;
-            if (current !== undefined) {
-                const latestMessage =
-                    (updated.latestMessage?.timestamp ?? BigInt(-1)) >
-                    (current.latestMessage?.timestamp ?? BigInt(-1))
-                        ? updated.latestMessage
-                        : current.latestMessage;
-                const latestEventIndex = Math.max(
-                    latestMessage?.index ?? 0,
-                    current.latestEventIndex,
-                );
-
-                if (updated.kind === undefined) {
-                    merged.set(chatId, {
-                        ...current,
-                        latestMessage,
-                        latestMessageIndex: latestMessage?.event.messageIndex,
-                        latestEventIndex,
-                        membership: {
-                            ...current.membership,
-                            notificationsMuted:
-                                updated.notificationsMuted ?? current.membership.notificationsMuted,
-                            archived: updated.archived ?? current.membership.archived,
-                            rulesAccepted:
-                                updated.rulesAccepted ?? current.membership.rulesAccepted,
-                        },
-                    });
-                } else if (current.kind === updated.kind) {
-                    const mergedGate = { ...current.gateConfig.gate, ...updated.gateConfig?.gate };
-                    merged.set(chatId, {
-                        ...current,
-                        latestMessage,
-                        latestMessageIndex: latestMessage?.event.messageIndex,
-                        latestEventIndex,
-                        name: updated.name ?? current.name,
-                        description: updated.description ?? current.description,
-                        public: updated.public ?? current.public,
-                        permissions: mergePermissions(current.permissions, updated.permissions),
-                        gateConfig: {
-                            gate: mergedGate,
-                            expiry: updated.gateConfig?.expiry ?? current.gateConfig.expiry,
-                        },
-                        membership: {
-                            ...current.membership,
-                            notificationsMuted:
-                                updated.notificationsMuted ?? current.membership.notificationsMuted,
-                            archived: updated.archived ?? current.membership.archived,
-                            rulesAccepted:
-                                updated.rulesAccepted ?? current.membership.rulesAccepted,
-                        },
-                        eventsTTL: updated.eventsTTL
-                            ? updated.eventsTTL === "set_to_none"
-                                ? undefined
-                                : updated.eventsTTL.value
-                            : current.eventsTTL,
-                    });
-                }
-            }
-        }
-        if (localUpdate.removedAtTimestamp) {
-            const chat = merged.get(chatId);
-            if (
-                chat !== undefined &&
-                ((chat.kind === "direct_chat" &&
-                    chat.dateCreated < localUpdate.removedAtTimestamp) ||
-                    ((chat.kind === "group_chat" || chat.kind === "channel") &&
-                        (chat.membership?.joined ?? BigInt(0)) < localUpdate.removedAtTimestamp))
-            ) {
-                merged.delete(chatId);
-            }
-        }
-    }
-
-    return merged;
-}
-
 export function mergeUnconfirmedIntoSummary(
     formatter: MessageFormatter,
     userId: string,
     chatSummary: ChatSummary,
-    unconfirmed: UnconfirmedMessages,
-    localUpdates: MessageMap<LocalMessageUpdates>,
+    localMessageUpdates: MessageMap<MessageLocalState>,
     translations: MessageMap<string>,
     blockedUsers: Set<string>,
     currentUserId: string,
@@ -472,7 +362,7 @@ export function mergeUnconfirmedIntoSummary(
 ): ChatSummary {
     if (chatSummary.membership === undefined) return chatSummary;
 
-    const unconfirmedMessages = [...(unconfirmed.get({ chatId: chatSummary.id })?.messages ?? [])];
+    const unconfirmedMessages = localUpdates.unconfirmedMessages({ chatId: chatSummary.id });
 
     let latestMessage = chatSummary.latestMessage;
     let latestEventIndex = chatSummary.latestEventIndex;
@@ -492,7 +382,7 @@ export function mergeUnconfirmedIntoSummary(
         }
     }
     if (latestMessage !== undefined) {
-        const updates = localUpdates.get(latestMessage.event.messageId);
+        const updates = localMessageUpdates.get(latestMessage.event.messageId);
         const translation = translations.get(latestMessage.event.messageId);
         const senderBlocked = blockedUsers.has(latestMessage.event.sender);
 
@@ -527,7 +417,7 @@ export function mergeUnconfirmedIntoSummary(
 
     if (chatSummary.kind !== "direct_chat") {
         if (unconfirmedMessages !== undefined) {
-            chatSummary = mergeUnconfirmedThreadsIntoSummary(chatSummary, unconfirmed);
+            chatSummary = mergeUnconfirmedThreadsIntoSummary(chatSummary);
         }
         return {
             ...chatSummary,
@@ -548,7 +438,7 @@ export function mergeUnconfirmedIntoSummary(
     }
 }
 
-function mergePermissions(
+export function mergePermissions(
     current: ChatPermissions,
     updated?: OptionalChatPermissions,
 ): ChatPermissions {
@@ -1249,6 +1139,38 @@ export function canSendGroupMessage(
     );
 }
 
+function toSet(map: Map<MessagePermission, boolean>): Set<MessagePermission> {
+    return [...map.entries()].reduce((s, [k, v]) => {
+        if (v) {
+            s.add(k);
+        }
+        return s;
+    }, new Set<MessagePermission>());
+}
+
+export function getMessagePermissionsForSelectedChat(
+    chat: ChatSummary | undefined,
+    mode: "thread" | "message",
+): Set<MessagePermission> {
+    if (chat !== undefined) {
+        if (chat.kind === "direct_chat") {
+            const recipient = userStore.get(chat.them.userId);
+            if (recipient !== undefined) {
+                return toSet(
+                    permittedMessagesInDirectChat(
+                        recipient,
+                        mode,
+                        import.meta.env.OC_PROPOSALS_BOT_CANISTER!,
+                    ),
+                );
+            }
+        } else {
+            return toSet(permittedMessagesInGroup(app.currentUser, chat, mode));
+        }
+    }
+    return new Set();
+}
+
 export function permittedMessagesInDirectChat(
     recipient: UserSummary,
     mode: "message" | "thread",
@@ -1421,14 +1343,7 @@ export function mergeSendMessageResponse(
 export function mergeEventsAndLocalUpdates(
     events: EventWrapper<ChatEvent>[],
     unconfirmed: EventWrapper<Message>[],
-    localUpdates: MessageMap<LocalMessageUpdates>,
     expiredEventRanges: DRange,
-    proposalTallies: Record<string, Tally>,
-    translations: MessageMap<string>,
-    blockedUsers: Set<string>,
-    currentUserId: string,
-    messageFilters: MessageFilter[],
-    recentlySentMessages: Map<bigint, bigint>,
 ): EventWrapper<ChatEvent>[] {
     const eventIndexes = new DRange();
     eventIndexes.add(expiredEventRanges);
@@ -1439,8 +1354,8 @@ export function mergeEventsAndLocalUpdates(
 
         if (e.event.kind === "message") {
             confirmedMessageIds.add(e.event.messageId);
-            const updates = localUpdates.get(e.event.messageId);
-            const translation = translations.get(e.event.messageId);
+            const updates = messageLocalUpdates.get(e.event.messageId);
+            const translation = app.translations.get(e.event.messageId);
 
             const repliesTo =
                 e.event.repliesTo?.kind === "rehydrated_reply_context"
@@ -1449,28 +1364,26 @@ export function mergeEventsAndLocalUpdates(
 
             const [replyContextUpdates, replyTranslation] =
                 repliesTo !== undefined
-                    ? [localUpdates.get(repliesTo), translations.get(repliesTo)]
+                    ? [messageLocalUpdates.get(repliesTo), app.translations.get(repliesTo)]
                     : [undefined, undefined];
 
             const tallyUpdate =
                 e.event.content.kind === "proposal_content"
-                    ? proposalTallies[
-                          tallyKey(
-                              e.event.content.governanceCanisterId,
-                              e.event.content.proposal.id,
-                          )
-                      ]
+                    ? app.getProposalTally(
+                          e.event.content.governanceCanisterId,
+                          e.event.content.proposal.id,
+                      )
                     : undefined;
 
-            const senderBlocked = blockedUsers.has(e.event.sender);
+            const senderBlocked = app.currentChatBlockedOrSuspendedUsers.has(e.event.sender);
             const repliesToSenderBlocked =
                 e.event.repliesTo?.kind === "rehydrated_reply_context" &&
-                blockedUsers.has(e.event.repliesTo.senderId);
+                app.currentChatBlockedOrSuspendedUsers.has(e.event.repliesTo.senderId);
 
             // Don't hide the sender's own messages
             const failedMessageFilter =
-                e.event.sender !== currentUserId
-                    ? doesMessageFailFilter(e.event, messageFilters) !== undefined
+                e.event.sender !== app.currentUserId
+                    ? doesMessageFailFilter(e.event, app.messageFilters) !== undefined
                     : false;
 
             if (
@@ -1522,7 +1435,10 @@ export function mergeEventsAndLocalUpdates(
             }
         }
         if (unconfirmedAdded.size > 0) {
-            const sortFn = createMessageSortFunction(unconfirmedAdded, recentlySentMessages);
+            const sortFn = createMessageSortFunction(
+                unconfirmedAdded,
+                localUpdates.recentlySentMessages,
+            );
             merged.sort(sortFn);
         }
     }
@@ -1547,8 +1463,8 @@ export function doesMessageFailFilter(
 
 function mergeLocalUpdates(
     message: Message,
-    localUpdates: LocalMessageUpdates | undefined,
-    replyContextLocalUpdates: LocalMessageUpdates | undefined,
+    localUpdates: MessageLocalState | undefined,
+    replyContextLocalUpdates: MessageLocalState | undefined,
     tallyUpdate: Tally | undefined,
     translation: string | undefined,
     replyTranslation: string | undefined,
@@ -1745,17 +1661,23 @@ function mergeLocalUpdates(
     return message;
 }
 
-export function mergeLocalTips(existing?: TipsReceived, local?: TipsReceived): TipsReceived {
+export function mergeLocalTips(existing?: TipsReceived, local?: LocalTipsReceived): TipsReceived {
     const merged: TipsReceived = {};
     for (const ledger in existing) {
         merged[ledger] = { ...existing[ledger] };
     }
-    for (const ledger in local) {
-        if (!merged[ledger]) {
-            merged[ledger] = {};
-        }
-        for (const userId in local[ledger]) {
-            merged[ledger][userId] = local[ledger][userId];
+
+    if (local !== undefined) {
+        for (const [ledger] of local) {
+            if (!merged[ledger]) {
+                merged[ledger] = {};
+            }
+            const users = local.get(ledger);
+            if (users !== undefined) {
+                for (const [userId] of users) {
+                    merged[ledger][userId] = local.get(ledger)?.get(userId) ?? 0n;
+                }
+            }
         }
     }
     return merged;
@@ -2071,4 +1993,95 @@ export function isProposalsChat(chat: ChatSummary): chat is ChatSummary & {
     subtype: GovernanceProposalsSubtype;
 } {
     return chat.kind !== "direct_chat" && chat.subtype?.kind === "governance_proposals";
+}
+
+export function revokeObjectUrls(message: EventWrapper<Message>): void {
+    if ("blobUrl" in message.event.content && message.event.content.blobUrl !== undefined) {
+        URL.revokeObjectURL(message.event.content.blobUrl);
+    }
+}
+
+export function nextEventAndMessageIndexesForThread(
+    events: EventWrapper<ChatEvent>[],
+): [number, number] {
+    return events.reduce(
+        ([maxEvtIdx, maxMsgIdx], evt) => {
+            const msgIdx =
+                evt.event.kind === "message"
+                    ? Math.max(evt.event.messageIndex + 1, maxMsgIdx)
+                    : maxMsgIdx;
+            const evtIdx = Math.max(evt.index + 1, maxEvtIdx);
+            return [evtIdx, msgIdx];
+        },
+        [0, 0],
+    );
+}
+
+function sortByIndex(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): number {
+    return a.index - b.index;
+}
+
+export function nextEventAndMessageIndexes(): [number, number] {
+    const chat = app.selectedServerChatSummary;
+    if (chat === undefined) {
+        return [0, 0];
+    }
+    return getNextEventAndMessageIndexes(
+        chat,
+        localUpdates.unconfirmedMessages({ chatId: chat.id }).sort(sortByIndex),
+    );
+}
+
+export function confirmedEventIndexesLoaded(chatId: ChatIdentifier): DRange {
+    const selected = app.selectedChatId;
+    return selected !== undefined && chatIdentifiersEqual(selected, chatId)
+        ? app.selectedChat.confirmedEventIndexesLoaded
+        : new DRange();
+}
+
+function isContiguousInternal(
+    range: DRange,
+    events: EventWrapper<ChatEvent>[],
+    expiredEventRanges: ExpiredEventsRange[],
+): boolean {
+    if (range.length === 0 || events.length === 0) return true;
+
+    const indexes = [events[0].index, events[events.length - 1].index];
+    const minIndex = Math.min(...indexes, ...expiredEventRanges.map((e) => e.start));
+    const maxIndex = Math.max(...indexes, ...expiredEventRanges.map((e) => e.end));
+    const contiguousCheck = new DRange(minIndex - 1, maxIndex + 1);
+
+    const isContiguous = range.clone().intersect(contiguousCheck).length > 0;
+
+    if (!isContiguous) {
+        console.log(
+            "Events in response are not contiguous with the loaded events",
+            range,
+            minIndex,
+            maxIndex,
+        );
+    }
+
+    return isContiguous;
+}
+
+export function isContiguousInThread(
+    threadId: ThreadIdentifier,
+    events: EventWrapper<ChatEvent>[],
+): boolean {
+    return (
+        messageContextsEqual(threadId, app.selectedChat?.selectedThread?.id) &&
+        isContiguousInternal(app.selectedChat.confirmedThreadEventIndexesLoaded, events, [])
+    );
+}
+
+export function isContiguous(
+    chatId: ChatIdentifier,
+    events: EventWrapper<ChatEvent>[],
+    expiredEventRanges: ExpiredEventsRange[],
+): boolean {
+    return (
+        chatIdentifiersEqual(chatId, app.selectedChat.chatId) &&
+        isContiguousInternal(confirmedEventIndexesLoaded(chatId), events, expiredEventRanges)
+    );
 }

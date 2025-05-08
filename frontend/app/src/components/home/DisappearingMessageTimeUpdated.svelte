@@ -1,12 +1,10 @@
-<svelte:options immutable />
-
 <script lang="ts">
-    import NonMessageEvent from "./NonMessageEvent.svelte";
-    import { _ } from "svelte-i18n";
-    import { getContext } from "svelte";
     import type { OpenChat, UserSummary } from "openchat-client";
     import { userStore } from "openchat-client";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
     import { buildDisplayName } from "../../utils/user";
+    import NonMessageEvent from "./NonMessageEvent.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -20,7 +18,9 @@
     let { user, changedBy, newTimeToLive, timestamp }: Props = $props();
 
     let me = $derived(changedBy === user?.userId);
-    let changedByStr = $derived(buildDisplayName($userStore, changedBy, me));
+    let changedByStr = $derived(
+        buildDisplayName(userStore.allUsers, changedBy, me ? "me" : "user"),
+    );
     let text = $derived(
         newTimeToLive !== undefined
             ? $_("disappearingMessages.timeUpdatedBy", {

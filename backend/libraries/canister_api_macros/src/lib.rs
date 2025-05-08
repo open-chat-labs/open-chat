@@ -58,6 +58,7 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
     let composite = attr.composite.then_some(quote! { composite = true, });
     let manual_reply = attr.manual_reply.then_some(quote! { manual_reply = "true", });
 
+    let empty_args = item.sig.inputs.is_empty();
     let empty_return = matches!(item.sig.output, ReturnType::Default);
 
     let candid = if attr.candid {
@@ -78,6 +79,12 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
             quote! { msgpack::serialize_then_unwrap }
         };
 
+        let deserializer_func = if empty_args {
+            quote! { msgpack::deserialize_empty }
+        } else {
+            quote! { msgpack::deserialize_owned_then_unwrap }
+        };
+
         let serializer_name = format!("{msgpack_name}_serializer");
         let serializer_ident = Ident::new(&serializer_name, Span::call_site());
 
@@ -92,7 +99,7 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
 
         quote! {
             use #serializer_func as #serializer_ident;
-            use msgpack::deserialize_owned_then_unwrap as #deserializer_ident;
+            use #deserializer_func as #deserializer_ident;
 
             #[ic_cdk::#method_type(name = #msgpack_name, #guard #composite #manual_reply #encode_with #decode_with)]
             #msgpack_item
@@ -110,6 +117,12 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
             quote! { json::serialize_then_unwrap }
         };
 
+        let deserializer_func = if empty_args {
+            quote! { json::deserialize_empty }
+        } else {
+            quote! { json::deserialize_owned_then_unwrap }
+        };
+
         let serializer_name = format!("{json_name}_serializer");
         let serializer_ident = Ident::new(&serializer_name, Span::call_site());
 
@@ -124,7 +137,7 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
 
         quote! {
             use #serializer_func as #serializer_ident;
-            use json::deserialize_owned_then_unwrap as #deserializer_ident;
+            use #deserializer_func as #deserializer_ident;
 
             #[ic_cdk::#method_type(name = #json_name, #guard #composite #manual_reply #encode_with #decode_with)]
             #json_item

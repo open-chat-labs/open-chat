@@ -105,6 +105,7 @@
         "visibility": "وصول"
     },
     "account": "حساب",
+    "accountCopiedToClipboard": "تم نسخ عنوان الحساب إلى الحافظة!",
     "accounts": "الحسابات",
     "accountSuspended": "تم تعليق الحساب",
     "activity": {
@@ -369,13 +370,14 @@
         "matchingCommands": "أوامر المطابقة",
         "member": {
             "bots": "الروبوتات",
-            "people": "الناس"
+            "people": "الناس",
+            "webhooks": "خطافات الويب"
         },
         "poll": {
             "desc": "إنشاء استطلاع رأي في الدردشة الحالية"
         },
         "register_bot": {
-            "desc": "ابدأ اقتراحًا لوصف وتسجيل روبوت جديد مع OpenChat"
+            "desc": "سجل بوتًا جديدًا مع OpenChat"
         },
         "search": {
             "desc": "ابدأ البحث في الدردشة الحالية",
@@ -1091,6 +1093,14 @@
     "messageUrlCopiedToClipboard": "تم نسخ عنوان الرسالة إلى الحافظة!",
     "minimumAmount": "الحد الأدنى: {amount} {symbol}",
     "minutes": "دقائق",
+    "mobile": {
+        "credentials": {
+            "errors": {
+                "genericSignIn": "لم أتمكن من تسجيل الدخول باستخدام مفتاح المرور.",
+                "genericSignUp": "لم يتمكن من إنشاء مفتاح المرور."
+            }
+        }
+    },
     "moderator": "المشرف",
     "months": "شهور",
     "mustBeFutureDateError": "يجب عليك تحديد تاريخ مستقبلي",
@@ -1666,7 +1676,8 @@
         "groupStats": "إحصائيات {level}",
         "icpTransfers": "رسالة ICP",
         "imageMessages": "رسالة الصورة",
-        "minutesOnline": "دقائق على الانترنت هذا الشهر",
+        "minutesOnlineLastMonth": "الدقائق على الإنترنت الشهر الماضي",
+        "minutesOnlineThisMonth": "دقائق على الانترنت هذا الشهر",
         "pollMessages": "رسالة الاستطلاع",
         "pollVotes": "تصويتات الاستطلاع",
         "reactions": "ردود الفعل",
@@ -1994,6 +2005,23 @@
     "viewer": "مشاهد",
     "wallet": "محفظة",
     "walletSettings": "إعدادات المحفظة",
+    "webhook": {
+        "avatarLabel": "الصورة الرمزية",
+        "nameLabel": "اسم",
+        "namePlaceholder": "أدخل اسم خطاف الويب",
+        "nameRules": "يجب أن تكون فريدة في هذه الدردشة وتحتوي على أحرف أبجدية رقمية وشرطات سفلية فقط",
+        "regenerateAction": "تجديد",
+        "registerAction": "يسجل",
+        "registerDesc": "سجل خطاف ويب في هذه الدردشة",
+        "registerTitle": "تسجيل خطاف ويب",
+        "removeAction": "إزالة خطاف الويب",
+        "removeFailed": "نأسف لأننا لم نتمكن من إزالة خطاف الويب",
+        "updateAction": "تحديث",
+        "updateTitle": "تحديث {name}",
+        "urlLabel": "عنوان URL لـ Webhook",
+        "username": "خطاف الويب",
+        "viewEditAction": "عرض/تحرير تفاصيل خطاف الويب"
+    },
     "websiteVersion": "من الموقع",
     "weeks": "اسابيع",
     "whatsHot": "ما هو الساخن؟",

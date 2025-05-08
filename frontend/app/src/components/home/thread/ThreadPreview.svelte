@@ -2,19 +2,16 @@
     import {
         app,
         AvatarSize,
-        chatSummariesStore,
         type EventWrapper,
         type Message,
-        messagesRead,
         type MultiUserChat,
         OpenChat,
         routeForChatIdentifier,
         type ThreadPreview,
-        currentUser as user,
         userStore,
     } from "openchat-client";
     import page from "page";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
     import { pop } from "../../../utils/transition";
@@ -37,7 +34,7 @@
 
     let missingMessages = $derived(thread.totalReplies - thread.latestReplies.length);
     let threadRootMessageIndex = $derived(thread.rootMessage.event.messageIndex);
-    let chat = $derived($chatSummariesStore.get(thread.chatId) as MultiUserChat | undefined);
+    let chat = $derived(app.chatSummaries.get(thread.chatId) as MultiUserChat | undefined);
     let muted = $derived(chat?.membership?.notificationsMuted || false);
     let syncDetails = $derived(
         chat?.membership?.latestThreads?.find(
@@ -81,18 +78,6 @@
             }
         }
     }
-
-    onMount(() => {
-        return messagesRead.subscribe(() => {
-            if (syncDetails !== undefined) {
-                unreadCount = client.unreadThreadMessageCount(
-                    thread.chatId,
-                    threadRootMessageIndex,
-                    syncDetails.latestMessageIndex,
-                );
-            }
-        });
-    });
 
     function selectThread() {
         page(
@@ -148,7 +133,7 @@
                 <div class="body">
                     <div class="root-msg">
                         <ChatMessage
-                            sender={$userStore.get(thread.rootMessage.event.sender)}
+                            sender={userStore.get(thread.rootMessage.event.sender)}
                             focused={false}
                             {observer}
                             accepted
@@ -158,7 +143,7 @@
                             readByMe
                             chatId={thread.chatId}
                             chatType={chat.kind}
-                            me={thread.rootMessage.event.sender === $user.userId}
+                            me={thread.rootMessage.event.sender === app.currentUserId}
                             first
                             last
                             readonly
@@ -179,7 +164,7 @@
                             expiresAt={thread.rootMessage.expiresAt}
                             dateFormatter={(date) => client.toDatetimeString(date)}
                             msg={thread.rootMessage.event}
-                            botContext={thread.rootMessage.event.botContext} />
+                            senderContext={thread.rootMessage.event.senderContext} />
                     </div>
                     {#if missingMessages > 0}
                         <div class="separator">
@@ -192,7 +177,7 @@
                     {#each grouped as userGroup}
                         {#each userGroup as evt, i (evt.event.messageId)}
                             <ChatMessage
-                                sender={$userStore.get(evt.event.sender)}
+                                sender={userStore.get(evt.event.sender)}
                                 focused={false}
                                 {observer}
                                 accepted
@@ -202,7 +187,7 @@
                                 readByMe
                                 chatId={thread.chatId}
                                 chatType={chat.kind}
-                                me={evt.event.sender === $user.userId}
+                                me={evt.event.sender === app.currentUserId}
                                 first={i === 0}
                                 last={i === userGroup.length - 1}
                                 readonly
@@ -223,7 +208,7 @@
                                 expiresAt={evt.expiresAt}
                                 dateFormatter={(date) => client.toDatetimeString(date)}
                                 msg={evt.event}
-                                botContext={evt.event.botContext} />
+                                senderContext={evt.event.senderContext} />
                         {/each}
                     {/each}
                     <LinkButton underline="hover" onClick={selectThread}

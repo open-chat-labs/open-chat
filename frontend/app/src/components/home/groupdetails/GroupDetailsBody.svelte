@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { MultiUserChat, OpenChat } from "openchat-client";
-    import { app, AvatarSize, currentUser } from "openchat-client";
+    import { app, AvatarSize } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import {
@@ -51,7 +51,7 @@
         let description = chat.description;
 
         if (chat.subtype?.kind === "governance_proposals") {
-            description = description.replace("{userId}", $currentUser.userId);
+            description = description.replace("{userId}", app.currentUserId);
         }
 
         return description;

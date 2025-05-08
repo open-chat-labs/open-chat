@@ -39,7 +39,7 @@
         headerText={i18nKey("invite.referredUsers")}>
         <div class="referrals">
             {#each referrals as referral}
-                {@const u = $userStore.get(referral)}
+                {@const u = userStore.get(referral)}
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div class="referral" onclick={(ev) => showUserProfile(ev, referral)}>

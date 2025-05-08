@@ -1,12 +1,10 @@
 <script lang="ts">
     import type { ChatSummary, DiamondMembershipStatus, GroupChatSummary } from "openchat-client";
     import {
-        anonUser,
         app,
         AvatarSize,
         publish,
         routeForChatIdentifier,
-        selectedChatId,
         byContext as typersByContext,
         ui,
         userStore,
@@ -63,7 +61,7 @@
     let isMultiUser = $derived(
         selectedChatSummary.kind === "group_chat" || selectedChatSummary.kind === "channel",
     );
-    let isBot = $derived($userStore.get(userId)?.kind === "bot");
+    let isBot = $derived(userStore.get(userId)?.kind === "bot");
     let hasUserProfile = $derived(!isMultiUser && !isBot);
     let verified = $derived(
         selectedChatSummary.kind === "group_chat" && selectedChatSummary.verified,
@@ -74,7 +72,7 @@
     }
 
     function showGroupDetails() {
-        if ($selectedChatId !== undefined) {
+        if (app.selectedChatId !== undefined) {
             ui.rightPanelHistory = [
                 {
                     kind: "group_details",
@@ -90,7 +88,7 @@
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         switch (chatSummary.kind) {
             case "direct_chat":
-                const them = $userStore.get(chatSummary.them.userId);
+                const them = userStore.get(chatSummary.them.userId);
                 return {
                     name: client.displayName(them),
                     diamondStatus: them?.diamondStatus ?? "inactive",
@@ -99,7 +97,7 @@
                     userId: chatSummary.them.userId,
                     typing: client.getTypingString(
                         $_,
-                        $userStore,
+                        userStore.allUsers,
                         { chatId: chatSummary.id },
                         typing,
                     ),
@@ -117,7 +115,7 @@
                     username: undefined,
                     typing: client.getTypingString(
                         $_,
-                        $userStore,
+                        userStore.allUsers,
                         { chatId: chatSummary.id },
                         typing,
                     ),
@@ -232,7 +230,7 @@
         </div>
     </div>
     <ActiveVideoCallResume />
-    {#if !readonly && !$anonUser}
+    {#if !readonly && !app.anonUser}
         <CurrentChatMenu
             bind:showSuspendUserModal
             {hasPinned}

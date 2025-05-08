@@ -19,7 +19,7 @@ use std::collections::btree_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::mem;
 use std::ops::DerefMut;
-use tracing::error;
+use tracing::{error, info};
 use types::{
     BlobReference, BotNotification, CallParticipant, CanisterId, Chat, ChatEventType, ChatType, CompletedCryptoTransaction,
     DirectChatCreated, EventContext, EventIndex, EventMetaData, EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated,
@@ -51,8 +51,16 @@ pub struct ChatEvents {
 }
 
 impl ChatEvents {
-    pub fn prune_updated_events(&mut self, now: TimestampMillis) -> u32 {
-        self.last_updated_timestamps.prune(now)
+    pub fn migrate_bot_contexts(&mut self) {
+        // 1st March 2025
+        const BOTS_FIRST_INSTALLED: TimestampMillis = 1740787200000;
+
+        let mut count = self.main.migrate_bot_contexts(BOTS_FIRST_INSTALLED);
+        for thread in self.threads.values_mut() {
+            count += thread.migrate_bot_contexts(BOTS_FIRST_INSTALLED);
+        }
+
+        info!(count, "Migrated bot contexts");
     }
 
     pub fn import_events(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
@@ -199,6 +207,7 @@ impl ChatEvents {
         }
 
         let message_index = events_list.next_message_index();
+        #[allow(deprecated)]
         let message_internal = MessageInternal {
             message_index,
             message_id: args.message_id,

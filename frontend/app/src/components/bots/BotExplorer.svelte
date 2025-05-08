@@ -6,9 +6,9 @@
         type ExternalBotLike,
         type OpenChat,
     } from "openchat-client";
-    import Search from "../Search.svelte";
     import { getContext, onMount } from "svelte";
     import { botSearchState } from "../../stores/search.svelte";
+    import Search from "../Search.svelte";
     import BotProperties from "./install/BotProperties.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -20,9 +20,17 @@
         fill?: boolean;
         maxHeight?: string;
         installingBot?: BotMatchType | undefined;
+        excludeInstalled?: boolean;
     }
 
-    let { location, onSelect, fill = false, maxHeight, installingBot }: Props = $props();
+    let {
+        location,
+        onSelect,
+        fill = false,
+        maxHeight,
+        installingBot,
+        excludeInstalled,
+    }: Props = $props();
 
     function onSearchEntered(reset = false) {
         if (reset) {
@@ -37,6 +45,7 @@
                 botSearchState.index,
                 PAGE_SIZE,
                 location,
+                excludeInstalled ?? false,
             )
             .then((results) => {
                 console.log("Results: ", results);

@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">OpenChat</string>
+    <string name="main_activity_title">OpenChat</string>
+    <string name="asset_statements" translatable="false">
+    [{
+    \"include\": \"https://oc.app/.well-known/assetlinks.json\"
+    }]
+    </string>
+</resources>

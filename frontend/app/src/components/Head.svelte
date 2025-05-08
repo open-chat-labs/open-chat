@@ -7,10 +7,8 @@
         type OpenChat,
         type UserLookup,
         app,
-        globalUnreadCount,
         pathState,
         routeForChatIdentifier,
-        selectedChatStore,
         userStore,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
@@ -88,9 +86,9 @@
         getDetails(
             app.chatListScope,
             pathState.location,
-            $userStore,
-            $globalUnreadCount,
-            $selectedChatStore,
+            userStore.allUsers,
+            app.globalUnreadCount,
+            app.selectedChatSummary,
             app.selectedCommunitySummary,
         ),
     );

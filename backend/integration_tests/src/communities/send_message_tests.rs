@@ -70,7 +70,7 @@ fn send_crypto_in_channel(with_c2c_error: bool) {
     } = init_test_data(env, canister_ids, *controller);
 
     if with_c2c_error {
-        stop_canister(env, canister_ids.local_group_index(env, community_id), community_id.into());
+        stop_canister(env, canister_ids.local_user_index(env, community_id), community_id.into());
     }
 
     let send_message_result = client::user::send_message_with_transfer_to_channel(
@@ -124,7 +124,7 @@ fn send_crypto_in_channel(with_c2c_error: bool) {
 
     if with_c2c_error {
         env.advance_time(Duration::from_secs(10));
-        start_canister(env, canister_ids.local_group_index(env, community_id), community_id.into());
+        start_canister(env, canister_ids.local_user_index(env, community_id), community_id.into());
         env.tick();
     }
 

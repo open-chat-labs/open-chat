@@ -105,6 +105,7 @@
         "visibility": "Доступ"
     },
     "account": "Обліковий запис",
+    "accountCopiedToClipboard": "Адресу облікового запису скопійовано в буфер обміну!",
     "accounts": "Облікові записи",
     "accountSuspended": "Рахунок Підвісні",
     "activity": {
@@ -369,13 +370,14 @@
         "matchingCommands": "Зіставлення команд",
         "member": {
             "bots": "Боти",
-            "people": "Люди"
+            "people": "Люди",
+            "webhooks": "Вебхуки"
         },
         "poll": {
             "desc": "Створити опитування в поточному чаті"
         },
         "register_bot": {
-            "desc": "Розпочніть пропозицію для опису та реєстрації нового бота в OpenChat"
+            "desc": "Зареєструйте нового бота в OpenChat"
         },
         "search": {
             "desc": "Розпочніть пошук у поточному чаті",
@@ -1091,6 +1093,14 @@
     "messageUrlCopiedToClipboard": "URL-адресу повідомлення скопійовано в буфер обміну!",
     "minimumAmount": "Мінімум: {amount} {symbol}",
     "minutes": "хвилин",
+    "mobile": {
+        "credentials": {
+            "errors": {
+                "genericSignIn": "Не вдалося ввійти за допомогою ключа доступу.",
+                "genericSignUp": "Не вдалося створити ключ доступу."
+            }
+        }
+    },
     "moderator": "модератор",
     "months": "Місяці",
     "mustBeFutureDateError": "Ви повинні вибрати майбутню дату",
@@ -1666,7 +1676,8 @@
         "groupStats": "{level} статистика",
         "icpTransfers": "повідомлення ICP",
         "imageMessages": "Повідомлення зображення",
-        "minutesOnline": "Хвилини онлайн цього місяця",
+        "minutesOnlineLastMonth": "Хвилин онлайн минулого місяця",
+        "minutesOnlineThisMonth": "Хвилини онлайн цього місяця",
         "pollMessages": "Повідомлення опитування",
         "pollVotes": "Опитування голосів",
         "reactions": "реакції",
@@ -1994,6 +2005,23 @@
     "viewer": "глядач",
     "wallet": "Гаманець",
     "walletSettings": "Налаштування гаманця",
+    "webhook": {
+        "avatarLabel": "Аватар",
+        "nameLabel": "Ім'я",
+        "namePlaceholder": "Введіть назву вебхука",
+        "nameRules": "Має бути унікальним у цьому чаті та містити лише буквено-цифрові символи та символи підкреслення",
+        "regenerateAction": "Регенерувати",
+        "registerAction": "Зареєструватися",
+        "registerDesc": "Зареєструйте вебхук у цьому чаті",
+        "registerTitle": "Зареєструвати вебхук",
+        "removeAction": "Видалити вебхук",
+        "removeFailed": "Вибачте, нам не вдалося видалити вебхук",
+        "updateAction": "Оновлення",
+        "updateTitle": "Оновлення {name}",
+        "urlLabel": "URL-адреса вебхука",
+        "username": "вебхук",
+        "viewEditAction": "Переглянути/редагувати деталі вебхука"
+    },
     "websiteVersion": "веб-сайту",
     "weeks": "тижнів",
     "whatsHot": "Що цікавого?",

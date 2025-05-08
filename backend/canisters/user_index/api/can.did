@@ -112,6 +112,7 @@ type ExploreBotsArgs = record {
     search_term : opt text;
     page_index : nat32;
     page_size : nat8;
+    exclude_installed : bool;
 };
 
 type ExploreBotsResponse = variant {

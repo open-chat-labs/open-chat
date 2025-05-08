@@ -1,12 +1,11 @@
 <script lang="ts">
     import {
-        globalStateStore as global,
+        app,
         messageContextToChatListScope,
         messageContextToString,
         OpenChat,
         routeForMessage,
         ui,
-        type GlobalState,
         type MessageActivityEvent,
     } from "openchat-client";
     import page from "page";
@@ -15,7 +14,6 @@
     import Close from "svelte-material-icons/Close.svelte";
     import { menuCloser } from "../../../actions/closeMenu";
     import { i18nKey } from "../../../i18n/i18n";
-    import { activityEvents, activityFeedShowing } from "../../../stores/activity";
     import HoverIcon from "../../HoverIcon.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -23,18 +21,19 @@
     import ActivityEvent from "./ActivityEvent.svelte";
 
     const client = getContext<OpenChat>("client");
-    let selectedEventIndex = $state<number | undefined>();
 
-    function uptodate({ messageActivitySummary }: GlobalState, events: MessageActivityEvent[]) {
-        const latest = events[0]?.timestamp;
-        return messageActivitySummary.latestTimestamp <= latest;
-    }
+    let activityEvents = $state<MessageActivityEvent[]>([]);
+    let selectedEventIndex = $state<number | undefined>();
+    let latestTimestamp = $derived(activityEvents[0]?.timestamp ?? 0n);
+    let uptodate = $derived.by(() => {
+        return app.messageActivitySummary.latestTimestamp <= latestTimestamp;
+    });
 
     function loadActivity() {
         client.subscribeToMessageActivityFeed((resp, final) => {
-            activityEvents.set(resp.events);
-            if ($activityEvents.length > 0 && final) {
-                client.markActivityFeedRead($activityEvents[0].timestamp);
+            activityEvents = resp.events;
+            if (activityEvents.length > 0 && final) {
+                client.markActivityFeedRead(latestTimestamp);
             }
         });
     }
@@ -55,8 +54,9 @@
             event.activity
         }`;
     }
+
     $effect(() => {
-        if (!uptodate($global, $activityEvents)) {
+        if (!uptodate) {
             loadActivity();
         }
     });
@@ -71,7 +71,7 @@
             <h4 class="name"><Translatable resourceKey={i18nKey("activity.title")} /></h4>
         </div>
         <span class="menu">
-            <HoverIcon onclick={() => activityFeedShowing.set(false)}>
+            <HoverIcon onclick={() => (ui.activityFeedShowing = false)}>
                 <Close size={ui.iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </span>
@@ -79,7 +79,7 @@
 </SectionHeader>
 
 <div use:menuCloser class="body">
-    <VirtualList keyFn={eventKey} items={$activityEvents}>
+    <VirtualList keyFn={eventKey} items={activityEvents}>
         {#snippet children(item, idx)}
             <ActivityEvent
                 event={item}

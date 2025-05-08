@@ -1,9 +1,9 @@
 <script lang="ts">
-    import NonMessageEvent from "./NonMessageEvent.svelte";
-    import { _ } from "svelte-i18n";
     import type { UserSummary } from "openchat-client";
     import { userStore } from "openchat-client";
+    import { _ } from "svelte-i18n";
     import { buildDisplayName } from "../../utils/user";
+    import NonMessageEvent from "./NonMessageEvent.svelte";
 
     interface Props {
         user: UserSummary | undefined;
@@ -16,7 +16,9 @@
     let { user, changedBy, property, timestamp, level }: Props = $props();
 
     let me = $derived(changedBy === user?.userId);
-    let changedByStr = $derived(buildDisplayName($userStore, changedBy, me));
+    let changedByStr = $derived(
+        buildDisplayName(userStore.allUsers, changedBy, me ? "me" : "user"),
+    );
     let text = $derived(
         $_("groupChangedBy", {
             values: {

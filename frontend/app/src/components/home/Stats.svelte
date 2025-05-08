@@ -237,8 +237,12 @@
         <Translatable resourceKey={i18nKey("stats.deletedMessages")} />
     </div>
     <div class="minutes-online">
-        <span class="stat">{$minutesOnlineStore.toLocaleString()}</span>
-        <Translatable resourceKey={i18nKey("stats.minutesOnline")} />
+        <span class="stat">{$minutesOnlineStore.minutesOnlineThisMonth.toLocaleString()}</span>
+        <Translatable resourceKey={i18nKey("stats.minutesOnlineThisMonth")} />
+    </div>
+    <div class="minutes-online">
+        <span class="stat">{$minutesOnlineStore.minutesOnlineLastMonth.toLocaleString()}</span>
+        <Translatable resourceKey={i18nKey("stats.minutesOnlineLastMonth")} />
     </div>
     {#if showReported}
         <Tooltip longestWord={20} position={"top"} align="middle">

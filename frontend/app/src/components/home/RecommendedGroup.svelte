@@ -2,7 +2,6 @@
     import {
         app,
         AvatarSize,
-        chatSummariesStore,
         type GroupChatIdentifier,
         type GroupChatSummary,
         isLocked,
@@ -10,7 +9,6 @@
         type OpenChat,
         publish,
         routeForChatIdentifier,
-        suspendedUser,
         ui,
     } from "openchat-client";
     import page from "page";
@@ -37,7 +35,7 @@
 
     let { group, joining, onDismissRecommendation }: Props = $props();
 
-    let member = $derived($chatSummariesStore.has(group.id));
+    let member = $derived(app.chatSummaries.has(group.id));
     let locked = $derived(isLocked(group.gateConfig.gate));
 
     function dismiss({ id }: GroupChatSummary) {
@@ -98,7 +96,7 @@
             <Button tiny onClick={() => leaveGroup(group)}
                 ><Translatable resourceKey={i18nKey("leave")} /></Button>
         {:else}
-            {#if !$suspendedUser}
+            {#if !app.suspendedUser}
                 <Button
                     disabled={locked || joining === group}
                     loading={joining === group}

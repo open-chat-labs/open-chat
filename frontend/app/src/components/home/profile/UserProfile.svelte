@@ -6,19 +6,10 @@
         ModerationFlags,
         type OpenChat,
         type UserSummary,
-        anonUser,
         app,
-        canExtendDiamond,
-        globalStateStore as globalState,
-        hideMessagesFromDirectBlocked,
-        isDiamond,
-        isLifetimeDiamond,
-        moderationFlags,
         notificationStatus,
         publish,
-        suspendedUser,
         ui,
-        userMetrics,
     } from "openchat-client";
     import { ErrorCode } from "openchat-shared";
     import { getContext, onMount } from "svelte";
@@ -116,20 +107,13 @@
 
     let originalUsername = $derived(user?.username ?? "");
     let originalDisplayName = $derived(user?.displayName ?? undefined);
-    let adultEnabled = $derived(client.hasModerationFlag($moderationFlags, ModerationFlags.Adult));
-    let offensiveEnabled = $derived(
-        client.hasModerationFlag($moderationFlags, ModerationFlags.Offensive),
-    );
-    let underReviewEnabled = $derived(
-        client.hasModerationFlag($moderationFlags, ModerationFlags.UnderReview),
-    );
     let selectedCommunity = $derived(
         app.communities.get({
             kind: "community",
             communityId: selectedCommunityId,
         }),
     );
-    let readonly = $derived($suspendedUser || $anonUser);
+    let readonly = $derived(app.suspendedUser || app.anonUser);
     let verified = $derived(user.isUniquePerson);
 
     //@ts-ignore
@@ -151,11 +135,10 @@
             !readonly,
     );
     let canEditTranslations = $derived(!$locale?.startsWith("en"));
-    let referrals = $derived($globalState.referrals);
-    let referredUserIds = $derived(new Set(referrals.map((r) => r.userId)));
+    let referredUserIds = $derived(new Set(app.referrals.map((r) => r.userId)));
 
     onMount(() => {
-        if (!$anonUser) {
+        if (!app.anonUser) {
             client.getBio().then((bio) => {
                 originalBio = userbio = bio;
             });
@@ -163,13 +146,13 @@
     });
 
     function toggleModerationFlag(flag: ModerationFlag) {
-        client.setModerationFlags($moderationFlags ^ flag);
+        client.setModerationFlags(app.moderationFlagsEnabled ^ flag);
     }
 
     function saveUser(e: Event) {
         e.preventDefault();
 
-        if ($anonUser) return;
+        if (app.anonUser) return;
 
         saving = true;
         usernameError = undefined;
@@ -292,7 +275,7 @@
     </span>
 </SectionHeader>
 
-{#if !$anonUser}
+{#if !app.anonUser}
     <div class="tabs">
         <div
             tabindex="0"
@@ -348,7 +331,7 @@
                         <Verified size={"large"} {verified} tooltip={i18nKey("human.verified")} />
                     </div>
                 </div>
-                {#if $anonUser}
+                {#if app.anonUser}
                     <div class="guest">
                         <p><Translatable resourceKey={i18nKey("guestUser")} /></p>
                         <Button onClick={() => client.updateIdentityState({ kind: "logging_in" })}
@@ -406,7 +389,7 @@
                 {/if}
             </CollapsibleCard>
         </div>
-        {#if !$anonUser && uniquePersonGate.enabled}
+        {#if !app.anonUser && uniquePersonGate.enabled}
             <div class="verification">
                 <CollapsibleCard
                     onToggle={verificationSectionOpen.toggle}
@@ -435,7 +418,7 @@
                 </CollapsibleCard>
             </div>
         {/if}
-        {#if !$anonUser}
+        {#if !app.anonUser}
             <div class="linked-accounts">
                 <CollapsibleCard
                     onToggle={accountsSectionOpen.toggle}
@@ -477,7 +460,7 @@
                 </div>
             </CollapsibleCard>
         </div>
-        {#if !$anonUser}
+        {#if !app.anonUser}
             <div class="invite">
                 <CollapsibleCard
                     onToggle={referralOpen.toggle}
@@ -531,9 +514,9 @@
                     <Toggle
                         id={"hide-blocked"}
                         small
-                        onChange={() => hideMessagesFromDirectBlocked.toggle()}
+                        onChange={() => ui.hideMessagesFromDirectBlocked.toggle()}
                         label={i18nKey("hideBlocked")}
-                        checked={$hideMessagesFromDirectBlocked} />
+                        checked={ui.hideMessagesFromDirectBlocked.value} />
                 </CollapsibleCard>
             </div>
             <div class="video">
@@ -557,19 +540,19 @@
                         small
                         onChange={() => toggleModerationFlag(ModerationFlags.Offensive)}
                         label={i18nKey("communities.offensive")}
-                        checked={offensiveEnabled} />
+                        checked={app.offensiveEnabled} />
                     <Toggle
                         id={"adult"}
                         small
                         onChange={() => toggleModerationFlag(ModerationFlags.Adult)}
                         label={i18nKey("communities.adult")}
-                        checked={adultEnabled} />
+                        checked={app.adultEnabled} />
                     <Toggle
                         id={"underReview"}
                         small
                         onChange={() => toggleModerationFlag(ModerationFlags.UnderReview)}
                         label={i18nKey("communities.underReview")}
-                        checked={underReviewEnabled} />
+                        checked={app.underReviewEnabled} />
                 </CollapsibleCard>
             </div>
             {#if !readonly}
@@ -580,22 +563,22 @@
                         headerText={i18nKey("upgrade.membership")}>
                         <StorageUsage />
 
-                        {#if !$isDiamond}
+                        {#if !app.isDiamond}
                             <ButtonGroup align={"fill"}>
                                 <Button onClick={() => publish("upgrade")} small
                                     ><Translatable
                                         resourceKey={i18nKey("upgrade.button")} /></Button>
                             </ButtonGroup>
-                        {:else if $isLifetimeDiamond}
+                        {:else if app.isLifetimeDiamond}
                             <Translatable resourceKey={i18nKey("upgrade.lifetimeMessage")} />
                         {:else}
                             <Expiry />
                             <ButtonGroup align={"fill"}>
                                 <Button
-                                    title={!$canExtendDiamond
+                                    title={!app.canExtendDiamond
                                         ? $_("upgrade.cannotExtend")
                                         : undefined}
-                                    disabled={!$canExtendDiamond}
+                                    disabled={!app.canExtendDiamond}
                                     onClick={() => publish("upgrade")}
                                     small
                                     ><Translatable
@@ -610,7 +593,7 @@
                     onToggle={statsSectionOpen.toggle}
                     open={$statsSectionOpen}
                     headerText={i18nKey("stats.userStats")}>
-                    <Stats showReported stats={$userMetrics} />
+                    <Stats showReported stats={app.userMetrics} />
                 </CollapsibleCard>
             </div>
         {/if}
@@ -619,7 +602,7 @@
                 onToggle={advancedSectionOpen.toggle}
                 open={$advancedSectionOpen}
                 headerText={i18nKey("advanced")}>
-                {#if !$anonUser}
+                {#if !app.anonUser}
                     <div class="userid">
                         <Legend label={i18nKey("userId")} rules={i18nKey("alsoCanisterId")} />
                         <div class="userid-txt">
@@ -655,7 +638,7 @@
                 </div>
             </CollapsibleCard>
         </div>
-        {#if !$anonUser}
+        {#if !app.anonUser}
             <div class="danger">
                 <CollapsibleCard
                     onToggle={deleteAccountSectionOpen.toggle}

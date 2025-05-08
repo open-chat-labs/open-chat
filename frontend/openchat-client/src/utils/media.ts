@@ -1,6 +1,5 @@
-import type { Message, MessageContent } from "openchat-shared";
+import type { AttachmentContent, Message, MessageContent } from "openchat-shared";
 import { dataToBlobUrl } from "./blob";
-import type { AttachmentContent } from "openchat-shared";
 
 const THUMBNAIL_DIMS = dimensions(30, 30);
 

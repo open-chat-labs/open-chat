@@ -105,6 +105,7 @@
         "visibility": "Dostęp"
     },
     "account": "Konto",
+    "accountCopiedToClipboard": "Adres konta został skopiowany do schowka!",
     "accounts": "Konta",
     "accountSuspended": "Konto zawieszone",
     "activity": {
@@ -369,13 +370,14 @@
         "matchingCommands": "Dopasowywanie poleceń",
         "member": {
             "bots": "Boty",
-            "people": "Ludzie"
+            "people": "Ludzie",
+            "webhooks": "Webhooki"
         },
         "poll": {
             "desc": "Utwórz ankietę w bieżącym czacie"
         },
         "register_bot": {
-            "desc": "Rozpocznij propozycję opisania i zarejestrowania nowego bota w OpenChat"
+            "desc": "Zarejestruj nowego bota w OpenChat"
         },
         "search": {
             "desc": "Rozpocznij wyszukiwanie w bieżącym czacie",
@@ -1091,6 +1093,14 @@
     "messageUrlCopiedToClipboard": "Adres URL wiadomości skopiowany do schowka!",
     "minimumAmount": "Minimum: {amount} {symbol}",
     "minutes": "Minuty",
+    "mobile": {
+        "credentials": {
+            "errors": {
+                "genericSignIn": "Nie można zalogować się za pomocą klucza dostępu.",
+                "genericSignUp": "Nie można utworzyć klucza dostępu."
+            }
+        }
+    },
     "moderator": "moderator",
     "months": "Miesiące",
     "mustBeFutureDateError": "Musisz wybrać przyszłą datę",
@@ -1666,7 +1676,8 @@
         "groupStats": "Statystyki {level}",
         "icpTransfers": "Wiadomość ICP",
         "imageMessages": "Wiadomość obrazkowa",
-        "minutesOnline": "Minuty online w tym miesiącu",
+        "minutesOnlineLastMonth": "Minuty online w zeszłym miesiącu",
+        "minutesOnlineThisMonth": "Minuty online w tym miesiącu",
         "pollMessages": "Wiadomość z ankietą",
         "pollVotes": "Głosy w ankiecie",
         "reactions": "Reakcje",
@@ -1994,6 +2005,23 @@
     "viewer": "widz",
     "wallet": "Portfel",
     "walletSettings": "Ustawienia portfela",
+    "webhook": {
+        "avatarLabel": "Awatara",
+        "nameLabel": "Nazwa",
+        "namePlaceholder": "Wprowadź nazwę webhooka",
+        "nameRules": "Musi być unikalny w tym czacie i zawierać wyłącznie znaki alfanumeryczne i podkreślenia",
+        "regenerateAction": "Zregenerować",
+        "registerAction": "Rejestr",
+        "registerDesc": "Zarejestruj webhook w tym czacie",
+        "registerTitle": "Zarejestruj webhook",
+        "removeAction": "Usuń webhook",
+        "removeFailed": "Przepraszamy, nie udało nam się usunąć webhooka",
+        "updateAction": "Aktualizacja",
+        "updateTitle": "Aktualizacja {name}",
+        "urlLabel": "Adres URL webhooka",
+        "username": "hak internetowy",
+        "viewEditAction": "Wyświetl/edytuj szczegóły webhooka"
+    },
     "websiteVersion": "strony internetowej",
     "weeks": "Tygodnie",
     "whatsHot": "Co jest na topie?",

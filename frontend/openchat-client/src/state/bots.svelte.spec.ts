@@ -1,4 +1,7 @@
+import type { MessageContext } from "openchat-shared";
 import { botState } from "./bots.svelte";
+
+const messageContext: MessageContext = { chatId: { kind: "group_chat", groupId: "123456" } };
 
 describe("bot state", () => {
     beforeAll(() => {
@@ -21,7 +24,7 @@ describe("bot state", () => {
         });
 
         test("filtered built in commands", () => {
-            botState.prefix = "register";
+            botState.prefix = "register_b";
             expect(botState.commands.length).toEqual(1);
             expect(botState.commands[0].name).toEqual("register_bot");
             botState.prefix = "gif";
@@ -32,15 +35,23 @@ describe("bot state", () => {
         describe("set selected command", () => {
             test("set selected command - no params", () => {
                 botState.prefix = "register";
-                botState.setSelectedCommand(botState.commands, botState.commands[0]);
+                botState.setSelectedCommand(
+                    messageContext,
+                    botState.commands,
+                    botState.commands[0],
+                );
                 expect(botState.selectedCommand).toEqual(botState.commands[0]);
-                expect(botState.showingBuilder).toBe(false);
+                expect(botState.showingBuilder).toBeUndefined();
             });
             test("set selected command - with params", () => {
                 botState.prefix = "faq";
-                botState.setSelectedCommand(botState.commands, botState.commands[0]);
+                botState.setSelectedCommand(
+                    messageContext,
+                    botState.commands,
+                    botState.commands[0],
+                );
                 expect(botState.selectedCommand).toEqual(botState.commands[0]);
-                expect(botState.showingBuilder).toBe(true);
+                expect(botState.showingBuilder).toEqual(messageContext);
                 expect(botState.selectedCommandArgs.length).toEqual(1);
                 expect(botState.selectedCommandArgs[0]).toMatchObject({
                     name: "bots.faq.params.topic.name",

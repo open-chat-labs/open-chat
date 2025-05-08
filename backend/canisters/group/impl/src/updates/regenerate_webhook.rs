@@ -10,10 +10,13 @@ use types::OCResult;
 fn regenerate_webhook(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| regenerate_webhook_impl(args, state)).into()
+    match mutate_state(|state| regenerate_webhook_impl(args, state)) {
+        Ok(result) => Response::Success(result),
+        Err(error) => Response::Error(error),
+    }
 }
 
-fn regenerate_webhook_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+fn regenerate_webhook_impl(args: Args, state: &mut RuntimeState) -> OCResult<SuccessResult> {
     state.data.verify_not_frozen()?;
 
     let member = state.get_calling_member(true)?;
@@ -28,6 +31,12 @@ fn regenerate_webhook_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         return Err(OCErrorCode::WebhookNotFound.into());
     }
 
+    let webhook = state.data.chat.webhooks.get(&args.id).unwrap();
+
+    let result = SuccessResult {
+        secret: webhook.secret.clone(),
+    };
+
     handle_activity_notification(state);
-    Ok(())
+    Ok(result)
 }

@@ -4,7 +4,6 @@
         type RehydratedReplyContext,
         app,
         chatIdentifiersEqual,
-        currentUser,
         OpenChat,
         routeForChatIdentifier,
     } from "openchat-client";
@@ -31,7 +30,7 @@
 
     let debug = false;
 
-    let me = $derived(repliesTo.senderId === $currentUser.userId);
+    let me = $derived(repliesTo.senderId === app.currentUserId);
     let isTextContent = $derived(repliesTo.content?.kind === "text_content");
     let isP2PSwap = $derived(repliesTo.content.kind === "p2p_swap_content");
     let displayName = $derived(

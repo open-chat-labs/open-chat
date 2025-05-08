@@ -2,6 +2,7 @@ import { AuthProvider } from "./auth";
 import type { GroupInvite } from "./inviteCodes";
 
 export type AgentConfig = {
+    appType?: "android" | "ios" | "web";
     authPrincipal: string;
     authProvider: AuthProvider | undefined;
     icUrl: string;
@@ -19,7 +20,7 @@ export type AgentConfig = {
     userGeekApiKey: string;
     enableMultiCrypto?: boolean;
     blobUrlPattern: string;
-    achievementUrlPath: string;
+    canisterUrlPath: string;
     proposalBotCanister: string;
     marketMakerCanister: string;
     signInWithEmailCanister: string;

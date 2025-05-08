@@ -1,10 +1,10 @@
 <script lang="ts">
-    import NonMessageEvent from "./NonMessageEvent.svelte";
     import type { UserSummary } from "openchat-client";
     import { userStore } from "openchat-client";
-    import { _ } from "svelte-i18n";
     import type { ChatFrozenEvent } from "openchat-shared";
+    import { _ } from "svelte-i18n";
     import { buildDisplayName } from "../../utils/user";
+    import NonMessageEvent from "./NonMessageEvent.svelte";
 
     interface Props {
         event: ChatFrozenEvent;
@@ -15,7 +15,9 @@
     let { event, user, timestamp }: Props = $props();
 
     let me = $derived(event.frozenBy === user?.userId);
-    let frozenByStr = $derived(buildDisplayName($userStore, event.frozenBy, me));
+    let frozenByStr = $derived(
+        buildDisplayName(userStore.allUsers, event.frozenBy, me ? "me" : "user"),
+    );
 
     let chatFrozenByText = $derived(
         $_("chatFrozenBy", {

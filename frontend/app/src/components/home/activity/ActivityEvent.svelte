@@ -5,7 +5,7 @@
         AvatarSize,
         OpenChat,
         routeForMessageContext,
-        currentUser as user,
+        ui,
         userStore,
         type MessageContext,
     } from "openchat-client";
@@ -13,7 +13,6 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
-    import { activityFeedShowing } from "../../../stores/activity";
     import { buildDisplayName } from "../../../utils/user";
     import Avatar from "../../Avatar.svelte";
     import Link from "../../Link.svelte";
@@ -67,7 +66,7 @@
         if (ev.message === undefined) return new Set();
         return new Set(
             ev.message.reactions.flatMap((r) =>
-                [...r.userIds].filter((u) => u !== ev.userId && u !== userId),
+                [...r.userIds].filter((u) => u !== ev.userId && u !== app.currentUserId),
             ),
         );
     }
@@ -109,7 +108,11 @@
                 const u = [...others][0];
                 return i18nKey(`activity.${root}Two`, {
                     username,
-                    other: buildDisplayName($userStore, u, u === userId),
+                    other: buildDisplayName(
+                        userStore.allUsers,
+                        u,
+                        u === app.currentUserId ? "me" : "user",
+                    ),
                 });
             default:
                 return i18nKey(`activity.${root}N`, { username, n: others.size });
@@ -147,19 +150,26 @@
     }
 
     function goToEventContext() {
-        activityFeedShowing.set(false);
+        ui.activityFeedShowing = false;
         page(routeForMessageContext("none", event.messageContext, true));
     }
-    let userId = $derived($user.userId);
-    let sender = $derived(event.userId ? $userStore.get(event.userId) : undefined);
+    let sender = $derived(event.userId ? userStore.get(event.userId) : undefined);
     let eventUsername = $derived(
         event.userId
-            ? buildDisplayName($userStore, event.userId, event.userId === userId)
+            ? buildDisplayName(
+                  userStore.allUsers,
+                  event.userId,
+                  event.userId === app.currentUserId ? "me" : "user",
+              )
             : $_("activity.anon"),
     );
     let messageUsername = $derived(
         event.message
-            ? buildDisplayName($userStore, event.message.sender, event.message.sender === userId)
+            ? buildDisplayName(
+                  userStore.allUsers,
+                  event.message.sender,
+                  event.message.sender === app.currentUserId ? "me" : "user",
+              )
             : $_("activity.anon"),
     );
     let lastMessage = $derived(formatLatestMessage(event, messageUsername));

@@ -105,6 +105,7 @@
         "visibility": "Access"
     },
     "account": "Account",
+    "accountCopiedToClipboard": "Account address copied to clipboard!",
     "accounts": "Accounts",
     "accountSuspended": "Account suspended",
     "activity": {
@@ -369,13 +370,14 @@
         "matchingCommands": "Matching commands",
         "member": {
             "bots": "Bots",
-            "people": "People"
+            "people": "People",
+            "webhooks": "Webhooks"
         },
         "poll": {
             "desc": "Create a poll in the current chat"
         },
         "register_bot": {
-            "desc": "Start a proposal to describe and register a new bot with OpenChat"
+            "desc": "Register a new bot with OpenChat"
         },
         "search": {
             "desc": "Initiate a search in the current chat",
@@ -567,7 +569,7 @@
     "confirmMakeGroupPublic": "Do you definitely want to make this {level} public?\n\nExisting messages will remain private, all new messages will be public.",
     "confirmMembers": "Confirm members",
     "congratulations": "Congratulations!",
-    "copiedToClipboard": "Account address copied to clipboard!",
+    "copiedToClipboard": "Copied to clipboard!",
     "copy": "Copy",
     "copyGroupUrl": "Copy group url",
     "copyInviteCode": "Copy invite code",
@@ -1091,6 +1093,14 @@
     "messageUrlCopiedToClipboard": "Message url copied to clipboard!",
     "minimumAmount": "Minimum: {amount} {symbol}",
     "minutes": "Minutes",
+    "mobile": {
+        "credentials": {
+            "errors": {
+                "genericSignIn": "Could not sign in with a passkey.",
+                "genericSignUp": "Could not create a passkey."
+            }
+        }
+    },
     "moderator": "moderator",
     "months": "Months",
     "mustBeFutureDateError": "You must select a future date",
@@ -1666,7 +1676,8 @@
         "groupStats": "{level} stats",
         "icpTransfers": "ICP message",
         "imageMessages": "Image message",
-        "minutesOnline": "Mins online this month",
+        "minutesOnlineLastMonth": "Mins online last month",
+        "minutesOnlineThisMonth": "Mins online this month",
         "pollMessages": "Poll message",
         "pollVotes": "Poll votes",
         "reactions": "Reactions",
@@ -1994,6 +2005,23 @@
     "viewer": "viewer",
     "wallet": "Wallet",
     "walletSettings": "Wallet settings",
+    "webhook": {
+        "avatarLabel": "Avatar",
+        "nameLabel": "Name",
+        "namePlaceholder": "Enter webhook name",
+        "nameRules": "Must be unique in this chat and contain alphanumeric characters and underscores only",
+        "regenerateAction": "Regenerate",
+        "registerAction": "Register",
+        "registerDesc": "Register a webhook in this chat",
+        "registerTitle": "Register a webhook",
+        "removeAction": "Remove webhook",
+        "removeFailed": "Sorry we were unable to remove the webhook",
+        "updateAction": "Update",
+        "updateTitle": "Update {name}",
+        "urlLabel": "Webhook URL",
+        "username": "webhook",
+        "viewEditAction": "View/edit webhook details"
+    },
     "websiteVersion": "of the website",
     "weeks": "Weeks",
     "whatsHot": "What's hot?",

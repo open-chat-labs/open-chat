@@ -1,6 +1,7 @@
+export { type AgentConfig } from "./config";
 export * from "./services";
-export { setCommunityReferral } from "./utils/referralCache";
-export { setCachedWebAuthnKey } from "./utils/webAuthnKeyCache";
+export { UserNotificationPayload as Notification } from "./typebox";
 export { deserializeFromMsgPack, serializeToMsgPack } from "./utils/msgpack";
+export { setCommunityReferral } from "./utils/referralCache";
 export { typeboxValidate } from "./utils/typebox";
-export { Notification } from "./typebox";
+export { setCachedWebAuthnKey } from "./utils/webAuthnKeyCache";

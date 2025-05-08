@@ -2,18 +2,13 @@ import { chatIdentifiersEqual, type ChatIdentifier } from "openchat-shared";
 import { untrack } from "svelte";
 import type { OpenChat } from "./openchat";
 import { app } from "./state/app.svelte";
-import { localUpdates } from "./state/global";
 import { pathState } from "./state/path.svelte";
 import { ui } from "./state/ui.svelte";
+import { userStore } from "./state/users/users.svelte";
 import {
     chatListScopeStore,
-    dummyCommunityPreviewStore,
-    dummyPinnedChatsStore,
-    dummyScopedServerChats,
-    dummyServerCommunities,
-    dummyServerDirectChats,
-    dummyServerFavourites,
-    dummyServerGroupChats,
+    dummyCurrentUser,
+    dummyUserStore,
     dummyWalletConfigStore,
 } from "./stores";
 
@@ -26,7 +21,7 @@ function onSelectedCommunityChanged(client: OpenChat) {
             // make double sure we are only reacting to the things we want to react to
             untrack(() => {
                 client.setSelectedCommunity(id).then((preview) => {
-                    if (preview) {
+                    if (preview && app.selectedChatId === undefined) {
                         // if we are previewing the community we need to select the first chat manually
                         client.selectFirstChat();
                     }
@@ -58,12 +53,6 @@ function onSelectedChatChanged(client: OpenChat) {
                     }
                 }
             });
-        }
-    });
-
-    $effect(() => {
-        if (app.selectedChatId === undefined) {
-            client.clearSelectedChat();
         }
     });
 }
@@ -110,16 +99,7 @@ function onThreadStateChanged(client: OpenChat) {
 // runes and Svelte 4 stores in sync. The easiest way to do this is with effects
 function syncState() {
     $effect(() => {
-        dummyCommunityPreviewStore.set(localUpdates.previewCommunities.size);
-    });
-
-    $effect(() => {
         chatListScopeStore.set(pathState.route.scope);
-    });
-
-    $effect(() => {
-        void app.pinnedChats;
-        dummyPinnedChatsStore.set(Symbol());
     });
 
     $effect(() => {
@@ -128,50 +108,40 @@ function syncState() {
     });
 
     $effect(() => {
-        void app.serverCommunities;
-        dummyServerCommunities.set(Symbol());
+        void app.currentUser;
+        dummyCurrentUser.set(Symbol());
     });
 
     $effect(() => {
-        void app.serverDirectChats;
-        dummyServerDirectChats.set(Symbol());
-    });
-
-    $effect(() => {
-        void app.serverGroupChats;
-        dummyServerGroupChats.set(Symbol());
-    });
-
-    $effect(() => {
-        void app.serverFavourites;
-        dummyServerFavourites.set(Symbol());
-    });
-
-    $effect(() => {
-        void app.scopedServerChats;
-        dummyScopedServerChats.set(Symbol());
+        void userStore.allUsers;
+        dummyUserStore.set(Symbol());
     });
 }
 
 export function configureEffects(client: OpenChat) {
+    // Note that the order of these effects is important
     $effect.root(() => {
-        onSelectedCommunityChanged(client);
+        syncState();
 
-        onSelectedChatChanged(client);
+        onSelectedCommunityChanged(client);
 
         onThreadStateChanged(client);
 
         onThreadClosed();
 
-        syncState();
-
         // TODO - this seems to be a reasonable approach, but it causes a flicker of No Chat Selected for some reason
         // so we might need to rethink - ok for now though.
         // Actually this is already the case on webtest & prod so it's no worse - but could it be better?
         $effect(() => {
-            if (app.selectedChatId === undefined && pathState.route.scope.kind !== "none") {
+            if (
+                app.selectedChatId === undefined &&
+                app.chatListScope.kind !== "none" &&
+                !pathState.exploring
+            ) {
                 client.selectFirstChat();
             }
         });
+
+        onSelectedChatChanged(client);
     });
 }

@@ -1,10 +1,10 @@
 <script lang="ts">
     import type { ChatSummary, OpenChat, UserSummary } from "openchat-client";
     import {
+        app,
         cryptoBalance as cryptoBalanceStore,
         enhancedCryptoLookup as cryptoLookup,
         ui,
-        currentUser as user,
         userStore,
     } from "openchat-client";
     import { type CryptocurrencyContent, type MessageContext, nowNanos } from "openchat-shared";
@@ -76,9 +76,9 @@
     onMount(() => {
         // default the receiver to the other user in a direct chat
         if (chat.kind === "direct_chat") {
-            receiver = $userStore.get(chat.them.userId);
-        } else if (defaultReceiver !== undefined && defaultReceiver !== $user.userId) {
-            receiver = $userStore.get(defaultReceiver);
+            receiver = userStore.get(chat.them.userId);
+        } else if (defaultReceiver !== undefined && defaultReceiver !== app.currentUserId) {
+            receiver = userStore.get(defaultReceiver);
         }
     });
 

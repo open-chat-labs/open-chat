@@ -1,5 +1,6 @@
 use crate::model::challenges::Challenges;
 use crate::model::identity_link_requests::IdentityLinkRequests;
+use crate::model::identity_link_via_qr_code_requests::IdentityLinkViaQrCodeRequests;
 use crate::model::salt::Salt;
 use crate::model::user_principals::{AuthPrincipal, UserPrincipals};
 use crate::model::webauthn_keys::WebAuthnKeys;
@@ -86,7 +87,11 @@ impl RuntimeState {
 
         let caller = self.env.caller();
 
-        if self.data.user_principals.auth_principal_exists(&caller) {
+        if args.allow_existing_provided_not_linked_to_oc_account {
+            if self.data.user_principals.is_linked_to_oc_account(&caller) {
+                return Err(AlreadyRegistered);
+            }
+        } else if self.data.user_principals.auth_principal_exists(&caller) {
             return Err(AlreadyRegistered);
         }
 
@@ -112,7 +117,11 @@ impl RuntimeState {
             return Err(OriginatingCanisterInvalid(originating_canister));
         }
 
-        if self.data.user_principals.auth_principal_exists(&auth_principal) {
+        if args.allow_existing_provided_not_linked_to_oc_account {
+            if self.data.user_principals.is_linked_to_oc_account(&auth_principal) {
+                return Err(AlreadyRegistered);
+            }
+        } else if self.data.user_principals.auth_principal_exists(&auth_principal) {
             return Err(AlreadyRegistered);
         }
 
@@ -161,7 +170,7 @@ struct Data {
     skip_captcha_whitelist: HashSet<CanisterId>,
     user_principals: UserPrincipals,
     identity_link_requests: IdentityLinkRequests,
-    #[serde(default)]
+    identity_link_via_qr_code_requests: IdentityLinkViaQrCodeRequests,
     webauthn_keys: WebAuthnKeys,
     #[serde(skip)]
     signature_map: SignatureMap,
@@ -191,6 +200,7 @@ impl Data {
             skip_captcha_whitelist: skip_captcha_whitelist.into_iter().collect(),
             user_principals: UserPrincipals::default(),
             identity_link_requests: IdentityLinkRequests::default(),
+            identity_link_via_qr_code_requests: IdentityLinkViaQrCodeRequests::default(),
             webauthn_keys: WebAuthnKeys::default(),
             signature_map: SignatureMap::default(),
             ic_root_key,
@@ -294,6 +304,7 @@ pub struct CanisterIds {
 struct VerifyNewIdentityArgs {
     public_key: Vec<u8>,
     webauthn_key: Option<WebAuthnKey>,
+    allow_existing_provided_not_linked_to_oc_account: bool,
 }
 
 struct VerifyNewIdentitySuccess {

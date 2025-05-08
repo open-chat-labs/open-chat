@@ -9,15 +9,7 @@
         PermissionRole,
         ReadonlyMap,
     } from "openchat-client";
-    import {
-        app,
-        botState,
-        isPermitted,
-        messagePermissionsForSelectedChat,
-        selectedChatStore,
-        selectedMessageContext,
-        threadPermissionsForSelectedChat,
-    } from "openchat-client";
+    import { app, botState, isPermitted } from "openchat-client";
     import { hasEveryRequiredPermission, random64, type FlattenedCommand } from "openchat-shared";
     import { getContext, onMount } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
@@ -59,10 +51,11 @@
         return botState.commands.filter((c) => {
             return (
                 restrictByBotIfNecessary(c) &&
+                restrictByChatIfNecessary(c) &&
                 hasPermissionForCommand(
                     c,
                     installedBots,
-                    $selectedChatStore,
+                    app.selectedChatSummary,
                     app.selectedCommunitySummary,
                 )
             );
@@ -74,6 +67,12 @@
             selectedBotId === undefined ||
             (command.kind === "external_bot" && command.botId === selectedBotId) ||
             (command.kind === "internal_bot" && command.directBotDisabled === false)
+        );
+    }
+
+    function restrictByChatIfNecessary(command: FlattenedCommand): boolean {
+        return !(
+            messageContext.chatId.kind === "direct_chat" && command.directChatsDisabled === true
         );
     }
 
@@ -122,7 +121,7 @@
                     chatPermitted &&
                     communityPermitted &&
                     [...command.permissions.messagePermissions].every((p) =>
-                        $messagePermissionsForSelectedChat.has(p),
+                        app.messagePermissionsForSelectedChat.has(p),
                     )
                 );
             case "thread":
@@ -132,7 +131,7 @@
                     chatPermitted &&
                     communityPermitted &&
                     [...command.permissions.messagePermissions].every((p) =>
-                        $threadPermissionsForSelectedChat.has(p),
+                        app.threadPermissionsForSelectedChat.has(p),
                     )
                 );
         }
@@ -160,23 +159,18 @@
     }
 
     function selectCommand(command: FlattenedCommand) {
-        botState.setSelectedCommand(commands, command);
+        botState.setSelectedCommand(messageContext, commands, command);
         sendCommandIfValid();
     }
 
     function sendCommandIfValid() {
-        if (
-            botState.selectedCommand &&
-            botState.instanceValid &&
-            $selectedChatStore &&
-            $selectedMessageContext
-        ) {
+        if (botState.selectedCommand && botState.instanceValid && app.selectedChatSummary) {
             client
                 .executeBotCommand(
                     {
                         kind: "chat_scope",
-                        chatId: $selectedMessageContext.chatId,
-                        threadRootMessageIndex: $selectedMessageContext.threadRootMessageIndex,
+                        chatId: messageContext.chatId,
+                        threadRootMessageIndex: messageContext.threadRootMessageIndex,
                         messageId: random64(),
                     },
                     botState.createBotInstance(botState.selectedCommand),
@@ -216,7 +210,7 @@
                 break;
             case "Enter":
                 if (!botState.showingBuilder) {
-                    botState.setSelectedCommand(commands);
+                    botState.setSelectedCommand(messageContext, commands);
                     sendCommandIfValid();
                     ev.preventDefault();
                 }

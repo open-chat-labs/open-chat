@@ -11,14 +11,7 @@
         MultiUserChat,
         OpenChat,
     } from "openchat-client";
-    import {
-        app,
-        AvatarSize,
-        chatIdentifiersEqual,
-        selectedChatId,
-        ui,
-        userStore,
-    } from "openchat-client";
+    import { app, AvatarSize, chatIdentifiersEqual, ui, userStore } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
@@ -85,7 +78,7 @@
     });
 
     trackedEffect("select-chat-modal", () => {
-        buildListOfTargets($now, $selectedChatId, searchTermLower).then((t) => (targets = t));
+        buildListOfTargets($now, app.selectedChatId, searchTermLower).then((t) => (targets = t));
     });
     let noTargets = $derived(getNumberOfTargets(targets) === 0);
 
@@ -153,7 +146,7 @@
         };
         const direct = [...app.directChats.values()].map((d) => ({
             ...d,
-            name: buildDisplayName($userStore, d.them.userId, false),
+            name: buildDisplayName(userStore.allUsers, d.them.userId, "user"),
         }));
 
         const group = [...app.groupChats.values()];
@@ -202,7 +195,7 @@
         switch (chatSummary.kind) {
             case "direct_chat":
                 const description = await buildDirectChatDescription(chatSummary, now);
-                const them = $userStore.get(chatSummary.them.userId);
+                const them = userStore.get(chatSummary.them.userId);
                 return {
                     kind: "chat",
                     id: chatSummary.id,

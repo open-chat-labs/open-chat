@@ -1,9 +1,9 @@
 <script lang="ts">
-    import NonMessageEvent from "./NonMessageEvent.svelte";
     import { botState, userStore } from "openchat-client";
-    import { _ } from "svelte-i18n";
     import type { BotAdded, BotRemoved, BotUpdated } from "openchat-shared";
+    import { _ } from "svelte-i18n";
     import { buildDisplayName } from "../../utils/user";
+    import NonMessageEvent from "./NonMessageEvent.svelte";
 
     interface Props {
         event: BotAdded | BotRemoved | BotUpdated;
@@ -17,7 +17,7 @@
     let me = $derived(userId === changedBy);
     let text = $derived.by(() => {
         const bot = botState.externalBots.get(event.userId);
-        const username = buildDisplayName($userStore, changedBy, me);
+        const username = buildDisplayName(userStore.allUsers, changedBy, me ? "me" : "user");
         return $_(resourceKey, { values: { botname: bot?.name, username } });
     });
 </script>

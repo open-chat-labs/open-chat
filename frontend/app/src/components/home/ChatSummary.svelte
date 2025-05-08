@@ -11,21 +11,15 @@
         AvatarSize,
         OpenChat,
         app,
-        blockedUsers,
-        chatIdentifiersEqual,
-        messagesRead,
-        pathState,
+        botState,
         publish,
         routeForScope,
-        selectedChatId,
-        suspendedUser,
         byContext as typersByContext,
         ui,
-        currentUser as user,
         userStore,
     } from "openchat-client";
     import page from "page";
-    import { getContext, onMount, tick, untrack } from "svelte";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ArchiveIcon from "svelte-material-icons/Archive.svelte";
     import BellIcon from "svelte-material-icons/Bell.svelte";
@@ -70,16 +64,17 @@
 
     let { chatSummary, selected, visible, onChatSelected }: Props = $props();
 
-    let userId = $derived($user.userId);
     let externalContent = $derived(
         chatSummary.kind === "channel" && chatSummary.externalUrl !== undefined,
     );
     let verified = $derived(chatSummary.kind === "group_chat" && chatSummary.verified);
     let hovering = $state(false);
-    let unreadMessages: number = $state(0);
-    let unreadMentions: number = $state(0);
+    let unreadMessages = $derived(
+        client.unreadMessageCount(chatSummary.id, chatSummary.latestMessage?.event.messageIndex),
+    );
+    let unreadMentions = $derived(getUnreadMentionCount(chatSummary));
     let chat = $derived(normaliseChatSummary($now, chatSummary, $typersByContext));
-    let lastMessage = $derived(formatLatestMessage(chatSummary, $userStore));
+    let lastMessage = $derived(formatLatestMessage(chatSummary, userStore.allUsers));
     let displayDate = $derived(client.getDisplayDate(chatSummary));
     let community = $derived(
         chatSummary.kind === "channel"
@@ -87,7 +82,7 @@
             : undefined,
     );
     let blocked = $derived(
-        chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them.userId),
+        chatSummary.kind === "direct_chat" && userStore.blockedUsers.has(chatSummary.them.userId),
     );
     let readonly = $derived(client.isChatReadOnly(chatSummary.id));
     let canDelete = $derived(getCanDelete(chatSummary, community));
@@ -97,12 +92,6 @@
     let delOffset = $state(maxDelOffset);
     let swiped = $state(false);
 
-    trackedEffect("unread-counts", () => updateUnreadCounts(chatSummary));
-
-    onMount(() => {
-        return messagesRead.subscribe(() => updateUnreadCounts(chatSummary));
-    });
-
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         const fav = app.chatListScope.kind !== "favourite" && app.favourites.has(chatSummary.id);
         const muted = chatSummary.membership.notificationsMuted;
@@ -111,7 +100,7 @@
             : { muted: 0, unmuted: 0 };
         switch (chatSummary.kind) {
             case "direct_chat":
-                const them = $userStore.get(chatSummary.them.userId);
+                const them = userStore.get(chatSummary.them.userId);
                 return {
                     name: client.displayName(them),
                     diamondStatus: them?.diamondStatus ?? "inactive",
@@ -120,7 +109,7 @@
                     userId: chatSummary.them,
                     typing: client.getTypingString(
                         $_,
-                        $userStore,
+                        userStore.allUsers,
                         { chatId: chatSummary.id },
                         typing,
                     ),
@@ -140,7 +129,7 @@
                     userId: undefined,
                     typing: client.getTypingString(
                         $_,
-                        $userStore,
+                        userStore.allUsers,
                         { chatId: chatSummary.id },
                         typing,
                     ),
@@ -195,45 +184,42 @@
             return latestMessageText;
         }
 
+        let userType: "user" | "me" | "webhook" = "user";
+        if (chatSummary.latestMessage.event.senderContext?.kind === "webhook") {
+            userType = "webhook";
+        } else if (chatSummary.latestMessage.event.sender === app.currentUserId) {
+            userType = "me";
+        }
+
         const user = buildDisplayName(
             users,
             chatSummary.latestMessage.event.sender,
-            chatSummary.latestMessage.event.sender === userId,
+            userType,
             false,
         );
 
         return `${user}: ${latestMessageText}`;
     }
 
-    /***
-     * This needs to be called both when the chatSummary changes (because that may have changed the latestMessage)
-     * and when the internal state of the MessageReadTracker changes. Both are necessary to get the right value
-     * at all times.
-     */
-    function updateUnreadCounts(chatSummary: ChatSummary) {
-        untrack(() => {
-            unreadMessages = client.unreadMessageCount(
-                chatSummary.id,
-                chatSummary.latestMessage?.event.messageIndex,
-            );
-            unreadMentions = getUnreadMentionCount(chatSummary);
+    trackedEffect("unarchive-chat", () => {
+        if (chatSummary.membership.archived && unreadMessages > 0 && !chat.bot) {
+            unarchiveChat();
+        }
+    });
 
-            if (chatSummary.membership.archived && unreadMessages > 0 && !chat.bot) {
-                unarchiveChat();
-            }
-        });
-    }
-
-    function deleteDirectChat(e: Event) {
+    function deleteEmptyChat(e: Event) {
         e.stopPropagation();
         e.preventDefault();
-        if (
-            pathState.route.kind === "global_chat_selected_route" &&
-            chatIdentifiersEqual(chatSummary.id, pathState.route.chatId)
-        ) {
-            page(routeForScope(app.chatListScope));
+        const directBot =
+            chatSummary.kind === "direct_chat"
+                ? botState.externalBots.get(chatSummary.them.userId)
+                : undefined;
+        if (directBot !== undefined) {
+            client.uninstallBot({ kind: "direct_chat", userId: app.currentUserId }, directBot.id);
+        } else {
+            client.removePreviewedChat(chatSummary.id);
         }
-        tick().then(() => client.removeChat(chatSummary.id));
+        page(routeForScope(app.chatListScope));
         delOffset = -60;
     }
 
@@ -296,7 +282,7 @@
                 toastStore.showFailureToast(i18nKey("archiveChatFailed"));
             }
         });
-        if (chatSummary.id === $selectedChatId) {
+        if (chatSummary.id === app.selectedChatId) {
             page(routeForScope(app.chatListScope));
         }
     }
@@ -448,7 +434,7 @@
                         {unreadMessages > 999 ? "999+" : unreadMessages}
                     </div>
                 {/if}
-                {#if !$suspendedUser}
+                {#if !app.suspendedUser}
                     <div class="menu">
                         <MenuIcon position={"bottom"} align={"end"}>
                             {#snippet menuIcon()}
@@ -627,7 +613,7 @@
                         ? `left: ${delOffset}px`
                         : `right: ${delOffset}px`
                     : ""}
-                onclick={deleteDirectChat}
+                onclick={deleteEmptyChat}
                 class:rtl={$rtlStore}
                 class="delete-chat">
                 <Delete size={ui.iconSize} color={"#fff"} />

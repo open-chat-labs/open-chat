@@ -3,9 +3,9 @@ use crate::ic_agent::IcAgent;
 use crate::metrics::{Metrics, collect_metrics};
 use crate::reader::Reader;
 use crate::user_notifications::start_user_notifications_processor;
-use candid::CandidType;
 use index_store::IndexStore;
 use prometheus::{Encoder, TextEncoder};
+use serde::Serialize;
 use std::io::Write;
 use std::sync::Arc;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
@@ -83,7 +83,7 @@ pub struct BotNotification {
     first_read_at: Instant,
 }
 
-#[derive(CandidType)]
+#[derive(Serialize)]
 pub struct BotNotificationPayload {
     event_type: ChatEventType,
     chat: Chat,

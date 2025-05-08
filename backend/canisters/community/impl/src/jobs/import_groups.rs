@@ -416,7 +416,7 @@ fn trigger_upgrade_to_finalize_import(group_id: ChatId) {
     mutate_state(|state| {
         if state.data.groups_being_imported.contains(&group_id) {
             state.data.fire_and_forget_handler.send(
-                state.data.local_group_index_canister_id,
+                state.data.local_user_index_canister_id,
                 "c2c_trigger_upgrade_msgpack".to_string(),
                 msgpack::serialize_then_unwrap(Empty {}),
             );

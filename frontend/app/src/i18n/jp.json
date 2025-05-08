@@ -105,6 +105,7 @@
         "visibility": "アクセス"
     },
     "account": "アカウント",
+    "accountCopiedToClipboard": "アカウントアドレスがクリップボードにコピーされました。",
     "accounts": "アカウント",
     "accountSuspended": "アカウントが一時停止",
     "activity": {
@@ -369,13 +370,14 @@
         "matchingCommands": "一致するコマンド",
         "member": {
             "bots": "ボット",
-            "people": "人々"
+            "people": "人々",
+            "webhooks": "ウェブフック"
         },
         "poll": {
             "desc": "現在のチャットでアンケートを作成する"
         },
         "register_bot": {
-            "desc": "OpenChatで新しいボットを説明して登録するための提案を開始する"
+            "desc": "OpenChatに新しいボットを登録する"
         },
         "search": {
             "desc": "現在のチャットで検索を開始する",
@@ -1091,6 +1093,14 @@
     "messageUrlCopiedToClipboard": "メッセージのURLがクリップボードにコピーされました！",
     "minimumAmount": "最小値: {amount} {symbol}",
     "minutes": "分",
+    "mobile": {
+        "credentials": {
+            "errors": {
+                "genericSignIn": "パスキーでサインインできませんでした。",
+                "genericSignUp": "パスキーを作成できませんでした。"
+            }
+        }
+    },
     "moderator": "モデレータ",
     "months": "月",
     "mustBeFutureDateError": "将来の日付を選択する必要があります",
@@ -1666,7 +1676,8 @@
         "groupStats": "{level} の統計情報",
         "icpTransfers": "ICP 転送",
         "imageMessages": "画像メッセージ",
-        "minutesOnline": "今月のオンライン時間",
+        "minutesOnlineLastMonth": "先月のオンライン議事録",
+        "minutesOnlineThisMonth": "今月のオンライン時間",
         "pollMessages": "投票メッセージ",
         "pollVotes": "投票",
         "reactions": "反応数",
@@ -1994,6 +2005,23 @@
     "viewer": "ビューア",
     "wallet": "ウォレット",
     "walletSettings": "ウォレット設定",
+    "webhook": {
+        "avatarLabel": "アバター",
+        "nameLabel": "名前",
+        "namePlaceholder": "ウェブフック名を入力",
+        "nameRules": "このチャット内で一意であり、英数字とアンダースコアのみを含める必要があります",
+        "regenerateAction": "再生",
+        "registerAction": "登録する",
+        "registerDesc": "このチャットにWebhookを登録する",
+        "registerTitle": "Webhookを登録する",
+        "removeAction": "Webhookを削除する",
+        "removeFailed": "申し訳ありませんが、Webhookを削除できませんでした",
+        "updateAction": "アップデート",
+        "updateTitle": "{name}を更新",
+        "urlLabel": "ウェブフックURL",
+        "username": "ウェブフック",
+        "viewEditAction": "Webhook の詳細を表示/編集する"
+    },
     "websiteVersion": "ウェブサイト",
     "weeks": "週",
     "whatsHot": "何がｷﾃｲﾙ？",

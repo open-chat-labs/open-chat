@@ -67,6 +67,7 @@ export type CommunitySummary = AccessControlled &
         localUserIndex: string;
         isInvited: boolean;
         verified: boolean;
+        latestSuccessfulUpdatesCheck: bigint;
     };
 
 export type DefaultChannel = {
@@ -311,3 +312,7 @@ export function communityIdentifiersEqual(
     if (a === undefined || b === undefined) return false;
     return a.communityId === b.communityId;
 }
+
+export type CommunityFilter = {
+    languages: Set<string>;
+};

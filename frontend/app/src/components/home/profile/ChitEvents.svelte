@@ -1,6 +1,6 @@
 <script lang="ts">
     import CollapsibleCard from "@src/components/CollapsibleCard.svelte";
-    import { app, OpenChat, currentUser as user, type ChitEarned } from "openchat-client";
+    import { app, OpenChat, type ChitEarned } from "openchat-client";
     import { getContext } from "svelte";
     import { menuCloser } from "../../../actions/closeMenu";
     import { i18nKey } from "../../../i18n/i18n";
@@ -17,7 +17,7 @@
     const client = getContext<OpenChat>("client");
     let events = $state<ChitEarned[]>([]);
 
-    let streak = $derived(client.getStreak($user.userId));
+    let streak = $derived(client.getStreak(app.currentUserId));
     let totalEarned = $derived(
         events.reduce((total, ev) => {
             const eventDate = new Date(Number(ev.timestamp));

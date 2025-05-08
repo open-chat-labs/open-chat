@@ -1,3 +1,4 @@
+import { type ReadonlyMap } from "../../utils";
 import type { ChitState, MultiUserChat, PinNumberFailures } from "../chat";
 import type { DataContent } from "../data/data";
 import type { OCError } from "../error";
@@ -153,7 +154,7 @@ export type IdentityState =
     | { kind: "upgrade_user"; postLogin?: PostLoginOperation }
     | { kind: "challenging"; postLogin?: PostLoginOperation };
 
-export type UserLookup = Map<string, UserSummary>;
+export type UserLookup = ReadonlyMap<string, UserSummary>;
 
 export type User = {
     userId: string;

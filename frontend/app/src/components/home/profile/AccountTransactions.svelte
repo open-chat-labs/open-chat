@@ -5,8 +5,8 @@
         type NamedAccount,
         type OpenChat,
         type ResourceKey,
+        app,
         cryptoLookup,
-        currentUser,
         nervousSystemLookup,
         toRecord,
         ui,
@@ -232,13 +232,13 @@
                                         <TransactionEndpoint
                                             accounts={accountLookup}
                                             address={transaction.from}
-                                            currentUser={$currentUser} />
+                                            currentUser={app.currentUser} />
                                     </td>
                                     <td class="truncate">
                                         <TransactionEndpoint
                                             accounts={accountLookup}
                                             address={transaction.to}
-                                            currentUser={$currentUser} />
+                                            currentUser={app.currentUser} />
                                     </td>
                                 </tr>
                             {/each}

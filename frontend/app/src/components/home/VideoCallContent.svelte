@@ -5,8 +5,6 @@
         app,
         chatIdentifiersEqual,
         publish,
-        selectedChatStore as selectedChat,
-        currentUser as user,
         userStore,
         type VideoCallContent,
     } from "openchat-client";
@@ -31,13 +29,14 @@
     let displayName = $derived(client.getDisplayNameById(senderId, app.selectedCommunity.members));
     let incall = $derived(
         $activeVideoCall !== undefined &&
-            $selectedChat !== undefined &&
-            $selectedChat.videoCallInProgress === messageIndex &&
-            chatIdentifiersEqual($activeVideoCall.chatId, $selectedChat?.id),
+            app.selectedChatSummary !== undefined &&
+            app.selectedChatSummary.videoCallInProgress === messageIndex &&
+            chatIdentifiersEqual($activeVideoCall.chatId, app.selectedChatSummary?.id),
     );
     let endedDate = $derived(content.ended ? new Date(Number(content.ended)) : undefined);
     let missed = $derived(
-        content.ended && content.participants.find((p) => p.userId === $user.userId) === undefined,
+        content.ended &&
+            content.participants.find((p) => p.userId === app.currentUserId) === undefined,
     );
     let duration = $derived(
         content.ended !== undefined && timestamp !== undefined
@@ -48,8 +47,8 @@
     );
 
     function joinCall() {
-        if (!incall && $selectedChat) {
-            publish("startVideoCall", { chat: $selectedChat, join: true });
+        if (!incall && app.selectedChatSummary) {
+            publish("startVideoCall", { chat: app.selectedChatSummary, join: true });
         }
     }
 
@@ -75,7 +74,7 @@
     <div class="avatars">
         {#each [...content.participants].slice(0, 5) as participantId}
             <Avatar
-                url={client.userAvatarUrl($userStore.get(participantId.userId))}
+                url={client.userAvatarUrl(userStore.get(participantId.userId))}
                 userId={participantId.userId}
                 size={AvatarSize.Small} />
         {/each}

@@ -6,7 +6,7 @@
         OpenChat,
         ReadonlySet,
     } from "openchat-client";
-    import { messagesRead, subscribe, ui, currentUser as user } from "openchat-client";
+    import { app, subscribe, ui } from "openchat-client";
     import { isSuccessfulEventsResponse } from "openchat-shared";
     import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
@@ -36,7 +36,7 @@
         });
     });
 
-    let unread: boolean = $state(false);
+    let unread = $derived(client.unreadPinned(chatId, dateLastPinned));
     let messagesDiv: HTMLDivElement | undefined = $state();
 
     let messages: RemoteData<EventWrapper<Message>[][], string> = $state({ kind: "idle" });
@@ -93,19 +93,12 @@
 
     $effect(() => {
         reloadPinned(pinned);
-        unread = client.unreadPinned(chatId, dateLastPinned);
     });
 
     function dateGroupKey(group: EventWrapper<Message>[]): string {
         const first = group[0] && group[0] && group[0].timestamp;
         return first ? new Date(Number(first)).toDateString() : "unknown";
     }
-
-    onMount(() => {
-        return messagesRead.subscribe(() => {
-            unread = client.unreadPinned(chatId, dateLastPinned);
-        });
-    });
 </script>
 
 <SectionHeader gap>
@@ -130,7 +123,7 @@
                     <PinnedMessage
                         {chatId}
                         timestamp={message.timestamp}
-                        user={$user}
+                        user={app.currentUser}
                         senderId={message.event.sender}
                         msg={message.event} />
                 {/each}

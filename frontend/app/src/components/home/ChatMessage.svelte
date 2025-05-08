@@ -3,13 +3,11 @@
     import {
         app,
         AvatarSize,
-        type BotMessageContext as BotMessageContextType,
         type ChatIdentifier,
         type ChatType,
-        currentUser,
         type Dimensions,
         type EnhancedReplyContext,
-        ephemeralMessages,
+        localUpdates,
         type Message,
         type MessageContent,
         type MessageReminderCreatedContent,
@@ -19,7 +17,7 @@
         publish,
         routeForMessage,
         ScreenWidth,
-        translationStore,
+        type SenderContext,
         ui,
         unconfirmedReadByThem,
         undeletingMessagesStore,
@@ -102,7 +100,7 @@
         dateFormatter?: (date: Date) => string;
         collapsed?: boolean;
         threadRootMessage: Message | undefined;
-        botContext: BotMessageContextType | undefined;
+        senderContext: SenderContext | undefined;
         onExpandMessage?: (() => void) | undefined;
         // this is not to do with permission - some messages (namely thread root messages) will simply not support replying or editing inside a thread
         supportsEdit: boolean;
@@ -147,7 +145,7 @@
         dateFormatter = (date) => client.toShortTimeString(date),
         collapsed = false,
         threadRootMessage,
-        botContext,
+        senderContext,
         onExpandMessage = undefined,
         supportsEdit,
         supportsReply,
@@ -191,7 +189,9 @@
         if (!readByMe) {
             tick().then(() => {
                 if (observer !== undefined && msgElement !== undefined) {
-                    observer.observe(msgElement);
+                    try {
+                        observer.observe(msgElement);
+                    } catch {}
                 }
             });
         }
@@ -288,19 +288,19 @@
 
     function toggleReaction(isQuickReaction: boolean, reaction: string) {
         if (canReact) {
-            const kind = client.containsReaction($currentUser.userId, reaction, msg.reactions)
+            const kind = client.containsReaction(app.currentUserId, reaction, msg.reactions)
                 ? "remove"
                 : "add";
 
             client
                 .selectReaction(
                     chatId,
-                    $currentUser.userId,
+                    app.currentUserId,
                     threadRootMessageIndex,
                     msg.messageId,
                     reaction,
-                    $currentUser.username,
-                    $currentUser.displayName,
+                    app.currentUser.username,
+                    app.currentUser.displayName,
                     kind,
                 )
                 .then((success) => {
@@ -442,7 +442,7 @@
     let mediaDimensions = $derived(extractDimensions(msg.content));
     let fill = $derived(client.fillMessage(msg));
     let showAvatar = $derived(ui.screenWidth !== ScreenWidth.ExtraExtraSmall);
-    let translated = $derived($translationStore.has(msg.messageId));
+    let translated = $derived(app.translations.has(msg.messageId));
     let threadSummary = $derived(msg.thread);
     let msgUrl = $derived(
         `${routeForMessage(app.chatListScope.kind, { chatId }, msg.messageIndex)}?open=true`,
@@ -455,7 +455,7 @@
     );
     let undeleting = $derived($undeletingMessagesStore.has(msg.messageId));
     let deletedByMe = $derived(
-        msg.content.kind === "deleted_content" && msg.content.deletedBy == $currentUser.userId,
+        msg.content.kind === "deleted_content" && msg.content.deletedBy == app.currentUserId,
     );
     let permanentlyDeleted = $derived(
         deletedByMe &&
@@ -466,7 +466,7 @@
     let canRevealDeleted = $derived(deletedByMe && !undeleting && !permanentlyDeleted);
     let canRevealBlocked = $derived(msg.content.kind === "blocked_content");
     let messageContext = $derived({ chatId, threadRootMessageIndex });
-    let ephemeral = $derived($ephemeralMessages.get(messageContext)?.has(msg.messageId) ?? false);
+    let ephemeral = $derived(localUpdates.isEphemeral(messageContext, msg.messageId));
     let showChatMenu = $derived(
         (!inert || canRevealDeleted || canRevealBlocked) && !readonly && !ephemeral,
     );
@@ -474,7 +474,9 @@
     let senderDisplayName = $derived(client.getDisplayName(sender, app.selectedCommunity.members));
     let tips = $derived(msg.tips ? Object.entries(msg.tips) : []);
     let canBlockUser = $derived(canBlockUsers && !app.selectedChat.blockedUsers.has(msg.sender));
-    let edited = $derived(msg.edited && !botContext?.finalised);
+    let edited = $derived(
+        msg.edited && (senderContext?.kind !== "bot" || !senderContext.finalised),
+    );
     let canShare = $derived(canShareMessage(msg.content));
     let canForward = $derived(client.canForward(msg.content));
     let canTranslate = $derived((client.getMessageText(msg.content) ?? "").length > 0);
@@ -533,12 +535,12 @@
 
 {#if expiresAt === undefined || percentageExpired < 100}
     <div out:fade|local={{ duration: 1000 }} class="message-wrapper" class:last>
-        {#if botContext !== undefined && botContext.command !== undefined}
+        {#if senderContext?.kind === "bot" && senderContext.command !== undefined}
             <div class="bot-context">
                 <BotMessageContext
                     botName={senderDisplayName}
-                    botCommand={botContext.command}
-                    finalised={botContext.finalised} />
+                    botCommand={senderContext.command}
+                    finalised={senderContext.finalised} />
             </div>
         {/if}
         <IntersectionObserverComponent>
@@ -595,7 +597,7 @@
                             class:readByMe
                             class:crypto
                             class:failed
-                            class:bot={botContext !== undefined}
+                            class:bot={senderContext?.kind === "bot"}
                             class:thread={inThread}
                             class:rtl={$rtlStore}>
                             {#if first && !isProposal && !isPrize}
@@ -682,10 +684,11 @@
                                 {onRegisterVote}
                                 {onExpandMessage} />
 
-                            {#if !inert && !isPrize}
+                            {#if !inert}
                                 <TimeAndTicks
                                     {pinned}
-                                    {fill}
+                                    prize={isPrize}
+                                    fill={fill && !isPrize}
                                     {timestamp}
                                     {expiresAt}
                                     {percentageExpired}
@@ -715,7 +718,7 @@
                                 <pre>timestamp: {timestamp}</pre>
                                 <pre>expiresAt: {expiresAt}</pre>
                                 <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
-                                <pre>botContext: {JSON.stringify(botContext, null, 4)}</pre>
+                                <pre>senderContext: {JSON.stringify(senderContext, null, 4)}</pre>
                                 <pre>inert: {inert}</pre>
                                 <pre>canRevealDeleted: {canRevealDeleted}</pre>
                                 <pre>canlRevealBlocked: {canRevealBlocked}</pre>

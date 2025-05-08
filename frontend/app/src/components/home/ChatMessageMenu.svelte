@@ -2,15 +2,11 @@
     import {
         app,
         cryptoLookup,
-        isDiamond,
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
         publish,
         routeForMessage,
-        threadsFollowedByMeStore,
-        translationStore,
         ui,
-        currentUser as user,
         type ChatIdentifier,
         type Message,
         type MessageReminderCreatedContent,
@@ -167,7 +163,7 @@
     );
     let isFollowedByMe = $derived(
         threadRootMessage !== undefined &&
-            ($threadsFollowedByMeStore.get(chatId)?.has(threadRootMessage.messageIndex) ?? false),
+            (app.threadsFollowedByMe.get(chatId)?.has(threadRootMessage.messageIndex) ?? false),
     );
     let canFollow = $derived(threadRootMessage !== undefined && !isFollowedByMe);
     let canUnfollow = $derived(isFollowedByMe);
@@ -196,8 +192,8 @@
     function shareMessage() {
         shareFunctions.shareMessage(
             $_,
-            $user.userId,
-            msg.sender === $user.userId,
+            app.currentUserId,
+            msg.sender === app.currentUserId,
             msg,
             $cryptoLookup,
         );
@@ -260,11 +256,11 @@
     }
 
     function untranslateMessage() {
-        translationStore.untranslate(msg.messageId);
+        app.untranslate(msg.messageId);
     }
 
     function translateMessage() {
-        if (!$isDiamond) {
+        if (!app.isDiamond) {
             publish("upgrade");
         } else {
             const text = client.getMessageText(msg.content);
@@ -286,7 +282,7 @@
             .then((resp) => resp.json())
             .then(({ data: { translations } }) => {
                 if (Array.isArray(translations) && translations.length > 0) {
-                    translationStore.translate(messageId, translations[0].translatedText);
+                    app.translate(messageId, translations[0].translatedText);
                 }
             })
             .catch((_err) => {

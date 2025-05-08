@@ -1,9 +1,9 @@
 <script lang="ts" module>
     export type ChatEventListArgs = {
-        isAccepted: (_unconf: unknown, evt: EventWrapper<ChatEventType>) => boolean;
-        isConfirmed: (_unconf: unknown, evt: EventWrapper<ChatEventType>) => boolean;
-        isFailed: (_failed: unknown, evt: EventWrapper<ChatEventType>) => boolean;
-        isReadByMe: (_store: unknown, evt: EventWrapper<ChatEventType>) => boolean;
+        isAccepted: (evt: EventWrapper<ChatEventType>) => boolean;
+        isConfirmed: (evt: EventWrapper<ChatEventType>) => boolean;
+        isFailed: (evt: EventWrapper<ChatEventType>) => boolean;
+        isReadByMe: (evt: EventWrapper<ChatEventType>) => boolean;
         messageObserver: IntersectionObserver | undefined;
         labelObserver: IntersectionObserver | undefined;
         focusIndex: number | undefined;
@@ -13,13 +13,12 @@
 <script lang="ts">
     import {
         MessageContextMap,
-        failedMessagesStore,
+        app,
+        localUpdates,
         messageContextsEqual,
         pathState,
         subscribe,
         ui,
-        unconfirmed,
-        currentUser as user,
         withEqCheck,
         type ChatEvent as ChatEventType,
         type ChatSummary,
@@ -99,7 +98,6 @@
     let heightObserver: MutationObserver;
     let messageReadTimers: Record<number, number> = {};
 
-    let userId = $derived($user.userId);
     let threadSummary = $derived(threadRootEvent?.event.thread);
     let messageContext = $derived.by(
         withEqCheck(
@@ -428,7 +426,7 @@
     async function afterSendMessage(context: MessageContext, event: EventWrapper<Message>) {
         if (context.threadRootMessageIndex !== undefined && threadRootEvent !== undefined) {
             const summary = {
-                participantIds: new Set<string>([userId]),
+                participantIds: new Set<string>([app.currentUserId]),
                 numberOfReplies: event.event.messageIndex + 1,
                 latestEventIndex: event.index,
                 latestEventTimestamp: event.timestamp,
@@ -460,12 +458,12 @@
 
     function shouldLoadPreviousMessages() {
         morePrevAvailable = client.morePreviousMessagesAvailable(chat.id, threadRootEvent);
-        return insideTopThreshold() && morePrevAvailable;
+        return visible && insideTopThreshold() && morePrevAvailable;
     }
 
     function shouldLoadNewMessages() {
         moreNewAvailable = client.moreNewMessagesAvailable(chat.id, threadRootEvent);
-        return insideBottomThreshold() && moreNewAvailable;
+        return visible && insideBottomThreshold() && moreNewAvailable;
     }
 
     async function loadNewMessagesIfRequired(fromScroll = false): Promise<boolean> {
@@ -531,7 +529,7 @@
                 ev.event.kind === "message" &&
                 ev.event.messageIndex === index &&
                 (messageContext === undefined ||
-                    !failedMessagesStore.contains(messageContext, ev.event.messageId)),
+                    !localUpdates.isFailed(messageContext, ev.event.messageId)),
         ) as EventWrapper<Message> | undefined;
     }
 
@@ -539,29 +537,30 @@
         return document.querySelector(`.${rootSelector} [data-index~='${index}']`);
     }
 
-    function isAccepted(_unconf: unknown, evt: EventWrapper<ChatEventType>): boolean {
+    function isAccepted(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message" && messageContext) {
-            return !unconfirmed.pendingAcceptance(messageContext, evt.event.messageId);
+            return !localUpdates.isPendingAcceptance(messageContext, evt.event.messageId);
         }
         return true;
     }
 
-    function isConfirmed(_unconf: unknown, evt: EventWrapper<ChatEventType>): boolean {
+    function isConfirmed(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message" && messageContext) {
-            return !unconfirmed.contains(messageContext, evt.event.messageId);
+            return !localUpdates.isUnconfirmed(messageContext, evt.event.messageId);
         }
         return true;
     }
 
-    function isFailed(_failed: unknown, evt: EventWrapper<ChatEventType>): boolean {
+    function isFailed(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message" && messageContext) {
-            return failedMessagesStore.contains(messageContext, evt.event.messageId);
+            return localUpdates.isFailed(messageContext, evt.event.messageId);
         }
         return false;
     }
 
-    function isReadByMe(_store: unknown, evt: EventWrapper<ChatEventType>): boolean {
-        if (readonly || (evt.event.kind === "message" && evt.event.sender === userId)) return true;
+    function isReadByMe(evt: EventWrapper<ChatEventType>): boolean {
+        if (readonly || (evt.event.kind === "message" && evt.event.sender === app.currentUserId))
+            return true;
 
         if (evt.event.kind === "message" || evt.event.kind === "aggregate_common_events") {
             let messageIndex =
@@ -583,7 +582,7 @@
                     pathState.route.kind === "selected_channel_route") &&
                 (pathState.route.open || pathState.route.threadMessageIndex !== undefined)
             ) {
-                client.openThread(msgEvent, false, pathState.route.threadMessageIndex);
+                client.openThread(chat.id, msgEvent, false, pathState.route.threadMessageIndex);
             }
         }
     }

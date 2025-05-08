@@ -9,6 +9,7 @@
         DirectChatIdentifier,
         EnhancedAccessGate,
         EnhancedReplyContext,
+        FullWebhookDetails,
         GateCheckSucceeded,
         GroupChatSummary,
         Level,
@@ -24,13 +25,10 @@
         UpdatedRules,
     } from "openchat-client";
     import {
-        anonUser,
         app,
         chatIdentifiersEqual,
-        chatSummariesListStore,
-        chatSummariesStore,
         defaultChatRules,
-        draftMessagesStore,
+        localUpdates,
         nullMembership,
         offlineStore,
         pageRedirect,
@@ -40,12 +38,8 @@
         routeForChatIdentifier,
         routeForScope,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
-        selectedChatId,
-        selectedChatStore,
         subscribe,
-        suspendedUser,
         ui,
-        currentUser as user,
         userStore,
     } from "openchat-client";
     import page from "page";
@@ -69,6 +63,7 @@
     import AreYouSure from "../AreYouSure.svelte";
     import BackgroundLogo from "../BackgroundLogo.svelte";
     import BotBuilderModal from "../bots/BotBuilderModal.svelte";
+    import WebhookModal from "../bots/WebhookModal.svelte";
     import EditLabel from "../EditLabel.svelte";
     import NotFound from "../NotFound.svelte";
     import OfflineFooter from "../OfflineFooter.svelte";
@@ -153,6 +148,8 @@
         | { kind: "register_bot" }
         | { kind: "update_bot" }
         | { kind: "remove_bot" }
+        | { kind: "register_webhook" }
+        | { kind: "update_webhook"; webhook: FullWebhookDetails }
         | { kind: "suspended" }
         | { kind: "no_access" }
         | { kind: "new_group"; embeddedContent: boolean; candidate: CandidateGroupChat }
@@ -218,6 +215,8 @@
             subscribe("registerBot", registerBot),
             subscribe("updateBot", updateBot),
             subscribe("removeBot", removeBot),
+            subscribe("registerWebhook", registerWebhook),
+            subscribe("updateWebhook", updateWebhook),
             subscribe("remoteVideoCallStarted", remoteVideoCallStarted),
             subscribe("remoteVideoCallEnded", remoteVideoCallEnded),
             subscribe("notification", (n) => client.notificationReceived(n)),
@@ -225,18 +224,21 @@
             subscribe("notFound", () => (modal = { kind: "not_found" })),
         ];
         client.initialiseNotifications();
-        document.body.addEventListener("profile-clicked", (event) => {
-            profileLinkClicked(event as CustomEvent<ProfileLinkClickedEvent>);
-        });
+        document.body.addEventListener("profile-clicked", profileClicked);
 
-        if ($suspendedUser) {
+        if (app.suspendedUser) {
             modal = { kind: "suspended" };
         }
 
         return () => {
             unsubEvents.forEach((u) => u());
+            document.body.removeEventListener("profile-clicked", profileClicked);
         };
     });
+
+    function profileClicked(event: Event) {
+        profileLinkClicked(event as CustomEvent<ProfileLinkClickedEvent>);
+    }
 
     function selectedChatInvalid() {
         pageReplace(routeForScope(client.getDefaultScope()));
@@ -250,6 +252,14 @@
 
     function registerBot() {
         modal = { kind: "register_bot" };
+    }
+
+    function registerWebhook() {
+        modal = { kind: "register_webhook" };
+    }
+
+    function updateWebhook(webhook: FullWebhookDetails) {
+        modal = { kind: "update_webhook", webhook };
     }
 
     function updateBot() {
@@ -300,7 +310,7 @@
             if (initialised) {
                 ui.filterRightPanelHistory((state) => state.kind !== "community_filters");
                 if (
-                    $anonUser &&
+                    app.anonUser &&
                     pathState.isChatListRoute(route) &&
                     (route.scope.kind === "direct_chat" || route.scope.kind === "favourite")
                 ) {
@@ -313,16 +323,9 @@
                     return;
                 }
 
-                // When we have a middle panel and this route is for a chat list then select the first chat
-                if (pathState.isChatListRoute(route) && client.selectFirstChat()) {
-                    return;
-                }
-
                 if (pathState.isHomeRoute(route)) {
-                    client.clearSelectedChat();
                     filterChatSpecificRightPanelStates();
                 } else if (pathState.isCommunitiesRoute(route)) {
-                    client.clearSelectedChat();
                     ui.rightPanelHistory = ui.fullWidth ? [{ kind: "community_filters" }] : [];
                 } else {
                     // any other route with no associated chat therefore we must clear any selected chat and potentially close the right panel
@@ -336,10 +339,6 @@
                         pageReplace(routeForScope(client.getDefaultScope()));
                         modal = { kind: "select_chat" };
                     }
-                }
-
-                if (client.captureReferralCode()) {
-                    pageReplace(removeQueryStringParam("ref"));
                 }
 
                 if (modal?.kind === "claim_daily_chit") {
@@ -490,7 +489,7 @@
     }
 
     function chatWith(chatId: DirectChatIdentifier) {
-        const chat = $chatSummariesListStore.find((c) => {
+        const chat = app.chatSummariesList.find((c) => {
             return c.kind === "direct_chat" && c.them === chatId;
         });
 
@@ -498,7 +497,7 @@
     }
 
     function showInviteGroupUsers(show: boolean) {
-        if ($selectedChatId !== undefined) {
+        if (app.selectedChatId !== undefined) {
             if (show) {
                 ui.rightPanelHistory = [{ kind: "invite_group_users" }];
             } else {
@@ -510,7 +509,7 @@
     function replyPrivatelyTo(context: EnhancedReplyContext) {
         if (context.sender === undefined) return;
 
-        const chat = $chatSummariesListStore.find((c) => {
+        const chat = app.chatSummariesList.find((c) => {
             return (
                 c.kind === "direct_chat" &&
                 chatIdentifiersEqual(c.them, {
@@ -521,8 +520,8 @@
         });
 
         const chatId = chat?.id ?? { kind: "direct_chat", userId: context.sender.userId };
-        draftMessagesStore.setTextContent({ chatId }, "");
-        draftMessagesStore.setReplyingTo({ chatId }, context);
+        localUpdates.draftMessages.setTextContent({ chatId }, "");
+        localUpdates.draftMessages.setReplyingTo({ chatId }, context);
         if (chat) {
             page(routeForChatIdentifier(app.chatListScope.kind, chatId));
         } else {
@@ -536,14 +535,14 @@
     }
 
     function showGroupMembers() {
-        if ($selectedChatId !== undefined) {
+        if (app.selectedChatId !== undefined) {
             ui.rightPanelHistory = [{ kind: "show_group_members" }];
         }
     }
 
     function showProfile() {
-        if ($selectedChatId !== undefined) {
-            pageReplace(routeForChatIdentifier(app.chatListScope.kind, $selectedChatId));
+        if (app.selectedChatId !== undefined) {
+            pageReplace(routeForChatIdentifier(app.chatListScope.kind, app.selectedChatId));
         }
         ui.rightPanelHistory = [{ kind: "user_profile" }];
     }
@@ -557,8 +556,8 @@
     }
 
     function showProposalFilters() {
-        if ($selectedChatId !== undefined) {
-            pageReplace(routeForChatIdentifier(app.chatListScope.kind, $selectedChatId));
+        if (app.selectedChatId !== undefined) {
+            pageReplace(routeForChatIdentifier(app.chatListScope.kind, app.selectedChatId));
             ui.rightPanelHistory = [
                 {
                     kind: "proposal_filters",
@@ -574,7 +573,7 @@
     }
 
     async function joinGroup(detail: { group: MultiUserChat; select: boolean }): Promise<void> {
-        if ($anonUser) {
+        if (app.anonUser) {
             client.updateIdentityState({
                 kind: "logging_in",
                 postLogin: { kind: "join_group", ...detail },
@@ -586,7 +585,7 @@
         // it's possible that we got here via a postLogin capture in which case it's possible
         // that we are actually already a member of this group, so we should double check here
         // that we actually *need* to join the group
-        let chat = $chatSummariesStore.get(group.id);
+        let chat = app.chatSummaries.get(group.id);
         if (chat === undefined || chat.membership.role === "none" || client.isLapsed(chat.id)) {
             doJoinGroup(group, select, undefined);
         }
@@ -703,7 +702,7 @@
             text += shareUrl;
         }
 
-        draftMessagesStore.setTextContent({ chatId }, text);
+        localUpdates.draftMessages.setTextContent({ chatId }, text);
     }
 
     function showWallet() {
@@ -892,8 +891,9 @@
 
     let confirmMessage = $derived(getConfirmMessage(confirmActionEvent));
     let selectedMultiUserChat = $derived(
-        $selectedChatStore?.kind === "group_chat" || $selectedChatStore?.kind === "channel"
-            ? $selectedChatStore
+        app.selectedChatSummary?.kind === "group_chat" ||
+            app.selectedChatSummary?.kind === "channel"
+            ? app.selectedChatSummary
             : undefined,
     );
     let governanceCanisterId = $derived(
@@ -966,7 +966,7 @@
 </script>
 
 {#if showProfileCard !== undefined}
-    {@const profileUser = $userStore.get(showProfileCard.userId)}
+    {@const profileUser = userStore.get(showProfileCard.userId)}
     {#if profileUser?.kind !== "bot"}
         <ViewUserProfile
             userId={showProfileCard.userId}
@@ -978,14 +978,14 @@
     {/if}
 {/if}
 
-<main class:anon={$anonUser} class:offline={$offlineStore}>
+<main class:anon={app.anonUser} class:offline={$offlineStore}>
     <LeftNav />
     <LeftPanel />
     <MiddlePanel {joining} />
     <RightPanel />
 </main>
 
-{#if $anonUser}
+{#if app.anonUser}
     <AnonFooter />
 {/if}
 
@@ -1005,7 +1005,7 @@
 
 <Toast />
 
-{#if showUpgrade && $user}
+{#if showUpgrade && app.currentUser}
     <Upgrade onCancel={() => (showUpgrade = false)} />
 {/if}
 
@@ -1029,6 +1029,16 @@
             <BotBuilderModal mode={"update"} onClose={closeModal} />
         {:else if modal.kind === "remove_bot"}
             <BotBuilderModal mode={"remove"} onClose={closeModal} />
+        {:else if modal.kind === "register_webhook" && (app.selectedChatId?.kind === "group_chat" || app.selectedChatId?.kind === "channel")}
+            <WebhookModal
+                chatId={app.selectedChatId}
+                mode={{ kind: "register" }}
+                onClose={closeModal} />
+        {:else if modal.kind === "update_webhook" && (app.selectedChatId?.kind === "group_chat" || app.selectedChatId?.kind === "channel")}
+            <WebhookModal
+                chatId={app.selectedChatId}
+                mode={{ kind: "update", webhook: modal.webhook }}
+                onClose={closeModal} />
         {:else if modal.kind === "no_access"}
             <NoAccess onClose={closeNoAccess} />
         {:else if modal.kind === "not_found"}

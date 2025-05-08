@@ -105,6 +105,7 @@
         "visibility": "Zugang"
     },
     "account": "Konto",
+    "accountCopiedToClipboard": "Kontoadresse in die Zwischenablage kopiert!",
     "accounts": "Konten",
     "accountSuspended": "Konto gesperrt",
     "activity": {
@@ -369,13 +370,14 @@
         "matchingCommands": "Passende Befehle",
         "member": {
             "bots": "Bots",
-            "people": "Menschen"
+            "people": "Menschen",
+            "webhooks": "Webhooks"
         },
         "poll": {
             "desc": "Erstellen Sie eine Umfrage im aktuellen Chat"
         },
         "register_bot": {
-            "desc": "Starten Sie einen Vorschlag zur Beschreibung und Registrierung eines neuen Bots bei OpenChat"
+            "desc": "Einen neuen Bot bei OpenChat registrieren"
         },
         "search": {
             "desc": "Suche im aktuellen Chat starten",
@@ -1091,6 +1093,14 @@
     "messageUrlCopiedToClipboard": "Nachrichten-URL in die Zwischenablage kopiert!",
     "minimumAmount": "Minimum: {amount} {symbol}",
     "minutes": "Protokoll",
+    "mobile": {
+        "credentials": {
+            "errors": {
+                "genericSignIn": "Anmeldung mit einem Passkey nicht möglich.",
+                "genericSignUp": "Es konnte kein Hauptschlüssel erstellt werden."
+            }
+        }
+    },
     "moderator": "Moderator",
     "months": "Monate",
     "mustBeFutureDateError": "Sie müssen ein zukünftiges Datum auswählen",
@@ -1666,7 +1676,8 @@
         "groupStats": "{level} Statistiken",
         "icpTransfers": "ICP-Übertragungen",
         "imageMessages": "Bildnachrichten",
-        "minutesOnline": "Minuten online diesen Monat",
+        "minutesOnlineLastMonth": "Minuten online im letzten Monat",
+        "minutesOnlineThisMonth": "Minuten online diesen Monat",
         "pollMessages": "Umfragenachrichten",
         "pollVotes": "Umfrageabstimmungen",
         "reactions": "Reaktionen",
@@ -1994,6 +2005,23 @@
     "viewer": "Zuschauer",
     "wallet": "Wallet",
     "walletSettings": "Wallet-Einstellungen",
+    "webhook": {
+        "avatarLabel": "Avatar",
+        "nameLabel": "Name",
+        "namePlaceholder": "Geben Sie den Webhook-Namen ein",
+        "nameRules": "Muss in diesem Chat eindeutig sein und darf nur alphanumerische Zeichen und Unterstriche enthalten",
+        "regenerateAction": "Regenerieren",
+        "registerAction": "Registrieren",
+        "registerDesc": "Registrieren Sie einen Webhook in diesem Chat",
+        "registerTitle": "Registrieren eines Webhooks",
+        "removeAction": "Webhook entfernen",
+        "removeFailed": "Leider konnten wir den Webhook nicht entfernen",
+        "updateAction": "Aktualisieren",
+        "updateTitle": "Aktualisieren Sie {name}",
+        "urlLabel": "Webhook-URL",
+        "username": "Webhook",
+        "viewEditAction": "Webhook-Details anzeigen/bearbeiten"
+    },
     "websiteVersion": "der Webseite",
     "weeks": "Wochen",
     "whatsHot": "Was läuft?",

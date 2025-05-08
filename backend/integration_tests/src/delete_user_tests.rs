@@ -7,6 +7,7 @@ use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
+use testing::rng::random_string;
 use types::{Empty, Milliseconds};
 
 #[test_case(0, true)]
@@ -60,6 +61,43 @@ fn delete_user_succeeds_if_signed_in_recently(delay: Milliseconds, should_delete
 
     let canister_status = env.canister_status(user.canister(), Some(user.local_user_index)).unwrap();
     assert_eq!(canister_status.module_hash.is_none(), should_delete_user);
+}
+
+#[test]
+fn deleted_user_removed_from_groups_and_communities() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let user1 = client::register_diamond_user(env, canister_ids, *controller);
+    let (user2, user2_auth) = register_user_and_include_auth(env, canister_ids);
+
+    env.tick();
+
+    let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
+    let community_id = client::user::happy_path::create_community(env, &user1, &random_string(), true, vec![random_string()]);
+
+    client::group::happy_path::join_group(env, user2.principal, group_id);
+    client::community::happy_path::join_community(env, user2.principal, community_id);
+
+    let group_summary = client::group::happy_path::selected_initial(env, user1.principal, group_id);
+    let community_summary = client::community::happy_path::selected_initial(env, user1.principal, community_id);
+
+    assert_eq!(group_summary.basic_members, vec![user2.user_id]);
+    assert_eq!(community_summary.basic_members, vec![user2.user_id]);
+
+    client::identity::happy_path::delete_user(env, &user2_auth, canister_ids.identity);
+
+    tick_many(env, 10);
+
+    let group_summary = client::group::happy_path::selected_initial(env, user1.principal, group_id);
+    let community_summary = client::community::happy_path::selected_initial(env, user1.principal, community_id);
+
+    assert!(group_summary.basic_members.is_empty());
+    assert!(community_summary.basic_members.is_empty());
 }
 
 #[test]

@@ -1,10 +1,10 @@
-use crate::guards::caller_is_user_index_canister;
+use crate::guards::caller_is_user_index_or_group_index;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_push_wasm_chunk::{Response::*, *};
 
-#[update(guard = "caller_is_user_index_canister", msgpack = true)]
+#[update(guard = "caller_is_user_index_or_group_index", msgpack = true)]
 #[trace]
 fn c2c_push_wasm_chunk(args: Args) -> Response {
     mutate_state(|state| c2c_push_wasm_chunk_impl(args, state))

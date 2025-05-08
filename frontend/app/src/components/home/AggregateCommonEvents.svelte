@@ -70,7 +70,7 @@
     ): string[] {
         return [...rolesChanged.entries()].flatMap(([changedBy, changedByMap]) => {
             const me = changedBy === user?.userId;
-            const changedByStr = buildDisplayName(userStore, changedBy, me);
+            const changedByStr = buildDisplayName(userStore, changedBy, me ? "me" : "user");
 
             return [...changedByMap.entries()].flatMap(([newRole, userIds]) =>
                 buildRoleChangedText(userStore, changedByStr, newRole, Array.from(userIds)),
@@ -111,7 +111,7 @@
     function expandDeletedMessages() {
         client.expandDeletedMessages(new Set(messagesDeleted));
     }
-    let joinedText = $derived(buildJoinedText($userStore, joined));
+    let joinedText = $derived(buildJoinedText(userStore.allUsers, joined));
     let deletedText = $derived(
         messagesDeleted.length > 0
             ? messagesDeleted.length === 1
@@ -119,7 +119,7 @@
                 : $_("nMessagesDeleted", { values: { number: messagesDeleted.length } })
             : undefined,
     );
-    let roleChangedTextList = $derived(buildRoleChangedTextList($userStore, rolesChanged));
+    let roleChangedTextList = $derived(buildRoleChangedTextList(userStore.allUsers, rolesChanged));
 </script>
 
 {#if joinedText !== undefined || deletedText !== undefined || roleChangedTextList?.length > 0}

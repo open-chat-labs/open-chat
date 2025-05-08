@@ -2,10 +2,7 @@
     import {
         app,
         cryptoLookup,
-        isDiamond,
-        isLifetimeDiamond,
         publish,
-        currentUser as user,
         type ChatIdentifier,
         type DiamondMembershipStatus,
         type OpenChat,
@@ -81,13 +78,13 @@
     );
     let total = $derived(content.prizesRemaining + content.prizesPending + content.winners.length);
     let percentage = $derived((content.winners.length / total) * 100);
-    let claimedByYou = $derived(content.winners.includes($user.userId));
+    let claimedByYou = $derived(content.winners.includes(app.currentUserId));
     let finished = $derived($now500 >= Number(content.endDate));
     let allClaimed = $derived(content.prizesRemaining <= 0);
     let userEligible = $derived(
-        (!content.diamondOnly || $isDiamond) &&
-            (!content.lifetimeDiamondOnly || $isLifetimeDiamond) &&
-            (!content.uniquePersonOnly || $user.isUniquePerson) &&
+        (!content.diamondOnly || app.isDiamond) &&
+            (!content.lifetimeDiamondOnly || app.isLifetimeDiamond) &&
+            (!content.uniquePersonOnly || app.currentUser.isUniquePerson) &&
             content.streakOnly <= app.chitState.streak,
     );
     let disabled = $derived(finished || claimedByYou || allClaimed || !userEligible);
@@ -380,6 +377,7 @@
 
     .bottom {
         padding: $sp4;
+        padding-bottom: 0;
     }
     .image {
         height: auto;

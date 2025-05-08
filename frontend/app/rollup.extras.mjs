@@ -39,7 +39,6 @@ export function initEnv() {
     dotenv.config({ path: path.join(__dirname, "../.env") });
 
     const dfxNetwork = process.env.OC_DFX_NETWORK;
-    console.log("OC_DFX_NETWORK: ", dfxNetwork);
 
     if (dfxNetwork) {
         const dfxJsonPath = path.join(__dirname, "../..", "dfx.json");

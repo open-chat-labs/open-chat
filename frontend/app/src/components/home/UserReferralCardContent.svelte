@@ -1,12 +1,12 @@
 <script lang="ts">
+    import { app } from "openchat-client";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
-    import QRCode from "../QRCode.svelte";
-    import { toastStore } from "../../stores/toast";
     import { i18nKey } from "../../i18n/i18n";
+    import { toastStore } from "../../stores/toast";
+    import QRCode from "../QRCode.svelte";
     import Translatable from "../Translatable.svelte";
-    import { currentUser as user } from "openchat-client";
 
-    let link = `${window.location.origin}/?ref=${$user.userId}`;
+    let link = `${window.location.origin}/?ref=${app.currentUserId}`;
 
     function onCopy() {
         navigator.clipboard.writeText(link).then(

@@ -264,8 +264,8 @@ impl RuntimeState {
             },
             canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_failed: canister_upgrades_metrics.failed,
-            canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
-            canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
+            canister_upgrades_pending: canister_upgrades_metrics.pending,
+            canister_upgrades_in_progress: canister_upgrades_metrics.in_progress,
             governance_principals: self.data.governance_principals.iter().copied().collect(),
             user_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::User).wasm.version,
             local_user_index_wasm_version: self
@@ -376,7 +376,6 @@ struct Data {
     pub storage_index_user_sync_queue: BatchedTimerJobQueue<StorageIndexUserConfigBatch>,
     pub storage_index_users_to_remove_queue: BatchedTimerJobQueue<StorageIndexUsersToRemoveBatch>,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
-    #[serde(default = "default_group_index_event_sync_queue")]
     pub group_index_event_sync_queue: BatchedTimerJobQueue<GroupIndexEventBatch>,
     pub notifications_index_event_sync_queue: BatchedTimerJobQueue<NotificationsIndexEventBatch>,
     pub pending_payments_queue: PendingPaymentsQueue,
@@ -412,10 +411,6 @@ struct Data {
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
     pub streak_insurance_logs: StreakInsuranceLogs,
     pub idempotency_checker: IdempotencyChecker,
-}
-
-fn default_group_index_event_sync_queue() -> BatchedTimerJobQueue<GroupIndexEventBatch> {
-    BatchedTimerJobQueue::new(CanisterId::anonymous(), false)
 }
 
 impl Data {

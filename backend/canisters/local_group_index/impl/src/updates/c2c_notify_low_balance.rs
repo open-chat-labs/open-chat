@@ -3,7 +3,9 @@ use crate::{COMMUNITY_CANISTER_TOP_UP_AMOUNT, GROUP_CANISTER_TOP_UP_AMOUNT, Runt
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::min_cycles_balance;
-use types::{CanisterId, CyclesTopUp, NotifyLowBalanceArgs, NotifyLowBalanceResponse};
+use local_user_index_canister::LocalGroupIndexEvent;
+use rand::RngCore;
+use types::{CanisterId, CyclesTopUp, IdempotentEnvelope, NotifyLowBalanceArgs, NotifyLowBalanceResponse};
 use utils::canister::deposit_cycles;
 use utils::cycles::can_spend_cycles;
 
@@ -57,6 +59,12 @@ fn prepare(canister_id: Option<CanisterId>, state: &RuntimeState) -> Result<Prep
 
 fn commit(canister_id: CanisterId, top_up: CyclesTopUp, is_group: bool, state: &mut RuntimeState) {
     state.data.total_cycles_spent_on_canisters += top_up.amount;
+
+    state.data.local_user_index_sync_queue.push(IdempotentEnvelope {
+        created_at: state.env.now(),
+        idempotency_id: state.env.rng().next_u64(),
+        value: LocalGroupIndexEvent::MarkTopUp(canister_id, top_up.clone()),
+    });
 
     if is_group {
         if !state.data.local_groups.mark_cycles_top_up(&canister_id.into(), top_up) {

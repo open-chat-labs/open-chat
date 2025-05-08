@@ -1,7 +1,11 @@
-import type DRange from "drange";
 import { emptyChatMetrics } from "../../utils";
 import type { AccessControlled, AccessGateConfig, UpdatedRules, VersionedRules } from "../access";
-import type { CommandArg, ExternalBotPermissions, InstalledBotDetails } from "../bots";
+import type {
+    CommandArg,
+    ExternalBotPermissions,
+    InstalledBotDetails,
+    WebhookDetails,
+} from "../bots";
 import type { ChitEarned } from "../chit";
 import type {
     CommunityCanisterCommunitySummaryUpdates,
@@ -17,7 +21,6 @@ import type {
     ChatPermissions,
     HasMembershipRole,
     MemberRole,
-    OptionalChatPermissions,
     Permissioned,
     PublicApiKeyDetails,
 } from "../permission";
@@ -671,7 +674,7 @@ export type Message<T extends MessageContent = MessageContent> = {
     deleted: boolean;
     thread?: ThreadSummary;
     blockLevelMarkdown: boolean;
-    botContext?: BotMessageContext;
+    senderContext?: SenderContext;
 };
 
 export type BotContextCommand = {
@@ -681,9 +684,16 @@ export type BotContextCommand = {
 };
 
 export type BotMessageContext = {
+    kind: "bot";
     command?: BotContextCommand;
     finalised: boolean;
 };
+
+export type WebhookContext = {
+    kind: "webhook";
+};
+
+export type SenderContext = BotMessageContext | WebhookContext;
 
 export type ThreadSummary = {
     participantIds: Set<string>;
@@ -708,38 +718,6 @@ export type LocalPollVote = {
     answerIndex: number;
     type: "register" | "delete";
     userId: string;
-};
-
-export type LocalChatSummaryUpdates = {
-    favourited?: boolean;
-    unfavourited?: boolean;
-    added?: ChatSummary;
-    installedBots?: Map<string, ExternalBotPermissions>;
-    removedBots?: Set<string>;
-    updated?:
-        | {
-              kind?: undefined;
-              latestMessage?: EventWrapper<Message>;
-              notificationsMuted?: boolean;
-              archived?: boolean;
-              rulesAccepted?: boolean;
-          }
-        | {
-              kind: "group_chat" | "channel";
-              name?: string;
-              description?: string;
-              latestMessage?: EventWrapper<Message>;
-              public?: boolean;
-              permissions?: OptionalChatPermissions;
-              frozen?: boolean;
-              gateConfig?: AccessGateConfig;
-              notificationsMuted?: boolean;
-              archived?: boolean;
-              rulesAccepted?: boolean;
-              eventsTTL?: OptionUpdate<bigint>;
-          };
-    removedAtTimestamp?: bigint;
-    lastUpdated: number;
 };
 
 export type LocalMessageUpdates = {
@@ -1061,7 +1039,6 @@ export type UpdatesResult = {
 
 export type ChatStateFull = {
     latestUserCanisterUpdates: bigint;
-    latestActiveGroupsCheck: bigint;
     directChats: DirectChatSummary[];
     groupChats: GroupChatSummary[];
     communities: CommunitySummary[];
@@ -1187,6 +1164,11 @@ export function chatIdentifiersEqual(
             return b.kind === "group_chat" && a.groupId === b.groupId;
     }
 }
+
+export type ThreadIdentifier = {
+    chatId: ChatIdentifier;
+    threadRootMessageIndex: number;
+};
 
 export type DirectChatIdentifier = {
     kind: "direct_chat";
@@ -1466,17 +1448,7 @@ export type GroupChatDetails = {
     timestamp: bigint;
     bots: InstalledBotDetails[];
     apiKeys: Map<string, PublicApiKeyDetails>;
-};
-
-/**
- * This will hold all chat specific state
- * All properties are optional but individual derived stores can provide their own default values
- * TODO - the goal is to get rid of all of these
- */
-export type ChatSpecificState = {
-    confirmedEventIndexesLoaded: DRange;
-    serverEvents: EventWrapper<ChatEvent>[];
-    expiredEventRanges: DRange;
+    webhooks: WebhookDetails[];
 };
 
 export type GroupChatDetailsUpdates = {
@@ -1492,6 +1464,7 @@ export type GroupChatDetailsUpdates = {
     botsAddedOrUpdated: InstalledBotDetails[];
     botsRemoved: Set<string>;
     apiKeysGenerated: PublicApiKeyDetails[];
+    webhooks?: WebhookDetails[];
 };
 
 export type ChatSummary = DirectChatSummary | MultiUserChat;
@@ -1560,6 +1533,7 @@ export type GroupChatSummary = DataContent &
         isInvited: boolean;
         messagesVisibleToNonMembers: boolean;
         verified: boolean;
+        latestSuccessfulUpdatesCheck: bigint;
     };
 
 export function nullMembership(): ChatMembership {
@@ -2284,7 +2258,7 @@ export type GroupAndCommunitySummaryUpdatesResponse =
     | {
           kind: "not_found";
       }
-    | { kind: "error"; error: string };
+    | { kind: "error"; error: string; canisterId: string; };
 
 export type ChatEventsArgs = {
     context: MessageContext;
@@ -2361,3 +2335,12 @@ export type SetPinNumberResponse =
     | OCError;
 
 export type PinNumberFailures = PinRequired | PinIncorrect | TooManyFailedPinAttempts;
+
+export type MessageFilter = {
+    id: bigint;
+    regex: RegExp;
+};
+
+export type UnconfirmedMessageEvent = EventWrapper<Message> & { accepted: boolean };
+
+export type UnconfirmedState = Map<bigint, UnconfirmedMessageEvent>;

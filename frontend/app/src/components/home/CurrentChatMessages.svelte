@@ -13,16 +13,10 @@
         FilteredProposals,
         app,
         chatIdentifiersEqual,
-        currentChatEditingEvent,
-        draftMessagesStore,
-        eventsStore,
-        failedMessagesStore,
-        messagesRead,
+        localUpdates,
         pathState,
         routeForChatIdentifier,
         ui,
-        unconfirmed,
-        currentUser as user,
     } from "openchat-client";
     import page from "page";
     import { getContext, untrack } from "svelte";
@@ -99,7 +93,7 @@
     }
 
     function onEditEvent(ev: EventWrapper<Message>) {
-        draftMessagesStore.setEditing({ chatId: chat.id }, ev);
+        localUpdates.draftMessages.setEditing({ chatId: chat.id }, ev);
     }
 
     function eventKey(e: EventWrapper<ChatEventType>): string {
@@ -147,10 +141,10 @@
 
     function isMe(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            return evt.event.sender === $user.userId;
+            return evt.event.sender === app.currentUserId;
         }
         if (evt.event.kind === "group_chat_created") {
-            return evt.event.created_by === $user.userId;
+            return evt.event.created_by === app.currentUserId;
         }
         return false;
     }
@@ -172,7 +166,7 @@
 
     function toggleMessageExpansion(ew: EventWrapper<ChatEventType>, expand: boolean) {
         if (ew.event.kind === "message" && ew.event.content.kind === "proposal_content") {
-            client.toggleProposalFilterMessageExpansion(ew.event.messageId, expand);
+            app.toggleProposalFilterMessageExpansion(ew.event.messageId, expand);
         }
     }
 
@@ -252,12 +246,14 @@
             }
         }
     });
-    let showAvatar = $derived(initialised && shouldShowAvatar(chat, $eventsStore[0]?.index));
+    let showAvatar = $derived(
+        initialised && shouldShowAvatar(chat, app.selectedChat.events[0]?.index),
+    );
     let messageContext = $derived({ chatId: chat?.id, threadRootMessageIndex: undefined });
     let timeline = $derived(
         client.groupEvents(
-            [...$eventsStore].reverse(),
-            $user.userId,
+            [...app.selectedChat.events].reverse(),
+            app.currentUserId,
             app.selectedChat.expandedDeletedMessages,
             groupInner(filteredProposals),
         ),
@@ -292,7 +288,7 @@
     {unreadMessages}
     {firstUnreadMention}
     {footer}
-    events={$eventsStore}
+    events={app.selectedChat.events}
     {chat}
     bind:initialised
     bind:messagesDiv
@@ -317,11 +313,11 @@
                                 observer={messageObserver}
                                 focused={evt.event.kind === "message" &&
                                     evt.event.messageIndex === focusIndex &&
-                                    !isFailed($failedMessagesStore, evt)}
-                                accepted={isAccepted($unconfirmed, evt)}
-                                confirmed={isConfirmed($unconfirmed, evt)}
-                                failed={isFailed($failedMessagesStore, evt)}
-                                readByMe={isReadByMe($messagesRead, evt)}
+                                    !isFailed(evt)}
+                                accepted={isAccepted(evt)}
+                                confirmed={isConfirmed(evt)}
+                                failed={isFailed(evt)}
+                                readByMe={isReadByMe(evt)}
                                 chatId={chat.id}
                                 chatType={chat.kind}
                                 me={isMe(evt)}
@@ -343,7 +339,7 @@
                                     chat.kind === "channel") &&
                                     chat.public}
                                 pinned={isPinned(app.selectedChat.pinnedMessages, evt)}
-                                editing={$currentChatEditingEvent === evt}
+                                editing={app.currentChatDraftMessage?.editingEvent === evt}
                                 onReplyTo={replyTo}
                                 {onRemovePreview}
                                 {onEditEvent}

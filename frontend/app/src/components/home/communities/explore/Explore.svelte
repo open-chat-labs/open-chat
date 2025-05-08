@@ -1,14 +1,6 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
-    import {
-        anonUser,
-        app,
-        isDiamond,
-        offlineStore,
-        publish,
-        ScreenWidth,
-        ui,
-    } from "openchat-client";
+    import { app, offlineStore, publish, ScreenWidth, ui } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
@@ -16,7 +8,6 @@
     import Plus from "svelte-material-icons/Plus.svelte";
     import Tune from "svelte-material-icons/Tune.svelte";
     import { i18nKey } from "../../../../i18n/i18n";
-    import { exploreCommunitiesFilters } from "../../../../stores/communityFilters";
     import { communitySearchState } from "../../../../stores/search.svelte";
     import Search from "../../..//Search.svelte";
     import Button from "../../../Button.svelte";
@@ -32,7 +23,6 @@
     let searching = $state(false);
     let showFab = $state(false);
     let scrollableElement: HTMLElement | null;
-    let initialised = $state(false);
 
     function calculatePageSize(width: ScreenWidth): number {
         // make sure we get even rows of results
@@ -46,14 +36,14 @@
     }
 
     function createCommunity() {
-        if ($anonUser) {
+        if (app.anonUser) {
             client.updateIdentityState({
                 kind: "logging_in",
                 postLogin: { kind: "create_community" },
             });
             return;
         }
-        if (!$isDiamond) {
+        if (!app.isDiamond) {
             publish("upgrade");
         } else {
             publish("createCommunity");
@@ -101,12 +91,10 @@
             }
             onScroll();
         });
-        return exploreCommunitiesFilters.subscribe((filters) => {
-            if (initialised || communitySearchState.results.length === 0) {
-                search(filters, true);
-            }
-            initialised = true;
-        });
+    });
+
+    $effect(() => {
+        search(app.exploreCommunitiesFilters, true);
     });
 
     function scrollToTop() {
@@ -152,7 +140,7 @@
                         fill
                         bind:searchTerm={communitySearchState.term}
                         searching={false}
-                        onPerformSearch={() => search($exploreCommunitiesFilters, true)}
+                        onPerformSearch={() => search(app.exploreCommunitiesFilters, true)}
                         placeholder={i18nKey("communities.search")} />
                 </div>
                 <div class="create">
@@ -179,7 +167,7 @@
                         searching={false}
                         fill
                         bind:searchTerm={communitySearchState.term}
-                        onPerformSearch={() => search($exploreCommunitiesFilters, true)}
+                        onPerformSearch={() => search(app.exploreCommunitiesFilters, true)}
                         placeholder={i18nKey("communities.search")} />
                 </div>
             {/if}
@@ -237,7 +225,7 @@
                 <Button
                     disabled={searching}
                     loading={searching}
-                    onClick={() => search($exploreCommunitiesFilters, false)}
+                    onClick={() => search(app.exploreCommunitiesFilters, false)}
                     ><Translatable resourceKey={i18nKey("communities.loadMore")} /></Button>
             </div>
         {/if}

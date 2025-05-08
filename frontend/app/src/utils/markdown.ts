@@ -1,5 +1,5 @@
 import { isAbsoluteUrl, synonymousUrlRegex } from "./urls";
-import { marked } from "marked";
+import { marked, type Token } from "marked";
 
 interface Link {
     href: string;
@@ -30,4 +30,11 @@ const renderer = {
     },
 };
 
-marked.use({ renderer });
+const walkTokens = (token: Token) => {
+    if (token.type === "escape") {
+        // This ensures each instance of \\ is rendered correctly rather than being modified to \
+        token.text = token.raw;
+    }
+}
+
+marked.use({ renderer, walkTokens });

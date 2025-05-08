@@ -1,11 +1,11 @@
 <script lang="ts">
-    import Markdown from "./Markdown.svelte";
     import type { OpenChat, PrizeWinnerContent } from "openchat-client";
-    import { userStore, currentUser as user, cryptoLookup } from "openchat-client";
+    import { app, cryptoLookup, userStore } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import SpinningToken from "../icons/SpinningToken.svelte";
     import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
+    import Markdown from "./Markdown.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -16,9 +16,9 @@
     let { content }: Props = $props();
 
     function username(userId: string): string {
-        return userId === $user.userId
+        return userId === app.currentUserId
             ? $_("you")
-            : `${$userStore.get(userId)?.username ?? $_("unknown")}`;
+            : `${userStore.get(userId)?.username ?? $_("unknown")}`;
     }
 
     function openUserProfile(ev: Event) {
@@ -41,7 +41,7 @@
         client.formatTokens(content.transaction.amountE8s, tokenDetails.decimals),
     );
     let winner = $derived(`${username(content.transaction.recipient)}`);
-    let me = $derived($user.userId === content.transaction.recipient);
+    let me = $derived(app.currentUserId === content.transaction.recipient);
     let transactionLinkText = $derived(client.buildTransactionLink($_, content.transaction));
 </script>
 

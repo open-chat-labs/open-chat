@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { MessageContext, OpenChat, P2PSwapContentInitial } from "openchat-client";
-    import { enhancedCryptoLookup as cryptoLookup, isDiamond, publish, ui } from "openchat-client";
+    import { app, enhancedCryptoLookup as cryptoLookup, publish, ui } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
@@ -68,7 +68,7 @@
     });
 
     function onSend() {
-        if (!$isDiamond) {
+        if (!app.isDiamond) {
             publish("upgrade");
             return;
         }

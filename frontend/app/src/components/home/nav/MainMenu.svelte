@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
-    import { anonUser, canExtendDiamond, platformOperator, publish, ui } from "openchat-client";
+    import { app, publish, ui } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
     import AccountSettings from "svelte-material-icons/AccountSettingsOutline.svelte";
@@ -24,11 +24,11 @@
 
     const client = getContext<OpenChat>("client");
 
-    let admin = $derived($platformOperator);
+    let admin = $derived(app.platformOperator);
 </script>
 
 <Menu>
-    {#if !$anonUser}
+    {#if !app.anonUser}
         <MenuItem onclick={() => publish("wallet")}>
             {#snippet icon()}
                 <Wallet size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
@@ -52,7 +52,7 @@
             {#snippet text()}
                 <Translatable
                     resourceKey={i18nKey(
-                        $canExtendDiamond ? "upgrade.extend" : "upgrade.diamond",
+                        app.canExtendDiamond ? "upgrade.extend" : "upgrade.diamond",
                     )} />
             {/snippet}
         </MenuItem>
@@ -142,7 +142,7 @@
         </MenuItem>
     {/if}
     <MenuItem separator />
-    {#if !$anonUser}
+    {#if !app.anonUser}
         <MenuItem onclick={() => client.logout()}>
             {#snippet icon()}
                 <Logout size={ui.iconSize} color={"var(--icon-inverted-txt)"} />

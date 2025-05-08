@@ -216,6 +216,7 @@ pub mod happy_path {
         sender: Principal,
         user_index_canister_id: CanisterId,
         local_user_index_canister_id: CanisterId,
+        local_group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
     ) {
         let response = super::add_local_user_index_canister(
@@ -224,6 +225,7 @@ pub mod happy_path {
             user_index_canister_id,
             &user_index_canister::add_local_user_index_canister::Args {
                 canister_id: local_user_index_canister_id,
+                local_group_index_canister_id,
                 notifications_canister_id,
             },
         );
@@ -400,6 +402,7 @@ pub mod happy_path {
                 search_term,
                 page_index: 0,
                 page_size: 10,
+                exclude_installed: false,
             },
         );
 

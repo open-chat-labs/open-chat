@@ -1,0 +1,21 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+key.properties
+
+/.tauri
+
+# THIS FILE WAS IN GIT IGNORE, BUT IS REQUIERD BY ANDROID STUDIO TO SYNC GRADLE
+# /tauri.settings.gradle

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
-    import { offlineStore, ui } from "openchat-client";
+    import { ui } from "openchat-client";
 
     type LinkInfo = {
         url: string;
@@ -13,13 +13,13 @@
     interface Props {
         url: string;
         intersecting: boolean;
-        rendered?: boolean;
         onRendered: (url: string) => void;
     }
 
-    let { url, intersecting, rendered = $bindable(false), onRendered }: Props = $props();
+    let { url, intersecting, onRendered }: Props = $props();
 
     let previewPromise: Promise<LinkInfo | undefined> | undefined = $state();
+    let rendered = $state(false);
 
     async function loadPreview(url: string): Promise<LinkInfo | undefined> {
         const response = await fetch(
@@ -46,16 +46,14 @@
     }
 
     trackedEffect("generic-preview", () => {
-        if (intersecting && !ui.eventListScrolling && !rendered && !$offlineStore) {
-            // make sure we only actually *load* the preview once
-            previewPromise = previewPromise ?? loadPreview(url);
-            previewPromise.then((preview) => {
-                if (preview && intersecting && !ui.eventListScrolling) {
-                    rendered = true;
-                    onRendered(url);
-                }
-            });
-        }
+        // make sure we only actually *load* the preview once
+        previewPromise = previewPromise ?? loadPreview(url);
+        previewPromise.then((preview) => {
+            if (preview && intersecting && !ui.eventListScrolling) {
+                rendered = true;
+                onRendered(url);
+            }
+        });
     });
 </script>
 

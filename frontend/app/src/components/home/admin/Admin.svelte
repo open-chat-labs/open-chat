@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { platformOperator, ui } from "openchat-client";
+    import { app, ui } from "openchat-client";
     import page from "page";
     import CogOutline from "svelte-material-icons/CogOutline.svelte";
     import Button from "../../Button.svelte";
@@ -14,7 +14,7 @@
     }
 </script>
 
-{#if !$platformOperator}
+{#if !app.platformOperator}
     <div class="unauthorised">
         <img class="img" src={"/assets/evil-robot.svg"} alt="Unauthorised" />
         <h2>Unauthorised</h2>

@@ -1,12 +1,6 @@
 <script lang="ts">
     import BitcoinAccountInfo from "@components/home/BitcoinAccountInfo.svelte";
-    import {
-        BTC_SYMBOL,
-        cryptoBalance,
-        cryptoLookup,
-        ui,
-        currentUser as user,
-    } from "openchat-client";
+    import { app, BTC_SYMBOL, cryptoBalance, cryptoLookup, ui } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
@@ -29,7 +23,6 @@
     let tokenDetails = $derived($cryptoLookup[ledger]);
     let symbol = $derived(tokenDetails.symbol);
     let title = $derived(i18nKey(`cryptoAccount.receiveToken`, { symbol }));
-    let userId = $derived($user.userId);
 
     function onBalanceRefreshed() {
         error = undefined;
@@ -56,7 +49,7 @@
     {#snippet body()}
         <form class="body">
             {#if symbol === BTC_SYMBOL}
-                <BitcoinAccountInfo qrSize={"larger"} centered {userId} />
+                <BitcoinAccountInfo qrSize={"larger"} centered userId={app.currentUserId} />
             {:else}
                 <AccountInfo qrSize={"larger"} centered {ledger} />
             {/if}

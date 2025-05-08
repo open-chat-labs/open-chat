@@ -1,5 +1,6 @@
 <script lang="ts">
     import BotInstaller from "@src/components/bots/install/BotInstaller.svelte";
+    import WebhookMember from "@src/components/bots/WebhookMember.svelte";
     import {
         type BotMatch as BotMatchType,
         type CommunityIdentifier,
@@ -18,10 +19,11 @@
         type ReadonlySet,
         type UserLookup,
         type UserSummary,
+        type WebhookDetails,
+        app,
         botState,
         chatIdentifiersEqual,
         LARGE_GROUP_THRESHOLD,
-        currentUser as user,
         userStore,
     } from "openchat-client";
     import { getContext } from "svelte";
@@ -58,6 +60,7 @@
         initialUsergroup?: number | undefined;
         showHeader?: boolean;
         apiKeys: ReadonlyMap<string, PublicApiKeyDetails>;
+        webhooks?: WebhookDetails[];
         onClose: () => void;
         onShowInviteUsers: () => void;
         onChangeRole?: (args: { userId: string; newRole: MemberRole; oldRole: MemberRole }) => void;
@@ -78,6 +81,7 @@
         initialUsergroup = $bindable(undefined),
         showHeader = true,
         apiKeys,
+        webhooks,
         onClose,
         onShowInviteUsers,
         onChangeRole,
@@ -119,7 +123,11 @@
     ): UserSummary[] {
         return Array.from<string>(ids).reduce((matching, id) => {
             const user = users.get(id);
-            if (user && matchesSearch(term, user) && (user.userId !== userId || includeMe)) {
+            if (
+                user &&
+                matchesSearch(term, user) &&
+                (user.userId !== app.currentUserId || includeMe)
+            ) {
                 matching.push(user);
             }
             return matching;
@@ -159,6 +167,11 @@
             (user.displayName !== undefined &&
                 user.displayName.toLowerCase().includes(searchTermLower))
         );
+    }
+
+    function webhookMatches(searchTermLower: string, webhook: WebhookDetails): boolean {
+        if (searchTermLower === "") return true;
+        return webhook.name.toLowerCase().includes(searchTermLower);
     }
 
     function getKnownUsers(userStore: UserLookup, members: MemberType[]): FullMember[] {
@@ -230,20 +243,22 @@
             selectTab("users");
         }
     }
-    let userId = $derived($user.userId);
-    let knownUsers = $derived(getKnownUsers($userStore, members));
+    let knownUsers = $derived(getKnownUsers(userStore.allUsers, members));
     let largeGroup = $derived(members.length > LARGE_GROUP_THRESHOLD);
-    let me = $derived(knownUsers.find((u) => u.userId === userId));
+    let me = $derived(knownUsers.find((u) => u.userId === app.currentUserId));
     let searchTerm = $derived(trimLeadingAtSymbol(searchTermEntered));
     let searchTermLower = $derived(searchTerm.toLowerCase());
     let fullMembers = $derived(
         knownUsers
-            .filter((u) => matchesSearch(searchTermLower, u) && u.userId !== userId)
+            .filter((u) => matchesSearch(searchTermLower, u) && u.userId !== app.currentUserId)
             .sort(compareMembers),
     );
-    let blockedUsers = $derived(matchingUsers(searchTermLower, $userStore, blocked, true));
-    let lapsedMembers = $derived(matchingUsers(searchTermLower, $userStore, lapsed, true));
-    let invitedUsers = $derived(matchingUsers(searchTermLower, $userStore, invited, true));
+    let blockedUsers = $derived(matchingUsers(searchTermLower, userStore.allUsers, blocked, true));
+    let lapsedMembers = $derived(matchingUsers(searchTermLower, userStore.allUsers, lapsed, true));
+    let invitedUsers = $derived(matchingUsers(searchTermLower, userStore.allUsers, invited, true));
+    let matchingWebhooks = $derived(
+        webhooks?.filter((w) => webhookMatches(searchTermLower, w)) ?? [],
+    );
     let showBlocked = $derived(blockedUsers.length > 0);
     let showInvited = $derived(invitedUsers.length > 0);
     let showLapsed = $derived(lapsedMembers.length > 0);
@@ -407,12 +422,21 @@
                     canManage={canManageBots}
                     {searchTerm} />
             {/each}
+        {/if}
 
-            {#if fullMembers.length > 0}
-                <h4 class="member_type_label">
-                    <Translatable resourceKey={i18nKey("bots.member.people")}></Translatable>
-                </h4>
-            {/if}
+        {#if matchingWebhooks !== undefined && matchingWebhooks.length > 0 && me?.role === "owner" && collection.kind !== "community"}
+            <h4 class="member_type_label">
+                <Translatable resourceKey={i18nKey("bots.member.webhooks")}></Translatable>
+            </h4>
+            {#each matchingWebhooks.values() as webhook}
+                <WebhookMember chat={collection} {webhook} {searchTerm} />
+            {/each}
+        {/if}
+
+        {#if (bots.length > 0 || (matchingWebhooks !== undefined && matchingWebhooks.length > 0)) && fullMembers.length > 0}
+            <h4 class="member_type_label">
+                <Translatable resourceKey={i18nKey("bots.member.people")}></Translatable>
+            </h4>
         {/if}
 
         <VirtualList bind:this={membersList} keyFn={(user) => user.userId} items={fullMembers}>
@@ -438,7 +462,7 @@
         <div use:menuCloser class="user-list">
             {#each blockedUsers as user}
                 <BlockedUser
-                    me={user.userId === userId}
+                    me={user.userId === app.currentUserId}
                     {user}
                     {searchTerm}
                     canUnblockUser={client.canUnblockUsers(collection.id)}
@@ -449,7 +473,7 @@
         <div use:menuCloser class="user-list">
             {#each invitedUsers as user}
                 <InvitedUser
-                    me={user.userId === userId}
+                    me={user.userId === app.currentUserId}
                     {user}
                     {searchTerm}
                     canUninviteUser={client.canInviteUsers(collection.id)}
@@ -459,7 +483,7 @@
     {:else if memberView === "lapsed"}
         <div use:menuCloser class="user-list">
             {#each lapsedMembers as user}
-                <User me={user.userId === userId} {user} {searchTerm} />
+                <User me={user.userId === app.currentUserId} {user} {searchTerm} />
             {/each}
         </div>
     {/if}
@@ -472,7 +496,11 @@
     </div>
 {:else if selectedTab === "add-bots" && collection.kind !== "channel"}
     <div class="bot-explorer">
-        <BotExplorer location={botContainer} {installingBot} onSelect={onBotSelected}></BotExplorer>
+        <BotExplorer
+            location={botContainer}
+            {installingBot}
+            excludeInstalled
+            onSelect={onBotSelected}></BotExplorer>
     </div>
 {/if}
 

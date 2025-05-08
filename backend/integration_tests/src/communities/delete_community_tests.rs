@@ -1,3 +1,4 @@
+use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
 use crate::utils::tick_many;
 use crate::{CanisterIds, TestEnv, User, client};
@@ -52,9 +53,8 @@ fn user_canister_notified_of_community_deleted() {
         community_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    env.stop_canister(user2.canister(), Some(user2.local_user_index)).unwrap();
-
-    env.stop_canister(user3.canister(), Some(user3.local_user_index)).unwrap();
+    stop_canister(env, user2.local_user_index, user2.canister());
+    stop_canister(env, user3.local_user_index, user3.canister());
 
     let delete_community_response = client::user::delete_community(
         env,
@@ -83,8 +83,7 @@ fn user_canister_notified_of_community_deleted() {
 
     env.tick();
 
-    env.start_canister(user2.user_id.into(), Some(user2.local_user_index))
-        .unwrap();
+    start_canister(env, user2.local_user_index, user2.user_id.into());
 
     env.tick();
 
@@ -98,12 +97,8 @@ fn user_canister_notified_of_community_deleted() {
     );
 
     env.advance_time(Duration::from_secs(2 * 60));
-
     env.tick();
-
-    env.start_canister(user3.user_id.into(), Some(user3.local_user_index))
-        .unwrap();
-
+    start_canister(env, user3.local_user_index, user3.user_id.into());
     env.tick();
 
     // Only retry for 10 minutes so the notification shouldn't have made it to user3's canister

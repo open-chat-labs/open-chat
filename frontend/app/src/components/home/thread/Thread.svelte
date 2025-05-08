@@ -15,17 +15,11 @@
     } from "openchat-client";
     import {
         app,
-        draftMessagesStore,
-        failedMessagesStore,
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
+        localUpdates,
         messageContextsEqual,
-        messagesRead,
         subscribe,
-        threadEvents,
-        threadsFollowedByMeStore,
-        unconfirmed,
-        currentUser as user,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -78,27 +72,32 @@
     let blocked = $derived(
         chat.kind === "direct_chat" && app.selectedChat.blockedUsers.has(chat.them.userId),
     );
-    let draftMessage = $derived($draftMessagesStore.get(messageContext));
-    let textContent = $derived(draftMessage?.textContent);
-    let replyingTo = $derived(draftMessage?.replyingTo);
-    let attachment = $derived(draftMessage?.attachment);
-    let editingEvent = $derived(draftMessage?.editingEvent);
+    let textContent = $derived(app.currentThreadDraftMessage?.textContent);
+    let replyingTo = $derived(app.currentThreadDraftMessage?.replyingTo);
+    let attachment = $derived(app.currentThreadDraftMessage?.attachment);
+    let editingEvent = $derived(app.currentThreadDraftMessage?.editingEvent);
     let canSendAny = $derived(client.canSendMessage(chat.id, "thread"));
     let canReact = $derived(client.canReactToMessages(chat.id));
-    let atRoot = $derived($threadEvents.length === 0 || $threadEvents[0]?.index === 0);
-    let events = $derived(atRoot ? [rootEvent, ...$threadEvents] : $threadEvents);
+    let atRoot = $derived(
+        app.selectedChat.threadEvents.length === 0 || app.selectedChat.threadEvents[0]?.index === 0,
+    );
+    let events = $derived(
+        atRoot ? [rootEvent, ...app.selectedChat.threadEvents] : app.selectedChat.threadEvents,
+    );
     let timeline = $derived(
         client.groupEvents(
             [...events].reverse(),
-            $user.userId,
+            app.currentUserId,
             app.selectedChat.expandedDeletedMessages,
         ) as TimelineItem<Message>[],
     );
     let readonly = $derived(client.isChatReadOnly(chat.id));
     let thread = $derived(rootEvent.event.thread);
-    let loading = $derived(!initialised && $threadEvents.length === 0 && thread !== undefined);
+    let loading = $derived(
+        !initialised && app.selectedChat.threadEvents.length === 0 && thread !== undefined,
+    );
     let isFollowedByMe = $derived(
-        $threadsFollowedByMeStore.get(chat.id)?.has(threadRootMessageIndex) ?? false,
+        app.threadsFollowedByMe.get(chat.id)?.has(threadRootMessageIndex) ?? false,
     );
 
     onMount(() => {
@@ -172,7 +171,7 @@
     }
 
     function editEvent(ev: EventWrapper<Message>): void {
-        draftMessagesStore.setEditing(messageContext, ev);
+        localUpdates.draftMessages.setEditing(messageContext, ev);
     }
 
     function sendMessageWithAttachment(
@@ -191,31 +190,33 @@
     }
 
     function onCancelReply() {
-        draftMessagesStore.setReplyingTo(messageContext, undefined);
+        localUpdates.draftMessages.setReplyingTo(messageContext, undefined);
     }
 
     function clearAttachment() {
-        draftMessagesStore.setAttachment(messageContext, undefined);
+        localUpdates.draftMessages.setAttachment(messageContext, undefined);
     }
 
     function cancelEditEvent() {
-        draftMessagesStore.delete(messageContext);
+        localUpdates.draftMessages.delete(messageContext);
     }
 
     function onSetTextContent(txt?: string) {
-        draftMessagesStore.setTextContent(messageContext, txt);
+        localUpdates.draftMessages.setTextContent(messageContext, txt);
     }
 
     function onStartTyping() {
-        client.startTyping(chat, $user.userId, threadRootMessageIndex);
+        client.startTyping(chat, app.currentUserId, threadRootMessageIndex);
     }
 
     function onStopTyping() {
-        client.stopTyping(chat, $user.userId, threadRootMessageIndex);
+        // TODO - this is called on a timeout and by the time it runs, we might have closed the thread and that
+        // can cause an null ref error
+        client.stopTyping(chat, app.currentUserId, threadRootMessageIndex);
     }
 
     function onFileSelected(content: AttachmentContent) {
-        draftMessagesStore.setAttachment(messageContext, content);
+        localUpdates.draftMessages.setAttachment(messageContext, content);
     }
 
     function tokenTransfer(detail: { ledger?: string; amount?: bigint }) {
@@ -249,7 +250,7 @@
     }
 
     function replyTo(replyContext: EnhancedReplyContext) {
-        draftMessagesStore.setReplyingTo(messageContext, replyContext);
+        localUpdates.draftMessages.setReplyingTo(messageContext, replyContext);
     }
 
     function defaultCryptoTransferReceiver(): string | undefined {
@@ -300,7 +301,7 @@
 
     function toggleMessageExpansion(ew: EventWrapper<ChatEventType>, expand: boolean) {
         if (ew.event.kind === "message" && ew.event.content.kind === "proposal_content") {
-            client.toggleProposalFilterMessageExpansion(ew.event.messageId, expand);
+            app.toggleProposalFilterMessageExpansion(ew.event.messageId, expand);
         }
     }
 
@@ -381,13 +382,13 @@
                                 event={evt}
                                 first={i + 1 === userGroup.length}
                                 last={i === 0}
-                                me={evt.event.sender === $user.userId}
-                                accepted={isAccepted($unconfirmed, evt)}
-                                confirmed={isConfirmed($unconfirmed, evt)}
-                                failed={isFailed($failedMessagesStore, evt)}
+                                me={evt.event.sender === app.currentUserId}
+                                accepted={isAccepted(evt)}
+                                confirmed={isConfirmed(evt)}
+                                failed={isFailed(evt)}
                                 readByMe={evt.event.messageId === rootEvent.event.messageId ||
                                     !isFollowedByMe ||
-                                    isReadByMe($messagesRead, evt)}
+                                    isReadByMe(evt)}
                                 observer={messageObserver}
                                 focused={evt.event.kind === "message" &&
                                     focusIndex === evt.event.messageIndex}
@@ -429,7 +430,7 @@
         {editingEvent}
         {replyingTo}
         {textContent}
-        user={$user}
+        user={app.currentUser}
         joining={undefined}
         preview={false}
         lapsed={false}

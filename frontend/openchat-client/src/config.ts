@@ -1,7 +1,7 @@
-import type { Logger } from "openchat-shared";
-import type { GroupInvite, MessageFormatter } from "openchat-shared";
+import type { CommunityInvite, GroupInvite, Logger, MessageFormatter } from "openchat-shared";
 
 export type OpenChatConfig = {
+    appType?: "android" | "ios" | "web";
     icUrl?: string;
     webAuthnOrigin: string | undefined;
     iiDerivationOrigin?: string;
@@ -20,7 +20,7 @@ export type OpenChatConfig = {
     meteredApiKey: string;
     enableMultiCrypto?: boolean;
     blobUrlPattern: string;
-    achievementUrlPath: string;
+    canisterUrlPath: string;
     proposalBotCanister: string;
     marketMakerCanister: string;
     signInWithEmailCanister: string;
@@ -33,4 +33,5 @@ export type OpenChatConfig = {
     env: string;
     bitcoinMainnetEnabled: boolean;
     groupInvite?: GroupInvite;
+    communityInvite?: CommunityInvite;
 };

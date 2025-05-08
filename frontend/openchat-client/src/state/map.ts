@@ -3,6 +3,7 @@ import {
     SafeSet,
     type ChatIdentifier,
     type CommunityIdentifier,
+    type MessageContext,
     type Primitive,
     type ReadonlyMap,
 } from "openchat-shared";
@@ -29,6 +30,12 @@ export class LocalMap<K, V> {
     // for testing
     protected removed(key: K): boolean {
         return this.#removed.has(key);
+    }
+
+    // used for testing
+    clear() {
+        this.#addedOrUpdated.clear();
+        this.#removed.clear();
     }
 
     addOrUpdate(key: K, value: V): UndoLocalUpdate {
@@ -75,6 +82,16 @@ export class ReactiveCommunityMap<V> extends SafeMap<CommunityIdentifier, V> {
     }
 }
 
+export class ReactiveMessageMap<V> extends SafeMap<bigint, V> {
+    constructor() {
+        super(
+            (k) => k.toString(),
+            (k) => BigInt(k),
+            () => new SvelteMap(),
+        );
+    }
+}
+
 export class ReactiveChatMap<V> extends SafeMap<ChatIdentifier, V> {
     constructor() {
         super(
@@ -85,11 +102,30 @@ export class ReactiveChatMap<V> extends SafeMap<ChatIdentifier, V> {
     }
 }
 
+export class ReactiveMessageContextMap<V> extends SafeMap<MessageContext, V> {
+    constructor() {
+        super(
+            (k) => JSON.stringify(k),
+            (k) => JSON.parse(String(k)) as MessageContext,
+            () => new SvelteMap(),
+        );
+    }
+}
+
 export class LocalCommunityMap<V> extends LocalMap<CommunityIdentifier, V> {
     constructor() {
         super(
             (id) => id.communityId,
             (k) => ({ kind: "community", communityId: String(k) }),
+        );
+    }
+}
+
+export class LocalChatMap<V> extends LocalMap<ChatIdentifier, V> {
+    constructor() {
+        super(
+            (id) => JSON.stringify(id),
+            (k) => JSON.parse(String(k)) as ChatIdentifier,
         );
     }
 }

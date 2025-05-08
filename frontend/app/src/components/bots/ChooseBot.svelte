@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { AvatarSize, botState, currentUser, type ExternalBot } from "openchat-client";
+    import { app, AvatarSize, botState, type ExternalBot } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
-    import Translatable from "../Translatable.svelte";
     import AlertBox from "../AlertBox.svelte";
     import Avatar from "../Avatar.svelte";
+    import Translatable from "../Translatable.svelte";
 
     interface Props {
         onSelect: (bot: ExternalBot) => void;
@@ -14,7 +14,7 @@
 
     let bots = $derived(
         ownedOnly
-            ? [...botState.externalBots.values()].filter((b) => b.ownerId === $currentUser.userId)
+            ? [...botState.externalBots.values()].filter((b) => b.ownerId === app.currentUserId)
             : [...botState.externalBots.values()],
     );
 </script>

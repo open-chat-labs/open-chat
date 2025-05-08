@@ -16,13 +16,12 @@
         UserOrUserGroup,
     } from "openchat-client";
     import {
-        anonUser,
         app,
         botState,
         chatIdentifiersEqual,
-        currentUser,
         directMessageCommandInstance,
-        draftMessagesStore,
+        localUpdates,
+        messageContextsEqual,
         random64,
         ScreenWidth,
         throttleDeadline,
@@ -273,12 +272,12 @@
                 undefined,
                 { kind: "text_content", text: txt },
                 userMessageId,
-                $currentUser.userId,
+                app.currentUserId,
                 $useBlockLevelMarkdown,
                 false,
             );
             client.executeBotCommand(scope, commandInstance, true);
-            draftMessagesStore.delete(messageContext);
+            localUpdates.draftMessages.delete(messageContext);
             afterSendMessage();
         } else {
             showDirectBotChatWarning = true;
@@ -306,7 +305,7 @@
 
     function formatUserMentions(text: string): string {
         return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
-            const u = $userStore.get(p1);
+            const u = userStore.get(p1);
             if (u?.username !== undefined) {
                 const username = u.username;
                 return `@${username}`;
@@ -502,7 +501,7 @@
     let messageIsEmpty = $derived(
         (textContent?.trim() ?? "").length === 0 && attachment === undefined,
     );
-    let canSendAny = $derived(!$anonUser && client.canSendMessage(chat.id, mode));
+    let canSendAny = $derived(!app.anonUser && client.canSendMessage(chat.id, mode));
     let permittedMessages = $derived(client.permittedMessages(chat.id, mode));
     let canEnterText = $derived(
         (permittedMessages.get("text") ?? false) ||
@@ -583,7 +582,7 @@
         warning={i18nKey("bots.direct.warning")} />
 {/if}
 
-{#if botState.selectedCommand && botState.showingBuilder}
+{#if botState.selectedCommand && messageContextsEqual(botState.showingBuilder, messageContext)}
     <CommandBuilder
         {messageContext}
         onCommandSent={() => cancelCommandSelector(true)}
@@ -641,7 +640,7 @@
         <div class="disabled">
             <Translatable
                 resourceKey={i18nKey(
-                    $anonUser
+                    app.anonUser
                         ? "sendMessageDisabledAnon"
                         : mode === "thread"
                           ? "readOnlyThread"

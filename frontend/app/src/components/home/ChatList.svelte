@@ -5,24 +5,16 @@
         chatIdentifiersEqual,
         chatIdentifierToString,
         type ChatListScope,
-        chatSummariesListStore,
         type ChatSummary as ChatSummaryType,
         type CombinedUnreadCounts,
-        currentUser as createdUser,
         emptyCombinedUnreadCounts,
         type GroupMatch,
         type GroupSearchResponse,
-        numberOfThreadsStore,
         OpenChat,
         publish,
         routeForChatIdentifier,
         routeForScope,
-        selectedChatId,
         ui,
-        unreadCommunityChannelCounts,
-        unreadDirectCounts,
-        unreadFavouriteCounts,
-        unreadGroupCounts,
         userStore,
         type UserSummary,
     } from "openchat-client";
@@ -62,8 +54,6 @@
     let chatsScrollTop = $state<number | undefined>();
     let previousScope: ChatListScope | undefined = app.chatListScope;
     let previousView: "chats" | "threads" = $chatListView;
-
-    let unreadCounts = $state(emptyCombinedUnreadCounts());
 
     // TODO this doesn't work properly and I think it's to do with the way
     // effect dependencies are worked out when you have conditional code
@@ -112,7 +102,7 @@
         }
 
         if (chat.kind === "direct_chat") {
-            const user = $userStore.get(chat.them.userId);
+            const user = userStore.get(chat.them.userId);
             if (user !== undefined) {
                 return (
                     user.username.toLowerCase().indexOf(lowercaseSearch) >= 0 ||
@@ -180,12 +170,13 @@
                 return match.userId;
         }
     }
+
     let showPreview = $derived(
         ui.mobileWidth &&
             app.selectedCommunitySummary?.membership.role === "none" &&
-            $selectedChatId === undefined,
+            app.selectedChatId === undefined,
     );
-    let user = $derived($userStore.get($createdUser.userId));
+    let user = $derived(userStore.get(app.currentUserId));
     let lowercaseSearch = $derived(searchTerm.toLowerCase());
     let showExploreGroups = $derived(
         (app.chatListScope.kind === "none" || app.chatListScope.kind === "group_chat") &&
@@ -193,33 +184,30 @@
             !searchResultsAvailable,
     );
     let showBrowseChannnels = $derived(app.chatListScope.kind === "community");
-    $effect(() => {
+    let unreadCounts = $derived.by(() => {
         switch (app.chatListScope.kind) {
             case "group_chat": {
-                unreadCounts = $unreadGroupCounts;
-                break;
+                return app.unreadGroupCounts;
             }
             case "direct_chat": {
-                unreadCounts = $unreadDirectCounts;
-                break;
+                return app.unreadDirectCounts;
             }
             case "favourite": {
-                unreadCounts = $unreadFavouriteCounts;
-                break;
+                return app.unreadFavouriteCounts;
             }
             case "community": {
-                unreadCounts =
-                    $unreadCommunityChannelCounts.get(app.chatListScope.id) ??
-                    emptyCombinedUnreadCounts();
-                break;
+                return (
+                    app.unreadCommunityChannelCounts.get(app.chatListScope.id) ??
+                    emptyCombinedUnreadCounts()
+                );
             }
             default:
-                unreadCounts = emptyCombinedUnreadCounts();
+                return emptyCombinedUnreadCounts();
         }
     });
     let canMarkAllRead = $derived(anythingUnread(unreadCounts));
     $effect(() => {
-        if ($numberOfThreadsStore === 0) {
+        if (app.numberOfThreads === 0) {
             chatListView.set("chats");
         }
     });
@@ -229,9 +217,7 @@
         }
     });
     let chats = $derived(
-        searchTerm !== ""
-            ? $chatSummariesListStore.filter(chatMatchesSearch)
-            : $chatSummariesListStore,
+        searchTerm !== "" ? app.chatSummariesList.filter(chatMatchesSearch) : app.chatSummariesList,
     );
 </script>
 
@@ -253,7 +239,7 @@
         bind:searchResultsAvailable
         bind:searchTerm />
 
-    {#if $numberOfThreadsStore > 0}
+    {#if app.numberOfThreads > 0}
         <div class="section-selector">
             <ChatListSectionButton
                 onClick={() => setView("chats")}
@@ -281,7 +267,7 @@
                 {#each chats as chatSummary (chatIdentifierToString(chatSummary.id))}
                     <ChatSummary
                         {chatSummary}
-                        selected={chatIdentifiersEqual($selectedChatId, chatSummary.id)}
+                        selected={chatIdentifiersEqual(app.selectedChatId, chatSummary.id)}
                         visible={searchTerm !== "" || !chatSummary.membership.archived}
                         onChatSelected={chatSelected} />
                 {/each}
@@ -373,7 +359,7 @@
                 {/if}
             </div>
             {#if showExploreGroups}
-                <div class="explore-groups" onclick={() => page("/groups")}>
+                <div class="explore-groups" onclick={() => page("/groups?explore=true")}>
                     <div class="disc">
                         <Compass size={ui.iconSize} color={"var(--icon-txt)"} />
                     </div>

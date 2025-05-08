@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { EnhancedAccessGate, GateCheckSucceeded, OpenChat } from "openchat-client";
-    import { anonUser, app } from "openchat-client";
+    import { app } from "openchat-client";
     import { getContext, tick, type Snippet } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
@@ -20,7 +20,7 @@
     let checkingAccessGate: EnhancedAccessGate | undefined = $state(undefined);
 
     function joinCommunity() {
-        if ($anonUser) {
+        if (app.anonUser) {
             client.updateIdentityState({
                 kind: "logging_in",
                 postLogin: { kind: "join_community" },

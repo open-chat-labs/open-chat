@@ -105,6 +105,7 @@
         "visibility": "पहुँच"
     },
     "account": "खाता",
+    "accountCopiedToClipboard": "खाता पता क्लिपबोर्ड पर कॉपी किया गया!",
     "accounts": "हिसाब किताब",
     "accountSuspended": "खाता निलंबित कर दिया गया है",
     "activity": {
@@ -369,13 +370,14 @@
         "matchingCommands": "मिलान आदेश",
         "member": {
             "bots": "बॉट",
-            "people": "लोग"
+            "people": "लोग",
+            "webhooks": "वेबहुक"
         },
         "poll": {
             "desc": "वर्तमान चैट में पोल बनाएँ"
         },
         "register_bot": {
-            "desc": "OpenChat के साथ एक नए बॉट का वर्णन और पंजीकरण करने के लिए एक प्रस्ताव शुरू करें"
+            "desc": "OpenChat के साथ एक नया बॉट पंजीकृत करें"
         },
         "search": {
             "desc": "वर्तमान चैट में खोज आरंभ करें",
@@ -1091,6 +1093,14 @@
     "messageUrlCopiedToClipboard": "संदेश यूआरएल क्लिपबोर्ड पर कॉपी किया गया!",
     "minimumAmount": "न्यूनतम: {amount} {symbol}",
     "minutes": "मिनट",
+    "mobile": {
+        "credentials": {
+            "errors": {
+                "genericSignIn": "पासकी से साइन इन नहीं किया जा सका.",
+                "genericSignUp": "पासकी नहीं बनाई जा सकी."
+            }
+        }
+    },
     "moderator": "मध्यस्थ",
     "months": "महीने",
     "mustBeFutureDateError": "आपको भविष्य की कोई तिथि चुननी होगी",
@@ -1666,7 +1676,8 @@
         "groupStats": "{level} आँकड़े",
         "icpTransfers": "आईसीपी संदेश",
         "imageMessages": "छवि संदेश",
-        "minutesOnline": "इस महीने ऑनलाइन मिनट",
+        "minutesOnlineLastMonth": "पिछले महीने ऑनलाइन मिनट",
+        "minutesOnlineThisMonth": "इस महीने ऑनलाइन मिनट",
         "pollMessages": "मतदान संदेश",
         "pollVotes": "मतदान वोट",
         "reactions": "प्रतिक्रियाओं",
@@ -1994,6 +2005,23 @@
     "viewer": "दर्शक",
     "wallet": "वॉलेट",
     "walletSettings": "वॉलेट सेटिंग",
+    "webhook": {
+        "avatarLabel": "अवतार",
+        "nameLabel": "नाम",
+        "namePlaceholder": "वेबहुक नाम दर्ज करें",
+        "nameRules": "इस चैट में अद्वितीय होना चाहिए और इसमें केवल अल्फ़ान्यूमेरिक वर्ण और अंडरस्कोर शामिल होने चाहिए",
+        "regenerateAction": "पुनः जेनरेट",
+        "registerAction": "पंजीकरण करवाना",
+        "registerDesc": "इस चैट में वेबहुक पंजीकृत करें",
+        "registerTitle": "वेबहुक पंजीकृत करें",
+        "removeAction": "वेबहुक हटाएँ",
+        "removeFailed": "खेद है कि हम वेबहुक को हटाने में असमर्थ रहे",
+        "updateAction": "अद्यतन",
+        "updateTitle": "{name} अपडेट करें",
+        "urlLabel": "वेबहुक यूआरएल",
+        "username": "WEbhook",
+        "viewEditAction": "वेबहुक विवरण देखें/संपादित करें"
+    },
     "websiteVersion": "वेबसाइट का",
     "weeks": "हफ्तों",
     "whatsHot": "नवीनतम क्या है?",

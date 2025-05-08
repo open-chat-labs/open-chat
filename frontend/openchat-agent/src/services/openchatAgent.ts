@@ -80,6 +80,7 @@ import type {
     FollowThreadResponse,
     FreezeCommunityResponse,
     FreezeGroupResponse,
+    FullWebhookDetails,
     GenerateBotKeyResponse,
     GenerateMagicLinkResponse,
     GetDelegationResponse,
@@ -109,6 +110,7 @@ import type {
     MessageActivitySummary,
     MessageContent,
     MessageContext,
+    MinutesOnline,
     MultiUserChatIdentifier,
     OptionalChatPermissions,
     OptionUpdate,
@@ -264,7 +266,6 @@ import { clearCache as clearUserCache, getAllUsers, isUserIdDeleted } from "../u
 import { BitcoinClient } from "./bitcoin/bitcoin.client";
 import { CkbtcMinterClient } from "./ckbtcMinter/ckbtcMinter.client";
 import { measure } from "./common/profiling";
-import { excludeLatestKnownUpdateIfBeforeFix } from "./common/replicaUpToDateChecker";
 import { CommunityClient } from "./community/community.client";
 import { DataClient } from "./data/data.client";
 import { DexesAgent } from "./dexes";
@@ -911,8 +912,6 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
-        latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
-
         console.debug("CHAT EVENTS: Getting events window", {
             chatId,
             threadRootMessageIndex,
@@ -973,8 +972,6 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
-        latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
-
         console.debug("CHAT EVENTS: Getting chat events", {
             chatId,
             threadRootMessageIndex,
@@ -1149,8 +1146,6 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
-        latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
-
         console.debug("CHAT EVENTS: Getting chat events by index", {
             chatId,
             threadRootMessageIndex,
@@ -1524,8 +1519,6 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventWrapper<Message>> {
-        latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
-
         const missing = await this.resolveMissingIndexes(
             chatId,
             [message],
@@ -1745,7 +1738,6 @@ export class OpenChatAgent extends EventTarget {
         let bitcoinAddress: string | undefined = undefined;
         let streakInsurance: StreakInsurance | undefined;
 
-        let latestActiveGroupsCheck = BigInt(0);
         let latestUserCanisterUpdates: bigint;
         let anyUpdates = false;
 
@@ -1799,7 +1791,6 @@ export class OpenChatAgent extends EventTarget {
             directChats = current.directChats;
             currentGroups = current.groupChats;
             currentCommunities = current.communities;
-            latestActiveGroupsCheck = current.latestActiveGroupsCheck;
             installedBots = current.installedBots;
             apiKeys = current.apiKeys;
             bitcoinAddress = current.bitcoinAddress;
@@ -1908,16 +1899,33 @@ export class OpenChatAgent extends EventTarget {
             }
         }
 
-        const currentGroupChatIds = currentGroups.map((g) => g.id);
-        const currentCommunityIds = currentCommunities.map((c) => c.id);
+        // Set this to the minimum `latestSuccessfulUpdatesCheck` timestamp from the groups and communities to ensure
+        // no updates are missed
+        let checkActivityFromTimestamp: bigint | undefined = undefined;
+        const currentGroupChatIds: GroupChatIdentifier[] = [];
+        const currentCommunityIds: CommunityIdentifier[] = [];
+        for (const group of currentGroups) {
+            currentGroupChatIds.push(group.id);
+            if (checkActivityFromTimestamp === undefined || checkActivityFromTimestamp > group.latestSuccessfulUpdatesCheck) {
+                checkActivityFromTimestamp = group.latestSuccessfulUpdatesCheck;
+            }
+        }
+        for (const community of currentCommunities) {
+            currentCommunityIds.push(community.id);
+            if (checkActivityFromTimestamp === undefined || checkActivityFromTimestamp > community.latestSuccessfulUpdatesCheck) {
+                checkActivityFromTimestamp = community.latestSuccessfulUpdatesCheck;
+            }
+        }
 
-        if (currentGroupChatIds.length > 0 || currentCommunityIds.length > 0) {
+        let latestUpdatesCheck = latestUserCanisterUpdates;
+        if (checkActivityFromTimestamp !== undefined) {
             const groupIndexResponse = await this._groupIndexClient.activeGroups(
                 currentCommunityIds,
                 currentGroupChatIds,
-                latestActiveGroupsCheck,
+                checkActivityFromTimestamp,
             );
             numberOfAsyncCalls++;
+            latestUpdatesCheck = groupIndexResponse.timestamp;
 
             groupIndexResponse.activeGroups.forEach((g) => groupsToCheckForUpdates.add(g));
             groupIndexResponse.deletedGroups.forEach((g) => groupsRemoved.add(g.id));
@@ -1926,8 +1934,6 @@ export class OpenChatAgent extends EventTarget {
                 communitiesToCheckForUpdates.add(c),
             );
             groupIndexResponse.deletedCommunities.forEach((c) => groupsRemoved.add(c.id));
-
-            latestActiveGroupsCheck = groupIndexResponse.timestamp;
 
             // Also check for updates for recently joined groups and communities since it may take a few iterations
             // before the GroupIndex knows that they are active
@@ -2010,7 +2016,7 @@ export class OpenChatAgent extends EventTarget {
         const communityCanisterCommunitySummaries: CommunitySummary[] = [];
         const groupUpdates: GroupCanisterGroupChatSummaryUpdates[] = [];
         const communityUpdates: CommunityCanisterCommunitySummaryUpdates[] = [];
-        let anyErrors = summaryUpdatesResults.errors.length > 0;
+        const errors = new Set<string>();
 
         for (const response of summaryUpdatesResults.success) {
             for (const result of response) {
@@ -2033,7 +2039,7 @@ export class OpenChatAgent extends EventTarget {
                     }
                     case "error": {
                         if (!result.error.includes("DestinationInvalid")) {
-                            anyErrors = true;
+                            errors.add(result.canisterId);
                         }
                         break;
                     }
@@ -2045,16 +2051,18 @@ export class OpenChatAgent extends EventTarget {
             anyUpdates = true;
         }
 
-        const groupChats = mergeGroupChats(groupsAdded, groupCanisterGroupSummaries)
-            .concat(mergeGroupChatUpdates(currentGroups, userCanisterGroupUpdates, groupUpdates))
+        const groupChats = mergeGroupChats(groupsAdded, groupCanisterGroupSummaries, latestUpdatesCheck)
+            .concat(mergeGroupChatUpdates(currentGroups, userCanisterGroupUpdates, groupUpdates, latestUpdatesCheck, errors))
             .filter((g) => !groupsRemoved.has(g.id.groupId));
 
-        const communities = mergeCommunities(communitiesAdded, communityCanisterCommunitySummaries)
+        const communities = mergeCommunities(communitiesAdded, communityCanisterCommunitySummaries, latestUpdatesCheck)
             .concat(
                 mergeCommunityUpdates(
                     currentCommunities,
                     userCanisterCommunityUpdates,
                     communityUpdates,
+                    latestUpdatesCheck,
+                    errors,
                 ),
             )
             .filter((c) => !communitiesRemoved.has(c.id.communityId));
@@ -2065,7 +2073,6 @@ export class OpenChatAgent extends EventTarget {
 
         const state = {
             latestUserCanisterUpdates,
-            latestActiveGroupsCheck,
             directChats,
             groupChats,
             communities,
@@ -2092,7 +2099,7 @@ export class OpenChatAgent extends EventTarget {
 
         const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);
 
-        if (!anyErrors && this.userClient.userId !== ANON_USER_ID) {
+        if (this.userClient.userId !== ANON_USER_ID) {
             setCachedChats(this.db, this.principal, state, updatedEvents);
         }
 
@@ -2588,12 +2595,8 @@ export class OpenChatAgent extends EventTarget {
         return this._onlineClient.lastOnline(userIds);
     }
 
-    markAsOnline(): Promise<number> {
+    markAsOnline(): Promise<MinutesOnline> {
         return this._onlineClient.markAsOnline();
-    }
-
-    minutesOnline(year: number, month: number): Promise<number> {
-        return this._onlineClient.minutesOnline(year, month);
     }
 
     subscriptionExists(p256dh_key: string): Promise<boolean> {
@@ -2760,8 +2763,6 @@ export class OpenChatAgent extends EventTarget {
         messageIndexes: Set<number>,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<Message>> {
-        latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
-
         switch (chatId.kind) {
             case "group_chat":
                 return this.rehydrateEventResponse(
@@ -2988,8 +2989,6 @@ export class OpenChatAgent extends EventTarget {
         return Promise.all(
             [...ChatMap.fromMap(threadsByChat).entries()].map(
                 ([chatId, [threadSyncs, latestKnownUpdate]]) => {
-                    latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
-
                     const latestClientThreadUpdate = threadSyncs.reduce(
                         (curr, next) => (next.lastUpdated > curr ? next.lastUpdated : curr),
                         BigInt(0),
@@ -3641,8 +3640,18 @@ export class OpenChatAgent extends EventTarget {
         return this._registryClient.removeMessageFilter(id);
     }
 
-    setAirdropConfig(channelId: number, channelName: string): Promise<boolean> {
-        return this._registryClient.setAirdropConfig(channelId, channelName);
+    setAirdropConfig(
+        channelId: number,
+        channelName: string,
+        communityId?: string,
+        communityName?: string,
+    ): Promise<boolean> {
+        return this._registryClient.setAirdropConfig(
+            channelId,
+            channelName,
+            communityId,
+            communityName,
+        );
     }
 
     setTokenEnabled(ledger: string, enabled: boolean): Promise<boolean> {
@@ -4195,11 +4204,18 @@ export class OpenChatAgent extends EventTarget {
         searchTerm: string | undefined,
         pageIndex: number,
         pageSize: number,
-        location?: BotInstallationLocation,
+        location: BotInstallationLocation | undefined,
+        excludeInstalled: boolean,
     ): Promise<ExploreBotsResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
-        return this._userIndexClient.exploreBots(searchTerm, pageIndex, pageSize, location);
+        return this._userIndexClient.exploreBots(
+            searchTerm,
+            pageIndex,
+            pageSize,
+            location,
+            excludeInstalled,
+        );
     }
 
     registerBot(principal: string, bot: ExternalBot): Promise<boolean> {
@@ -4360,6 +4376,72 @@ export class OpenChatAgent extends EventTarget {
         pin: string | undefined,
     ): Promise<PayForStreakInsuranceResponse> {
         return this.userClient.payForStreakInsurance(additionalDays, expectedPrice, pin);
+    }
+
+    registerWebhook(
+        chatId: MultiUserChatIdentifier,
+        name: string,
+        avatar: string | undefined,
+    ): Promise<FullWebhookDetails | undefined> {
+        switch (chatId.kind) {
+            case "channel":
+                return this.communityClient(chatId.communityId).registerWebhook(
+                    chatId.channelId,
+                    name,
+                    avatar,
+                );
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).registerWebhook(name, avatar);
+        }
+    }
+
+    updateWebhook(
+        chatId: MultiUserChatIdentifier,
+        id: string,
+        name: string | undefined,
+        avatar: OptionUpdate<string>,
+    ): Promise<boolean> {
+        switch (chatId.kind) {
+            case "channel":
+                return this.communityClient(chatId.communityId).updateWebhook(
+                    chatId.channelId,
+                    id,
+                    name,
+                    avatar,
+                );
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).updateWebhook(id, name, avatar);
+        }
+    }
+
+    regenerateWebhook(chatId: MultiUserChatIdentifier, id: string): Promise<string | undefined> {
+        switch (chatId.kind) {
+            case "channel":
+                return this.communityClient(chatId.communityId).regenerateWebhook(
+                    chatId.channelId,
+                    id,
+                );
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).regenerateWebhook(id);
+        }
+    }
+
+    deleteWebhook(chatId: MultiUserChatIdentifier, id: string): Promise<boolean> {
+        switch (chatId.kind) {
+            case "channel":
+                return this.communityClient(chatId.communityId).deleteWebhook(chatId.channelId, id);
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).deleteWebhook(id);
+        }
+    }
+
+    getWebhook(chatId: MultiUserChatIdentifier, id: string): Promise<string | undefined> {
+        switch (chatId.kind) {
+            case "channel":
+                return this.communityClient(chatId.communityId).getWebhook(chatId.channelId, id);
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).getWebhook(id);
+        }
     }
 }
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AuthProvider, selectedAuthProviderStore } from "openchat-client";
+    import { AuthProvider, type OpenChat, selectedAuthProviderStore } from "openchat-client";
     import EmailIcon from "svelte-material-icons/EmailOutline.svelte";
     import SendIcon from "svelte-material-icons/Send.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -7,6 +7,9 @@
     import Input from "../../Input.svelte";
     import Translatable from "../../Translatable.svelte";
     import SignInOption from "./SignInOption.svelte";
+    import { getContext } from "svelte";
+
+    const client = getContext<OpenChat>("client");
 
     interface Props {
         mode?: "signin" | "signup";
@@ -47,6 +50,8 @@
             if (mode === "signin") {
                 options.push(AuthProvider.NFID);
             }
+        } else if (client.isNativeAndroid()) {
+            options.push(AuthProvider.II);
         }
 
         if (restrictTo.size > 0) {

@@ -28,7 +28,6 @@
         type DiamondMembershipFees,
         OpenChat,
         type UpdateMarketMakerConfigArgs,
-        anonUser,
         app,
         botState,
         inititaliseLogger,
@@ -66,6 +65,7 @@
 
     function createOpenChatClient(): OpenChat {
         return new OpenChat({
+            appType: import.meta.env.OC_APP_TYPE,
             icUrl: import.meta.env.OC_IC_URL,
             webAuthnOrigin: import.meta.env.OC_WEBAUTHN_ORIGIN,
             iiDerivationOrigin: import.meta.env.OC_II_DERIVATION_ORIGIN,
@@ -83,7 +83,7 @@
             videoBridgeUrl: import.meta.env.OC_VIDEO_BRIDGE_URL!,
             meteredApiKey: import.meta.env.OC_METERED_APIKEY!,
             blobUrlPattern: import.meta.env.OC_BLOB_URL_PATTERN!,
-            achievementUrlPath: import.meta.env.OC_ACHIEVEMENT_URL_PATH!,
+            canisterUrlPath: import.meta.env.OC_CANISTER_URL_PATH!,
             proposalBotCanister: import.meta.env.OC_PROPOSALS_BOT_CANISTER!,
             marketMakerCanister: import.meta.env.OC_MARKET_MAKER_CANISTER!,
             signInWithEmailCanister: import.meta.env.OC_SIGN_IN_WITH_EMAIL_CANISTER!,
@@ -107,7 +107,7 @@
     let landingPageRoute = $derived(isLandingPageRoute(pathState.route));
     let homeRoute = $derived(pathState.route.kind === "home_route");
     let showLandingPage = $derived(
-        landingPageRoute || (homeRoute && app.identityState.kind === "anon" && $anonUser),
+        landingPageRoute || (homeRoute && app.identityState.kind === "anon" && app.anonUser),
     );
     let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
     let burstPath = $derived(
@@ -406,14 +406,21 @@
         });
     }
 
-    function setAirdropConfig(channelId: number, channelName: string): void {
-        client.setAirdropConfig(channelId, channelName).then((success) => {
-            if (success) {
-                console.log("Airdrop config set");
-            } else {
-                console.log("Failed to set airdrop config");
-            }
-        });
+    function setAirdropConfig(
+        channelId: number,
+        channelName: string,
+        communityId?: string,
+        communityName?: string,
+    ): void {
+        client
+            .setAirdropConfig(channelId, channelName, communityId, communityName)
+            .then((success) => {
+                if (success) {
+                    console.log("Airdrop config set");
+                } else {
+                    console.log("Failed to set airdrop config");
+                }
+            });
     }
 
     function setDiamondMembershipFees(fees: DiamondMembershipFees[]): void {
@@ -551,7 +558,9 @@
 
 <Witch background />
 
-<InstallPrompt />
+{#if !client.isNativeApp()}
+    <InstallPrompt />
+{/if}
 
 <NotificationsBar />
 

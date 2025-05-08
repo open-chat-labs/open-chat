@@ -1,34 +1,33 @@
 <script lang="ts">
-    import { getContext } from "svelte";
-    import { _ } from "svelte-i18n";
-    import { rtlStore } from "../../../stores/rtl";
     import {
         type ChatIdentifier,
         type OpenChat,
         type ProposalContent,
         ProposalDecisionStatus,
         type RegisterProposalVoteResponse,
-        currentUser as user,
-        proposalTopicsStore,
+        app,
     } from "openchat-client";
-    import { ErrorCode } from "openchat-shared";
-    import Markdown from "../Markdown.svelte";
-    import { now } from "../../../stores/time";
+    import { ErrorCode, type ReadonlyMap } from "openchat-shared";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
     import ExpandIcon from "svelte-material-icons/ArrowExpandDown.svelte";
+    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Launch from "svelte-material-icons/Launch.svelte";
     import OpenInNew from "svelte-material-icons/OpenInNew.svelte";
-    import { toastStore } from "../../../stores/toast";
-    import Overlay from "../../Overlay.svelte";
-    import ModalContent from "../../ModalContent.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
     import { NamedNeurons } from "../../../stores/namedNeurons";
     import { proposalVotes } from "../../../stores/proposalVotes";
+    import { rtlStore } from "../../../stores/rtl";
+    import { now } from "../../../stores/time";
+    import { toastStore } from "../../../stores/toast";
+    import { round2 } from "../../../utils/math";
+    import ModalContent from "../../ModalContent.svelte";
+    import Overlay from "../../Overlay.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import Markdown from "../Markdown.svelte";
+    import ProposalProgressLayout from "./ProposalProgressLayout.svelte";
     import ProposalVoteButton from "./ProposalVoteButton.svelte";
     import ProposalVotingProgress from "./ProposalVotingProgress.svelte";
-    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
-    import ProposalProgressLayout from "./ProposalProgressLayout.svelte";
-    import { round2 } from "../../../utils/math";
-    import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
 
     interface Props {
         content: ProposalContent;
@@ -105,7 +104,8 @@
         resp: RegisterProposalVoteResponse,
     ): string | undefined {
         if (resp.kind === "error" && resp.code === ErrorCode.NoChange) return "alreadyVoted";
-        if (resp.kind === "error" && resp.code === ErrorCode.ProposalNotAcceptingVotes) return "proposalNotAcceptingVotes";
+        if (resp.kind === "error" && resp.code === ErrorCode.ProposalNotAcceptingVotes)
+            return "proposalNotAcceptingVotes";
         return "voteFailed";
     }
 
@@ -131,7 +131,7 @@
 
     export function getProposalTopicLabel(
         content: ProposalContent,
-        proposalTopics: Map<number, string>,
+        proposalTopics: ReadonlyMap<number, string>,
     ): string {
         return (
             proposalTopics.get(
@@ -172,7 +172,7 @@
     let votingEnded = $derived(proposal.deadline <= $now);
     let disable = $derived(readonly || reply || votingEnded);
     let votingDisabled = $derived(voteStatus !== undefined || disable);
-    let typeValue = $derived(getProposalTopicLabel(content, $proposalTopicsStore));
+    let typeValue = $derived(getProposalTopicLabel(content, app.proposalTopics));
     let showFullSummary = $derived(proposal.summary.length < 400);
     let payload = $derived(content.proposal.payloadTextRendering);
     let payloadEmpty = $derived(
@@ -293,7 +293,7 @@
             {#snippet body()}
                 <Markdown
                     text={$_("proposal.noEligibleNeuronsMessage", {
-                        values: { userId: $user.userId },
+                        values: { userId: app.currentUserId },
                     })} />
             {/snippet}
         </ModalContent>

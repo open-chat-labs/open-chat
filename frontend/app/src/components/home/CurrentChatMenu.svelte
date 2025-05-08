@@ -3,18 +3,13 @@
         app,
         chatIdentifiersEqual,
         type ChatSummary,
-        currentUser,
         type GroupChatSummary,
-        isDiamond,
-        isProposalGroup,
-        messagesRead,
         type OpenChat,
-        platformModerator,
         publish,
         ui,
         userStore,
     } from "openchat-client";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
@@ -87,8 +82,8 @@
     let userId = $derived(
         selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "",
     );
-    let isBot = $derived($userStore.get(userId)?.kind === "bot");
-    let isSuspended = $derived($userStore.get(userId)?.suspended ?? false);
+    let isBot = $derived(userStore.get(userId)?.kind === "bot");
+    let isSuspended = $derived(userStore.get(userId)?.suspended ?? false);
     let groupDetailsSelected = $derived(ui.lastRightPanelState.kind === "group_details");
     let pinnedSelected = $derived(ui.lastRightPanelState.kind === "show_pinned");
     let membersSelected = $derived(ui.lastRightPanelState.kind === "show_group_members");
@@ -122,22 +117,11 @@
 
     let canStartOrJoinVideoCall = $derived(!incall && (videoCallInProgress || canStartVideoCalls));
 
-    let hasUnreadPinned = $state(false);
-
-    $effect(() => {
-        setUnreadPinned(hasPinned, selectedChatSummary);
-    });
-
-    onMount(() => {
-        return messagesRead.subscribe(() => setUnreadPinned(hasPinned, selectedChatSummary));
-    });
-
-    function setUnreadPinned(hasPinned: boolean, chat: ChatSummary) {
-        hasUnreadPinned =
-            hasPinned &&
-            (chat.kind === "group_chat" || chat.kind === "channel") &&
-            client.unreadPinned(chat.id, chat.dateLastPinned);
-    }
+    let hasUnreadPinned = $derived(
+        hasPinned &&
+            (selectedChatSummary.kind === "group_chat" || selectedChatSummary.kind === "channel") &&
+            client.unreadPinned(selectedChatSummary.id, selectedChatSummary.dateLastPinned),
+    );
 
     function toggleMuteNotifications(mute: boolean) {
         publish("toggleMuteNotifications", { chatId: selectedChatSummary.id, mute });
@@ -213,7 +197,7 @@
     }
 
     function convertToCommunity() {
-        if (!$isDiamond) {
+        if (!app.isDiamond) {
             publish("upgrade");
         } else {
             if (selectedChatSummary.kind === "group_chat") {
@@ -275,7 +259,7 @@
 
     function removeBot(botId: string) {
         client
-            .uninstallBot({ kind: "direct_chat", userId: $currentUser.userId }, botId)
+            .uninstallBot({ kind: "direct_chat", userId: app.currentUserId }, botId)
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("bots.manage.removeFailed"));
@@ -285,7 +269,7 @@
 </script>
 
 {#if desktop}
-    {#if $isProposalGroup}
+    {#if app.isProposalGroup}
         <HoverIcon onclick={showProposalFilters} title={$_("showFilters")}>
             <Tune size={ui.iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
@@ -374,7 +358,7 @@
                     </MenuItem>
                 {/if}
                 {#if ui.mobileWidth}
-                    {#if $isProposalGroup}
+                    {#if app.isProposalGroup}
                         <MenuItem onclick={showProposalFilters}>
                             {#snippet icon()}
                                 <Tune size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
@@ -491,7 +475,7 @@
                         </MenuItem>
                     {/if}
 
-                    {#if $platformModerator && selectedChatSummary.kind === "group_chat"}
+                    {#if app.platformModerator && selectedChatSummary.kind === "group_chat"}
                         {#if client.isChatFrozen(selectedChatSummary.id)}
                             <MenuItem warning onclick={unfreezeGroup}>
                                 {#snippet icon()}
@@ -603,7 +587,7 @@
                             {/snippet}
                         </MenuItem>
                     {/if}
-                    {#if $platformModerator}
+                    {#if app.platformModerator}
                         {#if isSuspended}
                             <MenuItem onclick={unsuspendUser}>
                                 {#snippet icon()}

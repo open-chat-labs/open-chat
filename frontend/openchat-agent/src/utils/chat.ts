@@ -1,30 +1,32 @@
+import Identicon from "identicon.js";
+import md5 from "md5";
 import type {
+    ChannelIdentifier,
     ChatEvent,
+    CommunityCanisterCommunitySummaryUpdates,
+    CommunityDetails,
+    CommunityDetailsUpdates,
     DirectChatSummary,
     DirectChatSummaryUpdates,
     EventWrapper,
+    GroupCanisterGroupChatSummary,
+    GroupCanisterGroupChatSummaryUpdates,
+    GroupCanisterThreadDetails,
     GroupChatDetails,
     GroupChatDetailsUpdates,
     GroupChatSummary,
     Member,
+    Metrics,
     ThreadSyncDetails,
-    GroupCanisterGroupChatSummary,
-    GroupCanisterGroupChatSummaryUpdates,
+    UpdatedEvent,
     UserCanisterGroupChatSummary,
     UserCanisterGroupChatSummaryUpdates,
-    GroupCanisterThreadDetails,
-    UpdatedEvent,
-    Metrics,
-    CommunityDetails,
-    CommunityDetailsUpdates,
-    CommunityCanisterCommunitySummaryUpdates,
-    ChannelIdentifier,
     UserGroupDetails,
 } from "openchat-shared";
 import {
-    ChatMap,
     applyOptionUpdate,
     bigIntMax,
+    ChatMap,
     mapOptionUpdate,
     OPENCHAT_BOT_AVATAR_URL,
     OPENCHAT_BOT_USER_ID,
@@ -33,8 +35,6 @@ import {
 } from "openchat-shared";
 import { toRecord } from "./list";
 import { identity } from "./mapping";
-import Identicon from "identicon.js";
-import md5 from "md5";
 
 // this is used to merge both the overall list of chats with updates and also the list of participants
 // within a group chat
@@ -174,6 +174,7 @@ export function mergeGroupChatDetails(
             m.set(k.botId, k);
             return m;
         }, previous.apiKeys),
+        webhooks: updates.webhooks ?? previous.webhooks,
     };
 }
 
@@ -243,11 +244,16 @@ export function mergeGroupChatUpdates(
     groupChats: GroupChatSummary[],
     userCanisterUpdates: UserCanisterGroupChatSummaryUpdates[],
     groupCanisterUpdates: GroupCanisterGroupChatSummaryUpdates[],
+    latestSuccessfulUpdatesCheck: bigint,
+    canistersWhichResultedInError: Set<string>,
 ): GroupChatSummary[] {
     const userLookup = ChatMap.fromList(userCanisterUpdates);
     const groupLookup = ChatMap.fromList(groupCanisterUpdates);
 
     return groupChats.map((c) => {
+        if (!canistersWhichResultedInError.has(c.id.groupId)) {
+            c.latestSuccessfulUpdatesCheck = latestSuccessfulUpdatesCheck;
+        }
         const u = userLookup.get(c.id);
         const g = groupLookup.get(c.id);
 
@@ -330,6 +336,7 @@ export function mergeGroupChatUpdates(
             messagesVisibleToNonMembers:
                 g?.messagesVisibleToNonMembers ?? c.messagesVisibleToNonMembers,
             verified: g?.verified ?? c.verified,
+            latestSuccessfulUpdatesCheck: c.latestSuccessfulUpdatesCheck,
         };
     });
 }
@@ -337,6 +344,7 @@ export function mergeGroupChatUpdates(
 export function mergeGroupChats(
     userCanisterGroups: UserCanisterGroupChatSummary[],
     groupCanisterGroups: GroupCanisterGroupChatSummary[],
+    latestSuccessfulUpdatesCheck: bigint
 ): GroupChatSummary[] {
     const userCanisterGroupLookup = ChatMap.fromList(userCanisterGroups);
 
@@ -388,6 +396,7 @@ export function mergeGroupChats(
             isInvited: false,
             messagesVisibleToNonMembers: g.messagesVisibleToNonMembers,
             verified: g.verified,
+            latestSuccessfulUpdatesCheck,
         };
     });
 }
@@ -471,10 +480,10 @@ export function buildUserAvatarUrl(pattern: string, userId: string, avatarId?: b
     return avatarId !== undefined
         ? buildBlobUrl(pattern, userId, avatarId, "avatar")
         : userId === OPENCHAT_BOT_USER_ID
-          ? OPENCHAT_BOT_AVATAR_URL
-          : userId === OPENCHAT_VIDEO_CALL_USER_ID
-            ? OPENCHAT_VIDEO_CALL_AVATAR_URL
-            : buildIdenticonUrl(userId);
+        ? OPENCHAT_BOT_AVATAR_URL
+        : userId === OPENCHAT_VIDEO_CALL_USER_ID
+        ? OPENCHAT_VIDEO_CALL_AVATAR_URL
+        : buildIdenticonUrl(userId);
 }
 
 export function buildIdenticonUrl(userId: string): string {

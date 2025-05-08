@@ -6,7 +6,6 @@
         OpenChat,
         publish,
         routeForChatIdentifier,
-        selectedChatId,
         userStore,
         type ChatIdentifier,
     } from "openchat-client";
@@ -37,8 +36,8 @@
 
     let show = $derived(
         $activeVideoCall?.chatId !== undefined &&
-            (!chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatId) ||
-                (chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatId) &&
+            (!chatIdentifiersEqual($activeVideoCall.chatId, app.selectedChatId) ||
+                (chatIdentifiersEqual($activeVideoCall.chatId, app.selectedChatId) &&
                     $activeVideoCall.view === "minimised")),
     );
 
@@ -46,7 +45,7 @@
 
     function goToCall() {
         if ($activeVideoCall) {
-            if (!chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatId)) {
+            if (!chatIdentifiersEqual($activeVideoCall.chatId, app.selectedChatId)) {
                 page(routeForChatIdentifier("none", $activeVideoCall.chatId));
             }
             activeVideoCall.setView("default");
@@ -64,7 +63,7 @@
             if (chat) {
                 switch (chat.kind) {
                     case "direct_chat":
-                        const them = $userStore.get(chat.them.userId);
+                        const them = userStore.get(chat.them.userId);
                         return {
                             name: client.displayName(them),
                             avatarUrl: client.userAvatarUrl(them),

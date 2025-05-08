@@ -1,8 +1,9 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-    readonly OC_ACHIEVEMENT_URL_PATH: string;
+    readonly OC_CANISTER_URL_PATH: string;
     readonly OC_AIRDROP_BOT_CANISTER: string;
+    readonly OC_APP_TYPE: "android" | "ios" | "web" | undefined;
     readonly OC_BLOB_URL_PATTERN: string;
     readonly OC_BUILD_ENV: string;
     readonly OC_DFX_NETWORK: string;

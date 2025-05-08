@@ -7,7 +7,11 @@ use event_store_producer::EventBuilder;
 use group_canister::init::Args as InitGroupCanisterArgs;
 use local_group_index_canister::ChildCanisterType;
 use local_group_index_canister::c2c_create_group::{Response::*, *};
-use types::{BuildVersion, CanisterId, CanisterWasm, ChatId, Cycles, GroupCreatedEventPayload, UserId, UserType};
+use local_user_index_canister::{LocalGroup, LocalGroupIndexEvent};
+use rand::RngCore;
+use types::{
+    BuildVersion, CanisterId, CanisterWasm, ChatId, Cycles, GroupCreatedEventPayload, IdempotentEnvelope, UserId, UserType,
+};
 use utils::canister;
 
 #[update(guard = "caller_is_group_index_canister", msgpack = true)]
@@ -30,6 +34,7 @@ async fn c2c_create_group(args: Args) -> Response {
 
     match canister::create_and_install(
         prepare_ok.canister_id,
+        Some(prepare_ok.local_user_index_canister_id),
         prepare_ok.canister_wasm,
         prepare_ok.init_canister_args,
         prepare_ok.cycles_to_use,
@@ -138,17 +143,21 @@ fn commit(
     wasm_version: BuildVersion,
     state: &mut RuntimeState,
 ) {
+    let now = state.env.now();
     state.data.local_groups.add(chat_id, wasm_version);
+    state.data.local_user_index_sync_queue.push(IdempotentEnvelope {
+        created_at: now,
+        idempotency_id: state.env.rng().next_u64(),
+        value: LocalGroupIndexEvent::MigrateGroup(chat_id, LocalGroup::new(wasm_version)),
+    });
 
     state.data.event_store_client.push(
-        EventBuilder::new("group_created", state.env.now())
+        EventBuilder::new("group_created", now)
             .with_user(created_by.to_string(), true)
             .with_source(state.env.canister_id().to_string(), false)
             .with_json_payload(&event_payload)
             .build(),
     );
-
-    crate::jobs::topup_canister_pool::start_job_if_required(state, None);
 }
 
 fn rollback(canister_id: Option<CanisterId>, state: &mut RuntimeState) {

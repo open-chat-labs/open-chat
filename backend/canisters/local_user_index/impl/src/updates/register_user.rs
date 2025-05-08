@@ -1,5 +1,5 @@
 use crate::model::referral_codes::{ReferralCode, ReferralCodeError};
-use crate::{RuntimeState, USER_CANISTER_INITIAL_CYCLES_BALANCE, UserEvent, UserIndexEvent, mutate_state};
+use crate::{CHILD_CANISTER_INITIAL_CYCLES_BALANCE, RuntimeState, UserEvent, UserIndexEvent, mutate_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -36,6 +36,7 @@ async fn register_user(args: Args) -> Response {
 
     match canister::create_and_install(
         canister_id,
+        None,
         canister_wasm,
         init_canister_args,
         cycles_to_use,
@@ -144,7 +145,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
     };
 
     let cycles_to_use = if state.data.canister_pool.is_empty() {
-        let cycles_required = USER_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
+        let cycles_required = CHILD_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
         if !utils::cycles::can_spend_cycles(cycles_required, min_cycles_balance(state.data.test_mode)) {
             return Err(CyclesBalanceTooLow);
         }
