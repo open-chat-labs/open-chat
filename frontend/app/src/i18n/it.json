@@ -1093,6 +1093,14 @@
     "messageUrlCopiedToClipboard": "URL del messaggio copiato negli appunti!",
     "minimumAmount": "Minimo: {amount} {symbol}",
     "minutes": "Minuti",
+    "mobile": {
+        "credentials": {
+            "errors": {
+                "genericSignIn": "Impossibile accedere con una passkey.",
+                "genericSignUp": "Impossibile creare una passkey."
+            }
+        }
+    },
     "moderator": "moderatore",
     "months": "Mesi",
     "mustBeFutureDateError": "Devi selezionare una data futura",
@@ -2011,6 +2019,7 @@
         "updateAction": "Aggiornamento",
         "updateTitle": "Aggiorna {name}",
         "urlLabel": "URL del webhook",
+        "username": "webhook",
         "viewEditAction": "Visualizza/modifica i dettagli del webhook"
     },
     "websiteVersion": "del sito web",

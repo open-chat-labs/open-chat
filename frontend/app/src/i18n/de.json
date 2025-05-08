@@ -1093,6 +1093,14 @@
     "messageUrlCopiedToClipboard": "Nachrichten-URL in die Zwischenablage kopiert!",
     "minimumAmount": "Minimum: {amount} {symbol}",
     "minutes": "Protokoll",
+    "mobile": {
+        "credentials": {
+            "errors": {
+                "genericSignIn": "Anmeldung mit einem Passkey nicht möglich.",
+                "genericSignUp": "Es konnte kein Hauptschlüssel erstellt werden."
+            }
+        }
+    },
     "moderator": "Moderator",
     "months": "Monate",
     "mustBeFutureDateError": "Sie müssen ein zukünftiges Datum auswählen",
@@ -2011,6 +2019,7 @@
         "updateAction": "Aktualisieren",
         "updateTitle": "Aktualisieren Sie {name}",
         "urlLabel": "Webhook-URL",
+        "username": "Webhook",
         "viewEditAction": "Webhook-Details anzeigen/bearbeiten"
     },
     "websiteVersion": "der Webseite",

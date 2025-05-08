@@ -1093,6 +1093,14 @@
     "messageUrlCopiedToClipboard": "URL-адресу повідомлення скопійовано в буфер обміну!",
     "minimumAmount": "Мінімум: {amount} {symbol}",
     "minutes": "хвилин",
+    "mobile": {
+        "credentials": {
+            "errors": {
+                "genericSignIn": "Не вдалося ввійти за допомогою ключа доступу.",
+                "genericSignUp": "Не вдалося створити ключ доступу."
+            }
+        }
+    },
     "moderator": "модератор",
     "months": "Місяці",
     "mustBeFutureDateError": "Ви повинні вибрати майбутню дату",
@@ -2011,6 +2019,7 @@
         "updateAction": "Оновлення",
         "updateTitle": "Оновлення {name}",
         "urlLabel": "URL-адреса вебхука",
+        "username": "вебхук",
         "viewEditAction": "Переглянути/редагувати деталі вебхука"
     },
     "websiteVersion": "веб-сайту",

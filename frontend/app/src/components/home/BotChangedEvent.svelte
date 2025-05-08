@@ -17,7 +17,7 @@
     let me = $derived(userId === changedBy);
     let text = $derived.by(() => {
         const bot = botState.externalBots.get(event.userId);
-        const username = buildDisplayName(userStore.allUsers, changedBy, me);
+        const username = buildDisplayName(userStore.allUsers, changedBy, me ? "me" : "user");
         return $_(resourceKey, { values: { botname: bot?.name, username } });
     });
 </script>

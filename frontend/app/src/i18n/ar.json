@@ -1093,6 +1093,14 @@
     "messageUrlCopiedToClipboard": "تم نسخ عنوان الرسالة إلى الحافظة!",
     "minimumAmount": "الحد الأدنى: {amount} {symbol}",
     "minutes": "دقائق",
+    "mobile": {
+        "credentials": {
+            "errors": {
+                "genericSignIn": "لم أتمكن من تسجيل الدخول باستخدام مفتاح المرور.",
+                "genericSignUp": "لم يتمكن من إنشاء مفتاح المرور."
+            }
+        }
+    },
     "moderator": "المشرف",
     "months": "شهور",
     "mustBeFutureDateError": "يجب عليك تحديد تاريخ مستقبلي",
@@ -2011,6 +2019,7 @@
         "updateAction": "تحديث",
         "updateTitle": "تحديث {name}",
         "urlLabel": "عنوان URL لـ Webhook",
+        "username": "خطاف الويب",
         "viewEditAction": "عرض/تحرير تفاصيل خطاف الويب"
     },
     "websiteVersion": "من الموقع",

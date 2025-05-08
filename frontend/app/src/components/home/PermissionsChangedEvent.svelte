@@ -16,7 +16,9 @@
     let { event, user, timestamp, level }: Props = $props();
 
     let me = $derived(event.changedBy === user?.userId);
-    let changedByStr = $derived(buildDisplayName(userStore.allUsers, event.changedBy, me));
+    let changedByStr = $derived(
+        buildDisplayName(userStore.allUsers, event.changedBy, me ? "me" : "user"),
+    );
 
     let text = $derived(
         interpolate(

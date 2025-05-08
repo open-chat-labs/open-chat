@@ -1093,6 +1093,14 @@
     "messageUrlCopiedToClipboard": "संदेश यूआरएल क्लिपबोर्ड पर कॉपी किया गया!",
     "minimumAmount": "न्यूनतम: {amount} {symbol}",
     "minutes": "मिनट",
+    "mobile": {
+        "credentials": {
+            "errors": {
+                "genericSignIn": "पासकी से साइन इन नहीं किया जा सका.",
+                "genericSignUp": "पासकी नहीं बनाई जा सकी."
+            }
+        }
+    },
     "moderator": "मध्यस्थ",
     "months": "महीने",
     "mustBeFutureDateError": "आपको भविष्य की कोई तिथि चुननी होगी",
@@ -2011,6 +2019,7 @@
         "updateAction": "अद्यतन",
         "updateTitle": "{name} अपडेट करें",
         "urlLabel": "वेबहुक यूआरएल",
+        "username": "WEbhook",
         "viewEditAction": "वेबहुक विवरण देखें/संपादित करें"
     },
     "websiteVersion": "वेबसाइट का",

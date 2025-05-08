@@ -1093,6 +1093,14 @@
     "messageUrlCopiedToClipboard": "URL du message copiée dans le presse-papier !",
     "minimumAmount": "Minimum: {amount} {symbol}",
     "minutes": "Minutes",
+    "mobile": {
+        "credentials": {
+            "errors": {
+                "genericSignIn": "Impossible de se connecter avec un mot de passe.",
+                "genericSignUp": "Impossible de créer une clé d'accès."
+            }
+        }
+    },
     "moderator": "modérateur",
     "months": "Mois",
     "mustBeFutureDateError": "Vous devez sélectionner une date future",
@@ -2011,6 +2019,7 @@
         "updateAction": "Mise à jour",
         "updateTitle": "Mettre à jour {name}",
         "urlLabel": "URL du webhook",
+        "username": "webhook",
         "viewEditAction": "Afficher/modifier les détails du webhook"
     },
     "websiteVersion": "du site web",

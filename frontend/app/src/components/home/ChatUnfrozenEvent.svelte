@@ -15,7 +15,9 @@
     let { event, user, timestamp }: Props = $props();
 
     let me = $derived(event.unfrozenBy === user?.userId);
-    let unfrozenByStr = $derived(buildDisplayName(userStore.allUsers, event.unfrozenBy, me));
+    let unfrozenByStr = $derived(
+        buildDisplayName(userStore.allUsers, event.unfrozenBy, me ? "me" : "user"),
+    );
 
     let text = $derived(
         $_("chatUnfrozenBy", {

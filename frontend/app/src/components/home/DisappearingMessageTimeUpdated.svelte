@@ -18,7 +18,9 @@
     let { user, changedBy, newTimeToLive, timestamp }: Props = $props();
 
     let me = $derived(changedBy === user?.userId);
-    let changedByStr = $derived(buildDisplayName(userStore.allUsers, changedBy, me));
+    let changedByStr = $derived(
+        buildDisplayName(userStore.allUsers, changedBy, me ? "me" : "user"),
+    );
     let text = $derived(
         newTimeToLive !== undefined
             ? $_("disappearingMessages.timeUpdatedBy", {

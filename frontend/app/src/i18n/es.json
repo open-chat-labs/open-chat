@@ -1093,6 +1093,14 @@
     "messageUrlCopiedToClipboard": "URL del mensaje copiada al portapapeles.",
     "minimumAmount": "Mínimo: {amount} {symbol}",
     "minutes": "Minutos",
+    "mobile": {
+        "credentials": {
+            "errors": {
+                "genericSignIn": "No se pudo iniciar sesión con una clave de acceso.",
+                "genericSignUp": "No se pudo crear una clave de acceso."
+            }
+        }
+    },
     "moderator": "moderador",
     "months": "Meses",
     "mustBeFutureDateError": "Debes seleccionar una fecha futura",
@@ -2011,6 +2019,7 @@
         "updateAction": "Actualizar",
         "updateTitle": "Actualizar {name}",
         "urlLabel": "URL del webhook",
+        "username": "webhook",
         "viewEditAction": "Ver/editar detalles del webhook"
     },
     "websiteVersion": "del sitio web",

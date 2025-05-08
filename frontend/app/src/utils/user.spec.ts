@@ -19,7 +19,7 @@ userLookup.set("xyz", {
 
 describe("buildUsername", () => {
     test("doesn't mangle names with funny characters", () => {
-        const name = buildDisplayName(userLookup, "xyz", false, true);
+        const name = buildDisplayName(userLookup, "xyz", "user", true);
         expect(name).toBe("**ℙ𝕌𝕄ℙ𝕂𝕀ℕ🎃✅️**");
     });
 

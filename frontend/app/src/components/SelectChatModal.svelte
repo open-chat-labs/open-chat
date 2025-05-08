@@ -146,7 +146,7 @@
         };
         const direct = [...app.directChats.values()].map((d) => ({
             ...d,
-            name: buildDisplayName(userStore.allUsers, d.them.userId, false),
+            name: buildDisplayName(userStore.allUsers, d.them.userId, "user"),
         }));
 
         const group = [...app.groupChats.values()];

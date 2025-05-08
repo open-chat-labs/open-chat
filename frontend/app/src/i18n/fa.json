@@ -1093,6 +1093,14 @@
     "messageUrlCopiedToClipboard": "نشانی وب پیام در کلیپ بورد کپی شد!",
     "minimumAmount": "حداقل: {amount} {symbol}",
     "minutes": "دقایق",
+    "mobile": {
+        "credentials": {
+            "errors": {
+                "genericSignIn": "با رمز عبور وارد نشدم.",
+                "genericSignUp": "نتوانستم رمز عبور ایجاد کنم."
+            }
+        }
+    },
     "moderator": "ناظم",
     "months": "ماه ها",
     "mustBeFutureDateError": "شما باید تاریخ آینده را انتخاب کنید",
@@ -2011,6 +2019,7 @@
         "updateAction": "به‌روزرسانی",
         "updateTitle": "به‌روزرسانی {name}",
         "urlLabel": "آدرس وب هوک",
+        "username": "وب هوک",
         "viewEditAction": "مشاهده/ویرایش جزئیات وب‌هوک"
     },
     "websiteVersion": "از وب سایت",

@@ -70,7 +70,7 @@
     ): string[] {
         return [...rolesChanged.entries()].flatMap(([changedBy, changedByMap]) => {
             const me = changedBy === user?.userId;
-            const changedByStr = buildDisplayName(userStore, changedBy, me);
+            const changedByStr = buildDisplayName(userStore, changedBy, me ? "me" : "user");
 
             return [...changedByMap.entries()].flatMap(([newRole, userIds]) =>
                 buildRoleChangedText(userStore, changedByStr, newRole, Array.from(userIds)),
