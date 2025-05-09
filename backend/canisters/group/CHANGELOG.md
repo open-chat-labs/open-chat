@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Support bots deleting messages ([#7941](https://github.com/open-chat-labs/open-chat/pull/7941))
+- Support bots adding reactions ([#7944](https://github.com/open-chat-labs/open-chat/pull/7944))
 
 ### Changed
 

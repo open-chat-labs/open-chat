@@ -1,9 +1,14 @@
 use crate::activity_notifications::handle_activity_notification;
+use crate::guards::caller_is_local_user_index;
 use crate::{RuntimeState, mutate_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use group_canister::add_reaction::*;
-use types::{Achievement, Chat, EventIndex, GroupReactionAddedNotification, OCResult, UserNotificationPayload};
+use group_canister::{add_reaction::*, c2c_bot_add_reaction};
+use oc_error_codes::OCErrorCode;
+use types::{
+    Achievement, BotCaller, BotPermissions, Caller, Chat, ChatPermission, EventIndex, GroupReactionAddedNotification, OCResult,
+    UserNotificationPayload,
+};
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
 #[update(candid = true, msgpack = true)]
@@ -11,18 +16,53 @@ use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 fn add_reaction(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| add_reaction_impl(args, state)).into()
+    mutate_state(|state| add_reaction_impl(args, None, state)).into()
 }
 
-fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+#[update(guard = "caller_is_local_user_index", msgpack = true)]
+#[trace]
+fn c2c_bot_add_reaction(args: c2c_bot_add_reaction::Args) -> c2c_bot_add_reaction::Response {
+    run_regular_jobs();
+
+    mutate_state(|state| {
+        let bot_caller = BotCaller {
+            bot: args.bot_id,
+            initiator: args.initiator.clone(),
+        };
+
+        let args = Args {
+            thread_root_message_index: args.thread,
+            message_id: args.message_id,
+            reaction: args.reaction,
+            username: args.bot_name,
+            display_name: None,
+            new_achievement: false,
+            correlation_id: 0,
+        };
+
+        if !state.data.is_bot_permitted(
+            &bot_caller.bot,
+            &bot_caller.initiator,
+            BotPermissions::from_chat_permission(ChatPermission::ReactToMessages),
+        ) {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
+        }
+
+        add_reaction_impl(args, Some(Caller::BotV2(bot_caller)), state)
+    })
+    .into()
+}
+
+fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
-    let user_id = state.get_caller_user_id()?;
+    let caller = state.verified_caller(ext_caller)?;
+    let agent = caller.agent();
     let now = state.env.now();
     let thread_root_message_index = args.thread_root_message_index;
 
     state.data.chat.add_reaction(
-        user_id,
+        caller,
         args.thread_root_message_index,
         args.message_id,
         args.reaction.clone(),
@@ -38,7 +78,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             .message_internal(EventIndex::default(), thread_root_message_index, args.message_id.into())
     {
         if let Some(sender) = state.data.chat.members.get(&message.sender) {
-            if message.sender != user_id && !sender.user_type().is_bot() {
+            if message.sender != agent && !sender.user_type().is_bot() {
                 let chat_id = state.env.canister_id().into();
 
                 let notifications_muted = state
@@ -50,7 +90,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
                 if !notifications_muted {
                     state.push_notification(
-                        Some(user_id),
+                        Some(agent),
                         vec![message.sender],
                         UserNotificationPayload::GroupReactionAdded(GroupReactionAddedNotification {
                             chat_id,
@@ -58,7 +98,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                             message_index: message.message_index,
                             message_event_index: event_index,
                             group_name: state.data.chat.name.value.clone(),
-                            added_by: user_id,
+                            added_by: agent,
                             added_by_name: args.username,
                             added_by_display_name: args.display_name,
                             reaction: args.reaction,
@@ -77,7 +117,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                         event_index,
                         activity: MessageActivity::Reaction,
                         timestamp: state.env.now(),
-                        user_id: Some(user_id),
+                        user_id: Some(agent),
                     }),
                     now,
                 );
@@ -87,7 +127,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         }
 
         if args.new_achievement {
-            state.notify_user_of_achievement(user_id, Achievement::ReactedToMessage, now);
+            state.notify_user_of_achievement(agent, Achievement::ReactedToMessage, now);
         }
     }
 

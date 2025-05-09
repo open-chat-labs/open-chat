@@ -14,6 +14,7 @@ generate_c2c_call!(summary);
 generate_c2c_call!(summary_updates);
 
 // Updates
+generate_c2c_call!(c2c_bot_add_reaction);
 generate_c2c_call!(c2c_bot_create_channel);
 generate_c2c_call!(c2c_bot_delete_channel);
 generate_c2c_call!(c2c_bot_delete_messages);
