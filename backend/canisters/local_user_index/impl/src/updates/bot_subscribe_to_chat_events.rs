@@ -8,7 +8,7 @@ use types::{AuthToken, BotActionScope, Chat};
 async fn bot_subscribe_to_chat_events(args: Args) -> Response {
     let context = match mutate_state(|state| extract_access_context(&AuthToken::ApiKey(args.api_key), state)) {
         Ok(context) => context,
-        Err(error) => return Response::Error(OCErrorCode::InitiatorNotAuthorized.with_message(error)),
+        Err(_) => return Response::Error(OCErrorCode::BotNotAuthenticated.into()),
     };
 
     let BotActionScope::Chat(scope) = context.scope else {

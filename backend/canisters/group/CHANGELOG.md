@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Support bots deleting messages ([#7941](https://github.com/open-chat-labs/open-chat/pull/7941))
+
 ### Changed
 
 - Avoid having to specify `authorizer` when pushing notifications ([#7861](https://github.com/open-chat-labs/open-chat/pull/7861))

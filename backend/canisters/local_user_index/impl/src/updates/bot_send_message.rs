@@ -1,6 +1,7 @@
 use crate::{RuntimeState, bots::extract_access_context, mutate_state};
 use canister_api_macros::update;
 use local_user_index_canister::bot_send_message::*;
+use oc_error_codes::{OCError, OCErrorCode};
 use rand::Rng;
 use types::{
     BotActionScope, BotInitiator, BotMessageContent, ChannelId, Chat, ChatId, CommunityId, MessageId, MessageIndex, UserId,
@@ -10,7 +11,7 @@ use types::{
 async fn bot_send_message(args: Args) -> Response {
     let context = match mutate_state(|state| extract_message_access_context(&args, state)) {
         Ok(context) => context,
-        Err(response) => return response,
+        Err(error) => return Response::Error(error),
     };
 
     match context.chat {
@@ -71,18 +72,16 @@ struct MessageAccessContext {
     user_message_id: Option<MessageId>,
 }
 
-fn extract_message_access_context(args: &Args, state: &mut RuntimeState) -> Result<MessageAccessContext, Response> {
-    use Response::*;
-
-    let context = extract_access_context(&args.auth_token, state).map_err(FailedAuthentication)?;
+fn extract_message_access_context(args: &Args, state: &mut RuntimeState) -> Result<MessageAccessContext, OCError> {
+    let context = extract_access_context(&args.auth_token, state).map_err(|_| OCErrorCode::BotNotAuthenticated)?;
 
     let (chat, thread, message_id, user_message_id) = match context.scope {
         BotActionScope::Chat(details) => {
             if let Some(message_id) = args.message_id {
                 if matches!(context.initiator, BotInitiator::Command(_)) && message_id != details.message_id {
-                    return Err(InvalidRequest(
-                        "Message id is already specified in the command access token".to_string(),
-                    ));
+                    return Err(
+                        OCErrorCode::InvalidRequest.with_message("Message id is already specified in the command access token")
+                    );
                 }
             }
             let message_id = args.message_id.unwrap_or(details.message_id);
@@ -90,7 +89,7 @@ fn extract_message_access_context(args: &Args, state: &mut RuntimeState) -> Resu
         }
         BotActionScope::Community(details) => {
             let Some(channel_id) = args.channel_id else {
-                return Err(InvalidRequest("Channel must be specified for community scope".to_string()));
+                return Err(OCErrorCode::InvalidRequest.with_message("Channel ID does not match access token"));
             };
             let chat = Chat::Channel(details.community_id, channel_id);
             let message_id = args.message_id.unwrap_or_else(|| state.env.rng().r#gen::<u64>().into());
@@ -193,7 +192,7 @@ async fn send_message_to_group(
             }),
             group_canister::c2c_bot_send_message::Response::Error(error) => Error(error),
         },
-        Err(error) => C2CError(error.reject_code() as i32, error.message().to_string()),
+        Err(error) => Error(error.into()),
     }
 }
 
@@ -238,6 +237,6 @@ async fn send_message_to_user(
             }),
             user_canister::c2c_bot_send_message::Response::Error(error) => Error(error),
         },
-        Err(error) => C2CError(error.reject_code() as i32, error.message().to_string()),
+        Err(error) => Error(error.into()),
     }
 }

@@ -278,8 +278,8 @@ impl ArgsInternal {
             Self::StartVideoCall(args) => Some(args.chat),
             Self::JoinVideoCall(args) => Some(args.chat),
             Self::MarkVideoCallAsEnded(args) => Some(args.chat),
-            Self::BotActionByCommand(args) => args.scope.chat(),
-            Self::BotActionByApiKey(args) => args.scope.chat(),
+            Self::BotActionByCommand(args) => args.scope.chat(None),
+            Self::BotActionByApiKey(args) => args.scope.chat(None),
         }
     }
 }
