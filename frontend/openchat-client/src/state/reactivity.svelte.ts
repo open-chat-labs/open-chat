@@ -31,19 +31,6 @@ export function debouncedDerived<T>(
     return () => value;
 }
 
-const times = new Map<string, number>();
-
-export function timed<T>(key: string, fn: () => T): () => T {
-    return () => {
-        const start = performance.now();
-        const res = fn();
-        const time = performance.now() - start;
-        const sofar = times.get(key);
-        times.set(key, sofar ? sofar + time : time);
-        return res;
-    };
-}
-
 /**
  * This can be used with a derived expression to allow us to provide a custom equality check
  * to make sure that if the derived result has not actually changed we will return the existing

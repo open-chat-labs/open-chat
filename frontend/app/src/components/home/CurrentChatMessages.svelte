@@ -259,8 +259,6 @@
         ),
     );
 
-    $inspect(timeline).with(console.trace);
-
     // if the messageIndex has changed but the chatId has not, scroll to the specified message
     let previousChatId: ChatIdentifier | undefined = undefined;
     $effect(() => {
