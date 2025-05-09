@@ -50,6 +50,10 @@ impl DeletedGroups {
         self.pending_group_deleted_notifications.len()
     }
 
+    pub fn iter(&self) -> impl Iterator<Item = &DeletedGroupInfoInternal> + '_ {
+        self.groups.values()
+    }
+
     pub fn metrics(&self) -> Metrics {
         let mut public = 0;
         let mut private = 0;
