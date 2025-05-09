@@ -5874,7 +5874,6 @@ dependencies = [
  "community_canister",
  "constants",
  "event_store_canister",
- "event_store_types",
  "group_canister",
  "ic-ledger-types",
  "oc_error_codes",
