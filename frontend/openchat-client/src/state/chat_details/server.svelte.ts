@@ -169,7 +169,9 @@ export class ChatDetailsServerState {
         apiKeys: Map<string, PublicApiKeyDetails>,
         webhooks: Map<string, WebhookDetails>,
     ) {
-        this.#chatId = chatId;
+        if (!chatIdentifiersEqual(chatId, this.#chatId)) {
+            this.#chatId = chatId;
+        }
         this.#members = members;
         this.#lapsedMembers = lapsedMembers;
         this.#blockedUsers = blockedUsers;

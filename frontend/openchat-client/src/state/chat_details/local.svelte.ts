@@ -1,3 +1,4 @@
+import { dequal } from "dequal";
 import {
     type AccessGateConfig,
     type ChatIdentifier,
@@ -207,13 +208,16 @@ export class ChatDetailsLocalStateManager {
     updateLatestMessage(id: ChatIdentifier, message: EventWrapper<Message>): UndoLocalUpdate {
         const state = this.#getOrCreate(id);
         const previous = state.latestMessage;
-        state.latestMessage = message;
-        return scheduleUndo(() => {
-            if (state.latestMessage !== undefined) {
-                revokeObjectUrls(state.latestMessage);
-            }
-            state.latestMessage = previous;
-        });
+        if (!dequal(state.latestMessage, message)) {
+            state.latestMessage = message;
+            return scheduleUndo(() => {
+                if (state.latestMessage !== undefined) {
+                    revokeObjectUrls(state.latestMessage);
+                }
+                state.latestMessage = previous;
+            });
+        }
+        return noop;
     }
 
     updateRulesAccepted(id: ChatIdentifier, rulesAccepted: boolean): UndoLocalUpdate {
