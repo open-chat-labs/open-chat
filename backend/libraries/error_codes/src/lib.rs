@@ -39,6 +39,7 @@ pub enum OCErrorCode {
     InitiatorNotInCommunity = 104,
     InitiatorLapsed = 105,
     InitiatorBlocked = 106,
+    BotNotAuthenticated = 107,
 
     // Invalid
     ChatNotFound = 200,

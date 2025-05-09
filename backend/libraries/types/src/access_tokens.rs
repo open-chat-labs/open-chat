@@ -42,10 +42,10 @@ impl BotActionScope {
         }
     }
 
-    pub fn chat(&self) -> Option<Chat> {
+    pub fn chat(&self, channel_id: Option<ChannelId>) -> Option<Chat> {
         match self {
             BotActionScope::Chat(details) => Some(details.chat),
-            _ => None,
+            BotActionScope::Community(details) => channel_id.map(|channel_id| Chat::Channel(details.community_id, channel_id)),
         }
     }
 
@@ -55,6 +55,13 @@ impl BotActionScope {
                 Chat::Channel(_, channel_id) => Some(channel_id),
                 _ => None,
             },
+            _ => None,
+        }
+    }
+
+    pub fn thread(&self) -> Option<MessageIndex> {
+        match self {
+            Self::Chat(details) => details.thread,
             _ => None,
         }
     }
@@ -137,10 +144,10 @@ impl AccessTokenScope {
         }
     }
 
-    pub fn chat(&self) -> Option<Chat> {
+    pub fn chat(&self, channel_id: Option<ChannelId>) -> Option<Chat> {
         match self {
             AccessTokenScope::Chat(chat) => Some(*chat),
-            _ => None,
+            AccessTokenScope::Community(community_id) => channel_id.map(|channel_id| Chat::Channel(*community_id, channel_id)),
         }
     }
 }

@@ -74,9 +74,9 @@ pub struct SuccessResult {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum EventsResponse {
     Success(types::EventsResponse),
-    NotFound,
-    ReplicaNotUpToDate(TimestampMillis),
-    InternalError(String),
+    // NotFound,
+    // ReplicaNotUpToDate(TimestampMillis),
+    // InternalError(String),
     Error(OCError),
 }
 

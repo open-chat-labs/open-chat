@@ -1,13 +1,14 @@
 use crate::activity_notifications::handle_activity_notification;
+use crate::guards::caller_is_local_user_index;
 use crate::timer_job_types::HardDeleteMessageContentJob;
 use crate::{RuntimeState, TimerJob, mutate_state, read_state, run_regular_jobs};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use community_canister::delete_messages::*;
-use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
+use community_canister::{c2c_bot_delete_messages, delete_messages::*};
+use constants::MINUTE_IN_MS;
 use oc_error_codes::OCErrorCode;
-use types::{Achievement, CanisterId, OCResult, UserId};
+use types::{Achievement, BotCaller, BotPermissions, Caller, CanisterId, ChatPermission, OCResult};
 use user_index_canister_c2c_client::lookup_user;
 
 #[update(candid = true, msgpack = true)]
@@ -17,7 +18,6 @@ async fn delete_messages(args: Args) -> Response {
 
     let PrepareResult {
         caller,
-        user_id,
         user_index_canister_id,
     } = match read_state(prepare) {
         Ok(ok) => ok,
@@ -32,40 +32,72 @@ async fn delete_messages(args: Args) -> Response {
         }
     }
 
-    mutate_state(|state| delete_messages_impl(user_id, args, state)).into()
+    mutate_state(|state| delete_messages_impl(args, None, state)).into()
+}
+
+#[update(guard = "caller_is_local_user_index", msgpack = true)]
+#[trace]
+fn c2c_bot_delete_messages(args: c2c_bot_delete_messages::Args) -> c2c_bot_delete_messages::Response {
+    run_regular_jobs();
+
+    match mutate_state(|state| {
+        let bot_caller = BotCaller {
+            bot: args.bot_id,
+            initiator: args.initiator.clone(),
+        };
+
+        let args = Args {
+            channel_id: args.channel_id,
+            thread_root_message_index: args.thread,
+            message_ids: args.message_ids,
+            as_platform_moderator: None,
+            new_achievement: false,
+        };
+
+        if state.data.is_bot_permitted(
+            &bot_caller.bot,
+            Some(args.channel_id),
+            &bot_caller.initiator,
+            BotPermissions::from_chat_permission(ChatPermission::DeleteMessages),
+        ) {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
+        }
+
+        delete_messages_impl(args, Some(Caller::BotV2(bot_caller)), state)
+    }) {
+        Ok(_) => Response::Success,
+        Err(error) => Response::Error(error),
+    }
 }
 
 struct PrepareResult {
     caller: Principal,
-    user_id: UserId,
     user_index_canister_id: CanisterId,
 }
 
 fn prepare(state: &RuntimeState) -> OCResult<PrepareResult> {
     let caller = state.env.caller();
-    let user_id = if caller == state.data.user_index_canister_id {
-        OPENCHAT_BOT_USER_ID
-    } else {
-        state.data.members.get_verified_member(caller)?.user_id
-    };
 
     Ok(PrepareResult {
         caller,
-        user_id,
         user_index_canister_id: state.data.user_index_canister_id,
     })
 }
 
-fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -> OCResult {
+fn delete_messages_impl(args: Args, ext_caller: Option<Caller>, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
+
+    let caller = state.verified_caller(ext_caller)?;
 
     let Some(channel) = state.data.channels.get_mut(&args.channel_id) else {
         return Err(OCErrorCode::ChatNotFound.into());
     };
 
+    let agent = caller.agent();
+
     let now = state.env.now();
     let results = channel.chat.delete_messages(
-        user_id,
+        caller,
         args.thread_root_message_index,
         args.message_ids,
         args.as_platform_moderator.unwrap_or_default(),
@@ -76,7 +108,7 @@ fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -
     for message_id in
         results.into_iter().filter_map(
             |(message_id, result)| {
-                if let Ok(sender) = result { (sender == user_id).then_some(message_id) } else { None }
+                if let Ok(sender) = result { (sender == agent).then_some(message_id) } else { None }
             },
         )
     {
@@ -93,7 +125,7 @@ fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -
     }
 
     if args.new_achievement {
-        state.notify_user_of_achievement(user_id, Achievement::DeletedMessage, now);
+        state.notify_user_of_achievement(agent, Achievement::DeletedMessage, now);
     }
 
     handle_activity_notification(state);

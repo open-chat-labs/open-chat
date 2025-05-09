@@ -1,5 +1,6 @@
 pub mod bot_create_channel;
 pub mod bot_delete_channel;
+pub mod bot_delete_messages;
 pub mod bot_send_message;
 pub mod bot_subscribe_to_chat_events;
 pub mod c2c_create_community;

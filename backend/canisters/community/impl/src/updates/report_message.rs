@@ -6,7 +6,7 @@ use chat_events::Reader;
 use community_canister::report_message::*;
 use group_index_canister::c2c_report_message;
 use oc_error_codes::OCErrorCode;
-use types::{CanisterId, MultiUserChat, OCResult, UserId};
+use types::{Caller, CanisterId, MultiUserChat, OCResult, UserId};
 
 #[update(msgpack = true)]
 #[trace]
@@ -74,7 +74,7 @@ fn build_c2c_args(args: &Args, state: &RuntimeState) -> OCResult<(c2c_report_mes
 fn delete_message(args: &Args, reporter: UserId, state: &mut RuntimeState) {
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
         if let Ok(results) = channel.chat.delete_messages(
-            reporter,
+            Caller::User(reporter),
             args.thread_root_message_index,
             vec![args.message_id],
             false,

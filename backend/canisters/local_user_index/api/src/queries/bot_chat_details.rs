@@ -19,11 +19,6 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(types::ChatDetails),
-    FailedAuthentication(String),
-    DirectChatUnsupported,
-    NotAuthorized,
-    NotFound,
-    InternalError(String),
     Error(OCError),
 }
 

@@ -26,10 +26,6 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(EventsResponse),
-    FailedAuthentication(String),
-    NotAuthorized,
-    NotFound,
-    InternalError(String),
     Error(OCError),
 }
 

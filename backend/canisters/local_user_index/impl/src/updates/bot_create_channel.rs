@@ -1,5 +1,6 @@
 use canister_api_macros::update;
 use local_user_index_canister::bot_create_channel::*;
+use oc_error_codes::OCErrorCode;
 use types::BotActionScope;
 
 use crate::{bots::extract_access_context, mutate_state};
@@ -10,11 +11,11 @@ async fn bot_create_channel(args: Args) -> Response {
 
     let context = match mutate_state(|state| extract_access_context(&args.auth_token, state)) {
         Ok(context) => context,
-        Err(error) => return FailedAuthentication(error),
+        Err(_) => return Error(OCErrorCode::BotNotAuthenticated.into()),
     };
 
     let BotActionScope::Community(details) = context.scope else {
-        return InvalidRequest("Must be community scope".to_string());
+        return Error(OCErrorCode::InvalidBotActionScope.with_message("Must be community scope"));
     };
 
     match community_canister_c2c_client::c2c_bot_create_channel(
