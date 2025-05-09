@@ -291,6 +291,7 @@
     }
     let showChatHeader = $derived(!ui.mobileWidth || !ui.runningInIframe);
     let messageContext = $derived({ chatId: chat.id });
+
     trackedEffect("current-chat", () => {
         if (previousChatId === undefined || !chatIdentifiersEqual(chat.id, previousChatId)) {
             previousChatId = chat.id;

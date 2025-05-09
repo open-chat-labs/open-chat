@@ -367,6 +367,7 @@ export function mergeUnconfirmedIntoSummary(
     let latestMessage = chatSummary.latestMessage;
     let latestEventIndex = chatSummary.latestEventIndex;
     let mentions = chatSummary.membership.mentions ?? [];
+
     if (unconfirmedMessages != undefined && unconfirmedMessages.length > 0) {
         const incomingMentions = mentionsFromMessages(formatter, userId, unconfirmedMessages);
         mentions = mergeMentions(mentions, incomingMentions);
@@ -398,20 +399,17 @@ export function mergeUnconfirmedIntoSummary(
             senderBlocked ||
             failedMessageFilter
         ) {
-            latestMessage = {
-                ...latestMessage,
-                event: mergeLocalUpdates(
-                    latestMessage.event,
-                    updates,
-                    undefined,
-                    undefined,
-                    translation,
-                    undefined,
-                    senderBlocked,
-                    false,
-                    failedMessageFilter,
-                ),
-            };
+            latestMessage.event = mergeLocalUpdates(
+                latestMessage.event,
+                updates,
+                undefined,
+                undefined,
+                translation,
+                undefined,
+                senderBlocked,
+                false,
+                failedMessageFilter,
+            );
         }
     }
 
@@ -419,23 +417,11 @@ export function mergeUnconfirmedIntoSummary(
         if (unconfirmedMessages !== undefined) {
             chatSummary = mergeUnconfirmedThreadsIntoSummary(chatSummary);
         }
-        return {
-            ...chatSummary,
-            latestMessage,
-            latestEventIndex,
-            membership: {
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                ...chatSummary.membership!,
-                mentions,
-            },
-        };
-    } else {
-        return {
-            ...chatSummary,
-            latestMessage,
-            latestEventIndex,
-        };
+        chatSummary.membership.mentions = mentions;
     }
+    chatSummary.latestMessage = latestMessage;
+    chatSummary.latestEventIndex = latestEventIndex;
+    return chatSummary;
 }
 
 export function mergePermissions(
@@ -1399,7 +1385,7 @@ export function mergeEventsAndLocalUpdates(
                 return {
                     ...e,
                     event: mergeLocalUpdates(
-                        e.event,
+                        { ...e.event },
                         updates,
                         replyContextUpdates,
                         tallyUpdate,
@@ -1473,15 +1459,13 @@ function mergeLocalUpdates(
     failedMessageFilter: boolean,
 ): Message {
     if (localUpdates?.deleted !== undefined) {
-        return {
-            ...message,
-            deleted: true,
-            content: {
-                kind: "deleted_content",
-                deletedBy: localUpdates.deleted.deletedBy,
-                timestamp: localUpdates.deleted.timestamp,
-            },
+        message.deleted = true;
+        message.content = {
+            kind: "deleted_content",
+            deletedBy: localUpdates.deleted.deletedBy,
+            timestamp: localUpdates.deleted.timestamp,
         };
+        return message;
     }
 
     if (
@@ -1489,15 +1473,11 @@ function mergeLocalUpdates(
         message.content.kind !== "deleted_content" &&
         (senderBlocked || failedMessageFilter)
     ) {
-        return {
-            ...message,
-            content: {
-                kind: "blocked_content",
-            },
+        message.content = {
+            kind: "blocked_content",
         };
+        return message;
     }
-
-    message = { ...message };
 
     if (localUpdates?.cancelledReminder !== undefined) {
         message.content = localUpdates.cancelledReminder;
@@ -1596,27 +1576,19 @@ function mergeLocalUpdates(
             repliesToSenderBlocked)
     ) {
         if (replyContextLocalUpdates?.deleted !== undefined) {
-            message.repliesTo = {
-                ...message.repliesTo,
-                content: {
-                    kind: "deleted_content",
-                    deletedBy: replyContextLocalUpdates.deleted.deletedBy,
-                    timestamp: replyContextLocalUpdates.deleted.timestamp,
-                },
+            message.repliesTo.content = {
+                kind: "deleted_content",
+                deletedBy: replyContextLocalUpdates.deleted.deletedBy,
+                timestamp: replyContextLocalUpdates.deleted.timestamp,
             };
         } else if (
             repliesToSenderBlocked &&
             replyContextLocalUpdates?.hiddenMessageRevealed !== true
         ) {
-            message.repliesTo = {
-                ...message.repliesTo,
-                content: {
-                    kind: "blocked_content",
-                },
+            message.repliesTo.content = {
+                kind: "blocked_content",
             };
         } else {
-            message.repliesTo = { ...message.repliesTo };
-
             if (replyContextLocalUpdates?.editedContent !== undefined) {
                 message.repliesTo.content = replyContextLocalUpdates.editedContent;
             }
@@ -1646,13 +1618,7 @@ function mergeLocalUpdates(
         message.content.kind === "proposal_content" &&
         tallyUpdate.timestamp > message.content.proposal.tally.timestamp
     ) {
-        message.content = {
-            ...message.content,
-            proposal: {
-                ...message.content.proposal,
-                tally: tallyUpdate,
-            },
-        };
+        message.content.proposal.tally = tallyUpdate;
     }
 
     if (translation !== undefined) {

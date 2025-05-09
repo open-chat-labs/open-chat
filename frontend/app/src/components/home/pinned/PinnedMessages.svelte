@@ -6,7 +6,7 @@
         OpenChat,
         ReadonlySet,
     } from "openchat-client";
-    import { app, subscribe, ui } from "openchat-client";
+    import { app, setsAreEqual, subscribe, ui, withEqCheck } from "openchat-client";
     import { isSuccessfulEventsResponse } from "openchat-shared";
     import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
@@ -26,9 +26,13 @@
         onClose: () => void;
     }
 
-    let { pinned, chatId, dateLastPinned, onClose }: Props = $props();
+    let { chatId, dateLastPinned, onClose }: Props = $props();
 
     const client = getContext<OpenChat>("client");
+
+    let pinnedMessages = $derived.by(
+        withEqCheck(() => app.selectedChat.pinnedMessages, setsAreEqual),
+    );
 
     onMount(() => {
         return subscribe("chatWith", (_) => {
@@ -92,7 +96,7 @@
     }
 
     $effect(() => {
-        reloadPinned(pinned);
+        reloadPinned(pinnedMessages);
     });
 
     function dateGroupKey(group: EventWrapper<Message>[]): string {
