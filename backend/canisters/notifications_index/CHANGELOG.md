@@ -6,11 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1734](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1734-notifications_index)] - 2025-05-08
+
 ### Changed
 
 - Increase timeout of bounded-wait calls to 5 minutes ([#7730](https://github.com/open-chat-labs/open-chat/pull/7730))
 - Include more details in failed c2c call errors ([#7749](https://github.com/open-chat-labs/open-chat/pull/7749))
-- Split `authorizers` into `local_user_index` and `local_group_index` ([#7861](https://github.com/open-chat-labs/open-chat/pull/7861))
+- Remove `local_group_index_canister_id` from Notifications canister init args ([#7861](https://github.com/open-chat-labs/open-chat/pull/7861))
 
 ## [[2.0.1675](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1675-notifications_index)] - 2025-04-02
 
