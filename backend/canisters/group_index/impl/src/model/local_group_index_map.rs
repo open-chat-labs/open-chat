@@ -1,6 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::mem;
 use types::{BuildVersion, CanisterId, ChatId, CommunityId};
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
@@ -19,6 +20,23 @@ pub struct LocalGroupIndex {
 }
 
 impl LocalGroupIndexMap {
+    pub fn switch_index_canisters(&mut self, replacements: HashMap<CanisterId, CanisterId>) {
+        self.index_map = mem::take(&mut self.index_map)
+            .into_iter()
+            .map(|(k, v)| (replacements.get(&k).copied().unwrap_or(k), v))
+            .collect();
+
+        self.group_to_index = mem::take(&mut self.group_to_index)
+            .into_iter()
+            .map(|(k, v)| (k, replacements.get(&v).copied().unwrap_or(v)))
+            .collect();
+
+        self.community_to_index = mem::take(&mut self.community_to_index)
+            .into_iter()
+            .map(|(k, v)| (k, replacements.get(&v).copied().unwrap_or(v)))
+            .collect();
+    }
+
     pub fn add_index(&mut self, index_id: CanisterId) -> bool {
         let exists = self.index_map.contains_key(&index_id);
         if !exists {
@@ -99,6 +117,22 @@ impl LocalGroupIndexMap {
 
     pub fn iter(&self) -> impl Iterator<Item = (&CanisterId, &LocalGroupIndex)> {
         self.index_map.iter()
+    }
+
+    pub fn mark_group_deleted(&mut self, chat_id: &ChatId) {
+        if let Some(index) = self.group_to_index.remove(chat_id) {
+            self.index_map
+                .entry(index)
+                .and_modify(|i| i.group_count = i.group_count.saturating_sub(1));
+        }
+    }
+
+    pub fn mark_community_deleted(&mut self, community_id: &CommunityId) {
+        if let Some(index) = self.community_to_index.remove(community_id) {
+            self.index_map
+                .entry(index)
+                .and_modify(|i| i.community_count = i.community_count.saturating_sub(1));
+        }
     }
 }
 
