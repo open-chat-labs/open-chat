@@ -86,6 +86,7 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
             user_principal: args.principal,
             name: args.name.clone(),
             commands: args.definition.commands.clone(),
+            endpoint: args.endpoint.clone(),
             autonomous_config: args.definition.autonomous_config.clone(),
             permitted_install_location: args.permitted_install_location,
         }),

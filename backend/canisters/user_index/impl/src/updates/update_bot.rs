@@ -69,7 +69,8 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
         bot.autonomous_config = definition.autonomous_config.clone();
     }
 
-    let owner = bot.owner;
+    let owner_id = bot.owner;
+    let endpoint = bot.endpoint.clone();
 
     bot.last_updated = now;
 
@@ -84,7 +85,8 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
         state.push_event_to_all_local_user_indexes(
             UserIndexEvent::BotUpdated(BotUpdated {
                 bot_id: args.bot_id,
-                owner_id: owner,
+                owner_id,
+                endpoint,
                 definition,
             }),
             None,
