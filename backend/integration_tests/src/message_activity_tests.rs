@@ -3,7 +3,6 @@ use crate::utils::{chat_token_info, icp_token_info, now_millis, now_nanos, tick_
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use constants::{DAY_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE};
-use event_store_canister::TimestampMillis;
 use pocket_ic::PocketIc;
 use std::collections::HashMap;
 use std::ops::Deref;
@@ -12,7 +11,7 @@ use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
 use types::{
     Chat, ChatType, CryptoContent, CryptoTransaction, GroupReplyContext, MessageContentInitial, P2PSwapContentInitial,
-    PendingCryptoTransaction, PollConfig, PollContent, PollVotes, TextContent, TotalVotes,
+    PendingCryptoTransaction, PollConfig, PollContent, PollVotes, TextContent, TimestampMillis, TotalVotes,
 };
 use user_canister::MessageActivity;
 

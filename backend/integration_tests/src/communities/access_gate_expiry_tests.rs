@@ -3,7 +3,6 @@ use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
-use event_store_canister::{Milliseconds, TimestampMillis};
 use pocket_ic::PocketIc;
 use std::collections::HashMap;
 use std::ops::Deref;
@@ -12,7 +11,7 @@ use test_case::test_case;
 use testing::rng::random_string;
 use types::{
     AccessGate, AccessGateConfig, AccessGateNonComposite, ChannelId, ChatId, CommunityId, CompositeGate,
-    DiamondMembershipPlanDuration, OptionUpdate, TokenBalanceGate, UserId,
+    DiamondMembershipPlanDuration, Milliseconds, OptionUpdate, TimestampMillis, TokenBalanceGate, UserId,
 };
 
 const DAY_IN_MS: Milliseconds = 24 * 60 * 60 * 1000;
