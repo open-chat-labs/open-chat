@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Allow local Groups and Communities to request cycles + push events ([#7940](https://github.com/open-chat-labs/open-chat/pull/7940))
+
 ## [[2.0.1731](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1731-local_user_index)] - 2025-05-08
 
 ### Fixed
