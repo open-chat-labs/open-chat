@@ -40,14 +40,13 @@ pub mod happy_path {
     use crate::User;
     use candid::Principal;
     use constants::{CHAT_LEDGER_CANISTER_ID, CHUNK_STORE_CHUNK_SIZE, ICP_LEDGER_CANISTER_ID};
-    use event_store_canister::TimestampMillis;
     use pocket_ic::PocketIc;
     use sha256::sha256;
     use std::collections::HashMap;
     use testing::rng::random_principal;
     use types::{
         BotDefinition, BotInstallationLocation, CanisterId, CanisterWasm, Chit, DiamondMembershipFees,
-        DiamondMembershipPlanDuration, Empty, OptionUpdate, SignedDelegation, UserId, UserSummary,
+        DiamondMembershipPlanDuration, Empty, OptionUpdate, SignedDelegation, TimestampMillis, UserId, UserSummary,
     };
     use user_index_canister::ChildCanisterType;
     use user_index_canister::users::UserGroup;
