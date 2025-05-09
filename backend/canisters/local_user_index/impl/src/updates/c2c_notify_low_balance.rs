@@ -1,4 +1,4 @@
-use crate::guards::caller_is_local_user_canister;
+use crate::guards::caller_is_local_child_canister;
 use crate::{CHILD_CANISTER_TOP_UP_AMOUNT, RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -7,7 +7,7 @@ use types::{CanisterId, Cycles, CyclesTopUp, NotifyLowBalanceArgs, NotifyLowBala
 use utils::canister::deposit_cycles;
 use utils::cycles::can_spend_cycles;
 
-#[update(guard = "caller_is_local_user_canister", msgpack = true)]
+#[update(guard = "caller_is_local_child_canister", msgpack = true)]
 #[trace]
 async fn c2c_notify_low_balance(_args: NotifyLowBalanceArgs) -> NotifyLowBalanceResponse {
     top_up_child_canister(None).await

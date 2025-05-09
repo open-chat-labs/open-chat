@@ -143,6 +143,13 @@ impl RuntimeState {
         self.data.local_users.get(&caller.into()).is_some()
     }
 
+    pub fn is_caller_local_child_canister(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.local_users.contains(&caller.into())
+            || self.data.local_groups.contains(&caller.into())
+            || self.data.local_communities.contains(&caller.into())
+    }
+
     pub fn is_caller_local_group_index(&self) -> bool {
         let caller = self.env.caller();
         self.data.local_group_index_canister_id == caller
