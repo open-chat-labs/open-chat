@@ -43,7 +43,7 @@ async fn delete_messages(args: Args) -> Response {
 fn c2c_bot_delete_messages(args: c2c_bot_delete_messages::Args) -> c2c_bot_delete_messages::Response {
     run_regular_jobs();
 
-    match mutate_state(|state| {
+    mutate_state(|state| {
         let bot_caller = BotCaller {
             bot: args.bot_id,
             initiator: args.initiator.clone(),
@@ -57,7 +57,7 @@ fn c2c_bot_delete_messages(args: c2c_bot_delete_messages::Args) -> c2c_bot_delet
             correlation_id: 0,
         };
 
-        if state.data.is_bot_permitted(
+        if !state.data.is_bot_permitted(
             &bot_caller.bot,
             &bot_caller.initiator,
             BotPermissions::from_chat_permission(ChatPermission::DeleteMessages),
@@ -66,10 +66,8 @@ fn c2c_bot_delete_messages(args: c2c_bot_delete_messages::Args) -> c2c_bot_delet
         }
 
         delete_messages_impl(Some(Caller::BotV2(bot_caller)), args, state)
-    }) {
-        Ok(_) => Response::Success,
-        Err(error) => Response::Error(error),
-    }
+    })
+    .into()
 }
 
 struct PrepareResult {
