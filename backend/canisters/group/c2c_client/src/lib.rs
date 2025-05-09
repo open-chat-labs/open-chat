@@ -15,6 +15,7 @@ generate_c2c_call!(summary);
 generate_c2c_call!(summary_updates);
 
 // Updates
+generate_c2c_call!(c2c_bot_add_reaction);
 generate_c2c_call!(c2c_bot_delete_messages);
 generate_c2c_call!(c2c_bot_send_message);
 generate_c2c_call!(c2c_bot_subscribe_to_chat_events);
