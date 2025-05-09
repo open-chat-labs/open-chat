@@ -91,6 +91,7 @@ fn commit(community_id: CommunityId, deleted_by: UserId, name: String, members: 
         false
     };
 
+    state.data.local_index_map.mark_community_deleted(&community_id);
     state.data.deleted_communities.insert(
         DeletedCommunityInfo {
             id: community_id,
