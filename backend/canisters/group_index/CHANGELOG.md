@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Remove deleted Groups/Communities from IndexMap ([#7942](https://github.com/open-chat-labs/open-chat/pull/7942))
+- Bump Group/Community wasm versions to avoid `VersionNotHigher` error ([#7943](https://github.com/open-chat-labs/open-chat/pull/7943))
 
 ## [[2.0.1736](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1736-group_index)] - 2025-05-09
 
