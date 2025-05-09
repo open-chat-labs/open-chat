@@ -87,6 +87,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 wasm_version: canister_wasm.wasm.version,
                 user_index_canister_id: state.env.canister_id(),
                 group_index_canister_id: state.data.group_index_canister_id,
+                notifications_index_canister_id: state.data.notifications_index_canister_id,
                 identity_canister_id: state.data.identity_canister_id,
                 local_group_index_canister_id: args.local_group_index_canister_id,
                 notifications_canister_id: args.notifications_canister_id,
