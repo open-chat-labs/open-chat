@@ -888,6 +888,13 @@ export const TSPrincipal = Type.Union([
     Type.String(),
 ]);
 
+export type ChatEventType = Static<typeof ChatEventType>;
+export const ChatEventType = Type.Union([
+    Type.Literal("Message"),
+    Type.Literal("MembershipUpdate"),
+    Type.Literal("ChatDetailsUpdate"),
+]);
+
 export type OptionUpdateGroupPermissionRole = Static<typeof OptionUpdateGroupPermissionRole>;
 export const OptionUpdateGroupPermissionRole = Type.Union(
     [
@@ -2423,6 +2430,15 @@ export const LocalUserIndexBotDeleteChannelResponse = Type.Union([
         Error: OCError,
     }),
 ]);
+
+export type LocalUserIndexBotSubscribeToChatEventsArgs = Static<
+    typeof LocalUserIndexBotSubscribeToChatEventsArgs
+>;
+export const LocalUserIndexBotSubscribeToChatEventsArgs = Type.Object({
+    channel_id: Type.Optional(ChannelId),
+    event_types: Type.Array(ChatEventType),
+    api_key: Type.String(),
+});
 
 export type LocalUserIndexUninstallBotResponse = Static<typeof LocalUserIndexUninstallBotResponse>;
 export const LocalUserIndexUninstallBotResponse = Type.Union([
@@ -4826,6 +4842,7 @@ export const PrizeContent = Type.Object({
     lifetime_diamond_only: Type.Boolean(),
     unique_person_only: Type.Boolean(),
     streak_only: Type.Number(),
+    requires_captcha: Type.Boolean(),
 });
 
 export type GroupRulesChanged = Static<typeof GroupRulesChanged>;
