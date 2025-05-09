@@ -165,6 +165,11 @@ export class CommunityLocalStateManager {
     ): UndoLocalUpdate {
         return this.#getOrCreate(id).bots.addOrUpdate(botId, perm);
     }
+
+    // Only used for testing
+    clearAll() {
+        this.#data = new ReactiveCommunityMap<CommunityLocalState>();
+    }
 }
 
 export const communityLocalUpdates = new CommunityLocalStateManager();

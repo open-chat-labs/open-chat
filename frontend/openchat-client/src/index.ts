@@ -25,3 +25,4 @@ export type { Dimensions } from "./utils/media";
 export { isPermitted } from "./utils/permissions";
 export { Poller } from "./utils/poller";
 export * from "./utils/routes";
+export { setsAreEqual } from "./utils/set";
