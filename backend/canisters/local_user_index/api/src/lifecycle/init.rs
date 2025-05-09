@@ -8,6 +8,7 @@ pub struct Args {
     pub wasm_version: BuildVersion,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
+    pub notifications_index_canister_id: CanisterId,
     pub identity_canister_id: CanisterId,
     pub local_group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
