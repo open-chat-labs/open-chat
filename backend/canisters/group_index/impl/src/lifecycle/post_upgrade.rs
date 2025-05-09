@@ -64,7 +64,7 @@ async fn switch_to_local_user_indexes(test_mode: bool) {
             CanisterId::from_text("lyt4m-myaaa-aaaac-aadkq-cai").unwrap(),
         ));
     }
-    let index_replacements_map: HashMap<_, _> = HashMap::new();
+    let index_replacements_map: HashMap<_, _> = index_replacements.into_iter().collect();
 
     let (group_canister_wasm, community_canister_wasm) = read_state(|state| {
         (
