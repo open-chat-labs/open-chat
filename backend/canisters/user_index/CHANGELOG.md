@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Support exclusion of installed bots from `explore_bots` ([#7904](https://github.com/open-chat-labs/open-chat/pull/7904))
+- Store `notifications_index_canister_id` within LocalUserIndexes ([#7947](https://github.com/open-chat-labs/open-chat/pull/7947))
 
 ## [[2.0.1724](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1724-user_index)] - 2025-05-06
 

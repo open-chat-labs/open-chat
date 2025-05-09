@@ -8,6 +8,7 @@ generate_c2c_call!(c2c_is_empty_and_dormant);
 generate_c2c_call!(c2c_groups_and_communities);
 
 // Updates
+generate_c2c_call!(c2c_bot_add_reaction);
 generate_c2c_call!(c2c_bot_send_message);
 generate_c2c_call!(c2c_accept_p2p_swap);
 generate_c2c_call!(c2c_charge_user_account);

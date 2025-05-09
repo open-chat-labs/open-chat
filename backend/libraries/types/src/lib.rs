@@ -135,7 +135,7 @@ pub use message_id::*;
 pub use message_index::*;
 pub use message_match::*;
 pub use notifications::*;
-use oc_error_codes::OCError;
+use oc_error_codes::{OCError, OCErrorCode};
 pub use option::*;
 pub use p2p_swaps::*;
 pub use phone_number::*;
@@ -183,6 +183,18 @@ pub type OCResult<T = ()> = Result<T, OCError>;
 pub enum UnitResult {
     Success,
     Error(OCError),
+}
+
+impl From<OCErrorCode> for UnitResult {
+    fn from(value: OCErrorCode) -> Self {
+        Self::Error(value.into())
+    }
+}
+
+impl From<OCError> for UnitResult {
+    fn from(value: OCError) -> Self {
+        Self::Error(value)
+    }
 }
 
 impl<T> From<OCResult<T>> for UnitResult {

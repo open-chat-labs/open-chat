@@ -878,24 +878,32 @@ impl GroupChatCore {
 
     pub fn add_reaction<R: Runtime + Send + 'static>(
         &mut self,
-        user_id: UserId,
+        caller: Caller,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         reaction: Reaction,
         now: TimestampMillis,
         event_store_client: &mut EventStoreClient<R>,
     ) -> OCResult<UpdateMessageSuccess> {
-        let member = self.members.get_verified_member(user_id)?;
-
-        if !member.role().can_react_to_messages(&self.permissions) {
+        if matches!(caller, Caller::Webhook(_) | Caller::Bot(_)) {
             return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
 
-        let min_visible_event_index = member.min_visible_event_index();
+        let mut min_visible_event_index = EventIndex::default();
+
+        if matches!(caller, Caller::User(_) | Caller::BotV2(_)) {
+            if let Some(initiator) = caller.initiator() {
+                let member = self.members.get_verified_member(initiator)?;
+                if !member.role().can_react_to_messages(&self.permissions) {
+                    return Err(OCErrorCode::InitiatorNotAuthorized.into());
+                }
+                min_visible_event_index = member.min_visible_event_index()
+            }
+        }
 
         self.events.add_reaction(
             AddRemoveReactionArgs {
-                user_id,
+                user_id: caller.agent(),
                 min_visible_event_index,
                 thread_root_message_index,
                 message_id,
@@ -951,25 +959,37 @@ impl GroupChatCore {
 
     pub fn delete_messages(
         &mut self,
-        user_id: UserId,
+        caller: Caller,
         thread_root_message_index: Option<MessageIndex>,
         message_ids: Vec<MessageId>,
         as_platform_moderator: bool,
         now: TimestampMillis,
     ) -> OCResult<Vec<(MessageId, OCResult<UserId>)>> {
-        let (is_admin, min_visible_event_index) = if as_platform_moderator {
-            (true, EventIndex::default())
-        } else {
-            let member = self.members.get_verified_member(user_id)?;
+        let initiator = caller.initiator();
 
-            (
-                member.role().can_delete_messages(&self.permissions),
-                member.min_visible_event_index(),
-            )
+        let (is_admin, min_visible_event_index) = match caller {
+            Caller::Webhook(_) | Caller::Bot(_) => return Err(OCErrorCode::InitiatorNotAuthorized.into()),
+            Caller::User(user_id) if !as_platform_moderator => {
+                let member = self.members.get_verified_member(user_id)?;
+                (
+                    member.role().can_delete_messages(&self.permissions),
+                    member.min_visible_event_index(),
+                )
+            }
+            Caller::BotV2(_) if initiator.is_some() => {
+                // We already know the bot has permission to delete messages but if
+                // the initiator is a user then they must also have permission
+                let member = self.members.get_verified_member(initiator.unwrap())?;
+                if !member.role().can_delete_messages(&self.permissions) {
+                    return Err(OCErrorCode::InitiatorNotAuthorized.into());
+                }
+                (true, member.min_visible_event_index())
+            }
+            _ => (true, EventIndex::default()),
         };
 
         let results = self.events.delete_messages(DeleteUndeleteMessagesArgs {
-            caller: user_id,
+            caller: caller.agent(),
             is_admin,
             min_visible_event_index,
             thread_root_message_index,
@@ -996,7 +1016,7 @@ impl GroupChatCore {
                         self.events.push_main_event(
                             ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
                                 message_index,
-                                unpinned_by: user_id,
+                                unpinned_by: caller.agent(),
                                 due_to_message_deleted: true,
                             })),
                             0,

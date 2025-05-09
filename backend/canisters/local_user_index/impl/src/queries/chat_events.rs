@@ -190,6 +190,6 @@ pub(crate) async fn make_c2c_call_to_get_events(
 fn map_response<R: Into<EventsResponse>>(response: Result<R, C2CError>) -> EventsResponse {
     match response {
         Ok(result) => result.into(),
-        Err(error) => EventsResponse::InternalError(format!("{error:?}")),
+        Err(error) => EventsResponse::Error(error.into()),
     }
 }

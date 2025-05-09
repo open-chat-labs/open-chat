@@ -22,6 +22,7 @@ fn init(args: Args) {
     let data = Data::new(
         args.user_index_canister_id,
         args.group_index_canister_id,
+        args.notifications_index_canister_id,
         args.identity_canister_id,
         args.local_group_index_canister_id,
         args.notifications_canister_id,

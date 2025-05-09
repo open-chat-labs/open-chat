@@ -100,6 +100,22 @@ impl LocalGroupIndexMap {
     pub fn iter(&self) -> impl Iterator<Item = (&CanisterId, &LocalGroupIndex)> {
         self.index_map.iter()
     }
+
+    pub fn mark_group_deleted(&mut self, chat_id: &ChatId) {
+        if let Some(index) = self.group_to_index.remove(chat_id).and_then(|i| self.index_map.get_mut(&i)) {
+            index.group_count = index.group_count.saturating_sub(1);
+        }
+    }
+
+    pub fn mark_community_deleted(&mut self, community_id: &CommunityId) {
+        if let Some(index) = self
+            .community_to_index
+            .remove(community_id)
+            .and_then(|i| self.index_map.get_mut(&i))
+        {
+            index.community_count = index.community_count.saturating_sub(1);
+        }
+    }
 }
 
 impl LocalGroupIndex {

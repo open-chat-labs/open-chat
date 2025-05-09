@@ -51,6 +51,7 @@ pub(crate) fn delete_group(
         false
     };
 
+    state.data.local_index_map.mark_group_deleted(&group_id);
     state.data.deleted_groups.insert(
         DeletedGroupInfoInternal {
             id: group_id,
