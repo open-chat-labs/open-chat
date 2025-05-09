@@ -15,6 +15,8 @@ pub struct Bot {
     pub owner_id: UserId,
     pub name: String,
     pub commands: Vec<BotCommandDefinition>,
+    #[serde(default)]
+    pub endpoint: String,
     pub autonomous_config: Option<AutonomousConfig>,
     pub principal: Principal,
     pub registration_status: BotRegistrationStatus,
@@ -39,6 +41,7 @@ impl BotsMap {
         owner_id: UserId,
         name: String,
         commands: Vec<BotCommandDefinition>,
+        endpoint: String,
         autonomous_config: Option<AutonomousConfig>,
         permitted_install_location: Option<BotInstallationLocation>,
     ) {
@@ -49,6 +52,7 @@ impl BotsMap {
                 owner_id,
                 name,
                 commands,
+                endpoint,
                 autonomous_config,
                 principal: user_principal,
                 registration_status: BotRegistrationStatus::Private(permitted_install_location),
@@ -63,10 +67,11 @@ impl BotsMap {
         });
     }
 
-    pub fn update(&mut self, bot_id: UserId, owner_id: UserId, definition: BotDefinition) {
+    pub fn update(&mut self, bot_id: UserId, owner_id: UserId, endpoint: String, definition: BotDefinition) {
         self.bots.entry(bot_id).and_modify(|bot| {
             bot.owner_id = owner_id;
             bot.commands = definition.commands;
+            bot.endpoint = endpoint;
             bot.autonomous_config = definition.autonomous_config;
         });
     }
