@@ -32,6 +32,14 @@ pub fn caller_is_local_user_canister() -> Result<(), String> {
     }
 }
 
+pub fn caller_is_local_child_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_local_child_canister()) {
+        Ok(())
+    } else {
+        Err("Caller is not a local user, group or community".to_string())
+    }
+}
+
 pub fn caller_is_local_group_index() -> Result<(), String> {
     if read_state(|state| state.is_caller_local_group_index()) {
         Ok(())
