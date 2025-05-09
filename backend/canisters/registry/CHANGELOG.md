@@ -6,9 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1735](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1735-registry)] - 2025-05-08
+
 ### Changed
 
-- Remove LocalGroupIndex from Notifications canister init args ([#7861](https://github.com/open-chat-labs/open-chat/pull/7861))
+- Remove `local_group_index_canister_id` from Notifications canister init args ([#7861](https://github.com/open-chat-labs/open-chat/pull/7861))
 
 ## [[2.0.1723](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1723-registry)] - 2025-05-02
 
