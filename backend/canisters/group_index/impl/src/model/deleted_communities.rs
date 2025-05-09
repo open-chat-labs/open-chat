@@ -51,10 +51,6 @@ impl DeletedCommunities {
         self.pending_community_deleted_notifications.len()
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &DeletedCommunityInfo> + '_ {
-        self.communities.values()
-    }
-
     pub fn metrics(&self) -> Metrics {
         let mut public = 0;
         let mut private = 0;
