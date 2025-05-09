@@ -32,10 +32,7 @@ async fn delete_messages(args: Args) -> Response {
         }
     }
 
-    match mutate_state(|state| delete_messages_impl(None, args, state)) {
-        Ok(_) => Response::Success,
-        Err(error) => Response::Error(error),
-    }
+    mutate_state(|state| delete_messages_impl(None, args, state)).into()
 }
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
