@@ -389,7 +389,10 @@ export async function getCachedBots(
 }
 
 export async function setCachedBots(db: Database, principal: Principal, bots: BotsResponse) {
-    (await db).put("bots", bots, principal.toString());
+    const tx = (await db).transaction("bots", "readwrite", { durability: "relaxed" });
+    const store = tx.objectStore("bots");
+    await store.put(bots, principal.toString());
+    await tx.done;
 }
 
 export async function getCachedChats(
@@ -404,10 +407,15 @@ export async function getCachedChats(
         chats.latestUserCanisterUpdates < BigInt(Date.now() - 30 * ONE_DAY)
     ) {
         // If the cache was last updated more than 30 days ago, clear the cache and return undefined
+        const tx = resolvedDb.transaction(resolvedDb.objectStoreNames, "readwrite", {
+            durability: "relaxed",
+        });
         const storeNames = resolvedDb.objectStoreNames;
         for (let i = 0; i < storeNames.length; i++) {
-            await resolvedDb.clear(storeNames[i]);
+            const store = tx.objectStore(storeNames[i]);
+            await store.clear();
         }
+        await tx.done;
         return undefined;
     }
     return chats;
@@ -806,7 +814,10 @@ export async function removeFailedMessage(
 ): Promise<void> {
     const store =
         threadRootMessageIndex !== undefined ? "failed_thread_messages" : "failed_chat_messages";
-    (await db).delete(store, createFailedCacheKey({ chatId, threadRootMessageIndex }, messageId));
+    const tx = (await db).transaction(store, "readwrite", { durability: "relaxed" });
+    const objStore = tx.objectStore(store);
+    await objStore.delete(createFailedCacheKey({ chatId, threadRootMessageIndex }, messageId));
+    await tx.done;
 }
 
 export async function recordFailedMessage<T extends Message>(
@@ -972,7 +983,10 @@ export async function setCachePrimerTimestamp(
     chatId: ChatIdentifier,
     timestamp: bigint,
 ): Promise<void> {
-    await (await db).put("cachePrimer", timestamp, chatIdentifierToString(chatId));
+    const tx = (await db).transaction("cachePrimer", "readwrite", { durability: "relaxed" });
+    const store = tx.objectStore("cachePrimer");
+    await store.put(timestamp, chatIdentifierToString(chatId));
+    await tx.done;
 }
 
 function messageToEvent(
@@ -1051,7 +1065,10 @@ export async function setCachedCommunityDetails(
     communityId: string,
     communityDetails: CommunityDetails,
 ): Promise<void> {
-    await (await db).put("community_details", communityDetails, communityId);
+    const tx = (await db).transaction("community_details", "readwrite", { durability: "relaxed" });
+    const store = tx.objectStore("community_details");
+    await store.put(communityDetails, communityId);
+    await tx.done;
 }
 
 export async function setCachedGroupDetails(
@@ -1059,7 +1076,10 @@ export async function setCachedGroupDetails(
     chatId: string,
     groupDetails: GroupChatDetails,
 ): Promise<void> {
-    await (await db).put("group_details", groupDetails, chatId);
+    const tx = (await db).transaction("group_details", "readwrite", { durability: "relaxed" });
+    const store = tx.objectStore("group_details");
+    await store.put(groupDetails, chatId);
+    await tx.done;
 }
 
 let db: Database | undefined;
@@ -1426,13 +1446,19 @@ export async function mergeCachedCurrentUser(
     const current = await getCachedCurrentUser(principal);
     if (current) {
         const merged = updateCreatedUser(current, updated);
-        (await db).put("currentUser", merged, principal);
+        const tx = (await db).transaction("currentUser", "readwrite", { durability: "relaxed" });
+        const store = tx.objectStore("currentUser");
+        await store.put(merged, principal);
+        await tx.done;
     }
 }
 
 export async function setCachedCurrentUser(principal: string, user: CreatedUser): Promise<void> {
     if (db === undefined) return;
-    (await db).put("currentUser", user, principal);
+    const tx = (await db).transaction("currentUser", "readwrite", { durability: "relaxed" });
+    const store = tx.objectStore("currentUser");
+    await store.put(user, principal);
+    await tx.done;
 }
 
 export async function setCurrentUserDiamondStatusInCache(
@@ -1441,14 +1467,16 @@ export async function setCurrentUserDiamondStatusInCache(
 ): Promise<void> {
     const user = await getCachedCurrentUser(principal);
     if (user === undefined || db === undefined) return;
-    (await db).put(
-        "currentUser",
+    const tx = (await db).transaction("currentUser", "readwrite", { durability: "relaxed" });
+    const store = tx.objectStore("currentUser");
+    await store.put(
         {
             ...user,
             diamondStatus,
         },
         principal,
     );
+    await tx.done;
 }
 
 export async function getLocalUserIndexForUser(userId: string): Promise<string | undefined> {
@@ -1461,7 +1489,10 @@ export async function cacheLocalUserIndexForUser(
     localUserIndex: string,
 ): Promise<string> {
     if (db === undefined) return localUserIndex;
-    (await db).put("localUserIndex", localUserIndex, userId);
+    const tx = (await db).transaction("localUserIndex", "readwrite", { durability: "relaxed" });
+    const store = tx.objectStore("localUserIndex");
+    await store.put(localUserIndex, userId);
+    await tx.done;
     return localUserIndex;
 }
 
@@ -1490,7 +1521,12 @@ export async function setCachedExternalAchievements(
     achievements: ExternalAchievement[],
 ): Promise<void> {
     if (db === undefined) return;
-    (await db).put("externalAchievements", { lastUpdated, achievements }, "value");
+    const tx = (await db).transaction("externalAchievements", "readwrite", {
+        durability: "relaxed",
+    });
+    const store = tx.objectStore("externalAchievements");
+    await store.put({ lastUpdated, achievements }, "value");
+    await tx.done;
 }
 
 export async function getActivityFeedEvents(): Promise<MessageActivityEvent[]> {
@@ -1501,7 +1537,12 @@ export async function getActivityFeedEvents(): Promise<MessageActivityEvent[]> {
 
 export async function setActivityFeedEvents(activity: MessageActivityEvent[]): Promise<void> {
     if (db === undefined) return;
-    (await db).put("activityFeed", activity, "value");
+    const tx = (await db).transaction("activityFeed", "readwrite", {
+        durability: "relaxed",
+    });
+    const store = tx.objectStore("activityFeed");
+    await store.put(activity, "value");
+    await tx.done;
 }
 
 /**
