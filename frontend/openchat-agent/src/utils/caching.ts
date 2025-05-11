@@ -430,7 +430,9 @@ export async function setCachedChats(
         communities,
     };
 
-    const tx = (await db).transaction(["chats", "chat_events", "thread_events"], "readwrite");
+    const tx = (await db).transaction(["chats", "chat_events", "thread_events"], "readwrite", {
+        durability: "relaxed",
+    });
     const chatsStore = tx.objectStore("chats");
     const eventsStore = tx.objectStore("chat_events");
     const threadsStore = tx.objectStore("thread_events");
@@ -454,7 +456,7 @@ export async function setCachedChats(
 }
 
 export async function deleteEventsForChat(db: Database, chatId: string) {
-    const tx = (await db).transaction("chat_events", "readwrite");
+    const tx = (await db).transaction("chat_events", "readwrite", { durability: "relaxed" });
     const store = tx.objectStore("chat_events");
     const cursor = await store.openCursor(IDBKeyRange.lowerBound(chatId));
     while (cursor?.key !== undefined) {
@@ -1370,7 +1372,9 @@ function tryStartExpiredEventSweeper() {
 // TODO we can improve this by replacing these events with expired event ranges
 async function runExpiredEventSweeper() {
     if (db === undefined) return;
-    const transaction = (await db).transaction(["chat_events", "thread_events"], "readwrite");
+    const transaction = (await db).transaction(["chat_events", "thread_events"], "readwrite", {
+        durability: "relaxed",
+    });
     const eventsStore = transaction.objectStore("chat_events");
     const threadEventsStore = transaction.objectStore("thread_events");
     const index = eventsStore.index("expiresAt");
@@ -1514,7 +1518,9 @@ export async function removeCachedChannelApiKeys(
     if (chats !== undefined) {
         const community = chats.communities.find((c) => c.id.communityId === communityId);
         if (community !== undefined) {
-            const tx = (await db).transaction(["group_details"], "readwrite");
+            const tx = (await db).transaction(["group_details"], "readwrite", {
+                durability: "relaxed",
+            });
             for (const { id } of community.channels) {
                 const cacheKey = `${id.communityId}_${id.channelId}`;
                 if (db === undefined) return;

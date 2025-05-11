@@ -481,7 +481,7 @@ export class AppState {
             case "direct_chat":
                 return this.#allChats.filter((c) => c.kind === "direct_chat");
             case "favourite": {
-                return [...this.favourites.values()].reduce((favs, chatId) => {
+                return [...this.#favourites.values()].reduce((favs, chatId) => {
                     const chat = this.#allChats.get(chatId);
                     if (chat !== undefined) {
                         favs.set(chat.id, chat);
