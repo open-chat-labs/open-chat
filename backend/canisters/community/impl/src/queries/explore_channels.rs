@@ -38,5 +38,9 @@ fn explore_channels_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessRe
             .channels
             .search(args.search_term, args.page_index, args.page_size, is_caller_community_owner);
 
-    Ok(SuccessResult { matches, total })
+    Ok(SuccessResult {
+        timestamp: state.env.now(),
+        matches,
+        total,
+    })
 }
