@@ -25,7 +25,7 @@ use types::{
     DirectChatCreated, EventContext, EventIndex, EventMetaData, EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated,
     GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message,
     MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageReport,
-    MessageTippedEventPayload, Milliseconds, MultiUserChat, OCResult, P2PSwapAccepted, P2PSwapCompleted,
+    MessageTippedEventPayload, Milliseconds, MultiUserChat, OCResult, OptionUpdate, P2PSwapAccepted, P2PSwapCompleted,
     P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate,
     PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess, SenderContext,
     TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants,
@@ -2078,29 +2078,49 @@ impl ChatEvents {
         }
     }
 
-    pub fn video_call_in_progress(&self, caller: Option<UserId>) -> Timestamped<Option<VideoCall>> {
-        let timestamp = self.video_call_in_progress.timestamp;
-        let video_call = self.video_call_in_progress.as_ref().map(|vc| {
-            let joined_by_current_user = caller.is_some_and(|u| {
-                self.main_events_reader()
-                    .message_internal(vc.message_index.into())
-                    .is_some_and(|m| {
-                        if let MessageContentInternal::VideoCall(v) = m.content {
-                            v.participants.contains_key(&u)
-                        } else {
-                            false
-                        }
-                    })
-            });
+    pub fn video_call_in_progress(&self, caller: Option<UserId>) -> Option<VideoCall> {
+        let vc = self.video_call_in_progress.as_ref()?;
+        let current_user_joined_at = caller.and_then(|u| self.timestamp_user_joined_video_call(vc.message_index.into(), u));
 
-            VideoCall {
-                message_index: vc.message_index,
-                call_type: vc.call_type,
-                joined_by_current_user,
+        Some(VideoCall {
+            started: self.video_call_in_progress.timestamp,
+            message_index: vc.message_index,
+            call_type: vc.call_type,
+            joined_by_current_user: current_user_joined_at.is_some(),
+        })
+    }
+
+    pub fn video_call_in_progress_updates(&self, caller: Option<UserId>, since: TimestampMillis) -> OptionUpdate<VideoCall> {
+        let started_or_stopped_timestamp = self.video_call_in_progress.timestamp;
+
+        if let Some(vc) = self.video_call_in_progress.as_ref() {
+            let current_user_joined_at = caller.and_then(|u| self.timestamp_user_joined_video_call(vc.message_index.into(), u));
+
+            if started_or_stopped_timestamp > since || current_user_joined_at > Some(since) {
+                OptionUpdate::SetToSome(VideoCall {
+                    started: started_or_stopped_timestamp,
+                    message_index: vc.message_index,
+                    call_type: vc.call_type,
+                    joined_by_current_user: current_user_joined_at.is_some(),
+                })
+            } else {
+                OptionUpdate::NoChange
             }
-        });
+        } else if started_or_stopped_timestamp > since {
+            OptionUpdate::SetToNone
+        } else {
+            OptionUpdate::NoChange
+        }
+    }
 
-        Timestamped::new(video_call, timestamp)
+    fn timestamp_user_joined_video_call(&self, event_key: EventKey, user_id: UserId) -> Option<TimestampMillis> {
+        self.main_events_reader().message_internal(event_key).and_then(|m| {
+            if let MessageContentInternal::VideoCall(v) = m.content {
+                v.participants.get(&user_id).map(|p| p.joined)
+            } else {
+                None
+            }
+        })
     }
 
     pub fn video_call_participants(
@@ -2571,4 +2591,18 @@ pub enum UpdateEventError<E = ()> {
 pub struct VideoCallInternal {
     pub message_index: MessageIndex,
     pub call_type: VideoCallType,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct VideoCallInProgress {
+    pub started: TimestampMillis,
+    pub message_index: MessageIndex,
+    pub call_type: VideoCallType,
+    pub joined_by_current_user: Option<TimestampMillis>,
+}
+
+impl VideoCallInProgress {
+    pub fn last_updated(&self) -> TimestampMillis {
+        self.joined_by_current_user.unwrap_or(self.started)
+    }
 }

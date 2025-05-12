@@ -42,7 +42,7 @@ fn c2c_bot_group_details_impl(args: Args, state: &RuntimeState) -> OCResult<Chat
         events_ttl: events_ttl.value,
         events_ttl_last_updated: if events_ttl.timestamp == 0 { None } else { Some(events_ttl.timestamp) },
         gate_config: chat.gate_config.value.clone().map(|gc| gc.into()),
-        video_call_in_progress: chat.events.video_call_in_progress(None).value.clone(),
+        video_call_in_progress: chat.events.video_call_in_progress(None),
         verified: Some(state.data.verified.value),
         frozen: state.data.frozen.value.clone(),
         date_last_pinned: chat.date_last_pinned,
