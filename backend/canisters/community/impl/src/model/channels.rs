@@ -341,7 +341,7 @@ impl Channel {
             gate: chat.gate_config.value.as_ref().map(|gc| gc.gate.clone()),
             gate_config: chat.gate_config.value.clone().map(|gc| gc.into()),
             membership,
-            video_call_in_progress: chat.events.video_call_in_progress().value.clone(),
+            video_call_in_progress: chat.events.video_call_in_progress(user_id).value.clone(),
             is_invited,
             external_url: chat.external_url.value.clone(),
         })

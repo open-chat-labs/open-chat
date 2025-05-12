@@ -264,7 +264,7 @@ impl GroupChatCore {
             rules_changed: self.rules.version_last_updated > since,
             video_call_in_progress: self
                 .events
-                .video_call_in_progress()
+                .video_call_in_progress(user_id)
                 .if_set_after(since)
                 .cloned()
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),

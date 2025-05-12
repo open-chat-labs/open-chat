@@ -29,7 +29,7 @@ use types::{
     P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate,
     PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess, SenderContext,
     TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants,
-    VideoCallPresence, VoteOperation,
+    VideoCallPresence, VideoCallType, VoteOperation,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -43,7 +43,7 @@ pub struct ChatEvents {
     events_ttl: Timestamped<Option<Milliseconds>>,
     expiring_events: ExpiringEvents,
     last_updated_timestamps: LastUpdatedTimestamps,
-    video_call_in_progress: Timestamped<Option<VideoCall>>,
+    video_call_in_progress: Timestamped<Option<VideoCallInternal>>,
     anonymized_id: String,
     search_index: SearchIndex,
     #[serde(default)]
@@ -267,7 +267,7 @@ impl ChatEvents {
             }
 
             self.video_call_in_progress = Timestamped::new(
-                Some(VideoCall {
+                Some(VideoCallInternal {
                     message_index,
                     call_type,
                 }),
@@ -2078,8 +2078,29 @@ impl ChatEvents {
         }
     }
 
-    pub fn video_call_in_progress(&self) -> &Timestamped<Option<VideoCall>> {
-        &self.video_call_in_progress
+    pub fn video_call_in_progress(&self, caller: Option<UserId>) -> Timestamped<Option<VideoCall>> {
+        let timestamp = self.video_call_in_progress.timestamp;
+        let video_call = self.video_call_in_progress.as_ref().map(|vc| {
+            let joined_by_current_user = caller.is_some_and(|u| {
+                self.main_events_reader()
+                    .message_internal(vc.message_index.into())
+                    .is_some_and(|m| {
+                        if let MessageContentInternal::VideoCall(v) = m.content {
+                            v.participants.contains_key(&u)
+                        } else {
+                            false
+                        }
+                    })
+            });
+
+            VideoCall {
+                message_index: vc.message_index,
+                call_type: vc.call_type,
+                joined_by_current_user,
+            }
+        });
+
+        Timestamped::new(video_call, timestamp)
     }
 
     pub fn video_call_participants(
@@ -2544,4 +2565,10 @@ pub struct UpdateEventSuccess<T> {
 pub enum UpdateEventError<E = ()> {
     NoChange(E),
     NotFound,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct VideoCallInternal {
+    pub message_index: MessageIndex,
+    pub call_type: VideoCallType,
 }

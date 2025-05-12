@@ -376,6 +376,8 @@ pub struct UpdatedRules {
 pub struct VideoCall {
     pub message_index: MessageIndex,
     pub call_type: VideoCallType,
+    #[ts(skip)]
+    pub joined_by_current_user: bool,
 }
 
 #[ts_export]
