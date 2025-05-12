@@ -130,6 +130,7 @@ import {
     mapResult,
     sendMessageSuccess,
     unitResult,
+    videoCallInProgress,
 } from "../common/chatMappersV2";
 import type { PinNumberSettings } from "openchat-shared";
 import { signedDelegation } from "../../utils/id";
@@ -863,7 +864,7 @@ function directChatSummaryUpdates(value: TDirectChatSummaryUpdates): DirectChatS
         metrics: mapOptional(value.metrics, chatMetrics),
         myMetrics: mapOptional(value.my_metrics, chatMetrics),
         archived: value.archived,
-        videoCallInProgress: optionUpdateV2(value.video_call_in_progress, (v) => v.message_index),
+        videoCallInProgress: optionUpdateV2(value.video_call_in_progress, videoCallInProgress),
     };
 }
 
@@ -888,7 +889,7 @@ function directChatSummary(value: TDirectChatSummary): DirectChatSummary {
         eventsTTL: undefined,
         eventsTtlLastUpdated: BigInt(0),
         metrics: chatMetrics(value.metrics),
-        videoCallInProgress: mapOptional(value.video_call_in_progress, (v) => v.message_index),
+        videoCallInProgress: mapOptional(value.video_call_in_progress, videoCallInProgress),
         membership: {
             ...nullMembership(),
             role: "owner",

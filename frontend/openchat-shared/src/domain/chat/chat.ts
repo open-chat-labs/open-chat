@@ -1399,7 +1399,7 @@ export type DirectChatSummaryUpdates = {
     metrics?: Metrics;
     myMetrics?: Metrics;
     archived?: boolean;
-    videoCallInProgress: OptionUpdate<number>;
+    videoCallInProgress: OptionUpdate<VideoCallInProgress>;
 };
 
 export type GroupSubtypeUpdate =
@@ -1482,7 +1482,7 @@ type ChatSummaryCommon = HasMembershipRole & {
     membership: ChatMembership;
     eventsTTL: bigint | undefined;
     eventsTtlLastUpdated: bigint;
-    videoCallInProgress?: number;
+    videoCallInProgress?: VideoCallInProgress;
 };
 
 export type ChannelSummary = DataContent &
@@ -1595,7 +1595,7 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         eventsTTL?: bigint;
         eventsTtlLastUpdated: bigint;
         localUserIndex: string;
-        videoCallInProgress?: number;
+        videoCallInProgress?: VideoCallInProgress;
         messagesVisibleToNonMembers: boolean;
         membership: GroupCanisterGroupMembership;
         verified: boolean;
@@ -1638,7 +1638,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     gateConfig: OptionUpdate<AccessGateConfig>;
     eventsTTL: OptionUpdate<bigint>;
     eventsTtlLastUpdated?: bigint;
-    videoCallInProgress: OptionUpdate<number>;
+    videoCallInProgress: OptionUpdate<VideoCallInProgress>;
     messagesVisibleToNonMembers?: boolean;
     membership: GroupMembershipUpdates | undefined;
     verified?: boolean;
@@ -2344,3 +2344,12 @@ export type MessageFilter = {
 export type UnconfirmedMessageEvent = EventWrapper<Message> & { accepted: boolean };
 
 export type UnconfirmedState = Map<bigint, UnconfirmedMessageEvent>;
+
+export type VideoCallInProgress = {
+    started: bigint;
+    startedBy: string;
+    messageIndex: number;
+    messageId: bigint;
+    callType: "default" | "broadcast";
+    joinedByCurrentUser: boolean;
+}

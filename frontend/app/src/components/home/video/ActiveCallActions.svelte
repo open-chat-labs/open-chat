@@ -36,7 +36,7 @@
     let isOwner = $derived($activeVideoCall?.isOwner ?? false);
 
     function toggleThread() {
-        if (chat.chatId !== undefined && chat.messageIndex !== undefined) {
+        if (chat.chatId !== undefined && chat.videoCallInProgress?.messageIndex !== undefined) {
             if (threadOpen) {
                 ui.popRightPanelHistory();
                 pageReplace(removeQueryStringParam("open"));
@@ -45,7 +45,7 @@
                     `${routeForMessage(
                         app.chatListScope.kind,
                         { chatId: chat.chatId },
-                        chat.messageIndex,
+                        chat.videoCallInProgress?.messageIndex,
                     )}?open=true`,
                 );
             }
@@ -114,7 +114,7 @@
                             {/snippet}
                         </MenuItem>
                     {/if}
-                    {#if chat.chatId && chat.messageIndex !== undefined}
+                    {#if chat.chatId && chat.videoCallInProgress?.messageIndex !== undefined}
                         <MenuItem onclick={toggleThread}>
                             {#snippet icon()}
                                 <MessageOutline
@@ -165,7 +165,7 @@
                     color={participantsOpen ? "var(--icon-selected)" : "var(--icon-txt)"} />
             </HoverIcon>
         {/if}
-        {#if chat.chatId && chat.messageIndex !== undefined}
+        {#if chat.chatId && chat.videoCallInProgress?.messageIndex !== undefined}
             <HoverIcon title={$_("videoCall.chat")} onclick={toggleThread}>
                 <MessageOutline
                     size={ui.iconSize}

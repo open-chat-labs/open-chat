@@ -1,6 +1,5 @@
 export * from "openchat-shared";
 export type { OpenChatConfig } from "./config";
-export * from "./events";
 export { OpenChat } from "./openchat";
 export { app, dummyPinNumberFailureStore, ONE_GB } from "./state/app.svelte";
 export { botState } from "./state/bots.svelte";

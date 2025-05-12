@@ -289,11 +289,11 @@
     }
 
     function remoteVideoCallStarted(ev: PubSubEvents["remoteVideoCallStarted"]) {
-        // If current user is already in the call, or has previously been in the call, or the call started more than an hour ago, exit
+        // If current user is already in the call, or has previously been in the call, or the call started more than 2 hours ago, exit
         if (
             chatIdentifiersEqual($activeVideoCall?.chatId, ev.chatId) ||
             ev.currentUserIsParticipant ||
-            Number(ev.timestamp) < Date.now() - 60 * 60 * 1000
+            Number(ev.timestamp) < Date.now() - 2 * 60 * 60 * 1000
         ) {
             return;
         }

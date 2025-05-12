@@ -14,6 +14,7 @@ import type {
     MessageContent,
     Metrics,
     UpdatedEvent,
+    VideoCallInProgress,
 } from "../chat";
 import type { DataContent } from "../data";
 import type { OCError } from "../error";
@@ -198,7 +199,7 @@ export type CommunityCanisterChannelSummaryUpdates = {
     updatedEvents: UpdatedEvent[];
     eventsTTL: OptionUpdate<bigint>;
     eventsTtlLastUpdated: bigint | undefined;
-    videoCallInProgress: OptionUpdate<number>;
+    videoCallInProgress: OptionUpdate<VideoCallInProgress>;
     messageVisibleToNonMembers?: boolean;
     externalUrl: OptionUpdate<string>;
 };

@@ -33,6 +33,7 @@ import {
     messageEvent,
     threadSyncDetails,
     updatedEvent,
+    videoCallInProgress,
 } from "../common/chatMappersV2";
 import {
     apiOptionUpdateV2,
@@ -86,7 +87,7 @@ export function groupChatSummary(
         eventsTTL: value.events_ttl,
         eventsTtlLastUpdated: value.events_ttl_last_updated,
         localUserIndex: principalBytesToString(value.local_user_index_canister_id),
-        videoCallInProgress: mapOptional(value.video_call_in_progress, (v) => v.message_index),
+        videoCallInProgress: mapOptional(value.video_call_in_progress, videoCallInProgress),
         messagesVisibleToNonMembers: value.messages_visible_to_non_members,
         membership: mapOptional(value.membership, (m) => ({
             joined: m.joined,
@@ -156,7 +157,7 @@ export function groupChatSummaryUpdates(
         gateConfig: optionUpdateV2(value.gate_config, accessGateConfig),
         eventsTTL: optionUpdateV2(value.events_ttl, identity),
         eventsTtlLastUpdated: value.events_ttl_last_updated,
-        videoCallInProgress: optionUpdateV2(value.video_call_in_progress, (v) => v.message_index),
+        videoCallInProgress: optionUpdateV2(value.video_call_in_progress, videoCallInProgress),
         messagesVisibleToNonMembers: value.messages_visible_to_non_members,
         membership: mapOptional(value.membership, groupMembershipUpdates),
         verified: mapOptional(value.verified, identity),
