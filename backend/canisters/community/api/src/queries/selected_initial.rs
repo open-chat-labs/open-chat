@@ -36,5 +36,6 @@ pub struct SuccessResult {
     pub chat_rules: VersionedRules,
     pub user_groups: Vec<UserGroupDetails>,
     pub referrals: Vec<UserId>,
+    #[ts(skip)]
     pub public_channel_list_updated: TimestampMillis,
 }

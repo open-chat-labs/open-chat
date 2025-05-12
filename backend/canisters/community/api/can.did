@@ -161,6 +161,7 @@ type SelectedInitialSuccess = record {
     chat_rules : VersionedRules;
     user_groups : vec UserGroupDetails;
     referrals : vec UserId;
+    public_channel_list_updated : TimestampMillis;
 };
 
 type SelectedUpdatesArgs = record {
@@ -190,6 +191,7 @@ type SelectedUpdatesSuccess = record {
     user_groups_deleted : vec nat32;
     referrals_added : vec UserId;
     referrals_removed : vec UserId;
+    public_channel_list_updated : TimestampMillis;
 };
 
 type UserGroupDetails = record {
