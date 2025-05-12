@@ -1928,6 +1928,7 @@ type SwapStatusErrorCancelled = record {
 type VideoCall = record {
     message_index : MessageIndex;
     call_type : VideoCallType;
+    joined_by_current_user : bool;
 };
 
 type VideoCallUpdates = variant {
