@@ -25,11 +25,11 @@ use types::{
     DirectChatCreated, EventContext, EventIndex, EventMetaData, EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated,
     GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message,
     MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageReport,
-    MessageTippedEventPayload, Milliseconds, MultiUserChat, OCResult, P2PSwapAccepted, P2PSwapCompleted,
+    MessageTippedEventPayload, Milliseconds, MultiUserChat, OCResult, OptionUpdate, P2PSwapAccepted, P2PSwapCompleted,
     P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate,
     PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess, SenderContext,
     TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants,
-    VideoCallPresence, VoteOperation,
+    VideoCallPresence, VideoCallType, VoteOperation,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -43,7 +43,7 @@ pub struct ChatEvents {
     events_ttl: Timestamped<Option<Milliseconds>>,
     expiring_events: ExpiringEvents,
     last_updated_timestamps: LastUpdatedTimestamps,
-    video_call_in_progress: Timestamped<Option<VideoCall>>,
+    video_call_in_progress: Timestamped<Option<VideoCallInternal>>,
     anonymized_id: String,
     search_index: SearchIndex,
     #[serde(default)]
@@ -267,7 +267,7 @@ impl ChatEvents {
             }
 
             self.video_call_in_progress = Timestamped::new(
-                Some(VideoCall {
+                Some(VideoCallInternal {
                     message_index,
                     call_type,
                 }),
@@ -2078,8 +2078,57 @@ impl ChatEvents {
         }
     }
 
-    pub fn video_call_in_progress(&self) -> &Timestamped<Option<VideoCall>> {
-        &self.video_call_in_progress
+    pub fn video_call_in_progress(&self, caller: Option<UserId>) -> Option<VideoCall> {
+        let message_index = self.video_call_in_progress.as_ref()?.message_index;
+        let event = self.main_events_reader().message_event_internal(message_index.into())?;
+        let message = event.event;
+
+        let MessageContentInternal::VideoCall(vc) = message.content else {
+            return None;
+        };
+
+        Some(VideoCall {
+            started: event.timestamp,
+            started_by: message.sender,
+            event_index: event.index,
+            message_index,
+            message_id: message.message_id,
+            call_type: vc.call_type,
+            joined_by_current_user: caller.is_some_and(|u| vc.participants.contains_key(&u)),
+        })
+    }
+
+    pub fn video_call_in_progress_updates(&self, caller: Option<UserId>, since: TimestampMillis) -> OptionUpdate<VideoCall> {
+        if let Some(message_index) = self.video_call_in_progress.as_ref().map(|vc| vc.message_index) {
+            let Some(event) = self.main_events_reader().message_event_internal(message_index.into()) else {
+                return OptionUpdate::SetToNone;
+            };
+            let message = event.event;
+
+            let MessageContentInternal::VideoCall(vc) = message.content else {
+                return OptionUpdate::SetToNone;
+            };
+
+            let current_user_joined_at = caller.and_then(|u| vc.participants.get(&u).map(|p| p.joined));
+
+            if event.timestamp > since || current_user_joined_at > Some(since) {
+                OptionUpdate::SetToSome(VideoCall {
+                    started: event.timestamp,
+                    started_by: message.sender,
+                    event_index: event.index,
+                    message_index,
+                    message_id: message.message_id,
+                    call_type: vc.call_type,
+                    joined_by_current_user: current_user_joined_at.is_some(),
+                })
+            } else {
+                OptionUpdate::NoChange
+            }
+        } else if self.video_call_in_progress.timestamp > since {
+            OptionUpdate::SetToNone
+        } else {
+            OptionUpdate::NoChange
+        }
     }
 
     pub fn video_call_participants(
@@ -2544,4 +2593,10 @@ pub struct UpdateEventSuccess<T> {
 pub enum UpdateEventError<E = ()> {
     NoChange(E),
     NotFound,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct VideoCallInternal {
+    pub message_index: MessageIndex,
+    pub call_type: VideoCallType,
 }

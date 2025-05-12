@@ -1,7 +1,7 @@
 use crate::{
     AccessGate, AccessGateConfig, BuildVersion, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupMember,
-    GroupPermissions, GroupRole, HydratedMention, InstalledBotDetails, Message, MessageIndex, Milliseconds, OptionUpdate,
-    PublicApiKeyDetails, TimestampMillis, UserId, Version, WebhookDetails,
+    GroupPermissions, GroupRole, HydratedMention, InstalledBotDetails, Message, MessageId, MessageIndex, Milliseconds,
+    OptionUpdate, PublicApiKeyDetails, TimestampMillis, UserId, Version, WebhookDetails,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -374,8 +374,13 @@ pub struct UpdatedRules {
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct VideoCall {
+    pub started: TimestampMillis,
+    pub started_by: UserId,
+    pub event_index: EventIndex,
     pub message_index: MessageIndex,
+    pub message_id: MessageId,
     pub call_type: VideoCallType,
+    pub joined_by_current_user: bool,
 }
 
 #[ts_export]

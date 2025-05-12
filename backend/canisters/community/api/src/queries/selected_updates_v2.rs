@@ -40,4 +40,5 @@ pub struct SuccessResult {
     pub user_groups_deleted: Vec<u32>,
     pub referrals_added: Vec<UserId>,
     pub referrals_removed: Vec<UserId>,
+    pub public_channel_list_updated: TimestampMillis,
 }

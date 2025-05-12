@@ -91,6 +91,10 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> OCResult<Suc
         jobs::expire_members::restart_job(state);
     }
 
+    if args.public.is_some() {
+        state.data.public_channel_list_updated = now;
+    }
+
     handle_activity_notification(state);
 
     Ok(SuccessResult {

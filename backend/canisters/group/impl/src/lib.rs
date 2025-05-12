@@ -234,7 +234,7 @@ impl RuntimeState {
             gate_config: chat.gate_config.value.clone().map(|gc| gc.into()),
             rules_accepted: membership.rules_accepted,
             membership: Some(membership),
-            video_call_in_progress: chat.events.video_call_in_progress().value.clone(),
+            video_call_in_progress: chat.events.video_call_in_progress(Some(member.user_id())),
             verified: self.data.verified.value,
         }
     }

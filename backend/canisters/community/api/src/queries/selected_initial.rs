@@ -36,4 +36,5 @@ pub struct SuccessResult {
     pub chat_rules: VersionedRules,
     pub user_groups: Vec<UserGroupDetails>,
     pub referrals: Vec<UserId>,
+    pub public_channel_list_updated: TimestampMillis,
 }

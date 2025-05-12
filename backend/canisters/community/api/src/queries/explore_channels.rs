@@ -2,7 +2,7 @@ use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::ChannelMatch;
+use types::{ChannelMatch, TimestampMillis};
 
 #[ts_export(community, explore_channels)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -23,6 +23,7 @@ pub enum Response {
 #[ts_export(community, explore_channels)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
+    pub timestamp: TimestampMillis,
     pub matches: Vec<ChannelMatch>,
     pub total: u32,
 }
