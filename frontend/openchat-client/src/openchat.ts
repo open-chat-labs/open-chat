@@ -262,7 +262,6 @@ import {
     shouldPreprocessGate,
     storeEmailSignInSession,
     Stream,
-    toBigInt64,
     toDer,
     toTitleCase,
     updateCreatedUser,
