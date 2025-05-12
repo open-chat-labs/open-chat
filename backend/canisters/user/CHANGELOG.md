@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Migrate `bot_context` to `sender_context` ([#7870](https://github.com/open-chat-labs/open-chat/pull/7870))
 - Add `requires_captcha` field to prize messages ([#7932](https://github.com/open-chat-labs/open-chat/pull/7932))
 - Add `started` and `joined_by_current_user` to video call details in summary responses ([#7950](https://github.com/open-chat-labs/open-chat/pull/7950))
+- Add more details to `video_call_in_progress` responses ([#7954](https://github.com/open-chat-labs/open-chat/pull/7954))
 
 ### Fixed
 

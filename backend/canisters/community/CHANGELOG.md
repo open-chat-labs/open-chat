@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Add more details to `video_call_in_progress` responses ([#7954](https://github.com/open-chat-labs/open-chat/pull/7954))
+
 ## [[2.0.1741](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1741-community)] - 2025-05-12
 
 ### Added
