@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Store `notifications_index_canister_id` within LocalUserIndexes ([#7947](https://github.com/open-chat-labs/open-chat/pull/7947))
 - Store bot endpoints in LocalUserIndexes ([#7949](https://github.com/open-chat-labs/open-chat/pull/7949))
+- Add `started` and `joined_by_current_user` to video call details in summary responses ([#7950](https://github.com/open-chat-labs/open-chat/pull/7950))
+- Add more details to `video_call_in_progress` responses ([#7954](https://github.com/open-chat-labs/open-chat/pull/7954))
 
 ## [[2.0.1739](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1739-local_user_index)] - 2025-05-09
 
