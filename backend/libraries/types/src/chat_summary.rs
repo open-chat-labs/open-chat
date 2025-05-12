@@ -374,8 +374,12 @@ pub struct UpdatedRules {
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct VideoCall {
+    #[ts(skip)]
+    pub started: TimestampMillis,
     pub message_index: MessageIndex,
     pub call_type: VideoCallType,
+    #[ts(skip)]
+    pub joined_by_current_user: bool,
 }
 
 #[ts_export]

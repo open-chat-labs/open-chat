@@ -634,6 +634,7 @@ export type VideoCall = Static<typeof VideoCall>;
 export const VideoCall = Type.Object({
     message_index: MessageIndex,
     call_type: VideoCallType,
+    joined_by_current_user: Type.Boolean(),
 });
 
 export type GroupRole = Static<typeof GroupRole>;
