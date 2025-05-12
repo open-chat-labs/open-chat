@@ -1927,7 +1927,10 @@ type SwapStatusErrorCancelled = record {
 
 type VideoCall = record {
     started : TimestampMillis;
+    started_by : UserId;
+    event_index : EventIndex;
     message_index : MessageIndex;
+    message_id : MessageId;
     call_type : VideoCallType;
     joined_by_current_user : bool;
 };

@@ -2079,48 +2079,56 @@ impl ChatEvents {
     }
 
     pub fn video_call_in_progress(&self, caller: Option<UserId>) -> Option<VideoCall> {
-        let vc = self.video_call_in_progress.as_ref()?;
-        let current_user_joined_at = caller.and_then(|u| self.timestamp_user_joined_video_call(vc.message_index.into(), u));
+        let message_index = self.video_call_in_progress.as_ref()?.message_index;
+        let event = self.main_events_reader().message_event_internal(message_index.into())?;
+        let message = event.event;
+
+        let MessageContentInternal::VideoCall(vc) = message.content else {
+            return None;
+        };
 
         Some(VideoCall {
-            started: self.video_call_in_progress.timestamp,
-            message_index: vc.message_index,
+            started: event.timestamp,
+            started_by: message.sender,
+            event_index: event.index,
+            message_index,
+            message_id: message.message_id,
             call_type: vc.call_type,
-            joined_by_current_user: current_user_joined_at.is_some(),
+            joined_by_current_user: caller.is_some_and(|u| vc.participants.contains_key(&u)),
         })
     }
 
     pub fn video_call_in_progress_updates(&self, caller: Option<UserId>, since: TimestampMillis) -> OptionUpdate<VideoCall> {
-        let started_or_stopped_timestamp = self.video_call_in_progress.timestamp;
+        if let Some(message_index) = self.video_call_in_progress.as_ref().map(|vc| vc.message_index) {
+            let Some(event) = self.main_events_reader().message_event_internal(message_index.into()) else {
+                return OptionUpdate::SetToNone;
+            };
+            let message = event.event;
 
-        if let Some(vc) = self.video_call_in_progress.as_ref() {
-            let current_user_joined_at = caller.and_then(|u| self.timestamp_user_joined_video_call(vc.message_index.into(), u));
+            let MessageContentInternal::VideoCall(vc) = message.content else {
+                return OptionUpdate::SetToNone;
+            };
 
-            if started_or_stopped_timestamp > since || current_user_joined_at > Some(since) {
+            let current_user_joined_at = caller.and_then(|u| vc.participants.get(&u).map(|p| p.joined));
+
+            if event.timestamp > since || current_user_joined_at > Some(since) {
                 OptionUpdate::SetToSome(VideoCall {
-                    started: started_or_stopped_timestamp,
-                    message_index: vc.message_index,
+                    started: event.timestamp,
+                    started_by: message.sender,
+                    event_index: event.index,
+                    message_index,
+                    message_id: message.message_id,
                     call_type: vc.call_type,
                     joined_by_current_user: current_user_joined_at.is_some(),
                 })
             } else {
                 OptionUpdate::NoChange
             }
-        } else if started_or_stopped_timestamp > since {
+        } else if self.video_call_in_progress.timestamp > since {
             OptionUpdate::SetToNone
         } else {
             OptionUpdate::NoChange
         }
-    }
-
-    fn timestamp_user_joined_video_call(&self, event_key: EventKey, user_id: UserId) -> Option<TimestampMillis> {
-        self.main_events_reader().message_internal(event_key).and_then(|m| {
-            if let MessageContentInternal::VideoCall(v) = m.content {
-                v.participants.get(&user_id).map(|p| p.joined)
-            } else {
-                None
-            }
-        })
     }
 
     pub fn video_call_participants(
@@ -2591,18 +2599,4 @@ pub enum UpdateEventError<E = ()> {
 pub struct VideoCallInternal {
     pub message_index: MessageIndex,
     pub call_type: VideoCallType,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct VideoCallInProgress {
-    pub started: TimestampMillis,
-    pub message_index: MessageIndex,
-    pub call_type: VideoCallType,
-    pub joined_by_current_user: Option<TimestampMillis>,
-}
-
-impl VideoCallInProgress {
-    pub fn last_updated(&self) -> TimestampMillis {
-        self.joined_by_current_user.unwrap_or(self.started)
-    }
 }
