@@ -4,11 +4,6 @@ BigInt.prototype.toJSON = function () {
     return this.toString();
 };
 
-console.log = () => {};
-console.debug = () => {};
-console.trace = () => {};
-console.error = () => {};
-
 import "svelte";
 import { mount } from "svelte";
 import App from "./components/App.svelte";

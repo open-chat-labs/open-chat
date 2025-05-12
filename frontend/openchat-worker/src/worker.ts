@@ -35,11 +35,6 @@ import {
     type WorkerResponseInner,
 } from "openchat-shared";
 
-console.log = () => {};
-console.debug = () => {};
-console.trace = () => {};
-console.error = () => {};
-
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
 BigInt.prototype.toJSON = function () {

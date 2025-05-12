@@ -1,3 +1,4 @@
+import { cancelAnimation } from "@src/utils/transition";
 import { ui } from "openchat-client";
 import { writable } from "svelte/store";
 import { type Alignment, type Position, centerOfScreen } from "../utils/alignment";
@@ -17,6 +18,8 @@ function close(menu: HTMLElement | undefined): HTMLElement | undefined {
             console.error("trying to remove menu when menu anchor is null");
         } else {
             if (menuAnchor.contains(menu)) {
+                cancelAnimation(menu);
+                menu.innerHTML = "";
                 menuAnchor.removeChild(menu);
             }
         }

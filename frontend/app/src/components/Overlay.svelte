@@ -1,7 +1,7 @@
 <script lang="ts">
     import { menuStore } from "@src/stores/menu";
-    import { tick, type Snippet } from "svelte";
-    import { onMount } from "svelte";
+    import { cancelAnimation } from "@src/utils/transition";
+    import { onMount, tick, type Snippet } from "svelte";
 
     interface Props {
         fade?: boolean;
@@ -44,6 +44,8 @@
         window.addEventListener("popstate", popState);
         return () => {
             window.removeEventListener("popstate", popState);
+            cancelAnimation(portal);
+            portal.innerHTML = "";
             document.body.removeChild(portal);
         };
     });

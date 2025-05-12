@@ -1,3 +1,4 @@
+import { cancelAnimation } from "@src/utils/transition";
 import { writable } from "svelte/store";
 import { type Alignment, type Position } from "../utils/alignment";
 import { reposition } from "../utils/position";
@@ -11,6 +12,8 @@ document.body.appendChild(tooltipAnchor);
 function close(tooltip: HTMLElement | undefined): HTMLElement | undefined {
     if (tooltip !== undefined) {
         if (tooltipAnchor && tooltipAnchor.contains(tooltip)) {
+            cancelAnimation(tooltip);
+            tooltip.innerHTML = "";
             tooltipAnchor.removeChild(tooltip);
         }
     }
