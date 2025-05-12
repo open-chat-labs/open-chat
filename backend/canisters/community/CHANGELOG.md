@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Add `started` and `joined_by_current_user` to video call details in summary responses ([#7950](https://github.com/open-chat-labs/open-chat/pull/7950))
+- Add `public_channel_list_updated` to community details ([#7951](https://github.com/open-chat-labs/open-chat/pull/7951))
 
 ## [[2.0.1737](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1737-community)] - 2025-05-09
 

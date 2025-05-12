@@ -68,5 +68,6 @@ fn selected_initial_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessRe
         chat_rules: data.rules.value.clone().into(),
         user_groups: data.members.iter_user_groups().map(|u| u.into()).collect(),
         referrals,
+        public_channel_list_updated: state.data.public_channel_list_updated,
     })
 }
