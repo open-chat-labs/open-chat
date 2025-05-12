@@ -217,17 +217,6 @@ impl NervousSystems {
         }
     }
 
-    // TODO remove this
-    pub fn push_decided_user_submitted_proposal(
-        &mut self,
-        governance_canister_id: CanisterId,
-        proposal: UserSubmittedProposalResult,
-    ) {
-        if let Some(ns) = self.nervous_systems.get_mut(&governance_canister_id) {
-            ns.decided_user_submitted_proposals.push(proposal);
-        }
-    }
-
     pub fn take_newly_decided_user_submitted_proposals(
         &mut self,
         governance_canister_id: CanisterId,
