@@ -327,6 +327,7 @@ import {
     createAndroidWebAuthnPasskeyIdentity,
 } from "./utils/androidWebAuthn";
 import { dataToBlobUrl } from "./utils/blob";
+import type { CachePrimer } from "./utils/cachePrimer";
 import {
     activeUserIdFromEvent,
     buildBlobUrl,
@@ -516,7 +517,7 @@ export class OpenChat {
     #logger: Logger;
     #lastOnlineDatesPending = new Set<string>();
     #lastOnlineDatesPromise: Promise<Record<string, number>> | undefined;
-    // #cachePrimer: CachePrimer | undefined = undefined;
+    #cachePrimer: CachePrimer | undefined = undefined;
     #membershipCheck: number | undefined;
     #referralCode: string | undefined = undefined;
     #userLookupForMentions: Record<string, UserOrUserGroup> | undefined = undefined;
@@ -5888,16 +5889,16 @@ export class OpenChat {
 
             this.#updateReadUpToStore(chats);
 
-            // if (this.#cachePrimer === undefined && !app.anonUser) {
-            //     this.#cachePrimer = new CachePrimer(
-            //         this,
-            //         app.currentUserId,
-            //         chatsResponse.state.userCanisterLocalUserIndex,
-            //     );
-            // }
-            // if (this.#cachePrimer !== undefined) {
-            //     this.#cachePrimer.processChats(chats);
-            // }
+            if (this.#cachePrimer === undefined && !app.anonUser) {
+                this.#cachePrimer = new CachePrimer(
+                    this,
+                    app.currentUserId,
+                    chatsResponse.state.userCanisterLocalUserIndex,
+                );
+            }
+            if (this.#cachePrimer !== undefined) {
+                this.#cachePrimer.processChats(chats);
+            }
 
             const userIds = this.#userIdsFromChatSummaries(chats);
             if (chatsResponse.state.referrals !== undefined) {
