@@ -44,7 +44,7 @@ export class ProposalsBotClient extends MsgpackCanisterAgent {
             transaction: {
                 ledger: principalStringToBytes(ledger),
                 token_symbol: token,
-                amount: proposalRejectionFee,
+                amount: proposalRejectionFee + transactionFee,
                 from: principalToIcrcAccount(userId),
                 to: principalToIcrcAccount(this.canisterId),
                 fee: transactionFee,
