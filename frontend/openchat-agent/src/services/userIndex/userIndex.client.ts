@@ -248,6 +248,11 @@ export class UserIndexClient extends MsgpackCanisterAgent {
 
     async populateUserCache(userIds: string[]): Promise<void> {
         const fromCache = await getCachedUsers(userIds);
+
+        if (fromCache.length === userIds.length) {
+            return;
+        }
+
         const args = this.buildGetUsersArgs(userIds, fromCache, true);
         const apiResponse = await this.getUsersFromBackend(args, undefined);
 
