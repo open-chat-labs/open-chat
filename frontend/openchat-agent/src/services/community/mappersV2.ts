@@ -64,6 +64,7 @@ import {
     threadSyncDetails,
     updatedEvent,
     userGroup,
+    videoCallInProgress,
 } from "../common/chatMappersV2";
 import { identity } from "../../utils/mapping";
 
@@ -274,7 +275,7 @@ export function communityChannelUpdates(
         latestMessage: mapOptional(value.latest_message, messageEvent),
         eventsTTL: optionUpdateV2(value.events_ttl, identity),
         eventsTtlLastUpdated: value.events_ttl_last_updated,
-        videoCallInProgress: optionUpdateV2(value.video_call_in_progress, (v) => v.message_index),
+        videoCallInProgress: optionUpdateV2(value.video_call_in_progress, videoCallInProgress),
         messageVisibleToNonMembers: value.messages_visible_to_non_members,
     };
 }

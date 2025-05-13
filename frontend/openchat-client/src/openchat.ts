@@ -141,6 +141,7 @@ import type {
     ProposalVoteDetails,
     ProposeResponse,
     PublicProfile,
+    PubSubEvents,
     ReadonlyMap,
     ReadonlySet,
     RegisterProposalVoteResponse,
@@ -191,7 +192,6 @@ import type {
     Verification,
     VerifiedCredentialArgs,
     VersionedRules,
-    VideoCallContent,
     VideoCallParticipant,
     VideoCallPresence,
     WalletConfig,
@@ -279,7 +279,6 @@ import { get } from "svelte/store";
 import type { OpenChatConfig } from "./config";
 import { AIRDROP_BOT_USER_ID } from "./constants";
 import { configureEffects } from "./effects.svelte";
-import { remoteVideoCallStartedEvent } from "./events";
 import { snapshot } from "./snapshot.svelte";
 import { app } from "./state/app.svelte";
 import { botState } from "./state/bots.svelte";
@@ -534,6 +533,7 @@ export class OpenChat {
     #refreshBalanceSemaphore: Semaphore = new Semaphore(10);
     #inflightBalanceRefreshPromises: Map<string, Promise<bigint>> = new Map();
     #appType?: "android" | "ios" | "web" = undefined;
+    #videoCallsInProgress: Set<bigint> = new Set();
 
     currentAirdropChannel: AirdropChannelDetails | undefined = undefined;
 
@@ -4311,15 +4311,13 @@ export class OpenChat {
                         ev.event.kind === "message" &&
                         ev.event.content.kind === "video_call_content"
                     ) {
-                        publish(
-                            "remoteVideoCallStarted",
-                            remoteVideoCallStartedEvent(
-                                chatId,
-                                app.currentUserId,
-                                ev.event as Message<VideoCallContent>,
-                                ev.timestamp,
-                            ),
-                        );
+                        this.#publishRemoteVideoCallStarted({
+                            chatId,
+                            userId: ev.event.sender,
+                            messageId: ev.event.messageId,
+                            currentUserIsParticipant: false,
+                            timestamp: ev.timestamp,
+                        });
                     }
                 }
                 return resp;
@@ -4474,12 +4472,12 @@ export class OpenChat {
         if (msg.kind === "remote_video_call_started") {
             const ev = createRemoteVideoStartedEvent(msg);
             if (ev) {
-                publish("remoteVideoCallStarted", ev);
+                this.#publishRemoteVideoCallStarted(ev);
             }
             return;
         }
         if (msg.kind === "remote_video_call_ended") {
-            publish("remoteVideoCallEnded", msg.messageId);
+            this.#publishRemoteVideoCallEnded(msg.messageId);
             return;
         }
         const fromChatId = filterWebRtcMessage(msg);
@@ -5890,15 +5888,9 @@ export class OpenChat {
             this.#updateReadUpToStore(chats);
 
             if (this.#cachePrimer === undefined && !app.anonUser) {
-                this.#cachePrimer = new CachePrimer(
-                    this,
-                    app.currentUserId,
-                    chatsResponse.state.userCanisterLocalUserIndex,
-                );
+                this.#cachePrimer = new CachePrimer(this, chatsResponse.state.userCanisterLocalUserIndex);
             }
-            if (this.#cachePrimer !== undefined) {
-                this.#cachePrimer.processChats(chats);
-            }
+            this.#cachePrimer?.processChats(chats);
 
             const userIds = this.#userIdsFromChatSummaries(chats);
             if (chatsResponse.state.referrals !== undefined) {
@@ -6001,6 +5993,9 @@ export class OpenChat {
                 }
             }
 
+            // Take a copy of the previous video calls in progress, then remove those that are still in progress
+            const videoCallsEnded = new Set(this.#videoCallsInProgress);
+
             // If the latest message in a chat is sent by the current user, then we know they must have read up to
             // that message, so we mark the chat as read up to that message if it isn't already. This happens when a
             // user sends a message on one device then looks at OpenChat on another.
@@ -6014,6 +6009,20 @@ export class OpenChat {
                 ) {
                     messagesRead.markReadUpTo({ chatId: chat.id }, latestMessage.messageIndex);
                 }
+                if (chat.videoCallInProgress !== undefined) {
+                    videoCallsEnded.delete(chat.videoCallInProgress.messageId);
+                    this.#publishRemoteVideoCallStarted({
+                        chatId: chat.id,
+                        userId: chat.videoCallInProgress.startedBy,
+                        messageId: chat.videoCallInProgress.messageId,
+                        currentUserIsParticipant: chat.videoCallInProgress.joinedByCurrentUser,
+                        timestamp: chat.videoCallInProgress.started,
+                    });
+                }
+            }
+
+            for (const messageId of videoCallsEnded) {
+                this.#publishRemoteVideoCallEnded(messageId);
             }
 
             app.pinNumberRequired = chatsResponse.state.pinNumberSettings !== undefined;
@@ -6292,6 +6301,18 @@ export class OpenChat {
         })
             .then((resp) => resp.kind === "success")
             .catch(() => false);
+    }
+
+    #publishRemoteVideoCallStarted(event: PubSubEvents["remoteVideoCallStarted"]) {
+        if (this.#videoCallsInProgress.add(event.messageId)) {
+            publish("remoteVideoCallStarted", event);
+        }
+    }
+
+    #publishRemoteVideoCallEnded(messageId: bigint) {
+        if (this.#videoCallsInProgress.delete(messageId)) {
+            publish("remoteVideoCallEnded", messageId);
+        }
     }
 
     // FIXME - should this input param be a Map

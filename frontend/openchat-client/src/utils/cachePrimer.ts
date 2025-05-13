@@ -7,13 +7,9 @@ import {
     type ChatSummary,
     compareChats,
     MAX_MESSAGES,
-    type Message,
     missingUserIds,
-    publish,
     userIdsFromEvents,
-    type VideoCallContent,
 } from "openchat-shared";
-import { remoteVideoCallEndedEvent, remoteVideoCallStartedEvent } from "../events";
 import type { OpenChat } from "../openchat";
 import { app } from "../state/app.svelte";
 import { messagesRead } from "../state/unread/markRead.svelte";
@@ -31,7 +27,6 @@ export class CachePrimer {
 
     constructor(
         private api: OpenChat,
-        private userId: string,
         private userCanisterLocalUserIndex: string,
     ) {
         debug("initialized");
@@ -68,37 +63,9 @@ export class CachePrimer {
             const responses = await this.getEventsBatch(localUserIndex, batch);
 
             const userIds = new Set<string>();
-            for (let i = 0; i < responses.length; i++) {
-                const request = batch[i];
-                const response = responses[i];
-
+            for (const response of responses) {
                 if (response.kind === "success") {
                     userIdsFromEvents(response.result.events).forEach((u) => userIds.add(u));
-                    response.result.events.forEach((e) => {
-                        if (
-                            e.event.kind === "message" &&
-                            e.event.sender !== this.userId &&
-                            e.event.content.kind === "video_call_content" &&
-                            e.event.content.callType === "default"
-                        ) {
-                            if (e.event.content.ended === undefined) {
-                                publish(
-                                    "remoteVideoCallStarted",
-                                    remoteVideoCallStartedEvent(
-                                        request.context.chatId,
-                                        this.userId,
-                                        e.event as Message<VideoCallContent>,
-                                        e.timestamp,
-                                    ),
-                                );
-                            } else {
-                                publish(
-                                    "remoteVideoCallEnded",
-                                    remoteVideoCallEndedEvent(e.event.messageId),
-                                );
-                            }
-                        }
-                    });
                 }
             }
 

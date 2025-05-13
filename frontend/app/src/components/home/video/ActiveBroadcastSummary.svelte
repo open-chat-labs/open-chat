@@ -27,7 +27,7 @@
                 routeForMessage(
                     app.chatListScope.kind,
                     { chatId: app.selectedChatSummary.id },
-                    app.selectedChatSummary?.videoCallInProgress,
+                    app.selectedChatSummary?.videoCallInProgress.messageIndex,
                 ),
             );
         }
