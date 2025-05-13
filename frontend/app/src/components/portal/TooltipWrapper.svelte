@@ -21,9 +21,9 @@
     const {
         children,
         trigger,
-        position,
-        align,
-        gutter,
+        position = "top",
+        align = "start",
+        gutter = 8,
         autoWidth = false,
         textLength = 100,
         longestWord = 10,

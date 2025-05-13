@@ -13,44 +13,30 @@
         menuItems?: Snippet;
     }
 
-    let {
-        centered = false,
-        position = "bottom",
-        align = "middle",
-        gutter = 8,
-        menuIcon,
-        menuItems,
-    }: Props = $props();
+    let { menuIcon, menuItems, ...rest }: Props = $props();
 
     let menu: HTMLElement;
     let open = $state(false);
 
     const context = getAllContexts();
 
-    onDestroy(() => portalState.close());
-
-    export function showMenu() {
-        internalShowMenu();
-    }
+    onDestroy(closeMenu);
 
     function click(e: MouseEvent) {
         e.preventDefault();
         e.stopPropagation();
-        internalShowMenu();
+        showMenu();
     }
 
-    function internalShowMenu() {
+    export function showMenu() {
         portalState.open(
             mount(MenuWrapper, {
                 target: document.body,
                 props: {
                     children: menuItems,
-                    onClose: internalHideMenu,
+                    onClose: closeMenu,
                     trigger: menu,
-                    centered,
-                    position,
-                    align,
-                    gutter,
+                    ...rest,
                 },
                 context,
             }),
@@ -58,7 +44,7 @@
         open = true;
     }
 
-    function internalHideMenu() {
+    function closeMenu() {
         portalState.close();
         open = false;
     }

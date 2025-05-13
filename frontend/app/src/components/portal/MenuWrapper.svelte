@@ -14,7 +14,15 @@
         align?: Alignment;
         gutter?: number;
     }
-    const { children, onClose, trigger, centered, position, align, gutter }: Props = $props();
+    const {
+        children,
+        onClose,
+        trigger,
+        centered = false,
+        position = "bottom",
+        align = "middle",
+        gutter = 8,
+    }: Props = $props();
 
     let container: HTMLElement | undefined;
 

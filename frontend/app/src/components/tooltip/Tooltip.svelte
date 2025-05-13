@@ -1,6 +1,6 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
-    import { getAllContexts, mount, onDestroy, tick, type Snippet } from "svelte";
+    import { getAllContexts, mount, onDestroy, type Snippet } from "svelte";
     import type { Alignment, Position } from "../../utils/alignment";
     import Hoverable from "../Hoverable.svelte";
     import TooltipWrapper from "../portal/TooltipWrapper.svelte";
@@ -23,17 +23,11 @@
 
     let {
         enable = true,
-        position = "top",
-        align = "start",
         fill = false,
-        gutter = 8,
         longPressed = $bindable(false),
         children,
         popupTemplate,
-        autoWidth = false,
-        textLength = 100,
-        longestWord = 10,
-        uppercase = false,
+        ...rest
     }: Props = $props();
 
     let target: Hoverable;
@@ -46,41 +40,28 @@
         if (show) {
             showTooltip();
         } else {
-            closeTooltip();
+            portalState.close();
         }
     });
 
-    onDestroy(closeTooltip);
+    onDestroy(() => portalState.close());
 
     async function showTooltip(): Promise<void> {
-        await tick();
-
         const trigger = target.getDomElement();
         if (trigger !== undefined) {
-            const props = {
-                children: popupTemplate,
-                onClose: closeTooltip,
-                trigger,
-                position,
-                align,
-                gutter,
-                autoWidth,
-                textLength,
-                longestWord,
-                uppercase,
-            };
             portalState.open(
                 mount(TooltipWrapper, {
                     target: document.body,
-                    props,
+                    props: {
+                        children: popupTemplate,
+                        onClose: () => portalState.close(),
+                        trigger,
+                        ...rest,
+                    },
                     context,
                 }),
             );
         }
-    }
-
-    function closeTooltip() {
-        portalState.close();
     }
 </script>
 
