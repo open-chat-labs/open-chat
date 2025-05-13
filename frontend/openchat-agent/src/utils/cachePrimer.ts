@@ -51,7 +51,7 @@ export class CachePrimer {
 
         const lastUpdated = this.lastUpdatedTimestamps[chatIdString];
         if (this.shouldEnqueueChat(chat, lastUpdated)) {
-            this.pending.push(convertChat(chat, localUserIndex));
+            this.pending.push(normalizeChat(chat, localUserIndex));
             debug("enqueued " + chatIdString);
         }
     }
@@ -173,7 +173,7 @@ function debug(message: string) {
     console.debug("CachePrimer - " + message);
 }
 
-function convertChat(chat: ChatSummary, localUserIndex: string): QueuedChat {
+function normalizeChat(chat: ChatSummary, localUserIndex: string): QueuedChat {
     return {
         chatId: chat.id,
         kind: chat.kind,
