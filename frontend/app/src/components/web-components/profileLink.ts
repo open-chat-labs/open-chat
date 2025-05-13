@@ -7,6 +7,7 @@ export type ProfileLinkClickedEvent = {
 class ProfileLink extends HTMLElement {
     constructor() {
         super();
+        this.handleClick = this.handleClick.bind(this);
     }
 
     get text(): string {
@@ -34,6 +35,18 @@ class ProfileLink extends HTMLElement {
         this.setAttribute("suppress-links", value.toString());
     }
 
+    handleClick() {
+        const event = new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
+            detail: {
+                userId: this.userId,
+                chatButton: true,
+                inGlobalContext: false,
+            },
+            bubbles: true,
+        });
+        this.dispatchEvent(event);
+    }
+
     // Called when the element is connected to the DOM
     connectedCallback() {
         const template = document.querySelector("#profile-link-template") as HTMLTemplateElement;
@@ -44,18 +57,12 @@ class ProfileLink extends HTMLElement {
 
         // Add a click event listener to raise the custom event
         if (!this.suppressLinks) {
-            this.addEventListener("click", () => {
-                const event = new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
-                    detail: {
-                        userId: this.userId,
-                        chatButton: true,
-                        inGlobalContext: false,
-                    },
-                    bubbles: true,
-                });
-                this.dispatchEvent(event);
-            });
+            this.addEventListener("click", this.handleClick);
         }
+    }
+
+    disconnectedCallback() {
+        this.removeEventListener("click", this.handleClick);
     }
 }
 // Define the custom element tag name
