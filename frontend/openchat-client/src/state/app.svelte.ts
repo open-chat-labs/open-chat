@@ -447,7 +447,8 @@ export class AppState {
         const withUpdates = localUpdates.chats.apply(this.#allServerChats);
         return [...withUpdates.entries()].reduce((result, [chatId, chat]) => {
             // it's ok to structured clone this because it is *not* a svelte 5 proxy
-            const clone = structuredClone(chat);
+            // const clone = structuredClone(chat);
+            const clone = $state.snapshot(chat);
             const withLocal = this.#applyLocalUpdatesToChat(clone);
             const withUnconfirmed = mergeUnconfirmedIntoSummary(
                 this.#messageFormatter ?? ((k) => k),
