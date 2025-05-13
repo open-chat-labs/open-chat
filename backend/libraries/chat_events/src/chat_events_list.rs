@@ -9,7 +9,7 @@ use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use types::{
     Chat, ChatEvent, ChatEventType, EventIndex, EventOrExpiredRange, EventWrapper, EventWrapperInternal, HydratedMention,
-    Mention, Message, MessageId, MessageIndex, SenderContext, TimestampMillis, UserId,
+    Mention, Message, MessageId, MessageIndex, TimestampMillis, UserId,
 };
 
 #[derive(Serialize, Deserialize)]

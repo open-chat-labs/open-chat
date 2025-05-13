@@ -19,7 +19,7 @@ use std::collections::btree_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::mem;
 use std::ops::DerefMut;
-use tracing::{error, info};
+use tracing::error;
 use types::{
     BlobReference, BotNotification, CallParticipant, CanisterId, Chat, ChatEventType, ChatType, CompletedCryptoTransaction,
     DirectChatCreated, EventContext, EventIndex, EventMetaData, EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated,
