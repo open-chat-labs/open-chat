@@ -3,7 +3,7 @@
     import Feature from "./Feature.svelte";
 
     import { ui } from "openchat-client";
-    import { menuStore } from "../../stores/menu";
+    import { portalState } from "../portalState.svelte";
 
     let scrollTop = $state(0);
     let phoneBorder = 5;
@@ -22,7 +22,7 @@
     const black = "#242834";
 
     function onScroll() {
-        menuStore.hideMenu();
+        portalState.close();
         scrollTop = window.scrollY;
     }
 

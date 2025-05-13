@@ -1906,13 +1906,19 @@ export class OpenChatAgent extends EventTarget {
         const currentCommunityIds: CommunityIdentifier[] = [];
         for (const group of currentGroups) {
             currentGroupChatIds.push(group.id);
-            if (checkActivityFromTimestamp === undefined || checkActivityFromTimestamp > group.latestSuccessfulUpdatesCheck) {
+            if (
+                checkActivityFromTimestamp === undefined ||
+                checkActivityFromTimestamp > group.latestSuccessfulUpdatesCheck
+            ) {
                 checkActivityFromTimestamp = group.latestSuccessfulUpdatesCheck;
             }
         }
         for (const community of currentCommunities) {
             currentCommunityIds.push(community.id);
-            if (checkActivityFromTimestamp === undefined || checkActivityFromTimestamp > community.latestSuccessfulUpdatesCheck) {
+            if (
+                checkActivityFromTimestamp === undefined ||
+                checkActivityFromTimestamp > community.latestSuccessfulUpdatesCheck
+            ) {
                 checkActivityFromTimestamp = community.latestSuccessfulUpdatesCheck;
             }
         }
@@ -2051,11 +2057,27 @@ export class OpenChatAgent extends EventTarget {
             anyUpdates = true;
         }
 
-        const groupChats = mergeGroupChats(groupsAdded, groupCanisterGroupSummaries, latestUpdatesCheck)
-            .concat(mergeGroupChatUpdates(currentGroups, userCanisterGroupUpdates, groupUpdates, latestUpdatesCheck, errors))
+        const groupChats = mergeGroupChats(
+            groupsAdded,
+            groupCanisterGroupSummaries,
+            latestUpdatesCheck,
+        )
+            .concat(
+                mergeGroupChatUpdates(
+                    currentGroups,
+                    userCanisterGroupUpdates,
+                    groupUpdates,
+                    latestUpdatesCheck,
+                    errors,
+                ),
+            )
             .filter((g) => !groupsRemoved.has(g.id.groupId));
 
-        const communities = mergeCommunities(communitiesAdded, communityCanisterCommunitySummaries, latestUpdatesCheck)
+        const communities = mergeCommunities(
+            communitiesAdded,
+            communityCanisterCommunitySummaries,
+            latestUpdatesCheck,
+        )
             .concat(
                 mergeCommunityUpdates(
                     currentCommunities,

@@ -14,3 +14,8 @@ export function pop(
         css: (t: number) => `transform: ${transform || ""} scale(${elasticOut(t)});`,
     };
 }
+
+export function cancelAnimation(el: HTMLElement): void {
+    el.style.animation = "none";
+    el.style.transition = "none";
+}

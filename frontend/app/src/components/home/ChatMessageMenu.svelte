@@ -140,7 +140,7 @@
         onTipMessage,
     }: Props = $props();
 
-    let menuIconEl: MenuIcon | undefined = $state();
+    let menuIconEl: MenuIcon | undefined;
     let quickReactionIconSize = "1.2rem";
 
     let canRemind = $derived(

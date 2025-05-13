@@ -158,10 +158,11 @@
         onGoToMessageIndex,
     }: Props = $props();
 
-    let msgElement: HTMLElement | undefined = $state();
-    let msgBubbleWrapperElement: HTMLElement | undefined = $state();
-    let msgBubbleElement: HTMLElement | undefined = $state();
-    let messageMenu: ChatMessageMenu | undefined = $state();
+    let msgElement: HTMLElement | undefined;
+    let msgBubbleWrapperElement: HTMLElement | undefined;
+    let msgBubbleElement: HTMLElement | undefined;
+    let messageMenu: ChatMessageMenu | undefined;
+
     let multiUserChat = chatType === "group_chat" || chatType === "channel";
     let showEmojiPicker = $state(false);
     let debug = false;
