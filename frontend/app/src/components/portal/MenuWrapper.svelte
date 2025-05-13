@@ -3,7 +3,6 @@
     import { reposition, type NanoPopPosition } from "@src/utils/position";
     import { ui } from "openchat-client";
     import { onMount, type Snippet } from "svelte";
-    import { portalState } from "../portalState.svelte";
 
     interface Props {
         children?: Snippet;
@@ -32,7 +31,7 @@
         }
 
         setTimeout(() => {
-            document.addEventListener("click", () => portalState.close(), { once: true });
+            document.addEventListener("click", onClose, { once: true });
         }, 100);
     });
 

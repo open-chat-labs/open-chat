@@ -3,7 +3,7 @@
     import { getAllContexts, mount, onDestroy, type Snippet } from "svelte";
     import type { Alignment, Position } from "../../utils/alignment";
     import Hoverable from "../Hoverable.svelte";
-    import TooltipWrapper from "../portal/TooltipWrapper.svelte";
+    import TooltipPopup from "../portal/TooltipPopup.svelte";
     import { portalState } from "../portalState.svelte";
 
     interface Props {
@@ -50,7 +50,7 @@
         const trigger = target.getDomElement();
         if (trigger !== undefined) {
             portalState.open(
-                mount(TooltipWrapper, {
+                mount(TooltipPopup, {
                     target: document.body,
                     props: {
                         children: popupTemplate,

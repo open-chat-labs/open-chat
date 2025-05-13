@@ -29,7 +29,7 @@
     }
 
     export function showMenu() {
-        portalState.open(
+        open = portalState.open(
             mount(MenuWrapper, {
                 target: document.body,
                 props: {
@@ -40,13 +40,12 @@
                 },
                 context,
             }),
+            closeMenu,
         );
-        open = true;
     }
 
     function closeMenu() {
-        portalState.close();
-        open = false;
+        open = portalState.close();
     }
 </script>
 
