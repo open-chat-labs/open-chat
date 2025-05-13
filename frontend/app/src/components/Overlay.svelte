@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { menuStore } from "@src/stores/menu";
     import { cancelAnimation } from "@src/utils/transition";
     import { onMount, tick, type Snippet } from "svelte";
+    import { portalState } from "./portalState.svelte";
 
     interface Props {
         fade?: boolean;
@@ -35,7 +35,7 @@
         document.body.appendChild(portal);
         portal.appendChild(ref);
 
-        menuStore.hideMenu();
+        portalState.close();
 
         if (fade) {
             tick().then(() => ref?.classList.add("faded"));

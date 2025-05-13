@@ -187,7 +187,8 @@ export class UIState {
     #availableHeight = $derived(
         this.#dimensions.height - this.#pixelsFromRems(5, this.#dimensions.width),
     );
-    #iconSize = $derived(this.#mobileWidth ? "1.6em" : "1.4em");
+    // #iconSize = $derived(this.#mobileWidth ? "1.6em" : "1.4em");
+    #iconSize = "1.4em";
     #rightPanelWidth = $state<number | undefined>(
         numberFromLocalStorage("openchat_right_panel_width"),
     );

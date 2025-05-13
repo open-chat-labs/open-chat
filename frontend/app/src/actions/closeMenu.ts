@@ -1,23 +1,16 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import { menuStore } from "../stores/menu";
+import { portalState } from "@src/components/portalState.svelte";
 
 function hideMenu() {
-    menuStore.hideMenu();
+    portalState.close();
 }
 
 export function menuCloser(node: HTMLElement) {
-    const unsub = menuStore.subscribe((menu) => {
-        if (menu !== undefined) {
-            node.addEventListener("scroll", hideMenu);
-        } else {
-            node.removeEventListener("scroll", hideMenu);
-        }
-    });
+    node.addEventListener("scroll", hideMenu);
 
     return {
         destroy() {
             node.removeEventListener("scroll", hideMenu);
-            unsub();
         },
     };
 }
