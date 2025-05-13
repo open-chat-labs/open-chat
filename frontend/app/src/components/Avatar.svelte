@@ -1,15 +1,15 @@
 <script lang="ts">
+    import { trackedEffect } from "@src/utils/effects.svelte";
     import { AvatarSize, OpenChat, UserStatus } from "openchat-client";
+    import { getContext } from "svelte";
     import Robot from "svelte-material-icons/Robot.svelte";
     import { rtlStore } from "../stores/rtl";
-    import { getContext } from "svelte";
     import { now } from "../stores/time";
-    import Verified from "./icons/Verified.svelte";
-    import { trackedEffect } from "@src/utils/effects.svelte";
+    import LighteningBolt from "./home/nav/LighteningBolt.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    type Specialisation = "verified" | "bot" | "none";
+    type Specialisation = "bot" | "none" | "super_user";
 
     interface Props {
         url: string | undefined;
@@ -19,8 +19,8 @@
         blocked?: boolean;
         statusBorder?: string;
         selected?: boolean;
-        verified?: boolean;
         bot?: boolean;
+        superUser?: boolean;
     }
 
     let {
@@ -31,13 +31,19 @@
         blocked = false,
         statusBorder = "white",
         selected = false,
-        verified = false,
         bot = false,
+        superUser = false,
     }: Props = $props();
 
-    let specialisation: Specialisation = $derived(bot ? "bot" : verified ? "verified" : "none");
+    let specialisation: Specialisation = $derived(getSpecialisation());
     let userStatus = $state(UserStatus.None);
     let userStatusUserId: string | undefined = $state(undefined);
+
+    function getSpecialisation(): Specialisation {
+        if (bot) return "bot";
+        if (superUser) return "super_user";
+        return "none";
+    }
 
     trackedEffect("user-status", () => {
         if (!showStatus || userId !== userStatusUserId) {
@@ -61,6 +67,7 @@
     class:small={size === AvatarSize.Small}
     class:default={size === AvatarSize.Default}
     class:large={size === AvatarSize.Large}
+    class:superUser
     class:blocked>
     <img alt="Avatar" class="avatar-image" src={url} loading="lazy" />
     {#if userStatus === UserStatus.Online}
@@ -69,12 +76,12 @@
     {/if}
     {#if specialisation !== "none"}
         <div class="specialised" class:rtl={$rtlStore}>
-            {#if specialisation === "verified"}
-                <Verified size={size === AvatarSize.Large ? "large" : "default"} verified />
-            {:else if specialisation === "bot"}
+            {#if specialisation === "bot"}
                 <div class="robot">
                     <Robot viewBox={"0 2 24 24"} size={"100%"} color={"rgba(255, 255, 255, 0.9)"} />
                 </div>
+            {:else if specialisation === "super_user"}
+                <LighteningBolt enabled />
             {/if}
         </div>
     {/if}

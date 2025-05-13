@@ -1,5 +1,5 @@
 <script lang="ts">
-    type Size = "large" | "medium" | "small" | "tiny";
+    type Size = "extra-large" | "large" | "medium" | "small" | "tiny";
 
     interface Props {
         logo: string;
@@ -14,6 +14,8 @@
 
     function coinSize(size: Size): string {
         switch (size) {
+            case "extra-large":
+                return "9rem";
             case "large":
                 return "6rem";
             case "medium":

@@ -1,15 +1,16 @@
 <script lang="ts">
-    import { Spring, Tween } from "svelte/motion";
     import { subscribe, type ChitEarned, type OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import SpinningToken from "../icons/SpinningToken.svelte";
     import { Confetti } from "svelte-confetti";
     import { _ } from "svelte-i18n";
+    import { Spring, Tween } from "svelte/motion";
+    import SpinningToken from "../icons/SpinningToken.svelte";
 
     const OFF_SCREEN_OPACITY = 0.0;
     const SHOW_DURATION = 3000;
     const SLIDE_IN_DURATION = 400;
     const TWEEN_DURATION = 300;
+    const LONG_DURATION = SHOW_DURATION * 3;
 
     const client = getContext<OpenChat>("client");
     let confetti = $state(false);
@@ -21,11 +22,18 @@
     let amount = $state(0);
     let labels: string[] = $state([]);
     let active = $state(false);
+    let imageUrl = $state("/assets/chit.svg");
+    let maxStreak = $state(false);
 
     function trigger(events: ChitEarned[]) {
+        maxStreak = false;
         amount = events.reduce((total, chit) => total + chit.amount, 0);
         labels = events.reduce((labels, c) => {
             if (c.reason.kind === "achievement_unlocked") {
+                if (c.reason.type === "streak_365") {
+                    maxStreak = true;
+                    imageUrl = "/assets/max_streak.svg";
+                }
                 labels.push($_(`learnToEarn.${c.reason.type}`));
             }
             if (c.reason.kind === "external_achievement_unlocked") {
@@ -33,9 +41,34 @@
             }
             return labels;
         }, [] as string[]);
+        const showDuration = maxStreak ? LONG_DURATION : SHOW_DURATION;
         ypos.target = dimensions.height / 2;
         opacity.target = 1;
         active = true;
+        if (maxStreak) {
+            setTimeout(() => {
+                shakeElements(
+                    [
+                        "div.message-wrapper",
+                        ".chat-summary",
+                        ".avatar",
+                        "svg",
+                        ".date-label",
+                        ".icon",
+                        ".section-header",
+                        ".message-entry",
+                        ".section-selector",
+                        ".input-wrapper",
+                        ".legend",
+                        ".chat-list",
+                    ],
+                    {
+                        duration: showDuration,
+                        maxIntensity: 50,
+                    },
+                );
+            }, 100);
+        }
         window.setTimeout(() => {
             confetti = true;
             msg.target = { scale: 1, opacity: 1 };
@@ -44,7 +77,7 @@
                 opacity.target = OFF_SCREEN_OPACITY;
                 msg.target = { scale: 0, opacity: 1 };
                 window.setTimeout(reset, TWEEN_DURATION);
-            }, SHOW_DURATION);
+            }, showDuration);
         }, SLIDE_IN_DURATION);
 
         // update the backend so we don't get notified again
@@ -69,8 +102,83 @@
     }
 
     onMount(() => {
+        trigger([
+            {
+                amount: 100_000,
+                timestamp: BigInt(Date.now()),
+                reason: {
+                    kind: "achievement_unlocked",
+                    type: "streak_365",
+                },
+            },
+        ]);
         return subscribe("chitEarned", trigger);
     });
+
+    function shakeElements(
+        selectors: string[],
+        {
+            duration = 2000,
+            maxIntensity = 20,
+            explosionForce = 1000,
+            returnDuration = 500,
+        }: {
+            duration?: number;
+            maxIntensity?: number;
+            explosionForce?: number;
+            returnDuration?: number;
+        } = {},
+    ): void {
+        const elements: HTMLElement[] = selectors
+            .flatMap((selector) => Array.from(document.querySelectorAll(selector)))
+            .filter((el): el is HTMLElement => el instanceof HTMLElement);
+
+        const originalTransforms = new Map<HTMLElement, CSSStyleDeclaration>();
+
+        for (const el of elements) {
+            originalTransforms.set(el, el.style ?? {});
+        }
+
+        const startTime = performance.now();
+
+        function animate(now: number): void {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const intensity = maxIntensity * progress;
+
+            for (const el of elements) {
+                const x = (Math.random() - 0.5) * 2 * intensity;
+                const y = (Math.random() - 0.5) * 2 * intensity;
+                el.style.transform = `translate(${x}px, ${y}px)`;
+            }
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                for (const el of elements) {
+                    const angle = Math.random() * 2 * Math.PI;
+                    const radius = explosionForce * (0.5 + Math.random() / 2);
+                    const x = Math.cos(angle) * radius;
+                    const y = Math.sin(angle) * radius;
+                    const rotation = (Math.random() - 0.5) * 720;
+                    const scale = 1 + Math.random() * 5;
+
+                    el.style.transition = "transform 3s ease-out";
+                    el.style.transform = `translate(${x}px, ${y}px) rotate(${rotation}deg) scale(${scale})`;
+                    el.style.transformOrigin = "center";
+                }
+
+                setTimeout(() => {
+                    for (const el of elements) {
+                        el.style = JSON.stringify(originalTransforms.get(el) ?? {});
+                        el.style.transition = `transform ${returnDuration}ms ease-in-out`;
+                    }
+                }, 3000);
+            }
+        }
+
+        requestAnimationFrame(animate);
+    }
 </script>
 
 <svelte:window on:resize={reset} />
@@ -90,7 +198,11 @@
             </div>
         {/if}
         <div class="coin">
-            <SpinningToken spin mirror={false} size={"large"} logo={"/assets/chit.svg"} />
+            <SpinningToken
+                spin
+                mirror={false}
+                size={maxStreak ? "extra-large" : "large"}
+                logo={imageUrl} />
         </div>
         <div
             class="details"
