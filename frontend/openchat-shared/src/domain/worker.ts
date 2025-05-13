@@ -26,7 +26,6 @@ import type {
     ChangeRoleResponse,
     ChannelIdentifier,
     ChatEvent,
-    ChatEventsArgs,
     ChatEventsResponse,
     ChatIdentifier,
     ChitState,
@@ -273,7 +272,6 @@ export type WorkerRequest =
     | SearchUsers
     | CheckUsername
     | RehydrateMessage
-    | ChatEventsBatch
     | ChatEventsByEventIndex
     | ChatEventsWindow
     | LastOnline
@@ -381,7 +379,6 @@ export type WorkerRequest =
     | UpdateUserGroup
     | DeleteUserGroups
     | SetMemberDisplayName
-    | GetCachePrimerTimestamps
     | FollowThread
     | LoadSavedCryptoAccounts
     | SaveCryptoAccount
@@ -1195,13 +1192,6 @@ type SearchUsers = {
     kind: "searchUsers";
 };
 
-type ChatEventsBatch = {
-    localUserIndex: string;
-    requests: ChatEventsArgs[];
-    cachePrimer: boolean;
-    kind: "chatEventsBatch";
-};
-
 type ChatEventsWindow = {
     eventIndexRange: IndexRange;
     chatId: ChatIdentifier;
@@ -1456,10 +1446,6 @@ type DeleteUserGroups = {
     communityId: string;
     userGroupIds: number[];
     kind: "deleteUserGroups";
-};
-
-type GetCachePrimerTimestamps = {
-    kind: "getCachePrimerTimestamps";
 };
 
 type GenerateBtcAddress = {
@@ -2095,8 +2081,6 @@ export type WorkerResult<T> = T extends Init
     ? Record<string, number>
     : T extends MarkAsOnline
     ? MinutesOnline
-    : T extends ChatEventsBatch
-    ? ChatEventsResponse[]
     : T extends ChatEventsWindow
     ? EventsResponse<ChatEvent>
     : T extends ChatEventsByEventIndex
@@ -2361,8 +2345,6 @@ export type WorkerResult<T> = T extends Init
     ? SubmitProposalResponse
     : T extends FollowThread
     ? FollowThreadResponse
-    : T extends GetCachePrimerTimestamps
-    ? Record< string, bigint >
     : T extends GetTokenSwaps
     ? Record<string, DexId[]>
     : T extends CanSwap

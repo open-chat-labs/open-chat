@@ -16,7 +16,6 @@ import type {
     CryptocurrencyTransfer,
     EventWrapper,
     ExpiredEventsRange,
-    GovernanceProposalsSubtype,
     GroupChatSummary,
     HasMembershipRole,
     LocalPollVote,
@@ -1953,12 +1952,6 @@ function diffMessagePermissions(
     diff.p2pSwap = updateFromOptions(original.p2pSwap, updated.p2pSwap);
 
     return diff;
-}
-
-export function isProposalsChat(chat: ChatSummary): chat is ChatSummary & {
-    subtype: GovernanceProposalsSubtype;
-} {
-    return chat.kind !== "direct_chat" && chat.subtype?.kind === "governance_proposals";
 }
 
 export function revokeObjectUrls(message: EventWrapper<Message>): void {
