@@ -17,26 +17,8 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
+    let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
-
-    for (bot_id, bot) in data.users.iter_bots() {
-        for canister_id in data.local_index_map.canisters() {
-            data.user_index_event_sync_queue.push(
-                *canister_id,
-                UserIndexEvent::BotUpdated(BotUpdated {
-                    bot_id: *bot_id,
-                    owner_id: bot.owner,
-                    endpoint: bot.endpoint.clone(),
-                    definition: BotDefinition {
-                        description: bot.description.clone(),
-                        commands: bot.commands.clone(),
-                        autonomous_config: bot.autonomous_config.clone(),
-                    },
-                }),
-            );
-        }
-    }
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 

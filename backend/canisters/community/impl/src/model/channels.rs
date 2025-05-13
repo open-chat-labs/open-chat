@@ -19,7 +19,6 @@ use types::{
 #[derive(Serialize, Deserialize, Default)]
 pub struct Channels {
     channels: HashMap<ChannelId, Channel>,
-    #[serde(default)]
     channels_deleted: BTreeSet<(TimestampMillis, ChannelId)>,
 }
 
@@ -28,7 +27,6 @@ pub struct Channel {
     pub id: ChannelId,
     pub chat: GroupChatCore,
     pub date_imported: Option<TimestampMillis>,
-    #[serde(default)]
     pub bot_api_keys: BotApiKeys,
 }
 

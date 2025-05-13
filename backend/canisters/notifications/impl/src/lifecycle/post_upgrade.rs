@@ -18,22 +18,8 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
+    let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
-
-    if data.local_user_index_canister_id == CanisterId::anonymous() {
-        let canister_id = ic_cdk::api::canister_self();
-        if canister_id == CanisterId::from_text("dobi3-tyaaa-aaaaf-adnna-cai").unwrap() {
-            data.local_user_index_canister_id = CanisterId::from_text("nq4qv-wqaaa-aaaaf-bhdgq-cai").unwrap();
-        } else if canister_id == CanisterId::from_text("apmvt-5yaaa-aaaar-aaabq-cai").unwrap() {
-            data.local_user_index_canister_id = CanisterId::from_text("aboy3-giaaa-aaaar-aaaaq-cai").unwrap();
-        } else if canister_id == CanisterId::from_text("lwrre-xiaaa-aaaac-aadlq-cai").unwrap() {
-            data.local_user_index_canister_id = CanisterId::from_text("lyt4m-myaaa-aaaac-aadkq-cai").unwrap();
-        } else if canister_id == CanisterId::from_text("dhcdh-fqaaa-aaaaf-adnmq-cai").unwrap() {
-            data.local_user_index_canister_id = CanisterId::from_text("pecvb-tqaaa-aaaaf-bhdiq-cai").unwrap();
-        }
-        assert_ne!(data.local_user_index_canister_id, CanisterId::anonymous());
-    }
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 

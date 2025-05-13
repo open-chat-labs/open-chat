@@ -46,23 +46,10 @@ pub struct ChatEvents {
     video_call_in_progress: Timestamped<Option<VideoCallInternal>>,
     anonymized_id: String,
     search_index: SearchIndex,
-    #[serde(default)]
     bot_subscriptions: BTreeMap<ChatEventType, HashMap<String, UserId>>,
 }
 
 impl ChatEvents {
-    pub fn migrate_bot_contexts(&mut self) {
-        // 1st March 2025
-        const BOTS_FIRST_INSTALLED: TimestampMillis = 1740787200000;
-
-        let mut count = self.main.migrate_bot_contexts(BOTS_FIRST_INSTALLED);
-        for thread in self.threads.values_mut() {
-            count += thread.migrate_bot_contexts(BOTS_FIRST_INSTALLED);
-        }
-
-        info!(count, "Migrated bot contexts");
-    }
-
     pub fn import_events(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
         stable_memory::write_events_as_bytes(chat, events);
     }
