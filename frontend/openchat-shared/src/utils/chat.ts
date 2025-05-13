@@ -7,6 +7,7 @@ import type {
     ChatSummary,
     CryptocurrencyDetails,
     EventWrapper,
+    GovernanceProposalsSubtype,
     IndexRange,
     MemberRole,
     MessageContent,
@@ -361,4 +362,10 @@ export function contentTypeToPermission(contentType: AttachmentContent["kind"]):
         default:
             throw new UnsupportedValueError("Unknown attachment content type", contentType);
     }
+}
+
+export function isProposalsChat(chat: ChatSummary): chat is ChatSummary & {
+    subtype: GovernanceProposalsSubtype;
+} {
+    return chat.kind !== "direct_chat" && chat.subtype?.kind === "governance_proposals";
 }
