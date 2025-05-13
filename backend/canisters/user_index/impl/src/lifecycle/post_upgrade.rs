@@ -4,10 +4,8 @@ use crate::memory::get_upgrades_memory;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
-use local_user_index_canister::{BotUpdated, UserIndexEvent};
 use stable_memory::get_reader;
 use tracing::info;
-use types::BotDefinition;
 use user_index_canister::post_upgrade::Args;
 use utils::cycles::init_cycles_dispenser_client;
 
