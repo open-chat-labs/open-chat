@@ -1544,14 +1544,10 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<ExploreChannelsResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
-        console.log("Exploring channels");
-        const start = performance.now();
-
         return this.communityClient(id.communityId)
             .exploreChannels(searchTerm, pageIndex, pageSize)
             .then((res) => {
                 if (res.kind === "success") {
-                    console.log("Finished exploring channels: ", performance.now() - start);
                     return {
                         ...res,
                         matches: res.matches.map((match) => ({
