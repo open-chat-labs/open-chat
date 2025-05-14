@@ -378,6 +378,7 @@ impl RuntimeState {
             users_to_delete_queue_length: self.data.users_to_delete_queue.len(),
             referral_codes: self.data.referral_codes.metrics(now),
             event_store_client_info,
+            blocked_user_pairs: self.data.blocked_users.len() as u64,
             oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
             cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
             bots: self
@@ -608,6 +609,7 @@ pub struct Metrics {
     pub recent_user_upgrades: Vec<CanisterId>,
     pub recent_group_upgrades: Vec<CanisterId>,
     pub recent_community_upgrades: Vec<CanisterId>,
+    pub blocked_user_pairs: u64,
     pub oc_secret_key_initialized: bool,
     pub cycles_balance_check_queue_len: u32,
     pub bots: Vec<BotMetrics>,
