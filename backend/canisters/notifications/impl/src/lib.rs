@@ -74,7 +74,6 @@ struct Data {
     pub notifications_index_canister_id: CanisterId,
     pub push_service_principals: HashSet<Principal>,
     pub authorized_principals: AuthorizedPrincipals,
-    #[serde(default = "CanisterId::anonymous")]
     pub local_user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub notifications: EventStream<NotificationEnvelope>,

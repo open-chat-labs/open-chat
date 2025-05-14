@@ -375,18 +375,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.markAsOnline());
                 break;
 
-            case "chatEventsBatch":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.chatEventsBatch(
-                        payload.localUserIndex,
-                        payload.requests,
-                        payload.cachePrimer,
-                    ),
-                );
-                break;
-
             case "chatEventsWindow":
                 executeThenReply(
                     payload,
@@ -1532,10 +1520,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.transactionFee,
                     ),
                 );
-                break;
-
-            case "getCachePrimerTimestamps":
-                executeThenReply(payload, correlationId, agent.getCachePrimerTimestamps());
                 break;
 
             case "tipMessage":

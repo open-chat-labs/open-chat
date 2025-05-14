@@ -5,6 +5,7 @@ use canister_time::now_millis;
 use canister_tracing_macros::trace;
 use local_user_index_canister::UserEvent;
 use local_user_index_canister::c2c_user_canister::{Response::*, *};
+use stable_memory_map::StableMemoryMap;
 use std::cell::LazyCell;
 use types::{StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis, UserId};
 
@@ -78,9 +79,11 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             );
         }
         UserEvent::UserBlocked(blocked) => {
+            state.data.blocked_users.insert((user_id, blocked), ());
             state.push_event_to_user_index(UserIndexEvent::UserBlocked(user_id, blocked), **now);
         }
         UserEvent::UserUnblocked(unblocked) => {
+            state.data.blocked_users.remove(&(user_id, unblocked));
             state.push_event_to_user_index(UserIndexEvent::UserUnblocked(user_id, unblocked), **now);
         }
         UserEvent::SetMaxStreak(max_streak) => {

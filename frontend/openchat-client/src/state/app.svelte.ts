@@ -30,6 +30,7 @@ import {
     type ExternalBotPermissions,
     type GroupChatSummary,
     type IdentityState,
+    isProposalsChat,
     type Member,
     mergeListOfCombinedUnreadCounts,
     type MessageActivitySummary,
@@ -63,7 +64,6 @@ import { offlineStore, type PinnedByScope } from "../stores";
 import { createDummyStore } from "../stores/dummyStore";
 import {
     getMessagePermissionsForSelectedChat,
-    isProposalsChat,
     mergeChatMetrics,
     mergePermissions,
     mergeUnconfirmedIntoSummary,

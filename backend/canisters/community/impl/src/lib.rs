@@ -448,7 +448,6 @@ struct Data {
     verified: Timestamped<bool>,
     idempotency_checker: IdempotencyChecker,
     notifications_queue: BatchedTimerJobQueue<NotificationsBatch>,
-    #[serde(default)]
     public_channel_list_updated: TimestampMillis,
 }
 
