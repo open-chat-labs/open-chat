@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { shakeElements } from "@src/utils/shake";
     import { subscribe, type ChitEarned, type OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { Confetti } from "svelte-confetti";
@@ -10,7 +11,7 @@
     const SHOW_DURATION = 3000;
     const SLIDE_IN_DURATION = 400;
     const TWEEN_DURATION = 300;
-    const LONG_DURATION = SHOW_DURATION * 3;
+    const LONG_DURATION = 10_000;
 
     const client = getContext<OpenChat>("client");
     let confetti = $state(false);
@@ -49,7 +50,7 @@
             setTimeout(() => {
                 shakeElements(
                     [
-                        "div.message-wrapper",
+                        ".message-wrapper",
                         ".chat-summary",
                         ".avatar",
                         "svg",
@@ -61,6 +62,7 @@
                         ".input-wrapper",
                         ".legend",
                         ".chat-list",
+                        ".communities .card",
                     ],
                     {
                         duration: showDuration,
@@ -102,83 +104,19 @@
     }
 
     onMount(() => {
-        trigger([
-            {
-                amount: 100_000,
-                timestamp: BigInt(Date.now()),
-                reason: {
-                    kind: "achievement_unlocked",
-                    type: "streak_365",
-                },
-            },
-        ]);
+        // - Useful for testing
+        // trigger([
+        //     {
+        //         amount: 100_000,
+        //         timestamp: BigInt(Date.now()),
+        //         reason: {
+        //             kind: "achievement_unlocked",
+        //             type: "streak_365",
+        //         },
+        //     },
+        // ]);
         return subscribe("chitEarned", trigger);
     });
-
-    function shakeElements(
-        selectors: string[],
-        {
-            duration = 2000,
-            maxIntensity = 20,
-            explosionForce = 1000,
-            returnDuration = 500,
-        }: {
-            duration?: number;
-            maxIntensity?: number;
-            explosionForce?: number;
-            returnDuration?: number;
-        } = {},
-    ): void {
-        const elements: HTMLElement[] = selectors
-            .flatMap((selector) => Array.from(document.querySelectorAll(selector)))
-            .filter((el): el is HTMLElement => el instanceof HTMLElement);
-
-        const originalTransforms = new Map<HTMLElement, CSSStyleDeclaration>();
-
-        for (const el of elements) {
-            originalTransforms.set(el, el.style ?? {});
-        }
-
-        const startTime = performance.now();
-
-        function animate(now: number): void {
-            const elapsed = now - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            const intensity = maxIntensity * progress;
-
-            for (const el of elements) {
-                const x = (Math.random() - 0.5) * 2 * intensity;
-                const y = (Math.random() - 0.5) * 2 * intensity;
-                el.style.transform = `translate(${x}px, ${y}px)`;
-            }
-
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            } else {
-                for (const el of elements) {
-                    const angle = Math.random() * 2 * Math.PI;
-                    const radius = explosionForce * (0.5 + Math.random() / 2);
-                    const x = Math.cos(angle) * radius;
-                    const y = Math.sin(angle) * radius;
-                    const rotation = (Math.random() - 0.5) * 720;
-                    const scale = 1 + Math.random() * 5;
-
-                    el.style.transition = "transform 3s ease-out";
-                    el.style.transform = `translate(${x}px, ${y}px) rotate(${rotation}deg) scale(${scale})`;
-                    el.style.transformOrigin = "center";
-                }
-
-                setTimeout(() => {
-                    for (const el of elements) {
-                        el.style = JSON.stringify(originalTransforms.get(el) ?? {});
-                        el.style.transition = `transform ${returnDuration}ms ease-in-out`;
-                    }
-                }, 3000);
-            }
-        }
-
-        requestAnimationFrame(animate);
-    }
 </script>
 
 <svelte:window on:resize={reset} />
@@ -208,7 +146,7 @@
             class="details"
             style={`transform: scale(${msg.current.scale}); opacity: ${msg.current.opacity}`}>
             <div class="chit">
-                {`+${amount} CHIT`}
+                {`+${amount.toLocaleString()} CHIT`}
             </div>
             <div class="msgs">
                 {#each labels as label}
