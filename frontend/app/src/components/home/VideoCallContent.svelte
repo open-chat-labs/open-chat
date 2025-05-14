@@ -47,8 +47,12 @@
     );
 
     function joinCall() {
-        if (!inCall && app.selectedChatSummary) {
-            publish("startVideoCall", { chat: app.selectedChatSummary, join: true });
+        if (!inCall && app.selectedChatSummary?.videoCallInProgress) {
+            publish("startVideoCall", {
+                chatId: app.selectedChatSummary.id,
+                callType: app.selectedChatSummary.videoCallInProgress.callType,
+                join: true
+            });
         }
     }
 
