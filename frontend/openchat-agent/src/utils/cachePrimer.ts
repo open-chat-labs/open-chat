@@ -71,6 +71,8 @@ export class CachePrimer {
             const responses = await this.getEventsBatch(localUserIndex, batch);
 
             const userIds = new Set<string>();
+            const loadRepliesBatch: ChatEventsArgs[] = [];
+
             for (let i = 0; i < responses.length; i++) {
                 const request = batch[i];
                 const response = responses[i];
@@ -84,6 +86,42 @@ export class CachePrimer {
                         if (!this.usersLoaded.has(userId)) {
                             this.usersLoaded.add(userId);
                             userIds.add(userId);
+                        }
+                    }
+
+                    const repliesToLoad = new Set<number>();
+                    for (const event of response.result.events) {
+                        if (event.event.kind === "message") {
+                            const repliesTo = event.event.repliesTo;
+                            if (repliesTo !== undefined && repliesTo.sourceContext === undefined) {
+                                repliesToLoad.add(repliesTo.eventIndex);
+                            }
+                        }
+                    }
+
+                    if (repliesToLoad.size > 0) {
+                        loadRepliesBatch.push({
+                            context: request.context,
+                            args: {
+                                kind: "by_index",
+                                events: [...repliesToLoad]
+                            },
+                            latestKnownUpdate: request.latestKnownUpdate,
+                        });
+                    }
+                }
+            }
+
+            if (loadRepliesBatch.length > 0) {
+                const repliesResponse = await this.getEventsBatch(localUserIndex, loadRepliesBatch);
+
+                for (const response of repliesResponse) {
+                    if (response.kind === "success") {
+                        for (const userId of userIdsFromEvents(response.result.events)) {
+                            if (!this.usersLoaded.has(userId)) {
+                                this.usersLoaded.add(userId);
+                                userIds.add(userId);
+                            }
                         }
                     }
                 }
