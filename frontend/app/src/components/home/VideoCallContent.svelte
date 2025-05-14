@@ -27,10 +27,10 @@
     let { content, messageIndex, timestamp, senderId }: Props = $props();
 
     let displayName = $derived(client.getDisplayNameById(senderId, app.selectedCommunity.members));
-    let incall = $derived(
+    let inCall = $derived(
         $activeVideoCall !== undefined &&
             app.selectedChatSummary !== undefined &&
-            app.selectedChatSummary.videoCallInProgress === messageIndex &&
+            app.selectedChatSummary.videoCallInProgress?.messageIndex === messageIndex &&
             chatIdentifiersEqual($activeVideoCall.chatId, app.selectedChatSummary?.id),
     );
     let endedDate = $derived(content.ended ? new Date(Number(content.ended)) : undefined);
@@ -47,13 +47,13 @@
     );
 
     function joinCall() {
-        if (!incall && app.selectedChatSummary) {
+        if (!inCall && app.selectedChatSummary) {
             publish("startVideoCall", { chat: app.selectedChatSummary, join: true });
         }
     }
 
     function leaveCall() {
-        if (incall) {
+        if (inCall) {
             activeVideoCall.endCall();
         }
     }
@@ -85,7 +85,7 @@
         {/if}
     </div>
     <div class="video-call-btn">
-        {#if incall}
+        {#if inCall}
             <Button fill disabled={content.ended !== undefined} onClick={leaveCall}>
                 <Translatable
                     resourceKey={i18nKey(content.ended ? "videoCall.ended" : "videoCall.leave")} />

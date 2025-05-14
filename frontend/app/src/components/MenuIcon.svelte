@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { onDestroy, type Snippet } from "svelte";
-    import { menuStore } from "../stores/menu";
+    import { getAllContexts, mount, onDestroy, type Snippet } from "svelte";
     import type { Alignment, Position } from "../utils/alignment";
+    import MenuWrapper from "./portal/MenuWrapper.svelte";
+    import { portalState } from "./portalState.svelte";
 
     interface Props {
         centered?: boolean;
@@ -12,69 +13,50 @@
         menuItems?: Snippet;
     }
 
-    let {
-        centered = false,
-        position = "bottom",
-        align = "middle",
-        gutter = 8,
-        menuIcon,
-        menuItems,
-    }: Props = $props();
+    let { menuIcon, menuItems, ...rest }: Props = $props();
 
     let menu: HTMLElement;
-    let contextMenu = $state<HTMLElement>();
-    let open = $derived($menuStore === contextMenu);
+    let open = $state(false);
 
-    onDestroy(() => menuStore.hideMenu());
+    const context = getAllContexts();
 
-    export function showMenu() {
-        if (menu === undefined || contextMenu === undefined) return;
+    onDestroy(closeMenu);
 
-        if ($menuStore === contextMenu) {
-            menuStore.hideMenu();
-        } else {
-            menuStore.showMenu(contextMenu);
-            menuStore.position(menu, centered, position, align, gutter);
-        }
-    }
-
-    function onShowMenu(e: MouseEvent) {
+    function click(e: MouseEvent) {
         e.preventDefault();
         e.stopPropagation();
         showMenu();
     }
 
-    function closeMenu(e: Event) {
-        e.stopPropagation();
-        menuStore.hideMenu();
+    export function showMenu() {
+        open = portalState.open(
+            mount(MenuWrapper, {
+                target: document.body,
+                props: {
+                    children: menuItems,
+                    onClose: closeMenu,
+                    trigger: menu,
+                    ...rest,
+                },
+                context,
+            }),
+            closeMenu,
+        );
+    }
+
+    function closeMenu() {
+        open = portalState.close();
     }
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class:open class="menu-icon" bind:this={menu} onclick={onShowMenu}>
+<div class:open class="menu-icon" bind:this={menu} onclick={click}>
     {@render menuIcon?.()}
-</div>
-
-<div class="menu-blueprint">
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <span class="menu" bind:this={contextMenu} onclick={closeMenu}>
-        {@render menuItems?.()}
-    </span>
 </div>
 
 <style lang="scss">
     :global(.menu-icon.open path) {
         fill: var(--icon-selected);
-    }
-
-    .menu {
-        position: fixed;
-        @include z-index("popup-menu");
-    }
-
-    .menu-blueprint {
-        display: none;
     }
 </style>

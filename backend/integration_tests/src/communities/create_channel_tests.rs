@@ -1,8 +1,10 @@
 use crate::env::ENV;
+use crate::utils::now_millis;
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
+use std::time::Duration;
 use test_case::test_case;
 use testing::rng::random_string;
 use types::{CommunityId, Rules};
@@ -20,6 +22,8 @@ fn create_channel_succeeds(is_public: bool) {
 
     let TestData { user, community_id } = init_test_data(env, canister_ids, *controller, true);
 
+    env.advance_time(Duration::from_secs(60));
+
     let channel_name = random_string();
     let channel_id =
         client::community::happy_path::create_channel(env, user.principal, community_id, is_public, channel_name.clone());
@@ -33,6 +37,15 @@ fn create_channel_succeeds(is_public: bool) {
             .iter()
             .any(|c| c.channel_id == channel_id && c.is_public == is_public && c.name == channel_name)
     );
+
+    let community_details = client::community::happy_path::selected_initial(env, user.principal, community_id);
+    let now = now_millis(env);
+
+    if is_public {
+        assert_eq!(community_details.public_channel_list_updated, now);
+    } else {
+        assert!(community_details.public_channel_list_updated < now);
+    }
 }
 
 #[test]

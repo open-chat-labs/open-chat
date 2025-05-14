@@ -32,11 +32,10 @@
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
-    import { menuStore } from "../../stores/menu";
     import { rtlStore } from "../../stores/rtl";
-    import { tooltipStore } from "../../stores/tooltip";
     import { pop } from "../../utils/transition";
     import Fab from "../Fab.svelte";
+    import { portalState } from "../portalState.svelte";
     import TimelineDate from "./TimelineDate.svelte";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
@@ -722,8 +721,7 @@
         }
         updateShowGoToBottom();
         updateShowGoToTop();
-        menuStore.hideMenu();
-        tooltipStore.hide();
+        portalState.close();
         ui.eventListLastScrolled = Date.now();
 
         if (!initialised || interrupt || loadingFromUserScroll || !visible) return;

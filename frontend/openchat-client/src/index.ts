@@ -1,6 +1,5 @@
 export * from "openchat-shared";
 export type { OpenChatConfig } from "./config";
-export * from "./events";
 export { OpenChat } from "./openchat";
 export { app, dummyPinNumberFailureStore, ONE_GB } from "./state/app.svelte";
 export { botState } from "./state/bots.svelte";
@@ -25,3 +24,4 @@ export type { Dimensions } from "./utils/media";
 export { isPermitted } from "./utils/permissions";
 export { Poller } from "./utils/poller";
 export * from "./utils/routes";
+export { setsAreEqual } from "./utils/set";

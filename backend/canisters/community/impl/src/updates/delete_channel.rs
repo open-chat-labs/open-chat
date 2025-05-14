@@ -34,15 +34,10 @@ fn c2c_bot_delete_channel(args: c2c_bot_delete_channel::Args) -> c2c_bot_delete_
 }
 
 fn delete_channel_impl(channel_id: ChannelId, ext_caller: Option<Caller>, state: &mut RuntimeState) -> OCResult {
-    if state.data.is_frozen() {
-        return Err(OCErrorCode::CommunityFrozen.into());
-    }
+    state.data.verify_not_frozen()?;
 
     let caller = state.verified_caller(ext_caller)?;
-
-    let Some(channel) = state.data.channels.get(&channel_id) else {
-        return Err(OCErrorCode::ChatNotFound.into());
-    };
+    let channel = state.data.channels.get_or_err(&channel_id)?;
 
     // A community owner can delete a channel whether or not they are a member of the channel
     let caller_is_community_owner = state
@@ -113,6 +108,10 @@ fn delete_channel_impl(channel_id: ChannelId, ext_caller: Option<Caller>, state:
 
     if channel.chat.gate_config.value.is_some_and(|gc| gc.expiry.is_some()) {
         state.data.expiring_members.remove_gate(Some(channel_id));
+    }
+
+    if channel.chat.is_public.value {
+        state.data.public_channel_list_updated = now;
     }
 
     handle_activity_notification(state);

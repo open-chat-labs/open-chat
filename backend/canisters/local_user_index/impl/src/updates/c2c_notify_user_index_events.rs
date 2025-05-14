@@ -96,6 +96,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 ev.owner_id,
                 ev.name,
                 ev.commands,
+                ev.endpoint,
                 ev.autonomous_config,
                 ev.permitted_install_location,
             );
@@ -104,7 +105,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             state.data.bots.publish(ev.bot_id);
         }
         UserIndexEvent::BotUpdated(ev) => {
-            state.data.bots.update(ev.bot_id, ev.owner_id, ev.definition);
+            state.data.bots.update(ev.bot_id, ev.owner_id, ev.endpoint, ev.definition);
         }
         UserIndexEvent::PlatformOperatorStatusChanged(ev) => {
             state

@@ -196,12 +196,16 @@ fn create_channel_impl(
         bot_api_keys: Default::default(),
     });
 
-    if args.is_public && args.gate_config.is_none() {
-        JoinMembersToPublicChannelJob {
-            channel_id,
-            members: state.data.members.iter_member_ids().collect(),
+    if args.is_public {
+        state.data.public_channel_list_updated = now;
+
+        if args.gate_config.is_none() {
+            JoinMembersToPublicChannelJob {
+                channel_id,
+                members: state.data.members.iter_member_ids().collect(),
+            }
+            .execute_with_state(state);
         }
-        .execute_with_state(state);
     }
 
     handle_activity_notification(state);

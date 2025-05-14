@@ -5,12 +5,12 @@
     import Close from "svelte-material-icons/Close.svelte";
     import { fade } from "svelte/transition";
     import { i18nKey } from "../i18n/i18n";
-    import { menuStore } from "../stores/menu";
     import { rtlStore } from "../stores/rtl";
     import { currentTheme } from "../theme/themes";
     import Button from "./Button.svelte";
     import HoverIcon from "./HoverIcon.svelte";
     import Translatable from "./Translatable.svelte";
+    import { portalState } from "./portalState.svelte";
 
     type OnClose = (() => void) | undefined;
 
@@ -78,7 +78,7 @@
     );
 
     function closeMenus() {
-        menuStore.hideMenu();
+        portalState.close();
     }
 
     onMount(() => {

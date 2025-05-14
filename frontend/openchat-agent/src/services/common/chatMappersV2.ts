@@ -102,6 +102,7 @@ import type {
     User,
     UserGroupSummary,
     VideoCallContent,
+    VideoCallInProgress,
     VideoCallParticipant,
     VideoCallParticipantsResponse,
     VideoCallPresence,
@@ -246,6 +247,7 @@ import type {
     UserGenerateBotApiKeySuccessResult,
     UserUndeleteMessagesSuccessResult,
     UserWithdrawCryptoArgs,
+    VideoCall,
     VideoCallParticipants,
 } from "../../typebox";
 import { toRecord2 } from "../../utils/list";
@@ -2247,7 +2249,7 @@ export function communityChannelSummary(
         level: "channel",
         eventsTTL: value.events_ttl,
         eventsTtlLastUpdated: value.events_ttl_last_updated,
-        videoCallInProgress: mapOptional(value.video_call_in_progress, (v) => v.message_index),
+        videoCallInProgress: mapOptional(value.video_call_in_progress, videoCallInProgress),
         membership: {
             joined: mapOptional(value.membership, (m) => m.joined) ?? BigInt(0),
             notificationsMuted:
@@ -2909,4 +2911,15 @@ export function ocError(error: TOCError): OCError {
         code: error[0],
         message: error[1] ?? undefined,
     };
+}
+
+export function videoCallInProgress(value: VideoCall): VideoCallInProgress {
+    return {
+        started: value.started,
+        startedBy: principalBytesToString(value.started_by),
+        messageIndex: value.message_index,
+        messageId: value.message_id,
+        callType: value.call_type === "Default" ? "default" : "broadcast",
+        joinedByCurrentUser: value.joined_by_current_user,
+    }
 }

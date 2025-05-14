@@ -61,7 +61,9 @@ export class LocalMap<K, V> {
         });
     }
 
-    apply(original: ReadonlyMap<K, V>): SafeMap<K, V> {
+    apply(original: ReadonlyMap<K, V>): ReadonlyMap<K, V> {
+        if (this.#addedOrUpdated.size === 0 && this.#removed.size === 0) return original;
+
         const merged = new SafeMap<K, V>(this.serialiser, this.deserialiser);
         for (const [k, v] of original) {
             merged.set(k, v);

@@ -103,6 +103,7 @@ export class GlobalLocalState {
         this.#groupChatPreviews.clear();
         messageLocalUpdates.clearAll();
         chatDetailsLocalUpdates.clearAll();
+        communityLocalUpdates.clearAll();
     }
 
     blockDirectUser(userId: string) {

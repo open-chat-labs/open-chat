@@ -6,7 +6,6 @@
     import "@i18n/i18n";
     import { reviewingTranslations } from "@i18n/i18n";
     import { trackedEffect } from "@src/utils/effects.svelte";
-    import { menuStore } from "@stores/menu";
     import { rtlStore } from "@stores/rtl";
     import { snowing } from "@stores/snow";
     import { incomingVideoCall } from "@stores/video";
@@ -53,6 +52,7 @@
     import ActiveCall from "./home/video/ActiveCall.svelte";
     import IncomingCall from "./home/video/IncomingCall.svelte";
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
+    import { portalState } from "./portalState.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
@@ -511,7 +511,7 @@
     }
 
     function resize() {
-        menuStore.hideMenu();
+        portalState.close();
         calculateHeight();
     }
 
@@ -585,7 +585,6 @@
 {/if}
 
 <svelte:window onresize={resize} onerror={unhandledError} onorientationchange={resize} />
-<svelte:body onclick={() => menuStore.hideMenu()} />
 
 <style lang="scss">
     .burst-wrapper {

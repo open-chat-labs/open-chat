@@ -53,7 +53,8 @@ export class LocalSet<T> {
         });
     }
 
-    apply(original: ReadonlySet<T>): SafeSet<T> {
+    apply(original: ReadonlySet<T>): ReadonlySet<T> {
+        if (this.#added.size === 0 && this.#removed.size === 0) return original;
         const merged = new SafeSet<T>(this.serialiser, this.deserialiser);
         for (const v of original) {
             merged.add(v);

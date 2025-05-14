@@ -26,7 +26,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::time::Duration;
-use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue, TimerJobItemGroup};
+use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary,
     CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails, IdempotentEnvelope, MessageContent,
@@ -392,6 +392,7 @@ impl RuntimeState {
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
+                notifications_index: self.data.notifications_index_canister_id,
                 identity: self.data.identity_canister_id,
                 local_group_index: self.data.local_group_index_canister_id,
                 notifications: self.data.notifications_canister_id,
@@ -409,17 +410,16 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub local_users: LocalUserMap,
-    #[serde(default)]
     pub local_groups: LocalGroupMap,
-    #[serde(default)]
     pub local_communities: LocalCommunityMap,
     pub global_users: GlobalUserMap,
     pub bots: BotsMap,
     pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
-    pub identity_canister_id: CanisterId,
     #[serde(default = "CanisterId::anonymous")]
+    pub notifications_index_canister_id: CanisterId,
+    pub identity_canister_id: CanisterId,
     pub local_group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
@@ -428,31 +428,21 @@ struct Data {
     pub online_users_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
     pub website_canister_id: CanisterId,
-    #[serde(alias = "canisters_requiring_upgrade")]
     pub users_requiring_upgrade: CanistersRequiringUpgrade,
-    #[serde(default)]
     pub groups_requiring_upgrade: CanistersRequiringUpgrade,
-    #[serde(default)]
     pub communities_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub user_index_event_sync_queue: BatchedTimerJobQueue<UserIndexEventBatch>,
     pub user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
-    #[serde(default = "default_event_sync_queue")]
     pub group_event_sync_queue: GroupedTimerJobQueue<GroupEventBatch>,
-    #[serde(default = "default_event_sync_queue")]
     pub community_event_sync_queue: GroupedTimerJobQueue<CommunityEventBatch>,
     pub test_mode: bool,
-    #[serde(alias = "max_concurrent_canister_upgrades")]
     pub max_concurrent_user_upgrades: u32,
     pub user_upgrade_concurrency: u32,
-    #[serde(default = "ten")]
     pub max_concurrent_group_upgrades: u32,
-    #[serde(default = "ten")]
     pub group_upgrade_concurrency: u32,
-    #[serde(default = "ten")]
     pub max_concurrent_community_upgrades: u32,
-    #[serde(default = "ten")]
     pub community_upgrade_concurrency: u32,
     pub platform_moderators_group: Option<ChatId>,
     pub referral_codes: ReferralCodes,
@@ -468,18 +458,6 @@ struct Data {
     pub cycles_balance_check_queue: VecDeque<CanisterId>,
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub idempotency_checker: IdempotencyChecker,
-}
-
-fn default_event_sync_queue<T>() -> GroupedTimerJobQueue<T>
-where
-    T: TimerJobItemGroup,
-    T::SharedState: Default,
-{
-    GroupedTimerJobQueue::new(10, false)
-}
-
-fn ten() -> u32 {
-    10
 }
 
 #[derive(Serialize, Deserialize)]
@@ -500,6 +478,7 @@ impl Data {
     pub fn new(
         user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
+        notifications_index_canister_id: CanisterId,
         identity_canister_id: CanisterId,
         local_group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
@@ -524,6 +503,7 @@ impl Data {
             child_canister_wasms: ChildCanisterWasms::default(),
             user_index_canister_id,
             group_index_canister_id,
+            notifications_index_canister_id,
             identity_canister_id,
             local_group_index_canister_id,
             notifications_canister_id,
@@ -631,6 +611,7 @@ pub struct Metrics {
 pub struct CanisterIds {
     pub user_index: CanisterId,
     pub group_index: CanisterId,
+    pub notifications_index: CanisterId,
     pub identity: CanisterId,
     pub local_group_index: CanisterId,
     pub notifications: CanisterId,

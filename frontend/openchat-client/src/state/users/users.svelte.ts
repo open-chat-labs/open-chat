@@ -34,11 +34,15 @@ export class UsersState {
     }
 
     blockUser(userId: string) {
-        this.#serverBlockedUsers.add(userId);
+        if (!this.#serverBlockedUsers.has(userId)) {
+            this.#serverBlockedUsers.add(userId);
+        }
     }
 
     unblockUser(userId: string) {
-        this.#serverBlockedUsers.delete(userId);
+        if (this.#serverBlockedUsers.has(userId)) {
+            this.#serverBlockedUsers.delete(userId);
+        }
     }
 
     setUsers(users: UserLookup) {
@@ -46,11 +50,13 @@ export class UsersState {
     }
 
     addUser(user: UserSummary) {
-        this.#normalUsers.set(user.userId, user);
+        if (!this.#normalUsers.has(user.userId)) {
+            this.#normalUsers.set(user.userId, user);
+        }
     }
 
     addMany(users: UserSummary[]) {
-        users.forEach((u) => this.#normalUsers.set(u.userId, u));
+        users.forEach((u) => this.addUser(u));
     }
 
     setUpdated(userIds: string[], timestamp: bigint) {

@@ -30,6 +30,7 @@ import {
     type ExternalBotPermissions,
     type GroupChatSummary,
     type IdentityState,
+    isProposalsChat,
     type Member,
     mergeListOfCombinedUnreadCounts,
     type MessageActivitySummary,
@@ -63,7 +64,6 @@ import { offlineStore, type PinnedByScope } from "../stores";
 import { createDummyStore } from "../stores/dummyStore";
 import {
     getMessagePermissionsForSelectedChat,
-    isProposalsChat,
     mergeChatMetrics,
     mergePermissions,
     mergeUnconfirmedIntoSummary,
@@ -408,14 +408,16 @@ export class AppState {
         }, empty);
     });
 
+    // Note that it's ok that this method mutates the input since it is
+    // already a clone
     #applyLocalUpdatesToChat(chat: ChatSummary): ChatSummary {
         const local = chatDetailsLocalUpdates.get(chat.id);
         if (local === undefined) return chat;
 
         chat.membership.notificationsMuted =
-            local?.notificationsMuted ?? chat.membership.notificationsMuted;
-        chat.membership.archived = local?.archived ?? chat.membership.archived;
-        chat.membership.rulesAccepted = local?.rulesAccepted ?? chat.membership.rulesAccepted;
+            local.notificationsMuted ?? chat.membership.notificationsMuted;
+        chat.membership.archived = local.archived ?? chat.membership.archived;
+        chat.membership.rulesAccepted = local.rulesAccepted ?? chat.membership.rulesAccepted;
         const latestMessage =
             (local?.latestMessage?.timestamp ?? BigInt(-1)) >
             (chat.latestMessage?.timestamp ?? BigInt(-1))
@@ -425,16 +427,17 @@ export class AppState {
         chat.latestMessage = latestMessage;
         chat.latestMessageIndex = latestMessage?.event?.messageIndex;
         chat.latestEventIndex = latestEventIndex;
+
         if (chat.kind !== "direct_chat") {
-            chat.frozen = local?.frozen ?? chat.frozen;
-            chat.name = local?.name ?? chat.name;
-            chat.description = local?.description ?? chat.description;
+            chat.frozen = local.frozen ?? chat.frozen;
+            chat.name = local.name ?? chat.name;
+            chat.description = local.description ?? chat.description;
             chat.permissions = mergePermissions(chat.permissions, local?.permissions);
-            chat.gateConfig = local?.gateConfig ?? chat.gateConfig;
-            chat.eventsTTL = local?.eventsTTL
-                ? applyOptionUpdate(chat.eventsTTL, local.eventsTTL)
-                : chat.eventsTTL;
-            chat.public = local?.isPublic ?? chat.public;
+            chat.gateConfig = local.gateConfig ?? chat.gateConfig;
+            if (local.eventsTTL !== undefined) {
+                chat.eventsTTL = applyOptionUpdate(chat.eventsTTL, local.eventsTTL);
+            }
+            chat.public = local.isPublic ?? chat.public;
         }
         return chat;
     }
@@ -442,8 +445,9 @@ export class AppState {
     // this is all server chats (which already include previews) + local updates applied.
     #allChats = $derived.by(() => {
         const withUpdates = localUpdates.chats.apply(this.#allServerChats);
-        return withUpdates.reduce((result, [chatId, chat]) => {
-            const withLocal = this.#applyLocalUpdatesToChat(chat);
+        return [...withUpdates.entries()].reduce((result, [chatId, chat]) => {
+            const clone = $state.snapshot(chat);
+            const withLocal = this.#applyLocalUpdatesToChat(clone);
             const withUnconfirmed = mergeUnconfirmedIntoSummary(
                 this.#messageFormatter ?? ((k) => k),
                 this.#currentUserId,
@@ -454,7 +458,9 @@ export class AppState {
                 this.#currentUserId,
                 this.#messageFilters,
             );
-            result.set(chatId, withUnconfirmed);
+            // only overwrite the chat if turns out to be different from the original to try
+            // to minimise downstream effects
+            result.set(chatId, dequal(chat, withUnconfirmed) ? chat : withUnconfirmed);
             return result;
         }, new ChatMap<ChatSummary>());
     });
@@ -504,10 +510,12 @@ export class AppState {
         return pinned.concat(unpinned);
     });
 
-    #selectedChatSummary = $derived.by(() => {
-        if (this.#selectedChatId === undefined) return undefined;
-        return this.#chatSummaries.get(this.#selectedChatId);
-    });
+    #selectedChatSummary = $derived.by(
+        withEqCheck(() => {
+            if (this.#selectedChatId === undefined) return undefined;
+            return this.#chatSummaries.get(this.#selectedChatId);
+        }, dequal),
+    );
 
     #isProposalGroup = $derived(
         this.#selectedChatSummary !== undefined &&
@@ -516,7 +524,7 @@ export class AppState {
     );
 
     #threadsByChat = $derived.by(() => {
-        return this.#chatSummariesList.reduce((result, chat) => {
+        return [...this.#chatSummaries.entries()].reduce((result, [_, chat]) => {
             if (
                 (chat.kind === "group_chat" || chat.kind === "channel") &&
                 chat.membership &&
@@ -570,24 +578,36 @@ export class AppState {
     });
 
     #communities = $derived.by(() => {
-        const merged = localUpdates.communities.apply(this.#serverCommunities);
-        for (const c of localUpdates.previewCommunities.values()) {
-            merged.set(c.id, c);
-        }
-        return merged.map((communityId, community) => {
+        const merged = localUpdates.communities.apply(
+            this.#serverCommunities.merge(localUpdates.previewCommunities),
+        );
+        return [...merged.entries()].reduce((result, [communityId, community]) => {
             const updates = communityLocalUpdates.get(communityId);
-            const index = updates?.index;
-            if (index !== undefined) {
-                community.membership.index = index;
+
+            const anyChanges =
+                updates?.index !== undefined ||
+                updates?.displayName !== undefined ||
+                updates?.rulesAccepted !== undefined;
+
+            if (anyChanges) {
+                const clone = structuredClone(community);
+                const index = updates?.index;
+                if (index !== undefined) {
+                    clone.membership.index = index;
+                }
+                clone.membership.displayName = applyOptionUpdate(
+                    clone.membership.displayName,
+                    updates?.displayName,
+                );
+                clone.membership.rulesAccepted =
+                    updates?.rulesAccepted ?? clone.membership.rulesAccepted;
+
+                result.set(communityId, clone);
+            } else {
+                result.set(communityId, community);
             }
-            community.membership.displayName = applyOptionUpdate(
-                community.membership.displayName,
-                updates?.displayName,
-            );
-            community.membership.rulesAccepted =
-                updates?.rulesAccepted ?? community.membership.rulesAccepted;
-            return community;
-        });
+            return result;
+        }, new CommunityMap<CommunitySummary>());
     });
 
     #sortedCommunities = $derived.by(() => {
@@ -608,7 +628,7 @@ export class AppState {
     });
 
     #communityChannelVideoCallCounts = $derived.by(() => {
-        return this.#communities.reduce((map, [id, community]) => {
+        return [...this.#communities.entries()].reduce((map, [id, community]) => {
             map.set(id, videoCallsInProgressForChats(community.channels));
             return map;
         }, new CommunityMap<VideoCallCounts>());
@@ -1127,7 +1147,7 @@ export class AppState {
         if (chatIdentifiersEqual(chatId, this.#selectedChat.chatId)) {
             console.warn(
                 "We are trying to setSelectedChat for the same chat we already have selected. This probably indicates that some effect is firing when it shouldn't",
-                chatId,
+                $state.snapshot(chatId),
             );
             return;
         }
@@ -1142,8 +1162,8 @@ export class AppState {
         if (!chatIdentifiersEqual(chatId, this.#selectedChatId)) {
             console.warn(
                 "Attempting to set direct chat details on the wrong chat - probably a stale response",
-                chatId,
-                this.#selectedChatId,
+                $state.snapshot(chatId),
+                $state.snapshot(this.#selectedChatId),
             );
             return;
         }
@@ -1165,8 +1185,8 @@ export class AppState {
         if (!chatIdentifiersEqual(chatId, this.#selectedChatId)) {
             console.warn(
                 "Attempting to set chat details on the wrong chat - probably a stale response",
-                chatId,
-                this.#selectedChatId,
+                $state.snapshot(chatId),
+                $state.snapshot(this.#selectedChatId),
             );
             return;
         }
@@ -1204,8 +1224,8 @@ export class AppState {
         if (!communityIdentifiersEqual(communityId, this.#selectedCommunityId)) {
             console.warn(
                 "Attempting to set community details on the wrong community - probably a stale response",
-                communityId,
-                this.#selectedCommunityId,
+                $state.snapshot(communityId),
+                $state.snapshot(this.#selectedCommunityId),
             );
             return;
         }

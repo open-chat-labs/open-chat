@@ -630,12 +630,6 @@ export const ChatMetrics = Type.Object({
 export type VideoCallType = Static<typeof VideoCallType>;
 export const VideoCallType = Type.Union([Type.Literal("Broadcast"), Type.Literal("Default")]);
 
-export type VideoCall = Static<typeof VideoCall>;
-export const VideoCall = Type.Object({
-    message_index: MessageIndex,
-    call_type: VideoCallType,
-});
-
 export type GroupRole = Static<typeof GroupRole>;
 export const GroupRole = Type.Union([
     Type.Literal("Owner"),
@@ -715,18 +709,6 @@ export const SubscriptionInfo = Type.Object({
     endpoint: Type.String(),
     keys: SubscriptionKeys,
 });
-
-export type OptionUpdateVideoCall = Static<typeof OptionUpdateVideoCall>;
-export const OptionUpdateVideoCall = Type.Union(
-    [
-        Type.Literal("NoChange"),
-        Type.Literal("SetToNone"),
-        Type.Object({
-            SetToSome: VideoCall,
-        }),
-    ],
-    { default: "NoChange" },
-);
 
 export type UserSummaryVolatile = Static<typeof UserSummaryVolatile>;
 export const UserSummaryVolatile = Type.Object({
@@ -4850,6 +4832,17 @@ export const HydratedMention = Type.Object({
     event_index: EventIndex,
 });
 
+export type VideoCall = Static<typeof VideoCall>;
+export const VideoCall = Type.Object({
+    started: Type.BigInt(),
+    started_by: UserId,
+    event_index: EventIndex,
+    message_index: MessageIndex,
+    message_id: MessageId,
+    call_type: VideoCallType,
+    joined_by_current_user: Type.Boolean(),
+});
+
 export type ExternalUrlUpdated = Static<typeof ExternalUrlUpdated>;
 export const ExternalUrlUpdated = Type.Object({
     updated_by: UserId,
@@ -5238,6 +5231,18 @@ export const PendingCryptoTransactionNNS = Type.Object({
     memo: Type.Optional(Type.BigInt()),
     created: Type.BigInt(),
 });
+
+export type OptionUpdateVideoCall = Static<typeof OptionUpdateVideoCall>;
+export const OptionUpdateVideoCall = Type.Union(
+    [
+        Type.Literal("NoChange"),
+        Type.Literal("SetToNone"),
+        Type.Object({
+            SetToSome: VideoCall,
+        }),
+    ],
+    { default: "NoChange" },
+);
 
 export type DeletedCommunityInfo = Static<typeof DeletedCommunityInfo>;
 export const DeletedCommunityInfo = Type.Object({
@@ -6138,6 +6143,7 @@ export const CommunitySelectedInitialSuccessResult = Type.Object({
     chat_rules: VersionedRules,
     user_groups: Type.Array(UserGroupDetails),
     referrals: Type.Array(UserId),
+    public_channel_list_updated: Type.BigInt(),
 });
 
 export type CommunityVideoCallParticipantsResponse = Static<
@@ -6191,6 +6197,7 @@ export const CommunitySelectedUpdatesSuccessResult = Type.Object({
     user_groups_deleted: Type.Array(Type.Number()),
     referrals_added: Type.Array(UserId),
     referrals_removed: Type.Array(UserId),
+    public_channel_list_updated: Type.BigInt(),
 });
 
 export type CommunitySelectedUpdatesResponse = Static<typeof CommunitySelectedUpdatesResponse>;
@@ -8434,6 +8441,7 @@ export type CommunityExploreChannelsSuccessResult = Static<
     typeof CommunityExploreChannelsSuccessResult
 >;
 export const CommunityExploreChannelsSuccessResult = Type.Object({
+    timestamp: Type.BigInt(),
     matches: Type.Array(ChannelMatch),
     total: Type.Number(),
 });

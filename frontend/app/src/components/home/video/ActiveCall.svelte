@@ -10,7 +10,7 @@
         userStore,
         type AccessTokenType,
         type ChatIdentifier,
-        type ChatSummary,
+        type VideoCallType,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -45,7 +45,7 @@
     const client = getContext<OpenChat>("client");
 
     let iframeContainer: HTMLDivElement | undefined = $state();
-    let confirmSwitchTo: { chat: ChatSummary; join: boolean } | undefined = $state(undefined);
+    let confirmSwitchTo: { chatId: ChatIdentifier; callType: VideoCallType; join: boolean } | undefined = $state(undefined);
     let hostEnded = $state(false);
     let denied = $state(false);
     let askedToSpeak = $state(false);
@@ -66,23 +66,23 @@
                     case "direct_chat":
                         const them = userStore.get(chat.them.userId);
                         return {
-                            chatId: chat.id,
+                            chatId,
                             name: client.displayName(them),
                             avatarUrl: client.userAvatarUrl(them),
                             userId: chat.them,
-                            messageIndex: undefined,
+                            videoCallInProgress: chat.videoCallInProgress,
                         };
                     case "group_chat":
                         return {
-                            chatId: chat.id,
+                            chatId,
                             name: chat.name,
                             avatarUrl: client.groupAvatarUrl(chat),
                             userId: undefined,
-                            messageIndex: chat.videoCallInProgress,
+                            videoCallInProgress: chat.videoCallInProgress,
                         };
                     case "channel":
                         return {
-                            chatId: chat.id,
+                            chatId,
                             name: `${
                                 app.communities.get({
                                     kind: "community",
@@ -91,21 +91,19 @@
                             } > ${chat.name}`,
                             avatarUrl: client.groupAvatarUrl(chat, app.selectedCommunitySummary),
                             userId: undefined,
-                            messageIndex: chat.videoCallInProgress,
+                            videoCallInProgress: chat.videoCallInProgress,
                         };
                 }
             }
         }
     }
 
-    export async function startOrJoinVideoCall(chat: ChatSummary, join: boolean) {
+    export async function startOrJoinVideoCall(chatId: ChatIdentifier, callType: VideoCallType, join: boolean) {
         if (chat === undefined || iframeContainer === undefined) return;
-
-        const isPublic = !client.isChatPrivate(chat);
 
         try {
             if ($activeVideoCall !== undefined) {
-                confirmSwitchTo = { chat, join };
+                confirmSwitchTo = { chatId, callType, join };
                 return;
             }
 
@@ -113,17 +111,15 @@
             ui.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
             removeQueryStringParam("open");
 
-            const callType = isPublic ? "broadcast" : "default";
-
-            activeVideoCall.joining(chat.id, callType);
+            activeVideoCall.joining(chatId, callType);
 
             const accessType: AccessTokenType = join
-                ? { kind: "join_video_call", chatId: chat.id }
-                : { kind: "start_video_call", callType, chatId: chat.id };
+                ? { kind: "join_video_call", chatId }
+                : { kind: "start_video_call", callType, chatId };
 
             // first we need to get access jwt from the oc backend
             const { token, roomName, messageId, joining } = await client.getVideoChatAccessToken(
-                chat.id,
+                chatId,
                 accessType,
             );
 
@@ -149,7 +145,7 @@
             });
 
             call.on("app-message", (ev: InterCallMessage | undefined) => {
-                if (chat.id.kind === "direct_chat") return;
+                if (chatId.kind === "direct_chat") return;
 
                 if (ev && ev.action === "app-message") {
                     if (ev.data.kind === "ask_to_speak") {
@@ -159,7 +155,7 @@
                         const me = call?.participants().local.session_id;
                         if (ev.data.participantId === me && app.currentUserId === ev.data.userId) {
                             askedToSpeak = false;
-                            client.setVideoCallPresence(chat.id, BigInt(messageId), "hidden");
+                            client.setVideoCallPresence(chatId, BigInt(messageId), "hidden");
                         }
                     }
                     if (ev.data.kind === "ask_to_speak_response") {
@@ -168,7 +164,7 @@
                             askedToSpeak = false;
                             denied = !ev.data.approved;
                             if (ev.data.approved) {
-                                client.setVideoCallPresence(chat.id, BigInt(messageId), "default");
+                                client.setVideoCallPresence(chatId, BigInt(messageId), "default");
                             }
                         }
                     }
@@ -185,7 +181,7 @@
             // this fires when a remote participant leaves the meeting
             call.on("participant-left", (ev) => {
                 // if the owner leaves, end the call
-                if (ev?.participant.owner && !ev.participant.local && isPublic) {
+                if (ev?.participant.owner && !ev.participant.local && callType === "broadcast") {
                     hangup();
                     hostEnded = true;
                 }
@@ -215,21 +211,21 @@
 
             // if we are not joining aka starting we need to tell the other users
             if (!joining) {
-                client.ringOtherUsers(chat.id, messageId);
+                client.ringOtherUsers(chatId, messageId);
             }
 
             await call.join();
 
-            activeVideoCall.setCall(chat.id, BigInt(messageId), call);
+            activeVideoCall.setCall(chatId, BigInt(messageId), call);
 
             if (joining) {
-                switch (chat.id.kind) {
+                switch (chatId.kind) {
                     case "direct_chat":
-                        await client.joinVideoCall(chat.id, BigInt(messageId));
+                        await client.joinVideoCall(chatId, BigInt(messageId));
                         break;
                     default:
                         await client.setVideoCallPresence(
-                            chat.id,
+                            chatId,
                             BigInt(messageId),
                             callType === "broadcast" ? "hidden" : "default",
                         );
@@ -267,8 +263,8 @@
     function switchCall(confirmed: boolean): Promise<void> {
         if (confirmed && confirmSwitchTo) {
             activeVideoCall.endCall();
-            const { chat, join } = confirmSwitchTo;
-            window.setTimeout(() => startOrJoinVideoCall(chat, join), 100);
+            const { chatId, callType, join } = confirmSwitchTo;
+            window.setTimeout(() => startOrJoinVideoCall(chatId, callType, join), 100);
         }
         confirmSwitchTo = undefined;
         return Promise.resolve();

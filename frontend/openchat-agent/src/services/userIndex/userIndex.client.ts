@@ -91,7 +91,6 @@ import {
     principalStringToBytes,
 } from "../../utils/mapping";
 import {
-    getCachedDeletedUserIds,
     getCachedUsers,
     getSuspendedUsersSyncedUpTo,
     setCachedDeletedUserIds,
@@ -209,12 +208,11 @@ export class UserIndexClient extends MsgpackCanisterAgent {
         const allUsers = users.userGroups.flatMap((g) => g.users);
 
         const fromCache = await getCachedUsers(allUsers);
-        const cachedDeletedUserIds = await getCachedDeletedUserIds();
         const suspendedUsersSyncedTo = await getSuspendedUsersSyncedUpTo();
 
         // We throw away all of the updatedSince values passed in and instead use the values from the cache, this
         // ensures the cache is always correct and doesn't miss any updates
-        const args = this.buildGetUsersArgs(allUsers, fromCache, allowStale, cachedDeletedUserIds);
+        const args = this.buildGetUsersArgs(allUsers, fromCache, allowStale);
 
         const requestedFromServer = new Set<string>([...args.userGroups.flatMap((g) => g.users)]);
 
@@ -246,6 +244,35 @@ export class UserIndexClient extends MsgpackCanisterAgent {
         }
 
         return mergedResponse;
+    }
+
+    async populateUserCache(userIds: string[]): Promise<void> {
+        const fromCache = await getCachedUsers(userIds);
+
+        if (fromCache.length === userIds.length) {
+            return;
+        }
+
+        const args = this.buildGetUsersArgs(userIds, fromCache, true);
+        const apiResponse = await this.getUsersFromBackend(args, undefined);
+
+        const users: UserSummary[] = [];
+        for (const user of apiResponse.users) {
+            if (user.stable !== undefined && user.volatile !== undefined) {
+                users.push({
+                    kind: user.stable?.isBot ? "bot" : "user",
+                    userId: user.userId,
+                    ...user.stable,
+                    ...user.volatile,
+                    updated: apiResponse.serverTimestamp
+                })
+            }
+        }
+
+        setCachedUsers(users).catch((err) =>
+            console.error("Failed to save users to the cache", err),
+        );
+        setCachedDeletedUserIds(apiResponse.deletedUserIds);
     }
 
     private getUsersFromBackend(
@@ -282,7 +309,6 @@ export class UserIndexClient extends MsgpackCanisterAgent {
         users: string[],
         fromCache: UserSummary[],
         allowStale: boolean,
-        _cachedDeletedUserIds: Set<string>,
     ): UsersArgs {
         const fromCacheGrouped = groupBy(fromCache, (u) => u.updated);
         const fromCacheSet = new Set<string>(fromCache.map((u) => u.userId));

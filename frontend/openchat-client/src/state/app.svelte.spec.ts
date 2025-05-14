@@ -14,13 +14,11 @@ import {
     type Message,
 } from "openchat-shared";
 import { vi } from "vitest";
-import { AppState } from "./app.svelte";
+import { app } from "./app.svelte";
 import { chatDetailsLocalUpdates } from "./chat_details";
 import { communityLocalUpdates } from "./community_details/local.svelte";
 import { localUpdates } from "./global";
 import { pathState } from "./path.svelte";
-
-let app = new AppState();
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
@@ -40,7 +38,6 @@ const mockContext: PageJS.Context = {
 
 describe("app state", () => {
     beforeEach(() => {
-        app = new AppState();
         localUpdates.clearAll();
         pathState.setRouteParams(mockContext, {
             kind: "home_route",
@@ -104,6 +101,9 @@ describe("app state", () => {
                 new Map(),
                 new Map(),
             );
+            app.updateServerEvents(chatId, () => {
+                return [chatMessage()];
+            });
         }
 
         describe("setting chat details", () => {
@@ -132,7 +132,7 @@ describe("app state", () => {
             });
         });
 
-        describe("chat local updates", () => {
+        describe("chat summary local updates", () => {
             const groupId: GroupChatIdentifier = { kind: "group_chat", groupId: "123456" };
 
             beforeEach(() => {
@@ -184,6 +184,10 @@ describe("app state", () => {
             });
 
             describe("chat properties", () => {
+                beforeEach(() => {
+                    localUpdates.clearAll();
+                });
+
                 test("chat found in all chats", () => {
                     groupChatExpectation(groupId, (g) => {
                         expect(g.name).toEqual("group chat one");
@@ -210,6 +214,25 @@ describe("app state", () => {
                             expect(g.name).toEqual("name updated");
                         });
                     });
+                });
+
+                test("when no updates, the server chat is returned", () => {
+                    const g = app.allChats.get(groupId);
+                    const s = app.allServerChats.get(groupId);
+                    expect(g === s).toBe(true);
+                });
+
+                test("when there are updates, the server chat is not mutated", () => {
+                    localUpdates.updateChatProperties(groupId, "name updated");
+                    const client = app.allChats.get(groupId);
+                    const server = app.allServerChats.get(groupId);
+                    expect(client === server).toBe(false);
+                    expect(client?.kind === "group_chat" && client.name === "name updated").toBe(
+                        true,
+                    );
+                    expect(server?.kind === "group_chat" && server.name === "group chat one").toBe(
+                        true,
+                    );
                 });
 
                 test("scoping works as expected", () => {
@@ -247,6 +270,28 @@ describe("app state", () => {
                         app.allChats.get({ kind: "group_chat", groupId: "654321" }),
                     ).not.toBeUndefined();
                 });
+            });
+        });
+
+        describe("chat events", () => {
+            beforeEach(() => setChatDetails(chatId));
+
+            test("server events are returned when there are no updates", () => {
+                const client = app.selectedChat.events[0];
+                const server = app.selectedChat.serverEvents[0];
+                expect(client === server).toBe(true);
+            });
+
+            test("server object should not be mutated if there are updates", () => {
+                app.translate(123456n, "whatever");
+                const client = app.selectedChat.events[0];
+                const server = app.selectedChat.serverEvents[0];
+                expect(client === server).toBe(false);
+                expect(
+                    client.event.kind === "message" &&
+                        client.event.content.kind === "text_content" &&
+                        client.event.content.text === "whatever",
+                ).toBe(true);
             });
         });
     });
@@ -370,6 +415,21 @@ describe("app state", () => {
             localUpdates.updateCommunityIndex(id, 3);
             expect(app.communities.get(id)?.membership.index).toEqual(3);
         });
+
+        test("should get the server object if there are no updates", () => {
+            const server = app.serverCommunities.get({ kind: "community", communityId: "123456" });
+            const client = app.communities.get({ kind: "community", communityId: "123456" });
+            expect(client === server).toBe(true);
+        });
+
+        test("should not mutate the server object if there are local updates", () => {
+            const id: CommunityIdentifier = { kind: "community", communityId: "123456" };
+            localUpdates.updateCommunityDisplayName(id, "Mr. OpenChat");
+            const server = app.serverCommunities.get(id);
+            const client = app.communities.get(id);
+            expect(client === server).toBe(false);
+        });
+
         test("community display name", () => {
             const id: CommunityIdentifier = { kind: "community", communityId: "123456" };
             expect(app.communities.get(id)?.membership.displayName).toBeUndefined();
