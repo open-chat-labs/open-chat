@@ -1,5 +1,5 @@
 use crate::updates::c2c_send_messages::{HandleMessageArgs, handle_message_impl};
-use crate::{BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT, RuntimeState};
+use crate::{Membership, RuntimeState};
 use chat_events::{MessageContentInternal, TextContentInternal};
 use constants::{DAY_IN_MS, HOUR_IN_MS, OPENCHAT_BOT_USER_ID, OPENCHAT_BOT_USERNAME};
 use types::nns::Tokens;
@@ -57,8 +57,8 @@ pub(crate) fn send_removed_from_group_or_community_message(
 
 pub(crate) fn send_phone_number_confirmed_bot_message(event: &PhoneNumberConfirmed, state: &mut RuntimeState) {
     let storage_added = to_gb(event.storage_added);
-    let new_group_limit = PREMIUM_GROUP_CREATION_LIMIT.to_string();
-    let old_group_limit = BASIC_GROUP_CREATION_LIMIT.to_string();
+    let new_group_limit = Membership::Diamond.group_creation_limit().to_string();
+    let old_group_limit = Membership::Basic.group_creation_limit().to_string();
     let text = format!(
         "Thank you for [verifying ownership of your phone number](/{OPENCHAT_BOT_USER_ID}?faq=sms_icp). This gives you {storage_added} GB of storage allowing you to send and store images, videos, audio and other files. It also entitles you to create {new_group_limit} groups (up from {old_group_limit})."
     );
@@ -71,8 +71,8 @@ pub(crate) fn send_storage_ugraded_bot_message(event: &StorageUpgraded, state: &
     let token = event.cost.token.token_symbol();
     let storage_added = to_gb(event.storage_added);
     let storage_total = to_gb(event.new_storage_limit);
-    let new_group_limit = PREMIUM_GROUP_CREATION_LIMIT.to_string();
-    let old_group_limit = BASIC_GROUP_CREATION_LIMIT.to_string();
+    let new_group_limit = Membership::Diamond.group_creation_limit().to_string();
+    let old_group_limit = Membership::Basic.group_creation_limit().to_string();
 
     let text = if event.storage_added == event.new_storage_limit {
         format!(

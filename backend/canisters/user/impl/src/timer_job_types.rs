@@ -24,7 +24,6 @@ pub enum TimerJob {
     SendMessageToGroup(Box<SendMessageToGroupJob>),
     SendMessageToChannel(Box<SendMessageToChannelJob>),
     MarkVideoCallEnded(MarkVideoCallEndedJob),
-    #[serde(alias = "ClaimChitInsurance")]
     ClaimOrResetStreakInsurance(ClaimOrResetStreakInsuranceJob),
 }
 

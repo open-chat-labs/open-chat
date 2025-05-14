@@ -138,10 +138,8 @@ pub struct GroupBeingImported {
     imported_by: UserId,
     import_started: TimestampMillis,
     current_batch_started: Option<TimestampMillis>,
-    #[serde(default)]
     events_imported: bool,
     events_imported_up_to: Option<EventContext>,
-    #[serde(default)]
     members_imported: bool,
     members_imported_up_to: Option<UserId>,
     total_bytes: u64,

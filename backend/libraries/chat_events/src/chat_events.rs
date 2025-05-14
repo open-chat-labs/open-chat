@@ -19,7 +19,7 @@ use std::collections::btree_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::mem;
 use std::ops::DerefMut;
-use tracing::{error, info};
+use tracing::error;
 use types::{
     BlobReference, BotNotification, CallParticipant, CanisterId, Chat, ChatEventType, ChatType, CompletedCryptoTransaction,
     DirectChatCreated, EventContext, EventIndex, EventMetaData, EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated,
@@ -46,23 +46,10 @@ pub struct ChatEvents {
     video_call_in_progress: Timestamped<Option<VideoCallInternal>>,
     anonymized_id: String,
     search_index: SearchIndex,
-    #[serde(default)]
     bot_subscriptions: BTreeMap<ChatEventType, HashMap<String, UserId>>,
 }
 
 impl ChatEvents {
-    pub fn migrate_bot_contexts(&mut self) {
-        // 1st March 2025
-        const BOTS_FIRST_INSTALLED: TimestampMillis = 1740787200000;
-
-        let mut count = self.main.migrate_bot_contexts(BOTS_FIRST_INSTALLED);
-        for thread in self.threads.values_mut() {
-            count += thread.migrate_bot_contexts(BOTS_FIRST_INSTALLED);
-        }
-
-        info!(count, "Migrated bot contexts");
-    }
-
     pub fn import_events(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
         stable_memory::write_events_as_bytes(chat, events);
     }
@@ -207,13 +194,11 @@ impl ChatEvents {
         }
 
         let message_index = events_list.next_message_index();
-        #[allow(deprecated)]
         let message_internal = MessageInternal {
             message_index,
             message_id: args.message_id,
             sender: args.sender,
             content: args.content,
-            bot_context: args.sender_context.as_ref().and_then(|c| c.bot_context().cloned()),
             sender_context: args.sender_context,
             replies_to: args.replies_to,
             reactions: Vec::new(),

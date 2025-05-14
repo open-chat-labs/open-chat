@@ -76,10 +76,6 @@ async function getDeletedUserIdsList(): Promise<string[]> {
     return (await lazyOpenUserCache()).getAll("deletedUserIds");
 }
 
-export async function getCachedDeletedUserIds(): Promise<Set<string>> {
-    return getDeletedUserIdsList().then((list) => new Set(list));
-}
-
 export async function isUserIdDeleted(userId: string): Promise<boolean> {
     const user = await (await lazyOpenUserCache()).get("deletedUserIds", userId);
     return user !== undefined;
@@ -105,7 +101,7 @@ export async function setCachedDeletedUserIds(deletedUserIds: Set<string>): Prom
     // delete all the deletedIds from the main userStore
     const deletes = [...deletedUserIds].map((userId) => userStore.delete(userId));
 
-    Promise.all([...inserts, ...deletes]);
+    await Promise.all([...inserts, ...deletes]);
     await tx.done;
 }
 

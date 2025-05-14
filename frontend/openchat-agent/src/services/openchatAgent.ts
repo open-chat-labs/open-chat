@@ -24,8 +24,6 @@ import type {
     ChannelIdentifier,
     ChannelSummaryResponse,
     ChatEvent,
-    ChatEventsArgs,
-    ChatEventsResponse,
     ChatIdentifier,
     ChatStateFull,
     ChatSummary,
@@ -292,6 +290,7 @@ import { TranslationsClient } from "./translations/translations.client";
 import { AnonUserClient } from "./user/anonUser.client";
 import { UserClient } from "./user/user.client";
 import { UserIndexClient } from "./userIndex/userIndex.client";
+import { CachePrimer } from "../utils/cachePrimer";
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
@@ -313,6 +312,7 @@ export class OpenChatAgent extends EventTarget {
     private _registryValue: RegistryValue | undefined;
     private db: Database;
     private _logger: Logger;
+    private _cachePrimer: CachePrimer | undefined = undefined;
 
     // Lazy loaded clients which may never end up being used
     private _bitcoinClient: Lazy<BitcoinClient>;
@@ -890,19 +890,6 @@ export class OpenChatAgent extends EventTarget {
                 );
             }
         }
-    }
-
-    chatEventsBatch(
-        localUserIndex: string,
-        requests: ChatEventsArgs[],
-        cachePrimer: boolean,
-    ): Promise<ChatEventsResponse[]> {
-        console.debug("CHAT EVENTS: Getting events batch", {
-            localUserIndex,
-            requests,
-        });
-
-        return this.getLocalUserIndexClient(localUserIndex).chatEvents(requests, cachePrimer);
     }
 
     chatEventsWindow(
@@ -2123,6 +2110,18 @@ export class OpenChatAgent extends EventTarget {
 
         if (this.userClient.userId !== ANON_USER_ID) {
             setCachedChats(this.db, this.principal, state, updatedEvents);
+
+            if (this._cachePrimer === undefined) {
+                // Set up the cache primer on the first iteration but don't process anything yet, since we want OC's
+                // initialization to be as fast as possible and so don't want resources going to the CachePrimer yet.
+                getCachePrimerTimestamps(this.db).then((ts) => this._cachePrimer = new CachePrimer(
+                    state.userCanisterLocalUserIndex,
+                    ts,
+                    (localUserIndex, requests) => this.getLocalUserIndexClient(localUserIndex).chatEvents(requests, true),
+                    (userIds) => this._userIndexClient.populateUserCache(userIds)))
+            } else {
+                this._cachePrimer.processState(state)
+            }
         }
 
         const end = Date.now();
@@ -3437,10 +3436,6 @@ export class OpenChatAgent extends EventTarget {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.communityClient(communityId).deleteUserGroups(userGroupIds);
-    }
-
-    getCachePrimerTimestamps(): Promise<Record<string, bigint>> {
-        return getCachePrimerTimestamps(this.db);
     }
 
     followThread(

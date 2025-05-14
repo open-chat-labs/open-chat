@@ -84,7 +84,6 @@ pub struct Message {
     pub message_id: MessageId,
     pub sender: UserId,
     pub content: MessageContent,
-    //pub bot_context: Option<BotMessageContext>,
     pub sender_context: Option<SenderContext>,
     pub replies_to: Option<ReplyContext>,
     pub reactions: Vec<(Reaction, Vec<UserId>)>,

@@ -15,7 +15,6 @@ pub struct Bot {
     pub owner_id: UserId,
     pub name: String,
     pub commands: Vec<BotCommandDefinition>,
-    #[serde(default)]
     pub endpoint: String,
     pub autonomous_config: Option<AutonomousConfig>,
     pub principal: Principal,

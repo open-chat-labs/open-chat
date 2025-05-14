@@ -40,8 +40,6 @@ import type {
     ChannelIdentifier,
     ChannelSummary,
     ChatEvent,
-    ChatEventsArgs,
-    ChatEventsResponse,
     ChatFrozenEvent,
     ChatIdentifier,
     ChatListScope,
@@ -326,7 +324,6 @@ import {
     createAndroidWebAuthnPasskeyIdentity,
 } from "./utils/androidWebAuthn";
 import { dataToBlobUrl } from "./utils/blob";
-import { CachePrimer } from "./utils/cachePrimer";
 import {
     activeUserIdFromEvent,
     buildBlobUrl,
@@ -516,7 +513,6 @@ export class OpenChat {
     #logger: Logger;
     #lastOnlineDatesPending = new Set<string>();
     #lastOnlineDatesPromise: Promise<Record<string, number>> | undefined;
-    #cachePrimer: CachePrimer | undefined = undefined;
     #membershipCheck: number | undefined;
     #referralCode: string | undefined = undefined;
     #userLookupForMentions: Record<string, UserOrUserGroup> | undefined = undefined;
@@ -878,18 +874,6 @@ export class OpenChat {
 
     sendMarkReadRequest(req: MarkReadRequest) {
         return this.#sendRequest({ kind: "markMessagesRead", payload: req });
-    }
-
-    chatEventsBatch(
-        localUserIndex: string,
-        requests: ChatEventsArgs[],
-    ): Promise<ChatEventsResponse[]> {
-        return this.#sendRequest({
-            kind: "chatEventsBatch",
-            localUserIndex,
-            requests,
-            cachePrimer: true,
-        });
     }
 
     maxMediaSizes(): MaxMediaSizes {
@@ -5887,11 +5871,6 @@ export class OpenChat {
 
             this.#updateReadUpToStore(chats);
 
-            if (this.#cachePrimer === undefined && !app.anonUser) {
-                this.#cachePrimer = new CachePrimer(this, chatsResponse.state.userCanisterLocalUserIndex);
-            }
-            this.#cachePrimer?.processChats(chats);
-
             const userIds = this.#userIdsFromChatSummaries(chats);
             if (chatsResponse.state.referrals !== undefined) {
                 for (const userId of chatsResponse.state.referrals.map((r) => r.userId)) {
@@ -6758,10 +6737,6 @@ export class OpenChat {
                     ? userOrGroup
                     : undefined;
         }
-    }
-
-    getCachePrimerTimestamps(): Promise<Record<string, bigint>> {
-        return this.#sendRequest({ kind: "getCachePrimerTimestamps" }).catch(() => ({}));
     }
 
     submitProposal(governanceCanisterId: string, proposal: CandidateProposal): Promise<boolean> {
