@@ -8,6 +8,7 @@ use local_user_index_canister::c2c_notify_user_index_events::{Response::*, *};
 use local_user_index_canister::{UserIndexEvent, UserRegistered};
 use msgpack::serialize_then_unwrap;
 use p256_key_pair::P256KeyPair;
+use stable_memory_map::StableMemoryMap;
 use std::cell::LazyCell;
 use std::cmp::min;
 use tracing::info;
@@ -281,6 +282,12 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                     caller: OPENCHAT_BOT_USER_ID,
                 }),
             );
+        }
+        UserIndexEvent::UserBlocked(user_id, blocked) => {
+            state.data.blocked_users.insert((user_id, blocked), ());
+        }
+        UserIndexEvent::UserUnblocked(user_id, unblocked) => {
+            state.data.blocked_users.remove(&(user_id, unblocked));
         }
     }
 }

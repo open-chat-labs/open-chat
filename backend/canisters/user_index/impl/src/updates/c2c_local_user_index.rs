@@ -12,6 +12,7 @@ use local_user_index_canister::{
     UserRegistered, UsernameChanged,
 };
 use rand::RngCore;
+use stable_memory_map::StableMemoryMap;
 use std::cell::LazyCell;
 use storage_index_canister::add_or_update_users::UserConfig;
 use types::{CanisterId, IdempotentEnvelope, MessageContent, TextContent, TimestampMillis, UserId, UserType};
@@ -150,14 +151,22 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         LocalUserIndexEvent::BotUninstalled(ev) => {
             state.data.users.remove_bot_installation(ev.bot_id, &ev.location);
         }
-        LocalUserIndexEvent::UserBlocked(user_id, blocked) => state.push_event_to_notifications_index(
-            notifications_index_canister::UserIndexEvent::UserBlocked(user_id, blocked),
-            **now,
-        ),
-        LocalUserIndexEvent::UserUnblocked(user_id, unblocked) => state.push_event_to_notifications_index(
-            notifications_index_canister::UserIndexEvent::UserUnblocked(user_id, unblocked),
-            **now,
-        ),
+        LocalUserIndexEvent::UserBlocked(user_id, blocked) => {
+            state.data.blocked_users.insert((user_id, blocked), ());
+            state.push_event_to_all_local_user_indexes(UserIndexEvent::UserBlocked(user_id, blocked), Some(caller));
+            state.push_event_to_notifications_index(
+                notifications_index_canister::UserIndexEvent::UserBlocked(user_id, blocked),
+                **now,
+            );
+        }
+        LocalUserIndexEvent::UserUnblocked(user_id, unblocked) => {
+            state.data.blocked_users.remove(&(user_id, unblocked));
+            state.push_event_to_all_local_user_indexes(UserIndexEvent::UserUnblocked(user_id, unblocked), Some(caller));
+            state.push_event_to_notifications_index(
+                notifications_index_canister::UserIndexEvent::UserUnblocked(user_id, unblocked),
+                **now,
+            );
+        }
         LocalUserIndexEvent::SetMaxStreak(user_id, max_streak) => state.data.users.set_max_streak(&user_id, max_streak),
     }
 }

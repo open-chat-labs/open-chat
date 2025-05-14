@@ -23,6 +23,7 @@ use p256_key_pair::P256KeyPair;
 use proof_of_unique_personhood::verify_proof_of_unique_personhood;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
+use stable_memory_map::UserIdsKeyPrefix;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::time::Duration;
@@ -33,6 +34,7 @@ use types::{
     Milliseconds, ReferralType, TimestampMillis, Timestamped, User, UserId, VerifiedCredentialGateArgs,
 };
 use user_canister::LocalUserIndexEvent as UserEvent;
+use user_ids_set::UserIdsSet;
 use user_index_canister::LocalUserIndexEvent as UserIndexEvent;
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
@@ -376,6 +378,7 @@ impl RuntimeState {
             users_to_delete_queue_length: self.data.users_to_delete_queue.len(),
             referral_codes: self.data.referral_codes.metrics(now),
             event_store_client_info,
+            blocked_user_pairs: self.data.blocked_users.len() as u64,
             oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
             cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
             bots: self
@@ -457,6 +460,12 @@ struct Data {
     pub cycles_balance_check_queue: VecDeque<CanisterId>,
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub idempotency_checker: IdempotencyChecker,
+    #[serde(default = "blocked_users")]
+    pub blocked_users: UserIdsSet,
+}
+
+fn blocked_users() -> UserIdsSet {
+    UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users())
 }
 
 #[derive(Serialize, Deserialize)]
@@ -546,6 +555,7 @@ impl Data {
             bots: BotsMap::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             idempotency_checker: IdempotencyChecker::default(),
+            blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
         }
     }
 }
@@ -599,6 +609,7 @@ pub struct Metrics {
     pub recent_user_upgrades: Vec<CanisterId>,
     pub recent_group_upgrades: Vec<CanisterId>,
     pub recent_community_upgrades: Vec<CanisterId>,
+    pub blocked_user_pairs: u64,
     pub oc_secret_key_initialized: bool,
     pub cycles_balance_check_queue_len: u32,
     pub bots: Vec<BotMetrics>,

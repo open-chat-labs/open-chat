@@ -5915,6 +5915,7 @@ dependencies = [
  "types",
  "user_canister",
  "user_canister_c2c_client",
+ "user_ids_set",
  "user_index_canister",
  "user_index_canister_c2c_client",
  "utils 0.1.0",
@@ -11340,6 +11341,7 @@ dependencies = [
  "serde_bytes",
  "serde_json",
  "stable_memory",
+ "stable_memory_map",
  "storage_index_canister",
  "storage_index_canister_c2c_client",
  "testing",
@@ -11350,6 +11352,7 @@ dependencies = [
  "url",
  "user_canister",
  "user_canister_c2c_client",
+ "user_ids_set",
  "user_index_canister",
  "utils 0.1.0",
 ]

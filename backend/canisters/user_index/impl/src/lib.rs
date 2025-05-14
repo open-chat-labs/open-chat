@@ -25,6 +25,7 @@ use model::user::SuspensionDetails;
 use p256_key_pair::P256KeyPair;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
+use stable_memory_map::UserIdsKeyPrefix;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
@@ -33,6 +34,7 @@ use types::{
     BuildVersion, CanisterId, ChatId, ChildCanisterWasms, Cycles, DiamondMembershipFees, IdempotentEnvelope, Milliseconds,
     TimestampMillis, Timestamped, UserId, UserType,
 };
+use user_ids_set::UserIdsSet;
 use user_index_canister::ChildCanisterType;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
@@ -290,6 +292,7 @@ impl RuntimeState {
             empty_users: self.data.empty_users.len(),
             deleted_users: self.data.deleted_users.len(),
             unique_person_proofs_submitted: self.data.users.unique_person_proofs_submitted(),
+            blocked_user_pairs: self.data.blocked_users.len() as u64,
             july_airdrop_period: self.build_stats_for_cohort(1719792000000, 1723021200000),
             august_airdrop_period: self.build_stats_for_cohort(1723021200000, 1725181200000),
             streak_badges: self.data.users.streak_badge_metrics(now),
@@ -411,6 +414,12 @@ struct Data {
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
     pub streak_insurance_logs: StreakInsuranceLogs,
     pub idempotency_checker: IdempotencyChecker,
+    #[serde(default = "blocked_users")]
+    pub blocked_users: UserIdsSet,
+}
+
+fn blocked_users() -> UserIdsSet {
+    UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users())
 }
 
 impl Data {
@@ -494,6 +503,7 @@ impl Data {
             upload_wasm_chunks_whitelist: Vec::new(),
             streak_insurance_logs: StreakInsuranceLogs::default(),
             idempotency_checker: IdempotencyChecker::default(),
+            blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
         };
 
         // Register the ProposalsBot
@@ -609,6 +619,7 @@ impl Default for Data {
             upload_wasm_chunks_whitelist: Vec::new(),
             streak_insurance_logs: StreakInsuranceLogs::default(),
             idempotency_checker: IdempotencyChecker::default(),
+            blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
         }
     }
 }
@@ -647,6 +658,7 @@ pub struct Metrics {
     pub empty_users: usize,
     pub deleted_users: usize,
     pub unique_person_proofs_submitted: u32,
+    pub blocked_user_pairs: u64,
     pub july_airdrop_period: AirdropStats,
     pub august_airdrop_period: AirdropStats,
     pub streak_badges: BTreeMap<u16, u32>,
