@@ -35,10 +35,12 @@ export class CachePrimer {
             community.channels.forEach((c) => this.processChat(c, community.localUserIndex));
         }
 
+        debug("processed state, queue length: " + this.pending.length);
+
         if (!this.jobActive && this.pending.length > 0) {
             this.jobActive = true;
-            // Sort by `lastUpdated` descending
-            this.pending.sort((a, b) => a.lastUpdated > b.lastUpdated ? -1 : 1);
+            // Sort by `lastUpdated` ascending
+            this.pending.sort((a, b) => a.lastUpdated > b.lastUpdated ? 1 : -1);
             setTimeout(() => this.processNextBatch(), 0);
         }
     }
@@ -52,7 +54,6 @@ export class CachePrimer {
         const lastUpdated = this.lastUpdatedTimestamps[chatIdString];
         if (this.shouldEnqueueChat(chat, lastUpdated)) {
             this.pending.push(normalizeChat(chat, localUserIndex));
-            debug("enqueued " + chatIdString);
         }
     }
 
@@ -89,11 +90,11 @@ export class CachePrimer {
             }
 
             if (userIds.size > 0) {
-                debug(`Loading ${userIds.size} users`);
+                debug(`loading ${userIds.size} users`);
                 this.loadUsers([...userIds]);
             }
 
-            debug(`Batch of size ${batch.length} completed`);
+            debug(`batch of size ${batch.length} completed`);
         } finally {
             this.inProgress.clear();
             if (this.pending.length === 0) {
@@ -109,14 +110,17 @@ export class CachePrimer {
         const batch: ChatEventsArgs[] = [];
         let localUserIndexForBatch: string | undefined = undefined;
 
-        for (const [index, next] of this.pending.entries()) {
+        // Iterate backwards to reduce the number of items having to be moved each time we `splice` the array
+        for (let i = this.pending.length - 1; i >= 0; i--) {
+            const next = this.pending[i];
+
             if (localUserIndexForBatch === undefined) {
                 localUserIndexForBatch = next.localUserIndex;
             } else if (next.localUserIndex !== localUserIndexForBatch) {
                 continue;
             }
 
-            delete this.pending[index];
+            this.pending.splice(i, 1);
             this.inProgress.add(chatIdentifierToString(next.chatId));
 
             batch.push(...this.getEventsArgs(next));
