@@ -113,6 +113,7 @@ export class MessageReadTracker {
     #timeout: number | undefined;
     #serverState: MessagesReadByChat = new ReactiveChatMap<MessagesRead>();
     #state: MessagesReadByChat = new ReactiveChatMap<MessagesRead>();
+    #stopped: boolean = false;
 
     /**
      * The waiting structure is either keyed on chatId for normal chat messages or
@@ -129,7 +130,9 @@ export class MessageReadTracker {
     });
 
     #triggerLoop(api: OpenChat): void {
-        this.#timeout = window.setTimeout(() => this.#sendToServer(api), MARK_READ_INTERVAL);
+        if (!this.#stopped) {
+            this.#timeout = window.setTimeout(() => this.#sendToServer(api), MARK_READ_INTERVAL);
+        }
     }
 
     get messageReadState() {
@@ -138,6 +141,7 @@ export class MessageReadTracker {
 
     start(api: OpenChat): void {
         console.log("starting the mark read poller");
+        this.#stopped = false;
         if (import.meta.env.OC_NODE_ENV !== "test") {
             this.#triggerLoop(api);
         }
@@ -148,6 +152,7 @@ export class MessageReadTracker {
 
     stop(): void {
         console.log("stopping the mark read poller");
+        this.#stopped = true;
         if (this.#timeout !== undefined) {
             window.clearTimeout(this.#timeout);
         }

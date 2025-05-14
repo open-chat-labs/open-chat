@@ -3180,6 +3180,9 @@ export class OpenChat {
     }
 
     async #loadChatDetails(serverChat: ChatSummary): Promise<void> {
+        if (app.offline) {
+            return;
+        }
         switch (serverChat.kind) {
             case "group_chat":
             case "channel":
