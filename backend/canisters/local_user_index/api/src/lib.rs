@@ -124,7 +124,6 @@ pub struct BotRegistered {
     pub user_principal: Principal,
     pub name: String,
     pub commands: Vec<BotCommandDefinition>,
-    #[serde(default)]
     pub endpoint: String,
     pub autonomous_config: Option<AutonomousConfig>,
     pub permitted_install_location: Option<BotInstallationLocation>,
@@ -139,7 +138,6 @@ pub struct BotPublished {
 pub struct BotUpdated {
     pub bot_id: UserId,
     pub owner_id: UserId,
-    #[serde(default)]
     pub endpoint: String,
     pub definition: BotDefinition,
 }

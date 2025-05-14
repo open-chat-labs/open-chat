@@ -417,7 +417,6 @@ struct Data {
     pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
-    #[serde(default = "CanisterId::anonymous")]
     pub notifications_index_canister_id: CanisterId,
     pub identity_canister_id: CanisterId,
     pub local_group_index_canister_id: CanisterId,

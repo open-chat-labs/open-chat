@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1749](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1749-user_index)] - 2025-05-13
+
 ### Changed
 
 - Support exclusion of installed bots from `explore_bots` ([#7904](https://github.com/open-chat-labs/open-chat/pull/7904))
