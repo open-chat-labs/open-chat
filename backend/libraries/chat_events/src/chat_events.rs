@@ -194,13 +194,11 @@ impl ChatEvents {
         }
 
         let message_index = events_list.next_message_index();
-        #[allow(deprecated)]
         let message_internal = MessageInternal {
             message_index,
             message_id: args.message_id,
             sender: args.sender,
             content: args.content,
-            bot_context: args.sender_context.as_ref().and_then(|c| c.bot_context().cloned()),
             sender_context: args.sender_context,
             replies_to: args.replies_to,
             reactions: Vec::new(),

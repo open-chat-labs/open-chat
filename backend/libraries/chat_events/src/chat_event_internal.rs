@@ -205,9 +205,6 @@ pub struct MessageInternal {
     pub sender: UserId,
     #[serde(rename = "c")]
     pub content: MessageContentInternal,
-    #[serde(rename = "bc", default, skip_serializing_if = "Option::is_none")]
-    #[deprecated]
-    pub bot_context: Option<BotMessageContext>,
     #[serde(rename = "sc", default, skip_serializing_if = "Option::is_none")]
     pub sender_context: Option<SenderContext>,
     #[serde(rename = "p", default, skip_serializing_if = "Option::is_none")]
@@ -239,7 +236,6 @@ impl MessageInternal {
             } else {
                 self.content.hydrate(my_user_id)
             },
-            bot_context: self.sender_context.as_ref().and_then(|c| c.bot_context().cloned()),
             sender_context: self.sender_context,
             replies_to: self.replies_to.as_ref().map(|r| r.hydrate()),
             reactions: self
@@ -522,7 +518,6 @@ mod tests {
             message_id: 1u64.into(),
             sender: Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap().into(),
             content: MessageContentInternal::Text(TextContentInternal { text: "123".to_string() }),
-            bot_context: None,
             sender_context: None,
             replies_to: None,
             reactions: Vec::new(),
