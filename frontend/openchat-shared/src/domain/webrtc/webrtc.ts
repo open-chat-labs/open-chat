@@ -1,4 +1,4 @@
-import type { ChatIdentifier, EventWrapper, Message } from "../chat/chat";
+import type { ChatIdentifier, EventWrapper, Message, VideoCallType } from "../chat/chat";
 
 export type WebRtcMessage =
     | RemoteUserStoppedTyping
@@ -21,6 +21,7 @@ type WebRtcMessageCommon = {
 export type RemoteVideoCallStarted = WebRtcMessageCommon & {
     kind: "remote_video_call_started";
     messageId: bigint;
+    callType: VideoCallType;
 };
 
 export type RemoteVideoCallEnded = WebRtcMessageCommon & {
