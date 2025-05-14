@@ -294,6 +294,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
         switch (kind) {
             case "setMinLogLevel":
                 setMinLogLevel(payload.minLogLevel);
+                sendResponse(correlationId, undefined);
                 break;
 
             case "getCurrentUser":
