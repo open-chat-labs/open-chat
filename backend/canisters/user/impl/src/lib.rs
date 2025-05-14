@@ -13,7 +13,7 @@ use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReference
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use constants::{DAY_IN_MS, ICP_LEDGER_CANISTER_ID, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
+use constants::{DAY_IN_MS, ICP_LEDGER_CANISTER_ID, LIFETIME_DIAMOND_TIMESTAMP, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -63,8 +63,6 @@ mod timer_job_types;
 mod token_swaps;
 mod updates;
 
-pub const BASIC_GROUP_CREATION_LIMIT: u32 = 5;
-pub const PREMIUM_GROUP_CREATION_LIMIT: u32 = 40;
 pub const COMMUNITY_CREATION_LIMIT: u32 = 10;
 const SIX_MONTHS: Milliseconds = 183 * DAY_IN_MS;
 
@@ -501,8 +499,12 @@ impl Data {
         }
     }
 
-    pub fn is_diamond_member(&self, now: TimestampMillis) -> bool {
-        self.diamond_membership_expires_at.is_some_and(|ts| now < ts)
+    pub fn membership(&self, now: TimestampMillis) -> Membership {
+        match self.diamond_membership_expires_at {
+            Some(ts) if ts > LIFETIME_DIAMOND_TIMESTAMP => Membership::LifetimeDiamond,
+            Some(ts) if ts > now => Membership::Diamond,
+            _ => Membership::Basic,
+        }
     }
 
     pub fn verify_not_suspended(&self) -> Result<(), OCErrorCode> {
@@ -616,4 +618,24 @@ pub struct CanisterIds {
     pub notifications: CanisterId,
     pub escrow: CanisterId,
     pub icp_ledger: CanisterId,
+}
+
+pub enum Membership {
+    Basic,
+    Diamond,
+    LifetimeDiamond,
+}
+
+impl Membership {
+    pub fn is_diamond_member(&self) -> bool {
+        matches!(self, Membership::Diamond | Membership::LifetimeDiamond)
+    }
+
+    pub fn group_creation_limit(&self) -> u32 {
+        match self {
+            Membership::Basic => 5,
+            Membership::Diamond => 40,
+            Membership::LifetimeDiamond => 100,
+        }
+    }
 }

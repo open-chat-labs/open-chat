@@ -1,7 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{
-    BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT, RuntimeState, mutate_state, read_state, run_regular_jobs,
-};
+use crate::{RuntimeState, mutate_state, read_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_group;
@@ -66,10 +64,10 @@ fn prepare(args: Args, state: &RuntimeState) -> OCResult<PrepareResult> {
     }
 
     let now = state.env.now();
-    let is_diamond_member = state.data.is_diamond_member(now);
-    let group_creation_limit = if is_diamond_member { PREMIUM_GROUP_CREATION_LIMIT } else { BASIC_GROUP_CREATION_LIMIT };
+    let membership = state.data.membership(now);
+    let group_creation_limit = membership.group_creation_limit();
 
-    if !is_diamond_member && args.is_public {
+    if !membership.is_diamond_member() && args.is_public {
         Err(OCErrorCode::NotDiamondMember.into())
     } else if state.data.group_chats.groups_created() >= group_creation_limit {
         Err(OCErrorCode::MaxGroupsCreated.with_message(group_creation_limit))
