@@ -21,7 +21,7 @@ async fn add_notifications_canister(args: Args) -> Response {
             } else if let Err(error) = install_basic(args.canister_id, result.canister_wasm, result.init_args).await {
                 InternalError(format!("Failed to install canister: {error:?}"))
             } else {
-                mutate_state(|state| commit(args.canister_id, wasm_version, state))
+                mutate_state(|state| commit(args.canister_id, args.local_user_index_canister_id, wasm_version, state))
             }
         }
         Err(response) => response,
@@ -53,7 +53,14 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     }
 }
 
-fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut RuntimeState) -> Response {
+fn commit(
+    canister_id: CanisterId,
+    local_user_index_canister_id: CanisterId,
+    wasm_version: BuildVersion,
+    state: &mut RuntimeState,
+) -> Response {
+    state.data.local_indexes.insert(local_user_index_canister_id);
+
     if let Vacant(e) = state.data.notifications_canisters.entry(canister_id) {
         let now = state.env.now();
         e.insert(NotificationsCanister::new(wasm_version, now));

@@ -2,6 +2,7 @@ use crate::model::community_event_batch::CommunityEventBatch;
 use crate::model::group_event_batch::GroupEventBatch;
 use crate::model::local_community_map::LocalCommunityMap;
 use crate::model::local_group_map::LocalGroupMap;
+use crate::model::notification_subscriptions::NotificationSubscriptions;
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use crate::model::user_event_batch::UserEventBatch;
 use crate::model::user_index_event_batch::UserIndexEventBatch;
@@ -130,14 +131,19 @@ impl RuntimeState {
         user_details
     }
 
-    pub fn is_caller_user_index_canister(&self) -> bool {
+    pub fn is_caller_user_index(&self) -> bool {
         let caller = self.env.caller();
         self.data.user_index_canister_id == caller
     }
 
-    pub fn is_caller_group_index_canister(&self) -> bool {
+    pub fn is_caller_group_index(&self) -> bool {
         let caller = self.env.caller();
         self.data.group_index_canister_id == caller
+    }
+
+    pub fn is_caller_notifications_index(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.notifications_index_canister_id == caller
     }
 
     pub fn is_caller_local_user_canister(&self) -> bool {
@@ -460,6 +466,8 @@ struct Data {
     pub cycles_balance_check_queue: VecDeque<CanisterId>,
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub idempotency_checker: IdempotencyChecker,
+    #[serde(default)]
+    pub notification_subscriptions: NotificationSubscriptions,
     #[serde(default = "blocked_users")]
     pub blocked_users: UserIdsSet,
 }
@@ -555,6 +563,7 @@ impl Data {
             bots: BotsMap::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             idempotency_checker: IdempotencyChecker::default(),
+            notification_subscriptions: NotificationSubscriptions::default(),
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
         }
     }

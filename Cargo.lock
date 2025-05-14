@@ -5837,12 +5837,11 @@ name = "local_user_index_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "candid_gen",
  "community_canister",
- "constants",
  "event_store_canister",
  "group_canister",
  "ic-ledger-types",
+ "notifications_index_canister",
  "oc_error_codes",
  "serde",
  "serde_bytes",
@@ -5850,7 +5849,6 @@ dependencies = [
  "ts_export",
  "types",
  "user_canister",
- "utils 0.1.0",
 ]
 
 [[package]]
@@ -5898,6 +5896,7 @@ dependencies = [
  "ledger_utils",
  "local_user_index_canister",
  "msgpack",
+ "notifications_index_canister",
  "oc_error_codes",
  "online_users_canister",
  "online_users_canister_c2c_client",

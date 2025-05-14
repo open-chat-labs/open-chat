@@ -1,4 +1,4 @@
-use crate::guards::caller_is_group_index_canister;
+use crate::guards::caller_is_group_index;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -6,7 +6,7 @@ use local_user_index_canister::c2c_delete_community::{Response::*, *};
 use types::CanisterId;
 use utils::canister::{delete, stop};
 
-#[update(guard = "caller_is_group_index_canister", msgpack = true)]
+#[update(guard = "caller_is_group_index", msgpack = true)]
 #[trace]
 fn c2c_delete_community(args: Args) -> Response {
     mutate_state(|state| c2c_delete_community_impl(args, state))

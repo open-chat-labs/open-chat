@@ -9,7 +9,7 @@ use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::UserIdsKeyPrefix;
 use std::cell::RefCell;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, Cycles, IdempotentEnvelope, SubscriptionInfo, TimestampMillis, Timestamped, UserId,
@@ -65,12 +65,14 @@ impl RuntimeState {
 
         let event = NotificationsIndexEvent::SubscriptionAdded(SubscriptionAdded { user_id, subscription });
 
-        self.push_event_to_notifications_canisters(event, now);
+        self.push_event_to_notifications_canisters(event.clone(), now);
+        self.push_event_to_local_indexes(event, now);
 
         for p256dh_key in subscriptions_removed {
             let event = NotificationsIndexEvent::SubscriptionRemoved(SubscriptionRemoved { user_id, p256dh_key });
 
-            self.push_event_to_notifications_canisters(event, now);
+            self.push_event_to_notifications_canisters(event.clone(), now);
+            self.push_event_to_local_indexes(event, now);
         }
     }
 
@@ -79,7 +81,8 @@ impl RuntimeState {
 
         let event = NotificationsIndexEvent::SubscriptionRemoved(SubscriptionRemoved { user_id, p256dh_key });
 
-        self.push_event_to_notifications_canisters(event, now);
+        self.push_event_to_notifications_canisters(event.clone(), now);
+        self.push_event_to_local_indexes(event, now);
     }
 
     pub fn remove_all_subscriptions(&mut self, user_id: UserId, now: TimestampMillis) {
@@ -87,7 +90,8 @@ impl RuntimeState {
 
         let event = NotificationsIndexEvent::AllSubscriptionsRemoved(user_id);
 
-        self.push_event_to_notifications_canisters(event, now);
+        self.push_event_to_notifications_canisters(event.clone(), now);
+        self.push_event_to_local_indexes(event, now);
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -111,6 +115,7 @@ impl RuntimeState {
                 .iter()
                 .map(|(k, v)| (*k, v.clone()))
                 .collect(),
+            local_indexes: self.data.local_indexes.clone(),
             stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
@@ -131,12 +136,27 @@ impl RuntimeState {
             );
         }
     }
+
+    pub fn push_event_to_local_indexes(&mut self, event: NotificationsIndexEvent, now: TimestampMillis) {
+        for canister_id in self.data.local_indexes.iter() {
+            self.data.local_index_event_sync_queue.push(
+                *canister_id,
+                IdempotentEnvelope {
+                    created_at: now,
+                    idempotency_id: self.env.rng().next_u64(),
+                    value: event.clone(),
+                },
+            );
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub governance_principals: HashSet<Principal>,
     pub notifications_canisters: HashMap<CanisterId, NotificationsCanister>,
+    #[serde(default)]
+    pub local_indexes: BTreeSet<CanisterId>,
     pub push_service_principals: HashSet<Principal>,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
@@ -147,11 +167,17 @@ struct Data {
     pub notifications_canister_wasm_for_upgrades: CanisterWasm,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub notification_canisters_event_sync_queue: GroupedTimerJobQueue<NotificationCanistersEventBatch>,
+    #[serde(default = "local_index_event_sync_queue")]
+    pub local_index_event_sync_queue: GroupedTimerJobQueue<NotificationCanistersEventBatch>,
     pub blocked_users: UserIdsSet,
     pub bot_endpoints: HashMap<UserId, String>,
     pub idempotency_checker: IdempotencyChecker,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
+}
+
+fn local_index_event_sync_queue() -> GroupedTimerJobQueue<NotificationCanistersEventBatch> {
+    GroupedTimerJobQueue::new(5, false)
 }
 
 impl Data {
@@ -166,6 +192,7 @@ impl Data {
         Data {
             governance_principals: governance_principals.into_iter().collect(),
             notifications_canisters: HashMap::default(),
+            local_indexes: BTreeSet::default(),
             push_service_principals: push_service_principals.into_iter().collect(),
             user_index_canister_id,
             cycles_dispenser_canister_id,
@@ -176,6 +203,7 @@ impl Data {
             notifications_canister_wasm_for_upgrades: CanisterWasm::default(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             notification_canisters_event_sync_queue: GroupedTimerJobQueue::new(5, false),
+            local_index_event_sync_queue: GroupedTimerJobQueue::new(5, false),
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
             bot_endpoints: HashMap::default(),
             idempotency_checker: IdempotencyChecker::default(),
@@ -201,6 +229,7 @@ pub struct Metrics {
     pub push_service_principals: Vec<Principal>,
     pub notifications_canister_wasm_version: BuildVersion,
     pub notifications_canisters: Vec<(CanisterId, NotificationsCanister)>,
+    pub local_indexes: BTreeSet<CanisterId>,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
