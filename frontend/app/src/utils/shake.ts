@@ -14,10 +14,10 @@ export function shakeElements(
         .flatMap((selector) => Array.from(document.querySelectorAll(selector)))
         .filter((el): el is HTMLElement => el instanceof HTMLElement);
 
-    const originalStyle = new Map<HTMLElement, CSSStyleDeclaration>();
+    const originalStyle = new Map<HTMLElement, string>();
 
     for (const el of elements) {
-        originalStyle.set(el, el.style ?? {});
+        originalStyle.set(el, el.getAttribute("style") || "");
     }
 
     const startTime = performance.now();
@@ -38,7 +38,7 @@ export function shakeElements(
         } else {
             // put the original elements back how they were
             for (const el of elements) {
-                el.style = JSON.stringify(originalStyle.get(el) ?? {});
+                el.setAttribute("style", originalStyle.get(el)!);
                 el.style.transform = "";
             }
 
