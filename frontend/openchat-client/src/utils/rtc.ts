@@ -29,6 +29,7 @@ export function createRemoteVideoStartedEvent(msg: RemoteVideoCallStarted) {
             userId: msg.userId,
             messageId: msg.messageId,
             currentUserIsParticipant: false,
+            callType: msg.callType,
             timestamp: BigInt(Date.now()),
         };
     }

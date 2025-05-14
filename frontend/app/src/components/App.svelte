@@ -22,11 +22,11 @@
     } from "@utils/urls";
     import {
         type ChatIdentifier,
-        type ChatSummary,
         type DexId,
         type DiamondMembershipFees,
         OpenChat,
         type UpdateMarketMakerConfigArgs,
+        type VideoCallType,
         app,
         botState,
         inititaliseLogger,
@@ -515,8 +515,8 @@
         calculateHeight();
     }
 
-    function startVideoCall(payload: { chat: ChatSummary; join: boolean }) {
-        videoCallElement?.startOrJoinVideoCall(payload.chat, payload.join);
+    function startVideoCall(payload: { chatId: ChatIdentifier; callType: VideoCallType; join: boolean }) {
+        videoCallElement?.startOrJoinVideoCall(payload.chatId, payload.callType, payload.join);
     }
 
     function askToSpeak() {
@@ -527,13 +527,10 @@
         videoCallElement?.hangup();
     }
 
-    function joinVideoCall(chatId: ChatIdentifier) {
+    function joinVideoCall(chatId: ChatIdentifier, callType: VideoCallType) {
         incomingVideoCall.set(undefined);
-        const chat = client.lookupChatSummary(chatId);
-        if (chat) {
-            page(routeForChatIdentifier("none", chat.id));
-            videoCallElement?.startOrJoinVideoCall(chat, true);
-        }
+        page(routeForChatIdentifier("none", chatId));
+        videoCallElement?.startOrJoinVideoCall(chatId, callType, true);
     }
 </script>
 

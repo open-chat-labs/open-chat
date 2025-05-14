@@ -16,8 +16,8 @@
     const client = getContext<OpenChat>("client");
 
     function join() {
-        if (!incall && app.selectedChatSummary) {
-            publish("startVideoCall", { chat: app.selectedChatSummary, join: true });
+        if (!inCall && app.selectedChatSummary) {
+            publish("startVideoCall", { chatId: app.selectedChatSummary.id, callType: "broadcast", join: true });
         }
     }
 
@@ -39,12 +39,12 @@
     let isPublic = $derived(
         app.selectedChatSummary !== undefined && !client.isChatPrivate(app.selectedChatSummary),
     );
-    let incall = $derived(
+    let inCall = $derived(
         $activeVideoCall !== undefined &&
             app.selectedChatSummary !== undefined &&
             chatIdentifiersEqual($activeVideoCall.chatId, app.selectedChatSummary?.id),
     );
-    let show = $derived(hasCall && isPublic && !incall);
+    let show = $derived(hasCall && isPublic && !inCall);
 </script>
 
 {#if show}

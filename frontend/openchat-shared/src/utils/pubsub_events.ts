@@ -2,7 +2,6 @@ import type { Readable } from "svelte/store";
 import type {
     ChannelIdentifier,
     ChatIdentifier,
-    ChatSummary,
     ChitEarned,
     CommunityIdentifier,
     CommunitySummary,
@@ -19,10 +18,11 @@ import type {
     Notification,
     ResourceKey,
     UpdatedRules,
+    VideoCallType,
 } from "..";
 
 export type PubSubEvents = {
-    startVideoCall: { chat: ChatSummary; join: boolean };
+    startVideoCall: { chatId: ChatIdentifier; callType: VideoCallType; join: boolean };
     hangup: undefined;
     askToSpeak: undefined;
     chatWith: DirectChatIdentifier;
@@ -120,6 +120,7 @@ export type PubSubEvents = {
         userId: string;
         messageId: bigint;
         currentUserIsParticipant: boolean;
+        callType: VideoCallType;
         timestamp: bigint;
     };
     remoteVideoCallEnded: bigint;
