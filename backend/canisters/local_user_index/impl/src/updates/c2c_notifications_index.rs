@@ -28,6 +28,9 @@ fn c2c_notifications_index_impl(args: Args, state: &mut RuntimeState) -> Respons
                 NotificationsIndexEvent::AllSubscriptionsRemoved(u) => {
                     state.data.notification_subscriptions.remove_all(u);
                 }
+                NotificationsIndexEvent::SetNotificationPusherPrincipals(principals) => {
+                    state.data.notification_pushers = principals;
+                }
                 NotificationsIndexEvent::UserBlocked(..)
                 | NotificationsIndexEvent::UserUnblocked(..)
                 | NotificationsIndexEvent::BotEndpointUpdated(..)
