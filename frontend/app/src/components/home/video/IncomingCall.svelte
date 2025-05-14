@@ -6,6 +6,7 @@
         userStore,
         type ChatIdentifier,
         type OpenChat,
+        type VideoCallType,
     } from "openchat-client";
     import { getContext } from "svelte";
     import Phone from "svelte-material-icons/Phone.svelte";
@@ -26,7 +27,7 @@
     import Translatable from "../../Translatable.svelte";
 
     interface Props {
-        onJoinVideoCall: (chatId: ChatIdentifier) => void;
+        onJoinVideoCall: (chatId: ChatIdentifier, callType: VideoCallType) => void;
     }
 
     let { onJoinVideoCall }: Props = $props();
@@ -77,7 +78,7 @@
 
     function join() {
         if ($incomingVideoCall !== undefined) {
-            onJoinVideoCall($incomingVideoCall.chatId);
+            onJoinVideoCall($incomingVideoCall.chatId, $incomingVideoCall.callType);
         }
     }
 

@@ -101,7 +101,7 @@
     let videoCallInProgress = $derived(selectedChatSummary.videoCallInProgress !== undefined);
     let isPublic = $derived(!client.isChatPrivate(selectedChatSummary));
 
-    let incall = $derived(
+    let inCall = $derived(
         $activeVideoCall !== undefined &&
             videoCallInProgress &&
             chatIdentifiersEqual($activeVideoCall.chatId, selectedChatSummary?.id),
@@ -115,7 +115,7 @@
               : i18nKey("videoCall.startVideo"),
     );
 
-    let canStartOrJoinVideoCall = $derived(!incall && (videoCallInProgress || canStartVideoCalls));
+    let canStartOrJoinVideoCall = $derived(!inCall && (videoCallInProgress || canStartVideoCalls));
 
     let hasUnreadPinned = $derived(
         hasPinned &&
@@ -252,7 +252,8 @@
 
     function startVideoCall() {
         publish("startVideoCall", {
-            chat: selectedChatSummary,
+            chatId: selectedChatSummary.id,
+            callType: isPublic ? "broadcast" : "default",
             join: videoCallInProgress,
         });
     }

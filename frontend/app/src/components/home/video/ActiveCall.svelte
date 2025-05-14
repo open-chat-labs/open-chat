@@ -99,7 +99,7 @@
     }
 
     export async function startOrJoinVideoCall(chatId: ChatIdentifier, callType: VideoCallType, join: boolean) {
-        if (chat === undefined || iframeContainer === undefined) return;
+        if (iframeContainer === undefined) return;
 
         try {
             if ($activeVideoCall !== undefined) {
@@ -211,7 +211,7 @@
 
             // if we are not joining aka starting we need to tell the other users
             if (!joining) {
-                client.ringOtherUsers(chatId, messageId);
+                client.ringOtherUsers(chatId, messageId, callType);
             }
 
             await call.join();

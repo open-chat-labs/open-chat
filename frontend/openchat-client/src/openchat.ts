@@ -192,6 +192,7 @@ import type {
     VersionedRules,
     VideoCallParticipant,
     VideoCallPresence,
+    VideoCallType,
     WalletConfig,
     WebAuthnKey,
     WebAuthnKeyFull,
@@ -4300,6 +4301,7 @@ export class OpenChat {
                             userId: ev.event.sender,
                             messageId: ev.event.messageId,
                             currentUserIsParticipant: false,
+                            callType: ev.event.content.callType,
                             timestamp: ev.timestamp,
                         });
                     }
@@ -5995,6 +5997,7 @@ export class OpenChat {
                         userId: chat.videoCallInProgress.startedBy,
                         messageId: chat.videoCallInProgress.messageId,
                         currentUserIsParticipant: chat.videoCallInProgress.joinedByCurrentUser,
+                        callType: chat.videoCallInProgress.callType,
                         timestamp: chat.videoCallInProgress.started,
                     });
                 }
@@ -6943,13 +6946,14 @@ export class OpenChat {
         }
     }
 
-    async ringOtherUsers(chatId: ChatIdentifier, messageId: bigint) {
+    async ringOtherUsers(chatId: ChatIdentifier, messageId: bigint, callType: VideoCallType) {
         this.#sendVideoCallUsersWebRtcMessage(
             {
                 kind: "remote_video_call_started",
                 id: chatId,
                 userId: app.currentUserId,
                 messageId,
+                callType,
             },
             chatId,
         );
