@@ -9,3 +9,5 @@ pub mod c2c_user_principals;
 pub mod chat_events;
 pub mod group_and_community_summary_updates;
 pub mod http_request;
+pub mod latest_notification_index;
+pub mod notifications_v2;

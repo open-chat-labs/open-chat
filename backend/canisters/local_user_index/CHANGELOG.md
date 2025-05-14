@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Support serving notifications from LocalUserIndexes ([#7968](https://github.com/open-chat-labs/open-chat/pull/7968))
+
 ### Changed
 
 - Store blocked user mappings in LocalUserIndexes ([#7960](https://github.com/open-chat-labs/open-chat/pull/7960))

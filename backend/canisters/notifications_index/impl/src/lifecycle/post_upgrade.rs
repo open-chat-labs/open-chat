@@ -46,7 +46,9 @@ fn post_upgrade(args: Args) {
         }
     }
 
-    let mut events = Vec::new();
+    let mut events = vec![NotificationsIndexEvent::SetNotificationPusherPrincipals(
+        data.push_service_principals.clone(),
+    )];
     for (user_id, subscriptions) in data.subscriptions.iter() {
         for subscription in subscriptions.iter().cloned() {
             events.push(NotificationsIndexEvent::SubscriptionAdded(SubscriptionAdded {

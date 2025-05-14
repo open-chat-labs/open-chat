@@ -56,6 +56,14 @@ pub fn caller_is_local_group_index() -> Result<(), String> {
     }
 }
 
+pub fn caller_is_notification_pusher() -> Result<(), String> {
+    if read_state(|state| state.is_caller_notification_pusher()) {
+        Ok(())
+    } else {
+        Err("Caller is not a notification pusher".to_string())
+    }
+}
+
 pub fn caller_is_notifications_canister() -> Result<(), String> {
     if read_state(|state| state.is_caller_notifications_canister()) {
         Ok(())

@@ -26,13 +26,13 @@ use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::UserIdsKeyPrefix;
 use std::cell::RefCell;
-use std::collections::{BTreeMap, HashMap, VecDeque};
+use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary,
     CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails, IdempotentEnvelope, MessageContent,
-    Milliseconds, ReferralType, TimestampMillis, Timestamped, User, UserId, VerifiedCredentialGateArgs,
+    Milliseconds, NotificationEnvelope, ReferralType, TimestampMillis, Timestamped, User, UserId, VerifiedCredentialGateArgs,
 };
 use user_canister::LocalUserIndexEvent as UserEvent;
 use user_ids_set::UserIdsSet;
@@ -40,6 +40,7 @@ use user_index_canister::LocalUserIndexEvent as UserIndexEvent;
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
+use utils::event_stream::EventStream;
 use utils::idempotency_checker::IdempotencyChecker;
 use utils::iterator_extensions::IteratorExtensions;
 
@@ -161,6 +162,11 @@ impl RuntimeState {
     pub fn is_caller_local_group_index(&self) -> bool {
         let caller = self.env.caller();
         self.data.local_group_index_canister_id == caller
+    }
+
+    pub fn is_caller_notification_pusher(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.notification_pushers.contains(&caller)
     }
 
     pub fn is_caller_notifications_canister(&self) -> bool {
@@ -384,6 +390,10 @@ impl RuntimeState {
             users_to_delete_queue_length: self.data.users_to_delete_queue.len(),
             referral_codes: self.data.referral_codes.metrics(now),
             event_store_client_info,
+            notification_pushers: self.data.notification_pushers.iter().copied().collect(),
+            queued_notifications: self.data.notifications.len() as u32,
+            latest_notification_index: self.data.notifications.latest_event_index(),
+            subscriptions: self.data.notification_subscriptions.total(),
             blocked_user_pairs: self.data.blocked_users.len() as u64,
             oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
             cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
@@ -467,7 +477,11 @@ struct Data {
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub idempotency_checker: IdempotencyChecker,
     #[serde(default)]
+    pub notification_pushers: HashSet<Principal>,
+    #[serde(default)]
     pub notification_subscriptions: NotificationSubscriptions,
+    #[serde(default)]
+    pub notifications: EventStream<NotificationEnvelope>,
     #[serde(default = "blocked_users")]
     pub blocked_users: UserIdsSet,
 }
@@ -548,6 +562,7 @@ impl Data {
             platform_moderators_group: None,
             referral_codes: ReferralCodes::default(),
             rng_seed: [0; 32],
+            notification_pushers: HashSet::new(),
             video_call_operators,
             oc_key_pair: oc_secret_key_der
                 .map(|sk| P256KeyPair::from_secret_key_der(sk).unwrap())
@@ -564,6 +579,7 @@ impl Data {
             fire_and_forget_handler: FireAndForgetHandler::default(),
             idempotency_checker: IdempotencyChecker::default(),
             notification_subscriptions: NotificationSubscriptions::default(),
+            notifications: EventStream::default(),
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
         }
     }
@@ -618,6 +634,10 @@ pub struct Metrics {
     pub recent_user_upgrades: Vec<CanisterId>,
     pub recent_group_upgrades: Vec<CanisterId>,
     pub recent_community_upgrades: Vec<CanisterId>,
+    pub notification_pushers: Vec<Principal>,
+    pub queued_notifications: u32,
+    pub latest_notification_index: u64,
+    pub subscriptions: u64,
     pub blocked_user_pairs: u64,
     pub oc_secret_key_initialized: bool,
     pub cycles_balance_check_queue_len: u32,
