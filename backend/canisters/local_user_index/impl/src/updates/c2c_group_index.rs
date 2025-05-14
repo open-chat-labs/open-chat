@@ -1,4 +1,4 @@
-use crate::guards::caller_is_group_index_canister;
+use crate::guards::caller_is_group_index;
 use crate::{CommunityEvent, GroupEvent};
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
@@ -13,7 +13,7 @@ use local_user_index_canister::c2c_group_index::{Response::*, *};
 use std::cell::LazyCell;
 use types::TimestampMillis;
 
-#[update(guard = "caller_is_group_index_canister", msgpack = true)]
+#[update(guard = "caller_is_group_index", msgpack = true)]
 #[trace]
 fn c2c_group_index(args: Args) -> Response {
     mutate_state(|state| c2c_group_index_impl(args, state))

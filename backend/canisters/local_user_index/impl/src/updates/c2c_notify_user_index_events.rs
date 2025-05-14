@@ -1,4 +1,4 @@
-use crate::guards::caller_is_user_index_canister;
+use crate::guards::caller_is_user_index;
 use crate::{RuntimeState, UserEvent, UserToDelete, jobs, mutate_state};
 use canister_api_macros::update;
 use canister_time::now_millis;
@@ -19,7 +19,7 @@ use user_canister::{
     UserSuspended, UsernameChanged,
 };
 
-#[update(guard = "caller_is_user_index_canister", msgpack = true)]
+#[update(guard = "caller_is_user_index", msgpack = true)]
 #[trace]
 fn c2c_notify_user_index_events(args: Args) -> Response {
     mutate_state(|state| c2c_notify_user_index_events_impl(args, state))
