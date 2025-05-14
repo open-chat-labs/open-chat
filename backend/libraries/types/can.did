@@ -600,7 +600,6 @@ type Message = record {
     message_id : MessageId;
     sender : UserId;
     content : MessageContent;
-    bot_context : opt BotMessageContext;
     sender_context : opt SenderContext;
     replies_to : opt ReplyContext;
     reactions : vec record { text; vec UserId };
