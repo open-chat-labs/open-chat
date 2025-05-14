@@ -64,7 +64,7 @@ fn prepare(args: Args, state: &RuntimeState) -> OCResult<PrepareResult> {
     }
 
     let now = state.env.now();
-    let is_diamond_member = state.data.is_diamond_member(now);
+    let is_diamond_member = state.data.membership(now).is_diamond_member();
 
     if !is_diamond_member {
         Err(OCErrorCode::NotDiamondMember.into())
