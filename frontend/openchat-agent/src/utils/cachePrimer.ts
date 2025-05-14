@@ -35,7 +35,7 @@ export class CachePrimer {
             community.channels.forEach((c) => this.processChat(c, community.localUserIndex));
         }
 
-        debug("Processed state, queue length: " + this.pending.length);
+        debug("processed state, queue length: " + this.pending.length);
 
         if (!this.jobActive && this.pending.length > 0) {
             this.jobActive = true;
@@ -90,11 +90,11 @@ export class CachePrimer {
             }
 
             if (userIds.size > 0) {
-                debug(`Loading ${userIds.size} users`);
+                debug(`loading ${userIds.size} users`);
                 this.loadUsers([...userIds]);
             }
 
-            debug(`Batch of size ${batch.length} completed`);
+            debug(`batch of size ${batch.length} completed`);
         } finally {
             this.inProgress.clear();
             if (this.pending.length === 0) {
