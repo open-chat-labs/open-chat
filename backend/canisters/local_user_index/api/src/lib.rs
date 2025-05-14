@@ -47,6 +47,8 @@ pub enum UserIndexEvent {
     AddCanisterToPool(CanisterId),
     ExternalAchievementAwarded(ExternalAchievementAwarded),
     SyncExistingUser(UserDetailsFull),
+    UserBlocked(UserId, UserId),
+    UserUnblocked(UserId, UserId),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

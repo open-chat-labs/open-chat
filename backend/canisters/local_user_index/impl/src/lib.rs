@@ -23,6 +23,7 @@ use p256_key_pair::P256KeyPair;
 use proof_of_unique_personhood::verify_proof_of_unique_personhood;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
+use stable_memory_map::UserIdsKeyPrefix;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::time::Duration;
@@ -33,6 +34,7 @@ use types::{
     Milliseconds, ReferralType, TimestampMillis, Timestamped, User, UserId, VerifiedCredentialGateArgs,
 };
 use user_canister::LocalUserIndexEvent as UserEvent;
+use user_ids_set::UserIdsSet;
 use user_index_canister::LocalUserIndexEvent as UserIndexEvent;
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
@@ -457,6 +459,12 @@ struct Data {
     pub cycles_balance_check_queue: VecDeque<CanisterId>,
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub idempotency_checker: IdempotencyChecker,
+    #[serde(default = "blocked_users")]
+    pub blocked_users: UserIdsSet,
+}
+
+fn blocked_users() -> UserIdsSet {
+    UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users())
 }
 
 #[derive(Serialize, Deserialize)]
@@ -546,6 +554,7 @@ impl Data {
             bots: BotsMap::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             idempotency_checker: IdempotencyChecker::default(),
+            blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
         }
     }
 }
