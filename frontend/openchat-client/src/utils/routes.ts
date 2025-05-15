@@ -144,7 +144,6 @@ export function selectedChannelRoute(fav: boolean) {
             scope: fav
                 ? {
                       kind: "favourite",
-                      communityId: createCommunityIdentifier(ctx.params["communityId"]),
                   }
                 : { kind: "community", id: createCommunityIdentifier(ctx.params["communityId"]) },
         };

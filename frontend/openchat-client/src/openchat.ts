@@ -402,6 +402,7 @@ import {
     canUnblockUsers as canUnblockCommunityUsers,
     isCommunityLapsed,
 } from "./utils/community";
+import { configKeys } from "./utils/config";
 import { verifyCredential } from "./utils/credentials";
 import { formatTokens, validateTokenInput } from "./utils/cryptoFormatter";
 import {
@@ -470,7 +471,6 @@ import {
 } from "./utils/user";
 import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 import { createWebAuthnIdentity, MultiWebAuthnIdentity } from "./utils/webAuthn";
-import { configKeys } from "./utils/config";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -2626,7 +2626,7 @@ export class OpenChat {
             if (scope.kind === "favourite") {
                 pageRedirect(
                     routeForChatIdentifier(
-                        scope.communityId === undefined ? "group_chat" : "community",
+                        pathState.communityId === undefined ? "group_chat" : "community",
                         chatId,
                     ),
                 );
@@ -8787,7 +8787,13 @@ export class OpenChat {
             ).then((resp) => {
                 resolve(resp);
                 this.#connectedToWorker = true;
-                this.#setMinLogLevel((localStorage.getItem(configKeys.minLogLevel) ?? "warn") as "debug" | "log" | "warn" | "error");
+                this.#setMinLogLevel(
+                    (localStorage.getItem(configKeys.minLogLevel) ?? "warn") as
+                        | "debug"
+                        | "log"
+                        | "warn"
+                        | "error",
+                );
             });
         });
 
@@ -8833,7 +8839,7 @@ export class OpenChat {
         this.#sendRequest({
             kind: "setMinLogLevel",
             minLogLevel,
-        })
+        });
     }
 
     #logUnexpected(correlationId: string): void {

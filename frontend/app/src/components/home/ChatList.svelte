@@ -69,7 +69,7 @@
     });
 
     $effect(() => {
-        if (previousScope !== app.chatListScope) {
+        if (previousScope?.kind !== app.chatListScope.kind) {
             onScopeChanged();
         } else if (previousView !== $chatListView) {
             onViewChanged();
@@ -135,7 +135,7 @@
         searchTerm = "";
     }
 
-    let chatListElement = $state<HTMLElement | undefined>();
+    let chatListElement: HTMLElement | undefined;
 
     function setView(view: "chats" | "threads"): void {
         chatListView.set(view);
