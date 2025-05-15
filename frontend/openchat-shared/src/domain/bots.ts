@@ -458,7 +458,7 @@ function parseDateTime(value: string): bigint | null {
 
     const date = chrono.parseDate(
         value,
-        { instant: now, timezone: now.getTimezoneOffset() },
+        { instant: now, timezone: -now.getTimezoneOffset() },
         { forwardDate: true },
     );
 
