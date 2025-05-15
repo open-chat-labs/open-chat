@@ -150,7 +150,7 @@
         busy = true;
 
         if (
-            !(await approvePayment(PROPOSALS_BOT_CANISTER, proposalCost + transferFee))
+            !(await approvePayment(PROPOSALS_BOT_CANISTER, proposalCost + BigInt(2) * transferFee))
         ) {
             busy = false;
             return;
