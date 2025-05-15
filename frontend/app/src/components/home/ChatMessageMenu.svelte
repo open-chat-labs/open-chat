@@ -2,6 +2,7 @@
     import {
         app,
         cryptoLookup,
+        iconSize,
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
         publish,

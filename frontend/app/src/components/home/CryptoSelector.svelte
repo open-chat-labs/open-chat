@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { EnhancedTokenDetails } from "openchat-client";
-    import { cryptoLookup, cryptoTokensSorted } from "openchat-client";
+    import { cryptoLookup, cryptoTokensSorted, iconSize } from "openchat-client";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Menu from "../Menu.svelte";
     import MenuIcon from "../MenuIcon.svelte";

@@ -20,12 +20,13 @@
         botState,
         chatIdentifiersEqual,
         directMessageCommandInstance,
+        iconSize,
         localUpdates,
         messageContextsEqual,
         random64,
+        screenWidth,
         ScreenWidth,
         throttleDeadline,
-        ui,
         userStore,
     } from "openchat-client";
     import { getContext, tick } from "svelte";
@@ -558,7 +559,7 @@
         }
     });
     trackedEffect("screen-width-focus", () => {
-        if (ui.screenWidth === ScreenWidth.Large) {
+        if ($screenWidth === ScreenWidth.Large) {
             inp?.focus();
         }
     });

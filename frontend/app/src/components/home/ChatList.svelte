@@ -10,6 +10,7 @@
         emptyCombinedUnreadCounts,
         type GroupMatch,
         type GroupSearchResponse,
+        iconSize,
         mobileWidth,
         OpenChat,
         publish,

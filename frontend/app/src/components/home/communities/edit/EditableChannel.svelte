@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type DefaultChannel } from "openchat-client";
+    import { iconSize, type DefaultChannel } from "openchat-client";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import Pound from "svelte-material-icons/Pound.svelte";
     import { i18nKey } from "../../../../i18n/i18n";

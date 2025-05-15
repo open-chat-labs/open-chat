@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { app } from "openchat-client";
+    import { app, iconSize } from "openchat-client";
     import page from "page";
     import CogOutline from "svelte-material-icons/CogOutline.svelte";
     import Button from "../../Button.svelte";

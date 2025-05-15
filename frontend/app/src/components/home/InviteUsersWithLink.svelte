@@ -3,6 +3,7 @@
         app,
         type CommunityIdentifier,
         type CommunitySummary,
+        iconSize,
         type MultiUserChat,
         type MultiUserChatIdentifier,
         type OpenChat,

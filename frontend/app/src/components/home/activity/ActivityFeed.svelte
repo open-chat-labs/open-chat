@@ -2,6 +2,7 @@
     import {
         activityFeedShowing,
         app,
+        iconSize,
         messageContextToChatListScope,
         messageContextToString,
         OpenChat,

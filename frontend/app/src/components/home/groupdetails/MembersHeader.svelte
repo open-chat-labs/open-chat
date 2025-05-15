@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type Level, type ResourceKey } from "openchat-client";
+    import { iconSize, type Level, type ResourceKey } from "openchat-client";
     import { _ } from "svelte-i18n";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";

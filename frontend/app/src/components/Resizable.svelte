@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { mobileWidth, ui } from "openchat-client";
+    import { mobileWidth, rightPanelWidth, ui } from "openchat-client";
 
     const MIN_COL_WIDTH = 400;
     const MAX_COL_WIDTH = 900;
@@ -26,14 +26,14 @@
     let previous = 0;
 
     $effect(() => {
-        const isResized = ui.rightPanelWidth !== undefined;
+        const isResized = $rightPanelWidth !== undefined;
         if (isResized !== resized) {
             resized = isResized;
         }
     });
 
     $effect(() => {
-        const widthVar = getWidthVar(ui.rightPanelWidth);
+        const widthVar = getWidthVar($rightPanelWidth);
         if (widthVar !== resizedWidth) {
             resizedWidth = widthVar;
         }

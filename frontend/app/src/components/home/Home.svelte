@@ -28,11 +28,14 @@
         app,
         chatIdentifiersEqual,
         defaultChatRules,
+        dimensions,
+        fullWidth,
         localUpdates,
         nullMembership,
         pageRedirect,
         pageReplace,
         pathState,
+        rightPanelHistory,
         routeForChatIdentifier,
         routeForScope,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
@@ -324,7 +327,7 @@
                 if (pathState.isHomeRoute(route)) {
                     filterChatSpecificRightPanelStates();
                 } else if (pathState.isCommunitiesRoute(route)) {
-                    ui.rightPanelHistory = ui.fullWidth ? [{ kind: "community_filters" }] : [];
+                    rightPanelHistory.set($fullWidth ? [{ kind: "community_filters" }] : []);
                 } else {
                     // any other route with no associated chat therefore we must clear any selected chat and potentially close the right panel
                     if (pathState.isShareRoute(route)) {
@@ -411,12 +414,12 @@
                 return leaveCommunity(confirmActionEvent.communityId);
             case "delete_community":
                 return deleteCommunity(confirmActionEvent.communityId).then((_) => {
-                    ui.rightPanelHistory = [];
+                    rightPanelHistory.set([]);
                 });
             case "delete":
                 return deleteGroup(confirmActionEvent.chatId, confirmActionEvent.level).then(
                     (_) => {
-                        ui.rightPanelHistory = [];
+                        rightPanelHistory.set([]);
                         confirmActionEvent.after?.();
                     },
                 );
@@ -497,7 +500,7 @@
     function showInviteGroupUsers(show: boolean) {
         if (app.selectedChatId !== undefined) {
             if (show) {
-                ui.rightPanelHistory = [{ kind: "invite_group_users" }];
+                rightPanelHistory.set([{ kind: "invite_group_users" }]);
             } else {
                 ui.pushRightPanelHistory({ kind: "invite_group_users" });
             }
@@ -534,7 +537,7 @@
 
     function showGroupMembers() {
         if (app.selectedChatId !== undefined) {
-            ui.rightPanelHistory = [{ kind: "show_group_members" }];
+            rightPanelHistory.set([{ kind: "show_group_members" }]);
         }
     }
 
@@ -542,25 +545,25 @@
         if (app.selectedChatId !== undefined) {
             pageReplace(routeForChatIdentifier(app.chatListScope.kind, app.selectedChatId));
         }
-        ui.rightPanelHistory = [{ kind: "user_profile" }];
+        rightPanelHistory.set([{ kind: "user_profile" }]);
     }
 
     function communityDetails(_: CommunitySummary) {
         // what do we do here if the community is not selected
         // do we select it?
         if (app.chatListScope.kind === "community") {
-            ui.rightPanelHistory = [{ kind: "community_details" }];
+            rightPanelHistory.set([{ kind: "community_details" }]);
         }
     }
 
     function showProposalFilters() {
         if (app.selectedChatId !== undefined) {
             pageReplace(routeForChatIdentifier(app.chatListScope.kind, app.selectedChatId));
-            ui.rightPanelHistory = [
+            rightPanelHistory.set([
                 {
                     kind: "proposal_filters",
                 },
-            ];
+            ]);
         }
     }
 
@@ -840,7 +843,7 @@
     }
 
     function convertGroupToCommunity(group: GroupChatSummary) {
-        ui.rightPanelHistory = [];
+        rightPanelHistory.set([]);
         convertGroup = group;
     }
 
@@ -947,20 +950,20 @@
                 pageReplace(removeQueryStringParam("hof"));
             }
             if (pathState.querystring.get("everyone") !== null) {
-                ui.rightPanelHistory = [{ kind: "show_group_members" }];
+                rightPanelHistory.set([{ kind: "show_group_members" }]);
                 pageReplace(removeQueryStringParam("everyone"));
             }
             const usergroup = pathState.querystring.get("usergroup");
             if (usergroup !== null) {
                 const userGroupId = Number(usergroup);
-                ui.rightPanelHistory = [{ kind: "show_community_members", userGroupId }];
+                rightPanelHistory.set([{ kind: "show_community_members", userGroupId }]);
                 pageReplace(removeQueryStringParam("usergroup"));
             }
         }
     });
 
-    let bgHeight = $derived(ui.dimensions.height * 0.9);
-    let bgClip = $derived(((ui.dimensions.height - 32) / bgHeight) * 361);
+    let bgHeight = $derived($dimensions.height * 0.9);
+    let bgClip = $derived((($dimensions.height - 32) / bgHeight) * 361);
 </script>
 
 {#if showProfileCard !== undefined}

@@ -3,6 +3,7 @@
         OpenChat,
         achievements,
         app,
+        iconSize,
         type Achievement,
         type ExternalAchievement,
     } from "openchat-client";

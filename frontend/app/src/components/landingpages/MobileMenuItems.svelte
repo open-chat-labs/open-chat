@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { app, OpenChat, pathState, routeForScope } from "openchat-client";
+    import { app, iconSize, OpenChat, pathState, routeForScope } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
     import Graph from "svelte-material-icons/GraphOutline.svelte";

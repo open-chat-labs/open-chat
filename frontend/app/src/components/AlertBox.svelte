@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { iconSize } from "openchat-client";
     import type { Snippet } from "svelte";
     import Alert from "svelte-material-icons/Alert.svelte";
 

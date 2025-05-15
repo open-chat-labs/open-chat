@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
         type ChatIdentifier,
+        iconSize,
         localUpdates,
         routeForChatIdentifier,
         subscribe,

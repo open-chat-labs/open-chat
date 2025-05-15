@@ -1,6 +1,7 @@
 <script lang="ts">
     import { start } from "@memefighter/maker-core";
     import {
+        iconSize,
         mobileWidth,
         type MemeFighterContent as MemeFighterContentType,
     } from "openchat-client";

@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        iconSize,
         type AttachmentContent,
         type ChatSummary,
         type CreatedUser,

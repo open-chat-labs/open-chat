@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        iconSize,
         type CommunitySummary,
         type Level,
         type MultiUserChat,

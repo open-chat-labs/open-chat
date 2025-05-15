@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { iconSize } from "openchat-client";
     import { onMount } from "svelte";
     import PauseCircleOutline from "svelte-material-icons/PauseCircleOutline.svelte";
     import PlayCircleOutline from "svelte-material-icons/PlayCircleOutline.svelte";

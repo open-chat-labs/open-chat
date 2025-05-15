@@ -1,5 +1,10 @@
 <script lang="ts">
-    import { type CommandDefinition, type CommandParam, ValidationErrors } from "openchat-client";
+    import {
+        type CommandDefinition,
+        type CommandParam,
+        iconSize,
+        ValidationErrors,
+    } from "openchat-client";
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import { i18nKey } from "../../i18n/i18n";

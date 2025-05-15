@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { ResourceKey } from "openchat-client";
-    import { AvatarSize, OpenChat, userStore } from "openchat-client";
+    import { AvatarSize, iconSize, OpenChat, userStore } from "openchat-client";
     import { getContext } from "svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import type { Theme } from "../../../theme/types";

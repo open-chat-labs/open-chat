@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { app } from "openchat-client";
+    import { app, iconSize } from "openchat-client";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
     import { i18nKey } from "../../../i18n/i18n";

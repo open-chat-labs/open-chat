@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type UserSummary } from "openchat-client";
+    import { iconSize, type UserSummary } from "openchat-client";
     import { onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";

@@ -3,6 +3,7 @@
         walletTokensSorted as accountsSorted,
         app,
         type EnhancedTokenDetails,
+        iconSize,
         ICP_SYMBOL,
         nervousSystemLookup,
         type OpenChat,

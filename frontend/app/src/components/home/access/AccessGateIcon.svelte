@@ -3,6 +3,7 @@
         type AccessGate,
         type AccessGateConfig,
         type CryptocurrencyDetails,
+        iconSize,
         isBalanceGate,
         isNeuronGate,
         isPaymentGate,

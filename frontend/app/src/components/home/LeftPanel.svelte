@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activityFeedShowing, ui } from "openchat-client";
+    import { activityFeedShowing, showLeft, showNav } from "openchat-client";
     import { rtlStore } from "../../stores/rtl";
     import { currentTheme } from "../../theme/themes";
     import ActivityFeed from "./activity/ActivityFeed.svelte";
@@ -7,8 +7,8 @@
 </script>
 
 <section
-    class:visible={ui.showLeft}
-    class:offset={ui.showNav}
+    class:visible={$showLeft}
+    class:offset={$showNav}
     class:rtl={$rtlStore}
     class:halloween={$currentTheme.name === "halloween"}>
     <div class="chat-list">

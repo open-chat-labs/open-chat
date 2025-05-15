@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type AccessGateConfig, type Level } from "openchat-client";
+    import { iconSize, type AccessGateConfig, type Level } from "openchat-client";
     import { _ } from "svelte-i18n";
     import LockOutline from "svelte-material-icons/LockOutline.svelte";
     import { fade } from "svelte/transition";

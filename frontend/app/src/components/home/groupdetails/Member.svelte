@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type FullMember } from "openchat-client";
+    import { iconSize, type FullMember } from "openchat-client";
     import type { MemberRole } from "openchat-shared";
     import { _ } from "svelte-i18n";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";

@@ -3,6 +3,7 @@
     import {
         botActionScopeFromExecutionContext,
         i18nKey,
+        iconSize,
         OpenChat,
         type ChatIdentifier,
         type CommunityIdentifier,

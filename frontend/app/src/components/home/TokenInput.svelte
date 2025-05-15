@@ -2,6 +2,7 @@
     import {
         cryptoLookup,
         exchangeRatesLookupStore as exchangeRatesLookup,
+        iconSize,
         type OpenChat,
     } from "openchat-client";
     import { getContext, onMount, untrack } from "svelte";

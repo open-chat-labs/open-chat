@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { iconSize } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../../i18n/i18n";

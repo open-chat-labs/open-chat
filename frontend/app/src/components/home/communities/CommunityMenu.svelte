@@ -1,6 +1,12 @@
 <script lang="ts">
     import type { CommunitySummary, OpenChat } from "openchat-client";
-    import { app, notificationsSupported, publish, ui } from "openchat-client";
+    import {
+        app,
+        iconSize,
+        notificationsSupported,
+        publish,
+        rightPanelHistory,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
@@ -78,12 +84,12 @@
     }
 
     function showMembers() {
-        ui.rightPanelHistory = [{ kind: "show_community_members" }];
+        rightPanelHistory.set([{ kind: "show_community_members" }]);
     }
 
     function invite() {
         if (canInvite) {
-            ui.rightPanelHistory = [{ kind: "invite_community_users" }];
+            rightPanelHistory.set([{ kind: "invite_community_users" }]);
         }
     }
 

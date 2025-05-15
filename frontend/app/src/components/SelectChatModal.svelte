@@ -11,7 +11,7 @@
         MultiUserChat,
         OpenChat,
     } from "openchat-client";
-    import { app, AvatarSize, chatIdentifiersEqual, userStore } from "openchat-client";
+    import { app, AvatarSize, chatIdentifiersEqual, iconSize, userStore } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";

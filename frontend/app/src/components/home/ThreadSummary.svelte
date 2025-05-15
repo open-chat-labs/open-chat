@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { ChatIdentifier, mobileWidth, OpenChat, ThreadSummary } from "openchat-client";
-    import { app, AvatarSize, userStore } from "openchat-client";
+    import type { ChatIdentifier, OpenChat, ThreadSummary } from "openchat-client";
+    import { app, AvatarSize, mobileWidth, userStore } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";

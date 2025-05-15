@@ -17,6 +17,7 @@
         eventListLastScrolled,
         eventListScrollTop,
         eventListScrolling,
+        iconSize,
         localUpdates,
         messageContextsEqual,
         pathState,

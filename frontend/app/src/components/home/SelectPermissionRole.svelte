@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type ResourceKey } from "openchat-client";
+    import { iconSize, type ResourceKey } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Check from "svelte-material-icons/Check.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";

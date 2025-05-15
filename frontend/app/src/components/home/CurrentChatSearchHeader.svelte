@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        iconSize,
         type ChatSummary,
         type MessageMatch,
         type OpenChat,

@@ -1,5 +1,10 @@
 <script lang="ts">
-    import { AuthProvider, type AuthenticationPrincipal, type OpenChat } from "openchat-client";
+    import {
+        AuthProvider,
+        iconSize,
+        type AuthenticationPrincipal,
+        type OpenChat,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import LinkVariantOff from "svelte-material-icons/LinkVariantOff.svelte";
     import { i18nKey } from "../../../i18n/i18n";

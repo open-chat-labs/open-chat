@@ -6,6 +6,7 @@
         AuthProvider,
         InMemoryAuthClientStorage,
         app,
+        iconSize,
         type AuthenticationPrincipal,
         type OpenChat,
         type ResourceKey,

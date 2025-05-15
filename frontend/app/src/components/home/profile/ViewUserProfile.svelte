@@ -11,7 +11,7 @@
         type UserSummary,
         app,
         mobileWidth,
-        ui,
+        rightPanelHistory,
         userStore,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
@@ -191,7 +191,7 @@
     }
 
     function showUserProfile() {
-        ui.rightPanelHistory = [{ kind: "user_profile" }];
+        rightPanelHistory.set([{ kind: "user_profile" }]);
         onClose();
     }
 

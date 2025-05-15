@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { publish, ui, type CommunitySummary, type Level } from "openchat-client";
+    import { iconSize, publish, ui, type CommunitySummary, type Level } from "openchat-client";
     import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";

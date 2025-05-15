@@ -6,7 +6,7 @@
         OpenChat,
         ReadonlySet,
     } from "openchat-client";
-    import { app, setsAreEqual, subscribe, withEqCheck } from "openchat-client";
+    import { app, iconSize, setsAreEqual, subscribe, withEqCheck } from "openchat-client";
     import { isSuccessfulEventsResponse } from "openchat-shared";
     import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { iconSize } from "openchat-client";
     import { _ } from "svelte-i18n";
     import ThumbDown from "svelte-material-icons/ThumbDown.svelte";
     import ThumbUp from "svelte-material-icons/ThumbUp.svelte";

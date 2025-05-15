@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { iconSize } from "openchat-client";
     import { type Snippet } from "svelte";
     import { locale } from "svelte-i18n";
     import PrevIcon from "svelte-material-icons/ChevronLeft.svelte";

@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        iconSize,
         isCompositeGate,
         isCredentialGate,
         isDiamondGate,

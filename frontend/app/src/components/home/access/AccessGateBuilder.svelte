@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
         cryptoLookup,
+        iconSize,
         isCompositeGate,
         isLeafGate,
         nervousSystemLookup,

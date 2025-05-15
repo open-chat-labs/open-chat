@@ -8,6 +8,7 @@
         type UserSummary,
         app,
         hideMessagesFromDirectBlocked,
+        iconSize,
         notificationStatus,
         notificationsSupported,
         publish,

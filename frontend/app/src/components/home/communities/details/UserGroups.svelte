@@ -8,7 +8,7 @@
         UserLookup,
         UserSummary,
     } from "openchat-client";
-    import { app, userStore } from "openchat-client";
+    import { app, iconSize, userStore } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";

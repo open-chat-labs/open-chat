@@ -60,6 +60,7 @@ import {
 } from "openchat-shared";
 import { locale } from "svelte-i18n";
 import { SvelteMap, SvelteSet } from "svelte/reactivity";
+import { get } from "svelte/store";
 import { offlineStore, type PinnedByScope } from "../stores";
 import { createDummyStore } from "../stores/dummyStore";
 import {
@@ -83,7 +84,7 @@ import { messageLocalUpdates } from "./message/local.svelte";
 import { pathState } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
 import { SnsFunctions } from "./snsFunctions.svelte";
-import { ui } from "./ui.svelte";
+import { hideMessagesFromDirectBlocked } from "./ui.svelte";
 import { messagesRead } from "./unread/markRead.svelte";
 import { userStore } from "./users/users.svelte";
 
@@ -334,7 +335,7 @@ export class AppState {
     #serverFavourites = $state<ChatSet>(new ChatSet());
 
     #currentChatBlockedOrSuspendedUsers = $derived.by(() => {
-        const direct = ui.hideMessagesFromDirectBlocked ? [...userStore.blockedUsers] : [];
+        const direct = get(hideMessagesFromDirectBlocked) ? [...userStore.blockedUsers] : [];
         return new Set<string>([
             ...this.#selectedChat.blockedUsers,
             ...this.#selectedCommunity.blockedUsers,

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type ResourceKey } from "openchat-client";
+    import { iconSize, type ResourceKey } from "openchat-client";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import Translatable from "../Translatable.svelte";
 

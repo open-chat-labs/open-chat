@@ -8,11 +8,13 @@
         UserLookup,
     } from "openchat-client";
     import {
-        AvatarSize,
-        OpenChat,
         app,
+        AvatarSize,
         botState,
+        iconSize,
+        mobileWidth,
         notificationsSupported,
+        OpenChat,
         publish,
         routeForScope,
         byContext as typersByContext,

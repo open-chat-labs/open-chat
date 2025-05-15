@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type ResourceKey } from "openchat-client";
+    import { iconSize, type ResourceKey } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
     import Magnify from "svelte-material-icons/Magnify.svelte";

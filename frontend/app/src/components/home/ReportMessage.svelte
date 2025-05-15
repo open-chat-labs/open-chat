@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { mobileWidth, type ChatIdentifier, type OpenChat } from "openchat-client";
+    import { iconSize, mobileWidth, type ChatIdentifier, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Flag from "svelte-material-icons/Flag.svelte";

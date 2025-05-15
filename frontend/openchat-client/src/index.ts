@@ -7,7 +7,7 @@ export { FilteredProposals } from "./state/filteredProposals.svelte";
 export { localUpdates } from "./state/global/local.svelte";
 export * from "./state/path.svelte";
 export { debouncedDerived, withEqCheck } from "./state/reactivity.svelte";
-export { ScreenHeight, ScreenWidth, ui, type Layout } from "./state/ui.svelte";
+export * from "./state/ui.svelte";
 export * from "./state/undo";
 export { messagesRead, type MessageReadState } from "./state/unread/markRead.svelte";
 export { userStore } from "./state/users/users.svelte";

@@ -24,9 +24,9 @@
         type MultiUserChat,
         type OpenChat,
         type ReadonlySet,
+        rightPanelHistory,
         runningInIframe,
         subscribe,
-        ui,
         type User,
         userStore,
     } from "openchat-client";
@@ -126,7 +126,7 @@
             toastStore.showFailureToast(i18nKey("communities.noOwned"));
             importToCommunities = undefined;
         } else {
-            ui.rightPanelHistory = [];
+            rightPanelHistory.set([]);
         }
     }
 

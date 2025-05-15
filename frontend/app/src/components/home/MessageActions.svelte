@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        iconSize,
         mobileWidth,
         type AttachmentContent,
         type MessageAction,

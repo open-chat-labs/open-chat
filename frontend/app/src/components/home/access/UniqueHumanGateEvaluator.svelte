@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type Level, type OpenChat } from "openchat-client";
+    import { iconSize, type Level, type OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountCheck from "svelte-material-icons/AccountCheck.svelte";

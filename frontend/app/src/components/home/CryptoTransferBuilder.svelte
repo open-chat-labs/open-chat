@@ -1,9 +1,11 @@
 <script lang="ts">
-    import type { ChatSummary, mobileWidth, OpenChat, UserSummary } from "openchat-client";
+    import type { ChatSummary, OpenChat, UserSummary } from "openchat-client";
     import {
         app,
         cryptoBalance as cryptoBalanceStore,
         enhancedCryptoLookup as cryptoLookup,
+        iconSize,
+        mobileWidth,
         userStore,
     } from "openchat-client";
     import { type CryptocurrencyContent, type MessageContext, nowNanos } from "openchat-shared";

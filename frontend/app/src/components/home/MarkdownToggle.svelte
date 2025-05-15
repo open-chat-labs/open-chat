@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type EventWrapper, type Message } from "openchat-client";
+    import { iconSize, type EventWrapper, type Message } from "openchat-client";
     import Markdown from "svelte-material-icons/LanguageMarkdown.svelte";
     import MarkdownOutline from "svelte-material-icons/LanguageMarkdownOutline.svelte";
     import { i18nKey } from "../../i18n/i18n";

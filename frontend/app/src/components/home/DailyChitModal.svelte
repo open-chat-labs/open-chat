@@ -1,6 +1,6 @@
 <script lang="ts">
     import InfoIcon from "@src/components/InfoIcon.svelte";
-    import { type AirdropChannelDetails, app, type OpenChat } from "openchat-client";
+    import { type AirdropChannelDetails, app, iconSize, type OpenChat } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
     import { Confetti } from "svelte-confetti";
     import { _ } from "svelte-i18n";

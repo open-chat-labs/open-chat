@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type OpenChat } from "openchat-client";
+    import { iconSize, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import Kebab from "svelte-material-icons/DotsVertical.svelte";

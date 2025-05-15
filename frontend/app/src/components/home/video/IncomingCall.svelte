@@ -2,6 +2,7 @@
     import {
         app,
         AvatarSize,
+        iconSize,
         userStore,
         type ChatIdentifier,
         type OpenChat,
