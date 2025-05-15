@@ -319,6 +319,8 @@ pub enum UserEvent {
     UserBlocked(UserId),
     UserUnblocked(UserId),
     SetMaxStreak(u16),
+    EventStoreEvent(Event),
+    Notification(Notification),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
