@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Support serving notifications from LocalUserIndexes ([#7968](https://github.com/open-chat-labs/open-chat/pull/7968))
 - Implement handling events from Groups and Communities ([#7971](https://github.com/open-chat-labs/open-chat/pull/7971))
+- Implement handling events and notifications from User canisters ([#7972](https://github.com/open-chat-labs/open-chat/pull/7972))
 
 ### Changed
 
