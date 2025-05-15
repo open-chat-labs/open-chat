@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Return current timestamp in `selected_updates` response ([#7977](https://github.com/open-chat-labs/open-chat/pull/7977))
+
 ## [[2.0.1745](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1745-community)] - 2025-05-12
 
 ### Changed
