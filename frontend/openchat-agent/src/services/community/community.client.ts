@@ -998,9 +998,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
         previous: CommunityDetails,
     ): Promise<CommunityDetails> {
         const response = await this.getCommunityDetailsUpdatesFromBackend(previous);
-        if (response.lastUpdated > previous.lastUpdated) {
-            await setCachedCommunityDetails(this.db, id.communityId, response);
-        }
+        await setCachedCommunityDetails(this.db, id.communityId, response);
         return response;
     }
 
