@@ -14,6 +14,8 @@ generate_c2c_call!(c2c_user_principals);
 generate_c2c_call!(chat_events);
 
 // Updates
+generate_c2c_call!(c2c_community_canister, 300);
+generate_c2c_call!(c2c_group_canister, 300);
 generate_c2c_call!(c2c_local_group_index, 300);
 generate_c2c_call!(c2c_notify_low_balance);
 generate_c2c_call!(c2c_notify_user_index_events);

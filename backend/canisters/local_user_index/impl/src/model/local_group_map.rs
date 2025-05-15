@@ -1,7 +1,7 @@
 use local_user_index_canister::LocalGroup;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{BuildVersion, ChatId, CyclesTopUp};
+use types::{BuildVersion, ChatId, CyclesTopUp, TimestampMillis};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct LocalGroupMap {
@@ -33,6 +33,15 @@ impl LocalGroupMap {
 
     pub fn contains(&self, chat_id: &ChatId) -> bool {
         self.groups.contains_key(chat_id)
+    }
+
+    pub fn mark_activity(&mut self, chat_id: &ChatId, timestamp: TimestampMillis) -> bool {
+        if let Some(group) = self.groups.get_mut(chat_id) {
+            group.latest_activity = timestamp;
+            true
+        } else {
+            false
+        }
     }
 
     pub fn mark_cycles_top_up(&mut self, chat_id: &ChatId, top_up: CyclesTopUp) -> bool {

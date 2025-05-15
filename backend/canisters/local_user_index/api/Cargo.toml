@@ -9,6 +9,7 @@ edition.workspace = true
 candid = { workspace = true }
 community_canister = { path = "../../community/api" }
 event_store_canister = { workspace = true }
+event_store_types = { workspace = true }
 group_canister = { path = "../../group/api" }
 ic-ledger-types = { workspace = true }
 oc_error_codes = { path = "../../../libraries/error_codes" }
