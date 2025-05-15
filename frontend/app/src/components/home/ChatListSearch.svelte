@@ -1,7 +1,6 @@
 <script lang="ts">
     import {
         app,
-        chatListScopeStore as chatListScope,
         type BotMatch,
         type ChatListScope,
         type DirectChatIdentifier,
@@ -63,7 +62,7 @@
         searchResultsAvailable = false;
         searchTerm = term;
 
-        if ($chatListScope.kind === "direct_chat") {
+        if (app.chatListScope.kind === "direct_chat") {
             searchTerm = trimLeadingAtSymbol(searchTerm);
         }
 
@@ -71,7 +70,7 @@
             try {
                 searching = true;
                 const term = searchTerm.toLowerCase();
-                switch ($chatListScope.kind) {
+                switch (app.chatListScope.kind) {
                     case "none":
                         legacySearch(term);
                         break;
@@ -140,7 +139,7 @@
         userAndBotsSearchResults = client.searchUsers(term, 10);
         Promise.all([groupSearchResults, userAndBotsSearchResults]).then(postSearch);
     }
-    let placeholder = $derived(getPlaceholder($chatListScope.kind));
+    let placeholder = $derived(getPlaceholder(app.chatListScope.kind));
     $effect(() => {
         if (searchTerm === "") {
             searching = false;
