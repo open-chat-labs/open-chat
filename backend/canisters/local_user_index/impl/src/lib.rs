@@ -30,9 +30,10 @@ use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary,
-    CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails, IdempotentEnvelope, MessageContent,
-    Milliseconds, NotificationEnvelope, ReferralType, TimestampMillis, Timestamped, User, UserId, VerifiedCredentialGateArgs,
+    BotNotificationEnvelope, BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms,
+    CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
+    IdempotentEnvelope, MessageContent, Milliseconds, Notification, NotificationEnvelope, ReferralType, TimestampMillis,
+    Timestamped, User, UserId, UserNotificationEnvelope, VerifiedCredentialGateArgs,
 };
 use user_canister::LocalUserIndexEvent as UserEvent;
 use user_ids_set::UserIdsSet;
@@ -591,6 +592,46 @@ impl Data {
             notification_subscriptions: NotificationSubscriptions::default(),
             notifications: EventStream::default(),
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
+        }
+    }
+
+    pub fn handle_notification(&mut self, notification: Notification, now: TimestampMillis) {
+        match notification {
+            Notification::User(user_notification) => {
+                let users_who_have_blocked_sender: HashSet<_> = user_notification
+                    .sender
+                    .map(|s| self.blocked_users.all_linked_users(s))
+                    .unwrap_or_default();
+
+                let filtered_recipients: Vec<_> = user_notification
+                    .recipients
+                    .into_iter()
+                    .filter(|u| self.notification_subscriptions.any_for_user(u) && !users_who_have_blocked_sender.contains(u))
+                    .collect();
+
+                if !filtered_recipients.is_empty() {
+                    self.notifications.add(NotificationEnvelope::User(UserNotificationEnvelope {
+                        recipients: filtered_recipients,
+                        notification_bytes: user_notification.notification_bytes.clone(),
+                        timestamp: now,
+                    }));
+                }
+            }
+            Notification::Bot(mut bot_notification) => {
+                bot_notification.recipients.retain(|b| self.bots.exists(b));
+
+                if !bot_notification.recipients.is_empty() {
+                    self.notifications.add(NotificationEnvelope::Bot(BotNotificationEnvelope {
+                        event_type: bot_notification.event_type,
+                        recipients: bot_notification.recipients,
+                        chat: bot_notification.chat,
+                        thread: bot_notification.thread,
+                        event_index: bot_notification.event_index,
+                        latest_event_index: bot_notification.latest_event_index,
+                        timestamp: now,
+                    }));
+                }
+            }
         }
     }
 }

@@ -89,5 +89,9 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         UserEvent::SetMaxStreak(max_streak) => {
             state.push_event_to_user_index(UserIndexEvent::SetMaxStreak(user_id, max_streak), **now);
         }
+        UserEvent::EventStoreEvent(event) => state.data.event_store_client.push(event),
+        UserEvent::Notification(notification) => {
+            state.data.handle_notification(notification, **now);
+        }
     }
 }
