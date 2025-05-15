@@ -25,10 +25,11 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
     }
 
     let data = &state.data;
+    let now = state.env.now();
     let last_updated = data.details_last_updated();
 
     if last_updated <= args.updates_since {
-        return SuccessNoUpdates(args.updates_since);
+        return SuccessNoUpdates(now);
     }
 
     let invited_users = if data.invited_users.last_updated() > args.updates_since {
@@ -38,7 +39,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
     };
 
     let mut result = SuccessResult {
-        timestamp: last_updated,
+        timestamp: now,
         last_updated,
         members_added_or_updated: vec![],
         members_removed: vec![],
