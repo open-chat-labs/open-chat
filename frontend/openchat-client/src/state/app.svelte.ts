@@ -675,32 +675,14 @@ export class AppState {
         return this.#selectedChatId ? this.#allServerChats.get(this.#selectedChatId) : undefined;
     });
 
-    #selectedCommunityId = $derived.by<CommunityIdentifier | undefined>(
-        withEqCheck(() => {
-            switch (pathState.route.scope.kind) {
-                case "community":
-                    return pathState.route.scope.id;
-                case "favourite":
-                    return pathState.route.scope.communityId;
-                default:
-                    return undefined;
-            }
-        }, communityIdentifiersEqual),
-    );
+    #selectedCommunityId = $derived(pathState.communityId);
 
     #selectedCommunitySummary = $derived.by<CommunitySummary | undefined>(
-        withEqCheck(() => {
-            if (this.#chatListScope.kind === "community") {
-                return this.#communities.get(this.#chatListScope.id);
-            } else if (
-                this.#chatListScope.kind === "favourite" &&
-                this.#chatListScope.communityId
-            ) {
-                return this.#communities.get(this.#chatListScope.communityId);
-            } else {
-                return undefined;
-            }
-        }, dequal),
+        withEqCheck(
+            () =>
+                pathState.communityId ? this.#communities.get(pathState.communityId) : undefined,
+            dequal,
+        ),
     );
 
     #selectedCommunity = $state<CommunityMergedState>(

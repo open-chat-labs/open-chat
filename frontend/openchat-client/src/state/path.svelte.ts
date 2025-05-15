@@ -35,6 +35,29 @@ export class PathState {
             this.#route.messageIndex !== undefined &&
             this.#route.open,
     );
+    #communityId = $derived.by(
+        withEqCheck(() => {
+            switch (this.#route.kind) {
+                case "selected_community_route":
+                case "selected_channel_route":
+                    return this.#route.communityId;
+                case "favourites_route":
+                    if (this.#route.chatId?.kind === "channel") {
+                        return {
+                            kind: "community",
+                            communityId: this.#route.chatId.communityId,
+                        } as CommunityIdentifier;
+                    }
+                    return undefined;
+                default:
+                    return undefined;
+            }
+        }, communityIdentifiersEqual),
+    );
+
+    get communityId() {
+        return this.#communityId;
+    }
 
     get exploring() {
         return this.#exploring;
@@ -155,15 +178,17 @@ export class PathState {
     }
 }
 
-import type {
-    ChannelIdentifier,
-    ChatIdentifier,
-    ChatListScope,
-    CommunityIdentifier,
-    DirectChatIdentifier,
-    GroupChatIdentifier,
-    NullScope,
+import {
+    communityIdentifiersEqual,
+    type ChannelIdentifier,
+    type ChatIdentifier,
+    type ChatListScope,
+    type CommunityIdentifier,
+    type DirectChatIdentifier,
+    type GroupChatIdentifier,
+    type NullScope,
 } from "openchat-shared";
+import { withEqCheck } from "./reactivity.svelte";
 
 export type LandingPageRoute =
     | HomeLandingRoute
