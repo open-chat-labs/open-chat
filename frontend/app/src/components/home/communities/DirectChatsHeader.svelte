@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui, type OpenChat } from "openchat-client";
+    import { type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import Kebab from "svelte-material-icons/DotsVertical.svelte";
@@ -24,7 +24,7 @@
 <SectionHeader slim border={false}>
     <div class="direct-chats">
         <div class="icon">
-            <MessageOutline size={ui.iconSize} color={"var(--icon-txt)"} />
+            <MessageOutline size={$iconSize} color={"var(--icon-txt)"} />
         </div>
         <div class="details">
             <h4 class="name"><Translatable resourceKey={i18nKey("communities.directChats")} /></h4>
@@ -33,7 +33,7 @@
             <MenuIcon position="bottom" align="end">
                 {#snippet menuIcon()}
                     <HoverIcon>
-                        <Kebab size={ui.iconSize} color={"var(--icon-txt)"} />
+                        <Kebab size={$iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
                 {/snippet}
                 {#snippet menuItems()}
@@ -43,7 +43,7 @@
                             onclick={() => client.markAllReadForCurrentScope()}>
                             {#snippet icon()}
                                 <CheckboxMultipleMarked
-                                    size={ui.iconSize}
+                                    size={$iconSize}
                                     color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AvatarSize, type OpenChat, ui, userStore } from "openchat-client";
+    import { AvatarSize, type OpenChat, userStore } from "openchat-client";
     import { getContext } from "svelte";
     import ThumbDown from "svelte-material-icons/ThumbDown.svelte";
     import ThumbUp from "svelte-material-icons/ThumbUp.svelte";
@@ -52,12 +52,12 @@
         <!-- svelte-ignore a11y_interactive_supports_focus -->
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <div role="button" onclick={() => approve(request)} class="btn">
-            <ThumbUp size={ui.iconSize} color={"var(--vote-yes-color)"} />
+            <ThumbUp size={$iconSize} color={"var(--vote-yes-color)"} />
         </div>
         <!-- svelte-ignore a11y_interactive_supports_focus -->
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <div role="button" onclick={() => reject(request)} class="btn">
-            <ThumbDown size={ui.iconSize} color={"var(--vote-no-color)"} />
+            <ThumbDown size={$iconSize} color={"var(--vote-no-color)"} />
         </div>
     </div>
 {/each}

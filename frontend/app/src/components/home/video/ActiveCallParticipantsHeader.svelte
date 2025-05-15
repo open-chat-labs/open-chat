@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { ui } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -14,7 +13,7 @@
     <h4><Translatable resourceKey={i18nKey("videoCall.participants")} /></h4>
     <span title={$_("close")} class="close" onclick={onClose}>
         <HoverIcon>
-            <Close size={ui.iconSize} color={"var(--icon-txt)"} />
+            <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
 </SectionHeader>

@@ -10,6 +10,7 @@
         type ResourceKey,
         type UserSummary,
         app,
+        mobileWidth,
         ui,
         userStore,
     } from "openchat-client";
@@ -232,7 +233,7 @@
     let diamondStatus = $derived(user?.diamondStatus);
     let me = $derived(userId === app.currentUserId);
     let isSuspended = $derived(user?.suspended ?? false);
-    let modal = $derived(ui.mobileWidth);
+    let modal = $derived($mobileWidth);
     let [status, online] = $derived(
         lastOnline !== undefined && lastOnline !== 0
             ? client.formatLastOnlineDate($_, Date.now(), lastOnline)

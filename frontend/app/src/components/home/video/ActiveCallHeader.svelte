@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AvatarSize, ui } from "openchat-client";
+    import { AvatarSize, iconSize, mobileWidth } from "openchat-client";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import { rtlStore } from "../../../stores/rtl";
@@ -37,7 +37,7 @@
 
 <SectionHeader shadow flush>
     <div class="header">
-        {#if ui.mobileWidth}
+        {#if $mobileWidth}
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <div
                 tabindex="0"
@@ -47,9 +47,9 @@
                 onclick={onClearSelection}>
                 <HoverIcon>
                     {#if $rtlStore}
-                        <ArrowRight size={ui.iconSize} color={"var(--icon-txt)"} />
+                        <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
                     {:else}
-                        <ArrowLeft size={ui.iconSize} color={"var(--icon-txt)"} />
+                        <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
                     {/if}
                 </HoverIcon>
             </div>

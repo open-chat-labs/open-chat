@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui, type AudioContent, type OpenChat } from "openchat-client";
+    import { type AudioContent, type OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Microphone from "svelte-material-icons/Microphone.svelte";
@@ -118,9 +118,9 @@
     <div onclick={toggle}>
         <HoverIcon title={recording ? $_("stopRecording") : $_("recordAudioMessage")}>
             {#if recording}
-                <RadioboxMarked size={ui.iconSize} color={"red"} />
+                <RadioboxMarked size={$iconSize} color={"red"} />
             {:else}
-                <Microphone size={ui.iconSize} color={"var(--icon-txt)"} />
+                <Microphone size={$iconSize} color={"var(--icon-txt)"} />
             {/if}
         </HoverIcon>
     </div>

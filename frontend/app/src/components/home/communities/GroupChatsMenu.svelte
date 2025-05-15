@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
-    import { app, publish, ui } from "openchat-client";
+    import { app, publish } from "openchat-client";
     import page from "page";
     import { getContext, tick } from "svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
@@ -46,14 +46,14 @@
 <MenuIcon position="bottom" align="end">
     {#snippet menuIcon()}
         <HoverIcon>
-            <Kebab size={ui.iconSize} color={"var(--icon-txt)"} />
+            <Kebab size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     {/snippet}
     {#snippet menuItems()}
         <Menu>
             <MenuItem onclick={newGroup}>
                 {#snippet icon()}
-                    <AccountMultiplePlus size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                    <AccountMultiplePlus size={$iconSize} color={"var(--icon-inverted-txt)"} />
                 {/snippet}
                 {#snippet text()}
                     <Translatable resourceKey={i18nKey("newGroup")} />
@@ -61,7 +61,7 @@
             </MenuItem>
             <MenuItem onclick={() => page("/groups")}>
                 {#snippet icon()}
-                    <Compass size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                    <Compass size={$iconSize} color={"var(--icon-inverted-txt)"} />
                 {/snippet}
                 {#snippet text()}
                     <Translatable resourceKey={i18nKey("exploreGroups")} />
@@ -71,7 +71,7 @@
                 disabled={!canMarkAllRead}
                 onclick={() => client.markAllReadForCurrentScope()}>
                 {#snippet icon()}
-                    <CheckboxMultipleMarked size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                    <CheckboxMultipleMarked size={$iconSize} color={"var(--icon-inverted-txt)"} />
                 {/snippet}
                 {#snippet text()}
                     <Translatable resourceKey={i18nKey("markAllRead")} />

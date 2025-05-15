@@ -6,7 +6,6 @@
         LEDGER_CANISTER_ICP,
         publish,
         routeForMessage,
-        ui,
         type ChatIdentifier,
         type Message,
         type MessageReminderCreatedContent,
@@ -365,7 +364,7 @@
                 {#if isProposal && !inert}
                     <MenuItem onclick={onCollapseMessage}>
                         {#snippet icon()}
-                            <CollapseIcon size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                            <CollapseIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
                         {/snippet}
                         {#snippet text()}
                             <div>
@@ -379,7 +378,7 @@
                         <MenuItem onclick={() => followThread(true)}>
                             {#snippet icon()}
                                 <EyeArrowRightIcon
-                                    size={ui.iconSize}
+                                    size={$iconSize}
                                     color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}
@@ -391,7 +390,7 @@
                     {:else if canUnfollow}
                         <MenuItem onclick={() => followThread(false)}>
                             {#snippet icon()}
-                                <EyeOffIcon size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                                <EyeOffIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}
                                 <div>
@@ -403,7 +402,7 @@
                     {#if publicGroup && canShare}
                         <MenuItem onclick={shareMessage}>
                             {#snippet icon()}
-                                <ShareIcon size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                                <ShareIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}
                                 <div><Translatable resourceKey={i18nKey("share")} /></div>
@@ -412,7 +411,7 @@
                     {/if}
                     <MenuItem onclick={copyMessageUrl}>
                         {#snippet icon()}
-                            <ContentCopy size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                            <ContentCopy size={$iconSize} color={"var(--icon-inverted-txt)"} />
                         {/snippet}
                         {#snippet text()}
                             <div>
@@ -423,7 +422,7 @@
                 {/if}
                 <MenuItem onclick={copyMessage}>
                     {#snippet icon()}
-                        <ContentCopy size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                        <ContentCopy size={$iconSize} color={"var(--icon-inverted-txt)"} />
                     {/snippet}
                     {#snippet text()}
                         <div><Translatable resourceKey={i18nKey("copy")} /></div>
@@ -432,9 +431,7 @@
                 {#if canRemind && confirmed && !inert && !failed}
                     <MenuItem onclick={onRemindMe}>
                         {#snippet icon()}
-                            <ClockPlusOutline
-                                size={ui.iconSize}
-                                color={"var(--icon-inverted-txt)"} />
+                            <ClockPlusOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
                         {/snippet}
                         {#snippet text()}
                             <div>
@@ -447,7 +444,7 @@
                     <MenuItem onclick={cancelReminder}>
                         {#snippet icon()}
                             <ClockRemoveOutline
-                                size={ui.iconSize}
+                                size={$iconSize}
                                 color={"var(--icon-inverted-txt)"} />
                         {/snippet}
                         {#snippet text()}
@@ -461,7 +458,7 @@
                     {#if pinned}
                         <MenuItem onclick={unpinMessage}>
                             {#snippet icon()}
-                                <PinOff size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                                <PinOff size={$iconSize} color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}
                                 <div>
@@ -472,7 +469,7 @@
                     {:else}
                         <MenuItem onclick={pinMessage}>
                             {#snippet icon()}
-                                <Pin size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                                <Pin size={$iconSize} color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}
                                 <div>
@@ -486,7 +483,7 @@
                     {#if canQuoteReply}
                         <MenuItem onclick={onReply}>
                             {#snippet icon()}
-                                <Reply size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                                <Reply size={$iconSize} color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}
                                 <div>
@@ -499,7 +496,7 @@
                         <MenuItem onclick={initiateThread}>
                             {#snippet icon()}
                                 <ChatPlusOutline
-                                    size={ui.iconSize}
+                                    size={$iconSize}
                                     color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}
@@ -513,7 +510,7 @@
                 {#if canForward && !inThread && !inert && !failed}
                     <MenuItem onclick={forward}>
                         {#snippet icon()}
-                            <ForwardIcon size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                            <ForwardIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
                         {/snippet}
                         {#snippet text()}
                             <div><Translatable resourceKey={i18nKey("forward")} /></div>
@@ -523,7 +520,7 @@
                 {#if confirmed && multiUserChat && !inThread && !me && !isProposal && !inert && !failed}
                     <MenuItem onclick={onReplyPrivately}>
                         {#snippet icon()}
-                            <ReplyOutline size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                            <ReplyOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
                         {/snippet}
                         {#snippet text()}
                             <div>
@@ -536,9 +533,7 @@
                     {#if translated}
                         <MenuItem onclick={untranslateMessage}>
                             {#snippet icon()}
-                                <TranslateOff
-                                    size={ui.iconSize}
-                                    color={"var(--icon-inverted-txt)"} />
+                                <TranslateOff size={$iconSize} color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}
                                 <div>
@@ -550,7 +545,7 @@
                         <MenuItem onclick={translateMessage}>
                             {#snippet icon()}
                                 <TranslateIcon
-                                    size={ui.iconSize}
+                                    size={$iconSize}
                                     color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}
@@ -564,7 +559,7 @@
                 {#if canEdit && !inert && !failed}
                     <MenuItem onclick={onEditMessage}>
                         {#snippet icon()}
-                            <PencilOutline size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                            <PencilOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
                         {/snippet}
                         {#snippet text()}
                             <div><Translatable resourceKey={i18nKey("editMessage")} /></div>
@@ -574,7 +569,7 @@
                 {#if canTip}
                     <MenuItem onclick={() => onTipMessage($lastCryptoSent ?? LEDGER_CANISTER_ICP)}>
                         {#snippet icon()}
-                            <Bitcoin size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                            <Bitcoin size={$iconSize} color={"var(--icon-inverted-txt)"} />
                         {/snippet}
                         {#snippet text()}
                             <div><Translatable resourceKey={i18nKey("tip.menu")} /></div>
@@ -585,7 +580,7 @@
                 {#if confirmed && multiUserChat && !me && canBlockUser && !failed}
                     <MenuItem onclick={blockUser}>
                         {#snippet icon()}
-                            <Cancel size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                            <Cancel size={$iconSize} color={"var(--icon-inverted-txt)"} />
                         {/snippet}
                         {#snippet text()}
                             <div><Translatable resourceKey={i18nKey("blockUser")} /></div>
@@ -595,7 +590,7 @@
                 {#if canDeleteMessage}
                     <MenuItem onclick={deleteMessage}>
                         {#snippet icon()}
-                            <DeleteOutline size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                            <DeleteOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
                         {/snippet}
                         {#snippet text()}
                             <div>
@@ -611,7 +606,7 @@
                 {#if confirmed && !me && !inert}
                     <MenuItem onclick={onReportMessage}>
                         {#snippet icon()}
-                            <Flag size={ui.iconSize} color={"var(--error)"} />
+                            <Flag size={$iconSize} color={"var(--error)"} />
                         {/snippet}
                         {#snippet text()}
                             <div>
@@ -623,7 +618,7 @@
                 {#if canRevealDeleted || canRevealBlocked}
                     <MenuItem onclick={revealDeletedMessage}>
                         {#snippet icon()}
-                            <EyeIcon size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                            <EyeIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
                         {/snippet}
                         {#snippet text()}
                             <div>
@@ -635,9 +630,7 @@
                 {#if canUndelete}
                     <MenuItem onclick={undeleteMessage}>
                         {#snippet icon()}
-                            <DeleteOffOutline
-                                size={ui.iconSize}
-                                color={"var(--icon-inverted-txt)"} />
+                            <DeleteOffOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
                         {/snippet}
                         {#snippet text()}
                             <div>
@@ -649,7 +642,7 @@
                 {#if failed}
                     <MenuItem onclick={onRetrySend}>
                         {#snippet icon()}
-                            <Refresh size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                            <Refresh size={$iconSize} color={"var(--icon-inverted-txt)"} />
                         {/snippet}
                         {#snippet text()}
                             <div>

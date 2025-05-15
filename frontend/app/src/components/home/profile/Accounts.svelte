@@ -7,7 +7,6 @@
         nervousSystemLookup,
         type OpenChat,
         swappableTokensStore,
-        ui,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import ArrowLeftBoldCircle from "svelte-material-icons/ArrowLeftBoldCircle.svelte";
@@ -187,7 +186,7 @@
                             <span class="wallet-menu">
                                 <ChevronDown
                                     viewBox={"0 -3 24 24"}
-                                    size={ui.iconSize}
+                                    size={$iconSize}
                                     color={"var(--txt)"} />
                             </span>
                         {/snippet}
@@ -196,7 +195,7 @@
                                 <MenuItem onclick={() => showSend(token.ledger)}>
                                     {#snippet icon()}
                                         <ArrowRightBoldCircle
-                                            size={ui.iconSize}
+                                            size={$iconSize}
                                             color={"var(--icon-inverted-txt)"} />
                                     {/snippet}
                                     {#snippet text()}
@@ -210,7 +209,7 @@
                                     <MenuItem onclick={() => showReceive(token.ledger)}>
                                         {#snippet icon()}
                                             <ArrowLeftBoldCircle
-                                                size={ui.iconSize}
+                                                size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"} />
                                         {/snippet}
                                         {#snippet text()}
@@ -226,7 +225,7 @@
                                         <MenuItem onclick={() => showSwap(token.ledger)}>
                                             {#snippet icon()}
                                                 <SwapIcon
-                                                    size={ui.iconSize}
+                                                    size={$iconSize}
                                                     color={"var(--icon-inverted-txt)"} />
                                             {/snippet}
                                             {#snippet text()}
@@ -244,7 +243,7 @@
                                     <MenuItem onclick={() => showTransactions(token)}>
                                         {#snippet icon()}
                                             <ViewList
-                                                size={ui.iconSize}
+                                                size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"} />
                                         {/snippet}
                                         {#snippet text()}
@@ -261,7 +260,7 @@
                                     <MenuItem onclick={() => removeFromWallet(token.ledger)}>
                                         {#snippet icon()}
                                             <HeartRemoveOutline
-                                                size={ui.iconSize}
+                                                size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"} />
                                         {/snippet}
                                         {#snippet text()}

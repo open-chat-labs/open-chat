@@ -20,9 +20,11 @@
         type MessageContext,
         messageContextsEqual,
         messagesRead,
+        mobileWidth,
         type MultiUserChat,
         type OpenChat,
         type ReadonlySet,
+        runningInIframe,
         subscribe,
         ui,
         type User,
@@ -289,7 +291,7 @@
     function onSendMessageWithContent(content: MessageContent) {
         client.sendMessageWithContent(messageContext, content, false);
     }
-    let showChatHeader = $derived(!ui.mobileWidth || !ui.runningInIframe);
+    let showChatHeader = $derived(!$mobileWidth || !$runningInIframe);
     let messageContext = $derived({ chatId: chat.id });
 
     trackedEffect("current-chat", () => {

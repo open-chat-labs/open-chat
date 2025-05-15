@@ -3,7 +3,6 @@
         OpenChat,
         achievements,
         app,
-        ui,
         type Achievement,
         type ExternalAchievement,
     } from "openchat-client";
@@ -184,7 +183,7 @@
                             {#each internalNotAchieved as achievement}
                                 <div class="achievement">
                                     <div class="no icon">
-                                        <CheckCircleOutline size={ui.iconSize} color={"#ccc"} />
+                                        <CheckCircleOutline size={$iconSize} color={"#ccc"} />
                                     </div>
                                     <Translatable
                                         resourceKey={i18nKey(`learnToEarn.${achievement}`)} />
@@ -208,7 +207,7 @@
                                 <div class="achievement">
                                     <div class="yes icon">
                                         <CheckCircle
-                                            size={ui.iconSize}
+                                            size={$iconSize}
                                             color={"var(--toast-success-bg)"} />
                                     </div>
                                     <Translatable resourceKey={i18nKey(achievement)} />

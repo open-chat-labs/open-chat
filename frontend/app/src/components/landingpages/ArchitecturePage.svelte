@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { pathState, ui } from "openchat-client";
+    import { mobileWidth, pathState } from "openchat-client";
     import Copy from "svelte-material-icons/ContentCopy.svelte";
     import { copyToClipboard, scrollToSection } from "../../utils/urls";
     import ArrowLink from "../ArrowLink.svelte";
@@ -15,7 +15,7 @@
     let linked: number | undefined = $state(undefined);
     let zooming: { url: string; alt: string } | undefined = $state(undefined);
 
-    let copySize = $derived(ui.mobileWidth ? "14px" : "16px");
+    let copySize = $derived($mobileWidth ? "14px" : "16px");
 
     function zoomImage(url: string, alt: string) {
         zooming = { url, alt };

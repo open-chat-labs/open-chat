@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { CommunitySummary, OpenChat } from "openchat-client";
-    import { app, publish, ui } from "openchat-client";
+    import { app, notificationsSupported, publish, ui } from "openchat-client";
     import { getContext } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
@@ -119,14 +119,14 @@
 <MenuIcon position="bottom" align="end">
     {#snippet menuIcon()}
         <HoverIcon>
-            <Kebab size={ui.iconSize} color={"var(--icon-txt)"} />
+            <Kebab size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     {/snippet}
     {#snippet menuItems()}
         <Menu>
             <MenuItem onclick={communityDetails}>
                 {#snippet icon()}
-                    <FileDocument size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                    <FileDocument size={$iconSize} color={"var(--icon-inverted-txt)"} />
                 {/snippet}
                 {#snippet text()}
                     <div><Translatable resourceKey={i18nKey("communities.details")} /></div>
@@ -134,7 +134,7 @@
             </MenuItem>
             <MenuItem onclick={showMembers}>
                 {#snippet icon()}
-                    <AccountMultiple size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                    <AccountMultiple size={$iconSize} color={"var(--icon-inverted-txt)"} />
                 {/snippet}
                 {#snippet text()}
                     <div><Translatable resourceKey={i18nKey("communities.members")} /></div>
@@ -143,9 +143,7 @@
             {#if canInvite}
                 <MenuItem onclick={invite}>
                     {#snippet icon()}
-                        <AccountMultiplePlus
-                            size={ui.iconSize}
-                            color={"var(--icon-inverted-txt)"} />
+                        <AccountMultiplePlus size={$iconSize} color={"var(--icon-inverted-txt)"} />
                     {/snippet}
                     {#snippet text()}
                         <div>
@@ -157,7 +155,7 @@
             {#if canEdit}
                 <MenuItem onclick={editCommunity}>
                     {#snippet icon()}
-                        <PencilOutline size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                        <PencilOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
                     {/snippet}
                     {#snippet text()}
                         <div>
@@ -169,7 +167,7 @@
             {#if canCreateChannel}
                 <MenuItem onclick={newChannel}>
                     {#snippet icon()}
-                        <PlaylistPlus size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                        <PlaylistPlus size={$iconSize} color={"var(--icon-inverted-txt)"} />
                     {/snippet}
                     {#snippet text()}
                         <span
@@ -181,7 +179,7 @@
             {#if canCreateChannel}
                 <MenuItem onclick={embedContent}>
                     {#snippet icon()}
-                        <Contain size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                        <Contain size={$iconSize} color={"var(--icon-inverted-txt)"} />
                     {/snippet}
                     {#snippet text()}
                         <span><Translatable resourceKey={i18nKey("communities.embed")} /></span>
@@ -190,16 +188,16 @@
             {/if}
             <MenuItem disabled={!canMarkAllRead} onclick={markAllRead}>
                 {#snippet icon()}
-                    <CheckboxMultipleMarked size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                    <CheckboxMultipleMarked size={$iconSize} color={"var(--icon-inverted-txt)"} />
                 {/snippet}
                 {#snippet text()}
                     <span><Translatable resourceKey={i18nKey("markAllRead")} /></span>
                 {/snippet}
             </MenuItem>
-            {#if ui.notificationsSupported && !isCommunityMuted}
+            {#if notificationsSupported && !isCommunityMuted}
                 <MenuItem onclick={muteAllChannels}>
                     {#snippet icon()}
-                        <BellOff size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                        <BellOff size={$iconSize} color={"var(--icon-inverted-txt)"} />
                     {/snippet}
                     {#snippet text()}
                         <span
@@ -213,7 +211,7 @@
                 {#if canDelete}
                     <MenuItem warning onclick={deleteCommunity}>
                         {#snippet icon()}
-                            <DeleteOutline size={ui.iconSize} color={"var(--menu-warn)"} />
+                            <DeleteOutline size={$iconSize} color={"var(--menu-warn)"} />
                         {/snippet}
                         {#snippet text()}
                             <div>
@@ -225,7 +223,7 @@
                 {#if canLeave}
                     <MenuItem warning onclick={leaveCommunity}>
                         {#snippet icon()}
-                            <LocationExit size={ui.iconSize} color={"var(--menu-warn)"} />
+                            <LocationExit size={$iconSize} color={"var(--menu-warn)"} />
                         {/snippet}
                         {#snippet text()}
                             <div>
@@ -239,7 +237,7 @@
                 {#if client.isCommunityFrozen(community.id)}
                     <MenuItem warning onclick={unfreezeCommunity}>
                         {#snippet icon()}
-                            <TickIcon size={ui.iconSize} color={"var(--menu-warn"} />
+                            <TickIcon size={$iconSize} color={"var(--menu-warn"} />
                         {/snippet}
                         {#snippet text()}
                             <div>
@@ -250,7 +248,7 @@
                 {:else}
                     <MenuItem warning onclick={freezeCommunity}>
                         {#snippet icon()}
-                            <CancelIcon size={ui.iconSize} color={"var(--menu-warn"} />
+                            <CancelIcon size={$iconSize} color={"var(--menu-warn"} />
                         {/snippet}
                         {#snippet text()}
                             <div>

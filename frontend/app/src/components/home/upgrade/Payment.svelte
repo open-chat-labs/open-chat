@@ -6,7 +6,7 @@
         type ResourceKey,
         cryptoLookup,
         E8S_PER_TOKEN,
-        ui,
+        mobileWidth,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -243,32 +243,32 @@
         </div>
     {/if}
 </div>
-<Footer align={ui.mobileWidth ? "center" : "end"}>
+<Footer align={$mobileWidth ? "center" : "end"}>
     {#if confirmed}
-        <Button small={!ui.mobileWidth} tiny={ui.mobileWidth} onClick={onCancel}
+        <Button small={!$mobileWidth} tiny={$mobileWidth} onClick={onCancel}
             ><Translatable resourceKey={i18nKey("close")} /></Button>
     {:else}
         <Button
             disabled={confirming}
-            tiny={ui.mobileWidth}
-            small={!ui.mobileWidth}
+            tiny={$mobileWidth}
+            small={!$mobileWidth}
             secondary
             onClick={onCancel}><Translatable resourceKey={i18nKey("cancel")} /></Button>
         {#if allowBack}
             <Button
                 disabled={confirming}
-                tiny={ui.mobileWidth}
-                small={!ui.mobileWidth}
+                tiny={$mobileWidth}
+                small={!$mobileWidth}
                 secondary
                 onClick={onFeatures}
                 ><Translatable resourceKey={i18nKey("upgrade.features")} /></Button>
         {/if}
         <Button
-            small={!ui.mobileWidth}
+            small={!$mobileWidth}
             disabled={confirming || insufficientFunds}
             loading={confirming || refreshingBalance}
             onClick={confirm}
-            tiny={ui.mobileWidth}><Translatable resourceKey={i18nKey("upgrade.confirm")} /></Button>
+            tiny={$mobileWidth}><Translatable resourceKey={i18nKey("upgrade.confirm")} /></Button>
     {/if}
 </Footer>
 

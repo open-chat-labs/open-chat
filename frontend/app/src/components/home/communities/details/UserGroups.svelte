@@ -8,7 +8,7 @@
         UserLookup,
         UserSummary,
     } from "openchat-client";
-    import { app, ui, userStore } from "openchat-client";
+    import { app, userStore } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
@@ -149,7 +149,7 @@
             {#if canManageUserGroups}
                 <div class="add">
                     <HoverIcon onclick={createUserGroup}>
-                        <Plus size={ui.iconSize} color={"var(--icon-txt)"} />
+                        <Plus size={$iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
                 </div>
             {/if}

@@ -8,7 +8,6 @@
         isPaymentGate,
         type Level,
         OpenChat,
-        ui,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -115,7 +114,7 @@
     {#if gateConfig.gate.kind === "no_gate" && showNoGate}
         <Tooltip {position} {align}>
             <div class="open">
-                <ShieldLockOpenOutline size={ui.iconSize} color={defaultColor} />
+                <ShieldLockOpenOutline size={$iconSize} color={defaultColor} />
             </div>
             {#snippet popupTemplate()}
                 <Translatable resourceKey={i18nKey("access.openAccessInfo")} />
@@ -132,7 +131,7 @@
     {:else if gateConfig.gate.kind === "composite_gate"}
         <Tooltip {position} {align}>
             <div class="composite">
-                <VectorCombine size={ui.iconSize} color={defaultColor} />
+                <VectorCombine size={$iconSize} color={defaultColor} />
             </div>
             {#snippet popupTemplate()}
                 <Translatable resourceKey={i18nKey("access.compositeGate")} />
@@ -159,7 +158,7 @@
     {:else if gateConfig.gate.kind === "unique_person_gate"}
         <Tooltip {position} {align}>
             <div class="unique">
-                <AccountCheck size={ui.iconSize} color={defaultColor} />
+                <AccountCheck size={$iconSize} color={defaultColor} />
             </div>
             {#snippet popupTemplate()}
                 <Translatable resourceKey={i18nKey("access.uniquePersonInfo")} />
@@ -176,7 +175,7 @@
     {:else if gateConfig.gate.kind === "referred_by_member_gate"}
         <Tooltip {position} {align}>
             <div class="referred_by_member">
-                <AccountPlusOutline size={ui.iconSize} color={defaultColor} />
+                <AccountPlusOutline size={$iconSize} color={defaultColor} />
             </div>
             {#snippet popupTemplate()}
                 <Translatable resourceKey={i18nKey("access.referredByMemberInfo")} />

@@ -10,11 +10,11 @@
         emptyCombinedUnreadCounts,
         type GroupMatch,
         type GroupSearchResponse,
+        mobileWidth,
         OpenChat,
         publish,
         routeForChatIdentifier,
         routeForScope,
-        ui,
         userStore,
         type UserSummary,
     } from "openchat-client";
@@ -172,7 +172,7 @@
     }
 
     let showPreview = $derived(
-        ui.mobileWidth &&
+        $mobileWidth &&
             app.selectedCommunitySummary?.membership.role === "none" &&
             app.selectedChatId === undefined,
     );
@@ -361,16 +361,13 @@
             {#if showExploreGroups}
                 <div class="explore-groups" onclick={() => page("/groups?explore=true")}>
                     <div class="disc">
-                        <Compass size={ui.iconSize} color={"var(--icon-txt)"} />
+                        <Compass size={$iconSize} color={"var(--icon-txt)"} />
                     </div>
                     <div class="label">
                         <Translatable resourceKey={i18nKey("exploreGroups")} />
                     </div>
                     <div onclick={() => exploreGroupsDismissed.set(true)} class="close">
-                        <Close
-                            viewBox="0 -3 24 24"
-                            size={ui.iconSize}
-                            color={"var(--button-txt)"} />
+                        <Close viewBox="0 -3 24 24" size={$iconSize} color={"var(--button-txt)"} />
                     </div>
                 </div>
             {/if}

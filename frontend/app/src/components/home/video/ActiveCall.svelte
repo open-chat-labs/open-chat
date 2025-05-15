@@ -4,6 +4,7 @@
     import {
         app,
         chatIdentifiersEqual,
+        mobileWidth,
         NoMeetingToJoin,
         OpenChat,
         ui,
@@ -45,7 +46,9 @@
     const client = getContext<OpenChat>("client");
 
     let iframeContainer: HTMLDivElement | undefined = $state();
-    let confirmSwitchTo: { chatId: ChatIdentifier; callType: VideoCallType; join: boolean } | undefined = $state(undefined);
+    let confirmSwitchTo:
+        | { chatId: ChatIdentifier; callType: VideoCallType; join: boolean }
+        | undefined = $state(undefined);
     let hostEnded = $state(false);
     let denied = $state(false);
     let askedToSpeak = $state(false);
@@ -98,7 +101,11 @@
         }
     }
 
-    export async function startOrJoinVideoCall(chatId: ChatIdentifier, callType: VideoCallType, join: boolean) {
+    export async function startOrJoinVideoCall(
+        chatId: ChatIdentifier,
+        callType: VideoCallType,
+        join: boolean,
+    ) {
         if (iframeContainer === undefined) return;
 
         try {
@@ -346,8 +353,8 @@
     class:visible={$activeVideoCall &&
         $activeVideoCall.view !== "minimised" &&
         !showLandingPage &&
-        !(threadOpen && ui.mobileWidth) &&
-        !(participantsOpen && ui.mobileWidth) &&
+        !(threadOpen && $mobileWidth) &&
+        !(participantsOpen && $mobileWidth) &&
         chatIdentifiersEqual($activeVideoCall.chatId, app.selectedChatSummary?.id)}>
     {#if chat !== undefined}
         <ActiveCallHeader

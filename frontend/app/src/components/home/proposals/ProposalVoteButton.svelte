@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { ui } from "openchat-client";
     import { _ } from "svelte-i18n";
     import ThumbDown from "svelte-material-icons/ThumbDown.svelte";
     import ThumbUp from "svelte-material-icons/ThumbUp.svelte";
@@ -33,9 +32,9 @@
     <div onclick={onClick} class:voting class:voted class:disabled class={`icon ${mode}`}>
         {#if !voting}
             {#if mode === "yes"}
-                <ThumbUp size={ui.iconSize} color={iconColor} />
+                <ThumbUp size={$iconSize} color={iconColor} />
             {:else}
-                <ThumbDown size={ui.iconSize} color={iconColor} />
+                <ThumbDown size={$iconSize} color={iconColor} />
             {/if}
         {/if}
     </div>

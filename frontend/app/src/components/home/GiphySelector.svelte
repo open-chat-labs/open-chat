@@ -1,9 +1,9 @@
 <script lang="ts">
     import {
         type GiphyContent,
+        mobileWidth,
         type TenorObject,
         type TenorSearchResponse,
-        ui,
     } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
     import Button from "../Button.svelte";
@@ -194,13 +194,13 @@
     let selectedImage = $derived(
         selectedGif === undefined
             ? undefined
-            : ui.mobileWidth
+            : $mobileWidth
               ? { ...selectedGif.media_formats.tinygif }
               : { ...selectedGif.media_formats.mediumgif },
     );
     $effect(() => {
         let containerWidth = containerElement?.clientWidth ?? 0;
-        let numCols = ui.mobileWidth ? 2 : 4;
+        let numCols = $mobileWidth ? 2 : 4;
         let availWidth = containerWidth - (numCols - 1) * gutter;
         imgWidth = availWidth / numCols;
         gifCache = gifs.reduce((cache, gif, i) => reduceGifs(numCols, cache, gif, i), {});
@@ -276,7 +276,7 @@
                             </Link>
                         </span>
                     {/if}
-                    <ButtonGroup align={ui.mobileWidth ? "center" : "end"}>
+                    <ButtonGroup align={$mobileWidth ? "center" : "end"}>
                         <Button small secondary onClick={() => (open = false)}
                             ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                         <Button small disabled={selectedGif === undefined} onClick={send}

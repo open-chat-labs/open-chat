@@ -4,7 +4,6 @@
         type ExternalBotPermissions,
         type MultiUserChat,
         type PublicApiKeyDetails,
-        ui,
     } from "openchat-client";
     import { type ExternalBot } from "openchat-shared";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
@@ -89,7 +88,7 @@
             <MenuIcon position={"bottom"} align={"end"}>
                 {#snippet menuIcon()}
                     <HoverIcon>
-                        <ChevronDown size={ui.iconSize} color={"var(--icon-txt)"} />
+                        <ChevronDown size={$iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
                 {/snippet}
                 {#snippet menuItems()}
@@ -98,7 +97,7 @@
                             <MenuItem onclick={() => removeBot()}>
                                 {#snippet icon()}
                                     <DeleteOutline
-                                        size={ui.iconSize}
+                                        size={$iconSize}
                                         color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}
@@ -109,7 +108,7 @@
                                 <MenuItem onclick={() => reviewCommandPermissions()}>
                                     {#snippet icon()}
                                         <PencilOutline
-                                            size={ui.iconSize}
+                                            size={$iconSize}
                                             color={"var(--icon-inverted-txt)"} />
                                     {/snippet}
                                     {#snippet text()}
@@ -123,7 +122,7 @@
                                 <MenuItem onclick={reviewApiKey}>
                                     {#snippet icon()}
                                         <KeyRemove
-                                            size={ui.iconSize}
+                                            size={$iconSize}
                                             color={"var(--icon-inverted-txt)"} />
                                     {/snippet}
                                     {#snippet text()}
@@ -135,7 +134,7 @@
                                 <MenuItem onclick={() => generateApiKey()}>
                                     {#snippet icon()}
                                         <KeyPlus
-                                            size={ui.iconSize}
+                                            size={$iconSize}
                                             color={"var(--icon-inverted-txt)"} />
                                     {/snippet}
                                     {#snippet text()}
@@ -148,7 +147,7 @@
                         <MenuItem onclick={() => viewBotDetails()}>
                             {#snippet icon()}
                                 <TextBoxOutline
-                                    size={ui.iconSize}
+                                    size={$iconSize}
                                     color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}

@@ -7,9 +7,10 @@
         type OpenChat,
         type UserSummary,
         app,
+        hideMessagesFromDirectBlocked,
         notificationStatus,
+        notificationsSupported,
         publish,
-        ui,
     } from "openchat-client";
     import { ErrorCode } from "openchat-shared";
     import { getContext, onMount } from "svelte";
@@ -270,7 +271,7 @@
     <h4 class="title"><Translatable resourceKey={i18nKey("profile.title")} /></h4>
     <span title={$_("close")} class="close" onclick={onCloseProfile}>
         <HoverIcon>
-            <Close size={ui.iconSize} color={"var(--icon-txt)"} />
+            <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
 </SectionHeader>
@@ -487,7 +488,7 @@
                         onChange={() => dclickReply.toggle()}
                         label={i18nKey(isTouchDevice ? "doubleTapReply" : "doubleClickReply")}
                         checked={$dclickReply} />
-                    {#if ui.notificationsSupported}
+                    {#if notificationsSupported}
                         <Toggle
                             id={"notifications"}
                             small
@@ -514,9 +515,9 @@
                     <Toggle
                         id={"hide-blocked"}
                         small
-                        onChange={() => ui.hideMessagesFromDirectBlocked.toggle()}
+                        onChange={() => hideMessagesFromDirectBlocked.toggle()}
                         label={i18nKey("hideBlocked")}
-                        checked={ui.hideMessagesFromDirectBlocked.value} />
+                        checked={$hideMessagesFromDirectBlocked} />
                 </CollapsibleCard>
             </div>
             <div class="video">
@@ -608,7 +609,7 @@
                         <div class="userid-txt">
                             <div>{user.userId}</div>
                             <div role="button" tabindex="0" onclick={onCopy} class="copy">
-                                <CopyIcon size={ui.iconSize} color={"var(--icon-txt)"} />
+                                <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
                             </div>
                         </div>
                     </div>

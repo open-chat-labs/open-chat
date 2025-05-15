@@ -1,6 +1,5 @@
 <script lang="ts">
     import {
-        ui,
         type CommunitySummary,
         type Level,
         type MultiUserChat,
@@ -44,9 +43,9 @@
     <span title={$_("close")} class="close" onclick={onCancelInviteUsers}>
         <HoverIcon>
             {#if closeIcon === "close"}
-                <Close size={ui.iconSize} color={"var(--icon-txt)"} />
+                <Close size={$iconSize} color={"var(--icon-txt)"} />
             {:else}
-                <ArrowLeft size={ui.iconSize} color={"var(--icon-txt)"} />
+                <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
             {/if}
         </HoverIcon>
     </span>

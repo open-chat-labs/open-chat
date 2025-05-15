@@ -1,11 +1,11 @@
 <script lang="ts">
     import type { Message, MessageActivityEvent, ResourceKey } from "openchat-client";
     import {
+        activityFeedShowing,
         app,
         AvatarSize,
         OpenChat,
         routeForMessageContext,
-        ui,
         userStore,
         type MessageContext,
     } from "openchat-client";
@@ -150,7 +150,7 @@
     }
 
     function goToEventContext() {
-        ui.activityFeedShowing = false;
+        activityFeedShowing.set(false);
         page(routeForMessageContext("none", event.messageContext, true));
     }
     let sender = $derived(event.userId ? userStore.get(event.userId) : undefined);

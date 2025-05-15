@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { allQuestions, pathState, ui, type Questions } from "openchat-client";
+    import { allQuestions, mobileWidth, pathState, type Questions } from "openchat-client";
     import { _ } from "svelte-i18n";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -18,7 +18,7 @@
         }
     });
 
-    let copySize = $derived(ui.mobileWidth ? "14px" : "16px");
+    let copySize = $derived($mobileWidth ? "14px" : "16px");
 
     function copyUrl(e: Event, q: string): void {
         e.stopPropagation();

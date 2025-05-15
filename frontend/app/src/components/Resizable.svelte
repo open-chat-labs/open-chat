@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui } from "openchat-client";
+    import { mobileWidth, ui } from "openchat-client";
 
     const MIN_COL_WIDTH = 400;
     const MAX_COL_WIDTH = 900;
@@ -80,7 +80,7 @@
 
 <svelte:window onmousemove={drag} onmouseup={stopResize} />
 
-{#if !ui.mobileWidth}
+{#if !$mobileWidth}
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
     <div
         role="separator"

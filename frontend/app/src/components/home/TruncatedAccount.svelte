@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { ui } from "openchat-client";
     import type { Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
@@ -45,7 +44,7 @@
     </div>
     {#if !disableCopy}
         <div class="copy" title={$_("copyToClipboard")} onclick={copy}>
-            <ContentCopy size={ui.iconSize} color={"var(--icon-txt)"} />
+            <ContentCopy size={$iconSize} color={"var(--icon-txt)"} />
         </div>
     {/if}
 </div>

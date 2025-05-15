@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { emptyUnreadCounts, ui, type ResourceKey } from "openchat-client";
+    import { emptyUnreadCounts, mobileWidth, type ResourceKey } from "openchat-client";
     import Button from "../Button.svelte";
     import Translatable from "../Translatable.svelte";
     import UnreadCount from "./UnreadCount.svelte";
@@ -14,12 +14,7 @@
     let { selected = false, title, unread = emptyUnreadCounts(), onClick }: Props = $props();
 </script>
 
-<Button
-    fill={ui.mobileWidth}
-    hollow={!selected}
-    small={!ui.mobileWidth}
-    tiny={ui.mobileWidth}
-    {onClick}>
+<Button fill={$mobileWidth} hollow={!selected} small={!$mobileWidth} tiny={$mobileWidth} {onClick}>
     <h4 class="title">
         <Translatable resourceKey={title} />
     </h4>

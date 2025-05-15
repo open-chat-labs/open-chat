@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui } from "openchat-client";
+    import { mobileWidth } from "openchat-client";
     import Button from "../Button.svelte";
 
     interface Props {
@@ -11,12 +11,7 @@
     let { selected = false, title, onClick }: Props = $props();
 </script>
 
-<Button
-    fill={ui.mobileWidth}
-    hollow={!selected}
-    small={!ui.mobileWidth}
-    tiny={ui.mobileWidth}
-    {onClick}>
+<Button fill={$mobileWidth} hollow={!selected} small={!$mobileWidth} tiny={$mobileWidth} {onClick}>
     <div class="content">
         {title}
     </div>

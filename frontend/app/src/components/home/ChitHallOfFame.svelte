@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type ChitUserBalance, type OpenChat, ui } from "openchat-client";
+    import { type ChitUserBalance, mobileWidth, type OpenChat } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import { isTouchDevice } from "../../utils/devices";
@@ -142,7 +142,7 @@
                     <table cellpadding="3px" class="scoreboard">
                         <thead class="table-header">
                             <tr>
-                                {#if !ui.mobileWidth}
+                                {#if !$mobileWidth}
                                     <th class="rank">#</th>
                                 {/if}
                                 <th class="username">{$_("halloffame.username")}</th>
@@ -152,7 +152,7 @@
                         <tbody>
                             {#each leaders as leader, i}
                                 <tr class="table-row">
-                                    {#if !ui.mobileWidth}
+                                    {#if !$mobileWidth}
                                         <td class="rank">{i + 1}</td>
                                     {/if}
                                     <td class="username" title={leader.username}
@@ -172,14 +172,14 @@
                 {#if showGame}
                     <div onclick={() => (showGame = false)} class="joystick">🏆️</div>
                     <Button
-                        tiny={ui.mobileWidth}
-                        small={!ui.mobileWidth}
+                        tiny={$mobileWidth}
+                        small={!$mobileWidth}
                         onClick={() => (showGame = false)}>{$_("backToResults")}</Button>
                 {:else}
                     {#if supportsGame}
                         <div onclick={() => (showGame = true)} class="joystick">🕹️</div>
                     {/if}
-                    <Button tiny={ui.mobileWidth} small={!ui.mobileWidth} onClick={onClose}
+                    <Button tiny={$mobileWidth} small={!$mobileWidth} onClick={onClose}
                         >{$_("close")}</Button>
                 {/if}
             </ButtonGroup>

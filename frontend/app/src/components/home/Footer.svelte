@@ -11,7 +11,6 @@
         type MultiUserChat,
         type OpenChat,
         type User,
-        ui,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -160,7 +159,7 @@
                         <h4><Translatable resourceKey={i18nKey("pickEmoji")} /></h4>
                         <span title={$_("close")} class="close-emoji">
                             <HoverIcon onclick={() => (messageAction = undefined)}>
-                                <Close size={ui.iconSize} color={"var(--icon-txt)"} />
+                                <Close size={$iconSize} color={"var(--icon-txt)"} />
                             </HoverIcon>
                         </span>
                     </div>

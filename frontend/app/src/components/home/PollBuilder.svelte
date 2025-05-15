@@ -1,5 +1,11 @@
 <script lang="ts">
-    import { ui, type PollContent, type ResourceKey, type TotalPollVotes } from "openchat-client";
+    import {
+        iconSize,
+        mobileWidth,
+        type PollContent,
+        type ResourceKey,
+        type TotalPollVotes,
+    } from "openchat-client";
     import { _ } from "svelte-i18n";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import PlusCircleOutline from "svelte-material-icons/PlusCircleOutline.svelte";
@@ -163,15 +169,15 @@
                 <div class="buttons">
                     <ButtonGroup align={"start"}>
                         <Button
-                            small={!ui.mobileWidth}
-                            tiny={ui.mobileWidth}
+                            small={!$mobileWidth}
+                            tiny={$mobileWidth}
                             secondary={showSettings}
                             onClick={() => (showSettings = false)}
                             ><Translatable resourceKey={i18nKey("poll.poll")} /></Button>
                         <Button
-                            small={!ui.mobileWidth}
+                            small={!$mobileWidth}
                             secondary={!showSettings}
-                            tiny={ui.mobileWidth}
+                            tiny={$mobileWidth}
                             onClick={() => (showSettings = true)}
                             ><Translatable resourceKey={i18nKey("poll.settings")} /></Button>
                     </ButtonGroup>
@@ -199,9 +205,7 @@
                                         {answer}
                                     </div>
                                     <div class="delete" onclick={() => deleteAnswer(answer)}>
-                                        <DeleteOutline
-                                            size={ui.iconSize}
-                                            color={"var(--icon-txt)"} />
+                                        <DeleteOutline size={$iconSize} color={"var(--icon-txt)"} />
                                     </div>
                                 </div>
                             {/each}
@@ -229,7 +233,7 @@
                                     </div>
                                     <div class="add-btn" onclick={addAnswer}>
                                         <PlusCircleOutline
-                                            size={ui.iconSize}
+                                            size={$iconSize}
                                             color={"var(--icon-txt)"} />
                                     </div>
                                 </div>
@@ -292,14 +296,14 @@
             {#snippet footer()}
                 <ButtonGroup>
                     <Button
-                        small={!ui.mobileWidth}
-                        tiny={ui.mobileWidth}
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}
                         secondary
                         onClick={() => (open = false)}>{$_("cancel")}</Button>
                     <Button
-                        small={!ui.mobileWidth}
+                        small={!$mobileWidth}
                         disabled={!valid}
-                        tiny={ui.mobileWidth}
+                        tiny={$mobileWidth}
                         onClick={start}>{$_("poll.start")}</Button>
                 </ButtonGroup>
             {/snippet}

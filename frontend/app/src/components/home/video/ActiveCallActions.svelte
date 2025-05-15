@@ -1,5 +1,13 @@
 <script lang="ts">
-    import { app, pageReplace, routeForMessage, ui } from "openchat-client";
+    import {
+        app,
+        iconSize,
+        mobileWidth,
+        pageReplace,
+        rightPanelHistory,
+        routeForMessage,
+        ui,
+    } from "openchat-client";
     import page from "page";
     import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
@@ -61,26 +69,26 @@
                 $activeVideoCall?.messageId !== undefined &&
                 $activeVideoCall.chatId.kind !== "direct_chat"
             ) {
-                ui.rightPanelHistory = [
+                rightPanelHistory.set([
                     {
                         kind: "call_participants_panel",
                         chatId: $activeVideoCall.chatId,
                         messageId: $activeVideoCall.messageId,
                         isOwner,
                     },
-                ];
+                ]);
             }
         }
         activeVideoCall.participantsOpen(!participantsOpen);
     }
 </script>
 
-{#if ui.mobileWidth}
+{#if $mobileWidth}
     {#if $activeVideoCall?.status === "joined"}
         <MenuIcon position={"bottom"} align={"end"}>
             {#snippet menuIcon()}
                 <HoverIcon title={$_("chatMenu")}>
-                    <DotsVertical size={ui.iconSize} color={"var(--icon-txt)"} />
+                    <DotsVertical size={$iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
             {/snippet}
             {#snippet menuItems()}
@@ -90,7 +98,7 @@
                             {#snippet icon()}
                                 <HandFrontLeft
                                     title={$_("videoCall.askToSpeak")}
-                                    size={ui.iconSize}
+                                    size={$iconSize}
                                     color={askedToSpeak
                                         ? "var(--icon-selected)"
                                         : "var(--icon-txt)"} />
@@ -104,7 +112,7 @@
                         <MenuItem onclick={toggleParticipants}>
                             {#snippet icon()}
                                 <AccountMultiple
-                                    size={ui.iconSize}
+                                    size={$iconSize}
                                     color={participantsOpen
                                         ? "var(--icon-selected)"
                                         : "var(--icon-txt)"} />
@@ -118,7 +126,7 @@
                         <MenuItem onclick={toggleThread}>
                             {#snippet icon()}
                                 <MessageOutline
-                                    size={ui.iconSize}
+                                    size={$iconSize}
                                     color={threadOpen
                                         ? "var(--icon-selected)"
                                         : "var(--icon-txt)"} />
@@ -130,7 +138,7 @@
                     {/if}
                     <MenuItem onclick={onMinimise}>
                         {#snippet icon()}
-                            <WindowMinimize size={ui.iconSize} color={"var(--icon-txt)"} />
+                            <WindowMinimize size={$iconSize} color={"var(--icon-txt)"} />
                         {/snippet}
                         {#snippet text()}
                             <Translatable resourceKey={i18nKey("videoCall.minimise")} />
@@ -138,7 +146,7 @@
                     </MenuItem>
                     <MenuItem onclick={onHangup}>
                         {#snippet icon()}
-                            <PhoneHangup size={ui.iconSize} color={"var(--vote-no-color)"} />
+                            <PhoneHangup size={$iconSize} color={"var(--vote-no-color)"} />
                         {/snippet}
                         {#snippet text()}
                             <Translatable resourceKey={i18nKey("videoCall.leave")} />
@@ -154,32 +162,32 @@
             <HoverIcon onclick={onAskToSpeak}>
                 <HandFrontLeft
                     title={$_("videoCall.askToSpeak")}
-                    size={ui.iconSize}
+                    size={$iconSize}
                     color={askedToSpeak ? "var(--icon-selected)" : "var(--icon-txt)"} />
             </HoverIcon>
         {/if}
         {#if $activeVideoCall?.messageId !== undefined && $activeVideoCall.chatId.kind !== "direct_chat"}
             <HoverIcon title={$_("videoCall.showParticipants")} onclick={toggleParticipants}>
                 <AccountMultiple
-                    size={ui.iconSize}
+                    size={$iconSize}
                     color={participantsOpen ? "var(--icon-selected)" : "var(--icon-txt)"} />
             </HoverIcon>
         {/if}
         {#if chat.chatId && chat.videoCallInProgress?.messageIndex !== undefined}
             <HoverIcon title={$_("videoCall.chat")} onclick={toggleThread}>
                 <MessageOutline
-                    size={ui.iconSize}
+                    size={$iconSize}
                     color={threadOpen ? "var(--icon-selected)" : "var(--icon-txt)"} />
             </HoverIcon>
         {/if}
         <HoverIcon onclick={onMinimise}>
-            <WindowMinimize size={ui.iconSize} color={"var(--icon-txt)"} />
+            <WindowMinimize size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
         <HoverIcon onclick={onToggleFullscreen}>
-            <WindowMaximize size={ui.iconSize} color={"var(--icon-txt)"} />
+            <WindowMaximize size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
         <HoverIcon title={$_("videoCall.leave")} onclick={onHangup}>
-            <PhoneHangup size={ui.iconSize} color={"var(--vote-no-color)"} />
+            <PhoneHangup size={$iconSize} color={"var(--vote-no-color)"} />
         </HoverIcon>
     </div>
 {/if}

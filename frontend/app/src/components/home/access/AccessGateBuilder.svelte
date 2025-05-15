@@ -4,7 +4,6 @@
         isCompositeGate,
         isLeafGate,
         nervousSystemLookup,
-        ui,
         type AccessGate,
         type AccessGateConfig,
         type Level,
@@ -156,7 +155,7 @@
                                         <div onclick={() => deleteGate(i)} class="delete">
                                             <Delete
                                                 viewBox={"0 -3 24 24"}
-                                                size={ui.iconSize}
+                                                size={$iconSize}
                                                 color={"var(--icon-txt)"} />
                                         </div>
                                     {/if}
@@ -182,7 +181,7 @@
                         </Button>
                         <div class="icon">
                             <Tooltip position={"top"} align={"middle"}>
-                                <InformationOutline size={ui.iconSize} color={"var(--txt)"} />
+                                <InformationOutline size={$iconSize} color={"var(--txt)"} />
                                 {#snippet popupTemplate()}
                                     <Translatable resourceKey={i18nKey("access.addGateInfo")} />
                                 {/snippet}

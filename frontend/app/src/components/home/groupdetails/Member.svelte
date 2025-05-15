@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui, type FullMember } from "openchat-client";
+    import { type FullMember } from "openchat-client";
     import type { MemberRole } from "openchat-shared";
     import { _ } from "svelte-i18n";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
@@ -96,7 +96,7 @@
             <MenuIcon position={"bottom"} align={"end"}>
                 {#snippet menuIcon()}
                     <HoverIcon>
-                        <ChevronDown size={ui.iconSize} color={"var(--icon-txt)"} />
+                        <ChevronDown size={$iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
                 {/snippet}
                 {#snippet menuItems()}
@@ -105,7 +105,7 @@
                             <MenuItem onclick={() => changeRole("owner")}>
                                 {#snippet icon()}
                                     <AccountPlusOutline
-                                        size={ui.iconSize}
+                                        size={$iconSize}
                                         color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}
@@ -122,7 +122,7 @@
                             <MenuItem onclick={() => changeRole("admin")}>
                                 {#snippet icon()}
                                     <AccountPlusOutline
-                                        size={ui.iconSize}
+                                        size={$iconSize}
                                         color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}
@@ -139,7 +139,7 @@
                             <MenuItem onclick={() => changeRole("admin")}>
                                 {#snippet icon()}
                                     <AccountRemoveOutline
-                                        size={ui.iconSize}
+                                        size={$iconSize}
                                         color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}
@@ -156,7 +156,7 @@
                             <MenuItem onclick={() => changeRole("moderator")}>
                                 {#snippet icon()}
                                     <AccountPlusOutline
-                                        size={ui.iconSize}
+                                        size={$iconSize}
                                         color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}
@@ -173,7 +173,7 @@
                             <MenuItem onclick={() => changeRole("moderator")}>
                                 {#snippet icon()}
                                     <AccountRemoveOutline
-                                        size={ui.iconSize}
+                                        size={$iconSize}
                                         color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}
@@ -190,7 +190,7 @@
                             <MenuItem onclick={() => changeRole("member")}>
                                 {#snippet icon()}
                                     <AccountRemoveOutline
-                                        size={ui.iconSize}
+                                        size={$iconSize}
                                         color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}
@@ -206,7 +206,7 @@
                         {#if canBlockUser}
                             <MenuItem onclick={blockUser}>
                                 {#snippet icon()}
-                                    <Cancel size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                                    <Cancel size={$iconSize} color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}
                                     <div>
@@ -219,7 +219,7 @@
                             <MenuItem onclick={removeUser}>
                                 {#snippet icon()}
                                     <MinusCircleOutline
-                                        size={ui.iconSize}
+                                        size={$iconSize}
                                         color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}

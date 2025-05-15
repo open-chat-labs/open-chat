@@ -3,10 +3,12 @@
     import {
         app,
         AvatarSize,
+        iconSize,
+        mobileWidth,
         publish,
+        rightPanelHistory,
         routeForChatIdentifier,
         byContext as typersByContext,
-        ui,
         userStore,
         type OpenChat,
         type TypersByKey,
@@ -73,11 +75,11 @@
 
     function showGroupDetails() {
         if (app.selectedChatId !== undefined) {
-            ui.rightPanelHistory = [
+            rightPanelHistory.set([
                 {
                     kind: "group_details",
                 },
-            ];
+            ]);
         }
     }
 
@@ -160,13 +162,13 @@
 {/if}
 
 <SectionHeader shadow flush>
-    {#if ui.mobileWidth}
+    {#if $mobileWidth}
         <div class="back" class:rtl={$rtlStore} onclick={clearSelection}>
             <HoverIcon>
                 {#if $rtlStore}
-                    <ArrowRight size={ui.iconSize} color={"var(--icon-txt)"} />
+                    <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
                 {:else}
-                    <ArrowLeft size={ui.iconSize} color={"var(--icon-txt)"} />
+                    <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
                 {/if}
             </HoverIcon>
         </div>

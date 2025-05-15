@@ -1,6 +1,6 @@
 <script lang="ts">
     import { toastStore } from "@src/stores/toast";
-    import { type MultiUserChat, OpenChat, ui } from "openchat-client";
+    import { type MultiUserChat, OpenChat } from "openchat-client";
     import { publish, type WebhookDetails } from "openchat-shared";
     import { getContext } from "svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
@@ -59,14 +59,14 @@
     <MenuIcon position={"bottom"} align={"end"}>
         {#snippet menuIcon()}
             <HoverIcon>
-                <ChevronDown size={ui.iconSize} color={"var(--icon-txt)"} />
+                <ChevronDown size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         {/snippet}
         {#snippet menuItems()}
             <Menu>
                 <MenuItem onclick={() => viewEditWebhook()}>
                     {#snippet icon()}
-                        <TextBoxOutline size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                        <TextBoxOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
                     {/snippet}
                     {#snippet text()}
                         <Translatable resourceKey={i18nKey("webhook.viewEditAction")} />
@@ -74,7 +74,7 @@
                 </MenuItem>
                 <MenuItem onclick={() => deleteWebhook()}>
                     {#snippet icon()}
-                        <DeleteOutline size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                        <DeleteOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
                     {/snippet}
                     {#snippet text()}
                         <Translatable resourceKey={i18nKey("webhook.removeAction")} />

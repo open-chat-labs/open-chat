@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { ResourceKey } from "openchat-client";
-    import { AvatarSize, OpenChat, ui, userStore } from "openchat-client";
+    import { AvatarSize, OpenChat, userStore } from "openchat-client";
     import { getContext } from "svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import type { Theme } from "../../../theme/types";
@@ -40,7 +40,7 @@
                 <div class="icon">
                     <ChevronDown
                         viewBox={"0 -3 24 24"}
-                        size={ui.iconSize}
+                        size={$iconSize}
                         color={`${theme.accent}`} />
                 </div>
             </div>

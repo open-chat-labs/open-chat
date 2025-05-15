@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AuthProvider, ui, type AuthenticationPrincipal, type OpenChat } from "openchat-client";
+    import { AuthProvider, type AuthenticationPrincipal, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import LinkVariantOff from "svelte-material-icons/LinkVariantOff.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -53,7 +53,7 @@
 </script>
 
 <div class="header">
-    <LinkVariantOff size={ui.iconSize} color={"var(--txt)"} />
+    <LinkVariantOff size={$iconSize} color={"var(--txt)"} />
     <div class="title">
         <Translatable resourceKey={i18nKey("identity.unlinkIdentity")} />
     </div>

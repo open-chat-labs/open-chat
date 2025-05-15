@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui } from "openchat-client";
+    import { activityFeedShowing, ui } from "openchat-client";
     import { rtlStore } from "../../stores/rtl";
     import { currentTheme } from "../../theme/themes";
     import ActivityFeed from "./activity/ActivityFeed.svelte";
@@ -12,7 +12,7 @@
     class:rtl={$rtlStore}
     class:halloween={$currentTheme.name === "halloween"}>
     <div class="chat-list">
-        {#if ui.activityFeedShowing}
+        {#if $activityFeedShowing}
             <ActivityFeed />
         {:else}
             <ChatList />

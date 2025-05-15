@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui, type Level, type OpenChat } from "openchat-client";
+    import { type Level, type OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
@@ -76,7 +76,7 @@
         explanations={[i18nKey("identity.humanityWarning")]} />
 {:else}
     <div class="header">
-        <AccountCheck size={ui.iconSize} color={"var(--txt)"} />
+        <AccountCheck size={$iconSize} color={"var(--txt)"} />
         <div class="title">
             <Translatable resourceKey={i18nKey("access.uniquePerson")} />
         </div>

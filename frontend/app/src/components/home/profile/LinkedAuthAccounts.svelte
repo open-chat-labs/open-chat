@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AuthProvider, OpenChat, ui, type AuthenticationPrincipal } from "openchat-client";
+    import { AuthProvider, OpenChat, type AuthenticationPrincipal } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import Account from "svelte-material-icons/Account.svelte";
     import LinkOff from "svelte-material-icons/LinkOff.svelte";
@@ -61,7 +61,7 @@
         {#if account.isCurrentIdentity}
             <div class="current">
                 <Tooltip position="top" align="end">
-                    <Account size={ui.iconSize} color={"var(--icon-txt)"} />
+                    <Account size={$iconSize} color={"var(--icon-txt)"} />
                     {#snippet popupTemplate()}
                         <Translatable
                             resourceKey={i18nKey("identity.linkedAccounts.currentAccount")} />
@@ -72,7 +72,7 @@
             <div class="unlink">
                 <Tooltip position="top" align="end">
                     <HoverIcon onclick={() => (unlinking = account)}>
-                        <LinkOff size={ui.iconSize} color={"var(--icon-txt)"} />
+                        <LinkOff size={$iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
                     {#snippet popupTemplate()}
                         <Translatable resourceKey={i18nKey("identity.linkedAccounts.unlink")} />

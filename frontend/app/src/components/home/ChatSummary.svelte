@@ -12,10 +12,10 @@
         OpenChat,
         app,
         botState,
+        notificationsSupported,
         publish,
         routeForScope,
         byContext as typersByContext,
-        ui,
         userStore,
     } from "openchat-client";
     import page from "page";
@@ -393,7 +393,7 @@
             <!-- this date formatting is OK for now but we might want to use something like this:
             https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
             <div class:rtl={$rtlStore} class="chat-date">
-                {#if muted && ui.notificationsSupported}
+                {#if muted && notificationsSupported}
                     <div class="mute icon" class:rtl={$rtlStore}>
                         <MutedIcon size={"1em"} color={"var(--icon-txt)"} />
                     </div>
@@ -451,7 +451,7 @@
                                         <MenuItem onclick={addToFavourites}>
                                             {#snippet icon()}
                                                 <HeartPlus
-                                                    size={ui.iconSize}
+                                                    size={$iconSize}
                                                     color={"var(--menu-warn)"} />
                                             {/snippet}
                                             {#snippet text()}
@@ -465,7 +465,7 @@
                                         <MenuItem onclick={removeFromFavourites}>
                                             {#snippet icon()}
                                                 <HeartMinus
-                                                    size={ui.iconSize}
+                                                    size={$iconSize}
                                                     color={"var(--menu-warn)"} />
                                             {/snippet}
                                             {#snippet text()}
@@ -480,7 +480,7 @@
                                         <MenuItem onclick={pinChat}>
                                             {#snippet icon()}
                                                 <PinIcon
-                                                    size={ui.iconSize}
+                                                    size={$iconSize}
                                                     color={"var(--icon-inverted-txt)"} />
                                             {/snippet}
                                             {#snippet text()}
@@ -492,7 +492,7 @@
                                         <MenuItem onclick={unpinChat}>
                                             {#snippet icon()}
                                                 <PinOffIcon
-                                                    size={ui.iconSize}
+                                                    size={$iconSize}
                                                     color={"var(--icon-inverted-txt)"} />
                                             {/snippet}
                                             {#snippet text()}
@@ -503,13 +503,13 @@
                                             {/snippet}
                                         </MenuItem>
                                     {/if}
-                                    {#if ui.notificationsSupported && !externalContent}
+                                    {#if notificationsSupported && !externalContent}
                                         {#if muted}
                                             <MenuItem
                                                 onclick={() => toggleMuteNotifications(false)}>
                                                 {#snippet icon()}
                                                     <BellIcon
-                                                        size={ui.iconSize}
+                                                        size={$iconSize}
                                                         color={"var(--icon-inverted-txt)"} />
                                                 {/snippet}
                                                 {#snippet text()}
@@ -523,7 +523,7 @@
                                             <MenuItem onclick={() => toggleMuteNotifications(true)}>
                                                 {#snippet icon()}
                                                     <MutedIcon
-                                                        size={ui.iconSize}
+                                                        size={$iconSize}
                                                         color={"var(--icon-inverted-txt)"} />
                                                 {/snippet}
                                                 {#snippet text()}
@@ -541,7 +541,7 @@
                                             onclick={() => client.markAllRead(chatSummary)}>
                                             {#snippet icon()}
                                                 <CheckboxMultipleMarked
-                                                    size={ui.iconSize}
+                                                    size={$iconSize}
                                                     color={"var(--icon-inverted-txt)"} />
                                             {/snippet}
                                             {#snippet text()}
@@ -555,7 +555,7 @@
                                             <MenuItem onclick={selectChat}>
                                                 {#snippet icon()}
                                                     <ArchiveOffIcon
-                                                        size={ui.iconSize}
+                                                        size={$iconSize}
                                                         color={"var(--icon-inverted-txt)"} />
                                                 {/snippet}
                                                 {#snippet text()}
@@ -567,7 +567,7 @@
                                             <MenuItem onclick={archiveChat}>
                                                 {#snippet icon()}
                                                     <ArchiveIcon
-                                                        size={ui.iconSize}
+                                                        size={$iconSize}
                                                         color={"var(--icon-inverted-txt)"} />
                                                 {/snippet}
                                                 {#snippet text()}
@@ -581,7 +581,7 @@
                                         <MenuItem warning onclick={leaveGroup}>
                                             {#snippet icon()}
                                                 <LocationExit
-                                                    size={ui.iconSize}
+                                                    size={$iconSize}
                                                     color={"var(--menu-warn)"} />
                                             {/snippet}
                                             {#snippet text()}
@@ -608,7 +608,7 @@
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div
                 title={$_("removeChat")}
-                style={ui.mobileWidth
+                style={$mobileWidth
                     ? $rtlStore
                         ? `left: ${delOffset}px`
                         : `right: ${delOffset}px`
@@ -616,7 +616,7 @@
                 onclick={deleteEmptyChat}
                 class:rtl={$rtlStore}
                 class="delete-chat">
-                <Delete size={ui.iconSize} color={"#fff"} />
+                <Delete size={$iconSize} color={"#fff"} />
             </div>
         {/if}
     </div>

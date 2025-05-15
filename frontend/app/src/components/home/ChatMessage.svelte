@@ -11,6 +11,7 @@
         type Message,
         type MessageContent,
         type MessageReminderCreatedContent,
+        mobileWidth,
         OpenChat,
         pageReplace,
         pathState,
@@ -339,7 +340,7 @@
                 height: content.height,
             };
         } else if (content.kind === "giphy_content") {
-            return ui.mobileWidth
+            return $mobileWidth
                 ? { width: content.mobile.width, height: content.mobile.height }
                 : { width: content.desktop.width, height: content.desktop.height };
         } else if (
@@ -504,7 +505,7 @@
                         class="close-emoji"
                         onclick={() => (showEmojiPicker = false)}>
                         <HoverIcon>
-                            <Close size={ui.iconSize} color={"var(--icon-txt)"} />
+                            <Close size={$iconSize} color={"var(--icon-txt)"} />
                         </HoverIcon>
                     </span>
                 </div>
@@ -563,7 +564,7 @@
                                         url={client.userAvatarUrl(sender)}
                                         userId={msg.sender}
                                         bot={sender?.kind === "bot"}
-                                        size={ui.mobileWidth
+                                        size={$mobileWidth
                                             ? AvatarSize.Small
                                             : AvatarSize.Default} />
                                 </div>
@@ -642,7 +643,7 @@
                                 <div class="forwarded">
                                     <div>
                                         <ForwardIcon
-                                            size={ui.iconSize}
+                                            size={$iconSize}
                                             color={me
                                                 ? "var(--currentChat-msg-me-muted)"
                                                 : "var(--currentChat-msg-muted)"} />
@@ -785,7 +786,7 @@
                         <div class="actions" class:touch={isTouchOnlyDevice}>
                             <div class="reaction" onclick={() => (showEmojiPicker = true)}>
                                 <HoverIcon>
-                                    <EmoticonOutline size={ui.iconSize} color={"var(--icon-txt)"} />
+                                    <EmoticonOutline size={$iconSize} color={"var(--icon-txt)"} />
                                 </HoverIcon>
                             </div>
                         </div>

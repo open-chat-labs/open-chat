@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { ui } from "openchat-client";
     import type { UserSummary } from "openchat-shared";
     import Cancel from "svelte-material-icons/Cancel.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
@@ -34,14 +33,14 @@
             <MenuIcon position={"bottom"} align={"end"}>
                 {#snippet menuIcon()}
                     <HoverIcon>
-                        <ChevronDown size={ui.iconSize} color={"var(--icon-txt)"} />
+                        <ChevronDown size={$iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
                 {/snippet}
                 {#snippet menuItems()}
                     <Menu>
                         <MenuItem onclick={() => onUnblockUser(user)}>
                             {#snippet icon()}
-                                <Cancel size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                                <Cancel size={$iconSize} color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}
                                 <div>

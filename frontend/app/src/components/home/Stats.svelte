@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Metrics, OpenChat } from "openchat-client";
-    import { minutesOnlineStore, ui } from "openchat-client";
+    import { minutesOnlineStore } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import Flag from "svelte-material-icons/Flag.svelte";
     import { cubicOut } from "svelte/easing";
@@ -252,7 +252,7 @@
                     <Translatable resourceKey={i18nKey("stats.reportedMessages")} />
                 </span>
                 <span class="icon">
-                    <Flag size={ui.iconSize} color={"var(--accent)"} />
+                    <Flag size={$iconSize} color={"var(--accent)"} />
                 </span>
             </div>
             {#snippet popupTemplate()}

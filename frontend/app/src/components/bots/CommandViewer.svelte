@@ -1,10 +1,5 @@
 <script lang="ts">
-    import {
-        type CommandDefinition,
-        type CommandParam,
-        ValidationErrors,
-        ui,
-    } from "openchat-client";
+    import { type CommandDefinition, type CommandParam, ValidationErrors } from "openchat-client";
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -143,10 +138,10 @@
             <div class="footer">
                 <div class="navigate">
                     <HoverIcon disabled={onPrevious === undefined} onclick={onPrevious}>
-                        <ChevronLeft size={ui.iconSize} color={"var(--icon-txt)"}></ChevronLeft>
+                        <ChevronLeft size={$iconSize} color={"var(--icon-txt)"}></ChevronLeft>
                     </HoverIcon>
                     <HoverIcon disabled={onNext === undefined} onclick={onNext}>
-                        <ChevronRight size={ui.iconSize} color={"var(--icon-txt)"}></ChevronRight>
+                        <ChevronRight size={$iconSize} color={"var(--icon-txt)"}></ChevronRight>
                     </HoverIcon>
                 </div>
             </div>

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui, type UserSummary } from "openchat-client";
+    import { type UserSummary } from "openchat-client";
     import { onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -88,7 +88,7 @@
 </script>
 
 <div class="search-form" class:add={mode === "add"} class:edit={mode === "edit"}>
-    <span class="icon"><Magnify size={ui.iconSize} color={"#ccc"} viewBox="-5 -3 24 24" /></span>
+    <span class="icon"><Magnify size={$iconSize} color={"#ccc"} viewBox="-5 -3 24 24" /></span>
     <input
         bind:this={inp}
         bind:value={searchTerm}

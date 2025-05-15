@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { OpenChat, UserOrUserGroup } from "openchat-client";
-    import { app, AvatarSize, ui, userStore } from "openchat-client";
+    import { app, AvatarSize, iconSize, mobileWidth, userStore } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import Avatar from "../Avatar.svelte";
@@ -88,7 +88,7 @@
         }
         return a.length < b.length ? -1 : 1;
     }
-    let itemHeight = $derived(ui.mobileWidth ? 53 : 55);
+    let itemHeight = $derived($mobileWidth ? 53 : 55);
     let borderWidth = $derived(direction === "up" ? 2 : 3);
     let maxHeight = $derived(
         direction === "down" ? `${3.2 * itemHeight + borderWidth}px` : "calc(var(--vh, 1vh) * 50)",
@@ -174,7 +174,7 @@
                                     <div class="group-icon">
                                         <AccountMultiple
                                             color={"var(--menu-disabled-txt)"}
-                                            size={ui.iconSize} />
+                                            size={$iconSize} />
                                     </div>
                                 {:else}
                                     <Avatar

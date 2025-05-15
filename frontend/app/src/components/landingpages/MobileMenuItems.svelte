@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { app, OpenChat, pathState, routeForScope, ui } from "openchat-client";
+    import { app, OpenChat, pathState, routeForScope } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
     import Graph from "svelte-material-icons/GraphOutline.svelte";
@@ -33,7 +33,7 @@
 <Menu>
     <MenuItem>
         {#snippet icon()}
-            <Shopping size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+            <Shopping size={$iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
         {#snippet text()}
             <a
@@ -47,7 +47,7 @@
     </MenuItem>
     <MenuItem selected={pathState.location === "/features"} onclick={() => page("/features")}>
         {#snippet icon()}
-            <InformationOutline size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+            <InformationOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
         {#snippet text()}
             {"Features"}
@@ -55,7 +55,7 @@
     </MenuItem>
     <MenuItem selected={pathState.location === "/roadmap"} onclick={() => page("/roadmap")}>
         {#snippet icon()}
-            <Road size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+            <Road size={$iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
         {#snippet text()}
             {"Roadmap"}
@@ -63,7 +63,7 @@
     </MenuItem>
     <MenuItem selected={pathState.location === "/whitepaper"} onclick={() => page("/whitepaper")}>
         {#snippet icon()}
-            <Note size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+            <Note size={$iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
         {#snippet text()}
             {"Whitepaper"}
@@ -73,7 +73,7 @@
         selected={pathState.location === "/architecture"}
         onclick={() => page("/architecture")}>
         {#snippet icon()}
-            <Graph size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+            <Graph size={$iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
         {#snippet text()}
             {"Architecture"}
@@ -82,7 +82,7 @@
     {#if showBlog}
         <MenuItem selected={pathState.location.startsWith("/blog")} onclick={() => page("/blog")}>
             {#snippet icon()}
-                <Blog size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                <Blog size={$iconSize} color={"var(--icon-inverted-txt)"} />
             {/snippet}
             {#snippet text()}
                 {"Blog"}
@@ -91,7 +91,7 @@
     {/if}
     <MenuItem selected={pathState.location.startsWith("/faq")} onclick={() => page("/faq")}>
         {#snippet icon()}
-            <Help size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+            <Help size={$iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
         {#snippet text()}
             {"FAQs"}
@@ -109,7 +109,7 @@
         <MenuItem separator />
         <MenuItem onclick={() => client.logout()}>
             {#snippet icon()}
-                <Logout size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                <Logout size={$iconSize} color={"var(--icon-inverted-txt)"} />
             {/snippet}
             {#snippet text()}
                 {"Logout"}

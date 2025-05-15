@@ -3,10 +3,15 @@
         AvatarSize,
         type CommunitySummary,
         type OpenChat,
+        activityFeedShowing,
         app,
+        communityListScrollTop,
         emptyCombinedUnreadCounts,
+        mobileWidth,
+        navOpen,
         pathState,
         publish,
+        showNav,
         ui,
         userStore,
     } from "openchat-client";
@@ -37,12 +42,12 @@
     const flipDurationMs = 300;
 
     let user = $derived(userStore.get(app.currentUserId));
-    let avatarSize = $derived(ui.mobileWidth ? AvatarSize.Small : AvatarSize.Default);
+    let avatarSize = $derived($mobileWidth ? AvatarSize.Small : AvatarSize.Default);
     let communityExplorer = $derived(pathState.route.kind === "communities_route");
     let selectedCommunityId = $derived(app.selectedCommunitySummary?.id.communityId);
     let claimChitAvailable = $derived(app.chitState.nextDailyChitClaim < $now);
 
-    let iconSize = ui.mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
+    let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
     let scrollingSection: HTMLElement;
 
     // we don't want drag n drop to monkey around with the key
@@ -55,11 +60,11 @@
     });
 
     onMount(() => {
-        tick().then(() => (scrollingSection.scrollTop = ui.communityListScrollTop ?? 0));
+        tick().then(() => (scrollingSection.scrollTop = $communityListScrollTop ?? 0));
     });
 
     function onScroll() {
-        ui.communityListScrollTop = scrollingSection.scrollTop;
+        communityListScrollTop.set(scrollingSection.scrollTop);
     }
 
     function handleDndConsider(e: CustomEvent<DndEvent<CommunityItem>>) {
@@ -76,32 +81,32 @@
     }
 
     function viewProfile() {
-        ui.activityFeedShowing = false;
+        activityFeedShowing.set(false);
         publish("profile");
     }
 
     function exploreCommunities() {
-        ui.activityFeedShowing = false;
+        activityFeedShowing.set(false);
         page("/communities");
     }
 
     function directChats() {
-        ui.activityFeedShowing = false;
+        activityFeedShowing.set(false);
         page("/user");
     }
 
     function groupChats() {
-        ui.activityFeedShowing = false;
+        activityFeedShowing.set(false);
         page("/group");
     }
 
     function favouriteChats() {
-        ui.activityFeedShowing = false;
+        activityFeedShowing.set(false);
         page("/favourite");
     }
 
     function selectCommunity(community: CommunitySummary) {
-        ui.activityFeedShowing = false;
+        activityFeedShowing.set(false);
         page(`/community/${community.id.communityId}`);
     }
 
@@ -113,13 +118,13 @@
         if (pathState.route.kind === "communities_route") {
             page("/");
         }
-        ui.activityFeedShowing = true;
+        activityFeedShowing.set(true);
     }
 </script>
 
 <svelte:body onclick={closeIfOpen} />
 
-<section class:visible={ui.showNav} class="nav" class:open={ui.navOpen} class:rtl={$rtlStore}>
+<section class:visible={$showNav} class="nav" class:open={$navOpen} class:rtl={$rtlStore}>
     <div class="top">
         <LeftNavItem separator label={i18nKey("communities.mainMenu")}>
             <div class="hover logo">
@@ -187,7 +192,7 @@
             {#if app.messageActivitySummary.latestTimestamp > 0n}
                 <LeftNavItem
                     separator
-                    selected={ui.activityFeedShowing}
+                    selected={$activityFeedShowing}
                     label={i18nKey("activity.navLabel")}
                     unread={{
                         muted: 0,
@@ -252,10 +257,10 @@
                 <Compass size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
-        <LeftNavItem label={ui.navOpen ? i18nKey("collapse") : i18nKey("expand")}>
+        <LeftNavItem label={$navOpen ? i18nKey("collapse") : i18nKey("expand")}>
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <div class:open={ui.navOpen} onclick={toggleNav} class="expand hover">
+            <div class:open={$navOpen} onclick={toggleNav} class="expand hover">
                 <ArrowRight size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>

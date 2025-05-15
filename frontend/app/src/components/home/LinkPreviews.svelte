@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { app, ui, type OpenChat } from "openchat-client";
+    import { app, eventListScrolling, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import { rtlStore } from "../../stores/rtl";
@@ -115,7 +115,7 @@
     }
 
     $effect(() => {
-        if (intersecting && !ui.eventListScrolling && !shouldRenderPreviews && !app.offline) {
+        if (intersecting && !$eventListScrolling && !shouldRenderPreviews && !app.offline) {
             shouldRenderPreviews = true;
         }
     });
@@ -137,7 +137,7 @@
         {#if me}
             <div class="remove-wrapper" class:rtl={$rtlStore}>
                 <div class="remove" onclick={() => removePreview(preview)}>
-                    <CloseIcon viewBox="0 0 24 24" size={ui.iconSize} color={"var(--button-txt)"} />
+                    <CloseIcon viewBox="0 0 24 24" size={$iconSize} color={"var(--button-txt)"} />
                 </div>
             </div>
         {/if}

@@ -2,7 +2,6 @@
     import {
         cryptoLookup,
         exchangeRatesLookupStore as exchangeRatesLookup,
-        ui,
         type OpenChat,
     } from "openchat-client";
     import { getContext, onMount, untrack } from "svelte";
@@ -149,7 +148,7 @@
 <div class="wrapper">
     {#if transferFees !== undefined && transferFees > 0n}
         <div class="fee">
-            <Alert size={ui.iconSize} color={"var(--warn)"} />
+            <Alert size={$iconSize} color={"var(--warn)"} />
             <span>
                 <Translatable
                     resourceKey={i18nKey("tokenTransfer.fee", {

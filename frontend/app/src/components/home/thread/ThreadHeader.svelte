@@ -7,7 +7,15 @@
         OpenChat,
         TypersByKey,
     } from "openchat-client";
-    import { app, AvatarSize, byContext, ui, UserStatus, userStore } from "openchat-client";
+    import {
+        app,
+        AvatarSize,
+        byContext,
+        iconSize,
+        mobileWidth,
+        UserStatus,
+        userStore,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
@@ -46,10 +54,10 @@
 
         const msgTxt = client.getContentAsText($_, rootEvent.event.content);
         const subtext =
-            someoneTyping ?? (ui.mobileWidth ? `${$_("thread.title")}: ${msgTxt}` : msgTxt);
+            someoneTyping ?? ($mobileWidth ? `${$_("thread.title")}: ${msgTxt}` : msgTxt);
         if (chatSummary.kind === "direct_chat") {
             return {
-                title: ui.mobileWidth
+                title: $mobileWidth
                     ? userStore.get(chatSummary.them.userId)?.username
                     : $_("thread.title"),
                 avatarUrl: client.userAvatarUrl(userStore.get(chatSummary.them.userId)),
@@ -59,7 +67,7 @@
             };
         }
         return {
-            title: ui.mobileWidth ? chatSummary.name : $_("thread.title"),
+            title: $mobileWidth ? chatSummary.name : $_("thread.title"),
             userStatus: UserStatus.None,
             avatarUrl: client.groupAvatarUrl(chatSummary, app.selectedCommunitySummary),
             userId: undefined,
@@ -103,14 +111,14 @@
     </div>
     <div class="close" onclick={close}>
         <HoverIcon>
-            {#if ui.mobileWidth}
+            {#if $mobileWidth}
                 {#if $rtlStore}
-                    <ArrowRight size={ui.iconSize} color={"var(--icon-txt)"} />
+                    <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
                 {:else}
-                    <ArrowLeft size={ui.iconSize} color={"var(--icon-txt)"} />
+                    <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
                 {/if}
             {:else}
-                <Close size={ui.iconSize} color={"var(--icon-txt)"} />
+                <Close size={$iconSize} color={"var(--icon-txt)"} />
             {/if}
         </HoverIcon>
     </div>

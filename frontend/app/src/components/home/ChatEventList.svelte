@@ -14,11 +14,13 @@
     import {
         MessageContextMap,
         app,
+        eventListLastScrolled,
+        eventListScrollTop,
+        eventListScrolling,
         localUpdates,
         messageContextsEqual,
         pathState,
         subscribe,
-        ui,
         withEqCheck,
         type ChatEvent as ChatEventType,
         type ChatSummary,
@@ -194,12 +196,12 @@
     $effect(() => {
         if (visible && maintainScroll) {
             untrack(() => {
-                if (ui.eventListScrollTop !== undefined && maintainScroll) {
+                if ($eventListScrollTop !== undefined && maintainScroll) {
                     interruptScroll((el) => {
-                        if (ui.eventListScrollTop !== undefined) {
+                        if ($eventListScrollTop !== undefined) {
                             initialised = true;
                             destroyed = false;
-                            el.scrollTop = ui.eventListScrollTop;
+                            el.scrollTop = $eventListScrollTop;
                         }
                     });
                 }
@@ -717,12 +719,12 @@
     function onUserScroll() {
         trackScrollStop(SCROLL_THRESHOLD);
         if (maintainScroll) {
-            ui.eventListScrollTop = messagesDiv?.scrollTop;
+            eventListScrollTop.set(messagesDiv?.scrollTop);
         }
         updateShowGoToBottom();
         updateShowGoToTop();
         portalState.close();
-        ui.eventListLastScrolled = Date.now();
+        eventListLastScrolled.set(Date.now());
 
         if (!initialised || interrupt || loadingFromUserScroll || !visible) return;
 
@@ -753,10 +755,10 @@
 
     let scrollTimeout: number | undefined = undefined;
     function trackScrollStop(delay: number) {
-        ui.eventListScrolling = true;
+        eventListScrolling.set(true);
         clearTimeout(scrollTimeout);
         scrollTimeout = window.setTimeout(() => {
-            ui.eventListScrolling = false;
+            eventListScrolling.set(false);
         }, delay);
     }
 </script>
@@ -789,7 +791,7 @@
         class="fab to-top"
         class:rtl={$rtlStore}>
         <Fab on:click={scrollToTop}>
-            <ArrowUp size={ui.iconSize} color={"#fff"} />
+            <ArrowUp size={$iconSize} color={"#fff"} />
         </Fab>
     </div>
 {/if}
@@ -821,7 +823,7 @@
                 <div class="unread-count">{unreadMessages > 999 ? "999+" : unreadMessages}</div>
             </div>
         {:else}
-            <ArrowDown size={ui.iconSize} color={"#fff"} />
+            <ArrowDown size={$iconSize} color={"#fff"} />
         {/if}
     </Fab>
 </div>

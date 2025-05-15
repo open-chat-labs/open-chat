@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { app, ui } from "openchat-client";
+    import { app, iconSize, mobileWidth } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey, supportedLanguages } from "../../../../i18n/i18n";
@@ -16,11 +16,11 @@
     let { onClose }: Props = $props();
 </script>
 
-<SectionHeader shadow flush={ui.mobileWidth}>
+<SectionHeader shadow flush={$mobileWidth}>
     <h4><Translatable resourceKey={i18nKey("communities.filters")} /></h4>
     <span title={$_("close")} class="close" on:click={onClose}>
         <HoverIcon>
-            <Close size={ui.iconSize} color={"var(--icon-txt)"} />
+            <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
 </SectionHeader>
