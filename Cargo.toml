@@ -196,6 +196,7 @@ enum-repr = "0.2.6"
 event_store_canister = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
 event_store_producer = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
 event_store_producer_cdk_runtime = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
+event_store_types = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
 event_store_utils = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
 futures = "0.3.30"
 getrandom = { version = "0.2.15", features = ["custom"] }

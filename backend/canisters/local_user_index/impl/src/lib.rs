@@ -149,7 +149,17 @@ impl RuntimeState {
 
     pub fn is_caller_local_user_canister(&self) -> bool {
         let caller = self.env.caller();
-        self.data.local_users.get(&caller.into()).is_some()
+        self.data.local_users.contains(&caller.into())
+    }
+
+    pub fn is_caller_local_group_canister(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.local_groups.contains(&caller.into())
+    }
+
+    pub fn is_caller_local_community_canister(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.local_communities.contains(&caller.into())
     }
 
     pub fn is_caller_local_child_canister(&self) -> bool {

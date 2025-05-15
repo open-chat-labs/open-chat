@@ -40,6 +40,22 @@ pub fn caller_is_local_user_canister() -> Result<(), String> {
     }
 }
 
+pub fn caller_is_local_group_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_local_group_canister()) {
+        Ok(())
+    } else {
+        Err("Caller is not a local group canister".to_string())
+    }
+}
+
+pub fn caller_is_local_community_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_local_community_canister()) {
+        Ok(())
+    } else {
+        Err("Caller is not a local community canister".to_string())
+    }
+}
+
 pub fn caller_is_local_child_canister() -> Result<(), String> {
     if read_state(|state| state.is_caller_local_child_canister()) {
         Ok(())

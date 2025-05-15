@@ -5839,6 +5839,7 @@ dependencies = [
  "candid",
  "community_canister",
  "event_store_canister",
+ "event_store_types",
  "group_canister",
  "ic-ledger-types",
  "notifications_index_canister",
