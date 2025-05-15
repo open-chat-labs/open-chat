@@ -10,7 +10,7 @@
         type ResourceKey,
         type UserSummary,
     } from "openchat-client";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { trimLeadingAtSymbol } from "../../utils/user";
     import Search from "../Search.svelte";
@@ -35,8 +35,9 @@
 
     let searching: boolean = $state(false);
 
-    onMount(() => {
-        return chatListScope.subscribe((_) => clearSearch());
+    $effect(() => {
+        void app.chatListScope.kind;
+        clearSearch();
     });
 
     function getPlaceholder(scope: ChatListScope["kind"]): ResourceKey {
