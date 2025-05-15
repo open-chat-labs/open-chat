@@ -510,7 +510,7 @@
     );
     let excessiveLinks = $derived(client.extractEnabledLinks(textContent ?? "").length > 5);
     let frozen = $derived(client.isChatOrCommunityFrozen(chat, app.selectedCommunitySummary));
-    trackedEffect("message-entry-inp", () => {
+    $effect(() => {
         if (inp) {
             if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
                 if (editingEvent.event.content.kind === "text_content") {
