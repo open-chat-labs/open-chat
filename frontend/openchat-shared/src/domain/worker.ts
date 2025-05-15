@@ -230,6 +230,7 @@ export type CorrelatedWorkerRequest = WorkerRequest & {
 };
 
 export type WorkerRequest =
+    | SetMinLogLevel
     | DismissRecommendations
     | SearchGroups
     | GetRecommendedGroups
@@ -453,6 +454,11 @@ export type WorkerRequest =
     | DeleteWebhook
     | GetWebhook
     | PayForStreakInsurance;
+
+type SetMinLogLevel = {
+    kind: "setMinLogLevel";
+    minLogLevel: "debug" | "log" | "warn" | "error";
+};
 
 type PayForStreakInsurance = {
     kind: "payForStreakInsurance";
@@ -2039,6 +2045,8 @@ export type ConnectToWorkerResponse = GetOpenChatIdentityResponse["kind"];
 // prettier-ignore
 export type WorkerResult<T> = T extends Init
     ? ConnectToWorkerResponse
+    : T extends SetMinLogLevel
+    ? void
     : T extends GenerateIdentityChallenge
     ? GenerateChallengeResponse
     : T extends CreateOpenChatIdentity

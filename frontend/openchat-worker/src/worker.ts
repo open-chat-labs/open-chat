@@ -18,6 +18,7 @@ import {
     IdentityStorage,
     inititaliseLogger,
     MessagesReadFromServer,
+    setMinLogLevel,
     StorageUpdated,
     Stream,
     UsersLoaded,
@@ -291,6 +292,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
         }
 
         switch (kind) {
+            case "setMinLogLevel":
+                setMinLogLevel(payload.minLogLevel);
+                sendResponse(correlationId, undefined);
+                break;
+
             case "getCurrentUser":
                 streamReplies(payload, correlationId, agent.getCurrentUser());
                 break;

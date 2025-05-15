@@ -28,4 +28,5 @@ export const configKeys = {
     userCreated: "openchat_user_created",
     softDisabled: "openchat_softdisabled",
     hideBlocked: "openchat_hideblocked",
+    minLogLevel: "openchat_min_log_level",
 };

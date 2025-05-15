@@ -259,6 +259,7 @@ import {
     removeEmailSignInSession,
     routeForChatIdentifier,
     routeForMessage,
+    setMinLogLevel,
     shouldPreprocessGate,
     storeEmailSignInSession,
     Stream,
@@ -469,6 +470,7 @@ import {
 } from "./utils/user";
 import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 import { createWebAuthnIdentity, MultiWebAuthnIdentity } from "./utils/webAuthn";
+import { configKeys } from "./utils/config";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -8785,6 +8787,7 @@ export class OpenChat {
             ).then((resp) => {
                 resolve(resp);
                 this.#connectedToWorker = true;
+                this.#setMinLogLevel((localStorage.getItem(configKeys.minLogLevel) ?? "warn") as "debug" | "log" | "warn" | "error");
             });
         });
 
@@ -8822,6 +8825,15 @@ export class OpenChat {
             }
         };
         return initResponse;
+    }
+
+    #setMinLogLevel(minLogLevel: "debug" | "log" | "warn" | "error"): void {
+        setMinLogLevel(minLogLevel);
+
+        this.#sendRequest({
+            kind: "setMinLogLevel",
+            minLogLevel,
+        })
     }
 
     #logUnexpected(correlationId: string): void {
