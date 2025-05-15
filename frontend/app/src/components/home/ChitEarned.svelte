@@ -1,15 +1,17 @@
 <script lang="ts">
-    import { Spring, Tween } from "svelte/motion";
+    import { shakeElements } from "@src/utils/shake";
     import { subscribe, type ChitEarned, type OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import SpinningToken from "../icons/SpinningToken.svelte";
     import { Confetti } from "svelte-confetti";
     import { _ } from "svelte-i18n";
+    import { Spring, Tween } from "svelte/motion";
+    import SpinningToken from "../icons/SpinningToken.svelte";
 
     const OFF_SCREEN_OPACITY = 0.0;
     const SHOW_DURATION = 3000;
     const SLIDE_IN_DURATION = 400;
     const TWEEN_DURATION = 300;
+    const LONG_DURATION = 10_000;
 
     const client = getContext<OpenChat>("client");
     let confetti = $state(false);
@@ -21,11 +23,18 @@
     let amount = $state(0);
     let labels: string[] = $state([]);
     let active = $state(false);
+    let imageUrl = $state("/assets/chit.svg");
+    let maxStreak = $state(false);
 
     function trigger(events: ChitEarned[]) {
+        maxStreak = false;
         amount = events.reduce((total, chit) => total + chit.amount, 0);
         labels = events.reduce((labels, c) => {
             if (c.reason.kind === "achievement_unlocked") {
+                if (c.reason.type === "streak_365") {
+                    maxStreak = true;
+                    imageUrl = "/assets/max_streak.svg";
+                }
                 labels.push($_(`learnToEarn.${c.reason.type}`));
             }
             if (c.reason.kind === "external_achievement_unlocked") {
@@ -33,9 +42,35 @@
             }
             return labels;
         }, [] as string[]);
+        const showDuration = maxStreak ? LONG_DURATION : SHOW_DURATION;
         ypos.target = dimensions.height / 2;
         opacity.target = 1;
         active = true;
+        if (maxStreak) {
+            setTimeout(() => {
+                shakeElements(
+                    [
+                        ".message-wrapper",
+                        ".chat-summary",
+                        ".avatar",
+                        "svg",
+                        ".date-label",
+                        ".icon",
+                        ".section-header",
+                        ".message-entry",
+                        ".section-selector",
+                        ".input-wrapper",
+                        ".legend",
+                        ".chat-list",
+                        ".communities .card",
+                    ],
+                    {
+                        duration: showDuration,
+                        maxIntensity: 50,
+                    },
+                );
+            }, 100);
+        }
         window.setTimeout(() => {
             confetti = true;
             msg.target = { scale: 1, opacity: 1 };
@@ -44,7 +79,7 @@
                 opacity.target = OFF_SCREEN_OPACITY;
                 msg.target = { scale: 0, opacity: 1 };
                 window.setTimeout(reset, TWEEN_DURATION);
-            }, SHOW_DURATION);
+            }, showDuration);
         }, SLIDE_IN_DURATION);
 
         // update the backend so we don't get notified again
@@ -69,6 +104,17 @@
     }
 
     onMount(() => {
+        // - Useful for testing
+        // trigger([
+        //     {
+        //         amount: 100_000,
+        //         timestamp: BigInt(Date.now()),
+        //         reason: {
+        //             kind: "achievement_unlocked",
+        //             type: "streak_365",
+        //         },
+        //     },
+        // ]);
         return subscribe("chitEarned", trigger);
     });
 </script>
@@ -90,13 +136,17 @@
             </div>
         {/if}
         <div class="coin">
-            <SpinningToken spin mirror={false} size={"large"} logo={"/assets/chit.svg"} />
+            <SpinningToken
+                spin
+                mirror={false}
+                size={maxStreak ? "extra-large" : "large"}
+                logo={imageUrl} />
         </div>
         <div
             class="details"
             style={`transform: scale(${msg.current.scale}); opacity: ${msg.current.opacity}`}>
             <div class="chit">
-                {`+${amount} CHIT`}
+                {`+${amount.toLocaleString()} CHIT`}
             </div>
             <div class="msgs">
                 {#each labels as label}
