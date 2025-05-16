@@ -38,11 +38,11 @@ import { revokeObjectUrls } from "../../utils/chat";
 import { chatDetailsLocalUpdates } from "../chat_details";
 import { communityLocalUpdates } from "../community_details";
 import {
+    CommunityMapStore,
     LocalChatMap,
-    LocalCommunityMap,
+    LocalCommunityMapStore,
     LocalMap,
     ReactiveChatMap,
-    ReactiveCommunityMap,
     ReactiveMessageContextMap,
 } from "../map";
 import { messageLocalUpdates } from "../message/local.svelte";
@@ -72,8 +72,9 @@ export class GlobalLocalState {
     );
     #draftMessages = new DraftMessages();
     readonly chats = new LocalChatMap<ChatSummary>();
-    readonly communities = new LocalCommunityMap<CommunitySummary>();
-    readonly previewCommunities = new ReactiveCommunityMap<CommunitySummary>();
+    // readonly communities = new LocalCommunityMap<CommunitySummary>();
+    readonly communities = new LocalCommunityMapStore<CommunitySummary>();
+    readonly previewCommunities = new CommunityMapStore<CommunitySummary>();
     readonly directChatBots = new LocalMap<string, ExternalBotPermissions>();
     #walletConfig = $state<WalletConfig | undefined>();
     #streakInsurance = $state<StreakInsurance | undefined>();

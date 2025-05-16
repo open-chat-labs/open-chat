@@ -81,7 +81,7 @@ import { CommunityServerState } from "./community_details/server.svelte";
 import { FilteredProposals } from "./filteredProposals.svelte";
 import { localUpdates } from "./global";
 import { LocalStorageBoolStore, LocalStorageStore } from "./localStorageStore";
-import { ReactiveMessageMapStore } from "./map";
+import { CommunityMapStore, MessageMapStore } from "./map";
 import { messageLocalUpdates } from "./message/local.svelte";
 import { pathState } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
@@ -132,7 +132,7 @@ export const storageInGBStore = derived(storageStore, (storage) => ({
 }));
 
 export const messageFiltersStore = writable<MessageFilter[]>([]);
-export const translationsStore = new ReactiveMessageMapStore<string>();
+export const translationsStore = new MessageMapStore<string>();
 export const snsFunctionsStore = writable<SnsFunctions>(new SnsFunctions());
 export const filteredProposalsStore = writable<FilteredProposals | undefined>(undefined);
 export const currentUserStore = writable<CreatedUser>(anonymousUser(), dequal);
@@ -205,6 +205,43 @@ export const chitStateStore = writable<ChitState>(
         nextDailyChitClaim: 0n,
     },
     dequal,
+);
+
+export const serverCommunitiesStore = new CommunityMapStore<CommunitySummary>();
+
+export const communitiesStore = derived(
+    [serverCommunitiesStore, localUpdates.communities, localUpdates.previewCommunities],
+    ([serverCommunities, localCommunities, previewCommunities]) => {
+        const merged = localCommunities.apply(serverCommunities.merge(previewCommunities));
+        return merged;
+        // return [...merged.entries()].reduce((result, [communityId, community]) => {
+        //     const updates = communityLocalUpdates.get(communityId);
+
+        //     const anyChanges =
+        //         updates?.index !== undefined ||
+        //         updates?.displayName !== undefined ||
+        //         updates?.rulesAccepted !== undefined;
+
+        //     if (anyChanges) {
+        //         const clone = structuredClone(community);
+        //         const index = updates?.index;
+        //         if (index !== undefined) {
+        //             clone.membership.index = index;
+        //         }
+        //         clone.membership.displayName = applyOptionUpdate(
+        //             clone.membership.displayName,
+        //             updates?.displayName,
+        //         );
+        //         clone.membership.rulesAccepted =
+        //             updates?.rulesAccepted ?? clone.membership.rulesAccepted;
+
+        //         result.set(communityId, clone);
+        //     } else {
+        //         result.set(communityId, community);
+        //     }
+        //     return result;
+        // }, new CommunityMap<CommunitySummary>());
+    },
 );
 
 export class AppState {
@@ -1290,6 +1327,9 @@ export class AppState {
     }
 
     set serverCommunities(val: CommunityMap<CommunitySummary>) {
+        serverCommunitiesStore.fromMap(val);
+
+        // TODO - get rid when possible
         this.#serverCommunities = val;
     }
 
@@ -1298,7 +1338,8 @@ export class AppState {
     }
 
     get serverCommunities() {
-        return this.#serverCommunities;
+        return serverCommunitiesStore;
+        // return this.#serverCommunities;
     }
 
     get chatSummaries() {
