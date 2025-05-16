@@ -86,11 +86,6 @@
                 ? isPermitted(chat.membership.role, command.defaultRole)
                 : true;
 
-        const communityRolePermitted =
-            community !== undefined
-                ? isPermitted(community.membership.role, command.defaultRole)
-                : true;
-
         const chatPermitted =
             chat !== undefined && chat.kind !== "direct_chat"
                 ? [...command.permissions.chatPermissions].every(
@@ -103,23 +98,11 @@
                   )
                 : true;
 
-        const communityPermitted =
-            community !== undefined
-                ? [...command.permissions.communityPermissions].every((p) =>
-                      isPermitted(
-                          community.membership.role,
-                          community.permissions[p] as PermissionRole,
-                      ),
-                  )
-                : true;
-
         switch (mode) {
             case "message":
                 return (
                     chatRolePermitted &&
-                    communityRolePermitted &&
                     chatPermitted &&
-                    communityPermitted &&
                     [...command.permissions.messagePermissions].every((p) =>
                         app.messagePermissionsForSelectedChat.has(p),
                     )
@@ -127,9 +110,7 @@
             case "thread":
                 return (
                     chatRolePermitted &&
-                    communityRolePermitted &&
                     chatPermitted &&
-                    communityPermitted &&
                     [...command.permissions.messagePermissions].every((p) =>
                         app.threadPermissionsForSelectedChat.has(p),
                     )
