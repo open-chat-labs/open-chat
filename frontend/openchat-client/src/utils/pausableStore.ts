@@ -1,6 +1,6 @@
 import { type Updater, type Writable, writable } from "svelte/store";
 
-export class PausableStores {
+export class PausableStoreManager {
     #paused = false;
     #callbacks: (() => void)[] = [];
 
@@ -31,9 +31,9 @@ export class PausableStore<T> {
     #store: Writable<T>;
     #value: T;
     #dirtyValue: T | undefined  = undefined;
-    #parent: PausableStores;
+    #parent: PausableStoreManager;
 
-    constructor(initValue: T, parent: PausableStores) {
+    constructor(initValue: T, parent: PausableStoreManager) {
         this.#store = writable(initValue);
         this.#value = initValue;
         this.#parent = parent;
