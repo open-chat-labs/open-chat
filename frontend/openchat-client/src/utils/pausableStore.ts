@@ -1,4 +1,4 @@
-import { type Updater, type Writable, writable } from "svelte/store";
+import { type Subscriber, type Updater, type Writable, writable } from "svelte/store";
 
 export class PausableStoreManager {
     #paused = false;
@@ -40,6 +40,10 @@ export class PausableStore<T> {
         this.#parent = parent;
 
         this.#store.subscribe((v) => this.#value = v);
+    }
+
+    subscribe(subscriber: Subscriber<T>): void {
+        this.#store.subscribe(subscriber);
     }
 
     value(allowDirty = false): T {
