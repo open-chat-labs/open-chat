@@ -61,7 +61,7 @@ import {
 } from "openchat-shared";
 import { locale } from "svelte-i18n";
 import { SvelteMap, SvelteSet } from "svelte/reactivity";
-import { derived, get, writable } from "svelte/store";
+import { derived, get } from "svelte/store";
 import { offlineStore, type PinnedByScope } from "../stores";
 import {
     getMessagePermissionsForSelectedChat,
@@ -87,13 +87,14 @@ import { SnsFunctions } from "./snsFunctions.svelte";
 import { hideMessagesFromDirectBlocked } from "./ui.svelte";
 import { messagesRead } from "./unread/markRead.svelte";
 import { userStore } from "./users/users.svelte";
+import { writable } from "./writable";
 
 export const ONE_MB = 1024 * 1024;
 export const ONE_GB = ONE_MB * 1024;
 
-export const pinNumberRequiredStore = writable<boolean | undefined>();
-export const pinNumberResolverStore = writable<PinNumberResolver | undefined>();
-export const pinNumberFailureStore = writable<PinNumberFailures | undefined>();
+export const pinNumberRequiredStore = writable<boolean | undefined>(undefined);
+export const pinNumberResolverStore = writable<PinNumberResolver | undefined>(undefined);
+export const pinNumberFailureStore = writable<PinNumberFailures | undefined>(undefined);
 
 export const storageStore = writable<StorageStatus>({
     byteLimit: 0,
@@ -114,28 +115,21 @@ export const storageInGBStore = derived(storageStore, (storage) => ({
 }));
 
 export const messageFiltersStore = writable<MessageFilter[]>([]);
-
 export const translationsStore = new ReactiveMessageMapStore<string>();
-
 export const snsFunctionsStore = writable<SnsFunctions>(new SnsFunctions());
-export const filteredProposalsStore = writable<FilteredProposals | undefined>();
+export const filteredProposalsStore = writable<FilteredProposals | undefined>(undefined);
 
 export class AppState {
-    #pinNumberRequired?: boolean;
-    #pinNumberResolver?: PinNumberResolver;
-    #pinNumberFailure?: PinNumberFailures;
-    #storage: StorageStatus = { byteLimit: 0, bytesUsed: 0 };
     #percentageStorageRemaining: number = 0;
     #percentageStorageUsed: number = 0;
     #storageInGB = { gbLimit: 0, gbUsed: 0 };
     #offline: boolean = false;
     #locale: string = "en";
-    #messageFilters: MessageFilter[] = [];
 
     // TODO - these need to use $state for the moment because we still have $derived that is depending on it
     // but it can be a plain value once that's all gone
     #translations = $state<MessageMap<string>>(new MessageMap());
-    #snsFunctions = $state<SnsFunctions>(new SnsFunctions());
+    #messageFilters = $state<MessageFilter[]>([]);
 
     constructor() {
         $effect.root(() => {
@@ -156,10 +150,6 @@ export class AppState {
 
         locale.subscribe((l) => (this.#locale = l ?? "en"));
         offlineStore.subscribe((offline) => (this.#offline = offline));
-        pinNumberRequiredStore.subscribe((val) => (this.#pinNumberRequired = val));
-        pinNumberResolverStore.subscribe((val) => (this.#pinNumberResolver = val));
-        pinNumberFailureStore.subscribe((val) => (this.#pinNumberFailure = val));
-        storageStore.subscribe((val) => (this.#storage = val));
         percentageStorageRemainingStore.subscribe(
             (val) => (this.#percentageStorageRemaining = val),
         );
@@ -169,7 +159,6 @@ export class AppState {
 
         // TODO - this clone is only necessary to trigger downstream $derived. Remove when all $deriveds are gone
         translationsStore.subscribe((val) => (this.#translations = val.clone()));
-        snsFunctionsStore.subscribe((val) => (this.#snsFunctions = val));
     }
 
     #selectedAuthProvider = new LocalStorageState(
@@ -226,7 +215,7 @@ export class AppState {
                     [14, "SNS & Neurons' Fund"],
                 ]);
             } else {
-                const snsFunctionsMap = this.#snsFunctions.get(
+                const snsFunctionsMap = this.snsFunctions.get(
                     this.#selectedChatSummary.subtype.governanceCanisterId,
                 );
                 if (snsFunctionsMap !== undefined) {
@@ -739,7 +728,7 @@ export class AppState {
     }
 
     get snsFunctions() {
-        return this.#snsFunctions;
+        return snsFunctionsStore.current;
     }
 
     get proposalTopics(): ReadonlyMap<number, string> {
@@ -865,7 +854,7 @@ export class AppState {
     }
 
     get storage() {
-        return this.#storage;
+        return storageStore.current;
     }
 
     get percentageStorageRemaining() {
@@ -1401,7 +1390,7 @@ export class AppState {
     }
 
     get pinNumberRequired() {
-        return this.#pinNumberRequired;
+        return pinNumberRequiredStore.current;
     }
 
     set pinNumberRequired(val: boolean | undefined) {
@@ -1409,7 +1398,7 @@ export class AppState {
     }
 
     get pinNumberResolver() {
-        return this.#pinNumberResolver;
+        return pinNumberResolverStore.current;
     }
 
     set pinNumberResolver(val: PinNumberResolver | undefined) {
@@ -1417,7 +1406,7 @@ export class AppState {
     }
 
     get pinNumberFailure() {
-        return this.#pinNumberFailure;
+        return pinNumberFailureStore.current;
     }
 
     set pinNumberFailure(val: PinNumberFailures | undefined) {
