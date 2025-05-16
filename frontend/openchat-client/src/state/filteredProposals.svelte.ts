@@ -6,11 +6,13 @@ const storageKeyPrefix = "proposal_filters_";
 export class FilteredProposals {
     private _canisterId: string;
     // A map of messageId to boolean where true==collapsed
-    private _messageState = $state<SvelteMap<bigint, boolean>>(new SvelteMap());
-    private _filters = $state<SvelteSet<number>>(new SvelteSet());
+    private _messageState: Map<bigint, boolean>;
+    private _filters: Set<number>;
 
     constructor(canisterId: string) {
         this._canisterId = canisterId;
+        this._messageState = new Map();
+        this._filters = new Set();
     }
 
     static fromStorage(canisterId: string): FilteredProposals {
@@ -65,6 +67,13 @@ export class FilteredProposals {
         } else if (currState == expand) {
             this._messageState.delete(messageId);
         }
+    }
+
+    clone(): FilteredProposals {
+        const clone = new FilteredProposals(this._canisterId);
+        clone._messageState = new Map(this._messageState);
+        clone._filters = new Set(this._filters);
+        return clone;
     }
 
     private toStorage() {

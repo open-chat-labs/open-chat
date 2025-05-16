@@ -118,6 +118,7 @@ export const messageFiltersStore = writable<MessageFilter[]>([]);
 export const translationsStore = new ReactiveMessageMapStore<string>();
 
 export const snsFunctionsStore = writable<SnsFunctions>(new SnsFunctions());
+export const filteredProposalsStore = writable<FilteredProposals | undefined>();
 
 export class AppState {
     #pinNumberRequired?: boolean;
@@ -236,8 +237,6 @@ export class AppState {
 
         return new Map();
     });
-
-    #filteredProposals = $state<FilteredProposals | undefined>();
 
     #messageFormatter: MessageFormatter | undefined;
 
@@ -747,30 +746,38 @@ export class AppState {
         return this.#proposalTopics;
     }
 
-    get filteredProposals(): FilteredProposals | undefined {
-        return this.#filteredProposals;
+    #modifyFilteredProposals(fn: (fp: FilteredProposals) => void) {
+        filteredProposalsStore.update((fp) => {
+            if (fp !== undefined) {
+                const clone = fp.clone();
+                fn(clone);
+                return clone;
+            }
+        });
     }
 
     enableAllProposalFilters() {
-        this.#filteredProposals?.enableAll();
+        this.#modifyFilteredProposals((fp) => fp.enableAll());
     }
 
     disableAllProposalFilters(ids: number[]) {
-        this.#filteredProposals?.disableAll(ids);
+        this.#modifyFilteredProposals((fp) => fp.disableAll(ids));
     }
 
     toggleProposalFilter(topic: number) {
-        this.#filteredProposals?.toggleFilter(topic);
+        this.#modifyFilteredProposals((fp) => fp.toggleFilter(topic));
     }
 
     toggleProposalFilterMessageExpansion(messageId: bigint, expand: boolean) {
-        this.#filteredProposals?.toggleMessageExpansion(messageId, expand);
+        this.#modifyFilteredProposals((fp) => fp.toggleMessageExpansion(messageId, expand));
     }
 
     #resetFilteredProposals(chat: ChatSummary) {
-        this.#filteredProposals = isProposalsChat(chat)
+        const filteredProposals = isProposalsChat(chat)
             ? FilteredProposals.fromStorage(chat.subtype.governanceCanisterId)
             : undefined;
+
+        filteredProposalsStore.set(filteredProposals);
     }
 
     get currentChatDraftMessage() {
