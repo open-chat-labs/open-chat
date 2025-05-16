@@ -1,6 +1,7 @@
 import type { ChatSummary, MultiUserChatIdentifier } from "openchat-shared";
+import { derived, get, writable, type Readable } from "svelte/store";
+import { createLsBoolStore } from "../stores";
 import { isCanisterUrl } from "../utils/url";
-import { LocalStorageBoolState } from "./localStorageState.svelte";
 import { pathState, type RouteParams } from "./path.svelte";
 
 export type FontScale = 0 | 1 | 2 | 3 | 4;
@@ -49,61 +50,61 @@ export type RightPanelContent =
     | CallParticipantsPanel
     | NoPanel;
 
-export type ProposalFilterPanel = {
+type ProposalFilterPanel = {
     kind: "proposal_filters";
 };
 
-export type CommunityFilters = {
+type CommunityFilters = {
     kind: "community_filters";
 };
 
-export type NoPanel = {
+type NoPanel = {
     kind: "no_panel";
 };
 
-export type MessageThreadPanel = {
+type MessageThreadPanel = {
     kind: "message_thread_panel";
     threadRootMessageIndex: number;
     threadRootMessageId: bigint;
 };
 
-export type GroupDetailsPanel = {
+type GroupDetailsPanel = {
     kind: "group_details";
 };
 
-export type UserProfilePanel = {
+type UserProfilePanel = {
     kind: "user_profile";
 };
 
-export type InviteGroupMembersPanel = {
+type InviteGroupMembersPanel = {
     kind: "invite_group_users";
 };
 
-export type InviteCommunityMembers = {
+type InviteCommunityMembers = {
     kind: "invite_community_users";
 };
 
-export type ShowGroupMembersPanel = {
+type ShowGroupMembersPanel = {
     kind: "show_group_members";
 };
 
-export type CommunityDetails = {
+type CommunityDetails = {
     kind: "community_details";
 };
 
-export type ShowCommunityMembers = {
+type ShowCommunityMembers = {
     kind: "show_community_members";
     userGroupId?: number;
 };
 
-export type CallParticipantsPanel = {
+type CallParticipantsPanel = {
     kind: "call_participants_panel";
     chatId: MultiUserChatIdentifier;
     messageId: bigint;
     isOwner: boolean;
 };
 
-export type ShowPinnedPanel = {
+type ShowPinnedPanel = {
     kind: "show_pinned";
 };
 
@@ -125,91 +126,87 @@ function translateScale(scale: FontScale): number {
     throw new Error("Unexpected font scale value");
 }
 
-export class UIState {
-    constructor() {
-        this.#runningInIframe = window.self !== window.top;
-        window.addEventListener("resize", this.#resize);
-        this.popRightPanelHistory = this.popRightPanelHistory.bind(this);
+export const runningInIframe: Readable<boolean> = writable(window.self !== window.top);
+export const hideMessagesFromDirectBlocked = createLsBoolStore("openchat_hideblocked", false);
+export const activityFeedShowing = writable(false);
+export const notificationsSupported =
+    !isCanisterUrl &&
+    "serviceWorker" in navigator &&
+    "PushManager" in window &&
+    "Notification" in window;
+export const eventListScrollTop = writable<number | undefined>();
+export const eventListLastScrolled = writable<number>(0);
+export const eventListScrolling = writable<boolean>(false);
+export const communityListScrollTop = writable<number | undefined>();
+function getDimensions() {
+    return { width: window.innerWidth, height: window.innerHeight };
+}
+export const dimensions = writable<Dimensions>(getDimensions());
+export const screenWidth = derived(dimensions, (dimensions) => {
+    if (dimensions.width < 354) {
+        return ScreenWidth.ExtraExtraSmall;
+    } else if (dimensions.width < 576) {
+        return ScreenWidth.ExtraSmall;
+    } else if (dimensions.width < 768) {
+        return ScreenWidth.Small;
+    } else if (dimensions.width < 992) {
+        return ScreenWidth.Medium;
+    } else if (dimensions.width < 1200) {
+        return ScreenWidth.Large;
+    } else if (dimensions.width < 1792) {
+        return ScreenWidth.ExtraLarge; // this is the default width on 15' macbook
+    } else {
+        return ScreenWidth.ExtraExtraLarge;
     }
-    #hideMessagesFromDirectBlocked = new LocalStorageBoolState("openchat_hideblocked", false);
-    #activityFeedShowing = $state(false);
-    #notificationsSupported = $state(
-        !isCanisterUrl &&
-            "serviceWorker" in navigator &&
-            "PushManager" in window &&
-            "Notification" in window,
-    );
-    #eventListScrollTop = $state<number | undefined>();
-    #eventListLastScrolled = $state<number>(0);
-    #eventListScrolling = $state<boolean>(false);
-    #communityListScrollTop = $state<number | undefined>();
-    #getDimensions = () => {
-        return { width: window.innerWidth, height: window.innerHeight };
-    };
-    #resize = () => {
-        this.#dimensions = this.#getDimensions();
-    };
-    #dimensions = $state<Dimensions>(this.#getDimensions());
-    #screenWidth = $derived.by(() => {
-        if (this.#dimensions.width < 354) {
-            return ScreenWidth.ExtraExtraSmall;
-        } else if (this.#dimensions.width < 576) {
-            return ScreenWidth.ExtraSmall;
-        } else if (this.#dimensions.width < 768) {
-            return ScreenWidth.Small;
-        } else if (this.#dimensions.width < 992) {
-            return ScreenWidth.Medium;
-        } else if (this.#dimensions.width < 1200) {
-            return ScreenWidth.Large;
-        } else if (this.#dimensions.width < 1792) {
-            return ScreenWidth.ExtraLarge; // this is the default width on 15' macbook
-        } else {
-            return ScreenWidth.ExtraExtraLarge;
-        }
-    });
-
-    #pixelsFromRems(rem: number, width: number): number {
-        if (width < 768) {
-            return rem * 14;
-        } else {
-            return rem * 16;
-        }
+});
+export const fullWidth = derived(
+    screenWidth,
+    (screenWidth) => screenWidth === ScreenWidth.ExtraExtraLarge,
+);
+function pixelsFromRems(rem: number, width: number): number {
+    if (width < 768) {
+        return rem * 14;
+    } else {
+        return rem * 16;
     }
-
-    // this probably does not belong here
-    toPixel(rem: number): number {
-        return this.#pixelsFromRems(rem, this.#dimensions.width);
-    }
-
-    #fullWidth = $derived(this.#screenWidth === ScreenWidth.ExtraExtraLarge);
-    #mobileWidth = $derived(this.#dimensions.width < 768);
-    #ipadWidth = $derived(this.#dimensions.width < 992);
-    #availableHeight = $derived(
-        this.#dimensions.height - this.#pixelsFromRems(5, this.#dimensions.width),
+}
+export const mobileWidth = derived(dimensions, (dimensions) => dimensions.width < 768);
+export const ipadWidth = derived(dimensions, (dimensions) => dimensions.width < 992);
+export const availableHeight = derived(
+    dimensions,
+    (dimensions) => dimensions.height - pixelsFromRems(5, dimensions.width),
+);
+export function toPixel(rem: number): number {
+    return pixelsFromRems(rem, get(dimensions).width);
+}
+export const iconSize = derived(mobileWidth, (mobileWidth) => (mobileWidth ? "1.6em" : "1.4em"));
+export const baseFontSize = derived(mobileWidth, (mobileWidth) => (mobileWidth ? 14 : 16));
+export const fontScale = writable<FontScale>(getCurrentFontScale());
+export const fontSize = derived([baseFontSize, fontScale], ([baseFontSize, fontScale]) => {
+    return baseFontSize * translateScale(fontScale);
+});
+function someHomeRoute(route: RouteParams["kind"]): boolean {
+    return (
+        route === "home_route" ||
+        route === "chat_list_route" ||
+        route === "selected_community_route"
     );
-    #iconSize = this.#mobileWidth ? "1.6em" : "1.4em";
-    #rightPanelWidth = $state<number | undefined>(
-        numberFromLocalStorage("openchat_right_panel_width"),
-    );
-    #runningInIframe = $state<boolean>(false);
-    #disableLeftNav = $state<boolean>(false);
-    #rightPanelHistory = $state<RightPanelContent[]>([]);
-    #lastRightPanelState = $derived(
-        this.#rightPanelHistory[this.#rightPanelHistory.length - 1] ?? { kind: "no_panel" },
-    );
-    #navOpen = $state<boolean>(false);
-    #fontScale = $state<FontScale>(getCurrentFontScale());
-    #baseFontSize = $derived(this.#mobileWidth ? 14 : 16);
-    #fontSize = $derived.by(() => {
-        return this.#baseFontSize * translateScale(this.#fontScale);
-    });
-    #layout = $derived.by<Layout>(() => {
-        if (this.#mobileWidth) {
-            const showRight = this.#rightPanelHistory.length > 0;
-            const showMiddle = !this.#someHomeRoute(pathState.route.kind) && !showRight;
+}
+export const rightPanelHistory = writable<RightPanelContent[]>([]);
+export const lastRightPanelState = derived(
+    rightPanelHistory,
+    (rightPanelHistory) => rightPanelHistory[rightPanelHistory.length - 1] ?? { kind: "no_panel" },
+);
+export const disableLeftNav = writable<boolean>(false);
+export const layout = derived(
+    [mobileWidth, fullWidth, rightPanelHistory, disableLeftNav],
+    ([mobileWidth, fullWidth, rightPanelHistory, disableLeftNav]) => {
+        if (mobileWidth) {
+            const showRight = rightPanelHistory.length > 0;
+            const showMiddle = !someHomeRoute(pathState.route.kind) && !showRight;
             const showLeft = !showMiddle && !showRight;
             const showNav =
-                !this.#disableLeftNav &&
+                !disableLeftNav &&
                 (showLeft ||
                     ((pathState.route.kind === "communities_route" ||
                         pathState.route.kind === "admin_route") &&
@@ -221,14 +218,14 @@ export class UIState {
                 rightPanel: (showRight ? "inline" : "hidden") as RightPanelMode,
             };
         } else {
-            const showRight = this.#rightPanelHistory.length > 0 || this.#fullWidth;
-            const floatRight = !this.#fullWidth;
+            const showRight = rightPanelHistory.length > 0 || fullWidth;
+            const floatRight = !fullWidth;
             const showLeft =
                 pathState.route.kind !== "communities_route" &&
                 pathState.route.kind !== "admin_route";
 
             return {
-                showNav: !this.#disableLeftNav,
+                showNav: !disableLeftNav,
                 showMiddle: true,
                 showLeft,
                 rightPanel: (showRight
@@ -238,86 +235,46 @@ export class UIState {
                     : "hidden") as RightPanelMode,
             };
         }
-    });
+    },
+);
+export const showMiddle = derived(layout, (layout) => layout.showMiddle);
+export const showNav = derived(layout, (layout) => layout.showNav);
+export const showLeft = derived(layout, (layout) => layout.showLeft);
+export const rightPanelMode = derived(layout, (layout) => layout.rightPanel);
+export const navOpen = writable<boolean>(false);
+export const rightPanelWidth = writable<number | undefined>(
+    numberFromLocalStorage("openchat_right_panel_width"),
+);
 
-    #showMiddle = $derived(this.#layout.showMiddle);
-    #showNav = $derived(this.#layout.showNav);
-    #showLeft = $derived(this.#layout.showLeft);
-    #rightPanel = $derived(this.#layout.rightPanel);
-
-    #someHomeRoute(route: RouteParams["kind"]): boolean {
-        return (
-            route === "home_route" ||
-            route === "chat_list_route" ||
-            route === "selected_community_route"
-        );
+export class UIState {
+    constructor() {
+        window.addEventListener("resize", this.#resize);
+        this.popRightPanelHistory = this.popRightPanelHistory.bind(this);
     }
-
-    get hideMessagesFromDirectBlocked() {
-        return this.#hideMessagesFromDirectBlocked;
-    }
-
-    get activityFeedShowing() {
-        return this.#activityFeedShowing;
-    }
-
-    set activityFeedShowing(val: boolean) {
-        this.#activityFeedShowing = val;
-    }
-
-    get notificationsSupported() {
-        return this.#notificationsSupported;
-    }
+    #resize = () => {
+        dimensions.set(getDimensions());
+    };
 
     set fontScale(scale: FontScale) {
-        this.#fontScale = scale;
+        fontScale.set(scale);
         localStorage.setItem("openchat_font_size", scale.toString());
     }
 
-    get fontScale() {
-        return this.#fontScale;
-    }
-
-    get showNav(): boolean {
-        return this.#showNav;
-    }
-
-    get showLeft(): boolean {
-        return this.#showLeft;
-    }
-
-    get showMiddle(): boolean {
-        return this.#showMiddle;
-    }
-
-    get rightPanelMode(): RightPanelMode {
-        return this.#rightPanel;
-    }
-
-    get navOpen(): boolean {
-        return this.#navOpen;
-    }
-
     toggleNav() {
-        this.#navOpen = !this.#navOpen;
+        navOpen.update((v) => !v);
     }
 
     closeNavIfOpen() {
-        if (this.#navOpen) {
-            this.#navOpen = false;
-        }
-    }
-
-    get layout(): Readonly<Layout> {
-        return this.#layout;
+        navOpen.update((open) => {
+            if (open) {
+                return false;
+            }
+            return open;
+        });
     }
 
     filterRightPanelHistory(fn: (state: RightPanelContent) => boolean) {
-        this.#rightPanelHistory = this.#rightPanelHistory.filter(fn);
-    }
-
-    get fontSize() {
-        return this.#fontSize;
+        rightPanelHistory.update((h) => h.filter(fn));
     }
 
     filterRightPanelHistoryByChatType(chat?: ChatSummary) {
@@ -338,31 +295,20 @@ export class UIState {
         });
     }
 
-    set rightPanelHistory(val: RightPanelContent[]) {
-        this.#rightPanelHistory = val;
-    }
-
-    get rightPanelHistory() {
-        return this.#rightPanelHistory;
-    }
-
     pushRightPanelHistory(val: RightPanelContent) {
-        this.#rightPanelHistory.push(val);
+        rightPanelHistory.update((h) => {
+            return [...h, val];
+        });
     }
 
     popRightPanelHistory() {
-        this.#rightPanelHistory = this.#rightPanelHistory.slice(
-            0,
-            this.#rightPanelHistory.length - 1,
-        );
+        rightPanelHistory.update((h) => {
+            return h.slice(0, h.length - 1);
+        });
     }
 
     rightPanelContains(kind: RightPanelContent["kind"]) {
-        return this.#rightPanelHistory.find((p) => p.kind === kind) !== undefined;
-    }
-
-    get lastRightPanelState() {
-        return this.#lastRightPanelState;
+        return get(rightPanelHistory).find((p) => p.kind === kind) !== undefined;
     }
 
     set rightPanelWidth(val: number | undefined) {
@@ -371,83 +317,7 @@ export class UIState {
         } else {
             localStorage.setItem("openchat_right_panel_width", val.toString());
         }
-        this.#rightPanelWidth = val;
-    }
-
-    get rightPanelWidth() {
-        return this.#rightPanelWidth;
-    }
-
-    set disableLeftNav(val: boolean) {
-        this.#disableLeftNav = val;
-    }
-
-    get disableLeftNav() {
-        return this.#disableLeftNav;
-    }
-
-    get runningInIframe() {
-        return this.#runningInIframe;
-    }
-
-    get iconSize() {
-        return this.#iconSize;
-    }
-
-    get dimensions(): Readonly<Dimensions> {
-        return this.#dimensions;
-    }
-
-    get screenWidth() {
-        return this.#screenWidth;
-    }
-
-    get mobileWidth() {
-        return this.#mobileWidth;
-    }
-
-    get fullWidth() {
-        return this.#fullWidth;
-    }
-
-    get ipadWidth() {
-        return this.#ipadWidth;
-    }
-
-    get availableHeight() {
-        return this.#availableHeight;
-    }
-
-    get eventListScrollTop() {
-        return this.#eventListScrollTop;
-    }
-
-    set eventListScrollTop(val: number | undefined) {
-        this.#eventListScrollTop = val;
-    }
-
-    get communityListScrollTop() {
-        return this.#communityListScrollTop;
-    }
-
-    set communityListScrollTop(val: number | undefined) {
-        this.#communityListScrollTop = val;
-    }
-
-    get eventListLastScrolled(): number {
-        return this.#eventListLastScrolled;
-    }
-
-    set eventListLastScrolled(val: number) {
-        this.#eventListLastScrolled = val;
-    }
-
-    get eventListScrolling(): boolean {
-        return this.#eventListScrolling;
-    }
-
-    set eventListScrolling(val: boolean) {
-        this.#eventListScrolling = val;
+        rightPanelWidth.set(val);
     }
 }
 

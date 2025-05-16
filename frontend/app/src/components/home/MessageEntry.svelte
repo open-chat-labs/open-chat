@@ -20,12 +20,13 @@
         botState,
         chatIdentifiersEqual,
         directMessageCommandInstance,
+        iconSize,
         localUpdates,
         messageContextsEqual,
         random64,
+        screenWidth,
         ScreenWidth,
         throttleDeadline,
-        ui,
         userStore,
     } from "openchat-client";
     import { getContext, tick } from "svelte";
@@ -558,7 +559,7 @@
         }
     });
     trackedEffect("screen-width-focus", () => {
-        if (ui.screenWidth === ScreenWidth.Large) {
+        if ($screenWidth === ScreenWidth.Large) {
             inp?.focus();
         }
     });
@@ -633,7 +634,7 @@
         <PreviewFooter {lapsed} {joining} {chat} />
     {:else if externalContent}
         <div class="disclaimer">
-            <Alert size={ui.iconSize} color={"var(--warn"} />
+            <Alert size={$iconSize} color={"var(--warn"} />
             <Translatable resourceKey={i18nKey("externalContent.disclaimer")} />
         </div>
     {:else if !canSendAny}
@@ -717,7 +718,7 @@
                         <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
                         <div class="send" onclick={sendMessage}>
                             <HoverIcon title={$_("sendMessage")}>
-                                <Send size={ui.iconSize} color={"var(--icon-txt)"} />
+                                <Send size={$iconSize} color={"var(--icon-txt)"} />
                             </HoverIcon>
                         </div>
                     {/if}
@@ -741,15 +742,13 @@
                     <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
                     <div class="send" onclick={sendMessage}>
                         <HoverIcon>
-                            <ContentSaveEditOutline
-                                size={ui.iconSize}
-                                color={"var(--button-txt)"} />
+                            <ContentSaveEditOutline size={$iconSize} color={"var(--button-txt)"} />
                         </HoverIcon>
                     </div>
                     <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
                     <div class="send" onclick={onCancelEdit}>
                         <HoverIcon>
-                            <Close size={ui.iconSize} color={"var(--button-txt)"} />
+                            <Close size={$iconSize} color={"var(--button-txt)"} />
                         </HoverIcon>
                     </div>
                 {/if}

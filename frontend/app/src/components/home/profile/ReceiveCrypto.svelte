@@ -1,6 +1,6 @@
 <script lang="ts">
     import BitcoinAccountInfo from "@components/home/BitcoinAccountInfo.svelte";
-    import { app, BTC_SYMBOL, cryptoBalance, cryptoLookup, ui } from "openchat-client";
+    import { app, BTC_SYMBOL, cryptoBalance, cryptoLookup, mobileWidth } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
@@ -61,7 +61,7 @@
     {#snippet footer()}
         <span>
             <ButtonGroup>
-                <Button tiny={ui.mobileWidth} onClick={onClose}
+                <Button tiny={$mobileWidth} onClick={onClose}
                     ><Translatable resourceKey={i18nKey("close")} /></Button>
             </ButtonGroup>
         </span>

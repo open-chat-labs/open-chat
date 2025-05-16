@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui } from "openchat-client";
+    import { fontScale, ui } from "openchat-client";
     import Range from "../../Range.svelte";
 </script>
 
@@ -10,7 +10,11 @@
     <div class="letter three" onclick={() => (ui.fontScale = 3)}>A</div>
     <div class="letter four" onclick={() => (ui.fontScale = 4)}>A</div>
     <div class="slider">
-        <Range min={0} max={4} bind:value={ui.fontScale} />
+        <Range
+            min={0}
+            max={4}
+            bind:value={$fontScale}
+            onChange={() => (ui.fontScale = $fontScale)} />
     </div>
 </div>
 

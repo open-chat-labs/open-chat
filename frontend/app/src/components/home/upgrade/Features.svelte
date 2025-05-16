@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui } from "openchat-client";
+    import { mobileWidth } from "openchat-client";
     import Check from "svelte-material-icons/Check.svelte";
     import Minus from "svelte-material-icons/Minus.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -264,13 +264,13 @@
 {#if !landing}
     <div class="footer">
         <Footer>
-            <Button tiny={ui.mobileWidth} small={!ui.mobileWidth} secondary onClick={onCancel}
+            <Button tiny={$mobileWidth} small={!$mobileWidth} secondary onClick={onCancel}
                 ><Translatable resourceKey={i18nKey(isDiamond ? "close" : "cancel")} /></Button>
             {#if !isDiamond}
-                <Button onClick={() => onUpgrade?.()} tiny={ui.mobileWidth} small={!ui.mobileWidth}
+                <Button onClick={() => onUpgrade?.()} tiny={$mobileWidth} small={!$mobileWidth}
                     ><Translatable resourceKey={i18nKey("upgrade.button")} /></Button>
             {:else if canExtend}
-                <Button onClick={() => onUpgrade?.()} tiny={ui.mobileWidth} small={!ui.mobileWidth}
+                <Button onClick={() => onUpgrade?.()} tiny={$mobileWidth} small={!$mobileWidth}
                     ><Translatable resourceKey={i18nKey("upgrade.extendShort")} /></Button>
             {/if}
         </Footer>

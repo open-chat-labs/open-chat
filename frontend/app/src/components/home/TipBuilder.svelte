@@ -11,7 +11,7 @@
         cryptoLookup,
         exchangeRatesLookupStore as exchangeRatesLookup,
         lastCryptoSent,
-        ui,
+        mobileWidth,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
@@ -342,21 +342,21 @@
         {#snippet footer()}
             <span>
                 <ButtonGroup>
-                    <Button small={!ui.mobileWidth} tiny={ui.mobileWidth} secondary onClick={cancel}
+                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary onClick={cancel}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     {#if toppingUp || zero}
                         <Button
-                            small={!ui.mobileWidth}
+                            small={!$mobileWidth}
                             disabled={refreshing}
                             loading={refreshing}
-                            tiny={ui.mobileWidth}
+                            tiny={$mobileWidth}
                             onClick={reset}
                             ><Translatable resourceKey={i18nKey("refresh")} /></Button>
                     {:else}
                         <Button
-                            small={!ui.mobileWidth}
+                            small={!$mobileWidth}
                             disabled={!valid}
-                            tiny={ui.mobileWidth}
+                            tiny={$mobileWidth}
                             onClick={send}
                             ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
                     {/if}

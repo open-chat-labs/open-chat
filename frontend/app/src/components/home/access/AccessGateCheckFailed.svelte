@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui, type EnhancedAccessGate } from "openchat-client";
+    import { mobileWidth, type EnhancedAccessGate } from "openchat-client";
     import { i18nKey } from "../../../i18n/i18n";
     import ModalContent from "../../ModalContent.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -13,7 +13,7 @@
     let { gates, onClose }: Props = $props();
 </script>
 
-<ModalContent fixedWidth={ui.mobileWidth} fitToContent={!ui.mobileWidth} {onClose}>
+<ModalContent fixedWidth={$mobileWidth} fitToContent={!$mobileWidth} {onClose}>
     {#snippet header()}
         <div><Translatable resourceKey={i18nKey("access.gateCheckFailed")} /></div>
     {/snippet}

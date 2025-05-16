@@ -1,6 +1,11 @@
 <script lang="ts">
     import type { MessageContext, OpenChat, P2PSwapContentInitial } from "openchat-client";
-    import { app, enhancedCryptoLookup as cryptoLookup, publish, ui } from "openchat-client";
+    import {
+        app,
+        enhancedCryptoLookup as cryptoLookup,
+        mobileWidth,
+        publish,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
@@ -241,13 +246,13 @@
         {#snippet footer()}
             <span>
                 <ButtonGroup>
-                    <Button small={!ui.mobileWidth} tiny={ui.mobileWidth} secondary onClick={cancel}
+                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary onClick={cancel}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     <Button
-                        small={!ui.mobileWidth}
+                        small={!$mobileWidth}
                         disabled={!valid || sending}
                         loading={sending}
-                        tiny={ui.mobileWidth}
+                        tiny={$mobileWidth}
                         onClick={onSend}
                         ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
                 </ButtonGroup>

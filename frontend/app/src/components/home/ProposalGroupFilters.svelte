@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { ChatSummary, OpenChat } from "openchat-client";
-    import { app, ui } from "openchat-client";
+    import { app, iconSize, mobileWidth } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -83,11 +83,11 @@
     }
 </script>
 
-<SectionHeader shadow flush={ui.mobileWidth}>
+<SectionHeader shadow flush={$mobileWidth}>
     <h4><Translatable resourceKey={i18nKey("proposal.filter")} /></h4>
     <span title={$_("close")} class="close" onclick={onClose}>
         <HoverIcon>
-            <Close size={ui.iconSize} color={"var(--icon-txt)"} />
+            <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
 </SectionHeader>

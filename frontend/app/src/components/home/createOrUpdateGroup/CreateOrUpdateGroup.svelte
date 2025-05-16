@@ -11,8 +11,8 @@
         type UserSummary,
         app,
         chatIdentifierUnset,
+        mobileWidth,
         routeForChatIdentifier,
-        ui,
     } from "openchat-client";
     import { ErrorCode } from "openchat-shared";
     import page from "page";
@@ -436,8 +436,8 @@
                     {#if !editing && stepIndex > 0}
                         <Button
                             disabled={busy}
-                            small={!ui.mobileWidth}
-                            tiny={ui.mobileWidth}
+                            small={!$mobileWidth}
+                            tiny={$mobileWidth}
                             onClick={() => (step = steps[stepIndex - 1].key)}
                             ><Translatable resourceKey={i18nKey("group.back")} /></Button>
                     {/if}
@@ -445,8 +445,8 @@
                 <div class="actions">
                     <Button
                         disabled={false}
-                        small={!ui.mobileWidth}
-                        tiny={ui.mobileWidth}
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}
                         onClick={onClose}
                         secondary><Translatable resourceKey={i18nKey("cancel")} /></Button>
 
@@ -454,8 +454,8 @@
                         <Button
                             disabled={!dirty || busy || !valid}
                             loading={busy}
-                            small={!ui.mobileWidth}
-                            tiny={ui.mobileWidth}
+                            small={!$mobileWidth}
+                            tiny={$mobileWidth}
                             onClick={() => updateGroup()}
                             ><Translatable
                                 resourceKey={i18nKey(
@@ -466,8 +466,8 @@
                                 )} /></Button>
                     {:else if stepIndex < steps.length - 1}
                         <Button
-                            small={!ui.mobileWidth}
-                            tiny={ui.mobileWidth}
+                            small={!$mobileWidth}
+                            tiny={$mobileWidth}
                             onClick={() => (step = steps[stepIndex + 1].key)}
                             ><Translatable resourceKey={i18nKey("group.next")} />
                         </Button>
@@ -475,8 +475,8 @@
                         <Button
                             disabled={busy || !valid}
                             loading={busy}
-                            small={!ui.mobileWidth}
-                            tiny={ui.mobileWidth}
+                            small={!$mobileWidth}
+                            tiny={$mobileWidth}
                             onClick={createGroup}
                             ><Translatable
                                 resourceKey={i18nKey(

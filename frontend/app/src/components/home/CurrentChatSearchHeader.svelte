@@ -1,10 +1,10 @@
 <script lang="ts">
     import {
+        iconSize,
         type ChatSummary,
         type MessageMatch,
         type OpenChat,
         type UserOrUserGroup,
-        ui,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
@@ -257,7 +257,7 @@
 <SectionHeader shadow flush entry bind:height={searchBoxHeight}>
     <div onclick={onClose}>
         <HoverIcon>
-            <Close size={ui.iconSize} color={"var(--icon-txt)"} />
+            <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </div>
     <div class="wrapper">

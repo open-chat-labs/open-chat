@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { publish, ui, type Level } from "openchat-client";
+    import { iconSize, mobileWidth, publish, type Level } from "openchat-client";
     import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import Close from "svelte-material-icons/Close.svelte";
@@ -28,23 +28,23 @@
     }
 </script>
 
-<SectionHeader border={false} flush={!ui.mobileWidth} shadow>
+<SectionHeader border={false} flush={!$mobileWidth} shadow>
     <span title={$_("members")} class="members" onclick={showGroupMembers}>
         <HoverIcon>
-            <AccountMultiple size={ui.iconSize} color={"var(--icon-txt)"} />
+            <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
     {#if canEdit}
         <span title={$_("group.edit", { values: { level } })} class="edit" onclick={editGroup}>
             <HoverIcon>
-                <PencilOutline size={ui.iconSize} color={"var(--icon-txt)"} />
+                <PencilOutline size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </span>
     {/if}
     <h4><Translatable resourceKey={i18nKey("groupDetails", undefined, level)} /></h4>
     <span title={$_("close")} class="close" onclick={onClose}>
         <HoverIcon>
-            <Close size={ui.iconSize} color={"var(--icon-txt)"} />
+            <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
 </SectionHeader>

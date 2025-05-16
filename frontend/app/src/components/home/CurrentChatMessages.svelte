@@ -16,7 +16,7 @@
         localUpdates,
         pathState,
         routeForChatIdentifier,
-        ui,
+        showMiddle,
     } from "openchat-client";
     import page from "page";
     import { getContext, untrack } from "svelte";
@@ -283,7 +283,7 @@
     rootSelector={"chat-messages"}
     threadRootEvent={undefined}
     maintainScroll
-    visible={ui.showMiddle}
+    visible={$showMiddle}
     {readonly}
     {unreadMessages}
     {firstUnreadMention}

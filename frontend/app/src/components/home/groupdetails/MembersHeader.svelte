@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui, type Level, type ResourceKey } from "openchat-client";
+    import { iconSize, type Level, type ResourceKey } from "openchat-client";
     import { _ } from "svelte-i18n";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
@@ -37,7 +37,7 @@
             class="add"
             onclick={onShowInviteUsers}>
             <HoverIcon>
-                <AccountMultiplePlus size={ui.iconSize} color={"var(--icon-txt)"} />
+                <AccountMultiplePlus size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </span>
     {/if}
@@ -45,9 +45,9 @@
     <span title={$_("close")} class="close" onclick={onClose}>
         <HoverIcon>
             {#if closeIcon === "close"}
-                <Close size={ui.iconSize} color={"var(--icon-txt)"} />
+                <Close size={$iconSize} color={"var(--icon-txt)"} />
             {:else}
-                <ArrowLeft size={ui.iconSize} color={"var(--icon-txt)"} />
+                <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
             {/if}
         </HoverIcon>
     </span>

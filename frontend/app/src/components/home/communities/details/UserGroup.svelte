@@ -1,8 +1,8 @@
 <script lang="ts">
     import {
+        iconSize,
         type CommunitySummary,
         type OpenChat,
-        ui,
         type UserGroupDetails,
         type UserSummary,
     } from "openchat-client";
@@ -208,7 +208,7 @@
                 <User {user} me={false}>
                     {#if canManageUserGroups}
                         <div onclick={() => removeUserFromGroup(user)} class="delete">
-                            <DeleteOutline size={ui.iconSize} color={"var(--icon-txt)"} />
+                            <DeleteOutline size={$iconSize} color={"var(--icon-txt)"} />
                         </div>
                     {/if}
                 </User>

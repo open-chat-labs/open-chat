@@ -1,7 +1,7 @@
 <script lang="ts">
     import { type Alignment, type Position } from "@src/utils/alignment";
     import { reposition, type NanoPopPosition } from "@src/utils/position";
-    import { ui } from "openchat-client";
+    import { mobileWidth } from "openchat-client";
     import { onMount, type Snippet } from "svelte";
     import { fade } from "svelte/transition";
     import { rtlStore } from "../../stores/rtl";
@@ -31,7 +31,7 @@
     }: Props = $props();
 
     let maxWidth = $derived(
-        autoWidth ? "unset" : calculateMaxWidth(textLength, longestWord, ui.mobileWidth),
+        autoWidth ? "unset" : calculateMaxWidth(textLength, longestWord, $mobileWidth),
     );
 
     let container: HTMLElement | undefined;

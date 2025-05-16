@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui, type ChitEarned } from "openchat-client";
+    import { mobileWidth, type ChitEarned } from "openchat-client";
     import Tooltip from "../../../components/tooltip/Tooltip.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
@@ -19,7 +19,7 @@
     <div class="day">{day.getDate()}</div>
 {:else}
     <div class="day has-events" class:otherMonth>
-        <Tooltip autoWidth fill position="top" align={ui.mobileWidth ? "middle" : "end"}>
+        <Tooltip autoWidth fill position="top" align={$mobileWidth ? "middle" : "end"}>
             {day.getDate()}
             {#snippet popupTemplate()}
                 <div class="tt">

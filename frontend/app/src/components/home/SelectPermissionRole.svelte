@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui, type ResourceKey } from "openchat-client";
+    import { iconSize, type ResourceKey } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Check from "svelte-material-icons/Check.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
@@ -54,7 +54,7 @@
     <MenuIcon bind:this={menu} position="bottom" align="end">
         {#snippet menuIcon()}
             <span class="icon">
-                <ChevronDown viewBox={"0 -3 24 24"} size={ui.iconSize} color={"var(--icon-txt)"} />
+                <ChevronDown viewBox={"0 -3 24 24"} size={$iconSize} color={"var(--icon-txt)"} />
             </span>
         {/snippet}
         {#snippet menuItems()}
@@ -64,7 +64,7 @@
                         {#snippet icon()}
                             <Check
                                 viewBox={"0 -3 24 24"}
-                                size={ui.iconSize}
+                                size={$iconSize}
                                 color={rolePermission === undefined
                                     ? "var(--icon-inverted-txt)"
                                     : "transparent"} />
@@ -81,7 +81,7 @@
                         {#snippet icon()}
                             <Check
                                 viewBox={"0 -3 24 24"}
-                                size={ui.iconSize}
+                                size={$iconSize}
                                 color={rolePermission !== undefined &&
                                 roles.indexOf(rolePermission) >= roles.indexOf(r) &&
                                 (r !== "none" || rolePermission === "none")

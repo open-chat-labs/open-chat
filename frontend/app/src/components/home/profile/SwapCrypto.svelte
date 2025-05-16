@@ -4,8 +4,8 @@
         cryptoBalance as cryptoBalanceStore,
         enhancedCryptoLookup as cryptoLookup,
         exchangeRatesLookupStore as exchangeRatesLookup,
+        mobileWidth,
         swappableTokensStore,
-        ui,
     } from "openchat-client";
     import { random128 } from "openchat-shared";
     import { getContext, onMount } from "svelte";
@@ -378,14 +378,14 @@
         <span>
             <ButtonGroup>
                 {#if !swapping}
-                    <Button secondary tiny={ui.mobileWidth} onClick={onClose}
+                    <Button secondary tiny={$mobileWidth} onClick={onClose}
                         ><Translatable resourceKey={i18nKey("close")} /></Button>
                 {/if}
                 {#if result !== "success" && result !== "error"}
                     <Button
                         disabled={busy || !valid}
                         loading={busy}
-                        tiny={ui.mobileWidth}
+                        tiny={$mobileWidth}
                         onClick={onPrimaryClick}
                         ><Translatable resourceKey={primaryButtonText} /></Button>
                 {/if}

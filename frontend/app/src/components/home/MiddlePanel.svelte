@@ -5,7 +5,11 @@
         botState,
         chatIdentifiersEqual,
         pathState,
-        ui,
+        rightPanelMode,
+        rightPanelWidth,
+        showLeft,
+        showMiddle,
+        showNav,
         type ChatIdentifier,
         type MultiUserChat,
     } from "openchat-client";
@@ -59,10 +63,10 @@
                 if (call.view === "fullscreen") {
                     let width = window.innerWidth;
                     if (
-                        ui.rightPanelMode !== "floating" &&
+                        $rightPanelMode !== "floating" &&
                         (call.threadOpen || call.participantsOpen)
                     ) {
-                        width = width - (ui.rightPanelWidth ?? 500);
+                        width = width - ($rightPanelWidth ?? 500);
                     }
                     callContainer.style.setProperty("left", `0px`);
                     callContainer.style.setProperty("width", `${width}px`);
@@ -98,8 +102,8 @@
 
 <section
     bind:this={middlePanel}
-    class:visible={ui.showMiddle}
-    class:offset={ui.showNav && !ui.showLeft}
+    class:visible={$showMiddle}
+    class:offset={$showNav && !$showLeft}
     class:halloween={$currentTheme.name === "halloween"}>
     {#if pathState.route.kind === "explore_groups_route"}
         <RecommendedGroups {joining} />

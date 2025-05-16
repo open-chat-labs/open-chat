@@ -1,8 +1,8 @@
 <script lang="ts">
     import {
         debouncedDerived,
+        iconSize,
         OpenChat,
-        ui,
         userStore,
         validateBot,
         ValidationErrors,
@@ -309,7 +309,7 @@
             {#if !errors.has("bot_endpoint")}
                 <HoverIcon title={"load definition"} onclick={loadDefinition}>
                     <Reload
-                        size={ui.iconSize}
+                        size={$iconSize}
                         color={schemaLoaded ? "var(--icon-txt)" : "var(--accent)"}></Reload>
                 </HoverIcon>
             {/if}

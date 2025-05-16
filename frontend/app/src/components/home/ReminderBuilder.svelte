@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui, type ChatIdentifier, type OpenChat } from "openchat-client";
+    import { mobileWidth, type ChatIdentifier, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { now } from "../../stores/time";
@@ -140,13 +140,13 @@
         {/snippet}
         {#snippet footer()}
             <ButtonGroup>
-                <Button secondary small={!ui.mobileWidth} tiny={ui.mobileWidth} onClick={onClose}
+                <Button secondary small={!$mobileWidth} tiny={$mobileWidth} onClick={onClose}
                     ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                 <Button
                     disabled={busy}
                     loading={busy}
-                    small={!ui.mobileWidth}
-                    tiny={ui.mobileWidth}
+                    small={!$mobileWidth}
+                    tiny={$mobileWidth}
                     onClick={createReminder}
                     ><Translatable resourceKey={i18nKey("reminders.create")} /></Button>
             </ButtonGroup>

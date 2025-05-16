@@ -7,9 +7,9 @@
         type ResourceKey,
         app,
         cryptoLookup,
+        mobileWidth,
         nervousSystemLookup,
         toRecord,
-        ui,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -162,7 +162,7 @@
     );
 </script>
 
-<ModalContent fitToContent={!ui.mobileWidth} closeIcon {onClose}>
+<ModalContent fitToContent={!$mobileWidth} closeIcon {onClose}>
     {#snippet header()}
         <div class="header">
             <div class="main-title">
@@ -261,11 +261,11 @@
                         onClick={() => loadTransactions()}
                         disabled={!moreAvailable && !loading}
                         {loading}
-                        small={!ui.mobileWidth}
-                        tiny={ui.mobileWidth}>
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}>
                         <Translatable resourceKey={i18nKey("cryptoAccount.loadMoreTransactions")} />
                     </Button>
-                    <Button onClick={onClose} small={!ui.mobileWidth} tiny={ui.mobileWidth}>
+                    <Button onClick={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
                         <Translatable resourceKey={i18nKey("close")} />
                     </Button>
                 </ButtonGroup>

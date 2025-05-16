@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
-        ui,
+        iconSize,
+        mobileWidth,
         type AttachmentContent,
         type MessageAction,
         type MessagePermission,
@@ -167,7 +168,7 @@
         return total - (i + 1) * increment;
     }
     let useDrawer = $derived(!editing);
-    let narrow = $derived(mode == "thread" || ui.mobileWidth);
+    let narrow = $derived(mode == "thread" || $mobileWidth);
     let showActions = $derived(!useDrawer || drawOpen);
     let iconColour = $derived(
         editing ? "var(--button-txt)" : useDrawer ? "var(--txt)" : "var(--icon-txt)",
@@ -203,11 +204,11 @@
     <div class="open-draw" onclick={toggleDraw}>
         {#if showClose}
             <HoverIcon>
-                <TrayRemove size={ui.iconSize} color={"var(--icon-txt)"} />
+                <TrayRemove size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         {:else}
             <HoverIcon>
-                <TrayPlus size={ui.iconSize} color={"var(--icon-txt)"} />
+                <TrayPlus size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         {/if}
     </div>
@@ -233,28 +234,28 @@
                 class="send-icp"
                 onclick={createTokenTransfer}>
                 <HoverIcon title={"Send Crypto"}>
-                    <Bitcoin size={ui.iconSize} color={"var(--button-txt)"} />
+                    <Bitcoin size={$iconSize} color={"var(--button-txt)"} />
                 </HoverIcon>
             </div>
         {/if}
         {#if supportedActions.has("giphy")}
             <div style={`${supportedActions.get("giphy")}`} class="gif" onclick={sendGif}>
                 <HoverIcon title={"Attach gif"}>
-                    <StickerEmoji size={ui.iconSize} color={iconColour} />
+                    <StickerEmoji size={$iconSize} color={iconColour} />
                 </HoverIcon>
             </div>
         {/if}
         {#if supportedActions.has("meme")}
             <div style={`${supportedActions.get("meme")}`} class="meme" onclick={makeMeme}>
                 <HoverIcon title={"Meme Fighter"}>
-                    <MemeFighter size={ui.iconSize} color={iconColour} />
+                    <MemeFighter size={$iconSize} color={iconColour} />
                 </HoverIcon>
             </div>
         {/if}
         {#if supportedActions.has("poll")}
             <div style={`${supportedActions.get("poll")}`} class="poll" onclick={createPoll}>
                 <HoverIcon title={$_("poll.create")}>
-                    <Poll size={ui.iconSize} color={"var(--icon-txt)"} />
+                    <Poll size={$iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
             </div>
         {/if}
@@ -264,7 +265,7 @@
                 class="prize"
                 onclick={createPrizeMessage}>
                 <HoverIcon title={"Create prize"}>
-                    <Gift size={ui.iconSize} color={iconColour} />
+                    <Gift size={$iconSize} color={iconColour} />
                 </HoverIcon>
             </div>
         {/if}
@@ -274,7 +275,7 @@
                 class="swap"
                 onclick={createP2PSwapMessage}>
                 <HoverIcon title={$_("p2pSwap.builderTitle")}>
-                    <SwapIcon size={ui.iconSize} color={iconColour} />
+                    <SwapIcon size={$iconSize} color={iconColour} />
                 </HoverIcon>
             </div>
         {/if}

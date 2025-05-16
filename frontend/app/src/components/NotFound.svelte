@@ -3,7 +3,7 @@
 </script>
 
 <script lang="ts">
-    import { ui } from "openchat-client";
+    import { mobileWidth } from "openchat-client";
     import type { Component } from "svelte";
     import { i18nKey } from "../i18n/i18n";
     import Button from "./Button.svelte";
@@ -26,7 +26,7 @@
     {/snippet}
     {#snippet footer()}
         <div>
-            <ButtonGroup align={ui.mobileWidth ? "fill" : "center"}>
+            <ButtonGroup align={$mobileWidth ? "fill" : "center"}>
                 <Button onClick={onClose}>
                     <Translatable resourceKey={i18nKey("goHome")} />
                 </Button>

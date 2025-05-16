@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui } from "openchat-client";
+    import { mobileWidth } from "openchat-client";
     import { onMount, tick, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -68,7 +68,7 @@
 
     let divElement: HTMLElement;
 
-    let useAlignTo = $derived(alignTo !== undefined && !ui.mobileWidth);
+    let useAlignTo = $derived(alignTo !== undefined && !$mobileWidth);
     let bgStyle = $derived(backgroundImage ? `--custom-bg: url(${backgroundImage});` : "");
     let position = $state("");
     let style = $derived(
@@ -155,7 +155,7 @@
     {#if !hideFooter}
         <div class="footer" class:rtl={$rtlStore} class:compact={compactFooter}>
             {#if footer}{@render footer(onClose)}{:else}
-                <Button onClick={() => onClose?.()} small={!ui.mobileWidth} tiny={ui.mobileWidth}>
+                <Button onClick={() => onClose?.()} small={!$mobileWidth} tiny={$mobileWidth}>
                     <Translatable resourceKey={i18nKey("close")} />
                 </Button>
             {/if}

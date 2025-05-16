@@ -2,17 +2,17 @@
     import { communityThemes, currentTheme, themes } from "../../theme/themes";
     import Feature from "./Feature.svelte";
 
-    import { ui } from "openchat-client";
+    import { availableHeight, mobileWidth, toPixel } from "openchat-client";
     import { portalState } from "../portalState.svelte";
 
     let scrollTop = $state(0);
     let phoneBorder = 5;
     let windowHeight = $state(window.innerHeight);
-    let menuHeight = ui.toPixel(5);
+    let menuHeight = toPixel(5);
 
     // all the crazy calculations
-    let sectionHeight = $derived(ui.availableHeight);
-    let phoneHeight = $derived(ui.mobileWidth ? ui.availableHeight * 0.7 : 750);
+    let sectionHeight = $derived($availableHeight);
+    let phoneHeight = $derived($mobileWidth ? $availableHeight * 0.7 : 750);
     let phoneTop = $derived((sectionHeight - phoneHeight) / 2 + menuHeight);
     let phoneWidth = $derived(phoneHeight * 0.5333);
     let cssHeight = $derived(phoneHeight + phoneBorder * 2);

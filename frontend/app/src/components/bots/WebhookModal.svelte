@@ -3,8 +3,9 @@
     import { copyToClipboard } from "@src/utils/urls";
     import {
         emptyWebhookInstance,
+        iconSize,
+        mobileWidth,
         OpenChat,
-        ui,
         validBotComponentName,
         type FullWebhookDetails,
         type MultiUserChatIdentifier,
@@ -183,8 +184,8 @@
                             onClick={update}
                             disabled={busyUpdate || !valid || !dirty}
                             loading={busyUpdate}
-                            small={!ui.mobileWidth}
-                            tiny={ui.mobileWidth}>
+                            small={!$mobileWidth}
+                            tiny={$mobileWidth}>
                             <Translatable resourceKey={i18nKey("webhook.updateAction")} />
                         </Button>
                     </ButtonGroup>
@@ -195,7 +196,7 @@
                         <Translatable resourceKey={i18nKey("webhook.urlLabel")} />
                     </div>
                     <div class="copy" title={$_("copyToClipboard")} onclick={copy}>
-                        <ContentCopy size={ui.iconSize} color={"var(--icon-txt)"} />
+                        <ContentCopy size={$iconSize} color={"var(--icon-txt)"} />
                     </div>
                 </div>
                 {url}
@@ -205,7 +206,7 @@
     {#snippet footer()}
         <div class="footer">
             <ButtonGroup>
-                <Button secondary small={!ui.mobileWidth} tiny={ui.mobileWidth} onClick={onClose}>
+                <Button secondary small={!$mobileWidth} tiny={$mobileWidth} onClick={onClose}>
                     <Translatable
                         resourceKey={step !== "register" && !dirty
                             ? i18nKey("close")
@@ -215,8 +216,8 @@
                     onClick={step === "update" ? regenerate : step === "register" ? register : copy}
                     disabled={busy || (step === "register" && (!valid || !dirty))}
                     loading={busy}
-                    small={!ui.mobileWidth}
-                    tiny={ui.mobileWidth}>
+                    small={!$mobileWidth}
+                    tiny={$mobileWidth}>
                     <Translatable
                         resourceKey={step === "update"
                             ? i18nKey("webhook.regenerateAction")

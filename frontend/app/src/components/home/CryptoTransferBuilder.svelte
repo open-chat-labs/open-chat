@@ -4,7 +4,8 @@
         app,
         cryptoBalance as cryptoBalanceStore,
         enhancedCryptoLookup as cryptoLookup,
-        ui,
+        iconSize,
+        mobileWidth,
         userStore,
     } from "openchat-client";
     import { type CryptocurrencyContent, type MessageContext, nowNanos } from "openchat-shared";
@@ -225,7 +226,7 @@
                         {#if confirming}
                             <div class="confirming">
                                 <div class="alert">
-                                    <Alert size={ui.iconSize} color={"var(--warn"} />
+                                    <Alert size={$iconSize} color={"var(--warn"} />
                                 </div>
                                 <div class="alert-txt">
                                     <Translatable
@@ -248,22 +249,22 @@
         {#snippet footer()}
             <span>
                 <ButtonGroup>
-                    <Button small={!ui.mobileWidth} tiny={ui.mobileWidth} secondary onClick={cancel}
+                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary onClick={cancel}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     {#if toppingUp || zero}
                         <Button
-                            small={!ui.mobileWidth}
+                            small={!$mobileWidth}
                             disabled={refreshing}
                             loading={refreshing}
-                            tiny={ui.mobileWidth}
+                            tiny={$mobileWidth}
                             onClick={reset}
                             ><Translatable resourceKey={i18nKey("refresh")} /></Button>
                     {:else}
                         <Button
-                            small={!ui.mobileWidth}
+                            small={!$mobileWidth}
                             disabled={!valid || sending}
                             loading={sending}
-                            tiny={ui.mobileWidth}
+                            tiny={$mobileWidth}
                             onClick={send}
                             ><Translatable
                                 resourceKey={i18nKey(

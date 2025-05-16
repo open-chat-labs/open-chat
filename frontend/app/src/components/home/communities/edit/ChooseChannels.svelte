@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui, type DefaultChannel } from "openchat-client";
+    import { iconSize, type DefaultChannel } from "openchat-client";
     import PlusCircleOutline from "svelte-material-icons/PlusCircleOutline.svelte";
     import { i18nKey } from "../../../../i18n/i18n";
     import ErrorMessage from "../../../ErrorMessage.svelte";
@@ -93,7 +93,7 @@
             placeholder={i18nKey("communities.channelPlaceholder")} />
     </div>
     <div class="add-btn" onclick={addChannel}>
-        <PlusCircleOutline size={ui.iconSize} color={"var(--icon-txt)"} />
+        <PlusCircleOutline size={$iconSize} color={"var(--icon-txt)"} />
     </div>
 </div>
 

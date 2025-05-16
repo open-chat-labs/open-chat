@@ -3,12 +3,12 @@
         app,
         type CommunityIdentifier,
         type CommunitySummary,
+        iconSize,
         type MultiUserChat,
         type MultiUserChatIdentifier,
         type OpenChat,
         type ResourceKey,
         routeForChatIdentifier,
-        ui,
     } from "openchat-client";
     import { ErrorCode } from "openchat-shared";
     import { getContext, onMount } from "svelte";
@@ -206,14 +206,14 @@
                     ) + (container.public ? "" : $_("invite.shareMessageTrust"))} />
             </div>
             <div class="action">
-                <CopyIcon size={ui.iconSize} color={"var(--icon-txt)"} />
+                <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
                 <Link onClick={onCopy}>
                     <Translatable resourceKey={i18nKey("copy")} />
                 </Link>
             </div>
             {#if canShare()}
                 <div class="action">
-                    <ShareIcon size={ui.iconSize} color={"var(--icon-txt)"} />
+                    <ShareIcon size={$iconSize} color={"var(--icon-txt)"} />
                     <Link onClick={onShare}>
                         <Translatable resourceKey={i18nKey("share")} />
                     </Link>
@@ -221,7 +221,7 @@
             {/if}
             {#if !container.public}
                 <div class="action">
-                    <RefreshIcon size={ui.iconSize} color={"var(--icon-txt)"} />
+                    <RefreshIcon size={$iconSize} color={"var(--icon-txt)"} />
                     <Link
                         onClick={() => {
                             confirmReset = true;

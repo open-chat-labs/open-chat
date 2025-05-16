@@ -1,6 +1,6 @@
 <script lang="ts">
     import InfoIcon from "@src/components/InfoIcon.svelte";
-    import { type AirdropChannelDetails, app, type OpenChat, ui } from "openchat-client";
+    import { type AirdropChannelDetails, app, iconSize, type OpenChat } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
     import { Confetti } from "svelte-confetti";
     import { _ } from "svelte-i18n";
@@ -135,7 +135,7 @@
         <div class="header">
             <div class="leaderboard">
                 <HoverIcon onclick={leaderboard}>
-                    <TrophyOutline size={ui.iconSize} color={"var(--icon-txt)"} />
+                    <TrophyOutline size={$iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
             </div>
             <Translatable resourceKey={i18nKey("dailyChit.title")} />

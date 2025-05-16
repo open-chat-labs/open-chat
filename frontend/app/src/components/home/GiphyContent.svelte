@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui, type GiphyContent } from "openchat-client";
+    import { mobileWidth, type GiphyContent } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
     import { lowBandwidth } from "../../stores/settings";
@@ -30,7 +30,7 @@
     }: Props = $props();
 
     let withCaption = $derived(content.caption !== undefined && content.caption !== "");
-    let image = $derived(ui.mobileWidth ? content.mobile : content.desktop);
+    let image = $derived($mobileWidth ? content.mobile : content.desktop);
     let landscape = $derived(image.height < image.width);
     let style = $derived(
         `${height === undefined ? "" : `height: ${height}px;`} max-width: ${image.width}px;`,
@@ -52,8 +52,8 @@
             class:reply
             class:rtl={$rtlStore}>
         </div>
-    {:else if ui.mobileWidth || hidden}
-        {#if hidden && !ui.mobileWidth}
+    {:else if $mobileWidth || hidden}
+        {#if hidden && !$mobileWidth}
             <div class="mask">
                 {#if !reply}
                     <div class="reveal">

@@ -6,7 +6,7 @@
         OpenChat,
         ReadonlySet,
     } from "openchat-client";
-    import { app, setsAreEqual, subscribe, ui, withEqCheck } from "openchat-client";
+    import { app, iconSize, setsAreEqual, subscribe, withEqCheck } from "openchat-client";
     import { isSuccessfulEventsResponse } from "openchat-shared";
     import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
@@ -109,7 +109,7 @@
     <h4><Translatable resourceKey={i18nKey("pinnedMessages")} /></h4>
     <span title={$_("close")} class="close" onclick={close}>
         <HoverIcon>
-            <Close size={ui.iconSize} color={"var(--icon-txt)"} />
+            <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
 </SectionHeader>

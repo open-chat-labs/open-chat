@@ -1,6 +1,6 @@
 <script lang="ts">
     import {
-        ui,
+        mobileWidth,
         type CandidateMember,
         type CommunitySummary,
         type DefaultChannel,
@@ -301,8 +301,8 @@
                     {#if !editing && stepIndex > 0}
                         <Button
                             disabled={busy}
-                            small={!ui.mobileWidth}
-                            tiny={ui.mobileWidth}
+                            small={!$mobileWidth}
+                            tiny={$mobileWidth}
                             onClick={() => (step = steps[stepIndex - 1].key)}
                             ><Translatable resourceKey={i18nKey("communities.back")} /></Button>
                     {/if}
@@ -310,8 +310,8 @@
                 <div class="actions">
                     <Button
                         disabled={false}
-                        small={!ui.mobileWidth}
-                        tiny={ui.mobileWidth}
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}
                         onClick={onClose}
                         secondary><Translatable resourceKey={i18nKey("cancel")} /></Button>
 
@@ -319,8 +319,8 @@
                         <Button
                             disabled={!dirty || busy || !valid}
                             loading={busy}
-                            small={!ui.mobileWidth}
-                            tiny={ui.mobileWidth}
+                            small={!$mobileWidth}
+                            tiny={$mobileWidth}
                             onClick={() => save()}
                             ><Translatable
                                 resourceKey={i18nKey(
@@ -331,8 +331,8 @@
                                 )} /></Button>
                     {:else if stepIndex < steps.length - 1}
                         <Button
-                            small={!ui.mobileWidth}
-                            tiny={ui.mobileWidth}
+                            small={!$mobileWidth}
+                            tiny={$mobileWidth}
                             onClick={() => (step = steps[stepIndex + 1].key)}>
                             <Translatable resourceKey={i18nKey("communities.next")} />
                         </Button>
@@ -340,8 +340,8 @@
                         <Button
                             disabled={busy || !valid}
                             loading={busy}
-                            small={!ui.mobileWidth}
-                            tiny={ui.mobileWidth}
+                            small={!$mobileWidth}
+                            tiny={$mobileWidth}
                             onClick={() => save()}
                             ><Translatable
                                 resourceKey={i18nKey(

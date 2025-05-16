@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AvatarSize, OpenChat, ui, userStore, type CommandArg } from "openchat-client";
+    import { AvatarSize, mobileWidth, OpenChat, userStore, type CommandArg } from "openchat-client";
     import type { BotContextCommand } from "openchat-shared";
     import { getContext } from "svelte";
     import CogOutline from "svelte-material-icons/CogOutline.svelte";
@@ -17,7 +17,7 @@
     }
 
     let { botCommand, finalised }: Props = $props();
-    let MAX_COMMAND_LENGTH = $derived(ui.mobileWidth ? 50 : 150);
+    let MAX_COMMAND_LENGTH = $derived($mobileWidth ? 50 : 150);
     let paramValues = $derived(botCommand.args.map(paramValue));
     let paramsLength = $derived(paramValues.reduce((total, p) => total + p.length, 0));
     let paramMode: "truncated" | "full" = $derived(

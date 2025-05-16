@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui } from "openchat-client";
+    import { mobileWidth } from "openchat-client";
     import Cellphone from "svelte-material-icons/Cellphone.svelte";
     import Monitor from "svelte-material-icons/Monitor.svelte";
 
@@ -11,7 +11,7 @@
 
     let { caption, desktopUrl, mobileUrl }: Props = $props();
 
-    let mode: "desktop" | "mobile" = $state(ui.mobileWidth ? "mobile" : "desktop");
+    let mode: "desktop" | "mobile" = $state($mobileWidth ? "mobile" : "desktop");
 </script>
 
 <div class="blog-image">

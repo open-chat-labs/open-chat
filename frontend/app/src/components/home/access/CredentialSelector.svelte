@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Principal } from "@dfinity/principal";
-    import { type Credential, type CredentialGate, ui } from "openchat-client";
+    import { iconSize, type Credential, type CredentialGate } from "openchat-client";
     import { onMount } from "svelte";
     import Delete from "svelte-material-icons/Delete.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -173,7 +173,7 @@
             </div>
             {#if editable}
                 <div onclick={() => deleteArgument(arg[0])} class="delete-icon">
-                    <Delete size={ui.iconSize} color={"var(--icon-txt)"} />
+                    <Delete size={$iconSize} color={"var(--icon-txt)"} />
                 </div>
             {/if}
         </div>
