@@ -6,6 +6,7 @@
         type ChatIdentifier,
         type ChatType,
         currentUserIdStore,
+        currentUserStore,
         type Dimensions,
         type EnhancedReplyContext,
         iconSize,
@@ -305,8 +306,8 @@
                     threadRootMessageIndex,
                     msg.messageId,
                     reaction,
-                    app.currentUser.username,
-                    app.currentUser.displayName,
+                    $currentUserStore.username,
+                    $currentUserStore.displayName,
                     kind,
                 )
                 .then((success) => {

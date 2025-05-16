@@ -16,6 +16,7 @@
     import {
         app,
         currentUserIdStore,
+        currentUserStore,
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
         localUpdates,
@@ -431,7 +432,7 @@
         {editingEvent}
         {replyingTo}
         {textContent}
-        user={app.currentUser}
+        user={$currentUserStore}
         joining={undefined}
         preview={false}
         lapsed={false}

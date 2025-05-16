@@ -1,9 +1,9 @@
 <script lang="ts">
     import BotPublisher from "@src/components/bots/BotPublisher.svelte";
     import {
-        app,
         cryptoBalance as cryptoBalanceStore,
         currentUserIdStore,
+        currentUserStore,
         iconSize,
         mobileWidth,
         routeForChatIdentifier,
@@ -323,7 +323,7 @@
 
         return `${summary}
 
-> Submitted by [@${app.currentUser.username}](https://oc.app/user/${$currentUserIdStore}) on [OpenChat](https://oc.app${groupPath})`;
+> Submitted by [@${$currentUserStore.username}](https://oc.app/user/${$currentUserIdStore}) on [OpenChat](https://oc.app${groupPath})`;
     }
 
     function isLogoValid(logo: string): boolean {

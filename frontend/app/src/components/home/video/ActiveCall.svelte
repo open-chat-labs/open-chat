@@ -5,6 +5,7 @@
         app,
         chatIdentifiersEqual,
         currentUserIdStore,
+        currentUserStore,
         mobileWidth,
         NoMeetingToJoin,
         OpenChat,
@@ -148,7 +149,7 @@
                     height: "100%",
                 },
                 url: `https://openchat.daily.co/${roomName}`,
-                userName: app.currentUser.username,
+                userName: $currentUserStore.username,
                 theme: getThemeConfig($currentTheme),
             });
 
@@ -216,7 +217,7 @@
                     sharing.set(ev?.participant.tracks.screenVideo.state !== "off");
                     hasPresence.set(ev?.participant.permissions.hasPresence);
                 } else {
-                    if (ev?.participant.user_name === app.currentUser.username) {
+                    if (ev?.participant.user_name === $currentUserStore.username) {
                         // this means that I have joined the call from somewhere else e.g. another device
                         hangup();
                     }

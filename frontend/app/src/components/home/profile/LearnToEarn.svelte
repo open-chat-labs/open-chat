@@ -4,6 +4,7 @@
         achievements,
         app,
         currentUserIdStore,
+        currentUserStore,
         iconSize,
         type Achievement,
         type ExternalAchievement,
@@ -238,7 +239,7 @@
                                             alt={achievement.name} />
                                         <ExternalLink
                                             iconColor={"var(--txt)"}
-                                            href={`${achievement.url}?oc_userid=${$currentUserIdStore}&oc_username=${app.currentUser.username}`}>
+                                            href={`${achievement.url}?oc_userid=${$currentUserIdStore}&oc_username=${$currentUserStore.username}`}>
                                             {achievement.name}
                                         </ExternalLink>
                                         <div class="reward">

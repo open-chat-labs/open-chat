@@ -3,6 +3,7 @@
     import {
         app,
         currentUserIdStore,
+        currentUserStore,
         typing,
         userStore,
         type ChatEvent,
@@ -109,15 +110,15 @@
 
     let userSummary = $derived<UserSummary>({
         kind: "user",
-        userId: app.currentUser.userId,
-        username: app.currentUser.username,
-        displayName: app.currentUser.displayName,
+        userId: $currentUserStore.userId,
+        username: $currentUserStore.username,
+        displayName: $currentUserStore.displayName,
         updated: BigInt(0),
         suspended: false,
         diamondStatus: "inactive",
         chitBalance: 0,
         streak: 0,
-        isUniquePerson: app.currentUser.isUniquePerson,
+        isUniquePerson: $currentUserStore.isUniquePerson,
         totalChitEarned: 0,
     });
 

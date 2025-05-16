@@ -10,6 +10,7 @@
         CommunityMap,
         type CommunitySummary,
         currentUserIdStore,
+        currentUserStore,
         type EnhancedReplyContext,
         type EventWrapper,
         type FilteredProposals,
@@ -429,7 +430,7 @@
             editingEvent={app.currentChatDraftMessage?.editingEvent}
             replyingTo={app.currentChatDraftMessage?.replyingTo}
             textContent={app.currentChatDraftMessage?.textContent}
-            user={app.currentUser}
+            user={$currentUserStore}
             mode={"message"}
             {joining}
             {preview}

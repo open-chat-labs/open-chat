@@ -28,6 +28,7 @@
         anonUserStore,
         app,
         chatIdentifiersEqual,
+        currentUserStore,
         defaultChatRules,
         dimensions,
         fullWidth,
@@ -1010,7 +1011,7 @@
 
 <Toast />
 
-{#if showUpgrade && app.currentUser}
+{#if showUpgrade && $currentUserStore}
     <Upgrade onCancel={() => (showUpgrade = false)} />
 {/if}
 

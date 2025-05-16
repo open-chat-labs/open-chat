@@ -3,6 +3,7 @@
         app,
         cryptoLookup,
         currentUserIdStore,
+        currentUserStore,
         isDiamondStore,
         isLifetimeDiamondStore,
         publish,
@@ -87,7 +88,7 @@
     let userEligible = $derived(
         (!content.diamondOnly || $isDiamondStore) &&
             (!content.lifetimeDiamondOnly || $isLifetimeDiamondStore) &&
-            (!content.uniquePersonOnly || app.currentUser.isUniquePerson) &&
+            (!content.uniquePersonOnly || $currentUserStore.isUniquePerson) &&
             content.streakOnly <= app.chitState.streak,
     );
     let disabled = $derived(finished || claimedByYou || allClaimed || !userEligible);
