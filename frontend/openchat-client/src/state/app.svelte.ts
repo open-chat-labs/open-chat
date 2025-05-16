@@ -84,7 +84,6 @@ import { ReactiveMessageMapStore } from "./map";
 import { messageLocalUpdates } from "./message/local.svelte";
 import { pathState } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
-import { SafeSetStore } from "./set";
 import { SnsFunctions } from "./snsFunctions.svelte";
 import { hideMessagesFromDirectBlocked } from "./ui.svelte";
 import { messagesRead } from "./unread/markRead.svelte";
@@ -266,13 +265,6 @@ export class AppState {
 
         // TODO - this clone is only necessary to trigger downstream $derived. Remove when all $deriveds are gone
         translationsStore.subscribe((val) => (this.#translations = val.clone()));
-    }
-
-    #communityFilterToString(filter: SafeSetStore<string>): string {
-        return JSON.stringify({
-            ...filter,
-            languages: Array.from(filter),
-        });
     }
 
     #proposalTopics = $derived.by(() => {
