@@ -143,30 +143,11 @@ export class UIState {
     #eventListLastScrolled = $state<number>(0);
     #eventListScrolling = $state<boolean>(false);
     #communityListScrollTop = $state<number | undefined>();
-    #getDimensions = () => {
-        return { width: window.innerWidth, height: window.innerHeight };
-    };
     #resize = () => {
-        this.#dimensions = this.#getDimensions();
+        this.#screenSizes = this.#recalculateScreenSizes();
     };
-    #dimensions = $state<Dimensions>(this.#getDimensions());
-    #screenWidth = $derived.by(() => {
-        if (this.#dimensions.width < 354) {
-            return ScreenWidth.ExtraExtraSmall;
-        } else if (this.#dimensions.width < 576) {
-            return ScreenWidth.ExtraSmall;
-        } else if (this.#dimensions.width < 768) {
-            return ScreenWidth.Small;
-        } else if (this.#dimensions.width < 992) {
-            return ScreenWidth.Medium;
-        } else if (this.#dimensions.width < 1200) {
-            return ScreenWidth.Large;
-        } else if (this.#dimensions.width < 1792) {
-            return ScreenWidth.ExtraLarge; // this is the default width on 15' macbook
-        } else {
-            return ScreenWidth.ExtraExtraLarge;
-        }
-    });
+
+    #screenSizes = $state(this.#recalculateScreenSizes());
 
     #pixelsFromRems(rem: number, width: number): number {
         if (width < 768) {
@@ -178,16 +159,9 @@ export class UIState {
 
     // this probably does not belong here
     toPixel(rem: number): number {
-        return this.#pixelsFromRems(rem, this.#dimensions.width);
+        return this.#pixelsFromRems(rem, this.#screenSizes.widthPixels);
     }
 
-    #fullWidth = $derived(this.#screenWidth === ScreenWidth.ExtraExtraLarge);
-    #mobileWidth = $derived(this.#dimensions.width < 768);
-    #ipadWidth = $derived(this.#dimensions.width < 992);
-    #availableHeight = $derived(
-        this.#dimensions.height - this.#pixelsFromRems(5, this.#dimensions.width),
-    );
-    #iconSize = this.#mobileWidth ? "1.6em" : "1.4em";
     #rightPanelWidth = $state<number | undefined>(
         numberFromLocalStorage("openchat_right_panel_width"),
     );
@@ -199,12 +173,12 @@ export class UIState {
     );
     #navOpen = $state<boolean>(false);
     #fontScale = $state<FontScale>(getCurrentFontScale());
-    #baseFontSize = $derived(this.#mobileWidth ? 14 : 16);
     #fontSize = $derived.by(() => {
-        return this.#baseFontSize * translateScale(this.#fontScale);
+        return this.#screenSizes.baseFontSize * translateScale(this.#fontScale);
     });
     #layout = $derived.by<Layout>(() => {
-        if (this.#mobileWidth) {
+        const screenSizes = this.#screenSizes;
+        if (screenSizes.mobileWidth) {
             const showRight = this.#rightPanelHistory.length > 0;
             const showMiddle = !this.#someHomeRoute(pathState.route.kind) && !showRight;
             const showLeft = !showMiddle && !showRight;
@@ -221,8 +195,8 @@ export class UIState {
                 rightPanel: (showRight ? "inline" : "hidden") as RightPanelMode,
             };
         } else {
-            const showRight = this.#rightPanelHistory.length > 0 || this.#fullWidth;
-            const floatRight = !this.#fullWidth;
+            const showRight = this.#rightPanelHistory.length > 0 || screenSizes.fullWidth;
+            const floatRight = !screenSizes.fullWidth;
             const showLeft =
                 pathState.route.kind !== "communities_route" &&
                 pathState.route.kind !== "admin_route";
@@ -391,31 +365,31 @@ export class UIState {
     }
 
     get iconSize() {
-        return this.#iconSize;
+        return this.#screenSizes.iconSize;
     }
 
     get dimensions(): Readonly<Dimensions> {
-        return this.#dimensions;
+        return { width: this.#screenSizes.widthPixels, height: this.#screenSizes.heightPixels };
     }
 
     get screenWidth() {
-        return this.#screenWidth;
+        return this.#screenSizes.screenWidth;
     }
 
     get mobileWidth() {
-        return this.#mobileWidth;
+        return this.#screenSizes.mobileWidth;
     }
 
     get fullWidth() {
-        return this.#fullWidth;
+        return this.#screenSizes.fullWidth;
     }
 
     get ipadWidth() {
-        return this.#ipadWidth;
+        return this.#screenSizes.ipadWidth;
     }
 
     get availableHeight() {
-        return this.#availableHeight;
+        return this.#screenSizes.availableHeight;
     }
 
     get eventListScrollTop() {
@@ -449,6 +423,60 @@ export class UIState {
     set eventListScrolling(val: boolean) {
         this.#eventListScrolling = val;
     }
+
+    #recalculateScreenSizes(): ScreenSizes {
+        const widthPixels = window.innerWidth;
+        const heightPixels = window.innerHeight;
+
+        const mobileWidth = widthPixels < 768;
+        const ipadWidth = widthPixels < 992;
+        const availableHeight = heightPixels - this.#pixelsFromRems(5, widthPixels);
+        const iconSize = mobileWidth ? "1.6em" : "1.4em";
+        const baseFontSize = mobileWidth ? 14 : 16;
+
+        let screenWidth;
+        if (widthPixels < 354) {
+            screenWidth = ScreenWidth.ExtraExtraSmall;
+        } else if (widthPixels < 576) {
+            screenWidth = ScreenWidth.ExtraSmall;
+        } else if (widthPixels < 768) {
+            screenWidth = ScreenWidth.Small;
+        } else if (widthPixels < 992) {
+            screenWidth = ScreenWidth.Medium;
+        } else if (widthPixels < 1200) {
+            screenWidth = ScreenWidth.Large;
+        } else if (widthPixels < 1792) {
+            screenWidth = ScreenWidth.ExtraLarge; // this is the default width on 15' macbook
+        } else {
+            screenWidth = ScreenWidth.ExtraExtraLarge;
+        }
+
+        const fullWidth = screenWidth === ScreenWidth.ExtraExtraLarge;
+
+        return {
+            widthPixels,
+            heightPixels,
+            screenWidth,
+            fullWidth,
+            mobileWidth,
+            ipadWidth,
+            availableHeight,
+            iconSize,
+            baseFontSize,
+        };
+    }
 }
 
 export const ui = new UIState();
+
+type ScreenSizes = {
+    widthPixels: number;
+    heightPixels: number;
+    screenWidth: ScreenWidth;
+    fullWidth: boolean;
+    mobileWidth: boolean;
+    ipadWidth: boolean;
+    availableHeight: number;
+    iconSize: string;
+    baseFontSize: number;
+}
