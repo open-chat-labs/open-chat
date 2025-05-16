@@ -5,7 +5,7 @@ use oc_error_codes::OCErrorCode;
 use types::Chat;
 
 #[update(candid = true, json = true, msgpack = true)]
-async fn bot_subscribe_to_chat_events(args: Args) -> Response {
+async fn bot_subscribe_to_events(args: Args) -> Response {
     let Some(bot_id) = read_state(|state| state.data.bots.get_by_caller(&state.env.caller()).map(|bot| bot.bot_id)) else {
         return Response::Error(OCErrorCode::BotNotAuthenticated.into());
     };

@@ -324,7 +324,6 @@ fn e2e_autonomous_bot_test() {
         canister_ids.notifications(env, community_id),
     );
 
-    // Call bot_subscribe_to_chat_events
     let subscribe_response = client::local_user_index::bot_subscribe_to_events(
         env,
         bot_principal,
@@ -341,7 +340,7 @@ fn e2e_autonomous_bot_test() {
             subscribe_response,
             local_user_index_canister::bot_subscribe_to_events::Response::Success
         ),
-        "'bot_subscribe_to_chat_events' error: {subscribe_response:?}"
+        "'bot_subscribe_to_events' error: {subscribe_response:?}"
     );
 
     // Call bot_send_message
