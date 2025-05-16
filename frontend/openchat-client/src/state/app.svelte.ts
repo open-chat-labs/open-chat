@@ -60,9 +60,8 @@ import {
 } from "openchat-shared";
 import { locale } from "svelte-i18n";
 import { SvelteMap, SvelteSet } from "svelte/reactivity";
-import { get } from "svelte/store";
+import { derived, get, writable } from "svelte/store";
 import { offlineStore, type PinnedByScope } from "../stores";
-import { createDummyStore } from "../stores/dummyStore";
 import {
     getMessagePermissionsForSelectedChat,
     mergeChatMetrics,
@@ -91,9 +90,37 @@ import { userStore } from "./users/users.svelte";
 export const ONE_MB = 1024 * 1024;
 export const ONE_GB = ONE_MB * 1024;
 
-export const dummyPinNumberFailureStore = createDummyStore();
+export const pinNumberRequired = writable<boolean | undefined>();
+export const pinNumberResolver = writable<PinNumberResolver | undefined>();
+export const pinNumberFailure = writable<PinNumberFailures | undefined>();
+
+export const storage = writable<StorageStatus>({
+    byteLimit: 0,
+    bytesUsed: 0,
+});
+
+export const percentageStorageUsed = derived(storage, (storage) =>
+    Math.ceil((storage.bytesUsed / storage.byteLimit) * 100),
+);
+
+export const percentageStorageRemaining = derived(storage, (storage) =>
+    Math.floor((1 - storage.bytesUsed / storage.byteLimit) * 100),
+);
+
+export const storageInGB = derived(storage, (storage) => ({
+    gbLimit: storage.byteLimit / ONE_GB,
+    gbUsed: storage.bytesUsed / ONE_GB,
+}));
 
 export class AppState {
+    #pinNumberRequired?: boolean;
+    #pinNumberResolver?: PinNumberResolver;
+    #pinNumberFailure?: PinNumberFailures;
+    #storage: StorageStatus = { byteLimit: 0, bytesUsed: 0 };
+    #percentageStorageRemaining: number = 0;
+    #percentageStorageUsed: number = 0;
+    #storageInGB = { gbLimit: 0, gbUsed: 0 };
+
     constructor() {
         $effect.root(() => {
             $effect(() => {
@@ -109,22 +136,18 @@ export class AppState {
                     this.#selectedChat = new ChatDetailsMergedState(ChatDetailsServerState.empty());
                 }
             });
-
-            $effect(() => {
-                void this.#pinNumberFailure;
-                dummyPinNumberFailureStore.set(Symbol());
-            });
         });
 
         locale.subscribe((l) => (this.#locale = l ?? "en"));
         offlineStore.subscribe((offline) => (this.#offline = offline));
+        pinNumberRequired.subscribe((val) => (this.#pinNumberRequired = val));
+        pinNumberResolver.subscribe((val) => (this.#pinNumberResolver = val));
+        pinNumberFailure.subscribe((val) => (this.#pinNumberFailure = val));
+        storage.subscribe((val) => (this.#storage = val));
+        percentageStorageRemaining.subscribe((val) => (this.#percentageStorageRemaining = val));
+        percentageStorageUsed.subscribe((val) => (this.#percentageStorageUsed = val));
+        storageInGB.subscribe((val) => (this.#storageInGB = val));
     }
-
-    #pinNumberRequired = $state<boolean | undefined>();
-
-    #pinNumberResolver = $state<PinNumberResolver | undefined>();
-
-    #pinNumberFailure = $state<PinNumberFailures | undefined>();
 
     #selectedAuthProvider = new LocalStorageState(
         configKeys.selectedAuthProvider,
@@ -134,24 +157,6 @@ export class AppState {
     );
 
     #userCreated = new LocalStorageBoolState(configKeys.userCreated, false);
-
-    #storage = $state<StorageStatus>({
-        byteLimit: 0,
-        bytesUsed: 0,
-    });
-
-    #percentageStorageUsed = $derived(
-        Math.ceil((this.#storage.bytesUsed / this.#storage.byteLimit) * 100),
-    );
-
-    #percentageStorageRemaining = $derived(
-        Math.floor((1 - this.#storage.bytesUsed / this.#storage.byteLimit) * 100),
-    );
-
-    #storageInGB = $derived({
-        gbLimit: this.#storage.byteLimit / ONE_GB,
-        gbUsed: this.#storage.bytesUsed / ONE_GB,
-    });
 
     #locale = $state<string>("en");
 
@@ -816,30 +821,6 @@ export class AppState {
         this.#translations.delete(messageId);
     }
 
-    set pinNumberFailure(val: PinNumberFailures | undefined) {
-        this.#pinNumberFailure = val;
-    }
-
-    get pinNumberFailure() {
-        return this.#pinNumberFailure;
-    }
-
-    set pinNumberResolver(val: PinNumberResolver | undefined) {
-        this.#pinNumberResolver = val;
-    }
-
-    get pinNumberResolver() {
-        return this.#pinNumberResolver;
-    }
-
-    set pinNumberRequired(val: boolean | undefined) {
-        this.#pinNumberRequired = val;
-    }
-
-    get pinNumberRequired() {
-        return this.#pinNumberRequired;
-    }
-
     set selectedAuthProvider(p: AuthProvider) {
         this.#selectedAuthProvider.value = p;
     }
@@ -857,7 +838,7 @@ export class AppState {
     }
 
     set storage(val: StorageStatus) {
-        this.#storage = val;
+        storage.set(val);
     }
 
     get storage() {
@@ -1394,6 +1375,30 @@ export class AppState {
 
     set messageFormatter(val: MessageFormatter) {
         this.#messageFormatter = val;
+    }
+
+    get pinNumberRequired() {
+        return this.#pinNumberRequired;
+    }
+
+    set pinNumberRequired(val: boolean | undefined) {
+        pinNumberRequired.set(val);
+    }
+
+    get pinNumberResolver() {
+        return this.#pinNumberResolver;
+    }
+
+    set pinNumberResolver(val: PinNumberResolver | undefined) {
+        pinNumberResolver.set(val);
+    }
+
+    get pinNumberFailure() {
+        return this.#pinNumberFailure;
+    }
+
+    set pinNumberFailure(val: PinNumberFailures | undefined) {
+        pinNumberFailure.set(val);
     }
 }
 

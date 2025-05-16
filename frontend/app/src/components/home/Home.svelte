@@ -35,6 +35,7 @@
         pageRedirect,
         pageReplace,
         pathState,
+        pinNumberResolver,
         rightPanelHistory,
         routeForChatIdentifier,
         routeForScope,
@@ -1107,7 +1108,7 @@
             onClose={() => (forgotPin = false)}
             type={{ kind: "forgot", while: { kind: "enter" } }} />
     </Overlay>
-{:else if app.pinNumberResolver !== undefined}
+{:else if $pinNumberResolver !== undefined}
     <Overlay>
         <PinNumberModal
             onClose={onPinNumberClose}
