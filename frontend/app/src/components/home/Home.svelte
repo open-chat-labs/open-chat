@@ -32,6 +32,7 @@
         fullWidth,
         localUpdates,
         nullMembership,
+        offlineStore,
         pageRedirect,
         pageReplace,
         pathState,
@@ -980,7 +981,7 @@
     {/if}
 {/if}
 
-<main class:anon={app.anonUser} class:offline={app.offline}>
+<main class:anon={app.anonUser} class:offline={$offlineStore}>
     <LeftNav />
     <LeftPanel />
     <MiddlePanel {joining} />
@@ -991,7 +992,7 @@
     <AnonFooter />
 {/if}
 
-{#if app.offline}
+{#if $offlineStore}
     <OfflineFooter />
 {/if}
 

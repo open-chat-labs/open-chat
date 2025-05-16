@@ -5,6 +5,7 @@
         iconSize,
         ipadWidth,
         mobileWidth,
+        offlineStore,
         publish,
         ScreenWidth,
         screenWidth,
@@ -193,7 +194,7 @@
                     <FancyLoader />
                 </div>
             {:else if communitySearchState.results.length === 0}
-                {#if app.offline}
+                {#if $offlineStore}
                     <div class="no-match">
                         <CloudOffOutline size={"1.8em"} color={"var(--txt-light)"} />
                         <p class="sub-header">

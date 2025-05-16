@@ -120,6 +120,7 @@ export class AppState {
     #percentageStorageRemaining: number = 0;
     #percentageStorageUsed: number = 0;
     #storageInGB = { gbLimit: 0, gbUsed: 0 };
+    #offline: boolean = false;
 
     constructor() {
         $effect.root(() => {
@@ -159,8 +160,6 @@ export class AppState {
     #userCreated = new LocalStorageBoolState(configKeys.userCreated, false);
 
     #locale = $state<string>("en");
-
-    #offline = $state<boolean>(false);
 
     #messageFilters = $state<MessageFilter[]>([]);
 
