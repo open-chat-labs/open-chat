@@ -71,6 +71,7 @@ import {
 } from "../utils/chat";
 import { configKeys } from "../utils/config";
 import { enumFromStringValue } from "../utils/enums";
+import { setsAreEqual } from "../utils/set";
 import { chatDetailsLocalUpdates, ChatDetailsMergedState } from "./chat_details";
 import { ChatDetailsServerState } from "./chat_details/server.svelte";
 import { communityLocalUpdates } from "./community_details";
@@ -78,7 +79,7 @@ import { CommunityMergedState } from "./community_details/merged.svelte";
 import { CommunityServerState } from "./community_details/server.svelte";
 import { FilteredProposals } from "./filteredProposals.svelte";
 import { localUpdates } from "./global";
-import { LocalStorageBoolState, LocalStorageState } from "./localStorageState.svelte";
+import { LocalStorageBoolStore, LocalStorageStore } from "./localStorageStore";
 import { ReactiveMessageMapStore } from "./map";
 import { messageLocalUpdates } from "./message/local.svelte";
 import { pathState } from "./path.svelte";
@@ -93,17 +94,17 @@ import { writable } from "./writable";
 export const ONE_MB = 1024 * 1024;
 export const ONE_GB = ONE_MB * 1024;
 
-function communityFilterFromString(serialised: string | null): SafeSetStore<string> | undefined {
-    if (!serialised) return undefined;
+function communityFilterFromString(serialised: string): Set<string> {
     const parsed = JSON.parse(serialised);
-    return new SafeSetStore<string>(parsed.languages);
+    return new Set<string>(parsed.languages);
 }
-function initialiseCommunityFilter() {
-    return (
-        communityFilterFromString(localStorage.getItem("openchat_community_filters")) ??
-        new SafeSetStore<string>()
-    );
+function communityFilterToString(filter: Set<string>): string {
+    return JSON.stringify({
+        ...filter,
+        languages: Array.from(filter),
+    });
 }
+
 function hasFlag(mask: number, flag: ModerationFlag): boolean {
     return (mask & flag) !== 0;
 }
@@ -172,13 +173,26 @@ export const underReviewEnabledStore = derived(
     moderationFlagsEnabledStore,
     (moderationFlagsEnabled) => hasFlag(moderationFlagsEnabled, ModerationFlags.UnderReview),
 );
-export const communityFiltersStore = initialiseCommunityFilter();
+export const communityFiltersStore = new LocalStorageStore(
+    "openchat_community_filters",
+    new Set<string>(),
+    communityFilterToString,
+    communityFilterFromString,
+    setsAreEqual,
+);
 export const exploreCommunitiesFiltersStore = derived(
     [communityFiltersStore, moderationFlagsEnabledStore],
     ([communityFilters, moderationFlagsEnabled]) => ({
         languages: Array.from(communityFilters),
         flags: moderationFlagsEnabled,
     }),
+);
+export const userCreatedStore = new LocalStorageBoolStore(configKeys.userCreated, false);
+export const selectedAuthProviderStore = new LocalStorageStore(
+    configKeys.selectedAuthProvider,
+    AuthProvider.II,
+    (a) => a,
+    (a) => enumFromStringValue(AuthProvider, a, AuthProvider.II),
 );
 
 export class AppState {
@@ -253,15 +267,6 @@ export class AppState {
         // TODO - this clone is only necessary to trigger downstream $derived. Remove when all $deriveds are gone
         translationsStore.subscribe((val) => (this.#translations = val.clone()));
     }
-
-    #selectedAuthProvider = new LocalStorageState(
-        configKeys.selectedAuthProvider,
-        AuthProvider.II,
-        (a) => a,
-        (a) => enumFromStringValue(AuthProvider, a, AuthProvider.II),
-    );
-
-    #userCreated = new LocalStorageBoolState(configKeys.userCreated, false);
 
     #communityFilterToString(filter: SafeSetStore<string>): string {
         return JSON.stringify({
@@ -845,15 +850,19 @@ export class AppState {
     }
 
     toggleCommunityFilterLanguage(lang: string) {
-        if (communityFiltersStore.has(lang)) {
-            communityFiltersStore.delete(lang);
+        if (communityFiltersStore.current.has(lang)) {
+            communityFiltersStore.update((val) => {
+                const clone = new Set([...val]);
+                clone.delete(lang);
+                return clone;
+            });
         } else {
-            communityFiltersStore.add(lang);
+            communityFiltersStore.update((val) => {
+                const clone = new Set([...val]);
+                clone.add(lang);
+                return clone;
+            });
         }
-        localStorage.setItem(
-            "openchat_community_filters",
-            this.#communityFilterToString(communityFiltersStore),
-        );
     }
 
     get translations() {
@@ -869,19 +878,19 @@ export class AppState {
     }
 
     set selectedAuthProvider(p: AuthProvider) {
-        this.#selectedAuthProvider.value = p;
+        selectedAuthProviderStore.set(p);
     }
 
     get selectedAuthProvider() {
-        return this.#selectedAuthProvider.value;
+        return selectedAuthProviderStore.current;
     }
 
     set userCreated(val: boolean) {
-        this.#userCreated.value = val;
+        userCreatedStore.set(val);
     }
 
     get userCreated() {
-        return this.#userCreated.value;
+        return userCreatedStore.current;
     }
 
     set storage(val: StorageStatus) {

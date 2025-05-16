@@ -1,8 +1,9 @@
 import type { ChatSummary, MultiUserChatIdentifier } from "openchat-shared";
-import { derived, get, writable, type Readable } from "svelte/store";
-import { createLsBoolStore } from "../stores";
+import { derived, get, type Readable } from "svelte/store";
 import { isCanisterUrl } from "../utils/url";
+import { LocalStorageBoolStore, LocalStorageStore } from "./localStorageStore";
 import { pathState, type RouteParams } from "./path.svelte";
+import { writable } from "./writable";
 
 export type FontScale = 0 | 1 | 2 | 3 | 4;
 
@@ -108,15 +109,6 @@ type ShowPinnedPanel = {
     kind: "show_pinned";
 };
 
-function numberFromLocalStorage(key: string): number | undefined {
-    const val = localStorage.getItem(key);
-    return val ? Number(val) : undefined;
-}
-
-export function getCurrentFontScale(): FontScale {
-    return Number(localStorage.getItem("openchat_font_size") ?? "2") as FontScale;
-}
-
 function translateScale(scale: FontScale): number {
     if (scale === 0) return 0.75;
     if (scale === 1) return 0.875;
@@ -127,17 +119,20 @@ function translateScale(scale: FontScale): number {
 }
 
 export const runningInIframe: Readable<boolean> = writable(window.self !== window.top);
-export const hideMessagesFromDirectBlocked = createLsBoolStore("openchat_hideblocked", false);
+export const hideMessagesFromDirectBlocked = new LocalStorageBoolStore(
+    "openchat_hideblocked",
+    false,
+);
 export const activityFeedShowing = writable(false);
 export const notificationsSupported =
     !isCanisterUrl &&
     "serviceWorker" in navigator &&
     "PushManager" in window &&
     "Notification" in window;
-export const eventListScrollTop = writable<number | undefined>();
+export const eventListScrollTop = writable<number | undefined>(undefined);
 export const eventListLastScrolled = writable<number>(0);
 export const eventListScrolling = writable<boolean>(false);
-export const communityListScrollTop = writable<number | undefined>();
+export const communityListScrollTop = writable<number | undefined>(undefined);
 function getDimensions() {
     return { width: window.innerWidth, height: window.innerHeight };
 }
@@ -181,8 +176,15 @@ export function toPixel(rem: number): number {
 }
 export const iconSize = derived(mobileWidth, (mobileWidth) => (mobileWidth ? "1.6em" : "1.4em"));
 export const baseFontSize = derived(mobileWidth, (mobileWidth) => (mobileWidth ? 14 : 16));
-export const fontScale = writable<FontScale>(getCurrentFontScale());
-export const fontSize = derived([baseFontSize, fontScale], ([baseFontSize, fontScale]) => {
+
+export const fontScaleStore = new LocalStorageStore<FontScale>(
+    "openchat_font_size",
+    2,
+    (fs) => fs.toString(),
+    (fs) => Number(fs) as FontScale,
+);
+
+export const fontSize = derived([baseFontSize, fontScaleStore], ([baseFontSize, fontScale]) => {
     return baseFontSize * translateScale(fontScale);
 });
 function someHomeRoute(route: RouteParams["kind"]): boolean {
@@ -242,8 +244,11 @@ export const showNav = derived(layout, (layout) => layout.showNav);
 export const showLeft = derived(layout, (layout) => layout.showLeft);
 export const rightPanelMode = derived(layout, (layout) => layout.rightPanel);
 export const navOpen = writable<boolean>(false);
-export const rightPanelWidth = writable<number | undefined>(
-    numberFromLocalStorage("openchat_right_panel_width"),
+export const rightPanelWidth = new LocalStorageStore<number | undefined>(
+    "openchat_right_panel_width",
+    undefined,
+    (n) => n?.toString() ?? "",
+    (n) => Number(n),
 );
 
 export class UIState {
@@ -256,8 +261,7 @@ export class UIState {
     };
 
     set fontScale(scale: FontScale) {
-        fontScale.set(scale);
-        localStorage.setItem("openchat_font_size", scale.toString());
+        fontScaleStore.set(scale);
     }
 
     toggleNav() {
@@ -312,11 +316,6 @@ export class UIState {
     }
 
     set rightPanelWidth(val: number | undefined) {
-        if (val === undefined) {
-            localStorage.removeItem("openchat_right_panel_width");
-        } else {
-            localStorage.setItem("openchat_right_panel_width", val.toString());
-        }
         rightPanelWidth.set(val);
     }
 }

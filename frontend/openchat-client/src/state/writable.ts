@@ -1,6 +1,6 @@
 import type { Subscriber, Unsubscriber } from "svelte/store";
 
-type EqualityCheck<T> = (a: T, b: T) => boolean;
+export type EqualityCheck<T> = (a: T, b: T) => boolean;
 
 export class WritableStore<T> {
     #subs: Set<Subscriber<T>> = new Set();
