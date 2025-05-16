@@ -46,10 +46,187 @@ pub enum ChatEvent {
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(u8)]
+pub enum ChatEventCategory {
+    Message = 0,    // Messages + edits, reaction, tips, etc.
+    Membership = 1, // User added, blocked, invited, role changed, etc.
+    Details = 2,    // Name, description, rules, permissions changed, etc.
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(u8)]
+pub enum CommunityEventCategory {
+    Membership = 0, // User added, blocked, invited, role changed, etc.
+    Details = 1,    // Name, description, rules, permissions changed, etc.
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ChatEventType {
-    Message = 0,           // Messages + edits, reaction, tips, etc.
-    MembershipUpdate = 1,  // User added, blocked, invited, role changed, etc.
-    ChatDetailsUpdate = 2, // Name, description, rules, permissions changed, etc.
+    // Message category
+    Message,
+    MessageEdited,
+    MessageReaction,
+    MessageTipped,
+    MessageDeleted,
+    MessagePollVote,
+    MessagePollEnded,
+    MessagePrizeClaim,
+    MessagePrizePayment,
+    MessageProposalVote,
+    MessageProposalUpdated,
+    MessageP2pSwap,
+    MessageReported,
+    MessageThreadSummary,
+    MessageReminder,
+    MessageVideoCall,
+    MessageOther,
+
+    // Details category
+    Created,
+    NameChanged,
+    DescriptionChanged,
+    RulesChanged,
+    AvatarChanged,
+    ExternalUrlUpdated,
+    PermissionsChanged,
+    VisibilityChanged,
+    InviteCodeChanged,
+    Frozen,
+    Unfrozen,
+    EventsTTLUpdated,
+    GateUpdated,
+    MessagePinned,
+    MessageUnpinned,
+
+    // Membership category
+    MembersJoined,
+    MembersLeft,
+    RoleChanged,
+    UsersInvited,
+    BotAdded,
+    BotRemoved,
+    BotUpdated,
+    UsersBlocked,
+    UsersUnblocked,
+}
+
+impl From<ChatEventType> for ChatEventCategory {
+    fn from(value: ChatEventType) -> Self {
+        match value {
+            ChatEventType::Message
+            | ChatEventType::MessageEdited
+            | ChatEventType::MessageReaction
+            | ChatEventType::MessageTipped
+            | ChatEventType::MessageDeleted
+            | ChatEventType::MessagePollVote
+            | ChatEventType::MessagePollEnded
+            | ChatEventType::MessagePrizeClaim
+            | ChatEventType::MessagePrizePayment
+            | ChatEventType::MessageProposalVote
+            | ChatEventType::MessageProposalUpdated
+            | ChatEventType::MessageP2pSwap
+            | ChatEventType::MessageReported
+            | ChatEventType::MessageThreadSummary
+            | ChatEventType::MessageReminder
+            | ChatEventType::MessageVideoCall
+            | ChatEventType::MessageOther => ChatEventCategory::Message,
+            ChatEventType::Created
+            | ChatEventType::NameChanged
+            | ChatEventType::DescriptionChanged
+            | ChatEventType::RulesChanged
+            | ChatEventType::AvatarChanged
+            | ChatEventType::ExternalUrlUpdated
+            | ChatEventType::PermissionsChanged
+            | ChatEventType::VisibilityChanged
+            | ChatEventType::InviteCodeChanged
+            | ChatEventType::Frozen
+            | ChatEventType::Unfrozen
+            | ChatEventType::EventsTTLUpdated
+            | ChatEventType::GateUpdated
+            | ChatEventType::MessagePinned
+            | ChatEventType::MessageUnpinned => ChatEventCategory::Details,
+            ChatEventType::MembersJoined
+            | ChatEventType::MembersLeft
+            | ChatEventType::RoleChanged
+            | ChatEventType::UsersInvited
+            | ChatEventType::BotAdded
+            | ChatEventType::BotRemoved
+            | ChatEventType::BotUpdated
+            | ChatEventType::UsersBlocked
+            | ChatEventType::UsersUnblocked => ChatEventCategory::Membership,
+        }
+    }
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub enum CommunityEventType {
+    // Details category
+    Created,
+    NameChanged,
+    DescriptionChanged,
+    RulesChanged,
+    AvatarChanged,
+    BannerChanged,
+    PermissionsChanged,
+    VisibilityChanged,
+    InviteCodeChanged,
+    Frozen,
+    Unfrozen,
+    EventsTTLUpdated,
+    GateUpdated,
+    MessagePinned,
+    MessageUnpinned,
+    PrimaryLanguageChanged,
+    GroupImported,
+    ChannelCreated,
+    ChannelDeleted,
+
+    // Membership category
+    MembersJoined,
+    MembersLeft,
+    RoleChanged,
+    UsersInvited,
+    BotAdded,
+    BotRemoved,
+    BotUpdated,
+    UsersBlocked,
+    UsersUnblocked,
+}
+
+impl From<CommunityEventType> for CommunityEventCategory {
+    fn from(value: CommunityEventType) -> Self {
+        match value {
+            CommunityEventType::Created
+            | CommunityEventType::NameChanged
+            | CommunityEventType::DescriptionChanged
+            | CommunityEventType::RulesChanged
+            | CommunityEventType::AvatarChanged
+            | CommunityEventType::BannerChanged
+            | CommunityEventType::PermissionsChanged
+            | CommunityEventType::VisibilityChanged
+            | CommunityEventType::InviteCodeChanged
+            | CommunityEventType::Frozen
+            | CommunityEventType::Unfrozen
+            | CommunityEventType::EventsTTLUpdated
+            | CommunityEventType::GateUpdated
+            | CommunityEventType::PrimaryLanguageChanged
+            | CommunityEventType::GroupImported
+            | CommunityEventType::ChannelCreated
+            | CommunityEventType::ChannelDeleted
+            | CommunityEventType::MessagePinned
+            | CommunityEventType::MessageUnpinned => CommunityEventCategory::Details,
+            CommunityEventType::MembersJoined
+            | CommunityEventType::MembersLeft
+            | CommunityEventType::RoleChanged
+            | CommunityEventType::UsersInvited
+            | CommunityEventType::BotAdded
+            | CommunityEventType::BotRemoved
+            | CommunityEventType::BotUpdated
+            | CommunityEventType::UsersBlocked
+            | CommunityEventType::UsersUnblocked => CommunityEventCategory::Membership,
+        }
+    }
 }
 
 #[ts_export]
@@ -469,35 +646,36 @@ impl ChatEvent {
     pub fn event_type(&self) -> Option<ChatEventType> {
         match self {
             ChatEvent::Message(_) => Some(ChatEventType::Message),
-            ChatEvent::GroupChatCreated(_)
-            | ChatEvent::DirectChatCreated(_)
-            | ChatEvent::GroupNameChanged(_)
-            | ChatEvent::GroupDescriptionChanged(_)
-            | ChatEvent::GroupRulesChanged(_)
-            | ChatEvent::AvatarChanged(_)
-            | ChatEvent::MessagePinned(_)
-            | ChatEvent::MessageUnpinned(_)
-            | ChatEvent::PermissionsChanged(_)
-            | ChatEvent::GroupVisibilityChanged(_)
-            | ChatEvent::GroupInviteCodeChanged(_)
-            | ChatEvent::ChatFrozen(_)
-            | ChatEvent::ChatUnfrozen(_)
-            | ChatEvent::EventsTimeToLiveUpdated(_)
-            | ChatEvent::GroupGateUpdated(_)
-            | ChatEvent::ExternalUrlUpdated(_) => Some(ChatEventType::ChatDetailsUpdate),
-            ChatEvent::ParticipantsAdded(_)
-            | ChatEvent::ParticipantsRemoved(_)
-            | ChatEvent::ParticipantJoined(_)
-            | ChatEvent::ParticipantLeft(_)
-            | ChatEvent::RoleChanged(_)
-            | ChatEvent::UsersBlocked(_)
-            | ChatEvent::UsersUnblocked(_)
-            | ChatEvent::UsersInvited(_)
-            | ChatEvent::MembersAddedToDefaultChannel(_)
-            | ChatEvent::BotAdded(_)
-            | ChatEvent::BotRemoved(_)
-            | ChatEvent::BotUpdated(_) => Some(ChatEventType::MembershipUpdate),
-            ChatEvent::Empty | ChatEvent::FailedToDeserialize => None,
+            ChatEvent::GroupChatCreated(_) => Some(ChatEventType::Created),
+            ChatEvent::DirectChatCreated(_) => Some(ChatEventType::Created),
+            ChatEvent::GroupNameChanged(_) => Some(ChatEventType::NameChanged),
+            ChatEvent::GroupDescriptionChanged(_) => Some(ChatEventType::DescriptionChanged),
+            ChatEvent::GroupRulesChanged(_) => Some(ChatEventType::RulesChanged),
+            ChatEvent::AvatarChanged(_) => Some(ChatEventType::AvatarChanged),
+            ChatEvent::ParticipantsAdded(_) => Some(ChatEventType::MembersJoined),
+            ChatEvent::ParticipantsRemoved(_) => Some(ChatEventType::MembersLeft),
+            ChatEvent::ParticipantJoined(_) => Some(ChatEventType::MembersJoined),
+            ChatEvent::ParticipantLeft(_) => Some(ChatEventType::MembersLeft),
+            ChatEvent::RoleChanged(_) => Some(ChatEventType::RoleChanged),
+            ChatEvent::UsersBlocked(_) => Some(ChatEventType::UsersBlocked),
+            ChatEvent::UsersUnblocked(_) => Some(ChatEventType::UsersUnblocked),
+            ChatEvent::MessagePinned(_) => Some(ChatEventType::MessagePinned),
+            ChatEvent::MessageUnpinned(_) => Some(ChatEventType::MessageUnpinned),
+            ChatEvent::PermissionsChanged(_) => Some(ChatEventType::PermissionsChanged),
+            ChatEvent::GroupVisibilityChanged(_) => Some(ChatEventType::VisibilityChanged),
+            ChatEvent::GroupInviteCodeChanged(_) => Some(ChatEventType::InviteCodeChanged),
+            ChatEvent::ChatFrozen(_) => Some(ChatEventType::Frozen),
+            ChatEvent::ChatUnfrozen(_) => Some(ChatEventType::Unfrozen),
+            ChatEvent::EventsTimeToLiveUpdated(_) => Some(ChatEventType::EventsTTLUpdated),
+            ChatEvent::GroupGateUpdated(_) => Some(ChatEventType::GateUpdated),
+            ChatEvent::UsersInvited(_) => Some(ChatEventType::UsersInvited),
+            ChatEvent::MembersAddedToDefaultChannel(_) => Some(ChatEventType::MembersJoined),
+            ChatEvent::ExternalUrlUpdated(_) => Some(ChatEventType::ExternalUrlUpdated),
+            ChatEvent::BotAdded(_) => Some(ChatEventType::BotAdded),
+            ChatEvent::BotRemoved(_) => Some(ChatEventType::BotRemoved),
+            ChatEvent::BotUpdated(_) => Some(ChatEventType::BotUpdated),
+            ChatEvent::FailedToDeserialize => None,
+            ChatEvent::Empty => None,
         }
     }
 }

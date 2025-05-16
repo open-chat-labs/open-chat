@@ -3,7 +3,7 @@ pub mod bot_create_channel;
 pub mod bot_delete_channel;
 pub mod bot_delete_messages;
 pub mod bot_send_message;
-pub mod bot_subscribe_to_chat_events;
+pub mod bot_subscribe_to_events;
 pub mod c2c_create_community;
 pub mod c2c_create_group;
 pub mod c2c_delete_community;

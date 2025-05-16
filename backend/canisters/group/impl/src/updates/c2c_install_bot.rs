@@ -3,8 +3,8 @@ use crate::{RuntimeState, activity_notifications::handle_activity_notification, 
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
+use types::OCResult;
 use types::c2c_install_bot::*;
-use types::{BotGroupConfig, OCResult};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -26,15 +26,13 @@ fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     if !state.data.install_bot(
         member.user_id(),
         args.bot_id,
-        BotGroupConfig {
-            permissions: args.granted_permissions,
-        },
+        args.granted_permissions,
+        args.granted_autonomous_permissions,
+        args.default_subscriptions,
         state.env.now(),
     ) {
         return Err(OCErrorCode::AlreadyAdded.into());
     }
-
-    // TODO: Notify UserIndex
 
     handle_activity_notification(state);
     Ok(())

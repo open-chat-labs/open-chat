@@ -101,12 +101,8 @@ fn push_bot_notification(mut notification: BotNotification, now: TimestampMillis
 
     if !notification.recipients.is_empty() {
         data.notifications.add(NotificationEnvelope::Bot(BotNotificationEnvelope {
-            event_type: notification.event_type,
+            event: notification.event,
             recipients: notification.recipients,
-            chat: notification.chat,
-            thread: notification.thread,
-            event_index: notification.event_index,
-            latest_event_index: notification.latest_event_index,
             timestamp: now,
         }));
     }

@@ -18,7 +18,7 @@ generate_c2c_call!(summary_updates);
 generate_c2c_call!(c2c_bot_add_reaction);
 generate_c2c_call!(c2c_bot_delete_messages);
 generate_c2c_call!(c2c_bot_send_message);
-generate_c2c_call!(c2c_bot_subscribe_to_chat_events);
+generate_c2c_call!(c2c_bot_subscribe_to_events);
 generate_c2c_call!(c2c_delete_group);
 generate_c2c_call!(c2c_export_group);
 generate_c2c_call!(c2c_export_group_events);

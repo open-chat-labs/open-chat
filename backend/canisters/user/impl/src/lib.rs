@@ -569,6 +569,10 @@ impl Data {
                 None => return false,
             },
             BotInitiator::ApiKeyPermissions(permissions) => permissions,
+            BotInitiator::Autonomous => match bot.autonomous_permissions.as_ref() {
+                Some(permissions) => permissions,
+                None => return false,
+            },
         };
 
         // The permissions required must be a subset of the permissions granted to the bot
