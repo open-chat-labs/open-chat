@@ -2,7 +2,6 @@
     import type {
         ChatPermissions,
         ChatSummary,
-        CommunitySummary,
         ExternalBotPermissions,
         MessageContext,
         OpenChat,
@@ -52,12 +51,7 @@
             return (
                 restrictByBotIfNecessary(c) &&
                 restrictByChatIfNecessary(c) &&
-                hasPermissionForCommand(
-                    c,
-                    installedBots,
-                    app.selectedChatSummary,
-                    app.selectedCommunitySummary,
-                )
+                hasPermissionForCommand(c, installedBots, app.selectedChatSummary)
             );
         });
     });
@@ -79,7 +73,6 @@
     function userHasPermissionForCommand(
         command: FlattenedCommand,
         chat: ChatSummary | undefined,
-        community: CommunitySummary | undefined,
     ): boolean {
         const chatRolePermitted =
             chat !== undefined && chat.kind !== "direct_chat"
@@ -122,9 +115,8 @@
         command: FlattenedCommand,
         installedBots: ReadonlyMap<string, ExternalBotPermissions>,
         chat: ChatSummary | undefined,
-        community: CommunitySummary | undefined,
     ): boolean {
-        const userPermission = userHasPermissionForCommand(command, chat, community);
+        const userPermission = userHasPermissionForCommand(command, chat);
         if (command.kind === "external_bot") {
             // for an external bot we also need to know that the bot has been granted all the permissions it requires
             const granted = installedBots.get(command.botId);
