@@ -36,6 +36,7 @@ import {
     type MessageActivitySummary,
     type MessageFilter,
     type MessageFormatter,
+    MessageMap,
     type ModerationFlag,
     ModerationFlags,
     type NervousSystemFunction,
@@ -78,7 +79,7 @@ import { CommunityServerState } from "./community_details/server.svelte";
 import { FilteredProposals } from "./filteredProposals.svelte";
 import { localUpdates } from "./global";
 import { LocalStorageBoolState, LocalStorageState } from "./localStorageState.svelte";
-import { ReactiveMessageMap } from "./map";
+import { ReactiveMessageMapStore } from "./map";
 import { messageLocalUpdates } from "./message/local.svelte";
 import { pathState } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
@@ -114,6 +115,8 @@ export const storageInGBStore = derived(storageStore, (storage) => ({
 
 export const messageFiltersStore = writable<MessageFilter[]>([]);
 
+export const translationsStore = new ReactiveMessageMapStore<string>();
+
 export class AppState {
     #pinNumberRequired?: boolean;
     #pinNumberResolver?: PinNumberResolver;
@@ -124,7 +127,11 @@ export class AppState {
     #storageInGB = { gbLimit: 0, gbUsed: 0 };
     #offline: boolean = false;
     #locale: string = "en";
-    #messageFilters = $state<MessageFilter[]>([]);
+    #messageFilters: MessageFilter[] = [];
+
+    // TODO - this needs to use $state for the moment because we still have $derived that is depending on it
+    // but it can be a plain value once that's all gone
+    #translations = $state<MessageMap<string>>(new MessageMap());
 
     constructor() {
         $effect.root(() => {
@@ -155,6 +162,9 @@ export class AppState {
         percentageStorageUsedStore.subscribe((val) => (this.#percentageStorageUsed = val));
         storageInGBStore.subscribe((val) => (this.#storageInGB = val));
         messageFiltersStore.subscribe((val) => (this.#messageFilters = val));
+
+        // TODO - this clone is only necessary to trigger downstream $derived. Remove when all $deriveds are gone
+        translationsStore.subscribe((val) => (this.#translations = val.clone()));
     }
 
     #selectedAuthProvider = new LocalStorageState(
@@ -165,8 +175,6 @@ export class AppState {
     );
 
     #userCreated = new LocalStorageBoolState(configKeys.userCreated, false);
-
-    #translations = $state<ReactiveMessageMap<string>>(new ReactiveMessageMap());
 
     #communityFilterToString(filter: CommunityFilter): string {
         return JSON.stringify({
@@ -816,11 +824,11 @@ export class AppState {
     }
 
     translate(messageId: bigint, translation: string) {
-        this.#translations.set(messageId, translation);
+        translationsStore.set(messageId, translation);
     }
 
     untranslate(messageId: bigint) {
-        this.#translations.delete(messageId);
+        translationsStore.delete(messageId);
     }
 
     set selectedAuthProvider(p: AuthProvider) {

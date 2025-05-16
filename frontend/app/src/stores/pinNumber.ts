@@ -1,4 +1,4 @@
-import { pinNumberFailure } from "openchat-client";
+import { pinNumberFailureStore } from "openchat-client";
 import { formatTimeRemaining } from "openchat-client/lib/utils/time";
 import type { PinNumberFailures, ResourceKey } from "openchat-shared";
 import { derived } from "svelte/store";
@@ -17,7 +17,7 @@ export function supportsForgot(operation: PinOperation): operation is ForgotPinW
 }
 
 export const pinNumberErrorMessageStore = derived(
-    [now500, pinNumberFailure],
+    [now500, pinNumberFailureStore],
     ([$nowStore, pinNumberFailure]) => {
         return pinNumberFailure ? pinNumberErrorMessage(pinNumberFailure, $nowStore) : undefined;
     },
