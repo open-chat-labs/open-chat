@@ -1275,7 +1275,7 @@ dependencies = [
  "candid",
  "ic-agent",
  "ic-utils",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "types",
 ]
 
@@ -1364,7 +1364,7 @@ version = "0.1.0"
 name = "canister_time"
 version = "0.1.0"
 dependencies = [
- "ic0 0.24.0",
+ "ic0 0.25.0",
 ]
 
 [[package]]
@@ -1578,7 +1578,7 @@ dependencies = [
  "ic-cdk 0.18.0",
  "ic-ledger-types",
  "ic-stable-structures",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "ledger_utils",
  "msgpack",
  "oc_error_codes",
@@ -1850,7 +1850,7 @@ dependencies = [
  "icrc-ledger-types",
  "installed_bots",
  "instruction_counts_log",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "lazy_static",
  "ledger_utils",
  "local_user_index_canister",
@@ -3724,7 +3724,7 @@ dependencies = [
  "icrc-ledger-types",
  "installed_bots",
  "instruction_counts_log",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "ledger_utils",
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
@@ -3761,7 +3761,7 @@ dependencies = [
  "group_community_common",
  "hex",
  "ic-stable-structures",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "lazy_static",
  "msgpack",
  "oc_error_codes",
@@ -4780,6 +4780,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "673a6b846467547f3fc61f95d246aadff03e368b53c931655300b9d1bd05a55a"
 
 [[package]]
+name = "ic0"
+version = "0.25.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0ecd5c978846f2f917a899f5d644dca9a7f01b4cf7d16b361a5746c4f1922029"
+
+[[package]]
 name = "ic_bls12_381"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5250,7 +5256,7 @@ dependencies = [
  "ic-stable-structures",
  "icrc-ledger-types",
  "identity_canister",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "jwt",
  "jwt-simple 0.12.9",
  "lazy_static",
@@ -5334,9 +5340,9 @@ dependencies = [
 
 [[package]]
 name = "itertools"
-version = "0.13.0"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
+checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
 dependencies = [
  "either",
 ]
@@ -5891,7 +5897,7 @@ dependencies = [
  "ic-cdk 0.18.0",
  "ic-cdk-timers",
  "ic-stable-structures",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "json",
  "jwt",
  "ledger_utils",
@@ -6037,7 +6043,7 @@ dependencies = [
  "icdex_client",
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "market_maker_canister",
  "msgpack",
  "rand 0.8.5",
@@ -7741,9 +7747,9 @@ dependencies = [
 
 [[package]]
 name = "prometheus"
-version = "0.13.4"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d33c28a30771f7f96db69893f78b857f7450d7e0237e9c8fc6427a81bae7ed1"
+checksum = "3ca5326d8d0b950a9acd87e6a3f94745394f62e4dae1b1ee22b2bc0c394af43a"
 dependencies = [
  "cfg-if",
  "fnv",
@@ -7751,7 +7757,7 @@ dependencies = [
  "memchr",
  "parking_lot",
  "protobuf",
- "thiserror 1.0.69",
+ "thiserror 2.0.12",
 ]
 
 [[package]]
@@ -7825,7 +7831,7 @@ dependencies = [
  "ic-stable-structures",
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "ledger_utils",
  "msgpack",
  "nns_governance_canister",
@@ -7867,9 +7873,23 @@ dependencies = [
 
 [[package]]
 name = "protobuf"
-version = "2.28.0"
+version = "3.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "106dd99e98437432fed6519dedecfade6a06a73bb7b2a1e019fdd2bee5778d94"
+checksum = "d65a1d4ddae7d8b5de68153b48f6aa3bba8cb002b243dbdbc55a5afbc98f99f4"
+dependencies = [
+ "once_cell",
+ "protobuf-support",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "protobuf-support"
+version = "3.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e36c2f31e0a47f9280fb347ef5e461ffcd2c52dd520d8e216b52f93b0b0d7d6"
+dependencies = [
+ "thiserror 1.0.69",
+]
 
 [[package]]
 name = "psm"
@@ -7882,9 +7902,9 @@ dependencies = [
 
 [[package]]
 name = "pulldown-cmark"
-version = "0.12.0"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4d31cbfcd94884c3a67ec210c83efb06cb43674043458b0ad59f6947f8462c23"
+checksum = "1e8bbe1a966bd2f362681a44f6edce3c2310ac21e4d5067a6e7ec396297a6ea0"
 dependencies = [
  "bitflags 2.9.0",
  "memchr",
@@ -10773,7 +10793,7 @@ version = "0.1.0"
 dependencies = [
  "canister_agent_utils",
  "clap 4.5.4",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "serde",
  "serde_json",
  "tokio",
@@ -10821,7 +10841,7 @@ dependencies = [
  "icrc-ledger-types",
  "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "ledger_utils",
  "msgpack",
  "rand 0.8.5",
@@ -11191,7 +11211,7 @@ dependencies = [
  "icrc_ledger_canister_c2c_client",
  "identity_utils",
  "installed_bots",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "kongswap_canister",
  "kongswap_canister_c2c_client",
  "ledger_utils",
@@ -11319,7 +11339,7 @@ dependencies = [
  "identity_canister",
  "identity_canister_c2c_client",
  "identity_utils",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "jwt",
  "ledger_utils",
  "local_user_index_canister",
@@ -11385,7 +11405,7 @@ dependencies = [
  "ic-cdk 0.18.0",
  "ic-cdk-timers",
  "ic-management-canister-types 0.3.0",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "msgpack",
  "oc_error_codes",
  "rand 0.8.5",
