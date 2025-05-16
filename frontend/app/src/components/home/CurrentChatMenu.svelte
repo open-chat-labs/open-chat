@@ -4,9 +4,13 @@
         chatIdentifiersEqual,
         type ChatSummary,
         type GroupChatSummary,
+        iconSize,
+        lastRightPanelState,
+        mobileWidth,
+        notificationsSupported,
         type OpenChat,
         publish,
-        ui,
+        rightPanelHistory,
         userStore,
     } from "openchat-client";
     import { getContext } from "svelte";
@@ -84,11 +88,11 @@
     );
     let isBot = $derived(userStore.get(userId)?.kind === "bot");
     let isSuspended = $derived(userStore.get(userId)?.suspended ?? false);
-    let groupDetailsSelected = $derived(ui.lastRightPanelState.kind === "group_details");
-    let pinnedSelected = $derived(ui.lastRightPanelState.kind === "show_pinned");
-    let membersSelected = $derived(ui.lastRightPanelState.kind === "show_group_members");
-    let inviteMembersSelected = $derived(ui.lastRightPanelState.kind === "invite_group_users");
-    let desktop = $derived(!ui.mobileWidth);
+    let groupDetailsSelected = $derived($lastRightPanelState.kind === "group_details");
+    let pinnedSelected = $derived($lastRightPanelState.kind === "show_pinned");
+    let membersSelected = $derived($lastRightPanelState.kind === "show_group_members");
+    let inviteMembersSelected = $derived($lastRightPanelState.kind === "invite_group_users");
+    let desktop = $derived(!$mobileWidth);
     let canConvert = $derived(
         selectedChatSummary.kind === "group_chat" &&
             client.canConvertGroupToCommunity(selectedChatSummary.id),
@@ -140,11 +144,11 @@
     }
 
     function showPinned() {
-        ui.rightPanelHistory = [
+        rightPanelHistory.set([
             {
                 kind: "show_pinned",
             },
-        ];
+        ]);
     }
 
     function searchChat() {
@@ -272,11 +276,11 @@
 {#if desktop}
     {#if app.isProposalGroup}
         <HoverIcon onclick={showProposalFilters} title={$_("showFilters")}>
-            <Tune size={ui.iconSize} color={"var(--icon-txt)"} />
+            <Tune size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     {/if}
     <HoverIcon onclick={searchChat} title={$_("searchChat")}>
-        <Magnify size={ui.iconSize} color={"var(--icon-txt)"} />
+        <Magnify size={$iconSize} color={"var(--icon-txt)"} />
     </HoverIcon>
 
     {#if hasPinned}
@@ -286,7 +290,7 @@
                 class:unread={!pinnedSelected && hasUnreadPinned}
                 class:rtl={$rtlStore}>
                 <Pin
-                    size={ui.iconSize}
+                    size={$iconSize}
                     color={pinnedSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
             </div>
         </HoverIcon>
@@ -297,12 +301,12 @@
             onclick={showGroupDetails}
             title={interpolate($_, i18nKey("groupDetails", undefined, selectedChatSummary.level))}>
             <FileDocument
-                size={ui.iconSize}
+                size={$iconSize}
                 color={groupDetailsSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
         </HoverIcon>
         <HoverIcon onclick={showGroupMembers} title={$_("members")}>
             <AccountMultiple
-                size={ui.iconSize}
+                size={$iconSize}
                 color={membersSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
         </HoverIcon>
         {#if selectedChatSummary.public || client.canInviteUsers(selectedChatSummary.id)}
@@ -313,7 +317,7 @@
                     i18nKey("group.inviteUsers", undefined, selectedChatSummary.level, true),
                 )}>
                 <AccountMultiplePlus
-                    size={ui.iconSize}
+                    size={$iconSize}
                     color={inviteMembersSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
             </HoverIcon>
         {/if}
@@ -323,7 +327,7 @@
     <MenuIcon position={"bottom"} align={"end"}>
         {#snippet menuIcon()}
             <HoverIcon title={$_("chatMenu")}>
-                <DotsVertical size={ui.iconSize} color={"var(--icon-txt)"} />
+                <DotsVertical size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         {/snippet}
         {#snippet menuItems()}
@@ -331,7 +335,7 @@
                 {#if canStartOrJoinVideoCall}
                     <MenuItem onclick={startVideoCall}>
                         {#snippet icon()}
-                            <Headphones size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                            <Headphones size={$iconSize} color={"var(--icon-inverted-txt)"} />
                         {/snippet}
                         {#snippet text()}
                             <Translatable resourceKey={videoMenuText} />
@@ -341,7 +345,7 @@
                 {#if !app.favourites.has(selectedChatSummary.id)}
                     <MenuItem onclick={addToFavourites}>
                         {#snippet icon()}
-                            <HeartPlus size={ui.iconSize} color={"var(--menu-warn)"} />
+                            <HeartPlus size={$iconSize} color={"var(--menu-warn)"} />
                         {/snippet}
                         {#snippet text()}
                             <Translatable resourceKey={i18nKey("communities.addToFavourites")} />
@@ -350,7 +354,7 @@
                 {:else}
                     <MenuItem onclick={removeFromFavourites}>
                         {#snippet icon()}
-                            <HeartMinus size={ui.iconSize} color={"var(--menu-warn)"} />
+                            <HeartMinus size={$iconSize} color={"var(--menu-warn)"} />
                         {/snippet}
                         {#snippet text()}
                             <Translatable
@@ -358,11 +362,11 @@
                         {/snippet}
                     </MenuItem>
                 {/if}
-                {#if ui.mobileWidth}
+                {#if $mobileWidth}
                     {#if app.isProposalGroup}
                         <MenuItem onclick={showProposalFilters}>
                             {#snippet icon()}
-                                <Tune size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                                <Tune size={$iconSize} color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}
                                 <Translatable resourceKey={i18nKey("proposal.filter")} />
@@ -371,7 +375,7 @@
                     {/if}
                     <MenuItem onclick={searchChat}>
                         {#snippet icon()}
-                            <Magnify size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                            <Magnify size={$iconSize} color={"var(--icon-inverted-txt)"} />
                         {/snippet}
                         {#snippet text()}
                             <Translatable resourceKey={i18nKey("searchChat")} />
@@ -379,12 +383,12 @@
                     </MenuItem>
                 {/if}
                 {#if selectedChatSummary.kind === "group_chat" || selectedChatSummary.kind === "channel"}
-                    {#if ui.mobileWidth}
+                    {#if $mobileWidth}
                         {#if hasPinned}
                             <MenuItem onclick={showPinned}>
                                 {#snippet icon()}
                                     <Pin
-                                        size={ui.iconSize}
+                                        size={$iconSize}
                                         color={hasUnreadPinned
                                             ? "var(--icon-selected)"
                                             : "var(--icon-inverted-txt)"} />
@@ -396,9 +400,7 @@
                         {/if}
                         <MenuItem onclick={showGroupDetails}>
                             {#snippet icon()}
-                                <FileDocument
-                                    size={ui.iconSize}
-                                    color={"var(--icon-inverted-txt)"} />
+                                <FileDocument size={$iconSize} color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}
                                 <Translatable
@@ -412,7 +414,7 @@
                         <MenuItem onclick={showGroupMembers}>
                             {#snippet icon()}
                                 <AccountMultiple
-                                    size={ui.iconSize}
+                                    size={$iconSize}
                                     color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}
@@ -423,7 +425,7 @@
                             <MenuItem onclick={showInviteGroupUsers}>
                                 {#snippet icon()}
                                     <AccountMultiplePlus
-                                        size={ui.iconSize}
+                                        size={$iconSize}
                                         color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}
@@ -439,11 +441,11 @@
                         {/if}
                     {/if}
 
-                    {#if ui.notificationsSupported}
+                    {#if notificationsSupported}
                         {#if selectedChatSummary.membership.notificationsMuted === true}
                             <MenuItem onclick={() => toggleMuteNotifications(false)}>
                                 {#snippet icon()}
-                                    <Bell size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                                    <Bell size={$iconSize} color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}
                                     <Translatable resourceKey={i18nKey("unmuteNotifications")} />
@@ -452,9 +454,7 @@
                         {:else}
                             <MenuItem onclick={() => toggleMuteNotifications(true)}>
                                 {#snippet icon()}
-                                    <BellOff
-                                        size={ui.iconSize}
-                                        color={"var(--icon-inverted-txt)"} />
+                                    <BellOff size={$iconSize} color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}
                                     <Translatable resourceKey={i18nKey("muteNotifications")} />
@@ -467,7 +467,7 @@
                         <MenuItem onclick={makeProposal}>
                             {#snippet icon()}
                                 <ChatQuestionIcon
-                                    size={ui.iconSize}
+                                    size={$iconSize}
                                     color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}
@@ -480,7 +480,7 @@
                         {#if client.isChatFrozen(selectedChatSummary.id)}
                             <MenuItem warning onclick={unfreezeGroup}>
                                 {#snippet icon()}
-                                    <TickIcon size={ui.iconSize} color={"var(--menu-warn"} />
+                                    <TickIcon size={$iconSize} color={"var(--menu-warn"} />
                                 {/snippet}
                                 {#snippet text()}
                                     <Translatable resourceKey={i18nKey("unfreezeGroup")} />
@@ -489,7 +489,7 @@
                         {:else}
                             <MenuItem warning onclick={freezeGroup}>
                                 {#snippet icon()}
-                                    <CancelIcon size={ui.iconSize} color={"var(--menu-warn"} />
+                                    <CancelIcon size={$iconSize} color={"var(--menu-warn"} />
                                 {/snippet}
                                 {#snippet text()}
                                     <Translatable resourceKey={i18nKey("freezeGroup")} />
@@ -501,7 +501,7 @@
                     {#if client.canLeaveGroup(selectedChatSummary.id)}
                         <MenuItem warning onclick={leaveGroup}>
                             {#snippet icon()}
-                                <LocationExit size={ui.iconSize} color={"var(--menu-warn)"} />
+                                <LocationExit size={$iconSize} color={"var(--menu-warn)"} />
                             {/snippet}
                             {#snippet text()}
                                 <Translatable
@@ -517,7 +517,7 @@
                     {#if canConvert}
                         <MenuItem warning onclick={convertToCommunity}>
                             {#snippet icon()}
-                                <ConvertToCommunity size={ui.iconSize} color={"var(--menu-warn)"} />
+                                <ConvertToCommunity size={$iconSize} color={"var(--menu-warn)"} />
                             {/snippet}
                             {#snippet text()}
                                 <Translatable resourceKey={i18nKey("communities.convert")} />
@@ -527,7 +527,7 @@
                     {#if canImportToCommunity}
                         <MenuItem warning onclick={importToCommunity}>
                             {#snippet icon()}
-                                <Import size={ui.iconSize} color={"var(--menu-warn)"} />
+                                <Import size={$iconSize} color={"var(--menu-warn)"} />
                             {/snippet}
                             {#snippet text()}
                                 <Translatable resourceKey={i18nKey("communities.import")} />
@@ -539,18 +539,18 @@
                     {#if hasPinned}
                         <MenuItem onclick={showPinned}>
                             {#snippet icon()}
-                                <Pin size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                                <Pin size={$iconSize} color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}
                                 <Translatable resourceKey={i18nKey("showPinned")} />
                             {/snippet}
                         </MenuItem>
                     {/if}
-                    {#if ui.notificationsSupported}
+                    {#if notificationsSupported}
                         {#if selectedChatSummary.membership.notificationsMuted === true}
                             <MenuItem onclick={() => toggleMuteNotifications(false)}>
                                 {#snippet icon()}
-                                    <Bell size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                                    <Bell size={$iconSize} color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}
                                     <Translatable resourceKey={i18nKey("unmuteNotifications")} />
@@ -559,9 +559,7 @@
                         {:else}
                             <MenuItem onclick={() => toggleMuteNotifications(true)}>
                                 {#snippet icon()}
-                                    <BellOff
-                                        size={ui.iconSize}
-                                        color={"var(--icon-inverted-txt)"} />
+                                    <BellOff size={$iconSize} color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}
                                     <Translatable resourceKey={i18nKey("muteNotifications")} />
@@ -572,7 +570,7 @@
                     {#if blocked}
                         <MenuItem onclick={unblockUser}>
                             {#snippet icon()}
-                                <CancelIcon size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                                <CancelIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}
                                 <Translatable resourceKey={i18nKey("unblockUser")} />
@@ -581,7 +579,7 @@
                     {:else}
                         <MenuItem onclick={blockUser}>
                             {#snippet icon()}
-                                <CancelIcon size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                                <CancelIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}
                                 <Translatable resourceKey={i18nKey("blockUser")} />
@@ -592,9 +590,7 @@
                         {#if isSuspended}
                             <MenuItem onclick={unsuspendUser}>
                                 {#snippet icon()}
-                                    <TickIcon
-                                        size={ui.iconSize}
-                                        color={"var(--icon-inverted-txt)"} />
+                                    <TickIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}
                                     <Translatable resourceKey={i18nKey("unsuspendUser")} />
@@ -604,7 +600,7 @@
                             <MenuItem onclick={onSuspendUser}>
                                 {#snippet icon()}
                                     <CancelIcon
-                                        size={ui.iconSize}
+                                        size={$iconSize}
                                         color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}
@@ -617,7 +613,7 @@
                 {#if botIdToUninstall !== undefined}
                     <MenuItem onclick={() => removeBot(botIdToUninstall)}>
                         {#snippet icon()}
-                            <DeleteOutline size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                            <DeleteOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
                         {/snippet}
                         {#snippet text()}
                             <Translatable resourceKey={i18nKey("bots.manage.remove")} />

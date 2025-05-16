@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui, type OpenChat } from "openchat-client";
+    import { iconSize, type OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
@@ -94,7 +94,7 @@
     <ModalContent fadeDelay={0} fadeDuration={0}>
         {#snippet header()}
             <div class="header">
-                <AccountCheck size={ui.iconSize} color={"var(--txt)"} />
+                <AccountCheck size={$iconSize} color={"var(--txt)"} />
                 <div class="title">
                     <Translatable resourceKey={i18nKey("access.uniquePerson")} />
                 </div>

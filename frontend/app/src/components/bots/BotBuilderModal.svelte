@@ -1,5 +1,11 @@
 <script lang="ts">
-    import { app, emptyBotInstance, OpenChat, ui, type ExternalBot } from "openchat-client";
+    import {
+        app,
+        emptyBotInstance,
+        mobileWidth,
+        OpenChat,
+        type ExternalBot,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
@@ -155,7 +161,7 @@
     {#snippet footer()}
         <div class="footer">
             <ButtonGroup>
-                <Button secondary small={!ui.mobileWidth} tiny={ui.mobileWidth} onClick={onClose}>
+                <Button secondary small={!$mobileWidth} tiny={$mobileWidth} onClick={onClose}>
                     <Translatable resourceKey={i18nKey("cancel")} />
                 </Button>
                 {#if mode !== "remove"}
@@ -163,8 +169,8 @@
                         onClick={mode === "update" ? update : register}
                         disabled={!valid || busy}
                         loading={busy}
-                        small={!ui.mobileWidth}
-                        tiny={ui.mobileWidth}>
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}>
                         <Translatable
                             resourceKey={mode === "update"
                                 ? i18nKey("bots.update_bot.action")

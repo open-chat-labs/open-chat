@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui } from "openchat-client";
+    import { mobileWidth } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
     import ModalContent from "../ModalContent.svelte";
     import Pincode from "../pincode/Pincode.svelte";
@@ -19,7 +19,7 @@
     }
 </script>
 
-<ModalContent closeIcon hideFooter fitToContent={!ui.mobileWidth} fixedWidth={false} {onClose}>
+<ModalContent closeIcon hideFooter fitToContent={!$mobileWidth} fixedWidth={false} {onClose}>
     {#snippet header()}
         <Translatable resourceKey={i18nKey("pinNumber.enterPin")} />
     {/snippet}

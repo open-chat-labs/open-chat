@@ -2,7 +2,7 @@
     import {
         app,
         AvatarSize,
-        ui,
+        iconSize,
         userStore,
         type ChatIdentifier,
         type OpenChat,
@@ -116,7 +116,7 @@
                     <div class="btns">
                         <Tooltip position={"top"} align={"middle"}>
                             <div role="button" onclick={cancel} class="btn ignore">
-                                <PhoneHangup size={ui.iconSize} color={"var(--txt)"} />
+                                <PhoneHangup size={$iconSize} color={"var(--txt)"} />
                             </div>
                             {#snippet popupTemplate()}
                                 <Translatable resourceKey={i18nKey("videoCall.ignore")} />
@@ -124,7 +124,7 @@
                         </Tooltip>
                         <Tooltip position={"top"} align={"middle"}>
                             <div role="button" onclick={join} class="btn join">
-                                <Phone size={ui.iconSize} color={"var(--txt)"} />
+                                <Phone size={$iconSize} color={"var(--txt)"} />
                             </div>
                             {#snippet popupTemplate()}
                                 <Translatable resourceKey={i18nKey("videoCall.join")} />

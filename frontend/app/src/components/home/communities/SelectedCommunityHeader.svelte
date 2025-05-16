@@ -1,5 +1,10 @@
 <script lang="ts">
-    import { AvatarSize, ui, type CommunitySummary, type OpenChat } from "openchat-client";
+    import {
+        AvatarSize,
+        rightPanelHistory,
+        type CommunitySummary,
+        type OpenChat,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { rtlStore } from "../../../stores/rtl";
@@ -20,7 +25,7 @@
     let { community, canMarkAllRead }: Props = $props();
 
     function showCommunityMembers() {
-        ui.rightPanelHistory = [{ kind: "show_community_members" }];
+        rightPanelHistory.set([{ kind: "show_community_members" }]);
     }
 </script>
 

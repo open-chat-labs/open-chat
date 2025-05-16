@@ -7,15 +7,18 @@
         type ChatType,
         type Dimensions,
         type EnhancedReplyContext,
+        iconSize,
         localUpdates,
         type Message,
         type MessageContent,
         type MessageReminderCreatedContent,
+        mobileWidth,
         OpenChat,
         pageReplace,
         pathState,
         publish,
         routeForMessage,
+        screenWidth,
         ScreenWidth,
         type SenderContext,
         ui,
@@ -339,7 +342,7 @@
                 height: content.height,
             };
         } else if (content.kind === "giphy_content") {
-            return ui.mobileWidth
+            return $mobileWidth
                 ? { width: content.mobile.width, height: content.mobile.height }
                 : { width: content.desktop.width, height: content.desktop.height };
         } else if (
@@ -427,7 +430,7 @@
     function remindMe() {
         showRemindMe = true;
     }
-    let maxWidthFraction = $derived(ui.screenWidth === ScreenWidth.ExtraLarge ? 0.7 : 0.8);
+    let maxWidthFraction = $derived($screenWidth === ScreenWidth.ExtraLarge ? 0.7 : 0.8);
     let inert = $derived(
         msg.content.kind === "deleted_content" ||
             msg.content.kind === "blocked_content" ||
@@ -442,7 +445,7 @@
     );
     let mediaDimensions = $derived(extractDimensions(msg.content));
     let fill = $derived(client.fillMessage(msg));
-    let showAvatar = $derived(ui.screenWidth !== ScreenWidth.ExtraExtraSmall);
+    let showAvatar = $derived($screenWidth !== ScreenWidth.ExtraExtraSmall);
     let translated = $derived(app.translations.has(msg.messageId));
     let threadSummary = $derived(msg.thread);
     let msgUrl = $derived(
@@ -504,7 +507,7 @@
                         class="close-emoji"
                         onclick={() => (showEmojiPicker = false)}>
                         <HoverIcon>
-                            <Close size={ui.iconSize} color={"var(--icon-txt)"} />
+                            <Close size={$iconSize} color={"var(--icon-txt)"} />
                         </HoverIcon>
                     </span>
                 </div>
@@ -563,7 +566,7 @@
                                         url={client.userAvatarUrl(sender)}
                                         userId={msg.sender}
                                         bot={sender?.kind === "bot"}
-                                        size={ui.mobileWidth
+                                        size={$mobileWidth
                                             ? AvatarSize.Small
                                             : AvatarSize.Default} />
                                 </div>
@@ -642,7 +645,7 @@
                                 <div class="forwarded">
                                     <div>
                                         <ForwardIcon
-                                            size={ui.iconSize}
+                                            size={$iconSize}
                                             color={me
                                                 ? "var(--currentChat-msg-me-muted)"
                                                 : "var(--currentChat-msg-muted)"} />
@@ -785,7 +788,7 @@
                         <div class="actions" class:touch={isTouchOnlyDevice}>
                             <div class="reaction" onclick={() => (showEmojiPicker = true)}>
                                 <HoverIcon>
-                                    <EmoticonOutline size={ui.iconSize} color={"var(--icon-txt)"} />
+                                    <EmoticonOutline size={$iconSize} color={"var(--icon-txt)"} />
                                 </HoverIcon>
                             </div>
                         </div>

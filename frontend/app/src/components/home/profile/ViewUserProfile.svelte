@@ -10,7 +10,8 @@
         type ResourceKey,
         type UserSummary,
         app,
-        ui,
+        mobileWidth,
+        rightPanelHistory,
         userStore,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
@@ -190,7 +191,7 @@
     }
 
     function showUserProfile() {
-        ui.rightPanelHistory = [{ kind: "user_profile" }];
+        rightPanelHistory.set([{ kind: "user_profile" }]);
         onClose();
     }
 
@@ -232,7 +233,7 @@
     let diamondStatus = $derived(user?.diamondStatus);
     let me = $derived(userId === app.currentUserId);
     let isSuspended = $derived(user?.suspended ?? false);
-    let modal = $derived(ui.mobileWidth);
+    let modal = $derived($mobileWidth);
     let [status, online] = $derived(
         lastOnline !== undefined && lastOnline !== 0
             ? client.formatLastOnlineDate($_, Date.now(), lastOnline)

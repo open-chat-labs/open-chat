@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui } from "openchat-client";
+    import { iconSize, mobileWidth } from "openchat-client";
     import { onMount } from "svelte";
 
     interface Props {
@@ -35,17 +35,13 @@
     }
 
     onMount(() => {
-        if (ui.mobileWidth) return;
+        if ($mobileWidth) return;
         const t = startBlinking();
         return () => window.clearInterval(t);
     });
 </script>
 
-<svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    width={ui.iconSize}
-    height={ui.iconSize}>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={$iconSize} height={$iconSize}>
     {#if open}
         <ellipse class="left open" cx="9" cy="9.3" rx="1.4" ry="2" fill={color} />
         <ellipse class="right open" cx="15" cy="9.3" rx="1.4" ry="2" fill={color} />

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui } from "openchat-client";
+    import { iconSize } from "openchat-client";
     import type { UserSummary, VideoCallPresence, VideoCallType } from "openchat-shared";
     import { _ } from "svelte-i18n";
     import AccountCancel from "svelte-material-icons/AccountCancel.svelte";
@@ -30,7 +30,7 @@
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div onclick={demote}>
             <HoverIcon title={$_("videoCall.demoteToHidden")}>
-                <AccountCancel size={ui.iconSize} color={"var(--icon-txt)"} />
+                <AccountCancel size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </div>
     {/if}

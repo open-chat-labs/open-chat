@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui, type Challenge, type OpenChat, type ResourceKey } from "openchat-client";
+    import { mobileWidth, type Challenge, type OpenChat, type ResourceKey } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import CloseIcon from "svelte-material-icons/Close.svelte";
@@ -73,7 +73,7 @@
 </script>
 
 <div class="challenge">
-    <ModalContent fitToContent={!ui.mobileWidth} fixedWidth={ui.mobileWidth}>
+    <ModalContent fitToContent={!$mobileWidth} fixedWidth={$mobileWidth}>
         {#snippet header()}
             <div class="header login">
                 <div class="title">

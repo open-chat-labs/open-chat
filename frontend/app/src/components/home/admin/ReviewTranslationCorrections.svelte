@@ -5,7 +5,7 @@
         RejectReason,
         TranslationCorrection,
     } from "openchat-client";
-    import { ui, userStore } from "openchat-client";
+    import { iconSize, userStore } from "openchat-client";
     import { getContext, onDestroy, onMount } from "svelte";
     import { _, locale } from "svelte-i18n";
     import Check from "svelte-material-icons/Check.svelte";
@@ -213,7 +213,7 @@
                                     <div class="busy"></div>
                                 {:else}
                                     <HoverIcon>
-                                        <Hamburger size={ui.iconSize} color={"var(--txt)"} />
+                                        <Hamburger size={$iconSize} color={"var(--txt)"} />
                                     </HoverIcon>
                                 {/if}
                             {/snippet}
@@ -222,7 +222,7 @@
                                     <MenuItem onclick={() => previewCorrection(correction)}>
                                         {#snippet icon()}
                                             <EyeOutline
-                                                size={ui.iconSize}
+                                                size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"} />
                                         {/snippet}
                                         {#snippet text()}
@@ -233,7 +233,7 @@
                                         <MenuItem onclick={() => (verifying = undefined)}>
                                             {#snippet icon()}
                                                 <Translate
-                                                    size={ui.iconSize}
+                                                    size={$iconSize}
                                                     color={"var(--icon-inverted-txt)"} />
                                             {/snippet}
                                             {#snippet text()}
@@ -244,7 +244,7 @@
                                         <MenuItem onclick={() => verifyCorrection(correction)}>
                                             {#snippet icon()}
                                                 <Translate
-                                                    size={ui.iconSize}
+                                                    size={$iconSize}
                                                     color={"var(--icon-inverted-txt)"} />
                                             {/snippet}
                                             {#snippet text()}
@@ -255,7 +255,7 @@
                                     <MenuItem onclick={() => approveCorrection(correction)}>
                                         {#snippet icon()}
                                             <Check
-                                                size={ui.iconSize}
+                                                size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"} />
                                         {/snippet}
                                         {#snippet text()}
@@ -267,7 +267,7 @@
                                             rejectCorrection(correction, "incorrect_meaning")}>
                                         {#snippet icon()}
                                             <Close
-                                                size={ui.iconSize}
+                                                size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"} />
                                         {/snippet}
                                         {#snippet text()}
@@ -278,7 +278,7 @@
                                         onclick={() => rejectCorrection(correction, "too_long")}>
                                         {#snippet icon()}
                                             <Close
-                                                size={ui.iconSize}
+                                                size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"} />
                                         {/snippet}
                                         {#snippet text()}

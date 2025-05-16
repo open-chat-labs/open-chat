@@ -3,7 +3,7 @@
     import {
         cryptoBalance as cryptoBalanceStore,
         enhancedCryptoLookup as cryptoLookup,
-        ui,
+        mobileWidth,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -95,24 +95,21 @@
         {#snippet footer()}
             <span>
                 <ButtonGroup>
-                    <Button
-                        small={!ui.mobileWidth}
-                        tiny={ui.mobileWidth}
-                        secondary
-                        onClick={onClose}><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary onClick={onClose}
+                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     {#if insufficient}
                         <Button
-                            small={!ui.mobileWidth}
+                            small={!$mobileWidth}
                             disabled={refreshing}
                             loading={refreshing}
-                            tiny={ui.mobileWidth}
+                            tiny={$mobileWidth}
                             onClick={reset}
                             ><Translatable resourceKey={i18nKey("refresh")} /></Button>
                     {:else}
                         <Button
-                            small={!ui.mobileWidth}
+                            small={!$mobileWidth}
                             disabled={!valid}
-                            tiny={ui.mobileWidth}
+                            tiny={$mobileWidth}
                             onClick={onAccept}
                             ><Translatable resourceKey={i18nKey("yes")} /></Button>
                     {/if}

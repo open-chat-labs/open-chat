@@ -4,12 +4,13 @@
         AvatarSize,
         type GroupChatIdentifier,
         type GroupChatSummary,
+        iconSize,
         isLocked,
+        mobileWidth,
         type MultiUserChat,
         type OpenChat,
         publish,
         routeForChatIdentifier,
-        ui,
     } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
@@ -63,7 +64,7 @@
             <div class="avatar">
                 <Avatar
                     url={client.groupAvatarUrl(group, app.selectedCommunitySummary)}
-                    size={ui.mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
+                    size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
             </div>
             <div class="group-title-line">
                 <WithVerifiedBadge verified={group.verified} size={"small"}>
@@ -80,7 +81,7 @@
             </div>
             <div title={$_("notInterested")} class="close" onclick={() => dismiss(group)}>
                 <HoverIcon>
-                    <Close size={ui.iconSize} color={"var(--icon-txt)"} />
+                    <Close size={$iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
             </div>
         </div>

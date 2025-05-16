@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui, type AccessGateConfig, type Level } from "openchat-client";
+    import { iconSize, type AccessGateConfig, type Level } from "openchat-client";
     import { _ } from "svelte-i18n";
     import LockOutline from "svelte-material-icons/LockOutline.svelte";
     import { fade } from "svelte/transition";
@@ -20,7 +20,7 @@
 
 <div in:fade={{ duration: 250 }} class="wrapper">
     <div class="icon">
-        <LockOutline size={ui.iconSize} color={"var(--icon-txt)"} />
+        <LockOutline size={$iconSize} color={"var(--icon-txt)"} />
     </div>
     <div class="section">
         <div class="section-title">{$_("access.chooseGate")}</div>

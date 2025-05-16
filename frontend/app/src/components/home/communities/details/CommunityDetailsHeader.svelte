@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { publish, ui, type CommunitySummary, type Level } from "openchat-client";
+    import { iconSize, publish, ui, type CommunitySummary, type Level } from "openchat-client";
     import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
@@ -42,14 +42,14 @@
     <MenuIcon position="bottom" align="start">
         {#snippet menuIcon()}
             <HoverIcon>
-                <Hamburger size={ui.iconSize} color={"var(--icon-txt)"} />
+                <Hamburger size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         {/snippet}
         {#snippet menuItems()}
             <Menu>
                 <MenuItem onclick={showMembers}>
                     {#snippet icon()}
-                        <AccountMultiple size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                        <AccountMultiple size={$iconSize} color={"var(--icon-inverted-txt)"} />
                     {/snippet}
                     {#snippet text()}
                         <div>
@@ -59,9 +59,7 @@
                 </MenuItem>
                 <MenuItem onclick={invite}>
                     {#snippet icon()}
-                        <AccountMultiplePlus
-                            size={ui.iconSize}
-                            color={"var(--icon-inverted-txt)"} />
+                        <AccountMultiplePlus size={$iconSize} color={"var(--icon-inverted-txt)"} />
                     {/snippet}
                     {#snippet text()}
                         <div>
@@ -72,7 +70,7 @@
                 {#if canEdit}
                     <MenuItem onclick={editCommunity}>
                         {#snippet icon()}
-                            <PencilOutline size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                            <PencilOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
                         {/snippet}
                         {#snippet text()}
                             <div>
@@ -87,7 +85,7 @@
     <h4><Translatable resourceKey={i18nKey("groupDetails", undefined, level)} /></h4>
     <span title={$_("close")} class="close" onclick={close}>
         <HoverIcon>
-            <Close size={ui.iconSize} color={"var(--icon-txt)"} />
+            <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
 </SectionHeader>

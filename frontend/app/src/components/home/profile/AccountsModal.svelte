@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { app, ui } from "openchat-client";
+    import { app, iconSize, mobileWidth } from "openchat-client";
     import { _ } from "svelte-i18n";
     import EyeOff from "svelte-material-icons/EyeOffOutline.svelte";
     import Eye from "svelte-material-icons/EyeOutline.svelte";
@@ -71,7 +71,7 @@
                                     <MenuItem onclick={() => (pinAction = { kind: "set" })}>
                                         {#snippet icon()}
                                             <ShieldPlusIcon
-                                                size={ui.iconSize}
+                                                size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"} />
                                         {/snippet}
                                         {#snippet text()}
@@ -85,7 +85,7 @@
                                     <MenuItem onclick={() => (pinAction = { kind: "change" })}>
                                         {#snippet icon()}
                                             <ShieldRefreshIcon
-                                                size={ui.iconSize}
+                                                size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"} />
                                         {/snippet}
                                         {#snippet text()}
@@ -98,7 +98,7 @@
                                     <MenuItem onclick={() => (pinAction = { kind: "clear" })}>
                                         {#snippet icon()}
                                             <ShieldRemoveIcon
-                                                size={ui.iconSize}
+                                                size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"} />
                                         {/snippet}
                                         {#snippet text()}
@@ -112,7 +112,7 @@
                                 <MenuItem onclick={() => (managing = true)}>
                                     {#snippet icon()}
                                         <TuneVertical
-                                            size={ui.iconSize}
+                                            size={$iconSize}
                                             color={"var(--icon-inverted-txt)"} />
                                     {/snippet}
                                     {#snippet text()}
@@ -140,12 +140,12 @@
             <Button
                 secondary
                 onClick={() => (managing = true)}
-                small={!ui.mobileWidth}
-                tiny={ui.mobileWidth}>
+                small={!$mobileWidth}
+                tiny={$mobileWidth}>
                 <Translatable resourceKey={i18nKey("cryptoAccount.manage")} />
             </Button>
 
-            <Button onClick={onClose} small={!ui.mobileWidth} tiny={ui.mobileWidth}>
+            <Button onClick={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
                 <Translatable resourceKey={i18nKey("close")} />
             </Button>
         </ButtonGroup>

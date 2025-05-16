@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { ChatIdentifier, OpenChat, ThreadSummary } from "openchat-client";
-    import { app, AvatarSize, ui, userStore } from "openchat-client";
+    import { app, AvatarSize, mobileWidth, userStore } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
@@ -54,7 +54,7 @@
                             threadSummary.numberOfReplies === 1
                                 ? $_("thread.reply")
                                 : $_("thread.replies"),
-                        message: ui.mobileWidth
+                        message: $mobileWidth
                             ? ""
                             : $_("thread.lastMessage", {
                                   values: {

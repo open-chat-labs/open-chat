@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui } from "openchat-client";
+    import { iconSize } from "openchat-client";
     import { type Snippet } from "svelte";
     import { locale } from "svelte-i18n";
     import PrevIcon from "svelte-material-icons/ChevronLeft.svelte";
@@ -68,7 +68,7 @@
 <div class={"calendar-wrapper"}>
     <div class="calendar-header">
         <HoverIcon onclick={previousMonth}>
-            <PrevIcon size={ui.iconSize} color={"var(--icon-txt"} />
+            <PrevIcon size={$iconSize} color={"var(--icon-txt"} />
         </HoverIcon>
         {#if monthTitleTemplate}
             {@render monthTitleTemplate()}
@@ -76,7 +76,7 @@
             <h3>{calendarState.monthTitle}</h3>
         {/if}
         <HoverIcon onclick={nextMonth}>
-            <NextIcon size={ui.iconSize} color={"var(--icon-txt"} />
+            <NextIcon size={$iconSize} color={"var(--icon-txt"} />
         </HoverIcon>
     </div>
     <div class="week-days-row">

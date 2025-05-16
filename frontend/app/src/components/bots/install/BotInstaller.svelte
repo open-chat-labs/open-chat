@@ -6,11 +6,11 @@
         type ExternalBotLike,
         type ExternalBotPermissions,
         flattenCommandPermissions,
-        type ReadonlyMap,
         type Level,
+        mobileWidth,
         OpenChat,
+        type ReadonlyMap,
         type ResourceKey,
-        ui,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -206,8 +206,8 @@
 )}
     <Button
         {secondary}
-        small={!ui.mobileWidth}
-        tiny={ui.mobileWidth}
+        small={!$mobileWidth}
+        tiny={$mobileWidth}
         {disabled}
         {loading}
         onClick={click}>

@@ -3,7 +3,13 @@
 </script>
 
 <script lang="ts">
-    import { app, pathState, ui, type CreatedUser, type OpenChat } from "openchat-client";
+    import {
+        runningInIframe,
+        app,
+        pathState,
+        type CreatedUser,
+        type OpenChat,
+    } from "openchat-client";
     import { getContext, type Component } from "svelte";
     import { showMenuForLandingRoute } from "../../utils/urls";
     import Loading from "../Loading.svelte";
@@ -31,7 +37,7 @@
     </Overlay>
 {/if}
 
-{#if ui.runningInIframe}
+{#if $runningInIframe}
     <HostedLandingPage />
 {:else}
     {#if showMenu}

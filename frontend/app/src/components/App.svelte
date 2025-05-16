@@ -29,13 +29,13 @@
         type VideoCallType,
         app,
         botState,
+        fontSize,
         inititaliseLogger,
         pageReplace,
         pathState,
         routeForChatIdentifier,
         routeForScope,
         subscribe,
-        ui,
     } from "openchat-client";
     import page from "page";
     import { onMount, setContext } from "svelte";
@@ -136,8 +136,8 @@
     });
 
     trackedEffect("font-size", () => {
-        console.log("Setting font size to: ", ui.fontSize);
-        document.documentElement.style.setProperty("--font-size", `${ui.fontSize}px`);
+        console.log("Setting font size to: ", $fontSize);
+        document.documentElement.style.setProperty("--font-size", `${$fontSize}px`);
     });
 
     trackedEffect("calculate-height", calculateHeight);
@@ -515,7 +515,11 @@
         calculateHeight();
     }
 
-    function startVideoCall(payload: { chatId: ChatIdentifier; callType: VideoCallType; join: boolean }) {
+    function startVideoCall(payload: {
+        chatId: ChatIdentifier;
+        callType: VideoCallType;
+        join: boolean;
+    }) {
         videoCallElement?.startOrJoinVideoCall(payload.chatId, payload.callType, payload.join);
     }
 

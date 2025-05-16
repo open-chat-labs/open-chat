@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { i18nKey, ui, type ResourceKey } from "openchat-client";
+    import { i18nKey, mobileWidth, type ResourceKey } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { interpolate } from "../i18n/i18n";
     import AlertBox from "./AlertBox.svelte";
@@ -36,7 +36,7 @@
         {#snippet footer()}
             <div class="footer">
                 <ButtonGroup>
-                    <Button onClick={onClose} small={!ui.mobileWidth} tiny={ui.mobileWidth}>
+                    <Button onClick={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
                         <Translatable resourceKey={i18nKey("close")} />
                     </Button>
                 </ButtonGroup>

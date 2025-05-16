@@ -3,8 +3,8 @@
     import {
         botActionScopeFromExecutionContext,
         i18nKey,
+        iconSize,
         OpenChat,
-        ui,
         type ChatIdentifier,
         type CommunityIdentifier,
         type ExternalBotLike,
@@ -60,7 +60,7 @@
         <Tooltip position={"top"} align={"middle"}>
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <div role="button" tabindex="0" class="icon" onclick={sendApiKeyToBot}>
-                <Send size={ui.iconSize} color={"var(--icon-txt)"} />
+                <Send size={$iconSize} color={"var(--icon-txt)"} />
             </div>
             {#snippet popupTemplate()}
                 <Translatable resourceKey={i18nKey("bots.add.sendToBot")} />
@@ -70,7 +70,7 @@
     <Tooltip position={"top"} align={"middle"}>
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <div role="button" tabindex="0" class="icon" onclick={onCopy}>
-            <CopyIcon size={ui.iconSize} color={"var(--icon-txt)"} />
+            <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
         </div>
         {#snippet popupTemplate()}
             <Translatable resourceKey={i18nKey("copy")} />

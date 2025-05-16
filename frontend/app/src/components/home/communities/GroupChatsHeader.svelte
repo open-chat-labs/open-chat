@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui } from "openchat-client";
+    import { iconSize } from "openchat-client";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import SectionHeader from "../../SectionHeader.svelte";
@@ -16,7 +16,7 @@
 <SectionHeader slim border={false}>
     <div class="group-chats">
         <div class="icon">
-            <ForumOutline size={ui.iconSize} color={"var(--icon-txt)"} />
+            <ForumOutline size={$iconSize} color={"var(--icon-txt)"} />
         </div>
         <div class="details">
             <h4 class="name">

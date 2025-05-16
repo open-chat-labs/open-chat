@@ -9,6 +9,8 @@
         app,
         AvatarSize,
         type ChannelMatch,
+        iconSize,
+        mobileWidth,
         type OpenChat,
         routeForChatIdentifier,
         ui,
@@ -36,7 +38,7 @@
     function selectChannel(match: ChannelMatch) {
         if (app.selectedCommunitySummary === undefined) return;
         if (!match.public) return;
-        if (ui.mobileWidth) {
+        if ($mobileWidth) {
             ui.popRightPanelHistory();
         }
         page(routeForChatIdentifier(app.chatListScope.kind, match.id));
@@ -93,14 +95,14 @@
             <MenuIcon position={"bottom"} align={"end"}>
                 {#snippet menuIcon()}
                     <HoverIcon>
-                        <DotsVertical size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                        <DotsVertical size={$iconSize} color={"var(--icon-inverted-txt)"} />
                     </HoverIcon>
                 {/snippet}
                 {#snippet menuItems()}
                     <Menu>
                         <MenuItem warning onclick={onDeleteChannel}>
                             {#snippet icon()}
-                                <DeleteOutline size={ui.iconSize} color={"var(--menu-warn)"} />
+                                <DeleteOutline size={$iconSize} color={"var(--menu-warn)"} />
                             {/snippet}
                             {#snippet text()}
                                 <Translatable

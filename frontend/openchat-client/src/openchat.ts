@@ -285,7 +285,13 @@ import { botState } from "./state/bots.svelte";
 import { type CommunityMergedState } from "./state/community_details";
 import { localUpdates } from "./state/global";
 import { pathState, type RouteParams } from "./state/path.svelte";
-import { ui } from "./state/ui.svelte";
+import {
+    eventListScrollTop,
+    mobileWidth,
+    notificationsSupported,
+    rightPanelHistory,
+    ui,
+} from "./state/ui.svelte";
 import type { UndoLocalUpdate } from "./state/undo";
 import { messagesRead, startMessagesReadTracker } from "./state/unread/markRead.svelte";
 import { userStore } from "./state/users/users.svelte";
@@ -2689,7 +2695,7 @@ export class OpenChat {
 
             // if it's a known chat let's select it
             this.closeNotificationsForChat(chat.id);
-            ui.eventListScrollTop = undefined;
+            eventListScrollTop.set(undefined);
             this.#setSelectedChat(chat.id, messageIndex);
             ui.filterRightPanelHistoryByChatType(chat);
 
@@ -2808,13 +2814,13 @@ export class OpenChat {
                 this.loadPreviousMessages(chatId, threadRootEvent, true);
             }
         }
-        ui.rightPanelHistory = [
+        rightPanelHistory.set([
             {
                 kind: "message_thread_panel",
                 threadRootMessageIndex: threadRootEvent.event.messageIndex,
                 threadRootMessageId: threadRootEvent.event.messageId,
             },
-        ];
+        ]);
     }
 
     async loadThreadMessages(
@@ -7570,7 +7576,7 @@ export class OpenChat {
     }
 
     selectFirstChat(): boolean {
-        if (!ui.mobileWidth) {
+        if (!get(mobileWidth)) {
             const first = app.chatSummariesList.find((c) => !c.membership.archived);
             if (first !== undefined) {
                 pageRedirect(routeForChatIdentifier(app.chatListScope.kind, first.id));
@@ -9007,7 +9013,7 @@ export class OpenChat {
     }
 
     async initialiseNotifications(): Promise<boolean> {
-        if (!ui.notificationsSupported) {
+        if (!notificationsSupported) {
             console.debug("PUSH: notifications not supported");
             return false;
         }
@@ -9056,7 +9062,7 @@ export class OpenChat {
 
     async #registerServiceWorker(): Promise<ServiceWorkerRegistration | undefined> {
         // Does the browser have all the support needed for web push
-        if (!ui.notificationsSupported) {
+        if (!notificationsSupported) {
             return undefined;
         }
 
@@ -9114,7 +9120,7 @@ export class OpenChat {
     }
 
     async #getRegistration(): Promise<ServiceWorkerRegistration | undefined> {
-        if (!ui.notificationsSupported) return undefined;
+        if (!notificationsSupported) return undefined;
         return await navigator.serviceWorker.getRegistration(
             import.meta.env.OC_SERVICE_WORKER_PATH,
         );

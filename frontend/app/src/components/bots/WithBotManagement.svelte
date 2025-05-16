@@ -2,9 +2,9 @@
     import { toastStore } from "@src/stores/toast";
     import {
         app,
+        mobileWidth,
         pageRedirect,
         routeForScope,
-        ui,
         type ChatSummary,
         type CommunitySummary,
         type ExternalBotPermissions,
@@ -97,7 +97,7 @@
         const botId = bot.id;
 
         if (commandContextId.kind === "direct_chat") {
-            if (ui.mobileWidth) {
+            if ($mobileWidth) {
                 page(routeForScope(app.chatListScope));
             } else {
                 const first = app.chatSummariesList.find(

@@ -1,6 +1,15 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
-    import { app, publish, ScreenWidth, ui } from "openchat-client";
+    import {
+        app,
+        iconSize,
+        ipadWidth,
+        mobileWidth,
+        publish,
+        ScreenWidth,
+        screenWidth,
+        ui,
+    } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
@@ -109,7 +118,7 @@
             communitySearchState.scrollPos = scrollableElement.scrollTop;
         }
     }
-    let pageSize = $derived(calculatePageSize(ui.screenWidth));
+    let pageSize = $derived(calculatePageSize($screenWidth));
     let more = $derived(communitySearchState.total > communitySearchState.results.length);
     let loading = $derived(searching && communitySearchState.results.length === 0);
 
@@ -128,13 +137,13 @@
     <div class="header">
         <div class="title-row">
             <div class="title">
-                {#if ui.mobileWidth}
+                {#if $mobileWidth}
                     <h4><Translatable resourceKey={i18nKey("communities.exploreMobile")} /></h4>
                 {:else}
                     <h4><Translatable resourceKey={i18nKey("communities.explore")} /></h4>
                 {/if}
             </div>
-            {#if !ui.ipadWidth}
+            {#if !$ipadWidth}
                 <div class="search">
                     <Search
                         fill
@@ -149,19 +158,19 @@
                 </div>
             {/if}
             <div class="buttons">
-                {#if ui.ipadWidth}
+                {#if $ipadWidth}
                     <HoverIcon onclick={createCommunity}>
-                        <Plus size={ui.iconSize} color={"var(--icon-txt)"} />
+                        <Plus size={$iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
                 {/if}
 
                 <HoverIcon title={$_("showFilters")} onclick={showFilters}>
-                    <Tune size={ui.iconSize} color={"var(--icon-txt)"} />
+                    <Tune size={$iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
             </div>
         </div>
         <div class="subtitle-row">
-            {#if ui.ipadWidth}
+            {#if $ipadWidth}
                 <div class="search">
                     <Search
                         searching={false}
@@ -232,7 +241,7 @@
     </div>
     <div class:show={showFab} class="fab">
         <Fab on:click={scrollToTop}>
-            <ArrowUp size={ui.iconSize} color={"#fff"} />
+            <ArrowUp size={$iconSize} color={"#fff"} />
         </Fab>
     </div>
 </div>

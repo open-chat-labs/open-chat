@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
-    import { app, publish, ui } from "openchat-client";
+    import { app, iconSize, publish } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
     import AccountSettings from "svelte-material-icons/AccountSettingsOutline.svelte";
@@ -31,7 +31,7 @@
     {#if !app.anonUser}
         <MenuItem onclick={() => publish("wallet")}>
             {#snippet icon()}
-                <Wallet size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                <Wallet size={$iconSize} color={"var(--icon-inverted-txt)"} />
             {/snippet}
             {#snippet text()}
                 <Translatable resourceKey={i18nKey("wallet")} />
@@ -39,7 +39,7 @@
         </MenuItem>
         <MenuItem onclick={() => publish("profile")}>
             {#snippet icon()}
-                <AccountSettings size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                <AccountSettings size={$iconSize} color={"var(--icon-inverted-txt)"} />
             {/snippet}
             {#snippet text()}
                 <Translatable resourceKey={i18nKey("profile.title")} />
@@ -60,7 +60,7 @@
     {/if}
     <MenuItem onclick={() => page("/home")}>
         {#snippet icon()}
-            <Home size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+            <Home size={$iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
         {#snippet text()}
             Home page
@@ -68,7 +68,7 @@
     </MenuItem>
     <MenuItem onclick={() => page("/features")}>
         {#snippet icon()}
-            <InformationOutline size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+            <InformationOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
         {#snippet text()}
             Features
@@ -76,7 +76,7 @@
     </MenuItem>
     <MenuItem onclick={() => page("/roadmap")}>
         {#snippet icon()}
-            <Road size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+            <Road size={$iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
         {#snippet text()}
             Roadmap
@@ -84,7 +84,7 @@
     </MenuItem>
     <MenuItem onclick={() => page("/whitepaper")}>
         {#snippet icon()}
-            <Note size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+            <Note size={$iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
         {#snippet text()}
             Whitepaper
@@ -92,7 +92,7 @@
     </MenuItem>
     <MenuItem onclick={() => page("/architecture")}>
         {#snippet icon()}
-            <Graph size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+            <Graph size={$iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
         {#snippet text()}
             Architecture
@@ -100,7 +100,7 @@
     </MenuItem>
     <MenuItem onclick={() => page("/blog")}>
         {#snippet icon()}
-            <Blog size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+            <Blog size={$iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
         {#snippet text()}
             Blog
@@ -108,7 +108,7 @@
     </MenuItem>
     <MenuItem onclick={() => page("/faq")}>
         {#snippet icon()}
-            <Help size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+            <Help size={$iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
         {#snippet text()}
             FAQs
@@ -116,7 +116,7 @@
     </MenuItem>
     <MenuItem onclick={() => page("/guidelines")}>
         {#snippet icon()}
-            <Security size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+            <Security size={$iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
         {#snippet text()}
             Guidelines
@@ -124,7 +124,7 @@
     </MenuItem>
     <MenuItem href="https://tokenterminal.com/terminal/projects/openchat">
         {#snippet icon()}
-            <ChartLine size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+            <ChartLine size={$iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
         {#snippet text()}
             Metrics
@@ -134,7 +134,7 @@
         <MenuItem separator />
         <MenuItem onclick={() => page("/admin")}>
             {#snippet icon()}
-                <CogOutline size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                <CogOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
             {/snippet}
             {#snippet text()}
                 {"Admin"}
@@ -145,7 +145,7 @@
     {#if !app.anonUser}
         <MenuItem onclick={() => client.logout()}>
             {#snippet icon()}
-                <Logout size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                <Logout size={$iconSize} color={"var(--icon-inverted-txt)"} />
             {/snippet}
             {#snippet text()}
                 <Translatable resourceKey={i18nKey("logout")} />
@@ -154,7 +154,7 @@
     {:else}
         <MenuItem onclick={() => client.updateIdentityState({ kind: "logging_in" })}>
             {#snippet icon()}
-                <Login size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                <Login size={$iconSize} color={"var(--icon-inverted-txt)"} />
             {/snippet}
             {#snippet text()}
                 <Translatable resourceKey={i18nKey("login")} />

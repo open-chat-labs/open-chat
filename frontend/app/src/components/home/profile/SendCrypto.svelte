@@ -10,8 +10,9 @@
         BTC_SYMBOL,
         cryptoBalance as cryptoBalanceStore,
         cryptoLookup,
+        iconSize,
         ICP_SYMBOL,
-        ui,
+        mobileWidth,
     } from "openchat-client";
     import { ErrorCode, isAccountIdentifierValid, isPrincipalValid } from "openchat-shared";
     import { getContext, onMount } from "svelte";
@@ -256,7 +257,7 @@
                         placeholder={i18nKey("cryptoAccount.sendTarget")} />
 
                     <div class="qr" onclick={scan}>
-                        <QrcodeScan size={ui.iconSize} color={"var(--icon-selected)"} />
+                        <QrcodeScan size={$iconSize} color={"var(--icon-selected)"} />
                     </div>
                 </div>
 
@@ -288,13 +289,13 @@
     {#snippet footer()}
         <span>
             <ButtonGroup>
-                <Button secondary tiny={ui.mobileWidth} onClick={onClose}
+                <Button secondary tiny={$mobileWidth} onClick={onClose}
                     ><Translatable
                         resourceKey={i18nKey(capturingAccount ? "noThanks" : "cancel")} /></Button>
                 <Button
                     disabled={busy || !valid}
                     loading={busy}
-                    tiny={ui.mobileWidth}
+                    tiny={$mobileWidth}
                     onClick={onPrimaryClick}
                     ><Translatable
                         resourceKey={i18nKey(

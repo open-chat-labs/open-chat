@@ -1,7 +1,7 @@
 <script lang="ts">
     import { centerOfScreen, type Alignment, type Position } from "@src/utils/alignment";
     import { reposition, type NanoPopPosition } from "@src/utils/position";
-    import { ui } from "openchat-client";
+    import { mobileWidth } from "openchat-client";
     import { onMount, type Snippet } from "svelte";
 
     interface Props {
@@ -36,7 +36,7 @@
     });
 
     function move(container: HTMLElement) {
-        if (centered && ui.mobileWidth) {
+        if (centered && $mobileWidth) {
             positionInCenter(container);
         } else {
             reposition(trigger, container, {

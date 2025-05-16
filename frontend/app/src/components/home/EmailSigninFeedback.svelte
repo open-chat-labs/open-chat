@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui } from "openchat-client";
+    import { iconSize } from "openchat-client";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
@@ -23,7 +23,7 @@
                 {code}
             </div>
             <div class="copy" onclick={() => onCopy?.(code)}>
-                <CopyIcon size={ui.iconSize} color={"var(--icon-txt)"} />
+                <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
             </div>
         </div>
     {/if}

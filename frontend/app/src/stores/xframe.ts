@@ -1,5 +1,5 @@
 import { AuthClient } from "@dfinity/auth-client";
-import { pathState, ui } from "openchat-client";
+import { disableLeftNav, pathState } from "openchat-client";
 import page from "page";
 import { setModifiedTheme } from "../theme/themes";
 import type { Theme } from "../theme/types";
@@ -133,7 +133,7 @@ function externalMessage(ev: MessageEvent) {
                         "XFRAME_TARGET: overriding settings",
                         payload.settings.disableLeftNav,
                     );
-                    ui.disableLeftNav = Boolean(payload.settings.disableLeftNav);
+                    disableLeftNav.set(Boolean(payload.settings.disableLeftNav));
                     break;
                 case "change_route":
                     pageWhenReady(payload.path);

@@ -11,7 +11,7 @@
         MultiUserChat,
         OpenChat,
     } from "openchat-client";
-    import { app, AvatarSize, chatIdentifiersEqual, ui, userStore } from "openchat-client";
+    import { app, AvatarSize, chatIdentifiersEqual, iconSize, userStore } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
@@ -271,12 +271,12 @@
 <section>
     <SectionHeader border={false} gap>
         <HoverIcon>
-            <AccountMultiple size={ui.iconSize} color={"var(--icon-txt)"} />
+            <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
         <h4><Translatable resourceKey={i18nKey("sendTo")} /></h4>
         <span role="button" tabindex="0" title={$_("close")} class="close" onclick={onClose}>
             <HoverIcon>
-                <Close size={ui.iconSize} color={"var(--icon-txt)"} />
+                <Close size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </span>
     </SectionHeader>
@@ -296,7 +296,7 @@
                     {#snippet titleSlot()}
                         <div class="card-header">
                             <div class="avatar">
-                                <MessageOutline size={ui.iconSize} color={"var(--icon-txt)"} />
+                                <MessageOutline size={$iconSize} color={"var(--icon-txt)"} />
                             </div>
                             <div class="details">
                                 <h4 class="title">
@@ -343,7 +343,7 @@
                     {#snippet titleSlot()}
                         <div class="card-header">
                             <div class="avatar">
-                                <ForumOutline size={ui.iconSize} color={"var(--icon-txt)"} />
+                                <ForumOutline size={$iconSize} color={"var(--icon-txt)"} />
                             </div>
                             <div class="details">
                                 <h4 class="title">
@@ -378,7 +378,7 @@
                     {#snippet titleSlot()}
                         <div class="card-header">
                             <div class="avatar">
-                                <HeartOutline size={ui.iconSize} color={"var(--icon-txt)"} />
+                                <HeartOutline size={$iconSize} color={"var(--icon-txt)"} />
                             </div>
                             <div class="details">
                                 <h4 class="title">

@@ -6,7 +6,7 @@
         AuthProvider,
         InMemoryAuthClientStorage,
         app,
-        ui,
+        iconSize,
         type AuthenticationPrincipal,
         type OpenChat,
         type ResourceKey,
@@ -340,7 +340,7 @@
 </script>
 
 <div class="header">
-    <LinkVariantPlus size={ui.iconSize} color={"var(--txt)"} />
+    <LinkVariantPlus size={$iconSize} color={"var(--txt)"} />
     <div class="title">
         <Translatable resourceKey={i18nKey("identity.linkIdentity")} />
     </div>
@@ -371,7 +371,7 @@
                     hollow
                     provider={substep.initiator.provider}
                     name={i18nKey(substep.initiator.provider)} />
-                <ArrowRightBoldOutline size={ui.iconSize} color={"var(--icon-txt)"} />
+                <ArrowRightBoldOutline size={$iconSize} color={"var(--icon-txt)"} />
                 <SignInOption
                     hollow
                     provider={substep.approver.provider}

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui, type ResourceKey } from "openchat-client";
+    import { iconSize, type ResourceKey } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
     import Magnify from "svelte-material-icons/Magnify.svelte";
@@ -74,14 +74,14 @@
         <span onclick={clearSearch} class="icon close" class:input-style={inputStyle}
             ><Close
                 viewBox={inputStyle ? "0 -3 24 24" : "0 0 24 24"}
-                size={ui.iconSize}
+                size={$iconSize}
                 color={"var(--icon-txt)"} /></span>
     {:else}
         <span class="icon" class:searching class:input-style={inputStyle}>
             {#if !searching}
                 <Magnify
                     viewBox={inputStyle ? "0 -3 24 24" : "0 0 24 24"}
-                    size={ui.iconSize}
+                    size={$iconSize}
                     color={"var(--icon-txt)"} />
             {/if}
         </span>

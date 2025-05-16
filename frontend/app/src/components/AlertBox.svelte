@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui } from "openchat-client";
+    import { iconSize } from "openchat-client";
     import type { Snippet } from "svelte";
     import Alert from "svelte-material-icons/Alert.svelte";
 
@@ -14,7 +14,7 @@
 <div class="alert-box">
     {#if icon}
         <div class="alert">
-            <Alert size={ui.iconSize} color={"var(--warn"} />
+            <Alert size={$iconSize} color={"var(--warn"} />
         </div>
     {/if}
     <div class="alert-txt">
