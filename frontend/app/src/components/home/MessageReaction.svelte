@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { NativeEmoji } from "emoji-picker-element/shared";
     import type { OpenChat, UserLookup } from "openchat-client";
-    import { app, userStore } from "openchat-client";
+    import { currentUserIdStore, userStore } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
@@ -54,9 +54,9 @@
             onClick?.();
         }
     }
-    let selected = $derived(userIds.has(app.currentUserId));
+    let selected = $derived(userIds.has($currentUserIdStore));
     let usernames = $derived(
-        buildReactionUsernames(userStore.allUsers, userIds, app.currentUserId),
+        buildReactionUsernames(userStore.allUsers, userIds, $currentUserIdStore),
     );
 </script>
 

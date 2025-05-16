@@ -16,13 +16,13 @@ import {
     type ChatSummary,
     type ChitState,
     type CombinedUnreadCounts,
-    type CommunityFilter,
     type CommunityIdentifier,
     communityIdentifiersEqual,
     CommunityMap,
     type CommunitySummary,
     compareChats,
     type CreatedUser,
+    type DiamondMembershipStatus,
     type DirectChatIdentifier,
     type DirectChatSummary,
     emptyChatMetrics,
@@ -60,7 +60,7 @@ import {
     type WebhookDetails,
 } from "openchat-shared";
 import { locale } from "svelte-i18n";
-import { SvelteMap, SvelteSet } from "svelte/reactivity";
+import { SvelteMap } from "svelte/reactivity";
 import { derived, get } from "svelte/store";
 import { offlineStore, type PinnedByScope } from "../stores";
 import {
@@ -83,6 +83,7 @@ import { ReactiveMessageMapStore } from "./map";
 import { messageLocalUpdates } from "./message/local.svelte";
 import { pathState } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
+import { SafeSetStore } from "./set";
 import { SnsFunctions } from "./snsFunctions.svelte";
 import { hideMessagesFromDirectBlocked } from "./ui.svelte";
 import { messagesRead } from "./unread/markRead.svelte";
@@ -92,6 +93,20 @@ import { writable } from "./writable";
 export const ONE_MB = 1024 * 1024;
 export const ONE_GB = ONE_MB * 1024;
 
+function communityFilterFromString(serialised: string | null): SafeSetStore<string> | undefined {
+    if (!serialised) return undefined;
+    const parsed = JSON.parse(serialised);
+    return new SafeSetStore<string>(parsed.languages);
+}
+function initialiseCommunityFilter() {
+    return (
+        communityFilterFromString(localStorage.getItem("openchat_community_filters")) ??
+        new SafeSetStore<string>()
+    );
+}
+function hasFlag(mask: number, flag: ModerationFlag): boolean {
+    return (mask & flag) !== 0;
+}
 export const pinNumberRequiredStore = writable<boolean | undefined>(undefined);
 export const pinNumberResolverStore = writable<PinNumberResolver | undefined>(undefined);
 export const pinNumberFailureStore = writable<PinNumberFailures | undefined>(undefined);
@@ -118,6 +133,53 @@ export const messageFiltersStore = writable<MessageFilter[]>([]);
 export const translationsStore = new ReactiveMessageMapStore<string>();
 export const snsFunctionsStore = writable<SnsFunctions>(new SnsFunctions());
 export const filteredProposalsStore = writable<FilteredProposals | undefined>(undefined);
+export const currentUserStore = writable<CreatedUser>(anonymousUser(), dequal);
+export const currentUserIdStore = derived(currentUserStore, ({ userId }) => userId);
+export const anonUserStore = derived(currentUserIdStore, (id) => id === ANON_USER_ID);
+export const suspendedUserStore = derived(
+    currentUserStore,
+    (user) => user.suspensionDetails !== undefined,
+);
+export const platformModeratorStore = derived(currentUserStore, (user) => user.isPlatformModerator);
+export const platformOperatorStore = derived(currentUserStore, (user) => user.isPlatformOperator);
+export const diamondStatusStore = derived(currentUserStore, (user) => user.diamondStatus);
+export const isDiamondStore = derived(
+    diamondStatusStore,
+    (diamondStatus) =>
+        diamondStatus.kind === "lifetime" ||
+        (diamondStatus.kind === "active" && diamondStatus.expiresAt > Date.now()),
+);
+export const isLifetimeDiamondStore = derived(
+    diamondStatusStore,
+    (diamondStatus) => diamondStatus.kind === "lifetime",
+);
+export const canExtendDiamondStore = derived(
+    diamondStatusStore,
+    (diamondStatus) => diamondStatus.kind === "active",
+);
+export const moderationFlagsEnabledStore = derived(
+    currentUserStore,
+    ({ moderationFlagsEnabled }) => moderationFlagsEnabled,
+);
+export const adultEnabledStore = derived(moderationFlagsEnabledStore, (moderationFlagsEnabled) =>
+    hasFlag(moderationFlagsEnabled, ModerationFlags.Adult),
+);
+export const offensiveEnabledStore = derived(
+    moderationFlagsEnabledStore,
+    (moderationFlagsEnabled) => hasFlag(moderationFlagsEnabled, ModerationFlags.Offensive),
+);
+export const underReviewEnabledStore = derived(
+    moderationFlagsEnabledStore,
+    (moderationFlagsEnabled) => hasFlag(moderationFlagsEnabled, ModerationFlags.UnderReview),
+);
+export const communityFiltersStore = initialiseCommunityFilter();
+export const exploreCommunitiesFiltersStore = derived(
+    [communityFiltersStore, moderationFlagsEnabledStore],
+    ([communityFilters, moderationFlagsEnabled]) => ({
+        languages: Array.from(communityFilters),
+        flags: moderationFlagsEnabled,
+    }),
+);
 
 export class AppState {
     #percentageStorageRemaining: number = 0;
@@ -125,11 +187,28 @@ export class AppState {
     #storageInGB = { gbLimit: 0, gbUsed: 0 };
     #offline: boolean = false;
     #locale: string = "en";
+    #exploreCommunitiesFilters: { languages: string[]; flags: number } = {
+        languages: [],
+        flags: 0,
+    };
+    #anonUser: boolean = false;
+    #suspendedUser: boolean = false;
+    #platformModerator: boolean = false;
+    #platformOperator: boolean = false;
+    #diamondStatus: DiamondMembershipStatus = { kind: "inactive" };
+    #isDiamond: boolean = false;
+    #isLifetimeDiamond: boolean = false;
+    #canExtendDiamond: boolean = false;
+    #moderationFlagsEnabled: number = 0;
+    #adultEnabled: boolean = false;
+    #offensiveEnabled: boolean = false;
+    #underReviewEnabled: boolean = false;
 
     // TODO - these need to use $state for the moment because we still have $derived that is depending on it
     // but it can be a plain value once that's all gone
     #translations = $state<MessageMap<string>>(new MessageMap());
     #messageFilters = $state<MessageFilter[]>([]);
+    #currentUserId = $state<string>(currentUserStore.current.userId);
 
     constructor() {
         $effect.root(() => {
@@ -156,6 +235,20 @@ export class AppState {
         percentageStorageUsedStore.subscribe((val) => (this.#percentageStorageUsed = val));
         storageInGBStore.subscribe((val) => (this.#storageInGB = val));
         messageFiltersStore.subscribe((val) => (this.#messageFilters = val));
+        currentUserIdStore.subscribe((val) => (this.#currentUserId = val));
+        exploreCommunitiesFiltersStore.subscribe((val) => (this.#exploreCommunitiesFilters = val));
+        anonUserStore.subscribe((val) => (this.#anonUser = val));
+        suspendedUserStore.subscribe((val) => (this.#suspendedUser = val));
+        platformModeratorStore.subscribe((val) => (this.#platformModerator = val));
+        platformOperatorStore.subscribe((val) => (this.#platformOperator = val));
+        diamondStatusStore.subscribe((val) => (this.#diamondStatus = val));
+        isDiamondStore.subscribe((val) => (this.#isDiamond = val));
+        isLifetimeDiamondStore.subscribe((val) => (this.#isLifetimeDiamond = val));
+        canExtendDiamondStore.subscribe((val) => (this.#canExtendDiamond = val));
+        moderationFlagsEnabledStore.subscribe((val) => (this.#moderationFlagsEnabled = val));
+        adultEnabledStore.subscribe((val) => (this.#adultEnabled = val));
+        offensiveEnabledStore.subscribe((val) => (this.#offensiveEnabled = val));
+        underReviewEnabledStore.subscribe((val) => (this.#underReviewEnabled = val));
 
         // TODO - this clone is only necessary to trigger downstream $derived. Remove when all $deriveds are gone
         translationsStore.subscribe((val) => (this.#translations = val.clone()));
@@ -170,27 +263,11 @@ export class AppState {
 
     #userCreated = new LocalStorageBoolState(configKeys.userCreated, false);
 
-    #communityFilterToString(filter: CommunityFilter): string {
+    #communityFilterToString(filter: SafeSetStore<string>): string {
         return JSON.stringify({
             ...filter,
-            languages: Array.from(filter.languages),
+            languages: Array.from(filter),
         });
-    }
-
-    #communityFilterFromString(serialised: string | null): CommunityFilter | undefined {
-        if (!serialised) return undefined;
-        const parsed = JSON.parse(serialised);
-        return {
-            languages: new SvelteSet(parsed.languages),
-        };
-    }
-
-    #initialiseCommunityFilter() {
-        return (
-            this.#communityFilterFromString(localStorage.getItem("openchat_community_filters")) ?? {
-                languages: new SvelteSet<string>(),
-            }
-        );
     }
 
     #proposalTopics = $derived.by(() => {
@@ -229,55 +306,13 @@ export class AppState {
 
     #messageFormatter: MessageFormatter | undefined;
 
-    #communityFilters = $state<CommunityFilter>(this.#initialiseCommunityFilter());
-
-    #currentUser = $state<CreatedUser>(anonymousUser());
-
-    #currentUserId = $derived(this.#currentUser.userId);
-
-    #anonUser = $derived(this.#currentUserId === ANON_USER_ID);
-
-    #suspendedUser = $derived(this.#currentUser.suspensionDetails !== undefined);
-
-    #platformModerator = $derived(this.#currentUser.isPlatformModerator);
-
-    #platformOperator = $derived(this.#currentUser.isPlatformOperator);
-
-    #diamondStatus = $derived(this.#currentUser.diamondStatus);
-
-    #isDiamond = $derived(
-        this.#diamondStatus.kind === "lifetime" ||
-            (this.#diamondStatus.kind === "active" && this.#diamondStatus.expiresAt > Date.now()),
-    );
-
-    #isLifetimeDiamond = $derived(this.#diamondStatus.kind === "lifetime");
-
-    #canExtendDiamond = $derived(this.#diamondStatus.kind === "active");
-
     hasFlag(mask: number, flag: ModerationFlag): boolean {
         return (mask & flag) !== 0;
     }
 
-    #moderationFlagsEnabled = $derived(this.#currentUser.moderationFlagsEnabled);
-
-    #adultEnabled = $derived(this.hasFlag(this.#moderationFlagsEnabled, ModerationFlags.Adult));
-
-    #offensiveEnabled = $derived(
-        this.hasFlag(this.#moderationFlagsEnabled, ModerationFlags.Offensive),
-    );
-
-    #underReviewEnabled = $derived(
-        this.hasFlag(this.#moderationFlagsEnabled, ModerationFlags.UnderReview),
-    );
-
     #achievements = $state<Set<string>>(new Set());
 
     #referrals = $state<Referral[]>([]);
-
-    #exploreCommunitiesFilters = $derived({
-        languages: Array.from(this.#communityFilters.languages),
-        flags: this.#moderationFlagsEnabled,
-    });
 
     #serverMessageActivitySummary = $state<MessageActivitySummary>({
         readUpToTimestamp: 0n,
@@ -786,7 +821,7 @@ export class AppState {
     }
 
     setCurrentUser(user: CreatedUser) {
-        this.#currentUser = user;
+        currentUserStore.set(user);
     }
 
     getProposalTally(governanceCanisterId: string, proposalId: bigint) {
@@ -802,7 +837,7 @@ export class AppState {
     }
 
     get communityFilters() {
-        return this.#communityFilters;
+        return communityFiltersStore;
     }
 
     get exploreCommunitiesFilters() {
@@ -810,14 +845,14 @@ export class AppState {
     }
 
     toggleCommunityFilterLanguage(lang: string) {
-        if (this.#communityFilters.languages.has(lang)) {
-            this.#communityFilters.languages.delete(lang);
+        if (communityFiltersStore.has(lang)) {
+            communityFiltersStore.delete(lang);
         } else {
-            this.#communityFilters.languages.add(lang);
+            communityFiltersStore.add(lang);
         }
         localStorage.setItem(
             "openchat_community_filters",
-            this.#communityFilterToString(this.#communityFilters),
+            this.#communityFilterToString(communityFiltersStore),
         );
     }
 
@@ -886,7 +921,7 @@ export class AppState {
     }
 
     get currentUser() {
-        return this.#currentUser;
+        return currentUserStore.current;
     }
 
     get currentUserId() {

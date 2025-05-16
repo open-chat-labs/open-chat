@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { app, iconSize, type OpenChat, type PollContent } from "openchat-client";
+    import { iconSize, type OpenChat, type PollContent } from "openchat-client";
     import { getContext } from "svelte";
     import Poll from "svelte-material-icons/Poll.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -94,7 +94,7 @@
     );
     let showVotes = $derived(
         content.ended ||
-            ((haveIVoted || senderId === app.currentUserId) &&
+            ((haveIVoted || senderId === $currentUserIdStore) &&
                 (content.config.showVotesBeforeEndDate || content.config.endDate === undefined)),
     );
 </script>

@@ -1,6 +1,13 @@
 <script lang="ts">
     import type { OpenChat, UserOrUserGroup } from "openchat-client";
-    import { app, AvatarSize, iconSize, mobileWidth, userStore } from "openchat-client";
+    import {
+        app,
+        AvatarSize,
+        currentUserIdStore,
+        iconSize,
+        mobileWidth,
+        userStore,
+    } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import Avatar from "../Avatar.svelte";
@@ -113,7 +120,7 @@
                     }
                     default:
                         return (
-                            (mentionSelf || userOrGroup.userId !== app.currentUserId) &&
+                            (mentionSelf || userOrGroup.userId !== $currentUserIdStore) &&
                             (prefixLower === undefined ||
                                 userOrGroup.username.toLowerCase().startsWith(prefixLower) ||
                                 userOrGroup.displayName?.toLowerCase().startsWith(prefixLower))

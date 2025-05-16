@@ -7,6 +7,7 @@
         type ChatListScope,
         type ChatSummary as ChatSummaryType,
         type CombinedUnreadCounts,
+        currentUserIdStore,
         emptyCombinedUnreadCounts,
         type GroupMatch,
         type GroupSearchResponse,
@@ -177,7 +178,7 @@
             app.selectedCommunitySummary?.membership.role === "none" &&
             app.selectedChatId === undefined,
     );
-    let user = $derived(userStore.get(app.currentUserId));
+    let user = $derived(userStore.get($currentUserIdStore));
     let lowercaseSearch = $derived(searchTerm.toLowerCase());
     let showExploreGroups = $derived(
         (app.chatListScope.kind === "none" || app.chatListScope.kind === "group_chat") &&

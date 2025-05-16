@@ -9,6 +9,7 @@
         type ChatSummary,
         CommunityMap,
         type CommunitySummary,
+        currentUserIdStore,
         type EnhancedReplyContext,
         type EventWrapper,
         type FilteredProposals,
@@ -27,6 +28,7 @@
         rightPanelHistory,
         runningInIframe,
         subscribe,
+        suspendedUserStore,
         type User,
         userStore,
     } from "openchat-client";
@@ -306,7 +308,7 @@
             });
         }
     });
-    let showFooter = $derived(!showSearchHeader && !app.suspendedUser);
+    let showFooter = $derived(!showSearchHeader && !$suspendedUserStore);
     let blocked = $derived(isBlocked(chat, userStore.blockedUsers));
     let frozen = $derived(client.isChatOrCommunityFrozen(chat, app.selectedCommunitySummary));
     let canSendAny = $derived(client.canSendMessage(chat.id, "message"));
@@ -441,8 +443,8 @@
                 localUpdates.draftMessages.setAttachment({ chatId: chat.id }, undefined)}
             onCancelEdit={() => localUpdates.draftMessages.delete({ chatId: chat.id })}
             {onSetTextContent}
-            onStartTyping={() => client.startTyping(chat, app.currentUserId)}
-            onStopTyping={() => client.stopTyping(chat, app.currentUserId)}
+            onStartTyping={() => client.startTyping(chat, $currentUserIdStore)}
+            onStopTyping={() => client.stopTyping(chat, $currentUserIdStore)}
             {onFileSelected}
             {onSendMessage}
             onAttachGif={attachGif}

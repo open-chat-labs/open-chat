@@ -4,6 +4,7 @@
         activityFeedShowing,
         app,
         AvatarSize,
+        currentUserIdStore,
         OpenChat,
         routeForMessageContext,
         userStore,
@@ -66,7 +67,7 @@
         if (ev.message === undefined) return new Set();
         return new Set(
             ev.message.reactions.flatMap((r) =>
-                [...r.userIds].filter((u) => u !== ev.userId && u !== app.currentUserId),
+                [...r.userIds].filter((u) => u !== ev.userId && u !== $currentUserIdStore),
             ),
         );
     }
@@ -111,7 +112,7 @@
                     other: buildDisplayName(
                         userStore.allUsers,
                         u,
-                        u === app.currentUserId ? "me" : "user",
+                        u === $currentUserIdStore ? "me" : "user",
                     ),
                 });
             default:
@@ -159,7 +160,7 @@
             ? buildDisplayName(
                   userStore.allUsers,
                   event.userId,
-                  event.userId === app.currentUserId ? "me" : "user",
+                  event.userId === $currentUserIdStore ? "me" : "user",
               )
             : $_("activity.anon"),
     );
@@ -168,7 +169,7 @@
             ? buildDisplayName(
                   userStore.allUsers,
                   event.message.sender,
-                  event.message.sender === app.currentUserId ? "me" : "user",
+                  event.message.sender === $currentUserIdStore ? "me" : "user",
               )
             : $_("activity.anon"),
     );

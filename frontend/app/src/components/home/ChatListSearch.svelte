@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
         app,
+        currentUserIdStore,
         type BotMatch,
         type ChatListScope,
         type DirectChatIdentifier,
@@ -117,7 +118,7 @@
         // available for direct chat.
         const location = {
             kind: "direct_chat",
-            userId: app.currentUserId,
+            userId: $currentUserIdStore,
         } as DirectChatIdentifier;
 
         return client.exploreBots(term, 0, 10, location, false).then((result) => {

@@ -2,6 +2,7 @@
     import { findSender } from "@src/utils/user";
     import {
         app,
+        currentUserIdStore,
         typing,
         userStore,
         type ChatEvent,
@@ -326,21 +327,21 @@
         changedBy={event.event.addedBy}
         resourceKey={"bots.events.add"}
         event={event.event}
-        userId={app.currentUserId}
+        userId={$currentUserIdStore}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "bot_removed"}
     <BotChangedEvent
         changedBy={event.event.removedBy}
         resourceKey={"bots.events.remove"}
         event={event.event}
-        userId={app.currentUserId}
+        userId={$currentUserIdStore}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "bot_updated"}
     <BotChangedEvent
         changedBy={event.event.updatedBy}
         resourceKey={"bots.events.update"}
         event={event.event}
-        userId={app.currentUserId}
+        userId={$currentUserIdStore}
         timestamp={event.timestamp} />
 {:else if !client.isEventKindHidden(event.event.kind)}
     <div>Unexpected event type: {event.event.kind}</div>

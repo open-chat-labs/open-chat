@@ -4,6 +4,7 @@
     import {
         app,
         chatIdentifiersEqual,
+        currentUserIdStore,
         mobileWidth,
         NoMeetingToJoin,
         OpenChat,
@@ -160,14 +161,20 @@
                     }
                     if (ev.data.kind === "demote_participant") {
                         const me = call?.participants().local.session_id;
-                        if (ev.data.participantId === me && app.currentUserId === ev.data.userId) {
+                        if (
+                            ev.data.participantId === me &&
+                            $currentUserIdStore === ev.data.userId
+                        ) {
                             askedToSpeak = false;
                             client.setVideoCallPresence(chatId, BigInt(messageId), "hidden");
                         }
                     }
                     if (ev.data.kind === "ask_to_speak_response") {
                         const me = call?.participants().local.session_id;
-                        if (ev.data.participantId === me && app.currentUserId === ev.data.userId) {
+                        if (
+                            ev.data.participantId === me &&
+                            $currentUserIdStore === ev.data.userId
+                        ) {
                             askedToSpeak = false;
                             denied = !ev.data.approved;
                             if (ev.data.approved) {
@@ -278,7 +285,7 @@
     }
 
     export function askToSpeak() {
-        activeVideoCall.askToSpeak(app.currentUserId);
+        activeVideoCall.askToSpeak($currentUserIdStore);
         askedToSpeak = true;
     }
 

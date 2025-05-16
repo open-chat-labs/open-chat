@@ -1,10 +1,10 @@
 <script lang="ts">
-    import type {
-        DiamondMembershipDuration,
-        DiamondMembershipStatus,
-        OpenChat,
+    import {
+        diamondStatusStore,
+        type DiamondMembershipDuration,
+        type DiamondMembershipStatus,
+        type OpenChat,
     } from "openchat-client";
-    import { app } from "openchat-client";
     import { getContext, untrack } from "svelte";
     import { _, locale } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
@@ -31,7 +31,7 @@
     }
     let extendByMs = $derived(durationToMs(extendBy));
     $effect(() => {
-        refresh(app.diamondStatus, $now500, $locale);
+        refresh($diamondStatusStore, $now500, $locale);
     });
 
     function refresh(
@@ -57,7 +57,7 @@
     }
 </script>
 
-{#if app.diamondStatus.kind !== "inactive"}
+{#if $diamondStatusStore.kind !== "inactive"}
     <p class="expiry">
         <span class="msg">
             <Translatable resourceKey={i18nKey("upgrade.expiryMessage", { relative: expiresIn })} />

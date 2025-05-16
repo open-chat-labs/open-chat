@@ -2,6 +2,9 @@
     import {
         app,
         cryptoLookup,
+        currentUserIdStore,
+        isDiamondStore,
+        isLifetimeDiamondStore,
         publish,
         type ChatIdentifier,
         type DiamondMembershipStatus,
@@ -78,12 +81,12 @@
     );
     let total = $derived(content.prizesRemaining + content.prizesPending + content.winners.length);
     let percentage = $derived((content.winners.length / total) * 100);
-    let claimedByYou = $derived(content.winners.includes(app.currentUserId));
+    let claimedByYou = $derived(content.winners.includes($currentUserIdStore));
     let finished = $derived($now500 >= Number(content.endDate));
     let allClaimed = $derived(content.prizesRemaining <= 0);
     let userEligible = $derived(
-        (!content.diamondOnly || app.isDiamond) &&
-            (!content.lifetimeDiamondOnly || app.isLifetimeDiamond) &&
+        (!content.diamondOnly || $isDiamondStore) &&
+            (!content.lifetimeDiamondOnly || $isLifetimeDiamondStore) &&
             (!content.uniquePersonOnly || app.currentUser.isUniquePerson) &&
             content.streakOnly <= app.chitState.streak,
     );

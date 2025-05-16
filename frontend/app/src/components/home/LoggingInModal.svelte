@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AuthProvider, type OpenChat, app, pathState } from "openchat-client";
+    import { AuthProvider, type OpenChat, anonUserStore, app, pathState } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { configKeys } from "../../utils/config";
@@ -52,7 +52,7 @@
         emailSigninHandler.addEventListener("email_signin_event", emailEvent);
         client.gaTrack("opened_signin_modal", "registration");
         return () => {
-            if (app.anonUser && app.identityState.kind === "logging_in") {
+            if ($anonUserStore && app.identityState.kind === "logging_in") {
                 client.updateIdentityState({ kind: "anon" });
             }
             emailSigninHandler.removeEventListener("email_signin_event", emailEvent);
@@ -76,7 +76,7 @@
     });
 
     function cancel() {
-        if (app.anonUser && app.identityState.kind === "logging_in") {
+        if ($anonUserStore && app.identityState.kind === "logging_in") {
             client.updateIdentityState({ kind: "anon" });
         }
         onClose();

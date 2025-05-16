@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { app, cryptoLookup, ICP_SYMBOL } from "openchat-client";
+    import { app, cryptoLookup, currentUserIdStore, ICP_SYMBOL } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
     import QRCode from "../QRCode.svelte";
     import Translatable from "../Translatable.svelte";
@@ -23,7 +23,7 @@
 
     let tokenDetails = $derived($cryptoLookup[ledger]);
     let account = $derived(
-        tokenDetails.symbol === ICP_SYMBOL ? app.currentUser.cryptoAccount : app.currentUserId,
+        tokenDetails.symbol === ICP_SYMBOL ? app.currentUser.cryptoAccount : $currentUserIdStore,
     );
     let symbol = $derived(tokenDetails.symbol);
 </script>

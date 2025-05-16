@@ -3,7 +3,7 @@ import type { Subscriber, Unsubscriber } from "svelte/store";
 type EqualityCheck<T> = (a: T, b: T) => boolean;
 
 export class WritableStore<T> {
-    #subs: Subscriber<T>[] = [];
+    #subs: Set<Subscriber<T>> = new Set();
     #val: T;
     #eq: EqualityCheck<T>;
     constructor(init: T, eq: EqualityCheck<T> = (a: T, b: T) => a === b) {
@@ -33,10 +33,10 @@ export class WritableStore<T> {
     }
 
     subscribe(sub: Subscriber<T>): Unsubscriber {
-        this.#subs.push(sub);
+        this.#subs.add(sub);
         sub(this.#val);
         return () => {
-            this.#subs = this.#subs.filter((s) => s !== sub);
+            this.#subs.delete(sub);
         };
     }
 }

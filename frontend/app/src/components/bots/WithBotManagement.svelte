@@ -2,6 +2,7 @@
     import { toastStore } from "@src/stores/toast";
     import {
         app,
+        currentUserIdStore,
         mobileWidth,
         pageRedirect,
         routeForScope,
@@ -61,7 +62,7 @@
             case "channel":
                 return { kind: "community", communityId: collection.id.communityId };
             case "direct_chat":
-                return { kind: "direct_chat", userId: app.currentUserId };
+                return { kind: "direct_chat", userId: $currentUserIdStore };
             case "group_chat":
                 return collection.id;
             case "community":

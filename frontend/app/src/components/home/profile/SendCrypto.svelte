@@ -10,6 +10,7 @@
         BTC_SYMBOL,
         cryptoBalance as cryptoBalanceStore,
         cryptoLookup,
+        currentUserIdStore,
         iconSize,
         ICP_SYMBOL,
         mobileWidth,
@@ -61,7 +62,7 @@
     let cryptoBalance = $derived($cryptoBalanceStore[ledger] ?? BigInt(0));
     let tokenDetails = $derived($cryptoLookup[ledger]);
     let account = $derived(
-        tokenDetails.symbol === ICP_SYMBOL ? app.currentUser.cryptoAccount : app.currentUserId,
+        tokenDetails.symbol === ICP_SYMBOL ? app.currentUser.cryptoAccount : $currentUserIdStore,
     );
     let symbol = $derived(tokenDetails.symbol);
     let selectedBtcNetwork = $state(BTC_SYMBOL);

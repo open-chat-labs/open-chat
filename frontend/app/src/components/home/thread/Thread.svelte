@@ -15,6 +15,7 @@
     } from "openchat-client";
     import {
         app,
+        currentUserIdStore,
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
         localUpdates,
@@ -87,7 +88,7 @@
     let timeline = $derived(
         client.groupEvents(
             [...events].reverse(),
-            app.currentUserId,
+            $currentUserIdStore,
             app.selectedChat.expandedDeletedMessages,
         ) as TimelineItem<Message>[],
     );
@@ -206,13 +207,13 @@
     }
 
     function onStartTyping() {
-        client.startTyping(chat, app.currentUserId, threadRootMessageIndex);
+        client.startTyping(chat, $currentUserIdStore, threadRootMessageIndex);
     }
 
     function onStopTyping() {
         // TODO - this is called on a timeout and by the time it runs, we might have closed the thread and that
         // can cause an null ref error
-        client.stopTyping(chat, app.currentUserId, threadRootMessageIndex);
+        client.stopTyping(chat, $currentUserIdStore, threadRootMessageIndex);
     }
 
     function onFileSelected(content: AttachmentContent) {
@@ -382,7 +383,7 @@
                                 event={evt}
                                 first={i + 1 === userGroup.length}
                                 last={i === 0}
-                                me={evt.event.sender === app.currentUserId}
+                                me={evt.event.sender === $currentUserIdStore}
                                 accepted={isAccepted(evt)}
                                 confirmed={isConfirmed(evt)}
                                 failed={isFailed(evt)}

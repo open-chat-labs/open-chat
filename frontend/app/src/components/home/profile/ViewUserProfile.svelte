@@ -10,7 +10,9 @@
         type ResourceKey,
         type UserSummary,
         app,
+        currentUserIdStore,
         mobileWidth,
+        platformModeratorStore,
         rightPanelHistory,
         userStore,
     } from "openchat-client";
@@ -231,7 +233,7 @@
         });
     }
     let diamondStatus = $derived(user?.diamondStatus);
-    let me = $derived(userId === app.currentUserId);
+    let me = $derived(userId === $currentUserIdStore);
     let isSuspended = $derived(user?.suspended ?? false);
     let modal = $derived($mobileWidth);
     let [status, online] = $derived(
@@ -382,7 +384,7 @@
                                 ><Translatable resourceKey={i18nKey("profile.unblock")} /></Button>
                         {/if}
                     </ButtonGroup>
-                    {#if app.platformModerator}
+                    {#if $platformModeratorStore}
                         <div class="suspend">
                             <ButtonGroup align={"fill"}>
                                 {#if isSuspended}

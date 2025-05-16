@@ -1,8 +1,8 @@
 <script lang="ts">
     import {
-        app,
         type CommunityIdentifier,
         type CommunitySummary,
+        currentUserIdStore,
         iconSize,
         type MultiUserChat,
         type MultiUserChatIdentifier,
@@ -46,7 +46,7 @@
     let confirmReset = $state(false);
 
     function getLink(id: CommunityIdentifier | MultiUserChatIdentifier, code: string | undefined) {
-        const qs = `/?ref=${app.currentUserId}` + (!container.public ? `&code=${code}` : "");
+        const qs = `/?ref=${$currentUserIdStore}` + (!container.public ? `&code=${code}` : "");
         switch (id.kind) {
             case "community":
                 return `${window.location.origin}/community/${id.communityId}${qs}`;
