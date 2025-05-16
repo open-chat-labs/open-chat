@@ -18,6 +18,7 @@ export class PausableStoreManager {
 
     set paused(value: boolean) {
         if (!value) {
+            // Flush any dirty values
             for (const callback of this.#callbacks) {
                 callback();
             }
@@ -50,6 +51,7 @@ export class PausableStore<T> {
     set(newValue: T) {
         if (this.#parent.paused) {
             this.#dirtyValue = newValue;
+            // Register callback to flush the new value once the store is unpaused
             this.#parent.registerCallback(() => {
                 if (this.#dirtyValue !== undefined) {
                     this.#store.set(this.#dirtyValue);
