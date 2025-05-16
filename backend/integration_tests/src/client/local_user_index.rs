@@ -11,7 +11,8 @@ generate_msgpack_query_call!(group_and_community_summary_updates);
 generate_update_call!(bot_create_channel);
 generate_update_call!(bot_delete_channel);
 generate_update_call!(bot_send_message);
-generate_update_call!(bot_subscribe_to_chat_events);
+generate_update_call!(bot_send_message_v2);
+generate_update_call!(bot_subscribe_to_events);
 generate_msgpack_update_call!(install_bot);
 generate_msgpack_update_call!(invite_users_to_channel);
 generate_msgpack_update_call!(invite_users_to_community);
@@ -281,6 +282,7 @@ pub mod happy_path {
         location: BotInstallationLocation,
         bot_id: UserId,
         granted_permissions: BotPermissions,
+        granted_autonomous_permissions: Option<BotPermissions>,
     ) {
         let response = super::install_bot(
             env,
@@ -290,6 +292,7 @@ pub mod happy_path {
                 bot_id,
                 granted_permissions,
                 location,
+                granted_autonomous_permissions,
             },
         );
 

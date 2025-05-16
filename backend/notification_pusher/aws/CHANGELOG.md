@@ -1,4 +1,5 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
@@ -12,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Split user notifications into separate module ([#7851](https://github.com/open-chat-labs/open-chat/pull/7851))
+- Support autonomous bots without API keys ([#7985](https://github.com/open-chat-labs/open-chat/pull/7985))
 
 ## [[2.0.1610](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1610-notifications_pusher)] - 2024-02-27
 

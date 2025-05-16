@@ -225,11 +225,17 @@ type BotDefinition = record {
     description : text;
     commands : vec BotCommandDefinition;
     autonomous_config : opt AutonomousConfig;
+    default_subscriptions : opt BotSubscriptions;
 };
 
 type AutonomousConfig = record {
     permissions : BotPermissions;
     sync_api_key : bool;
+};
+
+type BotSubscriptions = record {
+    community : vec CommunityEventType;
+    chat : vec ChatEventType;
 };
 
 type RegisterExternalAchievementArgs = record {

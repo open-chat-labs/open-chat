@@ -728,6 +728,7 @@ pub mod happy_path {
             &community_canister::update_bot::Args {
                 bot_id,
                 granted_permissions,
+                granted_autonomous_permissions: None,
             },
         );
 

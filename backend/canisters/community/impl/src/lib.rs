@@ -33,18 +33,18 @@ use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
 use std::cell::RefCell;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
-use types::CommunityId;
 use types::{
-    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotEventsCaller, BotGroupConfig, BotInitiator,
-    BotNotification, BotPermissions, BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChannelId, ChatMetrics,
-    CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cycles, Document, Empty, EventIndex,
-    EventsCaller, FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules,
+    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotEventsCaller, BotInitiator, BotNotification,
+    BotPermissions, BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChannelId, ChatEventCategory, ChatEventType,
+    ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cycles, Document, Empty,
+    EventIndex, EventsCaller, FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules,
     TimestampMillis, Timestamped, UserId, UserNotification, UserNotificationPayload, UserType,
 };
+use types::{BotSubscriptions, CommunityId};
 use user_canister::CommunityCanisterEvent;
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
@@ -781,13 +781,13 @@ impl Data {
             let Some(permissions) = self.granted_bot_permissions(&bot_user_id, &initiator, Some(channel_id)) else {
                 return Err(OCErrorCode::InitiatorNotInCommunity);
             };
-            let bot_permitted_event_types = permissions.permitted_event_types_to_read();
+            let bot_permitted_event_types = permissions.permitted_chat_event_categories_to_read();
             if bot_permitted_event_types.is_empty() {
                 return Err(OCErrorCode::InitiatorNotInCommunity);
             }
             Ok(EventsCaller::Bot(BotEventsCaller {
                 bot: bot_user_id,
-                bot_permitted_event_types,
+                bot_permitted_event_categories: bot_permitted_event_types,
                 min_visible_event_index: EventIndex::default(),
             }))
         } else {
@@ -895,36 +895,94 @@ impl Data {
         }
     }
 
-    pub fn install_bot(&mut self, owner_id: UserId, user_id: UserId, bot_config: BotGroupConfig, now: TimestampMillis) -> bool {
-        if !self.bots.add(user_id, owner_id, bot_config.permissions, now) {
+    pub fn install_bot(
+        &mut self,
+        owner_id: UserId,
+        bot_id: UserId,
+        permissions: BotPermissions,
+        autonomous_permissions: Option<BotPermissions>,
+        default_subscriptions: Option<BotSubscriptions>,
+        now: TimestampMillis,
+    ) -> bool {
+        if !self.bots.add(
+            bot_id,
+            owner_id,
+            permissions,
+            autonomous_permissions.clone(),
+            default_subscriptions.clone(),
+            now,
+        ) {
             return false;
         }
 
         // Publish community event
         self.events.push_event(
             CommunityEventInternal::BotAdded(Box::new(BotAdded {
-                user_id,
+                user_id: bot_id,
                 added_by: owner_id,
             })),
             now,
         );
 
+        if let (Some(subscriptions), Some(permissions)) = (default_subscriptions, autonomous_permissions) {
+            // TODO: Subscribe to permitted community events
+
+            // Subscribe to permitted chat events for all public channels
+            let permitted_categories = permissions.permitted_chat_event_categories_to_read();
+
+            let chat_events: HashSet<ChatEventType> = subscriptions
+                .chat
+                .into_iter()
+                .filter(|t| permitted_categories.contains(&ChatEventCategory::from(*t)))
+                .collect();
+
+            for channel in self.channels.iter_mut() {
+                if channel.chat.is_public.value {
+                    channel.chat.events.subscribe_bot_to_events(bot_id, chat_events.clone());
+                }
+            }
+        }
+
         true
     }
 
-    pub fn update_bot(&mut self, owner_id: UserId, user_id: UserId, bot_config: BotGroupConfig, now: TimestampMillis) -> bool {
-        if !self.bots.update(user_id, bot_config.permissions, now) {
+    pub fn update_bot(
+        &mut self,
+        owner_id: UserId,
+        bot_id: UserId,
+        permissions: BotPermissions,
+        autonomous_permissions: Option<BotPermissions>,
+        now: TimestampMillis,
+    ) -> bool {
+        if !self.bots.update(bot_id, permissions, autonomous_permissions.clone(), now) {
             return false;
         }
 
         // Publish community event
         self.events.push_event(
             CommunityEventInternal::BotUpdated(Box::new(BotUpdated {
-                user_id,
+                user_id: bot_id,
                 updated_by: owner_id,
             })),
             now,
         );
+
+        let bot = self.bots.get(&bot_id).unwrap();
+        let permissions = autonomous_permissions.unwrap_or_default();
+        let permitted_categories = permissions.permitted_chat_event_categories_to_read();
+        let subscriptions = bot.default_subscriptions.clone().unwrap_or_default();
+
+        let chat_events = subscriptions
+            .chat
+            .into_iter()
+            .filter(|t| permitted_categories.contains(&ChatEventCategory::from(*t)))
+            .collect::<HashSet<ChatEventType>>();
+
+        for channel in self.channels.iter_mut() {
+            if channel.chat.is_public.value {
+                channel.chat.events.subscribe_bot_to_events(bot_id, chat_events.clone());
+            }
+        }
 
         true
     }
@@ -936,7 +994,7 @@ impl Data {
 
         self.bot_api_keys.delete(bot_id);
         for channel in self.channels.iter_mut() {
-            channel.chat.events.unsubscribe_bot_from_events(bot_id, None);
+            channel.chat.events.unsubscribe_bot_from_events(bot_id);
         }
 
         // Publish community event
@@ -1002,7 +1060,7 @@ impl Data {
         bot_id: &UserId,
         channel_id: Option<ChannelId>,
         initiator: &BotInitiator,
-        required: BotPermissions,
+        required: &BotPermissions,
     ) -> bool {
         self.granted_bot_permissions(bot_id, initiator, channel_id)
             .is_some_and(|granted| required.is_subset(&granted))
@@ -1022,6 +1080,7 @@ impl Data {
             BotInitiator::Command(_) => &bot.permissions,
             BotInitiator::ApiKeySecret(secret) => self.get_api_key_permissions(bot_id, secret, channel_id)?,
             BotInitiator::ApiKeyPermissions(permissions) => permissions,
+            BotInitiator::Autonomous => bot.autonomous_permissions.as_ref()?,
         };
 
         // If the bot is the owner of the channel then grant all chat permissions
