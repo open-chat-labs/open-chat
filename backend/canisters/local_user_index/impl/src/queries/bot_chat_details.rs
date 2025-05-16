@@ -21,15 +21,10 @@ async fn bot_chat_details(args: Args) -> Response {
 #[update(candid = true, msgpack = true)]
 #[trace]
 async fn bot_chat_details_c2c(args: Args) -> Response {
-    let context = match mutate_state(|state| extract_access_context(&args.auth_token, state)) {
-        Ok(context) => context,
-        Err(_) => return Error(OCErrorCode::BotNotAuthenticated.into()),
-    };
-
-    bot_chat_details_impl(context, args.channel_id).await
+    bot_chat_details(args).await
 }
 
-#[update(candid = true, msgpack = true)]
+#[query(composite = true, candid = true, msgpack = true)]
 #[trace]
 async fn bot_chat_details_v2(args: ArgsV2) -> Response {
     let context = match mutate_state(|state| extract_access_context_from_chat_context(args.chat_context, state)) {
@@ -38,6 +33,12 @@ async fn bot_chat_details_v2(args: ArgsV2) -> Response {
     };
 
     bot_chat_details_impl(context, None).await
+}
+
+#[update(candid = true, msgpack = true)]
+#[trace]
+async fn bot_chat_details_c2c_v2(args: ArgsV2) -> Response {
+    bot_chat_details_v2(args).await
 }
 
 async fn bot_chat_details_impl(context: BotAccessContext, channel_id: Option<ChannelId>) -> Response {

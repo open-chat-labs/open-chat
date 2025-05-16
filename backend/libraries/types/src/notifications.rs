@@ -78,8 +78,6 @@ pub enum BotLifecycleEvent {
     Removed,
     #[serde(rename = "i")]
     Installed(BotInstalledEvent),
-    #[serde(rename = "s")]
-    InstallationUpdated(BotInstallationUpdatedEvent),
     #[serde(rename = "u")]
     Uninstalled(BotUninstalledEvent),
 }
@@ -94,18 +92,6 @@ pub struct BotRegisteredEvent {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BotInstalledEvent {
-    #[serde(rename = "u")]
-    pub installed_by: UserId,
-    #[serde(rename = "l")]
-    pub location: BotInstallationLocation,
-    #[serde(rename = "p")]
-    pub granted_permissions: BotPermissions,
-    #[serde(rename = "a")]
-    pub granted_autonomous_permissions: Option<BotPermissions>,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct BotInstallationUpdatedEvent {
     #[serde(rename = "u")]
     pub installed_by: UserId,
     #[serde(rename = "l")]
