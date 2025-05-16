@@ -370,9 +370,9 @@ fn e2e_autonomous_bot_test() {
         bot_principal,
         canister_ids.local_user_index(env, community_id),
         &local_user_index_canister::bot_subscribe_to_chat_events::Args {
-            channel_id: None,
-            event_types: vec![ChatEventType::Message],
-            api_key: api_key.clone(),
+            chat: Chat::Channel(community_id, channel_id),
+            chat_events: HashSet::from_iter([ChatEventType::Message]),
+            community_events: HashSet::new(),
         },
     );
 
@@ -760,6 +760,7 @@ fn read_messages_by_command() {
                 sync_api_key: false,
                 permissions: BotPermissions::default(),
             }),
+            default_subscriptions: None,
         },
     );
 
@@ -869,6 +870,7 @@ fn send_direct_message() {
                 direct_messages: Some(true),
             }],
             autonomous_config: None,
+            default_subscriptions: None,
         },
     );
 
@@ -1177,6 +1179,7 @@ fn register_bot(
                 sync_api_key: false,
                 permissions: BotPermissions::text_only(),
             }),
+            default_subscriptions: None,
         },
     )
 }
@@ -1204,6 +1207,7 @@ fn register_autonomous_bot(
                 sync_api_key: true,
                 permissions: BotPermissions::text_only(),
             }),
+            default_subscriptions: None,
         },
     )
 }

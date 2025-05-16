@@ -2,30 +2,36 @@ use crate::{RuntimeState, UserIndexEvent, guards::caller_is_openchat_user, mutat
 use canister_api_macros::update;
 use canister_client::generate_c2c_call;
 use canister_tracing_macros::trace;
-use local_user_index_canister::install_bot::{Response::*, *};
-use types::{BotRegistrationStatus, UserId, c2c_install_bot};
+use local_user_index_canister::install_bot::*;
+use oc_error_codes::{OCError, OCErrorCode};
+use types::{BotRegistrationStatus, BotSubscriptions, OCResult, UserId, c2c_install_bot};
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
 async fn install_bot(args: Args) -> Response {
-    let user_id = match read_state(|state| prepare(&args, state)) {
-        Ok(user_id) => user_id,
-        Err(response) => return response,
-    };
+    install_bot_impl(args).await.into()
+}
 
-    match c2c_install_bot(
+async fn install_bot_impl(args: Args) -> OCResult {
+    let PrepareResult {
+        user_id,
+        default_subscriptions,
+    } = read_state(|state| prepare(&args, state))?;
+
+    let response = c2c_install_bot(
         args.location.canister_id(),
         &c2c_install_bot::Args {
             bot_id: args.bot_id,
             caller: user_id,
             granted_permissions: args.granted_permissions,
+            granted_autonomous_permissions: args.granted_autonomous_permissions,
+            default_subscriptions,
         },
     )
-    .await
-    {
-        Ok(c2c_install_bot::Response::Success) => (),
-        Ok(other) => return other.into(),
-        Err(error) => return InternalError(format!("{error:?}")),
+    .await?;
+
+    if let Response::Error(error) = response {
+        return Err(error);
     }
 
     mutate_state(|state| {
@@ -39,24 +45,32 @@ async fn install_bot(args: Args) -> Response {
         );
     });
 
-    Success
+    Ok(())
 }
 
-fn prepare(args: &Args, state: &RuntimeState) -> Result<UserId, Response> {
+struct PrepareResult {
+    user_id: UserId,
+    default_subscriptions: Option<BotSubscriptions>,
+}
+
+fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, OCError> {
     let caller = state.env.caller();
     let user = state.data.global_users.get(&caller).unwrap();
-    let bot = state.data.bots.get(&args.bot_id).ok_or(Response::NotFound)?;
+    let bot = state.data.bots.get(&args.bot_id).ok_or(OCErrorCode::BotNotFound)?;
 
     match bot.registration_status {
         BotRegistrationStatus::Public => (),
         BotRegistrationStatus::Private(location) => {
             if location.is_none_or(|loc| loc != args.location) && bot.owner_id != user.user_id {
-                return Err(Response::NotAuthorized);
+                return Err(OCErrorCode::InitiatorNotAuthorized.into());
             }
         }
     }
 
-    Ok(user.user_id)
+    Ok(PrepareResult {
+        user_id: user.user_id,
+        default_subscriptions: bot.default_subscriptions.clone(),
+    })
 }
 
 generate_c2c_call!(c2c_install_bot);

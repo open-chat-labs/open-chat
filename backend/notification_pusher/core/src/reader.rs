@@ -1,6 +1,6 @@
 use crate::ic_agent::IcAgent;
 use crate::metrics::write_metrics;
-use crate::{BotNotification, BotNotificationPayload, UserNotification};
+use crate::{BotNotification, UserNotification};
 use async_channel::Sender;
 use base64::Engine;
 use index_store::IndexStore;
@@ -118,14 +118,7 @@ impl<I: IndexStore> Reader<I> {
                     }
                 }
                 NotificationEnvelope::Bot(notification) => {
-                    let payload = serde_json::to_vec(&BotNotificationPayload {
-                        event_type: notification.event_type,
-                        chat: notification.chat,
-                        thread: notification.thread,
-                        event_index: notification.event_index,
-                        latest_event_index: notification.latest_event_index,
-                    })
-                    .unwrap();
+                    let payload = serde_json::to_vec(&notification.event).unwrap();
 
                     for bot in notification.recipients {
                         if let Some(endpoint) = ic_response.bot_endpoints.get(&bot) {

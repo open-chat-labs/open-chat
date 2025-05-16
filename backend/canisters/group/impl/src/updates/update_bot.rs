@@ -3,7 +3,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::update_bot::*;
 use oc_error_codes::OCErrorCode;
-use types::{BotGroupConfig, OCResult};
+use types::OCResult;
 
 #[update(msgpack = true)]
 #[trace]
@@ -25,9 +25,8 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     if !state.data.update_bot(
         member.user_id(),
         args.bot_id,
-        BotGroupConfig {
-            permissions: args.granted_permissions,
-        },
+        args.granted_permissions,
+        args.granted_autonomous_permissions,
         state.env.now(),
     ) {
         return Err(OCErrorCode::BotNotFound.into());

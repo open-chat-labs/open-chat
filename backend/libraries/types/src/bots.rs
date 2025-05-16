@@ -1,8 +1,9 @@
 use crate::bitflags::{decode_from_bitflags, encode_as_bitflags};
 use crate::{
-    AccessTokenScope, AudioContent, CanisterId, Chat, ChatEventType, ChatId, ChatPermission, CommunityId, CommunityPermission,
-    FileContent, GiphyContent, GroupRole, ImageContent, MessageContentInitial, MessageId, MessagePermission, PollContent,
-    TextContent, TimestampMillis, UserId, VideoContent,
+    AccessTokenScope, AudioContent, CanisterId, Chat, ChatEventCategory, ChatEventType, ChatId, ChatPermission,
+    CommunityEventCategory, CommunityEventType, CommunityId, CommunityPermission, FileContent, GiphyContent, GroupRole,
+    ImageContent, MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent, TimestampMillis, UserId,
+    VideoContent,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -16,6 +17,7 @@ pub struct BotDefinition {
     pub description: String,
     pub commands: Vec<BotCommandDefinition>,
     pub autonomous_config: Option<AutonomousConfig>,
+    pub default_subscriptions: Option<BotSubscriptions>,
 }
 
 #[ts_export]
@@ -236,19 +238,20 @@ impl BotPermissions {
             ]))
     }
 
-    pub fn permitted_event_types_to_read(&self) -> HashSet<ChatEventType> {
-        let mut event_types = HashSet::new();
+    pub fn permitted_chat_event_categories_to_read(&self) -> HashSet<ChatEventCategory> {
+        let mut event_categories = HashSet::new();
         let chat_permissions = self.chat();
+
         if chat_permissions.contains(&ChatPermission::ReadMessages) {
-            event_types.insert(ChatEventType::Message);
+            event_categories.insert(ChatEventCategory::Message);
         }
         if chat_permissions.contains(&ChatPermission::ReadMembership) {
-            event_types.insert(ChatEventType::MembershipUpdate);
+            event_categories.insert(ChatEventCategory::Membership);
         }
         if chat_permissions.contains(&ChatPermission::ReadChatDetails) {
-            event_types.insert(ChatEventType::ChatDetailsUpdate);
+            event_categories.insert(ChatEventCategory::Details);
         }
-        event_types
+        event_categories
     }
 
     fn encode<T: Into<u8> + Copy>(field: &HashSet<T>) -> u32 {
@@ -340,12 +343,6 @@ pub struct PublicApiKeyDetails {
     pub granted_permissions: BotPermissions,
     pub generated_by: UserId,
     pub generated_at: TimestampMillis,
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct BotGroupConfig {
-    pub permissions: BotPermissions,
 }
 
 #[ts_export]
@@ -449,6 +446,7 @@ pub enum BotInitiator {
     Command(BotCommand),
     ApiKeySecret(String),
     ApiKeyPermissions(BotPermissions),
+    Autonomous,
 }
 
 impl BotInitiator {
@@ -496,6 +494,13 @@ pub enum AuthToken {
 }
 
 #[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum BotChatContext {
+    Command(String),
+    Autonomous(Chat),
+}
+
+#[ts_export]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ApiKey {
     pub secret: String,
@@ -509,4 +514,64 @@ pub struct ApiKey {
 pub enum BotRegistrationStatus {
     Public,
     Private(Option<BotInstallationLocation>),
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+pub struct BotSubscriptions {
+    pub community: HashSet<CommunityEventType>,
+    pub chat: HashSet<ChatEventType>,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub enum BotLifecycleEventType {
+    Registered,
+    Removed,
+    Installed,
+    Uninstalled,
+    ApiKeyGenerated,
+}
+
+impl From<ChatEventCategory> for ChatPermission {
+    fn from(value: ChatEventCategory) -> Self {
+        match value {
+            ChatEventCategory::Message => ChatPermission::ReadMessages,
+            ChatEventCategory::Membership => ChatPermission::ReadMembership,
+            ChatEventCategory::Details => ChatPermission::ReadChatDetails,
+        }
+    }
+}
+
+impl From<CommunityEventCategory> for CommunityPermission {
+    fn from(value: CommunityEventCategory) -> Self {
+        match value {
+            CommunityEventCategory::Membership => CommunityPermission::ReadMembership,
+            CommunityEventCategory::Details => CommunityPermission::ReadDetails,
+        }
+    }
+}
+
+impl From<&BotSubscriptions> for BotPermissions {
+    fn from(value: &BotSubscriptions) -> Self {
+        let mut permissions = BotPermissions::default();
+
+        permissions = permissions.with_chat(
+            &value
+                .chat
+                .iter()
+                .map(|c| ChatPermission::from(ChatEventCategory::from(*c)))
+                .collect(),
+        );
+
+        permissions = permissions.with_community(
+            &value
+                .community
+                .iter()
+                .map(|c| CommunityPermission::from(CommunityEventCategory::from(*c)))
+                .collect(),
+        );
+
+        permissions
+    }
 }

@@ -622,12 +622,8 @@ impl Data {
 
                 if !bot_notification.recipients.is_empty() {
                     self.notifications.add(NotificationEnvelope::Bot(BotNotificationEnvelope {
-                        event_type: bot_notification.event_type,
+                        event: bot_notification.event,
                         recipients: bot_notification.recipients,
-                        chat: bot_notification.chat,
-                        thread: bot_notification.thread,
-                        event_index: bot_notification.event_index,
-                        latest_event_index: bot_notification.latest_event_index,
                         timestamp: now,
                     }));
                 }

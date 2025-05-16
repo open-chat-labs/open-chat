@@ -1,8 +1,12 @@
-use crate::{bots::extract_access_context, mutate_state};
+use crate::{
+    bots::{BotAccessContext, extract_access_context, extract_access_context_from_chat_context},
+    mutate_state,
+};
 use canister_api_macros::update;
 use local_user_index_canister::bot_delete_messages::*;
+use local_user_index_canister::bot_delete_messages_v2::Args as ArgsV2;
 use oc_error_codes::OCErrorCode;
-use types::Chat;
+use types::{ChannelId, Chat, MessageId, MessageIndex};
 
 #[update(candid = true, json = true, msgpack = true)]
 async fn bot_delete_messages(args: Args) -> Response {
@@ -11,11 +15,32 @@ async fn bot_delete_messages(args: Args) -> Response {
         Err(_) => return OCErrorCode::BotNotAuthenticated.into(),
     };
 
-    let Some(chat) = context.scope.chat(args.channel_id) else {
+    call_chat_canister(context, args.channel_id, args.thread, args.message_ids).await
+}
+
+#[update(candid = true, json = true, msgpack = true)]
+async fn bot_delete_messages_v2(args: ArgsV2) -> Response {
+    let context = match mutate_state(|state| extract_access_context_from_chat_context(args.chat_context, state)) {
+        Ok(context) => context,
+        Err(_) => return OCErrorCode::BotNotAuthenticated.into(),
+    };
+
+    call_chat_canister(context, None, args.thread, args.message_ids).await
+}
+
+async fn call_chat_canister(
+    context: BotAccessContext,
+    channel_id: Option<ChannelId>,
+    thread: Option<MessageIndex>,
+    message_ids: Vec<MessageId>,
+) -> Response {
+    let Some(chat) = context.scope.chat(channel_id) else {
         return OCErrorCode::InvalidBotActionScope
             .with_message("Channel not specified")
             .into();
     };
+
+    let thread = thread.or(context.scope.thread());
 
     match chat {
         Chat::Direct(_) => OCErrorCode::InvalidBotActionScope
@@ -27,8 +52,8 @@ async fn bot_delete_messages(args: Args) -> Response {
                 bot_id: context.bot_id,
                 initiator: context.initiator,
                 channel_id,
-                message_ids: args.message_ids,
-                thread: args.thread,
+                message_ids,
+                thread,
             },
         )
         .await
@@ -38,8 +63,8 @@ async fn bot_delete_messages(args: Args) -> Response {
             &group_canister::c2c_bot_delete_messages::Args {
                 bot_id: context.bot_id,
                 initiator: context.initiator,
-                message_ids: args.message_ids,
-                thread: args.thread.or(context.scope.thread()),
+                message_ids,
+                thread,
             },
         )
         .await

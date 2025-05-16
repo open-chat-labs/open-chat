@@ -110,7 +110,7 @@ fn create_channel_impl(
                 &bot_caller.bot,
                 None,
                 &bot_caller.initiator,
-                BotPermissions::from_community_permission(if args.is_public {
+                &BotPermissions::from_community_permission(if args.is_public {
                     CommunityPermission::CreatePublicChannel
                 } else {
                     CommunityPermission::CreatePrivateChannel

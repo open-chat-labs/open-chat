@@ -290,6 +290,7 @@ pub mod happy_path {
                 bot_id,
                 granted_permissions,
                 location,
+                granted_autonomous_permissions: None,
             },
         );
 

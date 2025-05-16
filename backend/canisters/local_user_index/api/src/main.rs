@@ -18,6 +18,14 @@ fn main() {
     generate_ts_method!(local_user_index, bot_delete_channel);
     generate_ts_method!(local_user_index, bot_delete_messages);
     generate_ts_method!(local_user_index, bot_send_message);
+    generate_ts_method!(local_user_index, bot_subscribe_to_chat_events);
+    generate_ts_method!(local_user_index, bot_add_reaction_v2);
+    generate_ts_method!(local_user_index, bot_chat_details_v2);
+    generate_ts_method!(local_user_index, bot_chat_events_v2);
+    generate_ts_method!(local_user_index, bot_create_channel_v2);
+    generate_ts_method!(local_user_index, bot_delete_channel_v2);
+    generate_ts_method!(local_user_index, bot_delete_messages_v2);
+    generate_ts_method!(local_user_index, bot_send_message_v2);
     generate_ts_method!(local_user_index, install_bot);
     generate_ts_method!(local_user_index, invite_users_to_channel);
     generate_ts_method!(local_user_index, invite_users_to_community);

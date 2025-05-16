@@ -33,19 +33,13 @@ fn generate_bot_api_key_impl(args: Args, state: &mut RuntimeState) -> OCResult<S
     }
 
     let now = state.env.now();
-    let GenerateApiKeyResult { new_key, old_key } =
+    let GenerateApiKeyResult { new_key, old_key: _ } =
         state
             .data
             .bot_api_keys
             .generate(args.bot_id, args.requested_permissions.clone(), now, state.env.rng());
 
-    if let Some(old_key) = old_key {
-        state
-            .data
-            .chat
-            .events
-            .unsubscribe_bot_from_events(args.bot_id, Some(&old_key));
-    }
+    state.data.chat.events.unsubscribe_bot_from_events(args.bot_id);
 
     let api_key_token = BotApiKeyToken {
         gateway: state.data.local_user_index_canister_id,

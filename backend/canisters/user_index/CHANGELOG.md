@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Store blocked user mappings in UserIndex ([#7960](https://github.com/open-chat-labs/open-chat/pull/7960))
 - One time job to sync blocked users from NotificationsIndex ([#7961](https://github.com/open-chat-labs/open-chat/pull/7961))
+- Support autonomous bots without API keys ([#7985](https://github.com/open-chat-labs/open-chat/pull/7985))
 
 ## [[2.0.1749](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1749-user_index)] - 2025-05-13
 
