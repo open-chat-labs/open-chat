@@ -1,14 +1,4 @@
-export {
-    app,
-    ONE_GB,
-    percentageStorageRemaining,
-    percentageStorageUsed,
-    pinNumberFailure,
-    pinNumberRequired,
-    pinNumberResolver,
-    storage,
-    storageInGB,
-} from "./app.svelte";
+export * from "./app.svelte";
 export { FilteredProposals } from "./filteredProposals.svelte";
 export { localUpdates } from "./global/local.svelte";
 export * from "./path.svelte";

@@ -90,27 +90,29 @@ import { userStore } from "./users/users.svelte";
 export const ONE_MB = 1024 * 1024;
 export const ONE_GB = ONE_MB * 1024;
 
-export const pinNumberRequired = writable<boolean | undefined>();
-export const pinNumberResolver = writable<PinNumberResolver | undefined>();
-export const pinNumberFailure = writable<PinNumberFailures | undefined>();
+export const pinNumberRequiredStore = writable<boolean | undefined>();
+export const pinNumberResolverStore = writable<PinNumberResolver | undefined>();
+export const pinNumberFailureStore = writable<PinNumberFailures | undefined>();
 
-export const storage = writable<StorageStatus>({
+export const storageStore = writable<StorageStatus>({
     byteLimit: 0,
     bytesUsed: 0,
 });
 
-export const percentageStorageUsed = derived(storage, (storage) =>
+export const percentageStorageUsedStore = derived(storageStore, (storage) =>
     Math.ceil((storage.bytesUsed / storage.byteLimit) * 100),
 );
 
-export const percentageStorageRemaining = derived(storage, (storage) =>
+export const percentageStorageRemainingStore = derived(storageStore, (storage) =>
     Math.floor((1 - storage.bytesUsed / storage.byteLimit) * 100),
 );
 
-export const storageInGB = derived(storage, (storage) => ({
+export const storageInGBStore = derived(storageStore, (storage) => ({
     gbLimit: storage.byteLimit / ONE_GB,
     gbUsed: storage.bytesUsed / ONE_GB,
 }));
+
+export const messageFiltersStore = writable<MessageFilter[]>([]);
 
 export class AppState {
     #pinNumberRequired?: boolean;
@@ -121,6 +123,8 @@ export class AppState {
     #percentageStorageUsed: number = 0;
     #storageInGB = { gbLimit: 0, gbUsed: 0 };
     #offline: boolean = false;
+    #locale: string = "en";
+    #messageFilters = $state<MessageFilter[]>([]);
 
     constructor() {
         $effect.root(() => {
@@ -141,13 +145,16 @@ export class AppState {
 
         locale.subscribe((l) => (this.#locale = l ?? "en"));
         offlineStore.subscribe((offline) => (this.#offline = offline));
-        pinNumberRequired.subscribe((val) => (this.#pinNumberRequired = val));
-        pinNumberResolver.subscribe((val) => (this.#pinNumberResolver = val));
-        pinNumberFailure.subscribe((val) => (this.#pinNumberFailure = val));
-        storage.subscribe((val) => (this.#storage = val));
-        percentageStorageRemaining.subscribe((val) => (this.#percentageStorageRemaining = val));
-        percentageStorageUsed.subscribe((val) => (this.#percentageStorageUsed = val));
-        storageInGB.subscribe((val) => (this.#storageInGB = val));
+        pinNumberRequiredStore.subscribe((val) => (this.#pinNumberRequired = val));
+        pinNumberResolverStore.subscribe((val) => (this.#pinNumberResolver = val));
+        pinNumberFailureStore.subscribe((val) => (this.#pinNumberFailure = val));
+        storageStore.subscribe((val) => (this.#storage = val));
+        percentageStorageRemainingStore.subscribe(
+            (val) => (this.#percentageStorageRemaining = val),
+        );
+        percentageStorageUsedStore.subscribe((val) => (this.#percentageStorageUsed = val));
+        storageInGBStore.subscribe((val) => (this.#storageInGB = val));
+        messageFiltersStore.subscribe((val) => (this.#messageFilters = val));
     }
 
     #selectedAuthProvider = new LocalStorageState(
@@ -158,10 +165,6 @@ export class AppState {
     );
 
     #userCreated = new LocalStorageBoolState(configKeys.userCreated, false);
-
-    #locale = $state<string>("en");
-
-    #messageFilters = $state<MessageFilter[]>([]);
 
     #translations = $state<ReactiveMessageMap<string>>(new ReactiveMessageMap());
 
@@ -837,7 +840,7 @@ export class AppState {
     }
 
     set storage(val: StorageStatus) {
-        storage.set(val);
+        storageStore.set(val);
     }
 
     get storage() {
@@ -869,7 +872,7 @@ export class AppState {
     }
 
     set messageFilters(val: MessageFilter[]) {
-        this.#messageFilters = val;
+        messageFiltersStore.set(val);
     }
 
     get currentUser() {
@@ -1381,7 +1384,7 @@ export class AppState {
     }
 
     set pinNumberRequired(val: boolean | undefined) {
-        pinNumberRequired.set(val);
+        pinNumberRequiredStore.set(val);
     }
 
     get pinNumberResolver() {
@@ -1389,7 +1392,7 @@ export class AppState {
     }
 
     set pinNumberResolver(val: PinNumberResolver | undefined) {
-        pinNumberResolver.set(val);
+        pinNumberResolverStore.set(val);
     }
 
     get pinNumberFailure() {
@@ -1397,7 +1400,7 @@ export class AppState {
     }
 
     set pinNumberFailure(val: PinNumberFailures | undefined) {
-        pinNumberFailure.set(val);
+        pinNumberFailureStore.set(val);
     }
 }
 
