@@ -117,6 +117,8 @@ export const messageFiltersStore = writable<MessageFilter[]>([]);
 
 export const translationsStore = new ReactiveMessageMapStore<string>();
 
+export const snsFunctionsStore = writable<SnsFunctions>(new SnsFunctions());
+
 export class AppState {
     #pinNumberRequired?: boolean;
     #pinNumberResolver?: PinNumberResolver;
@@ -129,9 +131,10 @@ export class AppState {
     #locale: string = "en";
     #messageFilters: MessageFilter[] = [];
 
-    // TODO - this needs to use $state for the moment because we still have $derived that is depending on it
+    // TODO - these need to use $state for the moment because we still have $derived that is depending on it
     // but it can be a plain value once that's all gone
     #translations = $state<MessageMap<string>>(new MessageMap());
+    #snsFunctions = $state<SnsFunctions>(new SnsFunctions());
 
     constructor() {
         $effect.root(() => {
@@ -165,6 +168,7 @@ export class AppState {
 
         // TODO - this clone is only necessary to trigger downstream $derived. Remove when all $deriveds are gone
         translationsStore.subscribe((val) => (this.#translations = val.clone()));
+        snsFunctionsStore.subscribe((val) => (this.#snsFunctions = val));
     }
 
     #selectedAuthProvider = new LocalStorageState(
@@ -198,8 +202,6 @@ export class AppState {
             }
         );
     }
-
-    #snsFunctions = $state<SnsFunctions>(new SnsFunctions());
 
     #proposalTopics = $derived.by(() => {
         if (
@@ -730,7 +732,11 @@ export class AppState {
     });
 
     setSnsFunctions(snsCanisterId: string, list: NervousSystemFunction[]) {
-        this.#snsFunctions.set(snsCanisterId, list);
+        snsFunctionsStore.update((s) => {
+            const clone = s.clone();
+            clone.set(snsCanisterId, list);
+            return clone;
+        });
     }
 
     get snsFunctions() {
