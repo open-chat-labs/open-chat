@@ -44,6 +44,7 @@ import {
     type PinNumberResolver,
     type PublicApiKeyDetails,
     type ReadonlyMap,
+    type ReadonlySet,
     type Referral,
     SafeMap,
     type StorageStatus,
@@ -84,6 +85,7 @@ import { ReactiveMessageMapStore } from "./map";
 import { messageLocalUpdates } from "./message/local.svelte";
 import { pathState } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
+import { SafeSetStore } from "./set";
 import { SnsFunctions } from "./snsFunctions.svelte";
 import { hideMessagesFromDirectBlocked } from "./ui.svelte";
 import { messagesRead } from "./unread/markRead.svelte";
@@ -104,7 +106,7 @@ function communityFilterToString(filter: Set<string>): string {
     });
 }
 
-function hasFlag(mask: number, flag: ModerationFlag): boolean {
+export function hasFlag(mask: number, flag: ModerationFlag): boolean {
     return (mask & flag) !== 0;
 }
 export const pinNumberRequiredStore = writable<boolean | undefined>(undefined);
@@ -193,6 +195,7 @@ export const selectedAuthProviderStore = new LocalStorageStore(
     (a) => a,
     (a) => enumFromStringValue(AuthProvider, a, AuthProvider.II),
 );
+export const achievementsStore = new SafeSetStore<string>();
 
 export class AppState {
     #percentageStorageRemaining: number = 0;
@@ -302,12 +305,6 @@ export class AppState {
     });
 
     #messageFormatter: MessageFormatter | undefined;
-
-    hasFlag(mask: number, flag: ModerationFlag): boolean {
-        return (mask & flag) !== 0;
-    }
-
-    #achievements = $state<Set<string>>(new Set());
 
     #referrals = $state<Referral[]>([]);
 
@@ -1017,12 +1014,8 @@ export class AppState {
         this.#serverMessageActivitySummary = val;
     }
 
-    get achievements() {
-        return this.#achievements;
-    }
-
-    set achievements(val: Set<string>) {
-        this.#achievements = val;
+    get achievements(): ReadonlySet<string> {
+        return achievementsStore;
     }
 
     get referrals() {
@@ -1401,7 +1394,7 @@ export class AppState {
         // them individually is a mistake. But we also want to be able to set them from tests.
         // I'll try to lock this down a bit more later.
         this.#serverMessageActivitySummary = messageActivitySummary;
-        this.#achievements = achievements;
+        achievementsStore.fromSet(achievements);
         this.#referrals = referrals;
         this.#serverDirectChats = directChatsMap;
         this.#serverGroupChats = groupChatsMap;

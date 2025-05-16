@@ -1,4 +1,4 @@
-import { SafeSet, type Primitive, type ReadonlySet } from "openchat-shared";
+import { SafeSet, type Primitive, type ReadonlySet, type SetLike } from "openchat-shared";
 import { SvelteSet } from "svelte/reactivity";
 import type { Subscriber, Unsubscriber } from "svelte/store";
 import { scheduleUndo, type UndoLocalUpdate } from "./undo";
@@ -72,6 +72,14 @@ export class SafeSetStore<V> extends SafeSet<V> {
         this.#subs.forEach((sub) => {
             sub(this);
         });
+    }
+
+    fromSet(from: SetLike<V>) {
+        super.clear();
+        for (const val of from) {
+            super.add(val);
+        }
+        this.#publish();
     }
 
     subscribe(sub: Subscriber<SafeSet<V>>): Unsubscriber {
