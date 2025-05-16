@@ -57,7 +57,7 @@ fn c2c_bot_delete_messages(args: c2c_bot_delete_messages::Args) -> c2c_bot_delet
         if !state.data.is_bot_permitted(
             &bot_caller.bot,
             &bot_caller.initiator,
-            BotPermissions::from_chat_permission(ChatPermission::DeleteMessages),
+            &BotPermissions::from_chat_permission(ChatPermission::DeleteMessages),
         ) {
             return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }

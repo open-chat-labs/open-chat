@@ -44,7 +44,7 @@ fn c2c_bot_add_reaction(args: c2c_bot_add_reaction::Args) -> c2c_bot_add_reactio
             &bot_caller.bot,
             Some(args.channel_id),
             &bot_caller.initiator,
-            BotPermissions::from_chat_permission(ChatPermission::ReactToMessages),
+            &BotPermissions::from_chat_permission(ChatPermission::ReactToMessages),
         ) {
             return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }

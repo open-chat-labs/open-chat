@@ -8,7 +8,7 @@ use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use types::{
-    Chat, ChatEvent, ChatEventType, EventIndex, EventOrExpiredRange, EventWrapper, EventWrapperInternal, HydratedMention,
+    Chat, ChatEvent, ChatEventCategory, EventIndex, EventOrExpiredRange, EventWrapper, EventWrapperInternal, HydratedMention,
     Mention, Message, MessageId, MessageIndex, TimestampMillis, UserId,
 };
 
@@ -72,13 +72,13 @@ impl ChatEventsList {
         &self,
         event_key: EventKey,
         min_visible_event_index: EventIndex,
-        bot_permitted_event_types: Option<&HashSet<ChatEventType>>,
+        bot_permitted_event_types: Option<&HashSet<ChatEventCategory>>,
     ) -> Option<EventOrExpiredRangeInternal> {
         let event_index = self.event_index(event_key).filter(|e| *e >= min_visible_event_index)?;
 
         match self.get_value_or_neighbours(event_index) {
             Ok(event) => {
-                if bot_permitted_event_types.is_none_or(|pt| event.event.event_type().is_some_and(|t| pt.contains(&t))) {
+                if bot_permitted_event_types.is_none_or(|pt| event.event.event_category().is_some_and(|t| pt.contains(&t))) {
                     Some(EventOrExpiredRangeInternal::Event(event))
                 } else {
                     Some(EventOrExpiredRangeInternal::Unauthorized(event.index))
@@ -95,7 +95,7 @@ impl ChatEventsList {
         &self,
         event_key: EventKey,
         min_visible_event_index: EventIndex,
-        bot_permitted_event_types: Option<&HashSet<ChatEventType>>,
+        bot_permitted_event_types: Option<&HashSet<ChatEventCategory>>,
     ) -> Option<EventWrapperInternal<ChatEventInternal>> {
         self.get(event_key, min_visible_event_index, bot_permitted_event_types)
             .and_then(|e| e.into_event())
@@ -130,7 +130,7 @@ impl ChatEventsList {
         start: Option<EventKey>,
         ascending: bool,
         min_visible_event_index: EventIndex,
-        bot_permitted_event_types: Option<HashSet<ChatEventType>>,
+        bot_permitted_event_types: Option<HashSet<ChatEventCategory>>,
     ) -> Box<dyn Iterator<Item = EventOrExpiredRangeInternal> + '_> {
         let (min, max) = if let Some(start) = start {
             if let Some(index) = self.event_index(start) {
@@ -268,7 +268,7 @@ pub struct ChatEventsListReader<'r> {
     events_list: &'r ChatEventsList,
     last_updated_timestamps: &'r LastUpdatedTimestamps,
     min_visible_event_index: EventIndex,
-    bot_permitted_event_types: Option<HashSet<ChatEventType>>,
+    bot_permitted_event_types: Option<HashSet<ChatEventCategory>>,
 }
 
 impl Deref for ChatEventsListReader<'_> {
@@ -291,7 +291,7 @@ impl<'r> ChatEventsListReader<'r> {
         events_list: &'r ChatEventsList,
         last_updated_timestamps: &'r LastUpdatedTimestamps,
         min_visible_event_index: EventIndex,
-        bot_permitted_event_types: Option<HashSet<ChatEventType>>,
+        bot_permitted_event_types: Option<HashSet<ChatEventCategory>>,
     ) -> ChatEventsListReader<'r> {
         ChatEventsListReader {
             events_list,
@@ -565,7 +565,7 @@ struct ChatEventsListIterator<I> {
     expected_next: EventIndex,
     end: EventIndex,
     complete: bool,
-    bot_permitted_event_types: Option<HashSet<ChatEventType>>,
+    bot_permitted_event_types: Option<HashSet<ChatEventCategory>>,
 }
 
 impl<I: Iterator<Item = EventWrapperInternal<ChatEventInternal>>> Iterator for ChatEventsListIterator<I> {
@@ -582,7 +582,7 @@ impl<I: Iterator<Item = EventWrapperInternal<ChatEventInternal>>> Iterator for C
                 if self
                     .bot_permitted_event_types
                     .as_ref()
-                    .is_none_or(|pt| next.event.event_type().is_some_and(|t| pt.contains(&t)))
+                    .is_none_or(|pt| next.event.event_category().is_some_and(|t| pt.contains(&t)))
                 {
                     EventOrExpiredRangeInternal::Event(next)
                 } else {

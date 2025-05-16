@@ -7,7 +7,7 @@ pub mod c2c_bot_create_channel;
 pub mod c2c_bot_delete_channel;
 pub mod c2c_bot_delete_messages;
 pub mod c2c_bot_send_message;
-pub mod c2c_bot_subscribe_to_chat_events;
+pub mod c2c_bot_subscribe_to_events;
 pub mod c2c_create_proposals_channel;
 pub mod c2c_delete_community;
 pub mod c2c_freeze_community;

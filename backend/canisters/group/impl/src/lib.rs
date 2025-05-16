@@ -34,11 +34,12 @@ use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    AccessGateConfigInternal, Achievement, BotAdded, BotEventsCaller, BotGroupConfig, BotInitiator, BotNotification,
-    BotPermissions, BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics, CommunityId, Cycles,
-    Document, Empty, EventIndex, EventsCaller, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership,
-    GroupPermissions, GroupSubtype, IdempotentEnvelope, MAX_THREADS_IN_SUMMARY, MessageIndex, Milliseconds, MultiUserChat,
-    Notification, OCResult, Rules, TimestampMillis, Timestamped, UserId, UserNotification, UserNotificationPayload, UserType,
+    AccessGateConfigInternal, Achievement, BotAdded, BotEventsCaller, BotInitiator, BotNotification, BotPermissions,
+    BotRemoved, BotSubscriptions, BotUpdated, BuildVersion, Caller, CanisterId, ChatEventCategory, ChatId, ChatMetrics,
+    CommunityId, Cycles, Document, Empty, EventIndex, EventsCaller, FrozenGroupInfo, GroupCanisterGroupChatSummary,
+    GroupMembership, GroupPermissions, GroupSubtype, IdempotentEnvelope, MAX_THREADS_IN_SUMMARY, MessageIndex, Milliseconds,
+    MultiUserChat, Notification, OCResult, Rules, TimestampMillis, Timestamped, UserId, UserNotification,
+    UserNotificationPayload, UserType,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
@@ -750,13 +751,13 @@ impl Data {
         if let Some(initiator) = bot_initiator {
             let bot_user_id = caller.into();
             let permissions = self.granted_bot_permissions(&bot_user_id, &initiator)?;
-            let bot_permitted_event_types = permissions.permitted_event_types_to_read();
+            let bot_permitted_event_types = permissions.permitted_chat_event_categories_to_read();
             if bot_permitted_event_types.is_empty() {
                 return None;
             }
             Some(EventsCaller::Bot(BotEventsCaller {
                 bot: bot_user_id,
-                bot_permitted_event_types,
+                bot_permitted_event_categories: bot_permitted_event_types,
                 min_visible_event_index: EventIndex::default(),
             }))
         } else if let Some(user_id) = self.lookup_user_id(caller) {
@@ -783,7 +784,7 @@ impl Data {
         )
     }
 
-    pub fn is_bot_permitted(&self, bot_id: &UserId, initiator: &BotInitiator, required: BotPermissions) -> bool {
+    pub fn is_bot_permitted(&self, bot_id: &UserId, initiator: &BotInitiator, required: &BotPermissions) -> bool {
         self.granted_bot_permissions(bot_id, initiator)
             .is_some_and(|granted| required.is_subset(&granted))
     }
@@ -799,38 +800,90 @@ impl Data {
                 .map(|u| BotPermissions::intersect(&bot.permissions, &u)),
             BotInitiator::ApiKeySecret(secret) => self.bot_api_keys.permissions_if_secret_matches(bot_id, secret).cloned(),
             BotInitiator::ApiKeyPermissions(permissions) => Some(permissions.clone()),
+            BotInitiator::Autonomous => bot.autonomous_permissions.clone(),
         }
     }
 
-    pub fn install_bot(&mut self, owner_id: UserId, user_id: UserId, config: BotGroupConfig, now: TimestampMillis) -> bool {
-        if !self.bots.add(user_id, owner_id, config.permissions, now) {
+    pub fn install_bot(
+        &mut self,
+        owner_id: UserId,
+        bot_id: UserId,
+        permissions: BotPermissions,
+        autonomous_permissions: Option<BotPermissions>,
+        default_subscriptions: Option<BotSubscriptions>,
+        now: TimestampMillis,
+    ) -> bool {
+        if !self.bots.add(
+            bot_id,
+            owner_id,
+            permissions,
+            autonomous_permissions.clone(),
+            default_subscriptions.clone(),
+            now,
+        ) {
             return false;
         }
 
         self.chat.events.push_main_event(
             ChatEventInternal::BotAdded(Box::new(BotAdded {
-                user_id,
+                user_id: bot_id,
                 added_by: owner_id,
             })),
             0,
             now,
         );
 
+        // Subscribe to permitted chat events
+        if let (Some(subscriptions), Some(permissions)) = (default_subscriptions, autonomous_permissions) {
+            let permitted_categories = permissions.permitted_chat_event_categories_to_read();
+
+            self.chat.events.subscribe_bot_to_events(
+                bot_id,
+                subscriptions
+                    .chat
+                    .into_iter()
+                    .filter(|t| permitted_categories.contains(&ChatEventCategory::from(*t)))
+                    .collect(),
+            );
+        }
+
         true
     }
 
-    pub fn update_bot(&mut self, owner_id: UserId, user_id: UserId, config: BotGroupConfig, now: TimestampMillis) -> bool {
-        if !self.bots.update(user_id, config.permissions, now) {
+    pub fn update_bot(
+        &mut self,
+        owner_id: UserId,
+        bot_id: UserId,
+        permissions: BotPermissions,
+        autonomous_permissions: Option<BotPermissions>,
+        now: TimestampMillis,
+    ) -> bool {
+        if !self.bots.update(bot_id, permissions, autonomous_permissions.clone(), now) {
             return false;
         }
 
         self.chat.events.push_main_event(
             ChatEventInternal::BotUpdated(Box::new(BotUpdated {
-                user_id,
+                user_id: bot_id,
                 updated_by: owner_id,
             })),
             0,
             now,
+        );
+
+        // Subscribe to permitted chat events
+        let bot = self.bots.get(&bot_id).unwrap();
+        let permissions = autonomous_permissions.unwrap_or_default();
+        let permitted_categories = permissions.permitted_chat_event_categories_to_read();
+        let subscriptions = bot.default_subscriptions.clone().unwrap_or_default();
+
+        self.chat.events.subscribe_bot_to_events(
+            bot_id,
+            subscriptions
+                .chat
+                .into_iter()
+                .filter(|t| permitted_categories.contains(&ChatEventCategory::from(*t)))
+                .collect(),
         );
 
         true
@@ -842,7 +895,7 @@ impl Data {
         }
 
         self.bot_api_keys.delete(bot_id);
-        self.chat.events.unsubscribe_bot_from_events(bot_id, None);
+        self.chat.events.unsubscribe_bot_from_events(bot_id);
 
         self.chat.events.push_main_event(
             ChatEventInternal::BotRemoved(Box::new(BotRemoved {

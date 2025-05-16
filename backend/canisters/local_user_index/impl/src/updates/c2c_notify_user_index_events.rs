@@ -99,6 +99,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 ev.commands,
                 ev.endpoint,
                 ev.autonomous_config,
+                ev.default_subscriptions,
                 ev.permitted_install_location,
             );
         }

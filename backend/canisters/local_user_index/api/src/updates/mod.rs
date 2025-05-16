@@ -1,9 +1,14 @@
 pub mod bot_add_reaction;
+pub mod bot_add_reaction_v2;
 pub mod bot_create_channel;
+pub mod bot_create_channel_v2;
 pub mod bot_delete_channel;
+pub mod bot_delete_channel_v2;
 pub mod bot_delete_messages;
+pub mod bot_delete_messages_v2;
 pub mod bot_send_message;
-pub mod bot_subscribe_to_chat_events;
+pub mod bot_send_message_v2;
+pub mod bot_subscribe_to_events;
 pub mod c2c_community_canister;
 pub mod c2c_create_community;
 pub mod c2c_create_group;

@@ -63,7 +63,7 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
             &bot_caller.bot,
             Some(args.channel_id),
             &bot_caller.initiator,
-            BotPermissions::from_message_permission((&args.content).into()),
+            &BotPermissions::from_message_permission((&args.content).into()),
         )
     }) {
         return Error(OCErrorCode::InitiatorNotAuthorized.into());

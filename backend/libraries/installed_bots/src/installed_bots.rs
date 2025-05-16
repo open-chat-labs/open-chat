@@ -3,8 +3,8 @@ use constants::calculate_summary_updates_data_removal_cutoff;
 use rand::{rngs::StdRng, Rng};
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use std::collections::{btree_map::Entry, BTreeMap, BTreeSet, HashMap, HashSet};
-use types::{ApiKey, BotPermissions, ChannelId, ChatEventType, EventIndex, PublicApiKeyDetails, TimestampMillis, UserId};
+use std::collections::{btree_map::Entry, BTreeMap, BTreeSet, HashMap};
+use types::{ApiKey, BotPermissions, BotSubscriptions, PublicApiKeyDetails, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct InstalledBots {
@@ -14,41 +14,64 @@ pub struct InstalledBots {
 }
 
 impl InstalledBots {
-    pub fn add(&mut self, user_id: UserId, added_by: UserId, permissions: BotPermissions, now: TimestampMillis) -> bool {
-        if self.bots.contains_key(&user_id) {
+    pub fn add(
+        &mut self,
+        bot_id: UserId,
+        added_by: UserId,
+        permissions: BotPermissions,
+        autonomous_permissions: Option<BotPermissions>,
+        default_subscriptions: Option<BotSubscriptions>,
+        now: TimestampMillis,
+    ) -> bool {
+        if self.bots.contains_key(&bot_id) {
             return false;
         }
 
-        self.bots.insert(user_id, BotInternal { added_by, permissions });
-        self.prune_then_insert_member_update(user_id, BotUpdate::Added, now);
+        self.bots.insert(
+            bot_id,
+            BotInternal {
+                added_by,
+                permissions,
+                autonomous_permissions,
+                default_subscriptions,
+            },
+        );
+        self.prune_then_insert_member_update(bot_id, BotUpdate::Added, now);
 
         true
     }
 
-    pub fn update(&mut self, user_id: UserId, permissions: BotPermissions, now: TimestampMillis) -> bool {
-        match self.bots.entry(user_id) {
+    pub fn update(
+        &mut self,
+        bot_id: UserId,
+        permissions: BotPermissions,
+        autonomous_permissions: Option<BotPermissions>,
+        now: TimestampMillis,
+    ) -> bool {
+        match self.bots.entry(bot_id) {
             Entry::Vacant(_) => false,
             Entry::Occupied(mut o) => {
                 let bot = o.get_mut();
                 bot.permissions = permissions;
-                self.prune_then_insert_member_update(user_id, BotUpdate::Updated, now);
+                bot.autonomous_permissions = autonomous_permissions;
+                self.prune_then_insert_member_update(bot_id, BotUpdate::Updated, now);
                 true
             }
         }
     }
 
-    pub fn remove(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
-        let removed = self.bots.remove(&user_id).is_some();
+    pub fn remove(&mut self, bot_id: UserId, now: TimestampMillis) -> bool {
+        let removed = self.bots.remove(&bot_id).is_some();
 
         if removed {
-            self.prune_then_insert_member_update(user_id, BotUpdate::Removed, now);
+            self.prune_then_insert_member_update(bot_id, BotUpdate::Removed, now);
         }
 
         removed
     }
 
-    pub fn get(&self, user_id: &UserId) -> Option<&BotInternal> {
-        self.bots.get(user_id)
+    pub fn get(&self, bot_id: &UserId) -> Option<&BotInternal> {
+        self.bots.get(bot_id)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (&UserId, &BotInternal)> {
@@ -60,16 +83,16 @@ impl InstalledBots {
             .iter()
             .rev()
             .take_while(move |(ts, _, _)| *ts > since)
-            .map(|(_, user_id, update)| (*user_id, *update))
+            .map(|(_, bot_id, update)| (*bot_id, *update))
     }
 
     pub fn last_updated(&self) -> TimestampMillis {
         self.updates.iter().next_back().map_or(0, |(ts, _, _)| *ts)
     }
 
-    fn prune_then_insert_member_update(&mut self, user_id: UserId, update: BotUpdate, now: TimestampMillis) {
+    fn prune_then_insert_member_update(&mut self, bot_id: UserId, update: BotUpdate, now: TimestampMillis) {
         self.prune_member_updates(now);
-        self.updates.insert((now, user_id, update));
+        self.updates.insert((now, bot_id, update));
     }
 
     fn prune_member_updates(&mut self, now: TimestampMillis) -> u32 {
@@ -100,12 +123,10 @@ pub enum BotUpdate {
 pub struct BotInternal {
     pub added_by: UserId,
     pub permissions: BotPermissions,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct BotEventVisibility {
-    pub min_visible_event_indexes: HashMap<Option<ChannelId>, EventIndex>,
-    pub event_types: HashSet<ChatEventType>,
+    #[serde(default)]
+    pub autonomous_permissions: Option<BotPermissions>,
+    #[serde(default)]
+    pub default_subscriptions: Option<BotSubscriptions>,
 }
 
 #[derive(Serialize, Deserialize, Default)]
@@ -116,7 +137,7 @@ pub struct BotApiKeys {
 impl BotApiKeys {
     pub fn generate(
         &mut self,
-        user_id: UserId,
+        bot_id: UserId,
         granted_permissions: BotPermissions,
         now: TimestampMillis,
         rng: &mut StdRng,
@@ -125,11 +146,11 @@ impl BotApiKeys {
         let old_key = self
             .keys
             .insert(
-                user_id,
+                bot_id,
                 ApiKey {
                     secret: new_key.clone(),
                     granted_permissions,
-                    generated_by: user_id,
+                    generated_by: bot_id,
                     generated_at: now,
                 },
             )
