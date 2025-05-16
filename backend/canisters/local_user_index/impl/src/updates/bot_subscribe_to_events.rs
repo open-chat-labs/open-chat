@@ -1,6 +1,6 @@
 use crate::read_state;
 use canister_api_macros::update;
-use local_user_index_canister::bot_subscribe_to_chat_events::*;
+use local_user_index_canister::bot_subscribe_to_events::*;
 use oc_error_codes::OCErrorCode;
 use types::Chat;
 
