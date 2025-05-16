@@ -2,7 +2,9 @@
     import {
         app,
         cryptoLookup,
+        currentUserIdStore,
         iconSize,
+        isDiamondStore,
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
         publish,
@@ -192,8 +194,8 @@
     function shareMessage() {
         shareFunctions.shareMessage(
             $_,
-            app.currentUserId,
-            msg.sender === app.currentUserId,
+            $currentUserIdStore,
+            msg.sender === $currentUserIdStore,
             msg,
             $cryptoLookup,
         );
@@ -260,7 +262,7 @@
     }
 
     function translateMessage() {
-        if (!app.isDiamond) {
+        if (!$isDiamondStore) {
             publish("upgrade");
         } else {
             const text = client.getMessageText(msg.content);

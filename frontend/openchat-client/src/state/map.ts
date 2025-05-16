@@ -8,6 +8,7 @@ import {
     type ReadonlyMap,
 } from "openchat-shared";
 import { SvelteMap, SvelteSet } from "svelte/reactivity";
+import type { Subscriber, Unsubscriber } from "svelte/store";
 import { scheduleUndo, type UndoLocalUpdate } from "./undo";
 
 export class LocalMap<K, V> {
@@ -80,6 +81,54 @@ export class ReactiveCommunityMap<V> extends SafeMap<CommunityIdentifier, V> {
             (id) => id.communityId,
             (k) => ({ kind: "community", communityId: String(k) }),
             () => new SvelteMap(),
+        );
+    }
+}
+
+// This is a map that functions as a svelte store
+export class SafeMapStore<K, V> extends SafeMap<K, V> {
+    #subs: Subscriber<SafeMap<K, V>>[] = [];
+    #publish() {
+        this.#subs.forEach((sub) => {
+            sub(this);
+        });
+    }
+
+    subscribe(sub: Subscriber<SafeMap<K, V>>): Unsubscriber {
+        this.#subs.push(sub);
+        sub(this);
+        return () => {
+            this.#subs = this.#subs.filter((s) => s !== sub);
+        };
+    }
+
+    clear() {
+        if (super.size > 0) {
+            super.clear();
+            this.#publish();
+        }
+    }
+
+    set(key: K, val: V) {
+        super.set(key, val);
+        this.#publish();
+        return this;
+    }
+
+    delete(key: K) {
+        const deleted = super.delete(key);
+        if (deleted) {
+            this.#publish();
+        }
+        return deleted;
+    }
+}
+
+export class ReactiveMessageMapStore<V> extends SafeMapStore<bigint, V> {
+    constructor() {
+        super(
+            (k) => k.toString(),
+            (k) => BigInt(k),
         );
     }
 }

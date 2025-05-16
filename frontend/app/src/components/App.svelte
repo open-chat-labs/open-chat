@@ -27,6 +27,7 @@
         OpenChat,
         type UpdateMarketMakerConfigArgs,
         type VideoCallType,
+        anonUserStore,
         app,
         botState,
         fontSize,
@@ -107,7 +108,7 @@
     let landingPageRoute = $derived(isLandingPageRoute(pathState.route));
     let homeRoute = $derived(pathState.route.kind === "home_route");
     let showLandingPage = $derived(
-        landingPageRoute || (homeRoute && app.identityState.kind === "anon" && app.anonUser),
+        landingPageRoute || (homeRoute && app.identityState.kind === "anon" && $anonUserStore),
     );
     let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
     let burstPath = $derived(

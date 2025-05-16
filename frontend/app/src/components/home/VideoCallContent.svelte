@@ -4,6 +4,7 @@
         OpenChat,
         app,
         chatIdentifiersEqual,
+        currentUserIdStore,
         publish,
         userStore,
         type VideoCallContent,
@@ -36,7 +37,7 @@
     let endedDate = $derived(content.ended ? new Date(Number(content.ended)) : undefined);
     let missed = $derived(
         content.ended &&
-            content.participants.find((p) => p.userId === app.currentUserId) === undefined,
+            content.participants.find((p) => p.userId === $currentUserIdStore) === undefined,
     );
     let duration = $derived(
         content.ended !== undefined && timestamp !== undefined
@@ -51,7 +52,7 @@
             publish("startVideoCall", {
                 chatId: app.selectedChatSummary.id,
                 callType: app.selectedChatSummary.videoCallInProgress.callType,
-                join: true
+                join: true,
             });
         }
     }

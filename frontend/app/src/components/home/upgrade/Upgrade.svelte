@@ -2,9 +2,10 @@
     import {
         LEDGER_CANISTER_CHAT,
         LEDGER_CANISTER_ICP,
-        app,
+        canExtendDiamondStore,
         cryptoBalance,
         cryptoLookup,
+        isDiamondStore,
     } from "openchat-client";
     import { onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -47,7 +48,7 @@
     }
 
     onMount(() => {
-        if (app.canExtendDiamond) {
+        if ($canExtendDiamondStore) {
             step = "payment";
         }
     });
@@ -61,9 +62,9 @@
                     <div class="title">
                         <Diamond size={"1em"} show={"blue"} />
                         {#if step === "features"}
-                            {#if app.canExtendDiamond}
+                            {#if $canExtendDiamondStore}
                                 <Translatable resourceKey={i18nKey("upgrade.extend")} />
-                            {:else if app.isDiamond}
+                            {:else if $isDiamondStore}
                                 <Translatable resourceKey={i18nKey("upgrade.benefits")} />
                             {:else}
                                 <Translatable resourceKey={i18nKey("upgrade.featuresTitle")} />
@@ -94,8 +95,8 @@
             <div class="body">
                 {#if step === "features"}
                     <Features
-                        canExtend={app.canExtendDiamond}
-                        isDiamond={app.isDiamond}
+                        canExtend={$canExtendDiamondStore}
+                        isDiamond={$isDiamondStore}
                         {onCancel}
                         onUpgrade={() => (step = "payment")} />
                 {/if}

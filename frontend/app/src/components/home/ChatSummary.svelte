@@ -11,12 +11,14 @@
         app,
         AvatarSize,
         botState,
+        currentUserIdStore,
         iconSize,
         mobileWidth,
         notificationsSupported,
         OpenChat,
         publish,
         routeForScope,
+        suspendedUserStore,
         byContext as typersByContext,
         userStore,
     } from "openchat-client";
@@ -189,7 +191,7 @@
         let userType: "user" | "me" | "webhook" = "user";
         if (chatSummary.latestMessage.event.senderContext?.kind === "webhook") {
             userType = "webhook";
-        } else if (chatSummary.latestMessage.event.sender === app.currentUserId) {
+        } else if (chatSummary.latestMessage.event.sender === $currentUserIdStore) {
             userType = "me";
         }
 
@@ -217,7 +219,7 @@
                 ? botState.externalBots.get(chatSummary.them.userId)
                 : undefined;
         if (directBot !== undefined) {
-            client.uninstallBot({ kind: "direct_chat", userId: app.currentUserId }, directBot.id);
+            client.uninstallBot({ kind: "direct_chat", userId: $currentUserIdStore }, directBot.id);
         } else {
             client.removePreviewedChat(chatSummary.id);
         }
@@ -436,7 +438,7 @@
                         {unreadMessages > 999 ? "999+" : unreadMessages}
                     </div>
                 {/if}
-                {#if !app.suspendedUser}
+                {#if !$suspendedUserStore}
                     <div class="menu">
                         <MenuIcon position={"bottom"} align={"end"}>
                             {#snippet menuIcon()}

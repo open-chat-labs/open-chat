@@ -314,6 +314,4 @@ export function communityIdentifiersEqual(
     return a.communityId === b.communityId;
 }
 
-export type CommunityFilter = {
-    languages: Set<string>;
-};
+export type CommunityFilter = Set<string>;

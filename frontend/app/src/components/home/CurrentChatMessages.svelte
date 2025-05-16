@@ -13,6 +13,7 @@
         FilteredProposals,
         app,
         chatIdentifiersEqual,
+        currentUserIdStore,
         localUpdates,
         pathState,
         routeForChatIdentifier,
@@ -141,10 +142,10 @@
 
     function isMe(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            return evt.event.sender === app.currentUserId;
+            return evt.event.sender === $currentUserIdStore;
         }
         if (evt.event.kind === "group_chat_created") {
-            return evt.event.created_by === app.currentUserId;
+            return evt.event.created_by === $currentUserIdStore;
         }
         return false;
     }
@@ -253,7 +254,7 @@
     let timeline = $derived(
         client.groupEvents(
             [...app.selectedChat.events].reverse(),
-            app.currentUserId,
+            $currentUserIdStore,
             app.selectedChat.expandedDeletedMessages,
             groupInner(filteredProposals),
         ),

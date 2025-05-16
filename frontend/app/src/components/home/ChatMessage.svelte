@@ -5,6 +5,8 @@
         AvatarSize,
         type ChatIdentifier,
         type ChatType,
+        currentUserIdStore,
+        currentUserStore,
         type Dimensions,
         type EnhancedReplyContext,
         iconSize,
@@ -21,6 +23,7 @@
         screenWidth,
         ScreenWidth,
         type SenderContext,
+        translationsStore,
         ui,
         unconfirmedReadByThem,
         undeletingMessagesStore,
@@ -292,19 +295,19 @@
 
     function toggleReaction(isQuickReaction: boolean, reaction: string) {
         if (canReact) {
-            const kind = client.containsReaction(app.currentUserId, reaction, msg.reactions)
+            const kind = client.containsReaction($currentUserIdStore, reaction, msg.reactions)
                 ? "remove"
                 : "add";
 
             client
                 .selectReaction(
                     chatId,
-                    app.currentUserId,
+                    $currentUserIdStore,
                     threadRootMessageIndex,
                     msg.messageId,
                     reaction,
-                    app.currentUser.username,
-                    app.currentUser.displayName,
+                    $currentUserStore.username,
+                    $currentUserStore.displayName,
                     kind,
                 )
                 .then((success) => {
@@ -446,7 +449,7 @@
     let mediaDimensions = $derived(extractDimensions(msg.content));
     let fill = $derived(client.fillMessage(msg));
     let showAvatar = $derived($screenWidth !== ScreenWidth.ExtraExtraSmall);
-    let translated = $derived(app.translations.has(msg.messageId));
+    let translated = $derived($translationsStore.has(msg.messageId));
     let threadSummary = $derived(msg.thread);
     let msgUrl = $derived(
         `${routeForMessage(app.chatListScope.kind, { chatId }, msg.messageIndex)}?open=true`,
@@ -459,7 +462,7 @@
     );
     let undeleting = $derived($undeletingMessagesStore.has(msg.messageId));
     let deletedByMe = $derived(
-        msg.content.kind === "deleted_content" && msg.content.deletedBy == app.currentUserId,
+        msg.content.kind === "deleted_content" && msg.content.deletedBy == $currentUserIdStore,
     );
     let permanentlyDeleted = $derived(
         deletedByMe &&

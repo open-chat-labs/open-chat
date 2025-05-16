@@ -4,8 +4,10 @@
         type CommunitySummary,
         type OpenChat,
         activityFeedShowing,
+        anonUserStore,
         app,
         communityListScrollTop,
+        currentUserIdStore,
         emptyCombinedUnreadCounts,
         mobileWidth,
         navOpen,
@@ -41,7 +43,7 @@
     const client = getContext<OpenChat>("client");
     const flipDurationMs = 300;
 
-    let user = $derived(userStore.get(app.currentUserId));
+    let user = $derived(userStore.get($currentUserIdStore));
     let avatarSize = $derived($mobileWidth ? AvatarSize.Small : AvatarSize.Default);
     let communityExplorer = $derived(pathState.route.kind === "communities_route");
     let selectedCommunityId = $derived(app.selectedCommunitySummary?.id.communityId);
@@ -177,7 +179,7 @@
                 </div>
             </LeftNavItem>
         {/if}
-        {#if !app.anonUser}
+        {#if !$anonUserStore}
             {#if !$disableChit && (claimChitAvailable || !$hideChitIcon)}
                 <LeftNavItem
                     label={i18nKey(

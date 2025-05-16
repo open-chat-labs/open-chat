@@ -1,5 +1,12 @@
 <script lang="ts">
-    import { AuthProvider, type OpenChat, app, pathState } from "openchat-client";
+    import {
+        AuthProvider,
+        type OpenChat,
+        anonUserStore,
+        app,
+        pathState,
+        selectedAuthProviderStore,
+    } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { configKeys } from "../../utils/config";
@@ -33,26 +40,26 @@
 
     let restrictTo = $derived(new Set(pathState.querystring.getAll("auth")));
     let loggingInWithEmail = $derived(
-        loginState === "logging-in" && app.selectedAuthProvider === AuthProvider.EMAIL,
+        loginState === "logging-in" && $selectedAuthProviderStore === AuthProvider.EMAIL,
     );
     let loggingInWithEth = $derived(
-        loginState === "logging-in" && app.selectedAuthProvider === AuthProvider.ETH,
+        loginState === "logging-in" && $selectedAuthProviderStore === AuthProvider.ETH,
     );
     let loggingInWithSol = $derived(
-        loginState === "logging-in" && app.selectedAuthProvider === AuthProvider.SOL,
+        loginState === "logging-in" && $selectedAuthProviderStore === AuthProvider.SOL,
     );
     let spinning = $derived(
         loginState === "logging-in" &&
             error === undefined &&
-            app.selectedAuthProvider !== AuthProvider.ETH &&
-            app.selectedAuthProvider !== AuthProvider.SOL,
+            $selectedAuthProviderStore !== AuthProvider.ETH &&
+            $selectedAuthProviderStore !== AuthProvider.SOL,
     );
 
     onMount(() => {
         emailSigninHandler.addEventListener("email_signin_event", emailEvent);
         client.gaTrack("opened_signin_modal", "registration");
         return () => {
-            if (app.anonUser && app.identityState.kind === "logging_in") {
+            if ($anonUserStore && app.identityState.kind === "logging_in") {
                 client.updateIdentityState({ kind: "anon" });
             }
             emailSigninHandler.removeEventListener("email_signin_event", emailEvent);
@@ -76,7 +83,7 @@
     });
 
     function cancel() {
-        if (app.anonUser && app.identityState.kind === "logging_in") {
+        if ($anonUserStore && app.identityState.kind === "logging_in") {
             client.updateIdentityState({ kind: "anon" });
         }
         onClose();
@@ -94,7 +101,7 @@
         }
 
         localStorage.setItem(configKeys.selectedAuthEmail, email);
-        app.selectedAuthProvider = provider;
+        selectedAuthProviderStore.set(provider);
         loginState = "logging-in";
         error = undefined;
 

@@ -280,7 +280,7 @@ import type { OpenChatConfig } from "./config";
 import { AIRDROP_BOT_USER_ID } from "./constants";
 import { configureEffects } from "./effects.svelte";
 import { snapshot } from "./snapshot.svelte";
-import { app } from "./state/app.svelte";
+import { app, hasFlag } from "./state/app.svelte";
 import { botState } from "./state/bots.svelte";
 import { type CommunityMergedState } from "./state/community_details";
 import { localUpdates } from "./state/global";
@@ -6527,7 +6527,7 @@ export class OpenChat {
     }
 
     hasModerationFlag(flags: number, flag: ModerationFlag): boolean {
-        return app.hasFlag(flags, flag);
+        return hasFlag(flags, flag);
     }
 
     setModerationFlags(flags: number): Promise<number> {

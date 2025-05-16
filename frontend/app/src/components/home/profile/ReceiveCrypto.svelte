@@ -1,6 +1,12 @@
 <script lang="ts">
     import BitcoinAccountInfo from "@components/home/BitcoinAccountInfo.svelte";
-    import { app, BTC_SYMBOL, cryptoBalance, cryptoLookup, mobileWidth } from "openchat-client";
+    import {
+        BTC_SYMBOL,
+        cryptoBalance,
+        cryptoLookup,
+        currentUserIdStore,
+        mobileWidth,
+    } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
@@ -49,7 +55,7 @@
     {#snippet body()}
         <form class="body">
             {#if symbol === BTC_SYMBOL}
-                <BitcoinAccountInfo qrSize={"larger"} centered userId={app.currentUserId} />
+                <BitcoinAccountInfo qrSize={"larger"} centered userId={$currentUserIdStore} />
             {:else}
                 <AccountInfo qrSize={"larger"} centered {ledger} />
             {/if}

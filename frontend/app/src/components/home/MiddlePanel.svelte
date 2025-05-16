@@ -4,6 +4,7 @@
         app,
         botState,
         chatIdentifiersEqual,
+        filteredProposalsStore,
         pathState,
         rightPanelMode,
         rightPanelWidth,
@@ -132,7 +133,7 @@
         <CurrentChat
             {joining}
             chat={app.selectedChatSummary}
-            filteredProposals={app.filteredProposals} />
+            filteredProposals={$filteredProposalsStore} />
     {/if}
 </section>
 

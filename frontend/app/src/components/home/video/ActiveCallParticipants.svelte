@@ -4,8 +4,8 @@
         type MultiUserChatIdentifier,
         type OpenChat,
         type UserSummary,
-        app,
         chatIdentifiersEqual,
+        currentUserIdStore,
         subscribe,
         ui,
     } from "openchat-client";
@@ -137,7 +137,7 @@
                     {isOwner}
                     callType={$activeVideoCall.callType}
                     onDemote={demote}
-                    presence={isOwner && participant.userId === app.currentUserId
+                    presence={isOwner && participant.userId === $currentUserIdStore
                         ? "owner"
                         : "default"}
                     {participant} />

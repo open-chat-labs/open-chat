@@ -1,9 +1,9 @@
 <script lang="ts">
     import type { ChatSummary, OpenChat, UserSummary } from "openchat-client";
     import {
-        app,
         cryptoBalance as cryptoBalanceStore,
         enhancedCryptoLookup as cryptoLookup,
+        currentUserIdStore,
         iconSize,
         mobileWidth,
         userStore,
@@ -78,7 +78,7 @@
         // default the receiver to the other user in a direct chat
         if (chat.kind === "direct_chat") {
             receiver = userStore.get(chat.them.userId);
-        } else if (defaultReceiver !== undefined && defaultReceiver !== app.currentUserId) {
+        } else if (defaultReceiver !== undefined && defaultReceiver !== $currentUserIdStore) {
             receiver = userStore.get(defaultReceiver);
         }
     });

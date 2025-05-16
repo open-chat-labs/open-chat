@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { app } from "openchat-client";
+    import { currentUserStore } from "openchat-client";
     import { i18nKey } from "../i18n/i18n";
     import Markdown from "./home/Markdown.svelte";
     import ModalContent from "./ModalContent.svelte";
@@ -12,7 +12,7 @@
     let { onClose }: Props = $props();
 
     function buildNoticeText(): string {
-        const suspensionDetails = app.currentUser.suspensionDetails!;
+        const suspensionDetails = $currentUserStore.suspensionDetails!;
         const actionDate = new Date(Number(suspensionDetails.action.timestamp));
         const actionText =
             suspensionDetails.action.kind === "delete_action" ? "deleted" : "unsuspended";

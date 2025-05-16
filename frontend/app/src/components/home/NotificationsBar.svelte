@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
-    import { app, notificationStatus } from "openchat-client";
+    import { anonUserStore, notificationStatus } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Button from "../Button.svelte";
@@ -14,7 +14,7 @@
     $inspect(`PUSH STATUS: ${$notificationStatus}`);
 </script>
 
-{#if !app.anonUser && $notificationStatus === "prompt"}
+{#if !$anonUserStore && $notificationStatus === "prompt"}
     <Overlay dismissible>
         <ModalContent>
             {#snippet header()}

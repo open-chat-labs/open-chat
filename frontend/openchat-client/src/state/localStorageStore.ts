@@ -1,16 +1,15 @@
-export class LocalStorageState<V> {
+import { WritableStore, type EqualityCheck } from "./writable";
+
+export class LocalStorageStore<V> extends WritableStore<V> {
     #key: string;
-    #defVal: V;
     #serialise: (key: V) => string;
     #deserialise: (key: string) => V;
-    #value = $state<V>();
 
-    #initialise(): V {
+    #initialise() {
         const val = localStorage.getItem(this.#key);
-        if (val == null) {
-            return this.#defVal;
+        if (val != null) {
+            super.set(this.#deserialise(val));
         }
-        return this.#deserialise(val);
     }
 
     constructor(
@@ -18,34 +17,31 @@ export class LocalStorageState<V> {
         defVal: V,
         serialiser?: (key: V) => string,
         deserialiser?: (primitive: string) => V,
+        eq?: EqualityCheck<V>,
     ) {
+        super(defVal, eq);
         this.#key = key;
-        this.#defVal = defVal;
         this.#serialise = serialiser ?? ((v) => v as string);
         this.#deserialise = deserialiser ?? ((v) => v as V);
-        this.#value = this.#initialise();
+        this.#initialise();
     }
 
-    get value(): V {
-        return this.#value ?? this.#defVal;
-    }
-
-    set value(val: V | undefined) {
+    set(val: V) {
         if (val === undefined) {
             localStorage.removeItem(this.#key);
         } else {
             localStorage.setItem(this.#key, this.#serialise(val));
         }
-        this.#value = val;
+        super.set(val);
     }
 }
 
-export class LocalStorageBoolState extends LocalStorageState<boolean> {
+export class LocalStorageBoolStore extends LocalStorageStore<boolean> {
     constructor(key: string, defVal: boolean) {
         super(key, defVal);
     }
 
     toggle() {
-        this.value = !this.value;
+        this.set(!this.current);
     }
 }

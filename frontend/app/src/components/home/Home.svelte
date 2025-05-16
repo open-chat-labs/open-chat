@@ -25,21 +25,26 @@
         UpdatedRules,
     } from "openchat-client";
     import {
+        anonUserStore,
         app,
         chatIdentifiersEqual,
+        currentUserStore,
         defaultChatRules,
         dimensions,
         fullWidth,
         localUpdates,
         nullMembership,
+        offlineStore,
         pageRedirect,
         pageReplace,
         pathState,
+        pinNumberResolverStore,
         rightPanelHistory,
         routeForChatIdentifier,
         routeForScope,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
         subscribe,
+        suspendedUserStore,
         ui,
         userStore,
     } from "openchat-client";
@@ -227,7 +232,7 @@
         client.initialiseNotifications();
         document.body.addEventListener("profile-clicked", profileClicked);
 
-        if (app.suspendedUser) {
+        if ($suspendedUserStore) {
             modal = { kind: "suspended" };
         }
 
@@ -311,7 +316,7 @@
             if (initialised) {
                 ui.filterRightPanelHistory((state) => state.kind !== "community_filters");
                 if (
-                    app.anonUser &&
+                    $anonUserStore &&
                     pathState.isChatListRoute(route) &&
                     (route.scope.kind === "direct_chat" || route.scope.kind === "favourite")
                 ) {
@@ -574,7 +579,7 @@
     }
 
     async function joinGroup(detail: { group: MultiUserChat; select: boolean }): Promise<void> {
-        if (app.anonUser) {
+        if ($anonUserStore) {
             client.updateIdentityState({
                 kind: "logging_in",
                 postLogin: { kind: "join_group", ...detail },
@@ -979,18 +984,18 @@
     {/if}
 {/if}
 
-<main class:anon={app.anonUser} class:offline={app.offline}>
+<main class:anon={$anonUserStore} class:offline={$offlineStore}>
     <LeftNav />
     <LeftPanel />
     <MiddlePanel {joining} />
     <RightPanel />
 </main>
 
-{#if app.anonUser}
+{#if $anonUserStore}
     <AnonFooter />
 {/if}
 
-{#if app.offline}
+{#if $offlineStore}
     <OfflineFooter />
 {/if}
 
@@ -1006,7 +1011,7 @@
 
 <Toast />
 
-{#if showUpgrade && app.currentUser}
+{#if showUpgrade && $currentUserStore}
     <Upgrade onCancel={() => (showUpgrade = false)} />
 {/if}
 
@@ -1107,7 +1112,7 @@
             onClose={() => (forgotPin = false)}
             type={{ kind: "forgot", while: { kind: "enter" } }} />
     </Overlay>
-{:else if app.pinNumberResolver !== undefined}
+{:else if $pinNumberResolverStore !== undefined}
     <Overlay>
         <PinNumberModal
             onClose={onPinNumberClose}

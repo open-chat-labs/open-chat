@@ -3,6 +3,7 @@
         app,
         botState,
         chatIdentifiersEqual,
+        currentUserIdStore,
         OpenChat,
         pathState,
         routeForScope,
@@ -41,7 +42,7 @@
 {#if bot !== undefined}
     <BotInstaller
         level={"group"}
-        location={{ kind: "direct_chat", userId: app.currentUserId }}
+        location={{ kind: "direct_chat", userId: $currentUserIdStore }}
         {bot}
         onClose={closeInstaller}
         installedBots={app.directChatBots} />

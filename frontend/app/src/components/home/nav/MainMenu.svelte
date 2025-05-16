@@ -1,6 +1,12 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
-    import { app, iconSize, publish } from "openchat-client";
+    import {
+        anonUserStore,
+        canExtendDiamondStore,
+        iconSize,
+        platformOperatorStore,
+        publish,
+    } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
     import AccountSettings from "svelte-material-icons/AccountSettingsOutline.svelte";
@@ -23,12 +29,10 @@
     import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
-
-    let admin = $derived(app.platformOperator);
 </script>
 
 <Menu>
-    {#if !app.anonUser}
+    {#if !$anonUserStore}
         <MenuItem onclick={() => publish("wallet")}>
             {#snippet icon()}
                 <Wallet size={$iconSize} color={"var(--icon-inverted-txt)"} />
@@ -52,7 +56,7 @@
             {#snippet text()}
                 <Translatable
                     resourceKey={i18nKey(
-                        app.canExtendDiamond ? "upgrade.extend" : "upgrade.diamond",
+                        $canExtendDiamondStore ? "upgrade.extend" : "upgrade.diamond",
                     )} />
             {/snippet}
         </MenuItem>
@@ -130,7 +134,7 @@
             Metrics
         {/snippet}
     </MenuItem>
-    {#if admin}
+    {#if $platformOperatorStore}
         <MenuItem separator />
         <MenuItem onclick={() => page("/admin")}>
             {#snippet icon()}
@@ -142,7 +146,7 @@
         </MenuItem>
     {/if}
     <MenuItem separator />
-    {#if !app.anonUser}
+    {#if !$anonUserStore}
         <MenuItem onclick={() => client.logout()}>
             {#snippet icon()}
                 <Logout size={$iconSize} color={"var(--icon-inverted-txt)"} />

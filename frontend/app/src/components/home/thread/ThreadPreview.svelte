@@ -2,6 +2,7 @@
     import {
         app,
         AvatarSize,
+        currentUserIdStore,
         type EventWrapper,
         type Message,
         type MultiUserChat,
@@ -143,7 +144,7 @@
                             readByMe
                             chatId={thread.chatId}
                             chatType={chat.kind}
-                            me={thread.rootMessage.event.sender === app.currentUserId}
+                            me={thread.rootMessage.event.sender === $currentUserIdStore}
                             first
                             last
                             readonly
@@ -187,7 +188,7 @@
                                 readByMe
                                 chatId={thread.chatId}
                                 chatType={chat.kind}
-                                me={evt.event.sender === app.currentUserId}
+                                me={evt.event.sender === $currentUserIdStore}
                                 first={i === 0}
                                 last={i === userGroup.length - 1}
                                 readonly

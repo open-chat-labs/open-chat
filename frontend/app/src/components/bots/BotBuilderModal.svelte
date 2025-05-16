@@ -1,6 +1,6 @@
 <script lang="ts">
     import {
-        app,
+        currentUserIdStore,
         emptyBotInstance,
         mobileWidth,
         OpenChat,
@@ -35,8 +35,8 @@
     );
 
     let botState = $state({
-        original: emptyBotInstance(app.currentUserId),
-        current: emptyBotInstance(app.currentUserId),
+        original: emptyBotInstance($currentUserIdStore),
+        current: emptyBotInstance($currentUserIdStore),
     });
 
     let ownerDirty = $derived(botState.original.ownerId !== botState.current.ownerId);
@@ -105,7 +105,7 @@
     }
 
     function selectBot(bot: ExternalBot) {
-        if (bot.ownerId === app.currentUserId) {
+        if (bot.ownerId === $currentUserIdStore) {
             botState.original = bot;
             botState.current = structuredClone(bot);
             if (mode === "update") {

@@ -11,6 +11,7 @@
         type OpenChat,
         publish,
         routeForChatIdentifier,
+        suspendedUserStore,
     } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
@@ -97,7 +98,7 @@
             <Button tiny onClick={() => leaveGroup(group)}
                 ><Translatable resourceKey={i18nKey("leave")} /></Button>
         {:else}
-            {#if !app.suspendedUser}
+            {#if !$suspendedUserStore}
                 <Button
                     disabled={locked || joining === group}
                     loading={joining === group}

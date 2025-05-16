@@ -1,8 +1,8 @@
 <script lang="ts">
     import type { MessageContext, OpenChat, P2PSwapContentInitial } from "openchat-client";
     import {
-        app,
         enhancedCryptoLookup as cryptoLookup,
+        isDiamondStore,
         mobileWidth,
         publish,
     } from "openchat-client";
@@ -73,7 +73,7 @@
     });
 
     function onSend() {
-        if (!app.isDiamond) {
+        if (!$isDiamondStore) {
             publish("upgrade");
             return;
         }

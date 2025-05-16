@@ -15,6 +15,7 @@
     import {
         app,
         compareRoles,
+        currentUserIdStore,
         fullWidth,
         lastRightPanelState,
         pageReplace,
@@ -54,7 +55,7 @@
     let resizing = $state(false);
     let resizedWidth = $state("7");
 
-    let user = $derived(userStore.get(app.currentUserId) ?? client.nullUser("unknown"));
+    let user = $derived(userStore.get($currentUserIdStore) ?? client.nullUser("unknown"));
     let modal = $derived(!$fullWidth);
     let multiUserChat = $derived(app.selectedChatSummary as MultiUserChat | undefined);
     let empty = $derived($rightPanelHistory.length === 0);
