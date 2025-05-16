@@ -196,6 +196,16 @@ export const selectedAuthProviderStore = new LocalStorageStore(
     (a) => enumFromStringValue(AuthProvider, a, AuthProvider.II),
 );
 export const achievementsStore = new SafeSetStore<string>();
+export const chitStateStore = writable<ChitState>(
+    {
+        chitBalance: 0,
+        totalChitEarned: 0,
+        streak: 0,
+        streakEnds: 0n,
+        nextDailyChitClaim: 0n,
+    },
+    dequal,
+);
 
 export class AppState {
     #percentageStorageRemaining: number = 0;
@@ -326,14 +336,6 @@ export class AppState {
             };
         }
         return this.#serverMessageActivitySummary;
-    });
-
-    #chitState = $state<ChitState>({
-        chitBalance: 0,
-        totalChitEarned: 0,
-        streak: 0,
-        streakEnds: 0n,
-        nextDailyChitClaim: 0n,
     });
 
     #serverStreakInsurance = $state<StreakInsurance>({
@@ -1031,11 +1033,11 @@ export class AppState {
     }
 
     get chitState() {
-        return this.#chitState;
+        return chitStateStore.current;
     }
 
     updateChitState(fn: (s: ChitState) => ChitState) {
-        this.#chitState = fn(this.#chitState);
+        chitStateStore.update(fn);
     }
 
     get streakInsurance() {

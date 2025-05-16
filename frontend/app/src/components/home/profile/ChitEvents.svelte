@@ -1,6 +1,6 @@
 <script lang="ts">
     import CollapsibleCard from "@src/components/CollapsibleCard.svelte";
-    import { app, currentUserIdStore, OpenChat, type ChitEarned } from "openchat-client";
+    import { chitStateStore, currentUserIdStore, OpenChat, type ChitEarned } from "openchat-client";
     import { getContext } from "svelte";
     import { menuCloser } from "../../../actions/closeMenu";
     import { i18nKey } from "../../../i18n/i18n";
@@ -97,8 +97,8 @@
                 <ChitBalance
                     size={"large"}
                     me
-                    balance={app.chitState.chitBalance}
-                    totalEarned={app.chitState.totalChitEarned} />
+                    balance={$chitStateStore.chitBalance}
+                    totalEarned={$chitStateStore.totalChitEarned} />
             </div>
             {#if streak > 0}
                 <CollapsibleCard headerText={i18nKey("streakInsurance.title")}>
