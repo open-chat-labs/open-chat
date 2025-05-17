@@ -28,6 +28,7 @@
         anonUserStore,
         app,
         chatIdentifiersEqual,
+        communitiesStore,
         currentUserStore,
         defaultChatRules,
         dimensions,
@@ -828,7 +829,7 @@
     }
 
     function createCommunity() {
-        const maxIndex = app.communities.reduce(
+        const maxIndex = $communitiesStore.reduce(
             (m, [_, c]) => (c.membership.index > m ? c.membership.index : m),
             0,
         );

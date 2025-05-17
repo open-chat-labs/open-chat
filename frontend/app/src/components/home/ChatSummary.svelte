@@ -11,6 +11,7 @@
         app,
         AvatarSize,
         botState,
+        communitiesStore,
         currentUserIdStore,
         iconSize,
         mobileWidth,
@@ -82,7 +83,7 @@
     let displayDate = $derived(client.getDisplayDate(chatSummary));
     let community = $derived(
         chatSummary.kind === "channel"
-            ? app.communities.get({ kind: "community", communityId: chatSummary.id.communityId })
+            ? $communitiesStore.get({ kind: "community", communityId: chatSummary.id.communityId })
             : undefined,
     );
     let blocked = $derived(

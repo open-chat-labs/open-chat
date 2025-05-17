@@ -15,6 +15,7 @@
         pathState,
         publish,
         showNav,
+        sortedCommunitiesStore,
         ui,
         userStore,
     } from "openchat-client";
@@ -59,7 +60,7 @@
     let communityItems = $state<CommunityItem[]>([]);
 
     $effect(() => {
-        communityItems = app.sortedCommunities.map((c) => ({ ...c, _id: c.id.communityId }));
+        communityItems = $sortedCommunitiesStore.map((c) => ({ ...c, _id: c.id.communityId }));
     });
 
     onMount(() => {

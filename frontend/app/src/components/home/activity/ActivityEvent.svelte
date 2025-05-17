@@ -2,8 +2,8 @@
     import type { Message, MessageActivityEvent, ResourceKey } from "openchat-client";
     import {
         activityFeedShowing,
-        app,
         AvatarSize,
+        communitiesStore,
         currentUserIdStore,
         OpenChat,
         routeForMessageContext,
@@ -45,7 +45,7 @@
                     parts.push(chat.name);
                     break;
                 case "channel":
-                    const community = app.communities.get({
+                    const community = $communitiesStore.get({
                         kind: "community",
                         communityId: chat.id.communityId,
                     });

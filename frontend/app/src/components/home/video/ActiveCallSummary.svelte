@@ -3,6 +3,7 @@
         app,
         AvatarSize,
         chatIdentifiersEqual,
+        communitiesStore,
         OpenChat,
         publish,
         routeForChatIdentifier,
@@ -78,7 +79,7 @@
                     case "channel":
                         return {
                             name: `${
-                                app.communities.get({
+                                $communitiesStore.get({
                                     kind: "community",
                                     communityId: chat.id.communityId,
                                 })?.name

@@ -201,6 +201,13 @@ export class SafeMapStore<K, V> extends SafeMap<K, V> {
         }
     }
 
+    update(key: K, fn: (val: V) => V) {
+        const val = this.get(key);
+        if (val !== undefined) {
+            this.set(key, fn(val));
+        }
+    }
+
     set(key: K, val: V) {
         super.set(key, val);
         this.#publish();

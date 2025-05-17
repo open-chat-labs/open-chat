@@ -16,7 +16,7 @@ import {
 import { vi } from "vitest";
 import { app } from "./app.svelte";
 import { chatDetailsLocalUpdates } from "./chat_details";
-import { communityLocalUpdates } from "./community_details/local.svelte";
+import { communityLocalUpdates } from "./community/local.svelte";
 import { localUpdates } from "./global";
 import { pathState } from "./path.svelte";
 

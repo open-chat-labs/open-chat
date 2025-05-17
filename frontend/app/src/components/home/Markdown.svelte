@@ -1,7 +1,7 @@
 <script lang="ts">
     import { marked } from "marked";
     import type { OpenChat, ReadonlyMap, UserGroupSummary } from "openchat-client";
-    import { app, userStore } from "openchat-client";
+    import { userGroupSummariesStore, userStore } from "openchat-client";
     import { getContext } from "svelte";
     import { DOMPurifyDefault, DOMPurifyOneLine } from "../../utils/domPurify";
     import { isSingleEmoji } from "../../utils/emojis";
@@ -32,7 +32,7 @@
         let parsed = replaceEveryone(
             replaceUserGroupIds(
                 replaceUserIds(replaceDatetimes(client.stripLinkDisabledMarker(text))),
-                app.userGroupSummaries,
+                $userGroupSummariesStore,
             ),
         );
         try {

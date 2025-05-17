@@ -75,9 +75,9 @@ import { enumFromStringValue } from "../utils/enums";
 import { setsAreEqual } from "../utils/set";
 import { chatDetailsLocalUpdates, ChatDetailsMergedState } from "./chat_details";
 import { ChatDetailsServerState } from "./chat_details/server.svelte";
-import { communityLocalUpdates } from "./community_details";
-import { CommunityMergedState } from "./community_details/merged.svelte";
-import { CommunityServerState } from "./community_details/server.svelte";
+import { CommunityMergedState } from "./community/merged.svelte";
+import { CommunityServerState } from "./community/server.svelte";
+import { communitySummaryLocalUpdates } from "./community/summaryUpdates";
 import { FilteredProposals } from "./filteredProposals.svelte";
 import { localUpdates } from "./global";
 import { LocalStorageBoolStore, LocalStorageStore } from "./localStorageStore";
@@ -210,39 +210,63 @@ export const chitStateStore = writable<ChitState>(
 export const serverCommunitiesStore = new CommunityMapStore<CommunitySummary>();
 
 export const communitiesStore = derived(
-    [serverCommunitiesStore, localUpdates.communities, localUpdates.previewCommunities],
-    ([serverCommunities, localCommunities, previewCommunities]) => {
+    [
+        serverCommunitiesStore,
+        localUpdates.communities,
+        localUpdates.previewCommunities,
+        communitySummaryLocalUpdates,
+    ],
+    ([serverCommunities, localCommunities, previewCommunities, localUpdates]) => {
         const merged = localCommunities.apply(serverCommunities.merge(previewCommunities));
-        return merged;
-        // return [...merged.entries()].reduce((result, [communityId, community]) => {
-        //     const updates = communityLocalUpdates.get(communityId);
+        return [...merged.entries()].reduce((result, [communityId, community]) => {
+            const updates = localUpdates.get(communityId);
 
-        //     const anyChanges =
-        //         updates?.index !== undefined ||
-        //         updates?.displayName !== undefined ||
-        //         updates?.rulesAccepted !== undefined;
+            const anyChanges =
+                updates?.index !== undefined ||
+                updates?.displayName !== undefined ||
+                updates?.rulesAccepted !== undefined;
 
-        //     if (anyChanges) {
-        //         const clone = structuredClone(community);
-        //         const index = updates?.index;
-        //         if (index !== undefined) {
-        //             clone.membership.index = index;
-        //         }
-        //         clone.membership.displayName = applyOptionUpdate(
-        //             clone.membership.displayName,
-        //             updates?.displayName,
-        //         );
-        //         clone.membership.rulesAccepted =
-        //             updates?.rulesAccepted ?? clone.membership.rulesAccepted;
+            if (anyChanges) {
+                const clone = structuredClone(community);
+                const index = updates?.index;
+                if (index !== undefined) {
+                    clone.membership.index = index;
+                }
+                clone.membership.displayName = applyOptionUpdate(
+                    clone.membership.displayName,
+                    updates?.displayName,
+                );
+                clone.membership.rulesAccepted =
+                    updates?.rulesAccepted ?? clone.membership.rulesAccepted;
 
-        //         result.set(communityId, clone);
-        //     } else {
-        //         result.set(communityId, community);
-        //     }
-        //     return result;
-        // }, new CommunityMap<CommunitySummary>());
+                result.set(communityId, clone);
+            } else {
+                result.set(communityId, community);
+            }
+            return result;
+        }, new CommunityMap<CommunitySummary>());
     },
 );
+
+export const sortedCommunitiesStore = derived(communitiesStore, (communities) => {
+    return [...communities.values()].toSorted((a, b) => {
+        return b.membership.index === a.membership.index
+            ? b.memberCount - a.memberCount
+            : b.membership.index - a.membership.index;
+    });
+});
+
+export const nextCommunityIndexStore = derived(
+    sortedCommunitiesStore,
+    (sortedCommunitiesStore) => (sortedCommunitiesStore[0]?.membership?.index ?? -1) + 1,
+);
+
+export const userGroupSummariesStore = derived(communitiesStore, (communities) => {
+    return [...communities.values()].reduce((map, community) => {
+        community.userGroups.forEach((ug) => map.set(ug.id, ug));
+        return map;
+    }, new Map<number, UserGroupSummary>());
+});
 
 export class AppState {
     #percentageStorageRemaining: number = 0;
@@ -266,12 +290,14 @@ export class AppState {
     #adultEnabled: boolean = false;
     #offensiveEnabled: boolean = false;
     #underReviewEnabled: boolean = false;
+    #nextCommunityIndex: number = 0;
 
     // TODO - these need to use $state for the moment because we still have $derived that is depending on it
     // but it can be a plain value once that's all gone
     #translations = $state<MessageMap<string>>(new MessageMap());
     #messageFilters = $state<MessageFilter[]>([]);
     #currentUserId = $state<string>(currentUserStore.current.userId);
+    #communities = $state<CommunityMap<CommunitySummary>>(new CommunityMap());
 
     constructor() {
         $effect.root(() => {
@@ -312,9 +338,11 @@ export class AppState {
         adultEnabledStore.subscribe((val) => (this.#adultEnabled = val));
         offensiveEnabledStore.subscribe((val) => (this.#offensiveEnabled = val));
         underReviewEnabledStore.subscribe((val) => (this.#underReviewEnabled = val));
+        nextCommunityIndexStore.subscribe((val) => (this.#nextCommunityIndex = val));
 
         // TODO - this clone is only necessary to trigger downstream $derived. Remove when all $deriveds are gone
         translationsStore.subscribe((val) => (this.#translations = val.clone()));
+        communitiesStore.subscribe((val) => (this.#communities = val));
     }
 
     #proposalTopics = $derived.by(() => {
@@ -649,56 +677,6 @@ export class AppState {
         }
 
         return mergedPinned;
-    });
-
-    #communities = $derived.by(() => {
-        const merged = localUpdates.communities.apply(
-            this.#serverCommunities.merge(localUpdates.previewCommunities),
-        );
-        return [...merged.entries()].reduce((result, [communityId, community]) => {
-            const updates = communityLocalUpdates.get(communityId);
-
-            const anyChanges =
-                updates?.index !== undefined ||
-                updates?.displayName !== undefined ||
-                updates?.rulesAccepted !== undefined;
-
-            if (anyChanges) {
-                const clone = structuredClone(community);
-                const index = updates?.index;
-                if (index !== undefined) {
-                    clone.membership.index = index;
-                }
-                clone.membership.displayName = applyOptionUpdate(
-                    clone.membership.displayName,
-                    updates?.displayName,
-                );
-                clone.membership.rulesAccepted =
-                    updates?.rulesAccepted ?? clone.membership.rulesAccepted;
-
-                result.set(communityId, clone);
-            } else {
-                result.set(communityId, community);
-            }
-            return result;
-        }, new CommunityMap<CommunitySummary>());
-    });
-
-    #sortedCommunities = $derived.by(() => {
-        return [...this.#communities.values()].toSorted((a, b) => {
-            return b.membership.index === a.membership.index
-                ? b.memberCount - a.memberCount
-                : b.membership.index - a.membership.index;
-        });
-    });
-
-    #nextCommunityIndex = $derived((this.#sortedCommunities[0]?.membership?.index ?? -1) + 1);
-
-    #userGroupSummaries = $derived.by(() => {
-        return [...this.#communities.values()].reduce((map, community) => {
-            community.userGroups.forEach((ug) => map.set(ug.id, ug));
-            return map;
-        }, new Map<number, UserGroupSummary>());
     });
 
     #communityChannelVideoCallCounts = $derived.by(() => {
@@ -1326,6 +1304,7 @@ export class AppState {
         this.#serverFavourites = val;
     }
 
+    // TODO - this is only called from tests
     set serverCommunities(val: CommunityMap<CommunitySummary>) {
         serverCommunitiesStore.fromMap(val);
 
@@ -1372,14 +1351,6 @@ export class AppState {
 
     get communities() {
         return this.#communities;
-    }
-
-    get sortedCommunities() {
-        return this.#sortedCommunities;
-    }
-
-    get userGroupSummaries(): ReadonlyMap<number, UserGroupSummary> {
-        return this.#userGroupSummaries;
     }
 
     get communityChannelVideoCallCounts(): ReadonlyMap<CommunityIdentifier, VideoCallCounts> {
@@ -1443,6 +1414,7 @@ export class AppState {
         this.#serverGroupChats = groupChatsMap;
         this.#serverFavourites = favouritesSet;
         this.#serverCommunities = communitiesMap;
+        serverCommunitiesStore.fromMap(communitiesMap);
         this.#serverPinnedChats = pinnedChats;
         this.#directChatApiKeys = apiKeys;
         this.#serverDirectChatBots = SafeMap.fromEntries(installedBots.entries());
