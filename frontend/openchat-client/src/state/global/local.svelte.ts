@@ -106,6 +106,7 @@ export class GlobalLocalState {
         messageLocalUpdates.clearAll();
         chatDetailsLocalUpdates.clearAll();
         communityLocalUpdates.clearAll();
+        communitySummaryLocalUpdates.clear();
     }
 
     blockDirectUser(userId: string) {
