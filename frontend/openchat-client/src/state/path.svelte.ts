@@ -1,99 +1,102 @@
 import { dequal } from "dequal";
 import "page";
-import { SvelteURLSearchParams } from "svelte/reactivity";
 
 const noScope: NullScope = { kind: "none" };
 
-function routesAreEqual(r1: RouteParams, r2: RouteParams) {
-    return dequal(r1, r2);
+function hasMessageIndex(route: RouteParams): route is MessageIndexRoute {
+    return (
+        route.kind === "global_chat_selected_route" ||
+        route.kind === "favourites_route" ||
+        route.kind === "selected_channel_route"
+    );
 }
 
-export class PathState {
-    #notFound = $state<boolean>(false);
-    #pathContextStore = $state<PageJS.Context | undefined>(undefined);
-    #routerReady = $state<boolean>(false);
-    #location = $derived(this.#pathContextStore ? this.#pathContextStore.routePath : "");
-    #querystring = $derived(
-        this.#pathContextStore
-            ? new SvelteURLSearchParams(this.#pathContextStore.querystring)
-            : new SvelteURLSearchParams(),
-    );
-    #route = $state<RouteParams>({ scope: noScope, kind: "not_found_route" });
-    #querystringCode = $derived(this.#querystring.get("code"));
-    #querystringReferralCode = $derived(this.#querystring.get("ref"));
-    #exploring = $derived(this.#querystring.get("explore"));
-    #routeKind = $derived(this.#route.kind);
-    #messageIndex = $derived(
-        this.hasMessageIndex(this.#route) ? this.#route.messageIndex : undefined,
-    );
-    #threadMessageIndex = $derived(
-        this.hasMessageIndex(this.#route) ? this.#route.threadMessageIndex : undefined,
-    );
-    #threadOpen = $derived(
-        (this.#route.kind === "global_chat_selected_route" ||
-            this.#route.kind === "selected_channel_route") &&
-            this.#route.messageIndex !== undefined &&
-            this.#route.open,
-    );
-    #communityId = $derived.by(
-        withEqCheck(() => {
-            switch (this.#route.kind) {
-                case "selected_community_route":
-                case "selected_channel_route":
-                    return this.#route.communityId;
-                case "favourites_route":
-                    if (this.#route.chatId?.kind === "channel") {
-                        return {
-                            kind: "community",
-                            communityId: this.#route.chatId.communityId,
-                        } as CommunityIdentifier;
-                    }
-                    return undefined;
-                default:
-                    return undefined;
+export const notFoundStore = writable<boolean>(false);
+export const pathContextStore = writable<PageJS.Context | undefined>(undefined, dequal);
+export const routerReadyStore = writable<boolean>(false);
+export const locationStore = derived(pathContextStore, (pathContext) =>
+    pathContext ? pathContext.routePath : "",
+);
+export const querystringStore = derived(pathContextStore, (pathContext) =>
+    pathContext ? new URLSearchParams(pathContext.querystring) : new URLSearchParams(),
+);
+export const routeStore = writable<RouteParams>(
+    { scope: noScope, kind: "not_found_route" },
+    dequal,
+);
+export const querystringCodeStore = derived(querystringStore, (qs) => qs.get("code"));
+export const querystringReferralCodeStore = derived(querystringStore, (qs) => qs.get("ref"));
+export const exploringStore = derived(querystringStore, (qs) => qs.get("explore") != null);
+export const routeKindStore = derived(routeStore, (route) => route.kind);
+export const messageIndexStore = derived(routeStore, (route) =>
+    hasMessageIndex(route) ? route.messageIndex : undefined,
+);
+export const threadMessageIndexStore = derived(routeStore, (route) =>
+    hasMessageIndex(route) ? route.threadMessageIndex : undefined,
+);
+export const threadOpenStore = derived(
+    routeStore,
+    (route) =>
+        (route.kind === "global_chat_selected_route" || route.kind === "selected_channel_route") &&
+        route.messageIndex !== undefined &&
+        route.open,
+);
+export const selectedCommunityIdStore = derived(routeStore, (route) => {
+    switch (route.kind) {
+        case "selected_community_route":
+        case "selected_channel_route":
+            return route.communityId;
+        case "favourites_route":
+            if (route.chatId?.kind === "channel") {
+                return {
+                    kind: "community",
+                    communityId: route.chatId.communityId,
+                } as CommunityIdentifier;
             }
-        }, communityIdentifiersEqual),
-    );
+            return undefined;
+        default:
+            return undefined;
+    }
+});
+
+export class PathState {
+    #communityId = $state<CommunityIdentifier | undefined>();
+    #routerReady = false;
+    #route!: RouteParams;
+    #exploring = $state<boolean>(false);
+    #querystring!: URLSearchParams;
+    #querystringCode?: string;
+    #querystringReferralCode?: string;
+
+    constructor() {
+        selectedCommunityIdStore.subscribe((val) => (this.#communityId = val));
+        exploringStore.subscribe((val) => (this.#exploring = val));
+        routerReadyStore.subscribe((val) => (this.#routerReady = val));
+        querystringStore.subscribe((val) => (this.#querystring = val));
+        querystringCodeStore.subscribe((val) => (this.#querystringCode = val ?? undefined));
+        querystringReferralCodeStore.subscribe(
+            (val) => (this.#querystringReferralCode = val ?? undefined),
+        );
+        routeStore.subscribe((val) => (this.#route = val));
+    }
 
     get communityId() {
         return this.#communityId;
     }
-
     get exploring() {
         return this.#exploring;
     }
     set routerReady(val: boolean) {
         this.#routerReady = val;
     }
-    get threadOpen() {
-        return this.#threadOpen;
-    }
-    get messageIndex() {
-        return this.#messageIndex;
-    }
-    get threadMessageIndex() {
-        return this.#threadMessageIndex;
-    }
     get querystring(): URLSearchParams {
         return this.#querystring;
     }
-    get location(): string {
-        return this.#location;
-    }
-    get notFound(): boolean {
-        return this.#notFound;
+    get route() {
+        return this.#route;
     }
     get routerReady(): boolean {
         return this.#routerReady;
-    }
-    set notFound(val: boolean) {
-        this.#notFound = val;
-    }
-    get routeKind() {
-        return this.#routeKind;
-    }
-    get route(): Readonly<RouteParams> {
-        return this.#route;
     }
     get querystringCode() {
         return this.#querystringCode;
@@ -102,13 +105,11 @@ export class PathState {
         return this.#querystringReferralCode;
     }
     setRouteParams(ctx: PageJS.Context, p: RouteParams) {
-        if (!routesAreEqual(this.#route, p)) {
-            this.#route = p;
-        }
-        this.#pathContextStore = ctx;
-        this.#notFound = false;
+        // TODO - this is a case for a transaction
+        routeStore.set(p);
+        pathContextStore.set(ctx);
+        notFoundStore.set(false);
     }
-
     isChatListRoute(route: RouteParams): route is ChatListRoute {
         return route.kind === "chat_list_route";
     }
@@ -168,18 +169,9 @@ export class PathState {
     isDiamondRoute(route: RouteParams): route is DiamondRoute {
         return route.kind === "diamond_route";
     }
-
-    hasMessageIndex(route: RouteParams): route is MessageIndexRoute {
-        return (
-            route.kind === "global_chat_selected_route" ||
-            route.kind === "favourites_route" ||
-            route.kind === "selected_channel_route"
-        );
-    }
 }
 
 import {
-    communityIdentifiersEqual,
     type ChannelIdentifier,
     type ChatIdentifier,
     type ChatListScope,
@@ -188,7 +180,8 @@ import {
     type GroupChatIdentifier,
     type NullScope,
 } from "openchat-shared";
-import { withEqCheck } from "./reactivity.svelte";
+import { derived } from "svelte/store";
+import { writable } from "./writable";
 
 export type LandingPageRoute =
     | HomeLandingRoute

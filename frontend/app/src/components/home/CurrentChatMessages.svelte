@@ -13,9 +13,10 @@
         FilteredProposals,
         app,
         chatIdentifiersEqual,
+        chatListScopeStore,
         currentUserIdStore,
         localUpdates,
-        pathState,
+        messageIndexStore,
         routeForChatIdentifier,
         showMiddle,
     } from "openchat-client";
@@ -80,7 +81,7 @@
     }
 
     function doGoToMessageIndex(index: number): void {
-        page(routeForChatIdentifier(app.chatListScope.kind, chat.id));
+        page(routeForChatIdentifier($chatListScopeStore.kind, chat.id));
         chatEventList?.scrollToMessageIndex(messageContext, index, false);
     }
 
@@ -265,10 +266,10 @@
     $effect(() => {
         if (
             app.chatsInitialised &&
-            pathState.messageIndex !== undefined &&
+            $messageIndexStore !== undefined &&
             chatIdentifiersEqual(app.selectedChatId, previousChatId)
         ) {
-            const idx = pathState.messageIndex;
+            const idx = $messageIndexStore;
             untrack(() => {
                 scrollToMessageIndex(idx, false);
             });

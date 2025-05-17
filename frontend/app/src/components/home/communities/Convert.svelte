@@ -1,6 +1,6 @@
 <script lang="ts">
     import {
-        app,
+        chatListScopeStore,
         defaultChatRules,
         routeForChatIdentifier,
         type ChannelIdentifier,
@@ -37,7 +37,7 @@
     function convert() {
         if (group === undefined) return;
 
-        scope = app.chatListScope.kind;
+        scope = $chatListScopeStore.kind;
         state = "converting";
         client.convertGroupToCommunity(group, defaultChatRules("community")).then((id) => {
             state = id ? "converted" : "error";
@@ -48,7 +48,7 @@
     function go() {
         if (channelId !== undefined) {
             close();
-            page(routeForChatIdentifier(scope ?? app.chatListScope.kind, channelId));
+            page(routeForChatIdentifier(scope ?? $chatListScopeStore.kind, channelId));
         }
     }
 

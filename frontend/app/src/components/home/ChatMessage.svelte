@@ -4,6 +4,7 @@
         app,
         AvatarSize,
         type ChatIdentifier,
+        chatListScopeStore,
         type ChatType,
         currentUserIdStore,
         currentUserStore,
@@ -17,9 +18,9 @@
         mobileWidth,
         OpenChat,
         pageReplace,
-        pathState,
         publish,
         routeForMessage,
+        routeStore,
         screenWidth,
         ScreenWidth,
         type SenderContext,
@@ -452,7 +453,7 @@
     let translated = $derived($translationsStore.has(msg.messageId));
     let threadSummary = $derived(msg.thread);
     let msgUrl = $derived(
-        `${routeForMessage(app.chatListScope.kind, { chatId }, msg.messageIndex)}?open=true`,
+        `${routeForMessage($chatListScopeStore.kind, { chatId }, msg.messageIndex)}?open=true`,
     );
     let isProposal = $derived(msg.content.kind === "proposal_content");
     let isPrize = $derived(msg.content.kind === "prize_content");
@@ -802,10 +803,10 @@
                     <ThreadSummary
                         {chatId}
                         threadRootMessageIndex={msg.messageIndex}
-                        selected={(pathState.route.kind === "global_chat_selected_route" ||
-                            pathState.route.kind === "selected_channel_route") &&
-                            msg.messageIndex === pathState.route.messageIndex &&
-                            pathState.route.open}
+                        selected={($routeStore.kind === "global_chat_selected_route" ||
+                            $routeStore.kind === "selected_channel_route") &&
+                            msg.messageIndex === $routeStore.messageIndex &&
+                            $routeStore.open}
                         {threadSummary}
                         indent={showAvatar}
                         {me}

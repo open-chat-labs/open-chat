@@ -19,9 +19,9 @@
         fullWidth,
         lastRightPanelState,
         pageReplace,
-        pathState,
         publish,
         rightPanelHistory,
+        routeStore,
         ui,
         userStore,
     } from "openchat-client";
@@ -174,11 +174,11 @@
 
     function stripThreadFromUrl(path: string) {
         if (
-            (pathState.route.kind === "global_chat_selected_route" ||
-                pathState.route.kind === "selected_channel_route") &&
-            pathState.route.threadMessageIndex !== undefined
+            ($routeStore.kind === "global_chat_selected_route" ||
+                $routeStore.kind === "selected_channel_route") &&
+            $routeStore.threadMessageIndex !== undefined
         ) {
-            return removeThreadMessageIndex(pathState.route.threadMessageIndex, path);
+            return removeThreadMessageIndex($routeStore.threadMessageIndex, path);
         }
         return path;
     }

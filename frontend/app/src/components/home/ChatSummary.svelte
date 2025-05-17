@@ -11,6 +11,7 @@
         app,
         AvatarSize,
         botState,
+        chatListScopeStore,
         communitiesStore,
         currentUserIdStore,
         iconSize,
@@ -91,14 +92,14 @@
     );
     let readonly = $derived(client.isChatReadOnly(chatSummary.id));
     let canDelete = $derived(getCanDelete(chatSummary, community));
-    let pinned = $derived(client.pinned(app.chatListScope.kind, chatSummary.id));
+    let pinned = $derived(client.pinned($chatListScopeStore.kind, chatSummary.id));
     let muted = $derived(chatSummary.membership.notificationsMuted);
     const maxDelOffset = -60;
     let delOffset = $state(maxDelOffset);
     let swiped = $state(false);
 
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
-        const fav = app.chatListScope.kind !== "favourite" && app.favourites.has(chatSummary.id);
+        const fav = $chatListScopeStore.kind !== "favourite" && app.favourites.has(chatSummary.id);
         const muted = chatSummary.membership.notificationsMuted;
         const video = chatSummary.videoCallInProgress
             ? { muted: muted ? 1 : 0, unmuted: muted ? 0 : 1 }
@@ -224,7 +225,7 @@
         } else {
             client.removePreviewedChat(chatSummary.id);
         }
-        page(routeForScope(app.chatListScope));
+        page(routeForScope($chatListScopeStore));
         delOffset = -60;
     }
 
@@ -288,7 +289,7 @@
             }
         });
         if (chatSummary.id === app.selectedChatId) {
-            page(routeForScope(app.chatListScope));
+            page(routeForScope($chatListScopeStore));
         }
     }
 
@@ -373,7 +374,7 @@
                     {/if}
                     <WithVerifiedBadge {verified} size={"small"}>
                         <h4>
-                            {#if community !== undefined && app.chatListScope.kind === "favourite"}
+                            {#if community !== undefined && $chatListScopeStore.kind === "favourite"}
                                 <span>{community.name}</span>
                                 <span>{">"}</span>
                             {/if}

@@ -2,6 +2,7 @@
     import { toastStore } from "@src/stores/toast";
     import {
         app,
+        chatListScopeStore,
         currentUserIdStore,
         mobileWidth,
         pageRedirect,
@@ -99,13 +100,13 @@
 
         if (commandContextId.kind === "direct_chat") {
             if ($mobileWidth) {
-                page(routeForScope(app.chatListScope));
+                page(routeForScope($chatListScopeStore));
             } else {
                 const first = app.chatSummariesList.find(
                     (c) => !chatIdentifiersEqual(c.id, { kind: "direct_chat", userId: bot.id }),
                 );
                 if (first) {
-                    pageRedirect(routeForChatIdentifier(app.chatListScope.kind, first.id));
+                    pageRedirect(routeForChatIdentifier($chatListScopeStore.kind, first.id));
                 } else {
                     page(routeForScope(client.getDefaultScope()));
                 }

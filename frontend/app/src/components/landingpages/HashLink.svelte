@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { pathState } from "openchat-client";
+    import { locationStore } from "openchat-client";
     import type { Snippet } from "svelte";
     interface Props {
         id: string;
@@ -9,4 +9,4 @@
     let { id, children }: Props = $props();
 </script>
 
-<a href={`${pathState.location}?section=${id}`}>{@render children?.()}</a>
+<a href={`${$locationStore}?section=${id}`}>{@render children?.()}</a>

@@ -5,6 +5,7 @@
         chatIdentifiersEqual,
         chatIdentifierToString,
         type ChatListScope,
+        chatListScopeStore,
         type ChatSummary as ChatSummaryType,
         type CombinedUnreadCounts,
         currentUserIdStore,
@@ -54,7 +55,7 @@
     let searchTerm: string = $state("");
     let searchResultsAvailable: boolean = $state(false);
     let chatsScrollTop = $state<number | undefined>();
-    let previousScope: ChatListScope | undefined = app.chatListScope;
+    let previousScope: ChatListScope | undefined = $chatListScopeStore;
     let previousView: "chats" | "threads" = $chatListView;
 
     // TODO this doesn't work properly and I think it's to do with the way
@@ -62,7 +63,7 @@
     // Probably can just be done in a more explicit way but it's not urgent
     $effect.pre(() => {
         if (
-            previousScope === app.chatListScope &&
+            previousScope === $chatListScopeStore &&
             $chatListView !== "chats" &&
             previousView === "chats"
         ) {
@@ -71,7 +72,7 @@
     });
 
     $effect(() => {
-        if (previousScope?.kind !== app.chatListScope.kind) {
+        if (previousScope?.kind !== $chatListScopeStore.kind) {
             onScopeChanged();
         } else if (previousView !== $chatListView) {
             onViewChanged();
@@ -127,12 +128,12 @@
      * the routing will take care of the rest
      */
     function selectGroup({ chatId }: GroupMatch): void {
-        page(routeForChatIdentifier(app.chatListScope.kind, chatId));
+        page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
         searchTerm = "";
     }
 
     function chatSelected({ id }: ChatSummaryType): void {
-        const url = routeForChatIdentifier(app.chatListScope.kind, id);
+        const url = routeForChatIdentifier($chatListScopeStore.kind, id);
         page(url);
         searchTerm = "";
     }
@@ -148,7 +149,7 @@
     }
 
     function onScopeChanged() {
-        previousScope = app.chatListScope;
+        previousScope = $chatListScopeStore;
         chatListView.set("chats");
         chatsScrollTop = 0;
         onViewChanged();
@@ -181,13 +182,13 @@
     let user = $derived(userStore.get($currentUserIdStore));
     let lowercaseSearch = $derived(searchTerm.toLowerCase());
     let showExploreGroups = $derived(
-        (app.chatListScope.kind === "none" || app.chatListScope.kind === "group_chat") &&
+        ($chatListScopeStore.kind === "none" || $chatListScopeStore.kind === "group_chat") &&
             !$exploreGroupsDismissed &&
             !searchResultsAvailable,
     );
-    let showBrowseChannnels = $derived(app.chatListScope.kind === "community");
+    let showBrowseChannnels = $derived($chatListScopeStore.kind === "community");
     let unreadCounts = $derived.by(() => {
-        switch (app.chatListScope.kind) {
+        switch ($chatListScopeStore.kind) {
             case "group_chat": {
                 return app.unreadGroupCounts;
             }
@@ -199,7 +200,7 @@
             }
             case "community": {
                 return (
-                    app.unreadCommunityChannelCounts.get(app.chatListScope.id) ??
+                    app.unreadCommunityChannelCounts.get($chatListScopeStore.id) ??
                     emptyCombinedUnreadCounts()
                 );
             }
@@ -225,13 +226,13 @@
 
 <!-- svelte-ignore missing_declaration -->
 {#if user}
-    {#if app.chatListScope.kind === "favourite"}
+    {#if $chatListScopeStore.kind === "favourite"}
         <FavouriteChatsHeader {canMarkAllRead} />
-    {:else if app.chatListScope.kind === "group_chat"}
+    {:else if $chatListScopeStore.kind === "group_chat"}
         <GroupChatsHeader {canMarkAllRead} />
-    {:else if app.chatListScope.kind === "direct_chat"}
+    {:else if $chatListScopeStore.kind === "direct_chat"}
         <DirectChatsHeader {canMarkAllRead} />
-    {:else if app.selectedCommunitySummary && app.chatListScope.kind === "community"}
+    {:else if app.selectedCommunitySummary && $chatListScopeStore.kind === "community"}
         <SelectedCommunityHeader community={app.selectedCommunitySummary} {canMarkAllRead} />
     {/if}
 

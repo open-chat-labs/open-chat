@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { mobileWidth, pathState, toPixel } from "openchat-client";
+    import { locationStore, mobileWidth, querystringStore, toPixel } from "openchat-client";
     import Copy from "svelte-material-icons/ContentCopy.svelte";
     import { copyToClipboard, scrollToSection } from "../../utils/urls";
     import CollapsibleCard from "../CollapsibleCard.svelte";
@@ -20,11 +20,11 @@
 
     function onCopyUrl(e: Event, section: string): void {
         e.stopPropagation();
-        copyToClipboard(`${window.location.origin}${pathState.location}?section=${section}`);
+        copyToClipboard(`${window.location.origin}${$locationStore}?section=${section}`);
     }
 
     $effect(() => {
-        const section = pathState.querystring.get("section");
+        const section = $querystringStore.get("section");
         if (section) {
             linked = scrollToSection(section);
         }

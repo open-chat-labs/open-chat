@@ -7,7 +7,8 @@
         type OpenChat,
         type UserLookup,
         app,
-        pathState,
+        chatListScopeStore,
+        locationStore,
         routeForChatIdentifier,
         userStore,
     } from "openchat-client";
@@ -84,8 +85,8 @@
 
     let details = $derived(
         getDetails(
-            app.chatListScope,
-            pathState.location,
+            $chatListScopeStore,
+            $locationStore,
             userStore.allUsers,
             app.globalUnreadCount,
             app.selectedChatSummary,

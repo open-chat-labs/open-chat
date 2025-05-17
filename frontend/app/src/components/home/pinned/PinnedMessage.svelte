@@ -2,8 +2,9 @@
     import { findSender } from "@src/utils/user";
     import type { CreatedUser, Message, MultiUserChatIdentifier, OpenChat } from "openchat-client";
     import {
-        AvatarSize,
         app,
+        AvatarSize,
+        chatListScopeStore,
         fullWidth,
         mobileWidth,
         routeForMessage,
@@ -65,7 +66,7 @@
             }
             page(
                 routeForMessage(
-                    app.chatListScope.kind,
+                    $chatListScopeStore.kind,
                     { chatId: app.selectedChatId },
                     msg.messageIndex,
                 ),

@@ -10,7 +10,6 @@ import {
     type ChatIdentifier,
     chatIdentifiersEqual,
     type ChatListScope,
-    chatListScopesEqual,
     ChatMap,
     ChatSet,
     type ChatSummary,
@@ -83,7 +82,7 @@ import { localUpdates } from "./global";
 import { LocalStorageBoolStore, LocalStorageStore } from "./localStorageStore";
 import { CommunityMapStore, MessageMapStore } from "./map";
 import { messageLocalUpdates } from "./message/local.svelte";
-import { pathState } from "./path.svelte";
+import { pathState, routeStore, selectedCommunityIdStore } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
 import { SafeSetStore } from "./set";
 import { SnsFunctions } from "./snsFunctions.svelte";
@@ -268,6 +267,18 @@ export const userGroupSummariesStore = derived(communitiesStore, (communities) =
     }, new Map<number, UserGroupSummary>());
 });
 
+export const selectedChatIdStore = derived(routeStore, (route) => {
+    switch (route.kind) {
+        case "selected_channel_route":
+        case "global_chat_selected_route":
+            return route.chatId;
+        default:
+            return undefined;
+    }
+});
+
+export const chatListScopeStore = derived(routeStore, (route) => route.scope);
+
 export class AppState {
     #percentageStorageRemaining: number = 0;
     #percentageStorageUsed: number = 0;
@@ -298,6 +309,9 @@ export class AppState {
     #messageFilters = $state<MessageFilter[]>([]);
     #currentUserId = $state<string>(currentUserStore.current.userId);
     #communities = $state<CommunityMap<CommunitySummary>>(new CommunityMap());
+    #selectedChatId = $state<ChatIdentifier | undefined>();
+    #selectedCommunityId = $state<CommunityIdentifier | undefined>();
+    #chatListScope = $state<ChatListScope>({ kind: "none" });
 
     constructor() {
         $effect.root(() => {
@@ -343,6 +357,9 @@ export class AppState {
         // TODO - this clone is only necessary to trigger downstream $derived. Remove when all $deriveds are gone
         translationsStore.subscribe((val) => (this.#translations = val.clone()));
         communitiesStore.subscribe((val) => (this.#communities = val));
+        selectedChatIdStore.subscribe((val) => (this.#selectedChatId = val));
+        selectedCommunityIdStore.subscribe((val) => (this.#selectedCommunityId = val));
+        chatListScopeStore.subscribe((val) => (this.#chatListScope = val));
     }
 
     #proposalTopics = $derived.by(() => {
@@ -709,25 +726,10 @@ export class AppState {
     #chatsInitialised = $state(false);
 
     // TODO - this does not seem to be working as intended - investigate why
-    #chatListScope = $derived.by(withEqCheck(() => pathState.route.scope, chatListScopesEqual));
-
-    #selectedChatId = $derived.by(
-        withEqCheck(() => {
-            switch (pathState.route.kind) {
-                case "selected_channel_route":
-                case "global_chat_selected_route":
-                    return pathState.route.chatId;
-                default:
-                    return undefined;
-            }
-        }, chatIdentifiersEqual),
-    );
 
     #selectedServerChatSummary = $derived.by(() => {
         return this.#selectedChatId ? this.#allServerChats.get(this.#selectedChatId) : undefined;
     });
-
-    #selectedCommunityId = $derived(pathState.communityId);
 
     #selectedCommunitySummary = $derived.by<CommunitySummary | undefined>(
         withEqCheck(

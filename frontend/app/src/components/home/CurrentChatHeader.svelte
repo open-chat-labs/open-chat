@@ -4,6 +4,7 @@
         anonUserStore,
         app,
         AvatarSize,
+        chatListScopeStore,
         iconSize,
         mobileWidth,
         publish,
@@ -189,7 +190,7 @@
             {#if isMultiUser && !readonly}
                 <WithVerifiedBadge {verified} size={"small"}>
                     <div class="title">
-                        {#if app.selectedCommunitySummary !== undefined && app.chatListScope.kind === "favourite"}
+                        {#if app.selectedCommunitySummary !== undefined && $chatListScopeStore.kind === "favourite"}
                             <span onclick={navigateToCommunity} class="pointer">
                                 {app.selectedCommunitySummary.name}
                             </span>

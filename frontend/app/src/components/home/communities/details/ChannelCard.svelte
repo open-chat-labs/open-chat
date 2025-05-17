@@ -9,6 +9,7 @@
         app,
         AvatarSize,
         type ChannelMatch,
+        chatListScopeStore,
         iconSize,
         mobileWidth,
         type OpenChat,
@@ -41,7 +42,7 @@
         if ($mobileWidth) {
             ui.popRightPanelHistory();
         }
-        page(routeForChatIdentifier(app.chatListScope.kind, match.id));
+        page(routeForChatIdentifier($chatListScopeStore.kind, match.id));
     }
 </script>
 

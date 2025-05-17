@@ -11,6 +11,7 @@
         type UserSummary,
         app,
         chatIdentifierUnset,
+        chatListScopeStore,
         mobileWidth,
         routeForChatIdentifier,
     } from "openchat-client";
@@ -267,7 +268,7 @@
     }
 
     function onGroupCreated(canisterId: MultiUserChatIdentifier) {
-        const url = routeForChatIdentifier(app.chatListScope.kind, canisterId);
+        const url = routeForChatIdentifier($chatListScopeStore.kind, canisterId);
         onClose();
         // tick ensure that the new chat will have made its way in to the chat list by the time we arrive at the route
         tick().then(() => page(url)); // trigger the selection of the chat
