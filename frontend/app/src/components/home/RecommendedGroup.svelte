@@ -2,6 +2,7 @@
     import {
         app,
         AvatarSize,
+        chatListScopeStore,
         type GroupChatIdentifier,
         type GroupChatSummary,
         iconSize,
@@ -45,7 +46,7 @@
     }
 
     function gotoGroup({ id }: GroupChatSummary) {
-        page(routeForChatIdentifier(app.chatListScope.kind, id));
+        page(routeForChatIdentifier($chatListScopeStore.kind, id));
     }
 
     function joinGroup(group: GroupChatSummary) {

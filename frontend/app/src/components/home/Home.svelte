@@ -28,6 +28,7 @@
         anonUserStore,
         app,
         chatIdentifiersEqual,
+        chatListScopeStore,
         communitiesStore,
         currentUserStore,
         defaultChatRules,
@@ -44,6 +45,7 @@
         rightPanelHistory,
         routeForChatIdentifier,
         routeForScope,
+        routeStore,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
         subscribe,
         suspendedUserStore,
@@ -214,7 +216,7 @@
             subscribe("successfulImport", successfulImport),
             subscribe("showProposalFilters", showProposalFilters),
             subscribe("convertGroupToCommunity", convertGroupToCommunity),
-            subscribe("clearSelection", () => page(routeForScope(app.chatListScope))),
+            subscribe("clearSelection", () => page(routeForScope($chatListScopeStore))),
             subscribe("editGroup", editGroup),
             subscribe("userSuspensionChanged", () => window.location.reload()),
             subscribe("selectedChatInvalid", selectedChatInvalid),
@@ -439,14 +441,14 @@
         if (chatId.kind === "channel") {
             page(`/community/${chatId.communityId}`);
         } else {
-            page(routeForScope(app.chatListScope));
+            page(routeForScope($chatListScopeStore));
         }
         return client.deleteGroup(chatId).then((success) => {
             if (success) {
                 toastStore.showSuccessToast(i18nKey("deleteGroupSuccess", undefined, level));
             } else {
                 toastStore.showFailureToast(i18nKey("deleteGroupFailure", undefined, level, true));
-                page(routeForChatIdentifier(app.chatListScope.kind, chatId));
+                page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
             }
         });
     }
@@ -478,7 +480,7 @@
     }
 
     function leaveGroup(chatId: MultiUserChatIdentifier, level: Level): Promise<void> {
-        page(routeForScope(app.chatListScope));
+        page(routeForScope($chatListScopeStore));
 
         client.leaveGroup(chatId).then((resp) => {
             if (resp !== "success") {
@@ -489,7 +491,7 @@
                         i18nKey("failedToLeaveGroup", undefined, level, true),
                     );
                 }
-                page(routeForChatIdentifier(app.chatListScope.kind, chatId));
+                page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
             }
         });
 
@@ -501,7 +503,7 @@
             return c.kind === "direct_chat" && c.them === chatId;
         });
 
-        page(routeForChatIdentifier(chat ? app.chatListScope.kind : "direct_chat", chatId));
+        page(routeForChatIdentifier(chat ? $chatListScopeStore.kind : "direct_chat", chatId));
     }
 
     function showInviteGroupUsers(show: boolean) {
@@ -531,7 +533,7 @@
         localUpdates.draftMessages.setTextContent({ chatId }, "");
         localUpdates.draftMessages.setReplyingTo({ chatId }, context);
         if (chat) {
-            page(routeForChatIdentifier(app.chatListScope.kind, chatId));
+            page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
         } else {
             createDirectChat(chatId as DirectChatIdentifier);
         }
@@ -550,7 +552,7 @@
 
     function showProfile() {
         if (app.selectedChatId !== undefined) {
-            pageReplace(routeForChatIdentifier(app.chatListScope.kind, app.selectedChatId));
+            pageReplace(routeForChatIdentifier($chatListScopeStore.kind, app.selectedChatId));
         }
         rightPanelHistory.set([{ kind: "user_profile" }]);
     }
@@ -558,14 +560,14 @@
     function communityDetails(_: CommunitySummary) {
         // what do we do here if the community is not selected
         // do we select it?
-        if (app.chatListScope.kind === "community") {
+        if ($chatListScopeStore.kind === "community") {
             rightPanelHistory.set([{ kind: "community_details" }]);
         }
     }
 
     function showProposalFilters() {
         if (app.selectedChatId !== undefined) {
-            pageReplace(routeForChatIdentifier(app.chatListScope.kind, app.selectedChatId));
+            pageReplace(routeForChatIdentifier($chatListScopeStore.kind, app.selectedChatId));
             rightPanelHistory.set([
                 {
                     kind: "proposal_filters",
@@ -662,7 +664,7 @@
                     joining = undefined;
                 } else if (select) {
                     joining = undefined;
-                    page(routeForChatIdentifier(app.chatListScope.kind, group.id));
+                    page(routeForChatIdentifier($chatListScopeStore.kind, group.id));
                 } else {
                     joining = undefined;
                 }
@@ -690,12 +692,12 @@
     }
 
     function forwardToChat(chatId: ChatIdentifier) {
-        page(routeForChatIdentifier(app.chatListScope.kind, chatId));
+        page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
         messageToForwardStore.set(messageToForward);
     }
 
     function shareWithChat(chatId: ChatIdentifier) {
-        page(routeForChatIdentifier(app.chatListScope.kind, chatId));
+        page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
 
         const shareText = share.text ?? "";
         const shareTitle = share.title ?? "";
@@ -722,12 +724,12 @@
     }
 
     function newGroup(level: Level = "group", embeddedContent: boolean = false) {
-        if (level === "channel" && app.chatListScope.kind !== "community") {
+        if (level === "channel" && $chatListScopeStore.kind !== "community") {
             return;
         }
         const id: MultiUserChatIdentifier =
-            level === "channel" && app.chatListScope.kind === "community"
-                ? { kind: "channel", communityId: app.chatListScope.id.communityId, channelId: 0 }
+            level === "channel" && $chatListScopeStore.kind === "community"
+                ? { kind: "channel", communityId: $chatListScopeStore.id.communityId, channelId: 0 }
                 : { kind: "group_chat", groupId: "" };
 
         modal = {

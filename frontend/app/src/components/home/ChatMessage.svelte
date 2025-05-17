@@ -4,6 +4,7 @@
         app,
         AvatarSize,
         type ChatIdentifier,
+        chatListScopeStore,
         type ChatType,
         currentUserIdStore,
         currentUserStore,
@@ -19,6 +20,7 @@
         pageReplace,
         publish,
         routeForMessage,
+        routeStore,
         screenWidth,
         ScreenWidth,
         type SenderContext,
@@ -451,7 +453,7 @@
     let translated = $derived($translationsStore.has(msg.messageId));
     let threadSummary = $derived(msg.thread);
     let msgUrl = $derived(
-        `${routeForMessage(app.chatListScope.kind, { chatId }, msg.messageIndex)}?open=true`,
+        `${routeForMessage($chatListScopeStore.kind, { chatId }, msg.messageIndex)}?open=true`,
     );
     let isProposal = $derived(msg.content.kind === "proposal_content");
     let isPrize = $derived(msg.content.kind === "prize_content");

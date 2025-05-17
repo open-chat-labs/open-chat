@@ -41,7 +41,7 @@ export const threadOpenStore = derived(
         route.messageIndex !== undefined &&
         route.open,
 );
-export const communityIdStore = derived(routeStore, (route) => {
+export const selectedCommunityIdStore = derived(routeStore, (route) => {
     switch (route.kind) {
         case "selected_community_route":
         case "selected_channel_route":
@@ -60,15 +60,16 @@ export const communityIdStore = derived(routeStore, (route) => {
 });
 
 export class PathState {
-    #communityId?: CommunityIdentifier;
+    #communityId = $state<CommunityIdentifier | undefined>();
     #routerReady = false;
+    #route!: RouteParams;
     #exploring = $state<boolean>(false);
     #querystring!: URLSearchParams;
     #querystringCode?: string;
     #querystringReferralCode?: string;
 
     constructor() {
-        communityIdStore.subscribe((val) => (this.#communityId = val));
+        selectedCommunityIdStore.subscribe((val) => (this.#communityId = val));
         exploringStore.subscribe((val) => (this.#exploring = val));
         routerReadyStore.subscribe((val) => (this.#routerReady = val));
         querystringStore.subscribe((val) => (this.#querystring = val));
@@ -76,6 +77,7 @@ export class PathState {
         querystringReferralCodeStore.subscribe(
             (val) => (this.#querystringReferralCode = val ?? undefined),
         );
+        routeStore.subscribe((val) => (this.#route = val));
     }
 
     get communityId() {
@@ -89,6 +91,9 @@ export class PathState {
     }
     get querystring(): URLSearchParams {
         return this.#querystring;
+    }
+    get route() {
+        return this.#route;
     }
     get routerReady(): boolean {
         return this.#routerReady;

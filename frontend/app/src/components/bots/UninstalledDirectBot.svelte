@@ -3,9 +3,11 @@
         app,
         botState,
         chatIdentifiersEqual,
+        chatListScopeStore,
         currentUserIdStore,
         OpenChat,
         routeForScope,
+        routeStore,
         type DirectChatIdentifier,
     } from "openchat-client";
     import page from "page";
@@ -31,7 +33,7 @@
                 $routeStore.kind === "global_chat_selected_route" &&
                 chatIdentifiersEqual(chatId, $routeStore.chatId)
             ) {
-                page(routeForScope(app.chatListScope));
+                page(routeForScope($chatListScopeStore));
             }
         }
         onClose();

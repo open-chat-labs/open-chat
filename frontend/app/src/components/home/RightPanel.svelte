@@ -21,6 +21,7 @@
         pageReplace,
         publish,
         rightPanelHistory,
+        routeStore,
         ui,
         userStore,
     } from "openchat-client";

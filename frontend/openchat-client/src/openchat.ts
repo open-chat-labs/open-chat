@@ -278,7 +278,6 @@ import { tick } from "svelte";
 import { get } from "svelte/store";
 import type { OpenChatConfig } from "./config";
 import { AIRDROP_BOT_USER_ID } from "./constants";
-import { configureEffects } from "./effects.svelte";
 import { snapshot } from "./snapshot.svelte";
 import { app, hasFlag } from "./state/app.svelte";
 import { botState } from "./state/bots.svelte";
@@ -678,8 +677,6 @@ export class OpenChat {
         } else {
             await this.#ocIdentityStorage.remove();
         }
-
-        configureEffects(this);
 
         this.#loadUser();
     }
@@ -4718,7 +4715,7 @@ export class OpenChat {
         this.#referralCode = code;
     }
 
-    #extractReferralCodeFromPath(): string | null {
+    #extractReferralCodeFromPath(): string | undefined {
         return pathState.querystringReferral;
     }
 

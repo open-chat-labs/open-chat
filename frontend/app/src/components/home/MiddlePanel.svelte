@@ -7,6 +7,7 @@
         filteredProposalsStore,
         rightPanelMode,
         rightPanelWidth,
+        routeStore,
         showLeft,
         showMiddle,
         showNav,

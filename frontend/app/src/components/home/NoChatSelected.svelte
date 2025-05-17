@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
         app,
+        chatListScopeStore,
         isLocked,
         routeForScope,
         type ChatListScope,
@@ -42,7 +43,7 @@
             app.selectedCommunitySummary?.membership.lapsed,
     );
     let locked = $derived(isLocked(app.selectedCommunitySummary?.gateConfig?.gate));
-    let [title, message] = $derived(getMessageForScope(app.chatListScope.kind));
+    let [title, message] = $derived(getMessageForScope($chatListScopeStore.kind));
 </script>
 
 {#if previewingCommunity && app.selectedCommunitySummary !== undefined}
@@ -84,9 +85,9 @@
     <div class="wrapper">
         <h2 class="title"><Translatable resourceKey={i18nKey(title)} /></h2>
         <p class="subtitle"><Translatable resourceKey={i18nKey(message)} /></p>
-        {#if app.chatListScope.kind === "community"}
+        {#if $chatListScopeStore.kind === "community"}
             <Button><Translatable resourceKey={i18nKey("communities.browseChannels")} /></Button>
-        {:else if app.chatListScope.kind === "group_chat"}
+        {:else if $chatListScopeStore.kind === "group_chat"}
             <Button onClick={() => page("/groups")}
                 ><Translatable resourceKey={i18nKey("discoverMoreGroups")} /></Button>
         {/if}

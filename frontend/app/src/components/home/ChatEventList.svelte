@@ -20,6 +20,7 @@
         iconSize,
         localUpdates,
         messageContextsEqual,
+        routeStore,
         subscribe,
         withEqCheck,
         type ChatEvent as ChatEventType,

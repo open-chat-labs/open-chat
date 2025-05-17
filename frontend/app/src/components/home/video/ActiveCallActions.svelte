@@ -1,6 +1,6 @@
 <script lang="ts">
     import {
-        app,
+        chatListScopeStore,
         iconSize,
         mobileWidth,
         pageReplace,
@@ -51,7 +51,7 @@
             } else {
                 page(
                     `${routeForMessage(
-                        app.chatListScope.kind,
+                        $chatListScopeStore.kind,
                         { chatId: chat.chatId },
                         chat.videoCallInProgress?.messageIndex,
                     )}?open=true`,

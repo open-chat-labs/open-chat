@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
         app,
+        chatListScopeStore,
         cryptoLookup,
         currentUserIdStore,
         iconSize,
@@ -310,7 +311,9 @@
     }
 
     function initiateThread() {
-        page(`${routeForMessage(app.chatListScope.kind, { chatId }, msg.messageIndex)}?open=true`);
+        page(
+            `${routeForMessage($chatListScopeStore.kind, { chatId }, msg.messageIndex)}?open=true`,
+        );
     }
 </script>
 

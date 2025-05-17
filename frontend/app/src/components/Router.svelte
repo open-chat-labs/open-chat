@@ -8,7 +8,9 @@
         blogRoute,
         chatIdentifiersEqual,
         chatListRoute,
+        chatListScopeStore,
         communitesRoute,
+        exploringStore,
         globalDirectChatSelectedRoute,
         globalGroupChatSelectedRoute,
         messageIndexStore,
@@ -18,6 +20,8 @@
         routeStore,
         routerReadyStore,
         selectedChannelRoute,
+        selectedChatIdStore,
+        selectedCommunityIdStore,
         selectedCommunityRoute,
         shareRoute,
         threadMessageIndexStore,
@@ -233,22 +237,40 @@
     // This is where our general effects are going to go. They don't *really* belong in a component at all
     // but unfortunately unowned effects do not respond to store value changes
 
+    // Set selected community
+    $effect(() => {
+        if (app.chatsInitialised && $selectedCommunityIdStore !== undefined) {
+            const id = $selectedCommunityIdStore;
+
+            // this untrack is not really necessary in this case but it's probably a good pattern to follow to
+            // make double sure we are only reacting to the things we want to react to
+            untrack(() => {
+                client.setSelectedCommunity(id).then((preview) => {
+                    if (preview && $selectedChatIdStore === undefined) {
+                        // if we are previewing the community we need to select the first chat manually
+                        client.selectFirstChat();
+                    }
+                });
+            });
+        }
+    });
+
     let previousChatId: ChatIdentifier | undefined = undefined;
     $effect(() => {
         if (
             $threadOpenStore &&
             $messageIndexStore !== undefined &&
-            app.selectedChatId !== undefined &&
-            chatIdentifiersEqual(previousChatId, app.selectedChatId)
+            $selectedChatIdStore !== undefined &&
+            chatIdentifiersEqual(previousChatId, $selectedChatIdStore)
         ) {
-            const chatId = app.selectedChatId;
+            const chatId = $selectedChatIdStore;
             const idx = $messageIndexStore;
             const threadIdx = $threadMessageIndexStore;
             untrack(() => {
                 client.openThreadFromMessageIndex(chatId, idx, threadIdx);
             });
         }
-        previousChatId = app.selectedChatId;
+        previousChatId = $selectedChatIdStore;
     });
 
     $effect(() => {
@@ -259,12 +281,22 @@
         }
     });
 
+    $effect(() => {
+        if (
+            $selectedChatIdStore === undefined &&
+            $chatListScopeStore.kind !== "none" &&
+            !$exploringStore
+        ) {
+            client.selectFirstChat();
+        }
+    });
+
     // Set selected chat
     $effect(() => {
         // we have to be *so* careful with the reactivity here. Is this actually better?
         if (
             app.chatsInitialised &&
-            app.selectedChatId !== undefined &&
+            $selectedChatIdStore !== undefined &&
             ($routeKindStore === "selected_channel_route" ||
                 $routeKindStore === "global_chat_selected_route")
         ) {
@@ -273,7 +305,7 @@
                     $routeStore.kind === "selected_channel_route" ||
                     $routeStore.kind === "global_chat_selected_route"
                 ) {
-                    const id = app.selectedChatId;
+                    const id = $selectedChatIdStore;
                     const messageIndex = $routeStore.messageIndex;
                     const threadMessageIndex = $routeStore.threadMessageIndex;
                     if (id !== undefined) {
