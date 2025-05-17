@@ -6,6 +6,7 @@
         activityFeedShowing,
         anonUserStore,
         app,
+        chitStateStore,
         communityListScrollTop,
         currentUserIdStore,
         emptyCombinedUnreadCounts,
@@ -14,6 +15,7 @@
         pathState,
         publish,
         showNav,
+        sortedCommunitiesStore,
         ui,
         userStore,
     } from "openchat-client";
@@ -47,7 +49,7 @@
     let avatarSize = $derived($mobileWidth ? AvatarSize.Small : AvatarSize.Default);
     let communityExplorer = $derived(pathState.route.kind === "communities_route");
     let selectedCommunityId = $derived(app.selectedCommunitySummary?.id.communityId);
-    let claimChitAvailable = $derived(app.chitState.nextDailyChitClaim < $now);
+    let claimChitAvailable = $derived($chitStateStore.nextDailyChitClaim < $now);
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
     let scrollingSection: HTMLElement;
@@ -58,7 +60,7 @@
     let communityItems = $state<CommunityItem[]>([]);
 
     $effect(() => {
-        communityItems = app.sortedCommunities.map((c) => ({ ...c, _id: c.id.communityId }));
+        communityItems = $sortedCommunitiesStore.map((c) => ({ ...c, _id: c.id.communityId }));
     });
 
     onMount(() => {

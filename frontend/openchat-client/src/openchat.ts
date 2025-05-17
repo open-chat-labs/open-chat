@@ -282,7 +282,7 @@ import { configureEffects } from "./effects.svelte";
 import { snapshot } from "./snapshot.svelte";
 import { app, hasFlag } from "./state/app.svelte";
 import { botState } from "./state/bots.svelte";
-import { type CommunityMergedState } from "./state/community_details";
+import { type CommunityMergedState } from "./state/community";
 import { localUpdates } from "./state/global";
 import { pathState, type RouteParams } from "./state/path.svelte";
 import {

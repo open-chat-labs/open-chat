@@ -7,6 +7,7 @@
         type ChatIdentifier,
         chatIdentifiersEqual,
         type ChatSummary,
+        communitiesStore,
         CommunityMap,
         type CommunitySummary,
         currentUserIdStore,
@@ -124,7 +125,7 @@
     }
 
     function importToCommunity() {
-        importToCommunities = app.communities.filter((c) => c.membership.role === "owner");
+        importToCommunities = $communitiesStore.filter((c) => c.membership.role === "owner");
         if (importToCommunities.size === 0) {
             toastStore.showFailureToast(i18nKey("communities.noOwned"));
             importToCommunities = undefined;

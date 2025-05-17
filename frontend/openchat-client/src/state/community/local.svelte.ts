@@ -2,7 +2,6 @@ import {
     type CommunityIdentifier,
     type ExternalBotPermissions,
     type Member,
-    type OptionUpdate,
     type PublicApiKeyDetails,
     type UserGroupDetails,
     type VersionedRules,
@@ -13,9 +12,6 @@ import { scheduleUndo, type UndoLocalUpdate } from "../undo";
 
 export class CommunityLocalState {
     #rules = $state<VersionedRules | undefined>();
-    #displayName = $state<OptionUpdate<string>>();
-    #rulesAccepted = $state<boolean | undefined>();
-    #index = $state<number>();
 
     readonly invitedUsers = new LocalSet<string>();
     readonly blockedUsers = new LocalSet<string>();
@@ -26,35 +22,11 @@ export class CommunityLocalState {
     readonly bots = new LocalMap<string, ExternalBotPermissions>();
     readonly apiKeys = new LocalMap<string, PublicApiKeyDetails>();
 
-    get index() {
-        return this.#index;
-    }
-
-    set index(val: number | undefined) {
-        this.#index = val;
-    }
-
     get rules() {
         return this.#rules;
     }
     set rules(val: VersionedRules | undefined) {
         this.#rules = val;
-    }
-
-    get displayName() {
-        return this.#displayName;
-    }
-
-    set displayName(val: OptionUpdate<string>) {
-        this.#displayName = val;
-    }
-
-    get rulesAccepted() {
-        return this.#rulesAccepted;
-    }
-
-    set rulesAccepted(val: boolean | undefined) {
-        this.#rulesAccepted = val;
     }
 }
 
@@ -110,39 +82,12 @@ export class CommunityLocalStateManager {
         };
     }
 
-    updateRulesAccepted(id: CommunityIdentifier, accepted?: boolean) {
-        const state = this.#getOrCreate(id);
-        const previous = state.rulesAccepted;
-        state.rulesAccepted = accepted;
-        return scheduleUndo(() => {
-            state.rulesAccepted = previous;
-        });
-    }
-
-    updateDisplayName(id: CommunityIdentifier, name?: string) {
-        const state = this.#getOrCreate(id);
-        const previous = state.displayName;
-        state.displayName = name !== undefined ? { value: name } : "set_to_none";
-        return scheduleUndo(() => {
-            state.displayName = previous;
-        });
-    }
-
     updateRules(id: CommunityIdentifier, rules: VersionedRules): UndoLocalUpdate {
         const state = this.#getOrCreate(id);
         const previous = state.rules;
         state.rules = rules;
         return scheduleUndo(() => {
             state.rules = previous;
-        });
-    }
-
-    updateIndex(id: CommunityIdentifier, index?: number): UndoLocalUpdate {
-        const state = this.#getOrCreate(id);
-        const previous = state.index;
-        state.index = index;
-        return scheduleUndo(() => {
-            state.index = previous;
         });
     }
 

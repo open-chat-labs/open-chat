@@ -36,13 +36,14 @@ import {
 import { SvelteMap } from "svelte/reactivity";
 import { revokeObjectUrls } from "../../utils/chat";
 import { chatDetailsLocalUpdates } from "../chat_details";
-import { communityLocalUpdates } from "../community_details";
+import { communityLocalUpdates } from "../community";
+import { communitySummaryLocalUpdates } from "../community/summaryUpdates";
 import {
+    CommunityMapStore,
     LocalChatMap,
-    LocalCommunityMap,
+    LocalCommunityMapStore,
     LocalMap,
     ReactiveChatMap,
-    ReactiveCommunityMap,
     ReactiveMessageContextMap,
 } from "../map";
 import { messageLocalUpdates } from "../message/local.svelte";
@@ -72,8 +73,9 @@ export class GlobalLocalState {
     );
     #draftMessages = new DraftMessages();
     readonly chats = new LocalChatMap<ChatSummary>();
-    readonly communities = new LocalCommunityMap<CommunitySummary>();
-    readonly previewCommunities = new ReactiveCommunityMap<CommunitySummary>();
+    // readonly communities = new LocalCommunityMap<CommunitySummary>();
+    readonly communities = new LocalCommunityMapStore<CommunitySummary>();
+    readonly previewCommunities = new CommunityMapStore<CommunitySummary>();
     readonly directChatBots = new LocalMap<string, ExternalBotPermissions>();
     #walletConfig = $state<WalletConfig | undefined>();
     #streakInsurance = $state<StreakInsurance | undefined>();
@@ -104,6 +106,7 @@ export class GlobalLocalState {
         messageLocalUpdates.clearAll();
         chatDetailsLocalUpdates.clearAll();
         communityLocalUpdates.clearAll();
+        communitySummaryLocalUpdates.clear();
     }
 
     blockDirectUser(userId: string) {
@@ -376,7 +379,7 @@ export class GlobalLocalState {
     }
 
     updateCommunityDisplayName(id: CommunityIdentifier, name?: string) {
-        return communityLocalUpdates.updateDisplayName(id, name);
+        return communitySummaryLocalUpdates.updateDisplayName(id, name);
     }
 
     updateCommunityMember(id: CommunityIdentifier, userId: string, member: Member) {
@@ -408,7 +411,7 @@ export class GlobalLocalState {
     }
 
     updateCommunityRulesAccepted(id: CommunityIdentifier, accepted: boolean): UndoLocalUpdate {
-        return communityLocalUpdates.updateRulesAccepted(id, accepted);
+        return communitySummaryLocalUpdates.updateRulesAccepted(id, accepted);
     }
 
     deleteUserGroup(id: CommunityIdentifier, userGroupId: number): UndoLocalUpdate {
@@ -438,7 +441,6 @@ export class GlobalLocalState {
     ): UndoLocalUpdate {
         return communityLocalUpdates.installBot(id, botId, perm);
     }
-
     removeCommunity(id: CommunityIdentifier) {
         if (!this.removeCommunityPreview(id)) {
             return this.communities.remove(id);
@@ -446,7 +448,7 @@ export class GlobalLocalState {
     }
 
     updateCommunityIndex(id: CommunityIdentifier, index: number): UndoLocalUpdate {
-        return communityLocalUpdates.updateIndex(id, index);
+        return communitySummaryLocalUpdates.updateIndex(id, index);
     }
 
     // Chat stuff

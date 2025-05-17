@@ -1,6 +1,6 @@
 <script lang="ts">
     import {
-        app,
+        chitStateStore,
         cryptoLookup,
         currentUserIdStore,
         currentUserStore,
@@ -89,7 +89,7 @@
         (!content.diamondOnly || $isDiamondStore) &&
             (!content.lifetimeDiamondOnly || $isLifetimeDiamondStore) &&
             (!content.uniquePersonOnly || $currentUserStore.isUniquePerson) &&
-            content.streakOnly <= app.chitState.streak,
+            content.streakOnly <= $chitStateStore.streak,
     );
     let disabled = $derived(finished || claimedByYou || allClaimed || !userEligible);
     let timeRemaining = $derived(

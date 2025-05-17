@@ -10,6 +10,7 @@
         anonUserStore,
         app,
         canExtendDiamondStore,
+        communitiesStore,
         hideMessagesFromDirectBlocked,
         iconSize,
         isDiamondStore,
@@ -19,6 +20,7 @@
         notificationsSupported,
         offensiveEnabledStore,
         publish,
+        sortedCommunitiesStore,
         suspendedUserStore,
         underReviewEnabledStore,
     } from "openchat-client";
@@ -119,7 +121,7 @@
     let originalUsername = $derived(user?.username ?? "");
     let originalDisplayName = $derived(user?.displayName ?? undefined);
     let selectedCommunity = $derived(
-        app.communities.get({
+        $communitiesStore.get({
             kind: "community",
             communityId: selectedCommunityId,
         }),
@@ -675,7 +677,7 @@
         <Select bind:value={selectedCommunityId}>
             <option disabled selected value={""}
                 ><Translatable resourceKey={i18nKey("profile.selectCommunity")} /></option>
-            {#each app.sortedCommunities.filter((s) => s.membership?.role !== "none") as community}
+            {#each $sortedCommunitiesStore.filter((s) => s.membership?.role !== "none") as community}
                 <option value={community.id.communityId}>{community.name}</option>
             {/each}
         </Select>

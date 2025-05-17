@@ -2,6 +2,7 @@
     import {
         app,
         AvatarSize,
+        communitiesStore,
         i18nKey,
         OpenChat,
         type BotInstallationLocation,
@@ -41,7 +42,7 @@
     function onPerformSearch(term: string) {
         const termLower = term.toLowerCase();
 
-        const communities: Match[] = [...app.communities.values()]
+        const communities: Match[] = [...$communitiesStore.values()]
             .filter((c) => termLower === "" || c.name.toLowerCase().includes(termLower))
             .map((c) => ({
                 avatarUrl: client.communityAvatarUrl(c.id.communityId, c.avatar),

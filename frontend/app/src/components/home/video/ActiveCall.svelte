@@ -4,6 +4,7 @@
     import {
         app,
         chatIdentifiersEqual,
+        communitiesStore,
         currentUserIdStore,
         currentUserStore,
         mobileWidth,
@@ -89,7 +90,7 @@
                         return {
                             chatId,
                             name: `${
-                                app.communities.get({
+                                $communitiesStore.get({
                                     kind: "community",
                                     communityId: chat.id.communityId,
                                 })?.name
