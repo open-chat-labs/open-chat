@@ -1318,7 +1318,6 @@ export class AppState {
 
     get serverCommunities() {
         return serverCommunitiesStore;
-        // return this.#serverCommunities;
     }
 
     get chatSummaries() {

@@ -13,8 +13,9 @@ import {
     type Member,
     type Message,
 } from "openchat-shared";
+import { get } from "svelte/store";
 import { vi } from "vitest";
-import { app } from "./app.svelte";
+import { app, communitiesStore, serverCommunitiesStore } from "./app.svelte";
 import { chatDetailsLocalUpdates } from "./chat_details";
 import { communityLocalUpdates } from "./community/local.svelte";
 import { localUpdates } from "./global";
@@ -407,6 +408,7 @@ describe("app state", () => {
         });
         test("communities list", () => {
             expect(app.serverCommunities.size).toEqual(2);
+            expect(get(serverCommunitiesStore).size).toEqual(2);
         });
         test("community indexes", () => {
             const id: CommunityIdentifier = { kind: "community", communityId: "123456" };
@@ -414,6 +416,7 @@ describe("app state", () => {
             expect(app.communities.get(id)?.membership.index).toEqual(1);
             localUpdates.updateCommunityIndex(id, 3);
             expect(app.communities.get(id)?.membership.index).toEqual(3);
+            expect(get(communitiesStore).get(id)?.membership.index).toEqual(3);
         });
 
         test("should get the server object if there are no updates", () => {
@@ -435,6 +438,7 @@ describe("app state", () => {
             expect(app.communities.get(id)?.membership.displayName).toBeUndefined();
             localUpdates.updateCommunityDisplayName(id, "Mr. OpenChat");
             expect(app.communities.get(id)?.membership.displayName).toEqual("Mr. OpenChat");
+            expect(get(communitiesStore).get(id)?.membership.displayName).toEqual("Mr. OpenChat");
         });
 
         describe("pinned chats", () => {
