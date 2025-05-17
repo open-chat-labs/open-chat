@@ -40,6 +40,7 @@
         pageReplace,
         pathState,
         pinNumberResolverStore,
+        querystringStore,
         rightPanelHistory,
         routeForChatIdentifier,
         routeForScope,
@@ -934,32 +935,32 @@
     });
 
     trackedEffect("route-change", () => {
-        routeChange(app.chatsInitialised, pathState.route);
+        routeChange(app.chatsInitialised, $routeStore);
     });
 
     $effect(() => {
         if (app.chatsInitialised) {
-            if (pathState.querystring.get("diamond") !== null) {
+            if ($querystringStore.get("diamond") !== null) {
                 showUpgrade = true;
                 pageReplace(removeQueryStringParam("diamond"));
             }
-            const faq = pathState.querystring.get("faq");
+            const faq = $querystringStore.get("faq");
             if (faq !== null) {
                 pageReplace(`/faq?q=${faq}`);
             }
-            if (pathState.querystring.get("wallet") !== null) {
+            if ($querystringStore.get("wallet") !== null) {
                 showWallet();
                 pageReplace(removeQueryStringParam("wallet"));
             }
-            if (pathState.querystring.get("hof") !== null) {
+            if ($querystringStore.get("hof") !== null) {
                 modal = { kind: "hall_of_fame" };
                 pageReplace(removeQueryStringParam("hof"));
             }
-            if (pathState.querystring.get("everyone") !== null) {
+            if ($querystringStore.get("everyone") !== null) {
                 rightPanelHistory.set([{ kind: "show_group_members" }]);
                 pageReplace(removeQueryStringParam("everyone"));
             }
-            const usergroup = pathState.querystring.get("usergroup");
+            const usergroup = $querystringStore.get("usergroup");
             if (usergroup !== null) {
                 const userGroupId = Number(usergroup);
                 rightPanelHistory.set([{ kind: "show_community_members", userGroupId }]);

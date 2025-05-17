@@ -2,7 +2,7 @@ import type { ChatSummary, MultiUserChatIdentifier } from "openchat-shared";
 import { derived, get, type Readable } from "svelte/store";
 import { isCanisterUrl } from "../utils/url";
 import { LocalStorageBoolStore, LocalStorageStore } from "./localStorageStore";
-import { pathState, type RouteParams } from "./path.svelte";
+import { routeStore, type RouteParams } from "./path.svelte";
 import { writable } from "./writable";
 
 export type FontScale = 0 | 1 | 2 | 3 | 4;
@@ -201,17 +201,16 @@ export const lastRightPanelState = derived(
 );
 export const disableLeftNav = writable<boolean>(false);
 export const layout = derived(
-    [mobileWidth, fullWidth, rightPanelHistory, disableLeftNav],
-    ([mobileWidth, fullWidth, rightPanelHistory, disableLeftNav]) => {
+    [mobileWidth, fullWidth, rightPanelHistory, disableLeftNav, routeStore],
+    ([mobileWidth, fullWidth, rightPanelHistory, disableLeftNav, route]) => {
         if (mobileWidth) {
             const showRight = rightPanelHistory.length > 0;
-            const showMiddle = !someHomeRoute(pathState.route.kind) && !showRight;
+            const showMiddle = !someHomeRoute(route.kind) && !showRight;
             const showLeft = !showMiddle && !showRight;
             const showNav =
                 !disableLeftNav &&
                 (showLeft ||
-                    ((pathState.route.kind === "communities_route" ||
-                        pathState.route.kind === "admin_route") &&
+                    ((route.kind === "communities_route" || route.kind === "admin_route") &&
                         !showRight));
             return {
                 showNav,
@@ -222,9 +221,7 @@ export const layout = derived(
         } else {
             const showRight = rightPanelHistory.length > 0 || fullWidth;
             const floatRight = !fullWidth;
-            const showLeft =
-                pathState.route.kind !== "communities_route" &&
-                pathState.route.kind !== "admin_route";
+            const showLeft = route.kind !== "communities_route" && route.kind !== "admin_route";
 
             return {
                 showNav: !disableLeftNav,

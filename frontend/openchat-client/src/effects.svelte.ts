@@ -1,9 +1,7 @@
-import { chatIdentifiersEqual, type ChatIdentifier } from "openchat-shared";
 import { untrack } from "svelte";
 import type { OpenChat } from "./openchat";
 import { app } from "./state/app.svelte";
 import { pathState } from "./state/path.svelte";
-import { ui } from "./state/ui.svelte";
 import { userStore } from "./state/users/users.svelte";
 import { dummyCurrentUser, dummyUserStore, dummyWalletConfigStore } from "./stores";
 
@@ -26,31 +24,7 @@ function onSelectedCommunityChanged(client: OpenChat) {
     });
 }
 
-function onSelectedChatChanged(client: OpenChat) {
-    $effect(() => {
-        // we have to be *so* careful with the reactivity here. Is this actually better?
-        if (
-            app.chatsInitialised &&
-            app.selectedChatId !== undefined &&
-            (pathState.routeKind === "selected_channel_route" ||
-                pathState.routeKind === "global_chat_selected_route")
-        ) {
-            untrack(() => {
-                if (
-                    pathState.route.kind === "selected_channel_route" ||
-                    pathState.route.kind === "global_chat_selected_route"
-                ) {
-                    const id = app.selectedChatId;
-                    const messageIndex = pathState.route.messageIndex;
-                    const threadMessageIndex = pathState.route.threadMessageIndex;
-                    if (id !== undefined) {
-                        client.setSelectedChat(id, messageIndex, threadMessageIndex);
-                    }
-                }
-            });
-        }
-    });
-}
+function onSelectedChatChanged() {}
 
 // function onSelectedMessageChanged(client: OpenChat) {
 //     $effect(() => {
@@ -60,35 +34,9 @@ function onSelectedChatChanged(client: OpenChat) {
 //     });
 // }
 
-function onThreadClosed() {
-    $effect(() => {
-        if (!pathState.threadOpen) {
-            untrack(() => {
-                ui.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
-            });
-        }
-    });
-}
+function onThreadClosed() {}
 
-function onThreadStateChanged(client: OpenChat) {
-    let previousChatId: ChatIdentifier | undefined = undefined;
-    $effect(() => {
-        if (
-            pathState.threadOpen &&
-            pathState.messageIndex !== undefined &&
-            app.selectedChatId !== undefined &&
-            chatIdentifiersEqual(previousChatId, app.selectedChatId)
-        ) {
-            const chatId = app.selectedChatId;
-            const idx = pathState.messageIndex;
-            const threadIdx = pathState.threadMessageIndex;
-            untrack(() => {
-                client.openThreadFromMessageIndex(chatId, idx, threadIdx);
-            });
-        }
-        previousChatId = app.selectedChatId;
-    });
-}
+function onThreadStateChanged() {}
 
 // In the transition period we need to try to keep certain svelte 5
 // runes and Svelte 4 stores in sync. The easiest way to do this is with effects
@@ -116,7 +64,7 @@ export function configureEffects(client: OpenChat) {
 
         onSelectedCommunityChanged(client);
 
-        onThreadStateChanged(client);
+        onThreadStateChanged();
 
         onThreadClosed();
 
@@ -133,6 +81,6 @@ export function configureEffects(client: OpenChat) {
             }
         });
 
-        onSelectedChatChanged(client);
+        onSelectedChatChanged();
     });
 }

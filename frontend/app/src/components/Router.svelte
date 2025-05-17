@@ -1,22 +1,36 @@
 <script lang="ts">
     import {
+        type ChatIdentifier,
+        OpenChat,
         type RouteParams,
         adminRoute,
+        app,
         blogRoute,
+        chatIdentifiersEqual,
         chatListRoute,
         communitesRoute,
         globalDirectChatSelectedRoute,
         globalGroupChatSelectedRoute,
+        messageIndexStore,
+        notFoundStore,
         pathState,
+        routeKindStore,
+        routeStore,
+        routerReadyStore,
         selectedChannelRoute,
         selectedCommunityRoute,
         shareRoute,
+        threadMessageIndexStore,
+        threadOpenStore,
+        ui,
     } from "openchat-client";
     import page from "page";
-    import { onDestroy, onMount } from "svelte";
+    import { getContext, onDestroy, onMount, untrack } from "svelte";
     import Home, { type HomeType } from "./home/HomeRoute.svelte";
     import LandingPage, { type LandingPageType } from "./landingpages/LandingPage.svelte";
     import NotFound, { type NotFoundType } from "./NotFound.svelte";
+
+    const client = getContext<OpenChat>("client");
 
     interface Props {
         showLandingPage: boolean;
@@ -190,13 +204,13 @@
             "*",
             parsePathParams(() => ({ kind: "not_found_route", scope: { kind: "none" } })),
             () => {
-                pathState.notFound = true;
+                notFoundStore.set(true);
                 route = NotFound;
             },
         );
         page.start();
 
-        pathState.routerReady = true;
+        routerReadyStore.set(true);
     });
 
     onDestroy(() => page.stop());
@@ -215,6 +229,60 @@
         });
         next();
     }
+
+    // This is where our general effects are going to go. They don't *really* belong in a component at all
+    // but unfortunately unowned effects do not respond to store value changes
+
+    let previousChatId: ChatIdentifier | undefined = undefined;
+    $effect(() => {
+        if (
+            $threadOpenStore &&
+            $messageIndexStore !== undefined &&
+            app.selectedChatId !== undefined &&
+            chatIdentifiersEqual(previousChatId, app.selectedChatId)
+        ) {
+            const chatId = app.selectedChatId;
+            const idx = $messageIndexStore;
+            const threadIdx = $threadMessageIndexStore;
+            untrack(() => {
+                client.openThreadFromMessageIndex(chatId, idx, threadIdx);
+            });
+        }
+        previousChatId = app.selectedChatId;
+    });
+
+    $effect(() => {
+        if (!$threadOpenStore) {
+            untrack(() => {
+                ui.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
+            });
+        }
+    });
+
+    // Set selected chat
+    $effect(() => {
+        // we have to be *so* careful with the reactivity here. Is this actually better?
+        if (
+            app.chatsInitialised &&
+            app.selectedChatId !== undefined &&
+            ($routeKindStore === "selected_channel_route" ||
+                $routeKindStore === "global_chat_selected_route")
+        ) {
+            untrack(() => {
+                if (
+                    $routeStore.kind === "selected_channel_route" ||
+                    $routeStore.kind === "global_chat_selected_route"
+                ) {
+                    const id = app.selectedChatId;
+                    const messageIndex = $routeStore.messageIndex;
+                    const threadMessageIndex = $routeStore.threadMessageIndex;
+                    if (id !== undefined) {
+                        client.setSelectedChat(id, messageIndex, threadMessageIndex);
+                    }
+                }
+            });
+        }
+    });
 </script>
 
 {#if route !== undefined}

@@ -15,7 +15,7 @@
         chatIdentifiersEqual,
         currentUserIdStore,
         localUpdates,
-        pathState,
+        messageIndexStore,
         routeForChatIdentifier,
         showMiddle,
     } from "openchat-client";
@@ -265,10 +265,10 @@
     $effect(() => {
         if (
             app.chatsInitialised &&
-            pathState.messageIndex !== undefined &&
+            $messageIndexStore !== undefined &&
             chatIdentifiersEqual(app.selectedChatId, previousChatId)
         ) {
-            const idx = pathState.messageIndex;
+            const idx = $messageIndexStore;
             untrack(() => {
                 scrollToMessageIndex(idx, false);
             });

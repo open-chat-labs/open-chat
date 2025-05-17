@@ -20,7 +20,6 @@
         iconSize,
         localUpdates,
         messageContextsEqual,
-        pathState,
         subscribe,
         withEqCheck,
         type ChatEvent as ChatEventType,
@@ -580,11 +579,11 @@
         if (msgEvent && threadRootEvent === undefined) {
             if (
                 msgEvent.event.thread !== undefined &&
-                (pathState.route.kind === "global_chat_selected_route" ||
-                    pathState.route.kind === "selected_channel_route") &&
-                (pathState.route.open || pathState.route.threadMessageIndex !== undefined)
+                ($routeStore.kind === "global_chat_selected_route" ||
+                    $routeStore.kind === "selected_channel_route") &&
+                ($routeStore.open || $routeStore.threadMessageIndex !== undefined)
             ) {
-                client.openThread(chat.id, msgEvent, false, pathState.route.threadMessageIndex);
+                client.openThread(chat.id, msgEvent, false, $routeStore.threadMessageIndex);
             }
         }
     }

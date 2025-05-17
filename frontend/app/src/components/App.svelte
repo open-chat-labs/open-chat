@@ -32,10 +32,11 @@
         botState,
         fontSize,
         inititaliseLogger,
+        notFoundStore,
         pageReplace,
-        pathState,
         routeForChatIdentifier,
         routeForScope,
+        routeStore,
         subscribe,
     } from "openchat-client";
     import page from "page";
@@ -105,8 +106,8 @@
     let profileTrace = client.showTrace();
     // I can't (yet) find a way to avoid using "any" here. Will try to improve but need to commit this crime for the time being
     let videoCallElement: any;
-    let landingPageRoute = $derived(isLandingPageRoute(pathState.route));
-    let homeRoute = $derived(pathState.route.kind === "home_route");
+    let landingPageRoute = $derived(isLandingPageRoute($routeStore));
+    let homeRoute = $derived($routeStore.kind === "home_route");
     let showLandingPage = $derived(
         landingPageRoute || (homeRoute && app.identityState.kind === "anon" && $anonUserStore),
     );
@@ -115,7 +116,7 @@
         $currentTheme.mode === "dark" ? "/assets/burst_dark" : "/assets/burst_light",
     );
     let burstUrl = $derived(isFirefox ? `${burstPath}.png` : `${burstPath}.svg`);
-    let burstFixed = $derived(isScrollingRoute(pathState.route));
+    let burstFixed = $derived(isScrollingRoute($routeStore));
 
     let upgrading = $derived(
         app.identityState.kind === "upgrading_user" || app.identityState.kind === "upgrade_user",
@@ -129,7 +130,7 @@
     });
 
     trackedEffect("landing-page", () => {
-        if (!pathState.notFound && showLandingPage) {
+        if (!$notFoundStore && showLandingPage) {
             document.body.classList.add("landing-page");
         } else {
             document.body.classList.remove("landing-page");

@@ -1,13 +1,13 @@
 <script lang="ts">
-    import Headline from "./Headline.svelte";
+    import { querystringStore } from "openchat-client";
     import { scrollToSection } from "../../utils/urls";
     import GuidelinesContent from "./GuidelinesContent.svelte";
-    import { pathState } from "openchat-client";
+    import Headline from "./Headline.svelte";
 
     let linked: number | undefined = $state(undefined);
 
     $effect(() => {
-        const section = pathState.querystring.get("section");
+        const section = $querystringStore.get("section");
         if (section) {
             linked = scrollToSection(section);
         }

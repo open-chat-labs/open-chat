@@ -12,7 +12,6 @@
         emptyCombinedUnreadCounts,
         mobileWidth,
         navOpen,
-        pathState,
         publish,
         showNav,
         sortedCommunitiesStore,
@@ -47,7 +46,7 @@
 
     let user = $derived(userStore.get($currentUserIdStore));
     let avatarSize = $derived($mobileWidth ? AvatarSize.Small : AvatarSize.Default);
-    let communityExplorer = $derived(pathState.route.kind === "communities_route");
+    let communityExplorer = $derived($routeStore.kind === "communities_route");
     let selectedCommunityId = $derived(app.selectedCommunitySummary?.id.communityId);
     let claimChitAvailable = $derived($chitStateStore.nextDailyChitClaim < $now);
 
@@ -119,7 +118,7 @@
     }
 
     function showActivityFeed() {
-        if (pathState.route.kind === "communities_route") {
+        if ($routeStore.kind === "communities_route") {
             page("/");
         }
         activityFeedShowing.set(true);

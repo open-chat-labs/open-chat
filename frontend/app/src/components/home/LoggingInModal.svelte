@@ -4,7 +4,7 @@
         type OpenChat,
         anonUserStore,
         app,
-        pathState,
+        querystringStore,
         selectedAuthProviderStore,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
@@ -38,7 +38,7 @@
 
     let emailSigninHandler = new EmailSigninHandler(client, "registration", true);
 
-    let restrictTo = $derived(new Set(pathState.querystring.getAll("auth")));
+    let restrictTo = $derived(new Set($querystringStore.getAll("auth")));
     let loggingInWithEmail = $derived(
         loginState === "logging-in" && $selectedAuthProviderStore === AuthProvider.EMAIL,
     );
