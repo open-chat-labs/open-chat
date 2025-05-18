@@ -18,6 +18,7 @@
         publish,
         routeForChatIdentifier,
         routeForScope,
+        selectedCommunitySummaryStore,
         userStore,
         type UserSummary,
     } from "openchat-client";
@@ -90,8 +91,8 @@
     }
 
     function cancelPreview() {
-        if (app.selectedCommunitySummary) {
-            client.removeCommunity(app.selectedCommunitySummary.id);
+        if ($selectedCommunitySummaryStore) {
+            client.removeCommunity($selectedCommunitySummaryStore.id);
             page(routeForScope(client.getDefaultScope()));
         }
     }
@@ -176,7 +177,7 @@
 
     let showPreview = $derived(
         $mobileWidth &&
-            app.selectedCommunitySummary?.membership.role === "none" &&
+            $selectedCommunitySummaryStore?.membership.role === "none" &&
             app.selectedChatId === undefined,
     );
     let user = $derived(userStore.get($currentUserIdStore));
@@ -232,8 +233,8 @@
         <GroupChatsHeader {canMarkAllRead} />
     {:else if $chatListScopeStore.kind === "direct_chat"}
         <DirectChatsHeader {canMarkAllRead} />
-    {:else if app.selectedCommunitySummary && $chatListScopeStore.kind === "community"}
-        <SelectedCommunityHeader community={app.selectedCommunitySummary} {canMarkAllRead} />
+    {:else if $selectedCommunitySummaryStore && $chatListScopeStore.kind === "community"}
+        <SelectedCommunityHeader community={$selectedCommunitySummaryStore} {canMarkAllRead} />
     {/if}
 
     <ChatListSearch
@@ -345,7 +346,7 @@
                                                 ...group,
                                                 id: group.chatId,
                                             },
-                                            app.selectedCommunitySummary,
+                                            $selectedCommunitySummaryStore,
                                         )}
                                         onclick={() => selectGroup(group)}>
                                         <h4 class="search-item-title">

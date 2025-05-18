@@ -6,7 +6,6 @@
     import Translatable from "@src/components/Translatable.svelte";
     import { i18nKey } from "@src/i18n/i18n";
     import {
-        app,
         AvatarSize,
         type ChannelMatch,
         chatListScopeStore,
@@ -14,6 +13,7 @@
         mobileWidth,
         type OpenChat,
         routeForChatIdentifier,
+        selectedCommunitySummaryStore,
         ui,
     } from "openchat-client";
     import page from "page";
@@ -37,7 +37,7 @@
     let canDeleteChannel = $derived(client.canDeleteChannel(channel.id));
 
     function selectChannel(match: ChannelMatch) {
-        if (app.selectedCommunitySummary === undefined) return;
+        if ($selectedCommunitySummaryStore === undefined) return;
         if (!match.public) return;
         if ($mobileWidth) {
             ui.popRightPanelHistory();
@@ -53,7 +53,7 @@
         <Avatar
             url={client.groupAvatarUrl(
                 { id: channel.id, ...channel.avatar },
-                app.selectedCommunitySummary,
+                $selectedCommunitySummaryStore,
             )}
             size={AvatarSize.Default} />
     </div>

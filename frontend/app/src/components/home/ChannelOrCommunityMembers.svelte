@@ -6,6 +6,12 @@
         type MemberRole,
         OpenChat,
         publish,
+        selectedCommunityApiKeysStore,
+        selectedCommunityBlockedUsersStore,
+        selectedCommunityBotsStore,
+        selectedCommunityInvitedUsersStore,
+        selectedCommunityLapsedMembersStore,
+        selectedCommunityMembersStore,
         type UserSummary,
     } from "openchat-client";
     import { getContext } from "svelte";
@@ -100,12 +106,12 @@
             showHeader={false}
             {closeIcon}
             collection={community}
-            invited={app.selectedCommunity.invitedUsers}
-            members={[...app.selectedCommunity.members.values()]}
-            blocked={app.selectedCommunity.blockedUsers}
-            lapsed={app.selectedCommunity.lapsedMembers}
-            installedBots={app.selectedCommunity.bots}
-            apiKeys={app.selectedCommunity.apiKeys}
+            invited={$selectedCommunityInvitedUsersStore}
+            members={[...$selectedCommunityMembersStore.values()]}
+            blocked={$selectedCommunityBlockedUsersStore}
+            lapsed={$selectedCommunityLapsedMembersStore}
+            installedBots={$selectedCommunityBotsStore}
+            apiKeys={$selectedCommunityApiKeysStore}
             {onClose}
             onBlockUser={onBlockCommunityUser}
             onUnblockUser={onUnblockCommunityUser}
@@ -124,7 +130,7 @@
             members={[...app.selectedChat.members.values()]}
             blocked={app.selectedChat.blockedUsers}
             lapsed={app.selectedChat.lapsedMembers}
-            installedBots={app.selectedCommunity.bots}
+            installedBots={$selectedCommunityBotsStore}
             apiKeys={app.selectedChat.apiKeys}
             webhooks={Array.from(app.selectedChat.webhooks.values())}
             {onClose}

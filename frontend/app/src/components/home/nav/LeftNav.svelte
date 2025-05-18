@@ -15,6 +15,7 @@
         navOpen,
         publish,
         routeStore,
+        selectedCommunitySummaryStore,
         showNav,
         sortedCommunitiesStore,
         ui,
@@ -49,7 +50,7 @@
     let user = $derived(userStore.get($currentUserIdStore));
     let avatarSize = $derived($mobileWidth ? AvatarSize.Small : AvatarSize.Default);
     let communityExplorer = $derived($routeStore.kind === "communities_route");
-    let selectedCommunityId = $derived(app.selectedCommunitySummary?.id.communityId);
+    let selectedCommunityId = $derived($selectedCommunitySummaryStore?.id.communityId);
     let claimChitAvailable = $derived($chitStateStore.nextDailyChitClaim < $now);
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store

@@ -8,6 +8,7 @@
         fullWidth,
         mobileWidth,
         routeForMessage,
+        selectedCommunityMembersStore,
         ui,
         userStore,
     } from "openchat-client";
@@ -37,7 +38,7 @@
     let crypto = msg.content.kind === "crypto_content";
 
     let sender = $derived(findSender(msg.sender, userStore.allUsers, app.selectedChat.webhooks));
-    let username = $derived(client.getDisplayName(sender, app.selectedCommunity.members));
+    let username = $derived(client.getDisplayName(sender, $selectedCommunityMembersStore));
     let deleted = $derived(msg.content.kind === "deleted_content");
     let fill = $derived(client.fillMessage(msg));
     let me = $derived(user.userId === senderId);

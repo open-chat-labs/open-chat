@@ -1,2 +1,2 @@
-export { communityLocalUpdates } from "./local.svelte";
-export { type CommunityMergedState } from "./merged.svelte";
+export { communityLocalUpdates } from "./detailUpdates";
+export { CommunityDetailsState } from "./server";

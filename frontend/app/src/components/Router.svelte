@@ -4,11 +4,11 @@
         OpenChat,
         type RouteParams,
         adminRoute,
-        app,
         blogRoute,
         chatIdentifiersEqual,
         chatListRoute,
         chatListScopeStore,
+        chatsInitialisedStore,
         communitesRoute,
         exploringStore,
         globalDirectChatSelectedRoute,
@@ -23,6 +23,7 @@
         selectedChatIdStore,
         selectedCommunityIdStore,
         selectedCommunityRoute,
+        selectedServerCommunityStore,
         shareRoute,
         threadMessageIndexStore,
         threadOpenStore,
@@ -239,7 +240,7 @@
 
     // Set selected community
     $effect(() => {
-        if (app.chatsInitialised && $selectedCommunityIdStore !== undefined) {
+        if ($chatsInitialisedStore && $selectedCommunityIdStore !== undefined) {
             const id = $selectedCommunityIdStore;
 
             // this untrack is not really necessary in this case but it's probably a good pattern to follow to
@@ -252,6 +253,13 @@
                     }
                 });
             });
+        }
+    });
+
+    // clear selected community
+    $effect(() => {
+        if ($selectedCommunityIdStore === undefined) {
+            selectedServerCommunityStore.set(undefined);
         }
     });
 
@@ -295,7 +303,7 @@
     $effect(() => {
         // we have to be *so* careful with the reactivity here. Is this actually better?
         if (
-            app.chatsInitialised &&
+            $chatsInitialisedStore &&
             $selectedChatIdStore !== undefined &&
             ($routeKindStore === "selected_channel_route" ||
                 $routeKindStore === "global_chat_selected_route")

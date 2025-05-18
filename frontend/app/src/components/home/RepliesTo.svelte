@@ -2,12 +2,12 @@
     import {
         type ChatIdentifier,
         type RehydratedReplyContext,
-        app,
         chatIdentifiersEqual,
         chatListScopeStore,
         currentUserIdStore,
         OpenChat,
         routeForChatIdentifier,
+        selectedCommunityMembersStore,
     } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
@@ -38,7 +38,7 @@
     let displayName = $derived(
         me
             ? client.toTitleCase($_("you"))
-            : client.getDisplayNameById(repliesTo.senderId, app.selectedCommunity.members),
+            : client.getDisplayNameById(repliesTo.senderId, $selectedCommunityMembersStore),
     );
 
     function getUrl() {

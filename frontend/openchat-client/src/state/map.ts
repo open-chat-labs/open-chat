@@ -103,6 +103,7 @@ export class LocalMap<K, V> {
         private serialiser?: (k: K) => Primitive,
         private deserialiser?: (p: Primitive) => K,
     ) {
+        // TODO - when we are ready - make sure that this doesn't use SvelteMap
         this.#addedOrUpdated = new SafeMap(serialiser, deserialiser, () => new SvelteMap());
         this.#removed = new SafeSet(serialiser, deserialiser, () => new SvelteSet());
     }
@@ -172,7 +173,7 @@ export class ReactiveCommunityMap<V> extends SafeMap<CommunityIdentifier, V> {
 // This is a map that functions as a svelte store
 export class SafeMapStore<K, V> extends SafeMap<K, V> {
     #subs: Subscriber<SafeMap<K, V>>[] = [];
-    #publish() {
+    publish() {
         this.#subs.forEach((sub) => {
             sub(this);
         });
@@ -191,13 +192,13 @@ export class SafeMapStore<K, V> extends SafeMap<K, V> {
         for (const [k, v] of map) {
             super.set(k, v);
         }
-        this.#publish();
+        this.publish();
     }
 
     clear() {
         if (super.size > 0) {
             super.clear();
-            this.#publish();
+            this.publish();
         }
     }
 
@@ -210,14 +211,14 @@ export class SafeMapStore<K, V> extends SafeMap<K, V> {
 
     set(key: K, val: V) {
         super.set(key, val);
-        this.#publish();
+        this.publish();
         return this;
     }
 
     delete(key: K) {
         const deleted = super.delete(key);
         if (deleted) {
-            this.#publish();
+            this.publish();
         }
         return deleted;
     }

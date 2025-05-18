@@ -10,6 +10,7 @@
         mobileWidth,
         NoMeetingToJoin,
         OpenChat,
+        selectedCommunitySummaryStore,
         ui,
         userStore,
         type AccessTokenType,
@@ -95,7 +96,7 @@
                                     communityId: chat.id.communityId,
                                 })?.name
                             } > ${chat.name}`,
-                            avatarUrl: client.groupAvatarUrl(chat, app.selectedCommunitySummary),
+                            avatarUrl: client.groupAvatarUrl(chat, $selectedCommunitySummaryStore),
                             userId: undefined,
                             videoCallInProgress: chat.videoCallInProgress,
                         };

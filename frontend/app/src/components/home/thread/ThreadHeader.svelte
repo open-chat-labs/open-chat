@@ -8,11 +8,11 @@
         TypersByKey,
     } from "openchat-client";
     import {
-        app,
         AvatarSize,
         byContext,
         iconSize,
         mobileWidth,
+        selectedCommunitySummaryStore,
         UserStatus,
         userStore,
     } from "openchat-client";
@@ -69,7 +69,7 @@
         return {
             title: $mobileWidth ? chatSummary.name : $_("thread.title"),
             userStatus: UserStatus.None,
-            avatarUrl: client.groupAvatarUrl(chatSummary, app.selectedCommunitySummary),
+            avatarUrl: client.groupAvatarUrl(chatSummary, $selectedCommunitySummaryStore),
             userId: undefined,
             subtext,
             typing: someoneTyping !== undefined,

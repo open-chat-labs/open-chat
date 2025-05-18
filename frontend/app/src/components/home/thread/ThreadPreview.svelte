@@ -9,6 +9,7 @@
         type MultiUserChat,
         OpenChat,
         routeForChatIdentifier,
+        selectedCommunitySummaryStore,
         type ThreadPreview,
         userStore,
     } from "openchat-client";
@@ -54,7 +55,7 @@
     );
     let chatData = $derived({
         name: chat?.name,
-        avatarUrl: client.groupAvatarUrl(chat, app.selectedCommunitySummary),
+        avatarUrl: client.groupAvatarUrl(chat, $selectedCommunitySummaryStore),
     });
 
     let grouped = $derived(client.groupBySender(thread.latestReplies));

@@ -29,6 +29,7 @@
         app,
         chatIdentifiersEqual,
         chatListScopeStore,
+        chatsInitialisedStore,
         communitiesStore,
         currentUserStore,
         defaultChatRules,
@@ -47,6 +48,7 @@
         routeForScope,
         routeStore,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
+        selectedCommunityStore,
         subscribe,
         suspendedUserStore,
         ui,
@@ -847,7 +849,7 @@
         modal = {
             kind: "edit_community",
             community,
-            communityRules: app.selectedCommunity.rules ?? defaultChatRules("community"),
+            communityRules: $selectedCommunityStore?.rules ?? defaultChatRules("community"),
         };
     }
 
@@ -928,7 +930,7 @@
         if (
             app.identityState.kind === "logged_in" &&
             app.identityState.postLogin?.kind === "join_group" &&
-            app.chatsInitialised
+            $chatsInitialisedStore
         ) {
             const join = { ...app.identityState.postLogin };
             client.clearPostLoginState();
@@ -937,11 +939,11 @@
     });
 
     trackedEffect("route-change", () => {
-        routeChange(app.chatsInitialised, $routeStore);
+        routeChange($chatsInitialisedStore, $routeStore);
     });
 
     $effect(() => {
-        if (app.chatsInitialised) {
+        if ($chatsInitialisedStore) {
             if ($querystringStore.get("diamond") !== null) {
                 showUpgrade = true;
                 pageReplace(removeQueryStringParam("diamond"));
