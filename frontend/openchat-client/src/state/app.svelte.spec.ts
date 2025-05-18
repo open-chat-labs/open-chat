@@ -15,14 +15,14 @@ import {
 } from "openchat-shared";
 import { get } from "svelte/store";
 import { vi } from "vitest";
+import { app } from "./app.svelte";
+import { chatDetailsLocalUpdates } from "./chat_details";
+import { communityLocalUpdates } from "./community";
 import {
-    app,
     communitiesStore,
     selectedCommunityMembersStore,
     serverCommunitiesStore,
-} from "./app.svelte";
-import { chatDetailsLocalUpdates } from "./chat_details";
-import { communityLocalUpdates } from "./community";
+} from "./community/stores";
 import { localUpdates } from "./global";
 import { pathState } from "./path.svelte";
 
