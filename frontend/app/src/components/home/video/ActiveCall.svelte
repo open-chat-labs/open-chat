@@ -2,6 +2,7 @@
     import type { DailyThemeConfig } from "@daily-co/daily-js";
     import daily, { type DailyCall } from "@daily-co/daily-js";
     import {
+        allUsersStore,
         app,
         chatIdentifiersEqual,
         communitiesStore,
@@ -12,7 +13,6 @@
         OpenChat,
         selectedCommunitySummaryStore,
         ui,
-        userStore,
         type AccessTokenType,
         type ChatIdentifier,
         type VideoCallType,
@@ -71,7 +71,7 @@
             if (chat) {
                 switch (chat.kind) {
                     case "direct_chat":
-                        const them = userStore.get(chat.them.userId);
+                        const them = $allUsersStore.get(chat.them.userId);
                         return {
                             chatId,
                             name: client.displayName(them),

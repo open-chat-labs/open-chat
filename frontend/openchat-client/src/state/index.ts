@@ -5,4 +5,4 @@ export * from "./path.svelte";
 export * from "./ui.svelte";
 export * from "./undo";
 export { messagesRead, type MessageReadState } from "./unread/markRead.svelte";
-export { userStore } from "./users/users.svelte";
+export * from "./users/users.svelte";

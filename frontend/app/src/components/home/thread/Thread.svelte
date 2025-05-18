@@ -14,6 +14,7 @@
         User,
     } from "openchat-client";
     import {
+        allUsersStore,
         app,
         currentUserIdStore,
         currentUserStore,
@@ -173,7 +174,7 @@
     }
 
     function editEvent(ev: EventWrapper<Message>): void {
-        localUpdates.draftMessages.setEditing(messageContext, ev);
+        localUpdates.draftMessages.setEditing(messageContext, ev, $allUsersStore);
     }
 
     function sendMessageWithAttachment(

@@ -6,12 +6,12 @@
         type CommunitySummary,
         type OpenChat,
         type UserLookup,
+        allUsersStore,
         app,
         chatListScopeStore,
         locationStore,
         routeForChatIdentifier,
         selectedCommunitySummaryStore,
-        userStore,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { mobileOperatingSystem } from "../utils/devices";
@@ -88,7 +88,7 @@
         getDetails(
             $chatListScopeStore,
             $locationStore,
-            userStore.allUsers,
+            $allUsersStore,
             app.globalUnreadCount,
             app.selectedChatSummary,
             $selectedCommunitySummaryStore,

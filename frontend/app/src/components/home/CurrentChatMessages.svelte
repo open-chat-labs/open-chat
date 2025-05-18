@@ -11,6 +11,7 @@
         type OpenChat,
         type ReadonlySet,
         FilteredProposals,
+        allUsersStore,
         app,
         chatIdentifiersEqual,
         chatListScopeStore,
@@ -97,7 +98,7 @@
     }
 
     function onEditEvent(ev: EventWrapper<Message>) {
-        localUpdates.draftMessages.setEditing({ chatId: chat.id }, ev);
+        localUpdates.draftMessages.setEditing({ chatId: chat.id }, ev, $allUsersStore);
     }
 
     function eventKey(e: EventWrapper<ChatEventType>): string {

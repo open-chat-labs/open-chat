@@ -1,12 +1,12 @@
 <script lang="ts">
     import type { ChatSummary, OpenChat, UserSummary } from "openchat-client";
     import {
+        allUsersStore,
         cryptoBalance as cryptoBalanceStore,
         enhancedCryptoLookup as cryptoLookup,
         currentUserIdStore,
         iconSize,
         mobileWidth,
-        userStore,
     } from "openchat-client";
     import { type CryptocurrencyContent, type MessageContext, nowNanos } from "openchat-shared";
     import { getContext, onMount } from "svelte";
@@ -77,9 +77,9 @@
     onMount(() => {
         // default the receiver to the other user in a direct chat
         if (chat.kind === "direct_chat") {
-            receiver = userStore.get(chat.them.userId);
+            receiver = $allUsersStore.get(chat.them.userId);
         } else if (defaultReceiver !== undefined && defaultReceiver !== $currentUserIdStore) {
-            receiver = userStore.get(defaultReceiver);
+            receiver = $allUsersStore.get(defaultReceiver);
         }
     });
 

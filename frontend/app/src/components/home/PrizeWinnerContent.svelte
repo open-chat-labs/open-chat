@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { OpenChat, PrizeWinnerContent } from "openchat-client";
-    import { cryptoLookup, currentUserIdStore, userStore } from "openchat-client";
+    import { allUsersStore, cryptoLookup, currentUserIdStore } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import SpinningToken from "../icons/SpinningToken.svelte";
@@ -18,7 +18,7 @@
     function username(userId: string): string {
         return userId === $currentUserIdStore
             ? $_("you")
-            : `${userStore.get(userId)?.username ?? $_("unknown")}`;
+            : `${$allUsersStore.get(userId)?.username ?? $_("unknown")}`;
     }
 
     function openUserProfile(ev: Event) {

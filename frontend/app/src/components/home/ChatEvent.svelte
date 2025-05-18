@@ -1,11 +1,11 @@
 <script lang="ts">
     import { findSender } from "@src/utils/user";
     import {
+        allUsersStore,
         app,
         currentUserIdStore,
         currentUserStore,
         typing,
-        userStore,
         type ChatEvent,
         type ChatIdentifier,
         type ChatType,
@@ -152,7 +152,7 @@
 
     let sender = $derived(
         event.event.kind === "message"
-            ? findSender(event.event.sender, userStore.allUsers, app.selectedChat.webhooks)
+            ? findSender(event.event.sender, $allUsersStore, app.selectedChat.webhooks)
             : undefined,
     );
 </script>

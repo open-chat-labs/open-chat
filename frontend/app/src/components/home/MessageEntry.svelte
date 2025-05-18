@@ -16,6 +16,7 @@
         UserOrUserGroup,
     } from "openchat-client";
     import {
+        allUsersStore,
         anonUserStore,
         botState,
         chatIdentifiersEqual,
@@ -30,7 +31,6 @@
         selectedCommunitySummaryStore,
         selectedCommunityUserGroupsStore,
         throttleDeadline,
-        userStore,
     } from "openchat-client";
     import { getContext, tick } from "svelte";
     import { _ } from "svelte-i18n";
@@ -309,7 +309,7 @@
 
     function formatUserMentions(text: string): string {
         return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
-            const u = userStore.get(p1);
+            const u = $allUsersStore.get(p1);
             if (u?.username !== undefined) {
                 const username = u.username;
                 return `@${username}`;

@@ -187,7 +187,7 @@ export class SafeMapStore<K, V> extends SafeMap<K, V> {
         };
     }
 
-    fromMap(map: SafeMap<K, V>) {
+    fromMap(map: ReadonlyMap<K, V>) {
         this.clear();
         for (const [k, v] of map) {
             super.set(k, v);

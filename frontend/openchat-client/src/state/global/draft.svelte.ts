@@ -6,9 +6,9 @@ import {
     type EventWrapper,
     type Message,
     type MessageContext,
+    type UserLookup,
 } from "openchat-shared";
 import { ReactiveMessageContextMap } from "../map";
-import { userStore } from "../users/users.svelte";
 
 export class DraftMessage {
     textContent = $state<string>();
@@ -45,7 +45,7 @@ export class DraftMessages {
         this.#getOrCreate(key).attachment = attachment;
     }
 
-    setEditing(key: MessageContext, editingEvent: EventWrapper<Message>) {
+    setEditing(key: MessageContext, editingEvent: EventWrapper<Message>, userLookup: UserLookup) {
         const state = this.#getOrCreate(key);
         state.textContent = getContentAsText(editingEvent.event.content);
         state.editingEvent = editingEvent;
@@ -58,7 +58,7 @@ export class DraftMessages {
                 ? {
                       ...editingEvent.event.repliesTo,
                       content: editingEvent.event.content,
-                      sender: userStore.get(editingEvent.event.sender),
+                      sender: userLookup.get(editingEvent.event.sender),
                   }
                 : undefined;
     }

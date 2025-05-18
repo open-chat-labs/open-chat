@@ -2,12 +2,12 @@
     import {
         AvatarSize,
         OpenChat,
+        allUsersStore,
         app,
         chatIdentifiersEqual,
         currentUserIdStore,
         publish,
         selectedCommunityMembersStore,
-        userStore,
         type VideoCallContent,
     } from "openchat-client";
     import { getContext } from "svelte";
@@ -80,7 +80,7 @@
     <div class="avatars">
         {#each [...content.participants].slice(0, 5) as participantId}
             <Avatar
-                url={client.userAvatarUrl(userStore.get(participantId.userId))}
+                url={client.userAvatarUrl($allUsersStore.get(participantId.userId))}
                 userId={participantId.userId}
                 size={AvatarSize.Small} />
         {/each}

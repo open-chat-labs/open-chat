@@ -2,12 +2,12 @@
     import type { Message, MessageActivityEvent, ResourceKey } from "openchat-client";
     import {
         activityFeedShowing,
+        allUsersStore,
         AvatarSize,
         communitiesStore,
         currentUserIdStore,
         OpenChat,
         routeForMessageContext,
-        userStore,
         type MessageContext,
     } from "openchat-client";
     import page from "page";
@@ -110,7 +110,7 @@
                 return i18nKey(`activity.${root}Two`, {
                     username,
                     other: buildDisplayName(
-                        userStore.allUsers,
+                        $allUsersStore,
                         u,
                         u === $currentUserIdStore ? "me" : "user",
                     ),
@@ -154,11 +154,11 @@
         activityFeedShowing.set(false);
         page(routeForMessageContext("none", event.messageContext, true));
     }
-    let sender = $derived(event.userId ? userStore.get(event.userId) : undefined);
+    let sender = $derived(event.userId ? $allUsersStore.get(event.userId) : undefined);
     let eventUsername = $derived(
         event.userId
             ? buildDisplayName(
-                  userStore.allUsers,
+                  $allUsersStore,
                   event.userId,
                   event.userId === $currentUserIdStore ? "me" : "user",
               )
@@ -167,7 +167,7 @@
     let messageUsername = $derived(
         event.message
             ? buildDisplayName(
-                  userStore.allUsers,
+                  $allUsersStore,
                   event.message.sender,
                   event.message.sender === $currentUserIdStore ? "me" : "user",
               )
