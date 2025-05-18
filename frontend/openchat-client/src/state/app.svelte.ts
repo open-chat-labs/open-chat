@@ -536,6 +536,8 @@ export class AppState {
 
     #serverFavourites = $state<ChatSet>(new ChatSet());
 
+    // TODO - none of the references to userStore here will be reactive at the moment
+    // this is only a temporary problem
     #currentChatBlockedOrSuspendedUsers = $derived.by(() => {
         const direct = get(hideMessagesFromDirectBlocked) ? [...userStore.blockedUsers] : [];
         return new Set<string>([

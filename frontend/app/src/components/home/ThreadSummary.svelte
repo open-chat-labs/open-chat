@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { ChatIdentifier, OpenChat, ThreadSummary } from "openchat-client";
-    import { app, AvatarSize, mobileWidth, userStore } from "openchat-client";
+    import { allUsersStore, app, AvatarSize, mobileWidth } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
@@ -35,7 +35,7 @@
         <div class="thread-avatars">
             {#each [...threadSummary.participantIds].slice(0, 5) as participantId}
                 <Avatar
-                    url={client.userAvatarUrl(userStore.get(participantId))}
+                    url={client.userAvatarUrl($allUsersStore.get(participantId))}
                     userId={participantId}
                     size={AvatarSize.Tiny} />
             {/each}

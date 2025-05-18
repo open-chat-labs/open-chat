@@ -1954,12 +1954,6 @@ function diffMessagePermissions(
     return diff;
 }
 
-export function revokeObjectUrls(message: EventWrapper<Message>): void {
-    if ("blobUrl" in message.event.content && message.event.content.blobUrl !== undefined) {
-        URL.revokeObjectURL(message.event.content.blobUrl);
-    }
-}
-
 export function nextEventAndMessageIndexesForThread(
     events: EventWrapper<ChatEvent>[],
 ): [number, number] {

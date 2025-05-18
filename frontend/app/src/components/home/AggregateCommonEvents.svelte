@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Level, MemberRole, OpenChat, UserLookup, UserSummary } from "openchat-client";
-    import { userStore } from "openchat-client";
+    import { allUsersStore } from "openchat-client";
     import { getContext, onDestroy, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../../i18n/i18n";
@@ -111,7 +111,7 @@
     function expandDeletedMessages() {
         client.expandDeletedMessages(new Set(messagesDeleted));
     }
-    let joinedText = $derived(buildJoinedText(userStore.allUsers, joined));
+    let joinedText = $derived(buildJoinedText($allUsersStore, joined));
     let deletedText = $derived(
         messagesDeleted.length > 0
             ? messagesDeleted.length === 1
@@ -119,7 +119,7 @@
                 : $_("nMessagesDeleted", { values: { number: messagesDeleted.length } })
             : undefined,
     );
-    let roleChangedTextList = $derived(buildRoleChangedTextList(userStore.allUsers, rolesChanged));
+    let roleChangedTextList = $derived(buildRoleChangedTextList($allUsersStore, rolesChanged));
 </script>
 
 {#if joinedText !== undefined || deletedText !== undefined || roleChangedTextList?.length > 0}

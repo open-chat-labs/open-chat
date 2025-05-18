@@ -4,6 +4,7 @@
         type CommunitySummary,
         type OpenChat,
         activityFeedShowing,
+        allUsersStore,
         anonUserStore,
         app,
         chatListScopeStore,
@@ -19,7 +20,6 @@
         showNav,
         sortedCommunitiesStore,
         ui,
-        userStore,
     } from "openchat-client";
     import page from "page";
     import { getContext, onMount, tick } from "svelte";
@@ -47,7 +47,7 @@
     const client = getContext<OpenChat>("client");
     const flipDurationMs = 300;
 
-    let user = $derived(userStore.get($currentUserIdStore));
+    let user = $derived($allUsersStore.get($currentUserIdStore));
     let avatarSize = $derived($mobileWidth ? AvatarSize.Small : AvatarSize.Default);
     let communityExplorer = $derived($routeStore.kind === "communities_route");
     let selectedCommunityId = $derived($selectedCommunitySummaryStore?.id.communityId);

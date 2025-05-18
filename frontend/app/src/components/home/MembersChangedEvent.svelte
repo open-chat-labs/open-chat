@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Level, OpenChat, UserSummary } from "openchat-client";
-    import { userStore } from "openchat-client";
+    import { allUsersStore } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../../i18n/i18n";
@@ -22,12 +22,12 @@
 
     let me = $derived(changedBy === user?.userId);
     let changedByStr = $derived(
-        `**${buildDisplayName(userStore.allUsers, changedBy, me ? "me" : "user")}**`,
+        `**${buildDisplayName($allUsersStore, changedBy, me ? "me" : "user")}**`,
     );
     let members = $derived(
         client.getMembersString(
             user!,
-            userStore.allUsers,
+            $allUsersStore,
             changed,
             $_("unknownUser"),
             $_("you"),

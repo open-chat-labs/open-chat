@@ -9,10 +9,10 @@
         UserSummary,
     } from "openchat-client";
     import {
+        allUsersStore,
         iconSize,
         selectedCommunityMembersStore,
         selectedCommunityUserGroupsStore,
-        userStore,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
@@ -46,7 +46,7 @@
     let communityUsersList: UserSummary[] = $state([]);
 
     onMount(() => {
-        communityUsers = createLookup($selectedCommunityMembersStore, userStore.allUsers);
+        communityUsers = createLookup($selectedCommunityMembersStore, $allUsersStore);
         communityUsersList = Object.values(communityUsers);
     });
 

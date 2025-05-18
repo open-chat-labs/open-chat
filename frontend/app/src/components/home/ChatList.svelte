@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        allUsersStore,
         app,
         type BotMatch,
         chatIdentifiersEqual,
@@ -19,7 +20,6 @@
         routeForChatIdentifier,
         routeForScope,
         selectedCommunitySummaryStore,
-        userStore,
         type UserSummary,
     } from "openchat-client";
     import page from "page";
@@ -106,7 +106,7 @@
         }
 
         if (chat.kind === "direct_chat") {
-            const user = userStore.get(chat.them.userId);
+            const user = $allUsersStore.get(chat.them.userId);
             if (user !== undefined) {
                 return (
                     user.username.toLowerCase().indexOf(lowercaseSearch) >= 0 ||
@@ -180,7 +180,7 @@
             $selectedCommunitySummaryStore?.membership.role === "none" &&
             app.selectedChatId === undefined,
     );
-    let user = $derived(userStore.get($currentUserIdStore));
+    let user = $derived($allUsersStore.get($currentUserIdStore));
     let lowercaseSearch = $derived(searchTerm.toLowerCase());
     let showExploreGroups = $derived(
         ($chatListScopeStore.kind === "none" || $chatListScopeStore.kind === "group_chat") &&

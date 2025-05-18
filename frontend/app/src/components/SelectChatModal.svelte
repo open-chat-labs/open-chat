@@ -12,12 +12,12 @@
         OpenChat,
     } from "openchat-client";
     import {
+        allUsersStore,
         app,
         AvatarSize,
         chatIdentifiersEqual,
         communitiesStore,
         iconSize,
-        userStore,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -153,7 +153,7 @@
         };
         const direct = [...app.directChats.values()].map((d) => ({
             ...d,
-            name: buildDisplayName(userStore.allUsers, d.them.userId, "user"),
+            name: buildDisplayName($allUsersStore, d.them.userId, "user"),
         }));
 
         const group = [...app.groupChats.values()];
@@ -202,7 +202,7 @@
         switch (chatSummary.kind) {
             case "direct_chat":
                 const description = await buildDirectChatDescription(chatSummary, now);
-                const them = userStore.get(chatSummary.them.userId);
+                const them = $allUsersStore.get(chatSummary.them.userId);
                 return {
                     kind: "chat",
                     id: chatSummary.id,

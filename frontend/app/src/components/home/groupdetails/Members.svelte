@@ -20,11 +20,11 @@
         type UserLookup,
         type UserSummary,
         type WebhookDetails,
+        allUsersStore,
         botState,
         chatIdentifiersEqual,
         currentUserIdStore,
         LARGE_GROUP_THRESHOLD,
-        userStore,
     } from "openchat-client";
     import { getContext } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
@@ -243,7 +243,7 @@
             selectTab("users");
         }
     }
-    let knownUsers = $derived(getKnownUsers(userStore.allUsers, members));
+    let knownUsers = $derived(getKnownUsers($allUsersStore, members));
     let largeGroup = $derived(members.length > LARGE_GROUP_THRESHOLD);
     let me = $derived(knownUsers.find((u) => u.userId === $currentUserIdStore));
     let searchTerm = $derived(trimLeadingAtSymbol(searchTermEntered));
@@ -253,9 +253,9 @@
             .filter((u) => matchesSearch(searchTermLower, u) && u.userId !== $currentUserIdStore)
             .sort(compareMembers),
     );
-    let blockedUsers = $derived(matchingUsers(searchTermLower, userStore.allUsers, blocked, true));
-    let lapsedMembers = $derived(matchingUsers(searchTermLower, userStore.allUsers, lapsed, true));
-    let invitedUsers = $derived(matchingUsers(searchTermLower, userStore.allUsers, invited, true));
+    let blockedUsers = $derived(matchingUsers(searchTermLower, $allUsersStore, blocked, true));
+    let lapsedMembers = $derived(matchingUsers(searchTermLower, $allUsersStore, lapsed, true));
+    let invitedUsers = $derived(matchingUsers(searchTermLower, $allUsersStore, invited, true));
     let matchingWebhooks = $derived(
         webhooks?.filter((w) => webhookMatches(searchTermLower, w)) ?? [],
     );

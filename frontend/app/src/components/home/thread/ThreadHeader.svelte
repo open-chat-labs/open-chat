@@ -8,13 +8,13 @@
         TypersByKey,
     } from "openchat-client";
     import {
+        allUsersStore,
         AvatarSize,
         byContext,
         iconSize,
         mobileWidth,
         selectedCommunitySummaryStore,
         UserStatus,
-        userStore,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -47,7 +47,7 @@
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         const someoneTyping = client.getTypingString(
             $_,
-            userStore.allUsers,
+            $allUsersStore,
             { chatId: chatSummary.id, threadRootMessageIndex },
             typing,
         );
@@ -58,9 +58,9 @@
         if (chatSummary.kind === "direct_chat") {
             return {
                 title: $mobileWidth
-                    ? userStore.get(chatSummary.them.userId)?.username
+                    ? $allUsersStore.get(chatSummary.them.userId)?.username
                     : $_("thread.title"),
-                avatarUrl: client.userAvatarUrl(userStore.get(chatSummary.them.userId)),
+                avatarUrl: client.userAvatarUrl($allUsersStore.get(chatSummary.them.userId)),
                 userId: chatSummary.them.userId,
                 subtext,
                 typing: someoneTyping !== undefined,

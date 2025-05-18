@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { ChatSummary, OpenChat } from "openchat-client";
-    import { userStore } from "openchat-client";
+    import { allUsersStore } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
@@ -20,8 +20,8 @@
     let { chat, clickableMembers = false, onMembersClick }: Props = $props();
 
     let userId = $derived(chat.kind === "direct_chat" ? chat.them.userId : "");
-    let isBot = $derived(userStore.get(userId)?.kind === "bot");
-    let isSuspended = $derived(userStore.get(userId)?.suspended ?? false);
+    let isBot = $derived($allUsersStore.get(userId)?.kind === "bot");
+    let isSuspended = $derived($allUsersStore.get(userId)?.suspended ?? false);
     let subtext = $derived(isSuspended ? $_("accountSuspended") : "");
     let checkLastOnline = $derived(!isSuspended && !isBot && chat.kind === "direct_chat");
 

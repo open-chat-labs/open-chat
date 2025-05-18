@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { OpenChat, UserLookup } from "openchat-client";
-    import { currentUserIdStore, userStore } from "openchat-client";
+    import { allUsersStore, currentUserIdStore } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
@@ -77,7 +77,7 @@
             onClick?.();
         }
     }
-    let usernames = $derived(buildPollUsernames(userStore.allUsers, voters, $currentUserIdStore));
+    let usernames = $derived(buildPollUsernames($allUsersStore, voters, $currentUserIdStore));
 </script>
 
 <Tooltip

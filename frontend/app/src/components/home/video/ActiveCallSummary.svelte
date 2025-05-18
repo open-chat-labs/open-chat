@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        allUsersStore,
         app,
         AvatarSize,
         chatIdentifiersEqual,
@@ -8,7 +9,6 @@
         publish,
         routeForChatIdentifier,
         selectedCommunitySummaryStore,
-        userStore,
         type ChatIdentifier,
     } from "openchat-client";
     import page from "page";
@@ -65,7 +65,7 @@
             if (chat) {
                 switch (chat.kind) {
                     case "direct_chat":
-                        const them = userStore.get(chat.them.userId);
+                        const them = $allUsersStore.get(chat.them.userId);
                         return {
                             name: client.displayName(them),
                             avatarUrl: client.userAvatarUrl(them),

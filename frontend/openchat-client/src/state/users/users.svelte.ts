@@ -5,53 +5,69 @@ import {
     type UserLookup,
     type UserSummary,
 } from "openchat-shared";
-import { SvelteMap, SvelteSet } from "svelte/reactivity";
+import { derived } from "svelte/store";
 import { localUpdates } from "../global";
+import { SafeMapStore } from "../map";
+import { SafeSetStore } from "../set";
 
-export class UsersState {
-    #serverBlockedUsers = new SvelteSet<string>();
-    #blockedUsers = $derived(localUpdates.blockedDirectUsers.apply(this.#serverBlockedUsers));
-    #normalUsers = $state(new SvelteMap<string, UserSummary>());
-    #specialUsers = new SvelteMap<string, UserSummary>();
-    #allUsers = $derived.by(() => {
-        return [...this.#specialUsers.entries()].reduce((all, [k, v]) => {
+export const serverBlockedUsersStore = new SafeSetStore<string>();
+
+export const blockedUsersStore = derived(
+    [serverBlockedUsersStore, localUpdates.blockedDirectUsers],
+    ([serverBlockedUsers, localUpdates]) => localUpdates.apply(serverBlockedUsers),
+);
+
+export const normalUsersStore = new SafeMapStore<string, UserSummary>();
+export const specialUsersStore = new SafeMapStore<string, UserSummary>();
+export const allUsersStore = derived(
+    [normalUsersStore, specialUsersStore],
+    ([normalUsers, specialUsers]) => {
+        return specialUsers.reduce((all, [k, v]) => {
             all.set(k, v);
             return all;
-        }, this.#normalUsers);
-    });
-    #suspendedUsers = $derived.by(() => {
-        const suspended = new Map<string, UserSummary>();
-        for (const [k, v] of this.#allUsers) {
-            if (v.suspended) {
-                suspended.set(k, v);
-            }
+        }, normalUsers.clone()); // this clone is necessary to prevent infinite loop but will it be a problem?
+    },
+);
+export const suspendedUsers = derived(allUsersStore, (allUsers) => {
+    const suspended = new Map<string, UserSummary>();
+    for (const [k, v] of allUsers) {
+        if (v.suspended) {
+            suspended.set(k, v);
         }
-        return suspended;
-    });
+    }
+    return suspended as ReadonlyMap<string, UserSummary>;
+});
+
+export class UsersState {
+    #allUsers!: ReadonlyMap<string, UserSummary>;
+    #blockedUsers!: ReadonlySet<string>;
+    #suspendedUsers!: ReadonlyMap<string, UserSummary>;
+
+    constructor() {
+        allUsersStore.subscribe((val) => (this.#allUsers = val));
+        blockedUsersStore.subscribe((val) => (this.#blockedUsers = val));
+        suspendedUsers.subscribe((val) => (this.#suspendedUsers = val));
+    }
 
     setBlockedUsers(userIds: string[]) {
-        this.#serverBlockedUsers = new SvelteSet(userIds);
+        serverBlockedUsersStore.fromSet(new Set(userIds));
     }
 
     blockUser(userId: string) {
-        if (!this.#serverBlockedUsers.has(userId)) {
-            this.#serverBlockedUsers.add(userId);
-        }
+        serverBlockedUsersStore.add(userId);
     }
 
     unblockUser(userId: string) {
-        if (this.#serverBlockedUsers.has(userId)) {
-            this.#serverBlockedUsers.delete(userId);
-        }
+        serverBlockedUsersStore.delete(userId);
     }
 
     setUsers(users: UserLookup) {
-        this.#normalUsers = new SvelteMap(users);
+        normalUsersStore.fromMap(users);
     }
 
     addUser(user: UserSummary) {
-        if (!this.#normalUsers.has(user.userId)) {
-            this.#normalUsers.set(user.userId, user);
+        if (!normalUsersStore.has(user.userId)) {
+            normalUsersStore.set(user.userId, user);
         }
     }
 
@@ -61,11 +77,16 @@ export class UsersState {
 
     setUpdated(userIds: string[], timestamp: bigint) {
         for (const userId of userIds) {
-            const user = this.#normalUsers.get(userId);
+            const user = normalUsersStore.get(userId);
             if (user !== undefined) {
                 user.updated = timestamp;
+                normalUsersStore.set(userId, user);
             }
         }
+    }
+
+    addSpecialUsers(users: [string, UserSummary][]) {
+        specialUsersStore.fromMap(new Map(users));
     }
 
     get(userId: string): UserSummary | undefined {
@@ -76,24 +97,20 @@ export class UsersState {
         return this.#allUsers.has(userId);
     }
 
-    get blockedUsers(): ReadonlySet<string> {
+    get blockedUsers() {
         return this.#blockedUsers;
     }
 
-    get allUsers(): ReadonlyMap<string, UserSummary> {
+    get allUsers() {
         return this.#allUsers;
     }
 
     get specialUsers(): ReadonlyMap<string, UserSummary> {
-        return this.#specialUsers;
+        return specialUsersStore;
     }
 
     get suspendedUsers(): ReadonlyMap<string, UserSummary> {
         return this.#suspendedUsers;
-    }
-
-    addSpecialUsers(users: [string, UserSummary][]) {
-        this.#specialUsers = new SvelteMap(users);
     }
 }
 

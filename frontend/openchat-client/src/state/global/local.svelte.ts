@@ -34,7 +34,7 @@ import {
     type WebhookDetails,
 } from "openchat-shared";
 import { SvelteMap } from "svelte/reactivity";
-import { revokeObjectUrls } from "../../utils/chat";
+import { revokeObjectUrls } from "../../utils/url";
 import { chatDetailsLocalUpdates } from "../chat_details";
 import { communityLocalUpdates } from "../community";
 import { communitySummaryLocalUpdates } from "../community/summaryUpdates";
@@ -47,7 +47,7 @@ import {
     ReactiveMessageContextMap,
 } from "../map";
 import { messageLocalUpdates } from "../message/local.svelte";
-import { LocalSet } from "../set";
+import { LocalSet, LocalSetStore } from "../set";
 import { scheduleUndo, type UndoLocalUpdate } from "../undo";
 import { DraftMessages } from "./draft.svelte";
 
@@ -62,7 +62,7 @@ const noop = () => {};
 
 // global local updates don't need the manager because they are not specific to a keyed entity (community, chat, message etc)
 export class GlobalLocalState {
-    #blockedDirectUsers = new LocalSet<string>();
+    #blockedDirectUsers = new LocalSetStore<string>();
     #failedMessages = $state<ReactiveMessageContextMap<FailedMessageState>>(
         new ReactiveMessageContextMap(),
     );

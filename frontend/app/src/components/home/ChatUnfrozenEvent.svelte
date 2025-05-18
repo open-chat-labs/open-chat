@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { UserSummary } from "openchat-client";
-    import { userStore } from "openchat-client";
+    import { allUsersStore } from "openchat-client";
     import type { ChatUnfrozenEvent } from "openchat-shared";
     import { _ } from "svelte-i18n";
     import { buildDisplayName } from "../../utils/user";
@@ -16,7 +16,7 @@
 
     let me = $derived(event.unfrozenBy === user?.userId);
     let unfrozenByStr = $derived(
-        buildDisplayName(userStore.allUsers, event.unfrozenBy, me ? "me" : "user"),
+        buildDisplayName($allUsersStore, event.unfrozenBy, me ? "me" : "user"),
     );
 
     let text = $derived(

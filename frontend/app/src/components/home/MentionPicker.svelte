@@ -1,12 +1,12 @@
 <script lang="ts">
     import type { OpenChat, UserOrUserGroup } from "openchat-client";
     import {
+        allUsersStore,
         AvatarSize,
         currentUserIdStore,
         iconSize,
         mobileWidth,
         selectedCommunityMembersStore,
-        userStore,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
@@ -185,7 +185,7 @@
                                     </div>
                                 {:else}
                                     <Avatar
-                                        url={client.userAvatarUrl(userStore.get(item.userId))}
+                                        url={client.userAvatarUrl($allUsersStore.get(item.userId))}
                                         userId={item.userId}
                                         size={AvatarSize.Small} />
                                 {/if}

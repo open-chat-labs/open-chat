@@ -13,7 +13,7 @@ import {
     type VersionedRules,
     type WebhookDetails,
 } from "openchat-shared";
-import { revokeObjectUrls } from "../../utils/chat";
+import { revokeObjectUrls } from "../../utils/url";
 import { LocalMap, ReactiveChatMap } from "../map";
 import { LocalSet } from "../set";
 import { scheduleUndo, type UndoLocalUpdate } from "../undo";

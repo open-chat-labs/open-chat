@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        allUsersStore,
         app,
         chatIdentifiersEqual,
         type ChatSummary,
@@ -14,7 +15,6 @@
         platformModeratorStore,
         publish,
         rightPanelHistory,
-        userStore,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -89,8 +89,8 @@
     let userId = $derived(
         selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "",
     );
-    let isBot = $derived(userStore.get(userId)?.kind === "bot");
-    let isSuspended = $derived(userStore.get(userId)?.suspended ?? false);
+    let isBot = $derived($allUsersStore.get(userId)?.kind === "bot");
+    let isSuspended = $derived($allUsersStore.get(userId)?.suspended ?? false);
     let groupDetailsSelected = $derived($lastRightPanelState.kind === "group_details");
     let pinnedSelected = $derived($lastRightPanelState.kind === "show_pinned");
     let membersSelected = $derived($lastRightPanelState.kind === "show_group_members");
