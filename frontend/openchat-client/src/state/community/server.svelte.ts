@@ -10,6 +10,8 @@ import {
     type VersionedRules,
 } from "openchat-shared";
 
+// all of this stuff gets updated together so the whole thing will be a store, but the individual bits don't need to be
+// I *think*
 export class CommunityServerState {
     #communityId = $state<CommunityIdentifier | undefined>();
     #userGroups = $state<ReadonlyMap<number, UserGroupDetails>>(new Map());

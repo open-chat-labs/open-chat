@@ -278,6 +278,7 @@ export const selectedChatIdStore = derived(routeStore, (route) => {
 });
 
 export const chatListScopeStore = derived(routeStore, (route) => route.scope);
+export const chatsInitialisedStore = writable(false);
 
 export class AppState {
     #percentageStorageRemaining: number = 0;
@@ -723,8 +724,6 @@ export class AppState {
 
     #identityState = $state<IdentityState>({ kind: "loading_user" });
 
-    #chatsInitialised = $state(false);
-
     // TODO - this does not seem to be working as intended - investigate why
 
     #selectedServerChatSummary = $derived.by(() => {
@@ -1106,7 +1105,7 @@ export class AppState {
     }
 
     get chatsInitialised() {
-        return this.#chatsInitialised;
+        return chatsInitialisedStore.current;
     }
 
     get chatListScope() {
@@ -1114,7 +1113,7 @@ export class AppState {
     }
 
     set chatsInitialised(val: boolean) {
-        this.#chatsInitialised = val;
+        chatsInitialisedStore.set(val);
     }
 
     get selectedCommunityId() {

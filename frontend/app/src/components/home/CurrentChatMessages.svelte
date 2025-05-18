@@ -14,6 +14,7 @@
         app,
         chatIdentifiersEqual,
         chatListScopeStore,
+        chatsInitialisedStore,
         currentUserIdStore,
         localUpdates,
         messageIndexStore,
@@ -265,7 +266,7 @@
     let previousChatId: ChatIdentifier | undefined = undefined;
     $effect(() => {
         if (
-            app.chatsInitialised &&
+            $chatsInitialisedStore &&
             $messageIndexStore !== undefined &&
             chatIdentifiersEqual(app.selectedChatId, previousChatId)
         ) {

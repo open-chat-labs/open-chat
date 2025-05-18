@@ -29,6 +29,7 @@
         app,
         chatIdentifiersEqual,
         chatListScopeStore,
+        chatsInitialisedStore,
         communitiesStore,
         currentUserStore,
         defaultChatRules,
@@ -928,7 +929,7 @@
         if (
             app.identityState.kind === "logged_in" &&
             app.identityState.postLogin?.kind === "join_group" &&
-            app.chatsInitialised
+            $chatsInitialisedStore
         ) {
             const join = { ...app.identityState.postLogin };
             client.clearPostLoginState();
@@ -937,11 +938,11 @@
     });
 
     trackedEffect("route-change", () => {
-        routeChange(app.chatsInitialised, $routeStore);
+        routeChange($chatsInitialisedStore, $routeStore);
     });
 
     $effect(() => {
-        if (app.chatsInitialised) {
+        if ($chatsInitialisedStore) {
             if ($querystringStore.get("diamond") !== null) {
                 showUpgrade = true;
                 pageReplace(removeQueryStringParam("diamond"));
