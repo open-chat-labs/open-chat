@@ -3,7 +3,7 @@
         type OpenChat,
         defaultChatRules,
         selectedCommunityReferralsStore,
-        selectedCommunityStore,
+        selectedCommunityRulesStore,
         selectedCommunitySummaryStore,
     } from "openchat-client";
     import { getContext } from "svelte";
@@ -14,7 +14,7 @@
     const client = getContext<OpenChat>("client");
 
     let frozen = $derived(client.isCommunityFrozen($selectedCommunitySummaryStore?.id));
-    let rules = $derived($selectedCommunityStore?.rules ?? defaultChatRules("community"));
+    let rules = $derived($selectedCommunityRulesStore ?? defaultChatRules("community"));
     let canDelete = $derived(
         $selectedCommunitySummaryStore !== undefined &&
             !frozen &&

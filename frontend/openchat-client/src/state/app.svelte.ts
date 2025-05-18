@@ -280,64 +280,72 @@ export const selectedChatIdStore = derived(routeStore, (route) => {
 export const chatListScopeStore = derived(routeStore, (route) => route.scope);
 export const chatsInitialisedStore = writable(false);
 export const selectedServerCommunityStore = writable<CommunityDetailsState | undefined>(undefined);
-
-// TODO - revisit whether there is any point in this store existing. It simply forces a lower level of granularity on
-// the local updates than we could have with without it. Do we ever need to use it? I think not. We only care about it's
-// contents.
-export const selectedCommunityStore = derived(
-    [selectedServerCommunityStore, communityLocalUpdates],
-    ([serverCommunity, localUpdates]) => {
-        if (serverCommunity === undefined) return undefined;
-        const updates = localUpdates.get(serverCommunity?.communityId);
-        if (updates === undefined) return serverCommunity;
-        return {
-            communityId: serverCommunity.communityId,
-            userGroups: updates.userGroups.apply(serverCommunity.userGroups),
-            members: updates.members.apply(serverCommunity.members),
-            blockedUsers: updates.blockedUsers.apply(serverCommunity.blockedUsers),
-            lapsedMembers: updates.lapsedMembers.apply(serverCommunity.lapsedMembers),
-            invitedUsers: updates.invitedUsers.apply(serverCommunity.invitedUsers),
-            referrals: updates.referrals.apply(serverCommunity.referrals),
-            bots: updates.bots.apply(serverCommunity.bots),
-            apiKeys: updates.apiKeys.apply(serverCommunity.apiKeys),
-            rules: updates.rules ?? serverCommunity.rules,
-        };
+export const selectedCommunityMembersStore = derived(
+    [selectedServerCommunityStore, communityLocalUpdates.members],
+    ([community, members]) => {
+        if (community === undefined) return new Map() as ReadonlyMap<string, Member>;
+        const updates = members.get(community.communityId);
+        if (updates === undefined) return community.members;
+        return updates.apply(community.members);
     },
 );
-export const selectedCommunityMembersStore = derived(
-    selectedCommunityStore,
-    (selectedCommunity) => selectedCommunity?.members ?? (new Map() as ReadonlyMap<string, Member>),
-);
 export const selectedCommunityBotsStore = derived(
-    selectedCommunityStore,
-    (selectedCommunity) =>
-        selectedCommunity?.bots ?? (new Map() as ReadonlyMap<string, ExternalBotPermissions>),
+    [selectedServerCommunityStore, communityLocalUpdates.bots],
+    ([community, bots]) => {
+        if (community === undefined)
+            return new Map() as ReadonlyMap<string, ExternalBotPermissions>;
+        const updates = bots.get(community.communityId);
+        if (updates === undefined) return community.bots;
+        return updates.apply(community.bots);
+    },
+);
+export const selectedCommunityUserGroupsStore = derived(
+    [selectedServerCommunityStore, communityLocalUpdates.userGroups],
+    ([community, userGroups]) => {
+        if (community === undefined) return new Map() as ReadonlyMap<number, UserGroupDetails>;
+        const updates = userGroups.get(community.communityId);
+        if (updates === undefined) return community.userGroups;
+        return updates.apply(community.userGroups);
+    },
 );
 export const selectedCommunityInvitedUsersStore = derived(
-    selectedCommunityStore,
-    (selectedCommunity) => selectedCommunity?.invitedUsers ?? (new Set() as ReadonlySet<string>),
+    [selectedServerCommunityStore, communityLocalUpdates.invitedUsers],
+    ([community, invitedUsers]) => {
+        if (community === undefined) return new Set() as ReadonlySet<string>;
+        const updates = invitedUsers.get(community.communityId);
+        if (updates === undefined) return community.invitedUsers;
+        return updates.apply(community.invitedUsers);
+    },
 );
 export const selectedCommunityBlockedUsersStore = derived(
-    selectedCommunityStore,
-    (selectedCommunity) => selectedCommunity?.blockedUsers ?? (new Set() as ReadonlySet<string>),
+    [selectedServerCommunityStore, communityLocalUpdates.blockedUsers],
+    ([community, blockedUsers]) => {
+        if (community === undefined) return new Set() as ReadonlySet<string>;
+        const updates = blockedUsers.get(community.communityId);
+        if (updates === undefined) return community.blockedUsers;
+        return updates.apply(community.blockedUsers);
+    },
+);
+export const selectedCommunityRulesStore = derived(
+    [selectedServerCommunityStore, communityLocalUpdates.rules],
+    ([community, rules]) => {
+        if (community === undefined) return undefined;
+        const updates = rules.get(community.communityId);
+        return updates ?? community.rules;
+    },
 );
 export const selectedCommunityLapsedMembersStore = derived(
-    selectedCommunityStore,
+    selectedServerCommunityStore,
     (selectedCommunity) => selectedCommunity?.lapsedMembers ?? (new Set() as ReadonlySet<string>),
 );
 export const selectedCommunityApiKeysStore = derived(
-    selectedCommunityStore,
+    selectedServerCommunityStore,
     (selectedCommunity) =>
         selectedCommunity?.apiKeys ?? (new Map() as ReadonlyMap<string, PublicApiKeyDetails>),
 );
 export const selectedCommunityReferralsStore = derived(
-    selectedCommunityStore,
+    selectedServerCommunityStore,
     (selectedCommunity) => selectedCommunity?.referrals ?? (new Set() as ReadonlySet<string>),
-);
-export const selectedCommunityUserGroupsStore = derived(
-    selectedCommunityStore,
-    (selectedCommunity) =>
-        selectedCommunity?.userGroups ?? (new Map() as ReadonlyMap<number, UserGroupDetails>),
 );
 export const selectedCommunitySummaryStore = derived(
     [selectedCommunityIdStore, communitiesStore],
@@ -369,6 +377,10 @@ export class AppState {
     #underReviewEnabled: boolean = false;
     #nextCommunityIndex: number = 0;
     #selectedCommunityBlockedUsers!: ReadonlySet<string>;
+    #selectedCommunityMembers!: ReadonlyMap<string, Member>;
+    #selectedCommunityReferrals!: ReadonlySet<string>;
+    #selectedCommunityInvitedUsers!: ReadonlySet<string>;
+    #selectedCommunityRules?: VersionedRules;
 
     // TODO - these need to use $state for the moment because we still have $derived that is depending on it
     // but it can be a plain value once that's all gone
@@ -379,7 +391,6 @@ export class AppState {
     #selectedChatId = $state<ChatIdentifier | undefined>();
     #selectedCommunityId = $state<CommunityIdentifier | undefined>();
     #chatListScope = $state<ChatListScope>({ kind: "none" });
-    #selectedCommunity?: CommunityDetailsState;
     #selectedCommunitySummary?: CommunitySummary;
 
     constructor() {
@@ -414,10 +425,18 @@ export class AppState {
         offensiveEnabledStore.subscribe((val) => (this.#offensiveEnabled = val));
         underReviewEnabledStore.subscribe((val) => (this.#underReviewEnabled = val));
         nextCommunityIndexStore.subscribe((val) => (this.#nextCommunityIndex = val));
-        selectedCommunityStore.subscribe(
-            (val) => (this.#selectedCommunityBlockedUsers = val?.blockedUsers ?? new Set()),
+        selectedCommunityBlockedUsersStore.subscribe(
+            (val) => (this.#selectedCommunityBlockedUsers = val),
         );
+        selectedCommunityReferralsStore.subscribe(
+            (val) => (this.#selectedCommunityReferrals = val),
+        );
+        selectedCommunityInvitedUsersStore.subscribe(
+            (val) => (this.#selectedCommunityInvitedUsers = val),
+        );
+        selectedCommunityMembersStore.subscribe((val) => (this.#selectedCommunityMembers = val));
         selectedCommunitySummaryStore.subscribe((val) => (this.#selectedCommunitySummary = val));
+        selectedCommunityRulesStore.subscribe((val) => (this.#selectedCommunityRules = val));
 
         // TODO - this clone is only necessary to trigger downstream $derived. Remove when all $deriveds are gone
         translationsStore.subscribe((val) => (this.#translations = val.clone()));
@@ -425,7 +444,6 @@ export class AppState {
         selectedChatIdStore.subscribe((val) => (this.#selectedChatId = val));
         selectedCommunityIdStore.subscribe((val) => (this.#selectedCommunityId = val));
         chatListScopeStore.subscribe((val) => (this.#chatListScope = val));
-        selectedCommunityStore.subscribe((val) => (this.#selectedCommunity = val));
     }
 
     #proposalTopics = $derived.by(() => {
@@ -1177,10 +1195,6 @@ export class AppState {
         return this.#selectedChatId;
     }
 
-    get selectedCommunity() {
-        return this.#selectedCommunity;
-    }
-
     get selectedCommunitySummary() {
         return this.#selectedCommunitySummary;
     }
@@ -1505,6 +1519,26 @@ export class AppState {
 
     set pinNumberFailure(val: PinNumberFailures | undefined) {
         pinNumberFailureStore.set(val);
+    }
+
+    get selectedCommunityMembers() {
+        return this.#selectedCommunityMembers;
+    }
+
+    get selectedCommunityBlockedUsers() {
+        return this.#selectedCommunityBlockedUsers;
+    }
+
+    get selectedCommunityReferrals() {
+        return this.#selectedCommunityReferrals;
+    }
+
+    get selectedCommunityInvitedUsers() {
+        return this.#selectedCommunityInvitedUsers;
+    }
+
+    get selectedCommunityRules() {
+        return this.#selectedCommunityRules;
     }
 }
 

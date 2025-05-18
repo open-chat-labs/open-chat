@@ -349,13 +349,12 @@ describe("app state", () => {
             });
 
             test("local map updates - remove member", () => {
-                expect(app.selectedCommunity).not.toBeUndefined();
-                expect(app.selectedCommunity!.members.has("user_one")).toBe(true);
+                expect(app.selectedCommunityMembers.has("user_one")).toBe(true);
                 const undo = communityLocalUpdates.removeMember(communityId, "user_one");
                 expect(get(selectedCommunityMembersStore).has("user_one")).toBe(false);
-                expect(app.selectedCommunity!.members.has("user_one")).toBe(false);
+                expect(app.selectedCommunityMembers.has("user_one")).toBe(false);
                 undo();
-                expect(app.selectedCommunity!.members.has("user_one")).toBe(true);
+                expect(app.selectedCommunityMembers.has("user_one")).toBe(true);
             });
 
             test("local map updates - update member", () => {
@@ -365,34 +364,30 @@ describe("app state", () => {
                     displayName: "Mr One",
                     lapsed: false,
                 };
-                expect(app.selectedCommunity).not.toBeUndefined();
-                expect(app.selectedCommunity!.members.has("user_two")).toBe(false);
+                expect(app.selectedCommunityMembers.has("user_two")).toBe(false);
                 const undo = communityLocalUpdates.updateMember(communityId, "user_one", updated);
-                expect(app.selectedCommunity!.members.get("user_one")?.displayName).toEqual(
-                    "Mr One",
-                );
+                expect(app.selectedCommunityMembers.get("user_one")?.displayName).toEqual("Mr One");
                 undo();
-                expect(app.selectedCommunity!.members.get("user_one")?.displayName).toEqual(
+                expect(app.selectedCommunityMembers.get("user_one")?.displayName).toEqual(
                     "User One",
                 );
             });
 
             test("local set updates", () => {
-                expect(app.selectedCommunity).not.toBeUndefined();
-                expect(app.selectedCommunity!.blockedUsers.has("a")).toBe(true);
-                expect(app.selectedCommunity!.blockedUsers.has("d")).toBe(false);
+                expect(app.selectedCommunityBlockedUsers.has("a")).toBe(true);
+                expect(app.selectedCommunityBlockedUsers.has("d")).toBe(false);
 
                 // check that local updates work and are correctly merged with server state
                 const undo = communityLocalUpdates.blockUser(communityId, "d");
-                expect(app.selectedCommunity!.blockedUsers.has("d")).toBe(true);
+                expect(app.selectedCommunityBlockedUsers.has("d")).toBe(true);
 
                 // undo the local update
                 undo();
-                expect(app.selectedCommunity!.blockedUsers.has("d")).toBe(false);
+                expect(app.selectedCommunityBlockedUsers.has("d")).toBe(false);
 
                 // try unblock
                 communityLocalUpdates.unblockUser(communityId, "a");
-                expect(app.selectedCommunity!.blockedUsers.has("a")).toBe(false);
+                expect(app.selectedCommunityBlockedUsers.has("a")).toBe(false);
             });
         });
     });
