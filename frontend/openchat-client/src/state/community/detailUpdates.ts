@@ -27,56 +27,55 @@ export class CommunityDetailsUpdatesManager extends CommunityMapStore<CommunityD
         return this.get(id) ?? new CommunityDetailUpdates();
     }
 
-    #withState(
-        id: CommunityIdentifier,
-        fn: (state: CommunityDetailUpdates) => CommunityDetailUpdates,
-    ) {
+    #withState(id: CommunityIdentifier, fn: (state: CommunityDetailUpdates) => UndoLocalUpdate) {
         const state = this.#getOrCreate(id);
-        this.set(id, fn(state));
+        const undo = fn(state);
+        this.set(id, state);
         return scheduleUndo(() => {
+            undo();
             this.publish();
         });
     }
 
     updateMember(id: CommunityIdentifier, userId: string, member: Member) {
         return this.#withState(id, (state) => {
-            state.members.addOrUpdate(userId, member);
-            return state;
+            return state.members.addOrUpdate(userId, member);
         });
     }
 
     blockUser(id: CommunityIdentifier, userId: string): UndoLocalUpdate {
         return this.#withState(id, (state) => {
-            state.blockedUsers.add(userId);
-            return state;
+            return state.blockedUsers.add(userId);
         });
     }
 
     unblockUser(id: CommunityIdentifier, userId: string): UndoLocalUpdate {
         return this.#withState(id, (state) => {
-            state.blockedUsers.remove(userId);
-            return state;
+            return state.blockedUsers.remove(userId);
         });
     }
 
     removeMember(id: CommunityIdentifier, userId: string): UndoLocalUpdate {
         return this.#withState(id, (state) => {
-            state.members.remove(userId);
-            return state;
+            return state.members.remove(userId);
         });
     }
 
     inviteUsers(id: CommunityIdentifier, userIds: string[]): UndoLocalUpdate {
         return this.#withState(id, (state) => {
-            userIds.forEach((u) => state.invitedUsers.add(u));
-            return state;
+            const undos = userIds.map((u) => state.invitedUsers.add(u));
+            return () => {
+                undos.forEach((u) => u());
+            };
         });
     }
 
     uninviteUsers(id: CommunityIdentifier, userIds: string[]): UndoLocalUpdate {
         return this.#withState(id, (state) => {
-            userIds.forEach((u) => state.invitedUsers.remove(u));
-            return state;
+            const undos = userIds.map((u) => state.invitedUsers.remove(u));
+            return () => {
+                undos.forEach((u) => u());
+            };
         });
     }
 
@@ -92,22 +91,19 @@ export class CommunityDetailsUpdatesManager extends CommunityMapStore<CommunityD
 
     deleteUserGroup(id: CommunityIdentifier, userGroupId: number): UndoLocalUpdate {
         return this.#withState(id, (state) => {
-            state.userGroups.remove(userGroupId);
-            return state;
+            return state.userGroups.remove(userGroupId);
         });
     }
 
     addOrUpdateUserGroup(id: CommunityIdentifier, userGroup: UserGroupDetails): UndoLocalUpdate {
         return this.#withState(id, (state) => {
-            state.userGroups.addOrUpdate(userGroup.id, userGroup);
-            return state;
+            return state.userGroups.addOrUpdate(userGroup.id, userGroup);
         });
     }
 
     removeBot(id: CommunityIdentifier, botId: string): UndoLocalUpdate {
         return this.#withState(id, (state) => {
-            state.bots.remove(botId);
-            return state;
+            return state.bots.remove(botId);
         });
     }
 
@@ -117,8 +113,7 @@ export class CommunityDetailsUpdatesManager extends CommunityMapStore<CommunityD
         perm: ExternalBotPermissions,
     ): UndoLocalUpdate {
         return this.#withState(id, (state) => {
-            state.bots.addOrUpdate(botId, perm);
-            return state;
+            return state.bots.addOrUpdate(botId, perm);
         });
     }
 }

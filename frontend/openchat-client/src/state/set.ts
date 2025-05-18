@@ -94,6 +94,7 @@ export class LocalSet<T> {
         private serialiser?: (x: T) => Primitive,
         private deserialiser?: (x: Primitive) => T,
     ) {
+        // TODO - when we are ready - make sure that this doesn't use SvelteSet
         this.#added = new SafeSet(serialiser, deserialiser, () => new SvelteSet());
         this.#removed = new SafeSet(serialiser, deserialiser, () => new SvelteSet());
     }

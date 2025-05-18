@@ -216,7 +216,7 @@ export const communitiesStore = derived(
         communitySummaryLocalUpdates,
     ],
     ([serverCommunities, localCommunities, previewCommunities, localUpdates]) => {
-        const merged = localCommunities.apply(serverCommunities.merge(previewCommunities));
+        const merged = localCommunities.apply(serverCommunities.clone().merge(previewCommunities));
         return [...merged.entries()].reduce((result, [communityId, community]) => {
             const updates = localUpdates.get(communityId);
 
@@ -1275,11 +1275,6 @@ export class AppState {
             webhooks,
         );
     }
-
-    // setSelectedCommunity(communityId: CommunityIdentifier) {
-    //     const serverState = CommunityServerState.empty(communityId);
-    //     this.#selectedCommunity = new CommunityMergedState(serverState);
-    // }
 
     setCommunityDetailsFromServer(
         communityId: CommunityIdentifier,

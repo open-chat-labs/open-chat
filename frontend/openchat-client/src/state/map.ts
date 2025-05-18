@@ -103,6 +103,7 @@ export class LocalMap<K, V> {
         private serialiser?: (k: K) => Primitive,
         private deserialiser?: (p: Primitive) => K,
     ) {
+        // TODO - when we are ready - make sure that this doesn't use SvelteMap
         this.#addedOrUpdated = new SafeMap(serialiser, deserialiser, () => new SvelteMap());
         this.#removed = new SafeSet(serialiser, deserialiser, () => new SvelteSet());
     }
