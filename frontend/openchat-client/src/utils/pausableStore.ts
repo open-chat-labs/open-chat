@@ -1,15 +1,23 @@
-import { type Subscriber, type Updater, type Writable, writable } from "svelte/store";
+import type { Subscriber, Unsubscriber, Updater } from "svelte/store";
+import { tick } from "svelte";
 
 export class PausableStoreManager {
     #paused = false;
     #callbacks: (() => void)[] = [];
 
-    create<T>(initialValue: T): PausableStore<T> {
-        return new PausableStore(initialValue, this);
+    create<T>(initialValue: T, equalityCheck?: (a: T, b: T) => boolean): PausableStore<T> {
+        return new PausableStore(initialValue, equalityCheck ?? ((a, b) => a === b), this);
     }
 
     registerCallback(callback: () => void) {
         this.#callbacks.push(callback);
+    }
+
+    pauseForOneTick() {
+        this.#paused = true;
+        tick().then(() => {
+            this.#paused = false;
+        })
     }
 
     get paused() {
@@ -29,21 +37,23 @@ export class PausableStoreManager {
 }
 
 export class PausableStore<T> {
-    #store: Writable<T>;
+    #subscriptions: Map<symbol, (value: T) => void> = new Map();
     #value: T;
     #dirtyValue: T | undefined  = undefined;
-    #parent: PausableStoreManager;
+    readonly #equalityCheck: (a: T, b: T) => boolean;
+    readonly #parent: PausableStoreManager;
 
-    constructor(initValue: T, parent: PausableStoreManager) {
-        this.#store = writable(initValue);
+    constructor(initValue: T, equalityCheck: (a: T, b: T) => boolean, parent: PausableStoreManager) {
         this.#value = initValue;
+        this.#equalityCheck = equalityCheck;
         this.#parent = parent;
-
-        this.#store.subscribe((v) => this.#value = v);
     }
 
-    subscribe(subscriber: Subscriber<T>): void {
-        this.#store.subscribe(subscriber);
+    subscribe(subscriber: Subscriber<T>): Unsubscriber {
+        const id = Symbol();
+        this.#subscriptions.set(id, subscriber);
+        subscriber(this.#value);
+        return () => this.#subscriptions.delete(id);
     }
 
     value(allowDirty = false): T {
@@ -53,17 +63,18 @@ export class PausableStore<T> {
     }
 
     set(newValue: T) {
+        if (this.#equalityCheck(newValue, this.#value)) {
+            this.#dirtyValue = undefined;
+            return;
+        }
+
+        this.#dirtyValue = newValue;
+
         if (this.#parent.paused) {
-            this.#dirtyValue = newValue;
-            // Register callback to flush the new value once the store is unpaused
-            this.#parent.registerCallback(() => {
-                if (this.#dirtyValue !== undefined) {
-                    this.#store.set(this.#dirtyValue);
-                    this.#dirtyValue = undefined;
-                }
-            });
+            // Register callback to publish the new value once the store is unpaused
+            this.#parent.registerCallback(() => this.#publish());
         } else {
-            this.#store.set(newValue);
+            this.#publish();
         }
     }
 
@@ -71,5 +82,16 @@ export class PausableStore<T> {
         const input = this.#dirtyValue ?? this.#value;
         const newValue = updater(input);
         this.set(newValue);
+    }
+
+    #publish() {
+        if (this.#dirtyValue !== undefined) {
+            this.#value = this.#dirtyValue;
+            this.#dirtyValue = undefined
+
+            for (const subscription of this.#subscriptions.values()) {
+                subscription(this.#value);
+            }
+        }
     }
 }
