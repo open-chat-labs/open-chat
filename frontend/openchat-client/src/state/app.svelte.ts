@@ -280,6 +280,10 @@ export const selectedChatIdStore = derived(routeStore, (route) => {
 export const chatListScopeStore = derived(routeStore, (route) => route.scope);
 export const chatsInitialisedStore = writable(false);
 export const selectedServerCommunityStore = writable<CommunityDetailsState | undefined>(undefined);
+
+// TODO - revisit whether there is any point in this store existing. It simply forces a lower level of granularity on
+// the local updates than we could have with without it. Do we ever need to use it? I think not. We only care about it's
+// contents.
 export const selectedCommunityStore = derived(
     [selectedServerCommunityStore, communityLocalUpdates],
     ([serverCommunity, localUpdates]) => {
