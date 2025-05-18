@@ -23,6 +23,7 @@
         selectedChatIdStore,
         selectedCommunityIdStore,
         selectedCommunityRoute,
+        selectedServerCommunityStore,
         shareRoute,
         threadMessageIndexStore,
         threadOpenStore,
@@ -252,6 +253,13 @@
                     }
                 });
             });
+        }
+    });
+
+    // clear selected community
+    $effect(() => {
+        if ($selectedCommunityIdStore === undefined) {
+            selectedServerCommunityStore.set(undefined);
         }
     });
 

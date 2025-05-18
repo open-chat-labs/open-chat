@@ -1,11 +1,11 @@
 <script lang="ts">
     import type { OpenChat, UserOrUserGroup } from "openchat-client";
     import {
-        app,
         AvatarSize,
         currentUserIdStore,
         iconSize,
         mobileWidth,
+        selectedCommunityMembersStore,
         userStore,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
@@ -203,7 +203,10 @@
                                     </span>
                                 {:else}
                                     <span class="display-name">
-                                        {client.getDisplayName(item, app.selectedCommunity.members)}
+                                        {client.getDisplayName(
+                                            item,
+                                            $selectedCommunityMembersStore,
+                                        )}
                                     </span>
                                     <span class="username">
                                         @{item.username}

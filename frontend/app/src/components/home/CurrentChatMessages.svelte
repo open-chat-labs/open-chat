@@ -19,6 +19,7 @@
         localUpdates,
         messageIndexStore,
         routeForChatIdentifier,
+        selectedCommunitySummaryStore,
         showMiddle,
     } from "openchat-client";
     import page from "page";
@@ -229,11 +230,11 @@
         return earliestLoadedEventIndex <= indexRequired;
     }
     let privateCommunityPreview = $derived(
-        app.selectedCommunitySummary !== undefined &&
-            (app.selectedCommunitySummary.membership.role === "none" ||
-                app.selectedCommunitySummary.membership.lapsed) &&
-            (!app.selectedCommunitySummary.public ||
-                app.selectedCommunitySummary.gateConfig.gate.kind !== "no_gate"),
+        $selectedCommunitySummaryStore !== undefined &&
+            ($selectedCommunitySummaryStore.membership.role === "none" ||
+                $selectedCommunitySummaryStore.membership.lapsed) &&
+            (!$selectedCommunitySummaryStore.public ||
+                $selectedCommunitySummaryStore.gateConfig.gate.kind !== "no_gate"),
     );
     let privatePreview = $derived(privateCommunityPreview || privateChatPreview);
     let isEmptyChat = $derived(chat.latestEventIndex <= 0 || privatePreview);

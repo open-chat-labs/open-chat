@@ -17,7 +17,6 @@
     } from "openchat-client";
     import {
         anonUserStore,
-        app,
         botState,
         chatIdentifiersEqual,
         currentUserIdStore,
@@ -28,6 +27,8 @@
         random64,
         screenWidth,
         ScreenWidth,
+        selectedCommunitySummaryStore,
+        selectedCommunityUserGroupsStore,
         throttleDeadline,
         userStore,
     } from "openchat-client";
@@ -319,7 +320,7 @@
 
     function formatUserGroupMentions(text: string): string {
         return text.replace(/@UserGroup\(([\d\w-]+)\)/g, (match, p1) => {
-            const u = app.selectedCommunity.userGroups.get(Number(p1));
+            const u = $selectedCommunityUserGroupsStore.get(Number(p1));
             if (u !== undefined) {
                 return `@${u.name}`;
             }
@@ -512,7 +513,7 @@
             attachment !== undefined,
     );
     let excessiveLinks = $derived(client.extractEnabledLinks(textContent ?? "").length > 5);
-    let frozen = $derived(client.isChatOrCommunityFrozen(chat, app.selectedCommunitySummary));
+    let frozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
     $effect(() => {
         if (inp) {
             if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {

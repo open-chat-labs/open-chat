@@ -14,6 +14,9 @@
         mobileWidth,
         platformModeratorStore,
         rightPanelHistory,
+        selectedCommunityBlockedUsersStore,
+        selectedCommunityMembersStore,
+        selectedCommunitySummaryStore,
         userStore,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
@@ -98,9 +101,9 @@
                 return;
             }
         }
-        if (app.selectedCommunitySummary !== undefined) {
+        if ($selectedCommunitySummaryStore !== undefined) {
             client
-                .blockCommunityUser(app.selectedCommunitySummary.id, userId)
+                .blockCommunityUser($selectedCommunitySummaryStore.id, userId)
                 .then((success) =>
                     afterBlock(success, i18nKey("blockUserSucceeded"), i18nKey("blockUserFailed")),
                 );
@@ -134,9 +137,9 @@
                 return;
             }
         }
-        if (app.selectedCommunitySummary !== undefined) {
+        if ($selectedCommunitySummaryStore !== undefined) {
             client
-                .unblockCommunityUser(app.selectedCommunitySummary.id, userId)
+                .unblockCommunityUser($selectedCommunitySummaryStore.id, userId)
                 .then((success) =>
                     afterBlock(
                         success,
@@ -260,25 +263,25 @@
                 username: profile?.username ?? "",
                 displayName: profile?.displayName,
             },
-            inGlobalContext ? undefined : app.selectedCommunity.members,
+            inGlobalContext ? undefined : $selectedCommunityMembersStore,
         ),
     );
     let canBlock = $derived(
         canBlockUser(
             app.selectedChatSummary,
-            app.selectedCommunitySummary,
+            $selectedCommunitySummaryStore,
             userStore.blockedUsers,
             app.selectedChat.blockedUsers,
-            app.selectedCommunity.blockedUsers,
+            $selectedCommunityBlockedUsersStore,
         ),
     );
     let canUnblock = $derived(
         canUnblockUser(
             app.selectedChatSummary,
-            app.selectedCommunitySummary,
+            $selectedCommunitySummaryStore,
             userStore.blockedUsers,
             app.selectedChat.blockedUsers,
-            app.selectedCommunity.blockedUsers,
+            $selectedCommunityBlockedUsersStore,
         ),
     );
 </script>
@@ -315,7 +318,7 @@
                                 <WithRole
                                     userId={user.userId}
                                     chatMembers={app.selectedChat.members}
-                                    communityMembers={app.selectedCommunity.members}>
+                                    communityMembers={$selectedCommunityMembersStore}>
                                     {#snippet children(communityRole, chatRole)}
                                         <RoleIcon level="community" popup role={communityRole} />
                                         <RoleIcon

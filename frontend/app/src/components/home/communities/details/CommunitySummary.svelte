@@ -1,5 +1,11 @@
 <script lang="ts">
-    import { type OpenChat, app, defaultChatRules } from "openchat-client";
+    import {
+        type OpenChat,
+        defaultChatRules,
+        selectedCommunityReferralsStore,
+        selectedCommunityStore,
+        selectedCommunitySummaryStore,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import CommunityCard from "../explore/CommunityCard.svelte";
     import CommunityDetails from "./CommunityDetails.svelte";
@@ -7,51 +13,51 @@
 
     const client = getContext<OpenChat>("client");
 
-    let frozen = $derived(client.isCommunityFrozen(app.selectedCommunitySummary?.id));
-    let rules = $derived(app.selectedCommunity.rules ?? defaultChatRules("community"));
+    let frozen = $derived(client.isCommunityFrozen($selectedCommunitySummaryStore?.id));
+    let rules = $derived($selectedCommunityStore?.rules ?? defaultChatRules("community"));
     let canDelete = $derived(
-        app.selectedCommunitySummary !== undefined &&
+        $selectedCommunitySummaryStore !== undefined &&
             !frozen &&
-            client.canDeleteCommunity(app.selectedCommunitySummary.id),
+            client.canDeleteCommunity($selectedCommunitySummaryStore.id),
     );
     let canEdit = $derived(
-        app.selectedCommunitySummary !== undefined &&
+        $selectedCommunitySummaryStore !== undefined &&
             !frozen &&
-            client.canEditCommunity(app.selectedCommunitySummary.id),
+            client.canEditCommunity($selectedCommunitySummaryStore.id),
     );
     let canInvite = $derived(
-        app.selectedCommunitySummary !== undefined &&
+        $selectedCommunitySummaryStore !== undefined &&
             !frozen &&
-            client.canInviteUsers(app.selectedCommunitySummary.id),
+            client.canInviteUsers($selectedCommunitySummaryStore.id),
     );
 </script>
 
-{#if app.selectedCommunitySummary}
+{#if $selectedCommunitySummaryStore}
     <CommunityDetailsHeader
-        community={app.selectedCommunitySummary}
+        community={$selectedCommunitySummaryStore}
         {canEdit}
         level={"community"} />
     <div class="body">
         <CommunityCard
-            id={app.selectedCommunitySummary.id.communityId}
-            name={app.selectedCommunitySummary.name}
-            description={app.selectedCommunitySummary.description}
-            banner={app.selectedCommunitySummary.banner}
-            avatar={app.selectedCommunitySummary.avatar}
-            memberCount={app.selectedCommunitySummary.memberCount}
-            gateConfig={app.selectedCommunitySummary.gateConfig}
-            language={app.selectedCommunitySummary.primaryLanguage}
+            id={$selectedCommunitySummaryStore.id.communityId}
+            name={$selectedCommunitySummaryStore.name}
+            description={$selectedCommunitySummaryStore.description}
+            banner={$selectedCommunitySummaryStore.banner}
+            avatar={$selectedCommunitySummaryStore.avatar}
+            memberCount={$selectedCommunitySummaryStore.memberCount}
+            gateConfig={$selectedCommunitySummaryStore.gateConfig}
+            language={$selectedCommunitySummaryStore.primaryLanguage}
             flags={0}
             channelCount={0}
             header
-            verified={app.selectedCommunitySummary.verified} />
+            verified={$selectedCommunitySummaryStore.verified} />
         <CommunityDetails
             {canDelete}
             {canInvite}
             {rules}
-            metrics={app.selectedCommunitySummary.metrics}
-            community={app.selectedCommunitySummary}
-            referrals={app.selectedCommunity.referrals} />
+            metrics={$selectedCommunitySummaryStore.metrics}
+            community={$selectedCommunitySummaryStore}
+            referrals={$selectedCommunityReferralsStore} />
     </div>
 {/if}
 

@@ -1,9 +1,9 @@
 <script lang="ts">
     import {
-        app,
         AvatarSize,
         communitiesStore,
         iconSize,
+        selectedCommunitySummaryStore,
         userStore,
         type ChatIdentifier,
         type OpenChat,
@@ -69,7 +69,7 @@
                                     communityId: chat.id.communityId,
                                 })?.name
                             } > ${chat.name}`,
-                            avatarUrl: client.groupAvatarUrl(chat, app.selectedCommunitySummary),
+                            avatarUrl: client.groupAvatarUrl(chat, $selectedCommunitySummaryStore),
                             initiator: initiator.username,
                         };
                 }

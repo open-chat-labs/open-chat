@@ -23,6 +23,7 @@
         routeStore,
         screenWidth,
         ScreenWidth,
+        selectedCommunityMembersStore,
         type SenderContext,
         translationsStore,
         ui,
@@ -479,7 +480,7 @@
         (!inert || canRevealDeleted || canRevealBlocked) && !readonly && !ephemeral,
     );
     let canUndelete = $derived(msg.deleted && msg.content.kind !== "deleted_content");
-    let senderDisplayName = $derived(client.getDisplayName(sender, app.selectedCommunity.members));
+    let senderDisplayName = $derived(client.getDisplayName(sender, $selectedCommunityMembersStore));
     let tips = $derived(msg.tips ? Object.entries(msg.tips) : []);
     let canBlockUser = $derived(canBlockUsers && !app.selectedChat.blockedUsers.has(msg.sender));
     let edited = $derived(
@@ -622,7 +623,7 @@
                                             <WithRole
                                                 userId={sender.userId}
                                                 chatMembers={app.selectedChat.members}
-                                                communityMembers={app.selectedCommunity.members}>
+                                                communityMembers={$selectedCommunityMembersStore}>
                                                 {#snippet children(communityRole, chatRole)}
                                                     <RoleIcon
                                                         level="community"

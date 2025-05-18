@@ -7,6 +7,7 @@
         OpenChat,
         publish,
         routeForChatIdentifier,
+        selectedCommunitySummaryStore,
         userStore,
         type ChatIdentifier,
     } from "openchat-client";
@@ -84,7 +85,7 @@
                                     communityId: chat.id.communityId,
                                 })?.name
                             } > ${chat.name}`,
-                            avatarUrl: client.groupAvatarUrl(chat, app.selectedCommunitySummary),
+                            avatarUrl: client.groupAvatarUrl(chat, $selectedCommunitySummaryStore),
                             userId: undefined,
                         };
                 }

@@ -29,6 +29,7 @@
         type ReadonlySet,
         rightPanelHistory,
         runningInIframe,
+        selectedCommunitySummaryStore,
         subscribe,
         suspendedUserStore,
         type User,
@@ -312,7 +313,7 @@
     });
     let showFooter = $derived(!showSearchHeader && !$suspendedUserStore);
     let blocked = $derived(isBlocked(chat, userStore.blockedUsers));
-    let frozen = $derived(client.isChatOrCommunityFrozen(chat, app.selectedCommunitySummary));
+    let frozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
     let canSendAny = $derived(client.canSendMessage(chat.id, "message"));
     let preview = $derived(client.isPreviewing(chat.id));
     let lapsed = $derived(client.isLapsed(chat.id));

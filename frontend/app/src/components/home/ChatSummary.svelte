@@ -20,6 +20,7 @@
         OpenChat,
         publish,
         routeForScope,
+        selectedCommunitySummaryStore,
         suspendedUserStore,
         byContext as typersByContext,
         userStore,
@@ -131,7 +132,7 @@
                     name: chatSummary.name,
                     diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
                     streak: 0,
-                    avatarUrl: client.groupAvatarUrl(chatSummary, app.selectedCommunitySummary),
+                    avatarUrl: client.groupAvatarUrl(chatSummary, $selectedCommunitySummaryStore),
                     userId: undefined,
                     typing: client.getTypingString(
                         $_,

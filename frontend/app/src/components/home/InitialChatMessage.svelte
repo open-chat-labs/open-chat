@@ -9,6 +9,7 @@
         type ExternalBotPermissions,
         type OpenChat,
         type ResourceKey,
+        selectedCommunitySummaryStore,
         userStore,
     } from "openchat-client";
     import { getContext } from "svelte";
@@ -70,7 +71,7 @@
                     title: i18nKey("group.welcome", { groupName: chat.name }),
                     verified: chat.kind === "group_chat" ? chat.verified : false,
                     description: chat.description,
-                    avatarUrl: client.groupAvatarUrl(chat, app.selectedCommunitySummary),
+                    avatarUrl: client.groupAvatarUrl(chat, $selectedCommunitySummaryStore),
                     subtitle: i18nKey(
                         chat.public ? "thisIsPublicGroupWithN" : "thisIsPrivateGroupWithN",
                         { number: chat.memberCount },

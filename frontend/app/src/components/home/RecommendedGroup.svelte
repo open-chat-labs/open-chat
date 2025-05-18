@@ -12,6 +12,7 @@
         type OpenChat,
         publish,
         routeForChatIdentifier,
+        selectedCommunitySummaryStore,
         suspendedUserStore,
     } from "openchat-client";
     import page from "page";
@@ -65,7 +66,7 @@
         <div class="header">
             <div class="avatar">
                 <Avatar
-                    url={client.groupAvatarUrl(group, app.selectedCommunitySummary)}
+                    url={client.groupAvatarUrl(group, $selectedCommunitySummaryStore)}
                     size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
             </div>
             <div class="group-title-line">
