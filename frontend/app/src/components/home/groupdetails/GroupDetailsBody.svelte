@@ -4,7 +4,7 @@
         app,
         AvatarSize,
         currentUserIdStore,
-        selectedCommunityStore,
+        selectedCommunityRulesStore,
         selectedCommunitySummaryStore,
     } from "openchat-client";
     import { getContext } from "svelte";
@@ -48,7 +48,7 @@
     let avatarSrc = $derived(client.groupAvatarUrl(chat, $selectedCommunitySummaryStore));
     let combinedRulesText = $derived(
         canSend
-            ? client.combineRulesText(app.selectedChat.rules, $selectedCommunityStore?.rules)
+            ? client.combineRulesText(app.selectedChat.rules, $selectedCommunityRulesStore)
             : "",
     );
     let externalUrl = $derived(chat.kind === "channel" ? chat.externalUrl : undefined);

@@ -5,7 +5,7 @@
         OpenChat,
         publish,
         selectedCommunityReferralsStore,
-        selectedCommunityStore,
+        selectedCommunityRulesStore,
         type ChannelSummary,
         type CommunitySummary,
     } from "openchat-client";
@@ -41,7 +41,7 @@
     let canEditChannel = $derived(
         !channelFrozen && !communityFrozen && client.canEditGroupDetails(channel.id),
     );
-    let rules = $derived($selectedCommunityStore?.rules ?? defaultChatRules("community"));
+    let rules = $derived($selectedCommunityRulesStore ?? defaultChatRules("community"));
     let canDeleteCommunity = $derived(client.canDeleteCommunity(community.id));
     let canInviteToCommunity = $derived(!communityFrozen && client.canInviteUsers(community.id));
 

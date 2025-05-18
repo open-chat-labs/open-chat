@@ -48,7 +48,7 @@
         routeForScope,
         routeStore,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
-        selectedCommunityStore,
+        selectedCommunityRulesStore,
         subscribe,
         suspendedUserStore,
         ui,
@@ -849,7 +849,7 @@
         modal = {
             kind: "edit_community",
             community,
-            communityRules: $selectedCommunityStore?.rules ?? defaultChatRules("community"),
+            communityRules: $selectedCommunityRulesStore ?? defaultChatRules("community"),
         };
     }
 

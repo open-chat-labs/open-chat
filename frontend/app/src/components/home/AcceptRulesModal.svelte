@@ -3,7 +3,7 @@
         type OpenChat,
         app,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
-        selectedCommunityStore,
+        selectedCommunityRulesStore,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -19,9 +19,7 @@
 
 <AreYouSure
     title={i18nKey("rules.acceptTitle")}
-    message={i18nKey(
-        client.combineRulesText(app.selectedChat.rules, $selectedCommunityStore?.rules),
-    )}
+    message={i18nKey(client.combineRulesText(app.selectedChat.rules, $selectedCommunityRulesStore))}
     yesLabel={i18nKey("rules.accept")}
     noLabel={i18nKey("rules.reject")}
     action={onAction} />
