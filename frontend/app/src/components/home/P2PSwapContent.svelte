@@ -50,8 +50,8 @@
     let confirming = $state(false);
     let showDetails = $state(false);
 
-    let fromDetails = $derived($cryptoLookup[content.token0.ledger]);
-    let toDetails = $derived($cryptoLookup[content.token1.ledger]);
+    let fromDetails = $derived($cryptoLookup.get(content.token0.ledger)!);
+    let toDetails = $derived($cryptoLookup.get(content.token1.ledger)!);
     let finished = $derived($now500 >= Number(content.expiresAt));
     let timeRemaining = $derived(
         finished
@@ -72,14 +72,14 @@
     let fromAmountInUsd = $derived(
         calculateDollarAmount(
             content.token0Amount,
-            $exchangeRatesLookup[fromDetails.symbol.toLowerCase()]?.toUSD,
+            $exchangeRatesLookup.get(fromDetails.symbol.toLowerCase())?.toUSD,
             fromDetails.decimals,
         ),
     );
     let toAmountInUsd = $derived(
         calculateDollarAmount(
             content.token1Amount,
-            $exchangeRatesLookup[toDetails.symbol.toLowerCase()]?.toUSD,
+            $exchangeRatesLookup.get(toDetails.symbol.toLowerCase())?.toUSD,
             toDetails.decimals,
         ),
     );

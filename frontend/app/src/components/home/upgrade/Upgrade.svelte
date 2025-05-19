@@ -3,7 +3,7 @@
         LEDGER_CANISTER_CHAT,
         LEDGER_CANISTER_ICP,
         canExtendDiamondStore,
-        cryptoBalance,
+        cryptoBalanceStore,
         cryptoLookup,
         isDiamondStore,
     } from "openchat-client";
@@ -35,8 +35,8 @@
     let refreshingBalance = $state(false);
 
     let tokenDetails = $derived({
-        symbol: $cryptoLookup[ledger],
-        balance: $cryptoBalance[ledger] ?? BigInt(0),
+        symbol: $cryptoLookup.get(ledger),
+        balance: $cryptoBalanceStore.get(ledger) ?? BigInt(0),
     });
 
     function onBalanceRefreshed() {

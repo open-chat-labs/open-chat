@@ -5,7 +5,7 @@
     import {
         LEDGER_CANISTER_CHAT,
         OpenChat,
-        cryptoBalance,
+        cryptoBalanceStore,
         cryptoLookup,
         streakInsuranceStore,
     } from "openchat-client";
@@ -30,8 +30,8 @@
     const currentDaysMissed = $streakInsuranceStore.daysMissed;
     let { onClose }: Props = $props();
     let tokenDetails = $derived({
-        symbol: $cryptoLookup[ledger],
-        balance: $cryptoBalance[ledger] ?? BigInt(0),
+        symbol: $cryptoLookup.get(ledger),
+        balance: $cryptoBalanceStore.get(ledger) ?? 0n,
     });
     let additionalDays = $state(0);
     let confirming = $state(false);

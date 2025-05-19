@@ -26,7 +26,7 @@
         fullWidthOnMobile = false,
     }: Props = $props();
 
-    let tokenDetails = $derived($cryptoLookup[ledger]);
+    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let account = $derived(
         tokenDetails.symbol === ICP_SYMBOL ? $currentUserStore.cryptoAccount : $currentUserIdStore,
     );

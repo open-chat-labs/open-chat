@@ -38,6 +38,7 @@ import type {
     PollContent,
     PollVotes,
     Reaction,
+    ReadonlyMap,
     ReplyContext,
     SendMessageSuccess,
     Tally,
@@ -71,7 +72,7 @@ import {
     updateFromOptions,
     type ReadonlySet,
 } from "openchat-shared";
-import { get } from "svelte/store";
+import { cryptoLookup } from "../state";
 import { app } from "../state/app.svelte";
 import { localUpdates } from "../state/global";
 import {
@@ -80,7 +81,6 @@ import {
     type MessageLocalState,
 } from "../state/message/local.svelte";
 import { userStore } from "../state/users/users.svelte";
-import { cryptoLookup } from "../stores/crypto";
 import type { TypersByKey } from "../stores/typing";
 import { areOnSameDay } from "../utils/date";
 import { distinctBy, groupWhile, toRecordFiltered } from "../utils/list";
@@ -292,7 +292,7 @@ function messageMentionsUser(
     msg: EventWrapper<Message>,
 ): boolean {
     if (msg.event.sender === userId) return false;
-    const txt = getContentAsFormattedText(formatter, msg.event.content, get(cryptoLookup));
+    const txt = getContentAsFormattedText(formatter, msg.event.content, cryptoLookup);
     return txt.indexOf(`@UserId(${userId})`) >= 0;
 }
 
@@ -1736,7 +1736,7 @@ export function findMessageById(
 export function buildTransactionLink(
     formatter: MessageFormatter,
     transfer: CryptocurrencyTransfer,
-    cryptoLookup: Record<string, CryptocurrencyDetails>,
+    cryptoLookup: ReadonlyMap<string, CryptocurrencyDetails>,
 ): string | undefined {
     const url = buildTransactionUrl(transfer, cryptoLookup);
     return url !== undefined
@@ -1746,7 +1746,7 @@ export function buildTransactionLink(
 
 export function buildTransactionUrl(
     transfer: CryptocurrencyTransfer,
-    cryptoLookup: Record<string, CryptocurrencyDetails>,
+    cryptoLookup: ReadonlyMap<string, CryptocurrencyDetails>,
 ): string | undefined {
     if (transfer.kind === "completed") {
         return buildTransactionUrlByIndex(transfer.blockIndex, transfer.ledger, cryptoLookup);
@@ -1756,12 +1756,11 @@ export function buildTransactionUrl(
 export function buildTransactionUrlByIndex(
     transactionIndex: bigint,
     ledger: string,
-    cryptoLookup: Record<string, CryptocurrencyDetails>,
+    cryptoLookup: ReadonlyMap<string, CryptocurrencyDetails>,
 ): string | undefined {
-    return cryptoLookup[ledger].transactionUrlFormat.replace(
-        "{transaction_index}",
-        transactionIndex.toString(),
-    );
+    return cryptoLookup
+        .get(ledger)
+        ?.transactionUrlFormat.replace("{transaction_index}", transactionIndex.toString());
 }
 
 export function buildCryptoTransferText(
@@ -1770,7 +1769,7 @@ export function buildCryptoTransferText(
     senderId: string,
     content: CryptocurrencyContent,
     me: boolean,
-    cryptoLookup: Record<string, CryptocurrencyDetails>,
+    cryptoLookup: ReadonlyMap<string, CryptocurrencyDetails>,
 ): string | undefined {
     if (content.transfer.kind !== "completed" && content.transfer.kind !== "pending") {
         return undefined;
@@ -1780,7 +1779,8 @@ export function buildCryptoTransferText(
         return userId === myUserId ? formatter("you") : `@UserId(${userId})`;
     }
 
-    const tokenDetails = cryptoLookup[content.transfer.ledger];
+    const tokenDetails = cryptoLookup.get(content.transfer.ledger);
+    if (tokenDetails === undefined) return undefined;
 
     const values = {
         amount: formatTokens(content.transfer.amountE8s, tokenDetails.decimals),

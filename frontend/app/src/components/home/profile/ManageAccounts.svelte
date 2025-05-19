@@ -6,6 +6,7 @@
         OpenChat,
         walletConfigStore,
         type CryptocurrencyDetails,
+        type ReadonlyMap,
         type WalletConfig,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
@@ -64,8 +65,10 @@
         }
     }
 
-    function getDefaultLedgers(ledgerLookup: Record<string, CryptocurrencyDetails>): Set<string> {
-        const lookup = Object.entries(ledgerLookup).reduce(
+    function getDefaultLedgers(
+        ledgerLookup: ReadonlyMap<string, CryptocurrencyDetails>,
+    ): Set<string> {
+        const lookup = [...ledgerLookup.entries()].reduce(
             (bySymbol, [k, v]) => {
                 bySymbol[v.symbol] = k;
                 return bySymbol;

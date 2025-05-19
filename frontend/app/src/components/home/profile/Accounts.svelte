@@ -115,7 +115,7 @@
     let manualWalletConfig = $derived($walletConfigStore.kind === "manual_wallet");
     let snsLedgers = $derived(
         new Set<string>(
-            Object.values($nervousSystemLookup)
+            [...$nervousSystemLookup.values()]
                 .filter((ns) => !ns.isNns)
                 .map((ns) => ns.ledgerCanisterId),
         ),

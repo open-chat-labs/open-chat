@@ -34,8 +34,8 @@
         );
         ev.stopPropagation();
     }
-    let logo = $derived($cryptoLookup[content.transaction.ledger]?.logo ?? "");
-    let tokenDetails = $derived($cryptoLookup[content.transaction.ledger]);
+    let logo = $derived($cryptoLookup.get(content.transaction.ledger)?.logo ?? "");
+    let tokenDetails = $derived($cryptoLookup.get(content.transaction.ledger)!);
     let symbol = $derived(tokenDetails.symbol);
     let amount = $derived(
         client.formatTokens(content.transaction.amountE8s, tokenDetails.decimals),

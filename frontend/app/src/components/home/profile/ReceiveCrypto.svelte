@@ -2,7 +2,7 @@
     import BitcoinAccountInfo from "@components/home/BitcoinAccountInfo.svelte";
     import {
         BTC_SYMBOL,
-        cryptoBalance,
+        cryptoBalanceStore,
         cryptoLookup,
         currentUserIdStore,
         mobileWidth,
@@ -26,7 +26,7 @@
 
     let error: string | undefined = $state(undefined);
 
-    let tokenDetails = $derived($cryptoLookup[ledger]);
+    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let symbol = $derived(tokenDetails.symbol);
     let title = $derived(i18nKey(`cryptoAccount.receiveToken`, { symbol }));
 
@@ -45,7 +45,7 @@
             <div class="main-title"><Translatable resourceKey={title} /></div>
             <BalanceWithRefresh
                 {ledger}
-                value={$cryptoBalance[ledger]}
+                value={$cryptoBalanceStore.get(ledger) ?? 0n}
                 label={i18nKey("cryptoAccount.shortBalanceLabel")}
                 bold
                 onRefreshed={onBalanceRefreshed}

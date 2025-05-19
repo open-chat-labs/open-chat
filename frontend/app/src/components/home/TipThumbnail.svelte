@@ -18,7 +18,7 @@
     let longPressed: boolean = $state(false);
 
     let userTipsList = $derived(Object.entries(userTips));
-    let tokenDetails = $derived($cryptoLookup[ledger]);
+    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let totalAmount = $derived(userTipsList.reduce((n, [_, amount]) => n + amount, BigInt(0)));
 
     function click() {

@@ -21,10 +21,13 @@ import {
     type CommunitySummary,
     compareChats,
     type CreatedUser,
+    type CryptocurrencyDetails,
+    DEFAULT_TOKENS,
     type DiamondMembershipStatus,
     type DirectChatIdentifier,
     type DirectChatSummary,
     emptyChatMetrics,
+    type EnhancedTokenDetails,
     type EventWrapper,
     type ExternalBotPermissions,
     type GroupChatSummary,
@@ -38,7 +41,10 @@ import {
     MessageMap,
     type ModerationFlag,
     ModerationFlags,
+    type NervousSystemDetails,
     type NervousSystemFunction,
+    type NotificationStatus,
+    type PinnedByScope,
     type PinNumberFailures,
     type PinNumberResolver,
     type PublicApiKeyDetails,
@@ -51,6 +57,7 @@ import {
     type Tally,
     type ThreadIdentifier,
     type ThreadSyncDetails,
+    type TokenExchangeRates,
     type UserGroupDetails,
     type UserGroupSummary,
     type VersionedRules,
@@ -62,7 +69,7 @@ import {
 import { locale } from "svelte-i18n";
 import { SvelteMap } from "svelte/reactivity";
 import { derived, get } from "svelte/store";
-import { offlineStore, type PinnedByScope } from "../stores";
+import { offlineStore } from "../stores/network";
 import {
     getMessagePermissionsForSelectedChat,
     mergeChatMetrics,
@@ -109,6 +116,161 @@ function communityFilterToString(filter: Set<string>): string {
         ...filter,
         languages: Array.from(filter),
     });
+}
+
+type LedgerCanister = string;
+type GovernanceCanister = string;
+
+// TODO - also get rid of createSetStore and replace with SafeSetStore
+export const cryptoLookup = new SafeMapStore<LedgerCanister, CryptocurrencyDetails>();
+export const nervousSystemLookup = new SafeMapStore<GovernanceCanister, NervousSystemDetails>();
+export const exchangeRatesLookupStore = new SafeMapStore<string, TokenExchangeRates>();
+
+class CryptoBalanceStore extends SafeMapStore<LedgerCanister, bigint> {
+    setBalance(ledger: string, balance: bigint) {
+        super.set(ledger, balance);
+        cryptoBalancesLastUpdated.set(ledger, Date.now());
+    }
+
+    valueIfUpdatedRecently(ledger: string): bigint | undefined {
+        const lastUpdated = cryptoBalancesLastUpdated.get(ledger);
+        if (lastUpdated === undefined) {
+            return undefined;
+        }
+        return Date.now() - lastUpdated < 5 * 60 * 1000 ? this.get(ledger) : undefined;
+    }
+}
+export const cryptoBalanceStore = new CryptoBalanceStore();
+const cryptoBalancesLastUpdated = new Map<string, number>();
+
+export const bitcoinAddress = writable<string | undefined>(undefined);
+
+export const lastCryptoSent = new LocalStorageStore<string | undefined>(
+    configKeys.lastCryptoSent,
+    undefined,
+);
+
+export const enhancedCryptoLookup = derived(
+    [cryptoLookup, cryptoBalanceStore, exchangeRatesLookupStore],
+    ([$lookup, $balance, $exchangeRatesLookup]) => {
+        const xrICPtoDollar = $exchangeRatesLookup.get("icp")?.toUSD;
+        const xrBTCtoDollar = $exchangeRatesLookup.get("btc")?.toUSD;
+        const xrETHtoDollar = $exchangeRatesLookup.get("eth")?.toUSD;
+
+        const xrDollarToICP = xrICPtoDollar === undefined ? 0 : 1 / xrICPtoDollar;
+        const xrDollarToBTC = xrBTCtoDollar === undefined ? 0 : 1 / xrBTCtoDollar;
+        const xrDollarToETH = xrETHtoDollar === undefined ? 0 : 1 / xrETHtoDollar;
+
+        return $lookup.reduce((result, [key, t]) => {
+            const balance = $balance.get(t.ledger) ?? BigInt(0);
+            const symbolLower = t.symbol.toLowerCase();
+            const balanceWholeUnits = Number(balance) / Math.pow(10, t.decimals);
+            const rates = $exchangeRatesLookup.get(symbolLower);
+            const xrUSD = rates?.toUSD;
+            const dollarBalance = xrUSD !== undefined ? xrUSD * balanceWholeUnits : undefined;
+            const icpBalance =
+                dollarBalance !== undefined && xrDollarToICP !== undefined
+                    ? dollarBalance * xrDollarToICP
+                    : undefined;
+            const btcBalance =
+                dollarBalance !== undefined && xrDollarToBTC !== undefined
+                    ? dollarBalance * xrDollarToBTC
+                    : undefined;
+            const ethBalance =
+                dollarBalance !== undefined && xrDollarToETH !== undefined
+                    ? dollarBalance * xrDollarToETH
+                    : undefined;
+            const zero = balance === BigInt(0) && !DEFAULT_TOKENS.includes(t.symbol);
+            result.set(key, {
+                ...t,
+                balance,
+                dollarBalance,
+                icpBalance,
+                btcBalance,
+                ethBalance,
+                zero,
+                urlFormat: t.transactionUrlFormat,
+            });
+            return result;
+        }, new Map<string, EnhancedTokenDetails>());
+    },
+);
+
+export const cryptoTokensSorted = derived([enhancedCryptoLookup], ([$lookup]) => {
+    return [...$lookup.values()].filter((t) => t.enabled || !t.zero).sort(compareTokens);
+});
+
+function meetsAutoWalletCriteria(config: WalletConfig, token: EnhancedTokenDetails): boolean {
+    return (
+        config.kind === "auto_wallet" &&
+        (DEFAULT_TOKENS.includes(token.symbol) ||
+            (config.minDollarValue <= 0 && token.balance > 0) ||
+            (config.minDollarValue > 0 && (token.dollarBalance ?? 0) >= config.minDollarValue))
+    );
+}
+
+function meetsManualWalletCriteria(config: WalletConfig, token: EnhancedTokenDetails): boolean {
+    return config.kind === "manual_wallet" && config.tokens.has(token.ledger);
+}
+
+export const serverWalletConfigStore = writable<WalletConfig>({
+    kind: "auto_wallet",
+    minDollarValue: 0,
+});
+
+export const walletConfigStore = derived(
+    [serverWalletConfigStore, localUpdates.walletConfig],
+    ([serverWalletConfig, localUpates]) => localUpates ?? serverWalletConfig,
+);
+
+export const walletTokensSorted = derived(
+    [cryptoTokensSorted, walletConfigStore],
+    ([$tokens, walletConfig]) => {
+        return $tokens.filter(
+            (t) =>
+                meetsAutoWalletCriteria(walletConfig, t) ||
+                meetsManualWalletCriteria(walletConfig, t),
+        );
+    },
+);
+
+export const swappableTokensStore = new SafeSetStore<string>();
+
+function compareTokens(a: EnhancedTokenDetails, b: EnhancedTokenDetails): number {
+    // Sort by non-zero balances first
+    // Then by $ balance
+    // Then by whether token is a default
+    // Then by default precedence
+    // Then alphabetically by symbol
+
+    const aNonZero = a.balance > 0;
+    const bNonZero = b.balance > 0;
+
+    if (aNonZero !== bNonZero) {
+        return aNonZero ? -1 : 1;
+    }
+
+    const aDollarBalance = a.dollarBalance ?? -1;
+    const bDollarBalance = b.dollarBalance ?? -1;
+
+    if (aDollarBalance < bDollarBalance) {
+        return 1;
+    } else if (aDollarBalance > bDollarBalance) {
+        return -1;
+    } else {
+        const defA = DEFAULT_TOKENS.indexOf(a.symbol);
+        const defB = DEFAULT_TOKENS.indexOf(b.symbol);
+
+        if (defA >= 0 && defB >= 0) {
+            return defA < defB ? 1 : -1;
+        } else if (defA >= 0) {
+            return 1;
+        } else if (defB >= 0) {
+            return -1;
+        } else {
+            return a.symbol.localeCompare(b.symbol);
+        }
+    }
 }
 
 export function hasFlag(mask: number, flag: ModerationFlag): boolean {
@@ -179,6 +341,89 @@ export const underReviewEnabledStore = derived(
     moderationFlagsEnabledStore,
     (moderationFlagsEnabled) => hasFlag(moderationFlagsEnabled, ModerationFlags.UnderReview),
 );
+
+const notificationsSupported =
+    "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+
+export const softDisabledStore = new LocalStorageBoolStore(configKeys.softDisabled, false);
+
+const browserPermissionStore = writable<NotificationPermission | "pending-init">("pending-init");
+
+export async function initNotificationStores(): Promise<void> {
+    if (!notificationsSupported) {
+        return;
+    }
+
+    console.debug("PUSH: initialising notification stores with ", Notification.permission);
+
+    browserPermissionStore.set(Notification.permission);
+    if (navigator.permissions) {
+        navigator.permissions.query({ name: "notifications" }).then((perm) => {
+            perm.onchange = () => {
+                console.debug("PUSH: permission status changed to ", perm.state);
+                browserPermissionStore.set(permissionStateToNotificationPermission(perm.state));
+            };
+        });
+    }
+}
+
+export function setSoftDisabled(softDisabled: boolean): void {
+    softDisabledStore.set(softDisabled);
+}
+
+function permissionStateToNotificationPermission(perm: PermissionState): NotificationPermission {
+    switch (perm) {
+        case "prompt":
+            return "default";
+        case "denied":
+            return "denied";
+        case "granted":
+            return "granted";
+    }
+}
+
+function permissionToStatus(
+    permission: NotificationPermission | "pending-init",
+): NotificationStatus {
+    switch (permission) {
+        case "pending-init":
+            return "pending-init";
+        case "denied":
+            return "hard-denied";
+        case "granted":
+            return "granted";
+        default:
+            return "prompt";
+    }
+}
+
+export const notificationStatus = derived(
+    [softDisabledStore, browserPermissionStore, anonUserStore],
+    ([softDisabled, browserPermission, anonUser]) => {
+        if (!notificationsSupported || anonUser) {
+            return "unsupported";
+        }
+        if (softDisabled) {
+            return "soft-denied";
+        }
+        return permissionToStatus(browserPermission);
+    },
+);
+
+export async function askForNotificationPermission(): Promise<NotificationPermission> {
+    return Notification.requestPermission()
+        .then((res) => {
+            console.debug("PUSH: requestPermission result: ", res);
+            setSoftDisabled(false);
+            browserPermissionStore.set(res);
+            return res;
+        })
+        .catch((err) => {
+            console.debug("PUSH: requestPermission err: ", err);
+            throw err;
+        });
+}
+
 export const communityFiltersStore = new LocalStorageStore(
     "openchat_community_filters",
     new Set<string>(),
@@ -369,10 +614,6 @@ export const serverMessageActivitySummaryStore = writable<MessageActivitySummary
     unreadCount: 0,
 });
 export const serverDirectChatBotsStore = new SafeMapStore<string, ExternalBotPermissions>();
-export const serverWalletConfigStore = writable<WalletConfig>({
-    kind: "auto_wallet",
-    minDollarValue: 0,
-});
 export const serverStreakInsuranceStore = writable<StreakInsurance>({
     daysInsured: 0,
     daysMissed: 0,
@@ -381,10 +622,6 @@ export const referralsStore = writable<Referral[]>([]);
 export const streakInsuranceStore = derived(
     [serverStreakInsuranceStore, localUpdates.streakInsurance],
     ([serverStreakInsurance, localUpates]) => localUpates ?? serverStreakInsurance,
-);
-export const walletConfigStore = derived(
-    [serverWalletConfigStore, localUpdates.walletConfig],
-    ([serverWalletConfig, localUpates]) => localUpates ?? serverWalletConfig,
 );
 
 export class AppState {

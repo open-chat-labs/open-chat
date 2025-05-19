@@ -18,7 +18,7 @@
 
     let { content, me = false, reply = false, senderId }: Props = $props();
 
-    let logo = $derived($cryptoLookup[content.transfer.ledger].logo);
+    let logo = $derived($cryptoLookup.get(content.transfer.ledger)?.logo);
     let transferText = $derived(
         client.buildCryptoTransferText($_, $currentUserIdStore, senderId, content, me),
     );

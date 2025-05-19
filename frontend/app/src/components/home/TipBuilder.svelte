@@ -6,7 +6,7 @@
         PendingCryptocurrencyTransfer,
     } from "openchat-client";
     import {
-        cryptoBalance as cryptoBalanceStore,
+        cryptoBalanceStore,
         cryptoLookup,
         currentUserIdStore,
         exchangeRatesLookupStore as exchangeRatesLookup,
@@ -186,10 +186,10 @@
 
         onClose();
     }
-    let tokenDetails = $derived($cryptoLookup[ledger]);
-    let cryptoBalance = $derived($cryptoBalanceStore[ledger] ?? 0n);
+    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
+    let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
     let exchangeRate = $derived(
-        to2SigFigs($exchangeRatesLookup[tokenDetails.symbol.toLowerCase()]?.toUSD ?? 0),
+        to2SigFigs($exchangeRatesLookup.get(tokenDetails.symbol.toLowerCase())?.toUSD ?? 0),
     );
     $effect(() => {
         if (ledger !== undefined) {
