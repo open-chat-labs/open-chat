@@ -27,6 +27,8 @@ fn post_upgrade(args: Args) {
     let env = init_env(data.rng_seed);
 
     data.public_channel_list_updated = env.now();
+    data.local_user_index_event_sync_queue
+        .set_state(data.local_user_index_canister_id);
 
     init_state(env, data, args.wasm_version);
 

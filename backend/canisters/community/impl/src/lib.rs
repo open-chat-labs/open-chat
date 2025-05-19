@@ -1,6 +1,7 @@
 use crate::memory::{get_instruction_counts_data_memory, get_instruction_counts_index_memory};
 use crate::model::channels::Channels;
 use crate::model::groups_being_imported::{GroupBeingImportedSummary, GroupsBeingImported};
+use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::members::CommunityMembers;
 use crate::timer_job_types::{DeleteFileReferencesJob, MakeTransferJob, RemoveExpiredEventsJob, TimerJob};
 use activity_notification_state::ActivityNotificationState;
@@ -442,6 +443,8 @@ struct Data {
     expiring_member_actions: ExpiringMemberActions,
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
+    #[serde(default = "local_user_index_event_sync_queue")]
+    local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     bots: InstalledBots,
     bot_api_keys: BotApiKeys,
@@ -449,6 +452,10 @@ struct Data {
     idempotency_checker: IdempotencyChecker,
     notifications_queue: BatchedTimerJobQueue<NotificationsBatch>,
     public_channel_list_updated: TimestampMillis,
+}
+
+fn local_user_index_event_sync_queue() -> BatchedTimerJobQueue<LocalUserIndexEventBatch> {
+    BatchedTimerJobQueue::new(CanisterId::anonymous(), false)
 }
 
 impl Data {
@@ -547,7 +554,8 @@ impl Data {
             expiring_members: ExpiringMembers::default(),
             expiring_member_actions: ExpiringMemberActions::default(),
             user_cache: UserCache::default(),
-            user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
+            user_event_sync_queue: GroupedTimerJobQueue::new(5, false),
+            local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, false),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             bots: InstalledBots::default(),
             bot_api_keys: BotApiKeys::default(),
