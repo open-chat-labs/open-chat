@@ -76,7 +76,7 @@
         publish("claimDailyChit");
     }
     let logo = $derived(
-        Object.values($cryptoLookup).find(
+        [...$cryptoLookup.values()].find(
             (t) => t.symbol.toLowerCase() === content.token.toLowerCase(),
         )?.logo ?? "",
     );

@@ -20,6 +20,7 @@ import {
     communitiesStore,
     selectedCommunityMembersStore,
     serverCommunitiesStore,
+    serverPinnedChatsStore,
 } from "./app.svelte";
 import { chatDetailsLocalUpdates } from "./chat_details";
 import { communityLocalUpdates } from "./community";
@@ -447,16 +448,18 @@ describe("app state", () => {
         describe("pinned chats", () => {
             beforeEach(() => {
                 chatDetailsLocalUpdates.clearAll();
-                app.serverPinnedChats = new Map([
-                    [
-                        "direct_chat",
+                serverPinnedChatsStore.fromMap(
+                    new Map([
                         [
-                            { kind: "direct_chat", userId: "123456" },
-                            { kind: "direct_chat", userId: "888888" },
+                            "direct_chat",
+                            [
+                                { kind: "direct_chat", userId: "123456" },
+                                { kind: "direct_chat", userId: "888888" },
+                            ],
                         ],
-                    ],
-                    ["group_chat", [{ kind: "direct_chat", userId: "654321" }]],
-                ]);
+                        ["group_chat", [{ kind: "direct_chat", userId: "654321" }]],
+                    ]),
+                );
             });
 
             test("add a pinned chat", () => {

@@ -49,6 +49,7 @@ import {
 import { messageLocalUpdates } from "../message/local.svelte";
 import { LocalSet, LocalSetStore } from "../set";
 import { scheduleUndo, type UndoLocalUpdate } from "../undo";
+import { writable } from "../writable";
 import { DraftMessages } from "./draft.svelte";
 
 function emptyUnconfirmed(): UnconfirmedState {
@@ -77,8 +78,8 @@ export class GlobalLocalState {
     readonly communities = new LocalCommunityMapStore<CommunitySummary>();
     readonly previewCommunities = new CommunityMapStore<CommunitySummary>();
     readonly directChatBots = new LocalMap<string, ExternalBotPermissions>();
-    #walletConfig = $state<WalletConfig | undefined>();
-    #streakInsurance = $state<StreakInsurance | undefined>();
+    #walletConfig = writable<WalletConfig | undefined>(undefined);
+    #streakInsurance = writable<StreakInsurance | undefined>(undefined);
     #messageActivityFeedReadUpTo = $state<bigint | undefined>();
     readonly favourites = new LocalSet<ChatIdentifier>(
         (k) => JSON.stringify(k),
@@ -97,8 +98,8 @@ export class GlobalLocalState {
         this.communities.clear();
         this.previewCommunities.clear();
         this.directChatBots.clear();
-        this.#walletConfig = undefined;
-        this.#streakInsurance = undefined;
+        this.#walletConfig.set(undefined);
+        this.#streakInsurance.set(undefined);
         this.#messageActivityFeedReadUpTo = undefined;
         this.favourites.clear();
         this.#uninitialisedDirectChats.clear();
@@ -359,10 +360,10 @@ export class GlobalLocalState {
     }
 
     updateWalletConfig(val: WalletConfig) {
-        const prev = this.#walletConfig;
-        this.#walletConfig = val;
+        const prev = this.#walletConfig.current;
+        this.#walletConfig.set(val);
         return scheduleUndo(() => {
-            this.#walletConfig = prev;
+            this.#walletConfig.set(prev);
         });
     }
 
@@ -371,10 +372,10 @@ export class GlobalLocalState {
     }
 
     updateStreakInsurance(val: StreakInsurance) {
-        const prev = this.#streakInsurance;
-        this.#streakInsurance = val;
+        const prev = this.#streakInsurance.current;
+        this.#streakInsurance.set(val);
         return scheduleUndo(() => {
-            this.#streakInsurance = prev;
+            this.#streakInsurance.set(prev);
         });
     }
 

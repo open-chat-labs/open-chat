@@ -156,7 +156,7 @@
             });
     });
     let icpBalance = $derived(accountBalance / E8S_PER_TOKEN); //balance in the user's account expressed as ICP
-    let tokenDetails = $derived($cryptoLookup[ledger]);
+    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let toPayE8s = $derived(amountInE8s(tokenDetails.symbol, diamondFees, selectedOption));
     let toPay = $derived(amount(toPayE8s));
     let insufficientFunds = $derived(toPay - icpBalance > 0.0001); //we need to account for the fact that js cannot do maths

@@ -20,6 +20,7 @@
         notificationsSupported,
         offensiveEnabledStore,
         publish,
+        referralsStore,
         sortedCommunitiesStore,
         suspendedUserStore,
         underReviewEnabledStore,
@@ -148,7 +149,7 @@
             !readonly,
     );
     let canEditTranslations = $derived(!$locale?.startsWith("en"));
-    let referredUserIds = $derived(new Set(app.referrals.map((r) => r.userId)));
+    let referredUserIds = $derived(new Set($referralsStore.map((r) => r.userId)));
 
     onMount(() => {
         if (!$anonUserStore) {

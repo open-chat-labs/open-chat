@@ -1,24 +1,24 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import {
-        type PaymentGate,
-        type OpenChat,
-        type ResourceKey,
         type Level,
+        type OpenChat,
+        type PaymentGate,
         type PaymentGateApprovals,
-        cryptoBalance as cryptoBalanceStore,
+        type ResourceKey,
+        cryptoBalanceStore,
     } from "openchat-client";
     import { getContext } from "svelte";
-    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
+    import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
-    import ButtonGroup from "../../ButtonGroup.svelte";
+    import AlertBox from "../../AlertBox.svelte";
     import Button from "../../Button.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
+    import ErrorMessage from "../../ErrorMessage.svelte";
     import Translatable from "../../Translatable.svelte";
     import AccountInfo from "../AccountInfo.svelte";
-    import ErrorMessage from "../../ErrorMessage.svelte";
+    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import Markdown from "../Markdown.svelte";
-    import AlertBox from "../../AlertBox.svelte";
     import AccessGateExpiry from "./AccessGateExpiry.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -71,7 +71,7 @@
         }
     }
     let token = $derived(client.getTokenDetailsForAccessGate(gate)!);
-    let originalBalance = $derived($cryptoBalanceStore[token.ledger] ?? BigInt(0));
+    let originalBalance = $derived($cryptoBalanceStore.get(token.ledger) ?? 0n);
     let cryptoBalance = $derived(
         balanceAfterCurrentCommitments(token.ledger, paymentApprovals, originalBalance),
     );

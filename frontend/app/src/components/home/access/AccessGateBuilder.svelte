@@ -57,7 +57,7 @@
     let gateBindings: GateBinding[] = getGateBindings(level);
     let evaluationIntervalValid = $state(true);
     let nsLedgers = $derived(
-        new Set(Object.values($nervousSystemLookup).map((d) => d.ledgerCanisterId)),
+        new Set([...$nervousSystemLookup.values()].map((d) => d.ledgerCanisterId)),
     );
     let neuronGateBindings = $derived(getNeuronGateBindings($nervousSystemLookup));
     let paymentGateBindings = $derived(getPaymentGateBindings($cryptoLookup, nsLedgers));

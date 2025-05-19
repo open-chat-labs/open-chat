@@ -50,7 +50,7 @@
         {#snippet menuIcon()}
             <div class="token-selector-trigger">
                 <div class="symbol">
-                    {$cryptoLookup[ledger ?? ""]?.symbol}
+                    {$cryptoLookup.get(ledger ?? "")?.symbol}
                 </div>
                 <ChevronDown viewBox={"0 0 24 24"} size={$iconSize} color={"var(--icon-txt)"} />
             </div>

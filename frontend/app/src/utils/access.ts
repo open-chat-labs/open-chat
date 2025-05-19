@@ -1,5 +1,3 @@
-import { get } from "svelte/store";
-import { _ } from "svelte-i18n";
 import {
     type AccessGate,
     type Credential,
@@ -8,7 +6,10 @@ import {
     type EnhancedAccessGate,
     type Level,
     type NervousSystemDetails,
+    type ReadonlyMap,
 } from "openchat-client";
+import { _ } from "svelte-i18n";
+import { get } from "svelte/store";
 
 export type GateBinding = {
     key: string;
@@ -52,9 +53,9 @@ export function getGateBindings(level: Level): GateBinding[] {
 }
 
 export function getNeuronGateBindings(
-    nervousSystemLookup: Record<string, NervousSystemDetails>,
+    nervousSystemLookup: ReadonlyMap<string, NervousSystemDetails>,
 ): GateBinding[] {
-    return Object.values(nervousSystemLookup).map((ns) => {
+    return [...nervousSystemLookup.values()].map((ns) => {
         return {
             label: formatLabel(ns.token.name, ns.isNns),
             gate: {
@@ -68,10 +69,10 @@ export function getNeuronGateBindings(
 }
 
 export function getPaymentGateBindings(
-    cryptoLookup: Record<string, CryptocurrencyDetails>,
+    cryptoLookup: ReadonlyMap<string, CryptocurrencyDetails>,
     nsLedgers: Set<string>,
 ): GateBinding[] {
-    return Object.values(cryptoLookup)
+    return [...cryptoLookup.values()]
         .filter((c) => c.supportedStandards.includes("ICRC-2") || nsLedgers.has(c.ledger))
         .map((c) => {
             const enabled = c.supportedStandards.includes("ICRC-2") || c.symbol === "ICP";
@@ -90,9 +91,9 @@ export function getPaymentGateBindings(
 }
 
 export function getBalanceGateBindings(
-    cryptoLookup: Record<string, CryptocurrencyDetails>,
+    cryptoLookup: ReadonlyMap<string, CryptocurrencyDetails>,
 ): GateBinding[] {
-    return Object.values(cryptoLookup).map((c) => {
+    return [...cryptoLookup.values()].map((c) => {
         return {
             label: formatLabel(c.symbol, false),
             gate: {

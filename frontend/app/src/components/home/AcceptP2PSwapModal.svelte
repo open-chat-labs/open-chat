@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
     import {
-        cryptoBalance as cryptoBalanceStore,
+        cryptoBalanceStore,
         enhancedCryptoLookup as cryptoLookup,
         mobileWidth,
     } from "openchat-client";
@@ -37,9 +37,9 @@
         balanceWithRefresh.refresh();
     }
 
-    let cryptoBalance = $derived($cryptoBalanceStore[ledger1] ?? BigInt(0));
-    let tokenDetails0 = $derived($cryptoLookup[ledger0]);
-    let tokenDetails1 = $derived($cryptoLookup[ledger1]);
+    let cryptoBalance = $derived($cryptoBalanceStore.get(ledger1) ?? 0n);
+    let tokenDetails0 = $derived($cryptoLookup.get(ledger0)!);
+    let tokenDetails1 = $derived($cryptoLookup.get(ledger1)!);
     let symbol0 = $derived(tokenDetails0.symbol);
     let symbol1 = $derived(tokenDetails1.symbol);
     let transferFees = $derived(BigInt(2) * tokenDetails1.transferFee);

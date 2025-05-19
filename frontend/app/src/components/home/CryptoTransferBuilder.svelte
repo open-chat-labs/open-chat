@@ -2,7 +2,7 @@
     import type { ChatSummary, OpenChat, UserSummary } from "openchat-client";
     import {
         allUsersStore,
-        cryptoBalance as cryptoBalanceStore,
+        cryptoBalanceStore,
         enhancedCryptoLookup as cryptoLookup,
         currentUserIdStore,
         iconSize,
@@ -58,8 +58,8 @@
     let validAmount: boolean = $state(false);
     let sending = $state(false);
 
-    let cryptoBalance = $derived($cryptoBalanceStore[ledger] ?? BigInt(0));
-    let tokenDetails = $derived($cryptoLookup[ledger]);
+    let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
+    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let symbol = $derived(tokenDetails.symbol);
     let transferFees = $derived(tokenDetails.transferFee);
     let multiUserChat = $derived(chat.kind === "group_chat" || chat.kind === "channel");

@@ -2346,3 +2346,5 @@ export type VideoCallInProgress = {
     callType: "default" | "broadcast";
     joinedByCurrentUser: boolean;
 };
+
+export type PinnedByScope = Map<ChatListScope["kind"], ChatIdentifier[]>;

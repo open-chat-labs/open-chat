@@ -1,4 +1,10 @@
-import { SafeSet, type Primitive, type ReadonlySet, type SetLike } from "openchat-shared";
+import {
+    SafeSet,
+    type ChatIdentifier,
+    type Primitive,
+    type ReadonlySet,
+    type SetLike,
+} from "openchat-shared";
 import { SvelteSet } from "svelte/reactivity";
 import type { Subscriber, Unsubscriber } from "svelte/store";
 import { scheduleUndo, type UndoLocalUpdate } from "./undo";
@@ -156,7 +162,7 @@ export class SafeSetStore<V> extends SafeSet<V> {
     }
 
     fromSet(from: SetLike<V>) {
-        super.clear();
+        this.clear(false);
         for (const val of from) {
             super.add(val);
         }
@@ -171,10 +177,12 @@ export class SafeSetStore<V> extends SafeSet<V> {
         };
     }
 
-    clear() {
+    clear(publish = true) {
         if (super.size > 0) {
             super.clear();
-            this.#publish();
+            if (publish) {
+                this.#publish();
+            }
         }
     }
 
@@ -192,5 +200,14 @@ export class SafeSetStore<V> extends SafeSet<V> {
             this.#publish();
         }
         return deleted;
+    }
+}
+
+export class ChatSetStore extends SafeSetStore<ChatIdentifier> {
+    constructor() {
+        super(
+            (k) => JSON.stringify(k),
+            (k) => JSON.parse(String(k)) as ChatIdentifier,
+        );
     }
 }

@@ -1,7 +1,7 @@
 <script lang="ts">
     import BotPublisher from "@src/components/bots/BotPublisher.svelte";
     import {
-        cryptoBalance as cryptoBalanceStore,
+        cryptoBalanceStore,
         currentUserIdStore,
         currentUserStore,
         iconSize,
@@ -334,7 +334,7 @@
     );
     let tokenDetails = $derived(nervousSystem.token);
     let ledger = $derived(tokenDetails.ledger);
-    let cryptoBalance = $derived($cryptoBalanceStore[ledger] ?? BigInt(0));
+    let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? BigInt(0));
     let symbol = $derived(tokenDetails.symbol);
     let transferFee = $derived(tokenDetails.transferFee);
     let proposalCost = $derived(nervousSystem.proposalRejectionFee);

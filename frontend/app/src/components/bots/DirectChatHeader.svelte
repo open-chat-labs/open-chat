@@ -4,6 +4,7 @@
         allUsersStore,
         app,
         AvatarSize,
+        directChatApiKeysStore,
         flattenCommandPermissions,
         iconSize,
         mobileWidth,
@@ -46,7 +47,7 @@
 
     let { chat, bot, onSearchChat }: Props = $props();
     let botUser = $derived($allUsersStore.get(chat.them.userId));
-    let apiKey = $derived(app.directChatApiKeys.get(bot.id));
+    let apiKey = $derived($directChatApiKeysStore.get(bot.id));
     let grantedPermissions = $derived(
         app.directChatBots.get(bot.id) ?? flattenCommandPermissions(bot.definition),
     );

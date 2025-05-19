@@ -3,16 +3,15 @@
         LEDGER_CANISTER_CHAT,
         LEDGER_CANISTER_ICP,
         type Level,
-        cryptoBalance,
+        cryptoBalanceStore,
         cryptoLookup,
     } from "openchat-client";
-    import { _ } from "svelte-i18n";
-    import Diamond from "../../icons/Diamond.svelte";
-    import CryptoSelector from "../CryptoSelector.svelte";
-    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
-    import Payment from "../upgrade/Payment.svelte";
-    import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import Diamond from "../../icons/Diamond.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
+    import CryptoSelector from "../CryptoSelector.svelte";
+    import Payment from "../upgrade/Payment.svelte";
 
     interface Props {
         lifetime: boolean;
@@ -40,8 +39,8 @@
         error = err;
     }
     let tokenDetails = $derived({
-        symbol: $cryptoLookup[ledger],
-        balance: $cryptoBalance[ledger] ?? BigInt(0),
+        symbol: $cryptoLookup.get(ledger),
+        balance: $cryptoBalanceStore.get(ledger) ?? 0n,
     });
 </script>
 
