@@ -8,7 +8,7 @@ use oc_error_codes::OCErrorCode;
 use types::BotApiKeyToken;
 use types::Chat;
 use types::GroupRole;
-use types::{AccessTokenScope, OCResult};
+use types::{AutonomousBotScope, OCResult};
 use utils::base64;
 
 #[query(msgpack = true)]
@@ -41,13 +41,13 @@ fn api_key_impl(args: Args, caller: Principal, state: &RuntimeState) -> OCResult
         channel
             .bot_api_keys
             .get(&args.bot_id)
-            .map(|api_key| (api_key, AccessTokenScope::Chat(Chat::Channel(community_id, channel_id))))
+            .map(|api_key| (api_key, AutonomousBotScope::Chat(Chat::Channel(community_id, channel_id))))
     } else {
         state
             .data
             .bot_api_keys
             .get(&args.bot_id)
-            .map(|api_key| (api_key, AccessTokenScope::Community(community_id)))
+            .map(|api_key| (api_key, AutonomousBotScope::Community(community_id)))
     } {
         Some(p) => p,
         None => return Err(OCErrorCode::ApiKeyNotFound.into()),

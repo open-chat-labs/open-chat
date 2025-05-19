@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Store blocked user mappings in LocalUserIndexes ([#7960](https://github.com/open-chat-labs/open-chat/pull/7960))
 - Store notification subscriptions in LocalUserIndexes ([#7967](https://github.com/open-chat-labs/open-chat/pull/7967))
 - Support autonomous bots without API keys ([#7985](https://github.com/open-chat-labs/open-chat/pull/7985))
+- Increase scope of `bot_subscribe_to_events` ([#7996](https://github.com/open-chat-labs/open-chat/pull/7996))
 
 ## [[2.0.1748](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1748-local_user_index)] - 2025-05-13
 

@@ -7,7 +7,7 @@ use group_canister::api_key::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use types::BotApiKeyToken;
 use types::Chat;
-use types::{AccessTokenScope, OCResult};
+use types::{AutonomousBotScope, OCResult};
 use utils::base64;
 
 #[query(msgpack = true)]
@@ -40,7 +40,7 @@ fn api_key_impl(args: Args, caller: Principal, state: &RuntimeState) -> OCResult
     let api_key_token = BotApiKeyToken {
         gateway: state.data.local_user_index_canister_id,
         bot_id: args.bot_id,
-        scope: AccessTokenScope::Chat(Chat::Group(state.env.canister_id().into())),
+        scope: AutonomousBotScope::Chat(Chat::Group(state.env.canister_id().into())),
         secret: api_key.secret.clone(),
         permissions: api_key.granted_permissions.clone(),
     };
