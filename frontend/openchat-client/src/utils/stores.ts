@@ -4,7 +4,7 @@ export { get, type StartStopNotifier, type Subscriber, type Unsubscriber, type U
 export type Readable<T> = SvelteReadable<T> & MaybeDirty;
 export type Writable<T> = SvelteWritable<T> & MaybeDirty;
 export type EqualityCheck<T> = (a: T, b: T) => boolean;
-type MaybeDirty = { maybeDirty() : boolean };
+type MaybeDirty = { get dirty() : boolean };
 type Stores = Readable<unknown> | [Readable<unknown>, ...Array<Readable<unknown>>] | Array<Readable<unknown>>;
 type StoresValues<T> =
     T extends Readable<infer U> ? U : { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
@@ -41,14 +41,14 @@ function runSubscriptions() {
 }
 
 export function writable<T>(value: T, start?: StartStopNotifier<T>, equalityCheck?: EqualityCheck<T>): Writable<T> {
-    return new _Writable(value, start, equalityCheck);
+    return new _Writable(value as T, start, equalityCheck);
 }
 
 export function readable<T>(value: T, start: StartStopNotifier<T>, equalityCheck?: EqualityCheck<T>): Readable<T> {
     const store = writable(value, start, equalityCheck);
     return {
         subscribe: store.subscribe,
-        maybeDirty: store.maybeDirty,
+        dirty: store.dirty,
     };
 }
 
@@ -117,7 +117,7 @@ class _Writable<T> {
         this.set(newValue);
     }
 
-    maybeDirty(): boolean {
+    get dirty(): boolean {
         return this.#dirtyValue !== undefined;
     }
 
@@ -168,8 +168,8 @@ class _Derived<S extends Stores, T> {
         return this.#innerStore.subscribe(subscriber, invalidate);
     }
 
-    maybeDirty(): boolean {
-        return this.#pending !== 0 || this.#storesArray.some((s) => s.maybeDirty());
+    get dirty(): boolean {
+        return this.#pending !== 0 || this.#storesArray.some((s) => s.dirty);
     }
 
     #start() {
@@ -203,7 +203,7 @@ class _Derived<S extends Stores, T> {
     }
 
     #sync() {
-        if (this.maybeDirty()) {
+        if (this.dirty) {
             return;
         }
         const newValue = this.#fn((this.#single ? this.#storeValues[0] : this.#storeValues) as StoresValues<S>);
