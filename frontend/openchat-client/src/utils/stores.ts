@@ -1,8 +1,8 @@
 import type { StartStopNotifier, Readable as SvelteReadable, Subscriber, Writable as SvelteWritable, Unsubscriber, Updater } from "svelte/store";
 export { get, type StartStopNotifier, type Subscriber, type Unsubscriber, type Updater } from "svelte/store";
 
-export type Readable<T> = SvelteReadable<T> & MaybeDirty;
-export type Writable<T> = SvelteWritable<T> & MaybeDirty;
+export type Readable<T> = SvelteReadable<T> & { get value(): T } & MaybeDirty;
+export type Writable<T> = SvelteWritable<T> & { get value(): T } & MaybeDirty;
 export type EqualityCheck<T> = (a: T, b: T) => boolean;
 type MaybeDirty = { get dirty() : boolean };
 type Stores = Readable<unknown> | [Readable<unknown>, ...Array<Readable<unknown>>] | Array<Readable<unknown>>;
@@ -48,6 +48,7 @@ export function readable<T>(value: T, start: StartStopNotifier<T>, equalityCheck
     const store = writable(value, start, equalityCheck);
     return {
         subscribe: store.subscribe,
+        value: store.value,
         dirty: store.dirty,
     };
 }
@@ -86,10 +87,8 @@ class _Writable<T> {
         return () => this.#unsubscribe(id);
     }
 
-    value(allowDirty = false): T {
-        return allowDirty && this.#dirtyValue !== undefined
-            ? this.#dirtyValue
-            : this.#value;
+    get value(): T {
+        return this.#dirtyValue ?? this.#value;
     }
 
     set(newValue: T) {
@@ -102,7 +101,7 @@ class _Writable<T> {
 
         if (paused) {
             if (!this.#publishPending) {
-                // Register callback to publish the new value once the store is unpaused
+                // Register callback to publish the new value once stores are unpaused
                 publishesPending.push(() => this.#publish());
                 this.#publishPending = true;
             }
@@ -166,6 +165,10 @@ class _Derived<S extends Stores, T> {
 
     subscribe(subscriber: Subscriber<T>, invalidate?: () => void): Unsubscriber {
         return this.#innerStore.subscribe(subscriber, invalidate);
+    }
+
+    get value(): T {
+        return this.#innerStore.value
     }
 
     get dirty(): boolean {
