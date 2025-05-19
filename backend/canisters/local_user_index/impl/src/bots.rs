@@ -2,7 +2,7 @@ use crate::RuntimeState;
 use jwt::Claims;
 use rand::Rng;
 use types::{
-    AutonomousBotScope, AuthToken, BotActionByApiKeyClaims, BotActionByCommandClaims, BotActionChatDetails,
+    AuthToken, AutonomousBotScope, BotActionByApiKeyClaims, BotActionByCommandClaims, BotActionChatDetails,
     BotActionCommunityDetails, BotActionScope, BotApiKeyToken, BotChatContext, BotInitiator, User, UserId,
 };
 use utils::base64;
