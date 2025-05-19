@@ -35,7 +35,6 @@ fn init(args: Args) {
         args.group_index_canister_id,
         args.user_index_canister_id,
         args.local_user_index_canister_id,
-        args.notifications_canister_id,
         args.proposals_bot_user_id,
         args.escrow_canister_id,
         args.internet_identity_canister_id,
