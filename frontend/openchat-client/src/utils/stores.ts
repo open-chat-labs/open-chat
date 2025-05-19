@@ -10,20 +10,31 @@ type StoresValues<T> =
 
 let paused = false;
 let publishesPending: (() => void)[] = [];
+let subscriptionsPending: (() => void)[] = [];
 
 export function pauseStores() {
     paused = true;
 }
 
 export function unpauseStores() {
-    if (paused) {
-        // Publish any dirty values
-        for (const callback of publishesPending) {
-            callback();
-        }
-        publishesPending = [];
+    if (!paused) return;
+
+    // Publish the changes to the writable stores
+    for (const callback of publishesPending) {
+        callback();
     }
+    publishesPending = [];
     paused = false;
+
+    // Run the derived store subscriptions
+    runSubscriptions();
+}
+
+function runSubscriptions() {
+    for (const callback of subscriptionsPending) {
+        callback();
+    }
+    subscriptionsPending = [];
 }
 
 export function writable<T>(value: T, start?: StartStopNotifier<T>, equalityCheck?: EqualityCheck<T>): WritableStore<T> {
@@ -43,7 +54,7 @@ export function derived<S extends Stores, T>(stores: S, fn: (values: StoresValue
 }
 
 class _Writable<T> {
-    #subscriptions: Map<symbol, (value: T) => void> = new Map();
+    readonly #subscriptions: Map<symbol, [(value: T) => void, (() => void) | undefined]> = new Map();
     #value: T;
     #dirtyValue: T | undefined = undefined;
     #publishPending: boolean = false;
@@ -57,12 +68,15 @@ class _Writable<T> {
         this.#equalityCheck = equalityCheck ?? ((a, b) => a === b);
     }
 
-    subscribe(subscriber: Subscriber<T>): Unsubscriber {
+    subscribe(subscriber: Subscriber<T>, invalidate?: () => void): Unsubscriber {
         const id = Symbol();
-        this.#subscriptions.set(id, subscriber);
+        this.#subscriptions.set(id, [subscriber, invalidate]);
 
         if (this.#subscriptions.size === 1 && this.#start !== undefined) {
-            this.#stop = this.#start(this.set, this.update) ?? undefined;
+            const stop = this.#start(this.set, this.update);
+            if (typeof stop === 'function') {
+                this.#stop = stop;
+            }
         }
 
         subscriber(this.#value);
@@ -94,9 +108,9 @@ class _Writable<T> {
         }
     }
 
-    update(updater: Updater<T>) {
+    update(updateFn: Updater<T>) {
         const input = this.#dirtyValue ?? this.#value;
-        const newValue = updater(input);
+        const newValue = updateFn(input);
         this.set(newValue);
     }
 
@@ -107,12 +121,17 @@ class _Writable<T> {
     #publish() {
         if (this.#dirtyValue !== undefined) {
             this.#value = this.#dirtyValue;
+            this.#dirtyValue = undefined
 
-            for (const subscription of this.#subscriptions.values()) {
-                subscription(this.#value);
+            const shouldRunSubscriptions = !paused && subscriptionsPending.length === 0;
+            for (const [subscription, invalidate] of this.#subscriptions.values()) {
+                invalidate?.();
+                subscriptionsPending.push(() => subscription(this.#value));
             }
 
-            this.#dirtyValue = undefined
+            if (shouldRunSubscriptions) {
+                runSubscriptions();
+            }
         }
         this.#publishPending = false;
     }
@@ -126,76 +145,65 @@ class _Writable<T> {
 }
 
 class _Derived<S extends Stores, T> {
-    readonly #subscriptions: Map<symbol, (value: T) => void> = new Map();
+    readonly #innerStore: _Writable<T>;
     readonly #storesArray: ReadableStore<unknown>[] = [];
     readonly #storeValues: unknown[] = [];
     readonly #single;
     readonly #fn: (values: StoresValues<S>) => T;
-    readonly #equalityCheck: (a: T, b: T) => boolean;
-    #value: T | undefined;
     #started = false;
+    #pending = 0;
     #unsubscribers: Unsubscriber[] = [];
 
-    constructor(stores: S, fn: (values: StoresValues<S>) => T, equalityCheck: EqualityCheck<T>) {
+    constructor(stores: S, fn: (values: StoresValues<S>) => T, equalityCheck?: EqualityCheck<T>) {
+        this.#innerStore = new _Writable(undefined as T, (_) => this.#start(), equalityCheck);
         this.#storesArray = Array.isArray(stores) ? stores : [stores];
         this.#single = this.#storesArray.length === 1;
         this.#fn = fn;
-        this.#equalityCheck = equalityCheck;
     }
 
-    subscribe(subscriber: Subscriber<T>): Unsubscriber {
-        const id = Symbol();
-        this.#subscriptions.set(id, subscriber);
-
-        if (this.#subscriptions.size === 1 && this.#start !== undefined) {
-            this.#start();
-        }
-
-        subscriber(this.#value!);
-        return () => this.#unsubscribe(id);
+    subscribe(subscriber: Subscriber<T>, invalidate?: () => void): Unsubscriber {
+        return this.#innerStore.subscribe(subscriber, invalidate);
     }
 
     maybeDirty(): boolean {
-        return this.#storesArray.some((s) => s.maybeDirty());
+        return this.#pending !== 0 || this.#storesArray.some((s) => s.maybeDirty());
     }
 
     #start() {
         if (this.#started) return;
         for (const [index, store] of this.#storesArray.entries()) {
-            const unsub = store.subscribe((v) => {
-                (this.#storeValues as unknown[])[index] = v;
-                if (this.#started) {
-                    this.#sync();
-                }
-            });
+            const unsub = store.subscribe(
+                (v) => {
+                    (this.#storeValues as unknown[])[index] = v;
+                    this.#pending &= ~(1 << index);
+                    if (this.#started) {
+                        this.#sync();
+                    }
+                },
+                () => this.#pending |= 1 << index
+            );
             if (typeof unsub === 'function') {
                 this.#unsubscribers.push(unsub);
             }
         }
         this.#started = true;
         this.#sync();
+        return () => this.#stop();
+    }
+
+    #stop() {
+        for (const unsub of this.#unsubscribers) {
+            unsub();
+        }
+        this.#unsubscribers = [];
+        this.#started = false;
     }
 
     #sync() {
-        if (this.#storesArray.some((s) => s.maybeDirty())) {
+        if (this.maybeDirty()) {
             return;
         }
         const newValue = this.#fn((this.#single ? this.#storeValues[0] : this.#storeValues) as StoresValues<S>);
-        if (this.#value !== undefined && this.#equalityCheck(newValue, this.#value)) {
-            return;
-        }
-
-        this.#value = newValue;
-    }
-
-    #unsubscribe(id: symbol) {
-        this.#subscriptions.delete(id);
-        if (this.#subscriptions.size === 0) {
-            for (const unsub of this.#unsubscribers) {
-                unsub();
-            }
-            this.#unsubscribers = [];
-            this.#started = false;
-        }
+        this.#innerStore.set(newValue);
     }
 }
