@@ -28,7 +28,7 @@ export const allUsersStore = derived(
         }, normalUsers.clone()); // this clone is necessary to prevent infinite loop but will it be a problem?
     },
 );
-export const suspendedUsers = derived(allUsersStore, (allUsers) => {
+export const suspendedUsersStore = derived(allUsersStore, (allUsers) => {
     const suspended = new Map<string, UserSummary>();
     for (const [k, v] of allUsers) {
         if (v.suspended) {
@@ -46,7 +46,7 @@ export class UsersState {
     constructor() {
         allUsersStore.subscribe((val) => (this.#allUsers = val));
         blockedUsersStore.subscribe((val) => (this.#blockedUsers = val));
-        suspendedUsers.subscribe((val) => (this.#suspendedUsers = val));
+        suspendedUsersStore.subscribe((val) => (this.#suspendedUsers = val));
     }
 
     setBlockedUsers(userIds: string[]) {

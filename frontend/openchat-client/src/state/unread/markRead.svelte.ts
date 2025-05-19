@@ -15,12 +15,10 @@ import {
     type ThreadRead,
     type ThreadSyncDetails,
 } from "openchat-shared";
-import { SvelteMap } from "svelte/reactivity";
-import { type Unsubscriber } from "svelte/store";
+import { type Subscriber, type Unsubscriber } from "svelte/store";
 import type { OpenChat } from "../../openchat";
 import { offlineStore } from "../../stores";
 import { localUpdates } from "../global";
-import { ReactiveChatMap, ReactiveMessageContextMap } from "../map";
 
 const MARK_READ_INTERVAL = 10 * 1000;
 
@@ -29,71 +27,45 @@ export interface MarkMessagesRead {
 }
 
 export class MessagesRead {
-    #readUpTo = $state<number | undefined>();
-    #threads = new SvelteMap<number, number>();
-    #dateReadPinned = $state<bigint | undefined>();
+    readUpTo?: number;
+    threads = new Map<number, number>();
+    dateReadPinned?: bigint;
 
-    #threadsList = $derived.by(() => {
+    get threadsList(): ThreadRead[] {
         return [...this.threads.entries()].map(([threadRootMessageIndex, readUpTo]) => ({
             threadRootMessageIndex: Number(threadRootMessageIndex),
             readUpTo,
         }));
-    });
-
-    #empty = $derived(
-        this.#readUpTo === undefined &&
-            this.#threads.size === 0 &&
-            this.#dateReadPinned === undefined,
-    );
-
-    get readUpTo() {
-        return this.#readUpTo;
-    }
-
-    set readUpTo(val: number | undefined) {
-        this.#readUpTo = val;
-    }
-
-    get threads() {
-        return this.#threads;
-    }
-
-    get dateReadPinned() {
-        return this.#dateReadPinned;
-    }
-
-    set dateReadPinned(val: bigint | undefined) {
-        this.#dateReadPinned = val;
-    }
-
-    get threadsList(): ThreadRead[] {
-        return this.#threadsList;
     }
 
     get empty() {
-        return this.#empty;
+        return (
+            this.readUpTo === undefined &&
+            this.threads.size === 0 &&
+            this.dateReadPinned === undefined
+        );
     }
 
     markReadUpTo(index: number): void {
-        this.#readUpTo = Math.max(this.#readUpTo ?? 0, index);
+        this.readUpTo = Math.max(this.readUpTo ?? 0, index);
     }
 
     updateThread(rootIndex: number, readUpTo: number): void {
-        const current = this.#threads.get(rootIndex);
+        const current = this.threads.get(rootIndex);
         if (current === undefined || current < readUpTo) {
-            this.#threads.set(rootIndex, readUpTo);
+            this.threads.set(rootIndex, readUpTo);
         }
     }
 
     setThreads(threads: ThreadRead[]): void {
-        this.#threads = threads.reduce((rec, t) => {
+        this.threads = threads.reduce((rec, t) => {
             rec.set(t.threadRootMessageIndex, t.readUpTo);
             return rec;
-        }, new SvelteMap<number, number>());
+        }, new Map<number, number>());
     }
 
     markReadPinned(dateReadPinned: bigint | undefined): void {
-        this.#dateReadPinned = dateReadPinned;
+        this.dateReadPinned = dateReadPinned;
     }
 }
 
@@ -111,17 +83,50 @@ export type MessageReadState = {
  */
 export class MessageReadTracker {
     #timeout: number | undefined;
-    #serverState: MessagesReadByChat = new ReactiveChatMap<MessagesRead>();
-    #state: MessagesReadByChat = new ReactiveChatMap<MessagesRead>();
+    #serverState: MessagesReadByChat = new ChatMap<MessagesRead>();
+    #state: MessagesReadByChat = new ChatMap<MessagesRead>();
     #stopped: boolean = false;
+    #executingBatch = false;
+    #publishRequired = false;
+
+    #subs: Subscriber<MessageReadTracker>[] = [];
+
+    public publish(): void {
+        if (this.#executingBatch) {
+            this.#publishRequired = true;
+            return;
+        }
+        this.#subs.forEach((sub) => {
+            sub(this);
+        });
+        this.#publishRequired = false;
+    }
+
+    subscribe(sub: Subscriber<MessageReadTracker>): Unsubscriber {
+        this.#subs.push(sub);
+        sub(this);
+        return () => {
+            this.#subs = this.#subs.filter((s) => s !== sub);
+        };
+    }
+
+    batchUpdate(fn: () => void): void {
+        this.#executingBatch = true;
+        try {
+            fn();
+        } finally {
+            this.#executingBatch = false;
+            if (this.#publishRequired) {
+                this.publish();
+            }
+        }
+    }
 
     /**
      * The waiting structure is either keyed on chatId for normal chat messages or
      * of chatId_threadRootMessageIndex for thread messages
      */
-    #waiting: MessageContextMap<SvelteMap<bigint, number>> = new ReactiveMessageContextMap<
-        SvelteMap<bigint, number>
-    >(); // The map is messageId -> (unconfirmed) messageIndex
+    #waiting: MessageContextMap<Map<bigint, number>> = new MessageContextMap<Map<bigint, number>>(); // The map is messageId -> (unconfirmed) messageIndex
 
     #messageReadState = $derived({
         serverState: this.#serverState,
@@ -199,7 +204,7 @@ export class MessageReadTracker {
         if (messageId !== undefined && localUpdates.isUnconfirmed(context, messageId)) {
             // if a message is unconfirmed we will just tuck it away until we are told it has been confirmed
             if (!this.#waiting.has(context)) {
-                this.#waiting.set(context, new SvelteMap<bigint, number>());
+                this.#waiting.set(context, new Map<bigint, number>());
             }
             this.#waiting.get(context)?.set(messageId, messageIndex);
         } else if (context.threadRootMessageIndex !== undefined) {
@@ -208,6 +213,7 @@ export class MessageReadTracker {
             // Mark the chat as read up to the new messageIndex
             chatState.markReadUpTo(messageIndex);
         }
+        this.publish();
     }
 
     markReadUpTo(context: MessageContext, index: number): void {
@@ -217,10 +223,12 @@ export class MessageReadTracker {
         } else {
             chatState.markReadUpTo(index);
         }
+        this.publish();
     }
 
     markPinnedMessagesRead(chatId: ChatIdentifier, dateLastPinned: bigint): void {
         this.#stateForId(chatId).markReadPinned(dateLastPinned);
+        this.publish();
     }
 
     confirmMessage(context: MessageContext, messageIndex: number, messageId: bigint): boolean {
@@ -390,6 +398,7 @@ export class MessageReadTracker {
                 state.dateReadPinned = undefined;
             }
         }
+        this.publish();
     }
 
     isRead(context: MessageContext, messageIndex: number, messageId: bigint | undefined): boolean {

@@ -227,6 +227,15 @@ export class SafeMapStore<K, V> extends SafeMap<K, V> {
     }
 }
 
+export class MessageContextMapStore<V> extends SafeMapStore<MessageContext, V> {
+    constructor() {
+        super(
+            (k) => JSON.stringify(k),
+            (k) => JSON.parse(String(k)) as MessageContext,
+        );
+    }
+}
+
 export class ChatMapStore<V> extends SafeMapStore<ChatIdentifier, V> {
     constructor() {
         super(
@@ -289,6 +298,15 @@ export class ReactiveMessageContextMap<V> extends SafeMap<MessageContext, V> {
             (k) => JSON.stringify(k),
             (k) => JSON.parse(String(k)) as MessageContext,
             () => new SvelteMap(),
+        );
+    }
+}
+
+export class LocalChatMapStore<V> extends LocalMapStore<ChatIdentifier, V> {
+    constructor() {
+        super(
+            (id) => JSON.stringify(id),
+            (k) => JSON.parse(String(k)) as ChatIdentifier,
         );
     }
 }

@@ -22,7 +22,7 @@ import {
     serverCommunitiesStore,
     serverPinnedChatsStore,
 } from "./app.svelte";
-import { chatDetailsLocalUpdates } from "./chat_details";
+import { chatDetailsLocalUpdates } from "./chat";
 import { communityLocalUpdates } from "./community";
 import { localUpdates } from "./global";
 import { pathState } from "./path.svelte";

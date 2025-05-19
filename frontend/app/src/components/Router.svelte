@@ -23,6 +23,7 @@
         selectedChatIdStore,
         selectedCommunityIdStore,
         selectedCommunityRoute,
+        selectedServerChatStore,
         selectedServerCommunityStore,
         shareRoute,
         threadMessageIndexStore,
@@ -321,6 +322,13 @@
                     }
                 }
             });
+        }
+    });
+
+    // clear selected chat
+    $effect(() => {
+        if ($selectedChatIdStore === undefined) {
+            selectedServerChatStore.set(undefined);
         }
     });
 </script>

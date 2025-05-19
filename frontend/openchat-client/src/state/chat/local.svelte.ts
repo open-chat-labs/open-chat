@@ -1,4 +1,3 @@
-import { dequal } from "dequal";
 import {
     type AccessGateConfig,
     type ChatIdentifier,
@@ -13,13 +12,13 @@ import {
     type VersionedRules,
     type WebhookDetails,
 } from "openchat-shared";
-import { revokeObjectUrls } from "../../utils/url";
 import { LocalMap, ReactiveChatMap } from "../map";
 import { LocalSet } from "../set";
 import { scheduleUndo, type UndoLocalUpdate } from "../undo";
 
 export class ChatDetailsLocalState {
     #rules = $state<VersionedRules | undefined>();
+
     #notificationsMuted = $state<boolean | undefined>();
     #archived = $state<boolean | undefined>();
     #latestMessage = $state<EventWrapper<Message> | undefined>();
@@ -159,40 +158,6 @@ export class ChatDetailsLocalStateManager {
         return this.#data.entries();
     }
 
-    updateChatProperties(
-        id: ChatIdentifier,
-        name?: string,
-        description?: string,
-        permissions?: OptionalChatPermissions,
-        gateConfig?: AccessGateConfig,
-        eventsTTL?: OptionUpdate<bigint>,
-        isPublic?: boolean,
-    ) {
-        const state = this.#getOrCreate(id);
-        const prevName = state.name;
-        const prevDescription = state.description;
-        const prevPermissions = state.permissions;
-        const prevGateConfig = state.gateConfig;
-        const prevEventsTTL = state.eventsTTL;
-        const prevIsPublic = state.isPublic;
-
-        state.name = name;
-        state.description = description;
-        state.permissions = permissions;
-        state.gateConfig = gateConfig;
-        state.eventsTTL = eventsTTL;
-        state.isPublic = isPublic;
-
-        return scheduleUndo(() => {
-            state.name = prevName;
-            state.description = prevDescription;
-            state.permissions = prevPermissions;
-            state.gateConfig = prevGateConfig;
-            state.eventsTTL = prevEventsTTL;
-            state.isPublic = prevIsPublic;
-        });
-    }
-
     updateMember(
         id: ChatIdentifier,
         userId: string,
@@ -203,57 +168,6 @@ export class ChatDetailsLocalStateManager {
             return this.#getOrCreate(id).members.addOrUpdate(userId, updater(existing));
         }
         return noop;
-    }
-
-    updateLatestMessage(id: ChatIdentifier, message: EventWrapper<Message>): UndoLocalUpdate {
-        const state = this.#getOrCreate(id);
-        const previous = state.latestMessage;
-        if (!dequal(state.latestMessage, message)) {
-            state.latestMessage = message;
-            return scheduleUndo(() => {
-                if (state.latestMessage !== undefined) {
-                    revokeObjectUrls(state.latestMessage);
-                }
-                state.latestMessage = previous;
-            });
-        }
-        return noop;
-    }
-
-    updateRulesAccepted(id: ChatIdentifier, rulesAccepted: boolean): UndoLocalUpdate {
-        const state = this.#getOrCreate(id);
-        const previous = state.rulesAccepted;
-        state.rulesAccepted = rulesAccepted;
-        return scheduleUndo(() => {
-            state.rulesAccepted = previous;
-        });
-    }
-
-    updateNotificationsMuted(id: ChatIdentifier, muted: boolean): UndoLocalUpdate {
-        const state = this.#getOrCreate(id);
-        const previous = state.notificationsMuted;
-        state.notificationsMuted = muted;
-        return scheduleUndo(() => {
-            state.notificationsMuted = previous;
-        });
-    }
-
-    updateFrozen(id: ChatIdentifier, frozen: boolean): UndoLocalUpdate {
-        const state = this.#getOrCreate(id);
-        const previous = state.frozen;
-        state.frozen = frozen;
-        return scheduleUndo(() => {
-            state.frozen = previous;
-        });
-    }
-
-    updateArchived(id: ChatIdentifier, archived: boolean): UndoLocalUpdate {
-        const state = this.#getOrCreate(id);
-        const previous = state.archived;
-        state.archived = archived;
-        return scheduleUndo(() => {
-            state.archived = previous;
-        });
     }
 
     blockUser(id: ChatIdentifier, userId: string): UndoLocalUpdate {

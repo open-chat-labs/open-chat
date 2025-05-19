@@ -35,22 +35,23 @@ import {
 } from "openchat-shared";
 import { SvelteMap } from "svelte/reactivity";
 import { revokeObjectUrls } from "../../utils/url";
-import { chatDetailsLocalUpdates } from "../chat_details";
+import { chatDetailsLocalUpdates } from "../chat";
+import { chatSummaryLocalUpdates } from "../chat/summaryUpdates";
 import { communityLocalUpdates } from "../community";
 import { communitySummaryLocalUpdates } from "../community/summaryUpdates";
 import {
+    ChatMapStore,
     CommunityMapStore,
-    LocalChatMap,
+    LocalChatMapStore,
     LocalCommunityMapStore,
-    LocalMap,
-    ReactiveChatMap,
+    LocalMapStore,
     ReactiveMessageContextMap,
 } from "../map";
 import { messageLocalUpdates } from "../message/local.svelte";
-import { LocalSet, LocalSetStore } from "../set";
+import { LocalSetStore } from "../set";
 import { scheduleUndo, type UndoLocalUpdate } from "../undo";
 import { writable } from "../writable";
-import { DraftMessages } from "./draft.svelte";
+import { DraftMessages } from "./draft";
 
 function emptyUnconfirmed(): UnconfirmedState {
     return new SvelteMap<bigint, UnconfirmedMessageEvent>();
@@ -72,21 +73,20 @@ export class GlobalLocalState {
     #unconfirmed = $state<ReactiveMessageContextMap<UnconfirmedState>>(
         new ReactiveMessageContextMap(),
     );
-    #draftMessages = new DraftMessages();
-    readonly chats = new LocalChatMap<ChatSummary>();
-    // readonly communities = new LocalCommunityMap<CommunitySummary>();
+    readonly draftMessages = new DraftMessages();
+    readonly chats = new LocalChatMapStore<ChatSummary>();
     readonly communities = new LocalCommunityMapStore<CommunitySummary>();
     readonly previewCommunities = new CommunityMapStore<CommunitySummary>();
-    readonly directChatBots = new LocalMap<string, ExternalBotPermissions>();
+    readonly directChatBots = new LocalMapStore<string, ExternalBotPermissions>();
     #walletConfig = writable<WalletConfig | undefined>(undefined);
     #streakInsurance = writable<StreakInsurance | undefined>(undefined);
-    #messageActivityFeedReadUpTo = $state<bigint | undefined>();
-    readonly favourites = new LocalSet<ChatIdentifier>(
+    #messageActivityFeedReadUpTo = writable<bigint | undefined>(undefined);
+    readonly favourites = new LocalSetStore<ChatIdentifier>(
         (k) => JSON.stringify(k),
         (k) => JSON.parse(String(k)),
     );
-    #uninitialisedDirectChats = new ReactiveChatMap<DirectChatSummary>();
-    #groupChatPreviews = new ReactiveChatMap<MultiUserChat>();
+    #uninitialisedDirectChats = new ChatMapStore<DirectChatSummary>();
+    #groupChatPreviews = new ChatMapStore<MultiUserChat>();
 
     // only used for testing
     clearAll() {
@@ -100,7 +100,7 @@ export class GlobalLocalState {
         this.directChatBots.clear();
         this.#walletConfig.set(undefined);
         this.#streakInsurance.set(undefined);
-        this.#messageActivityFeedReadUpTo = undefined;
+        this.#messageActivityFeedReadUpTo.set(undefined);
         this.favourites.clear();
         this.#uninitialisedDirectChats.clear();
         this.#groupChatPreviews.clear();
@@ -120,10 +120,6 @@ export class GlobalLocalState {
 
     get blockedDirectUsers() {
         return this.#blockedDirectUsers;
-    }
-
-    get draftMessages() {
-        return this.#draftMessages;
     }
 
     get unconfirmed() {
@@ -348,10 +344,10 @@ export class GlobalLocalState {
     }
 
     setMessageActivityFeedReadUpTo(val: bigint) {
-        const prev = this.#messageActivityFeedReadUpTo;
-        this.#messageActivityFeedReadUpTo = val;
+        const prev = this.#messageActivityFeedReadUpTo.current;
+        this.#messageActivityFeedReadUpTo.set(val);
         return scheduleUndo(() => {
-            this.#messageActivityFeedReadUpTo = prev;
+            this.#messageActivityFeedReadUpTo.set(prev);
         });
     }
 
@@ -544,19 +540,19 @@ export class GlobalLocalState {
     }
 
     updateNotificationsMuted(id: ChatIdentifier, muted: boolean): UndoLocalUpdate {
-        return chatDetailsLocalUpdates.updateNotificationsMuted(id, muted);
+        return chatSummaryLocalUpdates.updateNotificationsMuted(id, muted);
     }
 
     updateArchived(id: ChatIdentifier, archived: boolean): UndoLocalUpdate {
-        return chatDetailsLocalUpdates.updateArchived(id, archived);
+        return chatSummaryLocalUpdates.updateArchived(id, archived);
     }
 
     updateLatestMessage(id: ChatIdentifier, message: EventWrapper<Message>): UndoLocalUpdate {
-        return chatDetailsLocalUpdates.updateLatestMessage(id, message);
+        return chatSummaryLocalUpdates.updateLatestMessage(id, message);
     }
 
     updateChatRulesAccepted(id: ChatIdentifier, rulesAccepted: boolean): UndoLocalUpdate {
-        return chatDetailsLocalUpdates.updateRulesAccepted(id, rulesAccepted);
+        return chatSummaryLocalUpdates.updateRulesAccepted(id, rulesAccepted);
     }
 
     updateChatProperties(
@@ -568,7 +564,7 @@ export class GlobalLocalState {
         eventsTTL?: OptionUpdate<bigint>,
         isPublic?: boolean,
     ) {
-        return chatDetailsLocalUpdates.updateChatProperties(
+        return chatSummaryLocalUpdates.updateChatProperties(
             id,
             name,
             description,
@@ -580,7 +576,7 @@ export class GlobalLocalState {
     }
 
     updateChatFrozen(id: ChatIdentifier, frozen: boolean): UndoLocalUpdate {
-        return chatDetailsLocalUpdates.updateFrozen(id, frozen);
+        return chatSummaryLocalUpdates.updateFrozen(id, frozen);
     }
 
     // message updates

@@ -1538,17 +1538,19 @@ export class OpenChat {
                     resp.community.membership.index = app.nextCommunityIndex;
                     this.#addCommunityLocally(resp.community);
 
-                    resp.community.channels.forEach((c) => {
-                        if (chatIdentifiersEqual(c.id, chat.id)) {
-                            localUpdates.addChat(c);
-                            this.#loadChatDetails(c);
-                        }
-                        if (c.latestMessage) {
-                            messagesRead.markReadUpTo(
-                                { chatId: c.id },
-                                c.latestMessage.event.messageIndex,
-                            );
-                        }
+                    messagesRead.batchUpdate(() => {
+                        resp.community.channels.forEach((c) => {
+                            if (chatIdentifiersEqual(c.id, chat.id)) {
+                                localUpdates.addChat(c);
+                                this.#loadChatDetails(c);
+                            }
+                            if (c.latestMessage) {
+                                messagesRead.markReadUpTo(
+                                    { chatId: c.id },
+                                    c.latestMessage.event.messageIndex,
+                                );
+                            }
+                        });
                     });
                     if (localUpdates.isPreviewingCommunity(resp.community.id)) {
                         localUpdates.removeCommunityPreview(resp.community.id);
@@ -6123,31 +6125,38 @@ export class OpenChat {
     }
 
     #updateReadUpToStore(chatSummaries: ChatSummary[]): void {
-        for (const chat of chatSummaries) {
-            if (chat.kind === "group_chat" || chat.kind === "channel") {
-                const threads: ThreadRead[] = (chat.membership?.latestThreads ?? []).reduce(
-                    (res, next) => {
-                        if (next.readUpTo !== undefined) {
-                            res.push({
-                                threadRootMessageIndex: next.threadRootMessageIndex,
-                                readUpTo: next.readUpTo,
-                            });
-                        }
-                        return res;
-                    },
-                    [] as ThreadRead[],
-                );
+        messagesRead.batchUpdate(() => {
+            for (const chat of chatSummaries) {
+                if (chat.kind === "group_chat" || chat.kind === "channel") {
+                    const threads: ThreadRead[] = (chat.membership?.latestThreads ?? []).reduce(
+                        (res, next) => {
+                            if (next.readUpTo !== undefined) {
+                                res.push({
+                                    threadRootMessageIndex: next.threadRootMessageIndex,
+                                    readUpTo: next.readUpTo,
+                                });
+                            }
+                            return res;
+                        },
+                        [] as ThreadRead[],
+                    );
 
-                messagesRead.syncWithServer(
-                    chat.id,
-                    chat.membership?.readByMeUpTo,
-                    threads,
-                    chat.dateReadPinned,
-                );
-            } else {
-                messagesRead.syncWithServer(chat.id, chat.membership.readByMeUpTo, [], undefined);
+                    messagesRead.syncWithServer(
+                        chat.id,
+                        chat.membership?.readByMeUpTo,
+                        threads,
+                        chat.dateReadPinned,
+                    );
+                } else {
+                    messagesRead.syncWithServer(
+                        chat.id,
+                        chat.membership.readByMeUpTo,
+                        [],
+                        undefined,
+                    );
+                }
             }
-        }
+        });
     }
 
     #validMouseEvent(e: MouseEvent) {
@@ -7646,13 +7655,15 @@ export class OpenChat {
                     this.#addCommunityLocally(resp.community);
                     localUpdates.removeCommunityPreview(community.id);
                     this.#loadCommunityDetails(resp.community);
-                    resp.community.channels.forEach((c) => {
-                        if (c.latestMessage) {
-                            messagesRead.markReadUpTo(
-                                { chatId: c.id },
-                                c.latestMessage.event.messageIndex,
-                            );
-                        }
+                    messagesRead.batchUpdate(() => {
+                        resp.community.channels.forEach((c) => {
+                            if (c.latestMessage) {
+                                messagesRead.markReadUpTo(
+                                    { chatId: c.id },
+                                    c.latestMessage.event.messageIndex,
+                                );
+                            }
+                        });
                     });
                 } else {
                     if (resp.kind === "gate_check_failed") {
