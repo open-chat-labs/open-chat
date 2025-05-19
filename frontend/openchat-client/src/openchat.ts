@@ -2449,11 +2449,11 @@ export class OpenChat {
     async #updateUserStoreFromEvents(events: EventWrapper<ChatEvent>[]): Promise<void> {
         const userId = app.currentUserId;
         const allUserIds = new Set<string>();
-        this.#getTruncatedUserIdsFromMembers([...app.selectedChat.members.values()]).forEach((m) =>
+        this.#getTruncatedUserIdsFromMembers([...app.selectedChatMembers.values()]).forEach((m) =>
             allUserIds.add(m.userId),
         );
-        app.selectedChat.blockedUsers.forEach((u) => allUserIds.add(u));
-        app.selectedChat.invitedUsers.forEach((u) => allUserIds.add(u));
+        app.selectedChatBlockedUsers.forEach((u) => allUserIds.add(u));
+        app.selectedChatInvitedUsers.forEach((u) => allUserIds.add(u));
         for (const u of userIdsFromEvents(events)) {
             allUserIds.add(u);
         }
@@ -2748,7 +2748,7 @@ export class OpenChat {
 
         // this has the effect of clearing any state for any previously selected chat and
         // creating an empty container for the new chat's state
-        app.setSelectedChat(chatId);
+        // app.setSelectedChat(chatId); TODO - make sure this works ok
 
         const selectedChat = app.selectedChatSummary;
         if (selectedChat !== undefined) {
@@ -3216,7 +3216,7 @@ export class OpenChat {
                 await this.#updateUserStoreFromEvents([]);
                 break;
             case "direct_chat":
-                app.setDirectChatDetails(serverChat.id, app.currentUserId);
+                // app.setDirectChatDetails(serverChat.id, app.currentUserId);  //TODO - make sure this still works without this
                 break;
         }
     }

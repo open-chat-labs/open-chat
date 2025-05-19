@@ -33,7 +33,6 @@ import {
     type WalletConfig,
     type WebhookDetails,
 } from "openchat-shared";
-import { SvelteMap } from "svelte/reactivity";
 import { revokeObjectUrls } from "../../utils/url";
 import { chatDetailsLocalUpdates } from "../chat";
 import { chatSummaryLocalUpdates } from "../chat/summaryUpdates";
@@ -45,7 +44,8 @@ import {
     LocalChatMapStore,
     LocalCommunityMapStore,
     LocalMapStore,
-    ReactiveMessageContextMap,
+    MessageContextMapStore,
+    SafeMapStore,
 } from "../map";
 import { messageLocalUpdates } from "../message/local.svelte";
 import { LocalSetStore } from "../set";
@@ -54,7 +54,7 @@ import { writable } from "../writable";
 import { DraftMessages } from "./draft";
 
 function emptyUnconfirmed(): UnconfirmedState {
-    return new SvelteMap<bigint, UnconfirmedMessageEvent>();
+    return new Map<bigint, UnconfirmedMessageEvent>();
 }
 
 type FailedMessageState = Map<bigint, EventWrapper<Message>>;
@@ -65,14 +65,10 @@ const noop = () => {};
 // global local updates don't need the manager because they are not specific to a keyed entity (community, chat, message etc)
 export class GlobalLocalState {
     #blockedDirectUsers = new LocalSetStore<string>();
-    #failedMessages = $state<ReactiveMessageContextMap<FailedMessageState>>(
-        new ReactiveMessageContextMap(),
-    );
-    #recentlySentMessages = new SvelteMap<bigint, bigint>();
-    #ephemeral = $state<ReactiveMessageContextMap<EphemeralState>>(new ReactiveMessageContextMap());
-    #unconfirmed = $state<ReactiveMessageContextMap<UnconfirmedState>>(
-        new ReactiveMessageContextMap(),
-    );
+    #recentlySentMessages = new SafeMapStore<bigint, bigint>();
+    #ephemeral = new MessageContextMapStore<EphemeralState>();
+    #unconfirmed = new MessageContextMapStore<UnconfirmedState>();
+    #failedMessages = new MessageContextMapStore<FailedMessageState>();
     readonly draftMessages = new DraftMessages();
     readonly chats = new LocalChatMapStore<ChatSummary>();
     readonly communities = new LocalCommunityMapStore<CommunitySummary>();
@@ -127,14 +123,11 @@ export class GlobalLocalState {
     }
 
     initialiseFailedMessages(messages: MessageContextMap<FailedMessageState>) {
-        this.#failedMessages = new ReactiveMessageContextMap();
-        for (const [k, v] of messages) {
-            this.#failedMessages.set(k, v);
-        }
+        this.#failedMessages.fromMap(messages);
     }
 
     addFailedMessage(key: MessageContext, message: EventWrapper<Message>) {
-        const s = this.#failedMessages.get(key) ?? new SvelteMap<bigint, EventWrapper<Message>>();
+        const s = this.#failedMessages.get(key) ?? new Map<bigint, EventWrapper<Message>>();
         s.set(message.event.messageId, message);
         this.#failedMessages.set(key, s);
     }
@@ -147,7 +140,11 @@ export class GlobalLocalState {
         return this.#failedMessages.get(key)?.has(messageId) ?? false;
     }
 
-    failedMessages(key: MessageContext): EventWrapper<Message>[] {
+    get failedMessages() {
+        return this.#failedMessages;
+    }
+
+    failedMessagesForContext(key: MessageContext): EventWrapper<Message>[] {
         const state = this.#failedMessages.get(key);
         return state ? [...state.values()] : [];
     }
@@ -157,7 +154,7 @@ export class GlobalLocalState {
     }
 
     addEphemeral(key: MessageContext, message: EventWrapper<Message>) {
-        const s = this.#ephemeral.get(key) ?? new SvelteMap<bigint, EventWrapper<Message>>();
+        const s = this.#ephemeral.get(key) ?? new Map<bigint, EventWrapper<Message>>();
         s.set(message.event.messageId, message);
         this.#ephemeral.set(key, s);
         // TODO - I don't think that we want ephemeral messages to automatically disappear
@@ -171,13 +168,17 @@ export class GlobalLocalState {
         return this.#ephemeral.get(key)?.has(messageId) ?? false;
     }
 
+    get ephemeral() {
+        return this.#ephemeral;
+    }
+
     ephemeralMessages(key: MessageContext): EventWrapper<Message>[] {
         const state = this.#ephemeral.get(key);
         return state ? [...state.values()] : [];
     }
 
-    #deleteLocalMessage(
-        container: ReactiveMessageContextMap<Map<bigint, EventWrapper<Message>>>,
+    #deleteLocalMessage<T extends EventWrapper<Message>>(
+        container: MessageContextMapStore<Map<bigint, T>>,
         key: MessageContext,
         messageId: bigint,
     ) {
@@ -188,6 +189,8 @@ export class GlobalLocalState {
             state?.delete(messageId);
             if (state?.size === 0) {
                 container.delete(key);
+            } else {
+                container.publish();
             }
             return true;
         }
@@ -237,6 +240,7 @@ export class GlobalLocalState {
                         blockLevelMarkdown: blockLevelMarkdown ?? false,
                     },
                 });
+                this.#unconfirmed.set(key, state);
             }
         }
     }
@@ -254,15 +258,19 @@ export class GlobalLocalState {
     }
 
     markUnconfirmedAccepted(key: MessageContext, messageId: bigint) {
-        const msg = this.#unconfirmed.get(key)?.get(messageId);
-        if (msg) {
-            msg.accepted = true;
+        const state = this.#unconfirmed.get(key);
+        if (state !== undefined) {
+            const msg = state?.get(messageId);
+            if (msg) {
+                msg.accepted = true;
+                this.#unconfirmed.set(key, state);
+            }
         }
     }
 
     // only used for testing
     clearUnconfirmed() {
-        this.#unconfirmed = new ReactiveMessageContextMap();
+        this.#unconfirmed.clear();
     }
 
     get groupChatPreviews() {

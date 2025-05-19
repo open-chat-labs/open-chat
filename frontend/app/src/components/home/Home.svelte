@@ -31,6 +31,7 @@
         chatIdentifiersEqual,
         chatListScopeStore,
         chatsInitialisedStore,
+        chatSummariesListStore,
         communitiesStore,
         currentUserStore,
         defaultChatRules,
@@ -501,7 +502,7 @@
     }
 
     function chatWith(chatId: DirectChatIdentifier) {
-        const chat = app.chatSummariesList.find((c) => {
+        const chat = $chatSummariesListStore.find((c) => {
             return c.kind === "direct_chat" && c.them === chatId;
         });
 
@@ -521,7 +522,7 @@
     function replyPrivatelyTo(context: EnhancedReplyContext) {
         if (context.sender === undefined) return;
 
-        const chat = app.chatSummariesList.find((c) => {
+        const chat = $chatSummariesListStore.find((c) => {
             return (
                 c.kind === "direct_chat" &&
                 chatIdentifiersEqual(c.them, {

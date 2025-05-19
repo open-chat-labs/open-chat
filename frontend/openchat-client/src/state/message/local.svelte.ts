@@ -7,8 +7,7 @@ import {
     type P2PSwapStatus,
     type ThreadSummary,
 } from "openchat-shared";
-import { SvelteMap } from "svelte/reactivity";
-import { ReactiveMessageMap } from "../map";
+import { MessageMapStore } from "../map";
 import { scheduleUndo, type UndoLocalUpdate } from "../undo";
 
 type MessageDeleted = {
@@ -16,153 +15,29 @@ type MessageDeleted = {
     timestamp: bigint;
 };
 
-export type LocalTipsReceived = SvelteMap<string, SvelteMap<string, bigint>>;
+export type LocalTipsReceived = Map<string, Map<string, bigint>>;
 
 export class MessageLocalState {
-    #deleted = $state<MessageDeleted | undefined>();
-    #editedContent = $state<MessageContent | undefined>();
-    #linkRemoved = $state<boolean>(false);
-    #cancelledReminder = $state<MessageReminderCreatedContent | undefined>();
-    #undeletedContent = $state<MessageContent | undefined>();
-    #revealedContent = $state<MessageContent | undefined>();
-    #prizeClaimed = $state<string | undefined>();
-    #p2pSwapStatus = $state<P2PSwapStatus | undefined>();
-    #reactions = $state<LocalReaction[]>([]);
-    #pollVotes = $state<LocalPollVote[]>([]);
-    #threadSummary = $state<Partial<ThreadSummary> | undefined>();
-    #tips = $state(new SvelteMap<string, SvelteMap<string, bigint>>());
-    #hiddenMessageRevealed = $state<boolean | undefined>();
-    #blockLevelMarkdown = $state<boolean | undefined>();
-    #lastUpdated = $state<number>(0);
-
-    get deleted() {
-        return this.#deleted;
-    }
-    set deleted(val: MessageDeleted | undefined) {
-        this.#deleted = val;
-    }
-
-    get editedContent() {
-        return this.#editedContent;
-    }
-    set editedContent(val: MessageContent | undefined) {
-        this.#editedContent = val;
-    }
-
-    get linkRemoved() {
-        return this.#linkRemoved;
-    }
-    set linkRemoved(val: boolean) {
-        this.#linkRemoved = val;
-    }
-
-    get cancelledReminder() {
-        return this.#cancelledReminder;
-    }
-    set cancelledReminder(val: MessageReminderCreatedContent | undefined) {
-        this.#cancelledReminder = val;
-    }
-
-    get undeletedContent() {
-        return this.#undeletedContent;
-    }
-    set undeletedContent(val: MessageContent | undefined) {
-        this.#undeletedContent = val;
-    }
-
-    get revealedContent() {
-        return this.#revealedContent;
-    }
-    set revealedContent(val: MessageContent | undefined) {
-        this.#revealedContent = val;
-    }
-
-    get prizeClaimed() {
-        return this.#prizeClaimed;
-    }
-    set prizeClaimed(val: string | undefined) {
-        this.#prizeClaimed = val;
-    }
-
-    get p2pSwapStatus() {
-        return this.#p2pSwapStatus;
-    }
-    set p2pSwapStatus(val: P2PSwapStatus | undefined) {
-        this.#p2pSwapStatus = val;
-    }
-
-    get reactions() {
-        return this.#reactions;
-    }
-    set reactions(val: LocalReaction[]) {
-        this.#reactions = val;
-    }
-
-    get pollVotes() {
-        return this.#pollVotes;
-    }
-    set pollVotes(val: LocalPollVote[]) {
-        this.#pollVotes = val;
-    }
-
-    get threadSummary() {
-        return this.#threadSummary;
-    }
-    set threadSummary(val: Partial<ThreadSummary> | undefined) {
-        this.#threadSummary = val;
-    }
-
-    get tips() {
-        return this.#tips;
-    }
-    set tips(val: LocalTipsReceived) {
-        this.#tips = val;
-    }
-
-    get hiddenMessageRevealed() {
-        return this.#hiddenMessageRevealed;
-    }
-    set hiddenMessageRevealed(val: boolean | undefined) {
-        this.#hiddenMessageRevealed = val;
-    }
-
-    get blockLevelMarkdown() {
-        return this.#blockLevelMarkdown;
-    }
-    set blockLevelMarkdown(val: boolean | undefined) {
-        this.#blockLevelMarkdown = val;
-    }
-
-    get lastUpdated() {
-        return this.#lastUpdated;
-    }
-    set lastUpdated(val: number) {
-        this.#lastUpdated = val;
-    }
+    deleted?: MessageDeleted;
+    editedContent?: MessageContent;
+    linkRemoved: boolean = false;
+    cancelledReminder?: MessageReminderCreatedContent;
+    undeletedContent?: MessageContent;
+    revealedContent?: MessageContent;
+    prizeClaimed?: string;
+    p2pSwapStatus?: P2PSwapStatus;
+    reactions: LocalReaction[] = [];
+    pollVotes: LocalPollVote[] = [];
+    threadSummary?: Partial<ThreadSummary>;
+    tips: LocalTipsReceived = new Map<string, Map<string, bigint>>();
+    hiddenMessageRevealed?: boolean;
+    blockLevelMarkdown?: boolean;
+    lastUpdated: number = 0;
 }
 
-export class MessageLocalStateManager {
-    #data = new ReactiveMessageMap<MessageLocalState>();
-
-    get(messageId: bigint): MessageLocalState | undefined {
-        return this.#data.get(messageId);
-    }
-
+export class MessageLocalStateManager extends MessageMapStore<MessageLocalState> {
     #getOrCreate(messageId: bigint): MessageLocalState {
-        let state = this.#data.get(messageId);
-        if (state === undefined) {
-            state = new MessageLocalState();
-            this.#data.set(messageId, state);
-        }
-        return state;
-    }
-
-    get data() {
-        return this.#data;
-    }
-
-    entries(): IterableIterator<[bigint, MessageLocalState]> {
-        return this.#data.entries();
+        return this.get(messageId) ?? new MessageLocalState();
     }
 
     markLinkRemoved(messageId: bigint, content: MessageContent) {
@@ -173,9 +48,9 @@ export class MessageLocalStateManager {
         };
         state.editedContent = content;
         state.linkRemoved = true;
+        this.set(messageId, state);
         return scheduleUndo(() => {
-            state.editedContent = previous.editedContent;
-            state.linkRemoved = previous.linkRemoved;
+            this.update(messageId, (val) => ({ ...val, ...previous }));
         });
     }
 
@@ -183,8 +58,9 @@ export class MessageLocalStateManager {
         const state = this.#getOrCreate(messageId);
         const previous = state.hiddenMessageRevealed;
         state.hiddenMessageRevealed = true;
+        this.set(messageId, state);
         return scheduleUndo(() => {
-            state.hiddenMessageRevealed = previous;
+            this.update(messageId, (val) => ({ ...val, hiddenMessageRevealed: previous }));
         });
     }
 
@@ -196,9 +72,9 @@ export class MessageLocalStateManager {
         };
         state.deleted = undefined;
         state.revealedContent = content;
+        this.set(messageId, state);
         return scheduleUndo(() => {
-            state.deleted = previous.deleted;
-            state.revealedContent = previous.revealedContent;
+            this.update(messageId, (val) => ({ ...val, ...previous }));
         });
     }
 
@@ -212,10 +88,9 @@ export class MessageLocalStateManager {
         state.deleted = undefined;
         state.undeletedContent = content;
         state.revealedContent = undefined;
+        this.set(messageId, state);
         return scheduleUndo(() => {
-            state.deleted = previous.deleted;
-            state.undeletedContent = previous.undeletedContent;
-            state.revealedContent = previous.revealedContent;
+            this.update(messageId, (val) => ({ ...val, ...previous }));
         });
     }
 
@@ -223,8 +98,9 @@ export class MessageLocalStateManager {
         const state = this.#getOrCreate(messageId);
         const previous = state.deleted;
         state.deleted = { deletedBy: userId, timestamp: BigInt(Date.now()) };
+        this.set(messageId, state);
         return scheduleUndo(() => {
-            state.deleted = previous;
+            this.update(messageId, (val) => ({ ...val, deleted: previous }));
         });
     }
 
@@ -232,8 +108,9 @@ export class MessageLocalStateManager {
         const state = this.#getOrCreate(messageId);
         const previous = state.cancelledReminder;
         state.cancelledReminder = content;
+        this.set(messageId, state);
         return scheduleUndo(() => {
-            state.cancelledReminder = previous;
+            this.update(messageId, (val) => ({ ...val, cancelledReminder: previous }));
         });
     }
 
@@ -250,18 +127,21 @@ export class MessageLocalStateManager {
         state.editedContent = content;
         state.blockLevelMarkdown = blockLevelMarkdown;
         state.linkRemoved = false;
+        this.set(messageId, state);
         return scheduleUndo(() => {
-            state.editedContent = previous.editedContent;
-            state.blockLevelMarkdown = previous.blockLevelMarkdown;
-            state.linkRemoved = previous.linkRemoved;
+            this.update(messageId, (val) => ({ ...val, ...previous }));
         });
     }
 
     markReaction(messageId: bigint, reaction: LocalReaction) {
         const state = this.#getOrCreate(messageId);
         state.reactions.push(reaction);
+        this.set(messageId, state);
         return scheduleUndo(() => {
-            state.reactions = state.reactions.filter((r) => r !== reaction);
+            this.update(messageId, (val) => ({
+                ...val,
+                reactions: val.reactions.filter((r) => r !== reaction),
+            }));
         });
     }
 
@@ -271,7 +151,7 @@ export class MessageLocalStateManager {
 
         let map = state.tips.get(ledger);
         if (map === undefined) {
-            map = new SvelteMap();
+            map = new Map();
             state.tips.set(ledger, map);
         }
 
@@ -290,8 +170,10 @@ export class MessageLocalStateManager {
             state.tips.delete(ledger);
         }
 
+        this.set(messageId, state);
+
         return scheduleUndo(() => {
-            state.tips = previous;
+            this.update(messageId, (val) => ({ ...val, tips: previous }));
         });
     }
 
@@ -299,8 +181,9 @@ export class MessageLocalStateManager {
         const state = this.#getOrCreate(messageId);
         const previous = state.prizeClaimed;
         state.prizeClaimed = userId;
+        this.set(messageId, state);
         return scheduleUndo(() => {
-            state.prizeClaimed = previous;
+            this.update(messageId, (val) => ({ ...val, prizeClaimed: previous }));
         });
     }
 
@@ -308,16 +191,21 @@ export class MessageLocalStateManager {
         const state = this.#getOrCreate(messageId);
         const previous = state.p2pSwapStatus;
         state.p2pSwapStatus = status;
+        this.set(messageId, state);
         return scheduleUndo(() => {
-            state.p2pSwapStatus = previous;
+            this.update(messageId, (val) => ({ ...val, p2pSwapStatus: previous }));
         });
     }
 
     markPollVote(messageId: bigint, vote: LocalPollVote) {
         const state = this.#getOrCreate(messageId);
         state.pollVotes.push(vote);
+        this.set(messageId, state);
         return scheduleUndo(() => {
-            state.pollVotes = state.pollVotes.filter((v) => v !== vote);
+            this.update(messageId, (val) => ({
+                ...val,
+                pollVotes: val.pollVotes.filter((v) => v !== vote),
+            }));
         });
     }
 
@@ -325,14 +213,15 @@ export class MessageLocalStateManager {
         const state = this.#getOrCreate(messageId);
         const previous = state.threadSummary;
         state.threadSummary = { ...state.threadSummary, ...summaryUpdates };
+        this.set(messageId, state);
         return scheduleUndo(() => {
-            state.threadSummary = previous;
+            this.update(messageId, (val) => ({ ...val, threadSummary: previous }));
         });
     }
 
     // Only used for testing
     clearAll() {
-        this.#data = new ReactiveMessageMap<MessageLocalState>();
+        this.clear();
     }
 }
 

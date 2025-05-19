@@ -125,8 +125,6 @@ export class ChatDetailsUpdatesManager {
     }
 }
 
-export const chatDetailsLocalUpdates = new ChatDetailsUpdatesManager();
-
 export class ChatLocalSetStore<V> extends ChatMapStore<LocalSet<V>> {
     add(id: ChatIdentifier, value: V) {
         return this.#withSet(id, (set) => set.add(value));
@@ -184,3 +182,5 @@ export class ChatLocalMapStore<K, V> extends ChatMapStore<LocalMap<K, V>> {
         });
     }
 }
+
+export const chatDetailsLocalUpdates = new ChatDetailsUpdatesManager();

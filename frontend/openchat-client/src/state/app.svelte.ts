@@ -9,6 +9,7 @@ import {
     type ChatEvent,
     type ChatIdentifier,
     chatIdentifiersEqual,
+    type ChatListScope,
     ChatMap,
     ChatSet,
     type ChatSummary,
@@ -36,7 +37,6 @@ import {
     type MessageActivitySummary,
     messageContextsEqual,
     type MessageFilter,
-    type MessageFormatter,
     MessageMap,
     type ModerationFlag,
     ModerationFlags,
@@ -70,6 +70,7 @@ import { offlineStore } from "../stores/network";
 import {
     getMessagePermissionsForSelectedChat,
     mergeChatMetrics,
+    mergeEventsAndLocalUpdates,
     mergePermissions,
     mergeUnconfirmedIntoSummary,
 } from "../utils/chat";
@@ -1046,6 +1047,51 @@ export const directVideoCallCountsStore = derived(serverDirectChatsStore, (serve
 export const serverEventsStore = writable<EventWrapper<ChatEvent>[]>([]);
 export const serverThreadEventsStore = writable<EventWrapper<ChatEvent>[]>([]);
 export const expiredServerEventRanges = writable<DRange>(new DRange());
+export const eventsStore = derived(
+    [
+        serverEventsStore,
+        expiredServerEventRanges,
+        selectedChatIdStore,
+        localUpdates.failedMessages,
+        localUpdates.unconfirmed,
+        localUpdates.ephemeral,
+        translationsStore,
+        selectedChatBlockedOrSuspendedUsersStore,
+        messageLocalUpdates,
+        localUpdates.recentlySentMessages,
+    ],
+    ([
+        serverEvents,
+        expiredEventRanges,
+        selectedChatId,
+        failedMessages,
+        unconfirmedMessages,
+        ephemeralMessages,
+        translations,
+        selectedChatBlockedOrSuspendedUsers,
+        messageLocalUpdates,
+        recentlySentMessages,
+    ]) => {
+        if (selectedChatId === undefined) return [];
+        const ctx = { chatId: selectedChatId };
+        const failedState = failedMessages.get(ctx);
+        const failed = failedState ? [...failedState.values()] : [];
+        const unconfirmedState = unconfirmedMessages.get(ctx);
+        const unconfirmed = unconfirmedState ? [...unconfirmedState.values()] : [];
+        const ephemeralState = ephemeralMessages.get(ctx);
+        const ephemeral = ephemeralState ? [...ephemeralState.values()] : [];
+        // TODO this is hiding all the message local updates which still need to be sorted out
+        return mergeEventsAndLocalUpdates(
+            serverEvents,
+            [...unconfirmed, ...failed, ...ephemeral],
+            expiredEventRanges,
+            translations,
+            selectedChatBlockedOrSuspendedUsers,
+            messageLocalUpdates,
+            recentlySentMessages,
+        );
+    },
+);
 
 export const messageActivitySummaryStore = derived(
     [serverMessageActivitySummaryStore, localUpdates.messageActivityFeedReadUpTo],
@@ -1116,15 +1162,8 @@ export const selectedThreadDraftMessageStore = derived(
 export const identityStateStore = writable<IdentityState>({ kind: "loading_user" });
 
 export class AppState {
-    #percentageStorageRemaining: number = 0;
-    #percentageStorageUsed: number = 0;
-    #storageInGB = { gbLimit: 0, gbUsed: 0 };
     #offline: boolean = false;
     #locale: string = "en";
-    #exploreCommunitiesFilters: { languages: string[]; flags: number } = {
-        languages: [],
-        flags: 0,
-    };
     #anonUser: boolean = false;
     #suspendedUser: boolean = false;
     #platformModerator: boolean = false;
@@ -1144,15 +1183,25 @@ export class AppState {
     #selectedCommunityInvitedUsers!: ReadonlySet<string>;
     #selectedCommunityRules?: VersionedRules;
     #selectedCommunitySummary?: CommunitySummary;
-    #serverMessageActivitySummary: MessageActivitySummary = {
-        readUpToTimestamp: 0n,
-        latestTimestamp: 0n,
-        unreadCount: 0,
-    };
     #walletConfig!: WalletConfig;
     #selectedThreadId?: ThreadIdentifier;
     #selectedChatId?: ChatIdentifier;
     #selectedCommunityId?: CommunityIdentifier;
+    #selectedServerChatSummary?: ChatSummary;
+    #selectedChatSummary?: ChatSummary;
+    #currentUserId!: string;
+    #communities!: CommunityMap<CommunitySummary>;
+    #pinnedChats!: ReadonlyMap<ChatListScope["kind"], ChatIdentifier[]>;
+    #chatListScope!: ChatListScope;
+    #messageActivitySummary!: MessageActivitySummary;
+    #allChats!: ChatMap<ChatSummary>;
+    #allServerChats!: ChatMap<ChatSummary>;
+    #chatSummaries!: ChatMap<ChatSummary>;
+    #selectedChatMembers!: ReadonlyMap<string, Member>;
+    #selectedChatBlockedUsers!: ReadonlySet<string>;
+    #selectedChatInvitedUsers!: ReadonlySet<string>;
+    #directChatBots!: ReadonlyMap<string, ExternalBotPermissions>;
+    #identityState!: IdentityState;
 
     // but it can be a plain value once that's all gone
     #translations: MessageMap<string> = new MessageMap();
@@ -1160,10 +1209,6 @@ export class AppState {
     constructor() {
         locale.subscribe((l) => (this.#locale = l ?? "en"));
         offlineStore.subscribe((offline) => (this.#offline = offline));
-        percentageStorageRemainingStore.subscribe((v) => (this.#percentageStorageRemaining = v));
-        percentageStorageUsedStore.subscribe((v) => (this.#percentageStorageUsed = v));
-        storageInGBStore.subscribe((v) => (this.#storageInGB = v));
-        exploreCommunitiesFiltersStore.subscribe((v) => (this.#exploreCommunitiesFilters = v));
         anonUserStore.subscribe((v) => (this.#anonUser = v));
         suspendedUserStore.subscribe((v) => (this.#suspendedUser = v));
         platformModeratorStore.subscribe((v) => (this.#platformModerator = v));
@@ -1189,16 +1234,26 @@ export class AppState {
         selectedCommunityRulesStore.subscribe((v) => (this.#selectedCommunityRules = v));
 
         translationsStore.subscribe((v) => (this.#translations = v));
-        serverMessageActivitySummaryStore.subscribe(
-            (v) => (this.#serverMessageActivitySummary = v),
-        );
         walletConfigStore.subscribe((v) => (this.#walletConfig = v));
         selectedThreadIdStore.subscribe((v) => (this.#selectedThreadId = v));
         selectedChatIdStore.subscribe((v) => (this.#selectedChatId = v));
         selectedCommunityIdStore.subscribe((v) => (this.#selectedCommunityId = v));
+        selectedServerChatSummaryStore.subscribe((v) => (this.#selectedServerChatSummary = v));
+        selectedChatSummaryStore.subscribe((v) => (this.#selectedChatSummary = v));
+        currentUserIdStore.subscribe((v) => (this.#currentUserId = v));
+        communitiesStore.subscribe((v) => (this.#communities = v));
+        pinnedChatsStore.subscribe((v) => (this.#pinnedChats = v));
+        chatListScopeStore.subscribe((v) => (this.#chatListScope = v));
+        messageActivitySummaryStore.subscribe((v) => (this.#messageActivitySummary = v));
+        allChatsStore.subscribe((v) => (this.#allChats = v));
+        allServerChatsStore.subscribe((v) => (this.#allServerChats = v));
+        chatSummariesStore.subscribe((v) => (this.#chatSummaries = v));
+        selectedChatMembersStore.subscribe((v) => (this.#selectedChatMembers = v));
+        selectedChatBlockedUsersStore.subscribe((v) => (this.#selectedChatBlockedUsers = v));
+        selectedChatInvitedUsersStore.subscribe((v) => (this.#selectedChatInvitedUsers = v));
+        directChatBotsStore.subscribe((v) => (this.#directChatBots = v));
+        identityStateStore.subscribe((v) => (this.#identityState = v));
     }
-
-    #messageFormatter: MessageFormatter | undefined;
 
     // TODO - none of the references to userStore here will be reactive at the moment
     // this is only a temporary problem
@@ -1311,18 +1366,6 @@ export class AppState {
 
     get storage() {
         return storageStore.current;
-    }
-
-    get percentageStorageRemaining() {
-        return this.#percentageStorageRemaining;
-    }
-
-    get percentageStorageUsed() {
-        return this.#percentageStorageUsed;
-    }
-
-    get storageInGB() {
-        return this.#storageInGB;
     }
 
     get locale() {
@@ -1616,10 +1659,6 @@ export class AppState {
         });
     }
 
-    set messageFormatter(val: MessageFormatter) {
-        this.#messageFormatter = val;
-    }
-
     get pinNumberRequired() {
         return pinNumberRequiredStore.current;
     }
@@ -1666,6 +1705,70 @@ export class AppState {
 
     get serverStreakInsurance() {
         return serverStreakInsuranceStore.current;
+    }
+
+    get selectedChatId() {
+        return this.#selectedChatId;
+    }
+
+    get selectedServerChatSummary() {
+        return this.#selectedServerChatSummary;
+    }
+
+    get selectedChatSummary() {
+        return this.#selectedChatSummary;
+    }
+
+    get currentUserId() {
+        return this.#currentUserId;
+    }
+
+    get communities() {
+        return this.#communities;
+    }
+
+    get pinnedChats() {
+        return this.#pinnedChats;
+    }
+
+    get chatListScope() {
+        return this.#chatListScope;
+    }
+
+    get messageActivitySummary() {
+        return this.#messageActivitySummary;
+    }
+
+    get allChats() {
+        return this.#allChats;
+    }
+
+    get allServerChats() {
+        return this.#allServerChats;
+    }
+
+    get chatSummaries() {
+        return this.#chatSummaries;
+    }
+
+    get selectedChatMembers() {
+        return this.#selectedChatMembers;
+    }
+
+    get selectedChatBlockedUsers() {
+        return this.#selectedChatBlockedUsers;
+    }
+
+    get selectedChatInvitedUsers() {
+        return this.#selectedChatInvitedUsers;
+    }
+
+    get directChatBots() {
+        return this.#directChatBots;
+    }
+
+    get identityState() {
+        return this.#identityState;
     }
 }
 

@@ -75,11 +75,7 @@ import {
 import { cryptoLookup } from "../state";
 import { app } from "../state/app.svelte";
 import { localUpdates } from "../state/global";
-import {
-    messageLocalUpdates,
-    type LocalTipsReceived,
-    type MessageLocalState,
-} from "../state/message/local.svelte";
+import { type LocalTipsReceived, type MessageLocalState } from "../state/message/local.svelte";
 import { userStore } from "../state/users/users.svelte";
 import type { TypersByKey } from "../stores/typing";
 import { areOnSameDay } from "../utils/date";
@@ -778,7 +774,7 @@ function updateReplyContexts(
 
 function createMessageSortFunction(
     unconfirmed: Set<bigint>,
-    recentlySent: Map<bigint, bigint>,
+    recentlySent: MessageMap<bigint>,
 ): (a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>) => number {
     return (a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): number => {
         // If either message is still unconfirmed, and both were sent recently, use both of their local timestamps,
@@ -1329,6 +1325,10 @@ export function mergeEventsAndLocalUpdates(
     events: EventWrapper<ChatEvent>[],
     unconfirmed: EventWrapper<Message>[],
     expiredEventRanges: DRange,
+    translations: MessageMap<string>,
+    selectedChatBlockedOrSuspendedUsers: Set<string>,
+    messageLocalUpdates: MessageMap<MessageLocalState>,
+    recentlySentMessages: MessageMap<bigint>,
 ): EventWrapper<ChatEvent>[] {
     const eventIndexes = new DRange();
     eventIndexes.add(expiredEventRanges);
@@ -1340,7 +1340,7 @@ export function mergeEventsAndLocalUpdates(
         if (e.event.kind === "message") {
             confirmedMessageIds.add(e.event.messageId);
             const updates = messageLocalUpdates.get(e.event.messageId);
-            const translation = app.translations.get(e.event.messageId);
+            const translation = translations.get(e.event.messageId);
 
             const repliesTo =
                 e.event.repliesTo?.kind === "rehydrated_reply_context"
@@ -1349,7 +1349,7 @@ export function mergeEventsAndLocalUpdates(
 
             const [replyContextUpdates, replyTranslation] =
                 repliesTo !== undefined
-                    ? [messageLocalUpdates.get(repliesTo), app.translations.get(repliesTo)]
+                    ? [messageLocalUpdates.get(repliesTo), translations.get(repliesTo)]
                     : [undefined, undefined];
 
             const tallyUpdate =
@@ -1360,10 +1360,10 @@ export function mergeEventsAndLocalUpdates(
                       )
                     : undefined;
 
-            const senderBlocked = app.currentChatBlockedOrSuspendedUsers.has(e.event.sender);
+            const senderBlocked = selectedChatBlockedOrSuspendedUsers.has(e.event.sender);
             const repliesToSenderBlocked =
                 e.event.repliesTo?.kind === "rehydrated_reply_context" &&
-                app.currentChatBlockedOrSuspendedUsers.has(e.event.repliesTo.senderId);
+                selectedChatBlockedOrSuspendedUsers.has(e.event.repliesTo.senderId);
 
             // Don't hide the sender's own messages
             const failedMessageFilter =
@@ -1420,10 +1420,7 @@ export function mergeEventsAndLocalUpdates(
             }
         }
         if (unconfirmedAdded.size > 0) {
-            const sortFn = createMessageSortFunction(
-                unconfirmedAdded,
-                localUpdates.recentlySentMessages,
-            );
+            const sortFn = createMessageSortFunction(unconfirmedAdded, recentlySentMessages);
             merged.sort(sortFn);
         }
     }

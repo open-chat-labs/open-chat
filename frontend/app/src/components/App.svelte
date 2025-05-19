@@ -28,10 +28,10 @@
         type UpdateMarketMakerConfigArgs,
         type VideoCallType,
         anonUserStore,
-        app,
         botState,
         chatListScopeStore,
         fontSize,
+        identityStateStore,
         inititaliseLogger,
         notFoundStore,
         pageReplace,
@@ -110,7 +110,7 @@
     let landingPageRoute = $derived(isLandingPageRoute($routeStore));
     let homeRoute = $derived($routeStore.kind === "home_route");
     let showLandingPage = $derived(
-        landingPageRoute || (homeRoute && app.identityState.kind === "anon" && $anonUserStore),
+        landingPageRoute || (homeRoute && $identityStateStore.kind === "anon" && $anonUserStore),
     );
     let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
     let burstPath = $derived(
@@ -120,7 +120,8 @@
     let burstFixed = $derived(isScrollingRoute($routeStore));
 
     let upgrading = $derived(
-        app.identityState.kind === "upgrading_user" || app.identityState.kind === "upgrade_user",
+        $identityStateStore.kind === "upgrading_user" ||
+            $identityStateStore.kind === "upgrade_user",
     );
 
     let lastScrollY = $state(window.scrollY);
@@ -572,7 +573,7 @@
     <SwitchDomain />
 {:else if upgrading}
     <Upgrading />
-{:else if app.identityState.kind === "anon" || app.identityState.kind === "logging_in" || app.identityState.kind === "registering" || app.identityState.kind === "logged_in" || app.identityState.kind === "loading_user" || app.identityState.kind === "challenging"}
+{:else if $identityStateStore.kind === "anon" || $identityStateStore.kind === "logging_in" || $identityStateStore.kind === "registering" || $identityStateStore.kind === "logged_in" || $identityStateStore.kind === "loading_user" || $identityStateStore.kind === "challenging"}
     {#if !$isLoading || $reviewingTranslations}
         <Router {showLandingPage} />
     {/if}
