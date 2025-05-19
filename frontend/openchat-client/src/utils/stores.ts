@@ -9,7 +9,9 @@ type StoresValues<T> =
     T extends ReadableStore<infer U> ? U : { [K in keyof T]: T[K] extends ReadableStore<infer U> ? U : never };
 
 let paused = false;
+// Callbacks to publish dirty values from writable stores when unpausing all stores
 let publishesPending: (() => void)[] = [];
+// Callbacks to push new values to their subscribers
 let subscriptionsPending: (() => void)[] = [];
 
 export function pauseStores() {
@@ -55,12 +57,12 @@ export function derived<S extends Stores, T>(stores: S, fn: (values: StoresValue
 
 class _Writable<T> {
     readonly #subscriptions: Map<symbol, [(value: T) => void, (() => void) | undefined]> = new Map();
+    readonly #start: StartStopNotifier<T> | undefined;
+    readonly #equalityCheck: (a: T, b: T) => boolean;
     #value: T;
     #dirtyValue: T | undefined = undefined;
     #publishPending: boolean = false;
-    readonly #start: StartStopNotifier<T> | undefined;
     #stop: Unsubscriber | undefined = undefined;
-    readonly #equalityCheck: (a: T, b: T) => boolean;
 
     constructor(initValue: T, start?: StartStopNotifier<T>, equalityCheck?: (a: T, b: T) => boolean) {
         this.#value = initValue;
