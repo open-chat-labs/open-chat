@@ -3,22 +3,23 @@ import { derived as svelteDerived, writable as svelteWritable } from "svelte/sto
 
 test("store values match Svelte store values", () => {
     for (const pause of [false, true]) {
+        // Create writable and derived stores using our custom implementation
         const w1 = writable(1);
         const w2 = writable(1);
         const w3 = writable(1);
 
-        let updateCount = 0;
+        let derivedStoreUpdateCount = 0;
 
         const d1 = derived([w1, w2], ([_w1, _w2]) => {
-            updateCount++;
+            derivedStoreUpdateCount++;
             return _w1 * _w2;
         });
         const d2 = derived([w2, w3, d1], ([_w2, _w3, _d1]) => {
-            updateCount++;
+            derivedStoreUpdateCount++;
             return _w2 + _w3 + _d1;
         });
         const d3 = derived(d2, (_d2) => {
-            updateCount++;
+            derivedStoreUpdateCount++;
             return _d2 * 2;
         });
 
@@ -26,22 +27,23 @@ test("store values match Svelte store values", () => {
             pauseStores();
         }
 
+        // Create matching writable and derived stores using Svelte's implementation
         const sw1 = svelteWritable(1);
         const sw2 = svelteWritable(1);
         const sw3 = svelteWritable(1);
 
-        let svelteUpdateCount = 0;
+        let svelteDerivedStoreUpdateCount = 0;
 
         const sd1 = svelteDerived([sw1, sw2], ([_sw1, _sw2]) => {
-            svelteUpdateCount++;
+            svelteDerivedStoreUpdateCount++;
             return _sw1 * _sw2;
         });
         const sd2 = svelteDerived([sw2, sw3, sd1], ([_sw2, _sw3, _sd1]) => {
-            svelteUpdateCount++;
+            svelteDerivedStoreUpdateCount++;
             return _sw2 + _sw3 + _sd1;
         });
         const sd3 = svelteDerived(sd2, (_sd2) => {
-            svelteUpdateCount++;
+            svelteDerivedStoreUpdateCount++;
             return _sd2 * 2;
         });
 
@@ -61,8 +63,10 @@ test("store values match Svelte store values", () => {
             allSvelteStores[i].subscribe((v) => svelteStoreValues[i] = v);
         }
 
-        expect(updateCount).toEqual(svelteUpdateCount);
+        // After initialization, each store should have been updated exactly once
+        expect(derivedStoreUpdateCount).toEqual(svelteDerivedStoreUpdateCount);
 
+        // Randomly update both sets of stores
         for (let i = 0; i < 100; i++) {
             const nextStoreIndex = Math.floor(Math.random() * 3);
             const nextValue = Math.random();
@@ -71,16 +75,22 @@ test("store values match Svelte store values", () => {
             svelteWritableStores[nextStoreIndex].set(nextValue);
 
             if (!pause) {
-                expect(updateCount).toEqual(svelteUpdateCount);
+                // If our stores are not paused, then they should be updated exactly as frequently as the Svelte stores
+                expect(derivedStoreUpdateCount).toEqual(svelteDerivedStoreUpdateCount);
             }
         }
 
         unpauseStores();
 
+        // Check that the values in our stores match the values in the Svelte stores
         for (let i = 0; i < allStores.length; i++) {
             expect(storeValues[i]).toEqual(svelteStoreValues[i]);
         }
 
-        expect(updateCount).toEqual(pause ? 6 : svelteUpdateCount);
+        if (pause) {
+            // If our stores were paused then they should have been updated twice, once when they were initialized and
+            // once after they were unpaused.
+            expect(derivedStoreUpdateCount).toEqual(pause ? 6 : svelteDerivedStoreUpdateCount);
+        }
     }
 });
