@@ -1,12 +1,12 @@
-import type { Readable, StartStopNotifier, Subscriber, Unsubscriber, Updater, Writable } from "svelte/store";
+import type { Readable as SvelteReadable, StartStopNotifier, Subscriber, Unsubscriber, Updater, Writable as SvelteWritable } from "svelte/store";
 
-export type ReadableStore<T> = Readable<T> & MaybeDirty;
-export type WritableStore<T> = Writable<T> & MaybeDirty;
+export type Readable<T> = SvelteReadable<T> & MaybeDirty;
+export type Writable<T> = SvelteWritable<T> & MaybeDirty;
 export type EqualityCheck<T> = (a: T, b: T) => boolean;
 type MaybeDirty = { maybeDirty() : boolean };
-type Stores = ReadableStore<unknown> | [ReadableStore<unknown>, ...Array<ReadableStore<unknown>>] | Array<ReadableStore<unknown>>;
+type Stores = Readable<unknown> | [Readable<unknown>, ...Array<Readable<unknown>>] | Array<Readable<unknown>>;
 type StoresValues<T> =
-    T extends ReadableStore<infer U> ? U : { [K in keyof T]: T[K] extends ReadableStore<infer U> ? U : never };
+    T extends Readable<infer U> ? U : { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
 
 let paused = false;
 // Callbacks to publish dirty values from writable stores when unpausing all stores
@@ -39,19 +39,19 @@ function runSubscriptions() {
     subscriptionsPending = [];
 }
 
-export function writable<T>(value: T, start?: StartStopNotifier<T>, equalityCheck?: EqualityCheck<T>): WritableStore<T> {
+export function writable<T>(value: T, start?: StartStopNotifier<T>, equalityCheck?: EqualityCheck<T>): Writable<T> {
     return new _Writable(value, start, equalityCheck);
 }
 
-export function readable<T>(value: T, start: StartStopNotifier<T>): ReadableStore<T> {
-    const store = writable(value, start);
+export function readable<T>(value: T, start: StartStopNotifier<T>, equalityCheck?: EqualityCheck<T>): Readable<T> {
+    const store = writable(value, start, equalityCheck);
     return {
         subscribe: store.subscribe,
         maybeDirty: store.maybeDirty,
     };
 }
 
-export function derived<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>) => T, equalityCheck?: EqualityCheck<T>): ReadableStore<T> {
+export function derived<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>) => T, equalityCheck?: EqualityCheck<T>): Readable<T> {
     return new _Derived(stores, fn, equalityCheck ?? ((a, b) => a === b));
 }
 
@@ -148,7 +148,7 @@ class _Writable<T> {
 
 class _Derived<S extends Stores, T> {
     readonly #innerStore: _Writable<T>;
-    readonly #storesArray: ReadableStore<unknown>[] = [];
+    readonly #storesArray: Readable<unknown>[] = [];
     readonly #storeValues: unknown[] = [];
     readonly #single;
     readonly #fn: (values: StoresValues<S>) => T;
