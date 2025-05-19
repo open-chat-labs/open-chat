@@ -117,8 +117,6 @@
         inGlobalContext: boolean;
     };
 
-    $inspect(app.allServerChats);
-
     const client = getContext<OpenChat>("client");
 
     let convertGroup: GroupChatSummary | undefined = $state(undefined);
