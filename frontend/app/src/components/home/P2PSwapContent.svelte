@@ -8,9 +8,10 @@
         ResourceKey,
     } from "openchat-client";
     import {
-        app,
         cryptoLookup,
+        currentUserIdStore,
         exchangeRatesLookupStore as exchangeRatesLookup,
+        isDiamondStore,
         publish,
     } from "openchat-client";
     import { getContext } from "svelte";
@@ -59,10 +60,10 @@
     );
     let acceptedByYou = $derived(
         (content.status.kind === "p2p_swap_reserved" &&
-            content.status.reservedBy === app.currentUserId) ||
+            content.status.reservedBy === $currentUserIdStore) ||
             ((content.status.kind === "p2p_swap_accepted" ||
                 content.status.kind === "p2p_swap_completed") &&
-                content.status.acceptedBy === app.currentUserId),
+                content.status.acceptedBy === $currentUserIdStore),
     );
 
     let fromAmount = $derived(client.formatTokens(content.token0Amount, content.token0.decimals));
@@ -150,7 +151,7 @@
 
     function onAcceptOrCancel(e: MouseEvent) {
         if (e.isTrusted && !buttonDisabled) {
-            if (!me && !app.isDiamond) {
+            if (!me && !$isDiamondStore) {
                 publish("upgrade");
             } else {
                 confirming = true;

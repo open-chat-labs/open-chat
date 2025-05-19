@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { ChatSummary, OpenChat } from "openchat-client";
-    import { app, iconSize, mobileWidth } from "openchat-client";
+    import { app, filteredProposalsStore, iconSize, mobileWidth } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -113,7 +113,7 @@
                             id={kebab(label)}
                             onChange={() => app.toggleProposalFilter(id)}
                             label={i18nKey(label)}
-                            checked={!app.filteredProposals?.hasFilter(id)} />
+                            checked={!$filteredProposalsStore?.hasFilter(id)} />
                     </div>
                 {/each}
             </CollapsibleCard>
@@ -124,7 +124,7 @@
                         id={kebab(label)}
                         onChange={() => app.toggleProposalFilter(id)}
                         label={i18nKey(label)}
-                        checked={!app.filteredProposals?.hasFilter(id)} />
+                        checked={!$filteredProposalsStore?.hasFilter(id)} />
                 </div>
             {/each}
         {/if}

@@ -2,8 +2,8 @@
     import {
         type CandidateGroupChat,
         type CommunitySummary,
+        isDiamondStore,
         type OpenChat,
-        app,
         publish,
     } from "openchat-client";
     import { getContext } from "svelte";
@@ -41,7 +41,7 @@
         candidate.kind === "candidate_group_chat" && candidate.eventsTTL !== undefined,
     );
 
-    let requiresUpgrade = $derived(!editing && !app.isDiamond && candidate.level !== "channel");
+    let requiresUpgrade = $derived(!editing && !$isDiamondStore && candidate.level !== "channel");
     let canChangeVisibility = $derived(!editing ? client.canChangeVisibility(candidate) : true);
 
     function gateUpdated() {

@@ -278,11 +278,9 @@ import { tick } from "svelte";
 import { get } from "svelte/store";
 import type { OpenChatConfig } from "./config";
 import { AIRDROP_BOT_USER_ID } from "./constants";
-import { configureEffects } from "./effects.svelte";
 import { snapshot } from "./snapshot.svelte";
-import { app } from "./state/app.svelte";
+import { app, hasFlag } from "./state/app.svelte";
 import { botState } from "./state/bots.svelte";
-import { type CommunityMergedState } from "./state/community_details";
 import { localUpdates } from "./state/global";
 import { pathState, type RouteParams } from "./state/path.svelte";
 import {
@@ -678,8 +676,6 @@ export class OpenChat {
         } else {
             await this.#ocIdentityStorage.remove();
         }
-
-        configureEffects(this);
 
         this.#loadUser();
     }
@@ -1609,7 +1605,7 @@ export class OpenChat {
             if (resp.kind === "success") {
                 const userId = app.currentUserId;
                 if (userId !== undefined) {
-                    const m = app.selectedCommunity.members.get(userId);
+                    const m = app.selectedCommunityMembers.get(userId);
                     if (m !== undefined) {
                         localUpdates.updateCommunityMember(id, userId, { ...m, displayName });
                     }
@@ -2429,14 +2425,14 @@ export class OpenChat {
         return true;
     }
 
-    async #updateUserStoreFromCommunityState(community: CommunityMergedState): Promise<void> {
+    async #updateUserStoreFromCommunityState(): Promise<void> {
         const allUserIds = new Set<string>();
-        this.#getTruncatedUserIdsFromMembers([...community.members.values()]).forEach((m) =>
-            allUserIds.add(m.userId),
+        this.#getTruncatedUserIdsFromMembers([...app.selectedCommunityMembers.values()]).forEach(
+            (m) => allUserIds.add(m.userId),
         );
-        community.blockedUsers.forEach((u) => allUserIds.add(u));
-        community.invitedUsers.forEach((u) => allUserIds.add(u));
-        community.referrals.forEach((u) => allUserIds.add(u));
+        app.selectedCommunityBlockedUsers.forEach((u) => allUserIds.add(u));
+        app.selectedCommunityInvitedUsers.forEach((u) => allUserIds.add(u));
+        app.selectedCommunityReferrals.forEach((u) => allUserIds.add(u));
         await this.getMissingUsers(allUserIds);
     }
 
@@ -3182,9 +3178,7 @@ export class OpenChat {
                 resp.apiKeys,
                 resp.rules,
             );
-            if (app.selectedCommunity) {
-                this.#updateUserStoreFromCommunityState(app.selectedCommunity);
-            }
+            this.#updateUserStoreFromCommunityState();
         }
     }
 
@@ -3909,7 +3903,7 @@ export class OpenChat {
             return false;
         }
 
-        const communityRules = app.selectedCommunity.rules;
+        const communityRules = app.selectedCommunityRules;
         const community = app.selectedCommunitySummary;
 
         console.debug(
@@ -4651,13 +4645,13 @@ export class OpenChat {
                     // are already in a map
                     const existing =
                         level === "community"
-                            ? app.selectedCommunity.members
+                            ? app.selectedCommunityMembers
                             : app.selectedChat.members;
 
                     // Remove any existing members from the global matches until there are at most `maxResults`
                     // TODO: Ideally we would return the total number of matches from the server and use that
                     const maxToKeep = matches.length < maxToSearch ? 0 : maxResults;
-                    keepMax(matches, (u) => !existing.has(u.userId), maxToKeep);
+                    keepMax(matches, (u) => !existing?.has(u.userId), maxToKeep);
                 }
                 return [[], matches];
             });
@@ -4685,7 +4679,7 @@ export class OpenChat {
     ): UserSummary[] {
         const termLower = term.toLowerCase();
         const matches: UserSummary[] = [];
-        for (const [userId, member] of app.selectedCommunity.members) {
+        for (const [userId, member] of app.selectedCommunityMembers) {
             let user = userStore.get(userId);
             if (user?.username !== undefined) {
                 const displayName = member.displayName ?? user.displayName;
@@ -4718,7 +4712,7 @@ export class OpenChat {
         this.#referralCode = code;
     }
 
-    #extractReferralCodeFromPath(): string | null {
+    #extractReferralCodeFromPath(): string | undefined {
         return pathState.querystringReferral;
     }
 
@@ -5011,7 +5005,7 @@ export class OpenChat {
     ): Promise<boolean> {
         if (newRole === oldRole) return Promise.resolve(true);
 
-        const m = app.selectedCommunity.members.get(userId);
+        const m = app.selectedCommunityMembers.get(userId);
         let undo = undefined;
         if (m !== undefined) {
             undo = localUpdates.updateCommunityMember(id, userId, { ...m, role: newRole });
@@ -6527,7 +6521,7 @@ export class OpenChat {
     }
 
     hasModerationFlag(flags: number, flag: ModerationFlag): boolean {
-        return app.hasFlag(flags, flag);
+        return hasFlag(flags, flag);
     }
 
     setModerationFlags(flags: number): Promise<number> {
@@ -6717,7 +6711,7 @@ export class OpenChat {
                 if (user !== undefined && app.selectedChatSummary?.kind === "channel") {
                     user = {
                         ...user,
-                        displayName: this.getDisplayName(user, app.selectedCommunity.members),
+                        displayName: this.getDisplayName(user, app.selectedCommunityMembers),
                     };
                 }
                 if (user?.username !== undefined) {
@@ -6978,7 +6972,7 @@ export class OpenChat {
         // * create the room if necessary
         // * obtain an access token for the user
         // * return it to the front end
-        const displayName = this.getDisplayName(app.currentUser, app.selectedCommunity.members);
+        const displayName = this.getDisplayName(app.currentUser, app.selectedCommunityMembers);
         const user = app.currentUser;
         const username = user.username;
         const avatarId = userStore.get(user.userId)?.blobReference?.blobId;
@@ -7568,7 +7562,6 @@ export class OpenChat {
         }
 
         if (community !== undefined) {
-            app.setSelectedCommunity(id);
             this.#loadCommunityDetails(community);
         }
 
@@ -8008,8 +8001,8 @@ export class OpenChat {
                             acceptedRules.chat = app.selectedChat.rules?.version;
                         }
 
-                        if (app.selectedCommunity.rules?.enabled ?? false) {
-                            acceptedRules.community = app.selectedCommunity.rules?.version;
+                        if (app.selectedCommunityRules?.enabled ?? false) {
+                            acceptedRules.community = app.selectedCommunityRules?.version;
                         }
                     }
 

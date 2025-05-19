@@ -25,23 +25,34 @@
         UpdatedRules,
     } from "openchat-client";
     import {
+        allUsersStore,
+        anonUserStore,
         app,
         chatIdentifiersEqual,
+        chatListScopeStore,
+        chatsInitialisedStore,
+        communitiesStore,
+        currentUserStore,
         defaultChatRules,
         dimensions,
         fullWidth,
         localUpdates,
         nullMembership,
+        offlineStore,
         pageRedirect,
         pageReplace,
         pathState,
+        pinNumberResolverStore,
+        querystringStore,
         rightPanelHistory,
         routeForChatIdentifier,
         routeForScope,
+        routeStore,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
+        selectedCommunityRulesStore,
         subscribe,
+        suspendedUserStore,
         ui,
-        userStore,
     } from "openchat-client";
     import page from "page";
     import { getContext, onMount, tick, untrack } from "svelte";
@@ -207,7 +218,7 @@
             subscribe("successfulImport", successfulImport),
             subscribe("showProposalFilters", showProposalFilters),
             subscribe("convertGroupToCommunity", convertGroupToCommunity),
-            subscribe("clearSelection", () => page(routeForScope(app.chatListScope))),
+            subscribe("clearSelection", () => page(routeForScope($chatListScopeStore))),
             subscribe("editGroup", editGroup),
             subscribe("userSuspensionChanged", () => window.location.reload()),
             subscribe("selectedChatInvalid", selectedChatInvalid),
@@ -227,7 +238,7 @@
         client.initialiseNotifications();
         document.body.addEventListener("profile-clicked", profileClicked);
 
-        if (app.suspendedUser) {
+        if ($suspendedUserStore) {
             modal = { kind: "suspended" };
         }
 
@@ -311,7 +322,7 @@
             if (initialised) {
                 ui.filterRightPanelHistory((state) => state.kind !== "community_filters");
                 if (
-                    app.anonUser &&
+                    $anonUserStore &&
                     pathState.isChatListRoute(route) &&
                     (route.scope.kind === "direct_chat" || route.scope.kind === "favourite")
                 ) {
@@ -432,14 +443,14 @@
         if (chatId.kind === "channel") {
             page(`/community/${chatId.communityId}`);
         } else {
-            page(routeForScope(app.chatListScope));
+            page(routeForScope($chatListScopeStore));
         }
         return client.deleteGroup(chatId).then((success) => {
             if (success) {
                 toastStore.showSuccessToast(i18nKey("deleteGroupSuccess", undefined, level));
             } else {
                 toastStore.showFailureToast(i18nKey("deleteGroupFailure", undefined, level, true));
-                page(routeForChatIdentifier(app.chatListScope.kind, chatId));
+                page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
             }
         });
     }
@@ -471,7 +482,7 @@
     }
 
     function leaveGroup(chatId: MultiUserChatIdentifier, level: Level): Promise<void> {
-        page(routeForScope(app.chatListScope));
+        page(routeForScope($chatListScopeStore));
 
         client.leaveGroup(chatId).then((resp) => {
             if (resp !== "success") {
@@ -482,7 +493,7 @@
                         i18nKey("failedToLeaveGroup", undefined, level, true),
                     );
                 }
-                page(routeForChatIdentifier(app.chatListScope.kind, chatId));
+                page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
             }
         });
 
@@ -494,7 +505,7 @@
             return c.kind === "direct_chat" && c.them === chatId;
         });
 
-        page(routeForChatIdentifier(chat ? app.chatListScope.kind : "direct_chat", chatId));
+        page(routeForChatIdentifier(chat ? $chatListScopeStore.kind : "direct_chat", chatId));
     }
 
     function showInviteGroupUsers(show: boolean) {
@@ -524,7 +535,7 @@
         localUpdates.draftMessages.setTextContent({ chatId }, "");
         localUpdates.draftMessages.setReplyingTo({ chatId }, context);
         if (chat) {
-            page(routeForChatIdentifier(app.chatListScope.kind, chatId));
+            page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
         } else {
             createDirectChat(chatId as DirectChatIdentifier);
         }
@@ -543,7 +554,7 @@
 
     function showProfile() {
         if (app.selectedChatId !== undefined) {
-            pageReplace(routeForChatIdentifier(app.chatListScope.kind, app.selectedChatId));
+            pageReplace(routeForChatIdentifier($chatListScopeStore.kind, app.selectedChatId));
         }
         rightPanelHistory.set([{ kind: "user_profile" }]);
     }
@@ -551,14 +562,14 @@
     function communityDetails(_: CommunitySummary) {
         // what do we do here if the community is not selected
         // do we select it?
-        if (app.chatListScope.kind === "community") {
+        if ($chatListScopeStore.kind === "community") {
             rightPanelHistory.set([{ kind: "community_details" }]);
         }
     }
 
     function showProposalFilters() {
         if (app.selectedChatId !== undefined) {
-            pageReplace(routeForChatIdentifier(app.chatListScope.kind, app.selectedChatId));
+            pageReplace(routeForChatIdentifier($chatListScopeStore.kind, app.selectedChatId));
             rightPanelHistory.set([
                 {
                     kind: "proposal_filters",
@@ -574,7 +585,7 @@
     }
 
     async function joinGroup(detail: { group: MultiUserChat; select: boolean }): Promise<void> {
-        if (app.anonUser) {
+        if ($anonUserStore) {
             client.updateIdentityState({
                 kind: "logging_in",
                 postLogin: { kind: "join_group", ...detail },
@@ -655,7 +666,7 @@
                     joining = undefined;
                 } else if (select) {
                     joining = undefined;
-                    page(routeForChatIdentifier(app.chatListScope.kind, group.id));
+                    page(routeForChatIdentifier($chatListScopeStore.kind, group.id));
                 } else {
                     joining = undefined;
                 }
@@ -683,12 +694,12 @@
     }
 
     function forwardToChat(chatId: ChatIdentifier) {
-        page(routeForChatIdentifier(app.chatListScope.kind, chatId));
+        page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
         messageToForwardStore.set(messageToForward);
     }
 
     function shareWithChat(chatId: ChatIdentifier) {
-        page(routeForChatIdentifier(app.chatListScope.kind, chatId));
+        page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
 
         const shareText = share.text ?? "";
         const shareTitle = share.title ?? "";
@@ -715,12 +726,12 @@
     }
 
     function newGroup(level: Level = "group", embeddedContent: boolean = false) {
-        if (level === "channel" && app.chatListScope.kind !== "community") {
+        if (level === "channel" && $chatListScopeStore.kind !== "community") {
             return;
         }
         const id: MultiUserChatIdentifier =
-            level === "channel" && app.chatListScope.kind === "community"
-                ? { kind: "channel", communityId: app.chatListScope.id.communityId, channelId: 0 }
+            level === "channel" && $chatListScopeStore.kind === "community"
+                ? { kind: "channel", communityId: $chatListScopeStore.id.communityId, channelId: 0 }
                 : { kind: "group_chat", groupId: "" };
 
         modal = {
@@ -823,7 +834,7 @@
     }
 
     function createCommunity() {
-        const maxIndex = app.communities.reduce(
+        const maxIndex = $communitiesStore.reduce(
             (m, [_, c]) => (c.membership.index > m ? c.membership.index : m),
             0,
         );
@@ -838,7 +849,7 @@
         modal = {
             kind: "edit_community",
             community,
-            communityRules: app.selectedCommunity.rules ?? defaultChatRules("community"),
+            communityRules: $selectedCommunityRulesStore ?? defaultChatRules("community"),
         };
     }
 
@@ -919,7 +930,7 @@
         if (
             app.identityState.kind === "logged_in" &&
             app.identityState.postLogin?.kind === "join_group" &&
-            app.chatsInitialised
+            $chatsInitialisedStore
         ) {
             const join = { ...app.identityState.postLogin };
             client.clearPostLoginState();
@@ -928,32 +939,32 @@
     });
 
     trackedEffect("route-change", () => {
-        routeChange(app.chatsInitialised, pathState.route);
+        routeChange($chatsInitialisedStore, $routeStore);
     });
 
     $effect(() => {
-        if (app.chatsInitialised) {
-            if (pathState.querystring.get("diamond") !== null) {
+        if ($chatsInitialisedStore) {
+            if ($querystringStore.get("diamond") !== null) {
                 showUpgrade = true;
                 pageReplace(removeQueryStringParam("diamond"));
             }
-            const faq = pathState.querystring.get("faq");
+            const faq = $querystringStore.get("faq");
             if (faq !== null) {
                 pageReplace(`/faq?q=${faq}`);
             }
-            if (pathState.querystring.get("wallet") !== null) {
+            if ($querystringStore.get("wallet") !== null) {
                 showWallet();
                 pageReplace(removeQueryStringParam("wallet"));
             }
-            if (pathState.querystring.get("hof") !== null) {
+            if ($querystringStore.get("hof") !== null) {
                 modal = { kind: "hall_of_fame" };
                 pageReplace(removeQueryStringParam("hof"));
             }
-            if (pathState.querystring.get("everyone") !== null) {
+            if ($querystringStore.get("everyone") !== null) {
                 rightPanelHistory.set([{ kind: "show_group_members" }]);
                 pageReplace(removeQueryStringParam("everyone"));
             }
-            const usergroup = pathState.querystring.get("usergroup");
+            const usergroup = $querystringStore.get("usergroup");
             if (usergroup !== null) {
                 const userGroupId = Number(usergroup);
                 rightPanelHistory.set([{ kind: "show_community_members", userGroupId }]);
@@ -967,7 +978,7 @@
 </script>
 
 {#if showProfileCard !== undefined}
-    {@const profileUser = userStore.get(showProfileCard.userId)}
+    {@const profileUser = $allUsersStore.get(showProfileCard.userId)}
     {#if profileUser?.kind !== "bot"}
         <ViewUserProfile
             userId={showProfileCard.userId}
@@ -979,18 +990,18 @@
     {/if}
 {/if}
 
-<main class:anon={app.anonUser} class:offline={app.offline}>
+<main class:anon={$anonUserStore} class:offline={$offlineStore}>
     <LeftNav />
     <LeftPanel />
     <MiddlePanel {joining} />
     <RightPanel />
 </main>
 
-{#if app.anonUser}
+{#if $anonUserStore}
     <AnonFooter />
 {/if}
 
-{#if app.offline}
+{#if $offlineStore}
     <OfflineFooter />
 {/if}
 
@@ -1006,7 +1017,7 @@
 
 <Toast />
 
-{#if showUpgrade && app.currentUser}
+{#if showUpgrade && $currentUserStore}
     <Upgrade onCancel={() => (showUpgrade = false)} />
 {/if}
 
@@ -1107,7 +1118,7 @@
             onClose={() => (forgotPin = false)}
             type={{ kind: "forgot", while: { kind: "enter" } }} />
     </Overlay>
-{:else if app.pinNumberResolver !== undefined}
+{:else if $pinNumberResolverStore !== undefined}
     <Overlay>
         <PinNumberModal
             onClose={onPinNumberClose}

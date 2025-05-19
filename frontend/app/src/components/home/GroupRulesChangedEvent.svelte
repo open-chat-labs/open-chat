@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { GroupRulesChanged, UserSummary } from "openchat-client";
-    import { userStore } from "openchat-client";
+    import { allUsersStore } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { buildDisplayName } from "../../utils/user";
     import NonMessageEvent from "./NonMessageEvent.svelte";
@@ -15,7 +15,7 @@
 
     let me = $derived(event.changedBy === user?.userId);
     let changedByStr = $derived(
-        buildDisplayName(userStore.allUsers, event.changedBy, me ? "me" : "user"),
+        buildDisplayName($allUsersStore, event.changedBy, me ? "me" : "user"),
     );
     let templateValues = $derived({
         values: {

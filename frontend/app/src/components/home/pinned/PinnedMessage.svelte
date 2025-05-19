@@ -2,13 +2,15 @@
     import { findSender } from "@src/utils/user";
     import type { CreatedUser, Message, MultiUserChatIdentifier, OpenChat } from "openchat-client";
     import {
-        AvatarSize,
+        allUsersStore,
         app,
+        AvatarSize,
+        chatListScopeStore,
         fullWidth,
         mobileWidth,
         routeForMessage,
+        selectedCommunityMembersStore,
         ui,
-        userStore,
     } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
@@ -35,8 +37,8 @@
 
     let crypto = msg.content.kind === "crypto_content";
 
-    let sender = $derived(findSender(msg.sender, userStore.allUsers, app.selectedChat.webhooks));
-    let username = $derived(client.getDisplayName(sender, app.selectedCommunity.members));
+    let sender = $derived(findSender(msg.sender, $allUsersStore, app.selectedChat.webhooks));
+    let username = $derived(client.getDisplayName(sender, $selectedCommunityMembersStore));
     let deleted = $derived(msg.content.kind === "deleted_content");
     let fill = $derived(client.fillMessage(msg));
     let me = $derived(user.userId === senderId);
@@ -65,7 +67,7 @@
             }
             page(
                 routeForMessage(
-                    app.chatListScope.kind,
+                    $chatListScopeStore.kind,
                     { chatId: app.selectedChatId },
                     msg.messageIndex,
                 ),

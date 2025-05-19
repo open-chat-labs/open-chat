@@ -1,9 +1,10 @@
 <script lang="ts">
     import {
-        app,
+        allUsersStore,
         AvatarSize,
+        communitiesStore,
         iconSize,
-        userStore,
+        selectedCommunitySummaryStore,
         type ChatIdentifier,
         type OpenChat,
         type VideoCallType,
@@ -41,11 +42,11 @@
     function normaliseChatSummary(call: IncomingVideoCall | undefined) {
         if (call) {
             const chat = client.lookupChatSummary(call.chatId);
-            const initiator = userStore.get(call.userId);
+            const initiator = $allUsersStore.get(call.userId);
             if (chat && initiator) {
                 switch (chat.kind) {
                     case "direct_chat":
-                        const them = userStore.get(chat.them.userId);
+                        const them = $allUsersStore.get(chat.them.userId);
                         return {
                             chatId: chat.id,
                             name: client.displayName(them),
@@ -63,12 +64,12 @@
                         return {
                             chatId: chat.id,
                             name: `${
-                                app.communities.get({
+                                $communitiesStore.get({
                                     kind: "community",
                                     communityId: chat.id.communityId,
                                 })?.name
                             } > ${chat.name}`,
-                            avatarUrl: client.groupAvatarUrl(chat, app.selectedCommunitySummary),
+                            avatarUrl: client.groupAvatarUrl(chat, $selectedCommunitySummaryStore),
                             initiator: initiator.username,
                         };
                 }

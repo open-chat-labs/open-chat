@@ -1,6 +1,12 @@
 <script lang="ts">
     import type { MultiUserChat, OpenChat } from "openchat-client";
-    import { app, AvatarSize } from "openchat-client";
+    import {
+        app,
+        AvatarSize,
+        currentUserIdStore,
+        selectedCommunityRulesStore,
+        selectedCommunitySummaryStore,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import {
@@ -39,9 +45,11 @@
     let canInvite = $derived(
         client.canInviteUsers(chat.id) && (chat.kind !== "channel" || !client.isChatPrivate(chat)),
     );
-    let avatarSrc = $derived(client.groupAvatarUrl(chat, app.selectedCommunitySummary));
+    let avatarSrc = $derived(client.groupAvatarUrl(chat, $selectedCommunitySummaryStore));
     let combinedRulesText = $derived(
-        canSend ? client.combineRulesText(app.selectedChat.rules, app.selectedCommunity.rules) : "",
+        canSend
+            ? client.combineRulesText(app.selectedChat.rules, $selectedCommunityRulesStore)
+            : "",
     );
     let externalUrl = $derived(chat.kind === "channel" ? chat.externalUrl : undefined);
     let externalContent = $derived(externalUrl !== undefined);
@@ -51,7 +59,7 @@
         let description = chat.description;
 
         if (chat.subtype?.kind === "governance_proposals") {
-            description = description.replace("{userId}", app.currentUserId);
+            description = description.replace("{userId}", $currentUserIdStore);
         }
 
         return description;
@@ -178,7 +186,7 @@
                 embeddedContent={externalContent}
                 permissions={chat.permissions}
                 isPublic={chat.public}
-                isCommunityPublic={app.selectedCommunitySummary?.public ?? true}
+                isCommunityPublic={$selectedCommunitySummaryStore?.public ?? true}
                 isChannel={chat.id.kind === "channel"} />
         </CollapsibleCard>
         {#if !externalContent}

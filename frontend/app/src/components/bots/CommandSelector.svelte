@@ -8,7 +8,7 @@
         PermissionRole,
         ReadonlyMap,
     } from "openchat-client";
-    import { app, botState, isPermitted } from "openchat-client";
+    import { app, botState, isPermitted, selectedCommunityBotsStore } from "openchat-client";
     import { hasEveryRequiredPermission, random64, type FlattenedCommand } from "openchat-shared";
     import { getContext, onMount } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
@@ -38,7 +38,7 @@
     let installedBots = $derived.by(() => {
         switch (messageContext.chatId.kind) {
             case "channel":
-                return app.selectedCommunity.bots;
+                return $selectedCommunityBotsStore;
             case "direct_chat":
                 return app.directChatBots;
             default:

@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { ResourceKey } from "openchat-client";
-    import { AvatarSize, iconSize, OpenChat, userStore } from "openchat-client";
+    import { allUsersStore, AvatarSize, iconSize, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import type { Theme } from "../../../theme/types";
@@ -52,10 +52,12 @@
                         {#snippet text()}
                             <div class="theme-item">
                                 <div class="label">{theme.label}</div>
-                                {#if theme.author !== undefined && userStore.get(theme.author) !== undefined}
+                                {#if theme.author !== undefined && $allUsersStore.get(theme.author) !== undefined}
                                     <div class="avatar">
                                         <Avatar
-                                            url={client.userAvatarUrl(userStore.get(theme.author))}
+                                            url={client.userAvatarUrl(
+                                                $allUsersStore.get(theme.author),
+                                            )}
                                             userId={theme.author}
                                             size={AvatarSize.Tiny} />
                                     </div>

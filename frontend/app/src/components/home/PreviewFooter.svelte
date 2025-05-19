@@ -1,11 +1,12 @@
 <script lang="ts">
     import {
-        app,
         isLocked,
         type MultiUserChat,
         type OpenChat,
+        platformModeratorStore,
         publish,
         routeForScope,
+        selectedCommunitySummaryStore,
     } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
@@ -25,10 +26,10 @@
 
     let { chat, joining, lapsed }: Props = $props();
 
-    let isFrozen = $derived(client.isChatOrCommunityFrozen(chat, app.selectedCommunitySummary));
+    let isFrozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
     let previewingCommunity = $derived(
-        app.selectedCommunitySummary?.membership.role === "none" ||
-            app.selectedCommunitySummary?.membership.lapsed,
+        $selectedCommunitySummaryStore?.membership.role === "none" ||
+            $selectedCommunitySummaryStore?.membership.lapsed,
     );
     let gates = $derived(client.accessGatesForChat(chat));
     let locked = $derived(gates.some((g) => isLocked(g)));
@@ -43,8 +44,8 @@
     }
 
     function cancelPreview() {
-        if (previewingCommunity && app.selectedCommunitySummary) {
-            client.removeCommunity(app.selectedCommunitySummary.id);
+        if (previewingCommunity && $selectedCommunitySummaryStore) {
+            client.removeCommunity($selectedCommunitySummaryStore.id);
         } else {
             if (!chat.public) {
                 client.declineInvitation(chat.id);
@@ -71,9 +72,9 @@
                 break;
 
             case "channel":
-                if (app.selectedCommunitySummary) {
+                if ($selectedCommunitySummaryStore) {
                     client
-                        .freezeCommunity(app.selectedCommunitySummary.id, undefined)
+                        .freezeCommunity($selectedCommunitySummaryStore.id, undefined)
                         .then((success) => {
                             if (!success) {
                                 toastStore.showFailureToast(i18nKey("failedToFreezeCommunity"));
@@ -104,9 +105,9 @@
                     .finally(() => (freezingInProgress = false));
 
             case "channel":
-                if (app.selectedCommunitySummary) {
+                if ($selectedCommunitySummaryStore) {
                     client
-                        .unfreezeCommunity(app.selectedCommunitySummary.id)
+                        .unfreezeCommunity($selectedCommunitySummaryStore.id)
                         .then((success) => {
                             if (!success) {
                                 toastStore.showFailureToast(i18nKey("failedToUnfreezeCommunity"));
@@ -129,7 +130,7 @@
             <Translatable resourceKey={i18nKey("access.lapsed.label")} />
         </div>
     {/if}
-    {#if app.platformModerator}
+    {#if $platformModeratorStore}
         {#if isFrozen}
             <Button loading={freezingInProgress} secondary small onClick={unfreeze}>
                 <Translatable

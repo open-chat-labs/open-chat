@@ -8,7 +8,12 @@
         UserLookup,
         UserSummary,
     } from "openchat-client";
-    import { app, iconSize, userStore } from "openchat-client";
+    import {
+        allUsersStore,
+        iconSize,
+        selectedCommunityMembersStore,
+        selectedCommunityUserGroupsStore,
+    } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
@@ -41,7 +46,7 @@
     let communityUsersList: UserSummary[] = $state([]);
 
     onMount(() => {
-        communityUsers = createLookup(app.selectedCommunity.members, userStore.allUsers);
+        communityUsers = createLookup($selectedCommunityMembersStore, $allUsersStore);
         communityUsersList = Object.values(communityUsers);
     });
 
@@ -119,7 +124,7 @@
         openedGroupId = undefined;
     }
     let searchTermLower = $derived(searchTerm.toLowerCase());
-    let userGroups = $derived([...app.selectedCommunity.userGroups.values()]);
+    let userGroups = $derived([...$selectedCommunityUserGroupsStore.values()]);
     let canManageUserGroups = $derived(client.canManageUserGroups(community.id));
     let matchingGroups = $derived(userGroups.filter((ug) => matchesSearch(searchTermLower, ug)));
 </script>

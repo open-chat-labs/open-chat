@@ -7,8 +7,11 @@
         type ChatIdentifier,
         chatIdentifiersEqual,
         type ChatSummary,
+        communitiesStore,
         CommunityMap,
         type CommunitySummary,
+        currentUserIdStore,
+        currentUserStore,
         type EnhancedReplyContext,
         type EventWrapper,
         type FilteredProposals,
@@ -26,7 +29,9 @@
         type ReadonlySet,
         rightPanelHistory,
         runningInIframe,
+        selectedCommunitySummaryStore,
         subscribe,
+        suspendedUserStore,
         type User,
         userStore,
     } from "openchat-client";
@@ -121,7 +126,7 @@
     }
 
     function importToCommunity() {
-        importToCommunities = app.communities.filter((c) => c.membership.role === "owner");
+        importToCommunities = $communitiesStore.filter((c) => c.membership.role === "owner");
         if (importToCommunities.size === 0) {
             toastStore.showFailureToast(i18nKey("communities.noOwned"));
             importToCommunities = undefined;
@@ -306,9 +311,9 @@
             });
         }
     });
-    let showFooter = $derived(!showSearchHeader && !app.suspendedUser);
+    let showFooter = $derived(!showSearchHeader && !$suspendedUserStore);
     let blocked = $derived(isBlocked(chat, userStore.blockedUsers));
-    let frozen = $derived(client.isChatOrCommunityFrozen(chat, app.selectedCommunitySummary));
+    let frozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
     let canSendAny = $derived(client.canSendMessage(chat.id, "message"));
     let preview = $derived(client.isPreviewing(chat.id));
     let lapsed = $derived(client.isLapsed(chat.id));
@@ -427,7 +432,7 @@
             editingEvent={app.currentChatDraftMessage?.editingEvent}
             replyingTo={app.currentChatDraftMessage?.replyingTo}
             textContent={app.currentChatDraftMessage?.textContent}
-            user={app.currentUser}
+            user={$currentUserStore}
             mode={"message"}
             {joining}
             {preview}
@@ -441,8 +446,8 @@
                 localUpdates.draftMessages.setAttachment({ chatId: chat.id }, undefined)}
             onCancelEdit={() => localUpdates.draftMessages.delete({ chatId: chat.id })}
             {onSetTextContent}
-            onStartTyping={() => client.startTyping(chat, app.currentUserId)}
-            onStopTyping={() => client.stopTyping(chat, app.currentUserId)}
+            onStartTyping={() => client.startTyping(chat, $currentUserIdStore)}
+            onStopTyping={() => client.stopTyping(chat, $currentUserIdStore)}
             {onFileSelected}
             {onSendMessage}
             onAttachGif={attachGif}

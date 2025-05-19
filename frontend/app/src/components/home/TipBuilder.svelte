@@ -6,9 +6,9 @@
         PendingCryptocurrencyTransfer,
     } from "openchat-client";
     import {
-        app,
         cryptoBalance as cryptoBalanceStore,
         cryptoLookup,
+        currentUserIdStore,
         exchangeRatesLookupStore as exchangeRatesLookup,
         lastCryptoSent,
         mobileWidth,
@@ -174,7 +174,7 @@
         };
         lastCryptoSent.set(ledger);
 
-        const currentTip = (msg.tips[transfer.ledger] ?? {})[app.currentUserId] ?? 0n;
+        const currentTip = (msg.tips[transfer.ledger] ?? {})[$currentUserIdStore] ?? 0n;
 
         client.tipMessage(messageContext, msg.messageId, transfer, currentTip).then((resp) => {
             if (resp.kind === "failure") {

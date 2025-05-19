@@ -1,12 +1,14 @@
 <script lang="ts">
     import {
+        allUsersStore,
         app,
         AvatarSize,
         chatIdentifiersEqual,
+        communitiesStore,
         OpenChat,
         publish,
         routeForChatIdentifier,
-        userStore,
+        selectedCommunitySummaryStore,
         type ChatIdentifier,
     } from "openchat-client";
     import page from "page";
@@ -63,7 +65,7 @@
             if (chat) {
                 switch (chat.kind) {
                     case "direct_chat":
-                        const them = userStore.get(chat.them.userId);
+                        const them = $allUsersStore.get(chat.them.userId);
                         return {
                             name: client.displayName(them),
                             avatarUrl: client.userAvatarUrl(them),
@@ -78,12 +80,12 @@
                     case "channel":
                         return {
                             name: `${
-                                app.communities.get({
+                                $communitiesStore.get({
                                     kind: "community",
                                     communityId: chat.id.communityId,
                                 })?.name
                             } > ${chat.name}`,
-                            avatarUrl: client.groupAvatarUrl(chat, app.selectedCommunitySummary),
+                            avatarUrl: client.groupAvatarUrl(chat, $selectedCommunitySummaryStore),
                             userId: undefined,
                         };
                 }

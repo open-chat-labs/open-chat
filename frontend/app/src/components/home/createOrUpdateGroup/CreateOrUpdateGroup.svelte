@@ -9,10 +9,11 @@
         UnsupportedValueError,
         type UpdateGroupResponse,
         type UserSummary,
-        app,
         chatIdentifierUnset,
+        chatListScopeStore,
         mobileWidth,
         routeForChatIdentifier,
+        selectedCommunitySummaryStore,
     } from "openchat-client";
     import { ErrorCode } from "openchat-shared";
     import page from "page";
@@ -78,8 +79,8 @@
 
     function searchUsers(term: string): Promise<[UserSummary[], UserSummary[]]> {
         const canInvite =
-            app.selectedCommunitySummary === undefined ||
-            client.canInviteUsers(app.selectedCommunitySummary.id);
+            $selectedCommunitySummaryStore === undefined ||
+            client.canInviteUsers($selectedCommunitySummaryStore.id);
         return client.searchUsersForInvite(term, 20, candidateGroup.level, true, canInvite);
     }
 
@@ -267,7 +268,7 @@
     }
 
     function onGroupCreated(canisterId: MultiUserChatIdentifier) {
-        const url = routeForChatIdentifier(app.chatListScope.kind, canisterId);
+        const url = routeForChatIdentifier($chatListScopeStore.kind, canisterId);
         onClose();
         // tick ensure that the new chat will have made its way in to the chat list by the time we arrive at the route
         tick().then(() => page(url)); // trigger the selection of the chat
@@ -406,14 +407,14 @@
                                 {editing}
                                 bind:permissions={candidateGroup.permissions}
                                 isPublic={candidateGroup.public}
-                                isCommunityPublic={app.selectedCommunitySummary?.public ?? true}
+                                isCommunityPublic={$selectedCommunitySummaryStore?.public ?? true}
                                 isChannel={candidateGroup.id.kind === "channel"} />
                         {:else}
                             <GroupPermissionsViewer
                                 {embeddedContent}
                                 permissions={candidateGroup.permissions}
                                 isPublic={candidateGroup.public}
-                                isCommunityPublic={app.selectedCommunitySummary?.public ?? true}
+                                isCommunityPublic={$selectedCommunitySummaryStore?.public ?? true}
                                 isChannel={candidateGroup.id.kind === "channel"} />
                         {/if}
                     </div>

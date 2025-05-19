@@ -6,6 +6,7 @@
         ProposalDecisionStatus,
         type RegisterProposalVoteResponse,
         app,
+        currentUserIdStore,
     } from "openchat-client";
     import { ErrorCode, type ReadonlyMap } from "openchat-shared";
     import { getContext } from "svelte";
@@ -293,7 +294,7 @@
             {#snippet body()}
                 <Markdown
                     text={$_("proposal.noEligibleNeuronsMessage", {
-                        values: { userId: app.currentUserId },
+                        values: { userId: $currentUserIdStore },
                     })} />
             {/snippet}
         </ModalContent>

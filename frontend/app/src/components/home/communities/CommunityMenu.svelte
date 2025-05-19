@@ -4,6 +4,7 @@
         app,
         iconSize,
         notificationsSupported,
+        platformModeratorStore,
         publish,
         rightPanelHistory,
     } from "openchat-client";
@@ -239,7 +240,7 @@
                     </MenuItem>
                 {/if}
             {/if}
-            {#if app.platformModerator}
+            {#if $platformModeratorStore}
                 {#if client.isCommunityFrozen(community.id)}
                     <MenuItem warning onclick={unfreezeCommunity}>
                         {#snippet icon()}
