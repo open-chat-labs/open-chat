@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { CryptocurrencyContent, OpenChat } from "openchat-client";
-    import { app, cryptoLookup } from "openchat-client";
+    import { cryptoLookup, currentUserIdStore } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
@@ -18,9 +18,9 @@
 
     let { content, me = false, reply = false, senderId }: Props = $props();
 
-    let logo = $derived($cryptoLookup[content.transfer.ledger].logo);
+    let logo = $derived($cryptoLookup.get(content.transfer.ledger)?.logo);
     let transferText = $derived(
-        client.buildCryptoTransferText($_, app.currentUserId, senderId, content, me),
+        client.buildCryptoTransferText($_, $currentUserIdStore, senderId, content, me),
     );
     let transactionLinkText = $derived(client.buildTransactionLink($_, content.transfer));
 </script>

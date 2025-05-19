@@ -13,10 +13,17 @@ import {
     type Member,
     type Message,
 } from "openchat-shared";
+import { get } from "svelte/store";
 import { vi } from "vitest";
-import { app } from "./app.svelte";
+import {
+    app,
+    communitiesStore,
+    selectedCommunityMembersStore,
+    serverCommunitiesStore,
+    serverPinnedChatsStore,
+} from "./app.svelte";
 import { chatDetailsLocalUpdates } from "./chat_details";
-import { communityLocalUpdates } from "./community_details/local.svelte";
+import { communityLocalUpdates } from "./community";
 import { localUpdates } from "./global";
 import { pathState } from "./path.svelte";
 
@@ -304,7 +311,6 @@ describe("app state", () => {
                 communityId,
                 scope: { kind: "community", id: communityId },
             });
-            app.setSelectedCommunity(communityId);
         });
 
         test("selected community id is set", () => {
@@ -344,11 +350,12 @@ describe("app state", () => {
             });
 
             test("local map updates - remove member", () => {
-                expect(app.selectedCommunity.members.has("user_one")).toBe(true);
+                expect(app.selectedCommunityMembers.has("user_one")).toBe(true);
                 const undo = communityLocalUpdates.removeMember(communityId, "user_one");
-                expect(app.selectedCommunity.members.has("user_one")).toBe(false);
+                expect(get(selectedCommunityMembersStore).has("user_one")).toBe(false);
+                expect(app.selectedCommunityMembers.has("user_one")).toBe(false);
                 undo();
-                expect(app.selectedCommunity.members.has("user_one")).toBe(true);
+                expect(app.selectedCommunityMembers.has("user_one")).toBe(true);
             });
 
             test("local map updates - update member", () => {
@@ -358,32 +365,30 @@ describe("app state", () => {
                     displayName: "Mr One",
                     lapsed: false,
                 };
-                expect(app.selectedCommunity.members.has("user_two")).toBe(false);
+                expect(app.selectedCommunityMembers.has("user_two")).toBe(false);
                 const undo = communityLocalUpdates.updateMember(communityId, "user_one", updated);
-                expect(app.selectedCommunity.members.get("user_one")?.displayName).toEqual(
-                    "Mr One",
-                );
+                expect(app.selectedCommunityMembers.get("user_one")?.displayName).toEqual("Mr One");
                 undo();
-                expect(app.selectedCommunity.members.get("user_one")?.displayName).toEqual(
+                expect(app.selectedCommunityMembers.get("user_one")?.displayName).toEqual(
                     "User One",
                 );
             });
 
             test("local set updates", () => {
-                expect(app.selectedCommunity.blockedUsers.has("a")).toBe(true);
-                expect(app.selectedCommunity.blockedUsers.has("d")).toBe(false);
+                expect(app.selectedCommunityBlockedUsers.has("a")).toBe(true);
+                expect(app.selectedCommunityBlockedUsers.has("d")).toBe(false);
 
                 // check that local updates work and are correctly merged with server state
                 const undo = communityLocalUpdates.blockUser(communityId, "d");
-                expect(app.selectedCommunity.blockedUsers.has("d")).toBe(true);
+                expect(app.selectedCommunityBlockedUsers.has("d")).toBe(true);
 
                 // undo the local update
                 undo();
-                expect(app.selectedCommunity.blockedUsers.has("d")).toBe(false);
+                expect(app.selectedCommunityBlockedUsers.has("d")).toBe(false);
 
                 // try unblock
                 communityLocalUpdates.unblockUser(communityId, "a");
-                expect(app.selectedCommunity.blockedUsers.has("a")).toBe(false);
+                expect(app.selectedCommunityBlockedUsers.has("a")).toBe(false);
             });
         });
     });
@@ -407,6 +412,7 @@ describe("app state", () => {
         });
         test("communities list", () => {
             expect(app.serverCommunities.size).toEqual(2);
+            expect(get(serverCommunitiesStore).size).toEqual(2);
         });
         test("community indexes", () => {
             const id: CommunityIdentifier = { kind: "community", communityId: "123456" };
@@ -414,6 +420,7 @@ describe("app state", () => {
             expect(app.communities.get(id)?.membership.index).toEqual(1);
             localUpdates.updateCommunityIndex(id, 3);
             expect(app.communities.get(id)?.membership.index).toEqual(3);
+            expect(get(communitiesStore).get(id)?.membership.index).toEqual(3);
         });
 
         test("should get the server object if there are no updates", () => {
@@ -435,21 +442,24 @@ describe("app state", () => {
             expect(app.communities.get(id)?.membership.displayName).toBeUndefined();
             localUpdates.updateCommunityDisplayName(id, "Mr. OpenChat");
             expect(app.communities.get(id)?.membership.displayName).toEqual("Mr. OpenChat");
+            expect(get(communitiesStore).get(id)?.membership.displayName).toEqual("Mr. OpenChat");
         });
 
         describe("pinned chats", () => {
             beforeEach(() => {
                 chatDetailsLocalUpdates.clearAll();
-                app.serverPinnedChats = new Map([
-                    [
-                        "direct_chat",
+                serverPinnedChatsStore.fromMap(
+                    new Map([
                         [
-                            { kind: "direct_chat", userId: "123456" },
-                            { kind: "direct_chat", userId: "888888" },
+                            "direct_chat",
+                            [
+                                { kind: "direct_chat", userId: "123456" },
+                                { kind: "direct_chat", userId: "888888" },
+                            ],
                         ],
-                    ],
-                    ["group_chat", [{ kind: "direct_chat", userId: "654321" }]],
-                ]);
+                        ["group_chat", [{ kind: "direct_chat", userId: "654321" }]],
+                    ]),
+                );
             });
 
             test("add a pinned chat", () => {

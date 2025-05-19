@@ -1,14 +1,15 @@
 <script lang="ts">
     import type { DirectChatSummary, ExternalBot } from "openchat-client";
     import {
+        allUsersStore,
         app,
         AvatarSize,
+        directChatApiKeysStore,
         flattenCommandPermissions,
         iconSize,
         mobileWidth,
         type OpenChat,
         publish,
-        userStore,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -45,8 +46,8 @@
     }
 
     let { chat, bot, onSearchChat }: Props = $props();
-    let botUser = $derived(userStore.get(chat.them.userId));
-    let apiKey = $derived(app.directChatApiKeys.get(bot.id));
+    let botUser = $derived($allUsersStore.get(chat.them.userId));
+    let apiKey = $derived($directChatApiKeysStore.get(bot.id));
     let grantedPermissions = $derived(
         app.directChatBots.get(bot.id) ?? flattenCommandPermissions(bot.definition),
     );

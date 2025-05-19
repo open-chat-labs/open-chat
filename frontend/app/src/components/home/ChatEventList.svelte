@@ -13,14 +13,14 @@
 <script lang="ts">
     import {
         MessageContextMap,
-        app,
+        currentUserIdStore,
         eventListLastScrolled,
         eventListScrollTop,
         eventListScrolling,
         iconSize,
         localUpdates,
         messageContextsEqual,
-        pathState,
+        routeStore,
         subscribe,
         withEqCheck,
         type ChatEvent as ChatEventType,
@@ -428,7 +428,7 @@
     async function afterSendMessage(context: MessageContext, event: EventWrapper<Message>) {
         if (context.threadRootMessageIndex !== undefined && threadRootEvent !== undefined) {
             const summary = {
-                participantIds: new Set<string>([app.currentUserId]),
+                participantIds: new Set<string>([$currentUserIdStore]),
                 numberOfReplies: event.event.messageIndex + 1,
                 latestEventIndex: event.index,
                 latestEventTimestamp: event.timestamp,
@@ -561,7 +561,7 @@
     }
 
     function isReadByMe(evt: EventWrapper<ChatEventType>): boolean {
-        if (readonly || (evt.event.kind === "message" && evt.event.sender === app.currentUserId))
+        if (readonly || (evt.event.kind === "message" && evt.event.sender === $currentUserIdStore))
             return true;
 
         if (evt.event.kind === "message" || evt.event.kind === "aggregate_common_events") {
@@ -580,11 +580,11 @@
         if (msgEvent && threadRootEvent === undefined) {
             if (
                 msgEvent.event.thread !== undefined &&
-                (pathState.route.kind === "global_chat_selected_route" ||
-                    pathState.route.kind === "selected_channel_route") &&
-                (pathState.route.open || pathState.route.threadMessageIndex !== undefined)
+                ($routeStore.kind === "global_chat_selected_route" ||
+                    $routeStore.kind === "selected_channel_route") &&
+                ($routeStore.open || $routeStore.threadMessageIndex !== undefined)
             ) {
-                client.openThread(chat.id, msgEvent, false, pathState.route.threadMessageIndex);
+                client.openThread(chat.id, msgEvent, false, $routeStore.threadMessageIndex);
             }
         }
     }

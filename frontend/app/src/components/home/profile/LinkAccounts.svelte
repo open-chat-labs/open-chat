@@ -5,8 +5,8 @@
     import {
         AuthProvider,
         InMemoryAuthClientStorage,
-        app,
         iconSize,
+        selectedAuthProviderStore,
         type AuthenticationPrincipal,
         type OpenChat,
         type ResourceKey,
@@ -88,7 +88,7 @@
     let accounts: (AuthenticationPrincipal & { provider: AuthProvider })[] = $state([]);
 
     let currentIdentity = $derived(accounts.find((a) => a.isCurrentIdentity));
-    let currentProvider = $derived(currentIdentity?.provider ?? app.selectedAuthProvider);
+    let currentProvider = $derived(currentIdentity?.provider ?? $selectedAuthProviderStore);
     let restrictTo = $derived(
         substep.kind === "approver" && currentProvider !== undefined
             ? new Set<string>([currentProvider])

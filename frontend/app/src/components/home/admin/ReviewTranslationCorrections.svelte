@@ -5,7 +5,7 @@
         RejectReason,
         TranslationCorrection,
     } from "openchat-client";
-    import { iconSize, userStore } from "openchat-client";
+    import { allUsersStore, iconSize } from "openchat-client";
     import { getContext, onDestroy, onMount } from "svelte";
     import { _, locale } from "svelte-i18n";
     import Check from "svelte-material-icons/Check.svelte";
@@ -202,7 +202,7 @@
                         {/if}
                     </td>
                     <td class="proposed_by"
-                        >{userStore.get(correction.proposedBy)?.username ??
+                        >{$allUsersStore.get(correction.proposedBy)?.username ??
                             correction.proposedBy}</td>
                     <td class="proposed_at"
                         >{client.toDatetimeString(new Date(Number(correction.proposedAt)))}</td>

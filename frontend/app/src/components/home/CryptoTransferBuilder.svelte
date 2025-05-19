@@ -1,12 +1,12 @@
 <script lang="ts">
     import type { ChatSummary, OpenChat, UserSummary } from "openchat-client";
     import {
-        app,
-        cryptoBalance as cryptoBalanceStore,
+        allUsersStore,
+        cryptoBalanceStore,
         enhancedCryptoLookup as cryptoLookup,
+        currentUserIdStore,
         iconSize,
         mobileWidth,
-        userStore,
     } from "openchat-client";
     import { type CryptocurrencyContent, type MessageContext, nowNanos } from "openchat-shared";
     import { getContext, onMount } from "svelte";
@@ -58,8 +58,8 @@
     let validAmount: boolean = $state(false);
     let sending = $state(false);
 
-    let cryptoBalance = $derived($cryptoBalanceStore[ledger] ?? BigInt(0));
-    let tokenDetails = $derived($cryptoLookup[ledger]);
+    let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
+    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let symbol = $derived(tokenDetails.symbol);
     let transferFees = $derived(tokenDetails.transferFee);
     let multiUserChat = $derived(chat.kind === "group_chat" || chat.kind === "channel");
@@ -77,9 +77,9 @@
     onMount(() => {
         // default the receiver to the other user in a direct chat
         if (chat.kind === "direct_chat") {
-            receiver = userStore.get(chat.them.userId);
-        } else if (defaultReceiver !== undefined && defaultReceiver !== app.currentUserId) {
-            receiver = userStore.get(defaultReceiver);
+            receiver = $allUsersStore.get(chat.them.userId);
+        } else if (defaultReceiver !== undefined && defaultReceiver !== $currentUserIdStore) {
+            receiver = $allUsersStore.get(defaultReceiver);
         }
     });
 

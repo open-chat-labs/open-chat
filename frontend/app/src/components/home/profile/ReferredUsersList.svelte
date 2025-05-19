@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { OpenChat, ReadonlySet } from "openchat-client";
-    import { AvatarSize, userStore } from "openchat-client";
+    import { AvatarSize, allUsersStore } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { referredUsersOpen } from "../../../stores/settings";
@@ -39,7 +39,7 @@
         headerText={i18nKey("invite.referredUsers")}>
         <div class="referrals">
             {#each referrals as referral}
-                {@const u = userStore.get(referral)}
+                {@const u = $allUsersStore.get(referral)}
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div class="referral" onclick={(ev) => showUserProfile(ev, referral)}>

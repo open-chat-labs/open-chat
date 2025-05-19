@@ -4,16 +4,22 @@
         type CommunitySummary,
         type OpenChat,
         activityFeedShowing,
+        allUsersStore,
+        anonUserStore,
         app,
+        chatListScopeStore,
+        chitStateStore,
         communityListScrollTop,
+        currentUserIdStore,
         emptyCombinedUnreadCounts,
         mobileWidth,
         navOpen,
-        pathState,
         publish,
+        routeStore,
+        selectedCommunitySummaryStore,
         showNav,
+        sortedCommunitiesStore,
         ui,
-        userStore,
     } from "openchat-client";
     import page from "page";
     import { getContext, onMount, tick } from "svelte";
@@ -41,11 +47,11 @@
     const client = getContext<OpenChat>("client");
     const flipDurationMs = 300;
 
-    let user = $derived(userStore.get(app.currentUserId));
+    let user = $derived($allUsersStore.get($currentUserIdStore));
     let avatarSize = $derived($mobileWidth ? AvatarSize.Small : AvatarSize.Default);
-    let communityExplorer = $derived(pathState.route.kind === "communities_route");
-    let selectedCommunityId = $derived(app.selectedCommunitySummary?.id.communityId);
-    let claimChitAvailable = $derived(app.chitState.nextDailyChitClaim < $now);
+    let communityExplorer = $derived($routeStore.kind === "communities_route");
+    let selectedCommunityId = $derived($selectedCommunitySummaryStore?.id.communityId);
+    let claimChitAvailable = $derived($chitStateStore.nextDailyChitClaim < $now);
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
     let scrollingSection: HTMLElement;
@@ -56,7 +62,7 @@
     let communityItems = $state<CommunityItem[]>([]);
 
     $effect(() => {
-        communityItems = app.sortedCommunities.map((c) => ({ ...c, _id: c.id.communityId }));
+        communityItems = $sortedCommunitiesStore.map((c) => ({ ...c, _id: c.id.communityId }));
     });
 
     onMount(() => {
@@ -115,7 +121,7 @@
     }
 
     function showActivityFeed() {
-        if (pathState.route.kind === "communities_route") {
+        if ($routeStore.kind === "communities_route") {
             page("/");
         }
         activityFeedShowing.set(true);
@@ -146,7 +152,7 @@
             </LeftNavItem>
         {/if}
         <LeftNavItem
-            selected={app.chatListScope.kind === "direct_chat" && !communityExplorer}
+            selected={$chatListScopeStore.kind === "direct_chat" && !communityExplorer}
             label={i18nKey("communities.directChats")}
             unread={app.unreadDirectCounts.chats}
             video={app.directVideoCallCounts}
@@ -156,7 +162,7 @@
             </div>
         </LeftNavItem>
         <LeftNavItem
-            selected={app.chatListScope.kind === "group_chat" && !communityExplorer}
+            selected={$chatListScopeStore.kind === "group_chat" && !communityExplorer}
             label={i18nKey("communities.groupChats")}
             unread={client.mergeCombinedUnreadCounts(app.unreadGroupCounts)}
             video={app.groupVideoCallCounts}
@@ -167,7 +173,7 @@
         </LeftNavItem>
         {#if app.favourites.size > 0}
             <LeftNavItem
-                selected={app.chatListScope.kind === "favourite" && !communityExplorer}
+                selected={$chatListScopeStore.kind === "favourite" && !communityExplorer}
                 label={i18nKey("communities.favourites")}
                 unread={client.mergeCombinedUnreadCounts(app.unreadFavouriteCounts)}
                 video={app.favouritesVideoCallCounts}
@@ -177,7 +183,7 @@
                 </div>
             </LeftNavItem>
         {/if}
-        {#if !app.anonUser}
+        {#if !$anonUserStore}
             {#if !$disableChit && (claimChitAvailable || !$hideChitIcon)}
                 <LeftNavItem
                     label={i18nKey(
@@ -224,7 +230,7 @@
             <div animate:flip={{ duration: flipDurationMs }}>
                 <LeftNavItem
                     selected={community.id.communityId === selectedCommunityId &&
-                        app.chatListScope.kind !== "favourite" &&
+                        $chatListScopeStore.kind !== "favourite" &&
                         !communityExplorer}
                     video={app.communityChannelVideoCallCounts.get(community.id) ?? {
                         muted: 0,
@@ -239,7 +245,7 @@
                     onClick={() => selectCommunity(community)}>
                     <Avatar
                         selected={community.id.communityId === selectedCommunityId &&
-                            app.chatListScope.kind !== "favourite" &&
+                            $chatListScopeStore.kind !== "favourite" &&
                             !communityExplorer}
                         url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
                         size={avatarSize} />

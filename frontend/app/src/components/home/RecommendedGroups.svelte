@@ -4,8 +4,8 @@
         type GroupChatSummary,
         type MultiUserChat,
         type OpenChat,
-        app,
         chatIdentifiersEqual,
+        chatListScopeStore,
         iconSize,
         mobileWidth,
         routeForScope,
@@ -38,7 +38,7 @@
     onMount(loadData);
 
     function cancelRecommendations() {
-        page(routeForScope(app.chatListScope));
+        page(routeForScope($chatListScopeStore));
     }
 
     function onDismissRecommendation(id: GroupChatIdentifier) {

@@ -4,7 +4,10 @@
         app,
         AvatarSize,
         type ChatIdentifier,
+        chatListScopeStore,
         type ChatType,
+        currentUserIdStore,
+        currentUserStore,
         type Dimensions,
         type EnhancedReplyContext,
         iconSize,
@@ -15,12 +18,14 @@
         mobileWidth,
         OpenChat,
         pageReplace,
-        pathState,
         publish,
         routeForMessage,
+        routeStore,
         screenWidth,
         ScreenWidth,
+        selectedCommunityMembersStore,
         type SenderContext,
+        translationsStore,
         ui,
         unconfirmedReadByThem,
         undeletingMessagesStore,
@@ -292,19 +297,19 @@
 
     function toggleReaction(isQuickReaction: boolean, reaction: string) {
         if (canReact) {
-            const kind = client.containsReaction(app.currentUserId, reaction, msg.reactions)
+            const kind = client.containsReaction($currentUserIdStore, reaction, msg.reactions)
                 ? "remove"
                 : "add";
 
             client
                 .selectReaction(
                     chatId,
-                    app.currentUserId,
+                    $currentUserIdStore,
                     threadRootMessageIndex,
                     msg.messageId,
                     reaction,
-                    app.currentUser.username,
-                    app.currentUser.displayName,
+                    $currentUserStore.username,
+                    $currentUserStore.displayName,
                     kind,
                 )
                 .then((success) => {
@@ -446,10 +451,10 @@
     let mediaDimensions = $derived(extractDimensions(msg.content));
     let fill = $derived(client.fillMessage(msg));
     let showAvatar = $derived($screenWidth !== ScreenWidth.ExtraExtraSmall);
-    let translated = $derived(app.translations.has(msg.messageId));
+    let translated = $derived($translationsStore.has(msg.messageId));
     let threadSummary = $derived(msg.thread);
     let msgUrl = $derived(
-        `${routeForMessage(app.chatListScope.kind, { chatId }, msg.messageIndex)}?open=true`,
+        `${routeForMessage($chatListScopeStore.kind, { chatId }, msg.messageIndex)}?open=true`,
     );
     let isProposal = $derived(msg.content.kind === "proposal_content");
     let isPrize = $derived(msg.content.kind === "prize_content");
@@ -459,7 +464,7 @@
     );
     let undeleting = $derived($undeletingMessagesStore.has(msg.messageId));
     let deletedByMe = $derived(
-        msg.content.kind === "deleted_content" && msg.content.deletedBy == app.currentUserId,
+        msg.content.kind === "deleted_content" && msg.content.deletedBy == $currentUserIdStore,
     );
     let permanentlyDeleted = $derived(
         deletedByMe &&
@@ -475,7 +480,7 @@
         (!inert || canRevealDeleted || canRevealBlocked) && !readonly && !ephemeral,
     );
     let canUndelete = $derived(msg.deleted && msg.content.kind !== "deleted_content");
-    let senderDisplayName = $derived(client.getDisplayName(sender, app.selectedCommunity.members));
+    let senderDisplayName = $derived(client.getDisplayName(sender, $selectedCommunityMembersStore));
     let tips = $derived(msg.tips ? Object.entries(msg.tips) : []);
     let canBlockUser = $derived(canBlockUsers && !app.selectedChat.blockedUsers.has(msg.sender));
     let edited = $derived(
@@ -618,7 +623,7 @@
                                             <WithRole
                                                 userId={sender.userId}
                                                 chatMembers={app.selectedChat.members}
-                                                communityMembers={app.selectedCommunity.members}>
+                                                communityMembers={$selectedCommunityMembersStore}>
                                                 {#snippet children(communityRole, chatRole)}
                                                     <RoleIcon
                                                         level="community"
@@ -799,10 +804,10 @@
                     <ThreadSummary
                         {chatId}
                         threadRootMessageIndex={msg.messageIndex}
-                        selected={(pathState.route.kind === "global_chat_selected_route" ||
-                            pathState.route.kind === "selected_channel_route") &&
-                            msg.messageIndex === pathState.route.messageIndex &&
-                            pathState.route.open}
+                        selected={($routeStore.kind === "global_chat_selected_route" ||
+                            $routeStore.kind === "selected_channel_route") &&
+                            msg.messageIndex === $routeStore.messageIndex &&
+                            $routeStore.open}
                         {threadSummary}
                         indent={showAvatar}
                         {me}

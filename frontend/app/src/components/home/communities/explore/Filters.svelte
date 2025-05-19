@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { app, iconSize, mobileWidth } from "openchat-client";
+    import { app, communityFiltersStore, iconSize, mobileWidth } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey, supportedLanguages } from "../../../../i18n/i18n";
@@ -33,7 +33,7 @@
                     id={`language_${lang.code}`}
                     onChange={() => app.toggleCommunityFilterLanguage(lang.code)}
                     label={i18nKey(lang.name)}
-                    checked={app.communityFilters.languages.has(lang.code)} />
+                    checked={$communityFiltersStore.has(lang.code)} />
             </div>
         {/each}
     </CollapsibleCard>

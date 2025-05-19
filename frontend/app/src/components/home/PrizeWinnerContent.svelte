@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { OpenChat, PrizeWinnerContent } from "openchat-client";
-    import { app, cryptoLookup, userStore } from "openchat-client";
+    import { allUsersStore, cryptoLookup, currentUserIdStore } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import SpinningToken from "../icons/SpinningToken.svelte";
@@ -16,9 +16,9 @@
     let { content }: Props = $props();
 
     function username(userId: string): string {
-        return userId === app.currentUserId
+        return userId === $currentUserIdStore
             ? $_("you")
-            : `${userStore.get(userId)?.username ?? $_("unknown")}`;
+            : `${$allUsersStore.get(userId)?.username ?? $_("unknown")}`;
     }
 
     function openUserProfile(ev: Event) {
@@ -34,14 +34,14 @@
         );
         ev.stopPropagation();
     }
-    let logo = $derived($cryptoLookup[content.transaction.ledger]?.logo ?? "");
-    let tokenDetails = $derived($cryptoLookup[content.transaction.ledger]);
+    let logo = $derived($cryptoLookup.get(content.transaction.ledger)?.logo ?? "");
+    let tokenDetails = $derived($cryptoLookup.get(content.transaction.ledger)!);
     let symbol = $derived(tokenDetails.symbol);
     let amount = $derived(
         client.formatTokens(content.transaction.amountE8s, tokenDetails.decimals),
     );
     let winner = $derived(`${username(content.transaction.recipient)}`);
-    let me = $derived(app.currentUserId === content.transaction.recipient);
+    let me = $derived($currentUserIdStore === content.transaction.recipient);
     let transactionLinkText = $derived(client.buildTransactionLink($_, content.transaction));
 </script>
 

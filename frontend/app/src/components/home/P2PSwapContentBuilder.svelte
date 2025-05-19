@@ -1,8 +1,8 @@
 <script lang="ts">
     import type { MessageContext, OpenChat, P2PSwapContentInitial } from "openchat-client";
     import {
-        app,
         enhancedCryptoLookup as cryptoLookup,
+        isDiamondStore,
         mobileWidth,
         publish,
     } from "openchat-client";
@@ -47,8 +47,8 @@
     let confirming = $state(false);
     let sending = $state(false);
 
-    let fromDetails = $derived($cryptoLookup[fromLedger]);
-    let toDetails = $derived($cryptoLookup[toLedger]);
+    let fromDetails = $derived($cryptoLookup.get(fromLedger)!);
+    let toDetails = $derived($cryptoLookup.get(toLedger)!);
     let totalFees = $derived(fromDetails.transferFee * BigInt(2));
     let remainingBalance = $state(0n);
     $effect(() => {
@@ -73,7 +73,7 @@
     });
 
     function onSend() {
-        if (!app.isDiamond) {
+        if (!$isDiamondStore) {
             publish("upgrade");
             return;
         }
@@ -151,9 +151,8 @@
     function onSelectFromToken(ledger: string, _: string) {
         if (ledger === toLedger) {
             toLedger =
-                Object.values($cryptoLookup)
-                    .map((t) => t.ledger)
-                    .find((l) => l !== toLedger) ?? toLedger;
+                [...$cryptoLookup.values()].map((t) => t.ledger).find((l) => l !== toLedger) ??
+                toLedger;
         }
     }
 </script>

@@ -1,7 +1,7 @@
 <script lang="ts">
     import Avatar from "@src/components/Avatar.svelte";
     import type { ExternalBotLike, ExternalBotPermissions, OpenChat } from "openchat-client";
-    import { AvatarSize, mobileWidth, userStore } from "openchat-client";
+    import { AvatarSize, allUsersStore, mobileWidth } from "openchat-client";
     import { getContext, type Snippet } from "svelte";
     import BotAvatar from "../BotAvatar.svelte";
     import BotCommands from "../BotCommands.svelte";
@@ -30,7 +30,7 @@
         showCommands = true,
     }: Props = $props();
     let collapsed = $state(true);
-    let owner = $derived(userStore.get(bot.ownerId));
+    let owner = $derived($allUsersStore.get(bot.ownerId));
     let isPublic = $derived(
         bot.kind === "external_bot" && bot.registrationStatus.kind === "public",
     );

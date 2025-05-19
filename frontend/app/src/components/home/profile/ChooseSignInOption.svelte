@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AuthProvider, type OpenChat, app } from "openchat-client";
+    import { AuthProvider, selectedAuthProviderStore, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import EmailIcon from "svelte-material-icons/EmailOutline.svelte";
     import SendIcon from "svelte-material-icons/Send.svelte";
@@ -88,10 +88,10 @@
     }
 
     let options = $derived(
-        buildOptions(currentProvider ?? app.selectedAuthProvider, mode, restrictTo),
+        buildOptions(currentProvider ?? $selectedAuthProviderStore, mode, restrictTo),
     );
     let showAllOptions = $derived(
-        (currentProvider ?? app.selectedAuthProvider) === undefined ||
+        (currentProvider ?? $selectedAuthProviderStore) === undefined ||
             showMore ||
             mode === "signup",
     );

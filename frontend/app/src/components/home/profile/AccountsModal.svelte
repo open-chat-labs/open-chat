@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { app, iconSize, mobileWidth } from "openchat-client";
+    import { iconSize, mobileWidth, pinNumberRequiredStore } from "openchat-client";
     import { _ } from "svelte-i18n";
     import EyeOff from "svelte-material-icons/EyeOffOutline.svelte";
     import Eye from "svelte-material-icons/EyeOutline.svelte";
@@ -10,7 +10,7 @@
     import TuneVertical from "svelte-material-icons/TuneVertical.svelte";
     import WalletIcon from "svelte-material-icons/WalletOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import type { PinOperation } from "../../../stores/pinNumber";
+    import { type PinOperation } from "../../../stores/pinNumber";
     import { hideTokenBalances } from "../../../stores/settings";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -67,7 +67,7 @@
                     {#snippet menuItems()}
                         <div>
                             <Menu>
-                                {#if !app.pinNumberRequired}
+                                {#if !$pinNumberRequiredStore}
                                     <MenuItem onclick={() => (pinAction = { kind: "set" })}>
                                         {#snippet icon()}
                                             <ShieldPlusIcon

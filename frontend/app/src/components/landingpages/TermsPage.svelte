@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { pathState } from "openchat-client";
+    import { querystringStore } from "openchat-client";
     import { scrollToSection } from "../../utils/urls";
     import Headline from "./Headline.svelte";
     import TermsContent from "./TermsContent.svelte";
 
     $effect(() => {
-        const section = pathState.querystring.get("section");
+        const section = $querystringStore.get("section");
         if (section) {
             scrollToSection(section);
         }

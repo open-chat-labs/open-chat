@@ -8,9 +8,10 @@
         ResourceKey,
     } from "openchat-client";
     import {
-        app,
         cryptoLookup,
+        currentUserIdStore,
         exchangeRatesLookupStore as exchangeRatesLookup,
+        isDiamondStore,
         publish,
     } from "openchat-client";
     import { getContext } from "svelte";
@@ -49,8 +50,8 @@
     let confirming = $state(false);
     let showDetails = $state(false);
 
-    let fromDetails = $derived($cryptoLookup[content.token0.ledger]);
-    let toDetails = $derived($cryptoLookup[content.token1.ledger]);
+    let fromDetails = $derived($cryptoLookup.get(content.token0.ledger)!);
+    let toDetails = $derived($cryptoLookup.get(content.token1.ledger)!);
     let finished = $derived($now500 >= Number(content.expiresAt));
     let timeRemaining = $derived(
         finished
@@ -59,10 +60,10 @@
     );
     let acceptedByYou = $derived(
         (content.status.kind === "p2p_swap_reserved" &&
-            content.status.reservedBy === app.currentUserId) ||
+            content.status.reservedBy === $currentUserIdStore) ||
             ((content.status.kind === "p2p_swap_accepted" ||
                 content.status.kind === "p2p_swap_completed") &&
-                content.status.acceptedBy === app.currentUserId),
+                content.status.acceptedBy === $currentUserIdStore),
     );
 
     let fromAmount = $derived(client.formatTokens(content.token0Amount, content.token0.decimals));
@@ -71,14 +72,14 @@
     let fromAmountInUsd = $derived(
         calculateDollarAmount(
             content.token0Amount,
-            $exchangeRatesLookup[fromDetails.symbol.toLowerCase()]?.toUSD,
+            $exchangeRatesLookup.get(fromDetails.symbol.toLowerCase())?.toUSD,
             fromDetails.decimals,
         ),
     );
     let toAmountInUsd = $derived(
         calculateDollarAmount(
             content.token1Amount,
-            $exchangeRatesLookup[toDetails.symbol.toLowerCase()]?.toUSD,
+            $exchangeRatesLookup.get(toDetails.symbol.toLowerCase())?.toUSD,
             toDetails.decimals,
         ),
     );
@@ -150,7 +151,7 @@
 
     function onAcceptOrCancel(e: MouseEvent) {
         if (e.isTrusted && !buttonDisabled) {
-            if (!me && !app.isDiamond) {
+            if (!me && !$isDiamondStore) {
                 publish("upgrade");
             } else {
                 confirming = true;

@@ -1,6 +1,13 @@
 <script lang="ts">
     import type { OpenChat, UserOrUserGroup } from "openchat-client";
-    import { app, AvatarSize, iconSize, mobileWidth, userStore } from "openchat-client";
+    import {
+        allUsersStore,
+        AvatarSize,
+        currentUserIdStore,
+        iconSize,
+        mobileWidth,
+        selectedCommunityMembersStore,
+    } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import Avatar from "../Avatar.svelte";
@@ -113,7 +120,7 @@
                     }
                     default:
                         return (
-                            (mentionSelf || userOrGroup.userId !== app.currentUserId) &&
+                            (mentionSelf || userOrGroup.userId !== $currentUserIdStore) &&
                             (prefixLower === undefined ||
                                 userOrGroup.username.toLowerCase().startsWith(prefixLower) ||
                                 userOrGroup.displayName?.toLowerCase().startsWith(prefixLower))
@@ -178,7 +185,7 @@
                                     </div>
                                 {:else}
                                     <Avatar
-                                        url={client.userAvatarUrl(userStore.get(item.userId))}
+                                        url={client.userAvatarUrl($allUsersStore.get(item.userId))}
                                         userId={item.userId}
                                         size={AvatarSize.Small} />
                                 {/if}
@@ -196,7 +203,10 @@
                                     </span>
                                 {:else}
                                     <span class="display-name">
-                                        {client.getDisplayName(item, app.selectedCommunity.members)}
+                                        {client.getDisplayName(
+                                            item,
+                                            $selectedCommunityMembersStore,
+                                        )}
                                     </span>
                                     <span class="username">
                                         @{item.username}

@@ -1,5 +1,10 @@
 <script lang="ts">
-    import { app, OPENCHAT_BOT_USER_ID, type DeletedContent, type OpenChat } from "openchat-client";
+    import {
+        OPENCHAT_BOT_USER_ID,
+        selectedCommunityMembersStore,
+        type DeletedContent,
+        type OpenChat,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
@@ -20,7 +25,7 @@
         `${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`,
     );
     let username = $derived(
-        client.getDisplayNameById(content.deletedBy, app.selectedCommunity.members),
+        client.getDisplayNameById(content.deletedBy, $selectedCommunityMembersStore),
     );
 </script>
 

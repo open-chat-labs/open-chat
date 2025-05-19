@@ -1,8 +1,9 @@
 <script lang="ts">
     import BotPublisher from "@src/components/bots/BotPublisher.svelte";
     import {
-        app,
-        cryptoBalance as cryptoBalanceStore,
+        cryptoBalanceStore,
+        currentUserIdStore,
+        currentUserStore,
         iconSize,
         mobileWidth,
         routeForChatIdentifier,
@@ -218,7 +219,7 @@
                     functionId: BigInt(7000),
                     payload: createAddTokenPayload(
                         addOrUpdateTokenLedgerCanisterId,
-                        app.currentUserId,
+                        $currentUserIdStore,
                         addOrUpdateTokenInfoUrl,
                         addOrUpdateTokenTransactionUrlFormat,
                     ),
@@ -243,7 +244,7 @@
                     functionId: BigInt(1012),
                     payload: createRegisterExternalAchievementPayload(
                         random32(),
-                        app.currentUserId,
+                        $currentUserIdStore,
                         achivementName,
                         achievementUrl,
                         logo,
@@ -322,7 +323,7 @@
 
         return `${summary}
 
-> Submitted by [@${app.currentUser.username}](https://oc.app/user/${app.currentUserId}) on [OpenChat](https://oc.app${groupPath})`;
+> Submitted by [@${$currentUserStore.username}](https://oc.app/user/${$currentUserIdStore}) on [OpenChat](https://oc.app${groupPath})`;
     }
 
     function isLogoValid(logo: string): boolean {
@@ -333,7 +334,7 @@
     );
     let tokenDetails = $derived(nervousSystem.token);
     let ledger = $derived(tokenDetails.ledger);
-    let cryptoBalance = $derived($cryptoBalanceStore[ledger] ?? BigInt(0));
+    let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? BigInt(0));
     let symbol = $derived(tokenDetails.symbol);
     let transferFee = $derived(tokenDetails.transferFee);
     let proposalCost = $derived(nervousSystem.proposalRejectionFee);

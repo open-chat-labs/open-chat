@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        allUsersStore,
         app,
         AvatarSize,
         botState,
@@ -9,7 +10,7 @@
         type ExternalBotPermissions,
         type OpenChat,
         type ResourceKey,
-        userStore,
+        selectedCommunitySummaryStore,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -46,11 +47,11 @@
     let state = $derived.by<State>(() => {
         switch (chat.kind) {
             case "direct_chat":
-                const them = userStore.get(chat.them.userId);
+                const them = $allUsersStore.get(chat.them.userId);
                 const s: State = {
                     title: i18nKey(client.displayName(them)),
                     verified: false,
-                    avatarUrl: client.userAvatarUrl(userStore.get(chat.them.userId)),
+                    avatarUrl: client.userAvatarUrl($allUsersStore.get(chat.them.userId)),
                 };
                 const bot = botState.externalBots.get(chat.them.userId);
                 const perm =
@@ -70,7 +71,7 @@
                     title: i18nKey("group.welcome", { groupName: chat.name }),
                     verified: chat.kind === "group_chat" ? chat.verified : false,
                     description: chat.description,
-                    avatarUrl: client.groupAvatarUrl(chat, app.selectedCommunitySummary),
+                    avatarUrl: client.groupAvatarUrl(chat, $selectedCommunitySummaryStore),
                     subtitle: i18nKey(
                         chat.public ? "thisIsPublicGroupWithN" : "thisIsPrivateGroupWithN",
                         { number: chat.memberCount },

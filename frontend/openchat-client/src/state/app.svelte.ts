@@ -10,22 +10,24 @@ import {
     type ChatIdentifier,
     chatIdentifiersEqual,
     type ChatListScope,
-    chatListScopesEqual,
     ChatMap,
     ChatSet,
     type ChatSummary,
     type ChitState,
     type CombinedUnreadCounts,
-    type CommunityFilter,
     type CommunityIdentifier,
     communityIdentifiersEqual,
     CommunityMap,
     type CommunitySummary,
     compareChats,
     type CreatedUser,
+    type CryptocurrencyDetails,
+    DEFAULT_TOKENS,
+    type DiamondMembershipStatus,
     type DirectChatIdentifier,
     type DirectChatSummary,
     emptyChatMetrics,
+    type EnhancedTokenDetails,
     type EventWrapper,
     type ExternalBotPermissions,
     type GroupChatSummary,
@@ -36,13 +38,18 @@ import {
     type MessageActivitySummary,
     type MessageFilter,
     type MessageFormatter,
+    MessageMap,
     type ModerationFlag,
     ModerationFlags,
+    type NervousSystemDetails,
     type NervousSystemFunction,
+    type NotificationStatus,
+    type PinnedByScope,
     type PinNumberFailures,
     type PinNumberResolver,
     type PublicApiKeyDetails,
     type ReadonlyMap,
+    type ReadonlySet,
     type Referral,
     SafeMap,
     type StorageStatus,
@@ -50,6 +57,7 @@ import {
     type Tally,
     type ThreadIdentifier,
     type ThreadSyncDetails,
+    type TokenExchangeRates,
     type UserGroupDetails,
     type UserGroupSummary,
     type VersionedRules,
@@ -59,10 +67,9 @@ import {
     type WebhookDetails,
 } from "openchat-shared";
 import { locale } from "svelte-i18n";
-import { SvelteMap, SvelteSet } from "svelte/reactivity";
-import { get } from "svelte/store";
-import { offlineStore, type PinnedByScope } from "../stores";
-import { createDummyStore } from "../stores/dummyStore";
+import { SvelteMap } from "svelte/reactivity";
+import { derived, get } from "svelte/store";
+import { offlineStore } from "../stores/network";
 import {
     getMessagePermissionsForSelectedChat,
     mergeChatMetrics,
@@ -71,120 +78,662 @@ import {
 } from "../utils/chat";
 import { configKeys } from "../utils/config";
 import { enumFromStringValue } from "../utils/enums";
+import { setsAreEqual } from "../utils/set";
 import { chatDetailsLocalUpdates, ChatDetailsMergedState } from "./chat_details";
 import { ChatDetailsServerState } from "./chat_details/server.svelte";
-import { communityLocalUpdates } from "./community_details";
-import { CommunityMergedState } from "./community_details/merged.svelte";
-import { CommunityServerState } from "./community_details/server.svelte";
+import { communityLocalUpdates } from "./community";
+import { CommunityDetailsState } from "./community/server";
+import { communitySummaryLocalUpdates } from "./community/summaryUpdates";
 import { FilteredProposals } from "./filteredProposals.svelte";
 import { localUpdates } from "./global";
-import { LocalStorageBoolState, LocalStorageState } from "./localStorageState.svelte";
-import { ReactiveMessageMap } from "./map";
+import { LocalStorageBoolStore, LocalStorageStore } from "./localStorageStore";
+import {
+    ChatMapStore,
+    CommunityMapStore,
+    MessageMapStore,
+    PinnedByScopeStore,
+    SafeMapStore,
+} from "./map";
 import { messageLocalUpdates } from "./message/local.svelte";
-import { pathState } from "./path.svelte";
+import { routeStore, selectedCommunityIdStore } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
+import { ChatSetStore, SafeSetStore } from "./set";
 import { SnsFunctions } from "./snsFunctions.svelte";
 import { hideMessagesFromDirectBlocked } from "./ui.svelte";
 import { messagesRead } from "./unread/markRead.svelte";
 import { userStore } from "./users/users.svelte";
+import { writable } from "./writable";
 
 export const ONE_MB = 1024 * 1024;
 export const ONE_GB = ONE_MB * 1024;
 
-export const dummyPinNumberFailureStore = createDummyStore();
+function communityFilterFromString(serialised: string): Set<string> {
+    const parsed = JSON.parse(serialised);
+    return new Set<string>(parsed.languages);
+}
+function communityFilterToString(filter: Set<string>): string {
+    return JSON.stringify({
+        ...filter,
+        languages: Array.from(filter),
+    });
+}
+
+type LedgerCanister = string;
+type GovernanceCanister = string;
+
+// TODO - also get rid of createSetStore and replace with SafeSetStore
+export const cryptoLookup = new SafeMapStore<LedgerCanister, CryptocurrencyDetails>();
+export const nervousSystemLookup = new SafeMapStore<GovernanceCanister, NervousSystemDetails>();
+export const exchangeRatesLookupStore = new SafeMapStore<string, TokenExchangeRates>();
+
+class CryptoBalanceStore extends SafeMapStore<LedgerCanister, bigint> {
+    setBalance(ledger: string, balance: bigint) {
+        super.set(ledger, balance);
+        cryptoBalancesLastUpdated.set(ledger, Date.now());
+    }
+
+    valueIfUpdatedRecently(ledger: string): bigint | undefined {
+        const lastUpdated = cryptoBalancesLastUpdated.get(ledger);
+        if (lastUpdated === undefined) {
+            return undefined;
+        }
+        return Date.now() - lastUpdated < 5 * 60 * 1000 ? this.get(ledger) : undefined;
+    }
+}
+export const cryptoBalanceStore = new CryptoBalanceStore();
+const cryptoBalancesLastUpdated = new Map<string, number>();
+
+export const bitcoinAddress = writable<string | undefined>(undefined);
+
+export const lastCryptoSent = new LocalStorageStore<string | undefined>(
+    configKeys.lastCryptoSent,
+    undefined,
+);
+
+export const enhancedCryptoLookup = derived(
+    [cryptoLookup, cryptoBalanceStore, exchangeRatesLookupStore],
+    ([$lookup, $balance, $exchangeRatesLookup]) => {
+        const xrICPtoDollar = $exchangeRatesLookup.get("icp")?.toUSD;
+        const xrBTCtoDollar = $exchangeRatesLookup.get("btc")?.toUSD;
+        const xrETHtoDollar = $exchangeRatesLookup.get("eth")?.toUSD;
+
+        const xrDollarToICP = xrICPtoDollar === undefined ? 0 : 1 / xrICPtoDollar;
+        const xrDollarToBTC = xrBTCtoDollar === undefined ? 0 : 1 / xrBTCtoDollar;
+        const xrDollarToETH = xrETHtoDollar === undefined ? 0 : 1 / xrETHtoDollar;
+
+        return $lookup.reduce((result, [key, t]) => {
+            const balance = $balance.get(t.ledger) ?? BigInt(0);
+            const symbolLower = t.symbol.toLowerCase();
+            const balanceWholeUnits = Number(balance) / Math.pow(10, t.decimals);
+            const rates = $exchangeRatesLookup.get(symbolLower);
+            const xrUSD = rates?.toUSD;
+            const dollarBalance = xrUSD !== undefined ? xrUSD * balanceWholeUnits : undefined;
+            const icpBalance =
+                dollarBalance !== undefined && xrDollarToICP !== undefined
+                    ? dollarBalance * xrDollarToICP
+                    : undefined;
+            const btcBalance =
+                dollarBalance !== undefined && xrDollarToBTC !== undefined
+                    ? dollarBalance * xrDollarToBTC
+                    : undefined;
+            const ethBalance =
+                dollarBalance !== undefined && xrDollarToETH !== undefined
+                    ? dollarBalance * xrDollarToETH
+                    : undefined;
+            const zero = balance === BigInt(0) && !DEFAULT_TOKENS.includes(t.symbol);
+            result.set(key, {
+                ...t,
+                balance,
+                dollarBalance,
+                icpBalance,
+                btcBalance,
+                ethBalance,
+                zero,
+                urlFormat: t.transactionUrlFormat,
+            });
+            return result;
+        }, new Map<string, EnhancedTokenDetails>());
+    },
+);
+
+export const cryptoTokensSorted = derived([enhancedCryptoLookup], ([$lookup]) => {
+    return [...$lookup.values()].filter((t) => t.enabled || !t.zero).sort(compareTokens);
+});
+
+function meetsAutoWalletCriteria(config: WalletConfig, token: EnhancedTokenDetails): boolean {
+    return (
+        config.kind === "auto_wallet" &&
+        (DEFAULT_TOKENS.includes(token.symbol) ||
+            (config.minDollarValue <= 0 && token.balance > 0) ||
+            (config.minDollarValue > 0 && (token.dollarBalance ?? 0) >= config.minDollarValue))
+    );
+}
+
+function meetsManualWalletCriteria(config: WalletConfig, token: EnhancedTokenDetails): boolean {
+    return config.kind === "manual_wallet" && config.tokens.has(token.ledger);
+}
+
+export const serverWalletConfigStore = writable<WalletConfig>({
+    kind: "auto_wallet",
+    minDollarValue: 0,
+});
+
+export const walletConfigStore = derived(
+    [serverWalletConfigStore, localUpdates.walletConfig],
+    ([serverWalletConfig, localUpates]) => localUpates ?? serverWalletConfig,
+);
+
+export const walletTokensSorted = derived(
+    [cryptoTokensSorted, walletConfigStore],
+    ([$tokens, walletConfig]) => {
+        return $tokens.filter(
+            (t) =>
+                meetsAutoWalletCriteria(walletConfig, t) ||
+                meetsManualWalletCriteria(walletConfig, t),
+        );
+    },
+);
+
+export const swappableTokensStore = new SafeSetStore<string>();
+
+function compareTokens(a: EnhancedTokenDetails, b: EnhancedTokenDetails): number {
+    // Sort by non-zero balances first
+    // Then by $ balance
+    // Then by whether token is a default
+    // Then by default precedence
+    // Then alphabetically by symbol
+
+    const aNonZero = a.balance > 0;
+    const bNonZero = b.balance > 0;
+
+    if (aNonZero !== bNonZero) {
+        return aNonZero ? -1 : 1;
+    }
+
+    const aDollarBalance = a.dollarBalance ?? -1;
+    const bDollarBalance = b.dollarBalance ?? -1;
+
+    if (aDollarBalance < bDollarBalance) {
+        return 1;
+    } else if (aDollarBalance > bDollarBalance) {
+        return -1;
+    } else {
+        const defA = DEFAULT_TOKENS.indexOf(a.symbol);
+        const defB = DEFAULT_TOKENS.indexOf(b.symbol);
+
+        if (defA >= 0 && defB >= 0) {
+            return defA < defB ? 1 : -1;
+        } else if (defA >= 0) {
+            return 1;
+        } else if (defB >= 0) {
+            return -1;
+        } else {
+            return a.symbol.localeCompare(b.symbol);
+        }
+    }
+}
+
+export function hasFlag(mask: number, flag: ModerationFlag): boolean {
+    return (mask & flag) !== 0;
+}
+export const pinNumberRequiredStore = writable<boolean | undefined>(undefined);
+export const pinNumberResolverStore = writable<PinNumberResolver | undefined>(undefined);
+export const pinNumberFailureStore = writable<PinNumberFailures | undefined>(undefined);
+
+export const storageStore = writable<StorageStatus>({
+    byteLimit: 0,
+    bytesUsed: 0,
+});
+
+export const percentageStorageUsedStore = derived(storageStore, (storage) =>
+    Math.ceil((storage.bytesUsed / storage.byteLimit) * 100),
+);
+
+export const percentageStorageRemainingStore = derived(storageStore, (storage) =>
+    Math.floor((1 - storage.bytesUsed / storage.byteLimit) * 100),
+);
+
+export const storageInGBStore = derived(storageStore, (storage) => ({
+    gbLimit: storage.byteLimit / ONE_GB,
+    gbUsed: storage.bytesUsed / ONE_GB,
+}));
+
+export const messageFiltersStore = writable<MessageFilter[]>([]);
+export const translationsStore = new MessageMapStore<string>();
+export const snsFunctionsStore = writable<SnsFunctions>(new SnsFunctions());
+export const filteredProposalsStore = writable<FilteredProposals | undefined>(undefined);
+export const currentUserStore = writable<CreatedUser>(anonymousUser(), dequal);
+export const currentUserIdStore = derived(currentUserStore, ({ userId }) => userId);
+export const anonUserStore = derived(currentUserIdStore, (id) => id === ANON_USER_ID);
+export const suspendedUserStore = derived(
+    currentUserStore,
+    (user) => user.suspensionDetails !== undefined,
+);
+export const platformModeratorStore = derived(currentUserStore, (user) => user.isPlatformModerator);
+export const platformOperatorStore = derived(currentUserStore, (user) => user.isPlatformOperator);
+export const diamondStatusStore = derived(currentUserStore, (user) => user.diamondStatus);
+export const isDiamondStore = derived(
+    diamondStatusStore,
+    (diamondStatus) =>
+        diamondStatus.kind === "lifetime" ||
+        (diamondStatus.kind === "active" && diamondStatus.expiresAt > Date.now()),
+);
+export const isLifetimeDiamondStore = derived(
+    diamondStatusStore,
+    (diamondStatus) => diamondStatus.kind === "lifetime",
+);
+export const canExtendDiamondStore = derived(
+    diamondStatusStore,
+    (diamondStatus) => diamondStatus.kind === "active",
+);
+export const moderationFlagsEnabledStore = derived(
+    currentUserStore,
+    ({ moderationFlagsEnabled }) => moderationFlagsEnabled,
+);
+export const adultEnabledStore = derived(moderationFlagsEnabledStore, (moderationFlagsEnabled) =>
+    hasFlag(moderationFlagsEnabled, ModerationFlags.Adult),
+);
+export const offensiveEnabledStore = derived(
+    moderationFlagsEnabledStore,
+    (moderationFlagsEnabled) => hasFlag(moderationFlagsEnabled, ModerationFlags.Offensive),
+);
+export const underReviewEnabledStore = derived(
+    moderationFlagsEnabledStore,
+    (moderationFlagsEnabled) => hasFlag(moderationFlagsEnabled, ModerationFlags.UnderReview),
+);
+
+const notificationsSupported =
+    "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+
+export const softDisabledStore = new LocalStorageBoolStore(configKeys.softDisabled, false);
+
+const browserPermissionStore = writable<NotificationPermission | "pending-init">("pending-init");
+
+export async function initNotificationStores(): Promise<void> {
+    if (!notificationsSupported) {
+        return;
+    }
+
+    console.debug("PUSH: initialising notification stores with ", Notification.permission);
+
+    browserPermissionStore.set(Notification.permission);
+    if (navigator.permissions) {
+        navigator.permissions.query({ name: "notifications" }).then((perm) => {
+            perm.onchange = () => {
+                console.debug("PUSH: permission status changed to ", perm.state);
+                browserPermissionStore.set(permissionStateToNotificationPermission(perm.state));
+            };
+        });
+    }
+}
+
+export function setSoftDisabled(softDisabled: boolean): void {
+    softDisabledStore.set(softDisabled);
+}
+
+function permissionStateToNotificationPermission(perm: PermissionState): NotificationPermission {
+    switch (perm) {
+        case "prompt":
+            return "default";
+        case "denied":
+            return "denied";
+        case "granted":
+            return "granted";
+    }
+}
+
+function permissionToStatus(
+    permission: NotificationPermission | "pending-init",
+): NotificationStatus {
+    switch (permission) {
+        case "pending-init":
+            return "pending-init";
+        case "denied":
+            return "hard-denied";
+        case "granted":
+            return "granted";
+        default:
+            return "prompt";
+    }
+}
+
+export const notificationStatus = derived(
+    [softDisabledStore, browserPermissionStore, anonUserStore],
+    ([softDisabled, browserPermission, anonUser]) => {
+        if (!notificationsSupported || anonUser) {
+            return "unsupported";
+        }
+        if (softDisabled) {
+            return "soft-denied";
+        }
+        return permissionToStatus(browserPermission);
+    },
+);
+
+export async function askForNotificationPermission(): Promise<NotificationPermission> {
+    return Notification.requestPermission()
+        .then((res) => {
+            console.debug("PUSH: requestPermission result: ", res);
+            setSoftDisabled(false);
+            browserPermissionStore.set(res);
+            return res;
+        })
+        .catch((err) => {
+            console.debug("PUSH: requestPermission err: ", err);
+            throw err;
+        });
+}
+
+export const communityFiltersStore = new LocalStorageStore(
+    "openchat_community_filters",
+    new Set<string>(),
+    communityFilterToString,
+    communityFilterFromString,
+    setsAreEqual,
+);
+export const exploreCommunitiesFiltersStore = derived(
+    [communityFiltersStore, moderationFlagsEnabledStore],
+    ([communityFilters, moderationFlagsEnabled]) => ({
+        languages: Array.from(communityFilters),
+        flags: moderationFlagsEnabled,
+    }),
+);
+export const userCreatedStore = new LocalStorageBoolStore(configKeys.userCreated, false);
+export const selectedAuthProviderStore = new LocalStorageStore(
+    configKeys.selectedAuthProvider,
+    AuthProvider.II,
+    (a) => a,
+    (a) => enumFromStringValue(AuthProvider, a, AuthProvider.II),
+);
+export const achievementsStore = new SafeSetStore<string>();
+export const chitStateStore = writable<ChitState>(
+    {
+        chitBalance: 0,
+        totalChitEarned: 0,
+        streak: 0,
+        streakEnds: 0n,
+        nextDailyChitClaim: 0n,
+    },
+    dequal,
+);
+
+export const serverCommunitiesStore = new CommunityMapStore<CommunitySummary>();
+
+export const communitiesStore = derived(
+    [
+        serverCommunitiesStore,
+        localUpdates.communities,
+        localUpdates.previewCommunities,
+        communitySummaryLocalUpdates,
+    ],
+    ([serverCommunities, localCommunities, previewCommunities, localUpdates]) => {
+        const merged = localCommunities.apply(serverCommunities.clone().merge(previewCommunities));
+        return [...merged.entries()].reduce((result, [communityId, community]) => {
+            const updates = localUpdates.get(communityId);
+
+            const anyChanges =
+                updates?.index !== undefined ||
+                updates?.displayName !== undefined ||
+                updates?.rulesAccepted !== undefined;
+
+            if (anyChanges) {
+                const clone = structuredClone(community);
+                const index = updates?.index;
+                if (index !== undefined) {
+                    clone.membership.index = index;
+                }
+                clone.membership.displayName = applyOptionUpdate(
+                    clone.membership.displayName,
+                    updates?.displayName,
+                );
+                clone.membership.rulesAccepted =
+                    updates?.rulesAccepted ?? clone.membership.rulesAccepted;
+
+                result.set(communityId, clone);
+            } else {
+                result.set(communityId, community);
+            }
+            return result;
+        }, new CommunityMap<CommunitySummary>());
+    },
+);
+
+export const sortedCommunitiesStore = derived(communitiesStore, (communities) => {
+    return [...communities.values()].toSorted((a, b) => {
+        return b.membership.index === a.membership.index
+            ? b.memberCount - a.memberCount
+            : b.membership.index - a.membership.index;
+    });
+});
+
+export const nextCommunityIndexStore = derived(
+    sortedCommunitiesStore,
+    (sortedCommunitiesStore) => (sortedCommunitiesStore[0]?.membership?.index ?? -1) + 1,
+);
+
+export const userGroupSummariesStore = derived(communitiesStore, (communities) => {
+    return [...communities.values()].reduce((map, community) => {
+        community.userGroups.forEach((ug) => map.set(ug.id, ug));
+        return map;
+    }, new Map<number, UserGroupSummary>());
+});
+
+export const selectedChatIdStore = derived(routeStore, (route) => {
+    switch (route.kind) {
+        case "selected_channel_route":
+        case "global_chat_selected_route":
+            return route.chatId;
+        default:
+            return undefined;
+    }
+});
+
+export const chatListScopeStore = derived(routeStore, (route) => route.scope);
+export const chatsInitialisedStore = writable(false);
+export const selectedServerCommunityStore = writable<CommunityDetailsState | undefined>(undefined);
+export const selectedCommunityMembersStore = derived(
+    [selectedServerCommunityStore, communityLocalUpdates.members],
+    ([community, members]) => {
+        if (community === undefined) return new Map() as ReadonlyMap<string, Member>;
+        const updates = members.get(community.communityId);
+        if (updates === undefined) return community.members;
+        return updates.apply(community.members);
+    },
+);
+export const selectedCommunityBotsStore = derived(
+    [selectedServerCommunityStore, communityLocalUpdates.bots],
+    ([community, bots]) => {
+        if (community === undefined)
+            return new Map() as ReadonlyMap<string, ExternalBotPermissions>;
+        const updates = bots.get(community.communityId);
+        if (updates === undefined) return community.bots;
+        return updates.apply(community.bots);
+    },
+);
+export const selectedCommunityUserGroupsStore = derived(
+    [selectedServerCommunityStore, communityLocalUpdates.userGroups],
+    ([community, userGroups]) => {
+        if (community === undefined) return new Map() as ReadonlyMap<number, UserGroupDetails>;
+        const updates = userGroups.get(community.communityId);
+        if (updates === undefined) return community.userGroups;
+        return updates.apply(community.userGroups);
+    },
+);
+export const selectedCommunityInvitedUsersStore = derived(
+    [selectedServerCommunityStore, communityLocalUpdates.invitedUsers],
+    ([community, invitedUsers]) => {
+        if (community === undefined) return new Set() as ReadonlySet<string>;
+        const updates = invitedUsers.get(community.communityId);
+        if (updates === undefined) return community.invitedUsers;
+        return updates.apply(community.invitedUsers);
+    },
+);
+export const selectedCommunityBlockedUsersStore = derived(
+    [selectedServerCommunityStore, communityLocalUpdates.blockedUsers],
+    ([community, blockedUsers]) => {
+        if (community === undefined) return new Set() as ReadonlySet<string>;
+        const updates = blockedUsers.get(community.communityId);
+        if (updates === undefined) return community.blockedUsers;
+        return updates.apply(community.blockedUsers);
+    },
+);
+export const selectedCommunityRulesStore = derived(
+    [selectedServerCommunityStore, communityLocalUpdates.rules],
+    ([community, rules]) => {
+        if (community === undefined) return undefined;
+        const updates = rules.get(community.communityId);
+        return updates ?? community.rules;
+    },
+);
+export const selectedCommunityLapsedMembersStore = derived(
+    selectedServerCommunityStore,
+    (selectedCommunity) => selectedCommunity?.lapsedMembers ?? (new Set() as ReadonlySet<string>),
+);
+export const selectedCommunityApiKeysStore = derived(
+    selectedServerCommunityStore,
+    (selectedCommunity) =>
+        selectedCommunity?.apiKeys ?? (new Map() as ReadonlyMap<string, PublicApiKeyDetails>),
+);
+export const selectedCommunityReferralsStore = derived(
+    selectedServerCommunityStore,
+    (selectedCommunity) => selectedCommunity?.referrals ?? (new Set() as ReadonlySet<string>),
+);
+export const selectedCommunitySummaryStore = derived(
+    [selectedCommunityIdStore, communitiesStore],
+    ([selectedCommunityId, communities]) =>
+        selectedCommunityId ? communities.get(selectedCommunityId) : undefined,
+);
+export const serverDirectChatsStore = new ChatMapStore<DirectChatSummary>();
+export const serverGroupChatsStore = new ChatMapStore<GroupChatSummary>();
+export const serverFavouritesStore = new ChatSetStore();
+export const serverPinnedChatsStore = new PinnedByScopeStore();
+export const directChatApiKeysStore = new SafeMapStore<string, PublicApiKeyDetails>();
+export const serverMessageActivitySummaryStore = writable<MessageActivitySummary>({
+    readUpToTimestamp: 0n,
+    latestTimestamp: 0n,
+    unreadCount: 0,
+});
+export const serverDirectChatBotsStore = new SafeMapStore<string, ExternalBotPermissions>();
+export const serverStreakInsuranceStore = writable<StreakInsurance>({
+    daysInsured: 0,
+    daysMissed: 0,
+});
+export const referralsStore = writable<Referral[]>([]);
+export const streakInsuranceStore = derived(
+    [serverStreakInsuranceStore, localUpdates.streakInsurance],
+    ([serverStreakInsurance, localUpates]) => localUpates ?? serverStreakInsurance,
+);
 
 export class AppState {
+    #percentageStorageRemaining: number = 0;
+    #percentageStorageUsed: number = 0;
+    #storageInGB = { gbLimit: 0, gbUsed: 0 };
+    #offline: boolean = false;
+    #locale: string = "en";
+    #exploreCommunitiesFilters: { languages: string[]; flags: number } = {
+        languages: [],
+        flags: 0,
+    };
+    #anonUser: boolean = false;
+    #suspendedUser: boolean = false;
+    #platformModerator: boolean = false;
+    #platformOperator: boolean = false;
+    #diamondStatus: DiamondMembershipStatus = { kind: "inactive" };
+    #isDiamond: boolean = false;
+    #isLifetimeDiamond: boolean = false;
+    #canExtendDiamond: boolean = false;
+    #moderationFlagsEnabled: number = 0;
+    #adultEnabled: boolean = false;
+    #offensiveEnabled: boolean = false;
+    #underReviewEnabled: boolean = false;
+    #nextCommunityIndex: number = 0;
+    #selectedCommunityBlockedUsers!: ReadonlySet<string>;
+    #selectedCommunityMembers!: ReadonlyMap<string, Member>;
+    #selectedCommunityReferrals!: ReadonlySet<string>;
+    #selectedCommunityInvitedUsers!: ReadonlySet<string>;
+    #selectedCommunityRules?: VersionedRules;
+    #selectedCommunitySummary?: CommunitySummary;
+    #serverMessageActivitySummary = $state<MessageActivitySummary>({
+        readUpToTimestamp: 0n,
+        latestTimestamp: 0n,
+        unreadCount: 0,
+    });
+    #walletConfig!: WalletConfig;
+
+    // TODO - these need to use $state for the moment because we still have $derived that is depending on it
+    // but it can be a plain value once that's all gone
+    #translations = $state<MessageMap<string>>(new MessageMap());
+    #messageFilters = $state<MessageFilter[]>([]);
+    #currentUserId = $state<string>(currentUserStore.current.userId);
+    #communities = $state<CommunityMap<CommunitySummary>>(new CommunityMap());
+    #selectedChatId = $state<ChatIdentifier | undefined>();
+    #selectedCommunityId = $state<CommunityIdentifier | undefined>();
+    #chatListScope = $state<ChatListScope>({ kind: "none" });
+    #serverDirectChats = $state<ChatMap<DirectChatSummary>>(new ChatMap());
+    #serverGroupChats = $state<ChatMap<GroupChatSummary>>(new ChatMap());
+    #serverCommunities = $state<CommunityMap<CommunitySummary>>(new CommunityMap());
+    #serverFavourites = $state<ChatSet>(new ChatSet());
+    #serverPinnedChats = $state<SafeMap<ChatListScope["kind"], ChatIdentifier[]>>(new SafeMap());
+    #serverDirectChatBots = $state<SafeMap<string, ExternalBotPermissions>>(new SafeMap());
+
     constructor() {
         $effect.root(() => {
-            $effect(() => {
-                if (this.#selectedCommunityId === undefined) {
-                    this.#selectedCommunity = new CommunityMergedState(
-                        CommunityServerState.empty(),
-                    );
-                }
-            });
-
             $effect(() => {
                 if (this.#selectedChatId === undefined) {
                     this.#selectedChat = new ChatDetailsMergedState(ChatDetailsServerState.empty());
                 }
             });
-
-            $effect(() => {
-                void this.#pinNumberFailure;
-                dummyPinNumberFailureStore.set(Symbol());
-            });
         });
 
         locale.subscribe((l) => (this.#locale = l ?? "en"));
         offlineStore.subscribe((offline) => (this.#offline = offline));
-    }
-
-    #pinNumberRequired = $state<boolean | undefined>();
-
-    #pinNumberResolver = $state<PinNumberResolver | undefined>();
-
-    #pinNumberFailure = $state<PinNumberFailures | undefined>();
-
-    #selectedAuthProvider = new LocalStorageState(
-        configKeys.selectedAuthProvider,
-        AuthProvider.II,
-        (a) => a,
-        (a) => enumFromStringValue(AuthProvider, a, AuthProvider.II),
-    );
-
-    #userCreated = new LocalStorageBoolState(configKeys.userCreated, false);
-
-    #storage = $state<StorageStatus>({
-        byteLimit: 0,
-        bytesUsed: 0,
-    });
-
-    #percentageStorageUsed = $derived(
-        Math.ceil((this.#storage.bytesUsed / this.#storage.byteLimit) * 100),
-    );
-
-    #percentageStorageRemaining = $derived(
-        Math.floor((1 - this.#storage.bytesUsed / this.#storage.byteLimit) * 100),
-    );
-
-    #storageInGB = $derived({
-        gbLimit: this.#storage.byteLimit / ONE_GB,
-        gbUsed: this.#storage.bytesUsed / ONE_GB,
-    });
-
-    #locale = $state<string>("en");
-
-    #offline = $state<boolean>(false);
-
-    #messageFilters = $state<MessageFilter[]>([]);
-
-    #translations = $state<ReactiveMessageMap<string>>(new ReactiveMessageMap());
-
-    #communityFilterToString(filter: CommunityFilter): string {
-        return JSON.stringify({
-            ...filter,
-            languages: Array.from(filter.languages),
-        });
-    }
-
-    #communityFilterFromString(serialised: string | null): CommunityFilter | undefined {
-        if (!serialised) return undefined;
-        const parsed = JSON.parse(serialised);
-        return {
-            languages: new SvelteSet(parsed.languages),
-        };
-    }
-
-    #initialiseCommunityFilter() {
-        return (
-            this.#communityFilterFromString(localStorage.getItem("openchat_community_filters")) ?? {
-                languages: new SvelteSet<string>(),
-            }
+        percentageStorageRemainingStore.subscribe((v) => (this.#percentageStorageRemaining = v));
+        percentageStorageUsedStore.subscribe((v) => (this.#percentageStorageUsed = v));
+        storageInGBStore.subscribe((v) => (this.#storageInGB = v));
+        messageFiltersStore.subscribe((v) => (this.#messageFilters = v));
+        currentUserIdStore.subscribe((v) => (this.#currentUserId = v));
+        exploreCommunitiesFiltersStore.subscribe((v) => (this.#exploreCommunitiesFilters = v));
+        anonUserStore.subscribe((v) => (this.#anonUser = v));
+        suspendedUserStore.subscribe((v) => (this.#suspendedUser = v));
+        platformModeratorStore.subscribe((v) => (this.#platformModerator = v));
+        platformOperatorStore.subscribe((v) => (this.#platformOperator = v));
+        diamondStatusStore.subscribe((v) => (this.#diamondStatus = v));
+        isDiamondStore.subscribe((v) => (this.#isDiamond = v));
+        isLifetimeDiamondStore.subscribe((v) => (this.#isLifetimeDiamond = v));
+        canExtendDiamondStore.subscribe((v) => (this.#canExtendDiamond = v));
+        moderationFlagsEnabledStore.subscribe((v) => (this.#moderationFlagsEnabled = v));
+        adultEnabledStore.subscribe((v) => (this.#adultEnabled = v));
+        offensiveEnabledStore.subscribe((v) => (this.#offensiveEnabled = v));
+        underReviewEnabledStore.subscribe((v) => (this.#underReviewEnabled = v));
+        nextCommunityIndexStore.subscribe((v) => (this.#nextCommunityIndex = v));
+        selectedCommunityBlockedUsersStore.subscribe(
+            (v) => (this.#selectedCommunityBlockedUsers = v),
         );
-    }
+        selectedCommunityReferralsStore.subscribe((v) => (this.#selectedCommunityReferrals = v));
+        selectedCommunityInvitedUsersStore.subscribe(
+            (v) => (this.#selectedCommunityInvitedUsers = v),
+        );
+        selectedCommunityMembersStore.subscribe((v) => (this.#selectedCommunityMembers = v));
+        selectedCommunitySummaryStore.subscribe((v) => (this.#selectedCommunitySummary = v));
+        selectedCommunityRulesStore.subscribe((v) => (this.#selectedCommunityRules = v));
 
-    #snsFunctions = $state<SnsFunctions>(new SnsFunctions());
+        // TODO - these clones are only necessary to trigger downstream $derived. Remove when all $deriveds are gone
+        translationsStore.subscribe((v) => (this.#translations = v.clone()));
+        serverCommunitiesStore.subscribe((v) => (this.#serverCommunities = v.clone()));
+        communitiesStore.subscribe((v) => (this.#communities = v));
+        selectedChatIdStore.subscribe((v) => (this.#selectedChatId = v));
+        selectedCommunityIdStore.subscribe((v) => (this.#selectedCommunityId = v));
+        chatListScopeStore.subscribe((v) => (this.#chatListScope = v));
+        serverDirectChatsStore.subscribe((v) => (this.#serverDirectChats = v.clone()));
+        serverGroupChatsStore.subscribe((v) => (this.#serverGroupChats = v.clone()));
+        serverFavouritesStore.subscribe((v) => (this.#serverFavourites = v.clone()));
+        serverPinnedChatsStore.subscribe((v) => (this.#serverPinnedChats = v.clone()));
+        serverMessageActivitySummaryStore.subscribe(
+            (v) => (this.#serverMessageActivitySummary = v),
+        );
+        serverDirectChatBotsStore.subscribe((v) => (this.#serverDirectChatBots = v.clone()));
+        walletConfigStore.subscribe((v) => (this.#walletConfig = v));
+    }
 
     #proposalTopics = $derived.by(() => {
         if (
@@ -208,7 +757,7 @@ export class AppState {
                     [14, "SNS & Neurons' Fund"],
                 ]);
             } else {
-                const snsFunctionsMap = this.#snsFunctions.get(
+                const snsFunctionsMap = this.snsFunctions.get(
                     this.#selectedChatSummary.subtype.governanceCanisterId,
                 );
                 if (snsFunctionsMap !== undefined) {
@@ -220,65 +769,7 @@ export class AppState {
         return new Map();
     });
 
-    #filteredProposals = $state<FilteredProposals | undefined>();
-
     #messageFormatter: MessageFormatter | undefined;
-
-    #communityFilters = $state<CommunityFilter>(this.#initialiseCommunityFilter());
-
-    #currentUser = $state<CreatedUser>(anonymousUser());
-
-    #currentUserId = $derived(this.#currentUser.userId);
-
-    #anonUser = $derived(this.#currentUserId === ANON_USER_ID);
-
-    #suspendedUser = $derived(this.#currentUser.suspensionDetails !== undefined);
-
-    #platformModerator = $derived(this.#currentUser.isPlatformModerator);
-
-    #platformOperator = $derived(this.#currentUser.isPlatformOperator);
-
-    #diamondStatus = $derived(this.#currentUser.diamondStatus);
-
-    #isDiamond = $derived(
-        this.#diamondStatus.kind === "lifetime" ||
-            (this.#diamondStatus.kind === "active" && this.#diamondStatus.expiresAt > Date.now()),
-    );
-
-    #isLifetimeDiamond = $derived(this.#diamondStatus.kind === "lifetime");
-
-    #canExtendDiamond = $derived(this.#diamondStatus.kind === "active");
-
-    hasFlag(mask: number, flag: ModerationFlag): boolean {
-        return (mask & flag) !== 0;
-    }
-
-    #moderationFlagsEnabled = $derived(this.#currentUser.moderationFlagsEnabled);
-
-    #adultEnabled = $derived(this.hasFlag(this.#moderationFlagsEnabled, ModerationFlags.Adult));
-
-    #offensiveEnabled = $derived(
-        this.hasFlag(this.#moderationFlagsEnabled, ModerationFlags.Offensive),
-    );
-
-    #underReviewEnabled = $derived(
-        this.hasFlag(this.#moderationFlagsEnabled, ModerationFlags.UnderReview),
-    );
-
-    #achievements = $state<Set<string>>(new Set());
-
-    #referrals = $state<Referral[]>([]);
-
-    #exploreCommunitiesFilters = $derived({
-        languages: Array.from(this.#communityFilters.languages),
-        flags: this.#moderationFlagsEnabled,
-    });
-
-    #serverMessageActivitySummary = $state<MessageActivitySummary>({
-        readUpToTimestamp: 0n,
-        latestTimestamp: 0n,
-        unreadCount: 0,
-    });
 
     #messageActivitySummary = $derived.by(() => {
         if (
@@ -294,51 +785,17 @@ export class AppState {
         return this.#serverMessageActivitySummary;
     });
 
-    #chitState = $state<ChitState>({
-        chitBalance: 0,
-        totalChitEarned: 0,
-        streak: 0,
-        streakEnds: 0n,
-        nextDailyChitClaim: 0n,
-    });
-
-    #serverStreakInsurance = $state<StreakInsurance>({
-        daysInsured: 0,
-        daysMissed: 0,
-    });
-
-    #streakInsurance = $derived(localUpdates.streakInsurance ?? this.#serverStreakInsurance);
-
-    #serverWalletConfig = $state<WalletConfig>({
-        kind: "auto_wallet",
-        minDollarValue: 0,
-    });
-
-    #walletConfig = $derived(localUpdates.walletConfig ?? this.#serverWalletConfig);
-
-    #serverDirectChatBots = $state<SafeMap<string, ExternalBotPermissions>>(new SafeMap());
-
     #directChatBots = $derived.by(() => {
         return localUpdates.directChatBots.apply(this.#serverDirectChatBots);
     });
 
-    #serverDirectChatApiKeys = $state<Map<string, PublicApiKeyDetails>>(new Map());
-
-    #directChatApiKeys = $derived.by(() => {
-        return this.#serverDirectChatApiKeys;
-    });
-
-    #serverDirectChats = $state<ChatMap<DirectChatSummary>>(new ChatMap());
-
-    #serverGroupChats = $state<ChatMap<GroupChatSummary>>(new ChatMap());
-
-    #serverFavourites = $state<ChatSet>(new ChatSet());
-
+    // TODO - none of the references to userStore here will be reactive at the moment
+    // this is only a temporary problem
     #currentChatBlockedOrSuspendedUsers = $derived.by(() => {
         const direct = get(hideMessagesFromDirectBlocked) ? [...userStore.blockedUsers] : [];
         return new Set<string>([
             ...this.#selectedChat.blockedUsers,
-            ...this.#selectedCommunity.blockedUsers,
+            ...this.#selectedCommunityBlockedUsers,
             ...userStore.suspendedUsers.keys(),
             ...direct,
         ]);
@@ -358,7 +815,7 @@ export class AppState {
 
     #unreadFavouriteCounts = $derived.by(() => {
         const chats = ChatMap.fromList(
-            [...this.serverFavourites.values()]
+            [...this.#serverFavourites.values()]
                 .map((id) => this.#allServerChats.get(id))
                 .filter((chat) => chat !== undefined) as ChatSummary[],
         );
@@ -385,8 +842,6 @@ export class AppState {
         ]);
     });
 
-    #serverCommunities = $state<CommunityMap<CommunitySummary>>(new CommunityMap());
-
     // this *includes* any preview chats since they come from the server too
     #allServerChats = $derived.by(() => {
         const groupChats = this.#serverGroupChats.values();
@@ -396,10 +851,12 @@ export class AppState {
         const previewChannels = ChatMap.fromList(
             [...localUpdates.previewCommunities.values()].flatMap((c) => c.channels),
         );
-        return all
+        const done = all
             .merge(localUpdates.uninitialisedDirectChats)
             .merge(localUpdates.groupChatPreviews)
             .merge(previewChannels);
+        console.log("All server chats: ", done);
+        return done;
     });
 
     #userMetrics = $derived.by(() => {
@@ -552,8 +1009,6 @@ export class AppState {
         }, new ChatMap<Set<number>>());
     });
 
-    #serverPinnedChats = $state<Map<ChatListScope["kind"], ChatIdentifier[]>>(new Map());
-
     #pinnedChats = $derived.by(() => {
         const mergedPinned = new Map(this.#serverPinnedChats);
 
@@ -576,56 +1031,6 @@ export class AppState {
         }
 
         return mergedPinned;
-    });
-
-    #communities = $derived.by(() => {
-        const merged = localUpdates.communities.apply(
-            this.#serverCommunities.merge(localUpdates.previewCommunities),
-        );
-        return [...merged.entries()].reduce((result, [communityId, community]) => {
-            const updates = communityLocalUpdates.get(communityId);
-
-            const anyChanges =
-                updates?.index !== undefined ||
-                updates?.displayName !== undefined ||
-                updates?.rulesAccepted !== undefined;
-
-            if (anyChanges) {
-                const clone = structuredClone(community);
-                const index = updates?.index;
-                if (index !== undefined) {
-                    clone.membership.index = index;
-                }
-                clone.membership.displayName = applyOptionUpdate(
-                    clone.membership.displayName,
-                    updates?.displayName,
-                );
-                clone.membership.rulesAccepted =
-                    updates?.rulesAccepted ?? clone.membership.rulesAccepted;
-
-                result.set(communityId, clone);
-            } else {
-                result.set(communityId, community);
-            }
-            return result;
-        }, new CommunityMap<CommunitySummary>());
-    });
-
-    #sortedCommunities = $derived.by(() => {
-        return [...this.#communities.values()].toSorted((a, b) => {
-            return b.membership.index === a.membership.index
-                ? b.memberCount - a.memberCount
-                : b.membership.index - a.membership.index;
-        });
-    });
-
-    #nextCommunityIndex = $derived((this.#sortedCommunities[0]?.membership?.index ?? -1) + 1);
-
-    #userGroupSummaries = $derived.by(() => {
-        return [...this.#communities.values()].reduce((map, community) => {
-            community.userGroups.forEach((ug) => map.set(ug.id, ug));
-            return map;
-        }, new Map<number, UserGroupSummary>());
     });
 
     #communityChannelVideoCallCounts = $derived.by(() => {
@@ -655,40 +1060,11 @@ export class AppState {
 
     #identityState = $state<IdentityState>({ kind: "loading_user" });
 
-    #chatsInitialised = $state(false);
-
     // TODO - this does not seem to be working as intended - investigate why
-    #chatListScope = $derived.by(withEqCheck(() => pathState.route.scope, chatListScopesEqual));
-
-    #selectedChatId = $derived.by(
-        withEqCheck(() => {
-            switch (pathState.route.kind) {
-                case "selected_channel_route":
-                case "global_chat_selected_route":
-                    return pathState.route.chatId;
-                default:
-                    return undefined;
-            }
-        }, chatIdentifiersEqual),
-    );
 
     #selectedServerChatSummary = $derived.by(() => {
         return this.#selectedChatId ? this.#allServerChats.get(this.#selectedChatId) : undefined;
     });
-
-    #selectedCommunityId = $derived(pathState.communityId);
-
-    #selectedCommunitySummary = $derived.by<CommunitySummary | undefined>(
-        withEqCheck(
-            () =>
-                pathState.communityId ? this.#communities.get(pathState.communityId) : undefined,
-            dequal,
-        ),
-    );
-
-    #selectedCommunity = $state<CommunityMergedState>(
-        new CommunityMergedState(CommunityServerState.empty()),
-    );
 
     #selectedChat = $state<ChatDetailsMergedState>(
         new ChatDetailsMergedState(ChatDetailsServerState.empty()),
@@ -715,41 +1091,53 @@ export class AppState {
     });
 
     setSnsFunctions(snsCanisterId: string, list: NervousSystemFunction[]) {
-        this.#snsFunctions.set(snsCanisterId, list);
+        snsFunctionsStore.update((s) => {
+            const clone = s.clone();
+            clone.set(snsCanisterId, list);
+            return clone;
+        });
     }
 
     get snsFunctions() {
-        return this.#snsFunctions;
+        return snsFunctionsStore.current;
     }
 
     get proposalTopics(): ReadonlyMap<number, string> {
         return this.#proposalTopics;
     }
 
-    get filteredProposals(): FilteredProposals | undefined {
-        return this.#filteredProposals;
+    #modifyFilteredProposals(fn: (fp: FilteredProposals) => void) {
+        filteredProposalsStore.update((fp) => {
+            if (fp !== undefined) {
+                const clone = fp.clone();
+                fn(clone);
+                return clone;
+            }
+        });
     }
 
     enableAllProposalFilters() {
-        this.#filteredProposals?.enableAll();
+        this.#modifyFilteredProposals((fp) => fp.enableAll());
     }
 
     disableAllProposalFilters(ids: number[]) {
-        this.#filteredProposals?.disableAll(ids);
+        this.#modifyFilteredProposals((fp) => fp.disableAll(ids));
     }
 
     toggleProposalFilter(topic: number) {
-        this.#filteredProposals?.toggleFilter(topic);
+        this.#modifyFilteredProposals((fp) => fp.toggleFilter(topic));
     }
 
     toggleProposalFilterMessageExpansion(messageId: bigint, expand: boolean) {
-        this.#filteredProposals?.toggleMessageExpansion(messageId, expand);
+        this.#modifyFilteredProposals((fp) => fp.toggleMessageExpansion(messageId, expand));
     }
 
     #resetFilteredProposals(chat: ChatSummary) {
-        this.#filteredProposals = isProposalsChat(chat)
+        const filteredProposals = isProposalsChat(chat)
             ? FilteredProposals.fromStorage(chat.subtype.governanceCanisterId)
             : undefined;
+
+        filteredProposalsStore.set(filteredProposals);
     }
 
     get currentChatDraftMessage() {
@@ -769,7 +1157,7 @@ export class AppState {
     }
 
     setCurrentUser(user: CreatedUser) {
-        this.#currentUser = user;
+        currentUserStore.set(user);
     }
 
     getProposalTally(governanceCanisterId: string, proposalId: bigint) {
@@ -785,7 +1173,7 @@ export class AppState {
     }
 
     get communityFilters() {
-        return this.#communityFilters;
+        return communityFiltersStore;
     }
 
     get exploreCommunitiesFilters() {
@@ -793,15 +1181,19 @@ export class AppState {
     }
 
     toggleCommunityFilterLanguage(lang: string) {
-        if (this.#communityFilters.languages.has(lang)) {
-            this.#communityFilters.languages.delete(lang);
+        if (communityFiltersStore.current.has(lang)) {
+            communityFiltersStore.update((val) => {
+                const clone = new Set([...val]);
+                clone.delete(lang);
+                return clone;
+            });
         } else {
-            this.#communityFilters.languages.add(lang);
+            communityFiltersStore.update((val) => {
+                const clone = new Set([...val]);
+                clone.add(lang);
+                return clone;
+            });
         }
-        localStorage.setItem(
-            "openchat_community_filters",
-            this.#communityFilterToString(this.#communityFilters),
-        );
     }
 
     get translations() {
@@ -809,59 +1201,35 @@ export class AppState {
     }
 
     translate(messageId: bigint, translation: string) {
-        this.#translations.set(messageId, translation);
+        translationsStore.set(messageId, translation);
     }
 
     untranslate(messageId: bigint) {
-        this.#translations.delete(messageId);
-    }
-
-    set pinNumberFailure(val: PinNumberFailures | undefined) {
-        this.#pinNumberFailure = val;
-    }
-
-    get pinNumberFailure() {
-        return this.#pinNumberFailure;
-    }
-
-    set pinNumberResolver(val: PinNumberResolver | undefined) {
-        this.#pinNumberResolver = val;
-    }
-
-    get pinNumberResolver() {
-        return this.#pinNumberResolver;
-    }
-
-    set pinNumberRequired(val: boolean | undefined) {
-        this.#pinNumberRequired = val;
-    }
-
-    get pinNumberRequired() {
-        return this.#pinNumberRequired;
+        translationsStore.delete(messageId);
     }
 
     set selectedAuthProvider(p: AuthProvider) {
-        this.#selectedAuthProvider.value = p;
+        selectedAuthProviderStore.set(p);
     }
 
     get selectedAuthProvider() {
-        return this.#selectedAuthProvider.value;
+        return selectedAuthProviderStore.current;
     }
 
     set userCreated(val: boolean) {
-        this.#userCreated.value = val;
+        userCreatedStore.set(val);
     }
 
     get userCreated() {
-        return this.#userCreated.value;
+        return userCreatedStore.current;
     }
 
     set storage(val: StorageStatus) {
-        this.#storage = val;
+        storageStore.set(val);
     }
 
     get storage() {
-        return this.#storage;
+        return storageStore.current;
     }
 
     get percentageStorageRemaining() {
@@ -889,11 +1257,11 @@ export class AppState {
     }
 
     set messageFilters(val: MessageFilter[]) {
-        this.#messageFilters = val;
+        messageFiltersStore.set(val);
     }
 
     get currentUser() {
-        return this.#currentUser;
+        return currentUserStore.current;
     }
 
     get currentUserId() {
@@ -984,24 +1352,8 @@ export class AppState {
         return this.#globalUnreadCount;
     }
 
-    set serverMessageActivitySummary(val: MessageActivitySummary) {
-        this.#serverMessageActivitySummary = val;
-    }
-
-    get achievements() {
-        return this.#achievements;
-    }
-
-    set achievements(val: Set<string>) {
-        this.#achievements = val;
-    }
-
-    get referrals() {
-        return this.#referrals;
-    }
-
-    set referrals(val: Referral[]) {
-        this.#referrals = val;
+    get achievements(): ReadonlySet<string> {
+        return achievementsStore;
     }
 
     get messageActivitySummary() {
@@ -1009,27 +1361,11 @@ export class AppState {
     }
 
     get chitState() {
-        return this.#chitState;
+        return chitStateStore.current;
     }
 
     updateChitState(fn: (s: ChitState) => ChitState) {
-        this.#chitState = fn(this.#chitState);
-    }
-
-    get streakInsurance() {
-        return this.#streakInsurance;
-    }
-
-    set serverStreakInsurance(val: StreakInsurance) {
-        this.#serverStreakInsurance = val;
-    }
-
-    get serverStreakInsurance() {
-        return this.#serverStreakInsurance;
-    }
-
-    set serverWalletConfig(val: WalletConfig) {
-        this.#serverWalletConfig = val;
+        chitStateStore.update(fn);
     }
 
     get walletConfig() {
@@ -1038,14 +1374,6 @@ export class AppState {
 
     get directChatBots() {
         return this.#directChatBots;
-    }
-
-    get directChatApiKeys() {
-        return this.#directChatApiKeys;
-    }
-
-    set directChatApiKeys(val: Map<string, PublicApiKeyDetails>) {
-        this.#serverDirectChatApiKeys = val;
     }
 
     get pinnedChats(): Map<ChatListScope["kind"], ChatIdentifier[]> {
@@ -1065,7 +1393,7 @@ export class AppState {
     }
 
     get chatsInitialised() {
-        return this.#chatsInitialised;
+        return chatsInitialisedStore.current;
     }
 
     get chatListScope() {
@@ -1073,7 +1401,7 @@ export class AppState {
     }
 
     set chatsInitialised(val: boolean) {
-        this.#chatsInitialised = val;
+        chatsInitialisedStore.set(val);
     }
 
     get selectedCommunityId() {
@@ -1082,10 +1410,6 @@ export class AppState {
 
     get selectedChatId() {
         return this.#selectedChatId;
-    }
-
-    get selectedCommunity() {
-        return this.#selectedCommunity;
     }
 
     get selectedCommunitySummary() {
@@ -1187,11 +1511,6 @@ export class AppState {
         );
     }
 
-    setSelectedCommunity(communityId: CommunityIdentifier) {
-        const serverState = CommunityServerState.empty(communityId);
-        this.#selectedCommunity = new CommunityMergedState(serverState);
-    }
-
     setCommunityDetailsFromServer(
         communityId: CommunityIdentifier,
         userGroups: Map<number, UserGroupDetails>,
@@ -1213,38 +1532,20 @@ export class AppState {
             return;
         }
 
-        this.#selectedCommunity.overwriteCommunityDetails(
-            communityId,
-            userGroups,
-            members,
-            blockedUsers,
-            lapsedMembers,
-            invitedUsers,
-            referrals,
-            bots,
-            apiKeys,
-            rules,
+        selectedServerCommunityStore.set(
+            new CommunityDetailsState(
+                communityId,
+                userGroups,
+                members,
+                blockedUsers,
+                lapsedMembers,
+                invitedUsers,
+                referrals,
+                bots,
+                apiKeys,
+                rules,
+            ),
         );
-    }
-
-    get serverDirectChats() {
-        return this.#serverDirectChats;
-    }
-
-    set serverDirectChats(val: ChatMap<DirectChatSummary>) {
-        this.#serverDirectChats = val;
-    }
-
-    get serverGroupChats() {
-        return this.#serverGroupChats;
-    }
-
-    set serverGroupChats(val: ChatMap<GroupChatSummary>) {
-        this.#serverGroupChats = val;
-    }
-
-    get serverFavourites() {
-        return this.#serverFavourites;
     }
 
     get favourites() {
@@ -1261,20 +1562,13 @@ export class AppState {
         return this.#serverDirectChats;
     }
 
-    set serverFavourites(val: ChatSet) {
-        this.#serverFavourites = val;
-    }
-
+    // TODO - this is only called from tests
     set serverCommunities(val: CommunityMap<CommunitySummary>) {
-        this.#serverCommunities = val;
-    }
-
-    set serverPinnedChats(val: Map<ChatListScope["kind"], ChatIdentifier[]>) {
-        this.#serverPinnedChats = val;
+        serverCommunitiesStore.fromMap(val);
     }
 
     get serverCommunities() {
-        return this.#serverCommunities;
+        return serverCommunitiesStore;
     }
 
     get chatSummaries() {
@@ -1307,14 +1601,6 @@ export class AppState {
 
     get communities() {
         return this.#communities;
-    }
-
-    get sortedCommunities() {
-        return this.#sortedCommunities;
-    }
-
-    get userGroupSummaries(): ReadonlyMap<number, UserGroupSummary> {
-        return this.#userGroupSummaries;
     }
 
     get communityChannelVideoCallCounts(): ReadonlyMap<CommunityIdentifier, VideoCallCounts> {
@@ -1371,19 +1657,23 @@ export class AppState {
         // ideally we would get rid of the setters for all of these server runes because setting
         // them individually is a mistake. But we also want to be able to set them from tests.
         // I'll try to lock this down a bit more later.
-        this.#serverMessageActivitySummary = messageActivitySummary;
-        this.#achievements = achievements;
-        this.#referrals = referrals;
-        this.#serverDirectChats = directChatsMap;
-        this.#serverGroupChats = groupChatsMap;
-        this.#serverFavourites = favouritesSet;
-        this.#serverCommunities = communitiesMap;
-        this.#serverPinnedChats = pinnedChats;
-        this.#directChatApiKeys = apiKeys;
-        this.#serverDirectChatBots = SafeMap.fromEntries(installedBots.entries());
-        this.#serverWalletConfig = walletConfig;
+        serverMessageActivitySummaryStore.set(messageActivitySummary);
+        achievementsStore.fromSet(achievements);
+        referralsStore.set(referrals);
+
+        // TODO - do we need to separate these things - each of these fromMap calls will result in a publish
+        // which will cause downstream deriveds to fire. It *might* be better to refactor into a single store - we shall see.
+        // Or - this might be the case for a "transaction".
+        serverDirectChatsStore.fromMap(directChatsMap);
+        serverGroupChatsStore.fromMap(groupChatsMap);
+        serverFavouritesStore.fromSet(favouritesSet);
+        serverCommunitiesStore.fromMap(communitiesMap);
+        serverPinnedChatsStore.fromMap(pinnedChats);
+        directChatApiKeysStore.fromMap(apiKeys);
+        serverDirectChatBotsStore.fromMap(installedBots);
+        serverWalletConfigStore.set(walletConfig);
         if (streakInsurance !== undefined) {
-            this.#serverStreakInsurance = streakInsurance;
+            serverStreakInsuranceStore.set(streakInsurance);
         }
         this.updateChitState((curr) => {
             // Skip the new update if it is behind what we already have locally
@@ -1394,6 +1684,54 @@ export class AppState {
 
     set messageFormatter(val: MessageFormatter) {
         this.#messageFormatter = val;
+    }
+
+    get pinNumberRequired() {
+        return pinNumberRequiredStore.current;
+    }
+
+    set pinNumberRequired(val: boolean | undefined) {
+        pinNumberRequiredStore.set(val);
+    }
+
+    get pinNumberResolver() {
+        return pinNumberResolverStore.current;
+    }
+
+    set pinNumberResolver(val: PinNumberResolver | undefined) {
+        pinNumberResolverStore.set(val);
+    }
+
+    get pinNumberFailure() {
+        return pinNumberFailureStore.current;
+    }
+
+    set pinNumberFailure(val: PinNumberFailures | undefined) {
+        pinNumberFailureStore.set(val);
+    }
+
+    get selectedCommunityMembers() {
+        return this.#selectedCommunityMembers;
+    }
+
+    get selectedCommunityBlockedUsers() {
+        return this.#selectedCommunityBlockedUsers;
+    }
+
+    get selectedCommunityReferrals() {
+        return this.#selectedCommunityReferrals;
+    }
+
+    get selectedCommunityInvitedUsers() {
+        return this.#selectedCommunityInvitedUsers;
+    }
+
+    get selectedCommunityRules() {
+        return this.#selectedCommunityRules;
+    }
+
+    get serverStreakInsurance() {
+        return serverStreakInsuranceStore.current;
     }
 }
 

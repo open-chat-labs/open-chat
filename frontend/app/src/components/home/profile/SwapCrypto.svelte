@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { DexId, InterpolationValues, OpenChat, ResourceKey } from "openchat-client";
     import {
-        cryptoBalance as cryptoBalanceStore,
+        cryptoBalanceStore,
         enhancedCryptoLookup as cryptoLookup,
         exchangeRatesLookupStore as exchangeRatesLookup,
         mobileWidth,
@@ -98,12 +98,12 @@
 
                     const usdInText = calculateDollarAmount(
                         amountIn,
-                        $exchangeRatesLookup[detailsIn.symbol.toLowerCase()]?.toUSD,
+                        $exchangeRatesLookup.get(detailsIn.symbol.toLowerCase())?.toUSD,
                         detailsIn.decimals,
                     );
                     const usdOutText = calculateDollarAmount(
                         bestQuote[1],
-                        $exchangeRatesLookup[detailsOut!.symbol.toLowerCase()]?.toUSD,
+                        $exchangeRatesLookup.get(detailsOut!.symbol.toLowerCase())?.toUSD,
                         detailsOut!.decimals,
                     );
 
@@ -235,8 +235,8 @@
     }
     let initialized = $state(false);
 
-    let detailsIn = $derived($cryptoLookup[ledgerIn]);
-    let detailsOut = $derived(ledgerOut !== undefined ? $cryptoLookup[ledgerOut] : undefined);
+    let detailsIn = $derived($cryptoLookup.get(ledgerIn)!);
+    let detailsOut = $derived(ledgerOut !== undefined ? $cryptoLookup.get(ledgerOut) : undefined);
     let anySwapsAvailable = $derived(Object.keys(swaps).length > 0 && detailsOut !== undefined);
     let swapping = $derived(swapState === "swap" && busy);
     let amountInText = $derived(client.formatTokens(amountIn, detailsIn.decimals));
@@ -257,7 +257,7 @@
                   tokenOut: detailsOut!.symbol,
               }),
     );
-    let balanceIn = $derived($cryptoBalanceStore[ledgerIn]);
+    let balanceIn = $derived($cryptoBalanceStore.get(ledgerIn) ?? 0n);
     let remainingBalance = $derived(
         amountIn > BigInt(0) ? balanceIn - amountIn - detailsIn.transferFee : balanceIn,
     );

@@ -16,9 +16,11 @@
         UserOrUserGroup,
     } from "openchat-client";
     import {
-        app,
+        allUsersStore,
+        anonUserStore,
         botState,
         chatIdentifiersEqual,
+        currentUserIdStore,
         directMessageCommandInstance,
         iconSize,
         localUpdates,
@@ -26,8 +28,9 @@
         random64,
         screenWidth,
         ScreenWidth,
+        selectedCommunitySummaryStore,
+        selectedCommunityUserGroupsStore,
         throttleDeadline,
-        userStore,
     } from "openchat-client";
     import { getContext, tick } from "svelte";
     import { _ } from "svelte-i18n";
@@ -273,7 +276,7 @@
                 undefined,
                 { kind: "text_content", text: txt },
                 userMessageId,
-                app.currentUserId,
+                $currentUserIdStore,
                 $useBlockLevelMarkdown,
                 false,
             );
@@ -306,7 +309,7 @@
 
     function formatUserMentions(text: string): string {
         return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
-            const u = userStore.get(p1);
+            const u = $allUsersStore.get(p1);
             if (u?.username !== undefined) {
                 const username = u.username;
                 return `@${username}`;
@@ -317,7 +320,7 @@
 
     function formatUserGroupMentions(text: string): string {
         return text.replace(/@UserGroup\(([\d\w-]+)\)/g, (match, p1) => {
-            const u = app.selectedCommunity.userGroups.get(Number(p1));
+            const u = $selectedCommunityUserGroupsStore.get(Number(p1));
             if (u !== undefined) {
                 return `@${u.name}`;
             }
@@ -502,7 +505,7 @@
     let messageIsEmpty = $derived(
         (textContent?.trim() ?? "").length === 0 && attachment === undefined,
     );
-    let canSendAny = $derived(!app.anonUser && client.canSendMessage(chat.id, mode));
+    let canSendAny = $derived(!$anonUserStore && client.canSendMessage(chat.id, mode));
     let permittedMessages = $derived(client.permittedMessages(chat.id, mode));
     let canEnterText = $derived(
         (permittedMessages.get("text") ?? false) ||
@@ -510,7 +513,7 @@
             attachment !== undefined,
     );
     let excessiveLinks = $derived(client.extractEnabledLinks(textContent ?? "").length > 5);
-    let frozen = $derived(client.isChatOrCommunityFrozen(chat, app.selectedCommunitySummary));
+    let frozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
     $effect(() => {
         if (inp) {
             if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
@@ -641,7 +644,7 @@
         <div class="disabled">
             <Translatable
                 resourceKey={i18nKey(
-                    app.anonUser
+                    $anonUserStore
                         ? "sendMessageDisabledAnon"
                         : mode === "thread"
                           ? "readOnlyThread"

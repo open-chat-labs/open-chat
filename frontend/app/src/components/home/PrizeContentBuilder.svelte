@@ -5,12 +5,7 @@
         OpenChat,
         PrizeContentInitial,
     } from "openchat-client";
-    import {
-        bigIntMax,
-        cryptoBalance as cryptoBalanceStore,
-        cryptoLookup,
-        mobileWidth,
-    } from "openchat-client";
+    import { bigIntMax, cryptoBalanceStore, cryptoLookup, mobileWidth } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
@@ -82,8 +77,8 @@
     $effect(() => {
         anyUser = !diamondOnly && !uniquePersonOnly && !streakOnly;
     });
-    let cryptoBalance = $derived($cryptoBalanceStore[ledger] ?? BigInt(0));
-    let tokenDetails = $derived($cryptoLookup[ledger]);
+    let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
+    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let symbol = $derived(tokenDetails.symbol);
     let transferFee = $derived(tokenDetails.transferFee);
     let transferFees = $derived(transferFee * BigInt(numberOfWinners ?? 0));

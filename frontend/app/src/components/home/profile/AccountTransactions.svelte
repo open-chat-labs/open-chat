@@ -5,8 +5,8 @@
         type NamedAccount,
         type OpenChat,
         type ResourceKey,
-        app,
         cryptoLookup,
+        currentUserStore,
         mobileWidth,
         nervousSystemLookup,
         toRecord,
@@ -92,7 +92,7 @@
     }
 
     function loadTransactions() {
-        const nervousSystem = Object.values($nervousSystemLookup).find(
+        const nervousSystem = [...$nervousSystemLookup.values()].find(
             (n) => n.ledgerCanisterId === ledger,
         );
         const ledgerIndex = nervousSystem?.indexCanisterId;
@@ -148,10 +148,10 @@
         }
     }
     let accountLookup = $derived(toRecord(accounts, (a) => a.account));
-    let tokenDetails = $derived($cryptoLookup[ledger]);
+    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let snsLedgers = $derived(
         new Set<string>(
-            Object.values($nervousSystemLookup)
+            [...$nervousSystemLookup.values()]
                 .filter((ns) => !ns.isNns)
                 .map((ns) => ns.ledgerCanisterId),
         ),
@@ -232,13 +232,13 @@
                                         <TransactionEndpoint
                                             accounts={accountLookup}
                                             address={transaction.from}
-                                            currentUser={app.currentUser} />
+                                            currentUser={$currentUserStore} />
                                     </td>
                                     <td class="truncate">
                                         <TransactionEndpoint
                                             accounts={accountLookup}
                                             address={transaction.to}
-                                            currentUser={app.currentUser} />
+                                            currentUser={$currentUserStore} />
                                     </td>
                                 </tr>
                             {/each}

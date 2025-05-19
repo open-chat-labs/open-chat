@@ -33,7 +33,7 @@
     });
 
     // make sure that the modal is closed if there is a routing event
-    // TODO - this could be done with an effect based on pathState.route - might be better
+    // TODO - this could be done with an effect based on $routeStore - might be better
     function popState() {
         onClose?.();
     }

@@ -6,10 +6,11 @@
         ResourceKey,
     } from "openchat-client";
     import {
-        app,
         BTC_SYMBOL,
-        cryptoBalance as cryptoBalanceStore,
+        cryptoBalanceStore,
         cryptoLookup,
+        currentUserIdStore,
+        currentUserStore,
         iconSize,
         ICP_SYMBOL,
         mobileWidth,
@@ -58,16 +59,16 @@
     let balanceWithRefresh: BalanceWithRefresh;
     const ckbtcMinterInfoDebouncer = new Debouncer(getCkbtcMinterWithdrawalInfo, 500);
 
-    let cryptoBalance = $derived($cryptoBalanceStore[ledger] ?? BigInt(0));
-    let tokenDetails = $derived($cryptoLookup[ledger]);
+    let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
+    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let account = $derived(
-        tokenDetails.symbol === ICP_SYMBOL ? app.currentUser.cryptoAccount : app.currentUserId,
+        tokenDetails?.symbol === ICP_SYMBOL ? $currentUserStore.cryptoAccount : $currentUserIdStore,
     );
     let symbol = $derived(tokenDetails.symbol);
     let selectedBtcNetwork = $state(BTC_SYMBOL);
     let isBtc = $derived(symbol === BTC_SYMBOL);
     let isBtcNetwork = $derived(isBtc && selectedBtcNetwork === BTC_SYMBOL);
-    let transferFees = $derived(tokenDetails.transferFee);
+    let transferFees = $derived(tokenDetails?.transferFee ?? 0n);
     let targetAccountValid = $derived(
         targetAccount.length > 0 && targetAccount !== account && isBtcNetwork
             ? targetAccount.length >= 14

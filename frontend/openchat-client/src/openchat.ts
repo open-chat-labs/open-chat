@@ -278,11 +278,23 @@ import { tick } from "svelte";
 import { get } from "svelte/store";
 import type { OpenChatConfig } from "./config";
 import { AIRDROP_BOT_USER_ID } from "./constants";
-import { configureEffects } from "./effects.svelte";
 import { snapshot } from "./snapshot.svelte";
-import { app } from "./state/app.svelte";
+import {
+    app,
+    askForNotificationPermission,
+    bitcoinAddress,
+    cryptoBalanceStore,
+    cryptoLookup,
+    exchangeRatesLookupStore,
+    hasFlag,
+    initNotificationStores,
+    lastCryptoSent,
+    nervousSystemLookup,
+    notificationStatus,
+    setSoftDisabled,
+    swappableTokensStore,
+} from "./state/app.svelte";
 import { botState } from "./state/bots.svelte";
-import { type CommunityMergedState } from "./state/community_details";
 import { localUpdates } from "./state/global";
 import { pathState, type RouteParams } from "./state/path.svelte";
 import {
@@ -295,25 +307,10 @@ import {
 import type { UndoLocalUpdate } from "./state/undo";
 import { messagesRead, startMessagesReadTracker } from "./state/unread/markRead.svelte";
 import { userStore } from "./state/users/users.svelte";
-import {
-    bitcoinAddress,
-    cryptoBalance,
-    cryptoLookup,
-    exchangeRatesLookupStore,
-    lastCryptoSent,
-    nervousSystemLookup,
-    swappableTokensStore,
-} from "./stores/crypto";
 import { diamondDurationToMs } from "./stores/diamond";
 import { applyTranslationCorrection } from "./stores/i18n";
 import { lastOnlineDates } from "./stores/lastOnlineDates";
 import { minutesOnlineStore } from "./stores/minutesOnline";
-import {
-    askForNotificationPermission,
-    initNotificationStores,
-    notificationStatus,
-    setSoftDisabled,
-} from "./stores/notifications";
 import { recommendedGroupExclusions } from "./stores/recommendedGroupExclusions";
 import { captureRulesAcceptanceStore } from "./stores/rules";
 import { initialiseMostRecentSentMessageTimes, shouldThrottle } from "./stores/throttling";
@@ -678,8 +675,6 @@ export class OpenChat {
         } else {
             await this.#ocIdentityStorage.remove();
         }
-
-        configureEffects(this);
 
         this.#loadUser();
     }
@@ -1609,7 +1604,7 @@ export class OpenChat {
             if (resp.kind === "success") {
                 const userId = app.currentUserId;
                 if (userId !== undefined) {
-                    const m = app.selectedCommunity.members.get(userId);
+                    const m = app.selectedCommunityMembers.get(userId);
                     if (m !== undefined) {
                         localUpdates.updateCommunityMember(id, userId, { ...m, displayName });
                     }
@@ -1653,7 +1648,7 @@ export class OpenChat {
     }
 
     getContentAsText(formatter: MessageFormatter, content: MessageContent): string {
-        return getContentAsFormattedText(formatter, content, get(cryptoLookup));
+        return getContentAsFormattedText(formatter, content, cryptoLookup);
     }
 
     groupAvatarUrl(
@@ -2429,14 +2424,14 @@ export class OpenChat {
         return true;
     }
 
-    async #updateUserStoreFromCommunityState(community: CommunityMergedState): Promise<void> {
+    async #updateUserStoreFromCommunityState(): Promise<void> {
         const allUserIds = new Set<string>();
-        this.#getTruncatedUserIdsFromMembers([...community.members.values()]).forEach((m) =>
-            allUserIds.add(m.userId),
+        this.#getTruncatedUserIdsFromMembers([...app.selectedCommunityMembers.values()]).forEach(
+            (m) => allUserIds.add(m.userId),
         );
-        community.blockedUsers.forEach((u) => allUserIds.add(u));
-        community.invitedUsers.forEach((u) => allUserIds.add(u));
-        community.referrals.forEach((u) => allUserIds.add(u));
+        app.selectedCommunityBlockedUsers.forEach((u) => allUserIds.add(u));
+        app.selectedCommunityInvitedUsers.forEach((u) => allUserIds.add(u));
+        app.selectedCommunityReferrals.forEach((u) => allUserIds.add(u));
         await this.getMissingUsers(allUserIds);
     }
 
@@ -3182,9 +3177,7 @@ export class OpenChat {
                 resp.apiKeys,
                 resp.rules,
             );
-            if (app.selectedCommunity) {
-                this.#updateUserStoreFromCommunityState(app.selectedCommunity);
-            }
+            this.#updateUserStoreFromCommunityState();
         }
     }
 
@@ -3909,7 +3902,7 @@ export class OpenChat {
             return false;
         }
 
-        const communityRules = app.selectedCommunity.rules;
+        const communityRules = app.selectedCommunityRules;
         const community = app.selectedCommunitySummary;
 
         console.debug(
@@ -3922,7 +3915,7 @@ export class OpenChat {
 
         return (
             (chatRules.enabled && !(chat.membership?.rulesAccepted ?? false)) ||
-            ((communityRules?.enabled ?? true) && !(community?.membership?.rulesAccepted ?? false))
+            ((communityRules?.enabled ?? false) && !(community?.membership?.rulesAccepted ?? false))
         );
     }
 
@@ -4106,25 +4099,18 @@ export class OpenChat {
         content: CryptocurrencyContent,
         me: boolean,
     ): string | undefined {
-        return buildCryptoTransferText(
-            formatter,
-            myUserId,
-            senderId,
-            content,
-            me,
-            get(cryptoLookup),
-        );
+        return buildCryptoTransferText(formatter, myUserId, senderId, content, me, cryptoLookup);
     }
 
     buildTransactionLink(
         formatter: MessageFormatter,
         transfer: CryptocurrencyTransfer,
     ): string | undefined {
-        return buildTransactionLink(formatter, transfer, get(cryptoLookup));
+        return buildTransactionLink(formatter, transfer, cryptoLookup);
     }
 
     buildTransactionUrl(transactionIndex: bigint, ledger: string): string | undefined {
-        return buildTransactionUrlByIndex(transactionIndex, ledger, get(cryptoLookup));
+        return buildTransactionUrlByIndex(transactionIndex, ledger, cryptoLookup);
     }
 
     getFirstUnreadMention(chat: ChatSummary): Mention | undefined {
@@ -4651,13 +4637,13 @@ export class OpenChat {
                     // are already in a map
                     const existing =
                         level === "community"
-                            ? app.selectedCommunity.members
+                            ? app.selectedCommunityMembers
                             : app.selectedChat.members;
 
                     // Remove any existing members from the global matches until there are at most `maxResults`
                     // TODO: Ideally we would return the total number of matches from the server and use that
                     const maxToKeep = matches.length < maxToSearch ? 0 : maxResults;
-                    keepMax(matches, (u) => !existing.has(u.userId), maxToKeep);
+                    keepMax(matches, (u) => !existing?.has(u.userId), maxToKeep);
                 }
                 return [[], matches];
             });
@@ -4685,7 +4671,7 @@ export class OpenChat {
     ): UserSummary[] {
         const termLower = term.toLowerCase();
         const matches: UserSummary[] = [];
-        for (const [userId, member] of app.selectedCommunity.members) {
+        for (const [userId, member] of app.selectedCommunityMembers) {
             let user = userStore.get(userId);
             if (user?.username !== undefined) {
                 const displayName = member.displayName ?? user.displayName;
@@ -4718,7 +4704,7 @@ export class OpenChat {
         this.#referralCode = code;
     }
 
-    #extractReferralCodeFromPath(): string | null {
+    #extractReferralCodeFromPath(): string | undefined {
         return pathState.querystringReferral;
     }
 
@@ -5011,7 +4997,7 @@ export class OpenChat {
     ): Promise<boolean> {
         if (newRole === oldRole) return Promise.resolve(true);
 
-        const m = app.selectedCommunity.members.get(userId);
+        const m = app.selectedCommunityMembers.get(userId);
         let undo = undefined;
         if (m !== undefined) {
             undo = localUpdates.updateCommunityMember(id, userId, { ...m, role: newRole });
@@ -5225,7 +5211,7 @@ export class OpenChat {
         }
 
         if (allowCached) {
-            const cached = cryptoBalance.valueIfUpdatedRecently(ledger);
+            const cached = cryptoBalanceStore.valueIfUpdatedRecently(ledger);
             if (cached !== undefined) {
                 return Promise.resolve(cached);
             }
@@ -5247,7 +5233,7 @@ export class OpenChat {
                         principal: user.userId,
                     })
                         .then((val) => {
-                            cryptoBalance.set(ledger, val);
+                            cryptoBalanceStore.set(ledger, val);
                             return val;
                         })
                         .catch(() => 0n)
@@ -6527,7 +6513,7 @@ export class OpenChat {
     }
 
     hasModerationFlag(flags: number, flag: ModerationFlag): boolean {
-        return app.hasFlag(flags, flag);
+        return hasFlag(flags, flag);
     }
 
     setModerationFlags(flags: number): Promise<number> {
@@ -6570,8 +6556,7 @@ export class OpenChat {
 
         const userId = app.currentUserId;
         const totalTip = transfer.amountE8s + currentTip;
-        const decimals = get(cryptoLookup)[transfer.ledger].decimals;
-
+        const decimals = cryptoLookup.get(transfer.ledger)?.decimals ?? 0;
         const undo = localUpdates.markTip(messageId, transfer.ledger, userId, totalTip);
 
         return this.#sendRequest({
@@ -6628,21 +6613,21 @@ export class OpenChat {
                 kind: "updateRegistry",
             }).subscribe({
                 onResult: ([registry, updated]) => {
-                    if (updated || Object.keys(get(cryptoLookup)).length === 0) {
+                    if (updated || [...cryptoLookup.keys()].length === 0) {
                         this.currentAirdropChannel = registry.currentAirdropChannel;
-                        const cryptoRecord = toRecord(registry.tokenDetails, (t) => t.ledger);
-
-                        nervousSystemLookup.set(
-                            toRecord(
-                                registry.nervousSystemSummary.map((ns) => ({
+                        const cryptoMap = new Map(registry.tokenDetails.map((t) => [t.ledger, t]));
+                        const nsMap = new Map(
+                            registry.nervousSystemSummary.map((ns) => [
+                                ns.governanceCanisterId,
+                                {
                                     ...ns,
-                                    token: cryptoRecord[ns.ledgerCanisterId],
-                                })),
-                                (ns) => ns.governanceCanisterId,
-                            ),
+                                    token: cryptoMap.get(ns.ledgerCanisterId)!,
+                                },
+                            ]),
                         );
 
-                        cryptoLookup.set(cryptoRecord);
+                        nervousSystemLookup.fromMap(nsMap);
+                        cryptoLookup.fromMap(cryptoMap);
 
                         app.messageFilters = registry.messageFilters
                             .map((f) => {
@@ -6671,13 +6656,15 @@ export class OpenChat {
 
     #updateExchangeRates(): Promise<void> {
         return this.#sendRequest({ kind: "exchangeRates" })
-            .then((exchangeRates) => exchangeRatesLookupStore.set(exchangeRates))
+            .then((exchangeRates) =>
+                exchangeRatesLookupStore.fromMap(new Map(Object.entries(exchangeRates))),
+            )
             .catch(() => undefined);
     }
 
     async #refreshBalancesInSeries() {
         const config = app.walletConfig;
-        for (const t of Object.values(get(cryptoLookup))) {
+        for (const t of [...cryptoLookup.values()]) {
             if (config.kind === "auto_wallet" || config.tokens.has(t.ledger)) {
                 await this.refreshAccountBalance(t.ledger);
             }
@@ -6694,7 +6681,7 @@ export class OpenChat {
         if (governanceCanisterId !== undefined) {
             const nsLookup = get(nervousSystemLookup);
             if (governanceCanisterId in nsLookup) {
-                return nsLookup[governanceCanisterId];
+                return nsLookup.get(governanceCanisterId);
             }
         }
     }
@@ -6703,7 +6690,7 @@ export class OpenChat {
         if (ledgerCanisterId !== undefined) {
             const lookup = get(cryptoLookup);
             if (ledgerCanisterId in lookup) {
-                return lookup[ledgerCanisterId];
+                return lookup.get(ledgerCanisterId);
             }
         }
     }
@@ -6717,7 +6704,7 @@ export class OpenChat {
                 if (user !== undefined && app.selectedChatSummary?.kind === "channel") {
                     user = {
                         ...user,
-                        displayName: this.getDisplayName(user, app.selectedCommunity.members),
+                        displayName: this.getDisplayName(user, app.selectedCommunityMembers),
                     };
                 }
                 if (user?.username !== undefined) {
@@ -6791,17 +6778,15 @@ export class OpenChat {
     refreshSwappableTokens(): Promise<Set<string>> {
         return this.#sendRequest({
             kind: "canSwap",
-            tokenLedgers: new Set(Object.keys(get(cryptoLookup))),
+            tokenLedgers: new Set([...cryptoLookup.keys()]),
         }).then((tokens) => {
-            swappableTokensStore.set(tokens);
+            swappableTokensStore.fromSet(tokens);
             return tokens;
         });
     }
 
     getTokenSwaps(inputTokenLedger: string): Promise<Record<string, DexId[]>> {
-        const outputTokenLedgers = Object.keys(get(cryptoLookup)).filter(
-            (t) => t !== inputTokenLedger,
-        );
+        const outputTokenLedgers = [...cryptoLookup.keys()].filter((t) => t !== inputTokenLedger);
 
         return this.#sendRequest({
             kind: "getTokenSwaps",
@@ -6843,8 +6828,8 @@ export class OpenChat {
             {
                 kind: "swapTokens",
                 swapId,
-                inputTokenDetails: lookup[inputTokenLedger],
-                outputTokenDetails: lookup[outputTokenLedger],
+                inputTokenDetails: lookup.get(inputTokenLedger)!,
+                outputTokenDetails: lookup.get(outputTokenLedger)!,
                 amountIn,
                 minAmountOut,
                 dex,
@@ -6978,7 +6963,7 @@ export class OpenChat {
         // * create the room if necessary
         // * obtain an access token for the user
         // * return it to the front end
-        const displayName = this.getDisplayName(app.currentUser, app.selectedCommunity.members);
+        const displayName = this.getDisplayName(app.currentUser, app.selectedCommunityMembers);
         const user = app.currentUser;
         const username = user.username;
         const avatarId = userStore.get(user.userId)?.blobReference?.blobId;
@@ -7568,7 +7553,6 @@ export class OpenChat {
         }
 
         if (community !== undefined) {
-            app.setSelectedCommunity(id);
             this.#loadCommunityDetails(community);
         }
 
@@ -8008,8 +7992,8 @@ export class OpenChat {
                             acceptedRules.chat = app.selectedChat.rules?.version;
                         }
 
-                        if (app.selectedCommunity.rules?.enabled ?? false) {
-                            acceptedRules.community = app.selectedCommunity.rules?.version;
+                        if (app.selectedCommunityRules?.enabled ?? false) {
+                            acceptedRules.community = app.selectedCommunityRules?.version;
                         }
                     }
 
@@ -8227,7 +8211,7 @@ export class OpenChat {
                 amount.kind === "decimal" &&
                 amount.value !== null
             ) {
-                const tokenDetails = Object.values(get(cryptoLookup)).find(
+                const tokenDetails = [...cryptoLookup.values()].find(
                     (t) => t.symbol.toLowerCase() === token.value?.toLocaleLowerCase(),
                 );
                 if (tokenDetails !== undefined) {

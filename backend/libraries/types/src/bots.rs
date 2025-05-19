@@ -1,6 +1,6 @@
 use crate::bitflags::{decode_from_bitflags, encode_as_bitflags};
 use crate::{
-    AccessTokenScope, AudioContent, CanisterId, Chat, ChatEventCategory, ChatEventType, ChatId, ChatPermission,
+    AudioContent, AutonomousBotScope, CanisterId, Chat, ChatEventCategory, ChatEventType, ChatId, ChatPermission,
     CommunityEventCategory, CommunityEventType, CommunityId, CommunityPermission, FileContent, GiphyContent, GroupRole,
     ImageContent, MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent, TimestampMillis, UserId,
     VideoContent,
@@ -423,7 +423,7 @@ impl From<Chat> for BotInstallationLocation {
 pub struct BotApiKeyToken {
     pub gateway: CanisterId,
     pub bot_id: UserId,
-    pub scope: AccessTokenScope,
+    pub scope: AutonomousBotScope,
     pub secret: String,
     pub permissions: BotPermissions,
 }

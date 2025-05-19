@@ -18,6 +18,7 @@ import type {
 } from "../domain";
 import { extractUserIdsFromMentions, UnsupportedValueError } from "../domain";
 import type { MessageFormatter } from "./i18n";
+import type { ReadonlyMap } from "./map";
 
 export function userIdsFromTransactions(transactions: AccountTransaction[]): Set<string> {
     return transactions.reduce<Set<string>>((userIds, t) => {
@@ -47,7 +48,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
                 ) {
                     userIds.add(e.event.repliesTo.senderId);
                     extractUserIdsFromMentions(
-                        getContentAsFormattedText(fakeFormatter, e.event.repliesTo.content, {}),
+                        getContentAsFormattedText(fakeFormatter, e.event.repliesTo.content),
                     ).forEach((id) => userIds.add(id));
                 }
                 if (e.event.content.kind === "crypto_content") {
@@ -69,7 +70,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
                 }
                 e.event.reactions.forEach((r) => r.userIds.forEach((u) => userIds.add(u)));
                 extractUserIdsFromMentions(
-                    getContentAsFormattedText(fakeFormatter, e.event.content, {}),
+                    getContentAsFormattedText(fakeFormatter, e.event.content),
                 ).forEach((id) => userIds.add(id));
                 break;
             case "member_joined":
@@ -148,7 +149,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
 export function getContentAsFormattedText(
     formatter: MessageFormatter,
     content: MessageContent,
-    cryptoLookup: Record<string, CryptocurrencyDetails>,
+    cryptoLookup: ReadonlyMap<string, CryptocurrencyDetails> = new Map(),
 ): string {
     let text;
     if (content.kind === "text_content") {
@@ -164,7 +165,7 @@ export function getContentAsFormattedText(
     } else if (content.kind === "crypto_content") {
         text = captionedContent(
             formatter("tokenTransfer.transfer", {
-                values: { token: cryptoLookup[content.transfer.ledger]?.symbol ?? "Unknown" },
+                values: { token: cryptoLookup.get(content.transfer.ledger)?.symbol ?? "Unknown" },
             }),
             content.caption,
         );

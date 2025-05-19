@@ -98,14 +98,14 @@
             }
         }
     }
-    let tokenDetails = $derived($cryptoLookup[ledger]);
+    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let symbol = $derived(tokenDetails?.symbol);
     let tokenDecimals = $derived(tokenDetails?.decimals ?? 0);
     let amountInUsd = $derived(
         tokenDetails !== undefined && showDollarAmount
             ? calculateDollarAmount(
                   amount,
-                  $exchangeRatesLookup[tokenDetails.symbol.toLowerCase()]?.toUSD,
+                  $exchangeRatesLookup.get(tokenDetails.symbol.toLowerCase())?.toUSD,
                   tokenDetails.decimals,
               )
             : "???",

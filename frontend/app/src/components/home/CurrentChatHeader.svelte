@@ -1,15 +1,18 @@
 <script lang="ts">
     import type { ChatSummary, DiamondMembershipStatus, GroupChatSummary } from "openchat-client";
     import {
+        allUsersStore,
+        anonUserStore,
         app,
         AvatarSize,
+        chatListScopeStore,
         iconSize,
         mobileWidth,
         publish,
         rightPanelHistory,
         routeForChatIdentifier,
+        selectedCommunitySummaryStore,
         byContext as typersByContext,
-        userStore,
         type OpenChat,
         type TypersByKey,
     } from "openchat-client";
@@ -63,7 +66,7 @@
     let isMultiUser = $derived(
         selectedChatSummary.kind === "group_chat" || selectedChatSummary.kind === "channel",
     );
-    let isBot = $derived(userStore.get(userId)?.kind === "bot");
+    let isBot = $derived($allUsersStore.get(userId)?.kind === "bot");
     let hasUserProfile = $derived(!isMultiUser && !isBot);
     let verified = $derived(
         selectedChatSummary.kind === "group_chat" && selectedChatSummary.verified,
@@ -90,7 +93,7 @@
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         switch (chatSummary.kind) {
             case "direct_chat":
-                const them = userStore.get(chatSummary.them.userId);
+                const them = $allUsersStore.get(chatSummary.them.userId);
                 return {
                     name: client.displayName(them),
                     diamondStatus: them?.diamondStatus ?? "inactive",
@@ -99,7 +102,7 @@
                     userId: chatSummary.them.userId,
                     typing: client.getTypingString(
                         $_,
-                        userStore.allUsers,
+                        $allUsersStore,
                         { chatId: chatSummary.id },
                         typing,
                     ),
@@ -112,12 +115,12 @@
                     name: chatSummary.name,
                     diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
                     streak: 0,
-                    avatarUrl: client.groupAvatarUrl(chatSummary, app.selectedCommunitySummary),
+                    avatarUrl: client.groupAvatarUrl(chatSummary, $selectedCommunitySummaryStore),
                     userId: undefined,
                     username: undefined,
                     typing: client.getTypingString(
                         $_,
-                        userStore.allUsers,
+                        $allUsersStore,
                         { chatId: chatSummary.id },
                         typing,
                     ),
@@ -143,13 +146,13 @@
     }
 
     function navigateToCommunity() {
-        if (app.selectedCommunitySummary !== undefined) {
-            page(`/community/${app.selectedCommunitySummary.id.communityId}`);
+        if ($selectedCommunitySummaryStore !== undefined) {
+            page(`/community/${$selectedCommunitySummaryStore.id.communityId}`);
         }
     }
 
     function navigateToChannel() {
-        if (app.selectedCommunitySummary !== undefined) {
+        if ($selectedCommunitySummaryStore !== undefined) {
             page(routeForChatIdentifier("community", selectedChatSummary.id));
         }
     }
@@ -188,9 +191,9 @@
             {#if isMultiUser && !readonly}
                 <WithVerifiedBadge {verified} size={"small"}>
                     <div class="title">
-                        {#if app.selectedCommunitySummary !== undefined && app.chatListScope.kind === "favourite"}
+                        {#if $selectedCommunitySummaryStore !== undefined && $chatListScopeStore.kind === "favourite"}
                             <span onclick={navigateToCommunity} class="pointer">
-                                {app.selectedCommunitySummary.name}
+                                {$selectedCommunitySummaryStore.name}
                             </span>
                             <span>{">"}</span>
                             <span onclick={navigateToChannel} class="pointer">
@@ -232,7 +235,7 @@
         </div>
     </div>
     <ActiveVideoCallResume />
-    {#if !readonly && !app.anonUser}
+    {#if !readonly && !$anonUserStore}
         <CurrentChatMenu
             bind:showSuspendUserModal
             {hasPinned}

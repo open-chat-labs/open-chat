@@ -4,9 +4,10 @@
         app,
         botState,
         chatIdentifiersEqual,
-        pathState,
+        filteredProposalsStore,
         rightPanelMode,
         rightPanelWidth,
+        routeStore,
         showLeft,
         showMiddle,
         showNav,
@@ -90,7 +91,7 @@
     function resize() {
         alignVideoCall($activeVideoCall, app.selectedChatId);
     }
-    let noChat = $derived(pathState.route.kind !== "global_chat_selected_route");
+    let noChat = $derived($routeStore.kind !== "global_chat_selected_route");
     trackedEffect("align-video-call", () => {
         if (middlePanel) {
             alignVideoCall($activeVideoCall, app.selectedChatId);
@@ -105,11 +106,11 @@
     class:visible={$showMiddle}
     class:offset={$showNav && !$showLeft}
     class:halloween={$currentTheme.name === "halloween"}>
-    {#if pathState.route.kind === "explore_groups_route"}
+    {#if $routeStore.kind === "explore_groups_route"}
         <RecommendedGroups {joining} />
-    {:else if pathState.route.kind === "communities_route"}
+    {:else if $routeStore.kind === "communities_route"}
         <ExploreCommunities />
-    {:else if pathState.route.kind === "admin_route"}
+    {:else if $routeStore.kind === "admin_route"}
         {#await import("./admin/Admin.svelte")}
             <div class="loading">
                 <Loading />
@@ -132,7 +133,7 @@
         <CurrentChat
             {joining}
             chat={app.selectedChatSummary}
-            filteredProposals={app.filteredProposals} />
+            filteredProposals={$filteredProposalsStore} />
     {/if}
 </section>
 
