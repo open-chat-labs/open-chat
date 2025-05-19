@@ -1139,6 +1139,10 @@ export class AppState {
         return this.#streakInsurance;
     }
 
+    get serverStreakInsurance() {
+        return serverStreakInsuranceStore.current;
+    }
+
     get walletConfig() {
         return this.#walletConfig;
     }
