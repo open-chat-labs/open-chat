@@ -2,7 +2,7 @@ use crate::RuntimeState;
 use jwt::Claims;
 use rand::Rng;
 use types::{
-    AccessTokenScope, AuthToken, BotActionByApiKeyClaims, BotActionByCommandClaims, BotActionChatDetails,
+    AuthToken, AutonomousBotScope, BotActionByApiKeyClaims, BotActionByCommandClaims, BotActionChatDetails,
     BotActionCommunityDetails, BotActionScope, BotApiKeyToken, BotChatContext, BotInitiator, User, UserId,
 };
 use utils::base64;
@@ -131,14 +131,14 @@ fn extract_access_context_from_jwt(jwt: &str, bot: &User, state: &mut RuntimeSta
     })
 }
 
-fn to_bot_action_scope(scope: AccessTokenScope, state: &mut RuntimeState) -> BotActionScope {
+fn to_bot_action_scope(scope: AutonomousBotScope, state: &mut RuntimeState) -> BotActionScope {
     match scope {
-        AccessTokenScope::Chat(chat) => BotActionScope::Chat(BotActionChatDetails {
+        AutonomousBotScope::Chat(chat) => BotActionScope::Chat(BotActionChatDetails {
             chat,
             thread: None,
             message_id: state.env.rng().r#gen::<u64>().into(),
             user_message_id: None,
         }),
-        AccessTokenScope::Community(community_id) => BotActionScope::Community(BotActionCommunityDetails { community_id }),
+        AutonomousBotScope::Community(community_id) => BotActionScope::Community(BotActionCommunityDetails { community_id }),
     }
 }

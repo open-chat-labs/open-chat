@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use group_canister::generate_bot_api_key::{Response::*, *};
 use installed_bots::GenerateApiKeyResult;
 use oc_error_codes::OCErrorCode;
-use types::{AccessTokenScope, BotApiKeyToken, Chat, OCResult};
+use types::{AutonomousBotScope, BotApiKeyToken, Chat, OCResult};
 use utils::base64;
 
 #[update(msgpack = true)]
@@ -44,7 +44,7 @@ fn generate_bot_api_key_impl(args: Args, state: &mut RuntimeState) -> OCResult<S
     let api_key_token = BotApiKeyToken {
         gateway: state.data.local_user_index_canister_id,
         bot_id: args.bot_id,
-        scope: AccessTokenScope::Chat(Chat::Group(state.env.canister_id().into())),
+        scope: AutonomousBotScope::Chat(Chat::Group(state.env.canister_id().into())),
         secret: new_key,
         permissions: args.requested_permissions,
     };

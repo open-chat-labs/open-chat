@@ -20,17 +20,31 @@ fn c2c_bot_subscribe_to_events_impl(args: Args, state: &mut RuntimeState) -> OCR
         chat: args.chat_events,
     };
 
+    // Note: Currently if _any_ of the events is not permitted then we don't update _any_ subscriptions
     if !state.data.is_bot_permitted(
         &args.bot_id,
-        Some(args.channel_id),
+        args.channel_id,
         &BotInitiator::Autonomous,
         &BotPermissions::from(&subscriptions),
     ) {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
-    let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
-    channel.chat.events.subscribe_bot_to_events(args.bot_id, subscriptions.chat);
+    // TODO: Subscribe to permitted community events
+
+    if let Some(channel_id) = args.channel_id {
+        let channel = state.data.channels.get_mut_or_err(&channel_id)?;
+        channel.chat.events.subscribe_bot_to_events(args.bot_id, subscriptions.chat);
+    } else {
+        for channel in state.data.channels.iter_mut() {
+            if channel.chat.is_public.value {
+                channel
+                    .chat
+                    .events
+                    .subscribe_bot_to_events(args.bot_id, subscriptions.chat.clone());
+            }
+        }
+    }
 
     Ok(())
 }

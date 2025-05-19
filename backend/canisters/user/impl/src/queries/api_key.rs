@@ -4,7 +4,7 @@ use crate::guards::caller_is_owner;
 use crate::read_state;
 use canister_api_macros::query;
 use oc_error_codes::OCErrorCode;
-use types::AccessTokenScope;
+use types::AutonomousBotScope;
 use types::BotApiKeyToken;
 use types::Chat;
 use user_canister::api_key::{Response::*, *};
@@ -35,7 +35,7 @@ fn api_key_impl(args: Args, state: &RuntimeState) -> Response {
     let api_key_token = BotApiKeyToken {
         gateway: state.data.local_user_index_canister_id,
         bot_id: args.bot_id,
-        scope: AccessTokenScope::Chat(Chat::Direct(state.env.canister_id().into())),
+        scope: AutonomousBotScope::Chat(Chat::Direct(state.env.canister_id().into())),
         secret: api_key.secret.clone(),
         permissions: api_key.granted_permissions.clone(),
     };

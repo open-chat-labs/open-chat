@@ -67,11 +67,11 @@ impl BotActionScope {
     }
 }
 
-impl From<BotActionScope> for AccessTokenScope {
+impl From<BotActionScope> for AutonomousBotScope {
     fn from(value: BotActionScope) -> Self {
         match value {
-            BotActionScope::Chat(details) => AccessTokenScope::Chat(details.chat),
-            BotActionScope::Community(details) => AccessTokenScope::Community(details.community_id),
+            BotActionScope::Chat(details) => AutonomousBotScope::Chat(details.chat),
+            BotActionScope::Community(details) => AutonomousBotScope::Community(details.community_id),
         }
     }
 }
@@ -131,23 +131,25 @@ impl AccessTokenType {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-pub enum AccessTokenScope {
+pub enum AutonomousBotScope {
     Chat(Chat),
     Community(CommunityId),
 }
 
-impl AccessTokenScope {
+impl AutonomousBotScope {
     pub fn canister_id(&self) -> CanisterId {
         match self {
-            AccessTokenScope::Chat(chat) => chat.canister_id(),
-            AccessTokenScope::Community(community_id) => (*community_id).into(),
+            AutonomousBotScope::Chat(chat) => chat.canister_id(),
+            AutonomousBotScope::Community(community_id) => (*community_id).into(),
         }
     }
 
     pub fn chat(&self, channel_id: Option<ChannelId>) -> Option<Chat> {
         match self {
-            AccessTokenScope::Chat(chat) => Some(*chat),
-            AccessTokenScope::Community(community_id) => channel_id.map(|channel_id| Chat::Channel(*community_id, channel_id)),
+            AutonomousBotScope::Chat(chat) => Some(*chat),
+            AutonomousBotScope::Community(community_id) => {
+                channel_id.map(|channel_id| Chat::Channel(*community_id, channel_id))
+            }
         }
     }
 }
