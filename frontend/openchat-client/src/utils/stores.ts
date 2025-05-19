@@ -41,7 +41,7 @@ function runSubscriptions() {
 }
 
 export function writable<T>(value: T, start?: StartStopNotifier<T>, equalityCheck?: EqualityCheck<T>): Writable<T> {
-    return new _Writable(value as T, start, equalityCheck);
+    return new _Writable(value, start, equalityCheck);
 }
 
 export function readable<T>(value: T, start: StartStopNotifier<T>, equalityCheck?: EqualityCheck<T>): Readable<T> {
