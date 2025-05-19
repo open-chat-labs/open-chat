@@ -10,7 +10,7 @@ type StoresValues<T> =
     T extends Readable<infer U> ? U : { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
 
 let paused = false;
-// Callbacks to publish dirty values from writable stores when unpausing all stores
+// Callbacks to publish dirty values from writable stores
 let publishesPending: (() => void)[] = [];
 // Callbacks to push new values to their subscribers
 let subscriptionsPending: (() => void)[] = [];
