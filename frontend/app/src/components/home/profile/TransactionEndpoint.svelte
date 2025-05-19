@@ -1,8 +1,8 @@
 <script lang="ts">
     import {
+        allUsersStore,
         AvatarSize,
         OpenChat,
-        userStore,
         type CreatedUser,
         type NamedAccount,
     } from "openchat-client";
@@ -20,9 +20,9 @@
 
     let user = $derived(
         address === currentUser.cryptoAccount
-            ? userStore.get(currentUser.userId)
+            ? $allUsersStore.get(currentUser.userId)
             : address
-              ? userStore.get(address)
+              ? $allUsersStore.get(address)
               : undefined,
     );
 </script>

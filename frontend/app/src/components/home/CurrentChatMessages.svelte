@@ -11,11 +11,16 @@
         type OpenChat,
         type ReadonlySet,
         FilteredProposals,
+        allUsersStore,
         app,
         chatIdentifiersEqual,
+        chatListScopeStore,
+        chatsInitialisedStore,
+        currentUserIdStore,
         localUpdates,
-        pathState,
+        messageIndexStore,
         routeForChatIdentifier,
+        selectedCommunitySummaryStore,
         showMiddle,
     } from "openchat-client";
     import page from "page";
@@ -79,7 +84,7 @@
     }
 
     function doGoToMessageIndex(index: number): void {
-        page(routeForChatIdentifier(app.chatListScope.kind, chat.id));
+        page(routeForChatIdentifier($chatListScopeStore.kind, chat.id));
         chatEventList?.scrollToMessageIndex(messageContext, index, false);
     }
 
@@ -93,7 +98,7 @@
     }
 
     function onEditEvent(ev: EventWrapper<Message>) {
-        localUpdates.draftMessages.setEditing({ chatId: chat.id }, ev);
+        localUpdates.draftMessages.setEditing({ chatId: chat.id }, ev, $allUsersStore);
     }
 
     function eventKey(e: EventWrapper<ChatEventType>): string {
@@ -141,10 +146,10 @@
 
     function isMe(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            return evt.event.sender === app.currentUserId;
+            return evt.event.sender === $currentUserIdStore;
         }
         if (evt.event.kind === "group_chat_created") {
-            return evt.event.created_by === app.currentUserId;
+            return evt.event.created_by === $currentUserIdStore;
         }
         return false;
     }
@@ -226,11 +231,11 @@
         return earliestLoadedEventIndex <= indexRequired;
     }
     let privateCommunityPreview = $derived(
-        app.selectedCommunitySummary !== undefined &&
-            (app.selectedCommunitySummary.membership.role === "none" ||
-                app.selectedCommunitySummary.membership.lapsed) &&
-            (!app.selectedCommunitySummary.public ||
-                app.selectedCommunitySummary.gateConfig.gate.kind !== "no_gate"),
+        $selectedCommunitySummaryStore !== undefined &&
+            ($selectedCommunitySummaryStore.membership.role === "none" ||
+                $selectedCommunitySummaryStore.membership.lapsed) &&
+            (!$selectedCommunitySummaryStore.public ||
+                $selectedCommunitySummaryStore.gateConfig.gate.kind !== "no_gate"),
     );
     let privatePreview = $derived(privateCommunityPreview || privateChatPreview);
     let isEmptyChat = $derived(chat.latestEventIndex <= 0 || privatePreview);
@@ -253,7 +258,7 @@
     let timeline = $derived(
         client.groupEvents(
             [...app.selectedChat.events].reverse(),
-            app.currentUserId,
+            $currentUserIdStore,
             app.selectedChat.expandedDeletedMessages,
             groupInner(filteredProposals),
         ),
@@ -263,11 +268,11 @@
     let previousChatId: ChatIdentifier | undefined = undefined;
     $effect(() => {
         if (
-            app.chatsInitialised &&
-            pathState.messageIndex !== undefined &&
+            $chatsInitialisedStore &&
+            $messageIndexStore !== undefined &&
             chatIdentifiersEqual(app.selectedChatId, previousChatId)
         ) {
-            const idx = pathState.messageIndex;
+            const idx = $messageIndexStore;
             untrack(() => {
                 scrollToMessageIndex(idx, false);
             });

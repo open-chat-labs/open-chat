@@ -2,6 +2,7 @@
     import {
         app,
         chatIdentifiersEqual,
+        chatListScopeStore,
         publish,
         routeForMessage,
         type OpenChat,
@@ -17,7 +18,11 @@
 
     function join() {
         if (!inCall && app.selectedChatSummary) {
-            publish("startVideoCall", { chatId: app.selectedChatSummary.id, callType: "broadcast", join: true });
+            publish("startVideoCall", {
+                chatId: app.selectedChatSummary.id,
+                callType: "broadcast",
+                join: true,
+            });
         }
     }
 
@@ -25,7 +30,7 @@
         if (app.selectedChatSummary?.videoCallInProgress !== undefined) {
             page(
                 routeForMessage(
-                    app.chatListScope.kind,
+                    $chatListScopeStore.kind,
                     { chatId: app.selectedChatSummary.id },
                     app.selectedChatSummary?.videoCallInProgress.messageIndex,
                 ),

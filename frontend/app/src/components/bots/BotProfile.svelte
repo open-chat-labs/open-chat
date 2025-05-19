@@ -13,6 +13,7 @@
         botState,
         emptyExternalBotPermissions,
         flattenCommandPermissions,
+        selectedCommunityBotsStore,
     } from "openchat-client";
     import BotSummary from "./BotSummary.svelte";
 
@@ -20,7 +21,7 @@
 
     let grantedPermissions = $derived.by(() => {
         if (chatId.kind === "channel") {
-            return app.selectedCommunity.bots.get(botId) ?? emptyExternalBotPermissions();
+            return $selectedCommunityBotsStore.get(botId) ?? emptyExternalBotPermissions();
         } else {
             return app.selectedChat.bots.get(botId) ?? emptyExternalBotPermissions();
         }

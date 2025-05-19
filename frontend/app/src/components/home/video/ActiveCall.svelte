@@ -2,13 +2,17 @@
     import type { DailyThemeConfig } from "@daily-co/daily-js";
     import daily, { type DailyCall } from "@daily-co/daily-js";
     import {
+        allUsersStore,
         app,
         chatIdentifiersEqual,
+        communitiesStore,
+        currentUserIdStore,
+        currentUserStore,
         mobileWidth,
         NoMeetingToJoin,
         OpenChat,
+        selectedCommunitySummaryStore,
         ui,
-        userStore,
         type AccessTokenType,
         type ChatIdentifier,
         type VideoCallType,
@@ -67,7 +71,7 @@
             if (chat) {
                 switch (chat.kind) {
                     case "direct_chat":
-                        const them = userStore.get(chat.them.userId);
+                        const them = $allUsersStore.get(chat.them.userId);
                         return {
                             chatId,
                             name: client.displayName(them),
@@ -87,12 +91,12 @@
                         return {
                             chatId,
                             name: `${
-                                app.communities.get({
+                                $communitiesStore.get({
                                     kind: "community",
                                     communityId: chat.id.communityId,
                                 })?.name
                             } > ${chat.name}`,
-                            avatarUrl: client.groupAvatarUrl(chat, app.selectedCommunitySummary),
+                            avatarUrl: client.groupAvatarUrl(chat, $selectedCommunitySummaryStore),
                             userId: undefined,
                             videoCallInProgress: chat.videoCallInProgress,
                         };
@@ -147,7 +151,7 @@
                     height: "100%",
                 },
                 url: `https://openchat.daily.co/${roomName}`,
-                userName: app.currentUser.username,
+                userName: $currentUserStore.username,
                 theme: getThemeConfig($currentTheme),
             });
 
@@ -160,14 +164,20 @@
                     }
                     if (ev.data.kind === "demote_participant") {
                         const me = call?.participants().local.session_id;
-                        if (ev.data.participantId === me && app.currentUserId === ev.data.userId) {
+                        if (
+                            ev.data.participantId === me &&
+                            $currentUserIdStore === ev.data.userId
+                        ) {
                             askedToSpeak = false;
                             client.setVideoCallPresence(chatId, BigInt(messageId), "hidden");
                         }
                     }
                     if (ev.data.kind === "ask_to_speak_response") {
                         const me = call?.participants().local.session_id;
-                        if (ev.data.participantId === me && app.currentUserId === ev.data.userId) {
+                        if (
+                            ev.data.participantId === me &&
+                            $currentUserIdStore === ev.data.userId
+                        ) {
                             askedToSpeak = false;
                             denied = !ev.data.approved;
                             if (ev.data.approved) {
@@ -209,7 +219,7 @@
                     sharing.set(ev?.participant.tracks.screenVideo.state !== "off");
                     hasPresence.set(ev?.participant.permissions.hasPresence);
                 } else {
-                    if (ev?.participant.user_name === app.currentUser.username) {
+                    if (ev?.participant.user_name === $currentUserStore.username) {
                         // this means that I have joined the call from somewhere else e.g. another device
                         hangup();
                     }
@@ -278,7 +288,7 @@
     }
 
     export function askToSpeak() {
-        activeVideoCall.askToSpeak(app.currentUserId);
+        activeVideoCall.askToSpeak($currentUserIdStore);
         askedToSpeak = true;
     }
 

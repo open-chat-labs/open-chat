@@ -1,8 +1,9 @@
 <script lang="ts">
     import {
-        app,
+        chatListScopeStore,
         isLocked,
         routeForScope,
+        selectedCommunitySummaryStore,
         type ChatListScope,
         type OpenChat,
     } from "openchat-client";
@@ -17,8 +18,8 @@
     const client = getContext<OpenChat>("client");
 
     function cancelPreview() {
-        if (app.selectedCommunitySummary) {
-            client.removeCommunity(app.selectedCommunitySummary.id);
+        if ($selectedCommunitySummaryStore) {
+            client.removeCommunity($selectedCommunitySummaryStore.id);
             page(routeForScope(client.getDefaultScope()));
         }
     }
@@ -38,31 +39,31 @@
         }
     }
     let previewingCommunity = $derived(
-        app.selectedCommunitySummary?.membership.role === "none" ||
-            app.selectedCommunitySummary?.membership.lapsed,
+        $selectedCommunitySummaryStore?.membership.role === "none" ||
+            $selectedCommunitySummaryStore?.membership.lapsed,
     );
-    let locked = $derived(isLocked(app.selectedCommunitySummary?.gateConfig?.gate));
-    let [title, message] = $derived(getMessageForScope(app.chatListScope.kind));
+    let locked = $derived(isLocked($selectedCommunitySummaryStore?.gateConfig?.gate));
+    let [title, message] = $derived(getMessageForScope($chatListScopeStore.kind));
 </script>
 
-{#if previewingCommunity && app.selectedCommunitySummary !== undefined}
+{#if previewingCommunity && $selectedCommunitySummaryStore !== undefined}
     <div class="wrapper community">
         <PreviewWrapper>
             {#snippet children(joiningCommunity, joinCommunity)}
-                {#if app.selectedCommunitySummary !== undefined}
+                {#if $selectedCommunitySummaryStore !== undefined}
                     <CommunityCard
-                        id={app.selectedCommunitySummary.id.communityId}
-                        name={app.selectedCommunitySummary.name}
-                        description={app.selectedCommunitySummary.description}
-                        banner={app.selectedCommunitySummary.banner}
+                        id={$selectedCommunitySummaryStore.id.communityId}
+                        name={$selectedCommunitySummaryStore.name}
+                        description={$selectedCommunitySummaryStore.description}
+                        banner={$selectedCommunitySummaryStore.banner}
                         memberCount={0}
                         channelCount={0}
-                        language={app.selectedCommunitySummary.primaryLanguage}
+                        language={$selectedCommunitySummaryStore.primaryLanguage}
                         flags={0}
                         header
-                        gateConfig={app.selectedCommunitySummary.gateConfig}
-                        avatar={app.selectedCommunitySummary.avatar}
-                        verified={app.selectedCommunitySummary.verified} />
+                        gateConfig={$selectedCommunitySummaryStore.gateConfig}
+                        avatar={$selectedCommunitySummaryStore.avatar}
+                        verified={$selectedCommunitySummaryStore.verified} />
                     <div class="join">
                         <Button
                             loading={joiningCommunity}
@@ -84,9 +85,9 @@
     <div class="wrapper">
         <h2 class="title"><Translatable resourceKey={i18nKey(title)} /></h2>
         <p class="subtitle"><Translatable resourceKey={i18nKey(message)} /></p>
-        {#if app.chatListScope.kind === "community"}
+        {#if $chatListScopeStore.kind === "community"}
             <Button><Translatable resourceKey={i18nKey("communities.browseChannels")} /></Button>
-        {:else if app.chatListScope.kind === "group_chat"}
+        {:else if $chatListScopeStore.kind === "group_chat"}
             <Button onClick={() => page("/groups")}
                 ><Translatable resourceKey={i18nKey("discoverMoreGroups")} /></Button>
         {/if}

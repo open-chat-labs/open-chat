@@ -1,5 +1,11 @@
 <script lang="ts">
-    import { AvatarSize, mobileWidth, OpenChat, userStore, type CommandArg } from "openchat-client";
+    import {
+        allUsersStore,
+        AvatarSize,
+        mobileWidth,
+        OpenChat,
+        type CommandArg,
+    } from "openchat-client";
     import type { BotContextCommand } from "openchat-shared";
     import { getContext } from "svelte";
     import CogOutline from "svelte-material-icons/CogOutline.svelte";
@@ -32,7 +38,7 @@
             return `@UserId(${botCommand.initiator}) used **/${botCommand.name}**`;
         }
     });
-    let user = $derived(userStore.get(botCommand.initiator));
+    let user = $derived($allUsersStore.get(botCommand.initiator));
 
     function paramValue(param: CommandArg): string {
         switch (param.kind) {
@@ -44,7 +50,7 @@
             case "string":
                 return param.value ?? "null";
             case "user":
-                return param.userId ? userStore.get(param.userId)?.username ?? "null" : "null";
+                return param.userId ? $allUsersStore.get(param.userId)?.username ?? "null" : "null";
             case "dateTime":
                 return param.value
                     ? client.toDatetimeString(new Date(Number(param.value)))

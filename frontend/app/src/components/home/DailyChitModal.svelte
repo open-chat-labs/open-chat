@@ -1,6 +1,11 @@
 <script lang="ts">
     import InfoIcon from "@src/components/InfoIcon.svelte";
-    import { type AirdropChannelDetails, app, iconSize, type OpenChat } from "openchat-client";
+    import {
+        type AirdropChannelDetails,
+        chitStateStore,
+        iconSize,
+        type OpenChat,
+    } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
     import { Confetti } from "svelte-confetti";
     import { _ } from "svelte-i18n";
@@ -68,14 +73,14 @@
 
         busy = true;
 
-        const previousBalance = app.chitState.chitBalance;
+        const previousBalance = $chitStateStore.chitBalance;
 
         client
             .claimDailyChit()
             .then((resp) => {
                 if (resp.kind === "success") {
                     claimed = true;
-                    additional = app.chitState.chitBalance - previousBalance;
+                    additional = $chitStateStore.chitBalance - previousBalance;
                     window.setTimeout(() => {
                         additional = undefined;
                     }, 2000);
@@ -112,13 +117,13 @@
         e.stopPropagation();
         learnToEarn = true;
     }
-    let available = $derived(app.chitState.nextDailyChitClaim < $now500);
-    let streak = $derived(app.chitState.streakEnds < $now500 ? 0 : app.chitState.streak);
+    let available = $derived($chitStateStore.nextDailyChitClaim < $now500);
+    let streak = $derived($chitStateStore.streakEnds < $now500 ? 0 : $chitStateStore.streak);
     let badgesVisible = $derived(calculateBadgesVisible(streak));
     let maxBadgeVisible = $derived(badgesVisible[badgesVisible.length - 1]);
     let percent = $derived(calculatePercentage(streak, maxBadgeVisible));
     let remaining = $derived(
-        client.formatTimeRemaining($now500, Number(app.chitState.nextDailyChitClaim), true),
+        client.formatTimeRemaining($now500, Number($chitStateStore.nextDailyChitClaim), true),
     );
 </script>
 
@@ -154,8 +159,8 @@
                 <div class="spacer"></div>
                 <div class="current">
                     <ChitBalance
-                        balance={app.chitState.chitBalance}
-                        totalEarned={app.chitState.totalChitEarned}
+                        balance={$chitStateStore.chitBalance}
+                        totalEarned={$chitStateStore.totalChitEarned}
                         me={false}
                         size={"large"} />
                 </div>

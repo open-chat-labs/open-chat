@@ -1,12 +1,15 @@
 <script lang="ts">
     import {
+        allUsersStore,
         app,
         type BotMatch,
         chatIdentifiersEqual,
         chatIdentifierToString,
         type ChatListScope,
+        chatListScopeStore,
         type ChatSummary as ChatSummaryType,
         type CombinedUnreadCounts,
+        currentUserIdStore,
         emptyCombinedUnreadCounts,
         type GroupMatch,
         type GroupSearchResponse,
@@ -16,7 +19,7 @@
         publish,
         routeForChatIdentifier,
         routeForScope,
-        userStore,
+        selectedCommunitySummaryStore,
         type UserSummary,
     } from "openchat-client";
     import page from "page";
@@ -53,7 +56,7 @@
     let searchTerm: string = $state("");
     let searchResultsAvailable: boolean = $state(false);
     let chatsScrollTop = $state<number | undefined>();
-    let previousScope: ChatListScope | undefined = app.chatListScope;
+    let previousScope: ChatListScope | undefined = $chatListScopeStore;
     let previousView: "chats" | "threads" = $chatListView;
 
     // TODO this doesn't work properly and I think it's to do with the way
@@ -61,7 +64,7 @@
     // Probably can just be done in a more explicit way but it's not urgent
     $effect.pre(() => {
         if (
-            previousScope === app.chatListScope &&
+            previousScope === $chatListScopeStore &&
             $chatListView !== "chats" &&
             previousView === "chats"
         ) {
@@ -70,7 +73,7 @@
     });
 
     $effect(() => {
-        if (previousScope?.kind !== app.chatListScope.kind) {
+        if (previousScope?.kind !== $chatListScopeStore.kind) {
             onScopeChanged();
         } else if (previousView !== $chatListView) {
             onViewChanged();
@@ -88,8 +91,8 @@
     }
 
     function cancelPreview() {
-        if (app.selectedCommunitySummary) {
-            client.removeCommunity(app.selectedCommunitySummary.id);
+        if ($selectedCommunitySummaryStore) {
+            client.removeCommunity($selectedCommunitySummaryStore.id);
             page(routeForScope(client.getDefaultScope()));
         }
     }
@@ -103,7 +106,7 @@
         }
 
         if (chat.kind === "direct_chat") {
-            const user = userStore.get(chat.them.userId);
+            const user = $allUsersStore.get(chat.them.userId);
             if (user !== undefined) {
                 return (
                     user.username.toLowerCase().indexOf(lowercaseSearch) >= 0 ||
@@ -126,12 +129,12 @@
      * the routing will take care of the rest
      */
     function selectGroup({ chatId }: GroupMatch): void {
-        page(routeForChatIdentifier(app.chatListScope.kind, chatId));
+        page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
         searchTerm = "";
     }
 
     function chatSelected({ id }: ChatSummaryType): void {
-        const url = routeForChatIdentifier(app.chatListScope.kind, id);
+        const url = routeForChatIdentifier($chatListScopeStore.kind, id);
         page(url);
         searchTerm = "";
     }
@@ -147,7 +150,7 @@
     }
 
     function onScopeChanged() {
-        previousScope = app.chatListScope;
+        previousScope = $chatListScopeStore;
         chatListView.set("chats");
         chatsScrollTop = 0;
         onViewChanged();
@@ -174,19 +177,19 @@
 
     let showPreview = $derived(
         $mobileWidth &&
-            app.selectedCommunitySummary?.membership.role === "none" &&
+            $selectedCommunitySummaryStore?.membership.role === "none" &&
             app.selectedChatId === undefined,
     );
-    let user = $derived(userStore.get(app.currentUserId));
+    let user = $derived($allUsersStore.get($currentUserIdStore));
     let lowercaseSearch = $derived(searchTerm.toLowerCase());
     let showExploreGroups = $derived(
-        (app.chatListScope.kind === "none" || app.chatListScope.kind === "group_chat") &&
+        ($chatListScopeStore.kind === "none" || $chatListScopeStore.kind === "group_chat") &&
             !$exploreGroupsDismissed &&
             !searchResultsAvailable,
     );
-    let showBrowseChannnels = $derived(app.chatListScope.kind === "community");
+    let showBrowseChannnels = $derived($chatListScopeStore.kind === "community");
     let unreadCounts = $derived.by(() => {
-        switch (app.chatListScope.kind) {
+        switch ($chatListScopeStore.kind) {
             case "group_chat": {
                 return app.unreadGroupCounts;
             }
@@ -198,7 +201,7 @@
             }
             case "community": {
                 return (
-                    app.unreadCommunityChannelCounts.get(app.chatListScope.id) ??
+                    app.unreadCommunityChannelCounts.get($chatListScopeStore.id) ??
                     emptyCombinedUnreadCounts()
                 );
             }
@@ -224,14 +227,14 @@
 
 <!-- svelte-ignore missing_declaration -->
 {#if user}
-    {#if app.chatListScope.kind === "favourite"}
+    {#if $chatListScopeStore.kind === "favourite"}
         <FavouriteChatsHeader {canMarkAllRead} />
-    {:else if app.chatListScope.kind === "group_chat"}
+    {:else if $chatListScopeStore.kind === "group_chat"}
         <GroupChatsHeader {canMarkAllRead} />
-    {:else if app.chatListScope.kind === "direct_chat"}
+    {:else if $chatListScopeStore.kind === "direct_chat"}
         <DirectChatsHeader {canMarkAllRead} />
-    {:else if app.selectedCommunitySummary && app.chatListScope.kind === "community"}
-        <SelectedCommunityHeader community={app.selectedCommunitySummary} {canMarkAllRead} />
+    {:else if $selectedCommunitySummaryStore && $chatListScopeStore.kind === "community"}
+        <SelectedCommunityHeader community={$selectedCommunitySummaryStore} {canMarkAllRead} />
     {/if}
 
     <ChatListSearch
@@ -343,7 +346,7 @@
                                                 ...group,
                                                 id: group.chatId,
                                             },
-                                            app.selectedCommunitySummary,
+                                            $selectedCommunitySummaryStore,
                                         )}
                                         onclick={() => selectGroup(group)}>
                                         <h4 class="search-item-title">

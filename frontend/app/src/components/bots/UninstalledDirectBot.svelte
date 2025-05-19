@@ -3,9 +3,11 @@
         app,
         botState,
         chatIdentifiersEqual,
+        chatListScopeStore,
+        currentUserIdStore,
         OpenChat,
-        pathState,
         routeForScope,
+        routeStore,
         type DirectChatIdentifier,
     } from "openchat-client";
     import page from "page";
@@ -28,10 +30,10 @@
         if (!installed) {
             client.removeChat(chatId);
             if (
-                pathState.route.kind === "global_chat_selected_route" &&
-                chatIdentifiersEqual(chatId, pathState.route.chatId)
+                $routeStore.kind === "global_chat_selected_route" &&
+                chatIdentifiersEqual(chatId, $routeStore.chatId)
             ) {
-                page(routeForScope(app.chatListScope));
+                page(routeForScope($chatListScopeStore));
             }
         }
         onClose();
@@ -41,7 +43,7 @@
 {#if bot !== undefined}
     <BotInstaller
         level={"group"}
-        location={{ kind: "direct_chat", userId: app.currentUserId }}
+        location={{ kind: "direct_chat", userId: $currentUserIdStore }}
         {bot}
         onClose={closeInstaller}
         installedBots={app.directChatBots} />

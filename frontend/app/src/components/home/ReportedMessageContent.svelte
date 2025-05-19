@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { OpenChat, ReportedMessageContent } from "openchat-client";
-    import { userStore } from "openchat-client";
+    import { allUsersStore } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
@@ -31,7 +31,7 @@
         $_("report.messageReport", {
             values: {
                 username:
-                    userStore.get(report.reportedBy)?.username ??
+                    $allUsersStore.get(report.reportedBy)?.username ??
                     `unknown user (${report.reportedBy}))`,
                 timestamp: client.toDatetimeString(new Date(report.timestamp)),
                 reason: reasons[report.reasonCode],

@@ -1,14 +1,17 @@
 <script lang="ts">
     import {
+        allUsersStore,
         app,
         AvatarSize,
+        chatListScopeStore,
+        currentUserIdStore,
         type EventWrapper,
         type Message,
         type MultiUserChat,
         OpenChat,
         routeForChatIdentifier,
+        selectedCommunitySummaryStore,
         type ThreadPreview,
-        userStore,
     } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
@@ -52,7 +55,7 @@
     );
     let chatData = $derived({
         name: chat?.name,
-        avatarUrl: client.groupAvatarUrl(chat, app.selectedCommunitySummary),
+        avatarUrl: client.groupAvatarUrl(chat, $selectedCommunitySummaryStore),
     });
 
     let grouped = $derived(client.groupBySender(thread.latestReplies));
@@ -81,7 +84,7 @@
 
     function selectThread() {
         page(
-            `${routeForChatIdentifier(app.chatListScope.kind, thread.chatId)}/${
+            `${routeForChatIdentifier($chatListScopeStore.kind, thread.chatId)}/${
                 thread.rootMessage.event.messageIndex
             }?open=true`,
         );
@@ -133,7 +136,7 @@
                 <div class="body">
                     <div class="root-msg">
                         <ChatMessage
-                            sender={userStore.get(thread.rootMessage.event.sender)}
+                            sender={$allUsersStore.get(thread.rootMessage.event.sender)}
                             focused={false}
                             {observer}
                             accepted
@@ -143,7 +146,7 @@
                             readByMe
                             chatId={thread.chatId}
                             chatType={chat.kind}
-                            me={thread.rootMessage.event.sender === app.currentUserId}
+                            me={thread.rootMessage.event.sender === $currentUserIdStore}
                             first
                             last
                             readonly
@@ -177,7 +180,7 @@
                     {#each grouped as userGroup}
                         {#each userGroup as evt, i (evt.event.messageId)}
                             <ChatMessage
-                                sender={userStore.get(evt.event.sender)}
+                                sender={$allUsersStore.get(evt.event.sender)}
                                 focused={false}
                                 {observer}
                                 accepted
@@ -187,7 +190,7 @@
                                 readByMe
                                 chatId={thread.chatId}
                                 chatType={chat.kind}
-                                me={evt.event.sender === app.currentUserId}
+                                me={evt.event.sender === $currentUserIdStore}
                                 first={i === 0}
                                 last={i === userGroup.length - 1}
                                 readonly

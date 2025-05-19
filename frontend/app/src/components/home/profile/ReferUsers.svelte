@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { app, iconSize } from "openchat-client";
+    import { currentUserIdStore, iconSize } from "openchat-client";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -9,7 +9,7 @@
     import QRCode from "../../QRCode.svelte";
     import Translatable from "../../Translatable.svelte";
 
-    let link = $derived(`${window.location.origin}/?ref=${app.currentUserId}`);
+    let link = $derived(`${window.location.origin}/?ref=${$currentUserIdStore}`);
 
     function onCopy() {
         navigator.clipboard.writeText(link).then(

@@ -11,7 +11,14 @@
         MultiUserChat,
         OpenChat,
     } from "openchat-client";
-    import { app, AvatarSize, chatIdentifiersEqual, iconSize, userStore } from "openchat-client";
+    import {
+        allUsersStore,
+        app,
+        AvatarSize,
+        chatIdentifiersEqual,
+        communitiesStore,
+        iconSize,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
@@ -146,11 +153,11 @@
         };
         const direct = [...app.directChats.values()].map((d) => ({
             ...d,
-            name: buildDisplayName(userStore.allUsers, d.them.userId, "user"),
+            name: buildDisplayName($allUsersStore, d.them.userId, "user"),
         }));
 
         const group = [...app.groupChats.values()];
-        const channels = [...app.communities.values()].flatMap((c) => c.channels);
+        const channels = [...$communitiesStore.values()].flatMap((c) => c.channels);
         const all = [...group, ...direct, ...channels];
         const favs = all.filter((c) => app.favourites.has(c.id));
         try {
@@ -158,7 +165,7 @@
             const groupChats = await targetsFromChatList(now, group, selectedChatId);
             const favourites = await targetsFromChatList(now, favs, selectedChatId);
             const communities = await Promise.all(
-                [...app.communities.values()].map((c) =>
+                [...$communitiesStore.values()].map((c) =>
                     normaliseCommunity(now, selectedChatId, c),
                 ),
             );
@@ -195,7 +202,7 @@
         switch (chatSummary.kind) {
             case "direct_chat":
                 const description = await buildDirectChatDescription(chatSummary, now);
-                const them = userStore.get(chatSummary.them.userId);
+                const them = $allUsersStore.get(chatSummary.them.userId);
                 return {
                     kind: "chat",
                     id: chatSummary.id,

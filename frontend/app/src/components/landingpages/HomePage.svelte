@@ -1,19 +1,19 @@
 <script lang="ts">
-    import Roadmap from "./RoadmapOverview.svelte";
-    import Intro from "./Intro.svelte";
-    import Team from "./Team.svelte";
-    import SellingPoints from "./SellingPoints.svelte";
-    import BragBox from "./BragBox.svelte";
-    import ArrowLink from "../ArrowLink.svelte";
-    import SignInWithMagicLink from "../SignInWithMagicLink.svelte";
+    import { querystringStore } from "openchat-client";
     import { onMount } from "svelte";
+    import ArrowLink from "../ArrowLink.svelte";
     import Overlay from "../Overlay.svelte";
-    import { pathState } from "openchat-client";
+    import SignInWithMagicLink from "../SignInWithMagicLink.svelte";
+    import BragBox from "./BragBox.svelte";
+    import Intro from "./Intro.svelte";
+    import Roadmap from "./RoadmapOverview.svelte";
+    import SellingPoints from "./SellingPoints.svelte";
+    import Team from "./Team.svelte";
 
     let showSignInWithMagicLinkModal = false;
 
     onMount(() => {
-        if (pathState.querystring.has("auth")) {
+        if ($querystringStore.has("auth")) {
             showSignInWithMagicLinkModal = true;
         }
     });

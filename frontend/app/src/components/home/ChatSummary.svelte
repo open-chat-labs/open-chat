@@ -8,15 +8,21 @@
         UserLookup,
     } from "openchat-client";
     import {
+        allUsersStore,
         app,
         AvatarSize,
         botState,
+        chatListScopeStore,
+        communitiesStore,
+        currentUserIdStore,
         iconSize,
         mobileWidth,
         notificationsSupported,
         OpenChat,
         publish,
         routeForScope,
+        selectedCommunitySummaryStore,
+        suspendedUserStore,
         byContext as typersByContext,
         userStore,
     } from "openchat-client";
@@ -76,11 +82,11 @@
     );
     let unreadMentions = $derived(getUnreadMentionCount(chatSummary));
     let chat = $derived(normaliseChatSummary($now, chatSummary, $typersByContext));
-    let lastMessage = $derived(formatLatestMessage(chatSummary, userStore.allUsers));
+    let lastMessage = $derived(formatLatestMessage(chatSummary, $allUsersStore));
     let displayDate = $derived(client.getDisplayDate(chatSummary));
     let community = $derived(
         chatSummary.kind === "channel"
-            ? app.communities.get({ kind: "community", communityId: chatSummary.id.communityId })
+            ? $communitiesStore.get({ kind: "community", communityId: chatSummary.id.communityId })
             : undefined,
     );
     let blocked = $derived(
@@ -88,21 +94,21 @@
     );
     let readonly = $derived(client.isChatReadOnly(chatSummary.id));
     let canDelete = $derived(getCanDelete(chatSummary, community));
-    let pinned = $derived(client.pinned(app.chatListScope.kind, chatSummary.id));
+    let pinned = $derived(client.pinned($chatListScopeStore.kind, chatSummary.id));
     let muted = $derived(chatSummary.membership.notificationsMuted);
     const maxDelOffset = -60;
     let delOffset = $state(maxDelOffset);
     let swiped = $state(false);
 
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
-        const fav = app.chatListScope.kind !== "favourite" && app.favourites.has(chatSummary.id);
+        const fav = $chatListScopeStore.kind !== "favourite" && app.favourites.has(chatSummary.id);
         const muted = chatSummary.membership.notificationsMuted;
         const video = chatSummary.videoCallInProgress
             ? { muted: muted ? 1 : 0, unmuted: muted ? 0 : 1 }
             : { muted: 0, unmuted: 0 };
         switch (chatSummary.kind) {
             case "direct_chat":
-                const them = userStore.get(chatSummary.them.userId);
+                const them = $allUsersStore.get(chatSummary.them.userId);
                 return {
                     name: client.displayName(them),
                     diamondStatus: them?.diamondStatus ?? "inactive",
@@ -111,7 +117,7 @@
                     userId: chatSummary.them,
                     typing: client.getTypingString(
                         $_,
-                        userStore.allUsers,
+                        $allUsersStore,
                         { chatId: chatSummary.id },
                         typing,
                     ),
@@ -127,11 +133,11 @@
                     name: chatSummary.name,
                     diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
                     streak: 0,
-                    avatarUrl: client.groupAvatarUrl(chatSummary, app.selectedCommunitySummary),
+                    avatarUrl: client.groupAvatarUrl(chatSummary, $selectedCommunitySummaryStore),
                     userId: undefined,
                     typing: client.getTypingString(
                         $_,
-                        userStore.allUsers,
+                        $allUsersStore,
                         { chatId: chatSummary.id },
                         typing,
                     ),
@@ -189,7 +195,7 @@
         let userType: "user" | "me" | "webhook" = "user";
         if (chatSummary.latestMessage.event.senderContext?.kind === "webhook") {
             userType = "webhook";
-        } else if (chatSummary.latestMessage.event.sender === app.currentUserId) {
+        } else if (chatSummary.latestMessage.event.sender === $currentUserIdStore) {
             userType = "me";
         }
 
@@ -217,11 +223,11 @@
                 ? botState.externalBots.get(chatSummary.them.userId)
                 : undefined;
         if (directBot !== undefined) {
-            client.uninstallBot({ kind: "direct_chat", userId: app.currentUserId }, directBot.id);
+            client.uninstallBot({ kind: "direct_chat", userId: $currentUserIdStore }, directBot.id);
         } else {
             client.removePreviewedChat(chatSummary.id);
         }
-        page(routeForScope(app.chatListScope));
+        page(routeForScope($chatListScopeStore));
         delOffset = -60;
     }
 
@@ -285,7 +291,7 @@
             }
         });
         if (chatSummary.id === app.selectedChatId) {
-            page(routeForScope(app.chatListScope));
+            page(routeForScope($chatListScopeStore));
         }
     }
 
@@ -370,7 +376,7 @@
                     {/if}
                     <WithVerifiedBadge {verified} size={"small"}>
                         <h4>
-                            {#if community !== undefined && app.chatListScope.kind === "favourite"}
+                            {#if community !== undefined && $chatListScopeStore.kind === "favourite"}
                                 <span>{community.name}</span>
                                 <span>{">"}</span>
                             {/if}
@@ -436,7 +442,7 @@
                         {unreadMessages > 999 ? "999+" : unreadMessages}
                     </div>
                 {/if}
-                {#if !app.suspendedUser}
+                {#if !$suspendedUserStore}
                     <div class="menu">
                         <MenuIcon position={"bottom"} align={"end"}>
                             {#snippet menuIcon()}

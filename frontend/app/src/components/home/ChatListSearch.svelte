@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
-        app,
+        chatListScopeStore,
+        currentUserIdStore,
         type BotMatch,
         type ChatListScope,
         type DirectChatIdentifier,
@@ -35,7 +36,7 @@
     let searching: boolean = $state(false);
 
     $effect(() => {
-        void app.chatListScope.kind;
+        void $chatListScopeStore.kind;
         clearSearch();
     });
 
@@ -62,7 +63,7 @@
         searchResultsAvailable = false;
         searchTerm = term;
 
-        if (app.chatListScope.kind === "direct_chat") {
+        if ($chatListScopeStore.kind === "direct_chat") {
             searchTerm = trimLeadingAtSymbol(searchTerm);
         }
 
@@ -70,7 +71,7 @@
             try {
                 searching = true;
                 const term = searchTerm.toLowerCase();
-                switch (app.chatListScope.kind) {
+                switch ($chatListScopeStore.kind) {
                     case "none":
                         legacySearch(term);
                         break;
@@ -117,7 +118,7 @@
         // available for direct chat.
         const location = {
             kind: "direct_chat",
-            userId: app.currentUserId,
+            userId: $currentUserIdStore,
         } as DirectChatIdentifier;
 
         return client.exploreBots(term, 0, 10, location, false).then((result) => {
@@ -139,7 +140,7 @@
         userAndBotsSearchResults = client.searchUsers(term, 10);
         Promise.all([groupSearchResults, userAndBotsSearchResults]).then(postSearch);
     }
-    let placeholder = $derived(getPlaceholder(app.chatListScope.kind));
+    let placeholder = $derived(getPlaceholder($chatListScopeStore.kind));
     $effect(() => {
         if (searchTerm === "") {
             searching = false;

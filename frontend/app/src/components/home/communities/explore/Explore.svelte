@@ -1,10 +1,14 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
     import {
+        anonUserStore,
         app,
+        exploreCommunitiesFiltersStore,
         iconSize,
         ipadWidth,
+        isDiamondStore,
         mobileWidth,
+        offlineStore,
         publish,
         ScreenWidth,
         screenWidth,
@@ -45,14 +49,14 @@
     }
 
     function createCommunity() {
-        if (app.anonUser) {
+        if ($anonUserStore) {
             client.updateIdentityState({
                 kind: "logging_in",
                 postLogin: { kind: "create_community" },
             });
             return;
         }
-        if (!app.isDiamond) {
+        if (!$isDiamondStore) {
             publish("upgrade");
         } else {
             publish("createCommunity");
@@ -103,7 +107,7 @@
     });
 
     $effect(() => {
-        search(app.exploreCommunitiesFilters, true);
+        search($exploreCommunitiesFiltersStore, true);
     });
 
     function scrollToTop() {
@@ -149,7 +153,7 @@
                         fill
                         bind:searchTerm={communitySearchState.term}
                         searching={false}
-                        onPerformSearch={() => search(app.exploreCommunitiesFilters, true)}
+                        onPerformSearch={() => search($exploreCommunitiesFiltersStore, true)}
                         placeholder={i18nKey("communities.search")} />
                 </div>
                 <div class="create">
@@ -176,7 +180,7 @@
                         searching={false}
                         fill
                         bind:searchTerm={communitySearchState.term}
-                        onPerformSearch={() => search(app.exploreCommunitiesFilters, true)}
+                        onPerformSearch={() => search($exploreCommunitiesFiltersStore, true)}
                         placeholder={i18nKey("communities.search")} />
                 </div>
             {/if}
@@ -193,7 +197,7 @@
                     <FancyLoader />
                 </div>
             {:else if communitySearchState.results.length === 0}
-                {#if app.offline}
+                {#if $offlineStore}
                     <div class="no-match">
                         <CloudOffOutline size={"1.8em"} color={"var(--txt-light)"} />
                         <p class="sub-header">
@@ -234,7 +238,7 @@
                 <Button
                     disabled={searching}
                     loading={searching}
-                    onClick={() => search(app.exploreCommunitiesFilters, false)}
+                    onClick={() => search($exploreCommunitiesFiltersStore, false)}
                     ><Translatable resourceKey={i18nKey("communities.loadMore")} /></Button>
             </div>
         {/if}

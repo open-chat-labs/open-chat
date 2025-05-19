@@ -4,9 +4,9 @@
     import {
         AuthProvider,
         InMemoryAuthClientStorage,
+        selectedAuthProviderStore,
         type OpenChat,
         type ResourceKey,
-        app,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -70,7 +70,7 @@
         }
 
         localStorage.setItem(configKeys.selectedAuthEmail, email);
-        app.selectedAuthProvider = provider;
+        selectedAuthProviderStore.set(provider);
         error = undefined;
 
         if (provider === AuthProvider.PASSKEY) {
