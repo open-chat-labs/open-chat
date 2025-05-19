@@ -22,6 +22,10 @@ test("store values match Svelte store values", () => {
             derivedStoreUpdateCount++;
             return _d2 * 2;
         });
+        const d4 = derived([w1, w2, w3, d1, d2, d3], ([_w1, _w2, _w3, _d1, _d2, _d3]) => {
+            derivedStoreUpdateCount++;
+            return _w1 * _w2 * _w3 * _d1 * _d2 * _d3;
+        });
 
         if (pause) {
             pauseStores();
@@ -46,12 +50,16 @@ test("store values match Svelte store values", () => {
             svelteDerivedStoreUpdateCount++;
             return _sd2 * 2;
         });
+        const sd4 = svelteDerived([sw1, sw2, sw3, sd1, sd2, sd3], ([_sw1, _sw2, _sw3, _sd1, _sd2, _sd3]) => {
+            svelteDerivedStoreUpdateCount++;
+            return _sw1 * _sw2 * _sw3 * _sd1 * _sd2 * _sd3;
+        });
 
         const writableStores = [w1, w2, w3];
         const svelteWritableStores = [sw1, sw2, sw3];
 
-        const allStores = [w1, w2, w3, d1, d2, d3];
-        const allSvelteStores = [sw1, sw2, sw3, sd1, sd2, sd3];
+        const allStores = [w1, w2, w3, d1, d2, d3, d4];
+        const allSvelteStores = [sw1, sw2, sw3, sd1, sd2, sd3, sd4];
 
         // Arrays to hold the values of the stores
         const storeValues: number[] = [];
@@ -90,7 +98,7 @@ test("store values match Svelte store values", () => {
         if (pause) {
             // If our stores were paused then they should have been updated twice, once when they were initialized and
             // once after they were unpaused.
-            expect(derivedStoreUpdateCount).toEqual(pause ? 6 : svelteDerivedStoreUpdateCount);
+            expect(derivedStoreUpdateCount).toEqual(pause ? 8 : svelteDerivedStoreUpdateCount);
         }
     }
 });
