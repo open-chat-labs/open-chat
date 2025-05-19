@@ -6,20 +6,24 @@ export type EqualityCheck<T> = (a: T, b: T) => boolean;
 type MaybeDirty = { maybeDirty() : boolean };
 type Stores = ReadableStore<unknown> | [ReadableStore<unknown>, ...Array<ReadableStore<unknown>>] | Array<ReadableStore<unknown>>;
 type StoresValues<T> =
-    T extends Readable<infer U> ? U : { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
+    T extends ReadableStore<infer U> ? U : { [K in keyof T]: T[K] extends ReadableStore<infer U> ? U : never };
 
 let paused = false;
 let publishesPending: (() => void)[] = [];
 
-export function setPaused(value: boolean) {
-    if (paused && !value) {
+export function pauseStores() {
+    paused = true;
+}
+
+export function unpauseStores() {
+    if (paused) {
         // Publish any dirty values
         for (const callback of publishesPending) {
             callback();
         }
         publishesPending = [];
     }
-    paused = value;
+    paused = false;
 }
 
 export function writable<T>(value: T, start?: StartStopNotifier<T>, equalityCheck?: EqualityCheck<T>): WritableStore<T> {
@@ -34,8 +38,8 @@ export function readable<T>(value: T, start: StartStopNotifier<T>): ReadableStor
     };
 }
 
-export function derived<S extends Stores, T>(_stores: S, _fn: (values: StoresValues<S>) => T, _initial_value?: T | undefined): ReadableStore<T> {
-    throw new Error('not implemented');
+export function derived<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>) => T, equalityCheck?: EqualityCheck<T>): ReadableStore<T> {
+    return new _Derived(stores, fn, equalityCheck ?? ((a, b) => a === b));
 }
 
 class _Writable<T> {
@@ -43,8 +47,8 @@ class _Writable<T> {
     #value: T;
     #dirtyValue: T | undefined = undefined;
     #publishPending: boolean = false;
-    #stop: Unsubscriber | undefined = undefined;
     readonly #start: StartStopNotifier<T> | undefined;
+    #stop: Unsubscriber | undefined = undefined;
     readonly #equalityCheck: (a: T, b: T) => boolean;
 
     constructor(initValue: T, start?: StartStopNotifier<T>, equalityCheck?: (a: T, b: T) => boolean) {
@@ -115,8 +119,83 @@ class _Writable<T> {
 
     #unsubscribe(id: symbol) {
         this.#subscriptions.delete(id);
-        if (this.#subscriptions.size === 0 && this.#stop !== undefined) {
+        if (this.#subscriptions.size === 0 && typeof this.#stop === "function") {
             this.#stop();
+        }
+    }
+}
+
+class _Derived<S extends Stores, T> {
+    readonly #subscriptions: Map<symbol, (value: T) => void> = new Map();
+    readonly #storesArray: ReadableStore<unknown>[] = [];
+    readonly #storeValues: unknown[] = [];
+    readonly #single;
+    readonly #fn: (values: StoresValues<S>) => T;
+    readonly #equalityCheck: (a: T, b: T) => boolean;
+    #value: T | undefined;
+    #started = false;
+    #unsubscribers: Unsubscriber[] = [];
+
+    constructor(stores: S, fn: (values: StoresValues<S>) => T, equalityCheck: EqualityCheck<T>) {
+        this.#storesArray = Array.isArray(stores) ? stores : [stores];
+        this.#single = this.#storesArray.length === 1;
+        this.#fn = fn;
+        this.#equalityCheck = equalityCheck;
+    }
+
+    subscribe(subscriber: Subscriber<T>): Unsubscriber {
+        const id = Symbol();
+        this.#subscriptions.set(id, subscriber);
+
+        if (this.#subscriptions.size === 1 && this.#start !== undefined) {
+            this.#start();
+        }
+
+        subscriber(this.#value!);
+        return () => this.#unsubscribe(id);
+    }
+
+    maybeDirty(): boolean {
+        return this.#storesArray.some((s) => s.maybeDirty());
+    }
+
+    #start() {
+        if (this.#started) return;
+        for (const [index, store] of this.#storesArray.entries()) {
+            const unsub = store.subscribe((v) => {
+                (this.#storeValues as unknown[])[index] = v;
+                if (this.#started) {
+                    this.#sync();
+                }
+            });
+            if (typeof unsub === 'function') {
+                this.#unsubscribers.push(unsub);
+            }
+        }
+        this.#started = true;
+        this.#sync();
+    }
+
+    #sync() {
+        if (this.#storesArray.some((s) => s.maybeDirty())) {
+            return;
+        }
+        const newValue = this.#fn((this.#single ? this.#storeValues[0] : this.#storeValues) as StoresValues<S>);
+        if (this.#value !== undefined && this.#equalityCheck(newValue, this.#value)) {
+            return;
+        }
+
+        this.#value = newValue;
+    }
+
+    #unsubscribe(id: symbol) {
+        this.#subscriptions.delete(id);
+        if (this.#subscriptions.size === 0) {
+            for (const unsub of this.#unsubscribers) {
+                unsub();
+            }
+            this.#unsubscribers = [];
+            this.#started = false;
         }
     }
 }
