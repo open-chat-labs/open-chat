@@ -899,7 +899,7 @@ impl Data {
         &mut self,
         owner_id: UserId,
         bot_id: UserId,
-        permissions: BotPermissions,
+        command_permissions: BotPermissions,
         autonomous_permissions: Option<BotPermissions>,
         default_subscriptions: Option<BotSubscriptions>,
         now: TimestampMillis,
@@ -907,7 +907,7 @@ impl Data {
         if !self.bots.add(
             bot_id,
             owner_id,
-            permissions,
+            command_permissions,
             autonomous_permissions.clone(),
             default_subscriptions.clone(),
             now,

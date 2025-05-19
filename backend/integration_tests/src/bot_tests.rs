@@ -12,11 +12,11 @@ use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    AuthToken, AutonomousConfig, BotActionByCommandClaims, BotActionChatDetails, BotActionScope, BotChatContext, BotCommandArg,
-    BotCommandArgValue, BotCommandDefinition, BotCommandParam, BotCommandParamType, BotDefinition, BotInstallationLocation,
-    BotMessageContent, BotPermissions, CanisterId, Chat, ChatEvent, ChatEventType, ChatPermission, ChatType,
-    CommunityPermission, MessageContent, MessageId, MessagePermission, NotificationEnvelope, Rules, StringParam, TextContent,
-    UserId,
+    AuthToken, AutonomousBotScope, AutonomousConfig, BotActionByCommandClaims, BotActionChatDetails, BotActionScope,
+    BotChatContext, BotCommandArg, BotCommandArgValue, BotCommandDefinition, BotCommandParam, BotCommandParamType,
+    BotDefinition, BotInstallationLocation, BotMessageContent, BotPermissions, CanisterId, Chat, ChatEvent, ChatEventType,
+    ChatPermission, ChatType, CommunityPermission, MessageContent, MessageId, MessagePermission, NotificationEnvelope, Rules,
+    StringParam, TextContent, UserId,
 };
 
 #[test]
@@ -329,7 +329,7 @@ fn e2e_autonomous_bot_test() {
         bot_principal,
         canister_ids.local_user_index(env, community_id),
         &local_user_index_canister::bot_subscribe_to_events::Args {
-            chat,
+            scope: AutonomousBotScope::Chat(chat),
             chat_events: HashSet::from_iter([ChatEventType::Message]),
             community_events: HashSet::new(),
         },
