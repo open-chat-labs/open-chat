@@ -5,9 +5,9 @@
     import {
         LEDGER_CANISTER_CHAT,
         OpenChat,
-        app,
         cryptoBalance,
         cryptoLookup,
+        streakInsuranceStore,
     } from "openchat-client";
     import { getContext } from "svelte";
     import Equal from "svelte-material-icons/Equal.svelte";
@@ -26,8 +26,8 @@
 
     const MAX_DAYS = 30;
     const ledger = LEDGER_CANISTER_CHAT;
-    const currentDaysInsured = app.streakInsurance.daysInsured;
-    const currentDaysMissed = app.streakInsurance.daysMissed;
+    const currentDaysInsured = $streakInsuranceStore.daysInsured;
+    const currentDaysMissed = $streakInsuranceStore.daysMissed;
     let { onClose }: Props = $props();
     let tokenDetails = $derived({
         symbol: $cryptoLookup[ledger],

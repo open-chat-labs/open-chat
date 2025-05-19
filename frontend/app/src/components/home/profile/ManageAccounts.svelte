@@ -1,10 +1,10 @@
 <script lang="ts">
     import {
         cryptoTokensSorted as accountsSorted,
-        app,
         cryptoLookup,
         DEFAULT_TOKENS,
         OpenChat,
+        walletConfigStore,
         type CryptocurrencyDetails,
         type WalletConfig,
     } from "openchat-client";
@@ -34,13 +34,13 @@
     let searchTerm = $state("");
     let searching = $state(false);
 
-    let config: WalletConfig = $state({ ...app.walletConfig });
+    let config: WalletConfig = $state({ ...$walletConfigStore });
 
     onMount(() => {
-        config = clone(app.walletConfig);
+        config = clone($walletConfigStore);
 
         return () => {
-            if (client.walletConfigChanged(app.walletConfig, config)) {
+            if (client.walletConfigChanged($walletConfigStore, config)) {
                 client.setWalletConfig(config).then((success) => {
                     if (!success) {
                         toastStore.showFailureToast(
@@ -98,14 +98,14 @@
         switch (kind) {
             case "auto_wallet":
                 config =
-                    app.walletConfig.kind === "auto_wallet"
-                        ? app.walletConfig
+                    $walletConfigStore.kind === "auto_wallet"
+                        ? $walletConfigStore
                         : { kind: "auto_wallet", minDollarValue: 0 };
                 break;
             case "manual_wallet":
                 config =
-                    app.walletConfig.kind === "manual_wallet"
-                        ? app.walletConfig
+                    $walletConfigStore.kind === "manual_wallet"
+                        ? $walletConfigStore
                         : { kind: "manual_wallet", tokens: defaultLedgers };
                 break;
         }

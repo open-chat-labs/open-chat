@@ -378,6 +378,14 @@ export const serverStreakInsuranceStore = writable<StreakInsurance>({
     daysMissed: 0,
 });
 export const referralsStore = writable<Referral[]>([]);
+export const streakInsuranceStore = derived(
+    [serverStreakInsuranceStore, localUpdates.streakInsurance],
+    ([serverStreakInsurance, localUpates]) => localUpates ?? serverStreakInsurance,
+);
+export const walletConfigStore = derived(
+    [serverWalletConfigStore, localUpdates.walletConfig],
+    ([serverWalletConfig, localUpates]) => localUpates ?? serverWalletConfig,
+);
 
 export class AppState {
     #percentageStorageRemaining: number = 0;
@@ -413,6 +421,7 @@ export class AppState {
         latestTimestamp: 0n,
         unreadCount: 0,
     });
+    #walletConfig!: WalletConfig;
 
     // TODO - these need to use $state for the moment because we still have $derived that is depending on it
     // but it can be a plain value once that's all gone
@@ -429,14 +438,6 @@ export class AppState {
     #serverFavourites = $state<ChatSet>(new ChatSet());
     #serverPinnedChats = $state<SafeMap<ChatListScope["kind"], ChatIdentifier[]>>(new SafeMap());
     #serverDirectChatBots = $state<SafeMap<string, ExternalBotPermissions>>(new SafeMap());
-    #serverWalletConfig = $state<WalletConfig>({
-        kind: "auto_wallet",
-        minDollarValue: 0,
-    });
-    #serverStreakInsurance = $state<StreakInsurance>({
-        daysInsured: 0,
-        daysMissed: 0,
-    });
 
     constructor() {
         $effect.root(() => {
@@ -494,8 +495,7 @@ export class AppState {
             (v) => (this.#serverMessageActivitySummary = v),
         );
         serverDirectChatBotsStore.subscribe((v) => (this.#serverDirectChatBots = v.clone()));
-        serverWalletConfigStore.subscribe((v) => (this.#serverWalletConfig = v));
-        serverStreakInsuranceStore.subscribe((v) => (this.#serverStreakInsurance = v));
+        walletConfigStore.subscribe((v) => (this.#walletConfig = v));
     }
 
     #proposalTopics = $derived.by(() => {
@@ -547,10 +547,6 @@ export class AppState {
         }
         return this.#serverMessageActivitySummary;
     });
-
-    #streakInsurance = $derived(localUpdates.streakInsurance ?? this.#serverStreakInsurance);
-
-    #walletConfig = $derived(localUpdates.walletConfig ?? this.#serverWalletConfig);
 
     #directChatBots = $derived.by(() => {
         return localUpdates.directChatBots.apply(this.#serverDirectChatBots);
@@ -1135,14 +1131,6 @@ export class AppState {
         chitStateStore.update(fn);
     }
 
-    get streakInsurance() {
-        return this.#streakInsurance;
-    }
-
-    get serverStreakInsurance() {
-        return serverStreakInsuranceStore.current;
-    }
-
     get walletConfig() {
         return this.#walletConfig;
     }
@@ -1503,6 +1491,10 @@ export class AppState {
 
     get selectedCommunityRules() {
         return this.#selectedCommunityRules;
+    }
+
+    get serverStreakInsurance() {
+        return serverStreakInsuranceStore.current;
     }
 }
 

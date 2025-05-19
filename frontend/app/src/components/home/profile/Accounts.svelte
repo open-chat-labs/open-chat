@@ -1,13 +1,13 @@
 <script lang="ts">
     import {
         walletTokensSorted as accountsSorted,
-        app,
         type EnhancedTokenDetails,
         iconSize,
         ICP_SYMBOL,
         nervousSystemLookup,
         type OpenChat,
         swappableTokensStore,
+        walletConfigStore,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import ArrowLeftBoldCircle from "svelte-material-icons/ArrowLeftBoldCircle.svelte";
@@ -112,7 +112,7 @@
     function removeFromWallet(ledger: string) {
         client.removeTokenFromWallet(ledger);
     }
-    let manualWalletConfig = $derived(app.walletConfig.kind === "manual_wallet");
+    let manualWalletConfig = $derived($walletConfigStore.kind === "manual_wallet");
     let snsLedgers = $derived(
         new Set<string>(
             Object.values($nervousSystemLookup)

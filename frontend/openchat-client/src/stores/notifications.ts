@@ -1,10 +1,9 @@
 import { derived, writable } from "svelte/store";
 
 import type { NotificationStatus } from "openchat-shared";
-import { app } from "../state/app.svelte";
+import { anonUserStore } from "../state/app.svelte";
 import { configKeys } from "../utils/config";
 import { createLsBoolStore } from "./localStorageSetting";
-import { dummyCurrentUser } from "./user";
 
 const notificationsSupported =
     "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
@@ -62,9 +61,9 @@ function permissionToStatus(
 }
 
 export const notificationStatus = derived(
-    [softDisabledStore, browserPermissionStore, dummyCurrentUser],
-    ([softDisabled, browserPermission, _]) => {
-        if (!notificationsSupported || app.anonUser) {
+    [softDisabledStore, browserPermissionStore, anonUserStore],
+    ([softDisabled, browserPermission, anonUser]) => {
+        if (!notificationsSupported || anonUser) {
             return "unsupported";
         }
         if (softDisabled) {

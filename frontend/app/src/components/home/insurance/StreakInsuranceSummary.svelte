@@ -4,10 +4,12 @@
     import Legend from "@src/components/Legend.svelte";
     import Translatable from "@src/components/Translatable.svelte";
     import { i18nKey } from "@src/i18n/i18n";
-    import { app } from "openchat-client";
+    import { streakInsuranceStore } from "openchat-client";
     import StreakInsuranceBuy from "./StreakInsuranceBuy.svelte";
 
-    const remaining = $derived(app.streakInsurance.daysInsured - app.streakInsurance.daysMissed);
+    const remaining = $derived(
+        $streakInsuranceStore.daysInsured - $streakInsuranceStore.daysMissed,
+    );
     let buy = $state(false);
 </script>
 
@@ -31,11 +33,11 @@
     </div>
 {/if}
 
-{#if app.streakInsurance.daysMissed > 0}
+{#if $streakInsuranceStore.daysMissed > 0}
     <div class="info">
         <Translatable
             resourceKey={i18nKey("streakInsurance.protected", {
-                missed: app.streakInsurance.daysMissed,
+                missed: $streakInsuranceStore.daysMissed,
             })}>
         </Translatable>
     </div>

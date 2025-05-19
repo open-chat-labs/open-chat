@@ -7,10 +7,9 @@ import {
     type WalletConfig,
 } from "openchat-shared";
 import { derived, writable } from "svelte/store";
-import { app } from "../state/app.svelte";
+import { walletConfigStore } from "../state/app.svelte";
 import { configKeys } from "../utils/config";
 import { toRecord } from "../utils/list";
-import { createDummyStore } from "./dummyStore";
 import { safeWritable } from "./safeWritable";
 import { createSetStore } from "./setStore";
 
@@ -128,15 +127,13 @@ function meetsManualWalletCriteria(config: WalletConfig, token: EnhancedTokenDet
     return config.kind === "manual_wallet" && config.tokens.has(token.ledger);
 }
 
-export const dummyWalletConfigStore = createDummyStore();
-
 export const walletTokensSorted = derived(
-    [cryptoTokensSorted, dummyWalletConfigStore],
-    ([$tokens, _]) => {
+    [cryptoTokensSorted, walletConfigStore],
+    ([$tokens, walletConfig]) => {
         return $tokens.filter(
             (t) =>
-                meetsAutoWalletCriteria(app.walletConfig, t) ||
-                meetsManualWalletCriteria(app.walletConfig, t),
+                meetsAutoWalletCriteria(walletConfig, t) ||
+                meetsManualWalletCriteria(walletConfig, t),
         );
     },
 );
