@@ -80,11 +80,17 @@ import { communitySummaryLocalUpdates } from "./community/summaryUpdates";
 import { FilteredProposals } from "./filteredProposals.svelte";
 import { localUpdates } from "./global";
 import { LocalStorageBoolStore, LocalStorageStore } from "./localStorageStore";
-import { CommunityMapStore, MessageMapStore } from "./map";
+import {
+    ChatMapStore,
+    CommunityMapStore,
+    MessageMapStore,
+    PinnedByScopeStore,
+    SafeMapStore,
+} from "./map";
 import { messageLocalUpdates } from "./message/local.svelte";
 import { routeStore, selectedCommunityIdStore } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
-import { SafeSetStore } from "./set";
+import { ChatSetStore, SafeSetStore } from "./set";
 import { SnsFunctions } from "./snsFunctions.svelte";
 import { hideMessagesFromDirectBlocked } from "./ui.svelte";
 import { messagesRead } from "./unread/markRead.svelte";
@@ -352,6 +358,26 @@ export const selectedCommunitySummaryStore = derived(
     ([selectedCommunityId, communities]) =>
         selectedCommunityId ? communities.get(selectedCommunityId) : undefined,
 );
+export const serverDirectChatsStore = new ChatMapStore<DirectChatSummary>();
+export const serverGroupChatsStore = new ChatMapStore<GroupChatSummary>();
+export const serverFavouritesStore = new ChatSetStore();
+export const serverPinnedChatsStore = new PinnedByScopeStore();
+export const directChatApiKeysStore = new SafeMapStore<string, PublicApiKeyDetails>();
+export const serverMessageActivitySummaryStore = writable<MessageActivitySummary>({
+    readUpToTimestamp: 0n,
+    latestTimestamp: 0n,
+    unreadCount: 0,
+});
+export const serverDirectChatBotsStore = new SafeMapStore<string, ExternalBotPermissions>();
+export const serverWalletConfigStore = writable<WalletConfig>({
+    kind: "auto_wallet",
+    minDollarValue: 0,
+});
+export const serverStreakInsuranceStore = writable<StreakInsurance>({
+    daysInsured: 0,
+    daysMissed: 0,
+});
+export const referralsStore = writable<Referral[]>([]);
 
 export class AppState {
     #percentageStorageRemaining: number = 0;
@@ -381,6 +407,12 @@ export class AppState {
     #selectedCommunityReferrals!: ReadonlySet<string>;
     #selectedCommunityInvitedUsers!: ReadonlySet<string>;
     #selectedCommunityRules?: VersionedRules;
+    #selectedCommunitySummary?: CommunitySummary;
+    #serverMessageActivitySummary = $state<MessageActivitySummary>({
+        readUpToTimestamp: 0n,
+        latestTimestamp: 0n,
+        unreadCount: 0,
+    });
 
     // TODO - these need to use $state for the moment because we still have $derived that is depending on it
     // but it can be a plain value once that's all gone
@@ -391,7 +423,20 @@ export class AppState {
     #selectedChatId = $state<ChatIdentifier | undefined>();
     #selectedCommunityId = $state<CommunityIdentifier | undefined>();
     #chatListScope = $state<ChatListScope>({ kind: "none" });
-    #selectedCommunitySummary?: CommunitySummary;
+    #serverDirectChats = $state<ChatMap<DirectChatSummary>>(new ChatMap());
+    #serverGroupChats = $state<ChatMap<GroupChatSummary>>(new ChatMap());
+    #serverCommunities = $state<CommunityMap<CommunitySummary>>(new CommunityMap());
+    #serverFavourites = $state<ChatSet>(new ChatSet());
+    #serverPinnedChats = $state<SafeMap<ChatListScope["kind"], ChatIdentifier[]>>(new SafeMap());
+    #serverDirectChatBots = $state<SafeMap<string, ExternalBotPermissions>>(new SafeMap());
+    #serverWalletConfig = $state<WalletConfig>({
+        kind: "auto_wallet",
+        minDollarValue: 0,
+    });
+    #serverStreakInsurance = $state<StreakInsurance>({
+        daysInsured: 0,
+        daysMissed: 0,
+    });
 
     constructor() {
         $effect.root(() => {
@@ -404,46 +449,53 @@ export class AppState {
 
         locale.subscribe((l) => (this.#locale = l ?? "en"));
         offlineStore.subscribe((offline) => (this.#offline = offline));
-        percentageStorageRemainingStore.subscribe(
-            (val) => (this.#percentageStorageRemaining = val),
-        );
-        percentageStorageUsedStore.subscribe((val) => (this.#percentageStorageUsed = val));
-        storageInGBStore.subscribe((val) => (this.#storageInGB = val));
-        messageFiltersStore.subscribe((val) => (this.#messageFilters = val));
-        currentUserIdStore.subscribe((val) => (this.#currentUserId = val));
-        exploreCommunitiesFiltersStore.subscribe((val) => (this.#exploreCommunitiesFilters = val));
-        anonUserStore.subscribe((val) => (this.#anonUser = val));
-        suspendedUserStore.subscribe((val) => (this.#suspendedUser = val));
-        platformModeratorStore.subscribe((val) => (this.#platformModerator = val));
-        platformOperatorStore.subscribe((val) => (this.#platformOperator = val));
-        diamondStatusStore.subscribe((val) => (this.#diamondStatus = val));
-        isDiamondStore.subscribe((val) => (this.#isDiamond = val));
-        isLifetimeDiamondStore.subscribe((val) => (this.#isLifetimeDiamond = val));
-        canExtendDiamondStore.subscribe((val) => (this.#canExtendDiamond = val));
-        moderationFlagsEnabledStore.subscribe((val) => (this.#moderationFlagsEnabled = val));
-        adultEnabledStore.subscribe((val) => (this.#adultEnabled = val));
-        offensiveEnabledStore.subscribe((val) => (this.#offensiveEnabled = val));
-        underReviewEnabledStore.subscribe((val) => (this.#underReviewEnabled = val));
-        nextCommunityIndexStore.subscribe((val) => (this.#nextCommunityIndex = val));
+        percentageStorageRemainingStore.subscribe((v) => (this.#percentageStorageRemaining = v));
+        percentageStorageUsedStore.subscribe((v) => (this.#percentageStorageUsed = v));
+        storageInGBStore.subscribe((v) => (this.#storageInGB = v));
+        messageFiltersStore.subscribe((v) => (this.#messageFilters = v));
+        currentUserIdStore.subscribe((v) => (this.#currentUserId = v));
+        exploreCommunitiesFiltersStore.subscribe((v) => (this.#exploreCommunitiesFilters = v));
+        anonUserStore.subscribe((v) => (this.#anonUser = v));
+        suspendedUserStore.subscribe((v) => (this.#suspendedUser = v));
+        platformModeratorStore.subscribe((v) => (this.#platformModerator = v));
+        platformOperatorStore.subscribe((v) => (this.#platformOperator = v));
+        diamondStatusStore.subscribe((v) => (this.#diamondStatus = v));
+        isDiamondStore.subscribe((v) => (this.#isDiamond = v));
+        isLifetimeDiamondStore.subscribe((v) => (this.#isLifetimeDiamond = v));
+        canExtendDiamondStore.subscribe((v) => (this.#canExtendDiamond = v));
+        moderationFlagsEnabledStore.subscribe((v) => (this.#moderationFlagsEnabled = v));
+        adultEnabledStore.subscribe((v) => (this.#adultEnabled = v));
+        offensiveEnabledStore.subscribe((v) => (this.#offensiveEnabled = v));
+        underReviewEnabledStore.subscribe((v) => (this.#underReviewEnabled = v));
+        nextCommunityIndexStore.subscribe((v) => (this.#nextCommunityIndex = v));
         selectedCommunityBlockedUsersStore.subscribe(
-            (val) => (this.#selectedCommunityBlockedUsers = val),
+            (v) => (this.#selectedCommunityBlockedUsers = v),
         );
-        selectedCommunityReferralsStore.subscribe(
-            (val) => (this.#selectedCommunityReferrals = val),
-        );
+        selectedCommunityReferralsStore.subscribe((v) => (this.#selectedCommunityReferrals = v));
         selectedCommunityInvitedUsersStore.subscribe(
-            (val) => (this.#selectedCommunityInvitedUsers = val),
+            (v) => (this.#selectedCommunityInvitedUsers = v),
         );
-        selectedCommunityMembersStore.subscribe((val) => (this.#selectedCommunityMembers = val));
-        selectedCommunitySummaryStore.subscribe((val) => (this.#selectedCommunitySummary = val));
-        selectedCommunityRulesStore.subscribe((val) => (this.#selectedCommunityRules = val));
+        selectedCommunityMembersStore.subscribe((v) => (this.#selectedCommunityMembers = v));
+        selectedCommunitySummaryStore.subscribe((v) => (this.#selectedCommunitySummary = v));
+        selectedCommunityRulesStore.subscribe((v) => (this.#selectedCommunityRules = v));
 
-        // TODO - this clone is only necessary to trigger downstream $derived. Remove when all $deriveds are gone
-        translationsStore.subscribe((val) => (this.#translations = val.clone()));
-        communitiesStore.subscribe((val) => (this.#communities = val));
-        selectedChatIdStore.subscribe((val) => (this.#selectedChatId = val));
-        selectedCommunityIdStore.subscribe((val) => (this.#selectedCommunityId = val));
-        chatListScopeStore.subscribe((val) => (this.#chatListScope = val));
+        // TODO - these clones are only necessary to trigger downstream $derived. Remove when all $deriveds are gone
+        translationsStore.subscribe((v) => (this.#translations = v.clone()));
+        serverCommunitiesStore.subscribe((v) => (this.#serverCommunities = v.clone()));
+        communitiesStore.subscribe((v) => (this.#communities = v));
+        selectedChatIdStore.subscribe((v) => (this.#selectedChatId = v));
+        selectedCommunityIdStore.subscribe((v) => (this.#selectedCommunityId = v));
+        chatListScopeStore.subscribe((v) => (this.#chatListScope = v));
+        serverDirectChatsStore.subscribe((v) => (this.#serverDirectChats = v.clone()));
+        serverGroupChatsStore.subscribe((v) => (this.#serverGroupChats = v.clone()));
+        serverFavouritesStore.subscribe((v) => (this.#serverFavourites = v.clone()));
+        serverPinnedChatsStore.subscribe((v) => (this.#serverPinnedChats = v.clone()));
+        serverMessageActivitySummaryStore.subscribe(
+            (v) => (this.#serverMessageActivitySummary = v),
+        );
+        serverDirectChatBotsStore.subscribe((v) => (this.#serverDirectChatBots = v.clone()));
+        serverWalletConfigStore.subscribe((v) => (this.#serverWalletConfig = v));
+        serverStreakInsuranceStore.subscribe((v) => (this.#serverStreakInsurance = v));
     }
 
     #proposalTopics = $derived.by(() => {
@@ -482,14 +534,6 @@ export class AppState {
 
     #messageFormatter: MessageFormatter | undefined;
 
-    #referrals = $state<Referral[]>([]);
-
-    #serverMessageActivitySummary = $state<MessageActivitySummary>({
-        readUpToTimestamp: 0n,
-        latestTimestamp: 0n,
-        unreadCount: 0,
-    });
-
     #messageActivitySummary = $derived.by(() => {
         if (
             localUpdates.messageActivityFeedReadUpTo !== undefined &&
@@ -504,37 +548,13 @@ export class AppState {
         return this.#serverMessageActivitySummary;
     });
 
-    #serverStreakInsurance = $state<StreakInsurance>({
-        daysInsured: 0,
-        daysMissed: 0,
-    });
-
     #streakInsurance = $derived(localUpdates.streakInsurance ?? this.#serverStreakInsurance);
 
-    #serverWalletConfig = $state<WalletConfig>({
-        kind: "auto_wallet",
-        minDollarValue: 0,
-    });
-
     #walletConfig = $derived(localUpdates.walletConfig ?? this.#serverWalletConfig);
-
-    #serverDirectChatBots = $state<SafeMap<string, ExternalBotPermissions>>(new SafeMap());
 
     #directChatBots = $derived.by(() => {
         return localUpdates.directChatBots.apply(this.#serverDirectChatBots);
     });
-
-    #serverDirectChatApiKeys = $state<Map<string, PublicApiKeyDetails>>(new Map());
-
-    #directChatApiKeys = $derived.by(() => {
-        return this.#serverDirectChatApiKeys;
-    });
-
-    #serverDirectChats = $state<ChatMap<DirectChatSummary>>(new ChatMap());
-
-    #serverGroupChats = $state<ChatMap<GroupChatSummary>>(new ChatMap());
-
-    #serverFavourites = $state<ChatSet>(new ChatSet());
 
     // TODO - none of the references to userStore here will be reactive at the moment
     // this is only a temporary problem
@@ -562,7 +582,7 @@ export class AppState {
 
     #unreadFavouriteCounts = $derived.by(() => {
         const chats = ChatMap.fromList(
-            [...this.serverFavourites.values()]
+            [...this.#serverFavourites.values()]
                 .map((id) => this.#allServerChats.get(id))
                 .filter((chat) => chat !== undefined) as ChatSummary[],
         );
@@ -589,8 +609,6 @@ export class AppState {
         ]);
     });
 
-    #serverCommunities = $state<CommunityMap<CommunitySummary>>(new CommunityMap());
-
     // this *includes* any preview chats since they come from the server too
     #allServerChats = $derived.by(() => {
         const groupChats = this.#serverGroupChats.values();
@@ -600,10 +618,12 @@ export class AppState {
         const previewChannels = ChatMap.fromList(
             [...localUpdates.previewCommunities.values()].flatMap((c) => c.channels),
         );
-        return all
+        const done = all
             .merge(localUpdates.uninitialisedDirectChats)
             .merge(localUpdates.groupChatPreviews)
             .merge(previewChannels);
+        console.log("All server chats: ", done);
+        return done;
     });
 
     #userMetrics = $derived.by(() => {
@@ -755,8 +775,6 @@ export class AppState {
             return result;
         }, new ChatMap<Set<number>>());
     });
-
-    #serverPinnedChats = $state<Map<ChatListScope["kind"], ChatIdentifier[]>>(new Map());
 
     #pinnedChats = $derived.by(() => {
         const mergedPinned = new Map(this.#serverPinnedChats);
@@ -1101,20 +1119,8 @@ export class AppState {
         return this.#globalUnreadCount;
     }
 
-    set serverMessageActivitySummary(val: MessageActivitySummary) {
-        this.#serverMessageActivitySummary = val;
-    }
-
     get achievements(): ReadonlySet<string> {
         return achievementsStore;
-    }
-
-    get referrals() {
-        return this.#referrals;
-    }
-
-    set referrals(val: Referral[]) {
-        this.#referrals = val;
     }
 
     get messageActivitySummary() {
@@ -1133,32 +1139,12 @@ export class AppState {
         return this.#streakInsurance;
     }
 
-    set serverStreakInsurance(val: StreakInsurance) {
-        this.#serverStreakInsurance = val;
-    }
-
-    get serverStreakInsurance() {
-        return this.#serverStreakInsurance;
-    }
-
-    set serverWalletConfig(val: WalletConfig) {
-        this.#serverWalletConfig = val;
-    }
-
     get walletConfig() {
         return this.#walletConfig;
     }
 
     get directChatBots() {
         return this.#directChatBots;
-    }
-
-    get directChatApiKeys() {
-        return this.#directChatApiKeys;
-    }
-
-    set directChatApiKeys(val: Map<string, PublicApiKeyDetails>) {
-        this.#serverDirectChatApiKeys = val;
     }
 
     get pinnedChats(): Map<ChatListScope["kind"], ChatIdentifier[]> {
@@ -1333,26 +1319,6 @@ export class AppState {
         );
     }
 
-    get serverDirectChats() {
-        return this.#serverDirectChats;
-    }
-
-    set serverDirectChats(val: ChatMap<DirectChatSummary>) {
-        this.#serverDirectChats = val;
-    }
-
-    get serverGroupChats() {
-        return this.#serverGroupChats;
-    }
-
-    set serverGroupChats(val: ChatMap<GroupChatSummary>) {
-        this.#serverGroupChats = val;
-    }
-
-    get serverFavourites() {
-        return this.#serverFavourites;
-    }
-
     get favourites() {
         return this.#favourites;
     }
@@ -1367,20 +1333,9 @@ export class AppState {
         return this.#serverDirectChats;
     }
 
-    set serverFavourites(val: ChatSet) {
-        this.#serverFavourites = val;
-    }
-
     // TODO - this is only called from tests
     set serverCommunities(val: CommunityMap<CommunitySummary>) {
         serverCommunitiesStore.fromMap(val);
-
-        // TODO - get rid when possible
-        this.#serverCommunities = val;
-    }
-
-    set serverPinnedChats(val: Map<ChatListScope["kind"], ChatIdentifier[]>) {
-        this.#serverPinnedChats = val;
     }
 
     get serverCommunities() {
@@ -1473,20 +1428,23 @@ export class AppState {
         // ideally we would get rid of the setters for all of these server runes because setting
         // them individually is a mistake. But we also want to be able to set them from tests.
         // I'll try to lock this down a bit more later.
-        this.#serverMessageActivitySummary = messageActivitySummary;
+        serverMessageActivitySummaryStore.set(messageActivitySummary);
         achievementsStore.fromSet(achievements);
-        this.#referrals = referrals;
-        this.#serverDirectChats = directChatsMap;
-        this.#serverGroupChats = groupChatsMap;
-        this.#serverFavourites = favouritesSet;
-        this.#serverCommunities = communitiesMap;
+        referralsStore.set(referrals);
+
+        // TODO - do we need to separate these things - each of these fromMap calls will result in a publish
+        // which will cause downstream deriveds to fire. It *might* be better to refactor into a single store - we shall see.
+        // Or - this might be the case for a "transaction".
+        serverDirectChatsStore.fromMap(directChatsMap);
+        serverGroupChatsStore.fromMap(groupChatsMap);
+        serverFavouritesStore.fromSet(favouritesSet);
         serverCommunitiesStore.fromMap(communitiesMap);
-        this.#serverPinnedChats = pinnedChats;
-        this.#directChatApiKeys = apiKeys;
-        this.#serverDirectChatBots = SafeMap.fromEntries(installedBots.entries());
-        this.#serverWalletConfig = walletConfig;
+        serverPinnedChatsStore.fromMap(pinnedChats);
+        directChatApiKeysStore.fromMap(apiKeys);
+        serverDirectChatBotsStore.fromMap(installedBots);
+        serverWalletConfigStore.set(walletConfig);
         if (streakInsurance !== undefined) {
-            this.#serverStreakInsurance = streakInsurance;
+            serverStreakInsuranceStore.set(streakInsurance);
         }
         this.updateChitState((curr) => {
             // Skip the new update if it is behind what we already have locally

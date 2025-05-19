@@ -3916,7 +3916,7 @@ export class OpenChat {
 
         return (
             (chatRules.enabled && !(chat.membership?.rulesAccepted ?? false)) ||
-            ((communityRules?.enabled ?? true) && !(community?.membership?.rulesAccepted ?? false))
+            ((communityRules?.enabled ?? false) && !(community?.membership?.rulesAccepted ?? false))
         );
     }
 

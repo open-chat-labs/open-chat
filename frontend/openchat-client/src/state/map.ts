@@ -2,6 +2,7 @@ import {
     SafeMap,
     SafeSet,
     type ChatIdentifier,
+    type ChatListScope,
     type CommunityIdentifier,
     type MessageContext,
     type Primitive,
@@ -188,17 +189,19 @@ export class SafeMapStore<K, V> extends SafeMap<K, V> {
     }
 
     fromMap(map: ReadonlyMap<K, V>) {
-        this.clear();
+        this.clear(false);
         for (const [k, v] of map) {
             super.set(k, v);
         }
         this.publish();
     }
 
-    clear() {
-        if (super.size > 0) {
+    clear(publish = true) {
+        if (this.size > 0) {
             super.clear();
-            this.publish();
+            if (publish) {
+                this.publish();
+            }
         }
     }
 
@@ -221,6 +224,24 @@ export class SafeMapStore<K, V> extends SafeMap<K, V> {
             this.publish();
         }
         return deleted;
+    }
+}
+
+export class ChatMapStore<V> extends SafeMapStore<ChatIdentifier, V> {
+    constructor() {
+        super(
+            (k) => JSON.stringify(k),
+            (k) => JSON.parse(String(k)) as ChatIdentifier,
+        );
+    }
+}
+
+export class PinnedByScopeStore extends SafeMapStore<ChatListScope["kind"], ChatIdentifier[]> {
+    constructor() {
+        super(
+            (k) => k,
+            (k) => k as ChatListScope["kind"],
+        );
     }
 }
 
