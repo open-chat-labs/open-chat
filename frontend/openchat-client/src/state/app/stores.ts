@@ -827,6 +827,7 @@ export const allChatsStore = derived(
         messageFiltersStore,
         selectedChatBlockedOrSuspendedUsersStore,
         messageLocalUpdates,
+        localUpdates.unconfirmed,
     ],
     ([
         allServerChats,
@@ -837,6 +838,7 @@ export const allChatsStore = derived(
         messageFilters,
         selectedChatBlockedOrSuspendedUsers,
         messageLocalUpdates,
+        unconfirmed,
     ]) => {
         const withUpdates = localChats.apply(allServerChats);
         return [...withUpdates.entries()].reduce((result, [chatId, chat]) => {
@@ -851,6 +853,7 @@ export const allChatsStore = derived(
                 selectedChatBlockedOrSuspendedUsers,
                 currentUserId,
                 messageFilters,
+                unconfirmed,
             );
             // only overwrite the chat if turns out to be different from the original to try
             // to minimise downstream effects

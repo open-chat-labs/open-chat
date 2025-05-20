@@ -25,6 +25,7 @@ import type {
     Message,
     MessageContent,
     MessageContext,
+    MessageContextMap,
     MessageFilter,
     MessageFormatter,
     MessagePermission,
@@ -47,6 +48,7 @@ import type {
     TimelineItem,
     TipsReceived,
     TransferSuccess,
+    UnconfirmedState,
     UserLookup,
     UserSummary,
 } from "openchat-shared";
@@ -353,10 +355,13 @@ export function mergeUnconfirmedIntoSummary(
     blockedUsers: Set<string>,
     currentUserId: string,
     messageFilters: MessageFilter[],
+    unconfirmed: MessageContextMap<UnconfirmedState>,
 ): ChatSummary {
     if (chatSummary.membership === undefined) return chatSummary;
 
-    const unconfirmedMessages = localUpdates.unconfirmedMessages({ chatId: chatSummary.id });
+    // const unconfirmedMessages = localUpdates.unconfirmedMessages({ chatId: chatSummary.id });
+    const unconfirmedState = unconfirmed.get({ chatId: chatSummary.id });
+    const unconfirmedMessages = unconfirmedState ? [...unconfirmedState.values()] : [];
 
     let latestMessage = chatSummary.latestMessage;
     let latestEventIndex = chatSummary.latestEventIndex;

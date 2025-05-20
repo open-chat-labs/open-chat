@@ -38,10 +38,15 @@ export class LocalStorageStore<V> extends WritableStore<V> {
 
 export class LocalStorageBoolStore extends LocalStorageStore<boolean> {
     constructor(key: string, defVal: boolean) {
-        super(key, defVal);
+        super(
+            key,
+            defVal,
+            (b) => b.toString(),
+            (b) => b === "true",
+        );
     }
 
-    toggle() {
+    toggle = () => {
         this.set(!this.current);
-    }
+    };
 }
