@@ -1,6 +1,7 @@
 use crate::memory::{get_instruction_counts_data_memory, get_instruction_counts_index_memory};
 use crate::model::channels::Channels;
 use crate::model::groups_being_imported::{GroupBeingImportedSummary, GroupsBeingImported};
+use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::members::CommunityMembers;
 use crate::timer_job_types::{DeleteFileReferencesJob, MakeTransferJob, RemoveExpiredEventsJob, TimerJob};
 use activity_notification_state::ActivityNotificationState;
@@ -25,7 +26,6 @@ use model::events::CommunityEventInternal;
 use model::user_event_batch::UserEventBatch;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use msgpack::serialize_then_unwrap;
-use notifications_canister_c2c_client::{NotificationPusherState, NotificationsBatch};
 use oc_error_codes::OCErrorCode;
 use rand::RngCore;
 use rand::rngs::StdRng;
@@ -147,10 +147,10 @@ impl RuntimeState {
     }
 
     fn push_notification_inner(&mut self, notification: Notification) {
-        self.data.notifications_queue.push(IdempotentEnvelope {
+        self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
             created_at: self.env.now(),
             idempotency_id: self.env.rng().next_u64(),
-            value: notification,
+            value: local_user_index_canister::CommunityEvent::Notification(notification),
         });
     }
 
@@ -343,7 +343,6 @@ impl RuntimeState {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
-                notifications: self.data.notifications_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
                 escrow: self.data.escrow_canister_id,
                 icp_ledger: ICP_LEDGER_CANISTER_ID,
@@ -409,7 +408,6 @@ struct Data {
     user_index_canister_id: CanisterId,
     local_user_index_canister_id: CanisterId,
     group_index_canister_id: CanisterId,
-    notifications_canister_id: CanisterId,
     proposals_bot_user_id: UserId,
     escrow_canister_id: CanisterId,
     internet_identity_canister_id: CanisterId,
@@ -442,13 +440,18 @@ struct Data {
     expiring_member_actions: ExpiringMemberActions,
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
+    #[serde(default = "local_user_index_event_sync_queue")]
+    local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     bots: InstalledBots,
     bot_api_keys: BotApiKeys,
     verified: Timestamped<bool>,
     idempotency_checker: IdempotencyChecker,
-    notifications_queue: BatchedTimerJobQueue<NotificationsBatch>,
     public_channel_list_updated: TimestampMillis,
+}
+
+fn local_user_index_event_sync_queue() -> BatchedTimerJobQueue<LocalUserIndexEventBatch> {
+    BatchedTimerJobQueue::new(CanisterId::anonymous(), false)
 }
 
 impl Data {
@@ -469,7 +472,6 @@ impl Data {
         user_index_canister_id: CanisterId,
         local_user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
-        notifications_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
         escrow_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
@@ -515,7 +517,6 @@ impl Data {
             user_index_canister_id,
             local_user_index_canister_id,
             group_index_canister_id,
-            notifications_canister_id,
             proposals_bot_user_id,
             escrow_canister_id,
             internet_identity_canister_id,
@@ -547,18 +548,13 @@ impl Data {
             expiring_members: ExpiringMembers::default(),
             expiring_member_actions: ExpiringMemberActions::default(),
             user_cache: UserCache::default(),
-            user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
+            user_event_sync_queue: GroupedTimerJobQueue::new(5, false),
+            local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, false),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             bots: InstalledBots::default(),
             bot_api_keys: BotApiKeys::default(),
             verified: Timestamped::default(),
             idempotency_checker: IdempotencyChecker::default(),
-            notifications_queue: BatchedTimerJobQueue::new(
-                NotificationPusherState {
-                    notifications_canister: notifications_canister_id,
-                },
-                false,
-            ),
             public_channel_list_updated: now,
         }
     }
@@ -1154,7 +1150,6 @@ pub struct CanisterIds {
     pub user_index: CanisterId,
     pub group_index: CanisterId,
     pub local_user_index: CanisterId,
-    pub notifications: CanisterId,
     pub proposals_bot: CanisterId,
     pub escrow: CanisterId,
     pub icp_ledger: CanisterId,

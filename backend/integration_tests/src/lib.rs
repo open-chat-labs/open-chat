@@ -128,10 +128,6 @@ impl CanisterIds {
         self.subnet(env, canister_id.into()).local_user_index
     }
 
-    pub fn notifications(&self, env: &PocketIc, canister_id: impl Into<CanisterId>) -> CanisterId {
-        self.subnet(env, canister_id.into()).notifications_canister
-    }
-
     fn subnet(&self, env: &PocketIc, canister_id: CanisterId) -> Subnet {
         let subnet_id = env.topology().get_subnet(canister_id).unwrap();
         self.subnets.iter().find(|s| s.subnet_id == subnet_id).cloned().unwrap()

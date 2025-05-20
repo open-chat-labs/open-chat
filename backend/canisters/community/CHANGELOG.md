@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Return current timestamp in `selected_updates` response ([#7977](https://github.com/open-chat-labs/open-chat/pull/7977))
 - Support autonomous bots without API keys ([#7985](https://github.com/open-chat-labs/open-chat/pull/7985))
 - Increase scope of `c2c_bot_subscribe_to_events` ([#7996](https://github.com/open-chat-labs/open-chat/pull/7996))
+- Wire up pushing events to LocalUserIndex ([#8001](https://github.com/open-chat-labs/open-chat/pull/8001))
+- Push notifications to LocalUserIndex canisters ([#8002](https://github.com/open-chat-labs/open-chat/pull/8002))
 
 ## [[2.0.1745](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1745-community)] - 2025-05-12
 
