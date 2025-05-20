@@ -6,9 +6,9 @@ use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::{ChatEventInternal, Reader, UpdateMessageSuccess};
+use chat_events::{ChatEventInternal, EventPusher, Reader, UpdateMessageSuccess};
 use constants::{DAY_IN_MS, HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
-use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
+use event_store_producer::{Event, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::{GatePayment, calculate_gate_payments};
@@ -24,6 +24,7 @@ use msgpack::serialize_then_unwrap;
 use oc_error_codes::OCErrorCode;
 use principal_to_user_id_map::PrincipalToUserIdMap;
 use rand::RngCore;
+use rand::prelude::StdRng;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix, StableMemoryMap};
@@ -918,6 +919,22 @@ impl Data {
     pub fn flush_pending_events(&mut self) {
         self.user_event_sync_queue.flush();
         self.local_user_index_event_sync_queue.flush();
+    }
+}
+
+struct GroupEventPusher<'a> {
+    now: TimestampMillis,
+    rng: &'a mut StdRng,
+    queue: &'a mut BatchedTimerJobQueue<LocalUserIndexEventBatch>,
+}
+
+impl<'a> EventPusher for GroupEventPusher<'a> {
+    fn push(&mut self, event: Event) {
+        self.queue.push(IdempotentEnvelope {
+            created_at: self.now,
+            idempotency_id: self.rng.next_u64(),
+            value: local_user_index_canister::GroupEvent::EventStoreEvent(event),
+        })
     }
 }
 

@@ -13,8 +13,9 @@ use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReference
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
+use chat_events::EventPusher;
 use constants::{DAY_IN_MS, ICP_LEDGER_CANISTER_ID, LIFETIME_DIAMOND_TIMESTAMP, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
-use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
+use event_store_producer::{Event, EventBuilder, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use installed_bots::{BotApiKeys, InstalledBots};
@@ -28,6 +29,7 @@ use model::streak::Streak;
 use msgpack::serialize_then_unwrap;
 use oc_error_codes::OCErrorCode;
 use rand::RngCore;
+use rand::prelude::StdRng;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
@@ -570,6 +572,22 @@ impl Data {
     pub fn flush_pending_events(&mut self) {
         self.user_canister_events_queue.flush();
         self.local_user_index_event_sync_queue.flush();
+    }
+}
+
+struct UserEventPusher<'a> {
+    now: TimestampMillis,
+    rng: &'a mut StdRng,
+    queue: &'a mut BatchedTimerJobQueue<LocalUserIndexEventBatch>,
+}
+
+impl<'a> EventPusher for UserEventPusher<'a> {
+    fn push(&mut self, event: Event) {
+        self.queue.push(IdempotentEnvelope {
+            created_at: self.now,
+            idempotency_id: self.rng.next_u64(),
+            value: local_user_index_canister::UserEvent::EventStoreEvent(event),
+        })
     }
 }
 

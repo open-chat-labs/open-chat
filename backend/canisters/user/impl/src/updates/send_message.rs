@@ -3,7 +3,7 @@ use crate::guards::caller_is_local_user_index;
 use crate::guards::caller_is_owner;
 use crate::timer_job_types::{DeleteFileReferencesJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob};
 use crate::updates::send_message_with_transfer::set_up_p2p_swap;
-use crate::{Data, RuntimeState, TimerJob, execute_update, execute_update_async, mutate_state, read_state};
+use crate::{Data, RuntimeState, TimerJob, UserEventPusher, execute_update, execute_update_async, mutate_state, read_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -11,8 +11,6 @@ use chat_events::TextContentInternal;
 use chat_events::{EditMessageArgs, EditMessageSuccess};
 use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal, ValidateNewMessageContentResult};
 use constants::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
-use event_store_producer::NullRuntime;
-use event_store_producer_cdk_runtime::CdkRuntime;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use std::ops::Not;
@@ -234,7 +232,7 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
 
                     let Ok(EditMessageSuccess {
                         message_index, event, ..
-                    }) = chat.events.edit_message::<CdkRuntime>(edit_message_args, None)
+                    }) = chat.events.edit_message::<UserEventPusher>(edit_message_args, None)
                     else {
                         // Shouldn't happen
                         return c2c_bot_send_message::Response::Error(OCErrorCode::InitiatorNotAuthorized.into());
@@ -285,7 +283,7 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
                 .direct_chats
                 .get_or_create(bot_id, UserType::BotV2, || state.env.rng().r#gen(), now);
 
-            chat.push_message::<NullRuntime>(
+            chat.push_message::<UserEventPusher>(
                 true,
                 PushMessageArgs {
                     thread_root_message_index: args.thread_root_message_index,
@@ -454,7 +452,16 @@ fn send_message_impl(
         .direct_chats
         .get_or_create(recipient, recipient_type.into(), || state.env.rng().r#gen(), now);
 
-    let message_event = chat.push_message(true, push_message_args, None, Some(&mut state.data.event_store_client));
+    let message_event = chat.push_message(
+        true,
+        push_message_args,
+        None,
+        Some(UserEventPusher {
+            now,
+            rng: state.env.rng(),
+            queue: &mut state.data.local_user_index_event_sync_queue,
+        }),
+    );
 
     if !recipient_type.is_self() {
         let send_message_args = SendMessageArgs {
@@ -564,7 +571,16 @@ async fn send_to_bot_canister(
                             now,
                             sender_context: None,
                         };
-                        chat.push_message(false, push_message_args, None, Some(&mut state.data.event_store_client));
+                        chat.push_message(
+                            false,
+                            push_message_args,
+                            None,
+                            Some(UserEventPusher {
+                                now,
+                                rng: state.env.rng(),
+                                queue: &mut state.data.local_user_index_event_sync_queue,
+                            }),
+                        );
 
                         // Mark that the bot has read the message we just sent
                         chat.mark_read_up_to(message_index, false, now);

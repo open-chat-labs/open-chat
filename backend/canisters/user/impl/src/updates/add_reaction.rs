@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{RuntimeState, execute_update};
+use crate::{RuntimeState, UserEventPusher, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::AddRemoveReactionArgs;
@@ -34,7 +34,11 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             reaction: args.reaction.clone(),
             now,
         },
-        Some(&mut state.data.event_store_client),
+        Some(UserEventPusher {
+            now,
+            rng: state.env.rng(),
+            queue: &mut state.data.local_user_index_event_sync_queue,
+        }),
     )?;
 
     let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));

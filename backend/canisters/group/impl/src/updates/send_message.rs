@@ -1,7 +1,7 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_local_user_index;
 use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, FinalPrizePaymentsJob, MarkP2PSwapExpiredJob};
-use crate::{Data, RuntimeState, TimerJob, execute_update};
+use crate::{Data, GroupEventPusher, RuntimeState, TimerJob, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, ValidateNewMessageContentResult};
@@ -97,7 +97,11 @@ pub(crate) fn send_message_impl(
         args.rules_accepted,
         args.message_filter_failed.is_some(),
         args.block_level_markdown,
-        &mut state.data.event_store_client,
+        GroupEventPusher {
+            now,
+            rng: state.env.rng(),
+            queue: &mut state.data.local_user_index_event_sync_queue,
+        },
         finalised,
         now,
     )?;
@@ -140,7 +144,11 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> OCResult<Su
         args.rules_accepted,
         args.message_filter_failed.is_some(),
         args.block_level_markdown,
-        &mut state.data.event_store_client,
+        GroupEventPusher {
+            now,
+            rng: state.env.rng(),
+            queue: &mut state.data.local_user_index_event_sync_queue,
+        },
         true,
         now,
     )?;

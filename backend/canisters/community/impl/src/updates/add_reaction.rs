@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_local_user_index;
-use crate::{RuntimeState, execute_update};
+use crate::{CommunityEventPusher, RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::{add_reaction::*, c2c_bot_add_reaction};
@@ -66,7 +66,11 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
         args.message_id,
         args.reaction.clone(),
         now,
-        &mut state.data.event_store_client,
+        CommunityEventPusher {
+            now,
+            rng: state.env.rng(),
+            queue: &mut state.data.local_user_index_event_sync_queue,
+        },
     )?;
 
     if let Some((message, event_index)) =

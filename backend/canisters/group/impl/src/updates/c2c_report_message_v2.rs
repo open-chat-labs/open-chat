@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_user_index_or_local_user_index;
-use crate::{RuntimeState, execute_update};
+use crate::{GroupEventPusher, RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_report_message_v2::{Response::*, *};
@@ -21,7 +21,11 @@ fn c2c_report_message_impl(args: Args, state: &mut RuntimeState) -> Response {
         args.event_index,
         args.reason_code,
         args.notes,
-        &mut state.data.event_store_client,
+        GroupEventPusher {
+            now,
+            rng: state.env.rng(),
+            queue: &mut state.data.local_user_index_event_sync_queue,
+        },
         now,
     );
 
