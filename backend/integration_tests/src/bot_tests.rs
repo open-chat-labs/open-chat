@@ -318,10 +318,10 @@ fn e2e_autonomous_bot_test() {
     env.advance_time(Duration::from_millis(1000));
     env.tick();
 
-    let latest_notification_index_at_start = client::notifications::happy_path::latest_notification_index(
+    let latest_notification_index_at_start = client::local_user_index::happy_path::latest_notification_index(
         env,
         *controller,
-        canister_ids.notifications(env, community_id),
+        canister_ids.local_user_index(env, community_id),
     );
 
     let subscribe_response = client::local_user_index::bot_subscribe_to_events(
@@ -369,10 +369,10 @@ fn e2e_autonomous_bot_test() {
 
     tick_many(env, 5);
 
-    let notifications = client::notifications::happy_path::notifications_v2(
+    let notifications = client::local_user_index::happy_path::notifications_v2(
         env,
         *controller,
-        canister_ids.notifications(env, community_id),
+        canister_ids.local_user_index(env, community_id),
         latest_notification_index_at_start + 1,
     );
 
