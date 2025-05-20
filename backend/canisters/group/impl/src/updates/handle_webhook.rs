@@ -1,4 +1,4 @@
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update};
 use group_canister::handle_webhook::*;
 use group_canister::send_message_v2::SuccessResult;
 use oc_error_codes::OCErrorCode;
@@ -8,9 +8,7 @@ use types::{Caller, MessageContentInitial, OCResult, TextContent};
 use super::send_message::send_message_impl;
 
 pub(crate) fn handle_webhook(args: Args) -> Response {
-    run_regular_jobs();
-
-    match mutate_state(|state| handle_webhook_impl(args, state)) {
+    match execute_update(|state| handle_webhook_impl(args, state)) {
         Ok(result) => Response::Success(result),
         Err(error) => Response::Error(error),
     }

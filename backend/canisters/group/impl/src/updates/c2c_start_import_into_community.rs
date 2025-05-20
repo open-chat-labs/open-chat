@@ -1,5 +1,5 @@
 use crate::guards::caller_is_group_index_or_local_user_index;
-use crate::{CommunityBeingImportedInto, RuntimeState, mutate_state, run_regular_jobs};
+use crate::{CommunityBeingImportedInto, RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_start_import_into_community::{Response::*, *};
@@ -9,9 +9,7 @@ use types::OCResult;
 #[update(guard = "caller_is_group_index_or_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_start_import_into_community(args: Args) -> Response {
-    run_regular_jobs();
-
-    match mutate_state(|state| c2c_start_import_into_community_impl(args, state)) {
+    match execute_update(|state| c2c_start_import_into_community_impl(args, state)) {
         Ok(total_bytes) => Success(total_bytes),
         Err(error) => Error(error),
     }

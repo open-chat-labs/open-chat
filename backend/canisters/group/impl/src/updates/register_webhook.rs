@@ -1,4 +1,4 @@
-use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::register_webhook::*;
@@ -12,9 +12,7 @@ use utils::{
 #[update(candid = true, msgpack = true)]
 #[trace]
 fn register_webhook(args: Args) -> Response {
-    run_regular_jobs();
-
-    match mutate_state(|state| register_webhook_impl(args, state)) {
+    match execute_update(|state| register_webhook_impl(args, state)) {
         Ok(result) => Response::Success(result),
         Err(error) => Response::Error(error),
     }

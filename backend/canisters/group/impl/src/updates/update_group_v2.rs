@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::updates::update_group_v2::Response::*;
-use crate::{Data, RuntimeState, jobs, mutate_state, read_state, run_regular_jobs};
+use crate::{Data, RuntimeState, execute_update_async, jobs, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::update_group_v2::*;
@@ -14,9 +14,11 @@ use types::{
 
 #[update(msgpack = true)]
 #[trace]
-async fn update_group_v2(mut args: Args) -> Response {
-    run_regular_jobs();
+async fn update_group_v2(args: Args) -> Response {
+    execute_update_async(|| update_group_impl(args)).await
+}
 
+async fn update_group_impl(mut args: Args) -> Response {
     clean_args(&mut args);
 
     let prepare_result = match read_state(|state| prepare(&args, state)) {

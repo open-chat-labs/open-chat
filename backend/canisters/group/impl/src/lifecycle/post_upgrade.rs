@@ -20,6 +20,8 @@ fn post_upgrade(args: Args) {
     let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
+    data.user_event_sync_queue.set_defer_processing(true);
+    data.local_user_index_event_sync_queue.set_defer_processing(true);
     data.local_user_index_event_sync_queue
         .set_state(data.local_user_index_canister_id);
 

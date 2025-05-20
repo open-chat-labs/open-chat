@@ -1,10 +1,10 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_local_user_index;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::{add_reaction::*, c2c_bot_add_reaction};
-use oc_error_codes::OCErrorCode;
+use oc_error_codes::{OCError, OCErrorCode};
 use types::{
     Achievement, BotCaller, BotPermissions, Caller, Chat, ChatPermission, EventIndex, GroupReactionAddedNotification, OCResult,
     UserNotificationPayload,
@@ -14,43 +14,40 @@ use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 #[update(candid = true, msgpack = true)]
 #[trace]
 fn add_reaction(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| add_reaction_impl(args, None, state)).into()
+    execute_update(|state| add_reaction_impl(args, None, state)).into()
 }
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_bot_add_reaction(args: c2c_bot_add_reaction::Args) -> c2c_bot_add_reaction::Response {
-    run_regular_jobs();
+    execute_update(|state| c2c_bot_add_reaction_impl(args, state))
+}
 
-    mutate_state(|state| {
-        let bot_caller = BotCaller {
-            bot: args.bot_id,
-            initiator: args.initiator.clone(),
-        };
+fn c2c_bot_add_reaction_impl(args: c2c_bot_add_reaction::Args, state: &mut RuntimeState) -> c2c_bot_add_reaction::Response {
+    let bot_caller = BotCaller {
+        bot: args.bot_id,
+        initiator: args.initiator.clone(),
+    };
 
-        let args = Args {
-            thread_root_message_index: args.thread,
-            message_id: args.message_id,
-            reaction: args.reaction,
-            username: args.bot_name,
-            display_name: None,
-            new_achievement: false,
-            correlation_id: 0,
-        };
+    let args = Args {
+        thread_root_message_index: args.thread,
+        message_id: args.message_id,
+        reaction: args.reaction,
+        username: args.bot_name,
+        display_name: None,
+        new_achievement: false,
+        correlation_id: 0,
+    };
 
-        if !state.data.is_bot_permitted(
-            &bot_caller.bot,
-            &bot_caller.initiator,
-            &BotPermissions::from_chat_permission(ChatPermission::ReactToMessages),
-        ) {
-            return Err(OCErrorCode::InitiatorNotAuthorized.into());
-        }
+    if !state.data.is_bot_permitted(
+        &bot_caller.bot,
+        &bot_caller.initiator,
+        &BotPermissions::from_chat_permission(ChatPermission::ReactToMessages),
+    ) {
+        return OCError::from(OCErrorCode::InitiatorNotAuthorized).into();
+    }
 
-        add_reaction_impl(args, Some(Caller::BotV2(bot_caller)), state)
-    })
-    .into()
+    add_reaction_impl(args, Some(Caller::BotV2(bot_caller)), state).into()
 }
 
 fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut RuntimeState) -> OCResult {
