@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::claim_prize::{Response::*, *};
@@ -12,8 +12,10 @@ use types::{CanisterId, CompletedCryptoTransaction, OCResult, PendingCryptoTrans
 #[update(msgpack = true)]
 #[trace]
 async fn claim_prize(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| claim_prize_impl(args)).await
+}
 
+async fn claim_prize_impl(args: Args) -> Response {
     // Validate the request and reserve a prize
     let prepare_result = match mutate_state(|state| prepare(&args, state)) {
         Ok(c) => c,

@@ -1,5 +1,5 @@
 use crate::updates::c2c_unfreeze_group::c2c_unfreeze_group_impl;
-use crate::{CommunityBeingImportedInto, RuntimeState, mutate_state, read_state, run_regular_jobs};
+use crate::{CommunityBeingImportedInto, RuntimeState, execute_update_async, mutate_state, read_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -13,8 +13,10 @@ use types::{CanisterId, OCResult, UserId};
 #[update(msgpack = true)]
 #[trace]
 async fn convert_into_community(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| convert_into_community_impl(args)).await
+}
 
+async fn convert_into_community_impl(args: Args) -> Response {
     let PrepareResult {
         caller,
         user_id,

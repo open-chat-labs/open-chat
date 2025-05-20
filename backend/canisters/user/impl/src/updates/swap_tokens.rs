@@ -5,7 +5,7 @@ use crate::token_swaps::icpswap::ICPSwapClient;
 use crate::token_swaps::kongswap::KongSwapClient;
 use crate::token_swaps::sonic::SonicClient;
 use crate::token_swaps::swap_client::SwapClient;
-use crate::{Data, RuntimeState, mutate_state, read_state, run_regular_jobs};
+use crate::{Data, RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{MEMO_SWAP, MEMO_SWAP_APPROVAL, NANOS_PER_MILLISECOND, SECOND_IN_MS};
@@ -19,8 +19,10 @@ use user_canister::swap_tokens::{Response::*, *};
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn swap_tokens(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| swap_tokens_impl(args)).await
+}
 
+async fn swap_tokens_impl(args: Args) -> Response {
     let (token_swap, swap_client) = match mutate_state(|state| prepare(args, state)) {
         Ok(ts) => ts,
         Err(response) => return Error(response),

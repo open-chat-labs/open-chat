@@ -1,4 +1,4 @@
-use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::remove_reaction::*;
@@ -7,9 +7,7 @@ use types::OCResult;
 #[update(candid = true, msgpack = true)]
 #[trace]
 fn remove_reaction(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| remove_reaction_impl(args, state)).into()
+    execute_update(|state| remove_reaction_impl(args, state)).into()
 }
 
 fn remove_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {

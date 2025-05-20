@@ -3,7 +3,7 @@ use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::model::events::CommunityEventInternal;
 use crate::model::members::AddResult;
 use crate::updates::c2c_join_channel::join_channel_synchronously;
-use crate::{RuntimeState, jobs, mutate_state, read_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update_async, jobs, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_join_community::{Response::*, *};
@@ -17,9 +17,7 @@ use types::{AccessGate, ChannelId, CommunityCanisterCommunitySummary, OCResult, 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
 async fn c2c_join_community(args: Args) -> Response {
-    run_regular_jobs();
-
-    join_community(args).await
+    execute_update_async(|| join_community(args)).await
 }
 
 pub(crate) async fn join_community(args: Args) -> Response {

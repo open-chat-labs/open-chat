@@ -1,6 +1,6 @@
 use crate::guards::caller_is_owner;
 use crate::timer_job_types::{MessageReminderJob, TimerJob};
-use crate::{RuntimeState, mutate_state, openchat_bot, run_regular_jobs};
+use crate::{RuntimeState, execute_update, openchat_bot};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, MessageReminderCreatedContentInternal};
@@ -15,9 +15,7 @@ const MAX_NOTES_LENGTH: usize = 1000;
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn set_message_reminder_v2(args: Args) -> Response {
-    run_regular_jobs();
-
-    match mutate_state(|state| set_message_reminder_impl(args, state)) {
+    match execute_update(|state| set_message_reminder_impl(args, state)) {
         Ok(reminder_id) => Success(reminder_id),
         Err(error) => Error(error),
     }

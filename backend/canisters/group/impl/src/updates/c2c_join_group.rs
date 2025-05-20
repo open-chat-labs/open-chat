@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_user_index_or_local_user_index;
-use crate::{AddMemberArgs, RuntimeState, jobs, mutate_state, read_state, run_regular_jobs};
+use crate::{AddMemberArgs, RuntimeState, execute_update_async, jobs, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
@@ -16,8 +16,10 @@ use types::{AccessGate, GroupCanisterGroupChatSummary, MemberJoinedInternal, OCR
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
 async fn c2c_join_group(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| c2c_join_group_impl(args)).await
+}
 
+async fn c2c_join_group_impl(args: Args) -> Response {
     let payments = match read_state(|state| is_permitted_to_join(&args, state)) {
         Ok(IsPermittedToJoinSuccess::NoGate) => Vec::new(),
         Ok(IsPermittedToJoinSuccess::RequiresGate(gate, check_gate_args)) => {
@@ -31,7 +33,7 @@ async fn c2c_join_group(args: Args) -> Response {
         Err(error) => return Error(error),
     };
 
-    mutate_state(|state| c2c_join_group_impl(args, payments, state))
+    mutate_state(|state| commit(args, payments, state))
 }
 
 enum IsPermittedToJoinSuccess {
@@ -85,7 +87,7 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> OCResult<IsPermitt
     })
 }
 
-fn c2c_join_group_impl(args: Args, payments: Vec<GatePayment>, state: &mut RuntimeState) -> Response {
+fn commit(args: Args, payments: Vec<GatePayment>, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
 
     let (min_visible_event_index, min_visible_message_index) =

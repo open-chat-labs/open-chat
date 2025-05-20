@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{mutate_state, read_state, run_regular_jobs};
+use crate::{execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_delete_group;
@@ -9,8 +9,10 @@ use user_canister::delete_group::*;
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn delete_group(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| delete_group_impl(args)).await
+}
 
+async fn delete_group_impl(args: Args) -> Response {
     if read_state(|state| state.data.suspended.value) {
         return Response::Error(OCErrorCode::InitiatorSuspended.into());
     }

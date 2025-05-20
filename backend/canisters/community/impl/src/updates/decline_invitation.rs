@@ -1,4 +1,4 @@
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::decline_invitation::*;
@@ -8,9 +8,7 @@ use types::OCResult;
 #[update(msgpack = true)]
 #[trace]
 fn decline_invitation(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| decline_invitation_impl(args, state)).into()
+    execute_update(|state| decline_invitation_impl(args, state)).into()
 }
 
 fn decline_invitation_impl(args: Args, state: &mut RuntimeState) -> OCResult {

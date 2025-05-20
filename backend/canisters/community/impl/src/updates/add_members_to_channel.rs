@@ -1,6 +1,5 @@
 use crate::{
-    AddUsersToChannelResult, RuntimeState, activity_notifications::handle_activity_notification, jobs, mutate_state,
-    read_state, run_regular_jobs,
+    AddUsersToChannelResult, RuntimeState, activity_notifications::handle_activity_notification, execute_update, jobs,
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -11,23 +10,23 @@ use types::{AddedToChannelNotification, ChannelId, OCResult, UserId, UserNotific
 #[update(msgpack = true)]
 #[trace]
 fn add_members_to_channel(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update(|state| add_members_to_channel_impl(args, state))
+}
 
-    let prepare_result = match read_state(|state| prepare(&args, state)) {
+fn add_members_to_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let prepare_result = match prepare(&args, state) {
         Ok(ok) => ok,
         Err(response) => return Error(response),
     };
 
-    mutate_state(|state| {
-        commit(
-            prepare_result.user_id,
-            args.added_by_name,
-            prepare_result.member_display_name.or(args.added_by_display_name),
-            args.channel_id,
-            prepare_result.users_to_add,
-            state,
-        )
-    })
+    commit(
+        prepare_result.user_id,
+        args.added_by_name,
+        prepare_result.member_display_name.or(args.added_by_display_name),
+        args.channel_id,
+        prepare_result.users_to_add,
+        state,
+    )
 }
 
 struct PrepareResult {

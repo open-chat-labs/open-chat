@@ -1,4 +1,4 @@
-use crate::{mutate_state, read_state, run_regular_jobs};
+use crate::{execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ckbtc_minter_canister::update_balance::{UpdateBalanceError, UtxoStatus};
@@ -14,8 +14,10 @@ use user_canister::update_btc_balance::*;
 #[update(msgpack = true)]
 #[trace]
 async fn update_btc_balance(_args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(update_btc_balance_impl).await
+}
 
+async fn update_btc_balance_impl() -> Response {
     let test_mode = read_state(|state| state.data.test_mode);
     let ckbtc_minter_canister_id = if test_mode { TESTNET_CKBTC_MINTER_CANISTER_ID } else { CKBTC_MINTER_CANISTER_ID };
 

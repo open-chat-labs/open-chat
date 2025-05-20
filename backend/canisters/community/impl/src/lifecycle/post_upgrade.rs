@@ -27,6 +27,8 @@ fn post_upgrade(args: Args) {
     let env = init_env(data.rng_seed);
 
     data.public_channel_list_updated = env.now();
+    data.user_event_sync_queue.set_defer_processing(true);
+    data.local_user_index_event_sync_queue.set_defer_processing(true);
     data.local_user_index_event_sync_queue
         .set_state(data.local_user_index_canister_id);
 

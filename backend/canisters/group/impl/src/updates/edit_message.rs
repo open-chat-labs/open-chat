@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::EditMessageArgs;
@@ -9,9 +9,7 @@ use types::{Achievement, OCResult};
 #[update(candid = true, msgpack = true)]
 #[trace]
 fn edit_message_v2(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| edit_message_impl(args, state)).into()
+    execute_update(|state| edit_message_impl(args, state)).into()
 }
 
 fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {

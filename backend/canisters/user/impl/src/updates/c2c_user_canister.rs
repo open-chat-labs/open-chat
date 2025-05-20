@@ -1,7 +1,7 @@
 use crate::timer_job_types::{HardDeleteMessageContentJob, TimerJob};
 use crate::updates::c2c_send_messages::{HandleMessageArgs, get_sender_status, handle_message_impl, verify_user};
 use crate::updates::start_video_call::handle_start_video_call;
-use crate::{RuntimeState, mutate_state, read_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{
@@ -22,8 +22,10 @@ use user_canister::{
 #[update(msgpack = true)]
 #[trace]
 async fn c2c_user_canister(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| c2c_user_canister_impl(args)).await
+}
 
+async fn c2c_user_canister_impl(args: Args) -> Response {
     let caller_user_id = match read_state(get_sender_status) {
         crate::updates::c2c_send_messages::SenderStatus::Ok(user_id, UserType::User) => user_id,
         crate::updates::c2c_send_messages::SenderStatus::Ok(..) => panic!("This request is from an OpenChat bot user"),

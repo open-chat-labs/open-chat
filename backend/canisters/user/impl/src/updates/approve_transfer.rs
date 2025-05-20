@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::NANOS_PER_MILLISECOND;
@@ -11,8 +11,10 @@ use user_canister::approve_transfer::*;
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn approve_transfer(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| approve_transfer_impl(args)).await
+}
 
+async fn approve_transfer_impl(args: Args) -> Response {
     let now_nanos = match mutate_state(|state| prepare(&args, state)) {
         Ok(ts) => ts,
         Err(error) => return Response::Error(error),

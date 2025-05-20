@@ -1,7 +1,7 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_local_user_index;
 use crate::timer_job_types::HardDeleteMessageContentJob;
-use crate::{RuntimeState, TimerJob, mutate_state, read_state, run_regular_jobs};
+use crate::{RuntimeState, TimerJob, execute_update, execute_update_async, mutate_state, read_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -14,8 +14,10 @@ use user_index_canister_c2c_client::lookup_user;
 #[update(candid = true, msgpack = true)]
 #[trace]
 async fn delete_messages(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| delete_messages_impl(args)).await
+}
 
+async fn delete_messages_impl(args: Args) -> Response {
     let PrepareResult {
         caller,
         user_index_canister_id,
@@ -32,40 +34,39 @@ async fn delete_messages(args: Args) -> Response {
         }
     }
 
-    mutate_state(|state| delete_messages_impl(args, None, state)).into()
+    mutate_state(|state| commit(args, None, state)).into()
 }
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_bot_delete_messages(args: c2c_bot_delete_messages::Args) -> c2c_bot_delete_messages::Response {
-    run_regular_jobs();
+    execute_update(|state| c2c_bot_delete_messages_impl(args, state).into())
+}
 
-    mutate_state(|state| {
-        let bot_caller = BotCaller {
-            bot: args.bot_id,
-            initiator: args.initiator.clone(),
-        };
+fn c2c_bot_delete_messages_impl(args: c2c_bot_delete_messages::Args, state: &mut RuntimeState) -> OCResult {
+    let bot_caller = BotCaller {
+        bot: args.bot_id,
+        initiator: args.initiator.clone(),
+    };
 
-        let args = Args {
-            channel_id: args.channel_id,
-            thread_root_message_index: args.thread,
-            message_ids: args.message_ids,
-            as_platform_moderator: None,
-            new_achievement: false,
-        };
+    let args = Args {
+        channel_id: args.channel_id,
+        thread_root_message_index: args.thread,
+        message_ids: args.message_ids,
+        as_platform_moderator: None,
+        new_achievement: false,
+    };
 
-        if !state.data.is_bot_permitted(
-            &bot_caller.bot,
-            Some(args.channel_id),
-            &bot_caller.initiator,
-            &BotPermissions::from_chat_permission(ChatPermission::DeleteMessages),
-        ) {
-            return Err(OCErrorCode::InitiatorNotAuthorized.into());
-        }
+    if !state.data.is_bot_permitted(
+        &bot_caller.bot,
+        Some(args.channel_id),
+        &bot_caller.initiator,
+        &BotPermissions::from_chat_permission(ChatPermission::DeleteMessages),
+    ) {
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
+    }
 
-        delete_messages_impl(args, Some(Caller::BotV2(bot_caller)), state)
-    })
-    .into()
+    commit(args, Some(Caller::BotV2(bot_caller)), state)
 }
 
 struct PrepareResult {
@@ -82,7 +83,7 @@ fn prepare(state: &RuntimeState) -> OCResult<PrepareResult> {
     })
 }
 
-fn delete_messages_impl(args: Args, ext_caller: Option<Caller>, state: &mut RuntimeState) -> OCResult {
+fn commit(args: Args, ext_caller: Option<Caller>, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
     let caller = state.verified_caller(ext_caller)?;

@@ -2,7 +2,7 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::jobs::import_groups::{finalize_group_import, mark_import_complete, process_channel_members};
 use crate::updates::c2c_join_channel::join_channel_unchecked;
 use crate::updates::end_video_call::end_video_call_impl;
-use crate::{RuntimeState, can_borrow_state, mutate_state, read_state, run_regular_jobs};
+use crate::{RuntimeState, can_borrow_state, flush_pending_events, mutate_state, read_state, run_regular_jobs};
 use canister_timer_jobs::Job;
 use chat_events::MessageContentInternal;
 use constants::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
@@ -148,7 +148,8 @@ pub struct JoinMembersToPublicChannelJob {
 
 impl Job for TimerJob {
     fn execute(self) {
-        if can_borrow_state() {
+        let can_borrow_state = can_borrow_state();
+        if can_borrow_state {
             run_regular_jobs();
         }
 
@@ -167,6 +168,10 @@ impl Job for TimerJob {
             TimerJob::MarkP2PSwapExpired(job) => job.execute(),
             TimerJob::MarkVideoCallEnded(job) => job.execute(),
             TimerJob::JoinMembersToPublicChannel(job) => job.execute(),
+        }
+
+        if can_borrow_state {
+            flush_pending_events();
         }
     }
 }

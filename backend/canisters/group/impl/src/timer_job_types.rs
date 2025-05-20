@@ -1,6 +1,7 @@
 use crate::updates::end_video_call::end_video_call_impl;
 use crate::{
-    activity_notifications::handle_activity_notification, can_borrow_state, mutate_state, read_state, run_regular_jobs,
+    activity_notifications::handle_activity_notification, can_borrow_state, flush_pending_events, mutate_state, read_state,
+    run_regular_jobs,
 };
 use canister_timer_jobs::Job;
 use chat_events::MessageContentInternal;
@@ -109,7 +110,8 @@ pub struct MarkVideoCallEndedJob(pub group_canister::end_video_call_v2::Args);
 
 impl Job for TimerJob {
     fn execute(self) {
-        if can_borrow_state() {
+        let can_borrow_state = can_borrow_state();
+        if can_borrow_state {
             run_regular_jobs();
         }
 
@@ -124,6 +126,10 @@ impl Job for TimerJob {
             TimerJob::CancelP2PSwapInEscrowCanister(job) => job.execute(),
             TimerJob::MarkP2PSwapExpired(job) => job.execute(),
             TimerJob::MarkVideoCallEnded(job) => job.execute(),
+        }
+
+        if can_borrow_state {
+            flush_pending_events();
         }
     }
 }

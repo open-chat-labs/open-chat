@@ -3,7 +3,7 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::guards::{caller_is_local_user_index, caller_is_proposals_bot};
 use crate::model::channels::Channel;
 use crate::timer_job_types::JoinMembersToPublicChannelJob;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::create_channel::{Response::*, *};
@@ -19,9 +19,7 @@ use utils::text_validation::{StringLengthValidationError, validate_channel_name,
 #[update(msgpack = true)]
 #[trace]
 fn create_channel(args: Args) -> Response {
-    run_regular_jobs();
-
-    match mutate_state(|state| create_channel_impl(args, false, None, state)) {
+    match execute_update(|state| create_channel_impl(args, false, None, state)) {
         Ok(result) => Success(result),
         Err(error) => Error(error),
     }
@@ -30,56 +28,61 @@ fn create_channel(args: Args) -> Response {
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_bot_create_channel(args: c2c_bot_create_channel::Args) -> c2c_bot_create_channel::Response {
-    run_regular_jobs();
+    execute_update(|state| c2c_bot_create_channel_impl(args, state))
+}
 
+fn c2c_bot_create_channel_impl(
+    args: c2c_bot_create_channel::Args,
+    state: &mut RuntimeState,
+) -> c2c_bot_create_channel::Response {
     let bot_caller = BotCaller {
         bot: args.bot_id,
         initiator: args.initiator.clone(),
     };
 
-    match mutate_state(|state| create_channel_impl(args.into(), false, Some(Caller::BotV2(bot_caller)), state)) {
-        Ok(result) => c2c_bot_create_channel::Response::Success(result),
-        Err(error) => c2c_bot_create_channel::Response::Error(error),
+    match create_channel_impl(args.into(), false, Some(Caller::BotV2(bot_caller)), state) {
+        Ok(result) => Success(result),
+        Err(error) => Error(error),
     }
 }
 
 #[update(guard = "caller_is_proposals_bot", msgpack = true)]
 #[trace]
 fn c2c_create_proposals_channel(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update(|state| c2c_create_proposals_channel_impl(args, state))
+}
 
-    mutate_state(|state| {
-        let caller = state.env.caller();
+fn c2c_create_proposals_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let caller = state.env.caller();
 
-        if let Some(response) = join_community_impl(
-            &c2c_join_community::Args {
-                user_id: caller.into(),
-                principal: caller,
-                invite_code: None,
-                referred_by: None,
-                is_platform_moderator: false,
-                user_type: UserType::OcControlledBot,
-                diamond_membership_expires_at: None,
-                verified_credential_args: None,
-                unique_person_proof: None,
-            },
-            Vec::new(),
-            state,
-        )
-        .err()
-        {
-            match response {
-                c2c_join_community::Response::Error(error) => return Error(error),
-                c2c_join_community::Response::AlreadyInCommunity(_) => {}
-                _ => panic!("Unexpected response from c2c_join_community"),
-            }
+    if let Some(response) = join_community_impl(
+        &c2c_join_community::Args {
+            user_id: caller.into(),
+            principal: caller,
+            invite_code: None,
+            referred_by: None,
+            is_platform_moderator: false,
+            user_type: UserType::OcControlledBot,
+            diamond_membership_expires_at: None,
+            verified_credential_args: None,
+            unique_person_proof: None,
+        },
+        Vec::new(),
+        state,
+    )
+    .err()
+    {
+        match response {
+            c2c_join_community::Response::Error(error) => return Error(error),
+            c2c_join_community::Response::AlreadyInCommunity(_) => {}
+            _ => panic!("Unexpected response from c2c_join_community"),
         }
+    }
 
-        match create_channel_impl(args, true, None, state) {
-            Ok(result) => Success(result),
-            Err(error) => Error(error),
-        }
-    })
+    match create_channel_impl(args, true, None, state) {
+        Ok(result) => Success(result),
+        Err(error) => Error(error),
+    }
 }
 
 fn create_channel_impl(

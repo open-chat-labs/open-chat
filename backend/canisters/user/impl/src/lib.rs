@@ -461,7 +461,7 @@ impl Data {
             next_event_expiry: None,
             token_swaps: TokenSwaps::default(),
             p2p_swaps: P2PSwaps::default(),
-            user_canister_events_queue: GroupedTimerJobQueue::new(10, false),
+            user_canister_events_queue: GroupedTimerJobQueue::new(10, true),
             video_call_operators,
             event_store_client: EventStoreClientBuilder::new(local_user_index_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
@@ -480,7 +480,7 @@ impl Data {
             referrals: Referrals::default(),
             message_activity_events: MessageActivityEvents::default(),
             stable_memory_keys_to_garbage_collect: Vec::new(),
-            local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, false),
+            local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
             idempotency_checker: IdempotencyChecker::default(),
             bots: InstalledBots::default(),
             bot_api_keys: BotApiKeys::default(),
@@ -566,6 +566,11 @@ impl Data {
         // The permissions required must be a subset of the permissions granted to the bot
         required.is_subset(granted)
     }
+
+    pub fn flush_pending_events(&mut self) {
+        self.user_canister_events_queue.flush();
+        self.local_user_index_event_sync_queue.flush();
+    }
 }
 
 #[derive(Serialize, Debug)]
@@ -598,8 +603,28 @@ pub struct Metrics {
     pub canister_ids: CanisterIds,
 }
 
+fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
+    mutate_state(|state| {
+        state.regular_jobs.run(state.env.deref(), &mut state.data);
+        let result = f(state);
+        state.data.flush_pending_events();
+        result
+    })
+}
+
+async fn execute_update_async<F: FnOnce() -> Fut, Fut: Future<Output = R>, R>(f: F) -> R {
+    run_regular_jobs();
+    let result = f().await;
+    flush_pending_events();
+    result
+}
+
 fn run_regular_jobs() {
     mutate_state(|state| state.regular_jobs.run(state.env.deref(), &mut state.data));
+}
+
+fn flush_pending_events() {
+    mutate_state(|state| state.data.flush_pending_events());
 }
 
 #[derive(Serialize, Debug)]
