@@ -46,7 +46,9 @@ pub enum BotEvent {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BotEventWrapper {
+    #[serde(rename = "g")]
     pub api_gateway: CanisterId,
+    #[serde(rename = "e")]
     pub event: BotEvent,
 }
 
