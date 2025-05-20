@@ -1,11 +1,14 @@
 use crate::{
-    BotInstallationLocation, BotPermissions, CanisterId, ChannelId, Chat, ChatEventType, ChatId, CommunityEventType,
-    CommunityId, EventIndex, MessageIndex, Reaction, TimestampMillis, UserId,
+    BotDataEncoding, BotInstallationLocation, BotPermissions, CanisterId, ChannelId, Chat, ChatEventType, ChatId,
+    CommunityEventType, CommunityId, EventIndex, MessageIndex, Reaction, TimestampMillis, UserId,
 };
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
-use std::fmt::{Debug, Formatter};
+use std::{
+    collections::HashMap,
+    fmt::{Debug, Formatter},
+};
 use ts_export::ts_export;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -96,10 +99,12 @@ pub struct BotInstalledEvent {
     pub installed_by: UserId,
     #[serde(rename = "l")]
     pub location: BotInstallationLocation,
+    #[serde(rename = "g")]
+    pub api_gateway: CanisterId,
     #[serde(rename = "p")]
-    pub granted_permissions: BotPermissions,
+    pub granted_command_permissions: BotPermissions,
     #[serde(rename = "a")]
-    pub granted_autonomous_permissions: Option<BotPermissions>,
+    pub granted_autonomous_permissions: BotPermissions,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -141,7 +146,7 @@ pub struct BotNotificationEnvelope {
     #[serde(rename = "e")]
     pub event: BotEvent,
     #[serde(rename = "r")]
-    pub recipients: Vec<UserId>,
+    pub recipients: HashMap<UserId, BotDataEncoding>,
     #[serde(rename = "t")]
     pub timestamp: TimestampMillis,
 }

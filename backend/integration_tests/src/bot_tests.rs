@@ -381,7 +381,7 @@ fn e2e_autonomous_bot_test() {
         notifications
             .notifications
             .iter()
-            .any(|n| matches!(&n.value, NotificationEnvelope::Bot(n) if n.recipients.contains(&bot_id)))
+            .any(|n| matches!(&n.value, NotificationEnvelope::Bot(n) if n.recipients.contains_key(&bot_id)))
     );
 }
 
@@ -723,6 +723,7 @@ fn read_messages_by_command() {
                 permissions: BotPermissions::default(),
             }),
             default_subscriptions: None,
+            data_encoding: None,
         },
     );
 
@@ -834,6 +835,7 @@ fn send_direct_message() {
             }],
             autonomous_config: None,
             default_subscriptions: None,
+            data_encoding: None,
         },
     );
 
@@ -1145,6 +1147,7 @@ fn register_bot(
                 permissions: BotPermissions::text_only(),
             }),
             default_subscriptions: None,
+            data_encoding: None,
         },
     )
 }
@@ -1173,6 +1176,7 @@ fn register_autonomous_bot(
                 permissions: BotPermissions::text_only(),
             }),
             default_subscriptions: None,
+            data_encoding: None,
         },
     )
 }

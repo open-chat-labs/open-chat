@@ -41,7 +41,7 @@ fn notifications_v2_impl(args: Args, state: &RuntimeState) -> Response {
             }
             NotificationEnvelope::Bot(n) => {
                 let mut bot_endpoint_to_add: Vec<(UserId, String)> = Vec::new();
-                for user_id in n.recipients.iter() {
+                for (user_id, _) in n.recipients.iter() {
                     if let Some(endpoint) = state.data.bot_endpoints.get(user_id) {
                         has_subscriptions = true;
                         if !bot_endpoints.contains_key(user_id) {
