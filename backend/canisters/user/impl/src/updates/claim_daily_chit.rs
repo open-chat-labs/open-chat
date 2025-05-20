@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
@@ -11,7 +11,7 @@ use utils::time::tomorrow;
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn claim_daily_chit(_args: Args) -> Response {
-    mutate_state(claim_daily_chit_impl)
+    execute_update(claim_daily_chit_impl)
 }
 
 fn claim_daily_chit_impl(state: &mut RuntimeState) -> Response {

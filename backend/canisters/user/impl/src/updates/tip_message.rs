@@ -1,6 +1,6 @@
 use crate::crypto::process_transaction;
 use crate::guards::caller_is_owner;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update_async, mutate_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -18,8 +18,10 @@ use user_canister::tip_message::{Response::*, *};
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn tip_message(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| tip_message_impl(args)).await
+}
 
+async fn tip_message_impl(args: Args) -> Response {
     let (prepare_result, now_nanos) = match mutate_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
         Err(response) => return Error(response),

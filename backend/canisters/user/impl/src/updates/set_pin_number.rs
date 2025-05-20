@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
@@ -14,9 +14,7 @@ const MAX_LENGTH: usize = 20;
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn set_pin_number(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| set_pin_number_impl(args, state)).into()
+    execute_update(|state| set_pin_number_impl(args, state)).into()
 }
 
 fn set_pin_number_impl(args: Args, state: &mut RuntimeState) -> OCResult {

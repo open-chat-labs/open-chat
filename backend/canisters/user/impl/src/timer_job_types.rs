@@ -1,7 +1,7 @@
 use crate::model::token_swaps::TokenSwap;
 use crate::updates::end_video_call::end_video_call_impl;
 use crate::updates::swap_tokens::process_token_swap;
-use crate::{can_borrow_state, mutate_state, openchat_bot, read_state, run_regular_jobs};
+use crate::{can_borrow_state, flush_pending_events, mutate_state, openchat_bot, read_state, run_regular_jobs};
 use canister_timer_jobs::Job;
 use chat_events::{MessageContentInternal, MessageReminderContentInternal};
 use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SECOND_IN_MS};
@@ -122,7 +122,8 @@ pub struct ClaimOrResetStreakInsuranceJob;
 
 impl Job for TimerJob {
     fn execute(self) {
-        if can_borrow_state() {
+        let can_borrow_state = can_borrow_state();
+        if can_borrow_state {
             run_regular_jobs();
         }
 
@@ -140,6 +141,10 @@ impl Job for TimerJob {
             TimerJob::SendMessageToChannel(job) => job.execute(),
             TimerJob::MarkVideoCallEnded(job) => job.execute(),
             TimerJob::ClaimOrResetStreakInsurance(job) => job.execute(),
+        }
+
+        if can_borrow_state {
+            flush_pending_events();
         }
     }
 }

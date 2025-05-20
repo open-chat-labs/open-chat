@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{mutate_state, read_state, run_regular_jobs};
+use crate::{execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_leave_group;
@@ -9,8 +9,10 @@ use user_canister::leave_group::*;
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn leave_group(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| leave_group_impl(args)).await
+}
 
+async fn leave_group_impl(args: Args) -> Response {
     let principal = match read_state(|state| {
         if state.data.suspended.value {
             Err(OCErrorCode::InitiatorSuspended.into())

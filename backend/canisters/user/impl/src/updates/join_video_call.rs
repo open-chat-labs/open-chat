@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
@@ -9,9 +9,7 @@ use user_canister::{JoinVideoCall, UserCanisterEvent, join_video_call::*};
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn join_video_call(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| join_video_call_impl(args, state)).into()
+    execute_update(|state| join_video_call_impl(args, state).into())
 }
 
 fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {

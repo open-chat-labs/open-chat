@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{COMMUNITY_CREATION_LIMIT, RuntimeState, mutate_state, read_state, run_regular_jobs};
+use crate::{COMMUNITY_CREATION_LIMIT, RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_community;
@@ -15,9 +15,11 @@ use utils::text_validation::{
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
-async fn create_community(mut args: Args) -> Response {
-    run_regular_jobs();
+async fn create_community(args: Args) -> Response {
+    execute_update_async(|| create_community_impl(args)).await
+}
 
+async fn create_community_impl(mut args: Args) -> Response {
     args.name = args.name.trim().to_string();
     args.description = args.description.trim().to_string();
     args.rules.text = args.rules.text.trim().to_string();

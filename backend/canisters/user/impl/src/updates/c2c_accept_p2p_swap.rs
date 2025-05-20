@@ -1,6 +1,6 @@
 use crate::guards::caller_is_known_group_or_community_canister;
 use crate::model::p2p_swaps::P2PSwap;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{MEMO_P2P_SWAP_ACCEPT, NANOS_PER_MILLISECOND};
@@ -14,8 +14,10 @@ use user_canister::c2c_accept_p2p_swap::{Response::*, *};
 #[update(guard = "caller_is_known_group_or_community_canister", msgpack = true)]
 #[trace]
 async fn c2c_accept_p2p_swap(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| c2c_accept_p2p_swap_impl(args)).await
+}
 
+async fn c2c_accept_p2p_swap_impl(args: Args) -> Response {
     let PrepareResult {
         my_user_id,
         escrow_canister_id,

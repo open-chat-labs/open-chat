@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::AddRemoveReactionArgs;
@@ -11,16 +11,14 @@ use user_canister::{ToggleReactionArgs, UserCanisterEvent};
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn add_reaction(args: Args) -> Response {
-    run_regular_jobs();
-
-    if args.reaction.is_valid() {
-        mutate_state(|state| add_reaction_impl(args, state)).into()
-    } else {
-        Response::Error(OCErrorCode::InvalidReaction.into())
-    }
+    execute_update(|state| add_reaction_impl(args, state)).into()
 }
 
 fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    if !args.reaction.is_valid() {
+        return Err(OCErrorCode::InvalidReaction.into());
+    }
+
     state.data.verify_not_suspended()?;
 
     let chat = state.data.direct_chats.get_mut_or_err(&args.user_id.into())?;
