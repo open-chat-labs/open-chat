@@ -621,7 +621,6 @@ mod tests {
     use super::*;
     use crate::{ChatEvents, MessageContentInternal, NullEventPusher, PushMessageArgs, TextContentInternal};
     use candid::Principal;
-    use event_store_types::Event;
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use rand::random;
