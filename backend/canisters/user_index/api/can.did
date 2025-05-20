@@ -226,6 +226,7 @@ type BotDefinition = record {
     commands : vec BotCommandDefinition;
     autonomous_config : opt AutonomousConfig;
     default_subscriptions : opt BotSubscriptions;
+    data_encoding : opt BotDataEncoding;
 };
 
 type AutonomousConfig = record {
