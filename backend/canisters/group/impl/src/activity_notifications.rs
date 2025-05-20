@@ -4,14 +4,19 @@ use constants::{DAY_IN_MS, HOUR_IN_MS};
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_index_canister::c2c_mark_active;
 use msgpack::serialize_then_unwrap;
+use rand::RngCore;
 use std::collections::HashSet;
-use types::{CanisterId, Milliseconds, PublicGroupActivity, TimestampMillis};
+use types::{CanisterId, IdempotentEnvelope, Milliseconds, PublicGroupActivity, TimestampMillis};
 
 // If needed, notify the group index canister that there has been activity in this group
 pub(crate) fn handle_activity_notification(state: &mut RuntimeState) {
-    state.data.user_event_sync_queue.flush();
-
     let now = state.env.now();
+
+    state.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
+        created_at: now,
+        idempotency_id: state.env.rng().next_u64(),
+        value: local_user_index_canister::GroupEvent::MarkActivity(now),
+    });
 
     if let Some(mark_active_duration) = state.data.activity_notification_state.notify_if_required(now) {
         let public_group_activity = state.data.chat.is_public.then(|| extract_activity(now, &state.data));
