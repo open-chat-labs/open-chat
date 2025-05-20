@@ -1,7 +1,6 @@
 use crate::env::ENV;
 use crate::utils::tick_many;
 use crate::{CanisterIds, TestEnv, User, client};
-use candid::Principal;
 use itertools::Itertools;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
@@ -22,7 +21,8 @@ fn direct_message_notification_succeeds() {
     let TestData { user1, user2 } = init_test_data(env, canister_ids);
 
     let local_user_index_canister = canister_ids.local_user_index(env, user2.canister());
-    let latest_notification_index = latest_notification_index(env, local_user_index_canister, *controller);
+    let latest_notification_index =
+        client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index_canister);
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
 
@@ -50,7 +50,8 @@ fn group_message_notification_succeeds() {
     let TestData { user1, user2 } = init_test_data(env, canister_ids);
 
     let local_user_index_canister = canister_ids.local_user_index(env, user2.canister());
-    let latest_notification_index = latest_notification_index(env, local_user_index_canister, *controller);
+    let latest_notification_index =
+        client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index_canister);
 
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), false, false);
     client::local_user_index::happy_path::add_users_to_group(
@@ -98,7 +99,8 @@ fn direct_message_notification_muted() {
     );
 
     let local_user_index_canister = canister_ids.local_user_index(env, user2.canister());
-    let latest_notification_index = latest_notification_index(env, local_user_index_canister, *controller);
+    let latest_notification_index =
+        client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index_canister);
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
 
@@ -147,7 +149,8 @@ fn group_message_notification_muted(case: u32) {
     );
 
     let local_user_index_canister = canister_ids.local_user_index(env, user2.canister());
-    let latest_notification_index = latest_notification_index(env, local_user_index_canister, *controller);
+    let latest_notification_index =
+        client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index_canister);
 
     let (text, mentioned) = match case {
         1 => (random_string(), Vec::new()),
@@ -223,7 +226,8 @@ fn only_store_up_to_10_subscriptions_per_user() {
     env.tick();
 
     let local_user_index_canister = canister_ids.local_user_index(env, user2.canister());
-    let latest_notification_index = latest_notification_index(env, local_user_index_canister, *controller);
+    let latest_notification_index =
+        client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index_canister);
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
 
@@ -264,7 +268,8 @@ fn notifications_blocked_from_blocked_users() {
     );
 
     let local_user_index_canister = canister_ids.local_user_index(env, group_id);
-    let latest_notification_index = latest_notification_index(env, local_user_index_canister, *controller);
+    let latest_notification_index =
+        client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index_canister);
 
     client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
 
@@ -308,18 +313,6 @@ fn notifications_blocked_from_blocked_users() {
 
     assert_eq!(notifications_response.notifications.len(), 1);
     assert!(notifications_response.subscriptions.contains_key(&user2.user_id));
-}
-
-fn latest_notification_index(env: &PocketIc, local_user_index_canister_id: Principal, controller: Principal) -> u64 {
-    let local_user_index_canister::latest_notification_index::Response::Success(latest_notification_index) =
-        client::local_user_index::latest_notification_index(
-            env,
-            controller,
-            local_user_index_canister_id,
-            &local_user_index_canister::latest_notification_index::Args {},
-        );
-
-    latest_notification_index
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds) -> TestData {
