@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support autonomous bots without API keys ([#7985](https://github.com/open-chat-labs/open-chat/pull/7985))
 - Wire up pushing events to LocalUserIndex ([#8001](https://github.com/open-chat-labs/open-chat/pull/8001))
 - Push notifications to LocalUserIndex canisters ([#8002](https://github.com/open-chat-labs/open-chat/pull/8002))
+- Flush pending events at the end of each update call ([#8008](https://github.com/open-chat-labs/open-chat/pull/8008))
 
 ## [[2.0.1746](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1746-group)] - 2025-05-12
 
