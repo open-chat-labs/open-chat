@@ -101,6 +101,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 ev.autonomous_config,
                 ev.default_subscriptions,
                 ev.permitted_install_location,
+                ev.data_encoding,
             );
         }
         UserIndexEvent::BotPublished(ev) => {

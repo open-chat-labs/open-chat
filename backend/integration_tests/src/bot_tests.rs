@@ -376,7 +376,7 @@ fn e2e_autonomous_bot_test() {
         latest_notification_index_at_start + 1,
     );
 
-    assert!(notifications.bot_endpoints.contains_key(&bot_id));
+    assert!(notifications.bots.contains_key(&bot_id));
     assert!(
         notifications
             .notifications
@@ -723,6 +723,7 @@ fn read_messages_by_command() {
                 permissions: BotPermissions::default(),
             }),
             default_subscriptions: None,
+            data_encoding: None,
         },
     );
 
@@ -834,6 +835,7 @@ fn send_direct_message() {
             }],
             autonomous_config: None,
             default_subscriptions: None,
+            data_encoding: None,
         },
     );
 
@@ -1145,6 +1147,7 @@ fn register_bot(
                 permissions: BotPermissions::text_only(),
             }),
             default_subscriptions: None,
+            data_encoding: None,
         },
     )
 }
@@ -1173,6 +1176,7 @@ fn register_autonomous_bot(
                 permissions: BotPermissions::text_only(),
             }),
             default_subscriptions: None,
+            data_encoding: None,
         },
     )
 }
