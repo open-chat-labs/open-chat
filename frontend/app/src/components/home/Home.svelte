@@ -27,21 +27,22 @@
     import {
         allUsersStore,
         anonUserStore,
-        app,
         chatIdentifiersEqual,
         chatListScopeStore,
         chatsInitialisedStore,
+        chatSummariesListStore,
+        chatSummariesStore,
         communitiesStore,
         currentUserStore,
         defaultChatRules,
         dimensions,
         fullWidth,
+        identityStateStore,
         localUpdates,
         nullMembership,
         offlineStore,
         pageRedirect,
         pageReplace,
-        pathState,
         pinNumberResolverStore,
         querystringStore,
         rightPanelHistory,
@@ -49,10 +50,11 @@
         routeForScope,
         routeStore,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
+        selectedChatIdStore,
+        selectedChatSummaryStore,
         selectedCommunityRulesStore,
         subscribe,
         suspendedUserStore,
-        ui,
     } from "openchat-client";
     import page from "page";
     import { getContext, onMount, tick, untrack } from "svelte";
@@ -320,10 +322,10 @@
         untrack(async () => {
             // wait until we have loaded the chats
             if (initialised) {
-                ui.filterRightPanelHistory((state) => state.kind !== "community_filters");
+                client.filterRightPanelHistory((state) => state.kind !== "community_filters");
                 if (
                     $anonUserStore &&
-                    pathState.isChatListRoute(route) &&
+                    client.isChatListRoute(route) &&
                     (route.scope.kind === "direct_chat" || route.scope.kind === "favourite")
                 ) {
                     client.updateIdentityState({ kind: "logging_in" });
@@ -335,13 +337,13 @@
                     return;
                 }
 
-                if (pathState.isHomeRoute(route)) {
+                if (client.isHomeRoute(route)) {
                     filterChatSpecificRightPanelStates();
-                } else if (pathState.isCommunitiesRoute(route)) {
+                } else if (client.isCommunitiesRoute(route)) {
                     rightPanelHistory.set($fullWidth ? [{ kind: "community_filters" }] : []);
                 } else {
                     // any other route with no associated chat therefore we must clear any selected chat and potentially close the right panel
-                    if (pathState.isShareRoute(route)) {
+                    if (client.isShareRoute(route)) {
                         share = {
                             title: route.title,
                             text: route.text,
@@ -363,7 +365,7 @@
     // Note: very important (and hacky) that this is hidden in a function rather than inline in the top level reactive
     // statement because we don't want that reactive statement to execute in reponse to changes in rightPanelHistory :puke:
     function filterChatSpecificRightPanelStates() {
-        ui.filterRightPanelHistory((panel) => panel.kind === "user_profile");
+        client.filterRightPanelHistory((panel) => panel.kind === "user_profile");
     }
 
     function leaderboard() {
@@ -501,7 +503,7 @@
     }
 
     function chatWith(chatId: DirectChatIdentifier) {
-        const chat = app.chatSummariesList.find((c) => {
+        const chat = $chatSummariesListStore.find((c) => {
             return c.kind === "direct_chat" && c.them === chatId;
         });
 
@@ -509,11 +511,11 @@
     }
 
     function showInviteGroupUsers(show: boolean) {
-        if (app.selectedChatId !== undefined) {
+        if ($selectedChatIdStore !== undefined) {
             if (show) {
                 rightPanelHistory.set([{ kind: "invite_group_users" }]);
             } else {
-                ui.pushRightPanelHistory({ kind: "invite_group_users" });
+                client.pushRightPanelHistory({ kind: "invite_group_users" });
             }
         }
     }
@@ -521,7 +523,7 @@
     function replyPrivatelyTo(context: EnhancedReplyContext) {
         if (context.sender === undefined) return;
 
-        const chat = app.chatSummariesList.find((c) => {
+        const chat = $chatSummariesListStore.find((c) => {
             return (
                 c.kind === "direct_chat" &&
                 chatIdentifiersEqual(c.them, {
@@ -547,14 +549,14 @@
     }
 
     function showGroupMembers() {
-        if (app.selectedChatId !== undefined) {
+        if ($selectedChatIdStore !== undefined) {
             rightPanelHistory.set([{ kind: "show_group_members" }]);
         }
     }
 
     function showProfile() {
-        if (app.selectedChatId !== undefined) {
-            pageReplace(routeForChatIdentifier($chatListScopeStore.kind, app.selectedChatId));
+        if ($selectedChatIdStore !== undefined) {
+            pageReplace(routeForChatIdentifier($chatListScopeStore.kind, $selectedChatIdStore));
         }
         rightPanelHistory.set([{ kind: "user_profile" }]);
     }
@@ -568,8 +570,8 @@
     }
 
     function showProposalFilters() {
-        if (app.selectedChatId !== undefined) {
-            pageReplace(routeForChatIdentifier($chatListScopeStore.kind, app.selectedChatId));
+        if ($selectedChatIdStore !== undefined) {
+            pageReplace(routeForChatIdentifier($chatListScopeStore.kind, $selectedChatIdStore));
             rightPanelHistory.set([
                 {
                     kind: "proposal_filters",
@@ -597,7 +599,7 @@
         // it's possible that we got here via a postLogin capture in which case it's possible
         // that we are actually already a member of this group, so we should double check here
         // that we actually *need* to join the group
-        let chat = app.chatSummaries.get(group.id);
+        let chat = $chatSummariesStore.get(group.id);
         if (chat === undefined || chat.membership.role === "none" || client.isLapsed(chat.id)) {
             doJoinGroup(group, select, undefined);
         }
@@ -885,12 +887,12 @@
 
     function onPinNumberComplete(pin: string | undefined) {
         if (pin) {
-            app.pinNumberResolver?.resolve(pin);
+            $pinNumberResolverStore?.resolve(pin);
         }
     }
 
     function onPinNumberClose() {
-        app.pinNumberResolver?.reject();
+        $pinNumberResolverStore?.reject();
     }
 
     function verifyHumanity() {
@@ -903,9 +905,9 @@
 
     let confirmMessage = $derived(getConfirmMessage(confirmActionEvent));
     let selectedMultiUserChat = $derived(
-        app.selectedChatSummary?.kind === "group_chat" ||
-            app.selectedChatSummary?.kind === "channel"
-            ? app.selectedChatSummary
+        $selectedChatSummaryStore?.kind === "group_chat" ||
+            $selectedChatSummaryStore?.kind === "channel"
+            ? $selectedChatSummaryStore
             : undefined,
     );
     let governanceCanisterId = $derived(
@@ -917,22 +919,22 @@
     // $: nervousSystem = client.tryGetNervousSystem("rrkah-fqaaa-aaaaa-aaaaq-cai");
 
     trackedEffect("identity-state", () => {
-        if (app.identityState.kind === "registering") {
+        if ($identityStateStore.kind === "registering") {
             modal = { kind: "registering" };
-        } else if (app.identityState.kind === "logging_in") {
+        } else if ($identityStateStore.kind === "logging_in") {
             modal = { kind: "logging_in" };
-        } else if (app.identityState.kind === "logged_in" && modal.kind === "registering") {
+        } else if ($identityStateStore.kind === "logged_in" && modal.kind === "registering") {
             console.log("We are now logged in so we are closing the register modal");
             closeModal();
-        } else if (app.identityState.kind === "challenging") {
+        } else if ($identityStateStore.kind === "challenging") {
             modal = { kind: "challenge" };
         }
         if (
-            app.identityState.kind === "logged_in" &&
-            app.identityState.postLogin?.kind === "join_group" &&
+            $identityStateStore.kind === "logged_in" &&
+            $identityStateStore.postLogin?.kind === "join_group" &&
             $chatsInitialisedStore
         ) {
-            const join = { ...app.identityState.postLogin };
+            const join = { ...$identityStateStore.postLogin };
             client.clearPostLoginState();
             tick().then(() => joinGroup(join));
         }
@@ -1041,14 +1043,14 @@
             <BotBuilderModal mode={"update"} onClose={closeModal} />
         {:else if modal.kind === "remove_bot"}
             <BotBuilderModal mode={"remove"} onClose={closeModal} />
-        {:else if modal.kind === "register_webhook" && (app.selectedChatId?.kind === "group_chat" || app.selectedChatId?.kind === "channel")}
+        {:else if modal.kind === "register_webhook" && ($selectedChatIdStore?.kind === "group_chat" || $selectedChatIdStore?.kind === "channel")}
             <WebhookModal
-                chatId={app.selectedChatId}
+                chatId={$selectedChatIdStore}
                 mode={{ kind: "register" }}
                 onClose={closeModal} />
-        {:else if modal.kind === "update_webhook" && (app.selectedChatId?.kind === "group_chat" || app.selectedChatId?.kind === "channel")}
+        {:else if modal.kind === "update_webhook" && ($selectedChatIdStore?.kind === "group_chat" || $selectedChatIdStore?.kind === "channel")}
             <WebhookModal
-                chatId={app.selectedChatId}
+                chatId={$selectedChatIdStore}
                 mode={{ kind: "update", webhook: modal.webhook }}
                 onClose={closeModal} />
         {:else if modal.kind === "no_access"}

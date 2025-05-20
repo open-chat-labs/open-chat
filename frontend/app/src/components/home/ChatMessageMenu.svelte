@@ -1,6 +1,5 @@
 <script lang="ts">
     import {
-        app,
         chatListScopeStore,
         cryptoLookup,
         currentUserIdStore,
@@ -10,6 +9,7 @@
         LEDGER_CANISTER_ICP,
         publish,
         routeForMessage,
+        threadsFollowedByMeStore,
         type ChatIdentifier,
         type Message,
         type MessageReminderCreatedContent,
@@ -166,7 +166,7 @@
     );
     let isFollowedByMe = $derived(
         threadRootMessage !== undefined &&
-            (app.threadsFollowedByMe.get(chatId)?.has(threadRootMessage.messageIndex) ?? false),
+            ($threadsFollowedByMeStore.get(chatId)?.has(threadRootMessage.messageIndex) ?? false),
     );
     let canFollow = $derived(threadRootMessage !== undefined && !isFollowedByMe);
     let canUnfollow = $derived(isFollowedByMe);
@@ -259,7 +259,7 @@
     }
 
     function untranslateMessage() {
-        app.untranslate(msg.messageId);
+        client.untranslate(msg.messageId);
     }
 
     function translateMessage() {
@@ -285,7 +285,7 @@
             .then((resp) => resp.json())
             .then(({ data: { translations } }) => {
                 if (Array.isArray(translations) && translations.length > 0) {
-                    app.translate(messageId, translations[0].translatedText);
+                    client.translate(messageId, translations[0].translatedText);
                 }
             })
             .catch((_err) => {

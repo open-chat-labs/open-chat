@@ -18,6 +18,7 @@ pub struct BotDefinition {
     pub commands: Vec<BotCommandDefinition>,
     pub autonomous_config: Option<AutonomousConfig>,
     pub default_subscriptions: Option<BotSubscriptions>,
+    pub data_encoding: Option<BotDataEncoding>,
 }
 
 #[ts_export]
@@ -574,4 +575,18 @@ impl From<&BotSubscriptions> for BotPermissions {
 
         permissions
     }
+}
+
+impl BotDefinition {
+    pub fn encoding(&self) -> BotDataEncoding {
+        *self.data_encoding.as_ref().unwrap_or(&BotDataEncoding::Json)
+    }
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, Default)]
+pub enum BotDataEncoding {
+    #[default]
+    Json,
+    Candid,
 }

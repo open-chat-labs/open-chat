@@ -1,6 +1,5 @@
 <script lang="ts">
     import {
-        ui,
         type ChannelIdentifier,
         type CommunitySummary,
         type Level,
@@ -70,11 +69,11 @@
             .then((resp) => {
                 switch (resp.kind) {
                     case "success": {
-                        ui.popRightPanelHistory();
+                        client.popRightPanelHistory();
                         break;
                     }
                     case "add_to_channel_partial_success": {
-                        ui.popRightPanelHistory();
+                        client.popRightPanelHistory();
                         toastStore.showSuccessToast(i18nKey("group.addMembersPartialSuccess"));
                         break;
                     }

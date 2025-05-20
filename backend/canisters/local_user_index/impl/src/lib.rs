@@ -30,7 +30,7 @@ use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    BotNotificationEnvelope, BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms,
+    BotEventWrapper, BotNotificationEnvelope, BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms,
     CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
     IdempotentEnvelope, MessageContent, Milliseconds, Notification, NotificationEnvelope, ReferralType, TimestampMillis,
     Timestamped, User, UserId, UserNotificationEnvelope, VerifiedCredentialGateArgs,
@@ -595,7 +595,7 @@ impl Data {
         }
     }
 
-    pub fn handle_notification(&mut self, notification: Notification, now: TimestampMillis) {
+    pub fn handle_notification(&mut self, notification: Notification, this_canister_id: CanisterId, now: TimestampMillis) {
         match notification {
             Notification::User(user_notification) => {
                 let users_who_have_blocked_sender: HashSet<_> = user_notification
@@ -622,7 +622,10 @@ impl Data {
 
                 if !bot_notification.recipients.is_empty() {
                     self.notifications.add(NotificationEnvelope::Bot(BotNotificationEnvelope {
-                        event: bot_notification.event,
+                        event: BotEventWrapper {
+                            api_gateway: this_canister_id,
+                            event: bot_notification.event,
+                        },
                         recipients: bot_notification.recipients,
                         timestamp: now,
                     }));

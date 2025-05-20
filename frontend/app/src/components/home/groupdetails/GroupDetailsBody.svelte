@@ -1,9 +1,9 @@
 <script lang="ts">
     import type { MultiUserChat, OpenChat } from "openchat-client";
     import {
-        app,
         AvatarSize,
         currentUserIdStore,
+        selectedChatRulesStore,
         selectedCommunityRulesStore,
         selectedCommunitySummaryStore,
     } from "openchat-client";
@@ -48,7 +48,7 @@
     let avatarSrc = $derived(client.groupAvatarUrl(chat, $selectedCommunitySummaryStore));
     let combinedRulesText = $derived(
         canSend
-            ? client.combineRulesText(app.selectedChat.rules, $selectedCommunityRulesStore)
+            ? client.combineRulesText($selectedChatRulesStore, $selectedCommunityRulesStore)
             : "",
     );
     let externalUrl = $derived(chat.kind === "channel" ? chat.externalUrl : undefined);

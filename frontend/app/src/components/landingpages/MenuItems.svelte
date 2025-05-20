@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { app, locationStore, OpenChat } from "openchat-client";
+    import { identityStateStore, locationStore, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import Launch from "./Launch.svelte";
     import Link from "./Link.svelte";
@@ -45,7 +45,7 @@
         <div class="menu-item">
             <Link selected={$locationStore.startsWith("/faq")} mode={"menu"} path="faq">FAQs</Link>
         </div>
-        {#if app.identityState.kind === "logged_in"}
+        {#if $identityStateStore.kind === "logged_in"}
             <Link onLinkClicked={() => client.logout()} mode={"menu"}>Logout</Link>
         {/if}
         <div class="menu-item">

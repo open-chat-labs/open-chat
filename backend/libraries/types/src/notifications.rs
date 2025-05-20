@@ -1,6 +1,6 @@
 use crate::{
-    BotInstallationLocation, BotPermissions, CanisterId, ChannelId, Chat, ChatEventType, ChatId, CommunityEventType,
-    CommunityId, EventIndex, MessageIndex, Reaction, TimestampMillis, UserId,
+    BotDataEncoding, BotInstallationLocation, BotPermissions, CanisterId, ChannelId, Chat, ChatEventType, ChatId,
+    CommunityEventType, CommunityId, EventIndex, MessageIndex, Reaction, TimestampMillis, UserId,
 };
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
@@ -45,6 +45,14 @@ pub enum BotEvent {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct BotEventWrapper {
+    #[serde(rename = "g")]
+    pub api_gateway: CanisterId,
+    #[serde(rename = "e")]
+    pub event: BotEvent,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BotChatEvent {
     #[serde(rename = "e")]
     pub event_type: ChatEventType,
@@ -72,22 +80,10 @@ pub struct BotCommunityEvent {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum BotLifecycleEvent {
-    #[serde(rename = "r")]
-    Registered(BotRegisteredEvent),
-    #[serde(rename = "d")]
-    Removed,
     #[serde(rename = "i")]
     Installed(BotInstalledEvent),
     #[serde(rename = "u")]
     Uninstalled(BotUninstalledEvent),
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct BotRegisteredEvent {
-    #[serde(rename = "i")]
-    pub bot_id: UserId,
-    #[serde(rename = "n")]
-    pub bot_name: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -96,10 +92,12 @@ pub struct BotInstalledEvent {
     pub installed_by: UserId,
     #[serde(rename = "l")]
     pub location: BotInstallationLocation,
+    #[serde(rename = "g")]
+    pub api_gateway: CanisterId,
     #[serde(rename = "p")]
-    pub granted_permissions: BotPermissions,
+    pub granted_command_permissions: BotPermissions,
     #[serde(rename = "a")]
-    pub granted_autonomous_permissions: Option<BotPermissions>,
+    pub granted_autonomous_permissions: BotPermissions,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -139,7 +137,7 @@ pub struct UserNotificationEnvelope {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BotNotificationEnvelope {
     #[serde(rename = "e")]
-    pub event: BotEvent,
+    pub event: BotEventWrapper,
     #[serde(rename = "r")]
     pub recipients: Vec<UserId>,
     #[serde(rename = "t")]
@@ -499,4 +497,10 @@ impl Debug for UserNotificationEnvelope {
             .field("timestamp", &self.timestamp)
             .finish()
     }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct NotificationBotDetails {
+    pub endpoint: String,
+    pub data_encoding: BotDataEncoding,
 }

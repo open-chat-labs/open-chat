@@ -1,8 +1,8 @@
 <script lang="ts">
     import { toastStore } from "@src/stores/toast";
     import {
-        app,
         chatListScopeStore,
+        chatSummariesListStore,
         currentUserIdStore,
         mobileWidth,
         pageRedirect,
@@ -102,7 +102,7 @@
             if ($mobileWidth) {
                 page(routeForScope($chatListScopeStore));
             } else {
-                const first = app.chatSummariesList.find(
+                const first = $chatSummariesListStore.find(
                     (c) => !chatIdentifiersEqual(c.id, { kind: "direct_chat", userId: bot.id }),
                 );
                 if (first) {

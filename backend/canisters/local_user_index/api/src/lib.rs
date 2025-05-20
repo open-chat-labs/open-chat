@@ -3,11 +3,11 @@ use event_store_types::Event;
 use serde::{Deserialize, Serialize};
 use types::nns::CryptoAmount;
 use types::{
-    AutonomousConfig, BotCommandDefinition, BotDefinition, BotInstallationLocation, BotSubscriptions, BuildVersion, CanisterId,
-    ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, CyclesTopUp, DiamondMembershipPlanDuration,
-    MessageContent, MessageContentInitial, MessageId, MessageIndex, Notification, NotifyChit, PhoneNumber, ReferralType,
-    SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim,
-    UserCanisterStreakInsurancePayment, UserId, UserType, is_default,
+    AutonomousConfig, BotCommandDefinition, BotDataEncoding, BotDefinition, BotInstallationLocation, BotSubscriptions,
+    BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, CyclesTopUp,
+    DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId, MessageIndex, Notification, NotifyChit,
+    PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User,
+    UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserType, is_default,
 };
 
 mod lifecycle;
@@ -141,6 +141,8 @@ pub struct BotRegistered {
     pub permitted_install_location: Option<BotInstallationLocation>,
     #[serde(default)]
     pub default_subscriptions: Option<BotSubscriptions>,
+    #[serde(default)]
+    pub data_encoding: BotDataEncoding,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

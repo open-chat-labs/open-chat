@@ -8,41 +8,33 @@ import {
     type MessageContext,
     type UserLookup,
 } from "openchat-shared";
-import { ReactiveMessageContextMap } from "../map";
+import { MessageContextMapStore } from "./map";
 
 export class DraftMessage {
-    textContent = $state<string>();
-    attachment = $state<AttachmentContent>();
-    editingEvent = $state<EventWrapper<Message>>();
-    replyingTo = $state<EnhancedReplyContext>();
+    textContent?: string;
+    attachment?: AttachmentContent;
+    editingEvent?: EventWrapper<Message>;
+    replyingTo?: EnhancedReplyContext;
 }
 
-export class DraftMessages {
-    #draftMessages = new ReactiveMessageContextMap<DraftMessage>();
-
+export class DraftMessages extends MessageContextMapStore<DraftMessage> {
     #getOrCreate(key: MessageContext) {
-        let state = this.#draftMessages.get(key);
+        let state = this.get(key);
         if (state === undefined) {
             state = new DraftMessage();
-            this.#draftMessages.set(key, state);
+            this.set(key, state);
         }
         return state;
     }
 
-    get(key: MessageContext) {
-        return this.#draftMessages.get(key);
-    }
-
-    delete(key: MessageContext) {
-        this.#draftMessages.delete(key);
-    }
-
     setTextContent(key: MessageContext, textContent?: string) {
         this.#getOrCreate(key).textContent = textContent;
+        this.publish();
     }
 
     setAttachment(key: MessageContext, attachment?: AttachmentContent) {
         this.#getOrCreate(key).attachment = attachment;
+        this.publish();
     }
 
     setEditing(key: MessageContext, editingEvent: EventWrapper<Message>, userLookup: UserLookup) {
@@ -61,9 +53,11 @@ export class DraftMessages {
                       sender: userLookup.get(editingEvent.event.sender),
                   }
                 : undefined;
+        this.publish();
     }
 
     setReplyingTo(key: MessageContext, replyingTo?: EnhancedReplyContext) {
         this.#getOrCreate(key).replyingTo = replyingTo;
+        this.publish();
     }
 }

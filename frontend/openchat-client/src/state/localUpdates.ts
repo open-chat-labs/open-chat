@@ -33,27 +33,28 @@ import {
     type WalletConfig,
     type WebhookDetails,
 } from "openchat-shared";
-import { SvelteMap } from "svelte/reactivity";
-import { revokeObjectUrls } from "../../utils/url";
-import { chatDetailsLocalUpdates } from "../chat_details";
-import { communityLocalUpdates } from "../community";
-import { communitySummaryLocalUpdates } from "../community/summaryUpdates";
+import { revokeObjectUrls } from "../utils/url";
+import { chatDetailsLocalUpdates } from "./chat/detailsUpdates";
+import { chatSummaryLocalUpdates } from "./chat/summaryUpdates";
+import { communityLocalUpdates } from "./community/detailUpdates";
+import { communitySummaryLocalUpdates } from "./community/summaryUpdates";
+import { DraftMessages } from "./draft";
 import {
+    ChatMapStore,
     CommunityMapStore,
-    LocalChatMap,
+    LocalChatMapStore,
     LocalCommunityMapStore,
-    LocalMap,
-    ReactiveChatMap,
-    ReactiveMessageContextMap,
-} from "../map";
-import { messageLocalUpdates } from "../message/local.svelte";
-import { LocalSet, LocalSetStore } from "../set";
-import { scheduleUndo, type UndoLocalUpdate } from "../undo";
-import { writable } from "../writable";
-import { DraftMessages } from "./draft.svelte";
+    LocalMapStore,
+    MessageContextMapStore,
+    SafeMapStore,
+} from "./map";
+import { messageLocalUpdates } from "./message/localUpdates";
+import { LocalSetStore } from "./set";
+import { scheduleUndo, type UndoLocalUpdate } from "./undo";
+import { writable } from "./writable";
 
 function emptyUnconfirmed(): UnconfirmedState {
-    return new SvelteMap<bigint, UnconfirmedMessageEvent>();
+    return new Map<bigint, UnconfirmedMessageEvent>();
 }
 
 type FailedMessageState = Map<bigint, EventWrapper<Message>>;
@@ -64,29 +65,24 @@ const noop = () => {};
 // global local updates don't need the manager because they are not specific to a keyed entity (community, chat, message etc)
 export class GlobalLocalState {
     #blockedDirectUsers = new LocalSetStore<string>();
-    #failedMessages = $state<ReactiveMessageContextMap<FailedMessageState>>(
-        new ReactiveMessageContextMap(),
-    );
-    #recentlySentMessages = new SvelteMap<bigint, bigint>();
-    #ephemeral = $state<ReactiveMessageContextMap<EphemeralState>>(new ReactiveMessageContextMap());
-    #unconfirmed = $state<ReactiveMessageContextMap<UnconfirmedState>>(
-        new ReactiveMessageContextMap(),
-    );
-    #draftMessages = new DraftMessages();
-    readonly chats = new LocalChatMap<ChatSummary>();
-    // readonly communities = new LocalCommunityMap<CommunitySummary>();
+    #recentlySentMessages = new SafeMapStore<bigint, bigint>();
+    #ephemeral = new MessageContextMapStore<EphemeralState>();
+    #unconfirmed = new MessageContextMapStore<UnconfirmedState>();
+    #failedMessages = new MessageContextMapStore<FailedMessageState>();
+    readonly draftMessages = new DraftMessages();
+    readonly chats = new LocalChatMapStore<ChatSummary>();
     readonly communities = new LocalCommunityMapStore<CommunitySummary>();
     readonly previewCommunities = new CommunityMapStore<CommunitySummary>();
-    readonly directChatBots = new LocalMap<string, ExternalBotPermissions>();
+    readonly directChatBots = new LocalMapStore<string, ExternalBotPermissions>();
     #walletConfig = writable<WalletConfig | undefined>(undefined);
     #streakInsurance = writable<StreakInsurance | undefined>(undefined);
-    #messageActivityFeedReadUpTo = $state<bigint | undefined>();
-    readonly favourites = new LocalSet<ChatIdentifier>(
+    #messageActivityFeedReadUpTo = writable<bigint | undefined>(undefined);
+    readonly favourites = new LocalSetStore<ChatIdentifier>(
         (k) => JSON.stringify(k),
         (k) => JSON.parse(String(k)),
     );
-    #uninitialisedDirectChats = new ReactiveChatMap<DirectChatSummary>();
-    #groupChatPreviews = new ReactiveChatMap<MultiUserChat>();
+    #uninitialisedDirectChats = new ChatMapStore<DirectChatSummary>();
+    #groupChatPreviews = new ChatMapStore<MultiUserChat>();
 
     // only used for testing
     clearAll() {
@@ -100,12 +96,13 @@ export class GlobalLocalState {
         this.directChatBots.clear();
         this.#walletConfig.set(undefined);
         this.#streakInsurance.set(undefined);
-        this.#messageActivityFeedReadUpTo = undefined;
+        this.#messageActivityFeedReadUpTo.set(undefined);
         this.favourites.clear();
         this.#uninitialisedDirectChats.clear();
         this.#groupChatPreviews.clear();
         messageLocalUpdates.clearAll();
         chatDetailsLocalUpdates.clearAll();
+        chatSummaryLocalUpdates.clear();
         communityLocalUpdates.clear();
         communitySummaryLocalUpdates.clear();
     }
@@ -122,23 +119,16 @@ export class GlobalLocalState {
         return this.#blockedDirectUsers;
     }
 
-    get draftMessages() {
-        return this.#draftMessages;
-    }
-
     get unconfirmed() {
         return this.#unconfirmed;
     }
 
     initialiseFailedMessages(messages: MessageContextMap<FailedMessageState>) {
-        this.#failedMessages = new ReactiveMessageContextMap();
-        for (const [k, v] of messages) {
-            this.#failedMessages.set(k, v);
-        }
+        this.#failedMessages.fromMap(messages);
     }
 
     addFailedMessage(key: MessageContext, message: EventWrapper<Message>) {
-        const s = this.#failedMessages.get(key) ?? new SvelteMap<bigint, EventWrapper<Message>>();
+        const s = this.#failedMessages.get(key) ?? new Map<bigint, EventWrapper<Message>>();
         s.set(message.event.messageId, message);
         this.#failedMessages.set(key, s);
     }
@@ -151,7 +141,11 @@ export class GlobalLocalState {
         return this.#failedMessages.get(key)?.has(messageId) ?? false;
     }
 
-    failedMessages(key: MessageContext): EventWrapper<Message>[] {
+    get failedMessages() {
+        return this.#failedMessages;
+    }
+
+    failedMessagesForContext(key: MessageContext): EventWrapper<Message>[] {
         const state = this.#failedMessages.get(key);
         return state ? [...state.values()] : [];
     }
@@ -161,7 +155,7 @@ export class GlobalLocalState {
     }
 
     addEphemeral(key: MessageContext, message: EventWrapper<Message>) {
-        const s = this.#ephemeral.get(key) ?? new SvelteMap<bigint, EventWrapper<Message>>();
+        const s = this.#ephemeral.get(key) ?? new Map<bigint, EventWrapper<Message>>();
         s.set(message.event.messageId, message);
         this.#ephemeral.set(key, s);
         // TODO - I don't think that we want ephemeral messages to automatically disappear
@@ -175,13 +169,17 @@ export class GlobalLocalState {
         return this.#ephemeral.get(key)?.has(messageId) ?? false;
     }
 
+    get ephemeral() {
+        return this.#ephemeral;
+    }
+
     ephemeralMessages(key: MessageContext): EventWrapper<Message>[] {
         const state = this.#ephemeral.get(key);
         return state ? [...state.values()] : [];
     }
 
-    #deleteLocalMessage(
-        container: ReactiveMessageContextMap<Map<bigint, EventWrapper<Message>>>,
+    #deleteLocalMessage<T extends EventWrapper<Message>>(
+        container: MessageContextMapStore<Map<bigint, T>>,
         key: MessageContext,
         messageId: bigint,
     ) {
@@ -192,6 +190,8 @@ export class GlobalLocalState {
             state?.delete(messageId);
             if (state?.size === 0) {
                 container.delete(key);
+            } else {
+                container.publish();
             }
             return true;
         }
@@ -241,6 +241,7 @@ export class GlobalLocalState {
                         blockLevelMarkdown: blockLevelMarkdown ?? false,
                     },
                 });
+                this.#unconfirmed.set(key, state);
             }
         }
     }
@@ -258,15 +259,19 @@ export class GlobalLocalState {
     }
 
     markUnconfirmedAccepted(key: MessageContext, messageId: bigint) {
-        const msg = this.#unconfirmed.get(key)?.get(messageId);
-        if (msg) {
-            msg.accepted = true;
+        const state = this.#unconfirmed.get(key);
+        if (state !== undefined) {
+            const msg = state?.get(messageId);
+            if (msg) {
+                msg.accepted = true;
+                this.#unconfirmed.set(key, state);
+            }
         }
     }
 
     // only used for testing
     clearUnconfirmed() {
-        this.#unconfirmed = new ReactiveMessageContextMap();
+        this.#unconfirmed.clear();
     }
 
     get groupChatPreviews() {
@@ -348,10 +353,10 @@ export class GlobalLocalState {
     }
 
     setMessageActivityFeedReadUpTo(val: bigint) {
-        const prev = this.#messageActivityFeedReadUpTo;
-        this.#messageActivityFeedReadUpTo = val;
+        const prev = this.#messageActivityFeedReadUpTo.current;
+        this.#messageActivityFeedReadUpTo.set(val);
         return scheduleUndo(() => {
-            this.#messageActivityFeedReadUpTo = prev;
+            this.#messageActivityFeedReadUpTo.set(prev);
         });
     }
 
@@ -544,19 +549,19 @@ export class GlobalLocalState {
     }
 
     updateNotificationsMuted(id: ChatIdentifier, muted: boolean): UndoLocalUpdate {
-        return chatDetailsLocalUpdates.updateNotificationsMuted(id, muted);
+        return chatSummaryLocalUpdates.updateNotificationsMuted(id, muted);
     }
 
     updateArchived(id: ChatIdentifier, archived: boolean): UndoLocalUpdate {
-        return chatDetailsLocalUpdates.updateArchived(id, archived);
+        return chatSummaryLocalUpdates.updateArchived(id, archived);
     }
 
     updateLatestMessage(id: ChatIdentifier, message: EventWrapper<Message>): UndoLocalUpdate {
-        return chatDetailsLocalUpdates.updateLatestMessage(id, message);
+        return chatSummaryLocalUpdates.updateLatestMessage(id, message);
     }
 
     updateChatRulesAccepted(id: ChatIdentifier, rulesAccepted: boolean): UndoLocalUpdate {
-        return chatDetailsLocalUpdates.updateRulesAccepted(id, rulesAccepted);
+        return chatSummaryLocalUpdates.updateRulesAccepted(id, rulesAccepted);
     }
 
     updateChatProperties(
@@ -568,7 +573,7 @@ export class GlobalLocalState {
         eventsTTL?: OptionUpdate<bigint>,
         isPublic?: boolean,
     ) {
-        return chatDetailsLocalUpdates.updateChatProperties(
+        return chatSummaryLocalUpdates.updateChatProperties(
             id,
             name,
             description,
@@ -580,7 +585,7 @@ export class GlobalLocalState {
     }
 
     updateChatFrozen(id: ChatIdentifier, frozen: boolean): UndoLocalUpdate {
-        return chatDetailsLocalUpdates.updateFrozen(id, frozen);
+        return chatSummaryLocalUpdates.updateFrozen(id, frozen);
     }
 
     // message updates

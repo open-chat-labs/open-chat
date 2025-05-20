@@ -1,13 +1,15 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
     import {
-        app,
         botState,
         chatIdentifiersEqual,
+        directChatBotsStore,
         filteredProposalsStore,
         rightPanelMode,
         rightPanelWidth,
         routeStore,
+        selectedChatIdStore,
+        selectedChatSummaryStore,
         showLeft,
         showMiddle,
         showNav,
@@ -34,13 +36,13 @@
     let middlePanel: HTMLElement | undefined;
 
     let botId = $derived.by(() => {
-        if (app.selectedChatSummary === undefined) return undefined;
-        if (app.selectedChatSummary.kind !== "direct_chat") return undefined;
-        return botState.externalBots.get(app.selectedChatSummary.them.userId)?.id;
+        if ($selectedChatSummaryStore === undefined) return undefined;
+        if ($selectedChatSummaryStore.kind !== "direct_chat") return undefined;
+        return botState.externalBots.get($selectedChatSummaryStore.them.userId)?.id;
     });
 
     let uninstalledBotId = $derived.by(() => {
-        return botId !== undefined && app.directChatBots.get(botId) === undefined
+        return botId !== undefined && $directChatBotsStore.get(botId) === undefined
             ? botId
             : undefined;
     });
@@ -89,12 +91,12 @@
     }
 
     function resize() {
-        alignVideoCall($activeVideoCall, app.selectedChatId);
+        alignVideoCall($activeVideoCall, $selectedChatIdStore);
     }
     let noChat = $derived($routeStore.kind !== "global_chat_selected_route");
     trackedEffect("align-video-call", () => {
         if (middlePanel) {
-            alignVideoCall($activeVideoCall, app.selectedChatId);
+            alignVideoCall($activeVideoCall, $selectedChatIdStore);
         }
     });
 </script>
@@ -118,21 +120,21 @@
         {:then { default: Admin }}
             <Admin />
         {/await}
-    {:else if app.selectedChatId === undefined}
+    {:else if $selectedChatIdStore === undefined}
         {#if noChat}
             <div class="no-chat" in:fade>
                 <NoChatSelected />
             </div>
         {/if}
-    {:else if installingBot && botId && app.selectedChatId.kind === "direct_chat"}
+    {:else if installingBot && botId && $selectedChatIdStore.kind === "direct_chat"}
         <UninstalledDirectBot
             onClose={() => (installingBot = false)}
-            chatId={app.selectedChatId}
+            chatId={$selectedChatIdStore}
             {botId} />
-    {:else if app.selectedChatSummary !== undefined}
+    {:else if $selectedChatSummaryStore !== undefined}
         <CurrentChat
             {joining}
-            chat={app.selectedChatSummary}
+            chat={$selectedChatSummaryStore}
             filteredProposals={$filteredProposalsStore} />
     {/if}
 </section>

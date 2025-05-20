@@ -2,8 +2,8 @@ use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
-    AutonomousConfig, BotCommandDefinition, BotDefinition, BotInstallationLocation, BotRegistrationStatus, BotSubscriptions,
-    UserId,
+    AutonomousConfig, BotCommandDefinition, BotDataEncoding, BotDefinition, BotInstallationLocation, BotRegistrationStatus,
+    BotSubscriptions, UserId,
 };
 
 #[derive(Serialize, Deserialize, Default)]
@@ -24,6 +24,8 @@ pub struct Bot {
     pub default_subscriptions: Option<BotSubscriptions>,
     pub principal: Principal,
     pub registration_status: BotRegistrationStatus,
+    #[serde(default)]
+    pub data_encoding: BotDataEncoding,
 }
 
 impl BotsMap {
@@ -53,6 +55,7 @@ impl BotsMap {
         autonomous_config: Option<AutonomousConfig>,
         default_subscriptions: Option<BotSubscriptions>,
         permitted_install_location: Option<BotInstallationLocation>,
+        data_encoding: BotDataEncoding,
     ) {
         self.bots.insert(
             bot_id,
@@ -66,6 +69,7 @@ impl BotsMap {
                 default_subscriptions,
                 principal: user_principal,
                 registration_status: BotRegistrationStatus::Private(permitted_install_location),
+                data_encoding,
             },
         );
         self.principal_to_user_id.insert(user_principal, bot_id);
