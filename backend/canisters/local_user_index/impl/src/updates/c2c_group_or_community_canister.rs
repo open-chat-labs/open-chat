@@ -54,6 +54,6 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             }
         }
         GroupEvent::EventStoreEvent(event) => state.data.event_store_client.push(event),
-        GroupEvent::Notification(notification) => state.data.handle_notification(notification, **now),
+        GroupEvent::Notification(notification) => state.data.handle_notification(notification, state.env.canister_id(), **now),
     }
 }
