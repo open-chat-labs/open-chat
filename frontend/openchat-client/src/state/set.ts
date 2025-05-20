@@ -5,7 +5,6 @@ import {
     type ReadonlySet,
     type SetLike,
 } from "openchat-shared";
-import { SvelteSet } from "svelte/reactivity";
 import type { Subscriber, Unsubscriber } from "svelte/store";
 import { scheduleUndo, type UndoLocalUpdate } from "./undo";
 
@@ -17,8 +16,8 @@ export class LocalSetStore<T> {
         private serialiser?: (x: T) => Primitive,
         private deserialiser?: (x: Primitive) => T,
     ) {
-        this.#added = new SafeSet(serialiser, deserialiser, () => new SvelteSet());
-        this.#removed = new SafeSet(serialiser, deserialiser, () => new SvelteSet());
+        this.#added = new SafeSet(serialiser, deserialiser);
+        this.#removed = new SafeSet(serialiser, deserialiser);
     }
 
     get added(): ReadonlySet<T> {
@@ -100,9 +99,8 @@ export class LocalSet<T> {
         private serialiser?: (x: T) => Primitive,
         private deserialiser?: (x: Primitive) => T,
     ) {
-        // TODO - when we are ready - make sure that this doesn't use SvelteSet
-        this.#added = new SafeSet(serialiser, deserialiser, () => new SvelteSet());
-        this.#removed = new SafeSet(serialiser, deserialiser, () => new SvelteSet());
+        this.#added = new SafeSet(serialiser, deserialiser);
+        this.#removed = new SafeSet(serialiser, deserialiser);
     }
 
     get added(): ReadonlySet<T> {
@@ -184,6 +182,11 @@ export class SafeSetStore<V> extends SafeSet<V> {
                 this.#publish();
             }
         }
+    }
+
+    addMany(vals: V[]) {
+        vals.forEach((v) => super.add(v));
+        this.#publish();
     }
 
     add(val: V) {

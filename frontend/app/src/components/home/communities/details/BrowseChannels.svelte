@@ -1,6 +1,6 @@
 <script lang="ts">
     import {
-        app,
+        chatSummariesStore,
         publish,
         selectedCommunitySummaryStore,
         type ChannelMatch,
@@ -31,7 +31,7 @@
     let autoOpen = $state(false);
     let matchedCommunityId: string | undefined = undefined;
     let more = $derived(total > searchResults.length);
-    let filteredResults = $derived(searchResults.filter((c) => !app.chatSummaries.has(c.id)));
+    let filteredResults = $derived(searchResults.filter((c) => !$chatSummariesStore.has(c.id)));
 
     function search(term: string, reset = false) {
         const communityId = selectedCommunityId;

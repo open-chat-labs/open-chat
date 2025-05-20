@@ -1,11 +1,16 @@
 <script lang="ts">
     import {
-        app,
         type ChannelSummary,
         type CommunitySummary,
         type MemberRole,
         OpenChat,
         publish,
+        selectedChatApiKeysStore,
+        selectedChatBlockedUsersStore,
+        selectedChatInvitedUsersStore,
+        selectedChatLapsedMembersStore,
+        selectedChatMembersStore,
+        selectedChatWebhooksStore,
         selectedCommunityApiKeysStore,
         selectedCommunityBlockedUsersStore,
         selectedCommunityBotsStore,
@@ -126,13 +131,13 @@
             showHeader={false}
             {closeIcon}
             collection={channel}
-            invited={app.selectedChat.invitedUsers}
-            members={[...app.selectedChat.members.values()]}
-            blocked={app.selectedChat.blockedUsers}
-            lapsed={app.selectedChat.lapsedMembers}
+            invited={$selectedChatInvitedUsersStore}
+            members={[...$selectedChatMembersStore.values()]}
+            blocked={$selectedChatBlockedUsersStore}
+            lapsed={$selectedChatLapsedMembersStore}
             installedBots={$selectedCommunityBotsStore}
-            apiKeys={app.selectedChat.apiKeys}
-            webhooks={Array.from(app.selectedChat.webhooks.values())}
+            apiKeys={$selectedChatApiKeysStore}
+            webhooks={Array.from($selectedChatWebhooksStore.values())}
             {onClose}
             onBlockUser={onBlockGroupUser}
             onUnblockUser={onUnblockGroupUser}

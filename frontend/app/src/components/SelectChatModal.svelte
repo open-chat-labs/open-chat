@@ -13,11 +13,14 @@
     } from "openchat-client";
     import {
         allUsersStore,
-        app,
         AvatarSize,
         chatIdentifiersEqual,
         communitiesStore,
+        favouritesStore,
         iconSize,
+        selectedChatIdStore,
+        serverDirectChatsStore,
+        serverGroupChatsStore,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -85,7 +88,7 @@
     });
 
     trackedEffect("select-chat-modal", () => {
-        buildListOfTargets($now, app.selectedChatId, searchTermLower).then((t) => (targets = t));
+        buildListOfTargets($now, $selectedChatIdStore, searchTermLower).then((t) => (targets = t));
     });
     let noTargets = $derived(getNumberOfTargets(targets) === 0);
 
@@ -151,15 +154,15 @@
             favourites: [],
             communities: [],
         };
-        const direct = [...app.directChats.values()].map((d) => ({
+        const direct = [...$serverDirectChatsStore.values()].map((d) => ({
             ...d,
             name: buildDisplayName($allUsersStore, d.them.userId, "user"),
         }));
 
-        const group = [...app.groupChats.values()];
+        const group = [...$serverGroupChatsStore.values()];
         const channels = [...$communitiesStore.values()].flatMap((c) => c.channels);
         const all = [...group, ...direct, ...channels];
-        const favs = all.filter((c) => app.favourites.has(c.id));
+        const favs = all.filter((c) => $favouritesStore.has(c.id));
         try {
             const directChats = await targetsFromChatList(now, direct, selectedChatId);
             const groupChats = await targetsFromChatList(now, group, selectedChatId);

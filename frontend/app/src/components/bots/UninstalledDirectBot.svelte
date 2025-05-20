@@ -1,10 +1,10 @@
 <script lang="ts">
     import {
-        app,
         botState,
         chatIdentifiersEqual,
         chatListScopeStore,
         currentUserIdStore,
+        directChatBotsStore,
         OpenChat,
         routeForScope,
         routeStore,
@@ -46,5 +46,5 @@
         location={{ kind: "direct_chat", userId: $currentUserIdStore }}
         {bot}
         onClose={closeInstaller}
-        installedBots={app.directChatBots} />
+        installedBots={$directChatBotsStore} />
 {/if}

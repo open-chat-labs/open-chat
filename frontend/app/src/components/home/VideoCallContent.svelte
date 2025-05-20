@@ -3,10 +3,10 @@
         AvatarSize,
         OpenChat,
         allUsersStore,
-        app,
         chatIdentifiersEqual,
         currentUserIdStore,
         publish,
+        selectedChatSummaryStore,
         selectedCommunityMembersStore,
         type VideoCallContent,
     } from "openchat-client";
@@ -31,9 +31,9 @@
     let displayName = $derived(client.getDisplayNameById(senderId, $selectedCommunityMembersStore));
     let inCall = $derived(
         $activeVideoCall !== undefined &&
-            app.selectedChatSummary !== undefined &&
-            app.selectedChatSummary.videoCallInProgress?.messageIndex === messageIndex &&
-            chatIdentifiersEqual($activeVideoCall.chatId, app.selectedChatSummary?.id),
+            $selectedChatSummaryStore !== undefined &&
+            $selectedChatSummaryStore.videoCallInProgress?.messageIndex === messageIndex &&
+            chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatSummaryStore?.id),
     );
     let endedDate = $derived(content.ended ? new Date(Number(content.ended)) : undefined);
     let missed = $derived(
@@ -49,10 +49,10 @@
     );
 
     function joinCall() {
-        if (!inCall && app.selectedChatSummary?.videoCallInProgress) {
+        if (!inCall && $selectedChatSummaryStore?.videoCallInProgress) {
             publish("startVideoCall", {
-                chatId: app.selectedChatSummary.id,
-                callType: app.selectedChatSummary.videoCallInProgress.callType,
+                chatId: $selectedChatSummaryStore.id,
+                callType: $selectedChatSummaryStore.videoCallInProgress.callType,
                 join: true,
             });
         }

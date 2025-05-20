@@ -1,10 +1,10 @@
 <script lang="ts">
     import {
-        app,
         AvatarSize,
         communitiesStore,
         i18nKey,
         OpenChat,
+        serverGroupChatsStore,
         type BotInstallationLocation,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
@@ -51,7 +51,7 @@
                 isCommunity: true,
             }));
 
-        const groups: Match[] = [...app.groupChats.values()]
+        const groups: Match[] = [...$serverGroupChatsStore.values()]
             .filter((g) => termLower === "" || g.name.toLowerCase().includes(termLower))
             .map((g) => ({
                 avatarUrl: client.groupAvatarUrl(g),

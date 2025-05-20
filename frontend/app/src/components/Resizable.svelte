@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { mobileWidth, rightPanelWidth, ui } from "openchat-client";
+    import { mobileWidth, rightPanelWidth } from "openchat-client";
 
     const MIN_COL_WIDTH = 400;
     const MAX_COL_WIDTH = 900;
@@ -51,7 +51,7 @@
     }
 
     function resetSize() {
-        ui.rightPanelWidth = undefined;
+        rightPanelWidth.set(undefined);
     }
 
     function clampResize(size: number): number {
@@ -64,7 +64,7 @@
         if (resizing) {
             const diff = previous - ev.screenX;
             const updated = clampResize(section.offsetWidth + diff);
-            ui.rightPanelWidth = updated;
+            rightPanelWidth.set(updated);
             previous = ev.screenX;
         }
     }

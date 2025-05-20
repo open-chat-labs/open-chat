@@ -2,9 +2,9 @@
     import type { OpenChat } from "openchat-client";
     import {
         anonUserStore,
-        app,
         exploreCommunitiesFiltersStore,
         iconSize,
+        identityStateStore,
         ipadWidth,
         isDiamondStore,
         mobileWidth,
@@ -12,7 +12,6 @@
         publish,
         ScreenWidth,
         screenWidth,
-        ui,
     } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
@@ -93,7 +92,7 @@
     }
 
     function showFilters() {
-        ui.pushRightPanelHistory({ kind: "community_filters" });
+        client.pushRightPanelHistory({ kind: "community_filters" });
     }
 
     onMount(() => {
@@ -128,8 +127,8 @@
 
     $effect(() => {
         if (
-            app.identityState.kind === "logged_in" &&
-            app.identityState.postLogin?.kind === "create_community"
+            $identityStateStore.kind === "logged_in" &&
+            $identityStateStore.postLogin?.kind === "create_community"
         ) {
             client.clearPostLoginState();
             tick().then(() => createCommunity());

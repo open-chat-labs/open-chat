@@ -3,7 +3,7 @@
         AuthProvider,
         type OpenChat,
         anonUserStore,
-        app,
+        identityStateStore,
         querystringStore,
         selectedAuthProviderStore,
     } from "openchat-client";
@@ -59,7 +59,7 @@
         emailSigninHandler.addEventListener("email_signin_event", emailEvent);
         client.gaTrack("opened_signin_modal", "registration");
         return () => {
-            if ($anonUserStore && app.identityState.kind === "logging_in") {
+            if ($anonUserStore && $identityStateStore.kind === "logging_in") {
                 client.updateIdentityState({ kind: "anon" });
             }
             emailSigninHandler.removeEventListener("email_signin_event", emailEvent);
@@ -74,16 +74,19 @@
     }
 
     $effect(() => {
-        if (app.identityState.kind === "anon" && loginState === "logging-in") {
+        if ($identityStateStore.kind === "anon" && loginState === "logging-in") {
             onClose();
         }
-        if (app.identityState.kind === "logged_in" || app.identityState.kind === "challenging") {
+        if (
+            $identityStateStore.kind === "logged_in" ||
+            $identityStateStore.kind === "challenging"
+        ) {
             onClose();
         }
     });
 
     function cancel() {
-        if ($anonUserStore && app.identityState.kind === "logging_in") {
+        if ($anonUserStore && $identityStateStore.kind === "logging_in") {
             client.updateIdentityState({ kind: "anon" });
         }
         onClose();

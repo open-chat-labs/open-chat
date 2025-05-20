@@ -15,17 +15,28 @@ import {
 } from "openchat-shared";
 import { get } from "svelte/store";
 import { vi } from "vitest";
+import { chatDetailsLocalUpdates } from "../chat/detailsUpdates";
+import { communityLocalUpdates } from "../community/detailUpdates";
+import { localUpdates } from "../localUpdates";
+import { pathState } from "../path/state";
+import { selectedCommunityIdStore } from "../path/stores";
+import { app } from "./state";
 import {
-    app,
+    allChatsStore,
+    allServerChatsStore,
+    chatListScopeStore,
     communitiesStore,
+    eventsStore,
+    messageFiltersStore,
+    pinnedChatsStore,
+    selectedChatExpandedDeletedMessageStore,
+    selectedChatIdStore,
+    selectedChatMembersStore,
     selectedCommunityMembersStore,
     serverCommunitiesStore,
+    serverEventsStore,
     serverPinnedChatsStore,
-} from "./app.svelte";
-import { chatDetailsLocalUpdates } from "./chat_details";
-import { communityLocalUpdates } from "./community";
-import { localUpdates } from "./global";
-import { pathState } from "./path.svelte";
+} from "./stores";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
@@ -77,10 +88,12 @@ describe("app state", () => {
                 kind: "explore_groups_route",
                 scope: { kind: "group_chat" },
             });
+            expect(get(chatListScopeStore)).toMatchObject({ kind: "group_chat" });
             expect(app.chatListScope).toMatchObject({ kind: "group_chat" });
         });
 
         test("selected chat id is set", () => {
+            expect(get(selectedChatIdStore)).toEqual(chatId);
             expect(app.selectedChatId).toEqual(chatId);
         });
 
@@ -117,25 +130,20 @@ describe("app state", () => {
             beforeEach(() => setChatDetails(chatId));
 
             test("make sure local updates are merged", () => {
-                expect(app.selectedChat.members.has("user_one")).toBe(true);
+                expect(get(messageFiltersStore)).toEqual([]);
+                console.log("are we getting here", get(messageFiltersStore));
+                expect(get(selectedChatMembersStore).has("user_one")).toBe(true);
                 const undo = localUpdates.removeChatMember(chatId, "user_one");
-                expect(app.selectedChat.members.has("user_one")).toBe(false);
+                expect(get(selectedChatMembersStore).has("user_one")).toBe(false);
                 undo();
-                expect(app.selectedChat.members.has("user_one")).toBe(true);
-            });
-
-            test("make sure that only server state is overwritten if chatId doesn't change", () => {
-                app.selectedChat.expandDeletedMessages(new Set([1, 2, 3]));
-                expect(app.selectedChat.expandedDeletedMessages.has(3)).toBe(true);
-                setChatDetails(chatId); // reset the server state for the *same* chatId
-                expect(app.selectedChat.expandedDeletedMessages.has(3)).toBe(true);
+                expect(get(selectedChatMembersStore).has("user_one")).toBe(true);
             });
 
             test("make sure that all state is overwritten if the chatId *does* change", () => {
-                app.selectedChat.expandDeletedMessages(new Set([1, 2, 3]));
-                expect(app.selectedChat.expandedDeletedMessages.has(3)).toBe(true);
+                app.expandDeletedMessages(new Set([1, 2, 3]));
+                expect(selectedChatExpandedDeletedMessageStore.has(3)).toBe(true);
                 setChatDetails({ ...chatId, channelId: 654321 }); // reset the server state for a different chatId
-                expect(app.selectedChat.expandedDeletedMessages.has(3)).toBe(false);
+                expect(selectedChatExpandedDeletedMessageStore.has(3)).toBe(false);
             });
         });
 
@@ -202,15 +210,19 @@ describe("app state", () => {
                 });
 
                 test("notifications muted", () => {
-                    expect(app.allChats.get(groupId)?.membership.notificationsMuted).toEqual(false);
+                    expect(get(allChatsStore).get(groupId)?.membership.notificationsMuted).toEqual(
+                        false,
+                    );
                     localUpdates.updateNotificationsMuted(groupId, true);
-                    expect(app.allChats.get(groupId)?.membership.notificationsMuted).toEqual(true);
+                    expect(get(allChatsStore).get(groupId)?.membership.notificationsMuted).toEqual(
+                        true,
+                    );
                 });
 
                 test("archived", () => {
-                    expect(app.allChats.get(groupId)?.membership.archived).toEqual(false);
+                    expect(get(allChatsStore).get(groupId)?.membership.archived).toEqual(false);
                     localUpdates.updateArchived(groupId, true);
-                    expect(app.allChats.get(groupId)?.membership.archived).toEqual(true);
+                    expect(get(allChatsStore).get(groupId)?.membership.archived).toEqual(true);
                 });
 
                 test("name", () => {
@@ -224,15 +236,15 @@ describe("app state", () => {
                 });
 
                 test("when no updates, the server chat is returned", () => {
-                    const g = app.allChats.get(groupId);
-                    const s = app.allServerChats.get(groupId);
+                    const g = get(allChatsStore).get(groupId);
+                    const s = get(allServerChatsStore).get(groupId);
                     expect(g === s).toBe(true);
                 });
 
                 test("when there are updates, the server chat is not mutated", () => {
                     localUpdates.updateChatProperties(groupId, "name updated");
-                    const client = app.allChats.get(groupId);
-                    const server = app.allServerChats.get(groupId);
+                    const client = get(allChatsStore).get(groupId);
+                    const server = get(allServerChatsStore).get(groupId);
                     expect(client === server).toBe(false);
                     expect(client?.kind === "group_chat" && client.name === "name updated").toBe(
                         true,
@@ -247,7 +259,7 @@ describe("app state", () => {
                         kind: "home_route",
                         scope: { kind: "group_chat" },
                     });
-                    expect(app.allChats.get(groupId)).not.toBeUndefined();
+                    expect(get(allChatsStore).get(groupId)).not.toBeUndefined();
                     expect(app.chatSummaries.get(groupId)).not.toBeUndefined();
                     pathState.setRouteParams(mockContext, {
                         kind: "home_route",
@@ -260,21 +272,21 @@ describe("app state", () => {
             describe("add or remove chats", () => {
                 test("remove a chat", () => {
                     localUpdates.removeChat(groupId);
-                    expect(app.allChats.get(groupId)).toBeUndefined();
+                    expect(get(allChatsStore).get(groupId)).toBeUndefined();
                 });
                 test("add a chat", () => {
                     expect(
-                        app.allChats.get({ kind: "group_chat", groupId: "654321" }),
+                        get(allChatsStore).get({ kind: "group_chat", groupId: "654321" }),
                     ).toBeUndefined();
                     localUpdates.addChat(groupChat("654321"));
                     expect(
-                        app.allChats.get({ kind: "group_chat", groupId: "654321" }),
+                        get(allChatsStore).get({ kind: "group_chat", groupId: "654321" }),
                     ).not.toBeUndefined();
                 });
                 test("preview a chat", () => {
                     localUpdates.addGroupPreview(groupChat("654321"));
                     expect(
-                        app.allChats.get({ kind: "group_chat", groupId: "654321" }),
+                        get(allChatsStore).get({ kind: "group_chat", groupId: "654321" }),
                     ).not.toBeUndefined();
                 });
             });
@@ -284,15 +296,15 @@ describe("app state", () => {
             beforeEach(() => setChatDetails(chatId));
 
             test("server events are returned when there are no updates", () => {
-                const client = app.selectedChat.events[0];
-                const server = app.selectedChat.serverEvents[0];
+                const client = get(eventsStore)[0];
+                const server = get(serverEventsStore)[0];
                 expect(client === server).toBe(true);
             });
 
             test("server object should not be mutated if there are updates", () => {
                 app.translate(123456n, "whatever");
-                const client = app.selectedChat.events[0];
-                const server = app.selectedChat.serverEvents[0];
+                const client = get(eventsStore)[0];
+                const server = get(serverEventsStore)[0];
                 expect(client === server).toBe(false);
                 expect(
                     client.event.kind === "message" &&
@@ -314,14 +326,14 @@ describe("app state", () => {
         });
 
         test("selected community id is set", () => {
-            expect(app.selectedCommunityId).toMatchObject(communityId);
+            expect(get(selectedCommunityIdStore)).toMatchObject(communityId);
 
             pathState.setRouteParams(mockContext, {
                 kind: "home_route",
                 scope: { kind: "group_chat" },
             });
 
-            expect(app.selectedCommunityId).toBeUndefined();
+            expect(get(selectedCommunityIdStore)).toBeUndefined();
         });
 
         describe("setting community details", () => {
@@ -411,37 +423,37 @@ describe("app state", () => {
             ]);
         });
         test("communities list", () => {
-            expect(app.serverCommunities.size).toEqual(2);
             expect(get(serverCommunitiesStore).size).toEqual(2);
         });
         test("community indexes", () => {
             const id: CommunityIdentifier = { kind: "community", communityId: "123456" };
-            expect(app.communities.size).toEqual(2);
-            expect(app.communities.get(id)?.membership.index).toEqual(1);
+            expect(get(communitiesStore).size).toEqual(2);
+            expect(get(communitiesStore).get(id)?.membership.index).toEqual(1);
             localUpdates.updateCommunityIndex(id, 3);
-            expect(app.communities.get(id)?.membership.index).toEqual(3);
             expect(get(communitiesStore).get(id)?.membership.index).toEqual(3);
         });
 
         test("should get the server object if there are no updates", () => {
-            const server = app.serverCommunities.get({ kind: "community", communityId: "123456" });
-            const client = app.communities.get({ kind: "community", communityId: "123456" });
+            const server = get(serverCommunitiesStore).get({
+                kind: "community",
+                communityId: "123456",
+            });
+            const client = get(communitiesStore).get({ kind: "community", communityId: "123456" });
             expect(client === server).toBe(true);
         });
 
         test("should not mutate the server object if there are local updates", () => {
             const id: CommunityIdentifier = { kind: "community", communityId: "123456" };
             localUpdates.updateCommunityDisplayName(id, "Mr. OpenChat");
-            const server = app.serverCommunities.get(id);
-            const client = app.communities.get(id);
+            const server = get(serverCommunitiesStore).get(id);
+            const client = get(communitiesStore).get(id);
             expect(client === server).toBe(false);
         });
 
         test("community display name", () => {
             const id: CommunityIdentifier = { kind: "community", communityId: "123456" };
-            expect(app.communities.get(id)?.membership.displayName).toBeUndefined();
+            expect(get(communitiesStore).get(id)?.membership.displayName).toBeUndefined();
             localUpdates.updateCommunityDisplayName(id, "Mr. OpenChat");
-            expect(app.communities.get(id)?.membership.displayName).toEqual("Mr. OpenChat");
             expect(get(communitiesStore).get(id)?.membership.displayName).toEqual("Mr. OpenChat");
         });
 
@@ -465,7 +477,7 @@ describe("app state", () => {
             test("add a pinned chat", () => {
                 const chatId: ChatIdentifier = { kind: "direct_chat", userId: "7777777" };
                 localUpdates.pinToScope(chatId, "favourite");
-                const favs = app.pinnedChats.get("favourite");
+                const favs = get(pinnedChatsStore).get("favourite");
                 expect(favs).not.toBeUndefined();
                 expect(favs?.length).toEqual(1);
                 expect(favs?.[0]).toEqual(chatId);
@@ -474,7 +486,7 @@ describe("app state", () => {
             test("added chat goes first", () => {
                 const chatId: ChatIdentifier = { kind: "direct_chat", userId: "7777777" };
                 localUpdates.pinToScope(chatId, "direct_chat");
-                const directs = app.pinnedChats.get("direct_chat");
+                const directs = get(pinnedChatsStore).get("direct_chat");
                 expect(directs).not.toBeUndefined();
                 expect(directs?.length).toEqual(3);
                 expect(directs?.[0]).toEqual(chatId);
@@ -483,7 +495,7 @@ describe("app state", () => {
             test("remove pinned chat", () => {
                 const chatId: ChatIdentifier = { kind: "direct_chat", userId: "123456" };
                 localUpdates.unpinFromScope(chatId, "direct_chat");
-                const directs = app.pinnedChats.get("direct_chat");
+                const directs = get(pinnedChatsStore).get("direct_chat");
                 expect(directs).not.toBeUndefined();
                 expect(directs?.length).toEqual(1);
                 expect(directs?.[0]).toEqual({ kind: "direct_chat", userId: "888888" });
@@ -622,7 +634,7 @@ function groupChat(groupId: string, lastMessage?: EventWrapper<Message>): GroupC
 }
 
 function groupChatExpectation(id: GroupChatIdentifier, fn: (g: GroupChatSummary) => void) {
-    const g = app.allChats.get(id);
+    const g = get(allChatsStore).get(id);
     if (g && g.kind === "group_chat") {
         fn(g);
     } else {

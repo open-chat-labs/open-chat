@@ -8,7 +8,16 @@
         PermissionRole,
         ReadonlyMap,
     } from "openchat-client";
-    import { app, botState, isPermitted, selectedCommunityBotsStore } from "openchat-client";
+    import {
+        botState,
+        directChatBotsStore,
+        isPermitted,
+        messagePermissionsForSelectedChatStore,
+        selectedChatBotsStore,
+        selectedChatSummaryStore,
+        selectedCommunityBotsStore,
+        threadPermissionsForSelectedChatStore,
+    } from "openchat-client";
     import { hasEveryRequiredPermission, random64, type FlattenedCommand } from "openchat-shared";
     import { getContext, onMount } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
@@ -40,9 +49,9 @@
             case "channel":
                 return $selectedCommunityBotsStore;
             case "direct_chat":
-                return app.directChatBots;
+                return $directChatBotsStore;
             default:
-                return app.selectedChat.bots;
+                return $selectedChatBotsStore;
         }
     });
 
@@ -51,7 +60,7 @@
             return (
                 restrictByBotIfNecessary(c) &&
                 restrictByChatIfNecessary(c) &&
-                hasPermissionForCommand(c, installedBots, app.selectedChatSummary)
+                hasPermissionForCommand(c, installedBots, $selectedChatSummaryStore)
             );
         });
     });
@@ -97,7 +106,7 @@
                     chatRolePermitted &&
                     chatPermitted &&
                     [...command.permissions.messagePermissions].every((p) =>
-                        app.messagePermissionsForSelectedChat.has(p),
+                        $messagePermissionsForSelectedChatStore.has(p),
                     )
                 );
             case "thread":
@@ -105,7 +114,7 @@
                     chatRolePermitted &&
                     chatPermitted &&
                     [...command.permissions.messagePermissions].every((p) =>
-                        app.threadPermissionsForSelectedChat.has(p),
+                        $threadPermissionsForSelectedChatStore.has(p),
                     )
                 );
         }
@@ -137,7 +146,7 @@
     }
 
     function sendCommandIfValid() {
-        if (botState.selectedCommand && botState.instanceValid && app.selectedChatSummary) {
+        if (botState.selectedCommand && botState.instanceValid && $selectedChatSummaryStore) {
             client
                 .executeBotCommand(
                     {

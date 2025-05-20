@@ -1,12 +1,15 @@
 <script lang="ts">
-    import { pageReplace, rightPanelHistory, rightPanelMode, ui } from "openchat-client";
+    import { OpenChat, pageReplace, rightPanelHistory, rightPanelMode } from "openchat-client";
+    import { getContext } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import { removeQueryStringParam } from "../../utils/urls";
     import Overlay from "../Overlay.svelte";
     import RightPanel from "./RightPanel.svelte";
 
+    const client = getContext<OpenChat>("client");
+
     function closeRightPanel() {
-        if (ui.rightPanelContains("message_thread_panel")) {
+        if (client.rightPanelContains("message_thread_panel")) {
             pageReplace(removeQueryStringParam("open"));
         }
         rightPanelHistory.set([]);

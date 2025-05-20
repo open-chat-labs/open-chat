@@ -1,5 +1,12 @@
 <script lang="ts">
-    import { iconSize, publish, ui, type CommunitySummary, type Level } from "openchat-client";
+    import {
+        iconSize,
+        OpenChat,
+        publish,
+        type CommunitySummary,
+        type Level,
+    } from "openchat-client";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
@@ -14,6 +21,8 @@
     import SectionHeader from "../../../SectionHeader.svelte";
     import Translatable from "../../../Translatable.svelte";
 
+    const client = getContext<OpenChat>("client");
+
     interface Props {
         community: CommunitySummary;
         canEdit: boolean;
@@ -23,13 +32,13 @@
     let { community, canEdit, level }: Props = $props();
 
     function close() {
-        ui.popRightPanelHistory();
+        client.popRightPanelHistory();
     }
     function showMembers() {
-        ui.pushRightPanelHistory({ kind: "show_community_members" });
+        client.pushRightPanelHistory({ kind: "show_community_members" });
     }
     function invite() {
-        ui.pushRightPanelHistory({ kind: "invite_community_users" });
+        client.pushRightPanelHistory({ kind: "invite_community_users" });
     }
     function editCommunity() {
         if (canEdit) {

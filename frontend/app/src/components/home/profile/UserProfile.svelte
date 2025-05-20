@@ -8,7 +8,6 @@
         type UserSummary,
         adultEnabledStore,
         anonUserStore,
-        app,
         canExtendDiamondStore,
         communitiesStore,
         hideMessagesFromDirectBlocked,
@@ -24,6 +23,7 @@
         sortedCommunitiesStore,
         suspendedUserStore,
         underReviewEnabledStore,
+        userMetricsStore,
     } from "openchat-client";
     import { ErrorCode } from "openchat-shared";
     import { getContext, onMount } from "svelte";
@@ -607,7 +607,7 @@
                     onToggle={statsSectionOpen.toggle}
                     open={$statsSectionOpen}
                     headerText={i18nKey("stats.userStats")}>
-                    <Stats showReported stats={app.userMetrics} />
+                    <Stats showReported stats={$userMetricsStore} />
                 </CollapsibleCard>
             </div>
         {/if}

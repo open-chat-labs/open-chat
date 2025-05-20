@@ -1,6 +1,10 @@
 <script lang="ts">
     import type { EnhancedAccessGate, GateCheckSucceeded, OpenChat } from "openchat-client";
-    import { anonUserStore, app, selectedCommunitySummaryStore } from "openchat-client";
+    import {
+        anonUserStore,
+        identityStateStore,
+        selectedCommunitySummaryStore,
+    } from "openchat-client";
     import { getContext, tick, type Snippet } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
@@ -92,8 +96,8 @@
     );
     $effect(() => {
         if (
-            app.identityState.kind === "logged_in" &&
-            app.identityState.postLogin?.kind === "join_community"
+            $identityStateStore.kind === "logged_in" &&
+            $identityStateStore.postLogin?.kind === "join_community"
         ) {
             client.clearPostLoginState();
             tick().then(() => joinCommunity());

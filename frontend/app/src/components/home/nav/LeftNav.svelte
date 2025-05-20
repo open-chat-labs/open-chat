@@ -6,12 +6,17 @@
         activityFeedShowing,
         allUsersStore,
         anonUserStore,
-        app,
         chatListScopeStore,
         chitStateStore,
+        communityChannelVideoCallCountsStore,
         communityListScrollTop,
         currentUserIdStore,
+        directVideoCallCountsStore,
         emptyCombinedUnreadCounts,
+        favouritesStore,
+        favouritesVideoCallCountsStore,
+        groupVideoCallCountsStore,
+        messageActivitySummaryStore,
         mobileWidth,
         navOpen,
         publish,
@@ -19,7 +24,10 @@
         selectedCommunitySummaryStore,
         showNav,
         sortedCommunitiesStore,
-        ui,
+        unreadCommunityChannelCountsStore,
+        unreadDirectCountsStore,
+        unreadFavouriteCountsStore,
+        unreadGroupCountsStore,
     } from "openchat-client";
     import page from "page";
     import { getContext, onMount, tick } from "svelte";
@@ -83,7 +91,7 @@
 
     function toggleNav(e: Event) {
         e.stopPropagation();
-        ui.toggleNav();
+        client.toggleNav();
     }
 
     function viewProfile() {
@@ -117,7 +125,7 @@
     }
 
     function closeIfOpen() {
-        ui.closeNavIfOpen();
+        client.closeNavIfOpen();
     }
 
     function showActivityFeed() {
@@ -154,8 +162,8 @@
         <LeftNavItem
             selected={$chatListScopeStore.kind === "direct_chat" && !communityExplorer}
             label={i18nKey("communities.directChats")}
-            unread={app.unreadDirectCounts.chats}
-            video={app.directVideoCallCounts}
+            unread={$unreadDirectCountsStore.chats}
+            video={$directVideoCallCountsStore}
             onClick={directChats}>
             <div class="hover direct">
                 <MessageOutline size={iconSize} color={"var(--icon-txt)"} />
@@ -164,19 +172,19 @@
         <LeftNavItem
             selected={$chatListScopeStore.kind === "group_chat" && !communityExplorer}
             label={i18nKey("communities.groupChats")}
-            unread={client.mergeCombinedUnreadCounts(app.unreadGroupCounts)}
-            video={app.groupVideoCallCounts}
+            unread={client.mergeCombinedUnreadCounts($unreadGroupCountsStore)}
+            video={$groupVideoCallCountsStore}
             onClick={groupChats}>
             <div class="hover direct">
                 <ForumOutline size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
-        {#if app.favourites.size > 0}
+        {#if $favouritesStore.size > 0}
             <LeftNavItem
                 selected={$chatListScopeStore.kind === "favourite" && !communityExplorer}
                 label={i18nKey("communities.favourites")}
-                unread={client.mergeCombinedUnreadCounts(app.unreadFavouriteCounts)}
-                video={app.favouritesVideoCallCounts}
+                unread={client.mergeCombinedUnreadCounts($unreadFavouriteCountsStore)}
+                video={$favouritesVideoCallCountsStore}
                 onClick={favouriteChats}>
                 <div class="hover favs">
                     <HeartOutline size={iconSize} color={"var(--icon-txt)"} />
@@ -195,14 +203,14 @@
                     </div>
                 </LeftNavItem>
             {/if}
-            {#if app.messageActivitySummary.latestTimestamp > 0n}
+            {#if $messageActivitySummaryStore.latestTimestamp > 0n}
                 <LeftNavItem
                     separator
                     selected={$activityFeedShowing}
                     label={i18nKey("activity.navLabel")}
                     unread={{
                         muted: 0,
-                        unmuted: app.messageActivitySummary.unreadCount,
+                        unmuted: $messageActivitySummaryStore.unreadCount,
                         mentions: false,
                     }}
                     onClick={showActivityFeed}>
@@ -232,12 +240,12 @@
                     selected={community.id.communityId === selectedCommunityId &&
                         $chatListScopeStore.kind !== "favourite" &&
                         !communityExplorer}
-                    video={app.communityChannelVideoCallCounts.get(community.id) ?? {
+                    video={$communityChannelVideoCallCountsStore.get(community.id) ?? {
                         muted: 0,
                         unmuted: 0,
                     }}
                     unread={client.mergeCombinedUnreadCounts(
-                        app.unreadCommunityChannelCounts.get(community.id) ??
+                        $unreadCommunityChannelCountsStore.get(community.id) ??
                             emptyCombinedUnreadCounts(),
                     )}
                     label={i18nKey(community.name)}

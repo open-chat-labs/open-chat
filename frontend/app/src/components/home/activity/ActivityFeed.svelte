@@ -1,8 +1,8 @@
 <script lang="ts">
     import {
         activityFeedShowing,
-        app,
         iconSize,
+        messageActivitySummaryStore,
         messageContextToChatListScope,
         messageContextToString,
         OpenChat,
@@ -27,7 +27,7 @@
     let selectedEventIndex = $state<number | undefined>();
     let latestTimestamp = $derived(activityEvents[0]?.timestamp ?? 0n);
     let uptodate = $derived.by(() => {
-        return app.messageActivitySummary.latestTimestamp <= latestTimestamp;
+        return $messageActivitySummaryStore.latestTimestamp <= latestTimestamp;
     });
 
     function loadActivity() {

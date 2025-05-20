@@ -72,15 +72,10 @@ import {
     updateFromOptions,
     type ReadonlySet,
 } from "openchat-shared";
-import { cryptoLookup } from "../state";
-import { app } from "../state/app.svelte";
-import { localUpdates } from "../state/global";
-import {
-    messageLocalUpdates,
-    type LocalTipsReceived,
-    type MessageLocalState,
-} from "../state/message/local.svelte";
-import { userStore } from "../state/users/users.svelte";
+import { cryptoLookup, localUpdates } from "../state";
+import { app } from "../state/app/state";
+import type { LocalTipsReceived, MessageLocalState } from "../state/message/localUpdates";
+import { userStore } from "../state/users/state";
 import type { TypersByKey } from "../stores/typing";
 import { areOnSameDay } from "../utils/date";
 import { distinctBy, groupWhile, toRecordFiltered } from "../utils/list";
@@ -778,7 +773,7 @@ function updateReplyContexts(
 
 function createMessageSortFunction(
     unconfirmed: Set<bigint>,
-    recentlySent: Map<bigint, bigint>,
+    recentlySent: MessageMap<bigint>,
 ): (a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>) => number {
     return (a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): number => {
         // If either message is still unconfirmed, and both were sent recently, use both of their local timestamps,
@@ -1329,6 +1324,11 @@ export function mergeEventsAndLocalUpdates(
     events: EventWrapper<ChatEvent>[],
     unconfirmed: EventWrapper<Message>[],
     expiredEventRanges: DRange,
+    translations: MessageMap<string>,
+    selectedChatBlockedOrSuspendedUsers: Set<string>,
+    messageLocalUpdates: MessageMap<MessageLocalState>,
+    recentlySentMessages: MessageMap<bigint>,
+    messageFilters: MessageFilter[],
 ): EventWrapper<ChatEvent>[] {
     const eventIndexes = new DRange();
     eventIndexes.add(expiredEventRanges);
@@ -1340,7 +1340,7 @@ export function mergeEventsAndLocalUpdates(
         if (e.event.kind === "message") {
             confirmedMessageIds.add(e.event.messageId);
             const updates = messageLocalUpdates.get(e.event.messageId);
-            const translation = app.translations.get(e.event.messageId);
+            const translation = translations.get(e.event.messageId);
 
             const repliesTo =
                 e.event.repliesTo?.kind === "rehydrated_reply_context"
@@ -1349,7 +1349,7 @@ export function mergeEventsAndLocalUpdates(
 
             const [replyContextUpdates, replyTranslation] =
                 repliesTo !== undefined
-                    ? [messageLocalUpdates.get(repliesTo), app.translations.get(repliesTo)]
+                    ? [messageLocalUpdates.get(repliesTo), translations.get(repliesTo)]
                     : [undefined, undefined];
 
             const tallyUpdate =
@@ -1360,15 +1360,15 @@ export function mergeEventsAndLocalUpdates(
                       )
                     : undefined;
 
-            const senderBlocked = app.currentChatBlockedOrSuspendedUsers.has(e.event.sender);
+            const senderBlocked = selectedChatBlockedOrSuspendedUsers.has(e.event.sender);
             const repliesToSenderBlocked =
                 e.event.repliesTo?.kind === "rehydrated_reply_context" &&
-                app.currentChatBlockedOrSuspendedUsers.has(e.event.repliesTo.senderId);
+                selectedChatBlockedOrSuspendedUsers.has(e.event.repliesTo.senderId);
 
             // Don't hide the sender's own messages
             const failedMessageFilter =
                 e.event.sender !== app.currentUserId
-                    ? doesMessageFailFilter(e.event, app.messageFilters) !== undefined
+                    ? doesMessageFailFilter(e.event, messageFilters) !== undefined
                     : false;
 
             if (
@@ -1420,10 +1420,7 @@ export function mergeEventsAndLocalUpdates(
             }
         }
         if (unconfirmedAdded.size > 0) {
-            const sortFn = createMessageSortFunction(
-                unconfirmedAdded,
-                localUpdates.recentlySentMessages,
-            );
+            const sortFn = createMessageSortFunction(unconfirmedAdded, recentlySentMessages);
             merged.sort(sortFn);
         }
     }
@@ -1804,7 +1801,7 @@ export function stopTyping(
     userId: string,
     threadRootMessageIndex?: number,
 ): void {
-    rtcConnectionsManager.sendMessage([...app.selectedChat.userIds], {
+    rtcConnectionsManager.sendMessage([...app.selectedChatUserIds], {
         kind: "remote_user_stopped_typing",
         id,
         userId,
@@ -1817,7 +1814,7 @@ export function startTyping(
     userId: string,
     threadRootMessageIndex?: number,
 ): void {
-    rtcConnectionsManager.sendMessage([...app.selectedChat.userIds], {
+    rtcConnectionsManager.sendMessage([...app.selectedChatUserIds], {
         kind: "remote_user_typing",
         id,
         userId,
@@ -1988,7 +1985,7 @@ export function nextEventAndMessageIndexes(): [number, number] {
 export function confirmedEventIndexesLoaded(chatId: ChatIdentifier): DRange {
     const selected = app.selectedChatId;
     return selected !== undefined && chatIdentifiersEqual(selected, chatId)
-        ? app.selectedChat.confirmedEventIndexesLoaded
+        ? app.confirmedEventIndexesLoaded
         : new DRange();
 }
 
@@ -2023,8 +2020,8 @@ export function isContiguousInThread(
     events: EventWrapper<ChatEvent>[],
 ): boolean {
     return (
-        messageContextsEqual(threadId, app.selectedChat?.selectedThread?.id) &&
-        isContiguousInternal(app.selectedChat.confirmedThreadEventIndexesLoaded, events, [])
+        messageContextsEqual(threadId, app.selectedThreadId) &&
+        isContiguousInternal(app.confirmedEventIndexesLoaded, events, [])
     );
 }
 
@@ -2034,7 +2031,7 @@ export function isContiguous(
     expiredEventRanges: ExpiredEventsRange[],
 ): boolean {
     return (
-        chatIdentifiersEqual(chatId, app.selectedChat.chatId) &&
+        chatIdentifiersEqual(chatId, app.selectedChatId) &&
         isContiguousInternal(confirmedEventIndexesLoaded(chatId), events, expiredEventRanges)
     );
 }

@@ -1,8 +1,8 @@
 import { type EventWrapper, type GroupChatIdentifier, type Message } from "openchat-shared";
 import { SvelteMap } from "svelte/reactivity";
 import { vi } from "vitest";
-import { localUpdates } from "../global";
-import { MessageReadTracker, MessagesRead } from "./markRead.svelte";
+import { localUpdates } from "../localUpdates";
+import { MessageReadTracker, MessagesRead } from "./markRead";
 
 const abcId: GroupChatIdentifier = { kind: "group_chat", groupId: "abc" };
 

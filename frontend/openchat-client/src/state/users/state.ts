@@ -5,38 +5,14 @@ import {
     type UserLookup,
     type UserSummary,
 } from "openchat-shared";
-import { derived } from "svelte/store";
-import { localUpdates } from "../global";
-import { SafeMapStore } from "../map";
-import { SafeSetStore } from "../set";
-
-export const serverBlockedUsersStore = new SafeSetStore<string>();
-
-export const blockedUsersStore = derived(
-    [serverBlockedUsersStore, localUpdates.blockedDirectUsers],
-    ([serverBlockedUsers, localUpdates]) => localUpdates.apply(serverBlockedUsers),
-);
-
-export const normalUsersStore = new SafeMapStore<string, UserSummary>();
-export const specialUsersStore = new SafeMapStore<string, UserSummary>();
-export const allUsersStore = derived(
-    [normalUsersStore, specialUsersStore],
-    ([normalUsers, specialUsers]) => {
-        return specialUsers.reduce((all, [k, v]) => {
-            all.set(k, v);
-            return all;
-        }, normalUsers.clone()); // this clone is necessary to prevent infinite loop but will it be a problem?
-    },
-);
-export const suspendedUsers = derived(allUsersStore, (allUsers) => {
-    const suspended = new Map<string, UserSummary>();
-    for (const [k, v] of allUsers) {
-        if (v.suspended) {
-            suspended.set(k, v);
-        }
-    }
-    return suspended as ReadonlyMap<string, UserSummary>;
-});
+import {
+    allUsersStore,
+    blockedUsersStore,
+    normalUsersStore,
+    serverBlockedUsersStore,
+    specialUsersStore,
+    suspendedUsersStore,
+} from "./stores";
 
 export class UsersState {
     #allUsers!: ReadonlyMap<string, UserSummary>;
@@ -46,7 +22,7 @@ export class UsersState {
     constructor() {
         allUsersStore.subscribe((val) => (this.#allUsers = val));
         blockedUsersStore.subscribe((val) => (this.#blockedUsers = val));
-        suspendedUsers.subscribe((val) => (this.#suspendedUsers = val));
+        suspendedUsersStore.subscribe((val) => (this.#suspendedUsers = val));
     }
 
     setBlockedUsers(userIds: string[]) {
@@ -66,9 +42,7 @@ export class UsersState {
     }
 
     addUser(user: UserSummary) {
-        if (!normalUsersStore.has(user.userId)) {
-            normalUsersStore.set(user.userId, user);
-        }
+        normalUsersStore.set(user.userId, user);
     }
 
     addMany(users: UserSummary[]) {

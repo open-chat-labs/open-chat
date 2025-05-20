@@ -1,9 +1,9 @@
 <script lang="ts" module>
     export type ChatEventListArgs = {
-        isAccepted: (evt: EventWrapper<ChatEventType>) => boolean;
-        isConfirmed: (evt: EventWrapper<ChatEventType>) => boolean;
-        isFailed: (evt: EventWrapper<ChatEventType>) => boolean;
-        isReadByMe: (evt: EventWrapper<ChatEventType>) => boolean;
+        isAccepted: (_unconf: unknown, evt: EventWrapper<ChatEventType>) => boolean;
+        isConfirmed: (_unconf: unknown, evt: EventWrapper<ChatEventType>) => boolean;
+        isFailed: (_failed: unknown, evt: EventWrapper<ChatEventType>) => boolean;
+        isReadByMe: (_store: unknown, evt: EventWrapper<ChatEventType>) => boolean;
         messageObserver: IntersectionObserver | undefined;
         labelObserver: IntersectionObserver | undefined;
         focusIndex: number | undefined;
@@ -539,28 +539,28 @@
         return document.querySelector(`.${rootSelector} [data-index~='${index}']`);
     }
 
-    function isAccepted(evt: EventWrapper<ChatEventType>): boolean {
+    function isAccepted(_: unknown, evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message" && messageContext) {
             return !localUpdates.isPendingAcceptance(messageContext, evt.event.messageId);
         }
         return true;
     }
 
-    function isConfirmed(evt: EventWrapper<ChatEventType>): boolean {
+    function isConfirmed(_: unknown, evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message" && messageContext) {
             return !localUpdates.isUnconfirmed(messageContext, evt.event.messageId);
         }
         return true;
     }
 
-    function isFailed(evt: EventWrapper<ChatEventType>): boolean {
+    function isFailed(_: unknown, evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message" && messageContext) {
             return localUpdates.isFailed(messageContext, evt.event.messageId);
         }
         return false;
     }
 
-    function isReadByMe(evt: EventWrapper<ChatEventType>): boolean {
+    function isReadByMe(_: unknown, evt: EventWrapper<ChatEventType>): boolean {
         if (readonly || (evt.event.kind === "message" && evt.event.sender === $currentUserIdStore))
             return true;
 
