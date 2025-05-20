@@ -581,7 +581,7 @@ struct UserEventPusher<'a> {
     queue: &'a mut BatchedTimerJobQueue<LocalUserIndexEventBatch>,
 }
 
-impl<'a> EventPusher for UserEventPusher<'a> {
+impl EventPusher for UserEventPusher<'_> {
     fn push(&mut self, event: Event) {
         self.queue.push(IdempotentEnvelope {
             created_at: self.now,
