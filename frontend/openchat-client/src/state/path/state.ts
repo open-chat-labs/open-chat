@@ -30,10 +30,10 @@ import {
 } from "./stores";
 
 export class PathState {
-    #communityId = $state<CommunityIdentifier | undefined>();
+    #communityId?: CommunityIdentifier;
     #routerReady = false;
     #route!: RouteParams;
-    #exploring = $state<boolean>(false);
+    #exploring: boolean = false;
     #querystring!: URLSearchParams;
     #querystringCode?: string;
     #querystringReferralCode?: string;

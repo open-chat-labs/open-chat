@@ -1,8 +1,8 @@
 <script lang="ts">
     import {
-        app,
         AvatarSize,
         chatListScopeStore,
+        chatSummariesStore,
         type GroupChatIdentifier,
         type GroupChatSummary,
         iconSize,
@@ -39,7 +39,7 @@
 
     let { group, joining, onDismissRecommendation }: Props = $props();
 
-    let member = $derived(app.chatSummaries.has(group.id));
+    let member = $derived($chatSummariesStore.has(group.id));
     let locked = $derived(isLocked(group.gateConfig.gate));
 
     function dismiss({ id }: GroupChatSummary) {

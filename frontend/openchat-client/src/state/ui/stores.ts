@@ -1,16 +1,16 @@
-import { derived, type Readable } from "svelte/store";
-import { isCanisterUrl } from "../../utils/url";
-import { LocalStorageBoolStore, LocalStorageStore } from "../localStorageStore";
-import type { RouteParams } from "../path/state";
-import { routeStore } from "../path/stores";
-import { writable } from "../writable";
 import {
     ScreenWidth,
     type Dimensions,
     type FontScale,
     type RightPanelContent,
     type RightPanelMode,
-} from "./state";
+    type RouteParams,
+} from "openchat-shared";
+import { derived, type Readable } from "svelte/store";
+import { isCanisterUrl } from "../../utils/url";
+import { LocalStorageBoolStore, LocalStorageStore } from "../localStorageStore";
+import { routeStore } from "../path/stores";
+import { writable } from "../writable";
 
 function translateScale(scale: FontScale): number {
     if (scale === 0) return 0.75;

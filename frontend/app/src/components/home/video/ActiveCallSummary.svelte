@@ -7,6 +7,7 @@
         OpenChat,
         publish,
         routeForChatIdentifier,
+        selectedChatIdStore,
         selectedCommunitySummaryStore,
         type ChatIdentifier,
     } from "openchat-client";

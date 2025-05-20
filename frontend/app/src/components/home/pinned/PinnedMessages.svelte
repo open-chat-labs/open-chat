@@ -7,9 +7,9 @@
         ReadonlySet,
     } from "openchat-client";
     import {
-        app,
         currentUserStore,
         iconSize,
+        selectedChatPinnedMessagesStore,
         setsAreEqual,
         subscribe,
         withEqCheck,
@@ -38,7 +38,7 @@
     const client = getContext<OpenChat>("client");
 
     let pinnedMessages = $derived.by(
-        withEqCheck(() => app.selectedChat.pinnedMessages, setsAreEqual),
+        withEqCheck(() => $selectedChatPinnedMessagesStore, setsAreEqual),
     );
 
     onMount(() => {

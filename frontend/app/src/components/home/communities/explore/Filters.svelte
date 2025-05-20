@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { app, communityFiltersStore, iconSize, mobileWidth } from "openchat-client";
+    import { communityFiltersStore, iconSize, mobileWidth, OpenChat } from "openchat-client";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey, supportedLanguages } from "../../../../i18n/i18n";
@@ -8,6 +9,8 @@
     import HoverIcon from "../../../HoverIcon.svelte";
     import SectionHeader from "../../../SectionHeader.svelte";
     import Translatable from "../../../Translatable.svelte";
+
+    const client = getContext<OpenChat>("client");
 
     interface Props {
         onClose: () => void;
@@ -31,7 +34,7 @@
             <div class="toggle">
                 <Checkbox
                     id={`language_${lang.code}`}
-                    onChange={() => app.toggleCommunityFilterLanguage(lang.code)}
+                    onChange={() => client.toggleCommunityFilterLanguage(lang.code)}
                     label={i18nKey(lang.name)}
                     checked={$communityFiltersStore.has(lang.code)} />
             </div>

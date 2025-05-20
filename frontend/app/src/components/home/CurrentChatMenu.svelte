@@ -1,13 +1,15 @@
 <script lang="ts">
     import {
         allUsersStore,
-        app,
         chatIdentifiersEqual,
         type ChatSummary,
         currentUserIdStore,
+        directChatBotsStore,
+        favouritesStore,
         type GroupChatSummary,
         iconSize,
         isDiamondStore,
+        isProposalGroupStore,
         lastRightPanelState,
         mobileWidth,
         notificationsSupported,
@@ -73,7 +75,7 @@
 
     let botIdToUninstall = $derived(
         selectedChatSummary.kind === "direct_chat" &&
-            app.directChatBots.has(selectedChatSummary.them.userId)
+            $directChatBotsStore.has(selectedChatSummary.them.userId)
             ? selectedChatSummary.them.userId
             : undefined,
     );
@@ -277,7 +279,7 @@
 </script>
 
 {#if desktop}
-    {#if app.isProposalGroup}
+    {#if $isProposalGroupStore}
         <HoverIcon onclick={showProposalFilters} title={$_("showFilters")}>
             <Tune size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
@@ -345,7 +347,7 @@
                         {/snippet}
                     </MenuItem>
                 {/if}
-                {#if !app.favourites.has(selectedChatSummary.id)}
+                {#if !$favouritesStore.has(selectedChatSummary.id)}
                     <MenuItem onclick={addToFavourites}>
                         {#snippet icon()}
                             <HeartPlus size={$iconSize} color={"var(--menu-warn)"} />
@@ -366,7 +368,7 @@
                     </MenuItem>
                 {/if}
                 {#if $mobileWidth}
-                    {#if app.isProposalGroup}
+                    {#if $isProposalGroupStore}
                         <MenuItem onclick={showProposalFilters}>
                             {#snippet icon()}
                                 <Tune size={$iconSize} color={"var(--icon-inverted-txt)"} />

@@ -1,8 +1,8 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
     import {
-        app,
         type AttachmentContent,
+        blockedUsersStore,
         botState,
         type ChatIdentifier,
         chatIdentifiersEqual,
@@ -29,11 +29,12 @@
         type ReadonlySet,
         rightPanelHistory,
         runningInIframe,
+        selectedChatDraftMessageStore,
+        selectedChatPinnedMessagesStore,
         selectedCommunitySummaryStore,
         subscribe,
         suspendedUserStore,
         type User,
-        userStore,
     } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -216,14 +217,14 @@
     function onSendMessage(detail: [string | undefined, User[], boolean]) {
         if (!canSendAny) return;
         let [text, mentioned, blockLevelMarkdown] = detail;
-        if (app.currentChatDraftMessage?.editingEvent !== undefined) {
+        if ($selectedChatDraftMessageStore?.editingEvent !== undefined) {
             client
                 .editMessageWithAttachment(
                     messageContext,
                     text,
                     blockLevelMarkdown,
-                    app.currentChatDraftMessage.attachment,
-                    app.currentChatDraftMessage.editingEvent,
+                    $selectedChatDraftMessageStore.attachment,
+                    $selectedChatDraftMessageStore.editingEvent,
                 )
                 .then((success) => {
                     if (!success) {
@@ -234,7 +235,7 @@
             sendMessageWithAttachment(
                 text,
                 blockLevelMarkdown,
-                app.currentChatDraftMessage?.attachment,
+                $selectedChatDraftMessageStore?.attachment,
                 mentioned,
             );
         }
@@ -290,7 +291,7 @@
     }
 
     function defaultCryptoTransferReceiver(): string | undefined {
-        return app.currentChatDraftMessage?.replyingTo?.sender?.userId;
+        return $selectedChatDraftMessageStore?.replyingTo?.sender?.userId;
     }
 
     function onSendMessageWithContent(content: MessageContent) {
@@ -312,7 +313,7 @@
         }
     });
     let showFooter = $derived(!showSearchHeader && !$suspendedUserStore);
-    let blocked = $derived(isBlocked(chat, userStore.blockedUsers));
+    let blocked = $derived(isBlocked(chat, $blockedUsersStore));
     let frozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
     let canSendAny = $derived(client.canSendMessage(chat.id, "message"));
     let preview = $derived(client.isPreviewing(chat.id));
@@ -400,7 +401,7 @@
                 {blocked}
                 {readonly}
                 selectedChatSummary={chat}
-                hasPinned={app.selectedChat.pinnedMessages.size > 0} />
+                hasPinned={$selectedChatPinnedMessagesStore.size > 0} />
         {/if}
     {/if}
     {#if externalUrl !== undefined}
@@ -428,10 +429,10 @@
     {#if showFooter}
         <Footer
             {chat}
-            attachment={app.currentChatDraftMessage?.attachment}
-            editingEvent={app.currentChatDraftMessage?.editingEvent}
-            replyingTo={app.currentChatDraftMessage?.replyingTo}
-            textContent={app.currentChatDraftMessage?.textContent}
+            attachment={$selectedChatDraftMessageStore?.attachment}
+            editingEvent={$selectedChatDraftMessageStore?.editingEvent}
+            replyingTo={$selectedChatDraftMessageStore?.replyingTo}
+            textContent={$selectedChatDraftMessageStore?.textContent}
             user={$currentUserStore}
             mode={"message"}
             {joining}

@@ -128,12 +128,6 @@ export class MessageReadTracker {
      */
     #waiting: MessageContextMap<Map<bigint, number>> = new MessageContextMap<Map<bigint, number>>(); // The map is messageId -> (unconfirmed) messageIndex
 
-    #messageReadState = $derived({
-        serverState: this.#serverState,
-        waiting: this.#waiting,
-        state: this.#state,
-    });
-
     #triggerLoop(api: OpenChat): void {
         if (!this.#stopped) {
             this.#timeout = window.setTimeout(() => this.#sendToServer(api), MARK_READ_INTERVAL);
@@ -141,7 +135,11 @@ export class MessageReadTracker {
     }
 
     get messageReadState() {
-        return this.#messageReadState;
+        return {
+            serverState: this.#serverState,
+            waiting: this.#waiting,
+            state: this.#state,
+        };
     }
 
     start(api: OpenChat): void {

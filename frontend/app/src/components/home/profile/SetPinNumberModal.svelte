@@ -2,8 +2,8 @@
     import type { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
     import {
         AuthProvider,
-        app,
         mobileWidth,
+        pinNumberFailureStore,
         type OpenChat,
         type Verification,
     } from "openchat-client";
@@ -40,7 +40,7 @@
     let delegation: DelegationChain | undefined = $state(undefined);
 
     onMount(() => {
-        app.pinNumberFailure = undefined;
+        pinNumberFailureStore.set(undefined);
     });
 
     function isPinValid(pin: string[]): boolean {

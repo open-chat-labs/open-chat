@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
-    import { anonUserStore, app, iconSize, publish } from "openchat-client";
+    import { anonUserStore, iconSize, identityStateStore, publish } from "openchat-client";
     import page from "page";
     import { getContext, tick } from "svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
@@ -34,8 +34,8 @@
     }
     $effect(() => {
         if (
-            app.identityState.kind === "logged_in" &&
-            app.identityState.postLogin?.kind === "create_group"
+            $identityStateStore.kind === "logged_in" &&
+            $identityStateStore.postLogin?.kind === "create_group"
         ) {
             client.clearPostLoginState();
             tick().then(() => newGroup());

@@ -14,7 +14,6 @@
         type OpenChat,
         routeForChatIdentifier,
         selectedCommunitySummaryStore,
-        ui,
     } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
@@ -40,7 +39,7 @@
         if ($selectedCommunitySummaryStore === undefined) return;
         if (!match.public) return;
         if ($mobileWidth) {
-            ui.popRightPanelHistory();
+            client.popRightPanelHistory();
         }
         page(routeForChatIdentifier($chatListScopeStore.kind, match.id));
     }

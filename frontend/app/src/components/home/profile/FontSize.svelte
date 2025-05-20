@@ -1,14 +1,14 @@
 <script lang="ts">
-    import { fontScaleStore, ui } from "openchat-client";
+    import { fontScaleStore } from "openchat-client";
     import Range from "../../Range.svelte";
 </script>
 
 <div class="grid">
-    <div class="letter zero" onclick={() => (ui.fontScale = 0)}>A</div>
-    <div class="letter one" onclick={() => (ui.fontScale = 1)}>A</div>
-    <div class="letter two" onclick={() => (ui.fontScale = 2)}>A</div>
-    <div class="letter three" onclick={() => (ui.fontScale = 3)}>A</div>
-    <div class="letter four" onclick={() => (ui.fontScale = 4)}>A</div>
+    <div class="letter zero" onclick={() => fontScaleStore.set(0)}>A</div>
+    <div class="letter one" onclick={() => fontScaleStore.set(1)}>A</div>
+    <div class="letter two" onclick={() => fontScaleStore.set(2)}>A</div>
+    <div class="letter three" onclick={() => fontScaleStore.set(3)}>A</div>
+    <div class="letter four" onclick={() => fontScaleStore.set(4)}>A</div>
     <div class="slider">
         <Range
             min={0}

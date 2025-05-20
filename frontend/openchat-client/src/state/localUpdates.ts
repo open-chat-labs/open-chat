@@ -102,6 +102,7 @@ export class GlobalLocalState {
         this.#groupChatPreviews.clear();
         messageLocalUpdates.clearAll();
         chatDetailsLocalUpdates.clearAll();
+        chatSummaryLocalUpdates.clear();
         communityLocalUpdates.clear();
         communitySummaryLocalUpdates.clear();
     }

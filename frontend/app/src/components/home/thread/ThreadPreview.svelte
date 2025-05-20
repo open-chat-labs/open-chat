@@ -1,9 +1,9 @@
 <script lang="ts">
     import {
         allUsersStore,
-        app,
         AvatarSize,
         chatListScopeStore,
+        chatSummariesStore,
         currentUserIdStore,
         type EventWrapper,
         type Message,
@@ -37,7 +37,7 @@
 
     let missingMessages = $derived(thread.totalReplies - thread.latestReplies.length);
     let threadRootMessageIndex = $derived(thread.rootMessage.event.messageIndex);
-    let chat = $derived(app.chatSummaries.get(thread.chatId) as MultiUserChat | undefined);
+    let chat = $derived($chatSummariesStore.get(thread.chatId) as MultiUserChat | undefined);
     let muted = $derived(chat?.membership?.notificationsMuted || false);
     let syncDetails = $derived(
         chat?.membership?.latestThreads?.find(

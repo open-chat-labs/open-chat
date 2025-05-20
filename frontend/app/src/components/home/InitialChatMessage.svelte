@@ -1,13 +1,14 @@
 <script lang="ts">
     import {
         allUsersStore,
-        app,
         AvatarSize,
         botState,
         type ChatSummary,
         type CommandDefinition,
+        directChatBotsStore,
         emptyExternalBotPermissions,
         type ExternalBotPermissions,
+        isProposalGroupStore,
         type OpenChat,
         type ResourceKey,
         selectedCommunitySummaryStore,
@@ -55,7 +56,7 @@
                 };
                 const bot = botState.externalBots.get(chat.them.userId);
                 const perm =
-                    app.directChatBots.get(chat.them.userId) ?? emptyExternalBotPermissions();
+                    $directChatBotsStore.get(chat.them.userId) ?? emptyExternalBotPermissions();
                 return bot === undefined
                     ? s
                     : {
@@ -85,7 +86,7 @@
 </script>
 
 <div class="container">
-    {#if app.isProposalGroup}
+    {#if $isProposalGroupStore}
         <ProposalBot />
     {:else if chat.kind === "direct_chat" && client.isOpenChatBot(chat.them.userId)}
         <Robot />

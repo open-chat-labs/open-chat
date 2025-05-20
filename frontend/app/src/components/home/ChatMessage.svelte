@@ -1,7 +1,6 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
     import {
-        app,
         AvatarSize,
         type ChatIdentifier,
         chatListScopeStore,
@@ -23,10 +22,10 @@
         routeStore,
         screenWidth,
         ScreenWidth,
+        selectedChatBlockedUsersStore,
         selectedCommunityMembersStore,
         type SenderContext,
         translationsStore,
-        ui,
         unconfirmedReadByThem,
         undeletingMessagesStore,
         type UserSummary,
@@ -215,7 +214,9 @@
                 percentageExpired = expired ? 100 : (age / ttl) * 100;
                 // if this message is the root of a thread, make sure that we close that thread when the message expires
                 if (percentageExpired >= 100 && msg.thread) {
-                    ui.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
+                    client.filterRightPanelHistory(
+                        (panel) => panel.kind !== "message_thread_panel",
+                    );
                     pageReplace(removeQueryStringParam("open"));
                 }
             });
@@ -482,7 +483,7 @@
     let canUndelete = $derived(msg.deleted && msg.content.kind !== "deleted_content");
     let senderDisplayName = $derived(client.getDisplayName(sender, $selectedCommunityMembersStore));
     let tips = $derived(msg.tips ? Object.entries(msg.tips) : []);
-    let canBlockUser = $derived(canBlockUsers && !app.selectedChat.blockedUsers.has(msg.sender));
+    let canBlockUser = $derived(canBlockUsers && !$selectedChatBlockedUsersStore.has(msg.sender));
     let edited = $derived(
         msg.edited && (senderContext?.kind !== "bot" || !senderContext.finalised),
     );
@@ -622,7 +623,7 @@
                                         {#if sender !== undefined && multiUserChat}
                                             <WithRole
                                                 userId={sender.userId}
-                                                chatMembers={app.selectedChat.members}
+                                                chatMembers={$selectedCommunityMembersStore}
                                                 communityMembers={$selectedCommunityMembersStore}>
                                                 {#snippet children(communityRole, chatRole)}
                                                     <RoleIcon

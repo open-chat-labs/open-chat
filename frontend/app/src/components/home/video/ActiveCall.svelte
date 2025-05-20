@@ -3,7 +3,6 @@
     import daily, { type DailyCall } from "@daily-co/daily-js";
     import {
         allUsersStore,
-        app,
         chatIdentifiersEqual,
         communitiesStore,
         currentUserIdStore,
@@ -11,8 +10,8 @@
         mobileWidth,
         NoMeetingToJoin,
         OpenChat,
+        selectedChatSummaryStore,
         selectedCommunitySummaryStore,
-        ui,
         type AccessTokenType,
         type ChatIdentifier,
         type VideoCallType,
@@ -119,7 +118,7 @@
             }
 
             // close and threads we have open in the right panel
-            ui.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
+            client.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
             removeQueryStringParam("open");
 
             activeVideoCall.joining(chatId, callType);
@@ -304,7 +303,7 @@
 
             // this will trigger the left-meeting event which will in turn end the call
             $activeVideoCall.call.leave();
-            ui.popRightPanelHistory();
+            client.popRightPanelHistory();
         }
     }
 
@@ -365,7 +364,7 @@
         !showLandingPage &&
         !(threadOpen && $mobileWidth) &&
         !(participantsOpen && $mobileWidth) &&
-        chatIdentifiersEqual($activeVideoCall.chatId, app.selectedChatSummary?.id)}>
+        chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatSummaryStore?.id)}>
     {#if chat !== undefined}
         <ActiveCallHeader
             {onClearSelection}

@@ -83,7 +83,7 @@ import { routeStore, selectedCommunityIdStore } from "../path/stores";
 import { ChatSetStore, SafeSetStore } from "../set";
 import { SnsFunctions } from "../snsFunctions.svelte";
 import { hideMessagesFromDirectBlocked } from "../ui/stores";
-import { messagesRead } from "../unread/markRead.svelte";
+import { messagesRead } from "../unread/markRead";
 import { blockedUsersStore, suspendedUsersStore } from "../users/stores";
 import { writable } from "../writable";
 
@@ -598,7 +598,7 @@ export const selectedChatMembersStore = derived(
 export const selectedChatBlockedUsersStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.blockedUsers],
     ([chat, blockedUsers]) => {
-        if (chat === undefined) return new Map() as ReadonlySet<string>;
+        if (chat === undefined) return new Set() as ReadonlySet<string>;
         return blockedUsers.get(chat.chatId)?.apply(chat.blockedUsers) ?? chat.blockedUsers;
     },
 );
@@ -608,14 +608,14 @@ export const selectedChatLapsedMembersStore = derived([selectedServerChatStore],
 export const selectedChatPinnedMessagesStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.pinnedMessages],
     ([chat, pinnedMessages]) => {
-        if (chat === undefined) return new Map() as ReadonlySet<number>;
+        if (chat === undefined) return new Set() as ReadonlySet<number>;
         return pinnedMessages.get(chat.chatId)?.apply(chat.pinnedMessages) ?? chat.pinnedMessages;
     },
 );
 export const selectedChatInvitedUsersStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.invitedUsers],
     ([chat, invitedUsers]) => {
-        if (chat === undefined) return new Map() as ReadonlySet<string>;
+        if (chat === undefined) return new Set() as ReadonlySet<string>;
         return invitedUsers.get(chat.chatId)?.apply(chat.invitedUsers) ?? chat.invitedUsers;
     },
 );
@@ -1048,6 +1048,7 @@ export const eventsStore = derived(
         selectedChatBlockedOrSuspendedUsersStore,
         messageLocalUpdates,
         localUpdates.recentlySentMessages,
+        messageFiltersStore,
     ],
     ([
         serverEvents,
@@ -1060,6 +1061,7 @@ export const eventsStore = derived(
         selectedChatBlockedOrSuspendedUsers,
         messageLocalUpdates,
         recentlySentMessages,
+        messageFilters,
     ]) => {
         if (selectedChatId === undefined) return [];
         const ctx = { chatId: selectedChatId };
@@ -1077,6 +1079,7 @@ export const eventsStore = derived(
             selectedChatBlockedOrSuspendedUsers,
             messageLocalUpdates,
             recentlySentMessages,
+            messageFilters,
         );
     },
 );
@@ -1162,6 +1165,7 @@ export const threadEventsStore = derived(
         selectedChatBlockedOrSuspendedUsersStore,
         messageLocalUpdates,
         localUpdates.recentlySentMessages,
+        messageFiltersStore,
     ],
     ([
         serverEvents,
@@ -1173,6 +1177,7 @@ export const threadEventsStore = derived(
         selectedChatBlockedOrSuspendedUsers,
         messageLocalUpdates,
         recentlySentMessages,
+        messageFilters,
     ]) => {
         if (selectedThreadId === undefined) return [];
         const ctx = selectedThreadId;
@@ -1190,6 +1195,7 @@ export const threadEventsStore = derived(
             selectedChatBlockedOrSuspendedUsers,
             messageLocalUpdates,
             recentlySentMessages,
+            messageFilters,
         );
     },
 );

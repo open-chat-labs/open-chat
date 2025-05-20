@@ -1,8 +1,8 @@
 <script lang="ts">
     import {
-        app,
         chatListScopeStore,
         iconSize,
+        identityStateStore,
         locationStore,
         OpenChat,
         routeForScope,
@@ -29,7 +29,7 @@
     let { showBlog }: Props = $props();
 
     function launch() {
-        if (app.identityState.kind === "logged_in") {
+        if ($identityStateStore.kind === "logged_in") {
             page(routeForScope($chatListScopeStore));
         } else {
             page("/communities");
@@ -110,7 +110,7 @@
             {"Launch app"}
         {/snippet}
     </MenuItem>
-    {#if app.identityState.kind === "logged_in"}
+    {#if $identityStateStore.kind === "logged_in"}
         <MenuItem separator />
         <MenuItem onclick={() => client.logout()}>
             {#snippet icon()}

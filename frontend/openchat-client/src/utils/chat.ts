@@ -1328,6 +1328,7 @@ export function mergeEventsAndLocalUpdates(
     selectedChatBlockedOrSuspendedUsers: Set<string>,
     messageLocalUpdates: MessageMap<MessageLocalState>,
     recentlySentMessages: MessageMap<bigint>,
+    messageFilters: MessageFilter[],
 ): EventWrapper<ChatEvent>[] {
     const eventIndexes = new DRange();
     eventIndexes.add(expiredEventRanges);
@@ -1367,7 +1368,7 @@ export function mergeEventsAndLocalUpdates(
             // Don't hide the sender's own messages
             const failedMessageFilter =
                 e.event.sender !== app.currentUserId
-                    ? doesMessageFailFilter(e.event, app.messageFilters) !== undefined
+                    ? doesMessageFailFilter(e.event, messageFilters) !== undefined
                     : false;
 
             if (

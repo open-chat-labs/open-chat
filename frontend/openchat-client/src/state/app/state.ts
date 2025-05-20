@@ -21,7 +21,6 @@ import {
     type ExternalBotPermissions,
     type GroupChatSummary,
     type IdentityState,
-    isProposalsChat,
     type Member,
     type MessageActivitySummary,
     messageContextsEqual,
@@ -187,62 +186,82 @@ export class AppState {
     #translations: MessageMap<string> = new MessageMap();
 
     constructor() {
-        locale.subscribe((l) => (this.#locale = l ?? "en"));
-        offlineStore.subscribe((offline) => (this.#offline = offline));
-        anonUserStore.subscribe((v) => (this.#anonUser = v));
-        suspendedUserStore.subscribe((v) => (this.#suspendedUser = v));
-        platformModeratorStore.subscribe((v) => (this.#platformModerator = v));
-        platformOperatorStore.subscribe((v) => (this.#platformOperator = v));
-        diamondStatusStore.subscribe((v) => (this.#diamondStatus = v));
-        isDiamondStore.subscribe((v) => (this.#isDiamond = v));
-        isLifetimeDiamondStore.subscribe((v) => (this.#isLifetimeDiamond = v));
-        canExtendDiamondStore.subscribe((v) => (this.#canExtendDiamond = v));
-        moderationFlagsEnabledStore.subscribe((v) => (this.#moderationFlagsEnabled = v));
-        adultEnabledStore.subscribe((v) => (this.#adultEnabled = v));
-        offensiveEnabledStore.subscribe((v) => (this.#offensiveEnabled = v));
-        underReviewEnabledStore.subscribe((v) => (this.#underReviewEnabled = v));
-        nextCommunityIndexStore.subscribe((v) => (this.#nextCommunityIndex = v));
-        selectedCommunityBlockedUsersStore.subscribe(
-            (v) => (this.#selectedCommunityBlockedUsers = v),
-        );
-        selectedCommunityReferralsStore.subscribe((v) => (this.#selectedCommunityReferrals = v));
-        selectedCommunityInvitedUsersStore.subscribe(
-            (v) => (this.#selectedCommunityInvitedUsers = v),
-        );
-        selectedCommunityMembersStore.subscribe((v) => (this.#selectedCommunityMembers = v));
-        selectedCommunitySummaryStore.subscribe((v) => (this.#selectedCommunitySummary = v));
-        selectedCommunityRulesStore.subscribe((v) => (this.#selectedCommunityRules = v));
+        setTimeout(() => {
+            try {
+                locale.subscribe((l) => (this.#locale = l ?? "en"));
+                offlineStore.subscribe((offline) => (this.#offline = offline));
+                anonUserStore.subscribe((v) => (this.#anonUser = v));
+                suspendedUserStore.subscribe((v) => (this.#suspendedUser = v));
+                platformModeratorStore.subscribe((v) => (this.#platformModerator = v));
+                platformOperatorStore.subscribe((v) => (this.#platformOperator = v));
+                diamondStatusStore.subscribe((v) => (this.#diamondStatus = v));
+                isDiamondStore.subscribe((v) => (this.#isDiamond = v));
+                isLifetimeDiamondStore.subscribe((v) => (this.#isLifetimeDiamond = v));
+                canExtendDiamondStore.subscribe((v) => (this.#canExtendDiamond = v));
+                moderationFlagsEnabledStore.subscribe((v) => (this.#moderationFlagsEnabled = v));
+                adultEnabledStore.subscribe((v) => (this.#adultEnabled = v));
+                offensiveEnabledStore.subscribe((v) => (this.#offensiveEnabled = v));
+                underReviewEnabledStore.subscribe((v) => (this.#underReviewEnabled = v));
+                nextCommunityIndexStore.subscribe((v) => (this.#nextCommunityIndex = v));
+                selectedCommunityBlockedUsersStore.subscribe(
+                    (v) => (this.#selectedCommunityBlockedUsers = v),
+                );
+                selectedCommunityReferralsStore.subscribe(
+                    (v) => (this.#selectedCommunityReferrals = v),
+                );
+                selectedCommunityInvitedUsersStore.subscribe(
+                    (v) => (this.#selectedCommunityInvitedUsers = v),
+                );
+                selectedCommunityMembersStore.subscribe(
+                    (v) => (this.#selectedCommunityMembers = v),
+                );
+                selectedCommunitySummaryStore.subscribe(
+                    (v) => (this.#selectedCommunitySummary = v),
+                );
+                selectedCommunityRulesStore.subscribe((v) => (this.#selectedCommunityRules = v));
 
-        translationsStore.subscribe((v) => (this.#translations = v));
-        walletConfigStore.subscribe((v) => (this.#walletConfig = v));
-        selectedThreadIdStore.subscribe((v) => (this.#selectedThreadId = v));
-        selectedChatIdStore.subscribe((v) => (this.#selectedChatId = v));
-        selectedCommunityIdStore.subscribe((v) => (this.#selectedCommunityId = v));
-        selectedServerChatSummaryStore.subscribe((v) => (this.#selectedServerChatSummary = v));
-        selectedChatSummaryStore.subscribe((v) => (this.#selectedChatSummary = v));
-        currentUserIdStore.subscribe((v) => (this.#currentUserId = v));
-        communitiesStore.subscribe((v) => (this.#communities = v));
-        pinnedChatsStore.subscribe((v) => (this.#pinnedChats = v));
-        chatListScopeStore.subscribe((v) => (this.#chatListScope = v));
-        messageActivitySummaryStore.subscribe((v) => (this.#messageActivitySummary = v));
-        allChatsStore.subscribe((v) => (this.#allChats = v));
-        allServerChatsStore.subscribe((v) => (this.#allServerChats = v));
-        chatSummariesStore.subscribe((v) => (this.#chatSummaries = v));
-        selectedChatMembersStore.subscribe((v) => (this.#selectedChatMembers = v));
-        selectedChatBlockedUsersStore.subscribe((v) => (this.#selectedChatBlockedUsers = v));
-        selectedChatInvitedUsersStore.subscribe((v) => (this.#selectedChatInvitedUsers = v));
-        directChatBotsStore.subscribe((v) => (this.#directChatBots = v));
-        identityStateStore.subscribe((v) => (this.#identityState = v));
-        confirmedEventIndexesLoadedStore.subscribe((v) => (this.#confirmedEventIndexesLoaded = v));
-        confirmedThreadEventIndexesLoadedStore.subscribe(
-            (v) => (this.#confirmedThreadEventIndexesLoaded = v),
-        );
-        selectedChatUserIdsStore.subscribe((v) => (this.#selectedChatUserIds = v));
-        eventsStore.subscribe((v) => (this.#selectedChatEvents = v));
-        threadEventsStore.subscribe((v) => (this.#selectedThreadEvents = v));
-        selectedChatRulesStore.subscribe((v) => (this.#selectedChatRules = v));
-        favouritesStore.subscribe((v) => (this.#favourites = v));
-        serverGroupChatsStore.subscribe((v) => (this.#groupChats = v));
+                translationsStore.subscribe((v) => (this.#translations = v));
+                walletConfigStore.subscribe((v) => (this.#walletConfig = v));
+                selectedThreadIdStore.subscribe((v) => (this.#selectedThreadId = v));
+                selectedChatIdStore.subscribe((v) => (this.#selectedChatId = v));
+                selectedCommunityIdStore.subscribe((v) => (this.#selectedCommunityId = v));
+                selectedServerChatSummaryStore.subscribe(
+                    (v) => (this.#selectedServerChatSummary = v),
+                );
+                selectedChatSummaryStore.subscribe((v) => (this.#selectedChatSummary = v));
+                currentUserIdStore.subscribe((v) => (this.#currentUserId = v));
+                communitiesStore.subscribe((v) => (this.#communities = v));
+                pinnedChatsStore.subscribe((v) => (this.#pinnedChats = v));
+                chatListScopeStore.subscribe((v) => (this.#chatListScope = v));
+                messageActivitySummaryStore.subscribe((v) => (this.#messageActivitySummary = v));
+                allChatsStore.subscribe((v) => (this.#allChats = v));
+                allServerChatsStore.subscribe((v) => (this.#allServerChats = v));
+                chatSummariesStore.subscribe((v) => (this.#chatSummaries = v));
+                selectedChatMembersStore.subscribe((v) => (this.#selectedChatMembers = v));
+                selectedChatBlockedUsersStore.subscribe(
+                    (v) => (this.#selectedChatBlockedUsers = v),
+                );
+                selectedChatInvitedUsersStore.subscribe(
+                    (v) => (this.#selectedChatInvitedUsers = v),
+                );
+                directChatBotsStore.subscribe((v) => (this.#directChatBots = v));
+                identityStateStore.subscribe((v) => (this.#identityState = v));
+                confirmedEventIndexesLoadedStore.subscribe(
+                    (v) => (this.#confirmedEventIndexesLoaded = v),
+                );
+                confirmedThreadEventIndexesLoadedStore.subscribe(
+                    (v) => (this.#confirmedThreadEventIndexesLoaded = v),
+                );
+                selectedChatUserIdsStore.subscribe((v) => (this.#selectedChatUserIds = v));
+                eventsStore.subscribe((v) => (this.#selectedChatEvents = v));
+                threadEventsStore.subscribe((v) => (this.#selectedThreadEvents = v));
+                selectedChatRulesStore.subscribe((v) => (this.#selectedChatRules = v));
+                favouritesStore.subscribe((v) => (this.#favourites = v));
+                serverGroupChatsStore.subscribe((v) => (this.#groupChats = v));
+            } catch {
+                console.log("Error subscribing");
+            }
+        });
     }
 
     // TODO - none of the references to userStore here will be reactive at the moment
@@ -286,13 +305,14 @@ export class AppState {
         this.#modifyFilteredProposals((fp) => fp.toggleMessageExpansion(messageId, expand));
     }
 
-    #resetFilteredProposals(chat: ChatSummary) {
-        const filteredProposals = isProposalsChat(chat)
-            ? FilteredProposals.fromStorage(chat.subtype.governanceCanisterId)
-            : undefined;
+    // TODO - find where this used to be called
+    // #resetFilteredProposals(chat: ChatSummary) {
+    //     const filteredProposals = isProposalsChat(chat)
+    //         ? FilteredProposals.fromStorage(chat.subtype.governanceCanisterId)
+    //         : undefined;
 
-        filteredProposalsStore.set(filteredProposals);
-    }
+    //     filteredProposalsStore.set(filteredProposals);
+    // }
 
     setCurrentUser(user: CreatedUser) {
         currentUserStore.set(user);
@@ -523,8 +543,8 @@ export class AppState {
         if (!chatIdentifiersEqual(chatId, this.#selectedChatId)) {
             console.warn(
                 "Attempting to set chat details on the wrong chat - probably a stale response",
-                $state.snapshot(chatId),
-                $state.snapshot(this.#selectedChatId),
+                chatId,
+                this.#selectedChatId,
             );
             return;
         }
@@ -559,8 +579,8 @@ export class AppState {
         if (!communityIdentifiersEqual(communityId, this.#selectedCommunityId)) {
             console.warn(
                 "Attempting to set community details on the wrong community - probably a stale response",
-                $state.snapshot(communityId),
-                $state.snapshot(this.#selectedCommunityId),
+                communityId,
+                this.#selectedCommunityId,
             );
             return;
         }

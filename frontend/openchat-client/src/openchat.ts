@@ -21,8 +21,10 @@ import type {
     AirdropChannelDetails,
     ApproveAccessGatePaymentResponse,
     ApproveTransferResponse,
+    ArchitectureRoute,
     AttachmentContent,
     AuthenticationPrincipal,
+    BlogRoute,
     BotActionScope,
     BotClientConfigData,
     BotCommandInstance,
@@ -77,6 +79,7 @@ import type {
     DiamondMembershipDuration,
     DiamondMembershipFees,
     DiamondMembershipStatus,
+    DiamondRoute,
     DirectChatIdentifier,
     DisableInviteCodeResponse,
     EnableInviteCodeResponse,
@@ -91,11 +94,13 @@ import type {
     ExternalBotCommandInstance,
     ExternalBotPermissions,
     Failure,
+    FaqRoute,
     FromWorker,
     FullWebhookDetails,
     GenerateBotKeyResponse,
     GenerateChallengeResponse,
     GenerateMagicLinkResponse,
+    GlobalSelectedChatRoute,
     GroupChatDetailsResponse,
     GroupChatIdentifier,
     GroupChatSummary,
@@ -103,6 +108,7 @@ import type {
     GroupMoved,
     GroupSearchResponse,
     GroupSubtype,
+    GuidelinesRoute,
     HandleMagicLinkResponse,
     HomeRoute,
     IdentityState,
@@ -153,11 +159,15 @@ import type {
     RemoveIdentityLinkResponse,
     RemoveMemberResponse,
     ResetInviteCodeResponse,
+    RightPanelContent,
+    RoadmapRoute,
     RouteParams,
     Rules,
     SaveCryptoAccountResponse,
     SearchDirectChatResponse,
     SearchGroupChatResponse,
+    SelectedChannelRoute,
+    SelectedCommunityRoute,
     SendMessageResponse,
     SendMessageSuccess,
     SetBioResponse,
@@ -171,6 +181,7 @@ import type {
     SubmitProofOfUniquePersonhoodResponse,
     Success,
     SwapTokensResponse,
+    TermsRoute,
     ThreadPreview,
     ThreadRead,
     ThreadSummary,
@@ -203,6 +214,7 @@ import type {
     WebAuthnKeyFull,
     WebhookDetails,
     WebRtcMessage,
+    WhitepaperRoute,
     WithdrawBtcResponse,
     WithdrawCryptocurrencyResponse,
     WorkerError,
@@ -306,9 +318,9 @@ import {
 import { app } from "./state/app/state";
 import { botState } from "./state/bots.svelte";
 import { pathState } from "./state/path/state";
-import { type RightPanelContent, ui } from "./state/ui/state";
+import { ui } from "./state/ui/state";
 import type { UndoLocalUpdate } from "./state/undo";
-import { messagesRead, startMessagesReadTracker } from "./state/unread/markRead.svelte";
+import { messagesRead, startMessagesReadTracker } from "./state/unread/markRead";
 import { userStore } from "./state/users/state";
 import { diamondDurationToMs } from "./stores/diamond";
 import { applyTranslationCorrection } from "./stores/i18n";
@@ -2697,7 +2709,7 @@ export class OpenChat {
             this.closeNotificationsForChat(chat.id);
             eventListScrollTop.set(undefined);
             this.#setSelectedChat(chat.id, messageIndex);
-            ui.filterRightPanelHistoryByChatType(chat);
+            this.filterRightPanelHistoryByChatType(chat);
 
             if (autojoin && chat.kind !== "direct_chat") {
                 publish("joinGroup", { group: chat, select: true });
@@ -9225,6 +9237,10 @@ export class OpenChat {
         ui.popRightPanelHistory();
     }
 
+    rightPanelContains(kind: RightPanelContent["kind"]) {
+        return ui.rightPanelContains(kind);
+    }
+
     filterRightPanelHistory(fn: (state: RightPanelContent) => boolean) {
         return ui.filterRightPanelHistory(fn);
     }
@@ -9248,14 +9264,93 @@ export class OpenChat {
     isShareRoute(route: RouteParams): route is ShareRoute {
         return pathState.isShareRoute(route);
     }
+
+    isSelectedCommunityRoute(route: RouteParams): route is SelectedCommunityRoute {
+        return pathState.isSelectedCommunityRoute(route);
+    }
+
+    isSelectedChannelRoute(route: RouteParams): route is SelectedChannelRoute {
+        return pathState.isSelectedChannelRoute(route);
+    }
+
+    isGlobalChatSelectedRoute(route: RouteParams): route is GlobalSelectedChatRoute {
+        return pathState.isGlobalChatSelectedRoute(route);
+    }
+
+    isBlogRoute(route: RouteParams): route is BlogRoute {
+        return pathState.isBlogRoute(route);
+    }
+
+    isRoadmapRoute(route: RouteParams): route is RoadmapRoute {
+        return pathState.isRoadmapRoute(route);
+    }
+
+    isWhitepaperRoute(route: RouteParams): route is WhitepaperRoute {
+        return pathState.isWhitepaperRoute(route);
+    }
+
+    isArchitectureRoute(route: RouteParams): route is ArchitectureRoute {
+        return pathState.isArchitectureRoute(route);
+    }
+
+    isGuidelinesRoute(route: RouteParams): route is GuidelinesRoute {
+        return pathState.isGuidelinesRoute(route);
+    }
+
+    isTermsRoute(route: RouteParams): route is TermsRoute {
+        return pathState.isTermsRoute(route);
+    }
+
+    isFaqRoute(route: RouteParams): route is FaqRoute {
+        return pathState.isFaqRoute(route);
+    }
+
+    isDiamondRoute(route: RouteParams): route is DiamondRoute {
+        return pathState.isDiamondRoute(route);
+    }
+
     setRouteParams(ctx: PageJS.Context, p: RouteParams) {
         pathState.setRouteParams(ctx, p);
     }
+
     addUserGroupKey(key: string) {
         app.addUserGroupKey(key);
     }
+
     toggleProposalFilterMessageExpansion(messageId: bigint, expand: boolean) {
         app.toggleProposalFilterMessageExpansion(messageId, expand);
+    }
+
+    enableAllProposalFilters() {
+        app.enableAllProposalFilters();
+    }
+
+    disableAllProposalFilters(ids: number[]) {
+        app.disableAllProposalFilters(ids);
+    }
+
+    toggleProposalFilter(topic: number) {
+        app.toggleProposalFilter(topic);
+    }
+
+    untranslate(messageId: bigint) {
+        app.untranslate(messageId);
+    }
+
+    translate(messageId: bigint, translation: string) {
+        app.translate(messageId, translation);
+    }
+
+    toggleNav() {
+        ui.toggleNav();
+    }
+
+    closeNavIfOpen() {
+        ui.closeNavIfOpen();
+    }
+
+    toggleCommunityFilterLanguage(lang: string) {
+        app.toggleCommunityFilterLanguage(lang);
     }
 }
 

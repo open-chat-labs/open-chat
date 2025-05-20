@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { chatIdentifiersEqual, mobileWidth } from "openchat-client";
+    import { chatIdentifiersEqual, mobileWidth, selectedChatIdStore } from "openchat-client";
     import { activeVideoCall } from "../../../stores/video";
 
     let show = $derived(

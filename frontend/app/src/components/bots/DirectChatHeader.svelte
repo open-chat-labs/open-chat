@@ -2,9 +2,10 @@
     import type { DirectChatSummary, ExternalBot } from "openchat-client";
     import {
         allUsersStore,
-        app,
         AvatarSize,
         directChatApiKeysStore,
+        directChatBotsStore,
+        favouritesStore,
         flattenCommandPermissions,
         iconSize,
         mobileWidth,
@@ -49,7 +50,7 @@
     let botUser = $derived($allUsersStore.get(chat.them.userId));
     let apiKey = $derived($directChatApiKeysStore.get(bot.id));
     let grantedPermissions = $derived(
-        app.directChatBots.get(bot.id) ?? flattenCommandPermissions(bot.definition),
+        $directChatBotsStore.get(bot.id) ?? flattenCommandPermissions(bot.definition),
     );
 
     function addToFavourites() {
@@ -136,7 +137,7 @@
                     {/snippet}
                     {#snippet menuItems()}
                         <Menu>
-                            {#if !app.favourites.has(chat.id)}
+                            {#if !$favouritesStore.has(chat.id)}
                                 <MenuItem onclick={addToFavourites}>
                                     {#snippet icon()}
                                         <HeartPlus size={$iconSize} color={"var(--menu-warn)"} />

@@ -1,9 +1,9 @@
 <script lang="ts">
     import {
-        app,
         defaultChatRules,
         OpenChat,
         publish,
+        selectedChatRulesStore,
         selectedCommunityReferralsStore,
         selectedCommunityRulesStore,
         type ChannelSummary,
@@ -50,7 +50,7 @@
             publish("editGroup", {
                 chat: channel,
                 rules: {
-                    ...(app.selectedChat.rules ?? defaultChatRules("channel")),
+                    ...($selectedChatRulesStore ?? defaultChatRules("channel")),
                     newVersion: false,
                 },
             });
