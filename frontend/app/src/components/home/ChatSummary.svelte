@@ -9,25 +9,27 @@
     } from "openchat-client";
     import {
         allUsersStore,
-        app,
         AvatarSize,
+        blockedUsersStore,
         botState,
         chatListScopeStore,
         communitiesStore,
         currentUserIdStore,
+        favouritesStore,
         iconSize,
+        messagesRead,
         mobileWidth,
         notificationsSupported,
         OpenChat,
         publish,
         routeForScope,
+        selectedChatIdStore,
         selectedCommunitySummaryStore,
         suspendedUserStore,
         byContext as typersByContext,
-        userStore,
     } from "openchat-client";
     import page from "page";
-    import { getContext } from "svelte";
+    import { getContext, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import ArchiveIcon from "svelte-material-icons/Archive.svelte";
     import BellIcon from "svelte-material-icons/Bell.svelte";
@@ -77,10 +79,8 @@
     );
     let verified = $derived(chatSummary.kind === "group_chat" && chatSummary.verified);
     let hovering = $state(false);
-    let unreadMessages = $derived(
-        client.unreadMessageCount(chatSummary.id, chatSummary.latestMessage?.event.messageIndex),
-    );
-    let unreadMentions = $derived(getUnreadMentionCount(chatSummary));
+    let unreadMessages = $state<number>(0);
+    let unreadMentions = $state<number>(0);
     let chat = $derived(normaliseChatSummary($now, chatSummary, $typersByContext));
     let lastMessage = $derived(formatLatestMessage(chatSummary, $allUsersStore));
     let displayDate = $derived(client.getDisplayDate(chatSummary));
@@ -90,7 +90,7 @@
             : undefined,
     );
     let blocked = $derived(
-        chatSummary.kind === "direct_chat" && userStore.blockedUsers.has(chatSummary.them.userId),
+        chatSummary.kind === "direct_chat" && $blockedUsersStore.has(chatSummary.them.userId),
     );
     let readonly = $derived(client.isChatReadOnly(chatSummary.id));
     let canDelete = $derived(getCanDelete(chatSummary, community));
@@ -100,8 +100,34 @@
     let delOffset = $state(maxDelOffset);
     let swiped = $state(false);
 
+    $effect(() => updateUnreadCounts(chatSummary));
+
+    onMount(() => {
+        return messagesRead.subscribe(() => updateUnreadCounts(chatSummary));
+    });
+
+    /***
+     * This needs to be called both when the chatSummary changes (because that may have changed the latestMessage)
+     * and when the internal state of the MessageReadTracker changes. Both are necessary to get the right value
+     * at all times.
+     */
+    function updateUnreadCounts(chatSummary: ChatSummary) {
+        untrack(() => {
+            unreadMessages = client.unreadMessageCount(
+                chatSummary.id,
+                chatSummary.latestMessage?.event.messageIndex,
+            );
+            unreadMentions = getUnreadMentionCount(chatSummary);
+
+            if (chatSummary.membership.archived && unreadMessages > 0 && !chat.bot) {
+                unarchiveChat();
+            }
+        });
+    }
+
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
-        const fav = $chatListScopeStore.kind !== "favourite" && app.favourites.has(chatSummary.id);
+        const fav =
+            $chatListScopeStore.kind !== "favourite" && $favouritesStore.has(chatSummary.id);
         const muted = chatSummary.membership.notificationsMuted;
         const video = chatSummary.videoCallInProgress
             ? { muted: muted ? 1 : 0, unmuted: muted ? 0 : 1 }
@@ -290,7 +316,7 @@
                 toastStore.showFailureToast(i18nKey("archiveChatFailed"));
             }
         });
-        if (chatSummary.id === app.selectedChatId) {
+        if (chatSummary.id === $selectedChatIdStore) {
             page(routeForScope($chatListScopeStore));
         }
     }
@@ -455,7 +481,7 @@
                             {/snippet}
                             {#snippet menuItems()}
                                 <Menu>
-                                    {#if !app.favourites.has(chatSummary.id)}
+                                    {#if !$favouritesStore.has(chatSummary.id)}
                                         <MenuItem onclick={addToFavourites}>
                                             {#snippet icon()}
                                                 <HeartPlus

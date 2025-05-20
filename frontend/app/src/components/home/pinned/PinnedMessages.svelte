@@ -7,9 +7,10 @@
         ReadonlySet,
     } from "openchat-client";
     import {
-        app,
         currentUserStore,
         iconSize,
+        messagesRead,
+        selectedChatPinnedMessagesStore,
         setsAreEqual,
         subscribe,
         withEqCheck,
@@ -36,18 +37,23 @@
     let { chatId, dateLastPinned, onClose }: Props = $props();
 
     const client = getContext<OpenChat>("client");
-
+    let unread = $state<boolean>(false);
     let pinnedMessages = $derived.by(
-        withEqCheck(() => app.selectedChat.pinnedMessages, setsAreEqual),
+        withEqCheck(() => $selectedChatPinnedMessagesStore, setsAreEqual),
     );
 
     onMount(() => {
-        return subscribe("chatWith", (_) => {
-            onClose();
-        });
+        const unsubs = [
+            subscribe("chatWith", onClose),
+            messagesRead.subscribe(() => {
+                unread = client.unreadPinned(chatId, dateLastPinned);
+            }),
+        ];
+        return () => {
+            unsubs.forEach((u) => u());
+        };
     });
 
-    let unread = $derived(client.unreadPinned(chatId, dateLastPinned));
     let messagesDiv: HTMLDivElement | undefined = $state();
 
     let messages: RemoteData<EventWrapper<Message>[][], string> = $state({ kind: "idle" });
@@ -104,6 +110,7 @@
 
     $effect(() => {
         reloadPinned(pinnedMessages);
+        unread = client.unreadPinned(chatId, dateLastPinned);
     });
 
     function dateGroupKey(group: EventWrapper<Message>[]): string {

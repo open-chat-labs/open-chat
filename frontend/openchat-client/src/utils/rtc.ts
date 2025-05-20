@@ -9,13 +9,19 @@ import {
     type RemoteVideoCallStarted,
     type WebRtcMessage,
 } from "openchat-shared";
-import { app } from "../state/app.svelte";
-import { userStore } from "../state/users/users.svelte";
+import { get } from "svelte/store";
+import {
+    blockedUsersStore,
+    selectedChatSummaryStore,
+    serverCommunitiesStore,
+    serverDirectChatsStore,
+    serverGroupChatsStore,
+} from "../state";
 
 export function messageIsForSelectedChat(msg: WebRtcMessage): boolean {
     const chat = findChatByChatType(msg);
     if (chat === undefined) return false;
-    const selectedChat = app.selectedChatSummary;
+    const selectedChat = get(selectedChatSummaryStore);
     if (selectedChat === undefined) return false;
     if (chat.id !== selectedChat.id) return false;
     return true;
@@ -38,15 +44,15 @@ export function createRemoteVideoStartedEvent(msg: RemoteVideoCallStarted) {
 function findChatByChatType(msg: WebRtcMessage): ChatSummary | undefined {
     switch (msg.id.kind) {
         case "direct_chat":
-            return app.directChats.get({ kind: "direct_chat", userId: msg.userId });
+            return get(serverDirectChatsStore).get({ kind: "direct_chat", userId: msg.userId });
         case "group_chat":
-            return app.groupChats.get(msg.id);
+            return get(serverGroupChatsStore).get(msg.id);
         case "channel":
             const communityId: CommunityIdentifier = {
                 kind: "community",
                 communityId: msg.id.communityId,
             };
-            const channels = app.communities.get(communityId)?.channels ?? [];
+            const channels = get(serverCommunitiesStore).get(communityId)?.channels ?? [];
             const channelId = msg.id.channelId;
             return channels.find((c) => c.id.channelId === channelId);
     }
@@ -57,12 +63,12 @@ function isDirectChatWith(chat: ChatSummary, userId: string): boolean {
 }
 
 function isBlockedUser(chat: ChatSummary): boolean {
-    return chat.kind === "direct_chat" && userStore.blockedUsers.has(chat.them.userId);
+    return chat.kind === "direct_chat" && get(blockedUsersStore).has(chat.them.userId);
 }
 
 export function filterWebRtcMessage(msg: WebRtcMessage): ChatIdentifier | undefined {
     const fromChat = findChatByChatType(msg);
-    const selectedChat = app.selectedChatSummary;
+    const selectedChat = get(selectedChatSummaryStore);
 
     // if the chat can't be found - ignore
     if (fromChat === undefined || selectedChat === undefined) {

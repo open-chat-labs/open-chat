@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { CommunitySummary, OpenChat } from "openchat-client";
     import {
-        app,
+        chatSummariesListStore,
         iconSize,
         notificationsSupported,
         platformModeratorStore,
@@ -47,7 +47,7 @@
     let canInvite = $derived(member && !frozen && client.canInviteUsers(community.id));
     let canCreateChannel = $derived(member && !frozen && client.canCreateChannel(community.id));
     let isCommunityMuted = $derived(
-        app.chatSummariesList.every((c) => c.membership.notificationsMuted),
+        $chatSummariesListStore.every((c) => c.membership.notificationsMuted),
     );
 
     function leaveCommunity() {

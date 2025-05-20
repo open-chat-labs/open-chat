@@ -15,14 +15,21 @@
     } from "openchat-client";
     import {
         allUsersStore,
-        app,
         currentUserIdStore,
         currentUserStore,
+        failedMessagesStore,
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
         localUpdates,
         messageContextsEqual,
+        messagesRead,
+        selectedChatBlockedUsersStore,
+        selectedChatExpandedDeletedMessageStore,
+        selectedThreadDraftMessageStore,
         subscribe,
+        threadEventsStore,
+        threadsFollowedByMeStore,
+        unconfirmedStore,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -73,34 +80,28 @@
     let messageContext = $derived({ chatId: chat.id, threadRootMessageIndex });
     let threadRootMessage = $derived(rootEvent.event);
     let blocked = $derived(
-        chat.kind === "direct_chat" && app.selectedChat.blockedUsers.has(chat.them.userId),
+        chat.kind === "direct_chat" && $selectedChatBlockedUsersStore.has(chat.them.userId),
     );
-    let textContent = $derived(app.currentThreadDraftMessage?.textContent);
-    let replyingTo = $derived(app.currentThreadDraftMessage?.replyingTo);
-    let attachment = $derived(app.currentThreadDraftMessage?.attachment);
-    let editingEvent = $derived(app.currentThreadDraftMessage?.editingEvent);
+    let textContent = $derived($selectedThreadDraftMessageStore?.textContent);
+    let replyingTo = $derived($selectedThreadDraftMessageStore?.replyingTo);
+    let attachment = $derived($selectedThreadDraftMessageStore?.attachment);
+    let editingEvent = $derived($selectedThreadDraftMessageStore?.editingEvent);
     let canSendAny = $derived(client.canSendMessage(chat.id, "thread"));
     let canReact = $derived(client.canReactToMessages(chat.id));
-    let atRoot = $derived(
-        app.selectedChat.threadEvents.length === 0 || app.selectedChat.threadEvents[0]?.index === 0,
-    );
-    let events = $derived(
-        atRoot ? [rootEvent, ...app.selectedChat.threadEvents] : app.selectedChat.threadEvents,
-    );
+    let atRoot = $derived($threadEventsStore.length === 0 || $threadEventsStore[0]?.index === 0);
+    let events = $derived(atRoot ? [rootEvent, ...$threadEventsStore] : $threadEventsStore);
     let timeline = $derived(
         client.groupEvents(
             [...events].reverse(),
             $currentUserIdStore,
-            app.selectedChat.expandedDeletedMessages,
+            $selectedChatExpandedDeletedMessageStore,
         ) as TimelineItem<Message>[],
     );
     let readonly = $derived(client.isChatReadOnly(chat.id));
     let thread = $derived(rootEvent.event.thread);
-    let loading = $derived(
-        !initialised && app.selectedChat.threadEvents.length === 0 && thread !== undefined,
-    );
+    let loading = $derived(!initialised && $threadEventsStore.length === 0 && thread !== undefined);
     let isFollowedByMe = $derived(
-        app.threadsFollowedByMe.get(chat.id)?.has(threadRootMessageIndex) ?? false,
+        $threadsFollowedByMeStore.get(chat.id)?.has(threadRootMessageIndex) ?? false,
     );
 
     onMount(() => {
@@ -304,7 +305,7 @@
 
     function toggleMessageExpansion(ew: EventWrapper<ChatEventType>, expand: boolean) {
         if (ew.event.kind === "message" && ew.event.content.kind === "proposal_content") {
-            app.toggleProposalFilterMessageExpansion(ew.event.messageId, expand);
+            client.toggleProposalFilterMessageExpansion(ew.event.messageId, expand);
         }
     }
 
@@ -386,12 +387,12 @@
                                 first={i + 1 === userGroup.length}
                                 last={i === 0}
                                 me={evt.event.sender === $currentUserIdStore}
-                                accepted={isAccepted(evt)}
-                                confirmed={isConfirmed(evt)}
-                                failed={isFailed(evt)}
+                                accepted={isAccepted($unconfirmedStore, evt)}
+                                confirmed={isConfirmed($unconfirmedStore, evt)}
+                                failed={isFailed($failedMessagesStore, evt)}
                                 readByMe={evt.event.messageId === rootEvent.event.messageId ||
                                     !isFollowedByMe ||
-                                    isReadByMe(evt)}
+                                    isReadByMe($messagesRead, evt)}
                                 observer={messageObserver}
                                 focused={evt.event.kind === "message" &&
                                     focusIndex === evt.event.messageIndex}

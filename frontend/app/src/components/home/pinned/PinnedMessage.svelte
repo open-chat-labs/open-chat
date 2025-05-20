@@ -3,14 +3,14 @@
     import type { CreatedUser, Message, MultiUserChatIdentifier, OpenChat } from "openchat-client";
     import {
         allUsersStore,
-        app,
         AvatarSize,
         chatListScopeStore,
         fullWidth,
         mobileWidth,
         routeForMessage,
+        selectedChatIdStore,
+        selectedChatWebhooksStore,
         selectedCommunityMembersStore,
-        ui,
     } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
@@ -37,7 +37,7 @@
 
     let crypto = msg.content.kind === "crypto_content";
 
-    let sender = $derived(findSender(msg.sender, $allUsersStore, app.selectedChat.webhooks));
+    let sender = $derived(findSender(msg.sender, $allUsersStore, $selectedChatWebhooksStore));
     let username = $derived(client.getDisplayName(sender, $selectedCommunityMembersStore));
     let deleted = $derived(msg.content.kind === "deleted_content");
     let fill = $derived(client.fillMessage(msg));
@@ -61,14 +61,14 @@
     }
 
     function goToMessageIndex() {
-        if (app.selectedChatId !== undefined) {
+        if ($selectedChatIdStore !== undefined) {
             if (modal) {
-                ui.popRightPanelHistory();
+                client.popRightPanelHistory();
             }
             page(
                 routeForMessage(
                     $chatListScopeStore.kind,
-                    { chatId: app.selectedChatId },
+                    { chatId: $selectedChatIdStore },
                     msg.messageIndex,
                 ),
             );

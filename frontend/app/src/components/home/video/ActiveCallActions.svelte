@@ -3,12 +3,13 @@
         chatListScopeStore,
         iconSize,
         mobileWidth,
+        OpenChat,
         pageReplace,
         rightPanelHistory,
         routeForMessage,
-        ui,
     } from "openchat-client";
     import page from "page";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
@@ -26,6 +27,8 @@
     import MenuItem from "../../MenuItem.svelte";
     import Translatable from "../../Translatable.svelte";
     import type { VideoCallChat } from "./callChat";
+
+    const client = getContext<OpenChat>("client");
 
     interface Props {
         askedToSpeak: boolean;
@@ -46,7 +49,7 @@
     function toggleThread() {
         if (chat.chatId !== undefined && chat.videoCallInProgress?.messageIndex !== undefined) {
             if (threadOpen) {
-                ui.popRightPanelHistory();
+                client.popRightPanelHistory();
                 pageReplace(removeQueryStringParam("open"));
             } else {
                 page(
@@ -63,7 +66,7 @@
 
     function toggleParticipants() {
         if (participantsOpen) {
-            ui.popRightPanelHistory();
+            client.popRightPanelHistory();
         } else {
             if (
                 $activeVideoCall?.messageId !== undefined &&

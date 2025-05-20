@@ -1,14 +1,17 @@
 <script lang="ts">
     import {
         allUsersStore,
-        app,
         chatIdentifiersEqual,
         type ChatSummary,
         currentUserIdStore,
+        directChatBotsStore,
+        favouritesStore,
         type GroupChatSummary,
         iconSize,
         isDiamondStore,
+        isProposalGroupStore,
         lastRightPanelState,
+        messagesRead,
         mobileWidth,
         notificationsSupported,
         type OpenChat,
@@ -16,7 +19,7 @@
         publish,
         rightPanelHistory,
     } from "openchat-client";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
@@ -73,7 +76,7 @@
 
     let botIdToUninstall = $derived(
         selectedChatSummary.kind === "direct_chat" &&
-            app.directChatBots.has(selectedChatSummary.them.userId)
+            $directChatBotsStore.has(selectedChatSummary.them.userId)
             ? selectedChatSummary.them.userId
             : undefined,
     );
@@ -124,11 +127,22 @@
 
     let canStartOrJoinVideoCall = $derived(!inCall && (videoCallInProgress || canStartVideoCalls));
 
-    let hasUnreadPinned = $derived(
-        hasPinned &&
-            (selectedChatSummary.kind === "group_chat" || selectedChatSummary.kind === "channel") &&
-            client.unreadPinned(selectedChatSummary.id, selectedChatSummary.dateLastPinned),
-    );
+    let hasUnreadPinned = $state(false);
+
+    $effect(() => {
+        setUnreadPinned(hasPinned, selectedChatSummary);
+    });
+
+    onMount(() => {
+        return messagesRead.subscribe(() => setUnreadPinned(hasPinned, selectedChatSummary));
+    });
+
+    function setUnreadPinned(hasPinned: boolean, chat: ChatSummary) {
+        hasUnreadPinned =
+            hasPinned &&
+            (chat.kind === "group_chat" || chat.kind === "channel") &&
+            client.unreadPinned(chat.id, chat.dateLastPinned);
+    }
 
     function toggleMuteNotifications(mute: boolean) {
         publish("toggleMuteNotifications", { chatId: selectedChatSummary.id, mute });
@@ -277,7 +291,7 @@
 </script>
 
 {#if desktop}
-    {#if app.isProposalGroup}
+    {#if $isProposalGroupStore}
         <HoverIcon onclick={showProposalFilters} title={$_("showFilters")}>
             <Tune size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
@@ -345,7 +359,7 @@
                         {/snippet}
                     </MenuItem>
                 {/if}
-                {#if !app.favourites.has(selectedChatSummary.id)}
+                {#if !$favouritesStore.has(selectedChatSummary.id)}
                     <MenuItem onclick={addToFavourites}>
                         {#snippet icon()}
                             <HeartPlus size={$iconSize} color={"var(--menu-warn)"} />
@@ -366,7 +380,7 @@
                     </MenuItem>
                 {/if}
                 {#if $mobileWidth}
-                    {#if app.isProposalGroup}
+                    {#if $isProposalGroupStore}
                         <MenuItem onclick={showProposalFilters}>
                             {#snippet icon()}
                                 <Tune size={$iconSize} color={"var(--icon-inverted-txt)"} />

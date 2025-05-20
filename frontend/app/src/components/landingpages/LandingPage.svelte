@@ -4,8 +4,7 @@
 
 <script lang="ts">
     import {
-        app,
-        pathState,
+        identityStateStore,
         routeStore,
         runningInIframe,
         type CreatedUser,
@@ -32,7 +31,7 @@
     }
 </script>
 
-{#if app.identityState.kind === "registering"}
+{#if $identityStateStore.kind === "registering"}
     <Overlay>
         <Register onCreatedUser={createdUser} />
     </Overlay>
@@ -50,7 +49,7 @@
             <FeaturesPage />
         {:else}
             <Content>
-                {#if pathState.isBlogRoute($routeStore)}
+                {#if client.isBlogRoute($routeStore)}
                     {#if $routeStore.slug !== undefined}
                         {#await import("./BlogPostPage.svelte")}
                             <div class="loading">
@@ -62,7 +61,7 @@
                     {:else}
                         <BlogPage />
                     {/if}
-                {:else if pathState.isRoadmapRoute($routeStore)}
+                {:else if client.isRoadmapRoute($routeStore)}
                     {#await import("./RoadmapPage.svelte")}
                         <div class="loading">
                             <Loading />
@@ -70,7 +69,7 @@
                     {:then { default: RoadmapPage }}
                         <RoadmapPage />
                     {/await}
-                {:else if pathState.isWhitepaperRoute($routeStore)}
+                {:else if client.isWhitepaperRoute($routeStore)}
                     {#await import("./WhitepaperPage.svelte")}
                         <div class="loading">
                             <Loading />
@@ -78,7 +77,7 @@
                     {:then { default: WhitepaperPage }}
                         <WhitepaperPage />
                     {/await}
-                {:else if pathState.isArchitectureRoute($routeStore)}
+                {:else if client.isArchitectureRoute($routeStore)}
                     {#await import("./ArchitecturePage.svelte")}
                         <div class="loading">
                             <Loading />
@@ -86,7 +85,7 @@
                     {:then { default: ArchitecturePage }}
                         <ArchitecturePage />
                     {/await}
-                {:else if pathState.isGuidelinesRoute($routeStore)}
+                {:else if client.isGuidelinesRoute($routeStore)}
                     {#await import("./GuidelinesPage.svelte")}
                         <div class="loading">
                             <Loading />
@@ -94,7 +93,7 @@
                     {:then { default: GuidelinesPage }}
                         <GuidelinesPage />
                     {/await}
-                {:else if pathState.isTermsRoute($routeStore)}
+                {:else if client.isTermsRoute($routeStore)}
                     {#await import("./TermsPage.svelte")}
                         <div class="loading">
                             <Loading />
@@ -102,7 +101,7 @@
                     {:then { default: TermsPage }}
                         <TermsPage />
                     {/await}
-                {:else if pathState.isFaqRoute($routeStore)}
+                {:else if client.isFaqRoute($routeStore)}
                     {#await import("./FAQPage.svelte")}
                         <div class="loading">
                             <Loading />
@@ -110,7 +109,7 @@
                     {:then { default: FAQPage }}
                         <FAQPage />
                     {/await}
-                {:else if pathState.isDiamondRoute($routeStore)}
+                {:else if client.isDiamondRoute($routeStore)}
                     {#await import("./DiamondPage.svelte")}
                         <div class="loading">
                             <Loading />

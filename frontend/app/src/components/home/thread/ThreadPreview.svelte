@@ -1,12 +1,13 @@
 <script lang="ts">
     import {
         allUsersStore,
-        app,
         AvatarSize,
         chatListScopeStore,
+        chatSummariesStore,
         currentUserIdStore,
         type EventWrapper,
         type Message,
+        messagesRead,
         type MultiUserChat,
         OpenChat,
         routeForChatIdentifier,
@@ -14,7 +15,7 @@
         type ThreadPreview,
     } from "openchat-client";
     import page from "page";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
     import { pop } from "../../../utils/transition";
@@ -37,7 +38,7 @@
 
     let missingMessages = $derived(thread.totalReplies - thread.latestReplies.length);
     let threadRootMessageIndex = $derived(thread.rootMessage.event.messageIndex);
-    let chat = $derived(app.chatSummaries.get(thread.chatId) as MultiUserChat | undefined);
+    let chat = $derived($chatSummariesStore.get(thread.chatId) as MultiUserChat | undefined);
     let muted = $derived(chat?.membership?.notificationsMuted || false);
     let syncDetails = $derived(
         chat?.membership?.latestThreads?.find(
@@ -56,6 +57,18 @@
     let chatData = $derived({
         name: chat?.name,
         avatarUrl: client.groupAvatarUrl(chat, $selectedCommunitySummaryStore),
+    });
+
+    onMount(() => {
+        return messagesRead.subscribe(() => {
+            if (syncDetails !== undefined) {
+                unreadCount = client.unreadThreadMessageCount(
+                    thread.chatId,
+                    threadRootMessageIndex,
+                    syncDetails.latestMessageIndex,
+                );
+            }
+        });
     });
 
     let grouped = $derived(client.groupBySender(thread.latestReplies));

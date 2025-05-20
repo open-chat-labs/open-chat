@@ -1,6 +1,11 @@
 <script lang="ts">
     import type { ChatSummary, OpenChat } from "openchat-client";
-    import { app, filteredProposalsStore, iconSize, mobileWidth } from "openchat-client";
+    import {
+        filteredProposalsStore,
+        iconSize,
+        mobileWidth,
+        proposalTopicsStore,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -42,7 +47,7 @@
     };
 
     const client = getContext<OpenChat>("client");
-    let topics = $derived([...app.proposalTopics]);
+    let topics = $derived([...$proposalTopicsStore]);
     let groupTopics = $derived(
         selectedChat.kind !== "direct_chat" &&
             selectedChat.subtype?.governanceCanisterId === OC_GOVERNANCE_CANISTER_ID,
@@ -94,10 +99,10 @@
 
 <div class="proposal-filters">
     <div class="controls">
-        <LinkButton onClick={() => app.enableAllProposalFilters()} underline={"hover"}
+        <LinkButton onClick={() => client.enableAllProposalFilters()} underline={"hover"}
             ><Translatable resourceKey={i18nKey("proposal.enableAll")} /></LinkButton>
         <LinkButton
-            onClick={() => app.disableAllProposalFilters(topics.map(([id]) => id))}
+            onClick={() => client.disableAllProposalFilters(topics.map(([id]) => id))}
             underline={"hover"}
             ><Translatable resourceKey={i18nKey("proposal.disableAll")} /></LinkButton>
     </div>
@@ -111,7 +116,7 @@
                     <div class="toggle">
                         <Checkbox
                             id={kebab(label)}
-                            onChange={() => app.toggleProposalFilter(id)}
+                            onChange={() => client.toggleProposalFilter(id)}
                             label={i18nKey(label)}
                             checked={!$filteredProposalsStore?.hasFilter(id)} />
                     </div>
@@ -122,7 +127,7 @@
                 <div class="toggle">
                     <Checkbox
                         id={kebab(label)}
-                        onChange={() => app.toggleProposalFilter(id)}
+                        onChange={() => client.toggleProposalFilter(id)}
                         label={i18nKey(label)}
                         checked={!$filteredProposalsStore?.hasFilter(id)} />
                 </div>

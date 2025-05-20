@@ -12,16 +12,24 @@
         type ReadonlySet,
         FilteredProposals,
         allUsersStore,
-        app,
         chatIdentifiersEqual,
         chatListScopeStore,
         chatsInitialisedStore,
         currentUserIdStore,
+        eventsStore,
+        failedMessagesStore,
         localUpdates,
         messageIndexStore,
+        messagesRead,
         routeForChatIdentifier,
+        selectedChatDraftMessageStore,
+        selectedChatExpandedDeletedMessageStore,
+        selectedChatIdStore,
+        selectedChatPinnedMessagesStore,
+        selectedChatUserGroupKeysStore,
         selectedCommunitySummaryStore,
         showMiddle,
+        unconfirmedStore,
     } from "openchat-client";
     import page from "page";
     import { getContext, untrack } from "svelte";
@@ -130,7 +138,7 @@
             const key =
                 prefix +
                 (evt.event.kind === "message" ? `${evt.index}_${evt.event.messageId}` : evt.index);
-            if (app.selectedChat.userGroupKeys.has(key)) {
+            if ($selectedChatUserGroupKeysStore.has(key)) {
                 return key;
             }
         }
@@ -140,7 +148,7 @@
                 ? `${first.index}_${first.event.messageId}`
                 : first.index);
 
-        setTimeout(() => app.selectedChat.addUserGroupKey(firstKey), 0);
+        setTimeout(() => client.addUserGroupKey(firstKey), 0);
         return firstKey;
     }
 
@@ -171,7 +179,7 @@
 
     function toggleMessageExpansion(ew: EventWrapper<ChatEventType>, expand: boolean) {
         if (ew.event.kind === "message" && ew.event.content.kind === "proposal_content") {
-            app.toggleProposalFilterMessageExpansion(ew.event.messageId, expand);
+            client.toggleProposalFilterMessageExpansion(ew.event.messageId, expand);
         }
     }
 
@@ -251,15 +259,13 @@
             }
         }
     });
-    let showAvatar = $derived(
-        initialised && shouldShowAvatar(chat, app.selectedChat.events[0]?.index),
-    );
+    let showAvatar = $derived(initialised && shouldShowAvatar(chat, $eventsStore[0]?.index));
     let messageContext = $derived({ chatId: chat?.id, threadRootMessageIndex: undefined });
     let timeline = $derived(
         client.groupEvents(
-            [...app.selectedChat.events].reverse(),
+            [...$eventsStore].reverse(),
             $currentUserIdStore,
-            app.selectedChat.expandedDeletedMessages,
+            $selectedChatExpandedDeletedMessageStore,
             groupInner(filteredProposals),
         ),
     );
@@ -270,14 +276,14 @@
         if (
             $chatsInitialisedStore &&
             $messageIndexStore !== undefined &&
-            chatIdentifiersEqual(app.selectedChatId, previousChatId)
+            chatIdentifiersEqual($selectedChatIdStore, previousChatId)
         ) {
             const idx = $messageIndexStore;
             untrack(() => {
                 scrollToMessageIndex(idx, false);
             });
         }
-        previousChatId = app.selectedChatId;
+        previousChatId = $selectedChatIdStore;
     });
 </script>
 
@@ -293,7 +299,7 @@
     {unreadMessages}
     {firstUnreadMention}
     {footer}
-    events={app.selectedChat.events}
+    events={$eventsStore}
     {chat}
     bind:initialised
     bind:messagesDiv
@@ -318,11 +324,11 @@
                                 observer={messageObserver}
                                 focused={evt.event.kind === "message" &&
                                     evt.event.messageIndex === focusIndex &&
-                                    !isFailed(evt)}
-                                accepted={isAccepted(evt)}
-                                confirmed={isConfirmed(evt)}
-                                failed={isFailed(evt)}
-                                readByMe={isReadByMe(evt)}
+                                    !isFailed($failedMessagesStore, evt)}
+                                accepted={isAccepted($unconfirmedStore, evt)}
+                                confirmed={isConfirmed($unconfirmedStore, evt)}
+                                failed={isFailed($failedMessagesStore, evt)}
+                                readByMe={isReadByMe($messagesRead, evt)}
                                 chatId={chat.id}
                                 chatType={chat.kind}
                                 me={isMe(evt)}
@@ -343,8 +349,8 @@
                                 publicGroup={(chat.kind === "group_chat" ||
                                     chat.kind === "channel") &&
                                     chat.public}
-                                pinned={isPinned(app.selectedChat.pinnedMessages, evt)}
-                                editing={app.currentChatDraftMessage?.editingEvent === evt}
+                                pinned={isPinned($selectedChatPinnedMessagesStore, evt)}
+                                editing={$selectedChatDraftMessageStore?.editingEvent === evt}
                                 onReplyTo={replyTo}
                                 {onRemovePreview}
                                 {onEditEvent}

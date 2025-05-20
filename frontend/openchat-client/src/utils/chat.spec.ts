@@ -7,7 +7,7 @@ import {
     type UserLookup,
     type UserSummary,
 } from "openchat-shared";
-import { localUpdates } from "../state/global";
+import { localUpdates } from "../state";
 import {
     addVoteToPoll,
     getMembersString,

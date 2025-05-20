@@ -3,7 +3,6 @@
     import {
         allUsersStore,
         anonUserStore,
-        app,
         AvatarSize,
         chatListScopeStore,
         iconSize,
@@ -11,6 +10,7 @@
         publish,
         rightPanelHistory,
         routeForChatIdentifier,
+        selectedChatIdStore,
         selectedCommunitySummaryStore,
         byContext as typersByContext,
         type OpenChat,
@@ -77,7 +77,7 @@
     }
 
     function showGroupDetails() {
-        if (app.selectedChatId !== undefined) {
+        if ($selectedChatIdStore !== undefined) {
             rightPanelHistory.set([
                 {
                     kind: "group_details",
