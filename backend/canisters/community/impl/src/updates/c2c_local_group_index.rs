@@ -1,7 +1,7 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_local_user_index;
 use crate::model::events::CommunityEventInternal;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_time::now_millis;
 use canister_tracing_macros::trace;
@@ -14,9 +14,7 @@ use types::{GroupNameChanged, TimestampMillis, Timestamped};
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_local_index(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| c2c_local_index_impl(args, state))
+    execute_update(|state| c2c_local_index_impl(args, state))
 }
 
 fn c2c_local_index_impl(args: Args, state: &mut RuntimeState) -> Response {

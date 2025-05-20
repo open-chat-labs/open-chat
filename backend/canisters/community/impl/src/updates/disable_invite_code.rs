@@ -1,6 +1,5 @@
 use crate::{
-    RuntimeState, activity_notifications::handle_activity_notification, model::events::CommunityEventInternal, mutate_state,
-    run_regular_jobs,
+    RuntimeState, activity_notifications::handle_activity_notification, execute_update, model::events::CommunityEventInternal,
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -11,9 +10,7 @@ use types::{GroupInviteCodeChange, GroupInviteCodeChanged, OCResult, Timestamped
 #[update(msgpack = true)]
 #[trace]
 fn disable_invite_code(_args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(disable_invite_code_impl).into()
+    execute_update(disable_invite_code_impl).into()
 }
 
 fn disable_invite_code_impl(state: &mut RuntimeState) -> OCResult {

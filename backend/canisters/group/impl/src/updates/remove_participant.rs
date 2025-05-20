@@ -57,7 +57,7 @@ struct PrepareResult {
 fn prepare(user_to_remove: UserId, block: bool, state: &RuntimeState) -> OCResult<Option<PrepareResult>> {
     state.data.verify_not_frozen()?;
 
-    if block && state.data.chat.is_public.value {
+    if block && !state.data.chat.is_public.value {
         return Err(OCErrorCode::ChatNotPublic.into());
     }
 

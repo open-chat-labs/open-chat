@@ -451,7 +451,7 @@ struct Data {
 }
 
 fn local_user_index_event_sync_queue() -> BatchedTimerJobQueue<LocalUserIndexEventBatch> {
-    BatchedTimerJobQueue::new(CanisterId::anonymous(), false)
+    BatchedTimerJobQueue::new(CanisterId::anonymous(), true)
 }
 
 impl Data {
@@ -548,8 +548,8 @@ impl Data {
             expiring_members: ExpiringMembers::default(),
             expiring_member_actions: ExpiringMemberActions::default(),
             user_cache: UserCache::default(),
-            user_event_sync_queue: GroupedTimerJobQueue::new(5, false),
-            local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, false),
+            user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
+            local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             bots: InstalledBots::default(),
             bot_api_keys: BotApiKeys::default(),
@@ -1114,10 +1114,35 @@ impl Data {
             community_member.role().is_same_or_senior(role.into())
         }
     }
+
+    pub fn flush_pending_events(&mut self) {
+        self.user_event_sync_queue.flush();
+        self.local_user_index_event_sync_queue.flush();
+    }
+}
+
+fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
+    mutate_state(|state| {
+        state.regular_jobs.run(state.env.deref(), &mut state.data);
+        let result = f(state);
+        state.data.flush_pending_events();
+        result
+    })
+}
+
+async fn execute_update_async<F: FnOnce() -> Fut, Fut: Future<Output = R>, R>(f: F) -> R {
+    run_regular_jobs();
+    let result = f().await;
+    flush_pending_events();
+    result
 }
 
 fn run_regular_jobs() {
     mutate_state(|state| state.regular_jobs.run(state.env.deref(), &mut state.data));
+}
+
+fn flush_pending_events() {
+    mutate_state(|state| state.data.flush_pending_events());
 }
 
 #[derive(Serialize, Debug)]

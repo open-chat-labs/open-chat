@@ -1,7 +1,7 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_video_call_operator;
 use crate::timer_job_types::TimerJob;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update};
 use canister_tracing_macros::trace;
 use community_canister::end_video_call_v2::*;
 use ic_cdk::update;
@@ -11,9 +11,7 @@ use types::OCResult;
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
 fn end_video_call_v2(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| end_video_call_impl(args, state)).into()
+    execute_update(|state| end_video_call_impl(args, state)).into()
 }
 
 pub(crate) fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {

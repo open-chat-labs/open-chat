@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::generate_bot_api_key::{Response::*, *};
@@ -11,9 +11,7 @@ use utils::base64;
 #[update(msgpack = true)]
 #[trace]
 fn generate_bot_api_key(args: Args) -> Response {
-    run_regular_jobs();
-
-    match mutate_state(|state| generate_bot_api_key_impl(args, state)) {
+    match execute_update(|state| generate_bot_api_key_impl(args, state)) {
         Ok(result) => Success(result),
         Err(error) => Error(error),
     }

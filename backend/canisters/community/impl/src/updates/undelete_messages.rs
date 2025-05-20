@@ -1,4 +1,4 @@
-use crate::{RuntimeState, TimerJob, activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, TimerJob, activity_notifications::handle_activity_notification, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::undelete_messages::{Response::*, *};
@@ -8,9 +8,7 @@ use types::OCResult;
 #[update(msgpack = true)]
 #[trace]
 fn undelete_messages(args: Args) -> Response {
-    run_regular_jobs();
-
-    match mutate_state(|state| undelete_messages_impl(args, state)) {
+    match execute_update(|state| undelete_messages_impl(args, state)) {
         Ok(result) => Success(result),
         Err(error) => Error(error),
     }

@@ -1,4 +1,4 @@
-use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::update_webhook::*;
@@ -9,9 +9,7 @@ use utils::document::try_parse_data_url;
 #[update(candid = true, msgpack = true)]
 #[trace]
 fn update_webhook(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| update_webhook_impl(args, state)).into()
+    execute_update(|state| update_webhook_impl(args, state)).into()
 }
 
 fn update_webhook_impl(args: Args, state: &mut RuntimeState) -> OCResult {

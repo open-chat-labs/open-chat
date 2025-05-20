@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{RuntimeState, mutate_state, read_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::Reader;
@@ -11,8 +11,10 @@ use types::{Caller, CanisterId, MultiUserChat, OCResult, UserId};
 #[update(msgpack = true)]
 #[trace]
 async fn report_message(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| report_message_impl(args)).await
+}
 
+async fn report_message_impl(args: Args) -> Response {
     let (c2c_args, group_index_canister) = match read_state(|state| build_c2c_args(&args, state)) {
         Ok(ok) => ok,
         Err(error) => return Response::Error(error),

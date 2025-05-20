@@ -1,6 +1,6 @@
 use crate::{
-    RuntimeState, activity_notifications::handle_activity_notification, model::events::CommunityEventInternal, mutate_state,
-    read_state, run_regular_jobs,
+    RuntimeState, activity_notifications::handle_activity_notification, execute_update_async,
+    model::events::CommunityEventInternal, mutate_state, read_state,
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -16,21 +16,13 @@ use user_canister::c2c_remove_from_community;
 #[update(msgpack = true)]
 #[trace]
 async fn block_user(args: community_canister::block_user::Args) -> community_canister::block_user::Response {
-    run_regular_jobs();
-
-    if !read_state(|state| state.data.is_public.value) {
-        return Response::Error(OCErrorCode::CommunityNotPublic.into());
-    }
-
-    remove_member_impl(args.user_id, true).await
+    execute_update_async(|| remove_member_impl(args.user_id, true)).await
 }
 
 #[update(msgpack = true)]
 #[trace]
 async fn remove_member(args: Args) -> Response {
-    run_regular_jobs();
-
-    remove_member_impl(args.user_id, false).await
+    execute_update_async(|| remove_member_impl(args.user_id, false)).await
 }
 
 async fn remove_member_impl(user_id: UserId, block: bool) -> Response {
@@ -65,6 +57,10 @@ struct PrepareResult {
 
 fn prepare(user_id: UserId, block: bool, state: &RuntimeState) -> OCResult<PrepareResult> {
     state.data.verify_not_frozen()?;
+
+    if block && !state.data.is_public.value {
+        return Err(OCErrorCode::ChatNotPublic.into());
+    }
 
     let member = state.get_calling_member(true)?;
     if member.user_id == user_id {

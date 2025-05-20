@@ -1,4 +1,4 @@
-use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::set_member_display_name::*;
@@ -9,9 +9,7 @@ use utils::text_validation::{UsernameValidationError, validate_display_name};
 #[update(msgpack = true)]
 #[trace]
 fn set_member_display_name(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| set_member_display_name_impl(args, state)).into()
+    execute_update(|state| set_member_display_name_impl(args, state)).into()
 }
 
 fn set_member_display_name_impl(args: Args, state: &mut RuntimeState) -> OCResult {

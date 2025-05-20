@@ -1,6 +1,6 @@
 use crate::jobs;
 use crate::timer_job_types::JoinMembersToPublicChannelJob;
-use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::update_channel::{Response::*, *};
@@ -11,9 +11,7 @@ use url::Url;
 #[update(msgpack = true)]
 #[trace]
 fn update_channel(args: Args) -> Response {
-    run_regular_jobs();
-
-    match mutate_state(|state| update_channel_impl(args, state)) {
+    match execute_update(|state| update_channel_impl(args, state)) {
         Ok(result) => SuccessV2(result),
         Err(error) => Error(error),
     }
