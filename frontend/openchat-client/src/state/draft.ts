@@ -8,7 +8,7 @@ import {
     type MessageContext,
     type UserLookup,
 } from "openchat-shared";
-import { MessageContextMapStore } from "../map";
+import { MessageContextMapStore } from "./map";
 
 export class DraftMessage {
     textContent?: string;

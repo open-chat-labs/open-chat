@@ -1,12 +1,12 @@
 <script lang="ts">
     import {
         allUsersStore,
-        app,
         type BotMatch,
         chatIdentifiersEqual,
         chatIdentifierToString,
         type ChatListScope,
         chatListScopeStore,
+        chatSummariesListStore,
         type ChatSummary as ChatSummaryType,
         type CombinedUnreadCounts,
         currentUserIdStore,
@@ -15,11 +15,17 @@
         type GroupSearchResponse,
         iconSize,
         mobileWidth,
+        numberOfThreadsStore,
         OpenChat,
         publish,
         routeForChatIdentifier,
         routeForScope,
+        selectedChatIdStore,
         selectedCommunitySummaryStore,
+        unreadCommunityChannelCountsStore,
+        unreadDirectCountsStore,
+        unreadFavouriteCountsStore,
+        unreadGroupCountsStore,
         type UserSummary,
     } from "openchat-client";
     import page from "page";
@@ -178,7 +184,7 @@
     let showPreview = $derived(
         $mobileWidth &&
             $selectedCommunitySummaryStore?.membership.role === "none" &&
-            app.selectedChatId === undefined,
+            $selectedChatIdStore === undefined,
     );
     let user = $derived($allUsersStore.get($currentUserIdStore));
     let lowercaseSearch = $derived(searchTerm.toLowerCase());
@@ -191,17 +197,17 @@
     let unreadCounts = $derived.by(() => {
         switch ($chatListScopeStore.kind) {
             case "group_chat": {
-                return app.unreadGroupCounts;
+                return $unreadGroupCountsStore;
             }
             case "direct_chat": {
-                return app.unreadDirectCounts;
+                return $unreadDirectCountsStore;
             }
             case "favourite": {
-                return app.unreadFavouriteCounts;
+                return $unreadFavouriteCountsStore;
             }
             case "community": {
                 return (
-                    app.unreadCommunityChannelCounts.get($chatListScopeStore.id) ??
+                    $unreadCommunityChannelCountsStore.get($chatListScopeStore.id) ??
                     emptyCombinedUnreadCounts()
                 );
             }
@@ -211,7 +217,7 @@
     });
     let canMarkAllRead = $derived(anythingUnread(unreadCounts));
     $effect(() => {
-        if (app.numberOfThreads === 0) {
+        if ($numberOfThreadsStore === 0) {
             chatListView.set("chats");
         }
     });
@@ -221,7 +227,9 @@
         }
     });
     let chats = $derived(
-        searchTerm !== "" ? app.chatSummariesList.filter(chatMatchesSearch) : app.chatSummariesList,
+        searchTerm !== ""
+            ? $chatSummariesListStore.filter(chatMatchesSearch)
+            : $chatSummariesListStore,
     );
 </script>
 
@@ -243,7 +251,7 @@
         bind:searchResultsAvailable
         bind:searchTerm />
 
-    {#if app.numberOfThreads > 0}
+    {#if $numberOfThreadsStore > 0}
         <div class="section-selector">
             <ChatListSectionButton
                 onClick={() => setView("chats")}
@@ -271,7 +279,7 @@
                 {#each chats as chatSummary (chatIdentifierToString(chatSummary.id))}
                     <ChatSummary
                         {chatSummary}
-                        selected={chatIdentifiersEqual(app.selectedChatId, chatSummary.id)}
+                        selected={chatIdentifiersEqual($selectedChatIdStore, chatSummary.id)}
                         visible={searchTerm !== "" || !chatSummary.membership.archived}
                         onChatSelected={chatSelected} />
                 {/each}

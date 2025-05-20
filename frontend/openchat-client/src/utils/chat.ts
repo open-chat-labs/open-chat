@@ -72,11 +72,10 @@ import {
     updateFromOptions,
     type ReadonlySet,
 } from "openchat-shared";
-import { cryptoLookup } from "../state";
-import { app } from "../state/app.svelte";
-import { localUpdates } from "../state/global";
-import { type LocalTipsReceived, type MessageLocalState } from "../state/message/local.svelte";
-import { userStore } from "../state/users/users.svelte";
+import { cryptoLookup, localUpdates } from "../state";
+import { app } from "../state/app/state";
+import type { LocalTipsReceived, MessageLocalState } from "../state/message/localUpdates";
+import { userStore } from "../state/users/state";
 import type { TypersByKey } from "../stores/typing";
 import { areOnSameDay } from "../utils/date";
 import { distinctBy, groupWhile, toRecordFiltered } from "../utils/list";
@@ -1801,7 +1800,7 @@ export function stopTyping(
     userId: string,
     threadRootMessageIndex?: number,
 ): void {
-    rtcConnectionsManager.sendMessage([...app.selectedChat.userIds], {
+    rtcConnectionsManager.sendMessage([...app.selectedChatUserIds], {
         kind: "remote_user_stopped_typing",
         id,
         userId,
@@ -1814,7 +1813,7 @@ export function startTyping(
     userId: string,
     threadRootMessageIndex?: number,
 ): void {
-    rtcConnectionsManager.sendMessage([...app.selectedChat.userIds], {
+    rtcConnectionsManager.sendMessage([...app.selectedChatUserIds], {
         kind: "remote_user_typing",
         id,
         userId,
@@ -1985,7 +1984,7 @@ export function nextEventAndMessageIndexes(): [number, number] {
 export function confirmedEventIndexesLoaded(chatId: ChatIdentifier): DRange {
     const selected = app.selectedChatId;
     return selected !== undefined && chatIdentifiersEqual(selected, chatId)
-        ? app.selectedChat.confirmedEventIndexesLoaded
+        ? app.confirmedEventIndexesLoaded
         : new DRange();
 }
 
@@ -2020,8 +2019,8 @@ export function isContiguousInThread(
     events: EventWrapper<ChatEvent>[],
 ): boolean {
     return (
-        messageContextsEqual(threadId, app.selectedChat?.selectedThread?.id) &&
-        isContiguousInternal(app.selectedChat.confirmedThreadEventIndexesLoaded, events, [])
+        messageContextsEqual(threadId, app.selectedThreadId) &&
+        isContiguousInternal(app.confirmedEventIndexesLoaded, events, [])
     );
 }
 
@@ -2031,7 +2030,7 @@ export function isContiguous(
     expiredEventRanges: ExpiredEventsRange[],
 ): boolean {
     return (
-        chatIdentifiersEqual(chatId, app.selectedChat.chatId) &&
+        chatIdentifiersEqual(chatId, app.selectedChatId) &&
         isContiguousInternal(confirmedEventIndexesLoaded(chatId), events, expiredEventRanges)
     );
 }

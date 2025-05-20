@@ -1,1 +1,0 @@
-export { chatDetailsLocalUpdates } from "./detailsUpdates";

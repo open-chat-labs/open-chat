@@ -8,7 +8,6 @@ import {
     type Primitive,
     type ReadonlyMap,
 } from "openchat-shared";
-import { SvelteMap, SvelteSet } from "svelte/reactivity";
 import type { Subscriber, Unsubscriber } from "svelte/store";
 import { scheduleUndo, type UndoLocalUpdate } from "./undo";
 
@@ -104,9 +103,8 @@ export class LocalMap<K, V> {
         private serialiser?: (k: K) => Primitive,
         private deserialiser?: (p: Primitive) => K,
     ) {
-        // TODO - when we are ready - make sure that this doesn't use SvelteMap
-        this.#addedOrUpdated = new SafeMap(serialiser, deserialiser, () => new SvelteMap());
-        this.#removed = new SafeSet(serialiser, deserialiser, () => new SvelteSet());
+        this.#addedOrUpdated = new SafeMap(serialiser, deserialiser);
+        this.#removed = new SafeSet(serialiser, deserialiser);
     }
 
     // for testing
@@ -158,16 +156,6 @@ export class LocalMap<K, V> {
         this.#addedOrUpdated.forEach((v, k) => merged.set(k, v));
         this.#removed.forEach((k) => merged.delete(k));
         return merged;
-    }
-}
-
-export class ReactiveCommunityMap<V> extends SafeMap<CommunityIdentifier, V> {
-    constructor() {
-        super(
-            (id) => id.communityId,
-            (k) => ({ kind: "community", communityId: String(k) }),
-            () => new SvelteMap(),
-        );
     }
 }
 
@@ -268,36 +256,6 @@ export class MessageMapStore<V> extends SafeMapStore<bigint, V> {
         super(
             (k) => k.toString(),
             (k) => BigInt(k),
-        );
-    }
-}
-
-export class ReactiveMessageMap<V> extends SafeMap<bigint, V> {
-    constructor() {
-        super(
-            (k) => k.toString(),
-            (k) => BigInt(k),
-            () => new SvelteMap(),
-        );
-    }
-}
-
-export class ReactiveChatMap<V> extends SafeMap<ChatIdentifier, V> {
-    constructor() {
-        super(
-            (id) => JSON.stringify(id),
-            (k) => JSON.parse(String(k)) as ChatIdentifier,
-            () => new SvelteMap(),
-        );
-    }
-}
-
-export class ReactiveMessageContextMap<V> extends SafeMap<MessageContext, V> {
-    constructor() {
-        super(
-            (k) => JSON.stringify(k),
-            (k) => JSON.parse(String(k)) as MessageContext,
-            () => new SvelteMap(),
         );
     }
 }

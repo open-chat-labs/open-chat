@@ -18,7 +18,7 @@ import {
 import { type Subscriber, type Unsubscriber } from "svelte/store";
 import type { OpenChat } from "../../openchat";
 import { offlineStore } from "../../stores";
-import { localUpdates } from "../global";
+import { localUpdates } from "../localUpdates";
 
 const MARK_READ_INTERVAL = 10 * 1000;
 

@@ -15,17 +15,17 @@ import {
 } from "openchat-shared";
 import { get } from "svelte/store";
 import { vi } from "vitest";
+import { chatDetailsLocalUpdates } from "../chat/detailsUpdates";
+import type { communityLocalUpdates } from "../community/detailUpdates";
+import { localUpdates } from "../localUpdates";
+import { pathState } from "../path/state";
+import { app } from "./state";
 import {
-    app,
     communitiesStore,
     selectedCommunityMembersStore,
     serverCommunitiesStore,
     serverPinnedChatsStore,
-} from "./app.svelte";
-import { chatDetailsLocalUpdates } from "./chat";
-import { communityLocalUpdates } from "./community";
-import { localUpdates } from "./global";
-import { pathState } from "./path.svelte";
+} from "./stores";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
@@ -117,15 +117,15 @@ describe("app state", () => {
             beforeEach(() => setChatDetails(chatId));
 
             test("make sure local updates are merged", () => {
-                expect(app.selectedChat.members.has("user_one")).toBe(true);
+                expect(app.selectedChatMembers.has("user_one")).toBe(true);
                 const undo = localUpdates.removeChatMember(chatId, "user_one");
-                expect(app.selectedChat.members.has("user_one")).toBe(false);
+                expect(app.selectedChatMembers.has("user_one")).toBe(false);
                 undo();
-                expect(app.selectedChat.members.has("user_one")).toBe(true);
+                expect(app.selectedChatMembers.has("user_one")).toBe(true);
             });
 
             test("make sure that only server state is overwritten if chatId doesn't change", () => {
-                app.selectedChat.expandDeletedMessages(new Set([1, 2, 3]));
+                app.expandDeletedMessages(new Set([1, 2, 3]));
                 expect(app.selectedChat.expandedDeletedMessages.has(3)).toBe(true);
                 setChatDetails(chatId); // reset the server state for the *same* chatId
                 expect(app.selectedChat.expandedDeletedMessages.has(3)).toBe(true);

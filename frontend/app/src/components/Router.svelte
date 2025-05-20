@@ -15,7 +15,6 @@
         globalGroupChatSelectedRoute,
         messageIndexStore,
         notFoundStore,
-        pathState,
         routeKindStore,
         routeStore,
         routerReadyStore,
@@ -28,7 +27,6 @@
         shareRoute,
         threadMessageIndexStore,
         threadOpenStore,
-        ui,
     } from "openchat-client";
     import page from "page";
     import { getContext, onDestroy, onMount, untrack } from "svelte";
@@ -48,7 +46,7 @@
 
     function parsePathParams(fn: (ctx: PageJS.Context) => RouteParams) {
         return (ctx: PageJS.Context, next: () => any) => {
-            pathState.setRouteParams(ctx, fn(ctx));
+            client.setRouteParams(ctx, fn(ctx));
             scrollToTop();
             next();
         };
@@ -285,7 +283,7 @@
     $effect(() => {
         if (!$threadOpenStore) {
             untrack(() => {
-                ui.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
+                client.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
             });
         }
     });

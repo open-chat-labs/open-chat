@@ -1,7 +1,6 @@
 <script lang="ts">
     import {
         allUsersStore,
-        app,
         AvatarSize,
         chatIdentifiersEqual,
         communitiesStore,
@@ -38,8 +37,8 @@
 
     let show = $derived(
         $activeVideoCall?.chatId !== undefined &&
-            (!chatIdentifiersEqual($activeVideoCall.chatId, app.selectedChatId) ||
-                (chatIdentifiersEqual($activeVideoCall.chatId, app.selectedChatId) &&
+            (!chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatIdStore) ||
+                (chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatIdStore) &&
                     $activeVideoCall.view === "minimised")),
     );
 
@@ -47,7 +46,7 @@
 
     function goToCall() {
         if ($activeVideoCall) {
-            if (!chatIdentifiersEqual($activeVideoCall.chatId, app.selectedChatId)) {
+            if (!chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatIdStore)) {
                 page(routeForChatIdentifier("none", $activeVideoCall.chatId));
             }
             activeVideoCall.setView("default");

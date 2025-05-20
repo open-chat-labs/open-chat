@@ -13,11 +13,11 @@
     } from "openchat-client";
     import {
         allUsersStore,
-        app,
         AvatarSize,
         chatIdentifiersEqual,
         communitiesStore,
         iconSize,
+        selectedChatIdStore,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -85,7 +85,7 @@
     });
 
     trackedEffect("select-chat-modal", () => {
-        buildListOfTargets($now, app.selectedChatId, searchTermLower).then((t) => (targets = t));
+        buildListOfTargets($now, $selectedChatIdStore, searchTermLower).then((t) => (targets = t));
     });
     let noTargets = $derived(getNumberOfTargets(targets) === 0);
 

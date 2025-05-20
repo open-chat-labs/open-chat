@@ -5,45 +5,34 @@ import {
     anonymousUser,
     applyOptionUpdate,
     AuthProvider,
-    type ChannelSummary,
-    type ChatEvent,
-    type ChatIdentifier,
     chatIdentifiersEqual,
-    type ChatListScope,
     ChatMap,
-    ChatSet,
+    CommunityMap,
+    compareChats,
+    DEFAULT_TOKENS,
+    emptyChatMetrics,
+    mergeListOfCombinedUnreadCounts,
+    ModerationFlags,
+    videoCallsInProgressForChats,
+    type ChatEvent,
     type ChatSummary,
     type ChitState,
     type CombinedUnreadCounts,
-    type CommunityIdentifier,
-    communityIdentifiersEqual,
-    CommunityMap,
     type CommunitySummary,
-    compareChats,
     type CreatedUser,
     type CryptocurrencyDetails,
-    DEFAULT_TOKENS,
-    type DiamondMembershipStatus,
     type DirectChatSummary,
-    emptyChatMetrics,
     type EnhancedTokenDetails,
     type EventWrapper,
     type ExternalBotPermissions,
     type GroupChatSummary,
     type IdentityState,
-    isProposalsChat,
     type Member,
-    mergeListOfCombinedUnreadCounts,
     type MessageActivitySummary,
-    messageContextsEqual,
     type MessageFilter,
-    MessageMap,
     type ModerationFlag,
-    ModerationFlags,
     type NervousSystemDetails,
-    type NervousSystemFunction,
     type NotificationStatus,
-    type PinnedByScope,
     type PinNumberFailures,
     type PinNumberResolver,
     type PublicApiKeyDetails,
@@ -58,49 +47,45 @@ import {
     type TokenExchangeRates,
     type UserGroupDetails,
     type UserGroupSummary,
-    type VersionedRules,
     type VideoCallCounts,
-    videoCallsInProgressForChats,
     type WalletConfig,
     type WebhookDetails,
 } from "openchat-shared";
-import { locale } from "svelte-i18n";
 import { derived } from "svelte/store";
-import { offlineStore } from "../stores/network";
 import {
     getMessagePermissionsForSelectedChat,
     mergeChatMetrics,
     mergeEventsAndLocalUpdates,
     mergePermissions,
     mergeUnconfirmedIntoSummary,
-} from "../utils/chat";
-import { configKeys } from "../utils/config";
-import { enumFromStringValue } from "../utils/enums";
-import { setsAreEqual } from "../utils/set";
-import { chatDetailsLocalUpdates } from "./chat";
-import { ChatDetailsState } from "./chat/serverDetails";
-import { chatSummaryLocalUpdates, ChatSummaryUpdates } from "./chat/summaryUpdates";
-import { communityLocalUpdates } from "./community";
-import { CommunityDetailsState } from "./community/server";
-import { communitySummaryLocalUpdates } from "./community/summaryUpdates";
-import { FilteredProposals } from "./filteredProposals.svelte";
-import { localUpdates } from "./global";
-import { LocalStorageBoolStore, LocalStorageStore } from "./localStorageStore";
+} from "../../utils/chat";
+import { configKeys } from "../../utils/config";
+import { enumFromStringValue } from "../../utils/enums";
+import { setsAreEqual } from "../../utils/set";
+import { chatDetailsLocalUpdates } from "../chat/detailsUpdates";
+import type { ChatDetailsState } from "../chat/serverDetails";
+import { chatSummaryLocalUpdates, ChatSummaryUpdates } from "../chat/summaryUpdates";
+import { communityLocalUpdates } from "../community/detailUpdates";
+import type { CommunityDetailsState } from "../community/server";
+import { communitySummaryLocalUpdates } from "../community/summaryUpdates";
+import type { FilteredProposals } from "../filteredProposals.svelte";
+import { LocalStorageBoolStore, LocalStorageStore } from "../localStorageStore";
+import { localUpdates } from "../localUpdates";
 import {
     ChatMapStore,
     CommunityMapStore,
     MessageMapStore,
     PinnedByScopeStore,
     SafeMapStore,
-} from "./map";
-import { messageLocalUpdates } from "./message/local.svelte";
-import { routeStore, selectedCommunityIdStore } from "./path.svelte";
-import { ChatSetStore, SafeSetStore } from "./set";
-import { SnsFunctions } from "./snsFunctions.svelte";
-import { hideMessagesFromDirectBlocked } from "./ui.svelte";
-import { messagesRead } from "./unread/markRead.svelte";
-import { blockedUsersStore, suspendedUsersStore } from "./users/users.svelte";
-import { writable } from "./writable";
+} from "../map";
+import { messageLocalUpdates } from "../message/localUpdates";
+import { routeStore, selectedCommunityIdStore } from "../path/stores";
+import { ChatSetStore, SafeSetStore } from "../set";
+import { SnsFunctions } from "../snsFunctions.svelte";
+import { hideMessagesFromDirectBlocked } from "../ui/stores";
+import { messagesRead } from "../unread/markRead.svelte";
+import { blockedUsersStore, suspendedUsersStore } from "../users/stores";
+import { writable } from "../writable";
 
 export const ONE_MB = 1024 * 1024;
 export const ONE_GB = ONE_MB * 1024;
@@ -115,11 +100,9 @@ function communityFilterToString(filter: Set<string>): string {
         languages: Array.from(filter),
     });
 }
-
 type LedgerCanister = string;
 type GovernanceCanister = string;
 
-// TODO - also get rid of createSetStore and replace with SafeSetStore
 export const cryptoLookup = new SafeMapStore<LedgerCanister, CryptocurrencyDetails>();
 export const nervousSystemLookup = new SafeMapStore<GovernanceCanister, NervousSystemDetails>();
 export const exchangeRatesLookupStore = new SafeMapStore<string, TokenExchangeRates>();
@@ -619,6 +602,9 @@ export const selectedChatBlockedUsersStore = derived(
         return blockedUsers.get(chat.chatId)?.apply(chat.blockedUsers) ?? chat.blockedUsers;
     },
 );
+export const selectedChatLapsedMembersStore = derived([selectedServerChatStore], ([chat]) => {
+    return chat?.lapsedMembers ?? (new Set() as ReadonlySet<string>);
+});
 export const selectedChatPinnedMessagesStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.pinnedMessages],
     ([chat, pinnedMessages]) => {
@@ -773,8 +759,7 @@ export const selectedServerChatSummaryStore = derived(
         return selectedChatId ? allServerChats.get(selectedChatId) : undefined;
     },
 );
-// Note that it's ok that this method mutates the input since it is
-// already a clone
+
 function applyLocalUpdatesToChat(chat: ChatSummary, updates?: ChatSummaryUpdates): ChatSummary {
     if (updates === undefined) return chat;
 
@@ -805,6 +790,7 @@ function applyLocalUpdatesToChat(chat: ChatSummary, updates?: ChatSummaryUpdates
     }
     return chat;
 }
+
 export const selectedChatBlockedOrSuspendedUsersStore = derived(
     [
         blockedUsersStore,
@@ -840,6 +826,7 @@ export const allChatsStore = derived(
         currentUserIdStore,
         messageFiltersStore,
         selectedChatBlockedOrSuspendedUsersStore,
+        messageLocalUpdates,
     ],
     ([
         allServerChats,
@@ -849,16 +836,17 @@ export const allChatsStore = derived(
         currentUserId,
         messageFilters,
         selectedChatBlockedOrSuspendedUsers,
+        messageLocalUpdates,
     ]) => {
         const withUpdates = localChats.apply(allServerChats);
         return [...withUpdates.entries()].reduce((result, [chatId, chat]) => {
             const clone = structuredClone(chat);
             const withLocal = applyLocalUpdatesToChat(clone, localUpdates.get(clone.id));
             const withUnconfirmed = mergeUnconfirmedIntoSummary(
-                (k) => k, // TODO - we need to get the message formatter here
+                (k) => k,
                 currentUserId,
                 withLocal,
-                messageLocalUpdates.data,
+                messageLocalUpdates,
                 translations,
                 selectedChatBlockedOrSuspendedUsers,
                 currentUserId,
@@ -1047,6 +1035,7 @@ export const directVideoCallCountsStore = derived(serverDirectChatsStore, (serve
 export const serverEventsStore = writable<EventWrapper<ChatEvent>[]>([]);
 export const serverThreadEventsStore = writable<EventWrapper<ChatEvent>[]>([]);
 export const expiredServerEventRanges = writable<DRange>(new DRange());
+
 export const eventsStore = derived(
     [
         serverEventsStore,
@@ -1080,7 +1069,6 @@ export const eventsStore = derived(
         const unconfirmed = unconfirmedState ? [...unconfirmedState.values()] : [];
         const ephemeralState = ephemeralMessages.get(ctx);
         const ephemeral = ephemeralState ? [...ephemeralState.values()] : [];
-        // TODO this is hiding all the message local updates which still need to be sorted out
         return mergeEventsAndLocalUpdates(
             serverEvents,
             [...unconfirmed, ...failed, ...ephemeral],
@@ -1090,6 +1078,16 @@ export const eventsStore = derived(
             messageLocalUpdates,
             recentlySentMessages,
         );
+    },
+);
+
+export const confirmedEventIndexesLoadedStore = derived(
+    [eventsStore, expiredServerEventRanges],
+    ([events, expiredEventRanges]) => {
+        const ranges = new DRange();
+        events.forEach((e) => ranges.add(e.index));
+        ranges.add(expiredEventRanges);
+        return ranges;
     },
 );
 
@@ -1153,6 +1151,55 @@ export const globalUnreadCountStore = derived(
 
 export const selectedThreadIdStore = writable<ThreadIdentifier | undefined>(undefined);
 
+export const threadEventsStore = derived(
+    [
+        serverThreadEventsStore,
+        selectedThreadIdStore,
+        localUpdates.failedMessages,
+        localUpdates.unconfirmed,
+        localUpdates.ephemeral,
+        translationsStore,
+        selectedChatBlockedOrSuspendedUsersStore,
+        messageLocalUpdates,
+        localUpdates.recentlySentMessages,
+    ],
+    ([
+        serverEvents,
+        selectedThreadId,
+        failedMessages,
+        unconfirmedMessages,
+        ephemeralMessages,
+        translations,
+        selectedChatBlockedOrSuspendedUsers,
+        messageLocalUpdates,
+        recentlySentMessages,
+    ]) => {
+        if (selectedThreadId === undefined) return [];
+        const ctx = selectedThreadId;
+        const failedState = failedMessages.get(ctx);
+        const failed = failedState ? [...failedState.values()] : [];
+        const unconfirmedState = unconfirmedMessages.get(ctx);
+        const unconfirmed = unconfirmedState ? [...unconfirmedState.values()] : [];
+        const ephemeralState = ephemeralMessages.get(ctx);
+        const ephemeral = ephemeralState ? [...ephemeralState.values()] : [];
+        return mergeEventsAndLocalUpdates(
+            serverEvents,
+            [...unconfirmed, ...failed, ...ephemeral],
+            new DRange(),
+            translations,
+            selectedChatBlockedOrSuspendedUsers,
+            messageLocalUpdates,
+            recentlySentMessages,
+        );
+    },
+);
+
+export const confirmedThreadEventIndexesLoadedStore = derived([threadEventsStore], ([events]) => {
+    const ranges = new DRange();
+    events.forEach((e) => ranges.add(e.index));
+    return ranges;
+});
+
 export const selectedThreadDraftMessageStore = derived(
     [selectedThreadIdStore, localUpdates.draftMessages],
     ([selectedThreadId, draftMessages]) =>
@@ -1161,651 +1208,6 @@ export const selectedThreadDraftMessageStore = derived(
 
 export const identityStateStore = writable<IdentityState>({ kind: "loading_user" });
 
-export class AppState {
-    #offline: boolean = false;
-    #locale: string = "en";
-    #anonUser: boolean = false;
-    #suspendedUser: boolean = false;
-    #platformModerator: boolean = false;
-    #platformOperator: boolean = false;
-    #diamondStatus: DiamondMembershipStatus = { kind: "inactive" };
-    #isDiamond: boolean = false;
-    #isLifetimeDiamond: boolean = false;
-    #canExtendDiamond: boolean = false;
-    #moderationFlagsEnabled: number = 0;
-    #adultEnabled: boolean = false;
-    #offensiveEnabled: boolean = false;
-    #underReviewEnabled: boolean = false;
-    #nextCommunityIndex: number = 0;
-    #selectedCommunityBlockedUsers!: ReadonlySet<string>;
-    #selectedCommunityMembers!: ReadonlyMap<string, Member>;
-    #selectedCommunityReferrals!: ReadonlySet<string>;
-    #selectedCommunityInvitedUsers!: ReadonlySet<string>;
-    #selectedCommunityRules?: VersionedRules;
-    #selectedCommunitySummary?: CommunitySummary;
-    #walletConfig!: WalletConfig;
-    #selectedThreadId?: ThreadIdentifier;
-    #selectedChatId?: ChatIdentifier;
-    #selectedCommunityId?: CommunityIdentifier;
-    #selectedServerChatSummary?: ChatSummary;
-    #selectedChatSummary?: ChatSummary;
-    #currentUserId!: string;
-    #communities!: CommunityMap<CommunitySummary>;
-    #pinnedChats!: ReadonlyMap<ChatListScope["kind"], ChatIdentifier[]>;
-    #chatListScope!: ChatListScope;
-    #messageActivitySummary!: MessageActivitySummary;
-    #allChats!: ChatMap<ChatSummary>;
-    #allServerChats!: ChatMap<ChatSummary>;
-    #chatSummaries!: ChatMap<ChatSummary>;
-    #selectedChatMembers!: ReadonlyMap<string, Member>;
-    #selectedChatBlockedUsers!: ReadonlySet<string>;
-    #selectedChatInvitedUsers!: ReadonlySet<string>;
-    #directChatBots!: ReadonlyMap<string, ExternalBotPermissions>;
-    #identityState!: IdentityState;
-
-    // but it can be a plain value once that's all gone
-    #translations: MessageMap<string> = new MessageMap();
-
-    constructor() {
-        locale.subscribe((l) => (this.#locale = l ?? "en"));
-        offlineStore.subscribe((offline) => (this.#offline = offline));
-        anonUserStore.subscribe((v) => (this.#anonUser = v));
-        suspendedUserStore.subscribe((v) => (this.#suspendedUser = v));
-        platformModeratorStore.subscribe((v) => (this.#platformModerator = v));
-        platformOperatorStore.subscribe((v) => (this.#platformOperator = v));
-        diamondStatusStore.subscribe((v) => (this.#diamondStatus = v));
-        isDiamondStore.subscribe((v) => (this.#isDiamond = v));
-        isLifetimeDiamondStore.subscribe((v) => (this.#isLifetimeDiamond = v));
-        canExtendDiamondStore.subscribe((v) => (this.#canExtendDiamond = v));
-        moderationFlagsEnabledStore.subscribe((v) => (this.#moderationFlagsEnabled = v));
-        adultEnabledStore.subscribe((v) => (this.#adultEnabled = v));
-        offensiveEnabledStore.subscribe((v) => (this.#offensiveEnabled = v));
-        underReviewEnabledStore.subscribe((v) => (this.#underReviewEnabled = v));
-        nextCommunityIndexStore.subscribe((v) => (this.#nextCommunityIndex = v));
-        selectedCommunityBlockedUsersStore.subscribe(
-            (v) => (this.#selectedCommunityBlockedUsers = v),
-        );
-        selectedCommunityReferralsStore.subscribe((v) => (this.#selectedCommunityReferrals = v));
-        selectedCommunityInvitedUsersStore.subscribe(
-            (v) => (this.#selectedCommunityInvitedUsers = v),
-        );
-        selectedCommunityMembersStore.subscribe((v) => (this.#selectedCommunityMembers = v));
-        selectedCommunitySummaryStore.subscribe((v) => (this.#selectedCommunitySummary = v));
-        selectedCommunityRulesStore.subscribe((v) => (this.#selectedCommunityRules = v));
-
-        translationsStore.subscribe((v) => (this.#translations = v));
-        walletConfigStore.subscribe((v) => (this.#walletConfig = v));
-        selectedThreadIdStore.subscribe((v) => (this.#selectedThreadId = v));
-        selectedChatIdStore.subscribe((v) => (this.#selectedChatId = v));
-        selectedCommunityIdStore.subscribe((v) => (this.#selectedCommunityId = v));
-        selectedServerChatSummaryStore.subscribe((v) => (this.#selectedServerChatSummary = v));
-        selectedChatSummaryStore.subscribe((v) => (this.#selectedChatSummary = v));
-        currentUserIdStore.subscribe((v) => (this.#currentUserId = v));
-        communitiesStore.subscribe((v) => (this.#communities = v));
-        pinnedChatsStore.subscribe((v) => (this.#pinnedChats = v));
-        chatListScopeStore.subscribe((v) => (this.#chatListScope = v));
-        messageActivitySummaryStore.subscribe((v) => (this.#messageActivitySummary = v));
-        allChatsStore.subscribe((v) => (this.#allChats = v));
-        allServerChatsStore.subscribe((v) => (this.#allServerChats = v));
-        chatSummariesStore.subscribe((v) => (this.#chatSummaries = v));
-        selectedChatMembersStore.subscribe((v) => (this.#selectedChatMembers = v));
-        selectedChatBlockedUsersStore.subscribe((v) => (this.#selectedChatBlockedUsers = v));
-        selectedChatInvitedUsersStore.subscribe((v) => (this.#selectedChatInvitedUsers = v));
-        directChatBotsStore.subscribe((v) => (this.#directChatBots = v));
-        identityStateStore.subscribe((v) => (this.#identityState = v));
-    }
-
-    // TODO - none of the references to userStore here will be reactive at the moment
-    // this is only a temporary problem
-
-    setSnsFunctions(snsCanisterId: string, list: NervousSystemFunction[]) {
-        snsFunctionsStore.update((s) => {
-            const clone = s.clone();
-            clone.set(snsCanisterId, list);
-            return clone;
-        });
-    }
-
-    get snsFunctions() {
-        return snsFunctionsStore.current;
-    }
-
-    #modifyFilteredProposals(fn: (fp: FilteredProposals) => void) {
-        filteredProposalsStore.update((fp) => {
-            if (fp !== undefined) {
-                const clone = fp.clone();
-                fn(clone);
-                return clone;
-            }
-        });
-    }
-
-    enableAllProposalFilters() {
-        this.#modifyFilteredProposals((fp) => fp.enableAll());
-    }
-
-    disableAllProposalFilters(ids: number[]) {
-        this.#modifyFilteredProposals((fp) => fp.disableAll(ids));
-    }
-
-    toggleProposalFilter(topic: number) {
-        this.#modifyFilteredProposals((fp) => fp.toggleFilter(topic));
-    }
-
-    toggleProposalFilterMessageExpansion(messageId: bigint, expand: boolean) {
-        this.#modifyFilteredProposals((fp) => fp.toggleMessageExpansion(messageId, expand));
-    }
-
-    #resetFilteredProposals(chat: ChatSummary) {
-        const filteredProposals = isProposalsChat(chat)
-            ? FilteredProposals.fromStorage(chat.subtype.governanceCanisterId)
-            : undefined;
-
-        filteredProposalsStore.set(filteredProposals);
-    }
-
-    setCurrentUser(user: CreatedUser) {
-        currentUserStore.set(user);
-    }
-
-    getProposalTally(governanceCanisterId: string, proposalId: bigint) {
-        return proposalTalliesStore.get(`${governanceCanisterId}_${proposalId}`);
-    }
-
-    setProposalTally(governanceCanisterId: string, proposalId: bigint, tally: Tally) {
-        proposalTalliesStore.set(`${governanceCanisterId}_${proposalId}`, tally);
-    }
-
-    toggleCommunityFilterLanguage(lang: string) {
-        if (communityFiltersStore.current.has(lang)) {
-            communityFiltersStore.update((val) => {
-                const clone = new Set([...val]);
-                clone.delete(lang);
-                return clone;
-            });
-        } else {
-            communityFiltersStore.update((val) => {
-                const clone = new Set([...val]);
-                clone.add(lang);
-                return clone;
-            });
-        }
-    }
-
-    get translations() {
-        return this.#translations;
-    }
-
-    translate(messageId: bigint, translation: string) {
-        translationsStore.set(messageId, translation);
-    }
-
-    untranslate(messageId: bigint) {
-        translationsStore.delete(messageId);
-    }
-
-    set selectedAuthProvider(p: AuthProvider) {
-        selectedAuthProviderStore.set(p);
-    }
-
-    get selectedAuthProvider() {
-        return selectedAuthProviderStore.current;
-    }
-
-    set userCreated(val: boolean) {
-        userCreatedStore.set(val);
-    }
-
-    get userCreated() {
-        return userCreatedStore.current;
-    }
-
-    set storage(val: StorageStatus) {
-        storageStore.set(val);
-    }
-
-    get storage() {
-        return storageStore.current;
-    }
-
-    get locale() {
-        return this.#locale;
-    }
-
-    get offline() {
-        return this.#offline;
-    }
-
-    set messageFilters(val: MessageFilter[]) {
-        messageFiltersStore.set(val);
-    }
-
-    get currentUser() {
-        return currentUserStore.current;
-    }
-
-    get anonUser() {
-        return this.#anonUser;
-    }
-
-    get suspendedUser() {
-        return this.#suspendedUser;
-    }
-
-    get platformModerator() {
-        return this.#platformModerator;
-    }
-
-    get platformOperator() {
-        return this.#platformOperator;
-    }
-
-    get diamondStatus() {
-        return this.#diamondStatus;
-    }
-
-    get isDiamond() {
-        return this.#isDiamond;
-    }
-
-    get isLifetimeDiamond() {
-        return this.#isLifetimeDiamond;
-    }
-
-    get canExtendDiamond() {
-        return this.#canExtendDiamond;
-    }
-
-    get moderationFlagsEnabled() {
-        return this.#moderationFlagsEnabled;
-    }
-
-    get adultEnabled() {
-        return this.#adultEnabled;
-    }
-
-    get offensiveEnabled() {
-        return this.#offensiveEnabled;
-    }
-
-    get underReviewEnabled() {
-        return this.#underReviewEnabled;
-    }
-
-    get achievements(): ReadonlySet<string> {
-        return achievementsStore;
-    }
-
-    get chitState() {
-        return chitStateStore.current;
-    }
-
-    updateChitState(fn: (s: ChitState) => ChitState) {
-        chitStateStore.update(fn);
-    }
-
-    get walletConfig() {
-        return this.#walletConfig;
-    }
-
-    updateIdentityState(fn: (prev: IdentityState) => IdentityState) {
-        identityStateStore.update(fn);
-    }
-
-    get nextCommunityIndex() {
-        return this.#nextCommunityIndex;
-    }
-
-    get chatsInitialised() {
-        return chatsInitialisedStore.current;
-    }
-
-    set chatsInitialised(val: boolean) {
-        chatsInitialisedStore.set(val);
-    }
-
-    get selectedCommunitySummary() {
-        return this.#selectedCommunitySummary;
-    }
-
-    setSelectedThread(id: ThreadIdentifier) {
-        selectedThreadIdStore.set(id);
-    }
-
-    updateServerThreadEvents(
-        id: ThreadIdentifier,
-        fn: (existing: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[],
-    ) {
-        if (!messageContextsEqual(id, this.#selectedThreadId)) {
-            console.warn(
-                "Attempting to updateServerThreadEvents for the wrong thread - probably a stale response",
-                id,
-                this.#selectedThreadId,
-            );
-            return;
-        }
-        serverThreadEventsStore.update(fn);
-    }
-
-    updateServerEvents(
-        chatId: ChatIdentifier,
-        fn: (existing: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[],
-    ) {
-        if (!chatIdentifiersEqual(chatId, this.#selectedChatId)) {
-            console.warn(
-                "Attempting to updateServerEvents for the wrong chat - probably a stale response",
-                chatId,
-                this.#selectedChatId,
-            );
-            return;
-        }
-        serverEventsStore.update(fn);
-    }
-
-    updateServerExpiredEventRanges(chatId: ChatIdentifier, fn: (existing: DRange) => DRange) {
-        if (!chatIdentifiersEqual(chatId, this.#selectedChatId)) {
-            console.warn(
-                "Attempting to updateExpiredServerEventRanges for the wrong chat - probably a stale response",
-                chatId,
-                this.#selectedChatId,
-            );
-            return;
-        }
-        expiredServerEventRanges.update(fn);
-    }
-
-    clearServerEvents() {
-        serverEventsStore.set([]);
-    }
-
-    setChatDetailsFromServer(
-        chatId: ChatIdentifier,
-        members: Map<string, Member>,
-        lapsedMembers: Set<string>,
-        blockedUsers: Set<string>,
-        invitedUsers: Set<string>,
-        pinnedMessages: Set<number>,
-        rules: VersionedRules,
-        bots: Map<string, ExternalBotPermissions>,
-        apiKeys: Map<string, PublicApiKeyDetails>,
-        webhooks: Map<string, WebhookDetails>,
-    ) {
-        if (!chatIdentifiersEqual(chatId, this.#selectedChatId)) {
-            console.warn(
-                "Attempting to set chat details on the wrong chat - probably a stale response",
-                $state.snapshot(chatId),
-                $state.snapshot(this.#selectedChatId),
-            );
-            return;
-        }
-        selectedServerChatStore.set(
-            new ChatDetailsState(
-                chatId,
-                members,
-                lapsedMembers,
-                blockedUsers,
-                invitedUsers,
-                pinnedMessages,
-                bots,
-                apiKeys,
-                webhooks,
-                rules,
-            ),
-        );
-    }
-
-    setCommunityDetailsFromServer(
-        communityId: CommunityIdentifier,
-        userGroups: Map<number, UserGroupDetails>,
-        members: Map<string, Member>,
-        blockedUsers: Set<string>,
-        lapsedMembers: Set<string>,
-        invitedUsers: Set<string>,
-        referrals: Set<string>,
-        bots: Map<string, ExternalBotPermissions>,
-        apiKeys: Map<string, PublicApiKeyDetails>,
-        rules?: VersionedRules,
-    ) {
-        if (!communityIdentifiersEqual(communityId, this.#selectedCommunityId)) {
-            console.warn(
-                "Attempting to set community details on the wrong community - probably a stale response",
-                $state.snapshot(communityId),
-                $state.snapshot(this.#selectedCommunityId),
-            );
-            return;
-        }
-
-        selectedServerCommunityStore.set(
-            new CommunityDetailsState(
-                communityId,
-                userGroups,
-                members,
-                blockedUsers,
-                lapsedMembers,
-                invitedUsers,
-                referrals,
-                bots,
-                apiKeys,
-                rules,
-            ),
-        );
-    }
-
-    // TODO - this is only called from tests
-    set serverCommunities(val: CommunityMap<CommunitySummary>) {
-        serverCommunitiesStore.fromMap(val);
-    }
-
-    isPreviewingCommunity(id: CommunityIdentifier) {
-        return localUpdates.isPreviewingCommunity(id);
-    }
-
-    getPreviewingCommunity(id: CommunityIdentifier) {
-        return localUpdates.getPreviewingCommunity(id);
-    }
-
-    setGlobalState(
-        communities: CommunitySummary[],
-        allChats: ChatSummary[],
-        favourites: ChatIdentifier[],
-        pinnedChats: PinnedByScope,
-        achievements: Set<string>,
-        chitState: ChitState,
-        referrals: Referral[],
-        walletConfig: WalletConfig,
-        messageActivitySummary: MessageActivitySummary,
-        installedBots: Map<string, ExternalBotPermissions>,
-        apiKeys: Map<string, PublicApiKeyDetails>,
-        streakInsurance: StreakInsurance | undefined,
-    ): void {
-        const [channelsMap, directChats, groupChats] = partitionChats(allChats);
-
-        const communitiesMap = CommunityMap.fromList(communities);
-        const directChatsMap = ChatMap.fromList(directChats);
-        const groupChatsMap = ChatMap.fromList(groupChats);
-        const favouritesSet = new ChatSet(favourites);
-        for (const [communityId, channels] of channelsMap) {
-            const community = communitiesMap.get(communityId);
-            if (community !== undefined) {
-                community.channels = channels;
-            }
-        }
-
-        // ideally we would get rid of the setters for all of these server runes because setting
-        // them individually is a mistake. But we also want to be able to set them from tests.
-        // I'll try to lock this down a bit more later.
-        serverMessageActivitySummaryStore.set(messageActivitySummary);
-        achievementsStore.fromSet(achievements);
-        referralsStore.set(referrals);
-
-        // TODO - do we need to separate these things - each of these fromMap calls will result in a publish
-        // which will cause downstream deriveds to fire. It *might* be better to refactor into a single store - we shall see.
-        // Or - this might be the case for a "transaction".
-        serverDirectChatsStore.fromMap(directChatsMap);
-        serverGroupChatsStore.fromMap(groupChatsMap);
-        serverFavouritesStore.fromSet(favouritesSet);
-        serverCommunitiesStore.fromMap(communitiesMap);
-        serverPinnedChatsStore.fromMap(pinnedChats);
-        directChatApiKeysStore.fromMap(apiKeys);
-        serverDirectChatBotsStore.fromMap(installedBots);
-        serverWalletConfigStore.set(walletConfig);
-        if (streakInsurance !== undefined) {
-            serverStreakInsuranceStore.set(streakInsurance);
-        }
-        this.updateChitState((curr) => {
-            // Skip the new update if it is behind what we already have locally
-            const skipUpdate = chitState.streakEnds < curr.streakEnds;
-            return skipUpdate ? curr : chitState;
-        });
-    }
-
-    get pinNumberRequired() {
-        return pinNumberRequiredStore.current;
-    }
-
-    set pinNumberRequired(val: boolean | undefined) {
-        pinNumberRequiredStore.set(val);
-    }
-
-    get pinNumberResolver() {
-        return pinNumberResolverStore.current;
-    }
-
-    set pinNumberResolver(val: PinNumberResolver | undefined) {
-        pinNumberResolverStore.set(val);
-    }
-
-    get pinNumberFailure() {
-        return pinNumberFailureStore.current;
-    }
-
-    set pinNumberFailure(val: PinNumberFailures | undefined) {
-        pinNumberFailureStore.set(val);
-    }
-
-    get selectedCommunityMembers() {
-        return this.#selectedCommunityMembers;
-    }
-
-    get selectedCommunityBlockedUsers() {
-        return this.#selectedCommunityBlockedUsers;
-    }
-
-    get selectedCommunityReferrals() {
-        return this.#selectedCommunityReferrals;
-    }
-
-    get selectedCommunityInvitedUsers() {
-        return this.#selectedCommunityInvitedUsers;
-    }
-
-    get selectedCommunityRules() {
-        return this.#selectedCommunityRules;
-    }
-
-    get serverStreakInsurance() {
-        return serverStreakInsuranceStore.current;
-    }
-
-    get selectedChatId() {
-        return this.#selectedChatId;
-    }
-
-    get selectedServerChatSummary() {
-        return this.#selectedServerChatSummary;
-    }
-
-    get selectedChatSummary() {
-        return this.#selectedChatSummary;
-    }
-
-    get currentUserId() {
-        return this.#currentUserId;
-    }
-
-    get communities() {
-        return this.#communities;
-    }
-
-    get pinnedChats() {
-        return this.#pinnedChats;
-    }
-
-    get chatListScope() {
-        return this.#chatListScope;
-    }
-
-    get messageActivitySummary() {
-        return this.#messageActivitySummary;
-    }
-
-    get allChats() {
-        return this.#allChats;
-    }
-
-    get allServerChats() {
-        return this.#allServerChats;
-    }
-
-    get chatSummaries() {
-        return this.#chatSummaries;
-    }
-
-    get selectedChatMembers() {
-        return this.#selectedChatMembers;
-    }
-
-    get selectedChatBlockedUsers() {
-        return this.#selectedChatBlockedUsers;
-    }
-
-    get selectedChatInvitedUsers() {
-        return this.#selectedChatInvitedUsers;
-    }
-
-    get directChatBots() {
-        return this.#directChatBots;
-    }
-
-    get identityState() {
-        return this.#identityState;
-    }
-}
-
-export const app = new AppState();
-
-function partitionChats(
-    allChats: ChatSummary[],
-): [CommunityMap<ChannelSummary[]>, DirectChatSummary[], GroupChatSummary[]] {
-    const [channels, direct, group] = allChats.reduce(
-        ([channels, direct, group], chat) => {
-            switch (chat.kind) {
-                case "channel":
-                    channels.push(chat);
-                    break;
-                case "direct_chat":
-                    direct.push(chat);
-                    break;
-                case "group_chat":
-                    group.push(chat);
-                    break;
-            }
-            return [channels, direct, group];
-        },
-        [[], [], []] as [ChannelSummary[], DirectChatSummary[], GroupChatSummary[]],
-    );
-    return [channelsByCommunityId(channels), direct, group];
-}
-
-function channelsByCommunityId(chats: ChannelSummary[]): CommunityMap<ChannelSummary[]> {
-    return chats.reduce((acc, chat) => {
-        const communityId: CommunityIdentifier = {
-            kind: "community",
-            communityId: chat.id.communityId,
-        };
-        const channels = acc.get(communityId) ?? [];
-        channels.push(chat);
-        acc.set(communityId, channels);
-        return acc;
-    }, new CommunityMap<ChannelSummary[]>());
-}
+export const selectedChatUserIdsStore = new SafeSetStore<string>();
+export const selectedChatUserGroupKeysStore = new SafeSetStore<string>();
+export const selectedChatExpandedDeletedMessageStore = new SafeSetStore<number>();

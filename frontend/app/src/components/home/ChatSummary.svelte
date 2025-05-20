@@ -9,22 +9,23 @@
     } from "openchat-client";
     import {
         allUsersStore,
-        app,
         AvatarSize,
+        blockedUsersStore,
         botState,
         chatListScopeStore,
         communitiesStore,
         currentUserIdStore,
+        favouritesStore,
         iconSize,
         mobileWidth,
         notificationsSupported,
         OpenChat,
         publish,
         routeForScope,
+        selectedChatIdStore,
         selectedCommunitySummaryStore,
         suspendedUserStore,
         byContext as typersByContext,
-        userStore,
     } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
@@ -90,7 +91,7 @@
             : undefined,
     );
     let blocked = $derived(
-        chatSummary.kind === "direct_chat" && userStore.blockedUsers.has(chatSummary.them.userId),
+        chatSummary.kind === "direct_chat" && $blockedUsersStore.has(chatSummary.them.userId),
     );
     let readonly = $derived(client.isChatReadOnly(chatSummary.id));
     let canDelete = $derived(getCanDelete(chatSummary, community));
@@ -101,7 +102,8 @@
     let swiped = $state(false);
 
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
-        const fav = $chatListScopeStore.kind !== "favourite" && app.favourites.has(chatSummary.id);
+        const fav =
+            $chatListScopeStore.kind !== "favourite" && $favouritesStore.has(chatSummary.id);
         const muted = chatSummary.membership.notificationsMuted;
         const video = chatSummary.videoCallInProgress
             ? { muted: muted ? 1 : 0, unmuted: muted ? 0 : 1 }
@@ -290,7 +292,7 @@
                 toastStore.showFailureToast(i18nKey("archiveChatFailed"));
             }
         });
-        if (chatSummary.id === app.selectedChatId) {
+        if (chatSummary.id === $selectedChatIdStore) {
             page(routeForScope($chatListScopeStore));
         }
     }
@@ -455,7 +457,7 @@
                             {/snippet}
                             {#snippet menuItems()}
                                 <Menu>
-                                    {#if !app.favourites.has(chatSummary.id)}
+                                    {#if !$favouritesStore.has(chatSummary.id)}
                                         <MenuItem onclick={addToFavourites}>
                                             {#snippet icon()}
                                                 <HeartPlus

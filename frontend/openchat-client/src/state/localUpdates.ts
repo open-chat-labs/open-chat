@@ -33,11 +33,12 @@ import {
     type WalletConfig,
     type WebhookDetails,
 } from "openchat-shared";
-import { revokeObjectUrls } from "../../utils/url";
-import { chatDetailsLocalUpdates } from "../chat";
-import { chatSummaryLocalUpdates } from "../chat/summaryUpdates";
-import { communityLocalUpdates } from "../community";
-import { communitySummaryLocalUpdates } from "../community/summaryUpdates";
+import { revokeObjectUrls } from "../utils/url";
+import { chatDetailsLocalUpdates } from "./chat/detailsUpdates";
+import { chatSummaryLocalUpdates } from "./chat/summaryUpdates";
+import { communityLocalUpdates } from "./community/detailUpdates";
+import { communitySummaryLocalUpdates } from "./community/summaryUpdates";
+import { DraftMessages } from "./draft";
 import {
     ChatMapStore,
     CommunityMapStore,
@@ -46,12 +47,11 @@ import {
     LocalMapStore,
     MessageContextMapStore,
     SafeMapStore,
-} from "../map";
-import { messageLocalUpdates } from "../message/local.svelte";
-import { LocalSetStore } from "../set";
-import { scheduleUndo, type UndoLocalUpdate } from "../undo";
-import { writable } from "../writable";
-import { DraftMessages } from "./draft";
+} from "./map";
+import { messageLocalUpdates } from "./message/localUpdates";
+import { LocalSetStore } from "./set";
+import { scheduleUndo, type UndoLocalUpdate } from "./undo";
+import { writable } from "./writable";
 
 function emptyUnconfirmed(): UnconfirmedState {
     return new Map<bigint, UnconfirmedMessageEvent>();
