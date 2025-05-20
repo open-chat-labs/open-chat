@@ -21,7 +21,6 @@ use installed_bots::{BotApiKeys, InstalledBots};
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use model::user_event_batch::UserEventBatch;
 use msgpack::serialize_then_unwrap;
-use notifications_canister_c2c_client::{NotificationPusherState, NotificationsBatch};
 use oc_error_codes::OCErrorCode;
 use principal_to_user_id_map::PrincipalToUserIdMap;
 use rand::RngCore;
@@ -149,10 +148,10 @@ impl RuntimeState {
     }
 
     fn push_notification_inner(&mut self, notification: Notification) {
-        self.data.notifications_queue.push(IdempotentEnvelope {
+        self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
             created_at: self.env.now(),
             idempotency_id: self.env.rng().next_u64(),
-            value: notification,
+            value: local_user_index_canister::GroupEvent::Notification(notification),
         });
     }
 
@@ -448,7 +447,6 @@ impl RuntimeState {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
-                notifications: self.data.notifications_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
                 escrow_canister_id: self.data.escrow_canister_id,
                 icp_ledger: ICP_LEDGER_CANISTER_ID,
@@ -491,7 +489,6 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
-    pub notifications_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
     pub escrow_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
@@ -526,7 +523,6 @@ struct Data {
     pub bots: InstalledBots,
     pub bot_api_keys: BotApiKeys,
     idempotency_checker: IdempotencyChecker,
-    notifications_queue: BatchedTimerJobQueue<NotificationsBatch>,
 }
 
 fn local_user_index_event_sync_queue() -> BatchedTimerJobQueue<LocalUserIndexEventBatch> {
@@ -558,7 +554,6 @@ impl Data {
         group_index_canister_id: CanisterId,
         user_index_canister_id: CanisterId,
         local_user_index_canister_id: CanisterId,
-        notifications_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
         escrow_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
@@ -598,7 +593,6 @@ impl Data {
             group_index_canister_id,
             user_index_canister_id,
             local_user_index_canister_id,
-            notifications_canister_id,
             proposals_bot_user_id,
             escrow_canister_id,
             internet_identity_canister_id,
@@ -632,12 +626,6 @@ impl Data {
             bots: InstalledBots::default(),
             bot_api_keys: BotApiKeys::default(),
             idempotency_checker: IdempotencyChecker::default(),
-            notifications_queue: BatchedTimerJobQueue::new(
-                NotificationPusherState {
-                    notifications_canister: notifications_canister_id,
-                },
-                false,
-            ),
         }
     }
 
@@ -994,7 +982,6 @@ pub struct CanisterIds {
     pub user_index: CanisterId,
     pub group_index: CanisterId,
     pub local_user_index: CanisterId,
-    pub notifications: CanisterId,
     pub proposals_bot: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub icp_ledger: CanisterId,

@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Increase group creation limit for lifetime diamond ([#7959](https://github.com/open-chat-labs/open-chat/pull/7959))
 - Support autonomous bots without API keys ([#7985](https://github.com/open-chat-labs/open-chat/pull/7985))
+- Push notifications to LocalUserIndex canisters ([#8002](https://github.com/open-chat-labs/open-chat/pull/8002))
 
 ## [[2.0.1747-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1747-user)] - 2025-05-12
 
