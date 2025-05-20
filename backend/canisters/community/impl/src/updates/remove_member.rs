@@ -59,7 +59,7 @@ fn prepare(user_id: UserId, block: bool, state: &RuntimeState) -> OCResult<Prepa
     state.data.verify_not_frozen()?;
 
     if block && !state.data.is_public.value {
-        return Err(OCErrorCode::ChatNotPublic.into());
+        return Err(OCErrorCode::CommunityNotPublic.into());
     }
 
     let member = state.get_calling_member(true)?;
