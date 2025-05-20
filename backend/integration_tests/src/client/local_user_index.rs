@@ -325,6 +325,8 @@ pub mod happy_path {
         local_user_index: CanisterId,
         from_index: u64,
     ) -> local_user_index_canister::notifications_v2::SuccessResult {
+        env.tick();
+
         let response = super::notifications_v2(
             env,
             sender,
