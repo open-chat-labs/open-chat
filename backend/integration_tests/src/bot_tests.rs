@@ -376,12 +376,12 @@ fn e2e_autonomous_bot_test() {
         latest_notification_index_at_start + 1,
     );
 
-    assert!(notifications.bot_endpoints.contains_key(&bot_id));
+    assert!(notifications.bots.contains_key(&bot_id));
     assert!(
         notifications
             .notifications
             .iter()
-            .any(|n| matches!(&n.value, NotificationEnvelope::Bot(n) if n.recipients.contains_key(&bot_id)))
+            .any(|n| matches!(&n.value, NotificationEnvelope::Bot(n) if n.recipients.contains(&bot_id)))
     );
 }
 

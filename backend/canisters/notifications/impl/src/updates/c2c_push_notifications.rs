@@ -4,10 +4,10 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use notifications_canister::c2c_push_notifications::{Response::*, *};
 use serde_bytes::ByteBuf;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use types::{
-    BotDataEncoding, BotNotification, BotNotificationEnvelope, CanPushNotificationsArgs, CanPushNotificationsResponse,
-    CanisterId, IdempotentEnvelope, Notification, NotificationEnvelope, TimestampMillis, UserId, UserNotificationEnvelope,
+    BotNotification, BotNotificationEnvelope, CanPushNotificationsArgs, CanPushNotificationsResponse, CanisterId,
+    IdempotentEnvelope, Notification, NotificationEnvelope, TimestampMillis, UserId, UserNotificationEnvelope,
 };
 
 #[update(msgpack = true)]
@@ -96,18 +96,13 @@ pub(crate) fn push_user_notification(
     }
 }
 
-fn push_bot_notification(notification: BotNotification, now: TimestampMillis, data: &mut Data) {
-    let recipients: HashMap<_, _> = notification
-        .recipients
-        .into_iter()
-        .filter(|r| data.bot_endpoints.contains_key(r))
-        .map(|user_id| (user_id, BotDataEncoding::Json))
-        .collect();
+fn push_bot_notification(mut notification: BotNotification, now: TimestampMillis, data: &mut Data) {
+    notification.recipients.retain(|r| data.bot_endpoints.contains_key(r));
 
-    if !recipients.is_empty() {
+    if !notification.recipients.is_empty() {
         data.notifications.add(NotificationEnvelope::Bot(BotNotificationEnvelope {
             event: notification.event,
-            recipients,
+            recipients: notification.recipients,
             timestamp: now,
         }));
     }

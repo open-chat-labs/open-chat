@@ -617,17 +617,13 @@ impl Data {
                     }));
                 }
             }
-            Notification::Bot(bot_notification) => {
-                let recipients: HashMap<_, _> = bot_notification
-                    .recipients
-                    .into_iter()
-                    .filter_map(|bot_id| self.bots.get(&bot_id).map(|b| (bot_id, b.data_encoding)))
-                    .collect();
+            Notification::Bot(mut bot_notification) => {
+                bot_notification.recipients.retain(|b| self.bots.exists(b));
 
-                if !recipients.is_empty() {
+                if !bot_notification.recipients.is_empty() {
                     self.notifications.add(NotificationEnvelope::Bot(BotNotificationEnvelope {
                         event: bot_notification.event,
-                        recipients,
+                        recipients: bot_notification.recipients,
                         timestamp: now,
                     }));
                 }

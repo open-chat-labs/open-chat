@@ -122,9 +122,9 @@ impl<I: IndexStore> Reader<I> {
                     let json_payload = LazyCell::new(|| serde_json::to_vec(&notification.event).unwrap());
                     let candid_payload = LazyCell::new(|| candid::encode_one(&notification.event).unwrap());
 
-                    for (bot, encoding) in notification.recipients {
-                        if let Some(endpoint) = ic_response.bot_endpoints.get(&bot) {
-                            let payload = match encoding {
+                    for bot_id in notification.recipients {
+                        if let Some(bot) = ic_response.bots.get(&bot_id) {
+                            let payload = match bot.data_encoding {
                                 BotDataEncoding::Json => &*json_payload,
                                 BotDataEncoding::Candid => &*candid_payload,
                             };
@@ -134,7 +134,7 @@ impl<I: IndexStore> Reader<I> {
                                     notifications_canister: self.notifications_canister_id,
                                     index: indexed_notification.index,
                                     timestamp: notification.timestamp,
-                                    endpoint: endpoint.to_string(),
+                                    endpoint: bot.endpoint.clone(),
                                     payload: payload.clone(),
                                     first_read_at,
                                 })

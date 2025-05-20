@@ -5,10 +5,7 @@ use crate::{
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
-use std::{
-    collections::HashMap,
-    fmt::{Debug, Formatter},
-};
+use std::fmt::{Debug, Formatter};
 use ts_export::ts_export;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -146,7 +143,7 @@ pub struct BotNotificationEnvelope {
     #[serde(rename = "e")]
     pub event: BotEvent,
     #[serde(rename = "r")]
-    pub recipients: HashMap<UserId, BotDataEncoding>,
+    pub recipients: Vec<UserId>,
     #[serde(rename = "t")]
     pub timestamp: TimestampMillis,
 }
@@ -504,4 +501,10 @@ impl Debug for UserNotificationEnvelope {
             .field("timestamp", &self.timestamp)
             .finish()
     }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct NotificationBotDetails {
+    pub endpoint: String,
+    pub data_encoding: BotDataEncoding,
 }
