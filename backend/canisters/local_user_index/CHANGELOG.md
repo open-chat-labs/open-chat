@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Store notification subscriptions in LocalUserIndexes ([#7967](https://github.com/open-chat-labs/open-chat/pull/7967))
 - Support autonomous bots without API keys ([#7985](https://github.com/open-chat-labs/open-chat/pull/7985))
 - Increase scope of `bot_subscribe_to_events` ([#7996](https://github.com/open-chat-labs/open-chat/pull/7996))
+- Allow bot to specify data encoding format ([#8004](https://github.com/open-chat-labs/open-chat/pull/8004))
 
 ### Fixed
 

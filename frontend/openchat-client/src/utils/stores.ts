@@ -5,9 +5,9 @@ export type Readable<T> = SvelteReadable<T> & { get value(): T } & MaybeDirty;
 export type Writable<T> = SvelteWritable<T> & { get value(): T } & MaybeDirty;
 export type EqualityCheck<T> = (a: T, b: T) => boolean;
 type MaybeDirty = { get dirty() : boolean };
-type Stores = Readable<unknown> | [Readable<unknown>, ...Array<Readable<unknown>>] | Array<Readable<unknown>>;
+type Stores = SvelteReadable<unknown> | [SvelteReadable<unknown>, ...Array<SvelteReadable<unknown>>] | Array<SvelteReadable<unknown>>;
 type StoresValues<T> =
-    T extends Readable<infer U> ? U : { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
+    T extends SvelteReadable<infer U> ? U : { [K in keyof T]: T[K] extends SvelteReadable<infer U> ? U : never };
 
 let paused = false;
 // Callbacks to publish dirty values from writable stores
@@ -158,7 +158,7 @@ class _Derived<S extends Stores, T> {
 
     constructor(stores: S, fn: (values: StoresValues<S>) => T, equalityCheck?: EqualityCheck<T>) {
         this.#innerStore = new _Writable(undefined as T, (_) => this.#start(), equalityCheck);
-        this.#storesArray = Array.isArray(stores) ? stores : [stores];
+        this.#storesArray = Array.isArray(stores) ? stores.map(convertStore) : [convertStore(stores)];
         this.#single = this.#storesArray.length === 1;
         this.#fn = fn;
     }
@@ -211,5 +211,22 @@ class _Derived<S extends Stores, T> {
         }
         const newValue = this.#fn((this.#single ? this.#storeValues[0] : this.#storeValues) as StoresValues<S>);
         this.#innerStore.set(newValue);
+    }
+}
+
+function convertStore<T>(store: Readable<T> | SvelteReadable<T>): Readable<T> {
+    if ("dirty" in store) {
+        return store;
+    }
+    let value: T;
+    store.subscribe((v) => value = v);
+    return {
+        ...store,
+        get dirty() {
+            return false;
+        },
+        get value() {
+            return value;
+        }
     }
 }

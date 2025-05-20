@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Always use LocalUserIndex to authorize pushing notifications ([#7861](https://github.com/open-chat-labs/open-chat/pull/7861))
+- Specify data encoding format ([#8004](https://github.com/open-chat-labs/open-chat/pull/8004))
 
 ## [[2.0.1674](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1674-notifications)] - 2025-04-02
 

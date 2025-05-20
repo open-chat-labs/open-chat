@@ -4,12 +4,13 @@ use crate::{BotNotification, UserNotification};
 use async_channel::Sender;
 use base64::Engine;
 use index_store::IndexStore;
+use std::cell::LazyCell;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
 use tokio::time;
 use tracing::{error, info};
-use types::{CanisterId, Error, NotificationEnvelope, Timestamped, UserId};
+use types::{BotDataEncoding, CanisterId, Error, NotificationEnvelope, Timestamped, UserId};
 use web_push::{SubscriptionInfo, SubscriptionKeys};
 
 pub struct Reader<I: IndexStore> {
@@ -118,16 +119,22 @@ impl<I: IndexStore> Reader<I> {
                     }
                 }
                 NotificationEnvelope::Bot(notification) => {
-                    let payload = serde_json::to_vec(&notification.event).unwrap();
+                    let json_payload = LazyCell::new(|| serde_json::to_vec(&notification.event).unwrap());
+                    let candid_payload = LazyCell::new(|| candid::encode_one(&notification.event).unwrap());
 
-                    for bot in notification.recipients {
-                        if let Some(endpoint) = ic_response.bot_endpoints.get(&bot) {
+                    for bot_id in notification.recipients {
+                        if let Some(bot) = ic_response.bots.get(&bot_id) {
+                            let payload = match bot.data_encoding {
+                                BotDataEncoding::Json => &*json_payload,
+                                BotDataEncoding::Candid => &*candid_payload,
+                            };
+
                             self.bot_notification_sender
                                 .send(BotNotification {
                                     notifications_canister: self.notifications_canister_id,
                                     index: indexed_notification.index,
                                     timestamp: notification.timestamp,
-                                    endpoint: endpoint.to_string(),
+                                    endpoint: bot.endpoint.clone(),
                                     payload: payload.clone(),
                                     first_read_at,
                                 })
