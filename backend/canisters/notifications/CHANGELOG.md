@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Handle `SetNotificationPusherPrincipals` events ([#7968](https://github.com/open-chat-labs/open-chat/pull/7968))
 - Support autonomous bots without API keys ([#7985](https://github.com/open-chat-labs/open-chat/pull/7985))
+- Include the api_gateway with bot notifications ([#8005](https://github.com/open-chat-labs/open-chat/pull/8005))
 
 ## [[2.0.1733](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1733-notifications)] - 2025-05-08
 
