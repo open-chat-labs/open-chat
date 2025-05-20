@@ -6,6 +6,8 @@ generate_msgpack_query_call!(access_token_v2);
 generate_query_call!(bot_chat_events);
 generate_msgpack_query_call!(chat_events);
 generate_msgpack_query_call!(group_and_community_summary_updates);
+generate_query_call!(latest_notification_index);
+generate_query_call!(notifications_v2);
 
 // Updates
 generate_update_call!(bot_create_channel);
@@ -32,7 +34,7 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use types::{
         BotInstallationLocation, BotPermissions, CanisterId, ChannelId, ChatId, CommunityCanisterCommunitySummary, CommunityId,
-        UserId,
+        Empty, UserId,
     };
 
     pub fn register_user(env: &mut PocketIc, principal: Principal, canister_id: CanisterId, public_key: Vec<u8>) -> User {
@@ -315,5 +317,36 @@ pub mod happy_path {
             uninstall_bot::Response::Success => {}
             response => panic!("'update_bot' error: {response:?}"),
         }
+    }
+
+    pub fn notifications_v2(
+        env: &PocketIc,
+        sender: Principal,
+        local_user_index: CanisterId,
+        from_index: u64,
+    ) -> local_user_index_canister::notifications_v2::SuccessResult {
+        // TODO remove this
+        env.tick();
+
+        let response = super::notifications_v2(
+            env,
+            sender,
+            local_user_index,
+            &local_user_index_canister::notifications_v2::Args {
+                from_notification_index: from_index,
+            },
+        );
+
+        let local_user_index_canister::notifications_v2::Response::Success(result) = response;
+        result
+    }
+
+    pub fn latest_notification_index(env: &PocketIc, sender: Principal, local_user_index: CanisterId) -> u64 {
+        // TODO remove this
+        env.tick();
+
+        let response = super::latest_notification_index(env, sender, local_user_index, &Empty {});
+        let local_user_index_canister::latest_notification_index::Response::Success(index) = response;
+        index
     }
 }

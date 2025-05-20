@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Add LocalUserIndex before adding Notifications canister ([#8004](https://github.com/open-chat-labs/open-chat/pull/8004))
+
 ## [[2.0.1735](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1735-registry)] - 2025-05-08
 
 ### Changed

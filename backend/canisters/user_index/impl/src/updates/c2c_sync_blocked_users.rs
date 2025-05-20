@@ -16,7 +16,7 @@ fn c2c_sync_blocked_users_impl(args: Args, state: &mut RuntimeState) -> Response
 
     for (user_id, blocked_users) in args.blocked_users {
         for blocked_user in blocked_users {
-            state.data.blocked_users.insert((user_id, blocked_user), ());
+            state.data.blocked_users.insert((blocked_user, user_id), ());
             state.push_event_to_all_local_user_indexes(UserIndexEvent::UserBlocked(user_id, blocked_user), None);
         }
     }

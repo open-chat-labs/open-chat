@@ -97,12 +97,12 @@ impl SubnetInProgress {
             ExpandOntoSubnetStep::NotifyCyclesDispenser(new_canister_ids)
         } else if !self.event_relay_notified {
             ExpandOntoSubnetStep::NotifyEventRelay(new_canister_ids)
-        } else if !self.notifications_index_notified {
-            ExpandOntoSubnetStep::NotifyNotificationsIndex(new_canister_ids)
         } else if !self.local_user_index_notified {
             ExpandOntoSubnetStep::NotifyUserIndex(new_canister_ids)
         } else if !self.local_group_index_notified {
             ExpandOntoSubnetStep::NotifyGroupIndex(new_canister_ids)
+        } else if !self.notifications_index_notified {
+            ExpandOntoSubnetStep::NotifyNotificationsIndex(new_canister_ids)
         } else {
             ExpandOntoSubnetStep::Complete
         }
@@ -149,8 +149,8 @@ pub enum ExpandOntoSubnetStep {
     UpdateControllers(NewCanisterIds),
     NotifyCyclesDispenser(NewCanisterIds),
     NotifyEventRelay(NewCanisterIds),
-    NotifyNotificationsIndex(NewCanisterIds),
     NotifyUserIndex(NewCanisterIds),
     NotifyGroupIndex(NewCanisterIds),
+    NotifyNotificationsIndex(NewCanisterIds),
     Complete,
 }

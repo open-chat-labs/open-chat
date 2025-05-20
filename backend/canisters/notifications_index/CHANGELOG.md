@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - One time job to sync blocked users to UserIndex ([#7961](https://github.com/open-chat-labs/open-chat/pull/7961))
 - Push notification subscriptions to LocalUserIndexes ([#7967](https://github.com/open-chat-labs/open-chat/pull/7967))
 - Push event if notification pusher principals change ([#7968](https://github.com/open-chat-labs/open-chat/pull/7968))
+- Push existing data to newly added LocalUserIndexes ([#8003](https://github.com/open-chat-labs/open-chat/pull/8003))
 
 ## [[2.0.1734](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1734-notifications_index)] - 2025-05-08
 
