@@ -17,16 +17,19 @@
         allUsersStore,
         currentUserIdStore,
         currentUserStore,
+        failedMessagesStore,
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
         localUpdates,
         messageContextsEqual,
+        messagesRead,
         selectedChatBlockedUsersStore,
         selectedChatExpandedDeletedMessageStore,
         selectedThreadDraftMessageStore,
         subscribe,
         threadEventsStore,
         threadsFollowedByMeStore,
+        unconfirmedStore,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -384,12 +387,12 @@
                                 first={i + 1 === userGroup.length}
                                 last={i === 0}
                                 me={evt.event.sender === $currentUserIdStore}
-                                accepted={isAccepted(evt)}
-                                confirmed={isConfirmed(evt)}
-                                failed={isFailed(evt)}
+                                accepted={isAccepted($unconfirmedStore, evt)}
+                                confirmed={isConfirmed($unconfirmedStore, evt)}
+                                failed={isFailed($failedMessagesStore, evt)}
                                 readByMe={evt.event.messageId === rootEvent.event.messageId ||
                                     !isFollowedByMe ||
-                                    isReadByMe(evt)}
+                                    isReadByMe($messagesRead, evt)}
                                 observer={messageObserver}
                                 focused={evt.event.kind === "message" &&
                                     focusIndex === evt.event.messageIndex}

@@ -11,6 +11,7 @@
         isDiamondStore,
         isProposalGroupStore,
         lastRightPanelState,
+        messagesRead,
         mobileWidth,
         notificationsSupported,
         type OpenChat,
@@ -18,7 +19,7 @@
         publish,
         rightPanelHistory,
     } from "openchat-client";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
@@ -126,11 +127,22 @@
 
     let canStartOrJoinVideoCall = $derived(!inCall && (videoCallInProgress || canStartVideoCalls));
 
-    let hasUnreadPinned = $derived(
-        hasPinned &&
-            (selectedChatSummary.kind === "group_chat" || selectedChatSummary.kind === "channel") &&
-            client.unreadPinned(selectedChatSummary.id, selectedChatSummary.dateLastPinned),
-    );
+    let hasUnreadPinned = $state(false);
+
+    $effect(() => {
+        setUnreadPinned(hasPinned, selectedChatSummary);
+    });
+
+    onMount(() => {
+        return messagesRead.subscribe(() => setUnreadPinned(hasPinned, selectedChatSummary));
+    });
+
+    function setUnreadPinned(hasPinned: boolean, chat: ChatSummary) {
+        hasUnreadPinned =
+            hasPinned &&
+            (chat.kind === "group_chat" || chat.kind === "channel") &&
+            client.unreadPinned(chat.id, chat.dateLastPinned);
+    }
 
     function toggleMuteNotifications(mute: boolean) {
         publish("toggleMuteNotifications", { chatId: selectedChatSummary.id, mute });

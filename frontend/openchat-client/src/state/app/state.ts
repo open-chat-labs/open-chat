@@ -181,6 +181,7 @@ export class AppState {
     #selectedChatRules?: VersionedRules;
     #favourites!: ReadonlySet<ChatIdentifier>;
     #groupChats!: ChatMap<ChatSummary>;
+    #messageFilters!: MessageFilter[];
 
     // but it can be a plain value once that's all gone
     #translations: MessageMap<string> = new MessageMap();
@@ -258,6 +259,7 @@ export class AppState {
                 selectedChatRulesStore.subscribe((v) => (this.#selectedChatRules = v));
                 favouritesStore.subscribe((v) => (this.#favourites = v));
                 serverGroupChatsStore.subscribe((v) => (this.#groupChats = v));
+                messageFiltersStore.subscribe((v) => (this.#messageFilters = v));
             } catch {
                 console.log("Error subscribing");
             }
@@ -388,6 +390,10 @@ export class AppState {
 
     set messageFilters(val: MessageFilter[]) {
         messageFiltersStore.set(val);
+    }
+
+    get messageFilters() {
+        return this.#messageFilters;
     }
 
     get currentUser() {
@@ -818,6 +824,8 @@ export class AppState {
     }
 
     setSelectedChat(_chatId: ChatIdentifier) {
+        serverEventsStore.set([]);
+        expiredServerEventRanges.set(new DRange());
         selectedChatUserIdsStore.clear();
         selectedChatUserGroupKeysStore.clear();
         selectedChatExpandedDeletedMessageStore.clear();

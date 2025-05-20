@@ -1217,3 +1217,5 @@ export const identityStateStore = writable<IdentityState>({ kind: "loading_user"
 export const selectedChatUserIdsStore = new SafeSetStore<string>();
 export const selectedChatUserGroupKeysStore = new SafeSetStore<string>();
 export const selectedChatExpandedDeletedMessageStore = new SafeSetStore<number>();
+export const failedMessagesStore = localUpdates.failedMessages;
+export const unconfirmedStore = localUpdates.unconfirmed;

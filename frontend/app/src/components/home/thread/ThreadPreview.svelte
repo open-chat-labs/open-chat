@@ -7,6 +7,7 @@
         currentUserIdStore,
         type EventWrapper,
         type Message,
+        messagesRead,
         type MultiUserChat,
         OpenChat,
         routeForChatIdentifier,
@@ -14,7 +15,7 @@
         type ThreadPreview,
     } from "openchat-client";
     import page from "page";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
     import { pop } from "../../../utils/transition";
@@ -56,6 +57,18 @@
     let chatData = $derived({
         name: chat?.name,
         avatarUrl: client.groupAvatarUrl(chat, $selectedCommunitySummaryStore),
+    });
+
+    onMount(() => {
+        return messagesRead.subscribe(() => {
+            if (syncDetails !== undefined) {
+                unreadCount = client.unreadThreadMessageCount(
+                    thread.chatId,
+                    threadRootMessageIndex,
+                    syncDetails.latestMessageIndex,
+                );
+            }
+        });
     });
 
     let grouped = $derived(client.groupBySender(thread.latestReplies));

@@ -17,8 +17,10 @@
         chatsInitialisedStore,
         currentUserIdStore,
         eventsStore,
+        failedMessagesStore,
         localUpdates,
         messageIndexStore,
+        messagesRead,
         routeForChatIdentifier,
         selectedChatDraftMessageStore,
         selectedChatExpandedDeletedMessageStore,
@@ -27,6 +29,7 @@
         selectedChatUserGroupKeysStore,
         selectedCommunitySummaryStore,
         showMiddle,
+        unconfirmedStore,
     } from "openchat-client";
     import page from "page";
     import { getContext, untrack } from "svelte";
@@ -321,11 +324,11 @@
                                 observer={messageObserver}
                                 focused={evt.event.kind === "message" &&
                                     evt.event.messageIndex === focusIndex &&
-                                    !isFailed(evt)}
-                                accepted={isAccepted(evt)}
-                                confirmed={isConfirmed(evt)}
-                                failed={isFailed(evt)}
-                                readByMe={isReadByMe(evt)}
+                                    !isFailed($failedMessagesStore, evt)}
+                                accepted={isAccepted($unconfirmedStore, evt)}
+                                confirmed={isConfirmed($unconfirmedStore, evt)}
+                                failed={isFailed($failedMessagesStore, evt)}
+                                readByMe={isReadByMe($messagesRead, evt)}
                                 chatId={chat.id}
                                 chatType={chat.kind}
                                 me={isMe(evt)}
