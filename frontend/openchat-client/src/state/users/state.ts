@@ -42,9 +42,7 @@ export class UsersState {
     }
 
     addUser(user: UserSummary) {
-        if (!normalUsersStore.has(user.userId)) {
-            normalUsersStore.set(user.userId, user);
-        }
+        normalUsersStore.set(user.userId, user);
     }
 
     addMany(users: UserSummary[]) {

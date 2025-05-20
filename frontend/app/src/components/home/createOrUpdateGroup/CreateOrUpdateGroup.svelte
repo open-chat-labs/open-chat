@@ -185,7 +185,7 @@
 
         confirming = false;
 
-        const updatedGroup = { ...candidateGroup };
+        const updatedGroup = $state.snapshot(candidateGroup);
 
         return client
             .updateGroup(
@@ -238,7 +238,7 @@
         const level = candidateGroup.level;
 
         client
-            .createGroupChat(candidateGroup)
+            .createGroupChat($state.snapshot(candidateGroup))
             .then((resp) => {
                 if (resp.kind !== "success") {
                     const resourceKey = groupCreationErrorMessage(resp, level);
