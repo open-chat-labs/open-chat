@@ -174,6 +174,7 @@ class _Derived<S extends Stores, T> {
     #started = false;
     #pending = 0;
     #unsubscribers: Unsubscriber[] = [];
+    #internalSubscriber: Unsubscriber | undefined = undefined;
 
     constructor(stores: S, fn: (values: StoresValues<S>) => T, equalityCheck?: EqualityCheck<T>) {
         this.#innerStore = new _Writable(undefined as T, (_) => this.#start(), equalityCheck);
@@ -184,10 +185,18 @@ class _Derived<S extends Stores, T> {
     }
 
     subscribe(subscriber: Subscriber<T>, invalidate?: () => void): Unsubscriber {
-        return this.#innerStore.subscribe(subscriber, invalidate);
+        const unsub = this.#innerStore.subscribe(subscriber, invalidate);
+        if (this.#internalSubscriber !== undefined) {
+            this.#internalSubscriber();
+            this.#internalSubscriber = undefined;
+        }
+        return unsub;
     }
 
     get value(): T {
+        if (!this.#started) {
+            this.#internalSubscriber = this.subscribe(_ => {});
+        }
         return this.#innerStore.value;
     }
 
