@@ -58,7 +58,10 @@ export class UsersState {
     }
 
     addMany(users: UserSummary[]) {
-        users.forEach((u) => this.addUser(u));
+        normalUsersStore.update((map) => {
+            users.forEach((u) => map.set(u.userId, u));
+            return map;
+        });
     }
 
     setUpdated(userIds: string[], timestamp: bigint) {

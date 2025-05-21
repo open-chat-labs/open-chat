@@ -450,7 +450,7 @@
                 localUpdates.draftMessages.setReplyingTo({ chatId: chat.id }, undefined)}
             onClearAttachment={() =>
                 localUpdates.draftMessages.setAttachment({ chatId: chat.id }, undefined)}
-            onCancelEdit={() => localUpdates.draftMessages.delete({ chatId: chat.id })}
+            onCancelEdit={() => localUpdates.draftMessages.value.delete({ chatId: chat.id })}
             {onSetTextContent}
             onStartTyping={() => client.startTyping(chat, $currentUserIdStore)}
             onStopTyping={() => client.stopTyping(chat, $currentUserIdStore)}

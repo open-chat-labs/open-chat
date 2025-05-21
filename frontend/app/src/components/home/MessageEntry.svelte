@@ -281,7 +281,7 @@
                 false,
             );
             client.executeBotCommand(scope, commandInstance, true);
-            localUpdates.draftMessages.delete(messageContext);
+            localUpdates.draftMessages.value.delete(messageContext);
             afterSendMessage();
         } else {
             showDirectBotChatWarning = true;
