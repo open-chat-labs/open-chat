@@ -11,7 +11,6 @@ pub struct Args {
 }
 
 #[ts_export(community, api_key)]
-#[allow(clippy::large_enum_variant)]
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(String),

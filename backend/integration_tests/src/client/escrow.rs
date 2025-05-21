@@ -12,7 +12,7 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use types::{CanisterId, P2PSwapLocation, TimestampMillis, TokenInfo, UserId};
 
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn create_swap(
         env: &mut PocketIc,
         sender: Principal,

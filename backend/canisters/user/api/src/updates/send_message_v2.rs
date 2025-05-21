@@ -22,7 +22,7 @@ pub struct Args {
     pub correlation_id: u64,
 }
 
-#[allow(clippy::large_enum_variant)]
+#[expect(clippy::large_enum_variant)]
 #[ts_export(user, send_message)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {

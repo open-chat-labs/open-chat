@@ -166,7 +166,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> OCResult<Su
     ))
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 fn process_send_message_result(
     result: SendMessageSuccess,
     caller: &Caller,

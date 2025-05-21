@@ -35,7 +35,6 @@ struct PrepareResult {
     member_display_name: Option<String>,
 }
 
-#[allow(clippy::result_large_err)]
 fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
     state.data.verify_not_frozen()?;
 
@@ -75,7 +74,6 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
     }
 }
 
-#[allow(clippy::too_many_arguments)]
 fn commit(
     added_by: UserId,
     added_by_name: String,

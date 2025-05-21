@@ -534,7 +534,7 @@ fn init_instruction_counts_log() -> InstructionCountsLog {
     InstructionCountsLog::init(get_instruction_counts_index_memory(), get_instruction_counts_data_memory())
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 impl Data {
     pub fn new(
         chat_id: ChatId,

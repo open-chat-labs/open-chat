@@ -5,7 +5,6 @@ use types::Empty;
 
 pub type Args = Empty;
 
-#[allow(clippy::large_enum_variant)]
 #[ts_export(user_index, diamond_membership_fees)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {

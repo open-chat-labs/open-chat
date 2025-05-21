@@ -320,7 +320,7 @@ impl ChatEvents {
         }
     }
 
-    #[allow(clippy::type_complexity)]
+    #[expect(clippy::type_complexity)]
     fn edit_message_inner<P: EventPusher>(
         message: &mut MessageInternal,
         event: EventMetaData,
@@ -1285,7 +1285,7 @@ impl ChatEvents {
         }
     }
 
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn complete_p2p_swap<P: EventPusher>(
         &mut self,
         user_id: UserId,
@@ -1324,7 +1324,7 @@ impl ChatEvents {
         }
     }
 
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     fn complete_p2p_swap_inner<P: EventPusher>(
         message: &mut MessageInternal,
         user_id: UserId,
@@ -1473,7 +1473,7 @@ impl ChatEvents {
         }
     }
 
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn report_message<P: EventPusher>(
         &mut self,
         user_id: UserId,

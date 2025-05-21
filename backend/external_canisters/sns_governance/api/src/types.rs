@@ -420,9 +420,7 @@ pub mod proposal {
     ///
     /// See `impl From<&Action> for u64` in src/types.rs for the implementation
     /// of this mapping.
-    #[derive(candid::CandidType, candid::Deserialize)]
-    #[allow(clippy::large_enum_variant)]
-    #[derive(Clone, PartialEq)]
+    #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
     pub enum Action {
         /// The `Unspecified` action is used as a fallback when
         /// following. That is, if no followees are specified for a given
@@ -1499,9 +1497,7 @@ pub mod manage_neuron {
         /// The set of permissions that will be revoked from the PrincipalId.
         pub permissions_to_remove: Option<super::NeuronPermissionList>,
     }
-    #[derive(candid::CandidType, candid::Deserialize)]
-    #[allow(clippy::large_enum_variant)]
-    #[derive(Clone, PartialEq)]
+    #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
     pub enum Command {
         Configure(Configure),
         Disburse(Disburse),
@@ -1647,9 +1643,7 @@ pub struct GetProposalResponse {
 pub mod get_proposal_response {
     /// The response to a GetProposal command is either an error or
     /// the proposal data corresponding to the requested proposal.
-    #[derive(candid::CandidType, candid::Deserialize)]
-    #[allow(clippy::large_enum_variant)]
-    #[derive(Clone, PartialEq)]
+    #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
     pub enum Result {
         Error(super::GovernanceError),
         Proposal(super::ProposalData),

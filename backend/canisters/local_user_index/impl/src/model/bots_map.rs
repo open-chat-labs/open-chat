@@ -43,7 +43,7 @@ impl BotsMap {
         self.bots.contains_key(bot_id)
     }
 
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn add(
         &mut self,
         user_principal: Principal,

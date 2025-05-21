@@ -8,7 +8,6 @@ pub struct LocalGroupMap {
     groups: HashMap<ChatId, LocalGroup>,
 }
 
-#[allow(dead_code)]
 impl LocalGroupMap {
     pub fn add_existing(&mut self, chat_id: ChatId, group: LocalGroup) {
         self.groups.insert(chat_id, group);

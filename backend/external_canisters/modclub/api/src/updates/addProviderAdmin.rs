@@ -14,7 +14,7 @@ pub enum ProviderError {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-#[allow(non_camel_case_types)]
+#[expect(non_camel_case_types)]
 pub enum ProviderResult {
     err(ProviderError),
     ok,

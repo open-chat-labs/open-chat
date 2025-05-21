@@ -455,7 +455,7 @@ fn local_user_index_event_sync_queue() -> BatchedTimerJobQueue<LocalUserIndexEve
 }
 
 impl Data {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     fn new(
         community_id: CommunityId,
         created_by_principal: Principal,
