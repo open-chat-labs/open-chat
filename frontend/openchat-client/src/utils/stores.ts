@@ -158,8 +158,9 @@ class _Derived<S extends Stores, T> {
 
     constructor(stores: S, fn: (values: StoresValues<S>) => T, equalityCheck?: EqualityCheck<T>) {
         this.#innerStore = new _Writable(undefined as T, (_) => this.#start(), equalityCheck);
-        this.#storesArray = Array.isArray(stores) ? stores.map(convertStore) : [convertStore(stores)];
-        this.#single = this.#storesArray.length === 1;
+        const isArray = Array.isArray(stores);
+        this.#single = !isArray;
+        this.#storesArray = isArray ? stores.map(convertStore) : [convertStore(stores)];
         this.#fn = fn;
     }
 
@@ -215,13 +216,13 @@ class _Derived<S extends Stores, T> {
 }
 
 function convertStore<T>(store: Readable<T> | SvelteReadable<T>): Readable<T> {
-    if ("dirty" in store) {
+    if ("dirty" in store && "value" in store) {
         return store;
     }
     let value: T;
     store.subscribe((v) => value = v);
     return {
-        ...store,
+        subscribe: (start, invalidate) => store.subscribe(start, invalidate),
         get dirty() {
             return false;
         },
