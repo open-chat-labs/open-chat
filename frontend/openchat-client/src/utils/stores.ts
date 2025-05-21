@@ -15,6 +15,8 @@ let publishesPending: (() => void)[] = [];
 // Callbacks to push new values to their subscribers
 let subscriptionsPending: (() => void)[] = [];
 
+const NOOP = () => {};
+
 export function pauseStores() {
     paused = true;
 }
@@ -174,7 +176,6 @@ class _Derived<S extends Stores, T> {
     #started = false;
     #pending = 0;
     #unsubscribers: Unsubscriber[] = [];
-    #internalSubscriber: Unsubscriber | undefined = undefined;
 
     constructor(stores: S, fn: (values: StoresValues<S>) => T, equalityCheck?: EqualityCheck<T>) {
         this.#innerStore = new _Writable(undefined as T, (_) => this.#start(), equalityCheck);
@@ -185,19 +186,14 @@ class _Derived<S extends Stores, T> {
     }
 
     subscribe(subscriber: Subscriber<T>, invalidate?: () => void): Unsubscriber {
-        const unsub = this.#innerStore.subscribe(subscriber, invalidate);
-        if (this.#internalSubscriber !== undefined) {
-            this.#internalSubscriber();
-            this.#internalSubscriber = undefined;
-        }
-        return unsub;
+        return this.#innerStore.subscribe(subscriber, invalidate);
     }
 
     get value(): T {
-        if (!this.#started) {
-            this.#internalSubscriber = this.subscribe(_ => {});
-        }
-        return this.#innerStore.value;
+        const unsub = this.#started ? undefined : this.subscribe(NOOP);
+        const value = this.#innerStore.value;
+        unsub?.();
+        return value;
     }
 
     get dirty(): boolean {
