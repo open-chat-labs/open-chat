@@ -19,7 +19,6 @@ generate_c2c_call!(c2c_report_message);
 generate_c2c_call!(c2c_send_openchat_bot_messages);
 generate_c2c_call!(c2c_set_avatar);
 generate_c2c_call!(c2c_suspend_users);
-generate_c2c_call!(c2c_sync_blocked_users);
 
 pub async fn lookup_user(
     user_id_or_principal: Principal,

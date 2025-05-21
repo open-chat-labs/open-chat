@@ -487,18 +487,10 @@ struct Data {
     pub cycles_balance_check_queue: VecDeque<CanisterId>,
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub idempotency_checker: IdempotencyChecker,
-    #[serde(default)]
     pub notification_pushers: HashSet<Principal>,
-    #[serde(default)]
     pub notification_subscriptions: NotificationSubscriptions,
-    #[serde(default)]
     pub notifications: EventStream<NotificationEnvelope>,
-    #[serde(default = "blocked_users")]
     pub blocked_users: UserIdsSet,
-}
-
-fn blocked_users() -> UserIdsSet {
-    UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users())
 }
 
 #[derive(Serialize, Deserialize)]
