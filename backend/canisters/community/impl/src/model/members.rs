@@ -206,7 +206,7 @@ impl CommunityMembers {
         Some(member)
     }
 
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn change_role(
         &mut self,
         user_id: UserId,
@@ -782,7 +782,6 @@ impl Member for CommunityMemberInternal {
     }
 }
 
-#[allow(clippy::large_enum_variant)]
 pub enum AddResult {
     Success(CommunityMemberInternal),
     AlreadyInCommunity,

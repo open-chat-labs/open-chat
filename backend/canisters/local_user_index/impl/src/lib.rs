@@ -515,7 +515,7 @@ pub struct UserToDelete {
 }
 
 impl Data {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,

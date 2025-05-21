@@ -309,7 +309,7 @@ struct Data {
 }
 
 impl Data {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     fn new(
         governance_principals: Vec<Principal>,
         user_index_canister_id: CanisterId,

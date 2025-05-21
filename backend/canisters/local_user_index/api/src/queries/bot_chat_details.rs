@@ -15,7 +15,7 @@ pub struct Args {
 }
 
 #[ts_export(local_user_index, bot_chat_details)]
-#[allow(clippy::large_enum_variant)]
+#[expect(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(types::ChatDetails),

@@ -239,7 +239,6 @@ fn build_token<T: Serialize>(token_type_name: String, custom_claims: T, state: &
     }
 }
 
-#[allow(clippy::large_enum_variant)]
 #[derive(Debug)]
 enum ArgsInternal {
     StartVideoCall(access_token_v2::StartVideoCallArgs),

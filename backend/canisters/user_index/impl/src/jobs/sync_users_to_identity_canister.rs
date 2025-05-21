@@ -44,7 +44,7 @@ fn run() {
     }
 }
 
-#[allow(clippy::type_complexity)]
+#[expect(clippy::type_complexity)]
 fn next_batch(state: &mut RuntimeState) -> Option<(CanisterId, Vec<(Principal, Option<UserId>)>)> {
     let count = min(state.data.identity_canister_user_sync_queue.len(), BATCH_SIZE);
     if count == 0 {

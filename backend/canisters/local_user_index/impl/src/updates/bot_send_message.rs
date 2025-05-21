@@ -162,7 +162,7 @@ fn extract_message_access_context(
     })
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 async fn send_message_to_channel(
     bot_id: UserId,
     bot_name: String,
@@ -207,7 +207,7 @@ async fn send_message_to_channel(
     }
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 async fn send_message_to_group(
     bot_id: UserId,
     bot_name: String,
@@ -250,7 +250,7 @@ async fn send_message_to_group(
     }
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 async fn send_message_to_user(
     bot_id: UserId,
     bot_name: String,

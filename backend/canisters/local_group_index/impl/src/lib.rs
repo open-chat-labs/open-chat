@@ -199,7 +199,7 @@ struct Data {
 }
 
 impl Data {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         user_index_canister_id: CanisterId,
         local_user_index_canister_id: CanisterId,

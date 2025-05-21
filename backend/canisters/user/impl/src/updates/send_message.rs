@@ -410,7 +410,7 @@ fn prepare(args: &Args, is_v2_bot: bool, state: &RuntimeState) -> OCResult<Prepa
     })
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 fn send_message_impl(
     my_user_id: UserId,
     recipient: UserId,

@@ -12,7 +12,7 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use types::{BuildVersion, CanisterId, Hash};
 
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn install_canisters(
         env: &mut PocketIc,
         sender: Principal,

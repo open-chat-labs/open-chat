@@ -27,7 +27,7 @@ impl PublicCommunities {
         self.communities.get_mut(community_id)
     }
 
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn add(
         &mut self,
         community_id: CommunityId,
@@ -100,7 +100,7 @@ impl PublicCommunities {
         (matches, total)
     }
 
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn update_community(
         &mut self,
         community_id: &CommunityId,
@@ -170,7 +170,7 @@ pub enum UpdateCommunityResult {
 }
 
 impl PublicCommunityInfo {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         id: CommunityId,
         name: String,

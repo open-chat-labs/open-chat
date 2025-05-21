@@ -72,7 +72,7 @@ impl ReferralCodes {
         }
     }
 
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     pub fn claim(&mut self, code: String, user_id: UserId, now: TimestampMillis) -> bool {
         match self.codes.entry(code) {
             Entry::Occupied(mut e) => {

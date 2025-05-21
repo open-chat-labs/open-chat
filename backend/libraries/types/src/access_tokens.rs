@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 
 #[ts_export]
-#[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub enum AccessTokenType {
     StartVideoCallV2(VideoCallAccessTokenArgs),
@@ -13,7 +12,6 @@ pub enum AccessTokenType {
 }
 
 #[ts_export]
-#[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub enum CheckAccessTokenType {
     StartVideoCallV2(VideoCallAccessTokenArgs),

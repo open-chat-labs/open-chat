@@ -423,7 +423,7 @@ fn blocked_users() -> UserIdsSet {
 }
 
 impl Data {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         governance_principals: Vec<Principal>,
         group_index_canister_id: CanisterId,

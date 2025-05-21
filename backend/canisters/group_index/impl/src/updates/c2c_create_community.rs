@@ -117,7 +117,6 @@ fn prepare(name: &str, is_public: bool, state: &mut RuntimeState) -> Result<Prep
     }
 }
 
-#[allow(clippy::too_many_arguments)]
 fn commit(
     args: local_group_index_canister::c2c_create_community::Args,
     community_id: CommunityId,

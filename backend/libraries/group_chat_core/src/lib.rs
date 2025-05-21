@@ -68,7 +68,7 @@ pub struct GroupChatCore {
     pub webhooks: Webhooks,
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 impl GroupChatCore {
     pub fn new(
         chat: MultiUserChat,

@@ -13,7 +13,6 @@ pub struct ReportedMessages {
 }
 
 impl ReportedMessages {
-    #[allow(dead_code)]
     pub fn set_rules(&mut self, rules: Vec<Rule>) {
         self.rules = rules;
     }

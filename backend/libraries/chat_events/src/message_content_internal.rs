@@ -1086,7 +1086,7 @@ pub(crate) mod icrc1 {
         #[serde(rename = "l", alias = "ledger")]
         pub ledger: CanisterId,
         #[serde(rename = "k", alias = "token")]
-        #[allow(deprecated)]
+        #[expect(deprecated)]
         pub token: Cryptocurrency,
         #[serde(rename = "a", alias = "amount")]
         pub amount: u128,
@@ -1146,7 +1146,7 @@ pub(crate) mod icrc2 {
         #[serde(rename = "l", alias = "ledger")]
         pub ledger: CanisterId,
         #[serde(rename = "k", alias = "token")]
-        #[allow(deprecated)]
+        #[expect(deprecated)]
         pub token: Cryptocurrency,
         #[serde(rename = "a", alias = "amount")]
         pub amount: u128,

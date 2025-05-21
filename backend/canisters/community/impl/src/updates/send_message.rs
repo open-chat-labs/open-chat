@@ -210,7 +210,7 @@ fn prepare(caller: &Caller, community_rules_accepted: Option<Version>, state: &m
     }
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 fn process_send_message_result(
     result: SendMessageSuccess,
     caller: &Caller,

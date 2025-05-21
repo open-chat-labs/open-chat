@@ -75,7 +75,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     }
 }
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 struct TestData {
     user1: User,
     user2: User,
