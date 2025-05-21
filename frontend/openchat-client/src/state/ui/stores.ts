@@ -68,7 +68,10 @@ function pixelsFromRems(rem: number, width: number): number {
         return rem * 16;
     }
 }
-export const mobileWidth = derived(dimensions, (dimensions) => dimensions.width < 768);
+export const mobileWidth = derived(dimensions, ({ width }) => {
+    console.log("Width: ", width);
+    return width < 768;
+});
 export const ipadWidth = derived(dimensions, (dimensions) => dimensions.width < 992);
 export const availableHeight = derived(
     dimensions,

@@ -910,7 +910,6 @@ export const allChatsStore = derived(
         messageLocalUpdates,
         unconfirmed,
     ]) => {
-        console.trace("Running all chats");
         const withUpdates = localChats.apply(allServerChats);
         return [...withUpdates.entries()].reduce((result, [chatId, chat]) => {
             const clone = structuredClone(chat);

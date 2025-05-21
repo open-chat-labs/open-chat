@@ -1,5 +1,26 @@
-import { derived, pauseStores, unpauseStores, writable } from "./stores";
 import { derived as svelteDerived, writable as svelteWritable } from "svelte/store";
+import { derived, pauseStores, unpauseStores, writable } from "./stores";
+
+test("derived from string store is triggered", () => {
+    const w1 = writable("hello");
+    const w2 = writable("there");
+    const d1 = derived([w1, w2], ([w1, w2]) => `${w1.toUpperCase()} ${w2.toUpperCase()}`);
+    d1.subscribe((val) => {
+        expect(val).toEqual("HELLO THERE");
+    });
+    expect(d1.value).toEqual("HELLO THERE");
+});
+
+test.only("derived from boolean store is triggered", () => {
+    const w1 = writable(true);
+    const d1 = derived(w1, (w1) => !w1);
+    let count = 0;
+    d1.subscribe((val) => {
+        expect(val).toBe(!w1.value);
+        count += 1;
+    });
+    expect(count).toEqual(1);
+});
 
 test("store values match Svelte store values", () => {
     for (const pause of [false, true]) {
@@ -50,10 +71,13 @@ test("store values match Svelte store values", () => {
             svelteDerivedStoreUpdateCount++;
             return _sd2 * 2;
         });
-        const sd4 = svelteDerived([sw1, sw2, sw3, sd1, sd2, sd3], ([_sw1, _sw2, _sw3, _sd1, _sd2, _sd3]) => {
-            svelteDerivedStoreUpdateCount++;
-            return _sw1 * _sw2 * _sw3 * _sd1 * _sd2 * _sd3;
-        });
+        const sd4 = svelteDerived(
+            [sw1, sw2, sw3, sd1, sd2, sd3],
+            ([_sw1, _sw2, _sw3, _sd1, _sd2, _sd3]) => {
+                svelteDerivedStoreUpdateCount++;
+                return _sw1 * _sw2 * _sw3 * _sd1 * _sd2 * _sd3;
+            },
+        );
 
         const writableStores = [w1, w2, w3];
         const svelteWritableStores = [sw1, sw2, sw3];
@@ -67,8 +91,8 @@ test("store values match Svelte store values", () => {
 
         // Subscribe to the stores
         for (let i = 0; i < allStores.length; i++) {
-            allStores[i].subscribe((v) => storeValues[i] = v);
-            allSvelteStores[i].subscribe((v) => svelteStoreValues[i] = v);
+            allStores[i].subscribe((v) => (storeValues[i] = v));
+            allSvelteStores[i].subscribe((v) => (svelteStoreValues[i] = v));
         }
 
         // After initialization, each store should have been updated exactly once

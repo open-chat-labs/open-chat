@@ -222,9 +222,6 @@ class _Derived<S extends Stores, T> {
     #start() {
         if (this.#started) return;
         for (const [index, store] of this.#storesArray.entries()) {
-            if (store.subscribe === undefined) {
-                console.log("Fuuuuuck");
-            }
             const unsub = store.subscribe(
                 (v) => {
                     (this.#storeValues as unknown[])[index] = v;
