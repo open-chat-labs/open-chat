@@ -102,8 +102,7 @@ class _Writable<T> {
             return;
         }
 
-        this.#dirtyValue = newValue;
-        this.#dirty = true;
+        this.#setDirtyValue(newValue);
 
         if (paused) {
             if (!this.#publishPending) {
@@ -153,6 +152,11 @@ class _Writable<T> {
             }
             this.#started = false;
         }
+    }
+
+    #setDirtyValue(value: T) {
+        this.#dirtyValue = value;
+        this.#dirty = true;
     }
 
     #resetDirtyValue() {
