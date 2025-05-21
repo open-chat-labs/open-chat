@@ -5,6 +5,7 @@ use ckbtc_minter_canister::update_balance::{UpdateBalanceError, UtxoStatus};
 use ckbtc_minter_canister::{CKBTC_MINTER_CANISTER_ID, TESTNET_CKBTC_MINTER_CANISTER_ID};
 use event_store_producer::EventBuilder;
 use ledger_utils::format_crypto_amount;
+use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use oc_error_codes::OCErrorCode;
 use serde::Serialize;
 use tracing::error;
@@ -51,12 +52,15 @@ Your account has been credited with {formatted} BTC."
                     );
                     let user_id_string = state.env.canister_id().to_string();
                     let now = state.env.now();
-                    state.data.event_store_client.push(
-                        EventBuilder::new("btc_deposit", now)
-                            .with_user(user_id_string.clone(), true)
-                            .with_source(user_id_string, true)
-                            .with_json_payload(&BtcDepositOrWithdrawalEventPayload { amount: total_minted })
-                            .build(),
+                    state.push_local_user_index_canister_event(
+                        LocalUserIndexEvent::EventStoreEvent(
+                            EventBuilder::new("btc_deposit", now)
+                                .with_user(user_id_string.clone(), true)
+                                .with_source(user_id_string, true)
+                                .with_json_payload(&BtcDepositOrWithdrawalEventPayload { amount: total_minted })
+                                .build(),
+                        ),
+                        now,
                     );
                     state.award_achievement_and_notify(Achievement::DepositedBtc, now);
                 }
