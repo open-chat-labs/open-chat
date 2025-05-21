@@ -13,10 +13,6 @@ pub struct ReportedMessages {
 }
 
 impl ReportedMessages {
-    pub fn set_rules(&mut self, rules: Vec<Rule>) {
-        self.rules = rules;
-    }
-
     pub fn add_report(&mut self, args: AddReportArgs) -> AddReportResult {
         let new_index = self.messages.len();
 
@@ -101,6 +97,11 @@ impl ReportedMessages {
 
     fn index_from_rule_id(&self, rule_id: String) -> usize {
         self.rules.iter().position(|r| r.id == rule_id).unwrap()
+    }
+
+    #[cfg(test)]
+    pub fn set_rules(&mut self, rules: Vec<Rule>) {
+        self.rules = rules;
     }
 }
 
