@@ -1,4 +1,4 @@
-#![allow(deprecated)]
+#![expect(deprecated)]
 use crate::nns::{Tokens, UserOrAccount};
 use crate::{CanisterId, TimestampNanos, UserId};
 use candid::{CandidType, Principal};
