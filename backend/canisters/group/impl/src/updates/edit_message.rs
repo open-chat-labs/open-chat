@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{RuntimeState, execute_update};
+use crate::{GroupEventPusher, RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::EditMessageArgs;
@@ -31,11 +31,14 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         now,
     };
 
-    state
-        .data
-        .chat
-        .events
-        .edit_message(edit_message_args, Some(&mut state.data.event_store_client))?;
+    state.data.chat.events.edit_message(
+        edit_message_args,
+        Some(GroupEventPusher {
+            now,
+            rng: state.env.rng(),
+            queue: &mut state.data.local_user_index_event_sync_queue,
+        }),
+    )?;
 
     if args.new_achievement && !is_bot {
         state.notify_user_of_achievement(sender, Achievement::EditedMessage, now);

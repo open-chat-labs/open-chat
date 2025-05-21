@@ -1,7 +1,7 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_video_call_operator;
 use crate::timer_job_types::{MarkVideoCallEndedJob, RemoveExpiredEventsJob};
-use crate::{RuntimeState, TimerJob, execute_update};
+use crate::{GroupEventPusher, RuntimeState, TimerJob, execute_update};
 use canister_tracing_macros::trace;
 use chat_events::{CallParticipantInternal, MessageContentInternal, VideoCallContentInternal};
 use constants::HOUR_IN_MS;
@@ -53,7 +53,11 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         None,
         false,
         false,
-        &mut state.data.event_store_client,
+        GroupEventPusher {
+            now,
+            rng: state.env.rng(),
+            queue: &mut state.data.local_user_index_event_sync_queue,
+        },
         true,
         now,
     )?;

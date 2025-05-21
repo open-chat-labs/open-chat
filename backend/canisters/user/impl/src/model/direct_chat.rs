@@ -1,6 +1,5 @@
 use crate::model::unread_message_index_map::UnreadMessageIndexMap;
-use chat_events::{ChatEvents, PushMessageArgs, Reader};
-use event_store_producer::{EventStoreClient, Runtime};
+use chat_events::{ChatEvents, EventPusher, PushMessageArgs, Reader};
 use serde::{Deserialize, Serialize};
 use std::cmp::min;
 use types::{
@@ -62,15 +61,15 @@ impl DirectChat {
         .unwrap()
     }
 
-    pub fn push_message<R: Runtime + Send + 'static>(
+    pub fn push_message<P: EventPusher>(
         &mut self,
         sent_by_me: bool,
         args: PushMessageArgs,
         their_message_index: Option<MessageIndex>,
-        event_store_client: Option<&mut EventStoreClient<R>>,
+        event_pusher: Option<P>,
     ) -> EventWrapper<Message> {
         let now = args.now;
-        let (message_event, _) = self.events.push_message(args, event_store_client);
+        let (message_event, _) = self.events.push_message(args, event_pusher);
 
         self.mark_read_up_to(message_event.event.message_index, sent_by_me, now);
 

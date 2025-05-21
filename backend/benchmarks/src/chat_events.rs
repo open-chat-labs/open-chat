@@ -1,7 +1,8 @@
 use crate::canister_id_from_u64;
 use canbench_rs::{BenchResult, bench, bench_fn};
-use chat_events::{AddRemoveReactionArgs, ChatEvents, MessageContentInternal, PushMessageArgs, TextContentInternal};
-use event_store_producer::NullRuntime;
+use chat_events::{
+    AddRemoveReactionArgs, ChatEvents, MessageContentInternal, NullEventPusher, PushMessageArgs, TextContentInternal,
+};
 use ic_stable_structures::DefaultMemoryImpl;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
 use types::{EventIndex, MessageId, MultiUserChat, Reaction};
@@ -44,7 +45,7 @@ fn push_simple_text_messages() -> BenchResult {
 
     bench_fn(|| {
         for args in args_vec {
-            chat_events.push_message::<NullRuntime>(args, None);
+            chat_events.push_message::<NullEventPusher>(args, None);
         }
     })
 }
@@ -68,7 +69,7 @@ fn add_reactions() -> BenchResult {
 
     let message_id = MessageId::from(u64::MAX);
 
-    chat_events.push_message::<NullRuntime>(
+    chat_events.push_message::<NullEventPusher>(
         PushMessageArgs {
             sender: canister_id_from_u64(1).into(),
             thread_root_message_index: None,
@@ -99,7 +100,7 @@ fn add_reactions() -> BenchResult {
 
     bench_fn(|| {
         for args in args_vec {
-            let _ = chat_events.add_reaction::<NullRuntime>(args, None);
+            let _ = chat_events.add_reaction::<NullEventPusher>(args, None);
         }
     })
 }

@@ -619,9 +619,8 @@ impl<I: Iterator<Item = EventWrapperInternal<ChatEventInternal>>> Iterator for C
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{ChatEvents, MessageContentInternal, PushMessageArgs, TextContentInternal};
+    use crate::{ChatEvents, MessageContentInternal, NullEventPusher, PushMessageArgs, TextContentInternal};
     use candid::Principal;
-    use event_store_producer::NullRuntime;
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use rand::random;
@@ -797,7 +796,7 @@ mod tests {
 
         for i in 0..50 {
             let message_id = MessageId::from((now + i) as u128);
-            events.push_message::<NullRuntime>(
+            events.push_message::<NullEventPusher>(
                 PushMessageArgs {
                     sender: user_id,
                     thread_root_message_index: None,
