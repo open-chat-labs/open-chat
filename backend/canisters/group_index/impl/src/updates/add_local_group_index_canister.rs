@@ -1,6 +1,6 @@
 use crate::guards::caller_is_registry_canister;
-use crate::updates::upgrade_community_canister_wasm::upgrade_community_wasm_in_local_group_index;
-use crate::updates::upgrade_group_canister_wasm::upgrade_group_wasm_in_local_group_index;
+use crate::updates::upgrade_community_canister_wasm::upgrade_community_wasm_in_local_index;
+use crate::updates::upgrade_group_canister_wasm::upgrade_group_wasm_in_local_index;
 use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -14,7 +14,7 @@ use types::{CanisterId, CanisterWasm, Hash};
 async fn add_local_group_index_canister(args: Args) -> Response {
     match read_state(|state| prepare(&args, state)) {
         Ok(result) => {
-            if let Err(error) = upgrade_group_wasm_in_local_group_index(
+            if let Err(error) = upgrade_group_wasm_in_local_index(
                 args.local_user_index_canister_id,
                 &result.group_canister_wasm,
                 result.group_canister_wasm_hash,
@@ -23,7 +23,7 @@ async fn add_local_group_index_canister(args: Args) -> Response {
             .await
             {
                 InternalError(format!("Failed to install group canister wasm: {error:?}"))
-            } else if let Err(error) = upgrade_community_wasm_in_local_group_index(
+            } else if let Err(error) = upgrade_community_wasm_in_local_index(
                 args.local_user_index_canister_id,
                 &result.community_canister_wasm,
                 result.community_canister_wasm_hash,

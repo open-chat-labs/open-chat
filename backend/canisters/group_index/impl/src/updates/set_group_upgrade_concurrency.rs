@@ -9,7 +9,7 @@ use user_index_canister_c2c_client::lookup_user;
 #[update(msgpack = true)]
 #[trace]
 async fn set_group_upgrade_concurrency(args: Args) -> Response {
-    let (caller, user_index_canister_id, local_group_index_canisters) = read_state(|state| {
+    let (caller, user_index_canister_id, local_index_canisters) = read_state(|state| {
         (
             state.env.caller(),
             state.data.user_index_canister_id,
@@ -23,11 +23,11 @@ async fn set_group_upgrade_concurrency(args: Args) -> Response {
         Err(error) => return InternalError(format!("{error:?}")),
     };
 
-    let args = local_group_index_canister::c2c_set_group_upgrade_concurrency::Args { value: args.value };
+    let args = local_user_index_canister::c2c_set_group_upgrade_concurrency::Args { value: args.value };
 
-    let futures: Vec<_> = local_group_index_canisters
+    let futures: Vec<_> = local_index_canisters
         .into_iter()
-        .map(|canister_id| local_group_index_canister_c2c_client::c2c_set_group_upgrade_concurrency(canister_id, &args))
+        .map(|canister_id| local_user_index_canister_c2c_client::c2c_set_group_upgrade_concurrency(canister_id, &args))
         .collect();
 
     let result = futures::future::join_all(futures).await;

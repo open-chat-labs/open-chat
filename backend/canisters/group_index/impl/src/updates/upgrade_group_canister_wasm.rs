@@ -15,7 +15,7 @@ async fn upgrade_group_canister_wasm(args: Args) -> Response {
     let PrepareResult {
         wasm,
         wasm_hash,
-        local_group_index_canisters,
+        local_index_canisters,
     } = match read_state(|state| prepare(args, state)) {
         Ok(ok) => ok,
         Err(response) => {
@@ -26,9 +26,9 @@ async fn upgrade_group_canister_wasm(args: Args) -> Response {
 
     let version = wasm.version;
 
-    let futures: Vec<_> = local_group_index_canisters
+    let futures: Vec<_> = local_index_canisters
         .into_iter()
-        .map(|(canister_id, filter)| upgrade_group_wasm_in_local_group_index(canister_id, &wasm, wasm_hash, Some(filter)))
+        .map(|(canister_id, filter)| upgrade_group_wasm_in_local_index(canister_id, &wasm, wasm_hash, Some(filter)))
         .collect();
 
     if let Err(error) = futures::future::try_join_all(futures).await {
@@ -47,7 +47,7 @@ async fn upgrade_group_canister_wasm(args: Args) -> Response {
 struct PrepareResult {
     wasm: CanisterWasm,
     wasm_hash: Hash,
-    local_group_index_canisters: Vec<(CanisterId, UpgradesFilter)>,
+    local_index_canisters: Vec<(CanisterId, UpgradesFilter)>,
 }
 
 fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
@@ -58,9 +58,9 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
 
     let wasm = state.data.child_canister_wasms.wasm_from_chunks(ChildCanisterType::Group);
 
-    let local_group_index_canister_ids: Vec<_> = state.data.local_index_map.canisters().copied().collect();
+    let local_index_canister_ids: Vec<_> = state.data.local_index_map.canisters().copied().collect();
 
-    let local_group_index_canisters = build_filter_map(local_group_index_canister_ids, args.filter.unwrap_or_default(), |c| {
+    let local_index_canisters = build_filter_map(local_index_canister_ids, args.filter.unwrap_or_default(), |c| {
         state.data.local_index_map.get_index_canister_for_group(&c.into())
     });
 
@@ -70,26 +70,26 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
             module: wasm,
         },
         wasm_hash: args.wasm_hash,
-        local_group_index_canisters,
+        local_index_canisters,
     })
 }
 
-pub(crate) async fn upgrade_group_wasm_in_local_group_index(
+pub(crate) async fn upgrade_group_wasm_in_local_index(
     canister_id: CanisterId,
     canister_wasm: &CanisterWasm,
     wasm_hash: Hash,
     filter: Option<UpgradesFilter>,
 ) -> Result<(), C2CError> {
-    let push_wasm_response = local_group_index_canister_c2c_client::push_wasm_in_chunks(
+    let push_wasm_response = local_user_index_canister_c2c_client::push_wasm_in_chunks(
         canister_id,
-        local_group_index_canister::ChildCanisterType::Group,
+        local_user_index_canister::ChildCanisterType::Group,
         &canister_wasm.module,
     )
     .await?;
 
     if !matches!(
         push_wasm_response,
-        local_group_index_canister::c2c_push_wasm_chunk::Response::Success
+        local_user_index_canister::c2c_push_wasm_chunk::Response::Success
     ) {
         return Err(C2CError::new(
             canister_id,
@@ -99,9 +99,9 @@ pub(crate) async fn upgrade_group_wasm_in_local_group_index(
         ));
     }
 
-    let upgrade_response = local_group_index_canister_c2c_client::c2c_upgrade_group_canister_wasm(
+    let upgrade_response = local_user_index_canister_c2c_client::c2c_upgrade_group_canister_wasm(
         canister_id,
-        &local_group_index_canister::c2c_upgrade_group_canister_wasm::Args {
+        &local_user_index_canister::c2c_upgrade_group_canister_wasm::Args {
             version: canister_wasm.version,
             wasm_hash,
             filter,
