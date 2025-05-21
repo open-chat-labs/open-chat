@@ -1,5 +1,6 @@
 import type { StartStopNotifier, Readable as SvelteReadable, Subscriber, Writable as SvelteWritable, Unsubscriber, Updater } from "svelte/store";
 export { get, type StartStopNotifier, type Subscriber, type Unsubscriber, type Updater } from "svelte/store";
+import { untrack } from "svelte";
 
 export type Readable<T> = SvelteReadable<T> & { get value(): T } & MaybeDirty;
 export type Writable<T> = SvelteWritable<T> & { get value(): T } & MaybeDirty;
@@ -203,7 +204,7 @@ class _Derived<S extends Stores, T> {
     #start() {
         if (this.#started) return;
         for (const [index, store] of this.#storesArray.entries()) {
-            const unsub = store.subscribe(
+            const unsub = untrack(() => store.subscribe(
                 (v) => {
                     (this.#storeValues as unknown[])[index] = v;
                     this.#pending &= ~(1 << index);
@@ -212,7 +213,7 @@ class _Derived<S extends Stores, T> {
                     }
                 },
                 () => this.#pending |= 1 << index
-            );
+            ));
             if (typeof unsub === 'function') {
                 this.#unsubscribers.push(unsub);
             }
