@@ -1,11 +1,12 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{RuntimeState, execute_update_async, mutate_state};
+use crate::{GroupEventPusher, RuntimeState, execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::MEMO_PRIZE_CLAIM;
 use group_canister::claim_prize::{Response::*, *};
 use ledger_utils::{create_pending_transaction, process_transaction};
 use oc_error_codes::OCErrorCode;
+use rand::Rng;
 use types::{CanisterId, CompletedCryptoTransaction, OCResult, PendingCryptoTransaction, UserId};
 
 #[update(msgpack = true)]
@@ -91,8 +92,12 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
         args.message_id,
         winner,
         transaction,
-        state.env.rng(),
-        &mut state.data.event_store_client,
+        state.env.rng().r#gen(),
+        GroupEventPusher {
+            now,
+            rng: state.env.rng(),
+            queue: &mut state.data.local_user_index_event_sync_queue,
+        },
         now,
     ) {
         Ok(_) => {

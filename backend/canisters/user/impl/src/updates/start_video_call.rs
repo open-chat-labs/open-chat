@@ -1,6 +1,6 @@
 use crate::guards::caller_is_video_call_operator;
 use crate::timer_job_types::{MarkVideoCallEndedJob, TimerJob};
-use crate::{RuntimeState, execute_update};
+use crate::{RuntimeState, UserEventPusher, execute_update};
 use canister_tracing_macros::trace;
 use chat_events::{CallParticipantInternal, MessageContentInternal, PushMessageArgs, VideoCallContentInternal};
 use constants::HOUR_IN_MS;
@@ -118,7 +118,11 @@ pub fn handle_start_video_call(
         false,
         push_message_args,
         their_message_index,
-        Some(&mut state.data.event_store_client),
+        Some(UserEventPusher {
+            now,
+            rng: state.env.rng(),
+            queue: &mut state.data.local_user_index_event_sync_queue,
+        }),
     );
 
     if let Some(expiry) = message_event.expires_at {
