@@ -33,7 +33,8 @@ ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
 local_group_index_canister = { path = "../../local_group_index/api" }
-local_group_index_canister_c2c_client = { path = "../../local_group_index/c2c_client" }
+local_user_index_canister = { path = "../../local_user_index/api" }
+local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_client" }
 msgpack = { path = "../../../libraries/msgpack" }
 rand = { workspace = true }
 search = { path = "../../../libraries/search" }

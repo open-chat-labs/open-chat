@@ -30,11 +30,11 @@ pub(crate) fn delete_group(
     community_imported_into: Option<CommunityImportedInto>,
     state: &mut RuntimeState,
 ) -> Response {
-    if let Some(local_group_index_canister) = state.data.local_index_map.get_index_canister_for_group(&group_id) {
+    if let Some(local_user_index_canister) = state.data.local_index_map.get_index_canister_for_group(&group_id) {
         state.data.fire_and_forget_handler.send(
-            local_group_index_canister,
+            local_user_index_canister,
             "c2c_delete_group_msgpack".to_string(),
-            msgpack::serialize_then_unwrap(local_group_index_canister::c2c_delete_group::Args { chat_id: group_id }),
+            msgpack::serialize_then_unwrap(local_user_index_canister::c2c_delete_group::Args { chat_id: group_id }),
         );
     }
 

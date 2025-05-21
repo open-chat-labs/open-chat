@@ -11,11 +11,11 @@ use tracing::info;
 async fn set_max_concurrent_community_canister_upgrades(args: Args) -> Response {
     let canisters: Vec<_> = read_state(|state| state.data.local_index_map.canisters().copied().collect());
 
-    let args = local_group_index_canister::c2c_set_max_concurrent_community_upgrades::Args { value: args.value };
+    let args = local_user_index_canister::c2c_set_max_concurrent_community_upgrades::Args { value: args.value };
 
     let futures: Vec<_> = canisters
         .into_iter()
-        .map(|canister_id| local_group_index_canister_c2c_client::c2c_set_max_concurrent_community_upgrades(canister_id, &args))
+        .map(|canister_id| local_user_index_canister_c2c_client::c2c_set_max_concurrent_community_upgrades(canister_id, &args))
         .collect();
 
     let result = futures::future::join_all(futures).await;

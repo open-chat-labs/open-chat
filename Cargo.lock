@@ -3850,7 +3850,8 @@ dependencies = [
  "ic-cdk-timers",
  "ic-stable-structures",
  "local_group_index_canister",
- "local_group_index_canister_c2c_client",
+ "local_user_index_canister",
+ "local_user_index_canister_c2c_client",
  "msgpack",
  "rand 0.8.5",
  "search",
@@ -5778,19 +5779,6 @@ dependencies = [
  "oc_error_codes",
  "serde",
  "serde_bytes",
- "types",
-]
-
-[[package]]
-name = "local_group_index_canister_c2c_client"
-version = "0.1.0"
-dependencies = [
- "canister_client",
- "constants",
- "ic-cdk 0.18.0",
- "local_group_index_canister",
- "msgpack",
- "tracing",
  "types",
 ]
 

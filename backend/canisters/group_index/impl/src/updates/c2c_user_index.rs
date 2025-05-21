@@ -5,7 +5,7 @@ use canister_time::now_millis;
 use canister_tracing_macros::trace;
 use group_index_canister::UserIndexEvent;
 use group_index_canister::c2c_user_index::{Response::*, *};
-use local_group_index_canister::GroupIndexEvent;
+use local_user_index_canister::GroupIndexEvent;
 use std::cell::LazyCell;
 use types::TimestampMillis;
 
