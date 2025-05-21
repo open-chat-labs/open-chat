@@ -331,7 +331,7 @@ export class AppState {
     }
 
     toggleCommunityFilterLanguage(lang: string) {
-        if (communityFiltersStore.current.has(lang)) {
+        if (communityFiltersStore.value.has(lang)) {
             communityFiltersStore.update((val) => {
                 const clone = new Set([...val]);
                 clone.delete(lang);
@@ -363,7 +363,7 @@ export class AppState {
     }
 
     get selectedAuthProvider() {
-        return selectedAuthProviderStore.current;
+        return selectedAuthProviderStore.value;
     }
 
     set userCreated(val: boolean) {
@@ -371,7 +371,7 @@ export class AppState {
     }
 
     get userCreated() {
-        return userCreatedStore.current;
+        return userCreatedStore.value;
     }
 
     set storage(val: StorageStatus) {

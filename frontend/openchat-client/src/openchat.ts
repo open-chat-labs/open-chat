@@ -299,6 +299,7 @@ import { snapshot } from "./snapshot.svelte";
 import {
     askForNotificationPermission,
     bitcoinAddress,
+    chatSummariesListStore,
     cryptoBalanceStore,
     cryptoLookup,
     eventListScrollTop,
@@ -7600,7 +7601,7 @@ export class OpenChat {
 
     selectFirstChat(): boolean {
         if (!get(mobileWidth)) {
-            const first = [...app.chatSummaries.values()].find((c) => !c.membership.archived);
+            const first = [...chatSummariesListStore.value.values()].find((c) => !c.membership.archived);
             if (first !== undefined) {
                 pageRedirect(routeForChatIdentifier(app.chatListScope.kind, first.id));
                 return true;
