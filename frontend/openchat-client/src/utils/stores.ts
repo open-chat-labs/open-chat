@@ -103,6 +103,7 @@ class _Writable<T> {
     #value: T;
     #dirtyValue: T | undefined = undefined;
     #publishPending: boolean = false;
+    #started: boolean = false;
     #stop: Unsubscriber | undefined = undefined;
 
     constructor(
@@ -119,11 +120,14 @@ class _Writable<T> {
         const id = Symbol();
         this.#subscriptions.set(id, [subscriber, invalidate]);
 
-        if (this.#subscriptions.size === 1 && this.#start !== undefined) {
-            const stop = this.#start(this.set, this.update);
-            if (typeof stop === "function") {
-                this.#stop = stop;
+        if (this.#subscriptions.size === 1) {
+            if (this.#start !== undefined) {
+                const stop = this.#start(this.set, this.update);
+                if (typeof stop === "function") {
+                    this.#stop = stop;
+                }
             }
+            this.#started = true;
         }
 
         subscriber(this.#value);
@@ -168,14 +172,16 @@ class _Writable<T> {
             this.#value = this.#dirtyValue;
             this.#dirtyValue = undefined;
 
-            const shouldRunSubscriptions = !paused && subscriptionsPending.length === 0;
-            for (const [subscription, invalidate] of this.#subscriptions.values()) {
-                invalidate?.();
-                subscriptionsPending.push(() => subscription(this.#value));
-            }
+            if (this.#started) {
+                const shouldRunSubscriptions = !paused && subscriptionsPending.length === 0;
+                for (const [subscription, invalidate] of this.#subscriptions.values()) {
+                    invalidate?.();
+                    subscriptionsPending.push(() => subscription(this.#value));
+                }
 
-            if (shouldRunSubscriptions) {
-                runSubscriptions();
+                if (shouldRunSubscriptions) {
+                    runSubscriptions();
+                }
             }
         }
         this.#publishPending = false;
@@ -183,8 +189,11 @@ class _Writable<T> {
 
     #unsubscribe(id: symbol) {
         this.#subscriptions.delete(id);
-        if (this.#subscriptions.size === 0 && typeof this.#stop === "function") {
-            this.#stop();
+        if (this.#subscriptions.size === 0) {
+            if (typeof this.#stop === "function") {
+                this.#stop();
+            }
+            this.#started = false;
         }
     }
 }

@@ -10,7 +10,7 @@ async fn group_and_community_summary_updates_v2(args: Args) -> Response {
     let PrepareResult {
         caller,
         c2c_args,
-        excess_with_updates,
+        excess_updates,
         not_found,
     } = read_state(|state| prepare(args, state));
 
@@ -18,9 +18,20 @@ async fn group_and_community_summary_updates_v2(args: Args) -> Response {
 
     let responses = futures::future::join_all(futures).await;
 
+    let mut updates = Vec::new();
+    let mut errors = Vec::new();
+    for (canister_id, response) in responses {
+        match response {
+            SummaryUpdatesResponse::SuccessNoUpdates => {}
+            SummaryUpdatesResponse::Error(error) => errors.push((canister_id, error)),
+            response => updates.push(response),
+        }
+    }
+
     Success(SuccessResult {
-        responses,
-        excess_with_updates,
+        updates,
+        excess_updates,
+        errors,
         not_found,
     })
 }
@@ -28,18 +39,18 @@ async fn group_and_community_summary_updates_v2(args: Args) -> Response {
 struct PrepareResult {
     caller: Principal,
     c2c_args: Vec<SummaryUpdatesArgs>,
-    excess_with_updates: Vec<CanisterId>,
+    excess_updates: Vec<CanisterId>,
     not_found: Vec<CanisterId>,
 }
 
 fn prepare(args: Args, state: &RuntimeState) -> PrepareResult {
     let mut c2c_args = Vec::new();
-    let mut excess_with_updates = Vec::new();
+    let mut excess_updates = Vec::new();
     let mut not_found = Vec::new();
     for request in args.requests {
         match should_include_request(&request, state) {
             Some(true) if c2c_args.len() < args.max_c2c_calls => c2c_args.push(request),
-            Some(true) => excess_with_updates.push(request.canister_id),
+            Some(true) => excess_updates.push(request.canister_id),
             Some(false) => {} // No updates
             None => not_found.push(request.canister_id),
         }
@@ -48,7 +59,7 @@ fn prepare(args: Args, state: &RuntimeState) -> PrepareResult {
     PrepareResult {
         caller: state.env.caller(),
         c2c_args,
-        excess_with_updates,
+        excess_updates,
         not_found,
     }
 }
@@ -69,8 +80,8 @@ fn should_include_request(request: &SummaryUpdatesArgs, state: &RuntimeState) ->
     }
 }
 
-pub(crate) async fn make_c2c_call(args: SummaryUpdatesArgs, principal: Principal) -> SummaryUpdatesResponse {
-    if args.is_community {
+pub(crate) async fn make_c2c_call(args: SummaryUpdatesArgs, principal: Principal) -> (CanisterId, SummaryUpdatesResponse) {
+    let response = if args.is_community {
         if let Some(updates_since) = args.updates_since {
             map_response(
                 community_canister_c2c_client::summary_updates(
@@ -116,12 +127,14 @@ pub(crate) async fn make_c2c_call(args: SummaryUpdatesArgs, principal: Principal
             )
             .await,
         )
-    }
+    };
+
+    (args.canister_id, response)
 }
 
 fn map_response<R: Into<SummaryUpdatesResponse>>(response: Result<R, C2CError>) -> SummaryUpdatesResponse {
     match response {
         Ok(result) => result.into(),
-        Err(error) => SummaryUpdatesResponse::InternalError(format!("{error:?}")),
+        Err(error) => SummaryUpdatesResponse::Error(error.into()),
     }
 }

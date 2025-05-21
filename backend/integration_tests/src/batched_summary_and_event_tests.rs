@@ -186,7 +186,7 @@ fn get_summary_updates(
                     max_c2c_calls: 10,
                 },
             );
-        response.responses
+        response.updates
     } else {
         let local_user_index_canister::group_and_community_summary_updates::Response::Success(responses) =
             client::local_user_index::group_and_community_summary_updates(
