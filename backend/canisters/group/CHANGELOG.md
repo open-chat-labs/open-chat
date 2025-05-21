@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Flush pending events at the end of each update call ([#8008](https://github.com/open-chat-labs/open-chat/pull/8008))
 - Notify LocalUserIndex when Group/Community has activity ([#8009](https://github.com/open-chat-labs/open-chat/pull/8009))
 - Use `EventPusher` rather than `EventStoreClient` to push events ([#8010](https://github.com/open-chat-labs/open-chat/pull/8010))
+- Deprecate `event_store_client` ([#8013](https://github.com/open-chat-labs/open-chat/pull/8013))
 
 ## [[2.0.1746](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1746-group)] - 2025-05-12
 
