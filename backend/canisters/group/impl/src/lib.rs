@@ -8,7 +8,7 @@ use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::{ChatEventInternal, EventPusher, Reader, UpdateMessageSuccess};
 use constants::{DAY_IN_MS, HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
-use event_store_producer::{Event, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
+use event_store_producer::{Event, EventStoreClient, EventStoreClientBuilder};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::{GatePayment, calculate_gate_payments};
@@ -441,8 +441,9 @@ impl RuntimeState {
                 .as_ref()
                 .map(|bytes| bytes.len() as u64)
                 .unwrap_or_default(),
-            event_store_client_info: self.data.event_store_client.info(),
             timer_jobs: self.data.timer_jobs.len() as u32,
+            queued_user_events: self.data.user_event_sync_queue.len() as u32,
+            queued_local_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
             stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
@@ -511,6 +512,7 @@ struct Data {
     pub video_call_operators: Vec<Principal>,
     #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
+    #[deprecated]
     pub event_store_client: EventStoreClient<CdkRuntime>,
     achievements: Achievements,
     expiring_members: ExpiringMembers,
@@ -588,6 +590,7 @@ impl Data {
         let mut principal_to_user_id_map = PrincipalToUserIdMap::default();
         principal_to_user_id_map.insert(creator_principal, creator_user_id);
 
+        #[expect(deprecated)]
         Data {
             chat,
             principal_to_user_id_map,
@@ -963,8 +966,9 @@ pub struct Metrics {
     pub instruction_counts: Vec<InstructionCountEntry>,
     pub community_being_imported_into: Option<CommunityId>,
     pub serialized_chat_state_bytes: u64,
-    pub event_store_client_info: EventStoreClientInfo,
     pub timer_jobs: u32,
+    pub queued_user_events: u32,
+    pub queued_local_index_events: u32,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }

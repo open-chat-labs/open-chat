@@ -6,6 +6,7 @@ use canister_tracing_macros::trace;
 use ckbtc_minter_canister::CKBTC_MINTER_CANISTER_ID;
 use constants::{CKBTC_LEDGER_CANISTER_ID, MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 use event_store_producer::EventBuilder;
+use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use oc_error_codes::OCErrorCode;
 use user_canister::withdraw_btc::{Response::*, *};
 
@@ -56,12 +57,15 @@ async fn withdraw_btc_impl(args: Args) -> Response {
             mutate_state(|state| {
                 let user_id_string = state.env.canister_id().to_string();
                 let now = state.env.now();
-                state.data.event_store_client.push(
-                    EventBuilder::new("btc_withdrawal", now)
-                        .with_user(user_id_string.clone(), true)
-                        .with_source(user_id_string, true)
-                        .with_json_payload(&BtcDepositOrWithdrawalEventPayload { amount: args.amount })
-                        .build(),
+                state.push_local_user_index_canister_event(
+                    LocalUserIndexEvent::EventStoreEvent(
+                        EventBuilder::new("btc_withdrawal", now)
+                            .with_user(user_id_string.clone(), true)
+                            .with_source(user_id_string, true)
+                            .with_json_payload(&BtcDepositOrWithdrawalEventPayload { amount: args.amount })
+                            .build(),
+                    ),
+                    now,
                 );
             });
             Success(result.block_index)
