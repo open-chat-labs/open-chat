@@ -298,13 +298,15 @@ export class GlobalLocalState {
 
     deleteUnconfirmed(key: MessageContext, messageId: bigint) {
         let deleted = false;
-        this.#unconfirmed.update((map) => {
-            const state = map.get(key);
-            if (state !== undefined) {
-                deleted = this.#deleteLocalMessage(state, messageId);
-            }
-            return map;
-        });
+        if (this.#unconfirmed.value.get(key)?.has(messageId)) {
+            this.#unconfirmed.update((map) => {
+                const state = map.get(key);
+                if (state !== undefined) {
+                    deleted = this.#deleteLocalMessage(state, messageId);
+                }
+                return map;
+            });
+        }
         return deleted;
     }
 
