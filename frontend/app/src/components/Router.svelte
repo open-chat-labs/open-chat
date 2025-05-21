@@ -289,6 +289,14 @@
     });
 
     $effect(() => {
+        console.log("is this happening?", $selectedChatIdStore);
+    });
+
+    selectedChatIdStore.subscribe((id) => {
+        console.log("and what about this?", id);
+    });
+
+    $effect(() => {
         if (
             $selectedChatIdStore === undefined &&
             $chatListScopeStore.kind !== "none" &&

@@ -19,7 +19,7 @@ import { chatDetailsLocalUpdates } from "../chat/detailsUpdates";
 import { communityLocalUpdates } from "../community/detailUpdates";
 import { localUpdates } from "../localUpdates";
 import { pathState } from "../path/state";
-import { selectedCommunityIdStore } from "../path/stores";
+import { routeStore, selectedCommunityIdStore } from "../path/stores";
 import { app } from "./state";
 import {
     allChatsStore,
@@ -60,6 +60,27 @@ describe("app state", () => {
         pathState.setRouteParams(mockContext, {
             kind: "home_route",
             scope: { kind: "group_chat" },
+        });
+    });
+
+    describe("clearing selected chat", () => {
+        test.only("unselected a chat and make sure id store is undefined", () => {
+            routeStore.set({
+                kind: "global_chat_selected_route",
+                chatId: { kind: "group_chat", groupId: "123456" },
+                chatType: "group_chat",
+                open: false,
+                scope: { kind: "group_chat" },
+            });
+
+            expect(selectedChatIdStore.value).toEqual({ kind: "group_chat", groupId: "123456" });
+
+            routeStore.set({
+                kind: "chat_list_route",
+                scope: { kind: "group_chat" },
+            });
+
+            expect(selectedChatIdStore.value).toBeUndefined();
         });
     });
 
