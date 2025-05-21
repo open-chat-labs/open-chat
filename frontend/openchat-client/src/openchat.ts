@@ -469,6 +469,7 @@ import {
 } from "./utils/rtc";
 import { rtcConnectionsManager } from "./utils/rtcConnectionsManager";
 import { Semaphore } from "./utils/semaphore";
+import { withPausedStores } from "./utils/stores";
 import {
     durationFromMilliseconds,
     formatDisappearingMessageTime,
@@ -1665,7 +1666,7 @@ export class OpenChat {
     }
 
     getContentAsText(formatter: MessageFormatter, content: MessageContent): string {
-        return getContentAsFormattedText(formatter, content, cryptoLookup);
+        return getContentAsFormattedText(formatter, content, cryptoLookup.value);
     }
 
     groupAvatarUrl(
@@ -4114,18 +4115,25 @@ export class OpenChat {
         content: CryptocurrencyContent,
         me: boolean,
     ): string | undefined {
-        return buildCryptoTransferText(formatter, myUserId, senderId, content, me, cryptoLookup);
+        return buildCryptoTransferText(
+            formatter,
+            myUserId,
+            senderId,
+            content,
+            me,
+            cryptoLookup.value,
+        );
     }
 
     buildTransactionLink(
         formatter: MessageFormatter,
         transfer: CryptocurrencyTransfer,
     ): string | undefined {
-        return buildTransactionLink(formatter, transfer, cryptoLookup);
+        return buildTransactionLink(formatter, transfer, cryptoLookup.value);
     }
 
     buildTransactionUrl(transactionIndex: bigint, ledger: string): string | undefined {
-        return buildTransactionUrlByIndex(transactionIndex, ledger, cryptoLookup);
+        return buildTransactionUrlByIndex(transactionIndex, ledger, cryptoLookup.value);
     }
 
     getFirstUnreadMention(chat: ChatSummary): Mention | undefined {
@@ -5249,7 +5257,7 @@ export class OpenChat {
                         principal: user.userId,
                     })
                         .then((val) => {
-                            cryptoBalanceStore.set(ledger, val);
+                            cryptoBalanceStore.setBalance(ledger, val);
                             return val;
                         })
                         .catch(() => 0n)
@@ -5775,7 +5783,7 @@ export class OpenChat {
     ): void {
         const frozen = event.event.kind === "chat_frozen";
         if (this.isPreviewing(chatId)) {
-            const summary = localUpdates.groupChatPreviews.get(chatId);
+            const summary = localUpdates.groupChatPreviews.value.get(chatId);
             if (summary !== undefined) {
                 localUpdates.addGroupPreview({ ...summary, frozen });
             }
@@ -5880,176 +5888,178 @@ export class OpenChat {
                 await updateRegistryTask;
             }
 
-            const chats = (chatsResponse.state.directChats as ChatSummary[])
-                .concat(chatsResponse.state.groupChats)
-                .concat(chatsResponse.state.communities.flatMap((c) => c.channels));
+            withPausedStores(async () => {
+                const chats = (chatsResponse.state.directChats as ChatSummary[])
+                    .concat(chatsResponse.state.groupChats)
+                    .concat(chatsResponse.state.communities.flatMap((c) => c.channels));
 
-            this.#updateReadUpToStore(chats);
+                this.#updateReadUpToStore(chats);
 
-            const userIds = this.#userIdsFromChatSummaries(chats);
-            if (chatsResponse.state.referrals !== undefined) {
-                for (const userId of chatsResponse.state.referrals.map((r) => r.userId)) {
-                    userIds.add(userId);
+                const userIds = this.#userIdsFromChatSummaries(chats);
+                if (chatsResponse.state.referrals !== undefined) {
+                    for (const userId of chatsResponse.state.referrals.map((r) => r.userId)) {
+                        userIds.add(userId);
+                    }
                 }
-            }
-            if (!app.anonUser) {
-                userIds.add(app.currentUserId);
-            }
-            await this.getMissingUsers(userIds);
-
-            if (chatsResponse.state.blockedUsers !== undefined) {
-                userStore.setBlockedUsers(chatsResponse.state.blockedUsers);
-            }
-
-            // if the selected community has updates, reload the details
-            const selectedCommunity = app.selectedCommunitySummary;
-            if (selectedCommunity !== undefined) {
-                const updatedCommunity = chatsResponse.state.communities.find(
-                    (c) => c.id.communityId === selectedCommunity.id.communityId,
-                );
-
-                if (
-                    updatedCommunity !== undefined &&
-                    updatedCommunity.lastUpdated > selectedCommunity.lastUpdated
-                ) {
-                    this.#loadCommunityDetails(updatedCommunity);
-                }
-            }
-
-            // If we are still previewing a community we are a member of then remove the preview
-            for (const community of chatsResponse.state.communities) {
-                if (
-                    community?.membership !== undefined &&
-                    localUpdates.isPreviewingCommunity(community.id)
-                ) {
-                    localUpdates.removeCommunityPreview(community.id);
-                }
-            }
-
-            for (const chat of chats) {
-                localUpdates.removeUninitialisedDirectChat(chat.id);
-            }
-
-            app.setGlobalState(
-                chatsResponse.state.communities,
-                chats,
-                chatsResponse.state.favouriteChats,
-                new Map<ChatListScope["kind"], ChatIdentifier[]>([
-                    ["group_chat", chatsResponse.state.pinnedGroupChats],
-                    ["direct_chat", chatsResponse.state.pinnedDirectChats],
-                    ["favourite", chatsResponse.state.pinnedFavouriteChats],
-                    ["community", chatsResponse.state.pinnedChannels],
-                    ["none", []],
-                ]),
-                chatsResponse.state.achievements,
-                chatsResponse.state.chitState,
-                chatsResponse.state.referrals,
-                chatsResponse.state.walletConfig,
-                chatsResponse.state.messageActivitySummary,
-                chatsResponse.state.installedBots,
-                chatsResponse.state.apiKeys,
-                chatsResponse.state.streakInsurance,
-            );
-
-            if (app.selectedChatId !== undefined) {
-                if (app.chatSummaries.get(app.selectedChatId) === undefined) {
-                    publish("selectedChatInvalid");
-                } else {
-                    const updatedEvents = ChatMap.fromMap(chatsResponse.updatedEvents);
-                    this.#chatUpdated(
-                        app.selectedChatId,
-                        updatedEvents.get(app.selectedChatId) ?? [],
-                    );
-                }
-            }
-
-            const currentUser = userStore.get(app.currentUserId);
-            const avatarId = currentUser?.blobReference?.blobId;
-            if (chatsResponse.state.avatarId !== avatarId) {
-                const blobReference =
-                    chatsResponse.state.avatarId === undefined
-                        ? undefined
-                        : {
-                              canisterId: app.currentUserId,
-                              blobId: chatsResponse.state.avatarId,
-                          };
-                const dataContent = {
-                    blobReference,
-                    blobData: undefined,
-                    blobUrl: undefined,
-                };
-                if (currentUser) {
-                    const user = {
-                        ...currentUser,
-                        ...dataContent,
-                    };
-                    userStore.addUser(this.#rehydrateDataContent(user, "avatar"));
-                }
-            }
-
-            // Take a copy of the previous video calls in progress, then remove those that are still in progress
-            const videoCallsEnded = new Set(this.#videoCallsInProgress);
-
-            // If the latest message in a chat is sent by the current user, then we know they must have read up to
-            // that message, so we mark the chat as read up to that message if it isn't already. This happens when a
-            // user sends a message on one device then looks at OpenChat on another.
-            for (const chat of chats) {
-                const latestMessage = chat.latestMessage?.event;
-                if (
-                    latestMessage !== undefined &&
-                    latestMessage.sender === app.currentUserId &&
-                    (chat.membership?.readByMeUpTo ?? -1) < latestMessage.messageIndex &&
-                    !localUpdates.isUnconfirmed({ chatId: chat.id }, latestMessage.messageId)
-                ) {
-                    messagesRead.markReadUpTo({ chatId: chat.id }, latestMessage.messageIndex);
-                }
-                if (chat.videoCallInProgress !== undefined) {
-                    videoCallsEnded.delete(chat.videoCallInProgress.messageId);
-                    this.#publishRemoteVideoCallStarted({
-                        chatId: chat.id,
-                        userId: chat.videoCallInProgress.startedBy,
-                        messageId: chat.videoCallInProgress.messageId,
-                        currentUserIsParticipant: chat.videoCallInProgress.joinedByCurrentUser,
-                        callType: chat.videoCallInProgress.callType,
-                        timestamp: chat.videoCallInProgress.started,
-                    });
-                }
-            }
-
-            for (const messageId of videoCallsEnded) {
-                this.#publishRemoteVideoCallEnded(messageId);
-            }
-
-            app.pinNumberRequired = chatsResponse.state.pinNumberSettings !== undefined;
-
-            // horribly enough - we need to slightly defer this so that all the cascade of derived stuff is complete
-            // I am hopeful that we can remove this when we aren't manually synchronising runes & stores
-            tick().then(() => {
-                app.chatsInitialised = true;
-            });
-
-            this.#closeNotificationsIfNecessary();
-
-            if (chatsResponse.newAchievements.length > 0) {
-                const filtered = chatsResponse.newAchievements.filter(
-                    (a) => a.timestamp > chatsResponse.state.achievementsLastSeen,
-                );
-                if (filtered.length > 0) {
-                    publish("chitEarned", filtered);
-                }
-            }
-
-            if (initialLoad) {
-                this.#startExchangeRatePoller();
                 if (!app.anonUser) {
-                    this.#initWebRtc();
-                    startMessagesReadTracker(this);
-                    this.refreshSwappableTokens();
-                    window.setTimeout(() => this.#refreshBalancesInSeries(), 1000);
+                    userIds.add(app.currentUserId);
                 }
-            }
+                await this.getMissingUsers(userIds);
 
-            bitcoinAddress.set(chatsResponse.state.bitcoinAddress);
+                if (chatsResponse.state.blockedUsers !== undefined) {
+                    userStore.setBlockedUsers(chatsResponse.state.blockedUsers);
+                }
+
+                // if the selected community has updates, reload the details
+                const selectedCommunity = app.selectedCommunitySummary;
+                if (selectedCommunity !== undefined) {
+                    const updatedCommunity = chatsResponse.state.communities.find(
+                        (c) => c.id.communityId === selectedCommunity.id.communityId,
+                    );
+
+                    if (
+                        updatedCommunity !== undefined &&
+                        updatedCommunity.lastUpdated > selectedCommunity.lastUpdated
+                    ) {
+                        this.#loadCommunityDetails(updatedCommunity);
+                    }
+                }
+
+                // If we are still previewing a community we are a member of then remove the preview
+                for (const community of chatsResponse.state.communities) {
+                    if (
+                        community?.membership !== undefined &&
+                        localUpdates.isPreviewingCommunity(community.id)
+                    ) {
+                        localUpdates.removeCommunityPreview(community.id);
+                    }
+                }
+
+                for (const chat of chats) {
+                    localUpdates.removeUninitialisedDirectChat(chat.id);
+                }
+
+                app.setGlobalState(
+                    chatsResponse.state.communities,
+                    chats,
+                    chatsResponse.state.favouriteChats,
+                    new Map<ChatListScope["kind"], ChatIdentifier[]>([
+                        ["group_chat", chatsResponse.state.pinnedGroupChats],
+                        ["direct_chat", chatsResponse.state.pinnedDirectChats],
+                        ["favourite", chatsResponse.state.pinnedFavouriteChats],
+                        ["community", chatsResponse.state.pinnedChannels],
+                        ["none", []],
+                    ]),
+                    chatsResponse.state.achievements,
+                    chatsResponse.state.chitState,
+                    chatsResponse.state.referrals,
+                    chatsResponse.state.walletConfig,
+                    chatsResponse.state.messageActivitySummary,
+                    chatsResponse.state.installedBots,
+                    chatsResponse.state.apiKeys,
+                    chatsResponse.state.streakInsurance,
+                );
+
+                if (app.selectedChatId !== undefined) {
+                    if (app.chatSummaries.get(app.selectedChatId) === undefined) {
+                        publish("selectedChatInvalid");
+                    } else {
+                        const updatedEvents = ChatMap.fromMap(chatsResponse.updatedEvents);
+                        this.#chatUpdated(
+                            app.selectedChatId,
+                            updatedEvents.get(app.selectedChatId) ?? [],
+                        );
+                    }
+                }
+
+                const currentUser = userStore.get(app.currentUserId);
+                const avatarId = currentUser?.blobReference?.blobId;
+                if (chatsResponse.state.avatarId !== avatarId) {
+                    const blobReference =
+                        chatsResponse.state.avatarId === undefined
+                            ? undefined
+                            : {
+                                  canisterId: app.currentUserId,
+                                  blobId: chatsResponse.state.avatarId,
+                              };
+                    const dataContent = {
+                        blobReference,
+                        blobData: undefined,
+                        blobUrl: undefined,
+                    };
+                    if (currentUser) {
+                        const user = {
+                            ...currentUser,
+                            ...dataContent,
+                        };
+                        userStore.addUser(this.#rehydrateDataContent(user, "avatar"));
+                    }
+                }
+
+                // Take a copy of the previous video calls in progress, then remove those that are still in progress
+                const videoCallsEnded = new Set(this.#videoCallsInProgress);
+
+                // If the latest message in a chat is sent by the current user, then we know they must have read up to
+                // that message, so we mark the chat as read up to that message if it isn't already. This happens when a
+                // user sends a message on one device then looks at OpenChat on another.
+                for (const chat of chats) {
+                    const latestMessage = chat.latestMessage?.event;
+                    if (
+                        latestMessage !== undefined &&
+                        latestMessage.sender === app.currentUserId &&
+                        (chat.membership?.readByMeUpTo ?? -1) < latestMessage.messageIndex &&
+                        !localUpdates.isUnconfirmed({ chatId: chat.id }, latestMessage.messageId)
+                    ) {
+                        messagesRead.markReadUpTo({ chatId: chat.id }, latestMessage.messageIndex);
+                    }
+                    if (chat.videoCallInProgress !== undefined) {
+                        videoCallsEnded.delete(chat.videoCallInProgress.messageId);
+                        this.#publishRemoteVideoCallStarted({
+                            chatId: chat.id,
+                            userId: chat.videoCallInProgress.startedBy,
+                            messageId: chat.videoCallInProgress.messageId,
+                            currentUserIsParticipant: chat.videoCallInProgress.joinedByCurrentUser,
+                            callType: chat.videoCallInProgress.callType,
+                            timestamp: chat.videoCallInProgress.started,
+                        });
+                    }
+                }
+
+                for (const messageId of videoCallsEnded) {
+                    this.#publishRemoteVideoCallEnded(messageId);
+                }
+
+                app.pinNumberRequired = chatsResponse.state.pinNumberSettings !== undefined;
+
+                // horribly enough - we need to slightly defer this so that all the cascade of derived stuff is complete
+                // I am hopeful that we can remove this when we aren't manually synchronising runes & stores
+                tick().then(() => {
+                    app.chatsInitialised = true;
+                });
+
+                this.#closeNotificationsIfNecessary();
+
+                if (chatsResponse.newAchievements.length > 0) {
+                    const filtered = chatsResponse.newAchievements.filter(
+                        (a) => a.timestamp > chatsResponse.state.achievementsLastSeen,
+                    );
+                    if (filtered.length > 0) {
+                        publish("chitEarned", filtered);
+                    }
+                }
+
+                if (initialLoad) {
+                    this.#startExchangeRatePoller();
+                    if (!app.anonUser) {
+                        this.#initWebRtc();
+                        startMessagesReadTracker(this);
+                        this.refreshSwappableTokens();
+                        window.setTimeout(() => this.#refreshBalancesInSeries(), 1000);
+                    }
+                }
+
+                bitcoinAddress.set(chatsResponse.state.bitcoinAddress);
+            });
         }
     }
 
@@ -6579,7 +6589,7 @@ export class OpenChat {
 
         const userId = app.currentUserId;
         const totalTip = transfer.amountE8s + currentTip;
-        const decimals = cryptoLookup.get(transfer.ledger)?.decimals ?? 0;
+        const decimals = cryptoLookup.value.get(transfer.ledger)?.decimals ?? 0;
         const undo = localUpdates.markTip(messageId, transfer.ledger, userId, totalTip);
 
         return this.#sendRequest({
@@ -6636,7 +6646,7 @@ export class OpenChat {
                 kind: "updateRegistry",
             }).subscribe({
                 onResult: ([registry, updated]) => {
-                    if (updated || [...cryptoLookup.keys()].length === 0) {
+                    if (updated || [...cryptoLookup.value.keys()].length === 0) {
                         this.currentAirdropChannel = registry.currentAirdropChannel;
                         const cryptoMap = new Map(registry.tokenDetails.map((t) => [t.ledger, t]));
                         const nsMap = new Map(
@@ -6649,8 +6659,8 @@ export class OpenChat {
                             ]),
                         );
 
-                        nervousSystemLookup.fromMap(nsMap);
-                        cryptoLookup.fromMap(cryptoMap);
+                        nervousSystemLookup.set(nsMap);
+                        cryptoLookup.set(cryptoMap);
 
                         app.messageFilters = registry.messageFilters
                             .map((f) => {
@@ -6680,14 +6690,14 @@ export class OpenChat {
     #updateExchangeRates(): Promise<void> {
         return this.#sendRequest({ kind: "exchangeRates" })
             .then((exchangeRates) =>
-                exchangeRatesLookupStore.fromMap(new Map(Object.entries(exchangeRates))),
+                exchangeRatesLookupStore.set(new Map(Object.entries(exchangeRates))),
             )
             .catch(() => undefined);
     }
 
     async #refreshBalancesInSeries() {
         const config = app.walletConfig;
-        for (const t of [...cryptoLookup.values()]) {
+        for (const t of [...cryptoLookup.value.values()]) {
             if (config.kind === "auto_wallet" || config.tokens.has(t.ledger)) {
                 await this.refreshAccountBalance(t.ledger);
             }
@@ -6801,7 +6811,7 @@ export class OpenChat {
     refreshSwappableTokens(): Promise<Set<string>> {
         return this.#sendRequest({
             kind: "canSwap",
-            tokenLedgers: new Set([...cryptoLookup.keys()]),
+            tokenLedgers: new Set([...cryptoLookup.value.keys()]),
         }).then((tokens) => {
             swappableTokensStore.fromSet(tokens);
             return tokens;
@@ -6809,7 +6819,9 @@ export class OpenChat {
     }
 
     getTokenSwaps(inputTokenLedger: string): Promise<Record<string, DexId[]>> {
-        const outputTokenLedgers = [...cryptoLookup.keys()].filter((t) => t !== inputTokenLedger);
+        const outputTokenLedgers = [...cryptoLookup.value.keys()].filter(
+            (t) => t !== inputTokenLedger,
+        );
 
         return this.#sendRequest({
             kind: "getTokenSwaps",
@@ -8236,7 +8248,7 @@ export class OpenChat {
                 amount.kind === "decimal" &&
                 amount.value !== null
             ) {
-                const tokenDetails = [...cryptoLookup.values()].find(
+                const tokenDetails = [...cryptoLookup.value.values()].find(
                     (t) => t.symbol.toLowerCase() === token.value?.toLocaleLowerCase(),
                 );
                 if (tokenDetails !== undefined) {

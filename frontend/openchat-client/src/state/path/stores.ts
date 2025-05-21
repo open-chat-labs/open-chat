@@ -7,7 +7,7 @@ import type {
 } from "openchat-shared";
 import "page";
 import { derived } from "svelte/store";
-import { writable } from "../writable";
+import { writable } from "../../utils/stores";
 
 const noScope: NullScope = { kind: "none" };
 
@@ -20,7 +20,7 @@ function hasMessageIndex(route: RouteParams): route is MessageIndexRoute {
 }
 
 export const notFoundStore = writable<boolean>(false);
-export const pathContextStore = writable<PageJS.Context | undefined>(undefined, dequal);
+export const pathContextStore = writable<PageJS.Context | undefined>(undefined, undefined, dequal);
 export const routerReadyStore = writable<boolean>(false);
 export const locationStore = derived(pathContextStore, (pathContext) =>
     pathContext ? pathContext.routePath : "",
@@ -30,6 +30,7 @@ export const querystringStore = derived(pathContextStore, (pathContext) =>
 );
 export const routeStore = writable<RouteParams>(
     { scope: noScope, kind: "not_found_route" },
+    undefined,
     dequal,
 );
 export const querystringCodeStore = derived(querystringStore, (qs) => qs.get("code"));

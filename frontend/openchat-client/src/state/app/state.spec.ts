@@ -460,7 +460,7 @@ describe("app state", () => {
         describe("pinned chats", () => {
             beforeEach(() => {
                 chatDetailsLocalUpdates.clearAll();
-                serverPinnedChatsStore.fromMap(
+                serverPinnedChatsStore.set(
                     new Map([
                         [
                             "direct_chat",

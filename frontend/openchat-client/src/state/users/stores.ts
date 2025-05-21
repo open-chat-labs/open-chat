@@ -1,10 +1,10 @@
 import type { UserSummary } from "openchat-shared";
 import { derived } from "svelte/store";
+import { writable } from "../../utils/stores";
 import { localUpdates } from "../localUpdates";
 import { SafeMapStore } from "../map";
-import { SafeSetStore } from "../set";
 
-export const serverBlockedUsersStore = new SafeSetStore<string>();
+export const serverBlockedUsersStore = writable<Set<string>>(new Set());
 
 export const blockedUsersStore = derived(
     [serverBlockedUsersStore, localUpdates.blockedDirectUsers],

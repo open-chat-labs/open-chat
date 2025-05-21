@@ -26,15 +26,24 @@ export class UsersState {
     }
 
     setBlockedUsers(userIds: string[]) {
-        serverBlockedUsersStore.fromSet(new Set(userIds));
+        serverBlockedUsersStore.set(new Set(userIds));
     }
 
     blockUser(userId: string) {
-        serverBlockedUsersStore.add(userId);
+        serverBlockedUsersStore.update((users) => {
+            users.add(userId);
+            return new Set([...users]);
+        });
     }
 
     unblockUser(userId: string) {
-        serverBlockedUsersStore.delete(userId);
+        serverBlockedUsersStore.update((users) => {
+            if (users.has(userId)) {
+                users.delete(userId);
+                return new Set([...users]);
+            }
+            return users;
+        });
     }
 
     setUsers(users: UserLookup) {

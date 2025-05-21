@@ -7,8 +7,6 @@ import type {
     VersionedRules,
     WebhookDetails,
 } from "openchat-shared";
-import { ChatMapStore, LocalMap } from "../map";
-import { LocalSet } from "../set";
 import { scheduleUndo, type UndoLocalUpdate } from "../undo";
 
 const noop = () => {};
@@ -122,64 +120,6 @@ export class ChatDetailsUpdatesManager {
         this.apiKeys.clear();
         this.webhooks.clear();
         this.rules.clear();
-    }
-}
-
-export class ChatLocalSetStore<V> extends ChatMapStore<LocalSet<V>> {
-    add(id: ChatIdentifier, value: V) {
-        return this.#withSet(id, (set) => set.add(value));
-    }
-
-    addMany(id: ChatIdentifier, values: V[]) {
-        return this.#withSet(id, (set) => {
-            const undos = values.map((v) => set.add(v));
-            return () => {
-                undos.forEach((u) => u());
-            };
-        });
-    }
-
-    removeMany(id: ChatIdentifier, values: V[]) {
-        return this.#withSet(id, (set) => {
-            const undos = values.map((v) => set.remove(v));
-            return () => {
-                undos.forEach((u) => u());
-            };
-        });
-    }
-
-    remove(id: ChatIdentifier, value: V) {
-        return this.#withSet(id, (set) => set.remove(value));
-    }
-
-    #withSet(id: ChatIdentifier, fn: (map: LocalSet<V>) => UndoLocalUpdate) {
-        const set = this.get(id) ?? new LocalSet();
-        const undo = fn(set);
-        this.set(id, set);
-        return scheduleUndo(() => {
-            undo();
-            this.publish();
-        });
-    }
-}
-
-export class ChatLocalMapStore<K, V> extends ChatMapStore<LocalMap<K, V>> {
-    addOrUpdate(id: ChatIdentifier, key: K, value: V) {
-        return this.#withMap(id, (map) => map.addOrUpdate(key, value));
-    }
-
-    remove(id: ChatIdentifier, key: K) {
-        return this.#withMap(id, (map) => map.remove(key));
-    }
-
-    #withMap(id: ChatIdentifier, fn: (map: LocalMap<K, V>) => UndoLocalUpdate) {
-        const map = this.get(id) ?? new LocalMap();
-        const undo = fn(map);
-        this.set(id, map);
-        return scheduleUndo(() => {
-            undo();
-            this.publish();
-        });
     }
 }
 

@@ -7,10 +7,10 @@ import {
     type RouteParams,
 } from "openchat-shared";
 import { derived, type Readable } from "svelte/store";
+import { writable } from "../../utils/stores";
 import { isCanisterUrl } from "../../utils/url";
 import { LocalStorageBoolStore, LocalStorageStore } from "../localStorageStore";
 import { routeStore } from "../path/stores";
-import { writable } from "../writable";
 
 function translateScale(scale: FontScale): number {
     if (scale === 0) return 0.75;
@@ -75,7 +75,7 @@ export const availableHeight = derived(
     (dimensions) => dimensions.height - pixelsFromRems(5, dimensions.width),
 );
 export function toPixel(rem: number): number {
-    return pixelsFromRems(rem, dimensions.current.width);
+    return pixelsFromRems(rem, dimensions.value.width);
 }
 export const iconSize = derived(mobileWidth, (mobileWidth) => (mobileWidth ? "1.6em" : "1.4em"));
 export const baseFontSize = derived(mobileWidth, (mobileWidth) => (mobileWidth ? 14 : 16));

@@ -1,6 +1,7 @@
 import {
     getContentAsText,
     isAttachmentContent,
+    MessageContextMap,
     type AttachmentContent,
     type EnhancedReplyContext,
     type EventWrapper,
@@ -8,7 +9,8 @@ import {
     type MessageContext,
     type UserLookup,
 } from "openchat-shared";
-import { MessageContextMapStore } from "./map";
+import { writable } from "../utils/stores";
+import { notEq } from "./utils";
 
 export class DraftMessage {
     textContent?: string;
@@ -17,47 +19,60 @@ export class DraftMessage {
     replyingTo?: EnhancedReplyContext;
 }
 
-export class DraftMessages extends MessageContextMapStore<DraftMessage> {
-    #getOrCreate(key: MessageContext) {
-        let state = this.get(key);
-        if (state === undefined) {
-            state = new DraftMessage();
-            this.set(key, state);
-        }
-        return state;
+export function createDraftMessagesStore() {
+    const store = writable<MessageContextMap<DraftMessage>>(
+        new MessageContextMap(),
+        undefined,
+        notEq,
+    );
+
+    function updateDraft(key: MessageContext, fn: (d: DraftMessage) => DraftMessage) {
+        store.update((s) => {
+            let draft = s.get(key);
+            if (draft === undefined) {
+                draft = new DraftMessage();
+            }
+            s.set(key, fn(draft));
+            return s;
+        });
     }
 
-    setTextContent(key: MessageContext, textContent?: string) {
-        this.#getOrCreate(key).textContent = textContent;
-        this.publish();
-    }
-
-    setAttachment(key: MessageContext, attachment?: AttachmentContent) {
-        this.#getOrCreate(key).attachment = attachment;
-        this.publish();
-    }
-
-    setEditing(key: MessageContext, editingEvent: EventWrapper<Message>, userLookup: UserLookup) {
-        const state = this.#getOrCreate(key);
-        state.textContent = getContentAsText(editingEvent.event.content);
-        state.editingEvent = editingEvent;
-        state.attachment = isAttachmentContent(editingEvent.event.content)
-            ? editingEvent.event.content
-            : undefined;
-        state.replyingTo =
-            editingEvent.event.repliesTo &&
-            editingEvent.event.repliesTo.kind === "rehydrated_reply_context"
-                ? {
-                      ...editingEvent.event.repliesTo,
-                      content: editingEvent.event.content,
-                      sender: userLookup.get(editingEvent.event.sender),
-                  }
-                : undefined;
-        this.publish();
-    }
-
-    setReplyingTo(key: MessageContext, replyingTo?: EnhancedReplyContext) {
-        this.#getOrCreate(key).replyingTo = replyingTo;
-        this.publish();
-    }
+    return {
+        subscribe: store.subscribe,
+        value: store.value,
+        setTextContent(key: MessageContext, textContent?: string) {
+            updateDraft(key, (d) => ({ ...d, textContent }));
+        },
+        setAttachment(key: MessageContext, attachment?: AttachmentContent) {
+            updateDraft(key, (d) => ({ ...d, attachment }));
+        },
+        setReplyingTo(key: MessageContext, replyingTo?: EnhancedReplyContext) {
+            updateDraft(key, (d) => ({ ...d, replyingTo }));
+        },
+        setEditing(
+            key: MessageContext,
+            editingEvent: EventWrapper<Message>,
+            userLookup: UserLookup,
+        ) {
+            updateDraft(key, (d) => {
+                return {
+                    ...d,
+                    textContent: getContentAsText(editingEvent.event.content),
+                    editingEvent: editingEvent,
+                    attachment: isAttachmentContent(editingEvent.event.content)
+                        ? editingEvent.event.content
+                        : undefined,
+                    replyingTo:
+                        editingEvent.event.repliesTo &&
+                        editingEvent.event.repliesTo.kind === "rehydrated_reply_context"
+                            ? {
+                                  ...editingEvent.event.repliesTo,
+                                  content: editingEvent.event.content,
+                                  sender: userLookup.get(editingEvent.event.sender),
+                              }
+                            : undefined,
+                };
+            });
+        },
+    };
 }

@@ -50,6 +50,7 @@ import { CommunityDetailsState } from "../community/server";
 import { FilteredProposals } from "../filteredProposals.svelte";
 import { localUpdates } from "../localUpdates";
 import { selectedCommunityIdStore } from "../path/stores";
+import { addToWritableMap, removeFromWritableMap } from "../utils";
 import {
     achievementsStore,
     adultEnabledStore,
@@ -278,7 +279,7 @@ export class AppState {
     }
 
     get snsFunctions() {
-        return snsFunctionsStore.current;
+        return snsFunctionsStore.value;
     }
 
     #modifyFilteredProposals(fn: (fp: FilteredProposals) => void) {
@@ -349,11 +350,11 @@ export class AppState {
     }
 
     translate(messageId: bigint, translation: string) {
-        translationsStore.set(messageId, translation);
+        return addToWritableMap(messageId, translation, translationsStore);
     }
 
     untranslate(messageId: bigint) {
-        translationsStore.delete(messageId);
+        return removeFromWritableMap(messageId, translationsStore);
     }
 
     set selectedAuthProvider(p: AuthProvider) {
@@ -377,7 +378,7 @@ export class AppState {
     }
 
     get storage() {
-        return storageStore.current;
+        return storageStore.value;
     }
 
     get locale() {
@@ -397,7 +398,7 @@ export class AppState {
     }
 
     get currentUser() {
-        return currentUserStore.current;
+        return currentUserStore.value;
     }
 
     get anonUser() {
@@ -449,11 +450,11 @@ export class AppState {
     }
 
     get achievements(): ReadonlySet<string> {
-        return achievementsStore;
+        return achievementsStore.value;
     }
 
     get chitState() {
-        return chitStateStore.current;
+        return chitStateStore.value;
     }
 
     updateChitState(fn: (s: ChitState) => ChitState) {
@@ -473,7 +474,7 @@ export class AppState {
     }
 
     get chatsInitialised() {
-        return chatsInitialisedStore.current;
+        return chatsInitialisedStore.value;
     }
 
     set chatsInitialised(val: boolean) {
@@ -609,7 +610,7 @@ export class AppState {
 
     // TODO - this is only called from tests
     set serverCommunities(val: CommunityMap<CommunitySummary>) {
-        serverCommunitiesStore.fromMap(val);
+        serverCommunitiesStore.set(val);
     }
 
     isPreviewingCommunity(id: CommunityIdentifier) {
@@ -651,19 +652,19 @@ export class AppState {
         // them individually is a mistake. But we also want to be able to set them from tests.
         // I'll try to lock this down a bit more later.
         serverMessageActivitySummaryStore.set(messageActivitySummary);
-        achievementsStore.fromSet(achievements);
+        achievementsStore.set(achievements);
         referralsStore.set(referrals);
 
         // TODO - do we need to separate these things - each of these fromMap calls will result in a publish
         // which will cause downstream deriveds to fire. It *might* be better to refactor into a single store - we shall see.
         // Or - this might be the case for a "transaction".
-        serverDirectChatsStore.fromMap(directChatsMap);
-        serverGroupChatsStore.fromMap(groupChatsMap);
-        serverFavouritesStore.fromSet(favouritesSet);
-        serverCommunitiesStore.fromMap(communitiesMap);
-        serverPinnedChatsStore.fromMap(pinnedChats);
-        directChatApiKeysStore.fromMap(apiKeys);
-        serverDirectChatBotsStore.fromMap(installedBots);
+        serverDirectChatsStore.set(directChatsMap);
+        serverGroupChatsStore.set(groupChatsMap);
+        serverFavouritesStore.set(favouritesSet);
+        serverCommunitiesStore.set(communitiesMap);
+        serverPinnedChatsStore.set(pinnedChats);
+        directChatApiKeysStore.set(apiKeys);
+        serverDirectChatBotsStore.set(installedBots);
         serverWalletConfigStore.set(walletConfig);
         if (streakInsurance !== undefined) {
             serverStreakInsuranceStore.set(streakInsurance);
@@ -676,7 +677,7 @@ export class AppState {
     }
 
     get pinNumberRequired() {
-        return pinNumberRequiredStore.current;
+        return pinNumberRequiredStore.value;
     }
 
     set pinNumberRequired(val: boolean | undefined) {
@@ -684,7 +685,7 @@ export class AppState {
     }
 
     get pinNumberResolver() {
-        return pinNumberResolverStore.current;
+        return pinNumberResolverStore.value;
     }
 
     set pinNumberResolver(val: PinNumberResolver | undefined) {
@@ -692,7 +693,7 @@ export class AppState {
     }
 
     get pinNumberFailure() {
-        return pinNumberFailureStore.current;
+        return pinNumberFailureStore.value;
     }
 
     set pinNumberFailure(val: PinNumberFailures | undefined) {
@@ -720,7 +721,7 @@ export class AppState {
     }
 
     get serverStreakInsurance() {
-        return serverStreakInsuranceStore.current;
+        return serverStreakInsuranceStore.value;
     }
 
     get selectedChatId() {
