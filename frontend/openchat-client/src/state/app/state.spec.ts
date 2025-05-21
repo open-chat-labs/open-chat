@@ -141,9 +141,9 @@ describe("app state", () => {
 
             test("make sure that all state is overwritten if the chatId *does* change", () => {
                 app.expandDeletedMessages(new Set([1, 2, 3]));
-                expect(selectedChatExpandedDeletedMessageStore.has(3)).toBe(true);
+                expect(selectedChatExpandedDeletedMessageStore.value.has(3)).toBe(true);
                 setChatDetails({ ...chatId, channelId: 654321 }); // reset the server state for a different chatId
-                expect(selectedChatExpandedDeletedMessageStore.has(3)).toBe(false);
+                expect(selectedChatExpandedDeletedMessageStore.value.has(3)).toBe(false);
             });
         });
 

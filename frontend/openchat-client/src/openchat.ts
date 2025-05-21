@@ -312,6 +312,7 @@ import {
     notificationsSupported,
     notificationStatus,
     rightPanelHistory,
+    selectedChatUserIdsStore,
     setSoftDisabled,
     swappableTokensStore,
 } from "./state";
@@ -2128,7 +2129,7 @@ export class OpenChat {
         localUpdates.markMessageDeleted(messageId, userId);
         undeletingMessagesStore.delete(messageId);
 
-        const recipients = [...app.selectedChatUserIds];
+        const recipients = [...selectedChatUserIdsStore.value];
 
         rtcConnectionsManager.sendMessage(recipients, {
             kind: "remote_user_deleted_message",
@@ -2309,7 +2310,7 @@ export class OpenChat {
                 return false;
             });
 
-        this.#sendRtcMessage([...app.selectedChatUserIds], {
+        this.#sendRtcMessage([...selectedChatUserIdsStore.value], {
             kind: "remote_user_toggled_reaction",
             id: chatId,
             messageId: messageId,
@@ -3460,7 +3461,7 @@ export class OpenChat {
         threadRootMessageIndex: number | undefined,
     ): void {
         if (userId === app.currentUserId) {
-            const userIds = app.selectedChatUserIds;
+            const userIds = selectedChatUserIdsStore.value;
             rtcConnectionsManager.sendMessage([...userIds], {
                 kind: "remote_user_removed_message",
                 id: chatId,
@@ -3614,7 +3615,7 @@ export class OpenChat {
         messageEvent: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
     ): Promise<void> {
-        rtcConnectionsManager.sendMessage([...app.selectedChatUserIds], {
+        rtcConnectionsManager.sendMessage([...selectedChatUserIdsStore.value], {
             kind: "remote_user_sent_message",
             id: clientChat.id,
             messageEvent: serialiseMessageForRtc(messageEvent),
@@ -3985,7 +3986,7 @@ export class OpenChat {
             return Promise.resolve(CommonResponses.failure());
         }
 
-        const draftMessage = localUpdates.draftMessages.get(messageContext);
+        const draftMessage = localUpdates.draftMessages.value.get(messageContext);
         const currentEvents = this.#eventsForMessageContext(messageContext);
         const [nextEventIndex, nextMessageIndex] =
             threadRootMessageIndex !== undefined
@@ -4098,7 +4099,7 @@ export class OpenChat {
                 messagesRead.markReadUpTo(context, messageEvent.event.messageIndex - 1);
             }
 
-            localUpdates.draftMessages.delete(context);
+            localUpdates.draftMessages.value.delete(context);
 
             if (!isTransfer(messageEvent.event.content)) {
                 this.#sendMessageWebRtc(chat, messageEvent, threadRootMessageIndex).then(() => {
@@ -4193,7 +4194,7 @@ export class OpenChat {
                 msg.blockLevelMarkdown === blockLevelMarkdown ? undefined : blockLevelMarkdown;
 
             const undo = localUpdates.markMessageContentEdited(msg, updatedBlockLevelMarkdown);
-            localUpdates.draftMessages.delete(messageContext);
+            localUpdates.draftMessages.value.delete(messageContext);
 
             const newAchievement = !app.achievements.has("edited_message");
 
@@ -5852,7 +5853,7 @@ export class OpenChat {
                 }
             }
 
-            for (const userId of userStore.specialUsers.keys()) {
+            for (const userId of userStore.specialUsers.value.keys()) {
                 usersToUpdate.delete(userId);
             }
 
@@ -6813,7 +6814,7 @@ export class OpenChat {
             kind: "canSwap",
             tokenLedgers: new Set([...cryptoLookup.value.keys()]),
         }).then((tokens) => {
-            swappableTokensStore.fromSet(tokens);
+            swappableTokensStore.set(tokens);
             return tokens;
         });
     }

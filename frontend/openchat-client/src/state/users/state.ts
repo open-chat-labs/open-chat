@@ -47,11 +47,14 @@ export class UsersState {
     }
 
     setUsers(users: UserLookup) {
-        normalUsersStore.fromMap(users);
+        normalUsersStore.set(new Map(users));
     }
 
     addUser(user: UserSummary) {
-        normalUsersStore.set(user.userId, user);
+        normalUsersStore.update((map) => {
+            map.set(user.userId, user);
+            return map;
+        });
     }
 
     addMany(users: UserSummary[]) {
@@ -59,17 +62,20 @@ export class UsersState {
     }
 
     setUpdated(userIds: string[], timestamp: bigint) {
-        for (const userId of userIds) {
-            const user = normalUsersStore.get(userId);
-            if (user !== undefined) {
-                user.updated = timestamp;
-                normalUsersStore.set(userId, user);
+        normalUsersStore.update((map) => {
+            for (const userId of userIds) {
+                const user = map.get(userId);
+                if (user !== undefined) {
+                    user.updated = timestamp;
+                    map.set(userId, user);
+                }
             }
-        }
+            return map;
+        });
     }
 
     addSpecialUsers(users: [string, UserSummary][]) {
-        specialUsersStore.fromMap(new Map(users));
+        specialUsersStore.set(new Map(users));
     }
 
     get(userId: string): UserSummary | undefined {
@@ -88,7 +94,7 @@ export class UsersState {
         return this.#allUsers;
     }
 
-    get specialUsers(): ReadonlyMap<string, UserSummary> {
+    get specialUsers() {
         return specialUsersStore;
     }
 

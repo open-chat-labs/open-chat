@@ -6,8 +6,8 @@ import {
     type RightPanelMode,
     type RouteParams,
 } from "openchat-shared";
-import { derived, type Readable } from "svelte/store";
-import { writable } from "../../utils/stores";
+import { type Readable } from "svelte/store";
+import { derived, writable } from "../../utils/stores";
 import { isCanisterUrl } from "../../utils/url";
 import { LocalStorageBoolStore, LocalStorageStore } from "../localStorageStore";
 import { routeStore } from "../path/stores";

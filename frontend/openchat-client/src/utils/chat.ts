@@ -74,9 +74,9 @@ import {
     updateFromOptions,
     type ReadonlySet,
 } from "openchat-shared";
-import { cryptoLookup, localUpdates } from "../state";
+import { cryptoLookup, localUpdates, selectedChatUserIdsStore } from "../state";
 import { app } from "../state/app/state";
-import type { LocalTipsReceived, MessageLocalState } from "../state/message/localUpdates";
+import type { LocalTipsReceived, MessageLocalUpdates } from "../state/message/localUpdates";
 import { userStore } from "../state/users/state";
 import type { TypersByKey } from "../stores/typing";
 import { areOnSameDay } from "../utils/date";
@@ -289,7 +289,7 @@ function messageMentionsUser(
     msg: EventWrapper<Message>,
 ): boolean {
     if (msg.event.sender === userId) return false;
-    const txt = getContentAsFormattedText(formatter, msg.event.content, cryptoLookup);
+    const txt = getContentAsFormattedText(formatter, msg.event.content, cryptoLookup.value);
     return txt.indexOf(`@UserId(${userId})`) >= 0;
 }
 
@@ -350,7 +350,7 @@ export function mergeUnconfirmedIntoSummary(
     formatter: MessageFormatter,
     userId: string,
     chatSummary: ChatSummary,
-    localMessageUpdates: MessageMap<MessageLocalState>,
+    localMessageUpdates: MessageMap<MessageLocalUpdates>,
     translations: MessageMap<string>,
     blockedUsers: Set<string>,
     currentUserId: string,
@@ -1331,7 +1331,7 @@ export function mergeEventsAndLocalUpdates(
     expiredEventRanges: DRange,
     translations: MessageMap<string>,
     selectedChatBlockedOrSuspendedUsers: Set<string>,
-    messageLocalUpdates: MessageMap<MessageLocalState>,
+    messageLocalUpdates: MessageMap<MessageLocalUpdates>,
     recentlySentMessages: MessageMap<bigint>,
     messageFilters: MessageFilter[],
 ): EventWrapper<ChatEvent>[] {
@@ -1450,8 +1450,8 @@ export function doesMessageFailFilter(
 
 function mergeLocalUpdates(
     message: Message,
-    localUpdates: MessageLocalState | undefined,
-    replyContextLocalUpdates: MessageLocalState | undefined,
+    localUpdates: MessageLocalUpdates | undefined,
+    replyContextLocalUpdates: MessageLocalUpdates | undefined,
     tallyUpdate: Tally | undefined,
     translation: string | undefined,
     replyTranslation: string | undefined,
@@ -1806,7 +1806,7 @@ export function stopTyping(
     userId: string,
     threadRootMessageIndex?: number,
 ): void {
-    rtcConnectionsManager.sendMessage([...app.selectedChatUserIds], {
+    rtcConnectionsManager.sendMessage([...selectedChatUserIdsStore.value], {
         kind: "remote_user_stopped_typing",
         id,
         userId,
@@ -1819,7 +1819,7 @@ export function startTyping(
     userId: string,
     threadRootMessageIndex?: number,
 ): void {
-    rtcConnectionsManager.sendMessage([...app.selectedChatUserIds], {
+    rtcConnectionsManager.sendMessage([...selectedChatUserIdsStore.value], {
         kind: "remote_user_typing",
         id,
         userId,

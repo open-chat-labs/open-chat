@@ -55,7 +55,6 @@ import {
     type WalletConfig,
     type WebhookDetails,
 } from "openchat-shared";
-import { derived as svelteDerived } from "svelte/store";
 import {
     getMessagePermissionsForSelectedChat,
     mergeChatMetrics,
@@ -66,7 +65,7 @@ import {
 import { configKeys } from "../../utils/config";
 import { enumFromStringValue } from "../../utils/enums";
 import { setsAreEqual } from "../../utils/set";
-import { derived, writable } from "../../utils/stores";
+import { derived, writable, type Subscriber } from "../../utils/stores";
 import { chatDetailsLocalUpdates } from "../chat/detailsUpdates";
 import type { ChatDetailsState } from "../chat/serverDetails";
 import { chatSummaryLocalUpdates, ChatSummaryUpdates } from "../chat/summaryUpdates";
@@ -102,19 +101,25 @@ type GovernanceCanister = string;
 
 export const cryptoLookup = writable<ReadonlyMap<LedgerCanister, CryptocurrencyDetails>>(
     new SafeMap(),
+    undefined,
+    notEq,
 );
 export const nervousSystemLookup = writable<ReadonlyMap<GovernanceCanister, NervousSystemDetails>>(
     new SafeMap(),
+    undefined,
+    notEq,
 );
 export const exchangeRatesLookupStore = writable<ReadonlyMap<string, TokenExchangeRates>>(
     new SafeMap(),
+    undefined,
+    notEq,
 );
 
 function createCryptoBalanceStore() {
     const store = writable<Map<LedgerCanister, bigint>>(new Map(), undefined, notEq);
     return {
         value: store.value,
-        subscribe: store.subscribe,
+        subscribe: (sub: Subscriber<Map<LedgerCanister, bigint>>) => store.subscribe(sub),
         setBalance(ledger: string, balance: bigint) {
             store.update((s) => s.set(ledger, balance));
             cryptoBalancesLastUpdated.set(ledger, Date.now());
@@ -139,7 +144,7 @@ export const lastCryptoSent = new LocalStorageStore<string | undefined>(
     undefined,
 );
 
-export const enhancedCryptoLookup = svelteDerived(
+export const enhancedCryptoLookup = derived(
     [cryptoLookup, cryptoBalanceStore, exchangeRatesLookupStore],
     ([$lookup, $balance, $exchangeRatesLookup]) => {
         const xrICPtoDollar = $exchangeRatesLookup.get("icp")?.toUSD;
@@ -185,7 +190,7 @@ export const enhancedCryptoLookup = svelteDerived(
     },
 );
 
-export const cryptoTokensSorted = svelteDerived([enhancedCryptoLookup], ([$lookup]) => {
+export const cryptoTokensSorted = derived(enhancedCryptoLookup, ($lookup) => {
     return [...$lookup.values()].filter((t) => t.enabled || !t.zero).sort(compareTokens);
 });
 
@@ -202,17 +207,21 @@ function meetsManualWalletCriteria(config: WalletConfig, token: EnhancedTokenDet
     return config.kind === "manual_wallet" && config.tokens.has(token.ledger);
 }
 
-export const serverWalletConfigStore = writable<WalletConfig>({
-    kind: "auto_wallet",
-    minDollarValue: 0,
-});
+export const serverWalletConfigStore = writable<WalletConfig>(
+    {
+        kind: "auto_wallet",
+        minDollarValue: 0,
+    },
+    undefined,
+    notEq,
+);
 
-export const walletConfigStore = svelteDerived(
+export const walletConfigStore = derived(
     [serverWalletConfigStore, localUpdates.walletConfig],
     ([serverWalletConfig, localUpates]) => localUpates ?? serverWalletConfig,
 );
 
-export const walletTokensSorted = svelteDerived(
+export const walletTokensSorted = derived(
     [cryptoTokensSorted, walletConfigStore],
     ([$tokens, walletConfig]) => {
         return $tokens.filter(
@@ -223,7 +232,7 @@ export const walletTokensSorted = svelteDerived(
     },
 );
 
-export const swappableTokensStore = new SafeSetStore<string>();
+export const swappableTokensStore = writable<ReadonlySet<string>>(new Set(), undefined, notEq);
 
 function compareTokens(a: EnhancedTokenDetails, b: EnhancedTokenDetails): number {
     // Sort by non-zero balances first
@@ -266,74 +275,83 @@ export function hasFlag(mask: number, flag: ModerationFlag): boolean {
     return (mask & flag) !== 0;
 }
 export const pinNumberRequiredStore = writable<boolean | undefined>(undefined);
-export const pinNumberResolverStore = writable<PinNumberResolver | undefined>(undefined);
-export const pinNumberFailureStore = writable<PinNumberFailures | undefined>(undefined);
+export const pinNumberResolverStore = writable<PinNumberResolver | undefined>(
+    undefined,
+    undefined,
+    notEq,
+);
+export const pinNumberFailureStore = writable<PinNumberFailures | undefined>(
+    undefined,
+    undefined,
+    notEq,
+);
 
-export const storageStore = writable<StorageStatus>({
-    byteLimit: 0,
-    bytesUsed: 0,
-});
+export const storageStore = writable<StorageStatus>(
+    {
+        byteLimit: 0,
+        bytesUsed: 0,
+    },
+    undefined,
+    notEq,
+);
 
-export const percentageStorageUsedStore = svelteDerived(storageStore, (storage) =>
+export const percentageStorageUsedStore = derived(storageStore, (storage) =>
     Math.ceil((storage.bytesUsed / storage.byteLimit) * 100),
 );
 
-export const percentageStorageRemainingStore = svelteDerived(storageStore, (storage) =>
+export const percentageStorageRemainingStore = derived(storageStore, (storage) =>
     Math.floor((1 - storage.bytesUsed / storage.byteLimit) * 100),
 );
 
-export const storageInGBStore = svelteDerived(storageStore, (storage) => ({
+export const storageInGBStore = derived(storageStore, (storage) => ({
     gbLimit: storage.byteLimit / ONE_GB,
     gbUsed: storage.bytesUsed / ONE_GB,
 }));
 
-export const messageFiltersStore = writable<MessageFilter[]>([]);
-export const translationsStore = writable<MessageMap<string>>(new MessageMap());
-export const snsFunctionsStore = writable<SnsFunctions>(new SnsFunctions());
-export const filteredProposalsStore = writable<FilteredProposals | undefined>(undefined);
+export const messageFiltersStore = writable<MessageFilter[]>([], undefined, notEq);
+export const translationsStore = writable<MessageMap<string>>(new MessageMap(), undefined, notEq);
+export const snsFunctionsStore = writable<SnsFunctions>(new SnsFunctions(), undefined, notEq);
+export const filteredProposalsStore = writable<FilteredProposals | undefined>(
+    undefined,
+    undefined,
+    notEq,
+);
 export const currentUserStore = writable<CreatedUser>(anonymousUser(), undefined, dequal);
 export const currentUserIdStore = derived(currentUserStore, ({ userId }) => userId);
-export const anonUserStore = svelteDerived(currentUserIdStore, (id) => id === ANON_USER_ID);
-export const suspendedUserStore = svelteDerived(
+export const anonUserStore = derived(currentUserIdStore, (id) => id === ANON_USER_ID);
+export const suspendedUserStore = derived(
     currentUserStore,
     (user) => user.suspensionDetails !== undefined,
 );
-export const platformModeratorStore = svelteDerived(
-    currentUserStore,
-    (user) => user.isPlatformModerator,
-);
-export const platformOperatorStore = svelteDerived(
-    currentUserStore,
-    (user) => user.isPlatformOperator,
-);
-export const diamondStatusStore = svelteDerived(currentUserStore, (user) => user.diamondStatus);
-export const isDiamondStore = svelteDerived(
+export const platformModeratorStore = derived(currentUserStore, (user) => user.isPlatformModerator);
+export const platformOperatorStore = derived(currentUserStore, (user) => user.isPlatformOperator);
+export const diamondStatusStore = derived(currentUserStore, (user) => user.diamondStatus);
+export const isDiamondStore = derived(
     diamondStatusStore,
     (diamondStatus) =>
         diamondStatus.kind === "lifetime" ||
         (diamondStatus.kind === "active" && diamondStatus.expiresAt > Date.now()),
 );
-export const isLifetimeDiamondStore = svelteDerived(
+export const isLifetimeDiamondStore = derived(
     diamondStatusStore,
     (diamondStatus) => diamondStatus.kind === "lifetime",
 );
-export const canExtendDiamondStore = svelteDerived(
+export const canExtendDiamondStore = derived(
     diamondStatusStore,
     (diamondStatus) => diamondStatus.kind === "active",
 );
-export const moderationFlagsEnabledStore = svelteDerived(
+export const moderationFlagsEnabledStore = derived(
     currentUserStore,
     ({ moderationFlagsEnabled }) => moderationFlagsEnabled,
 );
-export const adultEnabledStore = svelteDerived(
-    moderationFlagsEnabledStore,
-    (moderationFlagsEnabled) => hasFlag(moderationFlagsEnabled, ModerationFlags.Adult),
+export const adultEnabledStore = derived(moderationFlagsEnabledStore, (moderationFlagsEnabled) =>
+    hasFlag(moderationFlagsEnabled, ModerationFlags.Adult),
 );
-export const offensiveEnabledStore = svelteDerived(
+export const offensiveEnabledStore = derived(
     moderationFlagsEnabledStore,
     (moderationFlagsEnabled) => hasFlag(moderationFlagsEnabled, ModerationFlags.Offensive),
 );
-export const underReviewEnabledStore = svelteDerived(
+export const underReviewEnabledStore = derived(
     moderationFlagsEnabledStore,
     (moderationFlagsEnabled) => hasFlag(moderationFlagsEnabled, ModerationFlags.UnderReview),
 );
@@ -393,7 +411,7 @@ function permissionToStatus(
     }
 }
 
-export const notificationStatus = svelteDerived(
+export const notificationStatus = derived(
     [softDisabledStore, browserPermissionStore, anonUserStore],
     ([softDisabled, browserPermission, anonUser]) => {
         if (!notificationsSupported || anonUser) {
@@ -427,7 +445,7 @@ export const communityFiltersStore = new LocalStorageStore(
     communityFilterFromString,
     setsAreEqual,
 );
-export const exploreCommunitiesFiltersStore = svelteDerived(
+export const exploreCommunitiesFiltersStore = derived(
     [communityFiltersStore, moderationFlagsEnabledStore],
     ([communityFilters, moderationFlagsEnabled]) => ({
         languages: Array.from(communityFilters),
@@ -441,7 +459,7 @@ export const selectedAuthProviderStore = new LocalStorageStore(
     (a) => a,
     (a) => enumFromStringValue(AuthProvider, a, AuthProvider.II),
 );
-export const achievementsStore = writable<Set<string>>(new Set());
+export const achievementsStore = writable<Set<string>>(new Set(), undefined, notEq);
 export const chitStateStore = writable<ChitState>(
     {
         chitBalance: 0,
@@ -456,9 +474,11 @@ export const chitStateStore = writable<ChitState>(
 
 export const serverCommunitiesStore = writable<CommunityMap<CommunitySummary>>(
     new CommunityMap<CommunitySummary>(),
+    undefined,
+    notEq,
 );
 
-export const communitiesStore = svelteDerived(
+export const communitiesStore = derived(
     [
         serverCommunitiesStore,
         localUpdates.communities,
@@ -497,7 +517,7 @@ export const communitiesStore = svelteDerived(
     },
 );
 
-export const sortedCommunitiesStore = svelteDerived(communitiesStore, (communities) => {
+export const sortedCommunitiesStore = derived(communitiesStore, (communities) => {
     return [...communities.values()].toSorted((a, b) => {
         return b.membership.index === a.membership.index
             ? b.memberCount - a.memberCount
@@ -505,19 +525,19 @@ export const sortedCommunitiesStore = svelteDerived(communitiesStore, (communiti
     });
 });
 
-export const nextCommunityIndexStore = svelteDerived(
+export const nextCommunityIndexStore = derived(
     sortedCommunitiesStore,
     (sortedCommunitiesStore) => (sortedCommunitiesStore[0]?.membership?.index ?? -1) + 1,
 );
 
-export const userGroupSummariesStore = svelteDerived(communitiesStore, (communities) => {
+export const userGroupSummariesStore = derived(communitiesStore, (communities) => {
     return [...communities.values()].reduce((map, community) => {
         community.userGroups.forEach((ug) => map.set(ug.id, ug));
         return map;
     }, new Map<number, UserGroupSummary>());
 });
 
-export const selectedChatIdStore = svelteDerived(routeStore, (route) => {
+export const selectedChatIdStore = derived(routeStore, (route) => {
     switch (route.kind) {
         case "selected_channel_route":
         case "global_chat_selected_route":
@@ -527,11 +547,15 @@ export const selectedChatIdStore = svelteDerived(routeStore, (route) => {
     }
 });
 
-export const chatListScopeStore = svelteDerived(routeStore, (route) => route.scope);
+export const chatListScopeStore = derived(routeStore, (route) => route.scope);
 export const chatsInitialisedStore = writable(false);
-export const selectedServerCommunityStore = writable<CommunityDetailsState | undefined>(undefined);
+export const selectedServerCommunityStore = writable<CommunityDetailsState | undefined>(
+    undefined,
+    undefined,
+    notEq,
+);
 
-export const selectedCommunityMembersStore = svelteDerived(
+export const selectedCommunityMembersStore = derived(
     [selectedServerCommunityStore, communityLocalUpdates.members],
     ([community, members]) => {
         if (community === undefined) return new Map() as ReadonlyMap<string, Member>;
@@ -541,7 +565,7 @@ export const selectedCommunityMembersStore = svelteDerived(
     },
 );
 
-export const selectedCommunityBotsStore = svelteDerived(
+export const selectedCommunityBotsStore = derived(
     [selectedServerCommunityStore, communityLocalUpdates.bots],
     ([community, bots]) => {
         if (community === undefined)
@@ -551,7 +575,7 @@ export const selectedCommunityBotsStore = svelteDerived(
         return updates.apply(community.bots);
     },
 );
-export const selectedCommunityUserGroupsStore = svelteDerived(
+export const selectedCommunityUserGroupsStore = derived(
     [selectedServerCommunityStore, communityLocalUpdates.userGroups],
     ([community, userGroups]) => {
         if (community === undefined) return new Map() as ReadonlyMap<number, UserGroupDetails>;
@@ -560,7 +584,7 @@ export const selectedCommunityUserGroupsStore = svelteDerived(
         return updates.apply(community.userGroups);
     },
 );
-export const selectedCommunityInvitedUsersStore = svelteDerived(
+export const selectedCommunityInvitedUsersStore = derived(
     [selectedServerCommunityStore, communityLocalUpdates.invitedUsers],
     ([community, invitedUsers]) => {
         if (community === undefined) return new Set() as ReadonlySet<string>;
@@ -569,7 +593,7 @@ export const selectedCommunityInvitedUsersStore = svelteDerived(
         return updates.apply(community.invitedUsers);
     },
 );
-export const selectedCommunityBlockedUsersStore = svelteDerived(
+export const selectedCommunityBlockedUsersStore = derived(
     [selectedServerCommunityStore, communityLocalUpdates.blockedUsers],
     ([community, blockedUsers]) => {
         if (community === undefined) return new Set() as ReadonlySet<string>;
@@ -578,7 +602,7 @@ export const selectedCommunityBlockedUsersStore = svelteDerived(
         return updates.apply(community.blockedUsers);
     },
 );
-export const selectedCommunityRulesStore = svelteDerived(
+export const selectedCommunityRulesStore = derived(
     [selectedServerCommunityStore, communityLocalUpdates.rules],
     ([community, rules]) => {
         if (community === undefined) return undefined;
@@ -586,79 +610,83 @@ export const selectedCommunityRulesStore = svelteDerived(
         return updates ?? community.rules;
     },
 );
-export const selectedCommunityLapsedMembersStore = svelteDerived(
+export const selectedCommunityLapsedMembersStore = derived(
     selectedServerCommunityStore,
     (selectedCommunity) => selectedCommunity?.lapsedMembers ?? (new Set() as ReadonlySet<string>),
 );
-export const selectedCommunityApiKeysStore = svelteDerived(
+export const selectedCommunityApiKeysStore = derived(
     selectedServerCommunityStore,
     (selectedCommunity) =>
         selectedCommunity?.apiKeys ?? (new Map() as ReadonlyMap<string, PublicApiKeyDetails>),
 );
-export const selectedCommunityReferralsStore = svelteDerived(
+export const selectedCommunityReferralsStore = derived(
     selectedServerCommunityStore,
     (selectedCommunity) => selectedCommunity?.referrals ?? (new Set() as ReadonlySet<string>),
 );
-export const selectedCommunitySummaryStore = svelteDerived(
+export const selectedCommunitySummaryStore = derived(
     [selectedCommunityIdStore, communitiesStore],
     ([selectedCommunityId, communities]) =>
         selectedCommunityId ? communities.get(selectedCommunityId) : undefined,
 );
 
-export const selectedServerChatStore = writable<ChatDetailsState | undefined>(undefined);
-export const selectedChatMembersStore = svelteDerived(
+export const selectedServerChatStore = writable<ChatDetailsState | undefined>(
+    undefined,
+    undefined,
+    notEq,
+);
+export const selectedChatMembersStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.members],
     ([chat, members]) => {
         if (chat === undefined) return new Map() as ReadonlyMap<string, Member>;
         return members.get(chat.chatId)?.apply(chat.members) ?? chat.members;
     },
 );
-export const selectedChatBlockedUsersStore = svelteDerived(
+export const selectedChatBlockedUsersStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.blockedUsers],
     ([chat, blockedUsers]) => {
         if (chat === undefined) return new Set() as ReadonlySet<string>;
         return blockedUsers.get(chat.chatId)?.apply(chat.blockedUsers) ?? chat.blockedUsers;
     },
 );
-export const selectedChatLapsedMembersStore = svelteDerived([selectedServerChatStore], ([chat]) => {
+export const selectedChatLapsedMembersStore = derived(selectedServerChatStore, (chat) => {
     return chat?.lapsedMembers ?? (new Set() as ReadonlySet<string>);
 });
-export const selectedChatPinnedMessagesStore = svelteDerived(
+export const selectedChatPinnedMessagesStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.pinnedMessages],
     ([chat, pinnedMessages]) => {
         if (chat === undefined) return new Set() as ReadonlySet<number>;
         return pinnedMessages.get(chat.chatId)?.apply(chat.pinnedMessages) ?? chat.pinnedMessages;
     },
 );
-export const selectedChatInvitedUsersStore = svelteDerived(
+export const selectedChatInvitedUsersStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.invitedUsers],
     ([chat, invitedUsers]) => {
         if (chat === undefined) return new Set() as ReadonlySet<string>;
         return invitedUsers.get(chat.chatId)?.apply(chat.invitedUsers) ?? chat.invitedUsers;
     },
 );
-export const selectedChatBotsStore = svelteDerived(
+export const selectedChatBotsStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.bots],
     ([chat, bots]) => {
         if (chat === undefined) return new Map() as ReadonlyMap<string, ExternalBotPermissions>;
         return bots.get(chat.chatId)?.apply(chat.bots) ?? chat.bots;
     },
 );
-export const selectedChatApiKeysStore = svelteDerived(
+export const selectedChatApiKeysStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.apiKeys],
     ([chat, apiKeys]) => {
         if (chat === undefined) return new Map() as ReadonlyMap<string, PublicApiKeyDetails>;
         return apiKeys.get(chat.chatId)?.apply(chat.apiKeys) ?? chat.apiKeys;
     },
 );
-export const selectedChatWebhooksStore = svelteDerived(
+export const selectedChatWebhooksStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.webhooks],
     ([chat, webhooks]) => {
         if (chat === undefined) return new Map() as ReadonlyMap<string, WebhookDetails>;
         return webhooks.get(chat.chatId)?.apply(chat.webhooks) ?? chat.webhooks;
     },
 );
-export const selectedChatRulesStore = svelteDerived(
+export const selectedChatRulesStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.rules],
     ([chat, rules]) => {
         if (chat === undefined) return undefined;
@@ -666,18 +694,33 @@ export const selectedChatRulesStore = svelteDerived(
     },
 );
 
-// export const serverDirectChatsStore = new ChatMapStore<DirectChatSummary>();
-export const serverDirectChatsStore = writable<ChatMap<DirectChatSummary>>(new ChatMap());
-export const serverGroupChatsStore = writable<ChatMap<GroupChatSummary>>(new ChatMap());
-export const serverFavouritesStore = writable<ChatSet>(new ChatSet());
-export const serverPinnedChatsStore = writable<PinnedByScope>(new Map());
-export const directChatApiKeysStore = writable<Map<string, PublicApiKeyDetails>>(new Map());
-export const serverMessageActivitySummaryStore = writable<MessageActivitySummary>({
-    readUpToTimestamp: 0n,
-    latestTimestamp: 0n,
-    unreadCount: 0,
-});
-export const pinnedChatsStore = svelteDerived(
+export const serverDirectChatsStore = writable<ChatMap<DirectChatSummary>>(
+    new ChatMap(),
+    undefined,
+    notEq,
+);
+export const serverGroupChatsStore = writable<ChatMap<GroupChatSummary>>(
+    new ChatMap(),
+    undefined,
+    notEq,
+);
+export const serverFavouritesStore = writable<ChatSet>(new ChatSet(), undefined, notEq);
+export const serverPinnedChatsStore = writable<PinnedByScope>(new Map(), undefined, notEq);
+export const directChatApiKeysStore = writable<Map<string, PublicApiKeyDetails>>(
+    new Map(),
+    undefined,
+    notEq,
+);
+export const serverMessageActivitySummaryStore = writable<MessageActivitySummary>(
+    {
+        readUpToTimestamp: 0n,
+        latestTimestamp: 0n,
+        unreadCount: 0,
+    },
+    undefined,
+    notEq,
+);
+export const pinnedChatsStore = derived(
     [serverPinnedChatsStore, chatDetailsLocalUpdates.pinnedToScopes],
     ([serverPinnedChats, localUpdates]) => {
         const mergedPinned = new Map(serverPinnedChats);
@@ -703,13 +746,21 @@ export const pinnedChatsStore = svelteDerived(
     },
 );
 
-export const serverDirectChatBotsStore = writable<Map<string, ExternalBotPermissions>>(new Map());
-export const serverStreakInsuranceStore = writable<StreakInsurance>({
-    daysInsured: 0,
-    daysMissed: 0,
-});
-export const referralsStore = writable<Referral[]>([]);
-export const streakInsuranceStore = svelteDerived(
+export const serverDirectChatBotsStore = writable<Map<string, ExternalBotPermissions>>(
+    new Map(),
+    undefined,
+    notEq,
+);
+export const serverStreakInsuranceStore = writable<StreakInsurance>(
+    {
+        daysInsured: 0,
+        daysMissed: 0,
+    },
+    undefined,
+    notEq,
+);
+export const referralsStore = writable<Referral[]>([], undefined, notEq);
+export const streakInsuranceStore = derived(
     [serverStreakInsuranceStore, localUpdates.streakInsurance],
     ([serverStreakInsurance, localUpates]) => localUpates ?? serverStreakInsurance,
 );
@@ -752,7 +803,7 @@ export const userMetricsStore = derived(allServerChatsStore, (allServerChats) =>
     }, empty);
 });
 
-export const unreadFavouriteCountsStore = svelteDerived(
+export const unreadFavouriteCountsStore = derived(
     [serverFavouritesStore, allServerChatsStore, messagesRead],
     ([serverFavourites, allServerChats, messagesRead]) => {
         const chats = ChatMap.fromList(
@@ -764,7 +815,7 @@ export const unreadFavouriteCountsStore = svelteDerived(
     },
 );
 
-export const favouritesVideoCallCountsStore = svelteDerived(
+export const favouritesVideoCallCountsStore = derived(
     [serverFavouritesStore, allServerChatsStore],
     ([serverFavourites, allServerChats]) => {
         const chats = [...serverFavourites.values()].map((id) => allServerChats.get(id));
@@ -772,7 +823,7 @@ export const favouritesVideoCallCountsStore = svelteDerived(
     },
 );
 
-export const selectedServerChatSummaryStore = svelteDerived(
+export const selectedServerChatSummaryStore = derived(
     [selectedChatIdStore, allServerChatsStore],
     ([selectedChatId, allServerChats]) => {
         return selectedChatId ? allServerChats.get(selectedChatId) : undefined;
@@ -882,7 +933,7 @@ export const allChatsStore = derived(
     },
 );
 
-export const favouritesStore = svelteDerived(
+export const favouritesStore = derived(
     [serverFavouritesStore, localUpdates.favourites],
     ([serverFavourites, local]) => {
         return local.apply(serverFavourites);
@@ -891,7 +942,7 @@ export const favouritesStore = svelteDerived(
 
 // all chats filtered by scope including previews and local updates
 // the final client view of chat summaries with all updates merged in
-export const chatSummariesStore = svelteDerived(
+export const chatSummariesStore = derived(
     [chatListScopeStore, allChatsStore, favouritesStore],
     ([chatListScope, allChats, favourites]) => {
         switch (chatListScope.kind) {
@@ -920,7 +971,7 @@ export const chatSummariesStore = svelteDerived(
     },
 );
 
-export const chatSummariesListStore = svelteDerived(
+export const chatSummariesListStore = derived(
     [pinnedChatsStore, chatListScopeStore, chatSummariesStore],
     ([pinnedChats, chatListScope, chatSummaries]) => {
         const pinnedByScope = pinnedChats.get(chatListScope.kind) ?? [];
@@ -940,14 +991,14 @@ export const chatSummariesListStore = svelteDerived(
     },
 );
 
-export const selectedChatSummaryStore = svelteDerived(
+export const selectedChatSummaryStore = derived(
     [selectedChatIdStore, chatSummariesStore],
     ([selectedChatId, chatSummaries]) => {
         if (selectedChatId === undefined) return undefined;
         return chatSummaries.get(selectedChatId);
     },
 );
-export const proposalTopicsStore = svelteDerived(
+export const proposalTopicsStore = derived(
     [selectedChatSummaryStore, snsFunctionsStore],
     ([selectedChatSummary, snsFunctions]) => {
         if (
@@ -983,18 +1034,15 @@ export const proposalTopicsStore = svelteDerived(
     },
 );
 
-export const isProposalGroupStore = svelteDerived(
-    [selectedChatSummaryStore],
-    ([selectedChatSummary]) => {
-        return (
-            selectedChatSummary !== undefined &&
-            selectedChatSummary.kind !== "direct_chat" &&
-            selectedChatSummary.subtype?.kind === "governance_proposals"
-        );
-    },
-);
+export const isProposalGroupStore = derived(selectedChatSummaryStore, (selectedChatSummary) => {
+    return (
+        selectedChatSummary !== undefined &&
+        selectedChatSummary.kind !== "direct_chat" &&
+        selectedChatSummary.subtype?.kind === "governance_proposals"
+    );
+});
 
-export const threadsByChatStore = svelteDerived([chatSummariesStore], ([chatSummaries]) => {
+export const threadsByChatStore = derived(chatSummariesStore, (chatSummaries) => {
     return [...chatSummaries.entries()].reduce((result, [_, chat]) => {
         if (
             (chat.kind === "group_chat" || chat.kind === "channel") &&
@@ -1007,11 +1055,11 @@ export const threadsByChatStore = svelteDerived([chatSummariesStore], ([chatSumm
     }, new ChatMap<ThreadSyncDetails[]>());
 });
 
-export const numberOfThreadsStore = svelteDerived(threadsByChatStore, (threadsByChat) =>
+export const numberOfThreadsStore = derived(threadsByChatStore, (threadsByChat) =>
     threadsByChat.map((_, ts) => ts.length).reduce((total, [_, n]) => total + n, 0),
 );
 
-export const threadsFollowedByMeStore = svelteDerived(threadsByChatStore, (threadsByChat) => {
+export const threadsFollowedByMeStore = derived(threadsByChatStore, (threadsByChat) => {
     return threadsByChat.reduce<ChatMap<Set<number>>>((result, [chatId, threads]) => {
         const set = new Set<number>();
         for (const thread of threads) {
@@ -1022,55 +1070,46 @@ export const threadsFollowedByMeStore = svelteDerived(threadsByChatStore, (threa
     }, new ChatMap<Set<number>>());
 });
 
-export const messagePermissionsForSelectedChatStore = svelteDerived(
+export const messagePermissionsForSelectedChatStore = derived(
     selectedChatSummaryStore,
     (selectedChatSummary) => {
         return getMessagePermissionsForSelectedChat(selectedChatSummary, "message");
     },
 );
-export const threadPermissionsForSelectedChatStore = svelteDerived(
+export const threadPermissionsForSelectedChatStore = derived(
     selectedChatSummaryStore,
     (selectedChatSummary) => {
         return getMessagePermissionsForSelectedChat(selectedChatSummary, "thread");
     },
 );
-export const proposalTalliesStore = new SafeMapStore<string, Tally>();
+export const proposalTalliesStore = writable<Map<string, Tally>>(new Map(), undefined, notEq);
 
-export const selectedChatDraftMessageStore = svelteDerived(
+export const selectedChatDraftMessageStore = derived(
     [selectedChatIdStore, localUpdates.draftMessages],
     ([selectedChatId, draftMessages]) =>
         selectedChatId ? draftMessages.get({ chatId: selectedChatId }) : undefined,
 );
 
-export const communityChannelVideoCallCountsStore = svelteDerived(
-    [communitiesStore],
-    ([communities]) => {
-        return [...communities.entries()].reduce((map, [id, community]) => {
-            map.set(id, videoCallsInProgressForChats(community.channels));
-            return map;
-        }, new CommunityMap<VideoCallCounts>());
-    },
-);
+export const communityChannelVideoCallCountsStore = derived(communitiesStore, (communities) => {
+    return [...communities.entries()].reduce((map, [id, community]) => {
+        map.set(id, videoCallsInProgressForChats(community.channels));
+        return map;
+    }, new CommunityMap<VideoCallCounts>());
+});
 
-export const groupVideoCallCountsStore = svelteDerived(
-    serverGroupChatsStore,
-    (serverGroupChats) => {
-        return videoCallsInProgressForChats([...serverGroupChats.values()]);
-    },
-);
+export const groupVideoCallCountsStore = derived(serverGroupChatsStore, (serverGroupChats) => {
+    return videoCallsInProgressForChats([...serverGroupChats.values()]);
+});
 
-export const directVideoCallCountsStore = svelteDerived(
-    serverDirectChatsStore,
-    (serverDirectChats) => {
-        return videoCallsInProgressForChats([...serverDirectChats.values()]);
-    },
-);
+export const directVideoCallCountsStore = derived(serverDirectChatsStore, (serverDirectChats) => {
+    return videoCallsInProgressForChats([...serverDirectChats.values()]);
+});
 
-export const serverEventsStore = writable<EventWrapper<ChatEvent>[]>([]);
-export const serverThreadEventsStore = writable<EventWrapper<ChatEvent>[]>([]);
-export const expiredServerEventRanges = writable<DRange>(new DRange());
+export const serverEventsStore = writable<EventWrapper<ChatEvent>[]>([], undefined, notEq);
+export const serverThreadEventsStore = writable<EventWrapper<ChatEvent>[]>([], undefined, notEq);
+export const expiredServerEventRanges = writable<DRange>(new DRange(), undefined, notEq);
 
-export const eventsStore = svelteDerived(
+export const eventsStore = derived(
     [
         serverEventsStore,
         expiredServerEventRanges,
@@ -1118,7 +1157,7 @@ export const eventsStore = svelteDerived(
     },
 );
 
-export const confirmedEventIndexesLoadedStore = svelteDerived(
+export const confirmedEventIndexesLoadedStore = derived(
     [eventsStore, expiredServerEventRanges],
     ([events, expiredEventRanges]) => {
         const ranges = new DRange();
@@ -1128,7 +1167,7 @@ export const confirmedEventIndexesLoadedStore = svelteDerived(
     },
 );
 
-export const messageActivitySummaryStore = svelteDerived(
+export const messageActivitySummaryStore = derived(
     [serverMessageActivitySummaryStore, localUpdates.messageActivityFeedReadUpTo],
     ([serverMessageActivitySummary, readUpTo]) => {
         if (readUpTo !== undefined && readUpTo >= serverMessageActivitySummary.latestTimestamp) {
@@ -1141,28 +1180,28 @@ export const messageActivitySummaryStore = svelteDerived(
     },
 );
 
-export const directChatBotsStore = svelteDerived(
+export const directChatBotsStore = derived(
     [serverDirectChatBotsStore, localUpdates.directChatBots],
     ([serverDirectChatBots, local]) => {
         return local.apply(serverDirectChatBots);
     },
 );
 
-export const unreadGroupCountsStore = svelteDerived(
+export const unreadGroupCountsStore = derived(
     [serverGroupChatsStore, messagesRead],
     ([serverGroupChats, messagesRead]) => {
         return messagesRead.combinedUnreadCountForChats(serverGroupChats);
     },
 );
 
-export const unreadDirectCountsStore = svelteDerived(
+export const unreadDirectCountsStore = derived(
     [serverDirectChatsStore, messagesRead],
     ([serverDirectChats, messagesRead]) => {
         return messagesRead.combinedUnreadCountForChats(serverDirectChats);
     },
 );
 
-export const unreadCommunityChannelCountsStore = svelteDerived(
+export const unreadCommunityChannelCountsStore = derived(
     [serverCommunitiesStore, messagesRead],
     ([serverCommunities, messagesRead]) => {
         return serverCommunities.reduce((map, [id, community]) => {
@@ -1175,7 +1214,7 @@ export const unreadCommunityChannelCountsStore = svelteDerived(
     },
 );
 
-export const globalUnreadCountStore = svelteDerived(
+export const globalUnreadCountStore = derived(
     [unreadGroupCountsStore, unreadDirectCountsStore, unreadCommunityChannelCountsStore],
     ([unreadGroupCounts, unreadDirectCounts, unreadCommunityChannelCounts]) => {
         return mergeListOfCombinedUnreadCounts([
@@ -1186,9 +1225,13 @@ export const globalUnreadCountStore = svelteDerived(
     },
 );
 
-export const selectedThreadIdStore = writable<ThreadIdentifier | undefined>(undefined);
+export const selectedThreadIdStore = writable<ThreadIdentifier | undefined>(
+    undefined,
+    undefined,
+    notEq,
+);
 
-export const threadEventsStore = svelteDerived(
+export const threadEventsStore = derived(
     [
         serverThreadEventsStore,
         selectedThreadIdStore,
@@ -1234,25 +1277,30 @@ export const threadEventsStore = svelteDerived(
     },
 );
 
-export const confirmedThreadEventIndexesLoadedStore = svelteDerived(
-    [threadEventsStore],
-    ([events]) => {
-        const ranges = new DRange();
-        events.forEach((e) => ranges.add(e.index));
-        return ranges;
-    },
-);
+export const confirmedThreadEventIndexesLoadedStore = derived(threadEventsStore, (events) => {
+    const ranges = new DRange();
+    events.forEach((e) => ranges.add(e.index));
+    return ranges;
+});
 
-export const selectedThreadDraftMessageStore = svelteDerived(
+export const selectedThreadDraftMessageStore = derived(
     [selectedThreadIdStore, localUpdates.draftMessages],
     ([selectedThreadId, draftMessages]) =>
         selectedThreadId ? draftMessages.get(selectedThreadId) : undefined,
 );
 
-export const identityStateStore = writable<IdentityState>({ kind: "loading_user" });
+export const identityStateStore = writable<IdentityState>(
+    { kind: "loading_user" },
+    undefined,
+    notEq,
+);
 
-export const selectedChatUserIdsStore = new SafeSetStore<string>();
-export const selectedChatUserGroupKeysStore = new SafeSetStore<string>();
-export const selectedChatExpandedDeletedMessageStore = new SafeSetStore<number>();
+export const selectedChatUserIdsStore = writable<Set<string>>(new Set(), undefined, notEq);
+export const selectedChatUserGroupKeysStore = writable<Set<string>>(new Set(), undefined, notEq);
+export const selectedChatExpandedDeletedMessageStore = writable<Set<number>>(
+    new Set(),
+    undefined,
+    notEq,
+);
 export const failedMessagesStore = localUpdates.failedMessages;
 export const unconfirmedStore = localUpdates.unconfirmed;

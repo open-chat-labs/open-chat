@@ -1,4 +1,4 @@
-import { SafeSet, type Primitive, type ReadonlySet } from "openchat-shared";
+import { SafeSet, type ChatIdentifier, type Primitive, type ReadonlySet } from "openchat-shared";
 import { type UndoLocalUpdate } from "./undo";
 
 export class LocalSet<T> {
@@ -58,5 +58,14 @@ export class LocalSet<T> {
         this.#added.forEach((t) => merged.add(t));
         this.#removed.forEach((t) => merged.delete(t));
         return merged;
+    }
+}
+
+export class ChatLocalSet extends LocalSet<ChatIdentifier> {
+    constructor() {
+        super(
+            (k) => JSON.stringify(k),
+            (k) => JSON.parse(String(k)),
+        );
     }
 }

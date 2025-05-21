@@ -91,6 +91,14 @@ export class MessageReadTracker {
 
     #subs: Subscriber<MessageReadTracker>[] = [];
 
+    get dirty() {
+        return false;
+    }
+
+    get value() {
+        return this;
+    }
+
     public publish(): void {
         if (this.#executingBatch) {
             this.#publishRequired = true;

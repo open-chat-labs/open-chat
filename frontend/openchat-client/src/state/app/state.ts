@@ -176,7 +176,6 @@ export class AppState {
     #identityState!: IdentityState;
     #confirmedEventIndexesLoaded!: DRange;
     #confirmedThreadEventIndexesLoaded!: DRange;
-    #selectedChatUserIds!: ReadonlySet<string>;
     #selectedChatEvents!: EventWrapper<ChatEvent>[];
     #selectedThreadEvents!: EventWrapper<ChatEvent>[];
     #selectedChatRules?: VersionedRules;
@@ -254,7 +253,6 @@ export class AppState {
                 confirmedThreadEventIndexesLoadedStore.subscribe(
                     (v) => (this.#confirmedThreadEventIndexesLoaded = v),
                 );
-                selectedChatUserIdsStore.subscribe((v) => (this.#selectedChatUserIds = v));
                 eventsStore.subscribe((v) => (this.#selectedChatEvents = v));
                 threadEventsStore.subscribe((v) => (this.#selectedThreadEvents = v));
                 selectedChatRulesStore.subscribe((v) => (this.#selectedChatRules = v));
@@ -322,11 +320,14 @@ export class AppState {
     }
 
     getProposalTally(governanceCanisterId: string, proposalId: bigint) {
-        return proposalTalliesStore.get(`${governanceCanisterId}_${proposalId}`);
+        return proposalTalliesStore.value.get(`${governanceCanisterId}_${proposalId}`);
     }
 
     setProposalTally(governanceCanisterId: string, proposalId: bigint, tally: Tally) {
-        proposalTalliesStore.set(`${governanceCanisterId}_${proposalId}`, tally);
+        proposalTalliesStore.update((map) => {
+            map.set(`${governanceCanisterId}_${proposalId}`, tally);
+            return map;
+        });
     }
 
     toggleCommunityFilterLanguage(lang: string) {
@@ -800,10 +801,6 @@ export class AppState {
         return this.#confirmedThreadEventIndexesLoaded;
     }
 
-    get selectedChatUserIds() {
-        return this.#selectedChatUserIds;
-    }
-
     get selectedChatEvents() {
         return this.#selectedChatEvents;
     }
@@ -827,21 +824,27 @@ export class AppState {
     setSelectedChat(_chatId: ChatIdentifier) {
         serverEventsStore.set([]);
         expiredServerEventRanges.set(new DRange());
-        selectedChatUserIdsStore.clear();
-        selectedChatUserGroupKeysStore.clear();
-        selectedChatExpandedDeletedMessageStore.clear();
+        selectedChatUserIdsStore.set(new Set());
+        selectedChatUserGroupKeysStore.set(new Set());
+        selectedChatExpandedDeletedMessageStore.set(new Set());
     }
 
     expandDeletedMessages(messageIndexes: Set<number>) {
-        selectedChatExpandedDeletedMessageStore.addMany([...messageIndexes]);
+        selectedChatExpandedDeletedMessageStore.update((set) => {
+            messageIndexes.forEach((i) => set.add(i));
+            return set;
+        });
     }
 
     addSelectedChatUserIds(userIds: string[]) {
-        selectedChatUserIdsStore.addMany(userIds);
+        selectedChatUserIdsStore.update((set) => {
+            userIds.forEach((userId) => set.add(userId));
+            return set;
+        });
     }
 
     addUserGroupKey(key: string) {
-        selectedChatUserGroupKeysStore.add(key);
+        selectedChatUserGroupKeysStore.update((set) => set.add(key));
     }
 }
 

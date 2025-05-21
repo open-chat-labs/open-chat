@@ -6,8 +6,7 @@ import type {
     RouteParams,
 } from "openchat-shared";
 import "page";
-import { derived } from "svelte/store";
-import { writable } from "../../utils/stores";
+import { derived, writable } from "../../utils/stores";
 
 const noScope: NullScope = { kind: "none" };
 

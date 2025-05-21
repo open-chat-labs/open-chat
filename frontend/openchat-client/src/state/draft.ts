@@ -9,7 +9,7 @@ import {
     type MessageContext,
     type UserLookup,
 } from "openchat-shared";
-import { writable } from "../utils/stores";
+import { writable, type Subscriber } from "../utils/stores";
 import { notEq } from "./utils";
 
 export class DraftMessage {
@@ -38,7 +38,7 @@ export function createDraftMessagesStore() {
     }
 
     return {
-        subscribe: store.subscribe,
+        subscribe: (sub: Subscriber<MessageContextMap<DraftMessage>>) => store.subscribe(sub),
         value: store.value,
         setTextContent(key: MessageContext, textContent?: string) {
             updateDraft(key, (d) => ({ ...d, textContent }));
