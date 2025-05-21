@@ -4,7 +4,7 @@ use timer_job_queues::{TimerJobItem, grouped_timer_job_batch};
 use types::{AccessorId, CanisterId, FileId};
 use utils::canister::should_retry_failed_c2c_call;
 
-grouped_timer_job_batch!(BucketEventBatch, CanisterId, EventToSync, 1000);
+grouped_timer_job_batch!(BucketEventBatch, CanisterId, EventToSync, 100);
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum EventToSync {

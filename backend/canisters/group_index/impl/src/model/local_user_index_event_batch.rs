@@ -7,7 +7,7 @@ grouped_timer_job_batch!(
     LocalUserIndexEventBatch,
     CanisterId,
     IdempotentEnvelope<LocalUserIndexEvent>,
-    1000
+    100
 );
 
 impl TimerJobItem for LocalUserIndexEventBatch {

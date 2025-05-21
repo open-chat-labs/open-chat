@@ -4,7 +4,7 @@ use timer_job_queues::{TimerJobItem, grouped_timer_job_batch};
 use types::{IdempotentEnvelope, UserId};
 use utils::canister::{is_out_of_cycles_error, should_retry_failed_c2c_call};
 
-grouped_timer_job_batch!(UserEventBatch, UserId, IdempotentEnvelope<UserEvent>, 1000);
+grouped_timer_job_batch!(UserEventBatch, UserId, IdempotentEnvelope<UserEvent>, 100);
 
 impl TimerJobItem for UserEventBatch {
     async fn process(&self) -> Result<(), bool> {
