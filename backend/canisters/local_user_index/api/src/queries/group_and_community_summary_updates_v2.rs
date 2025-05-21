@@ -32,9 +32,11 @@ pub enum Response {
 #[ts_export(local_user_index, group_and_community_summary_updates_v2)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub responses: Vec<SummaryUpdatesResponse>,
+    pub updates: Vec<SummaryUpdatesResponse>,
     #[ts(as = "Vec::<ts_export::TSPrincipal>")]
-    pub excess_with_updates: Vec<CanisterId>,
+    pub excess_updates: Vec<CanisterId>,
+    #[ts(as = "Vec::<(ts_export::TSPrincipal, OCError)>")]
+    pub errors: Vec<(CanisterId, OCError)>,
     #[ts(as = "Vec::<ts_export::TSPrincipal>")]
     pub not_found: Vec<CanisterId>,
 }
@@ -47,8 +49,6 @@ pub enum SummaryUpdatesResponse {
     SuccessGroupUpdates(GroupCanisterGroupChatSummaryUpdates),
     SuccessCommunityUpdates(CommunityCanisterCommunitySummaryUpdates),
     SuccessNoUpdates,
-    NotFound,
-    InternalError(String),
     Error(OCError),
 }
 

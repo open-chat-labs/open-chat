@@ -12,5 +12,5 @@ async fn group_and_community_summary_updates(args: Args) -> Response {
 
     let results = futures::future::join_all(futures).await;
 
-    Success(results)
+    Success(results.into_iter().map(|(_, r)| r).collect())
 }
