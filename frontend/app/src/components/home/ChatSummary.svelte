@@ -4,6 +4,7 @@
         ChatSummary,
         CommunitySummary,
         DiamondMembershipStatus,
+        MessageContent,
         TypersByKey,
         UserLookup,
     } from "openchat-client";
@@ -26,6 +27,7 @@
         selectedChatIdStore,
         selectedCommunitySummaryStore,
         suspendedUserStore,
+        translationsStore,
         byContext as typersByContext,
     } from "openchat-client";
     import page from "page";
@@ -184,6 +186,11 @@
         ).length;
     }
 
+    function translateMessage(messageId: bigint, content: MessageContent): MessageContent {
+        const translation = $translationsStore.get(messageId);
+        return translation ? client.applyTranslation(content, translation) : content;
+    }
+
     function formatLatestMessage(chatSummary: ChatSummary, users: UserLookup): string {
         if (chatSummary.latestMessageIndex === undefined || externalContent) {
             return "";
@@ -211,7 +218,10 @@
 
         const latestMessageText = client.getContentAsText(
             $_,
-            chatSummary.latestMessage.event.content,
+            translateMessage(
+                chatSummary.latestMessage.event.messageId,
+                chatSummary.latestMessage.event.content,
+            ),
         );
 
         if (chatSummary.kind === "direct_chat") {

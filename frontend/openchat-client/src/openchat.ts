@@ -347,6 +347,7 @@ import {
 import { dataToBlobUrl } from "./utils/blob";
 import {
     activeUserIdFromEvent,
+    applyTranslation,
     buildBlobUrl,
     buildCryptoTransferText,
     buildIdenticonUrl,
@@ -1665,6 +1666,8 @@ export class OpenChat {
             })
             .catch(() => false);
     }
+
+    applyTranslation = applyTranslation;
 
     getContentAsText(formatter: MessageFormatter, content: MessageContent): string {
         return getContentAsFormattedText(formatter, content, cryptoLookup.value);

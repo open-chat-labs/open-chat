@@ -351,7 +351,6 @@ export function mergeUnconfirmedIntoSummary(
     userId: string,
     chatSummary: ChatSummary,
     localMessageUpdates: MessageMap<MessageLocalUpdates>,
-    translations: MessageMap<string>,
     blockedUsers: Set<string>,
     currentUserId: string,
     messageFilters: MessageFilter[],
@@ -383,7 +382,6 @@ export function mergeUnconfirmedIntoSummary(
     }
     if (latestMessage !== undefined) {
         const updates = localMessageUpdates.get(latestMessage.event.messageId);
-        const translation = translations.get(latestMessage.event.messageId);
         const senderBlocked = blockedUsers.has(latestMessage.event.sender);
 
         // Don't hide the sender's own messages
@@ -392,18 +390,13 @@ export function mergeUnconfirmedIntoSummary(
                 ? doesMessageFailFilter(latestMessage.event, messageFilters) !== undefined
                 : false;
 
-        if (
-            updates !== undefined ||
-            translation !== undefined ||
-            senderBlocked ||
-            failedMessageFilter
-        ) {
+        if (updates !== undefined || senderBlocked || failedMessageFilter) {
             latestMessage.event = mergeLocalUpdates(
                 latestMessage.event,
                 updates,
                 undefined,
                 undefined,
-                translation,
+                undefined,
                 undefined,
                 senderBlocked,
                 false,
@@ -1660,7 +1653,7 @@ function defaultThreadSummary(): ThreadSummary {
     };
 }
 
-function applyTranslation(content: MessageContent, translation: string): MessageContent {
+export function applyTranslation(content: MessageContent, translation: string): MessageContent {
     switch (content.kind) {
         case "text_content": {
             return {
