@@ -1,4 +1,4 @@
-#![allow(deprecated)]
+#![expect(deprecated)]
 use crate::DeletedByInternal;
 use candid::Principal;
 use constants::{MEMO_PRIZE_FEE, MEMO_PRIZE_REFUND, OPENCHAT_TREASURY_CANISTER_ID, PRIZE_FEE_PERCENT};

@@ -1,4 +1,4 @@
-#![allow(deprecated)]
+#![expect(deprecated)]
 use candid::CandidType;
 use chat_events::MessageContentInternal;
 use serde::{Deserialize, Serialize};

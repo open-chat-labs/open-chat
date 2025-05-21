@@ -1,4 +1,3 @@
-#![allow(deprecated)]
 use crate::CanisterId;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
