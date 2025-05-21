@@ -12,9 +12,9 @@ use canister_state_macros::canister_state;
 use constants::MINUTE_IN_MS;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_index_canister::ChildCanisterType;
-use local_group_index_canister::{GroupIndexEvent as LocalGroupIndexEvent, NameChanged, VerifiedChanged};
-use model::local_group_index_event_batch::LocalGroupIndexEventBatch;
+use local_user_index_canister::{GroupIndexEvent as LocalUserIndexEvent, NameChanged, VerifiedChanged};
 use model::local_group_index_map::LocalGroupIndexMap;
+use model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -87,7 +87,7 @@ impl RuntimeState {
     pub fn push_group_event_to_local_group_index(
         &mut self,
         group_id: ChatId,
-        event: LocalGroupIndexEvent,
+        event: LocalUserIndexEvent,
         now: TimestampMillis,
     ) {
         if let Some(canister_id) = self.data.local_index_map.get_index_canister_for_group(&group_id) {
@@ -98,7 +98,7 @@ impl RuntimeState {
     pub fn push_community_event_to_local_group_index(
         &mut self,
         community_id: CommunityId,
-        event: LocalGroupIndexEvent,
+        event: LocalUserIndexEvent,
         now: TimestampMillis,
     ) {
         if let Some(canister_id) = self.data.local_index_map.get_index_canister_for_community(&community_id) {
@@ -109,7 +109,7 @@ impl RuntimeState {
     pub fn push_event_to_local_group_index(
         &mut self,
         canister_id: CanisterId,
-        event: LocalGroupIndexEvent,
+        event: LocalUserIndexEvent,
         now: TimestampMillis,
     ) {
         self.data.local_group_index_event_sync_queue.push(
@@ -131,7 +131,7 @@ impl RuntimeState {
 
         self.push_community_event_to_local_group_index(
             community_id,
-            LocalGroupIndexEvent::CommunityVerifiedChanged(VerifiedChanged {
+            LocalUserIndexEvent::CommunityVerifiedChanged(VerifiedChanged {
                 canister_id: community_id.into(),
                 verified,
             }),
@@ -150,7 +150,7 @@ impl RuntimeState {
 
         self.push_group_event_to_local_group_index(
             group_id,
-            LocalGroupIndexEvent::GroupVerifiedChanged(VerifiedChanged {
+            LocalUserIndexEvent::GroupVerifiedChanged(VerifiedChanged {
                 canister_id: group_id.into(),
                 verified,
             }),
@@ -175,7 +175,7 @@ impl RuntimeState {
 
         self.push_community_event_to_local_group_index(
             community_id,
-            LocalGroupIndexEvent::CommunityNameChanged(NameChanged {
+            LocalUserIndexEvent::CommunityNameChanged(NameChanged {
                 canister_id,
                 name: new_name.clone(),
             }),
@@ -200,7 +200,7 @@ impl RuntimeState {
 
         self.push_group_event_to_local_group_index(
             group_id,
-            LocalGroupIndexEvent::GroupNameChanged(NameChanged {
+            LocalUserIndexEvent::GroupNameChanged(NameChanged {
                 canister_id,
                 name: new_name.clone(),
             }),
@@ -305,11 +305,11 @@ struct Data {
     pub rng_seed: [u8; 32],
     #[serde(default)]
     pub idempotency_checker: IdempotencyChecker,
-    pub local_group_index_event_sync_queue: GroupedTimerJobQueue<LocalGroupIndexEventBatch>,
+    pub local_group_index_event_sync_queue: GroupedTimerJobQueue<LocalUserIndexEventBatch>,
 }
 
 impl Data {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     fn new(
         governance_principals: Vec<Principal>,
         user_index_canister_id: CanisterId,

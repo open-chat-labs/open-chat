@@ -2,7 +2,7 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::model::events::CommunityEventInternal;
 use crate::model::invited_users::UserInvitation;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_invite_users::{Response::*, *};
@@ -15,9 +15,7 @@ const MAX_INVITES: usize = 100;
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_invite_users(args: Args) -> Response {
-    run_regular_jobs();
-
-    match mutate_state(|state| invite_users_to_community_impl(args, state)) {
+    match execute_update(|state| invite_users_to_community_impl(args, state)) {
         Ok(result) => Success(result),
         Err(error) => Error(error),
     }

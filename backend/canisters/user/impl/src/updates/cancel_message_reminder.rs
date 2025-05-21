@@ -1,6 +1,6 @@
 use crate::guards::caller_is_owner;
 use crate::timer_job_types::TimerJob;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
@@ -9,9 +9,7 @@ use user_canister::cancel_message_reminder::{Response::*, *};
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn cancel_message_reminder(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| cancel_message_reminder_impl(args.reminder_id, state))
+    execute_update(|state| cancel_message_reminder_impl(args.reminder_id, state))
 }
 
 fn cancel_message_reminder_impl(reminder_id: u64, state: &mut RuntimeState) -> Response {

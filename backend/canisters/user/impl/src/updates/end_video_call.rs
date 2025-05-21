@@ -1,6 +1,6 @@
 use crate::guards::caller_is_video_call_operator;
 use crate::timer_job_types::TimerJob;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, UserEventPusher, execute_update};
 use canister_tracing_macros::trace;
 use chat_events::Reader;
 use ic_cdk::update;
@@ -11,9 +11,7 @@ use user_canister::end_video_call_v2::*;
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
 fn end_video_call_v2(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| end_video_call_impl(args, state)).into()
+    execute_update(|state| end_video_call_impl(args, state).into())
 }
 
 pub(crate) fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
@@ -24,6 +22,7 @@ pub(crate) fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> OCRes
     );
 
     if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
+        let now = state.env.now();
         let was_started_by_me = chat
             .events
             .main_events_reader()
@@ -33,8 +32,12 @@ pub(crate) fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> OCRes
 
         chat.events.end_video_call(
             args.message_id.into(),
-            state.env.now(),
-            was_started_by_me.then_some(&mut state.data.event_store_client),
+            now,
+            was_started_by_me.then_some(UserEventPusher {
+                now,
+                rng: state.env.rng(),
+                queue: &mut state.data.local_user_index_event_sync_queue,
+            }),
         )?;
         Ok(())
     } else {

@@ -1,4 +1,4 @@
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::unfollow_thread::*;
@@ -7,9 +7,7 @@ use types::OCResult;
 #[update(msgpack = true)]
 #[trace]
 fn unfollow_thread(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| unfollow_thread_impl(args, state)).into()
+    execute_update(|state| unfollow_thread_impl(args, state)).into()
 }
 
 fn unfollow_thread_impl(args: Args, state: &mut RuntimeState) -> OCResult {

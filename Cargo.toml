@@ -27,7 +27,6 @@ members = [
     "backend/canisters/identity/c2c_client",
     "backend/canisters/identity/impl",
     "backend/canisters/local_group_index/api",
-    "backend/canisters/local_group_index/c2c_client",
     "backend/canisters/local_group_index/impl",
     "backend/canisters/local_user_index/api",
     "backend/canisters/local_user_index/c2c_client",

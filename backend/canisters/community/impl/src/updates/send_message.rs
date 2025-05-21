@@ -3,7 +3,7 @@ use crate::guards::caller_is_local_user_index;
 use crate::model::members::CommunityMembers;
 use crate::model::user_groups::UserGroup;
 use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, FinalPrizePaymentsJob, MarkP2PSwapExpiredJob, TimerJob};
-use crate::{Data, RuntimeState, mutate_state, read_state, run_regular_jobs};
+use crate::{CommunityEventPusher, Data, RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, ValidateNewMessageContentResult};
@@ -27,9 +27,7 @@ use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEven
 #[update(candid = true, msgpack = true)]
 #[trace]
 fn send_message(args: Args) -> Response {
-    run_regular_jobs();
-
-    match mutate_state(|state| send_message_impl(args, None, true, state)) {
+    match execute_update(|state| send_message_impl(args, None, true, state)) {
         Ok(result) => Success(result),
         Err(error) => Error(error),
     }
@@ -38,9 +36,7 @@ fn send_message(args: Args) -> Response {
 #[update(msgpack = true)]
 #[trace]
 fn c2c_send_message(args: C2CArgs) -> C2CResponse {
-    run_regular_jobs();
-
-    match mutate_state(|state| c2c_send_message_impl(args, state)) {
+    match execute_update(|state| c2c_send_message_impl(args, state)) {
         Ok(result) => Success(result),
         Err(error) => Error(error),
     }
@@ -49,8 +45,10 @@ fn c2c_send_message(args: C2CArgs) -> C2CResponse {
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_message::Response {
-    run_regular_jobs();
+    execute_update(|state| c2c_bot_send_message_impl(args, state))
+}
 
+fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut RuntimeState) -> c2c_bot_send_message::Response {
     let finalised = args.finalised;
     let bot_caller = BotCaller {
         bot: args.bot_id,
@@ -58,18 +56,16 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
     };
     let args: Args = args.into();
 
-    if !read_state(|state| {
-        state.data.is_bot_permitted(
-            &bot_caller.bot,
-            Some(args.channel_id),
-            &bot_caller.initiator,
-            &BotPermissions::from_message_permission((&args.content).into()),
-        )
-    }) {
+    if !state.data.is_bot_permitted(
+        &bot_caller.bot,
+        Some(args.channel_id),
+        &bot_caller.initiator,
+        &BotPermissions::from_message_permission((&args.content).into()),
+    ) {
         return Error(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
-    match mutate_state(|state| send_message_impl(args, Some(Caller::BotV2(bot_caller)), finalised, state)) {
+    match send_message_impl(args, Some(Caller::BotV2(bot_caller)), finalised, state) {
         Ok(result) => Success(result),
         Err(error) => Error(error),
     }
@@ -111,7 +107,11 @@ pub(crate) fn send_message_impl(
         args.channel_rules_accepted,
         args.message_filter_failed.is_some(),
         args.block_level_markdown,
-        &mut state.data.event_store_client,
+        CommunityEventPusher {
+            now,
+            rng: state.env.rng(),
+            queue: &mut state.data.local_user_index_event_sync_queue,
+        },
         finalised,
         now,
     )?;
@@ -157,7 +157,11 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> OCResult<Su
             args.channel_rules_accepted,
             args.message_filter_failed.is_some(),
             args.block_level_markdown,
-            &mut state.data.event_store_client,
+            CommunityEventPusher {
+                now,
+                rng: state.env.rng(),
+                queue: &mut state.data.local_user_index_event_sync_queue,
+            },
             true,
             now,
         )?;
@@ -214,7 +218,7 @@ fn prepare(caller: &Caller, community_rules_accepted: Option<Version>, state: &m
     }
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 fn process_send_message_result(
     result: SendMessageSuccess,
     caller: &Caller,

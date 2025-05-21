@@ -255,7 +255,7 @@ pub mod happy_path {
         }
     }
 
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn thread_events(
         env: &PocketIc,
         sender: &User,

@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{mutate_state, read_state, run_regular_jobs};
+use crate::{execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ckbtc_minter_canister::CKBTC_MINTER_CANISTER_ID;
@@ -9,8 +9,10 @@ use user_canister::generate_btc_address::{Response::*, *};
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn generate_btc_address(_args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(generate_btc_address_impl).await
+}
 
+async fn generate_btc_address_impl() -> Response {
     if let Some(btc_address) = read_state(|state| state.data.btc_address.as_ref().map(|a| a.value.clone())) {
         return Success(btc_address);
     }

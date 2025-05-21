@@ -1,8 +1,9 @@
 use crate::guards::caller_is_owner;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
+use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use serde::Serialize;
 use types::{Achievement, ChitEarned, ChitEarnedReason, UserId};
 use user_canister::claim_daily_chit::{Response::*, *};
@@ -11,7 +12,7 @@ use utils::time::tomorrow;
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn claim_daily_chit(_args: Args) -> Response {
-    mutate_state(claim_daily_chit_impl)
+    execute_update(claim_daily_chit_impl)
 }
 
 fn claim_daily_chit_impl(state: &mut RuntimeState) -> Response {
@@ -60,12 +61,15 @@ fn claim_daily_chit_impl(state: &mut RuntimeState) -> Response {
 
     state.set_up_streak_insurance_timer_job();
     state.notify_user_index_of_chit(now);
-    state.data.event_store_client.push(
-        EventBuilder::new("user_claimed_daily_chit", now)
-            .with_user(user_id.to_string(), true)
-            .with_source(user_id.to_string(), true)
-            .with_json_payload(&UserClaimedDailyChitEventPayload { streak, chit_earned })
-            .build(),
+    state.push_local_user_index_canister_event(
+        LocalUserIndexEvent::EventStoreEvent(
+            EventBuilder::new("user_claimed_daily_chit", now)
+                .with_user(user_id.to_string(), true)
+                .with_source(user_id.to_string(), true)
+                .with_json_payload(&UserClaimedDailyChitEventPayload { streak, chit_earned })
+                .build(),
+        ),
+        now,
     );
 
     Success(SuccessResult {

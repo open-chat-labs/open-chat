@@ -9,7 +9,6 @@ pub struct NotificationSubscriptions {
     total: u64,
 }
 
-#[allow(dead_code)]
 impl NotificationSubscriptions {
     pub fn get(&self, user_id: &UserId) -> Option<Vec<SubscriptionInfo>> {
         self.subscriptions.get(user_id).cloned()

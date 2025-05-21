@@ -1,4 +1,4 @@
-#![allow(deprecated)]
+#![expect(deprecated)]
 use crate::DeletedByInternal;
 use candid::Principal;
 use constants::{MEMO_PRIZE_FEE, MEMO_PRIZE_REFUND, OPENCHAT_TREASURY_CANISTER_ID, PRIZE_FEE_PERCENT};
@@ -1086,7 +1086,7 @@ pub(crate) mod icrc1 {
         #[serde(rename = "l", alias = "ledger")]
         pub ledger: CanisterId,
         #[serde(rename = "k", alias = "token")]
-        #[allow(deprecated)]
+        #[expect(deprecated)]
         pub token: Cryptocurrency,
         #[serde(rename = "a", alias = "amount")]
         pub amount: u128,
@@ -1146,7 +1146,7 @@ pub(crate) mod icrc2 {
         #[serde(rename = "l", alias = "ledger")]
         pub ledger: CanisterId,
         #[serde(rename = "k", alias = "token")]
-        #[allow(deprecated)]
+        #[expect(deprecated)]
         pub token: Cryptocurrency,
         #[serde(rename = "a", alias = "amount")]
         pub amount: u128,

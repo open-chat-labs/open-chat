@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::model::events::CommunityEventInternal;
-use crate::{RuntimeState, mutate_state, read_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::enable_invite_code::{Response::*, *};
@@ -14,8 +14,10 @@ use utils::canister;
 #[update(msgpack = true)]
 #[trace]
 async fn reset_invite_code(_args: reset_invite_code::Args) -> reset_invite_code::Response {
-    run_regular_jobs();
+    execute_update_async(reset_invite_code_impl).await
+}
 
+async fn reset_invite_code_impl() -> reset_invite_code::Response {
     let initial_state = match read_state(prepare) {
         Ok(c) => c,
         Err(error) => return Error(error),
@@ -36,8 +38,10 @@ async fn reset_invite_code(_args: reset_invite_code::Args) -> reset_invite_code:
 #[update(candid = true, msgpack = true)]
 #[trace]
 async fn enable_invite_code(_args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(enable_invite_code_impl).await
+}
 
+async fn enable_invite_code_impl() -> Response {
     let initial_state = match read_state(prepare) {
         Ok(c) => c,
         Err(error) => return Error(error),

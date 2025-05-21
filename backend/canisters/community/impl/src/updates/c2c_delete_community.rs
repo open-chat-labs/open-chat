@@ -1,4 +1,4 @@
-use crate::{RuntimeState, read_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update_async, read_state};
 use canister_api_macros::update;
 use canister_client::make_c2c_call_raw;
 use canister_tracing_macros::trace;
@@ -10,8 +10,10 @@ use types::{CanisterId, OCResult, UserId};
 #[update(msgpack = true)]
 #[trace]
 async fn c2c_delete_community(_args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(c2c_delete_community_impl).await
+}
 
+async fn c2c_delete_community_impl() -> Response {
     let prepare_result = match read_state(prepare) {
         Ok(ok) => ok,
         Err(error) => return Response::Error(error),

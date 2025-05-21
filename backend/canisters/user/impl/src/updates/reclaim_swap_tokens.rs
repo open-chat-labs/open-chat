@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{mutate_state, run_regular_jobs};
+use crate::{execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use types::ExchangeId;
@@ -8,8 +8,10 @@ use user_canister::reclaim_swap_tokens::{Response::*, *};
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn reclaim_swap_tokens(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| reclaim_swap_tokens_impl(args)).await
+}
 
+async fn reclaim_swap_tokens_impl(args: Args) -> Response {
     let result = match args.exchange_id {
         ExchangeId::ICPSwap => {
             crate::token_swaps::icpswap::withdraw(args.swap_canister_id, args.ledger_canister_id, args.amount, args.fee).await

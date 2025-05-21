@@ -12,7 +12,7 @@ pub struct Args {
 }
 
 #[ts_export(community, selected_channel_updates)]
-#[allow(clippy::large_enum_variant)]
+#[expect(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SelectedGroupUpdates),

@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::pin_message_v2::{Response::*, *};
@@ -8,9 +8,7 @@ use types::{OCResult, PushEventResult};
 #[update(msgpack = true)]
 #[trace]
 fn pin_message_v2(args: Args) -> Response {
-    run_regular_jobs();
-
-    match mutate_state(|state| pin_message_impl(args, state)) {
+    match execute_update(|state| pin_message_impl(args, state)) {
         Ok(result) => Success(result),
         Err(error) => Error(error),
     }

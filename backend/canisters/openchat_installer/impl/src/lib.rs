@@ -107,7 +107,7 @@ struct Data {
 }
 
 impl Data {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         governance_principals: Vec<Principal>,
         upload_wasm_chunks_whitelist: Vec<Principal>,

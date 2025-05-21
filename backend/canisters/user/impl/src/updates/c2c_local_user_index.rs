@@ -1,5 +1,5 @@
 use crate::guards::caller_is_local_user_index;
-use crate::{RuntimeState, mutate_state, openchat_bot};
+use crate::{RuntimeState, execute_update, openchat_bot};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use types::{Achievement, DiamondMembershipPlanDuration, MessageContentInitial, ReferralStatus, Timestamped};
@@ -10,7 +10,7 @@ use user_canister::{LocalUserIndexEvent, UserCanisterEvent};
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_local_user_index(args: Args) -> Response {
-    mutate_state(|state| c2c_local_user_index_impl(args, state))
+    execute_update(|state| c2c_local_user_index_impl(args, state))
 }
 
 fn c2c_local_user_index_impl(args: Args, state: &mut RuntimeState) -> Response {

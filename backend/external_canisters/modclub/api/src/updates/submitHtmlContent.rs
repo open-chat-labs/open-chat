@@ -2,7 +2,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Copy)]
-#[allow(non_camel_case_types)]
+#[expect(non_camel_case_types)]
 pub enum Level {
     hard,
     normal,

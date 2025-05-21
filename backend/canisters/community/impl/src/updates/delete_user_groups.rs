@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::delete_user_groups::*;
@@ -9,9 +9,7 @@ use types::OCResult;
 #[update(msgpack = true)]
 #[trace]
 fn delete_user_groups(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| delete_user_groups_impl(args, state)).into()
+    execute_update(|state| delete_user_groups_impl(args, state)).into()
 }
 
 fn delete_user_groups_impl(args: Args, state: &mut RuntimeState) -> OCResult {

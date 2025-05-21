@@ -1,10 +1,9 @@
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteUndeleteMessagesArgs, EditMessageArgs,
-    GroupGateUpdatedInternal, MessageContentInternal, PushEventResultInternal, PushMessageArgs, Reader, RegisterPollVoteArgs,
-    RegisterPollVoteSuccess, RemoveExpiredEventsResult, ReservePrizeSuccess, TipMessageArgs, UpdateMessageSuccess,
+    EventPusher, GroupGateUpdatedInternal, MessageContentInternal, NullEventPusher, PushEventResultInternal, PushMessageArgs,
+    Reader, RegisterPollVoteArgs, RegisterPollVoteSuccess, RemoveExpiredEventsResult, ReservePrizeSuccess, TipMessageArgs,
+    UpdateMessageSuccess,
 };
-use event_store_producer::{EventStoreClient, Runtime};
-use event_store_producer_cdk_runtime::CdkRuntime;
 use group_community_common::MemberUpdate;
 use itertools::Itertools;
 use lazy_static::lazy_static;
@@ -68,7 +67,7 @@ pub struct GroupChatCore {
     pub webhooks: Webhooks,
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 impl GroupChatCore {
     pub fn new(
         chat: MultiUserChat,
@@ -547,7 +546,7 @@ impl GroupChatCore {
         Ok(matches)
     }
 
-    pub fn send_message<R: Runtime + Send + 'static>(
+    pub fn send_message<P: EventPusher>(
         &mut self,
         caller: &Caller,
         thread_root_message_index: Option<MessageIndex>,
@@ -559,7 +558,7 @@ impl GroupChatCore {
         rules_accepted: Option<Version>,
         suppressed: bool,
         block_level_markdown: bool,
-        event_store_client: &mut EventStoreClient<R>,
+        event_pusher: P,
         finalised: bool,
         now: TimestampMillis,
     ) -> OCResult<SendMessageSuccess> {
@@ -633,7 +632,7 @@ impl GroupChatCore {
             now,
         };
 
-        let (message_event, bot_notification) = self.events.push_message(push_message_args, Some(event_store_client));
+        let (message_event, bot_notification) = self.events.push_message(push_message_args, Some(event_pusher));
 
         let unfinalised_bot_message = if let Caller::BotV2(_) = caller { !finalised } else { false };
 
@@ -690,7 +689,7 @@ impl GroupChatCore {
             now,
         };
 
-        let _ = self.events.edit_message::<CdkRuntime>(edit_message_args, None);
+        let _ = self.events.edit_message::<NullEventPusher>(edit_message_args, None);
 
         let reader = self
             .events
@@ -870,14 +869,14 @@ impl GroupChatCore {
         })
     }
 
-    pub fn add_reaction<R: Runtime + Send + 'static>(
+    pub fn add_reaction<P: EventPusher>(
         &mut self,
         caller: Caller,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         reaction: Reaction,
         now: TimestampMillis,
-        event_store_client: &mut EventStoreClient<R>,
+        event_pusher: P,
     ) -> OCResult<UpdateMessageSuccess> {
         if matches!(caller, Caller::Webhook(_) | Caller::Bot(_)) {
             return Err(OCErrorCode::InitiatorNotAuthorized.into());
@@ -904,7 +903,7 @@ impl GroupChatCore {
                 reaction,
                 now,
             },
-            Some(event_store_client),
+            Some(event_pusher),
         )
     }
 
@@ -934,11 +933,7 @@ impl GroupChatCore {
         })
     }
 
-    pub fn tip_message<R: Runtime + Send + 'static>(
-        &mut self,
-        args: TipMessageArgs,
-        event_store_client: &mut EventStoreClient<R>,
-    ) -> OCResult<UpdateMessageSuccess> {
+    pub fn tip_message<P: EventPusher>(&mut self, args: TipMessageArgs, event_pusher: P) -> OCResult<UpdateMessageSuccess> {
         let member = self.members.get_verified_member(args.user_id)?;
 
         if !member.role().can_react_to_messages(&self.permissions) {
@@ -947,8 +942,7 @@ impl GroupChatCore {
 
         let min_visible_event_index = member.min_visible_event_index();
 
-        self.events
-            .tip_message(args, min_visible_event_index, Some(event_store_client))
+        self.events.tip_message(args, min_visible_event_index, Some(event_pusher))
     }
 
     pub fn delete_messages(

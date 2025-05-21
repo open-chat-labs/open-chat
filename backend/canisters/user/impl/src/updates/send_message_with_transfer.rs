@@ -1,7 +1,7 @@
 use crate::guards::caller_is_owner;
 use crate::model::p2p_swaps::P2PSwap;
 use crate::timer_job_types::{NotifyEscrowCanisterOfDepositJob, SendMessageToChannelJob, SendMessageToGroupJob, TimerJob};
-use crate::{RuntimeState, mutate_state, read_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
@@ -23,10 +23,13 @@ use user_canister::send_message_with_transfer_to_group;
 async fn send_message_with_transfer_to_channel(
     args: send_message_with_transfer_to_channel::Args,
 ) -> send_message_with_transfer_to_channel::Response {
+    execute_update_async(|| send_message_with_transfer_to_channel_impl(args)).await
+}
+
+async fn send_message_with_transfer_to_channel_impl(
+    args: send_message_with_transfer_to_channel::Args,
+) -> send_message_with_transfer_to_channel::Response {
     use send_message_with_transfer_to_channel::Response::*;
-
-    run_regular_jobs();
-
     // Check that the user is a member of the community
     let (exists, now) = read_state(|state| (state.data.communities.exists(&args.community_id), state.env.now()));
     if !exists {
@@ -127,9 +130,13 @@ async fn send_message_with_transfer_to_channel(
 async fn send_message_with_transfer_to_group(
     args: send_message_with_transfer_to_group::Args,
 ) -> send_message_with_transfer_to_group::Response {
-    use send_message_with_transfer_to_group::Response::*;
+    execute_update_async(|| send_message_with_transfer_to_group_impl(args)).await
+}
 
-    run_regular_jobs();
+async fn send_message_with_transfer_to_group_impl(
+    args: send_message_with_transfer_to_group::Args,
+) -> send_message_with_transfer_to_group::Response {
+    use send_message_with_transfer_to_group::Response::*;
 
     // Check that the user is a member of the group
     let (exists, now) = read_state(|state| (state.data.group_chats.exists(&args.group_id), state.env.now()));

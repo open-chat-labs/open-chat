@@ -1,4 +1,4 @@
-use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::remove_member_from_channel::*;
@@ -8,9 +8,7 @@ use types::OCResult;
 #[update(msgpack = true)]
 #[trace]
 fn remove_member_from_channel(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| remove_member_from_channel_impl(args, state)).into()
+    execute_update(|state| remove_member_from_channel_impl(args, state)).into()
 }
 
 fn remove_member_from_channel_impl(args: Args, state: &mut RuntimeState) -> OCResult {

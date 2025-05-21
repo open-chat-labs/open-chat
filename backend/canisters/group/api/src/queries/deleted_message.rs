@@ -12,7 +12,7 @@ pub struct Args {
 }
 
 #[ts_export(group, deleted_message)]
-#[allow(clippy::large_enum_variant)]
+#[expect(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),

@@ -414,16 +414,11 @@ struct Data {
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
     pub streak_insurance_logs: StreakInsuranceLogs,
     pub idempotency_checker: IdempotencyChecker,
-    #[serde(default = "blocked_users")]
     pub blocked_users: UserIdsSet,
 }
 
-fn blocked_users() -> UserIdsSet {
-    UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users())
-}
-
 impl Data {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         governance_principals: Vec<Principal>,
         group_index_canister_id: CanisterId,

@@ -15,7 +15,7 @@ pub struct Args {
 
 // Allow the large size difference because essentially all responses are the large variant anyway
 #[ts_export(community, summary_updates)]
-#[allow(clippy::large_enum_variant)]
+#[expect(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(CommunityCanisterCommunitySummaryUpdates),

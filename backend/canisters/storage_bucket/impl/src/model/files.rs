@@ -537,7 +537,7 @@ impl From<PutChunkArgs> for PendingFile {
     }
 }
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 pub enum PutChunkResult {
     Success(PutChunkResultSuccess),
     FileAlreadyExists,
@@ -565,7 +565,7 @@ pub enum ForwardFileResult {
     NotFound,
 }
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 pub struct HashMismatch {
     pub provided_hash: Hash,
     pub actual_hash: Hash,
@@ -573,7 +573,7 @@ pub struct HashMismatch {
     pub meta_data: FileMetaData,
 }
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 pub struct ChunkSizeMismatch {
     pub expected_size: u32,
     pub actual_size: u32,

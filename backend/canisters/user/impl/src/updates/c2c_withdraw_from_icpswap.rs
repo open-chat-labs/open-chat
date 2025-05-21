@@ -1,7 +1,7 @@
 use crate::guards::caller_is_local_user_index;
 use crate::model::token_swaps::TokenSwap;
 use crate::updates::swap_tokens::mark_withdrawal_success;
-use crate::{RuntimeState, mutate_state, read_state, run_regular_jobs, token_swaps};
+use crate::{RuntimeState, execute_update_async, mutate_state, read_state, token_swaps};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use types::{CanisterId, Timestamped};
@@ -11,8 +11,10 @@ use user_canister::swap_tokens::ExchangeArgs;
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 async fn c2c_withdraw_from_icpswap(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| c2c_withdraw_from_icpswap_impl(args)).await
+}
 
+async fn c2c_withdraw_from_icpswap_impl(args: Args) -> Response {
     let PrepareOk {
         swap,
         ledger,

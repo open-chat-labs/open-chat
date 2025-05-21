@@ -11,7 +11,7 @@ pub struct Args {
     pub message_id: MessageId,
 }
 
-#[allow(clippy::large_enum_variant)]
+#[expect(clippy::large_enum_variant)]
 #[ts_export(user, deleted_message)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {

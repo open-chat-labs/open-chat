@@ -1,4 +1,4 @@
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use user_canister::c2c_notify_achievement::{Response::*, *};
@@ -8,9 +8,7 @@ use user_canister::c2c_notify_achievement::{Response::*, *};
 #[update(msgpack = true)]
 #[trace]
 fn c2c_notify_achievement(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| c2c_notify_achievement_impl(args, state))
+    execute_update(|state| c2c_notify_achievement_impl(args, state))
 }
 
 fn c2c_notify_achievement_impl(args: Args, state: &mut RuntimeState) -> Response {

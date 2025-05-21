@@ -1,5 +1,5 @@
 use crate::guards::caller_is_escrow_canister;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, UserEventPusher, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use escrow_canister::{SwapStatus, SwapStatusChange as Args};
@@ -9,9 +9,7 @@ use user_canister::{P2PSwapStatusChange, UserCanisterEvent};
 #[update(guard = "caller_is_escrow_canister", msgpack = true)]
 #[trace]
 fn c2c_notify_p2p_swap_status_change(args: Args) {
-    run_regular_jobs();
-
-    mutate_state(|state| c2c_notify_p2p_swap_status_change_impl(args, state))
+    execute_update(|state| c2c_notify_p2p_swap_status_change_impl(args, state))
 }
 
 fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) {
@@ -70,14 +68,19 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                     }
                 }
                 SwapStatus::Completed(c) => {
+                    let now = state.env.now();
                     if let Ok(result) = chat.events.complete_p2p_swap(
                         c.accepted_by,
                         m.thread_root_message_index,
                         m.message_id,
                         c.token0_transfer_out.block_index,
                         c.token1_transfer_out.block_index,
-                        state.env.now(),
-                        &mut state.data.event_store_client,
+                        now,
+                        UserEventPusher {
+                            now,
+                            rng: state.env.rng(),
+                            queue: &mut state.data.local_user_index_event_sync_queue,
+                        },
                     ) {
                         status_to_push_c2c = Some(P2PSwapStatus::Completed(result.value));
                     }

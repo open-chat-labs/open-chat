@@ -17,13 +17,13 @@ async fn c2c_create_group(args: Args) -> Response {
     };
 
     let PrepareResult {
-        local_group_index_canister,
+        local_user_index_canister,
     } = match mutate_state(|state| prepare(&args.name, args.is_public, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
 
-    let c2c_create_group_args = local_group_index_canister::c2c_create_group::Args {
+    let c2c_create_group_args = local_user_index_canister::c2c_create_group::Args {
         created_by_user_id: user_id,
         created_by_user_principal: principal,
         is_public: args.is_public,
@@ -39,8 +39,8 @@ async fn c2c_create_group(args: Args) -> Response {
         gate_config: args.gate_config.clone(),
     };
 
-    match local_group_index_canister_c2c_client::c2c_create_group(local_group_index_canister, &c2c_create_group_args).await {
-        Ok(local_group_index_canister::c2c_create_group::Response::Success(result)) => {
+    match local_user_index_canister_c2c_client::c2c_create_group(local_user_index_canister, &c2c_create_group_args).await {
+        Ok(local_user_index_canister::c2c_create_group::Response::Success(result)) => {
             mutate_state(|state| {
                 commit(
                     CommitArgs {
@@ -51,7 +51,7 @@ async fn c2c_create_group(args: Args) -> Response {
                         subtype: args.subtype,
                         avatar_id,
                         gate_config: args.gate_config,
-                        local_group_index_canister,
+                        local_user_index_canister,
                     },
                     state,
                 )
@@ -61,9 +61,9 @@ async fn c2c_create_group(args: Args) -> Response {
                 local_user_index_canister_id: result.local_user_index_canister_id,
             })
         }
-        Ok(local_group_index_canister::c2c_create_group::Response::Error(error)) => Error(error),
-        Ok(local_group_index_canister::c2c_create_group::Response::CyclesBalanceTooLow) => CyclesBalanceTooLow,
-        Ok(local_group_index_canister::c2c_create_group::Response::InternalError(_)) => InternalError,
+        Ok(local_user_index_canister::c2c_create_group::Response::Error(error)) => Error(error),
+        Ok(local_user_index_canister::c2c_create_group::Response::CyclesBalanceTooLow) => CyclesBalanceTooLow,
+        Ok(local_user_index_canister::c2c_create_group::Response::InternalError(_)) => InternalError,
         Err(_) => {
             if args.is_public {
                 mutate_state(|state| state.data.public_group_and_community_names.unreserve_name(&args.name));
@@ -93,7 +93,7 @@ async fn validate_caller() -> Result<(UserId, Principal), Response> {
 }
 
 struct PrepareResult {
-    pub local_group_index_canister: CanisterId,
+    pub local_user_index_canister: CanisterId,
 }
 
 fn prepare(name: &str, is_public: bool, state: &mut RuntimeState) -> Result<PrepareResult, Response> {
@@ -103,9 +103,9 @@ fn prepare(name: &str, is_public: bool, state: &mut RuntimeState) -> Result<Prep
         return Err(NameTaken);
     }
 
-    if let Some(local_group_index_canister) = state.data.local_index_map.index_for_new_group() {
+    if let Some(local_user_index_canister) = state.data.local_index_map.index_for_new_group() {
         Ok(PrepareResult {
-            local_group_index_canister,
+            local_user_index_canister,
         })
     } else {
         Err(InternalError)
@@ -120,7 +120,7 @@ struct CommitArgs {
     subtype: Option<GroupSubtype>,
     avatar_id: Option<u128>,
     gate_config: Option<AccessGateConfig>,
-    local_group_index_canister: CanisterId,
+    local_user_index_canister: CanisterId,
 }
 
 fn commit(args: CommitArgs, state: &mut RuntimeState) {
@@ -146,5 +146,5 @@ fn commit(args: CommitArgs, state: &mut RuntimeState) {
     state
         .data
         .local_index_map
-        .add_group(args.local_group_index_canister, args.chat_id);
+        .add_group(args.local_user_index_canister, args.chat_id);
 }

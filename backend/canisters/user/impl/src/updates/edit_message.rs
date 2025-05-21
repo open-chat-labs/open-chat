@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, UserEventPusher, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::EditMessageArgs;
@@ -12,9 +12,7 @@ use user_canister::edit_message_v2::*;
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn edit_message_v2(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| edit_message_impl(args, state)).into()
+    execute_update(|state| edit_message_impl(args, state).into())
 }
 
 fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
@@ -37,8 +35,14 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             now,
         };
 
-        chat.events
-            .edit_message(edit_message_args, Some(&mut state.data.event_store_client))?;
+        chat.events.edit_message(
+            edit_message_args,
+            Some(UserEventPusher {
+                now,
+                rng: state.env.rng(),
+                queue: &mut state.data.local_user_index_event_sync_queue,
+            }),
+        )?;
 
         if args.user_id != OPENCHAT_BOT_USER_ID {
             let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));

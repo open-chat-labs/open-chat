@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::model::events::CommunityEventInternal;
-use crate::{RuntimeState, jobs, mutate_state, read_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update_async, jobs, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::GroupGateUpdatedInternal;
@@ -20,9 +20,11 @@ use utils::text_validation::{
 
 #[update(msgpack = true)]
 #[trace]
-async fn update_community(mut args: Args) -> Response {
-    run_regular_jobs();
+async fn update_community(args: Args) -> Response {
+    execute_update_async(|| update_community_impl(args)).await
+}
 
+async fn update_community_impl(mut args: Args) -> Response {
     clean_args(&mut args);
 
     let prepare_result = match read_state(|state| prepare(&args, state)) {

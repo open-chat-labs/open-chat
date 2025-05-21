@@ -30,11 +30,11 @@ impl<T: TimerJobItemBatch> BatchedTimerJobQueue<T> {
         self.0.defer_processing()
     }
 
-    pub fn set_defer_processing(&self, value: bool) {
+    pub fn set_defer_processing(&mut self, value: bool) {
         self.0.set_defer_processing(value);
     }
 
-    pub fn clear(&self) {
+    pub fn clear(&mut self) {
         self.0.clear()
     }
 
@@ -63,7 +63,7 @@ where
         self.0.push_many((), items);
     }
 
-    pub fn flush(&self) {
+    pub fn flush(&mut self) {
         self.0.flush();
     }
 }

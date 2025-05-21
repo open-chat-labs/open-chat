@@ -207,7 +207,7 @@ fn derives_serde(attr: &Attribute) -> bool {
     }
 }
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 struct Defaults {
     func: &'static str,
     default_override: Option<&'static str>,

@@ -15,11 +15,23 @@ generate_c2c_call!(chat_events);
 
 // Updates
 generate_c2c_call!(c2c_community_canister, 300);
+generate_c2c_call!(c2c_create_community);
+generate_c2c_call!(c2c_create_group);
+generate_c2c_call!(c2c_delete_community);
+generate_c2c_call!(c2c_delete_group);
 generate_c2c_call!(c2c_group_canister, 300);
+generate_c2c_call!(c2c_group_index, 300);
 generate_c2c_call!(c2c_local_group_index, 300);
 generate_c2c_call!(c2c_notify_low_balance);
 generate_c2c_call!(c2c_notify_user_index_events);
 generate_c2c_call!(c2c_push_wasm_chunk);
+generate_c2c_call!(c2c_set_community_upgrade_concurrency);
+generate_c2c_call!(c2c_set_group_upgrade_concurrency);
+generate_c2c_call!(c2c_set_max_concurrent_community_upgrades);
+generate_c2c_call!(c2c_set_max_concurrent_group_upgrades);
+generate_c2c_call!(c2c_trigger_upgrade);
+generate_c2c_call!(c2c_upgrade_community_canister_wasm);
+generate_c2c_call!(c2c_upgrade_group_canister_wasm);
 generate_c2c_call!(c2c_upgrade_user_canister_wasm);
 generate_c2c_call!(c2c_user_canister, 300);
 generate_c2c_call!(join_channel);

@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::timer_job_types::NotifyEscrowCanisterOfDepositJob;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::accept_p2p_swap::{Response::*, *};
@@ -12,8 +12,10 @@ use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEven
 #[update(msgpack = true)]
 #[trace]
 async fn accept_p2p_swap(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| accept_p2p_swap_impl(args)).await
+}
 
+async fn accept_p2p_swap_impl(args: Args) -> Response {
     let channel_id = args.channel_id;
     let thread_root_message_index = args.thread_root_message_index;
     let message_id = args.message_id;

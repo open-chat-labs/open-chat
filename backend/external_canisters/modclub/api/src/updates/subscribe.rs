@@ -2,7 +2,7 @@ use candid::{CandidType, Nat, define_function};
 use serde::Deserialize;
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
-#[allow(non_camel_case_types)]
+#[expect(non_camel_case_types)]
 pub enum ContentStatus {
     approved,
     new,
@@ -10,14 +10,14 @@ pub enum ContentStatus {
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
-#[allow(non_snake_case)]
+#[expect(non_snake_case)]
 pub struct ViolatedRules {
     pub id: String,
     pub rejectionCount: Nat,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
-#[allow(non_snake_case)]
+#[expect(non_snake_case)]
 pub struct ContentResult {
     pub approvedCount: Nat,
     pub rejectedCount: Nat,

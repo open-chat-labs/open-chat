@@ -101,7 +101,7 @@ impl DiamondMembershipDetailsInternal {
         self.expires_at > Some(LIFETIME_DIAMOND_TIMESTAMP)
     }
 
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn add_payment(
         &mut self,
         ledger: CanisterId,

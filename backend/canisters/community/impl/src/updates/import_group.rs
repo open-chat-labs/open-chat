@@ -1,5 +1,5 @@
 use crate::guards::caller_is_proposals_bot;
-use crate::{RuntimeState, mutate_state, read_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::import_group::{Response::*, *};
@@ -11,12 +11,16 @@ use types::{CanisterId, ChannelId, ChatId, OCResult, UserId};
 async fn c2c_import_proposals_group(
     args: community_canister::c2c_import_proposals_group::Args,
 ) -> community_canister::c2c_import_proposals_group::Response {
-    run_regular_jobs();
+    execute_update_async(|| c2c_import_proposals_group_impl(args)).await
+}
 
+async fn c2c_import_proposals_group_impl(
+    args: community_canister::c2c_import_proposals_group::Args,
+) -> community_canister::c2c_import_proposals_group::Response {
     let (group_index_canister_id, user_id) =
         read_state(|state| (state.data.group_index_canister_id, state.env.caller().into()));
 
-    match import_group_impl(args.group_id, user_id, group_index_canister_id).await {
+    match import_group_common(args.group_id, user_id, group_index_canister_id).await {
         Success(result) => community_canister::c2c_import_proposals_group::Response::Success(result.channel_id),
         Error(error) => community_canister::c2c_import_proposals_group::Response::Error(error),
     }
@@ -25,8 +29,10 @@ async fn c2c_import_proposals_group(
 #[update(msgpack = true)]
 #[trace]
 async fn import_group(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| import_group_impl(args)).await
+}
 
+async fn import_group_impl(args: Args) -> Response {
     let PrepareResult {
         group_index_canister_id,
         user_id,
@@ -35,10 +41,10 @@ async fn import_group(args: Args) -> Response {
         Err(error) => return Error(error),
     };
 
-    import_group_impl(args.group_id, user_id, group_index_canister_id).await
+    import_group_common(args.group_id, user_id, group_index_canister_id).await
 }
 
-async fn import_group_impl(group_id: ChatId, user_id: UserId, group_index_canister_id: CanisterId) -> Response {
+async fn import_group_common(group_id: ChatId, user_id: UserId, group_index_canister_id: CanisterId) -> Response {
     match group_index_canister_c2c_client::c2c_start_importing_group_into_community(
         group_index_canister_id,
         &group_index_canister::c2c_start_importing_group_into_community::Args { user_id, group_id },

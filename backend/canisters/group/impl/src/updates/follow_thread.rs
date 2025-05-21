@@ -1,4 +1,4 @@
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::follow_thread::*;
@@ -7,9 +7,7 @@ use types::{Achievement, OCResult};
 #[update(msgpack = true)]
 #[trace]
 fn follow_thread(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| follow_thread_impl(args, state)).into()
+    execute_update(|state| follow_thread_impl(args, state)).into()
 }
 
 fn follow_thread_impl(args: Args, state: &mut RuntimeState) -> OCResult {

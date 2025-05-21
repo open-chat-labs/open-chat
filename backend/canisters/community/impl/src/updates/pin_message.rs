@@ -1,4 +1,4 @@
-use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::pin_message::{Response::*, *};
@@ -7,9 +7,7 @@ use types::{OCResult, PushEventResult};
 #[update(msgpack = true)]
 #[trace]
 fn pin_message(args: Args) -> Response {
-    run_regular_jobs();
-
-    match mutate_state(|state| pin_message_impl(args, true, state)) {
+    match execute_update(|state| pin_message_impl(args, true, state)) {
         Ok(result) => Success(result),
         Err(error) => Error(error),
     }
@@ -18,9 +16,7 @@ fn pin_message(args: Args) -> Response {
 #[update(msgpack = true)]
 #[trace]
 fn unpin_message(args: Args) -> Response {
-    run_regular_jobs();
-
-    match mutate_state(|state| pin_message_impl(args, false, state)) {
+    match execute_update(|state| pin_message_impl(args, false, state)) {
         Ok(result) => Success(result),
         Err(error) => Error(error),
     }

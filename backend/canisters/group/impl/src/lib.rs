@@ -6,9 +6,9 @@ use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::{ChatEventInternal, Reader, UpdateMessageSuccess};
+use chat_events::{ChatEventInternal, EventPusher, Reader, UpdateMessageSuccess};
 use constants::{DAY_IN_MS, HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
-use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
+use event_store_producer::{Event, EventStoreClient, EventStoreClientBuilder};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::{GatePayment, calculate_gate_payments};
@@ -24,6 +24,7 @@ use msgpack::serialize_then_unwrap;
 use oc_error_codes::OCErrorCode;
 use principal_to_user_id_map::PrincipalToUserIdMap;
 use rand::RngCore;
+use rand::prelude::StdRng;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix, StableMemoryMap};
@@ -440,8 +441,9 @@ impl RuntimeState {
                 .as_ref()
                 .map(|bytes| bytes.len() as u64)
                 .unwrap_or_default(),
-            event_store_client_info: self.data.event_store_client.info(),
             timer_jobs: self.data.timer_jobs.len() as u32,
+            queued_user_events: self.data.user_event_sync_queue.len() as u32,
+            queued_local_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
             stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
@@ -510,6 +512,7 @@ struct Data {
     pub video_call_operators: Vec<Principal>,
     #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
+    #[deprecated]
     pub event_store_client: EventStoreClient<CdkRuntime>,
     achievements: Achievements,
     expiring_members: ExpiringMembers,
@@ -526,14 +529,14 @@ struct Data {
 }
 
 fn local_user_index_event_sync_queue() -> BatchedTimerJobQueue<LocalUserIndexEventBatch> {
-    BatchedTimerJobQueue::new(CanisterId::anonymous(), false)
+    BatchedTimerJobQueue::new(CanisterId::anonymous(), true)
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
     InstructionCountsLog::init(get_instruction_counts_index_memory(), get_instruction_counts_data_memory())
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 impl Data {
     pub fn new(
         chat_id: ChatId,
@@ -587,6 +590,7 @@ impl Data {
         let mut principal_to_user_id_map = PrincipalToUserIdMap::default();
         principal_to_user_id_map.insert(creator_principal, creator_user_id);
 
+        #[expect(deprecated)]
         Data {
             chat,
             principal_to_user_id_map,
@@ -620,7 +624,7 @@ impl Data {
             expiring_member_actions: ExpiringMemberActions::default(),
             user_cache: UserCache::default(),
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
-            local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, false),
+            local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             verified: Timestamped::default(),
             bots: InstalledBots::default(),
@@ -914,6 +918,27 @@ impl Data {
 
         timestamps.into_iter().max().unwrap_or_default()
     }
+
+    pub fn flush_pending_events(&mut self) {
+        self.user_event_sync_queue.flush();
+        self.local_user_index_event_sync_queue.flush();
+    }
+}
+
+struct GroupEventPusher<'a> {
+    now: TimestampMillis,
+    rng: &'a mut StdRng,
+    queue: &'a mut BatchedTimerJobQueue<LocalUserIndexEventBatch>,
+}
+
+impl EventPusher for GroupEventPusher<'_> {
+    fn push(&mut self, event: Event) {
+        self.queue.push(IdempotentEnvelope {
+            created_at: self.now,
+            idempotency_id: self.rng.next_u64(),
+            value: local_user_index_canister::GroupEvent::EventStoreEvent(event),
+        })
+    }
 }
 
 #[derive(Serialize, Debug)]
@@ -941,14 +966,35 @@ pub struct Metrics {
     pub instruction_counts: Vec<InstructionCountEntry>,
     pub community_being_imported_into: Option<CommunityId>,
     pub serialized_chat_state_bytes: u64,
-    pub event_store_client_info: EventStoreClientInfo,
     pub timer_jobs: u32,
+    pub queued_user_events: u32,
+    pub queued_local_index_events: u32,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
 
+fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
+    mutate_state(|state| {
+        state.regular_jobs.run(state.env.deref(), &mut state.data);
+        let result = f(state);
+        state.data.flush_pending_events();
+        result
+    })
+}
+
+async fn execute_update_async<F: FnOnce() -> Fut, Fut: Future<Output = R>, R>(f: F) -> R {
+    run_regular_jobs();
+    let result = f().await;
+    flush_pending_events();
+    result
+}
+
 fn run_regular_jobs() {
     mutate_state(|state| state.regular_jobs.run(state.env.deref(), &mut state.data));
+}
+
+fn flush_pending_events() {
+    mutate_state(|state| state.data.flush_pending_events());
 }
 
 struct AddMemberArgs {

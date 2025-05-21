@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Implement improved method of getting chat summary updates ([#8016](https://github.com/open-chat-labs/open-chat/pull/8016))
+
+## [[2.0.1754](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1754-local_user_index)] - 2025-05-21
+
+### Added
+
 - Support serving notifications from LocalUserIndexes ([#7968](https://github.com/open-chat-labs/open-chat/pull/7968))
 - Implement handling events from Groups and Communities ([#7971](https://github.com/open-chat-labs/open-chat/pull/7971))
 - Implement handling events and notifications from User canisters ([#7972](https://github.com/open-chat-labs/open-chat/pull/7972))
@@ -20,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support autonomous bots without API keys ([#7985](https://github.com/open-chat-labs/open-chat/pull/7985))
 - Increase scope of `bot_subscribe_to_events` ([#7996](https://github.com/open-chat-labs/open-chat/pull/7996))
 - Allow bot to specify data encoding format ([#8004](https://github.com/open-chat-labs/open-chat/pull/8004))
+- Include the api_gateway with bot notifications ([#8005](https://github.com/open-chat-labs/open-chat/pull/8005))
 
 ### Fixed
 

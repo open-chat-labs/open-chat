@@ -27,7 +27,6 @@ impl TestEnvManager {
         TestEnvWrapper::new(setup_new_env(None))
     }
 
-    #[allow(dead_code)]
     pub fn get_with_seed(&self, seed: Hash) -> TestEnvWrapper {
         TestEnvWrapper::new(setup_new_env(Some(seed)))
     }

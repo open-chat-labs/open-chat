@@ -577,7 +577,7 @@ async fn install_service_canisters_impl(
 mod siwe {
     use candid::CandidType;
 
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     #[derive(CandidType)]
     pub enum RuntimeFeature {
         IncludeUriInSeed,
@@ -603,7 +603,7 @@ mod siwe {
 mod siws {
     use candid::CandidType;
 
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     #[derive(CandidType)]
     pub enum RuntimeFeature {
         IncludeUriInSeed,

@@ -1,4 +1,4 @@
-#![allow(deprecated)]
+#![expect(deprecated)]
 use crate::nns::{Tokens, UserOrAccount};
 use crate::{CanisterId, TimestampNanos, UserId};
 use candid::{CandidType, Principal};
@@ -33,7 +33,7 @@ impl Cryptocurrency {
     }
 }
 
-#[allow(deprecated)]
+#[expect(deprecated)]
 impl From<String> for Cryptocurrency {
     fn from(value: String) -> Self {
         match value.as_str() {
