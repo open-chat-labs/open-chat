@@ -101,6 +101,7 @@ class _Writable<T> {
     readonly #start: StartStopNotifier<T> | undefined;
     readonly #equalityCheck: (a: T, b: T) => boolean;
     #value: T;
+    #dirty: boolean = false;
     #dirtyValue: T | undefined = undefined;
     #publishPending: boolean = false;
     #started: boolean = false;
@@ -135,16 +136,16 @@ class _Writable<T> {
     }
 
     get value(): T {
-        return this.#dirtyValue ?? this.#value;
+        return this.#dirty ? (this.#dirtyValue as T) : this.#value;
     }
 
     set(newValue: T) {
         if (this.#equalityCheck(newValue, this.#value)) {
-            this.#dirtyValue = undefined;
+            this.#resetDirtyValue();
             return;
         }
 
-        this.#dirtyValue = newValue;
+        this.#setDirtyValue(newValue);
 
         if (paused) {
             if (!this.#publishPending) {
@@ -158,19 +159,18 @@ class _Writable<T> {
     }
 
     update(updateFn: Updater<T>) {
-        const input = this.#dirtyValue ?? this.#value;
-        const newValue = updateFn(input);
+        const newValue = updateFn(this.#value);
         this.set(newValue);
     }
 
     get dirty(): boolean {
-        return this.#dirtyValue !== undefined;
+        return this.#dirty;
     }
 
     #publish() {
-        if (this.#dirtyValue !== undefined) {
-            this.#value = this.#dirtyValue;
-            this.#dirtyValue = undefined;
+        if (this.#dirty) {
+            this.#value = this.#dirtyValue as T;
+            this.#resetDirtyValue();
 
             if (this.#started) {
                 const shouldRunSubscriptions = !paused && subscriptionsPending.length === 0;
@@ -195,6 +195,16 @@ class _Writable<T> {
             }
             this.#started = false;
         }
+    }
+
+    #setDirtyValue(value: T) {
+        this.#dirtyValue = value;
+        this.#dirty = true;
+    }
+
+    #resetDirtyValue() {
+        this.#dirtyValue = undefined;
+        this.#dirty = false;
     }
 }
 
