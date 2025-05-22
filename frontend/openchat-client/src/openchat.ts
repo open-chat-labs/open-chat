@@ -3692,118 +3692,120 @@ export class OpenChat {
             return;
         }
 
-        const context = { chatId, threadRootMessageIndex };
-        const myUserId = currentUserIdStore.value;
-        const now = BigInt(Date.now());
-        const recentlyActiveCutOff = now - BigInt(12 * ONE_HOUR);
+        withPausedStores(() => {
+            const context = { chatId, threadRootMessageIndex };
+            const myUserId = currentUserIdStore.value;
+            const now = BigInt(Date.now());
+            const recentlyActiveCutOff = now - BigInt(12 * ONE_HOUR);
 
-        // To ensure we keep the chat summary up to date, if these events are in the main event list, check if there is
-        // now a new latest message and if so, mark it as a local chat summary update.
-        let latestMessageIndex =
-            threadRootMessageIndex === undefined
-                ? allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1
-                : undefined;
-        let newLatestMessage: EventWrapper<Message> | undefined = undefined;
+            // To ensure we keep the chat summary up to date, if these events are in the main event list, check if there is
+            // now a new latest message and if so, mark it as a local chat summary update.
+            let latestMessageIndex =
+                threadRootMessageIndex === undefined
+                    ? allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1
+                    : undefined;
+            let newLatestMessage: EventWrapper<Message> | undefined = undefined;
 
-        const anyFailedMessages = localUpdates.anyFailed(context);
+            const anyFailedMessages = localUpdates.anyFailed(context);
 
-        for (const event of newEvents) {
-            if (event.event.kind === "message") {
-                const { content, messageIndex, messageId } = event.event;
-                if (anyFailedMessages && localUpdates.deleteFailedMessage(context, messageId)) {
-                    this.#sendRequest({
-                        kind: "deleteFailedMessage",
-                        chatId,
-                        messageId,
-                        threadRootMessageIndex,
-                    });
-                }
-                const inflightMessagePromise = this.#inflightMessagePromises.get(messageId);
-                if (inflightMessagePromise !== undefined) {
-                    // If we reach here, then a message is currently being sent but the update call is yet to complete.
-                    // So given that we have received the message from the backend we know that the message has
-                    // successfully been sent, so we resolve the promise early.
-                    this.#inflightMessagePromises.delete(messageId);
-
-                    let result: SendMessageSuccess | TransferSuccess = {
-                        kind: "success",
-                        timestamp: event.timestamp,
-                        messageIndex: event.event.messageIndex,
-                        eventIndex: event.index,
-                        expiresAt: event.expiresAt,
-                    };
-                    if (content.kind === "crypto_content") {
-                        result = {
-                            ...result,
-                            kind: "transfer_success",
-                            transfer: content.transfer as CompletedCryptocurrencyTransfer,
-                        };
-                    }
-                    inflightMessagePromise(result);
-                }
-                if (localUpdates.deleteUnconfirmed(context, messageId)) {
-                    messagesRead.confirmMessage(context, messageIndex, messageId);
-                }
-                // If the message was sent by the current user, mark it as read
-                if (
-                    event.event.sender === myUserId &&
-                    !messagesRead.isRead(context, messageIndex, messageId)
-                ) {
-                    messagesRead.markMessageRead(context, messageIndex, messageId);
-                }
-                if (latestMessageIndex !== undefined && messageIndex > latestMessageIndex) {
-                    newLatestMessage = event as EventWrapper<Message>;
-                    latestMessageIndex = messageIndex;
-                }
-            }
-            if (event.timestamp > recentlyActiveCutOff) {
-                const userId = activeUserIdFromEvent(event.event);
-                if (userId !== undefined && userId !== myUserId) {
-                    this.#recentlyActiveUsersTracker.track(userId, event.timestamp);
-                }
-            }
-        }
-
-        if (threadRootMessageIndex === undefined) {
-            if (newLatestMessage !== undefined) {
-                localUpdates.updateLatestMessage(chatId, newLatestMessage);
-            }
-
-            if (isContiguous(chatId, newEvents, expiredEventRanges)) {
-                this.#updateServerEventsStore(chatId, (events) =>
-                    mergeServerEvents(events, newEvents, context),
-                );
-
-                const selectedThreadRootMessageIndex =
-                    selectedThreadIdStore.value?.threadRootMessageIndex;
-                if (selectedThreadRootMessageIndex !== undefined) {
-                    const threadRootEvent = newEvents.find(
-                        (e) =>
-                            e.event.kind === "message" &&
-                            e.event.messageIndex === selectedThreadRootMessageIndex,
-                    );
-                    if (threadRootEvent !== undefined) {
-                        publish("chatUpdated", {
+            for (const event of newEvents) {
+                if (event.event.kind === "message") {
+                    const { content, messageIndex, messageId } = event.event;
+                    if (anyFailedMessages && localUpdates.deleteFailedMessage(context, messageId)) {
+                        this.#sendRequest({
+                            kind: "deleteFailedMessage",
                             chatId,
-                            threadRootMessageIndex: selectedThreadRootMessageIndex,
+                            messageId,
+                            threadRootMessageIndex,
                         });
                     }
+                    const inflightMessagePromise = this.#inflightMessagePromises.get(messageId);
+                    if (inflightMessagePromise !== undefined) {
+                        // If we reach here, then a message is currently being sent but the update call is yet to complete.
+                        // So given that we have received the message from the backend we know that the message has
+                        // successfully been sent, so we resolve the promise early.
+                        this.#inflightMessagePromises.delete(messageId);
+
+                        let result: SendMessageSuccess | TransferSuccess = {
+                            kind: "success",
+                            timestamp: event.timestamp,
+                            messageIndex: event.event.messageIndex,
+                            eventIndex: event.index,
+                            expiresAt: event.expiresAt,
+                        };
+                        if (content.kind === "crypto_content") {
+                            result = {
+                                ...result,
+                                kind: "transfer_success",
+                                transfer: content.transfer as CompletedCryptocurrencyTransfer,
+                            };
+                        }
+                        inflightMessagePromise(result);
+                    }
+                    if (localUpdates.deleteUnconfirmed(context, messageId)) {
+                        messagesRead.confirmMessage(context, messageIndex, messageId);
+                    }
+                    // If the message was sent by the current user, mark it as read
+                    if (
+                        event.event.sender === myUserId &&
+                        !messagesRead.isRead(context, messageIndex, messageId)
+                    ) {
+                        messagesRead.markMessageRead(context, messageIndex, messageId);
+                    }
+                    if (latestMessageIndex !== undefined && messageIndex > latestMessageIndex) {
+                        newLatestMessage = event as EventWrapper<Message>;
+                        latestMessageIndex = messageIndex;
+                    }
+                }
+                if (event.timestamp > recentlyActiveCutOff) {
+                    const userId = activeUserIdFromEvent(event.event);
+                    if (userId !== undefined && userId !== myUserId) {
+                        this.#recentlyActiveUsersTracker.track(userId, event.timestamp);
+                    }
                 }
             }
-        } else if (isContiguousInThread({ chatId, threadRootMessageIndex }, newEvents)) {
-            this.#updateServerThreadEventsStore({ chatId, threadRootMessageIndex }, (events) =>
-                mergeServerEvents(events, newEvents, context),
-            );
-        }
 
-        if (expiredEventRanges.length > 0) {
-            this.#updateServerExpiredEventRanges(chatId, (ranges) => {
-                const merged = new DRange();
-                merged.add(ranges);
-                expiredEventRanges.forEach((r) => merged.add(r.start, r.end));
-                return merged;
-            });
-        }
+            if (threadRootMessageIndex === undefined) {
+                if (newLatestMessage !== undefined) {
+                    localUpdates.updateLatestMessage(chatId, newLatestMessage);
+                }
+
+                if (isContiguous(chatId, newEvents, expiredEventRanges)) {
+                    this.#updateServerEventsStore(chatId, (events) =>
+                        mergeServerEvents(events, newEvents, context),
+                    );
+
+                    const selectedThreadRootMessageIndex =
+                        selectedThreadIdStore.value?.threadRootMessageIndex;
+                    if (selectedThreadRootMessageIndex !== undefined) {
+                        const threadRootEvent = newEvents.find(
+                            (e) =>
+                                e.event.kind === "message" &&
+                                e.event.messageIndex === selectedThreadRootMessageIndex,
+                        );
+                        if (threadRootEvent !== undefined) {
+                            publish("chatUpdated", {
+                                chatId,
+                                threadRootMessageIndex: selectedThreadRootMessageIndex,
+                            });
+                        }
+                    }
+                }
+            } else if (isContiguousInThread({ chatId, threadRootMessageIndex }, newEvents)) {
+                this.#updateServerThreadEventsStore({ chatId, threadRootMessageIndex }, (events) =>
+                    mergeServerEvents(events, newEvents, context),
+                );
+            }
+
+            if (expiredEventRanges.length > 0) {
+                this.#updateServerExpiredEventRanges(chatId, (ranges) => {
+                    const merged = new DRange();
+                    merged.add(ranges);
+                    expiredEventRanges.forEach((r) => merged.add(r.start, r.end));
+                    return merged;
+                });
+            }
+        });
     }
 
     #updateServerExpiredEventRanges(chatId: ChatIdentifier, fn: (existing: DRange) => DRange) {
