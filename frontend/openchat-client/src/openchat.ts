@@ -4318,30 +4318,32 @@ export class OpenChat {
         // HACK - we need to defer this very slightly so that we can guarantee that we handle SendingMessage events
         // *before* the new message is added to the unconfirmed store. Is this nice? No it is not.
         window.setTimeout(() => {
-            if (!isTransfer(messageEvent.event.content)) {
-                localUpdates.addUnconfirmed(context, messageEvent);
-            }
+            this.#withPausedStores(() => {
+                if (!isTransfer(messageEvent.event.content)) {
+                    localUpdates.addUnconfirmed(context, messageEvent);
+                }
 
-            localUpdates.deleteFailedMessage(context, messageEvent.event.messageId);
+                localUpdates.deleteFailedMessage(context, messageEvent.event.messageId);
 
-            // mark our own messages as read manually since we will not be observing them
-            messagesRead.markMessageRead(
-                context,
-                messageEvent.event.messageIndex,
-                messageEvent.event.messageId,
-            );
-            // Mark all existing messages as read
-            if (messageEvent.event.messageIndex > 0) {
-                messagesRead.markReadUpTo(context, messageEvent.event.messageIndex - 1);
-            }
+                // mark our own messages as read manually since we will not be observing them
+                messagesRead.markMessageRead(
+                    context,
+                    messageEvent.event.messageIndex,
+                    messageEvent.event.messageId,
+                );
+                // Mark all existing messages as read
+                if (messageEvent.event.messageIndex > 0) {
+                    messagesRead.markReadUpTo(context, messageEvent.event.messageIndex - 1);
+                }
 
-            localUpdates.draftMessages.value.delete(context);
+                localUpdates.draftMessages.delete(context);
 
-            if (!isTransfer(messageEvent.event.content)) {
-                this.#sendMessageWebRtc(chat, messageEvent, threadRootMessageIndex).then(() => {
-                    publish("sentMessage", { context, event: messageEvent });
-                });
-            }
+                if (!isTransfer(messageEvent.event.content)) {
+                    this.#sendMessageWebRtc(chat, messageEvent, threadRootMessageIndex).then(() => {
+                        publish("sentMessage", { context, event: messageEvent });
+                    });
+                }
+            });
         }, 0);
     }
 
@@ -4430,7 +4432,7 @@ export class OpenChat {
                 msg.blockLevelMarkdown === blockLevelMarkdown ? undefined : blockLevelMarkdown;
 
             const undo = localUpdates.markMessageContentEdited(msg, updatedBlockLevelMarkdown);
-            localUpdates.draftMessages.value.delete(messageContext);
+            localUpdates.draftMessages.delete(messageContext);
 
             const newAchievement = !achievementsStore.value.has("edited_message");
 
@@ -6115,10 +6117,10 @@ export class OpenChat {
         }
     }
 
-    async #withPausedStores(fn: () => void | Promise<void>) {
+    async #withPausedStores(fn: () => void) {
         try {
             pauseStores();
-            await fn();
+            fn();
         } finally {
             unpauseStores();
         }
@@ -6140,24 +6142,24 @@ export class OpenChat {
                 await updateRegistryTask;
             }
 
-            this.#withPausedStores(async () => {
-                const chats = (chatsResponse.state.directChats as ChatSummary[])
-                    .concat(chatsResponse.state.groupChats)
-                    .concat(chatsResponse.state.communities.flatMap((c) => c.channels));
+            const chats = (chatsResponse.state.directChats as ChatSummary[])
+                .concat(chatsResponse.state.groupChats)
+                .concat(chatsResponse.state.communities.flatMap((c) => c.channels));
 
-                this.#updateReadUpToStore(chats);
+            this.#updateReadUpToStore(chats);
 
-                const userIds = this.#userIdsFromChatSummaries(chats);
-                if (chatsResponse.state.referrals !== undefined) {
-                    for (const userId of chatsResponse.state.referrals.map((r) => r.userId)) {
-                        userIds.add(userId);
-                    }
+            const userIds = this.#userIdsFromChatSummaries(chats);
+            if (chatsResponse.state.referrals !== undefined) {
+                for (const userId of chatsResponse.state.referrals.map((r) => r.userId)) {
+                    userIds.add(userId);
                 }
-                if (!anonUserStore.value) {
-                    userIds.add(currentUserIdStore.value);
-                }
-                await this.getMissingUsers(userIds);
+            }
+            if (!anonUserStore.value) {
+                userIds.add(currentUserIdStore.value);
+            }
+            await this.getMissingUsers(userIds);
 
+            this.#withPausedStores(() => {
                 if (chatsResponse.state.blockedUsers !== undefined) {
                     userStore.setBlockedUsers(chatsResponse.state.blockedUsers);
                 }

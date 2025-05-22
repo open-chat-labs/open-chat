@@ -202,7 +202,7 @@
     }
 
     function cancelEditEvent() {
-        localUpdates.draftMessages.value.delete(messageContext);
+        localUpdates.draftMessages.delete(messageContext);
     }
 
     function onSetTextContent(txt?: string) {

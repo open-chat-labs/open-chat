@@ -49,6 +49,12 @@ export function createDraftMessagesStore() {
         setReplyingTo(key: MessageContext, replyingTo?: EnhancedReplyContext) {
             updateDraft(key, (d) => ({ ...d, replyingTo }));
         },
+        delete(key: MessageContext) {
+            store.update((map) => {
+                map.delete(key);
+                return map;
+            });
+        },
         setEditing(
             key: MessageContext,
             editingEvent: EventWrapper<Message>,
