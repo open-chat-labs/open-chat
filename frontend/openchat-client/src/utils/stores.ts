@@ -224,7 +224,7 @@ class _Derived<S extends Stores, T> {
                     (this.#storeValues as unknown[])[index] = v;
                     this.#pending &= ~(1 << index);
                     if (this.#started) {
-                        this.#sync();
+                        this.#sync(false);
                     }
                 },
                 () => this.#pending |= 1 << index
@@ -234,7 +234,7 @@ class _Derived<S extends Stores, T> {
             }
         }
         this.#started = true;
-        this.#sync();
+        this.#sync(true);
         return () => this.#stop();
     }
 
@@ -246,8 +246,8 @@ class _Derived<S extends Stores, T> {
         this.#started = false;
     }
 
-    #sync() {
-        if (this.dirty) {
+    #sync(force: boolean) {
+        if (!force && this.dirty) {
             return;
         }
         const newValue = this.#fn(
