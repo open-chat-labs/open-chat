@@ -146,6 +146,7 @@ describe("store value can be accessed", () => {
     test("when store has no subscribers and stores are paused", () => {
         const w = writable(1);
         const d = derived(w, (_w) => 2 * _w);
+
         withPausedStores(() => {
             expect(d.value).toEqual(2);
         });
@@ -156,8 +157,26 @@ describe("store value can be accessed", () => {
         const d1 = derived(w, (_w) => 2 * _w);
         const d2 = derived(d1, (_d1) => 3 * _d1);
         const d3 = derived(d2, (_d2) => 4 * _d2);
+
         withPausedStores(() => {
             expect(d3.value).toEqual(24);
+        });
+    });
+
+    test("when store has no subscribers and depends on dirty derived stores", () => {
+        const w1 = writable(1);
+        const w2 = writable(2);
+        const d1 = derived(w1, (_w1) => _w1);
+        const d2 = derived(w2, (_w2) => _w2);
+        const d3 = derived([d1, d2], ([_d1, _d2]) => _d1 * _d2);
+        d1.subscribe((_) => {});
+        d2.subscribe((_) => {});
+
+        withPausedStores(() => {
+            w1.set(3);
+            w2.set(4);
+            // It won't pick up the new values since stores are paused
+            expect(d3.value).toEqual(2);
         });
     });
 });

@@ -3,8 +3,8 @@ use crate::{RuntimeState, activity_notifications::handle_activity_notification, 
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
-use types::OCResult;
-use types::c2c_install_bot::*;
+use types::{BotEvent, BotInstalledEvent, BotLifecycleEvent, BotNotification, OCResult};
+use types::{BotInstallationLocation, c2c_install_bot::*};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -21,16 +21,29 @@ fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
+    let installed_by = member.user_id();
+
     if !state.data.install_bot(
-        member.user_id(),
+        installed_by,
         args.bot_id,
-        args.granted_permissions,
-        args.granted_autonomous_permissions,
+        args.granted_permissions.clone(),
+        args.granted_autonomous_permissions.clone(),
         args.default_subscriptions,
         state.env.now(),
     ) {
         return Err(OCErrorCode::AlreadyAdded.into());
     }
+
+    state.push_bot_notification(BotNotification {
+        event: BotEvent::Lifecycle(BotLifecycleEvent::Installed(BotInstalledEvent {
+            installed_by,
+            location: BotInstallationLocation::Group(state.env.canister_id().into()),
+            api_gateway: state.data.local_user_index_canister_id,
+            granted_command_permissions: args.granted_permissions,
+            granted_autonomous_permissions: args.granted_autonomous_permissions.unwrap_or_default(),
+        })),
+        recipients: vec![args.bot_id],
+    });
 
     handle_activity_notification(state);
     Ok(())

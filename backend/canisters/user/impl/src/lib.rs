@@ -39,8 +39,8 @@ use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    Achievement, BotInitiator, BotPermissions, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned,
-    ChitEarnedReason, CommunityId, Cycles, Document, IdempotentEnvelope, Milliseconds, Notification, NotifyChit,
+    Achievement, BotInitiator, BotNotification, BotPermissions, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics,
+    ChitEarned, ChitEarnedReason, CommunityId, Cycles, Document, IdempotentEnvelope, Milliseconds, Notification, NotifyChit,
     TimestampMillis, Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment,
     UserId, UserNotification, UserNotificationPayload,
 };
@@ -236,6 +236,12 @@ impl RuntimeState {
             }
         }
         false
+    }
+
+    pub fn push_bot_notification(&mut self, notification: BotNotification, now: TimestampMillis) {
+        if !notification.recipients.is_empty() {
+            self.push_local_user_index_canister_event(LocalUserIndexEvent::Notification(Notification::Bot(notification)), now);
+        }
     }
 
     pub fn push_local_user_index_canister_event(&mut self, event: LocalUserIndexEvent, now: TimestampMillis) {
