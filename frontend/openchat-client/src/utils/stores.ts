@@ -1,14 +1,18 @@
-import type { StartStopNotifier, Readable as SvelteReadable, Subscriber, Writable as SvelteWritable, Unsubscriber, Updater } from "svelte/store";
-export type { StartStopNotifier, Subscriber, Unsubscriber, Updater } from "svelte/store";
 import { untrack } from "svelte";
+import type { StartStopNotifier, Subscriber, Readable as SvelteReadable, Writable as SvelteWritable, Unsubscriber, Updater } from "svelte/store";
+export type { StartStopNotifier, Subscriber, Unsubscriber, Updater } from "svelte/store";
 
 export type Readable<T> = SvelteReadable<T> & { get value(): T } & MaybeDirty;
 export type Writable<T> = SvelteWritable<T> & { get value(): T } & MaybeDirty;
 export type EqualityCheck<T> = (a: T, b: T) => boolean;
-type MaybeDirty = { get dirty() : boolean };
-type Stores = SvelteReadable<unknown> | [SvelteReadable<unknown>, ...Array<SvelteReadable<unknown>>] | Array<SvelteReadable<unknown>>;
-type StoresValues<T> =
-    T extends SvelteReadable<infer U> ? U : { [K in keyof T]: T[K] extends SvelteReadable<infer U> ? U : never };
+type MaybeDirty = { get dirty(): boolean };
+type Stores =
+    | SvelteReadable<unknown>
+    | [SvelteReadable<unknown>, ...Array<SvelteReadable<unknown>>]
+    | Array<SvelteReadable<unknown>>;
+type StoresValues<T> = T extends SvelteReadable<infer U>
+    ? U
+    : { [K in keyof T]: T[K] extends SvelteReadable<infer U> ? U : never };
 
 let paused = false;
 // Callbacks to publish dirty values from writable stores
@@ -43,11 +47,19 @@ function runSubscriptions() {
     subscriptionsPending = [];
 }
 
-export function writable<T>(value: T, start?: StartStopNotifier<T>, equalityCheck?: EqualityCheck<T>): Writable<T> {
+export function writable<T>(
+    value: T,
+    start?: StartStopNotifier<T>,
+    equalityCheck?: EqualityCheck<T>,
+): Writable<T> {
     return new _Writable(value, start, equalityCheck);
 }
 
-export function readable<T>(value: T, start: StartStopNotifier<T>, equalityCheck?: EqualityCheck<T>): Readable<T> {
+export function readable<T>(
+    value: T,
+    start: StartStopNotifier<T>,
+    equalityCheck?: EqualityCheck<T>,
+): Readable<T> {
     const store = writable(value, start, equalityCheck);
     return {
         subscribe: store.subscribe,
@@ -56,7 +68,11 @@ export function readable<T>(value: T, start: StartStopNotifier<T>, equalityCheck
     };
 }
 
-export function derived<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>) => T, equalityCheck?: EqualityCheck<T>): Readable<T> {
+export function derived<S extends Stores, T>(
+    stores: S,
+    fn: (values: StoresValues<S>) => T,
+    equalityCheck?: EqualityCheck<T>,
+): Readable<T> {
     return new _Derived(stores, fn, equalityCheck ?? ((a, b) => a === b));
 }
 
@@ -65,7 +81,8 @@ export function get<T>(store: Readable<T>): T {
 }
 
 class _Writable<T> {
-    readonly #subscriptions: Map<symbol, [(value: T) => void, (() => void) | undefined]> = new Map();
+    readonly #subscriptions: Map<symbol, [(value: T) => void, (() => void) | undefined]> =
+        new Map();
     readonly #start: StartStopNotifier<T> | undefined;
     readonly #equalityCheck: (a: T, b: T) => boolean;
     #value: T;
@@ -75,7 +92,11 @@ class _Writable<T> {
     #started: boolean = false;
     #stop: Unsubscriber | undefined = undefined;
 
-    constructor(initValue: T, start?: StartStopNotifier<T>, equalityCheck?: (a: T, b: T) => boolean) {
+    constructor(
+        initValue: T,
+        start?: StartStopNotifier<T>,
+        equalityCheck?: (a: T, b: T) => boolean,
+    ) {
         this.#value = initValue;
         this.#start = start;
         this.#equalityCheck = equalityCheck ?? ((a, b) => a === b);
@@ -88,7 +109,7 @@ class _Writable<T> {
         if (this.#subscriptions.size === 1) {
             if (this.#start !== undefined) {
                 const stop = this.#start(this.set, this.update);
-                if (typeof stop === 'function') {
+                if (typeof stop === "function") {
                     this.#stop = stop;
                 }
             }
@@ -100,7 +121,7 @@ class _Writable<T> {
     }
 
     get value(): T {
-        return this.#dirty ? this.#dirtyValue as T : this.#value;
+        return this.#dirty ? (this.#dirtyValue as T) : this.#value;
     }
 
     set(newValue: T) {
@@ -239,7 +260,9 @@ class _Derived<S extends Stores, T> {
         if (this.dirty) {
             return;
         }
-        const newValue = this.#fn((this.#single ? this.#storeValues[0] : this.#storeValues) as StoresValues<S>);
+        const newValue = this.#fn(
+            (this.#single ? this.#storeValues[0] : this.#storeValues) as StoresValues<S>,
+        );
         this.#innerStore.set(newValue);
     }
 }
@@ -249,7 +272,7 @@ function convertStore<T>(store: Readable<T> | SvelteReadable<T>): Readable<T> {
         return store;
     }
     let value: T;
-    store.subscribe((v) => value = v);
+    store.subscribe((v) => (value = v));
     return {
         subscribe: (start, invalidate) => store.subscribe(start, invalidate),
         get dirty() {
