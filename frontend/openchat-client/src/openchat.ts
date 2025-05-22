@@ -9368,6 +9368,11 @@ export class OpenChat {
             pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
+        const local = {
+            ...serverStreakInsuranceStore.value,
+            daysInsured: serverStreakInsuranceStore.value.daysInsured + additionalDays,
+        };
+
         return this.#sendRequest({
             kind: "payForStreakInsurance",
             additionalDays,
@@ -9376,10 +9381,7 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    localUpdates.updateStreakInsurance({
-                        ...serverStreakInsuranceStore.value,
-                        daysInsured: serverStreakInsuranceStore.value.daysInsured + additionalDays,
-                    });
+                    localUpdates.updateStreakInsurance(local);
                 }
                 return resp;
             })
