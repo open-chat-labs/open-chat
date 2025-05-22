@@ -27,9 +27,11 @@ type StoresValues<T> = T extends SvelteReadable<infer U>
 
 let pauseCount = 0;
 // Callbacks to publish dirty values from writable stores
-let publishesPending: (() => void)[] = [];
+const publishesPending: (() => void)[] = [];
 // Callbacks to push new values to their subscribers
-let subscriptionsPending: (() => void)[] = [];
+const subscriptionsPending: (() => void)[] = [];
+// Callbacks to retry syncing derived stores whose dependencies were dirty when last attempted
+const derivedStoresToRetry: (() => void)[] = [];
 
 const NOOP = () => {};
 
@@ -40,10 +42,7 @@ export function withPausedStores(fn: () => void) {
     } finally {
         if (--pauseCount === 0) {
             // Publish the changes to the writable stores
-            for (const callback of publishesPending) {
-                callback();
-            }
-            publishesPending = [];
+            executeCallbacks(publishesPending);
 
             // Run the derived store subscriptions
             runSubscriptions();
@@ -52,10 +51,18 @@ export function withPausedStores(fn: () => void) {
 }
 
 function runSubscriptions() {
-    for (const callback of subscriptionsPending) {
-        callback();
+    while (subscriptionsPending.length > 0) {
+        executeCallbacks(subscriptionsPending);
+        executeCallbacks(publishesPending);
+        executeCallbacks(derivedStoresToRetry);
     }
-    subscriptionsPending = [];
+}
+
+function executeCallbacks(callbacks: (() => void)[]) {
+    for (let index = 0; index < callbacks.length; index++) {
+        callbacks[index]();
+    }
+    callbacks.length = 0;
 }
 
 export function writable<T>(
@@ -200,7 +207,8 @@ class _Derived<S extends Stores, T> {
     readonly #single;
     readonly #fn: (values: StoresValues<S>) => T;
     #started = false;
-    #pending = 0;
+    #dependenciesPending = 0;
+    #dirty = false;
     #unsubscribers: Unsubscriber[] = [];
     // The first time you call `value` a subscription will be created, ensuring subsequent accesses are fast
     #valueSubscriber: Unsubscriber | undefined = undefined;
@@ -223,7 +231,7 @@ class _Derived<S extends Stores, T> {
     }
 
     get dirty(): boolean {
-        return this.#pending !== 0 || this.#storesArray.some((s) => s.dirty);
+        return this.#dirty || this.#dependenciesDirty();
     }
 
     #start() {
@@ -232,12 +240,15 @@ class _Derived<S extends Stores, T> {
             const unsub = untrack(() => store.subscribe(
                 (v) => {
                     (this.#storeValues as unknown[])[index] = v;
-                    this.#pending &= ~(1 << index);
+                    this.#dependenciesPending &= ~(1 << index);
                     if (this.#started) {
                         this.#sync(false);
                     }
                 },
-                () => this.#pending |= 1 << index
+                () => {
+                    this.#dirty = true;
+                    this.#dependenciesPending |= 1 << index;
+                }
             ));
             if (typeof unsub === 'function') {
                 this.#unsubscribers.push(unsub);
@@ -257,13 +268,27 @@ class _Derived<S extends Stores, T> {
     }
 
     #sync(force: boolean) {
-        if (!force && this.dirty) {
-            return;
+        if (!force) {
+            // Exit early if the store is no longer dirty
+            if (!this.#dirty) {
+                return;
+            }
+            // If any dependencies are still dirty, queue this store to be retried
+            if (this.#dependenciesDirty()) {
+                derivedStoresToRetry.push(() => this.#sync(false))
+                return;
+            }
         }
+
         const newValue = this.#fn(
             (this.#single ? this.#storeValues[0] : this.#storeValues) as StoresValues<S>,
         );
         this.#innerStore.set(newValue);
+        this.#dirty = false;
+    }
+
+    #dependenciesDirty() {
+        return this.#dependenciesPending !== 0 || this.#storesArray.some((s) => s.dirty);
     }
 }
 
