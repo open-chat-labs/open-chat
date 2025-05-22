@@ -1,5 +1,5 @@
 import type { StartStopNotifier, Readable as SvelteReadable, Subscriber, Writable as SvelteWritable, Unsubscriber, Updater } from "svelte/store";
-export { type StartStopNotifier, type Subscriber, type Unsubscriber, type Updater } from "svelte/store";
+export type { StartStopNotifier, Subscriber, Unsubscriber, Updater } from "svelte/store";
 import { untrack } from "svelte";
 
 export type Readable<T> = SvelteReadable<T> & { get value(): T } & MaybeDirty;
