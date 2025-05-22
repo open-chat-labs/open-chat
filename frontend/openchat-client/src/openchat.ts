@@ -151,6 +151,7 @@ import {
     isMessageNotification,
     isNeuronGate,
     isPaymentGate,
+    isProposalsChat,
     isSuccessfulEventsResponse,
     isTransfer,
     type JoinVideoCallResponse,
@@ -2886,6 +2887,11 @@ export class OpenChat {
             selectedChatUserIdsStore.set(new Set());
             selectedChatUserGroupKeysStore.set(new Set());
             selectedChatExpandedDeletedMessageStore.set(new Set());
+            filteredProposalsStore.set(
+                isProposalsChat(clientChat)
+                    ? FilteredProposals.fromStorage(clientChat.subtype.governanceCanisterId)
+                    : undefined,
+            );
         });
 
         const selectedChat = selectedChatSummaryStore.value;
@@ -9705,9 +9711,8 @@ export class OpenChat {
     #modifyFilteredProposals(fn: (fp: FilteredProposals) => void) {
         filteredProposalsStore.update((fp) => {
             if (fp !== undefined) {
-                const clone = fp.clone();
-                fn(clone);
-                return clone;
+                fn(fp);
+                return fp;
             }
         });
     }
