@@ -88,7 +88,6 @@ class _Writable<T> {
     readonly #equalityCheck: (a: T, b: T) => boolean;
     #value: T;
     #dirty: boolean = false;
-    #publishedValue: T;
     #publishPending: boolean = false;
     #started: boolean = false;
     #stop: Unsubscriber | undefined = undefined;
@@ -99,7 +98,6 @@ class _Writable<T> {
         equalityCheck?: (a: T, b: T) => boolean,
     ) {
         this.#value = initValue;
-        this.#publishedValue = initValue;
         this.#start = start;
         this.#equalityCheck = equalityCheck ?? ((a, b) => a === b);
     }
@@ -127,12 +125,12 @@ class _Writable<T> {
     }
 
     set(newValue: T) {
-        this.#value = newValue;
-
-        if (this.#equalityCheck(newValue, this.#publishedValue)) {
-            this.#dirty = false;
+        if (this.#equalityCheck(newValue, this.#value)) {
             return;
         }
+
+        this.#value = newValue;
+        this.#dirty = true;
 
         if (pauseCount === 0 || !this.#started) {
             this.#publish();
@@ -156,7 +154,6 @@ class _Writable<T> {
 
     #publish() {
         if (this.#dirty) {
-            this.#publishedValue = this.#value;
             this.#dirty = false;
 
             if (this.#started) {
