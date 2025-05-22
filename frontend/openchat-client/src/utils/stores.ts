@@ -1,18 +1,6 @@
-import type {
-    StartStopNotifier,
-    Subscriber,
-    Readable as SvelteReadable,
-    Writable as SvelteWritable,
-    Unsubscriber,
-    Updater,
-} from "svelte/store";
-export {
-    get,
-    type StartStopNotifier,
-    type Subscriber,
-    type Unsubscriber,
-    type Updater,
-} from "svelte/store";
+import { untrack } from "svelte";
+import type { StartStopNotifier, Subscriber, Readable as SvelteReadable, Writable as SvelteWritable, Unsubscriber, Updater } from "svelte/store";
+export type { StartStopNotifier, Subscriber, Unsubscriber, Updater } from "svelte/store";
 
 export type Readable<T> = SvelteReadable<T> & { get value(): T } & MaybeDirty;
 export type Writable<T> = SvelteWritable<T> & { get value(): T } & MaybeDirty;
@@ -32,14 +20,7 @@ let publishesPending: (() => void)[] = [];
 // Callbacks to push new values to their subscribers
 let subscriptionsPending: (() => void)[] = [];
 
-export async function withPausedStores(fn: () => void | Promise<void>) {
-    try {
-        pauseStores();
-        await fn();
-    } finally {
-        unpauseStores();
-    }
-}
+const NOOP = () => {};
 
 export function pauseStores() {
     paused = true;
@@ -93,6 +74,10 @@ export function derived<S extends Stores, T>(
     equalityCheck?: EqualityCheck<T>,
 ): Readable<T> {
     return new _Derived(stores, fn, equalityCheck ?? ((a, b) => a === b));
+}
+
+export function get<T>(store: Readable<T>): T {
+    return store.value;
 }
 
 class _Writable<T> {
@@ -231,7 +216,10 @@ class _Derived<S extends Stores, T> {
     }
 
     get value(): T {
-        return this.#innerStore.value;
+        const unsub = this.#started ? undefined : this.subscribe(NOOP);
+        const value = this.#innerStore.value;
+        unsub?.();
+        return value;
     }
 
     get dirty(): boolean {
@@ -241,7 +229,7 @@ class _Derived<S extends Stores, T> {
     #start() {
         if (this.#started) return;
         for (const [index, store] of this.#storesArray.entries()) {
-            const unsub = store.subscribe(
+            const unsub = untrack(() => store.subscribe(
                 (v) => {
                     (this.#storeValues as unknown[])[index] = v;
                     this.#pending &= ~(1 << index);
@@ -249,9 +237,9 @@ class _Derived<S extends Stores, T> {
                         this.#sync();
                     }
                 },
-                () => (this.#pending |= 1 << index),
-            );
-            if (typeof unsub === "function") {
+                () => this.#pending |= 1 << index
+            ));
+            if (typeof unsub === 'function') {
                 this.#unsubscribers.push(unsub);
             }
         }
