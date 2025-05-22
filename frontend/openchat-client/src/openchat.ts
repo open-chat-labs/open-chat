@@ -564,7 +564,7 @@ import {
 } from "./utils/rtc";
 import { rtcConnectionsManager } from "./utils/rtcConnectionsManager";
 import { Semaphore } from "./utils/semaphore";
-import { pauseStores, unpauseStores } from "./utils/stores";
+import { withPausedStores } from "./utils/stores";
 import {
     durationFromMilliseconds,
     formatDisappearingMessageTime,
@@ -4318,7 +4318,7 @@ export class OpenChat {
         // HACK - we need to defer this very slightly so that we can guarantee that we handle SendingMessage events
         // *before* the new message is added to the unconfirmed store. Is this nice? No it is not.
         window.setTimeout(() => {
-            this.#withPausedStores(() => {
+            withPausedStores(() => {
                 if (!isTransfer(messageEvent.event.content)) {
                     localUpdates.addUnconfirmed(context, messageEvent);
                 }
@@ -6117,15 +6117,6 @@ export class OpenChat {
         }
     }
 
-    async #withPausedStores(fn: () => void) {
-        try {
-            pauseStores();
-            fn();
-        } finally {
-            unpauseStores();
-        }
-    }
-
     async #handleChatsResponse(
         updateRegistryTask: Promise<void> | undefined,
         initialLoad: boolean,
@@ -6159,7 +6150,7 @@ export class OpenChat {
             }
             await this.getMissingUsers(userIds);
 
-            this.#withPausedStores(() => {
+            withPausedStores(() => {
                 if (chatsResponse.state.blockedUsers !== undefined) {
                     userStore.setBlockedUsers(chatsResponse.state.blockedUsers);
                 }
@@ -9696,7 +9687,7 @@ export class OpenChat {
     }
 
     setRouteParams(ctx: PageJS.Context, p: RouteParams) {
-        this.#withPausedStores(() => {
+        withPausedStores(() => {
             routeStore.set(p);
             pathContextStore.set(ctx);
             notFoundStore.set(false);

@@ -1,10 +1,18 @@
 import { untrack } from "svelte";
-import type { StartStopNotifier, Subscriber, Readable as SvelteReadable, Writable as SvelteWritable, Unsubscriber, Updater } from "svelte/store";
-export type { StartStopNotifier, Subscriber, Unsubscriber, Updater } from "svelte/store";
+import type {
+    StartStopNotifier,
+    Subscriber,
+    Readable as SvelteReadable,
+    Writable as SvelteWritable,
+    Unsubscriber,
+    Updater,
+} from "svelte/store";
 
+export type { StartStopNotifier, Subscriber, Unsubscriber, Updater } from "svelte/store";
 export type Readable<T> = SvelteReadable<T> & { get value(): T } & MaybeDirty;
 export type Writable<T> = SvelteWritable<T> & { get value(): T } & MaybeDirty;
 export type EqualityCheck<T> = (a: T, b: T) => boolean;
+
 type MaybeDirty = { get dirty(): boolean };
 type Stores =
     | SvelteReadable<unknown>
@@ -14,7 +22,7 @@ type StoresValues<T> = T extends SvelteReadable<infer U>
     ? U
     : { [K in keyof T]: T[K] extends SvelteReadable<infer U> ? U : never };
 
-let paused = false;
+let pauseCount = 0;
 // Callbacks to publish dirty values from writable stores
 let publishesPending: (() => void)[] = [];
 // Callbacks to push new values to their subscribers
@@ -22,22 +30,22 @@ let subscriptionsPending: (() => void)[] = [];
 
 const NOOP = () => {};
 
-export function pauseStores() {
-    paused = true;
-}
+export function withPausedStores(fn: () => void) {
+    try {
+        pauseCount++;
+        fn();
+    } finally {
+        if (--pauseCount === 0) {
+            // Publish the changes to the writable stores
+            for (const callback of publishesPending) {
+                callback();
+            }
+            publishesPending = [];
 
-export function unpauseStores() {
-    if (!paused) return;
-
-    // Publish the changes to the writable stores
-    for (const callback of publishesPending) {
-        callback();
+            // Run the derived store subscriptions
+            runSubscriptions();
+        }
     }
-    publishesPending = [];
-    paused = false;
-
-    // Run the derived store subscriptions
-    runSubscriptions();
 }
 
 function runSubscriptions() {
@@ -132,14 +140,14 @@ class _Writable<T> {
 
         this.#setDirtyValue(newValue);
 
-        if (paused) {
+        if (pauseCount === 0) {
+            this.#publish();
+        } else {
             if (!this.#publishPending) {
                 // Register callback to publish the new value once stores are unpaused
                 publishesPending.push(() => this.#publish());
                 this.#publishPending = true;
             }
-        } else {
-            this.#publish();
         }
     }
 
@@ -158,7 +166,9 @@ class _Writable<T> {
             this.#resetDirtyValue();
 
             if (this.#started) {
-                const shouldRunSubscriptions = !paused && subscriptionsPending.length === 0;
+                const shouldRunSubscriptions =
+                    pauseCount === 0 && subscriptionsPending.length === 0;
+
                 for (const [subscription, invalidate] of this.#subscriptions.values()) {
                     invalidate?.();
                     subscriptionsPending.push(() => subscription(this.#value));
@@ -229,17 +239,19 @@ class _Derived<S extends Stores, T> {
     #start() {
         if (this.#started) return;
         for (const [index, store] of this.#storesArray.entries()) {
-            const unsub = untrack(() => store.subscribe(
-                (v) => {
-                    (this.#storeValues as unknown[])[index] = v;
-                    this.#pending &= ~(1 << index);
-                    if (this.#started) {
-                        this.#sync();
-                    }
-                },
-                () => this.#pending |= 1 << index
-            ));
-            if (typeof unsub === 'function') {
+            const unsub = untrack(() =>
+                store.subscribe(
+                    (v) => {
+                        (this.#storeValues as unknown[])[index] = v;
+                        this.#pending &= ~(1 << index);
+                        if (this.#started) {
+                            this.#sync();
+                        }
+                    },
+                    () => (this.#pending |= 1 << index),
+                ),
+            );
+            if (typeof unsub === "function") {
                 this.#unsubscribers.push(unsub);
             }
         }

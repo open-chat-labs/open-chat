@@ -1,5 +1,5 @@
 import { derived as svelteDerived, writable as svelteWritable } from "svelte/store";
-import { derived, pauseStores, unpauseStores, writable } from "./stores";
+import { derived, withPausedStores, writable } from "./stores";
 
 test("derived from string store is triggered", () => {
     const w1 = writable("hello");
@@ -48,10 +48,6 @@ test("store values match Svelte store values", () => {
             return _w1 * _w2 * _w3 * _d1 * _d2 * _d3;
         });
 
-        if (pause) {
-            pauseStores();
-        }
-
         // Create matching writable and derived stores using Svelte's implementation
         const sw1 = svelteWritable(1);
         const sw2 = svelteWritable(1);
@@ -98,21 +94,27 @@ test("store values match Svelte store values", () => {
         // After initialization, each store should have been updated exactly once
         expect(derivedStoreUpdateCount).toEqual(svelteDerivedStoreUpdateCount);
 
-        // Randomly update both sets of stores
-        for (let i = 0; i < 100; i++) {
-            const nextStoreIndex = Math.floor(Math.random() * 3);
-            const nextValue = Math.random();
+        const updateStores = () => {
+            // Randomly update both sets of stores
+            for (let i = 0; i < 100; i++) {
+                const nextStoreIndex = Math.floor(Math.random() * 3);
+                const nextValue = Math.random();
 
-            writableStores[nextStoreIndex].set(nextValue);
-            svelteWritableStores[nextStoreIndex].set(nextValue);
+                writableStores[nextStoreIndex].set(nextValue);
+                svelteWritableStores[nextStoreIndex].set(nextValue);
 
-            if (!pause) {
-                // If our stores are not paused, then they should be updated exactly as frequently as the Svelte stores
-                expect(derivedStoreUpdateCount).toEqual(svelteDerivedStoreUpdateCount);
+                if (!pause) {
+                    // If our stores are not paused, then they should be updated exactly as frequently as the Svelte stores
+                    expect(derivedStoreUpdateCount).toEqual(svelteDerivedStoreUpdateCount);
+                }
             }
-        }
+        };
 
-        unpauseStores();
+        if (pause) {
+            withPausedStores(updateStores);
+        } else {
+            updateStores();
+        }
 
         // Check that the values in our stores match the values in the Svelte stores
         for (let i = 0; i < allStores.length; i++) {
