@@ -1,5 +1,5 @@
 import type { StartStopNotifier, Readable as SvelteReadable, Subscriber, Writable as SvelteWritable, Unsubscriber, Updater } from "svelte/store";
-export { get, type StartStopNotifier, type Subscriber, type Unsubscriber, type Updater } from "svelte/store";
+export { type StartStopNotifier, type Subscriber, type Unsubscriber, type Updater } from "svelte/store";
 import { untrack } from "svelte";
 
 export type Readable<T> = SvelteReadable<T> & { get value(): T } & MaybeDirty;
@@ -58,6 +58,10 @@ export function readable<T>(value: T, start: StartStopNotifier<T>, equalityCheck
 
 export function derived<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>) => T, equalityCheck?: EqualityCheck<T>): Readable<T> {
     return new _Derived(stores, fn, equalityCheck ?? ((a, b) => a === b));
+}
+
+export function get<T>(store: Readable<T>): T {
+    return store.value;
 }
 
 class _Writable<T> {
