@@ -4,7 +4,10 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
-use types::{ChatEventCategory, c2c_install_bot::*};
+use types::{
+    BotEvent, BotInstallationLocation, BotInstalledEvent, BotLifecycleEvent, BotNotification, ChatEventCategory,
+    c2c_install_bot::*,
+};
 use types::{OCResult, UserType};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
@@ -27,7 +30,7 @@ fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     if !state.data.bots.add(
         args.bot_id,
         args.caller,
-        args.granted_permissions,
+        args.granted_permissions.clone(),
         args.granted_autonomous_permissions.clone(),
         args.default_subscriptions.clone(),
         now,
@@ -42,7 +45,8 @@ fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         .get_or_create(args.bot_id, UserType::BotV2, || state.env.rng().r#gen(), now);
 
     // Subscribe to permitted chat events
-    if let (Some(subscriptions), Some(permissions)) = (args.default_subscriptions, args.granted_autonomous_permissions) {
+    if let (Some(subscriptions), Some(permissions)) = (args.default_subscriptions, args.granted_autonomous_permissions.clone())
+    {
         let permitted_categories = permissions.permitted_chat_event_categories_to_read();
 
         chat.events.subscribe_bot_to_events(
@@ -54,6 +58,20 @@ fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                 .collect(),
         );
     }
+
+    state.push_bot_notification(
+        BotNotification {
+            event: BotEvent::Lifecycle(BotLifecycleEvent::Installed(BotInstalledEvent {
+                installed_by: args.caller,
+                location: BotInstallationLocation::User(args.caller.into()),
+                api_gateway: state.data.local_user_index_canister_id,
+                granted_command_permissions: args.granted_permissions,
+                granted_autonomous_permissions: args.granted_autonomous_permissions.unwrap_or_default(),
+            })),
+            recipients: vec![args.bot_id],
+        },
+        now,
+    );
 
     Ok(())
 }

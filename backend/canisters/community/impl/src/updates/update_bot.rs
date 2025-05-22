@@ -3,7 +3,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::update_bot::*;
 use oc_error_codes::OCErrorCode;
-use types::OCResult;
+use types::{BotEvent, BotInstallationLocation, BotInstalledEvent, BotLifecycleEvent, BotNotification, OCResult};
 
 #[update(msgpack = true)]
 #[trace]
@@ -20,16 +20,27 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
-    if state.data.update_bot(
+    if !state.data.update_bot(
         member.user_id,
         args.bot_id,
-        args.granted_permissions,
-        args.granted_autonomous_permissions,
+        args.granted_permissions.clone(),
+        args.granted_autonomous_permissions.clone(),
         state.env.now(),
     ) {
-        handle_activity_notification(state);
-        Ok(())
-    } else {
-        Err(OCErrorCode::BotNotFound.into())
+        return Err(OCErrorCode::BotNotFound.into());
     }
+
+    state.push_bot_notification(BotNotification {
+        event: BotEvent::Lifecycle(BotLifecycleEvent::Installed(BotInstalledEvent {
+            installed_by: member.user_id,
+            location: BotInstallationLocation::Community(state.env.canister_id().into()),
+            api_gateway: state.data.local_user_index_canister_id,
+            granted_command_permissions: args.granted_permissions,
+            granted_autonomous_permissions: args.granted_autonomous_permissions.unwrap_or_default(),
+        })),
+        recipients: vec![args.bot_id],
+    });
+
+    handle_activity_notification(state);
+    Ok(())
 }
