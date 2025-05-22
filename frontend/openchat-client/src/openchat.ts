@@ -2880,11 +2880,13 @@ export class OpenChat {
         this.#userLookupForMentions = undefined;
 
         // clear some chat state
-        serverEventsStore.set([]);
-        expiredServerEventRanges.set(new DRange());
-        selectedChatUserIdsStore.set(new Set());
-        selectedChatUserGroupKeysStore.set(new Set());
-        selectedChatExpandedDeletedMessageStore.set(new Set());
+        withPausedStores(() => {
+            serverEventsStore.set([]);
+            expiredServerEventRanges.set(new DRange());
+            selectedChatUserIdsStore.set(new Set());
+            selectedChatUserGroupKeysStore.set(new Set());
+            selectedChatExpandedDeletedMessageStore.set(new Set());
+        });
 
         const selectedChat = selectedChatSummaryStore.value;
         if (selectedChat !== undefined) {
@@ -6342,9 +6344,6 @@ export class OpenChat {
         achievementsStore.set(achievements);
         referralsStore.set(referrals);
 
-        // TODO - do we need to separate these things - each of these fromMap calls will result in a publish
-        // which will cause downstream deriveds to fire. It *might* be better to refactor into a single store - we shall see.
-        // Or - this might be the case for a "transaction".
         serverDirectChatsStore.set(directChatsMap);
         serverGroupChatsStore.set(groupChatsMap);
         serverFavouritesStore.set(favouritesSet);
