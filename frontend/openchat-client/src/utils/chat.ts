@@ -76,6 +76,7 @@ import {
 } from "openchat-shared";
 import {
     confirmedEventIndexesLoadedStore,
+    confirmedThreadEventIndexesLoadedStore,
     cryptoLookup,
     currentUserIdStore,
     currentUserStore,
@@ -2028,7 +2029,7 @@ export function isContiguousInThread(
 ): boolean {
     return (
         messageContextsEqual(threadId, selectedThreadIdStore.value) &&
-        isContiguousInternal(confirmedEventIndexesLoadedStore.value, events, [])
+        isContiguousInternal(confirmedThreadEventIndexesLoadedStore.value, events, [])
     );
 }
 

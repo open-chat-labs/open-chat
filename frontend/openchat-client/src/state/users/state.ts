@@ -58,6 +58,8 @@ export class UsersState {
     }
 
     addMany(users: UserSummary[]) {
+        if (users.length === 0) return;
+
         normalUsersStore.update((map) => {
             users.forEach((u) => map.set(u.userId, u));
             return map;

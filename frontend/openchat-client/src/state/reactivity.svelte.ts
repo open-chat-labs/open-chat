@@ -22,10 +22,16 @@ export function debouncedDerived<T>(
 ) {
     let value = $state<T>(initialValue);
     let timer: number | undefined;
+    let firstTime = true;
     $effect(() => {
         dependencies(); // subscribe to the dependencies (*this* is the hack)
         window.clearTimeout(timer);
         timer = window.setTimeout(async () => (value = await action()), delay);
+        if (firstTime) {
+            action()
+                .then((result) => (value = result))
+                .finally(() => (firstTime = false));
+        }
         return () => clearTimeout(timer);
     });
     return () => value;
