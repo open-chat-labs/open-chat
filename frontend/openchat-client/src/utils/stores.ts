@@ -9,11 +9,14 @@ import type {
 } from "svelte/store";
 
 export type { StartStopNotifier, Subscriber, Unsubscriber, Updater } from "svelte/store";
-export type Readable<T> = SvelteReadable<T> & { get value(): T } & MaybeDirty;
-export type Writable<T> = SvelteWritable<T> & { get value(): T } & MaybeDirty;
 export type EqualityCheck<T> = (a: T, b: T) => boolean;
 
-type MaybeDirty = { get dirty(): boolean };
+export interface Readable<T> extends SvelteReadable<T> {
+    get value(): T;
+    get dirty(): boolean;
+}
+export interface Writable<T> extends SvelteWritable<T>, Readable<T> {}
+
 type Stores =
     | SvelteReadable<unknown>
     | [SvelteReadable<unknown>, ...Array<SvelteReadable<unknown>>]
@@ -200,6 +203,8 @@ class _Derived<S extends Stores, T> {
     #started = false;
     #pending = 0;
     #unsubscribers: Unsubscriber[] = [];
+    // The first time you call `value` a subscription will be created, ensuring subsequent accesses are fast
+    #valueSubscriber: Unsubscriber | undefined = undefined;
 
     constructor(stores: S, fn: (values: StoresValues<S>) => T, equalityCheck?: EqualityCheck<T>) {
         this.#innerStore = new _Writable(undefined as T, (_) => this.#start(), equalityCheck);
@@ -214,10 +219,8 @@ class _Derived<S extends Stores, T> {
     }
 
     get value(): T {
-        const unsub = this.#started ? undefined : this.subscribe(NOOP);
-        const value = this.#innerStore.value;
-        unsub?.();
-        return value;
+        this.#valueSubscriber ??= this.subscribe(NOOP);
+        return this.#innerStore.value;
     }
 
     get dirty(): boolean {
