@@ -160,7 +160,7 @@ class _Writable<T> {
 
             if (this.#started) {
                 const shouldRunSubscriptions = pauseCount === 0 && subscriptionsPending.length === 0;
-                
+
                 for (const [subscription, invalidate] of this.#subscriptions.values()) {
                     invalidate?.();
                     subscriptionsPending.push(() => subscription(this.#value));
