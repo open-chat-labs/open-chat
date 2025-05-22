@@ -6217,107 +6217,107 @@ export class OpenChat {
                     chatsResponse.state.apiKeys,
                     chatsResponse.state.streakInsurance,
                 );
-
-                if (selectedChatIdStore.value !== undefined) {
-                    if (chatSummariesStore.value.get(selectedChatIdStore.value) === undefined) {
-                        publish("selectedChatInvalid");
-                    } else {
-                        const updatedEvents = ChatMap.fromMap(chatsResponse.updatedEvents);
-                        this.#chatUpdated(
-                            selectedChatIdStore.value,
-                            updatedEvents.get(selectedChatIdStore.value) ?? [],
-                        );
-                    }
-                }
-
-                const currentUser = userStore.get(currentUserIdStore.value);
-                const avatarId = currentUser?.blobReference?.blobId;
-                if (chatsResponse.state.avatarId !== avatarId) {
-                    const blobReference =
-                        chatsResponse.state.avatarId === undefined
-                            ? undefined
-                            : {
-                                  canisterId: currentUserIdStore.value,
-                                  blobId: chatsResponse.state.avatarId,
-                              };
-                    const dataContent = {
-                        blobReference,
-                        blobData: undefined,
-                        blobUrl: undefined,
-                    };
-                    if (currentUser) {
-                        const user = {
-                            ...currentUser,
-                            ...dataContent,
-                        };
-                        userStore.addUser(this.#rehydrateDataContent(user, "avatar"));
-                    }
-                }
-
-                // Take a copy of the previous video calls in progress, then remove those that are still in progress
-                const videoCallsEnded = new Set(this.#videoCallsInProgress);
-
-                // If the latest message in a chat is sent by the current user, then we know they must have read up to
-                // that message, so we mark the chat as read up to that message if it isn't already. This happens when a
-                // user sends a message on one device then looks at OpenChat on another.
-                for (const chat of chats) {
-                    const latestMessage = chat.latestMessage?.event;
-                    if (
-                        latestMessage !== undefined &&
-                        latestMessage.sender === currentUserIdStore.value &&
-                        (chat.membership?.readByMeUpTo ?? -1) < latestMessage.messageIndex &&
-                        !localUpdates.isUnconfirmed({ chatId: chat.id }, latestMessage.messageId)
-                    ) {
-                        messagesRead.markReadUpTo({ chatId: chat.id }, latestMessage.messageIndex);
-                    }
-                    if (chat.videoCallInProgress !== undefined) {
-                        videoCallsEnded.delete(chat.videoCallInProgress.messageId);
-                        this.#publishRemoteVideoCallStarted({
-                            chatId: chat.id,
-                            userId: chat.videoCallInProgress.startedBy,
-                            messageId: chat.videoCallInProgress.messageId,
-                            currentUserIsParticipant: chat.videoCallInProgress.joinedByCurrentUser,
-                            callType: chat.videoCallInProgress.callType,
-                            timestamp: chat.videoCallInProgress.started,
-                        });
-                    }
-                }
-
-                for (const messageId of videoCallsEnded) {
-                    this.#publishRemoteVideoCallEnded(messageId);
-                }
-
-                pinNumberRequiredStore.set(chatsResponse.state.pinNumberSettings !== undefined);
-
-                // horribly enough - we need to slightly defer this so that all the cascade of derived stuff is complete
-                // I am hopeful that we can remove this when we aren't manually synchronising runes & stores
-                tick().then(() => {
-                    chatsInitialisedStore.set(true);
-                });
-
-                this.#closeNotificationsIfNecessary();
-
-                if (chatsResponse.newAchievements.length > 0) {
-                    const filtered = chatsResponse.newAchievements.filter(
-                        (a) => a.timestamp > chatsResponse.state.achievementsLastSeen,
-                    );
-                    if (filtered.length > 0) {
-                        publish("chitEarned", filtered);
-                    }
-                }
-
-                if (initialLoad) {
-                    this.#startExchangeRatePoller();
-                    if (!anonUserStore.value) {
-                        this.#initWebRtc();
-                        startMessagesReadTracker(this);
-                        this.refreshSwappableTokens();
-                        window.setTimeout(() => this.#refreshBalancesInSeries(), 1000);
-                    }
-                }
-
-                bitcoinAddress.set(chatsResponse.state.bitcoinAddress);
             });
+
+            if (selectedChatIdStore.value !== undefined) {
+                if (chatSummariesStore.value.get(selectedChatIdStore.value) === undefined) {
+                    publish("selectedChatInvalid");
+                } else {
+                    const updatedEvents = ChatMap.fromMap(chatsResponse.updatedEvents);
+                    this.#chatUpdated(
+                        selectedChatIdStore.value,
+                        updatedEvents.get(selectedChatIdStore.value) ?? [],
+                    );
+                }
+            }
+
+            const currentUser = userStore.get(currentUserIdStore.value);
+            const avatarId = currentUser?.blobReference?.blobId;
+            if (chatsResponse.state.avatarId !== avatarId) {
+                const blobReference =
+                    chatsResponse.state.avatarId === undefined
+                        ? undefined
+                        : {
+                              canisterId: currentUserIdStore.value,
+                              blobId: chatsResponse.state.avatarId,
+                          };
+                const dataContent = {
+                    blobReference,
+                    blobData: undefined,
+                    blobUrl: undefined,
+                };
+                if (currentUser) {
+                    const user = {
+                        ...currentUser,
+                        ...dataContent,
+                    };
+                    userStore.addUser(this.#rehydrateDataContent(user, "avatar"));
+                }
+            }
+
+            // Take a copy of the previous video calls in progress, then remove those that are still in progress
+            const videoCallsEnded = new Set(this.#videoCallsInProgress);
+
+            // If the latest message in a chat is sent by the current user, then we know they must have read up to
+            // that message, so we mark the chat as read up to that message if it isn't already. This happens when a
+            // user sends a message on one device then looks at OpenChat on another.
+            for (const chat of chats) {
+                const latestMessage = chat.latestMessage?.event;
+                if (
+                    latestMessage !== undefined &&
+                    latestMessage.sender === currentUserIdStore.value &&
+                    (chat.membership?.readByMeUpTo ?? -1) < latestMessage.messageIndex &&
+                    !localUpdates.isUnconfirmed({ chatId: chat.id }, latestMessage.messageId)
+                ) {
+                    messagesRead.markReadUpTo({ chatId: chat.id }, latestMessage.messageIndex);
+                }
+                if (chat.videoCallInProgress !== undefined) {
+                    videoCallsEnded.delete(chat.videoCallInProgress.messageId);
+                    this.#publishRemoteVideoCallStarted({
+                        chatId: chat.id,
+                        userId: chat.videoCallInProgress.startedBy,
+                        messageId: chat.videoCallInProgress.messageId,
+                        currentUserIsParticipant: chat.videoCallInProgress.joinedByCurrentUser,
+                        callType: chat.videoCallInProgress.callType,
+                        timestamp: chat.videoCallInProgress.started,
+                    });
+                }
+            }
+
+            for (const messageId of videoCallsEnded) {
+                this.#publishRemoteVideoCallEnded(messageId);
+            }
+
+            pinNumberRequiredStore.set(chatsResponse.state.pinNumberSettings !== undefined);
+
+            // horribly enough - we need to slightly defer this so that all the cascade of derived stuff is complete
+            // I am hopeful that we can remove this when we aren't manually synchronising runes & stores
+            tick().then(() => {
+                chatsInitialisedStore.set(true);
+            });
+
+            this.#closeNotificationsIfNecessary();
+
+            if (chatsResponse.newAchievements.length > 0) {
+                const filtered = chatsResponse.newAchievements.filter(
+                    (a) => a.timestamp > chatsResponse.state.achievementsLastSeen,
+                );
+                if (filtered.length > 0) {
+                    publish("chitEarned", filtered);
+                }
+            }
+
+            if (initialLoad) {
+                this.#startExchangeRatePoller();
+                if (!anonUserStore.value) {
+                    this.#initWebRtc();
+                    startMessagesReadTracker(this);
+                    this.refreshSwappableTokens();
+                    window.setTimeout(() => this.#refreshBalancesInSeries(), 1000);
+                }
+            }
+
+            bitcoinAddress.set(chatsResponse.state.bitcoinAddress);
         }
     }
 
