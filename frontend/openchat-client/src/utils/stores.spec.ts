@@ -139,7 +139,7 @@ describe("store value can be accessed", () => {
         });
     });
 
-    test.only("when store has no subscribers and depends on dirty derived stores", () => {
+    test("when store has no subscribers and depends on dirty derived stores", () => {
         const w1 = writable(1);
         const w2 = writable(2);
         const d1 = derived(w1, (_w1) => _w1);
