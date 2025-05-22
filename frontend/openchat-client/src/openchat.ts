@@ -2937,9 +2937,12 @@ export class OpenChat {
         initiating: boolean,
         focusThreadMessageIndex?: number,
     ): void {
-        selectedThreadIdStore.set({
-            chatId,
-            threadRootMessageIndex: threadRootEvent.event.messageIndex,
+        withPausedStores(() => {
+            serverThreadEventsStore.set([]);
+            selectedThreadIdStore.set({
+                chatId,
+                threadRootMessageIndex: threadRootEvent.event.messageIndex,
+            });
         });
 
         if (!initiating) {
