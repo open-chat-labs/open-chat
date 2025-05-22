@@ -13,6 +13,7 @@ import {
     DEFAULT_TOKENS,
     emptyChatMetrics,
     mergeListOfCombinedUnreadCounts,
+    messageContextsEqual,
     MessageMap,
     ModerationFlags,
     SafeMap,
@@ -537,17 +538,21 @@ export const userGroupSummariesStore = derived(communitiesStore, (communities) =
     }, new Map<number, UserGroupSummary>());
 });
 
-export const selectedChatIdStore = derived(routeStore, (route) => {
-    switch (route.kind) {
-        case "selected_channel_route":
-        case "global_chat_selected_route":
-            return route.chatId;
-        default:
-            return undefined;
-    }
-});
+export const selectedChatIdStore = derived(
+    routeStore,
+    (route) => {
+        switch (route.kind) {
+            case "selected_channel_route":
+            case "global_chat_selected_route":
+                return route.chatId;
+            default:
+                return undefined;
+        }
+    },
+    chatIdentifiersEqual,
+);
 
-export const chatListScopeStore = derived(routeStore, (route) => route.scope);
+export const chatListScopeStore = derived(routeStore, (route) => route.scope, dequal);
 export const chatsInitialisedStore = writable(false);
 export const selectedServerCommunityStore = writable<CommunityDetailsState | undefined>(
     undefined,
@@ -1225,7 +1230,7 @@ export const globalUnreadCountStore = derived(
 export const selectedThreadIdStore = writable<ThreadIdentifier | undefined>(
     undefined,
     undefined,
-    notEq,
+    messageContextsEqual,
 );
 
 export const threadEventsStore = derived(

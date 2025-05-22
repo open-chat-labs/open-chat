@@ -1,9 +1,10 @@
 import { dequal } from "dequal";
-import type {
-    CommunityIdentifier,
-    MessageIndexRoute,
-    NullScope,
-    RouteParams,
+import {
+    communityIdentifiersEqual,
+    type CommunityIdentifier,
+    type MessageIndexRoute,
+    type NullScope,
+    type RouteParams,
 } from "openchat-shared";
 import "page";
 import { derived, writable } from "../../utils/stores";
@@ -49,20 +50,24 @@ export const threadOpenStore = derived(
         route.messageIndex !== undefined &&
         route.open,
 );
-export const selectedCommunityIdStore = derived(routeStore, (route) => {
-    switch (route.kind) {
-        case "selected_community_route":
-        case "selected_channel_route":
-            return route.communityId;
-        case "favourites_route":
-            if (route.chatId?.kind === "channel") {
-                return {
-                    kind: "community",
-                    communityId: route.chatId.communityId,
-                } as CommunityIdentifier;
-            }
-            return undefined;
-        default:
-            return undefined;
-    }
-});
+export const selectedCommunityIdStore = derived(
+    routeStore,
+    (route) => {
+        switch (route.kind) {
+            case "selected_community_route":
+            case "selected_channel_route":
+                return route.communityId;
+            case "favourites_route":
+                if (route.chatId?.kind === "channel") {
+                    return {
+                        kind: "community",
+                        communityId: route.chatId.communityId,
+                    } as CommunityIdentifier;
+                }
+                return undefined;
+            default:
+                return undefined;
+        }
+    },
+    communityIdentifiersEqual,
+);
