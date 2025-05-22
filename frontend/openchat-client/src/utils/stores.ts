@@ -133,7 +133,7 @@ class _Writable<T> {
 
         this.#setDirtyValue(newValue);
 
-        if (pauseCount === 0) {
+        if (pauseCount === 0 || !this.#started) {
             this.#publish();
         } else {
             if (!this.#publishPending) {

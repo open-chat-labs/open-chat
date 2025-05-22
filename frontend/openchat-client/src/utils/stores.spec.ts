@@ -104,3 +104,36 @@ test("store values match Svelte store values", () => {
         }
     }
 });
+
+describe("store value can be accessed", () => {
+    test("when store has subscribers", () => {
+        const w = writable(1);
+        const d = derived(w, (_w) => 2 * _w);
+        d.subscribe((_) => {});
+        expect(d.value).toEqual(2);
+    });
+
+    test("when store has no subscribers", () => {
+        const w = writable(1);
+        const d = derived(w, (_w) => 2 * _w);
+        expect(d.value).toEqual(2);
+    });
+
+    test("when store has no subscribers and stores are paused", () => {
+        const w = writable(1);
+        const d = derived(w, (_w) => 2 * _w);
+        withPausedStores(() => {
+            expect(d.value).toEqual(2);
+        });
+    });
+
+    test.only("when store is in chain of derived stores with no subscribers and stores are paused", () => {
+        const w = writable(1);
+        const d1 = derived(w, (_w) => 2 * _w);
+        const d2 = derived(d1, (_d1) => 3 * _d1);
+        const d3 = derived(d2, (_d2) => 4 * _d2);
+        withPausedStores(() => {
+            expect(d3.value).toEqual(24);
+        });
+    });
+});
