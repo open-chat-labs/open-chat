@@ -95,7 +95,6 @@ class _Writable<T> {
     readonly #equalityCheck: (a: T, b: T) => boolean;
     #value: T;
     #dirty: boolean = false;
-    #dirtyValue: T | undefined = undefined;
     #publishPending: boolean = false;
     #started: boolean = false;
     #stop: Unsubscriber | undefined = undefined;
@@ -129,18 +128,18 @@ class _Writable<T> {
     }
 
     get value(): T {
-        return this.#dirty ? (this.#dirtyValue as T) : this.#value;
+        return this.#value;
     }
 
     set(newValue: T) {
         if (this.#equalityCheck(newValue, this.#value)) {
-            this.#resetDirtyValue();
             return;
         }
 
-        this.#setDirtyValue(newValue);
+        this.#value = newValue;
+        this.#dirty = true;
 
-        if (pauseCount === 0) {
+        if (pauseCount === 0 || !this.#started) {
             this.#publish();
         } else {
             if (!this.#publishPending) {
@@ -162,8 +161,7 @@ class _Writable<T> {
 
     #publish() {
         if (this.#dirty) {
-            this.#value = this.#dirtyValue as T;
-            this.#resetDirtyValue();
+            this.#dirty = false;
 
             if (this.#started) {
                 const shouldRunSubscriptions =
@@ -190,16 +188,6 @@ class _Writable<T> {
             }
             this.#started = false;
         }
-    }
-
-    #setDirtyValue(value: T) {
-        this.#dirtyValue = value;
-        this.#dirty = true;
-    }
-
-    #resetDirtyValue() {
-        this.#dirtyValue = undefined;
-        this.#dirty = false;
     }
 }
 
