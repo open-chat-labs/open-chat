@@ -25,6 +25,7 @@
         selectedServerChatStore,
         selectedServerCommunityStore,
         shareRoute,
+        showMiddle,
         threadMessageIndexStore,
         threadOpenStore,
     } from "openchat-client";
@@ -266,6 +267,7 @@
     $effect(() => {
         if (
             $threadOpenStore &&
+            !$showMiddle &&
             $messageIndexStore !== undefined &&
             $selectedChatIdStore !== undefined &&
             chatIdentifiersEqual(previousChatId, $selectedChatIdStore)
