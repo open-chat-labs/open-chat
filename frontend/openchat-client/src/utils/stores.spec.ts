@@ -127,7 +127,7 @@ describe("store value can be accessed", () => {
         });
     });
 
-    test.only("when store is in chain of derived stores with no subscribers and stores are paused", () => {
+    test("when store is in chain of derived stores with no subscribers and stores are paused", () => {
         const w = writable(1);
         const d1 = derived(w, (_w) => 2 * _w);
         const d2 = derived(d1, (_d1) => 3 * _d1);
