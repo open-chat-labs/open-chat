@@ -538,7 +538,6 @@ export const userGroupSummariesStore = derived(communitiesStore, (communities) =
 });
 
 export const selectedChatIdStore = derived(routeStore, (route) => {
-    console.log("Route change: ", route);
     switch (route.kind) {
         case "selected_channel_route":
         case "global_chat_selected_route":
@@ -909,7 +908,6 @@ export const allChatsStore = derived(
         messageLocalUpdates,
         unconfirmed,
     ]) => {
-        console.trace("Running all chat");
         const withUpdates = localChats.apply(allServerChats);
         return [...withUpdates.entries()].reduce((result, [chatId, chat]) => {
             const clone = structuredClone(chat);
@@ -1135,7 +1133,6 @@ export const eventsStore = derived(
         recentlySentMessages,
         messageFilters,
     ]) => {
-        console.log("Running the events store");
         if (selectedChatId === undefined) return [];
         const ctx = { chatId: selectedChatId };
         const failedState = failedMessages.get(ctx);

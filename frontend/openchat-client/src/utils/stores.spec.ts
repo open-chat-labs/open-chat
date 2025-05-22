@@ -11,7 +11,7 @@ test("derived from string store is triggered", () => {
     expect(d1.value).toEqual("HELLO THERE");
 });
 
-test.only("derived from boolean store is triggered", () => {
+test("derived from boolean store is triggered", () => {
     const w1 = writable(true);
     const d1 = derived(w1, (w1) => !w1);
     let count = 0;

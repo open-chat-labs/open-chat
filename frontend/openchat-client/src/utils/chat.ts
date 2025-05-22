@@ -74,8 +74,18 @@ import {
     updateFromOptions,
     type ReadonlySet,
 } from "openchat-shared";
-import { cryptoLookup, localUpdates, selectedChatUserIdsStore } from "../state";
-import { app } from "../state/app/state";
+import {
+    confirmedEventIndexesLoadedStore,
+    cryptoLookup,
+    currentUserIdStore,
+    currentUserStore,
+    localUpdates,
+    proposalTalliesStore,
+    selectedChatIdStore,
+    selectedChatUserIdsStore,
+    selectedServerChatSummaryStore,
+    selectedThreadIdStore,
+} from "../state";
 import type { LocalTipsReceived, MessageLocalUpdates } from "../state/message/localUpdates";
 import { userStore } from "../state/users/state";
 import type { TypersByKey } from "../stores/typing";
@@ -1143,7 +1153,7 @@ export function getMessagePermissionsForSelectedChat(
                 );
             }
         } else {
-            return toSet(permittedMessagesInGroup(app.currentUser, chat, mode));
+            return toSet(permittedMessagesInGroup(currentUserStore.value, chat, mode));
         }
     }
     return new Set();
@@ -1352,9 +1362,8 @@ export function mergeEventsAndLocalUpdates(
 
             const tallyUpdate =
                 e.event.content.kind === "proposal_content"
-                    ? app.getProposalTally(
-                          e.event.content.governanceCanisterId,
-                          e.event.content.proposal.id,
+                    ? proposalTalliesStore.value.get(
+                          `${e.event.content.governanceCanisterId}_${e.event.content.proposal.id}`,
                       )
                     : undefined;
 
@@ -1365,7 +1374,7 @@ export function mergeEventsAndLocalUpdates(
 
             // Don't hide the sender's own messages
             const failedMessageFilter =
-                e.event.sender !== app.currentUserId
+                e.event.sender !== currentUserIdStore.value
                     ? doesMessageFailFilter(e.event, messageFilters) !== undefined
                     : false;
 
@@ -1970,7 +1979,7 @@ function sortByIndex(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): nu
 }
 
 export function nextEventAndMessageIndexes(): [number, number] {
-    const chat = app.selectedServerChatSummary;
+    const chat = selectedServerChatSummaryStore.value;
     if (chat === undefined) {
         return [0, 0];
     }
@@ -1981,9 +1990,9 @@ export function nextEventAndMessageIndexes(): [number, number] {
 }
 
 export function confirmedEventIndexesLoaded(chatId: ChatIdentifier): DRange {
-    const selected = app.selectedChatId;
+    const selected = selectedChatIdStore.value;
     return selected !== undefined && chatIdentifiersEqual(selected, chatId)
-        ? app.confirmedEventIndexesLoaded
+        ? confirmedEventIndexesLoadedStore.value
         : new DRange();
 }
 
@@ -2018,8 +2027,8 @@ export function isContiguousInThread(
     events: EventWrapper<ChatEvent>[],
 ): boolean {
     return (
-        messageContextsEqual(threadId, app.selectedThreadId) &&
-        isContiguousInternal(app.confirmedEventIndexesLoaded, events, [])
+        messageContextsEqual(threadId, selectedThreadIdStore.value) &&
+        isContiguousInternal(confirmedEventIndexesLoadedStore.value, events, [])
     );
 }
 
@@ -2029,7 +2038,7 @@ export function isContiguous(
     expiredEventRanges: ExpiredEventsRange[],
 ): boolean {
     return (
-        chatIdentifiersEqual(chatId, app.selectedChatId) &&
+        chatIdentifiersEqual(chatId, selectedChatIdStore.value) &&
         isContiguousInternal(confirmedEventIndexesLoaded(chatId), events, expiredEventRanges)
     );
 }
