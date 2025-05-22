@@ -15,10 +15,7 @@ export interface Readable<T> extends SvelteReadable<T> {
     get value(): T;
     get dirty(): boolean;
 };
-export interface Writable<T> extends SvelteWritable<T> {
-    get value(): T;
-    get dirty(): boolean;
-};
+export interface Writable<T> extends SvelteWritable<T>, Readable<T> {};
 
 type Stores =
     | SvelteReadable<unknown>
