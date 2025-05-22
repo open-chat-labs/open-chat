@@ -52,7 +52,7 @@
             typing,
         );
 
-        const msgTxt = client.getContentAsText($_, rootEvent.event.content);
+        const msgTxt = rootEvent ? client.getContentAsText($_, rootEvent.event.content) : "";
         const subtext =
             someoneTyping ?? ($mobileWidth ? `${$_("thread.title")}: ${msgTxt}` : msgTxt);
         if (chatSummary.kind === "direct_chat") {
