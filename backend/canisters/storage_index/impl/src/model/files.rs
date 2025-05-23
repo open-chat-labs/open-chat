@@ -237,6 +237,7 @@ impl Storable for FileIdByUserThenCreated {
 
 pub struct UserFile {
     pub file_id: FileId,
+    #[allow(dead_code)]
     pub created: TimestampMillis,
     pub hash: Hash,
     pub bucket: CanisterId,
