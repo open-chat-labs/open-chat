@@ -39,7 +39,6 @@
         fullWidth,
         identityStateStore,
         localUpdates,
-        mobileWidth,
         nullMembership,
         offlineStore,
         pageRedirect,
@@ -119,8 +118,6 @@
         alignTo?: DOMRect;
         inGlobalContext: boolean;
     };
-
-    $inspect($mobileWidth);
 
     const client = getContext<OpenChat>("client");
 
