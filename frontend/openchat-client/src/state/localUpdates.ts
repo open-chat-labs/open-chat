@@ -413,7 +413,7 @@ export class GlobalLocalState {
     }
 
     addCommunityPreview(val: CommunitySummary) {
-        return addToWritableMap(val.id, val, this.previewCommunities);
+        return addToWritableMap(val.id, val, this.previewCommunities, "never");
     }
 
     removeChat(chatId: ChatIdentifier) {
@@ -425,7 +425,7 @@ export class GlobalLocalState {
     }
 
     removeCommunityPreview(id: CommunityIdentifier) {
-        return removeFromWritableMap(id, this.previewCommunities);
+        return removeFromWritableMap(id, this.previewCommunities, "never");
     }
 
     addCommunity(val: CommunitySummary) {

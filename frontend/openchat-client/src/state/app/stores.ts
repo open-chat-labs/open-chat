@@ -119,8 +119,11 @@ export const exchangeRatesLookupStore = writable<ReadonlyMap<string, TokenExchan
 function createCryptoBalanceStore() {
     const store = writable<Map<LedgerCanister, bigint>>(new Map(), undefined, notEq);
     return {
-        value: store.value,
-        subscribe: (sub: Subscriber<Map<LedgerCanister, bigint>>) => store.subscribe(sub),
+        get value() {
+            return store.value;
+        },
+        subscribe: (sub: Subscriber<Map<LedgerCanister, bigint>>, invalidate?: () => void) =>
+            store.subscribe(sub, invalidate),
         setBalance(ledger: string, balance: bigint) {
             store.update((s) => s.set(ledger, balance));
             cryptoBalancesLastUpdated.set(ledger, Date.now());
@@ -810,7 +813,7 @@ export const userMetricsStore = derived(allServerChatsStore, (allServerChats) =>
 
 export const unreadFavouriteCountsStore = derived(
     [serverFavouritesStore, allServerChatsStore, messagesRead],
-    ([serverFavourites, allServerChats, messagesRead]) => {
+    ([serverFavourites, allServerChats, _]) => {
         const chats = ChatMap.fromList(
             [...serverFavourites.values()]
                 .map((id) => allServerChats.get(id))
@@ -1191,21 +1194,21 @@ export const directChatBotsStore = derived(
 
 export const unreadGroupCountsStore = derived(
     [serverGroupChatsStore, messagesRead],
-    ([serverGroupChats, messagesRead]) => {
+    ([serverGroupChats, _]) => {
         return messagesRead.combinedUnreadCountForChats(serverGroupChats);
     },
 );
 
 export const unreadDirectCountsStore = derived(
     [serverDirectChatsStore, messagesRead],
-    ([serverDirectChats, messagesRead]) => {
+    ([serverDirectChats, _]) => {
         return messagesRead.combinedUnreadCountForChats(serverDirectChats);
     },
 );
 
 export const unreadCommunityChannelCountsStore = derived(
     [serverCommunitiesStore, messagesRead],
-    ([serverCommunities, messagesRead]) => {
+    ([serverCommunities, _]) => {
         return serverCommunities.reduce((map, [id, community]) => {
             map.set(
                 id,

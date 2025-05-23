@@ -270,10 +270,6 @@
         ),
     );
 
-    localUpdates.unconfirmed.subscribe((u) => {
-        console.log("Unconfirmed: ", u);
-    });
-
     // if the messageIndex has changed but the chatId has not, scroll to the specified message
     let previousChatId: ChatIdentifier | undefined = undefined;
     $effect(() => {

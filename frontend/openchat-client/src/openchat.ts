@@ -1648,20 +1648,20 @@ export class OpenChat {
             credentialArgs: this.#buildVerifiedCredentialArgs(credentials),
         })
             .then((resp) => {
-                if (resp.kind === "success") {
-                    localUpdates.addChat(resp.group);
-                    this.#loadChatDetails(resp.group);
-                    messagesRead.syncWithServer(
-                        resp.group.id,
-                        resp.group.membership?.readByMeUpTo,
-                        [],
-                        undefined,
-                    );
-                } else if (resp.kind === "success_joined_community") {
-                    resp.community.membership.index = nextCommunityIndexStore.value;
-                    this.#addCommunityLocally(resp.community);
+                withPausedStores(() => {
+                    if (resp.kind === "success") {
+                        localUpdates.addChat(resp.group);
+                        this.#loadChatDetails(resp.group);
+                        messagesRead.syncWithServer(
+                            resp.group.id,
+                            resp.group.membership?.readByMeUpTo,
+                            [],
+                            undefined,
+                        );
+                    } else if (resp.kind === "success_joined_community") {
+                        resp.community.membership.index = nextCommunityIndexStore.value;
+                        this.#addCommunityLocally(resp.community);
 
-                    messagesRead.batchUpdate(() => {
                         resp.community.channels.forEach((c) => {
                             if (chatIdentifiersEqual(c.id, chat.id)) {
                                 localUpdates.addChat(c);
@@ -1674,18 +1674,18 @@ export class OpenChat {
                                 );
                             }
                         });
-                    });
-                    if (localUpdates.isPreviewingCommunity(resp.community.id)) {
-                        localUpdates.removeCommunityPreview(resp.community.id);
+                        if (localUpdates.isPreviewingCommunity(resp.community.id)) {
+                            localUpdates.removeCommunityPreview(resp.community.id);
+                        }
+                    } else {
+                        if (resp.kind === "error" && resp.code === ErrorCode.InitiatorBlocked) {
+                            return CommonResponses.blocked();
+                        } else if (resp.kind === "gate_check_failed") {
+                            return resp;
+                        }
+                        return CommonResponses.failure();
                     }
-                } else {
-                    if (resp.kind === "error" && resp.code === ErrorCode.InitiatorBlocked) {
-                        return CommonResponses.blocked();
-                    } else if (resp.kind === "gate_check_failed") {
-                        return resp;
-                    }
-                    return CommonResponses.failure();
-                }
+                });
                 return CommonResponses.success();
             })
             .then((resp) => {
@@ -4331,32 +4331,32 @@ export class OpenChat {
         // HACK - we need to defer this very slightly so that we can guarantee that we handle SendingMessage events
         // *before* the new message is added to the unconfirmed store. Is this nice? No it is not.
         window.setTimeout(() => {
-            withPausedStores(() => {
-                if (!isTransfer(messageEvent.event.content)) {
-                    localUpdates.addUnconfirmed(context, messageEvent);
-                }
+            // withPausedStores(() => {
+            if (!isTransfer(messageEvent.event.content)) {
+                localUpdates.addUnconfirmed(context, messageEvent);
+            }
 
-                localUpdates.deleteFailedMessage(context, messageEvent.event.messageId);
+            localUpdates.deleteFailedMessage(context, messageEvent.event.messageId);
 
-                // mark our own messages as read manually since we will not be observing them
-                messagesRead.markMessageRead(
-                    context,
-                    messageEvent.event.messageIndex,
-                    messageEvent.event.messageId,
-                );
-                // Mark all existing messages as read
-                if (messageEvent.event.messageIndex > 0) {
-                    messagesRead.markReadUpTo(context, messageEvent.event.messageIndex - 1);
-                }
+            // mark our own messages as read manually since we will not be observing them
+            messagesRead.markMessageRead(
+                context,
+                messageEvent.event.messageIndex,
+                messageEvent.event.messageId,
+            );
+            // Mark all existing messages as read
+            if (messageEvent.event.messageIndex > 0) {
+                messagesRead.markReadUpTo(context, messageEvent.event.messageIndex - 1);
+            }
 
-                localUpdates.draftMessages.delete(context);
+            localUpdates.draftMessages.delete(context);
 
-                if (!isTransfer(messageEvent.event.content)) {
-                    this.#sendMessageWebRtc(chat, messageEvent, threadRootMessageIndex).then(() => {
-                        publish("sentMessage", { context, event: messageEvent });
-                    });
-                }
-            });
+            if (!isTransfer(messageEvent.event.content)) {
+                this.#sendMessageWebRtc(chat, messageEvent, threadRootMessageIndex).then(() => {
+                    publish("sentMessage", { context, event: messageEvent });
+                });
+            }
+            // });
         }, 0);
     }
 
@@ -4397,7 +4397,7 @@ export class OpenChat {
     }
 
     markAllReadForCurrentScope() {
-        messagesRead.batchUpdate(() => {
+        withPausedStores(() => {
             chatSummariesStore.value.forEach((chat) => messagesRead.markAllRead(chat));
         });
     }
@@ -6495,7 +6495,7 @@ export class OpenChat {
     }
 
     #updateReadUpToStore(chatSummaries: ChatSummary[]): void {
-        messagesRead.batchUpdate(() => {
+        withPausedStores(() => {
             for (const chat of chatSummaries) {
                 if (chat.kind === "group_chat" || chat.kind === "channel") {
                     const threads: ThreadRead[] = (chat.membership?.latestThreads ?? []).reduce(
@@ -8037,7 +8037,7 @@ export class OpenChat {
                     this.#addCommunityLocally(resp.community);
                     localUpdates.removeCommunityPreview(community.id);
                     this.#loadCommunityDetails(resp.community);
-                    messagesRead.batchUpdate(() => {
+                    withPausedStores(() => {
                         resp.community.channels.forEach((c) => {
                             if (c.latestMessage) {
                                 messagesRead.markReadUpTo(
@@ -9190,12 +9190,15 @@ export class OpenChat {
 
             if (data.kind === "worker_event") {
                 if (data.event.subkind === "messages_read_from_server") {
-                    messagesRead.syncWithServer(
-                        data.event.chatId,
-                        data.event.readByMeUpTo,
-                        data.event.threadsRead,
-                        data.event.dateReadPinned,
-                    );
+                    const { chatId, readByMeUpTo, threadsRead, dateReadPinned } = data.event;
+                    withPausedStores(() => {
+                        messagesRead.syncWithServer(
+                            chatId,
+                            readByMeUpTo,
+                            threadsRead,
+                            dateReadPinned,
+                        );
+                    });
                 }
                 if (data.event.subkind === "storage_updated") {
                     storageStore.set(data.event.status);

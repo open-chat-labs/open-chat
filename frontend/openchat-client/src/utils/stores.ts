@@ -35,10 +35,10 @@ let derivedStoresToRetry: (() => void)[] = [];
 
 const NOOP = () => {};
 
-export function withPausedStores(fn: () => void) {
+export function withPausedStores<T>(fn: () => T) {
     try {
         pauseCount++;
-        fn();
+        return fn();
     } finally {
         if (pauseCount === 1) {
             // Publish all changes to writable stores

@@ -38,8 +38,11 @@ export function createDraftMessagesStore() {
     }
 
     return {
-        subscribe: (sub: Subscriber<MessageContextMap<DraftMessage>>) => store.subscribe(sub),
-        value: store.value,
+        subscribe: (sub: Subscriber<MessageContextMap<DraftMessage>>, invalidate?: () => void) =>
+            store.subscribe(sub, invalidate),
+        get value() {
+            return store.value;
+        },
         setTextContent(key: MessageContext, textContent?: string) {
             updateDraft(key, (d) => ({ ...d, textContent }));
         },

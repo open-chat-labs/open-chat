@@ -6,11 +6,12 @@ import { scheduleUndo, type UndoLocalUpdate } from "./undo";
 
 const noop = () => {};
 export const notEq = (_a: unknown, _b: unknown) => false;
+type UndoTimeout = number | "never";
 
 export function modifyWritable<T>(
     fn: (data: T) => UndoLocalUpdate,
     store: Writable<T>,
-    timeout?: number,
+    timeout?: UndoTimeout,
 ) {
     let undo: UndoLocalUpdate = noop;
     store.update((data) => {
@@ -28,7 +29,7 @@ export function modifyWritable<T>(
 export function removeFromWritableLocalMap<K, V>(
     key: K,
     store: Writable<LocalMap<K, V>>,
-    timeout?: number,
+    timeout?: UndoTimeout,
 ) {
     return modifyWritable((d) => d.remove(key), store, timeout);
 }
@@ -37,7 +38,7 @@ export function addToWritableLocalMap<K, V>(
     key: K,
     val: V,
     store: Writable<LocalMap<K, V>>,
-    timeout?: number,
+    timeout?: UndoTimeout,
 ) {
     return modifyWritable((d) => d.addOrUpdate(key, val), store, timeout);
 }
@@ -49,7 +50,7 @@ export function addToWritableLocalSet<V>(val: V, store: Writable<LocalSet<V>>, t
 export function removeFromWritableLocalSet<V>(
     val: V,
     store: Writable<LocalSet<V>>,
-    timeout?: number,
+    timeout?: UndoTimeout,
 ) {
     return modifyWritable((d) => d.remove(val), store, timeout);
 }
@@ -58,7 +59,7 @@ export function addToWritableMap<K, V>(
     key: K,
     val: V,
     store: Writable<SafeMap<K, V>>,
-    timeout?: number,
+    timeout?: UndoTimeout,
 ) {
     return modifyWritable(
         (d) => {
@@ -75,7 +76,7 @@ export function modifyWritableMap<K, V>(
     fn: (val: V) => (v: V) => V,
     store: Writable<SafeMap<K, V>>,
     notFound: () => V,
-    timeout?: number,
+    timeout?: UndoTimeout,
 ) {
     return modifyWritable(
         (d) => {
@@ -97,7 +98,7 @@ export function modifyWritableMap<K, V>(
 export function removeFromWritableMap<K, V>(
     key: K,
     store: Writable<SafeMap<K, V>>,
-    timeout?: number,
+    timeout?: UndoTimeout,
 ) {
     return modifyWritable(
         (d) => {
