@@ -1,24 +1,31 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
     import {
-        app,
         AvatarSize,
         type ChatIdentifier,
+        chatListScopeStore,
         type ChatType,
+        currentUserIdStore,
+        currentUserStore,
         type Dimensions,
         type EnhancedReplyContext,
+        iconSize,
         localUpdates,
         type Message,
         type MessageContent,
         type MessageReminderCreatedContent,
+        mobileWidth,
         OpenChat,
         pageReplace,
-        pathState,
         publish,
         routeForMessage,
+        routeStore,
+        screenWidth,
         ScreenWidth,
+        selectedChatBlockedUsersStore,
+        selectedCommunityMembersStore,
         type SenderContext,
-        ui,
+        translationsStore,
         unconfirmedReadByThem,
         undeletingMessagesStore,
         type UserSummary,
@@ -207,7 +214,9 @@
                 percentageExpired = expired ? 100 : (age / ttl) * 100;
                 // if this message is the root of a thread, make sure that we close that thread when the message expires
                 if (percentageExpired >= 100 && msg.thread) {
-                    ui.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
+                    client.filterRightPanelHistory(
+                        (panel) => panel.kind !== "message_thread_panel",
+                    );
                     pageReplace(removeQueryStringParam("open"));
                 }
             });
@@ -289,19 +298,19 @@
 
     function toggleReaction(isQuickReaction: boolean, reaction: string) {
         if (canReact) {
-            const kind = client.containsReaction(app.currentUserId, reaction, msg.reactions)
+            const kind = client.containsReaction($currentUserIdStore, reaction, msg.reactions)
                 ? "remove"
                 : "add";
 
             client
                 .selectReaction(
                     chatId,
-                    app.currentUserId,
+                    $currentUserIdStore,
                     threadRootMessageIndex,
                     msg.messageId,
                     reaction,
-                    app.currentUser.username,
-                    app.currentUser.displayName,
+                    $currentUserStore.username,
+                    $currentUserStore.displayName,
                     kind,
                 )
                 .then((success) => {
@@ -339,7 +348,7 @@
                 height: content.height,
             };
         } else if (content.kind === "giphy_content") {
-            return ui.mobileWidth
+            return $mobileWidth
                 ? { width: content.mobile.width, height: content.mobile.height }
                 : { width: content.desktop.width, height: content.desktop.height };
         } else if (
@@ -427,7 +436,7 @@
     function remindMe() {
         showRemindMe = true;
     }
-    let maxWidthFraction = $derived(ui.screenWidth === ScreenWidth.ExtraLarge ? 0.7 : 0.8);
+    let maxWidthFraction = $derived($screenWidth === ScreenWidth.ExtraLarge ? 0.7 : 0.8);
     let inert = $derived(
         msg.content.kind === "deleted_content" ||
             msg.content.kind === "blocked_content" ||
@@ -442,11 +451,11 @@
     );
     let mediaDimensions = $derived(extractDimensions(msg.content));
     let fill = $derived(client.fillMessage(msg));
-    let showAvatar = $derived(ui.screenWidth !== ScreenWidth.ExtraExtraSmall);
-    let translated = $derived(app.translations.has(msg.messageId));
+    let showAvatar = $derived($screenWidth !== ScreenWidth.ExtraExtraSmall);
+    let translated = $derived($translationsStore.has(msg.messageId));
     let threadSummary = $derived(msg.thread);
     let msgUrl = $derived(
-        `${routeForMessage(app.chatListScope.kind, { chatId }, msg.messageIndex)}?open=true`,
+        `${routeForMessage($chatListScopeStore.kind, { chatId }, msg.messageIndex)}?open=true`,
     );
     let isProposal = $derived(msg.content.kind === "proposal_content");
     let isPrize = $derived(msg.content.kind === "prize_content");
@@ -456,7 +465,7 @@
     );
     let undeleting = $derived($undeletingMessagesStore.has(msg.messageId));
     let deletedByMe = $derived(
-        msg.content.kind === "deleted_content" && msg.content.deletedBy == app.currentUserId,
+        msg.content.kind === "deleted_content" && msg.content.deletedBy == $currentUserIdStore,
     );
     let permanentlyDeleted = $derived(
         deletedByMe &&
@@ -472,9 +481,9 @@
         (!inert || canRevealDeleted || canRevealBlocked) && !readonly && !ephemeral,
     );
     let canUndelete = $derived(msg.deleted && msg.content.kind !== "deleted_content");
-    let senderDisplayName = $derived(client.getDisplayName(sender, app.selectedCommunity.members));
+    let senderDisplayName = $derived(client.getDisplayName(sender, $selectedCommunityMembersStore));
     let tips = $derived(msg.tips ? Object.entries(msg.tips) : []);
-    let canBlockUser = $derived(canBlockUsers && !app.selectedChat.blockedUsers.has(msg.sender));
+    let canBlockUser = $derived(canBlockUsers && !$selectedChatBlockedUsersStore.has(msg.sender));
     let edited = $derived(
         msg.edited && (senderContext?.kind !== "bot" || !senderContext.finalised),
     );
@@ -504,7 +513,7 @@
                         class="close-emoji"
                         onclick={() => (showEmojiPicker = false)}>
                         <HoverIcon>
-                            <Close size={ui.iconSize} color={"var(--icon-txt)"} />
+                            <Close size={$iconSize} color={"var(--icon-txt)"} />
                         </HoverIcon>
                     </span>
                 </div>
@@ -563,7 +572,7 @@
                                         url={client.userAvatarUrl(sender)}
                                         userId={msg.sender}
                                         bot={sender?.kind === "bot"}
-                                        size={ui.mobileWidth
+                                        size={$mobileWidth
                                             ? AvatarSize.Small
                                             : AvatarSize.Default} />
                                 </div>
@@ -614,8 +623,8 @@
                                         {#if sender !== undefined && multiUserChat}
                                             <WithRole
                                                 userId={sender.userId}
-                                                chatMembers={app.selectedChat.members}
-                                                communityMembers={app.selectedCommunity.members}>
+                                                chatMembers={$selectedCommunityMembersStore}
+                                                communityMembers={$selectedCommunityMembersStore}>
                                                 {#snippet children(communityRole, chatRole)}
                                                     <RoleIcon
                                                         level="community"
@@ -642,7 +651,7 @@
                                 <div class="forwarded">
                                     <div>
                                         <ForwardIcon
-                                            size={ui.iconSize}
+                                            size={$iconSize}
                                             color={me
                                                 ? "var(--currentChat-msg-me-muted)"
                                                 : "var(--currentChat-msg-muted)"} />
@@ -785,7 +794,7 @@
                         <div class="actions" class:touch={isTouchOnlyDevice}>
                             <div class="reaction" onclick={() => (showEmojiPicker = true)}>
                                 <HoverIcon>
-                                    <EmoticonOutline size={ui.iconSize} color={"var(--icon-txt)"} />
+                                    <EmoticonOutline size={$iconSize} color={"var(--icon-txt)"} />
                                 </HoverIcon>
                             </div>
                         </div>
@@ -796,10 +805,10 @@
                     <ThreadSummary
                         {chatId}
                         threadRootMessageIndex={msg.messageIndex}
-                        selected={(pathState.route.kind === "global_chat_selected_route" ||
-                            pathState.route.kind === "selected_channel_route") &&
-                            msg.messageIndex === pathState.route.messageIndex &&
-                            pathState.route.open}
+                        selected={($routeStore.kind === "global_chat_selected_route" ||
+                            $routeStore.kind === "selected_channel_route") &&
+                            msg.messageIndex === $routeStore.messageIndex &&
+                            $routeStore.open}
                         {threadSummary}
                         indent={showAvatar}
                         {me}

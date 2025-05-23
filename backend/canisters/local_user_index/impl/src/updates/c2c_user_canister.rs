@@ -79,15 +79,19 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             );
         }
         UserEvent::UserBlocked(blocked) => {
-            state.data.blocked_users.insert((user_id, blocked), ());
+            state.data.blocked_users.insert((blocked, user_id), ());
             state.push_event_to_user_index(UserIndexEvent::UserBlocked(user_id, blocked), **now);
         }
         UserEvent::UserUnblocked(unblocked) => {
-            state.data.blocked_users.remove(&(user_id, unblocked));
+            state.data.blocked_users.remove(&(unblocked, user_id));
             state.push_event_to_user_index(UserIndexEvent::UserUnblocked(user_id, unblocked), **now);
         }
         UserEvent::SetMaxStreak(max_streak) => {
             state.push_event_to_user_index(UserIndexEvent::SetMaxStreak(user_id, max_streak), **now);
+        }
+        UserEvent::EventStoreEvent(event) => state.data.event_store_client.push(event),
+        UserEvent::Notification(notification) => {
+            state.data.handle_notification(notification, state.env.canister_id(), **now);
         }
     }
 }

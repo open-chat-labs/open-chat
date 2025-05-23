@@ -1,11 +1,11 @@
 <script lang="ts">
-    import Refresh from "svelte-material-icons/Refresh.svelte";
-    import Plus from "svelte-material-icons/Plus.svelte";
+    import type { OpenChat, ResourceKey } from "openchat-client";
+    import { enhancedCryptoLookup as cryptoLookup } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import type { OpenChat, ResourceKey } from "openchat-client";
+    import Plus from "svelte-material-icons/Plus.svelte";
+    import Refresh from "svelte-material-icons/Refresh.svelte";
     import Translatable from "../Translatable.svelte";
-    import { enhancedCryptoLookup as cryptoLookup } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
 
@@ -78,7 +78,7 @@
                 return t.ethBalance?.toFixed(6) ?? "???";
         }
     }
-    let tokenDetails = $derived($cryptoLookup[ledger]);
+    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let symbol = $derived(tokenDetails.symbol);
     let formattedValue = $derived(
         hideBalance

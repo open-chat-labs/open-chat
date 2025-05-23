@@ -1,14 +1,11 @@
-use crate::RuntimeState;
 use crate::guards::caller_is_community_being_imported_into;
-use crate::{read_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use group_canister::c2c_export_group_events::{Response::*, *};
 
 #[update(guard = "caller_is_community_being_imported_into", msgpack = true)]
 fn c2c_export_group_events(args: Args) -> Response {
-    run_regular_jobs();
-
-    read_state(|state| c2c_export_group_events_impl(args, state))
+    execute_update(|state| c2c_export_group_events_impl(args, state))
 }
 
 fn c2c_export_group_events_impl(args: Args, state: &RuntimeState) -> Response {

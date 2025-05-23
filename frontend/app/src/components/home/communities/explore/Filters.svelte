@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { app, ui } from "openchat-client";
+    import { communityFiltersStore, iconSize, mobileWidth, OpenChat } from "openchat-client";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey, supportedLanguages } from "../../../../i18n/i18n";
@@ -9,6 +10,8 @@
     import SectionHeader from "../../../SectionHeader.svelte";
     import Translatable from "../../../Translatable.svelte";
 
+    const client = getContext<OpenChat>("client");
+
     interface Props {
         onClose: () => void;
     }
@@ -16,11 +19,11 @@
     let { onClose }: Props = $props();
 </script>
 
-<SectionHeader shadow flush={ui.mobileWidth}>
+<SectionHeader shadow flush={$mobileWidth}>
     <h4><Translatable resourceKey={i18nKey("communities.filters")} /></h4>
     <span title={$_("close")} class="close" on:click={onClose}>
         <HoverIcon>
-            <Close size={ui.iconSize} color={"var(--icon-txt)"} />
+            <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
 </SectionHeader>
@@ -31,9 +34,9 @@
             <div class="toggle">
                 <Checkbox
                     id={`language_${lang.code}`}
-                    onChange={() => app.toggleCommunityFilterLanguage(lang.code)}
+                    onChange={() => client.toggleCommunityFilterLanguage(lang.code)}
                     label={i18nKey(lang.name)}
-                    checked={app.communityFilters.languages.has(lang.code)} />
+                    checked={$communityFiltersStore.has(lang.code)} />
             </div>
         {/each}
     </CollapsibleCard>

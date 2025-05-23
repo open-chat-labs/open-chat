@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui } from "openchat-client";
+    import { mobileWidth } from "openchat-client";
     import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
 
     let zoom = $state(false);
@@ -13,7 +13,7 @@
     let { url, alt, onZoom }: Props = $props();
 
     function zoomin() {
-        if (ui.mobileWidth) return;
+        if ($mobileWidth) return;
         onZoom(url, alt);
         zoom = !zoom;
     }
@@ -26,7 +26,7 @@
 <div class="wrapper" onclick={zoomin}>
     <img class="zoomable" src={url} {alt} />
 
-    {#if !ui.mobileWidth}
+    {#if !$mobileWidth}
         <div class="expand">
             <ArrowExpand size={"1em"} color={"#000"} />
         </div>

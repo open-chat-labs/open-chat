@@ -47,7 +47,6 @@ impl<T> Default for RangeSet<T> {
 }
 
 impl<T: CandidType + Into<u32>> CandidType for RangeSet<T> {
-    #[allow(deprecated)]
     fn _ty() -> candid::types::Type {
         Vec::<Range>::_ty()
     }

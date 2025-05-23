@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_leave_group::{Response::*, *};
@@ -9,9 +9,7 @@ use types::{Empty, OCResult};
 #[update(msgpack = true)]
 #[trace]
 fn c2c_leave_group(args: Args) -> Response {
-    run_regular_jobs();
-
-    if let Err(error) = mutate_state(|state| c2c_leave_group_impl(args, state)) {
+    if let Err(error) = execute_update(|state| c2c_leave_group_impl(args, state)) {
         Error(error)
     } else {
         Success(Empty {})

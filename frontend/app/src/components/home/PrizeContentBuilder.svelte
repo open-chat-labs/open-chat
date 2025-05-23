@@ -5,12 +5,7 @@
         OpenChat,
         PrizeContentInitial,
     } from "openchat-client";
-    import {
-        bigIntMax,
-        cryptoBalance as cryptoBalanceStore,
-        cryptoLookup,
-        ui,
-    } from "openchat-client";
+    import { bigIntMax, cryptoBalanceStore, cryptoLookup, mobileWidth } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
@@ -82,8 +77,8 @@
     $effect(() => {
         anyUser = !diamondOnly && !uniquePersonOnly && !streakOnly;
     });
-    let cryptoBalance = $derived($cryptoBalanceStore[ledger] ?? BigInt(0));
-    let tokenDetails = $derived($cryptoLookup[ledger]);
+    let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
+    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let symbol = $derived(tokenDetails.symbol);
     let transferFee = $derived(tokenDetails.transferFee);
     let transferFees = $derived(transferFee * BigInt(numberOfWinners ?? 0));
@@ -468,22 +463,22 @@
         {#snippet footer()}
             <span>
                 <ButtonGroup>
-                    <Button small={!ui.mobileWidth} tiny={ui.mobileWidth} secondary onClick={cancel}
+                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary onClick={cancel}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     {#if toppingUp || zero}
                         <Button
-                            small={!ui.mobileWidth}
+                            small={!$mobileWidth}
                             disabled={refreshing}
                             loading={refreshing}
-                            tiny={ui.mobileWidth}
+                            tiny={$mobileWidth}
                             onClick={reset}
                             ><Translatable resourceKey={i18nKey("refresh")} /></Button>
                     {:else}
                         <Button
-                            small={!ui.mobileWidth}
+                            small={!$mobileWidth}
                             disabled={!valid || sending}
                             loading={sending}
-                            tiny={ui.mobileWidth}
+                            tiny={$mobileWidth}
                             onClick={send}
                             ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
                     {/if}

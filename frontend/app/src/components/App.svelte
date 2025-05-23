@@ -22,20 +22,23 @@
     } from "@utils/urls";
     import {
         type ChatIdentifier,
-        type ChatSummary,
         type DexId,
         type DiamondMembershipFees,
         OpenChat,
         type UpdateMarketMakerConfigArgs,
-        app,
+        type VideoCallType,
+        anonUserStore,
         botState,
+        chatListScopeStore,
+        fontSize,
+        identityStateStore,
         inititaliseLogger,
+        notFoundStore,
         pageReplace,
-        pathState,
         routeForChatIdentifier,
         routeForScope,
+        routeStore,
         subscribe,
-        ui,
     } from "openchat-client";
     import page from "page";
     import { onMount, setContext } from "svelte";
@@ -104,20 +107,21 @@
     let profileTrace = client.showTrace();
     // I can't (yet) find a way to avoid using "any" here. Will try to improve but need to commit this crime for the time being
     let videoCallElement: any;
-    let landingPageRoute = $derived(isLandingPageRoute(pathState.route));
-    let homeRoute = $derived(pathState.route.kind === "home_route");
+    let landingPageRoute = $derived(isLandingPageRoute($routeStore));
+    let homeRoute = $derived($routeStore.kind === "home_route");
     let showLandingPage = $derived(
-        landingPageRoute || (homeRoute && app.identityState.kind === "anon" && app.anonUser),
+        landingPageRoute || (homeRoute && $identityStateStore.kind === "anon" && $anonUserStore),
     );
     let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
     let burstPath = $derived(
         $currentTheme.mode === "dark" ? "/assets/burst_dark" : "/assets/burst_light",
     );
     let burstUrl = $derived(isFirefox ? `${burstPath}.png` : `${burstPath}.svg`);
-    let burstFixed = $derived(isScrollingRoute(pathState.route));
+    let burstFixed = $derived(isScrollingRoute($routeStore));
 
     let upgrading = $derived(
-        app.identityState.kind === "upgrading_user" || app.identityState.kind === "upgrade_user",
+        $identityStateStore.kind === "upgrading_user" ||
+            $identityStateStore.kind === "upgrade_user",
     );
 
     let lastScrollY = $state(window.scrollY);
@@ -128,7 +132,7 @@
     });
 
     trackedEffect("landing-page", () => {
-        if (!pathState.notFound && showLandingPage) {
+        if (!$notFoundStore && showLandingPage) {
             document.body.classList.add("landing-page");
         } else {
             document.body.classList.remove("landing-page");
@@ -136,8 +140,8 @@
     });
 
     trackedEffect("font-size", () => {
-        console.log("Setting font size to: ", ui.fontSize);
-        document.documentElement.style.setProperty("--font-size", `${ui.fontSize}px`);
+        console.log("Setting font size to: ", $fontSize);
+        document.documentElement.style.setProperty("--font-size", `${$fontSize}px`);
     });
 
     trackedEffect("calculate-height", calculateHeight);
@@ -515,8 +519,12 @@
         calculateHeight();
     }
 
-    function startVideoCall(payload: { chat: ChatSummary; join: boolean }) {
-        videoCallElement?.startOrJoinVideoCall(payload.chat, payload.join);
+    function startVideoCall(payload: {
+        chatId: ChatIdentifier;
+        callType: VideoCallType;
+        join: boolean;
+    }) {
+        videoCallElement?.startOrJoinVideoCall(payload.chatId, payload.callType, payload.join);
     }
 
     function askToSpeak() {
@@ -527,13 +535,10 @@
         videoCallElement?.hangup();
     }
 
-    function joinVideoCall(chatId: ChatIdentifier) {
+    function joinVideoCall(chatId: ChatIdentifier, callType: VideoCallType) {
         incomingVideoCall.set(undefined);
-        const chat = client.lookupChatSummary(chatId);
-        if (chat) {
-            page(routeForChatIdentifier("none", chat.id));
-            videoCallElement?.startOrJoinVideoCall(chat, true);
-        }
+        page(routeForChatIdentifier("none", chatId));
+        videoCallElement?.startOrJoinVideoCall(chatId, callType, true);
     }
 </script>
 
@@ -549,7 +554,7 @@
 
 <ActiveCall
     {showLandingPage}
-    onClearSelection={() => page(routeForScope(app.chatListScope))}
+    onClearSelection={() => page(routeForScope($chatListScopeStore))}
     bind:this={videoCallElement} />
 
 <VideoCallAccessRequests />
@@ -568,7 +573,7 @@
     <SwitchDomain />
 {:else if upgrading}
     <Upgrading />
-{:else if app.identityState.kind === "anon" || app.identityState.kind === "logging_in" || app.identityState.kind === "registering" || app.identityState.kind === "logged_in" || app.identityState.kind === "loading_user" || app.identityState.kind === "challenging"}
+{:else if $identityStateStore.kind === "anon" || $identityStateStore.kind === "logging_in" || $identityStateStore.kind === "registering" || $identityStateStore.kind === "logged_in" || $identityStateStore.kind === "loading_user" || $identityStateStore.kind === "challenging"}
     {#if !$isLoading || $reviewingTranslations}
         <Router {showLandingPage} />
     {/if}

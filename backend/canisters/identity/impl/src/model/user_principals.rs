@@ -14,7 +14,7 @@ pub struct UserPrincipals {
     temp_keys: HashMap<Principal, TempKey>,
 }
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 pub struct UserPrincipal {
     pub index: u32,
     pub principal: Principal,
@@ -57,7 +57,7 @@ struct TempKey {
 }
 
 impl UserPrincipals {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn push(
         &mut self,
         index: u32,

@@ -12,13 +12,12 @@ use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    AccessTokenScope, AuthToken, AutonomousConfig, BotActionByCommandClaims, BotActionChatDetails, BotActionScope,
-    BotApiKeyToken, BotCommandArg, BotCommandArgValue, BotCommandDefinition, BotCommandParam, BotCommandParamType,
+    AuthToken, AutonomousBotScope, AutonomousConfig, BotActionByCommandClaims, BotActionChatDetails, BotActionScope,
+    BotChatContext, BotCommandArg, BotCommandArgValue, BotCommandDefinition, BotCommandParam, BotCommandParamType,
     BotDefinition, BotInstallationLocation, BotMessageContent, BotPermissions, CanisterId, Chat, ChatEvent, ChatEventType,
     ChatPermission, ChatType, CommunityPermission, MessageContent, MessageId, MessagePermission, NotificationEnvelope, Rules,
     StringParam, TextContent, UserId,
 };
-use utils::base64;
 
 #[test]
 fn e2e_command_bot_test() {
@@ -61,6 +60,7 @@ fn e2e_command_bot_test() {
         installation_location,
         bot.id,
         granted_permissions.clone(),
+        None,
     );
 
     // Explore bots and check new bot is returned
@@ -258,6 +258,7 @@ fn remove_bot_test() {
         BotInstallationLocation::Group(group_id),
         bot_id,
         BotPermissions::default(),
+        None,
     );
 
     let bot_installed_timestamp = now_millis(env);
@@ -292,6 +293,7 @@ fn e2e_autonomous_bot_test() {
     let community_id =
         client::user::happy_path::create_community(env, &owner, &random_string(), true, vec!["General".to_string()]);
     let channel_id = client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
+    let chat = Chat::Channel(community_id, channel_id);
 
     // Register a bot
     let bot_name = random_string();
@@ -310,93 +312,50 @@ fn e2e_autonomous_bot_test() {
         BotInstallationLocation::Community(community_id),
         bot_id,
         permissions.clone(),
+        Some(permissions.clone()),
     );
 
-    let initial_time = now_millis(env);
     env.advance_time(Duration::from_millis(1000));
     env.tick();
 
-    // Generate an API key for the bot in the channel
-    let api_key = match client::community::generate_bot_api_key(
-        env,
-        owner.principal,
-        community_id.into(),
-        &community_canister::generate_bot_api_key::Args {
-            bot_id,
-            requested_permissions: permissions,
-            channel_id: Some(channel_id),
-        },
-    ) {
-        community_canister::generate_bot_api_key::Response::Success(result) => result.api_key,
-        response => panic!("'generate_bot_api_key' error: {response:?}"),
-    };
-
-    // Decode the API key and assert expected claims
-    let api_key_token = base64::to_value::<BotApiKeyToken>(&api_key).expect("Expected valid API key");
-    assert_eq!(api_key_token.bot_id, bot_id);
-    assert_eq!(api_key_token.gateway, canister_ids.local_user_index(env, community_id));
-    let AccessTokenScope::Chat(Chat::Channel(token_community_id, token_channel_id)) = api_key_token.scope else {
-        panic!("Expected API key scope to be channel");
-    };
-    assert_eq!(token_community_id, community_id);
-    assert_eq!(token_channel_id, channel_id);
-
-    env.advance_time(Duration::from_millis(1000));
-    env.tick();
-
-    // Check the API key is returned in selected_channel_initial
-    let response = client::community::happy_path::selected_channel_initial(env, &owner, community_id, channel_id);
-    assert_eq!(response.api_keys.len(), 1);
-    assert_eq!(response.api_keys[0].bot_id, bot_id);
-
-    // Check the API key is returned in selected_channel_updates
-    let Some(response) =
-        client::community::happy_path::selected_channel_updates(env, owner.principal, community_id, channel_id, initial_time)
-    else {
-        panic!("Expected `selected_channel_updates` Success");
-    };
-    assert_eq!(response.api_keys_generated.len(), 1);
-    assert_eq!(response.api_keys_generated[0].bot_id, bot_id);
-
-    let latest_notification_index_at_start = client::notifications::happy_path::latest_notification_index(
+    let latest_notification_index_at_start = client::local_user_index::happy_path::latest_notification_index(
         env,
         *controller,
-        canister_ids.notifications(env, community_id),
+        canister_ids.local_user_index(env, community_id),
     );
 
-    // Call bot_subscribe_to_chat_events
-    let subscribe_response = client::local_user_index::bot_subscribe_to_chat_events(
+    let subscribe_response = client::local_user_index::bot_subscribe_to_events(
         env,
         bot_principal,
         canister_ids.local_user_index(env, community_id),
-        &local_user_index_canister::bot_subscribe_to_chat_events::Args {
-            channel_id: None,
-            event_types: vec![ChatEventType::Message],
-            api_key: api_key.clone(),
+        &local_user_index_canister::bot_subscribe_to_events::Args {
+            scope: AutonomousBotScope::Chat(chat),
+            chat_events: HashSet::from_iter([ChatEventType::Message]),
+            community_events: HashSet::new(),
         },
     );
 
     assert!(
         matches!(
             subscribe_response,
-            local_user_index_canister::bot_subscribe_to_chat_events::Response::Success
+            local_user_index_canister::bot_subscribe_to_events::Response::Success
         ),
-        "'bot_subscribe_to_chat_events' error: {subscribe_response:?}"
+        "'bot_subscribe_to_events' error: {subscribe_response:?}"
     );
 
     // Call bot_send_message
     let text = "Hello world".to_string();
-    let send_message_response = client::local_user_index::bot_send_message(
+    let send_message_response = client::local_user_index::bot_send_message_v2(
         env,
         bot_principal,
         canister_ids.local_user_index(env, community_id),
-        &local_user_index_canister::bot_send_message::Args {
-            channel_id: None,
+        &local_user_index_canister::bot_send_message_v2::Args {
+            chat_context: BotChatContext::Autonomous(chat),
+            thread: None,
             message_id: None,
             content: BotMessageContent::Text(TextContent { text: text.clone() }),
             block_level_markdown: false,
             finalised: true,
-            auth_token: AuthToken::ApiKey(api_key),
         },
     );
 
@@ -410,14 +369,14 @@ fn e2e_autonomous_bot_test() {
 
     tick_many(env, 5);
 
-    let notifications = client::notifications::happy_path::notifications_v2(
+    let notifications = client::local_user_index::happy_path::notifications_v2(
         env,
         *controller,
-        canister_ids.notifications(env, community_id),
+        canister_ids.local_user_index(env, community_id),
         latest_notification_index_at_start + 1,
     );
 
-    assert!(notifications.bot_endpoints.contains_key(&bot_id));
+    assert!(notifications.bots.contains_key(&bot_id));
     assert!(
         notifications
             .notifications
@@ -473,6 +432,7 @@ fn send_api_key_test(chat_type: ChatType) {
         chat.into(),
         bot_id,
         BotPermissions::default(),
+        None,
     );
 
     env.advance_time(Duration::from_millis(1000));
@@ -544,6 +504,7 @@ fn create_channel_by_api_key() {
         BotInstallationLocation::Community(community_id),
         bot_id,
         BotPermissions::text_only(),
+        None,
     );
 
     env.advance_time(Duration::from_millis(1000));
@@ -663,6 +624,7 @@ fn read_messages_by_api_key(channel_api_key: bool, authorized: bool) {
         BotInstallationLocation::Community(community_id),
         bot_id,
         BotPermissions::text_only(),
+        None,
     );
 
     env.advance_time(Duration::from_millis(1000));
@@ -760,6 +722,8 @@ fn read_messages_by_command() {
                 sync_api_key: false,
                 permissions: BotPermissions::default(),
             }),
+            default_subscriptions: None,
+            data_encoding: None,
         },
     );
 
@@ -773,6 +737,7 @@ fn read_messages_by_command() {
         BotInstallationLocation::Community(community_id),
         bot_id,
         BotPermissions::from_chat_permission(ChatPermission::ReadMessages),
+        None,
     );
 
     env.advance_time(Duration::from_millis(1000));
@@ -869,6 +834,8 @@ fn send_direct_message() {
                 direct_messages: Some(true),
             }],
             autonomous_config: None,
+            default_subscriptions: None,
+            data_encoding: None,
         },
     );
 
@@ -880,6 +847,7 @@ fn send_direct_message() {
         BotInstallationLocation::User(owner.user_id.into()),
         bot_id,
         BotPermissions::text_only(),
+        None,
     );
 
     env.advance_time(Duration::from_millis(1000));
@@ -1011,6 +979,7 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
         chat.into(),
         bot_id,
         BotPermissions::text_only(),
+        None,
     );
 
     env.advance_time(Duration::from_millis(1000));
@@ -1177,6 +1146,8 @@ fn register_bot(
                 sync_api_key: false,
                 permissions: BotPermissions::text_only(),
             }),
+            default_subscriptions: None,
+            data_encoding: None,
         },
     )
 }
@@ -1204,6 +1175,8 @@ fn register_autonomous_bot(
                 sync_api_key: true,
                 permissions: BotPermissions::text_only(),
             }),
+            default_subscriptions: None,
+            data_encoding: None,
         },
     )
 }

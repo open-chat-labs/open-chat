@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { GroupInviteCodeChange, UserSummary } from "openchat-client";
-    import { userStore } from "openchat-client";
+    import { allUsersStore } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { buildDisplayName } from "../../utils/user";
     import NonMessageEvent from "./NonMessageEvent.svelte";
@@ -15,9 +15,7 @@
     let { user, change, changedBy, timestamp }: Props = $props();
 
     let me = $derived(changedBy === user?.userId);
-    let changedByStr = $derived(
-        buildDisplayName(userStore.allUsers, changedBy, me ? "me" : "user"),
-    );
+    let changedByStr = $derived(buildDisplayName($allUsersStore, changedBy, me ? "me" : "user"));
     let changedStr = $derived($_(`invite.${change}`));
     let text = $derived(
         $_("groupInviteChangedBy", {

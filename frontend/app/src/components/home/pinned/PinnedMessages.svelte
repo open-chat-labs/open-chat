@@ -6,7 +6,15 @@
         OpenChat,
         ReadonlySet,
     } from "openchat-client";
-    import { app, setsAreEqual, subscribe, ui, withEqCheck } from "openchat-client";
+    import {
+        currentUserStore,
+        iconSize,
+        messagesRead,
+        selectedChatPinnedMessagesStore,
+        setsAreEqual,
+        subscribe,
+        withEqCheck,
+    } from "openchat-client";
     import { isSuccessfulEventsResponse } from "openchat-shared";
     import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
@@ -29,18 +37,23 @@
     let { chatId, dateLastPinned, onClose }: Props = $props();
 
     const client = getContext<OpenChat>("client");
-
+    let unread = $state<boolean>(false);
     let pinnedMessages = $derived.by(
-        withEqCheck(() => app.selectedChat.pinnedMessages, setsAreEqual),
+        withEqCheck(() => $selectedChatPinnedMessagesStore, setsAreEqual),
     );
 
     onMount(() => {
-        return subscribe("chatWith", (_) => {
-            onClose();
-        });
+        const unsubs = [
+            subscribe("chatWith", onClose),
+            messagesRead.subscribe(() => {
+                unread = client.unreadPinned(chatId, dateLastPinned);
+            }),
+        ];
+        return () => {
+            unsubs.forEach((u) => u());
+        };
     });
 
-    let unread = $derived(client.unreadPinned(chatId, dateLastPinned));
     let messagesDiv: HTMLDivElement | undefined = $state();
 
     let messages: RemoteData<EventWrapper<Message>[][], string> = $state({ kind: "idle" });
@@ -97,6 +110,7 @@
 
     $effect(() => {
         reloadPinned(pinnedMessages);
+        unread = client.unreadPinned(chatId, dateLastPinned);
     });
 
     function dateGroupKey(group: EventWrapper<Message>[]): string {
@@ -109,7 +123,7 @@
     <h4><Translatable resourceKey={i18nKey("pinnedMessages")} /></h4>
     <span title={$_("close")} class="close" onclick={close}>
         <HoverIcon>
-            <Close size={ui.iconSize} color={"var(--icon-txt)"} />
+            <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
 </SectionHeader>
@@ -127,7 +141,7 @@
                     <PinnedMessage
                         {chatId}
                         timestamp={message.timestamp}
-                        user={app.currentUser}
+                        user={$currentUserStore}
                         senderId={message.event.sender}
                         msg={message.event} />
                 {/each}

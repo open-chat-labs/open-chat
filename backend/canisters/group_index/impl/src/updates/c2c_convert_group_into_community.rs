@@ -10,7 +10,7 @@ use types::{CanisterId, SourceGroup};
 #[trace]
 async fn c2c_convert_group_into_community(args: Args) -> Response {
     let PrepareResult {
-        local_group_index_canister,
+        local_user_index_canister,
         create_community_args,
     } = match mutate_state(|state| prepare(args, state)) {
         Ok(ok) => ok,
@@ -20,7 +20,7 @@ async fn c2c_convert_group_into_community(args: Args) -> Response {
     let public = create_community_args.is_public;
     let name = create_community_args.name.clone();
 
-    match create_community_impl(create_community_args, local_group_index_canister).await {
+    match create_community_impl(create_community_args, local_user_index_canister).await {
         Ok(result) => {
             if public {
                 mutate_state(|state| {
@@ -38,21 +38,21 @@ async fn c2c_convert_group_into_community(args: Args) -> Response {
 }
 
 struct PrepareResult {
-    pub local_group_index_canister: CanisterId,
-    pub create_community_args: local_group_index_canister::c2c_create_community::Args,
+    pub local_user_index_canister: CanisterId,
+    pub create_community_args: local_user_index_canister::c2c_create_community::Args,
 }
 
 fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareResult, Response> {
     let caller = state.env.caller().into();
 
-    let local_group_index_canister = match state.data.local_index_map.index_for_new_community() {
+    let local_user_index_canister = match state.data.local_index_map.index_for_new_community() {
         Some(canister) => canister,
         None => return Err(InternalError("No available LocalGroupIndex found".to_string())),
     };
 
     let is_public = state.data.public_groups.get(&caller).is_some();
 
-    let create_community_args = local_group_index_canister::c2c_create_community::Args {
+    let create_community_args = local_user_index_canister::c2c_create_community::Args {
         created_by_user_id: args.user_id,
         created_by_user_principal: args.user_principal,
         is_public,
@@ -75,7 +75,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareResult, Respon
     };
 
     Ok(PrepareResult {
-        local_group_index_canister,
+        local_user_index_canister,
         create_community_args,
     })
 }

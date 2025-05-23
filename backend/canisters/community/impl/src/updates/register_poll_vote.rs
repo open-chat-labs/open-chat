@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::register_poll_vote::{Response::*, *};
@@ -8,10 +8,8 @@ use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEven
 
 #[update(msgpack = true)]
 #[trace]
-async fn register_poll_vote(args: Args) -> Response {
-    run_regular_jobs();
-
-    match mutate_state(|state| register_poll_vote_impl(args, state)) {
+fn register_poll_vote(args: Args) -> Response {
+    match execute_update(|state| register_poll_vote_impl(args, state)) {
         Ok(votes) => Success(votes),
         Err(error) => Error(error),
     }

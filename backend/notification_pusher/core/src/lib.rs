@@ -5,12 +5,11 @@ use crate::reader::Reader;
 use crate::user_notifications::start_user_notifications_processor;
 use index_store::IndexStore;
 use prometheus::{Encoder, TextEncoder};
-use serde::Serialize;
 use std::io::Write;
 use std::sync::Arc;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use tracing::info;
-use types::{CanisterId, Chat, ChatEventType, EventIndex, MessageIndex, TimestampMillis, UserId};
+use types::{CanisterId, TimestampMillis, UserId};
 use web_push::{SubscriptionInfo, WebPushMessage};
 
 mod bot_notifications;
@@ -26,6 +25,7 @@ pub async fn run_notifications_pusher<I: IndexStore + 'static>(
     index_store: I,
     vapid_private_pem: String,
     pusher_count: u32,
+    is_production: bool,
 ) {
     info!("Notifications pusher starting");
 
@@ -34,7 +34,7 @@ pub async fn run_notifications_pusher<I: IndexStore + 'static>(
     let user_notifications_sender =
         start_user_notifications_processor(ic_agent.clone(), index_canister_id, vapid_private_pem, pusher_count);
 
-    let bot_notifications_sender = start_bot_notifications_processor();
+    let bot_notifications_sender = start_bot_notifications_processor(is_production);
 
     for notification_canister_id in notifications_canister_ids {
         let reader = Reader::new(
@@ -81,15 +81,6 @@ pub struct BotNotification {
     endpoint: String,
     payload: Vec<u8>,
     first_read_at: Instant,
-}
-
-#[derive(Serialize)]
-pub struct BotNotificationPayload {
-    event_type: ChatEventType,
-    chat: Chat,
-    thread: Option<MessageIndex>,
-    event_index: EventIndex,
-    latest_event_index: EventIndex,
 }
 
 fn timestamp() -> TimestampMillis {

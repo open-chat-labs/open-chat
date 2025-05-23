@@ -1,11 +1,18 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
     import {
-        app,
         botState,
         chatIdentifiersEqual,
-        pathState,
-        ui,
+        directChatBotsStore,
+        filteredProposalsStore,
+        rightPanelMode,
+        rightPanelWidth,
+        routeStore,
+        selectedChatIdStore,
+        selectedChatSummaryStore,
+        showLeft,
+        showMiddle,
+        showNav,
         type ChatIdentifier,
         type MultiUserChat,
     } from "openchat-client";
@@ -29,13 +36,13 @@
     let middlePanel: HTMLElement | undefined;
 
     let botId = $derived.by(() => {
-        if (app.selectedChatSummary === undefined) return undefined;
-        if (app.selectedChatSummary.kind !== "direct_chat") return undefined;
-        return botState.externalBots.get(app.selectedChatSummary.them.userId)?.id;
+        if ($selectedChatSummaryStore === undefined) return undefined;
+        if ($selectedChatSummaryStore.kind !== "direct_chat") return undefined;
+        return botState.externalBots.get($selectedChatSummaryStore.them.userId)?.id;
     });
 
     let uninstalledBotId = $derived.by(() => {
-        return botId !== undefined && app.directChatBots.get(botId) === undefined
+        return botId !== undefined && $directChatBotsStore.get(botId) === undefined
             ? botId
             : undefined;
     });
@@ -59,10 +66,10 @@
                 if (call.view === "fullscreen") {
                     let width = window.innerWidth;
                     if (
-                        ui.rightPanelMode !== "floating" &&
+                        $rightPanelMode !== "floating" &&
                         (call.threadOpen || call.participantsOpen)
                     ) {
-                        width = width - (ui.rightPanelWidth ?? 500);
+                        width = width - ($rightPanelWidth ?? 500);
                     }
                     callContainer.style.setProperty("left", `0px`);
                     callContainer.style.setProperty("width", `${width}px`);
@@ -84,12 +91,12 @@
     }
 
     function resize() {
-        alignVideoCall($activeVideoCall, app.selectedChatId);
+        alignVideoCall($activeVideoCall, $selectedChatIdStore);
     }
-    let noChat = $derived(pathState.route.kind !== "global_chat_selected_route");
+    let noChat = $derived($routeStore.kind !== "global_chat_selected_route");
     trackedEffect("align-video-call", () => {
         if (middlePanel) {
-            alignVideoCall($activeVideoCall, app.selectedChatId);
+            alignVideoCall($activeVideoCall, $selectedChatIdStore);
         }
     });
 </script>
@@ -98,14 +105,14 @@
 
 <section
     bind:this={middlePanel}
-    class:visible={ui.showMiddle}
-    class:offset={ui.showNav && !ui.showLeft}
+    class:visible={$showMiddle}
+    class:offset={$showNav && !$showLeft}
     class:halloween={$currentTheme.name === "halloween"}>
-    {#if pathState.route.kind === "explore_groups_route"}
+    {#if $routeStore.kind === "explore_groups_route"}
         <RecommendedGroups {joining} />
-    {:else if pathState.route.kind === "communities_route"}
+    {:else if $routeStore.kind === "communities_route"}
         <ExploreCommunities />
-    {:else if pathState.route.kind === "admin_route"}
+    {:else if $routeStore.kind === "admin_route"}
         {#await import("./admin/Admin.svelte")}
             <div class="loading">
                 <Loading />
@@ -113,22 +120,22 @@
         {:then { default: Admin }}
             <Admin />
         {/await}
-    {:else if app.selectedChatId === undefined}
+    {:else if $selectedChatIdStore === undefined}
         {#if noChat}
             <div class="no-chat" in:fade>
                 <NoChatSelected />
             </div>
         {/if}
-    {:else if installingBot && botId && app.selectedChatId.kind === "direct_chat"}
+    {:else if installingBot && botId && $selectedChatIdStore.kind === "direct_chat"}
         <UninstalledDirectBot
             onClose={() => (installingBot = false)}
-            chatId={app.selectedChatId}
+            chatId={$selectedChatIdStore}
             {botId} />
-    {:else if app.selectedChatSummary !== undefined}
+    {:else if $selectedChatSummaryStore !== undefined}
         <CurrentChat
             {joining}
-            chat={app.selectedChatSummary}
-            filteredProposals={app.filteredProposals} />
+            chat={$selectedChatSummaryStore}
+            filteredProposals={$filteredProposalsStore} />
     {/if}
 </section>
 

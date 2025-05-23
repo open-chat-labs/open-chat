@@ -23,14 +23,6 @@ describe("LocalSet", () => {
         set = new LocalSet(identity);
     });
 
-    it("make sure that automatic undo works", () => {
-        set.add("a");
-        expect(set.added.has("a")).toBe(true);
-        expect(set.removed.has("a")).toBe(false);
-        vi.runAllTimers();
-        expect(set.added.has("a")).toBe(false);
-    });
-
     it("make sure manual undo works", () => {
         const undo = set.add("a");
         expect(set.added.has("a")).toBe(true);

@@ -1,32 +1,41 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
     import {
-        app,
         type AttachmentContent,
+        blockedUsersStore,
         botState,
         type ChatIdentifier,
         chatIdentifiersEqual,
         type ChatSummary,
+        communitiesStore,
         CommunityMap,
         type CommunitySummary,
+        currentUserIdStore,
+        currentUserStore,
         type EnhancedReplyContext,
         type EventWrapper,
         type FilteredProposals,
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
         localUpdates,
+        type Mention,
         type Message,
         type MessageContent,
         type MessageContext,
         messageContextsEqual,
         messagesRead,
+        mobileWidth,
         type MultiUserChat,
         type OpenChat,
         type ReadonlySet,
+        rightPanelHistory,
+        runningInIframe,
+        selectedChatDraftMessageStore,
+        selectedChatPinnedMessagesStore,
+        selectedCommunitySummaryStore,
         subscribe,
-        ui,
+        suspendedUserStore,
         type User,
-        userStore,
     } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -61,8 +70,8 @@
     const client = getContext<OpenChat>("client");
 
     let previousChatId: ChatIdentifier | undefined = $state(undefined);
-    let unreadMessages = $derived(getUnreadMessageCount(chat));
-    let firstUnreadMention = $derived(client.getFirstUnreadMention(chat));
+    let unreadMessages = $state<number>(0);
+    let firstUnreadMention = $state<Mention | undefined>();
     let creatingPoll = $state(false);
     let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = $state(undefined);
     let creatingPrizeMessage = $state(false);
@@ -83,6 +92,10 @@
 
     onMount(() => {
         const unsubs = [
+            messagesRead.subscribe(() => {
+                unreadMessages = getUnreadMessageCount(chat);
+                firstUnreadMention = client.getFirstUnreadMention(chat);
+            }),
             subscribe("createPoll", onCreatePoll),
             subscribe("attachGif", onAttachGif),
             subscribe("tokenTransfer", onTokenTransfer),
@@ -119,12 +132,12 @@
     }
 
     function importToCommunity() {
-        importToCommunities = app.communities.filter((c) => c.membership.role === "owner");
+        importToCommunities = $communitiesStore.filter((c) => c.membership.role === "owner");
         if (importToCommunities.size === 0) {
             toastStore.showFailureToast(i18nKey("communities.noOwned"));
             importToCommunities = undefined;
         } else {
-            ui.rightPanelHistory = [];
+            rightPanelHistory.set([]);
         }
     }
 
@@ -209,14 +222,14 @@
     function onSendMessage(detail: [string | undefined, User[], boolean]) {
         if (!canSendAny) return;
         let [text, mentioned, blockLevelMarkdown] = detail;
-        if (app.currentChatDraftMessage?.editingEvent !== undefined) {
+        if ($selectedChatDraftMessageStore?.editingEvent !== undefined) {
             client
                 .editMessageWithAttachment(
                     messageContext,
                     text,
                     blockLevelMarkdown,
-                    app.currentChatDraftMessage.attachment,
-                    app.currentChatDraftMessage.editingEvent,
+                    $selectedChatDraftMessageStore.attachment,
+                    $selectedChatDraftMessageStore.editingEvent,
                 )
                 .then((success) => {
                     if (!success) {
@@ -227,7 +240,7 @@
             sendMessageWithAttachment(
                 text,
                 blockLevelMarkdown,
-                app.currentChatDraftMessage?.attachment,
+                $selectedChatDraftMessageStore?.attachment,
                 mentioned,
             );
         }
@@ -283,13 +296,13 @@
     }
 
     function defaultCryptoTransferReceiver(): string | undefined {
-        return app.currentChatDraftMessage?.replyingTo?.sender?.userId;
+        return $selectedChatDraftMessageStore?.replyingTo?.sender?.userId;
     }
 
     function onSendMessageWithContent(content: MessageContent) {
         client.sendMessageWithContent(messageContext, content, false);
     }
-    let showChatHeader = $derived(!ui.mobileWidth || !ui.runningInIframe);
+    let showChatHeader = $derived(!$mobileWidth || !$runningInIframe);
     let messageContext = $derived({ chatId: chat.id });
 
     trackedEffect("current-chat", () => {
@@ -304,9 +317,9 @@
             });
         }
     });
-    let showFooter = $derived(!showSearchHeader && !app.suspendedUser);
-    let blocked = $derived(isBlocked(chat, userStore.blockedUsers));
-    let frozen = $derived(client.isChatOrCommunityFrozen(chat, app.selectedCommunitySummary));
+    let showFooter = $derived(!showSearchHeader && !$suspendedUserStore);
+    let blocked = $derived(isBlocked(chat, $blockedUsersStore));
+    let frozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
     let canSendAny = $derived(client.canSendMessage(chat.id, "message"));
     let preview = $derived(client.isPreviewing(chat.id));
     let lapsed = $derived(client.isLapsed(chat.id));
@@ -393,7 +406,7 @@
                 {blocked}
                 {readonly}
                 selectedChatSummary={chat}
-                hasPinned={app.selectedChat.pinnedMessages.size > 0} />
+                hasPinned={$selectedChatPinnedMessagesStore.size > 0} />
         {/if}
     {/if}
     {#if externalUrl !== undefined}
@@ -421,11 +434,11 @@
     {#if showFooter}
         <Footer
             {chat}
-            attachment={app.currentChatDraftMessage?.attachment}
-            editingEvent={app.currentChatDraftMessage?.editingEvent}
-            replyingTo={app.currentChatDraftMessage?.replyingTo}
-            textContent={app.currentChatDraftMessage?.textContent}
-            user={app.currentUser}
+            attachment={$selectedChatDraftMessageStore?.attachment}
+            editingEvent={$selectedChatDraftMessageStore?.editingEvent}
+            replyingTo={$selectedChatDraftMessageStore?.replyingTo}
+            textContent={$selectedChatDraftMessageStore?.textContent}
+            user={$currentUserStore}
             mode={"message"}
             {joining}
             {preview}
@@ -439,8 +452,8 @@
                 localUpdates.draftMessages.setAttachment({ chatId: chat.id }, undefined)}
             onCancelEdit={() => localUpdates.draftMessages.delete({ chatId: chat.id })}
             {onSetTextContent}
-            onStartTyping={() => client.startTyping(chat, app.currentUserId)}
-            onStopTyping={() => client.stopTyping(chat, app.currentUserId)}
+            onStartTyping={() => client.startTyping(chat, $currentUserIdStore)}
+            onStopTyping={() => client.stopTyping(chat, $currentUserIdStore)}
             {onFileSelected}
             {onSendMessage}
             onAttachGif={attachGif}

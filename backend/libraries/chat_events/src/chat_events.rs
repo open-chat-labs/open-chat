@@ -5,31 +5,28 @@ use crate::metrics::{ChatMetricsInternal, MetricKey};
 use crate::search_index::SearchIndex;
 use crate::*;
 use constants::{ONE_MB, OPENCHAT_BOT_USER_ID};
-use event_store_producer::{EventBuilder, EventStoreClient, Runtime};
-use itertools::Itertools;
+use event_store_types::EventBuilder;
 use oc_error_codes::{OCError, OCErrorCode};
-use rand::Rng;
-use rand::rngs::StdRng;
 use search::simple::{Document, Query};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use sha2::{Digest, Sha256};
 use std::cmp::max;
 use std::collections::btree_map::Entry::{Occupied, Vacant};
-use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::mem;
 use std::ops::DerefMut;
 use tracing::error;
 use types::{
-    BlobReference, BotNotification, CallParticipant, CanisterId, Chat, ChatEventType, ChatType, CompletedCryptoTransaction,
-    DirectChatCreated, EventContext, EventIndex, EventMetaData, EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated,
-    GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message,
-    MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageReport,
-    MessageTippedEventPayload, Milliseconds, MultiUserChat, OCResult, OptionUpdate, P2PSwapAccepted, P2PSwapCompleted,
-    P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate,
-    PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess, SenderContext,
-    TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants,
-    VideoCallPresence, VideoCallType, VoteOperation,
+    BlobReference, BotChatEvent, BotNotification, CallParticipant, CanisterId, Chat, ChatEventCategory, ChatEventType,
+    ChatType, CompletedCryptoTransaction, DirectChatCreated, EventContext, EventIndex, EventMetaData, EventWrapper,
+    EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash,
+    HydratedMention, Mention, Message, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch,
+    MessageReport, MessageTippedEventPayload, Milliseconds, MultiUserChat, OCResult, OptionUpdate, P2PSwapAccepted,
+    P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes,
+    ProposalUpdate, PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess,
+    SenderContext, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload,
+    VideoCallParticipants, VideoCallPresence, VideoCallType, VoteOperation,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -46,7 +43,9 @@ pub struct ChatEvents {
     video_call_in_progress: Timestamped<Option<VideoCallInternal>>,
     anonymized_id: String,
     search_index: SearchIndex,
-    bot_subscriptions: BTreeMap<ChatEventType, HashMap<String, UserId>>,
+    // TODO: Remove this serde attribute after groups, communities, users released
+    #[serde(default, skip_deserializing)]
+    bot_subscriptions: BTreeMap<ChatEventType, HashSet<UserId>>,
 }
 
 impl ChatEvents {
@@ -159,10 +158,10 @@ impl ChatEvents {
             })
     }
 
-    pub fn push_message<R: Runtime + Send + 'static>(
+    pub fn push_message<P: EventPusher>(
         &mut self,
         args: PushMessageArgs,
-        mut event_store_client: Option<&mut EventStoreClient<R>>,
+        mut event_pusher: Option<P>,
     ) -> (EventWrapper<Message>, Option<BotNotification>) {
         let events_list = if let Some(root_message_index) = args.thread_root_message_index {
             self.threads
@@ -174,7 +173,7 @@ impl ChatEvents {
 
         let video_call_type = if let MessageContentInternal::VideoCall(vc) = &args.content { Some(vc.call_type) } else { None };
 
-        if let Some(client) = event_store_client.as_mut() {
+        if let Some(event_pusher) = event_pusher.as_mut() {
             let event_payload = MessageEventPayload {
                 message_type: args.content.content_type().to_string(),
                 chat_type: ChatType::from(&self.chat).to_string(),
@@ -184,7 +183,7 @@ impl ChatEvents {
                 content_specific_payload: args.content.event_payload(),
             };
 
-            client.push(
+            event_pusher.push(
                 EventBuilder::new("message_sent", args.now)
                     .with_user(args.sender.to_string(), true)
                     .with_source(self.chat.canister_id().to_string(), true)
@@ -248,7 +247,7 @@ impl ChatEvents {
 
         if let Some(call_type) = video_call_type {
             if let Some(vc) = &self.video_call_in_progress.value {
-                let _ = self.end_video_call(vc.message_index.into(), args.now, event_store_client);
+                let _ = self.end_video_call(vc.message_index.into(), args.now, event_pusher);
             }
 
             self.video_call_in_progress = Timestamped::new(
@@ -272,10 +271,10 @@ impl ChatEvents {
         )
     }
 
-    pub fn edit_message<R: Runtime + Send + 'static>(
+    pub fn edit_message<P: EventPusher>(
         &mut self,
         args: EditMessageArgs,
-        event_store_client: Option<&mut EventStoreClient<R>>,
+        event_pusher: Option<P>,
     ) -> OCResult<EditMessageSuccess> {
         let sender = args.sender;
         let thread_root_message_index = args.thread_root_message_index;
@@ -288,7 +287,8 @@ impl ChatEvents {
             args.message_id.into(),
             args.min_visible_event_index,
             Some(now),
-            |message, event| Self::edit_message_inner(message, event, args, chat, anonymized_id, event_store_client),
+            ChatEventType::MessageEdited,
+            |message, event| Self::edit_message_inner(message, event, args, chat, anonymized_id, event_pusher),
         ) {
             Ok(result) => {
                 let bot_notification = result.bot_notification;
@@ -320,14 +320,14 @@ impl ChatEvents {
         }
     }
 
-    #[allow(clippy::type_complexity)]
-    fn edit_message_inner<R: Runtime + Send + 'static>(
+    #[expect(clippy::type_complexity)]
+    fn edit_message_inner<P: EventPusher>(
         message: &mut MessageInternal,
         event: EventMetaData,
         args: EditMessageArgs,
         chat: Chat,
         anonymized_id: String,
-        event_store_client: Option<&mut EventStoreClient<R>>,
+        mut event_pusher: Option<P>,
     ) -> Result<(MessageIndex, EventMetaData, Document), UpdateEventError<OCResult<(MessageIndex, EventMetaData)>>> {
         if message.sender != args.sender || matches!(message.content, MessageContentInternal::Deleted(_)) {
             return Err(UpdateEventError::NoChange(Err(OCErrorCode::InitiatorNotAuthorized.into())));
@@ -361,7 +361,7 @@ impl ChatEvents {
                     }
                 }
 
-                if let Some(client) = event_store_client {
+                if let Some(event_pusher) = event_pusher.as_mut() {
                     let new_length = message.content.text_length();
                     let payload = MessageEditedEventPayload {
                         message_type: message.content.content_type().to_string(),
@@ -373,13 +373,13 @@ impl ChatEvents {
                         new_length,
                     };
 
-                    client.push(
+                    event_pusher.push(
                         EventBuilder::new("message_edited", args.now)
                             .with_user(args.sender.to_string(), true)
                             .with_source(chat.canister_id().to_string(), true)
                             .with_json_payload(&payload)
                             .build(),
-                    )
+                    );
                 }
             }
             return Ok((message.message_index, event, document));
@@ -414,6 +414,7 @@ impl ChatEvents {
                 args.message_id.into(),
                 args.min_visible_event_index,
                 Some(args.now),
+                ChatEventType::MessageDeleted,
                 |message, _| Self::delete_message_inner(message, &args),
             )
             .map(|r| r.value)
@@ -474,6 +475,7 @@ impl ChatEvents {
                 args.message_id.into(),
                 args.min_visible_event_index,
                 Some(args.now),
+                ChatEventType::MessageDeleted,
                 |message, _| Self::undelete_message_inner(message, &args),
             )
             .map(|r| r.value)
@@ -540,6 +542,7 @@ impl ChatEvents {
                 message_id.into(),
                 EventIndex::default(),
                 None,
+                ChatEventType::MessageDeleted,
                 |message, _| Self::remove_deleted_message_content_inner(message),
             )
             .map(|r| r.value)
@@ -572,6 +575,7 @@ impl ChatEvents {
             args.message_index.into(),
             args.min_visible_event_index,
             Some(args.now),
+            ChatEventType::MessagePollVote,
             |message, _| Self::register_poll_vote_inner(message, &args),
         ) {
             Ok(result) => {
@@ -648,6 +652,7 @@ impl ChatEvents {
             message_index.into(),
             EventIndex::default(),
             Some(now),
+            ChatEventType::MessagePollEnded,
             |message, _| Self::end_poll_inner(message),
         ) {
             Ok(result) => Success(result),
@@ -670,9 +675,14 @@ impl ChatEvents {
     }
 
     pub fn final_payments(&mut self, message_index: MessageIndex, now_nanos: TimestampNanos) -> Vec<PendingCryptoTransaction> {
-        self.update_message(None, message_index.into(), EventIndex::default(), None, |message, _| {
-            Self::final_payments_inner(message, now_nanos)
-        })
+        self.update_message(
+            None,
+            message_index.into(),
+            EventIndex::default(),
+            None,
+            ChatEventType::MessagePrizePayment,
+            |message, _| Self::final_payments_inner(message, now_nanos),
+        )
         .ok()
         .map(|r| r.value)
         .unwrap_or_default()
@@ -696,9 +706,14 @@ impl ChatEvents {
         message_index: MessageIndex,
         adopt: bool,
     ) -> OCResult {
-        match self.update_message(None, message_index.into(), min_visible_event_index, None, |message, _| {
-            Self::record_proposal_vote_inner(message, user_id, adopt)
-        }) {
+        match self.update_message(
+            None,
+            message_index.into(),
+            min_visible_event_index,
+            None,
+            ChatEventType::MessageProposalVote,
+            |message, _| Self::record_proposal_vote_inner(message, user_id, adopt),
+        ) {
             Ok(_) => Ok(()),
             Err(UpdateEventError::NoChange(_)) => Err(OCErrorCode::NoChange.into()),
             Err(UpdateEventError::NotFound) => Err(OCErrorCode::PollNotFound.into()),
@@ -733,6 +748,7 @@ impl ChatEvents {
                 update.message_id.into(),
                 EventIndex::default(),
                 Some(now),
+                ChatEventType::MessageProposalUpdated,
                 |message, _| Self::update_proposal_inner(message, user_id, update, now),
             );
         }
@@ -753,10 +769,10 @@ impl ChatEvents {
         Err(UpdateEventError::NotFound)
     }
 
-    pub fn add_reaction<R: Runtime + Send + 'static>(
+    pub fn add_reaction<P: EventPusher>(
         &mut self,
         args: AddRemoveReactionArgs,
-        event_store_client: Option<&mut EventStoreClient<R>>,
+        event_pusher: Option<P>,
     ) -> OCResult<UpdateMessageSuccess> {
         if !args.reaction.is_valid() {
             return Err(OCErrorCode::InvalidReaction.with_message(format!("{:?}", args.reaction)));
@@ -772,7 +788,8 @@ impl ChatEvents {
             args.message_id.into(),
             args.min_visible_event_index,
             Some(now),
-            |message, _| Self::add_reaction_inner(message, args, chat, anonymized_id, event_store_client),
+            ChatEventType::MessageReaction,
+            |message, _| Self::add_reaction_inner(message, args, chat, anonymized_id, event_pusher),
         ) {
             Ok(result) => {
                 add_to_metrics(
@@ -789,12 +806,12 @@ impl ChatEvents {
         }
     }
 
-    fn add_reaction_inner<R: Runtime + Send + 'static>(
+    fn add_reaction_inner<P: EventPusher>(
         message: &mut MessageInternal,
         args: AddRemoveReactionArgs,
         chat: Chat,
         anonymized_id: String,
-        event_store_client: Option<&mut EventStoreClient<R>>,
+        mut event_pusher: Option<P>,
     ) -> Result<(), UpdateEventError> {
         let added = if let Some((_, users)) = message.reactions.iter_mut().find(|(r, _)| *r == args.reaction) {
             users.insert(args.user_id)
@@ -809,7 +826,7 @@ impl ChatEvents {
             return Err(UpdateEventError::NoChange(()));
         }
 
-        if let Some(client) = event_store_client {
+        if let Some(event_pusher) = event_pusher.as_mut() {
             let payload = ReactionAddedEventPayload {
                 message_type: message.content.content_type().to_string(),
                 chat_type: ChatType::from(&chat).to_string(),
@@ -817,13 +834,13 @@ impl ChatEvents {
                 thread: args.thread_root_message_index.is_some(),
             };
 
-            client.push(
+            event_pusher.push(
                 EventBuilder::new("reaction_added", args.now)
                     .with_user(args.user_id.to_string(), true)
                     .with_source(chat.canister_id().to_string(), true)
                     .with_json_payload(&payload)
                     .build(),
-            )
+            );
         }
 
         Ok(())
@@ -835,6 +852,7 @@ impl ChatEvents {
             args.message_id.into(),
             args.min_visible_event_index,
             Some(args.now),
+            ChatEventType::MessageReaction,
             |message, _| Self::remove_reaction_inner(message, &args),
         ) {
             Ok(result) => {
@@ -871,11 +889,11 @@ impl ChatEvents {
         Ok(())
     }
 
-    pub fn tip_message<R: Runtime + Send + 'static>(
+    pub fn tip_message<P: EventPusher>(
         &mut self,
         args: TipMessageArgs,
         min_visible_event_index: EventIndex,
-        event_store_client: Option<&mut EventStoreClient<R>>,
+        event_pusher: Option<P>,
     ) -> OCResult<UpdateMessageSuccess> {
         let chat = self.chat;
         let anonymized_id = self.anonymized_id.clone();
@@ -885,7 +903,8 @@ impl ChatEvents {
             args.message_id.into(),
             min_visible_event_index,
             Some(args.now),
-            |message, _| Self::tip_message_inner(message, &args, chat, anonymized_id, event_store_client),
+            ChatEventType::MessageTipped,
+            |message, _| Self::tip_message_inner(message, &args, chat, anonymized_id, event_pusher),
         ) {
             Ok(result) => {
                 add_to_metrics(
@@ -902,12 +921,12 @@ impl ChatEvents {
         }
     }
 
-    fn tip_message_inner<R: Runtime + Send + 'static>(
+    fn tip_message_inner<P: EventPusher>(
         message: &mut MessageInternal,
         args: &TipMessageArgs,
         chat: Chat,
         anonymized_id: String,
-        event_store_client: Option<&mut EventStoreClient<R>>,
+        mut event_pusher: Option<P>,
     ) -> Result<(), UpdateEventError<OCError>> {
         if message.sender == args.user_id {
             return Err(UpdateEventError::NoChange(OCErrorCode::CannotTipSelf.into()));
@@ -926,10 +945,10 @@ impl ChatEvents {
 
         message.tips.push(args.ledger, args.user_id, args.amount);
 
-        if let Some(client) = event_store_client {
+        if let Some(event_pusher) = event_pusher.as_mut() {
             let message_type = message.content.content_type().to_string();
 
-            client.push(
+            event_pusher.push(
                 EventBuilder::new("message_tipped", args.now)
                     .with_user(args.user_id.to_string(), true)
                     .with_source(chat.canister_id().to_string(), true)
@@ -955,9 +974,14 @@ impl ChatEvents {
         message_id: MessageId,
         now: TimestampMillis,
     ) -> OCResult<ReservePrizeSuccess> {
-        match self.update_message(None, message_id.into(), min_visible_event_index, Some(now), |message, _| {
-            Self::reserve_prize_inner(message, user_id, now)
-        }) {
+        match self.update_message(
+            None,
+            message_id.into(),
+            min_visible_event_index,
+            Some(now),
+            ChatEventType::MessagePrizeClaim,
+            |message, _| Self::reserve_prize_inner(message, user_id, now),
+        ) {
             Ok(result) => Ok(result.value),
             Err(UpdateEventError::NoChange(error)) => Err(error.into()),
             Err(UpdateEventError::NotFound) => Err(OCErrorCode::PrizeNotFound.into()),
@@ -1005,20 +1029,25 @@ impl ChatEvents {
         })
     }
 
-    pub fn claim_prize<R: Runtime + Send + 'static>(
+    pub fn claim_prize<P: EventPusher>(
         &mut self,
         message_id: MessageId,
         winner: UserId,
         transaction: CompletedCryptoTransaction,
-        rng: &mut StdRng,
-        event_store_client: &mut EventStoreClient<R>,
+        new_message_id: MessageId,
+        event_pusher: P,
         now: TimestampMillis,
     ) -> OCResult<UpdateMessageSuccess<MessageIndex>> {
         let amount = transaction.units();
 
-        match self.update_message(None, message_id.into(), EventIndex::default(), Some(now), |message, _| {
-            Self::claim_prize_inner(message, winner, amount)
-        }) {
+        match self.update_message(
+            None,
+            message_id.into(),
+            EventIndex::default(),
+            Some(now),
+            ChatEventType::MessagePrizeClaim,
+            |message, _| Self::claim_prize_inner(message, winner, amount),
+        ) {
             Ok(result) => {
                 let message_index = result.value;
                 // Push a PrizeWinnerContent message to the group from the OpenChatBot
@@ -1026,7 +1055,7 @@ impl ChatEvents {
                     PushMessageArgs {
                         sender: OPENCHAT_BOT_USER_ID,
                         thread_root_message_index: Some(message_index),
-                        message_id: rng.r#gen(),
+                        message_id: new_message_id,
                         content: MessageContentInternal::PrizeWinner(PrizeWinnerContentInternal {
                             winner,
                             ledger: transaction.ledger_canister_id(),
@@ -1045,7 +1074,7 @@ impl ChatEvents {
                         correlation_id: 0,
                         now,
                     },
-                    Some(event_store_client),
+                    Some(event_pusher),
                 );
                 Ok(result)
             }
@@ -1082,9 +1111,14 @@ impl ChatEvents {
         ledger_error: bool,
         now: TimestampMillis,
     ) -> OCResult {
-        match self.update_message(None, message_id.into(), EventIndex::default(), Some(now), |message, _| {
-            Self::unreserve_prize_inner(message, user_id, amount, ledger_error)
-        }) {
+        match self.update_message(
+            None,
+            message_id.into(),
+            EventIndex::default(),
+            Some(now),
+            ChatEventType::MessagePrizeClaim,
+            |message, _| Self::unreserve_prize_inner(message, user_id, amount, ledger_error),
+        ) {
             Ok(_) => Ok(()),
             Err(UpdateEventError::NoChange(_)) => Err(OCErrorCode::NoChange.into()),
             Err(UpdateEventError::NotFound) => Err(OCErrorCode::MessageNotFound.into()),
@@ -1132,9 +1166,14 @@ impl ChatEvents {
     }
 
     pub fn reduce_final_prize_by_transfer_fee(&mut self, message_id: MessageId) -> bool {
-        self.update_message(None, message_id.into(), EventIndex::default(), None, |message, _| {
-            Self::reduce_final_prize_by_transfer_fee_inner(message)
-        })
+        self.update_message(
+            None,
+            message_id.into(),
+            EventIndex::default(),
+            None,
+            ChatEventType::MessagePrizePayment,
+            |message, _| Self::reduce_final_prize_by_transfer_fee_inner(message),
+        )
         .is_ok()
     }
 
@@ -1175,6 +1214,7 @@ impl ChatEvents {
             message_id.into(),
             min_visible_event_index,
             Some(now),
+            ChatEventType::MessageP2pSwap,
             |message, event| Self::reserve_p2p_swap_inner(message, event.timestamp, user_id, now),
         ) {
             Ok(result) => Ok(result.value),
@@ -1217,6 +1257,7 @@ impl ChatEvents {
             message_id.into(),
             EventIndex::default(),
             Some(now),
+            ChatEventType::MessageP2pSwap,
             |message, _| Self::accept_p2p_swap_inner(message, user_id, token1_txn_in),
         ) {
             Ok(result) => Ok(result),
@@ -1244,8 +1285,8 @@ impl ChatEvents {
         }
     }
 
-    #[allow(clippy::too_many_arguments)]
-    pub fn complete_p2p_swap<R: Runtime + Send + 'static>(
+    #[expect(clippy::too_many_arguments)]
+    pub fn complete_p2p_swap<P: EventPusher>(
         &mut self,
         user_id: UserId,
         thread_root_message_index: Option<MessageIndex>,
@@ -1253,7 +1294,7 @@ impl ChatEvents {
         token0_txn_out: u64,
         token1_txn_out: u64,
         now: TimestampMillis,
-        event_store_client: &mut EventStoreClient<R>,
+        event_pusher: P,
     ) -> OCResult<UpdateMessageSuccess<P2PSwapCompleted>> {
         let chat = self.chat;
         let anonymized_id = self.anonymized_id.clone();
@@ -1263,6 +1304,7 @@ impl ChatEvents {
             message_id.into(),
             EventIndex::default(),
             Some(now),
+            ChatEventType::MessageP2pSwap,
             |message, _| {
                 Self::complete_p2p_swap_inner(
                     message,
@@ -1272,7 +1314,7 @@ impl ChatEvents {
                     now,
                     chat,
                     anonymized_id,
-                    event_store_client,
+                    event_pusher,
                 )
             },
         ) {
@@ -1282,8 +1324,8 @@ impl ChatEvents {
         }
     }
 
-    #[allow(clippy::too_many_arguments)]
-    fn complete_p2p_swap_inner<R: Runtime + Send + 'static>(
+    #[expect(clippy::too_many_arguments)]
+    fn complete_p2p_swap_inner<P: EventPusher>(
         message: &mut MessageInternal,
         user_id: UserId,
         token0_txn_out: u64,
@@ -1291,7 +1333,7 @@ impl ChatEvents {
         now: TimestampMillis,
         chat: Chat,
         anonymized_id: String,
-        event_store_client: &mut EventStoreClient<R>,
+        mut event_pusher: P,
     ) -> Result<P2PSwapCompleted, UpdateEventError<OCErrorCode>> {
         let MessageContentInternal::P2PSwap(content) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
@@ -1307,7 +1349,7 @@ impl ChatEvents {
                 chat_id: anonymized_id.clone(),
             };
 
-            event_store_client.push(
+            event_pusher.push(
                 EventBuilder::new("p2p_swap_completed", now)
                     .with_user(user_id.to_string(), true)
                     .with_source(chat.canister_id().to_string(), true)
@@ -1333,6 +1375,7 @@ impl ChatEvents {
             message_id.into(),
             EventIndex::default(),
             Some(now),
+            ChatEventType::MessageP2pSwap,
             |message, _| Self::unreserve_p2p_swap_inner(message, user_id),
         );
     }
@@ -1357,6 +1400,7 @@ impl ChatEvents {
             message_id.into(),
             EventIndex::default(),
             Some(now),
+            ChatEventType::MessageP2pSwap,
             |message, _| Self::cancel_p2p_swap_inner(message, user_id),
         ) {
             Ok(result) => Ok(result),
@@ -1390,6 +1434,7 @@ impl ChatEvents {
             message_id.into(),
             EventIndex::default(),
             Some(now),
+            ChatEventType::MessageP2pSwap,
             |message, _| Self::mark_p2p_swap_expired_inner(message),
         )
     }
@@ -1414,6 +1459,7 @@ impl ChatEvents {
             message_id.into(),
             EventIndex::default(),
             Some(now),
+            ChatEventType::MessageP2pSwap,
             |message, _| Self::set_p2p_swap_status_inner(message, status),
         )
     }
@@ -1427,8 +1473,8 @@ impl ChatEvents {
         }
     }
 
-    #[allow(clippy::too_many_arguments)]
-    pub fn report_message<R: Runtime + Send + 'static>(
+    #[expect(clippy::too_many_arguments)]
+    pub fn report_message<P: EventPusher>(
         &mut self,
         user_id: UserId,
         chat: MultiUserChat,
@@ -1436,7 +1482,7 @@ impl ChatEvents {
         event_index: EventIndex,
         reason_code: u32,
         notes: Option<String>,
-        event_store_client: &mut EventStoreClient<R>,
+        event_pusher: P,
         now: TimestampMillis,
     ) {
         // Generate a deterministic MessageId based on the `chat_id`, `thread_root_message_index`,
@@ -1473,20 +1519,27 @@ impl ChatEvents {
         let message_id: MessageId = u128::from_be_bytes(message_id_bytes).into();
 
         if self
-            .update_message(None, message_id.into(), EventIndex::default(), Some(now), |message, _| {
-                if let MessageContentInternal::ReportedMessage(r) = &mut message.content {
-                    r.reports.retain(|x| x.reported_by != user_id);
-                    r.reports.push(MessageReport {
-                        reported_by: user_id,
-                        timestamp: now,
-                        reason_code,
-                        notes: notes.clone(),
-                    });
-                    Ok(())
-                } else {
-                    Err(UpdateEventError::<()>::NotFound)
-                }
-            })
+            .update_message(
+                None,
+                message_id.into(),
+                EventIndex::default(),
+                Some(now),
+                ChatEventType::MessageReported,
+                |message, _| {
+                    if let MessageContentInternal::ReportedMessage(r) = &mut message.content {
+                        r.reports.retain(|x| x.reported_by != user_id);
+                        r.reports.push(MessageReport {
+                            reported_by: user_id,
+                            timestamp: now,
+                            reason_code,
+                            notes: notes.clone(),
+                        });
+                        Ok(())
+                    } else {
+                        Err(UpdateEventError::<()>::NotFound)
+                    }
+                },
+            )
             .is_err()
         {
             let chat: Chat = chat.into();
@@ -1516,7 +1569,7 @@ impl ChatEvents {
                     correlation_id: 0,
                     now,
                 },
-                Some(event_store_client),
+                Some(event_pusher),
             );
         }
     }
@@ -1524,17 +1577,24 @@ impl ChatEvents {
     // Used when a group is imported into a community
     pub fn migrate_reply(&mut self, message_index: MessageIndex, old: ChatInternal, new: ChatInternal, now: TimestampMillis) {
         if self
-            .update_message(None, message_index.into(), EventIndex::default(), Some(now), |message, _| {
-                if let Some(r) = message.replies_to.as_mut() {
-                    if let Some((chat, _)) = r.chat_if_other.as_mut() {
-                        if *chat == old {
-                            *chat = new;
-                            return Ok(());
+            .update_message(
+                None,
+                message_index.into(),
+                EventIndex::default(),
+                Some(now),
+                ChatEventType::MessageOther,
+                |message, _| {
+                    if let Some(r) = message.replies_to.as_mut() {
+                        if let Some((chat, _)) = r.chat_if_other.as_mut() {
+                            if *chat == old {
+                                *chat = new;
+                                return Ok(());
+                            }
                         }
                     }
-                }
-                Err(UpdateEventError::NoChange(()))
-            })
+                    Err(UpdateEventError::NoChange(()))
+                },
+            )
             .is_err()
         {
             error!("Failed to migrate reply. This should never happen")
@@ -1594,6 +1654,7 @@ impl ChatEvents {
             thread_root_message_index.into(),
             min_visible_event_index,
             Some(now),
+            ChatEventType::MessageThreadSummary,
             |message, _| Self::update_thread_summary_inner(message, create_if_not_exists, update_fn),
         )
     }
@@ -1663,12 +1724,14 @@ impl ChatEvents {
             None
         } else {
             Some(BotNotification {
-                event_type,
+                event: types::BotEvent::Chat(BotChatEvent {
+                    event_type,
+                    chat: self.chat,
+                    thread: thread_root_message_index,
+                    event_index,
+                    latest_event_index: event_index,
+                }),
                 recipients: bots_to_notify,
-                chat: self.chat,
-                thread: thread_root_message_index,
-                event_index,
-                latest_event_index: event_index,
             })
         };
 
@@ -1743,9 +1806,14 @@ impl ChatEvents {
     }
 
     pub fn mark_message_reminder_created_message_hidden(&mut self, message_index: MessageIndex, now: TimestampMillis) -> bool {
-        self.update_message(None, message_index.into(), EventIndex::default(), Some(now), |message, _| {
-            Self::mark_message_reminder_created_message_hidden_inner(message)
-        })
+        self.update_message(
+            None,
+            message_index.into(),
+            EventIndex::default(),
+            Some(now),
+            ChatEventType::MessageReminder,
+            |message, _| Self::mark_message_reminder_created_message_hidden_inner(message),
+        )
         .is_ok()
     }
 
@@ -1920,7 +1988,7 @@ impl ChatEvents {
         &self,
         min_visible_event_index: EventIndex,
         thread_root_message_index: Option<MessageIndex>,
-        bot_permitted_event_types: Option<HashSet<ChatEventType>>,
+        bot_permitted_event_types: Option<HashSet<ChatEventCategory>>,
     ) -> Option<ChatEventsListReader> {
         let events_list = self.events_list(min_visible_event_index, thread_root_message_index)?;
 
@@ -1952,18 +2020,23 @@ impl ChatEvents {
         &self.main
     }
 
-    pub fn end_video_call<R: Runtime + Send + 'static>(
+    pub fn end_video_call<P: EventPusher>(
         &mut self,
         event_key: EventKey,
         now: TimestampMillis,
-        event_store_client: Option<&mut EventStoreClient<R>>,
+        event_pusher: Option<P>,
     ) -> OCResult<UpdateMessageSuccess> {
         let chat = self.chat;
         let anonymized_id = self.anonymized_id.clone();
 
-        match self.update_message(None, event_key, EventIndex::default(), Some(now), |message, event| {
-            Self::end_video_call_inner(message, event.timestamp, now, chat, anonymized_id, event_store_client)
-        }) {
+        match self.update_message(
+            None,
+            event_key,
+            EventIndex::default(),
+            Some(now),
+            ChatEventType::MessageVideoCall,
+            |message, event| Self::end_video_call_inner(message, event.timestamp, now, chat, anonymized_id, event_pusher),
+        ) {
             Ok(result) => {
                 self.video_call_in_progress = Timestamped::new(None, now);
                 Ok(result)
@@ -1973,13 +2046,13 @@ impl ChatEvents {
         }
     }
 
-    fn end_video_call_inner<R: Runtime + Send + 'static>(
+    fn end_video_call_inner<P: EventPusher>(
         message: &mut MessageInternal,
         message_timestamp: TimestampMillis,
         now: TimestampMillis,
         chat: Chat,
         anonymized_id: String,
-        event_store_client: Option<&mut EventStoreClient<R>>,
+        mut event_pusher: Option<P>,
     ) -> Result<(), UpdateEventError> {
         let MessageContentInternal::VideoCall(video_call) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
@@ -1995,8 +2068,8 @@ impl ChatEvents {
                     participants += 1;
                 }
             }
-            if let Some(client) = event_store_client {
-                client.push(
+            if let Some(event_pusher) = event_pusher.as_mut() {
+                event_pusher.push(
                     EventBuilder::new("video_call_ended", now)
                         .with_source(chat.canister_id().to_string(), true)
                         .with_json_payload(&VideoCallEndedEventPayload {
@@ -2024,9 +2097,14 @@ impl ChatEvents {
         min_visible_event_index: EventIndex,
         now: TimestampMillis,
     ) -> OCResult<UpdateMessageSuccess> {
-        match self.update_message(None, message_id.into(), min_visible_event_index, Some(now), |message, _| {
-            Self::set_video_presence_inner(message, user_id, presence, now)
-        }) {
+        match self.update_message(
+            None,
+            message_id.into(),
+            min_visible_event_index,
+            Some(now),
+            ChatEventType::MessageVideoCall,
+            |message, _| Self::set_video_presence_inner(message, user_id, presence, now),
+        ) {
             Ok(result) => Ok(result),
             Err(UpdateEventError::NoChange(_)) => Err(OCErrorCode::VideoCallAlreadyEnded.into()),
             Err(UpdateEventError::NotFound) => Err(OCErrorCode::MessageNotFound.into()),
@@ -2157,28 +2235,19 @@ impl ChatEvents {
         }
     }
 
-    pub fn subscribe_bot_to_events(&mut self, bot_id: UserId, api_key: String, event_types: Vec<ChatEventType>) {
+    pub fn subscribe_bot_to_events(&mut self, bot_id: UserId, event_types: HashSet<ChatEventType>) {
         // Remove any existing subscriptions
-        self.unsubscribe_bot_from_events(bot_id, Some(api_key.as_str()));
+        self.unsubscribe_bot_from_events(bot_id);
 
         // Add the new subscriptions (if any)
         for event_type in event_types {
-            self.bot_subscriptions
-                .entry(event_type)
-                .or_default()
-                .insert(api_key.clone(), bot_id);
+            self.bot_subscriptions.entry(event_type).or_default().insert(bot_id);
         }
     }
 
-    pub fn unsubscribe_bot_from_events(&mut self, bot_id: UserId, api_key: Option<&str>) {
-        if let Some(api_key) = api_key {
-            for existing in self.bot_subscriptions.values_mut() {
-                existing.remove(api_key);
-            }
-        } else {
-            for subscriptions in self.bot_subscriptions.values_mut() {
-                subscriptions.retain(|_, b| *b != bot_id);
-            }
+    pub fn unsubscribe_bot_from_events(&mut self, bot_id: UserId) {
+        for subscriptions in self.bot_subscriptions.values_mut() {
+            subscriptions.remove(&bot_id);
         }
         self.bot_subscriptions.retain(|_, subscriptions| !subscriptions.is_empty());
     }
@@ -2297,6 +2366,7 @@ impl ChatEvents {
         event_key: EventKey,
         min_visible_event_index: EventIndex,
         now_if_should_mark_updated: Option<TimestampMillis>,
+        event_type: ChatEventType,
         update_message_fn: F,
     ) -> Result<UpdateMessageSuccess<T>, UpdateEventError<E>> {
         self.update_event(
@@ -2307,15 +2377,17 @@ impl ChatEvents {
             |event| Self::update_message_inner(event, update_message_fn),
         )
         .map(|r| {
-            let bots_to_notify = self.bots_to_notify(&ChatEventType::Message);
+            let bots_to_notify = self.bots_to_notify(&event_type);
             let bot_notification = if !bots_to_notify.is_empty() {
                 Some(BotNotification {
-                    event_type: ChatEventType::Message,
+                    event: types::BotEvent::Chat(BotChatEvent {
+                        event_type,
+                        chat: self.chat,
+                        thread: thread_root_message_index,
+                        event_index: r.event_index,
+                        latest_event_index: r.latest_event_index,
+                    }),
                     recipients: bots_to_notify,
-                    chat: self.chat,
-                    thread: thread_root_message_index,
-                    event_index: r.event_index,
-                    latest_event_index: r.latest_event_index,
                 })
             } else {
                 None
@@ -2355,7 +2427,7 @@ impl ChatEvents {
     fn bots_to_notify(&self, event_type: &ChatEventType) -> Vec<UserId> {
         self.bot_subscriptions
             .get(event_type)
-            .map(|s| s.values().copied().unique().collect())
+            .map(|s| s.iter().cloned().collect())
             .unwrap_or_default()
     }
 }

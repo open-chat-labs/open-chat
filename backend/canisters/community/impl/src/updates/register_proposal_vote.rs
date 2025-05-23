@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{RuntimeState, mutate_state, read_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, Reader};
@@ -10,8 +10,10 @@ use types::{CanisterId, ChannelId, OCResult, ProposalId, UserId};
 #[update(msgpack = true)]
 #[trace]
 async fn register_proposal_vote(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| register_proposal_vote_impl(args)).await
+}
 
+async fn register_proposal_vote_impl(args: Args) -> Response {
     let PrepareResult {
         user_id,
         is_nns,

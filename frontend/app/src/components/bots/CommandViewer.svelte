@@ -2,8 +2,8 @@
     import {
         type CommandDefinition,
         type CommandParam,
+        iconSize,
         ValidationErrors,
-        ui,
     } from "openchat-client";
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
@@ -143,10 +143,10 @@
             <div class="footer">
                 <div class="navigate">
                     <HoverIcon disabled={onPrevious === undefined} onclick={onPrevious}>
-                        <ChevronLeft size={ui.iconSize} color={"var(--icon-txt)"}></ChevronLeft>
+                        <ChevronLeft size={$iconSize} color={"var(--icon-txt)"}></ChevronLeft>
                     </HoverIcon>
                     <HoverIcon disabled={onNext === undefined} onclick={onNext}>
-                        <ChevronRight size={ui.iconSize} color={"var(--icon-txt)"}></ChevronRight>
+                        <ChevronRight size={$iconSize} color={"var(--icon-txt)"}></ChevronRight>
                     </HoverIcon>
                 </div>
             </div>

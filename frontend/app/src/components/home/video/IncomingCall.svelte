@@ -1,11 +1,13 @@
 <script lang="ts">
     import {
-        app,
+        allUsersStore,
         AvatarSize,
-        ui,
-        userStore,
+        communitiesStore,
+        iconSize,
+        selectedCommunitySummaryStore,
         type ChatIdentifier,
         type OpenChat,
+        type VideoCallType,
     } from "openchat-client";
     import { getContext } from "svelte";
     import Phone from "svelte-material-icons/Phone.svelte";
@@ -26,7 +28,7 @@
     import Translatable from "../../Translatable.svelte";
 
     interface Props {
-        onJoinVideoCall: (chatId: ChatIdentifier) => void;
+        onJoinVideoCall: (chatId: ChatIdentifier, callType: VideoCallType) => void;
     }
 
     let { onJoinVideoCall }: Props = $props();
@@ -40,11 +42,11 @@
     function normaliseChatSummary(call: IncomingVideoCall | undefined) {
         if (call) {
             const chat = client.lookupChatSummary(call.chatId);
-            const initiator = userStore.get(call.userId);
+            const initiator = $allUsersStore.get(call.userId);
             if (chat && initiator) {
                 switch (chat.kind) {
                     case "direct_chat":
-                        const them = userStore.get(chat.them.userId);
+                        const them = $allUsersStore.get(chat.them.userId);
                         return {
                             chatId: chat.id,
                             name: client.displayName(them),
@@ -62,12 +64,12 @@
                         return {
                             chatId: chat.id,
                             name: `${
-                                app.communities.get({
+                                $communitiesStore.get({
                                     kind: "community",
                                     communityId: chat.id.communityId,
                                 })?.name
                             } > ${chat.name}`,
-                            avatarUrl: client.groupAvatarUrl(chat, app.selectedCommunitySummary),
+                            avatarUrl: client.groupAvatarUrl(chat, $selectedCommunitySummaryStore),
                             initiator: initiator.username,
                         };
                 }
@@ -77,7 +79,7 @@
 
     function join() {
         if ($incomingVideoCall !== undefined) {
-            onJoinVideoCall($incomingVideoCall.chatId);
+            onJoinVideoCall($incomingVideoCall.chatId, $incomingVideoCall.callType);
         }
     }
 
@@ -115,7 +117,7 @@
                     <div class="btns">
                         <Tooltip position={"top"} align={"middle"}>
                             <div role="button" onclick={cancel} class="btn ignore">
-                                <PhoneHangup size={ui.iconSize} color={"var(--txt)"} />
+                                <PhoneHangup size={$iconSize} color={"var(--txt)"} />
                             </div>
                             {#snippet popupTemplate()}
                                 <Translatable resourceKey={i18nKey("videoCall.ignore")} />
@@ -123,7 +125,7 @@
                         </Tooltip>
                         <Tooltip position={"top"} align={"middle"}>
                             <div role="button" onclick={join} class="btn join">
-                                <Phone size={ui.iconSize} color={"var(--txt)"} />
+                                <Phone size={$iconSize} color={"var(--txt)"} />
                             </div>
                             {#snippet popupTemplate()}
                                 <Translatable resourceKey={i18nKey("videoCall.join")} />

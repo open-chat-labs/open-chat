@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import { ui } from "openchat-client";
+import { eventListLastScrolled } from "openchat-client";
+import { get } from "svelte/store";
 import { isTouchDevice, mobileOperatingSystem } from "../utils/devices";
 
 const SCROLL_PROXIMITY = 750;
@@ -35,7 +36,7 @@ export function longpress(node: HTMLElement, onlongpress: (e: TouchEvent) => voi
         startY = t.screenY;
         clearLongPressTimer();
         longPressTimer = window.setTimeout(() => {
-            const lastScroll = ui.eventListLastScrolled;
+            const lastScroll = get(eventListLastScrolled);
             const diff = Date.now() - lastScroll;
             if (mobileOperatingSystem === "iOS" || diff > SCROLL_PROXIMITY) {
                 suppressNextClick();

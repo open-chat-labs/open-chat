@@ -1,3 +1,5 @@
+import type { EventWrapper, Message } from "openchat-shared";
+
 // Taken from here - https://stackoverflow.com/a/6041965
 const URL_REGEX = new RegExp(
     `(https?):\\/\\/([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:\\/~+#-]*[\\w@?^=%&\\/~+#-])`,
@@ -31,4 +33,10 @@ export function removeQueryStringParam(name: string): string {
     const qs = new URLSearchParams(window.location.search);
     qs.delete(name);
     return [...qs.keys()].length > 0 ? `${path}?${qs}` : path;
+}
+
+export function revokeObjectUrls(message: EventWrapper<Message>): void {
+    if ("blobUrl" in message.event.content && message.event.content.blobUrl !== undefined) {
+        URL.revokeObjectURL(message.event.content.blobUrl);
+    }
 }

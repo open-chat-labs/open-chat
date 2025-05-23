@@ -15,13 +15,13 @@ async fn c2c_create_community(args: Args) -> Response {
     };
 
     let PrepareResult {
-        local_group_index_canister,
+        local_user_index_canister,
     } = match mutate_state(|state| prepare(&args.name, args.is_public, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
 
-    let c2c_create_community_args = local_group_index_canister::c2c_create_community::Args {
+    let c2c_create_community_args = local_user_index_canister::c2c_create_community::Args {
         created_by_user_id: user_id,
         created_by_user_principal: principal,
         is_public: args.is_public,
@@ -39,7 +39,7 @@ async fn c2c_create_community(args: Args) -> Response {
         primary_language: args.primary_language.clone(),
     };
 
-    match create_community_impl(c2c_create_community_args, local_group_index_canister).await {
+    match create_community_impl(c2c_create_community_args, local_user_index_canister).await {
         Ok(result) => Success(SuccessResult {
             community_id: result.community_id,
             local_user_index_canister_id: result.local_user_index_canister_id,
@@ -49,21 +49,21 @@ async fn c2c_create_community(args: Args) -> Response {
 }
 
 pub(crate) async fn create_community_impl(
-    args: local_group_index_canister::c2c_create_community::Args,
-    local_group_index_canister: CanisterId,
-) -> Result<local_group_index_canister::c2c_create_community::SuccessResult, String> {
-    match local_group_index_canister_c2c_client::c2c_create_community(local_group_index_canister, &args).await {
-        Ok(local_group_index_canister::c2c_create_community::Response::Success(result)) => {
-            mutate_state(|state| commit(args, result.community_id, local_group_index_canister, state));
+    args: local_user_index_canister::c2c_create_community::Args,
+    local_user_index_canister: CanisterId,
+) -> Result<local_user_index_canister::c2c_create_community::SuccessResult, String> {
+    match local_user_index_canister_c2c_client::c2c_create_community(local_user_index_canister, &args).await {
+        Ok(local_user_index_canister::c2c_create_community::Response::Success(result)) => {
+            mutate_state(|state| commit(args, result.community_id, local_user_index_canister, state));
             Ok(result)
         }
-        Ok(local_group_index_canister::c2c_create_community::Response::InternalError(error)) => {
+        Ok(local_user_index_canister::c2c_create_community::Response::InternalError(error)) => {
             if args.is_public {
                 mutate_state(|state| state.data.public_group_and_community_names.unreserve_name(&args.name));
             }
             Err(error)
         }
-        Ok(local_group_index_canister::c2c_create_community::Response::Error(error)) => {
+        Ok(local_user_index_canister::c2c_create_community::Response::Error(error)) => {
             if args.is_public {
                 mutate_state(|state| state.data.public_group_and_community_names.unreserve_name(&args.name));
             }
@@ -98,7 +98,7 @@ async fn validate_caller() -> Result<(UserId, Principal), Response> {
 }
 
 struct PrepareResult {
-    pub local_group_index_canister: CanisterId,
+    pub local_user_index_canister: CanisterId,
 }
 
 fn prepare(name: &str, is_public: bool, state: &mut RuntimeState) -> Result<PrepareResult, Response> {
@@ -108,20 +108,19 @@ fn prepare(name: &str, is_public: bool, state: &mut RuntimeState) -> Result<Prep
         return Err(NameTaken);
     }
 
-    if let Some(local_group_index_canister) = state.data.local_index_map.index_for_new_community() {
+    if let Some(local_user_index_canister) = state.data.local_index_map.index_for_new_community() {
         Ok(PrepareResult {
-            local_group_index_canister,
+            local_user_index_canister,
         })
     } else {
         Err(InternalError("No available LocalGroupIndex found".to_string()))
     }
 }
 
-#[allow(clippy::too_many_arguments)]
 fn commit(
-    args: local_group_index_canister::c2c_create_community::Args,
+    args: local_user_index_canister::c2c_create_community::Args,
     community_id: CommunityId,
-    local_group_index_canister: CanisterId,
+    local_user_index_canister: CanisterId,
     state: &mut RuntimeState,
 ) {
     let now = state.env.now();
@@ -150,5 +149,5 @@ fn commit(
     state
         .data
         .local_index_map
-        .add_community(local_group_index_canister, community_id);
+        .add_community(local_user_index_canister, community_id);
 }

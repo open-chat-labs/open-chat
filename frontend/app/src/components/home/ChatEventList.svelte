@@ -1,9 +1,9 @@
 <script lang="ts" module>
     export type ChatEventListArgs = {
-        isAccepted: (evt: EventWrapper<ChatEventType>) => boolean;
-        isConfirmed: (evt: EventWrapper<ChatEventType>) => boolean;
-        isFailed: (evt: EventWrapper<ChatEventType>) => boolean;
-        isReadByMe: (evt: EventWrapper<ChatEventType>) => boolean;
+        isAccepted: (_unconf: unknown, evt: EventWrapper<ChatEventType>) => boolean;
+        isConfirmed: (_unconf: unknown, evt: EventWrapper<ChatEventType>) => boolean;
+        isFailed: (_failed: unknown, evt: EventWrapper<ChatEventType>) => boolean;
+        isReadByMe: (_store: unknown, evt: EventWrapper<ChatEventType>) => boolean;
         messageObserver: IntersectionObserver | undefined;
         labelObserver: IntersectionObserver | undefined;
         focusIndex: number | undefined;
@@ -13,12 +13,15 @@
 <script lang="ts">
     import {
         MessageContextMap,
-        app,
+        currentUserIdStore,
+        eventListLastScrolled,
+        eventListScrollTop,
+        eventListScrolling,
+        iconSize,
         localUpdates,
         messageContextsEqual,
-        pathState,
+        routeStore,
         subscribe,
-        ui,
         withEqCheck,
         type ChatEvent as ChatEventType,
         type ChatSummary,
@@ -194,12 +197,12 @@
     $effect(() => {
         if (visible && maintainScroll) {
             untrack(() => {
-                if (ui.eventListScrollTop !== undefined && maintainScroll) {
+                if ($eventListScrollTop !== undefined && maintainScroll) {
                     interruptScroll((el) => {
-                        if (ui.eventListScrollTop !== undefined) {
+                        if ($eventListScrollTop !== undefined) {
                             initialised = true;
                             destroyed = false;
-                            el.scrollTop = ui.eventListScrollTop;
+                            el.scrollTop = $eventListScrollTop;
                         }
                     });
                 }
@@ -425,7 +428,7 @@
     async function afterSendMessage(context: MessageContext, event: EventWrapper<Message>) {
         if (context.threadRootMessageIndex !== undefined && threadRootEvent !== undefined) {
             const summary = {
-                participantIds: new Set<string>([app.currentUserId]),
+                participantIds: new Set<string>([$currentUserIdStore]),
                 numberOfReplies: event.event.messageIndex + 1,
                 latestEventIndex: event.index,
                 latestEventTimestamp: event.timestamp,
@@ -536,29 +539,29 @@
         return document.querySelector(`.${rootSelector} [data-index~='${index}']`);
     }
 
-    function isAccepted(evt: EventWrapper<ChatEventType>): boolean {
+    function isAccepted(_: unknown, evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message" && messageContext) {
             return !localUpdates.isPendingAcceptance(messageContext, evt.event.messageId);
         }
         return true;
     }
 
-    function isConfirmed(evt: EventWrapper<ChatEventType>): boolean {
+    function isConfirmed(_: unknown, evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message" && messageContext) {
             return !localUpdates.isUnconfirmed(messageContext, evt.event.messageId);
         }
         return true;
     }
 
-    function isFailed(evt: EventWrapper<ChatEventType>): boolean {
+    function isFailed(_: unknown, evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message" && messageContext) {
             return localUpdates.isFailed(messageContext, evt.event.messageId);
         }
         return false;
     }
 
-    function isReadByMe(evt: EventWrapper<ChatEventType>): boolean {
-        if (readonly || (evt.event.kind === "message" && evt.event.sender === app.currentUserId))
+    function isReadByMe(_: unknown, evt: EventWrapper<ChatEventType>): boolean {
+        if (readonly || (evt.event.kind === "message" && evt.event.sender === $currentUserIdStore))
             return true;
 
         if (evt.event.kind === "message" || evt.event.kind === "aggregate_common_events") {
@@ -577,11 +580,11 @@
         if (msgEvent && threadRootEvent === undefined) {
             if (
                 msgEvent.event.thread !== undefined &&
-                (pathState.route.kind === "global_chat_selected_route" ||
-                    pathState.route.kind === "selected_channel_route") &&
-                (pathState.route.open || pathState.route.threadMessageIndex !== undefined)
+                ($routeStore.kind === "global_chat_selected_route" ||
+                    $routeStore.kind === "selected_channel_route") &&
+                ($routeStore.open || $routeStore.threadMessageIndex !== undefined)
             ) {
-                client.openThread(chat.id, msgEvent, false, pathState.route.threadMessageIndex);
+                client.openThread(chat.id, msgEvent, false, $routeStore.threadMessageIndex);
             }
         }
     }
@@ -717,12 +720,12 @@
     function onUserScroll() {
         trackScrollStop(SCROLL_THRESHOLD);
         if (maintainScroll) {
-            ui.eventListScrollTop = messagesDiv?.scrollTop;
+            eventListScrollTop.set(messagesDiv?.scrollTop);
         }
         updateShowGoToBottom();
         updateShowGoToTop();
         portalState.close();
-        ui.eventListLastScrolled = Date.now();
+        eventListLastScrolled.set(Date.now());
 
         if (!initialised || interrupt || loadingFromUserScroll || !visible) return;
 
@@ -753,10 +756,10 @@
 
     let scrollTimeout: number | undefined = undefined;
     function trackScrollStop(delay: number) {
-        ui.eventListScrolling = true;
+        eventListScrolling.set(true);
         clearTimeout(scrollTimeout);
         scrollTimeout = window.setTimeout(() => {
-            ui.eventListScrolling = false;
+            eventListScrolling.set(false);
         }, delay);
     }
 </script>
@@ -789,7 +792,7 @@
         class="fab to-top"
         class:rtl={$rtlStore}>
         <Fab on:click={scrollToTop}>
-            <ArrowUp size={ui.iconSize} color={"#fff"} />
+            <ArrowUp size={$iconSize} color={"#fff"} />
         </Fab>
     </div>
 {/if}
@@ -821,7 +824,7 @@
                 <div class="unread-count">{unreadMessages > 999 ? "999+" : unreadMessages}</div>
             </div>
         {:else}
-            <ArrowDown size={ui.iconSize} color={"#fff"} />
+            <ArrowDown size={$iconSize} color={"#fff"} />
         {/if}
     </Fab>
 </div>

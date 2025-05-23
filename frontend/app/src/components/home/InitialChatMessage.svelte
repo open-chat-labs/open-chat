@@ -1,15 +1,17 @@
 <script lang="ts">
     import {
-        app,
+        allUsersStore,
         AvatarSize,
         botState,
         type ChatSummary,
         type CommandDefinition,
+        directChatBotsStore,
         emptyExternalBotPermissions,
         type ExternalBotPermissions,
+        isProposalGroupStore,
         type OpenChat,
         type ResourceKey,
-        userStore,
+        selectedCommunitySummaryStore,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -46,15 +48,15 @@
     let state = $derived.by<State>(() => {
         switch (chat.kind) {
             case "direct_chat":
-                const them = userStore.get(chat.them.userId);
+                const them = $allUsersStore.get(chat.them.userId);
                 const s: State = {
                     title: i18nKey(client.displayName(them)),
                     verified: false,
-                    avatarUrl: client.userAvatarUrl(userStore.get(chat.them.userId)),
+                    avatarUrl: client.userAvatarUrl($allUsersStore.get(chat.them.userId)),
                 };
                 const bot = botState.externalBots.get(chat.them.userId);
                 const perm =
-                    app.directChatBots.get(chat.them.userId) ?? emptyExternalBotPermissions();
+                    $directChatBotsStore.get(chat.them.userId) ?? emptyExternalBotPermissions();
                 return bot === undefined
                     ? s
                     : {
@@ -70,7 +72,7 @@
                     title: i18nKey("group.welcome", { groupName: chat.name }),
                     verified: chat.kind === "group_chat" ? chat.verified : false,
                     description: chat.description,
-                    avatarUrl: client.groupAvatarUrl(chat, app.selectedCommunitySummary),
+                    avatarUrl: client.groupAvatarUrl(chat, $selectedCommunitySummaryStore),
                     subtitle: i18nKey(
                         chat.public ? "thisIsPublicGroupWithN" : "thisIsPrivateGroupWithN",
                         { number: chat.memberCount },
@@ -84,7 +86,7 @@
 </script>
 
 <div class="container">
-    {#if app.isProposalGroup}
+    {#if $isProposalGroupStore}
         <ProposalBot />
     {:else if chat.kind === "direct_chat" && client.isOpenChatBot(chat.them.userId)}
         <Robot />

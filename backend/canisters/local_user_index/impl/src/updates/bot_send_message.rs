@@ -1,6 +1,11 @@
-use crate::{RuntimeState, bots::extract_access_context, mutate_state};
+use crate::{
+    RuntimeState,
+    bots::{BotAccessContext, extract_access_context, extract_access_context_from_chat_context},
+    mutate_state,
+};
 use canister_api_macros::update;
 use local_user_index_canister::bot_send_message::*;
+use local_user_index_canister::bot_send_message_v2::Args as ArgsV2;
 use oc_error_codes::{OCError, OCErrorCode};
 use rand::Rng;
 use types::{
@@ -9,7 +14,62 @@ use types::{
 
 #[update(candid = true, json = true, msgpack = true)]
 async fn bot_send_message(args: Args) -> Response {
-    let context = match mutate_state(|state| extract_message_access_context(&args, state)) {
+    let context = match mutate_state(|state| extract_access_context(&args.auth_token, state)) {
+        Ok(context) => context,
+        Err(_) => return Response::Error(OCErrorCode::BotNotAuthenticated.into()),
+    };
+
+    bot_send_message_impl(
+        context,
+        args.channel_id,
+        None,
+        args.message_id,
+        args.content,
+        args.block_level_markdown,
+        args.finalised,
+    )
+    .await
+}
+
+#[update(candid = true, json = true, msgpack = true)]
+async fn bot_send_message_v2(args: ArgsV2) -> Response {
+    let context = match mutate_state(|state| extract_access_context_from_chat_context(args.chat_context, state)) {
+        Ok(context) => context,
+        Err(_) => return Response::Error(OCErrorCode::BotNotAuthenticated.into()),
+    };
+
+    bot_send_message_impl(
+        context,
+        None,
+        args.thread,
+        args.message_id,
+        args.content,
+        args.block_level_markdown,
+        args.finalised,
+    )
+    .await
+}
+
+struct MessageAccessContext {
+    bot_id: UserId,
+    bot_name: String,
+    initiator: BotInitiator,
+    chat: Chat,
+    thread: Option<MessageIndex>,
+    message_id: MessageId,
+    user_message_id: Option<MessageId>,
+}
+
+async fn bot_send_message_impl(
+    context: BotAccessContext,
+    channel_id: Option<ChannelId>,
+    thread: Option<MessageIndex>,
+    message_id: Option<MessageId>,
+    content: BotMessageContent,
+    block_level_markdown: bool,
+    finalised: bool,
+) -> Response {
+    let context = match mutate_state(|state| extract_message_access_context(context, channel_id, thread, message_id, state)) {
         Ok(context) => context,
         Err(error) => return Response::Error(error),
     };
@@ -24,9 +84,9 @@ async fn bot_send_message(args: Args) -> Response {
                 context.thread,
                 context.message_id,
                 context.user_message_id,
-                args.content,
-                args.block_level_markdown,
-                args.finalised,
+                content,
+                block_level_markdown,
+                finalised,
             )
             .await
         }
@@ -38,9 +98,9 @@ async fn bot_send_message(args: Args) -> Response {
                 chat_id,
                 context.thread,
                 context.message_id,
-                args.content,
-                args.block_level_markdown,
-                args.finalised,
+                content,
+                block_level_markdown,
+                finalised,
             )
             .await
         }
@@ -53,47 +113,41 @@ async fn bot_send_message(args: Args) -> Response {
                 channel_id,
                 context.thread,
                 context.message_id,
-                args.content,
-                args.block_level_markdown,
-                args.finalised,
+                content,
+                block_level_markdown,
+                finalised,
             )
             .await
         }
     }
 }
 
-struct MessageAccessContext {
-    bot_id: UserId,
-    bot_name: String,
-    initiator: BotInitiator,
-    chat: Chat,
+fn extract_message_access_context(
+    context: BotAccessContext,
+    channel_id: Option<ChannelId>,
     thread: Option<MessageIndex>,
-    message_id: MessageId,
-    user_message_id: Option<MessageId>,
-}
-
-fn extract_message_access_context(args: &Args, state: &mut RuntimeState) -> Result<MessageAccessContext, OCError> {
-    let context = extract_access_context(&args.auth_token, state).map_err(|_| OCErrorCode::BotNotAuthenticated)?;
-
+    message_id: Option<MessageId>,
+    state: &mut RuntimeState,
+) -> Result<MessageAccessContext, OCError> {
     let (chat, thread, message_id, user_message_id) = match context.scope {
         BotActionScope::Chat(details) => {
-            if let Some(message_id) = args.message_id {
+            if let Some(message_id) = message_id {
                 if matches!(context.initiator, BotInitiator::Command(_)) && message_id != details.message_id {
                     return Err(
                         OCErrorCode::InvalidRequest.with_message("Message id is already specified in the command access token")
                     );
                 }
             }
-            let message_id = args.message_id.unwrap_or(details.message_id);
-            (details.chat, details.thread, message_id, details.user_message_id)
+            let message_id = message_id.unwrap_or(details.message_id);
+            (details.chat, details.thread.or(thread), message_id, details.user_message_id)
         }
         BotActionScope::Community(details) => {
-            let Some(channel_id) = args.channel_id else {
+            let Some(channel_id) = channel_id else {
                 return Err(OCErrorCode::InvalidRequest.with_message("Channel ID does not match access token"));
             };
             let chat = Chat::Channel(details.community_id, channel_id);
-            let message_id = args.message_id.unwrap_or_else(|| state.env.rng().r#gen::<u64>().into());
-            (chat, None, message_id, None)
+            let message_id = message_id.unwrap_or_else(|| state.env.rng().r#gen::<u64>().into());
+            (chat, thread, message_id, None)
         }
     };
 
@@ -108,7 +162,7 @@ fn extract_message_access_context(args: &Args, state: &mut RuntimeState) -> Resu
     })
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 async fn send_message_to_channel(
     bot_id: UserId,
     bot_name: String,
@@ -153,7 +207,7 @@ async fn send_message_to_channel(
     }
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 async fn send_message_to_group(
     bot_id: UserId,
     bot_name: String,
@@ -196,7 +250,7 @@ async fn send_message_to_group(
     }
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 async fn send_message_to_user(
     bot_id: UserId,
     bot_name: String,

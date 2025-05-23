@@ -8,6 +8,7 @@ use types::{BotPermissions, UnitResult, UserId};
 pub struct Args {
     pub bot_id: UserId,
     pub granted_permissions: BotPermissions,
+    pub granted_autonomous_permissions: Option<BotPermissions>,
 }
 
 pub type Response = UnitResult;

@@ -13,7 +13,7 @@ pub struct Args {
     pub updates_since: TimestampMillis,
 }
 
-#[allow(clippy::large_enum_variant)]
+#[expect(clippy::large_enum_variant)]
 #[ts_export(user, updates)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {

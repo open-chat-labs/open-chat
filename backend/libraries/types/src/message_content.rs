@@ -1,4 +1,3 @@
-#![allow(deprecated)]
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
     Achievement, CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, MessageIndex,

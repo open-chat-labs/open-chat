@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { app, ui } from "openchat-client";
+    import { iconSize, platformOperatorStore } from "openchat-client";
     import page from "page";
     import CogOutline from "svelte-material-icons/CogOutline.svelte";
     import Button from "../../Button.svelte";
@@ -14,7 +14,7 @@
     }
 </script>
 
-{#if !app.platformOperator}
+{#if !$platformOperatorStore}
     <div class="unauthorised">
         <img class="img" src={"/assets/evil-robot.svg"} alt="Unauthorised" />
         <h2>Unauthorised</h2>
@@ -26,7 +26,7 @@
         <SectionHeader slim border={false}>
             <div class="header">
                 <div class="icon">
-                    <CogOutline size={ui.iconSize} color={"var(--icon-txt)"} />
+                    <CogOutline size={$iconSize} color={"var(--icon-txt)"} />
                 </div>
                 <div class="details">
                     <h4 class="name">Admin</h4>

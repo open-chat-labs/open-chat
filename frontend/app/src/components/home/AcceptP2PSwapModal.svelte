@@ -1,9 +1,9 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
     import {
-        cryptoBalance as cryptoBalanceStore,
+        cryptoBalanceStore,
         enhancedCryptoLookup as cryptoLookup,
-        ui,
+        mobileWidth,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -37,9 +37,9 @@
         balanceWithRefresh.refresh();
     }
 
-    let cryptoBalance = $derived($cryptoBalanceStore[ledger1] ?? BigInt(0));
-    let tokenDetails0 = $derived($cryptoLookup[ledger0]);
-    let tokenDetails1 = $derived($cryptoLookup[ledger1]);
+    let cryptoBalance = $derived($cryptoBalanceStore.get(ledger1) ?? 0n);
+    let tokenDetails0 = $derived($cryptoLookup.get(ledger0)!);
+    let tokenDetails1 = $derived($cryptoLookup.get(ledger1)!);
     let symbol0 = $derived(tokenDetails0.symbol);
     let symbol1 = $derived(tokenDetails1.symbol);
     let transferFees = $derived(BigInt(2) * tokenDetails1.transferFee);
@@ -95,24 +95,21 @@
         {#snippet footer()}
             <span>
                 <ButtonGroup>
-                    <Button
-                        small={!ui.mobileWidth}
-                        tiny={ui.mobileWidth}
-                        secondary
-                        onClick={onClose}><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary onClick={onClose}
+                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     {#if insufficient}
                         <Button
-                            small={!ui.mobileWidth}
+                            small={!$mobileWidth}
                             disabled={refreshing}
                             loading={refreshing}
-                            tiny={ui.mobileWidth}
+                            tiny={$mobileWidth}
                             onClick={reset}
                             ><Translatable resourceKey={i18nKey("refresh")} /></Button>
                     {:else}
                         <Button
-                            small={!ui.mobileWidth}
+                            small={!$mobileWidth}
                             disabled={!valid}
-                            tiny={ui.mobileWidth}
+                            tiny={$mobileWidth}
                             onClick={onAccept}
                             ><Translatable resourceKey={i18nKey("yes")} /></Button>
                     {/if}

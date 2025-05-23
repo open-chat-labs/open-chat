@@ -1,10 +1,12 @@
 <script lang="ts">
     import BotPublisher from "@src/components/bots/BotPublisher.svelte";
     import {
-        app,
-        cryptoBalance as cryptoBalanceStore,
+        cryptoBalanceStore,
+        currentUserIdStore,
+        currentUserStore,
+        iconSize,
+        mobileWidth,
         routeForChatIdentifier,
-        ui,
         type CandidateProposalAction,
         type MultiUserChat,
         type NervousSystemDetails,
@@ -150,7 +152,7 @@
         busy = true;
 
         if (
-            !(await approvePayment(PROPOSALS_BOT_CANISTER, proposalCost + transferFee))
+            !(await approvePayment(PROPOSALS_BOT_CANISTER, proposalCost + BigInt(2) * transferFee))
         ) {
             busy = false;
             return;
@@ -217,7 +219,7 @@
                     functionId: BigInt(7000),
                     payload: createAddTokenPayload(
                         addOrUpdateTokenLedgerCanisterId,
-                        app.currentUserId,
+                        $currentUserIdStore,
                         addOrUpdateTokenInfoUrl,
                         addOrUpdateTokenTransactionUrlFormat,
                     ),
@@ -242,7 +244,7 @@
                     functionId: BigInt(1012),
                     payload: createRegisterExternalAchievementPayload(
                         random32(),
-                        app.currentUserId,
+                        $currentUserIdStore,
                         achivementName,
                         achievementUrl,
                         logo,
@@ -321,7 +323,7 @@
 
         return `${summary}
 
-> Submitted by [@${app.currentUser.username}](https://oc.app/user/${app.currentUserId}) on [OpenChat](https://oc.app${groupPath})`;
+> Submitted by [@${$currentUserStore.username}](https://oc.app/user/${$currentUserIdStore}) on [OpenChat](https://oc.app${groupPath})`;
     }
 
     function isLogoValid(logo: string): boolean {
@@ -332,7 +334,7 @@
     );
     let tokenDetails = $derived(nervousSystem.token);
     let ledger = $derived(tokenDetails.ledger);
-    let cryptoBalance = $derived($cryptoBalanceStore[ledger] ?? BigInt(0));
+    let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? BigInt(0));
     let symbol = $derived(tokenDetails.symbol);
     let transferFee = $derived(tokenDetails.transferFee);
     let proposalCost = $derived(nervousSystem.proposalRejectionFee);
@@ -543,9 +545,9 @@
                                         )} /></span>
                                 <span class="icon">
                                     {#if summaryPreview}
-                                        <PencilIcon size={ui.iconSize} viewBox="0 -3 24 24" />
+                                        <PencilIcon size={$iconSize} viewBox="0 -3 24 24" />
                                     {:else}
-                                        <EyeIcon size={ui.iconSize} viewBox="0 -3 24 24" />
+                                        <EyeIcon size={$iconSize} viewBox="0 -3 24 24" />
                                     {/if}
                                 </span>
                             </div>
@@ -771,8 +773,8 @@
                     {#if step > 1 || (step == 1 && insufficientFunds)}
                         <Button
                             disabled={busy}
-                            small={!ui.mobileWidth}
-                            tiny={ui.mobileWidth}
+                            small={!$mobileWidth}
+                            tiny={$mobileWidth}
                             onClick={() => (step = step - 1)}
                             ><Translatable resourceKey={i18nKey("group.back")} /></Button>
                     {/if}
@@ -780,8 +782,8 @@
                 <div class="actions">
                     <Button
                         disabled={busy}
-                        small={!ui.mobileWidth}
-                        tiny={ui.mobileWidth}
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}
                         onClick={onClose}
                         secondary>{$_("cancel")}</Button>
 
@@ -790,8 +792,8 @@
                             (canSubmit && !valid) ||
                             selectedProposalType === undefined}
                         loading={busy || refreshingBalance}
-                        small={!ui.mobileWidth}
-                        tiny={ui.mobileWidth}
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}
                         onClick={onClickPrimary}
                         ><Translatable
                             resourceKey={i18nKey(

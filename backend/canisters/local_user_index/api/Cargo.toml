@@ -7,17 +7,16 @@ edition.workspace = true
 
 [dependencies]
 candid = { workspace = true }
-candid_gen = { path = "../../../libraries/candid_gen" }
 community_canister = { path = "../../community/api" }
-constants = { path = "../../../libraries/constants" }
 event_store_canister = { workspace = true }
+event_store_types = { workspace = true }
 group_canister = { path = "../../group/api" }
 ic-ledger-types = { workspace = true }
 oc_error_codes = { path = "../../../libraries/error_codes" }
+notifications_index_canister = { path = "../../notifications_index/api" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 ts_export = { path = "../../../libraries/ts_export" }
 ts-rs = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_canister = { path = "../../user/api" }
-utils = { path = "../../../libraries/utils" }

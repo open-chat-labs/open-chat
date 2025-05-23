@@ -1,5 +1,11 @@
 <script lang="ts">
-    import { allQuestions, pathState, ui, type Questions } from "openchat-client";
+    import {
+        allQuestions,
+        locationStore,
+        mobileWidth,
+        querystringStore,
+        type Questions,
+    } from "openchat-client";
     import { _ } from "svelte-i18n";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -12,17 +18,17 @@
     let question: Questions | undefined = $state(undefined);
 
     $effect(() => {
-        const q = pathState.querystring.get("q");
+        const q = $querystringStore.get("q");
         if (q) {
             question = q as Questions;
         }
     });
 
-    let copySize = $derived(ui.mobileWidth ? "14px" : "16px");
+    let copySize = $derived($mobileWidth ? "14px" : "16px");
 
     function copyUrl(e: Event, q: string): void {
         e.stopPropagation();
-        copyToClipboard(`${window.location.origin}${pathState.location}?q=${q}`);
+        copyToClipboard(`${window.location.origin}${$locationStore}?q=${q}`);
     }
 </script>
 

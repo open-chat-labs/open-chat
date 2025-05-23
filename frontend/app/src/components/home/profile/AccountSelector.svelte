@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui, type NamedAccount } from "openchat-client";
+    import { iconSize, mobileWidth, type NamedAccount } from "openchat-client";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Menu from "../../Menu.svelte";
@@ -45,9 +45,9 @@
         <Translatable resourceKey={i18nKey(selectedName ?? "tokenTransfer.chooseAddress")} />
     </div>
     <div class="icon">
-        <MenuIcon bind:this={menuIconEl} position={ui.mobileWidth ? "top" : "bottom"} align={"end"}>
+        <MenuIcon bind:this={menuIconEl} position={$mobileWidth ? "top" : "bottom"} align={"end"}>
             {#snippet menuIcon()}
-                <ChevronDown viewBox={"0 -3 24 24"} size={ui.iconSize} color={"var(--icon-txt)"} />
+                <ChevronDown viewBox={"0 -3 24 24"} size={$iconSize} color={"var(--icon-txt)"} />
             {/snippet}
             {#snippet menuItems()}
                 <Menu>

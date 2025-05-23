@@ -6,10 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1755](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1755-user_index)] - 2025-05-21
+
 ### Changed
 
 - Store blocked user mappings in UserIndex ([#7960](https://github.com/open-chat-labs/open-chat/pull/7960))
 - One time job to sync blocked users from NotificationsIndex ([#7961](https://github.com/open-chat-labs/open-chat/pull/7961))
+- Support autonomous bots without API keys ([#7985](https://github.com/open-chat-labs/open-chat/pull/7985))
+
+### Fixed
+
+- Fix ordering of blocked user map ([#8003](https://github.com/open-chat-labs/open-chat/pull/8003))
 
 ## [[2.0.1749](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1749-user_index)] - 2025-05-13
 
@@ -18,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support exclusion of installed bots from `explore_bots` ([#7904](https://github.com/open-chat-labs/open-chat/pull/7904))
 - Store `notifications_index_canister_id` within LocalUserIndexes ([#7947](https://github.com/open-chat-labs/open-chat/pull/7947))
 - Sync bot endpoints to LocalUserIndexes ([#7949](https://github.com/open-chat-labs/open-chat/pull/7949))
+- Allow bot to specify data encoding format ([#8004](https://github.com/open-chat-labs/open-chat/pull/8004))
 
 ## [[2.0.1724](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1724-user_index)] - 2025-05-06
 

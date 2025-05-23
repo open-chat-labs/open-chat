@@ -1,6 +1,6 @@
 use crate::guards::caller_is_owner;
 use crate::model::contacts::SetContactResponse;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
@@ -10,9 +10,7 @@ use user_canister::set_contact::*;
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn set_contact(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| set_contact_impl(args, state)).into()
+    execute_update(|state| set_contact_impl(args, state)).into()
 }
 
 fn set_contact_impl(args: Args, state: &mut RuntimeState) -> OCResult {

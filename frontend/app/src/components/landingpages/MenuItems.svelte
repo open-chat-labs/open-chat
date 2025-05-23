@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { app, OpenChat, pathState } from "openchat-client";
+    import { identityStateStore, locationStore, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import Launch from "./Launch.svelte";
     import Link from "./Link.svelte";
@@ -21,34 +21,31 @@
             </a>
         </div>
         <div class="menu-item">
-            <Link selected={pathState.location === "/features"} mode={"menu"} path="features"
+            <Link selected={$locationStore === "/features"} mode={"menu"} path="features"
                 >Features</Link>
         </div>
         <div class="menu-item">
-            <Link selected={pathState.location === "/roadmap"} mode={"menu"} path="roadmap"
+            <Link selected={$locationStore === "/roadmap"} mode={"menu"} path="roadmap"
                 >Roadmap</Link>
         </div>
         <div class="menu-item">
-            <Link selected={pathState.location === "/whitepaper"} mode={"menu"} path="whitepaper"
+            <Link selected={$locationStore === "/whitepaper"} mode={"menu"} path="whitepaper"
                 >Whitepaper</Link>
         </div>
         <div class="menu-item">
-            <Link
-                selected={pathState.location === "/architecture"}
-                mode={"menu"}
-                path="architecture">Architecture</Link>
+            <Link selected={$locationStore === "/architecture"} mode={"menu"} path="architecture"
+                >Architecture</Link>
         </div>
         {#if showBlog}
             <div class="menu-item">
-                <Link selected={pathState.location.startsWith("/blog")} mode={"menu"} path="blog"
+                <Link selected={$locationStore.startsWith("/blog")} mode={"menu"} path="blog"
                     >Blog</Link>
             </div>
         {/if}
         <div class="menu-item">
-            <Link selected={pathState.location.startsWith("/faq")} mode={"menu"} path="faq"
-                >FAQs</Link>
+            <Link selected={$locationStore.startsWith("/faq")} mode={"menu"} path="faq">FAQs</Link>
         </div>
-        {#if app.identityState.kind === "logged_in"}
+        {#if $identityStateStore.kind === "logged_in"}
             <Link onLinkClicked={() => client.logout()} mode={"menu"}>Logout</Link>
         {/if}
         <div class="menu-item">

@@ -5,7 +5,7 @@ use std::collections::BTreeSet;
 use std::ops::DerefMut;
 use types::{
     AccessGate, AccessGateConfigInternal, AvatarChanged, BotAdded, BotMessageContext, BotRemoved, BotUpdated, ChannelId, Chat,
-    ChatEventType, ChatId, CommunityId, DeletedBy, DirectChatCreated, EventIndex, EventWrapperInternal,
+    ChatEventCategory, ChatEventType, ChatId, CommunityId, DeletedBy, DirectChatCreated, EventIndex, EventWrapperInternal,
     EventsTimeToLiveUpdated, ExternalUrlUpdated, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated,
     GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged,
     MemberJoinedInternal, MemberLeft, MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, Message, MessageContent,
@@ -143,9 +143,9 @@ impl ChatEventInternal {
         if let ChatEventInternal::Message(m) = self { Some(*m) } else { None }
     }
 
-    pub fn event_type(&self) -> Option<ChatEventType> {
+    pub fn event_category(&self) -> Option<ChatEventCategory> {
         match self {
-            ChatEventInternal::Message(_) => Some(ChatEventType::Message),
+            ChatEventInternal::Message(_) => Some(ChatEventCategory::Message),
             ChatEventInternal::GroupChatCreated(_)
             | ChatEventInternal::DirectChatCreated(_)
             | ChatEventInternal::GroupNameChanged(_)
@@ -161,7 +161,7 @@ impl ChatEventInternal {
             | ChatEventInternal::ChatUnfrozen(_)
             | ChatEventInternal::EventsTimeToLiveUpdated(_)
             | ChatEventInternal::GroupGateUpdated(_)
-            | ChatEventInternal::ExternalUrlUpdated(_) => Some(ChatEventType::ChatDetailsUpdate),
+            | ChatEventInternal::ExternalUrlUpdated(_) => Some(ChatEventCategory::Details),
             ChatEventInternal::ParticipantsAdded(_)
             | ChatEventInternal::ParticipantsRemoved(_)
             | ChatEventInternal::ParticipantJoined(_)
@@ -173,8 +173,44 @@ impl ChatEventInternal {
             | ChatEventInternal::MembersAddedToPublicChannel(_)
             | ChatEventInternal::BotAdded(_)
             | ChatEventInternal::BotRemoved(_)
-            | ChatEventInternal::BotUpdated(_) => Some(ChatEventType::MembershipUpdate),
+            | ChatEventInternal::BotUpdated(_) => Some(ChatEventCategory::Membership),
             ChatEventInternal::Empty | ChatEventInternal::FailedToDeserialize => None,
+        }
+    }
+
+    pub fn event_type(&self) -> Option<ChatEventType> {
+        match self {
+            ChatEventInternal::Message(_) => Some(ChatEventType::Message),
+            ChatEventInternal::GroupChatCreated(_) => Some(ChatEventType::Created),
+            ChatEventInternal::DirectChatCreated(_) => Some(ChatEventType::Created),
+            ChatEventInternal::GroupNameChanged(_) => Some(ChatEventType::NameChanged),
+            ChatEventInternal::GroupDescriptionChanged(_) => Some(ChatEventType::DescriptionChanged),
+            ChatEventInternal::GroupRulesChanged(_) => Some(ChatEventType::RulesChanged),
+            ChatEventInternal::AvatarChanged(_) => Some(ChatEventType::AvatarChanged),
+            ChatEventInternal::ParticipantsAdded(_) => Some(ChatEventType::MembersJoined),
+            ChatEventInternal::ParticipantsRemoved(_) => Some(ChatEventType::MembersLeft),
+            ChatEventInternal::ParticipantJoined(_) => Some(ChatEventType::MembersJoined),
+            ChatEventInternal::ParticipantLeft(_) => Some(ChatEventType::MembersLeft),
+            ChatEventInternal::RoleChanged(_) => Some(ChatEventType::RoleChanged),
+            ChatEventInternal::UsersBlocked(_) => Some(ChatEventType::UsersBlocked),
+            ChatEventInternal::UsersUnblocked(_) => Some(ChatEventType::UsersUnblocked),
+            ChatEventInternal::MessagePinned(_) => Some(ChatEventType::MessagePinned),
+            ChatEventInternal::MessageUnpinned(_) => Some(ChatEventType::MessageUnpinned),
+            ChatEventInternal::PermissionsChanged(_) => Some(ChatEventType::PermissionsChanged),
+            ChatEventInternal::GroupVisibilityChanged(_) => Some(ChatEventType::VisibilityChanged),
+            ChatEventInternal::GroupInviteCodeChanged(_) => Some(ChatEventType::InviteCodeChanged),
+            ChatEventInternal::ChatFrozen(_) => Some(ChatEventType::Frozen),
+            ChatEventInternal::ChatUnfrozen(_) => Some(ChatEventType::Unfrozen),
+            ChatEventInternal::EventsTimeToLiveUpdated(_) => Some(ChatEventType::EventsTTLUpdated),
+            ChatEventInternal::GroupGateUpdated(_) => Some(ChatEventType::GateUpdated),
+            ChatEventInternal::UsersInvited(_) => Some(ChatEventType::UsersInvited),
+            ChatEventInternal::MembersAddedToPublicChannel(_) => Some(ChatEventType::MembersJoined),
+            ChatEventInternal::ExternalUrlUpdated(_) => Some(ChatEventType::ExternalUrlUpdated),
+            ChatEventInternal::BotAdded(_) => Some(ChatEventType::BotAdded),
+            ChatEventInternal::BotRemoved(_) => Some(ChatEventType::BotRemoved),
+            ChatEventInternal::BotUpdated(_) => Some(ChatEventType::BotUpdated),
+            ChatEventInternal::FailedToDeserialize => None,
+            ChatEventInternal::Empty => None,
         }
     }
 }
@@ -512,7 +548,6 @@ mod tests {
 
     #[test]
     fn serialize_with_max_defaults() {
-        #[allow(deprecated)]
         let message = MessageInternal {
             message_index: 1.into(),
             message_id: 1u64.into(),

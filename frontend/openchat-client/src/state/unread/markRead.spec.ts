@@ -1,8 +1,8 @@
 import { type EventWrapper, type GroupChatIdentifier, type Message } from "openchat-shared";
 import { SvelteMap } from "svelte/reactivity";
 import { vi } from "vitest";
-import { localUpdates } from "../global";
-import { MessageReadTracker, MessagesRead } from "./markRead.svelte";
+import { localUpdates } from "../localUpdates";
+import { MessageReadTracker, MessagesRead } from "./markRead";
 
 const abcId: GroupChatIdentifier = { kind: "group_chat", groupId: "abc" };
 
@@ -35,40 +35,34 @@ describe("mark messages read", () => {
     beforeEach(() => {
         vi.useFakeTimers();
         localUpdates.clearUnconfirmed();
-        if (markRead.messageReadState.waiting.get({ chatId: abcId }) !== undefined) {
-            markRead.messageReadState.waiting.get({ chatId: abcId })?.clear();
+        if (markRead.value.waiting.get({ chatId: abcId }) !== undefined) {
+            markRead.value.waiting.get({ chatId: abcId })?.clear();
         }
-        markRead.messageReadState.state.set(abcId, new MessagesRead());
-        markRead.messageReadState.serverState.set(abcId, new MessagesRead());
+        markRead.value.state.set(abcId, new MessagesRead());
+        markRead.value.serverState.set(abcId, new MessagesRead());
     });
 
     test("mark unconfirmed message as read", () => {
         localUpdates.addUnconfirmed({ chatId: abcId }, createDummyMessage(BigInt(100)));
         markRead.markMessageRead({ chatId: abcId }, 200, BigInt(100));
-        expect(markRead.messageReadState.waiting.get({ chatId: abcId })?.has(BigInt(100))).toBe(
-            true,
-        );
+        expect(markRead.value.waiting.get({ chatId: abcId })?.has(BigInt(100))).toBe(true);
     });
 
     test("mark confirmed message as read", () => {
         const mr = new MessagesRead();
         mr.readUpTo = 199;
-        markRead.messageReadState.state.set(abcId, mr);
+        markRead.value.state.set(abcId, mr);
         markRead.markMessageRead({ chatId: abcId }, 200, BigInt(500));
-        expect(markRead.messageReadState.waiting.get({ chatId: abcId })?.has(BigInt(500))).toBe(
-            false,
-        );
-        expect(markRead.messageReadState.state.get(abcId)?.readUpTo).toBe(200);
+        expect(markRead.value.waiting.get({ chatId: abcId })?.has(BigInt(500))).toBe(false);
+        expect(markRead.value.state.get(abcId)?.readUpTo).toBe(200);
     });
 
     test("confirm message", () => {
-        markRead.messageReadState.waiting.get({ chatId: abcId })?.set(BigInt(100), 100);
+        markRead.value.waiting.get({ chatId: abcId })?.set(BigInt(100), 100);
         markRead.markMessageRead({ chatId: abcId }, 200, BigInt(100));
         markRead.confirmMessage({ chatId: abcId }, 200, BigInt(100));
-        expect(markRead.messageReadState.waiting.get({ chatId: abcId })?.has(BigInt(100))).toBe(
-            false,
-        );
-        expect(markRead.messageReadState.state.get(abcId)?.readUpTo).toBe(200);
+        expect(markRead.value.waiting.get({ chatId: abcId })?.has(BigInt(100))).toBe(false);
+        expect(markRead.value.state.get(abcId)?.readUpTo).toBe(200);
     });
 
     describe("thread stuff", () => {
@@ -87,8 +81,8 @@ describe("mark messages read", () => {
             },
         ];
         beforeEach(() => {
-            markRead.messageReadState.state.set(abcId, new MessagesRead());
-            markRead.messageReadState.serverState.set(abcId, new MessagesRead());
+            markRead.value.state.set(abcId, new MessagesRead());
+            markRead.value.serverState.set(abcId, new MessagesRead());
         });
 
         describe("unread message count", () => {
@@ -201,13 +195,10 @@ describe("mark messages read", () => {
     describe("unread message count", () => {
         describe("when all messages are confirmed", () => {
             test("with no latest message + waiting local messages", () => {
-                markRead.messageReadState.waiting.set(
-                    { chatId: abcId },
-                    new SvelteMap<bigint, number>(),
-                );
-                markRead.messageReadState.waiting.get({ chatId: abcId })?.set(BigInt(0), 0);
-                markRead.messageReadState.waiting.get({ chatId: abcId })?.set(BigInt(1), 1);
-                markRead.messageReadState.waiting.get({ chatId: abcId })?.set(BigInt(2), 2);
+                markRead.value.waiting.set({ chatId: abcId }, new SvelteMap<bigint, number>());
+                markRead.value.waiting.get({ chatId: abcId })?.set(BigInt(0), 0);
+                markRead.value.waiting.get({ chatId: abcId })?.set(BigInt(1), 1);
+                markRead.value.waiting.get({ chatId: abcId })?.set(BigInt(2), 2);
                 expect(markRead.unreadMessageCount(abcId, undefined)).toEqual(0);
             });
             test("with no latest message", () => {
@@ -219,13 +210,13 @@ describe("mark messages read", () => {
             test("with server state only", () => {
                 const mr = new MessagesRead();
                 mr.readUpTo = 20;
-                markRead.messageReadState.serverState.set(abcId, mr);
+                markRead.value.serverState.set(abcId, mr);
                 expect(markRead.unreadMessageCount(abcId, 50)).toEqual(30);
             });
             test("with local state only", () => {
                 const mr = new MessagesRead();
                 mr.readUpTo = 30;
-                markRead.messageReadState.state.set(abcId, mr);
+                markRead.value.state.set(abcId, mr);
                 expect(markRead.unreadMessageCount(abcId, 50)).toEqual(20);
             });
             test("with server state ahead of local state", () => {
@@ -233,8 +224,8 @@ describe("mark messages read", () => {
                 mr.readUpTo = 90;
                 const ms = new MessagesRead();
                 ms.readUpTo = 50;
-                markRead.messageReadState.serverState.set(abcId, mr);
-                markRead.messageReadState.state.set(abcId, ms);
+                markRead.value.serverState.set(abcId, mr);
+                markRead.value.state.set(abcId, ms);
                 expect(markRead.unreadMessageCount(abcId, 100)).toEqual(10);
             });
             test("with local state ahead of server state", () => {
@@ -242,19 +233,19 @@ describe("mark messages read", () => {
                 mr.readUpTo = 90;
                 const ms = new MessagesRead();
                 ms.readUpTo = 50;
-                markRead.messageReadState.serverState.set(abcId, mr);
-                markRead.messageReadState.state.set(abcId, ms);
+                markRead.value.serverState.set(abcId, mr);
+                markRead.value.state.set(abcId, ms);
                 expect(markRead.unreadMessageCount(abcId, 100)).toEqual(10);
             });
         });
         describe("when some messages are unconfirmed", () => {
             test("with multiple gaps", () => {
-                markRead.messageReadState.waiting.get({ chatId: abcId })?.set(BigInt(1), 11);
-                markRead.messageReadState.waiting.get({ chatId: abcId })?.set(BigInt(2), 12);
-                markRead.messageReadState.waiting.get({ chatId: abcId })?.set(BigInt(3), 13);
+                markRead.value.waiting.get({ chatId: abcId })?.set(BigInt(1), 11);
+                markRead.value.waiting.get({ chatId: abcId })?.set(BigInt(2), 12);
+                markRead.value.waiting.get({ chatId: abcId })?.set(BigInt(3), 13);
                 const mr = new MessagesRead();
                 mr.readUpTo = 10;
-                markRead.messageReadState.serverState.set(abcId, mr);
+                markRead.value.serverState.set(abcId, mr);
                 expect(markRead.unreadMessageCount(abcId, 100)).toEqual(87);
             });
         });

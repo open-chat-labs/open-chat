@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui, type DefaultChannel } from "openchat-client";
+    import { iconSize, type DefaultChannel } from "openchat-client";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import Pound from "svelte-material-icons/Pound.svelte";
     import { i18nKey } from "../../../../i18n/i18n";
@@ -33,12 +33,12 @@
             onEnter={stopEditing}
             placeholder={i18nKey("communities.updateChannelPlaceholder")}>
             <div class="hash">
-                <Pound size={ui.iconSize} color={"var(--icon-txt)"} />
+                <Pound size={$iconSize} color={"var(--icon-txt)"} />
             </div>
         </Input>
     </div>
     <div class="delete" onclick={onDeleteChannel}>
-        <DeleteOutline size={ui.iconSize} color={"var(--icon-txt)"} />
+        <DeleteOutline size={$iconSize} color={"var(--icon-txt)"} />
     </div>
 </div>
 

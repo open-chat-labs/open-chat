@@ -100,7 +100,7 @@ impl Processor {
     }
 }
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 enum ProcessNotificationError {
     SubscriptionInvalid,
     SubscriptionThrottled,
@@ -123,7 +123,7 @@ fn build_web_push_message(
 }
 
 #[derive(Debug)]
-#[allow(dead_code)]
+#[expect(dead_code)]
 struct SubscriptionInfoDebug<'a> {
     endpoint: &'a str,
     p256dh_len: usize,

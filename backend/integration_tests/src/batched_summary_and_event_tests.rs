@@ -5,10 +5,11 @@ use candid::Principal;
 use local_user_index_canister::chat_events::{
     EventsArgs, EventsByIndexArgs, EventsContext, EventsResponse, EventsSelectionCriteria,
 };
-use local_user_index_canister::group_and_community_summary_updates::{SummaryUpdatesArgs, SummaryUpdatesResponse};
+use local_user_index_canister::group_and_community_summary_updates_v2::{SummaryUpdatesArgs, SummaryUpdatesResponse};
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
+use test_case::test_case;
 use testing::rng::random_string;
 use types::{CanisterId, ChannelId, ChatEvent, ChatId, CommunityId};
 
@@ -81,8 +82,9 @@ fn get_batched_events_succeeds() {
     assert_is_message_with_text(result.responses.get(3).unwrap(), "Channel: 3");
 }
 
-#[test]
-fn get_batched_summaries_succeeds() {
+#[test_case(true)]
+#[test_case(false)]
+fn get_batched_summaries_succeeds(v2: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -100,37 +102,29 @@ fn get_batched_summaries_succeeds() {
     } = init_test_data(env, canister_ids, *controller);
 
     let start = now_millis(env);
-
     let local_user_index = canister_ids.local_user_index(env, user1.canister());
+    let requests = vec![
+        SummaryUpdatesArgs {
+            canister_id: group_id1.into(),
+            is_community: false,
+            invite_code: None,
+            updates_since: None,
+        },
+        SummaryUpdatesArgs {
+            canister_id: group_id2.into(),
+            is_community: false,
+            invite_code: None,
+            updates_since: None,
+        },
+        SummaryUpdatesArgs {
+            canister_id: community_id.into(),
+            is_community: true,
+            invite_code: None,
+            updates_since: None,
+        },
+    ];
 
-    let local_user_index_canister::group_and_community_summary_updates::Response::Success(responses) =
-        client::local_user_index::group_and_community_summary_updates(
-            env,
-            user1.principal,
-            local_user_index,
-            &local_user_index_canister::group_and_community_summary_updates::Args {
-                requests: vec![
-                    SummaryUpdatesArgs {
-                        canister_id: group_id1.into(),
-                        is_community: false,
-                        invite_code: None,
-                        updates_since: None,
-                    },
-                    SummaryUpdatesArgs {
-                        canister_id: group_id2.into(),
-                        is_community: false,
-                        invite_code: None,
-                        updates_since: None,
-                    },
-                    SummaryUpdatesArgs {
-                        canister_id: community_id.into(),
-                        is_community: true,
-                        invite_code: None,
-                        updates_since: None,
-                    },
-                ],
-            },
-        );
+    let responses = get_summary_updates(env, user1.principal, local_user_index, requests, v2);
 
     assert_is_summary_with_id(responses.first().unwrap(), group_id1.into(), false);
     assert_is_summary_with_id(responses.get(1).unwrap(), group_id2.into(), false);
@@ -142,38 +136,67 @@ fn get_batched_summaries_succeeds() {
     client::group::happy_path::send_text_message(env, &user1, group_id1, None, random_string(), None);
     client::community::happy_path::send_text_message(env, &user1, community_id, channel_id, None, random_string(), None);
 
-    let local_user_index_canister::group_and_community_summary_updates::Response::Success(responses) =
-        client::local_user_index::group_and_community_summary_updates(
-            env,
-            user1.principal,
-            local_user_index,
-            &local_user_index_canister::group_and_community_summary_updates::Args {
-                requests: vec![
-                    SummaryUpdatesArgs {
-                        canister_id: group_id1.into(),
-                        is_community: false,
-                        invite_code: None,
-                        updates_since: Some(start + 1),
-                    },
-                    SummaryUpdatesArgs {
-                        canister_id: group_id2.into(),
-                        is_community: false,
-                        invite_code: None,
-                        updates_since: Some(start + 1),
-                    },
-                    SummaryUpdatesArgs {
-                        canister_id: community_id.into(),
-                        is_community: true,
-                        invite_code: None,
-                        updates_since: Some(start + 1),
-                    },
-                ],
-            },
-        );
+    let requests = vec![
+        SummaryUpdatesArgs {
+            canister_id: group_id1.into(),
+            is_community: false,
+            invite_code: None,
+            updates_since: Some(start + 1),
+        },
+        SummaryUpdatesArgs {
+            canister_id: group_id2.into(),
+            is_community: false,
+            invite_code: None,
+            updates_since: Some(start + 1),
+        },
+        SummaryUpdatesArgs {
+            canister_id: community_id.into(),
+            is_community: true,
+            invite_code: None,
+            updates_since: Some(start + 1),
+        },
+    ];
 
+    let responses = get_summary_updates(env, user1.principal, local_user_index, requests, v2);
+
+    assert_eq!(responses.len(), if v2 { 2 } else { 3 });
     assert_is_summary_updates_with_id(responses.first().unwrap(), group_id1.into(), false);
-    assert!(matches!(responses.get(1).unwrap(), SummaryUpdatesResponse::SuccessNoUpdates));
-    assert_is_summary_updates_with_id(responses.get(2).unwrap(), community_id.into(), true);
+    assert_is_summary_updates_with_id(responses.last().unwrap(), community_id.into(), true);
+
+    if !v2 {
+        assert!(matches!(responses.get(1).unwrap(), SummaryUpdatesResponse::SuccessNoUpdates));
+    }
+}
+
+fn get_summary_updates(
+    env: &PocketIc,
+    sender: Principal,
+    local_user_index: CanisterId,
+    requests: Vec<SummaryUpdatesArgs>,
+    v2: bool,
+) -> Vec<SummaryUpdatesResponse> {
+    if v2 {
+        let local_user_index_canister::group_and_community_summary_updates_v2::Response::Success(response) =
+            client::local_user_index::group_and_community_summary_updates_v2(
+                env,
+                sender,
+                local_user_index,
+                &local_user_index_canister::group_and_community_summary_updates_v2::Args {
+                    requests,
+                    max_c2c_calls: 10,
+                },
+            );
+        response.updates
+    } else {
+        let local_user_index_canister::group_and_community_summary_updates::Response::Success(responses) =
+            client::local_user_index::group_and_community_summary_updates(
+                env,
+                sender,
+                local_user_index,
+                &local_user_index_canister::group_and_community_summary_updates::Args { requests },
+            );
+        responses
+    }
 }
 
 fn assert_is_message_with_text(response: &EventsResponse, text: &str) {

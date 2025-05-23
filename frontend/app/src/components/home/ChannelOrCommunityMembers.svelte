@@ -1,11 +1,22 @@
 <script lang="ts">
     import {
-        app,
         type ChannelSummary,
         type CommunitySummary,
         type MemberRole,
         OpenChat,
         publish,
+        selectedChatApiKeysStore,
+        selectedChatBlockedUsersStore,
+        selectedChatInvitedUsersStore,
+        selectedChatLapsedMembersStore,
+        selectedChatMembersStore,
+        selectedChatWebhooksStore,
+        selectedCommunityApiKeysStore,
+        selectedCommunityBlockedUsersStore,
+        selectedCommunityBotsStore,
+        selectedCommunityInvitedUsersStore,
+        selectedCommunityLapsedMembersStore,
+        selectedCommunityMembersStore,
         type UserSummary,
     } from "openchat-client";
     import { getContext } from "svelte";
@@ -100,12 +111,12 @@
             showHeader={false}
             {closeIcon}
             collection={community}
-            invited={app.selectedCommunity.invitedUsers}
-            members={[...app.selectedCommunity.members.values()]}
-            blocked={app.selectedCommunity.blockedUsers}
-            lapsed={app.selectedCommunity.lapsedMembers}
-            installedBots={app.selectedCommunity.bots}
-            apiKeys={app.selectedCommunity.apiKeys}
+            invited={$selectedCommunityInvitedUsersStore}
+            members={[...$selectedCommunityMembersStore.values()]}
+            blocked={$selectedCommunityBlockedUsersStore}
+            lapsed={$selectedCommunityLapsedMembersStore}
+            installedBots={$selectedCommunityBotsStore}
+            apiKeys={$selectedCommunityApiKeysStore}
             {onClose}
             onBlockUser={onBlockCommunityUser}
             onUnblockUser={onUnblockCommunityUser}
@@ -120,13 +131,13 @@
             showHeader={false}
             {closeIcon}
             collection={channel}
-            invited={app.selectedChat.invitedUsers}
-            members={[...app.selectedChat.members.values()]}
-            blocked={app.selectedChat.blockedUsers}
-            lapsed={app.selectedChat.lapsedMembers}
-            installedBots={app.selectedCommunity.bots}
-            apiKeys={app.selectedChat.apiKeys}
-            webhooks={Array.from(app.selectedChat.webhooks.values())}
+            invited={$selectedChatInvitedUsersStore}
+            members={[...$selectedChatMembersStore.values()]}
+            blocked={$selectedChatBlockedUsersStore}
+            lapsed={$selectedChatLapsedMembersStore}
+            installedBots={$selectedCommunityBotsStore}
+            apiKeys={$selectedChatApiKeysStore}
+            webhooks={Array.from($selectedChatWebhooksStore.values())}
             {onClose}
             onBlockUser={onBlockGroupUser}
             onUnblockUser={onUnblockGroupUser}

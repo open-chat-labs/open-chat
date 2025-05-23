@@ -5,11 +5,11 @@
         type NamedAccount,
         type OpenChat,
         type ResourceKey,
-        app,
         cryptoLookup,
+        currentUserStore,
+        mobileWidth,
         nervousSystemLookup,
         toRecord,
-        ui,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -92,7 +92,7 @@
     }
 
     function loadTransactions() {
-        const nervousSystem = Object.values($nervousSystemLookup).find(
+        const nervousSystem = [...$nervousSystemLookup.values()].find(
             (n) => n.ledgerCanisterId === ledger,
         );
         const ledgerIndex = nervousSystem?.indexCanisterId;
@@ -148,10 +148,10 @@
         }
     }
     let accountLookup = $derived(toRecord(accounts, (a) => a.account));
-    let tokenDetails = $derived($cryptoLookup[ledger]);
+    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let snsLedgers = $derived(
         new Set<string>(
-            Object.values($nervousSystemLookup)
+            [...$nervousSystemLookup.values()]
                 .filter((ns) => !ns.isNns)
                 .map((ns) => ns.ledgerCanisterId),
         ),
@@ -162,7 +162,7 @@
     );
 </script>
 
-<ModalContent fitToContent={!ui.mobileWidth} closeIcon {onClose}>
+<ModalContent fitToContent={!$mobileWidth} closeIcon {onClose}>
     {#snippet header()}
         <div class="header">
             <div class="main-title">
@@ -232,13 +232,13 @@
                                         <TransactionEndpoint
                                             accounts={accountLookup}
                                             address={transaction.from}
-                                            currentUser={app.currentUser} />
+                                            currentUser={$currentUserStore} />
                                     </td>
                                     <td class="truncate">
                                         <TransactionEndpoint
                                             accounts={accountLookup}
                                             address={transaction.to}
-                                            currentUser={app.currentUser} />
+                                            currentUser={$currentUserStore} />
                                     </td>
                                 </tr>
                             {/each}
@@ -261,11 +261,11 @@
                         onClick={() => loadTransactions()}
                         disabled={!moreAvailable && !loading}
                         {loading}
-                        small={!ui.mobileWidth}
-                        tiny={ui.mobileWidth}>
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}>
                         <Translatable resourceKey={i18nKey("cryptoAccount.loadMoreTransactions")} />
                     </Button>
-                    <Button onClick={onClose} small={!ui.mobileWidth} tiny={ui.mobileWidth}>
+                    <Button onClick={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
                         <Translatable resourceKey={i18nKey("close")} />
                     </Button>
                 </ButtonGroup>

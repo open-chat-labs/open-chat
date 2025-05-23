@@ -1,6 +1,12 @@
 <script lang="ts">
     import type { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
-    import { AuthProvider, app, ui, type OpenChat, type Verification } from "openchat-client";
+    import {
+        AuthProvider,
+        mobileWidth,
+        pinNumberFailureStore,
+        type OpenChat,
+        type Verification,
+    } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import {
@@ -34,7 +40,7 @@
     let delegation: DelegationChain | undefined = $state(undefined);
 
     onMount(() => {
-        app.pinNumberFailure = undefined;
+        pinNumberFailureStore.set(undefined);
     });
 
     function isPinValid(pin: string[]): boolean {
@@ -123,7 +129,7 @@
     let errorMessage = $derived($pinNumberErrorMessageStore);
 </script>
 
-<ModalContent closeIcon fitToContent={!ui.mobileWidth} fixedWidth={false} {onClose}>
+<ModalContent closeIcon fitToContent={!$mobileWidth} fixedWidth={false} {onClose}>
     {#snippet header()}
         <div class="header">
             <Translatable resourceKey={title} />

@@ -1,6 +1,7 @@
 import { AuthClient } from "@dfinity/auth-client";
-import { pathState, ui } from "openchat-client";
+import { disableLeftNav, routerReadyStore } from "openchat-client";
 import page from "page";
+import { get } from "svelte/store";
 import { setModifiedTheme } from "../theme/themes";
 import type { Theme } from "../theme/types";
 
@@ -100,7 +101,7 @@ function broadcastMessage(msg: OutboundXFrameMessage) {
 init();
 
 function pageWhenReady(path: string, timeout = 50, attempts = 0) {
-    if (pathState.routerReady) {
+    if (get(routerReadyStore)) {
         console.debug("XFRAME_TARGET: changing path to ", path);
         page(path);
     } else {
@@ -133,7 +134,7 @@ function externalMessage(ev: MessageEvent) {
                         "XFRAME_TARGET: overriding settings",
                         payload.settings.disableLeftNav,
                     );
-                    ui.disableLeftNav = Boolean(payload.settings.disableLeftNav);
+                    disableLeftNav.set(Boolean(payload.settings.disableLeftNav));
                     break;
                 case "change_route":
                     pageWhenReady(payload.path);

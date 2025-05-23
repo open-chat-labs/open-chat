@@ -1,10 +1,10 @@
 <script lang="ts">
     import {
         type ChatIdentifier,
+        iconSize,
         localUpdates,
         routeForChatIdentifier,
         subscribe,
-        ui,
     } from "openchat-client";
     import page from "page";
     import { onMount } from "svelte";
@@ -66,7 +66,7 @@
                 {#if $toastStore.err !== undefined}
                     <Tooltip position="top" align="middle">
                         <div class="report" onclick={report}>
-                            <Bug size={ui.iconSize} color={"var(--button-txt)"} />
+                            <Bug size={$iconSize} color={"var(--button-txt)"} />
                         </div>
                         {#snippet popupTemplate()}
                             <Translatable resourceKey={i18nKey("reportBug")} />
@@ -74,7 +74,7 @@
                     </Tooltip>
                 {/if}
                 <div class="close" onclick={toastStore.hideToast}>
-                    <Close size={ui.iconSize} color={"var(--button-txt)"} />
+                    <Close size={$iconSize} color={"var(--button-txt)"} />
                 </div>
             {/if}
         </div>

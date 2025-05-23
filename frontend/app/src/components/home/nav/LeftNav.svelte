@@ -3,12 +3,31 @@
         AvatarSize,
         type CommunitySummary,
         type OpenChat,
-        app,
+        activityFeedShowing,
+        allUsersStore,
+        anonUserStore,
+        chatListScopeStore,
+        chitStateStore,
+        communityChannelVideoCallCountsStore,
+        communityListScrollTop,
+        currentUserIdStore,
+        directVideoCallCountsStore,
         emptyCombinedUnreadCounts,
-        pathState,
+        favouritesStore,
+        favouritesVideoCallCountsStore,
+        groupVideoCallCountsStore,
+        messageActivitySummaryStore,
+        mobileWidth,
+        navOpen,
         publish,
-        ui,
-        userStore,
+        routeStore,
+        selectedCommunitySummaryStore,
+        showNav,
+        sortedCommunitiesStore,
+        unreadCommunityChannelCountsStore,
+        unreadDirectCountsStore,
+        unreadFavouriteCountsStore,
+        unreadGroupCountsStore,
     } from "openchat-client";
     import page from "page";
     import { getContext, onMount, tick } from "svelte";
@@ -36,13 +55,13 @@
     const client = getContext<OpenChat>("client");
     const flipDurationMs = 300;
 
-    let user = $derived(userStore.get(app.currentUserId));
-    let avatarSize = $derived(ui.mobileWidth ? AvatarSize.Small : AvatarSize.Default);
-    let communityExplorer = $derived(pathState.route.kind === "communities_route");
-    let selectedCommunityId = $derived(app.selectedCommunitySummary?.id.communityId);
-    let claimChitAvailable = $derived(app.chitState.nextDailyChitClaim < $now);
+    let user = $derived($allUsersStore.get($currentUserIdStore));
+    let avatarSize = $derived($mobileWidth ? AvatarSize.Small : AvatarSize.Default);
+    let communityExplorer = $derived($routeStore.kind === "communities_route");
+    let selectedCommunityId = $derived($selectedCommunitySummaryStore?.id.communityId);
+    let claimChitAvailable = $derived($chitStateStore.nextDailyChitClaim < $now);
 
-    let iconSize = ui.mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
+    let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
     let scrollingSection: HTMLElement;
 
     // we don't want drag n drop to monkey around with the key
@@ -51,15 +70,15 @@
     let communityItems = $state<CommunityItem[]>([]);
 
     $effect(() => {
-        communityItems = app.sortedCommunities.map((c) => ({ ...c, _id: c.id.communityId }));
+        communityItems = $sortedCommunitiesStore.map((c) => ({ ...c, _id: c.id.communityId }));
     });
 
     onMount(() => {
-        tick().then(() => (scrollingSection.scrollTop = ui.communityListScrollTop ?? 0));
+        tick().then(() => (scrollingSection.scrollTop = $communityListScrollTop ?? 0));
     });
 
     function onScroll() {
-        ui.communityListScrollTop = scrollingSection.scrollTop;
+        communityListScrollTop.set(scrollingSection.scrollTop);
     }
 
     function handleDndConsider(e: CustomEvent<DndEvent<CommunityItem>>) {
@@ -72,54 +91,54 @@
 
     function toggleNav(e: Event) {
         e.stopPropagation();
-        ui.toggleNav();
+        client.toggleNav();
     }
 
     function viewProfile() {
-        ui.activityFeedShowing = false;
+        activityFeedShowing.set(false);
         publish("profile");
     }
 
     function exploreCommunities() {
-        ui.activityFeedShowing = false;
+        activityFeedShowing.set(false);
         page("/communities");
     }
 
     function directChats() {
-        ui.activityFeedShowing = false;
+        activityFeedShowing.set(false);
         page("/user");
     }
 
     function groupChats() {
-        ui.activityFeedShowing = false;
+        activityFeedShowing.set(false);
         page("/group");
     }
 
     function favouriteChats() {
-        ui.activityFeedShowing = false;
+        activityFeedShowing.set(false);
         page("/favourite");
     }
 
     function selectCommunity(community: CommunitySummary) {
-        ui.activityFeedShowing = false;
+        activityFeedShowing.set(false);
         page(`/community/${community.id.communityId}`);
     }
 
     function closeIfOpen() {
-        ui.closeNavIfOpen();
+        client.closeNavIfOpen();
     }
 
     function showActivityFeed() {
-        if (pathState.route.kind === "communities_route") {
+        if ($routeStore.kind === "communities_route") {
             page("/");
         }
-        ui.activityFeedShowing = true;
+        activityFeedShowing.set(true);
     }
 </script>
 
 <svelte:body onclick={closeIfOpen} />
 
-<section class:visible={ui.showNav} class="nav" class:open={ui.navOpen} class:rtl={$rtlStore}>
+<section class:visible={$showNav} class="nav" class:open={$navOpen} class:rtl={$rtlStore}>
     <div class="top">
         <LeftNavItem separator label={i18nKey("communities.mainMenu")}>
             <div class="hover logo">
@@ -141,38 +160,38 @@
             </LeftNavItem>
         {/if}
         <LeftNavItem
-            selected={app.chatListScope.kind === "direct_chat" && !communityExplorer}
+            selected={$chatListScopeStore.kind === "direct_chat" && !communityExplorer}
             label={i18nKey("communities.directChats")}
-            unread={app.unreadDirectCounts.chats}
-            video={app.directVideoCallCounts}
+            unread={$unreadDirectCountsStore.chats}
+            video={$directVideoCallCountsStore}
             onClick={directChats}>
             <div class="hover direct">
                 <MessageOutline size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
         <LeftNavItem
-            selected={app.chatListScope.kind === "group_chat" && !communityExplorer}
+            selected={$chatListScopeStore.kind === "group_chat" && !communityExplorer}
             label={i18nKey("communities.groupChats")}
-            unread={client.mergeCombinedUnreadCounts(app.unreadGroupCounts)}
-            video={app.groupVideoCallCounts}
+            unread={client.mergeCombinedUnreadCounts($unreadGroupCountsStore)}
+            video={$groupVideoCallCountsStore}
             onClick={groupChats}>
             <div class="hover direct">
                 <ForumOutline size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
-        {#if app.favourites.size > 0}
+        {#if $favouritesStore.size > 0}
             <LeftNavItem
-                selected={app.chatListScope.kind === "favourite" && !communityExplorer}
+                selected={$chatListScopeStore.kind === "favourite" && !communityExplorer}
                 label={i18nKey("communities.favourites")}
-                unread={client.mergeCombinedUnreadCounts(app.unreadFavouriteCounts)}
-                video={app.favouritesVideoCallCounts}
+                unread={client.mergeCombinedUnreadCounts($unreadFavouriteCountsStore)}
+                video={$favouritesVideoCallCountsStore}
                 onClick={favouriteChats}>
                 <div class="hover favs">
                     <HeartOutline size={iconSize} color={"var(--icon-txt)"} />
                 </div>
             </LeftNavItem>
         {/if}
-        {#if !app.anonUser}
+        {#if !$anonUserStore}
             {#if !$disableChit && (claimChitAvailable || !$hideChitIcon)}
                 <LeftNavItem
                     label={i18nKey(
@@ -184,14 +203,14 @@
                     </div>
                 </LeftNavItem>
             {/if}
-            {#if app.messageActivitySummary.latestTimestamp > 0n}
+            {#if $messageActivitySummaryStore.latestTimestamp > 0n}
                 <LeftNavItem
                     separator
-                    selected={ui.activityFeedShowing}
+                    selected={$activityFeedShowing}
                     label={i18nKey("activity.navLabel")}
                     unread={{
                         muted: 0,
-                        unmuted: app.messageActivitySummary.unreadCount,
+                        unmuted: $messageActivitySummaryStore.unreadCount,
                         mentions: false,
                     }}
                     onClick={showActivityFeed}>
@@ -219,14 +238,14 @@
             <div animate:flip={{ duration: flipDurationMs }}>
                 <LeftNavItem
                     selected={community.id.communityId === selectedCommunityId &&
-                        app.chatListScope.kind !== "favourite" &&
+                        $chatListScopeStore.kind !== "favourite" &&
                         !communityExplorer}
-                    video={app.communityChannelVideoCallCounts.get(community.id) ?? {
+                    video={$communityChannelVideoCallCountsStore.get(community.id) ?? {
                         muted: 0,
                         unmuted: 0,
                     }}
                     unread={client.mergeCombinedUnreadCounts(
-                        app.unreadCommunityChannelCounts.get(community.id) ??
+                        $unreadCommunityChannelCountsStore.get(community.id) ??
                             emptyCombinedUnreadCounts(),
                     )}
                     label={i18nKey(community.name)}
@@ -234,7 +253,7 @@
                     onClick={() => selectCommunity(community)}>
                     <Avatar
                         selected={community.id.communityId === selectedCommunityId &&
-                            app.chatListScope.kind !== "favourite" &&
+                            $chatListScopeStore.kind !== "favourite" &&
                             !communityExplorer}
                         url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
                         size={avatarSize} />
@@ -252,10 +271,10 @@
                 <Compass size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
-        <LeftNavItem label={ui.navOpen ? i18nKey("collapse") : i18nKey("expand")}>
+        <LeftNavItem label={$navOpen ? i18nKey("collapse") : i18nKey("expand")}>
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <div class:open={ui.navOpen} onclick={toggleNav} class="expand hover">
+            <div class:open={$navOpen} onclick={toggleNav} class="expand hover">
                 <ArrowRight size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>

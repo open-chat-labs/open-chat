@@ -6,12 +6,14 @@
     import Translatable from "@src/components/Translatable.svelte";
     import { i18nKey } from "@src/i18n/i18n";
     import {
-        app,
         AvatarSize,
         type ChannelMatch,
+        chatListScopeStore,
+        iconSize,
+        mobileWidth,
         type OpenChat,
         routeForChatIdentifier,
-        ui,
+        selectedCommunitySummaryStore,
     } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
@@ -34,12 +36,12 @@
     let canDeleteChannel = $derived(client.canDeleteChannel(channel.id));
 
     function selectChannel(match: ChannelMatch) {
-        if (app.selectedCommunitySummary === undefined) return;
+        if ($selectedCommunitySummaryStore === undefined) return;
         if (!match.public) return;
-        if (ui.mobileWidth) {
-            ui.popRightPanelHistory();
+        if ($mobileWidth) {
+            client.popRightPanelHistory();
         }
-        page(routeForChatIdentifier(app.chatListScope.kind, match.id));
+        page(routeForChatIdentifier($chatListScopeStore.kind, match.id));
     }
 </script>
 
@@ -50,7 +52,7 @@
         <Avatar
             url={client.groupAvatarUrl(
                 { id: channel.id, ...channel.avatar },
-                app.selectedCommunitySummary,
+                $selectedCommunitySummaryStore,
             )}
             size={AvatarSize.Default} />
     </div>
@@ -93,14 +95,14 @@
             <MenuIcon position={"bottom"} align={"end"}>
                 {#snippet menuIcon()}
                     <HoverIcon>
-                        <DotsVertical size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
+                        <DotsVertical size={$iconSize} color={"var(--icon-inverted-txt)"} />
                     </HoverIcon>
                 {/snippet}
                 {#snippet menuItems()}
                     <Menu>
                         <MenuItem warning onclick={onDeleteChannel}>
                             {#snippet icon()}
-                                <DeleteOutline size={ui.iconSize} color={"var(--menu-warn)"} />
+                                <DeleteOutline size={$iconSize} color={"var(--menu-warn)"} />
                             {/snippet}
                             {#snippet text()}
                                 <Translatable

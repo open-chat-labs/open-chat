@@ -6,9 +6,11 @@ import {
     type DirectChatIdentifier,
     type GroupChatIdentifier,
     type NullScope,
+    type RouteParams,
 } from "openchat-shared";
 import page from "page";
-import { pathState, type RouteParams } from "../state/path.svelte";
+import { get } from "svelte/store";
+import { routerReadyStore } from "../state";
 
 const noScope: NullScope = { kind: "none" };
 
@@ -19,7 +21,7 @@ function getRouter(): Promise<typeof page> {
             if (iterations > 10)
                 throw new Error("Router readiness check has failed - router cannot be used");
 
-            if (pathState.routerReady) {
+            if (get(routerReadyStore)) {
                 resolve(page);
             } else {
                 console.debug("ROUTER: router not ready, trying again in 100ms");
@@ -144,7 +146,6 @@ export function selectedChannelRoute(fav: boolean) {
             scope: fav
                 ? {
                       kind: "favourite",
-                      communityId: createCommunityIdentifier(ctx.params["communityId"]),
                   }
                 : { kind: "community", id: createCommunityIdentifier(ctx.params["communityId"]) },
         };

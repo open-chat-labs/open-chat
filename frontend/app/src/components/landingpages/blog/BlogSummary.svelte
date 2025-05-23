@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui } from "openchat-client";
+    import { mobileWidth } from "openchat-client";
     import Copy from "svelte-material-icons/ContentCopy.svelte";
     import { copyToClipboard } from "../../../utils/urls";
     import Link from "../Link.svelte";
@@ -13,7 +13,7 @@
 
     let { title, slug, author, posted }: Props = $props();
 
-    let copySize = $derived(ui.mobileWidth ? "14px" : "16px");
+    let copySize = $derived($mobileWidth ? "14px" : "16px");
 
     function copyUrl(e: Event): void {
         e.stopPropagation();

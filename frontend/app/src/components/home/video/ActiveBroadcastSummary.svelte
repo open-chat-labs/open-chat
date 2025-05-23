@@ -1,9 +1,10 @@
 <script lang="ts">
     import {
-        app,
         chatIdentifiersEqual,
+        chatListScopeStore,
         publish,
         routeForMessage,
+        selectedChatSummaryStore,
         type OpenChat,
     } from "openchat-client";
     import page from "page";
@@ -16,35 +17,39 @@
     const client = getContext<OpenChat>("client");
 
     function join() {
-        if (!incall && app.selectedChatSummary) {
-            publish("startVideoCall", { chat: app.selectedChatSummary, join: true });
+        if (!inCall && $selectedChatSummaryStore) {
+            publish("startVideoCall", {
+                chatId: $selectedChatSummaryStore.id,
+                callType: "broadcast",
+                join: true,
+            });
         }
     }
 
     function goto() {
-        if (app.selectedChatSummary?.videoCallInProgress !== undefined) {
+        if ($selectedChatSummaryStore?.videoCallInProgress !== undefined) {
             page(
                 routeForMessage(
-                    app.chatListScope.kind,
-                    { chatId: app.selectedChatSummary.id },
-                    app.selectedChatSummary?.videoCallInProgress.messageIndex,
+                    $chatListScopeStore.kind,
+                    { chatId: $selectedChatSummaryStore.id },
+                    $selectedChatSummaryStore?.videoCallInProgress.messageIndex,
                 ),
             );
         }
     }
     let hasCall = $derived(
-        app.selectedChatSummary !== undefined &&
-            app.selectedChatSummary.videoCallInProgress !== undefined,
+        $selectedChatSummaryStore !== undefined &&
+            $selectedChatSummaryStore.videoCallInProgress !== undefined,
     );
     let isPublic = $derived(
-        app.selectedChatSummary !== undefined && !client.isChatPrivate(app.selectedChatSummary),
+        $selectedChatSummaryStore !== undefined && !client.isChatPrivate($selectedChatSummaryStore),
     );
-    let incall = $derived(
+    let inCall = $derived(
         $activeVideoCall !== undefined &&
-            app.selectedChatSummary !== undefined &&
-            chatIdentifiersEqual($activeVideoCall.chatId, app.selectedChatSummary?.id),
+            $selectedChatSummaryStore !== undefined &&
+            chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatSummaryStore?.id),
     );
-    let show = $derived(hasCall && isPublic && !incall);
+    let show = $derived(hasCall && isPublic && !inCall);
 </script>
 
 {#if show}

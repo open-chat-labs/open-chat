@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { OpenChat, UserOrUserGroup } from "openchat-client";
-    import { app, AvatarSize } from "openchat-client";
+    import { AvatarSize, selectedCommunityMembersStore } from "openchat-client";
     import { getContext } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Avatar from "./Avatar.svelte";
@@ -25,7 +25,7 @@
     let displayName = $derived(
         userOrGroup.kind === "user_group" || userOrGroup.kind === "everyone"
             ? undefined
-            : client.getDisplayName(userOrGroup, app.selectedCommunity.members),
+            : client.getDisplayName(userOrGroup, $selectedCommunityMembersStore),
     );
 </script>
 

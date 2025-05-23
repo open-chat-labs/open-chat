@@ -1,2 +1,2 @@
-#[allow(non_snake_case)]
+#[expect(non_snake_case)]
 pub mod getProviderRules;

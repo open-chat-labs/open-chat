@@ -1,4 +1,4 @@
-use crate::guards::caller_is_group_index_canister;
+use crate::guards::caller_is_group_index;
 use crate::{CHILD_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION, RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -10,7 +10,7 @@ use local_user_index_canister::c2c_create_community::{Response::*, *};
 use types::{BuildVersion, CanisterId, CanisterWasm, CommunityCreatedEventPayload, CommunityId, Cycles, UserId, UserType};
 use utils::canister;
 
-#[update(guard = "caller_is_group_index_canister", msgpack = true)]
+#[update(guard = "caller_is_group_index", msgpack = true)]
 #[trace]
 async fn c2c_create_community(args: Args) -> Response {
     let prepare_ok = match mutate_state(|state| prepare(args, state)) {

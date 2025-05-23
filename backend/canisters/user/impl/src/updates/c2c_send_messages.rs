@@ -1,5 +1,5 @@
 use crate::updates::send_message::register_timer_jobs;
-use crate::{RuntimeState, mutate_state, read_state};
+use crate::{RuntimeState, UserEventPusher, execute_update_async, mutate_state, read_state};
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal, ValidateNewMessageContentResult};
 use ic_cdk::update;
@@ -14,6 +14,12 @@ use user_canister::{C2CReplyContext, MessageActivity, MessageActivityEvent};
 #[update]
 #[trace]
 async fn c2c_handle_bot_messages(
+    args: user_canister::c2c_handle_bot_messages::Args,
+) -> user_canister::c2c_handle_bot_messages::Response {
+    execute_update_async(|| c2c_handle_bot_messages_impl(args)).await
+}
+
+async fn c2c_handle_bot_messages_impl(
     args: user_canister::c2c_handle_bot_messages::Args,
 ) -> user_canister::c2c_handle_bot_messages::Response {
     let (sender_status, now) = read_state(|state| (get_sender_status(state), state.env.now()));
@@ -178,7 +184,11 @@ pub(crate) fn handle_message_impl(
         false,
         push_message_args,
         args.sender_message_index,
-        args.push_message_sent_event.then_some(&mut state.data.event_store_client),
+        args.push_message_sent_event.then_some(UserEventPusher {
+            now: args.now,
+            rng: state.env.rng(),
+            queue: &mut state.data.local_user_index_event_sync_queue,
+        }),
     );
 
     let content = &message_event.event.content;

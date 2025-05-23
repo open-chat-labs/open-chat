@@ -1,16 +1,14 @@
-use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::update_bot::*;
 use oc_error_codes::OCErrorCode;
-use types::{BotGroupConfig, OCResult};
+use types::{BotEvent, BotInstallationLocation, BotInstalledEvent, BotLifecycleEvent, BotNotification, OCResult};
 
 #[update(msgpack = true)]
 #[trace]
 fn update_bot(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| update_bot_impl(args, state)).into()
+    execute_update(|state| update_bot_impl(args, state)).into()
 }
 
 fn update_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
@@ -22,16 +20,28 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
+    let installed_by = member.user_id();
+
     if !state.data.update_bot(
-        member.user_id(),
+        installed_by,
         args.bot_id,
-        BotGroupConfig {
-            permissions: args.granted_permissions,
-        },
+        args.granted_permissions.clone(),
+        args.granted_autonomous_permissions.clone(),
         state.env.now(),
     ) {
         return Err(OCErrorCode::BotNotFound.into());
     }
+
+    state.push_bot_notification(BotNotification {
+        event: BotEvent::Lifecycle(BotLifecycleEvent::Installed(BotInstalledEvent {
+            installed_by,
+            location: BotInstallationLocation::Group(state.env.canister_id().into()),
+            api_gateway: state.data.local_user_index_canister_id,
+            granted_command_permissions: args.granted_permissions,
+            granted_autonomous_permissions: args.granted_autonomous_permissions.unwrap_or_default(),
+        })),
+        recipients: vec![args.bot_id],
+    });
 
     handle_activity_notification(state);
     Ok(())

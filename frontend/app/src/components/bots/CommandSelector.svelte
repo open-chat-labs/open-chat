@@ -2,14 +2,22 @@
     import type {
         ChatPermissions,
         ChatSummary,
-        CommunitySummary,
         ExternalBotPermissions,
         MessageContext,
         OpenChat,
         PermissionRole,
         ReadonlyMap,
     } from "openchat-client";
-    import { app, botState, isPermitted } from "openchat-client";
+    import {
+        botState,
+        directChatBotsStore,
+        isPermitted,
+        messagePermissionsForSelectedChatStore,
+        selectedChatBotsStore,
+        selectedChatSummaryStore,
+        selectedCommunityBotsStore,
+        threadPermissionsForSelectedChatStore,
+    } from "openchat-client";
     import { hasEveryRequiredPermission, random64, type FlattenedCommand } from "openchat-shared";
     import { getContext, onMount } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
@@ -39,11 +47,11 @@
     let installedBots = $derived.by(() => {
         switch (messageContext.chatId.kind) {
             case "channel":
-                return app.selectedCommunity.bots;
+                return $selectedCommunityBotsStore;
             case "direct_chat":
-                return app.directChatBots;
+                return $directChatBotsStore;
             default:
-                return app.selectedChat.bots;
+                return $selectedChatBotsStore;
         }
     });
 
@@ -52,12 +60,7 @@
             return (
                 restrictByBotIfNecessary(c) &&
                 restrictByChatIfNecessary(c) &&
-                hasPermissionForCommand(
-                    c,
-                    installedBots,
-                    app.selectedChatSummary,
-                    app.selectedCommunitySummary,
-                )
+                hasPermissionForCommand(c, installedBots, $selectedChatSummaryStore)
             );
         });
     });
@@ -79,16 +82,10 @@
     function userHasPermissionForCommand(
         command: FlattenedCommand,
         chat: ChatSummary | undefined,
-        community: CommunitySummary | undefined,
     ): boolean {
         const chatRolePermitted =
             chat !== undefined && chat.kind !== "direct_chat"
                 ? isPermitted(chat.membership.role, command.defaultRole)
-                : true;
-
-        const communityRolePermitted =
-            community !== undefined
-                ? isPermitted(community.membership.role, command.defaultRole)
                 : true;
 
         const chatPermitted =
@@ -103,35 +100,21 @@
                   )
                 : true;
 
-        const communityPermitted =
-            community !== undefined
-                ? [...command.permissions.communityPermissions].every((p) =>
-                      isPermitted(
-                          community.membership.role,
-                          community.permissions[p] as PermissionRole,
-                      ),
-                  )
-                : true;
-
         switch (mode) {
             case "message":
                 return (
                     chatRolePermitted &&
-                    communityRolePermitted &&
                     chatPermitted &&
-                    communityPermitted &&
                     [...command.permissions.messagePermissions].every((p) =>
-                        app.messagePermissionsForSelectedChat.has(p),
+                        $messagePermissionsForSelectedChatStore.has(p),
                     )
                 );
             case "thread":
                 return (
                     chatRolePermitted &&
-                    communityRolePermitted &&
                     chatPermitted &&
-                    communityPermitted &&
                     [...command.permissions.messagePermissions].every((p) =>
-                        app.threadPermissionsForSelectedChat.has(p),
+                        $threadPermissionsForSelectedChatStore.has(p),
                     )
                 );
         }
@@ -141,9 +124,8 @@
         command: FlattenedCommand,
         installedBots: ReadonlyMap<string, ExternalBotPermissions>,
         chat: ChatSummary | undefined,
-        community: CommunitySummary | undefined,
     ): boolean {
-        const userPermission = userHasPermissionForCommand(command, chat, community);
+        const userPermission = userHasPermissionForCommand(command, chat);
         if (command.kind === "external_bot") {
             // for an external bot we also need to know that the bot has been granted all the permissions it requires
             const granted = installedBots.get(command.botId);
@@ -164,7 +146,7 @@
     }
 
     function sendCommandIfValid() {
-        if (botState.selectedCommand && botState.instanceValid && app.selectedChatSummary) {
+        if (botState.selectedCommand && botState.instanceValid && $selectedChatSummaryStore) {
             client
                 .executeBotCommand(
                     {

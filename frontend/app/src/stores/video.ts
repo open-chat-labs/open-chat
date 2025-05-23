@@ -47,6 +47,7 @@ export type IncomingVideoCall = {
     chatId: ChatIdentifier;
     userId: string;
     messageId: bigint;
+    callType: VideoCallType;
 };
 
 export type VideoCallView = "fullscreen" | "minimised" | "default";

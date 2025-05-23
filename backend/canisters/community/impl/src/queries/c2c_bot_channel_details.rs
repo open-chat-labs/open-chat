@@ -23,7 +23,7 @@ fn c2c_bot_channel_details_impl(args: Args, state: &RuntimeState) -> OCResult<Ch
         &args.bot_id,
         Some(args.channel_id),
         &args.initiator,
-        BotPermissions::from_chat_permission(ChatPermission::ReadChatDetails),
+        &BotPermissions::from_chat_permission(ChatPermission::ReadChatDetails),
     ) {
         return Err(OCErrorCode::InitiatorNotFound.into());
     }

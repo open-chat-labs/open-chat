@@ -206,7 +206,7 @@ pub mod happy_path {
         }
     }
 
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn send_message(
         env: &mut PocketIc,
         sender: &User,
@@ -374,7 +374,7 @@ pub mod happy_path {
         }
     }
 
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn events(
         env: &PocketIc,
         sender: &User,
@@ -728,6 +728,7 @@ pub mod happy_path {
             &community_canister::update_bot::Args {
                 bot_id,
                 granted_permissions,
+                granted_autonomous_permissions: None,
             },
         );
 

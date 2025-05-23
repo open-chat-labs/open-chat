@@ -1,6 +1,13 @@
 <script lang="ts">
     import type { OpenChat, UserOrUserGroup } from "openchat-client";
-    import { app, AvatarSize, ui, userStore } from "openchat-client";
+    import {
+        allUsersStore,
+        AvatarSize,
+        currentUserIdStore,
+        iconSize,
+        mobileWidth,
+        selectedCommunityMembersStore,
+    } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import Avatar from "../Avatar.svelte";
@@ -88,7 +95,7 @@
         }
         return a.length < b.length ? -1 : 1;
     }
-    let itemHeight = $derived(ui.mobileWidth ? 53 : 55);
+    let itemHeight = $derived($mobileWidth ? 53 : 55);
     let borderWidth = $derived(direction === "up" ? 2 : 3);
     let maxHeight = $derived(
         direction === "down" ? `${3.2 * itemHeight + borderWidth}px` : "calc(var(--vh, 1vh) * 50)",
@@ -113,7 +120,7 @@
                     }
                     default:
                         return (
-                            (mentionSelf || userOrGroup.userId !== app.currentUserId) &&
+                            (mentionSelf || userOrGroup.userId !== $currentUserIdStore) &&
                             (prefixLower === undefined ||
                                 userOrGroup.username.toLowerCase().startsWith(prefixLower) ||
                                 userOrGroup.displayName?.toLowerCase().startsWith(prefixLower))
@@ -174,11 +181,11 @@
                                     <div class="group-icon">
                                         <AccountMultiple
                                             color={"var(--menu-disabled-txt)"}
-                                            size={ui.iconSize} />
+                                            size={$iconSize} />
                                     </div>
                                 {:else}
                                     <Avatar
-                                        url={client.userAvatarUrl(userStore.get(item.userId))}
+                                        url={client.userAvatarUrl($allUsersStore.get(item.userId))}
                                         userId={item.userId}
                                         size={AvatarSize.Small} />
                                 {/if}
@@ -196,7 +203,10 @@
                                     </span>
                                 {:else}
                                     <span class="display-name">
-                                        {client.getDisplayName(item, app.selectedCommunity.members)}
+                                        {client.getDisplayName(
+                                            item,
+                                            $selectedCommunityMembersStore,
+                                        )}
                                     </span>
                                     <span class="username">
                                         @{item.username}

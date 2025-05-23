@@ -13,8 +13,9 @@ use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReference
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
+use chat_events::EventPusher;
 use constants::{DAY_IN_MS, ICP_LEDGER_CANISTER_ID, LIFETIME_DIAMOND_TIMESTAMP, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
-use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
+use event_store_producer::{Event, EventBuilder, EventStoreClient, EventStoreClientBuilder};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use installed_bots::{BotApiKeys, InstalledBots};
@@ -26,9 +27,9 @@ use model::message_activity_events::MessageActivityEvents;
 use model::referrals::Referrals;
 use model::streak::Streak;
 use msgpack::serialize_then_unwrap;
-use notifications_canister_c2c_client::{NotificationPusherState, NotificationsBatch};
 use oc_error_codes::OCErrorCode;
 use rand::RngCore;
+use rand::prelude::StdRng;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
@@ -38,8 +39,8 @@ use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    Achievement, BotInitiator, BotPermissions, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned,
-    ChitEarnedReason, CommunityId, Cycles, Document, IdempotentEnvelope, Milliseconds, Notification, NotifyChit,
+    Achievement, BotInitiator, BotNotification, BotPermissions, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics,
+    ChitEarned, ChitEarnedReason, CommunityId, Cycles, Document, IdempotentEnvelope, Milliseconds, Notification, NotifyChit,
     TimestampMillis, Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment,
     UserId, UserNotification, UserNotificationPayload,
 };
@@ -119,14 +120,14 @@ impl RuntimeState {
     }
 
     pub fn push_notification(&mut self, sender: Option<UserId>, recipient: UserId, notification: UserNotificationPayload) {
-        self.data.notifications_queue.push(IdempotentEnvelope {
+        self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
             created_at: self.env.now(),
             idempotency_id: self.env.rng().next_u64(),
-            value: Notification::User(UserNotification {
+            value: local_user_index_canister::UserEvent::Notification(Notification::User(UserNotification {
                 sender,
                 recipients: vec![recipient],
                 notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
-            }),
+            })),
         })
     }
 
@@ -170,18 +171,20 @@ impl RuntimeState {
     }
 
     pub fn mark_streak_insurance_payment(&mut self, payment: UserCanisterStreakInsurancePayment) {
-        let user_id: UserId = self.env.canister_id().into();
-        let now = payment.timestamp;
         self.data.streak.mark_streak_insurance_payment(payment.clone());
-        self.data.event_store_client.push(
-            EventBuilder::new("user_streak_insurance_payment", payment.timestamp)
-                .with_user(user_id.to_string(), true)
-                .with_source(user_id.to_string(), true)
-                .with_json_payload(&payment)
-                .build(),
-        );
         self.set_up_streak_insurance_timer_job();
-        self.push_local_user_index_canister_event(LocalUserIndexEvent::NotifyStreakInsurancePayment(payment), now);
+        let user_id: UserId = self.env.canister_id().into();
+        let events = vec![
+            LocalUserIndexEvent::EventStoreEvent(
+                EventBuilder::new("user_streak_insurance_payment", payment.timestamp)
+                    .with_user(user_id.to_string(), true)
+                    .with_source(user_id.to_string(), true)
+                    .with_json_payload(&payment)
+                    .build(),
+            ),
+            LocalUserIndexEvent::NotifyStreakInsurancePayment(payment),
+        ];
+        self.push_local_user_index_canister_events(events, self.env.now());
     }
 
     pub fn mark_streak_insurance_claim(&mut self, claim: UserCanisterStreakInsuranceClaim) {
@@ -191,16 +194,17 @@ impl RuntimeState {
             reason: ChitEarnedReason::StreakInsuranceClaim,
         });
         let user_id: UserId = self.env.canister_id().into();
-        self.data.event_store_client.push(
-            EventBuilder::new("user_streak_insurance_claim", claim.timestamp)
-                .with_user(user_id.to_string(), true)
-                .with_source(user_id.to_string(), true)
-                .with_json_payload(&claim)
-                .build(),
-        );
-
-        let now = self.env.now();
-        self.push_local_user_index_canister_event(LocalUserIndexEvent::NotifyStreakInsuranceClaim(claim), now);
+        let events = vec![
+            LocalUserIndexEvent::EventStoreEvent(
+                EventBuilder::new("user_streak_insurance_claim", claim.timestamp)
+                    .with_user(user_id.to_string(), true)
+                    .with_source(user_id.to_string(), true)
+                    .with_json_payload(&claim)
+                    .build(),
+            ),
+            LocalUserIndexEvent::NotifyStreakInsuranceClaim(claim),
+        ];
+        self.push_local_user_index_canister_events(events, self.env.now());
     }
 
     pub fn set_up_streak_insurance_timer_job(&mut self) {
@@ -234,12 +238,31 @@ impl RuntimeState {
         false
     }
 
+    pub fn push_bot_notification(&mut self, notification: BotNotification, now: TimestampMillis) {
+        if !notification.recipients.is_empty() {
+            self.push_local_user_index_canister_event(LocalUserIndexEvent::Notification(Notification::Bot(notification)), now);
+        }
+    }
+
     pub fn push_local_user_index_canister_event(&mut self, event: LocalUserIndexEvent, now: TimestampMillis) {
         self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
             created_at: now,
             idempotency_id: self.env.rng().next_u64(),
             value: event,
         });
+    }
+
+    pub fn push_local_user_index_canister_events(&mut self, events: Vec<LocalUserIndexEvent>, now: TimestampMillis) {
+        self.data.local_user_index_event_sync_queue.push_many(
+            events
+                .into_iter()
+                .map(|event| IdempotentEnvelope {
+                    created_at: now,
+                    idempotency_id: self.env.rng().next_u64(),
+                    value: event,
+                })
+                .collect(),
+        );
     }
 
     pub fn award_achievements_and_notify(&mut self, achievements: Vec<Achievement>, now: TimestampMillis) {
@@ -318,9 +341,10 @@ impl RuntimeState {
             blocked_users: self.data.blocked_users.len() as u32,
             created: self.data.user_created,
             direct_chat_metrics: self.data.direct_chats.metrics().hydrate(),
-            event_store_client_info: self.data.event_store_client.info(),
             video_call_operators: self.data.video_call_operators.clone(),
             timer_jobs: self.data.timer_jobs.len() as u32,
+            queued_user_events: self.data.user_canister_events_queue.len() as u32,
+            queued_local_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
             chit_balance: self.data.chit_events.balance_for_month_by_timestamp(now),
             streak: self.data.streak.days(now),
             streak_ends: self.data.streak.ends(),
@@ -334,7 +358,6 @@ impl RuntimeState {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
-                notifications: self.data.notifications_canister_id,
                 escrow: self.data.escrow_canister_id,
                 icp_ledger: ICP_LEDGER_CANISTER_ID,
             },
@@ -376,7 +399,6 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
-    pub notifications_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Document>>,
     pub test_mode: bool,
@@ -399,6 +421,7 @@ struct Data {
     pub p2p_swaps: P2PSwaps,
     pub user_canister_events_queue: GroupedTimerJobQueue<UserCanisterEventBatch>,
     pub video_call_operators: Vec<Principal>,
+    #[deprecated]
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub pin_number: PinNumber,
     pub btc_address: Option<Timestamped<String>>,
@@ -418,17 +441,15 @@ struct Data {
     pub idempotency_checker: IdempotencyChecker,
     pub bots: InstalledBots,
     bot_api_keys: BotApiKeys,
-    notifications_queue: BatchedTimerJobQueue<NotificationsBatch>,
 }
 
 impl Data {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         owner: Principal,
         user_index_canister_id: CanisterId,
         local_user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
-        notifications_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
         video_call_operators: Vec<Principal>,
         username: String,
@@ -436,6 +457,7 @@ impl Data {
         referred_by: Option<UserId>,
         now: TimestampMillis,
     ) -> Data {
+        #[expect(deprecated)]
         Data {
             owner,
             direct_chats: DirectChats::default(),
@@ -446,7 +468,6 @@ impl Data {
             user_index_canister_id,
             local_user_index_canister_id,
             group_index_canister_id,
-            notifications_canister_id,
             escrow_canister_id,
             avatar: Timestamped::default(),
             test_mode,
@@ -467,7 +488,7 @@ impl Data {
             next_event_expiry: None,
             token_swaps: TokenSwaps::default(),
             p2p_swaps: P2PSwaps::default(),
-            user_canister_events_queue: GroupedTimerJobQueue::new(10, false),
+            user_canister_events_queue: GroupedTimerJobQueue::new(10, true),
             video_call_operators,
             event_store_client: EventStoreClientBuilder::new(local_user_index_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
@@ -486,16 +507,10 @@ impl Data {
             referrals: Referrals::default(),
             message_activity_events: MessageActivityEvents::default(),
             stable_memory_keys_to_garbage_collect: Vec::new(),
-            local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, false),
+            local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
             idempotency_checker: IdempotencyChecker::default(),
             bots: InstalledBots::default(),
             bot_api_keys: BotApiKeys::default(),
-            notifications_queue: BatchedTimerJobQueue::new(
-                NotificationPusherState {
-                    notifications_canister: notifications_canister_id,
-                },
-                false,
-            ),
         }
     }
 
@@ -569,10 +584,35 @@ impl Data {
                 None => return false,
             },
             BotInitiator::ApiKeyPermissions(permissions) => permissions,
+            BotInitiator::Autonomous => match bot.autonomous_permissions.as_ref() {
+                Some(permissions) => permissions,
+                None => return false,
+            },
         };
 
         // The permissions required must be a subset of the permissions granted to the bot
         required.is_subset(granted)
+    }
+
+    pub fn flush_pending_events(&mut self) {
+        self.user_canister_events_queue.flush();
+        self.local_user_index_event_sync_queue.flush();
+    }
+}
+
+struct UserEventPusher<'a> {
+    now: TimestampMillis,
+    rng: &'a mut StdRng,
+    queue: &'a mut BatchedTimerJobQueue<LocalUserIndexEventBatch>,
+}
+
+impl EventPusher for UserEventPusher<'_> {
+    fn push(&mut self, event: Event) {
+        self.queue.push(IdempotentEnvelope {
+            created_at: self.now,
+            idempotency_id: self.rng.next_u64(),
+            value: local_user_index_canister::UserEvent::EventStoreEvent(event),
+        })
     }
 }
 
@@ -591,9 +631,10 @@ pub struct Metrics {
     pub blocked_users: u32,
     pub created: TimestampMillis,
     pub direct_chat_metrics: ChatMetrics,
-    pub event_store_client_info: EventStoreClientInfo,
     pub video_call_operators: Vec<Principal>,
     pub timer_jobs: u32,
+    pub queued_user_events: u32,
+    pub queued_local_index_events: u32,
     pub chit_balance: i32,
     pub streak: u16,
     pub streak_ends: TimestampMillis,
@@ -606,8 +647,28 @@ pub struct Metrics {
     pub canister_ids: CanisterIds,
 }
 
+fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
+    mutate_state(|state| {
+        state.regular_jobs.run(state.env.deref(), &mut state.data);
+        let result = f(state);
+        state.data.flush_pending_events();
+        result
+    })
+}
+
+async fn execute_update_async<F: FnOnce() -> Fut, Fut: Future<Output = R>, R>(f: F) -> R {
+    run_regular_jobs();
+    let result = f().await;
+    flush_pending_events();
+    result
+}
+
 fn run_regular_jobs() {
     mutate_state(|state| state.regular_jobs.run(state.env.deref(), &mut state.data));
+}
+
+fn flush_pending_events() {
+    mutate_state(|state| state.data.flush_pending_events());
 }
 
 #[derive(Serialize, Debug)]
@@ -615,7 +676,6 @@ pub struct CanisterIds {
     pub user_index: CanisterId,
     pub group_index: CanisterId,
     pub local_user_index: CanisterId,
-    pub notifications: CanisterId,
     pub escrow: CanisterId,
     pub icp_ledger: CanisterId,
 }

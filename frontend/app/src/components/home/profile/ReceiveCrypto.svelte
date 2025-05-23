@@ -1,6 +1,12 @@
 <script lang="ts">
     import BitcoinAccountInfo from "@components/home/BitcoinAccountInfo.svelte";
-    import { app, BTC_SYMBOL, cryptoBalance, cryptoLookup, ui } from "openchat-client";
+    import {
+        BTC_SYMBOL,
+        cryptoBalanceStore,
+        cryptoLookup,
+        currentUserIdStore,
+        mobileWidth,
+    } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
@@ -20,7 +26,7 @@
 
     let error: string | undefined = $state(undefined);
 
-    let tokenDetails = $derived($cryptoLookup[ledger]);
+    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let symbol = $derived(tokenDetails.symbol);
     let title = $derived(i18nKey(`cryptoAccount.receiveToken`, { symbol }));
 
@@ -39,7 +45,7 @@
             <div class="main-title"><Translatable resourceKey={title} /></div>
             <BalanceWithRefresh
                 {ledger}
-                value={$cryptoBalance[ledger]}
+                value={$cryptoBalanceStore.get(ledger) ?? 0n}
                 label={i18nKey("cryptoAccount.shortBalanceLabel")}
                 bold
                 onRefreshed={onBalanceRefreshed}
@@ -49,7 +55,7 @@
     {#snippet body()}
         <form class="body">
             {#if symbol === BTC_SYMBOL}
-                <BitcoinAccountInfo qrSize={"larger"} centered userId={app.currentUserId} />
+                <BitcoinAccountInfo qrSize={"larger"} centered userId={$currentUserIdStore} />
             {:else}
                 <AccountInfo qrSize={"larger"} centered {ledger} />
             {/if}
@@ -61,7 +67,7 @@
     {#snippet footer()}
         <span>
             <ButtonGroup>
-                <Button tiny={ui.mobileWidth} onClick={onClose}
+                <Button tiny={$mobileWidth} onClick={onClose}
                     ><Translatable resourceKey={i18nKey("close")} /></Button>
             </ButtonGroup>
         </span>

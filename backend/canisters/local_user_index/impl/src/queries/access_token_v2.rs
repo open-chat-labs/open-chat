@@ -12,7 +12,7 @@ use types::c2c_can_issue_access_token::{
     StartVideoCallArgs,
 };
 use types::{
-    AccessTokenScope, BotActionByApiKeyClaims, BotActionByCommandClaims, BotApiKeyToken, BotCommand, BotCommandArg,
+    AutonomousBotScope, BotActionByApiKeyClaims, BotActionByCommandClaims, BotApiKeyToken, BotCommand, BotCommandArg,
     BotCommandArgValue, BotPermissions, Chat, GroupRole, JoinOrEndVideoCallClaims, StartVideoCallClaims, c2c_bot_api_key,
 };
 use utils::base64;
@@ -127,7 +127,7 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
 }
 
 struct PrepareResult {
-    scope: AccessTokenScope,
+    scope: AutonomousBotScope,
     access_type_args: AccessTypeArgs,
 }
 
@@ -196,7 +196,7 @@ fn prepare(args_outer: &ArgsInternal, state: &RuntimeState) -> Result<PrepareRes
 
     let result = match args_outer {
         ArgsInternal::StartVideoCall(args) => PrepareResult {
-            scope: AccessTokenScope::Chat(args.chat),
+            scope: AutonomousBotScope::Chat(args.chat),
             access_type_args: AccessTypeArgs::StartVideoCall(StartVideoCallArgs {
                 initiator: user_id,
                 call_type: args.call_type,
@@ -204,14 +204,14 @@ fn prepare(args_outer: &ArgsInternal, state: &RuntimeState) -> Result<PrepareRes
             }),
         },
         ArgsInternal::JoinVideoCall(args) => PrepareResult {
-            scope: AccessTokenScope::Chat(args.chat),
+            scope: AutonomousBotScope::Chat(args.chat),
             access_type_args: AccessTypeArgs::JoinVideoCall(JoinVideoCallArgs {
                 initiator: user_id,
                 is_diamond,
             }),
         },
         ArgsInternal::MarkVideoCallAsEnded(args) => PrepareResult {
-            scope: AccessTokenScope::Chat(args.chat),
+            scope: AutonomousBotScope::Chat(args.chat),
             access_type_args: AccessTypeArgs::MarkVideoCallAsEnded(MarkVideoCallAsEndedArgs { initiator: user_id }),
         },
         _ => unreachable!(),
@@ -239,7 +239,6 @@ fn build_token<T: Serialize>(token_type_name: String, custom_claims: T, state: &
     }
 }
 
-#[allow(clippy::large_enum_variant)]
 #[derive(Debug)]
 enum ArgsInternal {
     StartVideoCall(access_token_v2::StartVideoCallArgs),
@@ -284,12 +283,12 @@ impl ArgsInternal {
     }
 }
 
-async fn get_api_key(scope: AccessTokenScope, api_key_args: c2c_bot_api_key::Args) -> Result<String, Response> {
+async fn get_api_key(scope: AutonomousBotScope, api_key_args: c2c_bot_api_key::Args) -> Result<String, Response> {
     let response = match scope {
-        AccessTokenScope::Chat(Chat::Group(chat_id)) => {
+        AutonomousBotScope::Chat(Chat::Group(chat_id)) => {
             group_canister_c2c_client::c2c_bot_api_key(chat_id.into(), &api_key_args).await
         }
-        AccessTokenScope::Chat(Chat::Channel(community_id, channel_id)) => {
+        AutonomousBotScope::Chat(Chat::Channel(community_id, channel_id)) => {
             community_canister_c2c_client::c2c_bot_api_key(
                 community_id.into(),
                 &community_canister::c2c_bot_api_key::Args {
@@ -300,10 +299,10 @@ async fn get_api_key(scope: AccessTokenScope, api_key_args: c2c_bot_api_key::Arg
             )
             .await
         }
-        AccessTokenScope::Chat(Chat::Direct(chat_id)) => {
+        AutonomousBotScope::Chat(Chat::Direct(chat_id)) => {
             user_canister_c2c_client::c2c_bot_api_key(chat_id.into(), &api_key_args).await
         }
-        AccessTokenScope::Community(community_id) => {
+        AutonomousBotScope::Community(community_id) => {
             community_canister_c2c_client::c2c_bot_api_key(
                 community_id.into(),
                 &community_canister::c2c_bot_api_key::Args {
@@ -323,15 +322,15 @@ async fn get_api_key(scope: AccessTokenScope, api_key_args: c2c_bot_api_key::Arg
     }
 }
 
-async fn can_issue_access_token(scope: AccessTokenScope, access_type_args: &AccessTypeArgs) -> Result<(), Response> {
+async fn can_issue_access_token(scope: AutonomousBotScope, access_type_args: &AccessTypeArgs) -> Result<(), Response> {
     let c2c_response = match scope {
-        AccessTokenScope::Chat(Chat::Direct(chat_id)) => {
+        AutonomousBotScope::Chat(Chat::Direct(chat_id)) => {
             user_canister_c2c_client::c2c_can_issue_access_token_v2(chat_id.into(), access_type_args).await
         }
-        AccessTokenScope::Chat(Chat::Group(chat_id)) => {
+        AutonomousBotScope::Chat(Chat::Group(chat_id)) => {
             group_canister_c2c_client::c2c_can_issue_access_token_v2(chat_id.into(), access_type_args).await
         }
-        AccessTokenScope::Chat(Chat::Channel(community_id, channel_id)) => {
+        AutonomousBotScope::Chat(Chat::Channel(community_id, channel_id)) => {
             community_canister_c2c_client::c2c_can_issue_access_token(
                 community_id.into(),
                 &community_canister::c2c_can_issue_access_token::Args {
@@ -341,7 +340,7 @@ async fn can_issue_access_token(scope: AccessTokenScope, access_type_args: &Acce
             )
             .await
         }
-        AccessTokenScope::Community(community_id) => {
+        AutonomousBotScope::Community(community_id) => {
             community_canister_c2c_client::c2c_can_issue_access_token(
                 community_id.into(),
                 &community_canister::c2c_can_issue_access_token::Args {

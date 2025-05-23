@@ -7,7 +7,7 @@ import {
     type UserLookup,
     type UserSummary,
 } from "openchat-shared";
-import { localUpdates } from "../state/global";
+import { localUpdates } from "../state";
 import {
     addVoteToPoll,
     getMembersString,
@@ -105,7 +105,7 @@ function createUser(userId: string, username: string): UserSummary {
 
 describe("thread utils", () => {
     test("merge unconfirmed thread message into summary", () => {
-        localUpdates.clearUnconfirmed();
+        localUpdates.clearAll();
         localUpdates.addUnconfirmed(
             { chatId: { kind: "group_chat", groupId: "abc" }, threadRootMessageIndex: 1 },
             {

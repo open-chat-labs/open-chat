@@ -42,7 +42,7 @@ pub struct GroupMembers {
     latest_update_removed: TimestampMillis,
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 impl GroupMembers {
     pub fn new(creator_user_id: UserId, user_type: UserType, chat: MultiUserChat, now: TimestampMillis) -> GroupMembers {
         let member = GroupMemberInternal {
@@ -538,7 +538,6 @@ impl Members for GroupMembers {
     }
 }
 
-#[allow(clippy::large_enum_variant)]
 pub enum AddResult {
     Success(AddMemberSuccess),
     AlreadyInGroup,

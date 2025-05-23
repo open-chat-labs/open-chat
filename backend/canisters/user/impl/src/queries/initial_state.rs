@@ -41,8 +41,9 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
         .iter()
         .map(|(user_id, bot)| InstalledBotDetails {
             user_id: *user_id,
-            permissions: bot.permissions.clone(),
             added_by: bot.added_by,
+            permissions: bot.permissions.clone(),
+            autonomous_permissions: bot.autonomous_permissions.clone(),
         })
         .collect();
 

@@ -7,7 +7,15 @@
         OpenChat,
         TypersByKey,
     } from "openchat-client";
-    import { app, AvatarSize, byContext, ui, UserStatus, userStore } from "openchat-client";
+    import {
+        allUsersStore,
+        AvatarSize,
+        byContext,
+        iconSize,
+        mobileWidth,
+        selectedCommunitySummaryStore,
+        UserStatus,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
@@ -39,29 +47,29 @@
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         const someoneTyping = client.getTypingString(
             $_,
-            userStore.allUsers,
+            $allUsersStore,
             { chatId: chatSummary.id, threadRootMessageIndex },
             typing,
         );
 
-        const msgTxt = client.getContentAsText($_, rootEvent.event.content);
+        const msgTxt = rootEvent ? client.getContentAsText($_, rootEvent.event.content) : "";
         const subtext =
-            someoneTyping ?? (ui.mobileWidth ? `${$_("thread.title")}: ${msgTxt}` : msgTxt);
+            someoneTyping ?? ($mobileWidth ? `${$_("thread.title")}: ${msgTxt}` : msgTxt);
         if (chatSummary.kind === "direct_chat") {
             return {
-                title: ui.mobileWidth
-                    ? userStore.get(chatSummary.them.userId)?.username
+                title: $mobileWidth
+                    ? $allUsersStore.get(chatSummary.them.userId)?.username
                     : $_("thread.title"),
-                avatarUrl: client.userAvatarUrl(userStore.get(chatSummary.them.userId)),
+                avatarUrl: client.userAvatarUrl($allUsersStore.get(chatSummary.them.userId)),
                 userId: chatSummary.them.userId,
                 subtext,
                 typing: someoneTyping !== undefined,
             };
         }
         return {
-            title: ui.mobileWidth ? chatSummary.name : $_("thread.title"),
+            title: $mobileWidth ? chatSummary.name : $_("thread.title"),
             userStatus: UserStatus.None,
-            avatarUrl: client.groupAvatarUrl(chatSummary, app.selectedCommunitySummary),
+            avatarUrl: client.groupAvatarUrl(chatSummary, $selectedCommunitySummaryStore),
             userId: undefined,
             subtext,
             typing: someoneTyping !== undefined,
@@ -103,14 +111,14 @@
     </div>
     <div class="close" onclick={close}>
         <HoverIcon>
-            {#if ui.mobileWidth}
+            {#if $mobileWidth}
                 {#if $rtlStore}
-                    <ArrowRight size={ui.iconSize} color={"var(--icon-txt)"} />
+                    <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
                 {:else}
-                    <ArrowLeft size={ui.iconSize} color={"var(--icon-txt)"} />
+                    <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
                 {/if}
             {:else}
-                <Close size={ui.iconSize} color={"var(--icon-txt)"} />
+                <Close size={$iconSize} color={"var(--icon-txt)"} />
             {/if}
         </HoverIcon>
     </div>

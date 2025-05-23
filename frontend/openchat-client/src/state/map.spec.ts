@@ -40,14 +40,6 @@ describe("LocalMap", () => {
         map = new TestLocalMap();
     });
 
-    it("make sure that automatic undo works", () => {
-        map.addOrUpdate("a", "b");
-        expect(map.addedOrUpdated("a")).toBe(true);
-        expect(map.removed("a")).toBe(false);
-        vi.runAllTimers();
-        expect(map.addedOrUpdated("a")).toBe(false);
-    });
-
     it("make sure manual undo works", () => {
         const undo = map.addOrUpdate("a", "b");
         expect(map.addedOrUpdated("a")).toBe(true);

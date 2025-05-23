@@ -1,19 +1,22 @@
 use crate::guards::caller_is_owner;
 use crate::updates::update_btc_balance::BtcDepositOrWithdrawalEventPayload;
-use crate::{mutate_state, read_state, run_regular_jobs};
+use crate::{execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ckbtc_minter_canister::CKBTC_MINTER_CANISTER_ID;
 use constants::{CKBTC_LEDGER_CANISTER_ID, MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 use event_store_producer::EventBuilder;
+use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use oc_error_codes::OCErrorCode;
 use user_canister::withdraw_btc::{Response::*, *};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn withdraw_btc(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| withdraw_btc_impl(args)).await
+}
 
+async fn withdraw_btc_impl(args: Args) -> Response {
     if let Err(error) = mutate_state(|state| state.data.pin_number.verify(args.pin.as_deref(), state.env.now())) {
         return Error(error.into());
     }
@@ -54,12 +57,15 @@ async fn withdraw_btc(args: Args) -> Response {
             mutate_state(|state| {
                 let user_id_string = state.env.canister_id().to_string();
                 let now = state.env.now();
-                state.data.event_store_client.push(
-                    EventBuilder::new("btc_withdrawal", now)
-                        .with_user(user_id_string.clone(), true)
-                        .with_source(user_id_string, true)
-                        .with_json_payload(&BtcDepositOrWithdrawalEventPayload { amount: args.amount })
-                        .build(),
+                state.push_local_user_index_canister_event(
+                    LocalUserIndexEvent::EventStoreEvent(
+                        EventBuilder::new("btc_withdrawal", now)
+                            .with_user(user_id_string.clone(), true)
+                            .with_source(user_id_string, true)
+                            .with_json_payload(&BtcDepositOrWithdrawalEventPayload { amount: args.amount })
+                            .build(),
+                    ),
+                    now,
                 );
             });
             Success(result.block_index)

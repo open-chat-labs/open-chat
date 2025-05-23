@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::RecordProposalVoteResult;
@@ -8,9 +8,7 @@ use community_canister::register_proposal_vote_v2::{Response::*, *};
 #[update(msgpack = true)]
 #[trace]
 fn register_proposal_vote_v2(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| register_proposal_vote_impl(args, state))
+    execute_update(|state| register_proposal_vote_impl(args, state))
 }
 
 fn register_proposal_vote_impl(args: Args, state: &mut RuntimeState) -> Response {

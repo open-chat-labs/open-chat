@@ -27,32 +27,27 @@ export interface SetLike<V> {
     [Symbol.iterator](): IterableIterator<V>;
 }
 
-export type SetFactory = () => SetLike<Primitive>;
-
 export class SafeSet<V> {
     #isPrimitive: boolean;
     #serialise: (key: V) => Primitive;
     #deserialise: (key: Primitive) => V;
     #set: SetLike<Primitive>;
-    #setFactory: SetFactory;
 
     #newSet(): SafeSet<V> {
         return this.#isPrimitive
-            ? new SafeSet<V>(undefined, undefined, this.#setFactory)
-            : new SafeSet<V>(this.#serialise, this.#deserialise, this.#setFactory);
+            ? new SafeSet<V>(undefined, undefined)
+            : new SafeSet<V>(this.#serialise, this.#deserialise);
     }
 
     public constructor(
         serialiser?: (v: V) => Primitive,
         deserialiser?: (primitive: Primitive) => V,
-        setFactory?: SetFactory,
         set?: SetLike<Primitive>,
     ) {
         this.#isPrimitive = serialiser === undefined && deserialiser === undefined;
         this.#serialise = serialiser ?? defaultSerialiser;
         this.#deserialise = deserialiser ?? defaultDeserialiser;
-        this.#setFactory = setFactory ?? (() => new Set<Primitive>());
-        this.#set = set ?? (setFactory ? setFactory() : new Set<Primitive>());
+        this.#set = set ?? new Set<Primitive>();
     }
 
     clone(): SafeSet<V> {

@@ -1,4 +1,4 @@
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use types::ChatId;
@@ -7,9 +7,7 @@ use user_canister::c2c_mark_group_updated_for_user::{Response::*, *};
 #[update(msgpack = true)]
 #[trace]
 fn c2c_mark_group_updated_for_user(_args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(c2c_mark_group_updated_for_user_impl)
+    execute_update(c2c_mark_group_updated_for_user_impl)
 }
 
 fn c2c_mark_group_updated_for_user_impl(state: &mut RuntimeState) -> Response {

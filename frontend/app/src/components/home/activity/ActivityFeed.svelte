@@ -1,11 +1,12 @@
 <script lang="ts">
     import {
-        app,
+        activityFeedShowing,
+        iconSize,
+        messageActivitySummaryStore,
         messageContextToChatListScope,
         messageContextToString,
         OpenChat,
         routeForMessage,
-        ui,
         type MessageActivityEvent,
     } from "openchat-client";
     import page from "page";
@@ -26,7 +27,7 @@
     let selectedEventIndex = $state<number | undefined>();
     let latestTimestamp = $derived(activityEvents[0]?.timestamp ?? 0n);
     let uptodate = $derived.by(() => {
-        return app.messageActivitySummary.latestTimestamp <= latestTimestamp;
+        return $messageActivitySummaryStore.latestTimestamp <= latestTimestamp;
     });
 
     function loadActivity() {
@@ -65,14 +66,14 @@
 <SectionHeader slim border={false}>
     <div class="header">
         <div class="icon">
-            <BellRingOutline size={ui.iconSize} color={"var(--icon-txt)"} />
+            <BellRingOutline size={$iconSize} color={"var(--icon-txt)"} />
         </div>
         <div class="details">
             <h4 class="name"><Translatable resourceKey={i18nKey("activity.title")} /></h4>
         </div>
         <span class="menu">
-            <HoverIcon onclick={() => (ui.activityFeedShowing = false)}>
-                <Close size={ui.iconSize} color={"var(--icon-txt)"} />
+            <HoverIcon onclick={() => activityFeedShowing.set(false)}>
+                <Close size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </span>
     </div>

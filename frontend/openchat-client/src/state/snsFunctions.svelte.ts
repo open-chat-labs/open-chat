@@ -4,8 +4,8 @@ import { SvelteMap, SvelteSet } from "svelte/reactivity";
 const storageKeyPrefix = "sns_functions_";
 
 export class SnsFunctions {
-    private _functionsMap: SvelteMap<string, Map<number, NervousSystemFunction>>;
-    private _loaded: SvelteSet<string>;
+    private _functionsMap: Map<string, Map<number, NervousSystemFunction>>;
+    private _loaded: Set<string>;
 
     constructor() {
         this._functionsMap = new SvelteMap();
@@ -24,6 +24,13 @@ export class SnsFunctions {
         const functions = new Map(list.map((f): [number, NervousSystemFunction] => [f.id, f]));
         this._functionsMap.set(snsCanisterId, functions);
         this.toStorage(snsCanisterId);
+    }
+
+    clone(): SnsFunctions {
+        const clone = new SnsFunctions();
+        clone._functionsMap = new Map(this._functionsMap);
+        clone._loaded = new Set(this._loaded);
+        return clone;
     }
 
     private fromStorage(snsCanisterId: string) {

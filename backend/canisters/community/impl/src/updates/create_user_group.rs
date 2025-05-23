@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::create_user_group::{Response::*, *};
@@ -10,9 +10,7 @@ use utils::text_validation::{UsernameValidationError, validate_user_group_name};
 #[update(msgpack = true)]
 #[trace]
 fn create_user_group(args: Args) -> Response {
-    run_regular_jobs();
-
-    match mutate_state(|state| create_user_group_impl(args, state)) {
+    match execute_update(|state| create_user_group_impl(args, state)) {
         Ok(result) => Success(result),
         Err(error) => Error(error),
     }

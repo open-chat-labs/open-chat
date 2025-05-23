@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { pathState, ui } from "openchat-client";
+    import { locationStore, mobileWidth, querystringStore, toPixel } from "openchat-client";
     import Copy from "svelte-material-icons/ContentCopy.svelte";
     import { copyToClipboard, scrollToSection } from "../../utils/urls";
     import CollapsibleCard from "../CollapsibleCard.svelte";
@@ -13,18 +13,18 @@
     let width = $state(0);
     let linked: number | undefined = $state(undefined);
 
-    let padding = $derived(ui.mobileWidth ? 3 : 20);
-    let widthRatio = $derived(ui.mobileWidth ? 1 : 0.7);
-    let totalWidth = $derived((width - ui.toPixel(padding)) * widthRatio); // 160px * 2 = 320px of padding which is 20rems
-    let copySize = $derived(ui.mobileWidth ? "14px" : "16px");
+    let padding = $derived($mobileWidth ? 3 : 20);
+    let widthRatio = $derived($mobileWidth ? 1 : 0.7);
+    let totalWidth = $derived((width - toPixel(padding)) * widthRatio); // 160px * 2 = 320px of padding which is 20rems
+    let copySize = $derived($mobileWidth ? "14px" : "16px");
 
     function onCopyUrl(e: Event, section: string): void {
         e.stopPropagation();
-        copyToClipboard(`${window.location.origin}${pathState.location}?section=${section}`);
+        copyToClipboard(`${window.location.origin}${$locationStore}?section=${section}`);
     }
 
     $effect(() => {
-        const section = pathState.querystring.get("section");
+        const section = $querystringStore.get("section");
         if (section) {
             linked = scrollToSection(section);
         }

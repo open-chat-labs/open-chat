@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui } from "openchat-client";
+    import { iconSize, mobileWidth } from "openchat-client";
     import page from "page";
     import Menu from "svelte-material-icons/Menu.svelte";
     import HoverIcon from "../HoverIcon.svelte";
@@ -21,11 +21,11 @@
             <div class="logo-img"></div>
             <div class="name">OpenChat</div>
         </div>
-        {#if ui.mobileWidth}
+        {#if $mobileWidth}
             <MenuIcon position={"bottom"} align={"end"}>
                 {#snippet menuIcon()}
                     <HoverIcon>
-                        <Menu size={ui.iconSize} color={"var(--landing-txt)"} />
+                        <Menu size={$iconSize} color={"var(--landing-txt)"} />
                     </HoverIcon>
                 {/snippet}
                 {#snippet menuItems()}

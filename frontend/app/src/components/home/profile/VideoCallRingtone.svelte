@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ui } from "openchat-client";
+    import { iconSize } from "openchat-client";
     import { onMount } from "svelte";
     import PauseCircleOutline from "svelte-material-icons/PauseCircleOutline.svelte";
     import PlayCircleOutline from "svelte-material-icons/PlayCircleOutline.svelte";
@@ -57,9 +57,9 @@
             <div class="name">{ringtone.name}</div>
             <div onclick={togglePlay} class="play">
                 {#if ringtone.playing}
-                    <PauseCircleOutline size={ui.iconSize} color={"var(--icon-selected)"} />
+                    <PauseCircleOutline size={$iconSize} color={"var(--icon-selected)"} />
                 {:else}
-                    <PlayCircleOutline size={ui.iconSize} color={"var(--icon-txt)"} />
+                    <PlayCircleOutline size={$iconSize} color={"var(--icon-txt)"} />
                 {/if}
             </div>
         </div>

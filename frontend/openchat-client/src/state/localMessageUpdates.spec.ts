@@ -1,7 +1,8 @@
 import { type TipsReceived } from "openchat-shared";
 import { SvelteMap } from "svelte/reactivity";
 import { mergeLocalTips } from "../utils/chat";
-import { messageLocalUpdates, type LocalTipsReceived } from "./message/local.svelte";
+import { localUpdates } from "./localUpdates";
+import { messageLocalUpdates, type LocalTipsReceived } from "./message/localUpdates";
 
 type Message = {
     tips: TipsReceived;
@@ -9,41 +10,41 @@ type Message = {
 
 describe("adding tips locally", () => {
     beforeEach(() => {
-        messageLocalUpdates.clearAll();
+        localUpdates.clearAll();
     });
 
     test("add a local tip", () => {
-        messageLocalUpdates.markTip(123n, "ledger1", "user1", 456n);
-        const tips = messageLocalUpdates.get(BigInt(123))?.tips;
+        localUpdates.markTip(123n, "ledger1", "user1", 456n);
+        const tips = messageLocalUpdates.value.get(BigInt(123))?.tips;
         expect(tips?.get("ledger1")?.get("user1")).toEqual(456n);
     });
 
     test("adding two local tips on the same ledger", () => {
-        messageLocalUpdates.markTip(123n, "ledger1", "user1", 456n);
-        messageLocalUpdates.markTip(123n, "ledger1", "user1", 100n);
-        const tips = messageLocalUpdates.get(BigInt(123))?.tips;
+        localUpdates.markTip(123n, "ledger1", "user1", 456n);
+        localUpdates.markTip(123n, "ledger1", "user1", 100n);
+        const tips = messageLocalUpdates.value.get(BigInt(123))?.tips;
         expect(tips?.get("ledger1")?.get("user1")).toEqual(556n);
     });
 
     test("adding two local tips on the different ledger", () => {
-        messageLocalUpdates.markTip(123n, "ledger1", "user1", 456n);
-        messageLocalUpdates.markTip(123n, "ledger2", "user1", 100n);
-        const tips = messageLocalUpdates.get(BigInt(123))?.tips;
+        localUpdates.markTip(123n, "ledger1", "user1", 456n);
+        localUpdates.markTip(123n, "ledger2", "user1", 100n);
+        const tips = messageLocalUpdates.value.get(BigInt(123))?.tips;
         expect(tips?.get("ledger1")?.get("user1")).toEqual(456n);
         expect(tips?.get("ledger2")?.get("user1")).toEqual(100n);
     });
 
     test("reverting a tip", () => {
-        messageLocalUpdates.markTip(123n, "ledger1", "user1", 456n);
-        messageLocalUpdates.markTip(123n, "ledger1", "user1", -456n);
-        const tips = messageLocalUpdates.get(BigInt(123))?.tips;
+        localUpdates.markTip(123n, "ledger1", "user1", 456n);
+        localUpdates.markTip(123n, "ledger1", "user1", -456n);
+        const tips = messageLocalUpdates.value.get(BigInt(123))?.tips;
         expect(tips?.get("ledger1")).toBeUndefined();
     });
 });
 
 describe("merging local tips", () => {
     beforeEach(() => {
-        messageLocalUpdates.clearAll();
+        localUpdates.clearAll();
     });
     test("no existing local updates", () => {
         const existing: Message = { tips: {} };
@@ -53,7 +54,7 @@ describe("merging local tips", () => {
     });
     test("adding nothing leaves things unchanged", () => {
         const existing: Message = { tips: { ledger1: { user1: 123n } } };
-        const local = new SvelteMap() as LocalTipsReceived;
+        const local = new Map() as LocalTipsReceived;
         const merged = mergeLocalTips(existing.tips, local);
         expect(merged).toMatchObject({
             ledger1: { user1: 123n },

@@ -14,10 +14,6 @@ import {
     OPENCHAT_VIDEO_CALL_USERNAME,
 } from "openchat-shared";
 import { AIRDROP_BOT_USER_ID } from "../constants";
-import { createDummyStore } from "./dummyStore";
-
-export const dummyCurrentUser = createDummyStore();
-export const dummyUserStore = createDummyStore();
 
 export const airdropBotUser: UserSummary = {
     kind: "bot",

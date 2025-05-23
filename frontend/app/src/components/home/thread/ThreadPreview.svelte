@@ -1,17 +1,21 @@
 <script lang="ts">
     import {
-        app,
+        allUsersStore,
         AvatarSize,
+        chatListScopeStore,
+        chatSummariesStore,
+        currentUserIdStore,
         type EventWrapper,
         type Message,
+        messagesRead,
         type MultiUserChat,
         OpenChat,
         routeForChatIdentifier,
+        selectedCommunitySummaryStore,
         type ThreadPreview,
-        userStore,
     } from "openchat-client";
     import page from "page";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
     import { pop } from "../../../utils/transition";
@@ -34,7 +38,7 @@
 
     let missingMessages = $derived(thread.totalReplies - thread.latestReplies.length);
     let threadRootMessageIndex = $derived(thread.rootMessage.event.messageIndex);
-    let chat = $derived(app.chatSummaries.get(thread.chatId) as MultiUserChat | undefined);
+    let chat = $derived($chatSummariesStore.get(thread.chatId) as MultiUserChat | undefined);
     let muted = $derived(chat?.membership?.notificationsMuted || false);
     let syncDetails = $derived(
         chat?.membership?.latestThreads?.find(
@@ -52,7 +56,19 @@
     );
     let chatData = $derived({
         name: chat?.name,
-        avatarUrl: client.groupAvatarUrl(chat, app.selectedCommunitySummary),
+        avatarUrl: client.groupAvatarUrl(chat, $selectedCommunitySummaryStore),
+    });
+
+    onMount(() => {
+        return messagesRead.subscribe(() => {
+            if (syncDetails !== undefined) {
+                unreadCount = client.unreadThreadMessageCount(
+                    thread.chatId,
+                    threadRootMessageIndex,
+                    syncDetails.latestMessageIndex,
+                );
+            }
+        });
     });
 
     let grouped = $derived(client.groupBySender(thread.latestReplies));
@@ -81,7 +97,7 @@
 
     function selectThread() {
         page(
-            `${routeForChatIdentifier(app.chatListScope.kind, thread.chatId)}/${
+            `${routeForChatIdentifier($chatListScopeStore.kind, thread.chatId)}/${
                 thread.rootMessage.event.messageIndex
             }?open=true`,
         );
@@ -133,7 +149,7 @@
                 <div class="body">
                     <div class="root-msg">
                         <ChatMessage
-                            sender={userStore.get(thread.rootMessage.event.sender)}
+                            sender={$allUsersStore.get(thread.rootMessage.event.sender)}
                             focused={false}
                             {observer}
                             accepted
@@ -143,7 +159,7 @@
                             readByMe
                             chatId={thread.chatId}
                             chatType={chat.kind}
-                            me={thread.rootMessage.event.sender === app.currentUserId}
+                            me={thread.rootMessage.event.sender === $currentUserIdStore}
                             first
                             last
                             readonly
@@ -177,7 +193,7 @@
                     {#each grouped as userGroup}
                         {#each userGroup as evt, i (evt.event.messageId)}
                             <ChatMessage
-                                sender={userStore.get(evt.event.sender)}
+                                sender={$allUsersStore.get(evt.event.sender)}
                                 focused={false}
                                 {observer}
                                 accepted
@@ -187,7 +203,7 @@
                                 readByMe
                                 chatId={thread.chatId}
                                 chatType={chat.kind}
-                                me={evt.event.sender === app.currentUserId}
+                                me={evt.event.sender === $currentUserIdStore}
                                 first={i === 0}
                                 last={i === userGroup.length - 1}
                                 readonly

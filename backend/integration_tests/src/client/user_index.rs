@@ -324,7 +324,7 @@ pub mod happy_path {
         }
     }
 
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn update_bot(
         env: &mut PocketIc,
         user_index_canister_id: CanisterId,

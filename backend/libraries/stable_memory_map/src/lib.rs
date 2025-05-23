@@ -63,10 +63,10 @@ pub trait StableMemoryMap<KeyPrefix: crate::KeyPrefix, Value> {
         Some(removed)
     }
 
-    #[allow(unused_variables)]
+    #[expect(unused_variables)]
     fn on_inserted(&mut self, key: &KeyPrefix::Suffix, existing: &Option<LazyValue<KeyPrefix::Suffix, Value>>) {}
 
-    #[allow(unused_variables)]
+    #[expect(unused_variables)]
     fn on_removed(&mut self, key: &KeyPrefix::Suffix, removed: &LazyValue<KeyPrefix::Suffix, Value>) {}
 }
 

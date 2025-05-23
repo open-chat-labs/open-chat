@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{GroupEventPusher, RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::TipMessageArgs;
@@ -11,9 +11,7 @@ use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 #[update(msgpack = true)]
 #[trace]
 fn c2c_tip_message(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| c2c_tip_message_impl(args, state)).into()
+    execute_update(|state| c2c_tip_message_impl(args, state)).into()
 }
 
 fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
@@ -33,10 +31,14 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         now,
     };
 
-    state
-        .data
-        .chat
-        .tip_message(tip_message_args, &mut state.data.event_store_client)?;
+    state.data.chat.tip_message(
+        tip_message_args,
+        GroupEventPusher {
+            now,
+            rng: state.env.rng(),
+            queue: &mut state.data.local_user_index_event_sync_queue,
+        },
+    )?;
 
     if let Some((message, event_index)) =
         state

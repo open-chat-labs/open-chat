@@ -3,12 +3,10 @@ import {
     SafeSet,
     type ChatIdentifier,
     type CommunityIdentifier,
-    type MessageContext,
     type Primitive,
     type ReadonlyMap,
 } from "openchat-shared";
-import { SvelteMap, SvelteSet } from "svelte/reactivity";
-import { scheduleUndo, type UndoLocalUpdate } from "./undo";
+import { type UndoLocalUpdate } from "./undo";
 
 export class LocalMap<K, V> {
     #addedOrUpdated: SafeMap<K, V>;
@@ -18,8 +16,8 @@ export class LocalMap<K, V> {
         private serialiser?: (k: K) => Primitive,
         private deserialiser?: (p: Primitive) => K,
     ) {
-        this.#addedOrUpdated = new SafeMap(serialiser, deserialiser, () => new SvelteMap());
-        this.#removed = new SafeSet(serialiser, deserialiser, () => new SvelteSet());
+        this.#addedOrUpdated = new SafeMap(serialiser, deserialiser);
+        this.#removed = new SafeSet(serialiser, deserialiser);
     }
 
     // for testing
@@ -41,24 +39,30 @@ export class LocalMap<K, V> {
     addOrUpdate(key: K, value: V): UndoLocalUpdate {
         this.#addedOrUpdated.set(key, value);
         const removed = this.#removed.delete(key);
-        return scheduleUndo(() => {
+        return () => {
             this.#addedOrUpdated.delete(key);
             if (removed) {
                 this.#removed.add(key);
             }
-        });
+        };
+    }
+
+    // This is very rarely needed - you probably don't need this
+    undoRemove(key: K) {
+        this.#removed.delete(key);
+        return () => {};
     }
 
     remove(key: K) {
         this.#removed.add(key);
         const previous = this.#addedOrUpdated.get(key);
         this.#addedOrUpdated.delete(key);
-        return scheduleUndo(() => {
+        return () => {
             this.#removed.delete(key);
             if (previous) {
                 this.#addedOrUpdated.set(key, previous);
             }
-        });
+        };
     }
 
     apply(original: ReadonlyMap<K, V>): ReadonlyMap<K, V> {
@@ -71,46 +75,6 @@ export class LocalMap<K, V> {
         this.#addedOrUpdated.forEach((v, k) => merged.set(k, v));
         this.#removed.forEach((k) => merged.delete(k));
         return merged;
-    }
-}
-
-export class ReactiveCommunityMap<V> extends SafeMap<CommunityIdentifier, V> {
-    constructor() {
-        super(
-            (id) => id.communityId,
-            (k) => ({ kind: "community", communityId: String(k) }),
-            () => new SvelteMap(),
-        );
-    }
-}
-
-export class ReactiveMessageMap<V> extends SafeMap<bigint, V> {
-    constructor() {
-        super(
-            (k) => k.toString(),
-            (k) => BigInt(k),
-            () => new SvelteMap(),
-        );
-    }
-}
-
-export class ReactiveChatMap<V> extends SafeMap<ChatIdentifier, V> {
-    constructor() {
-        super(
-            (id) => JSON.stringify(id),
-            (k) => JSON.parse(String(k)) as ChatIdentifier,
-            () => new SvelteMap(),
-        );
-    }
-}
-
-export class ReactiveMessageContextMap<V> extends SafeMap<MessageContext, V> {
-    constructor() {
-        super(
-            (k) => JSON.stringify(k),
-            (k) => JSON.parse(String(k)) as MessageContext,
-            () => new SvelteMap(),
-        );
     }
 }
 

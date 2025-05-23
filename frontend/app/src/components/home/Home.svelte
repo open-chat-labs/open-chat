@@ -25,20 +25,36 @@
         UpdatedRules,
     } from "openchat-client";
     import {
-        app,
+        allUsersStore,
+        anonUserStore,
         chatIdentifiersEqual,
+        chatListScopeStore,
+        chatsInitialisedStore,
+        chatSummariesListStore,
+        chatSummariesStore,
+        communitiesStore,
+        currentUserStore,
         defaultChatRules,
+        dimensions,
+        fullWidth,
+        identityStateStore,
         localUpdates,
         nullMembership,
+        offlineStore,
         pageRedirect,
         pageReplace,
-        pathState,
+        pinNumberResolverStore,
+        querystringStore,
+        rightPanelHistory,
         routeForChatIdentifier,
         routeForScope,
+        routeStore,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
+        selectedChatIdStore,
+        selectedChatSummaryStore,
+        selectedCommunityRulesStore,
         subscribe,
-        ui,
-        userStore,
+        suspendedUserStore,
     } from "openchat-client";
     import page from "page";
     import { getContext, onMount, tick, untrack } from "svelte";
@@ -204,7 +220,7 @@
             subscribe("successfulImport", successfulImport),
             subscribe("showProposalFilters", showProposalFilters),
             subscribe("convertGroupToCommunity", convertGroupToCommunity),
-            subscribe("clearSelection", () => page(routeForScope(app.chatListScope))),
+            subscribe("clearSelection", () => page(routeForScope($chatListScopeStore))),
             subscribe("editGroup", editGroup),
             subscribe("userSuspensionChanged", () => window.location.reload()),
             subscribe("selectedChatInvalid", selectedChatInvalid),
@@ -224,7 +240,7 @@
         client.initialiseNotifications();
         document.body.addEventListener("profile-clicked", profileClicked);
 
-        if (app.suspendedUser) {
+        if ($suspendedUserStore) {
             modal = { kind: "suspended" };
         }
 
@@ -306,10 +322,10 @@
         untrack(async () => {
             // wait until we have loaded the chats
             if (initialised) {
-                ui.filterRightPanelHistory((state) => state.kind !== "community_filters");
+                client.filterRightPanelHistory((state) => state.kind !== "community_filters");
                 if (
-                    app.anonUser &&
-                    pathState.isChatListRoute(route) &&
+                    $anonUserStore &&
+                    client.isChatListRoute(route) &&
                     (route.scope.kind === "direct_chat" || route.scope.kind === "favourite")
                 ) {
                     client.updateIdentityState({ kind: "logging_in" });
@@ -321,13 +337,13 @@
                     return;
                 }
 
-                if (pathState.isHomeRoute(route)) {
+                if (client.isHomeRoute(route)) {
                     filterChatSpecificRightPanelStates();
-                } else if (pathState.isCommunitiesRoute(route)) {
-                    ui.rightPanelHistory = ui.fullWidth ? [{ kind: "community_filters" }] : [];
+                } else if (client.isCommunitiesRoute(route)) {
+                    rightPanelHistory.set($fullWidth ? [{ kind: "community_filters" }] : []);
                 } else {
                     // any other route with no associated chat therefore we must clear any selected chat and potentially close the right panel
-                    if (pathState.isShareRoute(route)) {
+                    if (client.isShareRoute(route)) {
                         share = {
                             title: route.title,
                             text: route.text,
@@ -349,7 +365,7 @@
     // Note: very important (and hacky) that this is hidden in a function rather than inline in the top level reactive
     // statement because we don't want that reactive statement to execute in reponse to changes in rightPanelHistory :puke:
     function filterChatSpecificRightPanelStates() {
-        ui.filterRightPanelHistory((panel) => panel.kind === "user_profile");
+        client.filterRightPanelHistory((panel) => panel.kind === "user_profile");
     }
 
     function leaderboard() {
@@ -411,12 +427,12 @@
                 return leaveCommunity(confirmActionEvent.communityId);
             case "delete_community":
                 return deleteCommunity(confirmActionEvent.communityId).then((_) => {
-                    ui.rightPanelHistory = [];
+                    rightPanelHistory.set([]);
                 });
             case "delete":
                 return deleteGroup(confirmActionEvent.chatId, confirmActionEvent.level).then(
                     (_) => {
-                        ui.rightPanelHistory = [];
+                        rightPanelHistory.set([]);
                         confirmActionEvent.after?.();
                     },
                 );
@@ -429,14 +445,14 @@
         if (chatId.kind === "channel") {
             page(`/community/${chatId.communityId}`);
         } else {
-            page(routeForScope(app.chatListScope));
+            page(routeForScope($chatListScopeStore));
         }
         return client.deleteGroup(chatId).then((success) => {
             if (success) {
                 toastStore.showSuccessToast(i18nKey("deleteGroupSuccess", undefined, level));
             } else {
                 toastStore.showFailureToast(i18nKey("deleteGroupFailure", undefined, level, true));
-                page(routeForChatIdentifier(app.chatListScope.kind, chatId));
+                page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
             }
         });
     }
@@ -468,7 +484,7 @@
     }
 
     function leaveGroup(chatId: MultiUserChatIdentifier, level: Level): Promise<void> {
-        page(routeForScope(app.chatListScope));
+        page(routeForScope($chatListScopeStore));
 
         client.leaveGroup(chatId).then((resp) => {
             if (resp !== "success") {
@@ -479,7 +495,7 @@
                         i18nKey("failedToLeaveGroup", undefined, level, true),
                     );
                 }
-                page(routeForChatIdentifier(app.chatListScope.kind, chatId));
+                page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
             }
         });
 
@@ -487,19 +503,19 @@
     }
 
     function chatWith(chatId: DirectChatIdentifier) {
-        const chat = app.chatSummariesList.find((c) => {
+        const chat = $chatSummariesListStore.find((c) => {
             return c.kind === "direct_chat" && c.them === chatId;
         });
 
-        page(routeForChatIdentifier(chat ? app.chatListScope.kind : "direct_chat", chatId));
+        page(routeForChatIdentifier(chat ? $chatListScopeStore.kind : "direct_chat", chatId));
     }
 
     function showInviteGroupUsers(show: boolean) {
-        if (app.selectedChatId !== undefined) {
+        if ($selectedChatIdStore !== undefined) {
             if (show) {
-                ui.rightPanelHistory = [{ kind: "invite_group_users" }];
+                rightPanelHistory.set([{ kind: "invite_group_users" }]);
             } else {
-                ui.pushRightPanelHistory({ kind: "invite_group_users" });
+                client.pushRightPanelHistory({ kind: "invite_group_users" });
             }
         }
     }
@@ -507,7 +523,7 @@
     function replyPrivatelyTo(context: EnhancedReplyContext) {
         if (context.sender === undefined) return;
 
-        const chat = app.chatSummariesList.find((c) => {
+        const chat = $chatSummariesListStore.find((c) => {
             return (
                 c.kind === "direct_chat" &&
                 chatIdentifiersEqual(c.them, {
@@ -521,7 +537,7 @@
         localUpdates.draftMessages.setTextContent({ chatId }, "");
         localUpdates.draftMessages.setReplyingTo({ chatId }, context);
         if (chat) {
-            page(routeForChatIdentifier(app.chatListScope.kind, chatId));
+            page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
         } else {
             createDirectChat(chatId as DirectChatIdentifier);
         }
@@ -533,34 +549,34 @@
     }
 
     function showGroupMembers() {
-        if (app.selectedChatId !== undefined) {
-            ui.rightPanelHistory = [{ kind: "show_group_members" }];
+        if ($selectedChatIdStore !== undefined) {
+            rightPanelHistory.set([{ kind: "show_group_members" }]);
         }
     }
 
     function showProfile() {
-        if (app.selectedChatId !== undefined) {
-            pageReplace(routeForChatIdentifier(app.chatListScope.kind, app.selectedChatId));
+        if ($selectedChatIdStore !== undefined) {
+            pageReplace(routeForChatIdentifier($chatListScopeStore.kind, $selectedChatIdStore));
         }
-        ui.rightPanelHistory = [{ kind: "user_profile" }];
+        rightPanelHistory.set([{ kind: "user_profile" }]);
     }
 
     function communityDetails(_: CommunitySummary) {
         // what do we do here if the community is not selected
         // do we select it?
-        if (app.chatListScope.kind === "community") {
-            ui.rightPanelHistory = [{ kind: "community_details" }];
+        if ($chatListScopeStore.kind === "community") {
+            rightPanelHistory.set([{ kind: "community_details" }]);
         }
     }
 
     function showProposalFilters() {
-        if (app.selectedChatId !== undefined) {
-            pageReplace(routeForChatIdentifier(app.chatListScope.kind, app.selectedChatId));
-            ui.rightPanelHistory = [
+        if ($selectedChatIdStore !== undefined) {
+            pageReplace(routeForChatIdentifier($chatListScopeStore.kind, $selectedChatIdStore));
+            rightPanelHistory.set([
                 {
                     kind: "proposal_filters",
                 },
-            ];
+            ]);
         }
     }
 
@@ -571,7 +587,7 @@
     }
 
     async function joinGroup(detail: { group: MultiUserChat; select: boolean }): Promise<void> {
-        if (app.anonUser) {
+        if ($anonUserStore) {
             client.updateIdentityState({
                 kind: "logging_in",
                 postLogin: { kind: "join_group", ...detail },
@@ -583,7 +599,7 @@
         // it's possible that we got here via a postLogin capture in which case it's possible
         // that we are actually already a member of this group, so we should double check here
         // that we actually *need* to join the group
-        let chat = app.chatSummaries.get(group.id);
+        let chat = $chatSummariesStore.get(group.id);
         if (chat === undefined || chat.membership.role === "none" || client.isLapsed(chat.id)) {
             doJoinGroup(group, select, undefined);
         }
@@ -652,7 +668,7 @@
                     joining = undefined;
                 } else if (select) {
                     joining = undefined;
-                    page(routeForChatIdentifier(app.chatListScope.kind, group.id));
+                    page(routeForChatIdentifier($chatListScopeStore.kind, group.id));
                 } else {
                     joining = undefined;
                 }
@@ -680,12 +696,12 @@
     }
 
     function forwardToChat(chatId: ChatIdentifier) {
-        page(routeForChatIdentifier(app.chatListScope.kind, chatId));
+        page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
         messageToForwardStore.set(messageToForward);
     }
 
     function shareWithChat(chatId: ChatIdentifier) {
-        page(routeForChatIdentifier(app.chatListScope.kind, chatId));
+        page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
 
         const shareText = share.text ?? "";
         const shareTitle = share.title ?? "";
@@ -712,12 +728,12 @@
     }
 
     function newGroup(level: Level = "group", embeddedContent: boolean = false) {
-        if (level === "channel" && app.chatListScope.kind !== "community") {
+        if (level === "channel" && $chatListScopeStore.kind !== "community") {
             return;
         }
         const id: MultiUserChatIdentifier =
-            level === "channel" && app.chatListScope.kind === "community"
-                ? { kind: "channel", communityId: app.chatListScope.id.communityId, channelId: 0 }
+            level === "channel" && $chatListScopeStore.kind === "community"
+                ? { kind: "channel", communityId: $chatListScopeStore.id.communityId, channelId: 0 }
                 : { kind: "group_chat", groupId: "" };
 
         modal = {
@@ -820,7 +836,7 @@
     }
 
     function createCommunity() {
-        const maxIndex = app.communities.reduce(
+        const maxIndex = $communitiesStore.reduce(
             (m, [_, c]) => (c.membership.index > m ? c.membership.index : m),
             0,
         );
@@ -835,12 +851,12 @@
         modal = {
             kind: "edit_community",
             community,
-            communityRules: app.selectedCommunity.rules ?? defaultChatRules("community"),
+            communityRules: $selectedCommunityRulesStore ?? defaultChatRules("community"),
         };
     }
 
     function convertGroupToCommunity(group: GroupChatSummary) {
-        ui.rightPanelHistory = [];
+        rightPanelHistory.set([]);
         convertGroup = group;
     }
 
@@ -871,12 +887,12 @@
 
     function onPinNumberComplete(pin: string | undefined) {
         if (pin) {
-            app.pinNumberResolver?.resolve(pin);
+            $pinNumberResolverStore?.resolve(pin);
         }
     }
 
     function onPinNumberClose() {
-        app.pinNumberResolver?.reject();
+        $pinNumberResolverStore?.reject();
     }
 
     function verifyHumanity() {
@@ -889,9 +905,9 @@
 
     let confirmMessage = $derived(getConfirmMessage(confirmActionEvent));
     let selectedMultiUserChat = $derived(
-        app.selectedChatSummary?.kind === "group_chat" ||
-            app.selectedChatSummary?.kind === "channel"
-            ? app.selectedChatSummary
+        $selectedChatSummaryStore?.kind === "group_chat" ||
+            $selectedChatSummaryStore?.kind === "channel"
+            ? $selectedChatSummaryStore
             : undefined,
     );
     let governanceCanisterId = $derived(
@@ -903,68 +919,68 @@
     // $: nervousSystem = client.tryGetNervousSystem("rrkah-fqaaa-aaaaa-aaaaq-cai");
 
     trackedEffect("identity-state", () => {
-        if (app.identityState.kind === "registering") {
+        if ($identityStateStore.kind === "registering") {
             modal = { kind: "registering" };
-        } else if (app.identityState.kind === "logging_in") {
+        } else if ($identityStateStore.kind === "logging_in") {
             modal = { kind: "logging_in" };
-        } else if (app.identityState.kind === "logged_in" && modal.kind === "registering") {
+        } else if ($identityStateStore.kind === "logged_in" && modal.kind === "registering") {
             console.log("We are now logged in so we are closing the register modal");
             closeModal();
-        } else if (app.identityState.kind === "challenging") {
+        } else if ($identityStateStore.kind === "challenging") {
             modal = { kind: "challenge" };
         }
         if (
-            app.identityState.kind === "logged_in" &&
-            app.identityState.postLogin?.kind === "join_group" &&
-            app.chatsInitialised
+            $identityStateStore.kind === "logged_in" &&
+            $identityStateStore.postLogin?.kind === "join_group" &&
+            $chatsInitialisedStore
         ) {
-            const join = { ...app.identityState.postLogin };
+            const join = { ...$identityStateStore.postLogin };
             client.clearPostLoginState();
             tick().then(() => joinGroup(join));
         }
     });
 
     trackedEffect("route-change", () => {
-        routeChange(app.chatsInitialised, pathState.route);
+        routeChange($chatsInitialisedStore, $routeStore);
     });
 
     $effect(() => {
-        if (app.chatsInitialised) {
-            if (pathState.querystring.get("diamond") !== null) {
+        if ($chatsInitialisedStore) {
+            if ($querystringStore.get("diamond") !== null) {
                 showUpgrade = true;
                 pageReplace(removeQueryStringParam("diamond"));
             }
-            const faq = pathState.querystring.get("faq");
+            const faq = $querystringStore.get("faq");
             if (faq !== null) {
                 pageReplace(`/faq?q=${faq}`);
             }
-            if (pathState.querystring.get("wallet") !== null) {
+            if ($querystringStore.get("wallet") !== null) {
                 showWallet();
                 pageReplace(removeQueryStringParam("wallet"));
             }
-            if (pathState.querystring.get("hof") !== null) {
+            if ($querystringStore.get("hof") !== null) {
                 modal = { kind: "hall_of_fame" };
                 pageReplace(removeQueryStringParam("hof"));
             }
-            if (pathState.querystring.get("everyone") !== null) {
-                ui.rightPanelHistory = [{ kind: "show_group_members" }];
+            if ($querystringStore.get("everyone") !== null) {
+                rightPanelHistory.set([{ kind: "show_group_members" }]);
                 pageReplace(removeQueryStringParam("everyone"));
             }
-            const usergroup = pathState.querystring.get("usergroup");
+            const usergroup = $querystringStore.get("usergroup");
             if (usergroup !== null) {
                 const userGroupId = Number(usergroup);
-                ui.rightPanelHistory = [{ kind: "show_community_members", userGroupId }];
+                rightPanelHistory.set([{ kind: "show_community_members", userGroupId }]);
                 pageReplace(removeQueryStringParam("usergroup"));
             }
         }
     });
 
-    let bgHeight = $derived(ui.dimensions.height * 0.9);
-    let bgClip = $derived(((ui.dimensions.height - 32) / bgHeight) * 361);
+    let bgHeight = $derived($dimensions.height * 0.9);
+    let bgClip = $derived((($dimensions.height - 32) / bgHeight) * 361);
 </script>
 
 {#if showProfileCard !== undefined}
-    {@const profileUser = userStore.get(showProfileCard.userId)}
+    {@const profileUser = $allUsersStore.get(showProfileCard.userId)}
     {#if profileUser?.kind !== "bot"}
         <ViewUserProfile
             userId={showProfileCard.userId}
@@ -976,18 +992,18 @@
     {/if}
 {/if}
 
-<main class:anon={app.anonUser} class:offline={app.offline}>
+<main class:anon={$anonUserStore} class:offline={$offlineStore}>
     <LeftNav />
     <LeftPanel />
     <MiddlePanel {joining} />
     <RightPanel />
 </main>
 
-{#if app.anonUser}
+{#if $anonUserStore}
     <AnonFooter />
 {/if}
 
-{#if app.offline}
+{#if $offlineStore}
     <OfflineFooter />
 {/if}
 
@@ -1003,7 +1019,7 @@
 
 <Toast />
 
-{#if showUpgrade && app.currentUser}
+{#if showUpgrade && $currentUserStore}
     <Upgrade onCancel={() => (showUpgrade = false)} />
 {/if}
 
@@ -1027,14 +1043,14 @@
             <BotBuilderModal mode={"update"} onClose={closeModal} />
         {:else if modal.kind === "remove_bot"}
             <BotBuilderModal mode={"remove"} onClose={closeModal} />
-        {:else if modal.kind === "register_webhook" && (app.selectedChatId?.kind === "group_chat" || app.selectedChatId?.kind === "channel")}
+        {:else if modal.kind === "register_webhook" && ($selectedChatIdStore?.kind === "group_chat" || $selectedChatIdStore?.kind === "channel")}
             <WebhookModal
-                chatId={app.selectedChatId}
+                chatId={$selectedChatIdStore}
                 mode={{ kind: "register" }}
                 onClose={closeModal} />
-        {:else if modal.kind === "update_webhook" && (app.selectedChatId?.kind === "group_chat" || app.selectedChatId?.kind === "channel")}
+        {:else if modal.kind === "update_webhook" && ($selectedChatIdStore?.kind === "group_chat" || $selectedChatIdStore?.kind === "channel")}
             <WebhookModal
-                chatId={app.selectedChatId}
+                chatId={$selectedChatIdStore}
                 mode={{ kind: "update", webhook: modal.webhook }}
                 onClose={closeModal} />
         {:else if modal.kind === "no_access"}
@@ -1104,7 +1120,7 @@
             onClose={() => (forgotPin = false)}
             type={{ kind: "forgot", while: { kind: "enter" } }} />
     </Overlay>
-{:else if app.pinNumberResolver !== undefined}
+{:else if $pinNumberResolverStore !== undefined}
     <Overlay>
         <PinNumberModal
             onClose={onPinNumberClose}

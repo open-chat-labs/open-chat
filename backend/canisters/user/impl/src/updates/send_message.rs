@@ -3,7 +3,7 @@ use crate::guards::caller_is_local_user_index;
 use crate::guards::caller_is_owner;
 use crate::timer_job_types::{DeleteFileReferencesJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob};
 use crate::updates::send_message_with_transfer::set_up_p2p_swap;
-use crate::{Data, RuntimeState, TimerJob, mutate_state, read_state, run_regular_jobs};
+use crate::{Data, RuntimeState, TimerJob, UserEventPusher, execute_update, execute_update_async, mutate_state, read_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -11,8 +11,6 @@ use chat_events::TextContentInternal;
 use chat_events::{EditMessageArgs, EditMessageSuccess};
 use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal, ValidateNewMessageContentResult};
 use constants::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
-use event_store_producer::NullRuntime;
-use event_store_producer_cdk_runtime::CdkRuntime;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use std::ops::Not;
@@ -35,8 +33,10 @@ use super::c2c_send_messages::handle_message_impl;
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn send_message_v2(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| send_message_v2_impl(args)).await
+}
 
+async fn send_message_v2_impl(args: Args) -> Response {
     let PrepareOk {
         my_user_id,
         now,
@@ -162,181 +162,181 @@ async fn send_message_v2(args: Args) -> Response {
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_message::Response {
-    run_regular_jobs();
+    execute_update(|state| c2c_bot_send_message_impl(args, state))
+}
 
-    mutate_state(|state| {
-        let finalised = args.finalised;
-        let bot_id = args.bot_id;
-        let bot_name = args.bot_name.clone();
-        let user_message_id = args.user_message_id;
-        let bot_caller = BotCaller {
-            bot: args.bot_id,
-            initiator: args.initiator.clone(),
-        };
+fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut RuntimeState) -> c2c_bot_send_message::Response {
+    let finalised = args.finalised;
+    let bot_id = args.bot_id;
+    let bot_name = args.bot_name.clone();
+    let user_message_id = args.user_message_id;
+    let bot_caller = BotCaller {
+        bot: args.bot_id,
+        initiator: args.initiator.clone(),
+    };
 
-        let my_user_id = state.env.canister_id().into();
-        let args: Args = args.into();
-        let message_content: MessageContent = args.content.clone().into();
+    let my_user_id = state.env.canister_id().into();
+    let args: Args = args.into();
+    let message_content: MessageContent = args.content.clone().into();
 
-        if !state.data.is_bot_permitted(
-            &bot_id,
-            &bot_caller.initiator,
-            BotPermissions::from_message_permission((&args.content).into()),
-        ) {
-            return c2c_bot_send_message::Response::Error(OCErrorCode::InitiatorNotAuthorized.into());
+    if !state.data.is_bot_permitted(
+        &bot_id,
+        &bot_caller.initiator,
+        BotPermissions::from_message_permission((&args.content).into()),
+    ) {
+        return c2c_bot_send_message::Response::Error(OCErrorCode::InitiatorNotAuthorized.into());
+    }
+
+    let result = match prepare(&args, true, state) {
+        Ok(ok) => ok,
+        Err(error) => return c2c_bot_send_message::Response::Error(error),
+    };
+
+    let now = result.now;
+
+    let content = match MessageContentInternal::validate_new_message(args.content, true, UserType::BotV2, args.forwarding, now)
+    {
+        ValidateNewMessageContentResult::Success(content) => content,
+        ValidateNewMessageContentResult::SuccessP2PSwap(_)
+        | ValidateNewMessageContentResult::SuccessCrypto(_)
+        | ValidateNewMessageContentResult::SuccessPrize(_) => unreachable!(),
+        ValidateNewMessageContentResult::Error(error) => {
+            return c2c_bot_send_message::Response::Error(OCErrorCode::InvalidMessageContent.with_json(&error));
         }
+    };
 
-        let result = match prepare(&args, true, state) {
-            Ok(ok) => ok,
-            Err(error) => return c2c_bot_send_message::Response::Error(error),
-        };
-
-        let now = result.now;
-
-        let content =
-            match MessageContentInternal::validate_new_message(args.content, true, UserType::BotV2, args.forwarding, now) {
-                ValidateNewMessageContentResult::Success(content) => content,
-                ValidateNewMessageContentResult::SuccessP2PSwap(_)
-                | ValidateNewMessageContentResult::SuccessCrypto(_)
-                | ValidateNewMessageContentResult::SuccessPrize(_) => unreachable!(),
-                ValidateNewMessageContentResult::Error(error) => {
-                    return c2c_bot_send_message::Response::Error(OCErrorCode::InvalidMessageContent.with_json(&error));
-                }
-            };
-
-        // Check if a message with the same id already exists
-        if let Some(chat) = state.data.direct_chats.get_mut(&bot_id.into()) {
-            if let Some((message, _)) =
-                chat.events
-                    .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
-            {
-                // If the message id of a bot message matches an existing unfinalised bot message
-                // then edit this message instead of pushing a new one
-                if let Some(bot_message) = message.bot_context() {
-                    if bot_caller.bot == message.sender
-                        && bot_caller.initiator.user() == bot_message.command.as_ref().map(|c| c.initiator)
-                        && bot_caller.initiator.command() == bot_message.command.as_ref()
-                        && !bot_message.finalised
-                    {
-                        let edit_message_args = EditMessageArgs {
-                            sender: bot_caller.bot,
-                            min_visible_event_index: EventIndex::default(),
-                            thread_root_message_index: args.thread_root_message_index,
-                            message_id: args.message_id,
-                            content,
-                            block_level_markdown: Some(args.block_level_markdown),
-                            finalise_bot_message: finalised,
-                            now,
-                        };
-
-                        let Ok(EditMessageSuccess {
-                            message_index, event, ..
-                        }) = chat.events.edit_message::<CdkRuntime>(edit_message_args, None)
-                        else {
-                            // Shouldn't happen
-                            return c2c_bot_send_message::Response::Error(OCErrorCode::InitiatorNotAuthorized.into());
-                        };
-
-                        if finalised && !chat.notifications_muted.value {
-                            let notification = UserNotificationPayload::DirectMessage(DirectMessageNotification {
-                                sender: bot_id,
-                                thread_root_message_index: args.thread_root_message_index,
-                                message_index,
-                                event_index: event.index,
-                                sender_name: bot_name,
-                                sender_display_name: None,
-                                message_type: message_content.message_type(),
-                                message_text: message_content.notification_text(&[], &[]),
-                                image_url: message_content.notification_image_url(),
-                                sender_avatar_id: None,
-                                crypto_transfer: message_content.notification_crypto_transfer_details(&[]),
-                            });
-                            state.push_notification(Some(bot_id), my_user_id, notification);
-                        }
-
-                        return c2c_bot_send_message::Response::Success(SuccessResult {
-                            chat_id: bot_id.into(),
-                            event_index: event.index,
-                            message_index,
-                            expires_at: event.expires_at,
-                            timestamp: now,
-                        });
-                    }
-                }
-
-                return c2c_bot_send_message::Response::Error(OCErrorCode::MessageAlreadyFinalized.into());
-            }
-        }
-
-        // If the user_message_id is set, then the user is sending a direct message to the bot.
-        // In which case rather than just posting the bot's message, we should first post the user's message.
-        // This allows the user to have a more natural conversation with the bot rather than using a /command.
-        let mut user_message = false;
-        if let Some(command) = bot_caller.initiator.command() {
-            if let (Some(text), Some(message_id)) = (
-                command.args.first().and_then(|a| a.value.as_string().map(String::from)),
-                user_message_id,
-            ) {
-                let chat = state
-                    .data
-                    .direct_chats
-                    .get_or_create(bot_id, UserType::BotV2, || state.env.rng().r#gen(), now);
-
-                chat.push_message::<NullRuntime>(
-                    true,
-                    PushMessageArgs {
+    // Check if a message with the same id already exists
+    if let Some(chat) = state.data.direct_chats.get_mut(&bot_id.into()) {
+        if let Some((message, _)) =
+            chat.events
+                .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
+        {
+            // If the message id of a bot message matches an existing unfinalised bot message
+            // then edit this message instead of pushing a new one
+            if let Some(bot_message) = message.bot_context() {
+                if bot_caller.bot == message.sender
+                    && bot_caller.initiator.user() == bot_message.command.as_ref().map(|c| c.initiator)
+                    && bot_caller.initiator.command() == bot_message.command.as_ref()
+                    && !bot_message.finalised
+                {
+                    let edit_message_args = EditMessageArgs {
+                        sender: bot_caller.bot,
+                        min_visible_event_index: EventIndex::default(),
                         thread_root_message_index: args.thread_root_message_index,
-                        message_id,
-                        sender: my_user_id,
-                        content: MessageContentInternal::Text(TextContentInternal { text }),
-                        mentioned: Vec::new(),
-                        replies_to: None,
-                        forwarded: false,
-                        sender_is_bot: false,
-                        block_level_markdown: args.block_level_markdown,
-                        correlation_id: 0,
+                        message_id: args.message_id,
+                        content,
+                        block_level_markdown: Some(args.block_level_markdown),
+                        finalise_bot_message: finalised,
                         now,
-                        sender_context: None,
-                    },
-                    None,
-                    None,
-                );
+                    };
 
-                user_message = true;
+                    let Ok(EditMessageSuccess {
+                        message_index, event, ..
+                    }) = chat.events.edit_message::<UserEventPusher>(edit_message_args, None)
+                    else {
+                        // Shouldn't happen
+                        return c2c_bot_send_message::Response::Error(OCErrorCode::InitiatorNotAuthorized.into());
+                    };
+
+                    if finalised && !chat.notifications_muted.value {
+                        let notification = UserNotificationPayload::DirectMessage(DirectMessageNotification {
+                            sender: bot_id,
+                            thread_root_message_index: args.thread_root_message_index,
+                            message_index,
+                            event_index: event.index,
+                            sender_name: bot_name,
+                            sender_display_name: None,
+                            message_type: message_content.message_type(),
+                            message_text: message_content.notification_text(&[], &[]),
+                            image_url: message_content.notification_image_url(),
+                            sender_avatar_id: None,
+                            crypto_transfer: message_content.notification_crypto_transfer_details(&[]),
+                        });
+                        state.push_notification(Some(bot_id), my_user_id, notification);
+                    }
+
+                    return c2c_bot_send_message::Response::Success(SuccessResult {
+                        chat_id: bot_id.into(),
+                        event_index: event.index,
+                        message_index,
+                        expires_at: event.expires_at,
+                        timestamp: now,
+                    });
+                }
             }
+
+            return c2c_bot_send_message::Response::Error(OCErrorCode::MessageAlreadyFinalized.into());
         }
+    }
 
-        let event_wrapper = handle_message_impl(
-            HandleMessageArgs {
-                sender: bot_id,
-                thread_root_message_id: None,
-                message_id: Some(args.message_id),
-                sender_message_index: None,
-                sender_name: bot_name,
-                sender_display_name: None,
-                content,
-                replies_to: None,
-                forwarding: false,
-                sender_user_type: UserType::BotV2,
-                sender_avatar_id: None,
-                push_message_sent_event: true,
-                mentioned: Vec::new(),
-                mute_notification: !finalised,
-                block_level_markdown: args.block_level_markdown,
-                now,
-            },
-            user_message.not().then_some(bot_caller),
-            finalised,
-            state,
-        );
+    // If the user_message_id is set, then the user is sending a direct message to the bot.
+    // In which case rather than just posting the bot's message, we should first post the user's message.
+    // This allows the user to have a more natural conversation with the bot rather than using a /command.
+    let mut user_message = false;
+    if let Some(command) = bot_caller.initiator.command() {
+        if let (Some(text), Some(message_id)) = (
+            command.args.first().and_then(|a| a.value.as_string().map(String::from)),
+            user_message_id,
+        ) {
+            let chat = state
+                .data
+                .direct_chats
+                .get_or_create(bot_id, UserType::BotV2, || state.env.rng().r#gen(), now);
 
-        c2c_bot_send_message::Response::Success(SuccessResult {
-            chat_id: bot_id.into(),
-            event_index: event_wrapper.index,
-            message_index: event_wrapper.event.message_index,
-            expires_at: event_wrapper.expires_at,
-            timestamp: now,
-        })
+            chat.push_message::<UserEventPusher>(
+                true,
+                PushMessageArgs {
+                    thread_root_message_index: args.thread_root_message_index,
+                    message_id,
+                    sender: my_user_id,
+                    content: MessageContentInternal::Text(TextContentInternal { text }),
+                    mentioned: Vec::new(),
+                    replies_to: None,
+                    forwarded: false,
+                    sender_is_bot: false,
+                    block_level_markdown: args.block_level_markdown,
+                    correlation_id: 0,
+                    now,
+                    sender_context: None,
+                },
+                None,
+                None,
+            );
+
+            user_message = true;
+        }
+    }
+
+    let event_wrapper = handle_message_impl(
+        HandleMessageArgs {
+            sender: bot_id,
+            thread_root_message_id: None,
+            message_id: Some(args.message_id),
+            sender_message_index: None,
+            sender_name: bot_name,
+            sender_display_name: None,
+            content,
+            replies_to: None,
+            forwarding: false,
+            sender_user_type: UserType::BotV2,
+            sender_avatar_id: None,
+            push_message_sent_event: true,
+            mentioned: Vec::new(),
+            mute_notification: !finalised,
+            block_level_markdown: args.block_level_markdown,
+            now,
+        },
+        user_message.not().then_some(bot_caller),
+        finalised,
+        state,
+    );
+
+    c2c_bot_send_message::Response::Success(SuccessResult {
+        chat_id: bot_id.into(),
+        event_index: event_wrapper.index,
+        message_index: event_wrapper.event.message_index,
+        expires_at: event_wrapper.expires_at,
+        timestamp: now,
     })
 }
 
@@ -408,7 +408,7 @@ fn prepare(args: &Args, is_v2_bot: bool, state: &RuntimeState) -> OCResult<Prepa
     })
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 fn send_message_impl(
     my_user_id: UserId,
     recipient: UserId,
@@ -452,7 +452,16 @@ fn send_message_impl(
         .direct_chats
         .get_or_create(recipient, recipient_type.into(), || state.env.rng().r#gen(), now);
 
-    let message_event = chat.push_message(true, push_message_args, None, Some(&mut state.data.event_store_client));
+    let message_event = chat.push_message(
+        true,
+        push_message_args,
+        None,
+        Some(UserEventPusher {
+            now,
+            rng: state.env.rng(),
+            queue: &mut state.data.local_user_index_event_sync_queue,
+        }),
+    );
 
     if !recipient_type.is_self() {
         let send_message_args = SendMessageArgs {
@@ -562,7 +571,16 @@ async fn send_to_bot_canister(
                             now,
                             sender_context: None,
                         };
-                        chat.push_message(false, push_message_args, None, Some(&mut state.data.event_store_client));
+                        chat.push_message(
+                            false,
+                            push_message_args,
+                            None,
+                            Some(UserEventPusher {
+                                now,
+                                rng: state.env.rng(),
+                                queue: &mut state.data.local_user_index_event_sync_queue,
+                            }),
+                        );
 
                         // Mark that the bot has read the message we just sent
                         chat.mark_read_up_to(message_index, false, now);

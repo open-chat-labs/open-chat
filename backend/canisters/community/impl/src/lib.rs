@@ -1,16 +1,17 @@
 use crate::memory::{get_instruction_counts_data_memory, get_instruction_counts_index_memory};
 use crate::model::channels::Channels;
 use crate::model::groups_being_imported::{GroupBeingImportedSummary, GroupsBeingImported};
+use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::members::CommunityMembers;
 use crate::timer_job_types::{DeleteFileReferencesJob, MakeTransferJob, RemoveExpiredEventsJob, TimerJob};
 use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::{ChatEventInternal, ChatMetricsInternal, UpdateMessageSuccess};
+use chat_events::{ChatEventInternal, ChatMetricsInternal, EventPusher, UpdateMessageSuccess};
 use community_canister::add_members_to_channel::UserFailedError;
 use constants::{ICP_LEDGER_CANISTER_ID, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
-use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
+use event_store_producer::{Event, EventStoreClient, EventStoreClientBuilder};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::{GatePayment, calculate_gate_payments};
@@ -25,7 +26,6 @@ use model::events::CommunityEventInternal;
 use model::user_event_batch::UserEventBatch;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use msgpack::serialize_then_unwrap;
-use notifications_canister_c2c_client::{NotificationPusherState, NotificationsBatch};
 use oc_error_codes::OCErrorCode;
 use rand::RngCore;
 use rand::rngs::StdRng;
@@ -33,18 +33,18 @@ use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
 use std::cell::RefCell;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
-use types::CommunityId;
 use types::{
-    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotEventsCaller, BotGroupConfig, BotInitiator,
-    BotNotification, BotPermissions, BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChannelId, ChatMetrics,
-    CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cycles, Document, Empty, EventIndex,
-    EventsCaller, FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules,
+    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotEventsCaller, BotInitiator, BotNotification,
+    BotPermissions, BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChannelId, ChatEventCategory, ChatEventType,
+    ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cycles, Document, Empty,
+    EventIndex, EventsCaller, FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules,
     TimestampMillis, Timestamped, UserId, UserNotification, UserNotificationPayload, UserType,
 };
+use types::{BotSubscriptions, CommunityId};
 use user_canister::CommunityCanisterEvent;
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
@@ -147,10 +147,10 @@ impl RuntimeState {
     }
 
     fn push_notification_inner(&mut self, notification: Notification) {
-        self.data.notifications_queue.push(IdempotentEnvelope {
+        self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
             created_at: self.env.now(),
             idempotency_id: self.env.rng().next_u64(),
-            value: notification,
+            value: local_user_index_canister::CommunityEvent::Notification(notification),
         });
     }
 
@@ -336,14 +336,14 @@ impl RuntimeState {
             frozen_at: self.data.frozen.as_ref().map(|f| f.timestamp),
             groups_being_imported: self.data.groups_being_imported.summaries(),
             instruction_counts: self.data.instruction_counts_log.iter().collect(),
-            event_store_client_info: self.data.event_store_client.info(),
             timer_jobs: self.data.timer_jobs.len() as u32,
+            queued_user_events: self.data.user_event_sync_queue.len() as u32,
+            queued_local_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
             stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
-                notifications: self.data.notifications_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
                 escrow: self.data.escrow_canister_id,
                 icp_ledger: ICP_LEDGER_CANISTER_ID,
@@ -409,7 +409,6 @@ struct Data {
     user_index_canister_id: CanisterId,
     local_user_index_canister_id: CanisterId,
     group_index_canister_id: CanisterId,
-    notifications_canister_id: CanisterId,
     proposals_bot_user_id: UserId,
     escrow_canister_id: CanisterId,
     internet_identity_canister_id: CanisterId,
@@ -436,23 +435,29 @@ struct Data {
     total_payment_receipts: PaymentReceipts,
     #[serde(with = "serde_bytes")]
     ic_root_key: Vec<u8>,
+    #[deprecated]
     event_store_client: EventStoreClient<CdkRuntime>,
     achievements: Achievements,
     expiring_members: ExpiringMembers,
     expiring_member_actions: ExpiringMemberActions,
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
+    #[serde(default = "local_user_index_event_sync_queue")]
+    local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     bots: InstalledBots,
     bot_api_keys: BotApiKeys,
     verified: Timestamped<bool>,
     idempotency_checker: IdempotencyChecker,
-    notifications_queue: BatchedTimerJobQueue<NotificationsBatch>,
     public_channel_list_updated: TimestampMillis,
 }
 
+fn local_user_index_event_sync_queue() -> BatchedTimerJobQueue<LocalUserIndexEventBatch> {
+    BatchedTimerJobQueue::new(CanisterId::anonymous(), true)
+}
+
 impl Data {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     fn new(
         community_id: CommunityId,
         created_by_principal: Principal,
@@ -469,7 +474,6 @@ impl Data {
         user_index_canister_id: CanisterId,
         local_user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
-        notifications_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
         escrow_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
@@ -502,6 +506,7 @@ impl Data {
         );
         let events = CommunityEvents::new(name.clone(), description.clone(), created_by_user_id, now);
 
+        #[expect(deprecated)]
         Data {
             is_public: Timestamped::new(is_public, now),
             name: Timestamped::new(name, now),
@@ -515,7 +520,6 @@ impl Data {
             user_index_canister_id,
             local_user_index_canister_id,
             group_index_canister_id,
-            notifications_canister_id,
             proposals_bot_user_id,
             escrow_canister_id,
             internet_identity_canister_id,
@@ -548,17 +552,12 @@ impl Data {
             expiring_member_actions: ExpiringMemberActions::default(),
             user_cache: UserCache::default(),
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
+            local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             bots: InstalledBots::default(),
             bot_api_keys: BotApiKeys::default(),
             verified: Timestamped::default(),
             idempotency_checker: IdempotencyChecker::default(),
-            notifications_queue: BatchedTimerJobQueue::new(
-                NotificationPusherState {
-                    notifications_canister: notifications_canister_id,
-                },
-                false,
-            ),
             public_channel_list_updated: now,
         }
     }
@@ -781,13 +780,13 @@ impl Data {
             let Some(permissions) = self.granted_bot_permissions(&bot_user_id, &initiator, Some(channel_id)) else {
                 return Err(OCErrorCode::InitiatorNotInCommunity);
             };
-            let bot_permitted_event_types = permissions.permitted_event_types_to_read();
+            let bot_permitted_event_types = permissions.permitted_chat_event_categories_to_read();
             if bot_permitted_event_types.is_empty() {
                 return Err(OCErrorCode::InitiatorNotInCommunity);
             }
             Ok(EventsCaller::Bot(BotEventsCaller {
                 bot: bot_user_id,
-                bot_permitted_event_types,
+                bot_permitted_event_categories: bot_permitted_event_types,
                 min_visible_event_index: EventIndex::default(),
             }))
         } else {
@@ -895,36 +894,94 @@ impl Data {
         }
     }
 
-    pub fn install_bot(&mut self, owner_id: UserId, user_id: UserId, bot_config: BotGroupConfig, now: TimestampMillis) -> bool {
-        if !self.bots.add(user_id, owner_id, bot_config.permissions, now) {
+    pub fn install_bot(
+        &mut self,
+        owner_id: UserId,
+        bot_id: UserId,
+        command_permissions: BotPermissions,
+        autonomous_permissions: Option<BotPermissions>,
+        default_subscriptions: Option<BotSubscriptions>,
+        now: TimestampMillis,
+    ) -> bool {
+        if !self.bots.add(
+            bot_id,
+            owner_id,
+            command_permissions,
+            autonomous_permissions.clone(),
+            default_subscriptions.clone(),
+            now,
+        ) {
             return false;
         }
 
         // Publish community event
         self.events.push_event(
             CommunityEventInternal::BotAdded(Box::new(BotAdded {
-                user_id,
+                user_id: bot_id,
                 added_by: owner_id,
             })),
             now,
         );
 
+        if let (Some(subscriptions), Some(permissions)) = (default_subscriptions, autonomous_permissions) {
+            // TODO: Subscribe to permitted community events
+
+            // Subscribe to permitted chat events for all public channels
+            let permitted_categories = permissions.permitted_chat_event_categories_to_read();
+
+            let chat_events: HashSet<ChatEventType> = subscriptions
+                .chat
+                .into_iter()
+                .filter(|t| permitted_categories.contains(&ChatEventCategory::from(*t)))
+                .collect();
+
+            for channel in self.channels.iter_mut() {
+                if channel.chat.is_public.value {
+                    channel.chat.events.subscribe_bot_to_events(bot_id, chat_events.clone());
+                }
+            }
+        }
+
         true
     }
 
-    pub fn update_bot(&mut self, owner_id: UserId, user_id: UserId, bot_config: BotGroupConfig, now: TimestampMillis) -> bool {
-        if !self.bots.update(user_id, bot_config.permissions, now) {
+    pub fn update_bot(
+        &mut self,
+        owner_id: UserId,
+        bot_id: UserId,
+        permissions: BotPermissions,
+        autonomous_permissions: Option<BotPermissions>,
+        now: TimestampMillis,
+    ) -> bool {
+        if !self.bots.update(bot_id, permissions, autonomous_permissions.clone(), now) {
             return false;
         }
 
         // Publish community event
         self.events.push_event(
             CommunityEventInternal::BotUpdated(Box::new(BotUpdated {
-                user_id,
+                user_id: bot_id,
                 updated_by: owner_id,
             })),
             now,
         );
+
+        let bot = self.bots.get(&bot_id).unwrap();
+        let permissions = autonomous_permissions.unwrap_or_default();
+        let permitted_categories = permissions.permitted_chat_event_categories_to_read();
+        let subscriptions = bot.default_subscriptions.clone().unwrap_or_default();
+
+        let chat_events = subscriptions
+            .chat
+            .into_iter()
+            .filter(|t| permitted_categories.contains(&ChatEventCategory::from(*t)))
+            .collect::<HashSet<ChatEventType>>();
+
+        for channel in self.channels.iter_mut() {
+            if channel.chat.is_public.value {
+                channel.chat.events.subscribe_bot_to_events(bot_id, chat_events.clone());
+            }
+        }
 
         true
     }
@@ -936,7 +993,7 @@ impl Data {
 
         self.bot_api_keys.delete(bot_id);
         for channel in self.channels.iter_mut() {
-            channel.chat.events.unsubscribe_bot_from_events(bot_id, None);
+            channel.chat.events.unsubscribe_bot_from_events(bot_id);
         }
 
         // Publish community event
@@ -1002,7 +1059,7 @@ impl Data {
         bot_id: &UserId,
         channel_id: Option<ChannelId>,
         initiator: &BotInitiator,
-        required: BotPermissions,
+        required: &BotPermissions,
     ) -> bool {
         self.granted_bot_permissions(bot_id, initiator, channel_id)
             .is_some_and(|granted| required.is_subset(&granted))
@@ -1022,6 +1079,7 @@ impl Data {
             BotInitiator::Command(_) => &bot.permissions,
             BotInitiator::ApiKeySecret(secret) => self.get_api_key_permissions(bot_id, secret, channel_id)?,
             BotInitiator::ApiKeyPermissions(permissions) => permissions,
+            BotInitiator::Autonomous => bot.autonomous_permissions.as_ref()?,
         };
 
         // If the bot is the owner of the channel then grant all chat permissions
@@ -1059,10 +1117,51 @@ impl Data {
             community_member.role().is_same_or_senior(role.into())
         }
     }
+
+    pub fn flush_pending_events(&mut self) {
+        self.user_event_sync_queue.flush();
+        self.local_user_index_event_sync_queue.flush();
+    }
+}
+
+struct CommunityEventPusher<'a> {
+    now: TimestampMillis,
+    rng: &'a mut StdRng,
+    queue: &'a mut BatchedTimerJobQueue<LocalUserIndexEventBatch>,
+}
+
+impl EventPusher for CommunityEventPusher<'_> {
+    fn push(&mut self, event: Event) {
+        self.queue.push(IdempotentEnvelope {
+            created_at: self.now,
+            idempotency_id: self.rng.next_u64(),
+            value: local_user_index_canister::CommunityEvent::EventStoreEvent(event),
+        })
+    }
+}
+
+fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
+    mutate_state(|state| {
+        state.regular_jobs.run(state.env.deref(), &mut state.data);
+        let result = f(state);
+        state.data.flush_pending_events();
+        result
+    })
+}
+
+async fn execute_update_async<F: FnOnce() -> Fut, Fut: Future<Output = R>, R>(f: F) -> R {
+    run_regular_jobs();
+    let result = f().await;
+    flush_pending_events();
+    result
 }
 
 fn run_regular_jobs() {
     mutate_state(|state| state.regular_jobs.run(state.env.deref(), &mut state.data));
+}
+
+fn flush_pending_events() {
+    mutate_state(|state| state.data.flush_pending_events());
 }
 
 #[derive(Serialize, Debug)]
@@ -1084,8 +1183,9 @@ pub struct Metrics {
     pub frozen_at: Option<TimestampMillis>,
     pub groups_being_imported: Vec<GroupBeingImportedSummary>,
     pub instruction_counts: Vec<InstructionCountEntry>,
-    pub event_store_client_info: EventStoreClientInfo,
     pub timer_jobs: u32,
+    pub queued_user_events: u32,
+    pub queued_local_index_events: u32,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
@@ -1095,7 +1195,6 @@ pub struct CanisterIds {
     pub user_index: CanisterId,
     pub group_index: CanisterId,
     pub local_user_index: CanisterId,
-    pub notifications: CanisterId,
     pub proposals_bot: CanisterId,
     pub escrow: CanisterId,
     pub icp_ledger: CanisterId,

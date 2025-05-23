@@ -4,22 +4,36 @@
         ChatSummary,
         CommunitySummary,
         DiamondMembershipStatus,
+        MessageContent,
         TypersByKey,
         UserLookup,
     } from "openchat-client";
     import {
+        allUsersStore,
         AvatarSize,
-        OpenChat,
-        app,
+        blockedUsersStore,
         botState,
+        chatIdentifiersEqual,
+        chatListScopeStore,
+        communitiesStore,
+        currentUserIdStore,
+        favouritesStore,
+        iconSize,
+        messagesRead,
+        mobileWidth,
+        notificationsSupported,
+        OpenChat,
+        pinnedChatsStore,
         publish,
         routeForScope,
+        selectedChatIdStore,
+        selectedCommunitySummaryStore,
+        suspendedUserStore,
+        translationsStore,
         byContext as typersByContext,
-        ui,
-        userStore,
     } from "openchat-client";
     import page from "page";
-    import { getContext } from "svelte";
+    import { getContext, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import ArchiveIcon from "svelte-material-icons/Archive.svelte";
     import BellIcon from "svelte-material-icons/Bell.svelte";
@@ -69,38 +83,66 @@
     );
     let verified = $derived(chatSummary.kind === "group_chat" && chatSummary.verified);
     let hovering = $state(false);
-    let unreadMessages = $derived(
-        client.unreadMessageCount(chatSummary.id, chatSummary.latestMessage?.event.messageIndex),
-    );
-    let unreadMentions = $derived(getUnreadMentionCount(chatSummary));
+    let unreadMessages = $state<number>(0);
+    let unreadMentions = $state<number>(0);
     let chat = $derived(normaliseChatSummary($now, chatSummary, $typersByContext));
-    let lastMessage = $derived(formatLatestMessage(chatSummary, userStore.allUsers));
+    let lastMessage = $derived(formatLatestMessage(chatSummary, $allUsersStore));
     let displayDate = $derived(client.getDisplayDate(chatSummary));
     let community = $derived(
         chatSummary.kind === "channel"
-            ? app.communities.get({ kind: "community", communityId: chatSummary.id.communityId })
+            ? $communitiesStore.get({ kind: "community", communityId: chatSummary.id.communityId })
             : undefined,
     );
     let blocked = $derived(
-        chatSummary.kind === "direct_chat" && userStore.blockedUsers.has(chatSummary.them.userId),
+        chatSummary.kind === "direct_chat" && $blockedUsersStore.has(chatSummary.them.userId),
     );
     let readonly = $derived(client.isChatReadOnly(chatSummary.id));
     let canDelete = $derived(getCanDelete(chatSummary, community));
-    let pinned = $derived(client.pinned(app.chatListScope.kind, chatSummary.id));
+    let pinned = $derived(
+        $pinnedChatsStore
+            .get($chatListScopeStore.kind)
+            ?.find((id) => chatIdentifiersEqual(id, chatSummary.id)) !== undefined,
+    );
     let muted = $derived(chatSummary.membership.notificationsMuted);
     const maxDelOffset = -60;
     let delOffset = $state(maxDelOffset);
     let swiped = $state(false);
 
+    $effect(() => updateUnreadCounts(chatSummary));
+
+    onMount(() => {
+        return messagesRead.subscribe(() => updateUnreadCounts(chatSummary));
+    });
+
+    /***
+     * This needs to be called both when the chatSummary changes (because that may have changed the latestMessage)
+     * and when the internal state of the MessageReadTracker changes. Both are necessary to get the right value
+     * at all times.
+     */
+    function updateUnreadCounts(chatSummary: ChatSummary) {
+        untrack(() => {
+            unreadMessages = client.unreadMessageCount(
+                chatSummary.id,
+                chatSummary.latestMessage?.event.messageIndex,
+            );
+            unreadMentions = getUnreadMentionCount(chatSummary);
+
+            if (chatSummary.membership.archived && unreadMessages > 0 && !chat.bot) {
+                unarchiveChat();
+            }
+        });
+    }
+
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
-        const fav = app.chatListScope.kind !== "favourite" && app.favourites.has(chatSummary.id);
+        const fav =
+            $chatListScopeStore.kind !== "favourite" && $favouritesStore.has(chatSummary.id);
         const muted = chatSummary.membership.notificationsMuted;
         const video = chatSummary.videoCallInProgress
             ? { muted: muted ? 1 : 0, unmuted: muted ? 0 : 1 }
             : { muted: 0, unmuted: 0 };
         switch (chatSummary.kind) {
             case "direct_chat":
-                const them = userStore.get(chatSummary.them.userId);
+                const them = $allUsersStore.get(chatSummary.them.userId);
                 return {
                     name: client.displayName(them),
                     diamondStatus: them?.diamondStatus ?? "inactive",
@@ -109,7 +151,7 @@
                     userId: chatSummary.them,
                     typing: client.getTypingString(
                         $_,
-                        userStore.allUsers,
+                        $allUsersStore,
                         { chatId: chatSummary.id },
                         typing,
                     ),
@@ -125,11 +167,11 @@
                     name: chatSummary.name,
                     diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
                     streak: 0,
-                    avatarUrl: client.groupAvatarUrl(chatSummary, app.selectedCommunitySummary),
+                    avatarUrl: client.groupAvatarUrl(chatSummary, $selectedCommunitySummaryStore),
                     userId: undefined,
                     typing: client.getTypingString(
                         $_,
-                        userStore.allUsers,
+                        $allUsersStore,
                         { chatId: chatSummary.id },
                         typing,
                     ),
@@ -148,6 +190,11 @@
         return chat.membership.mentions.filter(
             (m) => !client.isMessageRead({ chatId: chat.id }, m.messageIndex, m.messageId),
         ).length;
+    }
+
+    function translateMessage(messageId: bigint, content: MessageContent): MessageContent {
+        const translation = $translationsStore.get(messageId);
+        return translation ? client.applyTranslation(content, translation) : content;
     }
 
     function formatLatestMessage(chatSummary: ChatSummary, users: UserLookup): string {
@@ -177,7 +224,10 @@
 
         const latestMessageText = client.getContentAsText(
             $_,
-            chatSummary.latestMessage.event.content,
+            translateMessage(
+                chatSummary.latestMessage.event.messageId,
+                chatSummary.latestMessage.event.content,
+            ),
         );
 
         if (chatSummary.kind === "direct_chat") {
@@ -187,7 +237,7 @@
         let userType: "user" | "me" | "webhook" = "user";
         if (chatSummary.latestMessage.event.senderContext?.kind === "webhook") {
             userType = "webhook";
-        } else if (chatSummary.latestMessage.event.sender === app.currentUserId) {
+        } else if (chatSummary.latestMessage.event.sender === $currentUserIdStore) {
             userType = "me";
         }
 
@@ -215,11 +265,11 @@
                 ? botState.externalBots.get(chatSummary.them.userId)
                 : undefined;
         if (directBot !== undefined) {
-            client.uninstallBot({ kind: "direct_chat", userId: app.currentUserId }, directBot.id);
+            client.uninstallBot({ kind: "direct_chat", userId: $currentUserIdStore }, directBot.id);
         } else {
             client.removePreviewedChat(chatSummary.id);
         }
-        page(routeForScope(app.chatListScope));
+        page(routeForScope($chatListScopeStore));
         delOffset = -60;
     }
 
@@ -282,8 +332,8 @@
                 toastStore.showFailureToast(i18nKey("archiveChatFailed"));
             }
         });
-        if (chatSummary.id === app.selectedChatId) {
-            page(routeForScope(app.chatListScope));
+        if (chatSummary.id === $selectedChatIdStore) {
+            page(routeForScope($chatListScopeStore));
         }
     }
 
@@ -368,7 +418,7 @@
                     {/if}
                     <WithVerifiedBadge {verified} size={"small"}>
                         <h4>
-                            {#if community !== undefined && app.chatListScope.kind === "favourite"}
+                            {#if community !== undefined && $chatListScopeStore.kind === "favourite"}
                                 <span>{community.name}</span>
                                 <span>{">"}</span>
                             {/if}
@@ -393,7 +443,7 @@
             <!-- this date formatting is OK for now but we might want to use something like this:
             https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
             <div class:rtl={$rtlStore} class="chat-date">
-                {#if muted && ui.notificationsSupported}
+                {#if muted && notificationsSupported}
                     <div class="mute icon" class:rtl={$rtlStore}>
                         <MutedIcon size={"1em"} color={"var(--icon-txt)"} />
                     </div>
@@ -434,7 +484,7 @@
                         {unreadMessages > 999 ? "999+" : unreadMessages}
                     </div>
                 {/if}
-                {#if !app.suspendedUser}
+                {#if !$suspendedUserStore}
                     <div class="menu">
                         <MenuIcon position={"bottom"} align={"end"}>
                             {#snippet menuIcon()}
@@ -447,11 +497,11 @@
                             {/snippet}
                             {#snippet menuItems()}
                                 <Menu>
-                                    {#if !app.favourites.has(chatSummary.id)}
+                                    {#if !$favouritesStore.has(chatSummary.id)}
                                         <MenuItem onclick={addToFavourites}>
                                             {#snippet icon()}
                                                 <HeartPlus
-                                                    size={ui.iconSize}
+                                                    size={$iconSize}
                                                     color={"var(--menu-warn)"} />
                                             {/snippet}
                                             {#snippet text()}
@@ -465,7 +515,7 @@
                                         <MenuItem onclick={removeFromFavourites}>
                                             {#snippet icon()}
                                                 <HeartMinus
-                                                    size={ui.iconSize}
+                                                    size={$iconSize}
                                                     color={"var(--menu-warn)"} />
                                             {/snippet}
                                             {#snippet text()}
@@ -480,7 +530,7 @@
                                         <MenuItem onclick={pinChat}>
                                             {#snippet icon()}
                                                 <PinIcon
-                                                    size={ui.iconSize}
+                                                    size={$iconSize}
                                                     color={"var(--icon-inverted-txt)"} />
                                             {/snippet}
                                             {#snippet text()}
@@ -492,7 +542,7 @@
                                         <MenuItem onclick={unpinChat}>
                                             {#snippet icon()}
                                                 <PinOffIcon
-                                                    size={ui.iconSize}
+                                                    size={$iconSize}
                                                     color={"var(--icon-inverted-txt)"} />
                                             {/snippet}
                                             {#snippet text()}
@@ -503,13 +553,13 @@
                                             {/snippet}
                                         </MenuItem>
                                     {/if}
-                                    {#if ui.notificationsSupported && !externalContent}
+                                    {#if notificationsSupported && !externalContent}
                                         {#if muted}
                                             <MenuItem
                                                 onclick={() => toggleMuteNotifications(false)}>
                                                 {#snippet icon()}
                                                     <BellIcon
-                                                        size={ui.iconSize}
+                                                        size={$iconSize}
                                                         color={"var(--icon-inverted-txt)"} />
                                                 {/snippet}
                                                 {#snippet text()}
@@ -523,7 +573,7 @@
                                             <MenuItem onclick={() => toggleMuteNotifications(true)}>
                                                 {#snippet icon()}
                                                     <MutedIcon
-                                                        size={ui.iconSize}
+                                                        size={$iconSize}
                                                         color={"var(--icon-inverted-txt)"} />
                                                 {/snippet}
                                                 {#snippet text()}
@@ -541,7 +591,7 @@
                                             onclick={() => client.markAllRead(chatSummary)}>
                                             {#snippet icon()}
                                                 <CheckboxMultipleMarked
-                                                    size={ui.iconSize}
+                                                    size={$iconSize}
                                                     color={"var(--icon-inverted-txt)"} />
                                             {/snippet}
                                             {#snippet text()}
@@ -555,7 +605,7 @@
                                             <MenuItem onclick={selectChat}>
                                                 {#snippet icon()}
                                                     <ArchiveOffIcon
-                                                        size={ui.iconSize}
+                                                        size={$iconSize}
                                                         color={"var(--icon-inverted-txt)"} />
                                                 {/snippet}
                                                 {#snippet text()}
@@ -567,7 +617,7 @@
                                             <MenuItem onclick={archiveChat}>
                                                 {#snippet icon()}
                                                     <ArchiveIcon
-                                                        size={ui.iconSize}
+                                                        size={$iconSize}
                                                         color={"var(--icon-inverted-txt)"} />
                                                 {/snippet}
                                                 {#snippet text()}
@@ -581,7 +631,7 @@
                                         <MenuItem warning onclick={leaveGroup}>
                                             {#snippet icon()}
                                                 <LocationExit
-                                                    size={ui.iconSize}
+                                                    size={$iconSize}
                                                     color={"var(--menu-warn)"} />
                                             {/snippet}
                                             {#snippet text()}
@@ -608,7 +658,7 @@
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div
                 title={$_("removeChat")}
-                style={ui.mobileWidth
+                style={$mobileWidth
                     ? $rtlStore
                         ? `left: ${delOffset}px`
                         : `right: ${delOffset}px`
@@ -616,7 +666,7 @@
                 onclick={deleteEmptyChat}
                 class:rtl={$rtlStore}
                 class="delete-chat">
-                <Delete size={ui.iconSize} color={"#fff"} />
+                <Delete size={$iconSize} color={"#fff"} />
             </div>
         {/if}
     </div>

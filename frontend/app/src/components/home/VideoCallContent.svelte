@@ -2,10 +2,12 @@
     import {
         AvatarSize,
         OpenChat,
-        app,
+        allUsersStore,
         chatIdentifiersEqual,
+        currentUserIdStore,
         publish,
-        userStore,
+        selectedChatSummaryStore,
+        selectedCommunityMembersStore,
         type VideoCallContent,
     } from "openchat-client";
     import { getContext } from "svelte";
@@ -26,17 +28,17 @@
 
     let { content, messageIndex, timestamp, senderId }: Props = $props();
 
-    let displayName = $derived(client.getDisplayNameById(senderId, app.selectedCommunity.members));
+    let displayName = $derived(client.getDisplayNameById(senderId, $selectedCommunityMembersStore));
     let inCall = $derived(
         $activeVideoCall !== undefined &&
-            app.selectedChatSummary !== undefined &&
-            app.selectedChatSummary.videoCallInProgress?.messageIndex === messageIndex &&
-            chatIdentifiersEqual($activeVideoCall.chatId, app.selectedChatSummary?.id),
+            $selectedChatSummaryStore !== undefined &&
+            $selectedChatSummaryStore.videoCallInProgress?.messageIndex === messageIndex &&
+            chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatSummaryStore?.id),
     );
     let endedDate = $derived(content.ended ? new Date(Number(content.ended)) : undefined);
     let missed = $derived(
         content.ended &&
-            content.participants.find((p) => p.userId === app.currentUserId) === undefined,
+            content.participants.find((p) => p.userId === $currentUserIdStore) === undefined,
     );
     let duration = $derived(
         content.ended !== undefined && timestamp !== undefined
@@ -47,8 +49,12 @@
     );
 
     function joinCall() {
-        if (!inCall && app.selectedChatSummary) {
-            publish("startVideoCall", { chat: app.selectedChatSummary, join: true });
+        if (!inCall && $selectedChatSummaryStore?.videoCallInProgress) {
+            publish("startVideoCall", {
+                chatId: $selectedChatSummaryStore.id,
+                callType: $selectedChatSummaryStore.videoCallInProgress.callType,
+                join: true,
+            });
         }
     }
 
@@ -74,7 +80,7 @@
     <div class="avatars">
         {#each [...content.participants].slice(0, 5) as participantId}
             <Avatar
-                url={client.userAvatarUrl(userStore.get(participantId.userId))}
+                url={client.userAvatarUrl($allUsersStore.get(participantId.userId))}
                 userId={participantId.userId}
                 size={AvatarSize.Small} />
         {/each}

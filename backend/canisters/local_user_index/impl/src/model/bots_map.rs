@@ -1,7 +1,10 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{AutonomousConfig, BotCommandDefinition, BotDefinition, BotInstallationLocation, BotRegistrationStatus, UserId};
+use types::{
+    AutonomousConfig, BotCommandDefinition, BotDataEncoding, BotDefinition, BotInstallationLocation, BotRegistrationStatus,
+    BotSubscriptions, UserId,
+};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct BotsMap {
@@ -17,8 +20,12 @@ pub struct Bot {
     pub commands: Vec<BotCommandDefinition>,
     pub endpoint: String,
     pub autonomous_config: Option<AutonomousConfig>,
+    #[serde(default)]
+    pub default_subscriptions: Option<BotSubscriptions>,
     pub principal: Principal,
     pub registration_status: BotRegistrationStatus,
+    #[serde(default)]
+    pub data_encoding: BotDataEncoding,
 }
 
 impl BotsMap {
@@ -32,7 +39,11 @@ impl BotsMap {
             .and_then(|user_id| self.bots.get(user_id))
     }
 
-    #[allow(clippy::too_many_arguments)]
+    pub fn exists(&self, bot_id: &UserId) -> bool {
+        self.bots.contains_key(bot_id)
+    }
+
+    #[expect(clippy::too_many_arguments)]
     pub fn add(
         &mut self,
         user_principal: Principal,
@@ -42,7 +53,9 @@ impl BotsMap {
         commands: Vec<BotCommandDefinition>,
         endpoint: String,
         autonomous_config: Option<AutonomousConfig>,
+        default_subscriptions: Option<BotSubscriptions>,
         permitted_install_location: Option<BotInstallationLocation>,
+        data_encoding: BotDataEncoding,
     ) {
         self.bots.insert(
             bot_id,
@@ -53,8 +66,10 @@ impl BotsMap {
                 commands,
                 endpoint,
                 autonomous_config,
+                default_subscriptions,
                 principal: user_principal,
                 registration_status: BotRegistrationStatus::Private(permitted_install_location),
+                data_encoding,
             },
         );
         self.principal_to_user_id.insert(user_principal, bot_id);

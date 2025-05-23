@@ -36,32 +36,27 @@ export interface MapLike<K, V> {
     [Symbol.iterator](): IterableIterator<[K, V]>;
 }
 
-export type MapFactory<K> = <V>() => MapLike<K, V>;
-
 export class SafeMap<K, V> {
     #isPrimitive: boolean;
     #serialise: (key: K) => Primitive;
     #deserialise: (key: Primitive) => K;
     #map: MapLike<Primitive, V>;
-    #mapFactory: MapFactory<Primitive>;
 
     #newMap<A>(): SafeMap<K, A> {
         return this.#isPrimitive
-            ? new SafeMap<K, A>(undefined, undefined, this.#mapFactory)
-            : new SafeMap<K, A>(this.#serialise, this.#deserialise, this.#mapFactory);
+            ? new SafeMap<K, A>(undefined, undefined)
+            : new SafeMap<K, A>(this.#serialise, this.#deserialise);
     }
 
     constructor(
         serialiser?: (key: K) => Primitive,
         deserialiser?: (primitive: Primitive) => K,
-        mapFactory?: MapFactory<Primitive>,
         map?: MapLike<Primitive, V>,
     ) {
         this.#isPrimitive = serialiser === undefined && deserialiser === undefined;
         this.#serialise = serialiser ?? defaultSerialiser;
         this.#deserialise = deserialiser ?? defaultDeserialiser;
-        this.#mapFactory = mapFactory ?? (<V>() => new Map<Primitive, V>());
-        this.#map = map ?? (mapFactory ? mapFactory() : new Map<Primitive, V>());
+        this.#map = map ?? new Map<Primitive, V>();
     }
 
     [Symbol.iterator](): Iterator<[K, V]> {
@@ -191,9 +186,8 @@ export class SafeMap<K, V> {
         entries: IterableIterator<[K, V]>,
         serialiser?: (key: K) => Primitive,
         deserialiser?: (primitive: Primitive) => K,
-        mapFactory?: MapFactory<Primitive>,
     ): SafeMap<K, V> {
-        const map = new SafeMap<K, V>(serialiser, deserialiser, mapFactory);
+        const map = new SafeMap<K, V>(serialiser, deserialiser);
         for (const [k, v] of entries) {
             map.set(k, v);
         }
@@ -207,7 +201,6 @@ export class GlobalMap<V> extends SafeMap<"global", V> {
         super(
             (_: "global") => "global",
             (_) => "global",
-            undefined,
             _map,
         );
     }
@@ -218,7 +211,6 @@ export class ChatMap<V> extends SafeMap<ChatIdentifier, V> {
         super(
             (k) => JSON.stringify(k),
             (k) => JSON.parse(String(k)) as ChatIdentifier,
-            undefined,
             _map,
         );
     }
@@ -244,7 +236,6 @@ export class MessageContextMap<V> extends SafeMap<MessageContext, V> {
         super(
             (k) => JSON.stringify(k),
             (k) => JSON.parse(String(k)) as MessageContext,
-            undefined,
             _map,
         );
     }

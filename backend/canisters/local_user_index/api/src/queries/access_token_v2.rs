@@ -5,7 +5,6 @@ use ts_export::ts_export;
 use types::{BotActionScope, BotCommandArg, BotCommandMeta, Chat, UserId, VideoCallType};
 
 #[ts_export(local_user_index, access_token_v2)]
-#[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Args {
     StartVideoCall(StartVideoCallArgs),

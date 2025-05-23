@@ -21,6 +21,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "uninstall_bot" => state.is_caller_openchat_user(),
         "withdraw_from_icpswap" => state.is_caller_platform_operator(),
         "register_user" => true,
+        "remove_notifications" => state.is_caller_notification_pusher(),
         _ => false,
     } || method_name.starts_with("bot_");
 

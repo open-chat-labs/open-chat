@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 use crate::MARK_ACTIVE_DURATION;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};

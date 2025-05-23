@@ -1,15 +1,18 @@
 <script lang="ts">
-    import { pageReplace, ui } from "openchat-client";
+    import { OpenChat, pageReplace, rightPanelHistory, rightPanelMode } from "openchat-client";
+    import { getContext } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import { removeQueryStringParam } from "../../utils/urls";
     import Overlay from "../Overlay.svelte";
     import RightPanel from "./RightPanel.svelte";
 
+    const client = getContext<OpenChat>("client");
+
     function closeRightPanel() {
-        if (ui.rightPanelContains("message_thread_panel")) {
+        if (client.rightPanelContains("message_thread_panel")) {
             pageReplace(removeQueryStringParam("open"));
         }
-        ui.rightPanelHistory = [];
+        rightPanelHistory.set([]);
     }
 
     function onclick(e: Event) {
@@ -17,11 +20,11 @@
     }
 </script>
 
-{#if ui.rightPanelMode === "inline"}
+{#if $rightPanelMode === "inline"}
     <RightPanel />
 {/if}
 
-{#if ui.rightPanelMode === "floating"}
+{#if $rightPanelMode === "floating"}
     <Overlay onClose={closeRightPanel} dismissible>
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <!-- svelte-ignore a11y_click_events_have_key_events -->

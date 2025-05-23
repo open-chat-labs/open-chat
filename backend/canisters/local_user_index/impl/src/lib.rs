@@ -2,6 +2,7 @@ use crate::model::community_event_batch::CommunityEventBatch;
 use crate::model::group_event_batch::GroupEventBatch;
 use crate::model::local_community_map::LocalCommunityMap;
 use crate::model::local_group_map::LocalGroupMap;
+use crate::model::notification_subscriptions::NotificationSubscriptions;
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use crate::model::user_event_batch::UserEventBatch;
 use crate::model::user_index_event_batch::UserIndexEventBatch;
@@ -25,13 +26,14 @@ use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::UserIdsKeyPrefix;
 use std::cell::RefCell;
-use std::collections::{BTreeMap, HashMap, VecDeque};
+use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary,
-    CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails, IdempotentEnvelope, MessageContent,
-    Milliseconds, ReferralType, TimestampMillis, Timestamped, User, UserId, VerifiedCredentialGateArgs,
+    BotEventWrapper, BotNotificationEnvelope, BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms,
+    CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
+    IdempotentEnvelope, MessageContent, Milliseconds, Notification, NotificationEnvelope, ReferralType, TimestampMillis,
+    Timestamped, User, UserId, UserNotificationEnvelope, VerifiedCredentialGateArgs,
 };
 use user_canister::LocalUserIndexEvent as UserEvent;
 use user_ids_set::UserIdsSet;
@@ -39,6 +41,7 @@ use user_index_canister::LocalUserIndexEvent as UserIndexEvent;
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
+use utils::event_stream::EventStream;
 use utils::idempotency_checker::IdempotencyChecker;
 use utils::iterator_extensions::IteratorExtensions;
 
@@ -130,19 +133,34 @@ impl RuntimeState {
         user_details
     }
 
-    pub fn is_caller_user_index_canister(&self) -> bool {
+    pub fn is_caller_user_index(&self) -> bool {
         let caller = self.env.caller();
         self.data.user_index_canister_id == caller
     }
 
-    pub fn is_caller_group_index_canister(&self) -> bool {
+    pub fn is_caller_group_index(&self) -> bool {
         let caller = self.env.caller();
         self.data.group_index_canister_id == caller
     }
 
+    pub fn is_caller_notifications_index(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.notifications_index_canister_id == caller
+    }
+
     pub fn is_caller_local_user_canister(&self) -> bool {
         let caller = self.env.caller();
-        self.data.local_users.get(&caller.into()).is_some()
+        self.data.local_users.contains(&caller.into())
+    }
+
+    pub fn is_caller_local_group_canister(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.local_groups.contains(&caller.into())
+    }
+
+    pub fn is_caller_local_community_canister(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.local_communities.contains(&caller.into())
     }
 
     pub fn is_caller_local_child_canister(&self) -> bool {
@@ -155,6 +173,11 @@ impl RuntimeState {
     pub fn is_caller_local_group_index(&self) -> bool {
         let caller = self.env.caller();
         self.data.local_group_index_canister_id == caller
+    }
+
+    pub fn is_caller_notification_pusher(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.notification_pushers.contains(&caller)
     }
 
     pub fn is_caller_notifications_canister(&self) -> bool {
@@ -378,6 +401,10 @@ impl RuntimeState {
             users_to_delete_queue_length: self.data.users_to_delete_queue.len(),
             referral_codes: self.data.referral_codes.metrics(now),
             event_store_client_info,
+            notification_pushers: self.data.notification_pushers.iter().copied().collect(),
+            queued_notifications: self.data.notifications.len() as u32,
+            latest_notification_index: self.data.notifications.latest_event_index(),
+            subscriptions: self.data.notification_subscriptions.total(),
             blocked_user_pairs: self.data.blocked_users.len() as u64,
             oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
             cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
@@ -460,12 +487,10 @@ struct Data {
     pub cycles_balance_check_queue: VecDeque<CanisterId>,
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub idempotency_checker: IdempotencyChecker,
-    #[serde(default = "blocked_users")]
+    pub notification_pushers: HashSet<Principal>,
+    pub notification_subscriptions: NotificationSubscriptions,
+    pub notifications: EventStream<NotificationEnvelope>,
     pub blocked_users: UserIdsSet,
-}
-
-fn blocked_users() -> UserIdsSet {
-    UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users())
 }
 
 #[derive(Serialize, Deserialize)]
@@ -482,7 +507,7 @@ pub struct UserToDelete {
 }
 
 impl Data {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
@@ -540,6 +565,7 @@ impl Data {
             platform_moderators_group: None,
             referral_codes: ReferralCodes::default(),
             rng_seed: [0; 32],
+            notification_pushers: HashSet::new(),
             video_call_operators,
             oc_key_pair: oc_secret_key_der
                 .map(|sk| P256KeyPair::from_secret_key_der(sk).unwrap())
@@ -555,7 +581,48 @@ impl Data {
             bots: BotsMap::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             idempotency_checker: IdempotencyChecker::default(),
+            notification_subscriptions: NotificationSubscriptions::default(),
+            notifications: EventStream::default(),
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
+        }
+    }
+
+    pub fn handle_notification(&mut self, notification: Notification, this_canister_id: CanisterId, now: TimestampMillis) {
+        match notification {
+            Notification::User(user_notification) => {
+                let users_who_have_blocked_sender: HashSet<_> = user_notification
+                    .sender
+                    .map(|s| self.blocked_users.all_linked_users(s))
+                    .unwrap_or_default();
+
+                let filtered_recipients: Vec<_> = user_notification
+                    .recipients
+                    .into_iter()
+                    .filter(|u| self.notification_subscriptions.any_for_user(u) && !users_who_have_blocked_sender.contains(u))
+                    .collect();
+
+                if !filtered_recipients.is_empty() {
+                    self.notifications.add(NotificationEnvelope::User(UserNotificationEnvelope {
+                        recipients: filtered_recipients,
+                        notification_bytes: user_notification.notification_bytes.clone(),
+                        timestamp: now,
+                    }));
+                }
+            }
+            Notification::Bot(mut bot_notification) => {
+                bot_notification.recipients.retain(|b| self.bots.exists(b));
+
+                if !bot_notification.recipients.is_empty() {
+                    self.notifications.add(NotificationEnvelope::Bot(BotNotificationEnvelope {
+                        event: BotEventWrapper {
+                            api_gateway: this_canister_id,
+                            event: bot_notification.event,
+                        },
+                        recipients: bot_notification.recipients,
+                        timestamp: now,
+                    }));
+                }
+            }
         }
     }
 }
@@ -609,6 +676,10 @@ pub struct Metrics {
     pub recent_user_upgrades: Vec<CanisterId>,
     pub recent_group_upgrades: Vec<CanisterId>,
     pub recent_community_upgrades: Vec<CanisterId>,
+    pub notification_pushers: Vec<Principal>,
+    pub queued_notifications: u32,
+    pub latest_notification_index: u64,
+    pub subscriptions: u64,
     pub blocked_user_pairs: u64,
     pub oc_secret_key_initialized: bool,
     pub cycles_balance_check_queue_len: u32,

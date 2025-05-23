@@ -1,6 +1,10 @@
 <script lang="ts">
     import { start } from "@memefighter/maker-core";
-    import { ui, type MemeFighterContent as MemeFighterContentType } from "openchat-client";
+    import {
+        iconSize,
+        mobileWidth,
+        type MemeFighterContent as MemeFighterContentType,
+    } from "openchat-client";
     import { tick } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { currentTheme } from "../../theme/themes";
@@ -78,7 +82,7 @@
         <ModalContent fill closeIcon onClose={close}>
             {#snippet header()}
                 <div class="header">
-                    <MemeFighter size={ui.iconSize} color={"var(--icon-txt)"} />
+                    <MemeFighter size={$iconSize} color={"var(--icon-txt)"} />
                     <div class="title">Meme Fighter</div>
                 </div>
             {/snippet}
@@ -97,7 +101,7 @@
             {/snippet}
             {#snippet footer()}
                 <span class="footer">
-                    <ButtonGroup align={ui.mobileWidth ? "center" : "end"}>
+                    <ButtonGroup align={$mobileWidth ? "center" : "end"}>
                         <Button tiny secondary onClick={reset}
                             ><Translatable resourceKey={i18nKey("reset")} /></Button>
                         <Button tiny secondary onClick={close}

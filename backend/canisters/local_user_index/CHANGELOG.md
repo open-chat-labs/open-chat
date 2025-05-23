@@ -6,9 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Implement improved method of getting chat summary updates ([#8016](https://github.com/open-chat-labs/open-chat/pull/8016))
+
+### Fixed
+
+- Include remove_notifications in inspect_message ([#8030](https://github.com/open-chat-labs/open-chat/pull/8030))
+
+## [[2.0.1754](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1754-local_user_index)] - 2025-05-21
+
+### Added
+
+- Support serving notifications from LocalUserIndexes ([#7968](https://github.com/open-chat-labs/open-chat/pull/7968))
+- Implement handling events from Groups and Communities ([#7971](https://github.com/open-chat-labs/open-chat/pull/7971))
+- Implement handling events and notifications from User canisters ([#7972](https://github.com/open-chat-labs/open-chat/pull/7972))
+- Add `bot_chat_details_c2c_v2` and `bot_chat_events_c2c_v2` ([#7988](https://github.com/open-chat-labs/open-chat/pull/7988))
+
 ### Changed
 
 - Store blocked user mappings in LocalUserIndexes ([#7960](https://github.com/open-chat-labs/open-chat/pull/7960))
+- Store notification subscriptions in LocalUserIndexes ([#7967](https://github.com/open-chat-labs/open-chat/pull/7967))
+- Support autonomous bots without API keys ([#7985](https://github.com/open-chat-labs/open-chat/pull/7985))
+- Increase scope of `bot_subscribe_to_events` ([#7996](https://github.com/open-chat-labs/open-chat/pull/7996))
+- Allow bot to specify data encoding format ([#8004](https://github.com/open-chat-labs/open-chat/pull/8004))
+- Include the api_gateway with bot notifications ([#8005](https://github.com/open-chat-labs/open-chat/pull/8005))
+
+### Fixed
+
+- Fix ordering of blocked user map ([#8003](https://github.com/open-chat-labs/open-chat/pull/8003))
 
 ## [[2.0.1748](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1748-local_user_index)] - 2025-05-13
 

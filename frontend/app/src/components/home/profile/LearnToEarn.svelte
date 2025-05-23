@@ -2,8 +2,10 @@
     import {
         OpenChat,
         achievements,
-        app,
-        ui,
+        achievementsStore,
+        currentUserIdStore,
+        currentUserStore,
+        iconSize,
         type Achievement,
         type ExternalAchievement,
     } from "openchat-client";
@@ -85,7 +87,7 @@
     let selectedTab: "todo" | "done" | "external" = $state("todo");
 
     function filter(achievement: Achievement): boolean {
-        return enabled.has(achievement) || app.achievements.has(achievement);
+        return enabled.has(achievement) || $achievementsStore.has(achievement);
     }
 
     function selectTab(tab: "todo" | "done" | "external") {
@@ -99,13 +101,13 @@
     });
     let filtered = $derived([...achievements].filter(filter));
     let [internalAchieved, internalNotAchieved] = $derived(
-        client.partition(filtered, (a) => app.achievements.has(a)),
+        client.partition(filtered, (a) => $achievementsStore.has(a)),
     );
     let externalAchievements: ExternalAchievement[] = $state([]);
     let totalAchievements = $derived(filtered.length + externalAchievements.length);
     let [externalAchieved, externalNotAchieved] = $derived(
         client.partition(externalAchievements, (a) => {
-            return app.achievements.has(a.name);
+            return $achievementsStore.has(a.name);
         }),
     );
     let achieved = $derived([
@@ -184,7 +186,7 @@
                             {#each internalNotAchieved as achievement}
                                 <div class="achievement">
                                     <div class="no icon">
-                                        <CheckCircleOutline size={ui.iconSize} color={"#ccc"} />
+                                        <CheckCircleOutline size={$iconSize} color={"#ccc"} />
                                     </div>
                                     <Translatable
                                         resourceKey={i18nKey(`learnToEarn.${achievement}`)} />
@@ -208,7 +210,7 @@
                                 <div class="achievement">
                                     <div class="yes icon">
                                         <CheckCircle
-                                            size={ui.iconSize}
+                                            size={$iconSize}
                                             color={"var(--toast-success-bg)"} />
                                     </div>
                                     <Translatable resourceKey={i18nKey(achievement)} />
@@ -237,7 +239,7 @@
                                             alt={achievement.name} />
                                         <ExternalLink
                                             iconColor={"var(--txt)"}
-                                            href={`${achievement.url}?oc_userid=${app.currentUserId}&oc_username=${app.currentUser.username}`}>
+                                            href={`${achievement.url}?oc_userid=${$currentUserIdStore}&oc_username=${$currentUserStore.username}`}>
                                             {achievement.name}
                                         </ExternalLink>
                                         <div class="reward">

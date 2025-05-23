@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { botState, OpenChat, ui } from "openchat-client";
+    import { botState, mobileWidth, OpenChat } from "openchat-client";
     import { random64, type FlattenedCommand, type MessageContext } from "openchat-shared";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -105,8 +105,8 @@
                 disabled={!botState.instanceValid || busy}
                 loading={busy}
                 onClick={onSubmit}
-                small={!ui.mobileWidth}
-                tiny={ui.mobileWidth}>
+                small={!$mobileWidth}
+                tiny={$mobileWidth}>
                 <Translatable resourceKey={i18nKey("Submit")} />
             </Button>
         {/snippet}

@@ -25,6 +25,7 @@ import type {
     Message,
     MessageContent,
     MessageContext,
+    MessageContextMap,
     MessageFilter,
     MessageFormatter,
     MessagePermission,
@@ -38,6 +39,7 @@ import type {
     PollContent,
     PollVotes,
     Reaction,
+    ReadonlyMap,
     ReplyContext,
     SendMessageSuccess,
     Tally,
@@ -46,6 +48,7 @@ import type {
     TimelineItem,
     TipsReceived,
     TransferSuccess,
+    UnconfirmedState,
     UserLookup,
     UserSummary,
 } from "openchat-shared";
@@ -71,16 +74,21 @@ import {
     updateFromOptions,
     type ReadonlySet,
 } from "openchat-shared";
-import { get } from "svelte/store";
-import { app } from "../state/app.svelte";
-import { localUpdates } from "../state/global";
 import {
-    messageLocalUpdates,
-    type LocalTipsReceived,
-    type MessageLocalState,
-} from "../state/message/local.svelte";
-import { userStore } from "../state/users/users.svelte";
-import { cryptoLookup } from "../stores/crypto";
+    confirmedEventIndexesLoadedStore,
+    confirmedThreadEventIndexesLoadedStore,
+    cryptoLookup,
+    currentUserIdStore,
+    currentUserStore,
+    localUpdates,
+    proposalTalliesStore,
+    selectedChatIdStore,
+    selectedChatUserIdsStore,
+    selectedServerChatSummaryStore,
+    selectedThreadIdStore,
+} from "../state";
+import type { LocalTipsReceived, MessageLocalUpdates } from "../state/message/localUpdates";
+import { userStore } from "../state/users/state";
 import type { TypersByKey } from "../stores/typing";
 import { areOnSameDay } from "../utils/date";
 import { distinctBy, groupWhile, toRecordFiltered } from "../utils/list";
@@ -292,7 +300,7 @@ function messageMentionsUser(
     msg: EventWrapper<Message>,
 ): boolean {
     if (msg.event.sender === userId) return false;
-    const txt = getContentAsFormattedText(formatter, msg.event.content, get(cryptoLookup));
+    const txt = getContentAsFormattedText(formatter, msg.event.content, cryptoLookup.value);
     return txt.indexOf(`@UserId(${userId})`) >= 0;
 }
 
@@ -353,15 +361,17 @@ export function mergeUnconfirmedIntoSummary(
     formatter: MessageFormatter,
     userId: string,
     chatSummary: ChatSummary,
-    localMessageUpdates: MessageMap<MessageLocalState>,
-    translations: MessageMap<string>,
+    localMessageUpdates: MessageMap<MessageLocalUpdates>,
     blockedUsers: Set<string>,
     currentUserId: string,
     messageFilters: MessageFilter[],
+    unconfirmed: MessageContextMap<UnconfirmedState>,
 ): ChatSummary {
     if (chatSummary.membership === undefined) return chatSummary;
 
-    const unconfirmedMessages = localUpdates.unconfirmedMessages({ chatId: chatSummary.id });
+    // const unconfirmedMessages = localUpdates.unconfirmedMessages({ chatId: chatSummary.id });
+    const unconfirmedState = unconfirmed.get({ chatId: chatSummary.id });
+    const unconfirmedMessages = unconfirmedState ? [...unconfirmedState.values()] : [];
 
     let latestMessage = chatSummary.latestMessage;
     let latestEventIndex = chatSummary.latestEventIndex;
@@ -383,7 +393,6 @@ export function mergeUnconfirmedIntoSummary(
     }
     if (latestMessage !== undefined) {
         const updates = localMessageUpdates.get(latestMessage.event.messageId);
-        const translation = translations.get(latestMessage.event.messageId);
         const senderBlocked = blockedUsers.has(latestMessage.event.sender);
 
         // Don't hide the sender's own messages
@@ -392,18 +401,13 @@ export function mergeUnconfirmedIntoSummary(
                 ? doesMessageFailFilter(latestMessage.event, messageFilters) !== undefined
                 : false;
 
-        if (
-            updates !== undefined ||
-            translation !== undefined ||
-            senderBlocked ||
-            failedMessageFilter
-        ) {
+        if (updates !== undefined || senderBlocked || failedMessageFilter) {
             latestMessage.event = mergeLocalUpdates(
                 latestMessage.event,
                 updates,
                 undefined,
                 undefined,
-                translation,
+                undefined,
                 undefined,
                 senderBlocked,
                 false,
@@ -778,7 +782,7 @@ function updateReplyContexts(
 
 function createMessageSortFunction(
     unconfirmed: Set<bigint>,
-    recentlySent: Map<bigint, bigint>,
+    recentlySent: MessageMap<bigint>,
 ): (a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>) => number {
     return (a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): number => {
         // If either message is still unconfirmed, and both were sent recently, use both of their local timestamps,
@@ -1150,7 +1154,7 @@ export function getMessagePermissionsForSelectedChat(
                 );
             }
         } else {
-            return toSet(permittedMessagesInGroup(app.currentUser, chat, mode));
+            return toSet(permittedMessagesInGroup(currentUserStore.value, chat, mode));
         }
     }
     return new Set();
@@ -1329,6 +1333,11 @@ export function mergeEventsAndLocalUpdates(
     events: EventWrapper<ChatEvent>[],
     unconfirmed: EventWrapper<Message>[],
     expiredEventRanges: DRange,
+    translations: MessageMap<string>,
+    selectedChatBlockedOrSuspendedUsers: Set<string>,
+    messageLocalUpdates: MessageMap<MessageLocalUpdates>,
+    recentlySentMessages: MessageMap<bigint>,
+    messageFilters: MessageFilter[],
 ): EventWrapper<ChatEvent>[] {
     const eventIndexes = new DRange();
     eventIndexes.add(expiredEventRanges);
@@ -1340,7 +1349,7 @@ export function mergeEventsAndLocalUpdates(
         if (e.event.kind === "message") {
             confirmedMessageIds.add(e.event.messageId);
             const updates = messageLocalUpdates.get(e.event.messageId);
-            const translation = app.translations.get(e.event.messageId);
+            const translation = translations.get(e.event.messageId);
 
             const repliesTo =
                 e.event.repliesTo?.kind === "rehydrated_reply_context"
@@ -1349,26 +1358,25 @@ export function mergeEventsAndLocalUpdates(
 
             const [replyContextUpdates, replyTranslation] =
                 repliesTo !== undefined
-                    ? [messageLocalUpdates.get(repliesTo), app.translations.get(repliesTo)]
+                    ? [messageLocalUpdates.get(repliesTo), translations.get(repliesTo)]
                     : [undefined, undefined];
 
             const tallyUpdate =
                 e.event.content.kind === "proposal_content"
-                    ? app.getProposalTally(
-                          e.event.content.governanceCanisterId,
-                          e.event.content.proposal.id,
+                    ? proposalTalliesStore.value.get(
+                          `${e.event.content.governanceCanisterId}_${e.event.content.proposal.id}`,
                       )
                     : undefined;
 
-            const senderBlocked = app.currentChatBlockedOrSuspendedUsers.has(e.event.sender);
+            const senderBlocked = selectedChatBlockedOrSuspendedUsers.has(e.event.sender);
             const repliesToSenderBlocked =
                 e.event.repliesTo?.kind === "rehydrated_reply_context" &&
-                app.currentChatBlockedOrSuspendedUsers.has(e.event.repliesTo.senderId);
+                selectedChatBlockedOrSuspendedUsers.has(e.event.repliesTo.senderId);
 
             // Don't hide the sender's own messages
             const failedMessageFilter =
-                e.event.sender !== app.currentUserId
-                    ? doesMessageFailFilter(e.event, app.messageFilters) !== undefined
+                e.event.sender !== currentUserIdStore.value
+                    ? doesMessageFailFilter(e.event, messageFilters) !== undefined
                     : false;
 
             if (
@@ -1420,10 +1428,7 @@ export function mergeEventsAndLocalUpdates(
             }
         }
         if (unconfirmedAdded.size > 0) {
-            const sortFn = createMessageSortFunction(
-                unconfirmedAdded,
-                localUpdates.recentlySentMessages,
-            );
+            const sortFn = createMessageSortFunction(unconfirmedAdded, recentlySentMessages);
             merged.sort(sortFn);
         }
     }
@@ -1448,8 +1453,8 @@ export function doesMessageFailFilter(
 
 function mergeLocalUpdates(
     message: Message,
-    localUpdates: MessageLocalState | undefined,
-    replyContextLocalUpdates: MessageLocalState | undefined,
+    localUpdates: MessageLocalUpdates | undefined,
+    replyContextLocalUpdates: MessageLocalUpdates | undefined,
     tallyUpdate: Tally | undefined,
     translation: string | undefined,
     replyTranslation: string | undefined,
@@ -1658,7 +1663,7 @@ function defaultThreadSummary(): ThreadSummary {
     };
 }
 
-function applyTranslation(content: MessageContent, translation: string): MessageContent {
+export function applyTranslation(content: MessageContent, translation: string): MessageContent {
     switch (content.kind) {
         case "text_content": {
             return {
@@ -1736,7 +1741,7 @@ export function findMessageById(
 export function buildTransactionLink(
     formatter: MessageFormatter,
     transfer: CryptocurrencyTransfer,
-    cryptoLookup: Record<string, CryptocurrencyDetails>,
+    cryptoLookup: ReadonlyMap<string, CryptocurrencyDetails>,
 ): string | undefined {
     const url = buildTransactionUrl(transfer, cryptoLookup);
     return url !== undefined
@@ -1746,7 +1751,7 @@ export function buildTransactionLink(
 
 export function buildTransactionUrl(
     transfer: CryptocurrencyTransfer,
-    cryptoLookup: Record<string, CryptocurrencyDetails>,
+    cryptoLookup: ReadonlyMap<string, CryptocurrencyDetails>,
 ): string | undefined {
     if (transfer.kind === "completed") {
         return buildTransactionUrlByIndex(transfer.blockIndex, transfer.ledger, cryptoLookup);
@@ -1756,12 +1761,11 @@ export function buildTransactionUrl(
 export function buildTransactionUrlByIndex(
     transactionIndex: bigint,
     ledger: string,
-    cryptoLookup: Record<string, CryptocurrencyDetails>,
+    cryptoLookup: ReadonlyMap<string, CryptocurrencyDetails>,
 ): string | undefined {
-    return cryptoLookup[ledger].transactionUrlFormat.replace(
-        "{transaction_index}",
-        transactionIndex.toString(),
-    );
+    return cryptoLookup
+        .get(ledger)
+        ?.transactionUrlFormat.replace("{transaction_index}", transactionIndex.toString());
 }
 
 export function buildCryptoTransferText(
@@ -1770,7 +1774,7 @@ export function buildCryptoTransferText(
     senderId: string,
     content: CryptocurrencyContent,
     me: boolean,
-    cryptoLookup: Record<string, CryptocurrencyDetails>,
+    cryptoLookup: ReadonlyMap<string, CryptocurrencyDetails>,
 ): string | undefined {
     if (content.transfer.kind !== "completed" && content.transfer.kind !== "pending") {
         return undefined;
@@ -1780,7 +1784,8 @@ export function buildCryptoTransferText(
         return userId === myUserId ? formatter("you") : `@UserId(${userId})`;
     }
 
-    const tokenDetails = cryptoLookup[content.transfer.ledger];
+    const tokenDetails = cryptoLookup.get(content.transfer.ledger);
+    if (tokenDetails === undefined) return undefined;
 
     const values = {
         amount: formatTokens(content.transfer.amountE8s, tokenDetails.decimals),
@@ -1804,7 +1809,7 @@ export function stopTyping(
     userId: string,
     threadRootMessageIndex?: number,
 ): void {
-    rtcConnectionsManager.sendMessage([...app.selectedChat.userIds], {
+    rtcConnectionsManager.sendMessage([...selectedChatUserIdsStore.value], {
         kind: "remote_user_stopped_typing",
         id,
         userId,
@@ -1817,7 +1822,7 @@ export function startTyping(
     userId: string,
     threadRootMessageIndex?: number,
 ): void {
-    rtcConnectionsManager.sendMessage([...app.selectedChat.userIds], {
+    rtcConnectionsManager.sendMessage([...selectedChatUserIdsStore.value], {
         kind: "remote_user_typing",
         id,
         userId,
@@ -1954,12 +1959,6 @@ function diffMessagePermissions(
     return diff;
 }
 
-export function revokeObjectUrls(message: EventWrapper<Message>): void {
-    if ("blobUrl" in message.event.content && message.event.content.blobUrl !== undefined) {
-        URL.revokeObjectURL(message.event.content.blobUrl);
-    }
-}
-
 export function nextEventAndMessageIndexesForThread(
     events: EventWrapper<ChatEvent>[],
 ): [number, number] {
@@ -1981,7 +1980,7 @@ function sortByIndex(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): nu
 }
 
 export function nextEventAndMessageIndexes(): [number, number] {
-    const chat = app.selectedServerChatSummary;
+    const chat = selectedServerChatSummaryStore.value;
     if (chat === undefined) {
         return [0, 0];
     }
@@ -1992,9 +1991,9 @@ export function nextEventAndMessageIndexes(): [number, number] {
 }
 
 export function confirmedEventIndexesLoaded(chatId: ChatIdentifier): DRange {
-    const selected = app.selectedChatId;
+    const selected = selectedChatIdStore.value;
     return selected !== undefined && chatIdentifiersEqual(selected, chatId)
-        ? app.selectedChat.confirmedEventIndexesLoaded
+        ? confirmedEventIndexesLoadedStore.value
         : new DRange();
 }
 
@@ -2029,8 +2028,8 @@ export function isContiguousInThread(
     events: EventWrapper<ChatEvent>[],
 ): boolean {
     return (
-        messageContextsEqual(threadId, app.selectedChat?.selectedThread?.id) &&
-        isContiguousInternal(app.selectedChat.confirmedThreadEventIndexesLoaded, events, [])
+        messageContextsEqual(threadId, selectedThreadIdStore.value) &&
+        isContiguousInternal(confirmedThreadEventIndexesLoadedStore.value, events, [])
     );
 }
 
@@ -2040,7 +2039,7 @@ export function isContiguous(
     expiredEventRanges: ExpiredEventsRange[],
 ): boolean {
     return (
-        chatIdentifiersEqual(chatId, app.selectedChat.chatId) &&
+        chatIdentifiersEqual(chatId, selectedChatIdStore.value) &&
         isContiguousInternal(confirmedEventIndexesLoaded(chatId), events, expiredEventRanges)
     );
 }

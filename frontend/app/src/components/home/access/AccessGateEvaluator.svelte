@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        iconSize,
         isCompositeGate,
         isCredentialGate,
         isDiamondGate,
@@ -9,7 +10,6 @@
         isUniquePersonGate,
         OpenChat,
         shouldPreprocessGate,
-        ui,
         type EnhancedAccessGate,
         type GateCheckSucceeded,
         type LeafGate,
@@ -161,7 +161,7 @@
                 {#if isCompositeGate(currentGate) && currentGate.operator === "or"}
                     <div class="header">
                         <div class="icon">
-                            <VectorCombine size={ui.iconSize} color={"var(--txt)"} />
+                            <VectorCombine size={$iconSize} color={"var(--txt)"} />
                         </div>
                         <p class="title">
                             <Translatable resourceKey={i18nKey("access.chooseOneGate")} />

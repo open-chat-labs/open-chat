@@ -1,15 +1,19 @@
 <script lang="ts">
     import {
-        app,
         AvatarSize,
+        chatListScopeStore,
+        chatSummariesStore,
         type GroupChatIdentifier,
         type GroupChatSummary,
+        iconSize,
         isLocked,
+        mobileWidth,
         type MultiUserChat,
         type OpenChat,
         publish,
         routeForChatIdentifier,
-        ui,
+        selectedCommunitySummaryStore,
+        suspendedUserStore,
     } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
@@ -35,7 +39,7 @@
 
     let { group, joining, onDismissRecommendation }: Props = $props();
 
-    let member = $derived(app.chatSummaries.has(group.id));
+    let member = $derived($chatSummariesStore.has(group.id));
     let locked = $derived(isLocked(group.gateConfig.gate));
 
     function dismiss({ id }: GroupChatSummary) {
@@ -43,7 +47,7 @@
     }
 
     function gotoGroup({ id }: GroupChatSummary) {
-        page(routeForChatIdentifier(app.chatListScope.kind, id));
+        page(routeForChatIdentifier($chatListScopeStore.kind, id));
     }
 
     function joinGroup(group: GroupChatSummary) {
@@ -62,8 +66,8 @@
         <div class="header">
             <div class="avatar">
                 <Avatar
-                    url={client.groupAvatarUrl(group, app.selectedCommunitySummary)}
-                    size={ui.mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
+                    url={client.groupAvatarUrl(group, $selectedCommunitySummaryStore)}
+                    size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
             </div>
             <div class="group-title-line">
                 <WithVerifiedBadge verified={group.verified} size={"small"}>
@@ -80,7 +84,7 @@
             </div>
             <div title={$_("notInterested")} class="close" onclick={() => dismiss(group)}>
                 <HoverIcon>
-                    <Close size={ui.iconSize} color={"var(--icon-txt)"} />
+                    <Close size={$iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
             </div>
         </div>
@@ -96,7 +100,7 @@
             <Button tiny onClick={() => leaveGroup(group)}
                 ><Translatable resourceKey={i18nKey("leave")} /></Button>
         {:else}
-            {#if !app.suspendedUser}
+            {#if !$suspendedUserStore}
                 <Button
                     disabled={locked || joining === group}
                     loading={joining === group}

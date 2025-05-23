@@ -6,10 +6,13 @@
         type CommunitySummary,
         type OpenChat,
         type UserLookup,
-        app,
-        pathState,
+        allUsersStore,
+        chatListScopeStore,
+        globalUnreadCountStore,
+        locationStore,
         routeForChatIdentifier,
-        userStore,
+        selectedChatSummaryStore,
+        selectedCommunitySummaryStore,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { mobileOperatingSystem } from "../utils/devices";
@@ -84,12 +87,12 @@
 
     let details = $derived(
         getDetails(
-            app.chatListScope,
-            pathState.location,
-            userStore.allUsers,
-            app.globalUnreadCount,
-            app.selectedChatSummary,
-            app.selectedCommunitySummary,
+            $chatListScopeStore,
+            $locationStore,
+            $allUsersStore,
+            $globalUnreadCountStore,
+            $selectedChatSummaryStore,
+            $selectedCommunitySummaryStore,
         ),
     );
 </script>

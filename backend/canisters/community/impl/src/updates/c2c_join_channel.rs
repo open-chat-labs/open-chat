@@ -3,7 +3,7 @@ use crate::model::channels::Channel;
 use crate::model::members::CommunityMembers;
 use crate::updates::c2c_join_community::join_community;
 use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, read_state};
-use crate::{jobs, run_regular_jobs};
+use crate::{execute_update_async, jobs};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -24,8 +24,10 @@ use types::{
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
 async fn c2c_join_channel(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| c2c_join_channel_impl(args)).await
+}
 
+async fn c2c_join_channel_impl(args: Args) -> Response {
     if read_state(|state| {
         state
             .data

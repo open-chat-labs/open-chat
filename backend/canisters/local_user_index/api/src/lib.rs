@@ -1,12 +1,13 @@
 use candid::{CandidType, Principal};
+use event_store_types::Event;
 use serde::{Deserialize, Serialize};
 use types::nns::CryptoAmount;
 use types::{
-    AutonomousConfig, BotCommandDefinition, BotDefinition, BotInstallationLocation, BuildVersion, CanisterId,
-    ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, CyclesTopUp, DiamondMembershipPlanDuration,
-    MessageContent, MessageContentInitial, MessageId, MessageIndex, NotifyChit, PhoneNumber, ReferralType, SuspensionDuration,
-    TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim,
-    UserCanisterStreakInsurancePayment, UserId, UserType, is_default,
+    AutonomousConfig, BotCommandDefinition, BotDataEncoding, BotDefinition, BotInstallationLocation, BotSubscriptions,
+    BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, CyclesTopUp,
+    DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId, MessageIndex, Notification, NotifyChit,
+    PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User,
+    UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserType, is_default,
 };
 
 mod lifecycle;
@@ -59,6 +60,15 @@ pub enum GroupIndexEvent {
     CommunityVerifiedChanged(VerifiedChanged),
     NotifyOfUserDeleted(CanisterId, UserId),
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum GroupEvent {
+    MarkActivity(TimestampMillis),
+    EventStoreEvent(Event),
+    Notification(Notification),
+}
+
+pub type CommunityEvent = GroupEvent;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct NameChanged {
@@ -129,6 +139,10 @@ pub struct BotRegistered {
     pub endpoint: String,
     pub autonomous_config: Option<AutonomousConfig>,
     pub permitted_install_location: Option<BotInstallationLocation>,
+    #[serde(default)]
+    pub default_subscriptions: Option<BotSubscriptions>,
+    #[serde(default)]
+    pub data_encoding: BotDataEncoding,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -309,6 +323,8 @@ pub enum UserEvent {
     UserBlocked(UserId),
     UserUnblocked(UserId),
     SetMaxStreak(u16),
+    EventStoreEvent(Event),
+    Notification(Notification),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -322,6 +338,8 @@ pub enum ChildCanisterType {
 pub struct LocalGroup {
     pub wasm_version: BuildVersion,
     pub upgrade_in_progress: bool,
+    #[serde(default)]
+    pub latest_activity: TimestampMillis,
     pub cycle_top_ups: Vec<CyclesTopUp>,
 }
 
@@ -330,6 +348,7 @@ impl LocalGroup {
         LocalGroup {
             wasm_version,
             upgrade_in_progress: false,
+            latest_activity: 0,
             cycle_top_ups: Vec::new(),
         }
     }
@@ -350,6 +369,8 @@ impl LocalGroup {
 pub struct LocalCommunity {
     pub wasm_version: BuildVersion,
     pub upgrade_in_progress: bool,
+    #[serde(default)]
+    pub latest_activity: TimestampMillis,
     pub cycle_top_ups: Vec<CyclesTopUp>,
 }
 
@@ -358,6 +379,7 @@ impl LocalCommunity {
         LocalCommunity {
             wasm_version,
             upgrade_in_progress: false,
+            latest_activity: 0,
             cycle_top_ups: Vec::new(),
         }
     }

@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{CHAT_LEDGER_CANISTER_ID, MEMO_STREAK_INSURANCE, SNS_GOVERNANCE_CANISTER_ID};
@@ -13,8 +13,10 @@ use user_canister::pay_for_streak_insurance::*;
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn pay_for_streak_insurance(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| pay_for_streak_insurance_impl(args)).await
+}
 
+async fn pay_for_streak_insurance_impl(args: Args) -> Response {
     let PrepareOk { days_currently_insured } = match mutate_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
         Err(error) => return Response::Error(error),

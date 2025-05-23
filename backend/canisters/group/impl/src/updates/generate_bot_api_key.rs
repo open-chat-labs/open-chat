@@ -1,19 +1,17 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::generate_bot_api_key::{Response::*, *};
 use installed_bots::GenerateApiKeyResult;
 use oc_error_codes::OCErrorCode;
-use types::{AccessTokenScope, BotApiKeyToken, Chat, OCResult};
+use types::{AutonomousBotScope, BotApiKeyToken, Chat, OCResult};
 use utils::base64;
 
 #[update(msgpack = true)]
 #[trace]
 fn generate_bot_api_key(args: Args) -> Response {
-    run_regular_jobs();
-
-    match mutate_state(|state| generate_bot_api_key_impl(args, state)) {
+    match execute_update(|state| generate_bot_api_key_impl(args, state)) {
         Ok(result) => Success(result),
         Err(error) => Error(error),
     }
@@ -33,24 +31,18 @@ fn generate_bot_api_key_impl(args: Args, state: &mut RuntimeState) -> OCResult<S
     }
 
     let now = state.env.now();
-    let GenerateApiKeyResult { new_key, old_key } =
+    let GenerateApiKeyResult { new_key, old_key: _ } =
         state
             .data
             .bot_api_keys
             .generate(args.bot_id, args.requested_permissions.clone(), now, state.env.rng());
 
-    if let Some(old_key) = old_key {
-        state
-            .data
-            .chat
-            .events
-            .unsubscribe_bot_from_events(args.bot_id, Some(&old_key));
-    }
+    state.data.chat.events.unsubscribe_bot_from_events(args.bot_id);
 
     let api_key_token = BotApiKeyToken {
         gateway: state.data.local_user_index_canister_id,
         bot_id: args.bot_id,
-        scope: AccessTokenScope::Chat(Chat::Group(state.env.canister_id().into())),
+        scope: AutonomousBotScope::Chat(Chat::Group(state.env.canister_id().into())),
         secret: new_key,
         permissions: args.requested_permissions,
     };

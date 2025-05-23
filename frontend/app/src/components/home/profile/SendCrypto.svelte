@@ -6,12 +6,14 @@
         ResourceKey,
     } from "openchat-client";
     import {
-        app,
         BTC_SYMBOL,
-        cryptoBalance as cryptoBalanceStore,
+        cryptoBalanceStore,
         cryptoLookup,
+        currentUserIdStore,
+        currentUserStore,
+        iconSize,
         ICP_SYMBOL,
-        ui,
+        mobileWidth,
     } from "openchat-client";
     import { ErrorCode, isAccountIdentifierValid, isPrincipalValid } from "openchat-shared";
     import { getContext, onMount } from "svelte";
@@ -57,16 +59,16 @@
     let balanceWithRefresh: BalanceWithRefresh;
     const ckbtcMinterInfoDebouncer = new Debouncer(getCkbtcMinterWithdrawalInfo, 500);
 
-    let cryptoBalance = $derived($cryptoBalanceStore[ledger] ?? BigInt(0));
-    let tokenDetails = $derived($cryptoLookup[ledger]);
+    let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
+    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let account = $derived(
-        tokenDetails.symbol === ICP_SYMBOL ? app.currentUser.cryptoAccount : app.currentUserId,
+        tokenDetails?.symbol === ICP_SYMBOL ? $currentUserStore.cryptoAccount : $currentUserIdStore,
     );
     let symbol = $derived(tokenDetails.symbol);
     let selectedBtcNetwork = $state(BTC_SYMBOL);
     let isBtc = $derived(symbol === BTC_SYMBOL);
     let isBtcNetwork = $derived(isBtc && selectedBtcNetwork === BTC_SYMBOL);
-    let transferFees = $derived(tokenDetails.transferFee);
+    let transferFees = $derived(tokenDetails?.transferFee ?? 0n);
     let targetAccountValid = $derived(
         targetAccount.length > 0 && targetAccount !== account && isBtcNetwork
             ? targetAccount.length >= 14
@@ -256,7 +258,7 @@
                         placeholder={i18nKey("cryptoAccount.sendTarget")} />
 
                     <div class="qr" onclick={scan}>
-                        <QrcodeScan size={ui.iconSize} color={"var(--icon-selected)"} />
+                        <QrcodeScan size={$iconSize} color={"var(--icon-selected)"} />
                     </div>
                 </div>
 
@@ -288,13 +290,13 @@
     {#snippet footer()}
         <span>
             <ButtonGroup>
-                <Button secondary tiny={ui.mobileWidth} onClick={onClose}
+                <Button secondary tiny={$mobileWidth} onClick={onClose}
                     ><Translatable
                         resourceKey={i18nKey(capturingAccount ? "noThanks" : "cancel")} /></Button>
                 <Button
                     disabled={busy || !valid}
                     loading={busy}
-                    tiny={ui.mobileWidth}
+                    tiny={$mobileWidth}
                     onClick={onPrimaryClick}
                     ><Translatable
                         resourceKey={i18nKey(

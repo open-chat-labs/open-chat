@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
-        ui,
+        iconSize,
+        mobileWidth,
         type CreatedUser,
         type OpenChat,
         type UserOrUserGroup,
@@ -176,10 +177,7 @@
             {/snippet}
             {#snippet footer(onClose)}
                 <span>
-                    <Button
-                        onClick={() => onClose?.()}
-                        small={!ui.mobileWidth}
-                        tiny={ui.mobileWidth}>
+                    <Button onClick={() => onClose?.()} small={!$mobileWidth} tiny={$mobileWidth}>
                         <Translatable resourceKey={i18nKey("register.agree")} />
                     </Button>
                 </span>
@@ -212,7 +210,7 @@
             {:else if badCode}
                 <div class="bad-code">
                     <div class="alert">
-                        <Alert size={ui.iconSize} color={"var(--warn"} />
+                        <Alert size={$iconSize} color={"var(--warn"} />
                     </div>
                     <div class="alert-txt">
                         <h4 class="main">

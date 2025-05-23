@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { app, ui } from "openchat-client";
+    import { currentUserIdStore, iconSize } from "openchat-client";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -9,7 +9,7 @@
     import QRCode from "../../QRCode.svelte";
     import Translatable from "../../Translatable.svelte";
 
-    let link = $derived(`${window.location.origin}/?ref=${app.currentUserId}`);
+    let link = $derived(`${window.location.origin}/?ref=${$currentUserIdStore}`);
 
     function onCopy() {
         navigator.clipboard.writeText(link).then(
@@ -34,14 +34,14 @@
         <Translatable resourceKey={i18nKey("userReferralMessage")} />
     </div>
     <div class="action">
-        <CopyIcon size={ui.iconSize} color={"var(--icon-txt)"} />
+        <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
         <Link onClick={onCopy}>
             <Translatable resourceKey={i18nKey("copy")} />
         </Link>
     </div>
     {#if canShare()}
         <div class="action">
-            <ShareIcon size={ui.iconSize} color={"var(--icon-txt)"} />
+            <ShareIcon size={$iconSize} color={"var(--icon-txt)"} />
             <Link onClick={onShare}>
                 <Translatable resourceKey={i18nKey("share")} />
             </Link>

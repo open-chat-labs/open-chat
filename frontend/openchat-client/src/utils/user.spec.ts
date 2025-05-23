@@ -1,8 +1,8 @@
 import type { UserLookup, UserSummary } from "openchat-shared";
-import { init, addMessages, _ } from "svelte-i18n";
-import { buildUsernameList, compareUsername } from "./user";
+import { _, addMessages, init } from "svelte-i18n";
 import { get } from "svelte/store";
 import { vi } from "vitest";
+import { buildUsernameList, compareUsername } from "./user";
 
 addMessages("en", {
     you: "you",
@@ -86,7 +86,7 @@ const lookup: UserLookup = new Map([
 ]);
 
 describe("build username list", () => {
-    test.skip("and you and more", () => {
+    test("and you and more", () => {
         const userIds = [...lookup.entries()].map(([k, _]) => k);
         userIds.push("beta");
 
@@ -111,7 +111,7 @@ describe("build username list", () => {
         expect(result).toEqual("a, b, julian_jelfs, alpha");
     });
 
-    test.skip("do show 1 more if missing", () => {
+    test("do show 1 more if missing", () => {
         const userIds = [...lookup.entries()].map(([k, _]) => k);
         userIds.push("beta");
 

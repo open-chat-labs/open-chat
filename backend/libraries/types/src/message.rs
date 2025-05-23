@@ -140,7 +140,6 @@ impl Tips {
     }
 }
 
-#[allow(dead_code)]
 #[ts_export]
 #[derive(Serialize, Deserialize)]
 pub struct TipsTS(Vec<(TSPrincipal, Vec<(UserId, u128)>)>);

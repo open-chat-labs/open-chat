@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { ResourceKey, UnreadCounts, VideoCallCounts } from "openchat-client";
-    import { emptyUnreadCounts, ui } from "openchat-client";
+    import { emptyUnreadCounts, navOpen } from "openchat-client";
     import { _ } from "svelte-i18n";
     import WithVerifiedBadge from "../../icons/WithVerifiedBadge.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -43,7 +43,7 @@
         <UnreadCount {unread} />
         <VideoCallIcon {video} />
     </div>
-    {#if ui.navOpen}
+    {#if $navOpen}
         <WithVerifiedBadge {verified} size={"small"}>
             <div class="label"><Translatable resourceKey={label} /></div>
         </WithVerifiedBadge>

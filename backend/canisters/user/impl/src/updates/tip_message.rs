@@ -1,6 +1,6 @@
 use crate::crypto::process_transaction;
 use crate::guards::caller_is_owner;
-use crate::{RuntimeState, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, UserEventPusher, execute_update_async, mutate_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -18,8 +18,10 @@ use user_canister::tip_message::{Response::*, *};
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn tip_message(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| tip_message_impl(args)).await
+}
 
+async fn tip_message_impl(args: Args) -> Response {
     let (prepare_result, now_nanos) = match mutate_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
         Err(response) => return Error(response),
@@ -147,10 +149,15 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<(PrepareResult, Ti
 
 fn tip_direct_chat_message(args: TipMessageArgs, decimals: u8, state: &mut RuntimeState) -> Response {
     if let Some(chat) = state.data.direct_chats.get_mut(&args.recipient.into()) {
-        if let Err(error) =
-            chat.events
-                .tip_message(args.clone(), EventIndex::default(), Some(&mut state.data.event_store_client))
-        {
+        if let Err(error) = chat.events.tip_message(
+            args.clone(),
+            EventIndex::default(),
+            Some(UserEventPusher {
+                now: args.now,
+                rng: state.env.rng(),
+                queue: &mut state.data.local_user_index_event_sync_queue,
+            }),
+        ) {
             Error(error)
         } else {
             let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));

@@ -4,10 +4,11 @@
         type GroupChatSummary,
         type MultiUserChat,
         type OpenChat,
-        app,
         chatIdentifiersEqual,
+        chatListScopeStore,
+        iconSize,
+        mobileWidth,
         routeForScope,
-        ui,
     } from "openchat-client";
     import page from "page";
     import { getContext, onMount } from "svelte";
@@ -37,7 +38,7 @@
     onMount(loadData);
 
     function cancelRecommendations() {
-        page(routeForScope(app.chatListScope));
+        page(routeForScope($chatListScopeStore));
     }
 
     function onDismissRecommendation(id: GroupChatIdentifier) {
@@ -65,13 +66,13 @@
 {:else if hotGroups.kind === "success" && hotGroups.data.length > 0}
     <div class="wrapper">
         <SectionHeader>
-            {#if ui.mobileWidth}
+            {#if $mobileWidth}
                 <div class="back" class:rtl={$rtlStore} onclick={cancelRecommendations}>
                     <HoverIcon>
                         {#if $rtlStore}
-                            <ArrowRight size={ui.iconSize} color={"var(--icon-txt)"} />
+                            <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
                         {:else}
-                            <ArrowLeft size={ui.iconSize} color={"var(--icon-txt)"} />
+                            <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
                         {/if}
                     </HoverIcon>
                 </div>

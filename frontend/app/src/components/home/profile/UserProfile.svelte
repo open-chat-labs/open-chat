@@ -6,10 +6,24 @@
         ModerationFlags,
         type OpenChat,
         type UserSummary,
-        app,
+        adultEnabledStore,
+        anonUserStore,
+        canExtendDiamondStore,
+        communitiesStore,
+        hideMessagesFromDirectBlocked,
+        iconSize,
+        isDiamondStore,
+        isLifetimeDiamondStore,
+        moderationFlagsEnabledStore,
         notificationStatus,
+        notificationsSupported,
+        offensiveEnabledStore,
         publish,
-        ui,
+        referralsStore,
+        sortedCommunitiesStore,
+        suspendedUserStore,
+        underReviewEnabledStore,
+        userMetricsStore,
     } from "openchat-client";
     import { ErrorCode } from "openchat-shared";
     import { getContext, onMount } from "svelte";
@@ -108,12 +122,12 @@
     let originalUsername = $derived(user?.username ?? "");
     let originalDisplayName = $derived(user?.displayName ?? undefined);
     let selectedCommunity = $derived(
-        app.communities.get({
+        $communitiesStore.get({
             kind: "community",
             communityId: selectedCommunityId,
         }),
     );
-    let readonly = $derived(app.suspendedUser || app.anonUser);
+    let readonly = $derived($suspendedUserStore || $anonUserStore);
     let verified = $derived(user.isUniquePerson);
 
     //@ts-ignore
@@ -135,10 +149,10 @@
             !readonly,
     );
     let canEditTranslations = $derived(!$locale?.startsWith("en"));
-    let referredUserIds = $derived(new Set(app.referrals.map((r) => r.userId)));
+    let referredUserIds = $derived(new Set($referralsStore.map((r) => r.userId)));
 
     onMount(() => {
-        if (!app.anonUser) {
+        if (!$anonUserStore) {
             client.getBio().then((bio) => {
                 originalBio = userbio = bio;
             });
@@ -146,13 +160,13 @@
     });
 
     function toggleModerationFlag(flag: ModerationFlag) {
-        client.setModerationFlags(app.moderationFlagsEnabled ^ flag);
+        client.setModerationFlags($moderationFlagsEnabledStore ^ flag);
     }
 
     function saveUser(e: Event) {
         e.preventDefault();
 
-        if (app.anonUser) return;
+        if ($anonUserStore) return;
 
         saving = true;
         usernameError = undefined;
@@ -270,12 +284,12 @@
     <h4 class="title"><Translatable resourceKey={i18nKey("profile.title")} /></h4>
     <span title={$_("close")} class="close" onclick={onCloseProfile}>
         <HoverIcon>
-            <Close size={ui.iconSize} color={"var(--icon-txt)"} />
+            <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
 </SectionHeader>
 
-{#if !app.anonUser}
+{#if !$anonUserStore}
     <div class="tabs">
         <div
             tabindex="0"
@@ -331,7 +345,7 @@
                         <Verified size={"large"} {verified} tooltip={i18nKey("human.verified")} />
                     </div>
                 </div>
-                {#if app.anonUser}
+                {#if $anonUserStore}
                     <div class="guest">
                         <p><Translatable resourceKey={i18nKey("guestUser")} /></p>
                         <Button onClick={() => client.updateIdentityState({ kind: "logging_in" })}
@@ -389,7 +403,7 @@
                 {/if}
             </CollapsibleCard>
         </div>
-        {#if !app.anonUser && uniquePersonGate.enabled}
+        {#if !$anonUserStore && uniquePersonGate.enabled}
             <div class="verification">
                 <CollapsibleCard
                     onToggle={verificationSectionOpen.toggle}
@@ -418,7 +432,7 @@
                 </CollapsibleCard>
             </div>
         {/if}
-        {#if !app.anonUser}
+        {#if !$anonUserStore}
             <div class="linked-accounts">
                 <CollapsibleCard
                     onToggle={accountsSectionOpen.toggle}
@@ -460,7 +474,7 @@
                 </div>
             </CollapsibleCard>
         </div>
-        {#if !app.anonUser}
+        {#if !$anonUserStore}
             <div class="invite">
                 <CollapsibleCard
                     onToggle={referralOpen.toggle}
@@ -487,7 +501,7 @@
                         onChange={() => dclickReply.toggle()}
                         label={i18nKey(isTouchDevice ? "doubleTapReply" : "doubleClickReply")}
                         checked={$dclickReply} />
-                    {#if ui.notificationsSupported}
+                    {#if notificationsSupported}
                         <Toggle
                             id={"notifications"}
                             small
@@ -514,9 +528,9 @@
                     <Toggle
                         id={"hide-blocked"}
                         small
-                        onChange={() => ui.hideMessagesFromDirectBlocked.toggle()}
+                        onChange={() => hideMessagesFromDirectBlocked.toggle()}
                         label={i18nKey("hideBlocked")}
-                        checked={ui.hideMessagesFromDirectBlocked.value} />
+                        checked={$hideMessagesFromDirectBlocked} />
                 </CollapsibleCard>
             </div>
             <div class="video">
@@ -540,19 +554,19 @@
                         small
                         onChange={() => toggleModerationFlag(ModerationFlags.Offensive)}
                         label={i18nKey("communities.offensive")}
-                        checked={app.offensiveEnabled} />
+                        checked={$offensiveEnabledStore} />
                     <Toggle
                         id={"adult"}
                         small
                         onChange={() => toggleModerationFlag(ModerationFlags.Adult)}
                         label={i18nKey("communities.adult")}
-                        checked={app.adultEnabled} />
+                        checked={$adultEnabledStore} />
                     <Toggle
                         id={"underReview"}
                         small
                         onChange={() => toggleModerationFlag(ModerationFlags.UnderReview)}
                         label={i18nKey("communities.underReview")}
-                        checked={app.underReviewEnabled} />
+                        checked={$underReviewEnabledStore} />
                 </CollapsibleCard>
             </div>
             {#if !readonly}
@@ -563,22 +577,22 @@
                         headerText={i18nKey("upgrade.membership")}>
                         <StorageUsage />
 
-                        {#if !app.isDiamond}
+                        {#if !$isDiamondStore}
                             <ButtonGroup align={"fill"}>
                                 <Button onClick={() => publish("upgrade")} small
                                     ><Translatable
                                         resourceKey={i18nKey("upgrade.button")} /></Button>
                             </ButtonGroup>
-                        {:else if app.isLifetimeDiamond}
+                        {:else if $isLifetimeDiamondStore}
                             <Translatable resourceKey={i18nKey("upgrade.lifetimeMessage")} />
                         {:else}
                             <Expiry />
                             <ButtonGroup align={"fill"}>
                                 <Button
-                                    title={!app.canExtendDiamond
+                                    title={!$canExtendDiamondStore
                                         ? $_("upgrade.cannotExtend")
                                         : undefined}
-                                    disabled={!app.canExtendDiamond}
+                                    disabled={!$canExtendDiamondStore}
                                     onClick={() => publish("upgrade")}
                                     small
                                     ><Translatable
@@ -593,7 +607,7 @@
                     onToggle={statsSectionOpen.toggle}
                     open={$statsSectionOpen}
                     headerText={i18nKey("stats.userStats")}>
-                    <Stats showReported stats={app.userMetrics} />
+                    <Stats showReported stats={$userMetricsStore} />
                 </CollapsibleCard>
             </div>
         {/if}
@@ -602,13 +616,13 @@
                 onToggle={advancedSectionOpen.toggle}
                 open={$advancedSectionOpen}
                 headerText={i18nKey("advanced")}>
-                {#if !app.anonUser}
+                {#if !$anonUserStore}
                     <div class="userid">
                         <Legend label={i18nKey("userId")} rules={i18nKey("alsoCanisterId")} />
                         <div class="userid-txt">
                             <div>{user.userId}</div>
                             <div role="button" tabindex="0" onclick={onCopy} class="copy">
-                                <CopyIcon size={ui.iconSize} color={"var(--icon-txt)"} />
+                                <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
                             </div>
                         </div>
                     </div>
@@ -638,7 +652,7 @@
                 </div>
             </CollapsibleCard>
         </div>
-        {#if !app.anonUser}
+        {#if !$anonUserStore}
             <div class="danger">
                 <CollapsibleCard
                     onToggle={deleteAccountSectionOpen.toggle}
@@ -664,7 +678,7 @@
         <Select bind:value={selectedCommunityId}>
             <option disabled selected value={""}
                 ><Translatable resourceKey={i18nKey("profile.selectCommunity")} /></option>
-            {#each app.sortedCommunities.filter((s) => s.membership?.role !== "none") as community}
+            {#each $sortedCommunitiesStore.filter((s) => s.membership?.role !== "none") as community}
                 <option value={community.id.communityId}>{community.name}</option>
             {/each}
         </Select>

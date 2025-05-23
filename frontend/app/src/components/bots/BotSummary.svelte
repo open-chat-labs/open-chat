@@ -1,7 +1,7 @@
 <script lang="ts">
     import {
+        mobileWidth,
         OpenChat,
-        ui,
         type BotInstallationLocation,
         type BotSummaryMode,
         type ChatIdentifier,
@@ -188,19 +188,15 @@
         {#snippet footer()}
             <div class="footer">
                 <ButtonGroup>
-                    <Button
-                        secondary
-                        small={!ui.mobileWidth}
-                        tiny={ui.mobileWidth}
-                        onClick={onClose}>
+                    <Button secondary small={!$mobileWidth} tiny={$mobileWidth} onClick={onClose}>
                         <Translatable resourceKey={i18nKey("cancel")} />
                     </Button>
                     <Button
                         onClick={mainButton}
                         loading={busy}
                         disabled={busy}
-                        small={!ui.mobileWidth}
-                        tiny={ui.mobileWidth}>
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}>
                         <Translatable resourceKey={cta} />
                     </Button>
                 </ButtonGroup>

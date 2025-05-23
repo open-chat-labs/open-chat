@@ -1,6 +1,6 @@
 use crate::{
-    RuntimeState, activity_notifications::handle_activity_notification, jobs, model::events::CommunityEventInternal,
-    mutate_state, read_state, run_regular_jobs,
+    RuntimeState, activity_notifications::handle_activity_notification, execute_update_async, jobs,
+    model::events::CommunityEventInternal, mutate_state, read_state,
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -13,8 +13,10 @@ use user_index_canister_c2c_client::lookup_user;
 #[update(msgpack = true)]
 #[trace]
 async fn change_role(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| change_role_impl(args)).await
+}
 
+async fn change_role_impl(args: Args) -> Response {
     let PrepareResult {
         caller_id,
         user_index_canister_id,
@@ -50,7 +52,7 @@ async fn change_role(args: Args) -> Response {
     }
 
     mutate_state(|state| {
-        change_role_impl(
+        commit(
             args,
             caller_id,
             is_caller_platform_moderator,
@@ -83,7 +85,7 @@ fn prepare(user_id: UserId, state: &RuntimeState) -> OCResult<PrepareResult> {
     })
 }
 
-fn change_role_impl(
+fn commit(
     args: Args,
     caller_id: UserId,
     is_caller_platform_moderator: bool,

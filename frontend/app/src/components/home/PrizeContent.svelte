@@ -1,7 +1,11 @@
 <script lang="ts">
     import {
-        app,
+        chitStateStore,
         cryptoLookup,
+        currentUserIdStore,
+        currentUserStore,
+        isDiamondStore,
+        isLifetimeDiamondStore,
         publish,
         type ChatIdentifier,
         type DiamondMembershipStatus,
@@ -72,20 +76,20 @@
         publish("claimDailyChit");
     }
     let logo = $derived(
-        Object.values($cryptoLookup).find(
+        [...$cryptoLookup.values()].find(
             (t) => t.symbol.toLowerCase() === content.token.toLowerCase(),
         )?.logo ?? "",
     );
     let total = $derived(content.prizesRemaining + content.prizesPending + content.winners.length);
     let percentage = $derived((content.winners.length / total) * 100);
-    let claimedByYou = $derived(content.winners.includes(app.currentUserId));
+    let claimedByYou = $derived(content.winners.includes($currentUserIdStore));
     let finished = $derived($now500 >= Number(content.endDate));
     let allClaimed = $derived(content.prizesRemaining <= 0);
     let userEligible = $derived(
-        (!content.diamondOnly || app.isDiamond) &&
-            (!content.lifetimeDiamondOnly || app.isLifetimeDiamond) &&
-            (!content.uniquePersonOnly || app.currentUser.isUniquePerson) &&
-            content.streakOnly <= app.chitState.streak,
+        (!content.diamondOnly || $isDiamondStore) &&
+            (!content.lifetimeDiamondOnly || $isLifetimeDiamondStore) &&
+            (!content.uniquePersonOnly || $currentUserStore.isUniquePerson) &&
+            content.streakOnly <= $chitStateStore.streak,
     );
     let disabled = $derived(finished || claimedByYou || allClaimed || !userEligible);
     let timeRemaining = $derived(
@@ -227,7 +231,7 @@
             {#if claimedByYou}
                 <div class="tada">
                     <div class="confetti">
-                        <Confetti />
+                        <Confetti size={30} colorArray={[`url(${logo})`]} />
                     </div>
                 </div>
             {/if}

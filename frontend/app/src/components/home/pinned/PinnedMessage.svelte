@@ -1,7 +1,17 @@
 <script lang="ts">
     import { findSender } from "@src/utils/user";
     import type { CreatedUser, Message, MultiUserChatIdentifier, OpenChat } from "openchat-client";
-    import { AvatarSize, app, routeForMessage, ui, userStore } from "openchat-client";
+    import {
+        allUsersStore,
+        AvatarSize,
+        chatListScopeStore,
+        fullWidth,
+        mobileWidth,
+        routeForMessage,
+        selectedChatIdStore,
+        selectedChatWebhooksStore,
+        selectedCommunityMembersStore,
+    } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
     import { rtlStore } from "../../../stores/rtl";
@@ -27,12 +37,12 @@
 
     let crypto = msg.content.kind === "crypto_content";
 
-    let sender = $derived(findSender(msg.sender, userStore.allUsers, app.selectedChat.webhooks));
-    let username = $derived(client.getDisplayName(sender, app.selectedCommunity.members));
+    let sender = $derived(findSender(msg.sender, $allUsersStore, $selectedChatWebhooksStore));
+    let username = $derived(client.getDisplayName(sender, $selectedCommunityMembersStore));
     let deleted = $derived(msg.content.kind === "deleted_content");
     let fill = $derived(client.fillMessage(msg));
     let me = $derived(user.userId === senderId);
-    let modal = $derived(!ui.fullWidth);
+    let modal = $derived(!$fullWidth);
 
     function openUserProfile(e: Event) {
         if (!sender) return;
@@ -51,14 +61,14 @@
     }
 
     function goToMessageIndex() {
-        if (app.selectedChatId !== undefined) {
+        if ($selectedChatIdStore !== undefined) {
             if (modal) {
-                ui.popRightPanelHistory();
+                client.popRightPanelHistory();
             }
             page(
                 routeForMessage(
-                    app.chatListScope.kind,
-                    { chatId: app.selectedChatId },
+                    $chatListScopeStore.kind,
+                    { chatId: $selectedChatIdStore },
                     msg.messageIndex,
                 ),
             );
@@ -71,7 +81,7 @@
         <Avatar
             url={client.userAvatarUrl(sender)}
             userId={sender?.userId}
-            size={ui.mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
+            size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
     </div>
     <IntersectionObserver>
         {#snippet children(intersecting)}

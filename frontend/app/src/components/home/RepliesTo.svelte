@@ -2,10 +2,12 @@
     import {
         type ChatIdentifier,
         type RehydratedReplyContext,
-        app,
         chatIdentifiersEqual,
+        chatListScopeStore,
+        currentUserIdStore,
         OpenChat,
         routeForChatIdentifier,
+        selectedCommunityMembersStore,
     } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
@@ -30,18 +32,18 @@
 
     let debug = false;
 
-    let me = $derived(repliesTo.senderId === app.currentUserId);
+    let me = $derived(repliesTo.senderId === $currentUserIdStore);
     let isTextContent = $derived(repliesTo.content?.kind === "text_content");
     let isP2PSwap = $derived(repliesTo.content.kind === "p2p_swap_content");
     let displayName = $derived(
         me
             ? client.toTitleCase($_("you"))
-            : client.getDisplayNameById(repliesTo.senderId, app.selectedCommunity.members),
+            : client.getDisplayNameById(repliesTo.senderId, $selectedCommunityMembersStore),
     );
 
     function getUrl() {
         const path = [
-            routeForChatIdentifier(app.chatListScope.kind, repliesTo.sourceContext.chatId),
+            routeForChatIdentifier($chatListScopeStore.kind, repliesTo.sourceContext.chatId),
             repliesTo.sourceContext.threadRootMessageIndex ?? repliesTo.messageIndex,
         ];
         if (repliesTo.sourceContext.threadRootMessageIndex !== undefined) {

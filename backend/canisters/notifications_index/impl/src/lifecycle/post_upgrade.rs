@@ -1,12 +1,11 @@
+use crate::Data;
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
-use crate::{Data, read_state};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
 use notifications_index_canister::post_upgrade::Args;
 use stable_memory::get_reader;
-use std::time::Duration;
 use tracing::info;
 use utils::cycles::init_cycles_dispenser_client;
 
@@ -29,20 +28,4 @@ fn post_upgrade(args: Args) {
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
     info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");
-
-    ic_cdk_timers::set_timer(Duration::ZERO, sync_blocked_users);
-}
-
-fn sync_blocked_users() {
-    let (blocked_users, user_index_canister_id) =
-        read_state(|state| (state.data.blocked_users.collect_all(), state.data.user_index_canister_id));
-
-    ic_cdk::futures::spawn(async move {
-        user_index_canister_c2c_client::c2c_sync_blocked_users(
-            user_index_canister_id,
-            &user_index_canister::c2c_sync_blocked_users::Args { blocked_users },
-        )
-        .await
-        .unwrap();
-    });
 }

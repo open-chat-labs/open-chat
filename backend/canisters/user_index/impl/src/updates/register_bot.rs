@@ -89,6 +89,8 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
             endpoint: args.endpoint.clone(),
             autonomous_config: args.definition.autonomous_config.clone(),
             permitted_install_location: args.permitted_install_location,
+            default_subscriptions: args.definition.default_subscriptions.clone(),
+            data_encoding: args.definition.data_encoding.unwrap_or_default(),
         }),
         None,
     );

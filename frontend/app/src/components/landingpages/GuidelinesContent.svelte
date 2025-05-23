@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { pathState, ui } from "openchat-client";
+    import { locationStore, mobileWidth } from "openchat-client";
     import Copy from "svelte-material-icons/ContentCopy.svelte";
     import { copyToClipboard } from "../../utils/urls";
     import CollapsibleCard from "../CollapsibleCard.svelte";
@@ -13,7 +13,7 @@
 
     function copyUrl(e: Event, section: string): void {
         e.stopPropagation();
-        copyToClipboard(getSectionUrl(pathState.location, section));
+        copyToClipboard(getSectionUrl($locationStore, section));
     }
 
     function getSectionUrl(path: string, section: string): string {
@@ -24,7 +24,7 @@
         return `${window.location.origin}${path}`;
     }
 
-    let copySize = $derived(ui.mobileWidth ? "14px" : "16px");
+    let copySize = $derived($mobileWidth ? "14px" : "16px");
     let color = $derived(modal ? "var(--txt)" : "var(--landing-txt)");
 </script>
 

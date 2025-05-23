@@ -1,5 +1,11 @@
 <script lang="ts">
-    import { AvatarSize, OpenChat, ui, userStore, type CommandArg } from "openchat-client";
+    import {
+        allUsersStore,
+        AvatarSize,
+        mobileWidth,
+        OpenChat,
+        type CommandArg,
+    } from "openchat-client";
     import type { BotContextCommand } from "openchat-shared";
     import { getContext } from "svelte";
     import CogOutline from "svelte-material-icons/CogOutline.svelte";
@@ -17,7 +23,7 @@
     }
 
     let { botCommand, finalised }: Props = $props();
-    let MAX_COMMAND_LENGTH = $derived(ui.mobileWidth ? 50 : 150);
+    let MAX_COMMAND_LENGTH = $derived($mobileWidth ? 50 : 150);
     let paramValues = $derived(botCommand.args.map(paramValue));
     let paramsLength = $derived(paramValues.reduce((total, p) => total + p.length, 0));
     let paramMode: "truncated" | "full" = $derived(
@@ -32,7 +38,7 @@
             return `@UserId(${botCommand.initiator}) used **/${botCommand.name}**`;
         }
     });
-    let user = $derived(userStore.get(botCommand.initiator));
+    let user = $derived($allUsersStore.get(botCommand.initiator));
 
     function paramValue(param: CommandArg): string {
         switch (param.kind) {
@@ -44,7 +50,7 @@
             case "string":
                 return param.value ?? "null";
             case "user":
-                return param.userId ? userStore.get(param.userId)?.username ?? "null" : "null";
+                return param.userId ? $allUsersStore.get(param.userId)?.username ?? "null" : "null";
             case "dateTime":
                 return param.value
                     ? client.toDatetimeString(new Date(Number(param.value)))

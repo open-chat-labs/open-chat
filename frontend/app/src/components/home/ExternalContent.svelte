@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { app } from "openchat-client";
+    import { currentUserStore } from "openchat-client";
     import { onMount } from "svelte";
     import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
@@ -53,7 +53,7 @@
                 sendMessage(iframe, origin, {
                     kind: "initialise_external_content",
                     theme: $currentTheme,
-                    username: app.currentUser.username,
+                    username: $currentUserStore.username,
                 });
             }
             connected = true;

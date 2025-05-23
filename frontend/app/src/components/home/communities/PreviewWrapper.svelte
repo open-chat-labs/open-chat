@@ -1,6 +1,10 @@
 <script lang="ts">
     import type { EnhancedAccessGate, GateCheckSucceeded, OpenChat } from "openchat-client";
-    import { app } from "openchat-client";
+    import {
+        anonUserStore,
+        identityStateStore,
+        selectedCommunitySummaryStore,
+    } from "openchat-client";
     import { getContext, tick, type Snippet } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
@@ -20,7 +24,7 @@
     let checkingAccessGate: EnhancedAccessGate | undefined = $state(undefined);
 
     function joinCommunity() {
-        if (app.anonUser) {
+        if ($anonUserStore) {
             client.updateIdentityState({
                 kind: "logging_in",
                 postLogin: { kind: "join_community" },
@@ -35,21 +39,21 @@
     }
 
     function doJoinCommunity(gateCheck: GateCheckSucceeded | undefined): Promise<void> {
-        if (previewingCommunity && app.selectedCommunitySummary) {
+        if (previewingCommunity && $selectedCommunitySummaryStore) {
             const credentials = gateCheck?.credentials ?? [];
             const paymentApprovals = gateCheck?.paymentApprovals ?? new Map();
             const gateConfigWithLevel: EnhancedAccessGate = {
-                ...app.selectedCommunitySummary.gateConfig.gate,
+                ...$selectedCommunitySummaryStore.gateConfig.gate,
                 level: "community",
-                expiry: app.selectedCommunitySummary.gateConfig.expiry,
+                expiry: $selectedCommunitySummaryStore.gateConfig.expiry,
             };
 
             if (gateCheck === undefined) {
                 if (
-                    app.selectedCommunitySummary.gateConfig.gate.kind !== "no_gate" &&
-                    !app.selectedCommunitySummary.isInvited
+                    $selectedCommunitySummaryStore.gateConfig.gate.kind !== "no_gate" &&
+                    !$selectedCommunitySummaryStore.isInvited
                 ) {
-                    const gateConfigs = [app.selectedCommunitySummary.gateConfig];
+                    const gateConfigs = [$selectedCommunitySummaryStore.gateConfig];
                     const gates = gateConfigs.map((gc) => gc.gate);
                     const passed = client.doesUserMeetAccessGates(gates);
                     if (!passed) {
@@ -69,7 +73,7 @@
             joiningCommunity = true;
 
             return client
-                .joinCommunity(app.selectedCommunitySummary, credentials, paymentApprovals)
+                .joinCommunity($selectedCommunitySummaryStore, credentials, paymentApprovals)
                 .then((resp) => {
                     if (resp.kind === "gate_check_failed") {
                         gateCheckFailed = gateConfigWithLevel;
@@ -87,13 +91,13 @@
         gateCheckFailed = undefined;
     }
     let previewingCommunity = $derived(
-        app.selectedCommunitySummary?.membership.role === "none" ||
-            app.selectedCommunitySummary?.membership.lapsed,
+        $selectedCommunitySummaryStore?.membership.role === "none" ||
+            $selectedCommunitySummaryStore?.membership.lapsed,
     );
     $effect(() => {
         if (
-            app.identityState.kind === "logged_in" &&
-            app.identityState.postLogin?.kind === "join_community"
+            $identityStateStore.kind === "logged_in" &&
+            $identityStateStore.postLogin?.kind === "join_community"
         ) {
             client.clearPostLoginState();
             tick().then(() => joinCommunity());

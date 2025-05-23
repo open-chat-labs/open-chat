@@ -1,10 +1,12 @@
 <script lang="ts">
     import { toastStore } from "@src/stores/toast";
     import {
-        app,
+        chatListScopeStore,
+        chatSummariesListStore,
+        currentUserIdStore,
+        mobileWidth,
         pageRedirect,
         routeForScope,
-        ui,
         type ChatSummary,
         type CommunitySummary,
         type ExternalBotPermissions,
@@ -61,7 +63,7 @@
             case "channel":
                 return { kind: "community", communityId: collection.id.communityId };
             case "direct_chat":
-                return { kind: "direct_chat", userId: app.currentUserId };
+                return { kind: "direct_chat", userId: $currentUserIdStore };
             case "group_chat":
                 return collection.id;
             case "community":
@@ -97,14 +99,14 @@
         const botId = bot.id;
 
         if (commandContextId.kind === "direct_chat") {
-            if (ui.mobileWidth) {
-                page(routeForScope(app.chatListScope));
+            if ($mobileWidth) {
+                page(routeForScope($chatListScopeStore));
             } else {
-                const first = app.chatSummariesList.find(
+                const first = $chatSummariesListStore.find(
                     (c) => !chatIdentifiersEqual(c.id, { kind: "direct_chat", userId: bot.id }),
                 );
                 if (first) {
-                    pageRedirect(routeForChatIdentifier(app.chatListScope.kind, first.id));
+                    pageRedirect(routeForChatIdentifier($chatListScopeStore.kind, first.id));
                 } else {
                     page(routeForScope(client.getDefaultScope()));
                 }

@@ -5,8 +5,8 @@
     import {
         AuthProvider,
         InMemoryAuthClientStorage,
-        app,
-        ui,
+        iconSize,
+        selectedAuthProviderStore,
         type AuthenticationPrincipal,
         type OpenChat,
         type ResourceKey,
@@ -88,7 +88,7 @@
     let accounts: (AuthenticationPrincipal & { provider: AuthProvider })[] = $state([]);
 
     let currentIdentity = $derived(accounts.find((a) => a.isCurrentIdentity));
-    let currentProvider = $derived(currentIdentity?.provider ?? app.selectedAuthProvider);
+    let currentProvider = $derived(currentIdentity?.provider ?? $selectedAuthProviderStore);
     let restrictTo = $derived(
         substep.kind === "approver" && currentProvider !== undefined
             ? new Set<string>([currentProvider])
@@ -340,7 +340,7 @@
 </script>
 
 <div class="header">
-    <LinkVariantPlus size={ui.iconSize} color={"var(--txt)"} />
+    <LinkVariantPlus size={$iconSize} color={"var(--txt)"} />
     <div class="title">
         <Translatable resourceKey={i18nKey("identity.linkIdentity")} />
     </div>
@@ -371,7 +371,7 @@
                     hollow
                     provider={substep.initiator.provider}
                     name={i18nKey(substep.initiator.provider)} />
-                <ArrowRightBoldOutline size={ui.iconSize} color={"var(--icon-txt)"} />
+                <ArrowRightBoldOutline size={$iconSize} color={"var(--icon-txt)"} />
                 <SignInOption
                     hollow
                     provider={substep.approver.provider}

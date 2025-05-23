@@ -1,6 +1,6 @@
 use crate::{
-    CanisterId, ChannelId, Chat, ChatEventType, ChatId, CommunityId, EventIndex, MessageIndex, Reaction, TimestampMillis,
-    UserId,
+    BotDataEncoding, BotInstallationLocation, BotPermissions, CanisterId, ChannelId, Chat, ChatEventType, ChatId,
+    CommunityEventType, CommunityId, EventIndex, MessageIndex, Reaction, TimestampMillis, UserId,
 };
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
@@ -29,9 +29,33 @@ pub struct UserNotification {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct BotNotification {
     #[serde(rename = "e")]
-    pub event_type: ChatEventType,
+    pub event: BotEvent,
     #[serde(rename = "r")]
     pub recipients: Vec<UserId>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum BotEvent {
+    #[serde(rename = "c")]
+    Chat(BotChatEvent),
+    #[serde(rename = "u")]
+    Community(BotCommunityEvent),
+    #[serde(rename = "l")]
+    Lifecycle(BotLifecycleEvent),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct BotEventWrapper {
+    #[serde(rename = "g")]
+    pub api_gateway: CanisterId,
+    #[serde(rename = "e")]
+    pub event: BotEvent,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct BotChatEvent {
+    #[serde(rename = "e")]
+    pub event_type: ChatEventType,
     #[serde(rename = "c")]
     pub chat: Chat,
     #[serde(rename = "t")]
@@ -40,6 +64,48 @@ pub struct BotNotification {
     pub event_index: EventIndex,
     #[serde(rename = "l")]
     pub latest_event_index: EventIndex,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct BotCommunityEvent {
+    #[serde(rename = "e")]
+    pub event_type: CommunityEventType,
+    #[serde(rename = "c")]
+    pub community_id: CommunityId,
+    #[serde(rename = "i")]
+    pub event_index: EventIndex,
+    #[serde(rename = "l")]
+    pub latest_event_index: EventIndex,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum BotLifecycleEvent {
+    #[serde(rename = "i")]
+    Installed(BotInstalledEvent),
+    #[serde(rename = "u")]
+    Uninstalled(BotUninstalledEvent),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct BotInstalledEvent {
+    #[serde(rename = "u")]
+    pub installed_by: UserId,
+    #[serde(rename = "l")]
+    pub location: BotInstallationLocation,
+    #[serde(rename = "g")]
+    pub api_gateway: CanisterId,
+    #[serde(rename = "p")]
+    pub granted_command_permissions: BotPermissions,
+    #[serde(rename = "a")]
+    pub granted_autonomous_permissions: BotPermissions,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct BotUninstalledEvent {
+    #[serde(rename = "u")]
+    pub uninstalled_by: UserId,
+    #[serde(rename = "l")]
+    pub location: BotInstallationLocation,
 }
 
 impl Debug for UserNotification {
@@ -70,18 +136,10 @@ pub struct UserNotificationEnvelope {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BotNotificationEnvelope {
-    #[serde(rename = "ty")]
-    pub event_type: ChatEventType,
+    #[serde(rename = "e")]
+    pub event: BotEventWrapper,
     #[serde(rename = "r")]
     pub recipients: Vec<UserId>,
-    #[serde(rename = "c")]
-    pub chat: Chat,
-    #[serde(rename = "th")]
-    pub thread: Option<MessageIndex>,
-    #[serde(rename = "i")]
-    pub event_index: EventIndex,
-    #[serde(rename = "l")]
-    pub latest_event_index: EventIndex,
     #[serde(rename = "t")]
     pub timestamp: TimestampMillis,
 }
@@ -439,4 +497,10 @@ impl Debug for UserNotificationEnvelope {
             .field("timestamp", &self.timestamp)
             .finish()
     }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct NotificationBotDetails {
+    pub endpoint: String,
+    pub data_encoding: BotDataEncoding,
 }

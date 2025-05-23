@@ -1,9 +1,9 @@
 <script lang="ts">
     import {
+        allUsersStore,
         debouncedDerived,
+        iconSize,
         OpenChat,
-        ui,
-        userStore,
         validateBot,
         ValidationErrors,
         validEndpoint,
@@ -269,7 +269,7 @@
             mentionSelf
             onUserSelected={(user) => (candidate.ownerId = user.userId)}
             onUserRemoved={() => (candidate.ownerId = "")}
-            selectedReceiver={userStore.get(candidate.ownerId)}
+            selectedReceiver={$allUsersStore.get(candidate.ownerId)}
             placeholder={"bots.builder.ownerLabel"}
             autofocus={false} />
     {/if}
@@ -309,7 +309,7 @@
             {#if !errors.has("bot_endpoint")}
                 <HoverIcon title={"load definition"} onclick={loadDefinition}>
                     <Reload
-                        size={ui.iconSize}
+                        size={$iconSize}
                         color={schemaLoaded ? "var(--icon-txt)" : "var(--accent)"}></Reload>
                 </HoverIcon>
             {/if}

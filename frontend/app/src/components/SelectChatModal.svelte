@@ -11,7 +11,17 @@
         MultiUserChat,
         OpenChat,
     } from "openchat-client";
-    import { app, AvatarSize, chatIdentifiersEqual, ui, userStore } from "openchat-client";
+    import {
+        allUsersStore,
+        AvatarSize,
+        chatIdentifiersEqual,
+        communitiesStore,
+        favouritesStore,
+        iconSize,
+        selectedChatIdStore,
+        serverDirectChatsStore,
+        serverGroupChatsStore,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
@@ -78,7 +88,7 @@
     });
 
     trackedEffect("select-chat-modal", () => {
-        buildListOfTargets($now, app.selectedChatId, searchTermLower).then((t) => (targets = t));
+        buildListOfTargets($now, $selectedChatIdStore, searchTermLower).then((t) => (targets = t));
     });
     let noTargets = $derived(getNumberOfTargets(targets) === 0);
 
@@ -144,21 +154,21 @@
             favourites: [],
             communities: [],
         };
-        const direct = [...app.directChats.values()].map((d) => ({
+        const direct = [...$serverDirectChatsStore.values()].map((d) => ({
             ...d,
-            name: buildDisplayName(userStore.allUsers, d.them.userId, "user"),
+            name: buildDisplayName($allUsersStore, d.them.userId, "user"),
         }));
 
-        const group = [...app.groupChats.values()];
-        const channels = [...app.communities.values()].flatMap((c) => c.channels);
+        const group = [...$serverGroupChatsStore.values()];
+        const channels = [...$communitiesStore.values()].flatMap((c) => c.channels);
         const all = [...group, ...direct, ...channels];
-        const favs = all.filter((c) => app.favourites.has(c.id));
+        const favs = all.filter((c) => $favouritesStore.has(c.id));
         try {
             const directChats = await targetsFromChatList(now, direct, selectedChatId);
             const groupChats = await targetsFromChatList(now, group, selectedChatId);
             const favourites = await targetsFromChatList(now, favs, selectedChatId);
             const communities = await Promise.all(
-                [...app.communities.values()].map((c) =>
+                [...$communitiesStore.values()].map((c) =>
                     normaliseCommunity(now, selectedChatId, c),
                 ),
             );
@@ -195,7 +205,7 @@
         switch (chatSummary.kind) {
             case "direct_chat":
                 const description = await buildDirectChatDescription(chatSummary, now);
-                const them = userStore.get(chatSummary.them.userId);
+                const them = $allUsersStore.get(chatSummary.them.userId);
                 return {
                     kind: "chat",
                     id: chatSummary.id,
@@ -271,12 +281,12 @@
 <section>
     <SectionHeader border={false} gap>
         <HoverIcon>
-            <AccountMultiple size={ui.iconSize} color={"var(--icon-txt)"} />
+            <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
         <h4><Translatable resourceKey={i18nKey("sendTo")} /></h4>
         <span role="button" tabindex="0" title={$_("close")} class="close" onclick={onClose}>
             <HoverIcon>
-                <Close size={ui.iconSize} color={"var(--icon-txt)"} />
+                <Close size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </span>
     </SectionHeader>
@@ -296,7 +306,7 @@
                     {#snippet titleSlot()}
                         <div class="card-header">
                             <div class="avatar">
-                                <MessageOutline size={ui.iconSize} color={"var(--icon-txt)"} />
+                                <MessageOutline size={$iconSize} color={"var(--icon-txt)"} />
                             </div>
                             <div class="details">
                                 <h4 class="title">
@@ -343,7 +353,7 @@
                     {#snippet titleSlot()}
                         <div class="card-header">
                             <div class="avatar">
-                                <ForumOutline size={ui.iconSize} color={"var(--icon-txt)"} />
+                                <ForumOutline size={$iconSize} color={"var(--icon-txt)"} />
                             </div>
                             <div class="details">
                                 <h4 class="title">
@@ -378,7 +388,7 @@
                     {#snippet titleSlot()}
                         <div class="card-header">
                             <div class="avatar">
-                                <HeartOutline size={ui.iconSize} color={"var(--icon-txt)"} />
+                                <HeartOutline size={$iconSize} color={"var(--icon-txt)"} />
                             </div>
                             <div class="details">
                                 <h4 class="title">

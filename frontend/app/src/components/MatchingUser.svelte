@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { OpenChat, UserSummary } from "openchat-client";
-    import { app, AvatarSize } from "openchat-client";
+    import { AvatarSize, currentUserIdStore } from "openchat-client";
     import { getContext } from "svelte";
     import Avatar from "./Avatar.svelte";
     import FilteredUsername from "./FilteredUsername.svelte";
@@ -45,7 +45,7 @@
         <h4>
             <FilteredUsername
                 {searchTerm}
-                me={user.userId === app.currentUserId}
+                me={user.userId === $currentUserIdStore}
                 username={user.displayName ?? user.username} />
             <Badges
                 uniquePerson={user.isUniquePerson}

@@ -31,7 +31,7 @@ pub struct Channel {
 }
 
 impl Channels {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         community_id: CommunityId,
         created_by: UserId,
@@ -211,7 +211,7 @@ impl Channels {
 }
 
 impl Channel {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         id: ChannelId,
         community_id: CommunityId,

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ScreenWidth, ui } from "openchat-client";
+    import { screenWidth, ScreenWidth } from "openchat-client";
 
     interface Props {
         width: string;
@@ -26,7 +26,7 @@
     );
 
     let show = $derived(
-        ui.screenWidth === ScreenWidth.ExtraExtraLarge || ui.screenWidth === ScreenWidth.ExtraLarge,
+        $screenWidth === ScreenWidth.ExtraExtraLarge || $screenWidth === ScreenWidth.ExtraLarge,
     );
 </script>
 

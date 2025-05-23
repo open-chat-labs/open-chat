@@ -9,10 +9,11 @@
 <script lang="ts">
     import type { ChatIdentifier, CommunityIdentifier, GroupChatIdentifier } from "openchat-client";
     import {
-        app,
         botState,
         emptyExternalBotPermissions,
         flattenCommandPermissions,
+        selectedChatBotsStore,
+        selectedCommunityBotsStore,
     } from "openchat-client";
     import BotSummary from "./BotSummary.svelte";
 
@@ -20,9 +21,9 @@
 
     let grantedPermissions = $derived.by(() => {
         if (chatId.kind === "channel") {
-            return app.selectedCommunity.bots.get(botId) ?? emptyExternalBotPermissions();
+            return $selectedCommunityBotsStore.get(botId) ?? emptyExternalBotPermissions();
         } else {
-            return app.selectedChat.bots.get(botId) ?? emptyExternalBotPermissions();
+            return $selectedChatBotsStore.get(botId) ?? emptyExternalBotPermissions();
         }
     });
     let bot = $derived(botState.externalBots.get(botId));

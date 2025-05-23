@@ -1,3 +1,8 @@
+use candid::Principal;
+use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
+use types::{SubscriptionInfo, UserId};
+
 mod lifecycle;
 mod queries;
 mod updates;
@@ -6,14 +11,12 @@ pub use lifecycle::*;
 pub use queries::*;
 pub use updates::*;
 
-use serde::{Deserialize, Serialize};
-use types::{SubscriptionInfo, UserId};
-
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum NotificationsIndexEvent {
     SubscriptionAdded(SubscriptionAdded),
     SubscriptionRemoved(SubscriptionRemoved),
     AllSubscriptionsRemoved(UserId),
+    SetNotificationPusherPrincipals(HashSet<Principal>),
     UserBlocked(UserId, UserId),
     UserUnblocked(UserId, UserId),
     BotEndpointUpdated(UserId, String),

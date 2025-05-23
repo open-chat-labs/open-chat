@@ -1,7 +1,6 @@
 use crate::guards::caller_is_local_user_index;
 use crate::{
-    RuntimeState, activity_notifications::handle_activity_notification, model::events::CommunityEventInternal, mutate_state,
-    run_regular_jobs,
+    RuntimeState, activity_notifications::handle_activity_notification, execute_update, model::events::CommunityEventInternal,
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -15,22 +14,22 @@ use types::{BotCaller, Caller, ChannelDeleted, ChannelId, OCResult};
 #[update(msgpack = true)]
 #[trace]
 fn delete_channel(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| delete_channel_impl(args.channel_id, None, state)).into()
+    execute_update(|state| delete_channel_impl(args.channel_id, None, state)).into()
 }
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_bot_delete_channel(args: c2c_bot_delete_channel::Args) -> c2c_bot_delete_channel::Response {
-    run_regular_jobs();
+    execute_update(|state| c2c_bot_delete_channel_impl(args, state).into())
+}
 
+fn c2c_bot_delete_channel_impl(args: c2c_bot_delete_channel::Args, state: &mut RuntimeState) -> OCResult {
     let bot_caller = BotCaller {
         bot: args.bot_id,
         initiator: args.initiator.clone(),
     };
 
-    mutate_state(|state| delete_channel_impl(args.channel_id, Some(Caller::BotV2(bot_caller)), state)).into()
+    delete_channel_impl(args.channel_id, Some(Caller::BotV2(bot_caller)), state)
 }
 
 fn delete_channel_impl(channel_id: ChannelId, ext_caller: Option<Caller>, state: &mut RuntimeState) -> OCResult {

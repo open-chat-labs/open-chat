@@ -1,10 +1,11 @@
-use crate::{mutate_state, read_state, run_regular_jobs};
+use crate::{execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ckbtc_minter_canister::update_balance::{UpdateBalanceError, UtxoStatus};
 use ckbtc_minter_canister::{CKBTC_MINTER_CANISTER_ID, TESTNET_CKBTC_MINTER_CANISTER_ID};
 use event_store_producer::EventBuilder;
 use ledger_utils::format_crypto_amount;
+use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use oc_error_codes::OCErrorCode;
 use serde::Serialize;
 use tracing::error;
@@ -14,8 +15,10 @@ use user_canister::update_btc_balance::*;
 #[update(msgpack = true)]
 #[trace]
 async fn update_btc_balance(_args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(update_btc_balance_impl).await
+}
 
+async fn update_btc_balance_impl() -> Response {
     let test_mode = read_state(|state| state.data.test_mode);
     let ckbtc_minter_canister_id = if test_mode { TESTNET_CKBTC_MINTER_CANISTER_ID } else { CKBTC_MINTER_CANISTER_ID };
 
@@ -49,12 +52,15 @@ Your account has been credited with {formatted} BTC."
                     );
                     let user_id_string = state.env.canister_id().to_string();
                     let now = state.env.now();
-                    state.data.event_store_client.push(
-                        EventBuilder::new("btc_deposit", now)
-                            .with_user(user_id_string.clone(), true)
-                            .with_source(user_id_string, true)
-                            .with_json_payload(&BtcDepositOrWithdrawalEventPayload { amount: total_minted })
-                            .build(),
+                    state.push_local_user_index_canister_event(
+                        LocalUserIndexEvent::EventStoreEvent(
+                            EventBuilder::new("btc_deposit", now)
+                                .with_user(user_id_string.clone(), true)
+                                .with_source(user_id_string, true)
+                                .with_json_payload(&BtcDepositOrWithdrawalEventPayload { amount: total_minted })
+                                .build(),
+                        ),
+                        now,
                     );
                     state.award_achievement_and_notify(Achievement::DepositedBtc, now);
                 }

@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { CreatedUser, EnhancedReplyContext, OpenChat } from "openchat-client";
-    import { app, ui } from "openchat-client";
+    import { iconSize, selectedCommunityMembersStore } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -25,7 +25,7 @@
     let displayName = $derived(
         me
             ? client.toTitleCase($_("you"))
-            : client.getDisplayName(replyingTo.sender, app.selectedCommunity.members),
+            : client.getDisplayName(replyingTo.sender, $selectedCommunityMembersStore),
     );
 </script>
 
@@ -36,7 +36,7 @@
     class:crypto={replyingTo.content.kind === "crypto_content"}>
     <div class="close-icon" onclick={onCancelReply}>
         <HoverIcon compact>
-            <Close size={ui.iconSize} color={me ? "#fff" : "#aaa"} />
+            <Close size={$iconSize} color={me ? "#fff" : "#aaa"} />
         </HoverIcon>
     </div>
     <h4 class="username">

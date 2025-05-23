@@ -1,9 +1,10 @@
 <script lang="ts">
     import {
-        app,
         AvatarSize,
+        communitiesStore,
         i18nKey,
         OpenChat,
+        serverGroupChatsStore,
         type BotInstallationLocation,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
@@ -41,7 +42,7 @@
     function onPerformSearch(term: string) {
         const termLower = term.toLowerCase();
 
-        const communities: Match[] = [...app.communities.values()]
+        const communities: Match[] = [...$communitiesStore.values()]
             .filter((c) => termLower === "" || c.name.toLowerCase().includes(termLower))
             .map((c) => ({
                 avatarUrl: client.communityAvatarUrl(c.id.communityId, c.avatar),
@@ -50,7 +51,7 @@
                 isCommunity: true,
             }));
 
-        const groups: Match[] = [...app.groupChats.values()]
+        const groups: Match[] = [...$serverGroupChatsStore.values()]
             .filter((g) => termLower === "" || g.name.toLowerCase().includes(termLower))
             .map((g) => ({
                 avatarUrl: client.groupAvatarUrl(g),

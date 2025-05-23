@@ -9,9 +9,17 @@
         type ReadonlySet,
         type ResourceKey,
         type UserSummary,
-        app,
-        ui,
-        userStore,
+        blockedUsersStore,
+        currentUserIdStore,
+        mobileWidth,
+        platformModeratorStore,
+        rightPanelHistory,
+        selectedChatBlockedUsersStore,
+        selectedChatMembersStore,
+        selectedChatSummaryStore,
+        selectedCommunityBlockedUsersStore,
+        selectedCommunityMembersStore,
+        selectedCommunitySummaryStore,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
@@ -79,25 +87,25 @@
     }
 
     function blockUser() {
-        if (app.selectedChatSummary !== undefined) {
-            if (app.selectedChatSummary.kind === "direct_chat") {
+        if ($selectedChatSummaryStore !== undefined) {
+            if ($selectedChatSummaryStore.kind === "direct_chat") {
                 client.blockUserFromDirectChat(userId).then((success) => {
                     afterBlock(success, i18nKey("blockUserSucceeded"), i18nKey("blockUserFailed"));
                 });
                 onClose();
                 return;
             }
-            if (app.selectedChatSummary.kind === "group_chat") {
-                client.blockUser(app.selectedChatSummary.id, userId).then((success) => {
+            if ($selectedChatSummaryStore.kind === "group_chat") {
+                client.blockUser($selectedChatSummaryStore.id, userId).then((success) => {
                     afterBlock(success, i18nKey("blockUserSucceeded"), i18nKey("blockUserFailed"));
                 });
                 onClose();
                 return;
             }
         }
-        if (app.selectedCommunitySummary !== undefined) {
+        if ($selectedCommunitySummaryStore !== undefined) {
             client
-                .blockCommunityUser(app.selectedCommunitySummary.id, userId)
+                .blockCommunityUser($selectedCommunitySummaryStore.id, userId)
                 .then((success) =>
                     afterBlock(success, i18nKey("blockUserSucceeded"), i18nKey("blockUserFailed")),
                 );
@@ -107,8 +115,8 @@
     }
 
     function unblockUser() {
-        if (app.selectedChatSummary !== undefined) {
-            if (app.selectedChatSummary.kind === "direct_chat") {
+        if ($selectedChatSummaryStore !== undefined) {
+            if ($selectedChatSummaryStore.kind === "direct_chat") {
                 client.unblockUserFromDirectChat(userId).then((success) => {
                     afterBlock(
                         success,
@@ -119,8 +127,8 @@
                 onClose();
                 return;
             }
-            if (app.selectedChatSummary.kind === "group_chat") {
-                client.unblockUser(app.selectedChatSummary.id, userId).then((success) => {
+            if ($selectedChatSummaryStore.kind === "group_chat") {
+                client.unblockUser($selectedChatSummaryStore.id, userId).then((success) => {
                     afterBlock(
                         success,
                         i18nKey("unblockUserSucceeded"),
@@ -131,9 +139,9 @@
                 return;
             }
         }
-        if (app.selectedCommunitySummary !== undefined) {
+        if ($selectedCommunitySummaryStore !== undefined) {
             client
-                .unblockCommunityUser(app.selectedCommunitySummary.id, userId)
+                .unblockCommunityUser($selectedCommunitySummaryStore.id, userId)
                 .then((success) =>
                     afterBlock(
                         success,
@@ -190,7 +198,7 @@
     }
 
     function showUserProfile() {
-        ui.rightPanelHistory = [{ kind: "user_profile" }];
+        rightPanelHistory.set([{ kind: "user_profile" }]);
         onClose();
     }
 
@@ -230,9 +238,9 @@
         });
     }
     let diamondStatus = $derived(user?.diamondStatus);
-    let me = $derived(userId === app.currentUserId);
+    let me = $derived(userId === $currentUserIdStore);
     let isSuspended = $derived(user?.suspended ?? false);
-    let modal = $derived(ui.mobileWidth);
+    let modal = $derived($mobileWidth);
     let [status, online] = $derived(
         lastOnline !== undefined && lastOnline !== 0
             ? client.formatLastOnlineDate($_, Date.now(), lastOnline)
@@ -257,25 +265,25 @@
                 username: profile?.username ?? "",
                 displayName: profile?.displayName,
             },
-            inGlobalContext ? undefined : app.selectedCommunity.members,
+            inGlobalContext ? undefined : $selectedCommunityMembersStore,
         ),
     );
     let canBlock = $derived(
         canBlockUser(
-            app.selectedChatSummary,
-            app.selectedCommunitySummary,
-            userStore.blockedUsers,
-            app.selectedChat.blockedUsers,
-            app.selectedCommunity.blockedUsers,
+            $selectedChatSummaryStore,
+            $selectedCommunitySummaryStore,
+            $blockedUsersStore,
+            $selectedChatBlockedUsersStore,
+            $selectedCommunityBlockedUsersStore,
         ),
     );
     let canUnblock = $derived(
         canUnblockUser(
-            app.selectedChatSummary,
-            app.selectedCommunitySummary,
-            userStore.blockedUsers,
-            app.selectedChat.blockedUsers,
-            app.selectedCommunity.blockedUsers,
+            $selectedChatSummaryStore,
+            $selectedCommunitySummaryStore,
+            $blockedUsersStore,
+            $selectedChatBlockedUsersStore,
+            $selectedCommunityBlockedUsersStore,
         ),
     );
 </script>
@@ -308,15 +316,15 @@
                                 uniquePerson={user?.isUniquePerson}
                                 {diamondStatus}
                                 streak={client.getStreak(user?.userId)} />
-                            {#if user !== undefined && app.selectedChatSummary !== undefined && app.selectedChatSummary.kind !== "direct_chat"}
+                            {#if user !== undefined && $selectedChatSummaryStore !== undefined && $selectedChatSummaryStore.kind !== "direct_chat"}
                                 <WithRole
                                     userId={user.userId}
-                                    chatMembers={app.selectedChat.members}
-                                    communityMembers={app.selectedCommunity.members}>
+                                    chatMembers={$selectedChatMembersStore}
+                                    communityMembers={$selectedCommunityMembersStore}>
                                     {#snippet children(communityRole, chatRole)}
                                         <RoleIcon level="community" popup role={communityRole} />
                                         <RoleIcon
-                                            level={app.selectedChatSummary?.kind === "channel"
+                                            level={$selectedChatSummaryStore?.kind === "channel"
                                                 ? "channel"
                                                 : "group"}
                                             popup
@@ -381,7 +389,7 @@
                                 ><Translatable resourceKey={i18nKey("profile.unblock")} /></Button>
                         {/if}
                     </ButtonGroup>
-                    {#if app.platformModerator}
+                    {#if $platformModeratorStore}
                         <div class="suspend">
                             <ButtonGroup align={"fill"}>
                                 {#if isSuspended}

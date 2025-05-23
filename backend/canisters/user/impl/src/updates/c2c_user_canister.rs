@@ -1,14 +1,13 @@
 use crate::timer_job_types::{HardDeleteMessageContentJob, TimerJob};
 use crate::updates::c2c_send_messages::{HandleMessageArgs, get_sender_status, handle_message_impl, verify_user};
 use crate::updates::start_video_call::handle_start_video_call;
-use crate::{RuntimeState, mutate_state, read_state, run_regular_jobs};
+use crate::{RuntimeState, UserEventPusher, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{
     AddRemoveReactionArgs, DeleteUndeleteMessagesArgs, EditMessageArgs, MessageContentInternal, Reader, TipMessageArgs,
 };
 use constants::{HOUR_IN_MS, MINUTE_IN_MS};
-use event_store_producer_cdk_runtime::CdkRuntime;
 use ledger_utils::format_crypto_amount_with_symbol;
 use types::{
     Achievement, Chat, ChitEarned, ChitEarnedReason, DirectMessageTipped, DirectReactionAddedNotification, EventIndex,
@@ -22,8 +21,10 @@ use user_canister::{
 #[update(msgpack = true)]
 #[trace]
 async fn c2c_user_canister(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| c2c_user_canister_impl(args)).await
+}
 
+async fn c2c_user_canister_impl(args: Args) -> Response {
     let caller_user_id = match read_state(get_sender_status) {
         crate::updates::c2c_send_messages::SenderStatus::Ok(user_id, UserType::User) => user_id,
         crate::updates::c2c_send_messages::SenderStatus::Ok(..) => panic!("This request is from an OpenChat bot user"),
@@ -197,7 +198,7 @@ fn edit_message(args: user_canister::EditMessageArgs, caller_user_id: UserId, st
         let now = state.env.now();
         let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
 
-        let _ = chat.events.edit_message::<CdkRuntime>(
+        let _ = chat.events.edit_message::<UserEventPusher>(
             EditMessageArgs {
                 sender: caller_user_id,
                 min_visible_event_index: EventIndex::default(),
@@ -280,7 +281,11 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
         };
 
         if args.added {
-            if chat.events.add_reaction::<CdkRuntime>(add_remove_reaction_args, None).is_ok() {
+            if chat
+                .events
+                .add_reaction::<UserEventPusher>(add_remove_reaction_args, None)
+                .is_ok()
+            {
                 if let Some(message_event) = chat
                     .events
                     .main_events_reader()
@@ -385,7 +390,7 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
 
         if chat
             .events
-            .tip_message::<CdkRuntime>(tip_message_args, EventIndex::default(), None)
+            .tip_message::<UserEventPusher>(tip_message_args, EventIndex::default(), None)
             .is_ok()
         {
             if let Some(message_event) = chat

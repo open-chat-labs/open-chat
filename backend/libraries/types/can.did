@@ -259,12 +259,6 @@ type ChatEventWrapper = record {
     event : ChatEvent;
 };
 
-type ChatEventType = variant {
-    Message;
-    MembershipUpdate;
-    ChatDetailsUpdate;
-};
-
 type GroupChatSummary = record {
     chat_id : ChatId;
     local_user_index_canister_id : CanisterId;
@@ -2230,6 +2224,7 @@ type InstalledBotDetails = record {
     user_id : UserId;
     added_by : UserId;
     permissions : BotPermissions;
+    autonomous_permissions : opt BotPermissions;
 };
 
 type PublicApiKeyDetails = record {
@@ -2286,3 +2281,80 @@ type BotInstallationLocation = variant {
     Community : CanisterId;
     User : UserId;
 };
+
+type CommunityEventType = variant {
+    NameChanged;
+    GateUpdated;
+    BannerChanged;
+    PrimaryLanguageChanged;
+    MessagePinned;
+    UsersInvited;
+    UsersBlocked;
+    MessageUnpinned;
+    BotUpdated;
+    ChannelCreated;
+    ChannelDeleted;
+    PermissionsChanged;
+    EventsTTLUpdated;
+    MembersJoined;
+    UsersUnblocked;
+    Unfrozen;
+    VisibilityChanged;
+    RulesChanged;
+    DescriptionChanged;
+    InviteCodeChanged;
+    GroupImported;
+    BotRemoved;
+    MembersLeft;
+    RoleChanged;
+    BotAdded;
+    Created;
+    Frozen;
+    AvatarChanged;
+};
+
+type ChatEventType = variant {
+    MessagePrizePayment;
+    NameChanged;
+    MessageVideoCall;
+    GateUpdated;
+    MessagePinned;
+    UsersInvited;
+    UsersBlocked;
+    MessageUnpinned;
+    MessageOther;
+    BotUpdated;
+    MessagePollVote;
+    Message;
+    PermissionsChanged;
+    MessageP2pSwap;
+    MessageThreadSummary;
+    EventsTTLUpdated;
+    MembersJoined;
+    MessagePollEnded;
+    UsersUnblocked;
+    Unfrozen;
+    VisibilityChanged;
+    RulesChanged;
+    DescriptionChanged;
+    MessagePrizeClaim;
+    MessageReported;
+    MessageProposalUpdated;
+    MessageProposalVote;
+    ExternalUrlUpdated;
+    InviteCodeChanged;
+    MessageDeleted;
+    BotRemoved;
+    MessageReaction;
+    MembersLeft;
+    RoleChanged;
+    BotAdded;
+    Created;
+    MessageTipped;
+    Frozen;
+    MessageReminder;
+    MessageEdited;
+    AvatarChanged;
+};
+
+type BotDataEncoding = variant { Json; Candid };

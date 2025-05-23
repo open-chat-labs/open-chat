@@ -1,7 +1,7 @@
 <script lang="ts">
     import {
-        app,
-        chatListScopeStore as chatListScope,
+        chatListScopeStore,
+        currentUserIdStore,
         type BotMatch,
         type ChatListScope,
         type DirectChatIdentifier,
@@ -10,7 +10,7 @@
         type ResourceKey,
         type UserSummary,
     } from "openchat-client";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { trimLeadingAtSymbol } from "../../utils/user";
     import Search from "../Search.svelte";
@@ -35,8 +35,9 @@
 
     let searching: boolean = $state(false);
 
-    onMount(() => {
-        return chatListScope.subscribe((_) => clearSearch());
+    $effect(() => {
+        void $chatListScopeStore.kind;
+        clearSearch();
     });
 
     function getPlaceholder(scope: ChatListScope["kind"]): ResourceKey {
@@ -62,7 +63,7 @@
         searchResultsAvailable = false;
         searchTerm = term;
 
-        if ($chatListScope.kind === "direct_chat") {
+        if ($chatListScopeStore.kind === "direct_chat") {
             searchTerm = trimLeadingAtSymbol(searchTerm);
         }
 
@@ -70,7 +71,7 @@
             try {
                 searching = true;
                 const term = searchTerm.toLowerCase();
-                switch ($chatListScope.kind) {
+                switch ($chatListScopeStore.kind) {
                     case "none":
                         legacySearch(term);
                         break;
@@ -117,7 +118,7 @@
         // available for direct chat.
         const location = {
             kind: "direct_chat",
-            userId: app.currentUserId,
+            userId: $currentUserIdStore,
         } as DirectChatIdentifier;
 
         return client.exploreBots(term, 0, 10, location, false).then((result) => {
@@ -139,7 +140,7 @@
         userAndBotsSearchResults = client.searchUsers(term, 10);
         Promise.all([groupSearchResults, userAndBotsSearchResults]).then(postSearch);
     }
-    let placeholder = $derived(getPlaceholder($chatListScope.kind));
+    let placeholder = $derived(getPlaceholder($chatListScopeStore.kind));
     $effect(() => {
         if (searchTerm === "") {
             searching = false;

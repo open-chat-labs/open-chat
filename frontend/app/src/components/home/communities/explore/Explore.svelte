@@ -1,6 +1,18 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
-    import { app, publish, ScreenWidth, ui } from "openchat-client";
+    import {
+        anonUserStore,
+        exploreCommunitiesFiltersStore,
+        iconSize,
+        identityStateStore,
+        ipadWidth,
+        isDiamondStore,
+        mobileWidth,
+        offlineStore,
+        publish,
+        ScreenWidth,
+        screenWidth,
+    } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
@@ -36,14 +48,14 @@
     }
 
     function createCommunity() {
-        if (app.anonUser) {
+        if ($anonUserStore) {
             client.updateIdentityState({
                 kind: "logging_in",
                 postLogin: { kind: "create_community" },
             });
             return;
         }
-        if (!app.isDiamond) {
+        if (!$isDiamondStore) {
             publish("upgrade");
         } else {
             publish("createCommunity");
@@ -80,7 +92,7 @@
     }
 
     function showFilters() {
-        ui.pushRightPanelHistory({ kind: "community_filters" });
+        client.pushRightPanelHistory({ kind: "community_filters" });
     }
 
     onMount(() => {
@@ -94,7 +106,7 @@
     });
 
     $effect(() => {
-        search(app.exploreCommunitiesFilters, true);
+        search($exploreCommunitiesFiltersStore, true);
     });
 
     function scrollToTop() {
@@ -109,14 +121,14 @@
             communitySearchState.scrollPos = scrollableElement.scrollTop;
         }
     }
-    let pageSize = $derived(calculatePageSize(ui.screenWidth));
+    let pageSize = $derived(calculatePageSize($screenWidth));
     let more = $derived(communitySearchState.total > communitySearchState.results.length);
     let loading = $derived(searching && communitySearchState.results.length === 0);
 
     $effect(() => {
         if (
-            app.identityState.kind === "logged_in" &&
-            app.identityState.postLogin?.kind === "create_community"
+            $identityStateStore.kind === "logged_in" &&
+            $identityStateStore.postLogin?.kind === "create_community"
         ) {
             client.clearPostLoginState();
             tick().then(() => createCommunity());
@@ -128,19 +140,19 @@
     <div class="header">
         <div class="title-row">
             <div class="title">
-                {#if ui.mobileWidth}
+                {#if $mobileWidth}
                     <h4><Translatable resourceKey={i18nKey("communities.exploreMobile")} /></h4>
                 {:else}
                     <h4><Translatable resourceKey={i18nKey("communities.explore")} /></h4>
                 {/if}
             </div>
-            {#if !ui.ipadWidth}
+            {#if !$ipadWidth}
                 <div class="search">
                     <Search
                         fill
                         bind:searchTerm={communitySearchState.term}
                         searching={false}
-                        onPerformSearch={() => search(app.exploreCommunitiesFilters, true)}
+                        onPerformSearch={() => search($exploreCommunitiesFiltersStore, true)}
                         placeholder={i18nKey("communities.search")} />
                 </div>
                 <div class="create">
@@ -149,25 +161,25 @@
                 </div>
             {/if}
             <div class="buttons">
-                {#if ui.ipadWidth}
+                {#if $ipadWidth}
                     <HoverIcon onclick={createCommunity}>
-                        <Plus size={ui.iconSize} color={"var(--icon-txt)"} />
+                        <Plus size={$iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
                 {/if}
 
                 <HoverIcon title={$_("showFilters")} onclick={showFilters}>
-                    <Tune size={ui.iconSize} color={"var(--icon-txt)"} />
+                    <Tune size={$iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
             </div>
         </div>
         <div class="subtitle-row">
-            {#if ui.ipadWidth}
+            {#if $ipadWidth}
                 <div class="search">
                     <Search
                         searching={false}
                         fill
                         bind:searchTerm={communitySearchState.term}
-                        onPerformSearch={() => search(app.exploreCommunitiesFilters, true)}
+                        onPerformSearch={() => search($exploreCommunitiesFiltersStore, true)}
                         placeholder={i18nKey("communities.search")} />
                 </div>
             {/if}
@@ -184,7 +196,7 @@
                     <FancyLoader />
                 </div>
             {:else if communitySearchState.results.length === 0}
-                {#if app.offline}
+                {#if $offlineStore}
                     <div class="no-match">
                         <CloudOffOutline size={"1.8em"} color={"var(--txt-light)"} />
                         <p class="sub-header">
@@ -225,14 +237,14 @@
                 <Button
                     disabled={searching}
                     loading={searching}
-                    onClick={() => search(app.exploreCommunitiesFilters, false)}
+                    onClick={() => search($exploreCommunitiesFiltersStore, false)}
                     ><Translatable resourceKey={i18nKey("communities.loadMore")} /></Button>
             </div>
         {/if}
     </div>
     <div class:show={showFab} class="fab">
         <Fab on:click={scrollToTop}>
-            <ArrowUp size={ui.iconSize} color={"#fff"} />
+            <ArrowUp size={$iconSize} color={"#fff"} />
         </Fab>
     </div>
 </div>

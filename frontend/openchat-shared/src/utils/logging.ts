@@ -50,6 +50,22 @@ export function inititaliseLogger(apikey: string, version: string, env: string):
     };
 }
 
+const NOOP = () => {};
+const DEFAULT_DEBUG = console.debug;
+const DEFAULT_LOG = console.log;
+const DEFAULT_WARN = console.warn;
+
+export function setMinLogLevel(level: "debug" | "log" | "warn" | "error") {
+    const levelAsInt = level === "debug" ? 0 : level === "log" ? 1 : level === "warn" ? 2 : 3;
+    const debugEnabled = levelAsInt <= 0;
+    const logEnabled = levelAsInt <= 1;
+    const warnEnabled = levelAsInt <= 2;
+
+    console.debug = debugEnabled ? DEFAULT_DEBUG : NOOP;
+    console.log = logEnabled ? DEFAULT_LOG : NOOP;
+    console.warn = warnEnabled ? DEFAULT_WARN : NOOP;
+}
+
 export function debug<T>(data: T, msg?: string): T {
     if (msg) {
         console.log(msg, data);

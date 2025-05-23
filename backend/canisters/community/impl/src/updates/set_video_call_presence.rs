@@ -1,4 +1,4 @@
-use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs};
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::set_video_call_presence::*;
@@ -7,9 +7,7 @@ use types::{Achievement, OCResult};
 #[update(msgpack = true)]
 #[trace]
 fn set_video_call_presence(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| set_video_call_presence_impl(args, state)).into()
+    execute_update(|state| set_video_call_presence_impl(args, state)).into()
 }
 
 pub(crate) fn set_video_call_presence_impl(args: Args, state: &mut RuntimeState) -> OCResult {

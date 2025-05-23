@@ -2,7 +2,7 @@
     import {
         cryptoLookup,
         exchangeRatesLookupStore as exchangeRatesLookup,
-        ui,
+        iconSize,
         type OpenChat,
     } from "openchat-client";
     import { getContext, onMount, untrack } from "svelte";
@@ -98,14 +98,14 @@
             }
         }
     }
-    let tokenDetails = $derived($cryptoLookup[ledger]);
+    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let symbol = $derived(tokenDetails?.symbol);
     let tokenDecimals = $derived(tokenDetails?.decimals ?? 0);
     let amountInUsd = $derived(
         tokenDetails !== undefined && showDollarAmount
             ? calculateDollarAmount(
                   amount,
-                  $exchangeRatesLookup[tokenDetails.symbol.toLowerCase()]?.toUSD,
+                  $exchangeRatesLookup.get(tokenDetails.symbol.toLowerCase())?.toUSD,
                   tokenDetails.decimals,
               )
             : "???",
@@ -149,7 +149,7 @@
 <div class="wrapper">
     {#if transferFees !== undefined && transferFees > 0n}
         <div class="fee">
-            <Alert size={ui.iconSize} color={"var(--warn)"} />
+            <Alert size={$iconSize} color={"var(--warn)"} />
             <span>
                 <Translatable
                     resourceKey={i18nKey("tokenTransfer.fee", {
