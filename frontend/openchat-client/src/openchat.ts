@@ -100,6 +100,7 @@ import type {
     GenerateChallengeResponse,
     GenerateMagicLinkResponse,
     GlobalSelectedChatRoute,
+    GrantedBotPermissions,
     GroupChatDetailsResponse,
     GroupChatIdentifier,
     GroupChatSummary,
@@ -8291,7 +8292,7 @@ export class OpenChat {
     installBot(
         id: BotInstallationLocation,
         botId: string,
-        grantedPermissions: ExternalBotPermissions,
+        grantedPermissions: GrantedBotPermissions,
     ): Promise<boolean> {
         const undo = this.#installBotLocally(id, botId, grantedPermissions);
         return this.#sendRequest({
@@ -8343,7 +8344,7 @@ export class OpenChat {
     #installBotLocally(
         id: BotInstallationLocation,
         botId: string,
-        perm: ExternalBotPermissions,
+        perm: GrantedBotPermissions,
     ): UndoLocalUpdate {
         switch (id.kind) {
             case "community":

@@ -11,7 +11,7 @@ import {
     type DirectChatIdentifier,
     type DirectChatSummary,
     type EventWrapper,
-    type ExternalBotPermissions,
+    type GrantedBotPermissions,
     type LocalPollVote,
     type LocalReaction,
     type Member,
@@ -73,7 +73,7 @@ export class GlobalLocalState {
     readonly chats = new LocalChatMapStore<ChatSummary>();
     readonly communities = new LocalCommunityMapStore<CommunitySummary>();
     readonly previewCommunities = new CommunityMapStore<CommunitySummary>();
-    readonly directChatBots = new LocalMapStore<string, ExternalBotPermissions>();
+    readonly directChatBots = new LocalMapStore<string, GrantedBotPermissions>();
     #walletConfig = writable<WalletConfig | undefined>(undefined);
     #streakInsurance = writable<StreakInsurance | undefined>(undefined);
     #messageActivityFeedReadUpTo = writable<bigint | undefined>(undefined);
@@ -443,7 +443,7 @@ export class GlobalLocalState {
     installBotInCommunity(
         id: CommunityIdentifier,
         botId: string,
-        perm: ExternalBotPermissions,
+        perm: GrantedBotPermissions,
     ): UndoLocalUpdate {
         return communityLocalUpdates.installBot(id, botId, perm);
     }
@@ -510,7 +510,7 @@ export class GlobalLocalState {
     installBotInChat(
         id: ChatIdentifier,
         botId: string,
-        perm: ExternalBotPermissions,
+        perm: GrantedBotPermissions,
     ): UndoLocalUpdate {
         return chatDetailsLocalUpdates.installBot(id, botId, perm);
     }
@@ -544,7 +544,7 @@ export class GlobalLocalState {
         };
     }
 
-    installDirectChatBot(botId: string, perm: ExternalBotPermissions): UndoLocalUpdate {
+    installDirectChatBot(botId: string, perm: GrantedBotPermissions): UndoLocalUpdate {
         return this.directChatBots.addOrUpdate(botId, perm);
     }
 

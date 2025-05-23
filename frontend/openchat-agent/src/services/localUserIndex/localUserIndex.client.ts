@@ -10,7 +10,7 @@ import type {
     ChatEventsResponse,
     EventsSuccessResult,
     EventWrapper,
-    ExternalBotPermissions,
+    GrantedBotPermissions,
     GroupAndCommunitySummaryUpdatesArgs,
     GroupAndCommunitySummaryUpdatesResponse,
     JoinCommunityResponse,
@@ -389,14 +389,18 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
     installBot(
         location: BotInstallationLocation,
         botId: string,
-        grantedPermissions: ExternalBotPermissions,
+        grantedPermissions: GrantedBotPermissions,
     ): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "install_bot",
             {
                 location: this.#apiBotInstallationLocation(location),
                 bot_id: principalStringToBytes(botId),
-                granted_permissions: apiExternalBotPermissions(grantedPermissions),
+                granted_permissions: apiExternalBotPermissions(grantedPermissions.command),
+                granted_autonomous_permissions: mapOptional(
+                    grantedPermissions.autonomous,
+                    apiExternalBotPermissions,
+                ),
             },
             (resp) => {
                 console.log("Install bot response: ", resp);

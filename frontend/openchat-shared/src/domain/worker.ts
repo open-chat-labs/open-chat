@@ -14,6 +14,7 @@ import type {
     ExternalBot,
     ExternalBotPermissions,
     FullWebhookDetails,
+    GrantedBotPermissions,
 } from "./bots";
 import type {
     AcceptedRules,
@@ -522,7 +523,7 @@ type InstallBot = {
     kind: "installBot";
     id: BotInstallationLocation;
     botId: string;
-    grantedPermissions: ExternalBotPermissions;
+    grantedPermissions: GrantedBotPermissions;
 };
 
 type UpdateInstalledBot = {

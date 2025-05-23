@@ -1,7 +1,7 @@
 import {
     emptyRules,
     type CommunityIdentifier,
-    type ExternalBotPermissions,
+    type GrantedBotPermissions,
     type Member,
     type ReadonlyMap,
     type ReadonlySet,
@@ -20,7 +20,7 @@ export class CommunityDetailsState {
         public lapsedMembers: ReadonlySet<string>,
         public invitedUsers: ReadonlySet<string>,
         public referrals: ReadonlySet<string>,
-        public bots: ReadonlyMap<string, ExternalBotPermissions>,
+        public bots: ReadonlyMap<string, GrantedBotPermissions>,
         public rules: VersionedRules = emptyRules(),
     ) {}
 }

@@ -1,7 +1,7 @@
 import type {
     ChatIdentifier,
     ChatListScope,
-    ExternalBotPermissions,
+    GrantedBotPermissions,
     Member,
     VersionedRules,
     WebhookDetails,
@@ -17,7 +17,7 @@ export class ChatDetailsUpdatesManager {
     blockedUsers = new ChatLocalSetStore<string>();
     pinnedMessages = new ChatLocalSetStore<number>();
     invitedUsers = new ChatLocalSetStore<string>();
-    bots = new ChatLocalMapStore<string, ExternalBotPermissions>();
+    bots = new ChatLocalMapStore<string, GrantedBotPermissions>();
     webhooks = new ChatLocalMapStore<string, WebhookDetails>();
 
     rules = new ChatMapStore<VersionedRules>();
@@ -93,7 +93,7 @@ export class ChatDetailsUpdatesManager {
         return this.bots.remove(id, botId);
     }
 
-    installBot(id: ChatIdentifier, botId: string, perm: ExternalBotPermissions): UndoLocalUpdate {
+    installBot(id: ChatIdentifier, botId: string, perm: GrantedBotPermissions): UndoLocalUpdate {
         return this.bots.addOrUpdate(id, botId, perm);
     }
 

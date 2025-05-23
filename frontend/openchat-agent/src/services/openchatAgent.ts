@@ -81,6 +81,7 @@ import type {
     FullWebhookDetails,
     GenerateMagicLinkResponse,
     GetDelegationResponse,
+    GrantedBotPermissions,
     GroupAndCommunitySummaryUpdatesArgs,
     GroupAndCommunitySummaryUpdatesResponse,
     GroupCanisterGroupChatSummary,
@@ -1718,7 +1719,7 @@ export class OpenChatAgent extends EventTarget {
         let referrals: Referral[];
         let walletConfig: WalletConfig;
         let messageActivitySummary: MessageActivitySummary;
-        let installedBots: Map<string, ExternalBotPermissions>;
+        let installedBots: Map<string, GrantedBotPermissions>;
         let bitcoinAddress: string | undefined = undefined;
         let streakInsurance: StreakInsurance | undefined;
 
@@ -4278,7 +4279,7 @@ export class OpenChatAgent extends EventTarget {
     async installBot(
         id: BotInstallationLocation,
         botId: string,
-        grantedPermissions: ExternalBotPermissions,
+        grantedPermissions: GrantedBotPermissions,
     ): Promise<boolean> {
         const localUserIndex = await this.#localUserIndexForBotContext(id);
         return this.getLocalUserIndexClient(localUserIndex).installBot(

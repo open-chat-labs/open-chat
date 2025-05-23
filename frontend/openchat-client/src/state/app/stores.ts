@@ -25,6 +25,7 @@ import {
     type EnhancedTokenDetails,
     type EventWrapper,
     type ExternalBotPermissions,
+    type GrantedBotPermissions,
     type GroupChatSummary,
     type IdentityState,
     type Member,
@@ -670,7 +671,7 @@ export const pinnedChatsStore = derived(
     },
 );
 
-export const serverDirectChatBotsStore = new SafeMapStore<string, ExternalBotPermissions>();
+export const serverDirectChatBotsStore = new SafeMapStore<string, GrantedBotPermissions>();
 export const serverStreakInsuranceStore = writable<StreakInsurance>({
     daysInsured: 0,
     daysMissed: 0,

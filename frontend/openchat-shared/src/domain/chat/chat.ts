@@ -3,6 +3,7 @@ import type { AccessControlled, AccessGateConfig, UpdatedRules, VersionedRules }
 import type {
     CommandArg,
     ExternalBotPermissions,
+    GrantedBotPermissions,
     InstalledBotDetails,
     WebhookDetails,
 } from "../bots";
@@ -1056,7 +1057,7 @@ export type ChatStateFull = {
     referrals: Referral[];
     walletConfig: WalletConfig;
     messageActivitySummary: MessageActivitySummary;
-    installedBots: Map<string, ExternalBotPermissions>;
+    installedBots: Map<string, GrantedBotPermissions>;
     bitcoinAddress: string | undefined;
     streakInsurance: StreakInsurance | undefined;
 };

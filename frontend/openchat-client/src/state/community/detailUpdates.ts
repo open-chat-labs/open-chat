@@ -1,6 +1,6 @@
 import {
     type CommunityIdentifier,
-    type ExternalBotPermissions,
+    type GrantedBotPermissions,
     type Member,
     type UserGroupDetails,
     type VersionedRules,
@@ -14,7 +14,7 @@ export class CommunityDetailsUpdatesManager {
     invitedUsers = new CommunityLocalSetStore<string>();
     blockedUsers = new CommunityLocalSetStore<string>();
     userGroups = new CommunityLocalMapStore<number, UserGroupDetails>();
-    bots = new CommunityLocalMapStore<string, ExternalBotPermissions>();
+    bots = new CommunityLocalMapStore<string, GrantedBotPermissions>();
     rules = new CommunityMapStore<VersionedRules>();
 
     updateMember(id: CommunityIdentifier, userId: string, member: Member) {
@@ -56,7 +56,7 @@ export class CommunityDetailsUpdatesManager {
     installBot(
         id: CommunityIdentifier,
         botId: string,
-        perm: ExternalBotPermissions,
+        perm: GrantedBotPermissions,
     ): UndoLocalUpdate {
         return this.bots.addOrUpdate(id, botId, perm);
     }

@@ -18,7 +18,7 @@ import {
     type DiamondMembershipStatus,
     type DirectChatSummary,
     type EventWrapper,
-    type ExternalBotPermissions,
+    type GrantedBotPermissions,
     type GroupChatSummary,
     type IdentityState,
     type Member,
@@ -169,7 +169,7 @@ export class AppState {
     #selectedChatMembers!: ReadonlyMap<string, Member>;
     #selectedChatBlockedUsers!: ReadonlySet<string>;
     #selectedChatInvitedUsers!: ReadonlySet<string>;
-    #directChatBots!: ReadonlyMap<string, ExternalBotPermissions>;
+    #directChatBots!: ReadonlyMap<string, GrantedBotPermissions>;
     #identityState!: IdentityState;
     #confirmedEventIndexesLoaded!: DRange;
     #confirmedThreadEventIndexesLoaded!: DRange;
@@ -540,7 +540,7 @@ export class AppState {
         invitedUsers: Set<string>,
         pinnedMessages: Set<number>,
         rules: VersionedRules,
-        bots: Map<string, ExternalBotPermissions>,
+        bots: Map<string, GrantedBotPermissions>,
         webhooks: Map<string, WebhookDetails>,
     ) {
         if (!chatIdentifiersEqual(chatId, this.#selectedChatId)) {
@@ -574,7 +574,7 @@ export class AppState {
         lapsedMembers: Set<string>,
         invitedUsers: Set<string>,
         referrals: Set<string>,
-        bots: Map<string, ExternalBotPermissions>,
+        bots: Map<string, GrantedBotPermissions>,
         rules?: VersionedRules,
     ) {
         if (!communityIdentifiersEqual(communityId, this.#selectedCommunityId)) {
@@ -624,7 +624,7 @@ export class AppState {
         referrals: Referral[],
         walletConfig: WalletConfig,
         messageActivitySummary: MessageActivitySummary,
-        installedBots: Map<string, ExternalBotPermissions>,
+        installedBots: Map<string, GrantedBotPermissions>,
         streakInsurance: StreakInsurance | undefined,
     ): void {
         const [channelsMap, directChats, groupChats] = partitionChats(allChats);

@@ -252,6 +252,11 @@ export type ExternalBotPermissions = {
     messagePermissions: MessagePermission[];
 };
 
+export type GrantedBotPermissions = {
+    command: ExternalBotPermissions;
+    autonomous: ExternalBotPermissions | undefined;
+};
+
 export type CommandInstance = {
     name: string;
     arguments: CommandArg[];
