@@ -1648,7 +1648,7 @@ export class OpenChat {
             credentialArgs: this.#buildVerifiedCredentialArgs(credentials),
         })
             .then((resp) => {
-                withPausedStores(() => {
+                return withPausedStores(() => {
                     if (resp.kind === "success") {
                         localUpdates.addChat(resp.group);
                         this.#loadChatDetails(resp.group);
@@ -1685,8 +1685,8 @@ export class OpenChat {
                         }
                         return CommonResponses.failure();
                     }
+                    return CommonResponses.success();
                 });
-                return CommonResponses.success();
             })
             .then((resp) => {
                 if (resp.kind === "success") {
