@@ -1,5 +1,11 @@
+import {
+    derived as svelteDerived,
+    get as svelteGet,
+    type Readable as SvelteReadable,
+    writable as svelteWritable,
+    type Writable as SvelteWritable,
+} from "svelte/store";
 import { derived, type Readable, withPausedStores, writable, type Writable } from "./stores";
-import { derived as svelteDerived, get as svelteGet, type Readable as SvelteReadable, writable as svelteWritable, type Writable as SvelteWritable } from "svelte/store";
 
 describe("store updates propagate as expected", () => {
     test("with nested derived stores", () => {
@@ -47,10 +53,13 @@ describe("store updates propagate as expected", () => {
                 svelteDerivedStoreCalculations++;
                 return _sd2 * 2;
             });
-            const sd4 = svelteDerived([sw1, sw2, sw3, sd1, sd2, sd3], ([_sw1, _sw2, _sw3, _sd1, _sd2, _sd3]) => {
-                svelteDerivedStoreCalculations++;
-                return _sw1 * _sw2 * _sw3 * _sd1 * _sd2 * _sd3;
-            });
+            const sd4 = svelteDerived(
+                [sw1, sw2, sw3, sd1, sd2, sd3],
+                ([_sw1, _sw2, _sw3, _sd1, _sd2, _sd3]) => {
+                    svelteDerivedStoreCalculations++;
+                    return _sw1 * _sw2 * _sw3 * _sd1 * _sd2 * _sd3;
+                },
+            );
 
             const writableStores = [w1, w2, w3];
             const svelteWritableStores = [sw1, sw2, sw3];
@@ -64,8 +73,8 @@ describe("store updates propagate as expected", () => {
 
             // Subscribe to the stores
             for (let i = 0; i < allStores.length; i++) {
-                allStores[i].subscribe((v) => storeValues[i] = v);
-                allSvelteStores[i].subscribe((v) => svelteStoreValues[i] = v);
+                allStores[i].subscribe((v) => (storeValues[i] = v));
+                allSvelteStores[i].subscribe((v) => (svelteStoreValues[i] = v));
             }
 
             // After initialization, each store should have been updated exactly once
@@ -85,7 +94,7 @@ describe("store updates propagate as expected", () => {
                         expect(derivedStoreCalculations).toEqual(svelteDerivedStoreCalculations);
                     }
                 }
-            }
+            };
 
             if (pause) {
                 withPausedStores(updateStores);
@@ -101,7 +110,9 @@ describe("store updates propagate as expected", () => {
             if (pause) {
                 // If our stores were paused then they should have each been updated twice, once when they were
                 // initialized and once after they were unpaused.
-                expect(derivedStoreCalculations).toBeLessThanOrEqual(pause ? 8 : svelteDerivedStoreCalculations);
+                expect(derivedStoreCalculations).toBeLessThanOrEqual(
+                    pause ? 8 : svelteDerivedStoreCalculations,
+                );
             }
         }
     });
@@ -158,7 +169,9 @@ describe("store updates propagate as expected", () => {
 
                     if (!pause) {
                         // If our stores are not paused, then they should be updated no more than the Svelte stores
-                        expect(derivedStoreCalculations).toBeLessThanOrEqual(svelteDerivedStoreCalculations);
+                        expect(derivedStoreCalculations).toBeLessThanOrEqual(
+                            svelteDerivedStoreCalculations,
+                        );
                     }
                 }
             };
@@ -177,17 +190,19 @@ describe("store updates propagate as expected", () => {
             if (pause) {
                 // If our stores were paused then they should have each been updated twice, once when they were
                 // initialized and once after they were unpaused.
-                expect(derivedStoreCalculations).toBeLessThanOrEqual(pause ? 40 : svelteDerivedStoreCalculations);
+                expect(derivedStoreCalculations).toBeLessThanOrEqual(
+                    pause ? 40 : svelteDerivedStoreCalculations,
+                );
             }
         }
-    })
+    });
 
     test("when dependent derived store output remains the same as input changes", () => {
         const w = writable(1);
         const d1 = derived(w, (_w) => _w < 5);
         const d2 = derived(d1, (_d1) => _d1);
         const d3 = derived([w, d2], ([_w, _d2]) => _w + (_d2 ? 1 : 0));
-        d3.subscribe(_ => {});
+        d3.subscribe((_) => {});
         w.set(2);
         expect(d3.value).toEqual(3);
     });

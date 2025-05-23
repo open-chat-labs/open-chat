@@ -3,9 +3,9 @@ import type {
     StartStopNotifier,
     Subscriber,
     Readable as SvelteReadable,
+    Writable as SvelteWritable,
     Unsubscriber,
     Updater,
-    Writable as SvelteWritable
 } from "svelte/store";
 
 export type { StartStopNotifier, Subscriber, Unsubscriber, Updater } from "svelte/store";
@@ -14,8 +14,8 @@ export type EqualityCheck<T> = (a: T, b: T) => boolean;
 export interface Readable<T> extends SvelteReadable<T> {
     get value(): T;
     get dirty(): boolean;
-};
-export interface Writable<T> extends SvelteWritable<T>, Readable<T> {};
+}
+export interface Writable<T> extends SvelteWritable<T>, Readable<T> {}
 
 type Stores =
     | SvelteReadable<unknown>
@@ -35,10 +35,10 @@ let derivedStoresToRetry: (() => void)[] = [];
 
 const NOOP = () => {};
 
-export function withPausedStores(fn: () => void) {
+export function withPausedStores<T>(fn: () => T) {
     try {
         pauseCount++;
-        fn();
+        return fn();
     } finally {
         if (pauseCount === 1) {
             // Publish all changes to writable stores
@@ -181,7 +181,8 @@ class _Writable<T> {
             this.#publishPending = false;
 
             if (this.#started) {
-                const shouldRunSubscriptions = pauseCount === 0 && subscriptionsPending.length === 0;
+                const shouldRunSubscriptions =
+                    pauseCount === 0 && subscriptionsPending.length === 0;
 
                 for (const [subscription, invalidate] of this.#subscriptions.values()) {
                     invalidate?.();
@@ -244,18 +245,20 @@ class _Derived<S extends Stores, T> {
     #start() {
         if (this.#started) return;
         for (const [index, store] of this.#storesArray.entries()) {
-            const unsub = untrack(() => store.subscribe(
-                (v) => {
-                    (this.#storeValues as unknown[])[index] = v;
-                    this.#dependenciesPending &= ~(1 << index);
-                    this.#recalculationPending = true;
-                    if (this.#started) {
-                        this.#sync(false);
-                    }
-                },
-                () => this.#dependenciesPending |= 1 << index
-            ));
-            if (typeof unsub === 'function') {
+            const unsub = untrack(() =>
+                store.subscribe(
+                    (v) => {
+                        (this.#storeValues as unknown[])[index] = v;
+                        this.#dependenciesPending &= ~(1 << index);
+                        this.#recalculationPending = true;
+                        if (this.#started) {
+                            this.#sync(false);
+                        }
+                    },
+                    () => (this.#dependenciesPending |= 1 << index),
+                ),
+            );
+            if (typeof unsub === "function") {
                 this.#unsubscribers.push(unsub);
             }
         }
@@ -283,8 +286,8 @@ class _Derived<S extends Stores, T> {
                 if (!this.#queuedForRetry) {
                     derivedStoresToRetry.push(() => {
                         this.#queuedForRetry = false;
-                        this.#sync(false)
-                    })
+                        this.#sync(false);
+                    });
                     this.#queuedForRetry = true;
                 }
                 return;

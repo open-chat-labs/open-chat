@@ -7,12 +7,16 @@ import {
     AuthProvider,
     chatIdentifiersEqual,
     ChatMap,
+    ChatSet,
     CommunityMap,
     compareChats,
     DEFAULT_TOKENS,
     emptyChatMetrics,
     mergeListOfCombinedUnreadCounts,
+    messageContextsEqual,
+    MessageMap,
     ModerationFlags,
+    SafeMap,
     videoCallsInProgressForChats,
     type ChatEvent,
     type ChatSummary,
@@ -33,6 +37,7 @@ import {
     type ModerationFlag,
     type NervousSystemDetails,
     type NotificationStatus,
+    type PinnedByScope,
     type PinNumberFailures,
     type PinNumberResolver,
     type PublicApiKeyDetails,
@@ -51,7 +56,6 @@ import {
     type WalletConfig,
     type WebhookDetails,
 } from "openchat-shared";
-import { derived } from "svelte/store";
 import {
     getMessagePermissionsForSelectedChat,
     mergeChatMetrics,
@@ -62,6 +66,7 @@ import {
 import { configKeys } from "../../utils/config";
 import { enumFromStringValue } from "../../utils/enums";
 import { setsAreEqual } from "../../utils/set";
+import { derived, writable, type Subscriber } from "../../utils/stores";
 import { chatDetailsLocalUpdates } from "../chat/detailsUpdates";
 import type { ChatDetailsState } from "../chat/serverDetails";
 import { chatSummaryLocalUpdates, ChatSummaryUpdates } from "../chat/summaryUpdates";
@@ -71,21 +76,13 @@ import { communitySummaryLocalUpdates } from "../community/summaryUpdates";
 import type { FilteredProposals } from "../filteredProposals.svelte";
 import { LocalStorageBoolStore, LocalStorageStore } from "../localStorageStore";
 import { localUpdates } from "../localUpdates";
-import {
-    ChatMapStore,
-    CommunityMapStore,
-    MessageMapStore,
-    PinnedByScopeStore,
-    SafeMapStore,
-} from "../map";
 import { messageLocalUpdates } from "../message/localUpdates";
 import { routeStore, selectedCommunityIdStore } from "../path/stores";
-import { ChatSetStore, SafeSetStore } from "../set";
 import { SnsFunctions } from "../snsFunctions.svelte";
 import { hideMessagesFromDirectBlocked } from "../ui/stores";
 import { messagesRead } from "../unread/markRead";
 import { blockedUsersStore, suspendedUsersStore } from "../users/stores";
-import { writable } from "../writable";
+import { notEq } from "../utils";
 
 export const ONE_MB = 1024 * 1024;
 export const ONE_GB = ONE_MB * 1024;
@@ -103,25 +100,45 @@ function communityFilterToString(filter: Set<string>): string {
 type LedgerCanister = string;
 type GovernanceCanister = string;
 
-export const cryptoLookup = new SafeMapStore<LedgerCanister, CryptocurrencyDetails>();
-export const nervousSystemLookup = new SafeMapStore<GovernanceCanister, NervousSystemDetails>();
-export const exchangeRatesLookupStore = new SafeMapStore<string, TokenExchangeRates>();
+export const cryptoLookup = writable<ReadonlyMap<LedgerCanister, CryptocurrencyDetails>>(
+    new SafeMap(),
+    undefined,
+    notEq,
+);
+export const nervousSystemLookup = writable<ReadonlyMap<GovernanceCanister, NervousSystemDetails>>(
+    new SafeMap(),
+    undefined,
+    notEq,
+);
+export const exchangeRatesLookupStore = writable<ReadonlyMap<string, TokenExchangeRates>>(
+    new SafeMap(),
+    undefined,
+    notEq,
+);
 
-class CryptoBalanceStore extends SafeMapStore<LedgerCanister, bigint> {
-    setBalance(ledger: string, balance: bigint) {
-        super.set(ledger, balance);
-        cryptoBalancesLastUpdated.set(ledger, Date.now());
-    }
-
-    valueIfUpdatedRecently(ledger: string): bigint | undefined {
-        const lastUpdated = cryptoBalancesLastUpdated.get(ledger);
-        if (lastUpdated === undefined) {
-            return undefined;
-        }
-        return Date.now() - lastUpdated < 5 * 60 * 1000 ? this.get(ledger) : undefined;
-    }
+function createCryptoBalanceStore() {
+    const store = writable<Map<LedgerCanister, bigint>>(new Map(), undefined, notEq);
+    return {
+        get value() {
+            return store.value;
+        },
+        subscribe: (sub: Subscriber<Map<LedgerCanister, bigint>>, invalidate?: () => void) =>
+            store.subscribe(sub, invalidate),
+        setBalance(ledger: string, balance: bigint) {
+            store.update((s) => s.set(ledger, balance));
+            cryptoBalancesLastUpdated.set(ledger, Date.now());
+        },
+        valueIfUpdatedRecently(ledger: string): bigint | undefined {
+            const lastUpdated = cryptoBalancesLastUpdated.get(ledger);
+            if (lastUpdated === undefined) {
+                return undefined;
+            }
+            return Date.now() - lastUpdated < 5 * 60 * 1000 ? store.value.get(ledger) : undefined;
+        },
+    };
 }
-export const cryptoBalanceStore = new CryptoBalanceStore();
+
+export const cryptoBalanceStore = createCryptoBalanceStore();
 const cryptoBalancesLastUpdated = new Map<string, number>();
 
 export const bitcoinAddress = writable<string | undefined>(undefined);
@@ -142,7 +159,7 @@ export const enhancedCryptoLookup = derived(
         const xrDollarToBTC = xrBTCtoDollar === undefined ? 0 : 1 / xrBTCtoDollar;
         const xrDollarToETH = xrETHtoDollar === undefined ? 0 : 1 / xrETHtoDollar;
 
-        return $lookup.reduce((result, [key, t]) => {
+        return [...$lookup.entries()].reduce((result, [key, t]) => {
             const balance = $balance.get(t.ledger) ?? BigInt(0);
             const symbolLower = t.symbol.toLowerCase();
             const balanceWholeUnits = Number(balance) / Math.pow(10, t.decimals);
@@ -177,7 +194,7 @@ export const enhancedCryptoLookup = derived(
     },
 );
 
-export const cryptoTokensSorted = derived([enhancedCryptoLookup], ([$lookup]) => {
+export const cryptoTokensSorted = derived(enhancedCryptoLookup, ($lookup) => {
     return [...$lookup.values()].filter((t) => t.enabled || !t.zero).sort(compareTokens);
 });
 
@@ -194,10 +211,14 @@ function meetsManualWalletCriteria(config: WalletConfig, token: EnhancedTokenDet
     return config.kind === "manual_wallet" && config.tokens.has(token.ledger);
 }
 
-export const serverWalletConfigStore = writable<WalletConfig>({
-    kind: "auto_wallet",
-    minDollarValue: 0,
-});
+export const serverWalletConfigStore = writable<WalletConfig>(
+    {
+        kind: "auto_wallet",
+        minDollarValue: 0,
+    },
+    undefined,
+    notEq,
+);
 
 export const walletConfigStore = derived(
     [serverWalletConfigStore, localUpdates.walletConfig],
@@ -215,7 +236,7 @@ export const walletTokensSorted = derived(
     },
 );
 
-export const swappableTokensStore = new SafeSetStore<string>();
+export const swappableTokensStore = writable<ReadonlySet<string>>(new Set(), undefined, notEq);
 
 function compareTokens(a: EnhancedTokenDetails, b: EnhancedTokenDetails): number {
     // Sort by non-zero balances first
@@ -258,13 +279,25 @@ export function hasFlag(mask: number, flag: ModerationFlag): boolean {
     return (mask & flag) !== 0;
 }
 export const pinNumberRequiredStore = writable<boolean | undefined>(undefined);
-export const pinNumberResolverStore = writable<PinNumberResolver | undefined>(undefined);
-export const pinNumberFailureStore = writable<PinNumberFailures | undefined>(undefined);
+export const pinNumberResolverStore = writable<PinNumberResolver | undefined>(
+    undefined,
+    undefined,
+    notEq,
+);
+export const pinNumberFailureStore = writable<PinNumberFailures | undefined>(
+    undefined,
+    undefined,
+    notEq,
+);
 
-export const storageStore = writable<StorageStatus>({
-    byteLimit: 0,
-    bytesUsed: 0,
-});
+export const storageStore = writable<StorageStatus>(
+    {
+        byteLimit: 0,
+        bytesUsed: 0,
+    },
+    undefined,
+    notEq,
+);
 
 export const percentageStorageUsedStore = derived(storageStore, (storage) =>
     Math.ceil((storage.bytesUsed / storage.byteLimit) * 100),
@@ -279,11 +312,15 @@ export const storageInGBStore = derived(storageStore, (storage) => ({
     gbUsed: storage.bytesUsed / ONE_GB,
 }));
 
-export const messageFiltersStore = writable<MessageFilter[]>([]);
-export const translationsStore = new MessageMapStore<string>();
-export const snsFunctionsStore = writable<SnsFunctions>(new SnsFunctions());
-export const filteredProposalsStore = writable<FilteredProposals | undefined>(undefined);
-export const currentUserStore = writable<CreatedUser>(anonymousUser(), dequal);
+export const messageFiltersStore = writable<MessageFilter[]>([], undefined, notEq);
+export const translationsStore = writable<MessageMap<string>>(new MessageMap(), undefined, notEq);
+export const snsFunctionsStore = writable<SnsFunctions>(new SnsFunctions(), undefined, notEq);
+export const filteredProposalsStore = writable<FilteredProposals | undefined>(
+    undefined,
+    undefined,
+    notEq,
+);
+export const currentUserStore = writable<CreatedUser>(anonymousUser(), undefined, dequal);
 export const currentUserIdStore = derived(currentUserStore, ({ userId }) => userId);
 export const anonUserStore = derived(currentUserIdStore, (id) => id === ANON_USER_ID);
 export const suspendedUserStore = derived(
@@ -426,7 +463,7 @@ export const selectedAuthProviderStore = new LocalStorageStore(
     (a) => a,
     (a) => enumFromStringValue(AuthProvider, a, AuthProvider.II),
 );
-export const achievementsStore = new SafeSetStore<string>();
+export const achievementsStore = writable<Set<string>>(new Set(), undefined, notEq);
 export const chitStateStore = writable<ChitState>(
     {
         chitBalance: 0,
@@ -435,10 +472,15 @@ export const chitStateStore = writable<ChitState>(
         streakEnds: 0n,
         nextDailyChitClaim: 0n,
     },
+    undefined,
     dequal,
 );
 
-export const serverCommunitiesStore = new CommunityMapStore<CommunitySummary>();
+export const serverCommunitiesStore = writable<CommunityMap<CommunitySummary>>(
+    new CommunityMap<CommunitySummary>(),
+    undefined,
+    notEq,
+);
 
 export const communitiesStore = derived(
     [
@@ -499,19 +541,27 @@ export const userGroupSummariesStore = derived(communitiesStore, (communities) =
     }, new Map<number, UserGroupSummary>());
 });
 
-export const selectedChatIdStore = derived(routeStore, (route) => {
-    switch (route.kind) {
-        case "selected_channel_route":
-        case "global_chat_selected_route":
-            return route.chatId;
-        default:
-            return undefined;
-    }
-});
+export const selectedChatIdStore = derived(
+    routeStore,
+    (route) => {
+        switch (route.kind) {
+            case "selected_channel_route":
+            case "global_chat_selected_route":
+                return route.chatId;
+            default:
+                return undefined;
+        }
+    },
+    chatIdentifiersEqual,
+);
 
-export const chatListScopeStore = derived(routeStore, (route) => route.scope);
+export const chatListScopeStore = derived(routeStore, (route) => route.scope, dequal);
 export const chatsInitialisedStore = writable(false);
-export const selectedServerCommunityStore = writable<CommunityDetailsState | undefined>(undefined);
+export const selectedServerCommunityStore = writable<CommunityDetailsState | undefined>(
+    undefined,
+    undefined,
+    notEq,
+);
 
 export const selectedCommunityMembersStore = derived(
     [selectedServerCommunityStore, communityLocalUpdates.members],
@@ -587,7 +637,11 @@ export const selectedCommunitySummaryStore = derived(
         selectedCommunityId ? communities.get(selectedCommunityId) : undefined,
 );
 
-export const selectedServerChatStore = writable<ChatDetailsState | undefined>(undefined);
+export const selectedServerChatStore = writable<ChatDetailsState | undefined>(
+    undefined,
+    undefined,
+    notEq,
+);
 export const selectedChatMembersStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.members],
     ([chat, members]) => {
@@ -602,7 +656,7 @@ export const selectedChatBlockedUsersStore = derived(
         return blockedUsers.get(chat.chatId)?.apply(chat.blockedUsers) ?? chat.blockedUsers;
     },
 );
-export const selectedChatLapsedMembersStore = derived([selectedServerChatStore], ([chat]) => {
+export const selectedChatLapsedMembersStore = derived(selectedServerChatStore, (chat) => {
     return chat?.lapsedMembers ?? (new Set() as ReadonlySet<string>);
 });
 export const selectedChatPinnedMessagesStore = derived(
@@ -648,16 +702,32 @@ export const selectedChatRulesStore = derived(
     },
 );
 
-export const serverDirectChatsStore = new ChatMapStore<DirectChatSummary>();
-export const serverGroupChatsStore = new ChatMapStore<GroupChatSummary>();
-export const serverFavouritesStore = new ChatSetStore();
-export const serverPinnedChatsStore = new PinnedByScopeStore();
-export const directChatApiKeysStore = new SafeMapStore<string, PublicApiKeyDetails>();
-export const serverMessageActivitySummaryStore = writable<MessageActivitySummary>({
-    readUpToTimestamp: 0n,
-    latestTimestamp: 0n,
-    unreadCount: 0,
-});
+export const serverDirectChatsStore = writable<ChatMap<DirectChatSummary>>(
+    new ChatMap(),
+    undefined,
+    notEq,
+);
+export const serverGroupChatsStore = writable<ChatMap<GroupChatSummary>>(
+    new ChatMap(),
+    undefined,
+    notEq,
+);
+export const serverFavouritesStore = writable<ChatSet>(new ChatSet(), undefined, notEq);
+export const serverPinnedChatsStore = writable<PinnedByScope>(new Map(), undefined, notEq);
+export const directChatApiKeysStore = writable<Map<string, PublicApiKeyDetails>>(
+    new Map(),
+    undefined,
+    notEq,
+);
+export const serverMessageActivitySummaryStore = writable<MessageActivitySummary>(
+    {
+        readUpToTimestamp: 0n,
+        latestTimestamp: 0n,
+        unreadCount: 0,
+    },
+    undefined,
+    notEq,
+);
 export const pinnedChatsStore = derived(
     [serverPinnedChatsStore, chatDetailsLocalUpdates.pinnedToScopes],
     ([serverPinnedChats, localUpdates]) => {
@@ -684,12 +754,20 @@ export const pinnedChatsStore = derived(
     },
 );
 
-export const serverDirectChatBotsStore = new SafeMapStore<string, ExternalBotPermissions>();
-export const serverStreakInsuranceStore = writable<StreakInsurance>({
-    daysInsured: 0,
-    daysMissed: 0,
-});
-export const referralsStore = writable<Referral[]>([]);
+export const serverDirectChatBotsStore = writable<Map<string, ExternalBotPermissions>>(
+    new Map(),
+    undefined,
+    notEq,
+);
+export const serverStreakInsuranceStore = writable<StreakInsurance>(
+    {
+        daysInsured: 0,
+        daysMissed: 0,
+    },
+    undefined,
+    notEq,
+);
+export const referralsStore = writable<Referral[]>([], undefined, notEq);
 export const streakInsuranceStore = derived(
     [serverStreakInsuranceStore, localUpdates.streakInsurance],
     ([serverStreakInsurance, localUpates]) => localUpates ?? serverStreakInsurance,
@@ -735,7 +813,7 @@ export const userMetricsStore = derived(allServerChatsStore, (allServerChats) =>
 
 export const unreadFavouriteCountsStore = derived(
     [serverFavouritesStore, allServerChatsStore, messagesRead],
-    ([serverFavourites, allServerChats, messagesRead]) => {
+    ([serverFavourites, allServerChats, _]) => {
         const chats = ChatMap.fromList(
             [...serverFavourites.values()]
                 .map((id) => allServerChats.get(id))
@@ -822,21 +900,21 @@ export const allChatsStore = derived(
         allServerChatsStore,
         localUpdates.chats,
         chatSummaryLocalUpdates,
-        translationsStore,
         currentUserIdStore,
         messageFiltersStore,
         selectedChatBlockedOrSuspendedUsersStore,
         messageLocalUpdates,
+        localUpdates.unconfirmed,
     ],
     ([
         allServerChats,
         localChats,
         localUpdates,
-        translations,
         currentUserId,
         messageFilters,
         selectedChatBlockedOrSuspendedUsers,
         messageLocalUpdates,
+        unconfirmed,
     ]) => {
         const withUpdates = localChats.apply(allServerChats);
         return [...withUpdates.entries()].reduce((result, [chatId, chat]) => {
@@ -847,10 +925,10 @@ export const allChatsStore = derived(
                 currentUserId,
                 withLocal,
                 messageLocalUpdates,
-                translations,
                 selectedChatBlockedOrSuspendedUsers,
                 currentUserId,
                 messageFilters,
+                unconfirmed,
             );
             // only overwrite the chat if turns out to be different from the original to try
             // to minimise downstream effects
@@ -961,7 +1039,7 @@ export const proposalTopicsStore = derived(
     },
 );
 
-export const isProposalGroupStore = derived([selectedChatSummaryStore], ([selectedChatSummary]) => {
+export const isProposalGroupStore = derived(selectedChatSummaryStore, (selectedChatSummary) => {
     return (
         selectedChatSummary !== undefined &&
         selectedChatSummary.kind !== "direct_chat" &&
@@ -969,7 +1047,7 @@ export const isProposalGroupStore = derived([selectedChatSummaryStore], ([select
     );
 });
 
-export const threadsByChatStore = derived([chatSummariesStore], ([chatSummaries]) => {
+export const threadsByChatStore = derived(chatSummariesStore, (chatSummaries) => {
     return [...chatSummaries.entries()].reduce((result, [_, chat]) => {
         if (
             (chat.kind === "group_chat" || chat.kind === "channel") &&
@@ -1009,7 +1087,7 @@ export const threadPermissionsForSelectedChatStore = derived(
         return getMessagePermissionsForSelectedChat(selectedChatSummary, "thread");
     },
 );
-export const proposalTalliesStore = new SafeMapStore<string, Tally>();
+export const proposalTalliesStore = writable<Map<string, Tally>>(new Map(), undefined, notEq);
 
 export const selectedChatDraftMessageStore = derived(
     [selectedChatIdStore, localUpdates.draftMessages],
@@ -1017,7 +1095,7 @@ export const selectedChatDraftMessageStore = derived(
         selectedChatId ? draftMessages.get({ chatId: selectedChatId }) : undefined,
 );
 
-export const communityChannelVideoCallCountsStore = derived([communitiesStore], ([communities]) => {
+export const communityChannelVideoCallCountsStore = derived(communitiesStore, (communities) => {
     return [...communities.entries()].reduce((map, [id, community]) => {
         map.set(id, videoCallsInProgressForChats(community.channels));
         return map;
@@ -1032,9 +1110,9 @@ export const directVideoCallCountsStore = derived(serverDirectChatsStore, (serve
     return videoCallsInProgressForChats([...serverDirectChats.values()]);
 });
 
-export const serverEventsStore = writable<EventWrapper<ChatEvent>[]>([]);
-export const serverThreadEventsStore = writable<EventWrapper<ChatEvent>[]>([]);
-export const expiredServerEventRanges = writable<DRange>(new DRange());
+export const serverEventsStore = writable<EventWrapper<ChatEvent>[]>([], undefined, notEq);
+export const serverThreadEventsStore = writable<EventWrapper<ChatEvent>[]>([], undefined, notEq);
+export const expiredServerEventRanges = writable<DRange>(new DRange(), undefined, notEq);
 
 export const eventsStore = derived(
     [
@@ -1116,21 +1194,21 @@ export const directChatBotsStore = derived(
 
 export const unreadGroupCountsStore = derived(
     [serverGroupChatsStore, messagesRead],
-    ([serverGroupChats, messagesRead]) => {
+    ([serverGroupChats, _]) => {
         return messagesRead.combinedUnreadCountForChats(serverGroupChats);
     },
 );
 
 export const unreadDirectCountsStore = derived(
     [serverDirectChatsStore, messagesRead],
-    ([serverDirectChats, messagesRead]) => {
+    ([serverDirectChats, _]) => {
         return messagesRead.combinedUnreadCountForChats(serverDirectChats);
     },
 );
 
 export const unreadCommunityChannelCountsStore = derived(
     [serverCommunitiesStore, messagesRead],
-    ([serverCommunities, messagesRead]) => {
+    ([serverCommunities, _]) => {
         return serverCommunities.reduce((map, [id, community]) => {
             map.set(
                 id,
@@ -1152,7 +1230,11 @@ export const globalUnreadCountStore = derived(
     },
 );
 
-export const selectedThreadIdStore = writable<ThreadIdentifier | undefined>(undefined);
+export const selectedThreadIdStore = writable<ThreadIdentifier | undefined>(
+    undefined,
+    undefined,
+    messageContextsEqual,
+);
 
 export const threadEventsStore = derived(
     [
@@ -1200,7 +1282,7 @@ export const threadEventsStore = derived(
     },
 );
 
-export const confirmedThreadEventIndexesLoadedStore = derived([threadEventsStore], ([events]) => {
+export const confirmedThreadEventIndexesLoadedStore = derived(threadEventsStore, (events) => {
     const ranges = new DRange();
     events.forEach((e) => ranges.add(e.index));
     return ranges;
@@ -1212,10 +1294,18 @@ export const selectedThreadDraftMessageStore = derived(
         selectedThreadId ? draftMessages.get(selectedThreadId) : undefined,
 );
 
-export const identityStateStore = writable<IdentityState>({ kind: "loading_user" });
+export const identityStateStore = writable<IdentityState>(
+    { kind: "loading_user" },
+    undefined,
+    notEq,
+);
 
-export const selectedChatUserIdsStore = new SafeSetStore<string>();
-export const selectedChatUserGroupKeysStore = new SafeSetStore<string>();
-export const selectedChatExpandedDeletedMessageStore = new SafeSetStore<number>();
+export const selectedChatUserIdsStore = writable<Set<string>>(new Set(), undefined, notEq);
+export const selectedChatUserGroupKeysStore = writable<Set<string>>(new Set(), undefined, notEq);
+export const selectedChatExpandedDeletedMessageStore = writable<Set<number>>(
+    new Set(),
+    undefined,
+    notEq,
+);
 export const failedMessagesStore = localUpdates.failedMessages;
 export const unconfirmedStore = localUpdates.unconfirmed;

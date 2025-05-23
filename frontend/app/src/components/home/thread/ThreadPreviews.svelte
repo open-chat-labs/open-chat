@@ -1,32 +1,32 @@
 <script lang="ts">
-    import { threadsByChatStore, type OpenChat, type ThreadPreview } from "openchat-client";
+    import { i18nKey } from "@src/i18n/i18n";
+    import { toastStore } from "@src/stores/toast";
+    import { debouncedDerived, threadsByChatStore, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
-    import { i18nKey } from "../../../i18n/i18n";
-    import { toastStore } from "../../../stores/toast";
     import Loading from "../../Loading.svelte";
-    import ThreadPreviewComponent from "./ThreadPreview.svelte";
+    import { default as ThreadPreviewComponent } from "./ThreadPreview.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    let threads: ThreadPreview[] = $state([]);
     let observer: IntersectionObserver = new IntersectionObserver(() => {});
     let loading = $state(false);
     let initialised = $state(false);
 
-    $effect(() => {
+    let threads = $derived.by(
+        debouncedDerived(() => [$threadsByChatStore], loadThreadPreviews, 300, []),
+    );
+
+    async function loadThreadPreviews() {
         loading = true;
-        client
-            .threadPreviews($threadsByChatStore)
-            .then((t) => {
-                threads = t;
-                initialised = true;
-            })
-            .catch((err) => {
-                toastStore.showFailureToast(i18nKey("thread.previewFailure"));
-                client.logError("Unable to load thread previews: ", err);
-            })
-            .finally(() => (loading = false));
-    });
+        try {
+            return client.threadPreviews($threadsByChatStore);
+        } catch (_) {
+            toastStore.showFailureToast(i18nKey("thread.previewFailure"));
+            return [];
+        } finally {
+            loading = false;
+        }
+    }
 </script>
 
 <div class="threads">

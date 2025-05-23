@@ -26,41 +26,61 @@ export class UsersState {
     }
 
     setBlockedUsers(userIds: string[]) {
-        serverBlockedUsersStore.fromSet(new Set(userIds));
+        serverBlockedUsersStore.set(new Set(userIds));
     }
 
     blockUser(userId: string) {
-        serverBlockedUsersStore.add(userId);
+        serverBlockedUsersStore.update((users) => {
+            users.add(userId);
+            return new Set([...users]);
+        });
     }
 
     unblockUser(userId: string) {
-        serverBlockedUsersStore.delete(userId);
+        serverBlockedUsersStore.update((users) => {
+            if (users.has(userId)) {
+                users.delete(userId);
+                return new Set([...users]);
+            }
+            return users;
+        });
     }
 
     setUsers(users: UserLookup) {
-        normalUsersStore.fromMap(users);
+        normalUsersStore.set(new Map(users));
     }
 
     addUser(user: UserSummary) {
-        normalUsersStore.set(user.userId, user);
+        normalUsersStore.update((map) => {
+            map.set(user.userId, user);
+            return map;
+        });
     }
 
     addMany(users: UserSummary[]) {
-        users.forEach((u) => this.addUser(u));
+        if (users.length === 0) return;
+
+        normalUsersStore.update((map) => {
+            users.forEach((u) => map.set(u.userId, u));
+            return map;
+        });
     }
 
     setUpdated(userIds: string[], timestamp: bigint) {
-        for (const userId of userIds) {
-            const user = normalUsersStore.get(userId);
-            if (user !== undefined) {
-                user.updated = timestamp;
-                normalUsersStore.set(userId, user);
+        normalUsersStore.update((map) => {
+            for (const userId of userIds) {
+                const user = map.get(userId);
+                if (user !== undefined) {
+                    user.updated = timestamp;
+                    map.set(userId, user);
+                }
             }
-        }
+            return map;
+        });
     }
 
     addSpecialUsers(users: [string, UserSummary][]) {
-        specialUsersStore.fromMap(new Map(users));
+        specialUsersStore.set(new Map(users));
     }
 
     get(userId: string): UserSummary | undefined {
@@ -79,7 +99,7 @@ export class UsersState {
         return this.#allUsers;
     }
 
-    get specialUsers(): ReadonlyMap<string, UserSummary> {
+    get specialUsers() {
         return specialUsersStore;
     }
 

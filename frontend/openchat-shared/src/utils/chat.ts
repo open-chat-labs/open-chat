@@ -41,7 +41,9 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
         }
         switch (e.event.kind) {
             case "message":
-                userIds.add(e.event.sender);
+                if (e.event.senderContext?.kind !== "webhook") {
+                    userIds.add(e.event.sender);
+                }
                 if (
                     e.event.repliesTo !== undefined &&
                     e.event.repliesTo.kind === "rehydrated_reply_context"

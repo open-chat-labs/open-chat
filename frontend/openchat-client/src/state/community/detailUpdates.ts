@@ -1,56 +1,106 @@
 import {
+    CommunityMap,
     type CommunityIdentifier,
     type ExternalBotPermissions,
     type Member,
     type UserGroupDetails,
     type VersionedRules,
 } from "openchat-shared";
-import { CommunityMapStore, LocalMap } from "../map";
+import { writable, type Writable } from "../../utils/stores";
+import { LocalMap } from "../map";
 import { LocalSet } from "../set";
-import { scheduleUndo, type UndoLocalUpdate } from "../undo";
+import { type UndoLocalUpdate } from "../undo";
+import { modifyWritable, notEq } from "../utils";
+
+const localMap = <K, V>() => new LocalMap<K, V>();
+const localSet = <V>() => new LocalSet<V>();
 
 export class CommunityDetailsUpdatesManager {
-    members = new CommunityLocalMapStore<string, Member>();
-    invitedUsers = new CommunityLocalSetStore<string>();
-    blockedUsers = new CommunityLocalSetStore<string>();
-    userGroups = new CommunityLocalMapStore<number, UserGroupDetails>();
-    bots = new CommunityLocalMapStore<string, ExternalBotPermissions>();
-    rules = new CommunityMapStore<VersionedRules>();
+    members = writable<CommunityMap<LocalMap<string, Member>>>(
+        new CommunityMap(),
+        undefined,
+        notEq,
+    );
+    invitedUsers = writable<CommunityMap<LocalSet<string>>>(new CommunityMap(), undefined, notEq);
+    blockedUsers = writable<CommunityMap<LocalSet<string>>>(new CommunityMap(), undefined, notEq);
+    userGroups = writable<CommunityMap<LocalMap<number, UserGroupDetails>>>(
+        new CommunityMap(),
+        undefined,
+        notEq,
+    );
+    bots = writable<CommunityMap<LocalMap<string, ExternalBotPermissions>>>(
+        new CommunityMap(),
+        undefined,
+        notEq,
+    );
+    rules = writable<CommunityMap<VersionedRules>>(new CommunityMap(), undefined, notEq);
+
+    #updateForCommunity<T>(
+        id: CommunityIdentifier,
+        store: Writable<CommunityMap<T>>,
+        notFound: () => T,
+        updater: (val: T) => UndoLocalUpdate,
+    ): UndoLocalUpdate {
+        return modifyWritable((map) => {
+            let val = map.get(id);
+            if (val === undefined) {
+                val = notFound();
+                map.set(id, val);
+            }
+            return updater(val);
+        }, store);
+    }
 
     updateMember(id: CommunityIdentifier, userId: string, member: Member) {
-        return this.members.addOrUpdate(id, userId, member);
+        return this.#updateForCommunity(id, this.members, localMap, (m) =>
+            m.addOrUpdate(userId, member),
+        );
     }
 
     removeMember(id: CommunityIdentifier, userId: string): UndoLocalUpdate {
-        return this.members.remove(id, userId);
+        return this.#updateForCommunity(id, this.members, localMap, (m) => m.remove(userId));
     }
 
     inviteUsers(id: CommunityIdentifier, userIds: string[]): UndoLocalUpdate {
-        return this.invitedUsers.addMany(id, userIds);
+        return this.#updateForCommunity(id, this.invitedUsers, localSet, (set) => {
+            const undos = userIds.map((u) => set.add(u));
+            return () => {
+                undos.forEach((u) => u());
+            };
+        });
     }
 
     uninviteUsers(id: CommunityIdentifier, userIds: string[]): UndoLocalUpdate {
-        return this.invitedUsers.removeMany(id, userIds);
+        return this.#updateForCommunity(id, this.invitedUsers, localSet, (set) => {
+            const undos = userIds.map((u) => set.remove(u));
+            return () => {
+                undos.forEach((u) => u());
+            };
+        });
     }
 
     blockUser(id: CommunityIdentifier, userId: string): UndoLocalUpdate {
-        return this.blockedUsers.add(id, userId);
+        return this.#updateForCommunity(id, this.blockedUsers, localSet, (s) => s.add(userId));
     }
 
     unblockUser(id: CommunityIdentifier, userId: string): UndoLocalUpdate {
-        return this.blockedUsers.remove(id, userId);
+        return this.#updateForCommunity(id, this.blockedUsers, localSet, (s) => s.remove(userId));
     }
 
     deleteUserGroup(id: CommunityIdentifier, userGroupId: number): UndoLocalUpdate {
-        return this.userGroups.remove(id, userGroupId);
+        return this.#updateForCommunity(id, this.userGroups, localMap, (s) =>
+            s.remove(userGroupId),
+        );
     }
 
     addOrUpdateUserGroup(id: CommunityIdentifier, userGroup: UserGroupDetails): UndoLocalUpdate {
-        return this.userGroups.addOrUpdate(id, userGroup.id, userGroup);
+        return this.#updateForCommunity(id, this.userGroups, localMap, (s) =>
+            s.addOrUpdate(userGroup.id, userGroup),
+        );
     }
 
     removeBot(id: CommunityIdentifier, botId: string): UndoLocalUpdate {
-        return this.bots.remove(id, botId);
+        return this.#updateForCommunity(id, this.bots, localMap, (s) => s.remove(botId));
     }
 
     installBot(
@@ -58,86 +108,30 @@ export class CommunityDetailsUpdatesManager {
         botId: string,
         perm: ExternalBotPermissions,
     ): UndoLocalUpdate {
-        return this.bots.addOrUpdate(id, botId, perm);
+        return this.#updateForCommunity(id, this.bots, localMap, (s) => s.addOrUpdate(botId, perm));
     }
 
     updateRules(id: CommunityIdentifier, rules: VersionedRules): UndoLocalUpdate {
-        const previous = this.rules.get(id);
-        this.rules.set(id, rules);
-        return scheduleUndo(() => {
-            if (previous === undefined) {
-                this.rules.delete(id);
-            } else {
-                this.rules.set(id, previous);
-            }
-        });
+        return modifyWritable((map) => {
+            const prev = map.get(id);
+            map.set(id, rules);
+            return () => {
+                if (prev !== undefined) {
+                    map.set(id, prev);
+                } else {
+                    map.delete(id);
+                }
+            };
+        }, this.rules);
     }
 
     clear() {
-        this.members.clear();
-        this.invitedUsers.clear();
-        this.blockedUsers.clear();
-        this.userGroups.clear();
-        this.bots.clear();
-        this.rules.clear();
-    }
-}
-
-export class CommunityLocalSetStore<V> extends CommunityMapStore<LocalSet<V>> {
-    add(id: CommunityIdentifier, value: V) {
-        return this.#withSet(id, (set) => set.add(value));
-    }
-
-    addMany(id: CommunityIdentifier, values: V[]) {
-        return this.#withSet(id, (set) => {
-            const undos = values.map((v) => set.add(v));
-            return () => {
-                undos.forEach((u) => u());
-            };
-        });
-    }
-
-    removeMany(id: CommunityIdentifier, values: V[]) {
-        return this.#withSet(id, (set) => {
-            const undos = values.map((v) => set.remove(v));
-            return () => {
-                undos.forEach((u) => u());
-            };
-        });
-    }
-
-    remove(id: CommunityIdentifier, value: V) {
-        return this.#withSet(id, (set) => set.remove(value));
-    }
-
-    #withSet(id: CommunityIdentifier, fn: (map: LocalSet<V>) => UndoLocalUpdate) {
-        const set = this.get(id) ?? new LocalSet();
-        const undo = fn(set);
-        this.set(id, set);
-        return scheduleUndo(() => {
-            undo();
-            this.publish();
-        });
-    }
-}
-
-export class CommunityLocalMapStore<K, V> extends CommunityMapStore<LocalMap<K, V>> {
-    addOrUpdate(id: CommunityIdentifier, key: K, value: V) {
-        return this.#withMap(id, (map) => map.addOrUpdate(key, value));
-    }
-
-    remove(id: CommunityIdentifier, key: K) {
-        return this.#withMap(id, (map) => map.remove(key));
-    }
-
-    #withMap(id: CommunityIdentifier, fn: (map: LocalMap<K, V>) => UndoLocalUpdate) {
-        const map = this.get(id) ?? new LocalMap();
-        const undo = fn(map);
-        this.set(id, map);
-        return scheduleUndo(() => {
-            undo();
-            this.publish();
-        });
+        this.members.set(new CommunityMap());
+        this.invitedUsers.set(new CommunityMap());
+        this.blockedUsers.set(new CommunityMap());
+        this.userGroups.set(new CommunityMap());
+        this.bots.set(new CommunityMap());
+        this.rules.set(new CommunityMap());
     }
 }
 

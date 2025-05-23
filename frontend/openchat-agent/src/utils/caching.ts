@@ -372,15 +372,6 @@ export function openCache(principal: Principal): Database {
     });
 }
 
-export async function openDbAndGetCachedChats(
-    principal: Principal,
-): Promise<ChatStateFull | undefined> {
-    const db = openCache(principal);
-    if (db !== undefined) {
-        return getCachedChats(db, principal);
-    }
-}
-
 export async function getCachedBots(
     db: Database,
     principal: Principal,
@@ -1073,6 +1064,15 @@ export function initDb(principal: Principal): Database {
 
 export function closeDb(): void {
     db = undefined;
+}
+
+export async function openDbAndGetCachedChats(
+    principal: Principal,
+): Promise<ChatStateFull | undefined> {
+    db ??= openCache(principal);
+    if (db !== undefined) {
+        return getCachedChats(db, principal);
+    }
 }
 
 // for now this is only used for loading pinned messages so we can ignore the idea of
