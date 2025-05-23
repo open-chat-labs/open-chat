@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Implement improved method of getting chat summary updates ([#8016](https://github.com/open-chat-labs/open-chat/pull/8016))
 
+### Fixed
+
+- Include remove_notifications in inspect_message ([#8030](https://github.com/open-chat-labs/open-chat/pull/8030))
+
 ## [[2.0.1754](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1754-local_user_index)] - 2025-05-21
 
 ### Added

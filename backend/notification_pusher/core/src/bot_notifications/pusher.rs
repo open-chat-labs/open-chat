@@ -1,7 +1,10 @@
 use crate::metrics::write_metrics;
 use crate::{BotNotification, timestamp};
 use async_channel::Receiver;
-use reqwest::{Client, Url};
+use reqwest::dns::{Addrs, Name, Resolving};
+use reqwest::{Client, ClientBuilder, Url};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::sync::Arc;
 use std::time::Instant;
 
 pub struct Pusher {
@@ -10,10 +13,17 @@ pub struct Pusher {
 }
 
 impl Pusher {
-    pub fn new(receiver: Receiver<BotNotification>) -> Self {
+    pub fn new(receiver: Receiver<BotNotification>, is_production: bool) -> Self {
         Self {
             receiver,
-            http_client: Client::new(),
+            http_client: if is_production {
+                Client::new()
+            } else {
+                ClientBuilder::new()
+                    .dns_resolver(Arc::new(LocalHostResolver))
+                    .build()
+                    .unwrap()
+            },
         }
     }
 
@@ -47,5 +57,25 @@ impl Pusher {
         url = url.join("notify").map_err(|e| e.to_string())?;
         self.http_client.post(url).body(payload).send().await.unwrap();
         Ok(())
+    }
+}
+
+struct LocalHostResolver;
+
+impl reqwest::dns::Resolve for LocalHostResolver {
+    fn resolve(&self, name: Name) -> Resolving {
+        if name.as_str().contains("localhost") {
+            // If the domain name contains "localhost" resolve it to std localhost
+            let socket = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 0);
+            let addrs: Addrs = Box::new(std::iter::once(socket));
+            Box::pin(async move { Ok(addrs) })
+        } else {
+            // Fallback to system DNS resolution
+            let domain_name = name.as_str().to_owned();
+            Box::pin(async move {
+                let addrs: Addrs = Box::new(tokio::net::lookup_host((domain_name, 0)).await?);
+                Ok(addrs)
+            })
+        }
     }
 }

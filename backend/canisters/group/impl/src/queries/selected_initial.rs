@@ -43,8 +43,9 @@ fn selected_initial_impl(state: &RuntimeState) -> OCResult<SuccessResult> {
         .iter()
         .map(|(user_id, bot)| InstalledBotDetails {
             user_id: *user_id,
-            permissions: bot.permissions.clone(),
             added_by: bot.added_by,
+            permissions: bot.permissions.clone(),
+            autonomous_permissions: bot.autonomous_permissions.clone(),
         })
         .collect();
 

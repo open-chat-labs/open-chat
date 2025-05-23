@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Use `EventPusher` rather than `EventStoreClient` to push events ([#8010](https://github.com/open-chat-labs/open-chat/pull/8010))
 - Deprecate `event_store_client` ([#8013](https://github.com/open-chat-labs/open-chat/pull/8013))
 - Publish bot lifecycle events ([#8026](https://github.com/open-chat-labs/open-chat/pull/8026))
+- Add autonomous permisions to `InstalledBotDetails` ([#8035](https://github.com/open-chat-labs/open-chat/pull/8035))
 
 ## [[2.0.1745](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1745-community)] - 2025-05-12
 

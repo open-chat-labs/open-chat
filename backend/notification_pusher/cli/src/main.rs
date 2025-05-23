@@ -42,6 +42,7 @@ async fn main() -> Result<(), Error> {
         index_store,
         vapid_private_pem,
         pusher_count,
+        is_production,
     )
     .await;
 
