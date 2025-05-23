@@ -22,7 +22,6 @@ import type {
     HasMembershipRole,
     MemberRole,
     Permissioned,
-    PublicApiKeyDetails,
 } from "../permission";
 import type {
     ChatFrozen,
@@ -1058,7 +1057,6 @@ export type ChatStateFull = {
     walletConfig: WalletConfig;
     messageActivitySummary: MessageActivitySummary;
     installedBots: Map<string, ExternalBotPermissions>;
-    apiKeys: Map<string, PublicApiKeyDetails>;
     bitcoinAddress: string | undefined;
     streakInsurance: StreakInsurance | undefined;
 };
@@ -1227,7 +1225,6 @@ export type InitialStateResponse = {
     walletConfig: WalletConfig;
     messageActivitySummary: MessageActivitySummary;
     bots: Map<string, ExternalBotPermissions>;
-    apiKeys: Map<string, PublicApiKeyDetails>;
     bitcoinAddress: string | undefined;
     streakInsurance?: StreakInsurance;
 };
@@ -1313,7 +1310,6 @@ export type UpdatesSuccessResponse = {
     messageActivitySummary: MessageActivitySummary | undefined;
     botsAddedOrUpdated: InstalledBotDetails[];
     botsRemoved: Set<string>;
-    apiKeysGenerated: PublicApiKeyDetails[];
     bitcoinAddress: string | undefined;
     streakInsurance: OptionUpdate<StreakInsurance>;
 };
@@ -1440,7 +1436,6 @@ export type GroupChatDetails = {
     rules: VersionedRules;
     timestamp: bigint;
     bots: InstalledBotDetails[];
-    apiKeys: Map<string, PublicApiKeyDetails>;
     webhooks: WebhookDetails[];
 };
 
@@ -1456,7 +1451,6 @@ export type GroupChatDetailsUpdates = {
     timestamp: bigint;
     botsAddedOrUpdated: InstalledBotDetails[];
     botsRemoved: Set<string>;
-    apiKeysGenerated: PublicApiKeyDetails[];
     webhooks?: WebhookDetails[];
 };
 

@@ -14,7 +14,6 @@
         type MultiUserChat,
         type MultiUserChatIdentifier,
         type OpenChat,
-        type PublicApiKeyDetails,
         type ReadonlyMap,
         type ReadonlySet,
         type UserLookup,
@@ -59,7 +58,6 @@
         installedBots: ReadonlyMap<string, ExternalBotPermissions>;
         initialUsergroup?: number | undefined;
         showHeader?: boolean;
-        apiKeys: ReadonlyMap<string, PublicApiKeyDetails>;
         webhooks?: WebhookDetails[];
         onClose: () => void;
         onShowInviteUsers: () => void;
@@ -80,7 +78,6 @@
         installedBots,
         initialUsergroup = $bindable(undefined),
         showHeader = true,
-        apiKeys,
         webhooks,
         onClose,
         onShowInviteUsers,
@@ -415,7 +412,6 @@
             </h4>
             {#each bots as bot}
                 <BotMember
-                    apiKey={apiKeys.get(bot.id)}
                     {collection}
                     {bot}
                     grantedPermissions={bot.grantedPermissions}

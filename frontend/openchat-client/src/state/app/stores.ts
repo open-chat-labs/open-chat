@@ -35,7 +35,6 @@ import {
     type NotificationStatus,
     type PinNumberFailures,
     type PinNumberResolver,
-    type PublicApiKeyDetails,
     type ReadonlyMap,
     type ReadonlySet,
     type Referral,
@@ -572,11 +571,6 @@ export const selectedCommunityLapsedMembersStore = derived(
     selectedServerCommunityStore,
     (selectedCommunity) => selectedCommunity?.lapsedMembers ?? (new Set() as ReadonlySet<string>),
 );
-export const selectedCommunityApiKeysStore = derived(
-    selectedServerCommunityStore,
-    (selectedCommunity) =>
-        selectedCommunity?.apiKeys ?? (new Map() as ReadonlyMap<string, PublicApiKeyDetails>),
-);
 export const selectedCommunityReferralsStore = derived(
     selectedServerCommunityStore,
     (selectedCommunity) => selectedCommunity?.referrals ?? (new Set() as ReadonlySet<string>),
@@ -626,13 +620,6 @@ export const selectedChatBotsStore = derived(
         return bots.get(chat.chatId)?.apply(chat.bots) ?? chat.bots;
     },
 );
-export const selectedChatApiKeysStore = derived(
-    [selectedServerChatStore, chatDetailsLocalUpdates.apiKeys],
-    ([chat, apiKeys]) => {
-        if (chat === undefined) return new Map() as ReadonlyMap<string, PublicApiKeyDetails>;
-        return apiKeys.get(chat.chatId)?.apply(chat.apiKeys) ?? chat.apiKeys;
-    },
-);
 export const selectedChatWebhooksStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.webhooks],
     ([chat, webhooks]) => {
@@ -652,7 +639,6 @@ export const serverDirectChatsStore = new ChatMapStore<DirectChatSummary>();
 export const serverGroupChatsStore = new ChatMapStore<GroupChatSummary>();
 export const serverFavouritesStore = new ChatSetStore();
 export const serverPinnedChatsStore = new PinnedByScopeStore();
-export const directChatApiKeysStore = new SafeMapStore<string, PublicApiKeyDetails>();
 export const serverMessageActivitySummaryStore = writable<MessageActivitySummary>({
     readUpToTimestamp: 0n,
     latestTimestamp: 0n,

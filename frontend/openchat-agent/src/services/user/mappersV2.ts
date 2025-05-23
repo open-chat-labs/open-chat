@@ -1,11 +1,73 @@
+import { DelegationChain } from "@dfinity/identity";
+import type {
+    Achievement,
+    ArchiveChatResponse,
+    ChatIdentifier,
+    ChitEarned,
+    ChitEarnedReason,
+    ChitEventsResponse,
+    ClaimDailyChitResponse,
+    CommunitiesInitial,
+    CommunitiesUpdates,
+    CompletedCryptocurrencyWithdrawal,
+    CreateCommunityResponse,
+    DirectChatIdentifier,
+    DirectChatsInitial,
+    DirectChatSummary,
+    DirectChatSummaryUpdates,
+    DirectChatsUpdates,
+    ExchangeTokenSwapArgs,
+    ExternalBotPermissions,
+    FavouriteChatsInitial,
+    FavouriteChatsUpdates,
+    GroupChatsInitial,
+    GroupChatsUpdates,
+    InitialStateResponse,
+    MessageActivity,
+    MessageActivityEvent,
+    MessageActivityFeedResponse,
+    MessageActivitySummary,
+    MessageContext,
+    NamedAccount,
+    PinNumberSettings,
+    PublicProfile,
+    Referral,
+    ReferralStatus,
+    Result,
+    SearchDirectChatResponse,
+    SendMessageResponse,
+    StreakInsurance,
+    SwapTokensResponse,
+    TipMessageResponse,
+    TokenSwapStatusResponse,
+    UpdatedEvent,
+    UpdatesResponse,
+    UserCanisterChannelSummary,
+    UserCanisterChannelSummaryUpdates,
+    UserCanisterCommunitySummary,
+    UserCanisterCommunitySummaryUpdates,
+    UserCanisterGroupChatSummary,
+    UserCanisterGroupChatSummaryUpdates,
+    Verification,
+    WalletConfig,
+    WithdrawCryptocurrencyResponse,
+} from "openchat-shared";
+import {
+    CommonResponses,
+    nullMembership,
+    toBigInt32,
+    toBigInt64,
+    UnsupportedValueError,
+} from "openchat-shared";
 import type {
     AccountICRC1,
+    StreakInsurance as ApiStreakInsurance,
+    CompletedCryptoTransactionICRC1,
+    CompletedCryptoTransactionNNS,
     Achievement as TAchievement,
     Chat as TChat,
     ChitEarned as TChitEarned,
     ChitEarnedReason as TChitEarnedReason,
-    CompletedCryptoTransactionICRC1,
-    CompletedCryptoTransactionNNS,
     DirectChatSummary as TDirectChatSummary,
     DirectChatSummaryUpdates as TDirectChatSummaryUpdates,
     PinNumberSettings as TPinNumberSettings,
@@ -17,6 +79,7 @@ import type {
     UserClaimDailyChitResponse,
     UserCommunitySummary,
     UserCommunitySummaryUpdates,
+    UserCreateCommunitySuccessResult,
     UserGroupChatSummary,
     UserGroupChatSummaryUpdates,
     UserInitialStateCommunitiesInitial,
@@ -24,14 +87,20 @@ import type {
     UserInitialStateFavouriteChatsInitial,
     UserInitialStateGroupChatsInitial,
     UserInitialStateResponse,
+    UserMessageActivity,
+    UserMessageActivityEvent,
+    UserMessageActivityFeedResponse,
+    UserMessageActivitySummary,
     UserPublicProfileResponse,
     UserReferral,
     UserSavedCryptoAccountsResponse,
+    UserSearchMessagesSuccessResult,
     UserSendMessageResponse,
     UserSendMessageWithTransferToChannelResponse,
     UserSendMessageWithTransferToGroupResponse,
     UserSetPinNumberPinNumberVerification,
     UserSwapTokensExchangeArgs,
+    UserSwapTokensSuccessResult,
     UserTipMessageResponse,
     UserTokenSwapStatusResponse,
     UserUpdatesCommunitiesUpdates,
@@ -41,75 +110,8 @@ import type {
     UserUpdatesResponse,
     UserWalletConfig,
     UserWithdrawCryptoResponse,
-    UserMessageActivityFeedResponse,
-    UserMessageActivityEvent,
-    UserMessageActivity,
-    UserMessageActivitySummary,
-    StreakInsurance as ApiStreakInsurance,
-    UserCreateCommunitySuccessResult,
-    UserSearchMessagesSuccessResult,
-    UserSwapTokensSuccessResult,
 } from "../../typebox";
-import type {
-    SendMessageResponse,
-    InitialStateResponse,
-    UpdatesResponse,
-    DirectChatSummary,
-    UserCanisterGroupChatSummary,
-    UserCanisterGroupChatSummaryUpdates,
-    WithdrawCryptocurrencyResponse,
-    CompletedCryptocurrencyWithdrawal,
-    PublicProfile,
-    ArchiveChatResponse,
-    SearchDirectChatResponse,
-    DirectChatSummaryUpdates,
-    UpdatedEvent,
-    CreateCommunityResponse,
-    GroupChatsInitial,
-    DirectChatsInitial,
-    CommunitiesInitial,
-    UserCanisterCommunitySummary,
-    UserCanisterChannelSummary,
-    FavouriteChatsInitial,
-    ChatIdentifier,
-    CommunitiesUpdates,
-    UserCanisterCommunitySummaryUpdates,
-    UserCanisterChannelSummaryUpdates,
-    FavouriteChatsUpdates,
-    GroupChatsUpdates,
-    DirectChatsUpdates,
-    DirectChatIdentifier,
-    TipMessageResponse,
-    NamedAccount,
-    SwapTokensResponse,
-    TokenSwapStatusResponse,
-    Result,
-    ExchangeTokenSwapArgs,
-    ChitEventsResponse,
-    ChitEarned,
-    ChitEarnedReason,
-    Achievement,
-    ClaimDailyChitResponse,
-    ReferralStatus,
-    Referral,
-    WalletConfig,
-    Verification,
-    MessageActivityFeedResponse,
-    MessageActivityEvent,
-    MessageContext,
-    MessageActivity,
-    MessageActivitySummary,
-    ExternalBotPermissions,
-    PublicApiKeyDetails,
-    StreakInsurance,
-} from "openchat-shared";
-import {
-    nullMembership,
-    toBigInt32,
-    toBigInt64,
-    CommonResponses,
-    UnsupportedValueError,
-} from "openchat-shared";
+import { signedDelegation } from "../../utils/id";
 import {
     bytesToBigint,
     bytesToHexString,
@@ -123,18 +125,14 @@ import {
     chatMetrics,
     completedCryptoTransfer,
     installedBotDetails,
+    mapResult,
     messageEvent,
     messageMatch,
     ocError,
-    publicApiKeyDetails,
-    mapResult,
     sendMessageSuccess,
     unitResult,
     videoCallInProgress,
 } from "../common/chatMappersV2";
-import type { PinNumberSettings } from "openchat-shared";
-import { signedDelegation } from "../../utils/id";
-import { DelegationChain } from "@dfinity/identity";
 
 export function messageActivityFeedResponse(
     value: UserMessageActivityFeedResponse,
@@ -538,13 +536,10 @@ function userCanisterChannelSummary(
         },
         readByMeUpTo: value.read_by_me_up_to,
         dateReadPinned: value.date_read_pinned,
-        threadsRead: Object.entries(value.threads_read).reduce(
-            (curr, next) => {
-                curr[Number(next[0])] = next[1];
-                return curr;
-            },
-            {} as Record<number, number>,
-        ),
+        threadsRead: Object.entries(value.threads_read).reduce((curr, next) => {
+            curr[Number(next[0])] = next[1];
+            return curr;
+        }, {} as Record<number, number>),
         archived: value.archived,
     };
 }
@@ -625,10 +620,6 @@ export function initialStateResponse(value: UserInitialStateResponse): InitialSt
                 m.set(b.id, b.permissions);
                 return m;
             }, new Map<string, ExternalBotPermissions>()),
-            apiKeys: result.api_keys.map(publicApiKeyDetails).reduce((m, k) => {
-                m.set(k.botId, k);
-                return m;
-            }, new Map<string, PublicApiKeyDetails>()),
             bitcoinAddress: result.btc_address,
             streakInsurance: mapOptional(result.streak_insurance, streakInsurance),
         };
@@ -701,13 +692,10 @@ export function userCanisterChannelSummaryUpdates(
         id: { kind: "channel", communityId, channelId: Number(toBigInt32(value.channel_id)) },
         readByMeUpTo: value.read_by_me_up_to,
         dateReadPinned: value.date_read_pinned,
-        threadsRead: Object.entries(value.threads_read).reduce(
-            (curr, next) => {
-                curr[Number(next[0])] = next[1];
-                return curr;
-            },
-            {} as Record<number, number>,
-        ),
+        threadsRead: Object.entries(value.threads_read).reduce((curr, next) => {
+            curr[Number(next[0])] = next[1];
+            return curr;
+        }, {} as Record<number, number>),
         archived: value.archived,
     };
 }
@@ -803,7 +791,6 @@ export function getUpdatesResponse(value: UserUpdatesResponse): UpdatesResponse 
             ),
             botsAddedOrUpdated: value.Success.bots_added_or_updated.map(installedBotDetails),
             botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
-            apiKeysGenerated: value.Success.api_keys_generated.map(publicApiKeyDetails),
             bitcoinAddress: value.Success.btc_address,
             streakInsurance: optionUpdateV2(result.streak_insurance, streakInsurance),
         };
@@ -816,13 +803,10 @@ function userCanisterGroupSummary(summary: UserGroupChatSummary): UserCanisterGr
     return {
         id: { kind: "group_chat", groupId: principalBytesToString(summary.chat_id) },
         readByMeUpTo: summary.read_by_me_up_to,
-        threadsRead: Object.entries(summary.threads_read).reduce(
-            (curr, next) => {
-                curr[Number(next[0])] = next[1];
-                return curr;
-            },
-            {} as Record<number, number>,
-        ),
+        threadsRead: Object.entries(summary.threads_read).reduce((curr, next) => {
+            curr[Number(next[0])] = next[1];
+            return curr;
+        }, {} as Record<number, number>),
         archived: summary.archived,
         dateReadPinned: summary.date_read_pinned,
         localUserIndex: principalBytesToString(summary.local_user_index_canister_id),
@@ -835,13 +819,10 @@ function userCanisterGroupSummaryUpdates(
     return {
         id: { kind: "group_chat", groupId: principalBytesToString(summary.chat_id) },
         readByMeUpTo: summary.read_by_me_up_to,
-        threadsRead: Object.entries(summary.threads_read).reduce(
-            (curr, next) => {
-                curr[Number(next[0])] = next[1];
-                return curr;
-            },
-            {} as Record<number, number>,
-        ),
+        threadsRead: Object.entries(summary.threads_read).reduce((curr, next) => {
+            curr[Number(next[0])] = next[1];
+            return curr;
+        }, {} as Record<number, number>),
         archived: summary.archived,
         dateReadPinned: summary.date_read_pinned,
     };

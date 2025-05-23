@@ -1,150 +1,84 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import type {
-    InitialStateResponse,
-    UpdatesResponse,
-    EventsResponse,
-    CandidateGroupChat,
-    CreateGroupResponse,
-    DeleteGroupResponse,
-    Message,
-    SendMessageResponse,
-    BlockUserResponse,
-    UnblockUserResponse,
-    LeaveGroupResponse,
-    MarkReadResponse,
-    IndexRange,
+    AcceptP2PSwapResponse,
     AddRemoveReactionResponse,
-    DeleteMessageResponse,
-    UndeleteMessageResponse,
-    EditMessageResponse,
-    MarkReadRequest,
-    WithdrawCryptocurrencyResponse,
-    PendingCryptocurrencyWithdrawal,
+    ApproveTransferResponse,
     ArchiveChatResponse,
     BlobReference,
-    CreatedUser,
-    PinChatResponse,
-    PublicProfile,
-    SearchDirectChatResponse,
-    SetBioResponse,
-    ToggleMuteNotificationResponse,
-    UnpinChatResponse,
-    DeletedDirectMessageResponse,
-    EventWrapper,
-    SetMessageReminderResponse,
-    ChatEvent,
-    EventsSuccessResult,
-    CommunitySummary,
-    CreateCommunityResponse,
-    ChatIdentifier,
-    DirectChatIdentifier,
-    GroupChatIdentifier,
-    ThreadRead,
-    ManageFavouritesResponse,
-    CommunityIdentifier,
-    LeaveCommunityResponse,
-    DeleteCommunityResponse,
-    ChannelIdentifier,
-    Rules,
-    TipMessageResponse,
-    NamedAccount,
-    SaveCryptoAccountResponse,
-    CryptocurrencyDetails,
-    ExchangeTokenSwapArgs,
-    SwapTokensResponse,
-    TokenSwapStatusResponse,
-    ApproveTransferResponse,
-    MessageContext,
-    PendingCryptocurrencyTransfer,
-    AcceptP2PSwapResponse,
+    BlockUserResponse,
     CancelP2PSwapResponse,
-    JoinVideoCallResponse,
+    CandidateGroupChat,
+    ChannelIdentifier,
+    ChatEvent,
+    ChatIdentifier,
     ChitEventsRequest,
     ChitEventsResponse,
     ClaimDailyChitResponse,
-    WalletConfig,
-    Verification,
-    MessageActivityFeedResponse,
+    CommunityIdentifier,
+    CommunitySummary,
+    CreateCommunityResponse,
+    CreatedUser,
+    CreateGroupResponse,
+    CryptocurrencyDetails,
+    DeleteCommunityResponse,
+    DeletedDirectMessageResponse,
+    DeleteGroupResponse,
+    DeleteMessageResponse,
+    DirectChatIdentifier,
+    EditMessageResponse,
+    EventsResponse,
+    EventsSuccessResult,
+    EventWrapper,
+    ExchangeTokenSwapArgs,
     ExternalBotPermissions,
-    GenerateBotKeyResponse,
-    WithdrawBtcResponse,
+    GroupChatIdentifier,
+    IndexRange,
+    InitialStateResponse,
+    JoinVideoCallResponse,
+    LeaveCommunityResponse,
+    LeaveGroupResponse,
+    ManageFavouritesResponse,
+    MarkReadRequest,
+    MarkReadResponse,
+    Message,
+    MessageActivityFeedResponse,
+    MessageContext,
+    NamedAccount,
     PayForStreakInsuranceResponse,
+    PendingCryptocurrencyTransfer,
+    PendingCryptocurrencyWithdrawal,
+    PinChatResponse,
+    PublicProfile,
+    Rules,
+    SaveCryptoAccountResponse,
+    SearchDirectChatResponse,
+    SendMessageResponse,
+    SetBioResponse,
+    SetMessageReminderResponse,
+    SetPinNumberResponse,
+    SwapTokensResponse,
+    ThreadRead,
+    TipMessageResponse,
+    ToggleMuteNotificationResponse,
+    TokenSwapStatusResponse,
+    UnblockUserResponse,
+    UndeleteMessageResponse,
+    UnpinChatResponse,
+    UpdatesResponse,
+    Verification,
+    WalletConfig,
+    WithdrawBtcResponse,
+    WithdrawCryptocurrencyResponse,
 } from "openchat-shared";
-import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import {
-    getUpdatesResponse,
-    initialStateResponse,
-    searchDirectChatSuccess,
-    withdrawCryptoResponse,
-    sendMessageResponse,
-    sendMessageWithTransferToChannelResponse,
-    sendMessageWithTransferToGroupResponse,
-    publicProfileResponse,
-    archiveChatResponse,
-    tipMessageResponse,
-    savedCryptoAccountsResponse,
-    tokenSwapStatusResponse,
-    apiExchangeArgs,
-    chitEventsResponse,
-    claimDailyChitResponse,
-    apiWalletConfig,
-    apiVerification,
-    messageActivityFeedResponse,
-    createCommunitySuccess, swapTokensSuccess,
-} from "./mappersV2";
-import {
-    type Database,
-    getCachedEvents,
-    getCachedEventsByIndex,
-    getCachedEventsWindowByMessageIndex,
-    mergeSuccessResponses,
-    recordFailedMessage,
-    removeFailedMessage,
-    setCachedEvents,
-    setCachedMessageFromSendResponse,
-} from "../../utils/caching";
-import {
-    apiCommunityPermissions,
-    apiExternalBotPermissions,
-    apiGroupPermissions,
-    apiMessageContent,
-    apiPendingCryptocurrencyWithdrawal,
-    apiReplyContextArgs,
-    apiChatIdentifier,
-    apiMaybeAccessGateConfig,
-    isSuccess,
-    getEventsSuccess,
-    mapResult,
-    undeleteMessageSuccess,
-    unitResult,
-    createGroupSuccess,
-    generateApiKeySuccess,
-    acceptP2PSwapSuccess,
-    deletedMessageSuccess,
-} from "../common/chatMappersV2";
-import { DataClient } from "../data/data.client";
-import {
-    mapOptional,
-    principalBytesToString,
-    principalStringToBytes,
-    toVoid,
-} from "../../utils/mapping";
-import { generateUint64 } from "../../utils/rng";
-import type { AgentConfig } from "../../config";
-import {
-    toBigInt32,
+    isSuccessfulEventsResponse,
     MAX_EVENTS,
     MAX_MESSAGES,
     MAX_MISSING,
     ResponseTooLargeError,
-    isSuccessfulEventsResponse,
+    toBigInt32,
 } from "openchat-shared";
-import {
-    chunkedChatEventsFromBackend,
-    chunkedChatEventsWindowFromBackend,
-} from "../common/chunked";
-import type { SetPinNumberResponse } from "openchat-shared";
-import { setChitInfoInCache } from "../../utils/userCache";
+import type { AgentConfig } from "../../config";
 import {
     Empty as TEmpty,
     UnitResult,
@@ -182,6 +116,7 @@ import {
     UserEventsByIndexArgs,
     UserEventsResponse,
     UserEventsWindowArgs,
+    UserGenerateBtcAddressResponse,
     UserInitialStateResponse,
     UserJoinVideoCallArgs,
     UserLeaveCommunityArgs,
@@ -190,12 +125,17 @@ import {
     UserManageFavouriteChatsArgs,
     UserMarkAchievementsSeenArgs,
     UserMarkAchievementsSeenResponse,
+    UserMarkMessageActivityFeedReadArgs,
+    UserMarkMessageActivityFeedReadResponse,
     UserMarkReadArgs,
     UserMarkReadChannelMessagesRead,
     UserMarkReadChatMessagesRead,
     UserMarkReadResponse,
+    UserMessageActivityFeedArgs,
+    UserMessageActivityFeedResponse,
     UserMuteNotificationsArgs,
     UserNamedAccount,
+    UserPayForStreakInsuranceArgs,
     UserPinChatArgs,
     UserPublicProfileResponse,
     UserRemoveReactionArgs,
@@ -226,24 +166,79 @@ import {
     UserUndeleteMessagesArgs,
     UserUndeleteMessagesResponse,
     UserUnpinChatArgs,
+    UserUpdateBotArgs,
     UserUpdatesArgs,
     UserUpdatesResponse,
-    UserWithdrawCryptoArgs,
-    UserWithdrawCryptoResponse,
-    UserMarkMessageActivityFeedReadArgs,
-    UserMarkMessageActivityFeedReadResponse,
-    UserMessageActivityFeedArgs,
-    UserMessageActivityFeedResponse,
-    UserUpdateBotArgs,
-    UserGenerateBotApiKeyArgs,
-    UserGenerateBotApiKeyResponse,
-    UserGenerateBtcAddressResponse,
-    UserApiKeyArgs,
-    UserApiKeyResponse,
     UserWithdrawBtcArgs,
     UserWithdrawBtcResponse,
-    UserPayForStreakInsuranceArgs,
+    UserWithdrawCryptoArgs,
+    UserWithdrawCryptoResponse,
 } from "../../typebox";
+import {
+    type Database,
+    getCachedEvents,
+    getCachedEventsByIndex,
+    getCachedEventsWindowByMessageIndex,
+    mergeSuccessResponses,
+    recordFailedMessage,
+    removeFailedMessage,
+    setCachedEvents,
+    setCachedMessageFromSendResponse,
+} from "../../utils/caching";
+import {
+    mapOptional,
+    principalBytesToString,
+    principalStringToBytes,
+    toVoid,
+} from "../../utils/mapping";
+import { generateUint64 } from "../../utils/rng";
+import { setChitInfoInCache } from "../../utils/userCache";
+import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
+import {
+    acceptP2PSwapSuccess,
+    apiChatIdentifier,
+    apiCommunityPermissions,
+    apiExternalBotPermissions,
+    apiGroupPermissions,
+    apiMaybeAccessGateConfig,
+    apiMessageContent,
+    apiPendingCryptocurrencyWithdrawal,
+    apiReplyContextArgs,
+    createGroupSuccess,
+    deletedMessageSuccess,
+    getEventsSuccess,
+    isSuccess,
+    mapResult,
+    undeleteMessageSuccess,
+    unitResult,
+} from "../common/chatMappersV2";
+import {
+    chunkedChatEventsFromBackend,
+    chunkedChatEventsWindowFromBackend,
+} from "../common/chunked";
+import { DataClient } from "../data/data.client";
+import {
+    apiExchangeArgs,
+    apiVerification,
+    apiWalletConfig,
+    archiveChatResponse,
+    chitEventsResponse,
+    claimDailyChitResponse,
+    createCommunitySuccess,
+    getUpdatesResponse,
+    initialStateResponse,
+    messageActivityFeedResponse,
+    publicProfileResponse,
+    savedCryptoAccountsResponse,
+    searchDirectChatSuccess,
+    sendMessageResponse,
+    sendMessageWithTransferToChannelResponse,
+    sendMessageWithTransferToGroupResponse,
+    swapTokensSuccess,
+    tipMessageResponse,
+    tokenSwapStatusResponse,
+    withdrawCryptoResponse,
+} from "./mappersV2";
 
 export class UserClient extends MsgpackCanisterAgent {
     userId: string;
@@ -466,7 +461,8 @@ export class UserClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "events_by_index",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
+            (resp) =>
+                mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
             UserEventsByIndexArgs,
             UserEventsResponse,
         );
@@ -549,7 +545,8 @@ export class UserClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "events_window",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
+            (resp) =>
+                mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
             UserEventsWindowArgs,
             UserEventsResponse,
         );
@@ -640,7 +637,8 @@ export class UserClient extends MsgpackCanisterAgent {
         return this.executeMsgpackQuery(
             "events",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
+            (resp) =>
+                mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
             UserEventsArgs,
             UserEventsResponse,
         );
@@ -1641,40 +1639,6 @@ export class UserClient extends MsgpackCanisterAgent {
         );
     }
 
-    generateBotApiKey(
-        botId: string,
-        permissions: ExternalBotPermissions,
-    ): Promise<GenerateBotKeyResponse> {
-        return this.executeMsgpackUpdate(
-            "generate_bot_api_key",
-            {
-                bot_id: principalStringToBytes(botId),
-                requested_permissions: apiExternalBotPermissions(permissions),
-            },
-            (resp) => mapResult(resp, generateApiKeySuccess),
-            UserGenerateBotApiKeyArgs,
-            UserGenerateBotApiKeyResponse,
-        );
-    }
-
-    getApiKey(botId: string): Promise<string | undefined> {
-        return this.executeMsgpackQuery(
-            "api_key",
-            {
-                bot_id: principalStringToBytes(botId),
-            },
-            (resp) => {
-                if (typeof resp === "object" && "Success" in resp) {
-                    return resp.Success;
-                }
-                console.log("Failed to get direct api key: ", botId, resp);
-                return undefined;
-            },
-            UserApiKeyArgs,
-            UserApiKeyResponse,
-        );
-    }
-
     generateBtcAddress(): Promise<string> {
         return this.executeMsgpackUpdate(
             "generate_btc_address",
@@ -1692,13 +1656,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     updateBtcBalance(): Promise<boolean> {
-        return this.executeMsgpackUpdate(
-            "update_btc_balance",
-            {},
-            isSuccess,
-            TEmpty,
-            UnitResult,
-        );
+        return this.executeMsgpackUpdate("update_btc_balance", {}, isSuccess, TEmpty, UnitResult);
     }
 
     withdrawBtc(

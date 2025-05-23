@@ -15,58 +15,55 @@ import type {
     GroupMembershipUpdates,
     ImportGroupResponse,
     MemberRole,
-    PublicApiKeyDetails,
     UpdateCommunityResponse,
     UserFailedError,
     UserGroupDetails,
 } from "openchat-shared";
-import { toBigInt32, CommonResponses, UnsupportedValueError } from "openchat-shared";
+import { CommonResponses, toBigInt32, UnsupportedValueError } from "openchat-shared";
 import type {
-    ChannelMatch as TChannelMatch,
-    CommunityCanisterCommunitySummaryUpdates as TCommunityCanisterCommunitySummaryUpdates,
-    CommunityCanisterChannelSummaryUpdates as TCommunityCanisterChannelSummaryUpdates,
-    CommunityMembershipUpdates as TCommunityMembershipUpdates,
-    CommunityAddMembersToChannelResponse,
     CommunityAddMembersToChannelFailedResult,
-    CommunityAddMembersToChannelUserFailedError,
     CommunityAddMembersToChannelPartialSuccessResult,
-    CommunityRole as TCommunityRole,
-    CommunitySelectedInitialResponse,
-    GroupMembershipUpdates as TGroupMembershipUpdates,
-    GroupRole as TGroupRole,
-    UserGroupDetails as TUserGroupDetails,
-    CommunitySelectedUpdatesResponse,
+    CommunityAddMembersToChannelResponse,
+    CommunityAddMembersToChannelUserFailedError,
     CommunityChannelSummaryResponse,
+    CommunityCreateUserGroupSuccessResult,
+    CommunityExploreChannelsResponse,
+    CommunityImportGroupSuccessResult,
+    CommunitySelectedInitialResponse,
+    CommunitySelectedUpdatesResponse,
+    CommunityUpdateCommunitySuccessResult,
+    ChannelMatch as TChannelMatch,
+    CommunityCanisterChannelSummaryUpdates as TCommunityCanisterChannelSummaryUpdates,
+    CommunityCanisterCommunitySummaryUpdates as TCommunityCanisterCommunitySummaryUpdates,
+    CommunityMembershipUpdates as TCommunityMembershipUpdates,
+    CommunityRole as TCommunityRole,
     CommunitySummaryResponse as TCommunitySummaryResponse,
     CommunitySummaryUpdatesResponse as TCommunitySummaryUpdatesResponse,
-    CommunityExploreChannelsResponse,
+    GroupMembershipUpdates as TGroupMembershipUpdates,
+    GroupRole as TGroupRole,
     OptionalCommunityPermissions as TOptionalCommunityPermissions,
-    CommunityImportGroupSuccessResult,
-    CommunityUpdateCommunitySuccessResult,
-    CommunityCreateUserGroupSuccessResult,
+    UserGroupDetails as TUserGroupDetails,
 } from "../../typebox";
-import { mapOptional, optionUpdateV2, principalBytesToString } from "../../utils/mapping";
+import { identity, mapOptional, optionUpdateV2, principalBytesToString } from "../../utils/mapping";
 import {
     accessGateConfig,
     apiCommunityPermissionRole,
-    installedBotDetails,
     chatMetrics,
     communityChannelSummary,
     communityPermissions,
     communitySummary,
     groupPermissions,
     groupSubtype,
+    installedBotDetails,
     memberRole,
     mentions,
     messageEvent,
     ocError,
-    publicApiKeyDetails,
     threadSyncDetails,
     updatedEvent,
     userGroup,
     videoCallInProgress,
 } from "../common/chatMappersV2";
-import { identity } from "../../utils/mapping";
 
 export function addMembersToChannelResponse(
     value: CommunityAddMembersToChannelResponse,
@@ -374,10 +371,6 @@ export function communityDetailsResponse(
             userGroups: new Map(value.Success.user_groups.map(userGroupDetails)),
             referrals: new Set(value.Success.referrals.map(principalBytesToString)),
             bots: value.Success.bots.map(installedBotDetails),
-            apiKeys: value.Success.api_keys.map(publicApiKeyDetails).reduce((m, k) => {
-                m.set(k.botId, k);
-                return m;
-            }, new Map<string, PublicApiKeyDetails>()),
         };
     } else {
         console.warn("CommunityDetails failed with", value);
@@ -431,7 +424,6 @@ export function communityDetailsUpdatesResponse(
                 referralsAdded: new Set(value.Success.referrals_added.map(principalBytesToString)),
                 botsAddedOrUpdated: value.Success.bots_added_or_updated.map(installedBotDetails),
                 botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
-                apiKeysGenerated: value.Success.api_keys_generated.map(publicApiKeyDetails),
             };
         } else if ("SuccessNoUpdates" in value) {
             return {

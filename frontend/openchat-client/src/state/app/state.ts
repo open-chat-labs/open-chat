@@ -30,7 +30,6 @@ import {
     type PinnedByScope,
     type PinNumberFailures,
     type PinNumberResolver,
-    type PublicApiKeyDetails,
     type ReadonlyMap,
     type ReadonlySet,
     type Referral,
@@ -68,7 +67,6 @@ import {
     currentUserIdStore,
     currentUserStore,
     diamondStatusStore,
-    directChatApiKeysStore,
     directChatBotsStore,
     eventsStore,
     expiredServerEventRanges,
@@ -543,7 +541,6 @@ export class AppState {
         pinnedMessages: Set<number>,
         rules: VersionedRules,
         bots: Map<string, ExternalBotPermissions>,
-        apiKeys: Map<string, PublicApiKeyDetails>,
         webhooks: Map<string, WebhookDetails>,
     ) {
         if (!chatIdentifiersEqual(chatId, this.#selectedChatId)) {
@@ -563,7 +560,6 @@ export class AppState {
                 invitedUsers,
                 pinnedMessages,
                 bots,
-                apiKeys,
                 webhooks,
                 rules,
             ),
@@ -579,7 +575,6 @@ export class AppState {
         invitedUsers: Set<string>,
         referrals: Set<string>,
         bots: Map<string, ExternalBotPermissions>,
-        apiKeys: Map<string, PublicApiKeyDetails>,
         rules?: VersionedRules,
     ) {
         if (!communityIdentifiersEqual(communityId, this.#selectedCommunityId)) {
@@ -601,7 +596,6 @@ export class AppState {
                 invitedUsers,
                 referrals,
                 bots,
-                apiKeys,
                 rules,
             ),
         );
@@ -631,7 +625,6 @@ export class AppState {
         walletConfig: WalletConfig,
         messageActivitySummary: MessageActivitySummary,
         installedBots: Map<string, ExternalBotPermissions>,
-        apiKeys: Map<string, PublicApiKeyDetails>,
         streakInsurance: StreakInsurance | undefined,
     ): void {
         const [channelsMap, directChats, groupChats] = partitionChats(allChats);
@@ -662,7 +655,6 @@ export class AppState {
         serverFavouritesStore.fromSet(favouritesSet);
         serverCommunitiesStore.fromMap(communitiesMap);
         serverPinnedChatsStore.fromMap(pinnedChats);
-        directChatApiKeysStore.fromMap(apiKeys);
         serverDirectChatBotsStore.fromMap(installedBots);
         serverWalletConfigStore.set(walletConfig);
         if (streakInsurance !== undefined) {

@@ -310,7 +310,6 @@ export type BotDefinition = {
 };
 
 export type AutonomousBotConfig = {
-    syncApiKey: boolean;
     permissions: ExternalBotPermissions;
 };
 
@@ -714,7 +713,7 @@ export type BotClientConfigData = {
     icHost: string;
 };
 
-export type BotSummaryMode = EditingCommandBot | ViewingCommandBot | AddingApiKey | EditingApiKey;
+export type BotSummaryMode = EditingCommandBot | ViewingCommandBot;
 
 type BotSummaryModeCommon = {
     requested: ExternalBotPermissions;
@@ -730,19 +729,6 @@ export type ViewingCommandBot = BotSummaryModeCommon & {
     kind: "viewing_command_bot";
     id: CommunityIdentifier | GroupChatIdentifier | DirectChatIdentifier;
     granted: ExternalBotPermissions;
-};
-
-export type AddingApiKey = BotSummaryModeCommon & {
-    kind: "adding_api_key";
-    id: CommunityIdentifier | ChatIdentifier;
-};
-
-// Editing will infact amount to generating a new key
-export type EditingApiKey = BotSummaryModeCommon & {
-    kind: "editing_api_key";
-    id: CommunityIdentifier | ChatIdentifier;
-    granted: ExternalBotPermissions;
-    apiKey?: string;
 };
 
 export type EnhancedExternalBot = ExternalBot & { grantedPermissions: ExternalBotPermissions };

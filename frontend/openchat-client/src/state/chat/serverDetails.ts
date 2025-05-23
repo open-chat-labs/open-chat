@@ -3,7 +3,6 @@ import {
     type ChatIdentifier,
     type ExternalBotPermissions,
     type Member,
-    type PublicApiKeyDetails,
     type ReadonlyMap,
     type ReadonlySet,
     type VersionedRules,
@@ -19,7 +18,6 @@ export class ChatDetailsState {
         public invitedUsers: ReadonlySet<string>,
         public pinnedMessages: ReadonlySet<number>,
         public bots: ReadonlyMap<string, ExternalBotPermissions>,
-        public apiKeys: ReadonlyMap<string, PublicApiKeyDetails>,
         public webhooks: ReadonlyMap<string, WebhookDetails>,
         public rules: VersionedRules = emptyRules(),
     ) {}

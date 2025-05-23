@@ -168,7 +168,6 @@ import type { OptionUpdate } from "./optionUpdate";
 import type {
     AccessTokenType,
     CommunityPermissions,
-    GenerateBotKeyResponse,
     MemberRole,
     OptionalChatPermissions,
 } from "./permission";
@@ -446,8 +445,6 @@ export type WorkerRequest =
     | GetBotDefinition
     | CallBotCommandEndpoint
     | WithdrawFromIcpSwap
-    | GenerateBotApiKey
-    | GetApiKey
     | RegisterWebhook
     | UpdateWebhook
     | RegenerateWebhook
@@ -465,19 +462,6 @@ type PayForStreakInsurance = {
     additionalDays: number;
     expectedPrice: bigint;
     pin: string | undefined;
-};
-
-type GetApiKey = {
-    kind: "getApiKey";
-    id: ChatIdentifier | CommunityIdentifier;
-    botId: string;
-};
-
-type GenerateBotApiKey = {
-    kind: "generateBotApiKey";
-    id: ChatIdentifier | CommunityIdentifier;
-    botId: string;
-    permissions: ExternalBotPermissions;
 };
 
 type RegisterWebhook = {
@@ -1730,7 +1714,6 @@ export type WorkerResponseInner =
     | ExploreBotsResponse
     | BotDefinitionResponse
     | BotCommandResponse
-    | GenerateBotKeyResponse
     | PayForStreakInsuranceResponse
     | FullWebhookDetails;
 
@@ -2471,10 +2454,6 @@ export type WorkerResult<T> = T extends Init
     ? boolean
     : T extends WithdrawFromIcpSwap
     ? boolean
-    : T extends GenerateBotApiKey
-    ? GenerateBotKeyResponse
-    : T extends GetApiKey
-    ? string | undefined
     : T extends RegisterWebhook
     ? FullWebhookDetails | undefined
     : T extends UpdateWebhook

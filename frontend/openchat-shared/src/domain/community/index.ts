@@ -25,7 +25,6 @@ import type {
     HasMembershipRole,
     MemberRole,
     Permissioned,
-    PublicApiKeyDetails,
 } from "../permission";
 import type { Failure, InternalError, Offline, Success, SuccessNoUpdates } from "../response";
 import type { HasLevel } from "../structure";
@@ -85,7 +84,6 @@ export type CommunitySpecificState = {
     referrals: Set<string>;
     rules?: VersionedRules;
     bots: Map<string, ExternalBotPermissions>;
-    apiKeys: Map<string, PublicApiKeyDetails>;
 };
 
 export interface UserFailedGateCheck {
@@ -242,7 +240,6 @@ export type CommunityDetails = {
     userGroups: Map<number, UserGroupDetails>;
     referrals: Set<string>;
     bots: InstalledBotDetails[];
-    apiKeys: Map<string, PublicApiKeyDetails>;
 };
 
 export type CommunityDetailsUpdates = {
@@ -259,7 +256,6 @@ export type CommunityDetailsUpdates = {
     referralsAdded: Set<string>;
     botsAddedOrUpdated: InstalledBotDetails[];
     botsRemoved: Set<string>;
-    apiKeysGenerated: PublicApiKeyDetails[];
 };
 
 export type ChannelSummaryResponse = Failure | ChannelSummary | CanisterNotFound;

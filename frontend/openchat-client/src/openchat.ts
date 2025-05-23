@@ -97,7 +97,6 @@ import type {
     FaqRoute,
     FromWorker,
     FullWebhookDetails,
-    GenerateBotKeyResponse,
     GenerateChallengeResponse,
     GenerateMagicLinkResponse,
     GlobalSelectedChatRoute,
@@ -3191,7 +3190,6 @@ export class OpenChat {
                 resp.invitedUsers,
                 resp.referrals,
                 resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
-                resp.apiKeys,
                 resp.rules,
             );
             this.#updateUserStoreFromCommunityState();
@@ -3224,7 +3222,6 @@ export class OpenChat {
                         resp.pinnedMessages,
                         resp.rules,
                         resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
-                        resp.apiKeys,
                         new Map(resp.webhooks.map((w) => [w.id, w])),
                     );
                 }
@@ -5947,7 +5944,6 @@ export class OpenChat {
                 chatsResponse.state.walletConfig,
                 chatsResponse.state.messageActivitySummary,
                 chatsResponse.state.installedBots,
-                chatsResponse.state.apiKeys,
                 chatsResponse.state.streakInsurance,
             );
 
@@ -8058,36 +8054,6 @@ export class OpenChat {
             kind: "callBotCommandEndpoint",
             endpoint,
             token,
-        });
-    }
-
-    generateBotApiKey(
-        id: ChatIdentifier | CommunityIdentifier,
-        botId: string,
-        permissions: ExternalBotPermissions,
-    ): Promise<GenerateBotKeyResponse> {
-        return this.#sendRequest({
-            kind: "generateBotApiKey",
-            id,
-            botId,
-            permissions,
-        }).catch((err) => {
-            this.#logger.error("Failed to generate api key", err);
-            return { kind: "failure" };
-        });
-    }
-
-    getApiKey(
-        id: ChatIdentifier | CommunityIdentifier,
-        botId: string,
-    ): Promise<string | undefined> {
-        return this.#sendRequest({
-            kind: "getApiKey",
-            id,
-            botId,
-        }).catch((err) => {
-            this.#logger.error("Failed to get api key", err);
-            return undefined;
         });
     }
 

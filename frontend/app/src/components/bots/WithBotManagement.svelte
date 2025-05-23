@@ -11,7 +11,6 @@
         type CommunitySummary,
         type ExternalBotPermissions,
         type OpenChat,
-        type PublicApiKeyDetails,
     } from "openchat-client";
     import {
         chatIdentifiersEqual,
@@ -34,7 +33,6 @@
         bot: ExternalBot;
         canManage: boolean;
         grantedPermissions: ExternalBotPermissions;
-        apiKey: PublicApiKeyDetails | undefined;
         contents: Snippet<[BotManagement]>;
     }
 
@@ -48,7 +46,7 @@
                 return "group";
         }
     });
-    let { collection, bot, canManage, grantedPermissions, apiKey, contents }: Props = $props();
+    let { collection, bot, canManage, grantedPermissions, contents }: Props = $props();
     let botSummaryMode = $state<BotSummaryMode | undefined>(undefined);
     let generatingKey = $state(false);
     let autonomousPermissionsEmpty = $derived(
@@ -70,7 +68,6 @@
                 return collection.id;
         }
     });
-    let apiKeyPermissions = $derived(apiKey?.grantedPermissions);
 
     function permissionsAreEmpty(perm: ExternalBotPermissions): boolean {
         const empty =
@@ -119,22 +116,6 @@
         });
     }
 
-    function reviewApiKey() {
-        if (bot.definition.autonomousConfig !== undefined && apiKeyPermissions !== undefined) {
-            const requested = bot.definition.autonomousConfig.permissions;
-            client.getApiKey(collection.id, bot.id).then((apiKey) => {
-                botSummaryMode = {
-                    kind: "editing_api_key",
-                    id: collection.id,
-                    requested,
-                    granted: apiKeyPermissions,
-                    apiKey,
-                };
-                generatingKey = true;
-            });
-        }
-    }
-
     function reviewCommandPermissions() {
         botSummaryMode = {
             kind: "editing_command_bot",
@@ -158,27 +139,13 @@
         generatingKey = false;
     }
 
-    function generateApiKey() {
-        if (bot.definition.autonomousConfig !== undefined) {
-            botSummaryMode = {
-                kind: "adding_api_key",
-                id: collection.id,
-                requested: bot.definition.autonomousConfig.permissions,
-            };
-            generatingKey = true;
-        }
-    }
-
     type BotManagement = {
-        generateApiKey: () => void;
         closeModal: () => void;
         viewBotDetails: () => void;
         reviewCommandPermissions: () => void;
-        reviewApiKey: () => void;
         removeBot: () => void;
         generatingKey: boolean;
         canGenerateKey: boolean;
-        apiKeyPermissions: ExternalBotPermissions | undefined;
     };
 </script>
 
@@ -187,13 +154,10 @@
 {/if}
 
 {@render contents({
-    generateApiKey,
     closeModal,
     viewBotDetails,
     reviewCommandPermissions,
-    reviewApiKey,
     removeBot,
     generatingKey,
     canGenerateKey,
-    apiKeyPermissions,
 })}

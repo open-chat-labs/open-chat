@@ -3,7 +3,6 @@
     import {
         allUsersStore,
         AvatarSize,
-        directChatApiKeysStore,
         directChatBotsStore,
         favouritesStore,
         flattenCommandPermissions,
@@ -20,8 +19,6 @@
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import HeartMinus from "svelte-material-icons/HeartMinus.svelte";
     import HeartPlus from "svelte-material-icons/HeartPlus.svelte";
-    import KeyPlus from "svelte-material-icons/KeyPlus.svelte";
-    import KeyRemove from "svelte-material-icons/KeyRemove.svelte";
     import Magnify from "svelte-material-icons/Magnify.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import TextBoxOutline from "svelte-material-icons/TextBoxOutline.svelte";
@@ -29,8 +26,6 @@
     import { rtlStore } from "../../stores/rtl";
     import Avatar from "../Avatar.svelte";
     import HoverIcon from "../HoverIcon.svelte";
-    import InfoIcon from "../InfoIcon.svelte";
-    import Link from "../Link.svelte";
     import Menu from "../Menu.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import MenuItem from "../MenuItem.svelte";
@@ -48,7 +43,6 @@
 
     let { chat, bot, onSearchChat }: Props = $props();
     let botUser = $derived($allUsersStore.get(chat.them.userId));
-    let apiKey = $derived($directChatApiKeysStore.get(bot.id));
     let grantedPermissions = $derived(
         $directChatBotsStore.get(bot.id) ?? flattenCommandPermissions(bot.definition),
     );
@@ -66,17 +60,8 @@
     }
 </script>
 
-<WithBotManagement collection={chat} {bot} canManage {grantedPermissions} {apiKey}>
-    {#snippet contents({
-        canGenerateKey,
-        reviewApiKey,
-        generateApiKey,
-        removeBot,
-        reviewCommandPermissions,
-        viewBotDetails,
-        apiKeyPermissions,
-        generatingKey,
-    })}
+<WithBotManagement collection={chat} {bot} canManage {grantedPermissions}>
+    {#snippet contents({ removeBot, reviewCommandPermissions, viewBotDetails })}
         <SectionHeader shadow flush>
             {#if $mobileWidth}
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -102,30 +87,6 @@
                 <div class="chat-name">
                     {client.displayName(botUser)}
                 </div>
-                {#if canGenerateKey}
-                    <div class="chat-subtext apikey">
-                        <Link
-                            onClick={apiKeyPermissions !== undefined
-                                ? reviewApiKey
-                                : generateApiKey}
-                            underline="never">
-                            <Translatable
-                                resourceKey={apiKeyPermissions !== undefined
-                                    ? i18nKey("bots.manage.reviewApiKey")
-                                    : i18nKey("bots.manage.generateApiKey")}></Translatable>
-                        </Link>
-                        {#if generatingKey}
-                            <div class="spinner"></div>
-                        {:else}
-                            <InfoIcon>
-                                <Translatable
-                                    resourceKey={apiKeyPermissions !== undefined
-                                        ? i18nKey("bots.manage.deleteApiKeyInfo")
-                                        : i18nKey("bots.manage.apiKeyInfo")}></Translatable>
-                            </InfoIcon>
-                        {/if}
-                    </div>
-                {/if}
             </div>
 
             <div class="menu">
@@ -195,35 +156,6 @@
                                 {/snippet}
                             </MenuItem>
 
-                            {#if canGenerateKey}
-                                {#if apiKeyPermissions !== undefined}
-                                    <MenuItem onclick={reviewApiKey}>
-                                        {#snippet icon()}
-                                            <KeyRemove
-                                                size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"} />
-                                        {/snippet}
-                                        {#snippet text()}
-                                            <Translatable
-                                                resourceKey={i18nKey("bots.manage.reviewApiKey")} />
-                                        {/snippet}
-                                    </MenuItem>
-                                {:else}
-                                    <MenuItem onclick={() => generateApiKey()}>
-                                        {#snippet icon()}
-                                            <KeyPlus
-                                                size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"} />
-                                        {/snippet}
-                                        {#snippet text()}
-                                            <Translatable
-                                                resourceKey={i18nKey(
-                                                    "bots.manage.generateApiKey",
-                                                )} />
-                                        {/snippet}
-                                    </MenuItem>
-                                {/if}
-                            {/if}
                             <MenuItem onclick={() => viewBotDetails()}>
                                 {#snippet icon()}
                                     <TextBoxOutline
@@ -252,12 +184,6 @@
         gap: $sp2;
     }
 
-    .chat-subtext {
-        @include font(book, normal, fs-80);
-        @include ellipsis();
-        color: var(--txt-light);
-    }
-
     .avatar {
         flex: 0 0 55px;
     }
@@ -276,12 +202,5 @@
             margin-right: 0;
             margin-left: 5px;
         }
-    }
-
-    .apikey {
-        display: flex;
-        gap: $sp2;
-        align-items: center;
-        @include font(book, normal, fs-80);
     }
 </style>

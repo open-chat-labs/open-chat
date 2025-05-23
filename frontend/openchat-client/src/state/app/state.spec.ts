@@ -119,7 +119,6 @@ describe("app state", () => {
                 emptyRules(),
                 new Map(),
                 new Map(),
-                new Map(),
             );
             app.updateServerEvents(chatId, () => {
                 return [chatMessage()];
@@ -357,7 +356,6 @@ describe("app state", () => {
                     new Set(),
                     new Set(),
                     new Map(),
-                    new Map(),
                 );
             });
 
@@ -573,7 +571,6 @@ function initialiseGlobalState() {
                 { chatPermissions: [], messagePermissions: ["text"], communityPermissions: [] },
             ],
         ]),
-        new Map(),
         undefined,
     );
 }

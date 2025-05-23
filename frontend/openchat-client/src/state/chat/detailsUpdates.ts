@@ -3,7 +3,6 @@ import type {
     ChatListScope,
     ExternalBotPermissions,
     Member,
-    PublicApiKeyDetails,
     VersionedRules,
     WebhookDetails,
 } from "openchat-shared";
@@ -19,7 +18,6 @@ export class ChatDetailsUpdatesManager {
     pinnedMessages = new ChatLocalSetStore<number>();
     invitedUsers = new ChatLocalSetStore<string>();
     bots = new ChatLocalMapStore<string, ExternalBotPermissions>();
-    apiKeys = new ChatLocalMapStore<string, PublicApiKeyDetails>();
     webhooks = new ChatLocalMapStore<string, WebhookDetails>();
 
     rules = new ChatMapStore<VersionedRules>();
@@ -119,7 +117,6 @@ export class ChatDetailsUpdatesManager {
         this.blockedUsers.clear();
         this.members.clear();
         this.bots.clear();
-        this.apiKeys.clear();
         this.webhooks.clear();
         this.rules.clear();
     }

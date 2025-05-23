@@ -1,6 +1,6 @@
-import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
+import type { Principal } from '@dfinity/principal';
 
 export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
 export type AccessGate = { 'UniquePerson' : null } |
@@ -1605,12 +1605,6 @@ export type ProposedResponse = { 'NotAuthorized' : null } |
   { 'Success' : ProposedSuccessResult } |
   { 'InternalError' : string };
 export interface ProposedSuccessResult { 'records' : Array<Record> }
-export interface PublicApiKeyDetails {
-  'generated_at' : TimestampMillis,
-  'generated_by' : UserId,
-  'bot_id' : UserId,
-  'granted_permissions' : BotPermissions,
-}
 export interface PublicGroupSummary {
   'is_public' : boolean,
   'gate_config' : [] | [AccessGateConfig],
@@ -1683,7 +1677,6 @@ export interface RoleChanged {
 }
 export interface Rules { 'text' : string, 'enabled' : boolean }
 export interface SelectedGroupUpdates {
-  'api_keys_generated' : Array<PublicApiKeyDetails>,
   'blocked_users_removed' : Array<UserId>,
   'bots_removed' : Array<UserId>,
   'pinned_messages_removed' : Uint32Array | number[],

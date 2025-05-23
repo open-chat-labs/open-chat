@@ -20,7 +20,6 @@
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";
-    import ShowApiKey from "../ShowApiKey.svelte";
     import BotProperties from "./BotProperties.svelte";
     import ChoosePermissions from "./ChoosePermissions.svelte";
     import EnableAutonomousAccess from "./EnableAutonomousAccess.svelte";
@@ -31,7 +30,6 @@
         | { kind: "choose_command_permissions" }
         | { kind: "configure_autonomous_access"; config: AutonomousBotConfig }
         | { kind: "choose_autonomous_permissions"; config: AutonomousBotConfig }
-        | { kind: "show_api_key"; apiKey: string; config: AutonomousBotConfig }
         | { kind: "unknown" };
 
     interface Props {
@@ -53,15 +51,6 @@
     );
     let busy = $state(false);
     let step = $state<Step>(firstStep());
-    let botExecutionContext = $derived.by(() => {
-        switch (location.kind) {
-            case "direct_chat":
-                // for direct chat, the execution context is the bot's id, the install location is *our* userId
-                return { ...location, userId: bot.id };
-            default:
-                return location;
-        }
-    });
 
     function firstStep(): Step {
         if (bot.definition.commands.length > 0) {
@@ -94,31 +83,8 @@
                 break;
             case "choose_autonomous_permissions":
                 busy = true;
-                install(() => {
-                    generateApiKey((apiKey: string) => {
-                        step = { kind: "show_api_key", apiKey, config: current.config };
-                    });
-                });
+                install();
                 break;
-            case "show_api_key":
-                onClose(true);
-                break;
-        }
-    }
-
-    function generateApiKey(then?: (apiKey: string) => void) {
-        if (bot.definition.autonomousConfig !== undefined) {
-            busy = true;
-            client
-                .generateBotApiKey(location, bot.id, grantedAutonomousPermission)
-                .then((resp) => {
-                    if (resp.kind === "success") {
-                        then?.(resp.apiKey);
-                    } else {
-                        toastStore.showFailureToast(i18nKey("bots.manage.generateFailed"));
-                    }
-                })
-                .finally(() => (busy = false));
         }
     }
 
@@ -172,8 +138,6 @@
                             subtitle={i18nKey("bots.add.autonomousPermissionsInfo")}
                             bind:granted={grantedAutonomousPermission}
                             requested={requestedAutonomousPermissions} />
-                    {:else if step.kind === "show_api_key"}
-                        <ShowApiKey {bot} {botExecutionContext} apiKey={step.apiKey} />
                     {/if}
                 </BotProperties>
             </div>
@@ -186,8 +150,6 @@
                         {@render button(i18nKey("bots.add.configureNow"), () => nextStep(step))}
                     {:else if step.kind === "choose_autonomous_permissions"}
                         {@render button(i18nKey("bots.add.generateApiKey"), () => nextStep(step))}
-                    {:else if step.kind === "show_api_key"}
-                        {@render button(i18nKey("bots.add.continue"), () => nextStep(step))}
                     {:else}
                         {@render button(i18nKey("bots.add.install"), () => nextStep(step))}
                     {/if}

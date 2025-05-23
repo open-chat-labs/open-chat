@@ -630,6 +630,41 @@ export const ChatMetrics = Type.Object({
 export type VideoCallType = Static<typeof VideoCallType>;
 export const VideoCallType = Type.Union([Type.Literal("Broadcast"), Type.Literal("Default")]);
 
+export type BotDataEncoding = Static<typeof BotDataEncoding>;
+export const BotDataEncoding = Type.Union([Type.Literal("Json"), Type.Literal("Candid")]);
+
+export type CommunityEventType = Static<typeof CommunityEventType>;
+export const CommunityEventType = Type.Union([
+    Type.Literal("Created"),
+    Type.Literal("NameChanged"),
+    Type.Literal("DescriptionChanged"),
+    Type.Literal("RulesChanged"),
+    Type.Literal("AvatarChanged"),
+    Type.Literal("BannerChanged"),
+    Type.Literal("PermissionsChanged"),
+    Type.Literal("VisibilityChanged"),
+    Type.Literal("InviteCodeChanged"),
+    Type.Literal("Frozen"),
+    Type.Literal("Unfrozen"),
+    Type.Literal("EventsTTLUpdated"),
+    Type.Literal("GateUpdated"),
+    Type.Literal("MessagePinned"),
+    Type.Literal("MessageUnpinned"),
+    Type.Literal("PrimaryLanguageChanged"),
+    Type.Literal("GroupImported"),
+    Type.Literal("ChannelCreated"),
+    Type.Literal("ChannelDeleted"),
+    Type.Literal("MembersJoined"),
+    Type.Literal("MembersLeft"),
+    Type.Literal("RoleChanged"),
+    Type.Literal("UsersInvited"),
+    Type.Literal("BotAdded"),
+    Type.Literal("BotRemoved"),
+    Type.Literal("BotUpdated"),
+    Type.Literal("UsersBlocked"),
+    Type.Literal("UsersUnblocked"),
+]);
+
 export type GroupRole = Static<typeof GroupRole>;
 export const GroupRole = Type.Union([
     Type.Literal("Owner"),
@@ -868,6 +903,51 @@ export const TSPrincipal = Type.Union([
     Type.Uint8Array(),
     Type.Array(Type.Number()),
     Type.String(),
+]);
+
+export type ChatEventType = Static<typeof ChatEventType>;
+export const ChatEventType = Type.Union([
+    Type.Literal("Message"),
+    Type.Literal("MessageEdited"),
+    Type.Literal("MessageReaction"),
+    Type.Literal("MessageTipped"),
+    Type.Literal("MessageDeleted"),
+    Type.Literal("MessagePollVote"),
+    Type.Literal("MessagePollEnded"),
+    Type.Literal("MessagePrizeClaim"),
+    Type.Literal("MessagePrizePayment"),
+    Type.Literal("MessageProposalVote"),
+    Type.Literal("MessageProposalUpdated"),
+    Type.Literal("MessageP2pSwap"),
+    Type.Literal("MessageReported"),
+    Type.Literal("MessageThreadSummary"),
+    Type.Literal("MessageReminder"),
+    Type.Literal("MessageVideoCall"),
+    Type.Literal("MessageOther"),
+    Type.Literal("Created"),
+    Type.Literal("NameChanged"),
+    Type.Literal("DescriptionChanged"),
+    Type.Literal("RulesChanged"),
+    Type.Literal("AvatarChanged"),
+    Type.Literal("ExternalUrlUpdated"),
+    Type.Literal("PermissionsChanged"),
+    Type.Literal("VisibilityChanged"),
+    Type.Literal("InviteCodeChanged"),
+    Type.Literal("Frozen"),
+    Type.Literal("Unfrozen"),
+    Type.Literal("EventsTTLUpdated"),
+    Type.Literal("GateUpdated"),
+    Type.Literal("MessagePinned"),
+    Type.Literal("MessageUnpinned"),
+    Type.Literal("MembersJoined"),
+    Type.Literal("MembersLeft"),
+    Type.Literal("RoleChanged"),
+    Type.Literal("UsersInvited"),
+    Type.Literal("BotAdded"),
+    Type.Literal("BotRemoved"),
+    Type.Literal("BotUpdated"),
+    Type.Literal("UsersBlocked"),
+    Type.Literal("UsersUnblocked"),
 ]);
 
 export type OptionUpdateGroupPermissionRole = Static<typeof OptionUpdateGroupPermissionRole>;
@@ -1235,7 +1315,12 @@ export const MessageId = Type.BigInt();
 export type AutonomousConfig = Static<typeof AutonomousConfig>;
 export const AutonomousConfig = Type.Object({
     permissions: BotPermissions,
-    sync_api_key: Type.Boolean(),
+});
+
+export type BotSubscriptions = Static<typeof BotSubscriptions>;
+export const BotSubscriptions = Type.Object({
+    community: Type.Array(CommunityEventType),
+    chat: Type.Array(ChatEventType),
 });
 
 export type UsersBlocked = Static<typeof UsersBlocked>;
@@ -2313,21 +2398,6 @@ export const LocalUserIndexInviteUsersToCommunityResponse = Type.Union([
     }),
 ]);
 
-export type LocalUserIndexInstallBotResponse = Static<typeof LocalUserIndexInstallBotResponse>;
-export const LocalUserIndexInstallBotResponse = Type.Union([
-    Type.Literal("Success"),
-    Type.Literal("Frozen"),
-    Type.Literal("NotAuthorized"),
-    Type.Literal("AlreadyAdded"),
-    Type.Literal("NotFound"),
-    Type.Object({
-        InternalError: Type.String(),
-    }),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
-
 export type LocalUserIndexInviteUsersToGroupResponse = Static<
     typeof LocalUserIndexInviteUsersToGroupResponse
 >;
@@ -2348,6 +2418,14 @@ export const LocalUserIndexInviteUsersToGroupResponse = Type.Union([
     }),
 ]);
 
+export type LocalUserIndexBotDeleteChannelV2Args = Static<
+    typeof LocalUserIndexBotDeleteChannelV2Args
+>;
+export const LocalUserIndexBotDeleteChannelV2Args = Type.Object({
+    community_id: CommunityId,
+    channel_id: ChannelId,
+});
+
 export type LocalUserIndexBotCreateChannelSuccessResult = Static<
     typeof LocalUserIndexBotCreateChannelSuccessResult
 >;
@@ -2363,17 +2441,6 @@ export const LocalUserIndexBotCreateChannelResponse = Type.Union([
         Success: LocalUserIndexBotCreateChannelSuccessResult,
     }),
     Type.Object({
-        FailedAuthentication: Type.String(),
-    }),
-    Type.Object({
-        InvalidRequest: Type.String(),
-    }),
-    Type.Literal("NotAuthorized"),
-    Type.Literal("Frozen"),
-    Type.Object({
-        C2CError: Type.Tuple([Type.Number(), Type.String()]),
-    }),
-    Type.Object({
         Error: OCError,
     }),
 ]);
@@ -2383,28 +2450,6 @@ export const LocalUserIndexBotDeleteChannelArgs = Type.Object({
     channel_id: ChannelId,
     auth_token: AuthToken,
 });
-
-export type LocalUserIndexBotDeleteChannelResponse = Static<
-    typeof LocalUserIndexBotDeleteChannelResponse
->;
-export const LocalUserIndexBotDeleteChannelResponse = Type.Union([
-    Type.Literal("Success"),
-    Type.Literal("ChannelNotFound"),
-    Type.Object({
-        FailedAuthentication: Type.String(),
-    }),
-    Type.Object({
-        InvalidRequest: Type.String(),
-    }),
-    Type.Literal("NotAuthorized"),
-    Type.Literal("Frozen"),
-    Type.Object({
-        C2CError: Type.Tuple([Type.Number(), Type.String()]),
-    }),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
 
 export type LocalUserIndexUninstallBotResponse = Static<typeof LocalUserIndexUninstallBotResponse>;
 export const LocalUserIndexUninstallBotResponse = Type.Union([
@@ -2519,6 +2564,15 @@ export const LocalUserIndexChatEventsEventsPageArgs = Type.Object({
     max_events: Type.Number(),
 });
 
+export type LocalUserIndexBotAddReactionArgs = Static<typeof LocalUserIndexBotAddReactionArgs>;
+export const LocalUserIndexBotAddReactionArgs = Type.Object({
+    channel_id: Type.Optional(ChannelId),
+    thread: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    reaction: Reaction,
+    auth_token: AuthToken,
+});
+
 export type LocalUserIndexJoinCommunityArgs = Static<typeof LocalUserIndexJoinCommunityArgs>;
 export const LocalUserIndexJoinCommunityArgs = Type.Object({
     community_id: CommunityId,
@@ -2539,6 +2593,16 @@ export const LocalUserIndexJoinChannelArgs = Type.Object({
 export type LocalUserIndexBotChatDetailsArgs = Static<typeof LocalUserIndexBotChatDetailsArgs>;
 export const LocalUserIndexBotChatDetailsArgs = Type.Object({
     channel_id: Type.Optional(ChannelId),
+    auth_token: AuthToken,
+});
+
+export type LocalUserIndexBotDeleteMessagesArgs = Static<
+    typeof LocalUserIndexBotDeleteMessagesArgs
+>;
+export const LocalUserIndexBotDeleteMessagesArgs = Type.Object({
+    channel_id: Type.Optional(ChannelId),
+    thread: Type.Optional(MessageIndex),
+    message_ids: Type.Array(MessageId),
     auth_token: AuthToken,
 });
 
@@ -3183,6 +3247,7 @@ export type CommunityUpdateBotArgs = Static<typeof CommunityUpdateBotArgs>;
 export const CommunityUpdateBotArgs = Type.Object({
     bot_id: UserId,
     granted_permissions: BotPermissions,
+    granted_autonomous_permissions: Type.Optional(BotPermissions),
 });
 
 export type CommunityAcceptP2pSwapResponse = Static<typeof CommunityAcceptP2pSwapResponse>;
@@ -4062,6 +4127,7 @@ export type GroupUpdateBotArgs = Static<typeof GroupUpdateBotArgs>;
 export const GroupUpdateBotArgs = Type.Object({
     bot_id: UserId,
     granted_permissions: BotPermissions,
+    granted_autonomous_permissions: Type.Optional(BotPermissions),
 });
 
 export type GroupAcceptP2pSwapResponse = Static<typeof GroupAcceptP2pSwapResponse>;
@@ -4474,6 +4540,7 @@ export type UserUpdateBotArgs = Static<typeof UserUpdateBotArgs>;
 export const UserUpdateBotArgs = Type.Object({
     bot_id: UserId,
     granted_permissions: BotPermissions,
+    granted_autonomous_permissions: Type.Optional(BotPermissions),
 });
 
 export type UserLeaveCommunityArgs = Static<typeof UserLeaveCommunityArgs>;
@@ -5896,6 +5963,7 @@ export const LocalUserIndexInstallBotArgs = Type.Object({
     location: BotInstallationLocation,
     bot_id: UserId,
     granted_permissions: BotPermissions,
+    granted_autonomous_permissions: Type.Optional(BotPermissions),
 });
 
 export type LocalUserIndexInviteUsersToGroupArgs = Static<
@@ -6033,19 +6101,6 @@ export type LocalUserIndexBotSendMessageResponse = Static<
 export const LocalUserIndexBotSendMessageResponse = Type.Union([
     Type.Object({
         Success: LocalUserIndexBotSendMessageSuccessResult,
-    }),
-    Type.Object({
-        FailedAuthentication: Type.String(),
-    }),
-    Type.Object({
-        InvalidRequest: Type.String(),
-    }),
-    Type.Literal("NotAuthorized"),
-    Type.Literal("Frozen"),
-    Type.Literal("ThreadNotFound"),
-    Type.Literal("MessageAlreadyFinalised"),
-    Type.Object({
-        C2CError: Type.Tuple([Type.Number(), Type.String()]),
     }),
     Type.Object({
         Error: OCError,
@@ -6757,6 +6812,16 @@ export const FailedCryptoTransaction = Type.Union([
     }),
 ]);
 
+export type BotChatContext = Static<typeof BotChatContext>;
+export const BotChatContext = Type.Union([
+    Type.Object({
+        Command: Type.String(),
+    }),
+    Type.Object({
+        Autonomous: Chat,
+    }),
+]);
+
 export type CompletedCryptoTransactionICRC2 = Static<typeof CompletedCryptoTransactionICRC2>;
 export const CompletedCryptoTransactionICRC2 = Type.Object({
     ledger: TSPrincipal,
@@ -6776,6 +6841,16 @@ export const BotRegistrationStatus = Type.Union([
     Type.Literal("Public"),
     Type.Object({
         Private: Type.Union([BotInstallationLocation, Type.Null()]),
+    }),
+]);
+
+export type AutonomousBotScope = Static<typeof AutonomousBotScope>;
+export const AutonomousBotScope = Type.Union([
+    Type.Object({
+        Chat: Chat,
+    }),
+    Type.Object({
+        Community: CommunityId,
     }),
 ]);
 
@@ -7127,11 +7202,48 @@ export const UserIndexCurrentUserResponse = Type.Union([
     }),
 ]);
 
+export type LocalUserIndexBotDeleteMessagesV2Args = Static<
+    typeof LocalUserIndexBotDeleteMessagesV2Args
+>;
+export const LocalUserIndexBotDeleteMessagesV2Args = Type.Object({
+    chat_context: BotChatContext,
+    thread: Type.Optional(MessageIndex),
+    message_ids: Type.Array(MessageId),
+});
+
+export type LocalUserIndexBotAddReactionV2Args = Static<typeof LocalUserIndexBotAddReactionV2Args>;
+export const LocalUserIndexBotAddReactionV2Args = Type.Object({
+    chat_context: BotChatContext,
+    thread: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    reaction: Reaction,
+});
+
 export type LocalUserIndexChatEventsEventsArgs = Static<typeof LocalUserIndexChatEventsEventsArgs>;
 export const LocalUserIndexChatEventsEventsArgs = Type.Object({
     context: LocalUserIndexChatEventsEventsContext,
     args: LocalUserIndexChatEventsEventsSelectionCriteria,
     latest_known_update: Type.Optional(Type.BigInt()),
+});
+
+export type LocalUserIndexBotSubscribeToEventsArgs = Static<
+    typeof LocalUserIndexBotSubscribeToEventsArgs
+>;
+export const LocalUserIndexBotSubscribeToEventsArgs = Type.Object({
+    scope: AutonomousBotScope,
+    community_events: Type.Array(CommunityEventType),
+    chat_events: Type.Array(ChatEventType),
+});
+
+export type LocalUserIndexBotChatDetailsV2Args = Static<typeof LocalUserIndexBotChatDetailsV2Args>;
+export const LocalUserIndexBotChatDetailsV2Args = Type.Object({
+    chat_context: BotChatContext,
+});
+
+export type LocalUserIndexBotChatEventsV2Args = Static<typeof LocalUserIndexBotChatEventsV2Args>;
+export const LocalUserIndexBotChatEventsV2Args = Type.Object({
+    chat_context: BotChatContext,
+    events: LocalUserIndexChatEventsEventsSelectionCriteria,
 });
 
 export type CommunityClaimPrizeResponse = Static<typeof CommunityClaimPrizeResponse>;
@@ -7535,6 +7647,8 @@ export const BotDefinition = Type.Object({
     description: Type.String(),
     commands: Type.Array(BotCommandDefinition),
     autonomous_config: Type.Optional(AutonomousConfig),
+    default_subscriptions: Type.Optional(BotSubscriptions),
+    data_encoding: Type.Optional(BotDataEncoding),
 });
 
 export type UserIndexBotUpdatesBotDetails = Static<typeof UserIndexBotUpdatesBotDetails>;
@@ -7605,6 +7719,16 @@ export const UserIndexRegisterBotArgs = Type.Object({
     endpoint: Type.String(),
     definition: BotDefinition,
     permitted_install_location: Type.Optional(BotInstallationLocation),
+});
+
+export type LocalUserIndexBotSendMessageV2Args = Static<typeof LocalUserIndexBotSendMessageV2Args>;
+export const LocalUserIndexBotSendMessageV2Args = Type.Object({
+    chat_context: BotChatContext,
+    thread: Type.Optional(MessageIndex),
+    message_id: Type.Optional(MessageId),
+    content: BotMessageContent,
+    block_level_markdown: Type.Boolean(),
+    finalised: Type.Boolean(),
 });
 
 export type LocalUserIndexChatEventsArgs = Static<typeof LocalUserIndexChatEventsArgs>;
@@ -7906,6 +8030,24 @@ export const UserIndexBotUpdatesResponse = Type.Union([
     Type.Literal("SuccessNoUpdates"),
 ]);
 
+export type LocalUserIndexBotCreateChannelV2Args = Static<
+    typeof LocalUserIndexBotCreateChannelV2Args
+>;
+export const LocalUserIndexBotCreateChannelV2Args = Type.Object({
+    community_id: CommunityId,
+    is_public: Type.Boolean(),
+    name: Type.String(),
+    description: Type.String(),
+    rules: Rules,
+    avatar: Type.Optional(Document),
+    history_visible_to_new_joiners: Type.Boolean(),
+    messages_visible_to_non_members: Type.Boolean(),
+    permissions: Type.Optional(GroupPermissions),
+    events_ttl: Type.Optional(Type.BigInt()),
+    gate_config: Type.Optional(AccessGateConfig),
+    external_url: Type.Optional(Type.String()),
+});
+
 export type LocalUserIndexBotCreateChannelArgs = Static<typeof LocalUserIndexBotCreateChannelArgs>;
 export const LocalUserIndexBotCreateChannelArgs = Type.Object({
     is_public: Type.Boolean(),
@@ -8184,7 +8326,6 @@ export const Message = Type.Object({
     message_id: MessageId,
     sender: UserId,
     content: MessageContent,
-    bot_context: Type.Optional(BotMessageContext),
     sender_context: Type.Optional(SenderContext),
     replies_to: Type.Optional(ReplyContext),
     reactions: Type.Array(Type.Tuple([Reaction, Type.Array(UserId)])),
@@ -8405,15 +8546,6 @@ export type LocalUserIndexBotChatDetailsResponse = Static<
 export const LocalUserIndexBotChatDetailsResponse = Type.Union([
     Type.Object({
         Success: ChatDetails,
-    }),
-    Type.Object({
-        FailedAuthentication: Type.String(),
-    }),
-    Type.Literal("DirectChatUnsupported"),
-    Type.Literal("NotAuthorized"),
-    Type.Literal("NotFound"),
-    Type.Object({
-        InternalError: Type.String(),
     }),
     Type.Object({
         Error: OCError,
@@ -9043,14 +9175,6 @@ export type LocalUserIndexBotChatEventsResponse = Static<
 export const LocalUserIndexBotChatEventsResponse = Type.Union([
     Type.Object({
         Success: EventsResponse,
-    }),
-    Type.Object({
-        FailedAuthentication: Type.String(),
-    }),
-    Type.Literal("NotAuthorized"),
-    Type.Literal("NotFound"),
-    Type.Object({
-        InternalError: Type.String(),
     }),
     Type.Object({
         Error: OCError,
