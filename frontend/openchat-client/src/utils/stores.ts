@@ -214,6 +214,7 @@ class _Derived<S extends Stores, T> {
     readonly #fn: (values: StoresValues<S>) => T;
     #started = false;
     #recalculationPending = false;
+    #queuedForRetry = false;
     #dependenciesPending = 0;
     #unsubscribers: Unsubscriber[] = [];
     // The first time you call `value` a subscription will be created, ensuring subsequent accesses are fast
@@ -281,7 +282,13 @@ class _Derived<S extends Stores, T> {
             }
             // If any dependencies are still dirty, queue this store to be retried
             if (this.#dependenciesDirty()) {
-                derivedStoresToRetry.push(() => this.#sync(false))
+                if (!this.#queuedForRetry) {
+                    derivedStoresToRetry.push(() => {
+                        this.#queuedForRetry = false;
+                        this.#sync(false)
+                    })
+                    this.#queuedForRetry = true;
+                }
                 return;
             }
         }
