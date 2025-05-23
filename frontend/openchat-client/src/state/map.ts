@@ -47,6 +47,12 @@ export class LocalMap<K, V> {
         };
     }
 
+    // This is very rarely needed - you probably don't need this
+    undoRemove(key: K) {
+        this.#removed.delete(key);
+        return () => {};
+    }
+
     remove(key: K) {
         this.#removed.add(key);
         const previous = this.#addedOrUpdated.get(key);

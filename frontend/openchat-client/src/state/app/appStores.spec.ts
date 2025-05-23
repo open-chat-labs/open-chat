@@ -186,7 +186,6 @@ describe("app state", () => {
 
             test("make sure local updates are merged", () => {
                 expect(get(messageFiltersStore)).toEqual([]);
-                console.log("are we getting here", get(messageFiltersStore));
                 expect(get(selectedChatMembersStore).has("user_one")).toBe(true);
                 const undo = localUpdates.removeChatMember(chatId, "user_one");
                 expect(get(selectedChatMembersStore).has("user_one")).toBe(false);

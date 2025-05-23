@@ -53,6 +53,7 @@ import {
     addToWritableLocalMap,
     addToWritableLocalSet,
     addToWritableMap,
+    modifyWritable,
     modifyWritableMap,
     notEq,
     removeFromWritableLocalMap,
@@ -346,22 +347,14 @@ export class GlobalLocalState {
     }
 
     addGroupPreview(chat: MultiUserChat) {
-        this.#groupChatPreviews.update((data) => data.set(chat.id, chat));
-        return scheduleUndo(() => {
-            this.#groupChatPreviews.update((data) => {
-                data.delete(chat.id);
-                return data;
-            });
-        });
+        // if we recently left the chat it *might* still be in the removed chats local updates
+        // so we should remove it from there if it is in there
+        modifyWritable((d) => d.undoRemove(chat.id), this.chats, "never");
+        return addToWritableMap(chat.id, chat, this.#groupChatPreviews, "never");
     }
 
     removeGroupPreview(chatId: ChatIdentifier) {
-        if (this.#groupChatPreviews.value.has(chatId)) {
-            this.#groupChatPreviews.update((data) => {
-                data.delete(chatId);
-                return data;
-            });
-        }
+        removeFromWritableMap(chatId, this.#groupChatPreviews, "never");
     }
 
     addUninitialisedDirectChat(chatId: DirectChatIdentifier) {
