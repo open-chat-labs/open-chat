@@ -112,7 +112,6 @@ class _Writable<T> {
     readonly #start: StartStopNotifier<T> | undefined;
     readonly #equalityCheck: (a: T, b: T) => boolean;
     #value: T;
-    #dirty: boolean = false;
     #publishPending: boolean = false;
     #started: boolean = false;
     #stop: Unsubscriber | undefined = undefined;
@@ -155,9 +154,9 @@ class _Writable<T> {
         }
 
         this.#value = newValue;
-        this.#dirty = true;
 
         if (pauseCount === 0 || !this.#started) {
+            this.#publishPending = true;
             this.#publish();
         } else {
             if (!this.#publishPending) {
@@ -174,12 +173,12 @@ class _Writable<T> {
     }
 
     get dirty(): boolean {
-        return this.#dirty;
+        return this.#publishPending;
     }
 
     #publish() {
-        if (this.#dirty) {
-            this.#dirty = false;
+        if (this.#publishPending) {
+            this.#publishPending = false;
 
             if (this.#started) {
                 const shouldRunSubscriptions = pauseCount === 0 && subscriptionsPending.length === 0;
@@ -194,7 +193,6 @@ class _Writable<T> {
                 }
             }
         }
-        this.#publishPending = false;
     }
 
     #unsubscribe(id: symbol) {
@@ -215,8 +213,8 @@ class _Derived<S extends Stores, T> {
     readonly #single;
     readonly #fn: (values: StoresValues<S>) => T;
     #started = false;
+    #recalculationPending = false;
     #dependenciesPending = 0;
-    #dirty = false;
     #unsubscribers: Unsubscriber[] = [];
     // The first time you call `value` a subscription will be created, ensuring subsequent accesses are fast
     #valueSubscriber: Unsubscriber | undefined = undefined;
@@ -239,7 +237,7 @@ class _Derived<S extends Stores, T> {
     }
 
     get dirty(): boolean {
-        return this.#dirty || this.#dependenciesDirty();
+        return this.#recalculationPending || this.#dependenciesDirty();
     }
 
     #start() {
@@ -254,7 +252,7 @@ class _Derived<S extends Stores, T> {
                     }
                 },
                 () => {
-                    this.#dirty = true;
+                    this.#recalculationPending = true;
                     this.#dependenciesPending |= 1 << index;
                 }
             ));
@@ -277,8 +275,8 @@ class _Derived<S extends Stores, T> {
 
     #sync(force: boolean) {
         if (!force) {
-            // Exit early if the store is no longer dirty
-            if (!this.#dirty) {
+            // Exit early if no recalculation required
+            if (!this.#recalculationPending) {
                 return;
             }
             // If any dependencies are still dirty, queue this store to be retried
@@ -291,8 +289,8 @@ class _Derived<S extends Stores, T> {
         const newValue = this.#fn(
             (this.#single ? this.#storeValues[0] : this.#storeValues) as StoresValues<S>,
         );
+        this.#recalculationPending = false;
         this.#innerStore.set(newValue);
-        this.#dirty = false;
     }
 
     #dependenciesDirty() {
