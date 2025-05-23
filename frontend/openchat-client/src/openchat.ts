@@ -6348,9 +6348,6 @@ export class OpenChat {
             }
         }
 
-        // ideally we would get rid of the setters for all of these server runes because setting
-        // them individually is a mistake. But we also want to be able to set them from tests.
-        // I'll try to lock this down a bit more later.
         serverMessageActivitySummaryStore.set(messageActivitySummary);
         achievementsStore.set(achievements);
         referralsStore.set(referrals);
