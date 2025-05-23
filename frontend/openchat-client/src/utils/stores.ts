@@ -29,9 +29,9 @@ let pauseCount = 0;
 // Callbacks to publish dirty values from writable stores
 const publishesPending: (() => void)[] = [];
 // Callbacks to push new values to their subscribers
-const subscriptionsPending: (() => void)[] = [];
+let subscriptionsPending: (() => void)[] = [];
 // Callbacks to retry syncing derived stores whose dependencies were dirty when last attempted
-const derivedStoresToRetry: (() => void)[] = [];
+let derivedStoresToRetry: (() => void)[] = [];
 
 const NOOP = () => {};
 
@@ -56,8 +56,17 @@ export function withPausedStores(fn: () => void) {
 }
 
 function runSubscriptions() {
-    executeCallbacks(subscriptionsPending);
-    executeCallbacks(derivedStoresToRetry);
+    while (subscriptionsPending.length > 0) {
+        // Execute all the pending subscription callbacks
+        executeCallbacks(subscriptionsPending);
+
+        // Once all previous subscriptions are processed, queue up any derived stores which need to be retried and
+        // start the loop again required
+        subscriptionsPending = derivedStoresToRetry;
+
+        // Clear the `derivedStoresToRetry` array now that these callbacks are contained within `subscriptionsPending`
+        derivedStoresToRetry = [];
+    }
 }
 
 function executeCallbacks(callbacks: (() => void)[]) {
