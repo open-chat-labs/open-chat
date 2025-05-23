@@ -245,37 +245,20 @@ class _Derived<S extends Stores, T> {
     #start() {
         if (this.#started) return;
         for (const [index, store] of this.#storesArray.entries()) {
-<<<<<<< HEAD
             const unsub = untrack(() =>
                 store.subscribe(
                     (v) => {
                         (this.#storeValues as unknown[])[index] = v;
                         this.#dependenciesPending &= ~(1 << index);
+                        this.#recalculationPending = true;
                         if (this.#started) {
                             this.#sync(false);
                         }
                     },
-                    () => {
-                        this.#recalculationPending = true;
-                        this.#dependenciesPending |= 1 << index;
-                    },
+                    () => (this.#dependenciesPending |= 1 << index),
                 ),
             );
             if (typeof unsub === "function") {
-=======
-            const unsub = untrack(() => store.subscribe(
-                (v) => {
-                    (this.#storeValues as unknown[])[index] = v;
-                    this.#dependenciesPending &= ~(1 << index);
-                    this.#recalculationPending = true;
-                    if (this.#started) {
-                        this.#sync(false);
-                    }
-                },
-                () => this.#dependenciesPending |= 1 << index
-            ));
-            if (typeof unsub === 'function') {
->>>>>>> master
                 this.#unsubscribers.push(unsub);
             }
         }
@@ -300,17 +283,13 @@ class _Derived<S extends Stores, T> {
             }
             // If any dependencies are still dirty, queue this store to be retried
             if (this.#dependenciesDirty()) {
-<<<<<<< HEAD
-                derivedStoresToRetry.push(() => this.#sync(false));
-=======
                 if (!this.#queuedForRetry) {
                     derivedStoresToRetry.push(() => {
                         this.#queuedForRetry = false;
-                        this.#sync(false)
-                    })
+                        this.#sync(false);
+                    });
                     this.#queuedForRetry = true;
                 }
->>>>>>> master
                 return;
             }
         }
