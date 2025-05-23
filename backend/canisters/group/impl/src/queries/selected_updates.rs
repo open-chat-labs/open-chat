@@ -32,8 +32,9 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> OCResult<Response>
                     if let Some(bot) = bots.get(&user_id) {
                         results.bots_added_or_updated.push(InstalledBotDetails {
                             user_id,
-                            permissions: bot.permissions.clone(),
                             added_by: bot.added_by,
+                            permissions: bot.permissions.clone(),
+                            autonomous_permissions: bot.autonomous_permissions.clone(),
                         });
                     }
                 }

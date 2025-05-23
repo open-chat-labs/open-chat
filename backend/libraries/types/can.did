@@ -2224,6 +2224,7 @@ type InstalledBotDetails = record {
     user_id : UserId;
     added_by : UserId;
     permissions : BotPermissions;
+    autonomous_permissions : opt BotPermissions;
 };
 
 type PublicApiKeyDetails = record {

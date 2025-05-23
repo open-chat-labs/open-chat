@@ -181,8 +181,9 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
                     if let Some(bot) = state.data.bots.get(&user_id) {
                         bots_added_or_updated.push(InstalledBotDetails {
                             user_id,
-                            permissions: bot.permissions.clone(),
                             added_by: bot.added_by,
+                            permissions: bot.permissions.clone(),
+                            autonomous_permissions: bot.autonomous_permissions.clone(),
                         });
                     }
                 }
