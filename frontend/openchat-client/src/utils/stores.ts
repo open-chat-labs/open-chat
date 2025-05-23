@@ -60,7 +60,7 @@ function runSubscriptions() {
         // Execute all pending subscription callbacks
         executeCallbacks(subscriptionsPending);
 
-        // Once subscriptions are processed, queue up any derived stores which need to be retried and loop again
+        // Once the subscriptions are processed, queue up any derived stores which need to be retried and loop again
         subscriptionsPending = derivedStoresToRetry;
         derivedStoresToRetry = [];
     }
