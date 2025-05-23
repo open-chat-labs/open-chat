@@ -647,6 +647,7 @@ export class GlobalLocalState {
     }
 
     installDirectChatBot(botId: string, perm: ExternalBotPermissions): UndoLocalUpdate {
+        // I think we need to add a direct chat locally here
         return addToWritableLocalMap(botId, perm, this.directChatBots);
     }
 

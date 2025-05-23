@@ -145,8 +145,8 @@
     }
 </script>
 
-<Overlay dismissible onClose={() => onClose(false)}>
-    <ModalContent closeIcon onClose={() => onClose(false)}>
+<Overlay>
+    <ModalContent>
         {#snippet header()}
             <div class="header">
                 <Translatable resourceKey={i18nKey("bots.add.title", undefined, level, true)}
@@ -182,13 +182,21 @@
             <div class="footer">
                 <ButtonGroup>
                     {#if step.kind === "configure_autonomous_access"}
-                        {@render button(i18nKey("bots.add.skip"), () => onClose(true), true)}
+                        {@render button(
+                            i18nKey("bots.add.skip"),
+                            () => {
+                                console.log("About to call onClose with TRUE");
+                                onClose(true);
+                            },
+                            true,
+                        )}
                         {@render button(i18nKey("bots.add.configureNow"), () => nextStep(step))}
                     {:else if step.kind === "choose_autonomous_permissions"}
                         {@render button(i18nKey("bots.add.generateApiKey"), () => nextStep(step))}
                     {:else if step.kind === "show_api_key"}
                         {@render button(i18nKey("bots.add.continue"), () => nextStep(step))}
                     {:else}
+                        {@render button(i18nKey("cancel"), () => onClose(false), true)}
                         {@render button(i18nKey("bots.add.install"), () => nextStep(step))}
                     {/if}
                 </ButtonGroup>
