@@ -448,6 +448,9 @@ export function sendMessageWithTransferToChannelResponse(
                 transfer: completedCryptoTransfer(value.Success.transfer, sender, recipient ?? ""),
             };
         }
+        if ("Error" in value) {
+            return ocError(value.Error);
+        }
     }
 
     console.warn("SendMessageWithTransferToChannel failed with", value);
@@ -469,6 +472,9 @@ export function sendMessageWithTransferToGroupResponse(
                 expiresAt: mapOptional(value.Success.expires_at, Number),
                 transfer: completedCryptoTransfer(value.Success.transfer, sender, recipient ?? ""),
             };
+        }
+        if ("Error" in value) {
+            return ocError(value.Error);
         }
     }
 
