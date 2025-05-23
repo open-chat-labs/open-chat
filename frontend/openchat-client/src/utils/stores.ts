@@ -40,22 +40,24 @@ export function withPausedStores(fn: () => void) {
         pauseCount++;
         fn();
     } finally {
-        if (--pauseCount === 0) {
-            // Publish the changes to the writable stores
+        if (pauseCount === 1) {
+            // Publish all the changes to writable stores
             executeCallbacks(publishesPending);
+
+            // Unpause
+            pauseCount = 0;
 
             // Run the derived store subscriptions
             runSubscriptions();
+        } else {
+            pauseCount--;
         }
     }
 }
 
 function runSubscriptions() {
-    while (subscriptionsPending.length > 0) {
-        executeCallbacks(subscriptionsPending);
-        executeCallbacks(publishesPending);
-        executeCallbacks(derivedStoresToRetry);
-    }
+    executeCallbacks(subscriptionsPending);
+    executeCallbacks(derivedStoresToRetry);
 }
 
 function executeCallbacks(callbacks: (() => void)[]) {
