@@ -31,3 +31,4 @@ export const suspendedUsersStore = derived(allUsersStore, (allUsers) => {
     }
     return suspended as ReadonlyMap<string, UserSummary>;
 });
+export const webhookUserIdsStore = new SafeSetStore<string>();

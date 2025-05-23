@@ -82,7 +82,8 @@ export class CachePrimer {
                         this.lastUpdatedTimestamps[chatIdentifierToString(request.context.chatId)] = request.latestKnownUpdate;
                     }
 
-                    for (const userId of userIdsFromEvents(response.result.events)) {
+                    const { userIds } = userIdsFromEvents(response.result.events);
+                    for (const userId of userIds) {
                         if (!this.usersLoaded.has(userId)) {
                             this.usersLoaded.add(userId);
                             userIds.add(userId);
@@ -117,7 +118,8 @@ export class CachePrimer {
 
                 for (const response of repliesResponse) {
                     if (response.kind === "success") {
-                        for (const userId of userIdsFromEvents(response.result.events)) {
+                        const { userIds } = userIdsFromEvents(response.result.events);
+                        for (const userId of userIds) {
                             if (!this.usersLoaded.has(userId)) {
                                 this.usersLoaded.add(userId);
                                 userIds.add(userId);

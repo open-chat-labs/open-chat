@@ -185,8 +185,11 @@ export class SafeSetStore<V> extends SafeSet<V> {
     }
 
     addMany(vals: V[]) {
+        const startSize = this.size;
         vals.forEach((v) => super.add(v));
-        this.#publish();
+        if (this.size > startSize) {
+            this.#publish();
+        }
     }
 
     add(val: V) {
