@@ -248,14 +248,12 @@ class _Derived<S extends Stores, T> {
                 (v) => {
                     (this.#storeValues as unknown[])[index] = v;
                     this.#dependenciesPending &= ~(1 << index);
+                    this.#recalculationPending = true;
                     if (this.#started) {
                         this.#sync(false);
                     }
                 },
-                () => {
-                    this.#recalculationPending = true;
-                    this.#dependenciesPending |= 1 << index;
-                }
+                () => this.#dependenciesPending |= 1 << index
             ));
             if (typeof unsub === 'function') {
                 this.#unsubscribers.push(unsub);
