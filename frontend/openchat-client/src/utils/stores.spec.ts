@@ -110,7 +110,7 @@ describe("store updates propagate as expected", () => {
         for (const pause of [false, true]) {
             const writableStores: Writable<boolean>[] = [];
             const svelteWritableStores: SvelteWritable<boolean>[] = [];
-            for (let i = 0; i < 10; i++) {
+            for (let i = 0; i < 20; i++) {
                 writableStores.push(writable(false));
                 svelteWritableStores.push(svelteWritable(false));
             }
@@ -120,7 +120,7 @@ describe("store updates propagate as expected", () => {
 
             const allStores: Readable<boolean>[] = [...writableStores];
             const allSvelteStores: SvelteReadable<boolean>[] = [...svelteWritableStores];
-            for (let i = 0; i < 10; i++) {
+            for (let i = 0; i < 20; i++) {
                 const deps = [];
                 const svelteDeps = [];
                 for (let j = 0; j < allStores.length; j++) {
@@ -177,7 +177,7 @@ describe("store updates propagate as expected", () => {
             if (pause) {
                 // If our stores were paused then they should have each been updated twice, once when they were
                 // initialized and once after they were unpaused.
-                expect(derivedStoreCalculations).toBeLessThanOrEqual(pause ? 20 : svelteDerivedStoreCalculations);
+                expect(derivedStoreCalculations).toBeLessThanOrEqual(pause ? 40 : svelteDerivedStoreCalculations);
             }
         }
     })
