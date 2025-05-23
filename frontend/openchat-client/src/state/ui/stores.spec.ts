@@ -2,7 +2,7 @@ import { ScreenWidth } from "openchat-shared";
 import { routeStore } from "../path/stores";
 import { dimensions, fullWidth, layout, mobileWidth, screenWidth } from "./stores";
 
-describe.only("layout stores", () => {
+describe("layout stores", () => {
     beforeEach(() => {
         routeStore.set({ kind: "chat_list_route", scope: { kind: "group_chat" } });
         dimensions.set({ width: 100, height: 100 });
