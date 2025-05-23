@@ -36,23 +36,24 @@ let derivedStoresToRetry: (() => void)[] = [];
 const NOOP = () => {};
 
 export function withPausedStores(fn: () => void) {
-    try {
-        pauseCount++;
-        fn();
-    } finally {
-        if (pauseCount === 1) {
-            // Publish all changes to writable stores
-            executeCallbacks(publishesPending);
+    fn();
+    // try {
+    //     pauseCount++;
+    //     fn();
+    // } finally {
+    //     if (pauseCount === 1) {
+    //         // Publish all changes to writable stores
+    //         executeCallbacks(publishesPending);
 
-            // Unpause
-            pauseCount = 0;
+    //         // Unpause
+    //         pauseCount = 0;
 
-            // Run the derived store subscriptions
-            runSubscriptions();
-        } else {
-            pauseCount--;
-        }
-    }
+    //         // Run the derived store subscriptions
+    //         runSubscriptions();
+    //     } else {
+    //         pauseCount--;
+    //     }
+    // }
 }
 
 function runSubscriptions() {
