@@ -327,6 +327,7 @@ pub struct InstalledBotDetails {
     pub user_id: UserId,
     pub added_by: UserId,
     pub permissions: BotPermissions,
+    pub autonomous_permissions: Option<BotPermissions>,
 }
 
 #[ts_export]
