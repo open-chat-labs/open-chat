@@ -138,6 +138,7 @@ import type {
     Notification,
     OptionalChatPermissions,
     OptionUpdate,
+    PartitionedUserIds,
     PayForDiamondMembershipResponse,
     PayForStreakInsuranceResponse,
     PaymentGateApproval,
@@ -314,6 +315,7 @@ import {
     rightPanelHistory,
     setSoftDisabled,
     swappableTokensStore,
+    webhookUserIdsStore,
 } from "./state";
 import { app } from "./state/app/state";
 import { botState } from "./state/bots.svelte";
@@ -2469,9 +2471,11 @@ export class OpenChat {
         );
         app.selectedChatBlockedUsers.forEach((u) => allUserIds.add(u));
         app.selectedChatInvitedUsers.forEach((u) => allUserIds.add(u));
-        for (const u of userIdsFromEvents(events)) {
+        const { userIds, webhooks } = userIdsFromEvents(events);
+        for (const u of userIds) {
             allUserIds.add(u);
         }
+        webhookUserIdsStore.addMany([...webhooks]);
 
         app.addSelectedChatUserIds([...allUserIds].filter((u) => u !== userId));
         await this.getMissingUsers(allUserIds);
@@ -5312,8 +5316,9 @@ export class OpenChat {
         })
             .then((threads) => {
                 const events = threads.flatMap((t) => [t.rootMessage, ...t.latestReplies]);
-                const userIds = this.userIdsFromEvents(events);
+                const { userIds, webhooks } = this.userIdsFromEvents(events);
                 this.getMissingUsers(userIds);
+                webhookUserIdsStore.addMany([...webhooks]);
                 return threads;
             })
             .catch(() => []);
@@ -5785,12 +5790,19 @@ export class OpenChat {
         }
     }
 
-    #userIdsFromChatSummaries(chats: ChatSummary[]): Set<string> {
+    #userIdsFromChatSummaries(chats: ChatSummary[]): PartitionedUserIds {
         const userIds = new Set<string>();
+        const webhooks = new Set<string>();
         chats.forEach((chat) => {
             if (chat.kind === "direct_chat") {
                 userIds.add(chat.them.userId);
             } else if (chat.latestMessage !== undefined) {
+                const sender = chat.latestMessage.event.sender;
+                if (chat.latestMessage.event.senderContext?.kind === "webhook") {
+                    webhooks.add(sender);
+                } else {
+                    userIds.add(sender);
+                }
                 userIds.add(chat.latestMessage.event.sender);
                 this.extractUserIdsFromMentions(
                     getContentAsFormattedText(
@@ -5801,7 +5813,10 @@ export class OpenChat {
                 ).forEach((id) => userIds.add(id));
             }
         });
-        return userIds;
+        return {
+            userIds,
+            webhooks,
+        };
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -5886,7 +5901,8 @@ export class OpenChat {
 
             this.#updateReadUpToStore(chats);
 
-            const userIds = this.#userIdsFromChatSummaries(chats);
+            const { userIds, webhooks } = this.#userIdsFromChatSummaries(chats);
+            webhookUserIdsStore.addMany([...webhooks]);
             if (chatsResponse.state.referrals !== undefined) {
                 for (const userId of chatsResponse.state.referrals.map((r) => r.userId)) {
                     userIds.add(userId);
@@ -8104,6 +8120,7 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp !== undefined) {
+                    webhookUserIdsStore.add(resp.id);
                     localUpdates.addWebhookToChat(chatId, resp);
                 }
                 return resp;
