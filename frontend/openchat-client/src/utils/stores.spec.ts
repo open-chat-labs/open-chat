@@ -1,31 +1,11 @@
-<<<<<<< HEAD
-import { derived as svelteDerived, writable as svelteWritable } from "svelte/store";
-import { derived, withPausedStores, writable } from "./stores";
-
-test("derived from string store is triggered", () => {
-    const w1 = writable("hello");
-    const w2 = writable("there");
-    const d1 = derived([w1, w2], ([w1, w2]) => `${w1.toUpperCase()} ${w2.toUpperCase()}`);
-    d1.subscribe((val) => {
-        expect(val).toEqual("HELLO THERE");
-    });
-    expect(d1.value).toEqual("HELLO THERE");
-});
-
-test("derived from boolean store is triggered", () => {
-    const w1 = writable(true);
-    const d1 = derived(w1, (w1) => !w1);
-    let count = 0;
-    d1.subscribe((val) => {
-        expect(val).toBe(!w1.value);
-        count += 1;
-    });
-    expect(count).toEqual(1);
-});
-=======
+import {
+    derived as svelteDerived,
+    get as svelteGet,
+    type Readable as SvelteReadable,
+    writable as svelteWritable,
+    type Writable as SvelteWritable,
+} from "svelte/store";
 import { derived, type Readable, withPausedStores, writable, type Writable } from "./stores";
-import { derived as svelteDerived, get as svelteGet, type Readable as SvelteReadable, writable as svelteWritable, type Writable as SvelteWritable } from "svelte/store";
->>>>>>> master
 
 describe("store updates propagate as expected", () => {
     test("with nested derived stores", () => {
@@ -73,20 +53,13 @@ describe("store updates propagate as expected", () => {
                 svelteDerivedStoreCalculations++;
                 return _sd2 * 2;
             });
-<<<<<<< HEAD
             const sd4 = svelteDerived(
                 [sw1, sw2, sw3, sd1, sd2, sd3],
                 ([_sw1, _sw2, _sw3, _sd1, _sd2, _sd3]) => {
-                    svelteDerivedStoreUpdateCount++;
+                    svelteDerivedStoreCalculations++;
                     return _sw1 * _sw2 * _sw3 * _sd1 * _sd2 * _sd3;
                 },
             );
-=======
-            const sd4 = svelteDerived([sw1, sw2, sw3, sd1, sd2, sd3], ([_sw1, _sw2, _sw3, _sd1, _sd2, _sd3]) => {
-                svelteDerivedStoreCalculations++;
-                return _sw1 * _sw2 * _sw3 * _sd1 * _sd2 * _sd3;
-            });
->>>>>>> master
 
             const writableStores = [w1, w2, w3];
             const svelteWritableStores = [sw1, sw2, sw3];
@@ -137,7 +110,9 @@ describe("store updates propagate as expected", () => {
             if (pause) {
                 // If our stores were paused then they should have each been updated twice, once when they were
                 // initialized and once after they were unpaused.
-                expect(derivedStoreCalculations).toBeLessThanOrEqual(pause ? 8 : svelteDerivedStoreCalculations);
+                expect(derivedStoreCalculations).toBeLessThanOrEqual(
+                    pause ? 8 : svelteDerivedStoreCalculations,
+                );
             }
         }
     });
@@ -194,7 +169,9 @@ describe("store updates propagate as expected", () => {
 
                     if (!pause) {
                         // If our stores are not paused, then they should be updated no more than the Svelte stores
-                        expect(derivedStoreCalculations).toBeLessThanOrEqual(svelteDerivedStoreCalculations);
+                        expect(derivedStoreCalculations).toBeLessThanOrEqual(
+                            svelteDerivedStoreCalculations,
+                        );
                     }
                 }
             };
@@ -213,10 +190,12 @@ describe("store updates propagate as expected", () => {
             if (pause) {
                 // If our stores were paused then they should have each been updated twice, once when they were
                 // initialized and once after they were unpaused.
-                expect(derivedStoreCalculations).toBeLessThanOrEqual(pause ? 40 : svelteDerivedStoreCalculations);
+                expect(derivedStoreCalculations).toBeLessThanOrEqual(
+                    pause ? 40 : svelteDerivedStoreCalculations,
+                );
             }
         }
-    })
+    });
 
     test("when dependent derived store output remains the same as input changes", () => {
         const w = writable(1);
