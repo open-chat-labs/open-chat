@@ -6347,8 +6347,6 @@ export class OpenChat {
                 community.channels = channels;
             }
         }
-        console.log("DirectChats: ", directChatsMap);
-
         serverMessageActivitySummaryStore.set(messageActivitySummary);
         achievementsStore.set(achievements);
         referralsStore.set(referrals);

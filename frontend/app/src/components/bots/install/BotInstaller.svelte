@@ -182,14 +182,7 @@
             <div class="footer">
                 <ButtonGroup>
                     {#if step.kind === "configure_autonomous_access"}
-                        {@render button(
-                            i18nKey("bots.add.skip"),
-                            () => {
-                                console.log("About to call onClose with TRUE");
-                                onClose(true);
-                            },
-                            true,
-                        )}
+                        {@render button(i18nKey("bots.add.skip"), () => onClose(true), true)}
                         {@render button(i18nKey("bots.add.configureNow"), () => nextStep(step))}
                     {:else if step.kind === "choose_autonomous_permissions"}
                         {@render button(i18nKey("bots.add.generateApiKey"), () => nextStep(step))}
