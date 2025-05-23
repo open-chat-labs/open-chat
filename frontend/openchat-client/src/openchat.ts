@@ -4331,32 +4331,32 @@ export class OpenChat {
         // HACK - we need to defer this very slightly so that we can guarantee that we handle SendingMessage events
         // *before* the new message is added to the unconfirmed store. Is this nice? No it is not.
         window.setTimeout(() => {
-            // withPausedStores(() => {
-            if (!isTransfer(messageEvent.event.content)) {
-                localUpdates.addUnconfirmed(context, messageEvent);
-            }
+            withPausedStores(() => {
+                if (!isTransfer(messageEvent.event.content)) {
+                    localUpdates.addUnconfirmed(context, messageEvent);
+                }
 
-            localUpdates.deleteFailedMessage(context, messageEvent.event.messageId);
+                localUpdates.deleteFailedMessage(context, messageEvent.event.messageId);
 
-            // mark our own messages as read manually since we will not be observing them
-            messagesRead.markMessageRead(
-                context,
-                messageEvent.event.messageIndex,
-                messageEvent.event.messageId,
-            );
-            // Mark all existing messages as read
-            if (messageEvent.event.messageIndex > 0) {
-                messagesRead.markReadUpTo(context, messageEvent.event.messageIndex - 1);
-            }
+                // mark our own messages as read manually since we will not be observing them
+                messagesRead.markMessageRead(
+                    context,
+                    messageEvent.event.messageIndex,
+                    messageEvent.event.messageId,
+                );
+                // Mark all existing messages as read
+                if (messageEvent.event.messageIndex > 0) {
+                    messagesRead.markReadUpTo(context, messageEvent.event.messageIndex - 1);
+                }
 
-            localUpdates.draftMessages.delete(context);
+                localUpdates.draftMessages.delete(context);
 
-            if (!isTransfer(messageEvent.event.content)) {
-                this.#sendMessageWebRtc(chat, messageEvent, threadRootMessageIndex).then(() => {
-                    publish("sentMessage", { context, event: messageEvent });
-                });
-            }
-            // });
+                if (!isTransfer(messageEvent.event.content)) {
+                    this.#sendMessageWebRtc(chat, messageEvent, threadRootMessageIndex).then(() => {
+                        publish("sentMessage", { context, event: messageEvent });
+                    });
+                }
+            });
         }, 0);
     }
 
@@ -6565,7 +6565,7 @@ export class OpenChat {
             pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
-        localUpdates.setP2PSwapStatus(messageId, {
+        const undo = localUpdates.setP2PSwapStatus(messageId, {
             kind: "p2p_swap_reserved",
             reservedBy: currentUserIdStore.value,
         });
@@ -6594,12 +6594,13 @@ export class OpenChat {
                     if (pinNumberFailure !== undefined) {
                         pinNumberFailureStore.set(pinNumberFailure);
                     }
+                    undo();
                 }
 
                 return resp;
             })
             .catch((err) => {
-                localUpdates.setP2PSwapStatus(messageId, { kind: "p2p_swap_open" });
+                undo();
                 return { kind: "internal_error", text: err.toString() };
             });
     }
@@ -6609,7 +6610,7 @@ export class OpenChat {
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
     ): Promise<CancelP2PSwapResponse> {
-        localUpdates.setP2PSwapStatus(messageId, {
+        const undo = localUpdates.setP2PSwapStatus(messageId, {
             kind: "p2p_swap_cancelled",
         });
         return this.#sendRequest({
@@ -6623,11 +6624,13 @@ export class OpenChat {
                     localUpdates.setP2PSwapStatus(messageId, {
                         kind: "p2p_swap_cancelled",
                     });
+                } else {
+                    undo();
                 }
                 return resp;
             })
             .catch((err) => {
-                localUpdates.setP2PSwapStatus(messageId, { kind: "p2p_swap_open" });
+                undo();
                 return { kind: "internal_error", text: err.toString() };
             });
     }
