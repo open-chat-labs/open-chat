@@ -13,6 +13,7 @@
         AvatarSize,
         blockedUsersStore,
         botState,
+        chatIdentifiersEqual,
         chatListScopeStore,
         communitiesStore,
         currentUserIdStore,
@@ -22,6 +23,7 @@
         mobileWidth,
         notificationsSupported,
         OpenChat,
+        pinnedChatsStore,
         publish,
         routeForScope,
         selectedChatIdStore,
@@ -96,7 +98,11 @@
     );
     let readonly = $derived(client.isChatReadOnly(chatSummary.id));
     let canDelete = $derived(getCanDelete(chatSummary, community));
-    let pinned = $derived(client.pinned($chatListScopeStore.kind, chatSummary.id));
+    let pinned = $derived(
+        $pinnedChatsStore
+            .get($chatListScopeStore.kind)
+            ?.find((id) => chatIdentifiersEqual(id, chatSummary.id)) !== undefined,
+    );
     let muted = $derived(chatSummary.membership.notificationsMuted);
     const maxDelOffset = -60;
     let delOffset = $state(maxDelOffset);
