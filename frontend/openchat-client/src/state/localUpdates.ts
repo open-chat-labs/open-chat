@@ -414,6 +414,7 @@ export class GlobalLocalState {
     }
 
     addChat(chat: ChatSummary) {
+        this.removeGroupPreview(chat.id);
         return addToWritableLocalMap(chat.id, chat, this.chats);
     }
 
@@ -422,6 +423,7 @@ export class GlobalLocalState {
     }
 
     addCommunity(val: CommunitySummary) {
+        this.removeCommunityPreview(val.id);
         return addToWritableLocalMap(val.id, val, this.communities);
     }
 
