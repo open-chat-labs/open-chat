@@ -41,7 +41,7 @@ export function withPausedStores(fn: () => void) {
         fn();
     } finally {
         if (pauseCount === 1) {
-            // Publish all the changes to writable stores
+            // Publish all changes to writable stores
             executeCallbacks(publishesPending);
 
             // Unpause
@@ -57,14 +57,11 @@ export function withPausedStores(fn: () => void) {
 
 function runSubscriptions() {
     while (subscriptionsPending.length > 0) {
-        // Execute all the pending subscription callbacks
+        // Execute all pending subscription callbacks
         executeCallbacks(subscriptionsPending);
 
-        // Once all previous subscriptions are processed, queue up any derived stores which need to be retried and
-        // start the loop again required
+        // Once subscriptions are processed, queue up any derived stores which need to be retried and loop again
         subscriptionsPending = derivedStoresToRetry;
-
-        // Clear the `derivedStoresToRetry` array now that these callbacks are contained within `subscriptionsPending`
         derivedStoresToRetry = [];
     }
 }
