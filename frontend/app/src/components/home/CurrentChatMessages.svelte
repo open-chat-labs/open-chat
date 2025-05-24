@@ -29,6 +29,7 @@
         selectedChatUserGroupKeysStore,
         selectedCommunitySummaryStore,
         showMiddle,
+        threadOpenStore,
         unconfirmedStore,
     } from "openchat-client";
     import page from "page";
@@ -276,6 +277,7 @@
         if (
             $chatsInitialisedStore &&
             $messageIndexStore !== undefined &&
+            !$threadOpenStore &&
             chatIdentifiersEqual($selectedChatIdStore, previousChatId)
         ) {
             const idx = $messageIndexStore;
