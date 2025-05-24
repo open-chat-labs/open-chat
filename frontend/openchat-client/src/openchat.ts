@@ -6347,7 +6347,6 @@ export class OpenChat {
                 community.channels = channels;
             }
         }
-
         serverMessageActivitySummaryStore.set(messageActivitySummary);
         achievementsStore.set(achievements);
         referralsStore.set(referrals);
