@@ -137,7 +137,7 @@
         }
 
         &.p2pSwap {
-            width: 350px;
+            max-width: 350px;
         }
     }
 
