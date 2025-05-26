@@ -274,10 +274,10 @@
     // if the messageIndex has changed but the chatId has not, scroll to the specified message
     let previousChatId: ChatIdentifier | undefined = undefined;
     $effect(() => {
+        void $threadOpenStore;
         if (
             $chatsInitialisedStore &&
             $messageIndexStore !== undefined &&
-            !$threadOpenStore &&
             chatIdentifiersEqual($selectedChatIdStore, previousChatId)
         ) {
             const idx = $messageIndexStore;
