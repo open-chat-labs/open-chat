@@ -35,7 +35,7 @@
     const ONE_WEEK = ONE_DAY * 7;
     const OC_FEE_PERCENTAGE = 5n;
     const client = getContext<OpenChat>("client");
-    const streaks = ["3", "7", "14", "30", "100"];
+    const streaks = ["3", "7", "14", "30", "100", "365"];
 
     interface Props {
         draftAmount: bigint;
