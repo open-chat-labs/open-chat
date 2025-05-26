@@ -29,6 +29,11 @@ export type UserSummary = DataContent & {
     isUniquePerson: boolean;
 };
 
+export type PartitionedUserIds = {
+    userIds: Set<string>;
+    webhooks: Set<string>;
+}
+
 export function deletedUser(userId: string): UserSummary {
     return {
         kind: "user",

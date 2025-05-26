@@ -14,6 +14,7 @@ import type {
     MessageContext,
     MessagePermission,
     Metrics,
+    PartitionedUserIds,
     VersionedRules,
 } from "../domain";
 import { extractUserIdsFromMentions, UnsupportedValueError } from "../domain";
@@ -33,15 +34,19 @@ export function userIdsFromTransactions(transactions: AccountTransaction[]): Set
     }, new Set<string>());
 }
 
-export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string> {
+export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): PartitionedUserIds {
+    const userIds = new Set<string>();
+    const webhooks = new Set<string>();
     const fakeFormatter = (k: string) => k;
-    return events.reduce<Set<string>>((userIds, e) => {
+    for (const e of events) {
         if ("userIds" in e.event) {
             e.event.userIds.forEach((u) => userIds.add(u));
         }
         switch (e.event.kind) {
             case "message":
-                if (e.event.senderContext?.kind !== "webhook") {
+                if (e.event.senderContext?.kind === "webhook") {
+                    webhooks.add(e.event.sender);
+                } else {
                     userIds.add(e.event.sender);
                 }
                 if (
@@ -144,8 +149,11 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             default:
                 console.warn("Unexpected ChatEvent type received", e.event);
         }
-        return userIds;
-    }, new Set<string>());
+    }
+    return {
+        userIds,
+        webhooks,
+    }
 }
 
 export function getContentAsFormattedText(
