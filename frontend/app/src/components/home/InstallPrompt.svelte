@@ -1,12 +1,12 @@
 <script lang="ts">
+    import { onMount } from "svelte";
     import { isLoading } from "svelte-i18n";
-    import ModalContent from "../ModalContent.svelte";
-    import Overlay from "../Overlay.svelte";
+    import { i18nKey } from "../../i18n/i18n";
     import { showHomeScreenPrompt } from "../../stores/settings";
     import Checkbox from "../Checkbox.svelte";
-    import { i18nKey } from "../../i18n/i18n";
+    import ModalContent from "../ModalContent.svelte";
+    import Overlay from "../Overlay.svelte";
     import Translatable from "../Translatable.svelte";
-    import { onMount } from "svelte";
 
     let installed = window.matchMedia("(display-mode: standalone)").matches;
     let dismissed = $state(false);

@@ -231,7 +231,7 @@
             {#if claimedByYou}
                 <div class="tada">
                     <div class="confetti">
-                        <Confetti />
+                        <Confetti size={30} colorArray={[`url(${logo})`]} />
                     </div>
                 </div>
             {/if}

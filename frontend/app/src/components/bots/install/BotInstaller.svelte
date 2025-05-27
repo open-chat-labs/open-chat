@@ -95,8 +95,8 @@
     }
 </script>
 
-<Overlay dismissible onClose={() => onClose(false)}>
-    <ModalContent closeIcon onClose={() => onClose(false)}>
+<Overlay>
+    <ModalContent>
         {#snippet header()}
             <div class="header">
                 <Translatable resourceKey={i18nKey("bots.add.title", undefined, level, true)}
@@ -130,6 +130,7 @@
                     {#if step === "choose_command_permissions" && bot.definition.autonomousConfig !== undefined}
                         {@render button(i18nKey("bots.add.next"), () => nextStep(step))}
                     {:else}
+                        {@render button(i18nKey("cancel"), () => onClose(false), true)}
                         {@render button(i18nKey("bots.add.install"), () => nextStep(step))}
                     {/if}
                 </ButtonGroup>

@@ -1,13 +1,13 @@
 import { dequal } from "dequal";
-import type {
-    CommunityIdentifier,
-    MessageIndexRoute,
-    NullScope,
-    RouteParams,
+import {
+    communityIdentifiersEqual,
+    type CommunityIdentifier,
+    type MessageIndexRoute,
+    type NullScope,
+    type RouteParams,
 } from "openchat-shared";
 import "page";
-import { derived } from "svelte/store";
-import { writable } from "../writable";
+import { derived, writable } from "../../utils/stores";
 
 const noScope: NullScope = { kind: "none" };
 
@@ -20,7 +20,7 @@ function hasMessageIndex(route: RouteParams): route is MessageIndexRoute {
 }
 
 export const notFoundStore = writable<boolean>(false);
-export const pathContextStore = writable<PageJS.Context | undefined>(undefined, dequal);
+export const pathContextStore = writable<PageJS.Context | undefined>(undefined, undefined, dequal);
 export const routerReadyStore = writable<boolean>(false);
 export const locationStore = derived(pathContextStore, (pathContext) =>
     pathContext ? pathContext.routePath : "",
@@ -30,6 +30,7 @@ export const querystringStore = derived(pathContextStore, (pathContext) =>
 );
 export const routeStore = writable<RouteParams>(
     { scope: noScope, kind: "not_found_route" },
+    undefined,
     dequal,
 );
 export const querystringCodeStore = derived(querystringStore, (qs) => qs.get("code"));
@@ -49,20 +50,24 @@ export const threadOpenStore = derived(
         route.messageIndex !== undefined &&
         route.open,
 );
-export const selectedCommunityIdStore = derived(routeStore, (route) => {
-    switch (route.kind) {
-        case "selected_community_route":
-        case "selected_channel_route":
-            return route.communityId;
-        case "favourites_route":
-            if (route.chatId?.kind === "channel") {
-                return {
-                    kind: "community",
-                    communityId: route.chatId.communityId,
-                } as CommunityIdentifier;
-            }
-            return undefined;
-        default:
-            return undefined;
-    }
-});
+export const selectedCommunityIdStore = derived(
+    routeStore,
+    (route) => {
+        switch (route.kind) {
+            case "selected_community_route":
+            case "selected_channel_route":
+                return route.communityId;
+            case "favourites_route":
+                if (route.chatId?.kind === "channel") {
+                    return {
+                        kind: "community",
+                        communityId: route.chatId.communityId,
+                    } as CommunityIdentifier;
+                }
+                return undefined;
+            default:
+                return undefined;
+        }
+    },
+    communityIdentifiersEqual,
+);

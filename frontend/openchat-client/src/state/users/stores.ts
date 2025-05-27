@@ -1,25 +1,24 @@
 import type { UserSummary } from "openchat-shared";
-import { derived } from "svelte/store";
+import { derived, writable } from "../../utils/stores";
 import { localUpdates } from "../localUpdates";
-import { SafeMapStore } from "../map";
-import { SafeSetStore } from "../set";
+import { notEq } from "../utils";
 
-export const serverBlockedUsersStore = new SafeSetStore<string>();
+export const serverBlockedUsersStore = writable<Set<string>>(new Set());
 
 export const blockedUsersStore = derived(
     [serverBlockedUsersStore, localUpdates.blockedDirectUsers],
     ([serverBlockedUsers, localUpdates]) => localUpdates.apply(serverBlockedUsers),
 );
 
-export const normalUsersStore = new SafeMapStore<string, UserSummary>();
-export const specialUsersStore = new SafeMapStore<string, UserSummary>();
+export const normalUsersStore = writable<Map<string, UserSummary>>(new Map(), undefined, notEq);
+export const specialUsersStore = writable<Map<string, UserSummary>>(new Map(), undefined, notEq);
 export const allUsersStore = derived(
     [normalUsersStore, specialUsersStore],
     ([normalUsers, specialUsers]) => {
-        return specialUsers.reduce((all, [k, v]) => {
+        return [...specialUsers.entries()].reduce((all, [k, v]) => {
             all.set(k, v);
             return all;
-        }, normalUsers.clone()); // this clone is necessary to prevent infinite loop but will it be a problem?
+        }, new Map(normalUsers)); // this clone is necessary to prevent infinite loop but will it be a problem?
     },
 );
 export const suspendedUsersStore = derived(allUsersStore, (allUsers) => {
@@ -31,3 +30,4 @@ export const suspendedUsersStore = derived(allUsersStore, (allUsers) => {
     }
     return suspended as ReadonlyMap<string, UserSummary>;
 });
+export const webhookUserIdsStore = writable(new Set<string>());

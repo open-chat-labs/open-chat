@@ -1185,21 +1185,21 @@ dependencies = [
 
 [[package]]
 name = "canbench-rs"
-version = "0.1.12"
+version = "0.1.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f7e8af63a2bb70a1906ba8aa6f6990e48f14fdb028500e59062caf127fb200b9"
+checksum = "c1c560e37bb75c6900e18e7d37174efaff09e266d138d9926e34f489d9d2f6a0"
 dependencies = [
  "canbench-rs-macros",
  "candid",
- "ic-cdk 0.18.0",
+ "ic-cdk 0.17.2",
  "serde",
 ]
 
 [[package]]
 name = "canbench-rs-macros"
-version = "0.1.12"
+version = "0.1.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd4d630972468fcd844c0ce285d0f385fc925104e0f2cb38c9810c4d49259f9c"
+checksum = "866a310ae95dfd273c2f1d17c8382d0d893c35851e9252cca98bd3a80a7e5635"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4454,6 +4454,20 @@ dependencies = [
 
 [[package]]
 name = "ic-cdk"
+version = "0.17.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95a7344f41493cbf591f13ae9f90181076f808a83af799815c3074b19c693d2e"
+dependencies = [
+ "candid",
+ "ic-cdk-executor",
+ "ic-cdk-macros 0.17.2",
+ "ic0 0.23.0",
+ "serde",
+ "serde_bytes",
+]
+
+[[package]]
+name = "ic-cdk"
 version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b11cc255410be6a7e47e1a756ea94c1f31a2397a79e696f6f7d207d5ebd3e144"
@@ -4468,6 +4482,12 @@ dependencies = [
  "slotmap",
  "thiserror 2.0.12",
 ]
+
+[[package]]
+name = "ic-cdk-executor"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "903057edd3d4ff4b3fe44a64eaee1ceb73f579ba29e3ded372b63d291d7c16c2"
 
 [[package]]
 name = "ic-cdk-macros"
@@ -4488,6 +4508,20 @@ name = "ic-cdk-macros"
 version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3af44fb4ec3a4b18831c9d3303ca8fa2ace846c4022d50cb8df4122635d3782e"
+dependencies = [
+ "candid",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "serde_tokenstream",
+ "syn 2.0.87",
+]
+
+[[package]]
+name = "ic-cdk-macros"
+version = "0.17.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "84cbaa50fa36d3e0616114becf81faa95a099e0d60948ed6978f30f1c77399fd"
 dependencies = [
  "candid",
  "proc-macro2",

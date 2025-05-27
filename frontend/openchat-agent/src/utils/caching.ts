@@ -372,15 +372,6 @@ export function openCache(principal: Principal): Database {
     });
 }
 
-export async function openDbAndGetCachedChats(
-    principal: Principal,
-): Promise<ChatStateFull | undefined> {
-    const db = openCache(principal);
-    if (db !== undefined) {
-        return getCachedChats(db, principal);
-    }
-}
-
 export async function getCachedBots(
     db: Database,
     principal: Principal,
@@ -454,16 +445,20 @@ export async function setCachedChats(
 }
 
 export async function deleteEventsForChat(db: Database, chatId: string) {
-    const tx = (await db).transaction("chat_events", "readwrite");
-    const store = tx.objectStore("chat_events");
-    const cursor = await store.openCursor(IDBKeyRange.lowerBound(chatId));
-    while (cursor?.key !== undefined) {
-        if (cursor.key.startsWith(chatId)) {
-            await store.delete(cursor.key);
+    try {
+        const tx = (await db).transaction("chat_events", "readwrite", { durability: "relaxed" });
+        const store = tx.objectStore("chat_events");
+        const cursor = await store.openCursor(IDBKeyRange.lowerBound(chatId));
+        while (cursor?.key !== undefined) {
+            if (cursor.key.startsWith(chatId)) {
+                await store.delete(cursor.key);
+            }
+            await cursor.continue();
         }
-        await cursor.continue();
+        await tx.done;
+    } catch (err) {
+        console.warn("Error deleting events for chat: ", err);
     }
-    await tx.done;
 }
 
 export async function getCachedEvents(
@@ -1073,6 +1068,15 @@ export function initDb(principal: Principal): Database {
 
 export function closeDb(): void {
     db = undefined;
+}
+
+export async function openDbAndGetCachedChats(
+    principal: Principal,
+): Promise<ChatStateFull | undefined> {
+    db ??= openCache(principal);
+    if (db !== undefined) {
+        return getCachedChats(db, principal);
+    }
 }
 
 // for now this is only used for loading pinned messages so we can ignore the idea of

@@ -1,29 +1,55 @@
-import type {
-    ChatIdentifier,
-    ChatListScope,
-    GrantedBotPermissions,
-    Member,
-    VersionedRules,
-    WebhookDetails,
+import {
+    ChatMap,
+    type ChatIdentifier,
+    type ChatListScope,
+    type GrantedBotPermissions,
+    type Member,
+    type VersionedRules,
+    type WebhookDetails,
 } from "openchat-shared";
-import { ChatMapStore, LocalMap } from "../map";
+import { writable, type Writable } from "../../utils/stores";
+import { LocalMap } from "../map";
 import { LocalSet } from "../set";
-import { scheduleUndo, type UndoLocalUpdate } from "../undo";
+import { type UndoLocalUpdate } from "../undo";
+import { modifyWritable, notEq } from "../utils";
 
 const noop = () => {};
+const localMap = <K, V>() => new LocalMap<K, V>();
+const localSet = <V>() => new LocalSet<V>();
 
 export class ChatDetailsUpdatesManager {
-    members = new ChatLocalMapStore<string, Member>();
-    blockedUsers = new ChatLocalSetStore<string>();
-    pinnedMessages = new ChatLocalSetStore<number>();
-    invitedUsers = new ChatLocalSetStore<string>();
-    bots = new ChatLocalMapStore<string, GrantedBotPermissions>();
-    webhooks = new ChatLocalMapStore<string, WebhookDetails>();
+    members = writable<ChatMap<LocalMap<string, Member>>>(new ChatMap(), undefined, notEq);
+    blockedUsers = writable<ChatMap<LocalSet<string>>>(new ChatMap(), undefined, notEq);
+    pinnedMessages = writable<ChatMap<LocalSet<number>>>(new ChatMap(), undefined, notEq);
+    invitedUsers = writable<ChatMap<LocalSet<string>>>(new ChatMap(), undefined, notEq);
+    bots = writable<ChatMap<LocalMap<string, GrantedBotPermissions>>>(
+        new ChatMap(),
+        undefined,
+        notEq,
+    );
+    webhooks = writable<ChatMap<LocalMap<string, WebhookDetails>>>(new ChatMap(), undefined, notEq);
+    rules = writable<ChatMap<VersionedRules>>(new ChatMap(), undefined, notEq);
+    pinnedToScopes = writable<ChatMap<LocalSet<ChatListScope["kind"]>>>(
+        new ChatMap(),
+        undefined,
+        notEq,
+    );
 
-    rules = new ChatMapStore<VersionedRules>();
-
-    // TODO - come back to this fellow
-    pinnedToScopes = new ChatLocalSetStore<ChatListScope["kind"]>();
+    #updateForChat<T>(
+        id: ChatIdentifier,
+        store: Writable<ChatMap<T>>,
+        notFound: () => T,
+        updater: (val: T) => UndoLocalUpdate,
+    ): UndoLocalUpdate {
+        return modifyWritable((chatMap) => {
+            let val = chatMap.get(id);
+            if (val === undefined) {
+                val = notFound();
+                chatMap.set(id, val);
+            }
+            return updater(val);
+        }, store);
+    }
 
     updateMember(
         id: ChatIdentifier,
@@ -32,151 +58,117 @@ export class ChatDetailsUpdatesManager {
         updater: (m: Member) => Member,
     ) {
         if (existing !== undefined) {
-            return this.members.addOrUpdate(id, userId, updater(existing));
+            this.#updateForChat(id, this.members, localMap, (map) =>
+                map.addOrUpdate(userId, updater(existing)),
+            );
         }
         return noop;
     }
 
     blockUser(id: ChatIdentifier, userId: string): UndoLocalUpdate {
-        return this.blockedUsers.add(id, userId);
+        return this.#updateForChat(id, this.blockedUsers, localSet, (set) => set.add(userId));
     }
 
     unblockUser(id: ChatIdentifier, userId: string): UndoLocalUpdate {
-        return this.blockedUsers.remove(id, userId);
+        return this.#updateForChat(id, this.blockedUsers, localSet, (set) => set.remove(userId));
     }
 
     removeMember(id: ChatIdentifier, userId: string): UndoLocalUpdate {
-        return this.members.remove(id, userId);
+        return this.#updateForChat(id, this.members, localMap, (map) => map.remove(userId));
     }
 
     addMember(id: ChatIdentifier, member: Member): UndoLocalUpdate {
-        return this.members.addOrUpdate(id, member.userId, member);
+        return this.#updateForChat(id, this.members, localMap, (map) =>
+            map.addOrUpdate(member.userId, member),
+        );
     }
 
     pinToScope(id: ChatIdentifier, scope: ChatListScope["kind"]): UndoLocalUpdate {
-        return this.pinnedToScopes.add(id, scope);
+        return this.#updateForChat(id, this.pinnedToScopes, localSet, (set) => set.add(scope));
     }
 
     unpinFromScope(id: ChatIdentifier, scope: ChatListScope["kind"]): UndoLocalUpdate {
-        return this.pinnedToScopes.remove(id, scope);
+        return this.#updateForChat(id, this.pinnedToScopes, localSet, (set) => set.remove(scope));
     }
 
     pinMessage(id: ChatIdentifier, messageIndex: number): UndoLocalUpdate {
-        return this.pinnedMessages.add(id, messageIndex);
+        return this.#updateForChat(id, this.pinnedMessages, localSet, (set) =>
+            set.add(messageIndex),
+        );
     }
 
     unpinMessage(id: ChatIdentifier, messageIndex: number): UndoLocalUpdate {
-        return this.pinnedMessages.remove(id, messageIndex);
+        return this.#updateForChat(id, this.pinnedMessages, localSet, (set) =>
+            set.remove(messageIndex),
+        );
     }
 
     inviteUsers(id: ChatIdentifier, userIds: string[]): UndoLocalUpdate {
-        return this.invitedUsers.addMany(id, userIds);
-    }
-
-    uninviteUsers(id: ChatIdentifier, userIds: string[]): UndoLocalUpdate {
-        return this.invitedUsers.removeMany(id, userIds);
-    }
-
-    updateRules(id: ChatIdentifier, rules: VersionedRules): UndoLocalUpdate {
-        const previous = this.rules.get(id);
-        this.rules.set(id, rules);
-        return scheduleUndo(() => {
-            if (previous === undefined) {
-                this.rules.delete(id);
-            } else {
-                this.rules.set(id, previous);
-            }
+        return this.#updateForChat(id, this.invitedUsers, localSet, (set) => {
+            const undos = userIds.map((u) => set.add(u));
+            return () => {
+                undos.forEach((u) => u());
+            };
         });
     }
 
+    uninviteUsers(id: ChatIdentifier, userIds: string[]): UndoLocalUpdate {
+        return this.#updateForChat(id, this.invitedUsers, localSet, (set) => {
+            const undos = userIds.map((u) => set.remove(u));
+            return () => {
+                undos.forEach((u) => u());
+            };
+        });
+    }
+
+    updateRules(id: ChatIdentifier, rules: VersionedRules): UndoLocalUpdate {
+        return modifyWritable((map) => {
+            const prev = map.get(id);
+            map.set(id, rules);
+            return () => {
+                if (prev !== undefined) {
+                    map.set(id, prev);
+                } else {
+                    map.delete(id);
+                }
+            };
+        }, this.rules);
+    }
+
     removeBot(id: ChatIdentifier, botId: string): UndoLocalUpdate {
-        return this.bots.remove(id, botId);
+        return this.#updateForChat(id, this.bots, localMap, (map) => map.remove(botId));
     }
 
     installBot(id: ChatIdentifier, botId: string, perm: GrantedBotPermissions): UndoLocalUpdate {
-        return this.bots.addOrUpdate(id, botId, perm);
+        return this.#updateForChat(id, this.bots, localMap, (map) => map.addOrUpdate(botId, perm));
     }
 
     addWebhook(id: ChatIdentifier, webhook: WebhookDetails): UndoLocalUpdate {
-        return this.webhooks.addOrUpdate(id, webhook.id, webhook);
+        return this.#updateForChat(id, this.webhooks, localMap, (map) =>
+            map.addOrUpdate(webhook.id, webhook),
+        );
     }
 
     updateWebhook(id: ChatIdentifier, webhook: WebhookDetails): UndoLocalUpdate {
-        return this.webhooks.addOrUpdate(id, webhook.id, webhook);
+        return this.#updateForChat(id, this.webhooks, localMap, (map) =>
+            map.addOrUpdate(webhook.id, webhook),
+        );
     }
 
     removeWebhook(id: ChatIdentifier, webhookId: string): UndoLocalUpdate {
-        return this.webhooks.remove(id, webhookId);
+        return this.#updateForChat(id, this.webhooks, localMap, (map) => map.remove(webhookId));
     }
 
     // Only used for testing
     clearAll() {
-        this.pinnedToScopes.clear();
-        this.pinnedMessages.clear();
-        this.invitedUsers.clear();
-        this.blockedUsers.clear();
-        this.members.clear();
-        this.bots.clear();
-        this.webhooks.clear();
-        this.rules.clear();
-    }
-}
-
-export class ChatLocalSetStore<V> extends ChatMapStore<LocalSet<V>> {
-    add(id: ChatIdentifier, value: V) {
-        return this.#withSet(id, (set) => set.add(value));
-    }
-
-    addMany(id: ChatIdentifier, values: V[]) {
-        return this.#withSet(id, (set) => {
-            const undos = values.map((v) => set.add(v));
-            return () => {
-                undos.forEach((u) => u());
-            };
-        });
-    }
-
-    removeMany(id: ChatIdentifier, values: V[]) {
-        return this.#withSet(id, (set) => {
-            const undos = values.map((v) => set.remove(v));
-            return () => {
-                undos.forEach((u) => u());
-            };
-        });
-    }
-
-    remove(id: ChatIdentifier, value: V) {
-        return this.#withSet(id, (set) => set.remove(value));
-    }
-
-    #withSet(id: ChatIdentifier, fn: (map: LocalSet<V>) => UndoLocalUpdate) {
-        const set = this.get(id) ?? new LocalSet();
-        const undo = fn(set);
-        this.set(id, set);
-        return scheduleUndo(() => {
-            undo();
-            this.publish();
-        });
-    }
-}
-
-export class ChatLocalMapStore<K, V> extends ChatMapStore<LocalMap<K, V>> {
-    addOrUpdate(id: ChatIdentifier, key: K, value: V) {
-        return this.#withMap(id, (map) => map.addOrUpdate(key, value));
-    }
-
-    remove(id: ChatIdentifier, key: K) {
-        return this.#withMap(id, (map) => map.remove(key));
-    }
-
-    #withMap(id: ChatIdentifier, fn: (map: LocalMap<K, V>) => UndoLocalUpdate) {
-        const map = this.get(id) ?? new LocalMap();
-        const undo = fn(map);
-        this.set(id, map);
-        return scheduleUndo(() => {
-            undo();
-            this.publish();
-        });
+        this.pinnedToScopes.set(new ChatMap());
+        this.pinnedMessages.set(new ChatMap());
+        this.invitedUsers.set(new ChatMap());
+        this.blockedUsers.set(new ChatMap());
+        this.members.set(new ChatMap());
+        this.bots.set(new ChatMap());
+        this.webhooks.set(new ChatMap());
+        this.rules.set(new ChatMap());
     }
 }
 

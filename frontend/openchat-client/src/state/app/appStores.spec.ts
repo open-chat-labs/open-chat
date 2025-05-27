@@ -1,3 +1,4 @@
+import DRange from "drange";
 import {
     CommunityMap,
     emptyChatMetrics,
@@ -12,30 +13,47 @@ import {
     type GroupChatSummary,
     type Member,
     type Message,
+    type RouteParams,
 } from "openchat-shared";
 import { get } from "svelte/store";
 import { vi } from "vitest";
+import { OpenChat } from "../../openchat";
 import { chatDetailsLocalUpdates } from "../chat/detailsUpdates";
+import { ChatDetailsState } from "../chat/serverDetails";
 import { communityLocalUpdates } from "../community/detailUpdates";
+import { CommunityDetailsState } from "../community/server";
 import { localUpdates } from "../localUpdates";
-import { pathState } from "../path/state";
-import { selectedCommunityIdStore } from "../path/stores";
-import { app } from "./state";
+import {
+    notFoundStore,
+    pathContextStore,
+    routeStore,
+    selectedCommunityIdStore,
+} from "../path/stores";
+import { addToWritableMap } from "../utils";
 import {
     allChatsStore,
     allServerChatsStore,
     chatListScopeStore,
+    chatSummariesStore,
     communitiesStore,
+    directChatBotsStore,
     eventsStore,
+    expiredServerEventRanges,
     messageFiltersStore,
     pinnedChatsStore,
     selectedChatExpandedDeletedMessageStore,
     selectedChatIdStore,
     selectedChatMembersStore,
+    selectedChatUserGroupKeysStore,
+    selectedChatUserIdsStore,
+    selectedCommunityBlockedUsersStore,
     selectedCommunityMembersStore,
+    selectedServerChatStore,
+    selectedServerCommunityStore,
     serverCommunitiesStore,
     serverEventsStore,
     serverPinnedChatsStore,
+    translationsStore,
 } from "./stores";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -54,12 +72,47 @@ const mockContext: PageJS.Context = {
     params: {},
 };
 
+function setSelectedChat() {
+    serverEventsStore.set([]);
+    expiredServerEventRanges.set(new DRange());
+    selectedChatUserIdsStore.set(new Set());
+    selectedChatUserGroupKeysStore.set(new Set());
+    selectedChatExpandedDeletedMessageStore.set(new Set());
+}
+
+function setRouteParams(ctx: PageJS.Context, p: RouteParams) {
+    routeStore.set(p);
+    pathContextStore.set(ctx);
+    notFoundStore.set(false);
+}
+
 describe("app state", () => {
     beforeEach(() => {
         localUpdates.clearAll();
-        pathState.setRouteParams(mockContext, {
+        setRouteParams(mockContext, {
             kind: "home_route",
             scope: { kind: "group_chat" },
+        });
+    });
+
+    describe("clearing selected chat", () => {
+        test("unselected a chat and make sure id store is undefined", () => {
+            routeStore.set({
+                kind: "global_chat_selected_route",
+                chatId: { kind: "group_chat", groupId: "123456" },
+                chatType: "group_chat",
+                open: false,
+                scope: { kind: "group_chat" },
+            });
+
+            expect(selectedChatIdStore.value).toEqual({ kind: "group_chat", groupId: "123456" });
+
+            routeStore.set({
+                kind: "chat_list_route",
+                scope: { kind: "group_chat" },
+            });
+
+            expect(selectedChatIdStore.value).toBeUndefined();
         });
     });
 
@@ -71,7 +124,7 @@ describe("app state", () => {
             channelId: 123456,
         };
         beforeEach(() => {
-            pathState.setRouteParams(mockContext, {
+            setRouteParams(mockContext, {
                 kind: "selected_channel_route",
                 chatId,
                 communityId,
@@ -79,48 +132,50 @@ describe("app state", () => {
                 open: false,
                 scope: { kind: "community", id: communityId },
             });
-            app.setSelectedChat(chatId);
+            setSelectedChat();
         });
 
         test("chat list scope is set", () => {
-            expect(app.chatListScope).toMatchObject({ kind: "community", id: communityId });
-            pathState.setRouteParams(mockContext, {
+            expect(chatListScopeStore.value).toMatchObject({ kind: "community", id: communityId });
+            setRouteParams(mockContext, {
                 kind: "explore_groups_route",
                 scope: { kind: "group_chat" },
             });
             expect(get(chatListScopeStore)).toMatchObject({ kind: "group_chat" });
-            expect(app.chatListScope).toMatchObject({ kind: "group_chat" });
+            expect(chatListScopeStore.value).toMatchObject({ kind: "group_chat" });
         });
 
         test("selected chat id is set", () => {
             expect(get(selectedChatIdStore)).toEqual(chatId);
-            expect(app.selectedChatId).toEqual(chatId);
+            expect(selectedChatIdStore.value).toEqual(chatId);
         });
 
         function setChatDetails(chatId: ChatIdentifier) {
-            app.setSelectedChat(chatId);
-            app.setChatDetailsFromServer(
-                chatId,
-                new Map([
-                    [
-                        "user_one",
-                        {
-                            role: "member",
-                            userId: "user_one",
-                            displayName: "User One",
-                            lapsed: false,
-                        },
-                    ],
-                ]),
-                new Set(),
-                new Set(["a", "b", "c"]),
-                new Set(),
-                new Set(),
-                emptyRules(),
-                new Map(),
-                new Map(),
+            setSelectedChat();
+            selectedServerChatStore.set(
+                new ChatDetailsState(
+                    chatId,
+                    new Map([
+                        [
+                            "user_one",
+                            {
+                                role: "member",
+                                userId: "user_one",
+                                displayName: "User One",
+                                lapsed: false,
+                            },
+                        ],
+                    ]),
+                    new Set(),
+                    new Set(["a", "b", "c"]),
+                    new Set(),
+                    new Set(),
+                    new Map(),
+                    new Map(),
+                    emptyRules(),
+                ),
             );
-            app.updateServerEvents(chatId, () => {
+            serverEventsStore.update(() => {
                 return [chatMessage()];
             });
         }
@@ -130,7 +185,6 @@ describe("app state", () => {
 
             test("make sure local updates are merged", () => {
                 expect(get(messageFiltersStore)).toEqual([]);
-                console.log("are we getting here", get(messageFiltersStore));
                 expect(get(selectedChatMembersStore).has("user_one")).toBe(true);
                 const undo = localUpdates.removeChatMember(chatId, "user_one");
                 expect(get(selectedChatMembersStore).has("user_one")).toBe(false);
@@ -139,10 +193,10 @@ describe("app state", () => {
             });
 
             test("make sure that all state is overwritten if the chatId *does* change", () => {
-                app.expandDeletedMessages(new Set([1, 2, 3]));
-                expect(selectedChatExpandedDeletedMessageStore.has(3)).toBe(true);
+                selectedChatExpandedDeletedMessageStore.set(new Set([1, 2, 3]));
+                expect(selectedChatExpandedDeletedMessageStore.value.has(3)).toBe(true);
                 setChatDetails({ ...chatId, channelId: 654321 }); // reset the server state for a different chatId
-                expect(selectedChatExpandedDeletedMessageStore.has(3)).toBe(false);
+                expect(selectedChatExpandedDeletedMessageStore.value.has(3)).toBe(false);
             });
         });
 
@@ -155,7 +209,7 @@ describe("app state", () => {
 
             describe("direct chat bots", () => {
                 test("bots correctly initialised", () => {
-                    expect(app.directChatBots.has("123456")).toBe(true);
+                    expect(directChatBotsStore.value.has("123456")).toBe(true);
                 });
 
                 test("install a bot works", () => {
@@ -167,19 +221,19 @@ describe("app state", () => {
                         },
                         autonomous: undefined,
                     });
-                    expect(app.directChatBots.has("654321")).toBe(true);
-                    expect(app.directChatBots.has("123456")).toBe(true);
+                    expect(directChatBotsStore.value.has("654321")).toBe(true);
+                    expect(directChatBotsStore.value.has("123456")).toBe(true);
                 });
 
                 test("uninstall a bot works", () => {
                     localUpdates.removeDirectChatBot("123456");
-                    expect(app.directChatBots.has("123456")).toBe(false);
+                    expect(directChatBotsStore.value.has("123456")).toBe(false);
                 });
             });
 
             describe("last message updates", () => {
                 beforeEach(() => {
-                    pathState.setRouteParams(mockContext, {
+                    setRouteParams(mockContext, {
                         kind: "home_route",
                         scope: { kind: "group_chat" },
                     });
@@ -187,7 +241,7 @@ describe("app state", () => {
                 });
                 test("tips", () => {
                     localUpdates.markTip(123456n, "ledger1", "user2", 123n);
-                    const chat = app.chatSummaries.get({
+                    const chat = chatSummariesStore.value.get({
                         kind: "group_chat",
                         groupId: "654321",
                     });
@@ -257,17 +311,17 @@ describe("app state", () => {
                 });
 
                 test("scoping works as expected", () => {
-                    pathState.setRouteParams(mockContext, {
+                    setRouteParams(mockContext, {
                         kind: "home_route",
                         scope: { kind: "group_chat" },
                     });
                     expect(get(allChatsStore).get(groupId)).not.toBeUndefined();
-                    expect(app.chatSummaries.get(groupId)).not.toBeUndefined();
-                    pathState.setRouteParams(mockContext, {
+                    expect(chatSummariesStore.value.get(groupId)).not.toBeUndefined();
+                    setRouteParams(mockContext, {
                         kind: "home_route",
                         scope: { kind: "direct_chat" },
                     });
-                    expect(app.chatSummaries.get(groupId)).toBeUndefined();
+                    expect(chatSummariesStore.value.get(groupId)).toBeUndefined();
                 });
             });
 
@@ -304,7 +358,7 @@ describe("app state", () => {
             });
 
             test("server object should not be mutated if there are updates", () => {
-                app.translate(123456n, "whatever");
+                addToWritableMap(123456n, "whatever", translationsStore);
                 const client = get(eventsStore)[0];
                 const server = get(serverEventsStore)[0];
                 expect(client === server).toBe(false);
@@ -320,7 +374,7 @@ describe("app state", () => {
     describe("community state", () => {
         const communityId: CommunityIdentifier = { kind: "community", communityId: "123456" };
         beforeEach(() => {
-            pathState.setRouteParams(mockContext, {
+            setRouteParams(mockContext, {
                 kind: "selected_community_route",
                 communityId,
                 scope: { kind: "community", id: communityId },
@@ -330,7 +384,7 @@ describe("app state", () => {
         test("selected community id is set", () => {
             expect(get(selectedCommunityIdStore)).toMatchObject(communityId);
 
-            pathState.setRouteParams(mockContext, {
+            setRouteParams(mockContext, {
                 kind: "home_route",
                 scope: { kind: "group_chat" },
             });
@@ -340,35 +394,36 @@ describe("app state", () => {
 
         describe("setting community details", () => {
             beforeEach(() => {
-                app.setCommunityDetailsFromServer(
-                    communityId,
-                    new Map(),
-                    new Map([
-                        [
-                            "user_one",
-                            {
-                                role: "member",
-                                userId: "user_one",
-                                displayName: "User One",
-                                lapsed: false,
-                            },
-                        ],
-                    ]),
-                    new Set(["a", "b", "c"]),
-                    new Set(),
-                    new Set(),
-                    new Set(),
-                    new Map(),
+                selectedServerCommunityStore.set(
+                    new CommunityDetailsState(
+                        communityId,
+                        new Map(),
+                        new Map([
+                            [
+                                "user_one",
+                                {
+                                    role: "member",
+                                    userId: "user_one",
+                                    displayName: "User One",
+                                    lapsed: false,
+                                },
+                            ],
+                        ]),
+                        new Set(["a", "b", "c"]),
+                        new Set(),
+                        new Set(),
+                        new Set(),
+                        new Map(),
+                    ),
                 );
             });
 
             test("local map updates - remove member", () => {
-                expect(app.selectedCommunityMembers.has("user_one")).toBe(true);
+                expect(selectedCommunityMembersStore.value.has("user_one")).toBe(true);
                 const undo = communityLocalUpdates.removeMember(communityId, "user_one");
-                expect(get(selectedCommunityMembersStore).has("user_one")).toBe(false);
-                expect(app.selectedCommunityMembers.has("user_one")).toBe(false);
+                expect(selectedCommunityMembersStore.value.has("user_one")).toBe(false);
                 undo();
-                expect(app.selectedCommunityMembers.has("user_one")).toBe(true);
+                expect(selectedCommunityMembersStore.value.has("user_one")).toBe(true);
             });
 
             test("local map updates - update member", () => {
@@ -378,30 +433,32 @@ describe("app state", () => {
                     displayName: "Mr One",
                     lapsed: false,
                 };
-                expect(app.selectedCommunityMembers.has("user_two")).toBe(false);
+                expect(selectedCommunityMembersStore.value.has("user_two")).toBe(false);
                 const undo = communityLocalUpdates.updateMember(communityId, "user_one", updated);
-                expect(app.selectedCommunityMembers.get("user_one")?.displayName).toEqual("Mr One");
+                expect(selectedCommunityMembersStore.value.get("user_one")?.displayName).toEqual(
+                    "Mr One",
+                );
                 undo();
-                expect(app.selectedCommunityMembers.get("user_one")?.displayName).toEqual(
+                expect(selectedCommunityMembersStore.value.get("user_one")?.displayName).toEqual(
                     "User One",
                 );
             });
 
             test("local set updates", () => {
-                expect(app.selectedCommunityBlockedUsers.has("a")).toBe(true);
-                expect(app.selectedCommunityBlockedUsers.has("d")).toBe(false);
+                expect(selectedCommunityBlockedUsersStore.value.has("a")).toBe(true);
+                expect(selectedCommunityBlockedUsersStore.value.has("d")).toBe(false);
 
                 // check that local updates work and are correctly merged with server state
                 const undo = communityLocalUpdates.blockUser(communityId, "d");
-                expect(app.selectedCommunityBlockedUsers.has("d")).toBe(true);
+                expect(selectedCommunityBlockedUsersStore.value.has("d")).toBe(true);
 
                 // undo the local update
                 undo();
-                expect(app.selectedCommunityBlockedUsers.has("d")).toBe(false);
+                expect(selectedCommunityBlockedUsersStore.value.has("d")).toBe(false);
 
                 // try unblock
                 communityLocalUpdates.unblockUser(communityId, "a");
-                expect(app.selectedCommunityBlockedUsers.has("a")).toBe(false);
+                expect(selectedCommunityBlockedUsersStore.value.has("a")).toBe(false);
             });
         });
     });
@@ -418,10 +475,12 @@ describe("app state", () => {
 
     describe("global state", () => {
         beforeEach(() => {
-            app.serverCommunities = CommunityMap.fromList([
-                createCommunitySummary("123456", 1),
-                createCommunitySummary("654321", 2),
-            ]);
+            serverCommunitiesStore.set(
+                CommunityMap.fromList([
+                    createCommunitySummary("123456", 1),
+                    createCommunitySummary("654321", 2),
+                ]),
+            );
         });
         test("communities list", () => {
             expect(get(serverCommunitiesStore).size).toEqual(2);
@@ -461,7 +520,7 @@ describe("app state", () => {
         describe("pinned chats", () => {
             beforeEach(() => {
                 chatDetailsLocalUpdates.clearAll();
-                serverPinnedChatsStore.fromMap(
+                serverPinnedChatsStore.set(
                     new Map([
                         [
                             "direct_chat",
@@ -554,7 +613,7 @@ const defaultPermissions: CommunityPermissions = {
 };
 
 function initialiseGlobalState() {
-    app.setGlobalState(
+    OpenChat.setGlobalStateStores(
         [],
         [groupChat("123456")],
         [],

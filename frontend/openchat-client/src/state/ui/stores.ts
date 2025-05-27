@@ -1,3 +1,4 @@
+import { dequal } from "dequal";
 import {
     ScreenWidth,
     type Dimensions,
@@ -6,11 +7,11 @@ import {
     type RightPanelMode,
     type RouteParams,
 } from "openchat-shared";
-import { derived, type Readable } from "svelte/store";
+import { type Readable } from "svelte/store";
+import { derived, writable } from "../../utils/stores";
 import { isCanisterUrl } from "../../utils/url";
 import { LocalStorageBoolStore, LocalStorageStore } from "../localStorageStore";
 import { routeStore } from "../path/stores";
-import { writable } from "../writable";
 
 function translateScale(scale: FontScale): number {
     if (scale === 0) return 0.75;
@@ -68,14 +69,14 @@ function pixelsFromRems(rem: number, width: number): number {
         return rem * 16;
     }
 }
-export const mobileWidth = derived(dimensions, (dimensions) => dimensions.width < 768);
-export const ipadWidth = derived(dimensions, (dimensions) => dimensions.width < 992);
+export const mobileWidth = derived(dimensions, ({ width }) => width < 768);
+export const ipadWidth = derived(dimensions, ({ width }) => width < 992);
 export const availableHeight = derived(
     dimensions,
-    (dimensions) => dimensions.height - pixelsFromRems(5, dimensions.width),
+    ({ width, height }) => height - pixelsFromRems(5, width),
 );
 export function toPixel(rem: number): number {
-    return pixelsFromRems(rem, dimensions.current.width);
+    return pixelsFromRems(rem, dimensions.value.width);
 }
 export const iconSize = derived(mobileWidth, (mobileWidth) => (mobileWidth ? "1.6em" : "1.4em"));
 export const baseFontSize = derived(mobileWidth, (mobileWidth) => (mobileWidth ? 14 : 16));
@@ -97,7 +98,10 @@ function someHomeRoute(route: RouteParams["kind"]): boolean {
         route === "selected_community_route"
     );
 }
-export const rightPanelHistory = writable<RightPanelContent[]>([]);
+export const rightPanelHistory = writable<RightPanelContent[]>([], undefined, (a, b) => {
+    if (a.length === 0 && b.length === 0) return true;
+    return a === b;
+});
 export const lastRightPanelState = derived(
     rightPanelHistory,
     (rightPanelHistory) => rightPanelHistory[rightPanelHistory.length - 1] ?? { kind: "no_panel" },
@@ -138,6 +142,7 @@ export const layout = derived(
             };
         }
     },
+    dequal,
 );
 export const showMiddle = derived(layout, (layout) => layout.showMiddle);
 export const showNav = derived(layout, (layout) => layout.showNav);

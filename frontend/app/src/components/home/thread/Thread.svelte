@@ -76,7 +76,7 @@
     let removeLinkPreviewDetails: { event: EventWrapper<Message>; url: string } | undefined =
         $state(undefined);
 
-    let threadRootMessageIndex = $derived(rootEvent.event.messageIndex);
+    let threadRootMessageIndex = $derived(rootEvent?.event?.messageIndex ?? 0);
     let messageContext = $derived({ chatId: chat.id, threadRootMessageIndex });
     let threadRootMessage = $derived(rootEvent.event);
     let blocked = $derived(

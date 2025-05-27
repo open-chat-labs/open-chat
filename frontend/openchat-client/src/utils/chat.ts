@@ -25,6 +25,7 @@ import type {
     Message,
     MessageContent,
     MessageContext,
+    MessageContextMap,
     MessageFilter,
     MessageFormatter,
     MessagePermission,
@@ -47,6 +48,7 @@ import type {
     TimelineItem,
     TipsReceived,
     TransferSuccess,
+    UnconfirmedState,
     UserLookup,
     UserSummary,
 } from "openchat-shared";
@@ -72,9 +74,20 @@ import {
     updateFromOptions,
     type ReadonlySet,
 } from "openchat-shared";
-import { cryptoLookup, localUpdates } from "../state";
-import { app } from "../state/app/state";
-import type { LocalTipsReceived, MessageLocalState } from "../state/message/localUpdates";
+import {
+    confirmedEventIndexesLoadedStore,
+    confirmedThreadEventIndexesLoadedStore,
+    cryptoLookup,
+    currentUserIdStore,
+    currentUserStore,
+    localUpdates,
+    proposalTalliesStore,
+    selectedChatIdStore,
+    selectedChatUserIdsStore,
+    selectedServerChatSummaryStore,
+    selectedThreadIdStore,
+} from "../state";
+import type { LocalTipsReceived, MessageLocalUpdates } from "../state/message/localUpdates";
 import { userStore } from "../state/users/state";
 import type { TypersByKey } from "../stores/typing";
 import { areOnSameDay } from "../utils/date";
@@ -287,7 +300,7 @@ function messageMentionsUser(
     msg: EventWrapper<Message>,
 ): boolean {
     if (msg.event.sender === userId) return false;
-    const txt = getContentAsFormattedText(formatter, msg.event.content, cryptoLookup);
+    const txt = getContentAsFormattedText(formatter, msg.event.content, cryptoLookup.value);
     return txt.indexOf(`@UserId(${userId})`) >= 0;
 }
 
@@ -348,15 +361,17 @@ export function mergeUnconfirmedIntoSummary(
     formatter: MessageFormatter,
     userId: string,
     chatSummary: ChatSummary,
-    localMessageUpdates: MessageMap<MessageLocalState>,
-    translations: MessageMap<string>,
+    localMessageUpdates: MessageMap<MessageLocalUpdates>,
     blockedUsers: Set<string>,
     currentUserId: string,
     messageFilters: MessageFilter[],
+    unconfirmed: MessageContextMap<UnconfirmedState>,
 ): ChatSummary {
     if (chatSummary.membership === undefined) return chatSummary;
 
-    const unconfirmedMessages = localUpdates.unconfirmedMessages({ chatId: chatSummary.id });
+    // const unconfirmedMessages = localUpdates.unconfirmedMessages({ chatId: chatSummary.id });
+    const unconfirmedState = unconfirmed.get({ chatId: chatSummary.id });
+    const unconfirmedMessages = unconfirmedState ? [...unconfirmedState.values()] : [];
 
     let latestMessage = chatSummary.latestMessage;
     let latestEventIndex = chatSummary.latestEventIndex;
@@ -378,7 +393,6 @@ export function mergeUnconfirmedIntoSummary(
     }
     if (latestMessage !== undefined) {
         const updates = localMessageUpdates.get(latestMessage.event.messageId);
-        const translation = translations.get(latestMessage.event.messageId);
         const senderBlocked = blockedUsers.has(latestMessage.event.sender);
 
         // Don't hide the sender's own messages
@@ -387,18 +401,13 @@ export function mergeUnconfirmedIntoSummary(
                 ? doesMessageFailFilter(latestMessage.event, messageFilters) !== undefined
                 : false;
 
-        if (
-            updates !== undefined ||
-            translation !== undefined ||
-            senderBlocked ||
-            failedMessageFilter
-        ) {
+        if (updates !== undefined || senderBlocked || failedMessageFilter) {
             latestMessage.event = mergeLocalUpdates(
                 latestMessage.event,
                 updates,
                 undefined,
                 undefined,
-                translation,
+                undefined,
                 undefined,
                 senderBlocked,
                 false,
@@ -1145,7 +1154,7 @@ export function getMessagePermissionsForSelectedChat(
                 );
             }
         } else {
-            return toSet(permittedMessagesInGroup(app.currentUser, chat, mode));
+            return toSet(permittedMessagesInGroup(currentUserStore.value, chat, mode));
         }
     }
     return new Set();
@@ -1326,7 +1335,7 @@ export function mergeEventsAndLocalUpdates(
     expiredEventRanges: DRange,
     translations: MessageMap<string>,
     selectedChatBlockedOrSuspendedUsers: Set<string>,
-    messageLocalUpdates: MessageMap<MessageLocalState>,
+    messageLocalUpdates: MessageMap<MessageLocalUpdates>,
     recentlySentMessages: MessageMap<bigint>,
     messageFilters: MessageFilter[],
 ): EventWrapper<ChatEvent>[] {
@@ -1354,9 +1363,8 @@ export function mergeEventsAndLocalUpdates(
 
             const tallyUpdate =
                 e.event.content.kind === "proposal_content"
-                    ? app.getProposalTally(
-                          e.event.content.governanceCanisterId,
-                          e.event.content.proposal.id,
+                    ? proposalTalliesStore.value.get(
+                          `${e.event.content.governanceCanisterId}_${e.event.content.proposal.id}`,
                       )
                     : undefined;
 
@@ -1367,7 +1375,7 @@ export function mergeEventsAndLocalUpdates(
 
             // Don't hide the sender's own messages
             const failedMessageFilter =
-                e.event.sender !== app.currentUserId
+                e.event.sender !== currentUserIdStore.value
                     ? doesMessageFailFilter(e.event, messageFilters) !== undefined
                     : false;
 
@@ -1445,8 +1453,8 @@ export function doesMessageFailFilter(
 
 function mergeLocalUpdates(
     message: Message,
-    localUpdates: MessageLocalState | undefined,
-    replyContextLocalUpdates: MessageLocalState | undefined,
+    localUpdates: MessageLocalUpdates | undefined,
+    replyContextLocalUpdates: MessageLocalUpdates | undefined,
     tallyUpdate: Tally | undefined,
     translation: string | undefined,
     replyTranslation: string | undefined,
@@ -1655,7 +1663,7 @@ function defaultThreadSummary(): ThreadSummary {
     };
 }
 
-function applyTranslation(content: MessageContent, translation: string): MessageContent {
+export function applyTranslation(content: MessageContent, translation: string): MessageContent {
     switch (content.kind) {
         case "text_content": {
             return {
@@ -1801,7 +1809,7 @@ export function stopTyping(
     userId: string,
     threadRootMessageIndex?: number,
 ): void {
-    rtcConnectionsManager.sendMessage([...app.selectedChatUserIds], {
+    rtcConnectionsManager.sendMessage([...selectedChatUserIdsStore.value], {
         kind: "remote_user_stopped_typing",
         id,
         userId,
@@ -1814,7 +1822,7 @@ export function startTyping(
     userId: string,
     threadRootMessageIndex?: number,
 ): void {
-    rtcConnectionsManager.sendMessage([...app.selectedChatUserIds], {
+    rtcConnectionsManager.sendMessage([...selectedChatUserIdsStore.value], {
         kind: "remote_user_typing",
         id,
         userId,
@@ -1972,7 +1980,7 @@ function sortByIndex(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): nu
 }
 
 export function nextEventAndMessageIndexes(): [number, number] {
-    const chat = app.selectedServerChatSummary;
+    const chat = selectedServerChatSummaryStore.value;
     if (chat === undefined) {
         return [0, 0];
     }
@@ -1983,9 +1991,9 @@ export function nextEventAndMessageIndexes(): [number, number] {
 }
 
 export function confirmedEventIndexesLoaded(chatId: ChatIdentifier): DRange {
-    const selected = app.selectedChatId;
+    const selected = selectedChatIdStore.value;
     return selected !== undefined && chatIdentifiersEqual(selected, chatId)
-        ? app.confirmedEventIndexesLoaded
+        ? confirmedEventIndexesLoadedStore.value
         : new DRange();
 }
 
@@ -2020,8 +2028,8 @@ export function isContiguousInThread(
     events: EventWrapper<ChatEvent>[],
 ): boolean {
     return (
-        messageContextsEqual(threadId, app.selectedThreadId) &&
-        isContiguousInternal(app.confirmedEventIndexesLoaded, events, [])
+        messageContextsEqual(threadId, selectedThreadIdStore.value) &&
+        isContiguousInternal(confirmedThreadEventIndexesLoadedStore.value, events, [])
     );
 }
 
@@ -2031,7 +2039,7 @@ export function isContiguous(
     expiredEventRanges: ExpiredEventsRange[],
 ): boolean {
     return (
-        chatIdentifiersEqual(chatId, app.selectedChatId) &&
+        chatIdentifiersEqual(chatId, selectedChatIdStore.value) &&
         isContiguousInternal(confirmedEventIndexesLoaded(chatId), events, expiredEventRanges)
     );
 }
