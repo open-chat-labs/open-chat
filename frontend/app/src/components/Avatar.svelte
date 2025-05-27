@@ -9,7 +9,7 @@
 
     const client = getContext<OpenChat>("client");
 
-    type Specialisation = "bot" | "none" | "super_user";
+    type Specialisation = "bot" | "none" | "max_streak";
 
     interface Props {
         url: string | undefined;
@@ -41,7 +41,7 @@
 
     function getSpecialisation(): Specialisation {
         if (bot) return "bot";
-        if (superUser) return "super_user";
+        if (superUser) return "max_streak";
         return "none";
     }
 
@@ -80,7 +80,7 @@
                 <div class="robot">
                     <Robot viewBox={"0 2 24 24"} size={"100%"} color={"rgba(255, 255, 255, 0.9)"} />
                 </div>
-            {:else if specialisation === "super_user"}
+            {:else if specialisation === "max_streak"}
                 <LighteningBolt enabled />
             {/if}
         </div>
