@@ -437,7 +437,7 @@
         }
 
         if (!client.moreNewMessagesAvailable(chat.id, threadRootEvent) && scrollToBottomOnSend) {
-            await scrollBottom("smooth");
+            scrollBottom("smooth");
             scrollToBottomOnSend = false;
         }
     }

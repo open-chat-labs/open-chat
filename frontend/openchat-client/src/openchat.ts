@@ -4353,13 +4353,12 @@ export class OpenChat {
                 }
 
                 localUpdates.draftMessages.delete(context);
-
-                if (!isTransfer(messageEvent.event.content)) {
-                    this.#sendMessageWebRtc(chat, messageEvent, threadRootMessageIndex).then(() => {
-                        publish("sentMessage", { context, event: messageEvent });
-                    });
-                }
             });
+            if (!isTransfer(messageEvent.event.content)) {
+                this.#sendMessageWebRtc(chat, messageEvent, threadRootMessageIndex).then(() => {
+                    publish("sentMessage", { context, event: messageEvent });
+                });
+            }
         }, 0);
     }
 
