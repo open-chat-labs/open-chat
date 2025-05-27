@@ -145,8 +145,8 @@
     }
 </script>
 
-<Overlay dismissible onClose={() => onClose(false)}>
-    <ModalContent closeIcon onClose={() => onClose(false)}>
+<Overlay>
+    <ModalContent>
         {#snippet header()}
             <div class="header">
                 <Translatable resourceKey={i18nKey("bots.add.title", undefined, level, true)}
@@ -189,6 +189,7 @@
                     {:else if step.kind === "show_api_key"}
                         {@render button(i18nKey("bots.add.continue"), () => nextStep(step))}
                     {:else}
+                        {@render button(i18nKey("cancel"), () => onClose(false), true)}
                         {@render button(i18nKey("bots.add.install"), () => nextStep(step))}
                     {/if}
                 </ButtonGroup>

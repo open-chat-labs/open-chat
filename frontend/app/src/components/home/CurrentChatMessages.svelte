@@ -29,6 +29,7 @@
         selectedChatUserGroupKeysStore,
         selectedCommunitySummaryStore,
         showMiddle,
+        threadOpenStore,
         unconfirmedStore,
     } from "openchat-client";
     import page from "page";
@@ -273,6 +274,7 @@
     // if the messageIndex has changed but the chatId has not, scroll to the specified message
     let previousChatId: ChatIdentifier | undefined = undefined;
     $effect(() => {
+        void $threadOpenStore;
         if (
             $chatsInitialisedStore &&
             $messageIndexStore !== undefined &&
