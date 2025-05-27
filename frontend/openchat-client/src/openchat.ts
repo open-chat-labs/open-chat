@@ -6347,7 +6347,6 @@ export class OpenChat {
                 community.channels = channels;
             }
         }
-
         serverMessageActivitySummaryStore.set(messageActivitySummary);
         achievementsStore.set(achievements);
         referralsStore.set(referrals);
@@ -7060,10 +7059,7 @@ export class OpenChat {
         governanceCanisterId: string | undefined,
     ): NervousSystemDetails | undefined {
         if (governanceCanisterId !== undefined) {
-            const nsLookup = get(nervousSystemLookup);
-            if (governanceCanisterId in nsLookup) {
-                return nsLookup.get(governanceCanisterId);
-            }
+            return nervousSystemLookup.value.get(governanceCanisterId);
         }
     }
 
