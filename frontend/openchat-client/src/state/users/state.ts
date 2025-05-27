@@ -12,6 +12,7 @@ import {
     serverBlockedUsersStore,
     specialUsersStore,
     suspendedUsersStore,
+    webhookUserIdsStore,
 } from "./stores";
 
 export class UsersState {
@@ -89,6 +90,18 @@ export class UsersState {
 
     has(userId: string): boolean {
         return this.#allUsers.has(userId);
+    }
+
+    addWebhookIds(webhooks: string[]) {
+        const toAdd = webhooks.filter((id) => !webhookUserIdsStore.value.has(id));
+        if (toAdd.length > 0) {
+            webhookUserIdsStore.update((set) => {
+                for (const webhook of webhooks) {
+                    set.add(webhook);
+                }
+                return set;
+            });
+        }
     }
 
     get blockedUsers() {
