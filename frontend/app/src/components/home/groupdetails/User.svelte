@@ -69,6 +69,7 @@
             statusBorder={hovering && !me ? "var(--members-hv)" : "transparent"}
             userId={user.userId}
             url={client.userAvatarUrl(user)}
+            maxStreak={client.getStreak(user.userId) >= 365}
             size={AvatarSize.Default} />
     </span>
     <div class="details">
