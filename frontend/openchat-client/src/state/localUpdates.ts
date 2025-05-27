@@ -468,10 +468,10 @@ export class GlobalLocalState {
     updateCommunityDisplayName(id: CommunityIdentifier, name?: string) {
         return this.#modifyCommunitySummaryUpdates(id, (upd) => {
             upd.displayName = name !== undefined ? { value: name } : "set_to_none";
-            return (upd) => ({
-                ...upd,
-                displayName: undefined,
-            });
+            return (upd) => {
+                upd.displayName = undefined;
+                return upd;
+            };
         }, "updateCommunityDisplayName");
     }
 
@@ -506,10 +506,10 @@ export class GlobalLocalState {
     updateCommunityRulesAccepted(id: CommunityIdentifier, accepted: boolean): UndoLocalUpdate {
         return this.#modifyCommunitySummaryUpdates(id, (upd) => {
             upd.rulesAccepted = accepted;
-            return (upd) => ({
-                ...upd,
-                rulesAccepted: undefined,
-            });
+            return (upd) => {
+                upd.rulesAccepted = undefined;
+                return upd;
+            };
         }, "updateCommunityRulesAccepted");
     }
 
@@ -551,10 +551,10 @@ export class GlobalLocalState {
     updateCommunityIndex(id: CommunityIdentifier, index: number): UndoLocalUpdate {
         return this.#modifyCommunitySummaryUpdates(id, (upd) => {
             upd.index = index;
-            return (upd) => ({
-                ...upd,
-                index: undefined,
-            });
+            return (upd) => {
+                upd.index = undefined;
+                return upd;
+            };
         }, "updateCommunityIndex");
     }
 
@@ -695,20 +695,20 @@ export class GlobalLocalState {
     updateNotificationsMuted(id: ChatIdentifier, muted: boolean): UndoLocalUpdate {
         return this.#modifyChatSummaryUpdates(id, (upd) => {
             upd.notificationsMuted = muted;
-            return (upd) => ({
-                ...upd,
-                notificationsMuted: undefined,
-            });
+            return (upd) => {
+                upd.notificationsMuted = undefined;
+                return upd;
+            };
         }, "updateNotificationsMuted");
     }
 
     updateArchived(id: ChatIdentifier, archived: boolean): UndoLocalUpdate {
         return this.#modifyChatSummaryUpdates(id, (upd) => {
             upd.archived = archived;
-            return (upd) => ({
-                ...upd,
-                archived: undefined,
-            });
+            return (upd) => {
+                upd.archived = undefined;
+                return upd;
+            };
         }, "updateArchived");
     }
 
@@ -720,10 +720,8 @@ export class GlobalLocalState {
                     if (upd.latestMessage !== undefined) {
                         revokeObjectUrls(upd.latestMessage);
                     }
-                    return {
-                        ...upd,
-                        latestMessage: undefined,
-                    };
+                    upd.latestMessage = undefined;
+                    return upd;
                 };
             }
             return (upd) => upd;
@@ -733,10 +731,10 @@ export class GlobalLocalState {
     updateChatRulesAccepted(id: ChatIdentifier, rulesAccepted: boolean): UndoLocalUpdate {
         return this.#modifyChatSummaryUpdates(id, (upd) => {
             upd.rulesAccepted = rulesAccepted;
-            return (upd) => ({
-                ...upd,
-                rulesAccepted: undefined,
-            });
+            return (upd) => {
+                upd.rulesAccepted = undefined;
+                return upd;
+            };
         }, "updateChatRulesAccepted");
     }
 
@@ -756,25 +754,25 @@ export class GlobalLocalState {
             upd.gateConfig = gateConfig;
             upd.eventsTTL = eventsTTL;
             upd.isPublic = isPublic;
-            return (upd) => ({
-                ...upd,
-                name: undefined,
-                description: undefined,
-                permissions: undefined,
-                gateConfig: undefined,
-                eventsTTL: undefined,
-                isPublic: undefined,
-            });
+            return (upd) => {
+                upd.name = undefined;
+                upd.description = undefined;
+                upd.permissions = undefined;
+                upd.gateConfig = undefined;
+                upd.eventsTTL = undefined;
+                upd.isPublic = undefined;
+                return upd;
+            };
         }, "updateChatProperties");
     }
 
     updateChatFrozen(id: ChatIdentifier, frozen: boolean): UndoLocalUpdate {
         return this.#modifyChatSummaryUpdates(id, (upd) => {
             upd.frozen = frozen;
-            return (upd) => ({
-                ...upd,
-                frozen: undefined,
-            });
+            return (upd) => {
+                upd.frozen = undefined;
+                return upd;
+            };
         }, "updateChatFrozen");
     }
 
@@ -784,22 +782,22 @@ export class GlobalLocalState {
             upd.editedContent = msg.content;
             upd.blockLevelMarkdown = blockLevelMarkdown;
             upd.linkRemoved = false;
-            return (upd) => ({
-                ...upd,
-                editedContent: undefined,
-                blockLevelMarkdown: undefined,
-                linkRemoved: false,
-            });
+            return (upd) => {
+                upd.editedContent = undefined;
+                upd.blockLevelMarkdown = undefined;
+                upd.linkRemoved = false;
+                return upd;
+            };
         }, "markMessageContentEdited");
     }
 
     markCancelledReminder(messageId: bigint, content: MessageReminderCreatedContent) {
         return this.#modifyMessageUpdates(messageId, (upd) => {
             upd.cancelledReminder = content;
-            return (upd) => ({
-                ...upd,
-                cancelledReminder: undefined,
-            });
+            return (upd) => {
+                upd.cancelledReminder = undefined;
+                return upd;
+            };
         }, "markCancelledReminder");
     }
 
@@ -823,10 +821,10 @@ export class GlobalLocalState {
     markBlockedMessageRevealed(messageId: bigint) {
         return this.#modifyMessageUpdates(messageId, (upd) => {
             upd.hiddenMessageRevealed = true;
-            return (upd) => ({
-                ...upd,
-                hiddenMessageRevealed: undefined,
-            });
+            return (upd) => {
+                upd.hiddenMessageRevealed = undefined;
+                return upd;
+            };
         }, "markBlockedMessageRevealed");
     }
 
@@ -834,21 +832,21 @@ export class GlobalLocalState {
         return this.#modifyMessageUpdates(messageId, (upd) => {
             upd.editedContent = content;
             upd.linkRemoved = true;
-            return (upd) => ({
-                ...upd,
-                editedContent: undefined,
-                linkRemoved: false,
-            });
+            return (upd) => {
+                upd.editedContent = undefined;
+                upd.linkRemoved = false;
+                return upd;
+            };
         }, "markLinkRemoved");
     }
 
     markReaction(messageId: bigint, reaction: LocalReaction) {
         return this.#modifyMessageUpdates(messageId, (upd) => {
             upd.reactions.push(reaction);
-            return (upd) => ({
-                ...upd,
-                reactions: [],
-            });
+            return (upd) => {
+                upd.reactions = [];
+                return upd;
+            };
         }, "markReaction");
     }
 
@@ -874,50 +872,50 @@ export class GlobalLocalState {
             if (map.size === 0) {
                 upd.tips.delete(ledger);
             }
-            return (upd) => ({
-                ...upd,
-                tips: new Map(),
-            });
+            return (upd) => {
+                upd.tips = new Map();
+                return upd;
+            };
         }, "markTip");
     }
 
     markPrizeClaimed(messageId: bigint, userId: string) {
         return this.#modifyMessageUpdates(messageId, (upd) => {
             upd.prizeClaimed = userId;
-            return (upd) => ({
-                ...upd,
-                prizeClaimed: undefined,
-            });
+            return (upd) => {
+                upd.prizeClaimed = undefined;
+                return upd;
+            };
         }, "markPrizeClaimed");
     }
 
     setP2PSwapStatus(messageId: bigint, status: P2PSwapStatus) {
         return this.#modifyMessageUpdates(messageId, (upd) => {
             upd.p2pSwapStatus = status;
-            return (upd) => ({
-                ...upd,
-                p2pSwapStatus: undefined,
-            });
+            return (upd) => {
+                upd.p2pSwapStatus = undefined;
+                return upd;
+            };
         }, "setP2PSwapStatus");
     }
 
     markPollVote(messageId: bigint, vote: LocalPollVote) {
         return this.#modifyMessageUpdates(messageId, (upd) => {
             upd.pollVotes.push(vote);
-            return (upd) => ({
-                ...upd,
-                pollVotes: [],
-            });
+            return (upd) => {
+                upd.pollVotes = [];
+                return upd;
+            };
         }, "markPollVote");
     }
 
     markThreadSummaryUpdated(messageId: bigint, summaryUpdates: Partial<ThreadSummary>) {
         return this.#modifyMessageUpdates(messageId, (upd) => {
             upd.threadSummary = { ...upd.threadSummary, ...summaryUpdates };
-            return (upd) => ({
-                ...upd,
-                threadSummary: undefined,
-            });
+            return (upd) => {
+                upd.threadSummary = undefined;
+                return upd;
+            };
         }, "markThreadSummaryUpdated");
     }
 
@@ -931,12 +929,12 @@ export class GlobalLocalState {
             upd.deleted = deleted;
             upd.undeletedContent = undeletedContent;
             upd.revealedContent = revealedContent;
-            return (upd) => ({
-                ...upd,
-                deleted: undefined,
-                undeletedContent: undefined,
-                revealedContent: undefined,
-            });
+            return (upd) => {
+                upd.deleted = undefined;
+                upd.undeletedContent = undefined;
+                upd.revealedContent = undefined;
+                return upd;
+            };
         }, "markMessageDeletedUndeleted");
     }
 }
