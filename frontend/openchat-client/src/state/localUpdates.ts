@@ -46,7 +46,7 @@ import { communityLocalUpdates } from "./community/detailUpdates";
 import { communitySummaryLocalUpdates, CommunitySummaryUpdates } from "./community/summaryUpdates";
 import { createDraftMessagesStore } from "./draft";
 import { LocalChatMap, LocalCommunityMap, LocalMap } from "./map";
-import { MessageLocalUpdates, messageLocalUpdates } from "./message/localUpdates";
+import { type MessageDeleted, MessageLocalUpdates, messageLocalUpdates } from "./message/localUpdates";
 import { ChatLocalSet, LocalSet } from "./set";
 import { scheduleUndo, type UndoLocalUpdate } from "./undo";
 import {
@@ -807,42 +807,20 @@ export class GlobalLocalState {
     }
 
     markMessageDeleted(messageId: bigint, userId: string) {
-        return this.#modifyMessageUpdates(messageId, (upd) => {
-            upd.deleted = { deletedBy: userId, timestamp: BigInt(Date.now()) };
-            return (upd) => ({
-                ...upd,
-                deleted: undefined,
-                undeletedContent: undefined,
-                revealedContent: undefined,
-            });
-        }, "markMessageDeletedUndeleted");
+        return this.#markMessageDeletedUndeleted(
+            messageId,
+            { deletedBy: userId, timestamp: BigInt(Date.now()) },
+            undefined,
+            undefined,
+        );
     }
 
     markMessageUndeleted(messageId: bigint, content?: MessageContent) {
-        return this.#modifyMessageUpdates(messageId, (upd) => {
-            upd.deleted = undefined;
-            upd.undeletedContent = content;
-            upd.revealedContent = undefined;
-            return (upd) => ({
-                ...upd,
-                deleted: undefined,
-                undeletedContent: undefined,
-                revealedContent: undefined,
-            });
-        }, "markMessageDeletedUndeleted");
+        return this.#markMessageDeletedUndeleted(messageId, undefined, content, undefined);
     }
 
     markMessageContentRevealed(messageId: bigint, content: MessageContent) {
-        return this.#modifyMessageUpdates(messageId, (upd) => {
-            upd.deleted = undefined;
-            upd.revealedContent = content;
-            return (upd) => ({
-                ...upd,
-                deleted: undefined,
-                undeletedContent: undefined,
-                revealedContent: undefined,
-            });
-        }, "markMessageDeletedUndeleted");
+        return this.#markMessageDeletedUndeleted(messageId, undefined, undefined, content);
     }
 
     markBlockedMessageRevealed(messageId: bigint) {
@@ -944,6 +922,25 @@ export class GlobalLocalState {
                 threadSummary: undefined,
             });
         }, "markThreadSummaryUpdated");
+    }
+
+    #markMessageDeletedUndeleted(
+        messageId: bigint,
+        deleted: MessageDeleted | undefined,
+        undeletedContent: MessageContent | undefined,
+        revealedContent: MessageContent | undefined
+    ) {
+        return this.#modifyMessageUpdates(messageId, (upd) => {
+            upd.deleted = deleted;
+            upd.undeletedContent = undeletedContent;
+            upd.revealedContent = revealedContent;
+            return (upd) => ({
+                ...upd,
+                deleted: undefined,
+                undeletedContent: undefined,
+                revealedContent: undefined,
+            });
+        }, "markMessageDeletedUndeleted");
     }
 }
 
