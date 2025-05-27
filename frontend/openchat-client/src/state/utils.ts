@@ -11,6 +11,7 @@ type UndoTimeout = number | "never";
 export function modifyWritable<T>(
     fn: (data: T) => UndoLocalUpdate,
     store: Writable<T>,
+    dedupeId?: string,
     timeout?: UndoTimeout,
 ) {
     let undo: UndoLocalUpdate = noop;
@@ -23,7 +24,7 @@ export function modifyWritable<T>(
             undo();
             return s;
         });
-    }, timeout);
+    }, dedupeId, timeout);
 }
 
 export function removeFromWritableLocalMap<K, V>(
@@ -31,7 +32,7 @@ export function removeFromWritableLocalMap<K, V>(
     store: Writable<LocalMap<K, V>>,
     timeout?: UndoTimeout,
 ) {
-    return modifyWritable((d) => d.remove(key), store, timeout);
+    return modifyWritable((d) => d.remove(key), store, undefined, timeout);
 }
 
 export function addToWritableLocalMap<K, V>(
@@ -40,11 +41,11 @@ export function addToWritableLocalMap<K, V>(
     store: Writable<LocalMap<K, V>>,
     timeout?: UndoTimeout,
 ) {
-    return modifyWritable((d) => d.addOrUpdate(key, val), store, timeout);
+    return modifyWritable((d) => d.addOrUpdate(key, val), store, undefined, timeout);
 }
 
 export function addToWritableLocalSet<V>(val: V, store: Writable<LocalSet<V>>, timeout?: number) {
-    return modifyWritable((d) => d.add(val), store, timeout);
+    return modifyWritable((d) => d.add(val), store, undefined, timeout);
 }
 
 export function removeFromWritableLocalSet<V>(
@@ -52,7 +53,7 @@ export function removeFromWritableLocalSet<V>(
     store: Writable<LocalSet<V>>,
     timeout?: UndoTimeout,
 ) {
-    return modifyWritable((d) => d.remove(val), store, timeout);
+    return modifyWritable((d) => d.remove(val), store, undefined, timeout);
 }
 
 export function addToWritableMap<K, V>(
@@ -67,6 +68,7 @@ export function addToWritableMap<K, V>(
             return () => d.delete(key);
         },
         store,
+        undefined,
         timeout,
     );
 }
@@ -76,6 +78,7 @@ export function modifyWritableMap<K, V>(
     fn: (val: V) => (v: V) => V,
     store: Writable<SafeMap<K, V>>,
     notFound: () => V,
+    dedupeId?: string,
     timeout?: UndoTimeout,
 ) {
     return modifyWritable(
@@ -91,6 +94,7 @@ export function modifyWritableMap<K, V>(
             };
         },
         store,
+        dedupeId,
         timeout,
     );
 }
@@ -111,6 +115,7 @@ export function removeFromWritableMap<K, V>(
             };
         },
         store,
+        undefined,
         timeout,
     );
 }
