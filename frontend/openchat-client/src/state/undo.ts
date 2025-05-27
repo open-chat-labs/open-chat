@@ -1,6 +1,6 @@
 export type UndoLocalUpdate = () => void;
 
-const TIMEOUT = 30_000;
+const TIMEOUT = 60_000;
 
 export function scheduleUndo(
     fn: UndoLocalUpdate,
@@ -9,9 +9,7 @@ export function scheduleUndo(
 ): UndoLocalUpdate {
     if (timeout === "never") return fn;
 
-    const wrappedFn = dedupeId !== undefined
-        ? dedupe(fn, dedupeId)
-        : fn;
+    const wrappedFn = dedupeId !== undefined ? dedupe(fn, dedupeId) : fn;
 
     const timer = setTimeout(wrappedFn, timeout);
 
@@ -19,7 +17,7 @@ export function scheduleUndo(
         // if someone calls the undo fn manually, cancel the scheduled call
         clearTimeout(timer);
         wrappedFn();
-    }
+    };
 }
 
 function dedupe(fn: UndoLocalUpdate, dedupeId: string): UndoLocalUpdate {
