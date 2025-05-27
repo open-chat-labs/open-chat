@@ -1,5 +1,6 @@
 import { dequal } from "dequal";
 import {
+    chatIdentifierToString,
     ChatMap,
     CommunityMap,
     emptyChatMetrics,
@@ -466,13 +467,12 @@ export class GlobalLocalState {
 
     updateCommunityDisplayName(id: CommunityIdentifier, name?: string) {
         return this.#modifyCommunitySummaryUpdates(id, (upd) => {
-            const prev = upd.displayName;
             upd.displayName = name !== undefined ? { value: name } : "set_to_none";
             return (upd) => ({
                 ...upd,
-                displayName: prev,
+                displayName: undefined,
             });
-        });
+        }, "updateCommunityDisplayName");
     }
 
     updateCommunityMember(id: CommunityIdentifier, userId: string, member: Member) {
@@ -505,13 +505,12 @@ export class GlobalLocalState {
 
     updateCommunityRulesAccepted(id: CommunityIdentifier, accepted: boolean): UndoLocalUpdate {
         return this.#modifyCommunitySummaryUpdates(id, (upd) => {
-            const prev = upd.rulesAccepted;
             upd.rulesAccepted = accepted;
             return (upd) => ({
                 ...upd,
-                rulesAccepted: prev,
+                rulesAccepted: undefined,
             });
-        });
+        }, "updateCommunityRulesAccepted");
     }
 
     deleteUserGroup(id: CommunityIdentifier, userGroupId: number): UndoLocalUpdate {
@@ -551,13 +550,12 @@ export class GlobalLocalState {
 
     updateCommunityIndex(id: CommunityIdentifier, index: number): UndoLocalUpdate {
         return this.#modifyCommunitySummaryUpdates(id, (upd) => {
-            const prev = upd.index;
             upd.index = index;
             return (upd) => ({
                 ...upd,
-                index: prev,
+                index: undefined,
             });
-        });
+        }, "updateCommunityIndex");
     }
 
     // Chat stuff
@@ -670,47 +668,52 @@ export class GlobalLocalState {
         fn: (
             val: CommunitySummaryUpdates,
         ) => (v: CommunitySummaryUpdates) => CommunitySummaryUpdates,
+        functionName: string,
     ): UndoLocalUpdate {
         return modifyWritableMap(
             id,
             fn,
             communitySummaryLocalUpdates,
             () => new CommunitySummaryUpdates(),
+            `${functionName}_${id.communityId}`,
         );
     }
 
     #modifyChatSummaryUpdates(
         id: ChatIdentifier,
         fn: (val: ChatSummaryUpdates) => (v: ChatSummaryUpdates) => ChatSummaryUpdates,
+        functionName: string,
     ): UndoLocalUpdate {
-        return modifyWritableMap(id, fn, chatSummaryLocalUpdates, () => new ChatSummaryUpdates());
+        return modifyWritableMap(
+            id,
+            fn,
+            chatSummaryLocalUpdates,
+            () => new ChatSummaryUpdates(),
+            `${functionName}_${chatIdentifierToString(id)}`);
     }
 
     updateNotificationsMuted(id: ChatIdentifier, muted: boolean): UndoLocalUpdate {
         return this.#modifyChatSummaryUpdates(id, (upd) => {
-            const prev = upd.notificationsMuted;
             upd.notificationsMuted = muted;
             return (upd) => ({
                 ...upd,
-                notificationsMuted: prev,
+                notificationsMuted: undefined,
             });
-        });
+        }, "updateNotificationsMuted");
     }
 
     updateArchived(id: ChatIdentifier, archived: boolean): UndoLocalUpdate {
         return this.#modifyChatSummaryUpdates(id, (upd) => {
-            const prev = upd.archived;
             upd.archived = archived;
             return (upd) => ({
                 ...upd,
-                archived: prev,
+                archived: undefined,
             });
-        });
+        }, "updateArchived");
     }
 
     updateLatestMessage(id: ChatIdentifier, message: EventWrapper<Message>): UndoLocalUpdate {
         return this.#modifyChatSummaryUpdates(id, (upd) => {
-            const prev = upd.latestMessage;
             if (!dequal(upd.latestMessage, message)) {
                 upd.latestMessage = message;
                 return (upd) => {
@@ -719,12 +722,12 @@ export class GlobalLocalState {
                     }
                     return {
                         ...upd,
-                        latestMessage: prev,
+                        latestMessage: undefined,
                     };
                 };
             }
             return (upd) => upd;
-        });
+        }, "updateLatestMessage");
     }
 
     updateChatRulesAccepted(id: ChatIdentifier, rulesAccepted: boolean): UndoLocalUpdate {
@@ -734,7 +737,7 @@ export class GlobalLocalState {
                 ...upd,
                 rulesAccepted: undefined,
             });
-        });
+        }, "updateChatRulesAccepted");
     }
 
     updateChatProperties(
@@ -747,12 +750,6 @@ export class GlobalLocalState {
         isPublic?: boolean,
     ) {
         return this.#modifyChatSummaryUpdates(id, (upd) => {
-            const prevName = upd.name;
-            const prevDescription = upd.description;
-            const prevPermissions = upd.permissions;
-            const prevGateConfig = upd.gateConfig;
-            const prevEventsTTL = upd.eventsTTL;
-            const prevIsPublic = upd.isPublic;
             upd.name = name;
             upd.description = description;
             upd.permissions = permissions;
@@ -761,14 +758,14 @@ export class GlobalLocalState {
             upd.isPublic = isPublic;
             return (upd) => ({
                 ...upd,
-                name: prevName,
-                description: prevDescription,
-                permissions: prevPermissions,
-                gateConfig: prevGateConfig,
-                eventsTTL: prevEventsTTL,
-                isPublic: prevIsPublic,
+                name: undefined,
+                description: undefined,
+                permissions: undefined,
+                gateConfig: undefined,
+                eventsTTL: undefined,
+                isPublic: undefined,
             });
-        });
+        }, "updateChatProperties");
     }
 
     updateChatFrozen(id: ChatIdentifier, frozen: boolean): UndoLocalUpdate {
@@ -778,7 +775,7 @@ export class GlobalLocalState {
                 ...upd,
                 frozen: undefined,
             });
-        });
+        }, "updateChatFrozen");
     }
 
     // message updates
