@@ -401,6 +401,7 @@
                 bot={chat.bot}
                 url={chat.avatarUrl}
                 showStatus
+                maxStreak={chat.streak >= 365}
                 userId={chat.userId?.userId}
                 size={AvatarSize.Default} />
             {#if chat.eventsTTL}

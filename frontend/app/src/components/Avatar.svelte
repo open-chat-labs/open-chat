@@ -20,7 +20,7 @@
         statusBorder?: string;
         selected?: boolean;
         bot?: boolean;
-        superUser?: boolean;
+        maxStreak?: boolean;
     }
 
     let {
@@ -32,7 +32,7 @@
         statusBorder = "white",
         selected = false,
         bot = false,
-        superUser = false,
+        maxStreak = false,
     }: Props = $props();
 
     let specialisation: Specialisation = $derived(getSpecialisation());
@@ -41,7 +41,7 @@
 
     function getSpecialisation(): Specialisation {
         if (bot) return "bot";
-        if (superUser) return "max_streak";
+        if (maxStreak) return "max_streak";
         return "none";
     }
 
@@ -67,7 +67,6 @@
     class:small={size === AvatarSize.Small}
     class:default={size === AvatarSize.Default}
     class:large={size === AvatarSize.Large}
-    class:superUser
     class:blocked>
     <img alt="Avatar" class="avatar-image" src={url} loading="lazy" />
     {#if userStatus === UserStatus.Online}
@@ -75,7 +74,7 @@
         </div>
     {/if}
     {#if specialisation !== "none"}
-        <div class="specialised" class:rtl={$rtlStore}>
+        <div class="specialised" class:maxStreak class:rtl={$rtlStore}>
             {#if specialisation === "bot"}
                 <div class="robot">
                     <Robot viewBox={"0 2 24 24"} size={"100%"} color={"rgba(255, 255, 255, 0.9)"} />
@@ -166,7 +165,12 @@
     .specialised {
         position: absolute;
         $offset: $avatar-mod-offset;
+        &.maxStreak {
+            $offset: calc($offset - 5px);
+            transform: scale(0.85);
+        }
         top: $offset;
+
         &:not(.rtl) {
             left: $offset;
         }
