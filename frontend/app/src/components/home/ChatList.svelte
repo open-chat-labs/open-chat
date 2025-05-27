@@ -5,6 +5,7 @@
         chatIdentifiersEqual,
         chatIdentifierToString,
         type ChatListScope,
+        chatListScopesEqual,
         chatListScopeStore,
         chatSummariesListStore,
         type ChatSummary as ChatSummaryType,
@@ -62,7 +63,7 @@
     let searchTerm: string = $state("");
     let searchResultsAvailable: boolean = $state(false);
     let chatsScrollTop = $state<number | undefined>();
-    let previousScope: ChatListScope | undefined = $chatListScopeStore;
+    let previousScope: ChatListScope = $chatListScopeStore;
     let previousView: "chats" | "threads" = $chatListView;
 
     // TODO this doesn't work properly and I think it's to do with the way
@@ -70,7 +71,7 @@
     // Probably can just be done in a more explicit way but it's not urgent
     $effect.pre(() => {
         if (
-            previousScope === $chatListScopeStore &&
+            chatListScopesEqual(previousScope, $chatListScopeStore) &&
             $chatListView !== "chats" &&
             previousView === "chats"
         ) {
@@ -79,7 +80,7 @@
     });
 
     $effect(() => {
-        if (previousScope?.kind !== $chatListScopeStore.kind) {
+        if (!chatListScopesEqual(previousScope, $chatListScopeStore)) {
             onScopeChanged();
         } else if (previousView !== $chatListView) {
             onViewChanged();
