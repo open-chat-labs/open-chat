@@ -10,7 +10,7 @@ import {
 import { writable } from "../../utils/stores";
 import { notEq } from "../utils";
 
-type MessageDeleted = {
+export type MessageDeleted = {
     deletedBy: string;
     timestamp: bigint;
 };
