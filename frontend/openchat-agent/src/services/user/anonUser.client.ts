@@ -28,7 +28,7 @@ import type {
     EventsResponse,
     EventWrapper,
     ExchangeTokenSwapArgs,
-    ExternalBotPermissions,
+    GrantedBotPermissions,
     GroupChatIdentifier,
     IndexRange,
     InitialStateResponse,
@@ -494,7 +494,7 @@ export class AnonUserClient {
 
     updateInstalledBot(
         _botId: string,
-        _grantedPermissions: ExternalBotPermissions,
+        _grantedPermissions: GrantedBotPermissions,
     ): Promise<boolean> {
         throw new AnonymousOperationError();
     }

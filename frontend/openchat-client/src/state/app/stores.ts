@@ -24,7 +24,6 @@ import {
     type DirectChatSummary,
     type EnhancedTokenDetails,
     type EventWrapper,
-    type ExternalBotPermissions,
     type GrantedBotPermissions,
     type GroupChatSummary,
     type IdentityState,
@@ -526,8 +525,7 @@ export const selectedCommunityMembersStore = derived(
 export const selectedCommunityBotsStore = derived(
     [selectedServerCommunityStore, communityLocalUpdates.bots],
     ([community, bots]) => {
-        if (community === undefined)
-            return new Map() as ReadonlyMap<string, ExternalBotPermissions>;
+        if (community === undefined) return new Map() as ReadonlyMap<string, GrantedBotPermissions>;
         const updates = bots.get(community.communityId);
         if (updates === undefined) return community.bots;
         return updates.apply(community.bots);
@@ -617,7 +615,7 @@ export const selectedChatInvitedUsersStore = derived(
 export const selectedChatBotsStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.bots],
     ([chat, bots]) => {
-        if (chat === undefined) return new Map() as ReadonlyMap<string, ExternalBotPermissions>;
+        if (chat === undefined) return new Map() as ReadonlyMap<string, GrantedBotPermissions>;
         return bots.get(chat.chatId)?.apply(chat.bots) ?? chat.bots;
     },
 );

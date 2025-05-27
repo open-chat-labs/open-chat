@@ -140,6 +140,9 @@
             kind: "bot_definition",
             description: "",
             commands: [],
+            autonomousConfig: undefined,
+            defaultSubscriptions: undefined,
+            dataEncoding: undefined,
         };
     }
 

@@ -7,8 +7,8 @@
         type CommunitySummary,
         type EnhancedExternalBot,
         type ExternalBot,
-        type ExternalBotPermissions,
         type FullMember,
+        type GrantedBotPermissions,
         type MemberRole,
         type Member as MemberType,
         type MultiUserChat,
@@ -55,7 +55,7 @@
         members: MemberType[];
         blocked: ReadonlySet<string>;
         lapsed: ReadonlySet<string>;
-        installedBots: ReadonlyMap<string, ExternalBotPermissions>;
+        installedBots: ReadonlyMap<string, GrantedBotPermissions>;
         initialUsergroup?: number | undefined;
         showHeader?: boolean;
         webhooks?: WebhookDetails[];
@@ -97,7 +97,7 @@
     let installingBot: BotMatchType | undefined = undefined;
 
     function hydrateBots(
-        bots: ReadonlyMap<string, ExternalBotPermissions>,
+        bots: ReadonlyMap<string, GrantedBotPermissions>,
         allBots: Map<string, ExternalBot>,
     ): EnhancedExternalBot[] {
         return [...bots.entries()].reduce((bots, [id, perm]) => {

@@ -1,17 +1,17 @@
 <script lang="ts">
     import {
+        commandSupportsDirectMessages,
         hasEveryRequiredPermission,
         ValidationErrors,
-        type ExternalBotPermissions,
         type CommandDefinition,
-        commandSupportsDirectMessages,
+        type GrantedBotPermissions,
     } from "openchat-client";
-    import Tooltip from "../tooltip/Tooltip.svelte";
     import ShieldAccount from "svelte-material-icons/ShieldAccount.svelte";
     import SwapHorizontal from "svelte-material-icons/SwapHorizontal.svelte";
+    import Tooltip from "../tooltip/Tooltip.svelte";
 
     interface Props {
-        grantedPermissions?: ExternalBotPermissions;
+        grantedPermissions?: GrantedBotPermissions;
         commands: CommandDefinition[];
         centered?: boolean;
         onClick?: (command: CommandDefinition, index: number) => void;
@@ -24,8 +24,8 @@
 <div class="commands" class:centered>
     {#each commands as command, i}
         {@const permitted =
-            grantedPermissions === undefined ||
-            hasEveryRequiredPermission(command.permissions, grantedPermissions)}
+            grantedPermissions?.command === undefined ||
+            hasEveryRequiredPermission(command.permissions, grantedPermissions.command)}
         <Tooltip enable={permitted} position="bottom" align="middle">
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <!-- svelte-ignore a11y_no_static_element_interactions -->

@@ -30,7 +30,7 @@ import type {
     EventsSuccessResult,
     EventWrapper,
     ExchangeTokenSwapArgs,
-    ExternalBotPermissions,
+    GrantedBotPermissions,
     GroupChatIdentifier,
     IndexRange,
     InitialStateResponse,
@@ -1623,15 +1623,16 @@ export class UserClient extends MsgpackCanisterAgent {
         );
     }
 
-    updateInstalledBot(
-        botId: string,
-        grantedPermissions: ExternalBotPermissions,
-    ): Promise<boolean> {
+    updateInstalledBot(botId: string, grantedPermissions: GrantedBotPermissions): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "update_bot",
             {
                 bot_id: principalStringToBytes(botId),
-                granted_permissions: apiExternalBotPermissions(grantedPermissions),
+                granted_permissions: apiExternalBotPermissions(grantedPermissions.command),
+                granted_autonomous_permissions: mapOptional(
+                    grantedPermissions.autonomous,
+                    apiExternalBotPermissions,
+                ),
             },
             isSuccess,
             UserUpdateBotArgs,

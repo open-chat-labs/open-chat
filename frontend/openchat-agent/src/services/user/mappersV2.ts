@@ -17,9 +17,9 @@ import type {
     DirectChatSummaryUpdates,
     DirectChatsUpdates,
     ExchangeTokenSwapArgs,
-    ExternalBotPermissions,
     FavouriteChatsInitial,
     FavouriteChatsUpdates,
+    GrantedBotPermissions,
     GroupChatsInitial,
     GroupChatsUpdates,
     InitialStateResponse,
@@ -619,7 +619,7 @@ export function initialStateResponse(value: UserInitialStateResponse): InitialSt
             bots: result.bots.map(installedBotDetails).reduce((m, b) => {
                 m.set(b.id, b.permissions);
                 return m;
-            }, new Map<string, ExternalBotPermissions>()),
+            }, new Map<string, GrantedBotPermissions>()),
             bitcoinAddress: result.btc_address,
             streakInsurance: mapOptional(result.streak_insurance, streakInsurance),
         };

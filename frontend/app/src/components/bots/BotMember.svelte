@@ -1,11 +1,6 @@
 <script lang="ts">
-    import {
-        iconSize,
-        type CommunitySummary,
-        type ExternalBotPermissions,
-        type MultiUserChat,
-    } from "openchat-client";
-    import { type ExternalBot } from "openchat-shared";
+    import { iconSize, type CommunitySummary, type MultiUserChat } from "openchat-client";
+    import { type ExternalBot, type GrantedBotPermissions } from "openchat-shared";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
@@ -25,14 +20,14 @@
         bot: ExternalBot;
         canManage: boolean;
         searchTerm: string;
-        grantedPermissions: ExternalBotPermissions;
+        grantedPermissions: GrantedBotPermissions;
     }
 
     let { collection, bot, canManage, searchTerm, grantedPermissions }: Props = $props();
 </script>
 
 <WithBotManagement {collection} {bot} {canManage} {grantedPermissions}>
-    {#snippet contents({ removeBot, reviewCommandPermissions, viewBotDetails })}
+    {#snippet contents({ removeBot, reviewPermissions, viewBotDetails })}
         <div class="bot_member" role="button">
             <span class="avatar">
                 <BotAvatar {bot} />
@@ -66,8 +61,8 @@
                                     <Translatable resourceKey={i18nKey("bots.manage.remove")} />
                                 {/snippet}
                             </MenuItem>
-                            {#if bot.definition.commands.length > 0}
-                                <MenuItem onclick={() => reviewCommandPermissions()}>
+                            {#if bot.definition.commands.length > 0 || bot.definition.autonomousConfig !== undefined}
+                                <MenuItem onclick={() => reviewPermissions()}>
                                     {#snippet icon()}
                                         <PencilOutline
                                             size={$iconSize}

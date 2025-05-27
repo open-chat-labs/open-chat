@@ -135,6 +135,7 @@ import type {
     InstalledBotDetails as ApiInstalledBotDetails,
     WebhookDetails as ApiWebhookDetails,
     BotCommandArg,
+    BotDataEncoding,
     CommunityClaimPrizeResponse,
     CommunityCreateChannelSuccessResult,
     CommunityDeletedMessageSuccessResult,
@@ -2729,9 +2730,13 @@ function permissionsToBits<T>(permissions: T[], allPermissions: T[]): number {
 }
 
 export function installedBotDetails(value: ApiInstalledBotDetails): InstalledBotDetails {
+    console.log("Installed bot details: ", value);
     return {
         id: principalBytesToString(value.user_id),
-        permissions: externalBotPermissions(value.permissions),
+        permissions: {
+            command: externalBotPermissions(value.permissions),
+            autonomous: mapOptional(value.autonomous_permissions, externalBotPermissions),
+        },
     };
 }
 
@@ -2767,6 +2772,11 @@ export function externalBotDefinition(value: ApiBotDefinition): BotDefinition {
         autonomousConfig: mapOptional(value.autonomous_config, (c) => ({
             permissions: externalBotPermissions(c.permissions),
         })),
+        defaultSubscriptions: mapOptional(value.default_subscriptions, (s) => ({
+            community: s.community,
+            chat: s.chat,
+        })),
+        dataEncoding: mapOptional(value.data_encoding, dataEncoding),
     };
 }
 
@@ -2780,6 +2790,10 @@ export function externalBotCommand(command: ApiCommandDefinition): CommandDefini
         defaultRole: mapOptional(command.default_role, memberRole) ?? "member",
         directMessages: command.direct_messages ?? false,
     };
+}
+
+export function dataEncoding(data_encoding: BotDataEncoding): "json" | "candid" {
+    return data_encoding === "Candid" ? "candid" : "json";
 }
 
 export function externalBotParam(param: ApiCommandParam): CommandParam {

@@ -2,7 +2,6 @@ import { emptyChatMetrics } from "../../utils";
 import type { AccessControlled, AccessGateConfig, UpdatedRules, VersionedRules } from "../access";
 import type {
     CommandArg,
-    ExternalBotPermissions,
     GrantedBotPermissions,
     InstalledBotDetails,
     WebhookDetails,
@@ -1225,7 +1224,7 @@ export type InitialStateResponse = {
     referrals: Referral[];
     walletConfig: WalletConfig;
     messageActivitySummary: MessageActivitySummary;
-    bots: Map<string, ExternalBotPermissions>;
+    bots: Map<string, GrantedBotPermissions>;
     bitcoinAddress: string | undefined;
     streakInsurance?: StreakInsurance;
 };
@@ -2343,3 +2342,46 @@ export type VideoCallInProgress = {
 };
 
 export type PinnedByScope = Map<ChatListScope["kind"], ChatIdentifier[]>;
+
+export type ChatEventType =
+    | "Message"
+    | "MessageEdited"
+    | "MessageReaction"
+    | "MessageTipped"
+    | "MessageDeleted"
+    | "MessagePollVote"
+    | "MessagePollEnded"
+    | "MessagePrizeClaim"
+    | "MessagePrizePayment"
+    | "MessageProposalVote"
+    | "MessageProposalUpdated"
+    | "MessageP2pSwap"
+    | "MessageReported"
+    | "MessageThreadSummary"
+    | "MessageReminder"
+    | "MessageVideoCall"
+    | "MessageOther"
+    | "Created"
+    | "NameChanged"
+    | "DescriptionChanged"
+    | "RulesChanged"
+    | "AvatarChanged"
+    | "ExternalUrlUpdated"
+    | "PermissionsChanged"
+    | "VisibilityChanged"
+    | "InviteCodeChanged"
+    | "Frozen"
+    | "Unfrozen"
+    | "EventsTTLUpdated"
+    | "GateUpdated"
+    | "MessagePinned"
+    | "MessageUnpinned"
+    | "MembersJoined"
+    | "MembersLeft"
+    | "RoleChanged"
+    | "UsersInvited"
+    | "BotAdded"
+    | "BotRemoved"
+    | "BotUpdated"
+    | "UsersBlocked"
+    | "UsersUnblocked";

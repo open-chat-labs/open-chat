@@ -43,6 +43,7 @@ import type {
     BotCommandParam as ApiCommandParam,
     BotCommandParamType as ApiCommandParamType,
     AutonomousConfig,
+    BotDataEncoding,
     CurrentUserSummary as TCurrentUserSummary,
     DiamondMembershipDetails as TDiamondMembershipDetails,
     DiamondMembershipPlanDuration as TDiamondMembershipPlanDuration,
@@ -701,6 +702,8 @@ export function apiBotDefinition(domain: BotDefinition): ApiBotDefinition {
         description: domain.description ?? "",
         commands: domain.commands.map(apiExternalBotCommand),
         autonomous_config: mapOptional(domain.autonomousConfig, apiAutonomousConfig),
+        default_subscriptions: mapOptional(domain.defaultSubscriptions, identity),
+        data_encoding: mapOptional(domain.dataEncoding, apiDataEncoding),
     };
 }
 
@@ -708,6 +711,10 @@ export function apiAutonomousConfig(domain: AutonomousBotConfig): AutonomousConf
     return {
         permissions: apiExternalBotPermissions(domain.permissions),
     };
+}
+
+export function apiDataEncoding(dataEncoding: "json" | "candid"): BotDataEncoding {
+    return dataEncoding === "candid" ? "Candid" : "Json";
 }
 
 export function apiExternalBotCommand(command: CommandDefinition): ApiCommandDefinition {

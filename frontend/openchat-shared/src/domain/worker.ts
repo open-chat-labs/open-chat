@@ -12,7 +12,6 @@ import type {
     BotInstallationLocation,
     BotsResponse,
     ExternalBot,
-    ExternalBotPermissions,
     FullWebhookDetails,
     GrantedBotPermissions,
 } from "./bots";
@@ -530,7 +529,7 @@ type UpdateInstalledBot = {
     kind: "updateInstalledBot";
     id: BotInstallationLocation;
     botId: string;
-    grantedPermissions: ExternalBotPermissions;
+    grantedPermissions: GrantedBotPermissions;
 };
 
 type UninstallBot = {

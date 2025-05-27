@@ -1,5 +1,5 @@
 import type { AccessControlled, AccessGateConfig, VersionedRules } from "../access";
-import type { ExternalBotPermissions, InstalledBotDetails } from "../bots";
+import type { GrantedBotPermissions, InstalledBotDetails } from "../bots";
 import type {
     CanisterNotFound,
     ChannelIdentifier,
@@ -83,7 +83,7 @@ export type CommunitySpecificState = {
     invitedUsers: Set<string>;
     referrals: Set<string>;
     rules?: VersionedRules;
-    bots: Map<string, ExternalBotPermissions>;
+    bots: Map<string, GrantedBotPermissions>;
 };
 
 export interface UserFailedGateCheck {
@@ -311,3 +311,33 @@ export function communityIdentifiersEqual(
 }
 
 export type CommunityFilter = Set<string>;
+
+export type CommunityEventType =
+    | "Created"
+    | "NameChanged"
+    | "DescriptionChanged"
+    | "RulesChanged"
+    | "AvatarChanged"
+    | "BannerChanged"
+    | "PermissionsChanged"
+    | "VisibilityChanged"
+    | "InviteCodeChanged"
+    | "Frozen"
+    | "Unfrozen"
+    | "EventsTTLUpdated"
+    | "GateUpdated"
+    | "MessagePinned"
+    | "MessageUnpinned"
+    | "PrimaryLanguageChanged"
+    | "GroupImported"
+    | "ChannelCreated"
+    | "ChannelDeleted"
+    | "MembersJoined"
+    | "MembersLeft"
+    | "RoleChanged"
+    | "UsersInvited"
+    | "BotAdded"
+    | "BotRemoved"
+    | "BotUpdated"
+    | "UsersBlocked"
+    | "UsersUnblocked";

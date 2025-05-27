@@ -3,12 +3,13 @@ import * as chrono from "chrono-node";
 import { type InterpolationValues, parseBigInt, random64, type ResourceKey } from "../utils";
 import { ValidationErrors } from "../utils/validation";
 import type {
+    ChatEventType,
     ChatIdentifier,
     DirectChatIdentifier,
     GroupChatIdentifier,
     MessageContent,
 } from "./chat";
-import type { CommunityIdentifier } from "./community";
+import type { CommunityEventType, CommunityIdentifier } from "./community";
 import type {
     BotActionScope,
     BotChatPermission,
@@ -24,7 +25,7 @@ export const MIN_PARAM_NAME_LENGTH = 1;
 
 export type InstalledBotDetails = {
     id: string;
-    permissions: ExternalBotPermissions;
+    permissions: GrantedBotPermissions;
 };
 
 export type BotInstallationLocation =
@@ -189,10 +190,28 @@ export function emptyExternalBotPermissions(): ExternalBotPermissions {
     };
 }
 
+export function emptyGrantedBotPermissions(): GrantedBotPermissions {
+    return {
+        command: {
+            chatPermissions: [],
+            communityPermissions: [],
+            messagePermissions: [],
+        },
+        autonomous: undefined,
+    };
+}
+
 export function flattenCommandPermissions(definition: BotDefinition): ExternalBotPermissions {
     return definition.commands.reduce((p, c) => {
         return mergePermissions(p, c.permissions);
     }, emptyExternalBotPermissions());
+}
+
+export function definitionToPermissions(definition: BotDefinition): GrantedBotPermissions {
+    return {
+        command: flattenCommandPermissions(definition),
+        autonomous: definition.autonomousConfig?.permissions,
+    };
 }
 
 function mergeLists<T>(l1: T[], l2: T[]): T[] {
@@ -276,6 +295,9 @@ export function emptyBotInstance(ownerId: string): ExternalBot {
             kind: "bot_definition",
             description: "",
             commands: [],
+            autonomousConfig: undefined,
+            defaultSubscriptions: undefined,
+            dataEncoding: undefined,
         },
         registrationStatus: { kind: "private" },
     };
@@ -311,11 +333,18 @@ export type BotDefinition = {
     kind: "bot_definition";
     description: string;
     commands: CommandDefinition[];
-    autonomousConfig?: AutonomousBotConfig;
+    autonomousConfig: AutonomousBotConfig | undefined;
+    defaultSubscriptions: BotSubscriptions | undefined;
+    dataEncoding: "json" | "candid" | undefined;
 };
 
 export type AutonomousBotConfig = {
     permissions: ExternalBotPermissions;
+};
+
+export type BotSubscriptions = {
+    community: CommunityEventType[];
+    chat: ChatEventType[];
 };
 
 export type BotDefinitionFailure = {
@@ -718,25 +747,25 @@ export type BotClientConfigData = {
     icHost: string;
 };
 
-export type BotSummaryMode = EditingCommandBot | ViewingCommandBot;
+export type BotSummaryMode = EditingBot | ViewingBot;
 
 type BotSummaryModeCommon = {
-    requested: ExternalBotPermissions;
+    requested: GrantedBotPermissions;
 };
 
-export type EditingCommandBot = BotSummaryModeCommon & {
-    kind: "editing_command_bot";
+export type EditingBot = BotSummaryModeCommon & {
+    kind: "editing_bot";
     id: CommunityIdentifier | GroupChatIdentifier | DirectChatIdentifier;
-    granted: ExternalBotPermissions;
+    granted: GrantedBotPermissions;
 };
 
-export type ViewingCommandBot = BotSummaryModeCommon & {
-    kind: "viewing_command_bot";
+export type ViewingBot = BotSummaryModeCommon & {
+    kind: "viewing_bot";
     id: CommunityIdentifier | GroupChatIdentifier | DirectChatIdentifier;
-    granted: ExternalBotPermissions;
+    granted: GrantedBotPermissions;
 };
 
-export type EnhancedExternalBot = ExternalBot & { grantedPermissions: ExternalBotPermissions };
+export type EnhancedExternalBot = ExternalBot & { grantedPermissions: GrantedBotPermissions };
 
 export function botActionScopeFromExecutionContext(
     ctx: CommunityIdentifier | ChatIdentifier,

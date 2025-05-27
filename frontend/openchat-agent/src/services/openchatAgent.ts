@@ -74,7 +74,6 @@ import type {
     ExternalAchievement,
     ExternalAchievementsSuccess,
     ExternalBot,
-    ExternalBotPermissions,
     FollowThreadResponse,
     FreezeCommunityResponse,
     FreezeGroupResponse,
@@ -4292,7 +4291,7 @@ export class OpenChatAgent extends EventTarget {
     updateInstalledBot(
         id: BotInstallationLocation,
         botId: string,
-        grantedPermissions: ExternalBotPermissions,
+        grantedPermissions: GrantedBotPermissions,
     ): Promise<boolean> {
         switch (id.kind) {
             case "community":

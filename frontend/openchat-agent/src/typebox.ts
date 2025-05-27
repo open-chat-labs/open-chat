@@ -4968,6 +4968,7 @@ export const InstalledBotDetails = Type.Object({
     user_id: UserId,
     added_by: UserId,
     permissions: BotPermissions,
+    autonomous_permissions: Type.Optional(BotPermissions),
 });
 
 export type UserSummaryStable = Static<typeof UserSummaryStable>;

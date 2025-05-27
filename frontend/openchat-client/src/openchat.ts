@@ -92,7 +92,6 @@ import type {
     ExploreCommunitiesResponse,
     ExternalBot,
     ExternalBotCommandInstance,
-    ExternalBotPermissions,
     Failure,
     FaqRoute,
     FromWorker,
@@ -8317,7 +8316,7 @@ export class OpenChat {
     updateInstalledBot(
         id: BotInstallationLocation,
         botId: string,
-        grantedPermissions: ExternalBotPermissions,
+        grantedPermissions: GrantedBotPermissions,
     ): Promise<boolean> {
         return this.#sendRequest({
             kind: "updateInstalledBot",
@@ -8459,19 +8458,17 @@ export class OpenChat {
             case "external_bot":
                 return this.#getAuthTokenForBotCommand(scope, bot)
                     .then(([token, msgId]) => {
-                        if (bot.command.name !== "sync_api_key") {
-                            removePlaceholder = this.sendPlaceholderBotMessage(
-                                scope,
-                                botContext,
-                                bot.command.placeholder !== undefined
-                                    ? { kind: "text_content", text: bot.command.placeholder }
-                                    : { kind: "bot_placeholder_content" },
-                                msgId,
-                                bot.id,
-                                false,
-                                false,
-                            );
-                        }
+                        removePlaceholder = this.sendPlaceholderBotMessage(
+                            scope,
+                            botContext,
+                            bot.command.placeholder !== undefined
+                                ? { kind: "text_content", text: bot.command.placeholder }
+                                : { kind: "bot_placeholder_content" },
+                            msgId,
+                            bot.id,
+                            false,
+                            false,
+                        );
                         return this.#callBotCommandEndpoint(bot.endpoint, token);
                     })
                     .then((resp) => {

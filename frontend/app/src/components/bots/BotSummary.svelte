@@ -5,7 +5,6 @@
         type BotInstallationLocation,
         type BotSummaryMode,
         type ExternalBotLike,
-        type ExternalBotPermissions,
         type Level,
     } from "openchat-client";
     import { getContext } from "svelte";
@@ -21,6 +20,8 @@
 
     const client = getContext<OpenChat>("client");
 
+    type Step = "choose_command_permissions" | "choose_autonomous_permissions" | "unknown";
+
     interface Props {
         level: Level;
         mode: BotSummaryMode;
@@ -30,30 +31,55 @@
 
     let { bot, onClose, mode, level }: Props = $props();
     let busy = $state(false);
+    let step = $state<Step>(firstStep());
     let title = $derived.by(() => {
         switch (mode.kind) {
-            case "editing_command_bot":
+            case "editing_bot":
                 return i18nKey("bots.edit.title");
-            case "viewing_command_bot":
+            case "viewing_bot":
                 return i18nKey("bots.view.title");
         }
     });
     let cta = $derived.by(() => {
         switch (mode.kind) {
-            case "editing_command_bot":
-                return i18nKey("bots.edit.updateBot");
-            case "viewing_command_bot":
+            case "editing_bot":
+                if (
+                    step === "choose_command_permissions" &&
+                    bot.definition.autonomousConfig !== undefined
+                ) {
+                    return i18nKey("bots.edit.next");
+                } else {
+                    return i18nKey("bots.edit.updateBot");
+                }
+            case "viewing_bot":
                 return i18nKey("bots.view.close");
         }
     });
-    let choosePermissions = $derived(mode.kind !== "viewing_command_bot");
-    let grantedPermissions = $state(getInitialGrantedPermissions(mode));
+    let grantedPermissions = $state(mode.granted);
 
-    function getInitialGrantedPermissions(mode: BotSummaryMode): ExternalBotPermissions {
-        switch (mode.kind) {
-            case "editing_command_bot":
-            case "viewing_command_bot":
-                return mode.granted;
+    function firstStep(): Step {
+        if (mode.kind === "editing_bot") {
+            if (bot.definition.commands.length > 0) {
+                return "choose_command_permissions";
+            } else if (bot.definition.autonomousConfig !== undefined) {
+                return "choose_autonomous_permissions";
+            }
+        }
+        return "unknown";
+    }
+
+    function nextStep(current: Step) {
+        switch (current) {
+            case "choose_command_permissions":
+                if (bot.definition.autonomousConfig !== undefined) {
+                    step = "choose_autonomous_permissions";
+                } else {
+                    updateBot(mode.id);
+                }
+                break;
+            case "choose_autonomous_permissions":
+                updateBot(mode.id);
+                break;
         }
     }
 
@@ -73,10 +99,10 @@
 
     function mainButton() {
         switch (mode.kind) {
-            case "editing_command_bot":
-                updateBot(mode.id);
+            case "editing_bot":
+                nextStep(step);
                 break;
-            case "viewing_command_bot":
+            case "viewing_bot":
                 onClose();
                 break;
         }
@@ -92,18 +118,21 @@
         {/snippet}
         {#snippet body()}
             <div class="body">
-                <BotProperties
-                    {bot}
-                    installing={busy}
-                    showCommands
-                    grantedCommandPermissions={grantedPermissions}>
-                    {#if choosePermissions}
+                <BotProperties installing={busy} {grantedPermissions} {bot}>
+                    {#if step === "choose_command_permissions"}
                         <ChoosePermissions
                             {level}
-                            title={i18nKey("bots.add.choosePermissions")}
-                            subtitle={i18nKey("bots.add.permissionsInfo")}
-                            granted={grantedPermissions}
-                            requested={mode.requested} />
+                            title={i18nKey("bots.add.chooseCommandPermissions")}
+                            subtitle={i18nKey("bots.add.commandPermissionsInfo")}
+                            bind:granted={grantedPermissions.command}
+                            requested={mode.requested.command} />
+                    {:else if step === "choose_autonomous_permissions"}
+                        <ChoosePermissions
+                            {level}
+                            title={i18nKey("bots.add.chooseAutonomousPermissions")}
+                            subtitle={i18nKey("bots.add.autonomousPermissionsInfo")}
+                            bind:granted={grantedPermissions.autonomous!}
+                            requested={mode.requested.autonomous!} />
                     {/if}
                 </BotProperties>
             </div>

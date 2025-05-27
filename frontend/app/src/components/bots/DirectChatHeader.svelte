@@ -3,9 +3,9 @@
     import {
         allUsersStore,
         AvatarSize,
+        definitionToPermissions,
         directChatBotsStore,
         favouritesStore,
-        flattenCommandPermissions,
         iconSize,
         mobileWidth,
         type OpenChat,
@@ -44,7 +44,7 @@
     let { chat, bot, onSearchChat }: Props = $props();
     let botUser = $derived($allUsersStore.get(chat.them.userId));
     let grantedPermissions = $derived(
-        $directChatBotsStore.get(bot.id) ?? flattenCommandPermissions(bot.definition),
+        $directChatBotsStore.get(bot.id) ?? definitionToPermissions(bot.definition),
     );
 
     function addToFavourites() {
@@ -61,7 +61,7 @@
 </script>
 
 <WithBotManagement collection={chat} {bot} canManage {grantedPermissions}>
-    {#snippet contents({ removeBot, reviewCommandPermissions, viewBotDetails })}
+    {#snippet contents({ removeBot, reviewPermissions, viewBotDetails })}
         <SectionHeader shadow flush>
             {#if $mobileWidth}
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -145,7 +145,7 @@
                                 {/snippet}
                             </MenuItem>
 
-                            <MenuItem onclick={() => reviewCommandPermissions()}>
+                            <MenuItem onclick={() => reviewPermissions()}>
                                 {#snippet icon()}
                                     <PencilOutline
                                         size={$iconSize}
