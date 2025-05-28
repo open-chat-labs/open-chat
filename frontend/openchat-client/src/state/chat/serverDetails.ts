@@ -1,9 +1,8 @@
 import {
     emptyRules,
     type ChatIdentifier,
-    type ExternalBotPermissions,
+    type GrantedBotPermissions,
     type Member,
-    type PublicApiKeyDetails,
     type ReadonlyMap,
     type ReadonlySet,
     type VersionedRules,
@@ -18,8 +17,7 @@ export class ChatDetailsState {
         public blockedUsers: ReadonlySet<string>,
         public invitedUsers: ReadonlySet<string>,
         public pinnedMessages: ReadonlySet<number>,
-        public bots: ReadonlyMap<string, ExternalBotPermissions>,
-        public apiKeys: ReadonlyMap<string, PublicApiKeyDetails>,
+        public bots: ReadonlyMap<string, GrantedBotPermissions>,
         public webhooks: ReadonlyMap<string, WebhookDetails>,
         public rules: VersionedRules = emptyRules(),
     ) {}

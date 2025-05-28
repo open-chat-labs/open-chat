@@ -17,7 +17,7 @@ import {
     type DirectChatIdentifier,
     type DirectChatSummary,
     type EventWrapper,
-    type ExternalBotPermissions,
+    type GrantedBotPermissions,
     type LocalPollVote,
     type LocalReaction,
     type Member,
@@ -104,7 +104,7 @@ export class GlobalLocalState {
         undefined,
         notEq,
     );
-    readonly directChatBots = writable<LocalMap<string, ExternalBotPermissions>>(
+    readonly directChatBots = writable<LocalMap<string, GrantedBotPermissions>>(
         new LocalMap(),
         undefined,
         notEq,
@@ -548,7 +548,7 @@ export class GlobalLocalState {
     installBotInCommunity(
         id: CommunityIdentifier,
         botId: string,
-        perm: ExternalBotPermissions,
+        perm: GrantedBotPermissions,
     ): UndoLocalUpdate {
         return communityLocalUpdates.installBot(id, botId, perm);
     }
@@ -627,7 +627,7 @@ export class GlobalLocalState {
     installBotInChat(
         id: ChatIdentifier,
         botId: string,
-        perm: ExternalBotPermissions,
+        perm: GrantedBotPermissions,
     ): UndoLocalUpdate {
         return chatDetailsLocalUpdates.installBot(id, botId, perm);
     }
@@ -661,7 +661,7 @@ export class GlobalLocalState {
         };
     }
 
-    installDirectChatBot(botId: string, perm: ExternalBotPermissions): UndoLocalUpdate {
+    installDirectChatBot(botId: string, perm: GrantedBotPermissions): UndoLocalUpdate {
         return addToWritableLocalMap(botId, perm, this.directChatBots);
     }
 

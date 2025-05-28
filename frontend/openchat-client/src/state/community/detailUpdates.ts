@@ -1,7 +1,7 @@
 import {
     CommunityMap,
     type CommunityIdentifier,
-    type ExternalBotPermissions,
+    type GrantedBotPermissions,
     type Member,
     type UserGroupDetails,
     type VersionedRules,
@@ -28,7 +28,7 @@ export class CommunityDetailsUpdatesManager {
         undefined,
         notEq,
     );
-    bots = writable<CommunityMap<LocalMap<string, ExternalBotPermissions>>>(
+    bots = writable<CommunityMap<LocalMap<string, GrantedBotPermissions>>>(
         new CommunityMap(),
         undefined,
         notEq,
@@ -106,7 +106,7 @@ export class CommunityDetailsUpdatesManager {
     installBot(
         id: CommunityIdentifier,
         botId: string,
-        perm: ExternalBotPermissions,
+        perm: GrantedBotPermissions,
     ): UndoLocalUpdate {
         return this.#updateForCommunity(id, this.bots, localMap, (s) => s.addOrUpdate(botId, perm));
     }

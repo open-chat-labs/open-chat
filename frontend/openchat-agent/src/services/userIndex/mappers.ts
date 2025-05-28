@@ -1,61 +1,69 @@
 import type {
+    AutonomousBotConfig,
+    BotDefinition,
+    BotInstallationLocation,
+    BotMatch,
+    BotRegistrationStatus,
+    BotsResponse,
     CheckUsernameResponse,
-    SetUsernameResponse,
+    ChitLeaderboardResponse,
+    ChitUserBalance,
+    CommandDefinition,
+    CommandParam,
     CurrentUserResponse,
-    UserSummary,
-    SuspendUserResponse,
-    UnsuspendUserResponse,
-    SuspensionDetails,
-    SuspensionAction,
+    CurrentUserSummary,
     DiamondMembershipDetails,
     DiamondMembershipDuration,
     DiamondMembershipFees,
+    DiamondMembershipStatus,
+    DiamondMembershipSubscription,
+    ExploreBotsResponse,
+    ExternalAchievement,
+    ExternalAchievementsResponse,
+    ExternalBot,
     PayForDiamondMembershipResponse,
     SetDisplayNameResponse,
-    DiamondMembershipSubscription,
-    DiamondMembershipStatus,
-    ChitUserBalance,
-    CurrentUserSummary,
-    UsersApiResponse,
-    UserSummaryUpdate,
+    SetUsernameResponse,
     SubmitProofOfUniquePersonhoodResponse,
-    ExternalAchievementsResponse,
-    ExternalAchievement,
-    ChitLeaderboardResponse,
-    ExploreBotsResponse,
-    CommandDefinition,
-    BotMatch,
-    CommandParam,
-    BotsResponse,
-    ExternalBot,
-    BotDefinition,
-    AutonomousBotConfig,
-    BotInstallationLocation,
-    BotRegistrationStatus,
+    SuspendUserResponse,
+    SuspensionAction,
+    SuspensionDetails,
+    UnsuspendUserResponse,
+    UsersApiResponse,
+    UserSummary,
+    UserSummaryUpdate,
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
-import {
-    bytesToHexString,
-    identity,
-    mapOptional,
-    principalBytesToString,
-    principalStringToBytes,
-} from "../../utils/mapping";
-import { apiExternalBotPermissions, externalBotDefinition, ocError } from "../common/chatMappersV2";
 import type {
+    BotDefinition as ApiBotDefinition,
+    BotInstallationLocation as ApiBotInstallationLocation,
+    BotMatch as ApiBotMatch,
+    BotRegistrationStatus as ApiBotRegistrationStatus,
+    BotCommandDefinition as ApiCommandDefinition,
+    BotCommandParam as ApiCommandParam,
+    BotCommandParamType as ApiCommandParamType,
+    AutonomousConfig,
+    BotDataEncoding,
     CurrentUserSummary as TCurrentUserSummary,
     DiamondMembershipDetails as TDiamondMembershipDetails,
     DiamondMembershipPlanDuration as TDiamondMembershipPlanDuration,
-    DiamondMembershipStatusFull as TDiamondMembershipStatusFull,
     DiamondMembershipStatus as TDiamondMembershipStatus,
+    DiamondMembershipStatusFull as TDiamondMembershipStatusFull,
     DiamondMembershipSubscription as TDiamondMembershipSubscription,
     SuspensionAction as TSuspensionAction,
     SuspensionDetails as TSuspensionDetails,
+    UserSummary as TUserSummary,
+    UserSummaryV2 as TUserSummaryV2,
+    UserIndexBotUpdatesBotDetails,
+    UserIndexBotUpdatesResponse,
     UserIndexCheckUsernameResponse,
     UserIndexChitLeaderboardChitUserBalance,
     UserIndexChitLeaderboardResponse,
     UserIndexCurrentUserResponse,
     UserIndexDiamondMembershipFeesResponse,
+    UserIndexExploreBotsResponse,
+    UserIndexExternalAchievementsExternalAchievement,
+    UserIndexExternalAchievementsResponse,
     UserIndexPayForDiamondMembershipResponse,
     UserIndexSearchResponse,
     UserIndexSetDisplayNameResponse,
@@ -65,23 +73,16 @@ import type {
     UserIndexUnsuspendUserResponse,
     UserIndexUserRegistrationCanisterResponse,
     UserIndexUsersResponse,
-    UserSummary as TUserSummary,
-    UserSummaryV2 as TUserSummaryV2,
-    UserIndexExternalAchievementsResponse,
-    UserIndexExternalAchievementsExternalAchievement,
-    UserIndexExploreBotsResponse,
-    BotMatch as ApiBotMatch,
-    BotCommandDefinition as ApiCommandDefinition,
-    BotCommandParam as ApiCommandParam,
-    BotCommandParamType as ApiCommandParamType,
-    BotDefinition as ApiBotDefinition,
-    UserIndexBotUpdatesResponse,
-    UserIndexBotUpdatesBotDetails,
-    AutonomousConfig,
-    BotInstallationLocation as ApiBotInstallationLocation,
-    BotRegistrationStatus as ApiBotRegistrationStatus,
 } from "../../typebox";
 import { toRecord } from "../../utils/list";
+import {
+    bytesToHexString,
+    identity,
+    mapOptional,
+    principalBytesToString,
+    principalStringToBytes,
+} from "../../utils/mapping";
+import { apiExternalBotPermissions, externalBotDefinition, ocError } from "../common/chatMappersV2";
 import { apiMemberRole } from "../community/mappersV2";
 
 export function apiBotInstallLocation(domain: BotInstallationLocation): ApiBotInstallationLocation {
@@ -701,14 +702,19 @@ export function apiBotDefinition(domain: BotDefinition): ApiBotDefinition {
         description: domain.description ?? "",
         commands: domain.commands.map(apiExternalBotCommand),
         autonomous_config: mapOptional(domain.autonomousConfig, apiAutonomousConfig),
+        default_subscriptions: mapOptional(domain.defaultSubscriptions, identity),
+        data_encoding: mapOptional(domain.dataEncoding, apiDataEncoding),
     };
 }
 
 export function apiAutonomousConfig(domain: AutonomousBotConfig): AutonomousConfig {
     return {
-        sync_api_key: domain.syncApiKey,
         permissions: apiExternalBotPermissions(domain.permissions),
     };
+}
+
+export function apiDataEncoding(dataEncoding: "json" | "candid"): BotDataEncoding {
+    return dataEncoding === "candid" ? "Candid" : "Json";
 }
 
 export function apiExternalBotCommand(command: CommandDefinition): ApiCommandDefinition {

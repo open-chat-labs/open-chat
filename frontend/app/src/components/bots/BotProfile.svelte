@@ -10,8 +10,8 @@
     import type { ChatIdentifier, CommunityIdentifier, GroupChatIdentifier } from "openchat-client";
     import {
         botState,
-        emptyExternalBotPermissions,
-        flattenCommandPermissions,
+        definitionToPermissions,
+        emptyGrantedBotPermissions,
         selectedChatBotsStore,
         selectedCommunityBotsStore,
     } from "openchat-client";
@@ -21,9 +21,9 @@
 
     let grantedPermissions = $derived.by(() => {
         if (chatId.kind === "channel") {
-            return $selectedCommunityBotsStore.get(botId) ?? emptyExternalBotPermissions();
+            return $selectedCommunityBotsStore.get(botId) ?? emptyGrantedBotPermissions();
         } else {
-            return $selectedChatBotsStore.get(botId) ?? emptyExternalBotPermissions();
+            return $selectedChatBotsStore.get(botId) ?? emptyGrantedBotPermissions();
         }
     });
     let bot = $derived(botState.externalBots.get(botId));
@@ -43,9 +43,9 @@
     <BotSummary
         level={"group"}
         mode={{
-            kind: "viewing_command_bot",
+            kind: "viewing_bot",
             id,
-            requested: flattenCommandPermissions(bot.definition),
+            requested: definitionToPermissions(bot.definition),
             granted: grantedPermissions,
         }}
         {onClose}

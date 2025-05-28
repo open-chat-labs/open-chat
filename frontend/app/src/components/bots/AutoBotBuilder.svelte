@@ -16,7 +16,6 @@
     import Reload from "svelte-material-icons/Reload.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
-    import Checkbox from "../Checkbox.svelte";
     import EditableAvatar from "../EditableAvatar.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import SingleUserSelector from "../home/SingleUserSelector.svelte";
@@ -141,6 +140,9 @@
             kind: "bot_definition",
             description: "",
             commands: [],
+            autonomousConfig: undefined,
+            defaultSubscriptions: undefined,
+            dataEncoding: undefined,
         };
     }
 
@@ -202,13 +204,6 @@
         <BotPermissionViewer
             nested
             permissions={candidate.definition.autonomousConfig.permissions} />
-        <div class="send-key">
-            <Checkbox
-                disabled
-                label={i18nKey("bots.add.sendToBot")}
-                checked={candidate.definition.autonomousConfig.syncApiKey}
-                id={"sync_api_key"}></Checkbox>
-        </div>
     {:else}
         <div class="smallprint">
             <Translatable resourceKey={i18nKey("bots.builder.noAutonomousConfig")}></Translatable>

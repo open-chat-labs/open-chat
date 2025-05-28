@@ -9,18 +9,17 @@
         routeForScope,
         type ChatSummary,
         type CommunitySummary,
-        type ExternalBotPermissions,
         type OpenChat,
-        type PublicApiKeyDetails,
     } from "openchat-client";
     import {
         chatIdentifiersEqual,
-        flattenCommandPermissions,
+        definitionToPermissions,
         i18nKey,
         routeForChatIdentifier,
         type BotInstallationLocation,
         type BotSummaryMode,
         type ExternalBot,
+        type GrantedBotPermissions,
         type Level,
     } from "openchat-shared";
     import page from "page";
@@ -33,8 +32,7 @@
         collection: CommunitySummary | ChatSummary;
         bot: ExternalBot;
         canManage: boolean;
-        grantedPermissions: ExternalBotPermissions;
-        apiKey: PublicApiKeyDetails | undefined;
+        grantedPermissions: GrantedBotPermissions;
         contents: Snippet<[BotManagement]>;
     }
 
@@ -48,16 +46,8 @@
                 return "group";
         }
     });
-    let { collection, bot, canManage, grantedPermissions, apiKey, contents }: Props = $props();
+    let { collection, bot, grantedPermissions, contents }: Props = $props();
     let botSummaryMode = $state<BotSummaryMode | undefined>(undefined);
-    let generatingKey = $state(false);
-    let autonomousPermissionsEmpty = $derived(
-        bot.definition.autonomousConfig === undefined ||
-            permissionsAreEmpty(
-                filterRequestedPermissions(bot.definition.autonomousConfig.permissions, collection),
-            ),
-    );
-    let canGenerateKey = $derived(canManage && !autonomousPermissionsEmpty);
     let commandContextId = $derived.by<BotInstallationLocation>(() => {
         switch (collection.kind) {
             case "channel":
@@ -70,29 +60,6 @@
                 return collection.id;
         }
     });
-    let apiKeyPermissions = $derived(apiKey?.grantedPermissions);
-
-    function permissionsAreEmpty(perm: ExternalBotPermissions): boolean {
-        const empty =
-            perm.messagePermissions.length === 0 &&
-            perm.chatPermissions.length === 0 &&
-            perm.communityPermissions.length === 0;
-        return empty;
-    }
-
-    function filterRequestedPermissions(
-        perm: ExternalBotPermissions,
-        scope: CommunitySummary | ChatSummary,
-    ): ExternalBotPermissions {
-        if (scope.kind !== "community") {
-            // community permisisons don't apply at the chat level
-            return {
-                ...perm,
-                communityPermissions: [],
-            };
-        }
-        return perm;
-    }
 
     function removeBot() {
         const ctx = commandContextId;
@@ -119,66 +86,33 @@
         });
     }
 
-    function reviewApiKey() {
-        if (bot.definition.autonomousConfig !== undefined && apiKeyPermissions !== undefined) {
-            const requested = bot.definition.autonomousConfig.permissions;
-            client.getApiKey(collection.id, bot.id).then((apiKey) => {
-                botSummaryMode = {
-                    kind: "editing_api_key",
-                    id: collection.id,
-                    requested,
-                    granted: apiKeyPermissions,
-                    apiKey,
-                };
-                generatingKey = true;
-            });
-        }
-    }
-
-    function reviewCommandPermissions() {
+    function reviewPermissions() {
         botSummaryMode = {
-            kind: "editing_command_bot",
+            kind: "editing_bot",
             id: commandContextId,
-            requested: flattenCommandPermissions(bot.definition),
+            requested: definitionToPermissions(bot.definition),
             granted: grantedPermissions,
         };
     }
 
     function viewBotDetails() {
         botSummaryMode = {
-            kind: "viewing_command_bot",
+            kind: "viewing_bot",
             id: commandContextId,
-            requested: flattenCommandPermissions(bot.definition),
+            requested: definitionToPermissions(bot.definition),
             granted: grantedPermissions,
         };
     }
 
     function closeModal() {
         botSummaryMode = undefined;
-        generatingKey = false;
-    }
-
-    function generateApiKey() {
-        if (bot.definition.autonomousConfig !== undefined) {
-            botSummaryMode = {
-                kind: "adding_api_key",
-                id: collection.id,
-                requested: bot.definition.autonomousConfig.permissions,
-            };
-            generatingKey = true;
-        }
     }
 
     type BotManagement = {
-        generateApiKey: () => void;
         closeModal: () => void;
         viewBotDetails: () => void;
-        reviewCommandPermissions: () => void;
-        reviewApiKey: () => void;
+        reviewPermissions: () => void;
         removeBot: () => void;
-        generatingKey: boolean;
-        canGenerateKey: boolean;
-        apiKeyPermissions: ExternalBotPermissions | undefined;
     };
 </script>
 
@@ -187,13 +121,8 @@
 {/if}
 
 {@render contents({
-    generateApiKey,
     closeModal,
     viewBotDetails,
-    reviewCommandPermissions,
-    reviewApiKey,
+    reviewPermissions,
     removeBot,
-    generatingKey,
-    canGenerateKey,
-    apiKeyPermissions,
 })}

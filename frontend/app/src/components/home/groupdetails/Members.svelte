@@ -7,14 +7,13 @@
         type CommunitySummary,
         type EnhancedExternalBot,
         type ExternalBot,
-        type ExternalBotPermissions,
         type FullMember,
+        type GrantedBotPermissions,
         type MemberRole,
         type Member as MemberType,
         type MultiUserChat,
         type MultiUserChatIdentifier,
         type OpenChat,
-        type PublicApiKeyDetails,
         type ReadonlyMap,
         type ReadonlySet,
         type UserLookup,
@@ -56,10 +55,9 @@
         members: MemberType[];
         blocked: ReadonlySet<string>;
         lapsed: ReadonlySet<string>;
-        installedBots: ReadonlyMap<string, ExternalBotPermissions>;
+        installedBots: ReadonlyMap<string, GrantedBotPermissions>;
         initialUsergroup?: number | undefined;
         showHeader?: boolean;
-        apiKeys: ReadonlyMap<string, PublicApiKeyDetails>;
         webhooks?: WebhookDetails[];
         onClose: () => void;
         onShowInviteUsers: () => void;
@@ -80,7 +78,6 @@
         installedBots,
         initialUsergroup = $bindable(undefined),
         showHeader = true,
-        apiKeys,
         webhooks,
         onClose,
         onShowInviteUsers,
@@ -100,7 +97,7 @@
     let installingBot: BotMatchType | undefined = undefined;
 
     function hydrateBots(
-        bots: ReadonlyMap<string, ExternalBotPermissions>,
+        bots: ReadonlyMap<string, GrantedBotPermissions>,
         allBots: Map<string, ExternalBot>,
     ): EnhancedExternalBot[] {
         return [...bots.entries()].reduce((bots, [id, perm]) => {
@@ -415,7 +412,6 @@
             </h4>
             {#each bots as bot}
                 <BotMember
-                    apiKey={apiKeys.get(bot.id)}
                     {collection}
                     {bot}
                     grantedPermissions={bot.grantedPermissions}

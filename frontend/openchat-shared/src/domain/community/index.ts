@@ -1,5 +1,5 @@
 import type { AccessControlled, AccessGateConfig, VersionedRules } from "../access";
-import type { ExternalBotPermissions, InstalledBotDetails } from "../bots";
+import type { GrantedBotPermissions, InstalledBotDetails } from "../bots";
 import type {
     CanisterNotFound,
     ChannelIdentifier,
@@ -25,7 +25,6 @@ import type {
     HasMembershipRole,
     MemberRole,
     Permissioned,
-    PublicApiKeyDetails,
 } from "../permission";
 import type { Failure, InternalError, Offline, Success, SuccessNoUpdates } from "../response";
 import type { HasLevel } from "../structure";
@@ -84,8 +83,7 @@ export type CommunitySpecificState = {
     invitedUsers: Set<string>;
     referrals: Set<string>;
     rules?: VersionedRules;
-    bots: Map<string, ExternalBotPermissions>;
-    apiKeys: Map<string, PublicApiKeyDetails>;
+    bots: Map<string, GrantedBotPermissions>;
 };
 
 export interface UserFailedGateCheck {
@@ -242,7 +240,6 @@ export type CommunityDetails = {
     userGroups: Map<number, UserGroupDetails>;
     referrals: Set<string>;
     bots: InstalledBotDetails[];
-    apiKeys: Map<string, PublicApiKeyDetails>;
 };
 
 export type CommunityDetailsUpdates = {
@@ -259,7 +256,6 @@ export type CommunityDetailsUpdates = {
     referralsAdded: Set<string>;
     botsAddedOrUpdated: InstalledBotDetails[];
     botsRemoved: Set<string>;
-    apiKeysGenerated: PublicApiKeyDetails[];
 };
 
 export type ChannelSummaryResponse = Failure | ChannelSummary | CanisterNotFound;
@@ -315,3 +311,33 @@ export function communityIdentifiersEqual(
 }
 
 export type CommunityFilter = Set<string>;
+
+export type CommunityEventType =
+    | "Created"
+    | "NameChanged"
+    | "DescriptionChanged"
+    | "RulesChanged"
+    | "AvatarChanged"
+    | "BannerChanged"
+    | "PermissionsChanged"
+    | "VisibilityChanged"
+    | "InviteCodeChanged"
+    | "Frozen"
+    | "Unfrozen"
+    | "EventsTTLUpdated"
+    | "GateUpdated"
+    | "MessagePinned"
+    | "MessageUnpinned"
+    | "PrimaryLanguageChanged"
+    | "GroupImported"
+    | "ChannelCreated"
+    | "ChannelDeleted"
+    | "MembersJoined"
+    | "MembersLeft"
+    | "RoleChanged"
+    | "UsersInvited"
+    | "BotAdded"
+    | "BotRemoved"
+    | "BotUpdated"
+    | "UsersBlocked"
+    | "UsersUnblocked";
