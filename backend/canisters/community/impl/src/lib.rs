@@ -10,9 +10,8 @@ use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::{ChatEventInternal, ChatMetricsInternal, EventPusher, UpdateMessageSuccess};
 use community_canister::add_members_to_channel::UserFailedError;
-use constants::{ICP_LEDGER_CANISTER_ID, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
-use event_store_producer::{Event, EventStoreClient, EventStoreClientBuilder};
-use event_store_producer_cdk_runtime::CdkRuntime;
+use constants::{ICP_LEDGER_CANISTER_ID, OPENCHAT_BOT_USER_ID};
+use event_store_producer::Event;
 use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::{GatePayment, calculate_gate_payments};
 use group_chat_core::{AccessRulesInternal, AddResult};
@@ -35,7 +34,6 @@ use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
 use std::ops::Deref;
-use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotEventsCaller, BotInitiator, BotNotification,
@@ -435,14 +433,11 @@ struct Data {
     total_payment_receipts: PaymentReceipts,
     #[serde(with = "serde_bytes")]
     ic_root_key: Vec<u8>,
-    #[deprecated]
-    event_store_client: EventStoreClient<CdkRuntime>,
     achievements: Achievements,
     expiring_members: ExpiringMembers,
     expiring_member_actions: ExpiringMemberActions,
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
-    #[serde(default = "local_user_index_event_sync_queue")]
     local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     bots: InstalledBots,
@@ -450,10 +445,6 @@ struct Data {
     verified: Timestamped<bool>,
     idempotency_checker: IdempotencyChecker,
     public_channel_list_updated: TimestampMillis,
-}
-
-fn local_user_index_event_sync_queue() -> BatchedTimerJobQueue<LocalUserIndexEventBatch> {
-    BatchedTimerJobQueue::new(CanisterId::anonymous(), true)
 }
 
 impl Data {
@@ -506,7 +497,6 @@ impl Data {
         );
         let events = CommunityEvents::new(name.clone(), description.clone(), created_by_user_id, now);
 
-        #[expect(deprecated)]
         Data {
             is_public: Timestamped::new(is_public, now),
             name: Timestamped::new(name, now),
@@ -544,9 +534,6 @@ impl Data {
             total_payment_receipts: PaymentReceipts::default(),
             video_call_operators,
             ic_root_key,
-            event_store_client: EventStoreClientBuilder::new(local_user_index_canister_id, CdkRuntime::default())
-                .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
-                .build(),
             achievements: Achievements::default(),
             expiring_members: ExpiringMembers::default(),
             expiring_member_actions: ExpiringMemberActions::default(),
