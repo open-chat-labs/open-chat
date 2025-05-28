@@ -778,8 +778,7 @@ function prizeContent(value: TPrizeContent): PrizeContent {
         token: value.token_symbol,
         endDate: value.end_date,
         caption: value.caption,
-        // requiresCaptcha: value.requires_captcha,
-        requiresCaptcha: false,
+        requiresCaptcha: value.requires_captcha,
     };
 }
 
