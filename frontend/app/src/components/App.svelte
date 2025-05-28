@@ -542,7 +542,7 @@
     }
 </script>
 
-{#if $currentTheme.burst || landingPageRoute}
+{#if $currentTheme.burst}
     <div
         class:fixed={burstFixed}
         class="burst-wrapper"
