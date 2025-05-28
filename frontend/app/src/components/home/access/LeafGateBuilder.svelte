@@ -5,28 +5,28 @@
         isPaymentGate,
         type AccessGate,
         type CryptocurrencyDetails,
+        type InterpolationValues,
+        type Level,
         type NeuronGate,
         type OpenChat,
         type PaymentGate,
         type TokenBalanceGate,
-        type InterpolationValues,
-        type Level,
     } from "openchat-client";
-    import Translatable from "../../Translatable.svelte";
-    import { i18nKey, interpolate } from "../../../i18n/i18n";
+    import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
-    import Select from "../../Select.svelte";
+    import { i18nKey, interpolate } from "../../../i18n/i18n";
     import {
         balanceGateFolder,
         neuronGateFolder,
         paymentGateFolder,
         type GateBinding,
     } from "../../../utils/access";
-    import { getContext, onMount } from "svelte";
-    import Legend from "../../Legend.svelte";
     import Input from "../../Input.svelte";
-    import CredentialSelector from "./CredentialSelector.svelte";
+    import Legend from "../../Legend.svelte";
+    import Select from "../../Select.svelte";
+    import Translatable from "../../Translatable.svelte";
     import Markdown from "../Markdown.svelte";
+    import CredentialSelector from "./CredentialSelector.svelte";
 
     const client = getContext<OpenChat>("client");
 
