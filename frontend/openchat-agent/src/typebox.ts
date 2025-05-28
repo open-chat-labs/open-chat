@@ -2348,6 +2348,24 @@ export const LocalUserIndexInviteUsersToGroupResponse = Type.Union([
     }),
 ]);
 
+export type LocalUserIndexGroupAndCommunitySummaryUpdatesV2SummaryUpdatesArgs = Static<
+    typeof LocalUserIndexGroupAndCommunitySummaryUpdatesV2SummaryUpdatesArgs
+>;
+export const LocalUserIndexGroupAndCommunitySummaryUpdatesV2SummaryUpdatesArgs = Type.Object({
+    canister_id: TSPrincipal,
+    is_community: Type.Boolean(),
+    invite_code: Type.Optional(Type.BigInt()),
+    updates_since: Type.Optional(Type.BigInt()),
+});
+
+export type LocalUserIndexBotDeleteChannelV2Args = Static<
+    typeof LocalUserIndexBotDeleteChannelV2Args
+>;
+export const LocalUserIndexBotDeleteChannelV2Args = Type.Object({
+    community_id: CommunityId,
+    channel_id: ChannelId,
+});
+
 export type LocalUserIndexBotCreateChannelSuccessResult = Static<
     typeof LocalUserIndexBotCreateChannelSuccessResult
 >;
@@ -2606,14 +2624,11 @@ export const LocalUserIndexBotSendMessageSuccessResult = Type.Object({
     expires_at: Type.Optional(Type.BigInt()),
 });
 
-export type LocalUserIndexGroupAndCommunitySummaryUpdatesSummaryUpdatesArgs = Static<
-    typeof LocalUserIndexGroupAndCommunitySummaryUpdatesSummaryUpdatesArgs
+export type LocalUserIndexGroupAndCommunitySummaryUpdatesArgs = Static<
+    typeof LocalUserIndexGroupAndCommunitySummaryUpdatesArgs
 >;
-export const LocalUserIndexGroupAndCommunitySummaryUpdatesSummaryUpdatesArgs = Type.Object({
-    canister_id: TSPrincipal,
-    is_community: Type.Boolean(),
-    invite_code: Type.Optional(Type.BigInt()),
-    updates_since: Type.Optional(Type.BigInt()),
+export const LocalUserIndexGroupAndCommunitySummaryUpdatesArgs = Type.Object({
+    requests: Type.Array(LocalUserIndexGroupAndCommunitySummaryUpdatesV2SummaryUpdatesArgs),
 });
 
 export type CommunitySummaryUpdatesArgs = Static<typeof CommunitySummaryUpdatesArgs>;
@@ -5909,6 +5924,14 @@ export const LocalUserIndexInviteUsersToGroupArgs = Type.Object({
     correlation_id: Type.BigInt(),
 });
 
+export type LocalUserIndexGroupAndCommunitySummaryUpdatesV2Args = Static<
+    typeof LocalUserIndexGroupAndCommunitySummaryUpdatesV2Args
+>;
+export const LocalUserIndexGroupAndCommunitySummaryUpdatesV2Args = Type.Object({
+    requests: Type.Array(LocalUserIndexGroupAndCommunitySummaryUpdatesV2SummaryUpdatesArgs),
+    max_c2c_calls: Type.Number(),
+});
+
 export type LocalUserIndexJoinGroupArgs = Static<typeof LocalUserIndexJoinGroupArgs>;
 export const LocalUserIndexJoinGroupArgs = Type.Object({
     chat_id: ChatId,
@@ -6052,13 +6075,6 @@ export const LocalUserIndexBotSendMessageResponse = Type.Union([
         Error: OCError,
     }),
 ]);
-
-export type LocalUserIndexGroupAndCommunitySummaryUpdatesArgs = Static<
-    typeof LocalUserIndexGroupAndCommunitySummaryUpdatesArgs
->;
-export const LocalUserIndexGroupAndCommunitySummaryUpdatesArgs = Type.Object({
-    requests: Type.Array(LocalUserIndexGroupAndCommunitySummaryUpdatesSummaryUpdatesArgs),
-});
 
 export type CommunitySelectedChannelUpdatesResponse = Static<
     typeof CommunitySelectedChannelUpdatesResponse
@@ -8944,19 +8960,51 @@ export const CommunityCanisterCommunitySummaryUpdates = Type.Object({
     verified: Type.Optional(Type.Boolean()),
 });
 
+export type LocalUserIndexGroupAndCommunitySummaryUpdatesV2SummaryUpdatesResponse = Static<
+    typeof LocalUserIndexGroupAndCommunitySummaryUpdatesV2SummaryUpdatesResponse
+>;
+export const LocalUserIndexGroupAndCommunitySummaryUpdatesV2SummaryUpdatesResponse = Type.Union([
+    Type.Object({
+        SuccessGroup: GroupCanisterGroupChatSummary,
+    }),
+    Type.Object({
+        SuccessCommunity: CommunityCanisterCommunitySummary,
+    }),
+    Type.Object({
+        SuccessGroupUpdates: GroupCanisterGroupChatSummaryUpdates,
+    }),
+    Type.Object({
+        SuccessCommunityUpdates: CommunityCanisterCommunitySummaryUpdates,
+    }),
+    Type.Literal("SuccessNoUpdates"),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
+export type LocalUserIndexGroupAndCommunitySummaryUpdatesV2SuccessResult = Static<
+    typeof LocalUserIndexGroupAndCommunitySummaryUpdatesV2SuccessResult
+>;
+export const LocalUserIndexGroupAndCommunitySummaryUpdatesV2SuccessResult = Type.Object({
+    updates: Type.Array(LocalUserIndexGroupAndCommunitySummaryUpdatesV2SummaryUpdatesResponse),
+    excess_updates: Type.Array(TSPrincipal),
+    errors: Type.Array(Type.Tuple([TSPrincipal, OCError])),
+    not_found: Type.Array(TSPrincipal),
+});
+
+export type LocalUserIndexGroupAndCommunitySummaryUpdatesV2Response = Static<
+    typeof LocalUserIndexGroupAndCommunitySummaryUpdatesV2Response
+>;
+export const LocalUserIndexGroupAndCommunitySummaryUpdatesV2Response = Type.Object({
+    Success: LocalUserIndexGroupAndCommunitySummaryUpdatesV2SuccessResult,
+});
+
 export type LocalUserIndexChatEventsEventsResponse = Static<
     typeof LocalUserIndexChatEventsEventsResponse
 >;
 export const LocalUserIndexChatEventsEventsResponse = Type.Union([
     Type.Object({
         Success: EventsResponse,
-    }),
-    Type.Literal("NotFound"),
-    Type.Object({
-        ReplicaNotUpToDate: Type.BigInt(),
-    }),
-    Type.Object({
-        InternalError: Type.String(),
     }),
     Type.Object({
         Error: OCError,
@@ -9046,40 +9094,6 @@ export const LocalUserIndexBotChatEventsResponse = Type.Union([
         Success: EventsResponse,
     }),
     Type.Object({
-        FailedAuthentication: Type.String(),
-    }),
-    Type.Literal("NotAuthorized"),
-    Type.Literal("NotFound"),
-    Type.Object({
-        InternalError: Type.String(),
-    }),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
-
-export type LocalUserIndexGroupAndCommunitySummaryUpdatesSummaryUpdatesResponse = Static<
-    typeof LocalUserIndexGroupAndCommunitySummaryUpdatesSummaryUpdatesResponse
->;
-export const LocalUserIndexGroupAndCommunitySummaryUpdatesSummaryUpdatesResponse = Type.Union([
-    Type.Object({
-        SuccessGroup: GroupCanisterGroupChatSummary,
-    }),
-    Type.Object({
-        SuccessCommunity: CommunityCanisterCommunitySummary,
-    }),
-    Type.Object({
-        SuccessGroupUpdates: GroupCanisterGroupChatSummaryUpdates,
-    }),
-    Type.Object({
-        SuccessCommunityUpdates: CommunityCanisterCommunitySummaryUpdates,
-    }),
-    Type.Literal("SuccessNoUpdates"),
-    Type.Literal("NotFound"),
-    Type.Object({
-        InternalError: Type.String(),
-    }),
-    Type.Object({
         Error: OCError,
     }),
 ]);
@@ -9088,7 +9102,7 @@ export type LocalUserIndexGroupAndCommunitySummaryUpdatesResponse = Static<
     typeof LocalUserIndexGroupAndCommunitySummaryUpdatesResponse
 >;
 export const LocalUserIndexGroupAndCommunitySummaryUpdatesResponse = Type.Object({
-    Success: Type.Array(LocalUserIndexGroupAndCommunitySummaryUpdatesSummaryUpdatesResponse),
+    Success: Type.Array(LocalUserIndexGroupAndCommunitySummaryUpdatesV2SummaryUpdatesResponse),
 });
 
 export type CommunitySummaryUpdatesResponse = Static<typeof CommunitySummaryUpdatesResponse>;

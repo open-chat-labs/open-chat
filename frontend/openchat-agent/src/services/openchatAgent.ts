@@ -190,6 +190,7 @@ import type {
     VerifiedCredentialArgs,
     VideoCallParticipantsResponse,
     VideoCallPresence,
+    WaitAllResult,
     WalletConfig,
     WithdrawBtcResponse,
     WithdrawCryptocurrencyResponse,
@@ -208,6 +209,7 @@ import {
     MessageContextMap,
     messageContextToString,
     MessageMap,
+    ONE_MINUTE_MILLIS,
     offline,
     Stream,
     UnsupportedValueError,
@@ -250,7 +252,7 @@ import {
 } from "../utils/community";
 import { createHttpAgentSync } from "../utils/httpAgent";
 import { chunk, distinctBy, toRecord, toRecord2 } from "../utils/list";
-import { bytesToHexString } from "../utils/mapping";
+import { bytesToHexString, mapOptional } from "../utils/mapping";
 import { mean } from "../utils/maths";
 import { AsyncMessageContextMap } from "../utils/messageContext";
 import { isMainnet } from "../utils/network";
@@ -1987,19 +1989,9 @@ export class OpenChatAgent extends EventTarget {
             }
         }
 
-        const summaryUpdatesPromises: Promise<GroupAndCommunitySummaryUpdatesResponse[]>[] = [];
-        for (const [localUserIndex, args] of byLocalUserIndex) {
-            for (const batch of chunk(args, 50)) {
-                summaryUpdatesPromises.push(
-                    this.getLocalUserIndexClient(localUserIndex).groupAndCommunitySummaryUpdates(
-                        batch,
-                    ),
-                );
-                numberOfAsyncCalls++;
-            }
-        }
-
-        const summaryUpdatesResults = await waitAll(summaryUpdatesPromises);
+        const previousUpdatesTimestamp = mapOptional(current?.latestUserCanisterUpdates, Number);
+        const summaryUpdatesResults =
+            await this.#getSummaryUpdatesFromLocalUserIndexes(byLocalUserIndex, previousUpdatesTimestamp);
 
         for (const error of summaryUpdatesResults.errors) {
             this._logger.error("Summary updates error", error);
@@ -2011,31 +2003,29 @@ export class OpenChatAgent extends EventTarget {
         const communityUpdates: CommunityCanisterCommunitySummaryUpdates[] = [];
         const errors = new Set<string>();
 
-        for (const response of summaryUpdatesResults.success) {
-            for (const result of response) {
-                switch (result.kind) {
-                    case "group": {
-                        groupCanisterGroupSummaries.push(result.value);
-                        break;
+        for (const result of summaryUpdatesResults.success) {
+            switch (result.kind) {
+                case "group": {
+                    groupCanisterGroupSummaries.push(result.value);
+                    break;
+                }
+                case "group_updates": {
+                    groupUpdates.push(result.value);
+                    break;
+                }
+                case "community": {
+                    communityCanisterCommunitySummaries.push(result.value);
+                    break;
+                }
+                case "community_updates": {
+                    communityUpdates.push(result.value);
+                    break;
+                }
+                case "error": {
+                    if (!result.error.includes("DestinationInvalid")) {
+                        errors.add(result.canisterId);
                     }
-                    case "group_updates": {
-                        groupUpdates.push(result.value);
-                        break;
-                    }
-                    case "community": {
-                        communityCanisterCommunitySummaries.push(result.value);
-                        break;
-                    }
-                    case "community_updates": {
-                        communityUpdates.push(result.value);
-                        break;
-                    }
-                    case "error": {
-                        if (!result.error.includes("DestinationInvalid")) {
-                            errors.add(result.canisterId);
-                        }
-                        break;
-                    }
+                    break;
                 }
             }
         }
@@ -2136,6 +2126,77 @@ export class OpenChatAgent extends EventTarget {
             anyUpdates,
             suspensionChanged,
             newAchievements,
+        };
+    }
+
+    async #getSummaryUpdatesFromLocalUserIndexes(
+        requestsByLocalUserIndex: Map<string, GroupAndCommunitySummaryUpdatesArgs[]>,
+        previousUpdatesTimestamp: number | undefined,
+        maxC2cCalls: number = 50,
+    ): Promise<WaitAllResult<GroupAndCommunitySummaryUpdatesResponse>> {
+        const durationSincePreviousUpdates = Date.now() - (previousUpdatesTimestamp ?? 0);
+
+        // The shorter the duration since the previous updates were fetched, the larger we can make the batch size,
+        // since a smaller portion of canisters within the batch will have had any updates, so fewer c2c calls will be
+        // required.
+        const batchSize = previousUpdatesTimestamp === undefined
+            ? maxC2cCalls
+            : durationSincePreviousUpdates < 10 * ONE_MINUTE_MILLIS
+                ? maxC2cCalls * 4
+                : maxC2cCalls * 20;
+
+        const promises: Promise<WaitAllResult<GroupAndCommunitySummaryUpdatesResponse>>[] = [];
+        for (const [localUserIndex, requests] of requestsByLocalUserIndex) {
+            promises.push(this.#getSummaryUpdatesFromLocalUserIndex(localUserIndex, requests, batchSize, maxC2cCalls));
+        }
+
+        const results = await Promise.all(promises);
+        const success: GroupAndCommunitySummaryUpdatesResponse[] = [];
+        const errors = [];
+        for (const result of results) {
+            success.push(...result.success);
+            errors.push(...result.errors);
+        }
+        return {
+            success,
+            errors,
+        };
+    }
+
+    async #getSummaryUpdatesFromLocalUserIndex(
+        localUserIndex: string,
+        requests: GroupAndCommunitySummaryUpdatesArgs[],
+        batchSize: number,
+        maxC2cCalls: number,
+    ): Promise<WaitAllResult<GroupAndCommunitySummaryUpdatesResponse>> {
+        const localUserIndexClient = this.getLocalUserIndexClient(localUserIndex);
+        const promises = chunk(requests, batchSize).map((batch) =>
+            localUserIndexClient.groupAndCommunitySummaryUpdates(batch, maxC2cCalls));
+        const responses = await waitAll(promises);
+
+        const success: GroupAndCommunitySummaryUpdatesResponse[] = [];
+        const errors = responses.errors;
+        const excessUpdates = new Set<string>();
+
+        for (const response of responses.success) {
+            success.push(...response.updates);
+            response.excessUpdates.forEach((c) => excessUpdates.add(c));
+        }
+
+        if (excessUpdates.size > 0) {
+            const filteredRequests = requests.filter((r) => excessUpdates.has(r.canisterId));
+            const excessPromises = chunk(filteredRequests, maxC2cCalls).map((batch) =>
+                localUserIndexClient.groupAndCommunitySummaryUpdates(batch, maxC2cCalls));
+            const excessResponses = await waitAll(excessPromises);
+
+            for (const response of  excessResponses.success) {
+                success.push(...response.updates);
+            }
+        }
+
+        return {
+            success,
+            errors,
         };
     }
 
