@@ -401,10 +401,10 @@
                             </div>
                             <div class="restrictions">
                                 <Legend label={i18nKey("prizes.restrictions")} />
-                                <!-- <Checkbox
+                                <Checkbox
                                     id="captcha"
                                     label={i18nKey(`prizes.requiresCaptcha`)}
-                                    bind:checked={requiresCaptcha} /> -->
+                                    bind:checked={requiresCaptcha} />
                                 <Checkbox
                                     id="any_user"
                                     label={i18nKey(`prizes.anyone`)}

@@ -25,8 +25,13 @@
     let leftImageTransform = $derived(`rotate(${userRotation}rad)`);
     let isDragging = $state(false);
     let startAngle = $state(0);
-    let diff = $derived(Math.abs(userRotation - targetRotation));
+    let diff = $derived(angleDiff(userRotation, targetRotation));
     let correct = $derived(diff < TOLERANCE);
+
+    function angleDiff(a: number, b: number): number {
+        const diff = Math.abs(a - b) % (2 * Math.PI);
+        return diff > Math.PI ? 2 * Math.PI - diff : diff;
+    }
 
     onMount(() => {
         userRotation = normaliseAngle(Math.random() * 2 * Math.PI);

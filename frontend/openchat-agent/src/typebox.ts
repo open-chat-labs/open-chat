@@ -4875,6 +4875,7 @@ export const PrizeContent = Type.Object({
     lifetime_diamond_only: Type.Boolean(),
     unique_person_only: Type.Boolean(),
     streak_only: Type.Number(),
+    requires_captcha: Type.Boolean(),
 });
 
 export type GroupRulesChanged = Static<typeof GroupRulesChanged>;

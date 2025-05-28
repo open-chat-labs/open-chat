@@ -6063,7 +6063,7 @@ export class OpenChat {
                     getContentAsFormattedText(
                         (k) => k,
                         chat.latestMessage.event.content,
-                        get(cryptoLookup),
+                        cryptoLookup.value,
                     ),
                 ).forEach((id) => userIds.add(id));
             }
@@ -7067,10 +7067,7 @@ export class OpenChat {
 
     tryGetCryptocurrency(ledgerCanisterId: string | undefined): CryptocurrencyDetails | undefined {
         if (ledgerCanisterId !== undefined) {
-            const lookup = get(cryptoLookup);
-            if (ledgerCanisterId in lookup) {
-                return lookup.get(ledgerCanisterId);
-            }
+            return cryptoLookup.value.get(ledgerCanisterId);
         }
     }
 
@@ -7206,7 +7203,7 @@ export class OpenChat {
             pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
-        const lookup = get(cryptoLookup);
+        const lookup = cryptoLookup.value;
 
         return this.#sendRequest(
             {
