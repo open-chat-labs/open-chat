@@ -47,7 +47,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                         .get_index_canister_for_community(&canister_id.into())
                 })
             {
-                state.push_event_to_local_group_index(index, GroupIndexEvent::NotifyOfUserDeleted(canister_id, user_id), **now);
+                state.push_event_to_local_index(index, GroupIndexEvent::NotifyOfUserDeleted(canister_id, user_id), **now);
             }
         }
     }

@@ -113,7 +113,7 @@ fn prepare(name: &str, is_public: bool, state: &mut RuntimeState) -> Result<Prep
             local_user_index_canister,
         })
     } else {
-        Err(InternalError("No available LocalGroupIndex found".to_string()))
+        Err(InternalError("No available LocalIndex found".to_string()))
     }
 }
 

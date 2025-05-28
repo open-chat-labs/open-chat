@@ -5,8 +5,8 @@ use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_time::now_millis;
 use canister_tracing_macros::trace;
-use community_canister::LocalGroupIndexEvent;
-use community_canister::c2c_local_group_index::*;
+use community_canister::LocalIndexEvent;
+use community_canister::c2c_local_index::*;
 use constants::OPENCHAT_BOT_USER_ID;
 use std::cell::LazyCell;
 use types::{GroupNameChanged, TimestampMillis, Timestamped};
@@ -32,12 +32,12 @@ fn c2c_local_index_impl(args: Args, state: &mut RuntimeState) -> Response {
 }
 
 fn process_event<F: FnOnce() -> TimestampMillis>(
-    event: LocalGroupIndexEvent,
+    event: LocalIndexEvent,
     now: &LazyCell<TimestampMillis, F>,
     state: &mut RuntimeState,
 ) {
     match event {
-        LocalGroupIndexEvent::NameChanged(ev) => {
+        LocalIndexEvent::NameChanged(ev) => {
             state.data.events.push_event(
                 CommunityEventInternal::NameChanged(Box::new(GroupNameChanged {
                     new_name: ev.name.clone(),
@@ -49,10 +49,10 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
 
             state.data.name = Timestamped::new(ev.name, **now);
         }
-        LocalGroupIndexEvent::VerifiedChanged(ev) => {
+        LocalIndexEvent::VerifiedChanged(ev) => {
             state.data.verified = Timestamped::new(ev.verified, **now);
         }
-        LocalGroupIndexEvent::UserDeleted(user_id) => {
+        LocalIndexEvent::UserDeleted(user_id) => {
             for channel in state.data.channels.iter_mut() {
                 channel.chat.members.remove(user_id, **now);
             }
