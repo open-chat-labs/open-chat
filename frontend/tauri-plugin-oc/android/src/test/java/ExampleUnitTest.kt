@@ -1,4 +1,4 @@
-package com.openchat.app
+package com.ocplugin.app
 
 import org.junit.Test
 
