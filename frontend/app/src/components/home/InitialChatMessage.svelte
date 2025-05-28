@@ -6,8 +6,8 @@
         type ChatSummary,
         type CommandDefinition,
         directChatBotsStore,
-        emptyExternalBotPermissions,
-        type ExternalBotPermissions,
+        emptyGrantedBotPermissions,
+        type GrantedBotPermissions,
         isProposalGroupStore,
         type OpenChat,
         type ResourceKey,
@@ -27,7 +27,7 @@
 
     type BotState = {
         commands: CommandDefinition[];
-        grantedPermissions: ExternalBotPermissions;
+        grantedPermissions: GrantedBotPermissions;
     };
 
     type State = {
@@ -56,7 +56,7 @@
                 };
                 const bot = botState.externalBots.get(chat.them.userId);
                 const perm =
-                    $directChatBotsStore.get(chat.them.userId) ?? emptyExternalBotPermissions();
+                    $directChatBotsStore.get(chat.them.userId) ?? emptyGrantedBotPermissions();
                 return bot === undefined
                     ? s
                     : {

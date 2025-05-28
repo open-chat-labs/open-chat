@@ -5,13 +5,11 @@
         type MemberRole,
         OpenChat,
         publish,
-        selectedChatApiKeysStore,
         selectedChatBlockedUsersStore,
         selectedChatInvitedUsersStore,
         selectedChatLapsedMembersStore,
         selectedChatMembersStore,
         selectedChatWebhooksStore,
-        selectedCommunityApiKeysStore,
         selectedCommunityBlockedUsersStore,
         selectedCommunityBotsStore,
         selectedCommunityInvitedUsersStore,
@@ -116,7 +114,6 @@
             blocked={$selectedCommunityBlockedUsersStore}
             lapsed={$selectedCommunityLapsedMembersStore}
             installedBots={$selectedCommunityBotsStore}
-            apiKeys={$selectedCommunityApiKeysStore}
             {onClose}
             onBlockUser={onBlockCommunityUser}
             onUnblockUser={onUnblockCommunityUser}
@@ -136,7 +133,6 @@
             blocked={$selectedChatBlockedUsersStore}
             lapsed={$selectedChatLapsedMembersStore}
             installedBots={$selectedCommunityBotsStore}
-            apiKeys={$selectedChatApiKeysStore}
             webhooks={Array.from($selectedChatWebhooksStore.values())}
             {onClose}
             onBlockUser={onBlockGroupUser}

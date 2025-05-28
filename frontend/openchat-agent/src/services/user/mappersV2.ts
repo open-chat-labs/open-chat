@@ -17,9 +17,9 @@ import type {
     DirectChatSummaryUpdates,
     DirectChatsUpdates,
     ExchangeTokenSwapArgs,
-    ExternalBotPermissions,
     FavouriteChatsInitial,
     FavouriteChatsUpdates,
+    GrantedBotPermissions,
     GroupChatsInitial,
     GroupChatsUpdates,
     InitialStateResponse,
@@ -30,7 +30,6 @@ import type {
     MessageContext,
     NamedAccount,
     PinNumberSettings,
-    PublicApiKeyDetails,
     PublicProfile,
     Referral,
     ReferralStatus,
@@ -130,7 +129,6 @@ import {
     messageEvent,
     messageMatch,
     ocError,
-    publicApiKeyDetails,
     sendMessageSuccess,
     unitResult,
     videoCallInProgress,
@@ -627,11 +625,7 @@ export function initialStateResponse(value: UserInitialStateResponse): InitialSt
             bots: result.bots.map(installedBotDetails).reduce((m, b) => {
                 m.set(b.id, b.permissions);
                 return m;
-            }, new Map<string, ExternalBotPermissions>()),
-            apiKeys: result.api_keys.map(publicApiKeyDetails).reduce((m, k) => {
-                m.set(k.botId, k);
-                return m;
-            }, new Map<string, PublicApiKeyDetails>()),
+            }, new Map<string, GrantedBotPermissions>()),
             bitcoinAddress: result.btc_address,
             streakInsurance: mapOptional(result.streak_insurance, streakInsurance),
         };
@@ -803,7 +797,6 @@ export function getUpdatesResponse(value: UserUpdatesResponse): UpdatesResponse 
             ),
             botsAddedOrUpdated: value.Success.bots_added_or_updated.map(installedBotDetails),
             botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
-            apiKeysGenerated: value.Success.api_keys_generated.map(publicApiKeyDetails),
             bitcoinAddress: value.Success.btc_address,
             streakInsurance: optionUpdateV2(result.streak_insurance, streakInsurance),
         };

@@ -18,10 +18,9 @@ import type {
     EventsResponse,
     EventsSuccessResult,
     EventWrapper,
-    ExternalBotPermissions,
     FollowThreadResponse,
     FullWebhookDetails,
-    GenerateBotKeyResponse,
+    GrantedBotPermissions,
     GroupCanisterSummaryResponse,
     GroupCanisterSummaryUpdatesResponse,
     GroupChatDetails,
@@ -70,8 +69,6 @@ import {
     GroupAcceptP2pSwapArgs,
     GroupAcceptP2pSwapResponse,
     GroupAddReactionArgs,
-    GroupApiKeyArgs,
-    GroupApiKeyResponse,
     GroupBlockUserArgs,
     GroupCancelInvitesArgs,
     GroupCancelP2pSwapArgs,
@@ -93,8 +90,6 @@ import {
     GroupEventsResponse,
     GroupEventsWindowArgs,
     GroupFollowThreadArgs,
-    GroupGenerateBotApiKeyArgs,
-    GroupGenerateBotApiKeyResponse,
     GroupInviteCodeResponse,
     GroupJoinVideoCallArgs,
     GroupLocalUserIndexResponse,
@@ -179,7 +174,6 @@ import {
     claimPrizeResponse,
     deletedMessageSuccess,
     enableOrResetInviteCodeSuccess,
-    generateApiKeySuccess,
     getEventsSuccess,
     getMessagesSuccess,
     groupDetailsSuccess,
@@ -1262,53 +1256,20 @@ export class GroupClient extends MsgpackCanisterAgent {
         );
     }
 
-    updateInstalledBot(
-        botId: string,
-        grantedPermissions: ExternalBotPermissions,
-    ): Promise<boolean> {
+    updateInstalledBot(botId: string, grantedPermissions: GrantedBotPermissions): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "update_bot",
             {
                 bot_id: principalStringToBytes(botId),
-                granted_permissions: apiExternalBotPermissions(grantedPermissions),
+                granted_permissions: apiExternalBotPermissions(grantedPermissions.command),
+                granted_autonomous_permissions: mapOptional(
+                    grantedPermissions.autonomous,
+                    apiExternalBotPermissions,
+                ),
             },
             isSuccess,
             GroupUpdateBotArgs,
             UnitResult,
-        );
-    }
-
-    generateBotApiKey(
-        botId: string,
-        permissions: ExternalBotPermissions,
-    ): Promise<GenerateBotKeyResponse> {
-        return this.executeMsgpackUpdate(
-            "generate_bot_api_key",
-            {
-                bot_id: principalStringToBytes(botId),
-                requested_permissions: apiExternalBotPermissions(permissions),
-            },
-            (resp) => mapResult(resp, generateApiKeySuccess),
-            GroupGenerateBotApiKeyArgs,
-            GroupGenerateBotApiKeyResponse,
-        );
-    }
-
-    getApiKey(botId: string): Promise<string | undefined> {
-        return this.executeMsgpackQuery(
-            "api_key",
-            {
-                bot_id: principalStringToBytes(botId),
-            },
-            (resp) => {
-                if (typeof resp === "object" && "Success" in resp) {
-                    return resp.Success;
-                }
-                console.log("Failed to get group api key: ", botId, resp);
-                return undefined;
-            },
-            GroupApiKeyArgs,
-            GroupApiKeyResponse,
         );
     }
 

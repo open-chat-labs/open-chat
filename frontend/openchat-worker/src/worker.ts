@@ -1729,22 +1729,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            case "generateBotApiKey":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.generateBotApiKey(payload.id, payload.botId, payload.permissions),
-                );
-                break;
-
-            case "getApiKey":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.getApiKey(payload.id, payload.botId),
-                );
-                break;
-
             case "registerWebhook":
                 executeThenReply(
                     payload,

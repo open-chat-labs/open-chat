@@ -23,7 +23,6 @@
         publish,
         rightPanelHistory,
         routeStore,
-        selectedChatApiKeysStore,
         selectedChatBlockedUsersStore,
         selectedChatBotsStore,
         selectedChatIdStore,
@@ -33,7 +32,6 @@
         selectedChatPinnedMessagesStore,
         selectedChatSummaryStore,
         selectedChatWebhooksStore,
-        selectedCommunityApiKeysStore,
         selectedCommunityBlockedUsersStore,
         selectedCommunityBotsStore,
         selectedCommunityInvitedUsersStore,
@@ -464,7 +462,6 @@
                 lapsed={$selectedCommunityLapsedMembersStore}
                 initialUsergroup={$lastRightPanelState.userGroupId}
                 installedBots={$selectedCommunityBotsStore}
-                apiKeys={$selectedCommunityApiKeysStore}
                 onClose={client.popRightPanelHistory}
                 onBlockUser={onBlockCommunityUser}
                 onUnblockUser={onUnblockCommunityUser}
@@ -507,7 +504,6 @@
             blocked={$selectedChatBlockedUsersStore}
             lapsed={$selectedChatLapsedMembersStore}
             installedBots={$selectedChatBotsStore}
-            apiKeys={$selectedChatApiKeysStore}
             webhooks={Array.from($selectedChatWebhooksStore.values())}
             onClose={client.popRightPanelHistory}
             onBlockUser={onBlockGroupUser}

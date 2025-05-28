@@ -28,7 +28,7 @@ import {
     type DirectChatSummary,
     type EnhancedTokenDetails,
     type EventWrapper,
-    type ExternalBotPermissions,
+    type GrantedBotPermissions,
     type GroupChatSummary,
     type IdentityState,
     type Member,
@@ -40,7 +40,6 @@ import {
     type PinnedByScope,
     type PinNumberFailures,
     type PinNumberResolver,
-    type PublicApiKeyDetails,
     type ReadonlyMap,
     type ReadonlySet,
     type Referral,
@@ -576,8 +575,7 @@ export const selectedCommunityMembersStore = derived(
 export const selectedCommunityBotsStore = derived(
     [selectedServerCommunityStore, communityLocalUpdates.bots],
     ([community, bots]) => {
-        if (community === undefined)
-            return new Map() as ReadonlyMap<string, ExternalBotPermissions>;
+        if (community === undefined) return new Map() as ReadonlyMap<string, GrantedBotPermissions>;
         const updates = bots.get(community.communityId);
         if (updates === undefined) return community.bots;
         return updates.apply(community.bots);
@@ -621,11 +619,6 @@ export const selectedCommunityRulesStore = derived(
 export const selectedCommunityLapsedMembersStore = derived(
     selectedServerCommunityStore,
     (selectedCommunity) => selectedCommunity?.lapsedMembers ?? (new Set() as ReadonlySet<string>),
-);
-export const selectedCommunityApiKeysStore = derived(
-    selectedServerCommunityStore,
-    (selectedCommunity) =>
-        selectedCommunity?.apiKeys ?? (new Map() as ReadonlyMap<string, PublicApiKeyDetails>),
 );
 export const selectedCommunityReferralsStore = derived(
     selectedServerCommunityStore,
@@ -676,15 +669,8 @@ export const selectedChatInvitedUsersStore = derived(
 export const selectedChatBotsStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.bots],
     ([chat, bots]) => {
-        if (chat === undefined) return new Map() as ReadonlyMap<string, ExternalBotPermissions>;
+        if (chat === undefined) return new Map() as ReadonlyMap<string, GrantedBotPermissions>;
         return bots.get(chat.chatId)?.apply(chat.bots) ?? chat.bots;
-    },
-);
-export const selectedChatApiKeysStore = derived(
-    [selectedServerChatStore, chatDetailsLocalUpdates.apiKeys],
-    ([chat, apiKeys]) => {
-        if (chat === undefined) return new Map() as ReadonlyMap<string, PublicApiKeyDetails>;
-        return apiKeys.get(chat.chatId)?.apply(chat.apiKeys) ?? chat.apiKeys;
     },
 );
 export const selectedChatWebhooksStore = derived(
@@ -714,11 +700,6 @@ export const serverGroupChatsStore = writable<ChatMap<GroupChatSummary>>(
 );
 export const serverFavouritesStore = writable<ChatSet>(new ChatSet(), undefined, notEq);
 export const serverPinnedChatsStore = writable<PinnedByScope>(new Map(), undefined, notEq);
-export const directChatApiKeysStore = writable<Map<string, PublicApiKeyDetails>>(
-    new Map(),
-    undefined,
-    notEq,
-);
 export const serverMessageActivitySummaryStore = writable<MessageActivitySummary>(
     {
         readUpToTimestamp: 0n,
@@ -754,7 +735,7 @@ export const pinnedChatsStore = derived(
     },
 );
 
-export const serverDirectChatBotsStore = writable<Map<string, ExternalBotPermissions>>(
+export const serverDirectChatBotsStore = writable<Map<string, GrantedBotPermissions>>(
     new Map(),
     undefined,
     notEq,

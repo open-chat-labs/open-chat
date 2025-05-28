@@ -74,9 +74,6 @@ export function mergeCommunityDetails(
     previous: CommunityDetails,
     updates: CommunityDetailsUpdates,
 ): CommunityDetails {
-    updates.botsRemoved.forEach((id) => {
-        previous.apiKeys.delete(id);
-    });
     return {
         lastUpdated: updates.lastUpdated,
         members: mergeThings((p) => p.userId, mergeParticipants, previous.members, {
@@ -115,10 +112,6 @@ export function mergeCommunityDetails(
                 removed: updates.botsRemoved,
             },
         ),
-        apiKeys: updates.apiKeysGenerated.reduce((m, k) => {
-            m.set(k.botId, k);
-            return m;
-        }, previous.apiKeys),
     };
 }
 
@@ -136,9 +129,6 @@ export function mergeGroupChatDetails(
     previous: GroupChatDetails,
     updates: GroupChatDetailsUpdates,
 ): GroupChatDetails {
-    updates.botsRemoved.forEach((id) => {
-        previous.apiKeys.delete(id);
-    });
     return {
         timestamp: updates.timestamp,
         members: mergeThings((p) => p.userId, mergeParticipants, previous.members, {
@@ -170,10 +160,6 @@ export function mergeGroupChatDetails(
                 removed: updates.botsRemoved,
             },
         ),
-        apiKeys: updates.apiKeysGenerated.reduce((m, k) => {
-            m.set(k.botId, k);
-            return m;
-        }, previous.apiKeys),
         webhooks: updates.webhooks ?? previous.webhooks,
     };
 }
@@ -344,7 +330,7 @@ export function mergeGroupChatUpdates(
 export function mergeGroupChats(
     userCanisterGroups: UserCanisterGroupChatSummary[],
     groupCanisterGroups: GroupCanisterGroupChatSummary[],
-    latestSuccessfulUpdatesCheck: bigint
+    latestSuccessfulUpdatesCheck: bigint,
 ): GroupChatSummary[] {
     const userCanisterGroupLookup = ChatMap.fromList(userCanisterGroups);
 

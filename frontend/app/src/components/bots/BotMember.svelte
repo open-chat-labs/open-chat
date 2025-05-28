@@ -1,23 +1,13 @@
 <script lang="ts">
-    import {
-        iconSize,
-        type CommunitySummary,
-        type ExternalBotPermissions,
-        type MultiUserChat,
-        type PublicApiKeyDetails,
-    } from "openchat-client";
-    import { type ExternalBot } from "openchat-shared";
+    import { iconSize, type CommunitySummary, type MultiUserChat } from "openchat-client";
+    import { type ExternalBot, type GrantedBotPermissions } from "openchat-shared";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
-    import KeyPlus from "svelte-material-icons/KeyPlus.svelte";
-    import KeyRemove from "svelte-material-icons/KeyRemove.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import TextBoxOutline from "svelte-material-icons/TextBoxOutline.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import FilteredUsername from "../FilteredUsername.svelte";
     import HoverIcon from "../HoverIcon.svelte";
-    import InfoIcon from "../InfoIcon.svelte";
-    import Link from "../Link.svelte";
     import Menu from "../Menu.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import MenuItem from "../MenuItem.svelte";
@@ -30,24 +20,14 @@
         bot: ExternalBot;
         canManage: boolean;
         searchTerm: string;
-        grantedPermissions: ExternalBotPermissions;
-        apiKey: PublicApiKeyDetails | undefined;
+        grantedPermissions: GrantedBotPermissions;
     }
 
-    let { collection, bot, canManage, searchTerm, grantedPermissions, apiKey }: Props = $props();
+    let { collection, bot, canManage, searchTerm, grantedPermissions }: Props = $props();
 </script>
 
-<WithBotManagement {collection} {bot} {canManage} {grantedPermissions} {apiKey}>
-    {#snippet contents({
-        canGenerateKey,
-        reviewApiKey,
-        generateApiKey,
-        removeBot,
-        reviewCommandPermissions,
-        viewBotDetails,
-        apiKeyPermissions,
-        generatingKey,
-    })}
+<WithBotManagement {collection} {bot} {canManage} {grantedPermissions}>
+    {#snippet contents({ removeBot, reviewPermissions, viewBotDetails })}
         <div class="bot_member" role="button">
             <span class="avatar">
                 <BotAvatar {bot} />
@@ -61,30 +41,6 @@
                 <div class="bot_description">
                     <FilteredUsername {searchTerm} username={bot.definition.description} />
                 </div>
-                {#if canGenerateKey}
-                    <div class="apikey">
-                        <Link
-                            onClick={apiKeyPermissions !== undefined
-                                ? reviewApiKey
-                                : generateApiKey}
-                            underline="never">
-                            <Translatable
-                                resourceKey={apiKeyPermissions !== undefined
-                                    ? i18nKey("bots.manage.reviewApiKey")
-                                    : i18nKey("bots.manage.generateApiKey")}></Translatable>
-                        </Link>
-                        {#if generatingKey}
-                            <div class="spinner"></div>
-                        {:else}
-                            <InfoIcon>
-                                <Translatable
-                                    resourceKey={apiKeyPermissions !== undefined
-                                        ? i18nKey("bots.manage.reviewApiKeyInfo")
-                                        : i18nKey("bots.manage.apiKeyInfo")}></Translatable>
-                            </InfoIcon>
-                        {/if}
-                    </div>
-                {/if}
             </div>
             <MenuIcon position={"bottom"} align={"end"}>
                 {#snippet menuIcon()}
@@ -105,8 +61,8 @@
                                     <Translatable resourceKey={i18nKey("bots.manage.remove")} />
                                 {/snippet}
                             </MenuItem>
-                            {#if bot.definition.commands.length > 0}
-                                <MenuItem onclick={() => reviewCommandPermissions()}>
+                            {#if bot.definition.commands.length > 0 || bot.definition.autonomousConfig !== undefined}
+                                <MenuItem onclick={() => reviewPermissions()}>
                                     {#snippet icon()}
                                         <PencilOutline
                                             size={$iconSize}
@@ -114,33 +70,6 @@
                                     {/snippet}
                                     {#snippet text()}
                                         <Translatable resourceKey={i18nKey("bots.manage.review")} />
-                                    {/snippet}
-                                </MenuItem>
-                            {/if}
-                        {/if}
-                        {#if canGenerateKey}
-                            {#if apiKeyPermissions !== undefined}
-                                <MenuItem onclick={reviewApiKey}>
-                                    {#snippet icon()}
-                                        <KeyRemove
-                                            size={$iconSize}
-                                            color={"var(--icon-inverted-txt)"} />
-                                    {/snippet}
-                                    {#snippet text()}
-                                        <Translatable
-                                            resourceKey={i18nKey("bots.manage.reviewApiKey")} />
-                                    {/snippet}
-                                </MenuItem>
-                            {:else}
-                                <MenuItem onclick={() => generateApiKey()}>
-                                    {#snippet icon()}
-                                        <KeyPlus
-                                            size={$iconSize}
-                                            color={"var(--icon-inverted-txt)"} />
-                                    {/snippet}
-                                    {#snippet text()}
-                                        <Translatable
-                                            resourceKey={i18nKey("bots.manage.generateApiKey")} />
                                     {/snippet}
                                 </MenuItem>
                             {/if}
@@ -213,17 +142,5 @@
             color: var(--txt-light);
             @include clamp(2);
         }
-
-        .apikey {
-            display: flex;
-            gap: $sp2;
-            align-items: center;
-            @include font(book, normal, fs-80);
-        }
-    }
-
-    .spinner {
-        @include loading-spinner(1em, 0.5em, var(--button-spinner), "/assets/plain-spinner.svg");
-        flex: 0 0 toRem(24);
     }
 </style>

@@ -1,6 +1,6 @@
 <script lang="ts">
     import Avatar from "@src/components/Avatar.svelte";
-    import type { ExternalBotLike, ExternalBotPermissions, OpenChat } from "openchat-client";
+    import type { ExternalBotLike, GrantedBotPermissions, OpenChat } from "openchat-client";
     import { AvatarSize, allUsersStore, mobileWidth } from "openchat-client";
     import { getContext, type Snippet } from "svelte";
     import BotAvatar from "../BotAvatar.svelte";
@@ -10,7 +10,7 @@
 
     interface Props {
         bot: ExternalBotLike;
-        grantedCommandPermissions?: ExternalBotPermissions;
+        grantedPermissions?: GrantedBotPermissions;
         installing: boolean;
         padded?: boolean;
         onClick?: (match: ExternalBotLike) => void;
@@ -21,7 +21,7 @@
 
     let {
         bot,
-        grantedCommandPermissions,
+        grantedPermissions,
         installing,
         padded = false,
         onClick,
@@ -74,9 +74,7 @@
             {bot.definition.description}
         </p>
         {#if showCommands}
-            <BotCommands
-                grantedPermissions={grantedCommandPermissions}
-                commands={bot.definition.commands} />
+            <BotCommands {grantedPermissions} commands={bot.definition.commands} />
         {/if}
 
         {@render children?.()}

@@ -172,7 +172,6 @@ describe("app state", () => {
                     new Set(),
                     new Map(),
                     new Map(),
-                    new Map(),
                     emptyRules(),
                 ),
             );
@@ -215,9 +214,12 @@ describe("app state", () => {
 
                 test("install a bot works", () => {
                     localUpdates.installDirectChatBot("654321", {
-                        chatPermissions: [],
-                        communityPermissions: [],
-                        messagePermissions: [],
+                        command: {
+                            chatPermissions: [],
+                            communityPermissions: [],
+                            messagePermissions: [],
+                        },
+                        autonomous: undefined,
                     });
                     expect(directChatBotsStore.value.has("654321")).toBe(true);
                     expect(directChatBotsStore.value.has("123456")).toBe(true);
@@ -411,7 +413,6 @@ describe("app state", () => {
                         new Set(),
                         new Set(),
                         new Set(),
-                        new Map(),
                         new Map(),
                     ),
                 );
@@ -629,10 +630,16 @@ function initialiseGlobalState() {
         new Map([
             [
                 "123456",
-                { chatPermissions: [], messagePermissions: ["text"], communityPermissions: [] },
+                {
+                    command: {
+                        chatPermissions: [],
+                        messagePermissions: ["text"],
+                        communityPermissions: [],
+                    },
+                    autonomous: undefined,
+                },
             ],
         ]),
-        new Map(),
         undefined,
     );
 }

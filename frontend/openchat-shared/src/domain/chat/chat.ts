@@ -2,7 +2,7 @@ import { emptyChatMetrics } from "../../utils";
 import type { AccessControlled, AccessGateConfig, UpdatedRules, VersionedRules } from "../access";
 import type {
     CommandArg,
-    ExternalBotPermissions,
+    GrantedBotPermissions,
     InstalledBotDetails,
     WebhookDetails,
 } from "../bots";
@@ -22,7 +22,6 @@ import type {
     HasMembershipRole,
     MemberRole,
     Permissioned,
-    PublicApiKeyDetails,
 } from "../permission";
 import type {
     ChatFrozen,
@@ -1057,8 +1056,7 @@ export type ChatStateFull = {
     referrals: Referral[];
     walletConfig: WalletConfig;
     messageActivitySummary: MessageActivitySummary;
-    installedBots: Map<string, ExternalBotPermissions>;
-    apiKeys: Map<string, PublicApiKeyDetails>;
+    installedBots: Map<string, GrantedBotPermissions>;
     bitcoinAddress: string | undefined;
     streakInsurance: StreakInsurance | undefined;
 };
@@ -1226,8 +1224,7 @@ export type InitialStateResponse = {
     referrals: Referral[];
     walletConfig: WalletConfig;
     messageActivitySummary: MessageActivitySummary;
-    bots: Map<string, ExternalBotPermissions>;
-    apiKeys: Map<string, PublicApiKeyDetails>;
+    bots: Map<string, GrantedBotPermissions>;
     bitcoinAddress: string | undefined;
     streakInsurance?: StreakInsurance;
 };
@@ -1313,7 +1310,6 @@ export type UpdatesSuccessResponse = {
     messageActivitySummary: MessageActivitySummary | undefined;
     botsAddedOrUpdated: InstalledBotDetails[];
     botsRemoved: Set<string>;
-    apiKeysGenerated: PublicApiKeyDetails[];
     bitcoinAddress: string | undefined;
     streakInsurance: OptionUpdate<StreakInsurance>;
 };
@@ -1440,7 +1436,6 @@ export type GroupChatDetails = {
     rules: VersionedRules;
     timestamp: bigint;
     bots: InstalledBotDetails[];
-    apiKeys: Map<string, PublicApiKeyDetails>;
     webhooks: WebhookDetails[];
 };
 
@@ -1456,7 +1451,6 @@ export type GroupChatDetailsUpdates = {
     timestamp: bigint;
     botsAddedOrUpdated: InstalledBotDetails[];
     botsRemoved: Set<string>;
-    apiKeysGenerated: PublicApiKeyDetails[];
     webhooks?: WebhookDetails[];
 };
 
@@ -2348,3 +2342,46 @@ export type VideoCallInProgress = {
 };
 
 export type PinnedByScope = Map<ChatListScope["kind"], ChatIdentifier[]>;
+
+export type ChatEventType =
+    | "Message"
+    | "MessageEdited"
+    | "MessageReaction"
+    | "MessageTipped"
+    | "MessageDeleted"
+    | "MessagePollVote"
+    | "MessagePollEnded"
+    | "MessagePrizeClaim"
+    | "MessagePrizePayment"
+    | "MessageProposalVote"
+    | "MessageProposalUpdated"
+    | "MessageP2pSwap"
+    | "MessageReported"
+    | "MessageThreadSummary"
+    | "MessageReminder"
+    | "MessageVideoCall"
+    | "MessageOther"
+    | "Created"
+    | "NameChanged"
+    | "DescriptionChanged"
+    | "RulesChanged"
+    | "AvatarChanged"
+    | "ExternalUrlUpdated"
+    | "PermissionsChanged"
+    | "VisibilityChanged"
+    | "InviteCodeChanged"
+    | "Frozen"
+    | "Unfrozen"
+    | "EventsTTLUpdated"
+    | "GateUpdated"
+    | "MessagePinned"
+    | "MessageUnpinned"
+    | "MembersJoined"
+    | "MembersLeft"
+    | "RoleChanged"
+    | "UsersInvited"
+    | "BotAdded"
+    | "BotRemoved"
+    | "BotUpdated"
+    | "UsersBlocked"
+    | "UsersUnblocked";

@@ -113,14 +113,12 @@ import {
     type ExploreCommunitiesResponse,
     type ExternalBot,
     type ExternalBotCommandInstance,
-    type ExternalBotPermissions,
     extractUserIdsFromMentions,
     type Failure,
     type FaqRoute,
     featureRestricted,
     type FromWorker,
     type FullWebhookDetails,
-    type GenerateBotKeyResponse,
     type GenerateChallengeResponse,
     type GenerateMagicLinkResponse,
     getContentAsFormattedText,
@@ -128,6 +126,7 @@ import {
     getEmailSignInSession,
     getTimeUntilSessionExpiryMs,
     type GlobalSelectedChatRoute,
+    type GrantedBotPermissions,
     type GroupChatDetailsResponse,
     type GroupChatIdentifier,
     type GroupChatSummary,
@@ -204,7 +203,6 @@ import {
     type PreprocessedGate,
     type ProposalVoteDetails,
     type ProposeResponse,
-    type PublicApiKeyDetails,
     type PublicProfile,
     publish,
     type PubSubEvents,
@@ -329,7 +327,6 @@ import {
     currentUserIdStore,
     currentUserStore,
     diamondStatusStore,
-    directChatApiKeysStore,
     directChatBotsStore,
     eventListScrollTop,
     eventsStore,
@@ -3324,7 +3321,6 @@ export class OpenChat {
                 resp.invitedUsers,
                 resp.referrals,
                 resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
-                resp.apiKeys,
                 resp.rules,
             );
             this.#updateUserStoreFromCommunityState();
@@ -3339,8 +3335,7 @@ export class OpenChat {
         lapsedMembers: Set<string>,
         invitedUsers: Set<string>,
         referrals: Set<string>,
-        bots: Map<string, ExternalBotPermissions>,
-        apiKeys: Map<string, PublicApiKeyDetails>,
+        bots: Map<string, GrantedBotPermissions>,
         rules?: VersionedRules,
     ) {
         if (!communityIdentifiersEqual(communityId, selectedCommunityIdStore.value)) {
@@ -3362,7 +3357,6 @@ export class OpenChat {
                 invitedUsers,
                 referrals,
                 bots,
-                apiKeys,
                 rules,
             ),
         );
@@ -3394,7 +3388,6 @@ export class OpenChat {
                         resp.pinnedMessages,
                         resp.rules,
                         resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
-                        resp.apiKeys,
                         new Map(resp.webhooks.map((w) => [w.id, w])),
                     );
                 }
@@ -3414,8 +3407,7 @@ export class OpenChat {
         invitedUsers: Set<string>,
         pinnedMessages: Set<number>,
         rules: VersionedRules,
-        bots: Map<string, ExternalBotPermissions>,
-        apiKeys: Map<string, PublicApiKeyDetails>,
+        bots: Map<string, GrantedBotPermissions>,
         webhooks: Map<string, WebhookDetails>,
     ) {
         if (!chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
@@ -3435,7 +3427,6 @@ export class OpenChat {
                 invitedUsers,
                 pinnedMessages,
                 bots,
-                apiKeys,
                 webhooks,
                 rules,
             ),
@@ -6228,7 +6219,6 @@ export class OpenChat {
                     chatsResponse.state.walletConfig,
                     chatsResponse.state.messageActivitySummary,
                     chatsResponse.state.installedBots,
-                    chatsResponse.state.apiKeys,
                     chatsResponse.state.streakInsurance,
                 );
             });
@@ -6345,8 +6335,7 @@ export class OpenChat {
         referrals: Referral[],
         walletConfig: WalletConfig,
         messageActivitySummary: MessageActivitySummary,
-        installedBots: Map<string, ExternalBotPermissions>,
-        apiKeys: Map<string, PublicApiKeyDetails>,
+        installedBots: Map<string, GrantedBotPermissions>,
         streakInsurance: StreakInsurance | undefined,
     ): void {
         const [channelsMap, directChats, groupChats] = OpenChat.partitionChats(allChats);
@@ -6370,7 +6359,6 @@ export class OpenChat {
         serverFavouritesStore.set(favouritesSet);
         serverCommunitiesStore.set(communitiesMap);
         serverPinnedChatsStore.set(pinnedChats);
-        directChatApiKeysStore.set(apiKeys);
         serverDirectChatBotsStore.set(installedBots);
         serverWalletConfigStore.set(walletConfig);
         if (streakInsurance !== undefined) {
@@ -8436,36 +8424,6 @@ export class OpenChat {
         });
     }
 
-    generateBotApiKey(
-        id: ChatIdentifier | CommunityIdentifier,
-        botId: string,
-        permissions: ExternalBotPermissions,
-    ): Promise<GenerateBotKeyResponse> {
-        return this.#sendRequest({
-            kind: "generateBotApiKey",
-            id,
-            botId,
-            permissions,
-        }).catch((err) => {
-            this.#logger.error("Failed to generate api key", err);
-            return { kind: "failure" };
-        });
-    }
-
-    getApiKey(
-        id: ChatIdentifier | CommunityIdentifier,
-        botId: string,
-    ): Promise<string | undefined> {
-        return this.#sendRequest({
-            kind: "getApiKey",
-            id,
-            botId,
-        }).catch((err) => {
-            this.#logger.error("Failed to get api key", err);
-            return undefined;
-        });
-    }
-
     registerWebhook(
         chatId: MultiUserChatIdentifier,
         name: string,
@@ -8701,7 +8659,7 @@ export class OpenChat {
     installBot(
         id: BotInstallationLocation,
         botId: string,
-        grantedPermissions: ExternalBotPermissions,
+        grantedPermissions: GrantedBotPermissions,
     ): Promise<boolean> {
         const undo = this.#installBotLocally(id, botId, grantedPermissions);
         return this.#sendRequest({
@@ -8726,7 +8684,7 @@ export class OpenChat {
     updateInstalledBot(
         id: BotInstallationLocation,
         botId: string,
-        grantedPermissions: ExternalBotPermissions,
+        grantedPermissions: GrantedBotPermissions,
     ): Promise<boolean> {
         return this.#sendRequest({
             kind: "updateInstalledBot",
@@ -8753,7 +8711,7 @@ export class OpenChat {
     #installBotLocally(
         id: BotInstallationLocation,
         botId: string,
-        perm: ExternalBotPermissions,
+        perm: GrantedBotPermissions,
     ): UndoLocalUpdate {
         switch (id.kind) {
             case "community":
@@ -8868,19 +8826,17 @@ export class OpenChat {
             case "external_bot":
                 return this.#getAuthTokenForBotCommand(scope, bot)
                     .then(([token, msgId]) => {
-                        if (bot.command.name !== "sync_api_key") {
-                            removePlaceholder = this.sendPlaceholderBotMessage(
-                                scope,
-                                botContext,
-                                bot.command.placeholder !== undefined
-                                    ? { kind: "text_content", text: bot.command.placeholder }
-                                    : { kind: "bot_placeholder_content" },
-                                msgId,
-                                bot.id,
-                                false,
-                                false,
-                            );
-                        }
+                        removePlaceholder = this.sendPlaceholderBotMessage(
+                            scope,
+                            botContext,
+                            bot.command.placeholder !== undefined
+                                ? { kind: "text_content", text: bot.command.placeholder }
+                                : { kind: "bot_placeholder_content" },
+                            msgId,
+                            bot.id,
+                            false,
+                            false,
+                        );
                         return this.#callBotCommandEndpoint(bot.endpoint, token);
                     })
                     .then((resp) => {

@@ -2,9 +2,8 @@ import {
     ChatMap,
     type ChatIdentifier,
     type ChatListScope,
-    type ExternalBotPermissions,
+    type GrantedBotPermissions,
     type Member,
-    type PublicApiKeyDetails,
     type VersionedRules,
     type WebhookDetails,
 } from "openchat-shared";
@@ -23,12 +22,7 @@ export class ChatDetailsUpdatesManager {
     blockedUsers = writable<ChatMap<LocalSet<string>>>(new ChatMap(), undefined, notEq);
     pinnedMessages = writable<ChatMap<LocalSet<number>>>(new ChatMap(), undefined, notEq);
     invitedUsers = writable<ChatMap<LocalSet<string>>>(new ChatMap(), undefined, notEq);
-    bots = writable<ChatMap<LocalMap<string, ExternalBotPermissions>>>(
-        new ChatMap(),
-        undefined,
-        notEq,
-    );
-    apiKeys = writable<ChatMap<LocalMap<string, PublicApiKeyDetails>>>(
+    bots = writable<ChatMap<LocalMap<string, GrantedBotPermissions>>>(
         new ChatMap(),
         undefined,
         notEq,
@@ -145,7 +139,7 @@ export class ChatDetailsUpdatesManager {
         return this.#updateForChat(id, this.bots, localMap, (map) => map.remove(botId));
     }
 
-    installBot(id: ChatIdentifier, botId: string, perm: ExternalBotPermissions): UndoLocalUpdate {
+    installBot(id: ChatIdentifier, botId: string, perm: GrantedBotPermissions): UndoLocalUpdate {
         return this.#updateForChat(id, this.bots, localMap, (map) => map.addOrUpdate(botId, perm));
     }
 
@@ -173,7 +167,6 @@ export class ChatDetailsUpdatesManager {
         this.blockedUsers.set(new ChatMap());
         this.members.set(new ChatMap());
         this.bots.set(new ChatMap());
-        this.apiKeys.set(new ChatMap());
         this.webhooks.set(new ChatMap());
         this.rules.set(new ChatMap());
     }
