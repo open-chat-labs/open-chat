@@ -44,8 +44,7 @@ export async function expectPushNotifications<T>(
     }
 
     // Create a channel for receiving notifications!
-    // NOTE: We are currently doing this natively, in Kotlin code, but keeping
-    // this here for future reference in case we want to do it via Tauri.
+    // NOTE: This is currently done natively in Kotlin code.
     // createNotificationChannel();
 
     // Set up the listener for push notifications!
@@ -71,7 +70,21 @@ async function askForPermission(): Promise<boolean> {
     return false;
 }
 
-// @ts-ignore
+/**
+ * Creates a notification channel for messages. This is used to group message
+ * notifications, so that they can be managed together in the notification
+ * banner.
+ *
+ * This function checks if the channel already exists before creating it, to avoid
+ * duplicate channels; while this is not strictly necessary, it may be useful for
+ * debugging purposes or as a micro-optimisation if we want to ensure the channel
+ * is created only once - which should be the case anyway even with multiple
+ * createChannel calls, as it does not create a duplicate channel if it already
+ * exists.
+ *
+ * NOTE: We are currently doing this natively, in Kotlin code, but keeping
+ * this here for future reference in case we want to do it via Tauri.
+ */
 async function createNotificationChannel() {
     try {
         const channelExists = await checkMessagesNotificationChannelExists();
@@ -97,11 +110,7 @@ async function createNotificationChannel() {
 }
 
 // We can check if the channel exists by listing all channels and checking for
-// the one we want. While this is not strictly necessary, it may be useful for
-// debugging purposes or if we want to ensure the channel is created only once
-// - which should be the case even with multiple createChannel calls, if channel
-// exists it is not created again.
-// @ts-ignore
+// the one we want.
 async function checkMessagesNotificationChannelExists() {
     try {
         const existingChannels = await channels();
