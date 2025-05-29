@@ -191,7 +191,7 @@ impl Streak {
         self.utc_offset_updates
             .iter()
             .filter(|(updated_at, _)| *updated_at < ts)
-            .last()
+            .next_back()
             .map(|(_, offset)| *offset)
             .unwrap_or_default()
     }
