@@ -40,4 +40,8 @@ pub struct SuccessResult {
     pub diamond_membership_status: DiamondMembershipStatusFull,
     pub moderation_flags_enabled: u32,
     pub is_unique_person: bool,
+    pub total_chit_earned: i32,
+    pub chit_balance: i32,
+    pub streak: u16,
+    pub max_streak: u16,
 }
