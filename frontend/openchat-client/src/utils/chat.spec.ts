@@ -97,6 +97,7 @@ function createUser(userId: string, username: string): UserSummary {
         diamondStatus: "inactive",
         chitBalance: 0,
         streak: 0,
+        maxStreak: 0,
         isUniquePerson: false,
         totalChitEarned: 0,
     };

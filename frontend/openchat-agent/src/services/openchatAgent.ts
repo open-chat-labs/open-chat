@@ -1759,6 +1759,7 @@ export class OpenChatAgent extends EventTarget {
             chitState = {
                 streakEnds: userResponse.streakEnds,
                 streak: userResponse.streak,
+                maxStreak: userResponse.maxStreak,
                 chitBalance: userResponse.chitBalance,
                 nextDailyChitClaim: userResponse.nextDailyClaim,
                 totalChitEarned: userResponse.totalChitEarned,
@@ -1855,6 +1856,7 @@ export class OpenChatAgent extends EventTarget {
                 chitState = {
                     streakEnds: userResponse.streakEnds,
                     streak: userResponse.streak,
+                    maxStreak: userResponse.maxStreak,
                     chitBalance: userResponse.chitBalance,
                     nextDailyChitClaim: userResponse.nextDailyClaim,
                     totalChitEarned: userResponse.totalChitEarned,

@@ -26,6 +26,7 @@ export const airdropBotUser: UserSummary = {
     diamondStatus: "inactive",
     chitBalance: 0,
     streak: 0,
+    maxStreak: 0,
     isUniquePerson: false,
     totalChitEarned: 0,
 };
@@ -41,6 +42,7 @@ export const videoCallBotUser: UserSummary = {
     diamondStatus: "inactive",
     chitBalance: 0,
     streak: 0,
+    maxStreak: 0,
     isUniquePerson: false,
     totalChitEarned: 0,
 };
@@ -56,6 +58,7 @@ export const openChatBotUser: UserSummary = {
     diamondStatus: "inactive",
     chitBalance: 0,
     streak: 0,
+    maxStreak: 0,
     isUniquePerson: false,
     totalChitEarned: 0,
 };
@@ -71,6 +74,7 @@ export const anonymousUserSummary: UserSummary = {
     diamondStatus: "inactive",
     chitBalance: 0,
     streak: 0,
+    maxStreak: 0,
     isUniquePerson: false,
     totalChitEarned: 0,
 };
@@ -91,6 +95,7 @@ export function proposalsBotUser(userId: string): UserSummary {
         diamondStatus: "inactive",
         chitBalance: 0,
         streak: 0,
+        maxStreak: 0,
         isUniquePerson: false,
         totalChitEarned: 0,
     };

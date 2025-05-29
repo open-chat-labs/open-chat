@@ -116,6 +116,7 @@ export class AnonUserClient {
             achievementsLastSeen: 0n,
             streakEnds: 0n,
             streak: 0,
+            maxStreak: 0,
             nextDailyClaim: 0n,
             chitBalance: 0,
             totalChitEarned: 0,

@@ -118,6 +118,7 @@
         diamondStatus: "inactive",
         chitBalance: 0,
         streak: 0,
+        maxStreak: 0,
         isUniquePerson: $currentUserStore.isUniquePerson,
         totalChitEarned: 0,
     });
