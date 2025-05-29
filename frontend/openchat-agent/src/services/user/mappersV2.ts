@@ -616,6 +616,7 @@ export function initialStateResponse(value: UserInitialStateResponse): InitialSt
             achievements: result.achievements.map(chitEarned),
             streakEnds: result.streak_ends,
             streak: result.streak,
+            maxStreak: result.max_streak,
             nextDailyClaim: result.next_daily_claim,
             chitBalance: result.chit_balance,
             totalChitEarned: result.total_chit_earned,
@@ -786,6 +787,7 @@ export function getUpdatesResponse(value: UserUpdatesResponse): UpdatesResponse 
             achievements: result.achievements.map(chitEarned),
             streakEnds: result.streak_ends,
             streak: result.streak,
+            maxStreak: result.max_streak,
             nextDailyClaim: result.next_daily_claim,
             chitBalance: result.chit_balance,
             totalChitEarned: result.total_chit_earned,
@@ -1029,6 +1031,7 @@ export function claimDailyChitResponse(value: UserClaimDailyChitResponse): Claim
         return {
             kind: "success",
             streak: value.Success.streak,
+            maxStreak: value.Success.max_streak,
             chitBalance: value.Success.chit_balance,
             chitEarned: value.Success.chit_earned,
             nextDailyChitClaim: value.Success.next_claim,

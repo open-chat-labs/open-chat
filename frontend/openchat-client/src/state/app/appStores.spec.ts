@@ -711,6 +711,7 @@ function groupChatExpectation(id: GroupChatIdentifier, fn: (g: GroupChatSummary)
 function chitState() {
     return {
         streak: 10,
+        maxStreak: 10,
         streakEnds: BigInt(Date.now() + 1000 * 60 * 60 * 24),
         nextDailyChitClaim: BigInt(Date.now() + 1000 * 60 * 60 * 24),
         chitBalance: 10_000,

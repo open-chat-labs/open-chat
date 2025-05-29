@@ -14,6 +14,7 @@ userLookup.set("xyz", {
     chitBalance: 0,
     totalChitEarned: 0,
     streak: 0,
+    maxStreak: 0,
     isUniquePerson: true,
 });
 
