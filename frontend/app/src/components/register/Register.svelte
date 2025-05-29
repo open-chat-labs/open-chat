@@ -125,6 +125,10 @@
                     updated: 0n,
                     isBot: false,
                     isUniquePerson: false,
+                    totalChitEarned: 0,
+                    chitBalance: 0,
+                    streak: 0,
+                    maxStreak: 0,
                 };
                 onCreatedUser(createdUser);
             } else {
