@@ -11,7 +11,6 @@ import type {
     UnfreezeGroupResponse,
     CommunityMatch,
     GroupSearchResponse,
-    ActiveGroupsResponse,
     ExploreCommunitiesResponse,
     ChannelIdentifier,
     FreezeCommunityResponse,
@@ -22,7 +21,6 @@ import { publicGroupSummary } from "../common/publicSummaryMapperV2";
 import { accessGateConfig, groupSubtype, ocError } from "../common/chatMappersV2";
 import type {
     CommunityMatch as TCommunityMatch,
-    GroupIndexActiveGroupsResponse,
     GroupIndexAddHotGroupExclusionResponse,
     GroupIndexDeleteFrozenGroupResponse,
     GroupIndexExploreCommunitiesResponse,
@@ -38,28 +36,6 @@ import type {
     GroupIndexFreezeCommunityResponse,
     GroupIndexUnfreezeCommunityResponse,
 } from "../../typebox";
-
-export function activeGroupsResponse(value: GroupIndexActiveGroupsResponse): ActiveGroupsResponse {
-    return {
-        timestamp: value.Success.timestamp,
-        activeGroups: value.Success.active_groups.map(principalBytesToString),
-        activeCommunities: value.Success.active_communities.map(principalBytesToString),
-        deletedCommunities: value.Success.deleted_communities.map((d) => ({
-            id: principalBytesToString(d.id),
-            timestamp: d.timestamp,
-            deletedBy: principalBytesToString(d.deleted_by),
-            name: d.name,
-            public: d.public,
-        })),
-        deletedGroups: value.Success.deleted_groups.map((d) => ({
-            id: principalBytesToString(d.id),
-            timestamp: d.timestamp,
-            deletedBy: principalBytesToString(d.deleted_by),
-            name: d.name,
-            public: d.public,
-        })),
-    };
-}
 
 export function recommendedGroupsResponse(
     value: GroupIndexRecommendedGroupsResponse,

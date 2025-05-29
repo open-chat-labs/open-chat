@@ -67,7 +67,6 @@ export type CommunitySummary = AccessControlled &
         localUserIndex: string;
         isInvited: boolean;
         verified: boolean;
-        latestSuccessfulUpdatesCheck: bigint;
     };
 
 export type DefaultChannel = {

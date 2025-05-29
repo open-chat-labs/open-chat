@@ -12,7 +12,7 @@ import type {
     EventWrapper,
     GrantedBotPermissions,
     GroupAndCommunitySummaryUpdatesArgs,
-    GroupAndCommunitySummaryUpdatesResponse,
+    GroupAndCommunitySummaryUpdatesResponseBatch,
     JoinCommunityResponse,
     JoinGroupResponse,
     MessageContext,
@@ -26,8 +26,8 @@ import {
     LocalUserIndexAccessTokenV2Response,
     LocalUserIndexChatEventsArgs,
     LocalUserIndexChatEventsResponse,
-    LocalUserIndexGroupAndCommunitySummaryUpdatesArgs,
-    LocalUserIndexGroupAndCommunitySummaryUpdatesResponse,
+    LocalUserIndexGroupAndCommunitySummaryUpdatesV2Args,
+    LocalUserIndexGroupAndCommunitySummaryUpdatesV2Response,
     LocalUserIndexInstallBotArgs,
     LocalUserIndexInviteUsersToChannelArgs,
     LocalUserIndexInviteUsersToChannelResponse,
@@ -85,7 +85,8 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
 
     groupAndCommunitySummaryUpdates(
         requests: GroupAndCommunitySummaryUpdatesArgs[],
-    ): Promise<GroupAndCommunitySummaryUpdatesResponse[]> {
+        maxC2cCalls = 50,
+    ): Promise<GroupAndCommunitySummaryUpdatesResponseBatch> {
         const args = {
             requests: requests.map((r) => ({
                 canister_id: principalStringToBytes(r.canisterId),
@@ -93,14 +94,15 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
                 invite_code: r.inviteCode,
                 updates_since: r.updatesSince,
             })),
+            max_c2c_calls: maxC2cCalls,
         };
 
         return this.executeMsgpackQuery(
-            "group_and_community_summary_updates",
+            "group_and_community_summary_updates_v2",
             args,
-            (resp) => groupAndCommunitySummaryUpdates(requests, resp),
-            LocalUserIndexGroupAndCommunitySummaryUpdatesArgs,
-            LocalUserIndexGroupAndCommunitySummaryUpdatesResponse,
+            groupAndCommunitySummaryUpdates,
+            LocalUserIndexGroupAndCommunitySummaryUpdatesV2Args,
+            LocalUserIndexGroupAndCommunitySummaryUpdatesV2Response,
         );
     }
 

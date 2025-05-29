@@ -5,8 +5,8 @@ import type {
     ChatEventsArgs,
     ChatEventsBatchResponse,
     ChatEventsResponse,
-    GroupAndCommunitySummaryUpdatesArgs,
     GroupAndCommunitySummaryUpdatesResponse,
+    GroupAndCommunitySummaryUpdatesResponseBatch,
     JoinCommunityResponse,
     JoinGroupResponse,
     MessageContext,
@@ -20,7 +20,7 @@ import type {
     LocalUserIndexChatEventsEventsArgs,
     LocalUserIndexChatEventsEventsContext,
     LocalUserIndexChatEventsResponse,
-    LocalUserIndexGroupAndCommunitySummaryUpdatesResponse,
+    LocalUserIndexGroupAndCommunitySummaryUpdatesV2Response,
     LocalUserIndexInviteUsersToChannelResponse,
     LocalUserIndexInviteUsersToCommunityResponse,
     LocalUserIndexInviteUsersToGroupResponse,
@@ -171,63 +171,50 @@ export function accessTokenResponse(
 }
 
 export function groupAndCommunitySummaryUpdates(
-    requests: GroupAndCommunitySummaryUpdatesArgs[],
-    value: LocalUserIndexGroupAndCommunitySummaryUpdatesResponse,
-): GroupAndCommunitySummaryUpdatesResponse[] {
-    const results: GroupAndCommunitySummaryUpdatesResponse[] = [];
-    for (let i = 0; i < requests.length; i++) {
-        const request = requests[i];
-        const result = value.Success[i];
-
-        if (result === "SuccessNoUpdates") {
-            results.push({
-                kind: "no_updates",
-            });
-        } else if (result === "NotFound") {
-            results.push({
-                kind: "not_found",
-            });
-        } else if ("SuccessGroup" in result) {
-            results.push({
+    value: LocalUserIndexGroupAndCommunitySummaryUpdatesV2Response,
+): GroupAndCommunitySummaryUpdatesResponseBatch {
+    const updates: GroupAndCommunitySummaryUpdatesResponse[] = [];
+    for (const response of value.Success.updates) {
+        if (response === "SuccessNoUpdates") {
+            continue;
+        } else if ("SuccessGroup" in response) {
+            updates.push({
                 kind: "group",
-                value: groupChatSummary(result.SuccessGroup),
+                value: groupChatSummary(response.SuccessGroup),
             });
-        } else if ("SuccessGroupUpdates" in result) {
-            results.push({
+        } else if ("SuccessGroupUpdates" in response) {
+            updates.push({
                 kind: "group_updates",
-                value: groupChatSummaryUpdates(result.SuccessGroupUpdates),
+                value: groupChatSummaryUpdates(response.SuccessGroupUpdates),
             });
-        } else if ("SuccessCommunity" in result) {
-            results.push({
+        } else if ("SuccessCommunity" in response) {
+            updates.push({
                 kind: "community",
-                value: communitySummary(result.SuccessCommunity),
+                value: communitySummary(response.SuccessCommunity),
             });
-        } else if ("SuccessCommunityUpdates" in result) {
-            results.push({
+        } else if ("SuccessCommunityUpdates" in response) {
+            updates.push({
                 kind: "community_updates",
-                value: communitySummaryUpdates(result.SuccessCommunityUpdates),
+                value: communitySummaryUpdates(response.SuccessCommunityUpdates),
             });
-        } else if ("InternalError" in result) {
-            results.push({
-                kind: "error",
-                error: result.InternalError,
-                canisterId: request.canisterId,
-            });
-        } else if ("Error" in result) {
-            results.push({
-                kind: "error",
-                error: JSON.stringify(result.Error),
-                canisterId: request.canisterId,
-            });
+        } else if ("Error" in response) {
+            // This variant isn't returned any more and can be cleaned up shortly
+            continue;
         } else {
             throw new UnsupportedValueError(
                 "Unexpected ApiSummaryUpdatesResponse type received",
-                result,
+                response,
             );
         }
     }
 
-    return results;
+    return {
+        timestamp: value.Success.timestamp,
+        updates,
+        excessUpdates: value.Success.excess_updates.map(principalBytesToString),
+        errors: value.Success.errors.map(([c, e]) => [principalBytesToString(c), ocError(e)]),
+        notFound: value.Success.not_found.map(principalBytesToString),
+    };
 }
 
 export function chatEventsArgs(eventArgs: ChatEventsArgs): LocalUserIndexChatEventsEventsArgs {
@@ -302,12 +289,7 @@ export async function chatEventsBatchResponse(
     for (let i = 0; i < requests.length; i++) {
         const response = value.Success.responses[i];
         const args = requests[i];
-
-        if (response === "NotFound") {
-            responses.push({
-                kind: "not_found",
-            });
-        } else if ("Success" in response) {
+        if ("Success" in response) {
             const result = await getEventsSuccess(
                 response.Success,
                 principal,
@@ -315,17 +297,6 @@ export async function chatEventsBatchResponse(
                 true
             );
             responses.push(isSuccessfulEventsResponse(result) ? { kind: "success", result } : result);
-        } else if ("ReplicaNotUpToDate" in response) {
-            responses.push({
-                kind: "replica_not_up_to_date",
-                replicaTimestamp: response.ReplicaNotUpToDate,
-                clientTimestamp: args.latestKnownUpdate ?? BigInt(-1),
-            });
-        } else if ("InternalError" in response) {
-            responses.push({
-                kind: "internal_error",
-                error: response.InternalError,
-            });
         } else {
             responses.push(ocError(response.Error));
         }
