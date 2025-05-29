@@ -1526,7 +1526,6 @@ export type GroupChatSummary = DataContent &
         isInvited: boolean;
         messagesVisibleToNonMembers: boolean;
         verified: boolean;
-        latestSuccessfulUpdatesCheck: bigint;
     };
 
 export function nullMembership(): ChatMembership {

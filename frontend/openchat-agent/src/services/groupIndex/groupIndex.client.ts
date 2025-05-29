@@ -11,7 +11,6 @@ import type {
     GroupSearchResponse,
     CommunityIdentifier,
     GroupChatIdentifier,
-    ActiveGroupsResponse,
     ExploreCommunitiesResponse,
     ChannelIdentifier,
     FreezeCommunityResponse,
@@ -27,7 +26,6 @@ import {
     setCommunityModerationFlagsResponse,
     setUpgradeConcurrencyResponse,
     unfreezeGroupResponse,
-    activeGroupsResponse,
     exploreCommunitiesResponse,
     lookupChannelResponse,
     exploreGroupsResponse,
@@ -35,8 +33,6 @@ import {
     unfreezeCommunityResponse,
 } from "./mappers";
 import {
-    GroupIndexActiveGroupsArgs,
-    GroupIndexActiveGroupsResponse,
     GroupIndexAddHotGroupExclusionArgs,
     GroupIndexAddHotGroupExclusionResponse,
     GroupIndexDeleteFrozenGroupArgs,
@@ -73,25 +69,6 @@ import { principalStringToBytes } from "../../utils/mapping";
 export class GroupIndexClient extends MsgpackCanisterAgent {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
         super(identity, agent, canisterId, "GroupIndex");
-    }
-
-    activeGroups(
-        communityIds: CommunityIdentifier[],
-        groupIds: GroupChatIdentifier[],
-        activeSince: bigint,
-    ): Promise<ActiveGroupsResponse> {
-        const args = {
-            group_ids: groupIds.map((c) => principalStringToBytes(c.groupId)),
-            community_ids: communityIds.map((c) => principalStringToBytes(c.communityId)),
-            active_since: activeSince,
-        };
-        return this.executeMsgpackQuery(
-            "active_groups",
-            args,
-            activeGroupsResponse,
-            GroupIndexActiveGroupsArgs,
-            GroupIndexActiveGroupsResponse,
-        );
     }
 
     recommendedGroups(exclusions: string[]): Promise<GroupChatSummary[]> {

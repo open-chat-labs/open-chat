@@ -244,16 +244,11 @@ export function mergeGroupChatUpdates(
     groupChats: GroupChatSummary[],
     userCanisterUpdates: UserCanisterGroupChatSummaryUpdates[],
     groupCanisterUpdates: GroupCanisterGroupChatSummaryUpdates[],
-    latestSuccessfulUpdatesCheck: bigint,
-    canistersWhichResultedInError: Set<string>,
 ): GroupChatSummary[] {
     const userLookup = ChatMap.fromList(userCanisterUpdates);
     const groupLookup = ChatMap.fromList(groupCanisterUpdates);
 
     return groupChats.map((c) => {
-        if (!canistersWhichResultedInError.has(c.id.groupId)) {
-            c.latestSuccessfulUpdatesCheck = latestSuccessfulUpdatesCheck;
-        }
         const u = userLookup.get(c.id);
         const g = groupLookup.get(c.id);
 
@@ -336,7 +331,6 @@ export function mergeGroupChatUpdates(
             messagesVisibleToNonMembers:
                 g?.messagesVisibleToNonMembers ?? c.messagesVisibleToNonMembers,
             verified: g?.verified ?? c.verified,
-            latestSuccessfulUpdatesCheck: c.latestSuccessfulUpdatesCheck,
         };
     });
 }
@@ -344,7 +338,6 @@ export function mergeGroupChatUpdates(
 export function mergeGroupChats(
     userCanisterGroups: UserCanisterGroupChatSummary[],
     groupCanisterGroups: GroupCanisterGroupChatSummary[],
-    latestSuccessfulUpdatesCheck: bigint
 ): GroupChatSummary[] {
     const userCanisterGroupLookup = ChatMap.fromList(userCanisterGroups);
 
@@ -396,7 +389,6 @@ export function mergeGroupChats(
             isInvited: false,
             messagesVisibleToNonMembers: g.messagesVisibleToNonMembers,
             verified: g.verified,
-            latestSuccessfulUpdatesCheck,
         };
     });
 }
