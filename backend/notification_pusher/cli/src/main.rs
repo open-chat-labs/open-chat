@@ -17,14 +17,14 @@ async fn main() -> Result<(), Error> {
 
     let args: Vec<String> = std::env::args().collect();
     let index = args.get(1).map(|a| a.parse::<u64>().unwrap()).unwrap_or_default();
-    let vapid_private_pem = dotenv::var("VAPID_PRIVATE_PEM")?;
-    let index_canister_id = Principal::from_text(dotenv::var("NOTIFICATIONS_INDEX_CANISTER_ID")?)?;
-    let notifications_canister_id = Principal::from_text(dotenv::var("NOTIFICATIONS_CANISTER_ID")?)?;
+    let vapid_private_pem = read_env_var("VAPID_PRIVATE_PEM")?;
+    let index_canister_id = Principal::from_text(read_env_var("NOTIFICATIONS_INDEX_CANISTER_ID")?)?;
+    let notifications_canister_id = Principal::from_text(read_env_var("NOTIFICATIONS_CANISTER_ID")?)?;
     let index_store = DummyStore::new(HashMap::from([(notifications_canister_id, index)]));
-    let ic_url = dotenv::var("IC_URL")?;
-    let ic_identity_pem = dotenv::var("IC_IDENTITY_PEM")?;
-    let is_production = bool::from_str(&dotenv::var("IS_PRODUCTION")?).unwrap();
-    let pusher_count = dotenv::var("PUSHER_COUNT")
+    let ic_url = read_env_var("IC_URL")?;
+    let ic_identity_pem = read_env_var("IC_IDENTITY_PEM")?;
+    let is_production = bool::from_str(&read_env_var("IS_PRODUCTION")?).unwrap();
+    let pusher_count = read_env_var("PUSHER_COUNT")
         .ok()
         .and_then(|s| u32::from_str(&s).ok())
         .unwrap_or(1);
@@ -47,6 +47,10 @@ async fn main() -> Result<(), Error> {
     .await;
 
     Ok(())
+}
+
+fn read_env_var(name: &str) -> Result<String, String> {
+    dotenv::var(name).map_err(|_| format!("Environment variable not found: {name}"))
 }
 
 async fn write_metrics_to_file() {

@@ -41,6 +41,7 @@ jobs:
           OC_ROLLBAR_ACCESS_TOKEN: DUMMY_ROLLBAR_ACCESS_TOKEN
           OC_WEBSITE_VERSION: 1.0.0
           OC_METERED_APIKEY: DUMMY_METERED_APIKEY
+          OC_VAPID_PUBLIC_KEY: DUMMY_VAPID_PUBLIC_KEY
       - name: Save dependencies to cache
         if: ${{ github.ref == 'refs/heads/master' }}
         uses: actions/cache/save@v3
