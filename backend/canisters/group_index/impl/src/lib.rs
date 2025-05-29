@@ -1,7 +1,7 @@
 use crate::model::cached_hot_groups::CachedHotGroups;
 use crate::model::deleted_communities::DeletedCommunities;
 use crate::model::deleted_groups::DeletedGroups;
-use crate::model::local_group_index_map::LocalGroupIndex;
+use crate::model::local_index_map::LocalIndex;
 use crate::model::private_communities::PrivateCommunities;
 use crate::model::private_groups::PrivateGroups;
 use crate::model::public_communities::PublicCommunities;
@@ -12,9 +12,9 @@ use canister_state_macros::canister_state;
 use constants::MINUTE_IN_MS;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_index_canister::ChildCanisterType;
-use local_user_index_canister::{GroupIndexEvent as LocalUserIndexEvent, NameChanged, VerifiedChanged};
-use model::local_group_index_map::LocalGroupIndexMap;
-use model::local_user_index_event_batch::LocalUserIndexEventBatch;
+use local_user_index_canister::{GroupIndexEvent as LocalIndexEvent, NameChanged, VerifiedChanged};
+use model::local_index_event_batch::LocalIndexEventBatch;
+use model::local_index_map::LocalIndexMap;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -84,35 +84,25 @@ impl RuntimeState {
         self.data.governance_principals.contains(&caller) || self.data.upload_wasm_chunks_whitelist.contains(&caller)
     }
 
-    pub fn push_group_event_to_local_group_index(
-        &mut self,
-        group_id: ChatId,
-        event: LocalUserIndexEvent,
-        now: TimestampMillis,
-    ) {
+    pub fn push_group_event_to_local_index(&mut self, group_id: ChatId, event: LocalIndexEvent, now: TimestampMillis) {
         if let Some(canister_id) = self.data.local_index_map.get_index_canister_for_group(&group_id) {
-            self.push_event_to_local_group_index(canister_id, event, now);
+            self.push_event_to_local_index(canister_id, event, now);
         }
     }
 
-    pub fn push_community_event_to_local_group_index(
+    pub fn push_community_event_to_local_index(
         &mut self,
         community_id: CommunityId,
-        event: LocalUserIndexEvent,
+        event: LocalIndexEvent,
         now: TimestampMillis,
     ) {
         if let Some(canister_id) = self.data.local_index_map.get_index_canister_for_community(&community_id) {
-            self.push_event_to_local_group_index(canister_id, event, now);
+            self.push_event_to_local_index(canister_id, event, now);
         }
     }
 
-    pub fn push_event_to_local_group_index(
-        &mut self,
-        canister_id: CanisterId,
-        event: LocalUserIndexEvent,
-        now: TimestampMillis,
-    ) {
-        self.data.local_group_index_event_sync_queue.push(
+    pub fn push_event_to_local_index(&mut self, canister_id: CanisterId, event: LocalIndexEvent, now: TimestampMillis) {
+        self.data.local_index_event_sync_queue.push(
             canister_id,
             IdempotentEnvelope {
                 created_at: now,
@@ -129,9 +119,9 @@ impl RuntimeState {
 
         community.set_verified(verified);
 
-        self.push_community_event_to_local_group_index(
+        self.push_community_event_to_local_index(
             community_id,
-            LocalUserIndexEvent::CommunityVerifiedChanged(VerifiedChanged {
+            LocalIndexEvent::CommunityVerifiedChanged(VerifiedChanged {
                 canister_id: community_id.into(),
                 verified,
             }),
@@ -148,9 +138,9 @@ impl RuntimeState {
 
         group.set_verified(verified);
 
-        self.push_group_event_to_local_group_index(
+        self.push_group_event_to_local_index(
             group_id,
-            LocalUserIndexEvent::GroupVerifiedChanged(VerifiedChanged {
+            LocalIndexEvent::GroupVerifiedChanged(VerifiedChanged {
                 canister_id: group_id.into(),
                 verified,
             }),
@@ -173,9 +163,9 @@ impl RuntimeState {
 
         community.set_name(new_name.clone());
 
-        self.push_community_event_to_local_group_index(
+        self.push_community_event_to_local_index(
             community_id,
-            LocalUserIndexEvent::CommunityNameChanged(NameChanged {
+            LocalIndexEvent::CommunityNameChanged(NameChanged {
                 canister_id,
                 name: new_name.clone(),
             }),
@@ -198,9 +188,9 @@ impl RuntimeState {
 
         group.set_name(new_name.clone());
 
-        self.push_group_event_to_local_group_index(
+        self.push_group_event_to_local_index(
             group_id,
-            LocalUserIndexEvent::GroupNameChanged(NameChanged {
+            LocalIndexEvent::GroupNameChanged(NameChanged {
                 canister_id,
                 name: new_name.clone(),
             }),
@@ -244,15 +234,9 @@ impl RuntimeState {
             canister_upgrades_pending: canister_upgrades_metrics.pending,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress,
             governance_principals: self.data.governance_principals.iter().copied().collect(),
-            local_group_index_wasm_version: self
-                .data
-                .child_canister_wasms
-                .get(ChildCanisterType::LocalGroupIndex)
-                .wasm
-                .version,
             group_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::Group).wasm.version,
             community_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::Community).wasm.version,
-            local_group_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
+            local_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
             upload_wasm_chunks_whitelist: self.data.upload_wasm_chunks_whitelist.iter().copied().collect(),
             wasm_chunks_uploaded: self
                 .data
@@ -297,7 +281,7 @@ struct Data {
     pub total_cycles_spent_on_canisters: Cycles,
     pub cached_hot_groups: CachedHotGroups,
     pub cached_metrics: CachedMetrics,
-    pub local_index_map: LocalGroupIndexMap,
+    pub local_index_map: LocalIndexMap,
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub video_call_operators: Vec<Principal>,
     pub upload_wasm_chunks_whitelist: HashSet<Principal>,
@@ -305,7 +289,8 @@ struct Data {
     pub rng_seed: [u8; 32],
     #[serde(default)]
     pub idempotency_checker: IdempotencyChecker,
-    pub local_group_index_event_sync_queue: GroupedTimerJobQueue<LocalUserIndexEventBatch>,
+    #[serde(alias = "local_group_index_event_sync_queue")]
+    pub local_index_event_sync_queue: GroupedTimerJobQueue<LocalIndexEventBatch>,
 }
 
 impl Data {
@@ -345,14 +330,14 @@ impl Data {
             total_cycles_spent_on_canisters: 0,
             cached_hot_groups: CachedHotGroups::default(),
             cached_metrics: CachedMetrics::default(),
-            local_index_map: LocalGroupIndexMap::default(),
+            local_index_map: LocalIndexMap::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             video_call_operators,
             upload_wasm_chunks_whitelist: HashSet::default(),
             ic_root_key,
             rng_seed: [0; 32],
             idempotency_checker: IdempotencyChecker::default(),
-            local_group_index_event_sync_queue: GroupedTimerJobQueue::new(10, false),
+            local_index_event_sync_queue: GroupedTimerJobQueue::new(10, false),
         }
     }
 
@@ -454,14 +439,14 @@ impl Default for Data {
             total_cycles_spent_on_canisters: 0,
             cached_hot_groups: CachedHotGroups::default(),
             cached_metrics: CachedMetrics::default(),
-            local_index_map: LocalGroupIndexMap::default(),
+            local_index_map: LocalIndexMap::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             video_call_operators: Vec::default(),
             upload_wasm_chunks_whitelist: HashSet::default(),
             ic_root_key: Vec::new(),
             rng_seed: [0; 32],
             idempotency_checker: IdempotencyChecker::default(),
-            local_group_index_event_sync_queue: GroupedTimerJobQueue::new(10, false),
+            local_index_event_sync_queue: GroupedTimerJobQueue::new(10, false),
         }
     }
 }
@@ -498,10 +483,9 @@ pub struct Metrics {
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub canister_upgrades_pending: u64,
     pub canister_upgrades_in_progress: u64,
-    pub local_group_index_wasm_version: BuildVersion,
     pub group_wasm_version: BuildVersion,
     pub community_wasm_version: BuildVersion,
-    pub local_group_indexes: Vec<(CanisterId, LocalGroupIndex)>,
+    pub local_indexes: Vec<(CanisterId, LocalIndex)>,
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
     pub wasm_chunks_uploaded: Vec<(ChildCanisterType, String)>,
     pub stable_memory_sizes: BTreeMap<u8, u64>,

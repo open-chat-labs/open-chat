@@ -7,7 +7,7 @@ use user_index_canister::mark_local_user_index_full::{Response::*, *};
 
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
-fn mark_local_group_index_full(args: Args) -> Response {
+fn mark_local_index_full(args: Args) -> Response {
     mutate_state(|state| match state.data.local_index_map.get_mut(&args.canister_id) {
         Some(index) => {
             index.mark_full();

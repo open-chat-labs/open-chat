@@ -1,2 +1,13 @@
-pub type Args = crate::c2c_local_group_index::Args;
-pub type Response = crate::c2c_local_group_index::Response;
+use crate::LocalIndexEvent;
+use serde::{Deserialize, Serialize};
+use types::IdempotentEnvelope;
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Args {
+    pub events: Vec<IdempotentEnvelope<LocalIndexEvent>>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum Response {
+    Success,
+}

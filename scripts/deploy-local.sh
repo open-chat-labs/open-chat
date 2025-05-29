@@ -46,7 +46,6 @@ cargo run --package local_canister_creator -- \
   --canister group_index \
   --canister notifications_index \
   --canister local_user_index \
-  --canister local_group_index \
   --canister notifications \
   --canister identity \
   --canister online_users \

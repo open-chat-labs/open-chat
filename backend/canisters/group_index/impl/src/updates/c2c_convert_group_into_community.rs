@@ -47,7 +47,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareResult, Respon
 
     let local_user_index_canister = match state.data.local_index_map.index_for_new_community() {
         Some(canister) => canister,
-        None => return Err(InternalError("No available LocalGroupIndex found".to_string())),
+        None => return Err(InternalError("No available LocalIndex found".to_string())),
     };
 
     let is_public = state.data.public_groups.get(&caller).is_some();

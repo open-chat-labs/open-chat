@@ -31,12 +31,6 @@
       "wasm": "wasms/local_user_index.wasm.gz",
       "build": "./scripts/generate-wasm.sh local_user_index"
     },
-    "local_group_index": {
-      "type": "custom",
-      "candid": "backend/canisters/local_group_index/api/can.did",
-      "wasm": "wasms/local_group_index.wasm.gz",
-      "build": "./scripts/generate-wasm.sh local_user_group"
-    },
     "neuron_controller": {
       "type": "custom",
       "candid": "backend/canisters/neuron_controller/api/can.did",
