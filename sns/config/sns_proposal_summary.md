@@ -6,7 +6,7 @@ This is the proposal for the NNS to create an SNS DAO to govern the [OpenChat da
 
 OpenChat is a decentralized chat app governed by the people for the people.
 
-It is fully featured, runs on the Internet Computer blockchain, and is similar in functionality to WhatsApp, Signal and Telegram. It is [open source](https://github.com/dfinity-lab/open-chat) and the code running on any canister smart contract [verifiably links back a particular version](https://oc.app/architecture?section=3) of the code. Users can send messages to each other containing tokens such as ICP and ckBTC.
+It is fully featured, runs on the Internet Computer blockchain, and is similar in functionality to WhatsApp, Signal and Telegram. It is [open source](https://github.com/dfinity-lab/open-chat) and the code running on any canister smart contract [verifiably links back a particular version](https://oc.app/architecture?section=3) of the code. Users can send messages to each other containing tokens such as BTC and ICP.
 
 The OpenChat DAO is being formed to operate and steer the direction of OpenChat as a public good, owned by no-one. Holders of CHAT tokens can stake them as neurons which allow them to make and vote on proposals to change the OpenChat dapp.
 
