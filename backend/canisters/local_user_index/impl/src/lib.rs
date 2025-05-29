@@ -8,13 +8,13 @@ use crate::model::user_event_batch::UserEventBatch;
 use crate::model::user_index_event_batch::UserIndexEventBatch;
 use candid::Principal;
 use canister_state_macros::canister_state;
-use community_canister::LocalGroupIndexEvent as CommunityEvent;
+use community_canister::LocalIndexEvent as CommunityEvent;
 use constants::{CYCLES_REQUIRED_FOR_UPGRADE, MINUTE_IN_MS};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use event_store_utils::EventDeduper;
 use fire_and_forget_handler::FireAndForgetHandler;
-use group_canister::LocalGroupIndexEvent as GroupEvent;
+use group_canister::LocalIndexEvent as GroupEvent;
 use jwt::{Claims, verify_and_decode};
 use local_user_index_canister::{ChildCanisterType, GlobalUser};
 use model::bots_map::BotsMap;
@@ -168,11 +168,6 @@ impl RuntimeState {
         self.data.local_users.contains(&caller.into())
             || self.data.local_groups.contains(&caller.into())
             || self.data.local_communities.contains(&caller.into())
-    }
-
-    pub fn is_caller_local_group_index(&self) -> bool {
-        let caller = self.env.caller();
-        self.data.local_group_index_canister_id == caller
     }
 
     pub fn is_caller_notification_pusher(&self) -> bool {
@@ -424,7 +419,6 @@ impl RuntimeState {
                 group_index: self.data.group_index_canister_id,
                 notifications_index: self.data.notifications_index_canister_id,
                 identity: self.data.identity_canister_id,
-                local_group_index: self.data.local_group_index_canister_id,
                 notifications: self.data.notifications_canister_id,
                 proposals_bot: self.data.proposals_bot_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -449,7 +443,6 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub notifications_index_canister_id: CanisterId,
     pub identity_canister_id: CanisterId,
-    pub local_group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
@@ -513,7 +506,6 @@ impl Data {
         group_index_canister_id: CanisterId,
         notifications_index_canister_id: CanisterId,
         identity_canister_id: CanisterId,
-        local_group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
         proposals_bot_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
@@ -538,7 +530,6 @@ impl Data {
             group_index_canister_id,
             notifications_index_canister_id,
             identity_canister_id,
-            local_group_index_canister_id,
             notifications_canister_id,
             proposals_bot_canister_id,
             cycles_dispenser_canister_id,
@@ -694,7 +685,6 @@ pub struct CanisterIds {
     pub group_index: CanisterId,
     pub notifications_index: CanisterId,
     pub identity: CanisterId,
-    pub local_group_index: CanisterId,
     pub notifications: CanisterId,
     pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,

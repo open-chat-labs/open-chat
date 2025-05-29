@@ -4,27 +4,27 @@ use std::collections::HashMap;
 use types::{BuildVersion, CanisterId, ChatId, CommunityId};
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
-pub struct LocalGroupIndexMap {
-    index_map: HashMap<CanisterId, LocalGroupIndex>,
+pub struct LocalIndexMap {
+    index_map: HashMap<CanisterId, LocalIndex>,
     group_to_index: HashMap<ChatId, CanisterId>,
     community_to_index: HashMap<CommunityId, CanisterId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
-pub struct LocalGroupIndex {
+pub struct LocalIndex {
     group_count: u32,
     community_count: u32,
     full: bool,
     wasm_version: BuildVersion,
 }
 
-impl LocalGroupIndexMap {
+impl LocalIndexMap {
     pub fn add_index(&mut self, index_id: CanisterId) -> bool {
         let exists = self.index_map.contains_key(&index_id);
         if !exists {
             self.index_map.insert(
                 index_id,
-                LocalGroupIndex {
+                LocalIndex {
                     group_count: 0,
                     community_count: 0,
                     full: false,
@@ -77,11 +77,7 @@ impl LocalGroupIndexMap {
         self.index_map.contains_key(index_id)
     }
 
-    pub fn get(&self, index_id: &CanisterId) -> Option<&LocalGroupIndex> {
-        self.index_map.get(index_id)
-    }
-
-    pub fn get_mut(&mut self, index_id: &CanisterId) -> Option<&mut LocalGroupIndex> {
+    pub fn get_mut(&mut self, index_id: &CanisterId) -> Option<&mut LocalIndex> {
         self.index_map.get_mut(index_id)
     }
 
@@ -97,7 +93,7 @@ impl LocalGroupIndexMap {
         self.community_to_index.get(community_id).copied()
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (&CanisterId, &LocalGroupIndex)> {
+    pub fn iter(&self) -> impl Iterator<Item = (&CanisterId, &LocalIndex)> {
         self.index_map.iter()
     }
 
@@ -118,7 +114,7 @@ impl LocalGroupIndexMap {
     }
 }
 
-impl LocalGroupIndex {
+impl LocalIndex {
     pub fn set_wasm_version(&mut self, wasm_version: BuildVersion) {
         self.wasm_version = wasm_version;
     }

@@ -21,7 +21,6 @@ generate_c2c_call!(c2c_delete_community);
 generate_c2c_call!(c2c_delete_group);
 generate_c2c_call!(c2c_group_canister, 300);
 generate_c2c_call!(c2c_group_index, 300);
-generate_c2c_call!(c2c_local_group_index, 300);
 generate_c2c_call!(c2c_notify_low_balance);
 generate_c2c_call!(c2c_notify_user_index_events);
 generate_c2c_call!(c2c_push_wasm_chunk);

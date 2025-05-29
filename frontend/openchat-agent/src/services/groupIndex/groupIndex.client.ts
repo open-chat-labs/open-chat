@@ -277,7 +277,7 @@ export class GroupIndexClient extends MsgpackCanisterAgent {
 
     markLocalGroupIndexFull(canisterId: string, full: boolean): Promise<boolean> {
         return this.executeMsgpackUpdate(
-            "mark_local_group_index_full",
+            "mark_local_index_full",
             {
                 canister_id: principalStringToBytes(canisterId),
                 full,

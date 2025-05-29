@@ -83,16 +83,6 @@ pub struct VerifiedChanged {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum LocalGroupIndexEvent {
-    MigrateGroup(ChatId, LocalGroup),
-    MigrateCommunity(CommunityId, LocalCommunity),
-    MigrateEmptyCanister(CanisterId),
-    GroupRemoved(ChatId),
-    CommunityRemoved(CommunityId),
-    MarkTopUp(CanisterId, CyclesTopUp),
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct UsernameChanged {
     pub user_id: UserId,
     pub username: String,

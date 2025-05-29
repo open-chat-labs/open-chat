@@ -20,7 +20,7 @@ pub enum EventsResponse {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum LocalGroupIndexEvent {
+pub enum LocalIndexEvent {
     NameChanged(NameChanged),
     VerifiedChanged(VerifiedChanged),
     UserDeleted(UserId),
