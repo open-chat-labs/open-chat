@@ -2222,6 +2222,7 @@ export type GroupAndCommunitySummaryUpdatesArgs = {
 };
 
 export type GroupAndCommunitySummaryUpdatesResponseBatch = {
+    timestamp: bigint;
     updates: GroupAndCommunitySummaryUpdatesResponse[];
     excessUpdates: string[];
     errors: [string, OCError][];

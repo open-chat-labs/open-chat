@@ -82,7 +82,7 @@ import type {
     GetDelegationResponse,
     GrantedBotPermissions,
     GroupAndCommunitySummaryUpdatesArgs,
-    GroupAndCommunitySummaryUpdatesResponse, GroupAndCommunitySummaryUpdatesResponseBatch,
+    GroupAndCommunitySummaryUpdatesResponseBatch,
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
     GroupChatDetailsResponse,
@@ -1927,6 +1927,7 @@ export class OpenChatAgent extends EventTarget {
         const communityCanisterCommunitySummaries: CommunitySummary[] = [];
         const groupUpdates: GroupCanisterGroupChatSummaryUpdates[] = [];
         const communityUpdates: CommunityCanisterCommunitySummaryUpdates[] = [];
+        const notFoundTimestamps = new Map<string, bigint>();
 
         for (const response of summaryUpdatesResponses.success) {
             for (const result of response.updates) {
@@ -1950,13 +1951,21 @@ export class OpenChatAgent extends EventTarget {
                 }
             }
             for (const canisterId of response.notFound) {
-                groupsCommunitiesRemoved.add(canisterId);
+                notFoundTimestamps.set(canisterId, response.timestamp);
             }
         }
 
         if (groupUpdates.length > 0 || communityUpdates.length > 0) {
             anyUpdates = true;
         }
+
+        const isGroupCommunityDeleted = (canisterId: string, joined: bigint) => {
+            if (groupsCommunitiesRemoved.has(canisterId)) return true;
+            // This is needed in case we hit a replica which is lagging and
+            // isn't aware the group/community has been created yet
+            const notFoundTimestamp = notFoundTimestamps.get(canisterId);
+            return notFoundTimestamp !== undefined && notFoundTimestamp > joined;
+        };
 
         const groupChats = mergeGroupChats(
             groupsAdded,
@@ -1969,7 +1978,7 @@ export class OpenChatAgent extends EventTarget {
                     groupUpdates,
                 ),
             )
-            .filter((g) => !groupsCommunitiesRemoved.has(g.id.groupId));
+            .filter((g) => !isGroupCommunityDeleted(g.id.groupId, g.membership.joined));
 
         const communities = mergeCommunities(
             communitiesAdded,
@@ -1982,7 +1991,7 @@ export class OpenChatAgent extends EventTarget {
                     communityUpdates,
                 ),
             )
-            .filter((c) => !groupsCommunitiesRemoved.has(c.id.communityId));
+            .filter((c) => !isGroupCommunityDeleted(c.id.communityId, c.membership.joined));
 
         this.removeExpiredLatestMessages(directChats, start);
         this.removeExpiredLatestMessages(groupChats, start);

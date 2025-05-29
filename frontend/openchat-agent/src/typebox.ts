@@ -9111,6 +9111,7 @@ export type LocalUserIndexGroupAndCommunitySummaryUpdatesV2SuccessResult = Stati
     typeof LocalUserIndexGroupAndCommunitySummaryUpdatesV2SuccessResult
 >;
 export const LocalUserIndexGroupAndCommunitySummaryUpdatesV2SuccessResult = Type.Object({
+    timestamp: Type.BigInt(),
     updates: Type.Array(LocalUserIndexGroupAndCommunitySummaryUpdatesV2SummaryUpdatesResponse),
     excess_updates: Type.Array(TSPrincipal),
     errors: Type.Array(Type.Tuple([TSPrincipal, OCError])),

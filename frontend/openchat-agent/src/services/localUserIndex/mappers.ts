@@ -10,7 +10,6 @@ import type {
     JoinCommunityResponse,
     JoinGroupResponse,
     MessageContext,
-    OCError,
     RegisterUserResponse,
     CommandArg,
     VerifiedCredentialArgs,
@@ -208,15 +207,13 @@ export function groupAndCommunitySummaryUpdates(
             );
         }
     }
-    const excessUpdates = value.Success.excess_updates.map(principalBytesToString);
-    const errors: [string, OCError][] = value.Success.errors.map(([c, e]) => [principalBytesToString(c), ocError(e)])
-    const notFound = value.Success.not_found.map(principalBytesToString);
 
     return {
+        timestamp: value.Success.timestamp,
         updates,
-        excessUpdates,
-        errors,
-        notFound,
+        excessUpdates: value.Success.excess_updates.map(principalBytesToString),
+        errors: value.Success.errors.map(([c, e]) => [principalBytesToString(c), ocError(e)]),
+        notFound: value.Success.not_found.map(principalBytesToString),
     };
 }
 
