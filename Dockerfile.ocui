@@ -1,0 +1,65 @@
+# FIRST PART
+FROM ubuntu:latest AS build-app
+
+WORKDIR /
+
+# Install deps!
+RUN apt-get update
+RUN apt-get install -y curl
+
+# Install node and confirm commands are available
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs
+RUN nodejs --version
+RUN npm --version
+
+# # Make the oc directory, and copy code into it
+WORKDIR /oc
+COPY .dfx .dfx
+COPY . .
+
+# Build UI
+WORKDIR /oc/frontend
+RUN npm run build:docker
+
+# SECOND PART
+FROM ubuntu:latest
+
+# Install new set of deps, there's some overlap.
+RUN apt-get update
+RUN apt-get install -y nginx
+
+# Copy the built UI files from the previous stage
+COPY --from=build-app /oc/frontend/app/build /usr/share/nginx/html
+COPY --from=build-app /oc/frontend/app/public /usr/share/nginx/html
+
+# Nginx conf for serving the UI, and proxying requests to the local canisters.
+RUN echo 'server {\n\
+    listen 80;\n\
+    server_name localhost;\n\
+\n\
+    location /api {\n\
+        proxy_pass http://0.0.0.0:8080;\n\
+        proxy_set_header Host $host;\n\
+        proxy_set_header X-Real-IP $remote_addr;\n\
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n\
+        proxy_set_header X-Forwarded-Proto $scheme;\n\
+    }\n\
+\n\
+    location / {\n\
+        root /usr/share/nginx/html;\n\
+        try_files $uri /index.html;\n\
+    }\n\
+}' > /etc/nginx/conf.d/default.conf
+
+WORKDIR /oc
+
+# Create a startup script! `dfx stop` makes sure that any files crated by the
+# dfx run in the previous step are removed.
+RUN echo '#!/bin/sh\n\
+nginx -g "daemon off;"' > start.sh
+RUN chmod +x start.sh
+
+# Nginx runs on port 80...
+EXPOSE 80
+
+CMD ["/bin/sh", "start.sh"]
