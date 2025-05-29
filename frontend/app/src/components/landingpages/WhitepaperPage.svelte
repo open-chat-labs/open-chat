@@ -79,8 +79,8 @@
                 >.
             </p>
             <p>
-                OpenChat users can send messages to each other containing tokens such as ICP and
-                ckBTC and so can be used for global remittance.
+                OpenChat users can send messages to each other containing tokens such as BTC and
+                ICP and so can be used for global remittance.
             </p>
             <p>
                 However, the ground-breaking difference between OpenChat and other similar apps, is
