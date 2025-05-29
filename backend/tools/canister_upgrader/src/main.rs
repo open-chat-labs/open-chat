@@ -19,9 +19,6 @@ async fn main() {
         CanisterName::EventRelay => upgrade_event_relay_canister(identity, opts.url, opts.event_relay, opts.version).await,
         CanisterName::EventStore => upgrade_event_store_canister(identity, opts.url, opts.event_store, opts.version).await,
         CanisterName::Group => upgrade_group_canister(identity, opts.url, opts.group_index, opts.version).await,
-        CanisterName::LocalGroupIndex => {
-            upgrade_local_group_index_canister(identity, opts.url, opts.group_index, opts.version).await
-        }
         CanisterName::GroupIndex => {
             upgrade_group_index_canister(identity, opts.url, opts.openchat_installer, opts.version).await
         }

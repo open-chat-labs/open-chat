@@ -4,6 +4,7 @@
 *.sublime*
 .idea/
 debug.log
+package-lock.json
 .vscode/settings.json
 yarn.lock
 
@@ -14,5 +15,3 @@ node_modules/
 
 dist-js
 dist
-
-/examples

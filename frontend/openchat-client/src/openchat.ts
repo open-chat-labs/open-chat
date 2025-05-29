@@ -1015,6 +1015,7 @@ export class OpenChat {
             chitBalance: 0,
             totalChitEarned: 0,
             streak: 0,
+            maxStreak: 0,
             blobReference: user.blobReference,
             blobData: user.blobData,
             blobUrl: buildUserAvatarUrl(
@@ -8898,6 +8899,7 @@ export class OpenChat {
                     chitBalance: resp.chitBalance,
                     streakEnds: resp.nextDailyChitClaim + BigInt(1000 * 60 * 60 * 24),
                     streak: resp.streak,
+                    maxStreak: resp.maxStreak,
                     nextDailyChitClaim: resp.nextDailyChitClaim,
                     totalChitEarned: state.totalChitEarned + resp.chitEarned,
                 }));

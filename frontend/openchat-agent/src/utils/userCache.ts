@@ -1,6 +1,8 @@
 import { deleteDB, openDB, type DBSchema, type IDBPDatabase } from "idb";
 import { deletedUser, type DiamondMembershipStatus, type UserSummary } from "openchat-shared";
 
+// Next time we bump the cache, set `maxStreak` to `number` rather than `number | undefined`
+// Also, remove `reallyDeleted` since we only reused some deleted userIds ~1 year ago
 const CACHE_VERSION = 11;
 
 let db: UserDatabase | undefined;

@@ -26,8 +26,6 @@ members = [
     "backend/canisters/identity/api",
     "backend/canisters/identity/c2c_client",
     "backend/canisters/identity/impl",
-    "backend/canisters/local_group_index/api",
-    "backend/canisters/local_group_index/impl",
     "backend/canisters/local_user_index/api",
     "backend/canisters/local_user_index/c2c_client",
     "backend/canisters/local_user_index/impl",
@@ -169,6 +167,7 @@ members = [
     "backend/tools/translation_tool",
     "backend/tools/ts_exporter",
     "frontend/src-tauri",
+    "frontend/tauri-plugin-oc",
 ]
 resolver = "2"
 

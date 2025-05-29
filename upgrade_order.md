@@ -1,5 +1,0 @@
-local_user_index
-local_group_index
-group
-community
-user

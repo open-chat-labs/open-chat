@@ -30,7 +30,6 @@ cargo build --locked --target wasm32-unknown-unknown --release \
   --package group_canister_impl \
   --package group_index_canister_impl \
   --package identity_canister_impl \
-  --package local_group_index_canister_impl \
   --package local_user_index_canister_impl \
   --package market_maker_canister_impl \
   --package neuron_controller_canister_impl \
@@ -62,7 +61,6 @@ ic-wasm ./target/wasm32-unknown-unknown/release/event_relay_canister_impl.wasm -
 ic-wasm ./target/wasm32-unknown-unknown/release/group_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/group_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/group_index_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/group_index_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/identity_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/identity_canister_impl-opt.wasm shrink
-ic-wasm ./target/wasm32-unknown-unknown/release/local_group_index_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/local_group_index_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/local_user_index_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/local_user_index_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/market_maker_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/market_maker_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/neuron_controller_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/neuron_controller_canister_impl-opt.wasm shrink
@@ -89,7 +87,6 @@ gzip -fckn9 target/wasm32-unknown-unknown/release/event_relay_canister_impl-opt.
 gzip -fckn9 target/wasm32-unknown-unknown/release/group_canister_impl-opt.wasm > ./wasms/group.wasm.gz
 gzip -fckn9 target/wasm32-unknown-unknown/release/group_index_canister_impl-opt.wasm > ./wasms/group_index.wasm.gz
 gzip -fckn9 target/wasm32-unknown-unknown/release/identity_canister_impl-opt.wasm > ./wasms/identity.wasm.gz
-gzip -fckn9 target/wasm32-unknown-unknown/release/local_group_index_canister_impl-opt.wasm > ./wasms/local_group_index.wasm.gz
 gzip -fckn9 target/wasm32-unknown-unknown/release/local_user_index_canister_impl-opt.wasm > ./wasms/local_user_index.wasm.gz
 gzip -fckn9 target/wasm32-unknown-unknown/release/market_maker_canister_impl-opt.wasm > ./wasms/market_maker.wasm.gz
 gzip -fckn9 target/wasm32-unknown-unknown/release/neuron_controller_canister_impl-opt.wasm > ./wasms/neuron_controller.wasm.gz

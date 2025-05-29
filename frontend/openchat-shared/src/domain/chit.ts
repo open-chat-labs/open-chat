@@ -7,6 +7,7 @@ export type ClaimDailyChitResponse =
     | {
           kind: "success";
           streak: number;
+          maxStreak: number;
           chitBalance: number;
           chitEarned: number;
           nextDailyChitClaim: bigint;

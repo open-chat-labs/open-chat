@@ -468,6 +468,7 @@ export const chitStateStore = writable<ChitState>(
         chitBalance: 0,
         totalChitEarned: 0,
         streak: 0,
+        maxStreak: 0,
         streakEnds: 0n,
         nextDailyChitClaim: 0n,
     },
@@ -1144,7 +1145,7 @@ export const eventsStore = derived(
 );
 
 export const confirmedEventIndexesLoadedStore = derived(
-    [eventsStore, expiredServerEventRanges],
+    [serverEventsStore, expiredServerEventRanges],
     ([events, expiredEventRanges]) => {
         const ranges = new DRange();
         events.forEach((e) => ranges.add(e.index));
@@ -1263,7 +1264,7 @@ export const threadEventsStore = derived(
     },
 );
 
-export const confirmedThreadEventIndexesLoadedStore = derived(threadEventsStore, (events) => {
+export const confirmedThreadEventIndexesLoadedStore = derived(serverThreadEventsStore, (events) => {
     const ranges = new DRange();
     events.forEach((e) => ranges.add(e.index));
     return ranges;

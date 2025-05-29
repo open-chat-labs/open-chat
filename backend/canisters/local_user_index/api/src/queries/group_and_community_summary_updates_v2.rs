@@ -32,6 +32,7 @@ pub enum Response {
 #[ts_export(local_user_index, group_and_community_summary_updates_v2)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
+    pub timestamp: TimestampMillis,
     pub updates: Vec<SummaryUpdatesResponse>,
     #[ts(as = "Vec::<ts_export::TSPrincipal>")]
     pub excess_updates: Vec<CanisterId>,

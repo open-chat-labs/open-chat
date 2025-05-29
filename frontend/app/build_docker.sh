@@ -11,6 +11,7 @@ export OC_BUILD_ENV=$NODE_ENV
 export OC_WEBAUTHN_ORIGIN=localhost
 export OC_DEV_PORT=5001
 export OC_DFX_NETWORK=local
+export OC_IC_URL=http://localhost:8080
 export OC_INTERNET_IDENTITY_CANISTER_ID=qhbym-qaaaa-aaaaa-aaafq-cai
 export OC_INTERNET_IDENTITY_URL=http://qhbym-qaaaa-aaaaa-aaafq-cai.localhost:8080
 export OC_NFID_URL=http://qhbym-qaaaa-aaaaa-aaafq-cai.localhost:8080

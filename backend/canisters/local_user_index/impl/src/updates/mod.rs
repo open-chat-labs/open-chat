@@ -10,7 +10,6 @@ pub mod c2c_delete_community;
 pub mod c2c_delete_group;
 pub mod c2c_group_index;
 pub mod c2c_group_or_community_canister;
-pub mod c2c_local_group_index;
 pub mod c2c_notifications_index;
 pub mod c2c_notify_low_balance;
 pub mod c2c_notify_user_index_events;

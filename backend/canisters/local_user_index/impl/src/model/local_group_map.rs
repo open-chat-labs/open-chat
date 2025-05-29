@@ -9,10 +9,6 @@ pub struct LocalGroupMap {
 }
 
 impl LocalGroupMap {
-    pub fn add_existing(&mut self, chat_id: ChatId, group: LocalGroup) {
-        self.groups.insert(chat_id, group);
-    }
-
     pub fn add(&mut self, chat_id: ChatId, wasm_version: BuildVersion) {
         let group = LocalGroup::new(wasm_version);
         self.groups.insert(chat_id, group);

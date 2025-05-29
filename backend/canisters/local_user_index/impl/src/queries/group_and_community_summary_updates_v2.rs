@@ -3,12 +3,13 @@ use crate::{RuntimeState, read_state};
 use candid::Principal;
 use canister_api_macros::query;
 use local_user_index_canister::group_and_community_summary_updates_v2::{Response::*, *};
-use types::{C2CError, CanisterId};
+use types::{C2CError, CanisterId, TimestampMillis};
 
 #[query(composite = true, guard = "caller_is_openchat_user", candid = true, msgpack = true)]
 async fn group_and_community_summary_updates_v2(args: Args) -> Response {
     let PrepareResult {
         caller,
+        timestamp,
         c2c_args,
         excess_updates,
         not_found,
@@ -29,6 +30,7 @@ async fn group_and_community_summary_updates_v2(args: Args) -> Response {
     }
 
     Success(SuccessResult {
+        timestamp,
         updates,
         excess_updates,
         errors,
@@ -38,6 +40,7 @@ async fn group_and_community_summary_updates_v2(args: Args) -> Response {
 
 struct PrepareResult {
     caller: Principal,
+    timestamp: TimestampMillis,
     c2c_args: Vec<SummaryUpdatesArgs>,
     excess_updates: Vec<CanisterId>,
     not_found: Vec<CanisterId>,
@@ -58,6 +61,7 @@ fn prepare(args: Args, state: &RuntimeState) -> PrepareResult {
 
     PrepareResult {
         caller: state.env.caller(),
+        timestamp: state.env.now(),
         c2c_args,
         excess_updates,
         not_found,

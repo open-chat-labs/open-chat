@@ -15,7 +15,7 @@ pub fn init<R: Runtime, C: DeserializeOwned>(
     api: PluginApi<R, C>,
 ) -> crate::Result<Oc<R>> {
     #[cfg(target_os = "android")]
-    let handle = api.register_android_plugin("com.openchat.app", "OpenChatPlugin")?;
+    let handle = api.register_android_plugin("com.ocplugin.app", "OpenChatPlugin")?;
     #[cfg(target_os = "ios")]
     let handle = api.register_ios_plugin(init_plugin_oc)?;
     Ok(Oc(handle))

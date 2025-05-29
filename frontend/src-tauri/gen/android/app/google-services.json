@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1054285567366",
+    "project_id": "dev-ivan-open-chat",
+    "storage_bucket": "dev-ivan-open-chat.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1054285567366:android:31c89679fc3f2bb6630807",
+        "android_client_info": {
+          "package_name": "com.oc.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDTYAOHW4I8W2WSe7JkmbX8ZjIL5CyGbZY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

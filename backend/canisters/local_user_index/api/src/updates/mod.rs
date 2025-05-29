@@ -17,7 +17,6 @@ pub mod c2c_delete_community;
 pub mod c2c_delete_group;
 pub mod c2c_group_canister;
 pub mod c2c_group_index;
-pub mod c2c_local_group_index;
 pub mod c2c_mark_events_migrated_to_stable_memory;
 pub mod c2c_notifications_index;
 pub mod c2c_notify_low_balance;

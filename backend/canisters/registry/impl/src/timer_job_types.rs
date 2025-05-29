@@ -94,24 +94,6 @@ impl ExpandOntoSubnetJob {
                         .update_in_progress(|s| s.local_user_index = Some(canister_id), now)
                 })
             }
-            ExpandOntoSubnetStep::CreateLocalGroupIndex => {
-                let canister_id = create_canister(
-                    self.ledger,
-                    self.cmc,
-                    self.subnet_id,
-                    self.this_canister_id,
-                    self.create_canister_block_index,
-                    now,
-                )
-                .await?;
-
-                mutate_state(|state| {
-                    state
-                        .data
-                        .subnets
-                        .update_in_progress(|s| s.local_group_index = Some(canister_id), now)
-                })
-            }
             ExpandOntoSubnetStep::CreateNotificationsCanister => {
                 let canister_id = create_canister(
                     self.ledger,
@@ -133,7 +115,6 @@ impl ExpandOntoSubnetJob {
             ExpandOntoSubnetStep::UpdateControllers(ids) => {
                 let futures: Vec<_> = [
                     (ids.local_user_index, self.user_index),
-                    (ids.local_group_index, self.group_index),
                     (ids.notifications_canister, self.notifications_index),
                 ]
                 .into_iter()
@@ -145,7 +126,7 @@ impl ExpandOntoSubnetJob {
                 mutate_state(|state| state.data.subnets.update_in_progress(|s| s.controllers_updated = true, now))
             }
             ExpandOntoSubnetStep::NotifyCyclesDispenser(ids) => {
-                let futures: Vec<_> = [ids.local_user_index, ids.local_group_index, ids.notifications_canister]
+                let futures: Vec<_> = [ids.local_user_index, ids.notifications_canister]
                     .into_iter()
                     .map(|canister_id| async move {
                         cycles_dispenser_canister_c2c_client::add_canister(
@@ -169,7 +150,7 @@ impl ExpandOntoSubnetJob {
                 event_relay_canister_c2c_client::authorize_principals(
                     self.event_relay,
                     &event_relay_canister::authorize_principals::Args {
-                        principals: vec![ids.local_user_index, ids.local_group_index, ids.notifications_canister],
+                        principals: vec![ids.local_user_index, ids.notifications_canister],
                     },
                 )
                 .await?;
@@ -210,7 +191,6 @@ impl ExpandOntoSubnetJob {
                     self.user_index,
                     &user_index_canister::add_local_user_index_canister::Args {
                         canister_id: ids.local_user_index,
-                        local_group_index_canister_id: ids.local_group_index,
                         notifications_canister_id: ids.notifications_canister,
                     },
                 )
@@ -220,12 +200,7 @@ impl ExpandOntoSubnetJob {
                     response,
                     user_index_canister::add_local_user_index_canister::Response::Success
                 ) {
-                    mutate_state(|state| {
-                        state
-                            .data
-                            .subnets
-                            .update_in_progress(|s| s.local_user_index_notified = true, now)
-                    })
+                    mutate_state(|state| state.data.subnets.update_in_progress(|s| s.user_index_notified = true, now))
                 } else {
                     return Err(C2CError::new(
                         self.user_index,
@@ -236,32 +211,22 @@ impl ExpandOntoSubnetJob {
                 }
             }
             ExpandOntoSubnetStep::NotifyGroupIndex(ids) => {
-                let response = group_index_canister_c2c_client::add_local_group_index_canister(
+                let response = group_index_canister_c2c_client::add_local_index_canister(
                     self.group_index,
-                    &group_index_canister::add_local_group_index_canister::Args {
-                        canister_id: ids.local_group_index,
-                        local_user_index_canister_id: ids.local_user_index,
-                        notifications_canister_id: ids.notifications_canister,
+                    &group_index_canister::add_local_index_canister::Args {
+                        canister_id: ids.local_user_index,
                     },
                 )
                 .await?;
 
-                if matches!(
-                    response,
-                    group_index_canister::add_local_group_index_canister::Response::Success
-                ) {
-                    mutate_state(|state| {
-                        state
-                            .data
-                            .subnets
-                            .update_in_progress(|s| s.local_group_index_notified = true, now)
-                    })
+                if matches!(response, group_index_canister::add_local_index_canister::Response::Success) {
+                    mutate_state(|state| state.data.subnets.update_in_progress(|s| s.group_index_notified = true, now))
                 } else {
                     return Err(C2CError::new(
                         self.group_index,
-                        "add_local_group_index_canister",
+                        "add_local_index_canister",
                         RejectCode::CanisterError,
-                        format!("Failed to add local group index: {response:?}"),
+                        format!("Failed to add local index: {response:?}"),
                     ));
                 }
             }

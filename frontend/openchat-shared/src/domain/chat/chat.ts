@@ -1064,6 +1064,7 @@ export type ChatStateFull = {
 export type ChitState = {
     streak: number;
     streakEnds: bigint;
+    maxStreak: number;
     nextDailyChitClaim: bigint;
     chitBalance: number;
     totalChitEarned: number;
@@ -1218,6 +1219,7 @@ export type InitialStateResponse = {
     achievementsLastSeen: bigint;
     streakEnds: bigint;
     streak: number;
+    maxStreak: number;
     nextDailyClaim: bigint;
     chitBalance: number;
     totalChitEarned: number;
@@ -1303,6 +1305,7 @@ export type UpdatesSuccessResponse = {
     chitBalance: number;
     streakEnds: bigint;
     streak: number;
+    maxStreak: number;
     nextDailyClaim: bigint;
     totalChitEarned: number;
     referrals: Referral[];
