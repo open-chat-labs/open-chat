@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use types::{StreakInsurance, TimestampMillis, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment};
 
 const DAY_ZERO: TimestampMillis = 1704067200000; // Mon Jan 01 2024 00:00:00 GMT+0000
-const MAX_UTC_OFFSET_MS: i32 = 13 * 60 * 60 * 1000; // 13 hours
+const MAX_UTC_OFFSET_MS: i32 = 15 * 60 * 60 * 1000; // 15 hours
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct Streak {
