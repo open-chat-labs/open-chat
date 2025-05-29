@@ -110,6 +110,9 @@ export function initEnv() {
     if (production && !process.env.OC_METERED_APIKEY) {
         throw Error("OC_METERED_APIKEY environment variable not set");
     }
+    if (production && !process.env.OC_VAPID_PUBLIC_KEY) {
+        throw Error("OC_VAPID_PUBLIC_KEY environment variable not set");
+    }
 
     process.env.OC_SERVICE_WORKER_PATH = `/service_worker.js?v=${version}`;
 
