@@ -28,7 +28,6 @@ import type {
     ChatEvent,
     ChatEventsResponse,
     ChatIdentifier,
-    ChitState,
     ClaimPrizeResponse,
     CreateGroupResponse,
     DeclineInvitationResponse,
@@ -835,7 +834,6 @@ type GetPublicProfile = {
 };
 
 type GetUser = {
-    chitState: ChitState;
     userId: string;
     allowStale: boolean;
     kind: "getUser";
@@ -1372,7 +1370,6 @@ type TopUpNeuronForSubmittingProposals = {
 };
 
 type GetUsers = {
-    chitState: ChitState;
     users: UsersArgs;
     allowStale: boolean;
     kind: "getUsers";

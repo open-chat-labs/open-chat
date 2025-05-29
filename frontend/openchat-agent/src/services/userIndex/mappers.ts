@@ -215,6 +215,10 @@ export function currentUserSummary(
             canisterId: principalBytesToString(value.user_id),
         })),
         isUniquePerson: value.is_unique_person,
+        totalChitEarned: value.total_chit_earned,
+        chitBalance: value.chit_balance,
+        streak: value.streak,
+        maxStreak: value.max_streak,
     };
 }
 
@@ -310,6 +314,10 @@ export function currentUserResponse(value: UserIndexCurrentUserResponse): Curren
             isBot: false,
             updated: BigInt(Date.now()),
             isUniquePerson: value.Success.is_unique_person,
+            totalChitEarned: value.Success.total_chit_earned,
+            chitBalance: value.Success.chit_balance,
+            streak: value.Success.streak,
+            maxStreak: value.Success.max_streak,
         };
     }
 

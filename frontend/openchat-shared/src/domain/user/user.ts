@@ -1,5 +1,5 @@
 import { type ReadonlyMap } from "../../utils";
-import type { ChitState, MultiUserChat, PinNumberFailures } from "../chat";
+import type { MultiUserChat, PinNumberFailures } from "../chat";
 import type { DataContent } from "../data/data";
 import type { OCError } from "../error";
 import type {
@@ -26,8 +26,7 @@ export type UserSummary = DataContent & {
     chitBalance: number;
     totalChitEarned: number;
     streak: number;
-    // This should just be `number`, but I've added `undefined` so we don't need to clear the cache
-    maxStreak: number | undefined;
+    maxStreak: number;
     isUniquePerson: boolean;
 };
 
@@ -85,7 +84,6 @@ export function mergeUserSummaryWithUpdates(
 
 // problem - we can no longer create a UserSummary from a CurrentUserSummary
 export function userSummaryFromCurrentUserSummary(
-    chitState: ChitState,
     currentSummary: CurrentUserSummary,
 ): UserSummary {
     return {
@@ -96,10 +94,10 @@ export function userSummaryFromCurrentUserSummary(
         updated: currentSummary.updated,
         suspended: currentSummary.suspensionDetails !== undefined,
         diamondStatus: currentSummary.diamondStatus.kind,
-        chitBalance: chitState.chitBalance,
-        totalChitEarned: chitState.totalChitEarned,
-        streak: chitState.streak,
-        maxStreak: chitState.maxStreak,
+        chitBalance: currentSummary.chitBalance,
+        totalChitEarned: currentSummary.totalChitEarned,
+        streak: currentSummary.streak,
+        maxStreak: currentSummary.maxStreak,
         blobReference: currentSummary.blobReference,
         blobData: currentSummary.blobData,
         blobUrl: currentSummary.blobUrl,
@@ -264,6 +262,10 @@ type CurrentUserCommon = DataContent & {
     diamondDetails?: DiamondMembershipDetails;
     updated: bigint;
     isUniquePerson: boolean;
+    totalChitEarned: number;
+    chitBalance: number;
+    streak: number;
+    maxStreak: number;
 };
 
 export type CurrentUserSummary = CurrentUserCommon & {
@@ -293,6 +295,10 @@ export function anonymousUser(): CreatedUser {
         isBot: false,
         updated: 0n,
         isUniquePerson: false,
+        totalChitEarned: 0,
+        chitBalance: 0,
+        streak: 0,
+        maxStreak: 0,
     };
 }
 
