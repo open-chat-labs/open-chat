@@ -1,7 +1,6 @@
 {
     "name": "tauri-plugin-oc-api",
     "version": "0.1.0",
-    "author": "You",
     "description": "",
     "type": "module",
     "types": "./dist-js/index.d.ts",

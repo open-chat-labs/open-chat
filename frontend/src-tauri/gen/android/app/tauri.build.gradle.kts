@@ -3,5 +3,6 @@ val implementation by configurations
 dependencies {
   implementation(project(":tauri-android"))
   implementation(project(":tauri-plugin-deep-link"))
+  implementation(project(":tauri-plugin-notification"))
   implementation(project(":tauri-plugin-oc"))
 }

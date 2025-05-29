@@ -7,6 +7,8 @@ Default permissions for the plugin
 - `allow-open-url`
 - `allow-sign-in`
 - `allow-sign-up`
+- `allow-registerListener`
+- `allow-removeListener`
 
 ## Permission Table
 
@@ -39,6 +41,58 @@ Enables the open_url command without any pre-configured scope.
 <td>
 
 Denies the open_url command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-registerListener`
+
+</td>
+<td>
+
+Enables the registerListener command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-registerListener`
+
+</td>
+<td>
+
+Denies the registerListener command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-removeListener`
+
+</td>
+<td>
+
+Enables the removeListener command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-removeListener`
+
+</td>
+<td>
+
+Denies the removeListener command without any pre-configured scope.
 
 </td>
 </tr>
