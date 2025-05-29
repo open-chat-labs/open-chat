@@ -34,4 +34,5 @@ export type OpenChatConfig = {
     bitcoinMainnetEnabled: boolean;
     groupInvite?: GroupInvite;
     communityInvite?: CommunityInvite;
+    vapidPublicKey: string;
 };
