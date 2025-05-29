@@ -41,7 +41,6 @@ USER_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id user_index)
 GROUP_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id group_index)
 NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id notifications_index)
 LOCAL_USER_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id local_user_index)
-LOCAL_GROUP_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id local_group_index)
 NOTIFICATIONS_CANISTER_ID=$(dfx canister --network $NETWORK id notifications)
 IDENTITY_CANISTER_ID=$(dfx canister --network $NETWORK id identity)
 ONLINE_USERS_CANISTER_ID=$(dfx canister --network $NETWORK id online_users)
@@ -76,7 +75,6 @@ cargo run \
   --group-index $GROUP_INDEX_CANISTER_ID \
   --notifications-index $NOTIFICATIONS_INDEX_CANISTER_ID \
   --local-user-index $LOCAL_USER_INDEX_CANISTER_ID \
-  --local-group-index $LOCAL_GROUP_INDEX_CANISTER_ID \
   --notifications $NOTIFICATIONS_CANISTER_ID \
   --identity $IDENTITY_CANISTER_ID \
   --online-users $ONLINE_USERS_CANISTER_ID \

@@ -210,31 +210,6 @@ pub mod happy_path {
         ));
     }
 
-    pub fn add_local_user_index_canister(
-        env: &mut PocketIc,
-        sender: Principal,
-        user_index_canister_id: CanisterId,
-        local_user_index_canister_id: CanisterId,
-        local_group_index_canister_id: CanisterId,
-        notifications_canister_id: CanisterId,
-    ) {
-        let response = super::add_local_user_index_canister(
-            env,
-            sender,
-            user_index_canister_id,
-            &user_index_canister::add_local_user_index_canister::Args {
-                canister_id: local_user_index_canister_id,
-                local_group_index_canister_id,
-                notifications_canister_id,
-            },
-        );
-
-        assert!(matches!(
-            response,
-            user_index_canister::add_local_user_index_canister::Response::Success
-        ));
-    }
-
     pub fn public_key(env: &mut PocketIc, user_index_canister_id: CanisterId) -> String {
         let response = super::public_key(env, Principal::anonymous(), user_index_canister_id, &Empty {});
 

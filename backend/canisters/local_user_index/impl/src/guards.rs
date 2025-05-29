@@ -64,14 +64,6 @@ pub fn caller_is_local_child_canister() -> Result<(), String> {
     }
 }
 
-pub fn caller_is_local_group_index() -> Result<(), String> {
-    if read_state(|state| state.is_caller_local_group_index()) {
-        Ok(())
-    } else {
-        Err("Caller is not the local group index".to_string())
-    }
-}
-
 pub fn caller_is_notification_pusher() -> Result<(), String> {
     if read_state(|state| state.is_caller_notification_pusher()) {
         Ok(())

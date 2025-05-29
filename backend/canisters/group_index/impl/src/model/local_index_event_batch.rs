@@ -1,16 +1,11 @@
-use crate::LocalUserIndexEvent;
+use crate::LocalIndexEvent;
 use timer_job_queues::{TimerJobItem, grouped_timer_job_batch};
 use types::{CanisterId, IdempotentEnvelope};
 use utils::canister::should_retry_failed_c2c_call;
 
-grouped_timer_job_batch!(
-    LocalUserIndexEventBatch,
-    CanisterId,
-    IdempotentEnvelope<LocalUserIndexEvent>,
-    1000
-);
+grouped_timer_job_batch!(LocalIndexEventBatch, CanisterId, IdempotentEnvelope<LocalIndexEvent>, 1000);
 
-impl TimerJobItem for LocalUserIndexEventBatch {
+impl TimerJobItem for LocalIndexEventBatch {
     async fn process(&self) -> Result<(), bool> {
         let response = local_user_index_canister_c2c_client::c2c_group_index(
             self.key,

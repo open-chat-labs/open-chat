@@ -3849,7 +3849,6 @@ dependencies = [
  "ic-cdk 0.18.0",
  "ic-cdk-timers",
  "ic-stable-structures",
- "local_group_index_canister",
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
  "msgpack",
@@ -5801,57 +5800,6 @@ dependencies = [
  "tokio",
  "types",
  "url",
-]
-
-[[package]]
-name = "local_group_index_canister"
-version = "0.1.0"
-dependencies = [
- "candid",
- "event_store_canister",
- "ic-ledger-types",
- "oc_error_codes",
- "serde",
- "serde_bytes",
- "types",
-]
-
-[[package]]
-name = "local_group_index_canister_impl"
-version = "0.1.0"
-dependencies = [
- "candid",
- "canister_api_macros",
- "canister_logger",
- "canister_state_macros",
- "canister_time",
- "canister_tracing_macros",
- "community_canister",
- "community_canister_c2c_client",
- "constants",
- "event_store_producer",
- "event_store_producer_cdk_runtime",
- "event_store_utils",
- "futures",
- "group_canister",
- "group_canister_c2c_client",
- "http_request",
- "ic-cdk 0.18.0",
- "ic-cdk-timers",
- "ic-stable-structures",
- "local_group_index_canister",
- "local_user_index_canister",
- "local_user_index_canister_c2c_client",
- "msgpack",
- "rand 0.8.5",
- "serde",
- "serde_bytes",
- "sha256",
- "stable_memory",
- "timer_job_queues",
- "tracing",
- "types",
- "utils 0.1.0",
 ]
 
 [[package]]
