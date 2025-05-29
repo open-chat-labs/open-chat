@@ -35,6 +35,10 @@ fn current_user_impl(state: &RuntimeState) -> Response {
             diamond_membership_status: u.diamond_membership_details.status_full(now),
             moderation_flags_enabled: u.moderation_flags_enabled,
             is_unique_person: u.unique_person_proof.is_some(),
+            total_chit_earned: u.total_chit_earned(),
+            chit_balance: u.current_chit_balance(now),
+            streak: u.streak,
+            max_streak: u.max_streak,
         })
     } else {
         UserNotFound
