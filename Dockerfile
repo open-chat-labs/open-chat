@@ -1,5 +1,5 @@
 # To build run 'docker build . -t openchat'
-FROM ubuntu:22.04 AS builder
+FROM ubuntu:24.04 AS builder
 SHELL ["bash", "-c"]
 
 ARG git_commit_id
