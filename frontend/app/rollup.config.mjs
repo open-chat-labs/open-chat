@@ -206,6 +206,7 @@ export default {
             "import.meta.env.OC_BITCOIN_MAINNET_ENABLED": JSON.stringify(
                 process.env.OC_BITCOIN_MAINNET_ENABLED,
             ),
+            "import.meta.env.OC_VAPID_PUBLIC_KEY": JSON.stringify(process.env.OC_VAPID_PUBLIC_KEY),
         }),
 
         html({
