@@ -1,4 +1,4 @@
-package com.openchat.commands
+package com.ocplugin.app.commands
 
 import android.app.Activity
 import android.content.Intent

@@ -468,6 +468,7 @@ export const chitStateStore = writable<ChitState>(
         chitBalance: 0,
         totalChitEarned: 0,
         streak: 0,
+        maxStreak: 0,
         streakEnds: 0n,
         nextDailyChitClaim: 0n,
     },

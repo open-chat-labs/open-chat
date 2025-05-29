@@ -26,6 +26,8 @@ export type UserSummary = DataContent & {
     chitBalance: number;
     totalChitEarned: number;
     streak: number;
+    // This should just be `number`, but I've added `undefined` so we don't need to clear the cache
+    maxStreak: number | undefined;
     isUniquePerson: boolean;
 };
 
@@ -46,6 +48,7 @@ export function deletedUser(userId: string): UserSummary {
         diamondStatus: "inactive",
         chitBalance: 0,
         streak: 0,
+        maxStreak: 0,
         isUniquePerson: false,
         totalChitEarned: 0,
     };
@@ -96,6 +99,7 @@ export function userSummaryFromCurrentUserSummary(
         chitBalance: chitState.chitBalance,
         totalChitEarned: chitState.totalChitEarned,
         streak: chitState.streak,
+        maxStreak: chitState.maxStreak,
         blobReference: currentSummary.blobReference,
         blobData: currentSummary.blobData,
         blobUrl: currentSummary.blobUrl,
@@ -202,6 +206,7 @@ export type UserSummaryStable = DataContent & {
 
 export type UserSummaryVolatile = {
     streak: number;
+    maxStreak: number;
     chitBalance: number;
     totalChitEarned: number;
 };
