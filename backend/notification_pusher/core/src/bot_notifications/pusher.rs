@@ -2,7 +2,7 @@ use crate::metrics::write_metrics;
 use crate::{BotNotification, timestamp};
 use async_channel::Receiver;
 use reqwest::dns::{Addrs, Name, Resolving};
-use reqwest::header::{CONTENT_TYPE};
+use reqwest::header::CONTENT_TYPE;
 use reqwest::{Client, ClientBuilder, Url};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::Arc;
@@ -56,9 +56,13 @@ impl Pusher {
     async fn push_notification(&self, payload: Vec<u8>, endpoint: String) -> Result<(), String> {
         let mut url = Url::parse(&endpoint).map_err(|e| e.to_string())?;
         url = url.join("notify").map_err(|e| e.to_string())?;
-        self.http_client.post(url)
-        .header(CONTENT_TYPE, "application/json")
-        .body(payload).send().await.unwrap();
+        self.http_client
+            .post(url)
+            .header(CONTENT_TYPE, "application/json")
+            .body(payload)
+            .send()
+            .await
+            .unwrap();
         Ok(())
     }
 }
