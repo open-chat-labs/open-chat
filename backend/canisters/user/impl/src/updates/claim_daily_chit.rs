@@ -7,23 +7,30 @@ use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use serde::Serialize;
 use types::{Achievement, ChitEarned, ChitEarnedReason, UserId};
 use user_canister::claim_daily_chit::{Response::*, *};
-use utils::time::tomorrow;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
-fn claim_daily_chit(_args: Args) -> Response {
-    execute_update(claim_daily_chit_impl)
+fn claim_daily_chit(args: Args) -> Response {
+    execute_update(|state| claim_daily_chit_impl(args, state))
 }
 
-fn claim_daily_chit_impl(state: &mut RuntimeState) -> Response {
+fn claim_daily_chit_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
-    let tomorrow = tomorrow(now);
 
     match state.data.streak.claim(now) {
         Ok(Some(insurance_claim)) => state.mark_streak_insurance_claim(insurance_claim),
         Ok(None) => {}
-        Err(_) => return AlreadyClaimed(tomorrow),
+        Err(next_claim) => return AlreadyClaimed(next_claim),
     };
+
+    let mut utc_offset_updated = false;
+    if let Some(utc_offset_ms) = args.utc_offset_ms {
+        utc_offset_updated = state.data.streak.set_utc_offset_ms(utc_offset_ms, now);
+        if utc_offset_updated {
+            // Claim again in case the timezone change has made this possible
+            _ = state.data.streak.claim(now);
+        }
+    }
 
     let user_id: UserId = state.env.canister_id().into();
     let streak = state.data.streak.days(now);
@@ -77,7 +84,8 @@ fn claim_daily_chit_impl(state: &mut RuntimeState) -> Response {
         chit_balance: state.data.chit_events.balance_for_month_by_timestamp(now),
         streak,
         max_streak: state.data.streak.max_streak(),
-        next_claim: tomorrow,
+        next_claim: state.data.streak.next_claim(),
+        utc_offset_updated,
     })
 }
 

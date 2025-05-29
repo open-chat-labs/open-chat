@@ -1,7 +1,7 @@
 use crate::env::ENV;
 use crate::utils::now_millis;
 use crate::{TestEnv, User, client};
-use constants::DAY_IN_MS;
+use constants::{DAY_IN_MS, HOUR_IN_MS};
 use itertools::Itertools;
 use pocket_ic::PocketIc;
 use std::cmp::max;
@@ -23,7 +23,7 @@ fn claim_daily_chit_reflected_in_user_index() {
     let user2 = client::register_user(env, canister_ids);
     ensure_time_at_least_day0(env);
 
-    let result = client::user::happy_path::claim_daily_chit(env, &user);
+    let result = client::user::happy_path::claim_daily_chit(env, &user, None);
     assert_eq!(result.chit_balance, 200);
     assert_eq!(result.chit_earned, 200);
     assert_eq!(result.streak, 1);
@@ -56,19 +56,19 @@ fn chit_streak_gained_and_lost_as_expected() {
     let user2 = client::register_user(env, canister_ids);
     ensure_time_at_least_day0(env);
 
-    let result = client::user::happy_path::claim_daily_chit(env, &user);
+    let result = client::user::happy_path::claim_daily_chit(env, &user, None);
     assert_eq!(result.streak, 1);
 
     env.advance_time(Duration::from_millis(DAY_IN_MS));
-    let result = client::user::happy_path::claim_daily_chit(env, &user);
+    let result = client::user::happy_path::claim_daily_chit(env, &user, None);
     assert_eq!(result.streak, 2);
 
     env.advance_time(Duration::from_millis(DAY_IN_MS));
-    let result = client::user::happy_path::claim_daily_chit(env, &user);
+    let result = client::user::happy_path::claim_daily_chit(env, &user, None);
     assert_eq!(result.streak, 3);
 
     env.advance_time(Duration::from_millis(DAY_IN_MS));
-    let result = client::user::happy_path::claim_daily_chit(env, &user);
+    let result = client::user::happy_path::claim_daily_chit(env, &user, None);
     assert_eq!(result.streak, 4);
 
     env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
@@ -98,7 +98,7 @@ fn chit_stored_per_month() {
 
     for i in 1..5 {
         for _ in 0..i {
-            client::user::happy_path::claim_daily_chit(env, &user);
+            client::user::happy_path::claim_daily_chit(env, &user, None);
             env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
         }
         advance_to_next_month(env);
@@ -255,7 +255,7 @@ fn streak_insurance_can_cover_multiple_days_missed_in_a_row(days_insured: u8) {
     let expected_price = (2u128.pow(days_insured as u32) - 1) * ONE_CHAT;
 
     client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user.user_id, 2000 * ONE_CHAT);
-    client::user::happy_path::claim_daily_chit(env, &user);
+    client::user::happy_path::claim_daily_chit(env, &user, None);
     client::user::happy_path::pay_for_streak_insurance(env, &user, days_insured, expected_price);
 
     env.advance_time(Duration::from_millis(DAY_IN_MS));
@@ -294,14 +294,14 @@ fn streak_insurance_updates_returned_in_summary_updates(final_day_manually_claim
     let start = now_millis(env);
 
     client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user.user_id, 2000 * ONE_CHAT);
-    client::user::happy_path::claim_daily_chit(env, &user);
+    client::user::happy_path::claim_daily_chit(env, &user, None);
     client::user::happy_path::pay_for_streak_insurance(env, &user, 1, ONE_CHAT);
 
     env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
     env.tick();
 
     if final_day_manually_claimed {
-        client::user::happy_path::claim_daily_chit(env, &user);
+        client::user::happy_path::claim_daily_chit(env, &user, None);
         env.advance_time(Duration::from_millis(DAY_IN_MS));
         env.tick();
     }
@@ -311,6 +311,40 @@ fn streak_insurance_updates_returned_in_summary_updates(final_day_manually_claim
 
     let summary_updates = client::user::happy_path::updates(env, &user, start).unwrap();
     assert!(matches!(summary_updates.streak_insurance, OptionUpdate::SetToNone));
+}
+
+#[test]
+fn chit_utc_offset_can_be_updated() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+    ensure_time_at_least_day0(env);
+
+    let result1 = client::user::happy_path::claim_daily_chit(env, &user1, Some(HOUR_IN_MS as i32));
+    let result2 = client::user::happy_path::claim_daily_chit(env, &user2, None);
+    assert_eq!(result1.streak, 1);
+    assert!(result1.utc_offset_updated);
+    assert_eq!(result1.next_claim, result2.next_claim - HOUR_IN_MS);
+
+    // Advance time to the middle of the next day
+    env.advance_time(Duration::from_millis(
+        result2.next_claim + (12 * HOUR_IN_MS) - now_millis(env),
+    ));
+
+    let result1 = client::user::happy_path::claim_daily_chit(env, &user1, Some(-10 * HOUR_IN_MS as i32));
+    let result2 = client::user::happy_path::claim_daily_chit(env, &user2, None);
+    assert_eq!(result2.streak, 2);
+    assert!(result1.utc_offset_updated);
+    assert_eq!(result1.next_claim, result2.next_claim + (10 * HOUR_IN_MS));
+
+    env.advance_time(Duration::from_millis(DAY_IN_MS));
+    let result1 = client::user::happy_path::claim_daily_chit(env, &user1, None);
+    let result2 = client::user::happy_path::claim_daily_chit(env, &user2, None);
+    assert_eq!(result1.streak, 3);
+    assert!(!result1.utc_offset_updated);
+    assert_eq!(result1.next_claim, result2.next_claim + (10 * HOUR_IN_MS));
 }
 
 fn advance_to_next_month(env: &mut PocketIc) {
@@ -336,7 +370,7 @@ fn assert_streak_lengths(env: &PocketIc, user: &User, streak: u16, max_streak: u
 }
 
 fn claim_then_check_result(env: &mut PocketIc, user: &User, streak: u16, max_streak: u16) {
-    let result = client::user::happy_path::claim_daily_chit(env, user);
+    let result = client::user::happy_path::claim_daily_chit(env, user, None);
     assert_eq!(result.streak, streak);
     assert_eq!(result.max_streak, max_streak);
 }

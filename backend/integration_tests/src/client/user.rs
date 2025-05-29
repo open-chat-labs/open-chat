@@ -52,8 +52,8 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use testing::rng::random_from_u128;
     use types::{
-        CanisterId, Chat, ChatId, CommunityId, Empty, EventIndex, EventsResponse, MessageContentInitial, MessageId,
-        MessageIndex, Milliseconds, Reaction, ReplyContext, Rules, TextContent, TimestampMillis, UserId, VideoCallType,
+        CanisterId, Chat, ChatId, CommunityId, EventIndex, EventsResponse, MessageContentInitial, MessageId, MessageIndex,
+        Milliseconds, Reaction, ReplyContext, Rules, TextContent, TimestampMillis, UserId, VideoCallType,
     };
     use user_canister::set_pin_number::PinNumberVerification;
 
@@ -480,8 +480,17 @@ pub mod happy_path {
         }
     }
 
-    pub fn claim_daily_chit(env: &mut PocketIc, sender: &User) -> user_canister::claim_daily_chit::SuccessResult {
-        let response = super::claim_daily_chit(env, sender.principal, sender.canister(), &Empty {});
+    pub fn claim_daily_chit(
+        env: &mut PocketIc,
+        sender: &User,
+        utc_offset_ms: Option<i32>,
+    ) -> user_canister::claim_daily_chit::SuccessResult {
+        let response = super::claim_daily_chit(
+            env,
+            sender.principal,
+            sender.canister(),
+            &user_canister::claim_daily_chit::Args { utc_offset_ms },
+        );
 
         match response {
             user_canister::claim_daily_chit::Response::Success(result) => result,
