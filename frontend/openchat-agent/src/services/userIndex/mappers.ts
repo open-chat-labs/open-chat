@@ -236,6 +236,7 @@ export function userSummaryUpdate(value: TUserSummaryV2): UserSummaryUpdate {
         volatile: mapOptional(value.volatile, (v) => ({
             chitBalance: v.chit_balance,
             streak: v.streak,
+            maxStreak: v.max_streak,
             totalChitEarned: v.total_chit_earned,
         })),
     };
@@ -257,6 +258,7 @@ export function userSummary(value: TUserSummary, timestamp: bigint): UserSummary
         chitBalance: value.chit_balance,
         totalChitEarned: value.total_chit_earned,
         streak: value.streak,
+        maxStreak: value.max_streak,
         isUniquePerson: value.is_unique_person,
     };
 }
