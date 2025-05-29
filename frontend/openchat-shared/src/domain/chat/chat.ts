@@ -1523,7 +1523,6 @@ export type GroupChatSummary = DataContent &
         isInvited: boolean;
         messagesVisibleToNonMembers: boolean;
         verified: boolean;
-        latestSuccessfulUpdatesCheck: bigint;
     };
 
 export function nullMembership(): ChatMembership {
@@ -2225,6 +2224,14 @@ export type GroupAndCommunitySummaryUpdatesArgs = {
     updatesSince: bigint | undefined;
 };
 
+export type GroupAndCommunitySummaryUpdatesResponseBatch = {
+    timestamp: bigint;
+    updates: GroupAndCommunitySummaryUpdatesResponse[];
+    excessUpdates: string[];
+    errors: [string, OCError][];
+    notFound: string[];
+};
+
 export type GroupAndCommunitySummaryUpdatesResponse =
     | {
           kind: "group";
@@ -2243,10 +2250,8 @@ export type GroupAndCommunitySummaryUpdatesResponse =
           value: CommunityCanisterCommunitySummaryUpdates;
       }
     | {
-          kind: "no_updates";
-      }
-    | {
           kind: "not_found";
+          canisterId: string;
       }
     | { kind: "error"; error: string; canisterId: string };
 

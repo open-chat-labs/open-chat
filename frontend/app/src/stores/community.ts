@@ -48,6 +48,5 @@ export function createCandidateCommunity(id: string, index: number): CommunitySu
         localUserIndex: "",
         isInvited: false,
         verified: false,
-        latestSuccessfulUpdatesCheck: BigInt(0),
     };
 }
