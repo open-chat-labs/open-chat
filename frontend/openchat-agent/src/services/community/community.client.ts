@@ -34,10 +34,9 @@ import type {
     EventsResponse,
     EventsSuccessResult,
     ExploreChannelsResponse,
-    ExternalBotPermissions,
     FollowThreadResponse,
     FullWebhookDetails,
-    GenerateBotKeyResponse,
+    GrantedBotPermissions,
     GroupChatDetails,
     GroupChatDetailsResponse,
     GroupChatIdentifier,
@@ -90,8 +89,6 @@ import {
     CommunityAddMembersToChannelArgs,
     CommunityAddMembersToChannelResponse,
     CommunityAddReactionArgs,
-    CommunityApiKeyArgs,
-    CommunityApiKeyResponse,
     CommunityBlockUserArgs,
     CommunityCancelInvitesArgs,
     CommunityCancelP2pSwapArgs,
@@ -120,8 +117,6 @@ import {
     CommunityExploreChannelsArgs,
     CommunityExploreChannelsResponse,
     CommunityFollowThreadArgs,
-    CommunityGenerateBotApiKeyArgs,
-    CommunityGenerateBotApiKeyResponse,
     CommunityImportGroupArgs,
     CommunityImportGroupResponse,
     CommunityInviteCodeResponse,
@@ -191,7 +186,6 @@ import {
     loadMessagesByMessageIndex,
     mergeSuccessResponses,
     recordFailedMessage,
-    removeCachedChannelApiKeys,
     removeFailedMessage,
     setCachedCommunityDetails,
     setCachedEvents,
@@ -219,7 +213,6 @@ import {
     createGroupSuccess,
     deletedMessageSuccess,
     enableOrResetInviteCodeSuccess,
-    generateApiKeySuccess,
     getEventsSuccess,
     getMessagesSuccess,
     groupDetailsSuccess,
@@ -1029,10 +1022,6 @@ export class CommunityClient extends MsgpackCanisterAgent {
             };
         }
 
-        updatesResponse.botsRemoved.forEach((botId) =>
-            removeCachedChannelApiKeys(this.principal, this.communityId, botId),
-        );
-
         return mergeCommunityDetails(previous, updatesResponse);
     }
 
@@ -1689,56 +1678,20 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
     }
 
-    updateInstalledBot(
-        botId: string,
-        grantedPermissions: ExternalBotPermissions,
-    ): Promise<boolean> {
+    updateInstalledBot(botId: string, grantedPermissions: GrantedBotPermissions): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "update_bot",
             {
                 bot_id: principalStringToBytes(botId),
-                granted_permissions: apiExternalBotPermissions(grantedPermissions),
+                granted_permissions: apiExternalBotPermissions(grantedPermissions.command),
+                granted_autonomous_permissions: mapOptional(
+                    grantedPermissions.autonomous,
+                    apiExternalBotPermissions,
+                ),
             },
             (resp) => resp === "Success",
             CommunityUpdateBotArgs,
             UnitResult,
-        );
-    }
-
-    generateBotApiKey(
-        botId: string,
-        permissions: ExternalBotPermissions,
-        channelId?: number,
-    ): Promise<GenerateBotKeyResponse> {
-        return this.executeMsgpackUpdate(
-            "generate_bot_api_key",
-            {
-                bot_id: principalStringToBytes(botId),
-                requested_permissions: apiExternalBotPermissions(permissions),
-                channel_id: mapOptional(channelId, toBigInt32),
-            },
-            (resp) => mapResult(resp, generateApiKeySuccess),
-            CommunityGenerateBotApiKeyArgs,
-            CommunityGenerateBotApiKeyResponse,
-        );
-    }
-
-    getApiKey(botId: string, channelId?: number): Promise<string | undefined> {
-        return this.executeMsgpackQuery(
-            "api_key",
-            {
-                channel_id: channelId ? toBigInt32(channelId) : undefined,
-                bot_id: principalStringToBytes(botId),
-            },
-            (resp) => {
-                if (typeof resp === "object" && "Success" in resp) {
-                    return resp.Success;
-                }
-                console.log("Failed to get community api key: ", botId, channelId, resp);
-                return undefined;
-            },
-            CommunityApiKeyArgs,
-            CommunityApiKeyResponse,
         );
     }
 

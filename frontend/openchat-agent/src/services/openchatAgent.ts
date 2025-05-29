@@ -74,14 +74,13 @@ import type {
     ExternalAchievement,
     ExternalAchievementsSuccess,
     ExternalBot,
-    ExternalBotPermissions,
     FollowThreadResponse,
     FreezeCommunityResponse,
     FreezeGroupResponse,
     FullWebhookDetails,
-    GenerateBotKeyResponse,
     GenerateMagicLinkResponse,
     GetDelegationResponse,
+    GrantedBotPermissions,
     GroupAndCommunitySummaryUpdatesArgs,
     GroupAndCommunitySummaryUpdatesResponse,
     GroupCanisterGroupChatSummary,
@@ -120,7 +119,6 @@ import type {
     PinNumberSettings,
     PrepareDelegationResponse,
     ProposalVoteDetails,
-    PublicApiKeyDetails,
     PublicGroupSummaryResponse,
     PublicProfile,
     Referral,
@@ -216,6 +214,7 @@ import {
     waitAll,
 } from "openchat-shared";
 import type { AgentConfig } from "../config";
+import { CachePrimer } from "../utils/cachePrimer";
 import {
     cacheLocalUserIndexForUser,
     clearCache,
@@ -292,7 +291,6 @@ import { TranslationsClient } from "./translations/translations.client";
 import { AnonUserClient } from "./user/anonUser.client";
 import { UserClient } from "./user/user.client";
 import { UserIndexClient } from "./userIndex/userIndex.client";
-import { CachePrimer } from "../utils/cachePrimer";
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
@@ -1722,8 +1720,7 @@ export class OpenChatAgent extends EventTarget {
         let referrals: Referral[];
         let walletConfig: WalletConfig;
         let messageActivitySummary: MessageActivitySummary;
-        let installedBots: Map<string, ExternalBotPermissions>;
-        let apiKeys: Map<string, PublicApiKeyDetails>;
+        let installedBots: Map<string, GrantedBotPermissions>;
         let bitcoinAddress: string | undefined = undefined;
         let streakInsurance: StreakInsurance | undefined;
 
@@ -1773,7 +1770,6 @@ export class OpenChatAgent extends EventTarget {
             messageActivitySummary = userResponse.messageActivitySummary;
             anyUpdates = true;
             installedBots = userResponse.bots;
-            apiKeys = userResponse.apiKeys;
             bitcoinAddress = userResponse.bitcoinAddress;
             streakInsurance = userResponse.streakInsurance;
         } else {
@@ -1781,7 +1777,6 @@ export class OpenChatAgent extends EventTarget {
             currentGroups = current.groupChats;
             currentCommunities = current.communities;
             installedBots = current.installedBots;
-            apiKeys = current.apiKeys;
             bitcoinAddress = current.bitcoinAddress;
             streakInsurance = current.streakInsurance;
 
@@ -1812,10 +1807,8 @@ export class OpenChatAgent extends EventTarget {
                 userResponse.botsAddedOrUpdated.forEach((b) =>
                     installedBots.set(b.id, b.permissions),
                 );
-                userResponse.apiKeysGenerated.forEach((api) => apiKeys.set(api.botId, api));
                 userResponse.botsRemoved.forEach((b) => {
                     installedBots.delete(b);
-                    apiKeys.delete(b);
                 });
                 const removeDirectChatIds = userResponse.directChats.removed.map((id) => id.userId);
                 directChats = userResponse.directChats.added.concat(
@@ -2023,7 +2016,6 @@ export class OpenChatAgent extends EventTarget {
             walletConfig,
             messageActivitySummary,
             installedBots,
-            apiKeys,
             bitcoinAddress,
             streakInsurance,
         };
@@ -2036,13 +2028,21 @@ export class OpenChatAgent extends EventTarget {
             if (this._cachePrimer === undefined) {
                 // Set up the cache primer on the first iteration but don't process anything yet, since we want OC's
                 // initialization to be as fast as possible and so don't want resources going to the CachePrimer yet.
-                getCachePrimerTimestamps(this.db).then((ts) => this._cachePrimer = new CachePrimer(
-                    state.userCanisterLocalUserIndex,
-                    ts,
-                    (localUserIndex, requests) => this.getLocalUserIndexClient(localUserIndex).chatEvents(requests, true),
-                    (userIds) => this._userIndexClient.populateUserCache(userIds)))
+                getCachePrimerTimestamps(this.db).then(
+                    (ts) =>
+                        (this._cachePrimer = new CachePrimer(
+                            state.userCanisterLocalUserIndex,
+                            ts,
+                            (localUserIndex, requests) =>
+                                this.getLocalUserIndexClient(localUserIndex).chatEvents(
+                                    requests,
+                                    true,
+                                ),
+                            (userIds) => this._userIndexClient.populateUserCache(userIds),
+                        )),
+                );
             } else {
-                this._cachePrimer.processState(state)
+                this._cachePrimer.processState(state);
             }
         }
 
@@ -4269,7 +4269,7 @@ export class OpenChatAgent extends EventTarget {
     async installBot(
         id: BotInstallationLocation,
         botId: string,
-        grantedPermissions: ExternalBotPermissions,
+        grantedPermissions: GrantedBotPermissions,
     ): Promise<boolean> {
         const localUserIndex = await this.#localUserIndexForBotContext(id);
         return this.getLocalUserIndexClient(localUserIndex).installBot(
@@ -4282,7 +4282,7 @@ export class OpenChatAgent extends EventTarget {
     updateInstalledBot(
         id: BotInstallationLocation,
         botId: string,
-        grantedPermissions: ExternalBotPermissions,
+        grantedPermissions: GrantedBotPermissions,
     ): Promise<boolean> {
         switch (id.kind) {
             case "community":
@@ -4339,43 +4339,6 @@ export class OpenChatAgent extends EventTarget {
             amount,
             fee,
         );
-    }
-
-    generateBotApiKey(
-        id: ChatIdentifier | CommunityIdentifier,
-        botId: string,
-        permissions: ExternalBotPermissions,
-    ): Promise<GenerateBotKeyResponse> {
-        switch (id.kind) {
-            case "channel":
-                return this.communityClient(id.communityId).generateBotApiKey(
-                    botId,
-                    permissions,
-                    id.channelId,
-                );
-            case "community":
-                return this.communityClient(id.communityId).generateBotApiKey(botId, permissions);
-            case "group_chat":
-                return this.getGroupClient(id.groupId).generateBotApiKey(botId, permissions);
-            case "direct_chat":
-                return this.userClient.generateBotApiKey(botId, permissions);
-        }
-    }
-
-    getApiKey(
-        id: CommunityIdentifier | ChatIdentifier,
-        botId: string,
-    ): Promise<string | undefined> {
-        switch (id.kind) {
-            case "channel":
-                return this.communityClient(id.communityId).getApiKey(botId, id.channelId);
-            case "community":
-                return this.communityClient(id.communityId).getApiKey(botId);
-            case "group_chat":
-                return this.getGroupClient(id.groupId).getApiKey(botId);
-            case "direct_chat":
-                return this.userClient.getApiKey(botId);
-        }
     }
 
     payForStreakInsurance(

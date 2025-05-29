@@ -307,6 +307,30 @@
           "markdownDescription": "Denies the open_url command without any pre-configured scope."
         },
         {
+          "description": "Enables the registerListener command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-registerListener",
+          "markdownDescription": "Enables the registerListener command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the registerListener command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-registerListener",
+          "markdownDescription": "Denies the registerListener command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the removeListener command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-removeListener",
+          "markdownDescription": "Enables the removeListener command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the removeListener command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-removeListener",
+          "markdownDescription": "Denies the removeListener command without any pre-configured scope."
+        },
+        {
           "description": "Enables the sign_in command without any pre-configured scope.",
           "type": "string",
           "const": "allow-sign-in",
@@ -331,10 +355,10 @@
           "markdownDescription": "Denies the sign_up command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`",
+          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`"
+          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`"
         }
       ]
     }

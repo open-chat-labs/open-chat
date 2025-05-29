@@ -89,6 +89,9 @@ function createTestBot(): ExternalBot {
                     ],
                 },
             ],
+            autonomousConfig: undefined,
+            defaultSubscriptions: undefined,
+            dataEncoding: undefined,
         },
     };
 }

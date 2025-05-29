@@ -8,7 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Remove all calls into LocalGroupIndexes ([#7942](https://github.com/open-chat-labs/open-chat/pull/7942))
+- Remove all references to LocalGroupIndexes ([#8057](https://github.com/open-chat-labs/open-chat/pull/8057))
+
+## [[2.0.1767](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1767-group_index)] - 2025-05-28
+
+### Changed
+
+- Remove all calls into LocalGroupIndexes ([#8014](https://github.com/open-chat-labs/open-chat/pull/8014))
 
 ## [[2.0.1740](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1740-group_index)] - 2025-05-09
 

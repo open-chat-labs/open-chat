@@ -1,11 +1,9 @@
 <script lang="ts">
     import {
-        type AutonomousBotConfig,
         type BotInstallationLocation,
-        emptyExternalBotPermissions,
+        definitionToPermissions,
         type ExternalBotLike,
-        type ExternalBotPermissions,
-        flattenCommandPermissions,
+        type GrantedBotPermissions,
         type Level,
         mobileWidth,
         OpenChat,
@@ -20,105 +18,52 @@
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";
-    import ShowApiKey from "../ShowApiKey.svelte";
     import BotProperties from "./BotProperties.svelte";
     import ChoosePermissions from "./ChoosePermissions.svelte";
-    import EnableAutonomousAccess from "./EnableAutonomousAccess.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    type Step =
-        | { kind: "choose_command_permissions" }
-        | { kind: "configure_autonomous_access"; config: AutonomousBotConfig }
-        | { kind: "choose_autonomous_permissions"; config: AutonomousBotConfig }
-        | { kind: "show_api_key"; apiKey: string; config: AutonomousBotConfig }
-        | { kind: "unknown" };
+    type Step = "choose_command_permissions" | "choose_autonomous_permissions" | "unknown";
 
     interface Props {
         location: BotInstallationLocation;
         level: Level;
         bot: ExternalBotLike;
         onClose: (installed: boolean) => void;
-        installedBots: ReadonlyMap<string, ExternalBotPermissions>;
+        installedBots: ReadonlyMap<string, GrantedBotPermissions>;
     }
 
     let { location, bot, onClose, level, installedBots }: Props = $props();
-    let requestedCommandPermissions = $derived(flattenCommandPermissions(bot.definition));
-    let grantedCommandPermissions = $state(flattenCommandPermissions(bot.definition));
-    let requestedAutonomousPermissions = $derived(
-        bot.definition.autonomousConfig?.permissions ?? emptyExternalBotPermissions(),
-    );
-    let grantedAutonomousPermission = $state(
-        bot.definition.autonomousConfig?.permissions ?? emptyExternalBotPermissions(),
-    );
+    let requestedPermissions = $derived(definitionToPermissions(bot.definition));
+    let grantedPermissions = $state(definitionToPermissions(bot.definition));
+
     let busy = $state(false);
     let step = $state<Step>(firstStep());
-    let botExecutionContext = $derived.by(() => {
-        switch (location.kind) {
-            case "direct_chat":
-                // for direct chat, the execution context is the bot's id, the install location is *our* userId
-                return { ...location, userId: bot.id };
-            default:
-                return location;
-        }
-    });
 
     function firstStep(): Step {
         if (bot.definition.commands.length > 0) {
-            return { kind: "choose_command_permissions" };
+            return "choose_command_permissions";
         } else if (bot.definition.autonomousConfig !== undefined) {
-            return { kind: "configure_autonomous_access", config: bot.definition.autonomousConfig };
+            return "choose_autonomous_permissions";
         } else {
-            return { kind: "unknown" };
+            return "unknown";
         }
     }
 
     function nextStep(current: Step) {
-        switch (current.kind) {
+        switch (current) {
             case "choose_command_permissions":
-                busy = true;
-                install(() => {
-                    if (bot.definition.autonomousConfig !== undefined) {
-                        step = {
-                            kind: "configure_autonomous_access",
-                            config: bot.definition.autonomousConfig,
-                        };
-                        busy = false;
-                    } else {
-                        onClose(true);
-                    }
-                });
-                break;
-            case "configure_autonomous_access":
-                step = { kind: "choose_autonomous_permissions", config: current.config };
+                if (bot.definition.autonomousConfig !== undefined) {
+                    step = "choose_autonomous_permissions";
+                } else {
+                    busy = true;
+                    install(() => onClose(true));
+                }
                 break;
             case "choose_autonomous_permissions":
                 busy = true;
-                install(() => {
-                    generateApiKey((apiKey: string) => {
-                        step = { kind: "show_api_key", apiKey, config: current.config };
-                    });
-                });
+                install();
                 break;
-            case "show_api_key":
-                onClose(true);
-                break;
-        }
-    }
-
-    function generateApiKey(then?: (apiKey: string) => void) {
-        if (bot.definition.autonomousConfig !== undefined) {
-            busy = true;
-            client
-                .generateBotApiKey(location, bot.id, grantedAutonomousPermission)
-                .then((resp) => {
-                    if (resp.kind === "success") {
-                        then?.(resp.apiKey);
-                    } else {
-                        toastStore.showFailureToast(i18nKey("bots.manage.generateFailed"));
-                    }
-                })
-                .finally(() => (busy = false));
         }
     }
 
@@ -130,17 +75,22 @@
                 onClose(true);
             }
         } else {
-            client.installBot(location, bot.id, grantedCommandPermissions).then((success) => {
-                if (!success) {
-                    toastStore.showFailureToast(i18nKey("bots.add.failure"));
-                } else {
-                    if (then) {
-                        then();
+            client
+                .installBot(location, bot.id, {
+                    command: grantedPermissions.command,
+                    autonomous: grantedPermissions.autonomous,
+                })
+                .then((success) => {
+                    if (!success) {
+                        toastStore.showFailureToast(i18nKey("bots.add.failure"));
                     } else {
-                        onClose(true);
+                        if (then) {
+                            then();
+                        } else {
+                            onClose(true);
+                        }
                     }
-                }
-            });
+                });
         }
     }
 </script>
@@ -155,25 +105,21 @@
         {/snippet}
         {#snippet body()}
             <div class="body">
-                <BotProperties installing={busy} {grantedCommandPermissions} {bot}>
-                    {#if step.kind === "choose_command_permissions"}
+                <BotProperties installing={busy} {grantedPermissions} {bot}>
+                    {#if step === "choose_command_permissions"}
                         <ChoosePermissions
                             {level}
                             title={i18nKey("bots.add.chooseCommandPermissions")}
                             subtitle={i18nKey("bots.add.commandPermissionsInfo")}
-                            bind:granted={grantedCommandPermissions}
-                            requested={requestedCommandPermissions} />
-                    {:else if step.kind === "configure_autonomous_access"}
-                        <EnableAutonomousAccess {level} />
-                    {:else if step.kind === "choose_autonomous_permissions"}
+                            bind:granted={grantedPermissions.command}
+                            requested={requestedPermissions.command} />
+                    {:else if step === "choose_autonomous_permissions"}
                         <ChoosePermissions
                             {level}
                             title={i18nKey("bots.add.chooseAutonomousPermissions")}
                             subtitle={i18nKey("bots.add.autonomousPermissionsInfo")}
-                            bind:granted={grantedAutonomousPermission}
-                            requested={requestedAutonomousPermissions} />
-                    {:else if step.kind === "show_api_key"}
-                        <ShowApiKey {bot} {botExecutionContext} apiKey={step.apiKey} />
+                            bind:granted={grantedPermissions.autonomous!}
+                            requested={requestedPermissions.autonomous!} />
                     {/if}
                 </BotProperties>
             </div>
@@ -181,13 +127,8 @@
         {#snippet footer()}
             <div class="footer">
                 <ButtonGroup>
-                    {#if step.kind === "configure_autonomous_access"}
-                        {@render button(i18nKey("bots.add.skip"), () => onClose(true), true)}
-                        {@render button(i18nKey("bots.add.configureNow"), () => nextStep(step))}
-                    {:else if step.kind === "choose_autonomous_permissions"}
-                        {@render button(i18nKey("bots.add.generateApiKey"), () => nextStep(step))}
-                    {:else if step.kind === "show_api_key"}
-                        {@render button(i18nKey("bots.add.continue"), () => nextStep(step))}
+                    {#if step === "choose_command_permissions" && bot.definition.autonomousConfig !== undefined}
+                        {@render button(i18nKey("bots.add.next"), () => nextStep(step))}
                     {:else}
                         {@render button(i18nKey("cancel"), () => onClose(false), true)}
                         {@render button(i18nKey("bots.add.install"), () => nextStep(step))}

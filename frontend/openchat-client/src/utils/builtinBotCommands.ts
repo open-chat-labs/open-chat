@@ -1,4 +1,13 @@
-import type { ExternalBotPermissions, InternalBot } from "openchat-shared";
+import type { ExternalBotPermissions, GrantedBotPermissions, InternalBot } from "openchat-shared";
+
+export const emptyGrantedPermissions: GrantedBotPermissions = {
+    command: {
+        chatPermissions: [],
+        communityPermissions: [],
+        messagePermissions: [],
+    },
+    autonomous: undefined,
+};
 
 export const emptyPermissions: ExternalBotPermissions = {
     chatPermissions: [],
@@ -276,5 +285,8 @@ export const builtinBot: InternalBot = {
                 directBotDisabled: false,
             },
         ],
+        autonomousConfig: undefined,
+        defaultSubscriptions: undefined,
+        dataEncoding: undefined,
     },
 };

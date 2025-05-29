@@ -1,6 +1,7 @@
 import type { HttpAgent, Identity, SignIdentity } from "@dfinity/agent";
 import type {
     AccessTokenType,
+    BotInstallationLocation,
     ChannelIdentifier,
     ChatEvent,
     ChatEventsArgs,
@@ -9,45 +10,16 @@ import type {
     ChatEventsResponse,
     EventsSuccessResult,
     EventWrapper,
+    GrantedBotPermissions,
     GroupAndCommunitySummaryUpdatesArgs,
     GroupAndCommunitySummaryUpdatesResponseBatch,
     JoinCommunityResponse,
     JoinGroupResponse,
     MessageContext,
     RegisterUserResponse,
-    ExternalBotPermissions,
     VerifiedCredentialArgs,
-    BotInstallationLocation,
 } from "openchat-shared";
-import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
-import {
-    accessTokenResponse,
-    apiAccessTokenType,
-    apiVerifiedCredentialArgs,
-    chatEventsArgs,
-    chatEventsBatchResponse,
-    groupAndCommunitySummaryUpdates,
-    inviteUsersResponse,
-    joinChannelResponse,
-    joinCommunityResponse,
-    registerUserResponse,
-    withdrawFromIcpSwapResponse,
-} from "./mappers";
-import { joinGroupResponse, apiExternalBotPermissions } from "../common/chatMappersV2";
-import { toBigInt32, MAX_MISSING, textToCode, UnsupportedValueError } from "openchat-shared";
-import {
-    mapOptional,
-    maybePrincipalStringToBytes,
-    principalStringToBytes,
-} from "../../utils/mapping";
-import {
-    type Database,
-    getCachedEvents,
-    getCachedEventsByIndex,
-    getCachedEventsWindowByMessageIndex,
-    setCachedEvents,
-    setCachePrimerTimestamp,
-} from "../../utils/caching";
+import { MAX_MISSING, textToCode, toBigInt32, UnsupportedValueError } from "openchat-shared";
 import {
     BotInstallationLocation as ApiBotInstallationLocation,
     LocalUserIndexAccessTokenV2Args,
@@ -77,14 +49,37 @@ import {
     LocalUserIndexWithdrawFromIcpswapResponse,
     UnitResult,
 } from "../../typebox";
+import {
+    type Database,
+    getCachedEvents,
+    getCachedEventsByIndex,
+    getCachedEventsWindowByMessageIndex,
+    setCachedEvents,
+    setCachePrimerTimestamp,
+} from "../../utils/caching";
+import {
+    mapOptional,
+    maybePrincipalStringToBytes,
+    principalStringToBytes,
+} from "../../utils/mapping";
+import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
+import { apiExternalBotPermissions, joinGroupResponse } from "../common/chatMappersV2";
+import {
+    accessTokenResponse,
+    apiAccessTokenType,
+    apiVerifiedCredentialArgs,
+    chatEventsArgs,
+    chatEventsBatchResponse,
+    groupAndCommunitySummaryUpdates,
+    inviteUsersResponse,
+    joinChannelResponse,
+    joinCommunityResponse,
+    registerUserResponse,
+    withdrawFromIcpSwapResponse,
+} from "./mappers";
 
 export class LocalUserIndexClient extends MsgpackCanisterAgent {
-    constructor(
-        identity: Identity,
-        agent: HttpAgent,
-        canisterId: string,
-        private db: Database,
-    ) {
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string, private db: Database) {
         super(identity, agent, canisterId, "LocalUserIndex");
     }
 
@@ -396,14 +391,18 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
     installBot(
         location: BotInstallationLocation,
         botId: string,
-        grantedPermissions: ExternalBotPermissions,
+        grantedPermissions: GrantedBotPermissions,
     ): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "install_bot",
             {
                 location: this.#apiBotInstallationLocation(location),
                 bot_id: principalStringToBytes(botId),
-                granted_permissions: apiExternalBotPermissions(grantedPermissions),
+                granted_permissions: apiExternalBotPermissions(grantedPermissions.command),
+                granted_autonomous_permissions: mapOptional(
+                    grantedPermissions.autonomous,
+                    apiExternalBotPermissions,
+                ),
             },
             (resp) => {
                 console.log("Install bot response: ", resp);

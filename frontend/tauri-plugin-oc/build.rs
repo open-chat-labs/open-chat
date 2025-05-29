@@ -1,4 +1,10 @@
-const COMMANDS: &[&str] = &["open_url", "sign_up", "sign_in"];
+const COMMANDS: &[&str] = &[
+    "open_url",
+    "sign_up",
+    "sign_in",
+    "registerListener",
+    "removeListener",
+];
 
 fn main() {
     tauri_plugin::Builder::new(COMMANDS)

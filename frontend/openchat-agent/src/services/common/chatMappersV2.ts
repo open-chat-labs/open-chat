@@ -36,7 +36,6 @@ import type {
     FailedCryptocurrencyTransfer,
     FileContent,
     GateCheckFailedReason,
-    GenerateBotKeyResponse,
     GiphyContent,
     GiphyImage,
     GroupChatDetailsResponse,
@@ -80,7 +79,6 @@ import type {
     Proposal,
     // User,
     ProposalContent,
-    PublicApiKeyDetails,
     Reaction,
     ReplyContext,
     ReportedMessageContent,
@@ -135,14 +133,13 @@ import type {
     BotCommandParamType as ApiCommandParamType,
     BotPermissions as ApiExternalBotPermissions,
     InstalledBotDetails as ApiInstalledBotDetails,
-    PublicApiKeyDetails as ApiPublicApiKeyDetails,
     WebhookDetails as ApiWebhookDetails,
     BotCommandArg,
+    BotDataEncoding,
     CommunityClaimPrizeResponse,
     CommunityCreateChannelSuccessResult,
     CommunityDeletedMessageSuccessResult,
     CommunityEnableInviteCodeSuccessResult,
-    CommunityGenerateBotApiKeySuccessResult,
     CommunityInviteCodeSuccessResult,
     CommunitySearchChannelResponse,
     CommunitySelectedChannelInitialSuccessResult,
@@ -154,7 +151,6 @@ import type {
     GroupClaimPrizeResponse,
     GroupDeletedMessageSuccessResult,
     GroupEnableInviteCodeSuccessResult,
-    GroupGenerateBotApiKeySuccessResult,
     GroupInviteCodeSuccessResult,
     GroupSearchMessagesResponse,
     GroupSelectedInitialSuccessResult,
@@ -244,7 +240,6 @@ import type {
     VideoContent as TVideoContent,
     UserCreateGroupSuccessResult,
     UserDeletedMessageSuccessResult,
-    UserGenerateBotApiKeySuccessResult,
     UserUndeleteMessagesSuccessResult,
     UserWithdrawCryptoArgs,
     VideoCall,
@@ -266,15 +261,6 @@ import type { ApiPrincipal } from "../index";
 import { ensureReplicaIsUpToDate } from "./replicaUpToDateChecker";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
-
-export function generateApiKeySuccess(
-    value:
-        | CommunityGenerateBotApiKeySuccessResult
-        | GroupGenerateBotApiKeySuccessResult
-        | UserGenerateBotApiKeySuccessResult,
-): GenerateBotKeyResponse {
-    return { kind: "success", apiKey: value.api_key };
-}
 
 export async function getEventsSuccess(
     value: TEventsResponse,
@@ -2472,22 +2458,9 @@ export function groupDetailsSuccess(
         rules: value.chat_rules,
         timestamp: value.timestamp,
         bots: bots.map(installedBotDetails),
-        apiKeys: value.api_keys.map(publicApiKeyDetails).reduce((m, k) => {
-            m.set(k.botId, k);
-            return m;
-        }, new Map<string, PublicApiKeyDetails>()),
         webhooks: value.webhooks.map((v) =>
             webhookDetails(v, blobUrlPattern, canisterId, channelId),
         ),
-    };
-}
-
-export function publicApiKeyDetails(value: ApiPublicApiKeyDetails): PublicApiKeyDetails {
-    return {
-        botId: principalBytesToString(value.bot_id),
-        grantedPermissions: externalBotPermissions(value.granted_permissions),
-        generatedBy: principalBytesToString(value.generated_by),
-        generatedAt: value.generated_at,
     };
 }
 
@@ -2519,7 +2492,6 @@ export function groupDetailsUpdatesResponse(
                 timestamp: value.Success.timestamp,
                 botsAddedOrUpdated: value.Success.bots_added_or_updated.map(installedBotDetails),
                 botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
-                apiKeysGenerated: value.Success.api_keys_generated.map(publicApiKeyDetails),
                 webhooks: mapOptional(value.Success.webhooks, (whs) =>
                     whs.map((v) => webhookDetails(v, blobUrlPattern, canisterId, channelId)),
                 ),
@@ -2755,9 +2727,13 @@ function permissionsToBits<T>(permissions: T[], allPermissions: T[]): number {
 }
 
 export function installedBotDetails(value: ApiInstalledBotDetails): InstalledBotDetails {
+    console.log("Installed bot details: ", value);
     return {
         id: principalBytesToString(value.user_id),
-        permissions: externalBotPermissions(value.permissions),
+        permissions: {
+            command: externalBotPermissions(value.permissions),
+            autonomous: mapOptional(value.autonomous_permissions, externalBotPermissions),
+        },
     };
 }
 
@@ -2791,9 +2767,13 @@ export function externalBotDefinition(value: ApiBotDefinition): BotDefinition {
         description: value.description,
         commands: value.commands.map(externalBotCommand),
         autonomousConfig: mapOptional(value.autonomous_config, (c) => ({
-            syncApiKey: c.sync_api_key,
             permissions: externalBotPermissions(c.permissions),
         })),
+        defaultSubscriptions: mapOptional(value.default_subscriptions, (s) => ({
+            community: s.community,
+            chat: s.chat,
+        })),
+        dataEncoding: mapOptional(value.data_encoding, dataEncoding),
     };
 }
 
@@ -2807,6 +2787,10 @@ export function externalBotCommand(command: ApiCommandDefinition): CommandDefini
         defaultRole: mapOptional(command.default_role, memberRole) ?? "member",
         directMessages: command.direct_messages ?? false,
     };
+}
+
+export function dataEncoding(data_encoding: BotDataEncoding): "json" | "candid" {
+    return data_encoding === "Candid" ? "candid" : "json";
 }
 
 export function externalBotParam(param: ApiCommandParam): CommandParam {
@@ -2918,5 +2902,5 @@ export function videoCallInProgress(value: VideoCall): VideoCallInProgress {
         messageId: value.message_id,
         callType: value.call_type === "Default" ? "default" : "broadcast",
         joinedByCurrentUser: value.joined_by_current_user,
-    }
+    };
 }

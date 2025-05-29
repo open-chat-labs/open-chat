@@ -2,7 +2,7 @@
     import type {
         ChatPermissions,
         ChatSummary,
-        ExternalBotPermissions,
+        GrantedBotPermissions,
         MessageContext,
         OpenChat,
         PermissionRole,
@@ -122,7 +122,7 @@
 
     function hasPermissionForCommand(
         command: FlattenedCommand,
-        installedBots: ReadonlyMap<string, ExternalBotPermissions>,
+        installedBots: ReadonlyMap<string, GrantedBotPermissions>,
         chat: ChatSummary | undefined,
     ): boolean {
         const userPermission = userHasPermissionForCommand(command, chat);
@@ -133,7 +133,7 @@
             return (
                 userPermission &&
                 granted !== undefined &&
-                hasEveryRequiredPermission(required, granted)
+                hasEveryRequiredPermission(required, granted.command)
             );
         } else {
             return userPermission;

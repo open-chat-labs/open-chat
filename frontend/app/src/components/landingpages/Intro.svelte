@@ -6,10 +6,9 @@
     import OnChain from "./OnChain.svelte";
     import OnChainAlt from "./OnChainAlt.svelte";
 
-    let imgUrl = $derived(
-        $currentTheme.mode === "light"
-            ? "/assets/screenshots/intro_light.png"
-            : "/assets/screenshots/intro_dark.png",
+    let chatImg = $derived(`/assets/screenshots/intro/${$currentTheme.mode}_chat.png`);
+    let videoImg = $derived(
+        $mobileWidth ? chatImg : `/assets/screenshots/intro/${$currentTheme.mode}_video.png`,
     );
 
     let introStyle = $derived($mobileWidth ? "" : `height: ${$availableHeight}px`);
@@ -25,13 +24,10 @@
                     </div>
                     <h1>OpenChat</h1>
                 </div>
-                <h2 class="title">Where web3 communicates</h2>
+                <h2 class="title">Fully featured. Fully secure.</h2>
                 <p class="blurb">
-                    OpenChat is a fully featured chat application running end-to-end on the <a
-                        href="https://internetcomputer.org/"
-                        target="_blank">
-                        Internet Computer
-                    </a> blockchain.
+                    OpenChat is a community-owned chat application built for privacy, security and
+                    anonymity. Start chatting today for free.
                 </p>
                 <div class="launch">
                     <Launch />
@@ -43,18 +39,12 @@
                 </div>
             {/if}
         </div>
-        <div class="image-wrapper-wrapper">
-            <div class="image-wrapper">
-                <img class="img" alt="Open chat list" src={imgUrl} />
-                {#if $mobileWidth}
-                    <div
-                        class:light={$currentTheme.mode === "light"}
-                        class:dark={$currentTheme.mode === "dark"}
-                        class="overlay">
-                    </div>
-                {/if}
-            </div>
-        </div>
+        <section class="mockups">
+            <img src={videoImg} alt="Video call screenshot" class="img video-call" />
+            {#if !$mobileWidth}
+                <img src={chatImg} alt="Chat screenshot" class="img chat" />
+            {/if}
+        </section>
     </div>
     {#if $mobileWidth}
         <div class="powered-by">
@@ -85,13 +75,49 @@
         justify-content: center;
         align-items: stretch;
         flex-direction: row;
-        gap: toRem(100);
+        gap: toRem(50);
 
         .text-wrapper {
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             gap: toRem(20);
+            flex: 5;
+        }
+
+        .mockups {
+            position: relative;
+            flex-shrink: 0;
+            flex: 3;
+
+            .img {
+                box-shadow: 0px 4px 20px 0px #00000066;
+                width: 100%;
+                border: toRem(5) solid var(--landing-phone-bd);
+                border-radius: toRem(18);
+                transition: transform 0.2s ease;
+                animation: float 5s ease-in-out infinite;
+
+                @include mobile() {
+                    border: toRem(3) solid var(--landing-phone-bd);
+                }
+            }
+
+            .video-call {
+                width: 300px;
+
+                @include mobile() {
+                    width: 100%;
+                }
+            }
+
+            .chat {
+                position: absolute;
+                top: -80px;
+                left: 200px;
+                width: 280px;
+                animation-delay: 1.5s;
+            }
         }
 
         .text {
@@ -153,65 +179,21 @@
         }
     }
 
-    .image-wrapper-wrapper {
-        min-width: 270px;
-        max-width: 390px;
-        @include mobile() {
-            border-radius: toRem(18);
-            height: toRem(420);
-            overflow: hidden;
+    @keyframes float {
+        0% {
+            transform: translateY(0);
         }
-    }
-
-    .image-wrapper {
-        padding-right: toRem(30);
-        position: relative;
-
-        @include mobile() {
-            padding: 0;
+        50% {
+            transform: translateY(-4px);
         }
-
-        .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-
-            &.dark {
-                background: linear-gradient(
-                    180deg,
-                    rgba(27, 28, 33, 0) 0%,
-                    #1b1c21 42.19%,
-                    #1b1c21 100%
-                );
-            }
-
-            &.light {
-                background: linear-gradient(
-                    180deg,
-                    rgba(231, 238, 247, 0) 0%,
-                    #ffffff 39.74%,
-                    #ffffff 100%
-                );
-            }
-        }
-    }
-
-    .img {
-        box-shadow: 8px 4px 16px 0px #00000066;
-        width: 100%;
-        border: toRem(5) solid var(--landing-phone-bd);
-        border-radius: toRem(18);
-
-        @include mobile() {
-            border: toRem(3) solid var(--landing-phone-bd);
+        100% {
+            transform: translateY(0);
         }
     }
 
     .powered-by {
         position: relative;
         align-self: flex-start;
-        top: -$sp6;
+        margin-bottom: $sp4;
     }
 </style>

@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Remove all references to LocalGroupIndexes ([#8057](https://github.com/open-chat-labs/open-chat/pull/8057))
+
+## [[2.0.1763](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1763-community)] - 2025-05-28
+
+### Changed
+
 - Return current timestamp in `selected_updates` response ([#7977](https://github.com/open-chat-labs/open-chat/pull/7977))
 - Support autonomous bots without API keys ([#7985](https://github.com/open-chat-labs/open-chat/pull/7985))
 - Increase scope of `c2c_bot_subscribe_to_events` ([#7996](https://github.com/open-chat-labs/open-chat/pull/7996))
@@ -18,7 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Use `EventPusher` rather than `EventStoreClient` to push events ([#8010](https://github.com/open-chat-labs/open-chat/pull/8010))
 - Deprecate `event_store_client` ([#8013](https://github.com/open-chat-labs/open-chat/pull/8013))
 - Publish bot lifecycle events ([#8026](https://github.com/open-chat-labs/open-chat/pull/8026))
-- Add autonomous permisions to `InstalledBotDetails` ([#8035](https://github.com/open-chat-labs/open-chat/pull/8035))
+- Add autonomous permissions to `InstalledBotDetails` ([#8035](https://github.com/open-chat-labs/open-chat/pull/8035))
 
 ## [[2.0.1745](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1745-community)] - 2025-05-12
 
