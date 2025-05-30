@@ -5,7 +5,6 @@ import type {
     BotsResponse,
     CheckUsernameResponse,
     ChitLeaderboardResponse,
-    ChitState,
     CurrentUserResponse,
     DiamondMembershipDuration,
     DiamondMembershipFees,
@@ -201,7 +200,6 @@ export class UserIndexClient extends MsgpackCanisterAgent {
     }
 
     async getUsers(
-        chitState: ChitState,
         users: UsersArgs,
         allowStale: boolean,
     ): Promise<UsersResponse> {
@@ -220,7 +218,6 @@ export class UserIndexClient extends MsgpackCanisterAgent {
 
         // We return the fully hydrated users so that it is not possible for the Svelte store to miss any updates
         const mergedResponse = this.mergeGetUsersResponse(
-            chitState,
             allUsers,
             requestedFromServer,
             apiResponse,
@@ -346,7 +343,6 @@ export class UserIndexClient extends MsgpackCanisterAgent {
 
     // Merges the cached values into the response
     private mergeGetUsersResponse(
-        chitState: ChitState,
         allUsersRequested: string[],
         requestedFromServer: Set<string>,
         apiResponse: UsersApiResponse,
@@ -408,7 +404,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
 
         // let's see if we got the current user back from the server
         if (apiResponse.currentUser !== undefined) {
-            users.push(userSummaryFromCurrentUserSummary(chitState, apiResponse.currentUser));
+            users.push(userSummaryFromCurrentUserSummary(apiResponse.currentUser));
         }
 
         return {

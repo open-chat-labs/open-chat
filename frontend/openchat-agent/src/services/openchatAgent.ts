@@ -1623,12 +1623,10 @@ export class OpenChatAgent extends EventTarget {
     }
 
     async getUser(
-        chitState: ChitState,
         userId: string,
         allowStale = false,
     ): Promise<UserSummary | undefined> {
         const response = await this.getUsers(
-            chitState,
             {
                 userGroups: [
                     {
@@ -1647,8 +1645,8 @@ export class OpenChatAgent extends EventTarget {
         return response.users[0];
     }
 
-    getUsers(chitState: ChitState, users: UsersArgs, allowStale = false): Promise<UsersResponse> {
-        return this._userIndexClient.getUsers(chitState, users, allowStale).then((resp) => ({
+    getUsers(users: UsersArgs, allowStale = false): Promise<UsersResponse> {
+        return this._userIndexClient.getUsers(users, allowStale).then((resp) => ({
             ...resp,
             users: resp.users.map((u) => this.rehydrateUserSummary(u)),
         }));

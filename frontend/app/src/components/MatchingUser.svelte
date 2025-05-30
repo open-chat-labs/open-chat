@@ -50,7 +50,7 @@
             <Badges
                 uniquePerson={user.isUniquePerson}
                 diamondStatus={user.diamondStatus}
-                streak={client.getStreak(user.userId)} />
+                streak={user.streak} />
         </h4>
         <div class="username">
             <FilteredUsername {searchTerm} username={"@" + user.username} />
