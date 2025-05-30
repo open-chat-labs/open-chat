@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `c2c_bot_chat_summary` ([#8076](https://github.com/open-chat-labs/open-chat/pull/8076))
+
 ### Fixed
 
 - Take streak insurance claims into account when reinstating missed day ([#8075](https://github.com/open-chat-labs/open-chat/pull/8075))
