@@ -1895,7 +1895,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "claimDailyChit":
-                executeThenReply(payload, correlationId, agent.claimDailyChit());
+                executeThenReply(payload, correlationId, agent.claimDailyChit(payload.utcOffsetMins));
                 break;
 
             case "chitLeaderboard":

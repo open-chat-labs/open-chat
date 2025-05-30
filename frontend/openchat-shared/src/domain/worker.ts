@@ -2008,6 +2008,7 @@ type SetPinNumber = {
 
 type ClaimDailyChit = {
     kind: "claimDailyChit";
+    utcOffsetMins: number | undefined;
 };
 
 type ChitLeaderboard = {
