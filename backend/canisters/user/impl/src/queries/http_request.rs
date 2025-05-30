@@ -42,7 +42,12 @@ fn http_request(request: HttpRequest) -> HttpResponse {
                 ChitEarnedReason::DailyClaimReinstated => Some((e.timestamp, false)),
                 _ => None,
             })
-            .map(|(ts, manual_claim)| (Streak::timestamp_to_day(ts), manual_claim))
+            .map(|(ts, manual_claim)| {
+                (
+                    Streak::timestamp_to_offset_day(ts, state.data.streak.utc_offset_mins_at_ts(ts)),
+                    manual_claim,
+                )
+            })
             .collect();
 
         build_json_response(&claims)

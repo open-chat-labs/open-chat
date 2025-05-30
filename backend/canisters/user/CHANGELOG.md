@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Deprecate `event_store_client` ([#8013](https://github.com/open-chat-labs/open-chat/pull/8013))
 - Publish bot lifecycle events ([#8026](https://github.com/open-chat-labs/open-chat/pull/8026))
 - Add autonomous permissions to `InstalledBotDetails` ([#8035](https://github.com/open-chat-labs/open-chat/pull/8035))
+- Change daily claims to be in local timezone ([#8060](https://github.com/open-chat-labs/open-chat/pull/8060))
 - Reinstate 1 missed daily claim + notify of change to local timezone ([#8071](https://github.com/open-chat-labs/open-chat/pull/8071))
 
 ## [[2.0.1747-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1747-user)] - 2025-05-12

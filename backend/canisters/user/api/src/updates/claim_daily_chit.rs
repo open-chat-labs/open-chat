@@ -1,9 +1,13 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{Empty, TimestampMillis};
+use types::TimestampMillis;
 
-pub type Args = Empty;
+#[ts_export(user, claim_daily_chit)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct Args {
+    pub utc_offset_mins: Option<i16>,
+}
 
 #[ts_export(user, claim_daily_chit)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -20,4 +24,5 @@ pub struct SuccessResult {
     pub streak: u16,
     pub max_streak: u16,
     pub next_claim: TimestampMillis,
+    pub utc_offset_updated: bool,
 }

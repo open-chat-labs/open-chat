@@ -98,6 +98,7 @@ import {
     UserChatInList,
     UserChitEventsArgs,
     UserChitEventsResponse,
+    UserClaimDailyChitArgs,
     UserClaimDailyChitResponse,
     UserConfigureWalletArgs,
     UserConfigureWalletResponse,
@@ -186,6 +187,7 @@ import {
     setCachedMessageFromSendResponse,
 } from "../../utils/caching";
 import {
+    identity,
     mapOptional,
     principalBytesToString,
     principalStringToBytes,
@@ -1575,12 +1577,14 @@ export class UserClient extends MsgpackCanisterAgent {
         );
     }
 
-    claimDailyChit(): Promise<ClaimDailyChitResponse> {
+    claimDailyChit(utcOffsetMins: number | undefined): Promise<ClaimDailyChitResponse> {
         return this.executeMsgpackUpdate(
             "claim_daily_chit",
-            {},
+            {
+                utc_offset_mins: mapOptional(utcOffsetMins, identity),
+            },
             claimDailyChitResponse,
-            TEmpty,
+            UserClaimDailyChitArgs,
             UserClaimDailyChitResponse,
         ).then((res) => {
             if (res.kind === "success") {

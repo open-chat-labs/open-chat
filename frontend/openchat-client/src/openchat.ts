@@ -8892,8 +8892,9 @@ export class OpenChat {
 
     claimDailyChit(): Promise<ClaimDailyChitResponse> {
         const userId = currentUserIdStore.value;
+        const utcOffsetMins = -(new Date().getTimezoneOffset());
 
-        return this.#sendRequest({ kind: "claimDailyChit" }).then((resp) => {
+        return this.#sendRequest({ kind: "claimDailyChit", utcOffsetMins }).then((resp) => {
             if (resp.kind === "success") {
                 chitStateStore.update((state) => ({
                     chitBalance: resp.chitBalance,
