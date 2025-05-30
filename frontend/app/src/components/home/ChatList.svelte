@@ -325,7 +325,7 @@
                                                     <Badges
                                                         uniquePerson={match.isUniquePerson}
                                                         diamondStatus={match.diamondStatus}
-                                                        streak={client.getStreak(match.userId)} />
+                                                        streak={match.streak} />
                                                 </h4>
                                                 <div class="username">
                                                     <FilteredUsername

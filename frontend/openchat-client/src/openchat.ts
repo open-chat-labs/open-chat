@@ -5609,7 +5609,6 @@ export class OpenChat {
 
         return this.#sendRequest({
             kind: "getUsers",
-            chitState: chitStateStore.value,
             users: { userGroups },
             allowStale,
         })
@@ -5639,7 +5638,6 @@ export class OpenChat {
     getUser(userId: string, allowStale = false): Promise<UserSummary | undefined> {
         return this.#sendRequest({
             kind: "getUser",
-            chitState: chitStateStore.value,
             userId,
             allowStale,
         })
@@ -8394,14 +8392,9 @@ export class OpenChat {
     }
 
     getStreak(userId: string | undefined) {
-        if (userId === undefined) return 0;
-
-        if (userId === currentUserIdStore.value) {
-            const now = Date.now();
-            return chitStateStore.value.streakEnds < now ? 0 : chitStateStore.value.streak;
-        }
-
-        return userStore.get(userId)?.streak ?? 0;
+        return userId
+            ? userStore.get(userId)?.streak ?? 0
+            : 0;
     }
 
     getBotDefinition(endpoint: string): Promise<BotDefinitionResponse> {
@@ -8908,6 +8901,7 @@ export class OpenChat {
                     ...user,
                     chitBalance: resp.chitBalance,
                     streak: resp.streak,
+                    maxStreak: resp.maxStreak,
                 }));
             } else if (resp.kind === "already_claimed") {
                 chitStateStore.update((state) => ({
