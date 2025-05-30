@@ -38,8 +38,9 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         let claims: Vec<_> = chit_events
             .into_iter()
             .filter_map(|e| match e.reason {
-                ChitEarnedReason::DailyClaim => Some((e.timestamp, true)),
-                ChitEarnedReason::DailyClaimReinstated => Some((e.timestamp, false)),
+                ChitEarnedReason::DailyClaim => Some((e.timestamp, 0)),
+                ChitEarnedReason::DailyClaimReinstated => Some((e.timestamp, 1)),
+                ChitEarnedReason::StreakInsuranceClaim => Some((e.timestamp, 2)),
                 _ => None,
             })
             .map(|(ts, manual_claim)| {
