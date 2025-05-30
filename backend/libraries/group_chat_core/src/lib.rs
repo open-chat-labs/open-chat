@@ -1,8 +1,8 @@
 use chat_events::{
-    AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteUndeleteMessagesArgs, EditMessageArgs,
-    EventPusher, GroupGateUpdatedInternal, MessageContentInternal, NullEventPusher, PushEventResultInternal, PushMessageArgs,
-    Reader, RegisterPollVoteArgs, RegisterPollVoteSuccess, RemoveExpiredEventsResult, ReservePrizeSuccess, TipMessageArgs,
-    UpdateMessageSuccess,
+    AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageSuccess,
+    DeleteUndeleteMessagesArgs, EditMessageArgs, EventPusher, GroupGateUpdatedInternal, MessageContentInternal,
+    NullEventPusher, PushEventResultInternal, PushMessageArgs, Reader, RegisterPollVoteArgs, RegisterPollVoteSuccess,
+    RemoveExpiredEventsResult, ReservePrizeSuccess, TipMessageArgs, UndeleteMessageSuccess, UpdateMessageSuccess,
 };
 use group_community_common::MemberUpdate;
 use itertools::Itertools;
@@ -952,7 +952,7 @@ impl GroupChatCore {
         message_ids: Vec<MessageId>,
         as_platform_moderator: bool,
         now: TimestampMillis,
-    ) -> OCResult<Vec<(MessageId, OCResult<UserId>)>> {
+    ) -> OCResult<Vec<(MessageId, OCResult<DeleteMessageSuccess>)>> {
         let initiator = caller.initiator();
 
         let (is_admin, min_visible_event_index) = match caller {
@@ -1024,7 +1024,7 @@ impl GroupChatCore {
         thread_root_message_index: Option<MessageIndex>,
         message_ids: Vec<MessageId>,
         now: TimestampMillis,
-    ) -> OCResult<Vec<Message>> {
+    ) -> OCResult<Vec<UndeleteMessageSuccess>> {
         let member = self.members.get_verified_member(user_id)?;
 
         let min_visible_event_index = member.min_visible_event_index();
@@ -1045,12 +1045,14 @@ impl GroupChatCore {
 
         let messages = results
             .into_iter()
-            .filter(|(_, result)| result.is_ok())
-            .map(|(message_id, _)| message_id)
-            .filter_map(|message_id| {
+            .filter_map(|(message_id, result)| result.ok().map(|bot_notification| (message_id, bot_notification)))
+            .filter_map(|(message_id, bot_notification)| {
                 events_reader
                     .message_internal(message_id.into())
-                    .map(|m| m.hydrate(Some(user_id)))
+                    .map(|m| UndeleteMessageSuccess {
+                        message: m.hydrate(Some(user_id)),
+                        bot_notification,
+                    })
             })
             .collect();
 

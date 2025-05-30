@@ -186,6 +186,10 @@ fn process_send_message_result(
 
     register_timer_jobs(thread_root_message_index, message_event, now, &mut state.data);
 
+    if let Some(bot_notification) = result.bot_notification {
+        state.push_bot_notification(bot_notification);
+    }
+
     if !result.unfinalised_bot_message {
         let sender = caller.agent();
         let content = &message_event.event.content;
@@ -283,10 +287,6 @@ fn process_send_message_result(
                 now,
             );
         }
-    }
-
-    if let Some(bot_notification) = result.bot_notification {
-        state.push_bot_notification(bot_notification);
     }
 
     handle_activity_notification(state);
