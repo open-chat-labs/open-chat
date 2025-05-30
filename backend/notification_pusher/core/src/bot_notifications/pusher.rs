@@ -1,5 +1,5 @@
 use crate::metrics::write_metrics;
-use crate::{BotNotification, timestamp};
+use crate::{BotNotification, Payload, timestamp};
 use async_channel::Receiver;
 use reqwest::dns::{Addrs, Name, Resolving};
 use reqwest::header::CONTENT_TYPE;
@@ -31,7 +31,7 @@ impl Pusher {
     pub async fn run(self) {
         while let Ok(notification) = self.receiver.recv().await {
             let start = Instant::now();
-            let payload_size = notification.payload.len() as u64;
+            let payload_size = notification.payload.data.len() as u64;
             let push_result = self.push_notification(notification.payload, notification.endpoint).await;
 
             let success = push_result.is_ok();
@@ -53,13 +53,13 @@ impl Pusher {
         }
     }
 
-    async fn push_notification(&self, payload: Vec<u8>, endpoint: String) -> Result<(), String> {
+    async fn push_notification(&self, payload: Payload, endpoint: String) -> Result<(), String> {
         let mut url = Url::parse(&endpoint).map_err(|e| e.to_string())?;
         url = url.join("notify").map_err(|e| e.to_string())?;
         self.http_client
             .post(url)
-            .header(CONTENT_TYPE, "application/json")
-            .body(payload)
+            .header(CONTENT_TYPE, payload.mime_type)
+            .body(payload.data)
             .send()
             .await
             .unwrap();

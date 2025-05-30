@@ -79,8 +79,22 @@ pub struct BotNotification {
     index: u64,
     timestamp: TimestampMillis,
     endpoint: String,
-    payload: Vec<u8>,
+    payload: Payload,
     first_read_at: Instant,
+}
+
+pub struct Payload {
+    data: Vec<u8>,
+    mime_type: String,
+}
+
+impl Payload {
+    pub fn new(data: Vec<u8>, mime_type: &str) -> Self {
+        Self {
+            data,
+            mime_type: mime_type.to_string(),
+        }
+    }
 }
 
 fn timestamp() -> TimestampMillis {
