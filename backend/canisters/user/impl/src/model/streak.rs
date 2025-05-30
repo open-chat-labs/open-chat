@@ -1,10 +1,10 @@
+use constants::DAY_IN_MS;
 use serde::{Deserialize, Serialize};
-use types::{
-    Milliseconds, StreakInsurance, TimestampMillis, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment,
-};
+use tracing::info;
+use types::{StreakInsurance, TimestampMillis, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment};
 
 const DAY_ZERO: TimestampMillis = 1704067200000; // Mon Jan 01 2024 00:00:00 GMT+0000
-const MS_IN_DAY: Milliseconds = 1000 * 60 * 60 * 24;
+const MAX_UTC_OFFSET_MINS: i16 = 15 * 60; // 15 hours
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct Streak {
@@ -18,11 +18,27 @@ pub struct Streak {
     payment_lock: bool,
     payments: Vec<UserCanisterStreakInsurancePayment>,
     claims: Vec<UserCanisterStreakInsuranceClaim>,
+    #[serde(default)]
+    utc_offset_mins: i16,
+    #[serde(default)]
+    utc_offset_updates: Vec<(TimestampMillis, i16)>,
 }
 
 impl Streak {
+    pub fn start_day(&self) -> u16 {
+        self.start_day
+    }
+
+    pub fn set_start_day(&mut self, start_day: u16) {
+        self.start_day = start_day;
+    }
+
+    pub fn end_day(&self) -> u16 {
+        self.end_day
+    }
+
     pub fn days(&self, now: TimestampMillis) -> u16 {
-        if let Some(today) = Streak::timestamp_to_day(now) {
+        if let Some(today) = self.timestamp_to_day(now) {
             if !self.is_new_streak(today) {
                 return 1 + self.end_day - self.start_day;
             }
@@ -32,11 +48,11 @@ impl Streak {
     }
 
     pub fn ends(&self) -> TimestampMillis {
-        Streak::day_to_timestamp(self.end_day + 2)
+        self.day_to_timestamp(self.end_day + 2)
     }
 
-    pub fn claim(&mut self, now: TimestampMillis) -> Result<Option<UserCanisterStreakInsuranceClaim>, ()> {
-        if let Some(today) = Streak::timestamp_to_day(now) {
+    pub fn claim(&mut self, now: TimestampMillis) -> Result<Option<UserCanisterStreakInsuranceClaim>, TimestampMillis> {
+        if let Some(today) = self.timestamp_to_day(now) {
             if today > self.end_day {
                 if self.is_new_streak(today) {
                     if let Some(insurance_claim) = self.claim_via_insurance(now) {
@@ -53,7 +69,7 @@ impl Streak {
             }
         }
 
-        Err(())
+        Err(self.next_claim())
     }
 
     pub fn claim_via_insurance(&mut self, now: TimestampMillis) -> Option<UserCanisterStreakInsuranceClaim> {
@@ -61,7 +77,7 @@ impl Streak {
             return None;
         }
 
-        if let Some(today) = Streak::timestamp_to_day(now) {
+        if let Some(today) = self.timestamp_to_day(now) {
             if today == self.end_day + 2 {
                 self.set_end_day(self.end_day + 1);
                 self.days_missed += 1;
@@ -69,11 +85,12 @@ impl Streak {
 
                 let claim = UserCanisterStreakInsuranceClaim {
                     // The timestamp of the end of the day for which the claim applied
-                    timestamp: Self::final_timestamp_of_day(today - 1),
+                    timestamp: self.final_timestamp_of_day(today - 1),
                     streak_length: self.end_day - self.start_day,
                     new_days_claimed: self.days_missed,
                 };
                 self.claims.push(claim.clone());
+                info!(day = today, "Streak insurance used");
                 return Some(claim);
             }
         }
@@ -87,25 +104,51 @@ impl Streak {
     }
 
     pub fn can_claim(&self, now: TimestampMillis) -> bool {
-        if let Some(today) = Streak::timestamp_to_day(now) { today > self.end_day } else { false }
+        now > self.next_claim()
+    }
+
+    pub fn next_claim(&self) -> TimestampMillis {
+        self.day_to_timestamp(self.end_day + 1)
     }
 
     pub fn max_streak(&self) -> u16 {
         self.max_streak
     }
 
-    pub fn timestamp_to_day(ts: TimestampMillis) -> Option<u16> {
-        if ts < DAY_ZERO {
+    pub fn set_utc_offset_mins(&mut self, utc_offset_mins: i16, now: TimestampMillis) -> bool {
+        if utc_offset_mins != self.utc_offset_mins && utc_offset_mins.abs() < MAX_UTC_OFFSET_MINS {
+            self.utc_offset_mins = utc_offset_mins;
+            self.utc_offset_updates.push((now, utc_offset_mins));
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn timestamp_to_day(&self, ts: TimestampMillis) -> Option<u16> {
+        Self::timestamp_to_offset_day(ts, self.utc_offset_mins)
+    }
+
+    pub fn timestamp_to_offset_day(ts: TimestampMillis, utc_offset_mins: i16) -> Option<u16> {
+        let utc_offset_ms = mins_to_ms(utc_offset_mins);
+        let local = (ts as i64 + utc_offset_ms) as u64;
+
+        if local < DAY_ZERO {
             return None;
         }
 
-        let day = (ts - DAY_ZERO) / MS_IN_DAY;
+        let day = (local - DAY_ZERO) / DAY_IN_MS;
 
         if day > (u16::MAX as u64) {
             return None;
         }
 
         Some(day as u16)
+    }
+
+    pub fn day_to_timestamp(&self, day: u16) -> TimestampMillis {
+        let utc_offset_ms = mins_to_ms(self.utc_offset_mins);
+        (((DAY_ZERO + DAY_IN_MS * day as u64) as i64) - utc_offset_ms) as TimestampMillis
     }
 
     pub fn insurance_last_updated(&self) -> TimestampMillis {
@@ -160,6 +203,15 @@ impl Streak {
         total
     }
 
+    pub fn utc_offset_mins_at_ts(&self, ts: TimestampMillis) -> i16 {
+        self.utc_offset_updates
+            .iter()
+            .filter(|(updated_at, _)| *updated_at < ts)
+            .next_back()
+            .map(|(_, offset)| *offset)
+            .unwrap_or_default()
+    }
+
     fn set_end_day(&mut self, day: u16) {
         self.end_day = day;
         let streak = 1 + self.end_day - self.start_day;
@@ -172,17 +224,17 @@ impl Streak {
         today > (self.end_day + 1)
     }
 
-    pub fn day_to_timestamp(day: u16) -> TimestampMillis {
-        DAY_ZERO + MS_IN_DAY * day as u64
-    }
-
-    fn final_timestamp_of_day(day: u16) -> TimestampMillis {
-        Self::day_to_timestamp(day + 1) - 1
+    fn final_timestamp_of_day(&self, day: u16) -> TimestampMillis {
+        self.day_to_timestamp(day + 1) - 1
     }
 
     fn insurance_cost_for_day(day_index: u8) -> u128 {
         2u128.pow(day_index as u32) * 100_000_000
     }
+}
+
+fn mins_to_ms(mins: i16) -> i64 {
+    mins as i64 * 60 * 1000
 }
 
 #[cfg(test)]
@@ -191,14 +243,14 @@ mod tests {
 
     #[test]
     fn never_claimed_can_claim() {
-        let now = DAY_ZERO + (60 * MS_IN_DAY);
+        let now = DAY_ZERO + (60 * DAY_IN_MS);
         let streak = Streak::default();
         assert!(streak.can_claim(now));
     }
 
     #[test]
     fn claim_once_on_1_day_streak() {
-        let now = DAY_ZERO + (60 * MS_IN_DAY);
+        let now = DAY_ZERO + (60 * DAY_IN_MS);
         let mut streak = Streak::default();
         assert!(streak.claim(now).is_ok());
         assert_eq!(1, streak.days(now));
@@ -206,7 +258,7 @@ mod tests {
 
     #[test]
     fn claim_once_per_day_only() {
-        let now = DAY_ZERO + (60 * MS_IN_DAY);
+        let now = DAY_ZERO + (60 * DAY_IN_MS);
         let mut streak = Streak::default();
         assert!(streak.claim(now).is_ok());
         assert!(streak.claim(now).is_err());
@@ -214,36 +266,36 @@ mod tests {
 
     #[test]
     fn claim_again_next_day() {
-        let mut now = DAY_ZERO + (60 * MS_IN_DAY);
+        let mut now = DAY_ZERO + (60 * DAY_IN_MS);
         let mut streak = Streak::default();
         assert!(streak.claim(now).is_ok());
 
-        now += MS_IN_DAY;
+        now += DAY_IN_MS;
         assert!(streak.claim(now).is_ok());
         assert_eq!(2, streak.days(now));
     }
 
     #[test]
     fn claim_again_nearly_next_day_fails() {
-        let mut now = DAY_ZERO + (60 * MS_IN_DAY);
+        let mut now = DAY_ZERO + (60 * DAY_IN_MS);
         let mut streak = Streak::default();
         assert!(streak.claim(now).is_ok());
 
-        now += MS_IN_DAY - 1;
+        now += DAY_IN_MS - 1;
         assert!(streak.claim(now).is_err());
         assert_eq!(1, streak.days(now));
     }
 
     #[test]
     fn streak_reset_the_following_day() {
-        let mut now = DAY_ZERO + (60 * MS_IN_DAY);
+        let mut now = DAY_ZERO + (60 * DAY_IN_MS);
         let mut streak = Streak::default();
         streak.claim(now).unwrap();
 
-        now += MS_IN_DAY;
+        now += DAY_IN_MS;
         streak.claim(now).unwrap();
 
-        now += MS_IN_DAY * 2;
+        now += DAY_IN_MS * 2;
         assert_eq!(0, streak.days(now));
     }
 }

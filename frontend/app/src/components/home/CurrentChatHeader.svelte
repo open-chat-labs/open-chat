@@ -97,7 +97,7 @@
                 return {
                     name: client.displayName(them),
                     diamondStatus: them?.diamondStatus ?? "inactive",
-                    streak: client.getStreak(chatSummary.them.userId),
+                    streak: them?.streak ?? 0,
                     avatarUrl: client.userAvatarUrl(them),
                     userId: chatSummary.them.userId,
                     typing: client.getTypingString(

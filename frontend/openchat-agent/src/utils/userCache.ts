@@ -1,9 +1,7 @@
 import { deleteDB, openDB, type DBSchema, type IDBPDatabase } from "idb";
 import { deletedUser, type DiamondMembershipStatus, type UserSummary } from "openchat-shared";
 
-// Next time we bump the cache, set `maxStreak` to `number` rather than `number | undefined`
-// Also, remove `reallyDeleted` since we only reused some deleted userIds ~1 year ago
-const CACHE_VERSION = 11;
+const CACHE_VERSION = 12;
 
 let db: UserDatabase | undefined;
 
@@ -66,12 +64,7 @@ export async function getCachedUsers(userIds: string[]): Promise<UserSummary[]> 
 export async function getAllUsers(): Promise<UserSummary[]> {
     const users = await (await lazyOpenUserCache()).getAll("users");
     const deleted = await getDeletedUserIdsList();
-    const userIds = new Set(users.map((u) => u.userId));
-
-    // only consider records from the deleted list that do not exist in the real users list
-    // this is necessary because a userId can be resurrected by being re-used
-    const reallyDeleted = deleted.filter((u) => !userIds.has(u));
-    return [...users, ...reallyDeleted.map(deletedUser)];
+    return [...users, ...deleted.map(deletedUser)];
 }
 
 async function getDeletedUserIdsList(): Promise<string[]> {

@@ -477,7 +477,7 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
-    claimDailyChit(): Promise<ClaimDailyChitResponse> {
+    claimDailyChit(_utcOffsetMins: number | undefined): Promise<ClaimDailyChitResponse> {
         throw new AnonymousOperationError();
     }
 

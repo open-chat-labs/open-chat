@@ -395,6 +395,12 @@ export const UserClaimDailyChitSuccessResult = Type.Object({
     streak: Type.Number(),
     max_streak: Type.Number(),
     next_claim: Type.BigInt(),
+    utc_offset_updated: Type.Boolean(),
+});
+
+export type UserClaimDailyChitArgs = Static<typeof UserClaimDailyChitArgs>;
+export const UserClaimDailyChitArgs = Type.Object({
+    utc_offset_mins: Type.Optional(Type.Number()),
 });
 
 export type UserClaimDailyChitResponse = Static<typeof UserClaimDailyChitResponse>;
@@ -7199,6 +7205,10 @@ export const UserIndexCurrentUserSuccessResult = Type.Object({
     diamond_membership_status: DiamondMembershipStatusFull,
     moderation_flags_enabled: Type.Number(),
     is_unique_person: Type.Boolean(),
+    total_chit_earned: Type.Number(),
+    chit_balance: Type.Number(),
+    streak: Type.Number(),
+    max_streak: Type.Number(),
 });
 
 export type UserIndexCurrentUserResponse = Static<typeof UserIndexCurrentUserResponse>;
@@ -7598,6 +7608,10 @@ export const CurrentUserSummary = Type.Object({
     diamond_membership_status: DiamondMembershipStatusFull,
     moderation_flags_enabled: Type.Number(),
     is_unique_person: Type.Boolean(),
+    total_chit_earned: Type.Number(),
+    chit_balance: Type.Number(),
+    streak: Type.Number(),
+    max_streak: Type.Number(),
 });
 
 export type SenderContext = Static<typeof SenderContext>;

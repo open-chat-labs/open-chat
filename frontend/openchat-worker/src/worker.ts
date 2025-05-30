@@ -353,7 +353,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.getUsers(payload.chitState, payload.users, payload.allowStale),
+                    agent.getUsers(payload.users, payload.allowStale),
                 );
                 break;
 
@@ -904,7 +904,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.getUser(payload.chitState, payload.userId, payload.allowStale),
+                    agent.getUser(payload.userId, payload.allowStale),
                 );
                 break;
 
@@ -1895,7 +1895,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "claimDailyChit":
-                executeThenReply(payload, correlationId, agent.claimDailyChit());
+                executeThenReply(payload, correlationId, agent.claimDailyChit(payload.utcOffsetMins));
                 break;
 
             case "chitLeaderboard":
