@@ -1,6 +1,6 @@
 use crate::ic_agent::IcAgent;
 use crate::metrics::write_metrics;
-use crate::{BotNotification, UserNotification};
+use crate::{BotNotification, Payload, UserNotification};
 use async_channel::Sender;
 use base64::Engine;
 use index_store::IndexStore;
@@ -125,8 +125,8 @@ impl<I: IndexStore> Reader<I> {
                     for bot_id in notification.recipients {
                         if let Some(bot) = ic_response.bots.get(&bot_id) {
                             let payload = match bot.data_encoding {
-                                BotDataEncoding::Json => &*json_payload,
-                                BotDataEncoding::Candid => &*candid_payload,
+                                BotDataEncoding::Json => Payload::new((*json_payload).clone(), "application/json"),
+                                BotDataEncoding::Candid => Payload::new((*candid_payload).clone(), "application/candid"),
                             };
 
                             self.bot_notification_sender
@@ -135,7 +135,7 @@ impl<I: IndexStore> Reader<I> {
                                     index: indexed_notification.index,
                                     timestamp: notification.timestamp,
                                     endpoint: bot.endpoint.clone(),
-                                    payload: payload.clone(),
+                                    payload,
                                     first_read_at,
                                 })
                                 .await
