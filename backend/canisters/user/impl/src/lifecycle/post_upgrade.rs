@@ -70,7 +70,7 @@ fn reinstate_daily_claims(state: &mut RuntimeState, max_days_to_reinstate: u16) 
     let (days_to_reinstate, new_start_day) =
         streak_days_to_reinstate(&chit_claim_days, now_day, max_days_to_reinstate as usize);
 
-    if !days_to_reinstate.is_empty() {
+    if !days_to_reinstate.is_empty() && now_day - new_start_day > 7 {
         let count = days_to_reinstate.len();
         for day in days_to_reinstate {
             // Take the last millisecond of the day
