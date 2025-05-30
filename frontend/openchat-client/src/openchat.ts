@@ -8392,7 +8392,9 @@ export class OpenChat {
     }
 
     getStreak(userId: string | undefined) {
-        return userStore.get(userId)?.streak ?? 0;
+        return userId
+            ? userStore.get(userId)?.streak ?? 0
+            : 0;
     }
 
     getBotDefinition(endpoint: string): Promise<BotDefinitionResponse> {
