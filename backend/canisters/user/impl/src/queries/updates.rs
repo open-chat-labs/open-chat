@@ -1,12 +1,10 @@
-use std::collections::HashSet;
-
 use crate::guards::caller_is_owner;
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use installed_bots::BotUpdate;
+use std::collections::HashSet;
 use types::{InstalledBotDetails, OptionUpdate, TimestampMillis, UserId};
 use user_canister::updates::{Response::*, *};
-use utils::time::{today, tomorrow};
 
 #[query(guard = "caller_is_owner", msgpack = true)]
 fn updates(args: Args) -> Response {
@@ -154,14 +152,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         None
     };
 
-    let total_chit_earned = state.data.chit_events.total_chit_earned();
-    let chit_balance = state.data.chit_events.balance_for_month_by_timestamp(now);
-    let streak = state.data.streak.days(now);
-    let next_daily_claim = if state.data.streak.can_claim(now) { today(now) } else { tomorrow(now) };
-    let streak_ends = state.data.streak.ends();
-    let max_streak = state.data.streak.max_streak();
-    let is_unique_person = is_unique_person_updated.then_some(true);
-    let activity_feed = (state.data.message_activity_events.last_updated() > updates_since)
+    let message_activity_summary = (state.data.message_activity_events.last_updated() > updates_since)
         .then(|| state.data.message_activity_events.summary());
     let streak_insurance = if streak_insurance_updated {
         OptionUpdate::from_update(state.data.streak.streak_insurance(now))
@@ -210,17 +201,17 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         pin_number_settings,
         achievements,
         achievements_last_seen,
-        total_chit_earned,
-        chit_balance,
-        streak,
-        streak_ends,
-        max_streak,
+        total_chit_earned: state.data.chit_events.total_chit_earned(),
+        chit_balance: state.data.chit_events.balance_for_month_by_timestamp(now),
+        streak: state.data.streak.days(now),
+        streak_ends: state.data.streak.ends(),
+        max_streak: state.data.streak.max_streak(),
         streak_insurance,
-        next_daily_claim,
-        is_unique_person,
+        next_daily_claim: state.data.streak.next_claim(),
+        is_unique_person: is_unique_person_updated.then_some(true),
         wallet_config,
         referrals,
-        message_activity_summary: activity_feed,
+        message_activity_summary,
         bots_added_or_updated,
         bots_removed,
         api_keys_generated: state.data.bot_api_keys.generated_since(updates_since),
