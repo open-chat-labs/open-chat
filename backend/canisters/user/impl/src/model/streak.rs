@@ -1,5 +1,6 @@
 use constants::DAY_IN_MS;
 use serde::{Deserialize, Serialize};
+use tracing::info;
 use types::{StreakInsurance, TimestampMillis, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment};
 
 const DAY_ZERO: TimestampMillis = 1704067200000; // Mon Jan 01 2024 00:00:00 GMT+0000
@@ -89,6 +90,7 @@ impl Streak {
                     new_days_claimed: self.days_missed,
                 };
                 self.claims.push(claim.clone());
+                info!(day = today, "Streak insurance used");
                 return Some(claim);
             }
         }
