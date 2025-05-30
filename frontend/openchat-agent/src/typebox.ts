@@ -395,6 +395,12 @@ export const UserClaimDailyChitSuccessResult = Type.Object({
     streak: Type.Number(),
     max_streak: Type.Number(),
     next_claim: Type.BigInt(),
+    utc_offset_updated: Type.Boolean(),
+});
+
+export type UserClaimDailyChitArgs = Static<typeof UserClaimDailyChitArgs>;
+export const UserClaimDailyChitArgs = Type.Object({
+    utc_offset_mins: Type.Optional(Type.Number()),
 });
 
 export type UserClaimDailyChitResponse = Static<typeof UserClaimDailyChitResponse>;

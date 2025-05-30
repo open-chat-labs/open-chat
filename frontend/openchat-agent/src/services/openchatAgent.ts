@@ -3945,8 +3945,8 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.setPinNumber(verification, newPin);
     }
 
-    claimDailyChit(): Promise<ClaimDailyChitResponse> {
-        return this.userClient.claimDailyChit();
+    claimDailyChit(utcOffsetMins: number | undefined): Promise<ClaimDailyChitResponse> {
+        return this.userClient.claimDailyChit(utcOffsetMins);
     }
 
     chitLeaderboard(): Promise<ChitLeaderboardResponse> {
