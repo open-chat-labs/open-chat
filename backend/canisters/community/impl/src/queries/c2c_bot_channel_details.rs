@@ -5,8 +5,8 @@ use canister_api_macros::query;
 use community_canister::c2c_bot_channel_details::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use std::cmp::max;
-use types::ChatDetails;
 use types::ChatPermission;
+use types::ChatSummaryGroup;
 use types::EventIndex;
 use types::{BotPermissions, OCResult};
 
@@ -18,7 +18,7 @@ fn c2c_bot_channel_details(args: Args) -> Response {
     }
 }
 
-fn c2c_bot_channel_details_impl(args: Args, state: &RuntimeState) -> OCResult<ChatDetails> {
+fn c2c_bot_channel_details_impl(args: Args, state: &RuntimeState) -> OCResult<ChatSummaryGroup> {
     if !state.data.is_bot_permitted(
         &args.bot_id,
         Some(args.channel_id),
@@ -33,7 +33,7 @@ fn c2c_bot_channel_details_impl(args: Args, state: &RuntimeState) -> OCResult<Ch
     let events_ttl = chat.events.get_events_time_to_live();
     let main_events_reader = chat.events.visible_main_events_reader(EventIndex::default());
 
-    Ok(ChatDetails {
+    Ok(ChatSummaryGroup {
         name: chat.name.value.clone(),
         description: chat.description.value.clone(),
         rules: chat.rules.value.clone().into(),

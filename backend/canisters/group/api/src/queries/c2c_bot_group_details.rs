@@ -1,20 +1,17 @@
 use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
-use ts_export::ts_export;
-use types::{BotInitiator, ChatDetails, UserId};
+use types::{BotInitiator, ChatSummaryGroup, UserId};
 
-#[ts_export(community, channel_summary)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub bot_id: UserId,
     pub initiator: BotInitiator,
 }
 
-#[ts_export(community, channel_summary)]
 #[expect(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success(ChatDetails),
+    Success(ChatSummaryGroup),
     Error(OCError),
 }

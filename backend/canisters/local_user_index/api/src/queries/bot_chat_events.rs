@@ -4,22 +4,21 @@ use oc_error_codes::OCError;
 use serde::Serialize;
 use ts_export::ts_export;
 use types::{
-    AudioContent, AuthToken, AvatarChanged, BotAdded, BotRemoved, BotUpdated, ChannelId, CryptoContent, CustomContent,
-    DeletedBy, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated, ExternalUrlUpdated, FileContent,
-    GiphyContent, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged,
-    GroupNameChanged, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, ImageContent, MemberJoined, MemberLeft,
-    MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, MessageId, MessageIndex, MessagePinned, MessageUnpinned,
-    PermissionsChanged, PollContent, Reaction, ReplyContext, RoleChanged, SenderContext, TextContent, ThreadSummary,
-    TimestampMillis, Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked, VideoContent,
+    AudioContent, AvatarChanged, BotAdded, BotChatContext, BotRemoved, BotUpdated, CryptoContent, CustomContent, DeletedBy,
+    DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated, ExternalUrlUpdated, FileContent, GiphyContent,
+    GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged,
+    GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, ImageContent, MemberJoined, MemberLeft, MembersAdded,
+    MembersAddedToDefaultChannel, MembersRemoved, MessageId, MessageIndex, MessagePinned, MessageUnpinned, PermissionsChanged,
+    PollContent, Reaction, ReplyContext, RoleChanged, SenderContext, TextContent, ThreadSummary, TimestampMillis, Tips, UserId,
+    UsersBlocked, UsersInvited, UsersUnblocked, VideoContent,
 };
 use user_canister::token_swap_status::CandidType;
 
 #[ts_export(local_user_index, bot_chat_events)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub channel_id: Option<ChannelId>,
+    pub chat_context: BotChatContext,
     pub events: EventsSelectionCriteria,
-    pub auth_token: AuthToken,
 }
 
 #[ts_export(local_user_index, bot_chat_events)]

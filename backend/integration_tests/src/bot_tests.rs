@@ -593,11 +593,9 @@ fn create_channel_by_api_key() {
     }
 }
 
-#[test_case(true, true)]
-#[test_case(true, false)]
-#[test_case(false, true)]
-#[test_case(false, false)]
-fn read_messages_by_api_key(channel_api_key: bool, authorized: bool) {
+#[test_case(true)]
+#[test_case(false)]
+fn read_messages_autonomously(authorized: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -611,6 +609,7 @@ fn read_messages_by_api_key(channel_api_key: bool, authorized: bool) {
     let community_id =
         client::user::happy_path::create_community(env, &owner, &random_string(), true, vec!["General".to_string()]);
     let channel_id = client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
+    let chat = Chat::Channel(community_id, channel_id);
 
     // Register a bot
     let bot_name = random_string();
@@ -624,29 +623,15 @@ fn read_messages_by_api_key(channel_api_key: bool, authorized: bool) {
         BotInstallationLocation::Community(community_id),
         bot_id,
         BotPermissions::text_only(),
-        None,
+        Some(BotPermissions::default().with_chat(&HashSet::from_iter([if authorized {
+            ChatPermission::ReadMessages
+        } else {
+            ChatPermission::ReadMembership
+        }]))),
     );
 
     env.advance_time(Duration::from_millis(1000));
     env.tick();
-
-    let api_key = match client::community::generate_bot_api_key(
-        env,
-        owner.principal,
-        community_id.into(),
-        &community_canister::generate_bot_api_key::Args {
-            bot_id,
-            requested_permissions: BotPermissions::default().with_chat(&HashSet::from_iter([if authorized {
-                ChatPermission::ReadMessages
-            } else {
-                ChatPermission::ReadMembership
-            }])),
-            channel_id: channel_api_key.then_some(channel_id),
-        },
-    ) {
-        community_canister::generate_bot_api_key::Response::Success(result) => result.api_key,
-        response => panic!("'generate_bot_api_key' error: {response:?}"),
-    };
 
     let send_message_response =
         client::community::happy_path::send_text_message(env, &owner, community_id, channel_id, None, random_string(), None);
@@ -656,11 +641,10 @@ fn read_messages_by_api_key(channel_api_key: bool, authorized: bool) {
         bot_principal,
         canister_ids.local_user_index(env, community_id),
         &local_user_index_canister::bot_chat_events::Args {
-            channel_id: Some(channel_id),
+            chat_context: BotChatContext::Autonomous(chat),
             events: EventsSelectionCriteria::ByIndex(EventsByIndexArgs {
                 events: vec![send_message_response.event_index],
             }),
-            auth_token: AuthToken::ApiKey(api_key),
         },
     );
 
@@ -773,11 +757,10 @@ fn read_messages_by_command() {
         bot_principal,
         local_user_index,
         &local_user_index_canister::bot_chat_events::Args {
-            channel_id: Some(channel_id),
+            chat_context: BotChatContext::Command(access_token.clone()),
             events: EventsSelectionCriteria::ByIndex(EventsByIndexArgs {
                 events: vec![send_message_response.event_index],
             }),
-            auth_token: AuthToken::Jwt(access_token.clone()),
         },
     );
 
