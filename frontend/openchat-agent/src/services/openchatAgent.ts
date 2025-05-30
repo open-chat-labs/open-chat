@@ -1875,7 +1875,7 @@ export class OpenChatAgent extends EventTarget {
                     anyUpdates = true;
                 }
             } catch (error) {
-                console.error("Failed to get user canister updates", error);
+                console.error("Failed to get updates from User canister", error);
             }
         }
 
