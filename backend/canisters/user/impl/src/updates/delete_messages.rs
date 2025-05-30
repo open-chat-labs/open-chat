@@ -42,12 +42,12 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     if !deleted.is_empty() {
         let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
-        for (message_id, _) in deleted.iter().copied() {
+        for (message_id, _) in deleted.iter() {
             state.data.timer_jobs.enqueue_job(
                 TimerJob::HardDeleteMessageContent(Box::new(HardDeleteMessageContentJob {
                     chat_id: args.user_id.into(),
                     thread_root_message_index: None,
-                    message_id,
+                    message_id: *message_id,
                 })),
                 remove_deleted_message_content_at,
                 now,
@@ -57,7 +57,7 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         if args.user_id != OPENCHAT_BOT_USER_ID {
             let my_messages: Vec<_> = deleted
                 .iter()
-                .filter(|(_, u)| *u == my_user_id)
+                .filter(|(_, success)| success.sender == my_user_id)
                 .map(|(id, _)| id)
                 .copied()
                 .collect();

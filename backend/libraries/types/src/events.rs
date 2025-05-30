@@ -68,6 +68,7 @@ pub enum ChatEventType {
     MessageReaction,
     MessageTipped,
     MessageDeleted,
+    MessageUndeleted,
     MessagePollVote,
     MessagePollEnded,
     MessagePrizeClaim,
@@ -118,6 +119,7 @@ impl From<ChatEventType> for ChatEventCategory {
             | ChatEventType::MessageReaction
             | ChatEventType::MessageTipped
             | ChatEventType::MessageDeleted
+            | ChatEventType::MessageUndeleted
             | ChatEventType::MessagePollVote
             | ChatEventType::MessagePollEnded
             | ChatEventType::MessagePrizeClaim

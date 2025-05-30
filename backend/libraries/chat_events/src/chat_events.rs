@@ -395,31 +395,33 @@ impl ChatEvents {
         )
     }
 
-    pub fn delete_messages(&mut self, args: DeleteUndeleteMessagesArgs) -> Vec<(MessageId, OCResult<UserId>)> {
+    pub fn delete_messages(&mut self, args: DeleteUndeleteMessagesArgs) -> Vec<(MessageId, OCResult<DeleteMessageSuccess>)> {
         args.iter()
             .map(|delete_message_args| (delete_message_args.message_id, self.delete_message(delete_message_args)))
             .collect()
     }
 
-    pub fn undelete_messages(&mut self, args: DeleteUndeleteMessagesArgs) -> Vec<(MessageId, OCResult)> {
+    pub fn undelete_messages(
+        &mut self,
+        args: DeleteUndeleteMessagesArgs,
+    ) -> Vec<(MessageId, OCResult<Option<BotNotification>>)> {
         args.iter()
             .map(|undelete_message_args| (undelete_message_args.message_id, self.undelete_message(undelete_message_args)))
             .collect()
     }
 
-    fn delete_message(&mut self, args: DeleteUndeleteMessageArgs) -> OCResult<UserId> {
-        match self
-            .update_message(
-                args.thread_root_message_index,
-                args.message_id.into(),
-                args.min_visible_event_index,
-                Some(args.now),
-                ChatEventType::MessageDeleted,
-                |message, _| Self::delete_message_inner(message, &args),
-            )
-            .map(|r| r.value)
-        {
-            Ok((sender, message_index)) => {
+    fn delete_message(&mut self, args: DeleteUndeleteMessageArgs) -> OCResult<DeleteMessageSuccess> {
+        match self.update_message(
+            args.thread_root_message_index,
+            args.message_id.into(),
+            args.min_visible_event_index,
+            Some(args.now),
+            ChatEventType::MessageUndeleted,
+            |message, _| Self::delete_message_inner(message, &args),
+        ) {
+            Ok(result) => {
+                let (sender, message_index) = result.value;
+
                 if sender != args.caller {
                     add_to_metrics(
                         &mut self.metrics,
@@ -439,7 +441,10 @@ impl ChatEvents {
                 if args.thread_root_message_index.is_none() {
                     self.search_index.remove(message_index);
                 }
-                Ok(sender)
+                Ok(DeleteMessageSuccess {
+                    sender,
+                    bot_notification: result.bot_notification,
+                })
             }
             Err(UpdateEventError::NoChange(error)) => Err(error.into()),
             Err(UpdateEventError::NotFound) => Err(OCErrorCode::MessageNotFound.into()),
@@ -468,19 +473,17 @@ impl ChatEvents {
         }
     }
 
-    fn undelete_message(&mut self, args: DeleteUndeleteMessageArgs) -> OCResult {
-        match self
-            .update_message(
-                args.thread_root_message_index,
-                args.message_id.into(),
-                args.min_visible_event_index,
-                Some(args.now),
-                ChatEventType::MessageDeleted,
-                |message, _| Self::undelete_message_inner(message, &args),
-            )
-            .map(|r| r.value)
-        {
-            Ok((sender, message_index, document)) => {
+    fn undelete_message(&mut self, args: DeleteUndeleteMessageArgs) -> OCResult<Option<BotNotification>> {
+        match self.update_message(
+            args.thread_root_message_index,
+            args.message_id.into(),
+            args.min_visible_event_index,
+            Some(args.now),
+            ChatEventType::MessageDeleted,
+            |message, _| Self::undelete_message_inner(message, &args),
+        ) {
+            Ok(result) => {
+                let (sender, message_index, document) = result.value;
                 if sender != args.caller {
                     add_to_metrics(
                         &mut self.metrics,
@@ -500,7 +503,7 @@ impl ChatEvents {
                 if args.thread_root_message_index.is_none() {
                     self.search_index.push(message_index, sender, document);
                 }
-                Ok(())
+                Ok(result.bot_notification)
             }
             Err(UpdateEventError::NoChange(error)) => Err(error.into()),
             Err(UpdateEventError::NotFound) => Err(OCErrorCode::MessageNotFound.into()),
@@ -2578,6 +2581,16 @@ pub struct ExpiredThread {
 pub struct EditMessageSuccess {
     pub message_index: MessageIndex,
     pub event: EventMetaData,
+    pub bot_notification: Option<BotNotification>,
+}
+
+pub struct DeleteMessageSuccess {
+    pub sender: UserId,
+    pub bot_notification: Option<BotNotification>,
+}
+
+pub struct UndeleteMessageSuccess {
+    pub message: Message,
     pub bot_notification: Option<BotNotification>,
 }
 

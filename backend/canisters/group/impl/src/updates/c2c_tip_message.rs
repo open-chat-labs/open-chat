@@ -31,7 +31,7 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         now,
     };
 
-    state.data.chat.tip_message(
+    let result = state.data.chat.tip_message(
         tip_message_args,
         GroupEventPusher {
             now,
@@ -39,6 +39,10 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             queue: &mut state.data.local_user_index_event_sync_queue,
         },
     )?;
+
+    if let Some(bot_notification) = result.bot_notification {
+        state.push_bot_notification(bot_notification);
+    }
 
     if let Some((message, event_index)) =
         state
