@@ -314,7 +314,7 @@ fn streak_insurance_updates_returned_in_summary_updates(final_day_manually_claim
 }
 
 #[test]
-fn chit_utc_offset_can_be_updated() {
+fn streak_utc_offset_can_be_updated() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
@@ -322,7 +322,7 @@ fn chit_utc_offset_can_be_updated() {
     let user2 = client::register_user(env, canister_ids);
     ensure_time_at_least_day0(env);
 
-    let result1 = client::user::happy_path::claim_daily_chit(env, &user1, Some(HOUR_IN_MS as i32));
+    let result1 = client::user::happy_path::claim_daily_chit(env, &user1, Some(60));
     let result2 = client::user::happy_path::claim_daily_chit(env, &user2, None);
     assert_eq!(result1.streak, 1);
     assert!(result1.utc_offset_updated);
@@ -333,7 +333,7 @@ fn chit_utc_offset_can_be_updated() {
         result2.next_claim + (12 * HOUR_IN_MS) - now_millis(env),
     ));
 
-    let result1 = client::user::happy_path::claim_daily_chit(env, &user1, Some(-10 * HOUR_IN_MS as i32));
+    let result1 = client::user::happy_path::claim_daily_chit(env, &user1, Some(-600));
     let result2 = client::user::happy_path::claim_daily_chit(env, &user2, None);
     assert_eq!(result2.streak, 2);
     assert!(result1.utc_offset_updated);

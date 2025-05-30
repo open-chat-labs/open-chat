@@ -483,13 +483,13 @@ pub mod happy_path {
     pub fn claim_daily_chit(
         env: &mut PocketIc,
         sender: &User,
-        utc_offset_ms: Option<i32>,
+        utc_offset_mins: Option<i16>,
     ) -> user_canister::claim_daily_chit::SuccessResult {
         let response = super::claim_daily_chit(
             env,
             sender.principal,
             sender.canister(),
-            &user_canister::claim_daily_chit::Args { utc_offset_ms },
+            &user_canister::claim_daily_chit::Args { utc_offset_mins },
         );
 
         match response {

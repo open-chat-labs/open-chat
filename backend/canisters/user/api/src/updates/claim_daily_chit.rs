@@ -6,7 +6,7 @@ use types::TimestampMillis;
 #[ts_export(user, claim_daily_chit)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub utc_offset_ms: Option<i32>,
+    pub utc_offset_mins: Option<i16>,
 }
 
 #[ts_export(user, claim_daily_chit)]

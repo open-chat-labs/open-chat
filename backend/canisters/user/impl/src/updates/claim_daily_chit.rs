@@ -24,8 +24,8 @@ fn claim_daily_chit_impl(args: Args, state: &mut RuntimeState) -> Response {
     };
 
     let mut utc_offset_updated = false;
-    if let Some(utc_offset_ms) = args.utc_offset_ms {
-        utc_offset_updated = state.data.streak.set_utc_offset_ms(utc_offset_ms, now);
+    if let Some(utc_offset_mins) = args.utc_offset_mins {
+        utc_offset_updated = state.data.streak.set_utc_offset_mins(utc_offset_mins, now);
         if utc_offset_updated {
             // Claim again in case the timezone change has made this possible
             _ = state.data.streak.claim(now);

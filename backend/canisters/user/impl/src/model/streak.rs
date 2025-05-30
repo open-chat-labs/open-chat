@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use types::{StreakInsurance, TimestampMillis, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment};
 
 const DAY_ZERO: TimestampMillis = 1704067200000; // Mon Jan 01 2024 00:00:00 GMT+0000
-const MAX_UTC_OFFSET_MS: i32 = 15 * 60 * 60 * 1000; // 15 hours
+const MAX_UTC_OFFSET_MINS: i16 = 15 * 60; // 15 hours
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct Streak {
@@ -18,9 +18,9 @@ pub struct Streak {
     payments: Vec<UserCanisterStreakInsurancePayment>,
     claims: Vec<UserCanisterStreakInsuranceClaim>,
     #[serde(default)]
-    utc_offset_ms: i32,
+    utc_offset_mins: i16,
     #[serde(default)]
-    utc_offset_updates: Vec<(TimestampMillis, i32)>,
+    utc_offset_updates: Vec<(TimestampMillis, i16)>,
 }
 
 impl Streak {
@@ -101,10 +101,10 @@ impl Streak {
         self.max_streak
     }
 
-    pub fn set_utc_offset_ms(&mut self, utc_offset_ms: i32, now: TimestampMillis) -> bool {
-        if utc_offset_ms != self.utc_offset_ms && utc_offset_ms.abs() < MAX_UTC_OFFSET_MS {
-            self.utc_offset_ms = utc_offset_ms;
-            self.utc_offset_updates.push((now, utc_offset_ms));
+    pub fn set_utc_offset_mins(&mut self, utc_offset_mins: i16, now: TimestampMillis) -> bool {
+        if utc_offset_mins != self.utc_offset_mins && utc_offset_mins.abs() < MAX_UTC_OFFSET_MINS {
+            self.utc_offset_mins = utc_offset_mins;
+            self.utc_offset_updates.push((now, utc_offset_mins));
             true
         } else {
             false
@@ -112,11 +112,12 @@ impl Streak {
     }
 
     pub fn timestamp_to_day(&self, ts: TimestampMillis) -> Option<u16> {
-        Self::timestamp_to_offset_day(ts, self.utc_offset_ms)
+        Self::timestamp_to_offset_day(ts, self.utc_offset_mins)
     }
 
-    pub fn timestamp_to_offset_day(ts: TimestampMillis, utc_offset_ms: i32) -> Option<u16> {
-        let local = (ts as i64 + (utc_offset_ms as i64)) as u64;
+    pub fn timestamp_to_offset_day(ts: TimestampMillis, utc_offset_mins: i16) -> Option<u16> {
+        let utc_offset_ms = mins_to_ms(utc_offset_mins);
+        let local = (ts as i64 + utc_offset_ms) as u64;
 
         if local < DAY_ZERO {
             return None;
@@ -132,7 +133,8 @@ impl Streak {
     }
 
     pub fn day_to_timestamp(&self, day: u16) -> TimestampMillis {
-        (((DAY_ZERO + DAY_IN_MS * day as u64) as i64) - self.utc_offset_ms as i64) as TimestampMillis
+        let utc_offset_ms = mins_to_ms(self.utc_offset_mins);
+        (((DAY_ZERO + DAY_IN_MS * day as u64) as i64) - utc_offset_ms) as TimestampMillis
     }
 
     pub fn insurance_last_updated(&self) -> TimestampMillis {
@@ -187,7 +189,7 @@ impl Streak {
         total
     }
 
-    pub fn utc_offset_at_ts(&self, ts: TimestampMillis) -> i32 {
+    pub fn utc_offset_mins_at_ts(&self, ts: TimestampMillis) -> i16 {
         self.utc_offset_updates
             .iter()
             .filter(|(updated_at, _)| *updated_at < ts)
@@ -215,6 +217,10 @@ impl Streak {
     fn insurance_cost_for_day(day_index: u8) -> u128 {
         2u128.pow(day_index as u32) * 100_000_000
     }
+}
+
+fn mins_to_ms(mins: i16) -> i64 {
+    mins as i64 * 60 * 1000
 }
 
 #[cfg(test)]
