@@ -8392,13 +8392,6 @@ export class OpenChat {
     }
 
     getStreak(userId: string | undefined) {
-        if (userId === undefined) return 0;
-
-        if (userId === currentUserIdStore.value) {
-            const now = Date.now();
-            return chitStateStore.value.streakEnds < now ? 0 : chitStateStore.value.streak;
-        }
-
         return userStore.get(userId)?.streak ?? 0;
     }
 
