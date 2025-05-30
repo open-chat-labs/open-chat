@@ -2011,6 +2011,10 @@ type CurrentUserSummary = record {
     diamond_membership_status : DiamondMembershipStatusFull;
     moderation_flags_enabled : nat32;
     is_unique_person : bool;
+    total_chit_earned : int32;
+    chit_balance : int32;
+    streak : nat16;
+    max_streak : nat16;
 };
 
 type BotConfig = record {

@@ -82,7 +82,7 @@ import type {
     GetDelegationResponse,
     GrantedBotPermissions,
     GroupAndCommunitySummaryUpdatesArgs,
-    GroupAndCommunitySummaryUpdatesResponse,
+    GroupAndCommunitySummaryUpdatesResponseBatch,
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
     GroupChatDetailsResponse,
@@ -188,6 +188,7 @@ import type {
     VerifiedCredentialArgs,
     VideoCallParticipantsResponse,
     VideoCallPresence,
+    WaitAllResult,
     WalletConfig,
     WithdrawBtcResponse,
     WithdrawCryptocurrencyResponse,
@@ -206,6 +207,7 @@ import {
     MessageContextMap,
     messageContextToString,
     MessageMap,
+    ONE_MINUTE_MILLIS,
     offline,
     Stream,
     UnsupportedValueError,
@@ -249,7 +251,7 @@ import {
 } from "../utils/community";
 import { createHttpAgentSync } from "../utils/httpAgent";
 import { chunk, distinctBy, toRecord, toRecord2 } from "../utils/list";
-import { bytesToHexString } from "../utils/mapping";
+import { bytesToHexString, mapOptional } from "../utils/mapping";
 import { mean } from "../utils/maths";
 import { AsyncMessageContextMap } from "../utils/messageContext";
 import { isMainnet } from "../utils/network";
@@ -1684,7 +1686,7 @@ export class OpenChatAgent extends EventTarget {
 
     private async _getUpdates(current: ChatStateFull | undefined): Promise<UpdatesResult> {
         const start = Date.now();
-        let numberOfAsyncCalls = 0;
+        let totalQueryCount = 0;
 
         let directChats: DirectChatSummary[];
         let directChatUpdates: DirectChatSummaryUpdates[] = [];
@@ -1692,14 +1694,12 @@ export class OpenChatAgent extends EventTarget {
         let currentGroups: GroupChatSummary[] = [];
         let groupsAdded: UserCanisterGroupChatSummary[] = [];
         let userCanisterGroupUpdates: UserCanisterGroupChatSummaryUpdates[] = [];
-        const groupsToCheckForUpdates = new Set<string>();
-        const groupsRemoved = new Set<string>();
 
         let currentCommunities: CommunitySummary[] = [];
         let communitiesAdded: UserCanisterCommunitySummary[] = [];
         let userCanisterCommunityUpdates: UserCanisterCommunitySummaryUpdates[] = [];
-        const communitiesToCheckForUpdates = new Set<string>();
-        const communitiesRemoved = new Set<string>();
+
+        const groupsCommunitiesRemoved = new Set<string>();
 
         let avatarId: bigint | undefined;
         let blockedUsers: string[];
@@ -1727,7 +1727,7 @@ export class OpenChatAgent extends EventTarget {
 
         if (current === undefined) {
             const userResponse = await this.userClient.getInitialState();
-            numberOfAsyncCalls++;
+            totalQueryCount++;
 
             directChats = userResponse.directChats.summaries;
             groupsAdded = userResponse.groupChats.summaries;
@@ -1782,8 +1782,7 @@ export class OpenChatAgent extends EventTarget {
             const userResponse = await this.userClient.getUpdates(
                 current.latestUserCanisterUpdates,
             );
-
-            numberOfAsyncCalls++;
+            totalQueryCount++;
 
             avatarId = current.avatarId;
             blockedUsers = current.blockedUsers;
@@ -1825,15 +1824,11 @@ export class OpenChatAgent extends EventTarget {
 
                 groupsAdded = userResponse.groupChats.added;
                 userCanisterGroupUpdates = userResponse.groupChats.updated;
-                userCanisterGroupUpdates.forEach((g) => groupsToCheckForUpdates.add(g.id.groupId));
-                userResponse.groupChats.removed.forEach((g) => groupsRemoved.add(g));
+                userResponse.groupChats.removed.forEach((g) => groupsCommunitiesRemoved.add(g));
 
                 communitiesAdded = userResponse.communities.added;
                 userCanisterCommunityUpdates = userResponse.communities.updated;
-                userCanisterCommunityUpdates.forEach((c) =>
-                    communitiesToCheckForUpdates.add(c.id.communityId),
-                );
-                userResponse.communities.removed.forEach((c) => communitiesRemoved.add(c));
+                userResponse.communities.removed.forEach((c) => groupsCommunitiesRemoved.add(c));
 
                 avatarId = applyOptionUpdate(avatarId, userResponse.avatarId);
                 blockedUsers = userResponse.blockedUsers ?? blockedUsers;
@@ -1881,65 +1876,6 @@ export class OpenChatAgent extends EventTarget {
             }
         }
 
-        // Set this to the minimum `latestSuccessfulUpdatesCheck` timestamp from the groups and communities to ensure
-        // no updates are missed
-        let checkActivityFromTimestamp: bigint | undefined = undefined;
-        const currentGroupChatIds: GroupChatIdentifier[] = [];
-        const currentCommunityIds: CommunityIdentifier[] = [];
-        for (const group of currentGroups) {
-            currentGroupChatIds.push(group.id);
-            if (
-                checkActivityFromTimestamp === undefined ||
-                checkActivityFromTimestamp > group.latestSuccessfulUpdatesCheck
-            ) {
-                checkActivityFromTimestamp = group.latestSuccessfulUpdatesCheck;
-            }
-        }
-        for (const community of currentCommunities) {
-            currentCommunityIds.push(community.id);
-            if (
-                checkActivityFromTimestamp === undefined ||
-                checkActivityFromTimestamp > community.latestSuccessfulUpdatesCheck
-            ) {
-                checkActivityFromTimestamp = community.latestSuccessfulUpdatesCheck;
-            }
-        }
-
-        let latestUpdatesCheck = latestUserCanisterUpdates;
-        if (checkActivityFromTimestamp !== undefined) {
-            const groupIndexResponse = await this._groupIndexClient.activeGroups(
-                currentCommunityIds,
-                currentGroupChatIds,
-                checkActivityFromTimestamp,
-            );
-            numberOfAsyncCalls++;
-            latestUpdatesCheck = groupIndexResponse.timestamp;
-
-            groupIndexResponse.activeGroups.forEach((g) => groupsToCheckForUpdates.add(g));
-            groupIndexResponse.deletedGroups.forEach((g) => groupsRemoved.add(g.id));
-
-            groupIndexResponse.activeCommunities.forEach((c) =>
-                communitiesToCheckForUpdates.add(c),
-            );
-            groupIndexResponse.deletedCommunities.forEach((c) => groupsRemoved.add(c.id));
-
-            // Also check for updates for recently joined groups and communities since it may take a few iterations
-            // before the GroupIndex knows that they are active
-            const recentlyJoinedCutOff = BigInt(start - 10 * 60 * 1000);
-
-            for (const group of currentGroups) {
-                if (group.membership.joined > recentlyJoinedCutOff) {
-                    groupsToCheckForUpdates.add(group.id.groupId);
-                }
-            }
-
-            for (const community of currentCommunities) {
-                if (community.membership.joined > recentlyJoinedCutOff) {
-                    groupsToCheckForUpdates.add(community.id.communityId);
-                }
-            }
-        }
-
         const byLocalUserIndex: Map<string, GroupAndCommunitySummaryUpdatesArgs[]> = new Map();
 
         for (const group of groupsAdded) {
@@ -1961,42 +1897,31 @@ export class OpenChatAgent extends EventTarget {
         }
 
         for (const group of currentGroups) {
-            if (groupsToCheckForUpdates.has(group.id.groupId)) {
-                getOrAdd(byLocalUserIndex, group.localUserIndex, []).push({
-                    canisterId: group.id.groupId,
-                    isCommunity: false,
-                    inviteCode: undefined,
-                    updatesSince: group.lastUpdated,
-                });
-            }
+            getOrAdd(byLocalUserIndex, group.localUserIndex, []).push({
+                canisterId: group.id.groupId,
+                isCommunity: false,
+                inviteCode: undefined,
+                updatesSince: group.lastUpdated,
+            });
         }
 
         for (const community of currentCommunities) {
-            if (communitiesToCheckForUpdates.has(community.id.communityId)) {
-                getOrAdd(byLocalUserIndex, community.localUserIndex, []).push({
-                    canisterId: community.id.communityId,
-                    isCommunity: true,
-                    inviteCode: undefined,
-                    updatesSince: community.lastUpdated,
-                });
-            }
+            getOrAdd(byLocalUserIndex, community.localUserIndex, []).push({
+                canisterId: community.id.communityId,
+                isCommunity: true,
+                inviteCode: undefined,
+                updatesSince: community.lastUpdated,
+            });
         }
 
-        const summaryUpdatesPromises: Promise<GroupAndCommunitySummaryUpdatesResponse[]>[] = [];
-        for (const [localUserIndex, args] of byLocalUserIndex) {
-            for (const batch of chunk(args, 50)) {
-                summaryUpdatesPromises.push(
-                    this.getLocalUserIndexClient(localUserIndex).groupAndCommunitySummaryUpdates(
-                        batch,
-                    ),
-                );
-                numberOfAsyncCalls++;
-            }
-        }
+        const previousUpdatesTimestamp = mapOptional(current?.latestUserCanisterUpdates, Number);
+        const summaryUpdatesResponses =
+            await this.#getSummaryUpdatesFromLocalUserIndexes(byLocalUserIndex, previousUpdatesTimestamp);
 
-        const summaryUpdatesResults = await waitAll(summaryUpdatesPromises);
+        totalQueryCount += summaryUpdatesResponses.success.length;
+        totalQueryCount += summaryUpdatesResponses.errors.length;
 
-        for (const error of summaryUpdatesResults.errors) {
+        for (const error of summaryUpdatesResponses.errors) {
             this._logger.error("Summary updates error", error);
         }
 
@@ -2004,10 +1929,10 @@ export class OpenChatAgent extends EventTarget {
         const communityCanisterCommunitySummaries: CommunitySummary[] = [];
         const groupUpdates: GroupCanisterGroupChatSummaryUpdates[] = [];
         const communityUpdates: CommunityCanisterCommunitySummaryUpdates[] = [];
-        const errors = new Set<string>();
+        const notFoundTimestamps = new Map<string, bigint>();
 
-        for (const response of summaryUpdatesResults.success) {
-            for (const result of response) {
+        for (const response of summaryUpdatesResponses.success) {
+            for (const result of response.updates) {
                 switch (result.kind) {
                     case "group": {
                         groupCanisterGroupSummaries.push(result.value);
@@ -2025,13 +1950,10 @@ export class OpenChatAgent extends EventTarget {
                         communityUpdates.push(result.value);
                         break;
                     }
-                    case "error": {
-                        if (!result.error.includes("DestinationInvalid")) {
-                            errors.add(result.canisterId);
-                        }
-                        break;
-                    }
                 }
+            }
+            for (const canisterId of response.notFound) {
+                notFoundTimestamps.set(canisterId, response.timestamp);
             }
         }
 
@@ -2039,37 +1961,39 @@ export class OpenChatAgent extends EventTarget {
             anyUpdates = true;
         }
 
+        const isGroupCommunityDeleted = (canisterId: string, joined: bigint) => {
+            if (groupsCommunitiesRemoved.has(canisterId)) return true;
+            // This is needed in case we hit a replica which is lagging and
+            // isn't aware the group/community has been created yet
+            const notFoundTimestamp = notFoundTimestamps.get(canisterId);
+            return notFoundTimestamp !== undefined && notFoundTimestamp > joined;
+        };
+
         const groupChats = mergeGroupChats(
             groupsAdded,
             groupCanisterGroupSummaries,
-            latestUpdatesCheck,
         )
             .concat(
                 mergeGroupChatUpdates(
                     currentGroups,
                     userCanisterGroupUpdates,
                     groupUpdates,
-                    latestUpdatesCheck,
-                    errors,
                 ),
             )
-            .filter((g) => !groupsRemoved.has(g.id.groupId));
+            .filter((g) => !isGroupCommunityDeleted(g.id.groupId, g.membership.joined));
 
         const communities = mergeCommunities(
             communitiesAdded,
             communityCanisterCommunitySummaries,
-            latestUpdatesCheck,
         )
             .concat(
                 mergeCommunityUpdates(
                     currentCommunities,
                     userCanisterCommunityUpdates,
                     communityUpdates,
-                    latestUpdatesCheck,
-                    errors,
                 ),
             )
-            .filter((c) => !communitiesRemoved.has(c.id.communityId));
+            .filter((c) => !isGroupCommunityDeleted(c.id.communityId, c.membership.joined));
 
         this.removeExpiredLatestMessages(directChats, start);
         this.removeExpiredLatestMessages(groupChats, start);
@@ -2129,7 +2053,7 @@ export class OpenChatAgent extends EventTarget {
         const end = Date.now();
         const duration = end - start;
         console.debug(
-            `GetUpdates completed in ${duration}ms. Number of async calls: ${numberOfAsyncCalls}`,
+            `GetUpdates completed in ${duration}ms. Number of queries: ${totalQueryCount}`,
         );
 
         return {
@@ -2139,6 +2063,68 @@ export class OpenChatAgent extends EventTarget {
             suspensionChanged,
             newAchievements,
         };
+    }
+
+    async #getSummaryUpdatesFromLocalUserIndexes(
+        requestsByLocalUserIndex: Map<string, GroupAndCommunitySummaryUpdatesArgs[]>,
+        previousUpdatesTimestamp: number | undefined,
+        maxC2cCalls: number = 50,
+    ): Promise<WaitAllResult<GroupAndCommunitySummaryUpdatesResponseBatch>> {
+        const durationSincePreviousUpdates = Date.now() - (previousUpdatesTimestamp ?? 0);
+
+        // The shorter the duration since the previous updates were fetched, the larger we can make the batch size,
+        // since a smaller portion of canisters within the batch will have had any updates, so fewer c2c calls will be
+        // required.
+        const batchSize = previousUpdatesTimestamp === undefined
+            ? maxC2cCalls
+            : durationSincePreviousUpdates < 10 * ONE_MINUTE_MILLIS
+                ? maxC2cCalls * 4
+                : maxC2cCalls * 20;
+
+        const promises: Promise<WaitAllResult<GroupAndCommunitySummaryUpdatesResponseBatch>>[] = [];
+        for (const [localUserIndex, requests] of requestsByLocalUserIndex) {
+            promises.push(this.#getSummaryUpdatesFromLocalUserIndex(localUserIndex, requests, batchSize, maxC2cCalls));
+        }
+
+        const results = await Promise.all(promises);
+        const success: GroupAndCommunitySummaryUpdatesResponseBatch[] = [];
+        const errors = [];
+        for (const result of results) {
+            success.push(...result.success);
+            errors.push(...result.errors);
+        }
+        return { success, errors };
+    }
+
+    async #getSummaryUpdatesFromLocalUserIndex(
+        localUserIndex: string,
+        requests: GroupAndCommunitySummaryUpdatesArgs[],
+        batchSize: number,
+        maxC2cCalls: number,
+    ): Promise<WaitAllResult<GroupAndCommunitySummaryUpdatesResponseBatch>> {
+        const localUserIndexClient = this.getLocalUserIndexClient(localUserIndex);
+        const promises = chunk(requests, batchSize).map((batch) =>
+            localUserIndexClient.groupAndCommunitySummaryUpdates(batch, maxC2cCalls));
+        const responses = await waitAll(promises);
+
+        const success: GroupAndCommunitySummaryUpdatesResponseBatch[] = responses.success;
+        const errors = responses.errors;
+        const excessUpdates = new Set<string>();
+
+        for (const response of responses.success) {
+            response.excessUpdates.forEach((c) => excessUpdates.add(c));
+        }
+
+        if (excessUpdates.size > 0) {
+            const filteredRequests = requests.filter((r) => excessUpdates.has(r.canisterId));
+            const excessPromises = chunk(filteredRequests, maxC2cCalls).map((batch) =>
+                localUserIndexClient.groupAndCommunitySummaryUpdates(batch, maxC2cCalls));
+            const excessResponses = await waitAll(excessPromises);
+            success.push(...excessResponses.success);
+            errors.push(...excessResponses.errors);
+        }
+
+        return { success, errors };
     }
 
     getUpdates(initialLoad: boolean): Stream<UpdatesResult> {

@@ -24,7 +24,7 @@
 
     <div class="headline">
         <h2>
-            OpenChat users can send messages to each other containing tokens like ICP and ckBTC.
+            OpenChat users can send messages to each other containing tokens like BTC and ICP.
         </h2>
         <p>
             OpenChat is governed by its community as a DAO and has its own CHAT token. CHAT tokens

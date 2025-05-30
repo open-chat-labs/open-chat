@@ -598,8 +598,6 @@ const REGISTRY_UPDATE_INTERVAL = 2 * ONE_MINUTE_MILLIS;
 const EXCHANGE_RATE_UPDATE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
-const PUBLIC_VAPID_KEY =
-    "BD8RU5tDBbFTDFybDoWhFzlL5+mYptojI6qqqqiit68KSt17+vt33jcqLTHKhAXdSzu6pXntfT9e4LccBv+iV3A=";
 
 type UnresolvedRequest = {
     kind: string;
@@ -647,12 +645,14 @@ export class OpenChat {
     #appType?: "android" | "ios" | "web" = undefined;
     #videoCallsInProgress: Set<bigint> = new Set();
     #locale!: string;
+    #vapidPublicKey: string;
 
     currentAirdropChannel: AirdropChannelDetails | undefined = undefined;
 
     constructor(private config: OpenChatConfig) {
         this.#logger = config.logger;
         this.#appType = config.appType;
+        this.#vapidPublicKey = config.vapidPublicKey;
         locale.subscribe((v) => (this.#locale = v ?? "en"));
 
         console.log("OpenChatConfig: ", config);
@@ -9480,7 +9480,7 @@ export class OpenChat {
     ): Promise<PushSubscription | null> {
         const subscribeOptions = {
             userVisibleOnly: true,
-            applicationServerKey: this.#toUint8Array(PUBLIC_VAPID_KEY),
+            applicationServerKey: this.#toUint8Array(this.#vapidPublicKey),
         };
 
         try {

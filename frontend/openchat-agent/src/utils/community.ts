@@ -24,7 +24,6 @@ import { toRecord } from "./list";
 export function mergeCommunities(
     userCanisterCommunities: UserCanisterCommunitySummary[],
     communityCanisterCommunities: CommunitySummary[],
-    latestSuccessfulUpdatesCheck: bigint,
 ): CommunitySummary[] {
     const userCanisterCommunityLookup = CommunityMap.fromList(userCanisterCommunities);
 
@@ -40,7 +39,6 @@ export function mergeCommunities(
                 index: u?.index ?? community.membership.index,
             },
             channels: mergeChannels(u?.channels ?? [], community.channels),
-            latestSuccessfulUpdatesCheck,
         };
     });
 }
@@ -76,8 +74,6 @@ export function mergeCommunityUpdates(
     communities: CommunitySummary[],
     userCanisterUpdates: UserCanisterCommunitySummaryUpdates[],
     communityCanisterUpdates: CommunityCanisterCommunitySummaryUpdates[],
-    latestSuccessfulUpdatesCheck: bigint,
-    canistersWhichResultedInError: Set<string>,
 ): CommunitySummary[] {
     const userLookup = CommunityMap.fromList(userCanisterUpdates);
     const communityLookup = CommunityMap.fromList(communityCanisterUpdates);
@@ -157,9 +153,6 @@ export function mergeCommunityUpdates(
             localUserIndex: community.localUserIndex,
             isInvited: false,
             verified: c?.verified ?? community.verified,
-            latestSuccessfulUpdatesCheck: canistersWhichResultedInError.has(community.id.communityId)
-                ? community.latestSuccessfulUpdatesCheck
-                : latestSuccessfulUpdatesCheck,
         };
     });
 }

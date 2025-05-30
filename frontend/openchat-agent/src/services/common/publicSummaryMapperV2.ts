@@ -68,7 +68,6 @@ export function publicGroupSummary(
         isInvited,
         messagesVisibleToNonMembers: value.messages_visible_to_non_members,
         verified: false, // TODO - this needs to come from the backend
-        latestSuccessfulUpdatesCheck: BigInt(Date.now()),
     };
 }
 
