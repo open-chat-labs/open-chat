@@ -81,7 +81,7 @@ fn reinstate_daily_claims(state: &mut RuntimeState, max_days_to_reinstate: u16) 
                 amount: 0,
             });
         }
-        assert_eq!(state.data.streak.start_day() - new_start_day, count as u16);
+        assert!(new_start_day < state.data.streak.start_day());
         state.data.streak.set_start_day(new_start_day);
         let new_streak = state.data.streak.days(now);
 
@@ -116,10 +116,8 @@ fn streak_days_to_reinstate(chit_claim_days: &BTreeSet<u16>, now_day: u16, max_d
         }
         if to_add.len() < max_days_to_reinstate {
             to_add.push(next);
-
-            if to_add.len() >= max_days_to_reinstate {
-                break;
-            }
+        } else {
+            break;
         }
     }
 
@@ -133,19 +131,27 @@ mod tests {
     use super::*;
     use test_case::test_case;
 
-    #[test_case(vec![1, 2, 3, 6, 8, 9], 10, vec![7], 6)]
-    #[test_case(vec![1, 2, 3, 4, 6, 8, 9], 10, vec![7, 5], 1)]
-    #[test_case(vec![], 10, vec![], 10)]
-    #[test_case(vec![6, 9], 10, vec![8, 7], 6)]
-    #[test_case(vec![5, 8], 10, vec![9], 8)]
-    #[test_case(vec![4, 6, 7, 8], 10, vec![9, 5], 4)]
+    #[test_case(1, vec![1, 2, 3, 6, 8, 9], 10, vec![7], 6)]
+    #[test_case(1, vec![1, 2, 3, 4, 5, 7, 8, 9], 10, vec![6], 1)]
+    #[test_case(1, vec![], 10, vec![], 10)]
+    #[test_case(1, vec![6, 9], 10, vec![], 9)]
+    #[test_case(1, vec![4, 6, 8, 9], 10, vec![7], 6)]
+    #[test_case(1, vec![4, 6, 7, 8, 9], 10, vec![5], 4)]
+    #[test_case(2, vec![1, 2, 3, 6, 8, 9], 10, vec![7], 6)]
+    #[test_case(2, vec![1, 2, 3, 4, 6, 8, 9], 10, vec![7, 5], 1)]
+    #[test_case(2, vec![], 10, vec![], 10)]
+    #[test_case(2, vec![6, 9], 10, vec![8, 7], 6)]
+    #[test_case(2, vec![5, 8], 10, vec![9], 8)]
+    #[test_case(2, vec![4, 6, 7, 8], 10, vec![9, 5], 4)]
     fn streak_days_to_reinstate_tests(
+        max_days_to_reinstate: usize,
         chit_claim_days: Vec<u16>,
         now_day: u16,
         expected_days_to_add: Vec<u16>,
         expected_start_day: u16,
     ) {
-        let (to_add, start_day) = streak_days_to_reinstate(&chit_claim_days.into_iter().collect(), now_day, 1);
+        let (to_add, start_day) =
+            streak_days_to_reinstate(&chit_claim_days.into_iter().collect(), now_day, max_days_to_reinstate);
         assert_eq!(to_add, expected_days_to_add);
         assert_eq!(start_day, expected_start_day);
     }
