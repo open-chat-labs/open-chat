@@ -80,6 +80,7 @@ fn reinstate_daily_claims(state: &mut RuntimeState, max_days_to_reinstate: u16) 
                 reason: ChitEarnedReason::DailyClaimReinstated,
                 amount: 0,
             });
+            info!(day, "Daily claim reinstated");
         }
         assert!(new_start_day < state.data.streak.start_day());
         state.data.streak.set_start_day(new_start_day);
