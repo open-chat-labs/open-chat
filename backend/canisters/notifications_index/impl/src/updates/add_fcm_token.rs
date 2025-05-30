@@ -1,0 +1,26 @@
+use crate::{RuntimeState, mutate_state};
+use canister_api_macros::update;
+use canister_tracing_macros::trace;
+use notifications_index_canister::add_fcm_token::{Response::*, *};
+use stable_memory_map::StableMemoryMap;
+use types::{OCError, OCErrorCode, UnitResult};
+
+#[update(msgpack = true)]
+#[trace]
+fn add_fcm_token(args: Args) -> Response {
+    mutate_state(|state| add_fcm_token_impl(args, state))
+}
+
+fn add_fcm_token_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let caller = state.env.caller();
+    if let Some(user_id) = state.data.principal_to_user_id_map.get(&caller) {
+        state
+            .data
+            .fcm_token_store
+            .add_token(args.fcm_token.into(), user_id.clone())
+            .map(|_| UnitResult::Success)
+            .unwrap_or_else(|err| UnitResult::Error(OCErrorCode::AlreadyAdded.into()))
+    } else {
+        UnitResult::Error(OCErrorCode::InitiatorNotFound.into())
+    }
+}

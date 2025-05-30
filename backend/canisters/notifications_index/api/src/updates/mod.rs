@@ -1,3 +1,4 @@
+pub mod add_fcm_token;
 pub mod c2c_sync_user_index_events;
 pub mod c2c_user_index;
 pub mod notify_local_index_added;
