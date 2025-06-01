@@ -85,7 +85,9 @@ fn reinstate_daily_claims(state: &mut RuntimeState, max_days_to_reinstate: u16) 
             info!(day, "Daily claim reinstated");
         }
         state.data.streak.set_start_day(new_start_day);
-        state.data.streak.set_end_day(now_day);
+        if previous_streak == 0 {
+            state.data.streak.set_end_day(now_day.saturating_sub(1));
+        }
         let new_streak = state.data.streak.days(now);
         assert!(new_streak > previous_streak);
 
