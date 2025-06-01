@@ -56,9 +56,11 @@ fn reinstate_daily_claims(state: &mut RuntimeState, max_days_to_reinstate: u16) 
     let now = state.env.now();
     let now_day = state.data.streak.timestamp_to_day(now).unwrap();
     let current_end_day = state.data.streak.end_day();
-    if current_end_day < now_day.saturating_sub(3) {
+    if current_end_day < now_day.saturating_sub(max_days_to_reinstate + 1) {
         return;
     }
+
+    let previous_streak = state.data.streak.days(now);
 
     let chit_claim_days: BTreeSet<_> = state
         .data
@@ -82,9 +84,10 @@ fn reinstate_daily_claims(state: &mut RuntimeState, max_days_to_reinstate: u16) 
             });
             info!(day, "Daily claim reinstated");
         }
-        assert!(new_start_day < state.data.streak.start_day());
         state.data.streak.set_start_day(new_start_day);
+        state.data.streak.set_end_day(now_day);
         let new_streak = state.data.streak.days(now);
+        assert!(new_streak > previous_streak);
 
         let first_line = if count == 1 {
             "1 missed daily claim has been reinstated."

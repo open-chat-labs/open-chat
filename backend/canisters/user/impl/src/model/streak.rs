@@ -212,7 +212,7 @@ impl Streak {
             .unwrap_or_default()
     }
 
-    fn set_end_day(&mut self, day: u16) {
+    pub fn set_end_day(&mut self, day: u16) {
         self.end_day = day;
         let streak = 1 + self.end_day - self.start_day;
         if streak > self.max_streak {
