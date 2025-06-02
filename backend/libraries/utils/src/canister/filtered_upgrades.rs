@@ -18,7 +18,7 @@ pub fn build_filter_map<F: Fn(CanisterId) -> Option<CanisterId>>(
         ..Default::default()
     };
 
-    if filter.include.is_empty() {
+    if filter.include.is_empty() || !filter.versions.is_empty() {
         for canister_id in index_canisters {
             map.insert(canister_id, default.clone());
         }
