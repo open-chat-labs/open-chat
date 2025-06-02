@@ -95,11 +95,6 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
         None,
     );
 
-    state.push_event_to_notifications_index(
-        notifications_index_canister::UserIndexEvent::BotEndpointUpdated(bot_id, args.endpoint),
-        now,
-    );
-
     state.data.storage_index_user_sync_queue.push(UserConfig {
         user_id: args.principal,
         byte_limit: ONE_GB,

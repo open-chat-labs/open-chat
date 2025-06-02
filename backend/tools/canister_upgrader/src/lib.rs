@@ -462,39 +462,6 @@ pub async fn upgrade_local_user_index_canister(
     println!("Local user index canister wasm upgraded to version {version}");
 }
 
-pub async fn upgrade_notifications_canister(
-    identity: Box<dyn Identity>,
-    url: String,
-    notifications_index_canister_id: CanisterId,
-    version: BuildVersion,
-) {
-    let agent = build_ic_agent(url, identity).await;
-    let canister_wasm = get_canister_wasm(CanisterName::Notifications, version);
-    let args = UpgradeCanisterWasmArgs {
-        wasm: CanisterWasm {
-            version,
-            module: canister_wasm.module,
-        },
-        filter: None,
-    };
-
-    let response = notifications_index_canister_client::upgrade_notifications_canister_wasm(
-        &agent,
-        &notifications_index_canister_id,
-        &args,
-    )
-    .await
-    .unwrap();
-
-    if !matches!(
-        response,
-        notifications_index_canister::upgrade_notifications_canister_wasm::Response::Success
-    ) {
-        panic!("{response:?}");
-    }
-    println!("Notifications canister wasm upgraded to version {version}");
-}
-
 pub async fn upgrade_storage_bucket_canister(
     identity: Box<dyn Identity>,
     url: String,

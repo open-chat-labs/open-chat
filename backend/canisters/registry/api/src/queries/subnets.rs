@@ -13,5 +13,4 @@ pub enum Response {
 pub struct Subnet {
     pub subnet_id: Principal,
     pub local_user_index: CanisterId,
-    pub notifications_canister: CanisterId,
 }

@@ -44,11 +44,7 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     if let Some(endpoint) = args.endpoint {
-        bot.endpoint = endpoint.clone();
-        state.push_event_to_notifications_index(
-            notifications_index_canister::UserIndexEvent::BotEndpointUpdated(args.bot_id, endpoint),
-            now,
-        );
+        bot.endpoint = endpoint;
     }
 
     match args.avatar {

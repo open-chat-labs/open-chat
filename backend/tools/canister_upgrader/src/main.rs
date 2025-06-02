@@ -30,9 +30,6 @@ async fn main() {
         CanisterName::NotificationsIndex => {
             upgrade_notifications_index_canister(identity, opts.url, opts.openchat_installer, opts.version).await
         }
-        CanisterName::Notifications => {
-            upgrade_notifications_canister(identity, opts.url, opts.notifications_index, opts.version).await
-        }
         CanisterName::OnlineUsers => upgrade_online_users_canister(identity, opts.url, opts.online_users, opts.version).await,
         CanisterName::OpenChatInstaller => {
             upgrade_openchat_installer_canister(identity, opts.url, opts.openchat_installer, opts.version).await

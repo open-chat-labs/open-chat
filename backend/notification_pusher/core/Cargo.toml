@@ -9,8 +9,8 @@ base64 = { workspace = true }
 candid = { workspace = true }
 ic-agent = { workspace = true }
 index_store = { path = "../../libraries/index_store" }
-notifications_canister = { path = "../../canisters/notifications/api" }
-notifications_canister_client = { path = "../../canisters/notifications/client" }
+local_user_index_canister = { path = "../../canisters/local_user_index/api" }
+local_user_index_canister_client = { path = "../../canisters/local_user_index/client" }
 notifications_index_canister = { path = "../../canisters/notifications_index/api" }
 notifications_index_canister_client = { path = "../../canisters/notifications_index/client" }
 openssl = { workspace = true, features = ["vendored"] }

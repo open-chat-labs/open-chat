@@ -44,8 +44,7 @@ impl Subnets {
 #[derive(Serialize, Deserialize)]
 pub struct SubnetInProgress {
     pub id: Principal,
-    pub local_user_index: Option<CanisterId>,
-    pub notifications_canister: Option<CanisterId>,
+    pub local_index: Option<CanisterId>,
     pub controllers_updated: bool,
     pub cycles_dispenser_notified: bool,
     pub event_relay_notified: bool,
@@ -61,8 +60,7 @@ impl SubnetInProgress {
         SubnetInProgress {
             id,
             last_updated: now,
-            local_user_index: None,
-            notifications_canister: None,
+            local_index: None,
             controllers_updated: false,
             cycles_dispenser_notified: false,
             event_relay_notified: false,
@@ -74,29 +72,22 @@ impl SubnetInProgress {
     }
 
     pub fn next_step(&self) -> ExpandOntoSubnetStep {
-        let Some(local_user_index) = self.local_user_index else {
-            return ExpandOntoSubnetStep::CreateLocalUserIndex;
-        };
-        let Some(notifications_canister) = self.notifications_canister else {
-            return ExpandOntoSubnetStep::CreateNotificationsCanister;
+        let Some(local_index) = self.local_index else {
+            return ExpandOntoSubnetStep::CreateLocalIndex;
         };
 
-        let new_canister_ids = NewCanisterIds {
-            local_user_index,
-            notifications_canister,
-        };
         if !self.controllers_updated {
-            ExpandOntoSubnetStep::UpdateControllers(new_canister_ids)
+            ExpandOntoSubnetStep::UpdateControllers(local_index)
         } else if !self.cycles_dispenser_notified {
-            ExpandOntoSubnetStep::NotifyCyclesDispenser(new_canister_ids)
+            ExpandOntoSubnetStep::NotifyCyclesDispenser(local_index)
         } else if !self.event_relay_notified {
-            ExpandOntoSubnetStep::NotifyEventRelay(new_canister_ids)
+            ExpandOntoSubnetStep::NotifyEventRelay(local_index)
         } else if !self.user_index_notified {
-            ExpandOntoSubnetStep::NotifyUserIndex(new_canister_ids)
+            ExpandOntoSubnetStep::NotifyUserIndex(local_index)
         } else if !self.group_index_notified {
-            ExpandOntoSubnetStep::NotifyGroupIndex(new_canister_ids)
+            ExpandOntoSubnetStep::NotifyGroupIndex(local_index)
         } else if !self.notifications_index_notified {
-            ExpandOntoSubnetStep::NotifyNotificationsIndex(new_canister_ids)
+            ExpandOntoSubnetStep::NotifyNotificationsIndex(local_index)
         } else {
             ExpandOntoSubnetStep::Complete
         }
@@ -111,34 +102,25 @@ impl TryFrom<SubnetInProgress> for Subnet {
     type Error = ();
 
     fn try_from(value: SubnetInProgress) -> Result<Self, Self::Error> {
-        let (local_user_index, notifications_canister) = match (value.local_user_index, value.notifications_canister) {
-            (Some(local_user_index), Some(notifications_canister)) => (local_user_index, notifications_canister),
-            _ => return Err(()),
-        };
-
-        Ok(Subnet {
-            subnet_id: value.id,
-            local_user_index,
-            notifications_canister,
-        })
+        if let Some(local_user_index) = value.local_index {
+            Ok(Subnet {
+                subnet_id: value.id,
+                local_user_index,
+            })
+        } else {
+            Err(())
+        }
     }
 }
 
 #[derive(Debug)]
-pub struct NewCanisterIds {
-    pub local_user_index: CanisterId,
-    pub notifications_canister: CanisterId,
-}
-
-#[derive(Debug)]
 pub enum ExpandOntoSubnetStep {
-    CreateLocalUserIndex,
-    CreateNotificationsCanister,
-    UpdateControllers(NewCanisterIds),
-    NotifyCyclesDispenser(NewCanisterIds),
-    NotifyEventRelay(NewCanisterIds),
-    NotifyUserIndex(NewCanisterIds),
-    NotifyGroupIndex(NewCanisterIds),
-    NotifyNotificationsIndex(NewCanisterIds),
+    CreateLocalIndex,
+    UpdateControllers(CanisterId),
+    NotifyCyclesDispenser(CanisterId),
+    NotifyEventRelay(CanisterId),
+    NotifyUserIndex(CanisterId),
+    NotifyGroupIndex(CanisterId),
+    NotifyNotificationsIndex(CanisterId),
     Complete,
 }

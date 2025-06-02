@@ -66,8 +66,6 @@ fn remove_bot_impl(args: Args, deleted_by: Option<UserId>, state: &mut RuntimeSt
         );
     }
 
-    state.push_event_to_notifications_index(notifications_index_canister::UserIndexEvent::BotRemoved(args.bot_id), now);
-
     jobs::sync_events_to_local_user_index_canisters::try_run_now(state);
     Success
 }

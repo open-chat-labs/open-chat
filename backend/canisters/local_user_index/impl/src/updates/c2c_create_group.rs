@@ -87,6 +87,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
     let canister_id = state.data.canister_pool.pop();
     let canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::Group).wasm.clone();
     let local_user_index_canister_id = state.env.canister_id();
+    #[expect(deprecated)]
     let init_canister_args = group_canister::init::Args {
         is_public: args.is_public,
         name: args.name,
@@ -110,7 +111,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         local_group_index_canister_id: CanisterId::anonymous(),
         user_index_canister_id: state.data.user_index_canister_id,
         local_user_index_canister_id,
-        notifications_canister_id: state.data.notifications_canister_id,
+        notifications_canister_id: CanisterId::anonymous(),
         bot_api_gateway_canister_id: CanisterId::anonymous(),
         proposals_bot_user_id: state.data.proposals_bot_canister_id.into(),
         escrow_canister_id: state.data.escrow_canister_id,

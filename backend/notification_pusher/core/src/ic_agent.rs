@@ -1,6 +1,6 @@
 use ic_agent::identity::{BasicIdentity, Secp256k1Identity};
 use ic_agent::{Agent, Identity};
-use notifications_canister::{latest_notification_index, notifications_v2, remove_notifications};
+use local_user_index_canister::{latest_notification_index, notifications_v2, remove_notifications};
 use notifications_index_canister::remove_subscriptions;
 use std::collections::HashMap;
 use tracing::trace;
@@ -38,7 +38,7 @@ impl IcAgent {
         trace!(?args, "notifications_v2::args");
 
         let notifications_v2::Response::Success(result) =
-            notifications_canister_client::notifications_v2(&self.agent, notifications_canister_id, &args).await?;
+            local_user_index_canister_client::notifications_v2(&self.agent, notifications_canister_id, &args).await?;
 
         trace!(?result, "notifications_v2::result");
 
@@ -49,7 +49,7 @@ impl IcAgent {
         let args = latest_notification_index::Args {};
 
         let latest_notification_index::Response::Success(index) =
-            notifications_canister_client::latest_notification_index(&self.agent, notifications_canister_id, &args).await?;
+            local_user_index_canister_client::latest_notification_index(&self.agent, notifications_canister_id, &args).await?;
 
         Ok(index)
     }
@@ -65,7 +65,7 @@ impl IcAgent {
 
         trace!(?args, "remove_notifications::args");
 
-        notifications_canister_client::remove_notifications(&self.agent, notifications_canister_id, &args).await?;
+        local_user_index_canister_client::remove_notifications(&self.agent, notifications_canister_id, &args).await?;
 
         Ok(())
     }

@@ -1,6 +1,5 @@
 use crate::model::group_index_event_batch::GroupIndexEventBatch;
 use crate::model::local_user_index_map::LocalUserIndex;
-use crate::model::notifications_index_event_batch::NotificationsIndexEventBatch;
 use crate::model::storage_index_user_config_batch::StorageIndexUserConfigBatch;
 use crate::model::storage_index_users_to_remove_batch::StorageIndexUsersToRemoveBatch;
 use crate::model::streak_insurance_logs::StreakInsuranceLogs;
@@ -23,7 +22,6 @@ use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
 use model::reported_messages::{ReportedMessages, ReportingMetrics};
 use model::user::SuspensionDetails;
 use p256_key_pair::P256KeyPair;
-use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::UserIdsKeyPrefix;
 use std::cell::RefCell;
@@ -31,8 +29,8 @@ use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use timer_job_queues::BatchedTimerJobQueue;
 use types::{
-    BuildVersion, CanisterId, ChatId, ChildCanisterWasms, Cycles, DiamondMembershipFees, IdempotentEnvelope, Milliseconds,
-    TimestampMillis, Timestamped, UserId, UserType,
+    BuildVersion, CanisterId, ChatId, ChildCanisterWasms, Cycles, DiamondMembershipFees, Milliseconds, TimestampMillis,
+    Timestamped, UserId, UserType,
 };
 use user_ids_set::UserIdsSet;
 use user_index_canister::ChildCanisterType;
@@ -157,18 +155,6 @@ impl RuntimeState {
             }
         }
         jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
-    }
-
-    pub fn push_event_to_notifications_index(
-        &mut self,
-        event: notifications_index_canister::UserIndexEvent,
-        now: TimestampMillis,
-    ) {
-        self.data.notifications_index_event_sync_queue.push(IdempotentEnvelope {
-            created_at: now,
-            idempotency_id: self.env.rng().next_u64(),
-            value: event,
-        })
     }
 
     pub fn queue_payment(&mut self, pending_payment: PendingPayment) {
@@ -380,7 +366,6 @@ struct Data {
     pub storage_index_users_to_remove_queue: BatchedTimerJobQueue<StorageIndexUsersToRemoveBatch>,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub group_index_event_sync_queue: BatchedTimerJobQueue<GroupIndexEventBatch>,
-    pub notifications_index_event_sync_queue: BatchedTimerJobQueue<NotificationsIndexEventBatch>,
     pub pending_payments_queue: PendingPaymentsQueue,
     pub pending_modclub_submissions_queue: PendingModclubSubmissionsQueue,
     pub platform_moderators: HashSet<UserId>,
@@ -465,7 +450,6 @@ impl Data {
             storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             group_index_event_sync_queue: BatchedTimerJobQueue::new(group_index_canister_id, false),
-            notifications_index_event_sync_queue: BatchedTimerJobQueue::new(notifications_index_canister_id, false),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
             platform_moderators: HashSet::new(),
@@ -581,7 +565,6 @@ impl Default for Data {
             storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             group_index_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
-            notifications_index_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
             platform_moderators: HashSet::new(),

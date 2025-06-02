@@ -7,7 +7,7 @@ generate_msgpack_query_call!(explore_groups);
 generate_msgpack_query_call!(search);
 
 // Updates
-generate_update_call!(add_local_index_canister);
+generate_update_call!(notify_local_index_added);
 generate_msgpack_update_call!(delete_frozen_group);
 generate_msgpack_update_call!(freeze_group);
 generate_msgpack_update_call!(unfreeze_group);

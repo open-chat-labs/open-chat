@@ -5467,7 +5467,6 @@ dependencies = [
  "ledger_utils",
  "local_user_index_canister",
  "msgpack",
- "notifications_canister",
  "notifications_index_canister",
  "oc_error_codes",
  "online_users_canister",
@@ -6015,6 +6014,18 @@ dependencies = [
  "local_user_index_canister",
  "msgpack",
  "tracing",
+ "types",
+]
+
+[[package]]
+name = "local_user_index_canister_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "constants",
+ "ic-agent",
+ "local_user_index_canister",
  "types",
 ]
 
@@ -6594,8 +6605,8 @@ dependencies = [
  "candid",
  "ic-agent",
  "index_store",
- "notifications_canister",
- "notifications_canister_client",
+ "local_user_index_canister",
+ "local_user_index_canister_client",
  "notifications_index_canister",
  "notifications_index_canister_client",
  "openssl",
@@ -6607,73 +6618,6 @@ dependencies = [
  "tracing",
  "types",
  "web-push",
-]
-
-[[package]]
-name = "notifications_canister"
-version = "0.1.0"
-dependencies = [
- "candid",
- "notifications_index_canister",
- "serde",
- "serde_bytes",
- "ts-rs",
- "ts_export",
- "types",
-]
-
-[[package]]
-name = "notifications_canister_c2c_client"
-version = "0.1.0"
-dependencies = [
- "canister_client",
- "ic-cdk 0.18.0",
- "msgpack",
- "notifications_canister",
- "serde",
- "timer_job_queues",
- "tracing",
- "types",
- "utils 0.1.0",
-]
-
-[[package]]
-name = "notifications_canister_client"
-version = "0.1.0"
-dependencies = [
- "candid",
- "canister_client",
- "ic-agent",
- "notifications_canister",
- "types",
-]
-
-[[package]]
-name = "notifications_canister_impl"
-version = "0.1.0"
-dependencies = [
- "candid",
- "canister_api_macros",
- "canister_client",
- "canister_logger",
- "canister_state_macros",
- "canister_tracing_macros",
- "http_request",
- "ic-cdk 0.18.0",
- "ic-cdk-timers",
- "ic-stable-structures",
- "msgpack",
- "notifications_canister",
- "notifications_index_canister",
- "rand 0.8.5",
- "serde",
- "serde_bytes",
- "stable_memory",
- "stable_memory_map",
- "tracing",
- "types",
- "user_ids_set",
- "utils 0.1.0",
 ]
 
 [[package]]
@@ -6729,10 +6673,11 @@ dependencies = [
  "ic-cdk 0.18.0",
  "ic-cdk-timers",
  "ic-stable-structures",
+ "local_user_index_canister",
+ "local_user_index_canister_c2c_client",
  "msgpack",
- "notifications_canister",
- "notifications_canister_c2c_client",
  "notifications_index_canister",
+ "oc_error_codes",
  "principal_to_user_id_map",
  "rand 0.8.5",
  "serde",
@@ -11644,8 +11589,6 @@ dependencies = [
  "modclub_canister",
  "modclub_canister_c2c_client",
  "msgpack",
- "notifications_index_canister",
- "notifications_index_canister_c2c_client",
  "oc_error_codes",
  "online_users_canister",
  "online_users_canister_c2c_client",
