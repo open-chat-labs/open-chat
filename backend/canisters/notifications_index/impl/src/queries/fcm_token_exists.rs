@@ -9,5 +9,5 @@ fn fcm_token_exists(args: Args) -> Response {
 }
 
 fn fcm_token_exists_impl(args: Args, state: &RuntimeState) -> Response {
-    state.data.fcm_token_store.check_token_exists(&args.fcm_token.into())
+    state.data.fcm_token_store.check_token_exists(&args.fcm_token)
 }

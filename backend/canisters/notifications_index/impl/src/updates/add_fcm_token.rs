@@ -17,7 +17,7 @@ fn add_fcm_token_impl(args: Args, state: &mut RuntimeState) -> Response {
         state
             .data
             .fcm_token_store
-            .add_token(args.fcm_token.into(), user_id.clone())
+            .add_token(args.fcm_token, user_id.clone())
             .map(|_| UnitResult::Success)
             .unwrap_or_else(|err| UnitResult::Error(OCErrorCode::AlreadyAdded.into()))
     } else {

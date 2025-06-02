@@ -1,25 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
-use types::UserId;
-
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Hash, PartialOrd, Ord)]
-pub struct FcmToken(String);
-
-impl From<String> for FcmToken {
-    fn from(token: String) -> Self {
-        FcmToken(token)
-    }
-}
-impl From<FcmToken> for String {
-    fn from(token: FcmToken) -> Self {
-        token.0
-    }
-}
-impl AsRef<str> for FcmToken {
-    fn as_ref(&self) -> &str {
-        &self.0
-    }
-}
+use types::{FcmToken, UserId};
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct FcmTokenStore {
@@ -38,7 +19,7 @@ impl FcmTokenStore {
     /// If the token already exists, it will not be added again - this also
     /// ensures that the user does not have duplicate tokens, or that the same
     /// token is not assigned to multiple users.
-    pub fn add_token(&mut self, token: FcmToken, user_id: UserId) -> Result<(), String> {
+    pub fn add_token(&mut self, user_id: UserId, token: FcmToken) -> Result<(), String> {
         if !self.check_token_exists(&token) {
             self.fcm_user_tokens.insert((user_id, token.clone()));
             Ok(())
@@ -62,13 +43,12 @@ impl FcmTokenStore {
         }
     }
 
-    /// Get all FCM tokens associated with specific users! It is very likely
-    /// we'll have to push notifications to multiple users at once, so this
-    /// method allows us to retrieve all tokens for a set of users.
-    pub fn get_tokens_for_users(&self, user_ids: Vec<&UserId>) -> Vec<&FcmToken> {
+    /// Returns all FCM tokens for a given user. This is a fast lookup
+    /// leveraging the BTreeSet structure.
+    pub fn get_tokens_for_user(&self, user_id: &UserId) -> Vec<&FcmToken> {
         self.fcm_user_tokens
-            .iter()
-            .filter(|(user, _)| user_ids.contains(&user))
+            .range((*user_id, FcmToken(String::default()))..)
+            .take_while(|(u, _)| u == user_id)
             .map(|(_, token)| token)
             .collect()
     }
@@ -85,18 +65,21 @@ mod test {
 
         let user_id1 = UserId::new(CanisterId::from_text("3skqk-iqaaa-aaaaf-aaa3q-cai").expect("Invalid principal"));
         let user_id2 = UserId::new(CanisterId::from_text("hnv5y-siaaa-aaaaf-aacza-cai").expect("Invalid principal"));
+        let user_id3 = UserId::new(CanisterId::from_text("2yfsq-kaaaa-aaaaf-aaa4q-cai").expect("Invalid principal"));
 
         let token1 = FcmToken::from("token1".to_string());
         let token2 = FcmToken::from("token2".to_string());
         let token3 = FcmToken::from("token3".to_string());
+        let token4 = FcmToken::from("token4".to_string());
 
         // Assert tokens can be added
-        assert_eq!(store.add_token(token1.clone(), user_id1), Ok(()));
-        assert_eq!(store.add_token(token2.clone(), user_id1), Ok(()));
+        assert_eq!(store.add_token(user_id1, token1.clone()), Ok(()));
+        assert_eq!(store.add_token(user_id3, token4.clone()), Ok(()));
+        assert_eq!(store.add_token(user_id1, token2.clone()), Ok(()));
 
         // Assert that adding the same token for a different user fails
         assert_eq!(
-            store.add_token(token1.clone(), user_id2),
+            store.add_token(user_id2, token1.clone()),
             Err("Token already exists".to_string())
         );
 
@@ -106,13 +89,13 @@ mod test {
         assert!(!store.check_token_exists(&token3));
 
         // Assert that retrieveing tokens for users works correctly
-        let store_tokens = store.get_tokens_for_users(vec![&user_id1]);
+        let store_tokens = store.get_tokens_for_user(&user_id1);
         assert_eq!(store_tokens.len(), 2);
         assert!(store_tokens.contains(&&token1));
         assert!(store_tokens.contains(&&token2));
 
         // Also, if a user has no tokens, we should get an empty list
-        let store_tokens = store.get_tokens_for_users(vec![&user_id2]);
+        let store_tokens = store.get_tokens_for_user(&user_id2);
         assert!(store_tokens.is_empty());
 
         // Tokens cannot be removed if they are not associated with the current
