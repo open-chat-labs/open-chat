@@ -1,5 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
+use crate::model::streak::Streak;
 use crate::{Data, RuntimeState, mutate_state, openchat_bot};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
@@ -9,7 +10,7 @@ use stable_memory::get_reader;
 use std::collections::BTreeSet;
 use std::time::Duration;
 use tracing::info;
-use types::{ChitEarned, ChitEarnedReason, IdempotentEnvelope};
+use types::{CanisterId, ChitEarned, ChitEarnedReason, IdempotentEnvelope};
 use user_canister::post_upgrade::Args;
 use utils::env::Environment;
 
@@ -55,6 +56,7 @@ fn post_upgrade(args: Args) {
 fn reinstate_daily_claims(state: &mut RuntimeState, max_days_to_reinstate: u16) {
     let now = state.env.now();
     let now_day = state.data.streak.timestamp_to_day(now).unwrap();
+    let current_start_day = state.data.streak.start_day();
     let current_end_day = state.data.streak.end_day();
     if current_end_day < now_day.saturating_sub(max_days_to_reinstate + 1) {
         return;
@@ -66,13 +68,13 @@ fn reinstate_daily_claims(state: &mut RuntimeState, max_days_to_reinstate: u16) 
         .data
         .chit_events
         .iter_daily_claims()
-        .flat_map(|ts| state.data.streak.timestamp_to_day(ts))
+        .flat_map(|ts| Streak::timestamp_to_offset_day(ts, state.data.streak.utc_offset_mins_at_ts(ts)))
         .collect();
 
     let (days_to_reinstate, new_start_day) =
         streak_days_to_reinstate(&chit_claim_days, now_day, max_days_to_reinstate as usize);
 
-    if !days_to_reinstate.is_empty() && now_day - new_start_day > 7 {
+    if new_start_day < current_start_day && now_day - new_start_day > 7 {
         let count = days_to_reinstate.len();
         for day in days_to_reinstate {
             // Take the last millisecond of the day
@@ -92,12 +94,12 @@ fn reinstate_daily_claims(state: &mut RuntimeState, max_days_to_reinstate: u16) 
         assert!(new_streak > previous_streak);
 
         let first_line = if count == 1 {
-            "1 missed daily claim has been reinstated."
+            "missed daily claim has been reinstated."
         } else {
-            "2 missed daily claims have been reinstated."
+            "missed daily claims have been reinstated."
         };
         let message = format!(
-            "{first_line}
+            "{count} {first_line}
 Your new streak length is now {new_streak}!
 
 Going forward, daily claims will operate in your local timezone rather than UTC."
