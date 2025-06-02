@@ -25,10 +25,6 @@ pub struct Streak {
 }
 
 impl Streak {
-    pub fn start_day(&self) -> u16 {
-        self.start_day
-    }
-
     pub fn set_start_day(&mut self, start_day: u16) {
         self.start_day = start_day;
     }
@@ -212,7 +208,7 @@ impl Streak {
             .unwrap_or_default()
     }
 
-    fn set_end_day(&mut self, day: u16) {
+    pub fn set_end_day(&mut self, day: u16) {
         self.end_day = day;
         let streak = 1 + self.end_day - self.start_day;
         if streak > self.max_streak {
