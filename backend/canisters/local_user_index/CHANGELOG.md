@@ -8,9 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Add `bot_chat_summary` including direct chat support ([#8076](https://github.com/open-chat-labs/open-chat/pull/8076))
+
+## [[2.0.1769](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1769-local_user_index)] - 2025-05-29
+
+### Changed
+
 - Remove all references to LocalGroupIndexes ([#8057](https://github.com/open-chat-labs/open-chat/pull/8057))
 - Add `timestamp` to `group_and_community_summary_updates_v2` responses ([#8062](https://github.com/open-chat-labs/open-chat/pull/8062))
-- Add `bot_chat_summary` including direct chat support ([#8076](https://github.com/open-chat-labs/open-chat/pull/8076))
 
 ## [[2.0.1762](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1762-local_user_index)] - 2025-05-28
 
