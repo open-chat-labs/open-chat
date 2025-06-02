@@ -14,9 +14,8 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::EventPusher;
-use constants::{DAY_IN_MS, ICP_LEDGER_CANISTER_ID, LIFETIME_DIAMOND_TIMESTAMP, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
-use event_store_producer::{Event, EventBuilder, EventStoreClient, EventStoreClientBuilder};
-use event_store_producer_cdk_runtime::CdkRuntime;
+use constants::{DAY_IN_MS, ICP_LEDGER_CANISTER_ID, LIFETIME_DIAMOND_TIMESTAMP, OPENCHAT_BOT_USER_ID};
+use event_store_types::{Event, EventBuilder};
 use fire_and_forget_handler::FireAndForgetHandler;
 use installed_bots::{BotApiKeys, InstalledBots};
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
@@ -36,7 +35,6 @@ use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
 use std::ops::Deref;
-use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BotInitiator, BotNotification, BotPermissions, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics,
@@ -421,8 +419,6 @@ struct Data {
     pub p2p_swaps: P2PSwaps,
     pub user_canister_events_queue: GroupedTimerJobQueue<UserCanisterEventBatch>,
     pub video_call_operators: Vec<Principal>,
-    #[deprecated]
-    pub event_store_client: EventStoreClient<CdkRuntime>,
     pub pin_number: PinNumber,
     pub btc_address: Option<Timestamped<String>>,
     pub chit_events: ChitEarnedEvents,
@@ -457,7 +453,6 @@ impl Data {
         referred_by: Option<UserId>,
         now: TimestampMillis,
     ) -> Data {
-        #[expect(deprecated)]
         Data {
             owner,
             direct_chats: DirectChats::default(),
@@ -490,9 +485,6 @@ impl Data {
             p2p_swaps: P2PSwaps::default(),
             user_canister_events_queue: GroupedTimerJobQueue::new(10, true),
             video_call_operators,
-            event_store_client: EventStoreClientBuilder::new(local_user_index_canister_id, CdkRuntime::default())
-                .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
-                .build(),
             pin_number: PinNumber::default(),
             btc_address: None,
             chit_events: ChitEarnedEvents::default(),

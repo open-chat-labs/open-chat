@@ -8,10 +8,14 @@ pub struct Args {
     pub group_index_canister_id: CanisterId,
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
+    #[deprecated]
+    #[serde(default = "CanisterId::anonymous")]
     pub notifications_canister_id: CanisterId,
     #[deprecated]
+    #[serde(default = "CanisterId::anonymous")]
     pub bot_api_gateway_canister_id: CanisterId,
     #[deprecated]
+    #[serde(default = "CanisterId::anonymous")]
     pub proposals_bot_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub wasm_version: BuildVersion,
