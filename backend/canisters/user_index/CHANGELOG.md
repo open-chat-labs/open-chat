@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Remove all references to Notifications canisters ([#8087](https://github.com/open-chat-labs/open-chat/pull/8087))
+
 ### Fixed
 
 - Ensure canisters within `include` are always relayed on to local indexes ([#8083](https://github.com/open-chat-labs/open-chat/pull/8083))
