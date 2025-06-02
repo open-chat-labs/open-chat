@@ -105,7 +105,7 @@ impl FcmTokenStore {
 
                         Ok(())
                     } else {
-                        return Err("No tokens associated with user".to_string());
+                        Err("No tokens associated with user".to_string())
                     }
                 },
             )
@@ -141,14 +141,14 @@ mod test {
             Err("Token already exists".to_string())
         );
 
-        assert_eq!(store.check_token_exists(&token1), true);
-        assert_eq!(store.check_token_exists(&token2), true);
-        assert_eq!(store.check_token_exists(&token3), false);
+        assert!(store.check_token_exists(&token1));
+        assert!(store.check_token_exists(&token2));
+        assert!(!store.check_token_exists(&token3));
 
         let store_tokens = store.get_tokens_for_user(&user_id1).expect("User should have tokens");
         assert_eq!(store_tokens.len(), 2);
-        assert_eq!(store_tokens.contains(&&token1), true);
-        assert_eq!(store_tokens.contains(&&token2), true);
+        assert!(store_tokens.contains(&&token1));
+        assert!(store_tokens.contains(&&token2));
         assert_eq!(store.get_tokens_for_user(&user_id2), None);
 
         assert_eq!(
