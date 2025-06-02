@@ -10,7 +10,7 @@ use stable_memory::get_reader;
 use std::collections::BTreeSet;
 use std::time::Duration;
 use tracing::info;
-use types::{CanisterId, ChitEarned, ChitEarnedReason, IdempotentEnvelope};
+use types::{ChitEarned, ChitEarnedReason, IdempotentEnvelope};
 use user_canister::post_upgrade::Args;
 use utils::env::Environment;
 
