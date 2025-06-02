@@ -2348,6 +2348,7 @@ type ChatEventType = variant {
     ExternalUrlUpdated;
     InviteCodeChanged;
     MessageDeleted;
+    MessageUndeleted;
     BotRemoved;
     MessageReaction;
     MembersLeft;
