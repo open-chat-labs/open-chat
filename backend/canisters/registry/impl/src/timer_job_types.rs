@@ -153,9 +153,9 @@ impl ExpandOntoSubnetJob {
                 } else {
                     return Err(C2CError::new(
                         self.notifications_index,
-                        "add_notifications_canister",
+                        "notify_local_index_added",
                         RejectCode::CanisterError,
-                        format!("Failed to add notifications canister: {response:?}"),
+                        format!("Failed to notify NotificationIndex: {response:?}"),
                     ));
                 }
             }
@@ -196,9 +196,9 @@ impl ExpandOntoSubnetJob {
                 } else {
                     return Err(C2CError::new(
                         self.group_index,
-                        "add_local_index_canister",
+                        "notify_local_index_added",
                         RejectCode::CanisterError,
-                        format!("Failed to add local index: {response:?}"),
+                        format!("Failed to notify GroupIndex: {response:?}"),
                     ));
                 }
             }
