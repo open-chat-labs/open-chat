@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Push canister upgrade to all local indexes if `versions` is set ([#8080](https://github.com/open-chat-labs/open-chat/pull/8080))
+
+## [[2.0.1770](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1770-user_index)] - 2025-05-29
+
+### Changed
+
 - Remove all references to LocalGroupIndexes ([#8057](https://github.com/open-chat-labs/open-chat/pull/8057))
 - Return CHIT details in current user summary ([#8069](https://github.com/open-chat-labs/open-chat/pull/8069))
 
