@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::BTreeSet;
 use types::UserId;
 
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub struct FcmToken(String);
 
 impl From<String> for FcmToken {
@@ -21,31 +21,16 @@ impl AsRef<str> for FcmToken {
     }
 }
 
-type FcmTokenId = u64;
-
-/// We store FCM tokens in a way that allows us to efficiently check for
-/// existence, reduce memoy usage, and get tokens for a specific user.
-///
-/// We use two properties to track FCM tokens; first one as a full set of
-/// reported tokens, and the second to track which tokens are assigned to which
-/// user. To avoid duplicating token values and to reduce memory usage, we assign
-/// a unique ID for each token. This id is then used to map tokens to users.
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct FcmTokenStore {
-    // TODO consider recycling token IDs, perhaps using VecDeque
-    latest_token_id: FcmTokenId,
-
-    /// Maps FCM token IDs to the actual FCM token.
-    fcm_tokens: HashMap<FcmTokenId, FcmToken>,
-
-    /// Maps user IDs to a set of FCM token IDs.
-    fcm_tokens_for_user: HashMap<UserId, HashSet<FcmTokenId>>,
+    // User tokens are stored in a BTreeSet to ensure uniqueness!
+    fcm_user_tokens: BTreeSet<(UserId, FcmToken)>,
 }
 
 impl FcmTokenStore {
     /// Checks if a given FCM token exists!
     pub fn check_token_exists(&self, token: &FcmToken) -> bool {
-        self.fcm_tokens.values().any(|t| t == token)
+        self.fcm_user_tokens.iter().any(|(_, t)| t == token)
     }
 
     /// Add a new FCM token, and assign it to a user.
@@ -55,13 +40,7 @@ impl FcmTokenStore {
     /// token is not assigned to multiple users.
     pub fn add_token(&mut self, token: FcmToken, user_id: UserId) -> Result<(), String> {
         if !self.check_token_exists(&token) {
-            self.latest_token_id += 1;
-            self.fcm_tokens.insert(self.latest_token_id, token.clone());
-            self.fcm_tokens_for_user
-                .entry(user_id)
-                .or_default()
-                .insert(self.latest_token_id);
-
+            self.fcm_user_tokens.insert((user_id, token.clone()));
             Ok(())
         } else {
             Err("Token already exists".to_string())
@@ -69,53 +48,29 @@ impl FcmTokenStore {
     }
 
     /// Remove a token from the store. We remove tokens when the Firebase
-    /// request to push notification with this token fails, which means that
-    /// the token is no longer valid or the user has uninstalled the app. We
-    /// should also have the user id available at that point.
+    /// request to push notification with the token fails. This means that
+    /// the token is no longer valid or the user has uninstalled the app.
     ///
-    /// If the token exists, it will remove the mapping and return the user ID.
-    /// If the token does not exist, it will return None.
-    pub fn remove_token(&mut self, token: &FcmToken, user_id: &UserId) -> Result<(), String> {
-        // Find the token ID associated with the given FCM token
-        self.fcm_tokens
-            .iter()
-            .find(|(_, t)| *t == token)
-            .map(|(id, _)| *id)
-            .map_or_else(
-                || Err("Token not found".to_string()),
-                |token_id| {
-                    // Remove the token ID from the user's set of tokens
-                    if let Some(tokens) = self.fcm_tokens_for_user.get_mut(user_id) {
-                        // Make sure token is associated with the user!
-                        if !tokens.contains(&token_id) {
-                            return Err("Token is not associated with user".to_string());
-                        }
-
-                        // Remove the token ID from the user's set
-                        tokens.remove(&token_id);
-
-                        // If the user has no more tokens, remove the user entry.
-                        // This is a micro optimization to keep the map clean.
-                        if tokens.is_empty() {
-                            self.fcm_tokens_for_user.remove(user_id);
-                        }
-
-                        // Finally, remove the token from the fcm_tokens map
-                        self.fcm_tokens.remove(&token_id);
-
-                        Ok(())
-                    } else {
-                        Err("No tokens associated with user".to_string())
-                    }
-                },
-            )
+    /// If the user and token combo exists, it will remove the mapping, and we
+    /// confirm that with the OK result. If the token is not associated
+    /// with the user, remove operation returns false, and we return an error.
+    pub fn remove_token(&mut self, user_id: &UserId, token: &FcmToken) -> Result<(), String> {
+        if self.fcm_user_tokens.remove(&(*user_id, token.clone())) {
+            Ok(())
+        } else {
+            Err("Token is not associated with current user".to_string())
+        }
     }
 
-    /// Get all FCM tokens associated with a specific user.
-    pub fn get_tokens_for_user(&self, user_id: &UserId) -> Option<Vec<&FcmToken>> {
-        self.fcm_tokens_for_user
-            .get(user_id)
-            .map(|token_ids| token_ids.iter().filter_map(|id| self.fcm_tokens.get(id)).collect::<Vec<_>>())
+    /// Get all FCM tokens associated with specific users! It is very likely
+    /// we'll have to push notifications to multiple users at once, so this
+    /// method allows us to retrieve all tokens for a set of users.
+    pub fn get_tokens_for_users(&self, user_ids: Vec<&UserId>) -> Vec<&FcmToken> {
+        self.fcm_user_tokens
+            .iter()
+            .filter(|(user, _)| user_ids.contains(&user))
+            .map(|(_, token)| token)
+            .collect()
     }
 }
 
@@ -130,33 +85,49 @@ mod test {
 
         let user_id1 = UserId::new(CanisterId::from_text("3skqk-iqaaa-aaaaf-aaa3q-cai").expect("Invalid principal"));
         let user_id2 = UserId::new(CanisterId::from_text("hnv5y-siaaa-aaaaf-aacza-cai").expect("Invalid principal"));
+
         let token1 = FcmToken::from("token1".to_string());
         let token2 = FcmToken::from("token2".to_string());
         let token3 = FcmToken::from("token3".to_string());
 
+        // Assert tokens can be added
         assert_eq!(store.add_token(token1.clone(), user_id1), Ok(()));
         assert_eq!(store.add_token(token2.clone(), user_id1), Ok(()));
+
+        // Assert that adding the same token for a different user fails
         assert_eq!(
             store.add_token(token1.clone(), user_id2),
             Err("Token already exists".to_string())
         );
 
+        // Assert that we can check if a token exists
         assert!(store.check_token_exists(&token1));
         assert!(store.check_token_exists(&token2));
         assert!(!store.check_token_exists(&token3));
 
-        let store_tokens = store.get_tokens_for_user(&user_id1).expect("User should have tokens");
+        // Assert that retrieveing tokens for users works correctly
+        let store_tokens = store.get_tokens_for_users(vec![&user_id1]);
         assert_eq!(store_tokens.len(), 2);
         assert!(store_tokens.contains(&&token1));
         assert!(store_tokens.contains(&&token2));
-        assert_eq!(store.get_tokens_for_user(&user_id2), None);
 
+        // Also, if a user has no tokens, we should get an empty list
+        let store_tokens = store.get_tokens_for_users(vec![&user_id2]);
+        assert!(store_tokens.is_empty());
+
+        // Tokens cannot be removed if they are not associated with the current
+        // user, and we should get an error.
         assert_eq!(
-            store.remove_token(&token1, &user_id2),
-            Err("No tokens associated with user".to_string())
+            store.remove_token(&user_id2, &token1),
+            Err("Token is not associated with current user".to_string())
         );
 
-        assert_eq!(store.remove_token(&token1, &user_id1), Ok(()));
-        assert_eq!(store.remove_token(&token1, &user_id1), Err("Token not found".to_string()));
+        // Assert that we can remove tokens correctly, and if we try it again,
+        // we should get an error.
+        assert_eq!(store.remove_token(&user_id1, &token1), Ok(()));
+        assert_eq!(
+            store.remove_token(&user_id1, &token1),
+            Err("Token is not associated with current user".to_string())
+        );
     }
 }
