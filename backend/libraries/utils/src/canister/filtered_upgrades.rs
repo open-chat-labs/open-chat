@@ -19,16 +19,16 @@ pub fn build_filter_map<F: Fn(CanisterId) -> Option<CanisterId>>(
     };
 
     if filter.include.is_empty() || !filter.versions.is_empty() {
-        for canister_id in index_canisters {
-            map.insert(canister_id, default.clone());
+        for canister_id in index_canisters.iter() {
+            map.insert(*canister_id, default.clone());
         }
-    } else {
-        for canister_id in filter.include {
-            if index_canisters.contains(&canister_id) {
-                map.entry(canister_id).or_insert(default.clone());
-            } else if let Some(index) = get_index_canister(canister_id) {
-                map.entry(index).or_insert(default.clone()).include.insert(canister_id);
-            }
+    }
+
+    for canister_id in filter.include {
+        if index_canisters.contains(&canister_id) {
+            map.entry(canister_id).or_insert(default.clone());
+        } else if let Some(index) = get_index_canister(canister_id) {
+            map.entry(index).or_insert(default.clone()).include.insert(canister_id);
         }
     }
 
