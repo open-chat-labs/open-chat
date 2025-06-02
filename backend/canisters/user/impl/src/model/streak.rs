@@ -25,6 +25,10 @@ pub struct Streak {
 }
 
 impl Streak {
+    pub fn start_day(&self) -> u16 {
+        self.start_day
+    }
+
     pub fn set_start_day(&mut self, start_day: u16) {
         self.start_day = start_day;
     }

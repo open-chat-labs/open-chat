@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Take UTC offset updates into account when calculating daily claim days ([#8081](https://github.com/open-chat-labs/open-chat/pull/8081))
+
+## [[2.0.1774-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1774-user)] - 2025-06-02
+
 ### Added
 
 - Add `c2c_bot_chat_summary` ([#8076](https://github.com/open-chat-labs/open-chat/pull/8076))
