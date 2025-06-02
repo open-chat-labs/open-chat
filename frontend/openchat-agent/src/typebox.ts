@@ -1515,7 +1515,6 @@ export const GroupIndexAddHotGroupExclusionResponse = Type.Union([
         Error: OCError,
     }),
 ]);
-
 export type GroupIndexMarkLocalGroupIndexFullArgs = Static<
     typeof GroupIndexMarkLocalGroupIndexFullArgs
 >;
@@ -2604,12 +2603,6 @@ export const LocalUserIndexJoinChannelArgs = Type.Object({
     invite_code: Type.Optional(Type.BigInt()),
     referred_by: Type.Optional(UserId),
     verified_credential_args: Type.Optional(VerifiedCredentialGateArgs),
-});
-
-export type LocalUserIndexBotChatDetailsArgs = Static<typeof LocalUserIndexBotChatDetailsArgs>;
-export const LocalUserIndexBotChatDetailsArgs = Type.Object({
-    channel_id: Type.Optional(ChannelId),
-    auth_token: AuthToken,
 });
 
 export type LocalUserIndexBotDeleteMessagesArgs = Static<
@@ -5450,6 +5443,16 @@ export const JoinVideoCallArgs = Type.Object({
     chat: Chat,
 });
 
+export type ChatSummaryDirect = Static<typeof ChatSummaryDirect>;
+export const ChatSummaryDirect = Type.Object({
+    last_updated: Type.BigInt(),
+    latest_event_index: EventIndex,
+    latest_message_index: Type.Optional(MessageIndex),
+    events_ttl: Type.Optional(Type.BigInt()),
+    events_ttl_last_updated: Type.Optional(Type.BigInt()),
+    video_call_in_progress: Type.Optional(VideoCall),
+});
+
 export type RoleChanged = Static<typeof RoleChanged>;
 export const RoleChanged = Type.Object({
     user_ids: Type.Array(UserId),
@@ -6101,13 +6104,6 @@ export const LocalUserIndexInviteUsersToChannelResponse = Type.Union([
         Error: OCError,
     }),
 ]);
-
-export type LocalUserIndexBotChatEventsArgs = Static<typeof LocalUserIndexBotChatEventsArgs>;
-export const LocalUserIndexBotChatEventsArgs = Type.Object({
-    channel_id: Type.Optional(ChannelId),
-    events: LocalUserIndexChatEventsEventsSelectionCriteria,
-    auth_token: AuthToken,
-});
 
 export type LocalUserIndexReportMessageArgs = Static<typeof LocalUserIndexReportMessageArgs>;
 export const LocalUserIndexReportMessageArgs = Type.Object({
@@ -7231,6 +7227,11 @@ export const LocalUserIndexBotDeleteMessagesV2Args = Type.Object({
     message_ids: Type.Array(MessageId),
 });
 
+export type LocalUserIndexBotChatSummaryArgs = Static<typeof LocalUserIndexBotChatSummaryArgs>;
+export const LocalUserIndexBotChatSummaryArgs = Type.Object({
+    chat_context: BotChatContext,
+});
+
 export type LocalUserIndexBotAddReactionV2Args = Static<typeof LocalUserIndexBotAddReactionV2Args>;
 export const LocalUserIndexBotAddReactionV2Args = Type.Object({
     chat_context: BotChatContext,
@@ -7255,13 +7256,8 @@ export const LocalUserIndexBotSubscribeToEventsArgs = Type.Object({
     chat_events: Type.Array(ChatEventType),
 });
 
-export type LocalUserIndexBotChatDetailsV2Args = Static<typeof LocalUserIndexBotChatDetailsV2Args>;
-export const LocalUserIndexBotChatDetailsV2Args = Type.Object({
-    chat_context: BotChatContext,
-});
-
-export type LocalUserIndexBotChatEventsV2Args = Static<typeof LocalUserIndexBotChatEventsV2Args>;
-export const LocalUserIndexBotChatEventsV2Args = Type.Object({
+export type LocalUserIndexBotChatEventsArgs = Static<typeof LocalUserIndexBotChatEventsArgs>;
+export const LocalUserIndexBotChatEventsArgs = Type.Object({
     chat_context: BotChatContext,
     events: LocalUserIndexChatEventsEventsSelectionCriteria,
 });
@@ -8331,6 +8327,30 @@ export const UserEditMessageArgs = Type.Object({
     correlation_id: Type.BigInt(),
 });
 
+export type ChatSummaryGroup = Static<typeof ChatSummaryGroup>;
+export const ChatSummaryGroup = Type.Object({
+    name: Type.String(),
+    description: Type.String(),
+    avatar_id: Type.Optional(Type.BigInt()),
+    is_public: Type.Boolean(),
+    history_visible_to_new_joiners: Type.Boolean(),
+    messages_visible_to_non_members: Type.Boolean(),
+    permissions: GroupPermissions,
+    rules: VersionedRules,
+    events_ttl: Type.Optional(Type.BigInt()),
+    events_ttl_last_updated: Type.Optional(Type.BigInt()),
+    gate_config: Type.Optional(AccessGateConfig),
+    video_call_in_progress: Type.Optional(VideoCall),
+    verified: Type.Optional(Type.Boolean()),
+    frozen: Type.Optional(FrozenGroupInfo),
+    date_last_pinned: Type.Optional(Type.BigInt()),
+    last_updated: Type.BigInt(),
+    external_url: Type.Optional(Type.String()),
+    latest_event_index: EventIndex,
+    latest_message_index: Type.Optional(MessageIndex),
+    member_count: Type.Number(),
+});
+
 export type ChannelMatch = Static<typeof ChannelMatch>;
 export const ChannelMatch = Type.Object({
     id: ChannelId,
@@ -8360,29 +8380,15 @@ export const Message = Type.Object({
     block_level_markdown: Type.Boolean(),
 });
 
-export type ChatDetails = Static<typeof ChatDetails>;
-export const ChatDetails = Type.Object({
-    name: Type.String(),
-    description: Type.String(),
-    avatar_id: Type.Optional(Type.BigInt()),
-    is_public: Type.Boolean(),
-    history_visible_to_new_joiners: Type.Boolean(),
-    messages_visible_to_non_members: Type.Boolean(),
-    permissions: GroupPermissions,
-    rules: VersionedRules,
-    events_ttl: Type.Optional(Type.BigInt()),
-    events_ttl_last_updated: Type.Optional(Type.BigInt()),
-    gate_config: Type.Optional(AccessGateConfig),
-    video_call_in_progress: Type.Optional(VideoCall),
-    verified: Type.Optional(Type.Boolean()),
-    frozen: Type.Optional(FrozenGroupInfo),
-    date_last_pinned: Type.Optional(Type.BigInt()),
-    last_updated: Type.BigInt(),
-    external_url: Type.Optional(Type.String()),
-    latest_event_index: EventIndex,
-    latest_message_index: Type.Optional(MessageIndex),
-    member_count: Type.Number(),
-});
+export type ChatSummary = Static<typeof ChatSummary>;
+export const ChatSummary = Type.Union([
+    Type.Object({
+        Group: ChatSummaryGroup,
+    }),
+    Type.Object({
+        Direct: ChatSummaryDirect,
+    }),
+]);
 
 export type CommunityMatch = Static<typeof CommunityMatch>;
 export const CommunityMatch = Type.Object({
@@ -8564,12 +8570,12 @@ export const GroupIndexExploreCommunitiesResponse = Type.Union([
     }),
 ]);
 
-export type LocalUserIndexBotChatDetailsResponse = Static<
-    typeof LocalUserIndexBotChatDetailsResponse
+export type LocalUserIndexBotChatSummaryResponse = Static<
+    typeof LocalUserIndexBotChatSummaryResponse
 >;
-export const LocalUserIndexBotChatDetailsResponse = Type.Union([
+export const LocalUserIndexBotChatSummaryResponse = Type.Union([
     Type.Object({
-        Success: ChatDetails,
+        Success: ChatSummary,
     }),
     Type.Object({
         Error: OCError,
