@@ -18,25 +18,11 @@ pub struct Streak {
     payment_lock: bool,
     payments: Vec<UserCanisterStreakInsurancePayment>,
     claims: Vec<UserCanisterStreakInsuranceClaim>,
-    #[serde(default)]
     utc_offset_mins: i16,
-    #[serde(default)]
     utc_offset_updates: Vec<(TimestampMillis, i16)>,
 }
 
 impl Streak {
-    pub fn start_day(&self) -> u16 {
-        self.start_day
-    }
-
-    pub fn set_start_day(&mut self, start_day: u16) {
-        self.start_day = start_day;
-    }
-
-    pub fn end_day(&self) -> u16 {
-        self.end_day
-    }
-
     pub fn days(&self, now: TimestampMillis) -> u16 {
         if let Some(today) = self.timestamp_to_day(now) {
             if !self.is_new_streak(today) {

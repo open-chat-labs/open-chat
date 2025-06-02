@@ -24,8 +24,7 @@ community_canister = { path = "../api" }
 constants = { path = "../../../libraries/constants" }
 escrow_canister = { path = "../../escrow/api" }
 escrow_canister_c2c_client = { path = "../../escrow/c2c_client" }
-event_store_producer = { workspace = true, features = ["json"] }
-event_store_producer_cdk_runtime = { workspace = true }
+event_store_types = { workspace = true, features = ["json"] }
 fire_and_forget_handler = { path = "../../../libraries/fire_and_forget_handler" }
 futures = { workspace = true }
 gated_groups = { path = "../../../libraries/gated_groups" }

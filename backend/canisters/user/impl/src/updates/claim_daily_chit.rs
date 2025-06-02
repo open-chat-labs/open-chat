@@ -2,7 +2,7 @@ use crate::guards::caller_is_owner;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use event_store_producer::EventBuilder;
+use event_store_types::EventBuilder;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use serde::Serialize;
 use types::{Achievement, ChitEarned, ChitEarnedReason, UserId};

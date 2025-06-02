@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1778](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1778-local_user_index)] - 2025-06-02
+
 ### Changed
 
 - Add `bot_chat_summary` including direct chat support ([#8076](https://github.com/open-chat-labs/open-chat/pull/8076))
