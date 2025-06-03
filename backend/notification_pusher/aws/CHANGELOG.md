@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Read notification canisters from NotificationsIndex ([#8091](https://github.com/open-chat-labs/open-chat/pull/8091))
+
+## [[2.0.1775](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1775-notifications_pusher)] - 2025-06-02
+
+### Changed
+
+- Include application/json header for bot notifications when applicable ([#8068](https://github.com/open-chat-labs/open-chat/pull/8068))
+
 ## [[2.0.1765](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1765-notifications_pusher)] - 2025-05-28
 
 ### Added
