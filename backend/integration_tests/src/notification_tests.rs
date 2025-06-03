@@ -1,12 +1,13 @@
 use crate::env::ENV;
 use crate::utils::tick_many;
 use crate::{CanisterIds, TestEnv, User, client};
+use candid::Principal;
 use itertools::Itertools;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
-use types::{MessageContentInitial, TextContent};
+use types::{Empty, MessageContentInitial, TextContent};
 
 #[test]
 fn direct_message_notification_succeeds() {
@@ -313,6 +314,26 @@ fn notifications_blocked_from_blocked_users() {
 
     assert_eq!(notifications_response.notifications.len(), 1);
     assert!(notifications_response.subscriptions.contains_key(&user2.user_id));
+}
+
+#[test]
+fn notification_canisters_returns_correct_ids() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let user = client::register_user(env, canister_ids);
+
+    let notification_canisters = client::notifications_index::notification_canisters(
+        env,
+        Principal::anonymous(),
+        canister_ids.notifications_index,
+        &Empty {},
+    );
+
+    assert_eq!(
+        notification_canisters,
+        vec![canister_ids.local_user_index(env, user.canister())]
+    );
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds) -> TestData {

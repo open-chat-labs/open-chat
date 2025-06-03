@@ -119,9 +119,8 @@
 
         &.three_six_five {
             background-image: url("/assets/streaks/streak_365.svg");
-            color: white;
-            text-shadow: 0.5px 0.5px 0.5px #555;
             padding: 0 0 0 7px;
+            color: #085c8c;
         }
 
         &.disabled {

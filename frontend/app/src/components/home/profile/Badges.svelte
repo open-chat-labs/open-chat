@@ -1,9 +1,9 @@
 <script lang="ts">
+    import { disableChit } from "@src/stores/settings";
     import type { DiamondMembershipStatus } from "openchat-client";
     import Diamond from "../../icons/Diamond.svelte";
-    import Streak from "./Streak.svelte";
     import Verified from "../../icons/Verified.svelte";
-    import { disableChit } from "@src/stores/settings";
+    import Streak from "./Streak.svelte";
 
     interface Props {
         diamondStatus?: DiamondMembershipStatus["kind"] | undefined;
