@@ -180,6 +180,9 @@
 
         @include mobile() {
             $offset: $avatar-mod-offset-small;
+            &.maxStreak {
+                $offset: calc($offset - 5px);
+            }
             top: $offset;
             &:not(.rtl) {
                 left: $offset;

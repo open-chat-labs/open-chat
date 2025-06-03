@@ -186,7 +186,7 @@
     let botProfile: BotProfileProps | undefined = $state(undefined);
     let confirmedReadByThem = $derived(client.messageIsReadByThem(chatId, msg.messageIndex));
     let readByThem = $derived(confirmedReadByThem || $unconfirmedReadByThem.has(msg.messageId));
-    let streak = $derived(sender?.streak ?? 0);
+    let streak = $derived(sender?.maxStreak ?? 0);
     let maxStreak = $derived(streak >= 365);
 
     trackedEffect("read-by-them", () => {
