@@ -17,7 +17,6 @@ async fn main() -> Result<(), Error> {
 
     let vapid_private_pem = dotenv::var("VAPID_PRIVATE_PEM")?;
     let index_canister_id = Principal::from_text(dotenv::var("NOTIFICATIONS_INDEX_CANISTER_ID")?).unwrap();
-    let notifications_canister_ids_string = dotenv::var("NOTIFICATIONS_CANISTER_IDS")?;
     let ic_url = dotenv::var("IC_URL")?;
     let ic_identity_pem = dotenv::var("IC_IDENTITY_PEM")?;
     let is_production = bool::from_str(&dotenv::var("IS_PRODUCTION")?).unwrap();
@@ -35,17 +34,11 @@ async fn main() -> Result<(), Error> {
 
     info!("Configuration complete");
 
-    let notifications_canister_ids: Vec<_> = notifications_canister_ids_string
-        .split(';')
-        .map(|str| Principal::from_text(str).unwrap())
-        .collect();
-
     tokio::spawn(write_metrics_to_file());
 
     run_notifications_pusher(
         ic_agent,
         index_canister_id,
-        notifications_canister_ids,
         dynamodb_index_store,
         vapid_private_pem,
         pusher_count,

@@ -2,7 +2,6 @@ use candid::Principal;
 use index_store::DummyStore;
 use notification_pusher_core::ic_agent::IcAgent;
 use notification_pusher_core::{run_notifications_pusher, write_metrics};
-use std::collections::HashMap;
 use std::str::FromStr;
 use tokio::time;
 use tracing::info;
@@ -15,12 +14,9 @@ async fn main() -> Result<(), Error> {
 
     info!("Initializing notification pusher");
 
-    let args: Vec<String> = std::env::args().collect();
-    let index = args.get(1).map(|a| a.parse::<u64>().unwrap()).unwrap_or_default();
     let vapid_private_pem = read_env_var("VAPID_PRIVATE_PEM")?;
     let index_canister_id = Principal::from_text(read_env_var("NOTIFICATIONS_INDEX_CANISTER_ID")?)?;
-    let notifications_canister_id = Principal::from_text(read_env_var("NOTIFICATIONS_CANISTER_ID")?)?;
-    let index_store = DummyStore::new(HashMap::from([(notifications_canister_id, index)]));
+    let index_store = DummyStore::default();
     let ic_url = read_env_var("IC_URL")?;
     let ic_identity_pem = read_env_var("IC_IDENTITY_PEM")?;
     let is_production = bool::from_str(&read_env_var("IS_PRODUCTION")?).unwrap();
@@ -38,7 +34,6 @@ async fn main() -> Result<(), Error> {
     run_notifications_pusher(
         ic_agent,
         index_canister_id,
-        vec![notifications_canister_id],
         index_store,
         vapid_private_pem,
         pusher_count,

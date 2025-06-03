@@ -6648,11 +6648,11 @@ dependencies = [
 name = "notifications_index_canister_client"
 version = "0.1.0"
 dependencies = [
- "candid",
  "canister_client",
  "ic-agent",
+ "ic_principal",
+ "msgpack",
  "notifications_index_canister",
- "types",
 ]
 
 [[package]]
