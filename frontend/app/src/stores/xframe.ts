@@ -43,8 +43,10 @@ const FRAME_ANCESTORS = [
     "https://power-3.org", // pow-3 live (alias),
     "https://mimento.ai",
     "https://gboec-sqaaa-aaaah-aredq-cai.icp0.io", //Mimento canister Id url
-    "https://lx7ws-diaaa-aaaag-aubda-cai.icp0.io", // TacoDAO ID URL
-    "https://tacodao.com", // TacoDAO Website URL
+    "https://lx7ws-diaaa-aaaag-aubda-cai.icp0.io", // TacoDAO Production ID URL
+    "https://tacodao.com", // TacoDAO Production Website URL
+    "https://wxunf-maaaa-aaaab-qbzga-cai.icp0.io", // TacoDAO Staging ID URL
+    "https://staging.tacodao.com", // TacoDAO Staging Website URL
 ];
 
 type InboundXFrameMessage = UpdateTheme | ChangeRoute | OverrideSettings | Logout;
