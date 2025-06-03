@@ -2,6 +2,7 @@ use crate::{generate_msgpack_query_call, generate_msgpack_update_call, generate_
 use notifications_index_canister::*;
 
 // Queries
+generate_msgpack_query_call!(notification_canisters);
 generate_msgpack_query_call!(subscription_exists);
 
 // Updates
