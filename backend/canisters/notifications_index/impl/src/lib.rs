@@ -1,3 +1,4 @@
+use crate::model::fcm_token_store::FcmTokenStore;
 use crate::model::local_index_event_batch::LocalIndexEventBatch;
 use crate::model::subscriptions::Subscriptions;
 use candid::Principal;
@@ -127,6 +128,8 @@ struct Data {
     pub idempotency_checker: IdempotencyChecker,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
+    #[serde(default)]
+    pub fcm_token_store: FcmTokenStore,
 }
 
 impl Data {
@@ -153,6 +156,7 @@ impl Data {
             idempotency_checker: IdempotencyChecker::default(),
             rng_seed: [0; 32],
             test_mode,
+            fcm_token_store: FcmTokenStore::default(),
         }
     }
 }
