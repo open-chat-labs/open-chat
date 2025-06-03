@@ -10,7 +10,7 @@ generate_candid_query_call!(recommended_groups);
 generate_candid_query_call!(search);
 
 // Updates
-generate_candid_update_call!(add_local_index_canister);
+generate_candid_update_call!(notify_local_index_added);
 generate_candid_update_call!(upgrade_community_canister_wasm);
 generate_candid_update_call!(upgrade_group_canister_wasm);
 generate_candid_update_call!(upload_wasm_chunk);

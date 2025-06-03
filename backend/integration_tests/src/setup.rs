@@ -116,7 +116,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let icp_ledger_canister_wasm = wasms::ICP_LEDGER.clone();
     let identity_canister_wasm = wasms::IDENTITY.clone();
     let local_user_index_canister_wasm = wasms::LOCAL_USER_INDEX.clone();
-    let notifications_canister_wasm = wasms::NOTIFICATIONS.clone();
     let notifications_index_canister_wasm = wasms::NOTIFICATIONS_INDEX.clone();
     let online_users_canister_wasm = wasms::ONLINE_USERS.clone();
     let openchat_installer_canister_wasm = wasms::OPENCHAT_INSTALLER.clone();
@@ -413,13 +412,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         controller,
         group_index_canister_id,
         community_canister_wasm,
-    );
-
-    client::notifications_index::happy_path::upgrade_notifications_canister_wasm(
-        env,
-        controller,
-        notifications_index_canister_id,
-        notifications_canister_wasm,
     );
 
     client::storage_index::happy_path::upgrade_bucket_canister_wasm(

@@ -30,8 +30,7 @@ fn expand_onto_subnet_impl(args: Args, state: &mut RuntimeState) -> Result<Expan
         if state.data.test_mode {
             state.data.subnets.update_in_progress(
                 |s| {
-                    s.local_user_index = args.local_user_index;
-                    s.notifications_canister = args.notifications_canister;
+                    s.local_index = args.local_user_index;
                 },
                 now,
             );

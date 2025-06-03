@@ -33,7 +33,6 @@ cargo build --locked --target wasm32-unknown-unknown --release \
   --package local_user_index_canister_impl \
   --package market_maker_canister_impl \
   --package neuron_controller_canister_impl \
-  --package notifications_canister_impl \
   --package notifications_index_canister_impl \
   --package online_users_canister_impl \
   --package openchat_installer_canister_impl \
@@ -64,7 +63,6 @@ ic-wasm ./target/wasm32-unknown-unknown/release/identity_canister_impl.wasm -o .
 ic-wasm ./target/wasm32-unknown-unknown/release/local_user_index_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/local_user_index_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/market_maker_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/market_maker_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/neuron_controller_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/neuron_controller_canister_impl-opt.wasm shrink
-ic-wasm ./target/wasm32-unknown-unknown/release/notifications_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/notifications_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/notifications_index_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/notifications_index_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/online_users_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/online_users_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/openchat_installer_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/openchat_installer_canister_impl-opt.wasm shrink
@@ -90,7 +88,6 @@ gzip -fckn9 target/wasm32-unknown-unknown/release/identity_canister_impl-opt.was
 gzip -fckn9 target/wasm32-unknown-unknown/release/local_user_index_canister_impl-opt.wasm > ./wasms/local_user_index.wasm.gz
 gzip -fckn9 target/wasm32-unknown-unknown/release/market_maker_canister_impl-opt.wasm > ./wasms/market_maker.wasm.gz
 gzip -fckn9 target/wasm32-unknown-unknown/release/neuron_controller_canister_impl-opt.wasm > ./wasms/neuron_controller.wasm.gz
-gzip -fckn9 target/wasm32-unknown-unknown/release/notifications_canister_impl-opt.wasm > ./wasms/notifications.wasm.gz
 gzip -fckn9 target/wasm32-unknown-unknown/release/notifications_index_canister_impl-opt.wasm > ./wasms/notifications_index.wasm.gz
 gzip -fckn9 target/wasm32-unknown-unknown/release/online_users_canister_impl-opt.wasm > ./wasms/online_users.wasm.gz
 gzip -fckn9 target/wasm32-unknown-unknown/release/openchat_installer_canister_impl-opt.wasm > ./wasms/openchat_installer.wasm.gz

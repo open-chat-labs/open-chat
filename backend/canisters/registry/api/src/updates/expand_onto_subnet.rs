@@ -7,7 +7,6 @@ use types::CanisterId;
 pub struct Args {
     pub subnet_id: Principal,
     pub local_user_index: Option<CanisterId>,
-    pub notifications_canister: Option<CanisterId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -22,8 +21,6 @@ pub struct HumanReadableArgs {
     subnet_id: HumanReadablePrincipal,
     #[serde(skip_serializing_if = "Option::is_none")]
     local_user_index: Option<HumanReadablePrincipal>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    notifications_canister: Option<HumanReadablePrincipal>,
 }
 
 impl ToHumanReadable for Args {
@@ -33,7 +30,6 @@ impl ToHumanReadable for Args {
         HumanReadableArgs {
             subnet_id: self.subnet_id.into(),
             local_user_index: self.local_user_index.map(HumanReadablePrincipal::from),
-            notifications_canister: self.local_user_index.map(HumanReadablePrincipal::from),
         }
     }
 }

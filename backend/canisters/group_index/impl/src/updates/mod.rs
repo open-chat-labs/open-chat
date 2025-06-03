@@ -1,5 +1,4 @@
 pub mod add_hot_group_exclusion;
-pub mod add_local_index_canister;
 pub mod c2c_convert_group_into_community;
 pub mod c2c_create_community;
 pub mod c2c_create_group;
@@ -19,6 +18,7 @@ pub mod delete_frozen_group;
 pub mod freeze_community;
 pub mod freeze_group;
 pub mod mark_local_index_full;
+pub mod notify_local_index_added;
 pub mod revoke_community_verification;
 pub mod revoke_group_verification;
 pub mod set_community_moderation_flags;

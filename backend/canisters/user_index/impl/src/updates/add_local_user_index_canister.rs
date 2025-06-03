@@ -77,6 +77,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
 
         let user_canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::User);
 
+        #[expect(deprecated)]
         Ok(PrepareResult {
             this_canister_id: state.env.canister_id(),
             canister_wasm: canister_wasm.wasm.clone(),
@@ -89,7 +90,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 group_index_canister_id: state.data.group_index_canister_id,
                 notifications_index_canister_id: state.data.notifications_index_canister_id,
                 identity_canister_id: state.data.identity_canister_id,
-                notifications_canister_id: args.notifications_canister_id,
+                notifications_canister_id: CanisterId::anonymous(),
                 proposals_bot_canister_id: state.data.proposals_bot_canister_id,
                 cycles_dispenser_canister_id: state.data.cycles_dispenser_canister_id,
                 escrow_canister_id: state.data.escrow_canister_id,

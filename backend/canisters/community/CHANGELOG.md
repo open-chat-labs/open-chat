@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Remove all references to LocalGroupIndexes ([#8057](https://github.com/open-chat-labs/open-chat/pull/8057))
+- Remove all references to Notifications canisters ([#8087](https://github.com/open-chat-labs/open-chat/pull/8087))
 
 ## [[2.0.1763](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1763-community)] - 2025-05-28
 

@@ -1,8 +1,10 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::BuildVersion;
+use types::{CanisterId, UnitResult};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub wasm_version: BuildVersion,
+    pub canister_id: CanisterId,
 }
+
+pub type Response = UnitResult;

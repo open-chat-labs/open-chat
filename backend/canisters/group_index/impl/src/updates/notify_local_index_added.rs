@@ -5,13 +5,13 @@ use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::ChildCanisterType;
-use group_index_canister::add_local_index_canister::{Response::*, *};
+use group_index_canister::notify_local_index_added::{Response::*, *};
 use tracing::info;
 use types::{CanisterId, CanisterWasm, Hash};
 
 #[update(guard = "caller_is_registry_canister", msgpack = true)]
 #[trace]
-async fn add_local_index_canister(args: Args) -> Response {
+async fn notify_local_index_added(args: Args) -> Response {
     match read_state(|state| prepare(&args, state)) {
         Ok(result) => {
             if let Err(error) = upgrade_group_wasm_in_local_index(

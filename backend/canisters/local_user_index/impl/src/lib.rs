@@ -175,11 +175,6 @@ impl RuntimeState {
         self.data.notification_pushers.contains(&caller)
     }
 
-    pub fn is_caller_notifications_canister(&self) -> bool {
-        let caller = self.env.caller();
-        self.data.notifications_canister_id == caller
-    }
-
     pub fn is_caller_openchat_user(&self) -> bool {
         let caller = self.env.caller();
         self.data.global_users.get(&caller).is_some()
@@ -419,7 +414,6 @@ impl RuntimeState {
                 group_index: self.data.group_index_canister_id,
                 notifications_index: self.data.notifications_index_canister_id,
                 identity: self.data.identity_canister_id,
-                notifications: self.data.notifications_canister_id,
                 proposals_bot: self.data.proposals_bot_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 escrow: self.data.escrow_canister_id,
@@ -443,7 +437,6 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub notifications_index_canister_id: CanisterId,
     pub identity_canister_id: CanisterId,
-    pub notifications_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
@@ -506,7 +499,6 @@ impl Data {
         group_index_canister_id: CanisterId,
         notifications_index_canister_id: CanisterId,
         identity_canister_id: CanisterId,
-        notifications_canister_id: CanisterId,
         proposals_bot_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
@@ -530,7 +522,6 @@ impl Data {
             group_index_canister_id,
             notifications_index_canister_id,
             identity_canister_id,
-            notifications_canister_id,
             proposals_bot_canister_id,
             cycles_dispenser_canister_id,
             escrow_canister_id,
@@ -685,7 +676,6 @@ pub struct CanisterIds {
     pub group_index: CanisterId,
     pub notifications_index: CanisterId,
     pub identity: CanisterId,
-    pub notifications: CanisterId,
     pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub escrow: CanisterId,

@@ -10,6 +10,8 @@ pub struct Args {
     pub group_index_canister_id: CanisterId,
     pub notifications_index_canister_id: CanisterId,
     pub identity_canister_id: CanisterId,
+    #[deprecated]
+    #[serde(default = "CanisterId::anonymous")]
     pub notifications_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,

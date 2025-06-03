@@ -1,5 +1,5 @@
 use canister_client::{generate_candid_query_call, generate_candid_update_call};
-use notifications_canister::*;
+use local_user_index_canister::*;
 
 // Queries
 generate_candid_query_call!(latest_notification_index);

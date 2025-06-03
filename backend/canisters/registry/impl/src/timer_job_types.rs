@@ -76,7 +76,7 @@ impl ExpandOntoSubnetJob {
         now: TimestampMillis,
     ) -> Result<Option<bool>, C2CError> {
         let complete = match next_step {
-            ExpandOntoSubnetStep::CreateLocalUserIndex => {
+            ExpandOntoSubnetStep::CreateLocalIndex => {
                 let canister_id = create_canister(
                     self.ledger,
                     self.cmc,
@@ -91,53 +91,27 @@ impl ExpandOntoSubnetJob {
                     state
                         .data
                         .subnets
-                        .update_in_progress(|s| s.local_user_index = Some(canister_id), now)
+                        .update_in_progress(|s| s.local_index = Some(canister_id), now)
                 })
             }
-            ExpandOntoSubnetStep::CreateNotificationsCanister => {
-                let canister_id = create_canister(
-                    self.ledger,
-                    self.cmc,
-                    self.subnet_id,
-                    self.this_canister_id,
-                    self.create_canister_block_index,
-                    now,
-                )
-                .await?;
-
-                mutate_state(|state| {
-                    state
-                        .data
-                        .subnets
-                        .update_in_progress(|s| s.notifications_canister = Some(canister_id), now)
-                })
-            }
-            ExpandOntoSubnetStep::UpdateControllers(ids) => {
-                let futures: Vec<_> = [
-                    (ids.local_user_index, self.user_index),
-                    (ids.notifications_canister, self.notifications_index),
-                ]
-                .into_iter()
-                .map(|(canister_id, controller)| set_controllers(canister_id, vec![controller]))
-                .collect();
+            ExpandOntoSubnetStep::UpdateControllers(local_index) => {
+                let futures: Vec<_> = [(local_index, self.user_index)]
+                    .into_iter()
+                    .map(|(canister_id, controller)| set_controllers(canister_id, vec![controller]))
+                    .collect();
 
                 futures::future::try_join_all(futures).await?;
 
                 mutate_state(|state| state.data.subnets.update_in_progress(|s| s.controllers_updated = true, now))
             }
-            ExpandOntoSubnetStep::NotifyCyclesDispenser(ids) => {
-                let futures: Vec<_> = [ids.local_user_index, ids.notifications_canister]
-                    .into_iter()
-                    .map(|canister_id| async move {
-                        cycles_dispenser_canister_c2c_client::add_canister(
-                            self.cycles_dispenser,
-                            &cycles_dispenser_canister::add_canister::Args { canister_id },
-                        )
-                        .await
-                    })
-                    .collect();
-
-                futures::future::try_join_all(futures).await?;
+            ExpandOntoSubnetStep::NotifyCyclesDispenser(local_index) => {
+                cycles_dispenser_canister_c2c_client::add_canister(
+                    self.cycles_dispenser,
+                    &cycles_dispenser_canister::add_canister::Args {
+                        canister_id: local_index,
+                    },
+                )
+                .await?;
 
                 mutate_state(|state| {
                     state
@@ -146,30 +120,29 @@ impl ExpandOntoSubnetJob {
                         .update_in_progress(|s| s.cycles_dispenser_notified = true, now)
                 })
             }
-            ExpandOntoSubnetStep::NotifyEventRelay(ids) => {
+            ExpandOntoSubnetStep::NotifyEventRelay(local_index) => {
                 event_relay_canister_c2c_client::authorize_principals(
                     self.event_relay,
                     &event_relay_canister::authorize_principals::Args {
-                        principals: vec![ids.local_user_index, ids.notifications_canister],
+                        principals: vec![local_index],
                     },
                 )
                 .await?;
 
                 mutate_state(|state| state.data.subnets.update_in_progress(|s| s.event_relay_notified = true, now))
             }
-            ExpandOntoSubnetStep::NotifyNotificationsIndex(ids) => {
-                let response = notifications_index_canister_c2c_client::add_notifications_canister(
+            ExpandOntoSubnetStep::NotifyNotificationsIndex(local_index) => {
+                let response = notifications_index_canister_c2c_client::notify_local_index_added(
                     self.notifications_index,
-                    &notifications_index_canister::add_notifications_canister::Args {
-                        canister_id: ids.notifications_canister,
-                        local_user_index_canister_id: ids.local_user_index,
+                    &notifications_index_canister::notify_local_index_added::Args {
+                        canister_id: local_index,
                     },
                 )
                 .await?;
 
                 if matches!(
                     response,
-                    notifications_index_canister::add_notifications_canister::Response::Success
+                    notifications_index_canister::notify_local_index_added::Response::Success
                 ) {
                     mutate_state(|state| {
                         state
@@ -180,18 +153,17 @@ impl ExpandOntoSubnetJob {
                 } else {
                     return Err(C2CError::new(
                         self.notifications_index,
-                        "add_notifications_canister",
+                        "notify_local_index_added",
                         RejectCode::CanisterError,
-                        format!("Failed to add notifications canister: {response:?}"),
+                        format!("Failed to notify NotificationIndex: {response:?}"),
                     ));
                 }
             }
-            ExpandOntoSubnetStep::NotifyUserIndex(ids) => {
+            ExpandOntoSubnetStep::NotifyUserIndex(local_index) => {
                 let response = user_index_canister_c2c_client::add_local_user_index_canister(
                     self.user_index,
                     &user_index_canister::add_local_user_index_canister::Args {
-                        canister_id: ids.local_user_index,
-                        notifications_canister_id: ids.notifications_canister,
+                        canister_id: local_index,
                     },
                 )
                 .await?;
@@ -210,23 +182,23 @@ impl ExpandOntoSubnetJob {
                     ));
                 }
             }
-            ExpandOntoSubnetStep::NotifyGroupIndex(ids) => {
-                let response = group_index_canister_c2c_client::add_local_index_canister(
+            ExpandOntoSubnetStep::NotifyGroupIndex(local_index) => {
+                let response = group_index_canister_c2c_client::notify_local_index_added(
                     self.group_index,
-                    &group_index_canister::add_local_index_canister::Args {
-                        canister_id: ids.local_user_index,
+                    &group_index_canister::notify_local_index_added::Args {
+                        canister_id: local_index,
                     },
                 )
                 .await?;
 
-                if matches!(response, group_index_canister::add_local_index_canister::Response::Success) {
+                if matches!(response, group_index_canister::notify_local_index_added::Response::Success) {
                     mutate_state(|state| state.data.subnets.update_in_progress(|s| s.group_index_notified = true, now))
                 } else {
                     return Err(C2CError::new(
                         self.group_index,
-                        "add_local_index_canister",
+                        "notify_local_index_added",
                         RejectCode::CanisterError,
-                        format!("Failed to add local index: {response:?}"),
+                        format!("Failed to notify GroupIndex: {response:?}"),
                     ));
                 }
             }
