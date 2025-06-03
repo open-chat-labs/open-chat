@@ -9,8 +9,8 @@ pub struct FcmTokenStore {
 }
 
 impl FcmTokenStore {
-    /// Checks if a given FCM token exists!
-    pub fn check_token_exists(&self, token: &FcmToken) -> bool {
+    /// Checks if a given FCM token is contained within the store!
+    pub fn contains(&self, token: &FcmToken) -> bool {
         self.fcm_user_tokens.iter().any(|(_, t)| t == token)
     }
 
@@ -19,8 +19,8 @@ impl FcmTokenStore {
     /// If the token already exists, it will not be added again - this also
     /// ensures that the user does not have duplicate tokens, or that the same
     /// token is not assigned to multiple users.
-    pub fn add_token(&mut self, user_id: UserId, token: FcmToken) -> Result<(), String> {
-        if !self.check_token_exists(&token) {
+    pub fn add(&mut self, user_id: UserId, token: FcmToken) -> Result<(), String> {
+        if !self.contains(&token) {
             self.fcm_user_tokens.insert((user_id, token.clone()));
             Ok(())
         } else {
@@ -35,7 +35,7 @@ impl FcmTokenStore {
     /// If the user and token combo exists, it will remove the mapping, and we
     /// confirm that with the OK result. If the token is not associated
     /// with the user, remove operation returns false, and we return an error.
-    pub fn remove_token(&mut self, user_id: &UserId, token: &FcmToken) -> Result<(), String> {
+    pub fn remove(&mut self, user_id: &UserId, token: &FcmToken) -> Result<(), String> {
         if self.fcm_user_tokens.remove(&(*user_id, token.clone())) {
             Ok(())
         } else {
@@ -45,7 +45,7 @@ impl FcmTokenStore {
 
     /// Returns all FCM tokens for a given user. This is a fast lookup
     /// leveraging the BTreeSet structure.
-    pub fn get_tokens_for_user(&self, user_id: &UserId) -> Vec<&FcmToken> {
+    pub fn get_for_user(&self, user_id: &UserId) -> Vec<&FcmToken> {
         self.fcm_user_tokens
             .range((*user_id, FcmToken(String::default()))..)
             .take_while(|(u, _)| u == user_id)
@@ -73,43 +73,40 @@ mod test {
         let token4 = FcmToken::from("token4".to_string());
 
         // Assert tokens can be added
-        assert_eq!(store.add_token(user_id1, token1.clone()), Ok(()));
-        assert_eq!(store.add_token(user_id3, token4.clone()), Ok(()));
-        assert_eq!(store.add_token(user_id1, token2.clone()), Ok(()));
+        assert_eq!(store.add(user_id1, token1.clone()), Ok(()));
+        assert_eq!(store.add(user_id3, token4.clone()), Ok(()));
+        assert_eq!(store.add(user_id1, token2.clone()), Ok(()));
 
         // Assert that adding the same token for a different user fails
-        assert_eq!(
-            store.add_token(user_id2, token1.clone()),
-            Err("Token already exists".to_string())
-        );
+        assert_eq!(store.add(user_id2, token1.clone()), Err("Token already exists".to_string()));
 
-        // Assert that we can check if a token exists
-        assert!(store.check_token_exists(&token1));
-        assert!(store.check_token_exists(&token2));
-        assert!(!store.check_token_exists(&token3));
+        // Assert that we can check if the store contains a token
+        assert!(store.contains(&token1));
+        assert!(store.contains(&token2));
+        assert!(!store.contains(&token3));
 
         // Assert that retrieveing tokens for users works correctly
-        let store_tokens = store.get_tokens_for_user(&user_id1);
+        let store_tokens = store.get_for_user(&user_id1);
         assert_eq!(store_tokens.len(), 2);
         assert!(store_tokens.contains(&&token1));
         assert!(store_tokens.contains(&&token2));
 
         // Also, if a user has no tokens, we should get an empty list
-        let store_tokens = store.get_tokens_for_user(&user_id2);
+        let store_tokens = store.get_for_user(&user_id2);
         assert!(store_tokens.is_empty());
 
         // Tokens cannot be removed if they are not associated with the current
         // user, and we should get an error.
         assert_eq!(
-            store.remove_token(&user_id2, &token1),
+            store.remove(&user_id2, &token1),
             Err("Token is not associated with current user".to_string())
         );
 
         // Assert that we can remove tokens correctly, and if we try it again,
         // we should get an error.
-        assert_eq!(store.remove_token(&user_id1, &token1), Ok(()));
+        assert_eq!(store.remove(&user_id1, &token1), Ok(()));
         assert_eq!(
-            store.remove_token(&user_id1, &token1),
+            store.remove(&user_id1, &token1),
             Err("Token is not associated with current user".to_string())
         );
     }
