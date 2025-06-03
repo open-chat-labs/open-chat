@@ -159,6 +159,7 @@
             range.insertNode(document.createTextNode(text));
             range.collapse(false);
             const inputContent = inp?.textContent ?? "";
+            triggerCommandSelector(inputContent);
             onSetTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
         }
     }
