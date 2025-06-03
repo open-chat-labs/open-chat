@@ -5580,13 +5580,12 @@ export class OpenChat {
             .catch(() => []);
     }
 
-    getMissingUsers(userIds: string[] | Set<string>): Promise<UsersResponse> {
-        const userIdsSet = Array.isArray(userIds) ? new Set<string>(userIds) : userIds;
+    getMissingUsers(userIds: Iterable<string>): Promise<UsersResponse> {
         return this.getUsers(
             {
                 userGroups: [
                     {
-                        users: this.missingUserIds(userStore.allUsers, userIdsSet),
+                        users: this.missingUserIds(userStore.allUsers, userIds),
                         updatedSince: BigInt(0),
                     },
                 ],
