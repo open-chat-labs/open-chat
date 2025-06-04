@@ -6568,41 +6568,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "notification_pusher_aws"
-version = "0.1.0"
-dependencies = [
- "aws-config",
- "candid",
- "dotenv",
- "dynamodb_index_store",
- "notification_pusher_core",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "types",
-]
-
-[[package]]
-name = "notification_pusher_cli"
-version = "0.1.0"
-dependencies = [
- "candid",
- "dotenv",
- "index_store",
- "notification_pusher_core",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "types",
-]
-
-[[package]]
-name = "notification_pusher_core"
+name = "notification_pusher"
 version = "0.1.0"
 dependencies = [
  "async-channel 2.2.0",
+ "aws-config",
  "base64 0.22.1",
  "candid",
+ "dynamodb_index_store",
  "ic-agent",
  "index_store",
  "local_user_index_canister",
@@ -6615,7 +6588,9 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "toml 0.8.22",
  "tracing",
+ "tracing-subscriber",
  "types",
  "web-push",
 ]

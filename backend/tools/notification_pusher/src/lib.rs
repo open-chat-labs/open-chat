@@ -10,7 +10,7 @@ use std::sync::Arc;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use tracing::info;
 use types::{CanisterId, TimestampMillis, UserId};
-use web_push::{SubscriptionInfo, WebPushMessage};
+use web_push::{PartialVapidSignatureBuilder, SubscriptionInfo, WebPushMessage};
 
 mod bot_notifications;
 pub mod ic_agent;
@@ -22,9 +22,9 @@ pub async fn run_notifications_pusher<I: IndexStore + 'static>(
     ic_agent: IcAgent,
     index_canister_id: CanisterId,
     index_store: I,
-    vapid_private_pem: String,
-    pusher_count: u32,
-    is_production: bool,
+    sig_builder: PartialVapidSignatureBuilder,
+    pusher_threads: u32,
+    is_localhost: bool,
 ) {
     info!("Notifications pusher starting");
 
@@ -33,9 +33,9 @@ pub async fn run_notifications_pusher<I: IndexStore + 'static>(
     let notification_canister_ids = ic_agent.notification_canisters(index_canister_id).await.unwrap();
 
     let user_notifications_sender =
-        start_user_notifications_processor(ic_agent.clone(), index_canister_id, vapid_private_pem, pusher_count);
+        start_user_notifications_processor(ic_agent.clone(), index_canister_id, sig_builder, pusher_threads);
 
-    let bot_notifications_sender = start_bot_notifications_processor(is_production);
+    let bot_notifications_sender = start_bot_notifications_processor(is_localhost);
 
     for notification_canister_id in notification_canister_ids {
         let reader = Reader::new(

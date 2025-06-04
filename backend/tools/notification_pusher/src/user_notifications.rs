@@ -8,6 +8,7 @@ use async_channel::Sender;
 use prometheus::PullingGauge;
 use std::sync::{Arc, RwLock};
 use types::{CanisterId, UserId};
+use web_push::PartialVapidSignatureBuilder;
 
 mod processor;
 mod pusher;
@@ -16,8 +17,8 @@ mod subscription_remover;
 pub fn start_user_notifications_processor(
     ic_agent: IcAgent,
     index_canister_id: CanisterId,
-    vapid_private_pem: String,
-    pusher_count: u32,
+    sig_builder: PartialVapidSignatureBuilder,
+    pusher_threads: u32,
 ) -> Sender<UserNotification> {
     let (to_process_sender, to_process_receiver) = async_channel::bounded::<UserNotification>(200_000);
     let (to_push_sender, to_push_receiver) = async_channel::bounded::<UserNotificationToPush>(200_000);
@@ -29,13 +30,13 @@ pub fn start_user_notifications_processor(
     let processor = Processor::new(
         to_process_receiver.clone(),
         to_push_sender.clone(),
-        &vapid_private_pem,
+        sig_builder,
         invalid_subscriptions.clone(),
         throttled_subscriptions.clone(),
     );
     tokio::spawn(processor.run());
 
-    for _ in 0..pusher_count {
+    for _ in 0..pusher_threads {
         let pusher = Pusher::new(
             to_push_receiver.clone(),
             subscriptions_to_remove_sender.clone(),
