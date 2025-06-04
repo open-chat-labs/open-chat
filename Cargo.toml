@@ -150,9 +150,6 @@ members = [
     "backend/libraries/types",
     "backend/libraries/user_ids_set",
     "backend/libraries/utils",
-    "backend/notification_pusher/aws",
-    "backend/notification_pusher/cli",
-    "backend/notification_pusher/core",
     "backend/tools/account_id",
     "backend/tools/canister_installer",
     "backend/tools/canister_upgrade_proposal_builder",
@@ -160,6 +157,7 @@ members = [
     "backend/tools/canister_wasm_chunks_uploader",
     "backend/tools/dupe_deps_detector",
     "backend/tools/local_canister_creator",
+    "backend/tools/notification_pusher",
     "backend/tools/principal_generator",
     "backend/tools/translation_tool",
     "backend/tools/ts_exporter",
@@ -255,6 +253,7 @@ test-strategy = "0.4"
 thiserror = "2"
 time = "0.3"
 tokio = "1"
+toml = "0.8.22"
 tracing = "0.1"
 tracing-subscriber = "0.3"
 ts-rs = { version = "10", features = ["no-serde-warnings"] }

@@ -14,16 +14,16 @@ pub struct Pusher {
 }
 
 impl Pusher {
-    pub fn new(receiver: Receiver<BotNotification>, is_production: bool) -> Self {
+    pub fn new(receiver: Receiver<BotNotification>, is_localhost: bool) -> Self {
         Self {
             receiver,
-            http_client: if is_production {
-                Client::new()
-            } else {
+            http_client: if is_localhost {
                 ClientBuilder::new()
                     .dns_resolver(Arc::new(LocalHostResolver))
                     .build()
                     .unwrap()
+            } else {
+                Client::new()
             },
         }
     }

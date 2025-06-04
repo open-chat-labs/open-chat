@@ -1,0 +1,17 @@
+# The location of the pem file containing the private key which
+# the service will use to sign requests to the IC
+ic_identity_pem_file = "./notification_pusher.pem"
+
+vapid_private_key_pem_file = "./vapid_private_key.pem"
+
+# The url of the Internet Computer instance the service is targeting.
+ic_url = "http://localhost:8080"
+
+# The NotificationsIndex canister Id.
+notifications_index = "ufxgi-4p777-77774-qaadq-cai"
+
+# The number of threads configured to make outbound HTTP requests to push notifications
+pusher_threads = 10
+
+# The min log level. Allowed values: trace, debug, info, warn, error.
+log_level = "info"
