@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove all references to Notifications canisters ([#8087](https://github.com/open-chat-labs/open-chat/pull/8087))
 
+### Fixed
+
+- Fix `bot_chat_events` for direct chats ([#8096](https://github.com/open-chat-labs/open-chat/pull/8096))
+
 ## [[2.0.1778](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1778-local_user_index)] - 2025-06-02
 
 ### Changed
