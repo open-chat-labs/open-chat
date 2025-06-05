@@ -6,6 +6,7 @@ export type Logger = {
 
 import Rollbar, { type LogArgument } from "rollbar";
 import { offline } from "./network";
+import { NOOP } from "../constants";
 import { AnonymousOperationError } from "../domain";
 
 let rollbar: Rollbar | undefined;
@@ -50,7 +51,6 @@ export function inititaliseLogger(apikey: string, version: string, env: string):
     };
 }
 
-const NOOP = () => {};
 const DEFAULT_DEBUG = console.debug;
 const DEFAULT_LOG = console.log;
 const DEFAULT_WARN = console.warn;
