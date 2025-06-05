@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Remove `correlation_id` ([#8097](https://github.com/open-chat-labs/open-chat/pull/8097))
+
 ## [[2.0.1777-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1777-user)] - 2025-06-02
 
 ### Fixed

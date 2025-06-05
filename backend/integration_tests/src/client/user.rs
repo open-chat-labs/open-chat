@@ -78,7 +78,6 @@ pub mod happy_path {
                 block_level_markdown: false,
                 message_filter_failed: None,
                 pin: None,
-                correlation_id: 0,
             },
         );
 
@@ -110,7 +109,7 @@ pub mod happy_path {
                 forwarding: false,
                 block_level_markdown: false,
                 message_filter_failed: None,
-                correlation_id: 0,
+
                 pin: None,
             },
         );
@@ -140,7 +139,6 @@ pub mod happy_path {
                 message_id,
                 content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
                 block_level_markdown,
-                correlation_id: 0,
             },
         );
 
@@ -224,7 +222,6 @@ pub mod happy_path {
                 thread_root_message_index: None,
                 message_id,
                 reaction: Reaction::new(reaction.to_string()),
-                correlation_id: 0,
             },
         );
         assert!(matches!(response, user_canister::add_reaction::Response::Success));

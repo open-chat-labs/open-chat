@@ -569,7 +569,6 @@ mod tests {
         let event = EventWrapperInternal {
             index: 1.into(),
             timestamp: 1,
-            correlation_id: 0,
             expires_at: None,
             event: ChatEventInternal::Message(Box::new(message)),
         };

@@ -14,7 +14,6 @@ async fn invite_users_to_group(args: Args) -> Response {
     let c2c_args = group_canister::c2c_invite_users::Args {
         caller: invited_by,
         users,
-        correlation_id: args.correlation_id,
     };
 
     match group_canister_c2c_client::c2c_invite_users(args.group_id.into(), &c2c_args).await {

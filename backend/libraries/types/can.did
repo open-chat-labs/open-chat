@@ -254,7 +254,6 @@ type ChatEvent = variant {
 type ChatEventWrapper = record {
     index : EventIndex;
     timestamp : TimestampMillis;
-    correlation_id : nat64;
     expires_at : opt TimestampMillis;
     event : ChatEvent;
 };
@@ -607,7 +606,6 @@ type Message = record {
 type MessageEventWrapper = record {
     index : EventIndex;
     timestamp : TimestampMillis;
-    correlation_id : nat64;
     expires_at : opt TimestampMillis;
     event : Message;
 };

@@ -217,7 +217,7 @@ fn pending_prizes_transferred_to_community() {
             replies_to: None,
             mentioned: Vec::new(),
             block_level_markdown: false,
-            correlation_id: 0,
+
             rules_accepted: None,
             message_filter_failed: None,
             pin: None,
@@ -286,7 +286,6 @@ fn private_replies_to_group_updated_to_community() {
             block_level_markdown: false,
             message_filter_failed: None,
             pin: None,
-            correlation_id: 0,
         },
     );
 

@@ -88,7 +88,6 @@ pub mod happy_path {
                 group_id,
                 user_ids,
                 caller_username: user.username(),
-                correlation_id: 0,
             },
         );
 
@@ -107,7 +106,6 @@ pub mod happy_path {
                 chat_id,
                 invite_code: None,
                 verified_credential_args: None,
-                correlation_id: 0,
             },
         );
 

@@ -78,7 +78,7 @@ fn join_private_group_using_invite_code_succeeds() {
         env,
         user1.principal,
         group_id.into(),
-        &group_canister::enable_invite_code::Args { correlation_id: 0 },
+        &group_canister::enable_invite_code::Args {},
     );
 
     let invite_code = if let group_canister::enable_invite_code::Response::Success(result) = invite_code_response {
@@ -95,7 +95,6 @@ fn join_private_group_using_invite_code_succeeds() {
             chat_id: group_id,
             invite_code: Some(invite_code),
             verified_credential_args: None,
-            correlation_id: 0,
         },
     );
 

@@ -1,18 +1,18 @@
 benches:
   add_reactions:
     total:
-      start_instructions: 1386086
+      start_instructions: 1385961
       calls: 1
-      instructions: 1038415527
+      instructions: 1029018980
       heap_increase: 4
       stable_memory_increase: 0
     scopes: {}
   push_simple_text_messages:
     total:
-      start_instructions: 4391303
+      start_instructions: 4387752
       calls: 1
-      instructions: 227985054
-      heap_increase: 12
+      instructions: 227396734
+      heap_increase: 13
       stable_memory_increase: 0
     scopes: {}
 version: 0.1.16

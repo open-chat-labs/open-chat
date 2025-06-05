@@ -175,7 +175,6 @@ pub(crate) fn handle_message_impl(
         forwarded: args.forwarding,
         sender_is_bot: args.sender_user_type.is_bot(),
         block_level_markdown: args.block_level_markdown,
-        correlation_id: 0,
         now: args.now,
         sender_context: bot_caller.map(|bot| SenderContext::Bot(BotMessageContext::from(&bot, finalised))),
     };

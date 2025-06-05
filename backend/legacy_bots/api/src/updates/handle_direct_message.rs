@@ -12,8 +12,6 @@ pub struct Args {
     pub forwarding: bool,
     #[serde(default)]
     pub block_level_markdown: bool,
-    #[serde(default)]
-    pub correlation_id: u64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -39,7 +37,6 @@ impl Args {
             replies_to: args.replies_to,
             forwarding: args.forwarding,
             block_level_markdown: args.block_level_markdown,
-            correlation_id: 0,
         }
     }
 }

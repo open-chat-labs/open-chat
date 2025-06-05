@@ -29,7 +29,6 @@ impl From<Args> for send_message_v2::Args {
             rules_accepted: None,
             message_filter_failed: None,
             new_achievement: false,
-            correlation_id: 0,
         }
     }
 }

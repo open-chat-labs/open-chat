@@ -36,7 +36,6 @@ fn c2c_bot_add_reaction_impl(args: c2c_bot_add_reaction::Args, state: &mut Runti
         username: args.bot_name,
         display_name: None,
         new_achievement: false,
-        correlation_id: 0,
     };
 
     if !state.data.is_bot_permitted(

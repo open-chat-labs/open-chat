@@ -50,7 +50,6 @@ fn mention_users_succeeds(mention_everyone: bool) {
             rules_accepted: None,
             message_filter_failed: None,
             new_achievement: false,
-            correlation_id: 0,
         },
     );
 
@@ -126,7 +125,6 @@ fn mention_everyone_only_succeeds_if_authorized(authorized: bool) {
             rules_accepted: None,
             message_filter_failed: None,
             new_achievement: false,
-            correlation_id: 0,
         },
     );
 
@@ -189,7 +187,6 @@ fn mentioned_in_thread_adds_user_as_follower() {
             rules_accepted: None,
             message_filter_failed: None,
             new_achievement: false,
-            correlation_id: 0,
         },
     );
 

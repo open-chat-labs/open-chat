@@ -35,7 +35,6 @@ pub(crate) fn freeze_group_impl(
         let event = EventWrapper {
             index: push_event_result.index,
             timestamp: now,
-            correlation_id: 0,
             expires_at: push_event_result.expires_at,
             event: GroupFrozen {
                 frozen_by: caller,

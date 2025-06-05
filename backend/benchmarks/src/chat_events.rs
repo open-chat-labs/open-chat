@@ -38,7 +38,6 @@ fn push_simple_text_messages() -> BenchResult {
             forwarded: false,
             sender_is_bot: false,
             block_level_markdown: false,
-            correlation_id: 0,
             now: start + (i * 1000),
         })
         .collect();
@@ -81,7 +80,6 @@ fn add_reactions() -> BenchResult {
             forwarded: false,
             sender_is_bot: false,
             block_level_markdown: false,
-            correlation_id: 0,
             now: start,
         },
         None,

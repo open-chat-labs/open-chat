@@ -68,7 +68,6 @@ fn public_group_diamond_member_gate_check(is_diamond: bool, is_invited: bool) {
             chat_id: group_id,
             invite_code: None,
             verified_credential_args: None,
-            correlation_id: 0,
         },
     );
 
@@ -142,7 +141,6 @@ fn public_group_token_balance_gate_check(has_sufficient_balance: bool) {
             chat_id: group_id,
             invite_code: None,
             verified_credential_args: None,
-            correlation_id: 0,
         },
     );
 
@@ -236,7 +234,6 @@ fn public_group_composite_gate_check(is_diamond: bool, has_sufficient_balance: b
             chat_id: group_id,
             invite_code: None,
             verified_credential_args: None,
-            correlation_id: 0,
         },
     );
 

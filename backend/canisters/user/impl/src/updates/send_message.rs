@@ -295,7 +295,6 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
                     forwarded: false,
                     sender_is_bot: false,
                     block_level_markdown: args.block_level_markdown,
-                    correlation_id: 0,
                     now,
                     sender_context: None,
                 },
@@ -442,7 +441,6 @@ fn send_message_impl(
         forwarded: forwarding,
         sender_is_bot: false,
         block_level_markdown,
-        correlation_id: 0,
         now,
         sender_context: None,
     };
@@ -567,7 +565,6 @@ async fn send_to_bot_canister(
                             forwarded: false,
                             sender_is_bot: false,
                             block_level_markdown: args.block_level_markdown,
-                            correlation_id: 0,
                             now,
                             sender_context: None,
                         };
