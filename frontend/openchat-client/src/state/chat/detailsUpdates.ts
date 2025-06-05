@@ -1,5 +1,6 @@
 import {
     ChatMap,
+    NOOP,
     type ChatIdentifier,
     type ChatListScope,
     type GrantedBotPermissions,
@@ -13,7 +14,6 @@ import { LocalSet } from "../set";
 import { type UndoLocalUpdate } from "../undo";
 import { modifyWritable, notEq } from "../utils";
 
-const noop = () => {};
 const localMap = <K, V>() => new LocalMap<K, V>();
 const localSet = <V>() => new LocalSet<V>();
 
@@ -62,7 +62,7 @@ export class ChatDetailsUpdatesManager {
                 map.addOrUpdate(userId, updater(existing)),
             );
         }
-        return noop;
+        return NOOP;
     }
 
     blockUser(id: ChatIdentifier, userId: string): UndoLocalUpdate {
