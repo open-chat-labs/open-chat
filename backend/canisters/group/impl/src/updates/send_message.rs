@@ -285,10 +285,7 @@ fn process_send_message_result(
         }
     }
 
-    if let Some(bot_notification) = result.bot_notification {
-        state.push_bot_notification(bot_notification);
-    }
-
+    state.push_bot_notification(result.bot_notification);
     handle_activity_notification(state);
 
     SuccessResult {

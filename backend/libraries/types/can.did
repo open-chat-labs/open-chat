@@ -2341,11 +2341,10 @@ type ChatEventType = variant {
     DescriptionChanged;
     MessagePrizeClaim;
     MessageReported;
-    MessageProposalUpdated;
-    MessageProposalVote;
     ExternalUrlUpdated;
     InviteCodeChanged;
     MessageDeleted;
+    MessageUndeleted;
     BotRemoved;
     MessageReaction;
     MembersLeft;
@@ -2354,7 +2353,6 @@ type ChatEventType = variant {
     Created;
     MessageTipped;
     Frozen;
-    MessageReminder;
     MessageEdited;
     AvatarChanged;
 };

@@ -20,6 +20,11 @@ fn unpin_message_impl(args: Args, state: &mut RuntimeState) -> OCResult<PushEven
     let user_id = state.get_caller_user_id()?;
     let now = state.env.now();
     let result = state.data.chat.unpin_message(user_id, args.message_index, now)?;
+    state.push_bot_notification(result.bot_notification);
     handle_activity_notification(state);
-    Ok(result.into())
+    Ok(PushEventResult {
+        index: result.index,
+        timestamp: now,
+        expires_at: result.expires_at,
+    })
 }

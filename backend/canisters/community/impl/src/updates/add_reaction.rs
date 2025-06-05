@@ -140,7 +140,7 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
         }
     }
 
-    state.process_message_updated(result);
+    state.push_bot_notification(result.bot_notification);
     handle_activity_notification(state);
     Ok(())
 }

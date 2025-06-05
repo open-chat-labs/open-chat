@@ -236,9 +236,14 @@ impl RuntimeState {
         false
     }
 
-    pub fn push_bot_notification(&mut self, notification: BotNotification, now: TimestampMillis) {
-        if !notification.recipients.is_empty() {
-            self.push_local_user_index_canister_event(LocalUserIndexEvent::Notification(Notification::Bot(notification)), now);
+    pub fn push_bot_notification(&mut self, notification: Option<BotNotification>) {
+        if let Some(notification) = notification {
+            if !notification.recipients.is_empty() {
+                self.push_local_user_index_canister_event(
+                    LocalUserIndexEvent::Notification(Notification::Bot(notification)),
+                    self.env.now(),
+                );
+            }
         }
     }
 

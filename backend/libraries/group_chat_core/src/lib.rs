@@ -1,8 +1,8 @@
 use chat_events::{
-    AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteUndeleteMessagesArgs, EditMessageArgs,
-    EventPusher, GroupGateUpdatedInternal, MessageContentInternal, NullEventPusher, PushEventResultInternal, PushMessageArgs,
-    Reader, RegisterPollVoteArgs, RegisterPollVoteSuccess, RemoveExpiredEventsResult, ReservePrizeSuccess, TipMessageArgs,
-    UpdateMessageSuccess,
+    AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageSuccess,
+    DeleteUndeleteMessagesArgs, EditMessageArgs, EventPusher, GroupGateUpdatedInternal, MessageContentInternal,
+    NullEventPusher, PushEventResultInternal, PushMessageArgs, Reader, RegisterPollVoteArgs, RegisterPollVoteSuccess,
+    RemoveExpiredEventsResult, ReservePrizeSuccess, TipMessageArgs, UndeleteMessageSuccess, UpdateMessageSuccess,
 };
 use group_community_common::MemberUpdate;
 use itertools::Itertools;
@@ -688,7 +688,7 @@ impl GroupChatCore {
             now,
         };
 
-        let _ = self.events.edit_message::<NullEventPusher>(edit_message_args, None);
+        let result = self.events.edit_message::<NullEventPusher>(edit_message_args, None).ok();
 
         let reader = self
             .events
@@ -716,7 +716,7 @@ impl GroupChatCore {
             message_event,
             users_to_notify,
             unfinalised_bot_message: !finalise,
-            bot_notification: None,
+            bot_notification: result.and_then(|r| r.bot_notification),
         })
     }
 
@@ -951,7 +951,7 @@ impl GroupChatCore {
         message_ids: Vec<MessageId>,
         as_platform_moderator: bool,
         now: TimestampMillis,
-    ) -> OCResult<Vec<(MessageId, OCResult<UserId>)>> {
+    ) -> OCResult<Vec<(MessageId, OCResult<DeleteMessageSuccess>)>> {
         let initiator = caller.initiator();
 
         let (is_admin, min_visible_event_index) = match caller {
@@ -1022,7 +1022,7 @@ impl GroupChatCore {
         thread_root_message_index: Option<MessageIndex>,
         message_ids: Vec<MessageId>,
         now: TimestampMillis,
-    ) -> OCResult<Vec<Message>> {
+    ) -> OCResult<Vec<UndeleteMessageSuccess>> {
         let member = self.members.get_verified_member(user_id)?;
 
         let min_visible_event_index = member.min_visible_event_index();
@@ -1043,12 +1043,14 @@ impl GroupChatCore {
 
         let messages = results
             .into_iter()
-            .filter(|(_, result)| result.is_ok())
-            .map(|(message_id, _)| message_id)
-            .filter_map(|message_id| {
+            .filter_map(|(message_id, result)| result.ok().map(|bot_notification| (message_id, bot_notification)))
+            .filter_map(|(message_id, bot_notification)| {
                 events_reader
                     .message_internal(message_id.into())
-                    .map(|m| m.hydrate(Some(user_id)))
+                    .map(|m| UndeleteMessageSuccess {
+                        message: m.hydrate(Some(user_id)),
+                        bot_notification,
+                    })
             })
             .collect();
 
@@ -1064,7 +1066,7 @@ impl GroupChatCore {
         is_user_platform_moderator: bool,
         now: TimestampMillis,
     ) -> OCResult<ChangeRoleSuccess> {
-        let result = self.members.change_role(
+        let prev_role = self.members.change_role(
             caller,
             target_user,
             new_role.into(),
@@ -1076,15 +1078,19 @@ impl GroupChatCore {
 
         let event = RoleChanged {
             user_ids: vec![target_user],
-            old_role: result.prev_role.into(),
+            old_role: prev_role.into(),
             new_role,
             changed_by: caller,
         };
 
-        self.events
+        let result = self
+            .events
             .push_main_event(ChatEventInternal::RoleChanged(Box::new(event)), now);
 
-        Ok(result)
+        Ok(ChangeRoleSuccess {
+            prev_role,
+            bot_notification: result.bot_notification,
+        })
     }
 
     pub fn pin_message(
@@ -1229,6 +1235,8 @@ impl GroupChatCore {
             .copied()
             .collect();
 
+        let mut bot_notification = None;
+
         if !invited_users.is_empty() {
             // Check the max invite limit will not be exceeded
             if self.invited_users.len() + invited_users.len() > MAX_INVITES {
@@ -1250,18 +1258,21 @@ impl GroupChatCore {
             }
 
             // Push a UsersInvited event
-            self.events.push_main_event(
+            let result = self.events.push_main_event(
                 ChatEventInternal::UsersInvited(Box::new(UsersInvited {
                     user_ids: user_ids.clone(),
                     invited_by: member.user_id(),
                 })),
                 now,
             );
+
+            bot_notification = result.bot_notification;
         }
 
         Ok(InvitedUsersSuccess {
             invited_users: user_ids,
             group_name: self.name.value.clone(),
+            bot_notification,
         })
     }
 
@@ -1297,18 +1308,28 @@ impl GroupChatCore {
         }
     }
 
-    pub fn leave(&mut self, user_id: UserId, now: TimestampMillis) -> OCResult<GroupMemberInternal> {
+    pub fn leave(&mut self, user_id: UserId, now: TimestampMillis) -> OCResult<LeaveGroupSuccess> {
         self.can_leave(user_id)?;
 
         let removed = self.members.remove(user_id, now).unwrap();
 
-        self.events
+        let result = self
+            .events
             .push_main_event(ChatEventInternal::ParticipantLeft(Box::new(MemberLeft { user_id })), now);
 
-        Ok(removed)
+        Ok(LeaveGroupSuccess {
+            member: removed,
+            bot_notification: result.bot_notification,
+        })
     }
 
-    pub fn remove_member(&mut self, user_id: UserId, target_user_id: UserId, block: bool, now: TimestampMillis) -> OCResult {
+    pub fn remove_member(
+        &mut self,
+        user_id: UserId,
+        target_user_id: UserId,
+        block: bool,
+        now: TimestampMillis,
+    ) -> OCResult<Option<BotNotification>> {
         if user_id == target_user_id {
             return Err(OCErrorCode::CannotRemoveSelf.into());
         }
@@ -1332,7 +1353,7 @@ impl GroupChatCore {
 
             if block && !self.members.block(target_user_id, now) {
                 // Return Ok if the user was already blocked
-                return Ok(());
+                return Ok(None);
             }
 
             if !is_bot_v2 {
@@ -1351,10 +1372,13 @@ impl GroupChatCore {
                     };
                     ChatEventInternal::ParticipantsRemoved(Box::new(event))
                 };
-                self.events.push_main_event(event, now);
-            }
 
-            Ok(())
+                let result = self.events.push_main_event(event, now);
+
+                return Ok(result.bot_notification);
+            } else {
+                return Ok(None);
+            }
         } else {
             Err(OCErrorCode::InitiatorNotAuthorized.into())
         }
@@ -1466,13 +1490,14 @@ impl GroupChatCore {
             newly_public: false,
             gate_config_update: OptionUpdate::NoChange,
             rules_version: None,
+            bot_notifications: Vec::new(),
         };
 
         let events = &mut self.events;
 
         if let Some(name) = name {
             if self.name.value != name {
-                events.push_main_event(
+                let push_result = events.push_main_event(
                     ChatEventInternal::GroupNameChanged(Box::new(GroupNameChanged {
                         new_name: name.clone(),
                         previous_name: self.name.value.clone(),
@@ -1480,6 +1505,7 @@ impl GroupChatCore {
                     })),
                     now,
                 );
+                result.bot_notifications.push(push_result.bot_notification);
 
                 self.name = Timestamped::new(name, now);
             }
@@ -1487,7 +1513,7 @@ impl GroupChatCore {
 
         if let Some(description) = description {
             if self.description.value != description {
-                events.push_main_event(
+                let push_result = events.push_main_event(
                     ChatEventInternal::GroupDescriptionChanged(Box::new(GroupDescriptionChanged {
                         new_description: description.clone(),
                         previous_description: self.description.value.clone(),
@@ -1495,6 +1521,7 @@ impl GroupChatCore {
                     })),
                     now,
                 );
+                result.bot_notifications.push(push_result.bot_notification);
 
                 self.description = Timestamped::new(description, now);
             }
@@ -1512,7 +1539,7 @@ impl GroupChatCore {
                     true
                 });
 
-                events.push_main_event(
+                let push_result = events.push_main_event(
                     ChatEventInternal::GroupRulesChanged(Box::new(GroupRulesChanged {
                         enabled: self.rules.enabled,
                         prev_enabled,
@@ -1520,6 +1547,7 @@ impl GroupChatCore {
                     })),
                     now,
                 );
+                result.bot_notifications.push(push_result.bot_notification);
             }
         }
 
@@ -1528,7 +1556,7 @@ impl GroupChatCore {
             let new_avatar_id = Document::id(&avatar);
 
             if new_avatar_id != previous_avatar_id {
-                events.push_main_event(
+                let push_result = events.push_main_event(
                     ChatEventInternal::AvatarChanged(Box::new(AvatarChanged {
                         new_avatar: new_avatar_id,
                         previous_avatar: previous_avatar_id,
@@ -1536,6 +1564,7 @@ impl GroupChatCore {
                     })),
                     now,
                 );
+                result.bot_notifications.push(push_result.bot_notification);
 
                 self.avatar = Timestamped::new(avatar, now);
             }
@@ -1546,7 +1575,7 @@ impl GroupChatCore {
             let new_permissions_v2 = GroupChatCore::merge_permissions(permissions, old_permissions_v2.clone());
             self.permissions = Timestamped::new(new_permissions_v2.clone(), now);
 
-            events.push_main_event(
+            let push_result = events.push_main_event(
                 ChatEventInternal::PermissionsChanged(Box::new(PermissionsChanged {
                     old_permissions_v2,
                     new_permissions_v2,
@@ -1554,6 +1583,7 @@ impl GroupChatCore {
                 })),
                 now,
             );
+            result.bot_notifications.push(push_result.bot_notification);
         }
 
         if let Some(gate_config) = gate_config.expand() {
@@ -1561,13 +1591,14 @@ impl GroupChatCore {
                 self.gate_config = Timestamped::new(gate_config.clone(), now);
                 result.gate_config_update = OptionUpdate::from_update(gate_config.clone());
 
-                events.push_main_event(
+                let push_result = events.push_main_event(
                     ChatEventInternal::GroupGateUpdated(Box::new(GroupGateUpdatedInternal {
                         updated_by: user_id,
                         new_gate_config: gate_config,
                     })),
                     now,
                 );
+                result.bot_notifications.push(push_result.bot_notification);
             }
         }
 
@@ -1575,13 +1606,14 @@ impl GroupChatCore {
             if self.external_url.value != external_url {
                 self.external_url = Timestamped::new(external_url.clone(), now);
 
-                events.push_main_event(
+                let push_result = events.push_main_event(
                     ChatEventInternal::ExternalUrlUpdated(Box::new(ExternalUrlUpdated {
                         updated_by: user_id,
                         new_url: external_url,
                     })),
                     now,
                 );
+                result.bot_notifications.push(push_result.bot_notification);
             }
         }
 
@@ -1609,25 +1641,28 @@ impl GroupChatCore {
         }
 
         if public_changed || message_visbility_changed {
-            let event = GroupVisibilityChanged {
-                public: public_changed.then_some(self.is_public.value),
-                messages_visible_to_non_members: message_visbility_changed
-                    .then_some(self.messages_visible_to_non_members.value),
-                changed_by: user_id,
-            };
-
-            let push_event_result = events.push_main_event(ChatEventInternal::GroupVisibilityChanged(Box::new(event)), now);
+            let push_result = events.push_main_event(
+                ChatEventInternal::GroupVisibilityChanged(Box::new(GroupVisibilityChanged {
+                    public: public_changed.then_some(self.is_public.value),
+                    messages_visible_to_non_members: message_visbility_changed
+                        .then_some(self.messages_visible_to_non_members.value),
+                    changed_by: user_id,
+                })),
+                now,
+            );
+            result.bot_notifications.push(push_result.bot_notification);
 
             if public_changed && self.is_public.value {
                 self.min_visible_indexes_for_new_members =
-                    Some((push_event_result.index, events.main_events_list().next_message_index()));
+                    Some((push_result.index, events.main_events_list().next_message_index()));
                 result.newly_public = true;
             }
         }
 
         if let Some(new_events_ttl) = events_ttl.expand() {
             if new_events_ttl != events.get_events_time_to_live().value {
-                events.set_events_time_to_live(user_id, new_events_ttl, now);
+                let push_result = events.set_events_time_to_live(user_id, new_events_ttl, now);
+                result.bot_notifications.push(push_result.and_then(|r| r.bot_notification));
             }
         }
 
@@ -1958,6 +1993,7 @@ pub struct UpdateSuccessResult {
     pub newly_public: bool,
     pub gate_config_update: OptionUpdate<AccessGateConfigInternal>,
     pub rules_version: Option<Version>,
+    pub bot_notifications: Vec<Option<BotNotification>>,
 }
 
 pub enum MakePrivateResult {
@@ -1971,6 +2007,7 @@ pub enum MakePrivateResult {
 pub struct InvitedUsersSuccess {
     pub invited_users: Vec<UserId>,
     pub group_name: String,
+    pub bot_notification: Option<BotNotification>,
 }
 
 #[derive(Default)]
@@ -2091,4 +2128,9 @@ impl AtEveryoneMention {
     fn message_index(&self) -> MessageIndex {
         self.2
     }
+}
+
+pub struct LeaveGroupSuccess {
+    pub member: GroupMemberInternal,
+    pub bot_notification: Option<BotNotification>,
 }

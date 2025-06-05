@@ -32,12 +32,13 @@ fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                 unblocked_by: caller_member.user_id(),
             };
 
-            state
+            let result = state
                 .data
                 .chat
                 .events
                 .push_main_event(ChatEventInternal::UsersUnblocked(Box::new(event)), now);
 
+            state.push_bot_notification(result.bot_notification);
             handle_activity_notification(state);
             Ok(())
         } else {

@@ -32,7 +32,7 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         now,
     };
 
-    channel.chat.tip_message(
+    let result = channel.chat.tip_message(
         tip_message_args,
         CommunityEventPusher {
             now,
@@ -84,6 +84,7 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         }
     }
 
+    state.push_bot_notification(result.bot_notification);
     handle_activity_notification(state);
     Ok(())
 }

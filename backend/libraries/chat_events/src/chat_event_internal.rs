@@ -201,7 +201,7 @@ impl ChatEventInternal {
             ChatEventInternal::GroupInviteCodeChanged(_) => Some(ChatEventType::InviteCodeChanged),
             ChatEventInternal::ChatFrozen(_) => Some(ChatEventType::Frozen),
             ChatEventInternal::ChatUnfrozen(_) => Some(ChatEventType::Unfrozen),
-            ChatEventInternal::EventsTimeToLiveUpdated(_) => Some(ChatEventType::EventsTTLUpdated),
+            ChatEventInternal::EventsTimeToLiveUpdated(_) => Some(ChatEventType::DisappearingMessagesUpdated),
             ChatEventInternal::GroupGateUpdated(_) => Some(ChatEventType::GateUpdated),
             ChatEventInternal::UsersInvited(_) => Some(ChatEventType::UsersInvited),
             ChatEventInternal::MembersAddedToPublicChannel(_) => Some(ChatEventType::MembersJoined),

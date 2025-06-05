@@ -57,7 +57,7 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
     let now = state.env.now();
     let thread_root_message_index = args.thread_root_message_index;
 
-    state.data.chat.add_reaction(
+    let result = state.data.chat.add_reaction(
         caller,
         args.thread_root_message_index,
         args.message_id,
@@ -131,6 +131,7 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
         }
     }
 
+    state.push_bot_notification(result.bot_notification);
     handle_activity_notification(state);
     Ok(())
 }

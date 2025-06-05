@@ -100,7 +100,8 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
         },
         now,
     ) {
-        Ok(_) => {
+        Ok(result) => {
+            state.push_bot_notification(result.bot_notification);
             handle_activity_notification(state);
             None
         }

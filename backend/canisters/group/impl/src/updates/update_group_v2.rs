@@ -183,6 +183,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
 
     jobs::expire_members::restart_job(state);
 
+    state.push_bot_notifications(result.bot_notifications);
     handle_activity_notification(state);
     SuccessResult {
         rules_version: result.rules_version,

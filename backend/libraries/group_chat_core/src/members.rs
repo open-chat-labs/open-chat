@@ -14,8 +14,8 @@ use std::cmp::max;
 use std::collections::{BTreeMap, BTreeSet};
 use std::ops::Deref;
 use types::{
-    EventIndex, GroupMember, GroupPermissions, MessageIndex, MultiUserChat, OCResult, TimestampMillis, Timestamped, UserId,
-    UserType, Version, is_default,
+    BotNotification, EventIndex, GroupMember, GroupPermissions, MessageIndex, MultiUserChat, OCResult, TimestampMillis,
+    Timestamped, UserId, UserType, Version, is_default,
 };
 use utils::timestamped_set::TimestampedSet;
 
@@ -134,7 +134,11 @@ impl GroupMembers {
                 self.notifications_unmuted.insert(user_id);
             }
             self.prune_then_insert_member_update(user_id, MemberUpdate::Added, now);
-            AddResult::Success(AddMemberSuccess { member, unlapse: false })
+            AddResult::Success(AddMemberSuccess {
+                member,
+                unlapse: false,
+                bot_notification: None,
+            })
         } else {
             AddResult::AlreadyInGroup
         }
@@ -262,7 +266,7 @@ impl GroupMembers {
         is_caller_platform_moderator: bool,
         is_user_platform_moderator: bool,
         now: TimestampMillis,
-    ) -> OCResult<ChangeRoleSuccess> {
+    ) -> OCResult<GroupRoleInternal> {
         // Is the caller authorized to change the user to this role
         let member = self.get_verified_member(caller_id)?;
 
@@ -322,7 +326,7 @@ impl GroupMembers {
 
         self.prune_then_insert_member_update(user_id, MemberUpdate::RoleChanged, now);
 
-        Ok(ChangeRoleSuccess { prev_role })
+        Ok(prev_role)
     }
 
     pub fn toggle_notifications_muted(
@@ -548,10 +552,12 @@ pub enum AddResult {
 pub struct AddMemberSuccess {
     pub member: GroupMemberInternal,
     pub unlapse: bool,
+    pub bot_notification: Option<BotNotification>,
 }
 
 pub struct ChangeRoleSuccess {
     pub prev_role: GroupRoleInternal,
+    pub bot_notification: Option<BotNotification>,
 }
 
 #[derive(Clone)]

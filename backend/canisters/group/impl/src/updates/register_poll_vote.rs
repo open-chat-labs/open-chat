@@ -69,6 +69,6 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult<Pol
         handle_activity_notification(state);
     }
 
-    let votes = state.process_message_updated(result).votes;
-    Ok(votes)
+    state.push_bot_notification(result.bot_notification);
+    Ok(result.value.votes)
 }

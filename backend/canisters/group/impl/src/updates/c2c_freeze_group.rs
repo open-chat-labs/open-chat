@@ -42,6 +42,7 @@ pub(crate) fn freeze_group_impl(
             },
         };
 
+        state.push_bot_notification(push_event_result.bot_notification);
         handle_activity_notification(state);
 
         if return_members {
