@@ -65,7 +65,7 @@
             {/if}
         </div>
         <div class="bot-desc">
-            <Markdown inline={false} suppressLinks text={bot.definition.description} />
+            <Markdown inline={false} text={bot.definition.description} />
         </div>
         {#if showCommands}
             <BotCommands {grantedPermissions} commands={bot.definition.commands} />

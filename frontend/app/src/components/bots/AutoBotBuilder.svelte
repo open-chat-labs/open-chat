@@ -314,7 +314,7 @@
     {#if schemaLoaded}
         <Legend label={i18nKey("bots.builder.descLabel")}></Legend>
         <div class="desc">
-            <Markdown inline={false} suppressLinks text={candidate.definition.description} />
+            <Markdown inline={false} text={candidate.definition.description} />
         </div>
 
         {@render configtabs()}
