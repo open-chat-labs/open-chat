@@ -3368,27 +3368,46 @@ export class OpenChat {
         switch (serverChat.kind) {
             case "group_chat":
             case "channel":
-                const lastUpdated = serverChat.lastUpdated;
                 const resp: GroupChatDetailsResponse = await this.#sendRequest({
                     kind: "getGroupDetails",
                     chatId: serverChat.id,
-                    chatLastUpdated: lastUpdated,
+                    chatLastUpdated: serverChat.lastUpdated,
                 }).catch(CommonResponses.failure);
-                if ("members" in resp && resp.timestamp > lastUpdated) {
+                if ("members" in resp) {
+                    if (!chatIdentifiersEqual(serverChat.id, selectedChatIdStore.value)) {
+                        console.warn(
+                            "Attempting to set chat details on the wrong chat - probably a stale response",
+                            serverChat.id,
+                            selectedChatIdStore.value,
+                        );
+                        return;
+                    }
+                    const currentStoreValue = selectedServerChatStore.value;
+                    if (currentStoreValue !== undefined &&
+                        chatIdentifiersEqual(currentStoreValue.chatId, serverChat.id) &&
+                        resp.timestamp <= currentStoreValue.timestamp
+                    ) {
+                        // The store already has the latest updates, exiting
+                        return;
+                    }
                     const members = resp.members.filter((m) => !m.lapsed);
                     const lapsed = new Set(
                         resp.members.filter((m) => m.lapsed).map((m) => m.userId),
                     );
-                    this.#setChatDetailsFromServer(
-                        serverChat.id,
-                        new Map(members.map((m) => [m.userId, m])),
-                        lapsed,
-                        resp.blockedUsers,
-                        resp.invitedUsers,
-                        resp.pinnedMessages,
-                        resp.rules,
-                        resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
-                        new Map(resp.webhooks.map((w) => [w.id, w])),
+
+                    selectedServerChatStore.set(
+                        new ChatDetailsState(
+                            serverChat.id,
+                            resp.timestamp,
+                            new Map(members.map((m) => [m.userId, m])),
+                            lapsed,
+                            resp.blockedUsers,
+                            resp.invitedUsers,
+                            resp.pinnedMessages,
+                            resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
+                            new Map(resp.webhooks.map((w) => [w.id, w])),
+                            resp.rules,
+                        ),
                     );
                     await this.#updateUserStoreFromEvents([]);
                 }
@@ -3397,40 +3416,6 @@ export class OpenChat {
                 // app.setDirectChatDetails(serverChat.id, currentUserIdStore.value);  //TODO - make sure this still works without this
                 break;
         }
-    }
-
-    #setChatDetailsFromServer(
-        chatId: ChatIdentifier,
-        members: Map<string, Member>,
-        lapsedMembers: Set<string>,
-        blockedUsers: Set<string>,
-        invitedUsers: Set<string>,
-        pinnedMessages: Set<number>,
-        rules: VersionedRules,
-        bots: Map<string, GrantedBotPermissions>,
-        webhooks: Map<string, WebhookDetails>,
-    ) {
-        if (!chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
-            console.warn(
-                "Attempting to set chat details on the wrong chat - probably a stale response",
-                chatId,
-                selectedChatIdStore.value,
-            );
-            return;
-        }
-        selectedServerChatStore.set(
-            new ChatDetailsState(
-                chatId,
-                members,
-                lapsedMembers,
-                blockedUsers,
-                invitedUsers,
-                pinnedMessages,
-                bots,
-                webhooks,
-                rules,
-            ),
-        );
     }
 
     achievementLogo(id: number): string {

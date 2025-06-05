@@ -5,6 +5,7 @@ import {
     type ChatListScope,
     type GrantedBotPermissions,
     type Member,
+    NOOP,
     type VersionedRules,
     type WebhookDetails,
 } from "openchat-shared";
