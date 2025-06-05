@@ -18,9 +18,9 @@
     import { toastStore } from "../../stores/toast";
     import EditableAvatar from "../EditableAvatar.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
+    import Markdown from "../home/Markdown.svelte";
     import SingleUserSelector from "../home/SingleUserSelector.svelte";
     import HoverIcon from "../HoverIcon.svelte";
-    import Input from "../Input.svelte";
     import Legend from "../Legend.svelte";
     import Tabs, { type Tab } from "../Tabs.svelte";
     import Translatable from "../Translatable.svelte";
@@ -313,7 +313,9 @@
 
     {#if schemaLoaded}
         <Legend label={i18nKey("bots.builder.descLabel")}></Legend>
-        <Input disabled={true} value={candidate.definition.description} />
+        <div class="desc">
+            <Markdown inline={false} suppressLinks text={candidate.definition.description} />
+        </div>
 
         {@render configtabs()}
 
@@ -382,7 +384,10 @@
         color: var(--txt-light);
     }
 
-    .send-key {
-        margin-top: $sp4;
+    .desc {
+        @include input();
+        max-height: 180px;
+        overflow: auto;
+        margin-bottom: $sp3;
     }
 </style>
