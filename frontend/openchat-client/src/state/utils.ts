@@ -1,10 +1,9 @@
-import type { SafeMap } from "openchat-shared";
+import { NOOP, type SafeMap } from "openchat-shared";
 import type { Writable } from "svelte/store";
 import type { LocalMap } from "./map";
 import type { LocalSet } from "./set";
 import { scheduleUndo, type UndoLocalUpdate } from "./undo";
 
-const noop = () => {};
 export const notEq = (_a: unknown, _b: unknown) => false;
 type UndoTimeout = number | "never";
 
@@ -14,7 +13,7 @@ export function modifyWritable<T>(
     dedupeId?: string,
     timeout?: UndoTimeout,
 ) {
-    let undo: UndoLocalUpdate = noop;
+    let undo: UndoLocalUpdate = NOOP;
     store.update((data) => {
         undo = fn(data);
         return data;
