@@ -3368,11 +3368,10 @@ export class OpenChat {
         switch (serverChat.kind) {
             case "group_chat":
             case "channel":
-                const lastUpdated = serverChat.lastUpdated;
                 const resp: GroupChatDetailsResponse = await this.#sendRequest({
                     kind: "getGroupDetails",
                     chatId: serverChat.id,
-                    chatLastUpdated: lastUpdated,
+                    chatLastUpdated: serverChat.lastUpdated,
                 }).catch(CommonResponses.failure);
                 if ("members" in resp) {
                     if (!chatIdentifiersEqual(serverChat.id, selectedChatIdStore.value)) {
@@ -3383,7 +3382,9 @@ export class OpenChat {
                         );
                         return;
                     }
-                    if (selectedServerChatStore.value?.chatId === serverChat.id && resp.timestamp <= lastUpdated) {
+                    if (selectedServerChatStore.value?.chatId === serverChat.id &&
+                        resp.timestamp <= selectedServerChatStore.value.timestamp
+                    ) {
                         return;
                     }
                     const members = resp.members.filter((m) => !m.lapsed);
@@ -3394,6 +3395,7 @@ export class OpenChat {
                     selectedServerChatStore.set(
                         new ChatDetailsState(
                             serverChat.id,
+                            resp.timestamp,
                             new Map(members.map((m) => [m.userId, m])),
                             lapsed,
                             resp.blockedUsers,

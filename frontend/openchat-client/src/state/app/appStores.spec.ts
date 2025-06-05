@@ -155,6 +155,7 @@ describe("app state", () => {
             selectedServerChatStore.set(
                 new ChatDetailsState(
                     chatId,
+                    BigInt(0),
                     new Map([
                         [
                             "user_one",
