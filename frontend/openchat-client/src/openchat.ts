@@ -3382,9 +3382,12 @@ export class OpenChat {
                         );
                         return;
                     }
-                    if (chatIdentifiersEqual(selectedServerChatStore.value?.chatId, serverChat.id) &&
-                        resp.timestamp <= selectedServerChatStore.value.timestamp
+                    const currentStoreValue = selectedServerChatStore.value;
+                    if (currentStoreValue !== undefined &&
+                        chatIdentifiersEqual(currentStoreValue.chatId, serverChat.id) &&
+                        resp.timestamp <= currentStoreValue.timestamp
                     ) {
+                        // The store already has the latest updates, exiting
                         return;
                     }
                     const members = resp.members.filter((m) => !m.lapsed);
