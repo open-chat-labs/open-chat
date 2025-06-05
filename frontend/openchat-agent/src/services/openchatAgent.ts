@@ -407,7 +407,8 @@ export class OpenChatAgent extends EventTarget {
     }
 
     getAllCachedUsers(): Promise<UserSummary[]> {
-        return measure("getAllUsers", () => getAllUsers());
+        return measure("getAllUsers", () => getAllUsers().then((users) =>
+            users.map((u) => this.rehydrateUserSummary(u))));
     }
 
     logError(message?: unknown, ...optionalParams: unknown[]): void {
