@@ -225,7 +225,7 @@ lazy_static = "1"
 num-traits = "0.2"
 openssl = "0.10"
 p256 = { version = "0.13" }
-pocket-ic = "8"
+pocket-ic = "9"
 proc-macro2 = "1"
 prometheus = "0.14"
 proptest = "1"
