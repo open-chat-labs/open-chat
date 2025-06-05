@@ -3,6 +3,7 @@ use local_user_index_canister::*;
 
 // Queries
 generate_candid_query_call!(latest_notification_index);
+generate_candid_query_call!(notifications);
 generate_candid_query_call!(notifications_v2);
 
 // Updates
