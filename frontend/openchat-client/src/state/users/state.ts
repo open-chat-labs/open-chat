@@ -18,7 +18,7 @@ import {
 export class UsersState {
     #allUsers!: ReadonlyMap<string, UserSummary>;
     #blockedUsers!: ReadonlySet<string>;
-    #suspendedUsers!: ReadonlyMap<string, UserSummary>;
+    #suspendedUsers!: ReadonlySet<string>;
 
     constructor() {
         allUsersStore.subscribe((val) => (this.#allUsers = val));
@@ -49,6 +49,7 @@ export class UsersState {
 
     setUsers(users: UserLookup) {
         normalUsersStore.set(new Map(users));
+        this.#updateSuspended(users.values())
     }
 
     addUser(user: UserSummary) {
@@ -56,6 +57,7 @@ export class UsersState {
             map.set(user.userId, user);
             return map;
         });
+        this.#updateSuspended([user]);
     }
 
     addMany(users: UserSummary[]) {
@@ -65,6 +67,7 @@ export class UsersState {
             users.forEach((u) => map.set(u.userId, u));
             return map;
         });
+        this.#updateSuspended(users);
     }
 
     setUpdated(userIds: string[], timestamp: bigint) {
@@ -116,8 +119,33 @@ export class UsersState {
         return specialUsersStore;
     }
 
-    get suspendedUsers(): ReadonlyMap<string, UserSummary> {
+    get suspendedUsers() {
         return this.#suspendedUsers;
+    }
+
+    #updateSuspended(users: Iterable<UserSummary>) {
+        const toAdd = new Set<string>();
+        const toRemove = new Set<string>();
+        for (const user of users) {
+            if (user.suspended) {
+                if (!this.#suspendedUsers.has(user.userId)) {
+                    toAdd.add(user.userId);
+                }
+            } else if (this.#suspendedUsers.has(user.userId)) {
+                toRemove.add(user.userId);
+            }
+        }
+        if (toAdd.size > 0 || toRemove.size > 0) {
+            suspendedUsersStore.update((set) => {
+                for (const userId of toAdd) {
+                    set.add(userId);
+                }
+                for (const userId of toRemove) {
+                    set.delete(userId);
+                }
+                return set;
+            });
+        }
     }
 }
 
