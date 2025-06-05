@@ -207,6 +207,7 @@ class _Writable<T> {
     }
 }
 
+let derivedStoreIndex = 0;
 class _Derived<S extends Stores, T> {
     readonly #innerStore: _Writable<T>;
     readonly #storesArray: Readable<unknown>[] = [];
@@ -220,6 +221,7 @@ class _Derived<S extends Stores, T> {
     #unsubscribers: Unsubscriber[] = [];
     // The first time you call `value` a subscription will be created, ensuring subsequent accesses are fast
     #valueSubscriber: Unsubscriber | undefined = undefined;
+    #storeIndex = derivedStoreIndex++;
 
     constructor(stores: S, fn: (values: StoresValues<S>) => T, equalityCheck?: EqualityCheck<T>) {
         this.#innerStore = new _Writable(undefined as T, (_) => this.#start(), equalityCheck);
@@ -294,9 +296,9 @@ class _Derived<S extends Stores, T> {
             }
         }
 
-        const newValue = this.#fn(
-            (this.#single ? this.#storeValues[0] : this.#storeValues) as StoresValues<S>,
-        );
+        const newValue = measureDerivedStoreUpdate(this.#storeIndex, () => this.#fn(
+            (this.#single ? this.#storeValues[0] : this.#storeValues) as StoresValues<S>));
+
         this.#recalculationPending = false;
         this.#innerStore.set(newValue);
     }
@@ -322,3 +324,22 @@ function convertStore<T>(store: Readable<T> | SvelteReadable<T>): Readable<T> {
         },
     };
 }
+
+// [derivedStoreIndex, [updateCount, totalDuration]]
+const derivedStoreMetrics = new Map<number, [number, number]>();
+let derivedStoreMetricsSorted: [number, [number, number]][] = [];
+
+function measureDerivedStoreUpdate<T>(index: number, fn: () => T): T {
+    const start =  performance.now();
+    const value = fn();
+    const duration = performance.now() - start;
+    const [previousCount, previousDuration] = derivedStoreMetrics.get(index) ?? [0, 0];
+    derivedStoreMetrics.set(index, [previousCount + 1, previousDuration + duration]);
+    return value;
+}
+
+window.setInterval(() => {
+    derivedStoreMetricsSorted = [...derivedStoreMetrics.entries()];
+    derivedStoreMetricsSorted.sort(([, [, durationA]], [, [, durationB]]) => durationB - durationA);
+    console.debug("Derived store metrics", derivedStoreMetricsSorted);
+}, 5000);
