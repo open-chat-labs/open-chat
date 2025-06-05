@@ -958,7 +958,7 @@ export class OpenChat {
                     this.logout();
                 }
             });
-        this.#sendRequest({ kind: "getAllCachedUsers" }).then((u) => userStore.setUsers(u));
+        this.#sendRequest({ kind: "getAllCachedUsers" }).then((u) => userStore.addMany(u));
     }
 
     userIsDiamond(userId: string): boolean {

@@ -1,8 +1,7 @@
-// Not reallly sure whether to make this separate or not yet. Feels like a thing.
+// Not really sure whether to make this separate or not yet. Feels like a thing.
 import {
     type ReadonlyMap,
     type ReadonlySet,
-    type UserLookup,
     type UserSummary,
 } from "openchat-shared";
 import {
@@ -44,11 +43,6 @@ export class UsersState {
             }
             return users;
         });
-    }
-
-    setUsers(users: UserLookup) {
-        allUsersStore.set(new Map(users));
-        this.#updateSuspended(users.values())
     }
 
     addUser(user: UserSummary) {
