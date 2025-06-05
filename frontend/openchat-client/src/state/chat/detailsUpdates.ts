@@ -1,6 +1,5 @@
 import {
     ChatMap,
-    NOOP,
     type ChatIdentifier,
     type ChatListScope,
     type GrantedBotPermissions,
