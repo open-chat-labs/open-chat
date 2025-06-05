@@ -212,7 +212,6 @@ import type {
     UnpinChatResponse,
     UnsuspendUserResponse,
     User,
-    UserLookup,
     UsersArgs,
     UsersResponse,
     UserSummary,
@@ -1620,7 +1619,6 @@ export type WorkerResponseInner =
     | GroupChatDetailsResponse
     | GroupChatDetails
     | MarkReadResponse
-    | UserLookup
     | UsersResponse
     | CurrentUserResponse
     | FreezeGroupResponse
@@ -2065,7 +2063,7 @@ export type WorkerResult<T> = T extends Init
     : T extends CreateUserClient
     ? void
     : T extends GetAllCachedUsers
-    ? UserLookup
+    ? UserSummary[]
     : T extends LastOnline
     ? Record<string, number>
     : T extends MarkAsOnline

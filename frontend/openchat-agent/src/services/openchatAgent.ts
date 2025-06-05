@@ -180,7 +180,6 @@ import type {
     UserCanisterCommunitySummaryUpdates,
     UserCanisterGroupChatSummary,
     UserCanisterGroupChatSummaryUpdates,
-    UserLookup,
     UsersArgs,
     UsersResponse,
     UserSummary,
@@ -407,10 +406,8 @@ export class OpenChatAgent extends EventTarget {
         return this.identity.getPrincipal();
     }
 
-    getAllCachedUsers(): Promise<UserLookup> {
-        return measure("getAllUsers", () => getAllUsers()).then((users) => {
-            return new Map(users.map((user) => [user.userId, this.rehydrateUserSummary(user)]));
-        });
+    getAllCachedUsers(): Promise<UserSummary[]> {
+        return measure("getAllUsers", () => getAllUsers());
     }
 
     logError(message?: unknown, ...optionalParams: unknown[]): void {
