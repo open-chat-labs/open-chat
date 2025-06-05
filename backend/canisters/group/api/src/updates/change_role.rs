@@ -8,7 +8,6 @@ use types::{GroupRole, UnitResult, UserId};
 pub struct Args {
     pub user_id: UserId,
     pub new_role: GroupRole,
-    pub correlation_id: u64,
 }
 
 pub type Response = UnitResult;

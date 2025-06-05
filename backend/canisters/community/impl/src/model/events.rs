@@ -73,7 +73,6 @@ impl CommunityEvents {
         let event = EventWrapperInternal {
             index: event_index,
             timestamp: now,
-            correlation_id: 0,
             expires_at: None,
             event: CommunityEventInternal::Created(Box::new(GroupCreated {
                 name,
@@ -97,7 +96,6 @@ impl CommunityEvents {
         self.stable_events_map.insert(EventWrapperInternal {
             index: event_index,
             timestamp: now,
-            correlation_id: 0,
             expires_at: None,
             event,
         });

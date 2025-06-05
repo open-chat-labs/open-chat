@@ -816,7 +816,6 @@ impl Data {
                 user_id: bot_id,
                 added_by: owner_id,
             })),
-            0,
             now,
         );
 
@@ -854,7 +853,6 @@ impl Data {
                 user_id: bot_id,
                 updated_by: owner_id,
             })),
-            0,
             now,
         );
 
@@ -889,7 +887,6 @@ impl Data {
                 user_id: bot_id,
                 removed_by: owner_id,
             })),
-            0,
             now,
         );
 

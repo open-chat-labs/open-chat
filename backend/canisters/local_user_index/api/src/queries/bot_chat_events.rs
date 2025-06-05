@@ -124,7 +124,6 @@ impl From<types::EventsResponse> for EventsResponse {
                 .map(|event| EventWrapper {
                     index: event.index,
                     timestamp: event.timestamp,
-                    correlation_id: event.correlation_id,
                     expires_at: event.expires_at,
                     event: event.event.into(),
                 })

@@ -347,7 +347,6 @@ pub(crate) fn join_channel_unchecked(
                     user_id,
                     invited_by: invitation.map(|i| i.invited_by),
                 })),
-                0,
                 now,
             );
         }

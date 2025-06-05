@@ -12,7 +12,6 @@ pub struct Args {
     pub username: String,
     pub display_name: Option<String>,
     pub new_achievement: bool,
-    pub correlation_id: u64,
 }
 
 pub type Response = UnitResult;

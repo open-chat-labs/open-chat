@@ -111,7 +111,7 @@ fn commit(args: Args, payments: Vec<GatePayment>, state: &mut RuntimeState) -> R
             .data
             .chat
             .events
-            .push_main_event(ChatEventInternal::UsersUnblocked(Box::new(event)), args.correlation_id, now);
+            .push_main_event(ChatEventInternal::UsersUnblocked(Box::new(event)), now);
 
         new_event = true;
     }
@@ -132,11 +132,11 @@ fn commit(args: Args, payments: Vec<GatePayment>, state: &mut RuntimeState) -> R
                 user_id: args.user_id,
                 invited_by: invitation.map(|i| i.invited_by),
             };
-            state.data.chat.events.push_main_event(
-                ChatEventInternal::ParticipantJoined(Box::new(event)),
-                args.correlation_id,
-                now,
-            );
+            state
+                .data
+                .chat
+                .events
+                .push_main_event(ChatEventInternal::ParticipantJoined(Box::new(event)), now);
 
             new_event = true;
 

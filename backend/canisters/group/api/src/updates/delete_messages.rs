@@ -10,7 +10,6 @@ pub struct Args {
     pub message_ids: Vec<MessageId>,
     pub as_platform_moderator: Option<bool>,
     pub new_achievement: bool,
-    pub correlation_id: u64,
 }
 
 pub type Response = UnitResult;

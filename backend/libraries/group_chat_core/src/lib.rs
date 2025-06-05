@@ -628,7 +628,6 @@ impl GroupChatCore {
             forwarded: forwarding,
             sender_is_bot: caller.is_bot(),
             block_level_markdown,
-            correlation_id: 0,
             now,
         };
 
@@ -1007,7 +1006,6 @@ impl GroupChatCore {
                                 unpinned_by: caller.agent(),
                                 due_to_message_deleted: true,
                             })),
-                            0,
                             now,
                         );
                     }
@@ -1084,7 +1082,7 @@ impl GroupChatCore {
         };
 
         self.events
-            .push_main_event(ChatEventInternal::RoleChanged(Box::new(event)), 0, now);
+            .push_main_event(ChatEventInternal::RoleChanged(Box::new(event)), now);
 
         Ok(result)
     }
@@ -1114,7 +1112,6 @@ impl GroupChatCore {
                     message_index,
                     pinned_by: user_id,
                 })),
-                0,
                 now,
             );
 
@@ -1153,7 +1150,6 @@ impl GroupChatCore {
                     unpinned_by: user_id,
                     due_to_message_deleted: false,
                 })),
-                0,
                 now,
             );
 
@@ -1259,7 +1255,6 @@ impl GroupChatCore {
                     user_ids: user_ids.clone(),
                     invited_by: member.user_id(),
                 })),
-                0,
                 now,
             );
         }
@@ -1308,7 +1303,7 @@ impl GroupChatCore {
         let removed = self.members.remove(user_id, now).unwrap();
 
         self.events
-            .push_main_event(ChatEventInternal::ParticipantLeft(Box::new(MemberLeft { user_id })), 0, now);
+            .push_main_event(ChatEventInternal::ParticipantLeft(Box::new(MemberLeft { user_id })), now);
 
         Ok(removed)
     }
@@ -1356,7 +1351,7 @@ impl GroupChatCore {
                     };
                     ChatEventInternal::ParticipantsRemoved(Box::new(event))
                 };
-                self.events.push_main_event(event, 0, now);
+                self.events.push_main_event(event, now);
             }
 
             Ok(())
@@ -1483,7 +1478,6 @@ impl GroupChatCore {
                         previous_name: self.name.value.clone(),
                         changed_by: user_id,
                     })),
-                    0,
                     now,
                 );
 
@@ -1499,7 +1493,6 @@ impl GroupChatCore {
                         previous_description: self.description.value.clone(),
                         changed_by: user_id,
                     })),
-                    0,
                     now,
                 );
 
@@ -1525,7 +1518,6 @@ impl GroupChatCore {
                         prev_enabled,
                         changed_by: user_id,
                     })),
-                    0,
                     now,
                 );
             }
@@ -1542,7 +1534,6 @@ impl GroupChatCore {
                         previous_avatar: previous_avatar_id,
                         changed_by: user_id,
                     })),
-                    0,
                     now,
                 );
 
@@ -1561,7 +1552,6 @@ impl GroupChatCore {
                     new_permissions_v2,
                     changed_by: user_id,
                 })),
-                0,
                 now,
             );
         }
@@ -1576,7 +1566,6 @@ impl GroupChatCore {
                         updated_by: user_id,
                         new_gate_config: gate_config,
                     })),
-                    0,
                     now,
                 );
             }
@@ -1591,7 +1580,6 @@ impl GroupChatCore {
                         updated_by: user_id,
                         new_url: external_url,
                     })),
-                    0,
                     now,
                 );
             }
@@ -1628,7 +1616,7 @@ impl GroupChatCore {
                 changed_by: user_id,
             };
 
-            let push_event_result = events.push_main_event(ChatEventInternal::GroupVisibilityChanged(Box::new(event)), 0, now);
+            let push_event_result = events.push_main_event(ChatEventInternal::GroupVisibilityChanged(Box::new(event)), now);
 
             if public_changed && self.is_public.value {
                 self.min_visible_indexes_for_new_members =

@@ -102,7 +102,6 @@ pub fn handle_start_video_call(
         forwarded: false,
         sender_is_bot: true,
         block_level_markdown: false,
-        correlation_id: 0,
         now,
         sender_context: None,
     };

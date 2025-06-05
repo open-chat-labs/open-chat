@@ -523,7 +523,6 @@ fn generate_value<R: RngCore>(content: MessageContentInternal, rng: &mut R) -> E
         index: random_from_u32(rng),
         timestamp: rng.r#gen(),
         expires_at: Some(rng.r#gen()),
-        correlation_id: rng.r#gen(),
         event: ChatEventInternal::Message(Box::new(MessageInternal {
             message_index: random_from_u32(rng),
             message_id: random_from_u128(rng),

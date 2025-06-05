@@ -415,7 +415,6 @@ mod tests {
                 index: i.into(),
                 timestamp: i.into(),
                 event: ChatEventInternal::Empty,
-                correlation_id: 0,
                 expires_at: None,
             });
         }

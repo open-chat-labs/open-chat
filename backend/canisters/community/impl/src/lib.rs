@@ -861,7 +861,7 @@ impl Data {
                 let result = channel
                     .chat
                     .events
-                    .push_main_event(ChatEventInternal::ParticipantsAdded(Box::new(event)), 0, now);
+                    .push_main_event(ChatEventInternal::ParticipantsAdded(Box::new(event)), now);
 
                 bot_notification = result.bot_notification;
             }

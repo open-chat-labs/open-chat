@@ -59,7 +59,6 @@ fn suspend_user() {
             block_level_markdown: false,
             message_filter_failed: None,
             pin: None,
-            correlation_id: 0,
         },
     );
     assert!(matches!(
@@ -84,7 +83,6 @@ fn suspend_user() {
             rules_accepted: None,
             message_filter_failed: None,
             new_achievement: false,
-            correlation_id: 0,
         },
     );
     assert!(matches!(
@@ -144,7 +142,6 @@ fn suspend_user() {
             block_level_markdown: false,
             message_filter_failed: None,
             pin: None,
-            correlation_id: 0,
         },
     );
     assert!(matches!(
@@ -169,7 +166,6 @@ fn suspend_user() {
             rules_accepted: None,
             message_filter_failed: None,
             new_achievement: false,
-            correlation_id: 0,
         },
     );
     assert!(matches!(

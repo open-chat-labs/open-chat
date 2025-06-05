@@ -13,7 +13,6 @@ type SendMessageV2Args = record {
     rules_accepted : opt Version;
     message_filter_failed : opt nat64;
     new_achievement : bool;
-    correlation_id : nat64;
 };
 
 type SendMessageResponse = variant {
@@ -33,7 +32,6 @@ type EditMessageV2Args = record {
     message_id : MessageId;
     content : MessageContentInitial;
     block_level_markdown : opt bool;
-    correlation_id : nat64;
     new_achievement : bool;
 };
 
@@ -90,7 +88,6 @@ type DeleteMessagesArgs = record {
     thread_root_message_index : opt MessageIndex;
     message_ids : vec MessageId;
     as_platform_moderator : opt bool;
-    correlation_id : nat64;
     new_achievement : bool;
 };
 
@@ -102,7 +99,6 @@ type DeleteMessagesResponse = variant {
 type UndeleteMessagesArgs = record {
     thread_root_message_index : opt MessageIndex;
     message_ids : vec MessageId;
-    correlation_id : nat64;
 };
 
 type UndeleteMessagesResponse = variant {
@@ -118,7 +114,6 @@ type RegisterPollVoteArgs = record {
     poll_option : nat32;
     operation : VoteOperation;
     new_achievement : bool;
-    correlation_id : nat64;
 };
 
 type RegisterPollVoteResponse = variant {
@@ -154,7 +149,6 @@ type AddReactionArgs = record {
     reaction : text;
     username : text;
     display_name : opt text;
-    correlation_id : nat64;
     new_achievement : bool;
 };
 
@@ -167,7 +161,6 @@ type RemoveReactionArgs = record {
     thread_root_message_index : opt MessageIndex;
     message_id : MessageId;
     reaction : text;
-    correlation_id : nat64;
 };
 
 type RemoveReactionResponse = variant {
@@ -188,7 +181,6 @@ type ReportMessageResponse = variant {
 
 type BlockUserArgs = record {
     user_id : UserId;
-    correlation_id : nat64;
 };
 
 type BlockUserResponse = variant {
@@ -198,7 +190,6 @@ type BlockUserResponse = variant {
 
 type UnblockUserArgs = record {
     user_id : UserId;
-    correlation_id : nat64;
 };
 
 type UnblockUserResponse = variant {
@@ -208,7 +199,6 @@ type UnblockUserResponse = variant {
 
 type RemoveParticipantArgs = record {
     user_id : UserId;
-    correlation_id : nat64;
 };
 
 type RemoveParticipantResponse = variant {
@@ -219,7 +209,6 @@ type RemoveParticipantResponse = variant {
 type ChangeRoleArgs = record {
     user_id : UserId;
     new_role : GroupRole;
-    correlation_id : nat64;
 };
 
 type ChangeRoleResponse = variant {
@@ -237,7 +226,6 @@ type UpdateGroupV2Args = record {
     gate_config : AccessGateConfigUpdate;
     public : opt bool;
     messages_visible_to_non_members: opt bool;    
-    correlation_id : nat64;
 };
 
 type UpdateGroupV2Response = variant {
@@ -249,7 +237,6 @@ type UpdateGroupV2Response = variant {
 
 type PinMessageArgs = record {
     message_index : MessageIndex;
-    correlation_id : nat64;
 };
 
 type PinMessageV2Response = variant {
@@ -259,7 +246,6 @@ type PinMessageV2Response = variant {
 
 type UnpinMessageArgs = record {
     message_index : MessageIndex;
-    correlation_id : nat64;
 };
 
 type UnpinMessageResponse = variant {
@@ -284,7 +270,6 @@ type RegisterProposalVoteV2Response = variant {
 
 type ClaimPrizeArgs = record {
     message_id : MessageId;
-    correlation_id : nat64;
 };
 
 type ClaimPrizeResponse = variant {
@@ -510,10 +495,6 @@ type InviteCodeResponse = variant {
     Error : OCError;
 };
 
-type EnableInviteCodeArgs = record {
-    correlation_id : nat64;
-};
-
 type EnableInviteCodeResponse = variant {
     Success : record {
         code : nat64;
@@ -521,17 +502,9 @@ type EnableInviteCodeResponse = variant {
     Error : OCError;
 };
 
-type DisableInviteCodeArgs = record {
-    correlation_id : nat64;
-};
-
 type DisableInviteCodeResponse = variant {
     Success;
     Error : OCError;
-};
-
-type ResetInviteCodeArgs = record {
-    correlation_id : nat64;
 };
 
 type ResetInviteCodeResponse = variant {
@@ -582,9 +555,9 @@ service : {
     unpin_message : (UnpinMessageArgs) -> (UnpinMessageResponse);
     change_role : (ChangeRoleArgs) -> (ChangeRoleResponse);
     invite_code : (InviteCodeArgs) -> (InviteCodeResponse) query;
-    enable_invite_code : (EnableInviteCodeArgs) -> (EnableInviteCodeResponse);
-    disable_invite_code : (DisableInviteCodeArgs) -> (DisableInviteCodeResponse);
-    reset_invite_code : (ResetInviteCodeArgs) -> (ResetInviteCodeResponse);
+    enable_invite_code : (EmptyArgs) -> (EnableInviteCodeResponse);
+    disable_invite_code : (EmptyArgs) -> (DisableInviteCodeResponse);
+    reset_invite_code : (EmptyArgs) -> (ResetInviteCodeResponse);
     cancel_invites : (CancelInvitesArgs) -> (CancelInvitesResponse);
 
     // Regular users

@@ -9,7 +9,6 @@ use types::{Message, MessageId, MessageIndex};
 pub struct Args {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_ids: Vec<MessageId>,
-    pub correlation_id: u64,
 }
 
 #[ts_export(group, undelete_messages)]

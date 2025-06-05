@@ -76,7 +76,7 @@ impl ChatEvents {
             bot_subscriptions: BTreeMap::new(),
         };
 
-        events.push_event(None, ChatEventInternal::DirectChatCreated(DirectChatCreated {}), 0, now);
+        events.push_event(None, ChatEventInternal::DirectChatCreated(DirectChatCreated {}), now);
 
         events
     }
@@ -114,7 +114,6 @@ impl ChatEvents {
                 description,
                 created_by,
             })),
-            0,
             now,
         );
 
@@ -222,7 +221,6 @@ impl ChatEvents {
         let push_event_result = self.push_event(
             args.thread_root_message_index,
             ChatEventInternal::Message(Box::new(message_internal)),
-            args.correlation_id,
             args.now,
         );
 
@@ -263,7 +261,6 @@ impl ChatEvents {
             EventWrapper {
                 index: push_event_result.index,
                 timestamp: args.now,
-                correlation_id: args.correlation_id,
                 expires_at: push_event_result.expires_at,
                 event: message,
             },
@@ -1071,7 +1068,6 @@ impl ChatEvents {
                         forwarded: false,
                         sender_is_bot: true,
                         block_level_markdown: false,
-                        correlation_id: 0,
                         now,
                     },
                     Some(event_pusher),
@@ -1566,7 +1562,6 @@ impl ChatEvents {
                     forwarded: false,
                     sender_is_bot: true,
                     block_level_markdown: false,
-                    correlation_id: 0,
                     now,
                 },
                 Some(event_pusher),
@@ -1680,7 +1675,6 @@ impl ChatEvents {
         &mut self,
         thread_root_message_index: Option<MessageIndex>,
         event: ChatEventInternal,
-        correlation_id: u64,
         now: TimestampMillis,
     ) -> PushEventResultInternal {
         if self.frozen {
@@ -1713,7 +1707,7 @@ impl ChatEvents {
             &mut self.main
         };
 
-        let event_index = events_list.push_event(event, correlation_id, expires_at, now);
+        let event_index = events_list.push_event(event, expires_at, now);
 
         if let Some(timestamp) = expires_at {
             self.expiring_events.insert(event_index, timestamp);
@@ -1760,7 +1754,6 @@ impl ChatEvents {
                     updated_by: user_id,
                     new_ttl: events_ttl,
                 })),
-                0,
                 now,
             ))
         } else {
@@ -1782,27 +1775,21 @@ impl ChatEvents {
             .collect()
     }
 
-    pub fn push_main_event(
-        &mut self,
-        event: ChatEventInternal,
-        correlation_id: u64,
-        now: TimestampMillis,
-    ) -> PushEventResultInternal {
-        self.push_event(None, event, correlation_id, now)
+    pub fn push_main_event(&mut self, event: ChatEventInternal, now: TimestampMillis) -> PushEventResultInternal {
+        self.push_event(None, event, now)
     }
 
     pub fn push_thread_event(
         &mut self,
         thread_root_message_index: MessageIndex,
         event: ChatEventInternal,
-        correlation_id: u64,
         now: TimestampMillis,
     ) -> EventIndex {
         let events = self
             .threads
             .entry(thread_root_message_index)
             .or_insert_with(|| ChatEventsList::new(self.chat, Some(thread_root_message_index)));
-        events.push_event(event, correlation_id, None, now)
+        events.push_event(event, None, now)
     }
 
     pub fn mark_message_reminder_created_message_hidden(&mut self, message_index: MessageIndex, now: TimestampMillis) -> bool {
@@ -1892,7 +1879,6 @@ impl ChatEvents {
                 frozen_by: user_id,
                 reason,
             })),
-            0,
             now,
         );
         self.frozen = true;
@@ -1904,7 +1890,6 @@ impl ChatEvents {
         self.push_event(
             None,
             ChatEventInternal::ChatUnfrozen(Box::new(GroupUnfrozen { unfrozen_by: user_id })),
-            0,
             now,
         )
     }
@@ -1935,7 +1920,6 @@ impl ChatEvents {
 
         self.push_main_event(
             ChatEventInternal::MembersAddedToPublicChannel(Box::new(MembersAddedToPublicChannelInternal { user_ids })),
-            0,
             now,
         );
     }
@@ -2458,7 +2442,6 @@ pub struct PushMessageArgs {
     pub forwarded: bool,
     pub sender_is_bot: bool,
     pub block_level_markdown: bool,
-    pub correlation_id: u64,
     pub now: TimestampMillis,
 }
 

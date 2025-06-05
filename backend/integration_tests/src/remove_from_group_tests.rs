@@ -24,10 +24,7 @@ fn remove_group_member_succeeds() {
         env,
         user1.principal,
         group_id.into(),
-        &group_canister::remove_participant::Args {
-            user_id: user2.user_id,
-            correlation_id: 0,
-        },
+        &group_canister::remove_participant::Args { user_id: user2.user_id },
     );
 
     assert!(matches!(
@@ -58,10 +55,7 @@ fn block_user_who_is_no_longer_group_member_succeeds() {
         env,
         user1.principal,
         group_id.into(),
-        &group_canister::block_user::Args {
-            user_id: user2.user_id,
-            correlation_id: 0,
-        },
+        &group_canister::block_user::Args { user_id: user2.user_id },
     );
 
     assert!(matches!(block_user_response, group_canister::block_user::Response::Success));
@@ -78,7 +72,6 @@ fn block_user_who_is_no_longer_group_member_succeeds() {
             chat_id: group_id,
             invite_code: None,
             verified_credential_args: None,
-            correlation_id: 0,
         },
     );
 

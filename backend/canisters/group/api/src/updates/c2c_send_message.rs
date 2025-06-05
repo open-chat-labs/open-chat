@@ -15,7 +15,6 @@ pub struct Args {
     pub block_level_markdown: bool,
     pub rules_accepted: Option<Version>,
     pub message_filter_failed: Option<u64>,
-    pub correlation_id: u64,
 }
 
 pub type Response = crate::send_message_v2::Response;

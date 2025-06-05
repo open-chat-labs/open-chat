@@ -27,7 +27,6 @@ impl From<Args> for send_message_v2::Args {
             forwarding: false,
             block_level_markdown: value.block_level_markdown,
             message_filter_failed: None,
-            correlation_id: 0,
             recipient: value.bot_id,
             pin: None,
         }

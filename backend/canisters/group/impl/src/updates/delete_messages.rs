@@ -54,7 +54,6 @@ fn c2c_bot_delete_messages_impl(args: c2c_bot_delete_messages::Args, state: &mut
         message_ids: args.message_ids,
         as_platform_moderator: None,
         new_achievement: false,
-        correlation_id: 0,
     };
 
     if !state.data.is_bot_permitted(

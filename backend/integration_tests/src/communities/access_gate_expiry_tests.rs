@@ -640,7 +640,6 @@ fn update_container_gate(
                 permissions_v2: None,
                 events_ttl: OptionUpdate::NoChange,
                 messages_visible_to_non_members: None,
-                correlation_id: 0,
             };
 
             client::group::happy_path::update_group(env, principal, *group_id, &args);

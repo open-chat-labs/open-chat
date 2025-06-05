@@ -14,7 +14,7 @@ async fn add_platform_moderator(args: Args) -> Response {
         return AlreadyPlatformModerator;
     }
 
-    let c2c_args = c2c_grant_super_admin::Args { correlation_id: 0 };
+    let c2c_args = c2c_grant_super_admin::Args {};
     match user_canister_c2c_client::c2c_grant_super_admin(args.user_id.into(), &c2c_args).await {
         Ok(_) => {
             mutate_state(|state| commit(args.user_id, state));
