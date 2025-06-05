@@ -3382,7 +3382,7 @@ export class OpenChat {
                         );
                         return;
                     }
-                    if (selectedServerChatStore.value?.chatId === serverChat.id &&
+                    if (chatIdentifiersEqual(selectedServerChatStore.value?.chatId, serverChat.id) &&
                         resp.timestamp <= selectedServerChatStore.value.timestamp
                     ) {
                         return;
