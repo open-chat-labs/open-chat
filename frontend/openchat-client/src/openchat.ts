@@ -19,7 +19,6 @@ import {
     type Achievement,
     type AddMembersToChannelResponse,
     type AirdropChannelDetails,
-    ANON_USER_ID,
     anonymousUser,
     type ApproveAccessGatePaymentResponse,
     type ApproveTransferResponse,
@@ -305,7 +304,6 @@ import { tick } from "svelte";
 import { locale } from "svelte-i18n";
 import { get } from "svelte/store";
 import type { OpenChatConfig } from "./config";
-import { AIRDROP_BOT_USER_ID } from "./constants";
 import { snapshot } from "./snapshot.svelte";
 import {
     achievementsStore,
@@ -657,12 +655,12 @@ export class OpenChat {
 
         console.log("OpenChatConfig: ", config);
 
-        userStore.addSpecialUsers([
-            [OPENCHAT_BOT_USER_ID, openChatBotUser],
-            [OPENCHAT_VIDEO_CALL_USER_ID, videoCallBotUser],
-            [AIRDROP_BOT_USER_ID, airdropBotUser],
-            [ANON_USER_ID, anonymousUserSummary],
-            [config.proposalBotCanister, proposalsBotUser(config.proposalBotCanister)],
+        userStore.setSpecialUsers([
+            openChatBotUser,
+            videoCallBotUser,
+            airdropBotUser,
+            anonymousUserSummary,
+            proposalsBotUser(config.proposalBotCanister),
         ]);
 
         initialiseTracking(config);
@@ -6112,7 +6110,7 @@ export class OpenChat {
                 }
             }
 
-            for (const userId of userStore.specialUsers.value.keys()) {
+            for (const userId of userStore.specialUsers) {
                 usersToUpdate.delete(userId);
             }
 

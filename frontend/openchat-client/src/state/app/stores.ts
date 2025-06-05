@@ -82,7 +82,6 @@ import { hideMessagesFromDirectBlocked } from "../ui/stores";
 import { messagesRead } from "../unread/markRead";
 import { blockedUsersStore, suspendedUsersStore } from "../users/stores";
 import { notEq } from "../utils";
-import { UnionSets } from "../../utils/unionMaps";
 
 export const ONE_MB = 1024 * 1024;
 export const ONE_GB = ONE_MB * 1024;
@@ -867,13 +866,13 @@ export const selectedChatBlockedOrSuspendedUsersStore = derived(
         selectedCommunityBlockedUsers,
         suspendedUsers,
     ]) => {
-        const direct = hideMessagesFromDirectBlocked ? blockedUsers : new Set<string>();
-        return new UnionSets<string>(
-            selectedChatBlockedUsers,
-            selectedCommunityBlockedUsers,
-            suspendedUsers,
-            direct,
-        );
+        const direct = hideMessagesFromDirectBlocked ? [...blockedUsers] : [];
+        return new Set<string>([
+            ...selectedChatBlockedUsers,
+            ...selectedCommunityBlockedUsers,
+            ...suspendedUsers.keys(),
+            ...direct,
+        ]);
     },
 );
 

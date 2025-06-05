@@ -8,9 +8,7 @@ import {
 import {
     allUsersStore,
     blockedUsersStore,
-    normalUsersStore,
     serverBlockedUsersStore,
-    specialUsersStore,
     suspendedUsersStore,
     webhookUserIdsStore,
 } from "./stores";
@@ -19,6 +17,7 @@ export class UsersState {
     #allUsers!: ReadonlyMap<string, UserSummary>;
     #blockedUsers!: ReadonlySet<string>;
     #suspendedUsers!: ReadonlySet<string>;
+    #specialUsers: ReadonlySet<string> = new Set();
 
     constructor() {
         allUsersStore.subscribe((val) => (this.#allUsers = val));
@@ -48,12 +47,12 @@ export class UsersState {
     }
 
     setUsers(users: UserLookup) {
-        normalUsersStore.set(new Map(users));
+        allUsersStore.set(new Map(users));
         this.#updateSuspended(users.values())
     }
 
     addUser(user: UserSummary) {
-        normalUsersStore.update((map) => {
+        allUsersStore.update((map) => {
             map.set(user.userId, user);
             return map;
         });
@@ -63,7 +62,7 @@ export class UsersState {
     addMany(users: UserSummary[]) {
         if (users.length === 0) return;
 
-        normalUsersStore.update((map) => {
+        allUsersStore.update((map) => {
             users.forEach((u) => map.set(u.userId, u));
             return map;
         });
@@ -71,7 +70,7 @@ export class UsersState {
     }
 
     setUpdated(userIds: string[], timestamp: bigint) {
-        normalUsersStore.update((map) => {
+        allUsersStore.update((map) => {
             for (const userId of userIds) {
                 const user = map.get(userId);
                 if (user !== undefined) {
@@ -83,8 +82,9 @@ export class UsersState {
         });
     }
 
-    addSpecialUsers(users: [string, UserSummary][]) {
-        specialUsersStore.set(new Map(users));
+    setSpecialUsers(users: UserSummary[]) {
+        this.#specialUsers = new Set(users.map((u) => u.userId));
+        this.addMany(users);
     }
 
     get(userId: string): UserSummary | undefined {
@@ -116,7 +116,7 @@ export class UsersState {
     }
 
     get specialUsers() {
-        return specialUsersStore;
+        return this.#specialUsers;
     }
 
     get suspendedUsers() {
