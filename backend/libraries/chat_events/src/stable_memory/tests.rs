@@ -1,11 +1,14 @@
 use crate::message_content_internal::icrc1::AccountInternal;
 use crate::stable_memory::tests::test_values::{
-    AUDIO_CURRENT, AUDIO_PREV1, CRYPTO_CURRENT, CRYPTO_PREV1, CUSTOM_CURRENT, CUSTOM_PREV1, DELETED_CURRENT, DELETED_PREV1,
-    FILE_CURRENT, FILE_PREV1, GIPHY_CURRENT, GIPHY_PREV1, GOVERNANCE_PROPOSAL_CURRENT, GOVERNANCE_PROPOSAL_PREV1,
-    IMAGE_CURRENT, IMAGE_PREV1, MESSAGE_REMINDER_CREATED_CURRENT, MESSAGE_REMINDER_CREATED_PREV1, MESSAGE_REMINDER_CURRENT,
-    MESSAGE_REMINDER_PREV1, P2P_SWAP_CURRENT, P2P_SWAP_PREV1, P2P_SWAP_PREV2, POLL_CURRENT, POLL_PREV1, PRIZE_CURRENT,
-    PRIZE_PREV1, PRIZE_PREV2, PRIZE_WINNER_CURRENT, PRIZE_WINNER_PREV1, REPORTED_MESSAGE_CURRENT, REPORTED_MESSAGE_PREV1,
-    TEXT_CURRENT, TEXT_PREV1, VIDEO_CALL_CURRENT, VIDEO_CALL_PREV1, VIDEO_CURRENT, VIDEO_PREV1,
+    AUDIO_CURRENT, AUDIO_PREV1, AUDIO_PREV2, CRYPTO_CURRENT, CRYPTO_PREV1, CRYPTO_PREV2, CUSTOM_CURRENT, CUSTOM_PREV1,
+    CUSTOM_PREV2, DELETED_CURRENT, DELETED_PREV1, DELETED_PREV2, FILE_CURRENT, FILE_PREV1, FILE_PREV2, GIPHY_CURRENT,
+    GIPHY_PREV1, GIPHY_PREV2, GOVERNANCE_PROPOSAL_CURRENT, GOVERNANCE_PROPOSAL_PREV1, GOVERNANCE_PROPOSAL_PREV2, IMAGE_CURRENT,
+    IMAGE_PREV1, IMAGE_PREV2, MESSAGE_REMINDER_CREATED_CURRENT, MESSAGE_REMINDER_CREATED_PREV1, MESSAGE_REMINDER_CREATED_PREV2,
+    MESSAGE_REMINDER_CURRENT, MESSAGE_REMINDER_PREV1, MESSAGE_REMINDER_PREV2, P2P_SWAP_CURRENT, P2P_SWAP_PREV1, P2P_SWAP_PREV2,
+    P2P_SWAP_PREV3, POLL_CURRENT, POLL_PREV1, POLL_PREV2, PRIZE_CURRENT, PRIZE_PREV1, PRIZE_PREV2, PRIZE_PREV3,
+    PRIZE_WINNER_CURRENT, PRIZE_WINNER_PREV1, PRIZE_WINNER_PREV2, REPORTED_MESSAGE_CURRENT, REPORTED_MESSAGE_PREV1,
+    REPORTED_MESSAGE_PREV2, TEXT_CURRENT, TEXT_PREV1, TEXT_PREV2, VIDEO_CALL_CURRENT, VIDEO_CALL_PREV1, VIDEO_CALL_PREV2,
+    VIDEO_CURRENT, VIDEO_PREV1, VIDEO_PREV2,
 };
 use crate::stable_memory::{bytes_to_event, event_to_bytes};
 use crate::{
@@ -36,7 +39,7 @@ fn text_content() {
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, TEXT_CURRENT);
 
-    for test in [TEXT_CURRENT, TEXT_PREV1] {
+    for test in [TEXT_CURRENT, TEXT_PREV1, TEXT_PREV2] {
         assert!(matches!(test_deserialization(test), MessageContentInternal::Text(_)));
     }
 }
@@ -58,7 +61,7 @@ fn image_content() {
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, IMAGE_CURRENT);
 
-    for test in [IMAGE_CURRENT, IMAGE_PREV1] {
+    for test in [IMAGE_CURRENT, IMAGE_PREV1, IMAGE_PREV2] {
         assert!(matches!(test_deserialization(test), MessageContentInternal::Image(_)));
     }
 }
@@ -84,7 +87,7 @@ fn video_content() {
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, VIDEO_CURRENT);
 
-    for test in [VIDEO_CURRENT, VIDEO_PREV1] {
+    for test in [VIDEO_CURRENT, VIDEO_PREV1, VIDEO_PREV2] {
         assert!(matches!(test_deserialization(test), MessageContentInternal::Video(_)));
     }
 }
@@ -103,7 +106,7 @@ fn audio_content() {
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, AUDIO_CURRENT);
 
-    for test in [AUDIO_CURRENT, AUDIO_PREV1] {
+    for test in [AUDIO_CURRENT, AUDIO_PREV1, AUDIO_PREV2] {
         assert!(matches!(test_deserialization(test), MessageContentInternal::Audio(_)));
     }
 }
@@ -124,7 +127,7 @@ fn file_content() {
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, FILE_CURRENT);
 
-    for test in [FILE_CURRENT, FILE_PREV1] {
+    for test in [FILE_CURRENT, FILE_PREV1, FILE_PREV2] {
         assert!(matches!(test_deserialization(test), MessageContentInternal::File(_)));
     }
 }
@@ -153,7 +156,7 @@ fn poll_content() {
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, POLL_CURRENT);
 
-    for test in [POLL_CURRENT, POLL_PREV1] {
+    for test in [POLL_CURRENT, POLL_PREV1, POLL_PREV2] {
         assert!(matches!(test_deserialization(test), MessageContentInternal::Poll(_)));
     }
 }
@@ -185,7 +188,7 @@ fn crypto_content() {
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, CRYPTO_CURRENT);
 
-    for test in [CRYPTO_CURRENT, CRYPTO_PREV1] {
+    for test in [CRYPTO_CURRENT, CRYPTO_PREV1, CRYPTO_PREV2] {
         assert!(matches!(test_deserialization(test), MessageContentInternal::Crypto(_)));
     }
 }
@@ -200,7 +203,7 @@ fn deleted_content() {
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, DELETED_CURRENT);
 
-    for test in [DELETED_CURRENT, DELETED_PREV1] {
+    for test in [DELETED_CURRENT, DELETED_PREV1, DELETED_PREV2] {
         assert!(matches!(test_deserialization(test), MessageContentInternal::Deleted(_)));
     }
 }
@@ -227,7 +230,7 @@ fn giphy_content() {
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, GIPHY_CURRENT);
 
-    for test in [GIPHY_CURRENT, GIPHY_PREV1] {
+    for test in [GIPHY_CURRENT, GIPHY_PREV1, GIPHY_PREV2] {
         assert!(matches!(test_deserialization(test), MessageContentInternal::Giphy(_)));
     }
 }
@@ -269,7 +272,11 @@ fn governance_proposal() {
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, GOVERNANCE_PROPOSAL_CURRENT);
 
-    for test in [GOVERNANCE_PROPOSAL_CURRENT, GOVERNANCE_PROPOSAL_PREV1] {
+    for test in [
+        GOVERNANCE_PROPOSAL_CURRENT,
+        GOVERNANCE_PROPOSAL_PREV1,
+        GOVERNANCE_PROPOSAL_PREV2,
+    ] {
         assert!(matches!(
             test_deserialization(test),
             MessageContentInternal::GovernanceProposal(_)
@@ -323,7 +330,7 @@ fn prize_content() {
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, PRIZE_CURRENT);
 
-    for test in [PRIZE_CURRENT, PRIZE_PREV2, PRIZE_PREV1] {
+    for test in [PRIZE_CURRENT, PRIZE_PREV1, PRIZE_PREV2, PRIZE_PREV3] {
         assert!(matches!(test_deserialization(test), MessageContentInternal::Prize(_)));
     }
 }
@@ -343,7 +350,7 @@ fn prize_winner_content() {
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, PRIZE_WINNER_CURRENT);
 
-    for test in [PRIZE_WINNER_CURRENT, PRIZE_WINNER_PREV1] {
+    for test in [PRIZE_WINNER_CURRENT, PRIZE_WINNER_PREV1, PRIZE_WINNER_PREV2] {
         assert!(matches!(test_deserialization(test), MessageContentInternal::PrizeWinner(_)));
     }
 }
@@ -360,7 +367,11 @@ fn message_reminder_created_content() {
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, MESSAGE_REMINDER_CREATED_CURRENT);
 
-    for test in [MESSAGE_REMINDER_CREATED_CURRENT, MESSAGE_REMINDER_CREATED_PREV1] {
+    for test in [
+        MESSAGE_REMINDER_CREATED_CURRENT,
+        MESSAGE_REMINDER_CREATED_PREV1,
+        MESSAGE_REMINDER_CREATED_PREV2,
+    ] {
         assert!(matches!(
             test_deserialization(test),
             MessageContentInternal::MessageReminderCreated(_)
@@ -378,7 +389,7 @@ fn message_reminder_content() {
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, MESSAGE_REMINDER_CURRENT);
 
-    for test in [MESSAGE_REMINDER_CURRENT, MESSAGE_REMINDER_PREV1] {
+    for test in [MESSAGE_REMINDER_CURRENT, MESSAGE_REMINDER_PREV1, MESSAGE_REMINDER_PREV2] {
         assert!(matches!(
             test_deserialization(test),
             MessageContentInternal::MessageReminder(_)
@@ -400,7 +411,7 @@ fn reported_message_content() {
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, REPORTED_MESSAGE_CURRENT);
 
-    for test in [REPORTED_MESSAGE_CURRENT, REPORTED_MESSAGE_PREV1] {
+    for test in [REPORTED_MESSAGE_CURRENT, REPORTED_MESSAGE_PREV1, REPORTED_MESSAGE_PREV2] {
         assert!(matches!(
             test_deserialization(test),
             MessageContentInternal::ReportedMessage(_)
@@ -441,7 +452,7 @@ fn p2p_swap_content() {
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, P2P_SWAP_CURRENT);
 
-    for test in [P2P_SWAP_CURRENT, P2P_SWAP_PREV1, P2P_SWAP_PREV2] {
+    for test in [P2P_SWAP_CURRENT, P2P_SWAP_PREV1, P2P_SWAP_PREV2, P2P_SWAP_PREV3] {
         assert!(matches!(test_deserialization(test), MessageContentInternal::P2PSwap(_)));
     }
 }
@@ -484,7 +495,7 @@ fn video_call_content() {
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, VIDEO_CALL_CURRENT);
 
-    for test in [VIDEO_CALL_CURRENT, VIDEO_CALL_PREV1] {
+    for test in [VIDEO_CALL_CURRENT, VIDEO_CALL_PREV1, VIDEO_CALL_PREV2] {
         assert!(matches!(test_deserialization(test), MessageContentInternal::VideoCall(_)));
     }
 }
@@ -499,7 +510,7 @@ fn custom_content() {
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, CUSTOM_CURRENT);
 
-    for test in [CUSTOM_CURRENT, CUSTOM_PREV1] {
+    for test in [CUSTOM_CURRENT, CUSTOM_PREV1, CUSTOM_PREV2] {
         assert!(matches!(test_deserialization(test), MessageContentInternal::Custom(_)));
     }
 }
