@@ -3368,12 +3368,13 @@ export class OpenChat {
         switch (serverChat.kind) {
             case "group_chat":
             case "channel":
+                const lastUpdated = serverChat.lastUpdated;
                 const resp: GroupChatDetailsResponse = await this.#sendRequest({
                     kind: "getGroupDetails",
                     chatId: serverChat.id,
-                    chatLastUpdated: serverChat.lastUpdated,
+                    chatLastUpdated: lastUpdated,
                 }).catch(CommonResponses.failure);
-                if ("members" in resp) {
+                if ("members" in resp && resp.timestamp > lastUpdated) {
                     const members = resp.members.filter((m) => !m.lapsed);
                     const lapsed = new Set(
                         resp.members.filter((m) => m.lapsed).map((m) => m.userId),
@@ -3389,8 +3390,8 @@ export class OpenChat {
                         resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
                         new Map(resp.webhooks.map((w) => [w.id, w])),
                     );
+                    await this.#updateUserStoreFromEvents([]);
                 }
-                await this.#updateUserStoreFromEvents([]);
                 break;
             case "direct_chat":
                 // app.setDirectChatDetails(serverChat.id, currentUserIdStore.value);  //TODO - make sure this still works without this
