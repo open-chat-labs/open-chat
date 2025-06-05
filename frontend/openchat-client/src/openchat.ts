@@ -3310,55 +3310,41 @@ export class OpenChat {
             communityLastUpdated: community.lastUpdated,
         }).catch(() => "failure");
         if (resp !== "failure") {
+            if (!communityIdentifiersEqual(community.id, selectedCommunityIdStore.value)) {
+                console.warn(
+                    "Attempting to set community details on the wrong community - probably a stale response",
+                    community.id,
+                    selectedCommunityIdStore.value,
+                );
+                return;
+            }
+            const currentStoreValue = selectedServerCommunityStore.value;
+            if (currentStoreValue !== undefined &&
+                communityIdentifiersEqual(currentStoreValue.communityId, community.id) &&
+                resp.lastUpdated <= currentStoreValue.timestamp
+            ) {
+                // The store already has the latest updates, exiting
+                return;
+            }
+
             const [lapsed, members] = partition(resp.members, (m) => m.lapsed);
-            this.#setCommunityDetailsFromServer(
-                id,
-                resp.userGroups,
-                new Map(members.map((m) => [m.userId, m])),
-                resp.blockedUsers,
-                new Set(lapsed.map((m) => m.userId)),
-                resp.invitedUsers,
-                resp.referrals,
-                resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
-                resp.rules,
+
+            selectedServerCommunityStore.set(
+                new CommunityDetailsState(
+                    community.id,
+                    resp.lastUpdated,
+                    resp.userGroups,
+                    new Map(members.map((m) => [m.userId, m])),
+                    resp.blockedUsers,
+                    new Set(lapsed.map((m) => m.userId)),
+                    resp.invitedUsers,
+                    resp.referrals,
+                    resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
+                    resp.rules,
+                ),
             );
             this.#updateUserStoreFromCommunityState();
         }
-    }
-
-    #setCommunityDetailsFromServer(
-        communityId: CommunityIdentifier,
-        userGroups: Map<number, UserGroupDetails>,
-        members: Map<string, Member>,
-        blockedUsers: Set<string>,
-        lapsedMembers: Set<string>,
-        invitedUsers: Set<string>,
-        referrals: Set<string>,
-        bots: Map<string, GrantedBotPermissions>,
-        rules?: VersionedRules,
-    ) {
-        if (!communityIdentifiersEqual(communityId, selectedCommunityIdStore.value)) {
-            console.warn(
-                "Attempting to set community details on the wrong community - probably a stale response",
-                communityId,
-                selectedCommunityIdStore.value,
-            );
-            return;
-        }
-
-        selectedServerCommunityStore.set(
-            new CommunityDetailsState(
-                communityId,
-                userGroups,
-                members,
-                blockedUsers,
-                lapsedMembers,
-                invitedUsers,
-                referrals,
-                bots,
-                rules,
-            ),
-        );
     }
 
     async #loadChatDetails(serverChat: ChatSummary): Promise<void> {

@@ -398,6 +398,7 @@ describe("app state", () => {
                 selectedServerCommunityStore.set(
                     new CommunityDetailsState(
                         communityId,
+                        BigInt(0),
                         new Map(),
                         new Map([
                             [
