@@ -1,21 +1,21 @@
 use crate::metrics::write_metrics;
-use crate::{UserNotification, UserNotificationToPush, timestamp};
+use crate::{NotificationToPush, PushNotification, UserNotification, UserNotificationToPush, timestamp};
 use async_channel::{Receiver, Sender};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
 use tracing::info;
-use types::TimestampMillis;
+use types::{SubscriptionInfo, TimestampMillis};
 use web_push::{
-    ContentEncoding, PartialVapidSignatureBuilder, SubscriptionInfo, Urgency, VapidSignature, VapidSignatureBuilder,
-    WebPushError, WebPushMessage, WebPushMessageBuilder,
+    ContentEncoding, PartialVapidSignatureBuilder, Urgency, VapidSignature, VapidSignatureBuilder, WebPushError,
+    WebPushMessage, WebPushMessageBuilder,
 };
 
 const MAX_PAYLOAD_LENGTH_BYTES: u32 = 3 * 1000; // Just under 3KB
 
 pub struct Processor {
-    receiver: Receiver<UserNotification>,
-    sender: Sender<UserNotificationToPush>,
+    receiver: Receiver<PushNotification>,
+    sender: Sender<NotificationToPush>,
     sig_builder: PartialVapidSignatureBuilder,
     invalid_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
     throttled_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
@@ -23,8 +23,8 @@ pub struct Processor {
 
 impl Processor {
     pub fn new(
-        receiver: Receiver<UserNotification>,
-        sender: Sender<UserNotificationToPush>,
+        receiver: Receiver<PushNotification>,
+        sender: Sender<NotificationToPush>,
         vapid_private_pem: &str,
         invalid_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
         throttled_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
@@ -41,27 +41,47 @@ impl Processor {
     pub async fn run(self) {
         while let Ok(notification) = self.receiver.recv().await {
             let start = Instant::now();
-            let notifications_canister = notification.notifications_canister;
-            let index = notification.index;
 
-            let result = self.process_notification(&notification);
-            let success = result.is_ok();
-            if let Ok(message) = result {
-                self.sender
-                    .send(UserNotificationToPush { notification, message })
-                    .await
-                    .unwrap();
-            }
+            let (metadata, success) = match notification {
+                PushNotification::UserNotification(user_notification) => {
+                    let metadata = user_notification.metadata.clone();
+                    let result = self.process_web_push_notification(&user_notification);
+                    let success = result.is_ok();
+                    if let Ok(message) = result {
+                        self.sender
+                            .send(NotificationToPush::UserNotificationToPush(UserNotificationToPush {
+                                notification: user_notification,
+                                message,
+                            }))
+                            .await
+                            .unwrap();
+                    }
+
+                    (metadata, success)
+                }
+                PushNotification::FcmNotification(fcm_notification) => {
+                    let metadata = fcm_notification.metadata.clone();
+                    self.sender
+                        .send(NotificationToPush::FcmNotificationToPush(Box::new(fcm_notification)))
+                        .await
+                        .unwrap();
+                    (metadata, false)
+                }
+            };
+
             let end = Instant::now();
             let duration = end.saturating_duration_since(start).as_millis() as u64;
             write_metrics(|m| {
                 m.observe_processing_duration(duration, success);
-                m.set_latest_notification_index_processed(index, notifications_canister);
+                m.set_latest_notification_index_processed(metadata.index, metadata.notifications_canister);
             });
         }
     }
 
-    fn process_notification(&self, notification: &UserNotification) -> Result<WebPushMessage, ProcessNotificationError> {
+    fn process_web_push_notification(
+        &self,
+        notification: &UserNotification,
+    ) -> Result<WebPushMessage, ProcessNotificationError> {
         if let Ok(map) = self.invalid_subscriptions.read() {
             if map.contains_key(&notification.subscription_info.endpoint) {
                 return Err(ProcessNotificationError::SubscriptionInvalid);
@@ -77,12 +97,11 @@ impl Processor {
             }
         }
         let payload_bytes = notification.payload.as_ref();
-        let subscription = &notification.subscription_info;
         let vapid_signature = self
-            .build_vapid_signature(subscription)
+            .build_vapid_signature(&notification.subscription_info)
             .map_err(ProcessNotificationError::FailedToBuildSignature)?;
 
-        let message = build_web_push_message(payload_bytes, subscription, vapid_signature.clone())
+        let message = build_web_push_message(payload_bytes, &notification.subscription_info, vapid_signature.clone())
             .map_err(ProcessNotificationError::FailedToBuildMessage)?;
 
         let length = message.payload.as_ref().map_or(0, |p| p.content.len()) as u32;
@@ -94,7 +113,8 @@ impl Processor {
     }
 
     fn build_vapid_signature(&self, subscription: &SubscriptionInfo) -> Result<VapidSignature, WebPushError> {
-        let mut sig_builder = self.sig_builder.clone().add_sub_info(subscription);
+        let subscription: web_push::SubscriptionInfo = subscription.into();
+        let mut sig_builder = self.sig_builder.clone().add_sub_info(&subscription);
         sig_builder.add_claim("sub", "https://oc.app");
         sig_builder.build()
     }
@@ -114,7 +134,8 @@ fn build_web_push_message(
     subscription: &SubscriptionInfo,
     vapid_signature: VapidSignature,
 ) -> Result<WebPushMessage, WebPushError> {
-    let mut message_builder = WebPushMessageBuilder::new(subscription);
+    let subscription: web_push::SubscriptionInfo = subscription.into();
+    let mut message_builder = WebPushMessageBuilder::new(&subscription);
     message_builder.set_payload(ContentEncoding::Aes128Gcm, payload);
     message_builder.set_vapid_signature(vapid_signature);
     message_builder.set_ttl(3600); // 1 hour

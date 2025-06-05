@@ -1,23 +1,21 @@
 use crate::ic_agent::IcAgent;
 use crate::metrics::write_metrics;
-use crate::{BotNotification, Payload, UserNotification};
+use crate::{BotNotification, FcmNotification, NotificationMetadata, Payload, PushNotification, UserNotification};
 use async_channel::Sender;
 use base64::Engine;
 use index_store::IndexStore;
 use std::cell::LazyCell;
-use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
 use tokio::time;
 use tracing::{error, info};
-use types::{BotDataEncoding, CanisterId, Error, NotificationEnvelope, Timestamped, UserId};
-use web_push::{SubscriptionInfo, SubscriptionKeys};
+use types::{BotDataEncoding, CanisterId, Error, NotificationEnvelope, Timestamped};
 
 pub struct Reader<I: IndexStore> {
     ic_agent: IcAgent,
     notifications_canister_id: CanisterId,
     index_store: I,
-    user_notification_sender: Sender<UserNotification>,
+    user_notification_sender: Sender<PushNotification>,
     bot_notification_sender: Sender<BotNotification>,
 }
 
@@ -26,7 +24,7 @@ impl<I: IndexStore> Reader<I> {
         ic_agent: IcAgent,
         notifications_canister_id: CanisterId,
         index_store: I,
-        user_notification_sender: Sender<UserNotification>,
+        user_notification_sender: Sender<PushNotification>,
         bot_notification_sender: Sender<BotNotification>,
     ) -> Self {
         Self {
@@ -66,15 +64,10 @@ impl<I: IndexStore> Reader<I> {
         let from_notification_index = self.index_processed_up_to().await? + 1;
         let ic_response = self
             .ic_agent
-            .notifications_v2(&self.notifications_canister_id, from_notification_index)
+            .notifications(&self.notifications_canister_id, from_notification_index)
             .await?;
 
         let first_read_at = Instant::now();
-        let subscriptions_map: HashMap<UserId, Vec<SubscriptionInfo>> = ic_response
-            .subscriptions
-            .into_iter()
-            .map(|(k, v)| (k, v.into_iter().map(convert_subscription).collect()))
-            .collect();
 
         let mut latest_index_processed = None;
         for indexed_notification in ic_response.notifications {
@@ -85,6 +78,7 @@ impl<I: IndexStore> Reader<I> {
                         .capacity()
                         .unwrap()
                         .saturating_sub(self.user_notification_sender.len());
+
                     if available_capacity < notification.recipients.len() {
                         error!(
                             available_capacity,
@@ -98,22 +92,37 @@ impl<I: IndexStore> Reader<I> {
                     let payload = Arc::new(serde_json::to_vec(&Timestamped::new(base64, notification.timestamp)).unwrap());
 
                     for user_id in notification.recipients {
-                        if let Some(subscriptions) = subscriptions_map.get(&user_id) {
-                            for subscription_info in subscriptions.iter().cloned() {
+                        if let Some(subscriptions) = ic_response.subscriptions.get(&user_id) {
+                            for subscription in subscriptions.iter().cloned() {
+                                let metadata = NotificationMetadata {
+                                    notifications_canister: self.notifications_canister_id,
+                                    index: indexed_notification.index,
+                                    recipient: user_id,
+                                    timestamp: notification.timestamp,
+                                    first_read_at,
+                                };
+
+                                // Map to push notification based on subscription type
+                                let push_notification = match subscription {
+                                    types::NotificationSubscription::WebPush(subscription_info) => {
+                                        PushNotification::UserNotification(UserNotification {
+                                            payload: payload.clone(),
+                                            subscription_info,
+                                            metadata,
+                                        })
+                                    }
+                                    types::NotificationSubscription::FcmPush(fcm_token) => {
+                                        PushNotification::FcmNotification(FcmNotification {
+                                            fcm_data: notification.fcm_data.clone(),
+                                            fcm_token,
+                                            metadata,
+                                        })
+                                    }
+                                };
+
                                 // Wait here if needed to ensure the notification is pushed to all
                                 // subscriptions to avoid partially processed notifications
-                                self.user_notification_sender
-                                    .send(UserNotification {
-                                        notifications_canister: self.notifications_canister_id,
-                                        index: indexed_notification.index,
-                                        timestamp: notification.timestamp,
-                                        recipient: user_id,
-                                        payload: payload.clone(),
-                                        subscription_info,
-                                        first_read_at,
-                                    })
-                                    .await
-                                    .unwrap();
+                                self.user_notification_sender.send(push_notification).await.unwrap();
                             }
                         }
                     }
@@ -185,15 +194,5 @@ impl<I: IndexStore> Reader<I> {
         }
 
         Ok(())
-    }
-}
-
-fn convert_subscription(value: types::SubscriptionInfo) -> SubscriptionInfo {
-    SubscriptionInfo {
-        endpoint: value.endpoint,
-        keys: SubscriptionKeys {
-            p256dh: value.keys.p256dh,
-            auth: value.keys.auth,
-        },
     }
 }
