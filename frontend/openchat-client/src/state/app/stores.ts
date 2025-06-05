@@ -12,6 +12,7 @@ import {
     compareChats,
     DEFAULT_TOKENS,
     emptyChatMetrics,
+    Immutable,
     mergeListOfCombinedUnreadCounts,
     messageContextsEqual,
     MessageMap,
@@ -820,35 +821,36 @@ export const selectedServerChatSummaryStore = derived(
     },
 );
 
-function applyLocalUpdatesToChat(chat: ChatSummary, updates?: ChatSummaryUpdates): ChatSummary {
-    if (updates === undefined) return chat;
+function applyLocalUpdatesToChat(chat: Immutable<ChatSummary>, updates?: ChatSummaryUpdates) {
+    if (updates === undefined) return;
 
-    chat.membership.notificationsMuted =
-        updates.notificationsMuted ?? chat.membership.notificationsMuted;
-    chat.membership.archived = updates.archived ?? chat.membership.archived;
-    chat.membership.rulesAccepted = updates.rulesAccepted ?? chat.membership.rulesAccepted;
-    const latestMessage =
-        (updates?.latestMessage?.timestamp ?? BigInt(-1)) >
-        (chat.latestMessage?.timestamp ?? BigInt(-1))
-            ? updates?.latestMessage
-            : chat.latestMessage;
-    const latestEventIndex = Math.max(latestMessage?.index ?? 0, chat.latestEventIndex);
-    chat.latestMessage = latestMessage;
-    chat.latestMessageIndex = latestMessage?.event?.messageIndex;
-    chat.latestEventIndex = latestEventIndex;
+    chat.update((c) => {
+        c.membership.notificationsMuted =
+            updates.notificationsMuted ?? c.membership.notificationsMuted;
+        c.membership.archived = updates.archived ?? c.membership.archived;
+        c.membership.rulesAccepted = updates.rulesAccepted ?? c.membership.rulesAccepted;
+        const latestMessage =
+            (updates?.latestMessage?.timestamp ?? BigInt(-1)) >
+            (c.latestMessage?.timestamp ?? BigInt(-1))
+                ? updates?.latestMessage
+                : c.latestMessage;
+        const latestEventIndex = Math.max(latestMessage?.index ?? 0, c.latestEventIndex);
+        c.latestMessage = latestMessage;
+        c.latestMessageIndex = latestMessage?.event?.messageIndex;
+        c.latestEventIndex = latestEventIndex;
 
-    if (chat.kind !== "direct_chat") {
-        chat.frozen = updates.frozen ?? chat.frozen;
-        chat.name = updates.name ?? chat.name;
-        chat.description = updates.description ?? chat.description;
-        chat.permissions = mergePermissions(chat.permissions, updates?.permissions);
-        chat.gateConfig = updates.gateConfig ?? chat.gateConfig;
-        if (updates.eventsTTL !== undefined) {
-            chat.eventsTTL = applyOptionUpdate(chat.eventsTTL, updates.eventsTTL);
+        if (c.kind !== "direct_chat") {
+            c.frozen = updates.frozen ?? c.frozen;
+            c.name = updates.name ?? c.name;
+            c.description = updates.description ?? c.description;
+            c.permissions = mergePermissions(c.permissions, updates?.permissions);
+            c.gateConfig = updates.gateConfig ?? c.gateConfig;
+            if (updates.eventsTTL !== undefined) {
+                c.eventsTTL = applyOptionUpdate(c.eventsTTL, updates.eventsTTL);
+            }
+            c.public = updates.isPublic ?? c.public;
         }
-        chat.public = updates.isPublic ?? chat.public;
-    }
-    return chat;
+    });
 }
 
 export const selectedChatBlockedOrSuspendedUsersStore = derived(
@@ -900,21 +902,19 @@ export const allChatsStore = derived(
     ]) => {
         const withUpdates = localChats.apply(allServerChats);
         return [...withUpdates.entries()].reduce((result, [chatId, chat]) => {
-            const clone = structuredClone(chat);
-            const withLocal = applyLocalUpdatesToChat(clone, localUpdates.get(clone.id));
-            const withUnconfirmed = mergeUnconfirmedIntoSummary(
+            const immutable = new Immutable(chat);
+            applyLocalUpdatesToChat(immutable, localUpdates.get(chat.id));
+            mergeUnconfirmedIntoSummary(
+                immutable,
                 (k) => k,
                 currentUserId,
-                withLocal,
                 messageLocalUpdates,
                 selectedChatBlockedOrSuspendedUsers,
                 currentUserId,
                 messageFilters,
                 unconfirmed,
             );
-            // only overwrite the chat if turns out to be different from the original to try
-            // to minimise downstream effects
-            result.set(chatId, dequal(chat, withUnconfirmed) ? chat : withUnconfirmed);
+            result.set(chatId, immutable.value());
             return result;
         }, new ChatMap<ChatSummary>());
     },
