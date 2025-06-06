@@ -380,3 +380,49 @@ export function isProposalsChat(chat: ChatSummary): chat is ChatSummary & {
 } {
     return chat.kind !== "direct_chat" && chat.subtype?.kind === "governance_proposals";
 }
+
+const intToChatIdMap = new Map<number, ChatIdentifier>();
+const canisterIdToIntMap = new Map<string, number>();
+const canisterIdLookup: string[] = [];
+// We can bit shift the type flag, but we must multiply channelIds, because the resulting values will exceed 32 bits
+const CHANNEL_ID_MULTIPLIER = 2 << 18;
+
+// This encoding uses a maximum of 50 bits, which means all values can be represented as integers without loss of
+// precision and it will work for up to 65,536 canisters.
+// <- channelId? -><- type flag -><- canisterId as int ->
+// <-  32 bits   -><-  2 bits   -><-      16 bits      ->
+export function chatIdentifierToInt(value: ChatIdentifier): number {
+    function calculateIntValue(value: ChatIdentifier): number {
+        switch (value.kind) {
+            case "direct_chat":
+                return (1 << 16) + canisterIdToInt(value.userId);
+
+            case "group_chat":
+                return (2 << 16) + canisterIdToInt(value.groupId);
+
+            case "channel":
+                return (value.channelId * CHANNEL_ID_MULTIPLIER) + (3 << 16) + canisterIdToInt(value.communityId);
+        }
+    }
+
+    const intValue = calculateIntValue(value);
+    if (!intToChatIdMap.has(intValue)) {
+        intToChatIdMap.set(intValue, value);
+    }
+    return intValue;
+}
+
+export function chatIdentifierFromInt(value: number): ChatIdentifier {
+    return intToChatIdMap.get(value)!;
+}
+
+function canisterIdToInt(value: string): number {
+    const existing = canisterIdToIntMap.get(value);
+    if (existing !== undefined) {
+        return existing;
+    }
+    const intValue = canisterIdLookup.length;
+    canisterIdToIntMap.set(value, intValue);
+    canisterIdLookup.push(value);
+    return intValue;
+}

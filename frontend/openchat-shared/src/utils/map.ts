@@ -11,6 +11,7 @@ import {
     type Primitive,
 } from "../domain";
 import type { ChatIdentifier, MessageContext } from "../domain/chat";
+import { chatIdentifierFromInt, chatIdentifierToInt } from "./chat";
 
 export interface ReadonlyMap<K, V> {
     get(key: K): V | undefined;
@@ -209,8 +210,8 @@ export class GlobalMap<V> extends SafeMap<"global", V> {
 export class ChatMap<V> extends SafeMap<ChatIdentifier, V> {
     constructor(_map?: Map<string, V>) {
         super(
-            (k) => JSON.stringify(k),
-            (k) => JSON.parse(String(k)) as ChatIdentifier,
+            chatIdentifierToInt,
+            (k) => chatIdentifierFromInt(k as number),
             _map,
         );
     }
