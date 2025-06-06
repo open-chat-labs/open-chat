@@ -183,6 +183,8 @@ export function mergeDirectChatUpdates(
     updates: DirectChatSummaryUpdates[],
     removed: string[],
 ): DirectChatSummary[] {
+    if (updates.length === 0 && removed.length === 0) return directChats;
+
     const lookup = ChatMap.fromList(updates);
     const toRemove = new Set<string>(removed);
 
