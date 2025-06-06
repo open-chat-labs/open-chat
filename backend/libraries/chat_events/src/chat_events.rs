@@ -22,10 +22,10 @@ use types::{
     EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen,
     HydratedMention, Mention, Message, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch,
     MessageTippedEventPayload, Milliseconds, MultiUserChat, OCResult, OptionUpdate, P2PSwapAccepted, P2PSwapCompleted,
-    P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate,
-    PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess, SenderContext,
-    TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants,
-    VideoCallPresence, VideoCallType, VoteOperation,
+    P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate, Reaction,
+    ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess, SenderContext, TimestampMillis, TimestampNanos,
+    Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VideoCallType,
+    VoteOperation,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -2511,16 +2511,6 @@ pub struct PushEventResultInternal {
     pub timestamp: TimestampMillis,
     pub expires_at: Option<TimestampMillis>,
     pub bot_notification: Option<BotNotification>,
-}
-
-impl From<PushEventResultInternal> for PushEventResult {
-    fn from(value: PushEventResultInternal) -> Self {
-        PushEventResult {
-            index: value.index,
-            timestamp: value.timestamp,
-            expires_at: value.expires_at,
-        }
-    }
 }
 
 pub struct UpdateMessageSuccess<T = ()> {
