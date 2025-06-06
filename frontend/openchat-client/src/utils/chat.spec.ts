@@ -130,7 +130,7 @@ describe("thread utils", () => {
             },
         );
         const chat = { ...defaultGroupChat };
-        mergeUnconfirmedThreadsIntoSummary(defaultGroupChat);
+        mergeUnconfirmedThreadsIntoSummary(chat);
         expect(chat.membership.latestThreads[0].latestEventIndex).toEqual(4);
         expect(chat.membership.latestThreads[0].latestMessageIndex).toEqual(5);
     });
