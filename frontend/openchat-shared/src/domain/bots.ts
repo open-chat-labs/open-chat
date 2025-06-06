@@ -18,6 +18,7 @@ import type {
     MessagePermission,
 } from "./permission";
 import type { BotMatch } from "./search/search";
+import { ROLE_MEMBER } from "../constants";
 
 export const MIN_BOT_NAME_LENGTH = 5;
 export const MIN_COMMAND_NAME_LENGTH = 3;
@@ -163,7 +164,7 @@ export function emptyBotCommand(): CommandDefinition {
         name: "",
         description: "",
         params: [],
-        defaultRole: "member",
+        defaultRole: ROLE_MEMBER,
         permissions: emptyExternalBotPermissions(),
         directMessages: false,
     };

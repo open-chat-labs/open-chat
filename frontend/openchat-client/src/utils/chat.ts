@@ -72,6 +72,9 @@ import {
     OPENCHAT_VIDEO_CALL_AVATAR_URL,
     OPENCHAT_VIDEO_CALL_USER_ID,
     random64,
+    ROLE_MEMBER,
+    ROLE_NONE,
+    ROLE_OWNER,
     updateFromOptions,
     type ReadonlySet,
 } from "openchat-shared";
@@ -102,7 +105,7 @@ const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
 export function isPreviewing(chat: ChatSummary): boolean {
-    return chat.membership.role === "none";
+    return chat.membership.role === ROLE_NONE;
 }
 
 export function isLapsed(chat: ChatSummary): boolean {
@@ -463,7 +466,7 @@ export function mergePermissions(
             updated.messagePermissions,
         ),
         threadPermissions: mergeThreadPermissions(
-            current.threadPermissions ?? { default: "member" },
+            current.threadPermissions ?? { default: ROLE_MEMBER },
             updated.threadPermissions,
         ),
     };
@@ -867,7 +870,7 @@ export function groupChatFromCandidate(
         membership: {
             ...nullMembership(),
             joined: BigInt(Date.now()),
-            role: "owner",
+            role: ROLE_OWNER,
         },
         eventsTTL: candidate.eventsTTL,
     } as MultiUserChat;
@@ -983,7 +986,7 @@ export function canChangeRoles(
     }
 
     switch (newRole) {
-        case "owner":
+        case ROLE_OWNER:
             return hasOwnerRights(chat.membership.role);
         default:
             return isPermitted(chat.membership.role, chat.permissions.changeRoles);
@@ -1228,7 +1231,7 @@ export function canMentionAllMembers(chat: ChatSummary): boolean {
 export function canLeaveGroup(thing: AccessControlled & HasMembershipRole): boolean {
     if (!thing.frozen) {
         // TODO - this is not really correct - you should be able to leave if you are not the *only* owner
-        return thing.membership.role !== "owner";
+        return thing.membership.role !== ROLE_OWNER;
     } else {
         return false;
     }
@@ -1935,7 +1938,7 @@ export function diffGroupPermissions(
         diff.threadPermissions = "set_to_none";
     } else {
         const threadPermissionsDiff = diffMessagePermissions(
-            original.threadPermissions ?? { default: "member" },
+            original.threadPermissions ?? { default: ROLE_MEMBER },
             updated.threadPermissions,
         );
         diff.threadPermissions =

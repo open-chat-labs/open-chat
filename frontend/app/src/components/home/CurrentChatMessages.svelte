@@ -21,6 +21,7 @@
         localUpdates,
         messageIndexStore,
         messagesRead,
+        ROLE_NONE,
         routeForChatIdentifier,
         selectedChatDraftMessageStore,
         selectedChatExpandedDeletedMessageStore,
@@ -241,7 +242,7 @@
     }
     let privateCommunityPreview = $derived(
         $selectedCommunitySummaryStore !== undefined &&
-            ($selectedCommunitySummaryStore.membership.role === "none" ||
+            ($selectedCommunitySummaryStore.membership.role === ROLE_NONE ||
                 $selectedCommunitySummaryStore.membership.lapsed) &&
             (!$selectedCommunitySummaryStore.public ||
                 $selectedCommunitySummaryStore.gateConfig.gate.kind !== "no_gate"),

@@ -36,6 +36,7 @@ import type {
 } from "../response";
 import type { ChatListScope, HasLevel } from "../structure";
 import type { Referral, UserSummary } from "../user/user";
+import { ROLE_NONE } from "../../constants";
 
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
 export type CanisterNotFound = { kind: "canister_not_found" };
@@ -1528,7 +1529,7 @@ export type GroupChatSummary = DataContent &
 export function nullMembership(): ChatMembership {
     return {
         joined: BigInt(0),
-        role: "none",
+        role: ROLE_NONE,
         mentions: [],
         latestThreads: [],
         myMetrics: emptyChatMetrics(),

@@ -6,6 +6,7 @@
         type MultiUserChatIdentifier,
         type OpenChat,
         type ResourceKey,
+        ROLE_ADMIN,
         UnsupportedValueError,
         type UpdateGroupResponse,
         type UserSummary,
@@ -333,7 +334,7 @@
     let valid = $derived(detailsValid && visibilityValid && rulesValid);
     $effect(() => {
         if (candidateGroup.public) {
-            candidateGroup.permissions.startVideoCall = "admin";
+            candidateGroup.permissions.startVideoCall = ROLE_ADMIN;
         }
     });
     let verificationWarning = $derived(nameDirty && editing && originalGroup.verified);

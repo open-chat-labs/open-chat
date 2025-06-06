@@ -14,7 +14,7 @@ export { buildCryptoTransferText, buildTransactionUrl } from "./utils/chat";
 export type { TrackingCategory } from "./utils/ga";
 export { toRecord } from "./utils/list";
 export type { Dimensions } from "./utils/media";
-export { isPermitted } from "./utils/permissions";
+export * from "./utils/permissions";
 export { Poller } from "./utils/poller";
 export * from "./utils/routes";
 export { setsAreEqual } from "./utils/set";

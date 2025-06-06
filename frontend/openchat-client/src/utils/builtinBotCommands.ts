@@ -1,4 +1,4 @@
-import type { ExternalBotPermissions, GrantedBotPermissions, InternalBot } from "openchat-shared";
+import { type ExternalBotPermissions, type GrantedBotPermissions, type InternalBot, ROLE_MEMBER, ROLE_OWNER } from "openchat-shared";
 
 export const emptyGrantedPermissions: GrantedBotPermissions = {
     command: {
@@ -24,7 +24,7 @@ export const builtinBot: InternalBot = {
         commands: [
             {
                 name: "crypto",
-                defaultRole: "member",
+                defaultRole: ROLE_MEMBER,
                 directMessages: false,
                 description: "bots.crypto.desc",
                 directBotDisabled: true,
@@ -58,7 +58,7 @@ export const builtinBot: InternalBot = {
             },
             {
                 name: "diamond",
-                defaultRole: "member",
+                defaultRole: ROLE_MEMBER,
                 directMessages: false,
                 description: "bots.diamond.desc",
                 permissions: {
@@ -70,7 +70,7 @@ export const builtinBot: InternalBot = {
             },
             {
                 name: "gif",
-                defaultRole: "member",
+                defaultRole: ROLE_MEMBER,
                 directMessages: false,
                 description: "bots.gif.desc",
                 permissions: {
@@ -94,7 +94,7 @@ export const builtinBot: InternalBot = {
             },
             {
                 name: "faq",
-                defaultRole: "member",
+                defaultRole: ROLE_MEMBER,
                 directMessages: false,
                 description: "bots.faq.desc",
                 permissions: {
@@ -183,7 +183,7 @@ export const builtinBot: InternalBot = {
             },
             {
                 name: "poll",
-                defaultRole: "member",
+                defaultRole: ROLE_MEMBER,
                 directMessages: false,
                 description: "bots.poll.desc",
                 permissions: {
@@ -195,7 +195,7 @@ export const builtinBot: InternalBot = {
             },
             {
                 name: "register_bot",
-                defaultRole: "member",
+                defaultRole: ROLE_MEMBER,
                 directMessages: false,
                 description: "bots.register_bot.desc",
                 permissions: emptyPermissions,
@@ -204,7 +204,7 @@ export const builtinBot: InternalBot = {
             },
             {
                 name: "register_webhook",
-                defaultRole: "owner",
+                defaultRole: ROLE_OWNER,
                 directMessages: false,
                 description: "bots.register_webhook.desc",
                 permissions: emptyPermissions,
@@ -214,7 +214,7 @@ export const builtinBot: InternalBot = {
             },
             {
                 name: "search",
-                defaultRole: "member",
+                defaultRole: ROLE_MEMBER,
                 directMessages: false,
                 description: "bots.search.desc",
                 permissions: emptyPermissions,
@@ -235,7 +235,7 @@ export const builtinBot: InternalBot = {
             },
             {
                 name: "test-msg",
-                defaultRole: "member",
+                defaultRole: ROLE_MEMBER,
                 directMessages: false,
                 description: "Create and send a number of test messages",
                 devmode: true,
@@ -259,7 +259,7 @@ export const builtinBot: InternalBot = {
             },
             {
                 name: "update_bot",
-                defaultRole: "member",
+                defaultRole: ROLE_MEMBER,
                 directMessages: false,
                 description: "bots.update_bot.desc",
                 permissions: emptyPermissions,
@@ -268,7 +268,7 @@ export const builtinBot: InternalBot = {
             },
             {
                 name: "remove_bot",
-                defaultRole: "member",
+                defaultRole: ROLE_MEMBER,
                 directMessages: false,
                 description: "bots.update_bot.removeDesc",
                 permissions: emptyPermissions,
@@ -277,7 +277,7 @@ export const builtinBot: InternalBot = {
             },
             {
                 name: "witch",
-                defaultRole: "member",
+                defaultRole: ROLE_MEMBER,
                 directMessages: false,
                 description: "bots.witch.desc",
                 permissions: emptyPermissions,

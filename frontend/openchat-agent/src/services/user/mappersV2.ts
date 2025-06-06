@@ -57,6 +57,7 @@ import {
     nullMembership,
     toBigInt32,
     toBigInt64,
+    ROLE_OWNER,
     UnsupportedValueError,
 } from "openchat-shared";
 import type {
@@ -881,7 +882,7 @@ function directChatSummary(value: TDirectChatSummary): DirectChatSummary {
         videoCallInProgress: mapOptional(value.video_call_in_progress, videoCallInProgress),
         membership: {
             ...nullMembership(),
-            role: "owner",
+            role: ROLE_OWNER,
             myMetrics: chatMetrics(value.my_metrics),
             notificationsMuted: value.notifications_muted,
             readByMeUpTo: value.read_by_me_up_to,

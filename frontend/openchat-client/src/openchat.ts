@@ -221,6 +221,8 @@ import {
     type ResetInviteCodeResponse,
     type RightPanelContent,
     type RoadmapRoute,
+    ROLE_MEMBER,
+    ROLE_NONE,
     routeForChatIdentifier,
     routeForMessage,
     type RouteParams,
@@ -2563,7 +2565,7 @@ export class OpenChat {
     // We will already be adding users from events so it's not critical that we get all members
     // at this point
     #getTruncatedUserIdsFromMembers(members: Member[]): Member[] {
-        const elevated = members.filter((m) => m.role !== "none" && m.role !== "member");
+        const elevated = members.filter((m) => m.role > ROLE_MEMBER);
         const rest = members.slice(0, LARGE_GROUP_THRESHOLD);
         return [...elevated, ...rest];
     }
@@ -2621,7 +2623,7 @@ export class OpenChat {
         if (addToMembers) {
             undos.push(
                 localUpdates.addChatMember(chatId, {
-                    role: "member",
+                    role: ROLE_MEMBER,
                     userId,
                     displayName: undefined,
                     lapsed: false,
@@ -4668,7 +4670,7 @@ export class OpenChat {
         if (
             community !== undefined &&
             community.gateConfig.gate.kind !== "no_gate" &&
-            (community.membership.role === "none" || community.membership.lapsed) &&
+            (community.membership.role === ROLE_NONE || community.membership.lapsed) &&
             (!community.isInvited || !excludeInvited)
         ) {
             gates.push({
@@ -4679,7 +4681,7 @@ export class OpenChat {
         }
         if (
             chat.gateConfig.gate.kind !== "no_gate" &&
-            (chat.membership.role === "none" || chat.membership.lapsed) &&
+            (chat.membership.role === ROLE_NONE || chat.membership.lapsed) &&
             (!chat.isInvited || !excludeInvited)
         ) {
             gates.push({
@@ -5814,7 +5816,7 @@ export class OpenChat {
         // notANonLapsedMember && (private || !messagesVisibleToNonMembers)
         return (
             this.#isMultiUserChat(chat) &&
-            (chat.membership.role === "none" || this.isLapsed(chat.id)) &&
+            (chat.membership.role === ROLE_NONE || this.isLapsed(chat.id)) &&
             (!chat.public || !chat.messagesVisibleToNonMembers)
         );
     }

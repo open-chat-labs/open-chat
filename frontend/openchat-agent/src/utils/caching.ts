@@ -55,8 +55,8 @@ import {
     updateCreatedUser,
 } from "openchat-shared";
 
-const CACHE_VERSION = 137;
-const EARLIEST_SUPPORTED_MIGRATION = 137;
+const CACHE_VERSION = 138;
+const EARLIEST_SUPPORTED_MIGRATION = 138;
 const MAX_INDEX = 9999999999;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;

@@ -5,6 +5,11 @@
         type ChatPermissionRole,
         type MessagePermissions,
         type PermissionsByRole,
+        ROLE_ADMIN,
+        ROLE_OWNER,
+        ROLE_MEMBER,
+        ROLE_MODERATOR,
+        ROLE_NONE,
     } from "openchat-client";
     import GroupPermissionsPartitionViewer from "./GroupPermissionsPartitionViewer.svelte";
     import TabHeader from "../TabHeader.svelte";
@@ -101,7 +106,7 @@
         return (Object.entries(permissions) as PermissionsEntry[]).filter(filterPermissions).reduce(
             (dict: PermissionsByRole, [key, val]) => {
                 const text = $_(
-                    `permissions.${translationExt}${String(key)}`,
+                    `permissions.${translationExt}${key}`,
                     key === "mentionAllMembers" ? { values: { mention: "@everyone" } } : {},
                 );
 
@@ -109,11 +114,11 @@
                 return dict;
             },
             {
-                admin: new Set(),
-                moderator: new Set(),
-                member: new Set(),
-                owner: new Set(),
-                none: new Set(),
+                [ROLE_OWNER]: new Set(),
+                [ROLE_ADMIN]: new Set(),
+                [ROLE_MODERATOR]: new Set(),
+                [ROLE_MEMBER]: new Set(),
+                [ROLE_NONE]: new Set(),
             } as PermissionsByRole,
         );
     }

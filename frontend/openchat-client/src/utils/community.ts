@@ -1,4 +1,4 @@
-import type { CommunitySummary, MemberRole } from "openchat-shared";
+import { type CommunitySummary, type MemberRole, ROLE_OWNER } from "openchat-shared";
 import { hasOwnerRights, isPermitted } from "./permissions";
 
 export function canChangeRoles(
@@ -11,7 +11,7 @@ export function canChangeRoles(
     }
 
     switch (newRole) {
-        case "owner":
+        case ROLE_OWNER:
             return hasOwnerRights(membership.role);
         default:
             return isPermitted(membership.role, permissions.changeRoles);

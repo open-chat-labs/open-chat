@@ -4,6 +4,11 @@ import {
     emptyChatMetrics,
     emptyRules,
     nullMembership,
+    ROLE_ADMIN,
+    ROLE_MEMBER,
+    ROLE_MODERATOR,
+    ROLE_NONE,
+    ROLE_OWNER,
     type ChatIdentifier,
     type CommunityIdentifier,
     type CommunityPermissions,
@@ -160,7 +165,7 @@ describe("app state", () => {
                         [
                             "user_one",
                             {
-                                role: "member",
+                                role: ROLE_MEMBER,
                                 userId: "user_one",
                                 displayName: "User One",
                                 lapsed: false,
@@ -404,7 +409,7 @@ describe("app state", () => {
                             [
                                 "user_one",
                                 {
-                                    role: "member",
+                                    role: ROLE_MEMBER,
                                     userId: "user_one",
                                     displayName: "User One",
                                     lapsed: false,
@@ -430,7 +435,7 @@ describe("app state", () => {
 
             test("local map updates - update member", () => {
                 const updated: Member = {
-                    role: "admin",
+                    role: ROLE_ADMIN,
                     userId: "user_one",
                     displayName: "Mr One",
                     lapsed: false,
@@ -585,7 +590,7 @@ function createCommunitySummary(id: string, index: number): CommunitySummary {
         latestEventIndex: 0,
         channels: [],
         membership: {
-            role: "owner",
+            role: ROLE_OWNER,
             joined: BigInt(0),
             archived: false,
             pinned: [],
@@ -604,13 +609,13 @@ function createCommunitySummary(id: string, index: number): CommunitySummary {
 }
 
 const defaultPermissions: CommunityPermissions = {
-    changeRoles: "admin",
-    updateDetails: "admin",
-    inviteUsers: "admin",
-    removeMembers: "admin",
-    createPublicChannel: "admin",
-    createPrivateChannel: "admin",
-    manageUserGroups: "admin",
+    changeRoles: ROLE_ADMIN,
+    updateDetails: ROLE_ADMIN,
+    inviteUsers: ROLE_ADMIN,
+    removeMembers: ROLE_ADMIN,
+    createPublicChannel: ROLE_ADMIN,
+    createPrivateChannel: ROLE_ADMIN,
+    manageUserGroups: ROLE_ADMIN,
 };
 
 function initialiseGlobalState() {
@@ -655,19 +660,19 @@ function groupChat(groupId: string, lastMessage?: EventWrapper<Message>): GroupC
         public: false,
         frozen: false,
         permissions: {
-            changeRoles: "admin",
-            removeMembers: "moderator",
-            deleteMessages: "moderator",
-            updateGroup: "admin",
-            pinMessages: "admin",
-            inviteUsers: "admin",
-            addMembers: "admin",
-            mentionAllMembers: "member",
-            reactToMessages: "member",
-            startVideoCall: "member",
+            changeRoles: ROLE_ADMIN,
+            removeMembers: ROLE_MODERATOR,
+            deleteMessages: ROLE_MODERATOR,
+            updateGroup: ROLE_ADMIN,
+            pinMessages: ROLE_ADMIN,
+            inviteUsers: ROLE_ADMIN,
+            addMembers: ROLE_ADMIN,
+            mentionAllMembers: ROLE_MEMBER,
+            reactToMessages: ROLE_MEMBER,
+            startVideoCall: ROLE_MEMBER,
             messagePermissions: {
-                default: "member",
-                p2pSwap: "none",
+                default: ROLE_MEMBER,
+                p2pSwap: ROLE_NONE,
             },
             threadPermissions: undefined,
         },
@@ -675,7 +680,7 @@ function groupChat(groupId: string, lastMessage?: EventWrapper<Message>): GroupC
         level: "group",
         membership: {
             ...nullMembership(),
-            role: "owner",
+            role: ROLE_OWNER,
         },
         messagesVisibleToNonMembers: false,
         verified: false,

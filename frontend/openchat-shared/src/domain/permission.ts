@@ -2,18 +2,19 @@ import type { CommandArg } from "./bots";
 import type { ChatIdentifier, VideoCallType } from "./chat";
 import type { CommunityIdentifier } from "./community";
 import type { OptionUpdate } from "./optionUpdate";
+import { ROLE_ADMIN, ROLE_MEMBER, ROLE_MODERATOR, ROLE_NONE, ROLE_OWNER } from "../constants";
 
-export const allRoles = ["none", "owner", "admin", "moderator", "member"] as const;
+export const allRoles = [ROLE_OWNER, ROLE_ADMIN, ROLE_MODERATOR, ROLE_MEMBER, ROLE_NONE] as const;
 export const chatRoles = allRoles;
 type ChatRolesType = typeof allRoles;
 export type ChatPermissionRole = ChatRolesType[number];
 export type PermissionRole = ChatPermissionRole;
 
-export const communityRoles = ["owner", "admin", "member"] as const;
+export const communityRoles = [ROLE_OWNER, ROLE_ADMIN, ROLE_MEMBER] as const;
 type CommunityRolesType = typeof communityRoles;
 export type CommunityPermissionRole = CommunityRolesType[number];
 
-export type MemberRole = "admin" | "moderator" | "member" | "owner" | "none";
+export type MemberRole = typeof ROLE_OWNER | typeof ROLE_ADMIN | typeof ROLE_MODERATOR | typeof ROLE_MEMBER | typeof ROLE_NONE;
 
 export const messagePermissionsList = [
     "text",

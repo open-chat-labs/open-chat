@@ -7,6 +7,7 @@ import {
     MessageContextMap,
     MessageMap,
     nullMembership,
+    ROLE_OWNER,
     SafeMap,
     type AccessGateConfig,
     type ChatIdentifier,
@@ -380,7 +381,7 @@ export class GlobalLocalState {
                 eventsTtlLastUpdated: BigInt(0),
                 membership: {
                     ...nullMembership(),
-                    role: "owner",
+                    role: ROLE_OWNER,
                 },
             });
         });

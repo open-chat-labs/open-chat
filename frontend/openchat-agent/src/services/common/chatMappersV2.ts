@@ -113,6 +113,11 @@ import {
     ICP_SYMBOL,
     ProposalDecisionStatus,
     ProposalRewardStatus,
+    ROLE_ADMIN,
+    ROLE_MEMBER,
+    ROLE_MODERATOR,
+    ROLE_NONE,
+    ROLE_OWNER,
     UnsupportedValueError,
     botChatPermissionList,
     chatIdentifiersEqual,
@@ -1308,9 +1313,9 @@ export function communityPermissions(value: TCommunityPermissions): CommunityPer
 export function communityPermissionRole(
     value: TCommunityPermissionRole | TCommunityRole,
 ): CommunityPermissionRole {
-    if (value === "Owners") return "owner";
-    if (value === "Admins") return "admin";
-    return "member";
+    if (value === "Owners") return ROLE_OWNER;
+    if (value === "Admins") return ROLE_ADMIN;
+    return ROLE_MEMBER;
 }
 
 export function apiCommunityPermissions(permissions: CommunityPermissions): TCommunityPermissions {
@@ -1329,11 +1334,11 @@ export function apiCommunityPermissionRole(
     permissionRole: CommunityPermissionRole,
 ): TCommunityPermissionRole {
     switch (permissionRole) {
-        case "owner":
+        case ROLE_OWNER:
             return "Owners";
-        case "admin":
+        case ROLE_ADMIN:
             return "Admins";
-        case "member":
+        case ROLE_MEMBER:
             return "Members";
     }
 }
@@ -1368,7 +1373,7 @@ function apiMessagePermissions(permissions: MessagePermissions): TMessagePermiss
         giphy: mapOptional(permissions.giphy, apiPermissionRole),
         prize: mapOptional(permissions.prize, apiPermissionRole),
         p2p_swap: mapOptional(permissions.p2pSwap, apiPermissionRole),
-        video_call: mapOptional("none", apiPermissionRole),
+        video_call: mapOptional(ROLE_NONE, apiPermissionRole),
         custom:
             permissions.memeFighter !== undefined
                 ? [{ subtype: "meme_fighter", role: apiPermissionRole(permissions.memeFighter) }]
@@ -1378,13 +1383,13 @@ function apiMessagePermissions(permissions: MessagePermissions): TMessagePermiss
 
 export function apiPermissionRole(permissionRole: PermissionRole): TGroupPermissionRole {
     switch (permissionRole) {
-        case "none":
+        case ROLE_NONE:
             return "None";
-        case "owner":
+        case ROLE_OWNER:
             return "Owner";
-        case "admin":
+        case ROLE_ADMIN:
             return "Admins";
-        case "moderator":
+        case ROLE_MODERATOR:
             return "Moderators";
         default:
             return "Members";
@@ -1392,11 +1397,11 @@ export function apiPermissionRole(permissionRole: PermissionRole): TGroupPermiss
 }
 
 export function permissionRole(value: TGroupPermissionRole): PermissionRole {
-    if (value === "None") return "none";
-    if (value === "Owner") return "owner";
-    if (value === "Admins") return "admin";
-    if (value === "Moderators") return "moderator";
-    return "member";
+    if (value === "None") return ROLE_NONE;
+    if (value === "Owner") return ROLE_OWNER;
+    if (value === "Admins") return ROLE_ADMIN;
+    if (value === "Moderators") return ROLE_MODERATOR;
+    return ROLE_MEMBER;
 }
 
 export function chatMetrics(value: TChatMetrics): Metrics {
@@ -1422,16 +1427,16 @@ export function chatMetrics(value: TChatMetrics): Metrics {
 
 export function memberRole(value: TGroupRole | TCommunityRole): MemberRole {
     if (value === "Admin") {
-        return "admin";
+        return ROLE_ADMIN;
     }
     if (value === "Moderator") {
-        return "moderator";
+        return ROLE_MODERATOR;
     }
     if (value === "Participant" || value === "Member") {
-        return "member";
+        return ROLE_MEMBER;
     }
     if (value === "Owner") {
-        return "owner";
+        return ROLE_OWNER;
     }
     throw new UnsupportedValueError("Unexpected ApiRole type received", value);
 }
@@ -2167,7 +2172,7 @@ export function communitySummary(value: TCommunityCanisterCommunitySummary): Com
         permissions: communityPermissions(value.permissions),
         membership: {
             joined: mapOptional(value.membership, (m) => m.joined) ?? BigInt(0),
-            role: mapOptional(value.membership, (m) => memberRole(m.role)) ?? "none",
+            role: mapOptional(value.membership, (m) => memberRole(m.role)) ?? ROLE_NONE,
             archived: false,
             pinned: [],
             index: 0,
@@ -2237,7 +2242,7 @@ export function communityChannelSummary(
             joined: mapOptional(value.membership, (m) => m.joined) ?? BigInt(0),
             notificationsMuted:
                 mapOptional(value.membership, (m) => m.notifications_muted) ?? false,
-            role: mapOptional(value.membership, (m) => memberRole(m.role)) ?? "none",
+            role: mapOptional(value.membership, (m) => memberRole(m.role)) ?? ROLE_NONE,
             myMetrics:
                 mapOptional(value.membership, (m) => chatMetrics(m.my_metrics)) ??
                 emptyChatMetrics(),
@@ -2442,7 +2447,7 @@ export function groupDetailsSuccess(
         const userId = principalBytesToString(id);
         if (membersSet.add(userId)) {
             members.push({
-                role: "member",
+                role: ROLE_MEMBER,
                 userId,
                 displayName: undefined,
                 lapsed: false,
@@ -2784,7 +2789,7 @@ export function externalBotCommand(command: ApiCommandDefinition): CommandDefini
         placeholder: mapOptional(command.placeholder, identity),
         params: command.params.map(externalBotParam),
         permissions: externalBotPermissions(command.permissions),
-        defaultRole: mapOptional(command.default_role, memberRole) ?? "member",
+        defaultRole: mapOptional(command.default_role, memberRole) ?? ROLE_MEMBER,
         directMessages: command.direct_messages ?? false,
     };
 }
