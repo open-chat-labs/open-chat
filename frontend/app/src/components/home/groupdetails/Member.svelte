@@ -70,10 +70,10 @@
             canBlockUser,
     );
 
-    let ownerText = $_(roleAsText(ROLE_OWNER));
-    let adminText = $_(roleAsText(ROLE_ADMIN));
-    let moderatorText = $_(roleAsText(ROLE_MODERATOR));
-    let memberText = $_(roleAsText(ROLE_MEMBER));
+    let ownerText = $derived($_(roleAsText(ROLE_OWNER)));
+    let adminText = $derived($_(roleAsText(ROLE_ADMIN)));
+    let moderatorText = $derived($_(roleAsText(ROLE_MODERATOR)));
+    let memberText = $derived($_(roleAsText(ROLE_MEMBER)));
 
     function removeUser() {
         onRemoveMember?.(member.userId);

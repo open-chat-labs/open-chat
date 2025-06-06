@@ -14,7 +14,7 @@ export const communityRoles = [ROLE_OWNER, ROLE_ADMIN, ROLE_MEMBER] as const;
 type CommunityRolesType = typeof communityRoles;
 export type CommunityPermissionRole = CommunityRolesType[number];
 
-export type MemberRole = typeof allRoles;
+export type MemberRole = typeof ROLE_OWNER | typeof ROLE_ADMIN | typeof ROLE_MODERATOR | typeof ROLE_MEMBER | typeof ROLE_NONE;
 
 export const messagePermissionsList = [
     "text",
