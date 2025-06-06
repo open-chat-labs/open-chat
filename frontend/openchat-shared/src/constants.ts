@@ -15,6 +15,12 @@ export const AIRDROP_BOT_AVATAR_URL = "/assets/airdrop_bot.svg";
 export const WEBAUTHN_ORIGINATING_CANISTER = "zzzxd-webau-thnke-yr7oc-cai";
 export const NOOP = () => {};
 
+export const ROLE_NONE = 0;
+export const ROLE_MEMBER = 1;
+export const ROLE_MODERATOR = 2;
+export const ROLE_ADMIN = 3;
+export const ROLE_OWNER = 4;
+
 // downlink is the effective bandwidth estimate in megabits per second, rounded to the nearest multiple of 25 kilobits per seconds.
 export const MIN_DOWNLINK = 0.05;
 export const ONE_MINUTE_MILLIS = 60 * 1000;

@@ -46,6 +46,11 @@
         pinNumberResolverStore,
         querystringStore,
         rightPanelHistory,
+        ROLE_ADMIN,
+        ROLE_MEMBER,
+        ROLE_MODERATOR,
+        ROLE_NONE,
+        ROLE_OWNER,
         routeForChatIdentifier,
         routeForScope,
         routeStore,
@@ -600,7 +605,7 @@
         // that we are actually already a member of this group, so we should double check here
         // that we actually *need* to join the group
         let chat = $chatSummariesStore.get(group.id);
-        if (chat === undefined || chat.membership.role === "none" || client.isLapsed(chat.id)) {
+        if (chat === undefined || chat.membership.role === ROLE_NONE || client.isLapsed(chat.id)) {
             doJoinGroup(group, select, undefined);
         }
     }
@@ -749,19 +754,19 @@
                 frozen: false,
                 members: [],
                 permissions: {
-                    changeRoles: "admin",
-                    removeMembers: "moderator",
-                    deleteMessages: "moderator",
-                    updateGroup: "admin",
-                    pinMessages: "admin",
-                    inviteUsers: "admin",
-                    addMembers: "admin",
-                    mentionAllMembers: "member",
-                    reactToMessages: "member",
-                    startVideoCall: "member",
+                    changeRoles: ROLE_ADMIN,
+                    removeMembers: ROLE_MODERATOR,
+                    deleteMessages: ROLE_MODERATOR,
+                    updateGroup: ROLE_ADMIN,
+                    pinMessages: ROLE_ADMIN,
+                    inviteUsers: ROLE_ADMIN,
+                    addMembers: ROLE_ADMIN,
+                    mentionAllMembers: ROLE_MEMBER,
+                    reactToMessages: ROLE_MEMBER,
+                    startVideoCall: ROLE_MEMBER,
                     messagePermissions: {
-                        default: "member",
-                        p2pSwap: "none",
+                        default: ROLE_MEMBER,
+                        p2pSwap: ROLE_NONE,
                     },
                     threadPermissions: undefined,
                 },
@@ -770,7 +775,7 @@
                 level,
                 membership: {
                     ...nullMembership(),
-                    role: "owner",
+                    role: ROLE_OWNER,
                 },
                 messagesVisibleToNonMembers: false,
                 externalUrl: embeddedContent ? "" : undefined,

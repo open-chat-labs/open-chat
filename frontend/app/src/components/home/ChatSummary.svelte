@@ -25,6 +25,7 @@
         OpenChat,
         pinnedChatsStore,
         publish,
+        ROLE_NONE,
         routeForScope,
         selectedChatIdStore,
         selectedCommunitySummaryStore,
@@ -209,7 +210,7 @@
                 chatSummary.eventsTtlLastUpdated > chatSummary.latestMessage.timestamp) ||
             (chatSummary.latestMessage === undefined &&
                 chatSummary.eventsTTL !== undefined &&
-                chatSummary.membership.role !== "none")
+                chatSummary.membership.role !== ROLE_NONE)
         ) {
             return chatSummary.eventsTTL !== undefined
                 ? $_("disappearingMessages.timeUpdated", {
@@ -369,12 +370,12 @@
             case "direct_chat":
                 return chat.latestMessage === undefined;
             case "group_chat":
-                return chat.membership.role === "none";
+                return chat.membership.role === ROLE_NONE;
             case "channel":
                 return (
                     community !== undefined &&
-                    community.membership.role !== "none" &&
-                    chat.membership.role === "none"
+                    community.membership.role !== ROLE_NONE &&
+                    chat.membership.role === ROLE_NONE
                 );
         }
     }

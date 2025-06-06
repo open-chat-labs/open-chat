@@ -302,15 +302,7 @@ export function emptyRules(): VersionedRules {
 }
 
 export function compareRoles(a: MemberRole, b: MemberRole): number {
-    if (a === b) return 0;
-    if (a === "owner") return 1;
-    if (b === "owner") return -1;
-    if (a === "admin") return 1;
-    if (b === "admin") return -1;
-    if (a === "moderator") return 1;
-    if (b === "moderator") return -1;
-    if (a === "member") return 1;
-    return -1;
+    return a - b;
 }
 
 export function routeForMessage(

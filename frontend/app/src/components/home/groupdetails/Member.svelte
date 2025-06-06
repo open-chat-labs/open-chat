@@ -1,6 +1,14 @@
 <script lang="ts">
-    import { iconSize, type FullMember } from "openchat-client";
-    import type { MemberRole } from "openchat-shared";
+    import {
+        iconSize,
+        type FullMember,
+        type MemberRole,
+        ROLE_ADMIN,
+        ROLE_MEMBER,
+        ROLE_MODERATOR,
+        ROLE_OWNER,
+        roleAsText,
+    } from "openchat-client";
     import { _ } from "svelte-i18n";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import AccountRemoveOutline from "svelte-material-icons/AccountRemoveOutline.svelte";
@@ -62,10 +70,10 @@
             canBlockUser,
     );
 
-    let ownerText = $derived($_("owner"));
-    let adminText = $derived($_("admin"));
-    let moderatorText = $derived($_("moderator"));
-    let memberText = $derived($_("member"));
+    let ownerText = $_(roleAsText(ROLE_OWNER));
+    let adminText = $_(roleAsText(ROLE_ADMIN));
+    let moderatorText = $_(roleAsText(ROLE_MODERATOR));
+    let memberText = $_(roleAsText(ROLE_MEMBER));
 
     function removeUser() {
         onRemoveMember?.(member.userId);
@@ -88,8 +96,8 @@
     user={member}
     {me}
     {searchTerm}
-    role={member.role === "moderator" || member.role === "admin" || member.role === "owner"
-        ? member.role
+    role={member.role > ROLE_MEMBER
+        ? roleAsText(member.role)
         : undefined}>
     {#if showMenu}
         <span class="menu">
@@ -102,7 +110,7 @@
                 {#snippet menuItems()}
                     <Menu>
                         {#if canPromoteToOwner}
-                            <MenuItem onclick={() => changeRole("owner")}>
+                            <MenuItem onclick={() => changeRole(ROLE_OWNER)}>
                                 {#snippet icon()}
                                     <AccountPlusOutline
                                         size={$iconSize}
@@ -119,7 +127,7 @@
                             </MenuItem>
                         {/if}
                         {#if canPromoteToAdmin}
-                            <MenuItem onclick={() => changeRole("admin")}>
+                            <MenuItem onclick={() => changeRole(ROLE_ADMIN)}>
                                 {#snippet icon()}
                                     <AccountPlusOutline
                                         size={$iconSize}
@@ -136,7 +144,7 @@
                             </MenuItem>
                         {/if}
                         {#if canDemoteToAdmin}
-                            <MenuItem onclick={() => changeRole("admin")}>
+                            <MenuItem onclick={() => changeRole(ROLE_ADMIN)}>
                                 {#snippet icon()}
                                     <AccountRemoveOutline
                                         size={$iconSize}
@@ -153,7 +161,7 @@
                             </MenuItem>
                         {/if}
                         {#if canPromoteToModerator}
-                            <MenuItem onclick={() => changeRole("moderator")}>
+                            <MenuItem onclick={() => changeRole(ROLE_MODERATOR)}>
                                 {#snippet icon()}
                                     <AccountPlusOutline
                                         size={$iconSize}
@@ -170,7 +178,7 @@
                             </MenuItem>
                         {/if}
                         {#if canDemoteToModerator}
-                            <MenuItem onclick={() => changeRole("moderator")}>
+                            <MenuItem onclick={() => changeRole(ROLE_MODERATOR)}>
                                 {#snippet icon()}
                                     <AccountRemoveOutline
                                         size={$iconSize}
@@ -187,7 +195,7 @@
                             </MenuItem>
                         {/if}
                         {#if canDemoteToMember}
-                            <MenuItem onclick={() => changeRole("member")}>
+                            <MenuItem onclick={() => changeRole(ROLE_MEMBER)}>
                                 {#snippet icon()}
                                     <AccountRemoveOutline
                                         size={$iconSize}

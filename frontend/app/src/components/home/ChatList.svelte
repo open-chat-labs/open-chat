@@ -19,6 +19,7 @@
         numberOfThreadsStore,
         OpenChat,
         publish,
+        ROLE_NONE,
         routeForChatIdentifier,
         routeForScope,
         selectedChatIdStore,
@@ -184,7 +185,7 @@
 
     let showPreview = $derived(
         $mobileWidth &&
-            $selectedCommunitySummaryStore?.membership.role === "none" &&
+            $selectedCommunitySummaryStore?.membership.role === ROLE_NONE &&
             $selectedChatIdStore === undefined,
     );
     let user = $derived($allUsersStore.get($currentUserIdStore));

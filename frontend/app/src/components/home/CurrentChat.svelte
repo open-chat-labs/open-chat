@@ -29,6 +29,7 @@
         type OpenChat,
         type ReadonlySet,
         rightPanelHistory,
+        ROLE_OWNER,
         runningInIframe,
         selectedChatDraftMessageStore,
         selectedChatPinnedMessagesStore,
@@ -132,7 +133,7 @@
     }
 
     function importToCommunity() {
-        importToCommunities = $communitiesStore.filter((c) => c.membership.role === "owner");
+        importToCommunities = $communitiesStore.filter((c) => c.membership.role === ROLE_OWNER);
         if (importToCommunities.size === 0) {
             toastStore.showFailureToast(i18nKey("communities.noOwned"));
             importToCommunities = undefined;
