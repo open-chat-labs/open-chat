@@ -2316,45 +2316,47 @@ type CommunityEventType = variant {
 };
 
 type ChatEventType = variant {
-    MessagePrizePayment;
-    NameChanged;
-    MessageVideoCall;
-    GateUpdated;
-    MessagePinned;
-    UsersInvited;
-    UsersBlocked;
-    MessageUnpinned;
-    MessageOther;
-    BotUpdated;
-    MessagePollVote;
     Message;
-    PermissionsChanged;
-    MessageP2pSwap;
-    MessageThreadSummary;
-    EventsTTLUpdated;
-    MembersJoined;
-    MessagePollEnded;
-    UsersUnblocked;
-    Unfrozen;
-    VisibilityChanged;
-    RulesChanged;
-    DescriptionChanged;
-    MessagePrizeClaim;
-    MessageReported;
-    ExternalUrlUpdated;
-    InviteCodeChanged;
+    MessageEdited;
+    MessageReaction;
+    MessageTipped;
     MessageDeleted;
     MessageUndeleted;
-    BotRemoved;
-    MessageReaction;
+    MessagePollVote;
+    MessagePollEnded;
+    MessagePrizeClaim;
+    MessageP2pSwapCompleted;
+    MessageP2pSwapCancelled;
+    MessageVideoCall;
+    MessageOther;
+
+    // Details category
+    Created;
+    NameChanged;
+    DescriptionChanged;
+    RulesChanged;
+    AvatarChanged;
+    ExternalUrlUpdated;
+    PermissionsChanged;
+    GateUpdated;
+    VisibilityChanged;
+    InviteCodeChanged;
+    Frozen;
+    Unfrozen;
+    DisappearingMessagesUpdated;
+    MessagePinned;
+    MessageUnpinned;
+
+    // Membership category
+    MembersJoined;
     MembersLeft;
     RoleChanged;
+    UsersInvited;
+    UsersBlocked;
+    UsersUnblocked;
     BotAdded;
-    Created;
-    MessageTipped;
-    Frozen;
-    MessageEdited;
-    AvatarChanged;
+    BotRemoved;
+    BotUpdated;
 };
 
 type BotDataEncoding = variant { Json; Candid };

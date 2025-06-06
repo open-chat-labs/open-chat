@@ -87,9 +87,9 @@ pub enum ChatEventType {
     PermissionsChanged,
     GateUpdated,
     VisibilityChanged,
-    InviteCodeChanged,
-    Frozen,   // Applies to group chats only
-    Unfrozen, // Applies to group chats only
+    InviteCodeChanged, // Not publishing a bot notification for this event
+    Frozen,            // Applies to group chats only
+    Unfrozen,          // Applies to group chats only
     DisappearingMessagesUpdated,
     MessagePinned,
     MessageUnpinned,
