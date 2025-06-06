@@ -20,3 +20,4 @@ serde_bytes = { workspace = true }
 sha2.workspace = true
 ts_export = { path = "../ts_export" }
 ts-rs.workspace = true
+web-push = { workspace = true }

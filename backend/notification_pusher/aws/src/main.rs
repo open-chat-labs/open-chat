@@ -2,7 +2,7 @@ use aws_config::BehaviorVersion;
 use candid::Principal;
 use dynamodb_index_store::DynamoDbIndexStore;
 use notification_pusher_core::ic_agent::IcAgent;
-use notification_pusher_core::{run_notifications_pusher, write_metrics};
+use notification_pusher_core::{PusherArgs, run_notifications_pusher, write_metrics};
 use std::str::FromStr;
 use tokio::time;
 use tracing::info;
@@ -25,6 +25,8 @@ async fn main() -> Result<(), Error> {
         .ok()
         .and_then(|s| u32::from_str(&s).ok())
         .unwrap_or(10);
+    let gcloud_sa_json_path = dotenv::var("GCLOUD_SA_JSON_PATH")
+        .expect("GCLOUD_SA_JSON_PATH must be set, and point to google cloud service account JSON file");
 
     let aws_config = aws_config::load_defaults(BehaviorVersion::latest()).await;
     let dynamodb_index_store = DynamoDbIndexStore::build(&aws_config, "push_notification_stream_indexes".to_string());
@@ -42,15 +44,16 @@ async fn main() -> Result<(), Error> {
 
     tokio::spawn(write_metrics_to_file());
 
-    run_notifications_pusher(
+    run_notifications_pusher(PusherArgs {
         ic_agent,
         index_canister_id,
         notifications_canister_ids,
-        dynamodb_index_store,
+        index_store: dynamodb_index_store,
         vapid_private_pem,
         pusher_count,
         is_production,
-    )
+        gcloud_sa_json_path,
+    })
     .await;
 
     Ok(())

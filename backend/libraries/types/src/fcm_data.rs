@@ -1,8 +1,9 @@
+use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 // Values relevant for the FCM notifications
-#[derive(Serialize, Deserialize, Clone, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Default)]
 pub struct FcmData {
     #[serde(rename = "t")]
     pub title: String,
