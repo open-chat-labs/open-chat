@@ -10,7 +10,6 @@ use oc_error_codes::{OCError, OCErrorCode};
 use search::simple::{Document, Query};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
-use sha2::{Digest, Sha256};
 use std::cmp::max;
 use std::collections::btree_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
@@ -20,13 +19,13 @@ use tracing::error;
 use types::{
     BlobReference, BotChatEvent, BotNotification, CallParticipant, CanisterId, Chat, ChatEventCategory, ChatEventType,
     ChatType, CompletedCryptoTransaction, DirectChatCreated, EventContext, EventIndex, EventMetaData, EventWrapper,
-    EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash,
+    EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen,
     HydratedMention, Mention, Message, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch,
-    MessageReport, MessageTippedEventPayload, Milliseconds, MultiUserChat, OCResult, OptionUpdate, P2PSwapAccepted,
-    P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes,
-    ProposalUpdate, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess, SenderContext,
-    TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants,
-    VideoCallPresence, VideoCallType, VoteOperation,
+    MessageTippedEventPayload, Milliseconds, MultiUserChat, OCResult, OptionUpdate, P2PSwapAccepted, P2PSwapCompleted,
+    P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate, Reaction,
+    ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess, SenderContext, TimestampMillis, TimestampNanos,
+    Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VideoCallType,
+    VoteOperation,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -1469,106 +1468,6 @@ impl ChatEvents {
             Ok(())
         } else {
             Err(UpdateEventError::NotFound)
-        }
-    }
-
-    #[expect(clippy::too_many_arguments)]
-    pub fn report_message<P: EventPusher>(
-        &mut self,
-        user_id: UserId,
-        chat: MultiUserChat,
-        thread_root_message_index: Option<MessageIndex>,
-        event_index: EventIndex,
-        reason_code: u32,
-        notes: Option<String>,
-        event_pusher: P,
-        now: TimestampMillis,
-    ) {
-        // Generate a deterministic MessageId based on the `chat_id`, `thread_root_message_index`,
-        // and `event_index`. This allows us to quickly find any existing reports for the same
-        // message.
-        let mut hasher = Sha256::new();
-        match &chat {
-            MultiUserChat::Group(chat_id) => {
-                let chat_id_bytes = chat_id.as_ref();
-                hasher.update([chat_id_bytes.len() as u8]);
-                hasher.update(chat_id_bytes);
-            }
-            MultiUserChat::Channel(community_id, channel_id) => {
-                let community_id_bytes = community_id.as_ref();
-                hasher.update([community_id_bytes.len() as u8]);
-                hasher.update(community_id);
-                let channel_id_bytes = channel_id.as_u32().to_be_bytes();
-                hasher.update([channel_id_bytes.len() as u8]);
-                hasher.update(channel_id_bytes);
-            }
-        }
-        if let Some(root_message_index_bytes) = thread_root_message_index.map(u32::from).map(|i| i.to_be_bytes()) {
-            hasher.update([root_message_index_bytes.len() as u8]);
-            hasher.update(root_message_index_bytes);
-        } else {
-            hasher.update([0]);
-        }
-        let event_index_bytes = u32::from(event_index).to_be_bytes();
-        hasher.update([event_index_bytes.len() as u8]);
-        hasher.update(event_index_bytes);
-
-        let hash: Hash = hasher.finalize().into();
-        let message_id_bytes: [u8; 16] = hash[..16].try_into().unwrap();
-        let message_id: MessageId = u128::from_be_bytes(message_id_bytes).into();
-
-        if self
-            .update_message(
-                None,
-                message_id.into(),
-                EventIndex::default(),
-                Some(now),
-                ChatEventType::MessageOther,
-                |message, _| {
-                    if let MessageContentInternal::ReportedMessage(r) = &mut message.content {
-                        r.reports.retain(|x| x.reported_by != user_id);
-                        r.reports.push(MessageReport {
-                            reported_by: user_id,
-                            timestamp: now,
-                            reason_code,
-                            notes: notes.clone(),
-                        });
-                        Ok(())
-                    } else {
-                        Err(UpdateEventError::<()>::NotFound)
-                    }
-                },
-            )
-            .is_err()
-        {
-            let chat: Chat = chat.into();
-
-            self.push_message(
-                PushMessageArgs {
-                    sender: OPENCHAT_BOT_USER_ID,
-                    thread_root_message_index: None,
-                    message_id,
-                    content: MessageContentInternal::ReportedMessage(ReportedMessageInternal {
-                        reports: vec![MessageReport {
-                            reported_by: user_id,
-                            timestamp: now,
-                            reason_code,
-                            notes,
-                        }],
-                    }),
-                    sender_context: None,
-                    mentioned: Vec::new(),
-                    replies_to: Some(ReplyContextInternal {
-                        chat_if_other: Some((chat.into(), thread_root_message_index)),
-                        event_index,
-                    }),
-                    forwarded: false,
-                    sender_is_bot: true,
-                    block_level_markdown: false,
-                    now,
-                },
-                Some(event_pusher),
-            );
         }
     }
 

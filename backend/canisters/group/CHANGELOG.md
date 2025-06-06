@@ -13,6 +13,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove `correlation_id` ([#8097](https://github.com/open-chat-labs/open-chat/pull/8097))
 - Push chat event notifications to bots ([#8109](https://github.com/open-chat-labs/open-chat/pull/8109))
 
+### Removed
+
+- Remove unused `c2c_report_message_v2` ([#8110](https://github.com/open-chat-labs/open-chat/pull/8110))
+
 ## [[2.0.1764](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1764-group)] - 2025-05-28
 
 ### Changed

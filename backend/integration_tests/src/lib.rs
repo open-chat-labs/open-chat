@@ -36,7 +36,6 @@ mod notification_tests;
 mod online_users_tests;
 mod p2p_swap_tests;
 mod pin_number_tests;
-// mod platform_moderator_tests;
 mod poll_tests;
 mod prize_message_tests;
 mod register_user_tests;

@@ -33,6 +33,5 @@ pub mod join_group;
 pub mod push_events;
 pub mod register_user;
 pub mod remove_notifications;
-pub mod report_message_v2;
 pub mod uninstall_bot;
 pub mod withdraw_from_icpswap;
