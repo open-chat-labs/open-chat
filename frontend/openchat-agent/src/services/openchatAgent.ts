@@ -1680,8 +1680,8 @@ export class OpenChatAgent extends EventTarget {
         return [...byCommunity.values()].flat();
     }
 
-    private async _getUpdates(current: ChatStateFull | undefined): Promise<UpdatesResult> {
-        const start = Date.now();
+    private async _getUpdates(current: ChatStateFull | undefined): Promise<UpdatesResult | undefined> {
+        const start = performance.now();
         let totalQueryCount = 0;
 
         let directChats: DirectChatSummary[];
@@ -1724,6 +1724,7 @@ export class OpenChatAgent extends EventTarget {
         if (current === undefined) {
             totalQueryCount++;
             const userResponse = await this.userClient.getInitialState();
+            anyUpdates = true;
 
             directChats = userResponse.directChats.summaries;
             groupsAdded = userResponse.groupChats.summaries;
@@ -1763,7 +1764,6 @@ export class OpenChatAgent extends EventTarget {
             referrals = userResponse.referrals;
             walletConfig = userResponse.walletConfig;
             messageActivitySummary = userResponse.messageActivitySummary;
-            anyUpdates = true;
             installedBots = userResponse.bots;
             bitcoinAddress = userResponse.bitcoinAddress;
             streakInsurance = userResponse.streakInsurance;
@@ -1799,6 +1799,7 @@ export class OpenChatAgent extends EventTarget {
                 );
 
                 if (userResponse.kind === "success") {
+                    anyUpdates = true;
                     userResponse.botsAddedOrUpdated.forEach((b) =>
                         installedBots.set(b.id, b.permissions),
                     );
@@ -1868,7 +1869,6 @@ export class OpenChatAgent extends EventTarget {
                         userResponse.messageActivitySummary ?? current.messageActivitySummary;
                     bitcoinAddress ??= userResponse.bitcoinAddress;
                     streakInsurance = applyOptionUpdate(streakInsurance, userResponse.streakInsurance);
-                    anyUpdates = true;
                 }
             } catch (error) {
                 console.error("Failed to get updates from User canister", error);
@@ -1960,6 +1960,14 @@ export class OpenChatAgent extends EventTarget {
             anyUpdates = true;
         }
 
+        if (!anyUpdates) {
+            const duration = performance.now() - start;
+            console.debug(
+                `GetUpdates completed with no updates in ${duration}ms. Number of queries: ${totalQueryCount}`,
+            );
+            return undefined;
+        }
+
         const isGroupCommunityDeleted = (canisterId: string, joined: bigint) => {
             if (groupsCommunitiesRemoved.has(canisterId)) return true;
             // This is needed in case we hit a replica which is lagging and
@@ -2049,8 +2057,7 @@ export class OpenChatAgent extends EventTarget {
             }
         }
 
-        const end = Date.now();
-        const duration = end - start;
+        const duration = performance.now() - start;
         console.debug(
             `GetUpdates completed in ${duration}ms. Number of queries: ${totalQueryCount}`,
         );
@@ -2058,7 +2065,6 @@ export class OpenChatAgent extends EventTarget {
         return {
             state: this.hydrateChatState(state),
             updatedEvents: updatedEvents.toMap() as Map<string, UpdatedEvent[]>,
-            anyUpdates,
             suspensionChanged,
             newAchievements,
         };
@@ -2126,7 +2132,7 @@ export class OpenChatAgent extends EventTarget {
         return { success, errors };
     }
 
-    getUpdates(initialLoad: boolean): Stream<UpdatesResult> {
+    getUpdates(initialLoad: boolean): Stream<UpdatesResult | undefined> {
         return new Stream(async (resolve, reject) => {
             const cachedState = await getCachedChats(this.db, this.principal);
             const isOffline = offline();
@@ -2135,7 +2141,6 @@ export class OpenChatAgent extends EventTarget {
                     {
                         state: this.hydrateChatState(cachedState),
                         updatedEvents: new Map(),
-                        anyUpdates: false,
                         suspensionChanged: undefined,
                         newAchievements: [],
                     },

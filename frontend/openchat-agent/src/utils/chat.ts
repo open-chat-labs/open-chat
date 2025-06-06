@@ -231,6 +231,8 @@ export function mergeGroupChatUpdates(
     userCanisterUpdates: UserCanisterGroupChatSummaryUpdates[],
     groupCanisterUpdates: GroupCanisterGroupChatSummaryUpdates[],
 ): GroupChatSummary[] {
+    if (userCanisterUpdates.length === 0 && groupCanisterUpdates.length === 0) return groupChats;
+
     const userLookup = ChatMap.fromList(userCanisterUpdates);
     const groupLookup = ChatMap.fromList(groupCanisterUpdates);
 

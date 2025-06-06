@@ -2041,7 +2041,7 @@ export type WorkerResult<T> = T extends Init
     : T extends UnpinMessage
     ? UnpinMessageResponse
     : T extends GetUpdates
-    ? UpdatesResult
+    ? UpdatesResult | undefined
     : T extends GetBots
     ? BotsResponse
     : T extends GetDeletedDirectMessage

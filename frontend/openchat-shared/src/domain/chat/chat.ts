@@ -1032,7 +1032,6 @@ export type EventsSuccessResult<T extends ChatEvent> = {
 export type UpdatesResult = {
     state: ChatStateFull;
     updatedEvents: Map<string, UpdatedEvent[]>;
-    anyUpdates: boolean;
     suspensionChanged: boolean | undefined;
     newAchievements: ChitEarned[];
 };
