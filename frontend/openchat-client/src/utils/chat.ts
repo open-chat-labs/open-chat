@@ -18,6 +18,7 @@ import type {
     ExpiredEventsRange,
     GroupChatSummary,
     HasMembershipRole,
+    Immutable,
     LocalPollVote,
     LocalReaction,
     MemberRole,
@@ -358,27 +359,32 @@ export function mergeUnconfirmedThreadsIntoSummary<T extends GroupChatSummary | 
 }
 
 export function mergeUnconfirmedIntoSummary(
+    chatSummary: Immutable<ChatSummary>,
     formatter: MessageFormatter,
     userId: string,
-    chatSummary: ChatSummary,
     localMessageUpdates: MessageMap<MessageLocalUpdates>,
     blockedUsers: Set<string>,
     currentUserId: string,
     messageFilters: MessageFilter[],
     unconfirmed: MessageContextMap<UnconfirmedState>,
-): ChatSummary {
-    if (chatSummary.membership === undefined) return chatSummary;
+) {
+    const chatSummaryReadonly = chatSummary.value();
+    if (chatSummaryReadonly.membership === undefined) return;
 
     // const unconfirmedMessages = localUpdates.unconfirmedMessages({ chatId: chatSummary.id });
-    const unconfirmedState = unconfirmed.get({ chatId: chatSummary.id });
+    const unconfirmedState = unconfirmed.get({ chatId: chatSummaryReadonly.id });
     const unconfirmedMessages = unconfirmedState ? [...unconfirmedState.values()] : [];
 
-    let latestMessage = chatSummary.latestMessage;
-    let latestEventIndex = chatSummary.latestEventIndex;
-    let mentions = chatSummary.membership.mentions ?? [];
+    let latestMessage = chatSummaryReadonly.latestMessage;
+    let latestEventIndex = chatSummaryReadonly.latestEventIndex;
+    let mentions = chatSummaryReadonly.membership.mentions ?? [];
+    let anyUpdates = false;
 
     if (unconfirmedMessages != undefined && unconfirmedMessages.length > 0) {
         const incomingMentions = mentionsFromMessages(formatter, userId, unconfirmedMessages);
+        if (incomingMentions.length > 0) {
+            anyUpdates = true;
+        }
         mentions = mergeMentions(mentions, incomingMentions);
         const latestUnconfirmedMessage = unconfirmedMessages[unconfirmedMessages.length - 1];
         if (
@@ -386,9 +392,11 @@ export function mergeUnconfirmedIntoSummary(
             latestUnconfirmedMessage.timestamp > latestMessage.timestamp
         ) {
             latestMessage = latestUnconfirmedMessage;
+            anyUpdates = true;
         }
         if (latestUnconfirmedMessage.index > latestEventIndex) {
             latestEventIndex = latestUnconfirmedMessage.index;
+            anyUpdates = true;
         }
     }
     if (latestMessage !== undefined) {
@@ -413,18 +421,22 @@ export function mergeUnconfirmedIntoSummary(
                 false,
                 failedMessageFilter,
             );
+            anyUpdates = true;
         }
     }
 
-    if (chatSummary.kind !== "direct_chat") {
-        if (unconfirmedMessages !== undefined) {
-            chatSummary = mergeUnconfirmedThreadsIntoSummary(chatSummary);
-        }
-        chatSummary.membership.mentions = mentions;
+    if (anyUpdates) {
+        chatSummary.update((c) => {
+            if (c.kind !== "direct_chat") {
+                if (unconfirmedMessages !== undefined) {
+                    c = mergeUnconfirmedThreadsIntoSummary(c);
+                }
+                c.membership.mentions = mentions;
+            }
+            c.latestMessage = latestMessage;
+            c.latestEventIndex = latestEventIndex;
+        });
     }
-    chatSummary.latestMessage = latestMessage;
-    chatSummary.latestEventIndex = latestEventIndex;
-    return chatSummary;
 }
 
 export function mergePermissions(
