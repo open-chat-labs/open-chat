@@ -6800,7 +6800,6 @@ export type EventWrapperGroupFrozen = Static<typeof EventWrapperGroupFrozen>;
 export const EventWrapperGroupFrozen = Type.Object({
     index: EventIndex,
     timestamp: Type.BigInt(),
-    correlation_id: Type.BigInt(),
     expires_at: Type.Optional(Type.BigInt()),
     event: GroupFrozen,
 });
@@ -6870,7 +6869,6 @@ export type EventWrapperGroupUnfrozen = Static<typeof EventWrapperGroupUnfrozen>
 export const EventWrapperGroupUnfrozen = Type.Object({
     index: EventIndex,
     timestamp: Type.BigInt(),
-    correlation_id: Type.BigInt(),
     expires_at: Type.Optional(Type.BigInt()),
     event: GroupUnfrozen,
 });
@@ -8411,7 +8409,6 @@ export type EventWrapperMessage = Static<typeof EventWrapperMessage>;
 export const EventWrapperMessage = Type.Object({
     index: EventIndex,
     timestamp: Type.BigInt(),
-    correlation_id: Type.BigInt(),
     expires_at: Type.Optional(Type.BigInt()),
     event: Message,
 });
