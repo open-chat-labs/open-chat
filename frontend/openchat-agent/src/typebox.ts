@@ -3809,7 +3809,6 @@ export const GroupConvertIntoCommunityArgs = Type.Object({
 export type GroupClaimPrizeArgs = Static<typeof GroupClaimPrizeArgs>;
 export const GroupClaimPrizeArgs = Type.Object({
     message_id: MessageId,
-    correlation_id: Type.BigInt(),
 });
 
 export type GroupCancelInvitesArgs = Static<typeof GroupCancelInvitesArgs>;
@@ -3858,7 +3857,6 @@ export const GroupRegisterPollVoteArgs = Type.Object({
     poll_option: Type.Number(),
     operation: VoteOperation,
     new_achievement: Type.Boolean(),
-    correlation_id: Type.BigInt(),
 });
 
 export type GroupCancelP2pSwapArgs = Static<typeof GroupCancelP2pSwapArgs>;
@@ -3871,14 +3869,12 @@ export type GroupUndeleteMessagesArgs = Static<typeof GroupUndeleteMessagesArgs>
 export const GroupUndeleteMessagesArgs = Type.Object({
     thread_root_message_index: Type.Optional(MessageIndex),
     message_ids: Type.Array(MessageId),
-    correlation_id: Type.BigInt(),
 });
 
 export type GroupChangeRoleArgs = Static<typeof GroupChangeRoleArgs>;
 export const GroupChangeRoleArgs = Type.Object({
     user_id: UserId,
     new_role: GroupRole,
-    correlation_id: Type.BigInt(),
 });
 
 export type GroupInviteCodeResponse = Static<typeof GroupInviteCodeResponse>;
@@ -3894,7 +3890,6 @@ export const GroupInviteCodeResponse = Type.Union([
 export type GroupUnblockUserArgs = Static<typeof GroupUnblockUserArgs>;
 export const GroupUnblockUserArgs = Type.Object({
     user_id: UserId,
-    correlation_id: Type.BigInt(),
 });
 
 export type GroupEventsWindowArgs = Static<typeof GroupEventsWindowArgs>;
@@ -3917,7 +3912,6 @@ export const GroupDeleteMessagesArgs = Type.Object({
     message_ids: Type.Array(MessageId),
     as_platform_moderator: Type.Optional(Type.Boolean()),
     new_achievement: Type.Boolean(),
-    correlation_id: Type.BigInt(),
 });
 
 export type GroupEnableInviteCodeResponse = Static<typeof GroupEnableInviteCodeResponse>;
@@ -4002,7 +3996,6 @@ export const GroupRemoveReactionArgs = Type.Object({
     thread_root_message_index: Type.Optional(MessageIndex),
     message_id: MessageId,
     reaction: Reaction,
-    correlation_id: Type.BigInt(),
 });
 
 export type GroupAddReactionArgs = Static<typeof GroupAddReactionArgs>;
@@ -4013,7 +4006,6 @@ export const GroupAddReactionArgs = Type.Object({
     username: Type.String(),
     display_name: Type.Optional(Type.String()),
     new_achievement: Type.Boolean(),
-    correlation_id: Type.BigInt(),
 });
 
 export type GroupThreadPreviewsArgs = Static<typeof GroupThreadPreviewsArgs>;
@@ -4035,7 +4027,6 @@ export const GroupRulesResponse = Type.Union([
 export type GroupBlockUserArgs = Static<typeof GroupBlockUserArgs>;
 export const GroupBlockUserArgs = Type.Object({
     user_id: UserId,
-    correlation_id: Type.BigInt(),
 });
 
 export type GroupPinMessageResponse = Static<typeof GroupPinMessageResponse>;
@@ -4051,13 +4042,11 @@ export const GroupPinMessageResponse = Type.Union([
 export type GroupPinMessageArgs = Static<typeof GroupPinMessageArgs>;
 export const GroupPinMessageArgs = Type.Object({
     message_index: MessageIndex,
-    correlation_id: Type.BigInt(),
 });
 
 export type GroupRemoveParticipantArgs = Static<typeof GroupRemoveParticipantArgs>;
 export const GroupRemoveParticipantArgs = Type.Object({
     user_id: UserId,
-    correlation_id: Type.BigInt(),
 });
 
 export type GroupVideoCallParticipantsArgs = Static<typeof GroupVideoCallParticipantsArgs>;
@@ -4101,7 +4090,6 @@ export const GroupEventsByIndexArgs = Type.Object({
 export type GroupUnpinMessageArgs = Static<typeof GroupUnpinMessageArgs>;
 export const GroupUnpinMessageArgs = Type.Object({
     message_index: MessageIndex,
-    correlation_id: Type.BigInt(),
 });
 
 export type GroupUnpinMessageResponse = Static<typeof GroupUnpinMessageResponse>;
@@ -4253,7 +4241,6 @@ export const UserUndeleteMessagesArgs = Type.Object({
     user_id: UserId,
     thread_root_message_index: Type.Optional(MessageIndex),
     message_ids: Type.Array(MessageId),
-    correlation_id: Type.BigInt(),
 });
 
 export type UserTipMessageResponse = Static<typeof UserTipMessageResponse>;
@@ -4335,7 +4322,6 @@ export const UserDeleteMessagesArgs = Type.Object({
     user_id: UserId,
     thread_root_message_index: Type.Optional(MessageIndex),
     message_ids: Type.Array(MessageId),
-    correlation_id: Type.BigInt(),
 });
 
 export type UserWalletConfig = Static<typeof UserWalletConfig>;
@@ -4419,7 +4405,6 @@ export const UserRemoveReactionArgs = Type.Object({
     thread_root_message_index: Type.Optional(MessageIndex),
     message_id: MessageId,
     reaction: Reaction,
-    correlation_id: Type.BigInt(),
 });
 
 export type UserSetContactOptionalContact = Static<typeof UserSetContactOptionalContact>;
@@ -4439,7 +4424,6 @@ export const UserAddReactionArgs = Type.Object({
     thread_root_message_index: Type.Optional(MessageIndex),
     message_id: MessageId,
     reaction: Reaction,
-    correlation_id: Type.BigInt(),
 });
 
 export type UserReferral = Static<typeof UserReferral>;
@@ -5991,7 +5975,6 @@ export const LocalUserIndexInviteUsersToGroupArgs = Type.Object({
     group_id: ChatId,
     user_ids: Type.Array(UserId),
     caller_username: Type.String(),
-    correlation_id: Type.BigInt(),
 });
 
 export type LocalUserIndexGroupAndCommunitySummaryUpdatesV2Args = Static<
@@ -6007,7 +5990,6 @@ export const LocalUserIndexJoinGroupArgs = Type.Object({
     chat_id: ChatId,
     invite_code: Type.Optional(Type.BigInt()),
     verified_credential_args: Type.Optional(VerifiedCredentialGateArgs),
-    correlation_id: Type.BigInt(),
 });
 
 export type LocalUserIndexUninstallBotArgs = Static<typeof LocalUserIndexUninstallBotArgs>;
@@ -6800,7 +6782,6 @@ export type EventWrapperGroupFrozen = Static<typeof EventWrapperGroupFrozen>;
 export const EventWrapperGroupFrozen = Type.Object({
     index: EventIndex,
     timestamp: Type.BigInt(),
-    correlation_id: Type.BigInt(),
     expires_at: Type.Optional(Type.BigInt()),
     event: GroupFrozen,
 });
@@ -6870,7 +6851,6 @@ export type EventWrapperGroupUnfrozen = Static<typeof EventWrapperGroupUnfrozen>
 export const EventWrapperGroupUnfrozen = Type.Object({
     index: EventIndex,
     timestamp: Type.BigInt(),
-    correlation_id: Type.BigInt(),
     expires_at: Type.Optional(Type.BigInt()),
     event: GroupUnfrozen,
 });
@@ -8189,7 +8169,6 @@ export const GroupUpdateGroupArgs = Type.Object({
     gate_config: OptionUpdateAccessGateConfig,
     public: Type.Optional(Type.Boolean()),
     messages_visible_to_non_members: Type.Optional(Type.Boolean()),
-    correlation_id: Type.BigInt(),
 });
 
 export type GroupSendMessageArgs = Static<typeof GroupSendMessageArgs>;
@@ -8206,7 +8185,6 @@ export const GroupSendMessageArgs = Type.Object({
     rules_accepted: Type.Optional(Version),
     message_filter_failed: Type.Optional(Type.BigInt()),
     new_achievement: Type.Boolean(),
-    correlation_id: Type.BigInt(),
 });
 
 export type GroupEditMessageArgs = Static<typeof GroupEditMessageArgs>;
@@ -8216,7 +8194,6 @@ export const GroupEditMessageArgs = Type.Object({
     content: MessageContentInitial,
     block_level_markdown: Type.Optional(Type.Boolean()),
     new_achievement: Type.Boolean(),
-    correlation_id: Type.BigInt(),
 });
 
 export type UserCreateGroupArgs = Static<typeof UserCreateGroupArgs>;
@@ -8261,7 +8238,6 @@ export const UserSendMessageWithTransferToGroupArgs = Type.Object({
     replies_to: Type.Optional(GroupReplyContext),
     mentioned: Type.Array(User),
     block_level_markdown: Type.Boolean(),
-    correlation_id: Type.BigInt(),
     rules_accepted: Type.Optional(Version),
     message_filter_failed: Type.Optional(Type.BigInt()),
     pin: Type.Optional(PinNumberWrapper),
@@ -8278,7 +8254,6 @@ export const UserSendMessageArgs = Type.Object({
     block_level_markdown: Type.Boolean(),
     message_filter_failed: Type.Optional(Type.BigInt()),
     pin: Type.Optional(PinNumberWrapper),
-    correlation_id: Type.BigInt(),
 });
 
 export type UserCreateCommunityArgs = Static<typeof UserCreateCommunityArgs>;
@@ -8324,7 +8299,6 @@ export const UserEditMessageArgs = Type.Object({
     message_id: MessageId,
     content: MessageContentInitial,
     block_level_markdown: Type.Optional(Type.Boolean()),
-    correlation_id: Type.BigInt(),
 });
 
 export type ChatSummaryGroup = Static<typeof ChatSummaryGroup>;
@@ -8411,7 +8385,6 @@ export type EventWrapperMessage = Static<typeof EventWrapperMessage>;
 export const EventWrapperMessage = Type.Object({
     index: EventIndex,
     timestamp: Type.BigInt(),
-    correlation_id: Type.BigInt(),
     expires_at: Type.Optional(Type.BigInt()),
     event: Message,
 });
@@ -8727,7 +8700,6 @@ export type EventWrapperChatEvent = Static<typeof EventWrapperChatEvent>;
 export const EventWrapperChatEvent = Type.Object({
     index: EventIndex,
     timestamp: Type.BigInt(),
-    correlation_id: Type.BigInt(),
     expires_at: Type.Optional(Type.BigInt()),
     event: ChatEvent,
 });
