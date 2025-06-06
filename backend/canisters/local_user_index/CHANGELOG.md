@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove all references to Notifications canisters ([#8087](https://github.com/open-chat-labs/open-chat/pull/8087))
 - Remove `correlation_id` ([#8097](https://github.com/open-chat-labs/open-chat/pull/8097))
 
+### Removed
+
+- Remove unused `report_message_v2` ([#8110](https://github.com/open-chat-labs/open-chat/pull/8110))
+
 ### Fixed
 
 - Fix `bot_chat_events` for direct chats ([#8096](https://github.com/open-chat-labs/open-chat/pull/8096))
