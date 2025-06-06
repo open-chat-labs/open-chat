@@ -146,7 +146,8 @@
                 return {
                     name: client.displayName(them),
                     diamondStatus: them?.diamondStatus ?? "inactive",
-                    streak: client.getStreak(chatSummary.them.userId),
+                    streak: them?.streak ?? 0,
+                    hasAchievedMaxStreak: (them?.maxStreak ?? 0) >= 365,
                     avatarUrl: client.userAvatarUrl(them),
                     userId: chatSummary.them,
                     typing: client.getTypingString(
@@ -167,6 +168,7 @@
                     name: chatSummary.name,
                     diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
                     streak: 0,
+                    hasAchievedMaxStreak: false,
                     avatarUrl: client.groupAvatarUrl(chatSummary, $selectedCommunitySummaryStore),
                     userId: undefined,
                     typing: client.getTypingString(
@@ -401,7 +403,7 @@
                 bot={chat.bot}
                 url={chat.avatarUrl}
                 showStatus
-                maxStreak={chat.streak >= 365}
+                maxStreak={chat.hasAchievedMaxStreak}
                 userId={chat.userId?.userId}
                 size={AvatarSize.Default} />
             {#if chat.eventsTTL}
