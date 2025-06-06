@@ -5,6 +5,7 @@ export * from "./error";
 export * from "./i18n";
 export * from "./identity";
 export * from "./identityStorage";
+export * from "./immutable";
 export * from "./lazy";
 export * from "./logging";
 export * from "./map";

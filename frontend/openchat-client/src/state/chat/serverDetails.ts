@@ -12,6 +12,7 @@ import {
 export class ChatDetailsState {
     constructor(
         public chatId: ChatIdentifier,
+        public timestamp: bigint,
         public members: ReadonlyMap<string, Member>,
         public lapsedMembers: ReadonlySet<string>,
         public blockedUsers: ReadonlySet<string>,
