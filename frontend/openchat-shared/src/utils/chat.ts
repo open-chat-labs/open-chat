@@ -388,7 +388,7 @@ const canisterIdLookup: string[] = [];
 const CHANNEL_ID_MULTIPLIER = 2 << 18;
 
 // This encoding uses a maximum of 50 bits, which means all values can be represented as integers without loss of
-// precision and it will work for up to 65,536 canisters.
+// precision, and it will work for up to 65,536 canisters.
 // <- channelId? -><- type flag -><- canisterId as int ->
 // <-  32 bits   -><-  2 bits   -><-      16 bits      ->
 export function chatIdentifierToInt(value: ChatIdentifier): number {
