@@ -187,7 +187,7 @@
     let confirmedReadByThem = $derived(client.messageIsReadByThem(chatId, msg.messageIndex));
     let readByThem = $derived(confirmedReadByThem || $unconfirmedReadByThem.has(msg.messageId));
     let streak = $derived(sender?.streak ?? 0);
-    let hasAchievedMaxStreak = $derived(sender?.maxStreak ?? 0 >= 365);
+    let hasAchievedMaxStreak = $derived((sender?.maxStreak ?? 0) >= 365);
 
     trackedEffect("read-by-them", () => {
         if (confirmedReadByThem && $unconfirmedReadByThem.has(msg.messageId)) {
