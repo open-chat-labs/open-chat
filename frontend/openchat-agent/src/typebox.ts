@@ -8724,7 +8724,6 @@ export type EventWrapperChatEvent = Static<typeof EventWrapperChatEvent>;
 export const EventWrapperChatEvent = Type.Object({
     index: EventIndex,
     timestamp: Type.BigInt(),
-    correlation_id: Type.BigInt(),
     expires_at: Type.Optional(Type.BigInt()),
     event: ChatEvent,
 });
