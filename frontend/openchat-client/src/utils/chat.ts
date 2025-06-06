@@ -325,39 +325,34 @@ function mentionsFromMessages(
     }, [] as Mention[]);
 }
 
-export function mergeUnconfirmedThreadsIntoSummary<T extends GroupChatSummary | ChannelSummary>(
-    chat: T,
-): T {
+export function mergeUnconfirmedThreadsIntoSummary<T extends GroupChatSummary | ChannelSummary>(chat: T) {
     if (chat.membership === undefined) return chat;
-    return {
-        ...chat,
-        membership: {
-            ...chat.membership,
-            latestThreads: chat.membership.latestThreads.map((t) => {
-                const context = {
-                    chatId: chat.id,
-                    threadRootMessageIndex: t.threadRootMessageIndex,
-                };
-                const unconfirmedMsgs = localUpdates.unconfirmedMessages(context);
-                if (unconfirmedMsgs.length > 0) {
-                    let msgIdx = t.latestMessageIndex;
-                    let evtIdx = t.latestEventIndex;
-                    const latestUnconfirmedMessage = unconfirmedMsgs[unconfirmedMsgs.length - 1];
-                    if (latestUnconfirmedMessage.event.messageIndex > msgIdx) {
-                        msgIdx = latestUnconfirmedMessage.event.messageIndex;
-                    }
-                    if (latestUnconfirmedMessage.index > evtIdx) {
-                        evtIdx = latestUnconfirmedMessage.index;
-                    }
-                    return {
-                        ...t,
-                        latestEventIndex: evtIdx,
-                        latestMessageIndex: msgIdx,
-                    };
+    chat.membership = {
+        ...chat.membership,
+        latestThreads: chat.membership.latestThreads.map((t) => {
+            const context = {
+                chatId: chat.id,
+                threadRootMessageIndex: t.threadRootMessageIndex,
+            };
+            const unconfirmedMsgs = localUpdates.unconfirmedMessages(context);
+            if (unconfirmedMsgs.length > 0) {
+                let msgIdx = t.latestMessageIndex;
+                let evtIdx = t.latestEventIndex;
+                const latestUnconfirmedMessage = unconfirmedMsgs[unconfirmedMsgs.length - 1];
+                if (latestUnconfirmedMessage.event.messageIndex > msgIdx) {
+                    msgIdx = latestUnconfirmedMessage.event.messageIndex;
                 }
-                return t;
-            }),
-        },
+                if (latestUnconfirmedMessage.index > evtIdx) {
+                    evtIdx = latestUnconfirmedMessage.index;
+                }
+                return {
+                    ...t,
+                    latestEventIndex: evtIdx,
+                    latestMessageIndex: msgIdx,
+                };
+            }
+            return t;
+        }),
     };
 }
 
@@ -432,7 +427,7 @@ export function mergeUnconfirmedIntoSummary(
         chatSummary.update((c) => {
             if (c.kind !== "direct_chat") {
                 if (unconfirmedMessages !== undefined) {
-                    c = mergeUnconfirmedThreadsIntoSummary(c);
+                    mergeUnconfirmedThreadsIntoSummary(c);
                 }
                 c.membership.mentions = mentions;
             }
