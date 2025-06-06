@@ -39,8 +39,8 @@ use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotEventsCaller, BotInitiator, BotNotification,
     BotPermissions, BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChannelId, ChatEventCategory, ChatEventType,
     ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cycles, Document, Empty,
-    EventIndex, EventsCaller, FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules,
-    TimestampMillis, Timestamped, UserId, UserNotification, UserNotificationPayload, UserType,
+    EventIndex, EventsCaller, FcmData, FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds,
+    Notification, Rules, TimestampMillis, Timestamped, UserId, UserNotification, UserNotificationPayload, UserType,
 };
 use types::{BotSubscriptions, CommunityId};
 use user_canister::CommunityCanisterEvent;
@@ -127,12 +127,14 @@ impl RuntimeState {
         sender: Option<UserId>,
         recipients: Vec<UserId>,
         notification: UserNotificationPayload,
+        fcm_data: FcmData,
     ) {
         if !recipients.is_empty() {
             let notification = Notification::User(UserNotification {
                 sender,
                 recipients,
                 notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
+                fcm_data,
             });
             self.push_notification_inner(notification);
         }

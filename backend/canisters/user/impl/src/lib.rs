@@ -38,9 +38,9 @@ use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BotInitiator, BotNotification, BotPermissions, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics,
-    ChitEarned, ChitEarnedReason, CommunityId, Cycles, Document, IdempotentEnvelope, Milliseconds, Notification, NotifyChit,
-    TimestampMillis, Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment,
-    UserId, UserNotification, UserNotificationPayload,
+    ChitEarned, ChitEarnedReason, CommunityId, Cycles, Document, FcmData, IdempotentEnvelope, Milliseconds, Notification,
+    NotifyChit, TimestampMillis, Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim,
+    UserCanisterStreakInsurancePayment, UserId, UserNotification, UserNotificationPayload,
 };
 use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
 use utils::env::Environment;
@@ -117,7 +117,13 @@ impl RuntimeState {
         self.data.video_call_operators.iter().any(|o| *o == caller)
     }
 
-    pub fn push_notification(&mut self, sender: Option<UserId>, recipient: UserId, notification: UserNotificationPayload) {
+    pub fn push_notification(
+        &mut self,
+        sender: Option<UserId>,
+        recipient: UserId,
+        notification: UserNotificationPayload,
+        fcm_data: FcmData,
+    ) {
         self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
             created_at: self.env.now(),
             idempotency_id: self.env.rng().next_u64(),
@@ -125,6 +131,7 @@ impl RuntimeState {
                 sender,
                 recipients: vec![recipient],
                 notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
+                fcm_data,
             })),
         })
     }

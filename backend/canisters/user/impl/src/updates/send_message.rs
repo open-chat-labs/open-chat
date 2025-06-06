@@ -17,7 +17,7 @@ use std::ops::Not;
 use types::DirectMessageNotification;
 use types::EventIndex;
 use types::{
-    BlobReference, CanisterId, Chat, ChatId, CompletedCryptoTransaction, CryptoTransaction, EventWrapper, Message,
+    BlobReference, CanisterId, Chat, ChatId, CompletedCryptoTransaction, CryptoTransaction, EventWrapper, FcmData, Message,
     MessageContent, MessageContentInitial, MessageId, MessageIndex, P2PSwapLocation, ReplyContext, TimestampMillis, UserId,
     UserType,
 };
@@ -239,6 +239,16 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
                     };
 
                     if finalised && !chat.notifications_muted.value {
+                        let message_type = message_content.message_type();
+                        let message_text = message_content.notification_text(&[], &[]);
+                        let image_url = message_content.notification_image_url();
+
+                        let fcm_data = FcmData::builder()
+                            .with_title(bot_name.clone())
+                            .with_alt_body(&message_text, &message_type)
+                            .with_optional_image(image_url.clone())
+                            .build();
+
                         let notification = UserNotificationPayload::DirectMessage(DirectMessageNotification {
                             sender: bot_id,
                             thread_root_message_index: args.thread_root_message_index,
@@ -246,13 +256,13 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
                             event_index: event.index,
                             sender_name: bot_name,
                             sender_display_name: None,
-                            message_type: message_content.message_type(),
-                            message_text: message_content.notification_text(&[], &[]),
-                            image_url: message_content.notification_image_url(),
+                            message_type,
+                            message_text,
+                            image_url,
                             sender_avatar_id: None,
                             crypto_transfer: message_content.notification_crypto_transfer_details(&[]),
                         });
-                        state.push_notification(Some(bot_id), my_user_id, notification);
+                        state.push_notification(Some(bot_id), my_user_id, notification, fcm_data);
                     }
 
                     return c2c_bot_send_message::Response::Success(SuccessResult {

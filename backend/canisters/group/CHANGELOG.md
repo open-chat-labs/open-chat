@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Additional notification data for Firebase Cloud Messaging ([8113](https://github.com/open-chat-labs/open-chat/pull/8113))
+
 ### Changed
 
 - Remove all references to LocalGroupIndexes ([#8057](https://github.com/open-chat-labs/open-chat/pull/8057))
