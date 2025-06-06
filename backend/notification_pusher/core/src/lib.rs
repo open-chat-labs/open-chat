@@ -21,7 +21,6 @@ mod user_notifications;
 pub async fn run_notifications_pusher<I: IndexStore + 'static>(
     ic_agent: IcAgent,
     index_canister_id: CanisterId,
-    notifications_canister_ids: Vec<CanisterId>,
     index_store: I,
     vapid_private_pem: String,
     pusher_count: u32,
@@ -31,12 +30,14 @@ pub async fn run_notifications_pusher<I: IndexStore + 'static>(
 
     Metrics::init();
 
+    let notification_canister_ids = ic_agent.notification_canisters(index_canister_id).await.unwrap();
+
     let user_notifications_sender =
         start_user_notifications_processor(ic_agent.clone(), index_canister_id, vapid_private_pem, pusher_count);
 
     let bot_notifications_sender = start_bot_notifications_processor(is_production);
 
-    for notification_canister_id in notifications_canister_ids {
+    for notification_canister_id in notification_canister_ids {
         let reader = Reader::new(
             ic_agent.clone(),
             notification_canister_id,
