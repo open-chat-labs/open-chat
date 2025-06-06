@@ -1375,9 +1375,9 @@ impl GroupChatCore {
 
                 let result = self.events.push_main_event(event, now);
 
-                return Ok(result.bot_notification);
+                Ok(result.bot_notification)
             } else {
-                return Ok(None);
+                Ok(None)
             }
         } else {
             Err(OCErrorCode::InitiatorNotAuthorized.into())
