@@ -133,7 +133,7 @@ impl Channels {
             .iter_mut()
             .filter_map(
                 |(id, c)| {
-                    if let Ok(m) = c.chat.leave(user_id, now) { Some((*id, m)) } else { None }
+                    if let Ok(m) = c.chat.leave(user_id, now) { Some((*id, m.member)) } else { None }
                 },
             )
             .collect()

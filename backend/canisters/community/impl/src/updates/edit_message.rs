@@ -25,7 +25,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let sender = member.user_id;
     let channel_member = channel.chat.members.get_verified_member(sender)?;
 
-    channel.chat.events.edit_message(
+    let result = channel.chat.events.edit_message(
         EditMessageArgs {
             sender,
             min_visible_event_index: channel_member.min_visible_event_index(),
@@ -47,6 +47,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         state.notify_user_of_achievement(sender, Achievement::EditedMessage, now);
     }
 
+    state.push_bot_notification(result.bot_notification);
     handle_activity_notification(state);
     Ok(())
 }

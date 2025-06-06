@@ -6,7 +6,7 @@ use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::{ChatEventInternal, EventPusher, Reader, UpdateMessageSuccess};
+use chat_events::{ChatEventInternal, EventPusher, Reader};
 use constants::{DAY_IN_MS, HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, OPENCHAT_BOT_USER_ID};
 use event_store_types::Event;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -140,9 +140,17 @@ impl RuntimeState {
         }
     }
 
-    pub fn push_bot_notification(&mut self, notification: BotNotification) {
-        if !notification.recipients.is_empty() {
-            self.push_notification_inner(Notification::Bot(notification));
+    pub fn push_bot_notifications(&mut self, notifications: Vec<Option<BotNotification>>) {
+        for notification in notifications {
+            self.push_bot_notification(notification);
+        }
+    }
+
+    pub fn push_bot_notification(&mut self, notification: Option<BotNotification>) {
+        if let Some(notification) = notification {
+            if !notification.recipients.is_empty() {
+                self.push_notification_inner(Notification::Bot(notification));
+            }
         }
     }
 
@@ -152,13 +160,6 @@ impl RuntimeState {
             idempotency_id: self.env.rng().next_u64(),
             value: local_user_index_canister::GroupEvent::Notification(notification),
         });
-    }
-
-    pub fn process_message_updated<T>(&mut self, result: UpdateMessageSuccess<T>) -> T {
-        if let Some(bot_notification) = result.bot_notification {
-            self.push_bot_notification(bot_notification);
-        }
-        result.value
     }
 
     pub fn queue_access_gate_payments(&mut self, payment: GatePayment) {

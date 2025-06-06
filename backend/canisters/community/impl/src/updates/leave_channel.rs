@@ -17,9 +17,10 @@ fn leave_channel_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
     let now = state.env.now();
 
-    channel.chat.leave(user_id, now)?;
+    let result = channel.chat.leave(user_id, now)?;
     state.data.remove_user_from_channel(user_id, args.channel_id, now);
 
+    state.push_bot_notification(result.bot_notification);
     handle_activity_notification(state);
     Ok(())
 }

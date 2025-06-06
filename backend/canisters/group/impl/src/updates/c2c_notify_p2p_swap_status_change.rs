@@ -97,7 +97,7 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
     }
 
     if let Some(success) = result {
-        state.process_message_updated(success);
+        state.push_bot_notification(success.bot_notification);
         handle_activity_notification(state);
     }
 }

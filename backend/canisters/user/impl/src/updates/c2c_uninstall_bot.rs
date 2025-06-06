@@ -30,16 +30,13 @@ fn c2c_uninstall_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.bot_api_keys.delete(args.bot_id);
     state.delete_direct_chat(args.bot_id, false, now);
 
-    state.push_bot_notification(
-        BotNotification {
-            event: BotEvent::Lifecycle(BotLifecycleEvent::Uninstalled(BotUninstalledEvent {
-                uninstalled_by: args.caller,
-                location: BotInstallationLocation::Group(args.caller.into()),
-            })),
-            recipients: vec![args.bot_id],
-        },
-        now,
-    );
+    state.push_bot_notification(Some(BotNotification {
+        event: BotEvent::Lifecycle(BotLifecycleEvent::Uninstalled(BotUninstalledEvent {
+            uninstalled_by: args.caller,
+            location: BotInstallationLocation::Group(args.caller.into()),
+        })),
+        recipients: vec![args.bot_id],
+    }));
 
     Ok(())
 }

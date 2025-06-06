@@ -93,8 +93,10 @@ fn commit(channel_id: ChannelId, user_id: UserId, args: Args, state: &mut Runtim
         .events
         .record_proposal_vote(user_id, min_visible_event_index, args.message_index, args.adopt)?;
 
-    let now = state.env.now();
-    channel.chat.members.register_proposal_vote(&user_id, args.message_index, now);
+    channel
+        .chat
+        .members
+        .register_proposal_vote(&user_id, args.message_index, state.env.now());
 
     handle_activity_notification(state);
     Ok(())

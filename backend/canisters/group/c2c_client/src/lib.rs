@@ -7,7 +7,6 @@ generate_c2c_call!(c2c_bot_api_key);
 generate_c2c_call!(c2c_can_issue_access_token_v2);
 generate_c2c_call!(c2c_events);
 generate_c2c_call!(c2c_events_by_index);
-generate_c2c_call!(c2c_events_internal);
 generate_c2c_call!(c2c_events_window);
 generate_c2c_call!(c2c_name_and_members);
 generate_c2c_call!(public_summary);

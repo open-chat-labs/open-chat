@@ -33,7 +33,7 @@ pub(crate) fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> OCRes
             }),
         )?;
 
-        state.process_message_updated(result);
+        state.push_bot_notification(result.bot_notification);
         handle_activity_notification(state);
         Ok(())
     } else {

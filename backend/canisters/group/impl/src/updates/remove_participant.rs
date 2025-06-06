@@ -93,13 +93,13 @@ fn prepare(user_to_remove: UserId, block: bool, state: &RuntimeState) -> OCResul
 }
 
 fn commit(user_to_remove: UserId, block: bool, removed_by: UserId, state: &mut RuntimeState) -> OCResult {
-    state
+    let bot_notification = state
         .data
         .chat
         .remove_member(removed_by, user_to_remove, block, state.env.now())?;
 
     state.data.remove_user(user_to_remove, None);
-
+    state.push_bot_notification(bot_notification);
     handle_activity_notification(state);
 
     // Fire-and-forget call to notify the user canister

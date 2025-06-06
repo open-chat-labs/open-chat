@@ -119,10 +119,7 @@ fn commit(
     });
 
     state.push_notification(Some(added_by), users_added.clone(), notification);
-
-    if let Some(bot_notification) = bot_notification {
-        state.push_bot_notification(bot_notification);
-    }
+    state.push_bot_notification(bot_notification);
 
     jobs::expire_members::start_job_if_required(state);
 
