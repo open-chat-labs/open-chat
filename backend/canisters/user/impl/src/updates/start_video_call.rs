@@ -8,7 +8,7 @@ use ic_cdk::update;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use types::{
-    DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, OCResult, UserId,
+    DirectMessageNotification, EventWrapper, FcmData, Message, MessageId, MessageIndex, Milliseconds, OCResult, UserId,
     UserNotificationPayload, UserType, VideoCallPresence, VideoCallType,
 };
 use user_canister::start_video_call_v2::*;
@@ -40,6 +40,13 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     } = handle_start_video_call(args.message_id, None, sender, sender, max_duration, state);
 
     if !mute_notification {
+        // TODO i18n
+        // TODO video call notifications could display decline and answer buttons
+        let fcm_data = FcmData::builder()
+            .with_alt_title(&args.initiator_display_name, &args.initiator_username)
+            .with_body("Video call incoming...".to_string())
+            .build();
+
         let notification = UserNotificationPayload::DirectMessage(DirectMessageNotification {
             sender,
             thread_root_message_index: None,
@@ -54,7 +61,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             crypto_transfer: None,
         });
 
-        state.push_notification(Some(sender), my_user_id, notification);
+        state.push_notification(Some(sender), my_user_id, notification, fcm_data);
     }
 
     state.push_user_canister_event(

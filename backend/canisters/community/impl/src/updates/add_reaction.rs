@@ -7,7 +7,7 @@ use community_canister::{add_reaction::*, c2c_bot_add_reaction};
 use oc_error_codes::OCErrorCode;
 use types::{
     Achievement, BotCaller, BotPermissions, Caller, ChannelReactionAddedNotification, Chat, ChatPermission, EventIndex,
-    OCResult, UserNotificationPayload,
+    FcmData, OCResult, UserNotificationPayload,
 };
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -97,6 +97,13 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
                         .and_then(|m| m.display_name().value.clone())
                         .or(args.display_name);
 
+                    // TODO i18n
+                    let fcm_body = format!("Reacted {} to your message", args.reaction.clone().0);
+                    let fcm_data = FcmData::builder()
+                        .with_alt_title(&display_name, &args.username)
+                        .with_body(fcm_body)
+                        .build();
+
                     let notification = UserNotificationPayload::ChannelReactionAdded(ChannelReactionAddedNotification {
                         community_id,
                         channel_id: args.channel_id,
@@ -113,7 +120,7 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
                         channel_avatar_id: channel.chat.avatar.as_ref().map(|d| d.id),
                     });
 
-                    state.push_notification(Some(agent), vec![message.sender], notification);
+                    state.push_notification(Some(agent), vec![message.sender], notification, fcm_data);
                 }
 
                 state.push_event_to_user(

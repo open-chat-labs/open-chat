@@ -35,7 +35,7 @@ use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     AccessGateConfigInternal, Achievement, BotAdded, BotEventsCaller, BotInitiator, BotNotification, BotPermissions,
     BotRemoved, BotSubscriptions, BotUpdated, BuildVersion, Caller, CanisterId, ChatEventCategory, ChatId, ChatMetrics,
-    CommunityId, Cycles, Document, Empty, EventIndex, EventsCaller, FrozenGroupInfo, GroupCanisterGroupChatSummary,
+    CommunityId, Cycles, Document, Empty, EventIndex, EventsCaller, FcmData, FrozenGroupInfo, GroupCanisterGroupChatSummary,
     GroupMembership, GroupPermissions, GroupSubtype, IdempotentEnvelope, MAX_THREADS_IN_SUMMARY, MessageIndex, Milliseconds,
     MultiUserChat, Notification, OCResult, Rules, TimestampMillis, Timestamped, UserId, UserNotification,
     UserNotificationPayload, UserType,
@@ -129,12 +129,14 @@ impl RuntimeState {
         sender: Option<UserId>,
         recipients: Vec<UserId>,
         notification: UserNotificationPayload,
+        fcm_data: FcmData,
     ) {
         if !recipients.is_empty() {
             let notification = Notification::User(UserNotification {
                 sender,
                 recipients,
                 notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
+                fcm_data,
             });
             self.push_notification_inner(notification);
         }

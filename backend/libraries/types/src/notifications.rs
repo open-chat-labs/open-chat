@@ -1,6 +1,6 @@
 use crate::{
     BotDataEncoding, BotInstallationLocation, BotPermissions, CanisterId, ChannelId, Chat, ChatEventType, ChatId,
-    CommunityEventType, CommunityId, EventIndex, MessageIndex, Reaction, TimestampMillis, UserId,
+    CommunityEventType, CommunityId, EventIndex, FcmData, MessageIndex, Reaction, TimestampMillis, UserId,
 };
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
@@ -24,6 +24,10 @@ pub struct UserNotification {
     pub recipients: Vec<UserId>,
     #[serde(rename = "n")]
     pub notification_bytes: ByteBuf,
+
+    // Values relevant for the FCM notifications
+    #[serde(rename = "f")]
+    pub fcm_data: FcmData,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

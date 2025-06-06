@@ -6,7 +6,7 @@ const MAX_REACTION_LENGTH_BYTES: usize = 40;
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct Reaction(String);
+pub struct Reaction(pub String);
 
 impl Reaction {
     pub fn new(s: String) -> Reaction {
