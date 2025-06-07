@@ -113,7 +113,7 @@
             content.requiresCaptcha,
     );
     let showChallenge = $state(false);
-    let spin = $derived(intersecting && !finished && !allClaimed && !claimedByYou);
+    let spin = $derived(intersecting && !finished && !allClaimed);
 
     function onChallengeResult(e: MouseEvent, success: boolean) {
         if (success) {
