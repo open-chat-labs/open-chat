@@ -183,6 +183,8 @@ export function mergeDirectChatUpdates(
     updates: DirectChatSummaryUpdates[],
     removed: string[],
 ): DirectChatSummary[] {
+    if (updates.length === 0 && removed.length === 0) return directChats;
+
     const lookup = ChatMap.fromList(updates);
     const toRemove = new Set<string>(removed);
 
@@ -231,6 +233,8 @@ export function mergeGroupChatUpdates(
     userCanisterUpdates: UserCanisterGroupChatSummaryUpdates[],
     groupCanisterUpdates: GroupCanisterGroupChatSummaryUpdates[],
 ): GroupChatSummary[] {
+    if (userCanisterUpdates.length === 0 && groupCanisterUpdates.length === 0) return groupChats;
+
     const userLookup = ChatMap.fromList(userCanisterUpdates);
     const groupLookup = ChatMap.fromList(groupCanisterUpdates);
 

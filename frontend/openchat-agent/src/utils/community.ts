@@ -75,6 +75,8 @@ export function mergeCommunityUpdates(
     userCanisterUpdates: UserCanisterCommunitySummaryUpdates[],
     communityCanisterUpdates: CommunityCanisterCommunitySummaryUpdates[],
 ): CommunitySummary[] {
+    if (userCanisterUpdates.length === 0 && communityCanisterUpdates.length === 0) return communities;
+
     const userLookup = CommunityMap.fromList(userCanisterUpdates);
     const communityLookup = CommunityMap.fromList(communityCanisterUpdates);
 
