@@ -25,7 +25,11 @@
     function click(e: MouseEvent) {
         e.preventDefault();
         e.stopPropagation();
-        showMenu();
+        if (open) {
+            closeMenu();
+        } else {
+            showMenu();
+        }
     }
 
     export function showMenu() {
