@@ -5,7 +5,7 @@
         type MemberRole,
         type ResourceKey,
         ROLE_NONE,
-        roleAsText
+        roleAsText,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Check from "svelte-material-icons/Check.svelte";
@@ -97,7 +97,7 @@
                         {/snippet}
                         {#snippet text()}
                             <div>
-                                {$_(`role.${r}`)}
+                                {$_(`role.${roleAsText(r)}`)}
                             </div>
                         {/snippet}
                     </MenuItem>
