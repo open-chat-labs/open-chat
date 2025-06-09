@@ -6447,36 +6447,38 @@ export class OpenChat {
     }
 
     #updateReadUpToStore(chatSummaries: ChatSummary[]): void {
-        for (const chat of chatSummaries) {
-            if (chat.kind === "group_chat" || chat.kind === "channel") {
-                const threads: ThreadRead[] = (chat.membership?.latestThreads ?? []).reduce(
-                    (res, next) => {
-                        if (next.readUpTo !== undefined) {
-                            res.push({
-                                threadRootMessageIndex: next.threadRootMessageIndex,
-                                readUpTo: next.readUpTo,
-                            });
-                        }
-                        return res;
-                    },
-                    [] as ThreadRead[],
-                );
+        withPausedStores(() => {
+            for (const chat of chatSummaries) {
+                if (chat.kind === "group_chat" || chat.kind === "channel") {
+                    const threads: ThreadRead[] = (chat.membership?.latestThreads ?? []).reduce(
+                        (res, next) => {
+                            if (next.readUpTo !== undefined) {
+                                res.push({
+                                    threadRootMessageIndex: next.threadRootMessageIndex,
+                                    readUpTo: next.readUpTo,
+                                });
+                            }
+                            return res;
+                        },
+                        [] as ThreadRead[],
+                    );
 
-                messagesRead.syncWithServer(
-                    chat.id,
-                    chat.membership?.readByMeUpTo,
-                    threads,
-                    chat.dateReadPinned,
-                );
-            } else {
-                messagesRead.syncWithServer(
-                    chat.id,
-                    chat.membership.readByMeUpTo,
-                    [],
-                    undefined,
-                );
+                    messagesRead.syncWithServer(
+                        chat.id,
+                        chat.membership?.readByMeUpTo,
+                        threads,
+                        chat.dateReadPinned,
+                    );
+                } else {
+                    messagesRead.syncWithServer(
+                        chat.id,
+                        chat.membership.readByMeUpTo,
+                        [],
+                        undefined,
+                    );
+                }
             }
-        }
+        });
     }
 
     #validMouseEvent(e: MouseEvent) {
