@@ -3,10 +3,6 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 
-// Re-exporting web_push::SubscriptionInfo to reduce dependencies in other
-// modules (where applicable).
-pub type WebPushSubscriptionInfo = web_push::SubscriptionInfo;
-
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum NotificationSubscription {
@@ -37,17 +33,5 @@ impl SubscriptionInfo {
 impl SubscriptionKeys {
     pub fn approx_size(&self) -> usize {
         self.p256dh.len() + self.auth.len() + 24
-    }
-}
-
-impl From<&SubscriptionInfo> for WebPushSubscriptionInfo {
-    fn from(subscription: &SubscriptionInfo) -> Self {
-        WebPushSubscriptionInfo {
-            endpoint: subscription.endpoint.clone(),
-            keys: web_push::SubscriptionKeys {
-                p256dh: subscription.keys.p256dh.clone(),
-                auth: subscription.keys.auth.clone(),
-            },
-        }
     }
 }

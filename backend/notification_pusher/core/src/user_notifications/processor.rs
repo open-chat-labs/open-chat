@@ -113,7 +113,7 @@ impl Processor {
     }
 
     fn build_vapid_signature(&self, subscription: &SubscriptionInfo) -> Result<VapidSignature, WebPushError> {
-        let subscription: web_push::SubscriptionInfo = subscription.into();
+        let subscription: web_push::SubscriptionInfo = to_web_push_subscription_info(subscription);
         let mut sig_builder = self.sig_builder.clone().add_sub_info(&subscription);
         sig_builder.add_claim("sub", "https://oc.app");
         sig_builder.build()
@@ -134,7 +134,7 @@ fn build_web_push_message(
     subscription: &SubscriptionInfo,
     vapid_signature: VapidSignature,
 ) -> Result<WebPushMessage, WebPushError> {
-    let subscription: web_push::SubscriptionInfo = subscription.into();
+    let subscription: web_push::SubscriptionInfo = to_web_push_subscription_info(subscription);
     let mut message_builder = WebPushMessageBuilder::new(&subscription);
     message_builder.set_payload(ContentEncoding::Aes128Gcm, payload);
     message_builder.set_vapid_signature(vapid_signature);
@@ -158,5 +158,17 @@ impl<'a> From<&'a SubscriptionInfo> for SubscriptionInfoDebug<'a> {
             p256dh_len: s.keys.p256dh.len(),
             auth_len: s.keys.auth.len(),
         }
+    }
+}
+
+// `web_push` crate cannot build for canisters, so we're adding this conversion
+// function here, though there might be a better place for it.
+fn to_web_push_subscription_info(subscription: &SubscriptionInfo) -> web_push::SubscriptionInfo {
+    web_push::SubscriptionInfo {
+        endpoint: subscription.endpoint.clone(),
+        keys: web_push::SubscriptionKeys {
+            p256dh: subscription.keys.p256dh.clone(),
+            auth: subscription.keys.auth.clone(),
+        },
     }
 }
