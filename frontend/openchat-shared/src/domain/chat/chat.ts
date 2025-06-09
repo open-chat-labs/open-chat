@@ -1030,7 +1030,31 @@ export type EventsSuccessResult<T extends ChatEvent> = {
 };
 
 export type UpdatesResult = {
-    state: ChatStateFull;
+    latestUserCanisterUpdates: bigint;
+    directChatsAddedUpdated: DirectChatSummary[];
+    directChatsRemoved: string[];
+    groupsAddedUpdated: GroupChatSummary[];
+    groupsRemoved: string[];
+    communitiesAddedUpdated: CommunitySummary[];
+    communitiesRemoved: string[];
+    avatarId: bigint | undefined;
+    blockedUsers: string[];
+    pinnedGroupChats: GroupChatIdentifier[];
+    pinnedDirectChats: DirectChatIdentifier[];
+    pinnedFavouriteChats: ChatIdentifier[];
+    pinnedChannels: ChannelIdentifier[];
+    favouriteChats: ChatIdentifier[];
+    pinNumberSettings: PinNumberSettings | undefined;
+    userCanisterLocalUserIndex: string;
+    achievements: Set<string>;
+    achievementsLastSeen: bigint;
+    chitState: ChitState;
+    referrals: Referral[];
+    walletConfig: WalletConfig;
+    messageActivitySummary: MessageActivitySummary;
+    installedBots: Map<string, GrantedBotPermissions>;
+    bitcoinAddress: string | undefined;
+    streakInsurance: StreakInsurance | undefined;
     updatedEvents: Map<string, UpdatedEvent[]>;
     suspensionChanged: boolean | undefined;
     newAchievements: ChitEarned[];
@@ -1321,7 +1345,7 @@ export type DirectChatsUpdates = {
     added: DirectChatSummary[];
     pinned?: DirectChatIdentifier[];
     updated: DirectChatSummaryUpdates[];
-    removed: DirectChatIdentifier[];
+    removed: string[];
 };
 
 export type GroupChatsUpdates = {

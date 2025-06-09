@@ -757,11 +757,8 @@ export function directChatsUpdates(value: UserUpdatesDirectChatsUpdates): Direct
         pinned: mapOptional(value.pinned, (p) =>
             p.map((p) => ({ kind: "direct_chat", userId: principalBytesToString(p) })),
         ),
-        removed: value.removed.map((id) => ({
-            kind: "direct_chat",
-            userId: principalBytesToString(id),
-        })),
         updated: value.updated.map(directChatSummaryUpdates),
+        removed: value.removed.map(principalBytesToString),
     };
 }
 

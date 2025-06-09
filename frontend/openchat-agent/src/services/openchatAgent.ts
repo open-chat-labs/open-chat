@@ -1684,18 +1684,21 @@ export class OpenChatAgent extends EventTarget {
         const start = performance.now();
         let totalQueryCount = 0;
 
-        let directChats: DirectChatSummary[];
+        let currentDirectChats: DirectChatSummary[] = [];
+        let directChatsAdded: DirectChatSummary[] = [];
         let directChatUpdates: DirectChatSummaryUpdates[] = [];
+        let directChatsRemoved: string[] = [];
+        let directChats: DirectChatSummary[] = [];
 
         let currentGroups: GroupChatSummary[] = [];
         let groupsAdded: UserCanisterGroupChatSummary[] = [];
+        let groupsRemoved: string[] = [];
         let userCanisterGroupUpdates: UserCanisterGroupChatSummaryUpdates[] = [];
 
         let currentCommunities: CommunitySummary[] = [];
         let communitiesAdded: UserCanisterCommunitySummary[] = [];
+        let communitiesRemoved: string[] = [];
         let userCanisterCommunityUpdates: UserCanisterCommunitySummaryUpdates[] = [];
-
-        const groupsCommunitiesRemoved = new Set<string>();
 
         let avatarId: bigint | undefined;
         let blockedUsers: string[];
@@ -1726,7 +1729,7 @@ export class OpenChatAgent extends EventTarget {
             const userResponse = await this.userClient.getInitialState();
             anyUpdates = true;
 
-            directChats = userResponse.directChats.summaries;
+            directChats = directChatsAdded = userResponse.directChats.summaries;
             groupsAdded = userResponse.groupChats.summaries;
             communitiesAdded = userResponse.communities.summaries;
 
@@ -1768,7 +1771,7 @@ export class OpenChatAgent extends EventTarget {
             bitcoinAddress = userResponse.bitcoinAddress;
             streakInsurance = userResponse.streakInsurance;
         } else {
-            directChats = current.directChats;
+            currentDirectChats = current.directChats;
             currentGroups = current.groupChats;
             currentCommunities = current.communities;
             installedBots = current.installedBots;
@@ -1806,26 +1809,20 @@ export class OpenChatAgent extends EventTarget {
                     userResponse.botsRemoved.forEach((b) => {
                         installedBots.delete(b);
                     });
-                    const removeDirectChatIds = userResponse.directChats.removed.map((id) => id.userId);
-                    directChats = userResponse.directChats.added.concat(
-                        mergeDirectChatUpdates(
-                            directChats,
-                            userResponse.directChats.updated,
-                            removeDirectChatIds,
-                        ),
-                    );
-                    removeDirectChatIds.forEach((id) => {
+                    directChatsAdded = userResponse.directChats.added;
+                    directChatUpdates = userResponse.directChats.updated;
+                    directChatsRemoved = userResponse.directChats.removed;
+                    directChatsRemoved.forEach((id) => {
                         deleteEventsForChat(this.db, id);
                     });
-                    directChatUpdates = userResponse.directChats.updated;
 
                     groupsAdded = userResponse.groupChats.added;
+                    groupsRemoved = userResponse.groupChats.removed;
                     userCanisterGroupUpdates = userResponse.groupChats.updated;
-                    userResponse.groupChats.removed.forEach((g) => groupsCommunitiesRemoved.add(g));
 
                     communitiesAdded = userResponse.communities.added;
+                    communitiesRemoved = userResponse.communities.removed;
                     userCanisterCommunityUpdates = userResponse.communities.updated;
-                    userResponse.communities.removed.forEach((c) => groupsCommunitiesRemoved.add(c));
 
                     avatarId = applyOptionUpdate(avatarId, userResponse.avatarId);
                     blockedUsers = userResponse.blockedUsers ?? blockedUsers;
@@ -1873,6 +1870,14 @@ export class OpenChatAgent extends EventTarget {
             } catch (error) {
                 console.error("Failed to get updates from User canister", error);
             }
+
+            directChats = directChatsAdded.concat(
+                mergeDirectChatUpdates(
+                    currentDirectChats,
+                    directChatUpdates,
+                    directChatsRemoved,
+                ),
+            );
         }
 
         const byLocalUserIndex: Map<string, GroupAndCommunitySummaryUpdatesArgs[]> = new Map();
@@ -1968,8 +1973,8 @@ export class OpenChatAgent extends EventTarget {
             return undefined;
         }
 
-        const isGroupCommunityDeleted = (canisterId: string, joined: bigint) => {
-            if (groupsCommunitiesRemoved.has(canisterId)) return true;
+        const isGroupCommunityDeleted = (canisterId: string, joined: bigint, removed: string[]) => {
+            if (removed.includes(canisterId)) return true;
             // This is needed in case we hit a replica which is lagging and
             // isn't aware the group/community has been created yet
             const notFoundTimestamp = notFoundTimestamps.get(canisterId);
@@ -1987,7 +1992,7 @@ export class OpenChatAgent extends EventTarget {
                     groupUpdates,
                 ),
             )
-            .filter((g) => !isGroupCommunityDeleted(g.id.groupId, g.membership.joined));
+            .filter((g) => !isGroupCommunityDeleted(g.id.groupId, g.membership.joined, groupsRemoved));
 
         const communities = mergeCommunities(
             communitiesAdded,
@@ -2000,7 +2005,7 @@ export class OpenChatAgent extends EventTarget {
                     communityUpdates,
                 ),
             )
-            .filter((c) => !isGroupCommunityDeleted(c.id.communityId, c.membership.joined));
+            .filter((c) => !isGroupCommunityDeleted(c.id.communityId, c.membership.joined, communitiesRemoved));
 
         this.removeExpiredLatestMessages(directChats, start);
         this.removeExpiredLatestMessages(groupChats, start);
@@ -2057,14 +2062,62 @@ export class OpenChatAgent extends EventTarget {
             }
         }
 
+        const directChatsAddedUpdatedIds = new Set([
+            ...directChatsAdded.map((c) => c.id.userId),
+            ...directChatUpdates.map((c) => c.id.userId),
+        ]);
+        const directChatsAddedUpdated = directChats
+            .filter((c) => directChatsAddedUpdatedIds.has(c.id.userId))
+            .map((c) => this.hydrateChatSummary(c));
+
+        const groupsAddedUpdatedIds = new Set([
+            ...groupsAdded.map((g) => g.id.groupId),
+            ...groupUpdates.map((g) => g.id.groupId),
+        ]);
+        const groupsAddedUpdated = groupChats
+            .filter((g) => groupsAddedUpdatedIds.has(g.id.groupId))
+            .map((c) => this.hydrateChatSummary(c));
+
+        const communitiesAddedUpdatedIds = new Set([
+            ...communitiesAdded.map((c) => c.id.communityId),
+            ...communityUpdates.map((c) => c.id.communityId),
+        ]);
+        const communitiesAddedUpdated = communities
+            .filter((c) => communitiesAddedUpdatedIds.has(c.id.communityId))
+            .map((c) => this.hydrateCommunity(c));
+
         const duration = performance.now() - start;
         console.debug(
             `GetUpdates completed in ${duration}ms. Number of queries: ${totalQueryCount}`,
         );
 
         return {
-            state: this.hydrateChatState(state),
+            latestUserCanisterUpdates,
+            directChatsAddedUpdated,
+            directChatsRemoved,
+            groupsAddedUpdated,
+            groupsRemoved,
+            communitiesAddedUpdated,
+            communitiesRemoved,
             updatedEvents: updatedEvents.toMap() as Map<string, UpdatedEvent[]>,
+            avatarId,
+            blockedUsers,
+            pinnedGroupChats,
+            pinnedDirectChats,
+            pinnedFavouriteChats,
+            pinnedChannels,
+            favouriteChats,
+            pinNumberSettings,
+            userCanisterLocalUserIndex,
+            achievementsLastSeen,
+            achievements,
+            chitState,
+            referrals,
+            walletConfig,
+            messageActivitySummary,
+            installedBots,
+            bitcoinAddress,
+            streakInsurance,
             suspensionChanged,
             newAchievements,
         };
@@ -2139,7 +2192,13 @@ export class OpenChatAgent extends EventTarget {
             if (cachedState && initialLoad) {
                 resolve(
                     {
-                        state: this.hydrateChatState(cachedState),
+                        ...cachedState,
+                        directChatsAddedUpdated: this.hydrateChatSummaries(cachedState.directChats),
+                        directChatsRemoved: [],
+                        groupsAddedUpdated: this.hydrateChatSummaries(cachedState.groupChats),
+                        groupsRemoved: [],
+                        communitiesAddedUpdated: cachedState.communities.map((c) => this.hydrateCommunity(c)),
+                        communitiesRemoved: [],
                         updatedEvents: new Map(),
                         suspensionChanged: undefined,
                         newAchievements: [],
@@ -2180,22 +2239,10 @@ export class OpenChatAgent extends EventTarget {
         return resp;
     }
 
-    private hydrateChatState(state: ChatStateFull): ChatStateFull {
-        const groupChats = state.groupChats.map((c) => this.hydrateChatSummary(c));
-        const communities = state.communities.map((c) => this.hydrateCommunity(c));
-
-        return {
-            ...state,
-            groupChats,
-            communities,
-        };
-    }
-
-    hydrateCommunity(community: CommunitySummary): CommunitySummary {
-        const channels = community.channels.map((c) => this.hydrateChatSummary(c));
+    hydrateCommunity(community: CommunitySummary): CommunitySummary {;
         return {
             ...community,
-            channels,
+            channels: community.channels.map((c) => this.hydrateChatSummary(c)),
             avatar: {
                 ...this.rehydrateDataContent(community.avatar, "avatar"),
             },
@@ -2203,6 +2250,10 @@ export class OpenChatAgent extends EventTarget {
                 ...this.rehydrateDataContent(community.banner, "banner"),
             },
         };
+    }
+
+    hydrateChatSummaries<T extends ChatSummary>(chats: T[]): T[] {
+        return chats.map((c) => this.hydrateChatSummary(c));
     }
 
     hydrateChatSummary<T extends ChatSummary>(chat: T): T {
