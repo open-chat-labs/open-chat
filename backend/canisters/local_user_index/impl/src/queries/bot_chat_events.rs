@@ -23,15 +23,14 @@ async fn bot_chat_events(args: Args) -> Response {
     };
 
     let chat = context.scope.chat(None).unwrap();
+    let thread = args.thread.or(context.scope.thread());
 
     match make_c2c_call_to_get_events(
         EventsArgs {
             context: match chat {
                 Chat::Direct(user_id) => EventsContext::Direct((*user_id).into()),
-                Chat::Group(chat_id) => EventsContext::Group(chat_id, context.scope.thread()),
-                Chat::Channel(community_id, channel_id) => {
-                    EventsContext::Channel(community_id, channel_id, context.scope.thread())
-                }
+                Chat::Group(chat_id) => EventsContext::Group(chat_id, thread),
+                Chat::Channel(community_id, channel_id) => EventsContext::Channel(community_id, channel_id, thread),
             },
             args: args.events,
             latest_known_update: None,

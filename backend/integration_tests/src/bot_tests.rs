@@ -642,6 +642,7 @@ fn read_messages_autonomously(authorized: bool) {
         canister_ids.local_user_index(env, community_id),
         &local_user_index_canister::bot_chat_events::Args {
             chat_context: BotChatContext::Autonomous(chat),
+            thread: None,
             events: EventsSelectionCriteria::ByIndex(EventsByIndexArgs {
                 events: vec![send_message_response.event_index],
             }),
@@ -758,6 +759,7 @@ fn read_messages_by_command() {
         local_user_index,
         &local_user_index_canister::bot_chat_events::Args {
             chat_context: BotChatContext::Command(access_token.clone()),
+            thread: None,
             events: EventsSelectionCriteria::ByIndex(EventsByIndexArgs {
                 events: vec![send_message_response.event_index],
             }),

@@ -18,6 +18,7 @@ use user_canister::token_swap_status::CandidType;
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub chat_context: BotChatContext,
+    pub thread: Option<MessageIndex>,
     pub events: EventsSelectionCriteria,
 }
 
