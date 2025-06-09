@@ -6119,7 +6119,7 @@ export class OpenChat {
         }
 
         const chatsAddedUpdated = (chatsResponse.directChatsAddedUpdated as ChatSummary[])
-            .concat(chatsResponse.groupChatsAddedUpdated)
+            .concat(chatsResponse.groupsAddedUpdated)
             .concat(chatsResponse.communitiesAddedUpdated.flatMap((c) => c.channels));
 
         const { userIds, webhooks } = this.#userIdsFromChatSummaries(chatsAddedUpdated);
@@ -6173,10 +6173,10 @@ export class OpenChat {
 
             OpenChat.setGlobalStateStores(
                 chatsResponse.directChatsAddedUpdated,
-                chatsResponse.groupChatsAddedUpdated,
+                chatsResponse.groupsAddedUpdated,
                 chatsResponse.communitiesAddedUpdated,
                 chatsResponse.directChatsRemoved,
-                chatsResponse.groupChatsRemoved,
+                chatsResponse.groupsRemoved,
                 chatsResponse.communitiesRemoved,
                 chatsResponse.favouriteChats,
                 new Map<ChatListScope["kind"], ChatIdentifier[]>([
@@ -6299,10 +6299,10 @@ export class OpenChat {
 
     static setGlobalStateStores(
         directChatsAddedUpdated: DirectChatSummary[],
-        groupChatsAddedUpdated: GroupChatSummary[],
+        groupsAddedUpdated: GroupChatSummary[],
         communitiesAddedUpdated: CommunitySummary[],
         directChatsRemoved: string[],
-        groupChatsRemoved: string[],
+        groupsRemoved: string[],
         communitiesRemoved: string[],
         favourites: ChatIdentifier[],
         pinnedChats: PinnedByScope,
@@ -6328,10 +6328,10 @@ export class OpenChat {
             return map;
         });
         serverGroupChatsStore.update((map) => {
-            for (const chat of groupChatsAddedUpdated) {
+            for (const chat of groupsAddedUpdated) {
                 map.set(chat.id, chat);
             }
-            for (const id of groupChatsRemoved) {
+            for (const id of groupsRemoved) {
                 map.delete({ kind: "group_chat", groupId: id });
             }
             return map;

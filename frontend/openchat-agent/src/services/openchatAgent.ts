@@ -1691,8 +1691,8 @@ export class OpenChatAgent extends EventTarget {
         let directChats: DirectChatSummary[] = [];
 
         let currentGroupChats: GroupChatSummary[] = [];
-        let groupChatsAdded: UserCanisterGroupChatSummary[] = [];
-        let groupChatsRemoved: string[] = [];
+        let groupsAdded: UserCanisterGroupChatSummary[] = [];
+        let groupsRemoved: string[] = [];
         let userCanisterGroupUpdates: UserCanisterGroupChatSummaryUpdates[] = [];
 
         let currentCommunities: CommunitySummary[] = [];
@@ -1730,7 +1730,7 @@ export class OpenChatAgent extends EventTarget {
             anyUpdates = true;
 
             directChatsAdded = userResponse.directChats.summaries;
-            groupChatsAdded = userResponse.groupChats.summaries;
+            groupsAdded = userResponse.groupChats.summaries;
             communitiesAdded = userResponse.communities.summaries;
 
             avatarId = userResponse.avatarId;
@@ -1816,8 +1816,8 @@ export class OpenChatAgent extends EventTarget {
                         deleteEventsForChat(this.db, id);
                     });
 
-                    groupChatsAdded = userResponse.groupChats.added;
-                    groupChatsRemoved = userResponse.groupChats.removed;
+                    groupsAdded = userResponse.groupChats.added;
+                    groupsRemoved = userResponse.groupChats.removed;
                     userCanisterGroupUpdates = userResponse.groupChats.updated;
 
                     communitiesAdded = userResponse.communities.added;
@@ -1882,7 +1882,7 @@ export class OpenChatAgent extends EventTarget {
 
         const byLocalUserIndex: Map<string, GroupAndCommunitySummaryUpdatesArgs[]> = new Map();
 
-        for (const group of groupChatsAdded) {
+        for (const group of groupsAdded) {
             getOrAdd(byLocalUserIndex, group.localUserIndex, []).push({
                 canisterId: group.id.groupId,
                 isCommunity: false,
@@ -1982,7 +1982,7 @@ export class OpenChatAgent extends EventTarget {
         };
 
         const groupChats = mergeGroupChats(
-            groupChatsAdded,
+            groupsAdded,
             groupCanisterGroupSummaries,
         )
             .concat(
@@ -1992,7 +1992,7 @@ export class OpenChatAgent extends EventTarget {
                     groupUpdates,
                 ),
             )
-            .filter((g) => !isGroupCommunityDeleted(g.id.groupId, g.membership.joined, groupChatsRemoved));
+            .filter((g) => !isGroupCommunityDeleted(g.id.groupId, g.membership.joined, groupsRemoved));
 
         const communities = mergeCommunities(
             communitiesAdded,
@@ -2070,12 +2070,12 @@ export class OpenChatAgent extends EventTarget {
             .filter((c) => directChatsAddedUpdatedIds.has(c.id.userId))
             .map((c) => this.hydrateChatSummary(c));
 
-        const groupChatsAddedUpdatedIds = new Set([
-            ...groupChatsAdded.map((g) => g.id.groupId),
+        const groupsAddedUpdatedIds = new Set([
+            ...groupsAdded.map((g) => g.id.groupId),
             ...groupUpdates.map((g) => g.id.groupId),
         ]);
-        const groupChatsAddedUpdated = groupChats
-            .filter((g) => groupChatsAddedUpdatedIds.has(g.id.groupId))
+        const groupsAddedUpdated = groupChats
+            .filter((g) => groupsAddedUpdatedIds.has(g.id.groupId))
             .map((c) => this.hydrateChatSummary(c));
 
         const communitiesAddedUpdatedIds = new Set([
@@ -2095,8 +2095,8 @@ export class OpenChatAgent extends EventTarget {
             latestUserCanisterUpdates,
             directChatsAddedUpdated,
             directChatsRemoved,
-            groupChatsAddedUpdated,
-            groupChatsRemoved,
+            groupsAddedUpdated,
+            groupsRemoved,
             communitiesAddedUpdated,
             communitiesRemoved,
             updatedEvents: updatedEvents.toMap() as Map<string, UpdatedEvent[]>,
@@ -2195,8 +2195,8 @@ export class OpenChatAgent extends EventTarget {
                         ...cachedState,
                         directChatsAddedUpdated: this.hydrateChatSummaries(cachedState.directChats),
                         directChatsRemoved: [],
-                        groupChatsAddedUpdated: this.hydrateChatSummaries(cachedState.groupChats),
-                        groupChatsRemoved: [],
+                        groupsAddedUpdated: this.hydrateChatSummaries(cachedState.groupChats),
+                        groupsRemoved: [],
                         communitiesAddedUpdated: cachedState.communities.map((c) => this.hydrateCommunity(c)),
                         communitiesRemoved: [],
                         updatedEvents: new Map(),

@@ -1033,8 +1033,8 @@ export type UpdatesResult = {
     latestUserCanisterUpdates: bigint;
     directChatsAddedUpdated: DirectChatSummary[];
     directChatsRemoved: string[];
-    groupChatsAddedUpdated: GroupChatSummary[];
-    groupChatsRemoved: string[];
+    groupsAddedUpdated: GroupChatSummary[];
+    groupsRemoved: string[];
     communitiesAddedUpdated: CommunitySummary[];
     communitiesRemoved: string[];
     avatarId: bigint | undefined;
