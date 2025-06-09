@@ -1030,7 +1030,6 @@ export type EventsSuccessResult<T extends ChatEvent> = {
 };
 
 export type UpdatesResult = {
-    latestUserCanisterUpdates: bigint;
     directChatsAddedUpdated: DirectChatSummary[];
     directChatsRemoved: string[];
     groupsAddedUpdated: GroupChatSummary[];

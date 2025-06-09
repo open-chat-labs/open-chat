@@ -6288,7 +6288,9 @@ export class OpenChat {
             }
         }
 
-        bitcoinAddress.set(chatsResponse.bitcoinAddress);
+        if (chatsResponse.bitcoinAddress !== undefined) {
+            bitcoinAddress.set(chatsResponse.bitcoinAddress);
+        }
     }
 
     static setGlobalStateStores(

@@ -1736,6 +1736,7 @@ export class OpenChatAgent extends EventTarget {
         let installedBots: Map<string, GrantedBotPermissions>;
         let installedBotsUpdated = false;
         let bitcoinAddress: string | undefined = undefined;
+        let bitcoinAddressUpdated = false;
         let streakInsurance: StreakInsurance | undefined;
         let streakInsuranceUpdate: OptionUpdate<StreakInsurance> = undefined;
 
@@ -1804,6 +1805,7 @@ export class OpenChatAgent extends EventTarget {
             installedBots = userResponse.bots;
             installedBotsUpdated = true;
             bitcoinAddress = userResponse.bitcoinAddress;
+            bitcoinAddressUpdated = bitcoinAddress !== undefined;
             streakInsurance = userResponse.streakInsurance;
             if (streakInsurance !== undefined) {
                 streakInsuranceUpdate = { value: streakInsurance };
@@ -1923,7 +1925,10 @@ export class OpenChatAgent extends EventTarget {
                     messageActivitySummary =
                         userResponse.messageActivitySummary ?? current.messageActivitySummary;
                     messageActivitySummaryUpdated = userResponse.messageActivitySummary !== undefined;
-                    bitcoinAddress ??= userResponse.bitcoinAddress;
+                    if (bitcoinAddress === undefined && userResponse.bitcoinAddress !== undefined) {
+                        bitcoinAddress = userResponse.bitcoinAddress;
+                        bitcoinAddressUpdated = true;
+                    }
                     streakInsurance = applyOptionUpdate(streakInsurance, userResponse.streakInsurance);
                     streakInsuranceUpdate = userResponse.streakInsurance;
                 }
@@ -2152,7 +2157,6 @@ export class OpenChatAgent extends EventTarget {
         );
 
         return {
-            latestUserCanisterUpdates,
             directChatsAddedUpdated,
             directChatsRemoved,
             groupsAddedUpdated,
@@ -2176,7 +2180,7 @@ export class OpenChatAgent extends EventTarget {
             walletConfig: walletConfigUpdated ? walletConfig : undefined,
             messageActivitySummary: messageActivitySummaryUpdated ? messageActivitySummary : undefined,
             installedBots: installedBotsUpdated ? installedBots : undefined,
-            bitcoinAddress,
+            bitcoinAddress: bitcoinAddressUpdated ? bitcoinAddress : undefined,
             streakInsurance: streakInsuranceUpdate,
             suspensionChanged,
             newAchievements,
