@@ -79,16 +79,18 @@ impl RuntimeState {
         self.push_event_to_local_indexes(event, now);
     }
 
-    pub fn add_fcm_token(&mut self, user_id: UserId, fcm_token: FcmToken, now: TimestampMillis) -> Result<(), String> {
+    pub fn add_fcm_token(&mut self, user_id: UserId, fcm_token: FcmToken) -> Result<(), String> {
         // Add token locally
         self.data.fcm_token_store.add(user_id, fcm_token.clone()).map(|_| {
-            self.push_event_to_local_indexes(NotificationsIndexEvent::FcmTokenAdded(user_id, fcm_token), now);
+            self.push_event_to_local_indexes(NotificationsIndexEvent::FcmTokenAdded(user_id, fcm_token), self.env.now());
         })
     }
 
-    pub fn remove_fcm_token(&mut self, user_id: UserId, fcm_token: FcmToken, now: TimestampMillis) -> Result<(), String> {
+    // TODO remove tokens when push to firebase fails
+    #[allow(dead_code)]
+    pub fn remove_fcm_token(&mut self, user_id: UserId, fcm_token: FcmToken) -> Result<(), String> {
         self.data.fcm_token_store.remove(&user_id, &fcm_token).map(|_| {
-            self.push_event_to_local_indexes(NotificationsIndexEvent::FcmTokenRemoved(user_id, fcm_token), now);
+            self.push_event_to_local_indexes(NotificationsIndexEvent::FcmTokenRemoved(user_id, fcm_token), self.env.now());
         })
     }
 
