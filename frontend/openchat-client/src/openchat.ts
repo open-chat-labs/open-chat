@@ -73,7 +73,6 @@ import {
     type CommunityIdentifier,
     communityIdentifiersEqual,
     type CommunityInvite,
-    CommunityMap,
     type CommunityPermissions,
     communityRoles,
     type CommunitySummary,
@@ -6119,33 +6118,34 @@ export class OpenChat {
             await updateRegistryTask;
         }
 
-        const chats = (chatsResponse.state.directChats as ChatSummary[])
-            .concat(chatsResponse.state.groupChats)
-            .concat(chatsResponse.state.communities.flatMap((c) => c.channels));
+        const chatsAddedUpdated = (chatsResponse.directChatsAddedUpdated as ChatSummary[])
+            .concat(chatsResponse.groupChatsAddedUpdated)
+            .concat(chatsResponse.communitiesAddedUpdated.flatMap((c) => c.channels));
 
-        this.#updateReadUpToStore(chats);
-
-        const { userIds, webhooks } = this.#userIdsFromChatSummaries(chats);
-        if (chatsResponse.state.referrals !== undefined) {
-            for (const userId of chatsResponse.state.referrals.map((r) => r.userId)) {
+        const { userIds, webhooks } = this.#userIdsFromChatSummaries(chatsAddedUpdated);
+        if (chatsResponse.referrals !== undefined) {
+            for (const userId of chatsResponse.referrals.map((r) => r.userId)) {
                 userIds.add(userId);
             }
         }
         if (!anonUserStore.value) {
             userIds.add(currentUserIdStore.value);
         }
+
         await this.getMissingUsers(userIds);
 
         withPausedStores(() => {
-            if (chatsResponse.state.blockedUsers !== undefined) {
-                userStore.setBlockedUsers(chatsResponse.state.blockedUsers);
+            this.#updateReadUpToStore(chatsAddedUpdated);
+
+            if (chatsResponse.blockedUsers !== undefined) {
+                userStore.setBlockedUsers(chatsResponse.blockedUsers);
             }
             userStore.addWebhookIds([...webhooks]);
 
             // if the selected community has updates, reload the details
             const selectedCommunity = selectedCommunitySummaryStore.value;
             if (selectedCommunity !== undefined) {
-                const updatedCommunity = chatsResponse.state.communities.find(
+                const updatedCommunity = chatsResponse.communitiesAddedUpdated.find(
                     (c) => c.id.communityId === selectedCommunity.id.communityId,
                 );
 
@@ -6158,7 +6158,7 @@ export class OpenChat {
             }
 
             // If we are still previewing a community we are a member of then remove the preview
-            for (const community of chatsResponse.state.communities) {
+            for (const community of chatsResponse.communitiesAddedUpdated) {
                 if (
                     community?.membership !== undefined &&
                     localUpdates.isPreviewingCommunity(community.id)
@@ -6167,28 +6167,32 @@ export class OpenChat {
                 }
             }
 
-            for (const chat of chats) {
+            for (const chat of chatsAddedUpdated) {
                 localUpdates.removeUninitialisedDirectChat(chat.id);
             }
 
             OpenChat.setGlobalStateStores(
-                chatsResponse.state.communities,
-                chats,
-                chatsResponse.state.favouriteChats,
+                chatsResponse.directChatsAddedUpdated,
+                chatsResponse.groupChatsAddedUpdated,
+                chatsResponse.communitiesAddedUpdated,
+                chatsResponse.directChatsRemoved,
+                chatsResponse.groupChatsRemoved,
+                chatsResponse.communitiesRemoved,
+                chatsResponse.favouriteChats,
                 new Map<ChatListScope["kind"], ChatIdentifier[]>([
-                    ["group_chat", chatsResponse.state.pinnedGroupChats],
-                    ["direct_chat", chatsResponse.state.pinnedDirectChats],
-                    ["favourite", chatsResponse.state.pinnedFavouriteChats],
-                    ["community", chatsResponse.state.pinnedChannels],
+                    ["group_chat", chatsResponse.pinnedGroupChats],
+                    ["direct_chat", chatsResponse.pinnedDirectChats],
+                    ["favourite", chatsResponse.pinnedFavouriteChats],
+                    ["community", chatsResponse.pinnedChannels],
                     ["none", []],
                 ]),
-                chatsResponse.state.achievements,
-                chatsResponse.state.chitState,
-                chatsResponse.state.referrals,
-                chatsResponse.state.walletConfig,
-                chatsResponse.state.messageActivitySummary,
-                chatsResponse.state.installedBots,
-                chatsResponse.state.streakInsurance,
+                chatsResponse.achievements,
+                chatsResponse.chitState,
+                chatsResponse.referrals,
+                chatsResponse.walletConfig,
+                chatsResponse.messageActivitySummary,
+                chatsResponse.installedBots,
+                chatsResponse.streakInsurance,
             );
         });
 
@@ -6206,13 +6210,13 @@ export class OpenChat {
 
         const currentUser = userStore.get(currentUserIdStore.value);
         const avatarId = currentUser?.blobReference?.blobId;
-        if (chatsResponse.state.avatarId !== avatarId) {
+        if (chatsResponse.avatarId !== avatarId) {
             const blobReference =
-                chatsResponse.state.avatarId === undefined
+                chatsResponse.avatarId === undefined
                     ? undefined
                     : {
                           canisterId: currentUserIdStore.value,
-                          blobId: chatsResponse.state.avatarId,
+                          blobId: chatsResponse.avatarId,
                       };
             const dataContent = {
                 blobReference,
@@ -6234,7 +6238,7 @@ export class OpenChat {
         // If the latest message in a chat is sent by the current user, then we know they must have read up to
         // that message, so we mark the chat as read up to that message if it isn't already. This happens when a
         // user sends a message on one device then looks at OpenChat on another.
-        for (const chat of chats) {
+        for (const chat of chatsAddedUpdated) {
             const latestMessage = chat.latestMessage?.event;
             if (
                 latestMessage !== undefined &&
@@ -6261,7 +6265,7 @@ export class OpenChat {
             this.#publishRemoteVideoCallEnded(messageId);
         }
 
-        pinNumberRequiredStore.set(chatsResponse.state.pinNumberSettings !== undefined);
+        pinNumberRequiredStore.set(chatsResponse.pinNumberSettings !== undefined);
 
         // horribly enough - we need to slightly defer this so that all the cascade of derived stuff is complete
         // I am hopeful that we can remove this when we aren't manually synchronising runes & stores
@@ -6273,7 +6277,7 @@ export class OpenChat {
 
         if (chatsResponse.newAchievements.length > 0) {
             const filtered = chatsResponse.newAchievements.filter(
-                (a) => a.timestamp > chatsResponse.state.achievementsLastSeen,
+                (a) => a.timestamp > chatsResponse.achievementsLastSeen,
             );
             if (filtered.length > 0) {
                 publish("chitEarned", filtered);
@@ -6290,12 +6294,16 @@ export class OpenChat {
             }
         }
 
-        bitcoinAddress.set(chatsResponse.state.bitcoinAddress);
+        bitcoinAddress.set(chatsResponse.bitcoinAddress);
     }
 
     static setGlobalStateStores(
-        communities: CommunitySummary[],
-        allChats: ChatSummary[],
+        directChatsAddedUpdated: DirectChatSummary[],
+        groupChatsAddedUpdated: GroupChatSummary[],
+        communitiesAddedUpdated: CommunitySummary[],
+        directChatsRemoved: string[],
+        groupChatsRemoved: string[],
+        communitiesRemoved: string[],
         favourites: ChatIdentifier[],
         pinnedChats: PinnedByScope,
         achievements: Set<string>,
@@ -6306,26 +6314,38 @@ export class OpenChat {
         installedBots: Map<string, GrantedBotPermissions>,
         streakInsurance: StreakInsurance | undefined,
     ): void {
-        const [channelsMap, directChats, groupChats] = OpenChat.partitionChats(allChats);
-
-        const communitiesMap = CommunityMap.fromList(communities);
-        const directChatsMap = ChatMap.fromList(directChats);
-        const groupChatsMap = ChatMap.fromList(groupChats);
-        const favouritesSet = new ChatSet(favourites);
-        for (const [communityId, channels] of channelsMap) {
-            const community = communitiesMap.get(communityId);
-            if (community !== undefined) {
-                community.channels = channels;
-            }
-        }
         serverMessageActivitySummaryStore.set(messageActivitySummary);
         achievementsStore.set(achievements);
         referralsStore.set(referrals);
 
-        serverDirectChatsStore.set(directChatsMap);
-        serverGroupChatsStore.set(groupChatsMap);
-        serverFavouritesStore.set(favouritesSet);
-        serverCommunitiesStore.set(communitiesMap);
+        serverDirectChatsStore.update((map) => {
+            for (const chat of directChatsAddedUpdated) {
+                map.set(chat.id, chat);
+            }
+            for (const id of directChatsRemoved) {
+                map.delete({ kind: "direct_chat", userId: id });
+            }
+            return map;
+        });
+        serverGroupChatsStore.update((map) => {
+            for (const chat of groupChatsAddedUpdated) {
+                map.set(chat.id, chat);
+            }
+            for (const id of groupChatsRemoved) {
+                map.delete({ kind: "group_chat", groupId: id });
+            }
+            return map;
+        });
+        serverCommunitiesStore.update((map) => {
+            for (const community of communitiesAddedUpdated) {
+                map.set(community.id, community);
+            }
+            for (const id of communitiesRemoved) {
+                map.delete({ kind: "community", communityId: id });
+            }
+            return map;
+        });
+        serverFavouritesStore.set(new ChatSet(favourites));
         serverPinnedChatsStore.set(pinnedChats);
         serverDirectChatBotsStore.set(installedBots);
         serverWalletConfigStore.set(walletConfig);
@@ -6337,42 +6357,6 @@ export class OpenChat {
             const skipUpdate = chitState.streakEnds < curr.streakEnds;
             return skipUpdate ? curr : chitState;
         });
-    }
-
-    static partitionChats(
-        allChats: ChatSummary[],
-    ): [CommunityMap<ChannelSummary[]>, DirectChatSummary[], GroupChatSummary[]] {
-        const [channels, direct, group] = allChats.reduce(
-            ([channels, direct, group], chat) => {
-                switch (chat.kind) {
-                    case "channel":
-                        channels.push(chat);
-                        break;
-                    case "direct_chat":
-                        direct.push(chat);
-                        break;
-                    case "group_chat":
-                        group.push(chat);
-                        break;
-                }
-                return [channels, direct, group];
-            },
-            [[], [], []] as [ChannelSummary[], DirectChatSummary[], GroupChatSummary[]],
-        );
-        return [OpenChat.channelsByCommunityId(channels), direct, group];
-    }
-
-    static channelsByCommunityId(chats: ChannelSummary[]): CommunityMap<ChannelSummary[]> {
-        return chats.reduce((acc, chat) => {
-            const communityId: CommunityIdentifier = {
-                kind: "community",
-                communityId: chat.id.communityId,
-            };
-            const channels = acc.get(communityId) ?? [];
-            channels.push(chat);
-            acc.set(communityId, channels);
-            return acc;
-        }, new CommunityMap<ChannelSummary[]>());
     }
 
     #botsLoaded = false;
@@ -6463,38 +6447,36 @@ export class OpenChat {
     }
 
     #updateReadUpToStore(chatSummaries: ChatSummary[]): void {
-        withPausedStores(() => {
-            for (const chat of chatSummaries) {
-                if (chat.kind === "group_chat" || chat.kind === "channel") {
-                    const threads: ThreadRead[] = (chat.membership?.latestThreads ?? []).reduce(
-                        (res, next) => {
-                            if (next.readUpTo !== undefined) {
-                                res.push({
-                                    threadRootMessageIndex: next.threadRootMessageIndex,
-                                    readUpTo: next.readUpTo,
-                                });
-                            }
-                            return res;
-                        },
-                        [] as ThreadRead[],
-                    );
+        for (const chat of chatSummaries) {
+            if (chat.kind === "group_chat" || chat.kind === "channel") {
+                const threads: ThreadRead[] = (chat.membership?.latestThreads ?? []).reduce(
+                    (res, next) => {
+                        if (next.readUpTo !== undefined) {
+                            res.push({
+                                threadRootMessageIndex: next.threadRootMessageIndex,
+                                readUpTo: next.readUpTo,
+                            });
+                        }
+                        return res;
+                    },
+                    [] as ThreadRead[],
+                );
 
-                    messagesRead.syncWithServer(
-                        chat.id,
-                        chat.membership?.readByMeUpTo,
-                        threads,
-                        chat.dateReadPinned,
-                    );
-                } else {
-                    messagesRead.syncWithServer(
-                        chat.id,
-                        chat.membership.readByMeUpTo,
-                        [],
-                        undefined,
-                    );
-                }
+                messagesRead.syncWithServer(
+                    chat.id,
+                    chat.membership?.readByMeUpTo,
+                    threads,
+                    chat.dateReadPinned,
+                );
+            } else {
+                messagesRead.syncWithServer(
+                    chat.id,
+                    chat.membership.readByMeUpTo,
+                    [],
+                    undefined,
+                );
             }
-        });
+        }
     }
 
     #validMouseEvent(e: MouseEvent) {
