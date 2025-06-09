@@ -1705,6 +1705,7 @@ export class OpenChatAgent extends EventTarget {
         let userCanisterCommunityUpdates: UserCanisterCommunitySummaryUpdates[] = [];
 
         let avatarId: bigint | undefined;
+        let avatarIdUpdate: OptionUpdate<bigint> = undefined;
         let blockedUsers: string[];
         let blockedUsersUpdated = false;
         let pinnedGroupChats: GroupChatIdentifier[];
@@ -1751,6 +1752,9 @@ export class OpenChatAgent extends EventTarget {
             communitiesAdded = userResponse.communities.summaries;
 
             avatarId = userResponse.avatarId;
+            if (avatarId !== undefined) {
+                avatarIdUpdate = { value: avatarId };
+            }
             blockedUsers = userResponse.blockedUsers;
             blockedUsersUpdated = true;
             pinnedGroupChats = userResponse.groupChats.pinned;
@@ -1854,6 +1858,7 @@ export class OpenChatAgent extends EventTarget {
                     userCanisterCommunityUpdates = userResponse.communities.updated;
 
                     avatarId = applyOptionUpdate(avatarId, userResponse.avatarId);
+                    avatarIdUpdate = userResponse.avatarId;
                     blockedUsers = userResponse.blockedUsers ?? blockedUsers;
                     blockedUsersUpdated = userResponse.blockedUsers !== undefined;
                     pinnedGroupChats = userResponse.groupChats.pinned ?? pinnedGroupChats;
@@ -2155,7 +2160,7 @@ export class OpenChatAgent extends EventTarget {
             communitiesAddedUpdated,
             communitiesRemoved,
             updatedEvents: updatedEvents.toMap() as Map<string, UpdatedEvent[]>,
-            avatarId,
+            avatarId: avatarIdUpdate,
             blockedUsers: blockedUsersUpdated ? blockedUsers : undefined,
             pinnedGroupChats: pinnedGroupChatsUpdated ? pinnedGroupChats : undefined,
             pinnedDirectChats: pinnedDirectChatsUpdated ? pinnedDirectChats : undefined,
@@ -2257,6 +2262,9 @@ export class OpenChatAgent extends EventTarget {
                         updatedEvents: new Map(),
                         suspensionChanged: undefined,
                         newAchievements: [],
+                        avatarId: cachedState.avatarId !== undefined
+                            ? { value: cachedState.avatarId }
+                            : undefined,
                         pinNumberSettings: cachedState.pinNumberSettings !== undefined
                             ? { value: cachedState.pinNumberSettings }
                             : undefined,

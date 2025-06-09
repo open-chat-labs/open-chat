@@ -6170,6 +6170,26 @@ export class OpenChat {
                 localUpdates.removeUninitialisedDirectChat(chat.id);
             }
 
+            if (chatsResponse.avatarId !== undefined) {
+                const currentUser = userStore.get(currentUserIdStore.value);
+                const blobReference =
+                    chatsResponse.avatarId === "set_to_none"
+                        ? undefined
+                        : {
+                            canisterId: currentUserIdStore.value,
+                            blobId: chatsResponse.avatarId.value,
+                        };
+                if (currentUser) {
+                    const user = {
+                        ...currentUser,
+                        blobReference,
+                        blobData: undefined,
+                        blobUrl: undefined,
+                    };
+                    userStore.addUser(this.#rehydrateDataContent(user, "avatar"));
+                }
+            }
+
             OpenChat.setGlobalStateStores(
                 chatsResponse.directChatsAddedUpdated,
                 chatsResponse.groupsAddedUpdated,
@@ -6201,30 +6221,6 @@ export class OpenChat {
                     selectedChatIdStore.value,
                     updatedEvents.get(selectedChatIdStore.value) ?? [],
                 );
-            }
-        }
-
-        const currentUser = userStore.get(currentUserIdStore.value);
-        const avatarId = currentUser?.blobReference?.blobId;
-        if (chatsResponse.avatarId !== avatarId) {
-            const blobReference =
-                chatsResponse.avatarId === undefined
-                    ? undefined
-                    : {
-                          canisterId: currentUserIdStore.value,
-                          blobId: chatsResponse.avatarId,
-                      };
-            const dataContent = {
-                blobReference,
-                blobData: undefined,
-                blobUrl: undefined,
-            };
-            if (currentUser) {
-                const user = {
-                    ...currentUser,
-                    ...dataContent,
-                };
-                userStore.addUser(this.#rehydrateDataContent(user, "avatar"));
             }
         }
 

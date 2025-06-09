@@ -1037,7 +1037,7 @@ export type UpdatesResult = {
     groupsRemoved: string[];
     communitiesAddedUpdated: CommunitySummary[];
     communitiesRemoved: string[];
-    avatarId: bigint | undefined;
+    avatarId: OptionUpdate<bigint>;
     blockedUsers: string[] | undefined;
     pinnedDirectChats: DirectChatIdentifier[] | undefined;
     pinnedGroupChats: GroupChatIdentifier[] | undefined;
