@@ -2172,7 +2172,6 @@ export class OpenChatAgent extends EventTarget {
             pinnedFavouriteChats: pinnedFavouriteChatsUpdated ? pinnedFavouriteChats : undefined,
             favouriteChats: favouriteChatsUpdated ? favouriteChats : undefined,
             pinNumberSettings: pinNumberSettingsUpdate,
-            userCanisterLocalUserIndex,
             achievementsLastSeen,
             achievements: newAchievements.length ? achievements : undefined,
             chitState: chitStateUpdated ? chitState : undefined,

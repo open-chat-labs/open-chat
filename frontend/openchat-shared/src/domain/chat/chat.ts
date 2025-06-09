@@ -1044,7 +1044,6 @@ export type UpdatesResult = {
     pinnedFavouriteChats: ChatIdentifier[] | undefined;
     favouriteChats: ChatIdentifier[] | undefined;
     pinNumberSettings: OptionUpdate<PinNumberSettings>;
-    userCanisterLocalUserIndex: string;
     achievements: Set<string> | undefined;
     achievementsLastSeen: bigint;
     chitState: ChitState | undefined;
