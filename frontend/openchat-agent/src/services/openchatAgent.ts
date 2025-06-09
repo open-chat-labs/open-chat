@@ -1654,34 +1654,29 @@ export class OpenChatAgent extends EventTarget {
         currentPinnedChannels: ChannelIdentifier[],
         userResponse: UpdatesSuccessResponse,
     ): [ChannelIdentifier[], boolean] {
-        let anyUpdates = false;
+        const communitiesUpdated: Set<string> = new Set();
+        const updates: ChannelIdentifier[] = [];
 
-        const byCommunity = currentPinnedChannels.reduce((map, channel) => {
-            const channels = map.get(channel.communityId) ?? [];
-            channels.push(channel);
-            map.set(channel.communityId, channels);
-            return map;
-        }, new Map<string, ChannelIdentifier[]>());
-
-        userResponse.communities.added
-            .flatMap((c) => c.pinned)
-            .forEach((channel) => {
-                byCommunity.get(channel.communityId)?.push(channel);
-                anyUpdates = true;
-            });
-
+        userResponse.communities.added.forEach((c) => {
+            if (c.pinned.length > 0) {
+                communitiesUpdated.add(c.id.communityId);
+                updates.push(...c.pinned);
+            }
+        });
         userResponse.communities.updated.forEach((c) => {
             if (c.pinned !== undefined) {
-                if (c.pinned.length === 0) {
-                    byCommunity.delete(c.id.communityId);
-                } else {
-                    byCommunity.set(c.id.communityId, c.pinned);
+                communitiesUpdated.add(c.id.communityId);
+                if (c.pinned.length > 0) {
+                    updates.push(...c.pinned);
                 }
-                anyUpdates = true;
             }
         });
 
-        return [[...byCommunity.values()].flat(), anyUpdates];
+        if (communitiesUpdated.size === 0) {
+            return [currentPinnedChannels, false];
+        }
+
+        return [currentPinnedChannels.filter((c) => !communitiesUpdated.has(c.communityId)).concat(...updates), true];
     }
 
     private async _getUpdates(current: ChatStateFull | undefined): Promise<UpdatesResult | undefined> {
