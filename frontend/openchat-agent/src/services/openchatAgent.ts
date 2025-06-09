@@ -1653,7 +1653,9 @@ export class OpenChatAgent extends EventTarget {
     private getUpdatedPinnedChannels(
         currentPinnedChannels: ChannelIdentifier[],
         userResponse: UpdatesSuccessResponse,
-    ): ChannelIdentifier[] {
+    ): [ChannelIdentifier[], boolean] {
+        let anyUpdates = false;
+
         const byCommunity = currentPinnedChannels.reduce((map, channel) => {
             const channels = map.get(channel.communityId) ?? [];
             channels.push(channel);
@@ -1665,6 +1667,7 @@ export class OpenChatAgent extends EventTarget {
             .flatMap((c) => c.pinned)
             .forEach((channel) => {
                 byCommunity.get(channel.communityId)?.push(channel);
+                anyUpdates = true;
             });
 
         userResponse.communities.updated.forEach((c) => {
@@ -1674,10 +1677,11 @@ export class OpenChatAgent extends EventTarget {
                 } else {
                     byCommunity.set(c.id.communityId, c.pinned);
                 }
+                anyUpdates = true;
             }
         });
 
-        return [...byCommunity.values()].flat();
+        return [[...byCommunity.values()].flat(), anyUpdates];
     }
 
     private async _getUpdates(current: ChatStateFull | undefined): Promise<UpdatesResult | undefined> {
@@ -1702,11 +1706,17 @@ export class OpenChatAgent extends EventTarget {
 
         let avatarId: bigint | undefined;
         let blockedUsers: string[];
+        let blockedUsersUpdated = false;
         let pinnedGroupChats: GroupChatIdentifier[];
+        let pinnedGroupChatsUpdated = false;
         let pinnedDirectChats: DirectChatIdentifier[];
+        let pinnedDirectChatsUpdated = false;
         let pinnedFavouriteChats: ChatIdentifier[];
+        let pinnedFavouriteChatsUpdated = false;
         let pinnedChannels: ChannelIdentifier[];
+        let pinnedChannelsUpdated = false;
         let favouriteChats: ChatIdentifier[];
+        let favouriteChatsUpdated = false;
         let suspensionChanged = undefined;
         let pinNumberSettings: PinNumberSettings | undefined;
         let userCanisterLocalUserIndex: string;
@@ -1714,10 +1724,15 @@ export class OpenChatAgent extends EventTarget {
         let newAchievements: ChitEarned[];
         let achievementsLastSeen: bigint;
         let chitState: ChitState;
+        let chitStateUpdated = false;
         let referrals: Referral[];
+        let referralsUpdated = false;
         let walletConfig: WalletConfig;
+        let walletConfigUpdated = false;
         let messageActivitySummary: MessageActivitySummary;
+        let messageActivitySummaryUpdated = false;
         let installedBots: Map<string, GrantedBotPermissions>;
+        let installedBotsUpdated = false;
         let bitcoinAddress: string | undefined = undefined;
         let streakInsurance: StreakInsurance | undefined;
 
@@ -1735,15 +1750,21 @@ export class OpenChatAgent extends EventTarget {
 
             avatarId = userResponse.avatarId;
             blockedUsers = userResponse.blockedUsers;
+            blockedUsersUpdated = true;
             pinnedGroupChats = userResponse.groupChats.pinned;
+            pinnedGroupChatsUpdated = true;
             pinnedDirectChats = userResponse.directChats.pinned;
+            pinnedDirectChatsUpdated = true;
             pinnedFavouriteChats = userResponse.favouriteChats.pinned;
+            pinnedFavouriteChatsUpdated = true;
             pinnedChannels = userResponse.communities.summaries.flatMap((c) => c.pinned);
+            pinnedChannelsUpdated = true;
             favouriteChats = userResponse.favouriteChats.chats;
+            favouriteChatsUpdated = true;
             latestUserCanisterUpdates = userResponse.timestamp;
             pinNumberSettings = userResponse.pinNumberSettings;
             userCanisterLocalUserIndex = userResponse.localUserIndex;
-            newAchievements = userResponse.achievements ?? [];
+            newAchievements = userResponse.achievements;
             achievements = new Set<string>(
                 newAchievements.reduce((all, a) => {
                     if (a.reason.kind === "achievement_unlocked") {
@@ -1764,10 +1785,15 @@ export class OpenChatAgent extends EventTarget {
                 nextDailyChitClaim: userResponse.nextDailyClaim,
                 totalChitEarned: userResponse.totalChitEarned,
             };
+            chitStateUpdated = true;
             referrals = userResponse.referrals;
+            referralsUpdated = true;
             walletConfig = userResponse.walletConfig;
+            walletConfigUpdated = true;
             messageActivitySummary = userResponse.messageActivitySummary;
+            messageActivitySummaryUpdated = true;
             installedBots = userResponse.bots;
+            installedBotsUpdated = true;
             bitcoinAddress = userResponse.bitcoinAddress;
             streakInsurance = userResponse.streakInsurance;
         } else {
@@ -1787,9 +1813,9 @@ export class OpenChatAgent extends EventTarget {
             latestUserCanisterUpdates = current.latestUserCanisterUpdates;
             pinNumberSettings = current.pinNumberSettings;
             userCanisterLocalUserIndex = current.userCanisterLocalUserIndex;
-            achievementsLastSeen = current.achievementsLastSeen;
             achievements = current.achievements;
             newAchievements = [];
+            achievementsLastSeen = current.achievementsLastSeen;
             chitState = current.chitState;
             referrals = current.referrals;
             walletConfig = current.walletConfig;
@@ -1803,12 +1829,7 @@ export class OpenChatAgent extends EventTarget {
 
                 if (userResponse.kind === "success") {
                     anyUpdates = true;
-                    userResponse.botsAddedOrUpdated.forEach((b) =>
-                        installedBots.set(b.id, b.permissions),
-                    );
-                    userResponse.botsRemoved.forEach((b) => {
-                        installedBots.delete(b);
-                    });
+
                     directChatsAdded = userResponse.directChats.added;
                     directChatUpdates = userResponse.directChats.updated;
                     directChatsRemoved = userResponse.directChats.removed;
@@ -1826,11 +1847,16 @@ export class OpenChatAgent extends EventTarget {
 
                     avatarId = applyOptionUpdate(avatarId, userResponse.avatarId);
                     blockedUsers = userResponse.blockedUsers ?? blockedUsers;
+                    blockedUsersUpdated = userResponse.blockedUsers !== undefined;
                     pinnedGroupChats = userResponse.groupChats.pinned ?? pinnedGroupChats;
+                    pinnedGroupChatsUpdated = userResponse.groupChats.pinned !== undefined;
                     pinnedDirectChats = userResponse.directChats.pinned ?? pinnedDirectChats;
+                    pinnedDirectChatsUpdated = userResponse.directChats.pinned !== undefined;
                     pinnedFavouriteChats = userResponse.favouriteChats.pinned ?? pinnedFavouriteChats;
-                    pinnedChannels = this.getUpdatedPinnedChannels(pinnedChannels, userResponse);
+                    pinnedFavouriteChatsUpdated = userResponse.favouriteChats.pinned !== undefined;
+                    [pinnedChannels, pinnedChannelsUpdated] = this.getUpdatedPinnedChannels(pinnedChannels, userResponse);
                     favouriteChats = userResponse.favouriteChats.chats ?? favouriteChats;
+                    favouriteChatsUpdated = userResponse.favouriteChats.chats !== undefined;
                     suspensionChanged = userResponse.suspended;
                     latestUserCanisterUpdates = userResponse.timestamp;
                     pinNumberSettings = applyOptionUpdate(
@@ -1838,7 +1864,7 @@ export class OpenChatAgent extends EventTarget {
                         userResponse.pinNumberSettings,
                     );
                     achievementsLastSeen = userResponse.achievementsLastSeen ?? achievementsLastSeen;
-                    newAchievements = userResponse.achievements ?? [];
+                    newAchievements = userResponse.achievements;
                     newAchievements.forEach((a) => {
                         if (a.reason.kind === "achievement_unlocked") {
                             achievements.add(a.reason.type);
@@ -1847,23 +1873,42 @@ export class OpenChatAgent extends EventTarget {
                             achievements.add(a.reason.name);
                         }
                     });
-                    chitState = {
-                        streakEnds: userResponse.streakEnds,
-                        streak: userResponse.streak,
-                        maxStreak: userResponse.maxStreak,
-                        chitBalance: userResponse.chitBalance,
-                        nextDailyChitClaim: userResponse.nextDailyClaim,
-                        totalChitEarned: userResponse.totalChitEarned,
-                    };
-                    referrals = referrals
-                        .filter(
-                            (prev) =>
-                                !userResponse.referrals.find((latest) => latest.userId === prev.userId),
-                        )
-                        .concat(userResponse.referrals);
+                    if (userResponse.totalChitEarned !== chitState.totalChitEarned
+                        || userResponse.streakEnds !== chitState.streakEnds)
+                    {
+                        chitState = {
+                            streakEnds: userResponse.streakEnds,
+                            streak: userResponse.streak,
+                            maxStreak: userResponse.maxStreak,
+                            chitBalance: userResponse.chitBalance,
+                            nextDailyChitClaim: userResponse.nextDailyClaim,
+                            totalChitEarned: userResponse.totalChitEarned,
+                        };
+                        chitStateUpdated = true;
+                    }
+                    if (userResponse.referrals.length > 0) {
+                        referrals = referrals
+                            .filter(
+                                (prev) =>
+                                    !userResponse.referrals.find((latest) => latest.userId === prev.userId),
+                            )
+                            .concat(userResponse.referrals);
+                        referralsUpdated = true;
+                    }
+                    if (userResponse.botsAddedOrUpdated.length > 0 || userResponse.botsRemoved.length > 0) {
+                        userResponse.botsAddedOrUpdated.forEach((b) =>
+                            installedBots.set(b.id, b.permissions),
+                        );
+                        userResponse.botsRemoved.forEach((b) => {
+                            installedBots.delete(b);
+                        });
+                        installedBotsUpdated = true;
+                    }
                     walletConfig = userResponse.walletConfig ?? current.walletConfig;
+                    walletConfigUpdated = userResponse.walletConfig !== undefined;
                     messageActivitySummary =
                         userResponse.messageActivitySummary ?? current.messageActivitySummary;
+                    messageActivitySummaryUpdated = userResponse.messageActivitySummary !== undefined;
                     bitcoinAddress ??= userResponse.bitcoinAddress;
                     streakInsurance = applyOptionUpdate(streakInsurance, userResponse.streakInsurance);
                 }
@@ -2101,21 +2146,21 @@ export class OpenChatAgent extends EventTarget {
             communitiesRemoved,
             updatedEvents: updatedEvents.toMap() as Map<string, UpdatedEvent[]>,
             avatarId,
-            blockedUsers,
-            pinnedGroupChats,
-            pinnedDirectChats,
-            pinnedFavouriteChats,
-            pinnedChannels,
-            favouriteChats,
+            blockedUsers: blockedUsersUpdated ? blockedUsers : undefined,
+            pinnedGroupChats: pinnedGroupChatsUpdated ? pinnedGroupChats : undefined,
+            pinnedDirectChats: pinnedDirectChatsUpdated ? pinnedDirectChats : undefined,
+            pinnedChannels: pinnedChannelsUpdated ? pinnedChannels : undefined,
+            pinnedFavouriteChats: pinnedFavouriteChatsUpdated ? pinnedFavouriteChats : undefined,
+            favouriteChats: favouriteChatsUpdated ? favouriteChats : undefined,
             pinNumberSettings,
             userCanisterLocalUserIndex,
             achievementsLastSeen,
-            achievements,
-            chitState,
-            referrals,
-            walletConfig,
-            messageActivitySummary,
-            installedBots,
+            achievements: newAchievements.length ? achievements : undefined,
+            chitState: chitStateUpdated ? chitState : undefined,
+            referrals: referralsUpdated ? referrals : undefined,
+            walletConfig: walletConfigUpdated ? walletConfig : undefined,
+            messageActivitySummary: messageActivitySummaryUpdated ? messageActivitySummary : undefined,
+            installedBots: installedBotsUpdated ? installedBots : undefined,
             bitcoinAddress,
             streakInsurance,
             suspensionChanged,

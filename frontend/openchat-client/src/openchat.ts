@@ -196,7 +196,6 @@ import {
     type PaymentGateApprovals,
     type PendingCryptocurrencyTransfer,
     type PendingCryptocurrencyWithdrawal,
-    type PinnedByScope,
     pinNumberFailureFromError,
     type PreprocessedGate,
     type ProposalVoteDetails,
@@ -6179,14 +6178,11 @@ export class OpenChat {
                 chatsResponse.groupsRemoved,
                 chatsResponse.communitiesRemoved,
                 chatsResponse.favouriteChats,
-                new Map<ChatListScope["kind"], ChatIdentifier[]>([
-                    ["group_chat", chatsResponse.pinnedGroupChats],
-                    ["direct_chat", chatsResponse.pinnedDirectChats],
-                    ["favourite", chatsResponse.pinnedFavouriteChats],
-                    ["community", chatsResponse.pinnedChannels],
-                    ["none", []],
-                ]),
-                chatsResponse.achievements,
+                chatsResponse.pinnedDirectChats,
+                chatsResponse.pinnedGroupChats,
+                chatsResponse.pinnedChannels,
+                chatsResponse.pinnedFavouriteChats,
+                chatsResponse.newAchievements.length ? chatsResponse.achievements : undefined,
                 chatsResponse.chitState,
                 chatsResponse.referrals,
                 chatsResponse.walletConfig,
@@ -6304,20 +6300,19 @@ export class OpenChat {
         directChatsRemoved: string[],
         groupsRemoved: string[],
         communitiesRemoved: string[],
-        favourites: ChatIdentifier[],
-        pinnedChats: PinnedByScope,
-        achievements: Set<string>,
-        chitState: ChitState,
-        referrals: Referral[],
-        walletConfig: WalletConfig,
-        messageActivitySummary: MessageActivitySummary,
-        installedBots: Map<string, GrantedBotPermissions>,
+        favourites: ChatIdentifier[] | undefined,
+        pinnedDirectChats: DirectChatIdentifier[] | undefined,
+        pinnedGroupChats: GroupChatIdentifier[] | undefined,
+        pinnedChannels: ChannelIdentifier[] | undefined,
+        pinnedFavourites: ChatIdentifier[] | undefined,
+        achievements: Set<string> | undefined,
+        chitState: ChitState | undefined,
+        referrals: Referral[] | undefined,
+        walletConfig: WalletConfig | undefined,
+        messageActivitySummary: MessageActivitySummary | undefined,
+        installedBots: Map<string, GrantedBotPermissions> | undefined,
         streakInsurance: StreakInsurance | undefined,
     ): void {
-        serverMessageActivitySummaryStore.set(messageActivitySummary);
-        achievementsStore.set(achievements);
-        referralsStore.set(referrals);
-
         serverDirectChatsStore.update((map) => {
             for (const chat of directChatsAddedUpdated) {
                 map.set(chat.id, chat);
@@ -6345,18 +6340,46 @@ export class OpenChat {
             }
             return map;
         });
-        serverFavouritesStore.set(new ChatSet(favourites));
-        serverPinnedChatsStore.set(pinnedChats);
-        serverDirectChatBotsStore.set(installedBots);
-        serverWalletConfigStore.set(walletConfig);
+        if (favourites !== undefined) {
+            serverFavouritesStore.set(new ChatSet(favourites));
+        }
+        if (pinnedDirectChats !== undefined) {
+            serverPinnedChatsStore.update((map) => map.set("direct_chat", pinnedDirectChats));
+        }
+        if (pinnedGroupChats !== undefined) {
+            serverPinnedChatsStore.update((map) => map.set("group_chat", pinnedGroupChats));
+        }
+        if (pinnedChannels !== undefined) {
+            serverPinnedChatsStore.update((map) => map.set("community", pinnedChannels));
+        }
+        if (pinnedFavourites !== undefined) {
+            serverPinnedChatsStore.update((map) => map.set("favourite", pinnedFavourites));
+        }
+        if (achievements !== undefined) {
+            achievementsStore.set(achievements);
+        }
+        if (messageActivitySummary !== undefined) {
+            serverMessageActivitySummaryStore.set(messageActivitySummary);
+        }
+        if (referrals !== undefined) {
+            referralsStore.set(referrals);
+        }
+        if (installedBots !== undefined) {
+            serverDirectChatBotsStore.set(installedBots);
+        }
+        if (walletConfig !== undefined) {
+            serverWalletConfigStore.set(walletConfig);
+        }
         if (streakInsurance !== undefined) {
             serverStreakInsuranceStore.set(streakInsurance);
         }
-        chitStateStore.update((curr) => {
-            // Skip the new update if it is behind what we already have locally
-            const skipUpdate = chitState.streakEnds < curr.streakEnds;
-            return skipUpdate ? curr : chitState;
-        });
+        if (chitState !== undefined) {
+            chitStateStore.update((curr) => {
+                // Skip the new update if it is behind what we already have locally
+                const skipUpdate = chitState.streakEnds < curr.streakEnds;
+                return skipUpdate ? curr : chitState;
+            });
+        }
     }
 
     #botsLoaded = false;
