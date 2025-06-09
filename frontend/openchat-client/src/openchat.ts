@@ -6313,33 +6313,39 @@ export class OpenChat {
         installedBots: Map<string, GrantedBotPermissions> | undefined,
         streakInsurance: StreakInsurance | undefined,
     ): void {
-        serverDirectChatsStore.update((map) => {
-            for (const chat of directChatsAddedUpdated) {
-                map.set(chat.id, chat);
-            }
-            for (const id of directChatsRemoved) {
-                map.delete({ kind: "direct_chat", userId: id });
-            }
-            return map;
-        });
-        serverGroupChatsStore.update((map) => {
-            for (const chat of groupsAddedUpdated) {
-                map.set(chat.id, chat);
-            }
-            for (const id of groupsRemoved) {
-                map.delete({ kind: "group_chat", groupId: id });
-            }
-            return map;
-        });
-        serverCommunitiesStore.update((map) => {
-            for (const community of communitiesAddedUpdated) {
-                map.set(community.id, community);
-            }
-            for (const id of communitiesRemoved) {
-                map.delete({ kind: "community", communityId: id });
-            }
-            return map;
-        });
+        if (directChatsAddedUpdated.length > 0 || directChatsRemoved.length > 0) {
+            serverDirectChatsStore.update((map) => {
+                for (const chat of directChatsAddedUpdated) {
+                    map.set(chat.id, chat);
+                }
+                for (const id of directChatsRemoved) {
+                    map.delete({kind: "direct_chat", userId: id});
+                }
+                return map;
+            });
+        }
+        if (groupsAddedUpdated.length > 0 || groupsRemoved.length > 0) {
+            serverGroupChatsStore.update((map) => {
+                for (const chat of groupsAddedUpdated) {
+                    map.set(chat.id, chat);
+                }
+                for (const id of groupsRemoved) {
+                    map.delete({kind: "group_chat", groupId: id});
+                }
+                return map;
+            });
+        }
+        if (communitiesAddedUpdated.length > 0 || communitiesRemoved.length > 0) {
+            serverCommunitiesStore.update((map) => {
+                for (const community of communitiesAddedUpdated) {
+                    map.set(community.id, community);
+                }
+                for (const id of communitiesRemoved) {
+                    map.delete({kind: "community", communityId: id});
+                }
+                return map;
+            });
+        }
         if (favourites !== undefined) {
             serverFavouritesStore.set(new ChatSet(favourites));
         }
