@@ -1690,7 +1690,7 @@ export class OpenChatAgent extends EventTarget {
         let directChatsRemoved: string[] = [];
         let directChats: DirectChatSummary[] = [];
 
-        let currentGroupChats: GroupChatSummary[] = [];
+        let currentGroups: GroupChatSummary[] = [];
         let groupsAdded: UserCanisterGroupChatSummary[] = [];
         let groupsRemoved: string[] = [];
         let userCanisterGroupUpdates: UserCanisterGroupChatSummaryUpdates[] = [];
@@ -1772,7 +1772,7 @@ export class OpenChatAgent extends EventTarget {
             streakInsurance = userResponse.streakInsurance;
         } else {
             currentDirectChats = current.directChats;
-            currentGroupChats = current.groupChats;
+            currentGroups = current.groupChats;
             currentCommunities = current.communities;
             installedBots = current.installedBots;
             bitcoinAddress = current.bitcoinAddress;
@@ -1900,7 +1900,7 @@ export class OpenChatAgent extends EventTarget {
             });
         }
 
-        for (const group of currentGroupChats) {
+        for (const group of currentGroups) {
             getOrAdd(byLocalUserIndex, group.localUserIndex, []).push({
                 canisterId: group.id.groupId,
                 isCommunity: false,
@@ -1987,7 +1987,7 @@ export class OpenChatAgent extends EventTarget {
         )
             .concat(
                 mergeGroupChatUpdates(
-                    currentGroupChats,
+                    currentGroups,
                     userCanisterGroupUpdates,
                     groupUpdates,
                 ),
@@ -2070,7 +2070,7 @@ export class OpenChatAgent extends EventTarget {
             .filter((c) => directChatsAddedUpdatedIds.has(c.id.userId))
             .map((c) => this.hydrateChatSummary(c));
 
-        const groupsAddedUpdatedIds = new Set([
+        const groupsAddedUpdatedIds = new Set([current
             ...groupsAdded.map((g) => g.id.groupId),
             ...groupUpdates.map((g) => g.id.groupId),
         ]);
