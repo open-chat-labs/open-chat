@@ -1729,7 +1729,7 @@ export class OpenChatAgent extends EventTarget {
             const userResponse = await this.userClient.getInitialState();
             anyUpdates = true;
 
-            directChatsAdded = userResponse.directChats.summaries;
+            directChats = directChatsAdded = userResponse.directChats.summaries;
             groupsAdded = userResponse.groupChats.summaries;
             communitiesAdded = userResponse.communities.summaries;
 
@@ -2070,7 +2070,7 @@ export class OpenChatAgent extends EventTarget {
             .filter((c) => directChatsAddedUpdatedIds.has(c.id.userId))
             .map((c) => this.hydrateChatSummary(c));
 
-        const groupsAddedUpdatedIds = new Set([current
+        const groupsAddedUpdatedIds = new Set([
             ...groupsAdded.map((g) => g.id.groupId),
             ...groupUpdates.map((g) => g.id.groupId),
         ]);
