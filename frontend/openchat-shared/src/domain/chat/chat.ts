@@ -1045,7 +1045,6 @@ export type UpdatesResult = {
     favouriteChats: ChatIdentifier[] | undefined;
     pinNumberSettings: OptionUpdate<PinNumberSettings>;
     achievements: Set<string> | undefined;
-    achievementsLastSeen: bigint;
     chitState: ChitState | undefined;
     referrals: Referral[] | undefined;
     walletConfig: WalletConfig | undefined;

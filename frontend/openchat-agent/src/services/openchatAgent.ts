@@ -1717,8 +1717,9 @@ export class OpenChatAgent extends EventTarget {
         let pinNumberSettings: PinNumberSettings | undefined;
         let pinNumberSettingsUpdate: OptionUpdate<PinNumberSettings>;
         let userCanisterLocalUserIndex: string;
-        let achievements: Set<string>;
-        let newAchievements: ChitEarned[];
+        let achievements: Set<string> = new Set<string>();
+        let achievementsUpdated = false;
+        let newAchievements: ChitEarned[] = [];
         let achievementsLastSeen: bigint;
         let chitState: ChitState;
         let chitStateUpdated = false;
@@ -1737,6 +1738,23 @@ export class OpenChatAgent extends EventTarget {
 
         let latestUserCanisterUpdates: bigint;
         let anyUpdates = false;
+
+        const processAchievementsResponse = (achievementsResponse: ChitEarned[]) => {
+            if (achievementsResponse.length > 0) {
+                achievementsResponse.forEach((a) => {
+                    if (a.timestamp > achievementsLastSeen) {
+                        newAchievements.push(a);
+                    }
+                    if (a.reason.kind === "achievement_unlocked") {
+                        achievements.add(a.reason.type);
+                    }
+                    if (a.reason.kind === "external_achievement_unlocked") {
+                        achievements.add(a.reason.name);
+                    }
+                });
+                achievementsUpdated = true;
+            }
+        }
 
         if (current === undefined) {
             totalQueryCount++;
@@ -1769,19 +1787,8 @@ export class OpenChatAgent extends EventTarget {
                 pinNumberSettingsUpdate = { value: pinNumberSettings };
             }
             userCanisterLocalUserIndex = userResponse.localUserIndex;
-            newAchievements = userResponse.achievements;
-            achievements = new Set<string>(
-                newAchievements.reduce((all, a) => {
-                    if (a.reason.kind === "achievement_unlocked") {
-                        all.push(a.reason.type);
-                    }
-                    if (a.reason.kind === "external_achievement_unlocked") {
-                        all.push(a.reason.name);
-                    }
-                    return all;
-                }, [] as string[]),
-            );
             achievementsLastSeen = userResponse.achievementsLastSeen;
+            processAchievementsResponse(userResponse.achievements);
             chitState = {
                 streakEnds: userResponse.streakEnds,
                 streak: userResponse.streak,
@@ -1875,15 +1882,7 @@ export class OpenChatAgent extends EventTarget {
                     );
                     pinNumberSettingsUpdate = userResponse.pinNumberSettings;
                     achievementsLastSeen = userResponse.achievementsLastSeen ?? achievementsLastSeen;
-                    newAchievements = userResponse.achievements;
-                    newAchievements.forEach((a) => {
-                        if (a.reason.kind === "achievement_unlocked") {
-                            achievements.add(a.reason.type);
-                        }
-                        if (a.reason.kind === "external_achievement_unlocked") {
-                            achievements.add(a.reason.name);
-                        }
-                    });
+                    processAchievementsResponse(userResponse.achievements);
                     if (userResponse.totalChitEarned !== chitState.totalChitEarned
                         || userResponse.streakEnds !== chitState.streakEnds)
                     {
@@ -2167,8 +2166,7 @@ export class OpenChatAgent extends EventTarget {
             pinnedFavouriteChats: pinnedFavouriteChatsUpdated ? pinnedFavouriteChats : undefined,
             favouriteChats: favouriteChatsUpdated ? favouriteChats : undefined,
             pinNumberSettings: pinNumberSettingsUpdate,
-            achievementsLastSeen,
-            achievements: newAchievements.length ? achievements : undefined,
+            achievements: achievementsUpdated ? achievements : undefined,
             chitState: chitStateUpdated ? chitState : undefined,
             referrals: referralsUpdated ? referrals : undefined,
             walletConfig: walletConfigUpdated ? walletConfig : undefined,

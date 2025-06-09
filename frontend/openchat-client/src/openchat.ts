@@ -6202,7 +6202,7 @@ export class OpenChat {
                 chatsResponse.pinnedGroupChats,
                 chatsResponse.pinnedChannels,
                 chatsResponse.pinnedFavouriteChats,
-                chatsResponse.newAchievements.length ? chatsResponse.achievements : undefined,
+                chatsResponse.achievements,
                 chatsResponse.chitState,
                 chatsResponse.referrals,
                 chatsResponse.walletConfig,
@@ -6270,12 +6270,7 @@ export class OpenChat {
         this.#closeNotificationsIfNecessary();
 
         if (chatsResponse.newAchievements.length > 0) {
-            const filtered = chatsResponse.newAchievements.filter(
-                (a) => a.timestamp > chatsResponse.achievementsLastSeen,
-            );
-            if (filtered.length > 0) {
-                publish("chitEarned", filtered);
-            }
+            publish("chitEarned", chatsResponse.newAchievements);
         }
 
         if (initialLoad) {
