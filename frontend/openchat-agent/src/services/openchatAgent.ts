@@ -1719,6 +1719,7 @@ export class OpenChatAgent extends EventTarget {
         let favouriteChatsUpdated = false;
         let suspensionChanged = undefined;
         let pinNumberSettings: PinNumberSettings | undefined;
+        let pinNumberSettingsUpdate: OptionUpdate<PinNumberSettings>;
         let userCanisterLocalUserIndex: string;
         let achievements: Set<string>;
         let newAchievements: ChitEarned[];
@@ -1735,6 +1736,7 @@ export class OpenChatAgent extends EventTarget {
         let installedBotsUpdated = false;
         let bitcoinAddress: string | undefined = undefined;
         let streakInsurance: StreakInsurance | undefined;
+        let streakInsuranceUpdate: OptionUpdate<StreakInsurance> = undefined;
 
         let latestUserCanisterUpdates: bigint;
         let anyUpdates = false;
@@ -1763,6 +1765,9 @@ export class OpenChatAgent extends EventTarget {
             favouriteChatsUpdated = true;
             latestUserCanisterUpdates = userResponse.timestamp;
             pinNumberSettings = userResponse.pinNumberSettings;
+            if (pinNumberSettings !== undefined) {
+                pinNumberSettingsUpdate = { value: pinNumberSettings };
+            }
             userCanisterLocalUserIndex = userResponse.localUserIndex;
             newAchievements = userResponse.achievements;
             achievements = new Set<string>(
@@ -1796,6 +1801,9 @@ export class OpenChatAgent extends EventTarget {
             installedBotsUpdated = true;
             bitcoinAddress = userResponse.bitcoinAddress;
             streakInsurance = userResponse.streakInsurance;
+            if (streakInsurance !== undefined) {
+                streakInsuranceUpdate = { value: streakInsurance };
+            }
         } else {
             currentDirectChats = current.directChats;
             currentGroups = current.groupChats;
@@ -1863,6 +1871,7 @@ export class OpenChatAgent extends EventTarget {
                         pinNumberSettings,
                         userResponse.pinNumberSettings,
                     );
+                    pinNumberSettingsUpdate = userResponse.pinNumberSettings;
                     achievementsLastSeen = userResponse.achievementsLastSeen ?? achievementsLastSeen;
                     newAchievements = userResponse.achievements;
                     newAchievements.forEach((a) => {
@@ -1911,6 +1920,7 @@ export class OpenChatAgent extends EventTarget {
                     messageActivitySummaryUpdated = userResponse.messageActivitySummary !== undefined;
                     bitcoinAddress ??= userResponse.bitcoinAddress;
                     streakInsurance = applyOptionUpdate(streakInsurance, userResponse.streakInsurance);
+                    streakInsuranceUpdate = userResponse.streakInsurance;
                 }
             } catch (error) {
                 console.error("Failed to get updates from User canister", error);
@@ -2152,7 +2162,7 @@ export class OpenChatAgent extends EventTarget {
             pinnedChannels: pinnedChannelsUpdated ? pinnedChannels : undefined,
             pinnedFavouriteChats: pinnedFavouriteChatsUpdated ? pinnedFavouriteChats : undefined,
             favouriteChats: favouriteChatsUpdated ? favouriteChats : undefined,
-            pinNumberSettings,
+            pinNumberSettings: pinNumberSettingsUpdate,
             userCanisterLocalUserIndex,
             achievementsLastSeen,
             achievements: newAchievements.length ? achievements : undefined,
@@ -2162,7 +2172,7 @@ export class OpenChatAgent extends EventTarget {
             messageActivitySummary: messageActivitySummaryUpdated ? messageActivitySummary : undefined,
             installedBots: installedBotsUpdated ? installedBots : undefined,
             bitcoinAddress,
-            streakInsurance,
+            streakInsurance: streakInsuranceUpdate,
             suspensionChanged,
             newAchievements,
         };
@@ -2247,6 +2257,12 @@ export class OpenChatAgent extends EventTarget {
                         updatedEvents: new Map(),
                         suspensionChanged: undefined,
                         newAchievements: [],
+                        pinNumberSettings: cachedState.pinNumberSettings !== undefined
+                            ? { value: cachedState.pinNumberSettings }
+                            : undefined,
+                        streakInsurance: cachedState.streakInsurance !== undefined
+                            ? { value: cachedState.streakInsurance }
+                            : undefined,
                     },
                     isOffline,
                 );

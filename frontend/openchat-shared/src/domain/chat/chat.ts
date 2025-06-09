@@ -1044,7 +1044,7 @@ export type UpdatesResult = {
     pinnedChannels: ChannelIdentifier[] | undefined;
     pinnedFavouriteChats: ChatIdentifier[] | undefined;
     favouriteChats: ChatIdentifier[] | undefined;
-    pinNumberSettings: PinNumberSettings | undefined;
+    pinNumberSettings: OptionUpdate<PinNumberSettings>;
     userCanisterLocalUserIndex: string;
     achievements: Set<string> | undefined;
     achievementsLastSeen: bigint;
@@ -1054,7 +1054,7 @@ export type UpdatesResult = {
     messageActivitySummary: MessageActivitySummary | undefined;
     installedBots: Map<string, GrantedBotPermissions> | undefined;
     bitcoinAddress: string | undefined;
-    streakInsurance: StreakInsurance | undefined;
+    streakInsurance: OptionUpdate<StreakInsurance>;
     updatedEvents: Map<string, UpdatedEvent[]>;
     suspensionChanged: boolean | undefined;
     newAchievements: ChitEarned[];

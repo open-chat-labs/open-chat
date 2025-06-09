@@ -6261,7 +6261,9 @@ export class OpenChat {
             this.#publishRemoteVideoCallEnded(messageId);
         }
 
-        pinNumberRequiredStore.set(chatsResponse.pinNumberSettings !== undefined);
+        if (chatsResponse.pinNumberSettings !== undefined) {
+            pinNumberRequiredStore.set(chatsResponse.pinNumberSettings !== "set_to_none");
+        }
 
         // horribly enough - we need to slightly defer this so that all the cascade of derived stuff is complete
         // I am hopeful that we can remove this when we aren't manually synchronising runes & stores
@@ -6311,7 +6313,7 @@ export class OpenChat {
         walletConfig: WalletConfig | undefined,
         messageActivitySummary: MessageActivitySummary | undefined,
         installedBots: Map<string, GrantedBotPermissions> | undefined,
-        streakInsurance: StreakInsurance | undefined,
+        streakInsurance: OptionUpdate<StreakInsurance>,
     ): void {
         if (directChatsAddedUpdated.length > 0 || directChatsRemoved.length > 0) {
             serverDirectChatsStore.update((map) => {
@@ -6377,7 +6379,9 @@ export class OpenChat {
             serverWalletConfigStore.set(walletConfig);
         }
         if (streakInsurance !== undefined) {
-            serverStreakInsuranceStore.set(streakInsurance);
+            serverStreakInsuranceStore.set(streakInsurance === "set_to_none"
+                ? { daysInsured: 0, daysMissed: 0 }
+                : streakInsurance.value);
         }
         if (chitState !== undefined) {
             chitStateStore.update((curr) => {
