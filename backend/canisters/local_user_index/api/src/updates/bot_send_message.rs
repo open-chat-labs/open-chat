@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{BotChatContext, BotMessageContent, EventIndex, MessageId, MessageIndex, TimestampMillis};
 
-#[ts_export(local_user_index, bot_send_message_v2)]
+#[ts_export(local_user_index, bot_send_message)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
     pub chat_context: BotChatContext,
@@ -15,14 +15,14 @@ pub struct Args {
     pub finalised: bool,
 }
 
-#[ts_export(local_user_index, bot_send_message_v2)]
+#[ts_export(local_user_index, bot_send_message)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     Error(OCError),
 }
 
-#[ts_export(local_user_index, bot_send_message_v2)]
+#[ts_export(local_user_index, bot_send_message)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct SuccessResult {
     pub message_id: MessageId,

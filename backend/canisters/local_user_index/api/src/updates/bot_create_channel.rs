@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{AccessGateConfig, ChannelId, CommunityId, Document, GroupPermissions, Milliseconds, Rules};
 
-#[ts_export(local_user_index, bot_create_channel_v2)]
+#[ts_export(local_user_index, bot_create_channel)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
     pub community_id: CommunityId,
@@ -21,14 +21,14 @@ pub struct Args {
     pub external_url: Option<String>,
 }
 
-#[ts_export(local_user_index, bot_create_channel_v2)]
+#[ts_export(local_user_index, bot_create_channel)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     Error(OCError),
 }
 
-#[ts_export(local_user_index, bot_create_channel_v2)]
+#[ts_export(local_user_index, bot_create_channel)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct SuccessResult {
     pub channel_id: ChannelId,
