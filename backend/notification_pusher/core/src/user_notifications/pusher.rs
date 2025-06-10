@@ -17,7 +17,7 @@ pub struct Pusher {
     subscriptions_to_remove_sender: Sender<(UserId, String)>,
     invalid_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
     throttled_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
-    fcm_service: FcmService,
+    fcm_service: Arc<FcmService>,
 }
 
 impl Pusher {
@@ -26,7 +26,7 @@ impl Pusher {
         subscriptions_to_remove_sender: Sender<(UserId, String)>,
         invalid_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
         throttled_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
-        gcloud_sa_json_path: String,
+        fcm_service: Arc<FcmService>,
     ) -> Self {
         Self {
             receiver,
@@ -34,7 +34,7 @@ impl Pusher {
             subscriptions_to_remove_sender,
             invalid_subscriptions,
             throttled_subscriptions,
-            fcm_service: FcmService::new(gcloud_sa_json_path),
+            fcm_service,
         }
     }
 
