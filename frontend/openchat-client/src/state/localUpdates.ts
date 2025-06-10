@@ -393,6 +393,10 @@ export class GlobalLocalState {
         });
     }
 
+    anyUninitialisedDirectChats(): boolean {
+        return this.#uninitialisedDirectChats.value.size > 0;
+    }
+
     removeUninitialisedDirectChat(chatId: ChatIdentifier): boolean {
         if (this.#uninitialisedDirectChats.value.has(chatId)) {
             this.#uninitialisedDirectChats.update((data) => {
@@ -402,6 +406,10 @@ export class GlobalLocalState {
             return true;
         }
         return false;
+    }
+
+    anyCommunityPreviews(): boolean {
+        return this.previewCommunities.value.size > 0;
     }
 
     isPreviewingCommunity(id: CommunityIdentifier) {

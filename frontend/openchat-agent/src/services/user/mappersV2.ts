@@ -796,7 +796,7 @@ export function getUpdatesResponse(value: UserUpdatesResponse): UpdatesResponse 
                 messageActivitySummary,
             ),
             botsAddedOrUpdated: value.Success.bots_added_or_updated.map(installedBotDetails),
-            botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
+            botsRemoved: value.Success.bots_removed.map(principalBytesToString),
             bitcoinAddress: value.Success.btc_address,
             streakInsurance: optionUpdateV2(result.streak_insurance, streakInsurance),
         };
