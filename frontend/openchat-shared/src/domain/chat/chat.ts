@@ -1,3 +1,4 @@
+import { ROLE_NONE } from "../../constants";
 import { emptyChatMetrics } from "../../utils";
 import type { AccessControlled, AccessGateConfig, UpdatedRules, VersionedRules } from "../access";
 import type {
@@ -36,7 +37,6 @@ import type {
 } from "../response";
 import type { ChatListScope, HasLevel } from "../structure";
 import type { Referral, UserSummary } from "../user/user";
-import { ROLE_NONE } from "../../constants";
 
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
 export type CanisterNotFound = { kind: "canister_not_found" };
@@ -2378,16 +2378,12 @@ export type ChatEventType =
     | "MessageReaction"
     | "MessageTipped"
     | "MessageDeleted"
+    | "MessageUndeleted"
     | "MessagePollVote"
     | "MessagePollEnded"
     | "MessagePrizeClaim"
-    | "MessagePrizePayment"
-    | "MessageProposalVote"
-    | "MessageProposalUpdated"
-    | "MessageP2pSwap"
-    | "MessageReported"
-    | "MessageThreadSummary"
-    | "MessageReminder"
+    | "MessageP2pSwapCompleted"
+    | "MessageP2pSwapCancelled"
     | "MessageVideoCall"
     | "MessageOther"
     | "Created"
@@ -2397,20 +2393,20 @@ export type ChatEventType =
     | "AvatarChanged"
     | "ExternalUrlUpdated"
     | "PermissionsChanged"
+    | "GateUpdated"
     | "VisibilityChanged"
     | "InviteCodeChanged"
     | "Frozen"
     | "Unfrozen"
-    | "EventsTTLUpdated"
-    | "GateUpdated"
+    | "DisappearingMessagesUpdated"
     | "MessagePinned"
     | "MessageUnpinned"
     | "MembersJoined"
     | "MembersLeft"
     | "RoleChanged"
     | "UsersInvited"
+    | "UsersBlocked"
+    | "UsersUnblocked"
     | "BotAdded"
     | "BotRemoved"
-    | "BotUpdated"
-    | "UsersBlocked"
-    | "UsersUnblocked";
+    | "BotUpdated";

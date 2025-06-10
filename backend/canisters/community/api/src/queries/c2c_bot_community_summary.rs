@@ -20,7 +20,7 @@ pub enum Response {
     Error(OCError),
 }
 
-#[ts_export]
+#[ts_export(community)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunitySummary {
     pub community_id: CommunityId,
@@ -41,7 +41,7 @@ pub struct CommunitySummary {
     pub latest_event_index: EventIndex,
 }
 
-#[ts_export]
+#[ts_export(community)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ChannelSummary {
     pub channel_id: ChannelId,
