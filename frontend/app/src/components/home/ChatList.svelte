@@ -296,7 +296,6 @@
                                 {#each resp as match, i (userOrBotKey(match))}
                                     {#if match.kind === "bot_match"}
                                         <SearchResult
-                                            bot
                                             index={i}
                                             avatarUrl={match.avatarUrl ?? "/assets/bot_avatar.svg"}
                                             onclick={() => chatWith(match.id)}>
