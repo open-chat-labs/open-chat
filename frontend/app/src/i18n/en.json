@@ -1215,6 +1215,8 @@
         "pinMessages": "pin messages",
         "reactToMessages": "react to messages",
         "readChatDetails": "read chat details",
+        "readChatSummary": "read chat summary",
+        "readCommunitySummary": "read community summary",
         "readMembership": "read membership details",
         "readMessages": "read messages",
         "removeMembers": "remove/block members",
