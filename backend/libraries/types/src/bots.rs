@@ -220,7 +220,7 @@ impl BotPermissions {
                 ChatPermission::StartVideoCall,
                 ChatPermission::ReadMessages,
                 ChatPermission::ReadMembership,
-                ChatPermission::ReadChatDetails,
+                ChatPermission::ReadSummary,
             ]))
             .with_message(&HashSet::from_iter([
                 MessagePermission::Text,
@@ -247,7 +247,7 @@ impl BotPermissions {
         if chat_permissions.contains(&ChatPermission::ReadMembership) {
             event_categories.insert(ChatEventCategory::Membership);
         }
-        if chat_permissions.contains(&ChatPermission::ReadChatDetails) {
+        if chat_permissions.contains(&ChatPermission::ReadSummary) {
             event_categories.insert(ChatEventCategory::Details);
         }
         event_categories
@@ -485,7 +485,7 @@ impl From<ChatEventCategory> for ChatPermission {
         match value {
             ChatEventCategory::Message => ChatPermission::ReadMessages,
             ChatEventCategory::Membership => ChatPermission::ReadMembership,
-            ChatEventCategory::Details => ChatPermission::ReadChatDetails,
+            ChatEventCategory::Details => ChatPermission::ReadSummary,
         }
     }
 }
@@ -494,7 +494,7 @@ impl From<CommunityEventCategory> for CommunityPermission {
     fn from(value: CommunityEventCategory) -> Self {
         match value {
             CommunityEventCategory::Membership => CommunityPermission::ReadMembership,
-            CommunityEventCategory::Details => CommunityPermission::ReadDetails,
+            CommunityEventCategory::Details => CommunityPermission::ReadSummary,
         }
     }
 }
