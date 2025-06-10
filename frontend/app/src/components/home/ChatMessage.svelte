@@ -63,6 +63,7 @@
     import IntersectionObserverComponent from "./IntersectionObserver.svelte";
     import MessageReaction from "./MessageReaction.svelte";
     import Badges from "./profile/Badges.svelte";
+    import BotBadge from "./profile/BotBadge.svelte";
     import RoleIcon from "./profile/RoleIcon.svelte";
     import WithRole from "./profile/WithRole.svelte";
     import ReminderBuilder from "./ReminderBuilder.svelte";
@@ -574,7 +575,6 @@
                                         maxStreak={hasAchievedMaxStreak}
                                         url={client.userAvatarUrl(sender)}
                                         userId={msg.sender}
-                                        bot={sender?.kind === "bot"}
                                         size={$mobileWidth
                                             ? AvatarSize.Small
                                             : AvatarSize.Default} />
@@ -623,6 +623,7 @@
                                             uniquePerson={sender?.isUniquePerson}
                                             diamondStatus={sender?.diamondStatus}
                                             {streak} />
+                                        <BotBadge bot={sender?.kind === "bot"} />
                                         {#if sender !== undefined && multiUserChat}
                                             <WithRole
                                                 userId={sender.userId}
