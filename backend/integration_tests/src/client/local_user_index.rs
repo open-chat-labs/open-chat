@@ -11,9 +11,9 @@ generate_query_call!(latest_notification_index);
 generate_query_call!(notifications_v2);
 
 // Updates
-generate_update_call!(bot_create_channel_v2);
-generate_update_call!(bot_delete_channel_v2);
-generate_update_call!(bot_send_message_v2);
+generate_update_call!(bot_create_channel);
+generate_update_call!(bot_delete_channel);
+generate_update_call!(bot_send_message);
 generate_update_call!(bot_subscribe_to_events);
 generate_msgpack_update_call!(install_bot);
 generate_msgpack_update_call!(invite_users_to_channel);
