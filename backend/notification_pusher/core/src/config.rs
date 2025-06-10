@@ -67,6 +67,9 @@ impl<I: IndexStore + 'static> Config<I> {
     where
         F: FnOnce(EnvConfig) -> Result<I, Error>,
     {
+        // Load environment variables from .env file
+        dotenv::dotenv()?;
+
         // Load environment configuration
         let env_config = EnvConfig::init_from_env().map_err(|e| format!("Failed to load environment config: {}", e))?;
 
