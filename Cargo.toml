@@ -186,8 +186,8 @@ clap = "4"
 ct-codecs = "1"
 data-encoding = "2"
 dataurl = "0.1"
-dotenv = "0.15"
 enum-repr = "0.2"
+envconfig = "0.10.0"
 event_store_canister = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
 event_store_producer = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
 event_store_producer_cdk_runtime = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }

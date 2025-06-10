@@ -5,6 +5,7 @@ use crate::user_notifications::pusher::Pusher;
 use crate::user_notifications::subscription_remover::SubscriptionRemover;
 use crate::{NotificationToPush, PushNotification};
 use async_channel::Sender;
+use fcm_service::FcmService;
 use prometheus::PullingGauge;
 use std::sync::{Arc, RwLock};
 use types::{CanisterId, UserId};
@@ -18,7 +19,7 @@ pub fn start_user_notifications_processor(
     index_canister_id: CanisterId,
     vapid_private_pem: String,
     pusher_count: u32,
-    gcloud_sa_json_path: String,
+    fcm_service: Arc<FcmService>,
 ) -> Sender<PushNotification> {
     let (to_process_sender, to_process_receiver) = async_channel::bounded::<PushNotification>(200_000);
     let (to_push_sender, to_push_receiver) = async_channel::bounded::<NotificationToPush>(200_000);
@@ -42,7 +43,7 @@ pub fn start_user_notifications_processor(
             subscriptions_to_remove_sender.clone(),
             invalid_subscriptions.clone(),
             throttled_subscriptions.clone(),
-            gcloud_sa_json_path.clone(),
+            fcm_service.clone(),
         );
         tokio::spawn(pusher.run());
     }
