@@ -27,7 +27,6 @@ fn c2c_uninstall_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let now = state.env.now();
 
     state.data.bots.remove(args.bot_id, now);
-    state.data.bot_api_keys.delete(args.bot_id);
     state.delete_direct_chat(args.bot_id, false, now);
 
     state.push_bot_notification(Some(BotNotification {

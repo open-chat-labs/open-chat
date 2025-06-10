@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
     CanisterId, Chat, ChatId, ChitEarned, DirectChatSummary, Empty, GroupChatSummary, InstalledBotDetails, PinNumberSettings,
-    PublicApiKeyDetails, StreakInsurance, TimestampMillis, UserId,
+    StreakInsurance, TimestampMillis, UserId,
 };
 
 pub type Args = Empty;
@@ -42,7 +42,6 @@ pub struct SuccessResult {
     pub referrals: Vec<Referral>,
     pub message_activity_summary: MessageActivitySummary,
     pub bots: Vec<InstalledBotDetails>,
-    pub api_keys: Vec<PublicApiKeyDetails>,
     pub btc_address: Option<String>,
 }
 

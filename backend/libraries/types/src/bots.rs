@@ -339,15 +339,6 @@ pub struct WebhookDetails {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct PublicApiKeyDetails {
-    pub bot_id: UserId,
-    pub granted_permissions: BotPermissions,
-    pub generated_by: UserId,
-    pub generated_at: TimestampMillis,
-}
-
-#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct BotCommand {
     pub name: String,
@@ -446,8 +437,6 @@ pub enum BotMessageContent {
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub enum BotInitiator {
     Command(BotCommand),
-    ApiKeySecret(String),
-    ApiKeyPermissions(BotPermissions),
     Autonomous,
 }
 
@@ -465,13 +454,6 @@ impl BotInitiator {
             _ => None,
         }
     }
-
-    pub fn api_key_secret(&self) -> Option<&str> {
-        match self {
-            BotInitiator::ApiKeySecret(s) => Some(s),
-            _ => None,
-        }
-    }
 }
 
 impl From<BotMessageContent> for MessageContentInitial {
@@ -486,13 +468,6 @@ impl From<BotMessageContent> for MessageContentInitial {
             BotMessageContent::Giphy(c) => MessageContentInitial::Giphy(c),
         }
     }
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum AuthToken {
-    Jwt(String),
-    ApiKey(String),
 }
 
 #[ts_export]
