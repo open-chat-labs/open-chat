@@ -8,7 +8,8 @@ use local_user_index_canister::bot_send_message::*;
 use oc_error_codes::{OCError, OCErrorCode};
 use rand::Rng;
 use types::{
-    BotActionScope, BotInitiator, BotMessageContent, ChannelId, Chat, ChatId, CommunityId, MessageId, MessageIndex, UserId,
+    BotActionScope, BotInitiator, BotMessageContent, ChannelId, Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex,
+    UserId,
 };
 
 #[update(candid = true, json = true, msgpack = true)]
@@ -23,6 +24,7 @@ async fn bot_send_message(args: Args) -> Response {
         None,
         args.thread,
         args.message_id,
+        args.replies_to,
         args.content,
         args.block_level_markdown,
         args.finalised,
@@ -40,11 +42,13 @@ struct MessageAccessContext {
     user_message_id: Option<MessageId>,
 }
 
+#[expect(clippy::too_many_arguments)]
 async fn bot_send_message_impl(
     context: BotAccessContext,
     channel_id: Option<ChannelId>,
     thread: Option<MessageIndex>,
     message_id: Option<MessageId>,
+    replies_to: Option<EventIndex>,
     content: BotMessageContent,
     block_level_markdown: bool,
     finalised: bool,
@@ -63,6 +67,7 @@ async fn bot_send_message_impl(
                 chat_id,
                 context.thread,
                 context.message_id,
+                replies_to,
                 context.user_message_id,
                 content,
                 block_level_markdown,
@@ -78,6 +83,7 @@ async fn bot_send_message_impl(
                 chat_id,
                 context.thread,
                 context.message_id,
+                replies_to,
                 content,
                 block_level_markdown,
                 finalised,
@@ -93,6 +99,7 @@ async fn bot_send_message_impl(
                 channel_id,
                 context.thread,
                 context.message_id,
+                replies_to,
                 content,
                 block_level_markdown,
                 finalised,
@@ -151,6 +158,7 @@ async fn send_message_to_channel(
     channel_id: ChannelId,
     thread_root_message_index: Option<MessageIndex>,
     message_id: MessageId,
+    replies_to: Option<EventIndex>,
     content: BotMessageContent,
     block_level_markdown: bool,
     finalised: bool,
@@ -165,6 +173,7 @@ async fn send_message_to_channel(
             channel_id,
             thread_root_message_index,
             message_id,
+            replies_to,
             content,
             bot_name,
             block_level_markdown,
@@ -195,6 +204,7 @@ async fn send_message_to_group(
     chat_id: ChatId,
     thread_root_message_index: Option<MessageIndex>,
     message_id: MessageId,
+    replies_to: Option<EventIndex>,
     content: BotMessageContent,
     block_level_markdown: bool,
     finalised: bool,
@@ -208,6 +218,7 @@ async fn send_message_to_group(
             initiator,
             thread_root_message_index,
             message_id,
+            replies_to,
             content,
             bot_name,
             block_level_markdown,
@@ -238,6 +249,7 @@ async fn send_message_to_user(
     chat_id: ChatId,
     thread_root_message_index: Option<MessageIndex>,
     message_id: MessageId,
+    replies_to: Option<EventIndex>,
     user_message_id: Option<MessageId>,
     content: BotMessageContent,
     block_level_markdown: bool,
@@ -252,6 +264,7 @@ async fn send_message_to_user(
             initiator,
             thread_root_message_index,
             message_id,
+            replies_to,
             user_message_id,
             content,
             bot_name,

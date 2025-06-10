@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Remove bot API Keys ([#8131](https://github.com/open-chat-labs/open-chat/pull/8131))
+- Support bot making inline replies ([#8146](https://github.com/open-chat-labs/open-chat/pull/8146))
 
 ## [[2.0.1786](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1786-group)] - 2025-06-06
 
