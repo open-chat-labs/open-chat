@@ -6,12 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `bot_community_summary` endpoint ([#8135](https://github.com/open-chat-labs/open-chat/pull/8135))
+
 ### Changed
 
 - Remove all references to Notifications canisters ([#8087](https://github.com/open-chat-labs/open-chat/pull/8087))
 - Remove `correlation_id` ([#8097](https://github.com/open-chat-labs/open-chat/pull/8097))
 - Add optional thread to args of `bot_chat_events` ([#8128](https://github.com/open-chat-labs/open-chat/pull/8128))
 - Remove bot API Keys ([#8131](https://github.com/open-chat-labs/open-chat/pull/8131))
+- Remove _v2 suffix from bot_\* endpoints ([#8139](https://github.com/open-chat-labs/open-chat/pull/8139))
 
 ### Removed
 
@@ -20,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Fix `bot_chat_events` for direct chats ([#8096](https://github.com/open-chat-labs/open-chat/pull/8096))
+- Add missing decoding for community read permissions ([#8141](https://github.com/open-chat-labs/open-chat/pull/8141))
 
 ## [[2.0.1778](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1778-local_user_index)] - 2025-06-02
 

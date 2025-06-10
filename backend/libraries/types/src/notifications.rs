@@ -136,6 +136,8 @@ pub struct UserNotificationEnvelope {
     pub notification_bytes: ByteBuf,
     #[serde(rename = "t")]
     pub timestamp: TimestampMillis,
+    #[serde(rename = "f")]
+    pub fcm_data: FcmData,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

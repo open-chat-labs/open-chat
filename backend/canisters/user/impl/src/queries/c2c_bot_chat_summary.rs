@@ -17,7 +17,7 @@ fn c2c_bot_chat_summary_impl(args: Args, state: &RuntimeState) -> OCResult<ChatS
     if !state.data.is_bot_permitted(
         &args.bot_id,
         &args.initiator,
-        BotPermissions::from_chat_permission(ChatPermission::ReadChatDetails),
+        BotPermissions::from_chat_permission(ChatPermission::ReadSummary),
     ) {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }

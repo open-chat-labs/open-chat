@@ -138,11 +138,11 @@ fn e2e_command_bot_test() {
     // Call execute_bot_action as bot - unfinalised message
     let username = owner.username();
     let text = format!("Hello {username}");
-    let response = client::local_user_index::bot_send_message_v2(
+    let response = client::local_user_index::bot_send_message(
         env,
         bot_principal,
         canister_ids.local_user_index(env, group_id),
-        &local_user_index_canister::bot_send_message_v2::Args {
+        &local_user_index_canister::bot_send_message::Args {
             chat_context: BotChatContext::Command(access_token.clone()),
             thread: None,
             message_id: None,
@@ -152,7 +152,7 @@ fn e2e_command_bot_test() {
         },
     );
 
-    if !matches!(response, local_user_index_canister::bot_send_message_v2::Response::Success(_)) {
+    if !matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)) {
         panic!("'bot_send_message' error: {response:?}");
     }
 
@@ -174,11 +174,11 @@ fn e2e_command_bot_test() {
     // Call execute_bot_action as bot - finalised message
     let text = "Hello world".to_string();
 
-    let response = client::local_user_index::bot_send_message_v2(
+    let response = client::local_user_index::bot_send_message(
         env,
         bot_principal,
         canister_ids.local_user_index(env, group_id),
-        &local_user_index_canister::bot_send_message_v2::Args {
+        &local_user_index_canister::bot_send_message::Args {
             chat_context: BotChatContext::Command(access_token.clone()),
             thread: None,
             message_id: None,
@@ -188,7 +188,7 @@ fn e2e_command_bot_test() {
         },
     );
 
-    if !matches!(response, local_user_index_canister::bot_send_message_v2::Response::Success(_)) {
+    if !matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)) {
         panic!("'bot_send_message' error: {response:?}");
     }
 
@@ -344,11 +344,11 @@ fn e2e_autonomous_bot_test() {
 
     // Call bot_send_message
     let text = "Hello world".to_string();
-    let send_message_response = client::local_user_index::bot_send_message_v2(
+    let send_message_response = client::local_user_index::bot_send_message(
         env,
         bot_principal,
         canister_ids.local_user_index(env, community_id),
-        &local_user_index_canister::bot_send_message_v2::Args {
+        &local_user_index_canister::bot_send_message::Args {
             chat_context: BotChatContext::Autonomous(chat),
             thread: None,
             message_id: None,
@@ -361,14 +361,14 @@ fn e2e_autonomous_bot_test() {
     assert!(
         matches!(
             send_message_response,
-            local_user_index_canister::bot_send_message_v2::Response::Success(_)
+            local_user_index_canister::bot_send_message::Response::Success(_)
         ),
         "'bot_send_message' error: {send_message_response:?}"
     );
 
     tick_many(env, 5);
 
-    let notifications = client::local_user_index::happy_path::notifications_v2(
+    let notifications = client::local_user_index::happy_path::notifications(
         env,
         *controller,
         canister_ids.local_user_index(env, community_id),
@@ -421,11 +421,11 @@ fn create_channel_autonomously() {
     env.tick();
 
     // The bot creates a channel
-    let response = client::local_user_index::bot_create_channel_v2(
+    let response = client::local_user_index::bot_create_channel(
         env,
         bot_principal,
         canister_ids.local_user_index(env, community_id),
-        &local_user_index_canister::bot_create_channel_v2::Args {
+        &local_user_index_canister::bot_create_channel::Args {
             community_id,
             is_public: true,
             name: "My channel".to_string(),
@@ -444,16 +444,16 @@ fn create_channel_autonomously() {
         },
     );
 
-    let local_user_index_canister::bot_create_channel_v2::Response::Success(result) = response else {
+    let local_user_index_canister::bot_create_channel::Response::Success(result) = response else {
         panic!("'bot_send_message' error: {response:?}");
     };
 
     // Bot sends a message to the channel
-    let response = client::local_user_index::bot_send_message_v2(
+    let response = client::local_user_index::bot_send_message(
         env,
         bot_principal,
         canister_ids.local_user_index(env, community_id),
-        &local_user_index_canister::bot_send_message_v2::Args {
+        &local_user_index_canister::bot_send_message::Args {
             chat_context: BotChatContext::Autonomous(Chat::Channel(community_id, result.channel_id)),
             thread: None,
             message_id: None,
@@ -465,22 +465,22 @@ fn create_channel_autonomously() {
         },
     );
 
-    if !matches!(response, local_user_index_canister::bot_send_message_v2::Response::Success(_)) {
+    if !matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)) {
         panic!("'bot_send_message' error: {response:?}");
     }
 
     // Bot removes the channel
-    let response = client::local_user_index::bot_delete_channel_v2(
+    let response = client::local_user_index::bot_delete_channel(
         env,
         bot_principal,
         canister_ids.local_user_index(env, community_id),
-        &local_user_index_canister::bot_delete_channel_v2::Args {
+        &local_user_index_canister::bot_delete_channel::Args {
             community_id,
             channel_id: result.channel_id,
         },
     );
 
-    if !matches!(response, local_user_index_canister::bot_delete_channel_v2::Response::Success) {
+    if !matches!(response, local_user_index_canister::bot_delete_channel::Response::Success) {
         panic!("'bot_delete_channel' error: {response:?}");
     }
 }
@@ -596,7 +596,6 @@ fn read_messages_by_command() {
             description: description.clone(),
             commands: commands.clone(),
             autonomous_config: Some(AutonomousConfig {
-                sync_api_key: false,
                 permissions: BotPermissions::default(),
             }),
             default_subscriptions: None,
@@ -758,11 +757,11 @@ fn send_direct_message() {
         };
 
     // Send message
-    let response = client::local_user_index::bot_send_message_v2(
+    let response = client::local_user_index::bot_send_message(
         env,
         bot_principal,
         local_user_index,
-        &local_user_index_canister::bot_send_message_v2::Args {
+        &local_user_index_canister::bot_send_message::Args {
             chat_context: BotChatContext::Command(access_token),
             thread: None,
             message_id: None,
@@ -774,7 +773,7 @@ fn send_direct_message() {
         },
     );
 
-    if !matches!(response, local_user_index_canister::bot_send_message_v2::Response::Success(_)) {
+    if !matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)) {
         panic!("'bot_send_message' error: {response:?}");
     }
 
@@ -887,11 +886,11 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
     // Send message - unfinalised
     let username = owner.username();
     let text = format!("Hello 1 {username}");
-    let response = client::local_user_index::bot_send_message_v2(
+    let response = client::local_user_index::bot_send_message(
         env,
         bot_principal,
         local_user_index,
-        &local_user_index_canister::bot_send_message_v2::Args {
+        &local_user_index_canister::bot_send_message::Args {
             chat_context: BotChatContext::Command(access_token.clone()),
             thread: None,
             message_id: None,
@@ -901,17 +900,17 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
         },
     );
 
-    if !matches!(response, local_user_index_canister::bot_send_message_v2::Response::Success(_)) {
+    if !matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)) {
         panic!("'bot_send_message' error: {response:?}");
     }
 
     // Update message - unfinalised
     let text = format!("Hello 2 {username}");
-    let response = client::local_user_index::bot_send_message_v2(
+    let response = client::local_user_index::bot_send_message(
         env,
         bot_principal,
         local_user_index,
-        &local_user_index_canister::bot_send_message_v2::Args {
+        &local_user_index_canister::bot_send_message::Args {
             chat_context: BotChatContext::Command(access_token.clone()),
             thread: None,
             message_id: None,
@@ -921,17 +920,17 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
         },
     );
 
-    if !matches!(response, local_user_index_canister::bot_send_message_v2::Response::Success(_)) {
+    if !matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)) {
         panic!("'bot_send_message' error: {response:?}");
     }
 
     // Update message - finalised
     let text = format!("Hello 3 {username}");
-    let response = client::local_user_index::bot_send_message_v2(
+    let response = client::local_user_index::bot_send_message(
         env,
         bot_principal,
         local_user_index,
-        &local_user_index_canister::bot_send_message_v2::Args {
+        &local_user_index_canister::bot_send_message::Args {
             chat_context: BotChatContext::Command(access_token.clone()),
             thread: None,
             message_id: None,
@@ -941,7 +940,7 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
         },
     );
 
-    if !matches!(response, local_user_index_canister::bot_send_message_v2::Response::Success(_)) {
+    if !matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)) {
         panic!("'bot_send_message' error: {response:?}");
     }
 
@@ -969,11 +968,11 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
 
     // Try updating the same message again but expect it to fail
     let text = format!("Hello 4 {username}");
-    let response = client::local_user_index::bot_send_message_v2(
+    let response = client::local_user_index::bot_send_message(
         env,
         bot_principal,
         local_user_index,
-        &local_user_index_canister::bot_send_message_v2::Args {
+        &local_user_index_canister::bot_send_message::Args {
             chat_context: BotChatContext::Command(access_token),
             thread: None,
             message_id: None,
@@ -985,7 +984,7 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
 
     assert!(!matches!(
         response,
-        local_user_index_canister::bot_send_message_v2::Response::Success(_)
+        local_user_index_canister::bot_send_message::Response::Success(_)
     ));
 }
 
@@ -1020,7 +1019,6 @@ fn register_bot(
             description: description.clone(),
             commands: commands.clone(),
             autonomous_config: Some(AutonomousConfig {
-                sync_api_key: false,
                 permissions: BotPermissions::text_only(),
             }),
             default_subscriptions: None,

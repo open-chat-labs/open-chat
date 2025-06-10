@@ -27,7 +27,7 @@ pub enum CommunityPermission {
     CreatePrivateChannel = 5,
     ManageUserGroups = 6,
     ReadMembership = 7,
-    ReadDetails = 8,
+    ReadSummary = 8,
 }
 
 impl From<CommunityPermission> for u8 {
@@ -48,6 +48,8 @@ impl TryFrom<u8> for CommunityPermission {
             4 => Ok(CommunityPermission::CreatePublicChannel),
             5 => Ok(CommunityPermission::CreatePrivateChannel),
             6 => Ok(CommunityPermission::ManageUserGroups),
+            7 => Ok(CommunityPermission::ReadMembership),
+            8 => Ok(CommunityPermission::ReadSummary),
             _ => Err(()),
         }
     }

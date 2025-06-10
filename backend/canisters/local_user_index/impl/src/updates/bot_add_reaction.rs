@@ -3,12 +3,12 @@ use crate::{
     mutate_state,
 };
 use canister_api_macros::update;
-use local_user_index_canister::bot_add_reaction_v2::*;
+use local_user_index_canister::bot_add_reaction::*;
 use oc_error_codes::OCErrorCode;
 use types::{ChannelId, Chat, MessageId, MessageIndex, Reaction};
 
 #[update(candid = true, json = true, msgpack = true)]
-async fn bot_add_reaction_v2(args: Args) -> Response {
+async fn bot_add_reaction(args: Args) -> Response {
     let context = match mutate_state(|state| extract_access_context_from_chat_context(args.chat_context, state)) {
         Ok(context) => context,
         Err(_) => return OCErrorCode::BotNotAuthenticated.into(),

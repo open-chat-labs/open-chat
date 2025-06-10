@@ -1,6 +1,7 @@
 pub mod access_token_v2;
 pub mod bot_chat_events;
 pub mod bot_chat_summary;
+pub mod bot_community_summary;
 pub mod c2c_diamond_membership_expiry_dates;
 pub mod c2c_lookup_user;
 pub mod c2c_lookup_users;
@@ -10,4 +11,5 @@ pub mod group_and_community_summary_updates;
 pub mod group_and_community_summary_updates_v2;
 pub mod http_request;
 pub mod latest_notification_index;
+pub mod notifications;
 pub mod notifications_v2;
