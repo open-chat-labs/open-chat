@@ -1215,6 +1215,8 @@
         "pinMessages": "закріпити повідомлення",
         "reactToMessages": "реагувати на повідомлення",
         "readChatDetails": "читати деталі чату",
+        "readChatSummary": "прочитати короткий зміст чату",
+        "readCommunitySummary": "прочитати короткий опис спільноти",
         "readMembership": "читати деталі членства",
         "readMessages": "читати повідомлення",
         "removeMembers": "видалити/блокувати учасників",
