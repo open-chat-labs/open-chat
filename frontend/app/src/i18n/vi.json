@@ -1215,6 +1215,8 @@
         "pinMessages": "ghim tin nhắn",
         "reactToMessages": "phản ứng với tin nhắn",
         "readChatDetails": "đọc chi tiết trò chuyện",
+        "readChatSummary": "đọc tóm tắt cuộc trò chuyện",
+        "readCommunitySummary": "đọc tóm tắt cộng đồng",
         "readMembership": "đọc thông tin chi tiết về thành viên",
         "readMessages": "đọc tin nhắn",
         "removeMembers": "xóa/chặn thành viên",

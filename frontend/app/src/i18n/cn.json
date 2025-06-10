@@ -1215,6 +1215,8 @@
         "pinMessages": "固定消息",
         "reactToMessages": "对消息做出反应",
         "readChatDetails": "阅读聊天详细信息",
+        "readChatSummary": "阅读聊天摘要",
+        "readCommunitySummary": "阅读社区摘要",
         "readMembership": "阅读会员详细信息",
         "readMessages": "阅读消息",
         "removeMembers": "删除/阻止成员",

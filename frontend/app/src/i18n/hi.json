@@ -1215,6 +1215,8 @@
         "pinMessages": "संदेशों को पिन करें",
         "reactToMessages": "संदेशों पर प्रतिक्रिया दें",
         "readChatDetails": "चैट विवरण पढ़ें",
+        "readChatSummary": "चैट सारांश पढ़ें",
+        "readCommunitySummary": "समुदाय सारांश पढ़ें",
         "readMembership": "सदस्यता विवरण पढ़ें",
         "readMessages": "संदेश पढ़ें",
         "removeMembers": "सदस्यों को हटाएं/ब्लॉक करें",

@@ -6484,6 +6484,7 @@ dependencies = [
  "async-channel 2.2.0",
  "base64 0.22.1",
  "candid",
+ "dotenv",
  "envconfig",
  "fcm-service",
  "ic-agent",
