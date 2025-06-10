@@ -9,7 +9,6 @@ mod avatar;
 mod bitflags;
 mod bots;
 mod build_version;
-pub mod c2c_bot_api_key;
 pub mod c2c_can_issue_access_token;
 pub mod c2c_install_bot;
 pub mod c2c_uninstall_bot;

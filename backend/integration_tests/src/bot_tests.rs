@@ -596,7 +596,6 @@ fn read_messages_by_command() {
             description: description.clone(),
             commands: commands.clone(),
             autonomous_config: Some(AutonomousConfig {
-                sync_api_key: false,
                 permissions: BotPermissions::default(),
             }),
             default_subscriptions: None,
@@ -1020,7 +1019,6 @@ fn register_bot(
             description: description.clone(),
             commands: commands.clone(),
             autonomous_config: Some(AutonomousConfig {
-                sync_api_key: false,
                 permissions: BotPermissions::text_only(),
             }),
             default_subscriptions: None,

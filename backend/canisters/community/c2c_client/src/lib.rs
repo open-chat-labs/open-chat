@@ -2,7 +2,6 @@ use canister_client::generate_c2c_call;
 use community_canister::*;
 
 // Queries
-generate_c2c_call!(c2c_bot_api_key);
 generate_c2c_call!(c2c_bot_channel_details);
 generate_c2c_call!(c2c_can_issue_access_token);
 generate_c2c_call!(c2c_events);
