@@ -5,7 +5,6 @@ edition.workspace = true
 
 [dependencies]
 candid = { workspace = true }
-dotenv = { workspace = true }
 index_store = { path = "../../libraries/index_store" }
 notification_pusher_core = { path = "../core" }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }
