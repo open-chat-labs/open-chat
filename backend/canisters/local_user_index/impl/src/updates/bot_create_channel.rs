@@ -1,14 +1,14 @@
 use canister_api_macros::update;
-use local_user_index_canister::bot_create_channel_v2::{Response::*, *};
+use local_user_index_canister::bot_create_channel::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use types::{BotInitiator, UserId};
 
 use crate::read_state;
 
 #[update(candid = true, json = true, msgpack = true)]
-async fn bot_create_channel_v2(args: Args) -> Response {
+async fn bot_create_channel(args: Args) -> Response {
     let Some(bot_id) = read_state(|state| state.data.bots.get_by_caller(&state.env.caller()).map(|bot| bot.bot_id)) else {
-        return Error(OCErrorCode::BotNotAuthenticated.into());
+        return Response::Error(OCErrorCode::BotNotAuthenticated.into());
     };
 
     bot_create_channel_impl(args, bot_id, BotInitiator::Autonomous).await
