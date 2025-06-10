@@ -66,8 +66,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         || state.data.chit_events.last_updated() > updates_since
         || state.data.achievements_last_seen > updates_since
         || state.data.message_activity_events.last_updated() > updates_since
-        || state.data.bots.last_updated() > updates_since
-        || state.data.bot_api_keys.last_updated() > updates_since;
+        || state.data.bots.last_updated() > updates_since;
 
     // Short circuit prior to calling `ic0.time()` so that caching works effectively
     if !has_any_updates {
@@ -214,7 +213,6 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         message_activity_summary,
         bots_added_or_updated,
         bots_removed,
-        api_keys_generated: state.data.bot_api_keys.generated_since(updates_since),
         btc_address,
     })
 }

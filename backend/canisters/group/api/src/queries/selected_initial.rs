@@ -3,14 +3,12 @@ use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
-    Empty, EventIndex, GroupMember, InstalledBotDetails, MessageIndex, PublicApiKeyDetails, TimestampMillis, UserId,
-    VersionedRules, WebhookDetails,
+    Empty, EventIndex, GroupMember, InstalledBotDetails, MessageIndex, TimestampMillis, UserId, VersionedRules, WebhookDetails,
 };
 
 pub type Args = Empty;
 
 #[ts_export(group, selected_initial)]
-#[expect(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
@@ -25,7 +23,6 @@ pub struct SuccessResult {
     pub latest_event_index: EventIndex,
     pub participants: Vec<GroupMember>,
     pub bots: Vec<InstalledBotDetails>,
-    pub api_keys: Vec<PublicApiKeyDetails>,
     pub webhooks: Vec<WebhookDetails>,
     pub basic_members: Vec<UserId>,
     pub blocked_users: Vec<UserId>,

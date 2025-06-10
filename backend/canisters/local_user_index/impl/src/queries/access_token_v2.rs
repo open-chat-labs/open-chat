@@ -8,14 +8,12 @@ use rand::SeedableRng;
 use rand::rngs::StdRng;
 use serde::Serialize;
 use types::c2c_can_issue_access_token::{
-    AccessTypeArgs, BotActionByApiKeyArgs, BotActionByCommandArgs, JoinVideoCallArgs, MarkVideoCallAsEndedArgs,
-    StartVideoCallArgs,
+    AccessTypeArgs, BotActionByCommandArgs, JoinVideoCallArgs, MarkVideoCallAsEndedArgs, StartVideoCallArgs,
 };
 use types::{
-    AutonomousBotScope, BotActionByApiKeyClaims, BotActionByCommandClaims, BotApiKeyToken, BotCommand, BotCommandArg,
-    BotCommandArgValue, BotPermissions, Chat, GroupRole, JoinOrEndVideoCallClaims, StartVideoCallClaims, c2c_bot_api_key,
+    AutonomousBotScope, BotActionByCommandClaims, BotCommand, BotCommandArg, BotCommandArgValue, BotPermissions, Chat,
+    GroupRole, JoinOrEndVideoCallClaims, StartVideoCallClaims, c2c_bot_api_key,
 };
-use utils::base64;
 
 const SYNC_API_KEY_COMMAND_NAME: &str = "sync_api_key";
 
@@ -37,7 +35,7 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
         if a.command.name.eq_ignore_ascii_case(SYNC_API_KEY_COMMAND_NAME) {
             api_key_args = Some(c2c_bot_api_key::Args {
                 bot_id: a.bot_id,
-                initiator: access_type_args.initiator().unwrap(),
+                initiator: access_type_args.initiator(),
             })
         }
     };
@@ -60,41 +58,29 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
     mutate_state(|state| {
         let chat = args_wrapper.chat();
 
-        match &args_wrapper {
-            ArgsInternal::BotActionByCommand(args) => {
-                let command_args = if let Some(api_key) = api_key {
-                    vec![BotCommandArg {
-                        name: "api_key".to_string(),
-                        value: BotCommandArgValue::String(api_key),
-                    }]
-                } else {
-                    args.command.args.clone()
-                };
+        if let ArgsInternal::BotActionByCommand(args) = &args_wrapper {
+            let command_args = if let Some(api_key) = api_key {
+                vec![BotCommandArg {
+                    name: "api_key".to_string(),
+                    value: BotCommandArgValue::String(api_key),
+                }]
+            } else {
+                args.command.args.clone()
+            };
 
-                let custom_claims = BotActionByCommandClaims {
-                    bot: args.bot_id,
-                    scope: args.scope.clone(),
-                    bot_api_gateway: state.env.canister_id(),
-                    granted_permissions: access_type_args.requested_permissions().unwrap(),
-                    command: BotCommand {
-                        name: args.command.name.clone(),
-                        args: command_args,
-                        initiator: access_type_args.initiator().unwrap(),
-                        meta: args.command.meta.clone(),
-                    },
-                };
-                return build_token(token_type_name, custom_claims, state);
-            }
-            ArgsInternal::BotActionByApiKey(args) => {
-                let custom_claims = BotActionByApiKeyClaims {
-                    bot: args.bot_id,
-                    scope: args.scope.clone(),
-                    bot_api_gateway: state.env.canister_id(),
-                    granted_permissions: access_type_args.requested_permissions().unwrap(),
-                };
-                return build_token(token_type_name, custom_claims, state);
-            }
-            _ => (),
+            let custom_claims = BotActionByCommandClaims {
+                bot: args.bot_id,
+                scope: args.scope.clone(),
+                bot_api_gateway: state.env.canister_id(),
+                granted_permissions: access_type_args.requested_permissions().unwrap(),
+                command: BotCommand {
+                    name: args.command.name.clone(),
+                    args: command_args,
+                    initiator: access_type_args.initiator(),
+                    meta: args.command.meta.clone(),
+                },
+            };
+            return build_token(token_type_name, custom_claims, state);
         }
 
         match access_type_args {
@@ -132,27 +118,6 @@ struct PrepareResult {
 }
 
 fn prepare(args_outer: &ArgsInternal, state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if let ArgsInternal::BotActionByApiKey(args) = args_outer {
-        let Some(permissions) = state
-            .data
-            .bots
-            .get(&args.bot_id)
-            .and_then(|b| b.autonomous_config.as_ref())
-            .map(|c| c.permissions.clone())
-        else {
-            return Err(Response::NotAuthorized);
-        };
-
-        return Ok(PrepareResult {
-            scope: args.scope.clone(),
-            access_type_args: AccessTypeArgs::BotActionByApiKey(BotActionByApiKeyArgs {
-                bot_id: args.bot_id,
-                secret: args.secret.clone(),
-                requested_permissions: permissions,
-            }),
-        });
-    }
-
     let Some(user) = state
         .data
         .global_users
@@ -245,7 +210,6 @@ enum ArgsInternal {
     JoinVideoCall(access_token_v2::JoinVideoCallArgs),
     MarkVideoCallAsEnded(access_token_v2::MarkVideoCallAsEndedArgs),
     BotActionByCommand(access_token_v2::BotActionByCommandArgs),
-    BotActionByApiKey(BotApiKeyToken),
 }
 
 impl ArgsInternal {
@@ -255,10 +219,6 @@ impl ArgsInternal {
             Args::JoinVideoCall(args) => Ok(ArgsInternal::JoinVideoCall(args)),
             Args::MarkVideoCallAsEnded(args) => Ok(ArgsInternal::MarkVideoCallAsEnded(args)),
             Args::BotActionByCommand(args) => Ok(ArgsInternal::BotActionByCommand(args)),
-            Args::BotActionByApiKey(args) => {
-                let token: BotApiKeyToken = base64::to_value(&args)?;
-                Ok(ArgsInternal::BotActionByApiKey(token))
-            }
         }
     }
 
@@ -268,7 +228,6 @@ impl ArgsInternal {
             Self::JoinVideoCall(_) => "JoinVideoCall",
             Self::MarkVideoCallAsEnded(_) => "MarkVideoCallAsEnded",
             Self::BotActionByCommand(_) => "BotActionByCommand",
-            Self::BotActionByApiKey(_) => "BotActionByApiKey",
         }
     }
 
@@ -278,7 +237,6 @@ impl ArgsInternal {
             Self::JoinVideoCall(args) => Some(args.chat),
             Self::MarkVideoCallAsEnded(args) => Some(args.chat),
             Self::BotActionByCommand(args) => args.scope.chat(None),
-            Self::BotActionByApiKey(args) => args.scope.chat(None),
         }
     }
 }

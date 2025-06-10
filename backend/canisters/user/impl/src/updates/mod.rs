@@ -38,7 +38,6 @@ pub mod delete_group;
 pub mod delete_messages;
 pub mod edit_message;
 pub mod end_video_call;
-pub mod generate_bot_api_key;
 pub mod generate_btc_address;
 pub mod join_video_call;
 pub mod leave_community;
