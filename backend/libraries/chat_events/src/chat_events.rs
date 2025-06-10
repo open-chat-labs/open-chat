@@ -42,8 +42,6 @@ pub struct ChatEvents {
     video_call_in_progress: Timestamped<Option<VideoCallInternal>>,
     anonymized_id: String,
     search_index: SearchIndex,
-    // TODO: Remove this serde attribute after groups, communities, users released
-    #[serde(default, skip_deserializing)]
     bot_subscriptions: BTreeMap<ChatEventType, HashSet<UserId>>,
 }
 
