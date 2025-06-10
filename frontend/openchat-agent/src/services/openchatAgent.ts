@@ -290,7 +290,7 @@ import { TranslationsClient } from "./translations/translations.client";
 import { AnonUserClient } from "./user/anonUser.client";
 import { UserClient } from "./user/user.client";
 import { UserIndexClient } from "./userIndex/userIndex.client";
-import {Updatable, UpdatableOption} from "../utils/updatable";
+import { Updatable, UpdatableOption } from "../utils/updatable";
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
