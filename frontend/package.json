@@ -65,6 +65,7 @@
         "chrono-node": "^2.7.8",
         "svelte-dnd-action": "^0.9.52",
         "svelte-i18n": "^4.0.1",
+        "typescript": "^5.8.3",
         "workbox-core": "^7.1.0",
         "workbox-expiration": "^7.1.0",
         "workbox-recipes": "^7.1.0",
