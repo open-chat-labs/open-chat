@@ -368,7 +368,7 @@ fn e2e_autonomous_bot_test() {
 
     tick_many(env, 5);
 
-    let notifications = client::local_user_index::happy_path::notifications_v2(
+    let notifications = client::local_user_index::happy_path::notifications(
         env,
         *controller,
         canister_ids.local_user_index(env, community_id),

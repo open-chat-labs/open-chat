@@ -25,27 +25,25 @@ pub(crate) fn notifications_impl(args: Args, state: &RuntimeState) -> Response {
         match &notification.value {
             NotificationEnvelope::User(n) => {
                 for user_id in n.recipients.iter() {
+                    // Get web push and firebase subscriptions for the user
+                    let notification_subscriptions = get_notification_subscriptions(user_id, state);
+                    has_subscriptions = !notification_subscriptions.is_empty();
+
                     // If user's subscriptions are already processed, skip them
                     if !subscriptions.contains_key(user_id) {
-                        // Get web push and firebase subscriptions for the user
-                        let notification_subscriptions = get_notification_subscriptions(user_id, state);
+                        size_added_by_notification += notification_subscriptions
+                            .iter()
+                            .map(|s| match s {
+                                NotificationSubscription::WebPush(web_push) => web_push.approx_size(),
+                                _ => 0,
+                            })
+                            .sum::<usize>();
 
-                        if !notification_subscriptions.is_empty() {
-                            size_added_by_notification += notification_subscriptions
-                                .iter()
-                                .map(|s| match s {
-                                    NotificationSubscription::WebPush(web_push) => web_push.approx_size(),
-                                    _ => 0,
-                                })
-                                .sum::<usize>();
+                        subscriptions.insert(*user_id, notification_subscriptions);
+                    }
 
-                            subscriptions.insert(*user_id, notification_subscriptions);
-                            has_subscriptions = true;
-
-                            if size_added_by_notification > ONE_MB {
-                                break;
-                            }
-                        }
+                    if size_added_by_notification > ONE_MB {
+                        break;
                     }
                 }
             }
