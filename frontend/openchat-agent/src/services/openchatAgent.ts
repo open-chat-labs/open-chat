@@ -1651,7 +1651,7 @@ export class OpenChatAgent extends EventTarget {
         }));
     }
 
-    private applyPinnedChannelsUpdates(
+    private applyPinnedChannelUpdates(
         pinnedChannels: Updatable<ChannelIdentifier[]>,
         userResponse: UpdatesSuccessResponse,
     ) {
@@ -1837,7 +1837,7 @@ export class OpenChatAgent extends EventTarget {
                     pinnedGroupChats.updateIfNotUndefined(userResponse.groupChats.pinned);
                     pinnedDirectChats.updateIfNotUndefined(userResponse.directChats.pinned);
                     pinnedFavouriteChats.updateIfNotUndefined(userResponse.favouriteChats.pinned);
-                    this.applyPinnedChannelsUpdates(pinnedChannels, userResponse);
+                    this.applyPinnedChannelUpdates(pinnedChannels, userResponse);
                     favouriteChats.updateIfNotUndefined(userResponse.favouriteChats.chats);
                     suspensionChanged = userResponse.suspended;
                     pinNumberSettings.applyOptionUpdate(userResponse.pinNumberSettings);
