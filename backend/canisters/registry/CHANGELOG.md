@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1781](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1781-registry)] - 2025-06-09
+
 ### Changed
 
 - Remove all references to LocalGroupIndexes ([#8057](https://github.com/open-chat-labs/open-chat/pull/8057))

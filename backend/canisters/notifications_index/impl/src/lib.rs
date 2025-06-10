@@ -6,14 +6,12 @@ use notifications_index_canister::{NotificationsIndexEvent, SubscriptionAdded, S
 use principal_to_user_id_map::PrincipalToUserIdMap;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::UserIdsKeyPrefix;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     BuildVersion, CanisterId, Cycles, FcmToken, IdempotentEnvelope, SubscriptionInfo, TimestampMillis, Timestamped, UserId,
 };
-use user_ids_set::UserIdsSet;
 use utils::env::Environment;
 use utils::fcm_token_store::FcmTokenStore;
 use utils::idempotency_checker::IdempotencyChecker;
@@ -140,12 +138,9 @@ struct Data {
     pub principal_to_user_id_map: PrincipalToUserIdMap,
     pub subscriptions: Subscriptions,
     pub local_index_event_sync_queue: GroupedTimerJobQueue<LocalIndexEventBatch>,
-    #[deprecated]
-    pub blocked_users: UserIdsSet,
     pub idempotency_checker: IdempotencyChecker,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
-    #[serde(default)]
     pub fcm_token_store: FcmTokenStore,
 }
 
@@ -158,7 +153,6 @@ impl Data {
         registry_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
-        #[expect(deprecated)]
         Data {
             governance_principals: governance_principals.into_iter().collect(),
             local_indexes: BTreeSet::default(),
@@ -169,7 +163,6 @@ impl Data {
             principal_to_user_id_map: PrincipalToUserIdMap::default(),
             subscriptions: Subscriptions::default(),
             local_index_event_sync_queue: GroupedTimerJobQueue::new(5, false),
-            blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
             idempotency_checker: IdempotencyChecker::default(),
             rng_seed: [0; 32],
             test_mode,
