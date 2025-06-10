@@ -48,6 +48,8 @@ impl TryFrom<u8> for CommunityPermission {
             4 => Ok(CommunityPermission::CreatePublicChannel),
             5 => Ok(CommunityPermission::CreatePrivateChannel),
             6 => Ok(CommunityPermission::ManageUserGroups),
+            7 => Ok(CommunityPermission::ReadMembership),
+            8 => Ok(CommunityPermission::ReadSummary),
             _ => Err(()),
         }
     }
