@@ -27,7 +27,7 @@ pub enum CommunityPermission {
     CreatePrivateChannel = 5,
     ManageUserGroups = 6,
     ReadMembership = 7,
-    ReadDetails = 8,
+    ReadSummary = 8,
 }
 
 impl From<CommunityPermission> for u8 {
