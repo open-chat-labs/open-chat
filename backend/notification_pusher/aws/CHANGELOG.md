@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Updated the way configuration is loaded for the pusher by using the `envconf` crate ([8145](https://github.com/open-chat-labs/open-chat/pull/8145))
+
 - Implement pushing notifications to bots ([#7857](https://github.com/open-chat-labs/open-chat/pull/7857))
 
 ### Changed
