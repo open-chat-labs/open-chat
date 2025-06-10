@@ -8,6 +8,7 @@ generate_msgpack_query_call!(chat_events);
 generate_msgpack_query_call!(group_and_community_summary_updates);
 generate_msgpack_query_call!(group_and_community_summary_updates_v2);
 generate_query_call!(latest_notification_index);
+generate_query_call!(notifications);
 generate_query_call!(notifications_v2);
 
 // Updates
@@ -316,25 +317,25 @@ pub mod happy_path {
         }
     }
 
-    pub fn notifications_v2(
+    pub fn notifications(
         env: &PocketIc,
         sender: Principal,
         local_user_index: CanisterId,
         from_index: u64,
-    ) -> local_user_index_canister::notifications_v2::SuccessResult {
+    ) -> local_user_index_canister::notifications::SuccessResult {
         // TODO remove this
         env.tick();
 
-        let response = super::notifications_v2(
+        let response = super::notifications(
             env,
             sender,
             local_user_index,
-            &local_user_index_canister::notifications_v2::Args {
+            &local_user_index_canister::notifications::Args {
                 from_notification_index: from_index,
             },
         );
 
-        let local_user_index_canister::notifications_v2::Response::Success(result) = response;
+        let local_user_index_canister::notifications::Response::Success(result) = response;
         result
     }
 

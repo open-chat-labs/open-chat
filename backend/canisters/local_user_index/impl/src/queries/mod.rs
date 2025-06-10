@@ -11,4 +11,5 @@ pub mod group_and_community_summary_updates;
 pub mod group_and_community_summary_updates_v2;
 pub mod http_request;
 pub mod latest_notification_index;
+pub mod notifications;
 pub mod notifications_v2;
