@@ -12,26 +12,7 @@ fn c2c_can_issue_access_token(args: Args) -> Response {
 }
 
 fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Response {
-    if let AccessTypeArgs::BotActionByApiKey(args) = &args_outer.access_type {
-        let granted_opt = if let Some(channel_id) = args_outer.channel_id {
-            if let Some(channel) = state.data.channels.get(&channel_id) {
-                channel.bot_api_keys.permissions_if_secret_matches(&args.bot_id, &args.secret)
-            } else {
-                return Response::Failure;
-            }
-        } else {
-            state
-                .data
-                .bot_api_keys
-                .permissions_if_secret_matches(&args.bot_id, &args.secret)
-        };
-
-        return if granted_opt.is_some_and(|granted| args.requested_permissions.is_subset(granted)) {
-            Response::Success
-        } else {
-            Response::Failure
-        };
-    } else if let AccessTypeArgs::BotActionByCommand(args) = &args_outer.access_type {
+    if let AccessTypeArgs::BotActionByCommand(args) = &args_outer.access_type {
         // Ensure the initiator has the necessary seniority according to required role
         if !state
             .data

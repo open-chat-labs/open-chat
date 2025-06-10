@@ -3,8 +3,7 @@ use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
-    ChannelId, EventIndex, GroupMember, GroupRole, MessageIndex, PublicApiKeyDetails, TimestampMillis, UserId, VersionedRules,
-    WebhookDetails,
+    ChannelId, EventIndex, GroupMember, GroupRole, MessageIndex, TimestampMillis, UserId, VersionedRules, WebhookDetails,
 };
 
 #[ts_export(community, selected_channel_initial)]
@@ -32,7 +31,6 @@ pub struct SuccessResult {
     pub invited_users: Vec<UserId>,
     pub pinned_messages: Vec<MessageIndex>,
     pub chat_rules: VersionedRules,
-    pub api_keys: Vec<PublicApiKeyDetails>,
     pub webhooks: Vec<WebhookDetails>,
 }
 
