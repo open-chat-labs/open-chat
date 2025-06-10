@@ -59,7 +59,6 @@ fn main() {
         std::fs::remove_dir_all(&directory).unwrap();
     }
 
-    generate_ts_method!(group, api_key);
     generate_ts_method!(group, deleted_message);
     generate_ts_method!(group, events);
     generate_ts_method!(group, events_by_index);
@@ -93,7 +92,6 @@ fn main() {
     generate_ts_method!(group, edit_message_v2);
     generate_ts_method!(group, enable_invite_code);
     generate_ts_method!(group, follow_thread);
-    generate_ts_method!(group, generate_bot_api_key);
     generate_ts_method!(group, join_video_call);
     generate_ts_method!(group, pin_message_v2);
     generate_ts_method!(group, regenerate_webhook);

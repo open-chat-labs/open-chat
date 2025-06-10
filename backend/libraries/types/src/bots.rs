@@ -1,9 +1,8 @@
 use crate::bitflags::{decode_from_bitflags, encode_as_bitflags};
 use crate::{
-    AudioContent, AutonomousBotScope, CanisterId, Chat, ChatEventCategory, ChatEventType, ChatId, ChatPermission,
-    CommunityEventCategory, CommunityEventType, CommunityId, CommunityPermission, FileContent, GiphyContent, GroupRole,
-    ImageContent, MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent, TimestampMillis, UserId,
-    VideoContent,
+    AudioContent, CanisterId, Chat, ChatEventCategory, ChatEventType, ChatId, ChatPermission, CommunityEventCategory,
+    CommunityEventType, CommunityId, CommunityPermission, FileContent, GiphyContent, GroupRole, ImageContent,
+    MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent, TimestampMillis, UserId, VideoContent,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -37,7 +36,6 @@ pub struct BotCommandDefinition {
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct AutonomousConfig {
     pub permissions: BotPermissions,
-    pub sync_api_key: bool,
 }
 
 #[ts_export]
@@ -412,15 +410,6 @@ impl From<Chat> for BotInstallationLocation {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct BotApiKeyToken {
-    pub gateway: CanisterId,
-    pub bot_id: UserId,
-    pub scope: AutonomousBotScope,
-    pub secret: String,
-    pub permissions: BotPermissions,
-}
-
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum BotMessageContent {
@@ -478,15 +467,6 @@ pub enum BotChatContext {
 }
 
 #[ts_export]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct ApiKey {
-    pub secret: String,
-    pub granted_permissions: BotPermissions,
-    pub generated_by: UserId,
-    pub generated_at: TimestampMillis,
-}
-
-#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum BotRegistrationStatus {
     Public,
@@ -498,16 +478,6 @@ pub enum BotRegistrationStatus {
 pub struct BotSubscriptions {
     pub community: HashSet<CommunityEventType>,
     pub chat: HashSet<ChatEventType>,
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub enum BotLifecycleEventType {
-    Registered,
-    Removed,
-    Installed,
-    Uninstalled,
-    ApiKeyGenerated,
 }
 
 impl From<ChatEventCategory> for ChatPermission {
