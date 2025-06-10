@@ -1,7 +1,8 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{BotChatContext, BotMessageContent, MessageId, MessageIndex};
+use types::{BotChatContext, BotMessageContent, EventIndex, MessageId, MessageIndex, TimestampMillis};
 
 #[ts_export(local_user_index, bot_send_message_v2)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -14,4 +15,19 @@ pub struct Args {
     pub finalised: bool,
 }
 
-pub type Response = crate::bot_send_message::Response;
+#[ts_export(local_user_index, bot_send_message_v2)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub enum Response {
+    Success(SuccessResult),
+    Error(OCError),
+}
+
+#[ts_export(local_user_index, bot_send_message_v2)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct SuccessResult {
+    pub message_id: MessageId,
+    pub event_index: EventIndex,
+    pub message_index: MessageIndex,
+    pub timestamp: TimestampMillis,
+    pub expires_at: Option<TimestampMillis>,
+}

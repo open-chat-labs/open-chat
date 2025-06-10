@@ -19,7 +19,7 @@ use group_community_common::{
     Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, Members, PaymentReceipts, PendingPaymentsQueue,
     UserCache,
 };
-use installed_bots::{BotApiKeys, InstalledBots};
+use installed_bots::InstalledBots;
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use model::events::CommunityEventInternal;
 use model::user_event_batch::UserEventBatch;
@@ -444,7 +444,6 @@ struct Data {
     local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     bots: InstalledBots,
-    bot_api_keys: BotApiKeys,
     verified: Timestamped<bool>,
     idempotency_checker: IdempotencyChecker,
     public_channel_list_updated: TimestampMillis,
@@ -545,7 +544,6 @@ impl Data {
             local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             bots: InstalledBots::default(),
-            bot_api_keys: BotApiKeys::default(),
             verified: Timestamped::default(),
             idempotency_checker: IdempotencyChecker::default(),
             public_channel_list_updated: now,
@@ -614,7 +612,6 @@ impl Data {
             self.events.latest_event_timestamp(),
             self.members.last_updated(),
             self.bots.last_updated(),
-            self.bot_api_keys.last_updated(),
         ]
         .into_iter()
         .max()
@@ -981,7 +978,6 @@ impl Data {
             return false;
         }
 
-        self.bot_api_keys.delete(bot_id);
         for channel in self.channels.iter_mut() {
             channel.chat.events.unsubscribe_bot_from_events(bot_id);
         }
@@ -1028,22 +1024,6 @@ impl Data {
         Some(bot_permissions)
     }
 
-    pub fn get_api_key_permissions(
-        &self,
-        bot_id: &UserId,
-        secret: &str,
-        channel_id: Option<ChannelId>,
-    ) -> Option<&BotPermissions> {
-        let permissions = if let Some(channel_id) = channel_id {
-            let channel = self.channels.get(&channel_id)?;
-            channel.bot_api_keys.permissions_if_secret_matches(bot_id, secret)
-        } else {
-            None
-        };
-
-        permissions.or_else(|| self.bot_api_keys.permissions_if_secret_matches(bot_id, secret))
-    }
-
     pub fn is_bot_permitted(
         &self,
         bot_id: &UserId,
@@ -1064,11 +1044,9 @@ impl Data {
         // Try to get the installed bot
         let bot = self.bots.get(bot_id)?;
 
-        // Get the permissions granted to the bot when initiated by command or API key
+        // Get the permissions granted to the bot when initiated by command or autonomously
         let granted_to_bot = match initiator {
             BotInitiator::Command(_) => &bot.permissions,
-            BotInitiator::ApiKeySecret(secret) => self.get_api_key_permissions(bot_id, secret, channel_id)?,
-            BotInitiator::ApiKeyPermissions(permissions) => permissions,
             BotInitiator::Autonomous => bot.autonomous_permissions.as_ref()?,
         };
 
