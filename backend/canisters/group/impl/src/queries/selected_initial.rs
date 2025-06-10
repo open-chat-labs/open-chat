@@ -49,15 +49,12 @@ fn selected_initial_impl(state: &RuntimeState) -> OCResult<SuccessResult> {
         })
         .collect();
 
-    let api_keys = state.data.bot_api_keys.generated_since(0);
-
     Ok(SuccessResult {
         timestamp: last_updated,
         last_updated,
         latest_event_index: chat.events.main_events_reader().latest_event_index().unwrap_or_default(),
         participants: members,
         bots,
-        api_keys,
         webhooks: chat.webhooks(),
         basic_members,
         blocked_users: chat.members.blocked(),

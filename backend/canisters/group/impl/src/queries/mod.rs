@@ -1,7 +1,6 @@
 use crate::RuntimeState;
 use types::TimestampMillis;
 
-mod api_key;
 mod c2c_bot_group_details;
 mod c2c_can_issue_access_token_v2;
 mod c2c_name_and_members;

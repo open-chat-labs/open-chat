@@ -137,7 +137,6 @@ pub enum OCErrorCode {
     TextTooLong = 292,
     MessageHardDeleted = 293,
     InvalidMessageType = 294,
-    ApiKeyNotFound = 295,
     TooManyUsers = 296,
     VideoCallNotFound = 297,
     PrizeNotFound = 298,

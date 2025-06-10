@@ -6,11 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `bot_community_summary` endpoint ([#8135](https://github.com/open-chat-labs/open-chat/pull/8135))
+
 ### Changed
 
 - Remove all references to Notifications canisters ([#8087](https://github.com/open-chat-labs/open-chat/pull/8087))
 - Remove `correlation_id` ([#8097](https://github.com/open-chat-labs/open-chat/pull/8097))
 - Add optional thread to args of `bot_chat_events` ([#8128](https://github.com/open-chat-labs/open-chat/pull/8128))
+- Remove bot API Keys ([#8131](https://github.com/open-chat-labs/open-chat/pull/8131))
 
 ### Removed
 

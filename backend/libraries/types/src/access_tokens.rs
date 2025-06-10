@@ -1,4 +1,4 @@
-use crate::{BotPermissions, CanisterId, ChannelId, Chat, CommunityId, MessageId, MessageIndex, UserId, VideoCallType};
+use crate::{CanisterId, ChannelId, Chat, CommunityId, MessageId, MessageIndex, VideoCallType};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
@@ -87,34 +87,6 @@ pub struct BotActionChatDetails {
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct BotActionCommunityDetails {
     pub community_id: CommunityId,
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-pub struct BotActionCheckAccessToken {
-    pub bot: UserId,
-    pub initiator: BotActionInitiator,
-    pub scope: BotActionScope,
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-pub enum BotActionInitiator {
-    Command(BotActionCheckCommand),
-    ApiKey(BotActionCheckApiKey),
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-pub struct BotActionCheckCommand {
-    pub user_id: UserId,
-    pub permissions: BotPermissions,
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-pub struct BotActionCheckApiKey {
-    pub secret: String,
 }
 
 impl AccessTokenType {

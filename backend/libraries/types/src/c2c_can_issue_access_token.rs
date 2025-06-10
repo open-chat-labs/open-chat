@@ -7,25 +7,22 @@ pub enum AccessTypeArgs {
     JoinVideoCall(JoinVideoCallArgs),
     MarkVideoCallAsEnded(MarkVideoCallAsEndedArgs),
     BotActionByCommand(BotActionByCommandArgs),
-    BotActionByApiKey(BotActionByApiKeyArgs),
 }
 
 impl AccessTypeArgs {
     pub fn requested_permissions(&self) -> Option<BotPermissions> {
         match self {
             AccessTypeArgs::BotActionByCommand(args) => Some(args.requested_permissions.clone()),
-            AccessTypeArgs::BotActionByApiKey(args) => Some(args.requested_permissions.clone()),
             _ => None,
         }
     }
 
-    pub fn initiator(&self) -> Option<UserId> {
+    pub fn initiator(&self) -> UserId {
         match self {
-            AccessTypeArgs::StartVideoCall(args) => Some(args.initiator),
-            AccessTypeArgs::JoinVideoCall(args) => Some(args.initiator),
-            AccessTypeArgs::MarkVideoCallAsEnded(args) => Some(args.initiator),
-            AccessTypeArgs::BotActionByCommand(args) => Some(args.initiator),
-            _ => None,
+            AccessTypeArgs::StartVideoCall(args) => args.initiator,
+            AccessTypeArgs::JoinVideoCall(args) => args.initiator,
+            AccessTypeArgs::MarkVideoCallAsEnded(args) => args.initiator,
+            AccessTypeArgs::BotActionByCommand(args) => args.initiator,
         }
     }
 }
@@ -59,12 +56,5 @@ pub struct BotActionByCommandArgs {
     pub bot_id: UserId,
     pub initiator: UserId,
     pub initiator_role: GroupRole,
-    pub requested_permissions: BotPermissions,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct BotActionByApiKeyArgs {
-    pub bot_id: UserId,
-    pub secret: String,
     pub requested_permissions: BotPermissions,
 }

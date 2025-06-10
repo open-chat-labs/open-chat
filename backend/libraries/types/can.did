@@ -529,7 +529,6 @@ type SelectedGroupUpdates = record {
     members_removed : vec UserId;
     bots_added_or_updated : vec InstalledBotDetails;
     bots_removed : vec UserId;
-    api_keys_generated : vec PublicApiKeyDetails;
     webhooks : opt vec WebhookDetails;
     blocked_users_added : vec UserId;
     blocked_users_removed : vec UserId;
@@ -2227,13 +2226,6 @@ type InstalledBotDetails = record {
     added_by : UserId;
     permissions : BotPermissions;
     autonomous_permissions : opt BotPermissions;
-};
-
-type PublicApiKeyDetails = record {
-    bot_id : UserId;
-    granted_permissions : BotPermissions;
-    generated_by : UserId;
-    generated_at : TimestampMillis;
 };
 
 type WebhookDetails = record {

@@ -47,8 +47,6 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
         })
         .collect();
 
-    let api_keys = state.data.bot_api_keys.generated_since(0);
-
     Success(SuccessResult {
         timestamp: now,
         direct_chats,
@@ -74,7 +72,6 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
         referrals: state.data.referrals.list(),
         message_activity_summary: state.data.message_activity_events.summary(),
         bots,
-        api_keys,
         btc_address: state.data.btc_address.as_ref().map(|a| a.value.clone()),
     })
 }

@@ -5291,7 +5291,6 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "constants",
- "rand 0.8.5",
  "serde",
  "serde_repr",
  "types",
