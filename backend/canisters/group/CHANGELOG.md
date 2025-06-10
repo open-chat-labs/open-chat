@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Remove bot API Keys ([#8131](https://github.com/open-chat-labs/open-chat/pull/8131))
+
+## [[2.0.1786](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1786-group)] - 2025-06-06
+
 ### Added
 
 - Additional notification data for Firebase Cloud Messaging ([8113](https://github.com/open-chat-labs/open-chat/pull/8113))
@@ -16,7 +22,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove all references to Notifications canisters ([#8087](https://github.com/open-chat-labs/open-chat/pull/8087))
 - Remove `correlation_id` ([#8097](https://github.com/open-chat-labs/open-chat/pull/8097))
 - Push chat event notifications to bots ([#8109](https://github.com/open-chat-labs/open-chat/pull/8109))
-- Remove bot API Keys ([#8131](https://github.com/open-chat-labs/open-chat/pull/8131))
 
 ### Removed
 
