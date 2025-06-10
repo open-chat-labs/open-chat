@@ -310,6 +310,8 @@
         if (previousChatId === undefined || !chatIdentifiersEqual(chat.id, previousChatId)) {
             previousChatId = chat.id;
             showSearchHeader = false;
+            unreadMessages = getUnreadMessageCount(chat);
+            firstUnreadMention = client.getFirstUnreadMention(chat);
             tick().then(() => {
                 if ($messageToForwardStore !== undefined) {
                     forwardMessage($messageToForwardStore);

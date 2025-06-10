@@ -19,7 +19,7 @@ fn c2c_bot_community_summary_impl(args: Args, state: &RuntimeState) -> OCResult<
         &args.bot_id,
         None,
         &args.initiator,
-        &BotPermissions::from_community_permission(CommunityPermission::ReadDetails),
+        &BotPermissions::from_community_permission(CommunityPermission::ReadSummary),
     ) {
         return Err(OCErrorCode::InitiatorNotFound.into());
     }

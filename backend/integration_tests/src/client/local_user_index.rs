@@ -8,12 +8,13 @@ generate_msgpack_query_call!(chat_events);
 generate_msgpack_query_call!(group_and_community_summary_updates);
 generate_msgpack_query_call!(group_and_community_summary_updates_v2);
 generate_query_call!(latest_notification_index);
+generate_query_call!(notifications);
 generate_query_call!(notifications_v2);
 
 // Updates
-generate_update_call!(bot_create_channel_v2);
-generate_update_call!(bot_delete_channel_v2);
-generate_update_call!(bot_send_message_v2);
+generate_update_call!(bot_create_channel);
+generate_update_call!(bot_delete_channel);
+generate_update_call!(bot_send_message);
 generate_update_call!(bot_subscribe_to_events);
 generate_msgpack_update_call!(install_bot);
 generate_msgpack_update_call!(invite_users_to_channel);
@@ -316,25 +317,25 @@ pub mod happy_path {
         }
     }
 
-    pub fn notifications_v2(
+    pub fn notifications(
         env: &PocketIc,
         sender: Principal,
         local_user_index: CanisterId,
         from_index: u64,
-    ) -> local_user_index_canister::notifications_v2::SuccessResult {
+    ) -> local_user_index_canister::notifications::SuccessResult {
         // TODO remove this
         env.tick();
 
-        let response = super::notifications_v2(
+        let response = super::notifications(
             env,
             sender,
             local_user_index,
-            &local_user_index_canister::notifications_v2::Args {
+            &local_user_index_canister::notifications::Args {
                 from_notification_index: from_index,
             },
         );
 
-        let local_user_index_canister::notifications_v2::Response::Success(result) = response;
+        let local_user_index_canister::notifications::Response::Success(result) = response;
         result
     }
 

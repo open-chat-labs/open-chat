@@ -1,7 +1,7 @@
 use candid::Principal;
 use index_store::DummyStore;
 use notification_pusher_core::ic_agent::IcAgent;
-use notification_pusher_core::{run_notifications_pusher, write_metrics};
+use notification_pusher_core::{PusherArgs, run_notifications_pusher, write_metrics};
 use std::collections::HashMap;
 use std::str::FromStr;
 use tokio::time;
@@ -28,6 +28,8 @@ async fn main() -> Result<(), Error> {
         .ok()
         .and_then(|s| u32::from_str(&s).ok())
         .unwrap_or(1);
+    let gcloud_sa_json_path = read_env_var("GCLOUD_SA_JSON_PATH")
+        .expect("GCLOUD_SA_JSON_PATH must be set, and point to google service account JSON file");
 
     let ic_agent = IcAgent::build(&ic_url, &ic_identity_pem, !is_production).await?;
 
@@ -35,15 +37,16 @@ async fn main() -> Result<(), Error> {
 
     tokio::spawn(write_metrics_to_file());
 
-    run_notifications_pusher(
+    run_notifications_pusher(PusherArgs {
         ic_agent,
         index_canister_id,
-        vec![notifications_canister_id],
+        notifications_canister_ids: vec![notifications_canister_id],
         index_store,
         vapid_private_pem,
         pusher_count,
         is_production,
-    )
+        gcloud_sa_json_path,
+    })
     .await;
 
     Ok(())

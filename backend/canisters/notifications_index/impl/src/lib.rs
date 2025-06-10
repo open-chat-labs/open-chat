@@ -1,4 +1,3 @@
-use crate::model::fcm_token_store::FcmTokenStore;
 use crate::model::local_index_event_batch::LocalIndexEventBatch;
 use crate::model::subscriptions::Subscriptions;
 use candid::Principal;
@@ -11,9 +10,12 @@ use stable_memory_map::UserIdsKeyPrefix;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use timer_job_queues::GroupedTimerJobQueue;
-use types::{BuildVersion, CanisterId, Cycles, IdempotentEnvelope, SubscriptionInfo, TimestampMillis, Timestamped, UserId};
+use types::{
+    BuildVersion, CanisterId, Cycles, FcmToken, IdempotentEnvelope, SubscriptionInfo, TimestampMillis, Timestamped, UserId,
+};
 use user_ids_set::UserIdsSet;
 use utils::env::Environment;
+use utils::fcm_token_store::FcmTokenStore;
 use utils::idempotency_checker::IdempotencyChecker;
 
 mod guards;
@@ -75,6 +77,21 @@ impl RuntimeState {
         let event = NotificationsIndexEvent::AllSubscriptionsRemoved(user_id);
 
         self.push_event_to_local_indexes(event, now);
+    }
+
+    pub fn add_fcm_token(&mut self, user_id: UserId, fcm_token: FcmToken) -> Result<(), String> {
+        // Add token locally
+        self.data.fcm_token_store.add(user_id, fcm_token.clone()).map(|_| {
+            self.push_event_to_local_indexes(NotificationsIndexEvent::FcmTokenAdded(user_id, fcm_token), self.env.now());
+        })
+    }
+
+    // TODO remove tokens when push to firebase fails
+    #[allow(dead_code)]
+    pub fn remove_fcm_token(&mut self, user_id: UserId, fcm_token: FcmToken) -> Result<(), String> {
+        self.data.fcm_token_store.remove(&user_id, &fcm_token).map(|_| {
+            self.push_event_to_local_indexes(NotificationsIndexEvent::FcmTokenRemoved(user_id, fcm_token), self.env.now());
+        })
     }
 
     pub fn metrics(&self) -> Metrics {

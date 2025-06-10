@@ -1,3 +1,5 @@
+/// ! This file is now deprecated and will be removed in the future in favour
+/// ! of notifications.rs!
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

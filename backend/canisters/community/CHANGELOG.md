@@ -19,6 +19,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Push chat event notifications to bots ([#8109](https://github.com/open-chat-labs/open-chat/pull/8109))
 - Remove bot API Keys ([#8131](https://github.com/open-chat-labs/open-chat/pull/8131))
 
+### Fixed
+
+- Add missing decoding for community read permissions ([#8141](https://github.com/open-chat-labs/open-chat/pull/8141))
+
 ## [[2.0.1763](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1763-community)] - 2025-05-28
 
 ### Changed
