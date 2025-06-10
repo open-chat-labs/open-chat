@@ -286,7 +286,7 @@
         background-color: var(--modal-bg);
 
         .command {
-            $size: 48px;
+            $size: toRem(48);
             display: flex;
             align-items: center;
             gap: $sp3;
@@ -294,9 +294,11 @@
             padding: $sp3;
             cursor: pointer;
 
-            :global(.logo) {
+            :global(.logo),
+            :global(.avatar) {
                 width: $size;
                 height: $size;
+                flex: 0 0 $size;
             }
 
             &.selected {

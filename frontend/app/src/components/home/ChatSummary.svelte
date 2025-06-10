@@ -66,6 +66,7 @@
     import ArchiveOffIcon from "./ArchiveOffIcon.svelte";
     import Markdown from "./Markdown.svelte";
     import Badges from "./profile/Badges.svelte";
+    import BotBadge from "./profile/BotBadge.svelte";
     import VideoCallIcon from "./video/VideoCallIcon.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -401,7 +402,6 @@
             <Avatar
                 statusBorder={selected || hovering ? "var(--chatSummary-hv)" : "transparent"}
                 {blocked}
-                bot={chat.bot}
                 url={chat.avatarUrl}
                 showStatus
                 maxStreak={chat.hasAchievedMaxStreak}
@@ -433,6 +433,7 @@
                             diamondStatus={chat.diamondStatus}
                             streak={chat.streak} />
                     </WithVerifiedBadge>
+                    <BotBadge bot={chat.bot} />
                 </div>
             </div>
             <div class="chat-msg">

@@ -9,4 +9,4 @@
     let { bot }: Props = $props();
 </script>
 
-<Avatar bot url={bot.avatarUrl ?? "/assets/bot_avatar.svg"} size={AvatarSize.Default} />
+<Avatar url={bot.avatarUrl ?? "/assets/bot_avatar.svg"} size={AvatarSize.Default} />
