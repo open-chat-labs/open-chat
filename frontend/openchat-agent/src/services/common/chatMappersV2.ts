@@ -120,9 +120,9 @@ import {
     ROLE_OWNER,
     UnsupportedValueError,
     botChatPermissionList,
+    botCommunityPermissionList,
     chatIdentifiersEqual,
     codeToText,
-    communityPermissionsList,
     emptyChatMetrics,
     isAccountIdentifierValid,
     messagePermissionsList,
@@ -2694,7 +2694,7 @@ export function apiDexId(dex: DexId): TExchangeId {
 export function externalBotPermissions(value: ApiExternalBotPermissions): ExternalBotPermissions {
     return {
         communityPermissions: permissionsFromBits(value.community ?? 0, [
-            ...communityPermissionsList,
+            ...botCommunityPermissionList,
         ]),
         chatPermissions: permissionsFromBits(value.chat ?? 0, [...botChatPermissionList]),
         messagePermissions: permissionsFromBits(value.message ?? 0, [...messagePermissionsList]),
@@ -2705,7 +2705,7 @@ export function apiExternalBotPermissions(
     value: ExternalBotPermissions,
 ): ApiExternalBotPermissions {
     return {
-        community: permissionsToBits(value.communityPermissions, [...communityPermissionsList]),
+        community: permissionsToBits(value.communityPermissions, [...botCommunityPermissionList]),
         chat: permissionsToBits(value.chatPermissions, [...botChatPermissionList]),
         message: permissionsToBits(value.messagePermissions, [...messagePermissionsList]),
     };

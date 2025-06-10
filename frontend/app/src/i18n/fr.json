@@ -1215,6 +1215,8 @@
         "pinMessages": "épingler des messages",
         "reactToMessages": "réagir aux messages",
         "readChatDetails": "lire les détails du chat",
+        "readChatSummary": "lire le résumé du chat",
+        "readCommunitySummary": "lire le résumé de la communauté",
         "readMembership": "lire les détails de l'adhésion",
         "readMessages": "lire les messages",
         "removeMembers": "supprimer/bloquer des membres",

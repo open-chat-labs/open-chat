@@ -1215,6 +1215,8 @@
         "pinMessages": "رسائل الدبوس",
         "reactToMessages": "الرد على الرسائل",
         "readChatDetails": "قراءة تفاصيل الدردشة",
+        "readChatSummary": "قراءة ملخص الدردشة",
+        "readCommunitySummary": "قراءة ملخص المجتمع",
         "readMembership": "اقرأ تفاصيل العضوية",
         "readMessages": "قراءة الرسائل",
         "removeMembers": "إزالة/حظر الأعضاء",
