@@ -17,7 +17,7 @@ use chat_events::EventPusher;
 use constants::{DAY_IN_MS, ICP_LEDGER_CANISTER_ID, LIFETIME_DIAMOND_TIMESTAMP, OPENCHAT_BOT_USER_ID};
 use event_store_types::{Event, EventBuilder};
 use fire_and_forget_handler::FireAndForgetHandler;
-use installed_bots::{BotApiKeys, InstalledBots};
+use installed_bots::InstalledBots;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use model::chit_earned_events::ChitEarnedEvents;
 use model::contacts::Contacts;
@@ -448,7 +448,6 @@ struct Data {
     pub local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
     pub idempotency_checker: IdempotencyChecker,
     pub bots: InstalledBots,
-    bot_api_keys: BotApiKeys,
 }
 
 impl Data {
@@ -514,7 +513,6 @@ impl Data {
             local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
             idempotency_checker: IdempotencyChecker::default(),
             bots: InstalledBots::default(),
-            bot_api_keys: BotApiKeys::default(),
         }
     }
 
@@ -583,11 +581,6 @@ impl Data {
         // Get the granted permissions when initiated by command or API key
         let granted = match initiator {
             BotInitiator::Command(_) => &bot.permissions,
-            BotInitiator::ApiKeySecret(secret) => match self.bot_api_keys.permissions_if_secret_matches(bot_id, secret) {
-                Some(bot_permissions) => bot_permissions,
-                None => return false,
-            },
-            BotInitiator::ApiKeyPermissions(permissions) => permissions,
             BotInitiator::Autonomous => match bot.autonomous_permissions.as_ref() {
                 Some(permissions) => permissions,
                 None => return false,

@@ -11,7 +11,6 @@ pub enum Args {
     JoinVideoCall(JoinVideoCallArgs),
     MarkVideoCallAsEnded(MarkVideoCallAsEndedArgs),
     BotActionByCommand(BotActionByCommandArgs),
-    BotActionByApiKey(String),
 }
 
 #[ts_export(local_user_index, access_token_v2)]

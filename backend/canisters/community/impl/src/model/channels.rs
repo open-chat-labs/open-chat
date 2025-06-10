@@ -1,13 +1,12 @@
 use super::members::CommunityMembers;
 use chat_events::Reader;
 use group_chat_core::{GroupChatCore, GroupMemberInternal};
-use installed_bots::BotApiKeys;
 use oc_error_codes::OCErrorCode;
 use rand::rngs::StdRng;
 use rand::{Rng, RngCore};
 use search::weighted::*;
 use serde::{Deserialize, Serialize};
-use std::cmp::{Reverse, max};
+use std::cmp::Reverse;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeSet, HashMap, HashSet};
 use types::{
@@ -27,7 +26,6 @@ pub struct Channel {
     pub id: ChannelId,
     pub chat: GroupChatCore,
     pub date_imported: Option<TimestampMillis>,
-    pub bot_api_keys: BotApiKeys,
 }
 
 impl Channels {
@@ -250,7 +248,6 @@ impl Channel {
                 now,
             ),
             date_imported: None,
-            bot_api_keys: BotApiKeys::default(),
         }
     }
 
@@ -346,18 +343,14 @@ impl Channel {
     }
 
     pub fn last_updated(&self, user_id: Option<UserId>) -> TimestampMillis {
-        [
-            self.chat.last_updated(user_id),
-            self.date_imported.unwrap_or_default(),
-            self.bot_api_keys.last_updated(),
-        ]
-        .into_iter()
-        .max()
-        .unwrap()
+        [self.chat.last_updated(user_id), self.date_imported.unwrap_or_default()]
+            .into_iter()
+            .max()
+            .unwrap()
     }
 
     pub fn details_last_updated(&self) -> TimestampMillis {
-        max(self.chat.details_last_updated(), self.bot_api_keys.last_updated())
+        self.chat.details_last_updated()
     }
 
     pub fn summary_updates(

@@ -65,7 +65,8 @@ import {
 } from "../../utils/chat";
 import { configKeys } from "../../utils/config";
 import { enumFromStringValue } from "../../utils/enums";
-import { setsAreEqual } from "../../utils/set";
+import { mapsEqualIfEmpty } from "../../utils/map";
+import { setsAreEqual, setsEqualIfEmpty } from "../../utils/set";
 import { derived, writable, type Subscriber } from "../../utils/stores";
 import { chatDetailsLocalUpdates } from "../chat/detailsUpdates";
 import type { ChatDetailsState } from "../chat/serverDetails";
@@ -582,6 +583,7 @@ export const selectedCommunityBotsStore = derived(
         if (updates === undefined) return community.bots;
         return updates.apply(community.bots);
     },
+    mapsEqualIfEmpty,
 );
 export const selectedCommunityUserGroupsStore = derived(
     [selectedServerCommunityStore, communityLocalUpdates.userGroups],
@@ -591,6 +593,7 @@ export const selectedCommunityUserGroupsStore = derived(
         if (updates === undefined) return community.userGroups;
         return updates.apply(community.userGroups);
     },
+    mapsEqualIfEmpty,
 );
 export const selectedCommunityInvitedUsersStore = derived(
     [selectedServerCommunityStore, communityLocalUpdates.invitedUsers],
@@ -600,6 +603,7 @@ export const selectedCommunityInvitedUsersStore = derived(
         if (updates === undefined) return community.invitedUsers;
         return updates.apply(community.invitedUsers);
     },
+    setsEqualIfEmpty,
 );
 export const selectedCommunityBlockedUsersStore = derived(
     [selectedServerCommunityStore, communityLocalUpdates.blockedUsers],
@@ -609,6 +613,7 @@ export const selectedCommunityBlockedUsersStore = derived(
         if (updates === undefined) return community.blockedUsers;
         return updates.apply(community.blockedUsers);
     },
+    setsEqualIfEmpty,
 );
 export const selectedCommunityRulesStore = derived(
     [selectedServerCommunityStore, communityLocalUpdates.rules],
@@ -617,14 +622,17 @@ export const selectedCommunityRulesStore = derived(
         const updates = rules.get(community.communityId);
         return updates ?? community.rules;
     },
+    dequal,
 );
 export const selectedCommunityLapsedMembersStore = derived(
     selectedServerCommunityStore,
     (selectedCommunity) => selectedCommunity?.lapsedMembers ?? (new Set() as ReadonlySet<string>),
+    setsEqualIfEmpty,
 );
 export const selectedCommunityReferralsStore = derived(
     selectedServerCommunityStore,
     (selectedCommunity) => selectedCommunity?.referrals ?? (new Set() as ReadonlySet<string>),
+    setsEqualIfEmpty,
 );
 export const selectedCommunitySummaryStore = derived(
     [selectedCommunityIdStore, communitiesStore],
@@ -650,6 +658,7 @@ export const selectedChatBlockedUsersStore = derived(
         if (chat === undefined) return new Set() as ReadonlySet<string>;
         return blockedUsers.get(chat.chatId)?.apply(chat.blockedUsers) ?? chat.blockedUsers;
     },
+    setsEqualIfEmpty,
 );
 export const selectedChatLapsedMembersStore = derived(selectedServerChatStore, (chat) => {
     return chat?.lapsedMembers ?? (new Set() as ReadonlySet<string>);
@@ -660,6 +669,7 @@ export const selectedChatPinnedMessagesStore = derived(
         if (chat === undefined) return new Set() as ReadonlySet<number>;
         return pinnedMessages.get(chat.chatId)?.apply(chat.pinnedMessages) ?? chat.pinnedMessages;
     },
+    setsEqualIfEmpty,
 );
 export const selectedChatInvitedUsersStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.invitedUsers],
@@ -667,6 +677,7 @@ export const selectedChatInvitedUsersStore = derived(
         if (chat === undefined) return new Set() as ReadonlySet<string>;
         return invitedUsers.get(chat.chatId)?.apply(chat.invitedUsers) ?? chat.invitedUsers;
     },
+    setsEqualIfEmpty,
 );
 export const selectedChatBotsStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.bots],
@@ -674,6 +685,7 @@ export const selectedChatBotsStore = derived(
         if (chat === undefined) return new Map() as ReadonlyMap<string, GrantedBotPermissions>;
         return bots.get(chat.chatId)?.apply(chat.bots) ?? chat.bots;
     },
+    mapsEqualIfEmpty,
 );
 export const selectedChatWebhooksStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.webhooks],
@@ -681,6 +693,7 @@ export const selectedChatWebhooksStore = derived(
         if (chat === undefined) return new Map() as ReadonlyMap<string, WebhookDetails>;
         return webhooks.get(chat.chatId)?.apply(chat.webhooks) ?? chat.webhooks;
     },
+    mapsEqualIfEmpty,
 );
 export const selectedChatRulesStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.rules],
@@ -688,6 +701,7 @@ export const selectedChatRulesStore = derived(
         if (chat === undefined) return undefined;
         return rules.get(chat.chatId) ?? chat.rules;
     },
+    dequal,
 );
 
 export const serverDirectChatsStore = writable<ChatMap<DirectChatSummary>>(

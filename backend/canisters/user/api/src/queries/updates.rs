@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
     Chat, ChatId, ChitEarned, CommunityId, DirectChatSummary, DirectChatSummaryUpdates, InstalledBotDetails, OptionUpdate,
-    PinNumberSettings, PublicApiKeyDetails, StreakInsurance, TimestampMillis, UserId,
+    PinNumberSettings, StreakInsurance, TimestampMillis, UserId,
 };
 
 #[ts_export(user, updates)]
@@ -54,7 +54,6 @@ pub struct SuccessResult {
     pub message_activity_summary: Option<MessageActivitySummary>,
     pub bots_added_or_updated: Vec<InstalledBotDetails>,
     pub bots_removed: Vec<UserId>,
-    pub api_keys_generated: Vec<PublicApiKeyDetails>,
     pub btc_address: Option<String>,
 }
 

@@ -326,7 +326,6 @@ type SelectedInitialSuccess = record {
     latest_event_index : EventIndex;
     participants : vec Participant;
     bots: vec InstalledBotDetails;
-    api_keys: vec PublicApiKeyDetails;
     webhooks : vec WebhookDetails;
     basic_members : vec UserId;
     blocked_users : vec UserId;

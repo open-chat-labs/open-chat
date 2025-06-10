@@ -47,7 +47,5 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> OCResult<Response>
         }
     }
 
-    results.api_keys_generated = state.data.bot_api_keys.generated_since(args.updates_since);
-
     Ok(if results.has_updates() { Success(results) } else { SuccessNoUpdates(last_updated) })
 }

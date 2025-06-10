@@ -148,7 +148,7 @@ class _Writable<T> {
     }
 
     set(newValue: T) {
-        if (this.#equalityCheck(newValue, this.#value)) {
+        if (this.#started && this.#equalityCheck(newValue, this.#value)) {
             return;
         }
 

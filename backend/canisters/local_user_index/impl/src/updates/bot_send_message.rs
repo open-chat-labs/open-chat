@@ -1,11 +1,10 @@
 use crate::{
     RuntimeState,
-    bots::{BotAccessContext, extract_access_context, extract_access_context_from_chat_context},
+    bots::{BotAccessContext, extract_access_context_from_chat_context},
     mutate_state,
 };
 use canister_api_macros::update;
-use local_user_index_canister::bot_send_message::*;
-use local_user_index_canister::bot_send_message_v2::Args as ArgsV2;
+use local_user_index_canister::bot_send_message_v2::*;
 use oc_error_codes::{OCError, OCErrorCode};
 use rand::Rng;
 use types::{
@@ -13,26 +12,7 @@ use types::{
 };
 
 #[update(candid = true, json = true, msgpack = true)]
-async fn bot_send_message(args: Args) -> Response {
-    let context = match mutate_state(|state| extract_access_context(&args.auth_token, state)) {
-        Ok(context) => context,
-        Err(_) => return Response::Error(OCErrorCode::BotNotAuthenticated.into()),
-    };
-
-    bot_send_message_impl(
-        context,
-        args.channel_id,
-        None,
-        args.message_id,
-        args.content,
-        args.block_level_markdown,
-        args.finalised,
-    )
-    .await
-}
-
-#[update(candid = true, json = true, msgpack = true)]
-async fn bot_send_message_v2(args: ArgsV2) -> Response {
+async fn bot_send_message_v2(args: Args) -> Response {
     let context = match mutate_state(|state| extract_access_context_from_chat_context(args.chat_context, state)) {
         Ok(context) => context,
         Err(_) => return Response::Error(OCErrorCode::BotNotAuthenticated.into()),

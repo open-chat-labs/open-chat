@@ -16,7 +16,7 @@ use group_community_common::{
     Achievements, ExpiringMemberActions, ExpiringMembers, PaymentReceipts, PaymentRecipient, PendingPayment,
     PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
-use installed_bots::{BotApiKeys, InstalledBots};
+use installed_bots::InstalledBots;
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use model::user_event_batch::UserEventBatch;
 use msgpack::serialize_then_unwrap;
@@ -522,7 +522,6 @@ struct Data {
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     verified: Timestamped<bool>,
     pub bots: InstalledBots,
-    pub bot_api_keys: BotApiKeys,
     idempotency_checker: IdempotencyChecker,
 }
 
@@ -618,7 +617,6 @@ impl Data {
             stable_memory_keys_to_garbage_collect: Vec::new(),
             verified: Timestamped::default(),
             bots: InstalledBots::default(),
-            bot_api_keys: BotApiKeys::default(),
             idempotency_checker: IdempotencyChecker::default(),
         }
     }
@@ -788,8 +786,6 @@ impl Data {
             BotInitiator::Command(command) => self
                 .get_user_permissions(&command.initiator)
                 .map(|u| BotPermissions::intersect(&bot.permissions, &u)),
-            BotInitiator::ApiKeySecret(secret) => self.bot_api_keys.permissions_if_secret_matches(bot_id, secret).cloned(),
-            BotInitiator::ApiKeyPermissions(permissions) => Some(permissions.clone()),
             BotInitiator::Autonomous => bot.autonomous_permissions.clone(),
         }
     }
@@ -882,7 +878,6 @@ impl Data {
             return false;
         }
 
-        self.bot_api_keys.delete(bot_id);
         self.chat.events.unsubscribe_bot_from_events(bot_id);
 
         self.chat.events.push_main_event(
@@ -897,11 +892,7 @@ impl Data {
     }
 
     pub fn details_last_updated(&self) -> TimestampMillis {
-        let timestamps = vec![
-            self.chat.details_last_updated(),
-            self.bots.last_updated(),
-            self.bot_api_keys.last_updated(),
-        ];
+        let timestamps = vec![self.chat.details_last_updated(), self.bots.last_updated()];
 
         timestamps.into_iter().max().unwrap_or_default()
     }
