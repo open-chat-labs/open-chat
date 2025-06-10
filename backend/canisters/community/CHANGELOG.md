@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Additional notification data for Firebase Cloud Messaging ([8113](https://github.com/open-chat-labs/open-chat/pull/8113))
+- Add `c2c_bot_community_summary` endpoint ([#8135](https://github.com/open-chat-labs/open-chat/pull/8135))
 
 ### Changed
 
