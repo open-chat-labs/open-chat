@@ -6156,18 +6156,22 @@ export class OpenChat {
                 }
             }
 
-            // If we are still previewing a community we are a member of then remove the preview
-            for (const community of chatsResponse.communitiesAddedUpdated) {
-                if (
-                    community?.membership !== undefined &&
-                    localUpdates.isPreviewingCommunity(community.id)
-                ) {
-                    localUpdates.removeCommunityPreview(community.id);
+            if (localUpdates.anyCommunityPreviews()) {
+                // If we are now a member of a community we were previewing, remove the preview
+                for (const community of chatsResponse.communitiesAddedUpdated) {
+                    if (
+                        community?.membership !== undefined &&
+                        localUpdates.isPreviewingCommunity(community.id)
+                    ) {
+                        localUpdates.removeCommunityPreview(community.id);
+                    }
                 }
             }
 
-            for (const chat of chatsAddedUpdated) {
-                localUpdates.removeUninitialisedDirectChat(chat.id);
+            if (localUpdates.anyUninitialisedDirectChats()) {
+                for (const chat of chatsAddedUpdated) {
+                    localUpdates.removeUninitialisedDirectChat(chat.id);
+                }
             }
 
             if (chatsResponse.avatarId !== undefined) {
@@ -6188,6 +6192,10 @@ export class OpenChat {
                     };
                     userStore.addUser(this.#rehydrateDataContent(user, "avatar"));
                 }
+            }
+
+            if (chatsResponse.pinNumberSettings !== undefined) {
+                pinNumberRequiredStore.set(chatsResponse.pinNumberSettings !== "set_to_none");
             }
 
             OpenChat.setGlobalStateStores(
@@ -6227,19 +6235,7 @@ export class OpenChat {
         // Take a copy of the previous video calls in progress, then remove those that are still in progress
         const videoCallsEnded = new Set(this.#videoCallsInProgress);
 
-        // If the latest message in a chat is sent by the current user, then we know they must have read up to
-        // that message, so we mark the chat as read up to that message if it isn't already. This happens when a
-        // user sends a message on one device then looks at OpenChat on another.
         for (const chat of chatsAddedUpdated) {
-            const latestMessage = chat.latestMessage?.event;
-            if (
-                latestMessage !== undefined &&
-                latestMessage.sender === currentUserIdStore.value &&
-                (chat.membership?.readByMeUpTo ?? -1) < latestMessage.messageIndex &&
-                !localUpdates.isUnconfirmed({ chatId: chat.id }, latestMessage.messageId)
-            ) {
-                messagesRead.markReadUpTo({ chatId: chat.id }, latestMessage.messageIndex);
-            }
             if (chat.videoCallInProgress !== undefined) {
                 videoCallsEnded.delete(chat.videoCallInProgress.messageId);
                 this.#publishRemoteVideoCallStarted({
@@ -6255,10 +6251,6 @@ export class OpenChat {
 
         for (const messageId of videoCallsEnded) {
             this.#publishRemoteVideoCallEnded(messageId);
-        }
-
-        if (chatsResponse.pinNumberSettings !== undefined) {
-            pinNumberRequiredStore.set(chatsResponse.pinNumberSettings !== "set_to_none");
         }
 
         // horribly enough - we need to slightly defer this so that all the cascade of derived stuff is complete
@@ -6502,6 +6494,19 @@ export class OpenChat {
                         [],
                         undefined,
                     );
+                }
+
+                // If the latest message in a chat is sent by the current user, then we know they must have read up to
+                // that message, so we mark the chat as read up to that message if it isn't already. This happens when a
+                // user sends a message on one device then looks at OpenChat on another.
+                const latestMessage = chat.latestMessage?.event;
+                if (
+                    latestMessage !== undefined &&
+                    latestMessage.sender === currentUserIdStore.value &&
+                    (chat.membership?.readByMeUpTo ?? -1) < latestMessage.messageIndex &&
+                    !localUpdates.isUnconfirmed({ chatId: chat.id }, latestMessage.messageId)
+                ) {
+                    messagesRead.markReadUpTo({ chatId: chat.id }, latestMessage.messageIndex);
                 }
             }
         });
