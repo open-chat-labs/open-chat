@@ -23,7 +23,7 @@ macro_rules! generate_msgpack_query_call {
             canister_id: candid::Principal,
             args: &$method_name::Args,
         ) -> $method_name::Response {
-            let method_name = stringify!($method_name).to_string() + "_msgpack";
+            let method_name = concat!(stringify!($method_name), "_msgpack");
 
             $crate::client::execute_msgpack_query(env, sender, canister_id, &method_name, args)
         }
@@ -55,7 +55,7 @@ macro_rules! generate_msgpack_update_call {
             canister_id: candid::Principal,
             args: &$method_name::Args,
         ) -> $method_name::Response {
-            let method_name = stringify!($method_name).to_string() + "_msgpack";
+            let method_name = concat!(stringify!($method_name), "_msgpack");
 
             $crate::client::execute_msgpack_update(env, sender, canister_id, &method_name, args)
         }
