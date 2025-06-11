@@ -8,7 +8,7 @@ macro_rules! generate_update_call {
         ) -> Result<$method_name::Response, Box<dyn std::error::Error + Sync + std::marker::Send>> {
             let args_bytes = msgpack::serialize_to_vec(args)?;
 
-            let method_name = stringify!($method_name);
+            let method_name = concat!(stringify!($method_name), "_msgpack");
             let response = agent
                 .update(canister_id, method_name)
                 .with_arg(args_bytes)
@@ -31,7 +31,7 @@ macro_rules! generate_query_call {
         ) -> Result<$method_name::Response, Box<dyn std::error::Error + std::marker::Send + std::marker::Sync>> {
             let args_bytes = msgpack::serialize_to_vec(args)?;
 
-            let method_name = stringify!($method_name);
+            let method_name = concat!(stringify!($method_name), "_msgpack");
             let response = agent
                 .query(canister_id, method_name)
                 .with_arg(args_bytes)
