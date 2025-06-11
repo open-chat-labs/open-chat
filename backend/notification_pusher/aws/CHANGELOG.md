@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Updated the way configuration is loaded for the pusher by using the `envconf` crate ([8145](https://github.com/open-chat-labs/open-chat/pull/8145))
+
 ### Changed
 
 - Read notification canisters from NotificationsIndex ([#8091](https://github.com/open-chat-labs/open-chat/pull/8091))
@@ -19,8 +23,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [[2.0.1765](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1765-notifications_pusher)] - 2025-05-28
 
 ### Added
-
-- Updated the way configuration is loaded for the pusher by using the `envconf` crate ([8145](https://github.com/open-chat-labs/open-chat/pull/8145))
 
 - Implement pushing notifications to bots ([#7857](https://github.com/open-chat-labs/open-chat/pull/7857))
 
