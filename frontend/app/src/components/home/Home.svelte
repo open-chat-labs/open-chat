@@ -35,7 +35,7 @@
         communitiesStore,
         currentUserStore,
         defaultChatRules,
-        dimensions,
+        dimensionsHeight,
         fullWidth,
         identityStateStore,
         localUpdates,
@@ -980,8 +980,8 @@
         }
     });
 
-    let bgHeight = $derived($dimensions.height * 0.9);
-    let bgClip = $derived((($dimensions.height - 32) / bgHeight) * 361);
+    let bgHeight = $derived($dimensionsHeight * 0.9);
+    let bgClip = $derived((($dimensionsHeight - 32) / bgHeight) * 361);
 </script>
 
 {#if showProfileCard !== undefined}
