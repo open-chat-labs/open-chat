@@ -1,8 +1,6 @@
-use candid::Principal;
 use index_store::DummyStore;
 use notification_pusher_core::config::Config;
 use notification_pusher_core::{run_notifications_pusher, write_metrics};
-use std::collections::HashMap;
 use tokio::time;
 use tracing::info;
 use types::Error;
@@ -13,16 +11,7 @@ async fn main() -> Result<(), Error> {
 
     info!("Initializing notification pusher");
 
-    let args: Vec<String> = std::env::args().collect();
-    let index = args.get(1).map(|a| a.parse::<u64>().unwrap()).unwrap_or_default();
-    let config = Config::init_with_store(move |envc| {
-        if let Some(ncid) = envc.notifications_canister_id {
-            Ok(DummyStore::new(HashMap::from([(Principal::from_text(ncid)?, index)])))
-        } else {
-            Err("Notifications canister ID is not provided".into())
-        }
-    })
-    .await?;
+    let config = Config::init_with_store(DummyStore::default()).await?;
 
     info!("Initialization complete");
 

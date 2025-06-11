@@ -4,7 +4,7 @@ use local_user_index_canister::{latest_notification_index, notifications, remove
 use notifications_index_canister::remove_subscriptions;
 use std::collections::HashMap;
 use tracing::trace;
-use types::{CanisterId, Error, UserId};
+use types::{CanisterId, Empty, Error, UserId};
 
 #[derive(Clone)]
 pub struct IcAgent {
@@ -26,6 +26,12 @@ impl IcAgent {
         }
 
         Ok(IcAgent { agent })
+    }
+
+    pub async fn notification_canisters(&self, notifications_index_canister_id: CanisterId) -> Result<Vec<CanisterId>, Error> {
+        notifications_index_canister_client::notification_canisters(&self.agent, &notifications_index_canister_id, &Empty {})
+            .await
+            .inspect(|canister_ids| trace!(?canister_ids, "notification_canisters response"))
     }
 
     pub async fn notifications(

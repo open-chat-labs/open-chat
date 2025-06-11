@@ -12,13 +12,8 @@ async fn main() -> Result<(), Error> {
     info!("Starting...");
 
     let aws_config = aws_config::load_defaults(BehaviorVersion::latest()).await;
-    let config = Config::init_with_store(move |_| {
-        Ok(DynamoDbIndexStore::build(
-            &aws_config,
-            "push_notification_stream_indexes".to_string(),
-        ))
-    })
-    .await?;
+    let index_store = DynamoDbIndexStore::build(&aws_config, "push_notification_stream_indexes".to_string());
+    let config = Config::init_with_store(index_store).await?;
     info!("DynamoDbClient created & config initialized");
 
     tokio::spawn(write_metrics_to_file());
