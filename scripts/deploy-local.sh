@@ -81,5 +81,5 @@ echo "Canisters created"
     true \
 
 ./scripts/deploy-test-chat-ledger.sh $IDENTITY
-./scripts/get-test-icp.sh "w7lou-c7777-77774-qaamq-cai" $IDENTITY
-./scripts/get-test-chat-tokens.sh "w7lou-c7777-77774-qaamq-cai" $IDENTITY
+./scripts/get-test-icp.sh "xvemo-ap777-77774-qaalq-cai" $IDENTITY
+./scripts/get-test-chat-tokens.sh "xvemo-ap777-77774-qaalq-cai" $IDENTITY
