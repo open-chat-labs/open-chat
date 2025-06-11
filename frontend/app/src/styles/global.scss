@@ -377,6 +377,13 @@ a {
         border-radius: 4px;
     }
 
+    code.hljs {
+        border-radius: $sp3;
+        box-shadow: inset 0px 2px 4px rgba(0, 0, 0, 0.8);
+        display: block;
+        white-space: pre;
+    }
+
     blockquote {
         padding: 0 toRem(16);
         border-left: toRem(4) solid var(--bd);
