@@ -71,8 +71,8 @@ function pixelsFromRems(rem: number, width: number): number {
         return rem * 16;
     }
 }
-export const mobileWidth = derived(dimensionsWidth, (pixels) => pixels < 768);
-export const ipadWidth = derived(dimensionsWidth, (pixels) => pixels < 992);
+export const mobileWidth = derived(dimensionsWidth, (width) => width < 768);
+export const ipadWidth = derived(dimensionsWidth, (width) => width < 992);
 export const availableHeight = derived(
     dimensions,
     ({ width, height }) => height - pixelsFromRems(5, width),
