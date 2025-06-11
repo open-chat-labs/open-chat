@@ -31,14 +31,14 @@ pub(crate) async fn make_c2c_call_to_get_events(
 ) -> EventsResponse {
     match events_args.context {
         EventsContext::Direct(them) => {
-            let canister_id = if bot_initiator.is_some() { them.into() } else { user_id.into() };
+            let (user_id, canister_id) = if bot_initiator.is_some() { (user_id, them.into()) } else { (them, user_id.into()) };
 
             match events_args.args {
                 EventsSelectionCriteria::Page(args) => map_response(
                     user_canister_c2c_client::events(
                         canister_id,
                         &user_canister::events::Args {
-                            user_id: them,
+                            user_id,
                             thread_root_message_index: None,
                             start_index: args.start_index,
                             ascending: args.ascending,
@@ -53,7 +53,7 @@ pub(crate) async fn make_c2c_call_to_get_events(
                     user_canister_c2c_client::events_by_index(
                         canister_id,
                         &user_canister::events_by_index::Args {
-                            user_id: them,
+                            user_id,
                             thread_root_message_index: None,
                             events: args.events,
                             latest_known_update: events_args.latest_known_update,
@@ -65,7 +65,7 @@ pub(crate) async fn make_c2c_call_to_get_events(
                     user_canister_c2c_client::events_window(
                         canister_id,
                         &user_canister::events_window::Args {
-                            user_id: them,
+                            user_id,
                             thread_root_message_index: None,
                             mid_point: args.mid_point,
                             max_messages: args.max_messages,

@@ -34,7 +34,7 @@ fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         return Err(OCErrorCode::AlreadyAdded.into());
     }
 
-    state.push_bot_notification(BotNotification {
+    state.push_bot_notification(Some(BotNotification {
         event: BotEvent::Lifecycle(BotLifecycleEvent::Installed(BotInstalledEvent {
             installed_by,
             location: BotInstallationLocation::Group(state.env.canister_id().into()),
@@ -43,7 +43,7 @@ fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             granted_autonomous_permissions: args.granted_autonomous_permissions.unwrap_or_default(),
         })),
         recipients: vec![args.bot_id],
-    });
+    }));
 
     handle_activity_notification(state);
     Ok(())

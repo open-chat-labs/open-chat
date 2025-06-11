@@ -11,7 +11,7 @@ use group_canister::send_message_v2::{Response::*, *};
 use group_chat_core::SendMessageSuccess;
 use oc_error_codes::OCErrorCode;
 use types::{
-    Achievement, BotCaller, BotPermissions, Caller, Chat, EventIndex, EventWrapper, GroupMessageNotification, Message,
+    Achievement, BotCaller, BotPermissions, Caller, Chat, EventIndex, EventWrapper, FcmData, GroupMessageNotification, Message,
     MessageContent, MessageIndex, OCResult, TimestampMillis, User, UserNotificationPayload,
 };
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
@@ -190,6 +190,15 @@ fn process_send_message_result(
         let sender = caller.agent();
         let content = &message_event.event.content;
         let chat_id = state.env.canister_id().into();
+        let message_type = content.message_type();
+        let message_text = content.notification_text(&mentioned, &[]);
+
+        // TODO i18n
+        let fcm_body = message_text.clone().unwrap_or(message_type.clone());
+        let fcm_data = FcmData::builder()
+            .with_alt_title(&sender_display_name, &sender_username)
+            .with_body(fcm_body)
+            .build();
 
         let notification = UserNotificationPayload::GroupMessage(GroupMessageNotification {
             chat_id,
@@ -200,13 +209,13 @@ fn process_send_message_result(
             sender,
             sender_name: sender_username,
             sender_display_name,
-            message_type: content.message_type(),
-            message_text: content.notification_text(&mentioned, &[]),
+            message_type,
+            message_text,
             image_url: content.notification_image_url(),
             group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
             crypto_transfer: content.notification_crypto_transfer_details(&mentioned),
         });
-        state.push_notification(Some(sender), result.users_to_notify, notification);
+        state.push_notification(Some(sender), result.users_to_notify, notification, fcm_data);
 
         if new_achievement && !caller.is_bot() {
             for a in message_event.event.achievements(false, thread_root_message_index.is_some()) {
@@ -285,10 +294,7 @@ fn process_send_message_result(
         }
     }
 
-    if let Some(bot_notification) = result.bot_notification {
-        state.push_bot_notification(bot_notification);
-    }
-
+    state.push_bot_notification(result.bot_notification);
     handle_activity_notification(state);
 
     SuccessResult {

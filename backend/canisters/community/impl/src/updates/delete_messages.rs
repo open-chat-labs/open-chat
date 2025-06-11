@@ -105,9 +105,9 @@ fn commit(args: Args, ext_caller: Option<Caller>, state: &mut RuntimeState) -> O
 
     let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
     for message_id in
-        results.into_iter().filter_map(
+        results.iter().filter_map(
             |(message_id, result)| {
-                if let Ok(sender) = result { (sender == agent).then_some(message_id) } else { None }
+                if let Ok(success) = result { (success.sender == agent).then_some(message_id) } else { None }
             },
         )
     {
@@ -116,7 +116,7 @@ fn commit(args: Args, ext_caller: Option<Caller>, state: &mut RuntimeState) -> O
             TimerJob::HardDeleteMessageContent(HardDeleteMessageContentJob {
                 channel_id: args.channel_id,
                 thread_root_message_index: args.thread_root_message_index,
-                message_id,
+                message_id: *message_id,
             }),
             remove_deleted_message_content_at,
             now,
@@ -125,6 +125,10 @@ fn commit(args: Args, ext_caller: Option<Caller>, state: &mut RuntimeState) -> O
 
     if args.new_achievement {
         state.notify_user_of_achievement(agent, Achievement::DeletedMessage, now);
+    }
+
+    for result in results.into_iter().filter_map(|(_, result)| result.ok()) {
+        state.push_bot_notification(result.bot_notification);
     }
 
     handle_activity_notification(state);

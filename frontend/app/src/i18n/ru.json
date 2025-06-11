@@ -1215,6 +1215,8 @@
         "pinMessages": "пин-сообщения",
         "reactToMessages": "реагировать на сообщения",
         "readChatDetails": "прочитать подробности чата",
+        "readChatSummary": "прочитать резюме чата",
+        "readCommunitySummary": "прочитать резюме сообщества",
         "readMembership": "прочитать подробности членства",
         "readMessages": "прочитанные сообщения",
         "removeMembers": "удалить/заблокировать участников",

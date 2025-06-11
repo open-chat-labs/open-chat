@@ -9,7 +9,6 @@ pub struct Args {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
     pub reaction: Reaction,
-    pub correlation_id: u64,
 }
 
 pub type Response = UnitResult;

@@ -254,7 +254,6 @@ type ChatEvent = variant {
 type ChatEventWrapper = record {
     index : EventIndex;
     timestamp : TimestampMillis;
-    correlation_id : nat64;
     expires_at : opt TimestampMillis;
     event : ChatEvent;
 };
@@ -530,7 +529,6 @@ type SelectedGroupUpdates = record {
     members_removed : vec UserId;
     bots_added_or_updated : vec InstalledBotDetails;
     bots_removed : vec UserId;
-    api_keys_generated : vec PublicApiKeyDetails;
     webhooks : opt vec WebhookDetails;
     blocked_users_added : vec UserId;
     blocked_users_removed : vec UserId;
@@ -607,7 +605,6 @@ type Message = record {
 type MessageEventWrapper = record {
     index : EventIndex;
     timestamp : TimestampMillis;
-    correlation_id : nat64;
     expires_at : opt TimestampMillis;
     event : Message;
 };
@@ -2231,13 +2228,6 @@ type InstalledBotDetails = record {
     autonomous_permissions : opt BotPermissions;
 };
 
-type PublicApiKeyDetails = record {
-    bot_id : UserId;
-    granted_permissions : BotPermissions;
-    generated_by : UserId;
-    generated_at : TimestampMillis;
-};
-
 type WebhookDetails = record {
     id : UserId;
     name : text;
@@ -2318,47 +2308,47 @@ type CommunityEventType = variant {
 };
 
 type ChatEventType = variant {
-    MessagePrizePayment;
-    NameChanged;
-    MessageVideoCall;
-    GateUpdated;
-    MessagePinned;
-    UsersInvited;
-    UsersBlocked;
-    MessageUnpinned;
-    MessageOther;
-    BotUpdated;
-    MessagePollVote;
     Message;
-    PermissionsChanged;
-    MessageP2pSwap;
-    MessageThreadSummary;
-    EventsTTLUpdated;
-    MembersJoined;
-    MessagePollEnded;
-    UsersUnblocked;
-    Unfrozen;
-    VisibilityChanged;
-    RulesChanged;
-    DescriptionChanged;
-    MessagePrizeClaim;
-    MessageReported;
-    MessageProposalUpdated;
-    MessageProposalVote;
-    ExternalUrlUpdated;
-    InviteCodeChanged;
-    MessageDeleted;
-    BotRemoved;
+    MessageEdited;
     MessageReaction;
+    MessageTipped;
+    MessageDeleted;
+    MessageUndeleted;
+    MessagePollVote;
+    MessagePollEnded;
+    MessagePrizeClaim;
+    MessageP2pSwapCompleted;
+    MessageP2pSwapCancelled;
+    MessageVideoCall;
+    MessageOther;
+
+    // Details category
+    Created;
+    NameChanged;
+    DescriptionChanged;
+    RulesChanged;
+    AvatarChanged;
+    ExternalUrlUpdated;
+    PermissionsChanged;
+    GateUpdated;
+    VisibilityChanged;
+    InviteCodeChanged;
+    Frozen;
+    Unfrozen;
+    DisappearingMessagesUpdated;
+    MessagePinned;
+    MessageUnpinned;
+
+    // Membership category
+    MembersJoined;
     MembersLeft;
     RoleChanged;
+    UsersInvited;
+    UsersBlocked;
+    UsersUnblocked;
     BotAdded;
-    Created;
-    MessageTipped;
-    Frozen;
-    MessageReminder;
-    MessageEdited;
-    AvatarChanged;
+    BotRemoved;
+    BotUpdated;
 };
 
 type BotDataEncoding = variant { Json; Candid };

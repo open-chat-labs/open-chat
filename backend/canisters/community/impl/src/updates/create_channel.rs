@@ -196,7 +196,6 @@ fn create_channel_impl(
         id: channel_id,
         chat,
         date_imported: None,
-        bot_api_keys: Default::default(),
     });
 
     if args.is_public {

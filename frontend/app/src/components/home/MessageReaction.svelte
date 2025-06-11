@@ -42,6 +42,7 @@
         const emoji = (await emojiDatabase.getEmojiByUnicodeOrName(reaction)) as
             | NativeEmoji
             | undefined;
+        if (!emoji) return reaction;
         let code =
             emoji?.shortcodes !== undefined
                 ? `:${emoji.shortcodes[emoji.shortcodes.length - 1]}:`

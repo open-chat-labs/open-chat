@@ -1,5 +1,8 @@
 import {
     emptyChatMetrics,
+    ROLE_ADMIN,
+    ROLE_MEMBER,
+    ROLE_MODERATOR,
     type GroupChatSummary,
     type PollConfig,
     type PollContent,
@@ -36,18 +39,18 @@ const defaultGroupChat: GroupChatSummary = {
     latestMessageIndex: undefined,
     memberCount: 10,
     permissions: {
-        changeRoles: "admin",
-        removeMembers: "moderator",
-        deleteMessages: "moderator",
-        updateGroup: "admin",
-        pinMessages: "admin",
-        inviteUsers: "admin",
-        addMembers: "admin",
-        reactToMessages: "member",
-        mentionAllMembers: "member",
-        startVideoCall: "admin",
+        changeRoles: ROLE_ADMIN,
+        removeMembers: ROLE_MODERATOR,
+        deleteMessages: ROLE_MODERATOR,
+        updateGroup: ROLE_ADMIN,
+        pinMessages: ROLE_ADMIN,
+        inviteUsers: ROLE_ADMIN,
+        addMembers: ROLE_ADMIN,
+        reactToMessages: ROLE_MEMBER,
+        mentionAllMembers: ROLE_MEMBER,
+        startVideoCall: ROLE_ADMIN,
         messagePermissions: {
-            default: "member",
+            default: ROLE_MEMBER,
         },
         threadPermissions: undefined,
     },
@@ -66,7 +69,7 @@ const defaultGroupChat: GroupChatSummary = {
         archived: false,
         mentions: [],
         notificationsMuted: false,
-        role: "admin",
+        role: ROLE_ADMIN,
         readByMeUpTo: undefined,
         joined: BigInt(0),
         myMetrics: emptyChatMetrics(),
@@ -126,7 +129,8 @@ describe("thread utils", () => {
                 },
             },
         );
-        const chat = mergeUnconfirmedThreadsIntoSummary(defaultGroupChat);
+        const chat = { ...defaultGroupChat };
+        mergeUnconfirmedThreadsIntoSummary(chat);
         expect(chat.membership.latestThreads[0].latestEventIndex).toEqual(4);
         expect(chat.membership.latestThreads[0].latestMessageIndex).toEqual(5);
     });

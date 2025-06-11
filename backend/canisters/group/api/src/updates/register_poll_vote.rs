@@ -12,7 +12,6 @@ pub struct Args {
     pub poll_option: u32,
     pub operation: VoteOperation,
     pub new_achievement: bool,
-    pub correlation_id: u64,
 }
 
 #[ts_export(group, register_poll_vote)]

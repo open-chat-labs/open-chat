@@ -2,17 +2,18 @@ use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{AuthToken, BotMessageContent, ChannelId, EventIndex, MessageId, MessageIndex, TimestampMillis};
+use types::{BotChatContext, BotMessageContent, EventIndex, MessageId, MessageIndex, TimestampMillis};
 
 #[ts_export(local_user_index, bot_send_message)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
-    pub channel_id: Option<ChannelId>,
+    pub chat_context: BotChatContext,
+    pub thread: Option<MessageIndex>,
     pub message_id: Option<MessageId>,
+    pub replies_to: Option<EventIndex>,
     pub content: BotMessageContent,
     pub block_level_markdown: bool,
     pub finalised: bool,
-    pub auth_token: AuthToken,
 }
 
 #[ts_export(local_user_index, bot_send_message)]

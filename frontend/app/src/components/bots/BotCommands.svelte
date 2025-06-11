@@ -2,6 +2,7 @@
     import {
         commandSupportsDirectMessages,
         hasEveryRequiredPermission,
+        ROLE_ADMIN,
         ValidationErrors,
         type CommandDefinition,
         type GrantedBotPermissions,
@@ -34,7 +35,7 @@
                 onclick={() => onClick?.(command, i)}
                 class:command-error={errors?.has(`command_${i}`)}
                 class:not_permitted={!permitted}>
-                {#if command.defaultRole === "owner" || command.defaultRole === "admin"}
+                {#if command.defaultRole >= ROLE_ADMIN}
                     <ShieldAccount size={"1rem"} color={"var(--button-txt)"} />
                 {/if}
                 {#if commandSupportsDirectMessages(command)}

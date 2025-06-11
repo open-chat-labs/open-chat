@@ -8,7 +8,6 @@ use types::{CompletedCryptoTransaction, FailedCryptoTransaction, MessageId};
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub message_id: MessageId,
-    pub correlation_id: u64,
 }
 
 #[ts_export(group, claim_prize)]

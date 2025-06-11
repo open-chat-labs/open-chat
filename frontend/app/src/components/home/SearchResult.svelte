@@ -1,25 +1,24 @@
 <script lang="ts">
     import { AvatarSize } from "openchat-client";
-    import Avatar from "../Avatar.svelte";
     import type { Snippet } from "svelte";
+    import Avatar from "../Avatar.svelte";
 
     interface Props {
         showSpinner?: boolean | undefined;
         avatarUrl: string;
         index: number;
-        bot?: boolean;
         children?: Snippet;
         onclick: () => void;
     }
 
-    let { showSpinner = false, avatarUrl, index, children, bot = false, onclick }: Props = $props();
+    let { showSpinner = false, avatarUrl, index, children, onclick }: Props = $props();
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="search-result" class:first={index === 0} {onclick}>
     <span class="avatar">
-        <Avatar {bot} url={avatarUrl} size={AvatarSize.Default} />
+        <Avatar url={avatarUrl} size={AvatarSize.Default} />
     </span>
     <div class="details">
         {@render children?.()}

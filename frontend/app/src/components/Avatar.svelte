@@ -2,14 +2,13 @@
     import { trackedEffect } from "@src/utils/effects.svelte";
     import { AvatarSize, OpenChat, UserStatus } from "openchat-client";
     import { getContext } from "svelte";
-    import Robot from "svelte-material-icons/Robot.svelte";
     import { rtlStore } from "../stores/rtl";
     import { now } from "../stores/time";
     import LighteningBolt from "./home/nav/LighteningBolt.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    type Specialisation = "bot" | "none" | "max_streak";
+    type Specialisation = "none" | "max_streak";
 
     interface Props {
         url: string | undefined;
@@ -19,7 +18,6 @@
         blocked?: boolean;
         statusBorder?: string;
         selected?: boolean;
-        bot?: boolean;
         maxStreak?: boolean;
     }
 
@@ -31,7 +29,6 @@
         blocked = false,
         statusBorder = "white",
         selected = false,
-        bot = false,
         maxStreak = false,
     }: Props = $props();
 
@@ -40,7 +37,6 @@
     let userStatusUserId: string | undefined = $state(undefined);
 
     function getSpecialisation(): Specialisation {
-        if (bot) return "bot";
         if (maxStreak) return "max_streak";
         return "none";
     }
@@ -75,11 +71,7 @@
     {/if}
     {#if specialisation !== "none"}
         <div class="specialised" class:maxStreak class:rtl={$rtlStore}>
-            {#if specialisation === "bot"}
-                <div class="robot">
-                    <Robot viewBox={"0 2 24 24"} size={"100%"} color={"rgba(255, 255, 255, 0.9)"} />
-                </div>
-            {:else if specialisation === "max_streak"}
+            {#if specialisation === "max_streak"}
                 <LighteningBolt enabled />
             {/if}
         </div>
@@ -190,24 +182,6 @@
             &.rtl {
                 right: $offset;
             }
-        }
-    }
-
-    .robot {
-        $size: $avatar-mod;
-        width: $size;
-        height: $size;
-        border-radius: 50%;
-        background-color: var(--accent);
-        padding: toRem(3);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-
-        @include mobile() {
-            $size: $avatar-mod-small;
-            width: $size;
-            height: $size;
         }
     }
 </style>

@@ -97,7 +97,7 @@
             </h4>
         </WithVerifiedBadge>
         <div class="pop">
-            <Avatar bot={state.bot !== undefined} url={state.avatarUrl} size={AvatarSize.Large} />
+            <Avatar url={state.avatarUrl} size={AvatarSize.Large} />
         </div>
         {#if state.description && state.description.length > 0}
             <Markdown inline={false} text={state.description} />

@@ -24,6 +24,10 @@
         chatIdentifiersEqual,
         currentUserIdStore,
         LARGE_GROUP_THRESHOLD,
+        ROLE_ADMIN,
+        ROLE_MEMBER,
+        ROLE_MODERATOR,
+        ROLE_OWNER,
     } from "openchat-client";
     import { getContext } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
@@ -187,15 +191,7 @@
     }
 
     function compareMembers(a: FullMember, b: FullMember): number {
-        if (a.role !== b.role) {
-            if (a.role === "owner") return -1;
-            if (b.role === "owner") return 1;
-            if (a.role === "admin") return -1;
-            if (b.role === "admin") return 1;
-            if (a.role === "moderator") return -1;
-            if (b.role === "moderator") return 1;
-        }
-        return 0;
+        return b.role - a.role;
     }
 
     function setView(v: "members" | "blocked" | "invited" | "lapsed"): void {
@@ -400,9 +396,9 @@
                 me
                 member={me}
                 canPromoteToOwner={false}
-                canDemoteToAdmin={client.canDemote(collection.id, me.role, "admin")}
-                canDemoteToModerator={client.canDemote(collection.id, me.role, "moderator")}
-                canDemoteToMember={client.canDemote(collection.id, me.role, "member")}
+                canDemoteToAdmin={client.canDemote(collection.id, me.role, ROLE_ADMIN)}
+                canDemoteToModerator={client.canDemote(collection.id, me.role, ROLE_MODERATOR)}
+                canDemoteToMember={client.canDemote(collection.id, me.role, ROLE_MEMBER)}
                 {onChangeRole} />
         {/if}
 
@@ -420,7 +416,7 @@
             {/each}
         {/if}
 
-        {#if matchingWebhooks !== undefined && matchingWebhooks.length > 0 && me?.role === "owner" && collection.kind !== "community"}
+        {#if matchingWebhooks !== undefined && matchingWebhooks.length > 0 && me?.role === ROLE_OWNER && collection.kind !== "community"}
             <h4 class="member_type_label">
                 <Translatable resourceKey={i18nKey("bots.member.webhooks")}></Translatable>
             </h4>
@@ -440,12 +436,12 @@
                 <Member
                     me={false}
                     member={item}
-                    canPromoteToOwner={client.canPromote(collection.id, item.role, "owner")}
-                    canPromoteToAdmin={client.canPromote(collection.id, item.role, "admin")}
-                    canDemoteToAdmin={client.canDemote(collection.id, item.role, "admin")}
-                    canPromoteToModerator={client.canPromote(collection.id, item.role, "moderator")}
-                    canDemoteToModerator={client.canDemote(collection.id, item.role, "moderator")}
-                    canDemoteToMember={client.canDemote(collection.id, item.role, "member")}
+                    canPromoteToOwner={client.canPromote(collection.id, item.role, ROLE_OWNER)}
+                    canPromoteToAdmin={client.canPromote(collection.id, item.role, ROLE_ADMIN)}
+                    canDemoteToAdmin={client.canDemote(collection.id, item.role, ROLE_ADMIN)}
+                    canPromoteToModerator={client.canPromote(collection.id, item.role, ROLE_MODERATOR)}
+                    canDemoteToModerator={client.canDemote(collection.id, item.role, ROLE_MODERATOR)}
+                    canDemoteToMember={client.canDemote(collection.id, item.role, ROLE_MEMBER)}
                     canBlockUser={client.canBlockUsers(collection.id)}
                     canRemoveMember={client.canRemoveMembers(collection.id)}
                     {searchTerm}

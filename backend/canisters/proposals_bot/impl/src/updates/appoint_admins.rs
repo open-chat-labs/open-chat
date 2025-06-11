@@ -27,7 +27,6 @@ async fn appoint_group_admin(group_id: ChatId, user_id: UserId) {
     let args = group_canister::change_role::Args {
         user_id,
         new_role: GroupRole::Admin,
-        correlation_id: 0,
     };
 
     let _ = group_canister_c2c_client::change_role(group_id.into(), &args).await;

@@ -26,7 +26,6 @@ generate_msgpack_update_call!(delete_group);
 generate_msgpack_update_call!(delete_messages);
 generate_msgpack_update_call!(edit_message_v2);
 generate_update_call!(end_video_call_v2);
-generate_msgpack_update_call!(generate_bot_api_key);
 generate_msgpack_update_call!(join_video_call);
 generate_msgpack_update_call!(leave_community);
 generate_msgpack_update_call!(leave_group);
@@ -78,7 +77,6 @@ pub mod happy_path {
                 block_level_markdown: false,
                 message_filter_failed: None,
                 pin: None,
-                correlation_id: 0,
             },
         );
 
@@ -110,7 +108,7 @@ pub mod happy_path {
                 forwarding: false,
                 block_level_markdown: false,
                 message_filter_failed: None,
-                correlation_id: 0,
+
                 pin: None,
             },
         );
@@ -140,7 +138,6 @@ pub mod happy_path {
                 message_id,
                 content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
                 block_level_markdown,
-                correlation_id: 0,
             },
         );
 
@@ -224,7 +221,6 @@ pub mod happy_path {
                 thread_root_message_index: None,
                 message_id,
                 reaction: Reaction::new(reaction.to_string()),
-                correlation_id: 0,
             },
         );
         assert!(matches!(response, user_canister::add_reaction::Response::Success));

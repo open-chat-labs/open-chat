@@ -1,6 +1,6 @@
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
-use types::{BotInitiator, BotMessageContent, MessageId, MessageIndex, UserId};
+use types::{BotInitiator, BotMessageContent, EventIndex, MessageId, MessageIndex, ReplyContext, UserId};
 
 use super::send_message_v2::{self, SuccessResult};
 
@@ -10,6 +10,7 @@ pub struct Args {
     pub initiator: BotInitiator,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
+    pub replies_to: Option<EventIndex>,
     pub user_message_id: Option<MessageId>,
     pub content: BotMessageContent,
     pub bot_name: String,
@@ -23,11 +24,13 @@ impl From<Args> for send_message_v2::Args {
             thread_root_message_index: value.thread_root_message_index,
             message_id: value.message_id,
             content: value.content.into(),
-            replies_to: None,
+            replies_to: value.replies_to.map(|r| ReplyContext {
+                event_index: r,
+                chat_if_other: None,
+            }),
             forwarding: false,
             block_level_markdown: value.block_level_markdown,
             message_filter_failed: None,
-            correlation_id: 0,
             recipient: value.bot_id,
             pin: None,
         }

@@ -9,11 +9,11 @@ use types::{GroupInviteCodeChange, GroupInviteCodeChanged, OCResult};
 
 #[update(msgpack = true)]
 #[trace]
-fn disable_invite_code(args: Args) -> Response {
-    execute_update(|state| disable_invite_code_impl(args, state)).into()
+fn disable_invite_code(_args: Args) -> Response {
+    execute_update(disable_invite_code_impl).into()
 }
 
-fn disable_invite_code_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+fn disable_invite_code_impl(state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
     let member = state.get_calling_member(true)?;
@@ -27,7 +27,6 @@ fn disable_invite_code_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                 change: GroupInviteCodeChange::Disabled,
                 changed_by: member.user_id(),
             })),
-            args.correlation_id,
             now,
         );
 

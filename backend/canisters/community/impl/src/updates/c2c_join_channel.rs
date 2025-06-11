@@ -312,7 +312,7 @@ pub(crate) fn join_channel_unchecked(
         min_visible_message_index = events_reader.next_message_index();
     };
 
-    let result = channel.chat.members.add(
+    let mut result = channel.chat.members.add(
         user_id,
         now,
         min_visible_event_index,
@@ -327,29 +327,28 @@ pub(crate) fn join_channel_unchecked(
             return AddResult::Success(AddMemberSuccess {
                 member: member.clone(),
                 unlapse: true,
+                bot_notification: None,
             });
         }
     }
 
-    if !matches!(result, AddResult::Success(_)) {
-        return result;
-    }
+    if let AddResult::Success(success) = &mut result {
+        let invitation = channel.chat.invited_users.remove(&user_id, now);
+        community_members.mark_member_joined_channel(user_id, channel.id);
 
-    let invitation = channel.chat.invited_users.remove(&user_id, now);
-    community_members.mark_member_joined_channel(user_id, channel.id);
-
-    if push_event {
-        if channel.chat.is_public.value {
-            channel.chat.events.mark_members_added_to_public_channel(vec![user_id], now);
-        } else {
-            channel.chat.events.push_main_event(
-                ChatEventInternal::ParticipantJoined(Box::new(MemberJoinedInternal {
-                    user_id,
-                    invited_by: invitation.map(|i| i.invited_by),
-                })),
-                0,
-                now,
-            );
+        if push_event {
+            if channel.chat.is_public.value {
+                success.bot_notification = channel.chat.events.mark_members_added_to_public_channel(vec![user_id], now);
+            } else {
+                let push_result = channel.chat.events.push_main_event(
+                    ChatEventInternal::ParticipantJoined(Box::new(MemberJoinedInternal {
+                        user_id,
+                        invited_by: invitation.map(|i| i.invited_by),
+                    })),
+                    now,
+                );
+                success.bot_notification = push_result.bot_notification;
+            }
         }
     }
 

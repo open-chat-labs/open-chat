@@ -8,7 +8,9 @@ use community_canister::start_video_call_v2::*;
 use constants::HOUR_IN_MS;
 use ic_cdk::update;
 use oc_error_codes::OCErrorCode;
-use types::{Caller, ChannelMessageNotification, OCResult, UserId, UserNotificationPayload, VideoCallPresence, VideoCallType};
+use types::{
+    Caller, ChannelMessageNotification, FcmData, OCResult, UserId, UserNotificationPayload, VideoCallPresence, VideoCallType,
+};
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
@@ -75,6 +77,13 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         .filter(|u| state.data.members.get_by_user_id(u).is_some_and(|m| !m.suspended().value))
         .collect();
 
+    // TODO i18n
+    // TODO video call notifications could display decline and answer buttons
+    let fcm_data = FcmData::builder()
+        .with_alt_title(&args.initiator_display_name, &args.initiator_username)
+        .with_body("Video call incoming...".to_string())
+        .build();
+
     let notification = UserNotificationPayload::ChannelMessage(ChannelMessageNotification {
         community_id: state.env.canister_id().into(),
         channel_id: args.channel_id,
@@ -94,7 +103,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         channel_avatar_id: channel.chat.avatar.as_ref().map(|d| d.id),
     });
 
-    state.push_notification(Some(sender), users_to_notify, notification);
+    state.push_notification(Some(sender), users_to_notify, notification, fcm_data);
     handle_activity_notification(state);
 
     if let Some(expiry) = expires_at {

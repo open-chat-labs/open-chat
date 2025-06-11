@@ -17,7 +17,7 @@ use chat_events::EventPusher;
 use constants::{DAY_IN_MS, ICP_LEDGER_CANISTER_ID, LIFETIME_DIAMOND_TIMESTAMP, OPENCHAT_BOT_USER_ID};
 use event_store_types::{Event, EventBuilder};
 use fire_and_forget_handler::FireAndForgetHandler;
-use installed_bots::{BotApiKeys, InstalledBots};
+use installed_bots::InstalledBots;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use model::chit_earned_events::ChitEarnedEvents;
 use model::contacts::Contacts;
@@ -38,9 +38,9 @@ use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BotInitiator, BotNotification, BotPermissions, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics,
-    ChitEarned, ChitEarnedReason, CommunityId, Cycles, Document, IdempotentEnvelope, Milliseconds, Notification, NotifyChit,
-    TimestampMillis, Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment,
-    UserId, UserNotification, UserNotificationPayload,
+    ChitEarned, ChitEarnedReason, CommunityId, Cycles, Document, FcmData, IdempotentEnvelope, Milliseconds, Notification,
+    NotifyChit, TimestampMillis, Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim,
+    UserCanisterStreakInsurancePayment, UserId, UserNotification, UserNotificationPayload,
 };
 use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
 use utils::env::Environment;
@@ -117,7 +117,13 @@ impl RuntimeState {
         self.data.video_call_operators.iter().any(|o| *o == caller)
     }
 
-    pub fn push_notification(&mut self, sender: Option<UserId>, recipient: UserId, notification: UserNotificationPayload) {
+    pub fn push_notification(
+        &mut self,
+        sender: Option<UserId>,
+        recipient: UserId,
+        notification: UserNotificationPayload,
+        fcm_data: FcmData,
+    ) {
         self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
             created_at: self.env.now(),
             idempotency_id: self.env.rng().next_u64(),
@@ -125,6 +131,7 @@ impl RuntimeState {
                 sender,
                 recipients: vec![recipient],
                 notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
+                fcm_data,
             })),
         })
     }
@@ -236,9 +243,14 @@ impl RuntimeState {
         false
     }
 
-    pub fn push_bot_notification(&mut self, notification: BotNotification, now: TimestampMillis) {
-        if !notification.recipients.is_empty() {
-            self.push_local_user_index_canister_event(LocalUserIndexEvent::Notification(Notification::Bot(notification)), now);
+    pub fn push_bot_notification(&mut self, notification: Option<BotNotification>) {
+        if let Some(notification) = notification {
+            if !notification.recipients.is_empty() {
+                self.push_local_user_index_canister_event(
+                    LocalUserIndexEvent::Notification(Notification::Bot(notification)),
+                    self.env.now(),
+                );
+            }
         }
     }
 
@@ -436,7 +448,6 @@ struct Data {
     pub local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
     pub idempotency_checker: IdempotencyChecker,
     pub bots: InstalledBots,
-    bot_api_keys: BotApiKeys,
 }
 
 impl Data {
@@ -502,7 +513,6 @@ impl Data {
             local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
             idempotency_checker: IdempotencyChecker::default(),
             bots: InstalledBots::default(),
-            bot_api_keys: BotApiKeys::default(),
         }
     }
 
@@ -571,11 +581,6 @@ impl Data {
         // Get the granted permissions when initiated by command or API key
         let granted = match initiator {
             BotInitiator::Command(_) => &bot.permissions,
-            BotInitiator::ApiKeySecret(secret) => match self.bot_api_keys.permissions_if_secret_matches(bot_id, secret) {
-                Some(bot_permissions) => bot_permissions,
-                None => return false,
-            },
-            BotInitiator::ApiKeyPermissions(permissions) => permissions,
             BotInitiator::Autonomous => match bot.autonomous_permissions.as_ref() {
                 Some(permissions) => permissions,
                 None => return false,

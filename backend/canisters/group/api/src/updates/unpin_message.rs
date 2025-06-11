@@ -8,7 +8,6 @@ use types::{MessageIndex, PushEventResult};
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub message_index: MessageIndex,
-    pub correlation_id: u64,
 }
 
 #[ts_export(group, unpin_message)]

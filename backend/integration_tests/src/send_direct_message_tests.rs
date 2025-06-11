@@ -46,7 +46,6 @@ fn empty_message_fails() {
         block_level_markdown: false,
         message_filter_failed: None,
         pin: None,
-        correlation_id: 0,
     };
     let response = client::user::send_message_v2(env, user1.principal, user1.canister(), &send_message_args);
     if !matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InvalidMessageContent))
@@ -75,7 +74,6 @@ fn text_too_long_fails() {
         block_level_markdown: false,
         message_filter_failed: None,
         pin: None,
-        correlation_id: 0,
     };
     let response = client::user::send_message_v2(env, user1.principal, user1.canister(), &send_message_args);
     if !matches!(&response, user_canister::send_message_v2::Response::Error(e)

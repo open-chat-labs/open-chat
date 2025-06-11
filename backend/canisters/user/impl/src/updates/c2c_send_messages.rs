@@ -6,8 +6,9 @@ use ic_cdk::update;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use types::{
-    BotCaller, BotMessageContext, CanisterId, Chat, ContentValidationError, DirectMessageNotification, EventWrapper, Message,
-    MessageContent, MessageId, MessageIndex, SenderContext, TimestampMillis, User, UserId, UserNotificationPayload, UserType,
+    BotCaller, BotMessageContext, CanisterId, Chat, ContentValidationError, DirectMessageNotification, EventWrapper, FcmData,
+    Message, MessageContent, MessageId, MessageIndex, SenderContext, TimestampMillis, User, UserId, UserNotificationPayload,
+    UserType,
 };
 use user_canister::{C2CReplyContext, MessageActivity, MessageActivityEvent};
 
@@ -175,7 +176,6 @@ pub(crate) fn handle_message_impl(
         forwarded: args.forwarding,
         sender_is_bot: args.sender_user_type.is_bot(),
         block_level_markdown: args.block_level_markdown,
-        correlation_id: 0,
         now: args.now,
         sender_context: bot_caller.map(|bot| SenderContext::Bot(BotMessageContext::from(&bot, finalised))),
     };
@@ -198,6 +198,16 @@ pub(crate) fn handle_message_impl(
     }
 
     if !args.mute_notification && !chat.notifications_muted.value && !state.data.suspended.value {
+        let message_type = content.message_type();
+        let message_text = content.notification_text(&args.mentioned, &[]);
+        let image_url = content.notification_image_url();
+
+        let fcm_data = FcmData::builder()
+            .with_alt_title(&args.sender_display_name, &args.sender_name)
+            .with_alt_body(&message_text, &message_type)
+            .with_optional_image(image_url.clone())
+            .build();
+
         let notification = UserNotificationPayload::DirectMessage(DirectMessageNotification {
             sender: args.sender,
             thread_root_message_index,
@@ -205,15 +215,15 @@ pub(crate) fn handle_message_impl(
             event_index: message_event.index,
             sender_name: args.sender_name,
             sender_display_name: args.sender_display_name,
-            message_type: content.message_type(),
-            message_text: content.notification_text(&args.mentioned, &[]),
-            image_url: content.notification_image_url(),
+            message_type,
+            message_text,
+            image_url,
             sender_avatar_id: args.sender_avatar_id,
             crypto_transfer: content.notification_crypto_transfer_details(&[]),
         });
         let recipient = state.env.canister_id().into();
 
-        state.push_notification(Some(args.sender), recipient, notification);
+        state.push_notification(Some(args.sender), recipient, notification, fcm_data);
     }
 
     if matches!(content, MessageContent::Crypto(_)) {

@@ -201,7 +201,7 @@ impl ChatEventInternal {
             ChatEventInternal::GroupInviteCodeChanged(_) => Some(ChatEventType::InviteCodeChanged),
             ChatEventInternal::ChatFrozen(_) => Some(ChatEventType::Frozen),
             ChatEventInternal::ChatUnfrozen(_) => Some(ChatEventType::Unfrozen),
-            ChatEventInternal::EventsTimeToLiveUpdated(_) => Some(ChatEventType::EventsTTLUpdated),
+            ChatEventInternal::EventsTimeToLiveUpdated(_) => Some(ChatEventType::DisappearingMessagesUpdated),
             ChatEventInternal::GroupGateUpdated(_) => Some(ChatEventType::GateUpdated),
             ChatEventInternal::UsersInvited(_) => Some(ChatEventType::UsersInvited),
             ChatEventInternal::MembersAddedToPublicChannel(_) => Some(ChatEventType::MembersJoined),
@@ -569,7 +569,6 @@ mod tests {
         let event = EventWrapperInternal {
             index: 1.into(),
             timestamp: 1,
-            correlation_id: 0,
             expires_at: None,
             event: ChatEventInternal::Message(Box::new(message)),
         };

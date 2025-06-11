@@ -5,6 +5,7 @@
         type OpenChat,
         platformModeratorStore,
         publish,
+        ROLE_NONE,
         routeForScope,
         selectedCommunitySummaryStore,
     } from "openchat-client";
@@ -28,7 +29,7 @@
 
     let isFrozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
     let previewingCommunity = $derived(
-        $selectedCommunitySummaryStore?.membership.role === "none" ||
+        $selectedCommunitySummaryStore?.membership.role === ROLE_NONE ||
             $selectedCommunitySummaryStore?.membership.lapsed,
     );
     let gates = $derived(client.accessGatesForChat(chat));

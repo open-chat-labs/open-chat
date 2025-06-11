@@ -20,6 +20,7 @@
         offensiveEnabledStore,
         publish,
         referralsStore,
+        ROLE_NONE,
         sortedCommunitiesStore,
         suspendedUserStore,
         underReviewEnabledStore,
@@ -678,7 +679,7 @@
         <Select bind:value={selectedCommunityId}>
             <option disabled selected value={""}
                 ><Translatable resourceKey={i18nKey("profile.selectCommunity")} /></option>
-            {#each $sortedCommunitiesStore.filter((s) => s.membership?.role !== "none") as community}
+            {#each $sortedCommunitiesStore.filter((s) => s.membership?.role !== ROLE_NONE) as community}
                 <option value={community.id.communityId}>{community.name}</option>
             {/each}
         </Select>

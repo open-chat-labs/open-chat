@@ -25,6 +25,7 @@
         OpenChat,
         pinnedChatsStore,
         publish,
+        ROLE_NONE,
         routeForScope,
         selectedChatIdStore,
         selectedCommunitySummaryStore,
@@ -65,6 +66,7 @@
     import ArchiveOffIcon from "./ArchiveOffIcon.svelte";
     import Markdown from "./Markdown.svelte";
     import Badges from "./profile/Badges.svelte";
+    import BotBadge from "./profile/BotBadge.svelte";
     import VideoCallIcon from "./video/VideoCallIcon.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -146,7 +148,8 @@
                 return {
                     name: client.displayName(them),
                     diamondStatus: them?.diamondStatus ?? "inactive",
-                    streak: client.getStreak(chatSummary.them.userId),
+                    streak: them?.streak ?? 0,
+                    hasAchievedMaxStreak: (them?.maxStreak ?? 0) >= 365,
                     avatarUrl: client.userAvatarUrl(them),
                     userId: chatSummary.them,
                     typing: client.getTypingString(
@@ -167,6 +170,7 @@
                     name: chatSummary.name,
                     diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
                     streak: 0,
+                    hasAchievedMaxStreak: false,
                     avatarUrl: client.groupAvatarUrl(chatSummary, $selectedCommunitySummaryStore),
                     userId: undefined,
                     typing: client.getTypingString(
@@ -207,7 +211,7 @@
                 chatSummary.eventsTtlLastUpdated > chatSummary.latestMessage.timestamp) ||
             (chatSummary.latestMessage === undefined &&
                 chatSummary.eventsTTL !== undefined &&
-                chatSummary.membership.role !== "none")
+                chatSummary.membership.role !== ROLE_NONE)
         ) {
             return chatSummary.eventsTTL !== undefined
                 ? $_("disappearingMessages.timeUpdated", {
@@ -367,12 +371,12 @@
             case "direct_chat":
                 return chat.latestMessage === undefined;
             case "group_chat":
-                return chat.membership.role === "none";
+                return chat.membership.role === ROLE_NONE;
             case "channel":
                 return (
                     community !== undefined &&
-                    community.membership.role !== "none" &&
-                    chat.membership.role === "none"
+                    community.membership.role !== ROLE_NONE &&
+                    chat.membership.role === ROLE_NONE
                 );
         }
     }
@@ -398,10 +402,9 @@
             <Avatar
                 statusBorder={selected || hovering ? "var(--chatSummary-hv)" : "transparent"}
                 {blocked}
-                bot={chat.bot}
                 url={chat.avatarUrl}
                 showStatus
-                maxStreak={chat.streak >= 365}
+                maxStreak={chat.hasAchievedMaxStreak}
                 userId={chat.userId?.userId}
                 size={AvatarSize.Default} />
             {#if chat.eventsTTL}
@@ -430,6 +433,7 @@
                             diamondStatus={chat.diamondStatus}
                             streak={chat.streak} />
                     </WithVerifiedBadge>
+                    <BotBadge bot={chat.bot} />
                 </div>
             </div>
             <div class="chat-msg">

@@ -203,7 +203,7 @@ impl GroupRoleInternal {
             .filter_map(|(rp, p)| self.is_permitted(rp).then_some(p))
             .collect();
 
-        permissions.insert(ChatPermission::ReadChatDetails);
+        permissions.insert(ChatPermission::ReadSummary);
         permissions.insert(ChatPermission::ReadMembership);
         permissions.insert(ChatPermission::ReadMessages);
         permissions

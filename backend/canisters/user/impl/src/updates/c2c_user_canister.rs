@@ -10,7 +10,7 @@ use chat_events::{
 use constants::{HOUR_IN_MS, MINUTE_IN_MS};
 use ledger_utils::format_crypto_amount_with_symbol;
 use types::{
-    Achievement, Chat, ChitEarned, ChitEarnedReason, DirectMessageTipped, DirectReactionAddedNotification, EventIndex,
+    Achievement, Chat, ChitEarned, ChitEarnedReason, DirectMessageTipped, DirectReactionAddedNotification, EventIndex, FcmData,
     MessageContentInitial, P2PSwapStatus, UserId, UserNotificationPayload, UserType, VideoCallPresence,
 };
 use user_canister::c2c_user_canister::{Response::*, *};
@@ -296,6 +296,13 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
                         && !args.username.is_empty()
                         && !chat.notifications_muted.value
                     {
+                        // TODO i18n
+                        let fcm_body = format!("Reacted {} to your message", args.reaction.clone().0);
+                        let fcm_data = FcmData::builder()
+                            .with_alt_title(&args.display_name, &args.username)
+                            .with_body(fcm_body)
+                            .build();
+
                         let notification = UserNotificationPayload::DirectReactionAdded(DirectReactionAddedNotification {
                             them: chat.them,
                             thread_root_message_index,
@@ -307,7 +314,7 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
                             user_avatar_id: args.user_avatar_id,
                         });
 
-                        state.push_notification(Some(caller_user_id), message_event.event.sender, notification);
+                        state.push_notification(Some(caller_user_id), message_event.event.sender, notification, fcm_data);
                     }
 
                     state.data.push_message_activity(
@@ -398,6 +405,15 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
                 .main_events_reader()
                 .message_event_internal(args.message_id.into())
             {
+                let tip = format_crypto_amount_with_symbol(args.amount, args.decimals, &args.token_symbol);
+
+                // TODO i18n
+                let fcm_body = format!("Tipped your message {}", tip);
+                let fcm_data = FcmData::builder()
+                    .with_alt_title(&args.display_name, &args.username)
+                    .with_body(fcm_body)
+                    .build();
+
                 let notification = UserNotificationPayload::DirectMessageTipped(DirectMessageTipped {
                     them: caller_user_id,
                     thread_root_message_index,
@@ -405,10 +421,10 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
                     message_event_index: message_event.index,
                     username: args.username,
                     display_name: args.display_name,
-                    tip: format_crypto_amount_with_symbol(args.amount, args.decimals, &args.token_symbol),
+                    tip,
                     user_avatar_id: args.user_avatar_id,
                 });
-                state.push_notification(Some(caller_user_id), my_user_id, notification);
+                state.push_notification(Some(caller_user_id), my_user_id, notification, fcm_data);
 
                 state.data.push_message_activity(
                     MessageActivityEvent {

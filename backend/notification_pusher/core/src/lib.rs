@@ -1,5 +1,5 @@
 use crate::bot_notifications::start_bot_notifications_processor;
-use crate::ic_agent::IcAgent;
+use crate::config::Config;
 use crate::metrics::{Metrics, collect_metrics};
 use crate::reader::Reader;
 use crate::user_notifications::start_user_notifications_processor;
@@ -9,39 +9,38 @@ use std::io::Write;
 use std::sync::Arc;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use tracing::info;
-use types::{CanisterId, TimestampMillis, UserId};
-use web_push::{SubscriptionInfo, WebPushMessage};
+use types::{CanisterId, FcmData, FcmToken, SubscriptionInfo, TimestampMillis, UserId};
+use web_push::WebPushMessage;
 
 mod bot_notifications;
+pub mod config;
 pub mod ic_agent;
 mod metrics;
 mod reader;
 mod user_notifications;
 
-pub async fn run_notifications_pusher<I: IndexStore + 'static>(
-    ic_agent: IcAgent,
-    index_canister_id: CanisterId,
-    index_store: I,
-    vapid_private_pem: String,
-    pusher_count: u32,
-    is_production: bool,
-) {
+pub async fn run_notifications_pusher<I: IndexStore + 'static>(config: Config<I>) {
     info!("Notifications pusher starting");
 
     Metrics::init();
 
     let notification_canister_ids = ic_agent.notification_canisters(index_canister_id).await.unwrap();
 
-    let user_notifications_sender =
-        start_user_notifications_processor(ic_agent.clone(), index_canister_id, vapid_private_pem, pusher_count);
+    let user_notifications_sender = start_user_notifications_processor(
+        config.ic_agent.clone(),
+        config.index_canister_id,
+        config.vapid_private_pem,
+        config.pusher_count,
+        config.fcm_service,
+    );
 
-    let bot_notifications_sender = start_bot_notifications_processor(is_production);
+    let bot_notifications_sender = start_bot_notifications_processor(config.is_production);
 
     for notification_canister_id in notification_canister_ids {
         let reader = Reader::new(
-            ic_agent.clone(),
+            config.ic_agent.clone(),
             notification_canister_id,
-            index_store.clone(),
+            config.index_store.clone(),
             user_notifications_sender.clone(),
             bot_notifications_sender.clone(),
         );
@@ -60,14 +59,37 @@ pub fn write_metrics<W: Write>(w: &mut W) {
     encoder.encode(&metrics, w).unwrap();
 }
 
+// Used by reader and processor
+pub enum PushNotification {
+    UserNotification(UserNotification),
+    FcmNotification(FcmNotification),
+}
+
+pub struct FcmNotification {
+    fcm_data: FcmData,
+    fcm_token: FcmToken,
+    metadata: NotificationMetadata,
+}
+
 pub struct UserNotification {
-    notifications_canister: CanisterId,
-    index: u64,
-    timestamp: TimestampMillis,
-    recipient: UserId,
     payload: Arc<Vec<u8>>,
     subscription_info: SubscriptionInfo,
+    metadata: NotificationMetadata,
+}
+
+#[derive(Clone)]
+pub struct NotificationMetadata {
+    index: u64,
+    recipient: UserId,
+    timestamp: TimestampMillis,
     first_read_at: Instant,
+    notifications_canister: CanisterId,
+}
+
+// Sent by processor to pusher
+pub enum NotificationToPush {
+    UserNotificationToPush(UserNotificationToPush),
+    FcmNotificationToPush(Box<FcmNotification>),
 }
 
 pub struct UserNotificationToPush {
@@ -75,6 +97,7 @@ pub struct UserNotificationToPush {
     message: WebPushMessage,
 }
 
+// Bot specific notification structs
 pub struct BotNotification {
     notifications_canister: CanisterId,
     index: u64,

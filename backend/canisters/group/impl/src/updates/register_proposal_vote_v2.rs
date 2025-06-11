@@ -24,12 +24,11 @@ fn register_proposal_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult
         .events
         .record_proposal_vote(user_id, min_visible_event_index, args.message_index, args.adopt)?;
 
-    let now = state.env.now();
     state
         .data
         .chat
         .members
-        .register_proposal_vote(&user_id, args.message_index, now);
+        .register_proposal_vote(&user_id, args.message_index, state.env.now());
 
     handle_activity_notification(state);
     Ok(())

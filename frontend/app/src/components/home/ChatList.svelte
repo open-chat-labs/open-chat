@@ -19,6 +19,7 @@
         numberOfThreadsStore,
         OpenChat,
         publish,
+        ROLE_NONE,
         routeForChatIdentifier,
         routeForScope,
         selectedChatIdStore,
@@ -184,7 +185,7 @@
 
     let showPreview = $derived(
         $mobileWidth &&
-            $selectedCommunitySummaryStore?.membership.role === "none" &&
+            $selectedCommunitySummaryStore?.membership.role === ROLE_NONE &&
             $selectedChatIdStore === undefined,
     );
     let user = $derived($allUsersStore.get($currentUserIdStore));
@@ -295,7 +296,6 @@
                                 {#each resp as match, i (userOrBotKey(match))}
                                     {#if match.kind === "bot_match"}
                                         <SearchResult
-                                            bot
                                             index={i}
                                             avatarUrl={match.avatarUrl ?? "/assets/bot_avatar.svg"}
                                             onclick={() => chatWith(match.id)}>

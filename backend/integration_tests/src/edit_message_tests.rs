@@ -70,7 +70,6 @@ fn update_block_level_markdown_succeeds(starting_value: bool) {
             block_level_markdown: starting_value,
             message_filter_failed: None,
             pin: None,
-            correlation_id: 0,
         },
     ) else {
         panic!()

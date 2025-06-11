@@ -38,9 +38,10 @@
         chatId: ChatIdentifier;
         messageId: bigint;
         me: boolean;
+        intersecting: boolean;
     }
 
-    let { content, chatId, messageId, me }: Props = $props();
+    let { content, chatId, messageId, me, intersecting }: Props = $props();
 
     let progressWidth = $state(0);
 
@@ -112,6 +113,7 @@
             content.requiresCaptcha,
     );
     let showChallenge = $state(false);
+    let spin = $derived(intersecting && !finished && !allClaimed);
 
     function onChallengeResult(e: MouseEvent, success: boolean) {
         if (success) {
@@ -148,7 +150,7 @@
             {/if}
         </div>
         <div class="prize-coin">
-            <SpinningToken {logo} />
+            <SpinningToken {logo} {spin} />
         </div>
     </div>
     <div class="bottom">

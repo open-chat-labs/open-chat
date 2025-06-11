@@ -6,7 +6,6 @@ edition.workspace = true
 [dependencies]
 aws-config = { workspace = true }
 candid = { workspace = true }
-dotenv = { workspace = true }
 dynamodb_index_store = { path = "../../libraries/dynamodb_index_store" }
 notification_pusher_core = { path = "../core" }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

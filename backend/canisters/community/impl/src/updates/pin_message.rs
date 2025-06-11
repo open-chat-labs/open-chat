@@ -35,6 +35,11 @@ fn pin_message_impl(args: Args, pin: bool, state: &mut RuntimeState) -> OCResult
         channel.chat.unpin_message(user_id, args.message_index, now)?
     };
 
+    state.push_bot_notification(result.bot_notification);
     handle_activity_notification(state);
-    Ok(result.into())
+    Ok(PushEventResult {
+        index: result.index,
+        timestamp: now,
+        expires_at: result.expires_at,
+    })
 }

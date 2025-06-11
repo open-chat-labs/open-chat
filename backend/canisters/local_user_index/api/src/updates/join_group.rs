@@ -10,7 +10,6 @@ pub struct Args {
     pub chat_id: ChatId,
     pub invite_code: Option<u64>,
     pub verified_credential_args: Option<VerifiedCredentialGateArgs>,
-    pub correlation_id: u64,
 }
 
 #[ts_export(local_user_index, join_group)]

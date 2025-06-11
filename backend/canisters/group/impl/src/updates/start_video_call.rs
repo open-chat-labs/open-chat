@@ -8,7 +8,7 @@ use constants::HOUR_IN_MS;
 use group_canister::start_video_call_v2::*;
 use ic_cdk::update;
 use oc_error_codes::OCErrorCode;
-use types::{Caller, GroupMessageNotification, OCResult, UserNotificationPayload, VideoCallPresence, VideoCallType};
+use types::{Caller, FcmData, GroupMessageNotification, OCResult, UserNotificationPayload, VideoCallPresence, VideoCallType};
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
@@ -74,6 +74,17 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         }
     }
 
+    let sender_name = args.initiator_username;
+    let sender_display_name = args.initiator_display_name;
+
+    // TODO i18n
+    // TODO video call notifications could display decline and answer buttons
+    let fcm_body = "Video call incoming...".to_string();
+    let fcm_data = FcmData::builder()
+        .with_alt_title(&sender_display_name, &sender_name)
+        .with_body(fcm_body)
+        .build();
+
     let notification = UserNotificationPayload::GroupMessage(GroupMessageNotification {
         chat_id: state.env.canister_id().into(),
         thread_root_message_index: None,
@@ -81,15 +92,15 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         event_index,
         group_name: state.data.chat.name.value.clone(),
         sender,
-        sender_name: args.initiator_username,
-        sender_display_name: args.initiator_display_name,
+        sender_name,
+        sender_display_name,
         message_type: result.message_event.event.content.message_type(),
         message_text: None,
         image_url: None,
         group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
         crypto_transfer: None,
     });
-    state.push_notification(Some(sender), result.users_to_notify, notification);
+    state.push_notification(Some(sender), result.users_to_notify, notification, fcm_data);
     handle_activity_notification(state);
 
     let max_duration = args.max_duration.unwrap_or(HOUR_IN_MS);

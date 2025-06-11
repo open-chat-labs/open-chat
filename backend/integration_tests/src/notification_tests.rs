@@ -7,7 +7,7 @@ use pocket_ic::PocketIc;
 use std::ops::Deref;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
-use types::{Empty, MessageContentInitial, TextContent};
+use types::{Empty, MessageContentInitial, NotificationSubscription, TextContent};
 
 #[test]
 fn direct_message_notification_succeeds() {
@@ -27,7 +27,7 @@ fn direct_message_notification_succeeds() {
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
 
-    let notifications_response = client::local_user_index::happy_path::notifications_v2(
+    let notifications_response = client::local_user_index::happy_path::notifications(
         env,
         *controller,
         local_user_index_canister,
@@ -65,7 +65,7 @@ fn group_message_notification_succeeds() {
 
     client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
 
-    let notifications_response = client::local_user_index::happy_path::notifications_v2(
+    let notifications_response = client::local_user_index::happy_path::notifications(
         env,
         *controller,
         local_user_index_canister,
@@ -105,7 +105,7 @@ fn direct_message_notification_muted() {
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
 
-    let notifications_response = client::local_user_index::happy_path::notifications_v2(
+    let notifications_response = client::local_user_index::happy_path::notifications(
         env,
         *controller,
         local_user_index_canister,
@@ -183,11 +183,10 @@ fn group_message_notification_muted(case: u32) {
             rules_accepted: None,
             message_filter_failed: None,
             new_achievement: false,
-            correlation_id: 0,
         },
     );
 
-    let notifications_response = client::local_user_index::happy_path::notifications_v2(
+    let notifications_response = client::local_user_index::happy_path::notifications(
         env,
         *controller,
         local_user_index_canister,
@@ -232,7 +231,7 @@ fn only_store_up_to_10_subscriptions_per_user() {
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
 
-    let mut notifications_response = client::local_user_index::happy_path::notifications_v2(
+    let mut notifications_response = client::local_user_index::happy_path::notifications(
         env,
         *controller,
         local_user_index_canister,
@@ -242,7 +241,13 @@ fn only_store_up_to_10_subscriptions_per_user() {
     let subscriptions = notifications_response.subscriptions.remove(&user2.user_id).unwrap();
 
     assert_eq!(
-        subscriptions.into_iter().map(|s| s.keys.p256dh).collect_vec(),
+        subscriptions
+            .into_iter()
+            .filter_map(|s| match s {
+                NotificationSubscription::WebPush(si) => Some(si.keys.p256dh),
+                _ => None,
+            })
+            .collect_vec(),
         (10..20).map(|i| i.to_string()).collect_vec()
     );
 }
@@ -274,7 +279,7 @@ fn notifications_blocked_from_blocked_users() {
 
     client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
 
-    let notifications_response = client::local_user_index::happy_path::notifications_v2(
+    let notifications_response = client::local_user_index::happy_path::notifications(
         env,
         *controller,
         local_user_index_canister,
@@ -290,7 +295,7 @@ fn notifications_blocked_from_blocked_users() {
 
     client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
 
-    let notifications_response = client::local_user_index::happy_path::notifications_v2(
+    let notifications_response = client::local_user_index::happy_path::notifications(
         env,
         *controller,
         local_user_index_canister,
@@ -305,7 +310,7 @@ fn notifications_blocked_from_blocked_users() {
 
     client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
 
-    let notifications_response = client::local_user_index::happy_path::notifications_v2(
+    let notifications_response = client::local_user_index::happy_path::notifications(
         env,
         *controller,
         local_user_index_canister,

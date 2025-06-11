@@ -19,7 +19,15 @@ import type {
     UserFailedError,
     UserGroupDetails,
 } from "openchat-shared";
-import { CommonResponses, toBigInt32, UnsupportedValueError } from "openchat-shared";
+import {
+    CommonResponses,
+    toBigInt32,
+    ROLE_ADMIN,
+    ROLE_MEMBER,
+    ROLE_MODERATOR,
+    ROLE_OWNER,
+    UnsupportedValueError
+} from "openchat-shared";
 import type {
     CommunityAddMembersToChannelFailedResult,
     CommunityAddMembersToChannelPartialSuccessResult,
@@ -301,11 +309,11 @@ export function updateCommunitySuccess(
 
 export function apiMemberRole(domain: MemberRole): TGroupRole {
     switch (domain) {
-        case "owner":
+        case ROLE_OWNER:
             return "Owner";
-        case "admin":
+        case ROLE_ADMIN:
             return "Admin";
-        case "moderator":
+        case ROLE_MODERATOR:
             return "Moderator";
         default:
             return "Participant";
@@ -314,9 +322,9 @@ export function apiMemberRole(domain: MemberRole): TGroupRole {
 
 export function apiCommunityRole(newRole: MemberRole): TCommunityRole {
     switch (newRole) {
-        case "owner":
+        case ROLE_OWNER:
             return "Owner";
-        case "admin":
+        case ROLE_ADMIN:
             return "Admin";
         default:
             return "Member";
@@ -358,7 +366,7 @@ export function communityDetailsResponse(
                 }))
                 .concat(
                     value.Success.basic_members.map((id) => ({
-                        role: "member",
+                        role: ROLE_MEMBER,
                         userId: principalBytesToString(id),
                         displayName: undefined,
                         lapsed: false,

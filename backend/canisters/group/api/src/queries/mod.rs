@@ -1,10 +1,7 @@
-pub mod api_key;
-pub mod c2c_bot_api_key;
 pub mod c2c_bot_group_details;
 pub mod c2c_can_issue_access_token_v2;
 pub mod c2c_events;
 pub mod c2c_events_by_index;
-pub mod c2c_events_internal;
 pub mod c2c_events_window;
 pub mod c2c_name_and_members;
 pub mod c2c_summary;

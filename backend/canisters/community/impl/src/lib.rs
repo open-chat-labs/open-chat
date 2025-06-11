@@ -8,7 +8,7 @@ use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::{ChatEventInternal, ChatMetricsInternal, EventPusher, UpdateMessageSuccess};
+use chat_events::{ChatEventInternal, ChatMetricsInternal, EventPusher};
 use community_canister::add_members_to_channel::UserFailedError;
 use constants::{ICP_LEDGER_CANISTER_ID, OPENCHAT_BOT_USER_ID};
 use event_store_types::Event;
@@ -19,7 +19,7 @@ use group_community_common::{
     Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, Members, PaymentReceipts, PendingPaymentsQueue,
     UserCache,
 };
-use installed_bots::{BotApiKeys, InstalledBots};
+use installed_bots::InstalledBots;
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use model::events::CommunityEventInternal;
 use model::user_event_batch::UserEventBatch;
@@ -39,8 +39,8 @@ use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotEventsCaller, BotInitiator, BotNotification,
     BotPermissions, BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChannelId, ChatEventCategory, ChatEventType,
     ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cycles, Document, Empty,
-    EventIndex, EventsCaller, FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules,
-    TimestampMillis, Timestamped, UserId, UserNotification, UserNotificationPayload, UserType,
+    EventIndex, EventsCaller, FcmData, FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds,
+    Notification, Rules, TimestampMillis, Timestamped, UserId, UserNotification, UserNotificationPayload, UserType,
 };
 use types::{BotSubscriptions, CommunityId};
 use user_canister::CommunityCanisterEvent;
@@ -127,20 +127,30 @@ impl RuntimeState {
         sender: Option<UserId>,
         recipients: Vec<UserId>,
         notification: UserNotificationPayload,
+        fcm_data: FcmData,
     ) {
         if !recipients.is_empty() {
             let notification = Notification::User(UserNotification {
                 sender,
                 recipients,
                 notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
+                fcm_data,
             });
             self.push_notification_inner(notification);
         }
     }
 
-    pub fn push_bot_notification(&mut self, notification: BotNotification) {
-        if !notification.recipients.is_empty() {
-            self.push_notification_inner(Notification::Bot(notification));
+    pub fn push_bot_notification(&mut self, notification: Option<BotNotification>) {
+        if let Some(notification) = notification {
+            if !notification.recipients.is_empty() {
+                self.push_notification_inner(Notification::Bot(notification));
+            }
+        }
+    }
+
+    pub fn push_bot_notifications(&mut self, notifications: Vec<Option<BotNotification>>) {
+        for notification in notifications {
+            self.push_bot_notification(notification);
         }
     }
 
@@ -150,13 +160,6 @@ impl RuntimeState {
             idempotency_id: self.env.rng().next_u64(),
             value: local_user_index_canister::CommunityEvent::Notification(notification),
         });
-    }
-
-    pub fn process_message_updated<T>(&mut self, result: UpdateMessageSuccess<T>) -> T {
-        if let Some(bot_notification) = result.bot_notification {
-            self.push_bot_notification(bot_notification);
-        }
-        result.value
     }
 
     pub fn queue_access_gate_payments(&mut self, payment: GatePayment) {
@@ -441,7 +444,6 @@ struct Data {
     local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     bots: InstalledBots,
-    bot_api_keys: BotApiKeys,
     verified: Timestamped<bool>,
     idempotency_checker: IdempotencyChecker,
     public_channel_list_updated: TimestampMillis,
@@ -542,7 +544,6 @@ impl Data {
             local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             bots: InstalledBots::default(),
-            bot_api_keys: BotApiKeys::default(),
             verified: Timestamped::default(),
             idempotency_checker: IdempotencyChecker::default(),
             public_channel_list_updated: now,
@@ -611,7 +612,6 @@ impl Data {
             self.events.latest_event_timestamp(),
             self.members.last_updated(),
             self.bots.last_updated(),
-            self.bot_api_keys.last_updated(),
         ]
         .into_iter()
         .max()
@@ -861,7 +861,7 @@ impl Data {
                 let result = channel
                     .chat
                     .events
-                    .push_main_event(ChatEventInternal::ParticipantsAdded(Box::new(event)), 0, now);
+                    .push_main_event(ChatEventInternal::ParticipantsAdded(Box::new(event)), now);
 
                 bot_notification = result.bot_notification;
             }
@@ -978,7 +978,6 @@ impl Data {
             return false;
         }
 
-        self.bot_api_keys.delete(bot_id);
         for channel in self.channels.iter_mut() {
             channel.chat.events.unsubscribe_bot_from_events(bot_id);
         }
@@ -1025,22 +1024,6 @@ impl Data {
         Some(bot_permissions)
     }
 
-    pub fn get_api_key_permissions(
-        &self,
-        bot_id: &UserId,
-        secret: &str,
-        channel_id: Option<ChannelId>,
-    ) -> Option<&BotPermissions> {
-        let permissions = if let Some(channel_id) = channel_id {
-            let channel = self.channels.get(&channel_id)?;
-            channel.bot_api_keys.permissions_if_secret_matches(bot_id, secret)
-        } else {
-            None
-        };
-
-        permissions.or_else(|| self.bot_api_keys.permissions_if_secret_matches(bot_id, secret))
-    }
-
     pub fn is_bot_permitted(
         &self,
         bot_id: &UserId,
@@ -1061,11 +1044,9 @@ impl Data {
         // Try to get the installed bot
         let bot = self.bots.get(bot_id)?;
 
-        // Get the permissions granted to the bot when initiated by command or API key
+        // Get the permissions granted to the bot when initiated by command or autonomously
         let granted_to_bot = match initiator {
             BotInitiator::Command(_) => &bot.permissions,
-            BotInitiator::ApiKeySecret(secret) => self.get_api_key_permissions(bot_id, secret, channel_id)?,
-            BotInitiator::ApiKeyPermissions(permissions) => permissions,
             BotInitiator::Autonomous => bot.autonomous_permissions.as_ref()?,
         };
 

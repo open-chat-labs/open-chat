@@ -68,33 +68,29 @@ pub enum ChatEventType {
     MessageReaction,
     MessageTipped,
     MessageDeleted,
+    MessageUndeleted,
     MessagePollVote,
     MessagePollEnded,
     MessagePrizeClaim,
-    MessagePrizePayment,
-    MessageProposalVote,
-    MessageProposalUpdated,
-    MessageP2pSwap,
-    MessageReported,
-    MessageThreadSummary,
-    MessageReminder,
+    MessageP2pSwapCompleted,
+    MessageP2pSwapCancelled,
     MessageVideoCall,
-    MessageOther,
+    MessageOther, // Not publishing a bot notification for this event
 
     // Details category
-    Created,
+    Created, // Not publishing a bot notification for this event
     NameChanged,
     DescriptionChanged,
     RulesChanged,
     AvatarChanged,
     ExternalUrlUpdated,
     PermissionsChanged,
-    VisibilityChanged,
-    InviteCodeChanged,
-    Frozen,
-    Unfrozen,
-    EventsTTLUpdated,
     GateUpdated,
+    VisibilityChanged,
+    InviteCodeChanged, // Not publishing a bot notification for this event
+    Frozen,            // Applies to group chats only
+    Unfrozen,          // Applies to group chats only
+    DisappearingMessagesUpdated,
     MessagePinned,
     MessageUnpinned,
 
@@ -103,11 +99,11 @@ pub enum ChatEventType {
     MembersLeft,
     RoleChanged,
     UsersInvited,
-    BotAdded,
-    BotRemoved,
-    BotUpdated,
     UsersBlocked,
     UsersUnblocked,
+    BotAdded,   // Not publishing a bot notification for this event
+    BotRemoved, // Not publishing a bot notification for this event
+    BotUpdated, // Not publishing a bot notification for this event
 }
 
 impl From<ChatEventType> for ChatEventCategory {
@@ -118,16 +114,12 @@ impl From<ChatEventType> for ChatEventCategory {
             | ChatEventType::MessageReaction
             | ChatEventType::MessageTipped
             | ChatEventType::MessageDeleted
+            | ChatEventType::MessageUndeleted
             | ChatEventType::MessagePollVote
             | ChatEventType::MessagePollEnded
             | ChatEventType::MessagePrizeClaim
-            | ChatEventType::MessagePrizePayment
-            | ChatEventType::MessageProposalVote
-            | ChatEventType::MessageProposalUpdated
-            | ChatEventType::MessageP2pSwap
-            | ChatEventType::MessageReported
-            | ChatEventType::MessageThreadSummary
-            | ChatEventType::MessageReminder
+            | ChatEventType::MessageP2pSwapCompleted
+            | ChatEventType::MessageP2pSwapCancelled
             | ChatEventType::MessageVideoCall
             | ChatEventType::MessageOther => ChatEventCategory::Message,
             ChatEventType::Created
@@ -141,7 +133,7 @@ impl From<ChatEventType> for ChatEventCategory {
             | ChatEventType::InviteCodeChanged
             | ChatEventType::Frozen
             | ChatEventType::Unfrozen
-            | ChatEventType::EventsTTLUpdated
+            | ChatEventType::DisappearingMessagesUpdated
             | ChatEventType::GateUpdated
             | ChatEventType::MessagePinned
             | ChatEventType::MessageUnpinned => ChatEventCategory::Details,
@@ -666,7 +658,7 @@ impl ChatEvent {
             ChatEvent::GroupInviteCodeChanged(_) => Some(ChatEventType::InviteCodeChanged),
             ChatEvent::ChatFrozen(_) => Some(ChatEventType::Frozen),
             ChatEvent::ChatUnfrozen(_) => Some(ChatEventType::Unfrozen),
-            ChatEvent::EventsTimeToLiveUpdated(_) => Some(ChatEventType::EventsTTLUpdated),
+            ChatEvent::EventsTimeToLiveUpdated(_) => Some(ChatEventType::DisappearingMessagesUpdated),
             ChatEvent::GroupGateUpdated(_) => Some(ChatEventType::GateUpdated),
             ChatEvent::UsersInvited(_) => Some(ChatEventType::UsersInvited),
             ChatEvent::MembersAddedToDefaultChannel(_) => Some(ChatEventType::MembersJoined),

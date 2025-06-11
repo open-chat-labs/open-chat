@@ -3,6 +3,7 @@
     import {
         anonUserStore,
         identityStateStore,
+        ROLE_NONE,
         selectedCommunitySummaryStore,
     } from "openchat-client";
     import { getContext, tick, type Snippet } from "svelte";
@@ -91,7 +92,7 @@
         gateCheckFailed = undefined;
     }
     let previewingCommunity = $derived(
-        $selectedCommunitySummaryStore?.membership.role === "none" ||
+        $selectedCommunitySummaryStore?.membership.role === ROLE_NONE ||
             $selectedCommunitySummaryStore?.membership.lapsed,
     );
     $effect(() => {

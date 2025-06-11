@@ -37,7 +37,6 @@ fn c2c_freeze_community_impl(args: Args, state: &mut RuntimeState) -> Response {
         let event = EventWrapper {
             index: event_index,
             timestamp: now,
-            correlation_id: 0,
             expires_at: None,
             event: GroupFrozen {
                 frozen_by: args.caller,

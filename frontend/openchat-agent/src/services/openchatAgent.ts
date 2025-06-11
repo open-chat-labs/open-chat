@@ -180,7 +180,6 @@ import type {
     UserCanisterCommunitySummaryUpdates,
     UserCanisterGroupChatSummary,
     UserCanisterGroupChatSummaryUpdates,
-    UserLookup,
     UsersArgs,
     UsersResponse,
     UserSummary,
@@ -291,6 +290,7 @@ import { TranslationsClient } from "./translations/translations.client";
 import { AnonUserClient } from "./user/anonUser.client";
 import { UserClient } from "./user/user.client";
 import { UserIndexClient } from "./userIndex/userIndex.client";
+import { Updatable, UpdatableOption } from "../utils/updatable";
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
@@ -407,10 +407,9 @@ export class OpenChatAgent extends EventTarget {
         return this.identity.getPrincipal();
     }
 
-    getAllCachedUsers(): Promise<UserLookup> {
-        return measure("getAllUsers", () => getAllUsers()).then((users) => {
-            return new Map(users.map((user) => [user.userId, this.rehydrateUserSummary(user)]));
-        });
+    getAllCachedUsers(): Promise<UserSummary[]> {
+        return measure("getAllUsers", () => getAllUsers().then((users) =>
+            users.map((u) => this.rehydrateUserSummary(u))));
     }
 
     logError(message?: unknown, ...optionalParams: unknown[]): void {
@@ -1652,147 +1651,161 @@ export class OpenChatAgent extends EventTarget {
         }));
     }
 
-    private getUpdatedPinnedChannels(
-        currentPinnedChannels: ChannelIdentifier[],
+    private applyPinnedChannelUpdates(
+        pinnedChannels: Updatable<ChannelIdentifier[]>,
         userResponse: UpdatesSuccessResponse,
-    ): ChannelIdentifier[] {
-        const byCommunity = currentPinnedChannels.reduce((map, channel) => {
-            const channels = map.get(channel.communityId) ?? [];
-            channels.push(channel);
-            map.set(channel.communityId, channels);
-            return map;
-        }, new Map<string, ChannelIdentifier[]>());
+    ) {
+        const communitiesUpdated: Set<string> = new Set();
+        const updates: ChannelIdentifier[] = [];
 
-        userResponse.communities.added
-            .flatMap((c) => c.pinned)
-            .forEach((channel) => {
-                byCommunity.get(channel.communityId)?.push(channel);
-            });
-
+        userResponse.communities.added.forEach((c) => {
+            if (c.pinned.length > 0) {
+                communitiesUpdated.add(c.id.communityId);
+                updates.push(...c.pinned);
+            }
+        });
         userResponse.communities.updated.forEach((c) => {
             if (c.pinned !== undefined) {
-                if (c.pinned.length === 0) {
-                    byCommunity.delete(c.id.communityId);
-                } else {
-                    byCommunity.set(c.id.communityId, c.pinned);
+                communitiesUpdated.add(c.id.communityId);
+                if (c.pinned.length > 0) {
+                    updates.push(...c.pinned);
                 }
             }
         });
 
-        return [...byCommunity.values()].flat();
+        if (communitiesUpdated.size > 0) {
+            pinnedChannels.value = pinnedChannels.value
+                .filter((c) => !communitiesUpdated.has(c.communityId))
+                .concat(...updates);
+        }
     }
 
-    private async _getUpdates(current: ChatStateFull | undefined): Promise<UpdatesResult> {
-        const start = Date.now();
+    private async _getUpdates(current: ChatStateFull | undefined): Promise<UpdatesResult | undefined> {
+        const start = performance.now();
         let totalQueryCount = 0;
 
-        let directChats: DirectChatSummary[];
+        let userCanisterLocalUserIndex: string;
+        let currentDirectChats: DirectChatSummary[] = [];
+        let directChatsAdded: DirectChatSummary[] = [];
         let directChatUpdates: DirectChatSummaryUpdates[] = [];
+        let directChatsRemoved: string[] = [];
+        let directChats: DirectChatSummary[] = [];
 
         let currentGroups: GroupChatSummary[] = [];
         let groupsAdded: UserCanisterGroupChatSummary[] = [];
+        let groupsRemoved: string[] = [];
         let userCanisterGroupUpdates: UserCanisterGroupChatSummaryUpdates[] = [];
 
         let currentCommunities: CommunitySummary[] = [];
         let communitiesAdded: UserCanisterCommunitySummary[] = [];
+        let communitiesRemoved: string[] = [];
         let userCanisterCommunityUpdates: UserCanisterCommunitySummaryUpdates[] = [];
 
-        const groupsCommunitiesRemoved = new Set<string>();
-
-        let avatarId: bigint | undefined;
-        let blockedUsers: string[];
-        let pinnedGroupChats: GroupChatIdentifier[];
-        let pinnedDirectChats: DirectChatIdentifier[];
-        let pinnedFavouriteChats: ChatIdentifier[];
-        let pinnedChannels: ChannelIdentifier[];
-        let favouriteChats: ChatIdentifier[];
-        let suspensionChanged = undefined;
-        let pinNumberSettings: PinNumberSettings | undefined;
-        let userCanisterLocalUserIndex: string;
-        let achievements: Set<string>;
-        let newAchievements: ChitEarned[];
+        let avatarId: UpdatableOption<bigint>;
+        let blockedUsers: Updatable<string[]>;
+        let pinnedGroupChats: Updatable<GroupChatIdentifier[]>;
+        let pinnedDirectChats: Updatable<DirectChatIdentifier[]>;
+        let pinnedFavouriteChats: Updatable<ChatIdentifier[]>;
+        let pinnedChannels: Updatable<ChannelIdentifier[]>;
+        let favouriteChats: Updatable<ChatIdentifier[]>;
+        let pinNumberSettings: UpdatableOption<PinNumberSettings>;
+        let achievements: Updatable<Set<string>>;
+        let newAchievements: Updatable<ChitEarned[]>;
         let achievementsLastSeen: bigint;
-        let chitState: ChitState;
-        let referrals: Referral[];
-        let walletConfig: WalletConfig;
-        let messageActivitySummary: MessageActivitySummary;
-        let installedBots: Map<string, GrantedBotPermissions>;
-        let bitcoinAddress: string | undefined = undefined;
-        let streakInsurance: StreakInsurance | undefined;
+        let chitState: Updatable<ChitState>;
+        let referrals: Updatable<Referral[]>;
+        let walletConfig: Updatable<WalletConfig>;
+        let messageActivitySummary: Updatable<MessageActivitySummary>;
+        let installedBots: Updatable<Map<string, GrantedBotPermissions>>;
+        let bitcoinAddress: Updatable<string | undefined>;
+        let streakInsurance: UpdatableOption<StreakInsurance>;
 
+        let suspensionChanged: boolean | undefined = undefined;
         let latestUserCanisterUpdates: bigint;
         let anyUpdates = false;
+
+        const processAchievementsResponse = (achievementsResponse: ChitEarned[]) => {
+            if (achievementsResponse.length > 0) {
+                achievementsResponse.forEach((a) => {
+                    if (a.timestamp > achievementsLastSeen) {
+                        newAchievements.mutate((na) => na.push(a));
+                    }
+                    const name = a.reason.kind === "achievement_unlocked"
+                        ? a.reason.type
+                        : a.reason.kind === "external_achievement_unlocked"
+                            ? a.reason.name
+                            : undefined;
+
+                    if (name !== undefined) {
+                        achievements.mutate((ac) => ac.add(name));
+                    }
+                });
+            }
+        }
 
         if (current === undefined) {
             totalQueryCount++;
             const userResponse = await this.userClient.getInitialState();
+            anyUpdates = true;
+            userCanisterLocalUserIndex = userResponse.localUserIndex;
+            latestUserCanisterUpdates = userResponse.timestamp;
 
-            directChats = userResponse.directChats.summaries;
+            directChats = directChatsAdded = userResponse.directChats.summaries;
             groupsAdded = userResponse.groupChats.summaries;
             communitiesAdded = userResponse.communities.summaries;
 
-            avatarId = userResponse.avatarId;
-            blockedUsers = userResponse.blockedUsers;
-            pinnedGroupChats = userResponse.groupChats.pinned;
-            pinnedDirectChats = userResponse.directChats.pinned;
-            pinnedFavouriteChats = userResponse.favouriteChats.pinned;
-            pinnedChannels = userResponse.communities.summaries.flatMap((c) => c.pinned);
-            favouriteChats = userResponse.favouriteChats.chats;
-            latestUserCanisterUpdates = userResponse.timestamp;
-            pinNumberSettings = userResponse.pinNumberSettings;
-            userCanisterLocalUserIndex = userResponse.localUserIndex;
-            newAchievements = userResponse.achievements ?? [];
-            achievements = new Set<string>(
-                newAchievements.reduce((all, a) => {
-                    if (a.reason.kind === "achievement_unlocked") {
-                        all.push(a.reason.type);
-                    }
-                    if (a.reason.kind === "external_achievement_unlocked") {
-                        all.push(a.reason.name);
-                    }
-                    return all;
-                }, [] as string[]),
-            );
+            avatarId = new UpdatableOption(userResponse.avatarId, true);
+            blockedUsers = new Updatable(userResponse.blockedUsers, true);
+            pinnedGroupChats = new Updatable(userResponse.groupChats.pinned, true);
+            pinnedDirectChats = new Updatable(userResponse.directChats.pinned, true);
+            pinnedFavouriteChats = new Updatable(userResponse.favouriteChats.pinned, true);
+            pinnedChannels = new Updatable(userResponse.communities.summaries.flatMap((c) => c.pinned), true);
+            favouriteChats = new Updatable(userResponse.favouriteChats.chats, true);
+            pinNumberSettings = new UpdatableOption(userResponse.pinNumberSettings, true);
             achievementsLastSeen = userResponse.achievementsLastSeen;
-            chitState = {
+            achievements = new Updatable(new Set(), true);
+            newAchievements = new Updatable([], true);
+            processAchievementsResponse(userResponse.achievements);
+            chitState = new Updatable({
                 streakEnds: userResponse.streakEnds,
                 streak: userResponse.streak,
                 maxStreak: userResponse.maxStreak,
                 chitBalance: userResponse.chitBalance,
                 nextDailyChitClaim: userResponse.nextDailyClaim,
                 totalChitEarned: userResponse.totalChitEarned,
-            };
-            referrals = userResponse.referrals;
-            walletConfig = userResponse.walletConfig;
-            messageActivitySummary = userResponse.messageActivitySummary;
-            anyUpdates = true;
-            installedBots = userResponse.bots;
-            bitcoinAddress = userResponse.bitcoinAddress;
-            streakInsurance = userResponse.streakInsurance;
+            }, true);
+            referrals = new Updatable(userResponse.referrals, true);
+            walletConfig = new Updatable(userResponse.walletConfig, true);
+            messageActivitySummary = new Updatable(userResponse.messageActivitySummary, true);
+            installedBots = new Updatable(userResponse.bots, true);
+            bitcoinAddress = new Updatable(userResponse.bitcoinAddress, true);
+            streakInsurance = new UpdatableOption(userResponse.streakInsurance, true);
         } else {
-            directChats = current.directChats;
+            userCanisterLocalUserIndex = current.userCanisterLocalUserIndex;
+            latestUserCanisterUpdates = current.latestUserCanisterUpdates;
+
+            currentDirectChats = current.directChats;
             currentGroups = current.groupChats;
             currentCommunities = current.communities;
-            installedBots = current.installedBots;
-            bitcoinAddress = current.bitcoinAddress;
-            streakInsurance = current.streakInsurance;
-            avatarId = current.avatarId;
-            blockedUsers = current.blockedUsers;
-            pinnedGroupChats = current.pinnedGroupChats;
-            pinnedDirectChats = current.pinnedDirectChats;
-            pinnedFavouriteChats = current.pinnedFavouriteChats;
-            pinnedChannels = current.pinnedChannels;
-            favouriteChats = current.favouriteChats;
-            latestUserCanisterUpdates = current.latestUserCanisterUpdates;
-            pinNumberSettings = current.pinNumberSettings;
-            userCanisterLocalUserIndex = current.userCanisterLocalUserIndex;
+
+            avatarId = new UpdatableOption(current.avatarId);
+            blockedUsers = new Updatable(current.blockedUsers);
+            pinnedGroupChats = new Updatable(current.pinnedGroupChats);
+            pinnedDirectChats = new Updatable(current.pinnedDirectChats);
+            pinnedFavouriteChats = new Updatable(current.pinnedFavouriteChats);
+            pinnedChannels = new Updatable(current.pinnedChannels);
+            favouriteChats = new Updatable(current.favouriteChats);
+            pinNumberSettings = new UpdatableOption(current.pinNumberSettings);
+            achievements = new Updatable(current.achievements);
+            newAchievements = new Updatable([]);
             achievementsLastSeen = current.achievementsLastSeen;
-            achievements = current.achievements;
-            newAchievements = [];
-            chitState = current.chitState;
-            referrals = current.referrals;
-            walletConfig = current.walletConfig;
-            messageActivitySummary = current.messageActivitySummary;
+            chitState = new Updatable(current.chitState);
+            referrals = new Updatable(current.referrals);
+            walletConfig = new Updatable(current.walletConfig);
+            messageActivitySummary = new Updatable(current.messageActivitySummary);
+            installedBots = new Updatable(current.installedBots);
+            bitcoinAddress = new Updatable(current.bitcoinAddress);
+            streakInsurance = new UpdatableOption(current.streakInsurance);
 
             try {
                 totalQueryCount++;
@@ -1801,80 +1814,80 @@ export class OpenChatAgent extends EventTarget {
                 );
 
                 if (userResponse.kind === "success") {
-                    userResponse.botsAddedOrUpdated.forEach((b) =>
-                        installedBots.set(b.id, b.permissions),
-                    );
-                    userResponse.botsRemoved.forEach((b) => {
-                        installedBots.delete(b);
-                    });
-                    const removeDirectChatIds = userResponse.directChats.removed.map((id) => id.userId);
-                    directChats = userResponse.directChats.added.concat(
-                        mergeDirectChatUpdates(
-                            directChats,
-                            userResponse.directChats.updated,
-                            removeDirectChatIds,
-                        ),
-                    );
-                    removeDirectChatIds.forEach((id) => {
+                    anyUpdates = true;
+                    latestUserCanisterUpdates = userResponse.timestamp;
+
+                    directChatsAdded = userResponse.directChats.added;
+                    directChatUpdates = userResponse.directChats.updated;
+                    directChatsRemoved = userResponse.directChats.removed;
+                    directChatsRemoved.forEach((id) => {
                         deleteEventsForChat(this.db, id);
                     });
-                    directChatUpdates = userResponse.directChats.updated;
 
                     groupsAdded = userResponse.groupChats.added;
+                    groupsRemoved = userResponse.groupChats.removed;
                     userCanisterGroupUpdates = userResponse.groupChats.updated;
-                    userResponse.groupChats.removed.forEach((g) => groupsCommunitiesRemoved.add(g));
 
                     communitiesAdded = userResponse.communities.added;
+                    communitiesRemoved = userResponse.communities.removed;
                     userCanisterCommunityUpdates = userResponse.communities.updated;
-                    userResponse.communities.removed.forEach((c) => groupsCommunitiesRemoved.add(c));
 
-                    avatarId = applyOptionUpdate(avatarId, userResponse.avatarId);
-                    blockedUsers = userResponse.blockedUsers ?? blockedUsers;
-                    pinnedGroupChats = userResponse.groupChats.pinned ?? pinnedGroupChats;
-                    pinnedDirectChats = userResponse.directChats.pinned ?? pinnedDirectChats;
-                    pinnedFavouriteChats = userResponse.favouriteChats.pinned ?? pinnedFavouriteChats;
-                    pinnedChannels = this.getUpdatedPinnedChannels(pinnedChannels, userResponse);
-                    favouriteChats = userResponse.favouriteChats.chats ?? favouriteChats;
+                    avatarId.applyOptionUpdate(userResponse.avatarId);
+                    blockedUsers.updateIfNotUndefined(userResponse.blockedUsers);
+                    pinnedGroupChats.updateIfNotUndefined(userResponse.groupChats.pinned);
+                    pinnedDirectChats.updateIfNotUndefined(userResponse.directChats.pinned);
+                    pinnedFavouriteChats.updateIfNotUndefined(userResponse.favouriteChats.pinned);
+                    this.applyPinnedChannelUpdates(pinnedChannels, userResponse);
+                    favouriteChats.updateIfNotUndefined(userResponse.favouriteChats.chats);
                     suspensionChanged = userResponse.suspended;
-                    latestUserCanisterUpdates = userResponse.timestamp;
-                    pinNumberSettings = applyOptionUpdate(
-                        pinNumberSettings,
-                        userResponse.pinNumberSettings,
-                    );
+                    pinNumberSettings.applyOptionUpdate(userResponse.pinNumberSettings);
                     achievementsLastSeen = userResponse.achievementsLastSeen ?? achievementsLastSeen;
-                    newAchievements = userResponse.achievements ?? [];
-                    newAchievements.forEach((a) => {
-                        if (a.reason.kind === "achievement_unlocked") {
-                            achievements.add(a.reason.type);
-                        }
-                        if (a.reason.kind === "external_achievement_unlocked") {
-                            achievements.add(a.reason.name);
-                        }
-                    });
-                    chitState = {
-                        streakEnds: userResponse.streakEnds,
-                        streak: userResponse.streak,
-                        maxStreak: userResponse.maxStreak,
-                        chitBalance: userResponse.chitBalance,
-                        nextDailyChitClaim: userResponse.nextDailyClaim,
-                        totalChitEarned: userResponse.totalChitEarned,
-                    };
-                    referrals = referrals
-                        .filter(
-                            (prev) =>
-                                !userResponse.referrals.find((latest) => latest.userId === prev.userId),
-                        )
-                        .concat(userResponse.referrals);
-                    walletConfig = userResponse.walletConfig ?? current.walletConfig;
-                    messageActivitySummary =
-                        userResponse.messageActivitySummary ?? current.messageActivitySummary;
-                    bitcoinAddress ??= userResponse.bitcoinAddress;
-                    streakInsurance = applyOptionUpdate(streakInsurance, userResponse.streakInsurance);
-                    anyUpdates = true;
+                    processAchievementsResponse(userResponse.achievements);
+                    if (userResponse.totalChitEarned !== chitState.value.totalChitEarned
+                        || userResponse.streakEnds !== chitState.value.streakEnds) {
+                        chitState.value = {
+                            streakEnds: userResponse.streakEnds,
+                            streak: userResponse.streak,
+                            maxStreak: userResponse.maxStreak,
+                            chitBalance: userResponse.chitBalance,
+                            nextDailyChitClaim: userResponse.nextDailyClaim,
+                            totalChitEarned: userResponse.totalChitEarned,
+                        };
+                    }
+                    if (userResponse.referrals.length > 0) {
+                        referrals.value = referrals.value
+                            .filter(
+                                (prev) =>
+                                    !userResponse.referrals.find((latest) => latest.userId === prev.userId),
+                            )
+                            .concat(userResponse.referrals);
+                    }
+                    if (userResponse.botsAddedOrUpdated.length > 0 || userResponse.botsRemoved.length > 0) {
+                        installedBots.mutate((map) => {
+                            userResponse.botsAddedOrUpdated.forEach((b) =>
+                                map.set(b.id, b.permissions),
+                            );
+                            userResponse.botsRemoved.forEach((b) => {
+                                map.delete(b);
+                            });
+                        });
+                    }
+                    walletConfig.updateIfNotUndefined(userResponse.walletConfig);
+                    messageActivitySummary.updateIfNotUndefined(userResponse.messageActivitySummary);
+                    bitcoinAddress.updateIfNotUndefined(userResponse.bitcoinAddress);
+                    streakInsurance.applyOptionUpdate(userResponse.streakInsurance);
                 }
             } catch (error) {
                 console.error("Failed to get updates from User canister", error);
             }
+
+            directChats = directChatsAdded.concat(
+                mergeDirectChatUpdates(
+                    currentDirectChats,
+                    directChatUpdates,
+                    directChatsRemoved,
+                ),
+            );
         }
 
         const byLocalUserIndex: Map<string, GroupAndCommunitySummaryUpdatesArgs[]> = new Map();
@@ -1962,8 +1975,16 @@ export class OpenChatAgent extends EventTarget {
             anyUpdates = true;
         }
 
-        const isGroupCommunityDeleted = (canisterId: string, joined: bigint) => {
-            if (groupsCommunitiesRemoved.has(canisterId)) return true;
+        if (!anyUpdates) {
+            const duration = performance.now() - start;
+            console.debug(
+                `GetUpdates completed with no updates in ${duration}ms. Number of queries: ${totalQueryCount}`,
+            );
+            return undefined;
+        }
+
+        const isGroupCommunityDeleted = (canisterId: string, joined: bigint, removed: string[]) => {
+            if (removed.includes(canisterId)) return true;
             // This is needed in case we hit a replica which is lagging and
             // isn't aware the group/community has been created yet
             const notFoundTimestamp = notFoundTimestamps.get(canisterId);
@@ -1981,7 +2002,7 @@ export class OpenChatAgent extends EventTarget {
                     groupUpdates,
                 ),
             )
-            .filter((g) => !isGroupCommunityDeleted(g.id.groupId, g.membership.joined));
+            .filter((g) => !isGroupCommunityDeleted(g.id.groupId, g.membership.joined, groupsRemoved));
 
         const communities = mergeCommunities(
             communitiesAdded,
@@ -1994,35 +2015,35 @@ export class OpenChatAgent extends EventTarget {
                     communityUpdates,
                 ),
             )
-            .filter((c) => !isGroupCommunityDeleted(c.id.communityId, c.membership.joined));
+            .filter((c) => !isGroupCommunityDeleted(c.id.communityId, c.membership.joined, communitiesRemoved));
 
         this.removeExpiredLatestMessages(directChats, start);
         this.removeExpiredLatestMessages(groupChats, start);
         communities.forEach((c) => this.removeExpiredLatestMessages(c.channels, start));
 
         const state = {
+            userCanisterLocalUserIndex,
             latestUserCanisterUpdates,
             directChats,
             groupChats,
             communities,
-            avatarId,
-            blockedUsers,
-            pinnedGroupChats,
-            pinnedDirectChats,
-            pinnedFavouriteChats,
-            pinnedChannels,
-            favouriteChats,
-            pinNumberSettings,
-            userCanisterLocalUserIndex,
+            avatarId: avatarId.value,
+            blockedUsers: blockedUsers.value,
+            pinnedGroupChats: pinnedGroupChats.value,
+            pinnedDirectChats: pinnedDirectChats.value,
+            pinnedFavouriteChats: pinnedFavouriteChats.value,
+            pinnedChannels: pinnedChannels.value,
+            favouriteChats: favouriteChats.value,
+            pinNumberSettings: pinNumberSettings.value,
             achievementsLastSeen,
-            achievements,
-            chitState,
-            referrals,
-            walletConfig,
-            messageActivitySummary,
-            installedBots,
-            bitcoinAddress,
-            streakInsurance,
+            achievements: achievements.value,
+            chitState: chitState.value,
+            referrals: referrals.value,
+            walletConfig: walletConfig.value,
+            messageActivitySummary: messageActivitySummary.value,
+            installedBots: installedBots.value,
+            bitcoinAddress: bitcoinAddress.value,
+            streakInsurance: streakInsurance.value,
         };
 
         const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);
@@ -2051,18 +2072,61 @@ export class OpenChatAgent extends EventTarget {
             }
         }
 
-        const end = Date.now();
-        const duration = end - start;
+        const directChatsAddedUpdatedIds = new Set([
+            ...directChatsAdded.map((c) => c.id.userId),
+            ...directChatUpdates.map((c) => c.id.userId),
+        ]);
+        const directChatsAddedUpdated = directChats
+            .filter((c) => directChatsAddedUpdatedIds.has(c.id.userId))
+            .map((c) => this.hydrateChatSummary(c));
+
+        const groupsAddedUpdatedIds = new Set([
+            ...groupsAdded.map((g) => g.id.groupId),
+            ...groupUpdates.map((g) => g.id.groupId),
+        ]);
+        const groupsAddedUpdated = groupChats
+            .filter((g) => groupsAddedUpdatedIds.has(g.id.groupId))
+            .map((c) => this.hydrateChatSummary(c));
+
+        const communitiesAddedUpdatedIds = new Set([
+            ...communitiesAdded.map((c) => c.id.communityId),
+            ...communityUpdates.map((c) => c.id.communityId),
+        ]);
+        const communitiesAddedUpdated = communities
+            .filter((c) => communitiesAddedUpdatedIds.has(c.id.communityId))
+            .map((c) => this.hydrateCommunity(c));
+
+        const duration = performance.now() - start;
         console.debug(
             `GetUpdates completed in ${duration}ms. Number of queries: ${totalQueryCount}`,
         );
 
         return {
-            state: this.hydrateChatState(state),
+            directChatsAddedUpdated,
+            directChatsRemoved,
+            groupsAddedUpdated,
+            groupsRemoved,
+            communitiesAddedUpdated,
+            communitiesRemoved,
             updatedEvents: updatedEvents.toMap() as Map<string, UpdatedEvent[]>,
-            anyUpdates,
+            avatarId: avatarId.toOptionUpdate(),
+            blockedUsers: blockedUsers.valueIfUpdated(),
+            pinnedGroupChats: pinnedGroupChats.valueIfUpdated(),
+            pinnedDirectChats: pinnedDirectChats.valueIfUpdated(),
+            pinnedChannels: pinnedChannels.valueIfUpdated(),
+            pinnedFavouriteChats: pinnedFavouriteChats.valueIfUpdated(),
+            favouriteChats: favouriteChats.valueIfUpdated(),
+            pinNumberSettings: pinNumberSettings.toOptionUpdate(),
+            achievements: achievements.valueIfUpdated(),
+            newAchievements: newAchievements.valueIfUpdated() ?? [],
+            chitState: chitState.valueIfUpdated(),
+            referrals: referrals.valueIfUpdated(),
+            walletConfig: walletConfig.valueIfUpdated(),
+            messageActivitySummary: messageActivitySummary.valueIfUpdated(),
+            installedBots: installedBots.valueIfUpdated(),
+            bitcoinAddress: bitcoinAddress.valueIfUpdated(),
+            streakInsurance: streakInsurance.toOptionUpdate(),
             suspensionChanged,
-            newAchievements,
         };
     }
 
@@ -2128,18 +2192,32 @@ export class OpenChatAgent extends EventTarget {
         return { success, errors };
     }
 
-    getUpdates(initialLoad: boolean): Stream<UpdatesResult> {
+    getUpdates(initialLoad: boolean): Stream<UpdatesResult | undefined> {
         return new Stream(async (resolve, reject) => {
             const cachedState = await getCachedChats(this.db, this.principal);
             const isOffline = offline();
             if (cachedState && initialLoad) {
                 resolve(
                     {
-                        state: this.hydrateChatState(cachedState),
+                        ...cachedState,
+                        directChatsAddedUpdated: this.hydrateChatSummaries(cachedState.directChats),
+                        directChatsRemoved: [],
+                        groupsAddedUpdated: this.hydrateChatSummaries(cachedState.groupChats),
+                        groupsRemoved: [],
+                        communitiesAddedUpdated: cachedState.communities.map((c) => this.hydrateCommunity(c)),
+                        communitiesRemoved: [],
                         updatedEvents: new Map(),
-                        anyUpdates: false,
                         suspensionChanged: undefined,
                         newAchievements: [],
+                        avatarId: cachedState.avatarId !== undefined
+                            ? { value: cachedState.avatarId }
+                            : undefined,
+                        pinNumberSettings: cachedState.pinNumberSettings !== undefined
+                            ? { value: cachedState.pinNumberSettings }
+                            : undefined,
+                        streakInsurance: cachedState.streakInsurance !== undefined
+                            ? { value: cachedState.streakInsurance }
+                            : undefined,
                     },
                     isOffline,
                 );
@@ -2177,22 +2255,10 @@ export class OpenChatAgent extends EventTarget {
         return resp;
     }
 
-    private hydrateChatState(state: ChatStateFull): ChatStateFull {
-        const groupChats = state.groupChats.map((c) => this.hydrateChatSummary(c));
-        const communities = state.communities.map((c) => this.hydrateCommunity(c));
-
-        return {
-            ...state,
-            groupChats,
-            communities,
-        };
-    }
-
-    hydrateCommunity(community: CommunitySummary): CommunitySummary {
-        const channels = community.channels.map((c) => this.hydrateChatSummary(c));
+    hydrateCommunity(community: CommunitySummary): CommunitySummary {;
         return {
             ...community,
-            channels,
+            channels: community.channels.map((c) => this.hydrateChatSummary(c)),
             avatar: {
                 ...this.rehydrateDataContent(community.avatar, "avatar"),
             },
@@ -2200,6 +2266,10 @@ export class OpenChatAgent extends EventTarget {
                 ...this.rehydrateDataContent(community.banner, "banner"),
             },
         };
+    }
+
+    hydrateChatSummaries<T extends ChatSummary>(chats: T[]): T[] {
+        return chats.map((c) => this.hydrateChatSummary(c));
     }
 
     hydrateChatSummary<T extends ChatSummary>(chat: T): T {

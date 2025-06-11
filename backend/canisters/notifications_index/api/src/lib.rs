@@ -1,7 +1,7 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
-use types::{SubscriptionInfo, UserId};
+use types::{FcmToken, SubscriptionInfo, UserId};
 
 mod lifecycle;
 mod queries;
@@ -21,6 +21,8 @@ pub enum NotificationsIndexEvent {
     UserUnblocked(UserId, UserId),
     BotEndpointUpdated(UserId, String),
     BotRemoved(UserId),
+    FcmTokenAdded(UserId, FcmToken),
+    FcmTokenRemoved(UserId, FcmToken),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

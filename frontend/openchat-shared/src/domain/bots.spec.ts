@@ -1,4 +1,5 @@
 import { commandSupportsDirectMessages, type CommandDefinition, type CommandParam } from "./bots";
+import { ROLE_MEMBER } from "../constants";
 
 function stringParam(required: boolean): CommandParam {
     return {
@@ -21,7 +22,7 @@ const command: CommandDefinition = {
         communityPermissions: [],
         messagePermissions: [],
     },
-    defaultRole: "member",
+    defaultRole: ROLE_MEMBER,
     directMessages: true,
 };
 

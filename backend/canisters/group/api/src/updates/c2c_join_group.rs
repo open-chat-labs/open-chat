@@ -11,7 +11,6 @@ pub struct Args {
     pub user_id: UserId,
     pub principal: Principal,
     pub invite_code: Option<u64>,
-    pub correlation_id: u64,
     pub is_platform_moderator: bool,
     pub user_type: UserType,
     pub diamond_membership_expires_at: Option<TimestampMillis>,

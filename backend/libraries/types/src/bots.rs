@@ -1,9 +1,8 @@
 use crate::bitflags::{decode_from_bitflags, encode_as_bitflags};
 use crate::{
-    AudioContent, AutonomousBotScope, CanisterId, Chat, ChatEventCategory, ChatEventType, ChatId, ChatPermission,
-    CommunityEventCategory, CommunityEventType, CommunityId, CommunityPermission, FileContent, GiphyContent, GroupRole,
-    ImageContent, MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent, TimestampMillis, UserId,
-    VideoContent,
+    AudioContent, CanisterId, Chat, ChatEventCategory, ChatEventType, ChatId, ChatPermission, CommunityEventCategory,
+    CommunityEventType, CommunityId, CommunityPermission, FileContent, GiphyContent, GroupRole, ImageContent,
+    MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent, TimestampMillis, UserId, VideoContent,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -37,7 +36,6 @@ pub struct BotCommandDefinition {
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct AutonomousConfig {
     pub permissions: BotPermissions,
-    pub sync_api_key: bool,
 }
 
 #[ts_export]
@@ -222,7 +220,7 @@ impl BotPermissions {
                 ChatPermission::StartVideoCall,
                 ChatPermission::ReadMessages,
                 ChatPermission::ReadMembership,
-                ChatPermission::ReadChatDetails,
+                ChatPermission::ReadSummary,
             ]))
             .with_message(&HashSet::from_iter([
                 MessagePermission::Text,
@@ -249,7 +247,7 @@ impl BotPermissions {
         if chat_permissions.contains(&ChatPermission::ReadMembership) {
             event_categories.insert(ChatEventCategory::Membership);
         }
-        if chat_permissions.contains(&ChatPermission::ReadChatDetails) {
+        if chat_permissions.contains(&ChatPermission::ReadSummary) {
             event_categories.insert(ChatEventCategory::Details);
         }
         event_categories
@@ -339,15 +337,6 @@ pub struct WebhookDetails {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct PublicApiKeyDetails {
-    pub bot_id: UserId,
-    pub granted_permissions: BotPermissions,
-    pub generated_by: UserId,
-    pub generated_at: TimestampMillis,
-}
-
-#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct BotCommand {
     pub name: String,
@@ -421,15 +410,6 @@ impl From<Chat> for BotInstallationLocation {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct BotApiKeyToken {
-    pub gateway: CanisterId,
-    pub bot_id: UserId,
-    pub scope: AutonomousBotScope,
-    pub secret: String,
-    pub permissions: BotPermissions,
-}
-
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum BotMessageContent {
@@ -446,8 +426,6 @@ pub enum BotMessageContent {
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub enum BotInitiator {
     Command(BotCommand),
-    ApiKeySecret(String),
-    ApiKeyPermissions(BotPermissions),
     Autonomous,
 }
 
@@ -462,13 +440,6 @@ impl BotInitiator {
     pub fn command(&self) -> Option<&BotCommand> {
         match self {
             BotInitiator::Command(bot_command) => Some(bot_command),
-            _ => None,
-        }
-    }
-
-    pub fn api_key_secret(&self) -> Option<&str> {
-        match self {
-            BotInitiator::ApiKeySecret(s) => Some(s),
             _ => None,
         }
     }
@@ -490,25 +461,9 @@ impl From<BotMessageContent> for MessageContentInitial {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum AuthToken {
-    Jwt(String),
-    ApiKey(String),
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum BotChatContext {
     Command(String),
     Autonomous(Chat),
-}
-
-#[ts_export]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct ApiKey {
-    pub secret: String,
-    pub granted_permissions: BotPermissions,
-    pub generated_by: UserId,
-    pub generated_at: TimestampMillis,
 }
 
 #[ts_export]
@@ -525,22 +480,12 @@ pub struct BotSubscriptions {
     pub chat: HashSet<ChatEventType>,
 }
 
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub enum BotLifecycleEventType {
-    Registered,
-    Removed,
-    Installed,
-    Uninstalled,
-    ApiKeyGenerated,
-}
-
 impl From<ChatEventCategory> for ChatPermission {
     fn from(value: ChatEventCategory) -> Self {
         match value {
             ChatEventCategory::Message => ChatPermission::ReadMessages,
             ChatEventCategory::Membership => ChatPermission::ReadMembership,
-            ChatEventCategory::Details => ChatPermission::ReadChatDetails,
+            ChatEventCategory::Details => ChatPermission::ReadSummary,
         }
     }
 }
@@ -549,7 +494,7 @@ impl From<CommunityEventCategory> for CommunityPermission {
     fn from(value: CommunityEventCategory) -> Self {
         match value {
             CommunityEventCategory::Membership => CommunityPermission::ReadMembership,
-            CommunityEventCategory::Details => CommunityPermission::ReadDetails,
+            CommunityEventCategory::Details => CommunityPermission::ReadSummary,
         }
     }
 }

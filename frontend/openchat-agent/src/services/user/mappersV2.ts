@@ -57,6 +57,7 @@ import {
     nullMembership,
     toBigInt32,
     toBigInt64,
+    ROLE_OWNER,
     UnsupportedValueError,
 } from "openchat-shared";
 import type {
@@ -756,11 +757,8 @@ export function directChatsUpdates(value: UserUpdatesDirectChatsUpdates): Direct
         pinned: mapOptional(value.pinned, (p) =>
             p.map((p) => ({ kind: "direct_chat", userId: principalBytesToString(p) })),
         ),
-        removed: value.removed.map((id) => ({
-            kind: "direct_chat",
-            userId: principalBytesToString(id),
-        })),
         updated: value.updated.map(directChatSummaryUpdates),
+        removed: value.removed.map(principalBytesToString),
     };
 }
 
@@ -798,7 +796,7 @@ export function getUpdatesResponse(value: UserUpdatesResponse): UpdatesResponse 
                 messageActivitySummary,
             ),
             botsAddedOrUpdated: value.Success.bots_added_or_updated.map(installedBotDetails),
-            botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
+            botsRemoved: value.Success.bots_removed.map(principalBytesToString),
             bitcoinAddress: value.Success.btc_address,
             streakInsurance: optionUpdateV2(result.streak_insurance, streakInsurance),
         };
@@ -881,7 +879,7 @@ function directChatSummary(value: TDirectChatSummary): DirectChatSummary {
         videoCallInProgress: mapOptional(value.video_call_in_progress, videoCallInProgress),
         membership: {
             ...nullMembership(),
-            role: "owner",
+            role: ROLE_OWNER,
             myMetrics: chatMetrics(value.my_metrics),
             notificationsMuted: value.notifications_muted,
             readByMeUpTo: value.read_by_me_up_to,

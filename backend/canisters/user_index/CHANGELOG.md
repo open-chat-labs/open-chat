@@ -6,9 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Add missing decoding for community read permissions ([#8141](https://github.com/open-chat-labs/open-chat/pull/8141))
+
+## [[2.0.1780](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1780-user_index)] - 2025-06-09
+
 ### Changed
 
 - Remove all references to Notifications canisters ([#8087](https://github.com/open-chat-labs/open-chat/pull/8087))
+- Remove `correlation_id` ([#8097](https://github.com/open-chat-labs/open-chat/pull/8097))
 
 ### Fixed
 

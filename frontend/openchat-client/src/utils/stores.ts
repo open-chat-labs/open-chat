@@ -7,6 +7,7 @@ import type {
     Unsubscriber,
     Updater,
 } from "svelte/store";
+import { NOOP } from "openchat-shared";
 
 export type { StartStopNotifier, Subscriber, Unsubscriber, Updater } from "svelte/store";
 export type EqualityCheck<T> = (a: T, b: T) => boolean;
@@ -32,8 +33,6 @@ const publishesPending: (() => void)[] = [];
 let subscriptionsPending: (() => void)[] = [];
 // Callbacks to retry syncing derived stores whose dependencies were dirty when last attempted
 let derivedStoresToRetry: (() => void)[] = [];
-
-const NOOP = () => {};
 
 export function withPausedStores<T>(fn: () => T) {
     try {
@@ -149,7 +148,7 @@ class _Writable<T> {
     }
 
     set(newValue: T) {
-        if (this.#equalityCheck(newValue, this.#value)) {
+        if (this.#started && this.#equalityCheck(newValue, this.#value)) {
             return;
         }
 

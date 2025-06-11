@@ -6,10 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `c2c_bot_community_summary` endpoint ([#8135](https://github.com/open-chat-labs/open-chat/pull/8135))
+
+### Changed
+
+- Remove bot API Keys ([#8131](https://github.com/open-chat-labs/open-chat/pull/8131))
+- Support bot making inline replies ([#8146](https://github.com/open-chat-labs/open-chat/pull/8146))
+
+### Fixed
+
+- Add missing decoding for community read permissions ([#8141](https://github.com/open-chat-labs/open-chat/pull/8141))
+- Stop clearing subscriptions on upgrade ([#8150](https://github.com/open-chat-labs/open-chat/pull/8150))
+
+## [[2.0.1785](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1785-community)] - 2025-06-06
+
+### Added
+
+- Additional notification data for Firebase Cloud Messaging ([8113](https://github.com/open-chat-labs/open-chat/pull/8113))
+
 ### Changed
 
 - Remove all references to LocalGroupIndexes ([#8057](https://github.com/open-chat-labs/open-chat/pull/8057))
 - Remove all references to Notifications canisters ([#8087](https://github.com/open-chat-labs/open-chat/pull/8087))
+- Remove `correlation_id` ([#8097](https://github.com/open-chat-labs/open-chat/pull/8097))
+- Push chat event notifications to bots ([#8109](https://github.com/open-chat-labs/open-chat/pull/8109))
 
 ## [[2.0.1763](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1763-community)] - 2025-05-28
 

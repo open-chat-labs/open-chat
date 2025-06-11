@@ -19,7 +19,6 @@ pub struct Args {
     pub rules_accepted: Option<Version>,
     pub message_filter_failed: Option<u64>,
     pub new_achievement: bool,
-    pub correlation_id: u64,
 }
 
 #[ts_export(group, send_message)]

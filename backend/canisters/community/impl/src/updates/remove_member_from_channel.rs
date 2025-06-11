@@ -23,8 +23,9 @@ fn remove_member_from_channel_impl(args: Args, state: &mut RuntimeState) -> OCRe
     let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
     let now = state.env.now();
 
-    channel.chat.remove_member(user_id, args.user_id, false, now)?;
+    let bot_notification = channel.chat.remove_member(user_id, args.user_id, false, now)?;
     state.data.remove_user_from_channel(args.user_id, args.channel_id, now);
+    state.push_bot_notification(bot_notification);
     handle_activity_notification(state);
     Ok(())
 }

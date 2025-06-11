@@ -102,7 +102,6 @@ async fn push_group_proposal(governance_canister_id: CanisterId, group_id: ChatI
         block_level_markdown: true,
         rules_accepted: None,
         message_filter_failed: None,
-        correlation_id: 0,
     };
 
     let canister_id = group_id.into();

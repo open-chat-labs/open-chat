@@ -81,9 +81,7 @@ import {
     GroupDeletedMessageResponse,
     GroupDeleteMessagesArgs,
     GroupDeleteWebhookArgs,
-    GroupDisableInviteCodeArgs,
     GroupEditMessageArgs,
-    GroupEnableInviteCodeArgs,
     GroupEnableInviteCodeResponse,
     GroupEventsArgs,
     GroupEventsByIndexArgs,
@@ -162,7 +160,6 @@ import {
     principalBytesToString,
     principalStringToBytes,
 } from "../../utils/mapping";
-import { generateUint64 } from "../../utils/rng";
 import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import {
     acceptP2PSwapSuccess,
@@ -500,7 +497,6 @@ export class GroupClient extends MsgpackCanisterAgent {
             {
                 user_id: principalStringToBytes(userId),
                 new_role,
-                correlation_id: generateUint64(),
             },
             unitResult,
             GroupChangeRoleArgs,
@@ -513,7 +509,6 @@ export class GroupClient extends MsgpackCanisterAgent {
             "remove_participant",
             {
                 user_id: principalStringToBytes(userId),
-                correlation_id: generateUint64(),
             },
             unitResult,
             GroupRemoveParticipantArgs,
@@ -535,7 +530,6 @@ export class GroupClient extends MsgpackCanisterAgent {
                     content: apiMessageContent(content ?? message.content),
                     message_id: message.messageId,
                     block_level_markdown: blockLevelMarkdown,
-                    correlation_id: generateUint64(),
                     new_achievement: newAchievement,
                 };
                 return this.executeMsgpackUpdate(
@@ -552,7 +546,6 @@ export class GroupClient extends MsgpackCanisterAgent {
         return this.executeMsgpackUpdate(
             "claim_prize",
             {
-                correlation_id: generateUint64(),
                 message_id: messageId,
             },
             claimPrizeResponse,
@@ -596,7 +589,6 @@ export class GroupClient extends MsgpackCanisterAgent {
                 forwarding: newEvent.event.forwarded,
                 thread_root_message_index: threadRootMessageIndex,
                 message_filter_failed: messageFilterFailed,
-                correlation_id: generateUint64(),
                 block_level_markdown: newEvent.event.blockLevelMarkdown,
                 new_achievement: newAchievement,
             };
@@ -656,7 +648,6 @@ export class GroupClient extends MsgpackCanisterAgent {
                 permissions_v2: mapOptional(permissions, apiOptionalGroupPermissions),
                 rules: mapOptional(rules, apiUpdatedRules),
                 events_ttl: apiOptionUpdateV2(identity, eventsTimeToLiveMs),
-                correlation_id: generateUint64(),
                 gate_config:
                     gateConfig === undefined
                         ? "NoChange"
@@ -687,7 +678,6 @@ export class GroupClient extends MsgpackCanisterAgent {
                 reaction,
                 username,
                 display_name: displayName,
-                correlation_id: generateUint64(),
                 new_achievement: newAchievement,
             },
             unitResult,
@@ -707,7 +697,6 @@ export class GroupClient extends MsgpackCanisterAgent {
                 thread_root_message_index: threadRootMessageIndex,
                 message_id: messageId,
                 reaction,
-                correlation_id: generateUint64(),
             },
             unitResult,
             GroupRemoveReactionArgs,
@@ -726,7 +715,6 @@ export class GroupClient extends MsgpackCanisterAgent {
             {
                 thread_root_message_index: threadRootMessageIndex,
                 message_ids: [messageId],
-                correlation_id: generateUint64(),
                 as_platform_moderator: asPlatformModerator,
                 new_achievement: newAchievement,
             },
@@ -745,7 +733,6 @@ export class GroupClient extends MsgpackCanisterAgent {
             {
                 thread_root_message_index: threadRootMessageIndex,
                 message_ids: [messageId],
-                correlation_id: generateUint64(),
             },
             (resp) => mapResult(resp, undeleteMessageSuccess),
             GroupUndeleteMessagesArgs,
@@ -758,7 +745,6 @@ export class GroupClient extends MsgpackCanisterAgent {
             "block_user",
             {
                 user_id: principalStringToBytes(userId),
-                correlation_id: generateUint64(),
             },
             unitResult,
             GroupBlockUserArgs,
@@ -771,7 +757,6 @@ export class GroupClient extends MsgpackCanisterAgent {
             "unblock_user",
             {
                 user_id: principalStringToBytes(userId),
-                correlation_id: generateUint64(),
             },
             unitResult,
             GroupUnblockUserArgs,
@@ -929,7 +914,6 @@ export class GroupClient extends MsgpackCanisterAgent {
             "pin_message_v2",
             {
                 message_index: messageIndex,
-                correlation_id: generateUint64(),
             },
             (resp) => mapResult(resp, pushEventSuccess),
             GroupPinMessageArgs,
@@ -942,7 +926,6 @@ export class GroupClient extends MsgpackCanisterAgent {
             "unpin_message",
             {
                 message_index: messageIndex,
-                correlation_id: generateUint64(),
             },
             (resp) => mapResult(resp, pushEventSuccess),
             GroupUnpinMessageArgs,
@@ -965,7 +948,6 @@ export class GroupClient extends MsgpackCanisterAgent {
                 operation: voteType === "register" ? "RegisterVote" : "DeleteVote",
                 message_index: messageIdx,
                 new_achievement: newAchievement,
-                correlation_id: generateUint64(),
             },
             unitResult,
             GroupRegisterPollVoteArgs,
@@ -1005,35 +987,23 @@ export class GroupClient extends MsgpackCanisterAgent {
     enableInviteCode(): Promise<EnableInviteCodeResponse> {
         return this.executeMsgpackUpdate(
             "enable_invite_code",
-            {
-                correlation_id: generateUint64(),
-            },
+            {},
             (resp) => mapResult(resp, enableOrResetInviteCodeSuccess),
-            GroupEnableInviteCodeArgs,
+            TEmpty,
             GroupEnableInviteCodeResponse,
         );
     }
 
     disableInviteCode(): Promise<DisableInviteCodeResponse> {
-        return this.executeMsgpackUpdate(
-            "disable_invite_code",
-            {
-                correlation_id: generateUint64(),
-            },
-            unitResult,
-            GroupDisableInviteCodeArgs,
-            UnitResult,
-        );
+        return this.executeMsgpackUpdate("disable_invite_code", {}, unitResult, TEmpty, UnitResult);
     }
 
     resetInviteCode(): Promise<ResetInviteCodeResponse> {
         return this.executeMsgpackUpdate(
             "reset_invite_code",
-            {
-                correlation_id: generateUint64(),
-            },
+            {},
             (resp) => mapResult(resp, enableOrResetInviteCodeSuccess),
-            GroupEnableInviteCodeArgs,
+            TEmpty,
             GroupEnableInviteCodeResponse,
         );
     }

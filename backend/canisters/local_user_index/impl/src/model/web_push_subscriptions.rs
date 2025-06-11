@@ -4,12 +4,12 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 use types::{SubscriptionInfo, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
-pub struct NotificationSubscriptions {
+pub struct WebPushSubscriptions {
     subscriptions: HashMap<UserId, Vec<SubscriptionInfo>>,
     total: u64,
 }
 
-impl NotificationSubscriptions {
+impl WebPushSubscriptions {
     pub fn get(&self, user_id: &UserId) -> Option<Vec<SubscriptionInfo>> {
         self.subscriptions.get(user_id).cloned()
     }

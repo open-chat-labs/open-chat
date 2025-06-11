@@ -22,6 +22,7 @@
         pageReplace,
         publish,
         rightPanelHistory,
+        roleAsText,
         routeStore,
         selectedChatBlockedUsersStore,
         selectedChatBotsStore,
@@ -221,7 +222,7 @@
         // Call backend to changeRole
         return client.changeRole(chatId, userId, newRole, oldRole).then((success) => {
             if (!success) {
-                const roleText = $_(newRole);
+                const roleText = $_(roleAsText(newRole));
                 const promotion = compareRoles(newRole, oldRole) > 0;
                 const message = i18nKey(promotion ? "promoteFailed" : "demoteFailed", {
                     role: roleText,
@@ -239,7 +240,7 @@
     ) {
         return client.changeCommunityRole(id, userId, newRole, oldRole).then((success) => {
             if (!success) {
-                const roleText = $_(newRole);
+                const roleText = $_(roleAsText(newRole));
                 const promotion = compareRoles(newRole, oldRole) > 0;
                 const message = i18nKey(promotion ? "promoteFailed" : "demoteFailed", {
                     role: roleText,
