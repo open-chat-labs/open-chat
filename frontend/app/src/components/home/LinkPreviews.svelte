@@ -1,12 +1,13 @@
 <script lang="ts">
     import { eventListScrolling, iconSize, offlineStore, type OpenChat } from "openchat-client";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import { rtlStore } from "../../stores/rtl";
     import GenericPreviewComponent from "./GenericPreview.svelte";
     import SpotifyPreviewComponent from "./SpotifyPreview.svelte";
     import Tweet from "./Tweet.svelte";
     import YouTubePreview from "./YouTubePreview.svelte";
+    import { getPreviewHeight, recordPreviewHeight } from "../../utils/previewHeights";
 
     type Preview = SpotifyPreview | YoutubePreview | TwitterPreview | GenericPreview;
 
@@ -47,8 +48,8 @@
 
     let { links, intersecting, pinned, fill, me, onRemove }: Props = $props();
 
-    let previousLinks: string[] = $state([]);
-    let previews: Preview[] = $state([]);
+    let previousLinks = links;
+    let previews: Preview[] = $state(links.map(buildPreview));
     let shouldRenderPreviews = $state(false);
 
     function arraysAreEqual(a: string[], b: string[]) {
@@ -114,6 +115,34 @@
         }
     }
 
+    onMount(() => {
+        const observer = new ResizeObserver((elements) => {
+            for (const e of elements) {
+                if (e.target.clientHeight > 0) {
+                    const preview = previews.find((p) => p.container === e.target);
+                    if (preview) {
+                        recordPreviewHeight(preview.url, e.target.clientHeight);
+                    }
+                }
+            }
+        });
+        for (const preview of previews) {
+            if (preview.container) {
+                observer.observe(preview.container);
+
+                const minHeight = getPreviewHeight(preview.url);
+                if (minHeight) {
+                    preview.container.style.setProperty("min-height", `${minHeight}px`);
+                }
+                if (preview.kind === "generic") {
+                    const display = minHeight ? "flex" : "none";
+                    preview.container.style.setProperty("display", display);
+                }
+            }
+        }
+        return () => observer.disconnect();
+    });
+
     $effect(() => {
         if (intersecting && !$eventListScrolling && !shouldRenderPreviews && !$offlineStore) {
             shouldRenderPreviews = true;
@@ -171,7 +200,6 @@
         margin-top: $sp4;
         border-top: 1px solid var(--currentChat-msg-separator);
         padding-top: $sp2;
-        display: none;
         flex-direction: row-reverse;
         gap: $sp1;
         word-break: break-word;
