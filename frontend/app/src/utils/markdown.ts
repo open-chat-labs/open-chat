@@ -1,5 +1,6 @@
-import { isAbsoluteUrl, synonymousUrlRegex } from "./urls";
+import hljs from "highlight.js";
 import { marked, type Token } from "marked";
+import { isAbsoluteUrl, synonymousUrlRegex } from "./urls";
 
 interface Link {
     href: string;
@@ -7,7 +8,20 @@ interface Link {
     text: string;
 }
 
+interface Code {
+    text: string;
+    lang?: string;
+    escaped?: boolean;
+}
+
 const renderer = {
+    code({ text, lang }: Code) {
+        const highlighted =
+            lang && hljs.getLanguage(lang)
+                ? hljs.highlight(text, { language: lang }).value
+                : hljs.highlightAuto(text).value;
+        return `<pre><code class="hljs language-${lang}">${highlighted}</code></pre>`;
+    },
     link(link: Link) {
         let target = "";
         if (link.href !== null) {
@@ -35,6 +49,6 @@ const walkTokens = (token: Token) => {
         // This ensures each instance of \\ is rendered correctly rather than being modified to \
         token.text = token.raw;
     }
-}
+};
 
 marked.use({ renderer, walkTokens });
