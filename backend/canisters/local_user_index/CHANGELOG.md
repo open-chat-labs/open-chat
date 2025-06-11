@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Add missing decoding for community read permissions ([#8141](https://github.com/open-chat-labs/open-chat/pull/8141))
+- Update default subscriptions when bot is updated ([#8155](https://github.com/open-chat-labs/open-chat/pull/8155))
 
 ## [[2.0.1779](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1779-local_user_index)] - 2025-06-06
 

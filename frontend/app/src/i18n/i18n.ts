@@ -1,12 +1,12 @@
-import { register, init, locale, getLocaleFromNavigator, _ } from "svelte-i18n";
-import { get, writable } from "svelte/store";
-import { configKeys } from "../utils/config";
 import {
     type InterpolationValues,
     type Level,
     type MessageFormatter,
     type ResourceKey,
 } from "openchat-client";
+import { _, getLocaleFromNavigator, init, locale, register } from "svelte-i18n";
+import { get, writable } from "svelte/store";
+import { configKeys } from "../utils/config";
 
 export const translationCodes: Record<string, string> = {
     cn: "zh-cn",
@@ -166,7 +166,11 @@ export function interpolate(
             values: { ...p, level: lowercase ? levelTxt.toLowerCase() : levelTxt },
         });
     } else {
-        return formatter(key, { values: params });
+        const result = formatter(key, { values: params });
+        if (typeof result !== "string") {
+            return key;
+        }
+        return result;
     }
 }
 

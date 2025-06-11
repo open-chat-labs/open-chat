@@ -182,6 +182,7 @@
             "choices": "Choices",
             "choicesInfo": "If you enter a set of choices for your parameter, the user will be presented with a drop down to choose the correct value.",
             "choiceValue": "Choice value",
+            "chooseOption": "Choose {option}",
             "commandDescLabel": "Command description",
             "commandDescPlaceholder": "Enter command description",
             "commandLabel": "/{name}",

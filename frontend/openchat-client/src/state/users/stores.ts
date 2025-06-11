@@ -10,6 +10,6 @@ export const blockedUsersStore = derived(
     ([serverBlockedUsers, localUpdates]) => localUpdates.apply(serverBlockedUsers),
 );
 
-export const allUsersStore = writable(new Map<string, UserSummary>);
+export const allUsersStore = writable(new Map<string, UserSummary>(), undefined, notEq);
 export const suspendedUsersStore = writable(new Set<string>(), undefined, notEq);
 export const webhookUserIdsStore = writable(new Set<string>(), undefined, notEq);

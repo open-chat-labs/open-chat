@@ -1,16 +1,16 @@
 <script lang="ts">
+    import type { CommandArg, CommandParam } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import type { CommandParam, CommandArg } from "openchat-client";
-    import Legend from "../Legend.svelte";
-    import { i18nKey } from "../../i18n/i18n";
-    import Input from "../Input.svelte";
-    import SingleUserSelector from "../home/SingleUserSelector.svelte";
-    import Select from "../Select.svelte";
-    import IntegerInput from "../IntegerInput.svelte";
-    import NumberInput from "../NumberInput.svelte";
-    import Translatable from "../Translatable.svelte";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
     import DateInput from "../DateInput.svelte";
+    import SingleUserSelector from "../home/SingleUserSelector.svelte";
+    import Input from "../Input.svelte";
+    import IntegerInput from "../IntegerInput.svelte";
+    import Legend from "../Legend.svelte";
+    import NumberInput from "../NumberInput.svelte";
+    import Select from "../Select.svelte";
     import TextArea from "../TextArea.svelte";
+    import Translatable from "../Translatable.svelte";
 
     interface Props {
         param: CommandParam;
@@ -42,7 +42,14 @@
                 : i18nKey(`Max length ${param.maxLength}`)} />
         {#if param.choices?.length ?? 0 > 0}
             <Select bind:value={arg.value}>
-                <option value={""} selected disabled>{`Choose ${$_(param.name)}`}</option>
+                <option value={""} selected disabled>
+                    {interpolate(
+                        $_,
+                        i18nKey("bots.builder.chooseOption", {
+                            option: interpolate($_, i18nKey(param.name)),
+                        }),
+                    )}
+                </option>
                 {#each param.choices as choice}
                     <option value={choice.value}>
                         <Translatable resourceKey={i18nKey(choice.name)} />

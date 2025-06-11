@@ -182,6 +182,7 @@
             "choices": "Opciones",
             "choicesInfo": "Si ingresa un conjunto de opciones para su parámetro, se le presentará al usuario un menú desplegable para elegir el valor correcto.",
             "choiceValue": "Valor de elección",
+            "chooseOption": "Elija {option}",
             "commandDescLabel": "Descripción del comando",
             "commandDescPlaceholder": "Introduzca la descripción del comando",
             "commandLabel": "Comando: /{name}",

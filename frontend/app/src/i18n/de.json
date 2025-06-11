@@ -182,6 +182,7 @@
             "choices": "Auswahlmöglichkeiten",
             "choicesInfo": "Wenn Sie eine Reihe von Auswahlmöglichkeiten für Ihren Parameter eingeben, wird dem Benutzer eine Dropdown-Liste zur Auswahl des richtigen Werts angezeigt.",
             "choiceValue": "Auswahlwert",
+            "chooseOption": "Wählen Sie {option}",
             "commandDescLabel": "Befehlsbeschreibung",
             "commandDescPlaceholder": "Geben Sie die Befehlsbeschreibung ein",
             "commandLabel": "Befehl: /{name}",

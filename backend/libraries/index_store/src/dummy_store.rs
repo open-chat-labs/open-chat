@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use types::{CanisterId, Error};
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct DummyStore {
     indexes_processed_up_to: Arc<Mutex<HashMap<CanisterId, u64>>>,
 }
