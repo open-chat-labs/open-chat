@@ -22,7 +22,7 @@ export function createCandidateCommunity(id: string, index: number): CommunitySu
         id: { kind: "community", communityId: id },
         name: "",
         description: "",
-        memberCount: 0,
+        memberCount: 1,
         avatar: {},
         banner: {},
         gateConfig: { gate: { kind: "no_gate" }, expiry: undefined },
