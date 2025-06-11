@@ -182,6 +182,7 @@
             "choices": "בחירות",
             "choicesInfo": "אם תזין קבוצה של אפשרויות עבור הפרמטר שלך, יוצג למשתמש תפריט נפתח כדי לבחור את הערך הנכון.",
             "choiceValue": "ערך בחירה",
+            "chooseOption": "בחר {option}",
             "commandDescLabel": "תיאור הפקודה",
             "commandDescPlaceholder": "הזן את תיאור הפקודה",
             "commandLabel": "פקודה: /{name}",

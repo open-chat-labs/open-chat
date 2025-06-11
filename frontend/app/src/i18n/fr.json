@@ -182,6 +182,7 @@
             "choices": "Choix",
             "choicesInfo": "Si vous entrez un ensemble de choix pour votre paramètre, l'utilisateur se verra présenter une liste déroulante lui permettant de choisir la valeur correcte.",
             "choiceValue": "Valeur de choix",
+            "chooseOption": "Choisissez {option}",
             "commandDescLabel": "Description de la commande",
             "commandDescPlaceholder": "Entrer la description de la commande",
             "commandLabel": "Commande : /{name}",
