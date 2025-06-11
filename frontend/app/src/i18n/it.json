@@ -182,6 +182,7 @@
             "choices": "Scelte",
             "choicesInfo": "Se si immette una serie di scelte per il parametro, all'utente verrà presentato un menu a discesa per scegliere il valore corretto.",
             "choiceValue": "Valore di scelta",
+            "chooseOption": "Scegli {option}",
             "commandDescLabel": "Descrizione del comando",
             "commandDescPlaceholder": "Inserisci la descrizione del comando",
             "commandLabel": "Comando: /{name}",

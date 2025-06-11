@@ -182,6 +182,7 @@
             "choices": "الاختيارات",
             "choicesInfo": "إذا قمت بإدخال مجموعة من الخيارات لمعلمتك، فسيتم تقديم قائمة منسدلة للمستخدم لاختيار القيمة الصحيحة.",
             "choiceValue": "قيمة الاختيار",
+            "chooseOption": "اختر {option}",
             "commandDescLabel": "وصف الأمر",
             "commandDescPlaceholder": "أدخل وصف الأمر",
             "commandLabel": "الأمر: /{name}",

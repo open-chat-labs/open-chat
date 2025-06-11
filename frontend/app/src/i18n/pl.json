@@ -182,6 +182,7 @@
             "choices": "Wybory",
             "choicesInfo": "Jeśli wprowadzisz zestaw wyborów dla swojego parametru, użytkownikowi zostanie wyświetlona lista rozwijana umożliwiająca wybór właściwej wartości.",
             "choiceValue": "Wartość wyboru",
+            "chooseOption": "Wybierz {option}",
             "commandDescLabel": "Opis polecenia",
             "commandDescPlaceholder": "Wprowadź opis polecenia",
             "commandLabel": "Polecenie: /{name}",

@@ -182,6 +182,7 @@
             "choices": "選択肢",
             "choicesInfo": "パラメータの選択肢のセットを入力すると、ユーザーには正しい値を選択するためのドロップダウンが表示されます。",
             "choiceValue": "選択値",
+            "chooseOption": "{option}を選択",
             "commandDescLabel": "コマンドの説明",
             "commandDescPlaceholder": "コマンドの説明を入力",
             "commandLabel": "コマンド: /{name}",

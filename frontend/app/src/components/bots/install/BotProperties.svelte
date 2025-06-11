@@ -2,7 +2,7 @@
     import Avatar from "@src/components/Avatar.svelte";
     import Markdown from "@src/components/home/Markdown.svelte";
     import type { ExternalBotLike, GrantedBotPermissions, OpenChat } from "openchat-client";
-    import { AvatarSize, allUsersStore, mobileWidth } from "openchat-client";
+    import { AvatarSize, allUsersStore, currentUserIdStore, mobileWidth } from "openchat-client";
     import { getContext, type Snippet } from "svelte";
     import BotAvatar from "../BotAvatar.svelte";
     import BotCommands from "../BotCommands.svelte";
@@ -67,6 +67,11 @@
         <div class="bot-desc">
             <Markdown inline={false} text={bot.definition.description} />
         </div>
+        {#if bot.ownerId === $currentUserIdStore}
+            <div class="bot-id">
+                bot id: {bot.id}
+            </div>
+        {/if}
         {#if showCommands}
             <BotCommands {grantedPermissions} commands={bot.definition.commands} />
         {/if}
@@ -172,5 +177,12 @@
         &.private {
             background-image: url("/assets/locked.svg");
         }
+    }
+
+    .bot-id {
+        @include font(light, normal, fs-70);
+        color: var(--txt-light);
+        font: courier;
+        margin-bottom: $sp3;
     }
 </style>

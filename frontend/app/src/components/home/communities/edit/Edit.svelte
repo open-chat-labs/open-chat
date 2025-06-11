@@ -140,8 +140,8 @@
             confirming = false;
             showingVerificationWarning = false;
 
-            const community = { ...candidate };
-            const communityRules = { ...candidateRules };
+            const community = $state.snapshot(candidate);
+            const communityRules = $state.snapshot(candidateRules);
             return client
                 .saveCommunity(
                     community,
@@ -167,8 +167,8 @@
                 })
                 .finally(() => (busy = false));
         } else {
-            const community = { ...candidate };
-            const communityRules = { ...candidateRules };
+            const community = $state.snapshot(candidate);
+            const communityRules = $state.snapshot(candidateRules);
             return client
                 .createCommunity(
                     community,
