@@ -1,4 +1,5 @@
 <script lang="ts">
+    import "highlight.js/styles/monokai.css";
     import { marked } from "marked";
     import type { OpenChat, ReadonlyMap, UserGroupSummary } from "openchat-client";
     import { allUsersStore, userGroupSummariesStore } from "openchat-client";
