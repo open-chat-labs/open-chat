@@ -87,6 +87,7 @@ impl BotsMap {
             bot.commands = definition.commands;
             bot.endpoint = endpoint;
             bot.autonomous_config = definition.autonomous_config;
+            bot.default_subscriptions = definition.default_subscriptions;
         });
     }
 
