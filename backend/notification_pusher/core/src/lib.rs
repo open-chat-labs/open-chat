@@ -24,7 +24,11 @@ pub async fn run_notifications_pusher<I: IndexStore + 'static>(config: Config<I>
 
     Metrics::init();
 
-    let notification_canister_ids = ic_agent.notification_canisters(index_canister_id).await.unwrap();
+    let notification_canister_ids = config
+        .ic_agent
+        .notification_canisters(config.index_canister_id)
+        .await
+        .unwrap();
 
     let user_notifications_sender = start_user_notifications_processor(
         config.ic_agent.clone(),
