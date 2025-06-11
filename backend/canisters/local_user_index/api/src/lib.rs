@@ -129,10 +129,15 @@ pub struct BotRegistered {
     pub endpoint: String,
     pub autonomous_config: Option<AutonomousConfig>,
     pub permitted_install_location: Option<BotInstallationLocation>,
-    #[serde(default)]
     pub default_subscriptions: Option<BotSubscriptions>,
-    #[serde(default)]
     pub data_encoding: BotDataEncoding,
+    #[serde(default = "anon_principal")]
+    pub notification_canister: CanisterId,
+}
+
+// TODO: Remove this once the user_index has been upgraded
+fn anon_principal() -> CanisterId {
+    Principal::anonymous().into()
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
