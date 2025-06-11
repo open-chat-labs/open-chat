@@ -137,7 +137,7 @@ pub struct BotRegistered {
 
 // TODO: Remove this once the user_index has been upgraded
 fn anon_principal() -> CanisterId {
-    Principal::anonymous().into()
+    Principal::anonymous()
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
