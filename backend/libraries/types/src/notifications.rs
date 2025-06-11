@@ -68,6 +68,8 @@ pub struct BotChatEvent {
     pub event_index: EventIndex,
     #[serde(rename = "l")]
     pub latest_event_index: EventIndex,
+    #[serde(rename = "u")]
+    pub initiated_by: Option<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -80,6 +82,8 @@ pub struct BotCommunityEvent {
     pub event_index: EventIndex,
     #[serde(rename = "l")]
     pub latest_event_index: EventIndex,
+    #[serde(rename = "u")]
+    pub initiated_by: Option<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
