@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove _v2 suffix from bot_\* endpoints ([#8139](https://github.com/open-chat-labs/open-chat/pull/8139))
 - Support bot making inline replies ([#8146](https://github.com/open-chat-labs/open-chat/pull/8146))
 - Add `initiated_by` to bot event notifications ([#8160](https://github.com/open-chat-labs/open-chat/pull/8160))
+- Push a (lifecycle) registered event to bots ([#8163](https://github.com/open-chat-labs/open-chat/pull/8163))
 
 ### Fixed
 

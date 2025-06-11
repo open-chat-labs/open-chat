@@ -88,6 +88,8 @@ pub struct BotCommunityEvent {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum BotLifecycleEvent {
+    #[serde(rename = "r")]
+    Registered(BotRegisteredEvent),
     #[serde(rename = "i")]
     Installed(BotInstalledEvent),
     #[serde(rename = "u")]
@@ -114,6 +116,14 @@ pub struct BotUninstalledEvent {
     pub uninstalled_by: UserId,
     #[serde(rename = "l")]
     pub location: BotInstallationLocation,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct BotRegisteredEvent {
+    #[serde(rename = "i")]
+    pub bot_id: UserId,
+    #[serde(rename = "n")]
+    pub bot_name: String,
 }
 
 impl Debug for UserNotification {

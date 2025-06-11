@@ -22,6 +22,7 @@ use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
 use model::reported_messages::{ReportedMessages, ReportingMetrics};
 use model::user::SuspensionDetails;
 use p256_key_pair::P256KeyPair;
+use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::UserIdsKeyPrefix;
 use std::cell::RefCell;
@@ -155,6 +156,12 @@ impl RuntimeState {
             }
         }
         jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
+    }
+
+    pub fn get_random_local_user_index_canister(&mut self) -> CanisterId {
+        let canisters: Vec<CanisterId> = self.data.local_index_map.canisters().copied().collect();
+        let index: usize = self.env.rng().next_u32() as usize % canisters.len();
+        canisters[index]
     }
 
     pub fn queue_payment(&mut self, pending_payment: PendingPayment) {

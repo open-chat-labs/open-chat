@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Push a (lifecycle) registered event to bots ([#8163](https://github.com/open-chat-labs/open-chat/pull/8163))
+
 ### Fixed
 
 - Add missing decoding for community read permissions ([#8141](https://github.com/open-chat-labs/open-chat/pull/8141))
