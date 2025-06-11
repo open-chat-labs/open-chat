@@ -182,6 +182,7 @@
             "choices": "选择",
             "choicesInfo": "如果您为参数输入一组选项，则用户会看到一个下拉菜单来选择正确的值。",
             "choiceValue": "选择值",
+            "chooseOption": "选择{option}",
             "commandDescLabel": "命令描述",
             "commandDescPlaceholder": "输入命令描述",
             "commandLabel": "命令：/{name}",

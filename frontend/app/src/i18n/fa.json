@@ -182,6 +182,7 @@
             "choices": "انتخاب ها",
             "choicesInfo": "اگر مجموعه ای از انتخاب ها را برای پارامتر خود وارد کنید، یک کشویی برای انتخاب مقدار صحیح به کاربر نمایش داده می شود.",
             "choiceValue": "ارزش انتخابی",
+            "chooseOption": "انتخاب {option}",
             "commandDescLabel": "توضیحات فرمان",
             "commandDescPlaceholder": "توضیحات دستور را وارد کنید",
             "commandLabel": "دستور: /{name}",
