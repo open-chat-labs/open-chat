@@ -3319,7 +3319,8 @@ export class OpenChat {
                 return;
             }
             const currentStoreValue = selectedServerCommunityStore.value;
-            if (currentStoreValue !== undefined &&
+            if (
+                currentStoreValue !== undefined &&
                 communityIdentifiersEqual(currentStoreValue.communityId, community.id) &&
                 resp.lastUpdated <= currentStoreValue.timestamp
             ) {
@@ -3369,7 +3370,8 @@ export class OpenChat {
                         return;
                     }
                     const currentStoreValue = selectedServerChatStore.value;
-                    if (currentStoreValue !== undefined &&
+                    if (
+                        currentStoreValue !== undefined &&
                         chatIdentifiersEqual(currentStoreValue.chatId, serverChat.id) &&
                         resp.timestamp <= currentStoreValue.timestamp
                     ) {
@@ -3663,6 +3665,8 @@ export class OpenChat {
             return;
         }
 
+        let contextUpdated: MessageContext | undefined = undefined;
+
         withPausedStores(() => {
             const context = { chatId, threadRootMessageIndex };
             const myUserId = currentUserIdStore.value;
@@ -3755,10 +3759,10 @@ export class OpenChat {
                                 e.event.messageIndex === selectedThreadRootMessageIndex,
                         );
                         if (threadRootEvent !== undefined) {
-                            publish("chatUpdated", {
+                            contextUpdated = {
                                 chatId,
                                 threadRootMessageIndex: selectedThreadRootMessageIndex,
-                            });
+                            };
                         }
                     }
                 }
@@ -3777,6 +3781,10 @@ export class OpenChat {
                 });
             }
         });
+
+        if (contextUpdated !== undefined) {
+            publish("chatUpdated", contextUpdated);
+        }
     }
 
     #updateServerExpiredEventRanges(chatId: ChatIdentifier, fn: (existing: DRange) => DRange) {
@@ -6180,9 +6188,9 @@ export class OpenChat {
                     chatsResponse.avatarId === "set_to_none"
                         ? undefined
                         : {
-                            canisterId: currentUserIdStore.value,
-                            blobId: chatsResponse.avatarId.value,
-                        };
+                              canisterId: currentUserIdStore.value,
+                              blobId: chatsResponse.avatarId.value,
+                          };
                 if (currentUser) {
                     const user = {
                         ...currentUser,
@@ -6306,7 +6314,7 @@ export class OpenChat {
                     map.set(chat.id, chat);
                 }
                 for (const id of directChatsRemoved) {
-                    map.delete({kind: "direct_chat", userId: id});
+                    map.delete({ kind: "direct_chat", userId: id });
                 }
                 return map;
             });
@@ -6317,7 +6325,7 @@ export class OpenChat {
                     map.set(chat.id, chat);
                 }
                 for (const id of groupsRemoved) {
-                    map.delete({kind: "group_chat", groupId: id});
+                    map.delete({ kind: "group_chat", groupId: id });
                 }
                 return map;
             });
@@ -6328,7 +6336,7 @@ export class OpenChat {
                     map.set(community.id, community);
                 }
                 for (const id of communitiesRemoved) {
-                    map.delete({kind: "community", communityId: id});
+                    map.delete({ kind: "community", communityId: id });
                 }
                 return map;
             });
@@ -6364,9 +6372,11 @@ export class OpenChat {
             serverWalletConfigStore.set(walletConfig);
         }
         if (streakInsurance !== undefined) {
-            serverStreakInsuranceStore.set(streakInsurance === "set_to_none"
-                ? { daysInsured: 0, daysMissed: 0 }
-                : streakInsurance.value);
+            serverStreakInsuranceStore.set(
+                streakInsurance === "set_to_none"
+                    ? { daysInsured: 0, daysMissed: 0 }
+                    : streakInsurance.value,
+            );
         }
         if (chitState !== undefined) {
             chitStateStore.update((curr) => {
@@ -8378,9 +8388,7 @@ export class OpenChat {
     }
 
     getStreak(userId: string | undefined) {
-        return userId
-            ? userStore.get(userId)?.streak ?? 0
-            : 0;
+        return userId ? userStore.get(userId)?.streak ?? 0 : 0;
     }
 
     getBotDefinition(endpoint: string): Promise<BotDefinitionResponse> {
@@ -8871,7 +8879,7 @@ export class OpenChat {
 
     claimDailyChit(): Promise<ClaimDailyChitResponse> {
         const userId = currentUserIdStore.value;
-        const utcOffsetMins = -(new Date().getTimezoneOffset());
+        const utcOffsetMins = -new Date().getTimezoneOffset();
 
         return this.#sendRequest({ kind: "claimDailyChit", utcOffsetMins }).then((resp) => {
             if (resp.kind === "success") {

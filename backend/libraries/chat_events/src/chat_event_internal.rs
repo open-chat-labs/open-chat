@@ -213,6 +213,42 @@ impl ChatEventInternal {
             ChatEventInternal::Empty => None,
         }
     }
+
+    pub fn initiated_by(&self) -> Option<UserId> {
+        match self {
+            ChatEventInternal::Message(m) => Some(m.sender),
+            ChatEventInternal::DirectChatCreated(_) => None,
+            ChatEventInternal::GroupChatCreated(gcc) => Some(gcc.created_by),
+            ChatEventInternal::GroupNameChanged(gcn) => Some(gcn.changed_by),
+            ChatEventInternal::GroupDescriptionChanged(gdc) => Some(gdc.changed_by),
+            ChatEventInternal::GroupRulesChanged(grc) => Some(grc.changed_by),
+            ChatEventInternal::AvatarChanged(ac) => Some(ac.changed_by),
+            ChatEventInternal::ParticipantsAdded(ma) => Some(ma.added_by),
+            ChatEventInternal::ParticipantsRemoved(mr) => Some(mr.removed_by),
+            ChatEventInternal::ParticipantJoined(mj) => Some(mj.user_id),
+            ChatEventInternal::ParticipantLeft(ml) => Some(ml.user_id),
+            ChatEventInternal::RoleChanged(rc) => Some(rc.changed_by),
+            ChatEventInternal::UsersBlocked(ub) => Some(ub.blocked_by),
+            ChatEventInternal::UsersUnblocked(uub) => Some(uub.unblocked_by),
+            ChatEventInternal::MessagePinned(mp) => Some(mp.pinned_by),
+            ChatEventInternal::MessageUnpinned(mup) => Some(mup.unpinned_by),
+            ChatEventInternal::PermissionsChanged(pc) => Some(pc.changed_by),
+            ChatEventInternal::GroupVisibilityChanged(gvc) => Some(gvc.changed_by),
+            ChatEventInternal::GroupInviteCodeChanged(gic) => Some(gic.changed_by),
+            ChatEventInternal::ChatFrozen(fz) => Some(fz.frozen_by),
+            ChatEventInternal::ChatUnfrozen(ufz) => Some(ufz.unfrozen_by),
+            ChatEventInternal::EventsTimeToLiveUpdated(ttl) => Some(ttl.updated_by),
+            ChatEventInternal::GroupGateUpdated(gu) => Some(gu.updated_by),
+            ChatEventInternal::UsersInvited(ui) => Some(ui.invited_by),
+            ChatEventInternal::MembersAddedToPublicChannel(_) => None,
+            ChatEventInternal::ExternalUrlUpdated(eu) => Some(eu.updated_by),
+            ChatEventInternal::BotAdded(ba) => Some(ba.added_by),
+            ChatEventInternal::BotRemoved(br) => Some(br.removed_by),
+            ChatEventInternal::BotUpdated(bu) => Some(bu.updated_by),
+            ChatEventInternal::FailedToDeserialize => None,
+            ChatEventInternal::Empty => None,
+        }
+    }
 }
 
 pub enum EventOrExpiredRangeInternal {

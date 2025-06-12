@@ -79,6 +79,9 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
         }),
     );
 
+    // Pick a random local user index canister to send the bot the registration event.
+    let notification_canister = state.get_random_local_user_index_canister();
+
     state.push_event_to_all_local_user_indexes(
         UserIndexEvent::BotRegistered(BotRegistered {
             bot_id,
@@ -91,6 +94,7 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
             permitted_install_location: args.permitted_install_location,
             default_subscriptions: args.definition.default_subscriptions.clone(),
             data_encoding: args.definition.data_encoding.unwrap_or_default(),
+            notification_canister,
         }),
         None,
     );

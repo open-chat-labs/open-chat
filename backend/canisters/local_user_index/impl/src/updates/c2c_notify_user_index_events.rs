@@ -12,7 +12,10 @@ use stable_memory_map::StableMemoryMap;
 use std::cell::LazyCell;
 use std::cmp::min;
 use tracing::info;
-use types::{TimestampMillis, c2c_uninstall_bot};
+use types::{
+    BotEvent, BotEventWrapper, BotLifecycleEvent, BotNotificationEnvelope, BotRegisteredEvent, NotificationEnvelope,
+    TimestampMillis, c2c_uninstall_bot,
+};
 use user_canister::{
     DiamondMembershipPaymentReceived, DisplayNameChanged, ExternalAchievementAwarded, OpenChatBotMessageV2,
     PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserJoinedCommunityOrChannel, UserJoinedGroup,
@@ -95,7 +98,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 ev.user_principal,
                 ev.bot_id,
                 ev.owner_id,
-                ev.name,
+                ev.name.clone(),
                 ev.commands,
                 ev.endpoint,
                 ev.autonomous_config,
@@ -103,6 +106,25 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 ev.permitted_install_location,
                 ev.data_encoding,
             );
+
+            let this_canister_id = state.env.canister_id();
+            if ev.notification_canister == this_canister_id {
+                // This local_user_index canister has been nominated to notify the bot
+                state
+                    .data
+                    .notifications
+                    .add(NotificationEnvelope::Bot(BotNotificationEnvelope {
+                        event: BotEventWrapper {
+                            api_gateway: this_canister_id,
+                            event: BotEvent::Lifecycle(BotLifecycleEvent::Registered(BotRegisteredEvent {
+                                bot_id: ev.bot_id,
+                                bot_name: ev.name,
+                            })),
+                        },
+                        recipients: vec![ev.bot_id],
+                        timestamp: **now,
+                    }));
+            }
         }
         UserIndexEvent::BotPublished(ev) => {
             state.data.bots.publish(ev.bot_id);

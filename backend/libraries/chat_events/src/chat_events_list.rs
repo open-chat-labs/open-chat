@@ -1,7 +1,10 @@
 use crate::hybrid_map::HybridMap;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::stable_memory::ChatEventsStableStorage;
-use crate::{ChatEventInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal, UpdateEventError};
+use crate::{
+    ChatEventInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal, UpdateEventError,
+    UpdateEventInternalSuccess,
+};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
@@ -107,12 +110,17 @@ impl ChatEventsList {
         &mut self,
         event_key: EventKey,
         update_event_fn: F,
-    ) -> Result<(T, EventIndex), UpdateEventError<E>> {
+    ) -> Result<UpdateEventInternalSuccess<T>, UpdateEventError<E>> {
         if let Some(mut event) = self.get_event(event_key, EventIndex::default(), None) {
             update_event_fn(&mut event).map(|result| {
                 let event_index = event.index;
+                let initiated_by = event.event.initiated_by();
                 self.events_map.insert(event);
-                (result, event_index)
+                UpdateEventInternalSuccess {
+                    event_index,
+                    initiated_by,
+                    value: result,
+                }
             })
         } else {
             Err(UpdateEventError::NotFound)

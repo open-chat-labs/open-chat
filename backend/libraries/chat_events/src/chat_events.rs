@@ -1607,6 +1607,7 @@ impl ChatEvents {
             &mut self.main
         };
 
+        let initiated_by = event.initiated_by();
         let event_index = events_list.push_event(event, expires_at, now);
 
         if let Some(timestamp) = expires_at {
@@ -1624,6 +1625,7 @@ impl ChatEvents {
                     thread: thread_root_message_index,
                     event_index,
                     latest_event_index: event_index,
+                    initiated_by,
                 }),
                 recipients: bots_to_notify,
             })
@@ -2236,16 +2238,17 @@ impl ChatEvents {
         let latest_event_index = event_list.latest_event_index().unwrap_or_default();
 
         if let Some(now) = now_if_should_mark_updated {
-            if let Ok((_, event_index)) = &result {
+            if let Ok(success) = &result {
                 self.last_updated_timestamps
-                    .mark_updated(thread_root_message_index, *event_index, now);
+                    .mark_updated(thread_root_message_index, success.event_index, now);
             }
         }
 
-        result.map(|(value, event_index)| UpdateEventSuccess {
-            event_index,
+        result.map(|success| UpdateEventSuccess {
+            event_index: success.event_index,
             latest_event_index,
-            value,
+            initiated_by: success.initiated_by,
+            value: success.value,
         })
     }
 
@@ -2275,6 +2278,7 @@ impl ChatEvents {
                         thread: thread_root_message_index,
                         event_index: r.event_index,
                         latest_event_index: r.latest_event_index,
+                        initiated_by: r.initiated_by,
                     }),
                     recipients: bots_to_notify,
                 })
@@ -2532,6 +2536,13 @@ impl<T> UpdateMessageSuccess<T> {
 pub struct UpdateEventSuccess<T> {
     pub event_index: EventIndex,
     pub latest_event_index: EventIndex,
+    pub initiated_by: Option<UserId>,
+    pub value: T,
+}
+
+pub struct UpdateEventInternalSuccess<T> {
+    pub event_index: EventIndex,
+    pub initiated_by: Option<UserId>,
     pub value: T,
 }
 

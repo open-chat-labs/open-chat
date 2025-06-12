@@ -41,18 +41,20 @@ function getDimensions() {
     return { width: window.innerWidth, height: window.innerHeight };
 }
 export const dimensions = writable<Dimensions>(getDimensions());
-export const screenWidth = derived(dimensions, (dimensions) => {
-    if (dimensions.width < 354) {
+export const dimensionsHeight = derived(dimensions, (dimensions) => dimensions.height);
+export const dimensionsWidth = derived(dimensions, (dimensions) => dimensions.width);
+export const screenWidth = derived(dimensionsWidth, (width) => {
+    if (width < 354) {
         return ScreenWidth.ExtraExtraSmall;
-    } else if (dimensions.width < 576) {
+    } else if (width < 576) {
         return ScreenWidth.ExtraSmall;
-    } else if (dimensions.width < 768) {
+    } else if (width < 768) {
         return ScreenWidth.Small;
-    } else if (dimensions.width < 992) {
+    } else if (width < 992) {
         return ScreenWidth.Medium;
-    } else if (dimensions.width < 1200) {
+    } else if (width < 1200) {
         return ScreenWidth.Large;
-    } else if (dimensions.width < 1792) {
+    } else if (width < 1792) {
         return ScreenWidth.ExtraLarge; // this is the default width on 15' macbook
     } else {
         return ScreenWidth.ExtraExtraLarge;
@@ -69,14 +71,14 @@ function pixelsFromRems(rem: number, width: number): number {
         return rem * 16;
     }
 }
-export const mobileWidth = derived(dimensions, ({ width }) => width < 768);
-export const ipadWidth = derived(dimensions, ({ width }) => width < 992);
+export const mobileWidth = derived(dimensionsWidth, (width) => width < 768);
+export const ipadWidth = derived(dimensionsWidth, (width) => width < 992);
 export const availableHeight = derived(
     dimensions,
     ({ width, height }) => height - pixelsFromRems(5, width),
 );
 export function toPixel(rem: number): number {
-    return pixelsFromRems(rem, dimensions.value.width);
+    return pixelsFromRems(rem, dimensionsWidth.value);
 }
 export const iconSize = derived(mobileWidth, (mobileWidth) => (mobileWidth ? "1.6em" : "1.4em"));
 export const baseFontSize = derived(mobileWidth, (mobileWidth) => (mobileWidth ? 14 : 16));
