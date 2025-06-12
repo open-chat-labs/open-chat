@@ -41,6 +41,7 @@ async fn create_community_impl(mut args: Args) -> Response {
                 mutate_state(|state| commit(r.community_id, r.local_user_index_canister_id, state));
                 Success(SuccessResult {
                     community_id: r.community_id,
+                    channels: r.channels,
                 })
             }
             c2c_create_community::Response::NameTaken => Error(OCErrorCode::NameTaken.into()),
