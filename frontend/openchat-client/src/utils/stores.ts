@@ -1,3 +1,4 @@
+import { NOOP } from "openchat-shared";
 import { untrack } from "svelte";
 import type {
     StartStopNotifier,
@@ -7,7 +8,6 @@ import type {
     Unsubscriber,
     Updater,
 } from "svelte/store";
-import { NOOP } from "openchat-shared";
 
 export type { StartStopNotifier, Subscriber, Unsubscriber, Updater } from "svelte/store";
 export type EqualityCheck<T> = (a: T, b: T) => boolean;
