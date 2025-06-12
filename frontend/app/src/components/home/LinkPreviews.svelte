@@ -128,6 +128,8 @@
                     preview.container.style.setProperty("min-width", `${dimensions[1]}px`);
                 }
                 if (preview.kind === "generic") {
+                    // If we have dimensions for this preview then display the container immediately, else hide it
+                    // until we have fetched the preview (if any)
                     const display = dimensions ? "flex" : "none";
                     preview.container.style.setProperty("display", display);
                 }
