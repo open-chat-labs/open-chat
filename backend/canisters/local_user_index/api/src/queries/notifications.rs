@@ -2,7 +2,7 @@ use crate::queries::notifications_v2;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{IndexedEvent, NotificationBotDetails, NotificationEnvelope, NotificationSubscription, TimestampMillis, UserId};
+use types::{IndexedEvent, NotificationEnvelope, NotificationSubscription, TimestampMillis, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -18,7 +18,7 @@ pub enum Response {
 pub struct SuccessResult {
     pub notifications: Vec<IndexedEvent<NotificationEnvelope>>,
     pub subscriptions: HashMap<UserId, Vec<NotificationSubscription>>,
-    pub bots: HashMap<UserId, NotificationBotDetails>,
+    pub bot_endpoints: HashMap<UserId, String>,
     pub timestamp: TimestampMillis,
 }
 
@@ -51,7 +51,7 @@ impl From<SuccessResult> for notifications_v2::SuccessResult {
                     if !subscription_infos.is_empty() { Some((user_id, subscription_infos)) } else { None }
                 })
                 .collect(),
-            bots: result.bots,
+            bot_endpoints: result.bot_endpoints,
             timestamp: result.timestamp,
         }
     }
