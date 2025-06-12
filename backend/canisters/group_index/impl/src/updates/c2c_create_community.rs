@@ -42,6 +42,7 @@ async fn c2c_create_community(args: Args) -> Response {
     match create_community_impl(c2c_create_community_args, local_user_index_canister).await {
         Ok(result) => Success(SuccessResult {
             community_id: result.community_id,
+            channels: result.channels,
             local_user_index_canister_id: result.local_user_index_canister_id,
         }),
         Err(error) => InternalError(error),

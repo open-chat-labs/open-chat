@@ -15,13 +15,13 @@
 {#if role !== undefined && role > ROLE_MEMBER}
     {#if popup}
         <Tooltip position="top" align="middle">
-            <div class={`icon ${level} role=${roleText}`}></div>
+            <div class={`icon ${level} ${roleText}`}></div>
             {#snippet popupTemplate()}
                 {`${level.toUpperCase()} ${roleText?.toUpperCase()}`}
             {/snippet}
         </Tooltip>
     {:else}
-        <div class={`icon ${level} ${role}`}></div>
+        <div class={`icon ${level} ${roleText}`}></div>
     {/if}
 {/if}
 

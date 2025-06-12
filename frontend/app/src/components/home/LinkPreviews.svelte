@@ -1,12 +1,13 @@
 <script lang="ts">
     import { eventListScrolling, iconSize, offlineStore, type OpenChat } from "openchat-client";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import { rtlStore } from "../../stores/rtl";
     import GenericPreviewComponent from "./GenericPreview.svelte";
     import SpotifyPreviewComponent from "./SpotifyPreview.svelte";
     import Tweet from "./Tweet.svelte";
     import YouTubePreview from "./YouTubePreview.svelte";
+    import { previewDimensionsObserver } from "@utils/previewDimensionsObserver";
 
     type Preview = SpotifyPreview | YoutubePreview | TwitterPreview | GenericPreview;
 
@@ -47,14 +48,13 @@
 
     let { links, intersecting, pinned, fill, me, onRemove }: Props = $props();
 
-    let previousLinks: string[] = $state([]);
-    let previews: Preview[] = $state([]);
+    let previousLinks = links;
+    let previews: Preview[] = $state(links.map(buildPreview));
     let shouldRenderPreviews = $state(false);
 
     function arraysAreEqual(a: string[], b: string[]) {
-        if (a.length !== b.length) {
-            return false;
-        }
+        if (a === b) return true;
+        if (a.length !== b.length) return false;
 
         for (let i = 0; i < a.length; i++) {
             if (a[i] !== b[i]) {
@@ -114,6 +114,29 @@
         }
     }
 
+    onMount(() => {
+        const toUnobserve: Element[] = [];
+        for (const preview of previews) {
+            if (preview.container) {
+                previewDimensionsObserver.observe(preview.container, preview.url);
+                toUnobserve.push(preview.container);
+
+                const dimensions = previewDimensionsObserver.getDimensions(preview.url);
+                if (dimensions) {
+                    preview.container.style.setProperty("min-height", `${dimensions[0]}px`);
+                    preview.container.style.setProperty("min-width", `${dimensions[1]}px`);
+                }
+                if (preview.kind === "generic") {
+                    // If we have dimensions for this preview then display the container immediately, else hide it
+                    // until we have fetched the preview (if any)
+                    const display = dimensions ? "flex" : "none";
+                    preview.container.style.setProperty("display", display);
+                }
+            }
+        }
+        return () => toUnobserve.forEach((e) => previewDimensionsObserver.unobserve(e));
+    });
+
     $effect(() => {
         if (intersecting && !$eventListScrolling && !shouldRenderPreviews && !$offlineStore) {
             shouldRenderPreviews = true;
@@ -171,7 +194,6 @@
         margin-top: $sp4;
         border-top: 1px solid var(--currentChat-msg-separator);
         padding-top: $sp2;
-        display: none;
         flex-direction: row-reverse;
         gap: $sp1;
         word-break: break-word;
