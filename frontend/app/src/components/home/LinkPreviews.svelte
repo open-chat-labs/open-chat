@@ -7,7 +7,7 @@
     import SpotifyPreviewComponent from "./SpotifyPreview.svelte";
     import Tweet from "./Tweet.svelte";
     import YouTubePreview from "./YouTubePreview.svelte";
-    import { getPreviewHeight, recordPreviewHeight } from "../../utils/previewHeights";
+    import { previewDimensionsObserver } from "@utils/previewDimensionsObserver";
 
     type Preview = SpotifyPreview | YoutubePreview | TwitterPreview | GenericPreview;
 
@@ -116,31 +116,24 @@
     }
 
     onMount(() => {
-        const observer = new ResizeObserver((elements) => {
-            for (const e of elements) {
-                if (e.target.clientHeight > 0) {
-                    const preview = previews.find((p) => p.container === e.target);
-                    if (preview) {
-                        recordPreviewHeight(preview.url, e.target.clientHeight);
-                    }
-                }
-            }
-        });
+        const toUnobserve: Element[] = [];
         for (const preview of previews) {
             if (preview.container) {
-                observer.observe(preview.container);
+                previewDimensionsObserver.observe(preview.container, preview.url);
+                toUnobserve.push(preview.container);
 
-                const minHeight = getPreviewHeight(preview.url);
-                if (minHeight) {
-                    preview.container.style.setProperty("min-height", `${minHeight}px`);
+                const dimensions = previewDimensionsObserver.getDimensions(preview.url);
+                if (dimensions) {
+                    preview.container.style.setProperty("min-height", `${dimensions[0]}px`);
+                    preview.container.style.setProperty("min-width", `${dimensions[1]}px`);
                 }
                 if (preview.kind === "generic") {
-                    const display = minHeight ? "flex" : "none";
+                    const display = dimensions ? "flex" : "none";
                     preview.container.style.setProperty("display", display);
                 }
             }
         }
-        return () => observer.disconnect();
+        return () => toUnobserve.forEach((e) => previewDimensionsObserver.unobserve(e));
     });
 
     $effect(() => {
