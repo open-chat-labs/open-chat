@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1794](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1794-local_user_index)] - 2025-06-13
+
 ### Added
 
 - Add `bot_community_summary` endpoint ([#8135](https://github.com/open-chat-labs/open-chat/pull/8135))

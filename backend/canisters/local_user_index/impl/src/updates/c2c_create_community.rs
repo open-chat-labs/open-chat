@@ -29,7 +29,7 @@ async fn c2c_create_community(args: Args) -> Response {
         .as_ref()
         .map(|g| g.gate.gate_type().to_string());
     let rules_enabled = prepare_ok.init_canister_args.rules.enabled;
-    let channel_count = prepare_ok.init_canister_args.default_channels.len() as u32;
+    let channel_count = prepare_ok.init_canister_args.channels.len() as u32;
     let wasm_version = prepare_ok.canister_wasm.version;
 
     match canister::create_and_install(
@@ -99,7 +99,6 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         .collect();
     let canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::Community).wasm.clone();
     let local_user_index_canister_id = state.env.canister_id();
-    #[expect(deprecated)]
     let init_canister_args = community_canister::init::Args {
         is_public: args.is_public,
         name: args.name,
@@ -111,18 +110,14 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         created_by_user_type: UserType::User,
         mark_active_duration: MARK_ACTIVE_DURATION,
         group_index_canister_id: state.data.group_index_canister_id,
-        local_group_index_canister_id: CanisterId::anonymous(),
         user_index_canister_id: state.data.user_index_canister_id,
         local_user_index_canister_id,
-        notifications_canister_id: CanisterId::anonymous(),
-        bot_api_gateway_canister_id: CanisterId::anonymous(),
         proposals_bot_user_id: state.data.proposals_bot_canister_id.into(),
         escrow_canister_id: state.data.escrow_canister_id,
         internet_identity_canister_id: state.data.internet_identity_canister_id,
         avatar: args.avatar,
         banner: args.banner,
         gate_config: args.gate_config,
-        default_channels: args.default_channels,
         channels: channels.clone(),
         default_channel_rules: args.default_channel_rules,
         source_group: args.source_group,

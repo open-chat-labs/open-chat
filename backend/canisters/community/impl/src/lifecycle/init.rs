@@ -6,9 +6,7 @@ use canister_tracing_macros::trace;
 use community_canister::init::Args;
 use ic_cdk::init;
 use itertools::Itertools;
-use rand::RngCore;
 use tracing::info;
-use types::ChannelId;
 use utils::env::Environment;
 
 #[init]
@@ -19,16 +17,7 @@ fn init(args: Args) {
 
     let mut env = init_env([0; 32]);
 
-    let channels = if !args.channels.is_empty() {
-        args.channels
-    } else {
-        args.default_channels
-            .into_iter()
-            .map(|name| (ChannelId::from(env.rng().next_u32()), name))
-            .collect()
-    };
-
-    assert!(channels.iter().all_unique());
+    assert!(args.channels.iter().all_unique());
 
     let now = env.now();
     let data = Data::new(
@@ -51,7 +40,7 @@ fn init(args: Args) {
         args.escrow_canister_id,
         args.internet_identity_canister_id,
         args.gate_config.map(|g| g.into()),
-        channels,
+        args.channels,
         args.default_channel_rules,
         args.mark_active_duration,
         args.video_call_operators,
