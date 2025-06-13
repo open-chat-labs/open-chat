@@ -118,7 +118,6 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         avatar: args.avatar,
         banner: args.banner,
         gate_config: args.gate_config,
-        default_channels: args.default_channels,
         channels: channels.clone(),
         default_channel_rules: args.default_channel_rules,
         source_group: args.source_group,

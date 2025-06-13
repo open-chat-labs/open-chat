@@ -26,7 +26,6 @@ pub struct Args {
     pub escrow_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
     pub gate_config: Option<AccessGateConfig>,
-    pub default_channels: Vec<String>,
     pub channels: Vec<(ChannelId, String)>,
     pub default_channel_rules: Option<Rules>,
     pub source_group: Option<SourceGroup>,
