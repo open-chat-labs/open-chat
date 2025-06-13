@@ -2,13 +2,13 @@ use super::members::CommunityMembers;
 use chat_events::Reader;
 use group_chat_core::{GroupChatCore, GroupMemberInternal};
 use oc_error_codes::OCErrorCode;
+use rand::Rng;
 use rand::rngs::StdRng;
-use rand::{Rng, RngCore};
 use search::weighted::*;
 use serde::{Deserialize, Serialize};
 use std::cmp::Reverse;
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap};
 use types::{
     ChannelId, ChannelMatch, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, CommunityId,
     GroupMembership, GroupMembershipUpdates, GroupPermissionRole, GroupPermissions, MAX_THREADS_IN_SUMMARY, MultiUserChat,
@@ -34,23 +34,15 @@ impl Channels {
         community_id: CommunityId,
         created_by: UserId,
         created_by_user_type: UserType,
-        default_channels: Vec<String>,
+        channels: Vec<(ChannelId, String)>,
         default_channel_rules: Option<Rules>,
         is_community_public: bool,
         rng: &mut StdRng,
         now: TimestampMillis,
     ) -> Channels {
-        let mut channel_ids = HashSet::new();
-
-        let channels = default_channels
+        let channels = channels
             .into_iter()
-            .map(|name| {
-                let channel_id = loop {
-                    let id = rng.next_u32().into();
-                    if channel_ids.insert(id) {
-                        break id;
-                    }
-                };
+            .map(|(channel_id, name)| {
                 (
                     channel_id,
                     Channel::new(

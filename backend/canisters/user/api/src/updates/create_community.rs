@@ -2,7 +2,7 @@ use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{AccessGateConfig, CommunityId, CommunityPermissions, Document, Rules};
+use types::{AccessGateConfig, ChannelId, CommunityId, CommunityPermissions, Document, Rules};
 
 #[ts_export(user, create_community)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -32,4 +32,5 @@ pub enum Response {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub community_id: CommunityId,
+    pub channels: Vec<(ChannelId, String)>,
 }

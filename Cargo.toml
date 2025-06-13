@@ -181,7 +181,7 @@ aws-types = "1"
 base64 = "0.22"
 bitflags = { version = "2", features = ["serde"] }
 candid = "0.10"
-canbench-rs = "0.1"
+canbench-rs = "0.2"
 clap = "4"
 ct-codecs = "1"
 data-encoding = "2"
