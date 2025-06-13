@@ -7,7 +7,10 @@ use constants::{CREATE_CANISTER_CYCLES_FEE, min_cycles_balance};
 use event_store_producer::EventBuilder;
 use local_user_index_canister::ChildCanisterType;
 use local_user_index_canister::c2c_create_community::{Response::*, *};
-use types::{BuildVersion, CanisterId, CanisterWasm, CommunityCreatedEventPayload, CommunityId, Cycles, UserId, UserType};
+use rand::RngCore;
+use types::{
+    BuildVersion, CanisterId, CanisterWasm, ChannelId, CommunityCreatedEventPayload, CommunityId, Cycles, UserId, UserType,
+};
 use utils::canister;
 
 #[update(guard = "caller_is_group_index", msgpack = true)]
@@ -57,6 +60,7 @@ async fn c2c_create_community(args: Args) -> Response {
             });
             Success(SuccessResult {
                 community_id,
+                channels: prepare_ok.channels,
                 local_user_index_canister_id: prepare_ok.local_user_index_canister_id,
             })
         }
@@ -69,6 +73,7 @@ async fn c2c_create_community(args: Args) -> Response {
 
 struct PrepareOk {
     canister_id: Option<CanisterId>,
+    channels: Vec<(ChannelId, String)>,
     local_user_index_canister_id: CanisterId,
     canister_wasm: CanisterWasm,
     cycles_to_use: Cycles,
@@ -87,6 +92,11 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
     };
 
     let canister_id = state.data.canister_pool.pop();
+    let channels: Vec<_> = args
+        .default_channels
+        .iter()
+        .map(|name| (ChannelId::from(state.env.rng().next_u32()), name.clone()))
+        .collect();
     let canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::Community).wasm.clone();
     let local_user_index_canister_id = state.env.canister_id();
     #[expect(deprecated)]
@@ -113,6 +123,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         banner: args.banner,
         gate_config: args.gate_config,
         default_channels: args.default_channels,
+        channels: channels.clone(),
         default_channel_rules: args.default_channel_rules,
         source_group: args.source_group,
         wasm_version: canister_wasm.version,
@@ -124,6 +135,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
 
     Ok(PrepareOk {
         canister_id,
+        channels,
         local_user_index_canister_id,
         canister_wasm,
         cycles_to_use,
