@@ -29,7 +29,7 @@ async fn c2c_create_community(args: Args) -> Response {
         .as_ref()
         .map(|g| g.gate.gate_type().to_string());
     let rules_enabled = prepare_ok.init_canister_args.rules.enabled;
-    let channel_count = prepare_ok.init_canister_args.default_channels.len() as u32;
+    let channel_count = prepare_ok.init_canister_args.channels.len() as u32;
     let wasm_version = prepare_ok.canister_wasm.version;
 
     match canister::create_and_install(
