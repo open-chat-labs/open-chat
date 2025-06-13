@@ -6,6 +6,7 @@
         currentUserStore,
         isDiamondStore,
         isLifetimeDiamondStore,
+        mobileWidth,
         publish,
         type ChatIdentifier,
         type DiamondMembershipStatus,
@@ -114,6 +115,7 @@
     );
     let showChallenge = $state(false);
     let spin = $derived(intersecting && !finished && !allClaimed);
+    let mirror = $derived(intersecting && !$mobileWidth);
 
     function onChallengeResult(e: MouseEvent, success: boolean) {
         if (success) {
@@ -150,7 +152,7 @@
             {/if}
         </div>
         <div class="prize-coin">
-            <SpinningToken {logo} {spin} />
+            <SpinningToken {logo} {spin} {mirror} />
         </div>
     </div>
     <div class="bottom">
