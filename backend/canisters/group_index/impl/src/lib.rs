@@ -268,7 +268,6 @@ struct Data {
     pub deleted_communities: DeletedCommunities,
     pub public_group_and_community_names: PublicGroupAndCommunityNames,
     pub governance_principals: HashSet<Principal>,
-    #[serde(skip_deserializing)]
     pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
@@ -288,7 +287,6 @@ struct Data {
     pub upload_wasm_chunks_whitelist: HashSet<Principal>,
     pub ic_root_key: Vec<u8>,
     pub rng_seed: [u8; 32],
-    #[serde(default)]
     pub idempotency_checker: IdempotencyChecker,
     #[serde(alias = "local_group_index_event_sync_queue")]
     pub local_index_event_sync_queue: GroupedTimerJobQueue<LocalIndexEventBatch>,
@@ -523,19 +521,14 @@ pub struct CanisterIds {
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct AccessGateMetrics {
     pub diamond_membership: u32,
-    #[serde(default)]
     pub lifetime_diamond_membership: u32,
-    #[serde(default)]
     pub unique_person: u32,
     pub verified_credential: u32,
     pub sns_neuron: u32,
     pub payment: u32,
     pub token_balance: u32,
-    #[serde(default)]
     pub composite: u32,
-    #[serde(default)]
     pub locked: u32,
-    #[serde(default)]
     pub referred_by_member: u32,
 }
 

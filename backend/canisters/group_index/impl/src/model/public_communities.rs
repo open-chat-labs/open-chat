@@ -160,7 +160,6 @@ pub struct PublicCommunityInfo {
     gate_config: Option<AccessGateConfigInternal>,
     moderation_flags: ModerationFlags,
     primary_language: String,
-    #[serde(default)]
     verified: bool,
 }
 

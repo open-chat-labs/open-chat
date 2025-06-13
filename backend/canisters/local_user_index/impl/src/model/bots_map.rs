@@ -20,11 +20,9 @@ pub struct Bot {
     pub commands: Vec<BotCommandDefinition>,
     pub endpoint: String,
     pub autonomous_config: Option<AutonomousConfig>,
-    #[serde(default)]
     pub default_subscriptions: Option<BotSubscriptions>,
     pub principal: Principal,
     pub registration_status: BotRegistrationStatus,
-    #[serde(default)]
     pub data_encoding: BotDataEncoding,
 }
 
