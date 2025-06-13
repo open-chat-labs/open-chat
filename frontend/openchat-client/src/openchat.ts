@@ -3401,7 +3401,7 @@ export class OpenChat {
                 }
                 break;
             case "direct_chat":
-                // app.setDirectChatDetails(serverChat.id, currentUserIdStore.value);  //TODO - make sure this still works without this
+                selectedServerChatStore.set(undefined);
                 break;
         }
     }
