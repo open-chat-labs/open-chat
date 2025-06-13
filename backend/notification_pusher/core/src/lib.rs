@@ -9,7 +9,7 @@ use std::io::Write;
 use std::sync::Arc;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use tracing::info;
-use types::{CanisterId, FcmData, FcmToken, SubscriptionInfo, TimestampMillis, UserId};
+use types::{CanisterId, FcmData, FcmToken, Payload, SubscriptionInfo, TimestampMillis, UserId};
 use web_push::WebPushMessage;
 
 mod bot_notifications;
@@ -109,20 +109,6 @@ pub struct BotNotification {
     endpoint: String,
     payload: Payload,
     first_read_at: Instant,
-}
-
-pub struct Payload {
-    data: Vec<u8>,
-    mime_type: String,
-}
-
-impl Payload {
-    pub fn new(data: Vec<u8>, mime_type: &str) -> Self {
-        Self {
-            data,
-            mime_type: mime_type.to_string(),
-        }
-    }
 }
 
 fn timestamp() -> TimestampMillis {

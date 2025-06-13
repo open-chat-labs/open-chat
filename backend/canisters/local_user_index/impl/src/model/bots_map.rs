@@ -37,10 +37,6 @@ impl BotsMap {
             .and_then(|user_id| self.bots.get(user_id))
     }
 
-    pub fn exists(&self, bot_id: &UserId) -> bool {
-        self.bots.contains_key(bot_id)
-    }
-
     #[expect(clippy::too_many_arguments)]
     pub fn add(
         &mut self,

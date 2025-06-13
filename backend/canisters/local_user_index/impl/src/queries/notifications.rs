@@ -3,7 +3,7 @@ use crate::{RuntimeState, read_state};
 use ic_cdk::query;
 use local_user_index_canister::notifications::{Response::*, *};
 use std::collections::HashMap;
-use types::{NotificationBotDetails, NotificationEnvelope, NotificationSubscription, UserId};
+use types::{NotificationEnvelope, NotificationSubscription, UserId};
 
 const ONE_MB: usize = 1024 * 1024;
 
@@ -15,7 +15,7 @@ fn notifications(args: Args) -> Response {
 pub(crate) fn notifications_impl(args: Args, state: &RuntimeState) -> Response {
     let mut notifications = Vec::new();
     let mut subscriptions = HashMap::new();
-    let mut bots = HashMap::new();
+    let mut bot_endpoints = HashMap::new();
     let mut approx_response_size = 0;
 
     for notification in state.data.notifications.iter(args.from_notification_index) {
@@ -48,26 +48,20 @@ pub(crate) fn notifications_impl(args: Args, state: &RuntimeState) -> Response {
                 }
             }
             NotificationEnvelope::Bot(n) => {
-                let mut bots_to_add: Vec<(UserId, NotificationBotDetails)> = Vec::new();
-                for bot_id in n.recipients.iter() {
+                let mut bots_to_add: Vec<(UserId, String)> = Vec::new();
+                for bot_id in n.recipients.keys() {
                     if let Some(bot) = state.data.bots.get(bot_id) {
                         has_subscriptions = true;
-                        if !bots.contains_key(bot_id) {
+                        if !bot_endpoints.contains_key(bot_id) {
                             size_added_by_notification += bot_id.as_slice().len() + bot.endpoint.len() + 5;
-                            bots_to_add.push((
-                                *bot_id,
-                                NotificationBotDetails {
-                                    endpoint: bot.endpoint.clone(),
-                                    data_encoding: bot.data_encoding,
-                                },
-                            ));
+                            bots_to_add.push((*bot_id, bot.endpoint.clone()));
                         }
                     }
                     if size_added_by_notification > ONE_MB {
                         break;
                     }
                 }
-                bots.extend(bots_to_add);
+                bot_endpoints.extend(bots_to_add);
             }
         }
 
@@ -84,7 +78,7 @@ pub(crate) fn notifications_impl(args: Args, state: &RuntimeState) -> Response {
     Success(SuccessResult {
         notifications,
         subscriptions,
-        bots,
+        bot_endpoints,
         timestamp: state.env.now(),
     })
 }

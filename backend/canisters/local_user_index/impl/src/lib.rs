@@ -24,16 +24,18 @@ use p256_key_pair::P256KeyPair;
 use proof_of_unique_personhood::verify_proof_of_unique_personhood;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
+use serde_bytes::ByteBuf;
 use stable_memory_map::UserIdsKeyPrefix;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    BotEventWrapper, BotNotificationEnvelope, BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms,
-    CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
-    IdempotentEnvelope, MessageContent, Milliseconds, Notification, NotificationEnvelope, ReferralType, TimestampMillis,
-    Timestamped, User, UserId, UserNotificationEnvelope, VerifiedCredentialGateArgs,
+    BotDataEncoding, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion, CanisterId,
+    ChannelLatestMessageIndex, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
+    CommunityId, Cycles, DiamondMembershipDetails, IdempotentEnvelope, MessageContent, Milliseconds, Notification,
+    NotificationEnvelope, ReferralType, TimestampMillis, Timestamped, User, UserId, UserNotificationEnvelope,
+    VerifiedCredentialGateArgs,
 };
 use user_canister::LocalUserIndexEvent as UserEvent;
 use user_ids_set::UserIdsSet;
@@ -596,21 +598,49 @@ impl Data {
                     }));
                 }
             }
-            Notification::Bot(mut bot_notification) => {
-                bot_notification.recipients.retain(|b| self.bots.exists(b));
-
-                if !bot_notification.recipients.is_empty() {
-                    self.notifications.add(NotificationEnvelope::Bot(BotNotificationEnvelope {
-                        event: BotEventWrapper {
-                            api_gateway: this_canister_id,
-                            event: bot_notification.event,
-                        },
-                        recipients: bot_notification.recipients,
-                        timestamp: now,
-                    }));
-                }
-            }
+            Notification::Bot(bot_notification) => self.push_bot_notification(bot_notification, this_canister_id, now),
         }
+    }
+
+    pub fn push_bot_notification(
+        &mut self,
+        bot_notification: BotNotification,
+        this_canister_id: CanisterId,
+        now: TimestampMillis,
+    ) {
+        let recipients: HashMap<UserId, BotDataEncoding> = bot_notification
+            .recipients
+            .into_iter()
+            .filter_map(|bot_id| self.bots.get(&bot_id).map(|bot| (bot_id, bot.data_encoding)))
+            .collect();
+
+        if recipients.is_empty() {
+            return;
+        }
+
+        let encodings: HashSet<BotDataEncoding> = recipients.values().cloned().collect();
+
+        let event_wrapper = BotEventWrapper {
+            api_gateway: this_canister_id,
+            event: bot_notification.event,
+        };
+
+        let notification_bytes = encodings
+            .into_iter()
+            .map(|encoding| {
+                let bytes = match encoding {
+                    BotDataEncoding::Json => serde_json::to_vec(&event_wrapper).unwrap(),
+                    BotDataEncoding::Candid => candid::encode_one(&event_wrapper).unwrap(),
+                };
+                (encoding, ByteBuf::from(bytes))
+            })
+            .collect();
+
+        self.notifications.add(NotificationEnvelope::Bot(BotNotificationEnvelope {
+            recipients,
+            timestamp: now,
+            notification_bytes,
+        }));
     }
 }
 

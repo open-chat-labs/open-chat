@@ -59,7 +59,7 @@ impl Pusher {
         self.http_client
             .post(url)
             .header(CONTENT_TYPE, payload.mime_type)
-            .body(payload.data)
+            .body(payload.data.into_vec())
             .send()
             .await
             .unwrap();

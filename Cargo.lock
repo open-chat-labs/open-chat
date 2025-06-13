@@ -5985,6 +5985,7 @@ dependencies = [
  "rand 0.8.5",
  "serde",
  "serde_bytes",
+ "serde_json",
  "sha256",
  "stable_memory",
  "stable_memory_map",
