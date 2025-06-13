@@ -26,7 +26,7 @@ pub struct UserNotification {
     pub notification_bytes: ByteBuf,
 
     // Values relevant for the FCM notifications
-    #[serde(rename = "f")]
+    #[serde(default, rename = "f")]
     pub fcm_data: FcmData,
 }
 
