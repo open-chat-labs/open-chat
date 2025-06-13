@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Serialize bot notifications in LUI not pusher ([#8169](https://github.com/open-chat-labs/open-chat/pull/8169))
+
 ## [[2.0.1794](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1794-local_user_index)] - 2025-06-13
 
 ### Added
