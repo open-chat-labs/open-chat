@@ -479,7 +479,6 @@ struct Data {
     pub web_push_subscriptions: WebPushSubscriptions,
     pub notifications: EventStream<NotificationEnvelope>,
     pub blocked_users: UserIdsSet,
-    #[serde(default)]
     pub fcm_token_store: FcmTokenStore,
 }
 

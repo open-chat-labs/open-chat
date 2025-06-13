@@ -16,7 +16,6 @@ pub struct IdentityLinkRequest {
     pub webauthn_key: Option<WebAuthnKey>,
     pub link_to_principal: Principal,
     pub originating_canister: CanisterId,
-    #[serde(default)]
     pub is_ii_principal: bool,
     pub created: TimestampMillis,
 }

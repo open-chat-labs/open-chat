@@ -99,7 +99,6 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         .collect();
     let canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::Community).wasm.clone();
     let local_user_index_canister_id = state.env.canister_id();
-    #[expect(deprecated)]
     let init_canister_args = community_canister::init::Args {
         is_public: args.is_public,
         name: args.name,
@@ -111,11 +110,8 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         created_by_user_type: UserType::User,
         mark_active_duration: MARK_ACTIVE_DURATION,
         group_index_canister_id: state.data.group_index_canister_id,
-        local_group_index_canister_id: CanisterId::anonymous(),
         user_index_canister_id: state.data.user_index_canister_id,
         local_user_index_canister_id,
-        notifications_canister_id: CanisterId::anonymous(),
-        bot_api_gateway_canister_id: CanisterId::anonymous(),
         proposals_bot_user_id: state.data.proposals_bot_canister_id.into(),
         escrow_canister_id: state.data.escrow_canister_id,
         internet_identity_canister_id: state.data.internet_identity_canister_id,

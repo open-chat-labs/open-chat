@@ -22,22 +22,11 @@ pub struct Args {
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
-    #[deprecated]
-    #[serde(default = "CanisterId::anonymous")]
-    pub local_group_index_canister_id: CanisterId,
-    #[deprecated]
-    #[serde(default = "CanisterId::anonymous")]
-    pub notifications_canister_id: CanisterId,
-    #[deprecated]
-    #[serde(default = "CanisterId::anonymous")]
-    pub bot_api_gateway_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
     pub escrow_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
     pub gate_config: Option<AccessGateConfig>,
-    #[serde(default)]
     pub default_channels: Vec<String>,
-    #[serde(default)]
     pub channels: Vec<(ChannelId, String)>,
     pub default_channel_rules: Option<Rules>,
     pub source_group: Option<SourceGroup>,

@@ -170,7 +170,6 @@ pub struct PublicGroupInfo {
     hotness_score: u32,
     exclude_from_hotlist: bool,
     gate_config: Option<AccessGateConfigInternal>,
-    #[serde(default)]
     verified: bool,
 }
 

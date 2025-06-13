@@ -662,15 +662,11 @@ pub enum UpdateUserResult {
 #[derive(Deserialize)]
 struct UserMapTrimmed {
     users: HashMap<UserId, User>,
-    #[serde(default)]
     bots: HashMap<UserId, Bot>,
     suspected_bots: BTreeSet<UserId>,
     deleted_users: HashMap<UserId, TimestampMillis>,
-    #[serde(default)]
     bot_updates: BTreeSet<(TimestampMillis, BotUpdate)>,
-    #[serde(default)]
     suspended_or_unsuspended_users: BTreeSet<(TimestampMillis, UserId)>,
-    #[serde(default)]
     unique_person_proofs_submitted: u32,
 }
 
