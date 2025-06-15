@@ -78,7 +78,7 @@ const mockContext: PageJS.Context = {
 };
 
 function setSelectedChat() {
-    serverEventsStore.set([]);
+    serverEventsStore.set(undefined);
     expiredServerEventRanges.set(new DRange());
     selectedChatUserIdsStore.set(new Set());
     selectedChatUserGroupKeysStore.set(new Set());
@@ -182,7 +182,10 @@ describe("app state", () => {
                 ),
             );
             serverEventsStore.update(() => {
-                return [chatMessage()];
+                return {
+                    chatId,
+                    events: [chatMessage()],
+                };
             });
         }
 
@@ -359,14 +362,14 @@ describe("app state", () => {
 
             test("server events are returned when there are no updates", () => {
                 const client = get(eventsStore)[0];
-                const server = get(serverEventsStore)[0];
+                const server = get(serverEventsStore)?.events[0];
                 expect(client === server).toBe(true);
             });
 
             test("server object should not be mutated if there are updates", () => {
                 addToWritableMap(123456n, "whatever", translationsStore);
                 const client = get(eventsStore)[0];
-                const server = get(serverEventsStore)[0];
+                const server = get(serverEventsStore)?.events[0];
                 expect(client === server).toBe(false);
                 expect(
                     client.event.kind === "message" &&
