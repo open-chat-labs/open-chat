@@ -1050,13 +1050,22 @@ impl Data {
             BotInitiator::Autonomous => bot.autonomous_permissions.as_ref()?,
         };
 
+        let mut bot_is_channel_owner = false;
+        if let Some(channel) = channel_id.and_then(|id| self.channels.get(&id)) {
+            bot_is_channel_owner = channel.chat.members.get(bot_id).map(|m| m.role().is_owner()).unwrap_or(false);
+
+            // If the channel is not public and the bot is not an owner, it cannot access the channel
+            if !bot_is_channel_owner && !channel.chat.is_public.value {
+                return None;
+            }
+        }
+
         // If the bot is the owner of the channel then grant all chat permissions
-        let granted_to_bot =
-            if channel_id.is_some_and(|channel_id| self.is_same_or_senior_in_channel(bot_id, &channel_id, GroupRole::Owner)) {
-                &BotPermissions::union(granted_to_bot, &BotPermissions::chat_owner())
-            } else {
-                granted_to_bot
-            };
+        let granted_to_bot = if bot_is_channel_owner {
+            &BotPermissions::union(granted_to_bot, &BotPermissions::chat_owner())
+        } else {
+            granted_to_bot
+        };
 
         // If this is a command initiated by a user then intersect the permissions granted to the bot with the user's permissions
         match initiator {
