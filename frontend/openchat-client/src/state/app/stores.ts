@@ -593,7 +593,7 @@ export const selectedCommunityUserGroupsStore = derived(
         if (updates === undefined) return community.userGroups;
         return updates.apply(community.userGroups);
     },
-    mapsEqualIfEmpty,
+    dequal,
 );
 export const selectedCommunityInvitedUsersStore = derived(
     [selectedServerCommunityStore, communityLocalUpdates.invitedUsers],
@@ -658,7 +658,7 @@ export const selectedChatBlockedUsersStore = derived(
         if (chat === undefined) return new Set() as ReadonlySet<string>;
         return blockedUsers.get(chat.chatId)?.apply(chat.blockedUsers) ?? chat.blockedUsers;
     },
-    setsEqualIfEmpty,
+    setsAreEqual,
 );
 export const selectedChatLapsedMembersStore = derived(selectedServerChatStore, (chat) => {
     return chat?.lapsedMembers ?? (new Set() as ReadonlySet<string>);
