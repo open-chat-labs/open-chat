@@ -7,6 +7,7 @@ import type {
     CommunitySummary,
     DirectChatIdentifier,
     EnhancedReplyContext,
+    EphemeralMessageEvent,
     EventWrapper,
     FullWebhookDetails,
     GroupChatSummary,
@@ -132,4 +133,5 @@ export type PubSubEvents = {
         err?: unknown;
     };
     showSuccessToast: ResourceKey;
+    ephemeralMessage: EphemeralMessageEvent;
 };

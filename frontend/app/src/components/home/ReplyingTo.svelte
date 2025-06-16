@@ -44,6 +44,7 @@
     </h4>
     <div class="reply-content">
         <ChatMessageContent
+            showPreviews={false}
             {readonly}
             {timestamp}
             messageContext={replyingTo.sourceContext}

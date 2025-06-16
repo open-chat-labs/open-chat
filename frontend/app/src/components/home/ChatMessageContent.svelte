@@ -44,6 +44,7 @@
         failed: boolean;
         timestamp?: bigint | undefined;
         blockLevelMarkdown: boolean;
+        showPreviews: boolean;
         onExpandMessage?: (() => void) | undefined;
         onRemovePreview?: (url: string) => void;
         onRegisterVote?: (vote: { type: "delete" | "register"; answerIndex: number }) => void;
@@ -69,6 +70,7 @@
         failed,
         timestamp = undefined,
         blockLevelMarkdown,
+        showPreviews = true,
         onExpandMessage = undefined,
         onRemovePreview,
         onRegisterVote,
@@ -84,6 +86,7 @@
         {content}
         {edited}
         {blockLevelMarkdown}
+        {showPreviews}
         {onRemovePreview} />
 {:else if content.kind === "image_content"}
     <ImageContent

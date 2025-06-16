@@ -4,9 +4,10 @@
 
     interface Props {
         bot: { avatarUrl?: string };
+        size?: AvatarSize;
     }
 
-    let { bot }: Props = $props();
+    let { bot, size = AvatarSize.Default }: Props = $props();
 </script>
 
-<Avatar url={bot.avatarUrl ?? "/assets/bot_avatar.svg"} size={AvatarSize.Default} />
+<Avatar url={bot.avatarUrl ?? "/assets/bot_avatar.svg"} {size} />
