@@ -567,11 +567,13 @@ export const serverEventsStore = writable<EventWrapper<ChatEvent>[]>([], undefin
 export const serverThreadEventsStore = writable<EventWrapper<ChatEvent>[]>([], undefined, eqIfEmpty);
 export const expiredServerEventRanges = writable<DRange>(new DRange(), undefined, eqIfEmpty);
 
+// Whenever the selectedChatIdStore value changes we immediately clear the server events and the selected thread
 selectedChatIdStore.subscribe(_ => {
     serverEventsStore.set([]);
     expiredServerEventRanges.set(new DRange());
     selectedThreadIdStore.set(undefined);
 });
+// Whenever the selectedThreadIdStore value changes we immediately clear the serverThreadEventsStore
 selectedThreadIdStore.subscribe(_ => serverThreadEventsStore.set([]));
 
 export const chatListScopeStore = derived(routeStore, (route) => route.scope, dequal);
