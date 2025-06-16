@@ -1,5 +1,6 @@
 import { Principal } from "@dfinity/principal";
 import * as chrono from "chrono-node";
+import { ROLE_MEMBER } from "../constants";
 import { type InterpolationValues, parseBigInt, random64, type ResourceKey } from "../utils";
 import { ValidationErrors } from "../utils/validation";
 import type {
@@ -18,7 +19,6 @@ import type {
     MessagePermission,
 } from "./permission";
 import type { BotMatch } from "./search/search";
-import { ROLE_MEMBER } from "../constants";
 
 export const MIN_BOT_NAME_LENGTH = 5;
 export const MIN_COMMAND_NAME_LENGTH = 3;
@@ -845,4 +845,11 @@ export function emptyWebhookInstance(): FullWebhookDetails {
 
 export type FullWebhookDetails = WebhookDetails & {
     secret?: string;
+};
+
+export type EphemeralMessageEvent = {
+    message: BotResponseMessage;
+    botId: string;
+    commandName: string;
+    scope: BotActionScope;
 };

@@ -1,10 +1,13 @@
 <script lang="ts">
     import {
         iconSize,
+        messageContextsEqual,
+        subscribe,
         type AttachmentContent,
         type ChatSummary,
         type CreatedUser,
         type EnhancedReplyContext,
+        type EphemeralMessageEvent,
         type EventWrapper,
         type Message,
         type MessageAction,
@@ -13,11 +16,12 @@
         type OpenChat,
         type User,
     } from "openchat-client";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
+    import EphemeralMessage from "../bots/EphemeralMessage.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Translatable from "../Translatable.svelte";
@@ -88,9 +92,23 @@
         onMakeMeme,
     }: Props = $props();
 
+    let ephemeralMessageEvent = $state<EphemeralMessageEvent>();
     let messageAction: MessageAction = $state(undefined);
     //@ts-ignore
     let messageEntry: MessageEntry;
+
+    onMount(() => {
+        const unsubs = [subscribe("ephemeralMessage", onEphemeralMessage)];
+        return () => {
+            unsubs.forEach((u) => u());
+        };
+    });
+
+    function onEphemeralMessage(ev: EphemeralMessageEvent) {
+        if (ev.scope.kind !== "chat_scope") return;
+        if (!messageContextsEqual(messageContext, ev.scope)) return;
+        ephemeralMessageEvent = ev;
+    }
 
     function fileFromDataTransferItems(items: DataTransferItem[]): File | undefined {
         return items.reduce<File | undefined>((res, item) => {
@@ -176,6 +194,11 @@
 
 <div class="footer">
     <div class="footer-overlay">
+        {#if ephemeralMessageEvent !== undefined}
+            <EphemeralMessage
+                onClose={() => (ephemeralMessageEvent = undefined)}
+                event={ephemeralMessageEvent} />
+        {/if}
         {#if editingEvent === undefined && (replyingTo || attachment !== undefined)}
             <div class="draft-container">
                 {#if replyingTo}

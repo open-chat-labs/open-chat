@@ -679,6 +679,7 @@
 
                             <ChatMessageContent
                                 senderId={msg.sender}
+                                showPreviews
                                 {readonly}
                                 {fill}
                                 {me}

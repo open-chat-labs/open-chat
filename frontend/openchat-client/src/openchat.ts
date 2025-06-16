@@ -8737,7 +8737,6 @@ export class OpenChat {
         msgId: bigint,
         senderId: string,
         blockLevelMarkdown: boolean,
-        ephemeral: boolean,
     ): () => void {
         // we can't send a placeholder message to a community scope but that's ok
         if (scope.kind === "community_scope") return () => undefined;
@@ -8782,11 +8781,7 @@ export class OpenChat {
                     senderContext: botContext,
                 },
             };
-            if (!ephemeral) {
-                localUpdates.addUnconfirmed(context, event);
-            } else {
-                localUpdates.addEphemeral(context, event);
-            }
+            localUpdates.addUnconfirmed(context, event);
             publish("sentMessage", { context, event });
         }
         return () => localUpdates.deleteUnconfirmed(context, msgId);
@@ -8822,7 +8817,6 @@ export class OpenChat {
                             msgId,
                             bot.id,
                             false,
-                            false,
                         );
                         return this.#callBotCommandEndpoint(bot.endpoint, token);
                     })
@@ -8838,24 +8832,17 @@ export class OpenChat {
                             }
                         } else {
                             if (resp.message !== undefined) {
-                                // The message that comes back from the bot may be marked as ephemeral in which
-                                // case it will have a different messageId
+                                // if the bot responded with an ephemeral message remove any existing placeholder
+                                // as the message will be displayed in popup
                                 if (resp.message.ephemeral) {
                                     removePlaceholder?.();
                                 }
-                                removePlaceholder = this.sendPlaceholderBotMessage(
+                                publish("ephemeralMessage", {
+                                    message: resp.message,
                                     scope,
-                                    {
-                                        ...botContext,
-                                        finalised: resp.message.finalised,
-                                        kind: "bot",
-                                    },
-                                    resp.message.messageContent,
-                                    resp.message.messageId,
-                                    bot.id,
-                                    resp.message.blockLevelMarkdown,
-                                    resp.message.ephemeral,
-                                );
+                                    botId: bot.id,
+                                    commandName: bot.command.name,
+                                });
                             } else {
                                 removePlaceholder?.();
                             }

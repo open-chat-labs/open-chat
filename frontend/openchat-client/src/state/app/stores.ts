@@ -1144,7 +1144,6 @@ export const eventsStore = derived(
         selectedChatIdStore,
         localUpdates.failedMessages,
         localUpdates.unconfirmed,
-        localUpdates.ephemeral,
         translationsStore,
         selectedChatBlockedOrSuspendedUsersStore,
         messageLocalUpdates,
@@ -1157,7 +1156,6 @@ export const eventsStore = derived(
         selectedChatId,
         failedMessages,
         unconfirmedMessages,
-        ephemeralMessages,
         translations,
         selectedChatBlockedOrSuspendedUsers,
         messageLocalUpdates,
@@ -1170,11 +1168,9 @@ export const eventsStore = derived(
         const failed = failedState ? [...failedState.values()] : [];
         const unconfirmedState = unconfirmedMessages.get(ctx);
         const unconfirmed = unconfirmedState ? [...unconfirmedState.values()] : [];
-        const ephemeralState = ephemeralMessages.get(ctx);
-        const ephemeral = ephemeralState ? [...ephemeralState.values()] : [];
         return mergeEventsAndLocalUpdates(
             serverEvents,
-            [...unconfirmed, ...failed, ...ephemeral],
+            [...unconfirmed, ...failed],
             expiredEventRanges,
             translations,
             selectedChatBlockedOrSuspendedUsers,
@@ -1259,7 +1255,6 @@ export const threadEventsStore = derived(
         selectedThreadIdStore,
         localUpdates.failedMessages,
         localUpdates.unconfirmed,
-        localUpdates.ephemeral,
         translationsStore,
         selectedChatBlockedOrSuspendedUsersStore,
         messageLocalUpdates,
@@ -1271,7 +1266,6 @@ export const threadEventsStore = derived(
         selectedThreadId,
         failedMessages,
         unconfirmedMessages,
-        ephemeralMessages,
         translations,
         selectedChatBlockedOrSuspendedUsers,
         messageLocalUpdates,
@@ -1284,11 +1278,9 @@ export const threadEventsStore = derived(
         const failed = failedState ? [...failedState.values()] : [];
         const unconfirmedState = unconfirmedMessages.get(ctx);
         const unconfirmed = unconfirmedState ? [...unconfirmedState.values()] : [];
-        const ephemeralState = ephemeralMessages.get(ctx);
-        const ephemeral = ephemeralState ? [...ephemeralState.values()] : [];
         return mergeEventsAndLocalUpdates(
             serverEvents,
-            [...unconfirmed, ...failed, ...ephemeral],
+            [...unconfirmed, ...failed],
             new DRange(),
             translations,
             selectedChatBlockedOrSuspendedUsers,
