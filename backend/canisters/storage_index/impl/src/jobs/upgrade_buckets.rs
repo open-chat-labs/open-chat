@@ -82,7 +82,7 @@ async fn perform_upgrade(canister_to_upgrade: CanisterToInstall) {
     let from_version = canister_to_upgrade.current_wasm_version;
     let to_version = canister_to_upgrade.new_wasm_version;
 
-    match install(canister_to_upgrade.into()).await {
+    match install(canister_to_upgrade).await {
         Ok(_) => {
             mutate_state(|state| on_success(canister_id, to_version, state));
         }

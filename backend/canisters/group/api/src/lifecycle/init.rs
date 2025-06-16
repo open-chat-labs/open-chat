@@ -1,10 +1,10 @@
-use candid::{CandidType, Principal};
+use candid::Principal;
 use serde::{Deserialize, Serialize};
 use types::{
     AccessGateConfig, BuildVersion, CanisterId, Document, GroupPermissions, GroupSubtype, Milliseconds, Rules, UserId, UserType,
 };
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
     pub is_public: bool,
     pub name: String,

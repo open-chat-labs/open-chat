@@ -1,14 +1,14 @@
 use crate::Data;
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_stable_memory_map_memory;
+use canister_api_macros::init;
 use canister_tracing_macros::trace;
 use group_canister::init::Args;
-use ic_cdk::init;
 use rand::Rng;
 use tracing::info;
 use utils::env::Environment;
 
-#[init]
+#[init(msgpack = true)]
 #[trace]
 fn init(args: Args) {
     canister_logger::init(args.test_mode);

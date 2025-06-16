@@ -2,14 +2,14 @@ use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_stable_memory_map_memory;
 use crate::updates::import_group::commit_group_to_import;
 use crate::{Data, mutate_state};
+use canister_api_macros::init;
 use canister_tracing_macros::trace;
 use community_canister::init::Args;
-use ic_cdk::init;
 use itertools::Itertools;
 use tracing::info;
 use utils::env::Environment;
 
-#[init]
+#[init(msgpack = true)]
 #[trace]
 fn init(args: Args) {
     canister_logger::init(args.test_mode);
