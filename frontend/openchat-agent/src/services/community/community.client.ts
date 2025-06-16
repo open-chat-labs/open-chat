@@ -963,12 +963,15 @@ export class CommunityClient extends MsgpackCanisterAgent {
             if (fromCache.lastUpdated >= communityLastUpdated || offline()) {
                 return fromCache;
             } else {
-                return this.getCommunityDetailsUpdates(id, fromCache);
+                const [details, anyUpdates] = await this.getCommunityDetailsUpdates(id, fromCache);
+                return anyUpdates
+                    ? details
+                    : { kind: "success_no_updates", lastUpdated: details.lastUpdated };
             }
         }
 
         const response = await this.getCommunityDetailsFromBackend();
-        if (response !== "failure") {
+        if (response.kind === "success") {
             await setCachedCommunityDetails(this.db, id.communityId, response);
         }
         return response;
@@ -989,17 +992,17 @@ export class CommunityClient extends MsgpackCanisterAgent {
     private async getCommunityDetailsUpdates(
         id: CommunityIdentifier,
         previous: CommunityDetails,
-    ): Promise<CommunityDetails> {
-        const response = await this.getCommunityDetailsUpdatesFromBackend(previous);
-        if (response.lastUpdated > previous.lastUpdated) {
-            await setCachedCommunityDetails(this.db, id.communityId, response);
+    ): Promise<[CommunityDetails, boolean]> {
+        const [details, anyUpdates] = await this.getCommunityDetailsUpdatesFromBackend(previous);
+        if (details.lastUpdated > previous.lastUpdated) {
+            await setCachedCommunityDetails(this.db, id.communityId, details);
         }
-        return response;
+        return [details, anyUpdates];
     }
 
     private async getCommunityDetailsUpdatesFromBackend(
         previous: CommunityDetails,
-    ): Promise<CommunityDetails> {
+    ): Promise<[CommunityDetails, boolean]> {
         const updatesResponse = await this.executeMsgpackQuery(
             "selected_updates_v2",
             {
@@ -1012,17 +1015,17 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
 
         if (updatesResponse.kind === "failure") {
-            return previous;
+            return [previous, false];
         }
 
         if (updatesResponse.kind === "success_no_updates") {
-            return {
+            return [{
                 ...previous,
                 lastUpdated: updatesResponse.lastUpdated,
-            };
+            }, false];
         }
 
-        return mergeCommunityDetails(previous, updatesResponse);
+        return [mergeCommunityDetails(previous, updatesResponse), true];
     }
 
     async getChannelDetails(

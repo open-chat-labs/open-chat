@@ -218,7 +218,7 @@ export type ChannelMatch = {
     public: boolean;
 };
 
-export type CommunityDetailsResponse = "failure" | CommunityDetails;
+export type CommunityDetailsResponse = CommunityDetails | { kind: "success_no_updates", lastUpdated: bigint } | Failure;
 
 export type CommunityDetailsUpdatesResponse =
     | ({
@@ -231,6 +231,7 @@ export type CommunityDetailsUpdatesResponse =
     | Failure;
 
 export type CommunityDetails = {
+    kind: "success";
     members: Member[];
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
