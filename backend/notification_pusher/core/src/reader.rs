@@ -1,15 +1,14 @@
 use crate::ic_agent::IcAgent;
 use crate::metrics::write_metrics;
-use crate::{BotNotification, FcmNotification, NotificationMetadata, Payload, PushNotification, UserNotification};
+use crate::{BotNotification, FcmNotification, NotificationMetadata, PushNotification, UserNotification};
 use async_channel::Sender;
 use base64::Engine;
 use index_store::IndexStore;
-use std::cell::LazyCell;
 use std::sync::Arc;
 use std::time::Instant;
 use tokio::time;
 use tracing::{error, info};
-use types::{BotDataEncoding, CanisterId, Error, NotificationEnvelope, Timestamped};
+use types::{BotDataEncoding, CanisterId, Error, NotificationEnvelope, Payload, Timestamped};
 
 pub struct Reader<I: IndexStore> {
     ic_agent: IcAgent,
@@ -128,14 +127,12 @@ impl<I: IndexStore> Reader<I> {
                     }
                 }
                 NotificationEnvelope::Bot(notification) => {
-                    let json_payload = LazyCell::new(|| serde_json::to_vec(&notification.event).unwrap());
-                    let candid_payload = LazyCell::new(|| candid::encode_one(&notification.event).unwrap());
-
-                    for bot_id in notification.recipients {
-                        if let Some(bot) = ic_response.bots.get(&bot_id) {
-                            let payload = match bot.data_encoding {
-                                BotDataEncoding::Json => Payload::new((*json_payload).clone(), "application/json"),
-                                BotDataEncoding::Candid => Payload::new((*candid_payload).clone(), "application/candid"),
+                    for (bot_id, encoding) in notification.recipients {
+                        if let Some(endpoint) = ic_response.bot_endpoints.get(&bot_id) {
+                            let bytes = notification.notification_bytes[&encoding].clone();
+                            let mime_type = match encoding {
+                                BotDataEncoding::Json => "application/json",
+                                BotDataEncoding::Candid => "application/candid",
                             };
 
                             self.bot_notification_sender
@@ -143,8 +140,8 @@ impl<I: IndexStore> Reader<I> {
                                     notifications_canister: self.notifications_canister_id,
                                     index: indexed_notification.index,
                                     timestamp: notification.timestamp,
-                                    endpoint: bot.endpoint.clone(),
-                                    payload,
+                                    endpoint: endpoint.to_string(),
+                                    payload: Payload::new(bytes, mime_type),
                                     first_read_at,
                                 })
                                 .await

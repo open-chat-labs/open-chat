@@ -83,7 +83,7 @@ import { SnsFunctions } from "../snsFunctions.svelte";
 import { hideMessagesFromDirectBlocked } from "../ui/stores";
 import { messagesRead } from "../unread/markRead";
 import { blockedUsersStore, suspendedUsersStore } from "../users/stores";
-import { notEq } from "../utils";
+import { eqIfEmpty, eqIfUndefined, notEq } from "../utils";
 
 export const ONE_MB = 1024 * 1024;
 export const ONE_GB = ONE_MB * 1024;
@@ -316,11 +316,6 @@ export const storageInGBStore = derived(storageStore, (storage) => ({
 export const messageFiltersStore = writable<MessageFilter[]>([], undefined, notEq);
 export const translationsStore = writable<MessageMap<string>>(new MessageMap(), undefined, notEq);
 export const snsFunctionsStore = writable<SnsFunctions>(new SnsFunctions(), undefined, notEq);
-export const filteredProposalsStore = writable<FilteredProposals | undefined>(
-    undefined,
-    undefined,
-    notEq,
-);
 export const currentUserStore = writable<CreatedUser>(anonymousUser(), undefined, dequal);
 export const currentUserIdStore = derived(currentUserStore, ({ userId }) => userId);
 export const anonUserStore = derived(currentUserIdStore, (id) => id === ANON_USER_ID);
@@ -543,6 +538,22 @@ export const userGroupSummariesStore = derived(communitiesStore, (communities) =
     }, new Map<number, UserGroupSummary>());
 });
 
+export const serverEventsStore = writable<EventWrapper<ChatEvent>[]>([], undefined, eqIfEmpty);
+export const serverThreadEventsStore = writable<EventWrapper<ChatEvent>[]>([], undefined, eqIfEmpty);
+export const expiredServerEventRanges = writable<DRange>(new DRange(), undefined, eqIfEmpty);
+export const selectedChatUserIdsStore = writable<Set<string>>(new Set(), undefined, setsEqualIfEmpty);
+export const selectedChatUserGroupKeysStore = writable<Set<string>>(new Set(), undefined, setsEqualIfEmpty);
+export const selectedChatExpandedDeletedMessageStore = writable<Set<number>>(
+    new Set(),
+    undefined,
+    setsEqualIfEmpty,
+);
+export const filteredProposalsStore = writable<FilteredProposals | undefined>(
+    undefined,
+    undefined,
+    eqIfUndefined,
+);
+
 export const selectedChatIdStore = derived(
     routeStore,
     (route) => {
@@ -556,6 +567,26 @@ export const selectedChatIdStore = derived(
     },
     chatIdentifiersEqual,
 );
+
+export const selectedThreadIdStore = writable<ThreadIdentifier | undefined>(
+    undefined,
+    undefined,
+    messageContextsEqual,
+);
+
+// Whenever the selectedChatIdStore value changes the first thing we do is clear the related stores
+selectedChatIdStore.subscribe(_ => {
+    serverEventsStore.set([]);
+    expiredServerEventRanges.set(new DRange());
+    selectedThreadIdStore.set(undefined);
+    selectedChatUserIdsStore.set(new Set());
+    selectedChatUserGroupKeysStore.set(new Set());
+    selectedChatExpandedDeletedMessageStore.set(new Set());
+    filteredProposalsStore.set(undefined);
+});
+
+// Whenever the selectedThreadIdStore value changes we immediately clear the serverThreadEventsStore
+selectedThreadIdStore.subscribe(_ => serverThreadEventsStore.set([]));
 
 export const chatListScopeStore = derived(routeStore, (route) => route.scope, dequal);
 export const chatsInitialisedStore = writable(false);
@@ -1106,10 +1137,6 @@ export const directVideoCallCountsStore = derived(serverDirectChatsStore, (serve
     return videoCallsInProgressForChats([...serverDirectChats.values()]);
 });
 
-export const serverEventsStore = writable<EventWrapper<ChatEvent>[]>([], undefined, notEq);
-export const serverThreadEventsStore = writable<EventWrapper<ChatEvent>[]>([], undefined, notEq);
-export const expiredServerEventRanges = writable<DRange>(new DRange(), undefined, notEq);
-
 export const eventsStore = derived(
     [
         serverEventsStore,
@@ -1222,12 +1249,6 @@ export const globalUnreadCountStore = derived(
     },
 );
 
-export const selectedThreadIdStore = writable<ThreadIdentifier | undefined>(
-    undefined,
-    undefined,
-    messageContextsEqual,
-);
-
 export const threadEventsStore = derived(
     [
         serverThreadEventsStore,
@@ -1288,12 +1309,5 @@ export const identityStateStore = writable<IdentityState>(
     notEq,
 );
 
-export const selectedChatUserIdsStore = writable<Set<string>>(new Set(), undefined, notEq);
-export const selectedChatUserGroupKeysStore = writable<Set<string>>(new Set(), undefined, notEq);
-export const selectedChatExpandedDeletedMessageStore = writable<Set<number>>(
-    new Set(),
-    undefined,
-    notEq,
-);
 export const failedMessagesStore = localUpdates.failedMessages;
 export const unconfirmedStore = localUpdates.unconfirmed;

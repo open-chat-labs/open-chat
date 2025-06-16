@@ -2879,19 +2879,9 @@ export class OpenChat {
         // TODO - this might belong as a derivation in the selected chat state
         this.#userLookupForMentions = undefined;
 
-        // clear some chat state
-        withPausedStores(() => {
-            serverEventsStore.set([]);
-            expiredServerEventRanges.set(new DRange());
-            selectedChatUserIdsStore.set(new Set());
-            selectedChatUserGroupKeysStore.set(new Set());
-            selectedChatExpandedDeletedMessageStore.set(new Set());
-            filteredProposalsStore.set(
-                isProposalsChat(clientChat)
-                    ? FilteredProposals.fromStorage(clientChat.subtype.governanceCanisterId)
-                    : undefined,
-            );
-        });
+        if (isProposalsChat(clientChat)) {
+            filteredProposalsStore.set(FilteredProposals.fromStorage(clientChat.subtype.governanceCanisterId));
+        }
 
         const selectedChat = selectedChatSummaryStore.value;
         if (selectedChat !== undefined) {
@@ -3969,6 +3959,10 @@ export class OpenChat {
                 onResult: (response) => {
                     if (response === "accepted") {
                         localUpdates.markUnconfirmedAccepted(messageContext, messageId);
+
+                        if (!isTransfer(eventWrapper.event.content)) {
+                            this.#sendMessageWebRtc(chat, eventWrapper, threadRootMessageIndex);
+                        }
                         return;
                     }
                     this.#inflightMessagePromises.delete(messageId);
@@ -4333,11 +4327,7 @@ export class OpenChat {
 
                 localUpdates.draftMessages.delete(context);
             });
-            if (!isTransfer(messageEvent.event.content)) {
-                this.#sendMessageWebRtc(chat, messageEvent, threadRootMessageIndex).then(() => {
-                    publish("sentMessage", { context, event: messageEvent });
-                });
-            }
+            publish("sentMessage", { context, event: messageEvent });
         }, 0);
     }
 
