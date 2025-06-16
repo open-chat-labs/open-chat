@@ -3821,7 +3821,7 @@ export class OpenChat {
             return;
         }
         serverThreadEventsStore.update((state) => {
-            const existing = messageContextsEqual(state?.threadId, id) ? state.events : [];
+            const existing = state && messageContextsEqual(state.threadId, id) ? state.events : [];
             return {
                 threadId: id,
                 events: fn(existing),
@@ -3842,7 +3842,7 @@ export class OpenChat {
             return;
         }
         serverEventsStore.update((state) => {
-            const existing = chatIdentifiersEqual(state?.chatId, chatId) ? state.events : [];
+            const existing = state && chatIdentifiersEqual(state.chatId, chatId) ? state.events : [];
             return {
                 chatId,
                 events: fn(existing),
