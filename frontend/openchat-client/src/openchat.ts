@@ -3959,6 +3959,10 @@ export class OpenChat {
                 onResult: (response) => {
                     if (response === "accepted") {
                         localUpdates.markUnconfirmedAccepted(messageContext, messageId);
+
+                        if (!isTransfer(eventWrapper.event.content)) {
+                            this.#sendMessageWebRtc(chat, eventWrapper, threadRootMessageIndex);
+                        }
                         return;
                     }
                     this.#inflightMessagePromises.delete(messageId);
@@ -4323,11 +4327,7 @@ export class OpenChat {
 
                 localUpdates.draftMessages.delete(context);
             });
-            if (!isTransfer(messageEvent.event.content)) {
-                this.#sendMessageWebRtc(chat, messageEvent, threadRootMessageIndex).then(() => {
-                    publish("sentMessage", { context, event: messageEvent });
-                });
-            }
+            publish("sentMessage", { context, event: messageEvent });
         }, 0);
     }
 
