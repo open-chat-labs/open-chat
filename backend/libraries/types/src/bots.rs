@@ -530,7 +530,7 @@ impl BotDefinition {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, Default)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
 pub enum BotDataEncoding {
     #[default]
     Json,
