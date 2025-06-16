@@ -2879,19 +2879,9 @@ export class OpenChat {
         // TODO - this might belong as a derivation in the selected chat state
         this.#userLookupForMentions = undefined;
 
-        // clear some chat state
-        withPausedStores(() => {
-            serverEventsStore.set([]);
-            expiredServerEventRanges.set(new DRange());
-            selectedChatUserIdsStore.set(new Set());
-            selectedChatUserGroupKeysStore.set(new Set());
-            selectedChatExpandedDeletedMessageStore.set(new Set());
-            filteredProposalsStore.set(
-                isProposalsChat(clientChat)
-                    ? FilteredProposals.fromStorage(clientChat.subtype.governanceCanisterId)
-                    : undefined,
-            );
-        });
+        if (isProposalsChat(clientChat)) {
+            filteredProposalsStore.set(FilteredProposals.fromStorage(clientChat.subtype.governanceCanisterId));
+        }
 
         const selectedChat = selectedChatSummaryStore.value;
         if (selectedChat !== undefined) {
