@@ -66,7 +66,7 @@
                 intersecting={false}
                 blockLevelMarkdown={event.message.blockLevelMarkdown}
                 edited={false}
-                senderId={"TODO"}
+                senderId={bot.id}
                 fill={false}
                 readonly={true}
                 showPreviews={false}
