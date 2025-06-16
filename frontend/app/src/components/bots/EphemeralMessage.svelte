@@ -20,7 +20,6 @@
     let { event, onClose }: Props = $props();
     let bot = $derived(botState.externalBots.get(event.botId));
     let timer = $state<number>();
-    let done = 0;
 
     onMount(() => {
         perc.target = 0;
@@ -30,7 +29,6 @@
     function pause(e: MouseEvent) {
         e.preventDefault();
         e.stopPropagation();
-        done = perc.current / 100;
         perc.target = perc.current;
         window.clearTimeout(timer);
     }
