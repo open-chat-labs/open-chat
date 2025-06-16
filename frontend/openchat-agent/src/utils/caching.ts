@@ -55,7 +55,7 @@ import {
     updateCreatedUser,
 } from "openchat-shared";
 
-const CACHE_VERSION = 138;
+const CACHE_VERSION = 139;
 const EARLIEST_SUPPORTED_MIGRATION = 138;
 const MAX_INDEX = 9999999999;
 
@@ -177,28 +177,28 @@ type MigrationFunction<T> = (
 //     db.createObjectStore("activityFeed");
 // }
 //
-async function clearChatsStore(
-    _db: IDBPDatabase<ChatSchema>,
-    _principal: Principal,
-    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-) {
-    await tx.objectStore("chats").clear();
-}
-async function clearChatEventsStore(
-    _db: IDBPDatabase<ChatSchema>,
-    _principal: Principal,
-    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-) {
-    await tx.objectStore("chat_events").clear();
-}
-
-async function clearGroupDetailsStore(
-    _db: IDBPDatabase<ChatSchema>,
-    _principal: Principal,
-    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-) {
-    await tx.objectStore("group_details").clear();
-}
+// async function clearChatsStore(
+//     _db: IDBPDatabase<ChatSchema>,
+//     _principal: Principal,
+//     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+// ) {
+//     await tx.objectStore("chats").clear();
+// }
+// async function clearChatEventsStore(
+//     _db: IDBPDatabase<ChatSchema>,
+//     _principal: Principal,
+//     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+// ) {
+//     await tx.objectStore("chat_events").clear();
+// }
+//
+// async function clearGroupDetailsStore(
+//     _db: IDBPDatabase<ChatSchema>,
+//     _principal: Principal,
+//     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+// ) {
+//     await tx.objectStore("group_details").clear();
+// }
 
 async function clearCommunityDetailsStore(
     _db: IDBPDatabase<ChatSchema>,
@@ -242,14 +242,7 @@ async function clearCommunityDetailsStore(
 // }
 
 const migrations: Record<number, MigrationFunction<ChatSchema>> = {
-    126: clearChatsStore,
-    127: clearChatsStore,
-    128: clearCommunityDetailsStore,
-    129: clearChatsStore,
-    130: clearChatsStore,
-    131: clearChatEventsStore,
-    132: clearGroupDetailsStore,
-    133: clearChatsStore,
+    139: clearCommunityDetailsStore,
 };
 
 async function migrate(
