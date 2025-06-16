@@ -2527,7 +2527,7 @@ export class OpenChat {
         if (!isSuccessfulEventsResponse(resp)) return false;
 
         if (!keepCurrentEvents) {
-            serverEventsStore.set(undefined);
+            serverEventsStore.set([]);
         }
 
         await this.#updateUserStoreFromEvents(resp.events);
@@ -2881,7 +2881,7 @@ export class OpenChat {
 
         // clear some chat state
         withPausedStores(() => {
-            serverEventsStore.set(undefined);
+            serverEventsStore.set([]);
             expiredServerEventRanges.set(new DRange());
             selectedChatUserIdsStore.set(new Set());
             selectedChatUserGroupKeysStore.set(new Set());
@@ -2943,7 +2943,7 @@ export class OpenChat {
         focusThreadMessageIndex?: number,
     ): void {
         withPausedStores(() => {
-            serverThreadEventsStore.set(undefined);
+            serverThreadEventsStore.set([]);
             selectedThreadIdStore.set({
                 chatId,
                 threadRootMessageIndex: threadRootEvent.event.messageIndex,
@@ -3820,13 +3820,7 @@ export class OpenChat {
             );
             return;
         }
-        serverThreadEventsStore.update((state) => {
-            const existing = state && messageContextsEqual(state.threadId, id) ? state.events : [];
-            return {
-                threadId: id,
-                events: fn(existing),
-            };
-        });
+        serverThreadEventsStore.update(fn);
     }
 
     #updateServerEventsStore(
@@ -3841,13 +3835,7 @@ export class OpenChat {
             );
             return;
         }
-        serverEventsStore.update((state) => {
-            const existing = state && chatIdentifiersEqual(state.chatId, chatId) ? state.events : [];
-            return {
-                chatId,
-                events: fn(existing),
-            }
-        });
+        serverEventsStore.update(fn);
     }
 
     async #sendMessageWebRtc(

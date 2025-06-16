@@ -20,7 +20,6 @@ import {
     SafeMap,
     videoCallsInProgressForChats,
     type ChatEvent,
-    type ChatIdentifier,
     type ChatSummary,
     type ChitState,
     type CombinedUnreadCounts,
@@ -84,7 +83,7 @@ import { SnsFunctions } from "../snsFunctions.svelte";
 import { hideMessagesFromDirectBlocked } from "../ui/stores";
 import { messagesRead } from "../unread/markRead";
 import { blockedUsersStore, suspendedUsersStore } from "../users/stores";
-import { notEq } from "../utils";
+import { eqIfEmpty, notEq } from "../utils";
 
 export const ONE_MB = 1024 * 1024;
 export const ONE_GB = ONE_MB * 1024;
@@ -557,6 +556,23 @@ export const selectedChatIdStore = derived(
     },
     chatIdentifiersEqual,
 );
+
+export const selectedThreadIdStore = writable<ThreadIdentifier | undefined>(
+    undefined,
+    undefined,
+    messageContextsEqual,
+);
+
+export const serverEventsStore = writable<EventWrapper<ChatEvent>[]>([], undefined, eqIfEmpty);
+export const serverThreadEventsStore = writable<EventWrapper<ChatEvent>[]>([], undefined, eqIfEmpty);
+export const expiredServerEventRanges = writable<DRange>(new DRange(), undefined, eqIfEmpty);
+
+selectedChatIdStore.subscribe(_ => {
+    serverEventsStore.set([]);
+    expiredServerEventRanges.set(new DRange());
+    selectedThreadIdStore.set(undefined);
+});
+selectedThreadIdStore.subscribe(_ => serverThreadEventsStore.set([]));
 
 export const chatListScopeStore = derived(routeStore, (route) => route.scope, dequal);
 export const chatsInitialisedStore = writable(false);
@@ -1107,20 +1123,6 @@ export const directVideoCallCountsStore = derived(serverDirectChatsStore, (serve
     return videoCallsInProgressForChats([...serverDirectChats.values()]);
 });
 
-export const serverEventsStore = writable<ChatEvents | undefined>(undefined, undefined, notEq);
-export const serverThreadEventsStore = writable<ThreadEvents | undefined>(undefined, undefined, notEq);
-export const expiredServerEventRanges = writable<DRange>(new DRange(), undefined, notEq);
-
-type ChatEvents = {
-    chatId: ChatIdentifier;
-    events: EventWrapper<ChatEvent>[];
-}
-
-type ThreadEvents = {
-    threadId: ThreadIdentifier;
-    events: EventWrapper<ChatEvent>[];
-}
-
 export const eventsStore = derived(
     [
         serverEventsStore,
@@ -1148,7 +1150,7 @@ export const eventsStore = derived(
         recentlySentMessages,
         messageFilters,
     ]) => {
-        if (selectedChatId === undefined || serverEvents === undefined || !chatIdentifiersEqual(serverEvents.chatId, selectedChatId)) return [];
+        if (selectedChatId === undefined) return [];
         const ctx = { chatId: selectedChatId };
         const failedState = failedMessages.get(ctx);
         const failed = failedState ? [...failedState.values()] : [];
@@ -1157,7 +1159,7 @@ export const eventsStore = derived(
         const ephemeralState = ephemeralMessages.get(ctx);
         const ephemeral = ephemeralState ? [...ephemeralState.values()] : [];
         return mergeEventsAndLocalUpdates(
-            serverEvents.events,
+            serverEvents,
             [...unconfirmed, ...failed, ...ephemeral],
             expiredEventRanges,
             translations,
@@ -1173,10 +1175,8 @@ export const confirmedEventIndexesLoadedStore = derived(
     [serverEventsStore, expiredServerEventRanges],
     ([events, expiredEventRanges]) => {
         const ranges = new DRange();
-        if (events !== undefined) {
-            events.events.forEach((e) => ranges.add(e.index));
-            ranges.add(expiredEventRanges);
-        }
+        events.forEach((e) => ranges.add(e.index));
+        ranges.add(expiredEventRanges);
         return ranges;
     },
 );
@@ -1239,12 +1239,6 @@ export const globalUnreadCountStore = derived(
     },
 );
 
-export const selectedThreadIdStore = writable<ThreadIdentifier | undefined>(
-    undefined,
-    undefined,
-    messageContextsEqual,
-);
-
 export const threadEventsStore = derived(
     [
         serverThreadEventsStore,
@@ -1270,7 +1264,7 @@ export const threadEventsStore = derived(
         recentlySentMessages,
         messageFilters,
     ]) => {
-        if (selectedThreadId === undefined || serverEvents === undefined || !messageContextsEqual(selectedThreadId, serverEvents.threadId)) return [];
+        if (selectedThreadId === undefined) return [];
         const ctx = selectedThreadId;
         const failedState = failedMessages.get(ctx);
         const failed = failedState ? [...failedState.values()] : [];
@@ -1279,7 +1273,7 @@ export const threadEventsStore = derived(
         const ephemeralState = ephemeralMessages.get(ctx);
         const ephemeral = ephemeralState ? [...ephemeralState.values()] : [];
         return mergeEventsAndLocalUpdates(
-            serverEvents.events,
+            serverEvents,
             [...unconfirmed, ...failed, ...ephemeral],
             new DRange(),
             translations,
@@ -1293,9 +1287,7 @@ export const threadEventsStore = derived(
 
 export const confirmedThreadEventIndexesLoadedStore = derived(serverThreadEventsStore, (events) => {
     const ranges = new DRange();
-    if (events) {
-        events.events.forEach((e) => ranges.add(e.index));
-    }
+    events.forEach((e) => ranges.add(e.index));
     return ranges;
 });
 

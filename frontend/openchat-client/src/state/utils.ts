@@ -5,6 +5,9 @@ import type { LocalSet } from "./set";
 import { scheduleUndo, type UndoLocalUpdate } from "./undo";
 
 export const notEq = (_a: unknown, _b: unknown) => false;
+export function eqIfEmpty<T extends { length: number }>(a: T, b: T): boolean {
+    return a.length === 0 && b.length === 0;
+}
 type UndoTimeout = number | "never";
 
 export function modifyWritable<T>(
