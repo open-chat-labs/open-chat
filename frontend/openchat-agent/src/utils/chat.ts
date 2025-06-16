@@ -75,6 +75,7 @@ export function mergeCommunityDetails(
     updates: CommunityDetailsUpdates,
 ): CommunityDetails {
     return {
+        kind: "success",
         lastUpdated: updates.lastUpdated,
         members: mergeThings((p) => p.userId, mergeParticipants, previous.members, {
             added: [],

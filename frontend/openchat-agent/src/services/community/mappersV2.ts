@@ -357,6 +357,7 @@ export function communityDetailsResponse(
     if (typeof value === "object" && "Success" in value) {
         console.log("Community details: ", value.Success);
         return {
+            kind: "success",
             members: value.Success.members
                 .map((m) => ({
                     role: memberRole(m.role),
@@ -382,7 +383,7 @@ export function communityDetailsResponse(
         };
     } else {
         console.warn("CommunityDetails failed with", value);
-        return "failure";
+        return { kind: "failure" };
     }
 }
 

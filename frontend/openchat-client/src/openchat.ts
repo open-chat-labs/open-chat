@@ -2879,19 +2879,9 @@ export class OpenChat {
         // TODO - this might belong as a derivation in the selected chat state
         this.#userLookupForMentions = undefined;
 
-        // clear some chat state
-        withPausedStores(() => {
-            serverEventsStore.set([]);
-            expiredServerEventRanges.set(new DRange());
-            selectedChatUserIdsStore.set(new Set());
-            selectedChatUserGroupKeysStore.set(new Set());
-            selectedChatExpandedDeletedMessageStore.set(new Set());
-            filteredProposalsStore.set(
-                isProposalsChat(clientChat)
-                    ? FilteredProposals.fromStorage(clientChat.subtype.governanceCanisterId)
-                    : undefined,
-            );
-        });
+        if (isProposalsChat(clientChat)) {
+            filteredProposalsStore.set(FilteredProposals.fromStorage(clientChat.subtype.governanceCanisterId));
+        }
 
         const selectedChat = selectedChatSummaryStore.value;
         if (selectedChat !== undefined) {
@@ -3308,8 +3298,8 @@ export class OpenChat {
             kind: "getCommunityDetails",
             id,
             communityLastUpdated: community.lastUpdated,
-        }).catch(() => "failure");
-        if (resp !== "failure") {
+        }).catch(() => ({ kind: "failure" }));
+        if (resp.kind !== "failure") {
             if (!communityIdentifiersEqual(community.id, selectedCommunityIdStore.value)) {
                 console.warn(
                     "Attempting to set community details on the wrong community - probably a stale response",
@@ -3328,23 +3318,32 @@ export class OpenChat {
                 return;
             }
 
-            const [lapsed, members] = partition(resp.members, (m) => m.lapsed);
+            if (resp.kind === "success_no_updates") {
+                selectedServerCommunityStore.update((state) => {
+                    if (state) {
+                        state.timestamp = resp.lastUpdated;
+                    }
+                    return state;
+                });
+            } else {
+                const [lapsed, members] = partition(resp.members, (m) => m.lapsed);
 
-            selectedServerCommunityStore.set(
-                new CommunityDetailsState(
-                    community.id,
-                    resp.lastUpdated,
-                    resp.userGroups,
-                    new Map(members.map((m) => [m.userId, m])),
-                    resp.blockedUsers,
-                    new Set(lapsed.map((m) => m.userId)),
-                    resp.invitedUsers,
-                    resp.referrals,
-                    resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
-                    resp.rules,
-                ),
-            );
-            this.#updateUserStoreFromCommunityState();
+                selectedServerCommunityStore.set(
+                    new CommunityDetailsState(
+                        community.id,
+                        resp.lastUpdated,
+                        resp.userGroups,
+                        new Map(members.map((m) => [m.userId, m])),
+                        resp.blockedUsers,
+                        new Set(lapsed.map((m) => m.userId)),
+                        resp.invitedUsers,
+                        resp.referrals,
+                        resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
+                        resp.rules,
+                    ),
+                );
+                this.#updateUserStoreFromCommunityState();
+            }
         }
     }
 
