@@ -5,11 +5,9 @@ use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
 use types::{BuildVersion, CanisterId};
-use utils::canister::{FailedUpgrade, WasmToInstall, install};
+use utils::canister::{CanisterToInstall, FailedUpgrade, WasmToInstall, install};
 
 const MAX_CONCURRENT_CANISTER_UPGRADES: usize = 1;
-
-type CanisterToUpgrade = utils::canister::CanisterToInstall<storage_bucket_canister::post_upgrade::Args>;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -40,7 +38,7 @@ fn run() {
     }
 }
 
-fn next_batch(state: &mut RuntimeState) -> Option<Vec<CanisterToUpgrade>> {
+fn next_batch(state: &mut RuntimeState) -> Option<Vec<CanisterToInstall>> {
     let count_in_progress = state.data.canisters_requiring_upgrade.count_in_progress();
     let count_pending = state.data.canisters_requiring_upgrade.count_pending();
 
@@ -55,36 +53,36 @@ fn next_batch(state: &mut RuntimeState) -> Option<Vec<CanisterToUpgrade>> {
     }
 }
 
-fn try_get_next(state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
+fn try_get_next(state: &mut RuntimeState) -> Option<CanisterToInstall> {
     let (canister_id, _) = state.data.canisters_requiring_upgrade.try_take_next()?;
     let bucket = state.data.buckets.get(&canister_id)?;
     let new_wasm = state.data.bucket_canister_wasm.clone();
     let wasm_version = new_wasm.version;
 
-    Some(CanisterToUpgrade {
+    Some(CanisterToInstall {
         canister_id,
         current_wasm_version: bucket.wasm_version,
         new_wasm_version: new_wasm.version,
         new_wasm: WasmToInstall::Default(new_wasm.module),
-        args: storage_bucket_canister::post_upgrade::Args { wasm_version },
+        args: candid::encode_one(&storage_bucket_canister::post_upgrade::Args { wasm_version }).unwrap(),
         deposit_cycles_if_needed: false,
         mode: CanisterInstallMode::Upgrade(None),
         stop_start_canister: true,
     })
 }
 
-async fn perform_upgrades(canisters_to_upgrade: Vec<CanisterToUpgrade>) {
+async fn perform_upgrades(canisters_to_upgrade: Vec<CanisterToInstall>) {
     let futures: Vec<_> = canisters_to_upgrade.into_iter().map(perform_upgrade).collect();
 
     futures::future::join_all(futures).await;
 }
 
-async fn perform_upgrade(canister_to_upgrade: CanisterToUpgrade) {
+async fn perform_upgrade(canister_to_upgrade: CanisterToInstall) {
     let canister_id = canister_to_upgrade.canister_id;
     let from_version = canister_to_upgrade.current_wasm_version;
     let to_version = canister_to_upgrade.new_wasm_version;
 
-    match install(canister_to_upgrade).await {
+    match install(canister_to_upgrade.into()).await {
         Ok(_) => {
             mutate_state(|state| on_success(canister_id, to_version, state));
         }

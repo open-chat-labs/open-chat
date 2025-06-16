@@ -103,9 +103,10 @@ async fn perform_upgrade(canister_to_upgrade: NextCanisterToUpgrade) {
                 store_canister_id: canister_id,
             }),
             deposit_cycles_if_needed: false,
-            args: local_user_index_canister::post_upgrade::Args {
+            args: candid::encode_one(&local_user_index_canister::post_upgrade::Args {
                 wasm_version: to_version,
-            },
+            })
+            .unwrap(),
             mode: CanisterInstallMode::Upgrade(None),
             stop_start_canister: true,
         })
