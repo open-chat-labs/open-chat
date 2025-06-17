@@ -1,4 +1,4 @@
-use crate::canister::{convert_cdk_error, install_basic, install_basic_raw};
+use crate::canister::{convert_cdk_error, install_basic_raw};
 use candid::Principal;
 use ic_cdk::management_canister::{self, CanisterSettings, CreateCanisterArgs};
 use serde::Serialize;
