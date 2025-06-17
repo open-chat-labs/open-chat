@@ -452,7 +452,6 @@ impl From<&Channel> for ChannelMatch {
             description: channel.chat.description.value.clone(),
             avatar_id: types::Document::id(&channel.chat.avatar),
             member_count: channel.chat.members.len(),
-            gate: channel.chat.gate_config.value.as_ref().map(|gc| gc.gate.clone()),
             gate_config: channel.chat.gate_config.value.clone().map(|gc| gc.into()),
             subtype: channel.chat.subtype.value.clone(),
             is_public: channel.chat.is_public.value,

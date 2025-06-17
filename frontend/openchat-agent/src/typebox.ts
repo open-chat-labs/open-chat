@@ -7788,7 +7788,6 @@ export const OptionUpdateAccessGateConfig = Type.Union(
 export type GroupGateUpdated = Static<typeof GroupGateUpdated>;
 export const GroupGateUpdated = Type.Object({
     updated_by: UserId,
-    new_gate: Type.Optional(AccessGate),
     new_gate_config: Type.Optional(AccessGateConfig),
 });
 
@@ -8136,7 +8135,6 @@ export const ChannelMatch = Type.Object({
     description: Type.String(),
     avatar_id: Type.Optional(Type.BigInt()),
     member_count: Type.Number(),
-    gate: Type.Optional(AccessGate),
     gate_config: Type.Optional(AccessGateConfig),
     subtype: Type.Optional(GroupSubtype),
     is_public: Type.Boolean(),
@@ -8178,7 +8176,6 @@ export const CommunityMatch = Type.Object({
     banner_id: Type.Optional(Type.BigInt()),
     member_count: Type.Number(),
     channel_count: Type.Number(),
-    gate: Type.Optional(AccessGate),
     gate_config: Type.Optional(AccessGateConfig),
     moderation_flags: Type.Number(),
     primary_language: Type.String(),

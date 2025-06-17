@@ -45,16 +45,6 @@ impl From<AccessGate> for AccessGateConfig {
     }
 }
 
-// TODO: Delete this after it is released
-impl From<AccessGate> for AccessGateConfigInternal {
-    fn from(value: AccessGate) -> Self {
-        AccessGateConfigInternal {
-            gate: value,
-            expiry: None,
-        }
-    }
-}
-
 impl From<AccessGateConfigInternal> for AccessGateConfig {
     fn from(value: AccessGateConfigInternal) -> Self {
         AccessGateConfig {
