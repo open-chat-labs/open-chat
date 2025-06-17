@@ -26,7 +26,7 @@ pub async fn create_and_install(
         },
     };
 
-    match install_basic(canister_id, wasm, init_args).await {
+    match install_basic_raw(canister_id, wasm, init_args).await {
         Ok(_) => Ok(canister_id),
         Err(error) => Err((Some(canister_id), error)),
     }
