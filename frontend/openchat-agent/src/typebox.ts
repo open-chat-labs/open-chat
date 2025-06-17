@@ -7636,18 +7636,6 @@ export const PrizeContentInitial = Type.Object({
     requires_captcha: Type.Boolean(),
 });
 
-export type OptionUpdateAccessGate = Static<typeof OptionUpdateAccessGate>;
-export const OptionUpdateAccessGate = Type.Union(
-    [
-        Type.Literal("NoChange"),
-        Type.Literal("SetToNone"),
-        Type.Object({
-            SetToSome: AccessGate,
-        }),
-    ],
-    { default: "NoChange" },
-);
-
 export type MessageContent = Static<typeof MessageContent>;
 export const MessageContent = Type.Union([
     Type.Object({
@@ -7788,7 +7776,6 @@ export const OptionUpdateAccessGateConfig = Type.Union(
 export type GroupGateUpdated = Static<typeof GroupGateUpdated>;
 export const GroupGateUpdated = Type.Object({
     updated_by: UserId,
-    new_gate: Type.Optional(AccessGate),
     new_gate_config: Type.Optional(AccessGateConfig),
 });
 
@@ -8136,7 +8123,6 @@ export const ChannelMatch = Type.Object({
     description: Type.String(),
     avatar_id: Type.Optional(Type.BigInt()),
     member_count: Type.Number(),
-    gate: Type.Optional(AccessGate),
     gate_config: Type.Optional(AccessGateConfig),
     subtype: Type.Optional(GroupSubtype),
     is_public: Type.Boolean(),
@@ -8178,7 +8164,6 @@ export const CommunityMatch = Type.Object({
     banner_id: Type.Optional(Type.BigInt()),
     member_count: Type.Number(),
     channel_count: Type.Number(),
-    gate: Type.Optional(AccessGate),
     gate_config: Type.Optional(AccessGateConfig),
     moderation_flags: Type.Number(),
     primary_language: Type.String(),
@@ -8311,7 +8296,6 @@ export const CommunityCanisterChannelSummaryUpdates = Type.Object({
     date_last_pinned: Type.Optional(Type.BigInt()),
     events_ttl: OptionUpdateU64,
     events_ttl_last_updated: Type.Optional(Type.BigInt()),
-    gate: OptionUpdateAccessGate,
     gate_config: OptionUpdateAccessGateConfig,
     membership: Type.Optional(GroupMembershipUpdates),
     video_call_in_progress: OptionUpdateVideoCall,
@@ -8504,7 +8488,6 @@ export const GroupCanisterGroupChatSummary = Type.Object({
     date_last_pinned: Type.Optional(Type.BigInt()),
     events_ttl: Type.Optional(Type.BigInt()),
     events_ttl_last_updated: Type.BigInt(),
-    gate: Type.Optional(AccessGate),
     gate_config: Type.Optional(AccessGateConfig),
     rules_accepted: Type.Boolean(),
     membership: Type.Optional(GroupMembership),
@@ -8559,7 +8542,6 @@ export const GroupCanisterGroupChatSummaryUpdates = Type.Object({
     date_last_pinned: Type.Optional(Type.BigInt()),
     events_ttl: OptionUpdateU64,
     events_ttl_last_updated: Type.Optional(Type.BigInt()),
-    gate: OptionUpdateAccessGate,
     gate_config: OptionUpdateAccessGateConfig,
     rules_accepted: Type.Optional(Type.Boolean()),
     membership: Type.Optional(GroupMembershipUpdates),
@@ -8607,7 +8589,6 @@ export const PublicGroupSummary = Type.Object({
     frozen: Type.Optional(FrozenGroupInfo),
     events_ttl: Type.Optional(Type.BigInt()),
     events_ttl_last_updated: Type.BigInt(),
-    gate: Type.Optional(AccessGate),
     gate_config: Type.Optional(AccessGateConfig),
 });
 
@@ -8634,7 +8615,6 @@ export const CommunityCanisterChannelSummary = Type.Object({
     date_last_pinned: Type.Optional(Type.BigInt()),
     events_ttl: Type.Optional(Type.BigInt()),
     events_ttl_last_updated: Type.BigInt(),
-    gate: Type.Optional(AccessGate),
     gate_config: Type.Optional(AccessGateConfig),
     membership: Type.Optional(GroupMembership),
     video_call_in_progress: Type.Optional(VideoCall),
@@ -8853,7 +8833,6 @@ export const CommunityCanisterCommunitySummary = Type.Object({
     member_count: Type.Number(),
     permissions: CommunityPermissions,
     frozen: Type.Optional(FrozenGroupInfo),
-    gate: Type.Optional(AccessGate),
     gate_config: Type.Optional(AccessGateConfig),
     primary_language: Type.String(),
     latest_event_index: EventIndex,
@@ -8879,7 +8858,6 @@ export const CommunityCanisterCommunitySummaryUpdates = Type.Object({
     member_count: Type.Optional(Type.Number()),
     permissions: Type.Optional(CommunityPermissions),
     frozen: OptionUpdateFrozenGroupInfo,
-    gate: OptionUpdateAccessGate,
     gate_config: OptionUpdateAccessGateConfig,
     primary_language: Type.Optional(Type.String()),
     latest_event_index: Type.Optional(EventIndex),

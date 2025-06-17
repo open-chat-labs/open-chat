@@ -233,7 +233,6 @@ impl RuntimeState {
             date_last_pinned: chat.date_last_pinned,
             events_ttl: events_ttl.value,
             events_ttl_last_updated: events_ttl.timestamp,
-            gate: chat.gate_config.value.as_ref().map(|gc| gc.gate.clone()),
             gate_config: chat.gate_config.value.clone().map(|gc| gc.into()),
             rules_accepted: membership.rules_accepted,
             membership: Some(membership),

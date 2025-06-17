@@ -291,7 +291,6 @@ type GroupChatSummary = record {
     date_read_pinned : opt TimestampMillis;
     events_ttl : opt Milliseconds;
     events_ttl_last_updated : TimestampMillis;
-    gate : opt AccessGate;
     gate_config : opt AccessGateConfig;
     rules_accepted : bool;
     video_call_in_progress : opt VideoCall;
@@ -327,7 +326,6 @@ type GroupCanisterGroupChatSummary = record {
     date_last_pinned : opt TimestampMillis;
     events_ttl : opt Milliseconds;
     events_ttl_last_updated : TimestampMillis;
-    gate : opt AccessGate;
     gate_config : opt AccessGateConfig;
     rules_accepted : bool;
     membership : opt GroupMembership;
@@ -362,7 +360,6 @@ type GroupCanisterGroupChatSummaryUpdates = record {
     date_last_pinned : opt TimestampMillis;
     events_ttl : EventsTimeToLiveUpdate;
     events_ttl_last_updated : opt TimestampMillis;
-    gate : AccessGateUpdate;
     gate_config : AccessGateConfigUpdate;
     rules_accepted : opt bool;
     membership : opt GroupMembershipUpdates;
@@ -382,7 +379,6 @@ type CommunityCanisterCommunitySummary = record {
     member_count : nat32;
     permissions : CommunityPermissions;
     frozen : opt FrozenGroupInfo;
-    gate : opt AccessGate;
     gate_config : opt AccessGateConfig;
     primary_language : text;
     last_updated : TimestampMillis;
@@ -431,7 +427,6 @@ type CommunityCanisterChannelSummary = record {
     date_last_pinned : opt TimestampMillis;
     events_ttl : opt Milliseconds;
     events_ttl_last_updated : TimestampMillis;
-    gate : opt AccessGate;
     gate_config : opt AccessGateConfig;
     membership : opt GroupMembership;
     video_call_in_progress : opt VideoCall;
@@ -461,7 +456,6 @@ type CommunityCanisterCommunitySummaryUpdates = record {
     member_count : opt nat32;
     permissions : opt CommunityPermissions;
     frozen : FrozenGroupUpdate;
-    gate : AccessGateUpdate;
     gate_config : AccessGateConfigUpdate;
     primary_language : opt text;
     latest_event_index : opt EventIndex;
@@ -502,7 +496,6 @@ type CommunityCanisterChannelSummaryUpdates = record {
     date_last_pinned : opt TimestampMillis;
     events_ttl : EventsTimeToLiveUpdate;
     events_ttl_last_updated : opt TimestampMillis;
-    gate : AccessGateUpdate;
     gate_config : AccessGateConfigUpdate;
     membership : opt GroupMembershipUpdates;
     video_call_in_progress : VideoCallUpdates;
@@ -774,7 +767,6 @@ type PublicGroupSummary = record {
     frozen : opt FrozenGroupInfo;
     events_ttl : opt Milliseconds;
     events_ttl_last_updated : TimestampMillis;
-    gate : opt AccessGate;
     gate_config : opt AccessGateConfig;
     wasm_version : BuildVersion;
 };
@@ -1613,7 +1605,6 @@ type AccessGateConfigUpdate = variant {
 
 type GroupGateUpdated = record {
     updated_by : UserId;
-    new_gate : opt AccessGate;
     new_gate_config : opt AccessGateConfig;
 };
 
@@ -1815,7 +1806,6 @@ type CommunityMatch = record {
     banner_id : opt nat;
     member_count : nat32;
     channel_count : nat32;
-    gate : opt AccessGate;
     gate_config : opt AccessGateConfig;
     moderation_flags : nat32;
     primary_language : text;
@@ -1839,7 +1829,6 @@ type ChannelMatch = record {
     description : text;
     avatar_id : opt nat;
     member_count : nat32;
-    gate : opt AccessGate;
     gate_config : opt AccessGateConfig;
     subtype : opt GroupSubtype;
     is_public : bool;

@@ -1,6 +1,6 @@
 use crate::user_groups::UserGroupSummary;
 use crate::{
-    AccessGate, AccessGateConfig, CanisterId, ChannelId, ChatMetrics, CommunityCanisterChannelSummary,
+    AccessGateConfig, CanisterId, ChannelId, ChatMetrics, CommunityCanisterChannelSummary,
     CommunityCanisterChannelSummaryUpdates, CommunityId, CommunityPermissions, CommunityRole, EventIndex, FrozenGroupInfo,
     OptionUpdate, TimestampMillis,
 };
@@ -22,7 +22,6 @@ pub struct CommunityCanisterCommunitySummary {
     pub member_count: u32,
     pub permissions: CommunityPermissions,
     pub frozen: Option<FrozenGroupInfo>,
-    pub gate: Option<AccessGate>,
     pub gate_config: Option<AccessGateConfig>,
     pub primary_language: String,
     pub latest_event_index: EventIndex,
@@ -60,8 +59,6 @@ pub struct CommunityCanisterCommunitySummaryUpdates {
     pub permissions: Option<CommunityPermissions>,
     #[ts(as = "crate::OptionUpdateFrozenGroupInfo")]
     pub frozen: OptionUpdate<FrozenGroupInfo>,
-    #[ts(as = "crate::OptionUpdateAccessGate")]
-    pub gate: OptionUpdate<AccessGate>,
     #[ts(as = "crate::OptionUpdateAccessGateConfig")]
     pub gate_config: OptionUpdate<AccessGateConfig>,
     pub primary_language: Option<String>,

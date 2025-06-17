@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 use std::ops::DerefMut;
 use types::{
-    AccessGate, AccessGateConfigInternal, AvatarChanged, BotAdded, BotMessageContext, BotRemoved, BotUpdated, ChannelId, Chat,
+    AccessGateConfigInternal, AvatarChanged, BotAdded, BotMessageContext, BotRemoved, BotUpdated, ChannelId, Chat,
     ChatEventCategory, ChatEventType, ChatId, CommunityId, DeletedBy, DirectChatCreated, EventIndex, EventWrapperInternal,
     EventsTimeToLiveUpdated, ExternalUrlUpdated, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated,
     GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged,
@@ -422,12 +422,6 @@ pub struct MembersAddedToPublicChannelInternal {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct GroupGateUpdatedInternalPrevious {
-    pub updated_by: UserId,
-    pub new_gate: Option<AccessGate>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GroupGateUpdatedInternal {
     pub updated_by: UserId,
     pub new_gate_config: Option<AccessGateConfigInternal>,
@@ -437,7 +431,6 @@ impl From<GroupGateUpdatedInternal> for GroupGateUpdated {
     fn from(value: GroupGateUpdatedInternal) -> Self {
         GroupGateUpdated {
             updated_by: value.updated_by,
-            new_gate: value.new_gate_config.clone().map(|gc| gc.gate),
             new_gate_config: value.new_gate_config.map(|gc| gc.into()),
         }
     }

@@ -83,7 +83,7 @@ fn members_added_if_channel_made_public_or_gate_removed(make_public: bool) {
         assert_eq!(user3_channel_summary.min_visible_event_index, 10.into());
         assert_eq!(user3_channel_summary.min_visible_message_index, 5.into());
     } else {
-        assert!(user3_channel_summary.gate.is_none());
+        assert!(user3_channel_summary.gate_config.is_none());
         assert_eq!(user3_channel_summary.min_visible_event_index, 0.into());
         assert_eq!(user3_channel_summary.min_visible_message_index, 0.into());
     }

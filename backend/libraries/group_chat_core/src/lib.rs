@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use std::cmp::{Reverse, max, min};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use types::{
-    AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, BotNotification, Caller, Chat,
+    AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, BotNotification, Caller, Chat,
     CustomPermission, Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsCaller, EventsResponse,
     ExternalUrlUpdated, GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole,
     GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention, MAX_RETURNED_MENTIONS, MemberLeft,
@@ -249,11 +249,6 @@ impl GroupChatCore {
                 .copied()
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
             events_ttl_last_updated: (events_ttl.timestamp > since).then_some(events_ttl.timestamp),
-            gate: self
-                .gate_config
-                .if_set_after(since)
-                .cloned()
-                .map_or(OptionUpdate::NoChange, |ogc| OptionUpdate::from_update(ogc.map(|gc| gc.gate))),
             gate_config: self
                 .gate_config
                 .if_set_after(since)
@@ -2030,7 +2025,6 @@ pub struct SummaryUpdates {
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub events_ttl_last_updated: Option<TimestampMillis>,
-    pub gate: OptionUpdate<AccessGate>,
     pub gate_config: OptionUpdate<AccessGateConfig>,
     pub rules_changed: bool,
     pub video_call_in_progress: OptionUpdate<VideoCall>,

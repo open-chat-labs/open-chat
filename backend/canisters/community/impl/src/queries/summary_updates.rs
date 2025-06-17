@@ -178,7 +178,6 @@ fn summary_updates_impl(
         member_count,
         permissions,
         frozen,
-        gate: gate_config.as_ref().map(|gc| gc.gate.clone()),
         gate_config,
         primary_language,
         latest_event_index,

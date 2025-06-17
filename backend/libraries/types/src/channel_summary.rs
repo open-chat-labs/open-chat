@@ -1,5 +1,5 @@
 use crate::{
-    AccessGate, AccessGateConfig, ChannelId, ChatMetrics, EventIndex, EventWrapper, GroupMembership, GroupMembershipUpdates,
+    AccessGateConfig, ChannelId, ChatMetrics, EventIndex, EventWrapper, GroupMembership, GroupMembershipUpdates,
     GroupPermissions, GroupSubtype, Message, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis, VideoCall,
 };
 use candid::CandidType;
@@ -31,7 +31,6 @@ pub struct CommunityCanisterChannelSummary {
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: Option<Milliseconds>,
     pub events_ttl_last_updated: TimestampMillis,
-    pub gate: Option<AccessGate>,
     pub gate_config: Option<AccessGateConfig>,
     pub membership: Option<GroupMembership>,
     pub video_call_in_progress: Option<VideoCall>,
@@ -65,8 +64,6 @@ pub struct CommunityCanisterChannelSummaryUpdates {
     #[ts(as = "crate::OptionUpdateU64")]
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub events_ttl_last_updated: Option<TimestampMillis>,
-    #[ts(as = "crate::OptionUpdateAccessGate")]
-    pub gate: OptionUpdate<AccessGate>,
     #[ts(as = "crate::OptionUpdateAccessGateConfig")]
     pub gate_config: OptionUpdate<AccessGateConfig>,
     pub membership: Option<GroupMembershipUpdates>,
