@@ -143,7 +143,7 @@ fn airdrop_end_to_end(v2: bool) {
     // Assert the channel is now locked
     //
     let channel_summary = client::community::happy_path::channel_summary(env, &owner, community_id, channel_id);
-    assert_eq!(channel_summary.gate, Some(AccessGate::Locked));
+    assert_eq!(channel_summary.gate_config.map(|gc| gc.gate), Some(AccessGate::Locked));
 
     // Assert the airdrop channel has messages with the correct prizes in reverse order
     //

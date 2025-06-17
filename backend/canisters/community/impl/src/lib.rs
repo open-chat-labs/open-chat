@@ -236,7 +236,6 @@ impl RuntimeState {
             member_count: data.members.len() as u32,
             permissions: data.permissions.value.clone(),
             frozen: data.frozen.value.clone(),
-            gate: data.gate_config.value.as_ref().map(|gc| gc.gate.clone()),
             gate_config: data.gate_config.value.clone().map(|gc| gc.into()),
             primary_language: data.primary_language.value.clone(),
             channels,

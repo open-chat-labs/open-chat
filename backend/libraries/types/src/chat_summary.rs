@@ -1,5 +1,5 @@
 use crate::{
-    AccessGate, AccessGateConfig, BuildVersion, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupMember,
+    AccessGateConfig, BuildVersion, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupMember,
     GroupPermissions, GroupRole, HydratedMention, InstalledBotDetails, Message, MessageId, MessageIndex, Milliseconds,
     OptionUpdate, TimestampMillis, UserId, Version, WebhookDetails,
 };
@@ -66,7 +66,6 @@ pub struct GroupChatSummary {
     pub date_read_pinned: Option<TimestampMillis>,
     pub events_ttl: Option<Milliseconds>,
     pub events_ttl_last_updated: TimestampMillis,
-    pub gate: Option<AccessGate>,
     pub gate_config: Option<AccessGateConfig>,
     pub rules_accepted: bool,
     pub video_call_in_progress: Option<VideoCall>,
@@ -120,7 +119,6 @@ pub struct PublicGroupSummary {
     pub frozen: Option<FrozenGroupInfo>,
     pub events_ttl: Option<Milliseconds>,
     pub events_ttl_last_updated: TimestampMillis,
-    pub gate: Option<AccessGate>,
     pub gate_config: Option<AccessGateConfig>,
 }
 
@@ -157,7 +155,6 @@ pub struct GroupCanisterGroupChatSummary {
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: Option<Milliseconds>,
     pub events_ttl_last_updated: TimestampMillis,
-    pub gate: Option<AccessGate>,
     pub gate_config: Option<AccessGateConfig>,
     pub rules_accepted: bool,
     pub membership: Option<GroupMembership>,
@@ -199,8 +196,6 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     #[ts(as = "crate::OptionUpdateU64")]
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub events_ttl_last_updated: Option<TimestampMillis>,
-    #[ts(as = "crate::OptionUpdateAccessGate")]
-    pub gate: OptionUpdate<AccessGate>,
     #[ts(as = "crate::OptionUpdateAccessGateConfig")]
     pub gate_config: OptionUpdate<AccessGateConfig>,
     pub rules_accepted: Option<bool>,

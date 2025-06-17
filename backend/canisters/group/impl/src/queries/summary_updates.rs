@@ -104,7 +104,6 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
             date_last_pinned: updates.date_last_pinned,
             events_ttl: updates.events_ttl,
             events_ttl_last_updated: updates.events_ttl_last_updated,
-            gate: updates.gate,
             gate_config: updates.gate_config,
             rules_accepted: membership.rules_accepted,
             membership: Some(membership),
