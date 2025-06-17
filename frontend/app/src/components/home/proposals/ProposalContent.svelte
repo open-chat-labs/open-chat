@@ -82,7 +82,7 @@
                 if (resp.kind === "success") {
                     success = true;
                     proposalVotes.insert(mId, adopt ? "adopted" : "rejected");
-                    client.getProposalVoteDetails(content.governanceCanisterId, proposal.id, isNns);
+                    client.getProposalVoteDetails(messageId, content.governanceCanisterId, proposal.id, isNns);
                 } else if (resp.kind === "error" && resp.code === ErrorCode.NoEligibleNeurons) {
                     showNeuronInfo = true;
                 } else {

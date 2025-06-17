@@ -32,6 +32,7 @@ import {
     type P2PSwapStatus,
     type SenderContext,
     type StreakInsurance,
+    type Tally,
     type ThreadSummary,
     type UnconfirmedMessageEvent,
     type UnconfirmedState,
@@ -964,6 +965,20 @@ export class GlobalLocalState {
                 };
             },
             "markPrizeClaimed",
+        );
+    }
+
+    markProposalTallyUpdated(messageId: bigint, tally: Tally) {
+        return this.#modifyMessageUpdates(
+            messageId,
+            (upd) => {
+                upd.proposalTally = tally;
+                return (upd) => {
+                    upd.proposalTally = undefined;
+                    return upd;
+                };
+            },
+            "markProposalTallyUpdated"
         );
     }
 

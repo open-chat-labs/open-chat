@@ -85,7 +85,6 @@ import {
     currentUserIdStore,
     currentUserStore,
     localUpdates,
-    proposalTalliesStore,
     selectedChatIdStore,
     selectedChatUserIdsStore,
     selectedServerChatSummaryStore,
@@ -1373,9 +1372,7 @@ export function mergeEventsAndLocalUpdates(
 
             const tallyUpdate =
                 e.event.content.kind === "proposal_content"
-                    ? proposalTalliesStore.value.get(
-                          `${e.event.content.governanceCanisterId}_${e.event.content.proposal.id}`,
-                      )
+                    ? updates?.proposalTally
                     : undefined;
 
             const senderBlocked = selectedChatBlockedOrSuspendedUsers.has(e.event.sender);
