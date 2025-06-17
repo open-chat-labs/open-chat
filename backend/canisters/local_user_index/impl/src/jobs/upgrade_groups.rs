@@ -8,10 +8,7 @@ use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
 use types::{BuildVersion, CanisterId, ChatId, Cycles, CyclesTopUp};
-use utils::canister;
-use utils::canister::{ChunkedWasmToInstall, FailedUpgrade, WasmToInstall, install};
-
-type CanisterToUpgrade = canister::CanisterToInstall<group_canister::post_upgrade::Args>;
+use utils::canister::{CanisterToInstall, ChunkedWasmToInstall, FailedUpgrade, WasmToInstall, install};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -45,7 +42,7 @@ fn run() {
     }
 }
 
-fn next_batch(state: &mut RuntimeState) -> Option<Vec<CanisterToUpgrade>> {
+fn next_batch(state: &mut RuntimeState) -> Option<Vec<CanisterToInstall>> {
     if state.data.event_store_client.info().events_pending > 100000 {
         return Some(Vec::new());
     } else if state.data.group_upgrade_concurrency == 0 {
@@ -68,7 +65,7 @@ fn next_batch(state: &mut RuntimeState) -> Option<Vec<CanisterToUpgrade>> {
     }
 }
 
-fn try_get_next(state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
+fn try_get_next(state: &mut RuntimeState) -> Option<CanisterToInstall> {
     let (canister_id, force) = state.data.groups_requiring_upgrade.try_take_next()?;
 
     initialize_upgrade(canister_id, force, state).or_else(|| {
@@ -77,7 +74,7 @@ fn try_get_next(state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
     })
 }
 
-fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
+fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeState) -> Option<CanisterToInstall> {
     let chat_id = canister_id.into();
     let group = state.data.local_groups.get_mut(&chat_id)?;
     let group_canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::Group);
@@ -91,7 +88,7 @@ fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeS
 
     group.set_canister_upgrade_status(true, None);
 
-    Some(CanisterToUpgrade {
+    Some(CanisterToInstall {
         canister_id,
         current_wasm_version,
         new_wasm_version,
@@ -105,21 +102,22 @@ fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeS
             })
         },
         deposit_cycles_if_needed,
-        args: group_canister::post_upgrade::Args {
+        args: candid::encode_one(&group_canister::post_upgrade::Args {
             wasm_version: new_wasm_version,
-        },
+        })
+        .unwrap(),
         mode: CanisterInstallMode::Upgrade(None),
         stop_start_canister: true,
     })
 }
 
-async fn perform_upgrades(canisters_to_upgrade: Vec<CanisterToUpgrade>) {
+async fn perform_upgrades(canisters_to_upgrade: Vec<CanisterToInstall>) {
     let futures: Vec<_> = canisters_to_upgrade.into_iter().map(perform_upgrade).collect();
 
     futures::future::join_all(futures).await;
 }
 
-async fn perform_upgrade(canister_to_upgrade: CanisterToUpgrade) {
+async fn perform_upgrade(canister_to_upgrade: CanisterToInstall) {
     let canister_id = canister_to_upgrade.canister_id;
     let from_version = canister_to_upgrade.current_wasm_version;
     let to_version = canister_to_upgrade.new_wasm_version;

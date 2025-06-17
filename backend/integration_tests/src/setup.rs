@@ -56,6 +56,8 @@ fn initialize_base_state(controller: Principal, seed: Option<Hash>) -> (PocketIc
         .with_state(PocketIcState::new())
         .build();
 
+    println!("PocketIC instance ready. Installing canisters...");
+
     let ticks: u8 = seed.map_or(0, |s| StdRng::from_seed(s).r#gen());
     tick_many(&mut env, ticks as usize);
 

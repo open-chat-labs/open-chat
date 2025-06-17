@@ -38,7 +38,7 @@ async fn register_user(args: Args) -> Response {
         canister_id,
         None,
         canister_wasm,
-        init_canister_args,
+        candid::encode_one(&init_canister_args).unwrap(),
         cycles_to_use,
         on_canister_created,
     )
