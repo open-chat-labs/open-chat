@@ -36,7 +36,7 @@ async fn c2c_create_community(args: Args) -> Response {
         prepare_ok.canister_id,
         None,
         prepare_ok.canister_wasm,
-        prepare_ok.init_canister_args,
+        msgpack::serialize_then_unwrap(&prepare_ok.init_canister_args),
         prepare_ok.cycles_to_use,
         on_canister_created,
     )

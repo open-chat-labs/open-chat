@@ -78,7 +78,7 @@ async fn create_bucket(args: CreateBucketArgs) {
         None,
         None,
         args.canister_wasm,
-        args.init_canister_args,
+        candid::encode_one(&args.init_canister_args).unwrap(),
         args.cycles_to_use,
         on_bucket_created,
     )
