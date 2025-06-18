@@ -1,11 +1,15 @@
+use std::cmp::{max, min};
+
 use crate::model::events::stable_memory::EventsStableStorage;
 use chat_events::GroupGateUpdatedInternal;
+use community_canister::c2c_bot_community_events::EventsPageArgs;
 use serde::{Deserialize, Serialize};
 use types::{
-    AvatarChanged, BannerChanged, BotAdded, BotRemoved, BotUpdated, ChannelDeleted, ChannelId, ChatId, CommunityMembersRemoved,
-    CommunityPermissionsChanged, CommunityRoleChanged, CommunityUsersBlocked, CommunityVisibilityChanged, EventIndex,
-    EventWrapperInternal, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupInviteCodeChanged, GroupNameChanged,
-    GroupRulesChanged, GroupUnfrozen, PrimaryLanguageChanged, TimestampMillis, UserId, UsersInvited, UsersUnblocked,
+    AvatarChanged, BannerChanged, BotAdded, BotRemoved, BotUpdated, ChannelDeleted, ChannelId, ChatId, CommunityEvent,
+    CommunityMembersRemoved, CommunityPermissionsChanged, CommunityRoleChanged, CommunityUsersBlocked,
+    CommunityVisibilityChanged, EventIndex, EventWrapper, EventWrapperInternal, GroupCreated, GroupDescriptionChanged,
+    GroupFrozen, GroupGateUpdated, GroupImported, GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupUnfrozen,
+    PrimaryLanguageChanged, TimestampMillis, UserId, UsersInvited, UsersUnblocked,
 };
 
 mod stable_memory;
@@ -65,6 +69,11 @@ pub enum CommunityEventInternal {
     BotRemoved(Box<BotRemoved>),
     #[serde(rename = "bu")]
     BotUpdated(Box<BotUpdated>),
+    // This should never happen!
+    // But if it ever does, it's better to return the remaining events
+    // than to endlessly fail attempting to load the broken event(s)
+    #[serde(rename = "fd")]
+    FailedToDeserialize,
 }
 
 impl CommunityEvents {
@@ -117,6 +126,48 @@ impl CommunityEvents {
     pub fn latest_event_timestamp(&self) -> TimestampMillis {
         self.latest_event_timestamp
     }
+
+    pub fn get_page_events(&self, args: EventsPageArgs) -> Vec<EventWrapper<CommunityEvent>> {
+        let (start_index, end_index) = if args.ascending {
+            (
+                args.start_index,
+                min(
+                    u32::from(self.latest_event_index),
+                    u32::from(args.start_index) + args.max_events - 1,
+                )
+                .into(),
+            )
+        } else {
+            (
+                max(0, (u32::from(args.start_index) + 1).saturating_sub(args.max_events)).into(),
+                args.start_index,
+            )
+        };
+
+        let iter = self.stable_events_map.range(start_index, end_index);
+        let iter = if !args.ascending { Box::new(iter.rev()) } else { iter };
+
+        iter.map(|e| EventWrapper {
+            index: e.index,
+            timestamp: e.timestamp,
+            expires_at: e.expires_at,
+            event: e.event.into(),
+        })
+        .collect()
+    }
+
+    pub fn get_by_indexes(&self, event_indexes: &[EventIndex]) -> Vec<EventWrapper<CommunityEvent>> {
+        event_indexes
+            .iter()
+            .filter_map(|&e| self.stable_events_map.get(e))
+            .map(|e| EventWrapper {
+                index: e.index,
+                timestamp: e.timestamp,
+                expires_at: e.expires_at,
+                event: e.event.clone().into(),
+            })
+            .collect()
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -124,4 +175,52 @@ pub struct GroupImportedInternal {
     pub group_id: ChatId,
     pub channel_id: ChannelId,
     pub members_added: Vec<UserId>,
+}
+
+impl From<CommunityEventInternal> for CommunityEvent {
+    fn from(value: CommunityEventInternal) -> Self {
+        match value {
+            CommunityEventInternal::Created(event) => CommunityEvent::Created(event),
+            CommunityEventInternal::NameChanged(event) => CommunityEvent::NameChanged(event),
+            CommunityEventInternal::DescriptionChanged(event) => CommunityEvent::DescriptionChanged(event),
+            CommunityEventInternal::RulesChanged(event) => CommunityEvent::RulesChanged(event),
+            CommunityEventInternal::AvatarChanged(event) => CommunityEvent::AvatarChanged(event),
+            CommunityEventInternal::BannerChanged(event) => CommunityEvent::BannerChanged(event),
+            CommunityEventInternal::UsersInvited(event) => CommunityEvent::UsersInvited(event),
+            CommunityEventInternal::MembersRemoved(event) => CommunityEvent::MembersRemoved(event),
+            CommunityEventInternal::RoleChanged(event) => CommunityEvent::RoleChanged(event),
+            CommunityEventInternal::UsersBlocked(event) => CommunityEvent::UsersBlocked(event),
+            CommunityEventInternal::UsersUnblocked(event) => CommunityEvent::UsersUnblocked(event),
+            CommunityEventInternal::PermissionsChanged(event) => CommunityEvent::PermissionsChanged(event),
+            CommunityEventInternal::VisibilityChanged(event) => CommunityEvent::VisibilityChanged(event),
+            CommunityEventInternal::InviteCodeChanged(event) => CommunityEvent::InviteCodeChanged(event),
+            CommunityEventInternal::Frozen(event) => CommunityEvent::Frozen(event),
+            CommunityEventInternal::Unfrozen(event) => CommunityEvent::Unfrozen(event),
+            CommunityEventInternal::GateUpdated(event) => CommunityEvent::GateUpdated(Box::new(GroupGateUpdated {
+                updated_by: event.updated_by,
+                new_gate_config: event.new_gate_config.map(|gc| gc.into()),
+            })),
+            CommunityEventInternal::ChannelDeleted(event) => CommunityEvent::ChannelDeleted(Box::new(ChannelDeleted {
+                channel_id: event.channel_id,
+                name: event.name,
+                deleted_by: event.deleted_by,
+                bot_command: event.bot_command,
+            })),
+            CommunityEventInternal::PrimaryLanguageChanged(event) => {
+                CommunityEvent::PrimaryLanguageChanged(Box::new(PrimaryLanguageChanged {
+                    previous: event.previous,
+                    new: event.new,
+                    changed_by: event.changed_by,
+                }))
+            }
+            CommunityEventInternal::GroupImported(event) => CommunityEvent::GroupImported(Box::new(GroupImported {
+                group_id: event.group_id,
+                channel_id: event.channel_id,
+            })),
+            CommunityEventInternal::BotAdded(event) => CommunityEvent::BotAdded(event),
+            CommunityEventInternal::BotRemoved(event) => CommunityEvent::BotRemoved(event),
+            CommunityEventInternal::BotUpdated(event) => CommunityEvent::BotUpdated(event),
+            CommunityEventInternal::FailedToDeserialize => CommunityEvent::FailedToDeserialize,
+        }
+    }
 }
