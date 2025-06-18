@@ -4417,6 +4417,10 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.payForStreakInsurance(additionalDays, expectedPrice, pin);
     }
 
+    updateDirectChatSettings(userId: string, eventsTtl: OptionUpdate<bigint>): Promise<boolean> {
+        return this.userClient.updateChatSettings(userId, eventsTtl);
+    }
+
     registerWebhook(
         chatId: MultiUserChatIdentifier,
         name: string,

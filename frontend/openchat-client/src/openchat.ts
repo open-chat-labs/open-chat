@@ -9335,6 +9335,14 @@ export class OpenChat {
             });
     }
 
+    updateDirectChatSettings(userId: string, eventsTtl: OptionUpdate<bigint>): Promise<boolean> {
+        return this.#sendRequest({
+            kind: "updateDirectChatSettings",
+            userId,
+            eventsTtl,
+        });
+    }
+
     async initialiseNotifications(): Promise<boolean> {
         if (!notificationsSupported) {
             console.debug("PUSH: notifications not supported");

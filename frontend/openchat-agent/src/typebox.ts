@@ -4064,6 +4064,12 @@ export const UserGenerateBtcAddressResponse = Type.Union([
     }),
 ]);
 
+export type UserUpdateChatSettingsArgs = Static<typeof UserUpdateChatSettingsArgs>;
+export const UserUpdateChatSettingsArgs = Type.Object({
+    user_id: UserId,
+    events_ttl: OptionUpdateU64,
+});
+
 export type UserSavedCryptoAccountsResponse = Static<typeof UserSavedCryptoAccountsResponse>;
 export const UserSavedCryptoAccountsResponse = Type.Object({
     Success: Type.Array(UserNamedAccount),
