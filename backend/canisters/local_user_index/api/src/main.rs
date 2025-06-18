@@ -15,6 +15,7 @@ fn main() {
     generate_ts_method!(local_user_index, bot_add_reaction);
     generate_ts_method!(local_user_index, bot_chat_events);
     generate_ts_method!(local_user_index, bot_chat_summary);
+    generate_ts_method!(local_user_index, bot_community_events);
     generate_ts_method!(local_user_index, bot_community_summary);
     generate_ts_method!(local_user_index, bot_create_channel);
     generate_ts_method!(local_user_index, bot_delete_channel);

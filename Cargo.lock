@@ -1885,6 +1885,7 @@ dependencies = [
  "chat_events",
  "community_canister",
  "constants",
+ "either",
  "escrow_canister",
  "escrow_canister_c2c_client",
  "event_store_types",
@@ -2756,9 +2757,9 @@ dependencies = [
 
 [[package]]
 name = "either"
-version = "1.10.0"
+version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11157ac094ffbdde99aa67b23417ebdd801842852b500e395a45a9c0aac03e4a"
+checksum = "48c757948c5ede0e46177b7add2e67155f70e33c07fea8284df6576da70b3719"
 
 [[package]]
 name = "elliptic-curve"

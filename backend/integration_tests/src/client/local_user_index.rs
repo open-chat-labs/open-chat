@@ -4,6 +4,7 @@ use local_user_index_canister::*;
 // Queries
 generate_msgpack_query_call!(access_token_v2);
 generate_query_call!(bot_chat_events);
+generate_query_call!(bot_community_events);
 generate_msgpack_query_call!(chat_events);
 generate_msgpack_query_call!(group_and_community_summary_updates);
 generate_msgpack_query_call!(group_and_community_summary_updates_v2);
