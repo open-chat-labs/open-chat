@@ -69,6 +69,7 @@ pub mod undelete_messages;
 pub mod unpin_chat_v2;
 pub mod update_bot;
 pub mod update_btc_balance;
+pub mod update_chat_settings;
 pub mod wallet_receive;
 pub mod withdraw_btc;
 pub mod withdraw_crypto;

@@ -197,6 +197,7 @@ pub enum UserCanisterEvent {
     StartVideoCall(Box<StartVideoCallArgs>),
     JoinVideoCall(Box<JoinVideoCall>),
     SetReferralStatus(Box<ReferralStatus>),
+    SetEventsTtl(Box<SetEventsTtl>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -290,6 +291,12 @@ pub struct StartVideoCallArgs {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct JoinVideoCall {
     pub message_id: MessageId,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SetEventsTtl {
+    pub events_ttl: Option<Milliseconds>,
+    pub timestamp: TimestampMillis,
 }
 
 pub fn map_chats_to_chat_ids(chats: Vec<Chat>) -> Vec<ChatId> {

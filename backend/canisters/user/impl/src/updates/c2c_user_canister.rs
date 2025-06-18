@@ -148,6 +148,22 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
                 state.notify_user_index_of_chit(now);
             }
         }
+        UserCanisterEvent::SetEventsTtl(args) => {
+            if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
+                let last_updated_timestamp = chat.events.get_events_time_to_live().timestamp;
+
+                // If the incoming timestamp is higher than the existing one, update the TTL, if
+                // they are equal (meaning both users updated at exactly the same time), pick the
+                // TTL from whichever user has the lowest userId when their bytes are compared.
+                // This ensures the TTL is always the same in each user's canister.
+                if last_updated_timestamp < args.timestamp
+                    || (last_updated_timestamp == args.timestamp
+                        && caller_user_id.as_slice() < state.env.canister_id().as_slice())
+                {
+                    chat.events.set_events_time_to_live(caller_user_id, args.events_ttl, now);
+                }
+            }
+        }
     }
 }
 
