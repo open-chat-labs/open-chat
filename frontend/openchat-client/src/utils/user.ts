@@ -114,3 +114,13 @@ export function compareIsNotYouThenUsername(
 export function userAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T): string {
     return dataContent?.blobUrl ?? "/assets/unknownUserAvatar.svg";
 }
+
+export function missingUserIds(userLookup: UserLookup, webhookUserIds: Set<string>, userIds: Iterable<string>): string[] {
+    const missing: string[] = [];
+    for (const userId of userIds) {
+        if (!userLookup.has(userId) && !webhookUserIds.has(userId)) {
+            missing.push(userId);
+        }
+    }
+    return missing;
+}

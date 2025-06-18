@@ -2,7 +2,7 @@ import type { UserLookup, UserSummary } from "openchat-shared";
 import { _, addMessages, init } from "svelte-i18n";
 import { get } from "svelte/store";
 import { vi } from "vitest";
-import { buildUsernameList, compareUsername } from "./user";
+import { buildUsernameList, compareUsername, missingUserIds } from "./user";
 
 addMessages("en", {
     you: "you",
@@ -146,5 +146,12 @@ describe("compare username", () => {
         const users = ["zulu", "yanky", "foxtrot", "lima"].map(toUser);
         const sorted = users.sort(compareUsername);
         expect(sorted.map((u) => u.username)).toEqual(["foxtrot", "lima", "yanky", "zulu"]);
+    });
+});
+
+describe("missing userIds", () => {
+    test("should work", () => {
+        const missing = missingUserIds(lookup, new Set(), new Set(["a", "b", "c", "d", "e"]));
+        ["c", "d", "e"].forEach((u) => expect(missing.includes(u)).toBe(true));
     });
 });
