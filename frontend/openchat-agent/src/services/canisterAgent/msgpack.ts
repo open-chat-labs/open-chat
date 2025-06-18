@@ -1,14 +1,14 @@
 import {
-    bufFromBufLike,
     Certificate,
+    CertifiedRejectErrorCode,
     HttpAgent,
     type Identity,
+    isV2ResponseBody,
+    isV3ResponseBody,
     lookupResultToBuffer,
     polling,
-    QueryCallRejectedError,
-    ReplicaRejectCode,
-    UpdateCallRejectedError,
-    type v3ResponseBody,
+    RejectError,
+    UncertifiedRejectErrorCode,
 } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import type { Static, TSchema } from "@sinclair/typebox";
@@ -16,6 +16,7 @@ import { deserializeFromMsgPack, serializeToMsgPack } from "../../utils/msgpack"
 import { typeboxValidate } from "../../utils/typebox";
 import { toCanisterResponseError } from "../error";
 import { CanisterAgent } from "./base";
+import { utf8ToBytes } from "@noble/hashes/utils";
 
 export abstract class MsgpackCanisterAgent extends CanisterAgent {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string, canisterName: string) {
@@ -50,11 +51,19 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
                             ),
                         );
                     } else {
-                        throw new QueryCallRejectedError(
-                            Principal.fromText(this.canisterId),
-                            methodName,
-                            resp,
+                        const uncertifiedRejectErrorCode = new UncertifiedRejectErrorCode(
+                            resp.requestId,
+                            resp.reject_code,
+                            resp.reject_message,
+                            resp.error_code,
+                            resp.signatures,
                         );
+                        uncertifiedRejectErrorCode.callContext = {
+                            canisterId: Principal.fromText(this.canisterId),
+                            methodName,
+                            httpDetails: resp.httpDetails,
+                        };
+                        throw RejectError.fromCode(uncertifiedRejectErrorCode);
                     }
                 },
                 args,
@@ -87,23 +96,22 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
             });
             const canisterId = Principal.fromText(this.canisterId);
 
-            if (response.ok && (response.body as v3ResponseBody)?.certificate) {
-                const cert = (response.body as v3ResponseBody).certificate;
+            if (isV3ResponseBody(response.body)) {
                 // const certTime = this.agent.replicaTime;
                 const certificate = await Certificate.create({
-                    certificate: bufFromBufLike(cert),
+                    certificate: response.body.certificate,
                     rootKey: this.agent.rootKey!,
                     canisterId: Principal.from(canisterId),
                     blsVerify: undefined,
                 });
-                const path = [new TextEncoder().encode("request_status"), requestId];
+                const path = [utf8ToBytes('request_status'), requestId];
                 const status = new TextDecoder().decode(
-                    lookupResultToBuffer(certificate.lookup([...path, "status"])),
+                    lookupResultToBuffer(certificate.lookup_path([...path, 'status'])),
                 );
 
                 switch (status) {
                     case "replied": {
-                        const reply = lookupResultToBuffer(certificate.lookup([...path, "reply"]));
+                        const reply = lookupResultToBuffer(certificate.lookup_path([...path, "reply"]));
                         if (reply) {
                             return Promise.resolve(
                                 MsgpackCanisterAgent.processMsgpackResponse(
@@ -118,29 +126,51 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
                     case "rejected": {
                         // Find rejection details in the certificate
                         const rejectCode = new Uint8Array(
-                            lookupResultToBuffer(certificate.lookup([...path, "reject_code"]))!,
+                            lookupResultToBuffer(certificate.lookup_path([...path, 'reject_code']))!,
                         )[0];
                         const rejectMessage = new TextDecoder().decode(
-                            lookupResultToBuffer(certificate.lookup([...path, "reject_message"]))!,
+                            lookupResultToBuffer(certificate.lookup_path([...path, 'reject_message']))!,
                         );
+
                         const error_code_buf = lookupResultToBuffer(
-                            certificate.lookup([...path, "error_code"]),
+                            certificate.lookup_path([...path, 'error_code']),
                         );
                         const error_code = error_code_buf
                             ? new TextDecoder().decode(error_code_buf)
                             : undefined;
-                        throw new UpdateCallRejectedError(
-                            canisterId,
-                            methodName,
+
+                        const certifiedRejectErrorCode = new CertifiedRejectErrorCode(
                             requestId,
-                            response,
                             rejectCode,
                             rejectMessage,
                             error_code,
                         );
+                        certifiedRejectErrorCode.callContext = {
+                            canisterId,
+                            methodName,
+                            httpDetails: response,
+                        };
+                        throw RejectError.fromCode(certifiedRejectErrorCode);
                     }
                 }
+            } else if (isV2ResponseBody(response.body)) {
+                // handle v2 response errors by throwing an UpdateCallRejectedError object
+                const { reject_code, reject_message, error_code } = response.body;
+                const certifiedRejectErrorCode = new CertifiedRejectErrorCode(
+                    requestId,
+                    reject_code,
+                    reject_message,
+                    error_code,
+                );
+                certifiedRejectErrorCode.callContext = {
+                    canisterId,
+                    methodName,
+                    httpDetails: response,
+                };
+                throw RejectError.fromCode(certifiedRejectErrorCode);
             }
+
+            // Fall back to polling if we receive an Accepted response code
             if (response.status === 202) {
                 if (onRequestAccepted !== undefined) {
                     onRequestAccepted();
@@ -150,20 +180,12 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
                     this.agent,
                     canisterId,
                     requestId,
-                    polling.defaultStrategy(),
                 );
                 return Promise.resolve(
                     MsgpackCanisterAgent.processMsgpackResponse(reply, mapper, responseValidator),
                 );
             } else {
-                throw new UpdateCallRejectedError(
-                    canisterId,
-                    methodName,
-                    requestId,
-                    response,
-                    ReplicaRejectCode.CanisterReject,
-                    "",
-                );
+                throw new Error(`Failed to submit call to IC. CanisterId: ${canisterId}. MethodName: ${methodName}. Response: ${response}`);
             }
         } catch (err) {
             isError = true;
@@ -177,13 +199,13 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
     private static prepareMsgpackArgs<T extends TSchema>(
         value: unknown,
         validator: T,
-    ): ArrayBuffer {
+    ): Uint8Array {
         const validated = typeboxValidate(value, validator);
         return serializeToMsgPack(validated);
     }
 
     private static processMsgpackResponse<Resp extends TSchema, Out>(
-        responseBytes: ArrayBuffer,
+        responseBytes: Uint8Array,
         mapper: (from: Static<Resp>) => Out,
         validator: Resp,
     ): Out {

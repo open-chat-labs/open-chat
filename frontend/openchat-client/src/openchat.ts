@@ -7628,14 +7628,13 @@ export class OpenChat {
             }));
         if (webAuthnKey === undefined) throw new Error("WebAuthnKey not set");
 
-        const credentialId: Uint8Array = new Uint8Array(webAuthnKey.credentialId);
-        const cose: Uint8Array = unwrapDER(
-            new Uint8Array(webAuthnKey.publicKey).buffer,
+        const cose = unwrapDER(
+            webAuthnKey.publicKey,
             DER_COSE_OID,
         );
         const webAuthnIdentity = new WebAuthnIdentity(
-            credentialId.buffer as ArrayBuffer,
-            cose.buffer as ArrayBuffer,
+            webAuthnKey.credentialId,
+            cose,
             undefined,
         );
 
