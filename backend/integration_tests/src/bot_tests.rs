@@ -1126,7 +1126,6 @@ fn read_community_events() {
         panic!("'bot_community_events' error: {response:?}");
     };
     let events: Vec<_> = result.events.iter().map(|e| e.event.event_type().unwrap()).collect();
-    println!("{events:?}");
     assert!(events.len() == 3);
     assert!(matches!(events[0], CommunityEventType::NameChanged));
     assert!(matches!(events[1], CommunityEventType::DescriptionChanged));

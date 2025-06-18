@@ -1,5 +1,6 @@
 use crate::model::events::CommunityEventInternal;
 use candid::Deserialize;
+use either::Either;
 use serde::Serialize;
 use stable_memory_map::{CommunityEventKeyPrefix, KeyPrefix, with_map, with_map_mut};
 use types::{EventIndex, EventWrapperInternal, TimestampMillis};
@@ -21,18 +22,25 @@ impl EventsStableStorage {
         with_map_mut(|m| m.insert(self.prefix.create_key(&event.index), event_to_bytes(event)));
     }
 
-    pub fn range(
+    pub fn page(
         &self,
         start: EventIndex,
-        end: EventIndex,
-    ) -> Box<dyn DoubleEndedIterator<Item = EventWrapperInternal<CommunityEventInternal>> + '_> {
+        ascending: bool,
+        max_events: u32,
+    ) -> Vec<EventWrapperInternal<CommunityEventInternal>> {
         with_map(|m| {
-            Box::new(
-                m.range(self.prefix.create_key(&start)..=self.prefix.create_key(&end))
-                    .map(|(_, bytes)| bytes_to_event(&bytes))
-                    .collect::<Vec<_>>()
-                    .into_iter(),
-            )
+            let start = if ascending { start } else { start.incr() };
+            let start_key = self.prefix.create_key(&start);
+
+            let iter = if !ascending {
+                Either::Left(m.range(..start_key).rev())
+            } else {
+                Either::Right(m.range(start_key..))
+            };
+
+            iter.take(max_events as usize)
+                .map(|(_, bytes)| bytes_to_event(&bytes))
+                .collect::<Vec<_>>()
         })
     }
 }

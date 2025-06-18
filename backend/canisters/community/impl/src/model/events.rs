@@ -1,5 +1,3 @@
-use std::cmp::{max, min};
-
 use crate::model::events::stable_memory::EventsStableStorage;
 use chat_events::GroupGateUpdatedInternal;
 use community_canister::c2c_bot_community_events::EventsPageArgs;
@@ -128,32 +126,16 @@ impl CommunityEvents {
     }
 
     pub fn get_page_events(&self, args: EventsPageArgs) -> Vec<EventWrapper<CommunityEvent>> {
-        let (start_index, end_index) = if args.ascending {
-            (
-                args.start_index,
-                min(
-                    u32::from(self.latest_event_index),
-                    u32::from(args.start_index) + args.max_events - 1,
-                )
-                .into(),
-            )
-        } else {
-            (
-                max(0, (u32::from(args.start_index) + 1).saturating_sub(args.max_events)).into(),
-                args.start_index,
-            )
-        };
-
-        let iter = self.stable_events_map.range(start_index, end_index);
-        let iter = if !args.ascending { Box::new(iter.rev()) } else { iter };
-
-        iter.map(|e| EventWrapper {
-            index: e.index,
-            timestamp: e.timestamp,
-            expires_at: e.expires_at,
-            event: e.event.into(),
-        })
-        .collect()
+        self.stable_events_map
+            .page(args.start_index, args.ascending, args.max_events)
+            .into_iter()
+            .map(|e| EventWrapper {
+                index: e.index,
+                timestamp: e.timestamp,
+                expires_at: e.expires_at,
+                event: e.event.into(),
+            })
+            .collect()
     }
 
     pub fn get_by_indexes(&self, event_indexes: &[EventIndex]) -> Vec<EventWrapper<CommunityEvent>> {
