@@ -2066,6 +2066,17 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "updateDirectChatSettings":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.updateDirectChatSettings(
+                        payload.userId,
+                        payload.eventsTtl,
+                    ),
+                );
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

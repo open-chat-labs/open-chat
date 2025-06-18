@@ -448,7 +448,8 @@ export type WorkerRequest =
     | RegenerateWebhook
     | DeleteWebhook
     | GetWebhook
-    | PayForStreakInsurance;
+    | PayForStreakInsurance
+    | UpdateDirectChatSettings;
 
 type SetMinLogLevel = {
     kind: "setMinLogLevel";
@@ -460,6 +461,12 @@ type PayForStreakInsurance = {
     additionalDays: number;
     expectedPrice: bigint;
     pin: string | undefined;
+};
+
+type UpdateDirectChatSettings = {
+    kind: "updateDirectChatSettings";
+    userId: string;
+    eventsTtl: OptionUpdate<bigint>;
 };
 
 type RegisterWebhook = {
@@ -2462,4 +2469,6 @@ export type WorkerResult<T> = T extends Init
     ? string | undefined
     : T extends PayForStreakInsurance
     ? PayForStreakInsuranceResponse
+    : T extends UpdateDirectChatSettings
+    ? boolean
     : never;
