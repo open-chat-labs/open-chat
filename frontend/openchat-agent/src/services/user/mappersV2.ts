@@ -55,9 +55,9 @@ import type {
 import {
     CommonResponses,
     nullMembership,
+    ROLE_OWNER,
     toBigInt32,
     toBigInt64,
-    ROLE_OWNER,
     UnsupportedValueError,
 } from "openchat-shared";
 import type {
@@ -873,8 +873,8 @@ function directChatSummary(value: TDirectChatSummary): DirectChatSummary {
         lastUpdated: value.last_updated,
         readByThemUpTo: value.read_by_them_up_to,
         dateCreated: value.date_created,
-        eventsTTL: undefined,
-        eventsTtlLastUpdated: BigInt(0),
+        eventsTTL: value.events_ttl,
+        eventsTtlLastUpdated: value.events_ttl_last_updated,
         metrics: chatMetrics(value.metrics),
         videoCallInProgress: mapOptional(value.video_call_in_progress, videoCallInProgress),
         membership: {

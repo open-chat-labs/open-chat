@@ -107,7 +107,7 @@
                         typing,
                     ),
                     username: them ? "@" + them.username : undefined,
-                    eventsTTL: undefined,
+                    eventsTTL: chatSummary.eventsTTL,
                     uniquePerson: them?.isUniquePerson ?? false,
                 };
             default:

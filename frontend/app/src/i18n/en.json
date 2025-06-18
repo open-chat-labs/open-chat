@@ -810,6 +810,7 @@
     "groupDesc": "{level} description",
     "groupDescTooLong": "The {level} description is too long",
     "groupDetails": "{level} details",
+    "chatDetails": "Chat details",
     "groupInviteChangedBy": "{changedBy} {changed} the group invite link",
     "groupName": "{level} name",
     "groupNameInvalid": "The {level} name is invalid",
