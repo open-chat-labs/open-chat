@@ -37,7 +37,7 @@ fn disappearing_messages_in_direct_chats() {
     for b in [true, false] {
         let (user_a, user_b) = if b { (&user1, &user2) } else { (&user2, &user1) };
         assert!(
-            !client::user::happy_path::events_by_index(env, &user_a, user_b.user_id, vec![send_message_response1.event_index])
+            !client::user::happy_path::events_by_index(env, user_a, user_b.user_id, vec![send_message_response1.event_index])
                 .events
                 .is_empty()
         );
@@ -58,7 +58,7 @@ fn disappearing_messages_in_direct_chats() {
     for b in [true, false] {
         let (user_a, user_b) = if b { (&user1, &user2) } else { (&user2, &user1) };
         let events_by_index_response =
-            client::user::happy_path::events_by_index(env, &user_a, user_b.user_id, vec![send_message_response1.event_index]);
+            client::user::happy_path::events_by_index(env, user_a, user_b.user_id, vec![send_message_response1.event_index]);
         assert!(events_by_index_response.events.is_empty());
         assert_eq!(
             *events_by_index_response.expired_event_ranges.first().unwrap(),
@@ -70,7 +70,7 @@ fn disappearing_messages_in_direct_chats() {
         );
 
         let events_window_response =
-            client::user::happy_path::events_window(env, &user_a, user_b.user_id, send_message_response1.message_index, 10, 10);
+            client::user::happy_path::events_window(env, user_a, user_b.user_id, send_message_response1.message_index, 10, 10);
         assert!(!events_window_response.events.is_empty());
         assert_eq!(
             *events_window_response.expired_event_ranges.first().unwrap(),
@@ -99,7 +99,7 @@ fn disappearing_messages_in_direct_chats() {
     for b in [true, false] {
         let (user_a, user_b) = if b { (&user1, &user2) } else { (&user2, &user1) };
         assert!(
-            !client::user::happy_path::events_by_index(env, &user_a, user_b.user_id, vec![send_message_response2.event_index])
+            !client::user::happy_path::events_by_index(env, user_a, user_b.user_id, vec![send_message_response2.event_index])
                 .events
                 .is_empty()
         );
