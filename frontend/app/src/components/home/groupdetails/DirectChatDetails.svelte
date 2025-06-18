@@ -1,0 +1,303 @@
+<script lang="ts">
+    import Avatar from "@src/components/Avatar.svelte";
+    import Button from "@src/components/Button.svelte";
+    import ButtonGroup from "@src/components/ButtonGroup.svelte";
+    import Checkbox from "@src/components/Checkbox.svelte";
+    import HoverIcon from "@src/components/HoverIcon.svelte";
+    import HeartMinus from "@src/components/icons/HeartMinus.svelte";
+    import HeartPlus from "@src/components/icons/HeartPlus.svelte";
+    import Verified from "@src/components/icons/Verified.svelte";
+    import SectionHeader from "@src/components/SectionHeader.svelte";
+    import Translatable from "@src/components/Translatable.svelte";
+    import { i18nKey } from "@src/i18n/i18n";
+    import { toastStore } from "@src/stores/toast";
+    import { currentTheme } from "@src/theme/themes";
+    import { darkenHexColour } from "@src/theme/utils";
+    import type { DirectChatSummary, OptionUpdate, PublicProfile } from "openchat-client";
+    import {
+        allUsersStore,
+        AvatarSize,
+        blockedUsersStore,
+        favouritesStore,
+        iconSize,
+        mobileWidth,
+        OpenChat,
+        publish,
+    } from "openchat-client";
+    import { getContext, onMount } from "svelte";
+    import { _ } from "svelte-i18n";
+    import CancelIcon from "svelte-material-icons/Cancel.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
+    import Headphones from "svelte-material-icons/Headphones.svelte";
+    import DurationPicker from "../DurationPicker.svelte";
+    import Markdown from "../Markdown.svelte";
+
+    const client = getContext<OpenChat>("client");
+    const ONE_WEEK = 604800000n;
+
+    interface Props {
+        chat: DirectChatSummary;
+        onClose: () => void;
+    }
+
+    let { onClose, chat }: Props = $props();
+
+    let blocked = $derived($blockedUsersStore.has(chat.them.userId));
+    let user = $derived($allUsersStore.get(chat.them.userId));
+    let verified = $derived(user?.isUniquePerson ?? false);
+    let profile = $state<PublicProfile | undefined>();
+    let disappearingMessages = $state(chat.eventsTTL !== undefined);
+    let eventsTTL = $state(chat.eventsTTL);
+    let saving = $state(false);
+    let dirty = $derived(eventsTTL !== chat.eventsTTL);
+    let darkenedCall = $derived(darkenHexColour($currentTheme.vote.yes.color, 20));
+    let videoCallInProgress = $derived(chat.videoCallInProgress !== undefined);
+    let videoMenuText = $derived(videoCallInProgress ? i18nKey("Join") : i18nKey("Start"));
+    let blockLabel = $derived(blocked ? i18nKey("Unblock") : i18nKey("Block"));
+
+    onMount(async () => {
+        profile = await client.getPublicProfile(chat.them.userId);
+    });
+
+    $effect(() => {
+        dirty = eventsTTL !== chat.eventsTTL;
+    });
+
+    function toggleDisappearingMessages() {
+        disappearingMessages = !disappearingMessages;
+        if (!disappearingMessages) {
+            eventsTTL = undefined;
+        } else {
+            eventsTTL = ONE_WEEK;
+        }
+    }
+
+    function getUpdate(): OptionUpdate<bigint> {
+        if (eventsTTL !== undefined) {
+            return { value: eventsTTL };
+        } else if (chat.eventsTTL !== undefined) {
+            return "set_to_none";
+        } else {
+            return undefined;
+        }
+    }
+
+    async function updateDirectChatDetails(e: Event) {
+        e.preventDefault();
+        if (!dirty) return;
+
+        saving = true;
+
+        const success = await client
+            .updateDirectChatSettings(chat, getUpdate())
+            .finally(() => (saving = false));
+        if (success) {
+            console.log("fuck yeah");
+        }
+    }
+    function addToFavourites() {
+        client.addToFavourites(chat.id);
+    }
+
+    function removeFromFavourites() {
+        client.removeFromFavourites(chat.id);
+    }
+
+    function startVideoCall() {
+        publish("startVideoCall", {
+            chatId: chat.id,
+            callType: "default",
+            join: videoCallInProgress,
+        });
+    }
+
+    function toggleBlocked() {
+        if (blocked) {
+            unblockUser();
+        } else {
+            blockUser();
+        }
+    }
+
+    function blockUser() {
+        client.blockUserFromDirectChat(chat.them.userId).then((success) => {
+            if (success) {
+                toastStore.showSuccessToast(i18nKey("blockUserSucceeded"));
+            } else {
+                toastStore.showFailureToast(i18nKey("blockUserFailed"));
+            }
+        });
+    }
+
+    function unblockUser() {
+        client.unblockUserFromDirectChat(chat.them.userId).then((success) => {
+            if (success) {
+                toastStore.showSuccessToast(i18nKey("unblockUserSucceeded"));
+            } else {
+                toastStore.showFailureToast(i18nKey("unblockUserFailed"));
+            }
+        });
+    }
+</script>
+
+<SectionHeader border={false} flush={!$mobileWidth} shadow>
+    {#if !$favouritesStore.has(chat.id)}
+        <HoverIcon onclick={addToFavourites}>
+            <HeartPlus size={$iconSize} color={"var(--menu-warn)"} />
+        </HoverIcon>
+    {:else}
+        <HoverIcon onclick={removeFromFavourites}>
+            <HeartMinus size={$iconSize} color={"var(--menu-warn)"} />
+        </HoverIcon>
+    {/if}
+    <h4>
+        <Translatable resourceKey={i18nKey(`Direct chat with ${client.getDisplayName(user)}`)} />
+    </h4>
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <span title={$_("close")} class="close" onclick={onClose}>
+        <HoverIcon>
+            <Close size={$iconSize} color={"var(--icon-txt)"} />
+        </HoverIcon>
+    </span>
+</SectionHeader>
+
+{#if user !== undefined}
+    <div class="wrapper">
+        <div class="user-form">
+            <div class="avatar">
+                <Avatar
+                    url={client.userAvatarUrl(user)}
+                    userId={user.userId}
+                    size={AvatarSize.Large} />
+                <div class="human">
+                    <Verified size={"large"} {verified} tooltip={i18nKey("human.verified")} />
+                </div>
+            </div>
+            {#if profile && profile.bio.length > 0}
+                <p class="bio"><Markdown inline={false} text={profile.bio} /></p>
+            {/if}
+            <div style={`--darkened-call: ${darkenedCall}`} class="controls">
+                <ButtonGroup align={"fill"}>
+                    <Button onClick={startVideoCall} cls="call-user icon-button">
+                        <Headphones size={$iconSize} color={"var(--button-txt)"} />
+                        <Translatable resourceKey={videoMenuText} />
+                    </Button>
+                    <Button onClick={toggleBlocked} cls="icon-button" danger>
+                        <CancelIcon size={$iconSize} color={"var(--button-txt)"} />
+                        <Translatable resourceKey={blockLabel} />
+                    </Button>
+                </ButtonGroup>
+            </div>
+            <div class="disappearing">
+                <Checkbox
+                    id="disappearing-messages"
+                    onChange={toggleDisappearingMessages}
+                    label={i18nKey("disappearingMessages.label")}
+                    align={"start"}
+                    checked={disappearingMessages}>
+                    <div class="section-title disappear">
+                        <Translatable resourceKey={i18nKey("disappearingMessages.label")} />
+                    </div>
+                </Checkbox>
+                {#if disappearingMessages}
+                    <div class="picker">
+                        <DurationPicker bind:milliseconds={eventsTTL} />
+                    </div>
+                {/if}
+            </div>
+        </div>
+        <div class="full-width-btn">
+            <Button
+                loading={saving}
+                disabled={!dirty || saving}
+                fill
+                onClick={updateDirectChatDetails}
+                ><Translatable resourceKey={i18nKey("update")} /></Button>
+        </div>
+    </div>
+{/if}
+
+<style lang="scss">
+    .wrapper {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
+    }
+    .user-form {
+        @include nice-scrollbar();
+        padding: $sp3 $sp5 0 $sp5;
+        @include mobile() {
+            padding: $sp3 $sp4 0 $sp4;
+        }
+        display: flex;
+        flex-direction: column;
+        gap: $sp4;
+        align-items: center;
+    }
+
+    h4 {
+        flex: 1;
+        margin: 0;
+        text-align: center;
+        @include font-size(fs-120);
+    }
+    .close {
+        flex: 0 0 30px;
+    }
+
+    .avatar {
+        position: relative;
+        padding: 0 0 $sp4 0;
+        -webkit-box-reflect: below -24px linear-gradient(hsla(0, 0%, 100%, 0), hsla(0, 0%, 100%, 0)
+                    45%, hsla(0, 0%, 100%, 0.2));
+    }
+
+    .human {
+        position: absolute;
+        bottom: 0;
+        left: calc(50% + 32px);
+    }
+
+    .disappearing {
+        align-self: flex-start;
+    }
+
+    .full-width-btn {
+        align-self: stretch;
+        margin-top: $sp4;
+        padding: 0 $sp4 $sp4 $sp4;
+        @include mobile() {
+            padding: 0 $sp3 $sp3 $sp3;
+        }
+    }
+
+    .controls {
+        align-self: stretch;
+        margin-bottom: $sp5;
+    }
+
+    .picker {
+        margin-top: $sp3;
+    }
+
+    .user-form {
+        :global(button.icon-button) {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: $sp4;
+        }
+
+        :global(button.call-user) {
+            background: var(--vote-yes-color);
+            color: var(--toast-failure-txt);
+            @media (hover: hover) {
+                &:hover {
+                    background: var(--darkened-call);
+                }
+            }
+        }
+    }
+</style>

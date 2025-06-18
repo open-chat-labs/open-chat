@@ -159,7 +159,7 @@
                         typing,
                     ),
                     fav,
-                    eventsTTL: undefined,
+                    eventsTTL: chatSummary.eventsTTL,
                     video,
                     private: false,
                     uniquePerson: them?.isUniquePerson ?? false,

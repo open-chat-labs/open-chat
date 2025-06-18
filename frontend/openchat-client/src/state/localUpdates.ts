@@ -781,6 +781,20 @@ export class GlobalLocalState {
         );
     }
 
+    updateDirectChatProperties(id: DirectChatIdentifier, eventsTTL?: OptionUpdate<bigint>) {
+        return this.#modifyChatSummaryUpdates(
+            id,
+            (upd) => {
+                upd.eventsTTL = eventsTTL;
+                return (upd) => {
+                    upd.eventsTTL = undefined;
+                    return upd;
+                };
+            },
+            "updateDirectChatProperties",
+        );
+    }
+
     updateChatProperties(
         id: ChatIdentifier,
         name?: string,

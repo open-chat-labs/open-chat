@@ -404,6 +404,7 @@
     "change": "modifica",
     "changeTheme": "Cambia tema",
     "channelAlreadyExists": "Esiste già un canale con quel nome",
+    "chatDetails": "Dettagli della chat",
     "chatFrozen": "Questa chat è stata bloccata",
     "chatFrozenBy": "Chat bloccata da {frozenBy}",
     "chatMenu": "Menù chat",

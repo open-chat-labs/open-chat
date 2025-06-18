@@ -404,6 +404,7 @@
     "change": "monnaie",
     "changeTheme": "Change le thème",
     "channelAlreadyExists": "Une chaîne portant ce nom existe déjà",
+    "chatDetails": "Détails du chat",
     "chatFrozen": "Ce chat a été gelé",
     "chatFrozenBy": "Chat gelé par {frozenBy}",
     "chatMenu": "Menu de discussion",

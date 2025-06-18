@@ -404,6 +404,7 @@
     "change": "Änderung",
     "changeTheme": "Thema ändern",
     "channelAlreadyExists": "Ein Kanal mit diesem Namen existiert bereits",
+    "chatDetails": "Chatdetails",
     "chatFrozen": "Dieser Chat wurde eingefroren",
     "chatFrozenBy": "Chat eingefroren von {frozenBy}",
     "chatMenu": "Chat-Menü",

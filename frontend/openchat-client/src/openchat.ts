@@ -2879,7 +2879,9 @@ export class OpenChat {
         this.#userLookupForMentions = undefined;
 
         if (isProposalsChat(clientChat)) {
-            filteredProposalsStore.set(FilteredProposals.fromStorage(clientChat.subtype.governanceCanisterId));
+            filteredProposalsStore.set(
+                FilteredProposals.fromStorage(clientChat.subtype.governanceCanisterId),
+            );
         }
 
         const selectedChat = selectedChatSummaryStore.value;
@@ -4196,10 +4198,8 @@ export class OpenChat {
     }
 
     eventExpiry(chat: ChatSummary, timestamp: number): number | undefined {
-        if (chat.kind === "group_chat" || chat.kind === "channel") {
-            if (chat.eventsTTL !== undefined) {
-                return timestamp + Number(chat.eventsTTL);
-            }
+        if (chat.eventsTTL !== undefined) {
+            return timestamp + Number(chat.eventsTTL);
         }
         return undefined;
     }
@@ -9341,12 +9341,25 @@ export class OpenChat {
             });
     }
 
-    updateDirectChatSettings(userId: string, eventsTtl: OptionUpdate<bigint>): Promise<boolean> {
+    updateDirectChatSettings(
+        chat: DirectChatSummary,
+        eventsTtl: OptionUpdate<bigint>,
+    ): Promise<boolean> {
         return this.#sendRequest({
             kind: "updateDirectChatSettings",
-            userId,
+            userId: chat.them.userId,
             eventsTtl,
-        });
+        })
+            .then((success) => {
+                if (success) {
+                    localUpdates.updateDirectChatProperties(chat.id, eventsTtl);
+                }
+                return success;
+            })
+            .catch((err) => {
+                console.log("Failed to update direct chat settings", err);
+                return false;
+            });
     }
 
     async initialiseNotifications(): Promise<boolean> {

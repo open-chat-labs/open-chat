@@ -404,6 +404,7 @@
     "change": "変更",
     "changeTheme": "テーマ変更",
     "channelAlreadyExists": "その名前のチャンネルはすでに存在します",
+    "chatDetails": "チャットの詳細",
     "chatFrozen": "このチャットは凍結されました",
     "chatFrozenBy": "{frozenBy} によってチャットが凍結されました",
     "chatMenu": "チャットメニュー",
