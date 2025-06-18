@@ -4330,6 +4330,7 @@ export const UserEventsByIndexArgs = Type.Object({
 export type UserCreateCommunitySuccessResult = Static<typeof UserCreateCommunitySuccessResult>;
 export const UserCreateCommunitySuccessResult = Type.Object({
     community_id: CommunityId,
+    channels: Type.Array(Type.Tuple([ChannelId, Type.String()])),
 });
 
 export type UserCreateCommunityResponse = Static<typeof UserCreateCommunityResponse>;

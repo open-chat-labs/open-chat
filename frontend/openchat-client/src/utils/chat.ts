@@ -5,6 +5,7 @@ import type {
     AccessControlled,
     AggregateCommonEvents,
     CandidateGroupChat,
+    ChannelIdentifier,
     ChannelSummary,
     ChatEvent,
     ChatIdentifier,
@@ -57,6 +58,7 @@ import {
     applyOptionUpdate,
     bigIntMax,
     chatIdentifiersEqual,
+    defaultChatPermissions,
     defaultOptionalChatPermissions,
     defaultOptionalMessagePermissions,
     emptyChatMetrics,
@@ -2052,4 +2054,41 @@ export function isContiguous(
         chatIdentifiersEqual(chatId, selectedChatIdStore.value) &&
         isContiguousInternal(confirmedEventIndexesLoaded(chatId), events, expiredEventRanges)
     );
+}
+
+export function newDefaultChannel(id: ChannelIdentifier, name: string): ChannelSummary {
+    return {
+        kind: "channel",
+        id,
+        name,
+        description: "",
+        public: true,
+        historyVisible: true,
+        minVisibleEventIndex: 0,
+        minVisibleMessageIndex: 0,
+        latestMessage: undefined,
+        latestEventIndex: 0,
+        latestMessageIndex: 0,
+        lastUpdated: BigInt(0),
+        blobReference: undefined,
+        memberCount: 1,
+        permissions: defaultChatPermissions(),
+        metrics: emptyChatMetrics(),
+        subtype: undefined,
+        frozen: false,
+        dateLastPinned: undefined,
+        dateReadPinned: undefined,
+        gateConfig: { gate: { kind: "no_gate" }, expiry: undefined },
+        level: "channel",
+        eventsTTL: undefined,
+        eventsTtlLastUpdated: BigInt(0),
+        videoCallInProgress: undefined,
+        membership: {
+            ...nullMembership(),
+            role: ROLE_OWNER,
+        },
+        isInvited: false,
+        messagesVisibleToNonMembers: true,
+        externalUrl: undefined,
+    }
 }
