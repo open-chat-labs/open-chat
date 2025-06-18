@@ -1,10 +1,9 @@
 use crate::{
-    AccessGateConfig, BotCommand, ChannelId, CommunityPermissions, CommunityRole, EventIndex, EventWrapper, GroupPermissions,
-    GroupRole, Message, MessageIndex, Milliseconds, TimestampMillis, UserId,
+    AccessGateConfig, BotCommand, ChannelId, EventIndex, EventWrapper, GroupPermissions, GroupRole, Message, MessageIndex,
+    Milliseconds, TimestampMillis, UserId,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use ts_export::ts_export;
 
 #[ts_export]
@@ -50,13 +49,6 @@ pub enum ChatEventCategory {
     Message = 0,    // Messages + edits, reaction, tips, etc.
     Membership = 1, // User added, blocked, invited, role changed, etc.
     Details = 2,    // Name, description, rules, permissions changed, etc.
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[repr(u8)]
-pub enum CommunityEventCategory {
-    Membership = 0, // User added, blocked, invited, role changed, etc.
-    Details = 1,    // Name, description, rules, permissions changed, etc.
 }
 
 #[ts_export]
@@ -146,77 +138,6 @@ impl From<ChatEventType> for ChatEventCategory {
             | ChatEventType::BotUpdated
             | ChatEventType::UsersBlocked
             | ChatEventType::UsersUnblocked => ChatEventCategory::Membership,
-        }
-    }
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub enum CommunityEventType {
-    // Details category
-    Created,
-    NameChanged,
-    DescriptionChanged,
-    RulesChanged,
-    AvatarChanged,
-    BannerChanged,
-    PermissionsChanged,
-    VisibilityChanged,
-    InviteCodeChanged,
-    Frozen,
-    Unfrozen,
-    EventsTTLUpdated,
-    GateUpdated,
-    MessagePinned,
-    MessageUnpinned,
-    PrimaryLanguageChanged,
-    GroupImported,
-    ChannelCreated,
-    ChannelDeleted,
-
-    // Membership category
-    MembersJoined,
-    MembersLeft,
-    RoleChanged,
-    UsersInvited,
-    BotAdded,
-    BotRemoved,
-    BotUpdated,
-    UsersBlocked,
-    UsersUnblocked,
-}
-
-impl From<CommunityEventType> for CommunityEventCategory {
-    fn from(value: CommunityEventType) -> Self {
-        match value {
-            CommunityEventType::Created
-            | CommunityEventType::NameChanged
-            | CommunityEventType::DescriptionChanged
-            | CommunityEventType::RulesChanged
-            | CommunityEventType::AvatarChanged
-            | CommunityEventType::BannerChanged
-            | CommunityEventType::PermissionsChanged
-            | CommunityEventType::VisibilityChanged
-            | CommunityEventType::InviteCodeChanged
-            | CommunityEventType::Frozen
-            | CommunityEventType::Unfrozen
-            | CommunityEventType::EventsTTLUpdated
-            | CommunityEventType::GateUpdated
-            | CommunityEventType::PrimaryLanguageChanged
-            | CommunityEventType::GroupImported
-            | CommunityEventType::ChannelCreated
-            | CommunityEventType::ChannelDeleted
-            | CommunityEventType::MessagePinned
-            | CommunityEventType::MessageUnpinned => CommunityEventCategory::Details,
-            CommunityEventType::MembersJoined
-            | CommunityEventType::MembersLeft
-            | CommunityEventType::RoleChanged
-            | CommunityEventType::UsersInvited
-            | CommunityEventType::BotAdded
-            | CommunityEventType::BotRemoved
-            | CommunityEventType::BotUpdated
-            | CommunityEventType::UsersBlocked
-            | CommunityEventType::UsersUnblocked => CommunityEventCategory::Membership,
         }
     }
 }
@@ -342,25 +263,9 @@ pub struct MembersRemoved {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CommunityMembersRemoved {
-    pub user_ids: Vec<UserId>,
-    pub removed_by: UserId,
-    pub referred_by: HashMap<UserId, UserId>,
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UsersBlocked {
     pub user_ids: Vec<UserId>,
     pub blocked_by: UserId,
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CommunityUsersBlocked {
-    pub user_ids: Vec<UserId>,
-    pub blocked_by: UserId,
-    pub referred_by: HashMap<UserId, UserId>,
 }
 
 #[ts_export]
@@ -429,15 +334,6 @@ pub struct RoleChanged {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CommunityRoleChanged {
-    pub user_ids: Vec<UserId>,
-    pub changed_by: UserId,
-    pub old_role: CommunityRole,
-    pub new_role: CommunityRole,
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MessagePinned {
     pub message_index: MessageIndex,
     pub pinned_by: UserId,
@@ -461,24 +357,9 @@ pub struct PermissionsChanged {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CommunityPermissionsChanged {
-    pub old_permissions: CommunityPermissions,
-    pub new_permissions: CommunityPermissions,
-    pub changed_by: UserId,
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupVisibilityChanged {
     pub public: Option<bool>,
     pub messages_visible_to_non_members: Option<bool>,
-    pub changed_by: UserId,
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CommunityVisibilityChanged {
-    pub now_public: bool,
     pub changed_by: UserId,
 }
 

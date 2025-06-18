@@ -187,6 +187,7 @@ ct-codecs = "1"
 data-encoding = "2"
 dataurl = "0.1"
 dotenv = "0.15.0"
+either = "1.15.0"
 enum-repr = "0.2"
 envconfig = "0.10.0"
 event_store_canister = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }

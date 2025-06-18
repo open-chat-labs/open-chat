@@ -2,6 +2,10 @@ use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
 use crate::{TestEnv, User, client};
 use candid::Principal;
+use community_canister::c2c_bot_community_events::{
+    EventsByIndexArgs as CommunityEventsByIndexArgs, EventsPageArgs,
+    EventsSelectionCriteria as CommunityEventsSelectionCriteria,
+};
 use local_user_index_canister::access_token_v2::{self, BotActionByCommandArgs, BotCommandInitial};
 use local_user_index_canister::chat_events::{EventsByIndexArgs, EventsSelectionCriteria};
 use pocket_ic::PocketIc;
@@ -14,8 +18,8 @@ use types::{
     AutonomousBotScope, AutonomousConfig, BotActionChatDetails, BotActionScope, BotChatContext, BotCommandArg,
     BotCommandArgValue, BotCommandDefinition, BotCommandParam, BotCommandParamType, BotDefinition, BotInstallationLocation,
     BotMessageContent, BotPermissions, CanisterId, Chat, ChatEvent, ChatEventType, ChatPermission, ChatType,
-    CommunityPermission, MessageContent, MessageId, MessagePermission, NotificationEnvelope, Rules, StringParam, TextContent,
-    UserId,
+    CommunityEventType, CommunityPermission, EventIndex, MessageContent, MessageId, MessagePermission, NotificationEnvelope,
+    OptionUpdate, Rules, StringParam, TextContent, UpdatedRules, UserId,
 };
 
 #[test]
@@ -995,6 +999,137 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
         response,
         local_user_index_canister::bot_send_message::Response::Success(_)
     ));
+}
+
+#[test]
+fn read_community_events() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+
+    let community_id =
+        client::user::happy_path::create_community(env, &owner, &random_string(), true, vec!["General".to_string()]);
+
+    let local_user_index = canister_ids.local_user_index(env, community_id);
+
+    // Register a bot
+    let (bot_id, bot_principal) = register_bot(env, &owner, canister_ids.user_index, random_string(), random_string());
+
+    env.tick();
+
+    let permissions = BotPermissions::default().with_community(&HashSet::from_iter([CommunityPermission::ReadEvents]));
+
+    // Add bot to community
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        local_user_index,
+        BotInstallationLocation::Community(community_id),
+        bot_id,
+        permissions.clone(),
+        Some(permissions.clone()),
+    );
+
+    env.tick();
+
+    // Generate some more community events
+    client::community::happy_path::update_community(
+        env,
+        owner.principal,
+        community_id,
+        &community_canister::update_community::Args {
+            name: Some(random_string()),
+            description: Some(random_string()),
+            rules: Some(UpdatedRules {
+                text: random_string(),
+                enabled: true,
+                new_version: true,
+            }),
+            avatar: OptionUpdate::NoChange,
+            banner: OptionUpdate::NoChange,
+            permissions: None,
+            gate_config: OptionUpdate::NoChange,
+            public: Some(false),
+            primary_language: Some("fr".to_string()),
+        },
+    );
+
+    // TEST 1
+
+    let response = client::local_user_index::bot_community_events(
+        env,
+        bot_principal,
+        local_user_index,
+        &local_user_index_canister::bot_community_events::Args {
+            community_id,
+            events: CommunityEventsSelectionCriteria::Page(EventsPageArgs {
+                start_index: EventIndex::from(6),
+                ascending: false,
+                max_events: 100,
+            }),
+        },
+    );
+    let local_user_index_canister::bot_community_events::Response::Success(result) = &response else {
+        panic!("'bot_community_events' error: {response:?}");
+    };
+    let events: Vec<_> = result.events.iter().map(|e| e.event.event_type().unwrap()).collect();
+    assert!(events.len() == 7);
+    assert!(matches!(events[0], CommunityEventType::PrimaryLanguageChanged));
+    assert!(matches!(events[6], CommunityEventType::Created));
+
+    // TEST 2
+
+    let response = client::local_user_index::bot_community_events(
+        env,
+        bot_principal,
+        local_user_index,
+        &local_user_index_canister::bot_community_events::Args {
+            community_id,
+            events: CommunityEventsSelectionCriteria::ByIndex(CommunityEventsByIndexArgs {
+                events: vec![EventIndex::from(3), EventIndex::from(1), EventIndex::from(6)],
+            }),
+        },
+    );
+
+    let local_user_index_canister::bot_community_events::Response::Success(result) = &response else {
+        panic!("'bot_community_events' error: {response:?}");
+    };
+    let events: Vec<_> = result.events.iter().map(|e| e.event.event_type().unwrap()).collect();
+    assert!(events.len() == 3);
+    assert!(matches!(events[0], CommunityEventType::DescriptionChanged));
+    assert!(matches!(events[1], CommunityEventType::BotAdded));
+    assert!(matches!(events[2], CommunityEventType::PrimaryLanguageChanged));
+
+    // TEST 3
+
+    let response = client::local_user_index::bot_community_events(
+        env,
+        bot_principal,
+        local_user_index,
+        &local_user_index_canister::bot_community_events::Args {
+            community_id,
+            events: CommunityEventsSelectionCriteria::Page(EventsPageArgs {
+                start_index: EventIndex::from(2),
+                ascending: true,
+                max_events: 3,
+            }),
+        },
+    );
+
+    let local_user_index_canister::bot_community_events::Response::Success(result) = &response else {
+        panic!("'bot_community_events' error: {response:?}");
+    };
+    let events: Vec<_> = result.events.iter().map(|e| e.event.event_type().unwrap()).collect();
+    assert!(events.len() == 3);
+    assert!(matches!(events[0], CommunityEventType::NameChanged));
+    assert!(matches!(events[1], CommunityEventType::DescriptionChanged));
+    assert!(matches!(events[2], CommunityEventType::RulesChanged));
 }
 
 fn register_bot(
