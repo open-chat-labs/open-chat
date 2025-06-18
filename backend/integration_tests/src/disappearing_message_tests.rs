@@ -17,8 +17,6 @@ fn disappearing_messages_in_direct_chats() {
     let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
 
-    client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
-
     client::user::happy_path::update_chat_settings(
         env,
         &user1,

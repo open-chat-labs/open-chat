@@ -9,6 +9,7 @@ use chat_events::{
 };
 use constants::{HOUR_IN_MS, MINUTE_IN_MS};
 use ledger_utils::format_crypto_amount_with_symbol;
+use rand::Rng;
 use types::{
     Achievement, Chat, ChitEarned, ChitEarnedReason, DirectMessageTipped, DirectReactionAddedNotification, EventIndex, FcmData,
     MessageContentInitial, P2PSwapStatus, UserId, UserNotificationPayload, UserType, VideoCallPresence,
@@ -149,19 +150,22 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
             }
         }
         UserCanisterEvent::SetEventsTtl(args) => {
-            if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
-                let last_updated_timestamp = chat.events.get_events_time_to_live().timestamp;
+            let chat =
+                state
+                    .data
+                    .direct_chats
+                    .get_or_create(caller_user_id.into(), UserType::User, || state.env.rng().r#gen(), now);
 
-                // If the incoming timestamp is higher than the existing one, update the TTL, if
-                // they are equal (meaning both users updated at exactly the same time), pick the
-                // TTL from whichever user has the lowest userId when their bytes are compared.
-                // This ensures the TTL is always the same in each user's canister.
-                if last_updated_timestamp < args.timestamp
-                    || (last_updated_timestamp == args.timestamp
-                        && caller_user_id.as_slice() < state.env.canister_id().as_slice())
-                {
-                    chat.events.set_events_time_to_live(caller_user_id, args.events_ttl, now);
-                }
+            let last_updated_timestamp = chat.events.get_events_time_to_live().timestamp;
+
+            // If the incoming timestamp is higher than the existing one, update the TTL, if
+            // they are equal (meaning both users updated at exactly the same time), pick the
+            // TTL from whichever user has the lowest userId when their bytes are compared.
+            // This ensures the TTL is always the same in each user's canister.
+            if last_updated_timestamp < args.timestamp
+                || (last_updated_timestamp == args.timestamp && caller_user_id.as_slice() < state.env.canister_id().as_slice())
+            {
+                chat.events.set_events_time_to_live(caller_user_id, args.events_ttl, now);
             }
         }
     }
