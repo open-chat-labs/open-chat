@@ -355,7 +355,6 @@ import {
     pinNumberRequiredStore,
     pinNumberResolverStore,
     platformOperatorStore,
-    proposalTalliesStore,
     querystringCodeStore,
     querystringReferralCodeStore,
     querystringStore,
@@ -5320,6 +5319,7 @@ export class OpenChat {
     }
 
     getProposalVoteDetails(
+        messageId: bigint,
         governanceCanisterId: string,
         proposalId: bigint,
         isNns: boolean,
@@ -5330,10 +5330,7 @@ export class OpenChat {
             proposalId,
             isNns,
         }).then((resp) => {
-            proposalTalliesStore.update((map) => {
-                map.set(`${governanceCanisterId}_${proposalId}`, resp.latestTally);
-                return map;
-            });
+            localUpdates.markProposalTallyUpdated(messageId, resp.latestTally);
             return resp;
         });
     }
