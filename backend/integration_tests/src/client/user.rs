@@ -5,6 +5,7 @@ use user_canister::*;
 generate_msgpack_query_call!(chit_events);
 generate_msgpack_query_call!(events);
 generate_msgpack_query_call!(events_by_index);
+generate_msgpack_query_call!(events_window);
 generate_msgpack_query_call!(initial_state);
 generate_msgpack_query_call!(message_activity_feed);
 generate_msgpack_query_call!(saved_crypto_accounts);
@@ -44,6 +45,7 @@ generate_update_call!(start_video_call_v2);
 generate_msgpack_update_call!(tip_message);
 generate_msgpack_update_call!(unblock_user);
 generate_msgpack_update_call!(undelete_messages);
+generate_msgpack_update_call!(update_chat_settings);
 
 pub mod happy_path {
     use crate::User;
@@ -277,6 +279,34 @@ pub mod happy_path {
                 user_id,
                 thread_root_message_index: None,
                 events,
+                latest_known_update: None,
+            },
+        );
+
+        match response {
+            user_canister::events_by_index::Response::Success(result) => result,
+            response => panic!("'events_by_index' error: {response:?}"),
+        }
+    }
+
+    pub fn events_window(
+        env: &PocketIc,
+        sender: &User,
+        user_id: UserId,
+        mid_point: MessageIndex,
+        max_messages: u32,
+        max_events: u32,
+    ) -> EventsResponse {
+        let response = super::events_window(
+            env,
+            sender.principal,
+            sender.canister(),
+            &user_canister::events_window::Args {
+                user_id,
+                thread_root_message_index: None,
+                mid_point,
+                max_messages,
+                max_events,
                 latest_known_update: None,
             },
         );
@@ -562,5 +592,10 @@ pub mod happy_path {
             ),
             "{pay_for_insurance_response:?}"
         );
+    }
+
+    pub fn update_chat_settings(env: &mut PocketIc, user: &User, args: &user_canister::update_chat_settings::Args) {
+        let response = super::update_chat_settings(env, user.principal, user.canister(), args);
+        assert!(matches!(response, user_canister::update_chat_settings::Response::Success));
     }
 }

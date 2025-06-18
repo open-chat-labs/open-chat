@@ -44,6 +44,7 @@ import type {
     MessageActivityFeedResponse,
     MessageContext,
     NamedAccount,
+    OptionUpdate,
     PayForStreakInsuranceResponse,
     PendingCryptocurrencyTransfer,
     PendingCryptocurrencyWithdrawal,
@@ -168,6 +169,7 @@ import {
     UserUndeleteMessagesResponse,
     UserUnpinChatArgs,
     UserUpdateBotArgs,
+    UserUpdateChatSettingsArgs,
     UserUpdatesArgs,
     UserUpdatesResponse,
     UserWithdrawBtcArgs,
@@ -187,6 +189,7 @@ import {
     setCachedMessageFromSendResponse,
 } from "../../utils/caching";
 import {
+    apiOptionUpdateV2,
     identity,
     mapOptional,
     principalBytesToString,
@@ -1690,5 +1693,18 @@ export class UserClient extends MsgpackCanisterAgent {
             UserPayForStreakInsuranceArgs,
             UnitResult,
         );
+    }
+
+    updateChatSettings(userId: string, eventsTtl: OptionUpdate<bigint>): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "update_chat_settings",
+            {
+                user_id: principalStringToBytes(userId),
+                events_ttl: apiOptionUpdateV2(identity, eventsTtl),
+            },
+            isSuccess,
+            UserUpdateChatSettingsArgs,
+            UnitResult,
+        )
     }
 }

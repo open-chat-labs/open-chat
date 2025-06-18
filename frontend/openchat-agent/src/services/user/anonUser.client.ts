@@ -42,6 +42,7 @@ import type {
     MessageActivityFeedResponse,
     MessageContext,
     NamedAccount,
+    OptionUpdate,
     PayForStreakInsuranceResponse,
     PendingCryptocurrencyTransfer,
     PendingCryptocurrencyWithdrawal,
@@ -521,6 +522,13 @@ export class AnonUserClient {
         _expectedPrice: bigint,
         _pin: string | undefined,
     ): Promise<PayForStreakInsuranceResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    updateChatSettings(
+        _userId: string,
+        _eventsTtl: OptionUpdate<bigint>
+    ): Promise<boolean> {
         throw new AnonymousOperationError();
     }
 }

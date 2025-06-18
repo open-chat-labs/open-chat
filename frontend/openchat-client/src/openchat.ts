@@ -173,7 +173,6 @@ import {
     type MessageFormatter,
     type MessagePermission,
     type MessageReminderCreatedContent,
-    missingUserIds,
     type ModerationFlag,
     type MultiUserChat,
     type MultiUserChatIdentifier,
@@ -403,6 +402,7 @@ import {
     translationsStore,
     userCreatedStore,
     walletConfigStore,
+    webhookUserIdsStore,
 } from "./state";
 import { botState } from "./state/bots.svelte";
 import { ChatDetailsState } from "./state/chat/serverDetails";
@@ -576,6 +576,7 @@ import {
     compareIsNotYouThenUsername,
     compareUsername,
     formatLastOnlineDate,
+    missingUserIds,
     nullUser,
     userAvatarUrl,
 } from "./utils/user";
@@ -1838,7 +1839,6 @@ export class OpenChat {
     validateTokenInput = validateTokenInput;
     parseBigInt = parseBigInt;
     userIdsFromEvents = userIdsFromEvents;
-    missingUserIds = missingUserIds;
     userOrUserGroupName = userOrUserGroupName;
     userOrUserGroupId = userOrUserGroupId;
     extractUserIdsFromMentions = extractUserIdsFromMentions;
@@ -3380,6 +3380,15 @@ export class OpenChat {
                     const lapsed = new Set(
                         resp.members.filter((m) => m.lapsed).map((m) => m.userId),
                     );
+                    const webhooksToAdd = resp.webhooks.filter((w) => !webhookUserIdsStore.value.has(w.id));
+                    if (webhooksToAdd.length > 0) {
+                        webhookUserIdsStore.update((set) => {
+                            for (const webhook of webhooksToAdd) {
+                                set.add(webhook.id);
+                            }
+                            return set;
+                        });
+                    }
 
                     selectedServerChatStore.set(
                         new ChatDetailsState(
@@ -5559,7 +5568,7 @@ export class OpenChat {
             {
                 userGroups: [
                     {
-                        users: this.missingUserIds(userStore.allUsers, userIds),
+                        users: missingUserIds(userStore.allUsers, webhookUserIdsStore.value, userIds),
                         updatedSince: BigInt(0),
                     },
                 ],
@@ -9330,6 +9339,14 @@ export class OpenChat {
                 console.log("Failed to pay for streak insurance: ", err);
                 return CommonResponses.failure();
             });
+    }
+
+    updateDirectChatSettings(userId: string, eventsTtl: OptionUpdate<bigint>): Promise<boolean> {
+        return this.#sendRequest({
+            kind: "updateDirectChatSettings",
+            userId,
+            eventsTtl,
+        });
     }
 
     async initialiseNotifications(): Promise<boolean> {
