@@ -150,11 +150,10 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
             }
         }
         UserCanisterEvent::SetEventsTtl(args) => {
-            let chat =
-                state
-                    .data
-                    .direct_chats
-                    .get_or_create(caller_user_id.into(), UserType::User, || state.env.rng().r#gen(), now);
+            let chat = state
+                .data
+                .direct_chats
+                .get_or_create(caller_user_id, UserType::User, || state.env.rng().r#gen(), now);
 
             let last_updated_timestamp = chat.events.get_events_time_to_live().timestamp;
 
