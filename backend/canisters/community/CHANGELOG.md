@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `c2c_bot_community_events` endpoint ([#8194](https://github.com/open-chat-labs/open-chat/pull/8194))
+
 ### Changed
 
 - Bot's can't access private channels they don't own ([#8181](https://github.com/open-chat-labs/open-chat/pull/8181))
