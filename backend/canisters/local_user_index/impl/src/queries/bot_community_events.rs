@@ -8,12 +8,16 @@ use types::BotInitiator;
 #[update(candid = true, msgpack = true)]
 #[trace]
 async fn bot_community_events_c2c(args: Args) -> Response {
-    bot_community_events(args).await
+    bot_community_events_impl(args).await
 }
 
 #[query(composite = true, candid = true, msgpack = true)]
 #[trace]
 async fn bot_community_events(args: Args) -> Response {
+    bot_community_events_impl(args).await
+}
+
+async fn bot_community_events_impl(args: Args) -> Response {
     let Some(bot_id) = read_state(|state| state.data.bots.get_by_caller(&state.env.caller()).map(|bot| bot.bot_id)) else {
         return Response::Error(OCErrorCode::BotNotAuthenticated.into());
     };
