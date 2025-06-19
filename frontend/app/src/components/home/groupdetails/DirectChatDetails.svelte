@@ -11,6 +11,7 @@
     import Translatable from "@src/components/Translatable.svelte";
     import { i18nKey } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
+    import { activeVideoCall } from "@src/stores/video";
     import { currentTheme } from "@src/theme/themes";
     import { darkenHexColour } from "@src/theme/utils";
     import type { DirectChatSummary, OptionUpdate, PublicProfile } from "openchat-client";
@@ -18,6 +19,7 @@
         allUsersStore,
         AvatarSize,
         blockedUsersStore,
+        chatIdentifiersEqual,
         favouritesStore,
         iconSize,
         mobileWidth,
@@ -29,6 +31,7 @@
     import CancelIcon from "svelte-material-icons/Cancel.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Headphones from "svelte-material-icons/Headphones.svelte";
+    import PhoneHangup from "svelte-material-icons/PhoneHangup.svelte";
     import DurationPicker from "../DurationPicker.svelte";
     import Markdown from "../Markdown.svelte";
 
@@ -48,15 +51,30 @@
     let profile = $state<PublicProfile | undefined>();
     let disappearingMessages = $state(chat.eventsTTL !== undefined);
     let eventsTTL = $state(chat.eventsTTL);
+    let originalTTL = $state(chat.eventsTTL);
     let saving = $state(false);
     let dirty = $derived(eventsTTL !== chat.eventsTTL);
     let darkenedCall = $derived(darkenHexColour($currentTheme.vote.yes.color, 20));
     let videoCallInProgress = $derived(chat.videoCallInProgress !== undefined);
-    let videoMenuText = $derived(videoCallInProgress ? i18nKey("Join") : i18nKey("Start"));
     let blockLabel = $derived(blocked ? i18nKey("Unblock") : i18nKey("Block"));
+    let inCall = $derived(
+        videoCallInProgress &&
+            $activeVideoCall !== undefined &&
+            chatIdentifiersEqual($activeVideoCall.chatId, chat.id),
+    );
+    let videoMenuText = $derived(
+        videoCallInProgress ? (inCall ? i18nKey("Leave") : i18nKey("Join")) : i18nKey("Start"),
+    );
 
     onMount(async () => {
         profile = await client.getPublicProfile(chat.them.userId);
+    });
+
+    $effect(() => {
+        if (chat.eventsTTL !== originalTTL) {
+            eventsTTL = originalTTL = chat.eventsTTL;
+            disappearingMessages = chat.eventsTTL !== undefined;
+        }
     });
 
     $effect(() => {
@@ -92,7 +110,7 @@
             .updateDirectChatSettings(chat, getUpdate())
             .finally(() => (saving = false));
         if (success) {
-            console.log("fuck yeah");
+            originalTTL = originalTTL = chat.eventsTTL;
         }
     }
     function addToFavourites() {
@@ -104,11 +122,15 @@
     }
 
     function startVideoCall() {
-        publish("startVideoCall", {
-            chatId: chat.id,
-            callType: "default",
-            join: videoCallInProgress,
-        });
+        if (inCall) {
+            publish("hangup");
+        } else {
+            publish("startVideoCall", {
+                chatId: chat.id,
+                callType: "default",
+                join: videoCallInProgress,
+            });
+        }
     }
 
     function toggleBlocked() {
@@ -180,7 +202,11 @@
             <div style={`--darkened-call: ${darkenedCall}`} class="controls">
                 <ButtonGroup align={"fill"}>
                     <Button onClick={startVideoCall} cls="call-user icon-button">
-                        <Headphones size={$iconSize} color={"var(--button-txt)"} />
+                        {#if inCall}
+                            <PhoneHangup size={$iconSize} color={"var(--button-txt)"} />
+                        {:else}
+                            <Headphones size={$iconSize} color={"var(--button-txt)"} />
+                        {/if}
                         <Translatable resourceKey={videoMenuText} />
                     </Button>
                     <Button onClick={toggleBlocked} cls="icon-button" danger>
