@@ -41,8 +41,8 @@
         </svg>
     </div>
     <div class="progress">
-        <div class="adopt" style="width: {adoptPercent}%"></div>
-        <div class="reject" style="width: {rejectPercent}%"></div>
+        <div class="adopt" style="transform: scaleX({adoptPercent}%)"></div>
+        <div class="reject" style="transform: scaleX({rejectPercent}%)"></div>
         <div class="vertical-line" style="{rtl}: {minYesPercentageOfTotal}%"></div>
         <div class="vertical-line" style="{rtl}: {minYesPercentageOfExercised}%"></div>
     </div>
@@ -90,22 +90,25 @@
             margin-top: 0;
         }
 
-        .adopt {
+        .adopt, .reject {
             position: absolute;
             top: 0;
-            left: 0;
             bottom: 0;
+            left: 0;
+            right: 0;
+            transition-duration: 1s;
+        }
+
+        .adopt {
             background: var(--vote-yes-color);
             border-radius: $sp3 0 0 $sp3;
+            transform-origin: left;
         }
 
         .reject {
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
             background: var(--vote-no-color);
             border-radius: 0 $sp3 $sp3 0;
+            transform-origin: right;
         }
 
         .vertical-line {
