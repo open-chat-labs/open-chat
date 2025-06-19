@@ -301,7 +301,7 @@ import {
 import page from "page";
 import { tick } from "svelte";
 import { locale } from "svelte-i18n";
-import { get, type Unsubscriber } from "svelte/store";
+import { get } from "svelte/store";
 import type { OpenChatConfig } from "./config";
 import { snapshot } from "./snapshot.svelte";
 import {
@@ -633,6 +633,7 @@ export class OpenChat {
     #registryPoller: Poller | undefined = undefined;
     #userUpdatePoller: Poller | undefined = undefined;
     #exchangeRatePoller: Poller | undefined = undefined;
+    #proposalTalliesPoller: Poller | undefined = undefined;
     #recentlyActiveUsersTracker: RecentlyActiveUsersTracker = new RecentlyActiveUsersTracker();
     #inflightMessagePromises: Map<
         bigint,
@@ -2750,6 +2751,8 @@ export class OpenChat {
         let chat = chatSummariesStore.value.get(chatId);
         const scope = chatListScopeStore.value;
         let autojoin = false;
+        this.#proposalTalliesPoller?.stop();
+        this.#proposalTalliesPoller = undefined;
 
         // if this is an unknown chat let's preview it
         if (chat === undefined) {
@@ -2850,12 +2853,12 @@ export class OpenChat {
                 });
             }
             const id = clientChat.id;
-            const updateTalliesPoller = new Poller(() => this.#updateProposalTallies(id), 20_000, undefined, true);
-            let unsub: Unsubscriber | undefined = undefined;
-            unsub = selectedChatIdStore.subscribe(_ => {
-                updateTalliesPoller.stop();
-                unsub?.();
-            });
+            this.#proposalTalliesPoller = new Poller(
+                () => this.#updateProposalTallies(id),
+                20_000,
+                undefined,
+                true
+            );
         }
 
         if (messageIndex === undefined) {
