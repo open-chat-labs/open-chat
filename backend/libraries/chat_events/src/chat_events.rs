@@ -742,7 +742,8 @@ impl ChatEvents {
         }
     }
 
-    pub fn update_proposals(&mut self, user_id: UserId, updates: Vec<ProposalUpdate>, now: TimestampMillis) {
+    pub fn update_proposals(&mut self, user_id: UserId, updates: Vec<ProposalUpdate>, now: TimestampMillis) -> bool {
+        let mut mark_chat_updated = false;
         for update in updates {
             // If only the tally has been updated, skip marking the message as having been updated
             let should_mark_updated = update.deadline.is_some() || update.reward_status.is_some() || update.status.is_some();
@@ -761,8 +762,12 @@ impl ChatEvents {
                 } else if let Some(tally) = tally_update {
                     self.in_progress_proposal_tallies.insert(success.event_index, tally);
                 }
+                if should_mark_updated {
+                    mark_chat_updated = true;
+                }
             }
         }
+        mark_chat_updated
     }
 
     fn update_proposal_inner(
