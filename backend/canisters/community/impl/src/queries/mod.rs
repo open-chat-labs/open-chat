@@ -13,6 +13,7 @@ mod events_by_index;
 mod events_window;
 mod explore_channels;
 mod http_request;
+mod in_progress_proposal_tallies;
 mod invite_code;
 mod local_user_index;
 mod lookup_members;
