@@ -22,7 +22,7 @@ use types::{
     EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen,
     HydratedMention, Mention, Message, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch,
     MessageTippedEventPayload, Milliseconds, MultiUserChat, OCResult, OptionUpdate, P2PSwapAccepted, P2PSwapCompleted,
-    P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalRewardStatus,
+    P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalDecisionStatus,
     ProposalUpdate, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess, SenderContext, Tally,
     TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants,
     VideoCallPresence, VideoCallType, VoteOperation,
@@ -744,7 +744,9 @@ impl ChatEvents {
 
     pub fn update_proposals(&mut self, user_id: UserId, updates: Vec<ProposalUpdate>, now: TimestampMillis) {
         for update in updates {
+            // If only the tally has been updated, skip marking the message as having been updated
             let should_mark_updated = update.deadline.is_some() || update.reward_status.is_some() || update.status.is_some();
+            let tally_update = update.latest_tally.clone();
 
             if let Ok(success) = self.update_message(
                 None,
@@ -754,7 +756,9 @@ impl ChatEvents {
                 ChatEventType::MessageOther,
                 |message, _| Self::update_proposal_inner(message, user_id, update, now),
             ) {
-                if let Some(tally) = success.value {
+                if !matches!(success.value, ProposalDecisionStatus::Open) {
+                    self.in_progress_proposal_tallies.remove(&success.event_index);
+                } else if let Some(tally) = tally_update {
                     self.in_progress_proposal_tallies.insert(success.event_index, tally);
                 }
             }
@@ -766,22 +770,11 @@ impl ChatEvents {
         user_id: UserId,
         update: ProposalUpdate,
         now: TimestampMillis,
-    ) -> Result<Option<Tally>, UpdateEventError> {
+    ) -> Result<ProposalDecisionStatus, UpdateEventError> {
         if message.sender == user_id {
             if let MessageContentInternal::GovernanceProposal(p) = &mut message.content {
-                let tally = update.latest_tally.clone();
-
                 p.proposal.update_status(update.into(), now);
-
-                if let Some(tally) = tally {
-                    if matches!(
-                        p.proposal.reward_status(),
-                        ProposalRewardStatus::AcceptVotes | ProposalRewardStatus::ReadyToSettle
-                    ) {
-                        return Ok(Some(tally));
-                    }
-                }
-                return Ok(None);
+                return Ok(p.proposal.status());
             }
         }
         Err(UpdateEventError::NotFound)
