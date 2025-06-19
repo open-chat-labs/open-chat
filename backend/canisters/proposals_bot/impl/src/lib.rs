@@ -143,6 +143,7 @@ pub struct NervousSystemMetrics {
     pub latest_failed_sync: Option<TimestampMillis>,
     pub latest_successful_proposals_update: Option<TimestampMillis>,
     pub latest_failed_proposals_update: Option<TimestampMillis>,
+    pub latest_failed_proposal_push: Option<TimestampMillis>,
     pub queued_proposals: Vec<ProposalId>,
     pub active_proposals: Vec<ProposalId>,
     pub active_user_submitted_proposals: Vec<ProposalId>,
