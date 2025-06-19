@@ -129,6 +129,7 @@ impl NervousSystems {
             .nervous_systems
             .values_mut()
             .filter(|ns| !ns.disabled && !ns.proposals_to_be_pushed.in_progress)
+            .sorted_by_key(|ns| ns.latest_failed_proposal_push)
         {
             if let Some((_, p)) = ns.proposals_to_be_pushed.queue.pop_first() {
                 ns.proposals_to_be_pushed.in_progress = true;
@@ -261,10 +262,11 @@ impl NervousSystems {
         }
     }
 
-    pub fn mark_proposal_push_failed(&mut self, governance_canister_id: &CanisterId, proposal: Proposal) {
+    pub fn mark_proposal_push_failed(&mut self, governance_canister_id: &CanisterId, proposal: Proposal, now: TimestampMillis) {
         if let Some(ns) = self.nervous_systems.get_mut(governance_canister_id) {
             ns.proposals_to_be_pushed.queue.insert(proposal.id(), proposal);
             ns.proposals_to_be_pushed.in_progress = false;
+            ns.latest_failed_proposal_push = Some(now);
         }
     }
 
@@ -325,6 +327,7 @@ pub struct NervousSystem {
     latest_failed_sync: Option<TimestampMillis>,
     latest_successful_proposals_update: Option<TimestampMillis>,
     latest_failed_proposals_update: Option<TimestampMillis>,
+    latest_failed_proposal_push: Option<TimestampMillis>,
     proposals_to_be_pushed: ProposalsToBePushed,
     proposals_to_be_updated: ProposalsToBeUpdated,
     active_proposals: BTreeMap<ProposalId, (Proposal, MessageId)>,
@@ -363,6 +366,7 @@ impl NervousSystem {
             latest_failed_sync: None,
             latest_successful_proposals_update: None,
             latest_failed_proposals_update: None,
+            latest_failed_proposal_push: None,
             proposals_to_be_pushed: ProposalsToBePushed::default(),
             proposals_to_be_updated: ProposalsToBeUpdated::default(),
             active_proposals: BTreeMap::default(),
@@ -513,6 +517,7 @@ impl From<&NervousSystem> for NervousSystemMetrics {
             latest_failed_sync: ns.latest_failed_sync,
             latest_successful_proposals_update: ns.latest_successful_proposals_update,
             latest_failed_proposals_update: ns.latest_failed_proposals_update,
+            latest_failed_proposal_push: ns.latest_failed_proposal_push,
             queued_proposals: ns.proposals_to_be_pushed.queue.keys().copied().collect(),
             active_proposals: ns.active_proposals.keys().copied().collect(),
             active_user_submitted_proposals: ns.active_user_submitted_proposals.keys().copied().collect(),

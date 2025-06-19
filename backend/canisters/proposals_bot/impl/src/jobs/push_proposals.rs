@@ -168,7 +168,7 @@ fn mark_proposal_pushed(
                 state
                     .data
                     .nervous_systems
-                    .mark_proposal_push_failed(&governance_canister_id, proposal);
+                    .mark_proposal_push_failed(&governance_canister_id, proposal, state.env.now());
 
                 if code == RejectCode::DestinationInvalid {
                     state.data.nervous_systems.mark_disabled(&governance_canister_id);
