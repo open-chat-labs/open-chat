@@ -2077,6 +2077,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "updateProposalTallies":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.updateProposalTallies(payload.chatId),
+                );
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

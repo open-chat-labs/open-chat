@@ -214,6 +214,11 @@ export const GroupEnableInviteCodeSuccessResult = Type.Object({
     code: Type.BigInt(),
 });
 
+export type GroupInProgressProposalTalliesArgs = Static<typeof GroupInProgressProposalTalliesArgs>;
+export const GroupInProgressProposalTalliesArgs = Type.Object({
+    invite_code: Type.Optional(Type.BigInt()),
+});
+
 export type GroupPublicSummaryArgs = Static<typeof GroupPublicSummaryArgs>;
 export const GroupPublicSummaryArgs = Type.Object({
     invite_code: Type.Optional(Type.BigInt()),
@@ -2933,6 +2938,33 @@ export const CommunityRegisterProposalVoteArgs = Type.Object({
     adopt: Type.Boolean(),
 });
 
+export type CommunityInProgressProposalTalliesArgs = Static<
+    typeof CommunityInProgressProposalTalliesArgs
+>;
+export const CommunityInProgressProposalTalliesArgs = Type.Object({
+    channel_id: ChannelId,
+    invite_code: Type.Optional(Type.BigInt()),
+});
+
+export type CommunityInProgressProposalTalliesSuccessResult = Static<
+    typeof CommunityInProgressProposalTalliesSuccessResult
+>;
+export const CommunityInProgressProposalTalliesSuccessResult = Type.Object({
+    tallies: Type.Array(Type.Tuple([EventIndex, Tally])),
+});
+
+export type CommunityInProgressProposalTalliesResponse = Static<
+    typeof CommunityInProgressProposalTalliesResponse
+>;
+export const CommunityInProgressProposalTalliesResponse = Type.Union([
+    Type.Object({
+        Success: CommunityInProgressProposalTalliesSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
 export type CommunityAddMembersToChannelUserFailedError = Static<
     typeof CommunityAddMembersToChannelUserFailedError
 >;
@@ -3848,6 +3880,13 @@ export type GroupRegisterProposalVoteArgs = Static<typeof GroupRegisterProposalV
 export const GroupRegisterProposalVoteArgs = Type.Object({
     message_index: MessageIndex,
     adopt: Type.Boolean(),
+});
+
+export type GroupInProgressProposalTalliesSuccessResult = Static<
+    typeof GroupInProgressProposalTalliesSuccessResult
+>;
+export const GroupInProgressProposalTalliesSuccessResult = Type.Object({
+    tallies: Type.Array(Type.Tuple([EventIndex, Tally])),
 });
 
 export type GroupDeleteWebhookArgs = Static<typeof GroupDeleteWebhookArgs>;
@@ -6170,6 +6209,18 @@ export type GroupUpdateGroupResponse = Static<typeof GroupUpdateGroupResponse>;
 export const GroupUpdateGroupResponse = Type.Union([
     Type.Object({
         SuccessV2: GroupUpdateGroupSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
+export type GroupInProgressProposalTalliesResponse = Static<
+    typeof GroupInProgressProposalTalliesResponse
+>;
+export const GroupInProgressProposalTalliesResponse = Type.Union([
+    Type.Object({
+        Success: GroupInProgressProposalTalliesSuccessResult,
     }),
     Type.Object({
         Error: OCError,

@@ -31,6 +31,7 @@ import type {
     JoinVideoCallResponse,
     MemberRole,
     Message,
+    OCError,
     OptionalChatPermissions,
     OptionUpdate,
     PinMessageResponse,
@@ -43,6 +44,7 @@ import type {
     SearchGroupChatResponse,
     SendMessageResponse,
     SetVideoCallPresenceResponse,
+    Tally,
     ThreadPreviewsResponse,
     ToggleMuteNotificationResponse,
     UnblockUserResponse,
@@ -88,6 +90,8 @@ import {
     GroupEventsResponse,
     GroupEventsWindowArgs,
     GroupFollowThreadArgs,
+    GroupInProgressProposalTalliesArgs,
+    GroupInProgressProposalTalliesResponse,
     GroupInviteCodeResponse,
     GroupJoinVideoCallArgs,
     GroupLocalUserIndexResponse,
@@ -181,6 +185,7 @@ import {
     pushEventSuccess,
     searchGroupChatResponse,
     sendMessageSuccess,
+    tally,
     threadPreviewsSuccess,
     undeleteMessageSuccess,
     unitResult,
@@ -1339,5 +1344,17 @@ export class GroupClient extends MsgpackCanisterAgent {
             GroupWebhookArgs,
             GroupWebhookResponse,
         );
+    }
+
+    inProgressProposalTallies(): Promise<[number, Tally][] | OCError> {
+        return this.executeMsgpackQuery(
+            "in_progress_proposal_tallies",
+            {
+                invite_code: mapOptional(this.inviteCode, textToCode),
+            },
+            (resp) => mapResult(resp, (value) => value.tallies.map(([idx, t]) => [idx, tally(t)])),
+            GroupInProgressProposalTalliesArgs,
+            GroupInProgressProposalTalliesResponse,
+        )
     }
 }

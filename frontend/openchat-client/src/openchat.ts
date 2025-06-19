@@ -2831,23 +2831,6 @@ export class OpenChat {
         }
     }
 
-    #loadSnsFunctionsForChat(chat: ChatSummary) {
-        if (
-            (chat.kind === "group_chat" || chat.kind === "channel") &&
-            chat.subtype !== undefined &&
-            chat.subtype.kind === "governance_proposals" &&
-            !chat.subtype.isNns
-        ) {
-            const { governanceCanisterId } = chat.subtype;
-            this.listNervousSystemFunctions(governanceCanisterId).then((val) => {
-                snsFunctionsStore.update((s) => {
-                    s.set(governanceCanisterId, val.functions);
-                    return s;
-                });
-            });
-        }
-    }
-
     #setSelectedChat(chatId: ChatIdentifier, messageIndex?: number): void {
         const clientChat = chatSummariesStore.value.get(chatId);
         const serverChat = allServerChatsStore.value.get(chatId);
@@ -2856,7 +2839,23 @@ export class OpenChat {
             return;
         }
 
-        this.#loadSnsFunctionsForChat(clientChat);
+        if ((clientChat.kind === "group_chat" || clientChat.kind === "channel") && clientChat.subtype?.kind === "governance_proposals") {
+            const { isNns, governanceCanisterId } = clientChat.subtype;
+            if (!isNns) {
+                this.listNervousSystemFunctions(governanceCanisterId).then((val) => {
+                    snsFunctionsStore.update((s) => {
+                        s.set(governanceCanisterId, val.functions);
+                        return s;
+                    });
+                });
+            }
+            const id = clientChat.id;
+            const updateTalliesPoller = new Poller(() => this.#updateProposalTallies(id), 20_000, undefined, true);
+            const unsub = selectedChatIdStore.subscribe(_ => {
+                updateTalliesPoller.stop();
+                unsub();
+            });
+        }
 
         if (messageIndex === undefined) {
             messageIndex = isPreviewing(clientChat)
@@ -9360,6 +9359,15 @@ export class OpenChat {
                 console.log("Failed to update direct chat settings", err);
                 return false;
             });
+    }
+
+    async #updateProposalTallies(chatId: MultiUserChatIdentifier) {
+        const updatedMessages = await this.#sendRequest({
+            kind: "updateProposalTallies",
+            chatId,
+        });
+
+        this.#addServerEventsToStores(chatId, updatedMessages, undefined, []);
     }
 
     async initialiseNotifications(): Promise<boolean> {
