@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use super::c2c_join_community::join_community_impl;
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::{caller_is_local_user_index, caller_is_proposals_bot};
@@ -11,7 +13,9 @@ use community_canister::{c2c_bot_create_channel, c2c_join_community};
 use group_chat_core::GroupChatCore;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
-use types::{BotCaller, BotPermissions, Caller, CommunityPermission, MultiUserChat, OCResult, UserType};
+use types::{
+    BotCaller, BotPermissions, Caller, ChatEventCategory, ChatEventType, CommunityPermission, MultiUserChat, OCResult, UserType,
+};
 use url::Url;
 use utils::document::validate_avatar;
 use utils::text_validation::{StringLengthValidationError, validate_channel_name, validate_description, validate_rules};
@@ -170,7 +174,7 @@ fn create_channel_impl(
     let now = state.env.now();
     let permissions = args.permissions_v2.unwrap_or_default();
 
-    let chat = GroupChatCore::new(
+    let mut chat = GroupChatCore::new(
         MultiUserChat::Channel(state.env.canister_id().into(), channel_id),
         caller.agent(),
         args.is_public,
@@ -189,6 +193,10 @@ fn create_channel_impl(
         args.external_url,
         now,
     );
+
+    if args.is_public {
+        subscribe_bots_to_events(state, &mut chat);
+    }
 
     state.data.members.mark_member_joined_channel(caller.agent(), channel_id);
 
@@ -212,4 +220,21 @@ fn create_channel_impl(
 
     handle_activity_notification(state);
     Ok(SuccessResult { channel_id })
+}
+
+fn subscribe_bots_to_events(state: &mut RuntimeState, chat: &mut GroupChatCore) {
+    for (bot_id, bot) in state.data.bots.iter() {
+        if let (Some(subscriptions), Some(permissions)) = (&bot.default_subscriptions, &bot.autonomous_permissions) {
+            let permitted_categories = permissions.permitted_chat_event_categories_to_read();
+
+            let chat_events: HashSet<ChatEventType> = subscriptions
+                .chat
+                .iter()
+                .filter(|t| permitted_categories.contains(&ChatEventCategory::from(**t)))
+                .cloned()
+                .collect();
+
+            chat.events.subscribe_bot_to_events(*bot_id, chat_events.clone());
+        }
+    }
 }

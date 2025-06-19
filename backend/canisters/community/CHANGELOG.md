@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Bot's can't access private channels they don't own ([#8181](https://github.com/open-chat-labs/open-chat/pull/8181))
 - Use MessagePack to serialize `init` args ([#8183](https://github.com/open-chat-labs/open-chat/pull/8183))
+- When public channel created subscribe bots to events ([#8199](https://github.com/open-chat-labs/open-chat/pull/8199))
 
 ### Removed
 
