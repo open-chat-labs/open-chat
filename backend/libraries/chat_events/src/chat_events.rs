@@ -22,10 +22,10 @@ use types::{
     EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen,
     HydratedMention, Mention, Message, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch,
     MessageTippedEventPayload, Milliseconds, MultiUserChat, OCResult, OptionUpdate, P2PSwapAccepted, P2PSwapCompleted,
-    P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalRewardStatus,
-    ProposalUpdate, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess, SenderContext, Tally,
-    TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants,
-    VideoCallPresence, VideoCallType, VoteOperation,
+    P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalDecisionStatus,
+    ProposalRewardStatus, ProposalUpdate, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess,
+    SenderContext, Tally, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload,
+    VideoCallParticipants, VideoCallPresence, VideoCallType, VoteOperation,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -756,8 +756,7 @@ impl ChatEvents {
                 ChatEventType::MessageOther,
                 |message, _| Self::update_proposal_inner(message, user_id, update, now),
             ) {
-                let is_settled = matches!(success.value, ProposalRewardStatus::Settled);
-                if is_settled {
+                if !matches!(success.value, ProposalDecisionStatus::Open) {
                     self.in_progress_proposal_tallies.remove(&success.event_index);
                 } else if let Some(tally) = tally_update {
                     self.in_progress_proposal_tallies.insert(success.event_index, tally);
@@ -771,11 +770,11 @@ impl ChatEvents {
         user_id: UserId,
         update: ProposalUpdate,
         now: TimestampMillis,
-    ) -> Result<ProposalRewardStatus, UpdateEventError> {
+    ) -> Result<ProposalDecisionStatus, UpdateEventError> {
         if message.sender == user_id {
             if let MessageContentInternal::GovernanceProposal(p) = &mut message.content {
                 p.proposal.update_status(update.into(), now);
-                return Ok(p.proposal.reward_status());
+                return Ok(p.proposal.status());
             }
         }
         Err(UpdateEventError::NotFound)
