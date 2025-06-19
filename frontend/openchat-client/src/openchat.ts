@@ -301,7 +301,7 @@ import {
 import page from "page";
 import { tick } from "svelte";
 import { locale } from "svelte-i18n";
-import { get } from "svelte/store";
+import { get, type Unsubscriber } from "svelte/store";
 import type { OpenChatConfig } from "./config";
 import { snapshot } from "./snapshot.svelte";
 import {
@@ -2851,9 +2851,10 @@ export class OpenChat {
             }
             const id = clientChat.id;
             const updateTalliesPoller = new Poller(() => this.#updateProposalTallies(id), 20_000, undefined, true);
-            const unsub = selectedChatIdStore.subscribe(_ => {
+            let unsub: Unsubscriber | undefined = undefined;
+            unsub = selectedChatIdStore.subscribe(_ => {
                 updateTalliesPoller.stop();
-                unsub();
+                unsub?.();
             });
         }
 
