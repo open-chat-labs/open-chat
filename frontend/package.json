@@ -62,8 +62,6 @@
         "turbo": "^2.1.2"
     },
     "dependencies": {
-        "@noble/curves": "^1.9.2",
-        "@noble/hashes": "^1.8.0",
         "chrono-node": "^2.7.8",
         "svelte-dnd-action": "^0.9.52",
         "svelte-i18n": "^4.0.1",
