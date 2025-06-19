@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add `c2c_bot_community_events` endpoint ([#8194](https://github.com/open-chat-labs/open-chat/pull/8194))
+- Implement `in_progress_proposal_tallies` for retrieving only the tallies ([#8200](https://github.com/open-chat-labs/open-chat/pull/8200))
 
 ### Changed
 
