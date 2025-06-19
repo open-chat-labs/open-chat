@@ -14,6 +14,7 @@ pub mod events;
 pub mod events_by_index;
 pub mod events_window;
 pub mod explore_channels;
+pub mod in_progress_proposal_tallies;
 pub mod invite_code;
 pub mod local_user_index;
 pub mod lookup_members;

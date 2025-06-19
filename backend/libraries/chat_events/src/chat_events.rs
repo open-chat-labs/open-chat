@@ -22,10 +22,10 @@ use types::{
     EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen,
     HydratedMention, Mention, Message, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch,
     MessageTippedEventPayload, Milliseconds, MultiUserChat, OCResult, OptionUpdate, P2PSwapAccepted, P2PSwapCompleted,
-    P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate, Reaction,
-    ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess, SenderContext, TimestampMillis, TimestampNanos,
-    Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VideoCallType,
-    VoteOperation,
+    P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalRewardStatus,
+    ProposalUpdate, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess, SenderContext, Tally,
+    TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants,
+    VideoCallPresence, VideoCallType, VoteOperation,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -43,6 +43,8 @@ pub struct ChatEvents {
     anonymized_id: String,
     search_index: SearchIndex,
     bot_subscriptions: BTreeMap<ChatEventType, HashSet<UserId>>,
+    #[serde(rename = "pt", default, skip_serializing_if = "BTreeMap::is_empty")]
+    in_progress_proposal_tallies: BTreeMap<EventIndex, Tally>,
 }
 
 impl ChatEvents {
@@ -71,6 +73,7 @@ impl ChatEvents {
             anonymized_id: hex::encode(anonymized_id.to_be_bytes()),
             search_index: SearchIndex::default(),
             bot_subscriptions: BTreeMap::new(),
+            in_progress_proposal_tallies: BTreeMap::new(),
         };
 
         events.push_event(None, ChatEventInternal::DirectChatCreated(DirectChatCreated {}), now);
@@ -102,6 +105,7 @@ impl ChatEvents {
             anonymized_id: hex::encode(anonymized_id.to_be_bytes()),
             search_index: SearchIndex::default(),
             bot_subscriptions: BTreeMap::new(),
+            in_progress_proposal_tallies: BTreeMap::new(),
         };
 
         events.push_event(
@@ -740,14 +744,20 @@ impl ChatEvents {
 
     pub fn update_proposals(&mut self, user_id: UserId, updates: Vec<ProposalUpdate>, now: TimestampMillis) {
         for update in updates {
-            let _ = self.update_message(
+            let should_mark_updated = update.deadline.is_some() || update.reward_status.is_some() || update.status.is_some();
+
+            if let Ok(success) = self.update_message(
                 None,
                 update.message_id.into(),
                 EventIndex::default(),
-                Some(now),
+                should_mark_updated.then_some(now),
                 ChatEventType::MessageOther,
                 |message, _| Self::update_proposal_inner(message, user_id, update, now),
-            );
+            ) {
+                if let Some(tally) = success.value {
+                    self.in_progress_proposal_tallies.insert(success.event_index, tally);
+                }
+            }
         }
     }
 
@@ -756,14 +766,32 @@ impl ChatEvents {
         user_id: UserId,
         update: ProposalUpdate,
         now: TimestampMillis,
-    ) -> Result<(), UpdateEventError> {
+    ) -> Result<Option<Tally>, UpdateEventError> {
         if message.sender == user_id {
             if let MessageContentInternal::GovernanceProposal(p) = &mut message.content {
+                let tally = update.latest_tally.clone();
+
                 p.proposal.update_status(update.into(), now);
-                return Ok(());
+
+                if let Some(tally) = tally {
+                    if matches!(
+                        p.proposal.reward_status(),
+                        ProposalRewardStatus::AcceptVotes | ProposalRewardStatus::ReadyToSettle
+                    ) {
+                        return Ok(Some(tally));
+                    }
+                }
+                return Ok(None);
             }
         }
         Err(UpdateEventError::NotFound)
+    }
+
+    pub fn in_progress_proposal_tallies(&self) -> Vec<(EventIndex, Tally)> {
+        self.in_progress_proposal_tallies
+            .iter()
+            .map(|(idx, tally)| (*idx, tally.clone()))
+            .collect()
     }
 
     pub fn add_reaction<P: EventPusher>(
