@@ -86,6 +86,7 @@
     import EditLabel from "../EditLabel.svelte";
     import NotFound from "../NotFound.svelte";
     import OfflineFooter from "../OfflineFooter.svelte";
+    import OnboardModal from "../onboard/OnboardModal.svelte";
     import Overlay from "../Overlay.svelte";
     import Register from "../register/Register.svelte";
     import SelectChatModal from "../SelectChatModal.svelte";
@@ -104,7 +105,6 @@
     import CreateOrUpdateGroup from "./createOrUpdateGroup/CreateOrUpdateGroup.svelte";
     import DailyChitModal from "./DailyChitModal.svelte";
     import LeftPanel from "./LeftPanel.svelte";
-    import LoggingInModal from "./LoggingInModal.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
     import LeftNav from "./nav/LeftNav.svelte";
     import NoAccess from "./NoAccess.svelte";
@@ -1091,7 +1091,7 @@
                 nervousSystem={modal.nervousSystem}
                 onClose={closeModal} />
         {:else if modal.kind === "logging_in"}
-            <LoggingInModal onClose={closeModal} />
+            <OnboardModal onClose={closeModal} />
         {:else if modal.kind === "claim_daily_chit"}
             <DailyChitModal onLeaderboard={leaderboard} onClose={closeModal} />
         {:else if modal.kind === "challenge"}

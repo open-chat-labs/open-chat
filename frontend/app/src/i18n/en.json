@@ -1493,6 +1493,7 @@
         "confirmICPTransferText": "Please confirm below when you have made a transfer of {amount} ICP to the account given below",
         "confirmTransfer": "Confirm transfer",
         "createUser": "Create user",
+        "next": "Next",
         "cyclesTransferred": "Fee of {fee} cycles confirmed",
         "disclaimer": "By registering with OpenChat you agree to abide by our terms and conditions",
         "displayNameInvalid": "Invalid display name, please try again",
