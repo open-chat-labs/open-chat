@@ -23,9 +23,9 @@ use types::{
     HydratedMention, Mention, Message, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch,
     MessageTippedEventPayload, Milliseconds, MultiUserChat, OCResult, OptionUpdate, P2PSwapAccepted, P2PSwapCompleted,
     P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalDecisionStatus,
-    ProposalRewardStatus, ProposalUpdate, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess,
-    SenderContext, Tally, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload,
-    VideoCallParticipants, VideoCallPresence, VideoCallType, VoteOperation,
+    ProposalUpdate, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess, SenderContext, Tally,
+    TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants,
+    VideoCallPresence, VideoCallType, VoteOperation,
 };
 
 #[derive(Serialize, Deserialize)]
