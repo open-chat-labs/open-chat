@@ -304,6 +304,7 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
                                             &mut state.data.members,
                                             state.data.is_public.value,
                                             true,
+                                            false,
                                             now,
                                         );
                                     }

@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Use MessagePack to serialize `init` args ([#8183](https://github.com/open-chat-labs/open-chat/pull/8183))
 - When public channel created subscribe bots to events ([#8199](https://github.com/open-chat-labs/open-chat/pull/8199))
 - Avoid marking chat as active if only proposal tally has been updated ([#8206](https://github.com/open-chat-labs/open-chat/pull/8206))
+- Push ParticipantJoined when a user joins a channel explicitly ([#8210](https://github.com/open-chat-labs/open-chat/pull/8210))
 
 ### Removed
 
