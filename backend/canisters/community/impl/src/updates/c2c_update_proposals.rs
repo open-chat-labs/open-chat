@@ -23,11 +23,12 @@ fn c2c_update_proposals_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         return Err(OCErrorCode::InitiatorNotInChat.into());
     }
 
-    channel
+    if channel
         .chat
         .events
-        .update_proposals(member.user_id, args.proposals, state.env.now());
-
-    handle_activity_notification(state);
+        .update_proposals(member.user_id, args.proposals, state.env.now())
+    {
+        handle_activity_notification(state);
+    }
     Ok(())
 }
