@@ -2830,7 +2830,6 @@ export class OpenChatAgent extends EventTarget {
         username: string,
         referralCode: string | undefined,
     ): Promise<RegisterUserResponse> {
-        console.log("PK - are we getting into the agent");
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
         const localUserIndex = await this._userIndexClient.userRegistrationCanister();

@@ -948,6 +948,7 @@ export class OpenChat {
                 switch (user.kind) {
                     case "unknown_user":
                         this.onCreatedUser(anonymousUser());
+                        console.log("So this should not really happen now");
                         this.updateIdentityState({ kind: "registering" });
                         break;
                     case "created_user":
@@ -6213,6 +6214,7 @@ export class OpenChat {
                         blobData: undefined,
                         blobUrl: undefined,
                     };
+
                     userStore.addUser(this.#rehydrateDataContent(user, "avatar"));
                 }
             }

@@ -923,7 +923,9 @@
     // $: nervousSystem = client.tryGetNervousSystem("rrkah-fqaaa-aaaaa-aaaaq-cai");
 
     trackedEffect("identity-state", () => {
-        if ($identityStateStore.kind === "logging_in") {
+        if ($identityStateStore.kind === "registering") {
+            modal = { kind: "registering" };
+        } else if ($identityStateStore.kind === "logging_in") {
             modal = { kind: "logging_in" };
         } else if ($identityStateStore.kind === "logged_in" && modal.kind === "registering") {
             console.log("We are now logged in so we are closing the register modal");

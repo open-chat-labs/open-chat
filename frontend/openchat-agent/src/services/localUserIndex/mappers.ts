@@ -343,7 +343,6 @@ export function joinChannelResponse(
 export function registerUserResponse(
     value: LocalUserIndexRegisterUserResponse,
 ): RegisterUserResponse {
-    console.log("PK - are we getting a response for registering");
     if (value === "UsernameInvalid") {
         return { kind: "username_invalid" };
     }

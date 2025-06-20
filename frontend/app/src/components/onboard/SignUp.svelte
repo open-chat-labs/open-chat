@@ -1,9 +1,14 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
+    import { createLocalStorageStore } from "@src/utils/store";
     import type { CreatedUser, OpenChat, UserOrUserGroup, UserSummary } from "openchat-client";
-    import { AuthProvider, mobileWidth, selectedAuthProviderStore } from "openchat-client";
+    import {
+        AuthProvider,
+        identityStateStore,
+        mobileWidth,
+        selectedAuthProviderStore,
+    } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import { writable, type Writable } from "svelte/store";
     import AlertBox from "../AlertBox.svelte";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
@@ -29,7 +34,8 @@
     let showGuidelines = $state(false);
     let username = $state("");
     let usernameValid = $state(false);
-    let usernameStore: Writable<string | undefined> = writable(undefined);
+    // let usernameStore: Writable<string | undefined> = writable(undefined);
+    let usernameStore = createLocalStorageStore("openchat_candidate_username", "");
     let checkingUsername: boolean = $state(false);
     let busy = $state(false);
     let badCode = $state(false);
@@ -52,8 +58,14 @@
             try {
                 busy = true;
                 selectedAuthProviderStore.set(AuthProvider.PASSKEY);
-                if (!passkeyCreated) {
-                    await client.signUpWithWebAuthn(true, username);
+
+                // if we are already in the registering state it means that we are somehow
+                // already signed in, but there is no user. In that case, skip the webauthn
+                // and just call registerUser
+                if ($identityStateStore.kind !== "registering") {
+                    if (!passkeyCreated) {
+                        await client.signUpWithWebAuthn(true, username);
+                    }
                 }
                 passkeyCreated = true;
                 await registerUser(username);

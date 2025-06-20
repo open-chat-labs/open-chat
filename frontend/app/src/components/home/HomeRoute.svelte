@@ -24,15 +24,6 @@
     let showLoader = $derived(
         !registering && (!$chatsInitialisedStore || $identityStateStore.kind === "loading_user"),
     );
-
-    $effect(() => {
-        console.log(
-            "PK: HomeRoute: ",
-            showLoader,
-            $identityStateStore.kind,
-            $chatsInitialisedStore,
-        );
-    });
 </script>
 
 {#if showLandingPage}

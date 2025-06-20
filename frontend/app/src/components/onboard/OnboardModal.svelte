@@ -54,6 +54,12 @@
         client.onRegisteredUser(user);
         onClose();
     }
+
+    function logout(e: Event) {
+        e.preventDefault();
+        e.stopPropagation();
+        client.logout();
+    }
 </script>
 
 <ModalContent hideHeader fill hideFooter onClose={cancel} closeIcon>
@@ -105,6 +111,10 @@
         {/each}
     </Select>
 </div>
+
+<a class="logout" role="button" href="/" onclick={logout}>
+    <Translatable resourceKey={i18nKey("logout")} />
+</a>
 
 <style lang="scss">
     :global(.lang .wrapper .icon) {
@@ -177,5 +187,22 @@
         position: absolute;
         left: $sp3;
         top: $sp3;
+    }
+
+    .logout {
+        @include font(light, normal, fs-90);
+        cursor: pointer;
+        position: absolute;
+        top: $sp3;
+        right: $sp3;
+        color: #fff;
+        text-decoration: underline;
+        text-decoration-color: var(--accent);
+        text-underline-offset: $sp1;
+        @media (hover: hover) {
+            &:hover {
+                text-decoration-thickness: 2px;
+            }
+        }
     }
 </style>
