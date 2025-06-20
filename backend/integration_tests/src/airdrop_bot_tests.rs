@@ -148,7 +148,7 @@ fn airdrop_end_to_end(v2: bool) {
     // Assert the airdrop channel has messages with the correct prizes in reverse order
     //
     let response =
-        client::community::happy_path::events(env, &owner, community_id, channel_id, EventIndex::from(0), true, 10, 10);
+        client::community::happy_path::events(env, &owner, community_id, channel_id, EventIndex::from(0), true, 20, 20);
 
     let contents: Vec<CryptoContent> = response
         .events
