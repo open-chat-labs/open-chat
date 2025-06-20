@@ -7,8 +7,7 @@ use std::time::Instant;
 use tracing::info;
 use types::{SubscriptionInfo, TimestampMillis};
 use web_push::{
-    ContentEncoding, PartialVapidSignatureBuilder, Urgency, VapidSignature, VapidSignatureBuilder, WebPushError,
-    WebPushMessage, WebPushMessageBuilder,
+    ContentEncoding, PartialVapidSignatureBuilder, Urgency, VapidSignature, WebPushError, WebPushMessage, WebPushMessageBuilder,
 };
 
 const MAX_PAYLOAD_LENGTH_BYTES: u32 = 3 * 1000; // Just under 3KB
@@ -25,14 +24,14 @@ impl Processor {
     pub fn new(
         receiver: Receiver<PushNotification>,
         sender: Sender<NotificationToPush>,
-        vapid_private_pem: &str,
+        sig_builder: PartialVapidSignatureBuilder,
         invalid_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
         throttled_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
     ) -> Self {
         Self {
             receiver,
             sender,
-            sig_builder: VapidSignatureBuilder::from_pem_no_sub(vapid_private_pem.as_bytes()).unwrap(),
+            sig_builder,
             invalid_subscriptions,
             throttled_subscriptions,
         }

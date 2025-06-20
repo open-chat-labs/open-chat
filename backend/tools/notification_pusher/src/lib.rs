@@ -1,8 +1,9 @@
 use crate::bot_notifications::start_bot_notifications_processor;
-use crate::config::Config;
+use crate::ic_agent::IcAgent;
 use crate::metrics::{Metrics, collect_metrics};
 use crate::reader::Reader;
 use crate::user_notifications::start_user_notifications_processor;
+use fcm_service::FcmService;
 use index_store::IndexStore;
 use prometheus::{Encoder, TextEncoder};
 use std::io::Write;
@@ -10,41 +11,39 @@ use std::sync::Arc;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use tracing::info;
 use types::{CanisterId, FcmData, FcmToken, Payload, SubscriptionInfo, TimestampMillis, UserId};
-use web_push::WebPushMessage;
+use web_push::{PartialVapidSignatureBuilder, WebPushMessage};
 
 mod bot_notifications;
-pub mod config;
 pub mod ic_agent;
 mod metrics;
 mod reader;
 mod user_notifications;
 
-pub async fn run_notifications_pusher<I: IndexStore + 'static>(config: Config<I>) {
+pub async fn run_notifications_pusher<I: IndexStore + 'static>(
+    ic_agent: IcAgent,
+    index_canister_id: CanisterId,
+    index_store: I,
+    sig_builder: PartialVapidSignatureBuilder,
+    pusher_threads: u32,
+    fcm_service: FcmService,
+    is_localhost: bool,
+) {
     info!("Notifications pusher starting");
 
     Metrics::init();
 
-    let notification_canister_ids = config
-        .ic_agent
-        .notification_canisters(config.index_canister_id)
-        .await
-        .unwrap();
+    let notification_canister_ids = ic_agent.notification_canisters(index_canister_id).await.unwrap();
 
-    let user_notifications_sender = start_user_notifications_processor(
-        config.ic_agent.clone(),
-        config.index_canister_id,
-        config.vapid_private_pem,
-        config.pusher_count,
-        config.fcm_service,
-    );
+    let user_notifications_sender =
+        start_user_notifications_processor(ic_agent.clone(), index_canister_id, sig_builder, pusher_threads, fcm_service);
 
-    let bot_notifications_sender = start_bot_notifications_processor(config.is_production);
+    let bot_notifications_sender = start_bot_notifications_processor(is_localhost);
 
     for notification_canister_id in notification_canister_ids {
         let reader = Reader::new(
-            config.ic_agent.clone(),
+            ic_agent.clone(),
             notification_canister_id,
-            config.index_store.clone(),
+            index_store.clone(),
             user_notifications_sender.clone(),
             bot_notifications_sender.clone(),
         );
