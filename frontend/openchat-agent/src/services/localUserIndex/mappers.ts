@@ -5,20 +5,33 @@ import type {
     ChatEventsArgs,
     ChatEventsBatchResponse,
     ChatEventsResponse,
+    CommandArg,
     GroupAndCommunitySummaryUpdatesResponse,
     GroupAndCommunitySummaryUpdatesResponseBatch,
     JoinCommunityResponse,
     JoinGroupResponse,
     MessageContext,
     RegisterUserResponse,
-    CommandArg,
     VerifiedCredentialArgs,
     VideoCallType,
 } from "openchat-shared";
+import {
+    CommonResponses,
+    MAX_EVENTS,
+    MAX_MESSAGES,
+    UnsupportedValueError,
+    isSuccessfulEventsResponse,
+    toBigInt32,
+} from "openchat-shared";
 import type {
-    LocalUserIndexChatEventsEventsSelectionCriteria,
+    BotActionScope as ApiBotActionScope,
+    BotCommandArg,
+    BotCommandArgValue,
+    LocalUserIndexAccessTokenV2Args,
+    LocalUserIndexAccessTokenV2Response,
     LocalUserIndexChatEventsEventsArgs,
     LocalUserIndexChatEventsEventsContext,
+    LocalUserIndexChatEventsEventsSelectionCriteria,
     LocalUserIndexChatEventsResponse,
     LocalUserIndexGroupAndCommunitySummaryUpdatesV2Response,
     LocalUserIndexInviteUsersToChannelResponse,
@@ -30,20 +43,7 @@ import type {
     LocalUserIndexWithdrawFromIcpswapResponse,
     VerifiedCredentialGateArgs as TVerifiedCredentialGateArgs,
     VideoCallType as TVideoCallType,
-    BotCommandArg,
-    BotCommandArgValue,
-    LocalUserIndexAccessTokenV2Response,
-    LocalUserIndexAccessTokenV2Args,
-    BotActionScope as ApiBotActionScope,
 } from "../../typebox";
-import {
-    toBigInt32,
-    CommonResponses,
-    MAX_EVENTS,
-    MAX_MESSAGES,
-    UnsupportedValueError,
-    isSuccessfulEventsResponse,
-} from "openchat-shared";
 import {
     bytesToHexString,
     principalBytesToString,
@@ -57,8 +57,8 @@ import {
     getEventsSuccess,
     ocError,
 } from "../common/chatMappersV2";
-import { groupChatSummary, groupChatSummaryUpdates } from "../group/mappersV2";
 import { communitySummaryUpdates } from "../community/mappersV2";
+import { groupChatSummary, groupChatSummaryUpdates } from "../group/mappersV2";
 
 export function apiAccessTokenType(domain: AccessTokenType): LocalUserIndexAccessTokenV2Args {
     switch (domain.kind) {
@@ -294,9 +294,11 @@ export async function chatEventsBatchResponse(
                 response.Success,
                 principal,
                 args.context.chatId,
-                true
+                true,
             );
-            responses.push(isSuccessfulEventsResponse(result) ? { kind: "success", result } : result);
+            responses.push(
+                isSuccessfulEventsResponse(result) ? { kind: "success", result } : result,
+            );
         } else {
             responses.push(ocError(response.Error));
         }
@@ -341,6 +343,7 @@ export function joinChannelResponse(
 export function registerUserResponse(
     value: LocalUserIndexRegisterUserResponse,
 ): RegisterUserResponse {
+    console.log("PK - are we getting a response for registering");
     if (value === "UsernameInvalid") {
         return { kind: "username_invalid" };
     }

@@ -88,7 +88,6 @@
     import OfflineFooter from "../OfflineFooter.svelte";
     import OnboardModal from "../onboard/OnboardModal.svelte";
     import Overlay from "../Overlay.svelte";
-    import Register from "../register/Register.svelte";
     import SelectChatModal from "../SelectChatModal.svelte";
     import SuspendedModal from "../SuspendedModal.svelte";
     import Toast from "../Toast.svelte";
@@ -924,9 +923,7 @@
     // $: nervousSystem = client.tryGetNervousSystem("rrkah-fqaaa-aaaaa-aaaaq-cai");
 
     trackedEffect("identity-state", () => {
-        if ($identityStateStore.kind === "registering") {
-            modal = { kind: "registering" };
-        } else if ($identityStateStore.kind === "logging_in") {
+        if ($identityStateStore.kind === "logging_in") {
             modal = { kind: "logging_in" };
         } else if ($identityStateStore.kind === "logged_in" && modal.kind === "registering") {
             console.log("We are now logged in so we are closing the register modal");
@@ -1038,8 +1035,6 @@
         onClose={closeModal}>
         {#if modal.kind === "select_chat"}
             <SelectChatModal onClose={onCloseSelectChat} onSelect={onSelectChat} />
-        {:else if modal.kind === "registering"}
-            <Register onCreatedUser={(user) => client.onRegisteredUser(user)} />
         {:else if modal.kind === "suspended"}
             <SuspendedModal onClose={closeModal} />
         {:else if modal.kind === "register_bot"}
@@ -1090,8 +1085,10 @@
                 selectedMultiUserChat={modal.chat}
                 nervousSystem={modal.nervousSystem}
                 onClose={closeModal} />
-        {:else if modal.kind === "logging_in"}
-            <OnboardModal onClose={closeModal} />
+        {:else if modal.kind === "logging_in" || modal.kind === "registering"}
+            <OnboardModal
+                step={modal.kind === "registering" ? "sign_up" : "select_flow"}
+                onClose={closeModal} />
         {:else if modal.kind === "claim_daily_chit"}
             <DailyChitModal onLeaderboard={leaderboard} onClose={closeModal} />
         {:else if modal.kind === "challenge"}

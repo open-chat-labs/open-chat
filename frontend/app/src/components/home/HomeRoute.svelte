@@ -15,11 +15,24 @@
 
     let { showLandingPage }: HomeProps = $props();
 
-    let showLoader = $derived(
-        $identityStateStore.kind !== "registering" &&
-            $identityStateStore.kind !== "challenging" &&
-            (!$chatsInitialisedStore || $identityStateStore.kind === "loading_user"),
+    let registering = $derived(
+        $identityStateStore.kind === "registering" ||
+            $identityStateStore.kind === "challenging" ||
+            ($identityStateStore.kind === "loading_user" && $identityStateStore.registering),
     );
+
+    let showLoader = $derived(
+        !registering && (!$chatsInitialisedStore || $identityStateStore.kind === "loading_user"),
+    );
+
+    $effect(() => {
+        console.log(
+            "PK: HomeRoute: ",
+            showLoader,
+            $identityStateStore.kind,
+            $chatsInitialisedStore,
+        );
+    });
 </script>
 
 {#if showLandingPage}

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import type { OpenChat, UserOrUserGroup, UserSummary } from "openchat-client";
-    import { mobileWidth } from "openchat-client";
+    import type { CreatedUser, OpenChat, UserOrUserGroup, UserSummary } from "openchat-client";
+    import { AuthProvider, mobileWidth, selectedAuthProviderStore } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { writable, type Writable } from "svelte/store";
     import Button from "../Button.svelte";
@@ -18,20 +18,21 @@
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        onClose: () => void;
+        onCreatedUser: (user: CreatedUser) => void;
         error: string | undefined;
     }
 
-    let { error = $bindable() }: Props = $props();
+    let { error = $bindable(), onCreatedUser }: Props = $props();
 
     let showGuidelines = $state(false);
     let username = $state("");
     let usernameValid = $state(false);
     let usernameStore: Writable<string | undefined> = writable(undefined);
     let checkingUsername: boolean = $state(false);
-    // let busy = $derived($registerState.kind === "spinning");
     let busy = $state(false);
+    let badCode = $state(false);
     let referringUser: UserSummary | undefined = $state(undefined);
+    let createdUser: CreatedUser | undefined = undefined;
 
     function onShowGuidelines() {
         showGuidelines = true;
@@ -41,12 +42,76 @@
         showGuidelines = false;
     }
 
-    function register(e: Event) {
+    async function register(e: Event) {
         e.preventDefault();
         if (usernameValid) {
             usernameStore.set(username);
-            // registerUser(username);
+            try {
+                busy = true;
+                selectedAuthProviderStore.set(AuthProvider.PASSKEY);
+                await client.signUpWithWebAuthn(true, username);
+                await registerUser(username);
+            } catch (err) {
+                error = `Error registering user: ${err}`;
+            } finally {
+                busy = false;
+            }
         }
+    }
+
+    async function registerUser(username: string) {
+        await client.registerUser(username).then((resp) => {
+            badCode = false;
+            if (resp.kind === "username_taken") {
+                error = "register.usernameTaken";
+            } else if (resp.kind === "username_too_short") {
+                error = "register.usernameTooShort";
+            } else if (resp.kind === "username_too_long") {
+                error = "register.usernameTooLong";
+            } else if (resp.kind === "username_invalid") {
+                error = "register.usernameInvalid";
+            } else if (resp.kind === "user_limit_reached") {
+                error = "register.userLimitReached";
+            } else if (resp.kind === "internal_error") {
+                error = "unexpectedError";
+            } else if (resp.kind === "referral_code_invalid") {
+                error = "register.referralCodeInvalid";
+                badCode = true;
+            } else if (resp.kind === "referral_code_already_claimed") {
+                error = "register.referralCodeAlreadyClaimed";
+                badCode = true;
+            } else if (resp.kind === "referral_code_expired") {
+                error = "register.referralCodeExpired";
+                badCode = true;
+            } else if (resp.kind === "success") {
+                error = undefined;
+                createdUser = {
+                    kind: "created_user",
+                    username,
+                    dateCreated: BigInt(Date.now()),
+                    displayName: undefined,
+                    cryptoAccount: resp.icpAccount,
+                    userId: resp.userId,
+                    isPlatformModerator: false,
+                    isPlatformOperator: false,
+                    suspensionDetails: undefined,
+                    isSuspectedBot: false,
+                    diamondStatus: { kind: "inactive" },
+                    moderationFlagsEnabled: 0,
+                    updated: 0n,
+                    isBot: false,
+                    isUniquePerson: false,
+                    totalChitEarned: 0,
+                    chitBalance: 0,
+                    streak: 0,
+                    maxStreak: 0,
+                };
+                onCreatedUser(createdUser);
+                busy = false;
+            } else {
+                error = `Unexpected register user response: ${resp.kind}`;
+            }
+        });
     }
 
     function deleteUser(_: UserOrUserGroup) {

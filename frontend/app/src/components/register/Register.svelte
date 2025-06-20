@@ -311,20 +311,20 @@
     :global(.guidelines-modal .card .header:not(.open) .arrow path) {
         fill: var(--txt);
     }
-    :global(.lang select.select) {
-        @include font(light, normal, fs-90);
-        background-color: transparent;
-        padding: 0;
-        min-width: 80px;
-        height: auto;
-        border: none;
-        border-bottom: 1px solid var(--accent);
-        color: #fff;
+    // :global(.lang select.select) {
+    //     @include font(light, normal, fs-90);
+    //     background-color: transparent;
+    //     padding: 0;
+    //     min-width: 80px;
+    //     height: auto;
+    //     border: none;
+    //     border-bottom: 1px solid var(--accent);
+    //     color: #fff;
 
-        option {
-            @include font(light, normal, fs-90);
-        }
-    }
+    //     option {
+    //         @include font(light, normal, fs-90);
+    //     }
+    // }
     :global(.username-wrapper .results) {
         max-height: 250px;
         @include nice-scrollbar();

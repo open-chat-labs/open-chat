@@ -132,6 +132,10 @@
         document.dir = $rtlStore ? "rtl" : "ltr";
     });
 
+    $effect(() => {
+        console.trace($identityStateStore.kind);
+    });
+
     trackedEffect("landing-page", () => {
         if (!$notFoundStore && showLandingPage) {
             document.body.classList.add("landing-page");

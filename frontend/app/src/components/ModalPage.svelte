@@ -1,9 +1,9 @@
 <script lang="ts">
-    import Select from "./Select.svelte";
-    import { setLocale, supportedLanguages } from "../i18n/i18n";
-    import { locale } from "svelte-i18n";
-    import { onMount } from "svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
+    import { onMount } from "svelte";
+    import { locale } from "svelte-i18n";
+    import { setLocale, supportedLanguages } from "../i18n/i18n";
+    import Select from "./Select.svelte";
     interface Props {
         minHeight?: string | undefined;
         bgClass?:
@@ -52,20 +52,19 @@
         color: var(--modalPage-txt);
     }
 
-    :global(.lang select.select) {
-        @include font(light, normal, fs-90);
-        background-color: transparent;
-        padding: 0;
-        min-width: 80px;
-        height: auto;
-        border: none;
-        border-bottom: 1px solid var(--accent);
-        color: #fff;
+    // :global(.lang select.select) {
+    //     @include font(light, normal, fs-90);
+    //     background-color: transparent;
+    //     padding: 0;
+    //     min-width: 80px;
+    //     height: auto;
+    //     border: none;
+    //     color: #fff;
 
-        option {
-            @include font(light, normal, fs-90);
-        }
-    }
+    //     option {
+    //         @include font(light, normal, fs-90);
+    //     }
+    // }
 
     .lang {
         position: absolute;

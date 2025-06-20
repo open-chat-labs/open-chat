@@ -1,23 +1,34 @@
 <script lang="ts">
-    import { i18nKey } from "@src/i18n/i18n";
+    import { i18nKey, setLocale, supportedLanguages } from "@src/i18n/i18n";
+    import { OpenChat, type CreatedUser } from "openchat-client";
+    import { getContext } from "svelte";
+    import { locale } from "svelte-i18n";
+    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
     import ModalContent from "../ModalContent.svelte";
+    import Select from "../Select.svelte";
     import Translatable from "../Translatable.svelte";
     import FlowSelection from "./FlowSelection.svelte";
     import SignIn from "./SignIn.svelte";
     import SignUp from "./SignUp.svelte";
 
+    const client = getContext<OpenChat>("client");
+
     type Step = "select_flow" | "sign_up" | "sign_in";
 
     interface Props {
+        step?: Step;
         onClose: () => void;
     }
 
-    let { onClose }: Props = $props();
-    let step = $state<Step>("select_flow");
+    let { onClose, step = $bindable("select_flow") }: Props = $props();
     let error: string | undefined = $state(undefined);
+    let selectedLocale = $state(($locale as string).substring(0, 2));
+    $effect(() => {
+        setLocale(selectedLocale);
+    });
 
     function cancel() {
         onClose();
@@ -35,6 +46,11 @@
                 return i18nKey("loginDialog.signupTitle");
         }
     });
+
+    function onCreatedUser(user: CreatedUser) {
+        client.onRegisteredUser(user);
+        onClose();
+    }
 </script>
 
 <ModalContent hideHeader fill hideFooter onClose={cancel} closeIcon>
@@ -52,9 +68,15 @@
                 </div>
 
                 <span class="close">
-                    <HoverIcon onclick={onClose}>
-                        <Close size={"1em"} color={"var(--icon-txt)"} />
-                    </HoverIcon>
+                    {#if step === "select_flow"}
+                        <HoverIcon onclick={onClose}>
+                            <Close size={"1em"} color={"var(--icon-txt)"} />
+                        </HoverIcon>
+                    {:else}
+                        <HoverIcon onclick={() => (step = "select_flow")}>
+                            <ArrowLeft size={"1em"} color={"var(--icon-txt)"} />
+                        </HoverIcon>
+                    {/if}
                 </span>
             </div>
         </div>
@@ -67,13 +89,41 @@
             {:else if step === "sign_in"}
                 <SignIn bind:error onClose={() => (step = "select_flow")} />
             {:else if step === "sign_up"}
-                <SignUp bind:error onClose={() => (step = "select_flow")} />
+                <SignUp {onCreatedUser} bind:error />
             {/if}
         </div>
     {/snippet}
 </ModalContent>
 
+<div class="lang">
+    <Select bind:value={selectedLocale}>
+        {#each supportedLanguages as lang}
+            <option value={lang.code}>{lang.name}</option>
+        {/each}
+    </Select>
+</div>
+
 <style lang="scss">
+    :global(.lang .wrapper .icon) {
+        right: -1px;
+        top: 1px;
+    }
+
+    :global(.lang select.select) {
+        @include font(light, normal, fs-90);
+        background-color: transparent;
+        min-width: 80px;
+        height: auto;
+        color: #fff;
+        padding: $sp2 $sp4;
+        padding-right: $sp5;
+        border: 1px solid var(--bd);
+
+        option {
+            @include font(light, normal, fs-90);
+        }
+    }
+
     .body {
         display: flex;
         flex-direction: column;
@@ -118,5 +168,11 @@
         .title {
             flex: auto;
         }
+    }
+
+    .lang {
+        position: absolute;
+        left: $sp3;
+        top: $sp3;
     }
 </style>
