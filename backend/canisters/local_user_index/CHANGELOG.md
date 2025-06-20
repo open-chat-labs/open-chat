@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `bot_community_events` endpoint ([#8194](https://github.com/open-chat-labs/open-chat/pull/8194))
+
 ### Changed
 
 - Serialize bot notifications in LUI not pusher ([#8169](https://github.com/open-chat-labs/open-chat/pull/8169))

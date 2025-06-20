@@ -404,6 +404,7 @@
     "change": "изменить",
     "changeTheme": "Изменить тему",
     "channelAlreadyExists": "Канал с таким названием уже существует",
+    "chatDetails": "Подробности чата",
     "chatFrozen": "Этот чат был заморожен",
     "chatFrozenBy": "Чат заморожен пользователем {frozenBy}",
     "chatMenu": "Меню чата",

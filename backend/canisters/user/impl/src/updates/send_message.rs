@@ -1,34 +1,27 @@
+use super::c2c_send_messages::{HandleMessageArgs, handle_message_impl};
 use crate::crypto::process_transaction_without_caller_check;
-use crate::guards::caller_is_local_user_index;
-use crate::guards::caller_is_owner;
+use crate::guards::{caller_is_local_user_index, caller_is_owner};
 use crate::timer_job_types::{DeleteFileReferencesJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob};
 use crate::updates::send_message_with_transfer::set_up_p2p_swap;
 use crate::{Data, RuntimeState, TimerJob, UserEventPusher, execute_update, execute_update_async, mutate_state, read_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::TextContentInternal;
-use chat_events::{EditMessageArgs, EditMessageSuccess};
-use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal, ValidateNewMessageContentResult};
+use chat_events::{
+    EditMessageArgs, EditMessageSuccess, MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal,
+    TextContentInternal, ValidateNewMessageContentResult,
+};
 use constants::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use std::ops::Not;
-use types::DirectMessageNotification;
-use types::EventIndex;
 use types::{
-    BlobReference, CanisterId, Chat, ChatId, CompletedCryptoTransaction, CryptoTransaction, EventWrapper, FcmData, Message,
-    MessageContent, MessageContentInitial, MessageId, MessageIndex, P2PSwapLocation, ReplyContext, TimestampMillis, UserId,
-    UserType,
+    BlobReference, BotCaller, BotPermissions, CanisterId, Chat, ChatId, CompletedCryptoTransaction, CryptoTransaction,
+    DirectMessageNotification, EventIndex, EventWrapper, FcmData, Message, MessageContent, MessageContentInitial, MessageId,
+    MessageIndex, OCResult, P2PSwapLocation, ReplyContext, TimestampMillis, UserId, UserNotificationPayload, UserType,
 };
-use types::{BotCaller, OCResult};
-use types::{BotPermissions, UserNotificationPayload};
-use user_canister::c2c_bot_send_message;
 use user_canister::send_message_v2::{Response::*, *};
-use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent};
-
-use super::c2c_send_messages::HandleMessageArgs;
-use super::c2c_send_messages::handle_message_impl;
+use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent, c2c_bot_send_message};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]

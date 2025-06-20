@@ -173,7 +173,6 @@ import {
     type MessageFormatter,
     type MessagePermission,
     type MessageReminderCreatedContent,
-    missingUserIds,
     type ModerationFlag,
     type MultiUserChat,
     type MultiUserChatIdentifier,
@@ -356,7 +355,6 @@ import {
     pinNumberRequiredStore,
     pinNumberResolverStore,
     platformOperatorStore,
-    proposalTalliesStore,
     querystringCodeStore,
     querystringReferralCodeStore,
     querystringStore,
@@ -404,6 +402,7 @@ import {
     translationsStore,
     userCreatedStore,
     walletConfigStore,
+    webhookUserIdsStore,
 } from "./state";
 import { botState } from "./state/bots.svelte";
 import { ChatDetailsState } from "./state/chat/serverDetails";
@@ -578,6 +577,7 @@ import {
     compareIsNotYouThenUsername,
     compareUsername,
     formatLastOnlineDate,
+    missingUserIds,
     nullUser,
     userAvatarUrl,
 } from "./utils/user";
@@ -1840,7 +1840,6 @@ export class OpenChat {
     validateTokenInput = validateTokenInput;
     parseBigInt = parseBigInt;
     userIdsFromEvents = userIdsFromEvents;
-    missingUserIds = missingUserIds;
     userOrUserGroupName = userOrUserGroupName;
     userOrUserGroupId = userOrUserGroupId;
     extractUserIdsFromMentions = extractUserIdsFromMentions;
@@ -2881,7 +2880,9 @@ export class OpenChat {
         this.#userLookupForMentions = undefined;
 
         if (isProposalsChat(clientChat)) {
-            filteredProposalsStore.set(FilteredProposals.fromStorage(clientChat.subtype.governanceCanisterId));
+            filteredProposalsStore.set(
+                FilteredProposals.fromStorage(clientChat.subtype.governanceCanisterId),
+            );
         }
 
         const selectedChat = selectedChatSummaryStore.value;
@@ -3382,6 +3383,15 @@ export class OpenChat {
                     const lapsed = new Set(
                         resp.members.filter((m) => m.lapsed).map((m) => m.userId),
                     );
+                    const webhooksToAdd = resp.webhooks.filter((w) => !webhookUserIdsStore.value.has(w.id));
+                    if (webhooksToAdd.length > 0) {
+                        webhookUserIdsStore.update((set) => {
+                            for (const webhook of webhooksToAdd) {
+                                set.add(webhook.id);
+                            }
+                            return set;
+                        });
+                    }
 
                     selectedServerChatStore.set(
                         new ChatDetailsState(
@@ -4189,10 +4199,8 @@ export class OpenChat {
     }
 
     eventExpiry(chat: ChatSummary, timestamp: number): number | undefined {
-        if (chat.kind === "group_chat" || chat.kind === "channel") {
-            if (chat.eventsTTL !== undefined) {
-                return timestamp + Number(chat.eventsTTL);
-            }
+        if (chat.eventsTTL !== undefined) {
+            return timestamp + Number(chat.eventsTTL);
         }
         return undefined;
     }
@@ -5312,6 +5320,7 @@ export class OpenChat {
     }
 
     getProposalVoteDetails(
+        messageId: bigint,
         governanceCanisterId: string,
         proposalId: bigint,
         isNns: boolean,
@@ -5322,10 +5331,7 @@ export class OpenChat {
             proposalId,
             isNns,
         }).then((resp) => {
-            proposalTalliesStore.update((map) => {
-                map.set(`${governanceCanisterId}_${proposalId}`, resp.latestTally);
-                return map;
-            });
+            localUpdates.markProposalTallyUpdated(messageId, resp.latestTally);
             return resp;
         });
     }
@@ -5563,7 +5569,7 @@ export class OpenChat {
             {
                 userGroups: [
                     {
-                        users: this.missingUserIds(userStore.allUsers, userIds),
+                        users: missingUserIds(userStore.allUsers, webhookUserIdsStore.value, userIds),
                         updatedSince: BigInt(0),
                     },
                 ],
@@ -9339,12 +9345,25 @@ export class OpenChat {
             });
     }
 
-    updateDirectChatSettings(userId: string, eventsTtl: OptionUpdate<bigint>): Promise<boolean> {
+    updateDirectChatSettings(
+        chat: DirectChatSummary,
+        eventsTtl: OptionUpdate<bigint>,
+    ): Promise<boolean> {
         return this.#sendRequest({
             kind: "updateDirectChatSettings",
-            userId,
+            userId: chat.them.userId,
             eventsTtl,
-        });
+        })
+            .then((success) => {
+                if (success) {
+                    localUpdates.updateDirectChatProperties(chat.id, eventsTtl);
+                }
+                return success;
+            })
+            .catch((err) => {
+                console.log("Failed to update direct chat settings", err);
+                return false;
+            });
     }
 
     async initialiseNotifications(): Promise<boolean> {

@@ -7,6 +7,7 @@ use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
 use types::{C2CError, CanisterId, Proposal, ProposalId};
+use utils::canister::should_retry_failed_c2c_call;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -59,12 +60,16 @@ async fn process_proposal(governance_canister_id: CanisterId, proposal_id: Propo
             update_proposals::start_job_if_required(state);
         }),
         Ok(None) => {}
-        Err(_) => {
+        Err(error) => {
             mutate_state(|state| {
                 state
                     .data
                     .finished_proposals_to_process
                     .push_back((governance_canister_id, proposal_id));
+
+                if !should_retry_failed_c2c_call(error.reject_code(), error.message()) {
+                    state.data.nervous_systems.mark_disabled(&governance_canister_id);
+                }
 
                 start_job_if_required(state);
             });

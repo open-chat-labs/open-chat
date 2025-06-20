@@ -26,16 +26,12 @@
         timer = window.setTimeout(onClose, duration);
     });
 
-    function pause(e: MouseEvent) {
-        e.preventDefault();
-        e.stopPropagation();
+    function pause() {
         perc.target = perc.current;
         window.clearTimeout(timer);
     }
 
-    function resume(e: MouseEvent) {
-        e.preventDefault();
-        e.stopPropagation();
+    function resume() {
         const remainingTime = (perc.current / 100) * duration;
         perc.set(0, { duration: remainingTime });
         timer = window.setTimeout(onClose, remainingTime);

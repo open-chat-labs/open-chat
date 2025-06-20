@@ -46,7 +46,6 @@ import {
     type Referral,
     type StorageStatus,
     type StreakInsurance,
-    type Tally,
     type ThreadIdentifier,
     type ThreadSyncDetails,
     type TokenExchangeRates,
@@ -1114,8 +1113,6 @@ export const threadPermissionsForSelectedChatStore = derived(
         return getMessagePermissionsForSelectedChat(selectedChatSummary, "thread");
     },
 );
-export const proposalTalliesStore = writable<Map<string, Tally>>(new Map(), undefined, notEq);
-
 export const selectedChatDraftMessageStore = derived(
     [selectedChatIdStore, localUpdates.draftMessages],
     ([selectedChatId, draftMessages]) =>

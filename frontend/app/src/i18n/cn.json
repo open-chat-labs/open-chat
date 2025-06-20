@@ -404,6 +404,7 @@
     "change": "更改",
     "changeTheme": "更改主题",
     "channelAlreadyExists": "同名的频道已存在",
+    "chatDetails": "聊天详细信息",
     "chatFrozen": "此聊天已被冻结",
     "chatFrozenBy": "聊天被 {frozenBy} 冻结",
     "chatMenu": "聊天菜单",

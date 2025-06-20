@@ -404,6 +404,7 @@
     "change": "يتغير",
     "changeTheme": "تغيير الثيم",
     "channelAlreadyExists": "توجد قناة بهذا الاسم بالفعل",
+    "chatDetails": "تفاصيل الدردشة",
     "chatFrozen": "لقد تم تجميد هذه الدردشة",
     "chatFrozenBy": "تم تجميد الدردشة بواسطة {frozenBy}",
     "chatMenu": "قائمة الدردشة",

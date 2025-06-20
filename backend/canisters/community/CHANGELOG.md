@@ -6,14 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `c2c_bot_community_events` endpoint ([#8194](https://github.com/open-chat-labs/open-chat/pull/8194))
+- Implement `in_progress_proposal_tallies` for retrieving only the tallies ([#8200](https://github.com/open-chat-labs/open-chat/pull/8200))
+
 ### Changed
 
 - Bot's can't access private channels they don't own ([#8181](https://github.com/open-chat-labs/open-chat/pull/8181))
 - Use MessagePack to serialize `init` args ([#8183](https://github.com/open-chat-labs/open-chat/pull/8183))
+- When public channel created subscribe bots to events ([#8199](https://github.com/open-chat-labs/open-chat/pull/8199))
+- Avoid marking chat as active if only proposal tally has been updated ([#8206](https://github.com/open-chat-labs/open-chat/pull/8206))
 
 ### Removed
 
 - Remove `gate` which is superseded by `gate_config` ([#8186](https://github.com/open-chat-labs/open-chat/pull/8186))
+
+### Fixed
+
+- Send bot notification when a user joins a channel ([#8208](https://github.com/open-chat-labs/open-chat/pull/8208))
 
 ## [[2.0.1793](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1793-community)] - 2025-06-13
 

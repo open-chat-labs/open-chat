@@ -1,6 +1,7 @@
 pub mod access_token_v2;
 pub mod bot_chat_events;
 pub mod bot_chat_summary;
+pub mod bot_community_events;
 pub mod bot_community_summary;
 pub mod c2c_can_push_notifications;
 pub mod c2c_diamond_membership_expiry_dates;

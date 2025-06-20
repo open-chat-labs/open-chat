@@ -66,3 +66,4 @@ event_wrapper!(EventWrapperChatEvent, crate::ChatEvent);
 event_wrapper!(EventWrapperGroupFrozen, crate::GroupFrozen);
 event_wrapper!(EventWrapperGroupUnfrozen, crate::GroupUnfrozen);
 event_wrapper!(EventWrapperMessage, crate::Message);
+event_wrapper!(EventWrapperCommunityEvent, crate::CommunityEvent);

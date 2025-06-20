@@ -32,6 +32,7 @@ import {
     type P2PSwapStatus,
     type SenderContext,
     type StreakInsurance,
+    type Tally,
     type ThreadSummary,
     type UnconfirmedMessageEvent,
     type UnconfirmedState,
@@ -780,6 +781,20 @@ export class GlobalLocalState {
         );
     }
 
+    updateDirectChatProperties(id: DirectChatIdentifier, eventsTTL?: OptionUpdate<bigint>) {
+        return this.#modifyChatSummaryUpdates(
+            id,
+            (upd) => {
+                upd.eventsTTL = eventsTTL;
+                return (upd) => {
+                    upd.eventsTTL = undefined;
+                    return upd;
+                };
+            },
+            "updateDirectChatProperties",
+        );
+    }
+
     updateChatProperties(
         id: ChatIdentifier,
         name?: string,
@@ -964,6 +979,20 @@ export class GlobalLocalState {
                 };
             },
             "markPrizeClaimed",
+        );
+    }
+
+    markProposalTallyUpdated(messageId: bigint, tally: Tally) {
+        return this.#modifyMessageUpdates(
+            messageId,
+            (upd) => {
+                upd.proposalTally = tally;
+                return (upd) => {
+                    upd.proposalTally = undefined;
+                    return upd;
+                };
+            },
+            "markProposalTallyUpdated"
         );
     }
 

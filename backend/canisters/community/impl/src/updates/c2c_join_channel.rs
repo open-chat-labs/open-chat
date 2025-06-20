@@ -269,6 +269,7 @@ fn commit(
 
             jobs::expire_members::start_job_if_required(state);
 
+            state.push_bot_notification(result.bot_notification);
             handle_activity_notification(state);
 
             Success(Box::new(summary))

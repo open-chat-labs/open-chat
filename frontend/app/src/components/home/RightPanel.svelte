@@ -53,6 +53,7 @@
     import ChannelOrCommunitySummary from "./ChannelOrCommunitySummary.svelte";
     import CommunityDetails from "./communities/details/CommunitySummary.svelte";
     import CommunityFilters from "./communities/explore/Filters.svelte";
+    import DirectChatDetails from "./groupdetails/DirectChatDetails.svelte";
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
     import InviteUsers from "./groupdetails/InviteUsers.svelte";
     import Members from "./groupdetails/Members.svelte";
@@ -391,18 +392,22 @@
     style={`--resized-width: ${resizedWidth}`}
     class:halloween={$currentTheme.name === "halloween"}
     class:empty>
-    {#if $lastRightPanelState.kind === "group_details" && $selectedChatIdStore !== undefined && multiUserChat !== undefined}
-        {#if multiUserChat.kind === "channel" && $selectedCommunitySummaryStore !== undefined}
+    {#if $lastRightPanelState.kind === "group_details" && $selectedChatIdStore !== undefined && $selectedChatSummaryStore !== undefined}
+        {#if $selectedChatSummaryStore.kind === "channel" && $selectedCommunitySummaryStore !== undefined}
             <ChannelOrCommunitySummary
-                channel={multiUserChat}
+                channel={$selectedChatSummaryStore}
                 memberCount={$selectedChatMembersStore.size}
                 community={$selectedCommunitySummaryStore}
                 selectedTab="channel"
                 onClose={client.popRightPanelHistory} />
-        {:else}
+        {:else if $selectedChatSummaryStore.kind === "group_chat"}
             <GroupDetails
-                chat={multiUserChat}
+                chat={$selectedChatSummaryStore}
                 memberCount={$selectedChatMembersStore.size}
+                onClose={client.popRightPanelHistory} />
+        {:else if $selectedChatSummaryStore.kind === "direct_chat"}
+            <DirectChatDetails
+                chat={$selectedChatSummaryStore}
                 onClose={client.popRightPanelHistory} />
         {/if}
     {:else if $lastRightPanelState.kind === "call_participants_panel"}
