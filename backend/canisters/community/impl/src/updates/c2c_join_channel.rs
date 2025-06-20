@@ -238,6 +238,7 @@ fn commit(
         &mut state.data.members,
         state.data.is_public.value && channel.chat.is_public.value,
         true,
+        true,
         now,
     ) {
         AddResult::Success(result) => {
@@ -287,6 +288,7 @@ fn commit(
     }
 }
 
+#[expect(clippy::too_many_arguments)]
 pub(crate) fn join_channel_unchecked(
     user_id: UserId,
     user_type: UserType,
@@ -294,6 +296,7 @@ pub(crate) fn join_channel_unchecked(
     community_members: &mut CommunityMembers,
     notifications_muted: bool,
     push_event: bool,
+    explicit_join: bool,
     now: TimestampMillis,
 ) -> AddResult {
     let min_visible_event_index;
@@ -338,7 +341,7 @@ pub(crate) fn join_channel_unchecked(
         community_members.mark_member_joined_channel(user_id, channel.id);
 
         if push_event {
-            if channel.chat.is_public.value {
+            if channel.chat.is_public.value && !explicit_join {
                 success.bot_notification = channel.chat.events.mark_members_added_to_public_channel(vec![user_id], now);
             } else {
                 let push_result = channel.chat.events.push_main_event(
