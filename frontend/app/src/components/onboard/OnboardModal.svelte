@@ -42,7 +42,7 @@
     let title = $derived.by(() => {
         switch (step) {
             case "select_mode":
-                return i18nKey("Welcome to OpenChat");
+                return i18nKey("register.welcome");
             case "sign_in":
                 return i18nKey("loginDialog.title");
             case "sign_up":

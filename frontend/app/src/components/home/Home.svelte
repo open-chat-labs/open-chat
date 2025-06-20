@@ -1089,7 +1089,7 @@
                 onClose={closeModal} />
         {:else if modal.kind === "logging_in" || modal.kind === "registering"}
             <OnboardModal
-                step={modal.kind === "registering" ? "sign_up" : "select_flow"}
+                step={modal.kind === "registering" ? "sign_up" : "select_mode"}
                 onClose={closeModal} />
         {:else if modal.kind === "claim_daily_chit"}
             <DailyChitModal onLeaderboard={leaderboard} onClose={closeModal} />
