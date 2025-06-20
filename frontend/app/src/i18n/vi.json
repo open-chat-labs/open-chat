@@ -1485,6 +1485,7 @@
     "register": {
         "agree": "Đồng ý",
         "bioTooLong": "Tiểu sử của bạn quá dài",
+        "chooseMode": "Bạn đã có tài khoản OpenChat hay đây là lần đầu tiên bạn truy cập?",
         "choosePath": "Bạn muốn đăng ký như thế nào?",
         "closed": "Do nhu cầu rất cao, đăng ký người dùng mới tạm thời bị đóng. Chúng tôi sẽ sớm mở rộng quy mô trên nhiều mạng con và sau đó sẽ có thể phát triển vô tận!",
         "closedTitle": "Đăng ký bị tạm dừng",

@@ -1485,6 +1485,7 @@
     "register": {
         "agree": "同意",
         "bioTooLong": "您的简介太长了",
+        "chooseMode": "您是否已经拥有 OpenChat 帐户或者您是第一次访问？",
         "choosePath": "您要注册吗?",
         "closed": "由于需求量很大，新用户注册暂时关闭。我们很快将扩展到多个子网，然后将能够无限增长！",
         "closedTitle": "注册暂停",

@@ -13,12 +13,15 @@
     let { onSignIn, onSignUp }: Props = $props();
 </script>
 
-<p class="blurb">Do you already have an OpenChat account or are you visiting for the first time?</p>
+<p class="blurb">
+    <Translatable resourceKey={i18nKey("register.chooseMode")} />
+</p>
 <div class="buttons">
     <ButtonGroup align="center">
         <Button secondary onClick={onSignIn}
-            ><Translatable resourceKey={i18nKey("Sign In")} /></Button>
-        <Button onClick={onSignUp}><Translatable resourceKey={i18nKey("Sign Up")} /></Button>
+            ><Translatable resourceKey={i18nKey("loginDialog.signin")} /></Button>
+        <Button onClick={onSignUp}
+            ><Translatable resourceKey={i18nKey("loginDialog.signup")} /></Button>
     </ButtonGroup>
 </div>
 

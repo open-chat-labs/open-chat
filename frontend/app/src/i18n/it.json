@@ -1485,6 +1485,7 @@
     "register": {
         "agree": "Essere d'accordo",
         "bioTooLong": "La tua biografia è troppo lunga",
+        "chooseMode": "Hai già un account OpenChat o è la prima volta che visiti il sito?",
         "choosePath": "Come vorresti registrarti?",
         "closed": "A causa dell'elevata domanda, le registrazioni di nuovi utenti sono temporaneamente chiuse. Presto scaleremo su più sottoreti e saremo quindi in grado di crescere all'infinito!",
         "closedTitle": "Registrazione sospesa",
