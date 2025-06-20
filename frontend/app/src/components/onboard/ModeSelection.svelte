@@ -5,7 +5,6 @@
     import Translatable from "../Translatable.svelte";
 
     interface Props {
-        onClose: () => void;
         onSignIn: () => void;
         onSignUp: () => void;
     }

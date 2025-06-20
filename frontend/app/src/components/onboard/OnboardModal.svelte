@@ -10,20 +10,20 @@
     import ModalContent from "../ModalContent.svelte";
     import Select from "../Select.svelte";
     import Translatable from "../Translatable.svelte";
-    import FlowSelection from "./FlowSelection.svelte";
+    import ModeSelection from "./ModeSelection.svelte";
     import SignIn from "./SignIn.svelte";
     import SignUp from "./SignUp.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    type Step = "select_flow" | "sign_up" | "sign_in";
+    type Step = "select_mode" | "sign_up" | "sign_in";
 
     interface Props {
         step?: Step;
         onClose: () => void;
     }
 
-    let { onClose, step = $bindable("select_flow") }: Props = $props();
+    let { onClose, step = $bindable("select_mode") }: Props = $props();
     let error: string | undefined = $state(undefined);
     let selectedLocale = $state(($locale as string).substring(0, 2));
     $effect(() => {
@@ -41,7 +41,7 @@
 
     let title = $derived.by(() => {
         switch (step) {
-            case "select_flow":
+            case "select_mode":
                 return i18nKey("Welcome to OpenChat");
             case "sign_in":
                 return i18nKey("loginDialog.title");
@@ -77,12 +77,12 @@
                 </div>
 
                 <span class="close">
-                    {#if step === "select_flow"}
+                    {#if step === "select_mode"}
                         <HoverIcon onclick={cancel}>
                             <Close size={"1em"} color={"var(--icon-txt)"} />
                         </HoverIcon>
                     {:else}
-                        <HoverIcon onclick={() => (step = "select_flow")}>
+                        <HoverIcon onclick={() => (step = "select_mode")}>
                             <ArrowLeft size={"1em"} color={"var(--icon-txt)"} />
                         </HoverIcon>
                     {/if}
@@ -90,9 +90,8 @@
             </div>
         </div>
         <div class="body">
-            {#if step === "select_flow"}
-                <FlowSelection
-                    {onClose}
+            {#if step === "select_mode"}
+                <ModeSelection
                     onSignIn={() => (step = "sign_in")}
                     onSignUp={() => (step = "sign_up")} />
             {:else if step === "sign_in"}

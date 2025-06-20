@@ -161,8 +161,6 @@
     }
 </script>
 
-/** * This component is not used any more - leaving it hear for reference until we are completely
-happy with the new flow */
 {#snippet changeModeView()}
     <Translatable
         resourceKey={i18nKey(

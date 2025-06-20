@@ -34,7 +34,6 @@
     let showGuidelines = $state(false);
     let username = $state("");
     let usernameValid = $state(false);
-    // let usernameStore: Writable<string | undefined> = writable(undefined);
     let usernameStore = createLocalStorageStore("openchat_candidate_username", "");
     let checkingUsername: boolean = $state(false);
     let busy = $state(false);
