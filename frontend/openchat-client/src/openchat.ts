@@ -490,6 +490,7 @@ import {
     metricsEqual,
     nextEventAndMessageIndexes,
     nextEventAndMessageIndexesForThread,
+    newDefaultChannel,
     permittedMessagesInDirectChat,
     permittedMessagesInGroup,
     sameUser,
@@ -8121,11 +8122,14 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    candidate.id = {
-                        kind: "community",
-                        communityId: resp.id,
-                    };
-                    this.#addCommunityLocally(candidate);
+                    this.#addCommunityLocally({
+                        ...candidate,
+                        id: {
+                            kind: "community",
+                            communityId: resp.id,
+                        },
+                        channels: resp.channels.map(([id, name]) => newDefaultChannel(id, name)),
+                    });
                 }
                 return resp;
             })
