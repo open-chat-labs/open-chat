@@ -1,6 +1,6 @@
 <script lang="ts">
     import { i18nKey, setLocale, supportedLanguages } from "@src/i18n/i18n";
-    import { OpenChat, type CreatedUser } from "openchat-client";
+    import { anonUserStore, identityStateStore, OpenChat, type CreatedUser } from "openchat-client";
     import { getContext } from "svelte";
     import { locale } from "svelte-i18n";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
@@ -31,6 +31,9 @@
     });
 
     function cancel() {
+        if ($anonUserStore && $identityStateStore.kind === "logging_in") {
+            client.updateIdentityState({ kind: "anon" });
+        }
         onClose();
     }
 
@@ -69,7 +72,7 @@
 
                 <span class="close">
                     {#if step === "select_flow"}
-                        <HoverIcon onclick={onClose}>
+                        <HoverIcon onclick={cancel}>
                             <Close size={"1em"} color={"var(--icon-txt)"} />
                         </HoverIcon>
                     {:else}
@@ -87,7 +90,7 @@
                     onSignIn={() => (step = "sign_in")}
                     onSignUp={() => (step = "sign_up")} />
             {:else if step === "sign_in"}
-                <SignIn bind:error onClose={() => (step = "select_flow")} />
+                <SignIn bind:spinning bind:error {onClose} />
             {:else if step === "sign_up"}
                 <SignUp {onCreatedUser} bind:error />
             {/if}

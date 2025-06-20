@@ -4,7 +4,9 @@
     import { AuthProvider, mobileWidth, selectedAuthProviderStore } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { writable, type Writable } from "svelte/store";
+    import AlertBox from "../AlertBox.svelte";
     import Button from "../Button.svelte";
+    import ButtonGroup from "../ButtonGroup.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import FindUser from "../FindUser.svelte";
     import TermsContent from "../landingpages/TermsContent.svelte";
@@ -33,6 +35,7 @@
     let badCode = $state(false);
     let referringUser: UserSummary | undefined = $state(undefined);
     let createdUser: CreatedUser | undefined = undefined;
+    let passkeyCreated = $state(false);
 
     function onShowGuidelines() {
         showGuidelines = true;
@@ -49,7 +52,10 @@
             try {
                 busy = true;
                 selectedAuthProviderStore.set(AuthProvider.PASSKEY);
-                await client.signUpWithWebAuthn(true, username);
+                if (!passkeyCreated) {
+                    await client.signUpWithWebAuthn(true, username);
+                }
+                passkeyCreated = true;
                 await registerUser(username);
             } catch (err) {
                 error = `Error registering user: ${err}`;
@@ -128,6 +134,11 @@
         return client.searchUsers(searchTerm, 20).then((res) => [[], res]);
     }
 
+    function clearCodeAndLogout() {
+        client.clearReferralCode();
+        client.logout();
+    }
+
     onMount(async () => {
         referringUser = await client.getReferringUser();
     });
@@ -157,52 +168,72 @@
     </Overlay>
 {/if}
 
-<form class="username-wrapper" onsubmit={register}>
-    <div class="form-element">
-        <Legend label={i18nKey("username")} rules={i18nKey("usernameRules")} />
-        <UsernameInput
-            {client}
-            disabled={busy}
-            originalUsername={$usernameStore ?? ""}
-            autofocus={true}
-            bind:username
-            bind:usernameValid
-            bind:checking={checkingUsername}
-            bind:error />
-    </div>
-
-    <div class="form-element">
-        {#if referringUser !== undefined}
-            <Legend label={i18nKey("register.referredBy")} />
-            <UserPill onDeleteUser={deleteUser} userOrGroup={referringUser} />
-        {:else}
-            <Legend label={i18nKey("register.findReferrer")} />
-            <FindUser
-                placeholderKey={"register.searchForReferrer"}
-                {userLookup}
-                enabled
-                compact
-                mode={"add"}
-                autofocus={false}
-                onSelectUser={selectUser} />
-        {/if}
-    </div>
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div onclick={onShowGuidelines} class="smallprint">
-        <Translatable resourceKey={i18nKey("register.disclaimer")} />
-    </div>
-    {#if error !== undefined}
-        <div class="error">
-            <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
+{#if badCode}
+    <AlertBox>
+        <h4 class="main">
+            <Translatable resourceKey={i18nKey("register.referralCodeInvalid")} />
+        </h4>
+        <p class="sub">
+            <Translatable resourceKey={i18nKey("register.doYouWantToProceed")} />
+        </p>
+    </AlertBox>
+{:else}
+    <form class="username-wrapper" onsubmit={register}>
+        <div class="form-element">
+            <Legend label={i18nKey("username")} rules={i18nKey("usernameRules")} />
+            <UsernameInput
+                {client}
+                disabled={busy}
+                originalUsername={$usernameStore ?? ""}
+                autofocus={true}
+                bind:username
+                bind:usernameValid
+                bind:checking={checkingUsername}
+                bind:error />
         </div>
-    {/if}
-</form>
+
+        <div class="form-element">
+            {#if referringUser !== undefined}
+                <Legend label={i18nKey("register.referredBy")} />
+                <UserPill onDeleteUser={deleteUser} userOrGroup={referringUser} />
+            {:else}
+                <Legend label={i18nKey("register.findReferrer")} />
+                <FindUser
+                    placeholderKey={"register.searchForReferrer"}
+                    {userLookup}
+                    enabled
+                    compact
+                    mode={"add"}
+                    autofocus={false}
+                    onSelectUser={selectUser} />
+            {/if}
+        </div>
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div onclick={onShowGuidelines} class="smallprint">
+            <Translatable resourceKey={i18nKey("register.disclaimer")} />
+        </div>
+        {#if error !== undefined}
+            <div class="error">
+                <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
+            </div>
+        {/if}
+    </form>
+{/if}
 
 <div class="footer">
-    <Button loading={checkingUsername || busy} disabled={!usernameValid || busy} onClick={register}>
-        <Translatable resourceKey={i18nKey("register.next")} />
-    </Button>
+    <ButtonGroup>
+        {#if badCode}
+            <Button secondary onClick={clearCodeAndLogout}
+                ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+        {/if}
+        <Button
+            loading={checkingUsername || busy}
+            disabled={!usernameValid || busy}
+            onClick={register}>
+            <Translatable resourceKey={i18nKey("register.proceed")} />
+        </Button>
+    </ButtonGroup>
 </div>
 
 <style lang="scss">
@@ -240,5 +271,13 @@
 
     .error {
         margin-top: $sp4;
+    }
+
+    .main {
+        margin-bottom: $sp3;
+    }
+
+    .sub {
+        color: var(--txt-light);
     }
 </style>
