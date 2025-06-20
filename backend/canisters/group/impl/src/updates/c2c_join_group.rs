@@ -149,6 +149,8 @@ fn commit(args: Args, payments: Vec<GatePayment>, state: &mut RuntimeState) -> R
                 state.queue_access_gate_payments(payment);
             }
 
+            state.push_bot_notification(result.bot_notification);
+
             Success(Box::new(summary))
         }
         AddResult::AlreadyInGroup => {

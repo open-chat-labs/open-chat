@@ -18,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove `gate` which is superseded by `gate_config` ([#8186](https://github.com/open-chat-labs/open-chat/pull/8186))
 
+### Fixed
+
+- Send bot notification when a user joins a group ([#8208](https://github.com/open-chat-labs/open-chat/pull/8208))
+
 ## [[2.0.1795](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1795-group)] - 2025-06-13
 
 ### Changed
