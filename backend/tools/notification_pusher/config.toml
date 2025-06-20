@@ -10,6 +10,8 @@ ic_url = "http://localhost:8080"
 # The NotificationsIndex canister Id.
 notifications_index = "ufxgi-4p777-77774-qaadq-cai"
 
+gcloud_sa_json_path = ""
+
 # The number of threads configured to make outbound HTTP requests to push notifications
 pusher_threads = 10
 

@@ -9,6 +9,7 @@ use fcm_service::FcmService;
 use prometheus::PullingGauge;
 use std::sync::{Arc, RwLock};
 use types::{CanisterId, UserId};
+use web_push::PartialVapidSignatureBuilder;
 
 mod processor;
 mod pusher;
@@ -17,9 +18,9 @@ mod subscription_remover;
 pub fn start_user_notifications_processor(
     ic_agent: IcAgent,
     index_canister_id: CanisterId,
-    vapid_private_pem: String,
+    sig_builder: PartialVapidSignatureBuilder,
     pusher_count: u32,
-    fcm_service: Arc<FcmService>,
+    fcm_service: FcmService,
 ) -> Sender<PushNotification> {
     let (to_process_sender, to_process_receiver) = async_channel::bounded::<PushNotification>(200_000);
     let (to_push_sender, to_push_receiver) = async_channel::bounded::<NotificationToPush>(200_000);
@@ -27,11 +28,12 @@ pub fn start_user_notifications_processor(
 
     let invalid_subscriptions = Arc::new(RwLock::default());
     let throttled_subscriptions = Arc::new(RwLock::default());
+    let fcm_service = Arc::new(fcm_service);
 
     let processor = Processor::new(
         to_process_receiver.clone(),
         to_push_sender.clone(),
-        &vapid_private_pem,
+        sig_builder,
         invalid_subscriptions.clone(),
         throttled_subscriptions.clone(),
     );

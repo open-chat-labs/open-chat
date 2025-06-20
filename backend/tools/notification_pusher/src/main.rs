@@ -1,4 +1,5 @@
 use crate::config::Config;
+use fcm_service::FcmService;
 use ic_agent::Identity;
 use ic_agent::identity::{BasicIdentity, Secp256k1Identity};
 use index_store::DummyStore;
@@ -29,6 +30,7 @@ async fn main() -> Result<(), Error> {
     let vapid_private_key_pem = fs::read(config.vapid_private_key_pem_file)?;
     let sig_builder = VapidSignatureBuilder::from_pem_no_sub(vapid_private_key_pem.as_slice())?;
     let index_store = build_index_store();
+    let fcm_service = FcmService::new(config.gcloud_sa_json_path);
     let is_localhost = config.ic_url.contains("localhost") || config.ic_url.contains("127.0.0.1");
     let ic_agent = IcAgent::build(&config.ic_url, ic_identity, is_localhost).await?;
 
@@ -42,7 +44,8 @@ async fn main() -> Result<(), Error> {
         index_store,
         sig_builder,
         config.pusher_threads,
-        false,
+        fcm_service,
+        is_localhost,
     )
     .await;
 
