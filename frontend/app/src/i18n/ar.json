@@ -1493,6 +1493,7 @@
         "confirmCyclesTransferText": "يرجى التأكيد أدناه عند قيامك بتحويل {amount} دورة من محفظة الدورات الخاصة بك إلى محفظة OpenChat أدناه",
         "confirmICPTransferText": "يرجى التأكيد أدناه عند قيامك بتحويل {amount} ICP إلى الحساب الموضح أدناه",
         "confirmTransfer": "تأكيد التحويل",
+        "createAccount": "إنشاء حساب",
         "createUser": "إنشاء المستخدم",
         "cyclesTransferred": "تم تأكيد رسوم دورات {fee}",
         "disclaimer": "من خلال التسجيل في OpenChat فإنك توافق على الالتزام بشروطنا وأحكامنا",

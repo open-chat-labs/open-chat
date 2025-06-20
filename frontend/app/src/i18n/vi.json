@@ -1493,6 +1493,7 @@
         "confirmCyclesTransferText": "Vui lòng xác nhận khi bạn đã chuyển {amount} cycles từ ví của bạn sang ví  được cung cấp bên dưới",
         "confirmICPTransferText": "Vui lòng xác nhận khi bạn đã chuyển {amount} ICP vào tài khoản được cung cấp bên dưới",
         "confirmTransfer": "Xác nhận chuyển khoản",
+        "createAccount": "Tạo tài khoản",
         "createUser": "Tạo tài khoản",
         "cyclesTransferred": "Lệ phí {fee} cycles đã được xác nhận",
         "disclaimer": "Bằng cách đăng ký OpenChat, bạn đồng ý tuân theo các điều khoản và điều kiện của chúng tôi",

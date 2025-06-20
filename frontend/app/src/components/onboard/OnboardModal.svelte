@@ -144,6 +144,7 @@
     }
     .header {
         padding: $sp5;
+        padding-bottom: $sp4;
         display: flex;
         flex-direction: column;
         gap: $sp3;

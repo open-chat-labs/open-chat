@@ -1493,6 +1493,7 @@
         "confirmCyclesTransferText": "Bitte bestätigen Sie unten, wenn Sie {amount} Zyklen von Ihrer Zyklen-Wallet auf die OpenChat-Wallet unten übertragen haben",
         "confirmICPTransferText": "Bitte bestätigen Sie unten, wenn Sie eine Überweisung von {amount} ICP auf das unten angegebene Konto getätigt haben",
         "confirmTransfer": "Überweisung bestätigen",
+        "createAccount": "Benutzerkonto erstellen",
         "createUser": "Benutzer erstellen",
         "cyclesTransferred": "Gebühr von {fee} Zyklen bestätigt",
         "disclaimer": "Mit der Registrierung bei OpenChat erklären Sie sich mit unseren Allgemeinen Geschäftsbedingungen einverstanden.",

@@ -1493,6 +1493,7 @@
         "confirmCyclesTransferText": "Пожалуйста, подтвердите ниже, когда вы сделали перевод циклов {amount} из вашего кошелька циклов в кошелек OpenChat ниже",
         "confirmICPTransferText": "Пожалуйста, подтвердите ниже, когда вы сделали перевод {amount} ICP на счет, указанный ниже",
         "confirmTransfer": "Подтвердить перевод",
+        "createAccount": "Зарегистрироваться",
         "createUser": "Создать пользователя",
         "cyclesTransferred": "Комиссия {fee} cycles подтверждена",
         "disclaimer": "Регистрируясь в OpenChat, вы соглашаетесь соблюдать наши условия.",

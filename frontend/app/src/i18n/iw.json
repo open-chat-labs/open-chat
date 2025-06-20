@@ -1493,6 +1493,7 @@
         "confirmCyclesTransferText": "אנא אשר למטה כאשר ביצעת העברה של {amount} מחזורים מארנק המחזורים שלך לארנק OpenChat למטה",
         "confirmICPTransferText": "אנא אשר למטה כאשר ביצעת העברה של {amount} ICP לחשבון המופיע למטה",
         "confirmTransfer": "אשר העברה",
+        "createAccount": "צור חשבון",
         "createUser": "צור משתמש",
         "cyclesTransferred": "עמלה של {fee} מחזורים אושרה",
         "disclaimer": "בהרשמה ל-OpenChat אתה מסכים לציית לתנאים וההגבלות שלנו",

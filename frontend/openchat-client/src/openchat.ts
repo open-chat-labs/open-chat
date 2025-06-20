@@ -488,9 +488,9 @@ import {
     mergeServerEvents,
     messageIsReadByThem,
     metricsEqual,
+    newDefaultChannel,
     nextEventAndMessageIndexes,
     nextEventAndMessageIndexesForThread,
-    newDefaultChannel,
     permittedMessagesInDirectChat,
     permittedMessagesInGroup,
     sameUser,
@@ -4832,7 +4832,11 @@ export class OpenChat {
     }
 
     checkUsername(username: string, isBot: boolean): Promise<CheckUsernameResponse> {
-        return this.#sendRequest({ kind: "checkUsername", username, isBot });
+        console.log("we are getting here right?");
+        return this.#sendRequest({ kind: "checkUsername", username, isBot }).then((resp) => {
+            console.log("Resp: ", resp);
+            return resp;
+        });
     }
 
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {

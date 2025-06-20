@@ -1493,6 +1493,7 @@
         "confirmCyclesTransferText": "请确认：您将转账 {amount} cycles给以下OpenChat钱包地址",
         "confirmICPTransferText": "请确认： 您将转账 {amount} ICP 给以下地址",
         "confirmTransfer": "确认转账",
+        "createAccount": "创建账户",
         "createUser": "创建用户",
         "cyclesTransferred": " {fee} cycles 已转出",
         "disclaimer": "通过在 OpenChat 注册，您同意遵守我们的条款和条件",

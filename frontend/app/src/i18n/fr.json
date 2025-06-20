@@ -1493,6 +1493,7 @@
         "confirmCyclesTransferText": "Veuillez confirmer ci-dessous lorsque vous avez effectué un transfert de {amount} cycles de votre portefeuille de cycles vers le portefeuille OpenChat ci-dessous",
         "confirmICPTransferText": "Veuillez confirmer ci-dessous lorsque vous avez effectué un virement de {amount} ICP sur le compte indiqué ci-dessous",
         "confirmTransfer": "Confirmer le transfert",
+        "createAccount": "Créer un compte",
         "createUser": "Créer un utilisateur",
         "cyclesTransferred": "Frais de {fee} cycles confirmés",
         "disclaimer": "En vous inscrivant sur OpenChat, vous acceptez de respecter nos termes et conditions.",

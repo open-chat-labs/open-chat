@@ -1493,6 +1493,7 @@
         "confirmCyclesTransferText": "Potwierdź poniżej, kiedy wykonałeś przelew {amount} cykli z portfela rowerowego do portfela OpenChat poniżej",
         "confirmICPTransferText": "Potwierdź poniżej, kiedy wykonałeś przelew w wysokości {amount} ICP na podane poniżej konto",
         "confirmTransfer": "Potwierdź przelew",
+        "createAccount": "Utwórz konto",
         "createUser": "Stwórz użytkownika",
         "cyclesTransferred": "Potwierdzono opłatę za {fee} cykli",
         "disclaimer": "Rejestrując się w OpenChat, wyrażasz zgodę na przestrzeganie naszych warunków",

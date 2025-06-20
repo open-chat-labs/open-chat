@@ -1493,6 +1493,7 @@
         "confirmCyclesTransferText": "Confirma cuando hayas realizado una transferencia de {amount} cycles desde tu billetera de cycles a la billetera de OpenChat que figura a continuación",
         "confirmICPTransferText": "Confirma cuando haya realizado una transferencia de {amount} ICP a la siguiente cuenta",
         "confirmTransfer": "Confirmar transferencia",
+        "createAccount": "Crear una cuenta",
         "createUser": "Crear usuario",
         "cyclesTransferred": "Tarifa de {fee} cycles confirmada",
         "disclaimer": "Al registrarse en OpenChat, acepta cumplir con nuestros términos y condiciones.",

@@ -1493,6 +1493,7 @@
         "confirmCyclesTransferText": "お客様のサイクルウォレットから{amount}サイクルを下記のOpenChatウォレットに送金されましたら、下記をご確認ください",
         "confirmICPTransferText": "P以下の口座に{amount}のICPを振り込んだら、以下の通り確認してください",
         "confirmTransfer": "転送の確認",
+        "createAccount": "アカウントを作成する",
         "createUser": "ユーザーを作成する",
         "cyclesTransferred": "{fee} cyclesの手数料を確認しました",
         "disclaimer": "OpenChatに登録することにより、利用規約に従うことに同意するものとします。",

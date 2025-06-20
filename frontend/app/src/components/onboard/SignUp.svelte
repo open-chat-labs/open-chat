@@ -125,6 +125,7 @@
                 };
                 onCreatedUser(createdUser);
                 busy = false;
+                usernameStore.set("");
             } else {
                 error = `Unexpected register user response: ${resp.kind}`;
             }

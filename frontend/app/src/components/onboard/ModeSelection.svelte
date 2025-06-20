@@ -1,7 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "../../i18n/i18n";
     import Button from "../Button.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
     import Translatable from "../Translatable.svelte";
 
     interface Props {
@@ -16,12 +15,10 @@
     <Translatable resourceKey={i18nKey("register.chooseMode")} />
 </p>
 <div class="buttons">
-    <ButtonGroup align="center">
-        <Button secondary onClick={onSignIn}
-            ><Translatable resourceKey={i18nKey("loginDialog.signin")} /></Button>
-        <Button onClick={onSignUp}
-            ><Translatable resourceKey={i18nKey("loginDialog.signup")} /></Button>
-    </ButtonGroup>
+    <Button fill secondary onClick={onSignIn}
+        ><Translatable resourceKey={i18nKey("loginDialog.signin")} /></Button>
+    <Button fill onClick={onSignUp}
+        ><Translatable resourceKey={i18nKey("register.createAccount")} /></Button>
 </div>
 
 <style lang="scss">
@@ -34,5 +31,13 @@
         @include mobile() {
             margin-bottom: toRem(16);
         }
+    }
+
+    .buttons {
+        display: flex;
+        flex-direction: column;
+        gap: $sp4;
+        max-width: 440px;
+        width: 100%;
     }
 </style>
