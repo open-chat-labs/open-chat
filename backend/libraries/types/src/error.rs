@@ -6,7 +6,7 @@ use std::fmt::{Debug, Formatter};
 
 pub type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct C2CError {
     canister_id: CanisterId,
     method_name: String,

@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Use MessagePack to serialize `init` args ([#8183](https://github.com/open-chat-labs/open-chat/pull/8183))
+- Avoid marking chat as active if only proposal tally has been updated ([#8206](https://github.com/open-chat-labs/open-chat/pull/8206))
 
 ### Removed
 
