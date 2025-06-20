@@ -15,7 +15,8 @@ fn c2c_update_proposals_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let user_id = state.get_caller_user_id()?;
     let now = state.env.now();
 
-    state.data.chat.events.update_proposals(user_id, args.proposals, now);
-    handle_activity_notification(state);
+    if state.data.chat.events.update_proposals(user_id, args.proposals, now) {
+        handle_activity_notification(state);
+    }
     Ok(())
 }

@@ -500,6 +500,7 @@ impl JoinMembersToPublicChannelJob {
                         &mut state.data.members,
                         state.data.is_public.value,
                         false,
+                        false,
                         now,
                     );
                     if matches!(result, AddResult::Success(_)) {

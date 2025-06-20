@@ -2,6 +2,7 @@ import { DelegationChain } from "@dfinity/identity";
 import type {
     Achievement,
     ArchiveChatResponse,
+    ChannelIdentifier,
     ChatIdentifier,
     ChitEarned,
     ChitEarnedReason,
@@ -508,7 +509,19 @@ export function sendMessageResponse(
 export function createCommunitySuccess(
     value: UserCreateCommunitySuccessResult,
 ): CreateCommunityResponse {
-    return { kind: "success", id: principalBytesToString(value.community_id) };
+    const communityId = principalBytesToString(value.community_id);
+    return {
+        kind: "success",
+        id: communityId,
+        channels: value.channels.map(([id, name]) => {
+            const channelId = {
+                kind: "channel",
+                communityId,
+                channelId: Number(id),
+            } as ChannelIdentifier;
+            return [channelId, name];
+        }),
+    };
 }
 
 function groupChatsInitial(value: UserInitialStateGroupChatsInitial): GroupChatsInitial {
