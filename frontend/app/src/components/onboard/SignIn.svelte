@@ -26,6 +26,7 @@
     }
 
     let { error = $bindable(), onClose, spinning = $bindable() }: Props = $props();
+    void spinning;
 
     let loginState = $state<"options" | "logging-in">("options");
     let emailInvalid = $state(false);
