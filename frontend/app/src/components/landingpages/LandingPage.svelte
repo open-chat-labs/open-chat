@@ -3,18 +3,10 @@
 </script>
 
 <script lang="ts">
-    import {
-        identityStateStore,
-        routeStore,
-        runningInIframe,
-        type CreatedUser,
-        type OpenChat,
-    } from "openchat-client";
+    import { routeStore, runningInIframe, type OpenChat } from "openchat-client";
     import { getContext, type Component } from "svelte";
     import { showMenuForLandingRoute } from "../../utils/urls";
     import Loading from "../Loading.svelte";
-    import Overlay from "../Overlay.svelte";
-    import Register from "../register/Register.svelte";
     import BlogPage from "./BlogPage.svelte";
     import Content from "./Content.svelte";
     import FeaturesPage from "./FeaturesPage.svelte";
@@ -25,17 +17,7 @@
     const client = getContext<OpenChat>("client");
 
     let showMenu = $derived(showMenuForLandingRoute($routeStore));
-
-    function createdUser(user: CreatedUser) {
-        client.onCreatedUser(user);
-    }
 </script>
-
-{#if $identityStateStore.kind === "registering"}
-    <Overlay>
-        <Register onCreatedUser={createdUser} />
-    </Overlay>
-{/if}
 
 {#if $runningInIframe}
     <HostedLandingPage />

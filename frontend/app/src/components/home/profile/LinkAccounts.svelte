@@ -92,7 +92,7 @@
     let restrictTo = $derived(
         substep.kind === "approver" && currentProvider !== undefined
             ? new Set<string>([currentProvider])
-            : new Set<string>(),
+            : new Set<string>([AuthProvider.PASSKEY, AuthProvider.II, AuthProvider.EMAIL]),
     );
 
     onMount(() => {

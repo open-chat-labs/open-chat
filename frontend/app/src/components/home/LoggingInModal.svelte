@@ -21,6 +21,14 @@
     import EmailSigninFeedback from "./EmailSigninFeedback.svelte";
     import ChooseSignInOption from "./profile/ChooseSignInOption.svelte";
 
+    /**
+     * Note: This component is not actually used anywhere anymore. Leaving it here until we are completely happy with the new flow.
+     * In particular I have not attempted to incorporate the Android stuff in to the new flow because I'm not sure how to test
+     * that.
+     *
+     * The OnboardModal now takes care of logging in and registering and is quite similar to this
+     */
+
     interface Props {
         onClose: () => void;
     }

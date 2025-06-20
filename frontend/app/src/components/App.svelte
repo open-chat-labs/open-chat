@@ -18,7 +18,6 @@
         isLandingPageRoute,
         isScrollingRoute,
         redirectLandingPageLinksIfNecessary,
-        removeQueryStringParam,
     } from "@utils/urls";
     import {
         type ChatIdentifier,
@@ -34,7 +33,6 @@
         identityStateStore,
         inititaliseLogger,
         notFoundStore,
-        pageReplace,
         routeForChatIdentifier,
         routeForScope,
         routeStore,
@@ -160,9 +158,6 @@
         window.addEventListener("unhandledrejection", unhandledError);
 
         redirectLandingPageLinksIfNecessary();
-        if (client.captureReferralCode()) {
-            pageReplace(removeQueryStringParam("ref"));
-        }
 
         //@ts-ignore
         window.platformModerator = {

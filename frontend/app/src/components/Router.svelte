@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { removeQueryStringParam } from "@src/utils/urls";
     import {
         type ChatIdentifier,
         OpenChat,
@@ -15,6 +16,7 @@
         globalGroupChatSelectedRoute,
         messageIndexStore,
         notFoundStore,
+        pageReplace,
         routeKindStore,
         routeStore,
         routerReadyStore,
@@ -252,6 +254,12 @@
                     }
                 });
             });
+        }
+    });
+
+    $effect(() => {
+        if (client.captureReferralCode()) {
+            pageReplace(removeQueryStringParam("ref"));
         }
     });
 

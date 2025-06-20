@@ -15,10 +15,14 @@
 
     let { showLandingPage }: HomeProps = $props();
 
+    let registering = $derived(
+        $identityStateStore.kind === "registering" ||
+            $identityStateStore.kind === "challenging" ||
+            ($identityStateStore.kind === "loading_user" && $identityStateStore.registering),
+    );
+
     let showLoader = $derived(
-        $identityStateStore.kind !== "registering" &&
-            $identityStateStore.kind !== "challenging" &&
-            (!$chatsInitialisedStore || $identityStateStore.kind === "loading_user"),
+        !registering && (!$chatsInitialisedStore || $identityStateStore.kind === "loading_user"),
     );
 </script>
 

@@ -1,5 +1,3 @@
-import { WebAuthnIdentity } from "@dfinity/identity";
-import borc from "borc";
 import {
     DER_COSE_OID,
     type PublicKey,
@@ -7,13 +5,16 @@ import {
     SignIdentity,
     unwrapDER,
 } from "@dfinity/agent";
+import { WebAuthnIdentity } from "@dfinity/identity";
+import borc from "borc";
 import type { WebAuthnKeyFull } from "openchat-shared";
 
 export async function createWebAuthnIdentity(
     origin: string,
     saveKeyInCacheFn: (key: WebAuthnKeyFull) => Promise<void>,
+    username?: string,
 ): Promise<WebAuthnIdentity> {
-    const opts = webAuthnCreationOptions(origin);
+    const opts = webAuthnCreationOptions(origin, username);
     const credential = (await navigator.credentials.create({
         publicKey: opts,
     })) as PublicKeyCredential | null;
@@ -116,7 +117,10 @@ export class MultiWebAuthnIdentity extends SignIdentity {
     }
 }
 
-function webAuthnCreationOptions(rpId?: string): PublicKeyCredentialCreationOptions {
+function webAuthnCreationOptions(
+    rpId?: string,
+    username?: string,
+): PublicKeyCredentialCreationOptions {
     const now = new Date();
     const year = now.getFullYear().toString().substring(2);
     const month = (now.getMonth() + 1).toString().padStart(2, "0");
@@ -149,7 +153,7 @@ function webAuthnCreationOptions(rpId?: string): PublicKeyCredentialCreationOpti
         },
         user: {
             id: window.crypto.getRandomValues(new Uint8Array(16)),
-            name: `OpenChat-${suffix}`,
+            name: username ? `${username}@openchat` : `OpenChat-${suffix}`,
             displayName: `OpenChat-${suffix}`,
         },
     };
