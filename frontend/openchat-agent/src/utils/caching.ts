@@ -39,6 +39,7 @@ import type {
     ReplyContext,
     SendMessageResponse,
     SendMessageSuccess,
+    Tally,
     TransferSuccess,
     UpdatedEvent,
 } from "openchat-shared";
@@ -906,6 +907,39 @@ export async function setCachedEvents(
     }
     await Promise.all(promises);
     await tx.done;
+}
+
+export async function updateCachedProposalTallies(
+    db: Database,
+    chatId: ChatIdentifier,
+    tallies: [number, Tally][],
+): Promise<EventWrapper<Message>[]> {
+    const tx = (await db).transaction(["chat_events"], "readwrite", {
+        durability: "relaxed",
+    });
+    const eventStore = tx.objectStore("chat_events");
+
+    const updatedMessages: EventWrapper<Message>[] = [];
+    const promises: Promise<void>[] = tallies.map(([eventIndex, tally]) => {
+        const cacheKey = createCacheKey({ chatId }, eventIndex);
+        return eventStore
+            .get(cacheKey)
+            .then((event) => {
+                if (event?.kind === "event"
+                    && event.event.kind === "message"
+                    && event.event.content.kind === "proposal_content"
+                    && event.event.content.proposal.tally.timestamp < tally.timestamp
+                ) {
+                    event.event.content.proposal.tally = tally;
+                    updatedMessages.push(event as EventWrapper<Message>);
+                    return eventStore.put(event, cacheKey);
+                }
+            })
+            .then((_) => {});
+    });
+    await Promise.all(promises);
+    await tx.done;
+    return updatedMessages;
 }
 
 export function setCachedMessageFromSendResponse(

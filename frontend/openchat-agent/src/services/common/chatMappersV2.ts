@@ -86,6 +86,7 @@ import type {
     SendMessageResponse,
     SenderContext,
     Success,
+    Tally,
     TextContent,
     ThreadPreview,
     ThreadPreviewsResponse,
@@ -231,6 +232,7 @@ import type {
     ReplyContext as TReplyContext,
     ReportedMessage as TReportedMessage,
     SenderContext as TSenderContext,
+    Tally as TTally,
     TextContent as TTextContent,
     ThreadPreview as TThreadPreview,
     ThreadSummary as TThreadSummary,
@@ -895,12 +897,7 @@ function proposal(value: TProposal): Proposal {
             url: p.url,
             status: proposalDecisionStatus(p.status),
             rewardStatus: proposalRewardStatus(p.reward_status),
-            tally: {
-                yes: Number(p.tally.yes / E8S_AS_BIGINT),
-                no: Number(p.tally.no / E8S_AS_BIGINT),
-                total: Number(p.tally.total / E8S_AS_BIGINT),
-                timestamp: p.tally.timestamp,
-            },
+            tally: tally(p.tally),
             lastUpdated: Number(p.last_updated),
             created: Number(p.created),
             deadline: Number(p.deadline),
@@ -920,12 +917,7 @@ function proposal(value: TProposal): Proposal {
             url: p.url,
             status: proposalDecisionStatus(p.status),
             rewardStatus: proposalRewardStatus(p.reward_status),
-            tally: {
-                yes: Number(p.tally.yes / E8S_AS_BIGINT),
-                no: Number(p.tally.no / E8S_AS_BIGINT),
-                total: Number(p.tally.total / E8S_AS_BIGINT),
-                timestamp: p.tally.timestamp,
-            },
+            tally: tally(p.tally),
             lastUpdated: Number(p.last_updated),
             created: Number(p.created),
             deadline: Number(p.deadline),
@@ -935,6 +927,15 @@ function proposal(value: TProposal): Proposal {
         };
     }
     throw new UnsupportedValueError("Unexpected ApiProposal type received", value);
+}
+
+export function tally(value: TTally): Tally {
+    return {
+        yes: Number(value.yes / E8S_AS_BIGINT),
+        no: Number(value.no / E8S_AS_BIGINT),
+        total: Number(value.total / E8S_AS_BIGINT),
+        timestamp: value.timestamp,
+    };
 }
 
 function proposalDecisionStatus(value: TProposalDecisionStatus): ProposalDecisionStatus {
