@@ -3,12 +3,12 @@ use crate::metrics::register_metric;
 use crate::user_notifications::processor::Processor;
 use crate::user_notifications::pusher::Pusher;
 use crate::user_notifications::subscription_remover::SubscriptionRemover;
-use crate::{UserNotification, UserNotificationToPush};
+use crate::{NotificationToPush, PushNotification};
 use async_channel::Sender;
+use fcm_service::FcmService;
 use prometheus::PullingGauge;
 use std::sync::{Arc, RwLock};
 use types::{CanisterId, UserId};
-use web_push::PartialVapidSignatureBuilder;
 
 mod processor;
 mod pusher;
@@ -17,11 +17,12 @@ mod subscription_remover;
 pub fn start_user_notifications_processor(
     ic_agent: IcAgent,
     index_canister_id: CanisterId,
-    sig_builder: PartialVapidSignatureBuilder,
-    pusher_threads: u32,
-) -> Sender<UserNotification> {
-    let (to_process_sender, to_process_receiver) = async_channel::bounded::<UserNotification>(200_000);
-    let (to_push_sender, to_push_receiver) = async_channel::bounded::<UserNotificationToPush>(200_000);
+    vapid_private_pem: String,
+    pusher_count: u32,
+    fcm_service: Arc<FcmService>,
+) -> Sender<PushNotification> {
+    let (to_process_sender, to_process_receiver) = async_channel::bounded::<PushNotification>(200_000);
+    let (to_push_sender, to_push_receiver) = async_channel::bounded::<NotificationToPush>(200_000);
     let (subscriptions_to_remove_sender, subscriptions_to_remove_receiver) = async_channel::bounded(20_000);
 
     let invalid_subscriptions = Arc::new(RwLock::default());
@@ -30,18 +31,19 @@ pub fn start_user_notifications_processor(
     let processor = Processor::new(
         to_process_receiver.clone(),
         to_push_sender.clone(),
-        sig_builder,
+        &vapid_private_pem,
         invalid_subscriptions.clone(),
         throttled_subscriptions.clone(),
     );
     tokio::spawn(processor.run());
 
-    for _ in 0..pusher_threads {
+    for _ in 0..pusher_count {
         let pusher = Pusher::new(
             to_push_receiver.clone(),
             subscriptions_to_remove_sender.clone(),
             invalid_subscriptions.clone(),
             throttled_subscriptions.clone(),
+            fcm_service.clone(),
         );
         tokio::spawn(pusher.run());
     }
@@ -56,8 +58,8 @@ pub fn start_user_notifications_processor(
 }
 
 fn register_metrics(
-    to_process_sender: Sender<UserNotification>,
-    to_push_sender: Sender<UserNotificationToPush>,
+    to_process_sender: Sender<PushNotification>,
+    to_push_sender: Sender<NotificationToPush>,
     subscriptions_to_remove_sender: Sender<(UserId, String)>,
 ) {
     let notifications_to_process_queue = PullingGauge::new(

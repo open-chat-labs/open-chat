@@ -1,7 +1,7 @@
 use crate::{
-    AccessGate, AccessGateConfig, BuildVersion, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupMember,
+    AccessGateConfig, BuildVersion, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupMember,
     GroupPermissions, GroupRole, HydratedMention, InstalledBotDetails, Message, MessageId, MessageIndex, Milliseconds,
-    OptionUpdate, PublicApiKeyDetails, TimestampMillis, UserId, Version, WebhookDetails,
+    OptionUpdate, TimestampMillis, UserId, Version, WebhookDetails,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -66,7 +66,6 @@ pub struct GroupChatSummary {
     pub date_read_pinned: Option<TimestampMillis>,
     pub events_ttl: Option<Milliseconds>,
     pub events_ttl_last_updated: TimestampMillis,
-    pub gate: Option<AccessGate>,
     pub gate_config: Option<AccessGateConfig>,
     pub rules_accepted: bool,
     pub video_call_in_progress: Option<VideoCall>,
@@ -120,7 +119,6 @@ pub struct PublicGroupSummary {
     pub frozen: Option<FrozenGroupInfo>,
     pub events_ttl: Option<Milliseconds>,
     pub events_ttl_last_updated: TimestampMillis,
-    pub gate: Option<AccessGate>,
     pub gate_config: Option<AccessGateConfig>,
 }
 
@@ -157,7 +155,6 @@ pub struct GroupCanisterGroupChatSummary {
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: Option<Milliseconds>,
     pub events_ttl_last_updated: TimestampMillis,
-    pub gate: Option<AccessGate>,
     pub gate_config: Option<AccessGateConfig>,
     pub rules_accepted: bool,
     pub membership: Option<GroupMembership>,
@@ -199,8 +196,6 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     #[ts(as = "crate::OptionUpdateU64")]
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub events_ttl_last_updated: Option<TimestampMillis>,
-    #[ts(as = "crate::OptionUpdateAccessGate")]
-    pub gate: OptionUpdate<AccessGate>,
     #[ts(as = "crate::OptionUpdateAccessGateConfig")]
     pub gate_config: OptionUpdate<AccessGateConfig>,
     pub rules_accepted: Option<bool>,
@@ -247,7 +242,6 @@ pub struct SelectedGroupUpdates {
     pub members_removed: Vec<UserId>,
     pub bots_added_or_updated: Vec<InstalledBotDetails>,
     pub bots_removed: Vec<UserId>,
-    pub api_keys_generated: Vec<PublicApiKeyDetails>,
     pub webhooks: Option<Vec<WebhookDetails>>,
     pub blocked_users_added: Vec<UserId>,
     pub blocked_users_removed: Vec<UserId>,
@@ -262,7 +256,6 @@ impl SelectedGroupUpdates {
         !self.members_added_or_updated.is_empty()
             || !self.members_removed.is_empty()
             || !self.bots_added_or_updated.is_empty()
-            || !self.api_keys_generated.is_empty()
             || !self.bots_removed.is_empty()
             || self.webhooks.is_some()
             || !self.blocked_users_added.is_empty()

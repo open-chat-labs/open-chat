@@ -1,38 +1,19 @@
 use crate::{
     RuntimeState,
-    bots::{BotAccessContext, extract_access_context, extract_access_context_from_chat_context},
+    bots::{BotAccessContext, extract_access_context_from_chat_context},
     mutate_state,
 };
 use canister_api_macros::update;
 use local_user_index_canister::bot_send_message::*;
-use local_user_index_canister::bot_send_message_v2::Args as ArgsV2;
 use oc_error_codes::{OCError, OCErrorCode};
 use rand::Rng;
 use types::{
-    BotActionScope, BotInitiator, BotMessageContent, ChannelId, Chat, ChatId, CommunityId, MessageId, MessageIndex, UserId,
+    BotActionScope, BotInitiator, BotMessageContent, ChannelId, Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex,
+    UserId,
 };
 
 #[update(candid = true, json = true, msgpack = true)]
 async fn bot_send_message(args: Args) -> Response {
-    let context = match mutate_state(|state| extract_access_context(&args.auth_token, state)) {
-        Ok(context) => context,
-        Err(_) => return Response::Error(OCErrorCode::BotNotAuthenticated.into()),
-    };
-
-    bot_send_message_impl(
-        context,
-        args.channel_id,
-        None,
-        args.message_id,
-        args.content,
-        args.block_level_markdown,
-        args.finalised,
-    )
-    .await
-}
-
-#[update(candid = true, json = true, msgpack = true)]
-async fn bot_send_message_v2(args: ArgsV2) -> Response {
     let context = match mutate_state(|state| extract_access_context_from_chat_context(args.chat_context, state)) {
         Ok(context) => context,
         Err(_) => return Response::Error(OCErrorCode::BotNotAuthenticated.into()),
@@ -43,6 +24,7 @@ async fn bot_send_message_v2(args: ArgsV2) -> Response {
         None,
         args.thread,
         args.message_id,
+        args.replies_to,
         args.content,
         args.block_level_markdown,
         args.finalised,
@@ -60,11 +42,13 @@ struct MessageAccessContext {
     user_message_id: Option<MessageId>,
 }
 
+#[expect(clippy::too_many_arguments)]
 async fn bot_send_message_impl(
     context: BotAccessContext,
     channel_id: Option<ChannelId>,
     thread: Option<MessageIndex>,
     message_id: Option<MessageId>,
+    replies_to: Option<EventIndex>,
     content: BotMessageContent,
     block_level_markdown: bool,
     finalised: bool,
@@ -83,6 +67,7 @@ async fn bot_send_message_impl(
                 chat_id,
                 context.thread,
                 context.message_id,
+                replies_to,
                 context.user_message_id,
                 content,
                 block_level_markdown,
@@ -98,6 +83,7 @@ async fn bot_send_message_impl(
                 chat_id,
                 context.thread,
                 context.message_id,
+                replies_to,
                 content,
                 block_level_markdown,
                 finalised,
@@ -113,6 +99,7 @@ async fn bot_send_message_impl(
                 channel_id,
                 context.thread,
                 context.message_id,
+                replies_to,
                 content,
                 block_level_markdown,
                 finalised,
@@ -171,6 +158,7 @@ async fn send_message_to_channel(
     channel_id: ChannelId,
     thread_root_message_index: Option<MessageIndex>,
     message_id: MessageId,
+    replies_to: Option<EventIndex>,
     content: BotMessageContent,
     block_level_markdown: bool,
     finalised: bool,
@@ -185,6 +173,7 @@ async fn send_message_to_channel(
             channel_id,
             thread_root_message_index,
             message_id,
+            replies_to,
             content,
             bot_name,
             block_level_markdown,
@@ -215,6 +204,7 @@ async fn send_message_to_group(
     chat_id: ChatId,
     thread_root_message_index: Option<MessageIndex>,
     message_id: MessageId,
+    replies_to: Option<EventIndex>,
     content: BotMessageContent,
     block_level_markdown: bool,
     finalised: bool,
@@ -228,6 +218,7 @@ async fn send_message_to_group(
             initiator,
             thread_root_message_index,
             message_id,
+            replies_to,
             content,
             bot_name,
             block_level_markdown,
@@ -258,6 +249,7 @@ async fn send_message_to_user(
     chat_id: ChatId,
     thread_root_message_index: Option<MessageIndex>,
     message_id: MessageId,
+    replies_to: Option<EventIndex>,
     user_message_id: Option<MessageId>,
     content: BotMessageContent,
     block_level_markdown: bool,
@@ -272,6 +264,7 @@ async fn send_message_to_user(
             initiator,
             thread_root_message_index,
             message_id,
+            replies_to,
             user_message_id,
             content,
             bot_name,

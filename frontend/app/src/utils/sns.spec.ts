@@ -1,4 +1,4 @@
-import type { ExternalBot } from "openchat-client";
+import { type ExternalBot, ROLE_MEMBER } from "openchat-client";
 import { createPublishExternalBotPayload } from "./sns";
 
 function createTestBot(): ExternalBot {
@@ -16,7 +16,7 @@ function createTestBot(): ExternalBot {
             commands: [
                 {
                     name: "command_one",
-                    defaultRole: "member",
+                    defaultRole: ROLE_MEMBER,
                     directMessages: false,
                     description: "this is a test command",
                     permissions: {

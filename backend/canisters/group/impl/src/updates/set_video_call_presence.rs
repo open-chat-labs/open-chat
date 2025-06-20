@@ -16,7 +16,7 @@ pub(crate) fn set_video_call_presence_impl(args: Args, state: &mut RuntimeState)
     let user_id = state.get_caller_user_id()?;
     let now = state.env.now();
 
-    state
+    let result = state
         .data
         .chat
         .set_video_call_presence(user_id, args.message_id, args.presence, now)?;
@@ -25,6 +25,7 @@ pub(crate) fn set_video_call_presence_impl(args: Args, state: &mut RuntimeState)
         state.notify_user_of_achievement(user_id, Achievement::JoinedCall, now);
     }
 
+    state.push_bot_notification(result.bot_notification);
     handle_activity_notification(state);
     Ok(())
 }

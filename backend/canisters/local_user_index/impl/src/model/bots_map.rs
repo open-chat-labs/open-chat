@@ -20,11 +20,9 @@ pub struct Bot {
     pub commands: Vec<BotCommandDefinition>,
     pub endpoint: String,
     pub autonomous_config: Option<AutonomousConfig>,
-    #[serde(default)]
     pub default_subscriptions: Option<BotSubscriptions>,
     pub principal: Principal,
     pub registration_status: BotRegistrationStatus,
-    #[serde(default)]
     pub data_encoding: BotDataEncoding,
 }
 
@@ -37,10 +35,6 @@ impl BotsMap {
         self.principal_to_user_id
             .get(caller)
             .and_then(|user_id| self.bots.get(user_id))
-    }
-
-    pub fn exists(&self, bot_id: &UserId) -> bool {
-        self.bots.contains_key(bot_id)
     }
 
     #[expect(clippy::too_many_arguments)]
@@ -87,6 +81,7 @@ impl BotsMap {
             bot.commands = definition.commands;
             bot.endpoint = endpoint;
             bot.autonomous_config = definition.autonomous_config;
+            bot.default_subscriptions = definition.default_subscriptions;
         });
     }
 

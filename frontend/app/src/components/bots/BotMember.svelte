@@ -7,6 +7,8 @@
     import TextBoxOutline from "svelte-material-icons/TextBoxOutline.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import FilteredUsername from "../FilteredUsername.svelte";
+    import Markdown from "../home/Markdown.svelte";
+    import BotBadge from "../home/profile/BotBadge.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import Menu from "../Menu.svelte";
     import MenuIcon from "../MenuIcon.svelte";
@@ -36,10 +38,11 @@
                 <div class="bot_name">
                     <h4>
                         <FilteredUsername {searchTerm} username={bot.name} />
+                        <BotBadge bot />
                     </h4>
                 </div>
                 <div class="bot_description">
-                    <FilteredUsername {searchTerm} username={bot.definition.description} />
+                    <Markdown inline={false} suppressLinks text={bot.definition.description} />
                 </div>
             </div>
             <MenuIcon position={"bottom"} align={"end"}>

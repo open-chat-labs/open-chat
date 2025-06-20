@@ -6,10 +6,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Implement `in_progress_proposal_tallies` for retrieving only the tallies ([#8200](https://github.com/open-chat-labs/open-chat/pull/8200))
+
+### Changed
+
+- Use MessagePack to serialize `init` args ([#8183](https://github.com/open-chat-labs/open-chat/pull/8183))
+
+### Removed
+
+- Remove `gate` which is superseded by `gate_config` ([#8186](https://github.com/open-chat-labs/open-chat/pull/8186))
+
+## [[2.0.1795](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1795-group)] - 2025-06-13
+
+### Changed
+
+- Remove bot API Keys ([#8131](https://github.com/open-chat-labs/open-chat/pull/8131))
+- Support bot making inline replies ([#8146](https://github.com/open-chat-labs/open-chat/pull/8146))
+- Add `initiated_by` to bot event notifications ([#8160](https://github.com/open-chat-labs/open-chat/pull/8160))
+
+### Fixed
+
+- Stop clearing subscriptions on upgrade ([#8150](https://github.com/open-chat-labs/open-chat/pull/8150))
+
+## [[2.0.1786](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1786-group)] - 2025-06-06
+
+### Added
+
+- Additional notification data for Firebase Cloud Messaging ([8113](https://github.com/open-chat-labs/open-chat/pull/8113))
+
 ### Changed
 
 - Remove all references to LocalGroupIndexes ([#8057](https://github.com/open-chat-labs/open-chat/pull/8057))
 - Remove all references to Notifications canisters ([#8087](https://github.com/open-chat-labs/open-chat/pull/8087))
+- Remove `correlation_id` ([#8097](https://github.com/open-chat-labs/open-chat/pull/8097))
+- Push chat event notifications to bots ([#8109](https://github.com/open-chat-labs/open-chat/pull/8109))
+
+### Removed
+
+- Remove unused `c2c_report_message_v2` ([#8110](https://github.com/open-chat-labs/open-chat/pull/8110))
 
 ## [[2.0.1764](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1764-group)] - 2025-05-28
 

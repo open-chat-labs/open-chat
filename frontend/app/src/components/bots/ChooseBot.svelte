@@ -4,6 +4,7 @@
     import AlertBox from "../AlertBox.svelte";
     import Avatar from "../Avatar.svelte";
     import Translatable from "../Translatable.svelte";
+    import Markdown from "../home/Markdown.svelte";
 
     interface Props {
         onSelect: (bot: ExternalBot) => void;
@@ -39,7 +40,7 @@
                         {bot.name}
                     </h4>
                     <p title={bot.definition.description} class="bot-desc">
-                        {bot.definition.description}
+                        <Markdown inline={false} suppressLinks text={bot.definition.description} />
                     </p>
                 </div>
             </div>

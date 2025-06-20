@@ -44,6 +44,7 @@ import type {
     MessageActivityFeedResponse,
     MessageContext,
     NamedAccount,
+    OptionUpdate,
     PayForStreakInsuranceResponse,
     PendingCryptocurrencyTransfer,
     PendingCryptocurrencyWithdrawal,
@@ -168,6 +169,7 @@ import {
     UserUndeleteMessagesResponse,
     UserUnpinChatArgs,
     UserUpdateBotArgs,
+    UserUpdateChatSettingsArgs,
     UserUpdatesArgs,
     UserUpdatesResponse,
     UserWithdrawBtcArgs,
@@ -187,13 +189,13 @@ import {
     setCachedMessageFromSendResponse,
 } from "../../utils/caching";
 import {
+    apiOptionUpdateV2,
     identity,
     mapOptional,
     principalBytesToString,
     principalStringToBytes,
     toVoid,
 } from "../../utils/mapping";
-import { generateUint64 } from "../../utils/rng";
 import { setChitInfoInCache } from "../../utils/userCache";
 import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import {
@@ -685,7 +687,6 @@ export class UserClient extends MsgpackCanisterAgent {
                     user_id: principalStringToBytes(recipientId),
                     thread_root_message_index: threadRootMessageIndex,
                     message_id: message.messageId,
-                    correlation_id: generateUint64(),
                     block_level_markdown: blockLevelMarkdown,
                 };
                 return this.executeMsgpackUpdate(
@@ -727,7 +728,6 @@ export class UserClient extends MsgpackCanisterAgent {
                 thread_root_message_index: threadRootMessageIndex,
                 message_filter_failed: messageFilterFailed,
                 pin,
-                correlation_id: generateUint64(),
                 block_level_markdown: newEvent.event.blockLevelMarkdown,
             };
             return this.executeMsgpackUpdate(
@@ -810,7 +810,6 @@ export class UserClient extends MsgpackCanisterAgent {
             block_level_markdown: true,
             message_filter_failed: messageFilterFailed,
             pin,
-            correlation_id: generateUint64(),
         };
         return this.executeMsgpackUpdate(
             "send_message_with_transfer_to_group",
@@ -1077,7 +1076,6 @@ export class UserClient extends MsgpackCanisterAgent {
                 thread_root_message_index: threadRootMessageIndex,
                 message_id: messageId,
                 reaction,
-                correlation_id: generateUint64(),
             },
             unitResult,
             UserAddReactionArgs,
@@ -1098,7 +1096,6 @@ export class UserClient extends MsgpackCanisterAgent {
                 thread_root_message_index: threadRootMessageIndex,
                 message_id: messageId,
                 reaction,
-                correlation_id: generateUint64(),
             },
             unitResult,
             UserRemoveReactionArgs,
@@ -1117,7 +1114,6 @@ export class UserClient extends MsgpackCanisterAgent {
                 user_id: principalStringToBytes(otherUserId),
                 thread_root_message_index: threadRootMessageIndex,
                 message_ids: [messageId],
-                correlation_id: generateUint64(),
             },
             unitResult,
             UserDeleteMessagesArgs,
@@ -1136,7 +1132,6 @@ export class UserClient extends MsgpackCanisterAgent {
                 user_id: principalStringToBytes(otherUserId),
                 thread_root_message_index: threadRootMessageIndex,
                 message_ids: [messageId],
-                correlation_id: generateUint64(),
             },
             (resp) => mapResult(resp, undeleteMessageSuccess),
             UserUndeleteMessagesArgs,
@@ -1698,5 +1693,18 @@ export class UserClient extends MsgpackCanisterAgent {
             UserPayForStreakInsuranceArgs,
             UnitResult,
         );
+    }
+
+    updateChatSettings(userId: string, eventsTtl: OptionUpdate<bigint>): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "update_chat_settings",
+            {
+                user_id: principalStringToBytes(userId),
+                events_ttl: apiOptionUpdateV2(identity, eventsTtl),
+            },
+            isSuccess,
+            UserUpdateChatSettingsArgs,
+            UnitResult,
+        )
     }
 }

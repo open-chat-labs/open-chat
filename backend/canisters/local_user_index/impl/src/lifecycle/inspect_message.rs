@@ -17,7 +17,6 @@ fn accept_if_valid(state: &RuntimeState) {
         | "join_channel"
         | "join_community"
         | "join_group"
-        | "report_message_v2"
         | "uninstall_bot" => state.is_caller_openchat_user(),
         "withdraw_from_icpswap" => state.is_caller_platform_operator(),
         "register_user" => true,

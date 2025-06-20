@@ -179,18 +179,21 @@ aws-types = "1"
 base64 = "0.22"
 bitflags = { version = "2", features = ["serde"] }
 candid = "0.10"
-canbench-rs = "0.1"
+canbench-rs = "0.2"
 clap = "4"
 ct-codecs = "1"
 data-encoding = "2"
 dataurl = "0.1"
-dotenv = "0.15"
+dotenv = "0.15.0"
+either = "1.15.0"
 enum-repr = "0.2"
+envconfig = "0.10.0"
 event_store_canister = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
 event_store_producer = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
 event_store_producer_cdk_runtime = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
 event_store_types = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
 event_store_utils = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
+fcm-service = "0.2.3"
 futures = "0.3"
 getrandom = { version = "0.2", features = ["custom"] }
 hex = "0.4"
@@ -223,7 +226,7 @@ lazy_static = "1"
 num-traits = "0.2"
 openssl = "0.10"
 p256 = { version = "0.13" }
-pocket-ic = "8"
+pocket-ic = "9"
 proc-macro2 = "1"
 prometheus = "0.14"
 proptest = "1"

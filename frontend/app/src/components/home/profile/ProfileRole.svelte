@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { CommunitySummary, Member, MultiUserChat } from "openchat-client";
+    import { type CommunitySummary, type Member, type MultiUserChat, ROLE_NONE } from "openchat-client";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import RoleIcon from "./RoleIcon.svelte";
@@ -19,7 +19,7 @@
 <WithRole {userId} {chatMembers} {communityMembers}>
     {#snippet children(communityRole, chatRole)}
         <div class="wrapper">
-            {#if community !== undefined && communityRole !== "none"}
+            {#if community !== undefined && communityRole !== ROLE_NONE}
                 <div class="role-col">
                     <Translatable
                         resourceKey={i18nKey(
@@ -31,7 +31,7 @@
                     <RoleIcon level="community" role={communityRole} />
                 </div>
             {/if}
-            {#if chat !== undefined && chatRole !== "none"}
+            {#if chat !== undefined && chatRole !== ROLE_NONE}
                 <div class="role-col">
                     <Translatable
                         resourceKey={i18nKey(

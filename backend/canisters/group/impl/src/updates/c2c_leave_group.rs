@@ -22,9 +22,10 @@ fn c2c_leave_group_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let caller = state.env.caller().into();
     let now = state.env.now();
 
-    state.data.chat.leave(caller, now)?;
+    let result = state.data.chat.leave(caller, now)?;
     state.data.remove_user(caller, Some(args.principal));
 
+    state.push_bot_notification(result.bot_notification);
     handle_activity_notification(state);
     Ok(())
 }

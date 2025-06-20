@@ -44,6 +44,7 @@
         failed: boolean;
         timestamp?: bigint | undefined;
         blockLevelMarkdown: boolean;
+        showPreviews: boolean;
         onExpandMessage?: (() => void) | undefined;
         onRemovePreview?: (url: string) => void;
         onRegisterVote?: (vote: { type: "delete" | "register"; answerIndex: number }) => void;
@@ -69,6 +70,7 @@
         failed,
         timestamp = undefined,
         blockLevelMarkdown,
+        showPreviews = true,
         onExpandMessage = undefined,
         onRemovePreview,
         onRegisterVote,
@@ -84,6 +86,7 @@
         {content}
         {edited}
         {blockLevelMarkdown}
+        {showPreviews}
         {onRemovePreview} />
 {:else if content.kind === "image_content"}
     <ImageContent
@@ -120,7 +123,7 @@
         text={i18nKey(failed ? "p2pSwap.failedToCreateMessage" : "p2pSwap.creatingYourMessage")}
         {failed} />
 {:else if content.kind === "prize_content"}
-    <PrizeContent chatId={messageContext.chatId} {messageId} {content} {me} />
+    <PrizeContent chatId={messageContext.chatId} {messageId} {content} {me} {intersecting} />
 {:else if content.kind === "p2p_swap_content"}
     <P2PSwapContent {senderId} {messageContext} {messageId} {content} {me} {reply} {pinned} />
 {:else if content.kind === "prize_winner_content"}

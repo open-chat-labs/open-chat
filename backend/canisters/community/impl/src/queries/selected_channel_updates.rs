@@ -21,11 +21,9 @@ fn selected_channel_updates_impl(args: Args, state: &RuntimeState) -> OCResult<R
 
     let user_id = state.data.members.lookup_user_id(caller);
 
-    let mut updates = channel
+    let updates = channel
         .chat
         .selected_group_updates(args.updates_since, last_updated, user_id)?;
-
-    updates.api_keys_generated = channel.bot_api_keys.generated_since(args.updates_since);
 
     Ok(if updates.has_updates() { Success(updates) } else { SuccessNoUpdates(last_updated) })
 }

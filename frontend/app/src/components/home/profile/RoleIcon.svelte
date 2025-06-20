@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Level, MemberRole } from "openchat-client";
+    import { type Level, type MemberRole, ROLE_MEMBER, roleAsText } from "openchat-client";
     import Tooltip from "../../../components/tooltip/Tooltip.svelte";
 
     interface Props {
@@ -9,18 +9,19 @@
     }
 
     let { level, role, popup = false }: Props = $props();
+    let roleText = role !== undefined ? roleAsText(role) : undefined;
 </script>
 
-{#if role !== undefined && role !== "none" && role !== "member"}
+{#if role !== undefined && role > ROLE_MEMBER}
     {#if popup}
         <Tooltip position="top" align="middle">
-            <div class={`icon ${level} ${role}`}></div>
+            <div class={`icon ${level} ${roleText}`}></div>
             {#snippet popupTemplate()}
-                {`${level.toUpperCase()} ${role?.toUpperCase()}`}
+                {`${level.toUpperCase()} ${roleText?.toUpperCase()}`}
             {/snippet}
         </Tooltip>
     {:else}
-        <div class={`icon ${level} ${role}`}></div>
+        <div class={`icon ${level} ${roleText}`}></div>
     {/if}
 {/if}
 

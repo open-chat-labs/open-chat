@@ -4,7 +4,7 @@ use crate::updates::c2c_join_channel::join_channel_unchecked;
 use crate::updates::end_video_call::end_video_call_impl;
 use crate::{RuntimeState, can_borrow_state, flush_pending_events, mutate_state, read_state, run_regular_jobs};
 use canister_timer_jobs::Job;
-use chat_events::MessageContentInternal;
+use chat_events::{EndPollResult, MessageContentInternal};
 use constants::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 use group_chat_core::AddResult;
 use ledger_utils::process_transaction;
@@ -267,12 +267,15 @@ impl Job for EndPollJob {
         mutate_state(|state| {
             let now = state.env.now();
             if let Some(channel) = state.data.channels.get_mut(&self.channel_id) {
-                channel
-                    .chat
-                    .events
-                    .end_poll(self.thread_root_message_index, self.message_index, now);
-
-                handle_activity_notification(state);
+                if let EndPollResult::Success(result) =
+                    channel
+                        .chat
+                        .events
+                        .end_poll(self.thread_root_message_index, self.message_index, now)
+                {
+                    state.push_bot_notification(result.bot_notification);
+                    handle_activity_notification(state);
+                }
             }
         });
     }
@@ -457,7 +460,7 @@ impl Job for MarkP2PSwapExpiredJob {
                         .events
                         .mark_p2p_swap_expired(self.thread_root_message_index, self.message_id, state.env.now())
                 {
-                    state.process_message_updated(result);
+                    state.push_bot_notification(result.bot_notification);
                 }
             }
         });
@@ -510,7 +513,8 @@ impl JoinMembersToPublicChannelJob {
 
             info!("Joined {} members to channel {channel_id}", users_added.len());
 
-            channel.chat.events.mark_members_added_to_public_channel(users_added, now);
+            let bot_notification = channel.chat.events.mark_members_added_to_public_channel(users_added, now);
+            state.push_bot_notification(bot_notification);
 
             if !self.members.is_empty() {
                 state

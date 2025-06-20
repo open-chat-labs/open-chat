@@ -19,7 +19,6 @@ pub struct Args {
     pub block_level_markdown: bool,
     pub message_filter_failed: Option<u64>,
     pub pin: Option<PinNumberWrapper>,
-    pub correlation_id: u64,
 }
 
 #[expect(clippy::large_enum_variant)]

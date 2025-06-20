@@ -28,7 +28,6 @@ generate_msgpack_update_call!(delete_messages);
 generate_msgpack_update_call!(edit_message_v2);
 generate_msgpack_update_call!(enable_invite_code);
 generate_update_call!(end_video_call_v2);
-generate_msgpack_update_call!(generate_bot_api_key);
 generate_msgpack_update_call!(join_video_call);
 generate_msgpack_update_call!(pin_message_v2);
 generate_msgpack_update_call!(register_poll_vote);
@@ -82,7 +81,6 @@ pub mod happy_path {
                 rules_accepted: None,
                 message_filter_failed: None,
                 new_achievement: false,
-                correlation_id: 0,
             },
         );
 
@@ -118,7 +116,6 @@ pub mod happy_path {
                 rules_accepted: None,
                 message_filter_failed: None,
                 new_achievement: false,
-                correlation_id: 0,
             },
         );
 
@@ -146,7 +143,7 @@ pub mod happy_path {
                 replies_to: None,
                 block_level_markdown: false,
                 message_filter_failed: None,
-                correlation_id: 0,
+
                 sender_name: sender.username(),
                 sender_display_name: None,
                 mentioned: Vec::new(),
@@ -186,11 +183,7 @@ pub mod happy_path {
             env,
             sender,
             group_chat_id.into(),
-            &group_canister::change_role::Args {
-                user_id,
-                new_role,
-                correlation_id: 0,
-            },
+            &group_canister::change_role::Args { user_id, new_role },
         );
 
         match response {
@@ -216,7 +209,6 @@ pub mod happy_path {
                 poll_option,
                 operation: VoteOperation::RegisterVote,
                 new_achievement: false,
-                correlation_id: 0,
             },
         );
 
@@ -416,7 +408,7 @@ pub mod happy_path {
                 thread_root_message_index,
                 message_ids,
                 as_platform_moderator: None,
-                correlation_id: 0,
+
                 new_achievement: false,
             },
         );
@@ -432,10 +424,7 @@ pub mod happy_path {
             env,
             sender,
             group_chat_id.into(),
-            &group_canister::claim_prize::Args {
-                message_id,
-                correlation_id: 0,
-            },
+            &group_canister::claim_prize::Args { message_id },
         );
 
         match response {
@@ -507,10 +496,7 @@ pub mod happy_path {
             env,
             sender,
             group_chat_id.into(),
-            &group_canister::block_user::Args {
-                user_id,
-                correlation_id: 0,
-            },
+            &group_canister::block_user::Args { user_id },
         );
 
         match response {
@@ -534,7 +520,7 @@ pub mod happy_path {
                 thread_root_message_index: None,
                 message_id,
                 reaction: Reaction::new(reaction.to_string()),
-                correlation_id: 0,
+
                 username: sender.username(),
                 display_name: None,
                 new_achievement: false,

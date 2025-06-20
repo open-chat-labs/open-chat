@@ -1,5 +1,12 @@
 <script lang="ts">
-    import { iconSize, type ResourceKey } from "openchat-client";
+    import {
+        type ChatPermissionRole,
+        iconSize,
+        type MemberRole,
+        type ResourceKey,
+        ROLE_NONE,
+        roleAsText,
+    } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Check from "svelte-material-icons/Check.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
@@ -11,27 +18,27 @@
 
     interface Props {
         label: ResourceKey;
-        rolePermission: string | undefined;
-        roles: readonly string[];
-        defaultRole?: string | undefined;
+        rolePermission: ChatPermissionRole | undefined;
+        roles: readonly MemberRole[];
+        defaultRole?: MemberRole | undefined;
     }
 
     let { label, rolePermission = $bindable(), roles, defaultRole = undefined }: Props = $props();
 
     let defaultText = $derived($_("role.default"));
     let defaultRoleText = $derived(
-        defaultRole !== undefined ? $_(`role.${defaultRole}`) : undefined,
+        defaultRole !== undefined ? $_(`role.${roleAsText(defaultRole)}`) : undefined,
     );
     let selectedRoleText = $derived(
         rolePermission !== undefined
-            ? $_(`role.${rolePermission}`)
+            ? $_(`role.${roleAsText(rolePermission)}`)
             : defaultText + ` (${defaultRoleText})`,
     );
 
     let selecting = false;
     let menu: MenuIcon | undefined = $state();
 
-    function select(r: string | undefined) {
+    function select(r: ChatPermissionRole | undefined) {
         rolePermission = r;
     }
 
@@ -84,13 +91,13 @@
                                 size={$iconSize}
                                 color={rolePermission !== undefined &&
                                 roles.indexOf(rolePermission) >= roles.indexOf(r) &&
-                                (r !== "none" || rolePermission === "none")
+                                (r !== ROLE_NONE || rolePermission === ROLE_NONE)
                                     ? "var(--icon-inverted-txt)"
                                     : "transparent"} />
                         {/snippet}
                         {#snippet text()}
                             <div>
-                                {$_(`role.${r}`)}
+                                {$_(`role.${roleAsText(r)}`)}
                             </div>
                         {/snippet}
                     </MenuItem>

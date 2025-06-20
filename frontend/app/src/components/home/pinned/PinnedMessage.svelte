@@ -108,6 +108,7 @@
                 {/if}
 
                 <ChatMessageContent
+                    showPreviews={false}
                     readonly
                     pinned
                     {senderId}

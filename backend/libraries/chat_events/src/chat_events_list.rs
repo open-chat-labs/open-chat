@@ -1,7 +1,10 @@
 use crate::hybrid_map::HybridMap;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::stable_memory::ChatEventsStableStorage;
-use crate::{ChatEventInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal, UpdateEventError};
+use crate::{
+    ChatEventInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal, UpdateEventError,
+    UpdateEventInternalSuccess,
+};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
@@ -39,7 +42,6 @@ impl ChatEventsList {
     pub(crate) fn push_event(
         &mut self,
         event: ChatEventInternal,
-        correlation_id: u64,
         expires_at: Option<TimestampMillis>,
         now: TimestampMillis,
     ) -> EventIndex {
@@ -56,7 +58,6 @@ impl ChatEventsList {
         let event_wrapper = EventWrapperInternal {
             index: event_index,
             timestamp: now,
-            correlation_id,
             expires_at,
             event,
         };
@@ -109,12 +110,17 @@ impl ChatEventsList {
         &mut self,
         event_key: EventKey,
         update_event_fn: F,
-    ) -> Result<(T, EventIndex), UpdateEventError<E>> {
+    ) -> Result<UpdateEventInternalSuccess<T>, UpdateEventError<E>> {
         if let Some(mut event) = self.get_event(event_key, EventIndex::default(), None) {
             update_event_fn(&mut event).map(|result| {
                 let event_index = event.index;
+                let initiated_by = event.event.initiated_by();
                 self.events_map.insert(event);
-                (result, event_index)
+                UpdateEventInternalSuccess {
+                    event_index,
+                    initiated_by,
+                    value: result,
+                }
             })
         } else {
             Err(UpdateEventError::NotFound)
@@ -384,7 +390,6 @@ pub trait Reader {
                 Some(EventWrapper {
                     index: e.index,
                     timestamp: e.timestamp,
-                    correlation_id: e.correlation_id,
                     expires_at: e.expires_at,
                     event: m,
                 })
@@ -458,7 +463,6 @@ pub trait Reader {
         EventWrapper {
             index: event.index,
             timestamp: event.timestamp,
-            correlation_id: event.correlation_id,
             expires_at: event.expires_at,
             event: event_data,
         }
@@ -553,7 +557,6 @@ fn try_into_message_event(
     Some(EventWrapper {
         index: event.index,
         timestamp: event.timestamp,
-        correlation_id: event.correlation_id,
         expires_at: event.expires_at,
         event: message.hydrate(my_user_id),
     })
@@ -811,7 +814,6 @@ mod tests {
                     forwarded: false,
                     sender_is_bot: false,
                     block_level_markdown: false,
-                    correlation_id: i,
                 },
                 None,
             );
@@ -820,7 +822,6 @@ mod tests {
                     updated_by: user_id,
                     new_ttl: Some(i),
                 })),
-                i,
                 now,
             );
         }

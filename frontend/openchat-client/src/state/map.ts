@@ -1,6 +1,5 @@
 import {
     SafeMap,
-    SafeSet,
     type ChatIdentifier,
     type CommunityIdentifier,
     type Primitive,
@@ -8,72 +7,70 @@ import {
 } from "openchat-shared";
 import { type UndoLocalUpdate } from "./undo";
 
+type Add<K, V> = { kind: "add"; key: K; value: V };
+type Remove<K> = { kind: "remove"; key: K };
+type Modification<K, V> = Add<K, V> | Remove<K>;
+
 export class LocalMap<K, V> {
-    #addedOrUpdated: SafeMap<K, V>;
-    #removed: SafeSet<K>;
+    #queue: Modification<K, V>[] = [];
 
     constructor(
         private serialiser?: (k: K) => Primitive,
         private deserialiser?: (p: Primitive) => K,
-    ) {
-        this.#addedOrUpdated = new SafeMap(serialiser, deserialiser);
-        this.#removed = new SafeSet(serialiser, deserialiser);
-    }
+    ) {}
 
     // for testing
     protected addedOrUpdated(key: K): boolean {
-        return this.#addedOrUpdated.has(key);
+        return this.#queue.find((m) => m.kind === "add" && m.key === key) !== undefined;
     }
 
     // for testing
     protected removed(key: K): boolean {
-        return this.#removed.has(key);
+        return this.#queue.find((m) => m.kind === "remove" && m.key === key) !== undefined;
     }
 
     // used for testing
     clear() {
-        this.#addedOrUpdated.clear();
-        this.#removed.clear();
+        this.#queue = [];
     }
 
     addOrUpdate(key: K, value: V): UndoLocalUpdate {
-        this.#addedOrUpdated.set(key, value);
-        const removed = this.#removed.delete(key);
+        const add: Add<K, V> = { kind: "add", key, value };
+        this.#queue.push(add);
         return () => {
-            this.#addedOrUpdated.delete(key);
-            if (removed) {
-                this.#removed.add(key);
-            }
+            this.#queue = this.#queue.filter((a) => a !== add);
         };
     }
 
     // This is very rarely needed - you probably don't need this
     undoRemove(key: K) {
-        this.#removed.delete(key);
+        this.#queue = this.#queue.filter((m) => !(m.kind === "remove" && m.key === key));
         return () => {};
     }
 
     remove(key: K) {
-        this.#removed.add(key);
-        const previous = this.#addedOrUpdated.get(key);
-        this.#addedOrUpdated.delete(key);
+        const remove: Remove<K> = { kind: "remove", key };
+        this.#queue.push(remove);
         return () => {
-            this.#removed.delete(key);
-            if (previous) {
-                this.#addedOrUpdated.set(key, previous);
-            }
+            this.#queue = this.#queue.filter((a) => a !== remove);
         };
     }
 
     apply(original: ReadonlyMap<K, V>): ReadonlyMap<K, V> {
-        if (this.#addedOrUpdated.size === 0 && this.#removed.size === 0) return original;
+        if (this.#queue.length === 0) return original;
 
         const merged = new SafeMap<K, V>(this.serialiser, this.deserialiser);
         for (const [k, v] of original) {
             merged.set(k, v);
         }
-        this.#addedOrUpdated.forEach((v, k) => merged.set(k, v));
-        this.#removed.forEach((k) => merged.delete(k));
+        for (const mod of this.#queue) {
+            if (mod.kind === "remove") {
+                merged.delete(mod.key);
+            }
+            if (mod.kind === "add") {
+                merged.set(mod.key, mod.value);
+            }
+        }
         return merged;
     }
 }

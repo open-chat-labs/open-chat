@@ -20,7 +20,15 @@ import type {
     OptionalMessagePermissions,
     GroupMembershipUpdates,
 } from "openchat-shared";
-import { toBigInt32, emptyChatMetrics } from "openchat-shared";
+import {
+    toBigInt32,
+    emptyChatMetrics,
+    ROLE_ADMIN,
+    ROLE_MEMBER,
+    ROLE_MODERATOR,
+    ROLE_NONE,
+    ROLE_OWNER
+} from "openchat-shared";
 import {
     accessGateConfig,
     apiPermissionRole,
@@ -45,13 +53,13 @@ import {
 
 export function apiRole(role: MemberRole): GroupRole | undefined {
     switch (role) {
-        case "admin":
+        case ROLE_ADMIN:
             return "Admin";
-        case "moderator":
+        case ROLE_MODERATOR:
             return "Moderator";
-        case "member":
+        case ROLE_MEMBER:
             return "Participant";
-        case "owner":
+        case ROLE_OWNER:
             return "Owner";
         default:
             return undefined;
@@ -100,7 +108,7 @@ export function groupChatSummary(
             myMetrics: chatMetrics(m.my_metrics),
         })) ?? {
             joined: 0n,
-            role: "none",
+            role: ROLE_NONE,
             mentions: [],
             latestThreads: [],
             myMetrics: emptyChatMetrics(),

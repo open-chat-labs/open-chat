@@ -8,16 +8,9 @@ use rand::SeedableRng;
 use rand::rngs::StdRng;
 use serde::Serialize;
 use types::c2c_can_issue_access_token::{
-    AccessTypeArgs, BotActionByApiKeyArgs, BotActionByCommandArgs, JoinVideoCallArgs, MarkVideoCallAsEndedArgs,
-    StartVideoCallArgs,
+    AccessTypeArgs, BotActionByCommandArgs, JoinVideoCallArgs, MarkVideoCallAsEndedArgs, StartVideoCallArgs,
 };
-use types::{
-    AutonomousBotScope, BotActionByApiKeyClaims, BotActionByCommandClaims, BotApiKeyToken, BotCommand, BotCommandArg,
-    BotCommandArgValue, BotPermissions, Chat, GroupRole, JoinOrEndVideoCallClaims, StartVideoCallClaims, c2c_bot_api_key,
-};
-use utils::base64;
-
-const SYNC_API_KEY_COMMAND_NAME: &str = "sync_api_key";
+use types::{AutonomousBotScope, BotActionByCommandClaims, BotCommand, Chat, JoinOrEndVideoCallClaims, StartVideoCallClaims};
 
 #[query(composite = true, candid = true, msgpack = true)]
 #[trace]
@@ -31,28 +24,8 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
         Err(response) => return response,
     };
 
-    // If this is a special sync_api_key command, we need to fetch the API key
-    let mut api_key_args = None;
-    if let ArgsInternal::BotActionByCommand(a) = &args_wrapper {
-        if a.command.name.eq_ignore_ascii_case(SYNC_API_KEY_COMMAND_NAME) {
-            api_key_args = Some(c2c_bot_api_key::Args {
-                bot_id: a.bot_id,
-                initiator: access_type_args.initiator().unwrap(),
-            })
-        }
-    };
-
-    // Either fetch the API key or check if the user can issue an access token for the given scope
-    let api_key = if let Some(api_key_args) = api_key_args {
-        match get_api_key(scope, api_key_args).await {
-            Ok(api_key) => Some(api_key),
-            Err(response) => return response,
-        }
-    } else {
-        match can_issue_access_token(scope, &access_type_args).await {
-            Ok(_) => None,
-            Err(response) => return response,
-        }
+    if let Err(error_response) = can_issue_access_token(scope, &access_type_args).await {
+        return error_response;
     };
 
     let token_type_name = args_wrapper.type_name().to_string();
@@ -60,41 +33,22 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
     mutate_state(|state| {
         let chat = args_wrapper.chat();
 
-        match &args_wrapper {
-            ArgsInternal::BotActionByCommand(args) => {
-                let command_args = if let Some(api_key) = api_key {
-                    vec![BotCommandArg {
-                        name: "api_key".to_string(),
-                        value: BotCommandArgValue::String(api_key),
-                    }]
-                } else {
-                    args.command.args.clone()
-                };
+        if let ArgsInternal::BotActionByCommand(args) = &args_wrapper {
+            let command_args = args.command.args.clone();
 
-                let custom_claims = BotActionByCommandClaims {
-                    bot: args.bot_id,
-                    scope: args.scope.clone(),
-                    bot_api_gateway: state.env.canister_id(),
-                    granted_permissions: access_type_args.requested_permissions().unwrap(),
-                    command: BotCommand {
-                        name: args.command.name.clone(),
-                        args: command_args,
-                        initiator: access_type_args.initiator().unwrap(),
-                        meta: args.command.meta.clone(),
-                    },
-                };
-                return build_token(token_type_name, custom_claims, state);
-            }
-            ArgsInternal::BotActionByApiKey(args) => {
-                let custom_claims = BotActionByApiKeyClaims {
-                    bot: args.bot_id,
-                    scope: args.scope.clone(),
-                    bot_api_gateway: state.env.canister_id(),
-                    granted_permissions: access_type_args.requested_permissions().unwrap(),
-                };
-                return build_token(token_type_name, custom_claims, state);
-            }
-            _ => (),
+            let custom_claims = BotActionByCommandClaims {
+                bot: args.bot_id,
+                scope: args.scope.clone(),
+                bot_api_gateway: state.env.canister_id(),
+                granted_permissions: access_type_args.requested_permissions().unwrap(),
+                command: BotCommand {
+                    name: args.command.name.clone(),
+                    args: command_args,
+                    initiator: access_type_args.initiator(),
+                    meta: args.command.meta.clone(),
+                },
+            };
+            return build_token(token_type_name, custom_claims, state);
         }
 
         match access_type_args {
@@ -132,27 +86,6 @@ struct PrepareResult {
 }
 
 fn prepare(args_outer: &ArgsInternal, state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if let ArgsInternal::BotActionByApiKey(args) = args_outer {
-        let Some(permissions) = state
-            .data
-            .bots
-            .get(&args.bot_id)
-            .and_then(|b| b.autonomous_config.as_ref())
-            .map(|c| c.permissions.clone())
-        else {
-            return Err(Response::NotAuthorized);
-        };
-
-        return Ok(PrepareResult {
-            scope: args.scope.clone(),
-            access_type_args: AccessTypeArgs::BotActionByApiKey(BotActionByApiKeyArgs {
-                bot_id: args.bot_id,
-                secret: args.secret.clone(),
-                requested_permissions: permissions,
-            }),
-        });
-    }
-
     let Some(user) = state
         .data
         .global_users
@@ -165,28 +98,19 @@ fn prepare(args_outer: &ArgsInternal, state: &RuntimeState) -> Result<PrepareRes
     if let ArgsInternal::BotActionByCommand(args) = args_outer {
         let bot = state.data.bots.get(&args.bot_id).ok_or(Response::NotAuthorized)?;
 
-        let (permissions, default_role) = if args.command.name.eq_ignore_ascii_case(SYNC_API_KEY_COMMAND_NAME) {
-            if bot.autonomous_config.as_ref().is_none_or(|config| !config.sync_api_key) {
-                return Err(Response::NotAuthorized);
-            }
-            (BotPermissions::default(), GroupRole::Owner)
-        } else {
-            let command = bot
-                .commands
-                .iter()
-                .find(|c| c.name == args.command.name)
-                .ok_or(Response::NotAuthorized)?;
-
-            (command.permissions.clone(), command.default_role.unwrap_or_default())
-        };
+        let command = bot
+            .commands
+            .iter()
+            .find(|c| c.name == args.command.name)
+            .ok_or(Response::NotAuthorized)?;
 
         return Ok(PrepareResult {
             scope: args.scope.clone().into(),
             access_type_args: AccessTypeArgs::BotActionByCommand(BotActionByCommandArgs {
                 bot_id: args.bot_id,
                 initiator: user.user_id,
-                initiator_role: default_role,
-                requested_permissions: permissions,
+                initiator_role: command.default_role.unwrap_or_default(),
+                requested_permissions: command.permissions.clone(),
             }),
         });
     }
@@ -245,7 +169,6 @@ enum ArgsInternal {
     JoinVideoCall(access_token_v2::JoinVideoCallArgs),
     MarkVideoCallAsEnded(access_token_v2::MarkVideoCallAsEndedArgs),
     BotActionByCommand(access_token_v2::BotActionByCommandArgs),
-    BotActionByApiKey(BotApiKeyToken),
 }
 
 impl ArgsInternal {
@@ -255,10 +178,6 @@ impl ArgsInternal {
             Args::JoinVideoCall(args) => Ok(ArgsInternal::JoinVideoCall(args)),
             Args::MarkVideoCallAsEnded(args) => Ok(ArgsInternal::MarkVideoCallAsEnded(args)),
             Args::BotActionByCommand(args) => Ok(ArgsInternal::BotActionByCommand(args)),
-            Args::BotActionByApiKey(args) => {
-                let token: BotApiKeyToken = base64::to_value(&args)?;
-                Ok(ArgsInternal::BotActionByApiKey(token))
-            }
         }
     }
 
@@ -268,7 +187,6 @@ impl ArgsInternal {
             Self::JoinVideoCall(_) => "JoinVideoCall",
             Self::MarkVideoCallAsEnded(_) => "MarkVideoCallAsEnded",
             Self::BotActionByCommand(_) => "BotActionByCommand",
-            Self::BotActionByApiKey(_) => "BotActionByApiKey",
         }
     }
 
@@ -278,47 +196,7 @@ impl ArgsInternal {
             Self::JoinVideoCall(args) => Some(args.chat),
             Self::MarkVideoCallAsEnded(args) => Some(args.chat),
             Self::BotActionByCommand(args) => args.scope.chat(None),
-            Self::BotActionByApiKey(args) => args.scope.chat(None),
         }
-    }
-}
-
-async fn get_api_key(scope: AutonomousBotScope, api_key_args: c2c_bot_api_key::Args) -> Result<String, Response> {
-    let response = match scope {
-        AutonomousBotScope::Chat(Chat::Group(chat_id)) => {
-            group_canister_c2c_client::c2c_bot_api_key(chat_id.into(), &api_key_args).await
-        }
-        AutonomousBotScope::Chat(Chat::Channel(community_id, channel_id)) => {
-            community_canister_c2c_client::c2c_bot_api_key(
-                community_id.into(),
-                &community_canister::c2c_bot_api_key::Args {
-                    bot_id: api_key_args.bot_id,
-                    initiator: api_key_args.initiator,
-                    channel_id: Some(channel_id),
-                },
-            )
-            .await
-        }
-        AutonomousBotScope::Chat(Chat::Direct(chat_id)) => {
-            user_canister_c2c_client::c2c_bot_api_key(chat_id.into(), &api_key_args).await
-        }
-        AutonomousBotScope::Community(community_id) => {
-            community_canister_c2c_client::c2c_bot_api_key(
-                community_id.into(),
-                &community_canister::c2c_bot_api_key::Args {
-                    bot_id: api_key_args.bot_id,
-                    initiator: api_key_args.initiator,
-                    channel_id: None,
-                },
-            )
-            .await
-        }
-    };
-
-    match response {
-        Ok(c2c_bot_api_key::Response::Success(api_key)) => Ok(api_key),
-        Ok(_) => Err(NotAuthorized),
-        Err(error) => Err(InternalError(format!("{error:?}"))),
     }
 }
 

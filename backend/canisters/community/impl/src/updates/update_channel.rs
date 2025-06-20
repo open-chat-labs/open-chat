@@ -93,6 +93,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> OCResult<Suc
         state.data.public_channel_list_updated = now;
     }
 
+    state.push_bot_notifications(result.bot_notifications);
     handle_activity_notification(state);
 
     Ok(SuccessResult {

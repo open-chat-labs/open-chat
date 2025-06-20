@@ -15,7 +15,6 @@ async fn join_group(args: Args) -> Response {
         user_id: user_details.user_id,
         principal: user_details.principal,
         invite_code: args.invite_code,
-        correlation_id: args.correlation_id,
         is_platform_moderator: user_details.is_platform_moderator,
         user_type: user_details.user_type,
         diamond_membership_expires_at: user_details.diamond_membership_expires_at,

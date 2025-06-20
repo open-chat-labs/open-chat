@@ -51,7 +51,6 @@ async fn update_proposals(
 async fn update_group_proposals(governance_canister_id: CanisterId, group_id: ChatId, proposals: Vec<ProposalUpdate>) {
     let update_proposals_args = group_canister::c2c_update_proposals::Args {
         proposals: proposals.clone(),
-        correlation_id: 0,
     };
 
     let response = group_canister_c2c_client::c2c_update_proposals(group_id.into(), &update_proposals_args).await;

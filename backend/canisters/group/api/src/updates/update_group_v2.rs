@@ -19,7 +19,6 @@ pub struct Args {
     pub gate_config: OptionUpdate<AccessGateConfig>,
     pub public: Option<bool>,
     pub messages_visible_to_non_members: Option<bool>,
-    pub correlation_id: u64,
 }
 
 #[ts_export(group, update_group)]

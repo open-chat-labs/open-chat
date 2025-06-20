@@ -65,7 +65,6 @@ pub struct Swap {
     pub refunds: Vec<CompletedCryptoTransaction>,
     pub additional_admins: Vec<Principal>,
     pub canister_to_notify: Option<CanisterId>,
-    #[serde(default)]
     pub errors: Vec<String>,
 }
 

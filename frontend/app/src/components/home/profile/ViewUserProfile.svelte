@@ -21,6 +21,7 @@
         selectedCommunityMembersStore,
         selectedCommunitySummaryStore,
     } from "openchat-client";
+
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import ClockOutline from "svelte-material-icons/ClockOutline.svelte";

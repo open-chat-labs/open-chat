@@ -1,3 +1,4 @@
+import { ROLE_NONE } from "../../constants";
 import { emptyChatMetrics } from "../../utils";
 import type { AccessControlled, AccessGateConfig, UpdatedRules, VersionedRules } from "../access";
 import type {
@@ -1029,9 +1030,29 @@ export type EventsSuccessResult<T extends ChatEvent> = {
 };
 
 export type UpdatesResult = {
-    state: ChatStateFull;
+    directChatsAddedUpdated: DirectChatSummary[];
+    directChatsRemoved: string[];
+    groupsAddedUpdated: GroupChatSummary[];
+    groupsRemoved: string[];
+    communitiesAddedUpdated: CommunitySummary[];
+    communitiesRemoved: string[];
+    avatarId: OptionUpdate<bigint>;
+    blockedUsers: string[] | undefined;
+    pinnedDirectChats: DirectChatIdentifier[] | undefined;
+    pinnedGroupChats: GroupChatIdentifier[] | undefined;
+    pinnedChannels: ChannelIdentifier[] | undefined;
+    pinnedFavouriteChats: ChatIdentifier[] | undefined;
+    favouriteChats: ChatIdentifier[] | undefined;
+    pinNumberSettings: OptionUpdate<PinNumberSettings>;
+    achievements: Set<string> | undefined;
+    chitState: ChitState | undefined;
+    referrals: Referral[] | undefined;
+    walletConfig: WalletConfig | undefined;
+    messageActivitySummary: MessageActivitySummary | undefined;
+    installedBots: Map<string, GrantedBotPermissions> | undefined;
+    bitcoinAddress: string | undefined;
+    streakInsurance: OptionUpdate<StreakInsurance>;
     updatedEvents: Map<string, UpdatedEvent[]>;
-    anyUpdates: boolean;
     suspensionChanged: boolean | undefined;
     newAchievements: ChitEarned[];
 };
@@ -1312,7 +1333,7 @@ export type UpdatesSuccessResponse = {
     walletConfig: WalletConfig | undefined;
     messageActivitySummary: MessageActivitySummary | undefined;
     botsAddedOrUpdated: InstalledBotDetails[];
-    botsRemoved: Set<string>;
+    botsRemoved: string[];
     bitcoinAddress: string | undefined;
     streakInsurance: OptionUpdate<StreakInsurance>;
 };
@@ -1321,7 +1342,7 @@ export type DirectChatsUpdates = {
     added: DirectChatSummary[];
     pinned?: DirectChatIdentifier[];
     updated: DirectChatSummaryUpdates[];
-    removed: DirectChatIdentifier[];
+    removed: string[];
 };
 
 export type GroupChatsUpdates = {
@@ -1528,7 +1549,7 @@ export type GroupChatSummary = DataContent &
 export function nullMembership(): ChatMembership {
     return {
         joined: BigInt(0),
-        role: "none",
+        role: ROLE_NONE,
         mentions: [],
         latestThreads: [],
         myMetrics: emptyChatMetrics(),
@@ -2357,16 +2378,12 @@ export type ChatEventType =
     | "MessageReaction"
     | "MessageTipped"
     | "MessageDeleted"
+    | "MessageUndeleted"
     | "MessagePollVote"
     | "MessagePollEnded"
     | "MessagePrizeClaim"
-    | "MessagePrizePayment"
-    | "MessageProposalVote"
-    | "MessageProposalUpdated"
-    | "MessageP2pSwap"
-    | "MessageReported"
-    | "MessageThreadSummary"
-    | "MessageReminder"
+    | "MessageP2pSwapCompleted"
+    | "MessageP2pSwapCancelled"
     | "MessageVideoCall"
     | "MessageOther"
     | "Created"
@@ -2376,20 +2393,20 @@ export type ChatEventType =
     | "AvatarChanged"
     | "ExternalUrlUpdated"
     | "PermissionsChanged"
+    | "GateUpdated"
     | "VisibilityChanged"
     | "InviteCodeChanged"
     | "Frozen"
     | "Unfrozen"
-    | "EventsTTLUpdated"
-    | "GateUpdated"
+    | "DisappearingMessagesUpdated"
     | "MessagePinned"
     | "MessageUnpinned"
     | "MembersJoined"
     | "MembersLeft"
     | "RoleChanged"
     | "UsersInvited"
+    | "UsersBlocked"
+    | "UsersUnblocked"
     | "BotAdded"
     | "BotRemoved"
-    | "BotUpdated"
-    | "UsersBlocked"
-    | "UsersUnblocked";
+    | "BotUpdated";

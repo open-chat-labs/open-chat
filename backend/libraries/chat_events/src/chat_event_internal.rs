@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 use std::ops::DerefMut;
 use types::{
-    AccessGate, AccessGateConfigInternal, AvatarChanged, BotAdded, BotMessageContext, BotRemoved, BotUpdated, ChannelId, Chat,
+    AccessGateConfigInternal, AvatarChanged, BotAdded, BotMessageContext, BotRemoved, BotUpdated, ChannelId, Chat,
     ChatEventCategory, ChatEventType, ChatId, CommunityId, DeletedBy, DirectChatCreated, EventIndex, EventWrapperInternal,
     EventsTimeToLiveUpdated, ExternalUrlUpdated, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated,
     GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged,
@@ -201,7 +201,7 @@ impl ChatEventInternal {
             ChatEventInternal::GroupInviteCodeChanged(_) => Some(ChatEventType::InviteCodeChanged),
             ChatEventInternal::ChatFrozen(_) => Some(ChatEventType::Frozen),
             ChatEventInternal::ChatUnfrozen(_) => Some(ChatEventType::Unfrozen),
-            ChatEventInternal::EventsTimeToLiveUpdated(_) => Some(ChatEventType::EventsTTLUpdated),
+            ChatEventInternal::EventsTimeToLiveUpdated(_) => Some(ChatEventType::DisappearingMessagesUpdated),
             ChatEventInternal::GroupGateUpdated(_) => Some(ChatEventType::GateUpdated),
             ChatEventInternal::UsersInvited(_) => Some(ChatEventType::UsersInvited),
             ChatEventInternal::MembersAddedToPublicChannel(_) => Some(ChatEventType::MembersJoined),
@@ -209,6 +209,42 @@ impl ChatEventInternal {
             ChatEventInternal::BotAdded(_) => Some(ChatEventType::BotAdded),
             ChatEventInternal::BotRemoved(_) => Some(ChatEventType::BotRemoved),
             ChatEventInternal::BotUpdated(_) => Some(ChatEventType::BotUpdated),
+            ChatEventInternal::FailedToDeserialize => None,
+            ChatEventInternal::Empty => None,
+        }
+    }
+
+    pub fn initiated_by(&self) -> Option<UserId> {
+        match self {
+            ChatEventInternal::Message(m) => Some(m.sender),
+            ChatEventInternal::DirectChatCreated(_) => None,
+            ChatEventInternal::GroupChatCreated(gcc) => Some(gcc.created_by),
+            ChatEventInternal::GroupNameChanged(gcn) => Some(gcn.changed_by),
+            ChatEventInternal::GroupDescriptionChanged(gdc) => Some(gdc.changed_by),
+            ChatEventInternal::GroupRulesChanged(grc) => Some(grc.changed_by),
+            ChatEventInternal::AvatarChanged(ac) => Some(ac.changed_by),
+            ChatEventInternal::ParticipantsAdded(ma) => Some(ma.added_by),
+            ChatEventInternal::ParticipantsRemoved(mr) => Some(mr.removed_by),
+            ChatEventInternal::ParticipantJoined(mj) => Some(mj.user_id),
+            ChatEventInternal::ParticipantLeft(ml) => Some(ml.user_id),
+            ChatEventInternal::RoleChanged(rc) => Some(rc.changed_by),
+            ChatEventInternal::UsersBlocked(ub) => Some(ub.blocked_by),
+            ChatEventInternal::UsersUnblocked(uub) => Some(uub.unblocked_by),
+            ChatEventInternal::MessagePinned(mp) => Some(mp.pinned_by),
+            ChatEventInternal::MessageUnpinned(mup) => Some(mup.unpinned_by),
+            ChatEventInternal::PermissionsChanged(pc) => Some(pc.changed_by),
+            ChatEventInternal::GroupVisibilityChanged(gvc) => Some(gvc.changed_by),
+            ChatEventInternal::GroupInviteCodeChanged(gic) => Some(gic.changed_by),
+            ChatEventInternal::ChatFrozen(fz) => Some(fz.frozen_by),
+            ChatEventInternal::ChatUnfrozen(ufz) => Some(ufz.unfrozen_by),
+            ChatEventInternal::EventsTimeToLiveUpdated(ttl) => Some(ttl.updated_by),
+            ChatEventInternal::GroupGateUpdated(gu) => Some(gu.updated_by),
+            ChatEventInternal::UsersInvited(ui) => Some(ui.invited_by),
+            ChatEventInternal::MembersAddedToPublicChannel(_) => None,
+            ChatEventInternal::ExternalUrlUpdated(eu) => Some(eu.updated_by),
+            ChatEventInternal::BotAdded(ba) => Some(ba.added_by),
+            ChatEventInternal::BotRemoved(br) => Some(br.removed_by),
+            ChatEventInternal::BotUpdated(bu) => Some(bu.updated_by),
             ChatEventInternal::FailedToDeserialize => None,
             ChatEventInternal::Empty => None,
         }
@@ -386,12 +422,6 @@ pub struct MembersAddedToPublicChannelInternal {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct GroupGateUpdatedInternalPrevious {
-    pub updated_by: UserId,
-    pub new_gate: Option<AccessGate>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GroupGateUpdatedInternal {
     pub updated_by: UserId,
     pub new_gate_config: Option<AccessGateConfigInternal>,
@@ -401,7 +431,6 @@ impl From<GroupGateUpdatedInternal> for GroupGateUpdated {
     fn from(value: GroupGateUpdatedInternal) -> Self {
         GroupGateUpdated {
             updated_by: value.updated_by,
-            new_gate: value.new_gate_config.clone().map(|gc| gc.gate),
             new_gate_config: value.new_gate_config.map(|gc| gc.into()),
         }
     }
@@ -569,7 +598,6 @@ mod tests {
         let event = EventWrapperInternal {
             index: 1.into(),
             timestamp: 1,
-            correlation_id: 0,
             expires_at: None,
             event: ChatEventInternal::Message(Box::new(message)),
         };

@@ -7,7 +7,6 @@ use types::UserId;
 pub struct Args {
     pub caller: UserId,
     pub users: Vec<(UserId, Principal)>,
-    pub correlation_id: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

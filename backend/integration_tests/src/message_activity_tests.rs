@@ -91,7 +91,6 @@ fn mention_user_and_check_activity_feed(chat_type: ChatType) {
                     rules_accepted: None,
                     message_filter_failed: None,
                     new_achievement: false,
-                    correlation_id: 0,
                 },
             );
         }

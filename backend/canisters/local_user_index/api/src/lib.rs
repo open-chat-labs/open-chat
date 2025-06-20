@@ -129,10 +129,9 @@ pub struct BotRegistered {
     pub endpoint: String,
     pub autonomous_config: Option<AutonomousConfig>,
     pub permitted_install_location: Option<BotInstallationLocation>,
-    #[serde(default)]
     pub default_subscriptions: Option<BotSubscriptions>,
-    #[serde(default)]
     pub data_encoding: BotDataEncoding,
+    pub notification_canister: CanisterId,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -254,15 +253,12 @@ pub struct DeleteUser {
 pub struct GlobalUser {
     pub user_id: UserId,
     pub principal: Principal,
-    #[serde(default)]
     pub is_platform_operator: bool,
-    #[serde(default)]
     pub is_platform_moderator: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub diamond_membership_expires_at: Option<TimestampMillis>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub unique_person_proof: Option<UniquePersonProof>,
-    #[serde(default)]
     pub user_type: UserType,
 }
 
@@ -276,7 +272,6 @@ pub struct ChitEarned {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ExternalAchievementAwarded {
-    #[serde(default)]
     pub id: u32,
     pub user_id: UserId,
     pub name: String,
@@ -328,7 +323,6 @@ pub enum ChildCanisterType {
 pub struct LocalGroup {
     pub wasm_version: BuildVersion,
     pub upgrade_in_progress: bool,
-    #[serde(default)]
     pub latest_activity: TimestampMillis,
     pub cycle_top_ups: Vec<CyclesTopUp>,
 }
@@ -359,7 +353,6 @@ impl LocalGroup {
 pub struct LocalCommunity {
     pub wasm_version: BuildVersion,
     pub upgrade_in_progress: bool,
-    #[serde(default)]
     pub latest_activity: TimestampMillis,
     pub cycle_top_ups: Vec<CyclesTopUp>,
 }

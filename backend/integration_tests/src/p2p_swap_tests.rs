@@ -60,7 +60,6 @@ fn p2p_swap_in_direct_chat_succeeds() {
             block_level_markdown: false,
             message_filter_failed: None,
             pin: None,
-            correlation_id: 0,
         },
     );
 
@@ -177,7 +176,6 @@ fn p2p_swap_in_group_succeeds() {
             replies_to: None,
             mentioned: Vec::new(),
             block_level_markdown: false,
-            correlation_id: 0,
             rules_accepted: None,
             message_filter_failed: None,
             pin: None,
@@ -277,7 +275,6 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
             block_level_markdown: false,
             message_filter_failed: None,
             pin: None,
-            correlation_id: 0,
         },
     );
 
@@ -295,7 +292,6 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
                 user_id: user2.user_id,
                 thread_root_message_index: None,
                 message_ids: vec![message_id],
-                correlation_id: 0,
             },
         );
 
@@ -404,7 +400,6 @@ fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
             replies_to: None,
             mentioned: Vec::new(),
             block_level_markdown: false,
-            correlation_id: 0,
             rules_accepted: None,
             message_filter_failed: None,
             pin: None,
@@ -425,7 +420,6 @@ fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
                 thread_root_message_index: None,
                 message_ids: vec![message_id],
                 as_platform_moderator: None,
-                correlation_id: 0,
                 new_achievement: false,
             },
         );
@@ -520,7 +514,6 @@ fn deposit_refunded_if_swap_expires() {
             block_level_markdown: false,
             message_filter_failed: None,
             pin: None,
-            correlation_id: 0,
         },
     );
 
@@ -617,7 +610,6 @@ fn p2p_swap_blocked_if_token_disabled(input_token: bool) {
             replies_to: None,
             mentioned: Vec::new(),
             block_level_markdown: false,
-            correlation_id: 0,
             rules_accepted: None,
             message_filter_failed: None,
             pin: None,

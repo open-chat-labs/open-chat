@@ -2,6 +2,7 @@
     import {
         chatListScopeStore,
         isLocked,
+        ROLE_NONE,
         routeForScope,
         selectedCommunitySummaryStore,
         type ChatListScope,
@@ -39,7 +40,7 @@
         }
     }
     let previewingCommunity = $derived(
-        $selectedCommunitySummaryStore?.membership.role === "none" ||
+        $selectedCommunitySummaryStore?.membership.role === ROLE_NONE ||
             $selectedCommunitySummaryStore?.membership.lapsed,
     );
     let locked = $derived(isLocked($selectedCommunitySummaryStore?.gateConfig?.gate));

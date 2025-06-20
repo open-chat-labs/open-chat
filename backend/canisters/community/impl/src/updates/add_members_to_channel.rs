@@ -5,7 +5,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::add_members_to_channel::{Response::*, *};
 use oc_error_codes::OCErrorCode;
-use types::{AddedToChannelNotification, ChannelId, OCResult, UserId, UserNotificationPayload, UserType};
+use types::{AddedToChannelNotification, ChannelId, FcmData, OCResult, UserId, UserNotificationPayload, UserType};
 
 #[update(msgpack = true)]
 #[trace]
@@ -106,6 +106,13 @@ fn commit(
         });
     }
 
+    // TODO i18n
+    let fcm_body = format!("You have been added to channel {}", channel_name.clone());
+    let fcm_data = FcmData::builder()
+        .with_alt_title(&added_by_display_name, &added_by_name)
+        .with_body(fcm_body)
+        .build();
+
     let notification = UserNotificationPayload::AddedToChannel(AddedToChannelNotification {
         community_id: state.env.canister_id().into(),
         community_name: state.data.name.value.clone(),
@@ -118,11 +125,8 @@ fn commit(
         channel_avatar_id,
     });
 
-    state.push_notification(Some(added_by), users_added.clone(), notification);
-
-    if let Some(bot_notification) = bot_notification {
-        state.push_bot_notification(bot_notification);
-    }
+    state.push_notification(Some(added_by), users_added.clone(), notification, fcm_data);
+    state.push_bot_notification(bot_notification);
 
     jobs::expire_members::start_job_if_required(state);
 

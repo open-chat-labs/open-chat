@@ -21,7 +21,7 @@ pub(crate) fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> OCRes
     );
 
     let now = state.env.now();
-    state.data.chat.events.end_video_call(
+    let result = state.data.chat.events.end_video_call(
         args.message_id.into(),
         now,
         Some(GroupEventPusher {
@@ -31,6 +31,7 @@ pub(crate) fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> OCRes
         }),
     )?;
 
+    state.push_bot_notification(result.bot_notification);
     handle_activity_notification(state);
     Ok(())
 }

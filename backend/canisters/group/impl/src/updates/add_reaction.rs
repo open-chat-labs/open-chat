@@ -6,8 +6,8 @@ use canister_tracing_macros::trace;
 use group_canister::{add_reaction::*, c2c_bot_add_reaction};
 use oc_error_codes::{OCError, OCErrorCode};
 use types::{
-    Achievement, BotCaller, BotPermissions, Caller, Chat, ChatPermission, EventIndex, GroupReactionAddedNotification, OCResult,
-    UserNotificationPayload,
+    Achievement, BotCaller, BotPermissions, Caller, Chat, ChatPermission, EventIndex, FcmData, GroupReactionAddedNotification,
+    OCResult, UserNotificationPayload,
 };
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -36,7 +36,6 @@ fn c2c_bot_add_reaction_impl(args: c2c_bot_add_reaction::Args, state: &mut Runti
         username: args.bot_name,
         display_name: None,
         new_achievement: false,
-        correlation_id: 0,
     };
 
     if !state.data.is_bot_permitted(
@@ -58,7 +57,7 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
     let now = state.env.now();
     let thread_root_message_index = args.thread_root_message_index;
 
-    state.data.chat.add_reaction(
+    let result = state.data.chat.add_reaction(
         caller,
         args.thread_root_message_index,
         args.message_id,
@@ -90,9 +89,18 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
                     .is_none_or(|p| p.notifications_muted().value || p.suspended().value);
 
                 if !notifications_muted {
-                    state.push_notification(
-                        Some(agent),
-                        vec![message.sender],
+                    let added_by_name = args.username;
+                    let added_by_display_name = args.display_name;
+
+                    // TODO i18n
+                    // TODO create alternative channels for notifications that
+                    //      we consider to be low priority
+                    let fcm_data = FcmData::builder()
+                        .with_alt_title(&added_by_display_name, &added_by_name)
+                        .with_body(format!("Reacted {} to your message", args.reaction.clone().0))
+                        .build();
+
+                    let user_notification_payload =
                         UserNotificationPayload::GroupReactionAdded(GroupReactionAddedNotification {
                             chat_id,
                             thread_root_message_index,
@@ -100,12 +108,13 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
                             message_event_index: event_index,
                             group_name: state.data.chat.name.value.clone(),
                             added_by: agent,
-                            added_by_name: args.username,
-                            added_by_display_name: args.display_name,
+                            added_by_name,
+                            added_by_display_name,
                             reaction: args.reaction,
                             group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
-                        }),
-                    );
+                        });
+
+                    state.push_notification(Some(agent), vec![message.sender], user_notification_payload, fcm_data);
                 }
 
                 state.push_event_to_user(
@@ -132,6 +141,7 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
         }
     }
 
+    state.push_bot_notification(result.bot_notification);
     handle_activity_notification(state);
     Ok(())
 }

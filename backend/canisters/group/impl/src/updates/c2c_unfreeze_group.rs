@@ -19,13 +19,12 @@ pub(crate) fn c2c_unfreeze_group_impl(user_id: UserId, state: &mut RuntimeState)
         let push_event_result = state.data.chat.events.unfreeze(user_id, now);
         state.data.frozen = Timestamped::new(None, now);
         state.data.community_being_imported_into = None;
-
+        state.push_bot_notification(push_event_result.bot_notification);
         handle_activity_notification(state);
 
         Success(EventWrapper {
             index: push_event_result.index,
             timestamp: now,
-            correlation_id: 0,
             expires_at: push_event_result.expires_at,
             event: GroupUnfrozen { unfrozen_by: user_id },
         })

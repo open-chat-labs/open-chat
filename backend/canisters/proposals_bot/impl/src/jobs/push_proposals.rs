@@ -102,7 +102,6 @@ async fn push_group_proposal(governance_canister_id: CanisterId, group_id: ChatI
         block_level_markdown: true,
         rules_accepted: None,
         message_filter_failed: None,
-        correlation_id: 0,
     };
 
     let canister_id = group_id.into();
@@ -169,7 +168,7 @@ fn mark_proposal_pushed(
                 state
                     .data
                     .nervous_systems
-                    .mark_proposal_push_failed(&governance_canister_id, proposal);
+                    .mark_proposal_push_failed(&governance_canister_id, proposal, state.env.now());
 
                 if code == RejectCode::DestinationInvalid {
                     state.data.nervous_systems.mark_disabled(&governance_canister_id);

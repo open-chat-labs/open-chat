@@ -279,7 +279,6 @@
                 userMessageId,
                 $currentUserIdStore,
                 $useBlockLevelMarkdown,
-                false,
             );
             client.executeBotCommand(scope, commandInstance, true);
             localUpdates.draftMessages.delete(messageContext);

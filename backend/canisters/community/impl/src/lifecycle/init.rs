@@ -2,19 +2,22 @@ use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_stable_memory_map_memory;
 use crate::updates::import_group::commit_group_to_import;
 use crate::{Data, mutate_state};
+use canister_api_macros::init;
 use canister_tracing_macros::trace;
 use community_canister::init::Args;
-use ic_cdk::init;
+use itertools::Itertools;
 use tracing::info;
 use utils::env::Environment;
 
-#[init]
+#[init(msgpack = true)]
 #[trace]
 fn init(args: Args) {
     canister_logger::init(args.test_mode);
     stable_memory_map::init(get_stable_memory_map_memory());
 
     let mut env = init_env([0; 32]);
+
+    assert!(args.channels.iter().all_unique());
 
     let now = env.now();
     let data = Data::new(
@@ -37,7 +40,7 @@ fn init(args: Args) {
         args.escrow_canister_id,
         args.internet_identity_canister_id,
         args.gate_config.map(|g| g.into()),
-        args.default_channels,
+        args.channels,
         args.default_channel_rules,
         args.mark_active_duration,
         args.video_call_operators,

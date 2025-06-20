@@ -6,7 +6,7 @@ use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::{ChatEventInternal, EventPusher, Reader, UpdateMessageSuccess};
+use chat_events::{ChatEventInternal, EventPusher, Reader};
 use constants::{DAY_IN_MS, HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, OPENCHAT_BOT_USER_ID};
 use event_store_types::Event;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -16,7 +16,7 @@ use group_community_common::{
     Achievements, ExpiringMemberActions, ExpiringMembers, PaymentReceipts, PaymentRecipient, PendingPayment,
     PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
-use installed_bots::{BotApiKeys, InstalledBots};
+use installed_bots::InstalledBots;
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use model::user_event_batch::UserEventBatch;
 use msgpack::serialize_then_unwrap;
@@ -35,7 +35,7 @@ use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     AccessGateConfigInternal, Achievement, BotAdded, BotEventsCaller, BotInitiator, BotNotification, BotPermissions,
     BotRemoved, BotSubscriptions, BotUpdated, BuildVersion, Caller, CanisterId, ChatEventCategory, ChatId, ChatMetrics,
-    CommunityId, Cycles, Document, Empty, EventIndex, EventsCaller, FrozenGroupInfo, GroupCanisterGroupChatSummary,
+    CommunityId, Cycles, Document, Empty, EventIndex, EventsCaller, FcmData, FrozenGroupInfo, GroupCanisterGroupChatSummary,
     GroupMembership, GroupPermissions, GroupSubtype, IdempotentEnvelope, MAX_THREADS_IN_SUMMARY, MessageIndex, Milliseconds,
     MultiUserChat, Notification, OCResult, Rules, TimestampMillis, Timestamped, UserId, UserNotification,
     UserNotificationPayload, UserType,
@@ -129,20 +129,30 @@ impl RuntimeState {
         sender: Option<UserId>,
         recipients: Vec<UserId>,
         notification: UserNotificationPayload,
+        fcm_data: FcmData,
     ) {
         if !recipients.is_empty() {
             let notification = Notification::User(UserNotification {
                 sender,
                 recipients,
                 notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
+                fcm_data,
             });
             self.push_notification_inner(notification);
         }
     }
 
-    pub fn push_bot_notification(&mut self, notification: BotNotification) {
-        if !notification.recipients.is_empty() {
-            self.push_notification_inner(Notification::Bot(notification));
+    pub fn push_bot_notifications(&mut self, notifications: Vec<Option<BotNotification>>) {
+        for notification in notifications {
+            self.push_bot_notification(notification);
+        }
+    }
+
+    pub fn push_bot_notification(&mut self, notification: Option<BotNotification>) {
+        if let Some(notification) = notification {
+            if !notification.recipients.is_empty() {
+                self.push_notification_inner(Notification::Bot(notification));
+            }
         }
     }
 
@@ -152,13 +162,6 @@ impl RuntimeState {
             idempotency_id: self.env.rng().next_u64(),
             value: local_user_index_canister::GroupEvent::Notification(notification),
         });
-    }
-
-    pub fn process_message_updated<T>(&mut self, result: UpdateMessageSuccess<T>) -> T {
-        if let Some(bot_notification) = result.bot_notification {
-            self.push_bot_notification(bot_notification);
-        }
-        result.value
     }
 
     pub fn queue_access_gate_payments(&mut self, payment: GatePayment) {
@@ -230,7 +233,6 @@ impl RuntimeState {
             date_last_pinned: chat.date_last_pinned,
             events_ttl: events_ttl.value,
             events_ttl_last_updated: events_ttl.timestamp,
-            gate: chat.gate_config.value.as_ref().map(|gc| gc.gate.clone()),
             gate_config: chat.gate_config.value.clone().map(|gc| gc.into()),
             rules_accepted: membership.rules_accepted,
             membership: Some(membership),
@@ -519,7 +521,6 @@ struct Data {
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     verified: Timestamped<bool>,
     pub bots: InstalledBots,
-    pub bot_api_keys: BotApiKeys,
     idempotency_checker: IdempotencyChecker,
 }
 
@@ -615,7 +616,6 @@ impl Data {
             stable_memory_keys_to_garbage_collect: Vec::new(),
             verified: Timestamped::default(),
             bots: InstalledBots::default(),
-            bot_api_keys: BotApiKeys::default(),
             idempotency_checker: IdempotencyChecker::default(),
         }
     }
@@ -651,6 +651,10 @@ impl Data {
             || self.get_member(caller).is_some()
             || self.get_invitation(caller).is_some()
             || self.is_invite_code_valid(invite_code)
+    }
+
+    pub fn verify_is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> Result<(), OCErrorCode> {
+        if self.is_accessible(caller, invite_code) { Ok(()) } else { Err(OCErrorCode::InitiatorNotInChat) }
     }
 
     pub fn get_invitation(&self, caller: Principal) -> Option<&UserInvitation> {
@@ -785,8 +789,6 @@ impl Data {
             BotInitiator::Command(command) => self
                 .get_user_permissions(&command.initiator)
                 .map(|u| BotPermissions::intersect(&bot.permissions, &u)),
-            BotInitiator::ApiKeySecret(secret) => self.bot_api_keys.permissions_if_secret_matches(bot_id, secret).cloned(),
-            BotInitiator::ApiKeyPermissions(permissions) => Some(permissions.clone()),
             BotInitiator::Autonomous => bot.autonomous_permissions.clone(),
         }
     }
@@ -816,7 +818,6 @@ impl Data {
                 user_id: bot_id,
                 added_by: owner_id,
             })),
-            0,
             now,
         );
 
@@ -854,7 +855,6 @@ impl Data {
                 user_id: bot_id,
                 updated_by: owner_id,
             })),
-            0,
             now,
         );
 
@@ -881,7 +881,6 @@ impl Data {
             return false;
         }
 
-        self.bot_api_keys.delete(bot_id);
         self.chat.events.unsubscribe_bot_from_events(bot_id);
 
         self.chat.events.push_main_event(
@@ -889,7 +888,6 @@ impl Data {
                 user_id: bot_id,
                 removed_by: owner_id,
             })),
-            0,
             now,
         );
 
@@ -897,11 +895,7 @@ impl Data {
     }
 
     pub fn details_last_updated(&self) -> TimestampMillis {
-        let timestamps = vec![
-            self.chat.details_last_updated(),
-            self.bots.last_updated(),
-            self.bot_api_keys.last_updated(),
-        ];
+        let timestamps = vec![self.chat.details_last_updated(), self.bots.last_updated()];
 
         timestamps.into_iter().max().unwrap_or_default()
     }

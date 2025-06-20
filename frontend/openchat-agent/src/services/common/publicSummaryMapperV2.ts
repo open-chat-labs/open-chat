@@ -3,6 +3,7 @@ import { mapOptional, principalBytesToString } from "../../utils/mapping";
 import { accessGateConfig, groupSubtype, messageEvent } from "./chatMappersV2";
 import {
     nullMembership,
+    ROLE_NONE,
     type GroupChatSummary,
     type PublicGroupSummaryResponse,
 } from "openchat-shared";
@@ -35,18 +36,18 @@ export function publicGroupSummary(
             canisterId: groupId,
         })),
         permissions: {
-            changeRoles: "none",
-            removeMembers: "none",
-            deleteMessages: "none",
-            updateGroup: "none",
-            pinMessages: "none",
-            inviteUsers: "none",
-            addMembers: "none",
-            reactToMessages: "none",
-            mentionAllMembers: "none",
-            startVideoCall: "none",
+            changeRoles: ROLE_NONE,
+            removeMembers: ROLE_NONE,
+            deleteMessages: ROLE_NONE,
+            updateGroup: ROLE_NONE,
+            pinMessages: ROLE_NONE,
+            inviteUsers: ROLE_NONE,
+            addMembers: ROLE_NONE,
+            reactToMessages: ROLE_NONE,
+            mentionAllMembers: ROLE_NONE,
+            startVideoCall: ROLE_NONE,
             messagePermissions: {
-                default: "none",
+                default: ROLE_NONE,
             },
             threadPermissions: undefined,
         },

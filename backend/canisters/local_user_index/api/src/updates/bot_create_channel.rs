@@ -2,11 +2,12 @@ use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{AccessGateConfig, AuthToken, ChannelId, Document, GroupPermissions, Milliseconds, Rules};
+use types::{AccessGateConfig, ChannelId, CommunityId, Document, GroupPermissions, Milliseconds, Rules};
 
 #[ts_export(local_user_index, bot_create_channel)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
+    pub community_id: CommunityId,
     pub is_public: bool,
     pub name: String,
     pub description: String,
@@ -18,7 +19,6 @@ pub struct Args {
     pub events_ttl: Option<Milliseconds>,
     pub gate_config: Option<AccessGateConfig>,
     pub external_url: Option<String>,
-    pub auth_token: AuthToken,
 }
 
 #[ts_export(local_user_index, bot_create_channel)]

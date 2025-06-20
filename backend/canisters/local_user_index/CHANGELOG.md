@@ -6,9 +6,54 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `bot_community_events` endpoint ([#8194](https://github.com/open-chat-labs/open-chat/pull/8194))
+
+### Changed
+
+- Serialize bot notifications in LUI not pusher ([#8169](https://github.com/open-chat-labs/open-chat/pull/8169))
+- Use MessagePack to serialize Group/Community `init` args ([#8183](https://github.com/open-chat-labs/open-chat/pull/8183))
+
+### Removed
+
+- Remove `gate` which is superseded by `gate_config` ([#8186](https://github.com/open-chat-labs/open-chat/pull/8186))
+
+## [[2.0.1794](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1794-local_user_index)] - 2025-06-13
+
+### Added
+
+- Add `bot_community_summary` endpoint ([#8135](https://github.com/open-chat-labs/open-chat/pull/8135))
+
+### Changed
+
+- Add optional thread to args of `bot_chat_events` ([#8128](https://github.com/open-chat-labs/open-chat/pull/8128))
+- Remove bot API Keys ([#8131](https://github.com/open-chat-labs/open-chat/pull/8131))
+- Remove _v2 suffix from bot_\* endpoints ([#8139](https://github.com/open-chat-labs/open-chat/pull/8139))
+- Support bot making inline replies ([#8146](https://github.com/open-chat-labs/open-chat/pull/8146))
+- Return newly created channel Ids after creating community ([#8156](https://github.com/open-chat-labs/open-chat/pull/8156))
+- Add `initiated_by` to bot event notifications ([#8160](https://github.com/open-chat-labs/open-chat/pull/8160))
+- Push a (lifecycle) registered event to bots ([#8163](https://github.com/open-chat-labs/open-chat/pull/8163))
+
+### Fixed
+
+- Add missing decoding for community read permissions ([#8141](https://github.com/open-chat-labs/open-chat/pull/8141))
+- Update default subscriptions when bot is updated ([#8155](https://github.com/open-chat-labs/open-chat/pull/8155))
+
+## [[2.0.1779](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1779-local_user_index)] - 2025-06-06
+
 ### Changed
 
 - Remove all references to Notifications canisters ([#8087](https://github.com/open-chat-labs/open-chat/pull/8087))
+- Remove `correlation_id` ([#8097](https://github.com/open-chat-labs/open-chat/pull/8097))
+
+### Removed
+
+- Remove unused `report_message_v2` ([#8110](https://github.com/open-chat-labs/open-chat/pull/8110))
+
+### Fixed
+
+- Fix `bot_chat_events` for direct chats ([#8096](https://github.com/open-chat-labs/open-chat/pull/8096))
 
 ## [[2.0.1778](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1778-local_user_index)] - 2025-06-02
 

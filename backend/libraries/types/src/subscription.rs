@@ -1,6 +1,14 @@
+use crate::FcmToken;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub enum NotificationSubscription {
+    WebPush(SubscriptionInfo),
+    FcmPush(FcmToken),
+}
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]

@@ -29,7 +29,6 @@ fn delete_direct_message_succeeds() {
             user_id: user2.user_id,
             thread_root_message_index: None,
             message_ids: vec![message_id],
-            correlation_id: 0,
         },
     );
     assert!(matches!(
@@ -92,7 +91,6 @@ fn file_deleted_after_direct_message_deleted() {
             block_level_markdown: false,
             message_filter_failed: None,
             pin: None,
-            correlation_id: 0,
         },
     );
 
@@ -111,7 +109,6 @@ fn file_deleted_after_direct_message_deleted() {
             user_id: user2.user_id,
             thread_root_message_index: None,
             message_ids: vec![message_id],
-            correlation_id: 0,
         },
     );
     assert!(matches!(
@@ -151,7 +148,6 @@ fn delete_their_direct_message_succeeds() {
             user_id: user1.user_id,
             thread_root_message_index: None,
             message_ids: vec![message_id],
-            correlation_id: 0,
         },
     );
     assert!(matches!(
@@ -197,7 +193,6 @@ fn delete_group_message_succeeds() {
             thread_root_message_index: None,
             message_ids: vec![message_id],
             as_platform_moderator: None,
-            correlation_id: 0,
             new_achievement: false,
         },
     );
@@ -237,7 +232,6 @@ fn delete_then_undelete_direct_message(delay: bool) {
             user_id: user2.user_id,
             thread_root_message_index: None,
             message_ids: vec![message_id],
-            correlation_id: 0,
         },
     );
     assert!(matches!(
@@ -258,7 +252,6 @@ fn delete_then_undelete_direct_message(delay: bool) {
             user_id: user2.user_id,
             thread_root_message_index: None,
             message_ids: vec![message_id],
-            correlation_id: 0,
         },
     );
     if let user_canister::undelete_messages::Response::Success(result) = undelete_messages_response {
@@ -313,7 +306,6 @@ fn delete_then_undelete_group_message(delay: bool) {
             thread_root_message_index: None,
             message_ids: vec![message_id],
             as_platform_moderator: None,
-            correlation_id: 0,
             new_achievement: false,
         },
     );
@@ -334,7 +326,6 @@ fn delete_then_undelete_group_message(delay: bool) {
         &group_canister::undelete_messages::Args {
             thread_root_message_index: None,
             message_ids: vec![message_id],
-            correlation_id: 0,
         },
     );
     if let group_canister::undelete_messages::Response::Success(result) = undelete_messages_response {
@@ -393,7 +384,6 @@ fn platform_operators_can_delete_messages(is_platform_moderator: bool) {
             thread_root_message_index: None,
             message_ids: vec![message_id],
             as_platform_moderator: Some(true),
-            correlation_id: 0,
             new_achievement: false,
         },
     );

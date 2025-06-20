@@ -3,7 +3,6 @@ use crate::read_state;
 use canister_api_macros::query;
 use chat_events::Reader;
 use group_canister::public_summary::{Response::*, *};
-use oc_error_codes::OCErrorCode;
 use types::{BuildVersion, Document, PublicGroupSummary};
 
 #[query(candid = true, msgpack = true)]
@@ -14,8 +13,8 @@ fn public_summary(args: Args) -> Response {
 fn public_summary_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
 
-    if !state.data.is_accessible(caller, args.invite_code) {
-        return Error(OCErrorCode::InitiatorNotInChat.into());
+    if let Err(error) = state.data.verify_is_accessible(caller, args.invite_code) {
+        return Error(error.into());
     }
 
     let is_public = state.data.chat.is_public.value;
@@ -48,7 +47,6 @@ fn public_summary_impl(args: Args, state: &RuntimeState) -> Response {
         frozen: data.frozen.value.clone(),
         events_ttl: events_ttl.value,
         events_ttl_last_updated: events_ttl.timestamp,
-        gate: data.chat.gate_config.value.as_ref().map(|gc| gc.gate.clone()),
         gate_config: data.chat.gate_config.value.clone().map(|gc| gc.into()),
         wasm_version: BuildVersion::default(),
     };

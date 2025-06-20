@@ -1,7 +1,7 @@
 use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
-use types::{AccessGateConfig, CanisterId, CommunityId, CommunityPermissions, Document, Rules};
+use types::{AccessGateConfig, CanisterId, ChannelId, CommunityId, CommunityPermissions, Document, Rules};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -31,5 +31,6 @@ pub enum Response {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub community_id: CommunityId,
+    pub channels: Vec<(ChannelId, String)>,
     pub local_user_index_canister_id: CanisterId,
 }

@@ -44,7 +44,6 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
                     previous_name: state.data.chat.name.value.clone(),
                     changed_by: OPENCHAT_BOT_USER_ID,
                 })),
-                0,
                 **now,
             );
 

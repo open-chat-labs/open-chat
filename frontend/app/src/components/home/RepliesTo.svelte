@@ -76,6 +76,7 @@
         {#if repliesTo.content !== undefined}
             <div class="inert">
                 <ChatMessageContent
+                    showPreviews
                     {me}
                     {readonly}
                     messageContext={repliesTo.sourceContext}

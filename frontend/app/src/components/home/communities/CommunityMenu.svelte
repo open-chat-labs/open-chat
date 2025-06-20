@@ -7,6 +7,7 @@
         platformModeratorStore,
         publish,
         rightPanelHistory,
+        ROLE_NONE,
     } from "openchat-client";
     import { getContext } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
@@ -39,7 +40,7 @@
 
     let { community, canMarkAllRead }: Props = $props();
 
-    let member = $derived(community.membership.role !== "none");
+    let member = $derived(community.membership.role !== ROLE_NONE);
     let frozen = $derived(client.isCommunityFrozen(community.id));
     let canLeave = $derived(member);
     let canDelete = $derived(member && !frozen && client.canDeleteCommunity(community.id));

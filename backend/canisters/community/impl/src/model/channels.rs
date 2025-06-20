@@ -1,15 +1,14 @@
 use super::members::CommunityMembers;
 use chat_events::Reader;
 use group_chat_core::{GroupChatCore, GroupMemberInternal};
-use installed_bots::BotApiKeys;
 use oc_error_codes::OCErrorCode;
+use rand::Rng;
 use rand::rngs::StdRng;
-use rand::{Rng, RngCore};
 use search::weighted::*;
 use serde::{Deserialize, Serialize};
-use std::cmp::{Reverse, max};
+use std::cmp::Reverse;
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap};
 use types::{
     ChannelId, ChannelMatch, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, CommunityId,
     GroupMembership, GroupMembershipUpdates, GroupPermissionRole, GroupPermissions, MAX_THREADS_IN_SUMMARY, MultiUserChat,
@@ -27,7 +26,6 @@ pub struct Channel {
     pub id: ChannelId,
     pub chat: GroupChatCore,
     pub date_imported: Option<TimestampMillis>,
-    pub bot_api_keys: BotApiKeys,
 }
 
 impl Channels {
@@ -36,23 +34,15 @@ impl Channels {
         community_id: CommunityId,
         created_by: UserId,
         created_by_user_type: UserType,
-        default_channels: Vec<String>,
+        channels: Vec<(ChannelId, String)>,
         default_channel_rules: Option<Rules>,
         is_community_public: bool,
         rng: &mut StdRng,
         now: TimestampMillis,
     ) -> Channels {
-        let mut channel_ids = HashSet::new();
-
-        let channels = default_channels
+        let channels = channels
             .into_iter()
-            .map(|name| {
-                let channel_id = loop {
-                    let id = rng.next_u32().into();
-                    if channel_ids.insert(id) {
-                        break id;
-                    }
-                };
+            .map(|(channel_id, name)| {
                 (
                     channel_id,
                     Channel::new(
@@ -133,7 +123,7 @@ impl Channels {
             .iter_mut()
             .filter_map(
                 |(id, c)| {
-                    if let Ok(m) = c.chat.leave(user_id, now) { Some((*id, m)) } else { None }
+                    if let Ok(m) = c.chat.leave(user_id, now) { Some((*id, m.member)) } else { None }
                 },
             )
             .collect()
@@ -250,7 +240,6 @@ impl Channel {
                 now,
             ),
             date_imported: None,
-            bot_api_keys: BotApiKeys::default(),
         }
     }
 
@@ -336,7 +325,6 @@ impl Channel {
             date_last_pinned: chat.date_last_pinned,
             events_ttl: events_ttl.value,
             events_ttl_last_updated: events_ttl.timestamp,
-            gate: chat.gate_config.value.as_ref().map(|gc| gc.gate.clone()),
             gate_config: chat.gate_config.value.clone().map(|gc| gc.into()),
             membership,
             video_call_in_progress: chat.events.video_call_in_progress(user_id),
@@ -346,18 +334,14 @@ impl Channel {
     }
 
     pub fn last_updated(&self, user_id: Option<UserId>) -> TimestampMillis {
-        [
-            self.chat.last_updated(user_id),
-            self.date_imported.unwrap_or_default(),
-            self.bot_api_keys.last_updated(),
-        ]
-        .into_iter()
-        .max()
-        .unwrap()
+        [self.chat.last_updated(user_id), self.date_imported.unwrap_or_default()]
+            .into_iter()
+            .max()
+            .unwrap()
     }
 
     pub fn details_last_updated(&self) -> TimestampMillis {
-        max(self.chat.details_last_updated(), self.bot_api_keys.last_updated())
+        self.chat.details_last_updated()
     }
 
     pub fn summary_updates(
@@ -430,7 +414,6 @@ impl Channel {
             date_last_pinned: updates.date_last_pinned,
             events_ttl: updates.events_ttl,
             events_ttl_last_updated: updates.events_ttl_last_updated,
-            gate: updates.gate,
             gate_config: updates.gate_config,
             membership,
             video_call_in_progress: updates.video_call_in_progress,
@@ -467,7 +450,6 @@ impl From<&Channel> for ChannelMatch {
             description: channel.chat.description.value.clone(),
             avatar_id: types::Document::id(&channel.chat.avatar),
             member_count: channel.chat.members.len(),
-            gate: channel.chat.gate_config.value.as_ref().map(|gc| gc.gate.clone()),
             gate_config: channel.chat.gate_config.value.clone().map(|gc| gc.into()),
             subtype: channel.chat.subtype.value.clone(),
             is_public: channel.chat.is_public.value,

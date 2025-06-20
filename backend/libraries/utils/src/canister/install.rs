@@ -6,13 +6,13 @@ use ic_cdk::management_canister::{self, CanisterInstallMode, ChunkHash};
 use tracing::{error, trace};
 use types::{BuildVersion, C2CError, CanisterId, CanisterWasm, CanisterWasmBytes, Cycles, Hash};
 
-pub struct CanisterToInstall<A: CandidType> {
+pub struct CanisterToInstall {
     pub canister_id: CanisterId,
     pub current_wasm_version: BuildVersion,
     pub new_wasm_version: BuildVersion,
     pub new_wasm: WasmToInstall,
     pub deposit_cycles_if_needed: bool,
-    pub args: A,
+    pub args: Vec<u8>,
     pub mode: CanisterInstallMode,
     pub stop_start_canister: bool,
 }
@@ -29,6 +29,12 @@ pub struct ChunkedWasmToInstall {
 }
 
 pub async fn install_basic<A: CandidType>(canister_id: CanisterId, wasm: CanisterWasm, init_args: A) -> Result<(), C2CError> {
+    install_basic_raw(canister_id, wasm, candid::encode_one(init_args).unwrap())
+        .await
+        .map(|_| ())
+}
+
+pub async fn install_basic_raw(canister_id: CanisterId, wasm: CanisterWasm, init_args: Vec<u8>) -> Result<(), C2CError> {
     install(CanisterToInstall {
         canister_id,
         current_wasm_version: BuildVersion::default(),
@@ -43,7 +49,7 @@ pub async fn install_basic<A: CandidType>(canister_id: CanisterId, wasm: Caniste
     .map(|_| ())
 }
 
-pub async fn install<A: CandidType>(canister_to_install: CanisterToInstall<A>) -> Result<Option<Cycles>, C2CError> {
+pub async fn install(canister_to_install: CanisterToInstall) -> Result<Option<Cycles>, C2CError> {
     let canister_id = canister_to_install.canister_id;
     let mode = canister_to_install.mode;
 
@@ -58,7 +64,7 @@ pub async fn install<A: CandidType>(canister_to_install: CanisterToInstall<A>) -
             mode,
             canister_id,
             wasm_module: wasm_module.into(),
-            arg: candid::encode_one(canister_to_install.args).unwrap(),
+            arg: canister_to_install.args,
         }),
         WasmToInstall::Chunked(wasm) => InstallCodeArgs::Chunked(management_canister::InstallChunkedCodeArgs {
             mode,
@@ -70,7 +76,7 @@ pub async fn install<A: CandidType>(canister_to_install: CanisterToInstall<A>) -
                 .map(|hash| ChunkHash { hash: hash.to_vec() })
                 .collect(),
             wasm_module_hash: wasm.wasm_hash.to_vec(),
-            arg: candid::encode_one(canister_to_install.args).unwrap(),
+            arg: canister_to_install.args,
         }),
     };
 

@@ -5,6 +5,7 @@ import {
     type MessageContent,
     type MessageReminderCreatedContent,
     type P2PSwapStatus,
+    type Tally,
     type ThreadSummary,
 } from "openchat-shared";
 import { writable } from "../../utils/stores";
@@ -32,6 +33,7 @@ export class MessageLocalUpdates {
     tips: LocalTipsReceived = new Map<string, Map<string, bigint>>();
     hiddenMessageRevealed?: boolean;
     blockLevelMarkdown?: boolean;
+    proposalTally?: Tally;
     lastUpdated: number = 0;
 }
 

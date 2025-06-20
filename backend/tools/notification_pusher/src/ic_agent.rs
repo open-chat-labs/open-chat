@@ -1,5 +1,6 @@
+use ic_agent::identity::{BasicIdentity, Secp256k1Identity};
 use ic_agent::{Agent, Identity};
-use local_user_index_canister::{latest_notification_index, notifications_v2, remove_notifications};
+use local_user_index_canister::{latest_notification_index, notifications, remove_notifications};
 use notifications_index_canister::remove_subscriptions;
 use std::collections::HashMap;
 use tracing::trace;
@@ -11,12 +12,12 @@ pub struct IcAgent {
 }
 
 impl IcAgent {
-    pub async fn build(ic_url: &str, ic_identity: Box<dyn Identity>, fetch_root_key: bool) -> Result<IcAgent, Error> {
+    pub async fn build(ic_url: &str, ic_identity_pem: &str, fetch_root_key: bool) -> Result<IcAgent, Error> {
         let timeout = std::time::Duration::from_secs(60 * 5);
 
         let agent = Agent::builder()
             .with_url(ic_url.to_string())
-            .with_boxed_identity(ic_identity)
+            .with_boxed_identity(Self::get_identity(ic_identity_pem))
             .with_ingress_expiry(timeout)
             .build()?;
 
@@ -33,19 +34,19 @@ impl IcAgent {
             .inspect(|canister_ids| trace!(?canister_ids, "notification_canisters response"))
     }
 
-    pub async fn notifications_v2(
+    pub async fn notifications(
         &self,
         notifications_canister_id: &CanisterId,
         from_notification_index: u64,
-    ) -> Result<notifications_v2::SuccessResult, Error> {
-        let args = notifications_v2::Args { from_notification_index };
+    ) -> Result<notifications::SuccessResult, Error> {
+        let args = notifications::Args { from_notification_index };
 
-        trace!(?args, "notifications_v2::args");
+        trace!(?args, "notifications::args");
 
-        let notifications_v2::Response::Success(result) =
-            local_user_index_canister_client::notifications_v2(&self.agent, notifications_canister_id, &args).await?;
+        let notifications::Response::Success(result) =
+            local_user_index_canister_client::notifications(&self.agent, notifications_canister_id, &args).await?;
 
-        trace!(?result, "notifications_v2::result");
+        trace!(?result, "notifications::result");
 
         Ok(result)
     }
@@ -96,5 +97,16 @@ impl IcAgent {
         notifications_index_canister_client::remove_subscriptions(&self.agent, index_canister_id, &args).await?;
 
         Ok(())
+    }
+
+    /// Returns an identity derived from the private key.
+    fn get_identity(pem: &str) -> Box<dyn Identity + Sync + Send> {
+        if let Ok(identity) = BasicIdentity::from_pem(pem.as_bytes()) {
+            Box::new(identity)
+        } else if let Ok(identity) = Secp256k1Identity::from_pem(pem.as_bytes()) {
+            Box::new(identity)
+        } else {
+            panic!("Failed to create identity from pem");
+        }
     }
 }

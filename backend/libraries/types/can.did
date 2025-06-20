@@ -254,7 +254,6 @@ type ChatEvent = variant {
 type ChatEventWrapper = record {
     index : EventIndex;
     timestamp : TimestampMillis;
-    correlation_id : nat64;
     expires_at : opt TimestampMillis;
     event : ChatEvent;
 };
@@ -292,7 +291,6 @@ type GroupChatSummary = record {
     date_read_pinned : opt TimestampMillis;
     events_ttl : opt Milliseconds;
     events_ttl_last_updated : TimestampMillis;
-    gate : opt AccessGate;
     gate_config : opt AccessGateConfig;
     rules_accepted : bool;
     video_call_in_progress : opt VideoCall;
@@ -328,7 +326,6 @@ type GroupCanisterGroupChatSummary = record {
     date_last_pinned : opt TimestampMillis;
     events_ttl : opt Milliseconds;
     events_ttl_last_updated : TimestampMillis;
-    gate : opt AccessGate;
     gate_config : opt AccessGateConfig;
     rules_accepted : bool;
     membership : opt GroupMembership;
@@ -363,7 +360,6 @@ type GroupCanisterGroupChatSummaryUpdates = record {
     date_last_pinned : opt TimestampMillis;
     events_ttl : EventsTimeToLiveUpdate;
     events_ttl_last_updated : opt TimestampMillis;
-    gate : AccessGateUpdate;
     gate_config : AccessGateConfigUpdate;
     rules_accepted : opt bool;
     membership : opt GroupMembershipUpdates;
@@ -383,7 +379,6 @@ type CommunityCanisterCommunitySummary = record {
     member_count : nat32;
     permissions : CommunityPermissions;
     frozen : opt FrozenGroupInfo;
-    gate : opt AccessGate;
     gate_config : opt AccessGateConfig;
     primary_language : text;
     last_updated : TimestampMillis;
@@ -432,7 +427,6 @@ type CommunityCanisterChannelSummary = record {
     date_last_pinned : opt TimestampMillis;
     events_ttl : opt Milliseconds;
     events_ttl_last_updated : TimestampMillis;
-    gate : opt AccessGate;
     gate_config : opt AccessGateConfig;
     membership : opt GroupMembership;
     video_call_in_progress : opt VideoCall;
@@ -462,7 +456,6 @@ type CommunityCanisterCommunitySummaryUpdates = record {
     member_count : opt nat32;
     permissions : opt CommunityPermissions;
     frozen : FrozenGroupUpdate;
-    gate : AccessGateUpdate;
     gate_config : AccessGateConfigUpdate;
     primary_language : opt text;
     latest_event_index : opt EventIndex;
@@ -503,7 +496,6 @@ type CommunityCanisterChannelSummaryUpdates = record {
     date_last_pinned : opt TimestampMillis;
     events_ttl : EventsTimeToLiveUpdate;
     events_ttl_last_updated : opt TimestampMillis;
-    gate : AccessGateUpdate;
     gate_config : AccessGateConfigUpdate;
     membership : opt GroupMembershipUpdates;
     video_call_in_progress : VideoCallUpdates;
@@ -530,7 +522,6 @@ type SelectedGroupUpdates = record {
     members_removed : vec UserId;
     bots_added_or_updated : vec InstalledBotDetails;
     bots_removed : vec UserId;
-    api_keys_generated : vec PublicApiKeyDetails;
     webhooks : opt vec WebhookDetails;
     blocked_users_added : vec UserId;
     blocked_users_removed : vec UserId;
@@ -607,7 +598,6 @@ type Message = record {
 type MessageEventWrapper = record {
     index : EventIndex;
     timestamp : TimestampMillis;
-    correlation_id : nat64;
     expires_at : opt TimestampMillis;
     event : Message;
 };
@@ -777,7 +767,6 @@ type PublicGroupSummary = record {
     frozen : opt FrozenGroupInfo;
     events_ttl : opt Milliseconds;
     events_ttl_last_updated : TimestampMillis;
-    gate : opt AccessGate;
     gate_config : opt AccessGateConfig;
     wasm_version : BuildVersion;
 };
@@ -1616,7 +1605,6 @@ type AccessGateConfigUpdate = variant {
 
 type GroupGateUpdated = record {
     updated_by : UserId;
-    new_gate : opt AccessGate;
     new_gate_config : opt AccessGateConfig;
 };
 
@@ -1818,7 +1806,6 @@ type CommunityMatch = record {
     banner_id : opt nat;
     member_count : nat32;
     channel_count : nat32;
-    gate : opt AccessGate;
     gate_config : opt AccessGateConfig;
     moderation_flags : nat32;
     primary_language : text;
@@ -1842,7 +1829,6 @@ type ChannelMatch = record {
     description : text;
     avatar_id : opt nat;
     member_count : nat32;
-    gate : opt AccessGate;
     gate_config : opt AccessGateConfig;
     subtype : opt GroupSubtype;
     is_public : bool;
@@ -2231,13 +2217,6 @@ type InstalledBotDetails = record {
     autonomous_permissions : opt BotPermissions;
 };
 
-type PublicApiKeyDetails = record {
-    bot_id : UserId;
-    granted_permissions : BotPermissions;
-    generated_by : UserId;
-    generated_at : TimestampMillis;
-};
-
 type WebhookDetails = record {
     id : UserId;
     name : text;
@@ -2318,47 +2297,47 @@ type CommunityEventType = variant {
 };
 
 type ChatEventType = variant {
-    MessagePrizePayment;
-    NameChanged;
-    MessageVideoCall;
-    GateUpdated;
-    MessagePinned;
-    UsersInvited;
-    UsersBlocked;
-    MessageUnpinned;
-    MessageOther;
-    BotUpdated;
-    MessagePollVote;
     Message;
-    PermissionsChanged;
-    MessageP2pSwap;
-    MessageThreadSummary;
-    EventsTTLUpdated;
-    MembersJoined;
-    MessagePollEnded;
-    UsersUnblocked;
-    Unfrozen;
-    VisibilityChanged;
-    RulesChanged;
-    DescriptionChanged;
-    MessagePrizeClaim;
-    MessageReported;
-    MessageProposalUpdated;
-    MessageProposalVote;
-    ExternalUrlUpdated;
-    InviteCodeChanged;
-    MessageDeleted;
-    BotRemoved;
+    MessageEdited;
     MessageReaction;
+    MessageTipped;
+    MessageDeleted;
+    MessageUndeleted;
+    MessagePollVote;
+    MessagePollEnded;
+    MessagePrizeClaim;
+    MessageP2pSwapCompleted;
+    MessageP2pSwapCancelled;
+    MessageVideoCall;
+    MessageOther;
+
+    // Details category
+    Created;
+    NameChanged;
+    DescriptionChanged;
+    RulesChanged;
+    AvatarChanged;
+    ExternalUrlUpdated;
+    PermissionsChanged;
+    GateUpdated;
+    VisibilityChanged;
+    InviteCodeChanged;
+    Frozen;
+    Unfrozen;
+    DisappearingMessagesUpdated;
+    MessagePinned;
+    MessageUnpinned;
+
+    // Membership category
+    MembersJoined;
     MembersLeft;
     RoleChanged;
+    UsersInvited;
+    UsersBlocked;
+    UsersUnblocked;
     BotAdded;
-    Created;
-    MessageTipped;
-    Frozen;
-    MessageReminder;
-    MessageEdited;
-    AvatarChanged;
+    BotRemoved;
+    BotUpdated;
 };
 
 type BotDataEncoding = variant { Json; Candid };

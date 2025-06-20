@@ -31,7 +31,6 @@ fn c2c_unfreeze_community_impl(args: Args, state: &mut RuntimeState) -> Response
         Success(EventWrapper {
             index: event_index,
             timestamp: now,
-            correlation_id: 0,
             expires_at: None,
             event: GroupUnfrozen {
                 unfrozen_by: args.caller,

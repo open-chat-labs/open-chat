@@ -101,7 +101,6 @@ impl PublicGroups {
             frozen: None,
             events_ttl: summary.events_ttl,
             events_ttl_last_updated: summary.events_ttl_last_updated,
-            gate: summary.gate_config.as_ref().map(|gc| gc.gate.clone()),
             gate_config: summary.gate_config,
             wasm_version: BuildVersion::default(),
         })
@@ -170,7 +169,6 @@ pub struct PublicGroupInfo {
     hotness_score: u32,
     exclude_from_hotlist: bool,
     gate_config: Option<AccessGateConfigInternal>,
-    #[serde(default)]
     verified: bool,
 }
 

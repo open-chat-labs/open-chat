@@ -40,6 +40,19 @@ describe("LocalMap", () => {
         map = new TestLocalMap();
     });
 
+    test("make sure that the order of operations doesn't cause a problem", () => {
+        // perform two operations
+        const removeUndo = map.remove("123");
+        const addUndo = map.addOrUpdate("123", "456");
+
+        // undo them both
+        removeUndo();
+        addUndo();
+
+        expect(map.addedOrUpdated("123")).toBe(false);
+        expect(map.removed("123")).toBe(false);
+    });
+
     it("make sure manual undo works", () => {
         const undo = map.addOrUpdate("a", "b");
         expect(map.addedOrUpdated("a")).toBe(true);
@@ -54,7 +67,7 @@ describe("LocalMap", () => {
         const undo = map.addOrUpdate("a", "b");
 
         expect(map.addedOrUpdated("a")).toBe(true);
-        expect(map.removed("a")).toBe(false);
+        expect(map.removed("a")).toBe(true);
 
         undo();
 

@@ -370,25 +370,19 @@ a {
         font-family: Menlo, Monaco, "Courier New", monospace;
     }
 
-    code {
+    code:not(.hljs) {
         color: var(--code-txt);
         background-color: var(--code-bg);
         padding: 3px 5px;
         border-radius: 4px;
     }
 
-    pre {
-        padding: toRem(16);
-        overflow-x: auto;
-        border-radius: $sp2;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        background-color: var(--code-bg);
-        color: var(--code-txt);
-
-        code {
-            background-color: transparent;
-            padding: 0;
-        }
+    code.hljs {
+        border-radius: $sp3;
+        box-shadow: inset 0px 2px 4px rgba(0, 0, 0, 0.8);
+        display: block;
+        white-space: pre;
+        font-size: 0.9rem;
     }
 
     blockquote {

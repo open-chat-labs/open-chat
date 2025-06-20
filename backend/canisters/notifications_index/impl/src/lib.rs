@@ -1,4 +1,3 @@
-use crate::model::fcm_token_store::FcmTokenStore;
 use crate::model::local_index_event_batch::LocalIndexEventBatch;
 use crate::model::subscriptions::Subscriptions;
 use candid::Principal;
@@ -7,13 +6,14 @@ use notifications_index_canister::{NotificationsIndexEvent, SubscriptionAdded, S
 use principal_to_user_id_map::PrincipalToUserIdMap;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::UserIdsKeyPrefix;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use timer_job_queues::GroupedTimerJobQueue;
-use types::{BuildVersion, CanisterId, Cycles, IdempotentEnvelope, SubscriptionInfo, TimestampMillis, Timestamped, UserId};
-use user_ids_set::UserIdsSet;
+use types::{
+    BuildVersion, CanisterId, Cycles, FcmToken, IdempotentEnvelope, SubscriptionInfo, TimestampMillis, Timestamped, UserId,
+};
 use utils::env::Environment;
+use utils::fcm_token_store::FcmTokenStore;
 use utils::idempotency_checker::IdempotencyChecker;
 
 mod guards;
@@ -77,6 +77,21 @@ impl RuntimeState {
         self.push_event_to_local_indexes(event, now);
     }
 
+    pub fn add_fcm_token(&mut self, user_id: UserId, fcm_token: FcmToken) -> Result<(), String> {
+        // Add token locally
+        self.data.fcm_token_store.add(user_id, fcm_token.clone()).map(|_| {
+            self.push_event_to_local_indexes(NotificationsIndexEvent::FcmTokenAdded(user_id, fcm_token), self.env.now());
+        })
+    }
+
+    // TODO remove tokens when push to firebase fails
+    #[allow(dead_code)]
+    pub fn remove_fcm_token(&mut self, user_id: UserId, fcm_token: FcmToken) -> Result<(), String> {
+        self.data.fcm_token_store.remove(&user_id, &fcm_token).map(|_| {
+            self.push_event_to_local_indexes(NotificationsIndexEvent::FcmTokenRemoved(user_id, fcm_token), self.env.now());
+        })
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
             heap_memory_used: utils::memory::heap(),
@@ -123,12 +138,9 @@ struct Data {
     pub principal_to_user_id_map: PrincipalToUserIdMap,
     pub subscriptions: Subscriptions,
     pub local_index_event_sync_queue: GroupedTimerJobQueue<LocalIndexEventBatch>,
-    #[deprecated]
-    pub blocked_users: UserIdsSet,
     pub idempotency_checker: IdempotencyChecker,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
-    #[serde(default)]
     pub fcm_token_store: FcmTokenStore,
 }
 
@@ -141,7 +153,6 @@ impl Data {
         registry_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
-        #[expect(deprecated)]
         Data {
             governance_principals: governance_principals.into_iter().collect(),
             local_indexes: BTreeSet::default(),
@@ -152,7 +163,6 @@ impl Data {
             principal_to_user_id_map: PrincipalToUserIdMap::default(),
             subscriptions: Subscriptions::default(),
             local_index_event_sync_queue: GroupedTimerJobQueue::new(5, false),
-            blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
             idempotency_checker: IdempotencyChecker::default(),
             rng_seed: [0; 32],
             test_mode,

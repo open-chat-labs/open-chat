@@ -4,7 +4,7 @@ use crate::{
     run_regular_jobs,
 };
 use canister_timer_jobs::Job;
-use chat_events::MessageContentInternal;
+use chat_events::{EndPollResult, MessageContentInternal};
 use constants::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
@@ -222,13 +222,16 @@ impl Job for EndPollJob {
     fn execute(self) {
         mutate_state(|state| {
             let now = state.env.now();
-            state
-                .data
-                .chat
-                .events
-                .end_poll(self.thread_root_message_index, self.message_index, now);
-
-            handle_activity_notification(state);
+            if let EndPollResult::Success(result) =
+                state
+                    .data
+                    .chat
+                    .events
+                    .end_poll(self.thread_root_message_index, self.message_index, now)
+            {
+                state.push_bot_notification(result.bot_notification);
+                handle_activity_notification(state);
+            }
         });
     }
 }
@@ -388,7 +391,7 @@ impl Job for MarkP2PSwapExpiredJob {
                     .events
                     .mark_p2p_swap_expired(self.thread_root_message_index, self.message_id, state.env.now())
             {
-                state.process_message_updated(result);
+                state.push_bot_notification(result.bot_notification);
             }
         });
     }

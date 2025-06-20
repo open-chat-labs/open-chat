@@ -18,6 +18,7 @@ import type {
     ExpiredEventsRange,
     GroupChatSummary,
     HasMembershipRole,
+    Immutable,
     LocalPollVote,
     LocalReaction,
     MemberRole,
@@ -71,6 +72,9 @@ import {
     OPENCHAT_VIDEO_CALL_AVATAR_URL,
     OPENCHAT_VIDEO_CALL_USER_ID,
     random64,
+    ROLE_MEMBER,
+    ROLE_NONE,
+    ROLE_OWNER,
     updateFromOptions,
     type ReadonlySet,
 } from "openchat-shared";
@@ -81,7 +85,6 @@ import {
     currentUserIdStore,
     currentUserStore,
     localUpdates,
-    proposalTalliesStore,
     selectedChatIdStore,
     selectedChatUserIdsStore,
     selectedServerChatSummaryStore,
@@ -101,7 +104,7 @@ const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
 export function isPreviewing(chat: ChatSummary): boolean {
-    return chat.membership.role === "none";
+    return chat.membership.role === ROLE_NONE;
 }
 
 export function isLapsed(chat: ChatSummary): boolean {
@@ -321,64 +324,64 @@ function mentionsFromMessages(
     }, [] as Mention[]);
 }
 
-export function mergeUnconfirmedThreadsIntoSummary<T extends GroupChatSummary | ChannelSummary>(
-    chat: T,
-): T {
+export function mergeUnconfirmedThreadsIntoSummary<T extends GroupChatSummary | ChannelSummary>(chat: T) {
     if (chat.membership === undefined) return chat;
-    return {
-        ...chat,
-        membership: {
-            ...chat.membership,
-            latestThreads: chat.membership.latestThreads.map((t) => {
-                const context = {
-                    chatId: chat.id,
-                    threadRootMessageIndex: t.threadRootMessageIndex,
-                };
-                const unconfirmedMsgs = localUpdates.unconfirmedMessages(context);
-                if (unconfirmedMsgs.length > 0) {
-                    let msgIdx = t.latestMessageIndex;
-                    let evtIdx = t.latestEventIndex;
-                    const latestUnconfirmedMessage = unconfirmedMsgs[unconfirmedMsgs.length - 1];
-                    if (latestUnconfirmedMessage.event.messageIndex > msgIdx) {
-                        msgIdx = latestUnconfirmedMessage.event.messageIndex;
-                    }
-                    if (latestUnconfirmedMessage.index > evtIdx) {
-                        evtIdx = latestUnconfirmedMessage.index;
-                    }
-                    return {
-                        ...t,
-                        latestEventIndex: evtIdx,
-                        latestMessageIndex: msgIdx,
-                    };
+    chat.membership = {
+        ...chat.membership,
+        latestThreads: chat.membership.latestThreads.map((t) => {
+            const context = {
+                chatId: chat.id,
+                threadRootMessageIndex: t.threadRootMessageIndex,
+            };
+            const unconfirmedMsgs = localUpdates.unconfirmedMessages(context);
+            if (unconfirmedMsgs.length > 0) {
+                let msgIdx = t.latestMessageIndex;
+                let evtIdx = t.latestEventIndex;
+                const latestUnconfirmedMessage = unconfirmedMsgs[unconfirmedMsgs.length - 1];
+                if (latestUnconfirmedMessage.event.messageIndex > msgIdx) {
+                    msgIdx = latestUnconfirmedMessage.event.messageIndex;
                 }
-                return t;
-            }),
-        },
+                if (latestUnconfirmedMessage.index > evtIdx) {
+                    evtIdx = latestUnconfirmedMessage.index;
+                }
+                return {
+                    ...t,
+                    latestEventIndex: evtIdx,
+                    latestMessageIndex: msgIdx,
+                };
+            }
+            return t;
+        }),
     };
 }
 
 export function mergeUnconfirmedIntoSummary(
+    chatSummary: Immutable<ChatSummary>,
     formatter: MessageFormatter,
     userId: string,
-    chatSummary: ChatSummary,
     localMessageUpdates: MessageMap<MessageLocalUpdates>,
     blockedUsers: Set<string>,
     currentUserId: string,
     messageFilters: MessageFilter[],
     unconfirmed: MessageContextMap<UnconfirmedState>,
-): ChatSummary {
-    if (chatSummary.membership === undefined) return chatSummary;
+) {
+    const chatSummaryReadonly = chatSummary.value();
+    if (chatSummaryReadonly.membership === undefined) return;
 
     // const unconfirmedMessages = localUpdates.unconfirmedMessages({ chatId: chatSummary.id });
-    const unconfirmedState = unconfirmed.get({ chatId: chatSummary.id });
+    const unconfirmedState = unconfirmed.get({ chatId: chatSummaryReadonly.id });
     const unconfirmedMessages = unconfirmedState ? [...unconfirmedState.values()] : [];
 
-    let latestMessage = chatSummary.latestMessage;
-    let latestEventIndex = chatSummary.latestEventIndex;
-    let mentions = chatSummary.membership.mentions ?? [];
+    let latestMessage = chatSummaryReadonly.latestMessage;
+    let latestEventIndex = chatSummaryReadonly.latestEventIndex;
+    let mentions = chatSummaryReadonly.membership.mentions ?? [];
+    let anyUpdates = false;
 
     if (unconfirmedMessages != undefined && unconfirmedMessages.length > 0) {
         const incomingMentions = mentionsFromMessages(formatter, userId, unconfirmedMessages);
+        if (incomingMentions.length > 0) {
+            anyUpdates = true;
+        }
         mentions = mergeMentions(mentions, incomingMentions);
         const latestUnconfirmedMessage = unconfirmedMessages[unconfirmedMessages.length - 1];
         if (
@@ -386,9 +389,11 @@ export function mergeUnconfirmedIntoSummary(
             latestUnconfirmedMessage.timestamp > latestMessage.timestamp
         ) {
             latestMessage = latestUnconfirmedMessage;
+            anyUpdates = true;
         }
         if (latestUnconfirmedMessage.index > latestEventIndex) {
             latestEventIndex = latestUnconfirmedMessage.index;
+            anyUpdates = true;
         }
     }
     if (latestMessage !== undefined) {
@@ -413,18 +418,22 @@ export function mergeUnconfirmedIntoSummary(
                 false,
                 failedMessageFilter,
             );
+            anyUpdates = true;
         }
     }
 
-    if (chatSummary.kind !== "direct_chat") {
-        if (unconfirmedMessages !== undefined) {
-            chatSummary = mergeUnconfirmedThreadsIntoSummary(chatSummary);
-        }
-        chatSummary.membership.mentions = mentions;
+    if (anyUpdates) {
+        chatSummary.update((c) => {
+            if (c.kind !== "direct_chat") {
+                if (unconfirmedMessages !== undefined) {
+                    mergeUnconfirmedThreadsIntoSummary(c);
+                }
+                c.membership.mentions = mentions;
+            }
+            c.latestMessage = latestMessage;
+            c.latestEventIndex = latestEventIndex;
+        });
     }
-    chatSummary.latestMessage = latestMessage;
-    chatSummary.latestEventIndex = latestEventIndex;
-    return chatSummary;
 }
 
 export function mergePermissions(
@@ -451,7 +460,7 @@ export function mergePermissions(
             updated.messagePermissions,
         ),
         threadPermissions: mergeThreadPermissions(
-            current.threadPermissions ?? { default: "member" },
+            current.threadPermissions ?? { default: ROLE_MEMBER },
             updated.threadPermissions,
         ),
     };
@@ -855,7 +864,7 @@ export function groupChatFromCandidate(
         membership: {
             ...nullMembership(),
             joined: BigInt(Date.now()),
-            role: "owner",
+            role: ROLE_OWNER,
         },
         eventsTTL: candidate.eventsTTL,
     } as MultiUserChat;
@@ -971,7 +980,7 @@ export function canChangeRoles(
     }
 
     switch (newRole) {
-        case "owner":
+        case ROLE_OWNER:
             return hasOwnerRights(chat.membership.role);
         default:
             return isPermitted(chat.membership.role, chat.permissions.changeRoles);
@@ -1216,7 +1225,7 @@ export function canMentionAllMembers(chat: ChatSummary): boolean {
 export function canLeaveGroup(thing: AccessControlled & HasMembershipRole): boolean {
     if (!thing.frozen) {
         // TODO - this is not really correct - you should be able to leave if you are not the *only* owner
-        return thing.membership.role !== "owner";
+        return thing.membership.role !== ROLE_OWNER;
     } else {
         return false;
     }
@@ -1363,9 +1372,7 @@ export function mergeEventsAndLocalUpdates(
 
             const tallyUpdate =
                 e.event.content.kind === "proposal_content"
-                    ? proposalTalliesStore.value.get(
-                          `${e.event.content.governanceCanisterId}_${e.event.content.proposal.id}`,
-                      )
+                    ? updates?.proposalTally
                     : undefined;
 
             const senderBlocked = selectedChatBlockedOrSuspendedUsers.has(e.event.sender);
@@ -1923,7 +1930,7 @@ export function diffGroupPermissions(
         diff.threadPermissions = "set_to_none";
     } else {
         const threadPermissionsDiff = diffMessagePermissions(
-            original.threadPermissions ?? { default: "member" },
+            original.threadPermissions ?? { default: ROLE_MEMBER },
             updated.threadPermissions,
         );
         diff.threadPermissions =

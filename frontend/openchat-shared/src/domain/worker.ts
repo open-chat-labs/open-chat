@@ -212,7 +212,6 @@ import type {
     UnpinChatResponse,
     UnsuspendUserResponse,
     User,
-    UserLookup,
     UsersArgs,
     UsersResponse,
     UserSummary,
@@ -449,7 +448,8 @@ export type WorkerRequest =
     | RegenerateWebhook
     | DeleteWebhook
     | GetWebhook
-    | PayForStreakInsurance;
+    | PayForStreakInsurance
+    | UpdateDirectChatSettings;
 
 type SetMinLogLevel = {
     kind: "setMinLogLevel";
@@ -461,6 +461,12 @@ type PayForStreakInsurance = {
     additionalDays: number;
     expectedPrice: bigint;
     pin: string | undefined;
+};
+
+type UpdateDirectChatSettings = {
+    kind: "updateDirectChatSettings";
+    userId: string;
+    eventsTtl: OptionUpdate<bigint>;
 };
 
 type RegisterWebhook = {
@@ -1620,7 +1626,6 @@ export type WorkerResponseInner =
     | GroupChatDetailsResponse
     | GroupChatDetails
     | MarkReadResponse
-    | UserLookup
     | UsersResponse
     | CurrentUserResponse
     | FreezeGroupResponse
@@ -2043,7 +2048,7 @@ export type WorkerResult<T> = T extends Init
     : T extends UnpinMessage
     ? UnpinMessageResponse
     : T extends GetUpdates
-    ? UpdatesResult
+    ? UpdatesResult | undefined
     : T extends GetBots
     ? BotsResponse
     : T extends GetDeletedDirectMessage
@@ -2065,7 +2070,7 @@ export type WorkerResult<T> = T extends Init
     : T extends CreateUserClient
     ? void
     : T extends GetAllCachedUsers
-    ? UserLookup
+    ? UserSummary[]
     : T extends LastOnline
     ? Record<string, number>
     : T extends MarkAsOnline
@@ -2464,4 +2469,6 @@ export type WorkerResult<T> = T extends Init
     ? string | undefined
     : T extends PayForStreakInsurance
     ? PayForStreakInsuranceResponse
+    : T extends UpdateDirectChatSettings
+    ? boolean
     : never;

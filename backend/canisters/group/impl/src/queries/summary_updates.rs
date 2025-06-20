@@ -31,14 +31,10 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
     };
 
     let chat = &state.data.chat;
-    let chat_last_updated = [
-        chat.last_updated(Some(member.user_id())),
-        state.data.verified.timestamp,
-        state.data.bot_api_keys.last_updated(),
-    ]
-    .into_iter()
-    .max()
-    .unwrap();
+    let chat_last_updated = [chat.last_updated(Some(member.user_id())), state.data.verified.timestamp]
+        .into_iter()
+        .max()
+        .unwrap();
 
     if chat_last_updated <= updates_since {
         return SuccessNoUpdates;
@@ -108,7 +104,6 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
             date_last_pinned: updates.date_last_pinned,
             events_ttl: updates.events_ttl,
             events_ttl_last_updated: updates.events_ttl_last_updated,
-            gate: updates.gate,
             gate_config: updates.gate_config,
             rules_accepted: membership.rules_accepted,
             membership: Some(membership),

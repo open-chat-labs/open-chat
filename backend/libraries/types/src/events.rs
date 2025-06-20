@@ -1,10 +1,9 @@
 use crate::{
-    AccessGate, AccessGateConfig, BotCommand, ChannelId, CommunityPermissions, CommunityRole, EventIndex, EventWrapper,
-    GroupPermissions, GroupRole, Message, MessageIndex, Milliseconds, TimestampMillis, UserId,
+    AccessGateConfig, BotCommand, ChannelId, EventIndex, EventWrapper, GroupPermissions, GroupRole, Message, MessageIndex,
+    Milliseconds, TimestampMillis, UserId,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use ts_export::ts_export;
 
 #[ts_export]
@@ -52,13 +51,6 @@ pub enum ChatEventCategory {
     Details = 2,    // Name, description, rules, permissions changed, etc.
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[repr(u8)]
-pub enum CommunityEventCategory {
-    Membership = 0, // User added, blocked, invited, role changed, etc.
-    Details = 1,    // Name, description, rules, permissions changed, etc.
-}
-
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ChatEventType {
@@ -68,33 +60,29 @@ pub enum ChatEventType {
     MessageReaction,
     MessageTipped,
     MessageDeleted,
+    MessageUndeleted,
     MessagePollVote,
     MessagePollEnded,
     MessagePrizeClaim,
-    MessagePrizePayment,
-    MessageProposalVote,
-    MessageProposalUpdated,
-    MessageP2pSwap,
-    MessageReported,
-    MessageThreadSummary,
-    MessageReminder,
+    MessageP2pSwapCompleted,
+    MessageP2pSwapCancelled,
     MessageVideoCall,
-    MessageOther,
+    MessageOther, // Not publishing a bot notification for this event
 
     // Details category
-    Created,
+    Created, // Not publishing a bot notification for this event
     NameChanged,
     DescriptionChanged,
     RulesChanged,
     AvatarChanged,
     ExternalUrlUpdated,
     PermissionsChanged,
-    VisibilityChanged,
-    InviteCodeChanged,
-    Frozen,
-    Unfrozen,
-    EventsTTLUpdated,
     GateUpdated,
+    VisibilityChanged,
+    InviteCodeChanged, // Not publishing a bot notification for this event
+    Frozen,            // Applies to group chats only
+    Unfrozen,          // Applies to group chats only
+    DisappearingMessagesUpdated,
     MessagePinned,
     MessageUnpinned,
 
@@ -103,11 +91,11 @@ pub enum ChatEventType {
     MembersLeft,
     RoleChanged,
     UsersInvited,
-    BotAdded,
-    BotRemoved,
-    BotUpdated,
     UsersBlocked,
     UsersUnblocked,
+    BotAdded,   // Not publishing a bot notification for this event
+    BotRemoved, // Not publishing a bot notification for this event
+    BotUpdated, // Not publishing a bot notification for this event
 }
 
 impl From<ChatEventType> for ChatEventCategory {
@@ -118,16 +106,12 @@ impl From<ChatEventType> for ChatEventCategory {
             | ChatEventType::MessageReaction
             | ChatEventType::MessageTipped
             | ChatEventType::MessageDeleted
+            | ChatEventType::MessageUndeleted
             | ChatEventType::MessagePollVote
             | ChatEventType::MessagePollEnded
             | ChatEventType::MessagePrizeClaim
-            | ChatEventType::MessagePrizePayment
-            | ChatEventType::MessageProposalVote
-            | ChatEventType::MessageProposalUpdated
-            | ChatEventType::MessageP2pSwap
-            | ChatEventType::MessageReported
-            | ChatEventType::MessageThreadSummary
-            | ChatEventType::MessageReminder
+            | ChatEventType::MessageP2pSwapCompleted
+            | ChatEventType::MessageP2pSwapCancelled
             | ChatEventType::MessageVideoCall
             | ChatEventType::MessageOther => ChatEventCategory::Message,
             ChatEventType::Created
@@ -141,7 +125,7 @@ impl From<ChatEventType> for ChatEventCategory {
             | ChatEventType::InviteCodeChanged
             | ChatEventType::Frozen
             | ChatEventType::Unfrozen
-            | ChatEventType::EventsTTLUpdated
+            | ChatEventType::DisappearingMessagesUpdated
             | ChatEventType::GateUpdated
             | ChatEventType::MessagePinned
             | ChatEventType::MessageUnpinned => ChatEventCategory::Details,
@@ -154,77 +138,6 @@ impl From<ChatEventType> for ChatEventCategory {
             | ChatEventType::BotUpdated
             | ChatEventType::UsersBlocked
             | ChatEventType::UsersUnblocked => ChatEventCategory::Membership,
-        }
-    }
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub enum CommunityEventType {
-    // Details category
-    Created,
-    NameChanged,
-    DescriptionChanged,
-    RulesChanged,
-    AvatarChanged,
-    BannerChanged,
-    PermissionsChanged,
-    VisibilityChanged,
-    InviteCodeChanged,
-    Frozen,
-    Unfrozen,
-    EventsTTLUpdated,
-    GateUpdated,
-    MessagePinned,
-    MessageUnpinned,
-    PrimaryLanguageChanged,
-    GroupImported,
-    ChannelCreated,
-    ChannelDeleted,
-
-    // Membership category
-    MembersJoined,
-    MembersLeft,
-    RoleChanged,
-    UsersInvited,
-    BotAdded,
-    BotRemoved,
-    BotUpdated,
-    UsersBlocked,
-    UsersUnblocked,
-}
-
-impl From<CommunityEventType> for CommunityEventCategory {
-    fn from(value: CommunityEventType) -> Self {
-        match value {
-            CommunityEventType::Created
-            | CommunityEventType::NameChanged
-            | CommunityEventType::DescriptionChanged
-            | CommunityEventType::RulesChanged
-            | CommunityEventType::AvatarChanged
-            | CommunityEventType::BannerChanged
-            | CommunityEventType::PermissionsChanged
-            | CommunityEventType::VisibilityChanged
-            | CommunityEventType::InviteCodeChanged
-            | CommunityEventType::Frozen
-            | CommunityEventType::Unfrozen
-            | CommunityEventType::EventsTTLUpdated
-            | CommunityEventType::GateUpdated
-            | CommunityEventType::PrimaryLanguageChanged
-            | CommunityEventType::GroupImported
-            | CommunityEventType::ChannelCreated
-            | CommunityEventType::ChannelDeleted
-            | CommunityEventType::MessagePinned
-            | CommunityEventType::MessageUnpinned => CommunityEventCategory::Details,
-            CommunityEventType::MembersJoined
-            | CommunityEventType::MembersLeft
-            | CommunityEventType::RoleChanged
-            | CommunityEventType::UsersInvited
-            | CommunityEventType::BotAdded
-            | CommunityEventType::BotRemoved
-            | CommunityEventType::BotUpdated
-            | CommunityEventType::UsersBlocked
-            | CommunityEventType::UsersUnblocked => CommunityEventCategory::Membership,
         }
     }
 }
@@ -350,25 +263,9 @@ pub struct MembersRemoved {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CommunityMembersRemoved {
-    pub user_ids: Vec<UserId>,
-    pub removed_by: UserId,
-    pub referred_by: HashMap<UserId, UserId>,
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UsersBlocked {
     pub user_ids: Vec<UserId>,
     pub blocked_by: UserId,
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CommunityUsersBlocked {
-    pub user_ids: Vec<UserId>,
-    pub blocked_by: UserId,
-    pub referred_by: HashMap<UserId, UserId>,
 }
 
 #[ts_export]
@@ -437,15 +334,6 @@ pub struct RoleChanged {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CommunityRoleChanged {
-    pub user_ids: Vec<UserId>,
-    pub changed_by: UserId,
-    pub old_role: CommunityRole,
-    pub new_role: CommunityRole,
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MessagePinned {
     pub message_index: MessageIndex,
     pub pinned_by: UserId,
@@ -469,24 +357,9 @@ pub struct PermissionsChanged {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CommunityPermissionsChanged {
-    pub old_permissions: CommunityPermissions,
-    pub new_permissions: CommunityPermissions,
-    pub changed_by: UserId,
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupVisibilityChanged {
     pub public: Option<bool>,
     pub messages_visible_to_non_members: Option<bool>,
-    pub changed_by: UserId,
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CommunityVisibilityChanged {
-    pub now_public: bool,
     pub changed_by: UserId,
 }
 
@@ -529,7 +402,6 @@ pub struct EventsTimeToLiveUpdated {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupGateUpdated {
     pub updated_by: UserId,
-    pub new_gate: Option<AccessGate>,
     pub new_gate_config: Option<AccessGateConfig>,
 }
 
@@ -666,7 +538,7 @@ impl ChatEvent {
             ChatEvent::GroupInviteCodeChanged(_) => Some(ChatEventType::InviteCodeChanged),
             ChatEvent::ChatFrozen(_) => Some(ChatEventType::Frozen),
             ChatEvent::ChatUnfrozen(_) => Some(ChatEventType::Unfrozen),
-            ChatEvent::EventsTimeToLiveUpdated(_) => Some(ChatEventType::EventsTTLUpdated),
+            ChatEvent::EventsTimeToLiveUpdated(_) => Some(ChatEventType::DisappearingMessagesUpdated),
             ChatEvent::GroupGateUpdated(_) => Some(ChatEventType::GateUpdated),
             ChatEvent::UsersInvited(_) => Some(ChatEventType::UsersInvited),
             ChatEvent::MembersAddedToDefaultChannel(_) => Some(ChatEventType::MembersJoined),

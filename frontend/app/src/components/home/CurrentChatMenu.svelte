@@ -313,6 +313,14 @@
         </HoverIcon>
     {/if}
 
+    {#if selectedChatSummary.kind === "direct_chat"}
+        <HoverIcon onclick={showGroupDetails}>
+            <FileDocument
+                size={$iconSize}
+                color={groupDetailsSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
+        </HoverIcon>
+    {/if}
+
     {#if selectedChatSummary.kind === "group_chat" || selectedChatSummary.kind === "channel"}
         <HoverIcon
             onclick={showGroupDetails}
@@ -380,6 +388,16 @@
                     </MenuItem>
                 {/if}
                 {#if $mobileWidth}
+                    {#if selectedChatSummary.kind === "direct_chat"}
+                        <MenuItem onclick={showGroupDetails}>
+                            {#snippet icon()}
+                                <FileDocument size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
+                                <Translatable resourceKey={i18nKey("chatDetails")} />
+                            {/snippet}
+                        </MenuItem>
+                    {/if}
                     {#if $isProposalGroupStore}
                         <MenuItem onclick={showProposalFilters}>
                             {#snippet icon()}

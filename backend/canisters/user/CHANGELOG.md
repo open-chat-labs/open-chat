@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Additional notification data for Firebase Cloud Messaging ([8113](https://github.com/open-chat-labs/open-chat/pull/8113))
+- Implement disappearing messages in direct chats ([8189](https://github.com/open-chat-labs/open-chat/pull/8189))
+
+### Changed
+
+- Remove `correlation_id` ([#8097](https://github.com/open-chat-labs/open-chat/pull/8097))
+- Remove bot API Keys ([#8131](https://github.com/open-chat-labs/open-chat/pull/8131))
+- Support bot making inline replies ([#8146](https://github.com/open-chat-labs/open-chat/pull/8146))
+- Return newly created channel Ids after creating community ([#8156](https://github.com/open-chat-labs/open-chat/pull/8156))
+- Support enabling disappearing messages before sending first message ([#8196](https://github.com/open-chat-labs/open-chat/pull/8196))
+
+### Fixed
+
+- Stop clearing subscriptions on upgrade ([#8150](https://github.com/open-chat-labs/open-chat/pull/8150))
+
 ## [[2.0.1777-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1777-user)] - 2025-06-02
 
 ### Fixed

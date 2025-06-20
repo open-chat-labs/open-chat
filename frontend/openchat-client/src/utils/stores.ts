@@ -1,3 +1,4 @@
+import { NOOP } from "openchat-shared";
 import { untrack } from "svelte";
 import type {
     StartStopNotifier,
@@ -32,8 +33,6 @@ const publishesPending: (() => void)[] = [];
 let subscriptionsPending: (() => void)[] = [];
 // Callbacks to retry syncing derived stores whose dependencies were dirty when last attempted
 let derivedStoresToRetry: (() => void)[] = [];
-
-const NOOP = () => {};
 
 export function withPausedStores<T>(fn: () => T) {
     try {
@@ -149,7 +148,7 @@ class _Writable<T> {
     }
 
     set(newValue: T) {
-        if (this.#equalityCheck(newValue, this.#value)) {
+        if (this.#started && this.#equalityCheck(newValue, this.#value)) {
             return;
         }
 

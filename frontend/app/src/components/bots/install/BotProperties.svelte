@@ -1,7 +1,8 @@
 <script lang="ts">
     import Avatar from "@src/components/Avatar.svelte";
+    import Markdown from "@src/components/home/Markdown.svelte";
     import type { ExternalBotLike, GrantedBotPermissions, OpenChat } from "openchat-client";
-    import { AvatarSize, allUsersStore, mobileWidth } from "openchat-client";
+    import { AvatarSize, allUsersStore, currentUserIdStore, mobileWidth } from "openchat-client";
     import { getContext, type Snippet } from "svelte";
     import BotAvatar from "../BotAvatar.svelte";
     import BotCommands from "../BotCommands.svelte";
@@ -29,7 +30,6 @@
         showAvatar = !$mobileWidth,
         showCommands = true,
     }: Props = $props();
-    let collapsed = $state(true);
     let owner = $derived($allUsersStore.get(bot.ownerId));
     let isPublic = $derived(
         bot.kind === "external_bot" && bot.registrationStatus.kind === "public",
@@ -64,15 +64,14 @@
                 <div class="installing"></div>
             {/if}
         </div>
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-        <p
-            title={bot.definition.description}
-            class="bot-desc"
-            class:collapsed
-            onclick={() => (collapsed = !collapsed)}>
-            {bot.definition.description}
-        </p>
+        <div class="bot-desc">
+            <Markdown inline={false} text={bot.definition.description} />
+        </div>
+        {#if bot.ownerId === $currentUserIdStore}
+            <div class="bot-id">
+                bot id: {bot.id}
+            </div>
+        {/if}
         {#if showCommands}
             <BotCommands {grantedPermissions} commands={bot.definition.commands} />
         {/if}
@@ -144,10 +143,8 @@
             @include font(light, normal, fs-100);
             color: var(--txt-light);
             margin-bottom: $sp3;
-
-            &.collapsed {
-                @include clamp(4);
-            }
+            max-height: 300px;
+            overflow: auto;
         }
     }
 
@@ -180,5 +177,12 @@
         &.private {
             background-image: url("/assets/locked.svg");
         }
+    }
+
+    .bot-id {
+        @include font(light, normal, fs-70);
+        color: var(--txt-light);
+        font: courier;
+        margin-bottom: $sp3;
     }
 </style>

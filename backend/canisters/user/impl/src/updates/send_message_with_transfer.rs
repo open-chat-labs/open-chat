@@ -193,7 +193,6 @@ async fn send_message_with_transfer_to_group_impl(
         block_level_markdown: args.block_level_markdown,
         rules_accepted: args.rules_accepted,
         message_filter_failed: args.message_filter_failed,
-        correlation_id: args.correlation_id,
     };
 
     // Send the message to the group

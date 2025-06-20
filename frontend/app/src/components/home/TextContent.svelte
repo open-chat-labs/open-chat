@@ -19,6 +19,7 @@
         fill: boolean;
         me: boolean;
         blockLevelMarkdown: boolean;
+        showPreviews: boolean;
         onRemovePreview?: (url: string) => void;
     }
 
@@ -30,6 +31,7 @@
         fill,
         me,
         blockLevelMarkdown,
+        showPreviews,
         onRemovePreview,
     }: Props = $props();
 
@@ -53,7 +55,7 @@
 
     let expanded = $derived(!$lowBandwidth && $renderPreviews);
     let text = $derived(truncateText(content.text));
-    let previewUrls = $derived(extractPreviewUrls(content.text));
+    let previewUrls = $derived(showPreviews ? extractPreviewUrls(content.text) : []);
     let iconColour = $derived(me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)");
 </script>
 

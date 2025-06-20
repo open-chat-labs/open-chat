@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Level, MemberRole, OpenChat, UserLookup, UserSummary } from "openchat-client";
-    import { allUsersStore } from "openchat-client";
+    import { allUsersStore, roleAsText } from "openchat-client";
     import { getContext, onDestroy, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../../i18n/i18n";
@@ -91,7 +91,7 @@
             values: {
                 changed: members,
                 changedBy,
-                newRole: $_(newRole),
+                newRole: $_(roleAsText(newRole)),
             },
         });
     }

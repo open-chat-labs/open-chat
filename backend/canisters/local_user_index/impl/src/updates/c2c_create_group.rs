@@ -32,7 +32,7 @@ async fn c2c_create_group(args: Args) -> Response {
         prepare_ok.canister_id,
         Some(prepare_ok.local_user_index_canister_id),
         prepare_ok.canister_wasm,
-        prepare_ok.init_canister_args,
+        msgpack::serialize_then_unwrap(&prepare_ok.init_canister_args),
         prepare_ok.cycles_to_use,
         on_canister_created,
     )
@@ -87,7 +87,6 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
     let canister_id = state.data.canister_pool.pop();
     let canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::Group).wasm.clone();
     let local_user_index_canister_id = state.env.canister_id();
-    #[expect(deprecated)]
     let init_canister_args = group_canister::init::Args {
         is_public: args.is_public,
         name: args.name,
@@ -108,11 +107,8 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         events_ttl: args.events_ttl,
         mark_active_duration: MARK_ACTIVE_DURATION,
         group_index_canister_id: state.data.group_index_canister_id,
-        local_group_index_canister_id: CanisterId::anonymous(),
         user_index_canister_id: state.data.user_index_canister_id,
         local_user_index_canister_id,
-        notifications_canister_id: CanisterId::anonymous(),
-        bot_api_gateway_canister_id: CanisterId::anonymous(),
         proposals_bot_user_id: state.data.proposals_bot_canister_id.into(),
         escrow_canister_id: state.data.escrow_canister_id,
         internet_identity_canister_id: state.data.internet_identity_canister_id,

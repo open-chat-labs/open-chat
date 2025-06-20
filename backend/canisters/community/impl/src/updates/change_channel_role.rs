@@ -36,6 +36,7 @@ fn change_channel_role_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         }
     }
 
+    state.push_bot_notification(result.bot_notification);
     handle_activity_notification(state);
     Ok(())
 }

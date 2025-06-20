@@ -13,11 +13,11 @@ use utils::canister;
 
 #[update(msgpack = true)]
 #[trace]
-async fn reset_invite_code(args: reset_invite_code::Args) -> reset_invite_code::Response {
-    execute_update_async(|| reset_invite_code_impl(args)).await
+async fn reset_invite_code(_args: reset_invite_code::Args) -> reset_invite_code::Response {
+    execute_update_async(reset_invite_code_impl).await
 }
 
-async fn reset_invite_code_impl(args: reset_invite_code::Args) -> reset_invite_code::Response {
+async fn reset_invite_code_impl() -> reset_invite_code::Response {
     let initial_state = match read_state(prepare) {
         Ok(c) => c,
         Err(error) => return Error(error),
@@ -28,12 +28,7 @@ async fn reset_invite_code_impl(args: reset_invite_code::Args) -> reset_invite_c
     mutate_state(|state| {
         state.data.invite_code = Some(code);
         state.data.invite_code_enabled = true;
-        record_event(
-            initial_state.user_id,
-            GroupInviteCodeChange::Reset,
-            args.correlation_id,
-            state,
-        );
+        record_event(initial_state.user_id, GroupInviteCodeChange::Reset, state);
     });
 
     Success(SuccessResult { code })
@@ -41,11 +36,11 @@ async fn reset_invite_code_impl(args: reset_invite_code::Args) -> reset_invite_c
 
 #[update(candid = true, msgpack = true)]
 #[trace]
-async fn enable_invite_code(args: Args) -> Response {
-    execute_update_async(|| enable_invite_code_impl(args)).await
+async fn enable_invite_code(_args: Args) -> Response {
+    execute_update_async(enable_invite_code_impl).await
 }
 
-async fn enable_invite_code_impl(args: Args) -> Response {
+async fn enable_invite_code_impl() -> Response {
     let initial_state = match read_state(prepare) {
         Ok(c) => c,
         Err(error) => return Error(error),
@@ -60,12 +55,7 @@ async fn enable_invite_code_impl(args: Args) -> Response {
         mutate_state(|state| {
             state.data.invite_code = Some(code);
             state.data.invite_code_enabled = true;
-            record_event(
-                initial_state.user_id,
-                GroupInviteCodeChange::Enabled,
-                args.correlation_id,
-                state,
-            );
+            record_event(initial_state.user_id, GroupInviteCodeChange::Enabled, state);
         });
     }
 
@@ -78,14 +68,13 @@ async fn generate_code() -> u64 {
     rng.next_u64()
 }
 
-fn record_event(user_id: UserId, change: GroupInviteCodeChange, correlation_id: u64, state: &mut RuntimeState) {
+fn record_event(user_id: UserId, change: GroupInviteCodeChange, state: &mut RuntimeState) {
     let now = state.env.now();
     state.data.chat.events.push_main_event(
         ChatEventInternal::GroupInviteCodeChanged(Box::new(GroupInviteCodeChanged {
             change,
             changed_by: user_id,
         })),
-        correlation_id,
         now,
     );
 

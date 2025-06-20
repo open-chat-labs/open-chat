@@ -296,7 +296,6 @@ impl From<EventWrapperFallback> for EventWrapperInternal<ChatEventInternal> {
         EventWrapperInternal {
             index: value.index,
             timestamp: value.timestamp,
-            correlation_id: 0,
             expires_at: None,
             event: ChatEventInternal::FailedToDeserialize,
         }

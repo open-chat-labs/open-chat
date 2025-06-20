@@ -14,6 +14,7 @@ import {
 export class CommunityDetailsState {
     constructor(
         public communityId: CommunityIdentifier,
+        public timestamp: bigint,
         public userGroups: ReadonlyMap<number, UserGroupDetails>,
         public members: ReadonlyMap<string, Member>,
         public blockedUsers: ReadonlySet<string>,

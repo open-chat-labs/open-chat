@@ -7,6 +7,7 @@ import {
     MessageContextMap,
     MessageMap,
     nullMembership,
+    ROLE_OWNER,
     SafeMap,
     type AccessGateConfig,
     type ChatIdentifier,
@@ -31,6 +32,7 @@ import {
     type P2PSwapStatus,
     type SenderContext,
     type StreakInsurance,
+    type Tally,
     type ThreadSummary,
     type UnconfirmedMessageEvent,
     type UnconfirmedState,
@@ -380,7 +382,7 @@ export class GlobalLocalState {
                 eventsTtlLastUpdated: BigInt(0),
                 membership: {
                     ...nullMembership(),
-                    role: "owner",
+                    role: ROLE_OWNER,
                 },
             });
         });
@@ -392,6 +394,10 @@ export class GlobalLocalState {
         });
     }
 
+    anyUninitialisedDirectChats(): boolean {
+        return this.#uninitialisedDirectChats.value.size > 0;
+    }
+
     removeUninitialisedDirectChat(chatId: ChatIdentifier): boolean {
         if (this.#uninitialisedDirectChats.value.has(chatId)) {
             this.#uninitialisedDirectChats.update((data) => {
@@ -401,6 +407,10 @@ export class GlobalLocalState {
             return true;
         }
         return false;
+    }
+
+    anyCommunityPreviews(): boolean {
+        return this.previewCommunities.value.size > 0;
     }
 
     isPreviewingCommunity(id: CommunityIdentifier) {
@@ -771,6 +781,20 @@ export class GlobalLocalState {
         );
     }
 
+    updateDirectChatProperties(id: DirectChatIdentifier, eventsTTL?: OptionUpdate<bigint>) {
+        return this.#modifyChatSummaryUpdates(
+            id,
+            (upd) => {
+                upd.eventsTTL = eventsTTL;
+                return (upd) => {
+                    upd.eventsTTL = undefined;
+                    return upd;
+                };
+            },
+            "updateDirectChatProperties",
+        );
+    }
+
     updateChatProperties(
         id: ChatIdentifier,
         name?: string,
@@ -955,6 +979,20 @@ export class GlobalLocalState {
                 };
             },
             "markPrizeClaimed",
+        );
+    }
+
+    markProposalTallyUpdated(messageId: bigint, tally: Tally) {
+        return this.#modifyMessageUpdates(
+            messageId,
+            (upd) => {
+                upd.proposalTally = tally;
+                return (upd) => {
+                    upd.proposalTally = undefined;
+                    return upd;
+                };
+            },
+            "markProposalTallyUpdated"
         );
     }
 

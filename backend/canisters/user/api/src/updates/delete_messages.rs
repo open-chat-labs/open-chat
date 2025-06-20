@@ -9,7 +9,6 @@ pub struct Args {
     pub user_id: UserId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_ids: Vec<MessageId>,
-    pub correlation_id: u64,
 }
 
 pub type Response = UnitResult;

@@ -20,16 +20,22 @@ fn c2c_notifications_index_impl(args: Args, state: &mut RuntimeState) -> Respons
         ) {
             match event.value {
                 NotificationsIndexEvent::SubscriptionAdded(s) => {
-                    state.data.notification_subscriptions.push(s.user_id, s.subscription);
+                    state.data.web_push_subscriptions.push(s.user_id, s.subscription);
                 }
                 NotificationsIndexEvent::SubscriptionRemoved(s) => {
-                    state.data.notification_subscriptions.remove(s.user_id, &s.p256dh_key);
+                    state.data.web_push_subscriptions.remove(s.user_id, &s.p256dh_key);
                 }
                 NotificationsIndexEvent::AllSubscriptionsRemoved(u) => {
-                    state.data.notification_subscriptions.remove_all(u);
+                    state.data.web_push_subscriptions.remove_all(u);
                 }
                 NotificationsIndexEvent::SetNotificationPusherPrincipals(principals) => {
                     state.data.notification_pushers = principals;
+                }
+                NotificationsIndexEvent::FcmTokenAdded(user_id, fcm_token) => {
+                    let _ = state.data.fcm_token_store.add(user_id, fcm_token);
+                }
+                NotificationsIndexEvent::FcmTokenRemoved(user_id, fcm_token) => {
+                    let _ = state.data.fcm_token_store.remove(&user_id, &fcm_token);
                 }
                 NotificationsIndexEvent::UserBlocked(..)
                 | NotificationsIndexEvent::UserUnblocked(..)

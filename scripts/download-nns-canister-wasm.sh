@@ -17,7 +17,7 @@ cd wasms
 HTTP_CODE=$(curl -so $CANISTER_NAME.wasm.gz https://download.dfinity.systems/ic/$COMMIT_ID/canisters/$FILE_NAME.wasm.gz --write-out "%{http_code}")
 
 if [[ ${HTTP_CODE} -ne 200 ]] ; then
-    echo "Failed to download wasm. Response code: ${HTTP_CODE}"
+    echo "Failed to download wasm: ${CANISTER_NAME}. Response code: ${HTTP_CODE}"
     exit 1
 fi
 

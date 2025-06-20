@@ -2,10 +2,10 @@ use crate::model::community_event_batch::CommunityEventBatch;
 use crate::model::group_event_batch::GroupEventBatch;
 use crate::model::local_community_map::LocalCommunityMap;
 use crate::model::local_group_map::LocalGroupMap;
-use crate::model::notification_subscriptions::NotificationSubscriptions;
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use crate::model::user_event_batch::UserEventBatch;
 use crate::model::user_index_event_batch::UserIndexEventBatch;
+use crate::model::web_push_subscriptions::WebPushSubscriptions;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use community_canister::LocalIndexEvent as CommunityEvent;
@@ -24,16 +24,18 @@ use p256_key_pair::P256KeyPair;
 use proof_of_unique_personhood::verify_proof_of_unique_personhood;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
+use serde_bytes::ByteBuf;
 use stable_memory_map::UserIdsKeyPrefix;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    BotEventWrapper, BotNotificationEnvelope, BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms,
-    CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
-    IdempotentEnvelope, MessageContent, Milliseconds, Notification, NotificationEnvelope, ReferralType, TimestampMillis,
-    Timestamped, User, UserId, UserNotificationEnvelope, VerifiedCredentialGateArgs,
+    BotDataEncoding, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion, CanisterId,
+    ChannelLatestMessageIndex, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
+    CommunityId, Cycles, DiamondMembershipDetails, IdempotentEnvelope, MessageContent, Milliseconds, Notification,
+    NotificationEnvelope, ReferralType, TimestampMillis, Timestamped, User, UserId, UserNotificationEnvelope,
+    VerifiedCredentialGateArgs,
 };
 use user_canister::LocalUserIndexEvent as UserEvent;
 use user_ids_set::UserIdsSet;
@@ -42,6 +44,7 @@ use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
 use utils::event_stream::EventStream;
+use utils::fcm_token_store::FcmTokenStore;
 use utils::idempotency_checker::IdempotencyChecker;
 use utils::iterator_extensions::IteratorExtensions;
 
@@ -394,7 +397,7 @@ impl RuntimeState {
             notification_pushers: self.data.notification_pushers.iter().copied().collect(),
             queued_notifications: self.data.notifications.len() as u32,
             latest_notification_index: self.data.notifications.latest_event_index(),
-            subscriptions: self.data.notification_subscriptions.total(),
+            web_push_subscriptions: self.data.web_push_subscriptions.total(),
             blocked_user_pairs: self.data.blocked_users.len() as u64,
             oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
             cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
@@ -474,9 +477,11 @@ struct Data {
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub idempotency_checker: IdempotencyChecker,
     pub notification_pushers: HashSet<Principal>,
-    pub notification_subscriptions: NotificationSubscriptions,
+    #[serde(alias = "notification_subscriptions")]
+    pub web_push_subscriptions: WebPushSubscriptions,
     pub notifications: EventStream<NotificationEnvelope>,
     pub blocked_users: UserIdsSet,
+    pub fcm_token_store: FcmTokenStore,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -563,9 +568,10 @@ impl Data {
             bots: BotsMap::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             idempotency_checker: IdempotencyChecker::default(),
-            notification_subscriptions: NotificationSubscriptions::default(),
+            web_push_subscriptions: WebPushSubscriptions::default(),
             notifications: EventStream::default(),
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
+            fcm_token_store: FcmTokenStore::default(),
         }
     }
 
@@ -580,7 +586,7 @@ impl Data {
                 let filtered_recipients: Vec<_> = user_notification
                     .recipients
                     .into_iter()
-                    .filter(|u| self.notification_subscriptions.any_for_user(u) && !users_who_have_blocked_sender.contains(u))
+                    .filter(|u| self.web_push_subscriptions.any_for_user(u) && !users_who_have_blocked_sender.contains(u))
                     .collect();
 
                 if !filtered_recipients.is_empty() {
@@ -588,24 +594,53 @@ impl Data {
                         recipients: filtered_recipients,
                         notification_bytes: user_notification.notification_bytes.clone(),
                         timestamp: now,
+                        fcm_data: user_notification.fcm_data,
                     }));
                 }
             }
-            Notification::Bot(mut bot_notification) => {
-                bot_notification.recipients.retain(|b| self.bots.exists(b));
-
-                if !bot_notification.recipients.is_empty() {
-                    self.notifications.add(NotificationEnvelope::Bot(BotNotificationEnvelope {
-                        event: BotEventWrapper {
-                            api_gateway: this_canister_id,
-                            event: bot_notification.event,
-                        },
-                        recipients: bot_notification.recipients,
-                        timestamp: now,
-                    }));
-                }
-            }
+            Notification::Bot(bot_notification) => self.push_bot_notification(bot_notification, this_canister_id, now),
         }
+    }
+
+    pub fn push_bot_notification(
+        &mut self,
+        bot_notification: BotNotification,
+        this_canister_id: CanisterId,
+        now: TimestampMillis,
+    ) {
+        let recipients: HashMap<UserId, BotDataEncoding> = bot_notification
+            .recipients
+            .into_iter()
+            .filter_map(|bot_id| self.bots.get(&bot_id).map(|bot| (bot_id, bot.data_encoding)))
+            .collect();
+
+        if recipients.is_empty() {
+            return;
+        }
+
+        let encodings: HashSet<BotDataEncoding> = recipients.values().cloned().collect();
+
+        let event_wrapper = BotEventWrapper {
+            api_gateway: this_canister_id,
+            event: bot_notification.event,
+        };
+
+        let notification_bytes = encodings
+            .into_iter()
+            .map(|encoding| {
+                let bytes = match encoding {
+                    BotDataEncoding::Json => serde_json::to_vec(&event_wrapper).unwrap(),
+                    BotDataEncoding::Candid => candid::encode_one(&event_wrapper).unwrap(),
+                };
+                (encoding, ByteBuf::from(bytes))
+            })
+            .collect();
+
+        self.notifications.add(NotificationEnvelope::Bot(BotNotificationEnvelope {
+            recipients,
+            timestamp: now,
+            notification_bytes,
+        }));
     }
 }
 
@@ -661,7 +696,7 @@ pub struct Metrics {
     pub notification_pushers: Vec<Principal>,
     pub queued_notifications: u32,
     pub latest_notification_index: u64,
-    pub subscriptions: u64,
+    pub web_push_subscriptions: u64,
     pub blocked_user_pairs: u64,
     pub oc_secret_key_initialized: bool,
     pub cycles_balance_check_queue_len: u32,

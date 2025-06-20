@@ -5,6 +5,9 @@
         type CommunityPermissions,
         type ResourceKey,
         communityRoles,
+        ROLE_ADMIN,
+        ROLE_MEMBER,
+        ROLE_OWNER,
     } from "openchat-client";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
@@ -20,9 +23,9 @@
     type PermissionsEntry = [keyof CommunityPermissions, CommunityPermissionRole];
 
     const roleLabels: Record<CommunityPermissionRole, ResourceKey> = {
-        owner: i18nKey("permissions.ownerOnly"),
-        admin: i18nKey("permissions.ownerAndAdmins"),
-        member: i18nKey("permissions.allMembers"),
+        [ROLE_OWNER]: i18nKey("permissions.ownerOnly"),
+        [ROLE_ADMIN]: i18nKey("permissions.ownerAndAdmins"),
+        [ROLE_MEMBER]: i18nKey("permissions.allMembers"),
     };
 
     function partitionPermissions(permissions: CommunityPermissions): PermissionsByRole {
@@ -34,9 +37,9 @@
                 return dict;
             },
             {
-                admin: new Set(),
-                member: new Set(),
-                owner: new Set(),
+                [ROLE_OWNER]: new Set(),
+                [ROLE_ADMIN]: new Set(),
+                [ROLE_MEMBER]: new Set(),
             } as PermissionsByRole,
         );
     }

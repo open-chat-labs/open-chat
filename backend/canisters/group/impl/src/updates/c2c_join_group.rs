@@ -111,7 +111,7 @@ fn commit(args: Args, payments: Vec<GatePayment>, state: &mut RuntimeState) -> R
             .data
             .chat
             .events
-            .push_main_event(ChatEventInternal::UsersUnblocked(Box::new(event)), args.correlation_id, now);
+            .push_main_event(ChatEventInternal::UsersUnblocked(Box::new(event)), now);
 
         new_event = true;
     }
@@ -125,18 +125,20 @@ fn commit(args: Args, payments: Vec<GatePayment>, state: &mut RuntimeState) -> R
         mute_notifications: state.data.chat.is_public.value,
         user_type: args.user_type,
     }) {
-        AddResult::Success(result) => {
+        AddResult::Success(mut result) => {
             let invitation = state.data.chat.invited_users.remove(&args.user_id, now);
 
             let event = MemberJoinedInternal {
                 user_id: args.user_id,
                 invited_by: invitation.map(|i| i.invited_by),
             };
-            state.data.chat.events.push_main_event(
-                ChatEventInternal::ParticipantJoined(Box::new(event)),
-                args.correlation_id,
-                now,
-            );
+            let push_result = state
+                .data
+                .chat
+                .events
+                .push_main_event(ChatEventInternal::ParticipantJoined(Box::new(event)), now);
+
+            result.bot_notification = push_result.bot_notification;
 
             new_event = true;
 

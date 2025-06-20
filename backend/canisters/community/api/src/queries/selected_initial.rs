@@ -2,10 +2,7 @@ use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{
-    CommunityMember, EventIndex, InstalledBotDetails, PublicApiKeyDetails, TimestampMillis, UserGroupDetails, UserId,
-    VersionedRules,
-};
+use types::{CommunityMember, EventIndex, InstalledBotDetails, TimestampMillis, UserGroupDetails, UserId, VersionedRules};
 
 #[ts_export(community, selected_initial)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -14,7 +11,6 @@ pub struct Args {
 }
 
 #[ts_export(community, selected_initial)]
-#[expect(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
@@ -29,7 +25,6 @@ pub struct SuccessResult {
     pub latest_event_index: EventIndex,
     pub members: Vec<CommunityMember>,
     pub bots: Vec<InstalledBotDetails>,
-    pub api_keys: Vec<PublicApiKeyDetails>,
     pub basic_members: Vec<UserId>,
     pub blocked_users: Vec<UserId>,
     pub invited_users: Vec<UserId>,

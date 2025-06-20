@@ -117,7 +117,6 @@ fn delete_group_message(
         thread_root_message_index,
         message_ids: vec![message_id],
         as_platform_moderator: Some(true),
-        correlation_id: 0,
         new_achievement: false,
     };
     fire_and_forget_handler.send(

@@ -6,6 +6,7 @@
         currentUserStore,
         isDiamondStore,
         isLifetimeDiamondStore,
+        mobileWidth,
         publish,
         type ChatIdentifier,
         type DiamondMembershipStatus,
@@ -38,9 +39,10 @@
         chatId: ChatIdentifier;
         messageId: bigint;
         me: boolean;
+        intersecting: boolean;
     }
 
-    let { content, chatId, messageId, me }: Props = $props();
+    let { content, chatId, messageId, me, intersecting }: Props = $props();
 
     let progressWidth = $state(0);
 
@@ -112,6 +114,8 @@
             content.requiresCaptcha,
     );
     let showChallenge = $state(false);
+    let spin = $derived(intersecting && !finished && !allClaimed);
+    let mirror = $derived(intersecting && !$mobileWidth);
 
     function onChallengeResult(e: MouseEvent, success: boolean) {
         if (success) {
@@ -148,7 +152,7 @@
             {/if}
         </div>
         <div class="prize-coin">
-            <SpinningToken {logo} />
+            <SpinningToken {logo} {spin} {mirror} />
         </div>
     </div>
     <div class="bottom">

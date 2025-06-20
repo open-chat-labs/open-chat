@@ -18,6 +18,7 @@ use user_canister::token_swap_status::CandidType;
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub chat_context: BotChatContext,
+    pub thread: Option<MessageIndex>,
     pub events: EventsSelectionCriteria,
 }
 
@@ -124,7 +125,6 @@ impl From<types::EventsResponse> for EventsResponse {
                 .map(|event| EventWrapper {
                     index: event.index,
                     timestamp: event.timestamp,
-                    correlation_id: event.correlation_id,
                     expires_at: event.expires_at,
                     event: event.event.into(),
                 })

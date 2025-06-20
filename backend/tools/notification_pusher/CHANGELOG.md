@@ -8,7 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Serialize bot notifications in LUI not pusher ([#8169](https://github.com/open-chat-labs/open-chat/pull/8169))
+
+## [[2.0.1789](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1789-notifications_pusher)] - 2025-06-13
+
+### Added
+
+- Updated the way configuration is loaded for the pusher by using the `envconf` crate ([8145](https://github.com/open-chat-labs/open-chat/pull/8145))
+
+### Changed
+
 - Read notification canisters from NotificationsIndex ([#8091](https://github.com/open-chat-labs/open-chat/pull/8091))
+- Add new bot lifecycle event ([#8163](https://github.com/open-chat-labs/open-chat/pull/8163))
 
 ## [[2.0.1775](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1775-notifications_pusher)] - 2025-06-02
 

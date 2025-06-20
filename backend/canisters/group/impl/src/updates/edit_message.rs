@@ -31,7 +31,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         now,
     };
 
-    state.data.chat.events.edit_message(
+    let result = state.data.chat.events.edit_message(
         edit_message_args,
         Some(GroupEventPusher {
             now,
@@ -44,6 +44,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         state.notify_user_of_achievement(sender, Achievement::EditedMessage, now);
     }
 
+    state.push_bot_notification(result.bot_notification);
     handle_activity_notification(state);
     Ok(())
 }

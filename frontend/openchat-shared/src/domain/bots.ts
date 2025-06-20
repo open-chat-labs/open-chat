@@ -1,5 +1,6 @@
 import { Principal } from "@dfinity/principal";
 import * as chrono from "chrono-node";
+import { ROLE_MEMBER } from "../constants";
 import { type InterpolationValues, parseBigInt, random64, type ResourceKey } from "../utils";
 import { ValidationErrors } from "../utils/validation";
 import type {
@@ -163,7 +164,7 @@ export function emptyBotCommand(): CommandDefinition {
         name: "",
         description: "",
         params: [],
-        defaultRole: "member",
+        defaultRole: ROLE_MEMBER,
         permissions: emptyExternalBotPermissions(),
         directMessages: false,
     };
@@ -844,4 +845,11 @@ export function emptyWebhookInstance(): FullWebhookDetails {
 
 export type FullWebhookDetails = WebhookDetails & {
     secret?: string;
+};
+
+export type EphemeralMessageEvent = {
+    message: BotResponseMessage;
+    botId: string;
+    commandName: string;
+    scope: BotActionScope;
 };

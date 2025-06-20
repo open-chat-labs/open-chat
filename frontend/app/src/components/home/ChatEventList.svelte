@@ -395,9 +395,11 @@
     }
 
     function sentMessage(payload: { context: MessageContext; event: EventWrapper<Message> }) {
-        if (messageContextsEqual(payload.context, messageContext)) {
-            afterSendMessage(payload.context, payload.event);
-        }
+        tick().then(() => {
+            if (messageContextsEqual(payload.context, messageContext)) {
+                afterSendMessage(payload.context, payload.event);
+            }
+        });
     }
 
     async function afterReaction({

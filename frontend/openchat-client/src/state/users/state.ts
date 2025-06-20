@@ -1,16 +1,13 @@
-// Not reallly sure whether to make this separate or not yet. Feels like a thing.
+// Not really sure whether to make this separate or not yet. Feels like a thing.
 import {
     type ReadonlyMap,
     type ReadonlySet,
-    type UserLookup,
     type UserSummary,
 } from "openchat-shared";
 import {
     allUsersStore,
     blockedUsersStore,
-    normalUsersStore,
     serverBlockedUsersStore,
-    specialUsersStore,
     suspendedUsersStore,
     webhookUserIdsStore,
 } from "./stores";
@@ -18,7 +15,8 @@ import {
 export class UsersState {
     #allUsers!: ReadonlyMap<string, UserSummary>;
     #blockedUsers!: ReadonlySet<string>;
-    #suspendedUsers!: ReadonlyMap<string, UserSummary>;
+    #suspendedUsers!: ReadonlySet<string>;
+    #specialUsers: ReadonlySet<string> = new Set();
 
     constructor() {
         allUsersStore.subscribe((val) => (this.#allUsers = val));
@@ -47,28 +45,26 @@ export class UsersState {
         });
     }
 
-    setUsers(users: UserLookup) {
-        normalUsersStore.set(new Map(users));
-    }
-
     addUser(user: UserSummary) {
-        normalUsersStore.update((map) => {
+        allUsersStore.update((map) => {
             map.set(user.userId, user);
             return map;
         });
+        this.#updateSuspended([user]);
     }
 
     addMany(users: UserSummary[]) {
         if (users.length === 0) return;
 
-        normalUsersStore.update((map) => {
+        allUsersStore.update((map) => {
             users.forEach((u) => map.set(u.userId, u));
             return map;
         });
+        this.#updateSuspended(users);
     }
 
     setUpdated(userIds: string[], timestamp: bigint) {
-        normalUsersStore.update((map) => {
+        allUsersStore.update((map) => {
             for (const userId of userIds) {
                 const user = map.get(userId);
                 if (user !== undefined) {
@@ -80,8 +76,9 @@ export class UsersState {
         });
     }
 
-    addSpecialUsers(users: [string, UserSummary][]) {
-        specialUsersStore.set(new Map(users));
+    setSpecialUsers(users: UserSummary[]) {
+        this.#specialUsers = new Set(users.map((u) => u.userId));
+        this.addMany(users);
     }
 
     get(userId: string): UserSummary | undefined {
@@ -113,11 +110,36 @@ export class UsersState {
     }
 
     get specialUsers() {
-        return specialUsersStore;
+        return this.#specialUsers;
     }
 
-    get suspendedUsers(): ReadonlyMap<string, UserSummary> {
+    get suspendedUsers() {
         return this.#suspendedUsers;
+    }
+
+    #updateSuspended(users: Iterable<UserSummary>) {
+        const toAdd = new Set<string>();
+        const toRemove = new Set<string>();
+        for (const user of users) {
+            if (user.suspended) {
+                if (!this.#suspendedUsers.has(user.userId)) {
+                    toAdd.add(user.userId);
+                }
+            } else if (this.#suspendedUsers.has(user.userId)) {
+                toRemove.add(user.userId);
+            }
+        }
+        if (toAdd.size > 0 || toRemove.size > 0) {
+            suspendedUsersStore.update((set) => {
+                for (const userId of toAdd) {
+                    set.add(userId);
+                }
+                for (const userId of toRemove) {
+                    set.delete(userId);
+                }
+                return set;
+            });
+        }
     }
 }
 
