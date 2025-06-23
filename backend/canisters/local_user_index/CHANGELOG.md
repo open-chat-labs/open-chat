@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add `bot_community_events` endpoint ([#8194](https://github.com/open-chat-labs/open-chat/pull/8194))
+- Add `bot_remove_user` endpoint ([#8217](https://github.com/open-chat-labs/open-chat/pull/8217))
 
 ### Changed
 
