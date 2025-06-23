@@ -9,6 +9,7 @@ mod wallet_receive;
 use crate::{RuntimeState, mutate_state, read_state};
 use candid::Principal;
 use stable_memory_map::StableMemoryMap;
+use std::fmt::Display;
 use types::{CanisterId, UserId};
 use user_index_canister::c2c_lookup_user::Response;
 use user_index_canister_c2c_client::c2c_lookup_user;
@@ -23,11 +24,11 @@ pub(crate) enum LookupError {
     InternalError(String),
 }
 
-impl ToString for LookupError {
-    fn to_string(&self) -> String {
+impl Display for LookupError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            LookupError::UserNotFound => "User not found".to_string(),
-            LookupError::InternalError(msg) => format!("Internal error: {}", msg),
+            LookupError::UserNotFound => write!(f, "User not found"),
+            LookupError::InternalError(msg) => write!(f, "Internal error: {}", msg),
         }
     }
 }
