@@ -31,26 +31,18 @@ async fn remove_participant(args: Args) -> UnitResult {
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 async fn c2c_bot_remove_user(args: group_canister::c2c_bot_remove_user::Args) -> UnitResult {
-    execute_update_async(|| c2c_bot_remove_user_impl(args)).await.into()
-}
-
-async fn c2c_bot_remove_user_impl(args: group_canister::c2c_bot_remove_user::Args) -> OCResult {
-    let bot_caller = BotCaller {
-        bot: args.bot_id,
-        initiator: args.initiator.clone(),
-    };
-
-    if !read_state(|state| {
-        state.data.is_bot_permitted(
-            &bot_caller.bot,
-            &bot_caller.initiator,
-            &BotPermissions::from_chat_permission(ChatPermission::RemoveMembers),
+    execute_update_async(|| {
+        remove_participant_impl(
+            args.user_id,
+            args.block,
+            Some(Caller::BotV2(BotCaller {
+                bot: args.bot_id,
+                initiator: args.initiator.clone(),
+            })),
         )
-    }) {
-        return Err(OCErrorCode::InitiatorNotAuthorized.into());
-    }
-
-    remove_participant_impl(args.user_id, args.block, Some(Caller::BotV2(bot_caller))).await
+    })
+    .await
+    .into()
 }
 
 async fn remove_participant_impl(user_to_remove: UserId, block: bool, ext_caller: Option<Caller>) -> OCResult {
@@ -93,7 +85,6 @@ fn prepare(
     }
 
     let caller = state.verified_caller(ext_caller)?;
-
     let agent = caller.agent();
 
     if agent == user_to_remove {
@@ -109,6 +100,16 @@ fn prepare(
             }
             None => return Err(OCErrorCode::TargetUserNotInChat.into()),
         };
+
+        if let Caller::BotV2(bot_caller) = &caller {
+            if !state.data.is_bot_permitted(
+                &bot_caller.bot,
+                &bot_caller.initiator,
+                &BotPermissions::from_chat_permission(ChatPermission::RemoveMembers),
+            ) {
+                return Err(OCErrorCode::InitiatorNotAuthorized.into());
+            }
+        }
 
         if let Some(initiator) = caller.initiator() {
             let member = state.data.chat.members.get_verified_member(initiator)?;

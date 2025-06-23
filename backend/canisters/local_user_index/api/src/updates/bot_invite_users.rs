@@ -1,14 +1,13 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{BotLocationContext, UnitResult, UserId};
+use types::{BotChatContext, UnitResult, UserId};
 
-#[ts_export(local_user_index, bot_remove_user)]
+#[ts_export(local_user_index, bot_invite_users)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
-    pub location_context: BotLocationContext,
-    pub user_id: UserId,
-    pub block: bool,
+    pub chat_context: BotChatContext,
+    pub user_ids: Vec<UserId>,
 }
 
 pub type Response = UnitResult;
