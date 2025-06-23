@@ -538,10 +538,22 @@ export const userGroupSummariesStore = derived(communitiesStore, (communities) =
 });
 
 export const serverEventsStore = writable<EventWrapper<ChatEvent>[]>([], undefined, eqIfEmpty);
-export const serverThreadEventsStore = writable<EventWrapper<ChatEvent>[]>([], undefined, eqIfEmpty);
+export const serverThreadEventsStore = writable<EventWrapper<ChatEvent>[]>(
+    [],
+    undefined,
+    eqIfEmpty,
+);
 export const expiredServerEventRanges = writable<DRange>(new DRange(), undefined, eqIfEmpty);
-export const selectedChatUserIdsStore = writable<Set<string>>(new Set(), undefined, setsEqualIfEmpty);
-export const selectedChatUserGroupKeysStore = writable<Set<string>>(new Set(), undefined, setsEqualIfEmpty);
+export const selectedChatUserIdsStore = writable<Set<string>>(
+    new Set(),
+    undefined,
+    setsEqualIfEmpty,
+);
+export const selectedChatUserGroupKeysStore = writable<Set<string>>(
+    new Set(),
+    undefined,
+    setsEqualIfEmpty,
+);
 export const selectedChatExpandedDeletedMessageStore = writable<Set<number>>(
     new Set(),
     undefined,
@@ -574,7 +586,7 @@ export const selectedThreadIdStore = writable<ThreadIdentifier | undefined>(
 );
 
 // Whenever the selectedChatIdStore value changes the first thing we do is clear the related stores
-selectedChatIdStore.subscribe(_ => {
+selectedChatIdStore.subscribe((_) => {
     serverEventsStore.set([]);
     expiredServerEventRanges.set(new DRange());
     selectedThreadIdStore.set(undefined);
@@ -585,7 +597,7 @@ selectedChatIdStore.subscribe(_ => {
 });
 
 // Whenever the selectedThreadIdStore value changes we immediately clear the serverThreadEventsStore
-selectedThreadIdStore.subscribe(_ => serverThreadEventsStore.set([]));
+selectedThreadIdStore.subscribe((_) => serverThreadEventsStore.set([]));
 
 export const chatListScopeStore = derived(routeStore, (route) => route.scope, dequal);
 export const chatsInitialisedStore = writable(false);
@@ -1301,7 +1313,7 @@ export const selectedThreadDraftMessageStore = derived(
 );
 
 export const identityStateStore = writable<IdentityState>(
-    { kind: "loading_user" },
+    { kind: "loading_user", registering: false },
     undefined,
     notEq,
 );

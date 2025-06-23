@@ -1485,6 +1485,7 @@
     "register": {
         "agree": "Đồng ý",
         "bioTooLong": "Tiểu sử của bạn quá dài",
+        "chooseMode": "Bạn đã có tài khoản OpenChat hay đây là lần đầu tiên bạn truy cập?",
         "choosePath": "Bạn muốn đăng ký như thế nào?",
         "closed": "Do nhu cầu rất cao, đăng ký người dùng mới tạm thời bị đóng. Chúng tôi sẽ sớm mở rộng quy mô trên nhiều mạng con và sau đó sẽ có thể phát triển vô tận!",
         "closedTitle": "Đăng ký bị tạm dừng",
@@ -1492,6 +1493,7 @@
         "confirmCyclesTransferText": "Vui lòng xác nhận khi bạn đã chuyển {amount} cycles từ ví của bạn sang ví  được cung cấp bên dưới",
         "confirmICPTransferText": "Vui lòng xác nhận khi bạn đã chuyển {amount} ICP vào tài khoản được cung cấp bên dưới",
         "confirmTransfer": "Xác nhận chuyển khoản",
+        "createAccount": "Tạo tài khoản",
         "createUser": "Tạo tài khoản",
         "cyclesTransferred": "Lệ phí {fee} cycles đã được xác nhận",
         "disclaimer": "Bằng cách đăng ký OpenChat, bạn đồng ý tuân theo các điều khoản và điều kiện của chúng tôi",
