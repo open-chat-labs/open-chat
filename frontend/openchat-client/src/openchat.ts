@@ -488,9 +488,9 @@ import {
     mergeServerEvents,
     messageIsReadByThem,
     metricsEqual,
+    newDefaultChannel,
     nextEventAndMessageIndexes,
     nextEventAndMessageIndexesForThread,
-    newDefaultChannel,
     permittedMessagesInDirectChat,
     permittedMessagesInGroup,
     sameUser,
@@ -760,13 +760,17 @@ export class OpenChat {
         });
     }
 
-    async #loadedAuthenticationIdentity(id: Identity, authProvider: AuthProvider | undefined) {
+    async #loadedAuthenticationIdentity(
+        id: Identity,
+        authProvider: AuthProvider | undefined,
+        registering: boolean = false,
+    ) {
         currentUserStore.set(anonymousUser());
         chatsInitialisedStore.set(false);
         const anon = id.getPrincipal().isAnonymous();
         const authPrincipal = id.getPrincipal().toString();
         this.#authPrincipal = anon ? undefined : authPrincipal;
-        this.updateIdentityState(anon ? { kind: "anon" } : { kind: "loading_user" });
+        this.updateIdentityState(anon ? { kind: "anon" } : { kind: "loading_user", registering });
 
         const connectToWorkerResponse = await this.#connectToWorker(authPrincipal, authProvider);
 
@@ -793,7 +797,7 @@ export class OpenChat {
             await this.#ocIdentityStorage.remove();
         }
 
-        this.#loadUser();
+        await this.#loadUser();
     }
 
     logError(message: unknown, error: unknown, ...optionalParams: unknown[]): void {
@@ -945,6 +949,7 @@ export class OpenChat {
                 switch (user.kind) {
                     case "unknown_user":
                         this.onCreatedUser(anonymousUser());
+                        console.log("So this should not really happen now");
                         this.updateIdentityState({ kind: "registering" });
                         break;
                     case "created_user":
@@ -3383,7 +3388,9 @@ export class OpenChat {
                     const lapsed = new Set(
                         resp.members.filter((m) => m.lapsed).map((m) => m.userId),
                     );
-                    const webhooksToAdd = resp.webhooks.filter((w) => !webhookUserIdsStore.value.has(w.id));
+                    const webhooksToAdd = resp.webhooks.filter(
+                        (w) => !webhookUserIdsStore.value.has(w.id),
+                    );
                     if (webhooksToAdd.length > 0) {
                         webhookUserIdsStore.update((set) => {
                             for (const webhook of webhooksToAdd) {
@@ -4825,7 +4832,11 @@ export class OpenChat {
     }
 
     checkUsername(username: string, isBot: boolean): Promise<CheckUsernameResponse> {
-        return this.#sendRequest({ kind: "checkUsername", username, isBot });
+        console.log("we are getting here right?");
+        return this.#sendRequest({ kind: "checkUsername", username, isBot }).then((resp) => {
+            console.log("Resp: ", resp);
+            return resp;
+        });
     }
 
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
@@ -5569,7 +5580,11 @@ export class OpenChat {
             {
                 userGroups: [
                     {
-                        users: missingUserIds(userStore.allUsers, webhookUserIdsStore.value, userIds),
+                        users: missingUserIds(
+                            userStore.allUsers,
+                            webhookUserIdsStore.value,
+                            userIds,
+                        ),
                         updatedSince: BigInt(0),
                     },
                 ],
@@ -6204,6 +6219,7 @@ export class OpenChat {
                         blobData: undefined,
                         blobUrl: undefined,
                     };
+
                     userStore.addUser(this.#rehydrateDataContent(user, "avatar"));
                 }
             }
@@ -7570,19 +7586,22 @@ export class OpenChat {
 
     async signUpWithWebAuthn(
         assumeIdentity: boolean,
+        username?: string,
     ): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
         const webAuthnOrigin = this.config.webAuthnOrigin;
         if (webAuthnOrigin === undefined) throw new Error("WebAuthn origin not set");
 
-        const webAuthnIdentity = await createWebAuthnIdentity(webAuthnOrigin, (key) =>
-            this.#storeWebAuthnKeyInCache(key),
+        const webAuthnIdentity = await createWebAuthnIdentity(
+            webAuthnOrigin,
+            (key) => this.#storeWebAuthnKeyInCache(key),
+            username,
         );
 
         // We create a temporary key so that the user doesn't have to reauthenticate via WebAuthn, we store this key
         // in IndexedDb, it is valid for 30 days (the same as the other key delegations we use).
         const tempKey = await ECDSAKeyIdentity.generate();
 
-        return await this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, assumeIdentity);
+        return this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, assumeIdentity, true);
     }
 
     async signUpWithAndroidWebAuthn(
@@ -7653,6 +7672,7 @@ export class OpenChat {
         initialKey: SignIdentity,
         webAuthnIdentityFn: () => WebAuthnIdentity,
         assumeIdentity: boolean,
+        registering: boolean = false,
     ): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
         const sessionKey = await ECDSAKeyIdentity.generate();
         const delegationChain = await DelegationChain.create(
@@ -7671,7 +7691,7 @@ export class OpenChat {
         if (assumeIdentity) {
             this.#webAuthnKey = webAuthnKey;
             this.#authIdentityStorage.set(sessionKey, delegationChain);
-            this.#loadedAuthenticationIdentity(identity, AuthProvider.PASSKEY);
+            await this.#loadedAuthenticationIdentity(identity, AuthProvider.PASSKEY, registering);
         }
         return [sessionKey, delegationChain, webAuthnKey];
     }

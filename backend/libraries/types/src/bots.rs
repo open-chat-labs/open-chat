@@ -468,6 +468,13 @@ pub enum BotChatContext {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum BotLocationContext {
+    Command(String),
+    Autonomous(BotInstallationLocation),
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum BotRegistrationStatus {
     Public,
     Private(Option<BotInstallationLocation>),

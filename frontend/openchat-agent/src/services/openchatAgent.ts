@@ -206,8 +206,8 @@ import {
     MessageContextMap,
     messageContextToString,
     MessageMap,
-    ONE_MINUTE_MILLIS,
     offline,
+    ONE_MINUTE_MILLIS,
     Stream,
     UnsupportedValueError,
     waitAll,
@@ -260,6 +260,7 @@ import {
     getCommunityReferral,
 } from "../utils/referralCache";
 import { getCachedRegistry, setCachedRegistry } from "../utils/registryCache";
+import { Updatable, UpdatableOption } from "../utils/updatable";
 import { clearCache as clearUserCache, getAllUsers, isUserIdDeleted } from "../utils/userCache";
 import { BitcoinClient } from "./bitcoin/bitcoin.client";
 import { CkbtcMinterClient } from "./ckbtcMinter/ckbtcMinter.client";
@@ -290,7 +291,6 @@ import { TranslationsClient } from "./translations/translations.client";
 import { AnonUserClient } from "./user/anonUser.client";
 import { UserClient } from "./user/user.client";
 import { UserIndexClient } from "./userIndex/userIndex.client";
-import { Updatable, UpdatableOption } from "../utils/updatable";
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
@@ -408,8 +408,9 @@ export class OpenChatAgent extends EventTarget {
     }
 
     getAllCachedUsers(): Promise<UserSummary[]> {
-        return measure("getAllUsers", () => getAllUsers().then((users) =>
-            users.map((u) => this.rehydrateUserSummary(u))));
+        return measure("getAllUsers", () =>
+            getAllUsers().then((users) => users.map((u) => this.rehydrateUserSummary(u))),
+        );
     }
 
     logError(message?: unknown, ...optionalParams: unknown[]): void {
@@ -1621,10 +1622,7 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.searchDirectChat(chatId, searchTerm, maxResults);
     }
 
-    async getUser(
-        userId: string,
-        allowStale = false,
-    ): Promise<UserSummary | undefined> {
+    async getUser(userId: string, allowStale = false): Promise<UserSummary | undefined> {
         const response = await this.getUsers(
             {
                 userGroups: [
@@ -1680,7 +1678,9 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    private async _getUpdates(current: ChatStateFull | undefined): Promise<UpdatesResult | undefined> {
+    private async _getUpdates(
+        current: ChatStateFull | undefined,
+    ): Promise<UpdatesResult | undefined> {
         const start = performance.now();
         let totalQueryCount = 0;
 
@@ -1730,9 +1730,10 @@ export class OpenChatAgent extends EventTarget {
                     if (a.timestamp > achievementsLastSeen) {
                         newAchievements.mutate((na) => na.push(a));
                     }
-                    const name = a.reason.kind === "achievement_unlocked"
-                        ? a.reason.type
-                        : a.reason.kind === "external_achievement_unlocked"
+                    const name =
+                        a.reason.kind === "achievement_unlocked"
+                            ? a.reason.type
+                            : a.reason.kind === "external_achievement_unlocked"
                             ? a.reason.name
                             : undefined;
 
@@ -1741,7 +1742,7 @@ export class OpenChatAgent extends EventTarget {
                     }
                 });
             }
-        }
+        };
 
         if (current === undefined) {
             totalQueryCount++;
@@ -1759,22 +1760,28 @@ export class OpenChatAgent extends EventTarget {
             pinnedGroupChats = new Updatable(userResponse.groupChats.pinned, true);
             pinnedDirectChats = new Updatable(userResponse.directChats.pinned, true);
             pinnedFavouriteChats = new Updatable(userResponse.favouriteChats.pinned, true);
-            pinnedChannels = new Updatable(userResponse.communities.summaries.flatMap((c) => c.pinned), true);
+            pinnedChannels = new Updatable(
+                userResponse.communities.summaries.flatMap((c) => c.pinned),
+                true,
+            );
             favouriteChats = new Updatable(userResponse.favouriteChats.chats, true);
             pinNumberSettings = new UpdatableOption(userResponse.pinNumberSettings, true);
             achievementsLastSeen = userResponse.achievementsLastSeen;
             achievements = new Updatable(new Set(), true);
             newAchievements = new Updatable([], true);
             processAchievementsResponse(userResponse.achievements);
-            chitState = new Updatable({
-                canClaim: userResponse.timestamp > userResponse.nextDailyClaim,
-                streakEnds: userResponse.streakEnds,
-                streak: userResponse.streak,
-                maxStreak: userResponse.maxStreak,
-                chitBalance: userResponse.chitBalance,
-                nextDailyChitClaim: userResponse.nextDailyClaim,
-                totalChitEarned: userResponse.totalChitEarned,
-            }, true);
+            chitState = new Updatable(
+                {
+                    canClaim: userResponse.timestamp > userResponse.nextDailyClaim,
+                    streakEnds: userResponse.streakEnds,
+                    streak: userResponse.streak,
+                    maxStreak: userResponse.maxStreak,
+                    chitBalance: userResponse.chitBalance,
+                    nextDailyChitClaim: userResponse.nextDailyClaim,
+                    totalChitEarned: userResponse.totalChitEarned,
+                },
+                true,
+            );
             referrals = new Updatable(userResponse.referrals, true);
             walletConfig = new Updatable(userResponse.walletConfig, true);
             messageActivitySummary = new Updatable(userResponse.messageActivitySummary, true);
@@ -1842,10 +1849,13 @@ export class OpenChatAgent extends EventTarget {
                     favouriteChats.updateIfNotUndefined(userResponse.favouriteChats.chats);
                     suspensionChanged = userResponse.suspended;
                     pinNumberSettings.applyOptionUpdate(userResponse.pinNumberSettings);
-                    achievementsLastSeen = userResponse.achievementsLastSeen ?? achievementsLastSeen;
+                    achievementsLastSeen =
+                        userResponse.achievementsLastSeen ?? achievementsLastSeen;
                     processAchievementsResponse(userResponse.achievements);
-                    if (userResponse.totalChitEarned !== chitState.value.totalChitEarned
-                        || userResponse.streakEnds !== chitState.value.streakEnds) {
+                    if (
+                        userResponse.totalChitEarned !== chitState.value.totalChitEarned ||
+                        userResponse.streakEnds !== chitState.value.streakEnds
+                    ) {
                         chitState.value = {
                             streakEnds: userResponse.streakEnds,
                             streak: userResponse.streak,
@@ -1860,11 +1870,16 @@ export class OpenChatAgent extends EventTarget {
                         referrals.value = referrals.value
                             .filter(
                                 (prev) =>
-                                    !userResponse.referrals.find((latest) => latest.userId === prev.userId),
+                                    !userResponse.referrals.find(
+                                        (latest) => latest.userId === prev.userId,
+                                    ),
                             )
                             .concat(userResponse.referrals);
                     }
-                    if (userResponse.botsAddedOrUpdated.length > 0 || userResponse.botsRemoved.length > 0) {
+                    if (
+                        userResponse.botsAddedOrUpdated.length > 0 ||
+                        userResponse.botsRemoved.length > 0
+                    ) {
                         installedBots.mutate((map) => {
                             userResponse.botsAddedOrUpdated.forEach((b) =>
                                 map.set(b.id, b.permissions),
@@ -1875,7 +1890,9 @@ export class OpenChatAgent extends EventTarget {
                         });
                     }
                     walletConfig.updateIfNotUndefined(userResponse.walletConfig);
-                    messageActivitySummary.updateIfNotUndefined(userResponse.messageActivitySummary);
+                    messageActivitySummary.updateIfNotUndefined(
+                        userResponse.messageActivitySummary,
+                    );
                     bitcoinAddress.updateIfNotUndefined(userResponse.bitcoinAddress);
                     streakInsurance.applyOptionUpdate(userResponse.streakInsurance);
                 } else {
@@ -1888,11 +1905,7 @@ export class OpenChatAgent extends EventTarget {
             }
 
             directChats = directChatsAdded.concat(
-                mergeDirectChatUpdates(
-                    currentDirectChats,
-                    directChatUpdates,
-                    directChatsRemoved,
-                ),
+                mergeDirectChatUpdates(currentDirectChats, directChatUpdates, directChatsRemoved),
             );
         }
 
@@ -1935,8 +1948,10 @@ export class OpenChatAgent extends EventTarget {
         }
 
         const previousUpdatesTimestamp = mapOptional(current?.latestUserCanisterUpdates, Number);
-        const summaryUpdatesResponses =
-            await this.#getSummaryUpdatesFromLocalUserIndexes(byLocalUserIndex, previousUpdatesTimestamp);
+        const summaryUpdatesResponses = await this.#getSummaryUpdatesFromLocalUserIndexes(
+            byLocalUserIndex,
+            previousUpdatesTimestamp,
+        );
 
         totalQueryCount += summaryUpdatesResponses.success.length;
         totalQueryCount += summaryUpdatesResponses.errors.length;
@@ -1997,23 +2012,13 @@ export class OpenChatAgent extends EventTarget {
             return notFoundTimestamp !== undefined && notFoundTimestamp > joined;
         };
 
-        const groupChats = mergeGroupChats(
-            groupsAdded,
-            groupCanisterGroupSummaries,
-        )
-            .concat(
-                mergeGroupChatUpdates(
-                    currentGroups,
-                    userCanisterGroupUpdates,
-                    groupUpdates,
-                ),
-            )
-            .filter((g) => !isGroupCommunityDeleted(g.id.groupId, g.membership.joined, groupsRemoved));
+        const groupChats = mergeGroupChats(groupsAdded, groupCanisterGroupSummaries)
+            .concat(mergeGroupChatUpdates(currentGroups, userCanisterGroupUpdates, groupUpdates))
+            .filter(
+                (g) => !isGroupCommunityDeleted(g.id.groupId, g.membership.joined, groupsRemoved),
+            );
 
-        const communities = mergeCommunities(
-            communitiesAdded,
-            communityCanisterCommunitySummaries,
-        )
+        const communities = mergeCommunities(communitiesAdded, communityCanisterCommunitySummaries)
             .concat(
                 mergeCommunityUpdates(
                     currentCommunities,
@@ -2021,7 +2026,14 @@ export class OpenChatAgent extends EventTarget {
                     communityUpdates,
                 ),
             )
-            .filter((c) => !isGroupCommunityDeleted(c.id.communityId, c.membership.joined, communitiesRemoved));
+            .filter(
+                (c) =>
+                    !isGroupCommunityDeleted(
+                        c.id.communityId,
+                        c.membership.joined,
+                        communitiesRemoved,
+                    ),
+            );
 
         this.removeExpiredLatestMessages(directChats, start);
         this.removeExpiredLatestMessages(groupChats, start);
@@ -2146,15 +2158,23 @@ export class OpenChatAgent extends EventTarget {
         // The shorter the duration since the previous updates were fetched, the larger we can make the batch size,
         // since a smaller portion of canisters within the batch will have had any updates, so fewer c2c calls will be
         // required.
-        const batchSize = previousUpdatesTimestamp === undefined
-            ? maxC2cCalls
-            : durationSincePreviousUpdates < 10 * ONE_MINUTE_MILLIS
+        const batchSize =
+            previousUpdatesTimestamp === undefined
+                ? maxC2cCalls
+                : durationSincePreviousUpdates < 10 * ONE_MINUTE_MILLIS
                 ? maxC2cCalls * 4
                 : maxC2cCalls * 20;
 
         const promises: Promise<WaitAllResult<GroupAndCommunitySummaryUpdatesResponseBatch>>[] = [];
         for (const [localUserIndex, requests] of requestsByLocalUserIndex) {
-            promises.push(this.#getSummaryUpdatesFromLocalUserIndex(localUserIndex, requests, batchSize, maxC2cCalls));
+            promises.push(
+                this.#getSummaryUpdatesFromLocalUserIndex(
+                    localUserIndex,
+                    requests,
+                    batchSize,
+                    maxC2cCalls,
+                ),
+            );
         }
 
         const results = await Promise.all(promises);
@@ -2175,7 +2195,8 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<WaitAllResult<GroupAndCommunitySummaryUpdatesResponseBatch>> {
         const localUserIndexClient = this.getLocalUserIndexClient(localUserIndex);
         const promises = chunk(requests, batchSize).map((batch) =>
-            localUserIndexClient.groupAndCommunitySummaryUpdates(batch, maxC2cCalls));
+            localUserIndexClient.groupAndCommunitySummaryUpdates(batch, maxC2cCalls),
+        );
         const responses = await waitAll(promises);
 
         const success: GroupAndCommunitySummaryUpdatesResponseBatch[] = responses.success;
@@ -2189,7 +2210,8 @@ export class OpenChatAgent extends EventTarget {
         if (excessUpdates.size > 0) {
             const filteredRequests = requests.filter((r) => excessUpdates.has(r.canisterId));
             const excessPromises = chunk(filteredRequests, maxC2cCalls).map((batch) =>
-                localUserIndexClient.groupAndCommunitySummaryUpdates(batch, maxC2cCalls));
+                localUserIndexClient.groupAndCommunitySummaryUpdates(batch, maxC2cCalls),
+            );
             const excessResponses = await waitAll(excessPromises);
             success.push(...excessResponses.success);
             errors.push(...excessResponses.errors);
@@ -2210,20 +2232,25 @@ export class OpenChatAgent extends EventTarget {
                         directChatsRemoved: [],
                         groupsAddedUpdated: this.hydrateChatSummaries(cachedState.groupChats),
                         groupsRemoved: [],
-                        communitiesAddedUpdated: cachedState.communities.map((c) => this.hydrateCommunity(c)),
+                        communitiesAddedUpdated: cachedState.communities.map((c) =>
+                            this.hydrateCommunity(c),
+                        ),
                         communitiesRemoved: [],
                         updatedEvents: new Map(),
                         suspensionChanged: undefined,
                         newAchievements: [],
-                        avatarId: cachedState.avatarId !== undefined
-                            ? { value: cachedState.avatarId }
-                            : undefined,
-                        pinNumberSettings: cachedState.pinNumberSettings !== undefined
-                            ? { value: cachedState.pinNumberSettings }
-                            : undefined,
-                        streakInsurance: cachedState.streakInsurance !== undefined
-                            ? { value: cachedState.streakInsurance }
-                            : undefined,
+                        avatarId:
+                            cachedState.avatarId !== undefined
+                                ? { value: cachedState.avatarId }
+                                : undefined,
+                        pinNumberSettings:
+                            cachedState.pinNumberSettings !== undefined
+                                ? { value: cachedState.pinNumberSettings }
+                                : undefined,
+                        streakInsurance:
+                            cachedState.streakInsurance !== undefined
+                                ? { value: cachedState.streakInsurance }
+                                : undefined,
                     },
                     isOffline,
                 );
@@ -2261,7 +2288,7 @@ export class OpenChatAgent extends EventTarget {
         return resp;
     }
 
-    hydrateCommunity(community: CommunitySummary): CommunitySummary {;
+    hydrateCommunity(community: CommunitySummary): CommunitySummary {
         return {
             ...community,
             channels: community.channels.map((c) => this.hydrateChatSummary(c)),

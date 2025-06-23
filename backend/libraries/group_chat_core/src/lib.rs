@@ -1209,18 +1209,21 @@ impl GroupChatCore {
 
     pub fn invite_users(
         &mut self,
-        invited_by: UserId,
+        invited_by: Caller,
         user_ids: Vec<UserId>,
         now: TimestampMillis,
     ) -> OCResult<InvitedUsersSuccess> {
         const MAX_INVITES: usize = 100;
 
-        let member = self.members.get_verified_member(invited_by)?;
-
-        // The original caller must be authorized to invite other users
-        if !member.role().can_invite_users(&self.permissions) {
-            return Err(OCErrorCode::InitiatorNotAuthorized.into());
-        }
+        let invited_by = if let Some(initiator) = invited_by.initiator() {
+            let member = self.members.get_verified_member(initiator)?;
+            if !member.role().can_invite_users(&self.permissions) {
+                return Err(OCErrorCode::InitiatorNotAuthorized.into());
+            }
+            initiator
+        } else {
+            invited_by.agent()
+        };
 
         // Filter out users who are already members and those who have already been invited
         let invited_users: Vec<_> = user_ids
@@ -1245,7 +1248,7 @@ impl GroupChatCore {
             for user_id in invited_users.iter() {
                 self.invited_users.add(UserInvitation {
                     invited: *user_id,
-                    invited_by: member.user_id(),
+                    invited_by,
                     timestamp: now,
                     min_visible_event_index,
                     min_visible_message_index,
@@ -1256,7 +1259,7 @@ impl GroupChatCore {
             let result = self.events.push_main_event(
                 ChatEventInternal::UsersInvited(Box::new(UsersInvited {
                     user_ids: user_ids.clone(),
-                    invited_by: member.user_id(),
+                    invited_by,
                 })),
                 now,
             );
