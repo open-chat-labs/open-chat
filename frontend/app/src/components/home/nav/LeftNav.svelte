@@ -43,7 +43,6 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { rtlStore } from "../../../stores/rtl";
     import { disableChit, hideChitIcon } from "../../../stores/settings";
-    import { now } from "../../../stores/time";
     import { isTouchDevice } from "../../../utils/devices";
     import Avatar from "../../Avatar.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
