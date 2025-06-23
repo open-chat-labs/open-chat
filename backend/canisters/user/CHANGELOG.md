@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1799-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1799-user)] - 2025-06-20
+
 ### Added
 
 - Additional notification data for Firebase Cloud Messaging ([8113](https://github.com/open-chat-labs/open-chat/pull/8113))
