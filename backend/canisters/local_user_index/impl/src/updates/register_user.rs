@@ -167,6 +167,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         group_index_canister_id: state.data.group_index_canister_id,
         user_index_canister_id: state.data.user_index_canister_id,
         local_user_index_canister_id: state.env.canister_id(),
+        identity_canister_id: state.data.identity_canister_id,
         notifications_canister_id: CanisterId::anonymous(),
         proposals_bot_canister_id: CanisterId::anonymous(),
         escrow_canister_id: state.data.escrow_canister_id,
