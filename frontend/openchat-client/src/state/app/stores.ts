@@ -467,6 +467,7 @@ export const chitStateStore = writable<ChitState>(
         maxStreak: 0,
         streakEnds: 0n,
         nextDailyChitClaim: 0n,
+        canClaim: false,
     },
     undefined,
     dequal,

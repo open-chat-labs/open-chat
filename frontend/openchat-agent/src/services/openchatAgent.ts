@@ -1767,6 +1767,7 @@ export class OpenChatAgent extends EventTarget {
             newAchievements = new Updatable([], true);
             processAchievementsResponse(userResponse.achievements);
             chitState = new Updatable({
+                canClaim: userResponse.timestamp > userResponse.nextDailyClaim,
                 streakEnds: userResponse.streakEnds,
                 streak: userResponse.streak,
                 maxStreak: userResponse.maxStreak,
@@ -1851,6 +1852,7 @@ export class OpenChatAgent extends EventTarget {
                             maxStreak: userResponse.maxStreak,
                             chitBalance: userResponse.chitBalance,
                             nextDailyChitClaim: userResponse.nextDailyClaim,
+                            canClaim: userResponse.timestamp > userResponse.nextDailyClaim,
                             totalChitEarned: userResponse.totalChitEarned,
                         };
                     }
@@ -1876,6 +1878,10 @@ export class OpenChatAgent extends EventTarget {
                     messageActivitySummary.updateIfNotUndefined(userResponse.messageActivitySummary);
                     bitcoinAddress.updateIfNotUndefined(userResponse.bitcoinAddress);
                     streakInsurance.applyOptionUpdate(userResponse.streakInsurance);
+                } else {
+                    if (!chitState.value.canClaim && userResponse.timestamp > chitState.value.nextDailyChitClaim) {
+                        chitState.mutate((c) => c.canClaim = true)
+                    }
                 }
             } catch (error) {
                 console.error("Failed to get updates from User canister", error);

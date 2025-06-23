@@ -8879,14 +8879,17 @@ export class OpenChat {
 
         return this.#sendRequest({ kind: "claimDailyChit", utcOffsetMins }).then((resp) => {
             if (resp.kind === "success") {
-                chitStateStore.update((state) => ({
-                    chitBalance: resp.chitBalance,
-                    streakEnds: resp.nextDailyChitClaim + BigInt(1000 * 60 * 60 * 24),
-                    streak: resp.streak,
-                    maxStreak: resp.maxStreak,
-                    nextDailyChitClaim: resp.nextDailyChitClaim,
-                    totalChitEarned: state.totalChitEarned + resp.chitEarned,
-                }));
+                if (resp.nextDailyChitClaim > chitStateStore.value.nextDailyChitClaim) {
+                    chitStateStore.update((state) => ({
+                        chitBalance: resp.chitBalance,
+                        streakEnds: resp.nextDailyChitClaim + BigInt(1000 * 60 * 60 * 24),
+                        streak: resp.streak,
+                        maxStreak: resp.maxStreak,
+                        nextDailyChitClaim: resp.nextDailyChitClaim,
+                        totalChitEarned: state.totalChitEarned + resp.chitEarned,
+                        canClaim: false,
+                    }));
+                }
                 this.#overwriteUserInStore(userId, (user) => ({
                     ...user,
                     chitBalance: resp.chitBalance,

@@ -59,7 +59,6 @@
     let avatarSize = $derived($mobileWidth ? AvatarSize.Small : AvatarSize.Default);
     let communityExplorer = $derived($routeStore.kind === "communities_route");
     let selectedCommunityId = $derived($selectedCommunitySummaryStore?.id.communityId);
-    let claimChitAvailable = $derived($chitStateStore.nextDailyChitClaim < $now);
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
     let scrollingSection: HTMLElement;
@@ -192,14 +191,14 @@
             </LeftNavItem>
         {/if}
         {#if !$anonUserStore}
-            {#if !$disableChit && (claimChitAvailable || !$hideChitIcon)}
+            {#if !$disableChit && ($chitStateStore.canClaim || !$hideChitIcon)}
                 <LeftNavItem
                     label={i18nKey(
-                        claimChitAvailable ? "dailyChit.extendStreak" : "dailyChit.viewStreak",
+                        $chitStateStore.canClaim ? "dailyChit.extendStreak" : "dailyChit.viewStreak",
                     )}
                     onClick={() => publish("claimDailyChit")}>
                     <div class="hover streak">
-                        <LighteningBolt enabled={claimChitAvailable} />
+                        <LighteningBolt enabled={$chitStateStore.canClaim} />
                     </div>
                 </LeftNavItem>
             {/if}

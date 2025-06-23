@@ -728,6 +728,7 @@ function chitState() {
         nextDailyChitClaim: BigInt(Date.now() + 1000 * 60 * 60 * 24),
         chitBalance: 10_000,
         totalChitEarned: 50_000,
+        canClaim: false,
     };
 }
 
