@@ -3,6 +3,7 @@ pub mod add_reaction;
 pub mod block_user;
 pub mod c2c_bot_add_reaction;
 pub mod c2c_bot_delete_messages;
+pub mod c2c_bot_remove_user;
 pub mod c2c_bot_send_message;
 pub mod c2c_bot_subscribe_to_events;
 pub mod c2c_delete_group;
