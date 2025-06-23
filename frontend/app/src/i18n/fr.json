@@ -1485,6 +1485,7 @@
     "register": {
         "agree": "Accepter",
         "bioTooLong": "Votre biographie est trop longue",
+        "chooseMode": "Avez-vous déjà un compte OpenChat ou visitez-vous pour la première fois ?",
         "choosePath": "Comment souhaitez-vous vous inscrire ?",
         "closed": "En raison d'une très forte demande, les inscriptions de nouveaux utilisateurs sont temporairement fermées. Nous allons bientôt évoluer sur plusieurs sous-réseaux et pourrons ensuite nous développer indéfiniment !",
         "closedTitle": "Inscription en pause",
@@ -1492,6 +1493,7 @@
         "confirmCyclesTransferText": "Veuillez confirmer ci-dessous lorsque vous avez effectué un transfert de {amount} cycles de votre portefeuille de cycles vers le portefeuille OpenChat ci-dessous",
         "confirmICPTransferText": "Veuillez confirmer ci-dessous lorsque vous avez effectué un virement de {amount} ICP sur le compte indiqué ci-dessous",
         "confirmTransfer": "Confirmer le transfert",
+        "createAccount": "Créer un compte",
         "createUser": "Créer un utilisateur",
         "cyclesTransferred": "Frais de {fee} cycles confirmés",
         "disclaimer": "En vous inscrivant sur OpenChat, vous acceptez de respecter nos termes et conditions.",
