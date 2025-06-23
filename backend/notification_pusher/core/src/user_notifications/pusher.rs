@@ -87,8 +87,8 @@ impl Pusher {
         }
     }
 
-    async fn process_user_notification_to_push(&self, user_notification_to_push: UserNotificationToPush) -> bool {
-        let UserNotificationToPush { notification, message } = user_notification_to_push;
+    async fn process_user_notification_to_push(&self, user_notification_to_push: Box<UserNotificationToPush>) -> bool {
+        let UserNotificationToPush { notification, message } = *user_notification_to_push;
         let push_result = self.web_push_client.send(message).await;
         let success = push_result.is_ok();
 

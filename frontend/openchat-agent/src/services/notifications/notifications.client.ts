@@ -13,7 +13,7 @@ import {
     NotificationsIndexFcmTokenExistsArgs,
     NotificationsIndexFcmTokenExistsResponse,
     NotificationsIndexAddFcmTokenArgs,
-    NotificationsIndexAddFcmTokenResponse,
+    UnitResult,
 } from "../../typebox";
 
 export class NotificationsClient extends MsgpackCanisterAgent {
@@ -90,7 +90,7 @@ export class NotificationsClient extends MsgpackCanisterAgent {
                 }
             },
             NotificationsIndexAddFcmTokenArgs,
-            NotificationsIndexAddFcmTokenResponse,
+            UnitResult,
         );
     }
 }

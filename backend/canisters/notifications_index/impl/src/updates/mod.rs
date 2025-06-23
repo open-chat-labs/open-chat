@@ -8,9 +8,10 @@ mod wallet_receive;
 
 use crate::{RuntimeState, mutate_state, read_state};
 use candid::Principal;
+use oc_error_codes::OCErrorCode;
 use stable_memory_map::StableMemoryMap;
-use std::fmt::Display;
-use types::{CanisterId, UserId};
+use tracing::error;
+use types::{CanisterId, OCResult, UserId};
 use user_index_canister::c2c_lookup_user::Response;
 use user_index_canister_c2c_client::c2c_lookup_user;
 
@@ -19,21 +20,7 @@ pub(crate) enum LookupResult {
     NotFound((Principal, CanisterId)),
 }
 
-pub(crate) enum LookupError {
-    UserNotFound,
-    InternalError(String),
-}
-
-impl Display for LookupError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            LookupError::UserNotFound => write!(f, "User not found"),
-            LookupError::InternalError(msg) => write!(f, "Internal error: {}", msg),
-        }
-    }
-}
-
-pub(crate) async fn get_user_id() -> Result<UserId, LookupError> {
+pub(crate) async fn get_user_id() -> OCResult<UserId> {
     match read_state(lookup_user_locally) {
         LookupResult::Found(user_id) => Ok(user_id),
         LookupResult::NotFound((user_principal, user_index_canister_id)) => {
@@ -45,11 +32,15 @@ pub(crate) async fn get_user_id() -> Result<UserId, LookupError> {
                     mutate_state(|state| add_user_locally(user_principal, user.user_id, state));
                     Ok(user.user_id)
                 }
-                Ok(Response::UserNotFound) => Err(LookupError::UserNotFound),
-                Ok(Response::Error(..)) => Err(LookupError::UserNotFound),
-                Err(error) => Err(LookupError::InternalError(format!(
-                    "Failed to call 'user_index::c2c_lookup_user': {error:?}"
-                ))),
+                Ok(Response::UserNotFound) => Err(OCErrorCode::InitiatorNotFound.into()),
+                Ok(Response::Error(oc_error)) => Err(oc_error),
+                Err(error) => {
+                    error!(
+                        "Failed to call 'user_index::c2c_lookup_user' for user principal {}: {:?}",
+                        user_principal, error
+                    );
+                    Err(OCErrorCode::C2CError.into())
+                }
             }
         }
     }

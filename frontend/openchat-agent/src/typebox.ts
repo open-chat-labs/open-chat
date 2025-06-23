@@ -3337,11 +3337,6 @@ export const NotificationsIndexAddFcmTokenArgs = Type.Object({
     fcm_token: FcmToken,
 });
 
-export type NotificationsIndexAddFcmTokenResponse = Static<
-    typeof NotificationsIndexAddFcmTokenResponse
->;
-export const NotificationsIndexAddFcmTokenResponse = UnitResult;
-
 export type StorageBucketDeleteFilesDeleteFileFailureReason = Static<
     typeof StorageBucketDeleteFilesDeleteFileFailureReason
 >;
