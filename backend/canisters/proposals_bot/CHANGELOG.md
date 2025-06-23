@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1800](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1800-proposals_bot)] - 2025-05-23
+
 ### Changed
 
 - Fairer queuing for pushing proposal messages ([#8205](https://github.com/open-chat-labs/open-chat/pull/8205))
