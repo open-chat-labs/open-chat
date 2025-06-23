@@ -449,7 +449,9 @@ export type WorkerRequest =
     | DeleteWebhook
     | GetWebhook
     | PayForStreakInsurance
-    | UpdateDirectChatSettings;
+    | UpdateDirectChatSettings
+    | FcmTokenExists
+    | AddFcmToken;
 
 type SetMinLogLevel = {
     kind: "setMinLogLevel";
@@ -973,6 +975,17 @@ type PushSub = {
 type SubscriptionExists = {
     p256dh_key: string;
     kind: "subscriptionExists";
+};
+
+type FcmTokenExists = {
+    kind: "fcmTokenExists";
+    fcm_token: string;
+};
+
+type AddFcmToken = {
+    kind: "addFcmToken";
+    fcm_token: string;
+    onResponseError?: (error: string | null) => void;
 };
 
 type RegisterUser = {

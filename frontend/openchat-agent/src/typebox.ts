@@ -1456,6 +1456,9 @@ export const UserGroupDetails = Type.Object({
     members: Type.Array(UserId),
 });
 
+export type FcmToken = Static<typeof FcmToken>;
+export const FcmToken = Type.String();
+
 export type GroupIndexFreezeGroupSuspensionDetails = Static<
     typeof GroupIndexFreezeGroupSuspensionDetails
 >;
@@ -1593,6 +1596,24 @@ export type GroupIndexSetCommunityModerationFlagsArgs = Static<
 export const GroupIndexSetCommunityModerationFlagsArgs = Type.Object({
     community_id: CommunityId,
     flags: Type.Number(),
+});
+
+export type GroupIndexMarkLocalIndexFullResponse = Static<
+    typeof GroupIndexMarkLocalIndexFullResponse
+>;
+export const GroupIndexMarkLocalIndexFullResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("LocalIndexNotFound"),
+    Type.Literal("NotAuthorized"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
+export type GroupIndexMarkLocalIndexFullArgs = Static<typeof GroupIndexMarkLocalIndexFullArgs>;
+export const GroupIndexMarkLocalIndexFullArgs = Type.Object({
+    canister_id: TSPrincipal,
+    full: Type.Boolean(),
 });
 
 export type GroupIndexRemoveHotGroupExclusionResponse = Static<
@@ -3272,6 +3293,18 @@ export type NotificationsIndexRemoveSubscriptionsForUserResponse = Static<
 >;
 export const NotificationsIndexRemoveSubscriptionsForUserResponse = Type.Literal("Success");
 
+export type NotificationsIndexFcmTokenExistsArgs = Static<
+    typeof NotificationsIndexFcmTokenExistsArgs
+>;
+export const NotificationsIndexFcmTokenExistsArgs = Type.Object({
+    fcm_token: FcmToken,
+});
+
+export type NotificationsIndexFcmTokenExistsResponse = Static<
+    typeof NotificationsIndexFcmTokenExistsResponse
+>;
+export const NotificationsIndexFcmTokenExistsResponse = Type.Boolean();
+
 export type NotificationsIndexSubscriptionExistsArgs = Static<
     typeof NotificationsIndexSubscriptionExistsArgs
 >;
@@ -3298,6 +3331,16 @@ export type NotificationsIndexRemoveSubscriptionResponse = Static<
     typeof NotificationsIndexRemoveSubscriptionResponse
 >;
 export const NotificationsIndexRemoveSubscriptionResponse = Type.Literal("Success");
+
+export type NotificationsIndexAddFcmTokenArgs = Static<typeof NotificationsIndexAddFcmTokenArgs>;
+export const NotificationsIndexAddFcmTokenArgs = Type.Object({
+    fcm_token: FcmToken,
+});
+
+export type NotificationsIndexAddFcmTokenResponse = Static<
+    typeof NotificationsIndexAddFcmTokenResponse
+>;
+export const NotificationsIndexAddFcmTokenResponse = UnitResult;
 
 export type StorageBucketDeleteFilesDeleteFileFailureReason = Static<
     typeof StorageBucketDeleteFilesDeleteFileFailureReason
@@ -7569,6 +7612,7 @@ export const LocalUserIndexBotSendMessageArgs = Type.Object({
     chat_context: BotChatContext,
     thread: Type.Optional(MessageIndex),
     message_id: Type.Optional(MessageId),
+    replies_to: Type.Optional(EventIndex),
     content: BotMessageContent,
     block_level_markdown: Type.Boolean(),
     finalised: Type.Boolean(),

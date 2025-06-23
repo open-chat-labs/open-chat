@@ -1,51 +1,21 @@
-use crate::{RuntimeState, mutate_state, read_state};
-use candid::Principal;
+use crate::mutate_state;
+use crate::updates::{LookupError, get_user_id};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use notifications_index_canister::push_subscription::{Response::*, *};
-use stable_memory_map::StableMemoryMap;
-use types::{CanisterId, UserId};
-use user_index_canister::c2c_lookup_user;
 
 #[update(msgpack = true)]
 #[trace]
 async fn push_subscription(args: Args) -> Response {
-    let user_id = match read_state(lookup_user_locally) {
-        LookupResult::Found(user_id) => user_id,
-        LookupResult::NotFound((user_principal, user_index_canister_id)) => {
-            let c2c_lookup_user_args = c2c_lookup_user::Args {
-                user_id_or_principal: user_principal,
-            };
-            match user_index_canister_c2c_client::c2c_lookup_user(user_index_canister_id, &c2c_lookup_user_args).await {
-                Ok(c2c_lookup_user::Response::Success(user)) => {
-                    mutate_state(|state| add_user_locally(user_principal, user.user_id, state));
-                    user.user_id
-                }
-                Ok(c2c_lookup_user::Response::UserNotFound) => panic!("User not found"),
-                Ok(c2c_lookup_user::Response::Error(..)) => panic!("User not found"),
-                Err(error) => return InternalError(format!("Failed to call 'user_index::c2c_lookup_user': {error:?}")),
-            }
+    match get_user_id().await {
+        Ok(user_id) => {
+            mutate_state(|state| state.add_subscription(user_id, args.subscription, state.env.now()));
+            Success
         }
-    };
-
-    mutate_state(|state| state.add_subscription(user_id, args.subscription, state.env.now()));
-    Success
-}
-
-fn lookup_user_locally(state: &RuntimeState) -> LookupResult {
-    let caller = state.env.caller();
-    if let Some(user_id) = state.data.principal_to_user_id_map.get(&caller) {
-        LookupResult::Found(user_id)
-    } else {
-        LookupResult::NotFound((caller, state.data.user_index_canister_id))
+        Err(LookupError::UserNotFound) => panic!("User not found"),
+        Err(LookupError::InternalError(err)) => {
+            // TODO log/trace internal error
+            InternalError(format!("Failed to call 'user_index::c2c_lookup_user': {err:?}"))
+        }
     }
-}
-
-enum LookupResult {
-    Found(UserId),
-    NotFound((Principal, CanisterId)),
-}
-
-fn add_user_locally(principal: Principal, user_id: UserId, state: &mut RuntimeState) {
-    state.data.principal_to_user_id_map.insert(principal, user_id);
 }

@@ -19,10 +19,10 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
 
     companion object {
         var triggerRef: (event: String, payload: JSObject) -> Unit = {_, _ -> Log.d("TEST_OC", "No trigger")}
+        var fcm_token: String? = null
     }
 
     override fun load(webView: WebView) {
-        Log.d("TEST_OC", "Plugin load")
 
          var self = this
          triggerRef = { event, payload ->
@@ -44,5 +44,10 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
     @Command
     fun signIn(invoke: Invoke) {
         passkeyAuth.handleSignIn(invoke)
+    }
+
+    @Command
+    fun getFcmToken(invoke: Invoke) {
+        invoke.resolve(JSObject().put("fcm_token", OpenChatPlugin.fcm_token))
     }
 }

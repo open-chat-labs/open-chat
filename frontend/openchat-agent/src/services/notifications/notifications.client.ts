@@ -10,6 +10,10 @@ import {
     NotificationsIndexRemoveSubscriptionResponse,
     NotificationsIndexSubscriptionExistsArgs,
     NotificationsIndexSubscriptionExistsResponse,
+    NotificationsIndexFcmTokenExistsArgs,
+    NotificationsIndexFcmTokenExistsResponse,
+    NotificationsIndexAddFcmTokenArgs,
+    NotificationsIndexAddFcmTokenResponse,
 } from "../../typebox";
 
 export class NotificationsClient extends MsgpackCanisterAgent {
@@ -57,6 +61,36 @@ export class NotificationsClient extends MsgpackCanisterAgent {
             toVoid,
             NotificationsIndexRemoveSubscriptionArgs,
             NotificationsIndexRemoveSubscriptionResponse,
+        );
+    }
+
+    fcmTokenExists(fcm_token: string): Promise<boolean> {
+        return this.executeMsgpackQuery(
+            "fcm_token_exists",
+            { fcm_token },
+            (response) => response as boolean,
+            NotificationsIndexFcmTokenExistsArgs,
+            NotificationsIndexFcmTokenExistsResponse,
+        );
+    }
+
+    addFcmToken(
+        fcm_token: string,
+        onResponseError?: (error: string | null) => void,
+    ): Promise<void> {
+        return this.executeMsgpackUpdate(
+            "add_fcm_token",
+            { fcm_token },
+            (response) => {
+                if (response === "Success") {
+                    return;
+                } else {
+                    const [_, msg] = response.Error;
+                    onResponseError?.(msg);
+                }
+            },
+            NotificationsIndexAddFcmTokenArgs,
+            NotificationsIndexAddFcmTokenResponse,
         );
     }
 }
