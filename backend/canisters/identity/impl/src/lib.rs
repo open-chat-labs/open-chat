@@ -10,7 +10,7 @@ use constants::NANOS_PER_MILLISECOND;
 use ic_canister_sig_creation::CanisterSigPublicKey;
 use ic_canister_sig_creation::signature_map::{LABEL_SIG, SignatureMap};
 use ic_cdk::api::certified_data_set;
-use ic_certificate_verification::VerifyCertificate;
+use ic_certificate_verification::{CertificateVerificationError, VerifyCertificate};
 use identity_canister::{WEBAUTHN_ORIGINATING_CANISTER, WebAuthnKey};
 use identity_utils::extract_certificate;
 use oc_error_codes::OCErrorCode;
@@ -253,7 +253,10 @@ impl Data {
                     &now_nanos,
                     &max_offset_nanos,
                 )
-                .map_err(|_| OCErrorCode::InvalidSignature)?;
+                .map_err(|error| match error {
+                    CertificateVerificationError::TimeTooFarInThePast { .. } => OCErrorCode::DelegationTooOld,
+                    _ => OCErrorCode::InvalidSignature,
+                })?;
         } else {
             // TODO verify WebAuthn signatures somehow
         }
