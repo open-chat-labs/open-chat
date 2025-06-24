@@ -3694,7 +3694,7 @@ export class OpenChat {
             // now a new latest message and if so, mark it as a local chat summary update.
             let latestMessageIndex =
                 threadRootMessageIndex === undefined
-                    ? allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1
+                    ? (allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1)
                     : undefined;
             let newLatestMessage: EventWrapper<Message> | undefined = undefined;
 
@@ -5167,6 +5167,14 @@ export class OpenChat {
         } else {
             localUpdates.uninviteChatUsers(id, userIds);
         }
+    }
+
+    checkFcmTokenExists(fcmToken: string): Promise<boolean> {
+        return this.#sendRequest({ kind: "fcmTokenExists", fcmToken });
+    }
+
+    addFcmToken(fcmToken: string, onResponseError?: (error: string | null) => void): Promise<void> {
+        return this.#sendRequest({ kind: "addFcmToken", fcmToken, onResponseError });
     }
 
     inviteUsers(
@@ -8417,7 +8425,7 @@ export class OpenChat {
     }
 
     getStreak(userId: string | undefined) {
-        return userId ? userStore.get(userId)?.streak ?? 0 : 0;
+        return userId ? (userStore.get(userId)?.streak ?? 0) : 0;
     }
 
     getBotDefinition(endpoint: string): Promise<BotDefinitionResponse> {

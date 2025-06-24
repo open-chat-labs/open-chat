@@ -49,10 +49,10 @@ impl Processor {
                     let success = result.is_ok();
                     if let Ok(message) = result {
                         self.sender
-                            .send(NotificationToPush::UserNotificationToPush(UserNotificationToPush {
+                            .send(NotificationToPush::UserNotificationToPush(Box::new(UserNotificationToPush {
                                 notification: user_notification,
                                 message,
-                            }))
+                            })))
                             .await
                             .unwrap();
                     }
