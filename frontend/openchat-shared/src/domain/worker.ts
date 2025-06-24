@@ -450,6 +450,7 @@ export type WorkerRequest =
     | GetWebhook
     | PayForStreakInsurance
     | UpdateDirectChatSettings
+    | UpdateProposalTallies
     | FcmTokenExists
     | AddFcmToken;
 
@@ -470,6 +471,11 @@ type UpdateDirectChatSettings = {
     userId: string;
     eventsTtl: OptionUpdate<bigint>;
 };
+
+type UpdateProposalTallies = {
+    kind: "updateProposalTallies";
+    chatId: MultiUserChatIdentifier;
+}
 
 type RegisterWebhook = {
     kind: "registerWebhook";
@@ -1633,6 +1639,7 @@ export type WorkerResponseInner =
     | UserSummary[]
     | CheckUsernameResponse
     | EventWrapper<Message>
+    | EventWrapper<Message>[]
     | ChatEventsResponse[]
     | EventsResponse<ChatEvent>
     | Record<string, number>
@@ -2484,4 +2491,6 @@ export type WorkerResult<T> = T extends Init
     ? PayForStreakInsuranceResponse
     : T extends UpdateDirectChatSettings
     ? boolean
+    : T extends UpdateProposalTallies
+    ? EventWrapper<Message>[]
     : never;

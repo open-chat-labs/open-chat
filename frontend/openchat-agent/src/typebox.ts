@@ -219,6 +219,11 @@ export const GroupPublicSummaryArgs = Type.Object({
     invite_code: Type.Optional(Type.BigInt()),
 });
 
+export type GroupActiveProposalTalliesArgs = Static<typeof GroupActiveProposalTalliesArgs>;
+export const GroupActiveProposalTalliesArgs = Type.Object({
+    invite_code: Type.Optional(Type.BigInt()),
+});
+
 export type GroupRulesArgs = Static<typeof GroupRulesArgs>;
 export const GroupRulesArgs = Type.Object({
     invite_code: Type.Optional(Type.BigInt()),
@@ -3085,6 +3090,31 @@ export const CommunityThreadPreviewsArgs = Type.Object({
     latest_client_thread_update: Type.Optional(Type.BigInt()),
 });
 
+export type CommunityActiveProposalTalliesSuccessResult = Static<
+    typeof CommunityActiveProposalTalliesSuccessResult
+>;
+export const CommunityActiveProposalTalliesSuccessResult = Type.Object({
+    tallies: Type.Array(Type.Tuple([EventIndex, Tally])),
+});
+
+export type CommunityActiveProposalTalliesResponse = Static<
+    typeof CommunityActiveProposalTalliesResponse
+>;
+export const CommunityActiveProposalTalliesResponse = Type.Union([
+    Type.Object({
+        Success: CommunityActiveProposalTalliesSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
+export type CommunityActiveProposalTalliesArgs = Static<typeof CommunityActiveProposalTalliesArgs>;
+export const CommunityActiveProposalTalliesArgs = Type.Object({
+    channel_id: ChannelId,
+    invite_code: Type.Optional(Type.BigInt()),
+});
+
 export type CommunityBlockUserArgs = Static<typeof CommunityBlockUserArgs>;
 export const CommunityBlockUserArgs = Type.Object({
     user_id: UserId,
@@ -3927,6 +3957,13 @@ export type GroupThreadPreviewsArgs = Static<typeof GroupThreadPreviewsArgs>;
 export const GroupThreadPreviewsArgs = Type.Object({
     threads: Type.Array(MessageIndex),
     latest_client_thread_update: Type.Optional(Type.BigInt()),
+});
+
+export type GroupActiveProposalTalliesSuccessResult = Static<
+    typeof GroupActiveProposalTalliesSuccessResult
+>;
+export const GroupActiveProposalTalliesSuccessResult = Type.Object({
+    tallies: Type.Array(Type.Tuple([EventIndex, Tally])),
 });
 
 export type GroupRulesResponse = Static<typeof GroupRulesResponse>;
@@ -6234,6 +6271,16 @@ export type GroupSelectedInitialResponse = Static<typeof GroupSelectedInitialRes
 export const GroupSelectedInitialResponse = Type.Union([
     Type.Object({
         Success: GroupSelectedInitialSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
+export type GroupActiveProposalTalliesResponse = Static<typeof GroupActiveProposalTalliesResponse>;
+export const GroupActiveProposalTalliesResponse = Type.Union([
+    Type.Object({
+        Success: GroupActiveProposalTalliesSuccessResult,
     }),
     Type.Object({
         Error: OCError,

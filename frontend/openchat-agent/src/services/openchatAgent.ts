@@ -200,6 +200,7 @@ import {
     CommonResponses,
     DestinationInvalidError,
     getOrAdd,
+    isError,
     isSuccessfulEventsResponse,
     Lazy,
     MAX_ACTIVITY_EVENTS,
@@ -234,6 +235,7 @@ import {
     setCachedChats,
     setCachedExternalAchievements,
     setCachedMessageIfNotExists,
+    updateCachedProposalTallies,
 } from "../utils/caching";
 import {
     buildBlobUrl,
@@ -4523,6 +4525,18 @@ export class OpenChatAgent extends EventTarget {
             case "group_chat":
                 return this.getGroupClient(chatId.groupId).getWebhook(id);
         }
+    }
+
+    async updateProposalTallies(chatId: MultiUserChatIdentifier): Promise<EventWrapper<Message>[]> {
+        const response = await (chatId.kind === "channel"
+            ? this.communityClient(chatId.communityId).activeProposalTallies(chatId.channelId)
+            : this.getGroupClient(chatId.groupId).activeProposalTallies());
+
+        if (isError(response) || response.length === 0) {
+            return [];
+        }
+
+        return await updateCachedProposalTallies(this.db, chatId, response);
     }
 }
 
