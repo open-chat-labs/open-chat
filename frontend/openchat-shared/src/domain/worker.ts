@@ -450,7 +450,7 @@ export type WorkerRequest =
     | GetWebhook
     | PayForStreakInsurance
     | UpdateDirectChatSettings
-    | UpdateProposalTallies;
+    | UpdateProposalTallies
     | FcmTokenExists
     | AddFcmToken;
 
