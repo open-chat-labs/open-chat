@@ -78,7 +78,7 @@ object NotificationsHelper {
 
             Log.d("TEST_OC", "FCM Token: $token")
             // Save token locally so that we can query it!
-            OpenChatPlugin.fcm_token = token;
+            OpenChatPlugin.fcmToken = token;
             // Also raise an event in case UI is already listening for it!
             OpenChatPlugin.triggerRef("fcm-token", JSObject().apply { put("token", token) })
 

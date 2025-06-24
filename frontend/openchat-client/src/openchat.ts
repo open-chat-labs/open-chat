@@ -5169,15 +5169,12 @@ export class OpenChat {
         }
     }
 
-    checkFcmTokenExists(fcm_token: string): Promise<boolean> {
-        return this.#sendRequest({ kind: "fcmTokenExists", fcm_token });
+    checkFcmTokenExists(fcmToken: string): Promise<boolean> {
+        return this.#sendRequest({ kind: "fcmTokenExists", fcmToken });
     }
 
-    addFcmToken(
-        fcm_token: string,
-        onResponseError?: (error: string | null) => void,
-    ): Promise<void> {
-        return this.#sendRequest({ kind: "addFcmToken", fcm_token, onResponseError });
+    addFcmToken(fcmToken: string, onResponseError?: (error: string | null) => void): Promise<void> {
+        return this.#sendRequest({ kind: "addFcmToken", fcmToken, onResponseError });
     }
 
     inviteUsers(

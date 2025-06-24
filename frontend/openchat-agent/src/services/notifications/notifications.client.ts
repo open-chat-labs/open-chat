@@ -64,23 +64,20 @@ export class NotificationsClient extends MsgpackCanisterAgent {
         );
     }
 
-    fcmTokenExists(fcm_token: string): Promise<boolean> {
+    fcmTokenExists(fcmToken: string): Promise<boolean> {
         return this.executeMsgpackQuery(
             "fcm_token_exists",
-            { fcm_token },
+            { fcm_token: fcmToken },
             (response) => response as boolean,
             NotificationsIndexFcmTokenExistsArgs,
             NotificationsIndexFcmTokenExistsResponse,
         );
     }
 
-    addFcmToken(
-        fcm_token: string,
-        onResponseError?: (error: string | null) => void,
-    ): Promise<void> {
+    addFcmToken(fcmToken: string, onResponseError?: (error: string | null) => void): Promise<void> {
         return this.executeMsgpackUpdate(
             "add_fcm_token",
-            { fcm_token },
+            { fcm_token: fcmToken },
             (response) => {
                 if (response === "Success") {
                     return;

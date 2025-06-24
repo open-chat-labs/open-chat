@@ -731,14 +731,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "fcmTokenExists":
-                executeThenReply(payload, correlationId, agent.fcmTokenExists(payload.fcm_token));
+                executeThenReply(payload, correlationId, agent.fcmTokenExists(payload.fcmToken));
                 break;
 
             case "addFcmToken":
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.addFcmToken(payload.fcm_token, payload.onResponseError),
+                    agent.addFcmToken(payload.fcmToken, payload.onResponseError),
                 );
                 break;
 
@@ -2086,10 +2086,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.updateDirectChatSettings(
-                        payload.userId,
-                        payload.eventsTtl,
-                    ),
+                    agent.updateDirectChatSettings(payload.userId, payload.eventsTtl),
                 );
                 break;
 

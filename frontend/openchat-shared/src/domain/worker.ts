@@ -979,12 +979,12 @@ type SubscriptionExists = {
 
 type FcmTokenExists = {
     kind: "fcmTokenExists";
-    fcm_token: string;
+    fcmToken: string;
 };
 
 type AddFcmToken = {
     kind: "addFcmToken";
-    fcm_token: string;
+    fcmToken: string;
     onResponseError?: (error: string | null) => void;
 };
 

@@ -2721,15 +2721,12 @@ export class OpenChatAgent extends EventTarget {
         return this._notificationClient.removeSubscription(subscription);
     }
 
-    fcmTokenExists(fcm_token: string): Promise<boolean> {
-        return this._notificationClient.fcmTokenExists(fcm_token);
+    fcmTokenExists(fcmToken: string): Promise<boolean> {
+        return this._notificationClient.fcmTokenExists(fcmToken);
     }
 
-    addFcmToken(
-        fcm_token: string,
-        onResponseError?: (error: string | null) => void,
-    ): Promise<void> {
-        return this._notificationClient.addFcmToken(fcm_token, onResponseError);
+    addFcmToken(fcmToken: string, onResponseError?: (error: string | null) => void): Promise<void> {
+        return this._notificationClient.addFcmToken(fcmToken, onResponseError);
     }
 
     toggleMuteNotifications(
