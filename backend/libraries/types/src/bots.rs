@@ -1,7 +1,7 @@
 use crate::bitflags::{decode_from_bitflags, encode_as_bitflags};
 use crate::{
     AudioContent, CanisterId, Chat, ChatEventCategory, ChatEventType, ChatId, ChatPermission, CommunityEventCategory,
-    CommunityEventType, CommunityId, CommunityPermission, FileContent, GiphyContent, GroupRole, ImageContent,
+    CommunityEventType, CommunityId, CommunityOrGroup, CommunityPermission, FileContent, GiphyContent, GroupRole, ImageContent,
     MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent, TimestampMillis, UserId, VideoContent,
 };
 use candid::CandidType;
@@ -468,9 +468,9 @@ pub enum BotChatContext {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum BotLocationContext {
+pub enum BotCommunityOrGroupContext {
     Command(String),
-    Autonomous(BotInstallationLocation),
+    Autonomous(CommunityOrGroup),
 }
 
 #[ts_export]

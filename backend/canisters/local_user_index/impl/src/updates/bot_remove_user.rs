@@ -1,5 +1,5 @@
 use crate::{
-    bots::{BotAccessContext, extract_access_context_from_location_context},
+    bots::{BotAccessContext, extract_access_context_from_community_or_group_context},
     mutate_state,
 };
 use canister_api_macros::update;
@@ -9,7 +9,9 @@ use types::{ChannelId, Chat, UserId};
 
 #[update(candid = true, json = true, msgpack = true)]
 async fn bot_remove_user(args: Args) -> Response {
-    let context = match mutate_state(|state| extract_access_context_from_location_context(args.location_context, state)) {
+    let context = match mutate_state(|state| {
+        extract_access_context_from_community_or_group_context(args.community_or_group_context, state)
+    }) {
         Ok(context) => context,
         Err(_) => return OCErrorCode::BotNotAuthenticated.into(),
     };
