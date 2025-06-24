@@ -30,11 +30,11 @@ async fn remove_member(args: Args) -> UnitResult {
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
-async fn c2c_bot_remove_user(args: group_canister::c2c_bot_remove_user::Args) -> UnitResult {
+async fn c2c_bot_remove_user(args: community_canister::c2c_bot_remove_user::Args) -> UnitResult {
     execute_update_async(|| c2c_bot_remove_user_impl(args)).await
 }
 
-async fn c2c_bot_remove_user_impl(args: group_canister::c2c_bot_remove_user::Args) -> UnitResult {
+async fn c2c_bot_remove_user_impl(args: community_canister::c2c_bot_remove_user::Args) -> UnitResult {
     let bot_caller = BotCaller {
         bot: args.bot_id,
         initiator: args.initiator.clone(),

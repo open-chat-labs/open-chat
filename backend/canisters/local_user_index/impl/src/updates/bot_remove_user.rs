@@ -1,5 +1,5 @@
 use crate::{
-    bots::{BotAccessContext, extract_access_context_from_location_context},
+    bots::{BotAccessContext, extract_access_context_from_chat_context},
     mutate_state,
 };
 use canister_api_macros::update;
@@ -9,7 +9,7 @@ use types::{Chat, UserId};
 
 #[update(candid = true, json = true, msgpack = true)]
 async fn bot_remove_user(args: Args) -> Response {
-    let context = match mutate_state(|state| extract_access_context_from_location_context(args.location_context, state)) {
+    let context = match mutate_state(|state| extract_access_context_from_chat_context(args.chat_context, state)) {
         Ok(context) => context,
         Err(_) => return OCErrorCode::BotNotAuthenticated.into(),
     };
@@ -20,13 +20,13 @@ async fn bot_remove_user(args: Args) -> Response {
 async fn call_chat_canister(context: BotAccessContext, user_id: UserId, block: bool) -> Response {
     match context.scope {
         types::BotActionScope::Chat(details) => match details.chat {
-            Chat::Channel(community_id, _) => community_canister_c2c_client::c2c_bot_remove_user(
+            Chat::Channel(community_id, channel_id) => community_canister_c2c_client::c2c_bot_remove_user_from_channel(
                 community_id.into(),
-                &community_canister::c2c_bot_remove_user::Args {
+                &community_canister::c2c_bot_remove_user_from_channel::Args {
                     bot_id: context.bot_id,
                     initiator: context.initiator,
+                    channel_id,
                     user_id,
-                    block,
                 },
             )
             .await
