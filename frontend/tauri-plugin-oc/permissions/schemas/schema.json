@@ -295,6 +295,18 @@
       "type": "string",
       "oneOf": [
         {
+          "description": "Enables the get_fcm_token command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-get-fcm-token",
+          "markdownDescription": "Enables the get_fcm_token command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_fcm_token command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-get-fcm-token",
+          "markdownDescription": "Denies the get_fcm_token command without any pre-configured scope."
+        },
+        {
           "description": "Enables the open_url command without any pre-configured scope.",
           "type": "string",
           "const": "allow-open-url",
@@ -355,10 +367,10 @@
           "markdownDescription": "Denies the sign_up command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`",
+          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`"
+          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`"
         }
       ]
     }

@@ -3,6 +3,7 @@ import { addPluginListener, PluginListener } from "@tauri-apps/api/core";
 
 const TAURI_PLUGIN_NAME = "oc";
 const PUSH_NOTIFICATION_EVENT = "push-notification";
+const NEW_FCM_TOKEN_EVENT = "fcm-token";
 
 /**
  * Sets up a listener for push notifications. This function will ask for
@@ -57,4 +58,16 @@ async function askForPermission(): Promise<boolean> {
     }
 
     return false;
+}
+
+/**
+ * Adds a listener for new FCM tokens. This is useful for
+ * handling token refreshes in your application.
+ *
+ * @param handler the function to call when a new FCM token is received.
+ * @returns
+ */
+export async function expectNewFcmToken<T>(handler: (data: T) => void): Promise<PluginListener> {
+    // Set up the listener for new FCM tokens!
+    return addPluginListener(TAURI_PLUGIN_NAME, NEW_FCM_TOKEN_EVENT, handler);
 }
