@@ -1,11 +1,9 @@
-use crate::{
-    RuntimeState, activity_notifications::handle_activity_notification, execute_update, guards::caller_is_local_user_index,
-};
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::remove_member_from_channel::*;
 use oc_error_codes::OCErrorCode;
-use types::{BotCaller, BotPermissions, Caller, ChannelId, ChatPermission, OCResult, UnitResult, UserId};
+use types::{Caller, ChannelId, OCResult, UserId};
 
 #[update(msgpack = true)]
 #[trace]
@@ -13,30 +11,7 @@ fn remove_member_from_channel(args: Args) -> Response {
     execute_update(|state| remove_member_from_channel_impl(args.channel_id, args.user_id, None, state)).into()
 }
 
-#[update(guard = "caller_is_local_user_index", msgpack = true)]
-#[trace]
-async fn c2c_bot_remove_user_from_channel(args: community_canister::c2c_bot_remove_user_from_channel::Args) -> UnitResult {
-    execute_update(|state| {
-        let bot_caller = BotCaller {
-            bot: args.bot_id,
-            initiator: args.initiator.clone(),
-        };
-
-        if !state.data.is_bot_permitted(
-            &bot_caller.bot,
-            Some(args.channel_id),
-            &bot_caller.initiator,
-            &BotPermissions::from_chat_permission(ChatPermission::RemoveMembers),
-        ) {
-            return Err(OCErrorCode::InitiatorNotAuthorized.into());
-        }
-
-        remove_member_from_channel_impl(args.channel_id, args.user_id, Some(Caller::BotV2(bot_caller)), state)
-    })
-    .into()
-}
-
-fn remove_member_from_channel_impl(
+pub(crate) fn remove_member_from_channel_impl(
     channel_id: ChannelId,
     user_id: UserId,
     ext_caller: Option<Caller>,

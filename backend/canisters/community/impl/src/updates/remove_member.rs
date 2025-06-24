@@ -1,6 +1,7 @@
 use crate::{
     RuntimeState, activity_notifications::handle_activity_notification, execute_update_async,
     guards::caller_is_local_user_index, model::events::CommunityEventInternal, mutate_state, read_state,
+    updates::remove_member_from_channel::remove_member_from_channel_impl,
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -11,7 +12,7 @@ use msgpack::serialize_then_unwrap;
 use oc_error_codes::OCErrorCode;
 use std::collections::HashMap;
 use types::{
-    BotCaller, BotPermissions, Caller, CanisterId, ChatPermission, CommunityMembersRemoved, CommunityRole,
+    BotCaller, BotPermissions, Caller, CanisterId, ChatPermission, CommunityMembersRemoved, CommunityPermission, CommunityRole,
     CommunityUsersBlocked, OCResult, UnitResult, UserId,
 };
 use user_canister::c2c_remove_from_community;
@@ -41,17 +42,25 @@ async fn c2c_bot_remove_user_impl(args: community_canister::c2c_bot_remove_user:
     };
 
     if !read_state(|state| {
-        state.data.is_bot_permitted(
-            &bot_caller.bot,
-            None,
-            &bot_caller.initiator,
-            &BotPermissions::from_chat_permission(ChatPermission::RemoveMembers),
-        )
+        let required_permissions = if args.channel_id.is_some() {
+            BotPermissions::from_chat_permission(ChatPermission::RemoveMembers)
+        } else {
+            BotPermissions::from_community_permission(CommunityPermission::RemoveMembers)
+        };
+
+        state
+            .data
+            .is_bot_permitted(&bot_caller.bot, args.channel_id, &bot_caller.initiator, &required_permissions)
     }) {
         return OCErrorCode::InitiatorNotAuthorized.into();
     }
 
-    remove_member_impl(args.user_id, args.block, Some(Caller::BotV2(bot_caller))).await
+    if let Some(channel_id) = args.channel_id {
+        mutate_state(|state| remove_member_from_channel_impl(channel_id, args.user_id, Some(Caller::BotV2(bot_caller)), state))
+            .into()
+    } else {
+        remove_member_impl(args.user_id, args.block, Some(Caller::BotV2(bot_caller))).await
+    }
 }
 
 async fn remove_member_impl(user_id: UserId, block: bool, ext_caller: Option<Caller>) -> UnitResult {

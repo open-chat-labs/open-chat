@@ -20,13 +20,14 @@ async fn bot_remove_user(args: Args) -> Response {
 async fn call_chat_canister(context: BotAccessContext, user_id: UserId, block: bool) -> Response {
     match context.scope {
         types::BotActionScope::Chat(details) => match details.chat {
-            Chat::Channel(community_id, channel_id) => community_canister_c2c_client::c2c_bot_remove_user_from_channel(
+            Chat::Channel(community_id, channel_id) => community_canister_c2c_client::c2c_bot_remove_user(
                 community_id.into(),
-                &community_canister::c2c_bot_remove_user_from_channel::Args {
+                &community_canister::c2c_bot_remove_user::Args {
                     bot_id: context.bot_id,
                     initiator: context.initiator,
-                    channel_id,
+                    channel_id: Some(channel_id),
                     user_id,
+                    block,
                 },
             )
             .await
@@ -51,6 +52,7 @@ async fn call_chat_canister(context: BotAccessContext, user_id: UserId, block: b
             &community_canister::c2c_bot_remove_user::Args {
                 bot_id: context.bot_id,
                 initiator: context.initiator,
+                channel_id: None,
                 user_id,
                 block,
             },
