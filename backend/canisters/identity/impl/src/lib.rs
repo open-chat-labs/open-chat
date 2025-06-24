@@ -244,19 +244,21 @@ impl Data {
     ) -> OCResult {
         if auth_principal.originating_canister != WEBAUTHN_ORIGINATING_CANISTER {
             let certificate = extract_certificate(signature).map_err(|e| OCErrorCode::MalformedSignature.with_message(e))?;
-            certificate
-                .verify(auth_principal.originating_canister.as_slice(), self.ic_root_key.as_slice())
-                .map_err(|_| OCErrorCode::InvalidSignature)?;
-
             let now_nanos = (now * NANOS_PER_MILLISECOND) as u128;
-            let max_offset_minutes = (max_offset * NANOS_PER_MILLISECOND) as u128;
-
-            ic_certificate_verification::validate_certificate_time(&certificate, &now_nanos, &max_offset_minutes)
-                .map_err(|_| OCErrorCode::DelegationTooOld.into())
+            let max_offset_nanos = (max_offset * NANOS_PER_MILLISECOND) as u128;
+            certificate
+                .verify(
+                    auth_principal.originating_canister.as_slice(),
+                    self.ic_root_key.as_slice(),
+                    &now_nanos,
+                    &max_offset_nanos,
+                )
+                .map_err(|_| OCErrorCode::InvalidSignature)?;
         } else {
             // TODO verify WebAuthn signatures somehow
-            Ok(())
         }
+
+        Ok(())
     }
 }
 
