@@ -3,6 +3,7 @@ use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
+use ic_certificate_verification::VerifyCertificate;
 use identity_utils::extract_certificate;
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, FieldTooLongResult, FieldTooShortResult, OCResult};
@@ -37,7 +38,15 @@ fn set_pin_number_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                 let now_nanos = (now * NANOS_PER_MILLISECOND) as u128;
                 let five_minutes = (5 * MINUTE_IN_MS * NANOS_PER_MILLISECOND) as u128;
 
-                if ic_certificate_verification::validate_certificate_time(&certificate, &now_nanos, &five_minutes).is_err() {
+                if certificate
+                    .verify(
+                        state.data.identity_canister_id.as_slice(),
+                        &ic_cdk::api::root_key(),
+                        &now_nanos,
+                        &five_minutes,
+                    )
+                    .is_err()
+                {
                     return Err(OCErrorCode::DelegationTooOld.into());
                 };
             }
