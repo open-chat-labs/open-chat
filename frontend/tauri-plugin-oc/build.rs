@@ -4,6 +4,7 @@ const COMMANDS: &[&str] = &[
     "sign_in",
     "registerListener",
     "removeListener",
+    "get_fcm_token",
 ];
 
 fn main() {
