@@ -13,7 +13,7 @@ export function hasOwnerRights(role: MemberRole): boolean {
 }
 
 export function isPermitted(role: MemberRole, permissionRole: PermissionRole): boolean {
-    if (role === ROLE_NONE) return false;
+    if (role === ROLE_NONE || permissionRole === ROLE_NONE) return false;
     return role >= permissionRole;
 }
 
