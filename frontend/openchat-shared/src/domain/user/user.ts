@@ -33,7 +33,7 @@ export type UserSummary = DataContent & {
 export type PartitionedUserIds = {
     userIds: Set<string>;
     webhooks: Set<string>;
-}
+};
 
 export function deletedUser(userId: string): UserSummary {
     return {
@@ -83,9 +83,7 @@ export function mergeUserSummaryWithUpdates(
 }
 
 // problem - we can no longer create a UserSummary from a CurrentUserSummary
-export function userSummaryFromCurrentUserSummary(
-    currentSummary: CurrentUserSummary,
-): UserSummary {
+export function userSummaryFromCurrentUserSummary(currentSummary: CurrentUserSummary): UserSummary {
     return {
         kind: currentSummary.isBot ? "bot" : "user",
         userId: currentSummary.userId,
@@ -153,7 +151,7 @@ export type JoinGroup = {
 
 export type IdentityState =
     | { kind: "anon"; postLogin?: PostLoginOperation }
-    | { kind: "loading_user"; postLogin?: PostLoginOperation }
+    | { kind: "loading_user"; postLogin?: PostLoginOperation; registering: boolean }
     | { kind: "logged_in"; postLogin?: PostLoginOperation }
     | { kind: "registering"; postLogin?: PostLoginOperation }
     | { kind: "logging_in"; postLogin?: PostLoginOperation }

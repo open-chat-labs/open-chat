@@ -9,14 +9,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Implement `in_progress_proposal_tallies` for retrieving only the tallies ([#8200](https://github.com/open-chat-labs/open-chat/pull/8200))
+- Add `c2c_bot_remove_user` endpoint ([#8217](https://github.com/open-chat-labs/open-chat/pull/8217))
+- Add `c2c_bot_invite_users` endpoint ([#8218](https://github.com/open-chat-labs/open-chat/pull/8218))
 
 ### Changed
 
 - Use MessagePack to serialize `init` args ([#8183](https://github.com/open-chat-labs/open-chat/pull/8183))
+- Avoid marking chat as active if only proposal tally has been updated ([#8206](https://github.com/open-chat-labs/open-chat/pull/8206))
 
 ### Removed
 
 - Remove `gate` which is superseded by `gate_config` ([#8186](https://github.com/open-chat-labs/open-chat/pull/8186))
+
+### Fixed
+
+- Send bot notification when a user joins a group ([#8208](https://github.com/open-chat-labs/open-chat/pull/8208))
 
 ## [[2.0.1795](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1795-group)] - 2025-06-13
 

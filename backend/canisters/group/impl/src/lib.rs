@@ -665,7 +665,7 @@ impl Data {
 
     pub fn invite_users(
         &mut self,
-        invited_by: UserId,
+        invited_by: Caller,
         users: Vec<(UserId, Principal)>,
         now: TimestampMillis,
     ) -> OCResult<InvitedUsersSuccess> {

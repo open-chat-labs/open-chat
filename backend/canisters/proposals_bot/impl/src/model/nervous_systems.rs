@@ -5,6 +5,7 @@ use std::cmp::max;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap};
 use std::mem;
+use tracing::info;
 use types::{
     CanisterId, MessageId, MessageIndex, Milliseconds, MultiUserChat, Proposal, ProposalDecisionStatus, ProposalId,
     ProposalRewardStatus, ProposalUpdate, SnsNeuronId, TimestampMillis, UserId,
@@ -58,6 +59,7 @@ impl NervousSystems {
 
     pub fn mark_disabled(&mut self, governance_canister_id: &CanisterId) {
         if let Some(ns) = self.nervous_systems.get_mut(governance_canister_id) {
+            info!(%governance_canister_id, "NervousSystem disabled");
             ns.disabled = true;
         }
     }

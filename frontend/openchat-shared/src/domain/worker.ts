@@ -451,6 +451,8 @@ export type WorkerRequest =
     | PayForStreakInsurance
     | UpdateDirectChatSettings
     | UpdateProposalTallies;
+    | FcmTokenExists
+    | AddFcmToken;
 
 type SetMinLogLevel = {
     kind: "setMinLogLevel";
@@ -979,6 +981,17 @@ type PushSub = {
 type SubscriptionExists = {
     p256dh_key: string;
     kind: "subscriptionExists";
+};
+
+type FcmTokenExists = {
+    kind: "fcmTokenExists";
+    fcmToken: string;
+};
+
+type AddFcmToken = {
+    kind: "addFcmToken";
+    fcmToken: string;
+    onResponseError?: (error: string | null) => void;
 };
 
 type RegisterUser = {

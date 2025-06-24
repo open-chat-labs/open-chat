@@ -87,14 +87,14 @@ impl Pusher {
         }
     }
 
-    async fn process_user_notification_to_push(&self, user_notification_to_push: UserNotificationToPush) -> bool {
-        let UserNotificationToPush { notification, message } = user_notification_to_push;
+    async fn process_user_notification_to_push(&self, user_notification_to_push: Box<UserNotificationToPush>) -> bool {
+        let UserNotificationToPush { notification, message } = *user_notification_to_push;
         let push_result = self.web_push_client.send(message).await;
         let success = push_result.is_ok();
 
         if let Err(error) = push_result {
             match error {
-                WebPushError::EndpointNotValid | WebPushError::InvalidUri | WebPushError::EndpointNotFound => {
+                WebPushError::EndpointNotValid(_) | WebPushError::InvalidUri | WebPushError::EndpointNotFound(_) => {
                     let _ = self.subscriptions_to_remove_sender.try_send((
                         notification.metadata.recipient,
                         notification.subscription_info.keys.p256dh.clone(),

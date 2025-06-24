@@ -6,4 +6,5 @@ permissions = [
     "allow-sign-up",
     "allow-registerListener",
     "allow-removeListener",
+    "allow-get-fcm-token",
 ]

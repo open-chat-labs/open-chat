@@ -92,7 +92,7 @@ pub struct NotificationMetadata {
 
 // Sent by processor to pusher
 pub enum NotificationToPush {
-    UserNotificationToPush(UserNotificationToPush),
+    UserNotificationToPush(Box<UserNotificationToPush>),
     FcmNotificationToPush(Box<FcmNotification>),
 }
 

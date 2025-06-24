@@ -3,38 +3,57 @@ use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::model::events::CommunityEventInternal;
 use crate::model::invited_users::UserInvitation;
 use crate::{RuntimeState, execute_update};
+use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_invite_users::{Response::*, *};
 use itertools::Itertools;
 use oc_error_codes::OCErrorCode;
-use types::{OCResult, UsersInvited};
+use types::{BotPermissions, Caller, CommunityPermission, OCResult, UserId, UsersInvited};
 
 const MAX_INVITES: usize = 100;
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_invite_users(args: Args) -> Response {
-    match execute_update(|state| invite_users_to_community_impl(args, state)) {
+    match execute_update(|state| invite_users_to_community_impl(args.users, Caller::User(args.caller), state)) {
         Ok(result) => Success(result),
         Err(error) => Error(error),
     }
 }
 
-pub(crate) fn invite_users_to_community_impl(args: Args, state: &mut RuntimeState) -> OCResult<SuccessResult> {
+pub(crate) fn invite_users_to_community_impl(
+    users: Vec<(UserId, Principal)>,
+    caller: Caller,
+    state: &mut RuntimeState,
+) -> OCResult<SuccessResult> {
     state.data.verify_not_frozen()?;
 
-    let member = state.data.members.get_verified_member(args.caller.into())?;
-    let now = state.env.now();
-
-    // The original caller must be authorized to invite other users
-    if !member.role().can_invite_users(&state.data.permissions) {
-        return Err(OCErrorCode::InitiatorNotAuthorized.into());
+    if let Caller::BotV2(bot_caller) = &caller {
+        if !state.data.is_bot_permitted(
+            &bot_caller.bot,
+            None,
+            &bot_caller.initiator,
+            &BotPermissions::from_community_permission(CommunityPermission::InviteUsers),
+        ) {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
+        }
     }
 
+    let invited_by = if let Some(initiator) = caller.initiator() {
+        let member = state.data.members.get_verified_member(*initiator)?;
+        if !member.role().can_invite_users(&state.data.permissions) {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
+        }
+        initiator
+    } else {
+        caller.agent()
+    };
+
+    let now = state.env.now();
+
     // Filter out users who are already members and those who have already been invited
-    let invited_users: Vec<_> = args
-        .users
+    let invited_users: Vec<_> = users
         .iter()
         .unique_by(|(u, _)| u)
         .filter(|(user_id, principal)| {
@@ -58,7 +77,7 @@ pub(crate) fn invite_users_to_community_impl(args: Args, state: &mut RuntimeStat
             state.data.invited_users.add(
                 user_id,
                 UserInvitation {
-                    invited_by: member.user_id,
+                    invited_by,
                     timestamp: now,
                 },
             );
@@ -68,7 +87,7 @@ pub(crate) fn invite_users_to_community_impl(args: Args, state: &mut RuntimeStat
         state.data.events.push_event(
             CommunityEventInternal::UsersInvited(Box::new(UsersInvited {
                 user_ids: user_ids.clone(),
-                invited_by: member.user_id,
+                invited_by,
             })),
             now,
         );
