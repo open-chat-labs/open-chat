@@ -5,7 +5,7 @@ use crate::{
 use canister_api_macros::update;
 use local_user_index_canister::bot_remove_user::*;
 use oc_error_codes::OCErrorCode;
-use types::{ChannelId, Chat, UserId};
+use types::{BotActionScope, ChannelId, Chat, UserId};
 
 #[update(candid = true, json = true, msgpack = true)]
 async fn bot_remove_user(args: Args) -> Response {
@@ -26,7 +26,7 @@ async fn call_chat_canister(
     block: bool,
 ) -> Response {
     match context.scope {
-        types::BotActionScope::Chat(details) => match details.chat {
+        BotActionScope::Chat(details) => match details.chat {
             Chat::Channel(community_id, _) => community_canister_c2c_client::c2c_bot_remove_user(
                 community_id.into(),
                 &community_canister::c2c_bot_remove_user::Args {
@@ -54,7 +54,7 @@ async fn call_chat_canister(
                 .with_message("Direct chats not supported")
                 .into(),
         },
-        types::BotActionScope::Community(details) => community_canister_c2c_client::c2c_bot_remove_user(
+        BotActionScope::Community(details) => community_canister_c2c_client::c2c_bot_remove_user(
             details.community_id.into(),
             &community_canister::c2c_bot_remove_user::Args {
                 bot_id: context.bot_id,
