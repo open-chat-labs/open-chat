@@ -94,7 +94,7 @@ impl Pusher {
 
         if let Err(error) = push_result {
             match error {
-                WebPushError::EndpointNotValid | WebPushError::InvalidUri | WebPushError::EndpointNotFound => {
+                WebPushError::EndpointNotValid(_) | WebPushError::InvalidUri | WebPushError::EndpointNotFound(_) => {
                     let _ = self.subscriptions_to_remove_sender.try_send((
                         notification.metadata.recipient,
                         notification.subscription_info.keys.p256dh.clone(),
