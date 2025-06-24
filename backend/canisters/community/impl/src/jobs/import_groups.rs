@@ -18,7 +18,7 @@ use std::collections::HashMap;
 use std::time::Duration;
 use tracing::{info, trace};
 use types::{
-    ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityUsersBlocked, Empty, MultiUserChat, UserId, UserType,
+    Caller, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityUsersBlocked, Empty, MultiUserChat, UserId, UserType,
 };
 
 const PAGE_SIZE: u32 = 19 * 102 * 1024; // Roughly 1.9MB (1.9 * 1024 * 1024)
@@ -317,7 +317,9 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
                         AddResult::AlreadyInCommunity => {}
                         AddResult::Blocked => {
                             let channel = state.data.channels.get_mut(&channel_id).unwrap();
-                            let _ = channel.chat.remove_member(OPENCHAT_BOT_USER_ID, user_id, false, now);
+                            let _ = channel
+                                .chat
+                                .remove_member(Caller::OCBot(OPENCHAT_BOT_USER_ID), user_id, false, now);
                         }
                     }
                 }
