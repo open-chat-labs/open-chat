@@ -1,23 +1,30 @@
 use crate::{
-    bots::{BotAccessContext, extract_access_context_from_location_context},
+    bots::{BotAccessContext, extract_access_context_from_community_or_group_context},
     mutate_state,
 };
 use canister_api_macros::update;
 use local_user_index_canister::bot_remove_user::*;
 use oc_error_codes::OCErrorCode;
-use types::{Chat, UserId};
+use types::{ChannelId, Chat, UserId};
 
 #[update(candid = true, json = true, msgpack = true)]
 async fn bot_remove_user(args: Args) -> Response {
-    let context = match mutate_state(|state| extract_access_context_from_location_context(args.location_context, state)) {
+    let context = match mutate_state(|state| {
+        extract_access_context_from_community_or_group_context(args.community_or_group_context, state)
+    }) {
         Ok(context) => context,
         Err(_) => return OCErrorCode::BotNotAuthenticated.into(),
     };
 
-    call_chat_canister(context, args.user_id, args.block).await
+    call_chat_canister(context, args.channel_id, args.user_id, args.block).await
 }
 
-async fn call_chat_canister(context: BotAccessContext, user_id: UserId, block: bool) -> Response {
+async fn call_chat_canister(
+    context: BotAccessContext,
+    channel_id: Option<ChannelId>,
+    user_id: UserId,
+    block: bool,
+) -> Response {
     match context.scope {
         types::BotActionScope::Chat(details) => match details.chat {
             Chat::Channel(community_id, _) => community_canister_c2c_client::c2c_bot_remove_user(
@@ -25,6 +32,7 @@ async fn call_chat_canister(context: BotAccessContext, user_id: UserId, block: b
                 &community_canister::c2c_bot_remove_user::Args {
                     bot_id: context.bot_id,
                     initiator: context.initiator,
+                    channel_id,
                     user_id,
                     block,
                 },
@@ -51,6 +59,7 @@ async fn call_chat_canister(context: BotAccessContext, user_id: UserId, block: b
             &community_canister::c2c_bot_remove_user::Args {
                 bot_id: context.bot_id,
                 initiator: context.initiator,
+                channel_id,
                 user_id,
                 block,
             },

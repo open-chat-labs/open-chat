@@ -1323,63 +1323,65 @@ impl GroupChatCore {
 
     pub fn remove_member(
         &mut self,
-        user_id: UserId,
+        caller: Caller,
         target_user_id: UserId,
         block: bool,
         now: TimestampMillis,
     ) -> OCResult<Option<BotNotification>> {
-        if user_id == target_user_id {
+        let agent = caller.agent();
+
+        if agent == target_user_id {
             return Err(OCErrorCode::CannotRemoveSelf.into());
         }
 
-        let member = self.members.get_verified_member(user_id)?;
+        if matches!(caller, Caller::Webhook(_) | Caller::Bot(_)) {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
+        }
 
-        let target_member_role = match self.members.get(&target_user_id) {
-            Some(m) => m.role().value,
-            None if block => GroupRoleInternal::Member,
-            _ => return Err(OCErrorCode::TargetUserNotInChat.into()),
+        if let Some(initiator) = caller.initiator() {
+            let member = self.members.get_verified_member(initiator)?;
+
+            let target_member_role = match self.members.get(&target_user_id) {
+                Some(m) => m.role().value,
+                None if block => GroupRoleInternal::Member,
+                _ => return Err(OCErrorCode::TargetUserNotInChat.into()),
+            };
+
+            if !member
+                .role()
+                .can_remove_members_with_role(target_member_role, &self.permissions)
+            {
+                return Err(OCErrorCode::InitiatorNotAuthorized.into());
+            }
+        }
+
+        // Remove the user from the group
+        self.members.remove(target_user_id, now);
+
+        if block && !self.members.block(target_user_id, now) {
+            // Return Ok if the user was already blocked
+            return Ok(None);
+        }
+
+        // Push relevant event
+        let event = if block {
+            let event = UsersBlocked {
+                user_ids: vec![target_user_id],
+                blocked_by: agent,
+            };
+
+            ChatEventInternal::UsersBlocked(Box::new(event))
+        } else {
+            let event = MembersRemoved {
+                user_ids: vec![target_user_id],
+                removed_by: agent,
+            };
+            ChatEventInternal::ParticipantsRemoved(Box::new(event))
         };
 
-        if member
-            .role()
-            .can_remove_members_with_role(target_member_role, &self.permissions)
-        {
-            let is_bot_v2 = matches!(member.user_type(), UserType::BotV2);
+        let result = self.events.push_main_event(event, now);
 
-            // Remove the user from the group
-            self.members.remove(target_user_id, now);
-
-            if block && !self.members.block(target_user_id, now) {
-                // Return Ok if the user was already blocked
-                return Ok(None);
-            }
-
-            if !is_bot_v2 {
-                // Push relevant event
-                let event = if block {
-                    let event = UsersBlocked {
-                        user_ids: vec![target_user_id],
-                        blocked_by: user_id,
-                    };
-
-                    ChatEventInternal::UsersBlocked(Box::new(event))
-                } else {
-                    let event = MembersRemoved {
-                        user_ids: vec![target_user_id],
-                        removed_by: user_id,
-                    };
-                    ChatEventInternal::ParticipantsRemoved(Box::new(event))
-                };
-
-                let result = self.events.push_main_event(event, now);
-
-                Ok(result.bot_notification)
-            } else {
-                Ok(None)
-            }
-        } else {
-            Err(OCErrorCode::InitiatorNotAuthorized.into())
-        }
+        Ok(result.bot_notification)
     }
 
     pub fn update(

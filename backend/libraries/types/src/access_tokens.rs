@@ -1,4 +1,4 @@
-use crate::{CanisterId, ChannelId, Chat, CommunityId, MessageId, MessageIndex, VideoCallType};
+use crate::{CanisterId, ChannelId, Chat, CommunityId, MessageId, MessageIndex, UserId, VideoCallType};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
@@ -62,6 +62,16 @@ impl BotActionScope {
             Self::Chat(details) => details.thread,
             _ => None,
         }
+    }
+
+    pub fn user_id(&self) -> Option<UserId> {
+        if let Self::Chat(chat) = self {
+            if let Chat::Direct(chat_id) = chat.chat {
+                return Some((*chat_id).into());
+            }
+        }
+
+        None
     }
 }
 
