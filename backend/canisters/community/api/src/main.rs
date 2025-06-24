@@ -74,6 +74,7 @@ fn main() {
         std::fs::remove_dir_all(&directory).unwrap();
     }
 
+    generate_ts_method!(community, active_proposal_tallies);
     generate_ts_method!(community, channel_summary_updates);
     generate_ts_method!(community, channel_summary);
     generate_ts_method!(community, deleted_message);
@@ -81,7 +82,6 @@ fn main() {
     generate_ts_method!(community, events_window);
     generate_ts_method!(community, events);
     generate_ts_method!(community, explore_channels);
-    generate_ts_method!(community, in_progress_proposal_tallies);
     generate_ts_method!(community, invite_code);
     generate_ts_method!(community, local_user_index);
     generate_ts_method!(community, lookup_members);

@@ -88,6 +88,8 @@ import type { AgentConfig } from "../../config";
 import {
     CommunityAcceptP2pSwapArgs,
     CommunityAcceptP2pSwapResponse,
+    CommunityActiveProposalTalliesArgs,
+    CommunityActiveProposalTalliesResponse,
     CommunityAddMembersToChannelArgs,
     CommunityAddMembersToChannelResponse,
     CommunityAddReactionArgs,
@@ -121,8 +123,6 @@ import {
     CommunityFollowThreadArgs,
     CommunityImportGroupArgs,
     CommunityImportGroupResponse,
-    CommunityInProgressProposalTalliesArgs,
-    CommunityInProgressProposalTalliesResponse,
     CommunityInviteCodeResponse,
     CommunityJoinVideoCallArgs,
     CommunityLeaveChannelArgs,
@@ -1809,16 +1809,16 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
     }
 
-    inProgressProposalTallies(channelId: number): Promise<[number, Tally][] | OCError> {
+    activeProposalTallies(channelId: number): Promise<[number, Tally][] | OCError> {
         return this.executeMsgpackQuery(
-            "in_progress_proposal_tallies",
+            "active_proposal_tallies",
             {
                 channel_id: toBigInt32(channelId),
                 invite_code: mapOptional(this.inviteCode, textToCode),
             },
             (resp) => mapResult(resp, (value) => value.tallies.map(([idx, t]) => [idx, tally(t)])),
-            CommunityInProgressProposalTalliesArgs,
-            CommunityInProgressProposalTalliesResponse,
+            CommunityActiveProposalTalliesArgs,
+            CommunityActiveProposalTalliesResponse,
         )
     }
 }

@@ -4529,8 +4529,8 @@ export class OpenChatAgent extends EventTarget {
 
     async updateProposalTallies(chatId: MultiUserChatIdentifier): Promise<EventWrapper<Message>[]> {
         const response = await (chatId.kind === "channel"
-            ? this.communityClient(chatId.communityId).inProgressProposalTallies(chatId.channelId)
-            : this.getGroupClient(chatId.groupId).inProgressProposalTallies());
+            ? this.communityClient(chatId.communityId).activeProposalTallies(chatId.channelId)
+            : this.getGroupClient(chatId.groupId).activeProposalTallies());
 
         if (isError(response) || response.length === 0) {
             return [];

@@ -59,11 +59,11 @@ fn main() {
         std::fs::remove_dir_all(&directory).unwrap();
     }
 
+    generate_ts_method!(group, active_proposal_tallies);
     generate_ts_method!(group, deleted_message);
     generate_ts_method!(group, events);
     generate_ts_method!(group, events_by_index);
     generate_ts_method!(group, events_window);
-    generate_ts_method!(group, in_progress_proposal_tallies);
     generate_ts_method!(group, invite_code);
     generate_ts_method!(group, local_user_index);
     generate_ts_method!(group, messages_by_message_index);

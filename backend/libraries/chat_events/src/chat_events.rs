@@ -44,7 +44,7 @@ pub struct ChatEvents {
     search_index: SearchIndex,
     bot_subscriptions: BTreeMap<ChatEventType, HashSet<UserId>>,
     #[serde(rename = "pt", default, skip_serializing_if = "BTreeMap::is_empty")]
-    in_progress_proposal_tallies: BTreeMap<EventIndex, Tally>,
+    active_proposal_tallies: BTreeMap<EventIndex, Tally>,
 }
 
 impl ChatEvents {
@@ -73,7 +73,7 @@ impl ChatEvents {
             anonymized_id: hex::encode(anonymized_id.to_be_bytes()),
             search_index: SearchIndex::default(),
             bot_subscriptions: BTreeMap::new(),
-            in_progress_proposal_tallies: BTreeMap::new(),
+            active_proposal_tallies: BTreeMap::new(),
         };
 
         events.push_event(None, ChatEventInternal::DirectChatCreated(DirectChatCreated {}), now);
@@ -105,7 +105,7 @@ impl ChatEvents {
             anonymized_id: hex::encode(anonymized_id.to_be_bytes()),
             search_index: SearchIndex::default(),
             bot_subscriptions: BTreeMap::new(),
-            in_progress_proposal_tallies: BTreeMap::new(),
+            active_proposal_tallies: BTreeMap::new(),
         };
 
         events.push_event(
@@ -758,9 +758,9 @@ impl ChatEvents {
                 |message, _| Self::update_proposal_inner(message, user_id, update, now),
             ) {
                 if !matches!(success.value, ProposalRewardStatus::AcceptVotes) {
-                    self.in_progress_proposal_tallies.remove(&success.event_index);
+                    self.active_proposal_tallies.remove(&success.event_index);
                 } else if let Some(tally) = tally_update {
-                    self.in_progress_proposal_tallies.insert(success.event_index, tally);
+                    self.active_proposal_tallies.insert(success.event_index, tally);
                 }
                 if should_mark_updated {
                     mark_chat_updated = true;
@@ -785,8 +785,8 @@ impl ChatEvents {
         Err(UpdateEventError::NotFound)
     }
 
-    pub fn in_progress_proposal_tallies(&self) -> Vec<(EventIndex, Tally)> {
-        self.in_progress_proposal_tallies
+    pub fn active_proposal_tallies(&self) -> Vec<(EventIndex, Tally)> {
+        self.active_proposal_tallies
             .iter()
             .map(|(idx, tally)| (*idx, tally.clone()))
             .collect()

@@ -70,6 +70,8 @@ import type { AgentConfig } from "../../config";
 import {
     GroupAcceptP2pSwapArgs,
     GroupAcceptP2pSwapResponse,
+    GroupActiveProposalTalliesArgs,
+    GroupActiveProposalTalliesResponse,
     GroupAddReactionArgs,
     GroupBlockUserArgs,
     GroupCancelInvitesArgs,
@@ -90,8 +92,6 @@ import {
     GroupEventsResponse,
     GroupEventsWindowArgs,
     GroupFollowThreadArgs,
-    GroupInProgressProposalTalliesArgs,
-    GroupInProgressProposalTalliesResponse,
     GroupInviteCodeResponse,
     GroupJoinVideoCallArgs,
     GroupLocalUserIndexResponse,
@@ -1346,15 +1346,15 @@ export class GroupClient extends MsgpackCanisterAgent {
         );
     }
 
-    inProgressProposalTallies(): Promise<[number, Tally][] | OCError> {
+    activeProposalTallies(): Promise<[number, Tally][] | OCError> {
         return this.executeMsgpackQuery(
-            "in_progress_proposal_tallies",
+            "active_proposal_tallies",
             {
                 invite_code: mapOptional(this.inviteCode, textToCode),
             },
             (resp) => mapResult(resp, (value) => value.tallies.map(([idx, t]) => [idx, tally(t)])),
-            GroupInProgressProposalTalliesArgs,
-            GroupInProgressProposalTalliesResponse,
+            GroupActiveProposalTalliesArgs,
+            GroupActiveProposalTalliesResponse,
         )
     }
 }
