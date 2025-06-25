@@ -484,6 +484,14 @@ impl CommunityMembers {
         &self.suspended
     }
 
+    pub fn member_ids(&self) -> impl Iterator<Item = &UserId> {
+        self.members_and_channels.keys()
+    }
+
+    pub fn is_basic_member(&self, user_id: &UserId) -> bool {
+        self.members_and_channels.contains_key(user_id) && !self.owners.contains(user_id) && !self.admins.contains(user_id)
+    }
+
     pub fn members_with_display_names(&self) -> &BTreeSet<UserId> {
         &self.members_with_display_names
     }

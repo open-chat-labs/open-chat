@@ -3,6 +3,7 @@ use types::TimestampMillis;
 
 mod active_proposal_tallies;
 mod c2c_bot_group_details;
+mod c2c_bot_members;
 mod c2c_can_issue_access_token_v2;
 mod c2c_name_and_members;
 mod deleted_message;

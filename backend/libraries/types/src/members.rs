@@ -19,7 +19,7 @@ pub struct MembersResult {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug, PartialEq, Eq, Hash)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum MemberType {
     Owner,
     Admin,

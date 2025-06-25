@@ -53,4 +53,8 @@ impl InvitedUsers {
     pub fn len(&self) -> usize {
         self.users.len()
     }
+
+    pub fn user_ids(&self) -> impl Iterator<Item = &UserId> {
+        self.users.keys()
+    }
 }

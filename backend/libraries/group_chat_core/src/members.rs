@@ -419,6 +419,13 @@ impl GroupMembers {
         &self.moderators
     }
 
+    pub fn is_basic_member(&self, user_id: &UserId) -> bool {
+        self.member_ids.contains(user_id)
+            && !self.owners.contains(user_id)
+            && !self.admins.contains(user_id)
+            && !self.moderators.contains(user_id)
+    }
+
     pub fn bots(&self) -> &BTreeMap<UserId, UserType> {
         &self.bots
     }
