@@ -7558,8 +7558,9 @@ export class OpenChat {
 
     async signUpWithAndroidWebAuthn(
         assumeIdentity: boolean,
+        username: string,
     ): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
-        const webAuthnIdentity = await createAndroidWebAuthnPasskeyIdentity((key) =>
+        const webAuthnIdentity = await createAndroidWebAuthnPasskeyIdentity(username, (key) =>
             this.#storeWebAuthnKeyInCache(key),
         );
 

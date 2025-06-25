@@ -55,6 +55,9 @@
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
     import { portalState } from "./portalState.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
+    import { expectNewFcmToken } from "@utils/native/notification_channels";
+    import { getFcmToken } from "tauri-plugin-oc-api";
+    import { expectPushNotifications } from "@utils/native/notification_channels";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -219,7 +222,43 @@
         }
     }
 
+    if (client.isNativeApp()) {
+        // Listen for incoming push notifications from Firebase; also asks
+        // for permission to show notifications if not already granted.
+        expectPushNotifications((notification) => {
+            console.warn("TODO handle notifications: ", notification);
+        }).catch(console.error);
+    }
+
+    function addFcmToken(token: string) {
+        console.info("Updating FCM token");
+        client
+            .addFcmToken(token)
+            .then(() => console.info("FCM token updated successfully"))
+            .catch(console.error);
+    }
+
     function onUserLoggedIn(userId: string) {
+        if (client.isNativeApp()) {
+            // Expect FCM token refreshes
+            expectNewFcmToken(addFcmToken);
+
+            // Ask for the current FCM token
+            getFcmToken().then((token) => {
+                if (!token) {
+                    // TODO do we handle this somehow? Debounce, try again?
+                    console.error("No FCM token received");
+                    return;
+                }
+
+                client.checkFcmTokenExists(token).then((exists) => {
+                    if (!exists) {
+                        addFcmToken(token);
+                    }
+                });
+            });
+        }
+
         broadcastLoggedInUser(userId);
     }
 

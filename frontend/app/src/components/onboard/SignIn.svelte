@@ -91,7 +91,11 @@
                 }
             });
         } else if (provider === AuthProvider.PASSKEY) {
-            client.signInWithWebAuthn();
+            if (client.isNativeAndroid()) {
+                client.signInWithAndroidWebAuthn();
+            } else {
+                client.signInWithWebAuthn();
+            }
         } else if (provider === AuthProvider.ETH) {
             console.log("Logging in with ETH");
         } else if (provider === AuthProvider.SOL) {

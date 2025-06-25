@@ -52,6 +52,10 @@ impl FcmTokenStore {
             .map(|(_, token)| token)
             .collect()
     }
+
+    pub fn len(&self) -> usize {
+        self.fcm_user_tokens.len()
+    }
 }
 
 #[cfg(test)]

@@ -16,6 +16,8 @@ import {
     type SignInCredential,
 } from "tauri-plugin-oc-api";
 
+const OC_APP_ORIGIN = "oc.app";
+
 /**
  * Pops up a create passkey dialog for an Android user!
  *
@@ -28,10 +30,11 @@ import {
  * @returns
  */
 export async function createAndroidWebAuthnPasskeyIdentity(
+    username: string,
     saveKeyInCacheFn: (key: WebAuthnKeyFull) => Promise<void>,
 ): Promise<WebAuthnIdentity> {
     return new Promise((resolve, reject) => {
-        signUp()
+        signUp({ username })
             .then((credential: Credential<SignUpCredential> | null) => {
                 if (!credential) {
                     reject("no credential");
@@ -51,7 +54,7 @@ export async function createAndroidWebAuthnPasskeyIdentity(
                     saveKeyInCacheFn({
                         publicKey: new Uint8Array(identity.getPublicKey().toDer()),
                         credentialId: credential.rawId,
-                        origin: "oc.app",
+                        origin: OC_APP_ORIGIN,
                         crossPlatform: credential.authenticatorAttachment === "cross-platform",
                         aaguid,
                     }).then(() => {
