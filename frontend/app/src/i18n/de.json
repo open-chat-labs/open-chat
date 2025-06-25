@@ -142,7 +142,7 @@
     "avatarTooBig": "Der ausgewählte Avatar ist zu groß",
     "avatarUpdated": "Avatar erfolgreich aktualisiert",
     "avatarUpdateFailed": "Avatar-Update fehlgeschlagen",
-    "backToResults": "zurück",
+    "back": "zurück",
     "bio": "Biografie",
     "blocked": "gesperrt",
     "blockedBy": "{changedBy} sperrt {changed}",
@@ -1485,7 +1485,6 @@
     "register": {
         "agree": "Zustimmen",
         "bioTooLong": "Ihre Biografie ist zu lang",
-        "chooseMode": "Haben Sie bereits ein OpenChat-Konto oder besuchen Sie uns zum ersten Mal?",
         "choosePath": "Wie möchten Sie sich anmelden?",
         "closed": "Aufgrund der sehr hohen Nachfrage sind die Registrierungen neuer Benutzer vorübergehend geschlossen. Wir werden bald über mehrere Subnetze skalieren und können dann unbegrenzt wachsen!",
         "closedTitle": "Registrierung pausiert",

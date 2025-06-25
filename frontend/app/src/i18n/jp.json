@@ -142,7 +142,7 @@
     "avatarTooBig": "選択したアバターが大きすぎます",
     "avatarUpdated": "アバターが正常に更新されました",
     "avatarUpdateFailed": "アバターの更新に失敗しました",
-    "backToResults": "戻る",
+    "back": "戻る",
     "bio": "自己紹介",
     "blocked": "ブロック",
     "blockedBy": "{changedBy}は{changed}をブロックしました",
@@ -1485,7 +1485,6 @@
     "register": {
         "agree": "同意する",
         "bioTooLong": "あなたの経歴は長すぎます",
-        "chooseMode": "すでにOpenChatのアカウントをお持ちですか？それとも初めてですか？",
         "choosePath": "登録はどのように行いますか？",
         "closed": "大変ご好評につき、新規ユーザー登録を一時的に停止しております。すぐに複数のサブネットにまたがってスケーリングし、その後は無制限に成長できるようになります!",
         "closedTitle": "登録を一時停止しました",

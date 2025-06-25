@@ -3,9 +3,6 @@
     import { anonUserStore, identityStateStore, OpenChat, type CreatedUser } from "openchat-client";
     import { getContext } from "svelte";
     import { locale } from "svelte-i18n";
-    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Select from "../Select.svelte";
@@ -62,33 +59,21 @@
     }
 </script>
 
-<ModalContent hideHeader fill hideFooter onClose={cancel} closeIcon>
-    {#snippet body()}
-        <div class="header login">
-            <div class="main">
-                <div class="logo-img">
-                    <FancyLoader loop={spinning} />
+<ModalContent fill hideFooter onClose={cancel} closeIcon={step === "select_mode"} onBack={() => (step = "select_mode")} backIcon={step !== "select_mode"}>
+    {#snippet header()}
+        <div class="header">
+            <div class="logo-img">
+                <FancyLoader loop={spinning} />
+            </div>
+            <div class="title">
+                <Translatable resourceKey={title} />
+                <div class="strapline">
+                    <Translatable resourceKey={i18nKey("loginDialog.strapline")} />
                 </div>
-                <div class="title">
-                    <Translatable resourceKey={title} />
-                    <div class="strapline">
-                        <Translatable resourceKey={i18nKey("loginDialog.strapline")} />
-                    </div>
-                </div>
-
-                <span class="close">
-                    {#if step === "select_mode"}
-                        <HoverIcon onclick={cancel}>
-                            <Close size={"1em"} color={"var(--icon-txt)"} />
-                        </HoverIcon>
-                    {:else}
-                        <HoverIcon onclick={() => (step = "select_mode")}>
-                            <ArrowLeft size={"1em"} color={"var(--icon-txt)"} />
-                        </HoverIcon>
-                    {/if}
-                </span>
             </div>
         </div>
+    {/snippet}
+    {#snippet body()}
         <div class="body">
             {#if step === "select_mode"}
                 <ModeSelection
@@ -143,29 +128,20 @@
         padding: $sp4;
     }
     .header {
-        padding: $sp5;
-        padding-bottom: $sp4;
+        padding-top: $sp4;
         display: flex;
         flex-direction: column;
-        gap: $sp3;
+        gap: $sp4;
         @include font(bold, normal, fs-130, 29);
         @include mobile() {
             @include font(bold, normal, fs-120, 29);
         }
-
-        .main {
-            display: flex;
-            gap: $sp3;
-            align-items: center;
-
-            .close {
-                align-self: flex-start;
-            }
-        }
+        align-items: center;
+        text-align: center;
 
         .logo-img {
-            height: 48px;
-            width: 48px;
+            height: 56px;
+            width: 56px;
 
             @include mobile() {
                 height: 40px;
@@ -179,7 +155,10 @@
         }
 
         .title {
-            flex: auto;
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+            gap: $sp2;
         }
     }
 

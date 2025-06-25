@@ -2,6 +2,7 @@
     import EmailIcon from "svelte-material-icons/EmailOutline.svelte";
     import { AuthProvider } from "openchat-client";
     import InternetIdentityLogo from "../../landingpages/InternetIdentityLogo.svelte";
+    import OnBoardOptionLogo from "./OnBoardOptionLogo.svelte";
 
     interface Props {
         provider: AuthProvider;
@@ -11,7 +12,7 @@
     let { provider, square = false }: Props = $props();
 </script>
 
-<div class="icon center" class:square>
+<OnBoardOptionLogo {square}>
     {#if provider === AuthProvider.II}
         <InternetIdentityLogo />
     {:else if provider === AuthProvider.EMAIL}
@@ -25,41 +26,16 @@
     {:else if provider === AuthProvider.NFID}
         <img class="nfid-img" src="/assets/nfid.svg" alt="nfid" />
     {/if}
-</div>
+</OnBoardOptionLogo>
 
 <style lang="scss">
-    $height: 45px;
-
-    .center {
-        display: flex;
-        justify-content: center;
-        align-items: center;
+    .nfid-img {
+        width: 40px;
     }
 
-    .icon {
-        flex: 0 0 60px;
-        width: 60px;
-        height: $height;
-        border-radius: $sp2 0 0 $sp2;
-        border-right: 1px solid var(--bd);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: var(--input-bg);
-
-        &.square {
-            border-radius: $sp2;
-            border: none;
-        }
-
-        .nfid-img {
-            width: 40px;
-        }
-
-        .passkey-img,
-        .eth-img,
-        .sol-img {
-            width: 30px;
-        }
+    .passkey-img,
+    .eth-img,
+    .sol-img {
+        width: 30px;
     }
 </style>
