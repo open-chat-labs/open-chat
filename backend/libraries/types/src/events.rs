@@ -425,6 +425,15 @@ pub struct UsersInvited {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ChannelCreated {
+    pub channel_id: ChannelId,
+    pub is_public: bool,
+    pub name: String,
+    pub created_by: UserId,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ChannelDeleted {
     pub channel_id: ChannelId,
     pub name: String,

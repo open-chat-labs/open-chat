@@ -1,9 +1,8 @@
-use std::collections::HashSet;
-
 use super::c2c_join_community::join_community_impl;
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::{caller_is_local_user_index, caller_is_proposals_bot};
 use crate::model::channels::Channel;
+use crate::model::events::CommunityEventInternal;
 use crate::timer_job_types::JoinMembersToPublicChannelJob;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
@@ -13,8 +12,10 @@ use community_canister::{c2c_bot_create_channel, c2c_join_community};
 use group_chat_core::GroupChatCore;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
+use std::collections::HashSet;
 use types::{
-    BotCaller, BotPermissions, Caller, ChatEventCategory, ChatEventType, CommunityPermission, MultiUserChat, OCResult, UserType,
+    BotCaller, BotPermissions, Caller, ChannelCreated, ChatEventCategory, ChatEventType, CommunityPermission, MultiUserChat,
+    OCResult, UserType,
 };
 use url::Url;
 use utils::document::validate_avatar;
@@ -178,7 +179,7 @@ fn create_channel_impl(
         MultiUserChat::Channel(state.env.canister_id().into(), channel_id),
         caller.agent(),
         args.is_public,
-        args.name,
+        args.name.clone(),
         args.description,
         args.rules,
         subtype,
@@ -217,6 +218,16 @@ fn create_channel_impl(
             .execute_with_state(state);
         }
     }
+
+    state.data.events.push_event(
+        CommunityEventInternal::ChannelCreated(Box::new(ChannelCreated {
+            channel_id,
+            is_public: args.is_public,
+            name: args.name,
+            created_by: caller.agent(),
+        })),
+        now,
+    );
 
     handle_activity_notification(state);
     Ok(SuccessResult { channel_id })
