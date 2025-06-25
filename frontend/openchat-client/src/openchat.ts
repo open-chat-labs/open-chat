@@ -8804,13 +8804,36 @@ export class OpenChat {
                                 // as the message will be displayed in popup
                                 if (resp.message.ephemeral) {
                                     removePlaceholder?.();
+                                    publish("ephemeralMessage", {
+                                        message: resp.message,
+                                        scope,
+                                        botId: bot.id,
+                                        commandName: bot.command.name,
+                                    });
+                                } else if (scope.kind === "chat_scope") {
+                                    const chat = allChatsStore.value.get(scope.chatId);
+                                    if (chat !== undefined) {
+                                        const messageContext = {
+                                            chatId: scope.chatId,
+                                            threadRootMessageIndex: scope.threadRootMessageIndex,
+                                        };
+                                        const timestamp = Date.now();
+                                        localUpdates.addUnconfirmed(
+                                            messageContext,
+                                            createMessage(messageContext, {
+                                                timestamp: BigInt(timestamp),
+                                                expiresAt: this.eventExpiry(chat, timestamp),
+                                                messageId: resp.message.messageId,
+                                                sender: bot.id,
+                                                content: resp.message.messageContent,
+                                                forwarded: false,
+                                                blockLevelMarkdown: resp.message.blockLevelMarkdown,
+                                                senderContext: botContext,
+
+                                            }),
+                                        )
+                                    }
                                 }
-                                publish("ephemeralMessage", {
-                                    message: resp.message,
-                                    scope,
-                                    botId: bot.id,
-                                    commandName: bot.command.name,
-                                });
                             } else {
                                 removePlaceholder?.();
                             }
