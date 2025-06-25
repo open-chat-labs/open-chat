@@ -319,7 +319,7 @@ import {
     chitStateStore,
     communitiesStore,
     communityFiltersStore,
-    confirmedThreadEventIndexesLoadedStore,
+    threadEventIndexesLoadedStore,
     cryptoBalanceStore,
     cryptoLookup,
     currentUserIdStore,
@@ -465,7 +465,7 @@ import {
     canSendGroupMessage,
     canStartVideoCalls,
     canUnblockUsers,
-    confirmedEventIndexesLoaded,
+    eventIndexesLoaded,
     containsReaction,
     createMessage,
     diffGroupPermissions,
@@ -3218,7 +3218,7 @@ export class OpenChat {
     }
 
     #earliestLoadedIndex(chatId: ChatIdentifier): number | undefined {
-        const confirmedLoaded = confirmedEventIndexesLoaded(chatId);
+        const confirmedLoaded = eventIndexesLoaded(chatId);
         return confirmedLoaded.length > 0 ? confirmedLoaded.index(0) : undefined;
     }
 
@@ -3472,8 +3472,8 @@ export class OpenChat {
         serverChat: ChatSummary,
         updatedEvents: UpdatedEvent[],
     ): Promise<void> {
-        const confirmedLoaded = confirmedEventIndexesLoaded(serverChat.id);
-        const confirmedThreadLoaded = confirmedThreadEventIndexesLoadedStore.value;
+        const confirmedLoaded = eventIndexesLoaded(serverChat.id);
+        const confirmedThreadLoaded = threadEventIndexesLoadedStore.value;
         const selectedThreadRootMessageIndex = selectedThreadIdStore.value?.threadRootMessageIndex;
 
         // Partition the updated events into those that belong to the currently selected thread and those that don't
@@ -3581,7 +3581,7 @@ export class OpenChat {
     }
 
     #confirmedUpToEventIndex(chatId: ChatIdentifier): number | undefined {
-        const ranges = confirmedEventIndexesLoaded(chatId).subranges();
+        const ranges = eventIndexesLoaded(chatId).subranges();
         if (ranges.length > 0) {
             return ranges[0].high;
         }
@@ -3589,7 +3589,7 @@ export class OpenChat {
     }
 
     #confirmedThreadUpToEventIndex(): number | undefined {
-        const ranges = confirmedThreadEventIndexesLoadedStore.value.subranges();
+        const ranges = threadEventIndexesLoadedStore.value.subranges();
         if (ranges.length > 0) {
             return ranges[0].high;
         }
@@ -4529,7 +4529,7 @@ export class OpenChat {
         messageEvent: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
     ) {
-        const confirmedLoaded = confirmedEventIndexesLoaded(serverChat.id);
+        const confirmedLoaded = eventIndexesLoaded(serverChat.id);
 
         if (indexIsInRanges(messageEvent.index, confirmedLoaded)) {
             // We already have this confirmed message
