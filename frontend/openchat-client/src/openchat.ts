@@ -8814,7 +8814,12 @@ export class OpenChat {
                                 } else {
                                     this.sendPlaceholderBotMessage(
                                         scope,
-                                        botContext,
+                                        botContext === undefined
+                                            ? undefined
+                                            : {
+                                                ...botContext,
+                                                finalised: resp.message.finalised,
+                                            },
                                         resp.message.messageContent,
                                         resp.message.messageId,
                                         bot.id,
