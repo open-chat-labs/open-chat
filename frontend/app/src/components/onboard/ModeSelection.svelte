@@ -27,7 +27,7 @@
         <OnBoardOptionLogo>
             <Login size="1.5em" />
         </OnBoardOptionLogo>
-        <Button fill secondary onClick={onSignIn}>
+        <Button fill onClick={onSignIn}>
             <Translatable resourceKey={i18nKey("loginDialog.signin")} />
         </Button>
     </div>
