@@ -81,8 +81,8 @@ import {
 } from "openchat-shared";
 import {
     allServerChatsStore,
-    confirmedEventIndexesLoadedStore,
-    confirmedThreadEventIndexesLoadedStore,
+    eventIndexesLoadedStore,
+    threadEventIndexesLoadedStore,
     cryptoLookup,
     currentUserIdStore,
     currentUserStore,
@@ -1965,10 +1965,10 @@ function diffMessagePermissions(
     return diff;
 }
 
-export function confirmedEventIndexesLoaded(chatId: ChatIdentifier): DRange {
+export function eventIndexesLoaded(chatId: ChatIdentifier): DRange {
     const selected = selectedChatIdStore.value;
     return selected !== undefined && chatIdentifiersEqual(selected, chatId)
-        ? confirmedEventIndexesLoadedStore.value
+        ? eventIndexesLoadedStore.value
         : new DRange();
 }
 
@@ -2004,7 +2004,7 @@ export function isContiguousInThread(
 ): boolean {
     return (
         messageContextsEqual(threadId, selectedThreadIdStore.value) &&
-        isContiguousInternal(confirmedThreadEventIndexesLoadedStore.value, events, [])
+        isContiguousInternal(threadEventIndexesLoadedStore.value, events, [])
     );
 }
 
@@ -2015,7 +2015,7 @@ export function isContiguous(
 ): boolean {
     return (
         chatIdentifiersEqual(chatId, selectedChatIdStore.value) &&
-        isContiguousInternal(confirmedEventIndexesLoaded(chatId), events, expiredEventRanges)
+        isContiguousInternal(eventIndexesLoaded(chatId), events, expiredEventRanges)
     );
 }
 

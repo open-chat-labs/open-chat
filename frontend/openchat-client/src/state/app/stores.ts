@@ -1190,8 +1190,8 @@ export const eventsStore = derived(
     },
 );
 
-export const confirmedEventIndexesLoadedStore = derived(
-    [serverEventsStore, expiredServerEventRanges],
+export const eventIndexesLoadedStore = derived(
+    [eventsStore, expiredServerEventRanges],
     ([events, expiredEventRanges]) => {
         const ranges = new DRange();
         events.forEach((e) => ranges.add(e.index));
@@ -1300,7 +1300,7 @@ export const threadEventsStore = derived(
     },
 );
 
-export const confirmedThreadEventIndexesLoadedStore = derived(serverThreadEventsStore, (events) => {
+export const threadEventIndexesLoadedStore = derived(threadEventsStore, (events) => {
     const ranges = new DRange();
     events.forEach((e) => ranges.add(e.index));
     return ranges;
