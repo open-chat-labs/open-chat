@@ -2361,6 +2361,18 @@ export type UnconfirmedMessageEvent = EventWrapper<Message> & { accepted: boolea
 
 export type UnconfirmedState = Map<bigint, UnconfirmedMessageEvent>;
 
+export type NewUnconfirmedMessage = {
+    timestamp: bigint;
+    expiresAt?: number;
+    messageId: bigint;
+    sender: string;
+    content: MessageContent;
+    repliesTo?: ReplyContext;
+    forwarded: boolean;
+    blockLevelMarkdown: boolean;
+    senderContext?: SenderContext;
+};
+
 export type VideoCallInProgress = {
     started: bigint;
     startedBy: string;
