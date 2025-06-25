@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Updated the way configuration is loaded for the pusher by using the `envconf` crate ([8145](https://github.com/open-chat-labs/open-chat/pull/8145))
+- If FCM token is present, notifications are also pushed to the native platforms via Firebase ([8229](https://github.com/open-chat-labs/open-chat/pull/8229))
 
 ### Changed
 

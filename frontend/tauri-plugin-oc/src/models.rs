@@ -15,9 +15,7 @@ pub struct OpenUrlResponse {
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SignUpRequest {
-    pub user_name: Option<String>,
-    pub user_id: Option<String>,
-    pub user_display_name: Option<String>,
+    pub username: String,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]

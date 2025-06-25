@@ -3176,8 +3176,7 @@ checksum = "37909eebbb50d72f9059c3b6d82c0463f2ff062c9e95845c43a6c9c0355411be"
 [[package]]
 name = "fcm-service"
 version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86ba5a5ae136857bac4ab2806b10e7bfaaa9a89c10768beb1f6acdc54711ce80"
+source = "git+https://github.com/ivan-jukic/fcm-service?branch=main#92d02c9b1bc7c76d2af6e64b15cb59c503c85c3a"
 dependencies = [
  "chrono",
  "gcp_auth",

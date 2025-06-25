@@ -398,6 +398,7 @@ impl RuntimeState {
             queued_notifications: self.data.notifications.len() as u32,
             latest_notification_index: self.data.notifications.latest_event_index(),
             web_push_subscriptions: self.data.web_push_subscriptions.total(),
+            fcm_token_count: self.data.fcm_token_store.len(),
             blocked_user_pairs: self.data.blocked_users.len() as u64,
             oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
             cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
@@ -586,7 +587,10 @@ impl Data {
                 let filtered_recipients: Vec<_> = user_notification
                     .recipients
                     .into_iter()
-                    .filter(|u| self.web_push_subscriptions.any_for_user(u) && !users_who_have_blocked_sender.contains(u))
+                    .filter(|u| {
+                        (self.web_push_subscriptions.any_for_user(u) || !self.fcm_token_store.get_for_user(u).is_empty())
+                            && !users_who_have_blocked_sender.contains(u)
+                    })
                     .collect();
 
                 if !filtered_recipients.is_empty() {
@@ -697,6 +701,7 @@ pub struct Metrics {
     pub queued_notifications: u32,
     pub latest_notification_index: u64,
     pub web_push_subscriptions: u64,
+    pub fcm_token_count: usize,
     pub blocked_user_pairs: u64,
     pub oc_secret_key_initialized: bool,
     pub cycles_balance_check_queue_len: u32,

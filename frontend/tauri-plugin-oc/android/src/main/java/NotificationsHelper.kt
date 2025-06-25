@@ -7,7 +7,6 @@ import android.content.Context
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import app.tauri.plugin.JSObject
 import com.google.firebase.messaging.FirebaseMessaging
 
 object NotificationsHelper {
@@ -17,7 +16,7 @@ object NotificationsHelper {
     fun showNotification(context: Context, title: String, content: String) {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        Log.d("TEST_OC", "Notification received, proceed to show it")
+        Log.d("TEST_OC", "Notification received, and now we're rendering it!")
         val notification =
                 NotificationCompat.Builder(context, MESSAGES_CHANNEL_ID)
                         .setSmallIcon(android.R.drawable.ic_dialog_info)
@@ -67,22 +66,18 @@ object NotificationsHelper {
         }
     }
 
-    fun getFCMToken() {
+    fun cacheFCMToken() {
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
             if (!task.isSuccessful) {
                 // Handle the error
                 return@addOnCompleteListener
             }
-            // Get new FCM registration token
+            // Get FCM token
             val token = task.result
 
             Log.d("TEST_OC", "FCM Token: $token")
-            // Save token locally so that we can query it!
-            OpenChatPlugin.fcmToken = token;
-            // Also raise an event in case UI is already listening for it!
-            OpenChatPlugin.triggerRef("fcm-token", JSObject().apply { put("token", token) })
-
-            // TODO send to Backend!!!!
+            // Cache token locally so that we can query it!
+            OpenChatPlugin.fcmToken = token
         }
     }
 }
