@@ -276,7 +276,11 @@ impl GroupChatCore {
         let min_visible_event_index = self.min_visible_event_index(user_id)?;
         let events_reader = self.events.visible_main_events_reader(min_visible_event_index);
         let latest_event_index = events_reader.latest_event_index().unwrap();
-        let invited_users = if self.invited_users.last_updated() > since { Some(self.invited_users.users()) } else { None };
+        let invited_users = if self.invited_users.last_updated() > since {
+            Some(self.invited_users.user_ids().copied().collect())
+        } else {
+            None
+        };
 
         let mut result = SelectedGroupUpdates {
             timestamp: last_updated,

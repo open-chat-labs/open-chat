@@ -14,8 +14,8 @@ use std::cmp::max;
 use std::collections::{BTreeMap, BTreeSet};
 use std::ops::Deref;
 use types::{
-    BotNotification, EventIndex, GroupMember, GroupPermissions, MessageIndex, MultiUserChat, OCResult, TimestampMillis,
-    Timestamped, UserId, UserType, Version, is_default,
+    BotNotification, EventIndex, GroupMember, GroupPermissions, GroupRole, MessageIndex, MultiUserChat, OCResult,
+    TimestampMillis, Timestamped, UserId, UserType, Version, is_default,
 };
 use utils::timestamped_set::TimestampedSet;
 
@@ -417,6 +417,20 @@ impl GroupMembers {
 
     pub fn moderators(&self) -> &BTreeSet<UserId> {
         &self.moderators
+    }
+
+    pub fn role(&self, user_id: &UserId) -> Option<GroupRole> {
+        if self.owners.contains(user_id) {
+            Some(GroupRole::Owner)
+        } else if self.admins.contains(user_id) {
+            Some(GroupRole::Admin)
+        } else if self.moderators.contains(user_id) {
+            Some(GroupRole::Moderator)
+        } else if self.member_ids.contains(user_id) {
+            Some(GroupRole::Participant)
+        } else {
+            None
+        }
     }
 
     pub fn bots(&self) -> &BTreeMap<UserId, UserType> {

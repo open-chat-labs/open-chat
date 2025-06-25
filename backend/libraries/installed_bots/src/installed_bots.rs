@@ -77,6 +77,10 @@ impl InstalledBots {
         self.bots.iter()
     }
 
+    pub fn user_ids(&self) -> impl Iterator<Item = &UserId> {
+        self.bots.keys()
+    }
+
     pub fn iter_latest_updates(&self, since: TimestampMillis) -> impl Iterator<Item = (UserId, BotUpdate)> + '_ {
         self.updates
             .iter()
