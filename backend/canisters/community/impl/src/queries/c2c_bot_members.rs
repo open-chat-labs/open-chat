@@ -9,6 +9,8 @@ use oc_error_codes::OCErrorCode;
 use std::collections::HashMap;
 use types::ChatPermission;
 use types::CommunityPermission;
+use types::CommunityRole;
+use types::GroupRole;
 use types::MemberType;
 use types::MembersResponse;
 use types::MembersResult;
@@ -64,7 +66,7 @@ fn community_users_by_type(data: &Data, member_type: MemberType) -> Vec<UserId> 
         MemberType::Member => data
             .members
             .member_ids()
-            .filter(|user_id| data.members.is_basic_member(user_id))
+            .filter(|user_id| matches!(data.members.role(user_id), Some(CommunityRole::Member)))
             .copied()
             .collect(),
         MemberType::Lapsed => data.members.lapsed().iter().copied().collect(),
@@ -84,7 +86,7 @@ fn channel_users_by_type(chat: &GroupChatCore, member_type: MemberType) -> Vec<U
             .members
             .member_ids()
             .iter()
-            .filter(|user_id| chat.members.is_basic_member(user_id))
+            .filter(|user_id| matches!(chat.members.role(user_id), Some(GroupRole::Participant)))
             .copied()
             .collect(),
         MemberType::Lapsed => chat.members.lapsed().iter().copied().collect(),

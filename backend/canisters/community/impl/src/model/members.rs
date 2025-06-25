@@ -488,8 +488,16 @@ impl CommunityMembers {
         self.members_and_channels.keys()
     }
 
-    pub fn is_basic_member(&self, user_id: &UserId) -> bool {
-        self.members_and_channels.contains_key(user_id) && !self.owners.contains(user_id) && !self.admins.contains(user_id)
+    pub fn role(&self, user_id: &UserId) -> Option<CommunityRole> {
+        if self.owners.contains(user_id) {
+            Some(CommunityRole::Owner)
+        } else if self.admins.contains(user_id) {
+            Some(CommunityRole::Admin)
+        } else if self.members_and_channels.contains_key(user_id) {
+            Some(CommunityRole::Member)
+        } else {
+            None
+        }
     }
 
     pub fn members_with_display_names(&self) -> &BTreeSet<UserId> {

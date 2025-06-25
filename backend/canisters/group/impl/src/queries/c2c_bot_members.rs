@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::Data;
 use crate::RuntimeState;
 use crate::guards::caller_is_local_user_index;
@@ -7,7 +5,9 @@ use crate::read_state;
 use canister_api_macros::query;
 use group_canister::c2c_bot_members::*;
 use oc_error_codes::OCErrorCode;
+use std::collections::HashMap;
 use types::ChatPermission;
+use types::GroupRole;
 use types::MemberType;
 use types::MembersResponse;
 use types::MembersResult;
@@ -53,7 +53,7 @@ fn users_by_type(data: &Data, member_type: MemberType) -> Vec<UserId> {
             .members
             .member_ids()
             .iter()
-            .filter(|user_id| data.chat.members.is_basic_member(user_id))
+            .filter(|user_id| matches!(data.chat.members.role(user_id), Some(GroupRole::Participant)))
             .copied()
             .collect(),
         MemberType::Lapsed => data.chat.members.lapsed().iter().copied().collect(),

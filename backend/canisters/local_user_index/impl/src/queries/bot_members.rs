@@ -10,12 +10,16 @@ use types::{BotActionScope, ChannelId, Chat, MemberType, MembersResponse, Member
 #[update(candid = true, msgpack = true)]
 #[trace]
 async fn bot_members_c2c(args: Args) -> MembersResponse {
-    bot_members(args).await
+    bot_members_impl(args).await
 }
 
 #[query(composite = true, candid = true, msgpack = true)]
 #[trace]
 async fn bot_members(args: Args) -> MembersResponse {
+    bot_members_impl(args).await
+}
+
+async fn bot_members_impl(args: Args) -> MembersResponse {
     let context = match mutate_state(|state| {
         extract_access_context_from_community_or_group_context(args.community_or_group_context, state)
     }) {
