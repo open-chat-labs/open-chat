@@ -35,6 +35,7 @@ pub(crate) fn notifications_impl(args: Args, state: &RuntimeState) -> Response {
                             .iter()
                             .map(|s| match s {
                                 NotificationSubscription::WebPush(web_push) => web_push.approx_size(),
+                                // TODO add FCM push size calculation
                                 _ => 0,
                             })
                             .sum::<usize>();

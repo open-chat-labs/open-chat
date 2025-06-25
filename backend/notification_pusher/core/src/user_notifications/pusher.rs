@@ -5,7 +5,7 @@ use fcm_service::{FcmMessage, FcmNotification as ExternalFcmNotification, FcmSer
 use std::collections::{BinaryHeap, HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
-use tracing::info;
+use tracing::{error, info};
 use types::{Milliseconds, TimestampMillis, UserId};
 use web_push::{HyperWebPushClient, WebPushClient, WebPushError};
 
@@ -151,7 +151,12 @@ impl Pusher {
         message.set_target(Target::Token(fcm_notification_to_push.fcm_token.0));
         message.set_android(Some(android_cfg));
 
-        self.fcm_service.send_notification(message).await.is_ok()
+        let res = self.fcm_service.send_notification(message).await;
+        if res.is_err() {
+            error!("Failed to push FCM notification: {:#?}", res);
+        }
+
+        res.is_ok()
     }
 }
 

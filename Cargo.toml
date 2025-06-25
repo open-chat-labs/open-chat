@@ -195,7 +195,7 @@ event_store_producer = { git = "https://github.com/open-chat-labs/event-store", 
 event_store_producer_cdk_runtime = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
 event_store_types = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
 event_store_utils = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
-fcm-service = "0.2.3"
+fcm-service = { git = "https://github.com/ivan-jukic/fcm-service", branch = "main" }
 futures = "0.3"
 getrandom = { version = "0.2", features = ["custom"] }
 hex = "0.4"

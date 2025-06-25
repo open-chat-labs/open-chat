@@ -21,13 +21,10 @@ import org.json.JSONObject
 // TODO should this be a constant in a separate file?
 const val RP_ID = "oc.app"
 
-// * An example of args that could be passed to signUp function!
-// @InvokeArg
-// class SignUpArgs {
-//     val userName: String? = ""
-//     val userId: String? = ""
-//     val userDisplayName: String? = ""
-// }
+ @InvokeArg
+ class SignUpArgs {
+     val username: String = "OcUser"
+ }
 
 @InvokeArg
 class SignInArgs {
@@ -40,65 +37,48 @@ class PasskeyAuth(private val activity: Activity) {
     // Command for creating a passkey; prompts user for authentication, and
     // allows them to store the passkey in the device's secure storage.
     fun handleSignUp(invoke: Invoke) {
+        val args = invoke.parseArgs(SignUpArgs::class.java)
         CoroutineScope(Dispatchers.Main).launch {
             try {
                 val challenge = generateRandomChallenge()
-
-                // TODO can we get this from the user?
-                val userName = "user@oc.app"
-                val displayName = "OpenChat User"
+                val userName = args.username
+                val displayName = "${args.username} @ OpenChat"
                 val userId = encodeBase64Url(userName.toByteArray())
-                val requestJson =
-                        JSONObject().apply {
-                            put("challenge", encodeBase64Url(challenge))
-                            put(
-                                    "rp",
-                                    JSONObject().apply {
-                                        put("name", "OpenChat")
-                                        put("id", RP_ID)
-                                    }
-                            )
-                            put(
-                                    "user",
-                                    JSONObject().apply {
-                                        put("id", userId)
-                                        put("name", userName)
-                                        put("displayName", displayName)
-                                    }
-                            )
-                            put(
-                                    "pubKeyCredParams",
-                                    JSONArray().apply {
-                                        put(
-                                                JSONObject().apply {
-                                                    put("type", "public-key")
-                                                    put("alg", -7)
-                                                }
-                                        )
-                                    }
-                            )
-                            put("timeout", 60000)
-                            put(
-                                    "authenticatorSelection",
-                                    JSONObject().apply {
-                                        put("authenticatorAttachment", "platform")
-                                        put("userVerification", "required")
-                                    }
-                            )
-                            put("attestation", "none")
-                        }
-
-                val result =
-                        credentialManager.createCredential(
-                                context = activity,
-                                request = CreatePublicKeyCredentialRequest(requestJson.toString())
+                val requestJson = JSONObject().apply {
+                    put("challenge", encodeBase64Url(challenge))
+                    put("rp", JSONObject().apply {
+                        put("name", "OpenChat")
+                        put("id", RP_ID)
+                    })
+                    put("user", JSONObject().apply {
+                        put("id", userId)
+                        put("name", userName)
+                        put("displayName", displayName)
+                    })
+                    put("pubKeyCredParams", JSONArray().apply {
+                        put(
+                                JSONObject().apply {
+                                    put("type", "public-key")
+                                    put("alg", -7)
+                                }
                         )
+                    })
+                    put("timeout", 60000)
+                    put("authenticatorSelection", JSONObject().apply {
+                        put("authenticatorAttachment", "platform")
+                        put("userVerification", "required")
+                    })
+                    put("attestation", "none")
+                }
 
-                val rawResponse =
-                        result.data.getString(
-                                "androidx.credentials.BUNDLE_KEY_REGISTRATION_RESPONSE_JSON"
-                        )
-                                ?: throw Exception("No registration response returned.")
+                val result = credentialManager.createCredential(
+                    context = activity,
+                    request = CreatePublicKeyCredentialRequest(requestJson.toString())
+                )
+
+                val rawResponse = result.data.getString(
+                    "androidx.credentials.BUNDLE_KEY_REGISTRATION_RESPONSE_JSON"
+                ) ?: throw Exception("No registration response returned.")
 
                 val tauriResponse = JSObject().put("passkey", rawResponse)
                 invoke.resolve(tauriResponse)
@@ -126,34 +106,29 @@ class PasskeyAuth(private val activity: Activity) {
 
         CoroutineScope(Dispatchers.Main).launch {
             try {
-                val requestJson =
-                        JSONObject().apply {
-                            put("challenge", encodeBase64Url(args.challenge))
-                            put("timeout", 60000)
-                            put("rpId", RP_ID)
-                            put("allowCredentials", JSONArray()) // empty array
-                            put("userVerification", "required")
-                        }
+                val requestJson = JSONObject().apply {
+                    put("challenge", encodeBase64Url(args.challenge))
+                    put("timeout", 60000)
+                    put("rpId", RP_ID)
+                    put("allowCredentials", JSONArray()) // empty array
+                    put("userVerification", "required")
+                }
 
-                val result =
-                        credentialManager.getCredential(
-                                context = activity,
-                                request =
-                                        GetCredentialRequest(
-                                                credentialOptions =
-                                                        listOf(
-                                                                GetPublicKeyCredentialOption(
-                                                                        requestJson.toString()
-                                                                )
-                                                        )
-                                        ),
-                        )
+                val result = credentialManager.getCredential(
+                    context = activity,
+                    request = GetCredentialRequest(
+                        credentialOptions =
+                            listOf(
+                                GetPublicKeyCredentialOption(
+                                    requestJson.toString()
+                                )
+                            )
+                        ),
+                    )
 
-                val rawResponse =
-                        result.credential.data.getString(
-                                "androidx.credentials.BUNDLE_KEY_AUTHENTICATION_RESPONSE_JSON"
-                        )
-                                ?: throw Exception("No authentication response returned.")
+                val rawResponse = result.credential.data.getString(
+                    "androidx.credentials.BUNDLE_KEY_AUTHENTICATION_RESPONSE_JSON"
+                ) ?: throw Exception("No authentication response returned.")
 
                 val tauriResponse = JSObject().put("passkey", rawResponse)
                 invoke.resolve(tauriResponse)

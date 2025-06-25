@@ -6,7 +6,7 @@ use index_store::IndexStore;
 use std::sync::Arc;
 use types::Error;
 
-#[derive(Envconfig, Clone)]
+#[derive(Envconfig, Clone, Debug)]
 pub struct EnvConfig {
     #[envconfig(from = "VAPID_PRIVATE_PEM")]
     pub vapid_private_pem: String,
