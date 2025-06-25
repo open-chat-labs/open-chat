@@ -128,7 +128,6 @@
         padding: $sp4;
     }
     .header {
-        padding-top: $sp4;
         display: flex;
         flex-direction: column;
         gap: $sp4;
