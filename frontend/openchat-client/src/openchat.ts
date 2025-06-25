@@ -8810,29 +8810,15 @@ export class OpenChat {
                                         botId: bot.id,
                                         commandName: bot.command.name,
                                     });
-                                } else if (scope.kind === "chat_scope") {
-                                    const chat = allChatsStore.value.get(scope.chatId);
-                                    if (chat !== undefined) {
-                                        const messageContext = {
-                                            chatId: scope.chatId,
-                                            threadRootMessageIndex: scope.threadRootMessageIndex,
-                                        };
-                                        const timestamp = Date.now();
-                                        localUpdates.addUnconfirmed(
-                                            messageContext,
-                                            createMessage(messageContext, {
-                                                timestamp: BigInt(timestamp),
-                                                expiresAt: this.eventExpiry(chat, timestamp),
-                                                messageId: resp.message.messageId,
-                                                sender: bot.id,
-                                                content: resp.message.messageContent,
-                                                forwarded: false,
-                                                blockLevelMarkdown: resp.message.blockLevelMarkdown,
-                                                senderContext: botContext,
-
-                                            }),
-                                        )
-                                    }
+                                } else {
+                                    this.sendPlaceholderBotMessage(
+                                        scope,
+                                        botContext,
+                                        resp.message.messageContent,
+                                        resp.message.messageId,
+                                        bot.id,
+                                        resp.message.blockLevelMarkdown
+                                    );
                                 }
                             } else {
                                 removePlaceholder?.();
