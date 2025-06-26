@@ -1530,7 +1530,7 @@
         "usernameTooLong": "用户名太长了",
         "usernameTooShort": "用户名太短了",
         "userNotFound": "无法找到该用户",
-        "welcome": "欢迎来到OpenChat!"
+        "welcome": "欢迎来到OpenChat"
     },
     "reminders": {
         "cancel": "取消提醒",
