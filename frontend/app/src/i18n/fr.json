@@ -559,6 +559,7 @@
     "copyInviteCode": "Copier le code d'invitation",
     "copyMessageUrl": "Copier l'URL du message",
     "copyToClipboard": "Copier dans le presse-papier",
+    "copyUrl": "Copier l'URL",
     "createAccountOrSignIn": "Appuyez ici pour **créer un compte** ou **vous connecter**",
     "createNewGroup": "Créer un nouveau groupe",
     "cryptoAccount": {
@@ -1926,7 +1927,7 @@
     },
     "upgradeByTransfer": "PCI",
     "upgradeStorage": "Mettre à niveau le stockage",
-    "urlCopiedToClipboard": "URL du groupe copiée dans le presse-papier !",
+    "urlCopiedToClipboard": "Url copiée dans le presse-papiers!",
     "useAtOwnRisk": "À utiliser à vos risques et périls",
     "userId": "identifiant d'utilisateur",
     "userIdCopiedToClipboard": "ID utilisateur copié dans le presse-papiers",

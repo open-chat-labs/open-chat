@@ -559,6 +559,7 @@
     "copyInviteCode": "आमंत्रण कोड कॉपी करें",
     "copyMessageUrl": "संदेश यूआरएल कॉपी करें",
     "copyToClipboard": "क्लिपबोर्ड पर कॉपी करें",
+    "copyUrl": "यूआरएल कॉपी करें",
     "createAccountOrSignIn": "**खाता बनाने** या **साइन इन** करने के लिए यहां टैप करें",
     "createNewGroup": "एक नया समूह बनाएं",
     "cryptoAccount": {
@@ -1926,7 +1927,7 @@
     },
     "upgradeByTransfer": "आईसीपी",
     "upgradeStorage": "भंडारण को अपग्रेड करें",
-    "urlCopiedToClipboard": "समूह यूआरएल क्लिपबोर्ड पर कॉपी किया गया!",
+    "urlCopiedToClipboard": "यूआरएल क्लिपबोर्ड पर कॉपी किया गया!",
     "useAtOwnRisk": "अपने जोखिम पर उपयोग करें",
     "userId": "उपयोगकर्ता पहचान",
     "userIdCopiedToClipboard": "उपयोगकर्ता आईडी को क्लिपबोर्ड पर कॉपी किया गया",

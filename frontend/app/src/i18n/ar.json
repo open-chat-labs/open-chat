@@ -559,6 +559,7 @@
     "copyInviteCode": "نسخ رمز الدعوة",
     "copyMessageUrl": "نسخ عنوان الرسالة",
     "copyToClipboard": "نسخ إلى الحافظة",
+    "copyUrl": "نسخ عنوان URL",
     "createAccountOrSignIn": "انقر هنا لإنشاء حساب أو تسجيل الدخول",
     "createNewGroup": "إنشاء مجموعة جديدة",
     "cryptoAccount": {
@@ -1926,7 +1927,7 @@
     },
     "upgradeByTransfer": "اي سي بي",
     "upgradeStorage": "ترقية التخزين",
-    "urlCopiedToClipboard": "تم نسخ عنوان URL للمجموعة إلى الحافظة!",
+    "urlCopiedToClipboard": "تم نسخ الرابط إلى الحافظة!",
     "useAtOwnRisk": "استخدم على مسؤوليتك الخاصة",
     "userId": "معرف المستخدم",
     "userIdCopiedToClipboard": "تم نسخ معرف المستخدم إلى الحافظة",
