@@ -238,6 +238,7 @@
             subscribe("notification", (n) => client.notificationReceived(n)),
             subscribe("noAccess", () => (modal = { kind: "no_access" })),
             subscribe("notFound", () => (modal = { kind: "not_found" })),
+            subscribe("copyUrl", copyUrl),
         ];
         client.initialiseNotifications();
         document.body.addEventListener("profile-clicked", profileClicked);
@@ -809,6 +810,19 @@
                 );
             }
         });
+    }
+
+    function copyUrl() {
+        const url = window.location.href;
+
+        navigator.clipboard.writeText(url).then(
+            () => {
+                toastStore.showSuccessToast(i18nKey("urlCopiedToClipboard"));
+            },
+            () => {
+                toastStore.showFailureToast(i18nKey("failedToCopyUrlToClipboard", { url }));
+            },
+        );
     }
 
     async function createDirectChat(chatId: DirectChatIdentifier): Promise<boolean> {

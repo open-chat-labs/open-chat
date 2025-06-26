@@ -559,6 +559,7 @@
     "copyInviteCode": "Скопировать код приглашения",
     "copyMessageUrl": "Скопировать адрес сообщения",
     "copyToClipboard": "Копировать в буфер обмена",
+    "copyUrl": "Копировать ссылку",
     "createAccountOrSignIn": "Нажмите здесь, чтобы **создать учетную запись** или **войти в систему**",
     "createNewGroup": "Создать новую группу",
     "cryptoAccount": {
@@ -1926,7 +1927,7 @@
     },
     "upgradeByTransfer": "ICP",
     "upgradeStorage": "Обновление хранилища",
-    "urlCopiedToClipboard": "URL группы скопирован в буфер обмена!",
+    "urlCopiedToClipboard": "URL-адрес скопирован в буфер обмена!",
     "useAtOwnRisk": "Используйте на свой риск",
     "userId": "ID пользователя",
     "userIdCopiedToClipboard": "Идентификатор пользователя скопирован в буфер обмена.",
