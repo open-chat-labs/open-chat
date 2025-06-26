@@ -58,7 +58,7 @@ fn selected_initial_impl(state: &RuntimeState) -> OCResult<SuccessResult> {
         webhooks: chat.webhooks(),
         basic_members,
         blocked_users: chat.members.blocked(),
-        invited_users: chat.invited_users.users(),
+        invited_users: chat.invited_users.user_ids().copied().collect(),
         pinned_messages: chat.pinned_messages(min_visible_message_index),
         chat_rules: chat.rules.value.clone().into(),
     })

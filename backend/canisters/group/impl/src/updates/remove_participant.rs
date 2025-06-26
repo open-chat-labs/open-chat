@@ -67,7 +67,7 @@ async fn remove_participant_impl(user_to_remove: UserId, block: bool, ext_caller
 }
 
 struct PrepareResult {
-    removed_by: UserId,
+    removed_by: Caller,
     local_user_index_canister_id: CanisterId,
     is_user_to_remove_an_owner: bool,
 }
@@ -85,9 +85,8 @@ fn prepare(
     }
 
     let caller = state.verified_caller(ext_caller)?;
-    let agent = caller.agent();
 
-    if agent == user_to_remove {
+    if caller.agent() == user_to_remove {
         Err(OCErrorCode::CannotRemoveSelf.into())
     } else {
         let user_to_remove_role = match state.data.chat.members.get(&user_to_remove) {
@@ -122,18 +121,20 @@ fn prepare(
         }
 
         Ok(Some(PrepareResult {
-            removed_by: agent,
+            removed_by: caller,
             local_user_index_canister_id: state.data.local_user_index_canister_id,
             is_user_to_remove_an_owner: user_to_remove_role.is_owner(),
         }))
     }
 }
 
-fn commit(user_to_remove: UserId, block: bool, removed_by: UserId, state: &mut RuntimeState) -> OCResult {
+fn commit(user_to_remove: UserId, block: bool, caller: Caller, state: &mut RuntimeState) -> OCResult {
+    let agent = caller.agent();
+
     let bot_notification = state
         .data
         .chat
-        .remove_member(removed_by, user_to_remove, block, state.env.now())?;
+        .remove_member(caller, user_to_remove, block, state.env.now())?;
 
     state.data.remove_user(user_to_remove, None);
     state.push_bot_notification(bot_notification);
@@ -142,7 +143,7 @@ fn commit(user_to_remove: UserId, block: bool, removed_by: UserId, state: &mut R
     // Fire-and-forget call to notify the user canister
     remove_membership_from_user_canister(
         user_to_remove,
-        removed_by,
+        agent,
         block,
         state.data.chat.name.value.clone(),
         state.data.chat.is_public.value,

@@ -47,6 +47,7 @@ import type {
     LeaveGroupResponse,
     MemberRole,
     Message,
+    OCError,
     OptionUpdate,
     OptionalChatPermissions,
     PinMessageResponse,
@@ -58,6 +59,7 @@ import type {
     SendMessageResponse,
     SetMemberDisplayNameResponse,
     SetVideoCallPresenceResponse,
+    Tally,
     ThreadPreviewsResponse,
     ToggleMuteNotificationResponse,
     UnblockCommunityUserResponse,
@@ -86,6 +88,8 @@ import type { AgentConfig } from "../../config";
 import {
     CommunityAcceptP2pSwapArgs,
     CommunityAcceptP2pSwapResponse,
+    CommunityActiveProposalTalliesArgs,
+    CommunityActiveProposalTalliesResponse,
     CommunityAddMembersToChannelArgs,
     CommunityAddMembersToChannelResponse,
     CommunityAddReactionArgs,
@@ -223,6 +227,7 @@ import {
     pushEventSuccess,
     searchGroupChatResponse,
     sendMessageSuccess,
+    tally,
     threadPreviewsSuccess,
     undeleteMessageSuccess,
     unitResult,
@@ -1802,5 +1807,18 @@ export class CommunityClient extends MsgpackCanisterAgent {
             CommunityWebhookArgs,
             CommunityWebhookResponse,
         );
+    }
+
+    activeProposalTallies(channelId: number): Promise<[number, Tally][] | OCError> {
+        return this.executeMsgpackQuery(
+            "active_proposal_tallies",
+            {
+                channel_id: toBigInt32(channelId),
+                invite_code: mapOptional(this.inviteCode, textToCode),
+            },
+            (resp) => mapResult(resp, (value) => value.tallies.map(([idx, t]) => [idx, tally(t)])),
+            CommunityActiveProposalTalliesArgs,
+            CommunityActiveProposalTalliesResponse,
+        )
     }
 }

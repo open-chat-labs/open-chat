@@ -8,7 +8,6 @@ pub struct FcmTokenStore {
     fcm_user_tokens: BTreeSet<(UserId, FcmToken)>,
 }
 
-#[allow(dead_code)]
 impl FcmTokenStore {
     /// Checks if a given FCM token is contained within the store!
     pub fn contains(&self, token: &FcmToken) -> bool {
@@ -52,6 +51,14 @@ impl FcmTokenStore {
             .take_while(|(u, _)| u == user_id)
             .map(|(_, token)| token)
             .collect()
+    }
+
+    pub fn len(&self) -> usize {
+        self.fcm_user_tokens.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.fcm_user_tokens.is_empty()
     }
 }
 

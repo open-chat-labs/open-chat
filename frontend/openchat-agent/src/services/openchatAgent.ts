@@ -200,6 +200,7 @@ import {
     CommonResponses,
     DestinationInvalidError,
     getOrAdd,
+    isError,
     isSuccessfulEventsResponse,
     Lazy,
     MAX_ACTIVITY_EVENTS,
@@ -234,6 +235,7 @@ import {
     setCachedChats,
     setCachedExternalAchievements,
     setCachedMessageIfNotExists,
+    updateCachedProposalTallies,
 } from "../utils/caching";
 import {
     buildBlobUrl,
@@ -325,7 +327,10 @@ export class OpenChatAgent extends EventTarget {
     private _signInWithSolanaClient: Lazy<SignInWithSolanaClient>;
     private _translationsClient: Lazy<TranslationsClient>;
 
-    constructor(private identity: Identity, private config: AgentConfig) {
+    constructor(
+        private identity: Identity,
+        private config: AgentConfig,
+    ) {
         super();
         this._logger = config.logger;
         this._agent = createHttpAgentSync(identity, config.icUrl);
@@ -1734,8 +1739,8 @@ export class OpenChatAgent extends EventTarget {
                         a.reason.kind === "achievement_unlocked"
                             ? a.reason.type
                             : a.reason.kind === "external_achievement_unlocked"
-                            ? a.reason.name
-                            : undefined;
+                              ? a.reason.name
+                              : undefined;
 
                     if (name !== undefined) {
                         achievements.mutate((ac) => ac.add(name));
@@ -2162,8 +2167,8 @@ export class OpenChatAgent extends EventTarget {
             previousUpdatesTimestamp === undefined
                 ? maxC2cCalls
                 : durationSincePreviousUpdates < 10 * ONE_MINUTE_MILLIS
-                ? maxC2cCalls * 4
-                : maxC2cCalls * 20;
+                  ? maxC2cCalls * 4
+                  : maxC2cCalls * 20;
 
         const promises: Promise<WaitAllResult<GroupAndCommunitySummaryUpdatesResponseBatch>>[] = [];
         for (const [localUserIndex, requests] of requestsByLocalUserIndex) {
@@ -2722,6 +2727,14 @@ export class OpenChatAgent extends EventTarget {
 
     removeSubscription(subscription: PushSubscriptionJSON): Promise<void> {
         return this._notificationClient.removeSubscription(subscription);
+    }
+
+    fcmTokenExists(fcmToken: string): Promise<boolean> {
+        return this._notificationClient.fcmTokenExists(fcmToken);
+    }
+
+    addFcmToken(fcmToken: string, onResponseError?: (error: string | null) => void): Promise<void> {
+        return this._notificationClient.addFcmToken(fcmToken, onResponseError);
     }
 
     toggleMuteNotifications(
@@ -4518,6 +4531,18 @@ export class OpenChatAgent extends EventTarget {
             case "group_chat":
                 return this.getGroupClient(chatId.groupId).getWebhook(id);
         }
+    }
+
+    async updateProposalTallies(chatId: MultiUserChatIdentifier): Promise<EventWrapper<Message>[]> {
+        const response = await (chatId.kind === "channel"
+            ? this.communityClient(chatId.communityId).activeProposalTallies(chatId.channelId)
+            : this.getGroupClient(chatId.groupId).activeProposalTallies());
+
+        if (isError(response) || response.length === 0) {
+            return [];
+        }
+
+        return await updateCachedProposalTallies(this.db, chatId, response);
     }
 }
 

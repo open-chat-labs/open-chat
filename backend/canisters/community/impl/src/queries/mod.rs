@@ -1,9 +1,11 @@
 use crate::RuntimeState;
 use types::TimestampMillis;
 
+mod active_proposal_tallies;
 mod c2c_bot_channel_details;
 mod c2c_bot_community_events;
 mod c2c_bot_community_summary;
+mod c2c_bot_members;
 mod c2c_can_issue_access_token;
 mod channel_summary;
 mod channel_summary_updates;
@@ -13,7 +15,6 @@ mod events_by_index;
 mod events_window;
 mod explore_channels;
 mod http_request;
-mod in_progress_proposal_tallies;
 mod invite_code;
 mod local_user_index;
 mod lookup_members;

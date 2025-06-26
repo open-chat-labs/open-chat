@@ -2,8 +2,8 @@ use crate::RuntimeState;
 use jwt::Claims;
 use rand::Rng;
 use types::{
-    BotActionByCommandClaims, BotActionChatDetails, BotActionCommunityDetails, BotActionScope, BotChatContext, BotInitiator,
-    BotInstallationLocation, BotLocationContext, Chat, MessageId, User, UserId,
+    BotActionByCommandClaims, BotActionChatDetails, BotActionCommunityDetails, BotActionScope, BotChatContext,
+    BotCommunityOrGroupContext, BotInitiator, Chat, CommunityOrGroup, MessageId, User, UserId,
 };
 
 pub struct BotAccessContext {
@@ -44,8 +44,8 @@ pub fn extract_access_context_from_chat_context(
     }
 }
 
-pub fn extract_access_context_from_location_context(
-    location_context: BotLocationContext,
+pub fn extract_access_context_from_community_or_group_context(
+    location_context: BotCommunityOrGroupContext,
     state: &mut RuntimeState,
 ) -> Result<BotAccessContext, String> {
     let caller = state.env.caller();
@@ -60,22 +60,24 @@ pub fn extract_access_context_from_location_context(
     };
 
     let scope = match location_context {
-        BotLocationContext::Command(jwt) => return extract_access_context_from_jwt(&jwt, &user, state),
-        BotLocationContext::Autonomous(BotInstallationLocation::Community(community_id)) => {
+        BotCommunityOrGroupContext::Command(jwt) => {
+            let cxt = extract_access_context_from_jwt(&jwt, &user, state)?;
+            if cxt.scope.user_id().is_some() {
+                return Err("Command context must be a community or group".to_string());
+            }
+            return Ok(cxt);
+        }
+        BotCommunityOrGroupContext::Autonomous(CommunityOrGroup::Community(community_id)) => {
             BotActionScope::Community(BotActionCommunityDetails { community_id })
         }
-        BotLocationContext::Autonomous(BotInstallationLocation::Group(chat_id)) => BotActionScope::Chat(BotActionChatDetails {
-            chat: Chat::Group(chat_id),
-            thread: None,
-            message_id: MessageId::from(0_u64),
-            user_message_id: None,
-        }),
-        BotLocationContext::Autonomous(BotInstallationLocation::User(chat_id)) => BotActionScope::Chat(BotActionChatDetails {
-            chat: Chat::Direct(chat_id),
-            thread: None,
-            message_id: MessageId::from(0_u64),
-            user_message_id: None,
-        }),
+        BotCommunityOrGroupContext::Autonomous(CommunityOrGroup::Group(chat_id)) => {
+            BotActionScope::Chat(BotActionChatDetails {
+                chat: Chat::Group(chat_id),
+                thread: None,
+                message_id: MessageId::from(0_u64),
+                user_message_id: None,
+            })
+        }
     };
 
     Ok(BotAccessContext {

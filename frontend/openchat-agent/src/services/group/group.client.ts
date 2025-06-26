@@ -31,6 +31,7 @@ import type {
     JoinVideoCallResponse,
     MemberRole,
     Message,
+    OCError,
     OptionalChatPermissions,
     OptionUpdate,
     PinMessageResponse,
@@ -43,6 +44,7 @@ import type {
     SearchGroupChatResponse,
     SendMessageResponse,
     SetVideoCallPresenceResponse,
+    Tally,
     ThreadPreviewsResponse,
     ToggleMuteNotificationResponse,
     UnblockUserResponse,
@@ -68,6 +70,8 @@ import type { AgentConfig } from "../../config";
 import {
     GroupAcceptP2pSwapArgs,
     GroupAcceptP2pSwapResponse,
+    GroupActiveProposalTalliesArgs,
+    GroupActiveProposalTalliesResponse,
     GroupAddReactionArgs,
     GroupBlockUserArgs,
     GroupCancelInvitesArgs,
@@ -181,6 +185,7 @@ import {
     pushEventSuccess,
     searchGroupChatResponse,
     sendMessageSuccess,
+    tally,
     threadPreviewsSuccess,
     undeleteMessageSuccess,
     unitResult,
@@ -1339,5 +1344,17 @@ export class GroupClient extends MsgpackCanisterAgent {
             GroupWebhookArgs,
             GroupWebhookResponse,
         );
+    }
+
+    activeProposalTallies(): Promise<[number, Tally][] | OCError> {
+        return this.executeMsgpackQuery(
+            "active_proposal_tallies",
+            {
+                invite_code: mapOptional(this.inviteCode, textToCode),
+            },
+            (resp) => mapResult(resp, (value) => value.tallies.map(([idx, t]) => [idx, tally(t)])),
+            GroupActiveProposalTalliesArgs,
+            GroupActiveProposalTalliesResponse,
+        )
     }
 }

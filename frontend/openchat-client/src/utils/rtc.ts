@@ -134,23 +134,20 @@ export function parseWebRtcMessage(chatId: ChatIdentifier, msg: WebRtcMessage): 
         };
     }
     if (msg.kind === "remote_user_sent_message") {
-        msg.messageEvent.event.content = hydrateBigIntsInContent(msg.messageEvent.event.content);
-        if (msg.messageEvent.event.repliesTo?.kind === "rehydrated_reply_context") {
-            msg.messageEvent.event.repliesTo = {
-                ...msg.messageEvent.event.repliesTo,
-                messageId: toBigInt64(msg.messageEvent.event.messageId),
-                content: hydrateBigIntsInContent(msg.messageEvent.event.repliesTo.content),
+        msg.message.content = hydrateBigIntsInContent(msg.message.content);
+        if (msg.message.repliesTo?.kind === "rehydrated_reply_context") {
+            msg.message.repliesTo = {
+                ...msg.message.repliesTo,
+                messageId: toBigInt64(msg.message.repliesTo.messageId),
+                content: hydrateBigIntsInContent(msg.message.repliesTo.content),
             };
         }
         return {
             ...msg,
             id: chatId,
-            messageEvent: {
-                ...msg.messageEvent,
-                event: {
-                    ...msg.messageEvent.event,
-                    messageId: toBigInt64(msg.messageEvent.event.messageId),
-                },
+            message: {
+                ...msg.message,
+                messageId: toBigInt64(msg.message.messageId),
                 timestamp: BigInt(Date.now()),
             },
         };

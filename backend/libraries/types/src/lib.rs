@@ -53,6 +53,7 @@ mod group_roles;
 mod http;
 mod idempotency;
 mod indexed_event;
+mod members;
 mod mention;
 mod message;
 mod message_content;
@@ -133,6 +134,7 @@ pub use group_roles::*;
 pub use http::*;
 pub use idempotency::*;
 pub use indexed_event::*;
+pub use members::*;
 pub use mention::*;
 pub use message::*;
 pub use message_content::*;
@@ -250,4 +252,11 @@ pub fn is_default<T: Default + PartialEq>(value: &T) -> bool {
 
 pub trait Fallback: Sized {
     type FallbackType: Into<Self>;
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum CommunityOrGroup {
+    Community(CommunityId),
+    Group(ChatId),
 }

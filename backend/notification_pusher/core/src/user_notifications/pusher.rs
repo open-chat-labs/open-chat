@@ -5,7 +5,7 @@ use fcm_service::{FcmMessage, FcmNotification as ExternalFcmNotification, FcmSer
 use std::collections::{BinaryHeap, HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
-use tracing::info;
+use tracing::{error, info};
 use types::{Milliseconds, TimestampMillis, UserId};
 use web_push::{HyperWebPushClient, WebPushClient, WebPushError};
 
@@ -87,14 +87,14 @@ impl Pusher {
         }
     }
 
-    async fn process_user_notification_to_push(&self, user_notification_to_push: UserNotificationToPush) -> bool {
-        let UserNotificationToPush { notification, message } = user_notification_to_push;
+    async fn process_user_notification_to_push(&self, user_notification_to_push: Box<UserNotificationToPush>) -> bool {
+        let UserNotificationToPush { notification, message } = *user_notification_to_push;
         let push_result = self.web_push_client.send(message).await;
         let success = push_result.is_ok();
 
         if let Err(error) = push_result {
             match error {
-                WebPushError::EndpointNotValid | WebPushError::InvalidUri | WebPushError::EndpointNotFound => {
+                WebPushError::EndpointNotValid(_) | WebPushError::InvalidUri | WebPushError::EndpointNotFound(_) => {
                     let _ = self.subscriptions_to_remove_sender.try_send((
                         notification.metadata.recipient,
                         notification.subscription_info.keys.p256dh.clone(),
@@ -151,7 +151,12 @@ impl Pusher {
         message.set_target(Target::Token(fcm_notification_to_push.fcm_token.0));
         message.set_android(Some(android_cfg));
 
-        self.fcm_service.send_notification(message).await.is_ok()
+        let res = self.fcm_service.send_notification(message).await;
+        if res.is_err() {
+            error!("Failed to push FCM notification: {:#?}", res);
+        }
+
+        res.is_ok()
     }
 }
 

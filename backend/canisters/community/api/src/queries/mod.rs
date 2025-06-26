@@ -1,6 +1,8 @@
+pub mod active_proposal_tallies;
 pub mod c2c_bot_channel_details;
 pub mod c2c_bot_community_events;
 pub mod c2c_bot_community_summary;
+pub mod c2c_bot_members;
 pub mod c2c_can_issue_access_token;
 pub mod c2c_events;
 pub mod c2c_events_by_index;
@@ -14,7 +16,6 @@ pub mod events;
 pub mod events_by_index;
 pub mod events_window;
 pub mod explore_channels;
-pub mod in_progress_proposal_tallies;
 pub mod invite_code;
 pub mod local_user_index;
 pub mod lookup_members;

@@ -449,7 +449,10 @@ export type WorkerRequest =
     | DeleteWebhook
     | GetWebhook
     | PayForStreakInsurance
-    | UpdateDirectChatSettings;
+    | UpdateDirectChatSettings
+    | UpdateProposalTallies
+    | FcmTokenExists
+    | AddFcmToken;
 
 type SetMinLogLevel = {
     kind: "setMinLogLevel";
@@ -468,6 +471,11 @@ type UpdateDirectChatSettings = {
     userId: string;
     eventsTtl: OptionUpdate<bigint>;
 };
+
+type UpdateProposalTallies = {
+    kind: "updateProposalTallies";
+    chatId: MultiUserChatIdentifier;
+}
 
 type RegisterWebhook = {
     kind: "registerWebhook";
@@ -973,6 +981,17 @@ type PushSub = {
 type SubscriptionExists = {
     p256dh_key: string;
     kind: "subscriptionExists";
+};
+
+type FcmTokenExists = {
+    kind: "fcmTokenExists";
+    fcmToken: string;
+};
+
+type AddFcmToken = {
+    kind: "addFcmToken";
+    fcmToken: string;
+    onResponseError?: (error: string | null) => void;
 };
 
 type RegisterUser = {
@@ -1620,6 +1639,7 @@ export type WorkerResponseInner =
     | UserSummary[]
     | CheckUsernameResponse
     | EventWrapper<Message>
+    | EventWrapper<Message>[]
     | ChatEventsResponse[]
     | EventsResponse<ChatEvent>
     | Record<string, number>
@@ -2471,4 +2491,6 @@ export type WorkerResult<T> = T extends Init
     ? PayForStreakInsuranceResponse
     : T extends UpdateDirectChatSettings
     ? boolean
+    : T extends UpdateProposalTallies
+    ? EventWrapper<Message>[]
     : never;

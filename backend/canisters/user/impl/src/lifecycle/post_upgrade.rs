@@ -6,6 +6,7 @@ use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
 use tracing::info;
+use types::CanisterId;
 use user_canister::post_upgrade::Args;
 
 #[post_upgrade]
@@ -16,8 +17,14 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
+    let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
+
+    if data.test_mode {
+        data.identity_canister_id = CanisterId::from_text("rejcv-jqaaa-aaaak-afj5q-cai").unwrap();
+    } else {
+        data.identity_canister_id = CanisterId::from_text("6klfq-niaaa-aaaar-qadbq-cai").unwrap();
+    }
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 

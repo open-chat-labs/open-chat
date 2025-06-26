@@ -52,7 +52,7 @@ fn selected_channel_initial_impl(args: Args, state: &RuntimeState) -> OCResult<S
         members,
         basic_members,
         blocked_users: chat.members.blocked(),
-        invited_users: chat.invited_users.users(),
+        invited_users: chat.invited_users.user_ids().copied().collect(),
         pinned_messages: chat.pinned_messages(min_visible_message_index),
         chat_rules: chat.rules.value.clone().into(),
         webhooks: chat.webhooks(),

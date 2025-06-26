@@ -74,6 +74,7 @@ fn main() {
         std::fs::remove_dir_all(&directory).unwrap();
     }
 
+    generate_ts_method!(community, active_proposal_tallies);
     generate_ts_method!(community, channel_summary_updates);
     generate_ts_method!(community, channel_summary);
     generate_ts_method!(community, deleted_message);

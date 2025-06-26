@@ -140,15 +140,25 @@
     }
 
     function deleteFailedMessage() {
-        client.deleteFailedMessage(
-            chatId,
-            event as EventWrapper<Message>,
-            threadRootMessage?.messageIndex,
-        );
+        if (event.event.kind === "message") {
+            client.deleteFailedMessage(
+                chatId,
+                event.event.messageId,
+                threadRootMessage?.messageIndex,
+            );
+        }
     }
 
     function retrySend() {
-        client.retrySendMessage(messageContext, event as EventWrapper<Message>);
+        const message = event as EventWrapper<Message>;
+        client.sendMessageWithContent(
+            messageContext,
+            message.event.content,
+            message.event.blockLevelMarkdown,
+            [],
+            message.event.forwarded,
+            true
+        );
     }
 
     let sender = $derived(

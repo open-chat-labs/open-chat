@@ -63,7 +63,11 @@
                 // and just call registerUser
                 if ($identityStateStore.kind !== "registering") {
                     if (!passkeyCreated) {
-                        await client.signUpWithWebAuthn(true, username);
+                        if (client.isNativeAndroid()) {
+                            await client.signUpWithAndroidWebAuthn(true, username);
+                        } else {
+                            await client.signUpWithWebAuthn(true, username);
+                        }
                     }
                 }
                 passkeyCreated = true;
