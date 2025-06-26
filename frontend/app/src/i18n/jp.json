@@ -559,7 +559,7 @@
     "copyInviteCode": "招待コードをコピー",
     "copyMessageUrl": "メッセージのURLをコピーする",
     "copyToClipboard": "クリップボードにコピーする",
-    "createAccountOrSignIn": "タップして**アカウントを作成**または**ログイン**してください",
+    "createAccountOrSignIn": "**アカウントを作成**または**サインイン**するには、ここをタップしてください",
     "createNewGroup": "新しいグループを作成する",
     "cryptoAccount": {
         "auto": "自動",
