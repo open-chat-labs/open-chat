@@ -12,7 +12,7 @@
     tabindex="0"
     on:click={() => client.updateIdentityState({ kind: "logging_in" })}
     class="anon-footer">
-    <Translatable resourceKey={i18nKey("tapToLogin")} />
+    <Translatable resourceKey={i18nKey("createAccountOrSignIn")} />
 </div>
 
 <style lang="scss">
