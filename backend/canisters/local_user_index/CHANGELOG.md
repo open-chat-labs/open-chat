@@ -12,7 +12,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `bot_remove_user` endpoint ([#8217](https://github.com/open-chat-labs/open-chat/pull/8217))
 - Add `bot_invite_users` endpoint ([#8218](https://github.com/open-chat-labs/open-chat/pull/8218))
 - Add `bot_members` endpoint ([#8225](https://github.com/open-chat-labs/open-chat/pull/8225))
-- 
 
 ### Changed
 

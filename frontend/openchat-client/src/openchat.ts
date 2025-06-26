@@ -404,6 +404,7 @@ import {
     userCreatedStore,
     walletConfigStore,
     webhookUserIdsStore,
+    latestSuccessfulUpdatesLoop,
 } from "./state";
 import { botState } from "./state/bots.svelte";
 import { ChatDetailsState } from "./state/chat/serverDetails";
@@ -6401,6 +6402,7 @@ export class OpenChat {
                             resp as UpdatesResult,
                         );
                     }
+                    latestSuccessfulUpdatesLoop.set(Date.now());
                 },
                 onError: (err) => {
                     console.warn("getUpdates threw an error: ", err);
@@ -8852,14 +8854,16 @@ export class OpenChat {
 
         return this.#sendRequest({ kind: "claimDailyChit", utcOffsetMins }).then((resp) => {
             if (resp.kind === "success") {
-                chitStateStore.update((state) => ({
-                    chitBalance: resp.chitBalance,
-                    streakEnds: resp.nextDailyChitClaim + BigInt(1000 * 60 * 60 * 24),
-                    streak: resp.streak,
-                    maxStreak: resp.maxStreak,
-                    nextDailyChitClaim: resp.nextDailyChitClaim,
-                    totalChitEarned: state.totalChitEarned + resp.chitEarned,
-                }));
+                if (resp.nextDailyChitClaim > chitStateStore.value.nextDailyChitClaim) {
+                    chitStateStore.update((state) => ({
+                        chitBalance: resp.chitBalance,
+                        streakEnds: resp.nextDailyChitClaim + BigInt(1000 * 60 * 60 * 24),
+                        streak: resp.streak,
+                        maxStreak: resp.maxStreak,
+                        nextDailyChitClaim: resp.nextDailyChitClaim,
+                        totalChitEarned: state.totalChitEarned + resp.chitEarned,
+                    }));
+                }
                 this.#overwriteUserInStore(userId, (user) => ({
                     ...user,
                     chitBalance: resp.chitBalance,
