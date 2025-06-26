@@ -404,6 +404,7 @@ import {
     userCreatedStore,
     walletConfigStore,
     webhookUserIdsStore,
+    latestSuccessfulUpdatesLoop,
 } from "./state";
 import { botState } from "./state/bots.svelte";
 import { ChatDetailsState } from "./state/chat/serverDetails";
@@ -6401,6 +6402,7 @@ export class OpenChat {
                             resp as UpdatesResult,
                         );
                     }
+                    latestSuccessfulUpdatesLoop.set(Date.now());
                 },
                 onError: (err) => {
                     console.warn("getUpdates threw an error: ", err);
@@ -8860,7 +8862,6 @@ export class OpenChat {
                         maxStreak: resp.maxStreak,
                         nextDailyChitClaim: resp.nextDailyChitClaim,
                         totalChitEarned: state.totalChitEarned + resp.chitEarned,
-                        canClaim: false,
                     }));
                 }
                 this.#overwriteUserInStore(userId, (user) => ({

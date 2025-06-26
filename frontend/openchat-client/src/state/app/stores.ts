@@ -467,7 +467,6 @@ export const chitStateStore = writable<ChitState>(
         maxStreak: 0,
         streakEnds: 0n,
         nextDailyChitClaim: 0n,
-        canClaim: false,
     },
     undefined,
     dequal,
@@ -1321,3 +1320,4 @@ export const identityStateStore = writable<IdentityState>(
 
 export const failedMessagesStore = localUpdates.failedMessages;
 export const unconfirmedStore = localUpdates.unconfirmed;
+export const latestSuccessfulUpdatesLoop = writable(0);

@@ -28,6 +28,8 @@
         unreadDirectCountsStore,
         unreadFavouriteCountsStore,
         unreadGroupCountsStore,
+        latestSuccessfulUpdatesLoop,
+        ONE_MINUTE_MILLIS,
     } from "openchat-client";
     import page from "page";
     import { getContext, onMount, tick } from "svelte";
@@ -43,6 +45,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { rtlStore } from "../../../stores/rtl";
     import { disableChit, hideChitIcon } from "../../../stores/settings";
+    import { now } from "../../../stores/time";
     import { isTouchDevice } from "../../../utils/devices";
     import Avatar from "../../Avatar.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
@@ -58,6 +61,8 @@
     let avatarSize = $derived($mobileWidth ? AvatarSize.Small : AvatarSize.Default);
     let communityExplorer = $derived($routeStore.kind === "communities_route");
     let selectedCommunityId = $derived($selectedCommunitySummaryStore?.id.communityId);
+    let claimChitAvailable = $derived($chitStateStore.nextDailyChitClaim < $now
+        && latestSuccessfulUpdatesLoop > $now - 10 * ONE_MINUTE_MILLIS);
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
     let scrollingSection: HTMLElement;
@@ -190,14 +195,14 @@
             </LeftNavItem>
         {/if}
         {#if !$anonUserStore}
-            {#if !$disableChit && ($chitStateStore.canClaim || !$hideChitIcon)}
+            {#if !$disableChit && (claimChitAvailable || !$hideChitIcon)}
                 <LeftNavItem
                     label={i18nKey(
-                        $chitStateStore.canClaim ? "dailyChit.extendStreak" : "dailyChit.viewStreak",
+                        claimChitAvailable ? "dailyChit.extendStreak" : "dailyChit.viewStreak",
                     )}
                     onClick={() => publish("claimDailyChit")}>
                     <div class="hover streak">
-                        <LighteningBolt enabled={$chitStateStore.canClaim} />
+                        <LighteningBolt enabled={claimChitAvailable} />
                     </div>
                 </LeftNavItem>
             {/if}

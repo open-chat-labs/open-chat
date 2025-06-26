@@ -1087,7 +1087,6 @@ export type ChitState = {
     streakEnds: bigint;
     maxStreak: number;
     nextDailyChitClaim: bigint;
-    canClaim: boolean;
     chitBalance: number;
     totalChitEarned: number;
 };
