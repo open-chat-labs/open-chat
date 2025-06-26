@@ -559,6 +559,7 @@
     "copyInviteCode": "复制邀请码",
     "copyMessageUrl": "复制消息地址",
     "copyToClipboard": "复制到粘贴板",
+    "createAccountOrSignIn": "点击此处**创建账户**或**登录**",
     "createNewGroup": "创建群聊",
     "cryptoAccount": {
         "auto": "自动的",
@@ -1706,7 +1707,6 @@
         "title": "请切换到我们的新域"
     },
     "tapForReferralLink": "点击复制您的个人推荐链接",
-    "tapToLogin": "访客模式 - 点击此处登录",
     "tellMeMore": "更多信息",
     "theInternetComputer": "互联网计算机",
     "theme": {

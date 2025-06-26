@@ -2,6 +2,7 @@
     import {
         AvatarSize,
         type CommunitySummary,
+        ONE_MINUTE_MILLIS,
         type OpenChat,
         activityFeedShowing,
         allUsersStore,
@@ -16,6 +17,7 @@
         favouritesStore,
         favouritesVideoCallCountsStore,
         groupVideoCallCountsStore,
+        latestSuccessfulUpdatesLoop,
         messageActivitySummaryStore,
         mobileWidth,
         navOpen,
@@ -59,7 +61,9 @@
     let avatarSize = $derived($mobileWidth ? AvatarSize.Small : AvatarSize.Default);
     let communityExplorer = $derived($routeStore.kind === "communities_route");
     let selectedCommunityId = $derived($selectedCommunitySummaryStore?.id.communityId);
-    let claimChitAvailable = $derived($chitStateStore.nextDailyChitClaim < $now);
+    let claimChitAvailable = $derived.by(() => {
+        return $chitStateStore.nextDailyChitClaim < $now && $latestSuccessfulUpdatesLoop > $now - 10 * ONE_MINUTE_MILLIS;
+    });
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
     let scrollingSection: HTMLElement;
