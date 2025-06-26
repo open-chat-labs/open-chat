@@ -559,6 +559,7 @@
     "copyInviteCode": "کد دعوت را کپی کنید",
     "copyMessageUrl": "آدرس پیام را کپی کنید",
     "copyToClipboard": "کپی به کلیپ بورد",
+    "copyUrl": "کپی کردن آدرس اینترنتی",
     "createAccountOrSignIn": "برای ایجاد حساب کاربری یا ورود به سیستم اینجا را لمس کنید.",
     "createNewGroup": "یک گروه جدید ایجاد کنید",
     "cryptoAccount": {
@@ -1926,7 +1927,7 @@
     },
     "upgradeByTransfer": "ICP",
     "upgradeStorage": "فضای ذخیره سازی را ارتقا دهید",
-    "urlCopiedToClipboard": "نشانی وب گروه در کلیپ بورد کپی شد!",
+    "urlCopiedToClipboard": "آدرس اینترنتی در کلیپ‌بورد کپی شد!",
     "useAtOwnRisk": "با مسئولیت خود استفاده کنید",
     "userId": "شناسه کاربر",
     "userIdCopiedToClipboard": "شناسه کاربر در کلیپ بورد کپی شد",

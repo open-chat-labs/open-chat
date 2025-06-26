@@ -3,6 +3,7 @@
     import {
         chatSummariesListStore,
         iconSize,
+        mobileWidth,
         notificationsSupported,
         platformModeratorStore,
         publish,
@@ -17,6 +18,7 @@
     import TickIcon from "svelte-material-icons/Check.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import Contain from "svelte-material-icons/Contain.svelte";
+    import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import Kebab from "svelte-material-icons/DotsVertical.svelte";
     import FileDocument from "svelte-material-icons/FileDocument.svelte";
@@ -83,6 +85,10 @@
 
     function embedContent() {
         canCreateChannel && publish("newChannel", true);
+    }
+
+    function copyUrl() {
+        publish("copyUrl");
     }
 
     function showMembers() {
@@ -191,6 +197,16 @@
                     {/snippet}
                     {#snippet text()}
                         <span><Translatable resourceKey={i18nKey("communities.embed")} /></span>
+                    {/snippet}
+                </MenuItem>
+            {/if}
+            {#if $mobileWidth}
+                <MenuItem onclick={copyUrl}>
+                    {#snippet icon()}
+                        <ContentCopy size={$iconSize} color={"var(--icon-txt)"} />
+                    {/snippet}
+                    {#snippet text()}
+                        <Translatable resourceKey={i18nKey("copyUrl")} />
                     {/snippet}
                 </MenuItem>
             {/if}
