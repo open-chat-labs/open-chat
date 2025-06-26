@@ -30,7 +30,7 @@
 </script>
 
 <div class="buttons">
-    {#snippet button(primary)}
+    {#snippet button(primary: boolean)}
         <div class="button">
             <OnBoardOptionLogo>
                 {#if primary === hasExistingAccount}
@@ -50,17 +50,6 @@
 </div>
 
 <style lang="scss">
-    .blurb {
-        text-align: center;
-        max-width: 300px;
-        color: var(--landing-txt-light);
-        margin: 0 $sp4 toRem(24) $sp4;
-
-        @include mobile() {
-            margin-bottom: toRem(16);
-        }
-    }
-
     .buttons {
         display: flex;
         flex-direction: column;
