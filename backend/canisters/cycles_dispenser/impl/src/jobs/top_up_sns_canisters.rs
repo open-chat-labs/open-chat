@@ -1,4 +1,5 @@
 use crate::{mutate_state, read_state};
+use constants::T;
 use sns_root_canister::get_sns_canisters_summary::CanisterSummary;
 use std::time::Duration;
 use types::{CanisterId, Cycles, Empty};
@@ -6,7 +7,6 @@ use utils::canister::deposit_cycles;
 use utils::canister_timers::run_now_then_interval;
 
 const INTERVAL: Duration = Duration::from_secs(24 * 60 * 60); // 1 day
-const T: Cycles = 1_000_000_000_000;
 
 pub fn start_job() {
     run_now_then_interval(INTERVAL, run);
