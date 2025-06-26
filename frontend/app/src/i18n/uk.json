@@ -1529,7 +1529,7 @@
         "usernameTooLong": "Це ім’я користувача задовге",
         "usernameTooShort": "Це ім’я користувача занадто коротке",
         "userNotFound": "Користувач не знайдений",
-        "welcome": "Ласкаво просимо до OpenChat!"
+        "welcome": "Ласкаво просимо до OpenChat"
     },
     "reminders": {
         "cancel": "Скасувати нагадування",

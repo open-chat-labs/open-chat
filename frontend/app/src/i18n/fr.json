@@ -1529,7 +1529,7 @@
         "usernameTooLong": "Ce nom d'utilisateur est trop long",
         "usernameTooShort": "Ce nom d'utilisateur est trop court",
         "userNotFound": "Utilisateur non trouvé",
-        "welcome": "Bienvenue sur OpenChat !"
+        "welcome": "Bienvenue sur OpenChat"
     },
     "reminders": {
         "cancel": "Annuler le rappel",
