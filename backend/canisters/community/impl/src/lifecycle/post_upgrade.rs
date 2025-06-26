@@ -57,7 +57,7 @@ fn post_upgrade(args: Args) {
             }
         }
 
-        // Insert ChannelCreated events into CommunityEvents
+        // Append ChannelCreated events to CommunityEvents
         for channel in state.data.channels.iter() {
             if let Some(wrapper) = channel
                 .chat
@@ -66,15 +66,8 @@ fn post_upgrade(args: Args) {
                 .get_event(EventKey::EventIndex(EventIndex::from(0)))
             {
                 if let ChatEventInternal::GroupChatCreated(event) = wrapper.event {
-                    // Iterate through the community events to find the first event with a higher timstamp than the channel creation event
-                    // and use that to set the index for the new event
-                    let index = community_events
-                        .iter()
-                        .position(|e| e.timestamp > wrapper.timestamp)
-                        .unwrap_or(community_events.len());
-
                     let new_event_wrapper = EventWrapperInternal {
-                        index: EventIndex::from(index as u32),
+                        index: EventIndex::from(0),
                         timestamp: wrapper.timestamp,
                         expires_at: None,
                         event: CommunityEventInternal::ChannelCreated(Box::new(ChannelCreated {
@@ -85,12 +78,15 @@ fn post_upgrade(args: Args) {
                         })),
                     };
 
-                    community_events.insert(index, new_event_wrapper);
+                    community_events.push(new_event_wrapper);
                 } else {
                     panic!("Expected GroupChatCreated event, found {:?}", wrapper.event);
                 }
             }
         }
+
+        // Stable sort the community events by timestamp - events with the same timestamp will stay in the same order
+        community_events.sort_by_key(|event| event.timestamp);
 
         // Iterate through the community events and rewrite the event indexes to match the vector index
         for (index, event) in community_events.iter_mut().enumerate() {
