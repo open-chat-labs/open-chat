@@ -559,7 +559,7 @@
     "copyInviteCode": "Скопировать код приглашения",
     "copyMessageUrl": "Скопировать адрес сообщения",
     "copyToClipboard": "Копировать в буфер обмена",
-    "createAccountOrSignIn": "Создать учетную запись / войти",
+    "createAccountOrSignIn": "Нажмите, чтобы **создать учетную запись** или **войти в систему**",
     "createNewGroup": "Создать новую группу",
     "cryptoAccount": {
         "auto": "Автоматический",

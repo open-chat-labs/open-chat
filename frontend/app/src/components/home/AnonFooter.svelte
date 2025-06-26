@@ -1,8 +1,8 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
-    import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
+    import { _ } from "svelte-i18n";
+    import Markdown from "@components/home/Markdown.svelte";
 
     const client = getContext<OpenChat>("client");
 </script>
@@ -12,7 +12,7 @@
     tabindex="0"
     on:click={() => client.updateIdentityState({ kind: "logging_in" })}
     class="anon-footer">
-    <Translatable resourceKey={i18nKey("createAccountOrSignIn")} />
+    <Markdown text={$_("createAccountOrSignIn")} />
 </div>
 
 <style lang="scss">
@@ -30,5 +30,6 @@
         background-color: var(--notificationBar-bg);
         color: var(--notificationBar-txt);
         padding: $sp4 $sp3;
+        font-size: 1.2rem;
     }
 </style>
