@@ -28,13 +28,14 @@ export async function createWebAuthnIdentity(
         throw new Error("Invalid attestation response");
     }
 
+    const credentialId = new Uint8Array(credential.rawId);
     const attObject = borc.decodeFirst(new Uint8Array(response.attestationObject));
     const authenticatorAttachment =
         credential.authenticatorAttachment === "platform" ? "platform" : "cross-platform";
 
     const identity = new WebAuthnIdentity(
-        credential.rawId,
-        authDataToCose(attObject.authData),
+        credentialId,
+        new Uint8Array(authDataToCose(attObject.authData)),
         authenticatorAttachment,
     );
 
@@ -43,7 +44,7 @@ export async function createWebAuthnIdentity(
 
     await saveKeyInCacheFn({
         publicKey: new Uint8Array(identity.getPublicKey().toDer()),
-        credentialId: new Uint8Array(credential.rawId),
+        credentialId,
         origin,
         crossPlatform: authenticatorAttachment === "cross-platform",
         aaguid,
@@ -75,7 +76,7 @@ export class MultiWebAuthnIdentity extends SignIdentity {
         }
     }
 
-    public async sign(blob: ArrayBuffer): Promise<Signature> {
+    public async sign(blob: Uint8Array): Promise<Signature> {
         if (this._actualIdentity !== undefined) {
             return this._actualIdentity.sign(blob);
         }
@@ -93,11 +94,12 @@ export class MultiWebAuthnIdentity extends SignIdentity {
             throw new Error("internal error");
         }
 
-        const pubkey = await this.lookupPubKeyFn(new Uint8Array(result.rawId));
+        const credentialId = new Uint8Array(result.rawId);
+        const pubkey = await this.lookupPubKeyFn(credentialId);
 
         this._actualIdentity = new WebAuthnIdentity(
-            result.rawId,
-            unwrapDER(pubkey.buffer as ArrayBuffer, DER_COSE_OID).buffer as ArrayBuffer,
+            credentialId,
+            unwrapDER(pubkey, DER_COSE_OID),
             undefined,
         );
 

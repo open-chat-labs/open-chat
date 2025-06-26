@@ -39,12 +39,13 @@ export async function createAndroidWebAuthnPasskeyIdentity(
                 if (!credential) {
                     reject("no credential");
                 } else {
+                    const credentialId = new Uint8Array(credential.rawId);
                     const attObject = borc.decodeFirst(
                         new Uint8Array(credential.response.attestationObject),
                     );
                     const identity = new WebAuthnIdentity(
-                        credential.rawId.buffer as ArrayBuffer,
-                        authDataToCose(attObject.authData),
+                        credentialId,
+                        new Uint8Array(authDataToCose(attObject.authData)),
                         credential.authenticatorAttachment,
                     );
 
@@ -53,7 +54,7 @@ export async function createAndroidWebAuthnPasskeyIdentity(
                     );
                     saveKeyInCacheFn({
                         publicKey: new Uint8Array(identity.getPublicKey().toDer()),
-                        credentialId: credential.rawId,
+                        credentialId,
                         origin: OC_APP_ORIGIN,
                         crossPlatform: credential.authenticatorAttachment === "cross-platform",
                         aaguid,
@@ -127,18 +128,19 @@ export class AndroidWebAuthnPasskeyIdentity extends SignIdentity {
         throw new Error("AndroidWebAuthnPasskeyIdentity.identity: identity is not set!");
     }
 
-    public async sign(blob: ArrayBuffer): Promise<Signature> {
+    public async sign(blob: Uint8Array): Promise<Signature> {
         if (this._identity !== undefined) {
             return this._identity.sign(blob);
         }
 
         // Check credentials from android side, while providing the challenge!
         const credential = await getExistingAndroidWebAuthnPasskey(blob);
-        const pubkey = await this.lookupPubKeyFn(credential.rawId);
+        const credentialId = credential.rawId;
+        const pubkey = await this.lookupPubKeyFn(credentialId);
 
         this._identity = new WebAuthnIdentity(
-            credential.rawId.buffer as ArrayBuffer,
-            unwrapDER(pubkey.buffer as ArrayBuffer, DER_COSE_OID).buffer as ArrayBuffer,
+            credentialId,
+            unwrapDER(pubkey, DER_COSE_OID),
             credential.authenticatorAttachment,
         );
 
