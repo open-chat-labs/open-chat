@@ -11,6 +11,7 @@
     import HoverIcon from "./HoverIcon.svelte";
     import Translatable from "./Translatable.svelte";
     import { portalState } from "./portalState.svelte";
+    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
 
     type OnClose = (() => void) | undefined;
 
@@ -28,6 +29,7 @@
         alignTo?: DOMRect | undefined;
         actualWidth?: number;
         closeIcon?: boolean;
+        backIcon?: boolean;
         square?: boolean;
         backgroundImage?: string | undefined;
         // if your modal *definitely* overflows on mobile you might need to set height explicitly
@@ -38,6 +40,7 @@
         body?: Snippet<[OnClose]>;
         footer?: Snippet<[OnClose]>;
         onClose?: OnClose;
+        onBack?: OnClose;
     }
 
     let {
@@ -54,6 +57,7 @@
         alignTo = undefined,
         actualWidth = $bindable(0),
         closeIcon = false,
+        backIcon = false,
         square = false,
         backgroundImage = undefined,
         overflows = false,
@@ -62,6 +66,7 @@
         body,
         footer,
         onClose,
+        onBack,
     }: Props = $props();
 
     actualWidth;
@@ -142,6 +147,13 @@
                 <span title={$_("close")} class="close" class:rtl={$rtlStore} onclick={onClose}>
                     <HoverIcon>
                         <Close size={"1em"} color={"var(--icon-txt)"} />
+                    </HoverIcon>
+                </span>
+            {:else if backIcon}
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <span title={$_("back")} class="back" class:rtl={$rtlStore} onclick={onBack}>
+                    <HoverIcon>
+                        <ArrowLeft size={"1em"} color={"var(--icon-txt)"} />
                     </HoverIcon>
                 </span>
             {/if}
@@ -272,7 +284,7 @@
         }
     }
 
-    .close {
+    .close, .back {
         position: absolute;
         top: $sp3;
         &:not(.rtl) {
