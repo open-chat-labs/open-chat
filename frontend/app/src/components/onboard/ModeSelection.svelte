@@ -5,6 +5,7 @@
     import AccountPlus from "svelte-material-icons/AccountPlus.svelte";
     import Login from "svelte-material-icons/Login.svelte";
     import OnBoardOptionLogo from "@components/home/profile/OnBoardOptionLogo.svelte";
+    import { userCreatedStore } from "openchat-client";
 
     interface Props {
         onSignIn: () => void;
@@ -12,25 +13,40 @@
     }
 
     let { onSignIn, onSignUp }: Props = $props();
+
+    const hasExistingAccount = $userCreatedStore;
+
+    function onClick(primary: boolean) {
+        return primary === hasExistingAccount
+            ? onSignIn
+            : onSignUp;
+    }
+
+    function buttonLabel(primary: boolean) {
+        return primary === hasExistingAccount
+            ? "loginDialog.signin"
+            : "register.createAccount";
+    }
 </script>
 
 <div class="buttons">
-    <div class="button">
-        <OnBoardOptionLogo>
-            <AccountPlus size="1.5em" />
-        </OnBoardOptionLogo>
-        <Button fill onClick={onSignUp}>
-            <Translatable resourceKey={i18nKey("register.createAccount")} />
-        </Button>
-    </div>
-    <div class="button">
-        <OnBoardOptionLogo>
-            <Login size="1.5em" />
-        </OnBoardOptionLogo>
-        <Button fill onClick={onSignIn}>
-            <Translatable resourceKey={i18nKey("loginDialog.signin")} />
-        </Button>
-    </div>
+    {#snippet button(primary)}
+        <div class="button">
+            <OnBoardOptionLogo>
+                {#if primary === hasExistingAccount}
+                    <Login size="1.5em" />
+                {:else}
+                    <AccountPlus size="1.5em" />
+                {/if}
+            </OnBoardOptionLogo>
+            <Button fill secondary={!primary} onClick={onClick(primary)}>
+                <Translatable resourceKey={i18nKey(buttonLabel(primary))} />
+            </Button>
+        </div>
+    {/snippet}
+
+    {@render button(true)}
+    {@render button(false)}
 </div>
 
 <style lang="scss">
