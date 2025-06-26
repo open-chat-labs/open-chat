@@ -1320,3 +1320,4 @@ export const identityStateStore = writable<IdentityState>(
 
 export const failedMessagesStore = localUpdates.failedMessages;
 export const unconfirmedStore = localUpdates.unconfirmed;
+export const latestSuccessfulUpdatesLoop = writable(0);

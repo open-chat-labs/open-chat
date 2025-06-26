@@ -559,6 +559,7 @@
     "copyInviteCode": "Skopiuj kod zaproszenia",
     "copyMessageUrl": "Skopiuj adres URL wiadomości",
     "copyToClipboard": "Skopiuj do schowka",
+    "createAccountOrSignIn": "Kliknij tutaj, aby **utworzyć konto** lub **zalogować się**",
     "createNewGroup": "Utwórz nową grupę",
     "cryptoAccount": {
         "auto": "Automatyczny",
@@ -1705,7 +1706,6 @@
         "title": "Przejdź na naszą nową domenę"
     },
     "tapForReferralLink": "Kliknij, aby skopiować swój osobisty link polecający",
-    "tapToLogin": "Tryb gościa — kliknij tutaj, aby się zalogować",
     "tellMeMore": "Więcej informacji",
     "theInternetComputer": "Komputer internetowy",
     "theme": {
