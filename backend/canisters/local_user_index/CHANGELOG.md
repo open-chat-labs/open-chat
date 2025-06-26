@@ -6,10 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `bot_community_events` endpoint ([#8194](https://github.com/open-chat-labs/open-chat/pull/8194))
+- Add `bot_remove_user` endpoint ([#8217](https://github.com/open-chat-labs/open-chat/pull/8217))
+- Add `bot_invite_users` endpoint ([#8218](https://github.com/open-chat-labs/open-chat/pull/8218))
+- Add `bot_members` endpoint ([#8225](https://github.com/open-chat-labs/open-chat/pull/8225))
+
 ### Changed
 
 - Serialize bot notifications in LUI not pusher ([#8169](https://github.com/open-chat-labs/open-chat/pull/8169))
 - Use MessagePack to serialize Group/Community `init` args ([#8183](https://github.com/open-chat-labs/open-chat/pull/8183))
+- Changed how the notification recipients are filtered to include those with available Firebase tokens ([8229](https://github.com/open-chat-labs/open-chat/pull/8229))
 
 ### Removed
 

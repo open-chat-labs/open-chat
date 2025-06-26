@@ -1,6 +1,7 @@
 use crate::{
     RuntimeState, activity_notifications::handle_activity_notification, execute_update_async,
-    model::events::CommunityEventInternal, mutate_state, read_state,
+    guards::caller_is_local_user_index, model::events::CommunityEventInternal, mutate_state, read_state,
+    updates::remove_member_from_channel::remove_member_from_channel_impl,
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -10,24 +11,61 @@ use local_user_index_canister_c2c_client::lookup_user;
 use msgpack::serialize_then_unwrap;
 use oc_error_codes::OCErrorCode;
 use std::collections::HashMap;
-use types::{CanisterId, CommunityMembersRemoved, CommunityRole, CommunityUsersBlocked, OCResult, UserId};
+use types::{
+    BotCaller, BotPermissions, Caller, CanisterId, ChatPermission, CommunityMembersRemoved, CommunityPermission, CommunityRole,
+    CommunityUsersBlocked, OCResult, UnitResult, UserId,
+};
 use user_canister::c2c_remove_from_community;
 
 #[update(msgpack = true)]
 #[trace]
-async fn block_user(args: community_canister::block_user::Args) -> community_canister::block_user::Response {
-    execute_update_async(|| remove_member_impl(args.user_id, true)).await
+async fn block_user(args: community_canister::block_user::Args) -> UnitResult {
+    execute_update_async(|| remove_member_impl(args.user_id, true, None)).await
 }
 
 #[update(msgpack = true)]
 #[trace]
-async fn remove_member(args: Args) -> Response {
-    execute_update_async(|| remove_member_impl(args.user_id, false)).await
+async fn remove_member(args: Args) -> UnitResult {
+    execute_update_async(|| remove_member_impl(args.user_id, false, None)).await
 }
 
-async fn remove_member_impl(user_id: UserId, block: bool) -> Response {
+#[update(guard = "caller_is_local_user_index", msgpack = true)]
+#[trace]
+async fn c2c_bot_remove_user(args: community_canister::c2c_bot_remove_user::Args) -> UnitResult {
+    execute_update_async(|| c2c_bot_remove_user_impl(args)).await
+}
+
+async fn c2c_bot_remove_user_impl(args: community_canister::c2c_bot_remove_user::Args) -> UnitResult {
+    let bot_caller = BotCaller {
+        bot: args.bot_id,
+        initiator: args.initiator.clone(),
+    };
+
+    if !read_state(|state| {
+        let required_permissions = if args.channel_id.is_some() {
+            BotPermissions::from_chat_permission(ChatPermission::RemoveMembers)
+        } else {
+            BotPermissions::from_community_permission(CommunityPermission::RemoveMembers)
+        };
+
+        state
+            .data
+            .is_bot_permitted(&bot_caller.bot, args.channel_id, &bot_caller.initiator, &required_permissions)
+    }) {
+        return OCErrorCode::InitiatorNotAuthorized.into();
+    }
+
+    if let Some(channel_id) = args.channel_id {
+        mutate_state(|state| remove_member_from_channel_impl(channel_id, args.user_id, Some(Caller::BotV2(bot_caller)), state))
+            .into()
+    } else {
+        remove_member_impl(args.user_id, args.block, Some(Caller::BotV2(bot_caller))).await
+    }
+}
+
+async fn remove_member_impl(user_id: UserId, block: bool, ext_caller: Option<Caller>) -> UnitResult {
     // Check the caller can remove the user
-    let prepare_result = match read_state(|state| prepare(user_id, block, state)) {
+    let prepare_result = match read_state(|state| prepare(user_id, block, ext_caller, state)) {
         Ok(ok) => ok,
         Err(error) => return Response::Error(error),
     };
@@ -55,15 +93,17 @@ struct PrepareResult {
     is_user_to_remove_an_owner: bool,
 }
 
-fn prepare(user_id: UserId, block: bool, state: &RuntimeState) -> OCResult<PrepareResult> {
+fn prepare(user_id: UserId, block: bool, ext_caller: Option<Caller>, state: &RuntimeState) -> OCResult<PrepareResult> {
     state.data.verify_not_frozen()?;
 
     if block && !state.data.is_public.value {
         return Err(OCErrorCode::CommunityNotPublic.into());
     }
 
-    let member = state.get_calling_member(true)?;
-    if member.user_id == user_id {
+    let caller = state.verified_caller(ext_caller)?;
+    let agent = caller.agent();
+
+    if agent == user_id {
         Err(OCErrorCode::CannotRemoveSelf.into())
     } else {
         let user_to_remove_role = match state.data.members.get_by_user_id(&user_id) {
@@ -78,18 +118,21 @@ fn prepare(user_id: UserId, block: bool, state: &RuntimeState) -> OCResult<Prepa
         };
 
         // Check if the caller is authorized to remove the user
-        if member
-            .role()
-            .can_remove_members_with_role(user_to_remove_role, &state.data.permissions)
-        {
-            Ok(PrepareResult {
-                removed_by: member.user_id,
-                local_user_index_canister_id: state.data.local_user_index_canister_id,
-                is_user_to_remove_an_owner: user_to_remove_role.is_owner(),
-            })
-        } else {
-            Err(OCErrorCode::InitiatorNotAuthorized.into())
+        if let Some(initiator) = caller.initiator() {
+            let member = state.data.members.get_verified_member(*initiator)?;
+            if !member
+                .role()
+                .can_remove_members_with_role(user_to_remove_role, &state.data.permissions)
+            {
+                return Err(OCErrorCode::InitiatorNotAuthorized.into());
+            }
         }
+
+        Ok(PrepareResult {
+            removed_by: agent,
+            local_user_index_canister_id: state.data.local_user_index_canister_id,
+            is_user_to_remove_an_owner: user_to_remove_role.is_owner(),
+        })
     }
 }
 

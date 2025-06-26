@@ -1,4 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
+use crate::guards::caller_is_local_user_index;
 use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -8,28 +9,45 @@ use group_chat_core::GroupRoleInternal;
 use local_user_index_canister_c2c_client::lookup_user;
 use msgpack::serialize_then_unwrap;
 use oc_error_codes::OCErrorCode;
-use types::{CanisterId, OCResult, UserId};
+use types::{BotCaller, BotPermissions, Caller, CanisterId, ChatPermission, OCResult, UnitResult, UserId};
 use user_canister::c2c_remove_from_group;
 
 #[update(msgpack = true)]
 #[trace]
-async fn block_user(args: group_canister::block_user::Args) -> group_canister::block_user::Response {
-    execute_update_async(|| remove_participant_impl(args.user_id, true))
+async fn block_user(args: group_canister::block_user::Args) -> UnitResult {
+    execute_update_async(|| remove_participant_impl(args.user_id, true, None))
         .await
         .into()
 }
 
 #[update(msgpack = true)]
 #[trace]
-async fn remove_participant(args: Args) -> Response {
-    execute_update_async(|| remove_participant_impl(args.user_id, false))
+async fn remove_participant(args: Args) -> UnitResult {
+    execute_update_async(|| remove_participant_impl(args.user_id, false, None))
         .await
         .into()
 }
 
-async fn remove_participant_impl(user_to_remove: UserId, block: bool) -> OCResult {
+#[update(guard = "caller_is_local_user_index", msgpack = true)]
+#[trace]
+async fn c2c_bot_remove_user(args: group_canister::c2c_bot_remove_user::Args) -> UnitResult {
+    execute_update_async(|| {
+        remove_participant_impl(
+            args.user_id,
+            args.block,
+            Some(Caller::BotV2(BotCaller {
+                bot: args.bot_id,
+                initiator: args.initiator.clone(),
+            })),
+        )
+    })
+    .await
+    .into()
+}
+
+async fn remove_participant_impl(user_to_remove: UserId, block: bool, ext_caller: Option<Caller>) -> OCResult {
     // Check the caller can remove the user
-    let prepare_result = match read_state(|state| prepare(user_to_remove, block, state))? {
+    let prepare_result = match read_state(|state| prepare(user_to_remove, block, ext_caller, state))? {
         Some(ok) => ok,
         None => return Ok(()),
     };
@@ -49,20 +67,26 @@ async fn remove_participant_impl(user_to_remove: UserId, block: bool) -> OCResul
 }
 
 struct PrepareResult {
-    removed_by: UserId,
+    removed_by: Caller,
     local_user_index_canister_id: CanisterId,
     is_user_to_remove_an_owner: bool,
 }
 
-fn prepare(user_to_remove: UserId, block: bool, state: &RuntimeState) -> OCResult<Option<PrepareResult>> {
+fn prepare(
+    user_to_remove: UserId,
+    block: bool,
+    ext_caller: Option<Caller>,
+    state: &RuntimeState,
+) -> OCResult<Option<PrepareResult>> {
     state.data.verify_not_frozen()?;
 
     if block && !state.data.chat.is_public.value {
         return Err(OCErrorCode::ChatNotPublic.into());
     }
 
-    let member = state.get_calling_member(true)?;
-    if member.user_id() == user_to_remove {
+    let caller = state.verified_caller(ext_caller)?;
+
+    if caller.agent() == user_to_remove {
         Err(OCErrorCode::CannotRemoveSelf.into())
     } else {
         let user_to_remove_role = match state.data.chat.members.get(&user_to_remove) {
@@ -76,27 +100,41 @@ fn prepare(user_to_remove: UserId, block: bool, state: &RuntimeState) -> OCResul
             None => return Err(OCErrorCode::TargetUserNotInChat.into()),
         };
 
-        // Check if the caller is authorized to remove the user
-        if member
-            .role()
-            .can_remove_members_with_role(user_to_remove_role, &state.data.chat.permissions)
-        {
-            Ok(Some(PrepareResult {
-                removed_by: member.user_id(),
-                local_user_index_canister_id: state.data.local_user_index_canister_id,
-                is_user_to_remove_an_owner: user_to_remove_role.is_owner(),
-            }))
-        } else {
-            Err(OCErrorCode::InitiatorNotAuthorized.into())
+        if let Caller::BotV2(bot_caller) = &caller {
+            if !state.data.is_bot_permitted(
+                &bot_caller.bot,
+                &bot_caller.initiator,
+                &BotPermissions::from_chat_permission(ChatPermission::RemoveMembers),
+            ) {
+                return Err(OCErrorCode::InitiatorNotAuthorized.into());
+            }
         }
+
+        if let Some(initiator) = caller.initiator() {
+            let member = state.data.chat.members.get_verified_member(initiator)?;
+            if !member
+                .role()
+                .can_remove_members_with_role(user_to_remove_role, &state.data.chat.permissions)
+            {
+                return Err(OCErrorCode::InitiatorNotAuthorized.into());
+            }
+        }
+
+        Ok(Some(PrepareResult {
+            removed_by: caller,
+            local_user_index_canister_id: state.data.local_user_index_canister_id,
+            is_user_to_remove_an_owner: user_to_remove_role.is_owner(),
+        }))
     }
 }
 
-fn commit(user_to_remove: UserId, block: bool, removed_by: UserId, state: &mut RuntimeState) -> OCResult {
+fn commit(user_to_remove: UserId, block: bool, caller: Caller, state: &mut RuntimeState) -> OCResult {
+    let agent = caller.agent();
+
     let bot_notification = state
         .data
         .chat
-        .remove_member(removed_by, user_to_remove, block, state.env.now())?;
+        .remove_member(caller, user_to_remove, block, state.env.now())?;
 
     state.data.remove_user(user_to_remove, None);
     state.push_bot_notification(bot_notification);
@@ -105,7 +143,7 @@ fn commit(user_to_remove: UserId, block: bool, removed_by: UserId, state: &mut R
     // Fire-and-forget call to notify the user canister
     remove_membership_from_user_canister(
         user_to_remove,
-        removed_by,
+        agent,
         block,
         state.data.chat.name.value.clone(),
         state.data.chat.is_public.value,

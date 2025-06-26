@@ -272,7 +272,7 @@
                     {#if selectedGif !== undefined}
                         <span class="close">
                             <Link underline={"always"} onClick={clearSelectedGif}>
-                                <Translatable resourceKey={i18nKey("backToResults")} />
+                                <Translatable resourceKey={i18nKey("back")} />
                             </Link>
                         </span>
                     {/if}

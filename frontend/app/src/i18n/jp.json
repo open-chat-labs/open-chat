@@ -142,7 +142,7 @@
     "avatarTooBig": "選択したアバターが大きすぎます",
     "avatarUpdated": "アバターが正常に更新されました",
     "avatarUpdateFailed": "アバターの更新に失敗しました",
-    "backToResults": "戻る",
+    "back": "戻る",
     "bio": "自己紹介",
     "blocked": "ブロック",
     "blockedBy": "{changedBy}は{changed}をブロックしました",
@@ -404,6 +404,7 @@
     "change": "変更",
     "changeTheme": "テーマ変更",
     "channelAlreadyExists": "その名前のチャンネルはすでに存在します",
+    "chatDetails": "チャットの詳細",
     "chatFrozen": "このチャットは凍結されました",
     "chatFrozenBy": "{frozenBy} によってチャットが凍結されました",
     "chatMenu": "チャットメニュー",
@@ -558,6 +559,8 @@
     "copyInviteCode": "招待コードをコピー",
     "copyMessageUrl": "メッセージのURLをコピーする",
     "copyToClipboard": "クリップボードにコピーする",
+    "copyUrl": "URLをコピー",
+    "createAccountOrSignIn": "**アカウントを作成**または**サインイン**するには、ここをタップしてください",
     "createNewGroup": "新しいグループを作成する",
     "cryptoAccount": {
         "auto": "自動",
@@ -1491,6 +1494,7 @@
         "confirmCyclesTransferText": "お客様のサイクルウォレットから{amount}サイクルを下記のOpenChatウォレットに送金されましたら、下記をご確認ください",
         "confirmICPTransferText": "P以下の口座に{amount}のICPを振り込んだら、以下の通り確認してください",
         "confirmTransfer": "転送の確認",
+        "createAccount": "アカウントを作成する",
         "createUser": "ユーザーを作成する",
         "cyclesTransferred": "{fee} cyclesの手数料を確認しました",
         "disclaimer": "OpenChatに登録することにより、利用規約に従うことに同意するものとします。",
@@ -1526,7 +1530,7 @@
         "usernameTooLong": "そのユーザーネームは長すぎます",
         "usernameTooShort": "そのユーザーネームは短すぎます",
         "userNotFound": "ユーザーが見つかりません",
-        "welcome": "OpenChatへようこそ!"
+        "welcome": "OpenChatへようこそ"
     },
     "reminders": {
         "cancel": "リマインダーをキャンセル",
@@ -1703,7 +1707,6 @@
         "title": "新しいドメインに切り替えてください"
     },
     "tapForReferralLink": "タップして個人紹介リンクをコピーします",
-    "tapToLogin": "ゲスト モード - ここをタップしてログインします",
     "tellMeMore": "詳しくは",
     "theInternetComputer": "インターネットコンピューター",
     "theme": {
@@ -1924,7 +1927,7 @@
     },
     "upgradeByTransfer": "ICP",
     "upgradeStorage": "ストレージのアップグレード",
-    "urlCopiedToClipboard": "グループのURLがクリップボードにコピーされました",
+    "urlCopiedToClipboard": "URL をクリップボードにコピーしました。",
     "useAtOwnRisk": "自己責任",
     "userId": "ユーザーID",
     "userIdCopiedToClipboard": "ユーザーIDがクリップボードにコピーされました",

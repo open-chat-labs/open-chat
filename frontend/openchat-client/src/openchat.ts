@@ -173,12 +173,12 @@ import {
     type MessageFormatter,
     type MessagePermission,
     type MessageReminderCreatedContent,
-    missingUserIds,
     type ModerationFlag,
     type MultiUserChat,
     type MultiUserChatIdentifier,
     type NamedAccount,
     type NervousSystemDetails,
+    type NewUnconfirmedMessage,
     NoMeetingToJoin,
     type Notification,
     ONE_DAY,
@@ -319,7 +319,7 @@ import {
     chitStateStore,
     communitiesStore,
     communityFiltersStore,
-    confirmedThreadEventIndexesLoadedStore,
+    threadEventIndexesLoadedStore,
     cryptoBalanceStore,
     cryptoLookup,
     currentUserIdStore,
@@ -356,7 +356,6 @@ import {
     pinNumberRequiredStore,
     pinNumberResolverStore,
     platformOperatorStore,
-    proposalTalliesStore,
     querystringCodeStore,
     querystringReferralCodeStore,
     querystringStore,
@@ -404,6 +403,8 @@ import {
     translationsStore,
     userCreatedStore,
     walletConfigStore,
+    webhookUserIdsStore,
+    latestSuccessfulUpdatesLoop,
 } from "./state";
 import { botState } from "./state/bots.svelte";
 import { ChatDetailsState } from "./state/chat/serverDetails";
@@ -465,7 +466,7 @@ import {
     canSendGroupMessage,
     canStartVideoCalls,
     canUnblockUsers,
-    confirmedEventIndexesLoaded,
+    eventIndexesLoaded,
     containsReaction,
     createMessage,
     diffGroupPermissions,
@@ -489,8 +490,7 @@ import {
     mergeServerEvents,
     messageIsReadByThem,
     metricsEqual,
-    nextEventAndMessageIndexes,
-    nextEventAndMessageIndexesForThread,
+    newDefaultChannel,
     permittedMessagesInDirectChat,
     permittedMessagesInGroup,
     sameUser,
@@ -577,6 +577,7 @@ import {
     compareIsNotYouThenUsername,
     compareUsername,
     formatLastOnlineDate,
+    missingUserIds,
     nullUser,
     userAvatarUrl,
 } from "./utils/user";
@@ -633,6 +634,7 @@ export class OpenChat {
     #registryPoller: Poller | undefined = undefined;
     #userUpdatePoller: Poller | undefined = undefined;
     #exchangeRatePoller: Poller | undefined = undefined;
+    #proposalTalliesPoller: Poller | undefined = undefined;
     #recentlyActiveUsersTracker: RecentlyActiveUsersTracker = new RecentlyActiveUsersTracker();
     #inflightMessagePromises: Map<
         bigint,
@@ -759,13 +761,17 @@ export class OpenChat {
         });
     }
 
-    async #loadedAuthenticationIdentity(id: Identity, authProvider: AuthProvider | undefined) {
+    async #loadedAuthenticationIdentity(
+        id: Identity,
+        authProvider: AuthProvider | undefined,
+        registering: boolean = false,
+    ) {
         currentUserStore.set(anonymousUser());
         chatsInitialisedStore.set(false);
         const anon = id.getPrincipal().isAnonymous();
         const authPrincipal = id.getPrincipal().toString();
         this.#authPrincipal = anon ? undefined : authPrincipal;
-        this.updateIdentityState(anon ? { kind: "anon" } : { kind: "loading_user" });
+        this.updateIdentityState(anon ? { kind: "anon" } : { kind: "loading_user", registering });
 
         const connectToWorkerResponse = await this.#connectToWorker(authPrincipal, authProvider);
 
@@ -792,7 +798,7 @@ export class OpenChat {
             await this.#ocIdentityStorage.remove();
         }
 
-        this.#loadUser();
+        await this.#loadUser();
     }
 
     logError(message: unknown, error: unknown, ...optionalParams: unknown[]): void {
@@ -944,6 +950,7 @@ export class OpenChat {
                 switch (user.kind) {
                     case "unknown_user":
                         this.onCreatedUser(anonymousUser());
+                        console.log("So this should not really happen now");
                         this.updateIdentityState({ kind: "registering" });
                         break;
                     case "created_user":
@@ -1839,7 +1846,6 @@ export class OpenChat {
     validateTokenInput = validateTokenInput;
     parseBigInt = parseBigInt;
     userIdsFromEvents = userIdsFromEvents;
-    missingUserIds = missingUserIds;
     userOrUserGroupName = userOrUserGroupName;
     userOrUserGroupId = userOrUserGroupId;
     extractUserIdsFromMentions = extractUserIdsFromMentions;
@@ -2181,7 +2187,6 @@ export class OpenChat {
         );
     }
 
-    #createMessage = createMessage;
     #findMessageById = findMessageById;
     canForward = canForward;
     containsReaction = containsReaction;
@@ -2751,6 +2756,8 @@ export class OpenChat {
         let chat = chatSummariesStore.value.get(chatId);
         const scope = chatListScopeStore.value;
         let autojoin = false;
+        this.#proposalTalliesPoller?.stop();
+        this.#proposalTalliesPoller = undefined;
 
         // if this is an unknown chat let's preview it
         if (chat === undefined) {
@@ -2832,23 +2839,6 @@ export class OpenChat {
         }
     }
 
-    #loadSnsFunctionsForChat(chat: ChatSummary) {
-        if (
-            (chat.kind === "group_chat" || chat.kind === "channel") &&
-            chat.subtype !== undefined &&
-            chat.subtype.kind === "governance_proposals" &&
-            !chat.subtype.isNns
-        ) {
-            const { governanceCanisterId } = chat.subtype;
-            this.listNervousSystemFunctions(governanceCanisterId).then((val) => {
-                snsFunctionsStore.update((s) => {
-                    s.set(governanceCanisterId, val.functions);
-                    return s;
-                });
-            });
-        }
-    }
-
     #setSelectedChat(chatId: ChatIdentifier, messageIndex?: number): void {
         const clientChat = chatSummariesStore.value.get(chatId);
         const serverChat = allServerChatsStore.value.get(chatId);
@@ -2857,7 +2847,24 @@ export class OpenChat {
             return;
         }
 
-        this.#loadSnsFunctionsForChat(clientChat);
+        if ((clientChat.kind === "group_chat" || clientChat.kind === "channel") && clientChat.subtype?.kind === "governance_proposals") {
+            const { isNns, governanceCanisterId } = clientChat.subtype;
+            if (!isNns) {
+                this.listNervousSystemFunctions(governanceCanisterId).then((val) => {
+                    snsFunctionsStore.update((s) => {
+                        s.set(governanceCanisterId, val.functions);
+                        return s;
+                    });
+                });
+            }
+            const id = clientChat.id;
+            this.#proposalTalliesPoller = new Poller(
+                () => this.#updateProposalTallies(id),
+                20_000,
+                undefined,
+                true
+            );
+        }
 
         if (messageIndex === undefined) {
             messageIndex = isPreviewing(clientChat)
@@ -2880,7 +2887,9 @@ export class OpenChat {
         this.#userLookupForMentions = undefined;
 
         if (isProposalsChat(clientChat)) {
-            filteredProposalsStore.set(FilteredProposals.fromStorage(clientChat.subtype.governanceCanisterId));
+            filteredProposalsStore.set(
+                FilteredProposals.fromStorage(clientChat.subtype.governanceCanisterId),
+            );
         }
 
         const selectedChat = selectedChatSummaryStore.value;
@@ -3210,7 +3219,7 @@ export class OpenChat {
     }
 
     #earliestLoadedIndex(chatId: ChatIdentifier): number | undefined {
-        const confirmedLoaded = confirmedEventIndexesLoaded(chatId);
+        const confirmedLoaded = eventIndexesLoaded(chatId);
         return confirmedLoaded.length > 0 ? confirmedLoaded.index(0) : undefined;
     }
 
@@ -3381,6 +3390,17 @@ export class OpenChat {
                     const lapsed = new Set(
                         resp.members.filter((m) => m.lapsed).map((m) => m.userId),
                     );
+                    const webhooksToAdd = resp.webhooks.filter(
+                        (w) => !webhookUserIdsStore.value.has(w.id),
+                    );
+                    if (webhooksToAdd.length > 0) {
+                        webhookUserIdsStore.update((set) => {
+                            for (const webhook of webhooksToAdd) {
+                                set.add(webhook.id);
+                            }
+                            return set;
+                        });
+                    }
 
                     selectedServerChatStore.set(
                         new ChatDetailsState(
@@ -3453,8 +3473,8 @@ export class OpenChat {
         serverChat: ChatSummary,
         updatedEvents: UpdatedEvent[],
     ): Promise<void> {
-        const confirmedLoaded = confirmedEventIndexesLoaded(serverChat.id);
-        const confirmedThreadLoaded = confirmedThreadEventIndexesLoadedStore.value;
+        const confirmedLoaded = eventIndexesLoaded(serverChat.id);
+        const confirmedThreadLoaded = threadEventIndexesLoadedStore.value;
         const selectedThreadRootMessageIndex = selectedThreadIdStore.value?.threadRootMessageIndex;
 
         // Partition the updated events into those that belong to the currently selected thread and those that don't
@@ -3562,7 +3582,7 @@ export class OpenChat {
     }
 
     #confirmedUpToEventIndex(chatId: ChatIdentifier): number | undefined {
-        const ranges = confirmedEventIndexesLoaded(chatId).subranges();
+        const ranges = eventIndexesLoaded(chatId).subranges();
         if (ranges.length > 0) {
             return ranges[0].high;
         }
@@ -3570,7 +3590,7 @@ export class OpenChat {
     }
 
     #confirmedThreadUpToEventIndex(): number | undefined {
-        const ranges = confirmedThreadEventIndexesLoadedStore.value.subranges();
+        const ranges = threadEventIndexesLoadedStore.value.subranges();
         if (ranges.length > 0) {
             return ranges[0].high;
         }
@@ -3676,7 +3696,7 @@ export class OpenChat {
             // now a new latest message and if so, mark it as a local chat summary update.
             let latestMessageIndex =
                 threadRootMessageIndex === undefined
-                    ? allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1
+                    ? (allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1)
                     : undefined;
             let newLatestMessage: EventWrapper<Message> | undefined = undefined;
 
@@ -3830,13 +3850,13 @@ export class OpenChat {
 
     async #sendMessageWebRtc(
         clientChat: ChatSummary,
-        messageEvent: EventWrapper<Message>,
+        message: NewUnconfirmedMessage,
         threadRootMessageIndex: number | undefined,
     ): Promise<void> {
         rtcConnectionsManager.sendMessage([...selectedChatUserIdsStore.value], {
             kind: "remote_user_sent_message",
             id: clientChat.id,
-            messageEvent: serialiseMessageForRtc(messageEvent),
+            message: serialiseMessageForRtc(message),
             userId: currentUserIdStore.value,
             threadRootMessageIndex,
         });
@@ -3844,59 +3864,22 @@ export class OpenChat {
 
     deleteFailedMessage(
         chatId: ChatIdentifier,
-        event: EventWrapper<Message>,
+        messageId: bigint,
         threadRootMessageIndex?: number,
     ): Promise<void> {
-        localUpdates.deleteFailedMessage({ chatId, threadRootMessageIndex }, event.event.messageId);
+        localUpdates.deleteFailedMessage({ chatId, threadRootMessageIndex }, messageId);
         return this.#sendRequest({
             kind: "deleteFailedMessage",
             chatId,
-            messageId: event.event.messageId,
+            messageId,
             threadRootMessageIndex,
         });
-    }
-
-    async retrySendMessage(
-        messageContext: MessageContext,
-        event: EventWrapper<Message>,
-    ): Promise<void> {
-        const { chatId, threadRootMessageIndex } = messageContext;
-        const chat = chatSummariesStore.value.get(chatId);
-        if (chat === undefined) {
-            return;
-        }
-
-        const currentEvents = this.#eventsForMessageContext(messageContext);
-        const [nextEventIndex, nextMessageIndex] =
-            threadRootMessageIndex !== undefined
-                ? nextEventAndMessageIndexesForThread(currentEvents)
-                : nextEventAndMessageIndexes();
-
-        // remove the *original* event from the failed store
-        await this.deleteFailedMessage(chatId, event, threadRootMessageIndex);
-
-        // regenerate the indexes for the retry message
-        const retryEvent = {
-            ...event,
-            index: nextEventIndex,
-            timestamp: BigInt(Date.now()),
-            event: {
-                ...event.event,
-                messageIndex: nextMessageIndex,
-            },
-        };
-
-        // add the *new* event to unconfirmed
-        localUpdates.addUnconfirmed(messageContext, retryEvent);
-
-        // TODO - what about mentions?
-        this.#sendMessageCommon(chat, messageContext, retryEvent, [], true);
     }
 
     async #sendMessageCommon(
         chat: ChatSummary,
         messageContext: MessageContext,
-        eventWrapper: EventWrapper<Message>,
+        message: NewUnconfirmedMessage,
         mentioned: User[] = [],
         retrying: boolean,
     ): Promise<SendMessageResponse> {
@@ -3912,7 +3895,7 @@ export class OpenChat {
 
         let pin: string | undefined = undefined;
 
-        if (pinNumberRequiredStore.value && isTransfer(eventWrapper.event.content)) {
+        if (pinNumberRequiredStore.value && isTransfer(message.content)) {
             pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
@@ -3920,23 +3903,31 @@ export class OpenChat {
             return Promise.resolve({ kind: "message_throttled" });
         }
 
+        const messageEvent = createMessage(messageContext, message);
+
         if (!retrying) {
-            this.#postSendMessage(chat, eventWrapper, threadRootMessageIndex);
+            this.#postSendMessage(chat, messageEvent, threadRootMessageIndex);
+        } else {
+            // remove the *original* event from the failed store
+            await this.deleteFailedMessage(chatId, message.messageId, threadRootMessageIndex);
+
+            // add the *new* event to unconfirmed
+            localUpdates.addUnconfirmed(messageContext, messageEvent);
         }
 
-        const canRetry = canRetryMessage(eventWrapper.event.content);
+        const canRetry = canRetryMessage(message.content);
 
         const messageFilterFailed = doesMessageFailFilter(
-            eventWrapper.event,
+            message.content,
             messageFiltersStore.value,
         );
 
-        const messageId = eventWrapper.event.messageId;
+        const messageId = message.messageId;
         const newAchievement = this.#isNewSendMessageAchievement(
             messageContext,
-            eventWrapper.event,
+            messageEvent.event,
         );
-        const ledger = this.#extractLedgerFromContent(eventWrapper.event.content);
+        const ledger = this.#extractLedgerFromContent(message.content);
 
         const sendMessagePromise: Promise<SendMessageResponse> = new Promise((resolve) => {
             this.#inflightMessagePromises.set(messageId, resolve);
@@ -3947,7 +3938,7 @@ export class OpenChat {
                     messageContext,
                     user: currentUserStore.value,
                     mentioned,
-                    event: eventWrapper,
+                    event: messageEvent,
                     acceptedRules,
                     messageFilterFailed,
                     pin,
@@ -3960,8 +3951,8 @@ export class OpenChat {
                     if (response === "accepted") {
                         localUpdates.markUnconfirmedAccepted(messageContext, messageId);
 
-                        if (!isTransfer(eventWrapper.event.content)) {
-                            this.#sendMessageWebRtc(chat, eventWrapper, threadRootMessageIndex);
+                        if (!isTransfer(message.content)) {
+                            this.#sendMessageWebRtc(chat, message, threadRootMessageIndex);
                         }
                         return;
                     }
@@ -3984,7 +3975,7 @@ export class OpenChat {
                             chatId,
                             msg.messageId,
                             threadRootMessageIndex,
-                            eventWrapper,
+                            messageEvent,
                             canRetry,
                             resp,
                         );
@@ -3998,7 +3989,7 @@ export class OpenChat {
                         chatId,
                         messageId,
                         threadRootMessageIndex,
-                        eventWrapper,
+                        messageEvent,
                         canRetry,
                         undefined,
                     );
@@ -4029,7 +4020,7 @@ export class OpenChat {
                         }
                     }
                 }
-                if (eventWrapper.event.repliesTo !== undefined) {
+                if (messageEvent.event.repliesTo !== undefined) {
                     // double counting here which I think is OK since we are limited to string events
                     trackEvent("replied_to_message");
                 }
@@ -4180,18 +4171,9 @@ export class OpenChat {
         }
     }
 
-    #eventsForMessageContext({
-        threadRootMessageIndex,
-    }: MessageContext): EventWrapper<ChatEvent>[] {
-        if (threadRootMessageIndex === undefined) return eventsStore.value;
-        return threadEventsStore.value;
-    }
-
     eventExpiry(chat: ChatSummary, timestamp: number): number | undefined {
-        if (chat.kind === "group_chat" || chat.kind === "channel") {
-            if (chat.eventsTTL !== undefined) {
-                return timestamp + Number(chat.eventsTTL);
-            }
+        if (chat.eventsTTL !== undefined) {
+            return timestamp + Number(chat.eventsTTL);
         }
         return undefined;
     }
@@ -4202,8 +4184,7 @@ export class OpenChat {
         blockLevelMarkdown: boolean,
         mentioned: User[] = [],
         forwarded: boolean = false,
-        msgFn?: (idx: number) => Message,
-        messageId: bigint = random64(),
+        retrying = false,
     ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
         const chat = chatSummariesStore.value.get(chatId);
@@ -4212,33 +4193,19 @@ export class OpenChat {
         }
 
         const draftMessage = localUpdates.draftMessages.value.get(messageContext);
-        const currentEvents = this.#eventsForMessageContext(messageContext);
-        const [nextEventIndex, nextMessageIndex] =
-            threadRootMessageIndex !== undefined
-                ? nextEventAndMessageIndexesForThread(currentEvents)
-                : nextEventAndMessageIndexes();
-
-        const msg = msgFn
-            ? msgFn(nextMessageIndex)
-            : this.#createMessage(
-                  currentUserIdStore.value,
-                  nextMessageIndex,
-                  content,
-                  blockLevelMarkdown,
-                  draftMessage?.replyingTo,
-                  forwarded,
-                  messageId,
-              );
-
         const timestamp = Date.now();
-        const event = {
-            event: msg,
-            index: nextEventIndex,
+        const msg = {
             timestamp: BigInt(timestamp),
             expiresAt: threadRootMessageIndex ? undefined : this.eventExpiry(chat, timestamp),
+            messageId: random64(),
+            sender: currentUserIdStore.value,
+            content,
+            repliesTo: draftMessage?.replyingTo,
+            forwarded,
+            blockLevelMarkdown,
         };
 
-        return this.#sendMessageCommon(chat, messageContext, event, mentioned, false);
+        return this.#sendMessageCommon(chat, messageContext, msg, mentioned, retrying);
     }
 
     #throttleSendMessage(): boolean {
@@ -4563,7 +4530,7 @@ export class OpenChat {
         messageEvent: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
     ) {
-        const confirmedLoaded = confirmedEventIndexesLoaded(serverChat.id);
+        const confirmedLoaded = eventIndexesLoaded(serverChat.id);
 
         if (indexIsInRanges(messageEvent.index, confirmedLoaded)) {
             // We already have this confirmed message
@@ -4739,7 +4706,8 @@ export class OpenChat {
                 parsedMsg.kind === "remote_user_sent_message" &&
                 parsedMsg.threadRootMessageIndex === undefined
             ) {
-                localUpdates.addUnconfirmed({ chatId: fromChatId }, parsedMsg.messageEvent);
+                const context = { chatId: fromChatId };
+                localUpdates.addUnconfirmed(context, createMessage(context, parsedMsg.message));
             }
         }
     }
@@ -4787,36 +4755,33 @@ export class OpenChat {
         events: EventWrapper<ChatEvent>[],
         threadRootMessageIndex: number | undefined,
     ) {
-        const existing = this.#findMessageById(message.messageEvent.event.messageId, events);
+        // This is the old version
+        if ("messageEvent" in message) {
+            return;
+        }
+        const existing = this.#findMessageById(message.message.messageId, events);
         if (existing !== undefined) {
             return;
         }
 
-        const [eventIndex, messageIndex] =
-            threadRootMessageIndex !== undefined
-                ? nextEventAndMessageIndexesForThread(events)
-                : nextEventAndMessageIndexes();
-
         const context = { chatId, threadRootMessageIndex };
+        const messageEvent = createMessage(context, message.message);
 
         publish("sendingMessage", context);
 
         window.setTimeout(() => {
-            localUpdates.addUnconfirmed(context, {
-                ...message.messageEvent,
-                index: eventIndex,
-                event: {
-                    ...message.messageEvent.event,
-                    messageIndex,
-                },
-            });
+            localUpdates.addUnconfirmed(context, messageEvent);
 
-            publish("sentMessage", { context, event: message.messageEvent });
+            publish("sentMessage", { context, event: messageEvent });
         }, 0);
     }
 
     checkUsername(username: string, isBot: boolean): Promise<CheckUsernameResponse> {
-        return this.#sendRequest({ kind: "checkUsername", username, isBot });
+        console.log("we are getting here right?");
+        return this.#sendRequest({ kind: "checkUsername", username, isBot }).then((resp) => {
+            console.log("Resp: ", resp);
+            return resp;
+        });
     }
 
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
@@ -5149,6 +5114,14 @@ export class OpenChat {
         }
     }
 
+    checkFcmTokenExists(fcmToken: string): Promise<boolean> {
+        return this.#sendRequest({ kind: "fcmTokenExists", fcmToken });
+    }
+
+    addFcmToken(fcmToken: string, onResponseError?: (error: string | null) => void): Promise<void> {
+        return this.#sendRequest({ kind: "addFcmToken", fcmToken, onResponseError });
+    }
+
     inviteUsers(
         id: MultiUserChatIdentifier | CommunityIdentifier,
         userIds: string[],
@@ -5311,6 +5284,7 @@ export class OpenChat {
     }
 
     getProposalVoteDetails(
+        messageId: bigint,
         governanceCanisterId: string,
         proposalId: bigint,
         isNns: boolean,
@@ -5321,10 +5295,7 @@ export class OpenChat {
             proposalId,
             isNns,
         }).then((resp) => {
-            proposalTalliesStore.update((map) => {
-                map.set(`${governanceCanisterId}_${proposalId}`, resp.latestTally);
-                return map;
-            });
+            localUpdates.markProposalTallyUpdated(messageId, resp.latestTally);
             return resp;
         });
     }
@@ -5562,7 +5533,11 @@ export class OpenChat {
             {
                 userGroups: [
                     {
-                        users: this.missingUserIds(userStore.allUsers, userIds),
+                        users: missingUserIds(
+                            userStore.allUsers,
+                            webhookUserIdsStore.value,
+                            userIds,
+                        ),
                         updatedSince: BigInt(0),
                     },
                 ],
@@ -6197,6 +6172,7 @@ export class OpenChat {
                         blobData: undefined,
                         blobUrl: undefined,
                     };
+
                     userStore.addUser(this.#rehydrateDataContent(user, "avatar"));
                 }
             }
@@ -6426,6 +6402,7 @@ export class OpenChat {
                             resp as UpdatesResult,
                         );
                     }
+                    latestSuccessfulUpdatesLoop.set(Date.now());
                 },
                 onError: (err) => {
                     console.warn("getUpdates threw an error: ", err);
@@ -7563,25 +7540,29 @@ export class OpenChat {
 
     async signUpWithWebAuthn(
         assumeIdentity: boolean,
+        username?: string,
     ): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
         const webAuthnOrigin = this.config.webAuthnOrigin;
         if (webAuthnOrigin === undefined) throw new Error("WebAuthn origin not set");
 
-        const webAuthnIdentity = await createWebAuthnIdentity(webAuthnOrigin, (key) =>
-            this.#storeWebAuthnKeyInCache(key),
+        const webAuthnIdentity = await createWebAuthnIdentity(
+            webAuthnOrigin,
+            (key) => this.#storeWebAuthnKeyInCache(key),
+            username,
         );
 
         // We create a temporary key so that the user doesn't have to reauthenticate via WebAuthn, we store this key
         // in IndexedDb, it is valid for 30 days (the same as the other key delegations we use).
         const tempKey = await ECDSAKeyIdentity.generate();
 
-        return await this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, assumeIdentity);
+        return this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, assumeIdentity, true);
     }
 
     async signUpWithAndroidWebAuthn(
         assumeIdentity: boolean,
+        username: string,
     ): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
-        const webAuthnIdentity = await createAndroidWebAuthnPasskeyIdentity((key) =>
+        const webAuthnIdentity = await createAndroidWebAuthnPasskeyIdentity(username, (key) =>
             this.#storeWebAuthnKeyInCache(key),
         );
 
@@ -7645,6 +7626,7 @@ export class OpenChat {
         initialKey: SignIdentity,
         webAuthnIdentityFn: () => WebAuthnIdentity,
         assumeIdentity: boolean,
+        registering: boolean = false,
     ): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
         const sessionKey = await ECDSAKeyIdentity.generate();
         const delegationChain = await DelegationChain.create(
@@ -7663,7 +7645,7 @@ export class OpenChat {
         if (assumeIdentity) {
             this.#webAuthnKey = webAuthnKey;
             this.#authIdentityStorage.set(sessionKey, delegationChain);
-            this.#loadedAuthenticationIdentity(identity, AuthProvider.PASSKEY);
+            await this.#loadedAuthenticationIdentity(identity, AuthProvider.PASSKEY, registering);
         }
         return [sessionKey, delegationChain, webAuthnKey];
     }
@@ -8098,11 +8080,14 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    candidate.id = {
-                        kind: "community",
-                        communityId: resp.id,
-                    };
-                    this.#addCommunityLocally(candidate);
+                    this.#addCommunityLocally({
+                        ...candidate,
+                        id: {
+                            kind: "community",
+                            communityId: resp.id,
+                        },
+                        channels: resp.channels.map(([id, name]) => newDefaultChannel(id, name)),
+                    });
                 }
                 return resp;
             })
@@ -8386,7 +8371,7 @@ export class OpenChat {
     }
 
     getStreak(userId: string | undefined) {
-        return userId ? userStore.get(userId)?.streak ?? 0 : 0;
+        return userId ? (userStore.get(userId)?.streak ?? 0) : 0;
     }
 
     getBotDefinition(endpoint: string): Promise<BotDefinitionResponse> {
@@ -8756,30 +8741,16 @@ export class OpenChat {
                 blockLevelMarkdown,
             );
         } else {
-            const currentEvents = this.#eventsForMessageContext(context);
-            const [eventIndex, messageIndex] =
-                context.threadRootMessageIndex !== undefined
-                    ? nextEventAndMessageIndexesForThread(currentEvents)
-                    : nextEventAndMessageIndexes();
             publish("sendingMessage", context);
-            const event: EventWrapper<Message> = {
-                index: eventIndex,
+            const event = createMessage(context, {
                 timestamp: BigInt(Date.now()),
-                event: {
-                    content,
-                    messageIndex,
-                    kind: "message",
-                    sender: senderId,
-                    messageId: msgId,
-                    reactions: [],
-                    tips: {},
-                    edited: false,
-                    forwarded: false,
-                    deleted: false,
-                    blockLevelMarkdown: blockLevelMarkdown,
-                    senderContext: botContext,
-                },
-            };
+                content,
+                sender: senderId,
+                messageId: msgId,
+                forwarded: false,
+                blockLevelMarkdown,
+                senderContext: botContext,
+            });
             localUpdates.addUnconfirmed(context, event);
             publish("sentMessage", { context, event });
         }
@@ -8835,13 +8806,27 @@ export class OpenChat {
                                 // as the message will be displayed in popup
                                 if (resp.message.ephemeral) {
                                     removePlaceholder?.();
+                                    publish("ephemeralMessage", {
+                                        message: resp.message,
+                                        scope,
+                                        botId: bot.id,
+                                        commandName: bot.command.name,
+                                    });
+                                } else {
+                                    this.sendPlaceholderBotMessage(
+                                        scope,
+                                        botContext === undefined
+                                            ? undefined
+                                            : {
+                                                ...botContext,
+                                                finalised: resp.message.finalised,
+                                            },
+                                        resp.message.messageContent,
+                                        resp.message.messageId,
+                                        bot.id,
+                                        resp.message.blockLevelMarkdown
+                                    );
                                 }
-                                publish("ephemeralMessage", {
-                                    message: resp.message,
-                                    scope,
-                                    botId: bot.id,
-                                    commandName: bot.command.name,
-                                });
                             } else {
                                 removePlaceholder?.();
                             }
@@ -8868,14 +8853,16 @@ export class OpenChat {
 
         return this.#sendRequest({ kind: "claimDailyChit", utcOffsetMins }).then((resp) => {
             if (resp.kind === "success") {
-                chitStateStore.update((state) => ({
-                    chitBalance: resp.chitBalance,
-                    streakEnds: resp.nextDailyChitClaim + BigInt(1000 * 60 * 60 * 24),
-                    streak: resp.streak,
-                    maxStreak: resp.maxStreak,
-                    nextDailyChitClaim: resp.nextDailyChitClaim,
-                    totalChitEarned: state.totalChitEarned + resp.chitEarned,
-                }));
+                if (resp.nextDailyChitClaim > chitStateStore.value.nextDailyChitClaim) {
+                    chitStateStore.update((state) => ({
+                        chitBalance: resp.chitBalance,
+                        streakEnds: resp.nextDailyChitClaim + BigInt(1000 * 60 * 60 * 24),
+                        streak: resp.streak,
+                        maxStreak: resp.maxStreak,
+                        nextDailyChitClaim: resp.nextDailyChitClaim,
+                        totalChitEarned: state.totalChitEarned + resp.chitEarned,
+                    }));
+                }
                 this.#overwriteUserInStore(userId, (user) => ({
                     ...user,
                     chitBalance: resp.chitBalance,
@@ -9332,6 +9319,36 @@ export class OpenChat {
                 console.log("Failed to pay for streak insurance: ", err);
                 return CommonResponses.failure();
             });
+    }
+
+    updateDirectChatSettings(
+        chat: DirectChatSummary,
+        eventsTtl: OptionUpdate<bigint>,
+    ): Promise<boolean> {
+        return this.#sendRequest({
+            kind: "updateDirectChatSettings",
+            userId: chat.them.userId,
+            eventsTtl,
+        })
+            .then((success) => {
+                if (success) {
+                    localUpdates.updateDirectChatProperties(chat.id, eventsTtl);
+                }
+                return success;
+            })
+            .catch((err) => {
+                console.log("Failed to update direct chat settings", err);
+                return false;
+            });
+    }
+
+    async #updateProposalTallies(chatId: MultiUserChatIdentifier) {
+        const updatedMessages = await this.#sendRequest({
+            kind: "updateProposalTallies",
+            chatId,
+        });
+
+        this.#addServerEventsToStores(chatId, updatedMessages, undefined, []);
     }
 
     async initialiseNotifications(): Promise<boolean> {

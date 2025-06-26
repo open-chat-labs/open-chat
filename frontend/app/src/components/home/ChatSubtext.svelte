@@ -45,7 +45,12 @@
 </script>
 
 {#if chat.kind === "direct_chat"}
-    {subtext}
+    <div class="wrapper">
+        {#if chat.eventsTTL !== undefined}
+            <DisappearLabel ttl={chat.eventsTTL} />
+        {/if}
+        {subtext}
+    </div>
 {:else if chat.kind === "group_chat" || chat.kind === "channel"}
     <div class="wrapper">
         {#if chat.eventsTTL !== undefined}

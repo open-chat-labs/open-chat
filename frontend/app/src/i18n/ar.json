@@ -142,7 +142,7 @@
     "avatarTooBig": "الصورة الرمزية المحددة كبيرة جدًا",
     "avatarUpdated": "تم تحديث الصورة الرمزية بنجاح",
     "avatarUpdateFailed": "فشل تحديث الصورة الرمزية",
-    "backToResults": "خلف",
+    "back": "خلف",
     "bio": "السيرة الذاتية للمستخدم",
     "blocked": "مسدود",
     "blockedBy": "{changedBy} تم حظر {changed}",
@@ -404,6 +404,7 @@
     "change": "يتغير",
     "changeTheme": "تغيير الثيم",
     "channelAlreadyExists": "توجد قناة بهذا الاسم بالفعل",
+    "chatDetails": "تفاصيل الدردشة",
     "chatFrozen": "لقد تم تجميد هذه الدردشة",
     "chatFrozenBy": "تم تجميد الدردشة بواسطة {frozenBy}",
     "chatMenu": "قائمة الدردشة",
@@ -558,6 +559,8 @@
     "copyInviteCode": "نسخ رمز الدعوة",
     "copyMessageUrl": "نسخ عنوان الرسالة",
     "copyToClipboard": "نسخ إلى الحافظة",
+    "copyUrl": "نسخ عنوان URL",
+    "createAccountOrSignIn": "انقر هنا لإنشاء حساب أو تسجيل الدخول",
     "createNewGroup": "إنشاء مجموعة جديدة",
     "cryptoAccount": {
         "auto": "اوتوماتيكي",
@@ -1491,6 +1494,7 @@
         "confirmCyclesTransferText": "يرجى التأكيد أدناه عند قيامك بتحويل {amount} دورة من محفظة الدورات الخاصة بك إلى محفظة OpenChat أدناه",
         "confirmICPTransferText": "يرجى التأكيد أدناه عند قيامك بتحويل {amount} ICP إلى الحساب الموضح أدناه",
         "confirmTransfer": "تأكيد التحويل",
+        "createAccount": "إنشاء حساب",
         "createUser": "إنشاء المستخدم",
         "cyclesTransferred": "تم تأكيد رسوم دورات {fee}",
         "disclaimer": "من خلال التسجيل في OpenChat فإنك توافق على الالتزام بشروطنا وأحكامنا",
@@ -1526,7 +1530,7 @@
         "usernameTooLong": "اسم المستخدم هذا طويل جدًا",
         "usernameTooShort": "اسم المستخدم هذا قصير جدًا",
         "userNotFound": "لم يتم العثور على المستخدم",
-        "welcome": "مرحباً بكم في OpenChat!"
+        "welcome": "مرحباً بكم في OpenChat"
     },
     "reminders": {
         "cancel": "إلغاء التذكير",
@@ -1703,7 +1707,6 @@
         "title": "يرجى التبديل إلى نطاقنا الجديد"
     },
     "tapForReferralLink": "انقر هنا لنسخ رابط الإحالة الشخصي الخاص بك",
-    "tapToLogin": "وضع الضيف - انقر هنا لتسجيل الدخول",
     "tellMeMore": "مزيد من المعلومات",
     "theInternetComputer": "كمبيوتر الانترنت",
     "theme": {
@@ -1924,7 +1927,7 @@
     },
     "upgradeByTransfer": "اي سي بي",
     "upgradeStorage": "ترقية التخزين",
-    "urlCopiedToClipboard": "تم نسخ عنوان URL للمجموعة إلى الحافظة!",
+    "urlCopiedToClipboard": "تم نسخ الرابط إلى الحافظة!",
     "useAtOwnRisk": "استخدم على مسؤوليتك الخاصة",
     "userId": "معرف المستخدم",
     "userIdCopiedToClipboard": "تم نسخ معرف المستخدم إلى الحافظة",

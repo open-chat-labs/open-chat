@@ -32,6 +32,7 @@ import {
     type P2PSwapStatus,
     type SenderContext,
     type StreakInsurance,
+    type Tally,
     type ThreadSummary,
     type UnconfirmedMessageEvent,
     type UnconfirmedState,
@@ -245,19 +246,20 @@ export class GlobalLocalState {
     }
 
     addUnconfirmed(key: MessageContext, message: EventWrapper<Message>): UndoLocalUpdate {
+        const messageId = message.event.messageId;
         return modifyWritableMap(
             key,
             (state) => {
-                if (!state.has(message.event.messageId)) {
-                    state.set(message.event.messageId, { ...message, accepted: false });
+                if (!state.has(messageId)) {
+                    state.set(messageId, { ...message, accepted: false });
                     this.#recentlySentMessages.update((map) => {
-                        map.set(message.event.messageId, message.timestamp);
+                        map.set(messageId, message.timestamp);
                         return map;
                     });
                     return (state) => {
-                        this.#deleteLocalMessage(state, message.event.messageId);
+                        this.#deleteLocalMessage(state, messageId);
                         this.#recentlySentMessages.update((map) => {
-                            map.delete(message.event.messageId);
+                            map.delete(messageId);
                             return map;
                         });
                         return state;
@@ -780,6 +782,20 @@ export class GlobalLocalState {
         );
     }
 
+    updateDirectChatProperties(id: DirectChatIdentifier, eventsTTL?: OptionUpdate<bigint>) {
+        return this.#modifyChatSummaryUpdates(
+            id,
+            (upd) => {
+                upd.eventsTTL = eventsTTL;
+                return (upd) => {
+                    upd.eventsTTL = undefined;
+                    return upd;
+                };
+            },
+            "updateDirectChatProperties",
+        );
+    }
+
     updateChatProperties(
         id: ChatIdentifier,
         name?: string,
@@ -964,6 +980,20 @@ export class GlobalLocalState {
                 };
             },
             "markPrizeClaimed",
+        );
+    }
+
+    markProposalTallyUpdated(messageId: bigint, tally: Tally) {
+        return this.#modifyMessageUpdates(
+            messageId,
+            (upd) => {
+                upd.proposalTally = tally;
+                return (upd) => {
+                    upd.proposalTally = undefined;
+                    return upd;
+                };
+            },
+            "markProposalTallyUpdated"
         );
     }
 

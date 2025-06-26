@@ -136,7 +136,7 @@ export type UpdateCommunityResponse =
 
 export type ToggleMuteCommunityNotificationsResponse = Success | OCError | Offline;
 
-export type CreateCommunityResponse = Offline | Failure | OCError | (Success & { id: string });
+export type CreateCommunityResponse = Offline | Failure | OCError | (Success & { id: string; channels: [ChannelIdentifier, string][] });
 
 export type JoinCommunityResponse =
     | Failure

@@ -34,6 +34,7 @@
         chatSummariesStore,
         communitiesStore,
         currentUserStore,
+        defaultChatPermissions,
         defaultChatRules,
         dimensionsHeight,
         fullWidth,
@@ -46,9 +47,6 @@
         pinNumberResolverStore,
         querystringStore,
         rightPanelHistory,
-        ROLE_ADMIN,
-        ROLE_MEMBER,
-        ROLE_MODERATOR,
         ROLE_NONE,
         ROLE_OWNER,
         routeForChatIdentifier,
@@ -86,8 +84,8 @@
     import EditLabel from "../EditLabel.svelte";
     import NotFound from "../NotFound.svelte";
     import OfflineFooter from "../OfflineFooter.svelte";
+    import OnboardModal from "../onboard/OnboardModal.svelte";
     import Overlay from "../Overlay.svelte";
-    import Register from "../register/Register.svelte";
     import SelectChatModal from "../SelectChatModal.svelte";
     import SuspendedModal from "../SuspendedModal.svelte";
     import Toast from "../Toast.svelte";
@@ -104,7 +102,6 @@
     import CreateOrUpdateGroup from "./createOrUpdateGroup/CreateOrUpdateGroup.svelte";
     import DailyChitModal from "./DailyChitModal.svelte";
     import LeftPanel from "./LeftPanel.svelte";
-    import LoggingInModal from "./LoggingInModal.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
     import LeftNav from "./nav/LeftNav.svelte";
     import NoAccess from "./NoAccess.svelte";
@@ -241,6 +238,7 @@
             subscribe("notification", (n) => client.notificationReceived(n)),
             subscribe("noAccess", () => (modal = { kind: "no_access" })),
             subscribe("notFound", () => (modal = { kind: "not_found" })),
+            subscribe("copyUrl", copyUrl),
         ];
         client.initialiseNotifications();
         document.body.addEventListener("profile-clicked", profileClicked);
@@ -753,23 +751,7 @@
                 public: false,
                 frozen: false,
                 members: [],
-                permissions: {
-                    changeRoles: ROLE_ADMIN,
-                    removeMembers: ROLE_MODERATOR,
-                    deleteMessages: ROLE_MODERATOR,
-                    updateGroup: ROLE_ADMIN,
-                    pinMessages: ROLE_ADMIN,
-                    inviteUsers: ROLE_ADMIN,
-                    addMembers: ROLE_ADMIN,
-                    mentionAllMembers: ROLE_MEMBER,
-                    reactToMessages: ROLE_MEMBER,
-                    startVideoCall: ROLE_MEMBER,
-                    messagePermissions: {
-                        default: ROLE_MEMBER,
-                        p2pSwap: ROLE_NONE,
-                    },
-                    threadPermissions: undefined,
-                },
+                permissions: defaultChatPermissions(),
                 rules: { ...defaultChatRules(level), newVersion: false },
                 gateConfig: { gate: { kind: "no_gate" }, expiry: undefined },
                 level,
@@ -828,6 +810,19 @@
                 );
             }
         });
+    }
+
+    function copyUrl() {
+        const url = window.location.href;
+
+        navigator.clipboard.writeText(url).then(
+            () => {
+                toastStore.showSuccessToast(i18nKey("urlCopiedToClipboard"));
+            },
+            () => {
+                toastStore.showFailureToast(i18nKey("failedToCopyUrlToClipboard", { url }));
+            },
+        );
     }
 
     async function createDirectChat(chatId: DirectChatIdentifier): Promise<boolean> {
@@ -1038,8 +1033,6 @@
         onClose={closeModal}>
         {#if modal.kind === "select_chat"}
             <SelectChatModal onClose={onCloseSelectChat} onSelect={onSelectChat} />
-        {:else if modal.kind === "registering"}
-            <Register onCreatedUser={(user) => client.onRegisteredUser(user)} />
         {:else if modal.kind === "suspended"}
             <SuspendedModal onClose={closeModal} />
         {:else if modal.kind === "register_bot"}
@@ -1090,8 +1083,10 @@
                 selectedMultiUserChat={modal.chat}
                 nervousSystem={modal.nervousSystem}
                 onClose={closeModal} />
-        {:else if modal.kind === "logging_in"}
-            <LoggingInModal onClose={closeModal} />
+        {:else if modal.kind === "logging_in" || modal.kind === "registering"}
+            <OnboardModal
+                step={modal.kind === "registering" ? "sign_up" : "select_mode"}
+                onClose={closeModal} />
         {:else if modal.kind === "claim_daily_chit"}
             <DailyChitModal onLeaderboard={leaderboard} onClose={closeModal} />
         {:else if modal.kind === "challenge"}

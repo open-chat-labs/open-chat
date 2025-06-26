@@ -8,6 +8,7 @@ pub struct Args {
     pub group_index_canister_id: CanisterId,
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
+    pub identity_canister_id: CanisterId,
     #[deprecated]
     #[serde(default = "CanisterId::anonymous")]
     pub notifications_canister_id: CanisterId,

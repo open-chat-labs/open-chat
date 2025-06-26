@@ -142,7 +142,7 @@
     "avatarTooBig": "آواتار انتخاب شده خیلی بزرگ است",
     "avatarUpdated": "آواتار با موفقیت به روز شد",
     "avatarUpdateFailed": "به‌روزرسانی آواتار انجام نشد",
-    "backToResults": "بازگشت",
+    "back": "بازگشت",
     "bio": "بیوگرافی کاربر",
     "blocked": "مسدود",
     "blockedBy": "{changedBy} مسدود شد {changed}",
@@ -404,6 +404,7 @@
     "change": "تغییر دادن",
     "changeTheme": "تغییر زمینه",
     "channelAlreadyExists": "کانالی با آن نام از قبل وجود دارد",
+    "chatDetails": "جزئیات چت",
     "chatFrozen": "این چت مسدود شده است",
     "chatFrozenBy": "گپ ثابت شده توسط {frozenBy}",
     "chatMenu": "منوی چت",
@@ -558,6 +559,8 @@
     "copyInviteCode": "کد دعوت را کپی کنید",
     "copyMessageUrl": "آدرس پیام را کپی کنید",
     "copyToClipboard": "کپی به کلیپ بورد",
+    "copyUrl": "کپی کردن آدرس اینترنتی",
+    "createAccountOrSignIn": "برای ایجاد حساب کاربری یا ورود به سیستم اینجا را لمس کنید.",
     "createNewGroup": "یک گروه جدید ایجاد کنید",
     "cryptoAccount": {
         "auto": "خودکار",
@@ -1491,6 +1494,7 @@
         "confirmCyclesTransferText": "لطفاً هنگامی که {amount} چرخه را از کیف پول چرخه های خود به کیف پول OpenChat زیر منتقل کردید، در زیر تأیید کنید.",
         "confirmICPTransferText": "لطفاً هنگامی که {amount} ICP را به حساب ارائه شده در زیر انتقال دادید، در زیر تأیید کنید",
         "confirmTransfer": "انتقال را تایید کنید",
+        "createAccount": "ایجاد حساب کاربری",
         "createUser": "کاربر ایجاد کنید",
         "cyclesTransferred": "کارمزد چرخه {fee} تأیید شد",
         "disclaimer": "با ثبت نام در OpenChat موافقت می کنید که از شرایط و ضوابط ما پیروی کنید",
@@ -1526,7 +1530,7 @@
         "usernameTooLong": "این نام کاربری خیلی طولانی است",
         "usernameTooShort": "این نام کاربری خیلی کوتاه است",
         "userNotFound": "کاربر پیدا نشد",
-        "welcome": "به OpenChat خوش آمدید!"
+        "welcome": "به OpenChat خوش آمدید"
     },
     "reminders": {
         "cancel": "لغو یادآوری",
@@ -1703,7 +1707,6 @@
         "title": "لطفاً به دامنه جدید ما بروید"
     },
     "tapForReferralLink": "برای کپی کردن پیوند ارجاع شخصی خود ضربه بزنید",
-    "tapToLogin": "حالت مهمان - برای ورود به سیستم اینجا ضربه بزنید",
     "tellMeMore": "اطلاعات بیشتر",
     "theInternetComputer": "کامپیوتر اینترنتی",
     "theme": {
@@ -1924,7 +1927,7 @@
     },
     "upgradeByTransfer": "ICP",
     "upgradeStorage": "فضای ذخیره سازی را ارتقا دهید",
-    "urlCopiedToClipboard": "نشانی وب گروه در کلیپ بورد کپی شد!",
+    "urlCopiedToClipboard": "آدرس اینترنتی در کلیپ‌بورد کپی شد!",
     "useAtOwnRisk": "با مسئولیت خود استفاده کنید",
     "userId": "شناسه کاربر",
     "userIdCopiedToClipboard": "شناسه کاربر در کلیپ بورد کپی شد",

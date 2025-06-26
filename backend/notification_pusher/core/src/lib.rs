@@ -69,19 +69,21 @@ pub enum PushNotification {
     FcmNotification(FcmNotification),
 }
 
+#[derive(Debug)]
 pub struct FcmNotification {
     fcm_data: FcmData,
     fcm_token: FcmToken,
     metadata: NotificationMetadata,
 }
 
+#[derive(Debug)]
 pub struct UserNotification {
     payload: Arc<Vec<u8>>,
     subscription_info: SubscriptionInfo,
     metadata: NotificationMetadata,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct NotificationMetadata {
     index: u64,
     recipient: UserId,
@@ -91,11 +93,13 @@ pub struct NotificationMetadata {
 }
 
 // Sent by processor to pusher
+#[derive(Debug)]
 pub enum NotificationToPush {
-    UserNotificationToPush(UserNotificationToPush),
+    UserNotificationToPush(Box<UserNotificationToPush>),
     FcmNotificationToPush(Box<FcmNotification>),
 }
 
+#[derive(Debug)]
 pub struct UserNotificationToPush {
     notification: UserNotification,
     message: WebPushMessage,

@@ -142,7 +142,7 @@
     "avatarTooBig": "The selected avatar is too big",
     "avatarUpdated": "Avatar successfully updated",
     "avatarUpdateFailed": "Avatar update failed",
-    "backToResults": "Back",
+    "back": "Back",
     "bio": "User bio",
     "blocked": "blocked",
     "blockedBy": "{changedBy} blocked {changed}",
@@ -404,6 +404,7 @@
     "change": "change",
     "changeTheme": "Change theme",
     "channelAlreadyExists": "A channel with that name already exists",
+    "chatDetails": "Chat details",
     "chatFrozen": "This chat has been frozen",
     "chatFrozenBy": "Chat frozen by {frozenBy}",
     "chatMenu": "Chat menu",
@@ -558,6 +559,8 @@
     "copyInviteCode": "Copy invite code",
     "copyMessageUrl": "Copy message url",
     "copyToClipboard": "Copy to clipboard",
+    "copyUrl": "Copy url",
+    "createAccountOrSignIn": "Tap here to **create account** or **sign in**",
     "createNewGroup": "Create a new group",
     "cryptoAccount": {
         "auto": "Automatic",
@@ -1035,7 +1038,7 @@
         "signupEmailPlaceholder": "Sign up with email...",
         "signupTitle": "Sign up to OpenChat",
         "signupWith": "Sign up with {provider}",
-        "strapline": "Where Web3 communicates",
+        "strapline": "Fully featured. Fully secure.",
         "title": "Sign in to OpenChat",
         "unexpectedError": "Unexpected error. Please try again later."
     },
@@ -1491,6 +1494,7 @@
         "confirmCyclesTransferText": "Please confirm below when you have made a transfer of {amount} cycles from your cycles wallet to the OpenChat wallet below",
         "confirmICPTransferText": "Please confirm below when you have made a transfer of {amount} ICP to the account given below",
         "confirmTransfer": "Confirm transfer",
+        "createAccount": "Create account",
         "createUser": "Create user",
         "cyclesTransferred": "Fee of {fee} cycles confirmed",
         "disclaimer": "By registering with OpenChat you agree to abide by our terms and conditions",
@@ -1526,7 +1530,7 @@
         "usernameTooLong": "That username is too long",
         "usernameTooShort": "That username is too short",
         "userNotFound": "User not found",
-        "welcome": "Welcome to OpenChat!"
+        "welcome": "Welcome to OpenChat"
     },
     "reminders": {
         "cancel": "Cancel reminder",
@@ -1703,7 +1707,6 @@
         "title": "Please switch to our new domain"
     },
     "tapForReferralLink": "Tap to copy your personal referral link",
-    "tapToLogin": "Guest mode - tap here to sign in",
     "tellMeMore": "More information",
     "theInternetComputer": "The Internet Computer",
     "theme": {
@@ -1924,7 +1927,7 @@
     },
     "upgradeByTransfer": "ICP",
     "upgradeStorage": "Upgrade Storage",
-    "urlCopiedToClipboard": "Group url copied to clipboard!",
+    "urlCopiedToClipboard": "Url copied to clipboard!",
     "useAtOwnRisk": "Use at your own risk",
     "userId": "User id",
     "userIdCopiedToClipboard": "User Id copied to clipboard",

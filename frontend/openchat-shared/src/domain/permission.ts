@@ -173,6 +173,26 @@ export type CommunityPermissions = {
     manageUserGroups: CommunityPermissionRole;
 };
 
+export function defaultChatPermissions(): ChatPermissions {
+    return {
+        changeRoles: ROLE_ADMIN,
+        removeMembers: ROLE_MODERATOR,
+        deleteMessages: ROLE_MODERATOR,
+        updateGroup: ROLE_ADMIN,
+        pinMessages: ROLE_ADMIN,
+        inviteUsers: ROLE_ADMIN,
+        addMembers: ROLE_ADMIN,
+        mentionAllMembers: ROLE_MEMBER,
+        reactToMessages: ROLE_MEMBER,
+        startVideoCall: ROLE_MEMBER,
+        messagePermissions: {
+            default: ROLE_MEMBER,
+            p2pSwap: ROLE_NONE,
+        },
+        threadPermissions: undefined,
+    };
+}
+
 export function defaultOptionalChatPermissions(): OptionalChatPermissions {
     return {
         messagePermissions: undefined,

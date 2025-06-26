@@ -142,7 +142,7 @@
     "avatarTooBig": "चयनित अवतार बहुत बड़ा है",
     "avatarUpdated": "अवतार सफलतापूर्वक अपडेट किया गया",
     "avatarUpdateFailed": "अवतार अद्यतन विफल रहा",
-    "backToResults": "पीछे",
+    "back": "पीछे",
     "bio": "उपयोगकर्ता जीवनी",
     "blocked": "अवरोधित",
     "blockedBy": "{changedBy} अवरोधित किया गया {changed}",
@@ -404,6 +404,7 @@
     "change": "परिवर्तन",
     "changeTheme": "विषय को परिवर्तित करें",
     "channelAlreadyExists": "इस नाम का एक चैनल पहले से मौजूद है",
+    "chatDetails": "चैट विवरण",
     "chatFrozen": "इस चैट को फ़्रीज़ कर दिया गया है",
     "chatFrozenBy": "{frozenBy} द्वारा चैट फ़्रीज़ की गई",
     "chatMenu": "चैट मेनू",
@@ -558,6 +559,8 @@
     "copyInviteCode": "आमंत्रण कोड कॉपी करें",
     "copyMessageUrl": "संदेश यूआरएल कॉपी करें",
     "copyToClipboard": "क्लिपबोर्ड पर कॉपी करें",
+    "copyUrl": "यूआरएल कॉपी करें",
+    "createAccountOrSignIn": "**खाता बनाने** या **साइन इन** करने के लिए यहां टैप करें",
     "createNewGroup": "एक नया समूह बनाएं",
     "cryptoAccount": {
         "auto": "स्वचालित",
@@ -1491,6 +1494,7 @@
         "confirmCyclesTransferText": "कृपया नीचे पुष्टि करें कि आपने अपने साइकिल वॉलेट से नीचे दिए गए ओपनचैट वॉलेट में {amount} साइकिल का स्थानांतरण कब किया है",
         "confirmICPTransferText": "कृपया नीचे पुष्टि करें कि आपने नीचे दिए गए खाते में {amount} ICP का स्थानांतरण कब किया है",
         "confirmTransfer": "स्थानांतरण की पुष्टि करें",
+        "createAccount": "खाता बनाएं",
         "createUser": "उपयोगकर्ता बनाइये",
         "cyclesTransferred": "{fee} चक्रों के शुल्क की पुष्टि की गई",
         "disclaimer": "ओपनचैट पर पंजीकरण करके आप हमारे नियमों और शर्तों का पालन करने के लिए सहमत होते हैं",
@@ -1526,7 +1530,7 @@
         "usernameTooLong": "वह उपयोक्तानाम बहुत लंबा है",
         "usernameTooShort": "वह उपयोक्तानाम बहुत छोटा है",
         "userNotFound": "उपयोगकर्ता नहीं मिला",
-        "welcome": "ओपनचैट में आपका स्वागत है!"
+        "welcome": "ओपनचैट में आपका स्वागत है"
     },
     "reminders": {
         "cancel": "अनुस्मारक रद्द करें",
@@ -1703,7 +1707,6 @@
         "title": "कृपया हमारे नए डोमेन पर स्विच करें"
     },
     "tapForReferralLink": "अपना व्यक्तिगत रेफरल लिंक कॉपी करने के लिए टैप करें",
-    "tapToLogin": "अतिथि मोड - लॉग इन करने के लिए यहां टैप करें",
     "tellMeMore": "अधिक जानकारी",
     "theInternetComputer": "इंटरनेट कंप्यूटर",
     "theme": {
@@ -1924,7 +1927,7 @@
     },
     "upgradeByTransfer": "आईसीपी",
     "upgradeStorage": "भंडारण को अपग्रेड करें",
-    "urlCopiedToClipboard": "समूह यूआरएल क्लिपबोर्ड पर कॉपी किया गया!",
+    "urlCopiedToClipboard": "यूआरएल क्लिपबोर्ड पर कॉपी किया गया!",
     "useAtOwnRisk": "अपने जोखिम पर उपयोग करें",
     "userId": "उपयोगकर्ता पहचान",
     "userIdCopiedToClipboard": "उपयोगकर्ता आईडी को क्लिपबोर्ड पर कॉपी किया गया",

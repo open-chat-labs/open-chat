@@ -9,6 +9,7 @@ Default permissions for the plugin
 - `allow-sign-up`
 - `allow-registerListener`
 - `allow-removeListener`
+- `allow-get-fcm-token`
 
 ## Permission Table
 
@@ -18,6 +19,32 @@ Default permissions for the plugin
 <th>Description</th>
 </tr>
 
+
+<tr>
+<td>
+
+`oc:allow-get-fcm-token`
+
+</td>
+<td>
+
+Enables the get_fcm_token command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-get-fcm-token`
+
+</td>
+<td>
+
+Denies the get_fcm_token command without any pre-configured scope.
+
+</td>
+</tr>
 
 <tr>
 <td>

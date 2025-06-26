@@ -9,9 +9,9 @@ class MainActivity : TauriActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Get firebase token, upload to backend, and create notification channel
         try {
-            NotificationsHelper.getFCMToken()
+            // Cache FCM token, and create notification channel
+            NotificationsHelper.cacheFCMToken()
             NotificationsHelper.createNotificationChannel(this)
         } catch (e: Exception) {
             Log.e("TEST_OC", "Error occurred $e")

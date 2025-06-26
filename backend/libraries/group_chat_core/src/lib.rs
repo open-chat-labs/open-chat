@@ -276,7 +276,11 @@ impl GroupChatCore {
         let min_visible_event_index = self.min_visible_event_index(user_id)?;
         let events_reader = self.events.visible_main_events_reader(min_visible_event_index);
         let latest_event_index = events_reader.latest_event_index().unwrap();
-        let invited_users = if self.invited_users.last_updated() > since { Some(self.invited_users.users()) } else { None };
+        let invited_users = if self.invited_users.last_updated() > since {
+            Some(self.invited_users.user_ids().copied().collect())
+        } else {
+            None
+        };
 
         let mut result = SelectedGroupUpdates {
             timestamp: last_updated,
@@ -1209,18 +1213,21 @@ impl GroupChatCore {
 
     pub fn invite_users(
         &mut self,
-        invited_by: UserId,
+        invited_by: Caller,
         user_ids: Vec<UserId>,
         now: TimestampMillis,
     ) -> OCResult<InvitedUsersSuccess> {
         const MAX_INVITES: usize = 100;
 
-        let member = self.members.get_verified_member(invited_by)?;
-
-        // The original caller must be authorized to invite other users
-        if !member.role().can_invite_users(&self.permissions) {
-            return Err(OCErrorCode::InitiatorNotAuthorized.into());
-        }
+        let invited_by = if let Some(initiator) = invited_by.initiator() {
+            let member = self.members.get_verified_member(initiator)?;
+            if !member.role().can_invite_users(&self.permissions) {
+                return Err(OCErrorCode::InitiatorNotAuthorized.into());
+            }
+            initiator
+        } else {
+            invited_by.agent()
+        };
 
         // Filter out users who are already members and those who have already been invited
         let invited_users: Vec<_> = user_ids
@@ -1245,7 +1252,7 @@ impl GroupChatCore {
             for user_id in invited_users.iter() {
                 self.invited_users.add(UserInvitation {
                     invited: *user_id,
-                    invited_by: member.user_id(),
+                    invited_by,
                     timestamp: now,
                     min_visible_event_index,
                     min_visible_message_index,
@@ -1256,7 +1263,7 @@ impl GroupChatCore {
             let result = self.events.push_main_event(
                 ChatEventInternal::UsersInvited(Box::new(UsersInvited {
                     user_ids: user_ids.clone(),
-                    invited_by: member.user_id(),
+                    invited_by,
                 })),
                 now,
             );
@@ -1320,63 +1327,65 @@ impl GroupChatCore {
 
     pub fn remove_member(
         &mut self,
-        user_id: UserId,
+        caller: Caller,
         target_user_id: UserId,
         block: bool,
         now: TimestampMillis,
     ) -> OCResult<Option<BotNotification>> {
-        if user_id == target_user_id {
+        let agent = caller.agent();
+
+        if agent == target_user_id {
             return Err(OCErrorCode::CannotRemoveSelf.into());
         }
 
-        let member = self.members.get_verified_member(user_id)?;
+        if matches!(caller, Caller::Webhook(_) | Caller::Bot(_)) {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
+        }
 
-        let target_member_role = match self.members.get(&target_user_id) {
-            Some(m) => m.role().value,
-            None if block => GroupRoleInternal::Member,
-            _ => return Err(OCErrorCode::TargetUserNotInChat.into()),
+        if let Some(initiator) = caller.initiator() {
+            let member = self.members.get_verified_member(initiator)?;
+
+            let target_member_role = match self.members.get(&target_user_id) {
+                Some(m) => m.role().value,
+                None if block => GroupRoleInternal::Member,
+                _ => return Err(OCErrorCode::TargetUserNotInChat.into()),
+            };
+
+            if !member
+                .role()
+                .can_remove_members_with_role(target_member_role, &self.permissions)
+            {
+                return Err(OCErrorCode::InitiatorNotAuthorized.into());
+            }
+        }
+
+        // Remove the user from the group
+        self.members.remove(target_user_id, now);
+
+        if block && !self.members.block(target_user_id, now) {
+            // Return Ok if the user was already blocked
+            return Ok(None);
+        }
+
+        // Push relevant event
+        let event = if block {
+            let event = UsersBlocked {
+                user_ids: vec![target_user_id],
+                blocked_by: agent,
+            };
+
+            ChatEventInternal::UsersBlocked(Box::new(event))
+        } else {
+            let event = MembersRemoved {
+                user_ids: vec![target_user_id],
+                removed_by: agent,
+            };
+            ChatEventInternal::ParticipantsRemoved(Box::new(event))
         };
 
-        if member
-            .role()
-            .can_remove_members_with_role(target_member_role, &self.permissions)
-        {
-            let is_bot_v2 = matches!(member.user_type(), UserType::BotV2);
+        let result = self.events.push_main_event(event, now);
 
-            // Remove the user from the group
-            self.members.remove(target_user_id, now);
-
-            if block && !self.members.block(target_user_id, now) {
-                // Return Ok if the user was already blocked
-                return Ok(None);
-            }
-
-            if !is_bot_v2 {
-                // Push relevant event
-                let event = if block {
-                    let event = UsersBlocked {
-                        user_ids: vec![target_user_id],
-                        blocked_by: user_id,
-                    };
-
-                    ChatEventInternal::UsersBlocked(Box::new(event))
-                } else {
-                    let event = MembersRemoved {
-                        user_ids: vec![target_user_id],
-                        removed_by: user_id,
-                    };
-                    ChatEventInternal::ParticipantsRemoved(Box::new(event))
-                };
-
-                let result = self.events.push_main_event(event, now);
-
-                Ok(result.bot_notification)
-            } else {
-                Ok(None)
-            }
-        } else {
-            Err(OCErrorCode::InitiatorNotAuthorized.into())
-        }
+        Ok(result.bot_notification)
     }
 
     pub fn update(

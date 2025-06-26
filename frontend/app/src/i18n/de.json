@@ -142,7 +142,7 @@
     "avatarTooBig": "Der ausgewählte Avatar ist zu groß",
     "avatarUpdated": "Avatar erfolgreich aktualisiert",
     "avatarUpdateFailed": "Avatar-Update fehlgeschlagen",
-    "backToResults": "zurück",
+    "back": "zurück",
     "bio": "Biografie",
     "blocked": "gesperrt",
     "blockedBy": "{changedBy} sperrt {changed}",
@@ -404,6 +404,7 @@
     "change": "Änderung",
     "changeTheme": "Thema ändern",
     "channelAlreadyExists": "Ein Kanal mit diesem Namen existiert bereits",
+    "chatDetails": "Chatdetails",
     "chatFrozen": "Dieser Chat wurde eingefroren",
     "chatFrozenBy": "Chat eingefroren von {frozenBy}",
     "chatMenu": "Chat-Menü",
@@ -558,6 +559,8 @@
     "copyInviteCode": "Einladungscode kopieren",
     "copyMessageUrl": "Nachrichten-URL kopieren",
     "copyToClipboard": "In die Zwischenablage kopieren",
+    "copyUrl": "URL kopieren",
+    "createAccountOrSignIn": "Tippen Sie hier, um **ein Konto zu erstellen** oder sich **anzumelden**",
     "createNewGroup": "Erstellen Sie eine neue Gruppe",
     "cryptoAccount": {
         "auto": "Automatisch",
@@ -1491,6 +1494,7 @@
         "confirmCyclesTransferText": "Bitte bestätigen Sie unten, wenn Sie {amount} Zyklen von Ihrer Zyklen-Wallet auf die OpenChat-Wallet unten übertragen haben",
         "confirmICPTransferText": "Bitte bestätigen Sie unten, wenn Sie eine Überweisung von {amount} ICP auf das unten angegebene Konto getätigt haben",
         "confirmTransfer": "Überweisung bestätigen",
+        "createAccount": "Benutzerkonto erstellen",
         "createUser": "Benutzer erstellen",
         "cyclesTransferred": "Gebühr von {fee} Zyklen bestätigt",
         "disclaimer": "Mit der Registrierung bei OpenChat erklären Sie sich mit unseren Allgemeinen Geschäftsbedingungen einverstanden.",
@@ -1526,7 +1530,7 @@
         "usernameTooLong": "Dieser Benutzername ist zu lang",
         "usernameTooShort": "Dieser Benutzername ist zu kurz",
         "userNotFound": "Benutzer wurde nicht gefunden",
-        "welcome": "Willkommen bei OpenChat!"
+        "welcome": "Willkommen bei OpenChat"
     },
     "reminders": {
         "cancel": "Erinnerung abbrechen",
@@ -1703,7 +1707,6 @@
         "title": "Bitte wechseln Sie zu unserer neuen Domain"
     },
     "tapForReferralLink": "Tippen Sie hier, um Ihren persönlichen Empfehlungslink zu kopieren",
-    "tapToLogin": "Gastmodus – tippen Sie hier, um sich anzumelden",
     "tellMeMore": "Mehr Informationen",
     "theInternetComputer": "Der Internet-Computer",
     "theme": {
@@ -1924,7 +1927,7 @@
     },
     "upgradeByTransfer": "ICP",
     "upgradeStorage": "Upgrade-Speicher",
-    "urlCopiedToClipboard": "Gruppen-URL in die Zwischenablage kopiert!",
+    "urlCopiedToClipboard": "URL in die Zwischenablage kopiert!",
     "useAtOwnRisk": "Benutzung auf eigene Gefahr",
     "userId": "Benutzer-ID",
     "userIdCopiedToClipboard": "Benutzer-ID in die Zwischenablage kopiert",

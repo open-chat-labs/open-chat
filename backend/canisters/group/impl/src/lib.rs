@@ -653,6 +653,10 @@ impl Data {
             || self.is_invite_code_valid(invite_code)
     }
 
+    pub fn verify_is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> Result<(), OCErrorCode> {
+        if self.is_accessible(caller, invite_code) { Ok(()) } else { Err(OCErrorCode::InitiatorNotInChat) }
+    }
+
     pub fn get_invitation(&self, caller: Principal) -> Option<&UserInvitation> {
         self.principal_to_user_id_map
             .get(&caller)
@@ -661,7 +665,7 @@ impl Data {
 
     pub fn invite_users(
         &mut self,
-        invited_by: UserId,
+        invited_by: Caller,
         users: Vec<(UserId, Principal)>,
         now: TimestampMillis,
     ) -> OCResult<InvitedUsersSuccess> {

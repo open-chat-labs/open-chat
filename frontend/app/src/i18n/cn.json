@@ -142,7 +142,7 @@
     "avatarTooBig": "头像文件太大",
     "avatarUpdated": "头像编辑成功",
     "avatarUpdateFailed": "头像编辑失败",
-    "backToResults": "背部",
+    "back": "背部",
     "bio": "用户简介",
     "blocked": "加入黑名单",
     "blockedBy": "{changedBy} 将 {changed} 加入黑名单",
@@ -404,6 +404,7 @@
     "change": "更改",
     "changeTheme": "更改主题",
     "channelAlreadyExists": "同名的频道已存在",
+    "chatDetails": "聊天详细信息",
     "chatFrozen": "此聊天已被冻结",
     "chatFrozenBy": "聊天被 {frozenBy} 冻结",
     "chatMenu": "聊天菜单",
@@ -558,6 +559,8 @@
     "copyInviteCode": "复制邀请码",
     "copyMessageUrl": "复制消息地址",
     "copyToClipboard": "复制到粘贴板",
+    "copyUrl": "复制网址",
+    "createAccountOrSignIn": "点击此处**创建账户**或**登录**",
     "createNewGroup": "创建群聊",
     "cryptoAccount": {
         "auto": "自动的",
@@ -1491,6 +1494,7 @@
         "confirmCyclesTransferText": "请确认：您将转账 {amount} cycles给以下OpenChat钱包地址",
         "confirmICPTransferText": "请确认： 您将转账 {amount} ICP 给以下地址",
         "confirmTransfer": "确认转账",
+        "createAccount": "创建账户",
         "createUser": "创建用户",
         "cyclesTransferred": " {fee} cycles 已转出",
         "disclaimer": "通过在 OpenChat 注册，您同意遵守我们的条款和条件",
@@ -1526,7 +1530,7 @@
         "usernameTooLong": "用户名太长了",
         "usernameTooShort": "用户名太短了",
         "userNotFound": "无法找到该用户",
-        "welcome": "欢迎来到OpenChat!"
+        "welcome": "欢迎来到OpenChat"
     },
     "reminders": {
         "cancel": "取消提醒",
@@ -1703,7 +1707,6 @@
         "title": "请切换到我们的新域"
     },
     "tapForReferralLink": "点击复制您的个人推荐链接",
-    "tapToLogin": "访客模式 - 点击此处登录",
     "tellMeMore": "更多信息",
     "theInternetComputer": "互联网计算机",
     "theme": {
@@ -1924,7 +1927,7 @@
     },
     "upgradeByTransfer": "ICP",
     "upgradeStorage": "升级存储",
-    "urlCopiedToClipboard": "群聊链接已复制到粘贴板",
+    "urlCopiedToClipboard": "网址已复制到剪贴板！",
     "useAtOwnRisk": "使用风险自负",
     "userId": "用户身份",
     "userIdCopiedToClipboard": "用户 ID 已复制到剪贴板",

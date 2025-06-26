@@ -174,7 +174,7 @@
                     <Button
                         tiny={$mobileWidth}
                         small={!$mobileWidth}
-                        onClick={() => (showGame = false)}>{$_("backToResults")}</Button>
+                        onClick={() => (showGame = false)}>{$_("back")}</Button>
                 {:else}
                     {#if supportsGame}
                         <div onclick={() => (showGame = true)} class="joystick">🕹️</div>

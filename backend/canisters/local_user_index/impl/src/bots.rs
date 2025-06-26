@@ -1,7 +1,10 @@
 use crate::RuntimeState;
 use jwt::Claims;
 use rand::Rng;
-use types::{BotActionByCommandClaims, BotActionChatDetails, BotActionScope, BotChatContext, BotInitiator, User, UserId};
+use types::{
+    BotActionByCommandClaims, BotActionChatDetails, BotActionCommunityDetails, BotActionScope, BotChatContext,
+    BotCommunityOrGroupContext, BotInitiator, Chat, CommunityOrGroup, MessageId, User, UserId,
+};
 
 pub struct BotAccessContext {
     pub bot_id: UserId,
@@ -39,6 +42,50 @@ pub fn extract_access_context_from_chat_context(
             }),
         }),
     }
+}
+
+pub fn extract_access_context_from_community_or_group_context(
+    location_context: BotCommunityOrGroupContext,
+    state: &mut RuntimeState,
+) -> Result<BotAccessContext, String> {
+    let caller = state.env.caller();
+
+    let Some(bot) = state.data.bots.get_by_caller(&caller) else {
+        return Err("Caller is not a registered bot".to_string());
+    };
+
+    let user = User {
+        user_id: bot.bot_id,
+        username: bot.name.clone(),
+    };
+
+    let scope = match location_context {
+        BotCommunityOrGroupContext::Command(jwt) => {
+            let cxt = extract_access_context_from_jwt(&jwt, &user, state)?;
+            if cxt.scope.user_id().is_some() {
+                return Err("Command context must be a community or group".to_string());
+            }
+            return Ok(cxt);
+        }
+        BotCommunityOrGroupContext::Autonomous(CommunityOrGroup::Community(community_id)) => {
+            BotActionScope::Community(BotActionCommunityDetails { community_id })
+        }
+        BotCommunityOrGroupContext::Autonomous(CommunityOrGroup::Group(chat_id)) => {
+            BotActionScope::Chat(BotActionChatDetails {
+                chat: Chat::Group(chat_id),
+                thread: None,
+                message_id: MessageId::from(0_u64),
+                user_message_id: None,
+            })
+        }
+    };
+
+    Ok(BotAccessContext {
+        bot_id: user.user_id,
+        bot_name: user.username,
+        initiator: BotInitiator::Autonomous,
+        scope,
+    })
 }
 
 fn extract_access_context_from_jwt(jwt: &str, bot: &User, state: &mut RuntimeState) -> Result<BotAccessContext, String> {

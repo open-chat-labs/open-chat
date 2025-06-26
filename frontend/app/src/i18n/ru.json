@@ -142,7 +142,7 @@
     "avatarTooBig": "Выбранный аватар слишком большой",
     "avatarUpdated": "Аватар успешно обновлен",
     "avatarUpdateFailed": "Не удалось обновить аватар",
-    "backToResults": "назад",
+    "back": "назад",
     "bio": "Биография пользователя",
     "blocked": "заблокирован",
     "blockedBy": "{changedBy} заблокировал {changed}",
@@ -404,6 +404,7 @@
     "change": "изменить",
     "changeTheme": "Изменить тему",
     "channelAlreadyExists": "Канал с таким названием уже существует",
+    "chatDetails": "Подробности чата",
     "chatFrozen": "Этот чат был заморожен",
     "chatFrozenBy": "Чат заморожен пользователем {frozenBy}",
     "chatMenu": "Меню чата",
@@ -558,6 +559,8 @@
     "copyInviteCode": "Скопировать код приглашения",
     "copyMessageUrl": "Скопировать адрес сообщения",
     "copyToClipboard": "Копировать в буфер обмена",
+    "copyUrl": "Копировать ссылку",
+    "createAccountOrSignIn": "Нажмите здесь, чтобы **создать учетную запись** или **войти в систему**",
     "createNewGroup": "Создать новую группу",
     "cryptoAccount": {
         "auto": "Автоматический",
@@ -1491,6 +1494,7 @@
         "confirmCyclesTransferText": "Пожалуйста, подтвердите ниже, когда вы сделали перевод циклов {amount} из вашего кошелька циклов в кошелек OpenChat ниже",
         "confirmICPTransferText": "Пожалуйста, подтвердите ниже, когда вы сделали перевод {amount} ICP на счет, указанный ниже",
         "confirmTransfer": "Подтвердить перевод",
+        "createAccount": "Зарегистрироваться",
         "createUser": "Создать пользователя",
         "cyclesTransferred": "Комиссия {fee} cycles подтверждена",
         "disclaimer": "Регистрируясь в OpenChat, вы соглашаетесь соблюдать наши условия.",
@@ -1526,7 +1530,7 @@
         "usernameTooLong": "Это имя пользователя слишком длинное",
         "usernameTooShort": "Это имя пользователя слишком короткое",
         "userNotFound": "Пользователь не найден",
-        "welcome": "Добро пожаловать в OpenChat!"
+        "welcome": "Добро пожаловать в OpenChat"
     },
     "reminders": {
         "cancel": "Отменить напоминание",
@@ -1703,7 +1707,6 @@
         "title": "Пожалуйста, переключитесь на наш новый домен"
     },
     "tapForReferralLink": "Нажмите, чтобы скопировать личную реферальную ссылку",
-    "tapToLogin": "Гостевой режим — нажмите здесь, чтобы войти",
     "tellMeMore": "Дополнительная информация",
     "theInternetComputer": "Интернет-компьютер",
     "theme": {
@@ -1924,7 +1927,7 @@
     },
     "upgradeByTransfer": "ICP",
     "upgradeStorage": "Обновление хранилища",
-    "urlCopiedToClipboard": "URL группы скопирован в буфер обмена!",
+    "urlCopiedToClipboard": "URL-адрес скопирован в буфер обмена!",
     "useAtOwnRisk": "Используйте на свой риск",
     "userId": "ID пользователя",
     "userIdCopiedToClipboard": "Идентификатор пользователя скопирован в буфер обмена.",

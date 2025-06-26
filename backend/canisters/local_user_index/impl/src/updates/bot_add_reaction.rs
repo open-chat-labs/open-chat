@@ -5,7 +5,7 @@ use crate::{
 use canister_api_macros::update;
 use local_user_index_canister::bot_add_reaction::*;
 use oc_error_codes::OCErrorCode;
-use types::{ChannelId, Chat, MessageId, MessageIndex, Reaction};
+use types::{Chat, MessageId, MessageIndex, Reaction};
 
 #[update(candid = true, json = true, msgpack = true)]
 async fn bot_add_reaction(args: Args) -> Response {
@@ -14,17 +14,16 @@ async fn bot_add_reaction(args: Args) -> Response {
         Err(_) => return OCErrorCode::BotNotAuthenticated.into(),
     };
 
-    call_chat_canister(context, None, args.message_id, args.thread, args.reaction).await
+    call_chat_canister(context, args.message_id, args.thread, args.reaction).await
 }
 
 async fn call_chat_canister(
     context: BotAccessContext,
-    channel_id: Option<ChannelId>,
     message_id: MessageId,
     thread: Option<MessageIndex>,
     reaction: Reaction,
 ) -> Response {
-    let Some(chat) = context.scope.chat(channel_id) else {
+    let Some(chat) = context.scope.chat(None) else {
         return OCErrorCode::InvalidBotActionScope
             .with_message("Channel not specified")
             .into();

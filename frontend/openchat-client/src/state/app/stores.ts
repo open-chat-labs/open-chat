@@ -46,7 +46,6 @@ import {
     type Referral,
     type StorageStatus,
     type StreakInsurance,
-    type Tally,
     type ThreadIdentifier,
     type ThreadSyncDetails,
     type TokenExchangeRates,
@@ -539,10 +538,22 @@ export const userGroupSummariesStore = derived(communitiesStore, (communities) =
 });
 
 export const serverEventsStore = writable<EventWrapper<ChatEvent>[]>([], undefined, eqIfEmpty);
-export const serverThreadEventsStore = writable<EventWrapper<ChatEvent>[]>([], undefined, eqIfEmpty);
+export const serverThreadEventsStore = writable<EventWrapper<ChatEvent>[]>(
+    [],
+    undefined,
+    eqIfEmpty,
+);
 export const expiredServerEventRanges = writable<DRange>(new DRange(), undefined, eqIfEmpty);
-export const selectedChatUserIdsStore = writable<Set<string>>(new Set(), undefined, setsEqualIfEmpty);
-export const selectedChatUserGroupKeysStore = writable<Set<string>>(new Set(), undefined, setsEqualIfEmpty);
+export const selectedChatUserIdsStore = writable<Set<string>>(
+    new Set(),
+    undefined,
+    setsEqualIfEmpty,
+);
+export const selectedChatUserGroupKeysStore = writable<Set<string>>(
+    new Set(),
+    undefined,
+    setsEqualIfEmpty,
+);
 export const selectedChatExpandedDeletedMessageStore = writable<Set<number>>(
     new Set(),
     undefined,
@@ -575,7 +586,7 @@ export const selectedThreadIdStore = writable<ThreadIdentifier | undefined>(
 );
 
 // Whenever the selectedChatIdStore value changes the first thing we do is clear the related stores
-selectedChatIdStore.subscribe(_ => {
+selectedChatIdStore.subscribe((_) => {
     serverEventsStore.set([]);
     expiredServerEventRanges.set(new DRange());
     selectedThreadIdStore.set(undefined);
@@ -586,7 +597,7 @@ selectedChatIdStore.subscribe(_ => {
 });
 
 // Whenever the selectedThreadIdStore value changes we immediately clear the serverThreadEventsStore
-selectedThreadIdStore.subscribe(_ => serverThreadEventsStore.set([]));
+selectedThreadIdStore.subscribe((_) => serverThreadEventsStore.set([]));
 
 export const chatListScopeStore = derived(routeStore, (route) => route.scope, dequal);
 export const chatsInitialisedStore = writable(false);
@@ -1114,8 +1125,6 @@ export const threadPermissionsForSelectedChatStore = derived(
         return getMessagePermissionsForSelectedChat(selectedChatSummary, "thread");
     },
 );
-export const proposalTalliesStore = writable<Map<string, Tally>>(new Map(), undefined, notEq);
-
 export const selectedChatDraftMessageStore = derived(
     [selectedChatIdStore, localUpdates.draftMessages],
     ([selectedChatId, draftMessages]) =>
@@ -1181,8 +1190,8 @@ export const eventsStore = derived(
     },
 );
 
-export const confirmedEventIndexesLoadedStore = derived(
-    [serverEventsStore, expiredServerEventRanges],
+export const eventIndexesLoadedStore = derived(
+    [eventsStore, expiredServerEventRanges],
     ([events, expiredEventRanges]) => {
         const ranges = new DRange();
         events.forEach((e) => ranges.add(e.index));
@@ -1291,7 +1300,7 @@ export const threadEventsStore = derived(
     },
 );
 
-export const confirmedThreadEventIndexesLoadedStore = derived(serverThreadEventsStore, (events) => {
+export const threadEventIndexesLoadedStore = derived(threadEventsStore, (events) => {
     const ranges = new DRange();
     events.forEach((e) => ranges.add(e.index));
     return ranges;
@@ -1304,10 +1313,11 @@ export const selectedThreadDraftMessageStore = derived(
 );
 
 export const identityStateStore = writable<IdentityState>(
-    { kind: "loading_user" },
+    { kind: "loading_user", registering: false },
     undefined,
     notEq,
 );
 
 export const failedMessagesStore = localUpdates.failedMessages;
 export const unconfirmedStore = localUpdates.unconfirmed;
+export const latestSuccessfulUpdatesLoop = writable(0);

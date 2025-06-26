@@ -26,7 +26,7 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
     protected async executeMsgpackQuery<In extends TSchema, Resp extends TSchema, Out>(
         methodName: string,
         args: Static<In>,
-        mapper: (from: Static<Resp>) => Out | Promise<Out>,
+        mapper: (from: Static<Resp>, timestamp: bigint) => Out | Promise<Out>,
         requestValidator: In,
         responseValidator: Resp,
     ): Promise<Out> {
@@ -43,12 +43,16 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
                     }),
                 (resp) => {
                     if (resp.status === "replied") {
-                        return Promise.resolve(
-                            MsgpackCanisterAgent.processMsgpackResponse(
+                        const sigTimestamp = resp.signatures?.[0]?.timestamp;
+                        const timestampMs = sigTimestamp
+                            ? BigInt(sigTimestamp) / BigInt(1000000)
+                            : BigInt(0);
+
+                        return Promise.resolve(mapper(
+                            MsgpackCanisterAgent.deserializeResponse(
                                 resp.reply.arg,
-                                mapper,
                                 responseValidator,
-                            ),
+                            ), timestampMs)
                         );
                     } else {
                         const uncertifiedRejectErrorCode = new UncertifiedRejectErrorCode(
@@ -108,17 +112,17 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
                 const status = new TextDecoder().decode(
                     lookupResultToBuffer(certificate.lookup_path([...path, 'status'])),
                 );
+                const timestamp = new TextDecoder().decode(
+                    lookupResultToBuffer(certificate.lookup([...path, "time"])),
+                );
+                console.log(timestamp);
 
                 switch (status) {
                     case "replied": {
                         const reply = lookupResultToBuffer(certificate.lookup_path([...path, "reply"]));
                         if (reply) {
                             return Promise.resolve(
-                                MsgpackCanisterAgent.processMsgpackResponse(
-                                    reply,
-                                    mapper,
-                                    responseValidator,
-                                ),
+                                mapper(MsgpackCanisterAgent.deserializeResponse(reply, responseValidator))
                             );
                         }
                         break;
@@ -176,13 +180,13 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
                     onRequestAccepted();
                 }
 
-                const { reply } = await polling.pollForResponse(
+                const { reply  } = await polling.pollForResponse(
                     this.agent,
                     canisterId,
                     requestId,
                 );
                 return Promise.resolve(
-                    MsgpackCanisterAgent.processMsgpackResponse(reply, mapper, responseValidator),
+                    mapper(MsgpackCanisterAgent.deserializeResponse(reply, responseValidator)),
                 );
             } else {
                 throw new Error(`Failed to submit call to IC. CanisterId: ${canisterId}. MethodName: ${methodName}. Response: ${response}`);
@@ -204,13 +208,11 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
         return serializeToMsgPack(validated);
     }
 
-    private static processMsgpackResponse<Resp extends TSchema, Out>(
-        responseBytes: Uint8Array,
-        mapper: (from: Static<Resp>) => Out,
+    private static deserializeResponse<Resp extends TSchema>(
+        responseBytes: ArrayBuffer,
         validator: Resp,
-    ): Out {
+    ): Static<Resp> {
         const response = deserializeFromMsgPack(new Uint8Array(responseBytes));
-        const validated = typeboxValidate(response, validator);
-        return mapper(validated);
+        return typeboxValidate(response, validator);
     }
 }

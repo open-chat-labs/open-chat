@@ -2,6 +2,7 @@ import { DelegationChain } from "@dfinity/identity";
 import type {
     Achievement,
     ArchiveChatResponse,
+    ChannelIdentifier,
     ChatIdentifier,
     ChitEarned,
     ChitEarnedReason,
@@ -55,9 +56,9 @@ import type {
 import {
     CommonResponses,
     nullMembership,
+    ROLE_OWNER,
     toBigInt32,
     toBigInt64,
-    ROLE_OWNER,
     UnsupportedValueError,
 } from "openchat-shared";
 import type {
@@ -508,7 +509,19 @@ export function sendMessageResponse(
 export function createCommunitySuccess(
     value: UserCreateCommunitySuccessResult,
 ): CreateCommunityResponse {
-    return { kind: "success", id: principalBytesToString(value.community_id) };
+    const communityId = principalBytesToString(value.community_id);
+    return {
+        kind: "success",
+        id: communityId,
+        channels: value.channels.map(([id, name]) => {
+            const channelId = {
+                kind: "channel",
+                communityId,
+                channelId: Number(id),
+            } as ChannelIdentifier;
+            return [channelId, name];
+        }),
+    };
 }
 
 function groupChatsInitial(value: UserInitialStateGroupChatsInitial): GroupChatsInitial {
@@ -873,8 +886,8 @@ function directChatSummary(value: TDirectChatSummary): DirectChatSummary {
         lastUpdated: value.last_updated,
         readByThemUpTo: value.read_by_them_up_to,
         dateCreated: value.date_created,
-        eventsTTL: undefined,
-        eventsTtlLastUpdated: BigInt(0),
+        eventsTTL: value.events_ttl,
+        eventsTtlLastUpdated: value.events_ttl_last_updated,
         metrics: chatMetrics(value.metrics),
         videoCallInProgress: mapOptional(value.video_call_in_progress, videoCallInProgress),
         membership: {

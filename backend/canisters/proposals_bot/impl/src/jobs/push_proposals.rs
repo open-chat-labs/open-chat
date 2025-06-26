@@ -10,6 +10,7 @@ use std::fmt::Debug;
 use std::time::Duration;
 use tracing::{error, trace};
 use types::{C2CError, CanisterId, ChannelId, ChatId, CommunityId, MessageId, MessageIndex, MultiUserChat, Proposal};
+use utils::canister::should_retry_failed_c2c_call;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -75,7 +76,7 @@ async fn fetch_payload_rendering_if_required(
                     }
                 }
                 Err(error) => {
-                    mark_proposal_pushed(governance_canister_id, proposal, Err(error.reject_code()));
+                    mark_proposal_pushed(governance_canister_id, proposal, Err(error.clone()));
                     return Err(error);
                 }
             }
@@ -154,7 +155,7 @@ async fn push_channel_proposal(
 fn mark_proposal_pushed(
     governance_canister_id: CanisterId,
     proposal: Proposal,
-    result: Result<(MessageId, Option<MessageIndex>), RejectCode>,
+    result: Result<(MessageId, Option<MessageIndex>), C2CError>,
 ) {
     mutate_state(|state| {
         match result {
@@ -164,13 +165,13 @@ fn mark_proposal_pushed(
                     .nervous_systems
                     .mark_proposal_pushed(&governance_canister_id, proposal, message_id, message_index);
             }
-            Err(code) => {
+            Err(error) => {
                 state
                     .data
                     .nervous_systems
-                    .mark_proposal_push_failed(&governance_canister_id, proposal);
+                    .mark_proposal_push_failed(&governance_canister_id, proposal, state.env.now());
 
-                if code == RejectCode::DestinationInvalid {
+                if !should_retry_failed_c2c_call(error.reject_code(), error.message()) {
                     state.data.nervous_systems.mark_disabled(&governance_canister_id);
                 }
             }
@@ -183,7 +184,7 @@ fn extract_channel_result(
     message_id: MessageId,
     response: Result<community_canister::c2c_send_message::Response, C2CError>,
     canister_id: CanisterId,
-) -> Result<(MessageId, Option<MessageIndex>), RejectCode> {
+) -> Result<(MessageId, Option<MessageIndex>), C2CError> {
     match response {
         Ok(community_canister::c2c_send_message::Response::Success(result)) => Ok((message_id, Some(result.message_index))),
         other => extract_result_inner(message_id, other, canister_id),
@@ -194,7 +195,7 @@ fn extract_group_result(
     message_id: MessageId,
     response: Result<group_canister::c2c_send_message::Response, C2CError>,
     canister_id: CanisterId,
-) -> Result<(MessageId, Option<MessageIndex>), RejectCode> {
+) -> Result<(MessageId, Option<MessageIndex>), C2CError> {
     match response {
         Ok(group_canister::c2c_send_message::Response::Success(result)) => Ok((message_id, Some(result.message_index))),
         other => extract_result_inner(message_id, other, canister_id),
@@ -205,16 +206,21 @@ fn extract_result_inner<T: Debug>(
     message_id: MessageId,
     response: Result<T, C2CError>,
     canister_id: CanisterId,
-) -> Result<(MessageId, Option<MessageIndex>), RejectCode> {
+) -> Result<(MessageId, Option<MessageIndex>), C2CError> {
     match response {
         // If the messageId has already been used, treat that as success
         Err(error) if error.reject_code() == RejectCode::CanisterError && error.message().contains("MessageId") => {
             Ok((message_id, None))
         }
-        Err(error) => Err(error.reject_code()),
+        Err(error) => Err(error),
         _ => {
             error!(?response, %canister_id, "Failed to push proposal");
-            Err(RejectCode::CanisterError)
+            Err(C2CError::new(
+                canister_id,
+                "c2c_send_message",
+                RejectCode::CanisterError,
+                "Unexpected response type".to_string(),
+            ))
         }
     }
 }

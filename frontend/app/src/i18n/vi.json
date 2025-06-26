@@ -142,7 +142,7 @@
     "avatarTooBig": "Hình đại diện vượt quá kích cỡ cho phép",
     "avatarUpdated": "Đã cập nhật hình đại diện thành công",
     "avatarUpdateFailed": "Cập nhật hình đại diện không thành công",
-    "backToResults": "trở lại",
+    "back": "trở lại",
     "bio": "Tiểu sử",
     "blocked": "Đã chặn",
     "blockedBy": "{changedBy} đã chặn {changed}",
@@ -404,6 +404,7 @@
     "change": "thay đổi",
     "changeTheme": "Thay đổi nền",
     "channelAlreadyExists": "Kênh có tên đó đã tồn tại",
+    "chatDetails": "Chi tiết trò chuyện",
     "chatFrozen": "Cuộc trò chuyện này đã bị đóng băng",
     "chatFrozenBy": "Trò chuyện bị đóng băng bởi {frozenBy}",
     "chatMenu": "menu trò chuyện",
@@ -558,6 +559,8 @@
     "copyInviteCode": "Sao chép mã để mời",
     "copyMessageUrl": "Sao chép url tin nhắn",
     "copyToClipboard": "Sao chép",
+    "copyUrl": "Sao chép url",
+    "createAccountOrSignIn": "Nhấn vào đây để **tạo tài khoản** hoặc **đăng nhập**",
     "createNewGroup": "Tạo Nhóm mới",
     "cryptoAccount": {
         "auto": "Tự động",
@@ -1491,6 +1494,7 @@
         "confirmCyclesTransferText": "Vui lòng xác nhận khi bạn đã chuyển {amount} cycles từ ví của bạn sang ví  được cung cấp bên dưới",
         "confirmICPTransferText": "Vui lòng xác nhận khi bạn đã chuyển {amount} ICP vào tài khoản được cung cấp bên dưới",
         "confirmTransfer": "Xác nhận chuyển khoản",
+        "createAccount": "Tạo tài khoản",
         "createUser": "Tạo tài khoản",
         "cyclesTransferred": "Lệ phí {fee} cycles đã được xác nhận",
         "disclaimer": "Bằng cách đăng ký OpenChat, bạn đồng ý tuân theo các điều khoản và điều kiện của chúng tôi",
@@ -1526,7 +1530,7 @@
         "usernameTooLong": "Tên người dùng đó quá dài",
         "usernameTooShort": "Tên người dùng đó quá ngắn",
         "userNotFound": "Không tìm thấy người dùng",
-        "welcome": "Chào mừng bạn đến với OpenChat!"
+        "welcome": "Chào mừng bạn đến với OpenChat"
     },
     "reminders": {
         "cancel": "Hủy lời nhắc",
@@ -1703,7 +1707,6 @@
         "title": "Vui lòng chuyển sang miền mới của chúng tôi"
     },
     "tapForReferralLink": "Nhấn để sao chép liên kết giới thiệu cá nhân của bạn",
-    "tapToLogin": "Chế độ khách - nhấn vào đây để đăng nhập",
     "tellMeMore": "Thêm thông tin",
     "theInternetComputer": "Internet Computer",
     "theme": {
@@ -1924,7 +1927,7 @@
     },
     "upgradeByTransfer": "ICP",
     "upgradeStorage": "Nâng cấp lưu trữ",
-    "urlCopiedToClipboard": "Đã sao chép đường dẫn tới Nhóm!",
+    "urlCopiedToClipboard": "Đã sao chép URL vào bảng tạm!",
     "useAtOwnRisk": "Sử dụng có nguy cơ của riêng bạn",
     "userId": "tên người dùng",
     "userIdCopiedToClipboard": "Đã sao chép Id người dùng vào bảng nhớ tạm",

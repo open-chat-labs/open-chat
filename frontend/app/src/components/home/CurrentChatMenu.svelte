@@ -28,6 +28,7 @@
     import CancelIcon from "svelte-material-icons/Cancel.svelte";
     import ChatQuestionIcon from "svelte-material-icons/ChatQuestion.svelte";
     import TickIcon from "svelte-material-icons/Check.svelte";
+    import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import FileDocument from "svelte-material-icons/FileDocument.svelte";
@@ -154,6 +155,10 @@
 
     function removeFromFavourites() {
         client.removeFromFavourites(selectedChatSummary.id);
+    }
+
+    function copyUrl() {
+        publish("copyUrl");
     }
 
     function showGroupDetails() {
@@ -313,6 +318,14 @@
         </HoverIcon>
     {/if}
 
+    {#if selectedChatSummary.kind === "direct_chat"}
+        <HoverIcon onclick={showGroupDetails}>
+            <FileDocument
+                size={$iconSize}
+                color={groupDetailsSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
+        </HoverIcon>
+    {/if}
+
     {#if selectedChatSummary.kind === "group_chat" || selectedChatSummary.kind === "channel"}
         <HoverIcon
             onclick={showGroupDetails}
@@ -379,7 +392,25 @@
                         {/snippet}
                     </MenuItem>
                 {/if}
+                <MenuItem onclick={copyUrl}>
+                    {#snippet icon()}
+                        <ContentCopy size={$iconSize} color={"var(--icon-txt)"} />
+                    {/snippet}
+                    {#snippet text()}
+                        <Translatable resourceKey={i18nKey("copyUrl")} />
+                    {/snippet}
+                </MenuItem>
                 {#if $mobileWidth}
+                    {#if selectedChatSummary.kind === "direct_chat"}
+                        <MenuItem onclick={showGroupDetails}>
+                            {#snippet icon()}
+                                <FileDocument size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
+                                <Translatable resourceKey={i18nKey("chatDetails")} />
+                            {/snippet}
+                        </MenuItem>
+                    {/if}
                     {#if $isProposalGroupStore}
                         <MenuItem onclick={showProposalFilters}>
                             {#snippet icon()}

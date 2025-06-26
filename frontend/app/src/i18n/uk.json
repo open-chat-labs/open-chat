@@ -142,7 +142,7 @@
     "avatarTooBig": "Вибраний аватар завеликий",
     "avatarUpdated": "Аватар успішно оновлено",
     "avatarUpdateFailed": "Не вдалося оновити аватар",
-    "backToResults": "Назад",
+    "back": "Назад",
     "bio": "Біографія користувача",
     "blocked": "заблоковано",
     "blockedBy": "{changedBy} заблокував {changed}",
@@ -404,6 +404,7 @@
     "change": "змінити",
     "changeTheme": "Змінити тему",
     "channelAlreadyExists": "Канал із такою назвою вже існує",
+    "chatDetails": "Деталі чату",
     "chatFrozen": "Цей чат заморожено",
     "chatFrozenBy": "Чат заморожено {frozenBy}",
     "chatMenu": "Меню чату",
@@ -558,6 +559,8 @@
     "copyInviteCode": "Скопіюйте код запрошення",
     "copyMessageUrl": "Копіювати URL-адресу повідомлення",
     "copyToClipboard": "Копіювати в буфер обміну",
+    "copyUrl": "Копіювати URL-адресу",
+    "createAccountOrSignIn": "Натисніть тут, щоб **створити обліковий запис** або **увійти**",
     "createNewGroup": "Створіть нову групу",
     "cryptoAccount": {
         "auto": "Автоматичний",
@@ -1491,6 +1494,7 @@
         "confirmCyclesTransferText": "Будь ласка, підтвердьте нижче, коли ви здійснили переказ {amount} циклів зі свого гаманця cycles у гаманець OpenChat нижче",
         "confirmICPTransferText": "Будь ласка, підтвердьте нижче, коли ви здійснили переказ {amount} ICP на вказаний нижче рахунок",
         "confirmTransfer": "Підтвердити передачу",
+        "createAccount": "Створити обліковий запис",
         "createUser": "Створити користувача",
         "cyclesTransferred": "Комісія в розмірі {fee} циклів підтверджено",
         "disclaimer": "Реєструючись в OpenChat, ви погоджуєтеся дотримуватися наших умов",
@@ -1526,7 +1530,7 @@
         "usernameTooLong": "Це ім’я користувача задовге",
         "usernameTooShort": "Це ім’я користувача занадто коротке",
         "userNotFound": "Користувач не знайдений",
-        "welcome": "Ласкаво просимо до OpenChat!"
+        "welcome": "Ласкаво просимо до OpenChat"
     },
     "reminders": {
         "cancel": "Скасувати нагадування",
@@ -1703,7 +1707,6 @@
         "title": "Будь ласка, перейдіть на наш новий домен"
     },
     "tapForReferralLink": "Натисніть, щоб скопіювати ваше особисте реферальне посилання",
-    "tapToLogin": "Режим гостя - натисніть тут, щоб увійти",
     "tellMeMore": "Більше інформації",
     "theInternetComputer": "Комп'ютер Інтернет",
     "theme": {
@@ -1924,7 +1927,7 @@
     },
     "upgradeByTransfer": "ICP",
     "upgradeStorage": "Оновити сховище",
-    "urlCopiedToClipboard": "URL-адресу групи скопійовано в буфер обміну!",
+    "urlCopiedToClipboard": "URL-адресу скопійовано в буфер обміну!",
     "useAtOwnRisk": "Використовуйте на свій страх і ризик",
     "userId": "Ідентифікатор користувача",
     "userIdCopiedToClipboard": "Ідентифікатор користувача скопійовано в буфер обміну",

@@ -730,6 +730,18 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "fcmTokenExists":
+                executeThenReply(payload, correlationId, agent.fcmTokenExists(payload.fcmToken));
+                break;
+
+            case "addFcmToken":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.addFcmToken(payload.fcmToken, payload.onResponseError),
+                );
+                break;
+
             case "inviteUsers":
                 executeThenReply(
                     payload,
@@ -1895,7 +1907,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "claimDailyChit":
-                executeThenReply(payload, correlationId, agent.claimDailyChit(payload.utcOffsetMins));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.claimDailyChit(payload.utcOffsetMins),
+                );
                 break;
 
             case "chitLeaderboard":
@@ -2063,6 +2079,22 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.expectedPrice,
                         payload.pin,
                     ),
+                );
+                break;
+
+            case "updateDirectChatSettings":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.updateDirectChatSettings(payload.userId, payload.eventsTtl),
+                );
+                break;
+
+            case "updateProposalTallies":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.updateProposalTallies(payload.chatId),
                 );
                 break;
 

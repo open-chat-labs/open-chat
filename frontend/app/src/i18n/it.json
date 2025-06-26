@@ -142,7 +142,7 @@
     "avatarTooBig": "L'avatar selezionato è troppo grande",
     "avatarUpdated": "Avatar aggiornato correttamente",
     "avatarUpdateFailed": "Aggiornamento dell'avatar non riuscito",
-    "backToResults": "Indietro",
+    "back": "Indietro",
     "bio": "Bio",
     "blocked": "bloccato",
     "blockedBy": "{changedBy} bloccato {changed}",
@@ -404,6 +404,7 @@
     "change": "modifica",
     "changeTheme": "Cambia tema",
     "channelAlreadyExists": "Esiste già un canale con quel nome",
+    "chatDetails": "Dettagli della chat",
     "chatFrozen": "Questa chat è stata bloccata",
     "chatFrozenBy": "Chat bloccata da {frozenBy}",
     "chatMenu": "Menù chat",
@@ -558,6 +559,8 @@
     "copyInviteCode": "Copia il codice di invito",
     "copyMessageUrl": "Copia l'URL del messaggio",
     "copyToClipboard": "Copia negli appunti",
+    "copyUrl": "Copia l'URL",
+    "createAccountOrSignIn": "Tocca qui per **creare un account** o **accedere**",
     "createNewGroup": "Crea un nuovo gruppo",
     "cryptoAccount": {
         "auto": "Automatico",
@@ -1491,6 +1494,7 @@
         "confirmCyclesTransferText": "Conferma di seguito quando hai effettuato un trasferimento di {amount} cicli dal tuo portafoglio cicli al portafoglio OpenChat sottostante",
         "confirmICPTransferText": "Conferma di seguito quando hai effettuato un trasferimento di {amount} ICP sul conto indicato di seguito",
         "confirmTransfer": "Conferma il trasferimento",
+        "createAccount": "Creare un account",
         "createUser": "Creare un utente",
         "cyclesTransferred": "Commissione di {fee} cicli confermata",
         "disclaimer": "Registrandoti su OpenChat accetti di rispettare i nostri termini e condizioni",
@@ -1526,7 +1530,7 @@
         "usernameTooLong": "Quel nome utente è troppo lungo",
         "usernameTooShort": "Quel nome utente è troppo corto",
         "userNotFound": "Utente non trovato",
-        "welcome": "Benvenuto in OpenChat!"
+        "welcome": "Benvenuto in OpenChat"
     },
     "reminders": {
         "cancel": "Annulla promemoria",
@@ -1703,7 +1707,6 @@
         "title": "Si prega di passare al nostro nuovo dominio"
     },
     "tapForReferralLink": "Tocca per copiare il tuo link di riferimento personale",
-    "tapToLogin": "Modalità ospite: tocca qui per accedere",
     "tellMeMore": "Maggiori informazioni",
     "theInternetComputer": "Internet Computer",
     "theme": {
@@ -1924,7 +1927,7 @@
     },
     "upgradeByTransfer": "ICP",
     "upgradeStorage": "Aggiorna spazio di archiviazione",
-    "urlCopiedToClipboard": "URL del gruppo copiato negli appunti!",
+    "urlCopiedToClipboard": "URL copiato negli appunti!",
     "useAtOwnRisk": "Utilizzare a proprio rischio",
     "userId": "ID utente",
     "userIdCopiedToClipboard": "ID utente copiato negli appunti",

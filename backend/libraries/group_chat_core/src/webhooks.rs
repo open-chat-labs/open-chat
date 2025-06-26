@@ -91,6 +91,10 @@ impl Webhooks {
         self.map.iter()
     }
 
+    pub fn user_ids(&self) -> impl Iterator<Item = &UserId> {
+        self.map.keys()
+    }
+
     pub fn last_updated(&self) -> TimestampMillis {
         self.last_updated
     }

@@ -142,7 +142,7 @@
     "avatarTooBig": "L'avatar sélectionné est trop grand",
     "avatarUpdated": "Avatar mis à jour avec succès",
     "avatarUpdateFailed": "La mise à jour de l'avatar a échoué",
-    "backToResults": "arrière",
+    "back": "arrière",
     "bio": "Biographie de l'utilisateur",
     "blocked": "bloqué",
     "blockedBy": "{changedBy} bloqué {changed}",
@@ -404,6 +404,7 @@
     "change": "monnaie",
     "changeTheme": "Change le thème",
     "channelAlreadyExists": "Une chaîne portant ce nom existe déjà",
+    "chatDetails": "Détails du chat",
     "chatFrozen": "Ce chat a été gelé",
     "chatFrozenBy": "Chat gelé par {frozenBy}",
     "chatMenu": "Menu de discussion",
@@ -558,6 +559,8 @@
     "copyInviteCode": "Copier le code d'invitation",
     "copyMessageUrl": "Copier l'URL du message",
     "copyToClipboard": "Copier dans le presse-papier",
+    "copyUrl": "Copier l'URL",
+    "createAccountOrSignIn": "Appuyez ici pour **créer un compte** ou **vous connecter**",
     "createNewGroup": "Créer un nouveau groupe",
     "cryptoAccount": {
         "auto": "Automatique",
@@ -1491,6 +1494,7 @@
         "confirmCyclesTransferText": "Veuillez confirmer ci-dessous lorsque vous avez effectué un transfert de {amount} cycles de votre portefeuille de cycles vers le portefeuille OpenChat ci-dessous",
         "confirmICPTransferText": "Veuillez confirmer ci-dessous lorsque vous avez effectué un virement de {amount} ICP sur le compte indiqué ci-dessous",
         "confirmTransfer": "Confirmer le transfert",
+        "createAccount": "Créer un compte",
         "createUser": "Créer un utilisateur",
         "cyclesTransferred": "Frais de {fee} cycles confirmés",
         "disclaimer": "En vous inscrivant sur OpenChat, vous acceptez de respecter nos termes et conditions.",
@@ -1526,7 +1530,7 @@
         "usernameTooLong": "Ce nom d'utilisateur est trop long",
         "usernameTooShort": "Ce nom d'utilisateur est trop court",
         "userNotFound": "Utilisateur non trouvé",
-        "welcome": "Bienvenue sur OpenChat !"
+        "welcome": "Bienvenue sur OpenChat"
     },
     "reminders": {
         "cancel": "Annuler le rappel",
@@ -1703,7 +1707,6 @@
         "title": "Veuillez passer à notre nouveau domaine"
     },
     "tapForReferralLink": "Appuyez pour copier votre lien de parrainage personnel",
-    "tapToLogin": "Mode Invité - appuyez ici pour vous connecter",
     "tellMeMore": "Plus d'information",
     "theInternetComputer": "L'ordinateur Internet",
     "theme": {
@@ -1924,7 +1927,7 @@
     },
     "upgradeByTransfer": "PCI",
     "upgradeStorage": "Mettre à niveau le stockage",
-    "urlCopiedToClipboard": "URL du groupe copiée dans le presse-papier !",
+    "urlCopiedToClipboard": "Url copiée dans le presse-papiers!",
     "useAtOwnRisk": "À utiliser à vos risques et périls",
     "userId": "identifiant d'utilisateur",
     "userIdCopiedToClipboard": "ID utilisateur copié dans le presse-papiers",

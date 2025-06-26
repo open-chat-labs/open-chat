@@ -219,6 +219,11 @@ export const GroupPublicSummaryArgs = Type.Object({
     invite_code: Type.Optional(Type.BigInt()),
 });
 
+export type GroupActiveProposalTalliesArgs = Static<typeof GroupActiveProposalTalliesArgs>;
+export const GroupActiveProposalTalliesArgs = Type.Object({
+    invite_code: Type.Optional(Type.BigInt()),
+});
+
 export type GroupRulesArgs = Static<typeof GroupRulesArgs>;
 export const GroupRulesArgs = Type.Object({
     invite_code: Type.Optional(Type.BigInt()),
@@ -1456,6 +1461,9 @@ export const UserGroupDetails = Type.Object({
     members: Type.Array(UserId),
 });
 
+export type FcmToken = Static<typeof FcmToken>;
+export const FcmToken = Type.String();
+
 export type GroupIndexFreezeGroupSuspensionDetails = Static<
     typeof GroupIndexFreezeGroupSuspensionDetails
 >;
@@ -1593,6 +1601,24 @@ export type GroupIndexSetCommunityModerationFlagsArgs = Static<
 export const GroupIndexSetCommunityModerationFlagsArgs = Type.Object({
     community_id: CommunityId,
     flags: Type.Number(),
+});
+
+export type GroupIndexMarkLocalIndexFullResponse = Static<
+    typeof GroupIndexMarkLocalIndexFullResponse
+>;
+export const GroupIndexMarkLocalIndexFullResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("LocalIndexNotFound"),
+    Type.Literal("NotAuthorized"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
+export type GroupIndexMarkLocalIndexFullArgs = Static<typeof GroupIndexMarkLocalIndexFullArgs>;
+export const GroupIndexMarkLocalIndexFullArgs = Type.Object({
+    canister_id: TSPrincipal,
+    full: Type.Boolean(),
 });
 
 export type GroupIndexRemoveHotGroupExclusionResponse = Static<
@@ -3064,6 +3090,31 @@ export const CommunityThreadPreviewsArgs = Type.Object({
     latest_client_thread_update: Type.Optional(Type.BigInt()),
 });
 
+export type CommunityActiveProposalTalliesSuccessResult = Static<
+    typeof CommunityActiveProposalTalliesSuccessResult
+>;
+export const CommunityActiveProposalTalliesSuccessResult = Type.Object({
+    tallies: Type.Array(Type.Tuple([EventIndex, Tally])),
+});
+
+export type CommunityActiveProposalTalliesResponse = Static<
+    typeof CommunityActiveProposalTalliesResponse
+>;
+export const CommunityActiveProposalTalliesResponse = Type.Union([
+    Type.Object({
+        Success: CommunityActiveProposalTalliesSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
+export type CommunityActiveProposalTalliesArgs = Static<typeof CommunityActiveProposalTalliesArgs>;
+export const CommunityActiveProposalTalliesArgs = Type.Object({
+    channel_id: ChannelId,
+    invite_code: Type.Optional(Type.BigInt()),
+});
+
 export type CommunityBlockUserArgs = Static<typeof CommunityBlockUserArgs>;
 export const CommunityBlockUserArgs = Type.Object({
     user_id: UserId,
@@ -3272,6 +3323,18 @@ export type NotificationsIndexRemoveSubscriptionsForUserResponse = Static<
 >;
 export const NotificationsIndexRemoveSubscriptionsForUserResponse = Type.Literal("Success");
 
+export type NotificationsIndexFcmTokenExistsArgs = Static<
+    typeof NotificationsIndexFcmTokenExistsArgs
+>;
+export const NotificationsIndexFcmTokenExistsArgs = Type.Object({
+    fcm_token: FcmToken,
+});
+
+export type NotificationsIndexFcmTokenExistsResponse = Static<
+    typeof NotificationsIndexFcmTokenExistsResponse
+>;
+export const NotificationsIndexFcmTokenExistsResponse = Type.Boolean();
+
 export type NotificationsIndexSubscriptionExistsArgs = Static<
     typeof NotificationsIndexSubscriptionExistsArgs
 >;
@@ -3298,6 +3361,11 @@ export type NotificationsIndexRemoveSubscriptionResponse = Static<
     typeof NotificationsIndexRemoveSubscriptionResponse
 >;
 export const NotificationsIndexRemoveSubscriptionResponse = Type.Literal("Success");
+
+export type NotificationsIndexAddFcmTokenArgs = Static<typeof NotificationsIndexAddFcmTokenArgs>;
+export const NotificationsIndexAddFcmTokenArgs = Type.Object({
+    fcm_token: FcmToken,
+});
 
 export type StorageBucketDeleteFilesDeleteFileFailureReason = Static<
     typeof StorageBucketDeleteFilesDeleteFileFailureReason
@@ -3891,6 +3959,13 @@ export const GroupThreadPreviewsArgs = Type.Object({
     latest_client_thread_update: Type.Optional(Type.BigInt()),
 });
 
+export type GroupActiveProposalTalliesSuccessResult = Static<
+    typeof GroupActiveProposalTalliesSuccessResult
+>;
+export const GroupActiveProposalTalliesSuccessResult = Type.Object({
+    tallies: Type.Array(Type.Tuple([EventIndex, Tally])),
+});
+
 export type GroupRulesResponse = Static<typeof GroupRulesResponse>;
 export const GroupRulesResponse = Type.Union([
     Type.Object({
@@ -4063,6 +4138,12 @@ export const UserGenerateBtcAddressResponse = Type.Union([
         Error: OCError,
     }),
 ]);
+
+export type UserUpdateChatSettingsArgs = Static<typeof UserUpdateChatSettingsArgs>;
+export const UserUpdateChatSettingsArgs = Type.Object({
+    user_id: UserId,
+    events_ttl: OptionUpdateU64,
+});
 
 export type UserSavedCryptoAccountsResponse = Static<typeof UserSavedCryptoAccountsResponse>;
 export const UserSavedCryptoAccountsResponse = Type.Object({
@@ -4324,6 +4405,7 @@ export const UserEventsByIndexArgs = Type.Object({
 export type UserCreateCommunitySuccessResult = Static<typeof UserCreateCommunitySuccessResult>;
 export const UserCreateCommunitySuccessResult = Type.Object({
     community_id: CommunityId,
+    channels: Type.Array(Type.Tuple([ChannelId, Type.String()])),
 });
 
 export type UserCreateCommunityResponse = Static<typeof UserCreateCommunityResponse>;
@@ -6195,6 +6277,16 @@ export const GroupSelectedInitialResponse = Type.Union([
     }),
 ]);
 
+export type GroupActiveProposalTalliesResponse = Static<typeof GroupActiveProposalTalliesResponse>;
+export const GroupActiveProposalTalliesResponse = Type.Union([
+    Type.Object({
+        Success: GroupActiveProposalTalliesSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
 export type GroupVideoCallParticipantsResponse = Static<typeof GroupVideoCallParticipantsResponse>;
 export const GroupVideoCallParticipantsResponse = Type.Union([
     Type.Object({
@@ -7562,6 +7654,7 @@ export const LocalUserIndexBotSendMessageArgs = Type.Object({
     chat_context: BotChatContext,
     thread: Type.Optional(MessageIndex),
     message_id: Type.Optional(MessageId),
+    replies_to: Type.Optional(EventIndex),
     content: BotMessageContent,
     block_level_markdown: Type.Boolean(),
     finalised: Type.Boolean(),

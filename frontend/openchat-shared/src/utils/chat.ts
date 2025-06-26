@@ -44,10 +44,9 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Partitione
         }
         switch (e.event.kind) {
             case "message":
+                userIds.add(e.event.sender);
                 if (e.event.senderContext?.kind === "webhook") {
                     webhooks.add(e.event.sender);
-                } else {
-                    userIds.add(e.event.sender);
                 }
                 if (
                     e.event.repliesTo !== undefined &&

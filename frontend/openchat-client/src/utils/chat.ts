@@ -5,6 +5,7 @@ import type {
     AccessControlled,
     AggregateCommonEvents,
     CandidateGroupChat,
+    ChannelIdentifier,
     ChannelSummary,
     ChatEvent,
     ChatIdentifier,
@@ -34,6 +35,7 @@ import type {
     Metrics,
     MultiUserChat,
     MultiUserChatIdentifier,
+    NewUnconfirmedMessage,
     OptionalChatPermissions,
     OptionalMessagePermissions,
     OptionUpdate,
@@ -41,7 +43,6 @@ import type {
     PollVotes,
     Reaction,
     ReadonlyMap,
-    ReplyContext,
     SendMessageSuccess,
     Tally,
     ThreadIdentifier,
@@ -57,6 +58,7 @@ import {
     applyOptionUpdate,
     bigIntMax,
     chatIdentifiersEqual,
+    defaultChatPermissions,
     defaultOptionalChatPermissions,
     defaultOptionalMessagePermissions,
     emptyChatMetrics,
@@ -71,7 +73,6 @@ import {
     OPENCHAT_BOT_USER_ID,
     OPENCHAT_VIDEO_CALL_AVATAR_URL,
     OPENCHAT_VIDEO_CALL_USER_ID,
-    random64,
     ROLE_MEMBER,
     ROLE_NONE,
     ROLE_OWNER,
@@ -79,17 +80,18 @@ import {
     type ReadonlySet,
 } from "openchat-shared";
 import {
-    confirmedEventIndexesLoadedStore,
-    confirmedThreadEventIndexesLoadedStore,
+    allServerChatsStore,
+    eventIndexesLoadedStore,
+    threadEventIndexesLoadedStore,
     cryptoLookup,
     currentUserIdStore,
     currentUserStore,
+    eventsStore,
     localUpdates,
-    proposalTalliesStore,
     selectedChatIdStore,
     selectedChatUserIdsStore,
-    selectedServerChatSummaryStore,
     selectedThreadIdStore,
+    threadEventsStore,
 } from "../state";
 import type { LocalTipsReceived, MessageLocalUpdates } from "../state/message/localUpdates";
 import { userStore } from "../state/users/state";
@@ -273,28 +275,27 @@ export function getMembersString(
         : sorted.join();
 }
 
-export function createMessage(
-    userId: string,
-    messageIndex: number,
-    content: MessageContent,
-    blockLevelMarkdown: boolean,
-    replyingTo: ReplyContext | undefined,
-    forwarded: boolean,
-    messageId: bigint = random64(),
-): Message {
+export function createMessage(context: MessageContext, message: NewUnconfirmedMessage): EventWrapper<Message> {
+    const [eventIndex, messageIndex] = nextEventAndMessageIndex(context);
     return {
-        kind: "message",
-        content,
-        sender: userId,
-        repliesTo: replyingTo,
-        messageId,
-        messageIndex,
-        reactions: [],
-        tips: {},
-        edited: false,
-        forwarded,
-        deleted: false,
-        blockLevelMarkdown,
+        event: {
+            kind: "message",
+            messageId: message.messageId,
+            messageIndex,
+            sender: message.sender,
+            content: message.content,
+            repliesTo: message.repliesTo,
+            reactions: [],
+            tips: {},
+            edited: false,
+            forwarded: message.forwarded,
+            deleted: false,
+            blockLevelMarkdown: message.blockLevelMarkdown,
+            senderContext: message.senderContext,
+        },
+        timestamp: message.timestamp,
+        index: eventIndex,
+        expiresAt: message.expiresAt,
     };
 }
 
@@ -404,7 +405,7 @@ export function mergeUnconfirmedIntoSummary(
         // Don't hide the sender's own messages
         const failedMessageFilter =
             latestMessage.event.sender !== currentUserId
-                ? doesMessageFailFilter(latestMessage.event, messageFilters) !== undefined
+                ? doesMessageFailFilter(latestMessage.event.content, messageFilters) !== undefined
                 : false;
 
         if (updates !== undefined || senderBlocked || failedMessageFilter) {
@@ -820,19 +821,16 @@ function sortByTimestampThenEventIndex(
     return Number(a.timestamp - b.timestamp);
 }
 
-export function serialiseMessageForRtc(messageEvent: EventWrapper<Message>): EventWrapper<Message> {
-    if (isAttachmentContent(messageEvent.event.content)) {
+export function serialiseMessageForRtc(message: NewUnconfirmedMessage): NewUnconfirmedMessage {
+    if (isAttachmentContent(message.content)) {
         return {
-            ...messageEvent,
-            event: {
-                ...messageEvent.event,
-                content: {
-                    kind: "placeholder_content",
-                },
+            ...message,
+            content: {
+                kind: "placeholder_content",
             },
         };
     }
-    return messageEvent;
+    return message;
 }
 
 export function groupChatFromCandidate(
@@ -1373,9 +1371,7 @@ export function mergeEventsAndLocalUpdates(
 
             const tallyUpdate =
                 e.event.content.kind === "proposal_content"
-                    ? proposalTalliesStore.value.get(
-                          `${e.event.content.governanceCanisterId}_${e.event.content.proposal.id}`,
-                      )
+                    ? updates?.proposalTally
                     : undefined;
 
             const senderBlocked = selectedChatBlockedOrSuspendedUsers.has(e.event.sender);
@@ -1386,7 +1382,7 @@ export function mergeEventsAndLocalUpdates(
             // Don't hide the sender's own messages
             const failedMessageFilter =
                 e.event.sender !== currentUserIdStore.value
-                    ? doesMessageFailFilter(e.event, messageFilters) !== undefined
+                    ? doesMessageFailFilter(e.event.content, messageFilters) !== undefined
                     : false;
 
             if (
@@ -1447,10 +1443,10 @@ export function mergeEventsAndLocalUpdates(
 }
 
 export function doesMessageFailFilter(
-    message: Message,
+    messageContent: MessageContent,
     filters: MessageFilter[],
 ): bigint | undefined {
-    const text = getContentAsText(message.content);
+    const text = getContentAsText(messageContent);
 
     if (text !== undefined) {
         for (const f of filters) {
@@ -1969,41 +1965,10 @@ function diffMessagePermissions(
     return diff;
 }
 
-export function nextEventAndMessageIndexesForThread(
-    events: EventWrapper<ChatEvent>[],
-): [number, number] {
-    return events.reduce(
-        ([maxEvtIdx, maxMsgIdx], evt) => {
-            const msgIdx =
-                evt.event.kind === "message"
-                    ? Math.max(evt.event.messageIndex + 1, maxMsgIdx)
-                    : maxMsgIdx;
-            const evtIdx = Math.max(evt.index + 1, maxEvtIdx);
-            return [evtIdx, msgIdx];
-        },
-        [0, 0],
-    );
-}
-
-function sortByIndex(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): number {
-    return a.index - b.index;
-}
-
-export function nextEventAndMessageIndexes(): [number, number] {
-    const chat = selectedServerChatSummaryStore.value;
-    if (chat === undefined) {
-        return [0, 0];
-    }
-    return getNextEventAndMessageIndexes(
-        chat,
-        localUpdates.unconfirmedMessages({ chatId: chat.id }).sort(sortByIndex),
-    );
-}
-
-export function confirmedEventIndexesLoaded(chatId: ChatIdentifier): DRange {
+export function eventIndexesLoaded(chatId: ChatIdentifier): DRange {
     const selected = selectedChatIdStore.value;
     return selected !== undefined && chatIdentifiersEqual(selected, chatId)
-        ? confirmedEventIndexesLoadedStore.value
+        ? eventIndexesLoadedStore.value
         : new DRange();
 }
 
@@ -2039,7 +2004,7 @@ export function isContiguousInThread(
 ): boolean {
     return (
         messageContextsEqual(threadId, selectedThreadIdStore.value) &&
-        isContiguousInternal(confirmedThreadEventIndexesLoadedStore.value, events, [])
+        isContiguousInternal(threadEventIndexesLoadedStore.value, events, [])
     );
 }
 
@@ -2050,6 +2015,122 @@ export function isContiguous(
 ): boolean {
     return (
         chatIdentifiersEqual(chatId, selectedChatIdStore.value) &&
-        isContiguousInternal(confirmedEventIndexesLoaded(chatId), events, expiredEventRanges)
+        isContiguousInternal(eventIndexesLoaded(chatId), events, expiredEventRanges)
     );
+}
+
+export function newDefaultChannel(id: ChannelIdentifier, name: string): ChannelSummary {
+    return {
+        kind: "channel",
+        id,
+        name,
+        description: "",
+        public: true,
+        historyVisible: true,
+        minVisibleEventIndex: 0,
+        minVisibleMessageIndex: 0,
+        latestMessage: undefined,
+        latestEventIndex: 0,
+        latestMessageIndex: 0,
+        lastUpdated: BigInt(0),
+        blobReference: undefined,
+        memberCount: 1,
+        permissions: defaultChatPermissions(),
+        metrics: emptyChatMetrics(),
+        subtype: undefined,
+        frozen: false,
+        dateLastPinned: undefined,
+        dateReadPinned: undefined,
+        gateConfig: { gate: { kind: "no_gate" }, expiry: undefined },
+        level: "channel",
+        eventsTTL: undefined,
+        eventsTtlLastUpdated: BigInt(0),
+        videoCallInProgress: undefined,
+        membership: {
+            ...nullMembership(),
+            role: ROLE_OWNER,
+        },
+        isInvited: false,
+        messagesVisibleToNonMembers: true,
+        externalUrl: undefined,
+    }
+}
+
+function nextEventAndMessageIndex(context: MessageContext): [number, number] {
+    const chat = allServerChatsStore.value.get(context.chatId);
+    const unconfirmedMessages = localUpdates.unconfirmedMessages(context);
+
+    let [eventIndex, messageIndex] = [0, 0];
+
+    if (unconfirmedMessages !== undefined) {
+        for (const event of unconfirmedMessages.values()) {
+            if (event.index >= eventIndex) {
+                eventIndex = event.index + 1;
+            }
+            if (event.event.messageIndex >= messageIndex) {
+                messageIndex = event.event.messageIndex + 1;
+            }
+        }
+    }
+
+    let summary: { latestEventIndex: number, latestMessageIndex: number | undefined } | undefined = undefined;
+    let events: EventWrapper<ChatEvent>[] = [];
+    if (chat !== undefined) {
+        if (context.threadRootMessageIndex === undefined) {
+            summary = chat;
+
+            if (chatIdentifiersEqual(context.chatId, selectedChatIdStore.value)) {
+                events = eventsStore.value;
+            }
+        } else {
+            const thread = chat.membership.latestThreads.find((t) =>
+                t.threadRootMessageIndex === context.threadRootMessageIndex);
+
+            if (thread) {
+                summary = thread;
+
+                if (messageContextsEqual(context, selectedThreadIdStore.value)) {
+                    events = threadEventsStore.value;
+                }
+            }
+        }
+    }
+
+    if (summary) {
+        if (summary.latestEventIndex >= eventIndex) {
+            eventIndex = summary.latestEventIndex + 1;
+        }
+        if (summary.latestMessageIndex !== undefined && summary.latestMessageIndex >= messageIndex) {
+            messageIndex = summary.latestMessageIndex + 1;
+        }
+    }
+
+    const [eventIndexFromEvents, messageIndexFromEvents] = latestEventAndMessageIndexesFromEvents(events);
+
+    if (eventIndexFromEvents !== undefined && eventIndexFromEvents >= eventIndex) {
+        eventIndex = eventIndexFromEvents + 1;
+    }
+    if (messageIndexFromEvents !== undefined && messageIndexFromEvents >= messageIndex) {
+        messageIndex = messageIndexFromEvents + 1;
+    }
+
+    return [eventIndex, messageIndex];
+}
+
+function latestEventAndMessageIndexesFromEvents(events: EventWrapper<ChatEvent>[]): [number | undefined, number | undefined] {
+    let eventIndex: number | undefined = undefined;
+    let messageIndex: number | undefined = undefined;
+
+    for (let i = events.length - 1; i >= 0; i--) {
+        const event = events[i];
+        if (eventIndex === undefined) {
+            eventIndex = event.index;
+        }
+        if (event.event.kind === "message") {
+            messageIndex = event.event.messageIndex;
+            break;
+        }
+    }
+
+    return [eventIndex, messageIndex];
 }

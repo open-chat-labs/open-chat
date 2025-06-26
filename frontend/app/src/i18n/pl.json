@@ -142,7 +142,7 @@
     "avatarTooBig": "Wybrany awatar jest za duży",
     "avatarUpdated": "Awatar został pomyślnie zaktualizowany",
     "avatarUpdateFailed": "Aktualizacja awatara nie powiodła się",
-    "backToResults": "Z powrotem",
+    "back": "Z powrotem",
     "bio": "Biografia użytkownika",
     "blocked": "zablokowany",
     "blockedBy": "{changedBy} zablokowany {changed}",
@@ -404,6 +404,7 @@
     "change": "zmiana",
     "changeTheme": "Zmień motyw",
     "channelAlreadyExists": "Kanał o tej nazwie już istnieje",
+    "chatDetails": "Szczegóły czatu",
     "chatFrozen": "Ten czat został zablokowany",
     "chatFrozenBy": "Czat zablokowany przez {frozenBy}",
     "chatMenu": "Menu czatu",
@@ -558,6 +559,8 @@
     "copyInviteCode": "Skopiuj kod zaproszenia",
     "copyMessageUrl": "Skopiuj adres URL wiadomości",
     "copyToClipboard": "Skopiuj do schowka",
+    "copyUrl": "Kopiuj adres URL",
+    "createAccountOrSignIn": "Kliknij tutaj, aby **utworzyć konto** lub **zalogować się**",
     "createNewGroup": "Utwórz nową grupę",
     "cryptoAccount": {
         "auto": "Automatyczny",
@@ -1491,6 +1494,7 @@
         "confirmCyclesTransferText": "Potwierdź poniżej, kiedy wykonałeś przelew {amount} cykli z portfela rowerowego do portfela OpenChat poniżej",
         "confirmICPTransferText": "Potwierdź poniżej, kiedy wykonałeś przelew w wysokości {amount} ICP na podane poniżej konto",
         "confirmTransfer": "Potwierdź przelew",
+        "createAccount": "Utwórz konto",
         "createUser": "Stwórz użytkownika",
         "cyclesTransferred": "Potwierdzono opłatę za {fee} cykli",
         "disclaimer": "Rejestrując się w OpenChat, wyrażasz zgodę na przestrzeganie naszych warunków",
@@ -1526,7 +1530,7 @@
         "usernameTooLong": "Ta nazwa użytkownika jest za długa",
         "usernameTooShort": "Ta nazwa użytkownika jest za krótka",
         "userNotFound": "Użytkownik nie znaleziony",
-        "welcome": "Witamy w OpenChat!"
+        "welcome": "Witamy w OpenChat"
     },
     "reminders": {
         "cancel": "Anuluj przypomnienie",
@@ -1703,7 +1707,6 @@
         "title": "Przejdź na naszą nową domenę"
     },
     "tapForReferralLink": "Kliknij, aby skopiować swój osobisty link polecający",
-    "tapToLogin": "Tryb gościa — kliknij tutaj, aby się zalogować",
     "tellMeMore": "Więcej informacji",
     "theInternetComputer": "Komputer internetowy",
     "theme": {
@@ -1924,7 +1927,7 @@
     },
     "upgradeByTransfer": "ICP",
     "upgradeStorage": "Uaktualnij pamięć",
-    "urlCopiedToClipboard": "Adres URL grupy skopiowany do schowka!",
+    "urlCopiedToClipboard": "Skopiowano adres URL do schowka!",
     "useAtOwnRisk": "Używaj na własne ryzyko",
     "userId": "Identyfikator użytkownika",
     "userIdCopiedToClipboard": "Identyfikator użytkownika skopiowany do schowka",
