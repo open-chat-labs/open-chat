@@ -136,7 +136,6 @@ export class AnonUserClient {
     getUpdates(_updatesSince: bigint): Promise<UpdatesResponse> {
         return Promise.resolve({
             kind: "success_no_updates",
-            timestamp: BigInt(Date.now()),
         });
     }
 

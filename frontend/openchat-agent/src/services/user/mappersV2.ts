@@ -775,11 +775,10 @@ export function directChatsUpdates(value: UserUpdatesDirectChatsUpdates): Direct
     };
 }
 
-export function getUpdatesResponse(value: UserUpdatesResponse, timestamp: bigint): UpdatesResponse {
+export function getUpdatesResponse(value: UserUpdatesResponse): UpdatesResponse {
     if (value === "SuccessNoUpdates") {
         return {
             kind: "success_no_updates",
-            timestamp,
         };
     }
     if ("Success" in value) {
