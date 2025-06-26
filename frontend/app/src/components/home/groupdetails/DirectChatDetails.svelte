@@ -286,6 +286,10 @@
         left: calc(50% + 32px);
     }
 
+    .bio {
+        overflow-wrap: anywhere;
+    }
+
     .disappearing {
         align-self: flex-start;
     }
