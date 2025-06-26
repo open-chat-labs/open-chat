@@ -112,8 +112,7 @@
         min-width: 80px;
         height: auto;
         color: #fff;
-        padding: $sp2 $sp4;
-        padding-right: $sp5;
+        padding: $sp2 $sp5 $sp2 $sp4;
         border: 1px solid var(--bd);
 
         option {
@@ -129,14 +128,12 @@
     }
     .header {
         display: flex;
-        flex-direction: column;
-        gap: $sp4;
+        gap: $sp3;
         @include font(bold, normal, fs-130, 29);
         @include mobile() {
             @include font(bold, normal, fs-120, 29);
         }
         align-items: center;
-        text-align: center;
 
         .logo-img {
             height: 56px;
@@ -155,7 +152,6 @@
 
         .title {
             display: flex;
-            align-items: center;
             flex-direction: column;
             gap: $sp2;
         }
