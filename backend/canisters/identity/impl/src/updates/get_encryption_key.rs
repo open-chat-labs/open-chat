@@ -10,7 +10,7 @@ use types::{C2CError, CanisterId, OCResult, UserId};
 #[update(msgpack = true)]
 #[trace]
 async fn get_encryption_key(args: Args) -> Response {
-    let caller_user_id = match mutate_state(|state| prepare(state)) {
+    let caller_user_id = match mutate_state(prepare) {
         Ok(id) => id,
         Err(error) => return Error(error),
     };

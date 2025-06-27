@@ -37,8 +37,8 @@ impl EncryptionKeyRequests {
 
 impl UserEncryptionKeyRequests {
     pub fn try_start_for_user(&mut self, now: TimestampMillis) -> Result<(), Milliseconds> {
-        self.check_if_throttled(now)?;
-        self.in_progress += 1;
+        self.check_if_should_throttle(now)?;
+        self.in_progress = self.in_progress.saturating_add(1);
         Ok(())
     }
 
@@ -51,7 +51,7 @@ impl UserEncryptionKeyRequests {
         });
     }
 
-    fn check_if_throttled(&mut self, _now: TimestampMillis) -> Result<(), Milliseconds> {
+    fn check_if_should_throttle(&mut self, _now: TimestampMillis) -> Result<(), Milliseconds> {
         // TODO - implement this
         Ok(())
     }
