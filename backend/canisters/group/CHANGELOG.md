@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1804](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1804-group)] - 2025-06-26
+
 ### Added
 
 - Implement `active_proposal_tallies` for retrieving only the tallies ([#8200](https://github.com/open-chat-labs/open-chat/pull/8200))
