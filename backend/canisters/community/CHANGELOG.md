@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1808](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1808-community)] - 2025-06-27
+
 ### Added
 
 - Add `community_events` query endpoint ([#8246](https://github.com/open-chat-labs/open-chat/pull/8246))
