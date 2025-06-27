@@ -73,9 +73,7 @@ fn inform_referrer(pending_payment: &PendingPayment, block_index: BlockIndex, st
     let mut amount_text = format!("{amount_formatted} {symbol}");
 
     if pending_payment.ledger == CHAT_LEDGER_CANISTER_ID {
-        let link = format!(
-            "https://dashboard.internetcomputer.org/sns/{SNS_ROOT_CANISTER_ID}/transaction/{block_index}"
-        );
+        let link = format!("https://dashboard.internetcomputer.org/sns/{SNS_ROOT_CANISTER_ID}/transaction/{block_index}");
         amount_text = format!("[{amount_text}]({link})");
     }
 
