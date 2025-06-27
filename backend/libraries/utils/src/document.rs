@@ -26,7 +26,7 @@ pub fn validate_document(avatar: Option<&Document>, max_size: u32) -> Result<(),
 }
 
 pub fn try_parse_data_url(data_url: &str) -> Result<Document, String> {
-    let url = DataUrl::parse(data_url).map_err(|err| format!("Invalid data URL: {:?}", err))?;
+    let url = DataUrl::parse(data_url).map_err(|err| format!("Invalid data URL: {err:?}"))?;
     let mime_type = url.get_media_type().to_string();
     let data = url.get_data().to_vec();
     let id = Hasher::oneshot(&data);

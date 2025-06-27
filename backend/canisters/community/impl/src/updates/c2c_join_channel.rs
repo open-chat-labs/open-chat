@@ -328,11 +328,11 @@ pub(crate) fn join_channel_unchecked(
     if matches!(result, AddResult::AlreadyInGroup) {
         let member = channel.chat.members.get(&user_id).unwrap();
         if member.lapsed().value {
-            return AddResult::Success(AddMemberSuccess {
+            return AddResult::Success(Box::new(AddMemberSuccess {
                 member: member.clone(),
                 unlapse: true,
                 bot_notification: None,
-            });
+            }));
         }
     }
 

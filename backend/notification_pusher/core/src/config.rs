@@ -46,7 +46,7 @@ impl<I: IndexStore + 'static> Config<I> {
         dotenv::dotenv()?;
 
         // Load environment configuration
-        let env_config = EnvConfig::init_from_env().map_err(|e| format!("Failed to load environment config: {}", e))?;
+        let env_config = EnvConfig::init_from_env().map_err(|e| format!("Failed to load environment config: {e}"))?;
 
         // Initialize the IC agent and index store
         let ic_agent = IcAgent::build(&env_config.ic_url, &env_config.ic_identity_pem, !env_config.is_production).await?;

@@ -74,16 +74,14 @@ fn inform_referrer(pending_payment: &PendingPayment, block_index: BlockIndex, st
 
     if pending_payment.ledger == CHAT_LEDGER_CANISTER_ID {
         let link = format!(
-            "https://dashboard.internetcomputer.org/sns/{}/transaction/{}",
-            SNS_ROOT_CANISTER_ID, block_index
+            "https://dashboard.internetcomputer.org/sns/{SNS_ROOT_CANISTER_ID}/transaction/{block_index}"
         );
-        amount_text = format!("[{}]({})", amount_text, link);
+        amount_text = format!("[{amount_text}]({link})");
     }
 
     let message = MessageContent::Text(TextContent {
         text: format!(
-            "You have received a referral reward of {}. This is because one of the users you referred has made a Diamond membership payment.",
-            amount_text
+            "You have received a referral reward of {amount_text}. This is because one of the users you referred has made a Diamond membership payment."
         ),
     });
 

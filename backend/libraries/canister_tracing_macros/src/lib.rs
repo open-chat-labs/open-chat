@@ -8,7 +8,6 @@ pub fn trace(_: TokenStream, item: TokenStream) -> TokenStream {
     let mut inner = parse_macro_input!(item as ItemFn);
 
     // We will wrap the original fn in a new fn whose signature matches the original fn
-    #[expect(clippy::redundant_clone)] // clippy doesn't realise that this is used in the macro
     let wrapper_sig = inner.sig.clone();
 
     // Change the name of the inner fn so that it doesn't clash with the wrapper fn

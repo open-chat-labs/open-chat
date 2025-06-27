@@ -114,7 +114,7 @@ impl RuntimeState {
 
     pub fn is_caller_video_call_operator(&self) -> bool {
         let caller = self.env.caller();
-        self.data.video_call_operators.iter().any(|o| *o == caller)
+        self.data.video_call_operators.contains(&caller)
     }
 
     pub fn push_notification(

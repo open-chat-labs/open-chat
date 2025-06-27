@@ -12,6 +12,6 @@ async fn push_subscription(args: Args) -> Response {
             mutate_state(|state| state.add_subscription(user_id, args.subscription, state.env.now()));
             Success
         }
-        Err(err) => InternalError(format!("{:?}", err)),
+        Err(err) => InternalError(format!("{err:?}")),
     }
 }

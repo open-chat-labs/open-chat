@@ -85,11 +85,11 @@ fn e2e_webhook_test(chat_type: ChatType) {
 
     let response = match response {
         Ok(response) => response,
-        Err(e) => panic!("Failed to post a message to webhook: {}", e),
+        Err(e) => panic!("Failed to post a message to webhook: {e}"),
     };
 
     let send_message_v2::Response::Success(_) = response else {
-        panic!("Expected a success response, but got: {:?}", response);
+        panic!("Expected a success response, but got: {response:?}");
     };
 
     // Check the message was received
@@ -106,7 +106,7 @@ fn e2e_webhook_test(chat_type: ChatType) {
     let latest_event = &events_response.events.last().unwrap().event;
 
     let ChatEvent::Message(message) = latest_event else {
-        panic!("Expected a message event, but got: {:?}", latest_event);
+        panic!("Expected a message event, but got: {latest_event:?}");
     };
 
     assert!(matches!(message.content, MessageContent::Text(_)));
@@ -131,7 +131,7 @@ fn post_message_to_webhook(
     // Build the webhook URL
     let (domain, url) = match chat {
         Chat::Group(group_id) => {
-            let domain = format!("{}.localhost", group_id);
+            let domain = format!("{group_id}.localhost");
             let url = format!(
                 "http://{}:{}/webhook/{}/{}",
                 domain,
@@ -142,7 +142,7 @@ fn post_message_to_webhook(
             (domain, url)
         }
         Chat::Channel(community_id, channel_id) => {
-            let domain = format!("{}.localhost", community_id);
+            let domain = format!("{community_id}.localhost");
             let url = format!(
                 "http://{}:{}/channel/{}/webhook/{}/{}",
                 domain,
