@@ -273,7 +273,7 @@ type CommunityEvent = variant {
     Frozen : GroupFrozen;
     Unfrozen : GroupUnfrozen;
     GateUpdated : GroupGateUpdated;
-    ChannelCreated : ChannelCreated;
+    //ChannelCreated : ChannelCreated;
     ChannelDeleted : ChannelDeleted;
     PrimaryLanguageChanged : PrimaryLanguageChanged;
     GroupImported : GroupImported;
