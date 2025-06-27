@@ -3,9 +3,9 @@ use crate::utils::{now_millis, tick_many};
 use crate::{TestEnv, User, client};
 use candid::Principal;
 use community_canister::c2c_bot_community_events::{
-    EventsByIndexArgs as CommunityEventsByIndexArgs, EventsPageArgs,
-    EventsSelectionCriteria as CommunityEventsSelectionCriteria,
+    EventsByIndexArgs as CommunityEventsByIndexArgs, EventsSelectionCriteria as CommunityEventsSelectionCriteria,
 };
+use community_canister::community_events::EventsPageArgs;
 use local_user_index_canister::access_token_v2::{self, BotActionByCommandArgs, BotCommandInitial};
 use local_user_index_canister::chat_events::{EventsByIndexArgs, EventsSelectionCriteria};
 use pocket_ic::PocketIc;
@@ -1069,7 +1069,7 @@ fn read_community_events() {
         &local_user_index_canister::bot_community_events::Args {
             community_id,
             events: CommunityEventsSelectionCriteria::Page(EventsPageArgs {
-                start_index: EventIndex::from(6),
+                start_index: EventIndex::from(7),
                 ascending: false,
                 max_events: 100,
             }),
@@ -1079,9 +1079,9 @@ fn read_community_events() {
         panic!("'bot_community_events' error: {response:?}");
     };
     let events: Vec<_> = result.events.iter().map(|e| e.event.event_type().unwrap()).collect();
-    assert!(events.len() == 7);
+    assert!(events.len() == 8);
     assert!(matches!(events[0], CommunityEventType::PrimaryLanguageChanged));
-    assert!(matches!(events[6], CommunityEventType::Created));
+    assert!(matches!(events[7], CommunityEventType::Created));
 
     // TEST 2
 
@@ -1092,7 +1092,7 @@ fn read_community_events() {
         &local_user_index_canister::bot_community_events::Args {
             community_id,
             events: CommunityEventsSelectionCriteria::ByIndex(CommunityEventsByIndexArgs {
-                events: vec![EventIndex::from(3), EventIndex::from(1), EventIndex::from(6)],
+                events: vec![EventIndex::from(4), EventIndex::from(2), EventIndex::from(7)],
             }),
         },
     );
@@ -1115,7 +1115,7 @@ fn read_community_events() {
         &local_user_index_canister::bot_community_events::Args {
             community_id,
             events: CommunityEventsSelectionCriteria::Page(EventsPageArgs {
-                start_index: EventIndex::from(2),
+                start_index: EventIndex::from(3),
                 ascending: true,
                 max_events: 3,
             }),

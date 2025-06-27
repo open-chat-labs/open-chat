@@ -2,15 +2,15 @@ use crate::RuntimeState;
 use crate::guards::caller_is_local_user_index;
 use crate::read_state;
 use canister_api_macros::query;
-use community_canister::c2c_bot_community_events::{Response::*, *};
+use community_canister::{c2c_bot_community_events::*, community_events::EventsResponse};
 use oc_error_codes::OCErrorCode;
 use types::{BotPermissions, CommunityPermission, OCResult};
 
 #[query(guard = "caller_is_local_user_index", msgpack = true)]
 fn c2c_bot_community_events(args: Args) -> Response {
     match read_state(|state| c2c_bot_community_events_impl(args, state)) {
-        Ok(details) => Success(details),
-        Err(error) => Error(error),
+        Ok(details) => Response::Success(details),
+        Err(error) => Response::Error(error),
     }
 }
 

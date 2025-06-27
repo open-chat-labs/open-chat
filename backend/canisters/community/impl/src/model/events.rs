@@ -1,10 +1,10 @@
 use crate::model::events::stable_memory::EventsStableStorage;
 use chat_events::GroupGateUpdatedInternal;
-use community_canister::c2c_bot_community_events::EventsPageArgs;
+use community_canister::community_events::EventsPageArgs;
 use serde::{Deserialize, Serialize};
 use types::{
-    AvatarChanged, BannerChanged, BotAdded, BotRemoved, BotUpdated, ChannelDeleted, ChannelId, ChatId, CommunityEvent,
-    CommunityMembersRemoved, CommunityPermissionsChanged, CommunityRoleChanged, CommunityUsersBlocked,
+    AvatarChanged, BannerChanged, BotAdded, BotRemoved, BotUpdated, ChannelCreated, ChannelDeleted, ChannelId, ChatId,
+    CommunityEvent, CommunityMembersRemoved, CommunityPermissionsChanged, CommunityRoleChanged, CommunityUsersBlocked,
     CommunityVisibilityChanged, EventIndex, EventWrapper, EventWrapperInternal, GroupCreated, GroupDescriptionChanged,
     GroupFrozen, GroupGateUpdated, GroupImported, GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupUnfrozen,
     PrimaryLanguageChanged, TimestampMillis, UserId, UsersInvited, UsersUnblocked,
@@ -55,6 +55,8 @@ pub enum CommunityEventInternal {
     Unfrozen(Box<GroupUnfrozen>),
     #[serde(rename = "gu", alias = "GateUpdated")]
     GateUpdated(Box<GroupGateUpdatedInternal>),
+    #[serde(rename = "cc", alias = "ChannelCreated")]
+    ChannelCreated(Box<ChannelCreated>),
     #[serde(rename = "cd", alias = "ChannelDeleted")]
     ChannelDeleted(Box<ChannelDeleted>),
     #[serde(rename = "pl", alias = "PrimaryLanguageChanged")]
@@ -75,6 +77,25 @@ pub enum CommunityEventInternal {
 }
 
 impl CommunityEvents {
+    // TODO: Delete after communities are upgraded
+    pub fn read_all_events(&self) -> Vec<EventWrapperInternal<CommunityEventInternal>> {
+        self.stable_events_map.page(EventIndex::default(), true, u32::MAX)
+    }
+
+    // TODO: Delete after communities are upgraded
+    // This function assumes:
+    // - The event indexes of the given events are sequential and start from 0.
+    // - There are now more events than previously
+    pub fn overwrite_all_events(&mut self, events: Vec<EventWrapperInternal<CommunityEventInternal>>) {
+        let latest = events.last().unwrap();
+        self.latest_event_index = latest.index;
+        self.latest_event_timestamp = latest.timestamp;
+
+        for event in events {
+            self.stable_events_map.insert(event);
+        }
+    }
+
     pub fn new(name: String, description: String, created_by: UserId, now: TimestampMillis) -> CommunityEvents {
         let event_index = EventIndex::default();
         let event = EventWrapperInternal {
@@ -182,19 +203,9 @@ impl From<CommunityEventInternal> for CommunityEvent {
                 updated_by: event.updated_by,
                 new_gate_config: event.new_gate_config.map(|gc| gc.into()),
             })),
-            CommunityEventInternal::ChannelDeleted(event) => CommunityEvent::ChannelDeleted(Box::new(ChannelDeleted {
-                channel_id: event.channel_id,
-                name: event.name,
-                deleted_by: event.deleted_by,
-                bot_command: event.bot_command,
-            })),
-            CommunityEventInternal::PrimaryLanguageChanged(event) => {
-                CommunityEvent::PrimaryLanguageChanged(Box::new(PrimaryLanguageChanged {
-                    previous: event.previous,
-                    new: event.new,
-                    changed_by: event.changed_by,
-                }))
-            }
+            CommunityEventInternal::ChannelCreated(event) => CommunityEvent::ChannelCreated(event),
+            CommunityEventInternal::ChannelDeleted(event) => CommunityEvent::ChannelDeleted(event),
+            CommunityEventInternal::PrimaryLanguageChanged(event) => CommunityEvent::PrimaryLanguageChanged(event),
             CommunityEventInternal::GroupImported(event) => CommunityEvent::GroupImported(Box::new(GroupImported {
                 group_id: event.group_id,
                 channel_id: event.channel_id,

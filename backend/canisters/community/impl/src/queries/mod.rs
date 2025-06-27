@@ -9,6 +9,7 @@ mod c2c_bot_members;
 mod c2c_can_issue_access_token;
 mod channel_summary;
 mod channel_summary_updates;
+mod community_events;
 mod deleted_message;
 mod events;
 mod events_by_index;
