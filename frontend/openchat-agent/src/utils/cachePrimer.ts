@@ -4,7 +4,6 @@ import {
     chatIdentifierToString,
     type ChatStateFull,
     type ChatSummary,
-    isProposalsChat,
     MAX_MESSAGES,
     userIdsFromEvents,
 } from "openchat-shared";
@@ -207,9 +206,9 @@ export class CachePrimer {
     }
 
     private shouldEnqueueChat(chat: ChatSummary, lastUpdated: bigint | undefined): boolean {
-        if (chat.membership.archived || isProposalsChat(chat)) return false;
-
-        return lastUpdated === undefined || chat.lastUpdated > lastUpdated;
+        return chat.membership.archived
+            ? false
+            : lastUpdated === undefined || chat.lastUpdated > lastUpdated;
     }
 }
 
