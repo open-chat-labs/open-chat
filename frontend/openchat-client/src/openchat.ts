@@ -644,6 +644,7 @@ export class OpenChat {
     #inflightBalanceRefreshPromises: Map<string, Promise<bigint>> = new Map();
     #appType?: "android" | "ios" | "web" = undefined;
     #videoCallsInProgress: Set<bigint> = new Set();
+    #serverVideoCallsInProgress: ChatMap<bigint> = new ChatMap();
     #locale!: string;
     #vapidPublicKey: string;
 
@@ -6215,25 +6216,27 @@ export class OpenChat {
             }
         }
 
-        // Take a copy of the previous video calls in progress, then remove those that are still in progress
-        const videoCallsEnded = new Set(this.#videoCallsInProgress);
-
         for (const chat of chatsAddedUpdated) {
-            if (chat.videoCallInProgress !== undefined) {
-                videoCallsEnded.delete(chat.videoCallInProgress.messageId);
-                this.#publishRemoteVideoCallStarted({
-                    chatId: chat.id,
-                    userId: chat.videoCallInProgress.startedBy,
-                    messageId: chat.videoCallInProgress.messageId,
-                    currentUserIsParticipant: chat.videoCallInProgress.joinedByCurrentUser,
-                    callType: chat.videoCallInProgress.callType,
-                    timestamp: chat.videoCallInProgress.started,
-                });
+            const vc = chat.videoCallInProgress;
+            if (vc !== undefined) {
+                if (this.#serverVideoCallsInProgress.get(chat.id) !== vc.messageId) {
+                    this.#serverVideoCallsInProgress.set(chat.id, vc.messageId);
+                    this.#publishRemoteVideoCallStarted({
+                        chatId: chat.id,
+                        userId: vc.startedBy,
+                        messageId: vc.messageId,
+                        currentUserIsParticipant: vc.joinedByCurrentUser,
+                        callType: vc.callType,
+                        timestamp: vc.started,
+                    });
+                }
+            } else {
+                const videoCallMessageId = this.#serverVideoCallsInProgress.get(chat.id);
+                if (videoCallMessageId !== undefined) {
+                    this.#serverVideoCallsInProgress.delete(chat.id);
+                    this.#publishRemoteVideoCallEnded(videoCallMessageId);
+                }
             }
-        }
-
-        for (const messageId of videoCallsEnded) {
-            this.#publishRemoteVideoCallEnded(messageId);
         }
 
         // horribly enough - we need to slightly defer this so that all the cascade of derived stuff is complete
