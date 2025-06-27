@@ -1,12 +1,6 @@
 {
   "dfx": "0.27.0",
   "canisters": {
-    "community": {
-      "type": "custom",
-      "candid": "backend/canisters/community/api/can.did",
-      "wasm": "wasms/community.wasm.gz",
-      "build": "./scripts/generate-wasm.sh community"
-    },
     "openchat_installer": {
       "type": "custom",
       "candid": "backend/canisters/openchat_installer/api/can.did",
