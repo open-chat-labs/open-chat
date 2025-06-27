@@ -134,7 +134,7 @@ impl CommunityMembers {
                     self.members_with_referrals.insert(referrer);
                 }
             }
-            AddResult::Success(member)
+            AddResult::Success(Box::new(member))
         } else {
             AddResult::AlreadyInCommunity
         }
@@ -799,7 +799,7 @@ impl Member for CommunityMemberInternal {
 }
 
 pub enum AddResult {
-    Success(CommunityMemberInternal),
+    Success(Box<CommunityMemberInternal>),
     AlreadyInCommunity,
     Blocked,
 }

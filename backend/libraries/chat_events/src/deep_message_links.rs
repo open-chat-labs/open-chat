@@ -15,7 +15,7 @@ pub fn build_message_link(
 }
 
 fn build_direct_message_link(chat_id: ChatId, message_index: MessageIndex) -> String {
-    build_deep_link(format!("/user/{}/{}", chat_id, message_index))
+    build_deep_link(format!("/user/{chat_id}/{message_index}"))
 }
 
 fn build_group_message_link(
@@ -46,12 +46,12 @@ fn build_channel_message_link(
 
 fn build_message_path(thread_root_message_index: Option<MessageIndex>, message_index: MessageIndex) -> String {
     if let Some(root) = thread_root_message_index {
-        format!("{}/{}", root, message_index)
+        format!("{root}/{message_index}")
     } else {
         message_index.to_string()
     }
 }
 
 fn build_deep_link(path: String) -> String {
-    format!("https://oc.app{}", path)
+    format!("https://oc.app{path}")
 }

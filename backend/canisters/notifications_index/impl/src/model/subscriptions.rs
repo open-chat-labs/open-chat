@@ -17,7 +17,7 @@ impl Subscriptions {
         match self.subscriptions.entry(user_id) {
             Occupied(e) => {
                 let subscriptions = e.into_mut();
-                if subscriptions.iter().any(|s| *s == subscription) {
+                if subscriptions.contains(&subscription) {
                     return removed;
                 }
                 if subscriptions.len() >= 10 {

@@ -23,7 +23,7 @@ where
             canister_id,
             method_name,
             RejectCode::CanisterError,
-            format!("Serialization error: {:?}", e),
+            format!("Serialization error: {e:?}"),
         )
     })?;
 
@@ -34,7 +34,7 @@ where
             canister_id,
             method_name,
             RejectCode::CanisterError,
-            format!("Deserialization error: {:?}", e),
+            format!("Deserialization error: {e:?}"),
         )
     })
 }
@@ -56,7 +56,7 @@ where
             canister_id,
             method_name,
             RejectCode::CanisterError,
-            format!("Serialization error: {:?}", e),
+            format!("Serialization error: {e:?}"),
         )
     })?;
 
@@ -67,7 +67,7 @@ where
             canister_id,
             method_name,
             RejectCode::CanisterError,
-            format!("Deserialization error: {:?}", e),
+            format!("Deserialization error: {e:?}"),
         )
     })
 }

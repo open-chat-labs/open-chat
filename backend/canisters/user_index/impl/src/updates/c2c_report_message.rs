@@ -120,7 +120,7 @@ fn construct_html_report(
     // 3. Message link
     if is_public {
         let message_link = deep_message_links::build_message_link(chat_id, thread_root_message_index, message.message_index);
-        html.push_str(&format!("<a href=\"{}\">link to message</a>\n", message_link));
+        html.push_str(&format!("<a href=\"{message_link}\">link to message</a>\n"));
     }
 
     html
@@ -146,7 +146,7 @@ fn extract_text(content: &MessageContent) -> String {
 
     if let MessageContent::Poll(p) = content {
         for o in p.config.options.iter() {
-            text.push_str(&format!("- {}\n", o));
+            text.push_str(&format!("- {o}\n"));
         }
     }
 
@@ -199,7 +199,7 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
 
         let report = construct_html_report(Chat::Group(chat_id), None, &message, true);
 
-        print!("{}", report);
+        print!("{report}");
     }
 
     #[test]
@@ -236,7 +236,7 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
 
         let report = construct_html_report(chat, None, &message, true);
 
-        print!("{}", report);
+        print!("{report}");
     }
 
     #[test]
@@ -277,6 +277,6 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
 
         let report = construct_html_report(chat, None, &message, true);
 
-        print!("{}", report);
+        print!("{report}");
     }
 }

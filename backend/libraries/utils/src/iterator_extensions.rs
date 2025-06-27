@@ -40,7 +40,6 @@ pub trait IteratorExtensions: Iterator {
         }
 
         // Return the items in ascending order
-        #[expect(clippy::needless_collect)]
         let vec: Vec<_> = top.into_sorted_vec().into_iter().map(|g| g.item).collect();
         vec.into_iter()
     }
