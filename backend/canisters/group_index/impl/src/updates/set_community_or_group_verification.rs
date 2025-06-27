@@ -134,7 +134,7 @@ fn rename_other_if_name_clashes(name: &str, state: &mut RuntimeState) -> RenameO
 fn find_new_name(existing_name: &str, state: &mut RuntimeState) -> Option<String> {
     fn generate_candidate(existing_name: &str, state: &mut RuntimeState) -> String {
         let suffix = state.env.rng().r#gen::<u16>() % 1000;
-        format!("{}_{:03}", existing_name, suffix)
+        format!("{existing_name}_{suffix:03}")
     }
 
     let now = state.env.now();

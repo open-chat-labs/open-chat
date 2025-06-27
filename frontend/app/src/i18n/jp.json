@@ -1530,7 +1530,7 @@
         "usernameTooLong": "そのユーザーネームは長すぎます",
         "usernameTooShort": "そのユーザーネームは短すぎます",
         "userNotFound": "ユーザーが見つかりません",
-        "welcome": "OpenChatへようこそ!"
+        "welcome": "OpenChatへようこそ"
     },
     "reminders": {
         "cancel": "リマインダーをキャンセル",

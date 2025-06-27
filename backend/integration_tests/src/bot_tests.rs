@@ -3,9 +3,9 @@ use crate::utils::{now_millis, tick_many};
 use crate::{TestEnv, User, client};
 use candid::Principal;
 use community_canister::c2c_bot_community_events::{
-    EventsByIndexArgs as CommunityEventsByIndexArgs, EventsPageArgs,
-    EventsSelectionCriteria as CommunityEventsSelectionCriteria,
+    EventsByIndexArgs as CommunityEventsByIndexArgs, EventsSelectionCriteria as CommunityEventsSelectionCriteria,
 };
+use community_canister::community_events::EventsPageArgs;
 use local_user_index_canister::access_token_v2::{self, BotActionByCommandArgs, BotCommandInitial};
 use local_user_index_canister::chat_events::{EventsByIndexArgs, EventsSelectionCriteria};
 use pocket_ic::PocketIc;

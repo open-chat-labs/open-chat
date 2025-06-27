@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Add `community_events` query endpoint ([#8246](https://github.com/open-chat-labs/open-chat/pull/8246))
+
+## [[2.0.1803](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1803-community)] - 2025-06-26
+
+### Added
+
 - Add `c2c_bot_community_events` endpoint ([#8194](https://github.com/open-chat-labs/open-chat/pull/8194))
 - Implement `active_proposal_tallies` for retrieving only the tallies ([#8200](https://github.com/open-chat-labs/open-chat/pull/8200))
 - Add `c2c_bot_remove_user` endpoint ([#8217](https://github.com/open-chat-labs/open-chat/pull/8217))

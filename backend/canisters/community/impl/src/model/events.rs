@@ -1,6 +1,6 @@
 use crate::model::events::stable_memory::EventsStableStorage;
 use chat_events::GroupGateUpdatedInternal;
-use community_canister::c2c_bot_community_events::EventsPageArgs;
+use community_canister::community_events::EventsPageArgs;
 use serde::{Deserialize, Serialize};
 use types::{
     AvatarChanged, BannerChanged, BotAdded, BotRemoved, BotUpdated, ChannelCreated, ChannelDeleted, ChannelId, ChatId,

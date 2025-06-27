@@ -57,7 +57,7 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                 // TODO i18n
                 let fcm_data = FcmData::builder()
                     .with_alt_title(&tipped_by_display_name, &tipped_by_name)
-                    .with_body(format!("Tipped your message {}", tip))
+                    .with_body(format!("Tipped your message {tip}"))
                     .build();
 
                 let user_notification_payload = UserNotificationPayload::GroupMessageTipped(GroupMessageTipped {

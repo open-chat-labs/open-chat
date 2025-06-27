@@ -1530,7 +1530,7 @@
         "usernameTooLong": "این نام کاربری خیلی طولانی است",
         "usernameTooShort": "این نام کاربری خیلی کوتاه است",
         "userNotFound": "کاربر پیدا نشد",
-        "welcome": "به OpenChat خوش آمدید!"
+        "welcome": "به OpenChat خوش آمدید"
     },
     "reminders": {
         "cancel": "لغو یادآوری",

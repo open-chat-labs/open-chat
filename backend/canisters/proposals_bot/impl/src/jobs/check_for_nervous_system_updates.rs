@@ -60,7 +60,7 @@ async fn create_group(ns: NervousSystemDetails, group_index_canister_id: Caniste
 
     let create_group_args = group_index_canister::c2c_create_group::Args {
         is_public: true,
-        name: format!("{} Proposals", name),
+        name: format!("{name} Proposals"),
         description: default_description(&name),
         rules: Rules::default(),
         subtype: Some(GroupSubtype::GovernanceProposals(GovernanceProposalsSubtype {
