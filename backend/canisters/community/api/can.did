@@ -231,8 +231,121 @@ type ChannelSummaryUpdatesResponse = variant {
     Error : OCError;
 };
 
+type CommunityEventsArgs = record {
+    start_index : EventIndex;
+    ascending : bool;
+    max_events : nat32;
+};
+
+type CommunityEventsResponse = variant {
+    Success : CommunityEventsSuccessResult;
+    Error : OCError;
+};
+
+type CommunityEventsSuccessResult = record {
+    events : vec CommunityEventWrapper;
+    latest_event_index : nat32;
+    community_last_updated : TimestampMillis;
+};
+
+type CommunityEventWrapper = record {
+    index : EventIndex;
+    timestamp : TimestampMillis;
+    expires_at : opt TimestampMillis;
+    event : CommunityEvent;
+};
+
+type CommunityEvent = variant {
+    Created : CommunityCreated;
+    NameChanged : GroupNameChanged;
+    DescriptionChanged : GroupDescriptionChanged;
+    RulesChanged : GroupRulesChanged;
+    AvatarChanged : AvatarChanged;
+    BannerChanged : BannerChanged;
+    UsersInvited : UsersInvited;
+    MembersRemoved : CommunityMembersRemoved;
+    RoleChanged : CommunityRoleChanged;
+    UsersBlocked : CommunityUsersBlocked;
+    UsersUnblocked : UsersUnblocked;
+    PermissionsChanged : CommunityPermissionsChanged;
+    VisibilityChanged : CommunityVisibilityChanged;
+    InviteCodeChanged : GroupInviteCodeChanged;
+    Frozen : GroupFrozen;
+    Unfrozen : GroupUnfrozen;
+    GateUpdated : GroupGateUpdated;
+    //ChannelCreated : ChannelCreated;
+    ChannelDeleted : ChannelDeleted;
+    PrimaryLanguageChanged : PrimaryLanguageChanged;
+    GroupImported : GroupImported;
+    BotAdded : BotAdded;
+    BotRemoved : BotRemoved;
+    BotUpdated : BotUpdated;
+    FailedToDeserialize;
+};
+
+type CommunityCreated = record {
+    name : text;
+    description : text;
+    created_by : UserId;
+};
+
+type ChannelCreated = record {
+    channel_id : ChannelId;
+    is_public : bool;
+    name : text;
+    created_by : UserId;
+};
+
+type ChannelDeleted = record {
+    channel_id : ChannelId;
+    name : text;
+    deleted_by : UserId;
+    bot_command : opt BotCommand;
+};
+
+type CommunityMembersRemoved = record {
+    user_ids : vec UserId;
+    removed_by : UserId;
+    referred_by : vec record {UserId; UserId};
+};
+
+type CommunityUsersBlocked = record {
+    user_ids : vec UserId;
+    blocked_by : UserId;
+    referred_by : vec record {UserId; UserId};
+};
+
+type CommunityPermissionsChanged = record {
+    old_permissions : CommunityPermissions;
+    new_permissions : CommunityPermissions;
+    changed_by : UserId;
+};
+
+type CommunityVisibilityChanged = record {
+    now_public : bool;
+    changed_by : UserId;
+};
+
+type CommunityRoleChanged = record {
+    user_ids : vec UserId;
+    changed_by : UserId;
+    old_role : CommunityRole;
+    new_role : CommunityRole;
+};
+
+type PrimaryLanguageChanged = record {
+    previous : text;
+    new : text;
+    changed_by : UserId;
+};
+
+type GroupImported = record {
+    group_id : ChatId;
+    channel_id : ChannelId;
+};
+
 type SummaryUpdatesArgs = record {
-    on_behalf_of: opt UserId;
+    on_behalf_of : opt UserId;
     invite_code : opt nat64;
     updates_since : TimestampMillis;
 };
@@ -790,6 +903,7 @@ type UnfollowThreadResponse = variant {
 service : {
     channel_summary : (ChannelSummaryArgs) -> (ChannelSummaryResponse) query;
     channel_summary_updates : (ChannelSummaryUpdatesArgs) -> (ChannelSummaryUpdatesResponse) query;
+    community_events : (CommunityEventsArgs) -> (CommunityEventsResponse) query;
     deleted_message : (DeletedMessageArgs) -> (DeletedMessageResponse) query;
     events : (EventsArgs) -> (EventsResponse) query;
     events_by_index : (EventsByIndexArgs) -> (EventsResponse) query;
