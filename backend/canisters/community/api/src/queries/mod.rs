@@ -11,6 +11,7 @@ pub mod c2c_summary;
 pub mod c2c_summary_updates;
 pub mod channel_summary;
 pub mod channel_summary_updates;
+pub mod community_events;
 pub mod deleted_message;
 pub mod events;
 pub mod events_by_index;
