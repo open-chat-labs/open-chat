@@ -521,7 +521,7 @@ fn test_deserialization(bytes: &[u8]) -> MessageContentInternal {
     if let ChatEventInternal::Message(m) = value.event {
         m.content
     } else {
-        panic!("{:?}", value);
+        panic!("{value:?}");
     }
 }
 

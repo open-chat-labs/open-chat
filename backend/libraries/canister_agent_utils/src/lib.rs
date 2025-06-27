@@ -229,7 +229,7 @@ pub fn is_mainnet(url: &str) -> bool {
 }
 
 fn file_by_prefix(file_name_prefix: &str, dir: &PathBuf) -> Option<String> {
-    let dir = std::fs::read_dir(dir).unwrap_or_else(|_| panic!("Expect to read_dir {:#?}", dir));
+    let dir = std::fs::read_dir(dir).unwrap_or_else(|_| panic!("Expect to read_dir {dir:#?}"));
 
     dir.filter_map(|f| f.ok())
         .filter_map(|f| f.file_name().to_str().map(|s| s.to_string()))

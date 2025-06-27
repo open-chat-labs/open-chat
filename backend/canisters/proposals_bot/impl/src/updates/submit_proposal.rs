@@ -55,7 +55,7 @@ async fn submit_proposal_impl(args: Args) -> Response {
     match process_transaction(args.transaction.clone(), this_canister_id).await {
         Ok(Ok(_)) => {}
         Ok(Err(error)) => return PaymentFailed(error.error_message),
-        Err(error) => return InternalError(format!("{:?}", error)),
+        Err(error) => return InternalError(format!("{error:?}")),
     }
 
     let proposal = prepare_proposal(args.proposal, user_id, username, chat);

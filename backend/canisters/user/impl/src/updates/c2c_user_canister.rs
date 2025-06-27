@@ -427,7 +427,7 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
                 let tip = format_crypto_amount_with_symbol(args.amount, args.decimals, &args.token_symbol);
 
                 // TODO i18n
-                let fcm_body = format!("Tipped your message {}", tip);
+                let fcm_body = format!("Tipped your message {tip}");
                 let fcm_data = FcmData::builder()
                     .with_alt_title(&args.display_name, &args.username)
                     .with_body(fcm_body)
