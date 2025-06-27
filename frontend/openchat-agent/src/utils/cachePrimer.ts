@@ -206,9 +206,7 @@ export class CachePrimer {
     }
 
     private shouldEnqueueChat(chat: ChatSummary, lastUpdated: bigint | undefined): boolean {
-        return chat.membership.archived
-            ? false
-            : lastUpdated === undefined || chat.lastUpdated > lastUpdated;
+        return !chat.membership.archived && (lastUpdated === undefined || chat.lastUpdated > lastUpdated);
     }
 }
 
