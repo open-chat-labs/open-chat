@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Implement `get_encryption_key` for getting e2e encryption keys ([#8248](https://github.com/open-chat-labs/open-chat/pull/8248))
+
 ## [[2.0.1725](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1725-identity)] - 2025-05-06
 
 ### Added
