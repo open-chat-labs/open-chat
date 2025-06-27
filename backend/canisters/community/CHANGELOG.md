@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add `community_events` query endpoint ([#8246](https://github.com/open-chat-labs/open-chat/pull/8246))
 
+### Changed
+
+- Introduce and backdate a ChannelCreated event ([#8234](https://github.com/open-chat-labs/open-chat/pull/8234))
+
 ## [[2.0.1803](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1803-community)] - 2025-06-26
 
 ### Added

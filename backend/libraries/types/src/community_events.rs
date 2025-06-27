@@ -5,9 +5,10 @@ use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 
 use crate::{
-    AvatarChanged, BannerChanged, BotAdded, BotRemoved, BotUpdated, ChannelDeleted, ChannelId, ChatId, CommunityPermissions,
-    CommunityRole, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged,
-    GroupNameChanged, GroupRulesChanged, GroupUnfrozen, PrimaryLanguageChanged, UserId, UsersInvited, UsersUnblocked,
+    AvatarChanged, BannerChanged, BotAdded, BotRemoved, BotUpdated, ChannelCreated, ChannelDeleted, ChannelId, ChatId,
+    CommunityPermissions, CommunityRole, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated,
+    GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupUnfrozen, PrimaryLanguageChanged, UserId, UsersInvited,
+    UsersUnblocked,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -108,6 +109,7 @@ pub enum CommunityEvent {
     Frozen(Box<GroupFrozen>),
     Unfrozen(Box<GroupUnfrozen>),
     GateUpdated(Box<GroupGateUpdated>),
+    ChannelCreated(Box<ChannelCreated>),
     ChannelDeleted(Box<ChannelDeleted>),
     PrimaryLanguageChanged(Box<PrimaryLanguageChanged>),
     GroupImported(Box<GroupImported>),
@@ -137,6 +139,7 @@ impl CommunityEvent {
             CommunityEvent::Frozen(_) => Some(CommunityEventType::Frozen),
             CommunityEvent::Unfrozen(_) => Some(CommunityEventType::Unfrozen),
             CommunityEvent::GateUpdated(_) => Some(CommunityEventType::GateUpdated),
+            CommunityEvent::ChannelCreated(_) => Some(CommunityEventType::ChannelCreated),
             CommunityEvent::ChannelDeleted(_) => Some(CommunityEventType::ChannelDeleted),
             CommunityEvent::PrimaryLanguageChanged(_) => Some(CommunityEventType::PrimaryLanguageChanged),
             CommunityEvent::GroupImported(_) => Some(CommunityEventType::GroupImported),

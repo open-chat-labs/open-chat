@@ -37,9 +37,9 @@ use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotEventsCaller, BotInitiator, BotNotification,
-    BotPermissions, BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChannelId, ChatEventCategory, ChatEventType,
-    ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cycles, Document, Empty,
-    EventIndex, EventsCaller, FcmData, FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds,
+    BotPermissions, BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId, ChatEventCategory,
+    ChatEventType, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cycles, Document,
+    Empty, EventIndex, EventsCaller, FcmData, FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds,
     Notification, Rules, TimestampMillis, Timestamped, UserId, UserNotification, UserNotificationPayload, UserType,
 };
 use types::{BotSubscriptions, CommunityId};
@@ -496,7 +496,19 @@ impl Data {
             channels.public_channel_ids(),
             now,
         );
-        let events = CommunityEvents::new(name.clone(), description.clone(), created_by_user_id, now);
+        let mut events = CommunityEvents::new(name.clone(), description.clone(), created_by_user_id, now);
+
+        for channel in channels.iter() {
+            events.push_event(
+                CommunityEventInternal::ChannelCreated(Box::new(ChannelCreated {
+                    channel_id: channel.id,
+                    is_public: true,
+                    name: channel.chat.name.value.clone(),
+                    created_by: created_by_user_id,
+                })),
+                now,
+            );
+        }
 
         Data {
             is_public: Timestamped::new(is_public, now),
