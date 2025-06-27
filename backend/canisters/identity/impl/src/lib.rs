@@ -1,4 +1,5 @@
 use crate::model::challenges::Challenges;
+use crate::model::encryption_key_requests::EncryptionKeyRequests;
 use crate::model::identity_link_requests::IdentityLinkRequests;
 use crate::model::identity_link_via_qr_code_requests::IdentityLinkViaQrCodeRequests;
 use crate::model::salt::Salt;
@@ -174,6 +175,8 @@ struct Data {
     webauthn_keys: WebAuthnKeys,
     #[serde(skip)]
     signature_map: SignatureMap,
+    #[serde(default)]
+    encryption_key_requests: EncryptionKeyRequests,
     #[serde(with = "serde_bytes")]
     ic_root_key: Vec<u8>,
     salt: Salt,
@@ -203,6 +206,7 @@ impl Data {
             identity_link_via_qr_code_requests: IdentityLinkViaQrCodeRequests::default(),
             webauthn_keys: WebAuthnKeys::default(),
             signature_map: SignatureMap::default(),
+            encryption_key_requests: EncryptionKeyRequests::default(),
             ic_root_key,
             salt: Salt::default(),
             rng_seed: [0; 32],

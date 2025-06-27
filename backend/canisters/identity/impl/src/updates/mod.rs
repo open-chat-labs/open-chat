@@ -4,6 +4,7 @@ pub mod c2c_set_user_ids;
 pub mod create_identity;
 mod delete_user;
 pub mod generate_challenge;
+mod get_encryption_key;
 pub mod initiate_identity_link;
 pub mod initiate_identity_link_via_qr_code;
 pub mod prepare_delegation;
