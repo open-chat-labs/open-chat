@@ -478,7 +478,6 @@ struct Data {
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub idempotency_checker: IdempotencyChecker,
     pub notification_pushers: HashSet<Principal>,
-    #[serde(alias = "notification_subscriptions")]
     pub web_push_subscriptions: WebPushSubscriptions,
     pub notifications: EventStream<NotificationEnvelope>,
     pub blocked_users: UserIdsSet,
