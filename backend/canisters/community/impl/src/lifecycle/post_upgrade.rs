@@ -68,7 +68,7 @@ fn post_upgrade(args: Args) {
                 if let ChatEventInternal::GroupChatCreated(event) = wrapper.event {
                     let new_event_wrapper = EventWrapperInternal {
                         index: EventIndex::from(0),
-                        timestamp: wrapper.timestamp,
+                        timestamp: channel.date_imported.unwrap_or(channel.chat.date_created),
                         expires_at: None,
                         event: CommunityEventInternal::ChannelCreated(Box::new(ChannelCreated {
                             channel_id: channel.id,
