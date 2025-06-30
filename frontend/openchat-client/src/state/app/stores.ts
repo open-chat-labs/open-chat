@@ -454,9 +454,9 @@ export const exploreCommunitiesFiltersStore = derived(
 export const userCreatedStore = new LocalStorageBoolStore(configKeys.userCreated, false);
 export const selectedAuthProviderStore = new LocalStorageStore(
     configKeys.selectedAuthProvider,
-    AuthProvider.II,
+    AuthProvider.PASSKEY,
     (a) => a,
-    (a) => enumFromStringValue(AuthProvider, a, AuthProvider.II),
+    (a) => enumFromStringValue(AuthProvider, a, AuthProvider.PASSKEY),
 );
 export const achievementsStore = writable<Set<string>>(new Set(), undefined, notEq);
 export const chitStateStore = writable<ChitState>(
