@@ -44,10 +44,8 @@ fn http_request(request: HttpRequest) -> HttpResponse {
                 _ => None,
             })
             .map(|(ts, manual_claim)| {
-                (
-                    Streak::timestamp_to_offset_day(ts, state.data.streak.utc_offset_mins_at_ts(ts)),
-                    manual_claim,
-                )
+                let offset = state.data.streak.utc_offset_mins_at_ts(ts);
+                (Streak::timestamp_to_offset_day(ts, offset), manual_claim, ts, offset)
             })
             .collect();
 
