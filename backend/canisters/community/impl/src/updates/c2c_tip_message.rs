@@ -65,12 +65,10 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                 let tip = format_crypto_amount_with_symbol(args.amount, args.decimals, &args.token_symbol);
                 // TODO i18n
                 let fcm_body = format!("Tipped your message {}", tip.clone());
-                let fcm_data = FcmData::builder()
-                    .with_body(fcm_body)
-                    .with_chat_id(community_id.to_string())
-                    .with_alt_sender_name(&args.display_name, &args.username)
-                    .with_sender_avatar_id(channel_avatar_id)
-                    .build();
+                let fcm_data = FcmData::for_community_chat(community_id.into(), channel.id.into())
+                    .set_body(fcm_body)
+                    .set_sender_name_with_alt(&args.display_name, &args.username)
+                    .set_avatar_id(channel_avatar_id);
 
                 let notification = UserNotificationPayload::ChannelMessageTipped(ChannelMessageTipped {
                     community_id,

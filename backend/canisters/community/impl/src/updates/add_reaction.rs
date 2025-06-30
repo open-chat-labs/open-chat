@@ -100,12 +100,10 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
 
                     // TODO i18n
                     let fcm_body = format!("Reacted {} to your message", args.reaction.clone().0);
-                    let fcm_data = FcmData::builder()
-                        .with_body(fcm_body)
-                        .with_chat_id(community_id.to_string())
-                        .with_alt_sender_name(&display_name, &args.username)
-                        .with_sender_avatar_id(channel_avatar_id)
-                        .build();
+                    let fcm_data = FcmData::for_community_chat(community_id, args.channel_id)
+                        .set_body(fcm_body)
+                        .set_sender_name_with_alt(&display_name, &args.username)
+                        .set_avatar_id(channel_avatar_id);
 
                     let notification = UserNotificationPayload::ChannelReactionAdded(ChannelReactionAddedNotification {
                         community_id,

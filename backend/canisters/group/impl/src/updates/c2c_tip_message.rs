@@ -56,12 +56,10 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                 let group_avatar_id = state.data.chat.avatar.as_ref().map(|a| a.id);
 
                 // TODO i18n
-                let fcm_data = FcmData::builder()
-                    .with_body(format!("Tipped your message {tip}"))
-                    .with_chat_id(chat_id.to_text())
-                    .with_alt_sender_name(&tipped_by_display_name, &tipped_by_name)
-                    .with_sender_avatar_id(group_avatar_id)
-                    .build();
+                let fcm_data = FcmData::for_group_chat(chat_id)
+                    .set_body(format!("Tipped your message {tip}"))
+                    .set_sender_name_with_alt(&tipped_by_display_name, &tipped_by_name)
+                    .set_avatar_id(group_avatar_id);
 
                 let user_notification_payload = UserNotificationPayload::GroupMessageTipped(GroupMessageTipped {
                     chat_id,

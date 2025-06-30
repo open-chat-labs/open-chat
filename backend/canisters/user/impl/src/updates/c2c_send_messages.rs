@@ -202,13 +202,11 @@ pub(crate) fn handle_message_impl(
         let message_text = content.notification_text(&args.mentioned, &[]);
         let image_url = content.notification_image_url();
 
-        let fcm_data = FcmData::builder()
-            .with_alt_body(&message_text, &message_type)
-            .with_optional_image(image_url.clone())
-            .with_sender_id(args.sender.to_text())
-            .with_alt_sender_name(&args.sender_display_name, &args.sender_name)
-            .with_sender_avatar_id(args.sender_avatar_id)
-            .build();
+        let fcm_data = FcmData::for_direct_chat(args.sender.into())
+            .set_body_with_alt(&message_text, &message_type)
+            .set_optional_image(image_url.clone())
+            .set_sender_name_with_alt(&args.sender_display_name, &args.sender_name)
+            .set_avatar_id(args.sender_avatar_id);
 
         let notification = UserNotificationPayload::DirectMessage(DirectMessageNotification {
             sender: args.sender,

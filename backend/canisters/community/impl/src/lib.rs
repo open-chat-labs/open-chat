@@ -135,7 +135,7 @@ impl RuntimeState {
                 sender,
                 recipients,
                 notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
-                fcm_data,
+                fcm_data: Some(fcm_data),
             });
             self.push_notification_inner(notification);
         }

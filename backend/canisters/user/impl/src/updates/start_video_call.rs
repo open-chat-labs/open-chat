@@ -42,12 +42,10 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     if !mute_notification {
         // TODO i18n
         // TODO video call notifications could display decline and answer buttons
-        let fcm_data = FcmData::builder()
-            .with_body("Video call incoming...".to_string())
-            .with_sender_id(sender.to_text())
-            .with_alt_sender_name(&args.initiator_display_name, &args.initiator_username)
-            .with_sender_avatar_id(args.initiator_avatar_id)
-            .build();
+        let fcm_data = FcmData::for_direct_chat(sender.into())
+            .set_body("Video call incoming...".to_string())
+            .set_body_with_alt(&args.initiator_display_name, &args.initiator_username)
+            .set_avatar_id(args.initiator_avatar_id);
 
         let notification = UserNotificationPayload::DirectMessage(DirectMessageNotification {
             sender,

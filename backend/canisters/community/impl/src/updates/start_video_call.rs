@@ -83,12 +83,11 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     // TODO i18n
     // TODO video call notifications could display decline and answer buttons
-    let fcm_data = FcmData::builder()
-        .with_body("Video call incoming...".to_string())
-        .with_chat_id(community_id.to_string())
-        .with_alt_sender_name(&args.initiator_display_name, &args.initiator_username)
-        .with_sender_avatar_id(channel_avatar_id)
-        .build();
+    let fcm_data = FcmData::for_community_chat(community_id.into(), args.channel_id.into())
+        .set_body("Video call incoming...".to_string())
+        .set_sender_id(sender)
+        .set_sender_name_with_alt(&args.initiator_display_name, &args.initiator_username)
+        .set_avatar_id(channel_avatar_id);
 
     let notification = UserNotificationPayload::ChannelMessage(ChannelMessageNotification {
         community_id,
