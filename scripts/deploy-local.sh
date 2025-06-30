@@ -10,11 +10,11 @@ SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
 # Create and install the NNS canisters
-if ! dfx extension install nns --version 0.5.2 >& /dev/null
+if ! dfx extension install nns --version 0.5.4 >& /dev/null
 then
-  echo "Updating the DFX NNS extension to version 0.5.2"
+  echo "Updating the DFX NNS extension to version 0.5.4"
   dfx extension uninstall nns
-  dfx extension install nns --version 0.5.2 >& /dev/null
+  dfx extension install nns --version 0.5.4 >& /dev/null
 fi
 
 TEST_ICP_ACCOUNT=$(dfx --identity $IDENTITY ledger account-id)
