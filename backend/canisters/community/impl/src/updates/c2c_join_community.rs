@@ -42,6 +42,7 @@ pub(crate) async fn join_community(args: Args) -> Response {
                     args.principal,
                     args.diamond_membership_expires_at,
                     args.unique_person_proof.clone(),
+                    false,
                 );
             }
             read_state(|state| {
