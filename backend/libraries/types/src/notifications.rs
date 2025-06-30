@@ -1,5 +1,5 @@
 use crate::{
-    BotDataEncoding, BotInstallationLocation, BotPermissions, CanisterId, ChannelId, Chat, ChatEventType, ChatId,
+    BotDataEncoding, BotInstallationLocation, BotPermissions, CanisterId, ChannelId, Chat, ChatEvent, ChatEventType, ChatId,
     CommunityEvent, CommunityId, EventIndex, FcmData, MessageIndex, Reaction, TimestampMillis, UserId,
 };
 use candid::{CandidType, Principal};
@@ -61,8 +61,11 @@ pub struct BotEventWrapper {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BotChatEvent {
+    // TODO: Remove this field once groups/communities and dependant bots are updated
     #[serde(rename = "e")]
     pub event_type: ChatEventType,
+    #[serde(rename = "v")]
+    pub event: ChatEvent,
     #[serde(rename = "c")]
     pub chat: Chat,
     #[serde(rename = "t")]
@@ -71,6 +74,7 @@ pub struct BotChatEvent {
     pub event_index: EventIndex,
     #[serde(rename = "l")]
     pub latest_event_index: EventIndex,
+    // TODO: Remove this field once groups/communities and dependant bots are updated
     #[serde(rename = "u")]
     pub initiated_by: Option<UserId>,
 }

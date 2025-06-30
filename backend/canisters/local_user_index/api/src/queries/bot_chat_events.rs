@@ -4,13 +4,9 @@ use oc_error_codes::OCError;
 use serde::Serialize;
 use ts_export::ts_export;
 use types::{
-    AudioContent, AvatarChanged, BotAdded, BotChatContext, BotRemoved, BotUpdated, CryptoContent, CustomContent, DeletedBy,
-    DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated, ExternalUrlUpdated, FileContent, GiphyContent,
-    GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged,
-    GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, ImageContent, MemberJoined, MemberLeft, MembersAdded,
-    MembersAddedToDefaultChannel, MembersRemoved, MessageId, MessageIndex, MessagePinned, MessageUnpinned, PermissionsChanged,
-    PollContent, Reaction, ReplyContext, RoleChanged, SenderContext, TextContent, ThreadSummary, TimestampMillis, Tips, UserId,
-    UsersBlocked, UsersInvited, UsersUnblocked, VideoContent,
+    AudioContent, BotChatContext, ChatEvent, CryptoContent, CustomContent, DeletedBy, EventIndex, EventWrapper, FileContent,
+    GiphyContent, ImageContent, MessageId, MessageIndex, PollContent, Reaction, ReplyContext, SenderContext, TextContent,
+    ThreadSummary, TimestampMillis, Tips, UserId, VideoContent,
 };
 use user_canister::token_swap_status::CandidType;
 
@@ -39,42 +35,6 @@ pub struct EventsResponse {
     pub expired_message_ranges: Vec<(MessageIndex, MessageIndex)>,
     pub latest_event_index: EventIndex,
     pub chat_last_updated: TimestampMillis,
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum ChatEvent {
-    Empty,
-    Message(Box<Message>),
-    GroupChatCreated(GroupCreated),
-    DirectChatCreated(DirectChatCreated),
-    GroupNameChanged(GroupNameChanged),
-    GroupDescriptionChanged(GroupDescriptionChanged),
-    GroupRulesChanged(GroupRulesChanged),
-    AvatarChanged(AvatarChanged),
-    ParticipantsAdded(MembersAdded),
-    ParticipantsRemoved(MembersRemoved),
-    ParticipantJoined(MemberJoined),
-    ParticipantLeft(MemberLeft),
-    RoleChanged(RoleChanged),
-    UsersBlocked(UsersBlocked),
-    UsersUnblocked(UsersUnblocked),
-    MessagePinned(MessagePinned),
-    MessageUnpinned(MessageUnpinned),
-    PermissionsChanged(PermissionsChanged),
-    GroupVisibilityChanged(GroupVisibilityChanged),
-    GroupInviteCodeChanged(GroupInviteCodeChanged),
-    ChatFrozen(GroupFrozen),
-    ChatUnfrozen(GroupUnfrozen),
-    EventsTimeToLiveUpdated(EventsTimeToLiveUpdated),
-    GroupGateUpdated(GroupGateUpdated),
-    UsersInvited(UsersInvited),
-    MembersAddedToDefaultChannel(MembersAddedToDefaultChannel),
-    ExternalUrlUpdated(ExternalUrlUpdated),
-    BotAdded(BotAdded),
-    BotRemoved(BotRemoved),
-    BotUpdated(BotUpdated),
-    FailedToDeserialize,
 }
 
 #[ts_export]
@@ -119,69 +79,12 @@ pub struct UnsupportedContent {
 impl From<types::EventsResponse> for EventsResponse {
     fn from(value: types::EventsResponse) -> Self {
         Self {
-            events: value
-                .events
-                .into_iter()
-                .map(|event| EventWrapper {
-                    index: event.index,
-                    timestamp: event.timestamp,
-                    expires_at: event.expires_at,
-                    event: event.event.into(),
-                })
-                .collect(),
+            events: value.events,
             unauthorized: value.unauthorized,
             expired_event_ranges: value.expired_event_ranges,
             expired_message_ranges: value.expired_message_ranges,
             latest_event_index: value.latest_event_index,
             chat_last_updated: value.chat_last_updated,
-        }
-    }
-}
-
-impl From<types::ChatEvent> for ChatEvent {
-    fn from(value: types::ChatEvent) -> Self {
-        match value {
-            types::ChatEvent::Empty => Self::Empty,
-            types::ChatEvent::Message(message) => Self::Message(Box::new((*message).into())),
-            types::ChatEvent::GroupChatCreated(group_chat_created) => Self::GroupChatCreated(group_chat_created),
-            types::ChatEvent::DirectChatCreated(direct_chat_created) => Self::DirectChatCreated(direct_chat_created),
-            types::ChatEvent::GroupNameChanged(group_name_changed) => Self::GroupNameChanged(group_name_changed),
-            types::ChatEvent::GroupDescriptionChanged(group_description_changed) => {
-                Self::GroupDescriptionChanged(group_description_changed)
-            }
-            types::ChatEvent::GroupRulesChanged(group_rules_changed) => Self::GroupRulesChanged(group_rules_changed),
-            types::ChatEvent::AvatarChanged(avatar_changed) => Self::AvatarChanged(avatar_changed),
-            types::ChatEvent::ParticipantsAdded(participants_added) => Self::ParticipantsAdded(participants_added),
-            types::ChatEvent::ParticipantsRemoved(participants_removed) => Self::ParticipantsRemoved(participants_removed),
-            types::ChatEvent::ParticipantJoined(participant_joined) => Self::ParticipantJoined(participant_joined),
-            types::ChatEvent::ParticipantLeft(participant_left) => Self::ParticipantLeft(participant_left),
-            types::ChatEvent::RoleChanged(role_changed) => Self::RoleChanged(role_changed),
-            types::ChatEvent::UsersBlocked(users_blocked) => Self::UsersBlocked(users_blocked),
-            types::ChatEvent::UsersUnblocked(users_unblocked) => Self::UsersUnblocked(users_unblocked),
-            types::ChatEvent::MessagePinned(message_pinned) => Self::MessagePinned(message_pinned),
-            types::ChatEvent::MessageUnpinned(message_unpinned) => Self::MessageUnpinned(message_unpinned),
-            types::ChatEvent::PermissionsChanged(permissions_changed) => Self::PermissionsChanged(permissions_changed),
-            types::ChatEvent::GroupVisibilityChanged(group_visibility_changed) => {
-                Self::GroupVisibilityChanged(group_visibility_changed)
-            }
-            types::ChatEvent::GroupInviteCodeChanged(group_invite_code_changed) => {
-                Self::GroupInviteCodeChanged(group_invite_code_changed)
-            }
-            types::ChatEvent::ChatFrozen(chat_frozen) => Self::ChatFrozen(chat_frozen),
-            types::ChatEvent::ChatUnfrozen(chat_unfrozen) => Self::ChatUnfrozen(chat_unfrozen),
-            types::ChatEvent::EventsTimeToLiveUpdated(events_time_to_live_updated) => {
-                Self::EventsTimeToLiveUpdated(events_time_to_live_updated)
-            }
-            types::ChatEvent::GroupGateUpdated(group_gate_updated) => Self::GroupGateUpdated(group_gate_updated),
-            types::ChatEvent::UsersInvited(users_invited) => Self::UsersInvited(users_invited),
-            types::ChatEvent::MembersAddedToDefaultChannel(members_added_to_default_channel) => {
-                Self::MembersAddedToDefaultChannel(members_added_to_default_channel)
-            }
-            types::ChatEvent::ExternalUrlUpdated(external_url_updated) => Self::ExternalUrlUpdated(external_url_updated),
-            types::ChatEvent::BotAdded(bot_added) => Self::BotAdded(*bot_added),
-            types::ChatEvent::BotRemoved(bot_removed) => Self::BotRemoved(*bot_removed),
-            types::ChatEvent::BotUpdated(bot_updated) => Self::BotUpdated(*bot_updated),
-            types::ChatEvent::FailedToDeserialize => Self::FailedToDeserialize,
         }
     }
 }
