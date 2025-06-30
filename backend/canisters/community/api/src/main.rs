@@ -5,6 +5,7 @@ use ts_export::generate_ts_method;
 fn main() {
     generate_candid_method!(community, channel_summary_updates, query);
     generate_candid_method!(community, channel_summary, query);
+    generate_candid_method!(community, community_events, query);
     generate_candid_method!(community, deleted_message, query);
     generate_candid_method!(community, events_by_index, query);
     generate_candid_method!(community, events_window, query);

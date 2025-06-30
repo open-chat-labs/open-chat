@@ -420,6 +420,7 @@ pub mod proposal {
     ///
     /// See `impl From<&Action> for u64` in src/types.rs for the implementation
     /// of this mapping.
+    #[expect(clippy::large_enum_variant)]
     #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
     pub enum Action {
         /// The `Unspecified` action is used as a fallback when
@@ -1070,6 +1071,7 @@ pub mod governance {
         /// can generally be used in all sync cases.
         #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
         pub struct SyncCommand {}
+        #[expect(clippy::large_enum_variant)]
         #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
         pub enum Command {
             Disburse(super::super::manage_neuron::Disburse),
@@ -1497,6 +1499,7 @@ pub mod manage_neuron {
         /// The set of permissions that will be revoked from the PrincipalId.
         pub permissions_to_remove: Option<super::NeuronPermissionList>,
     }
+    #[expect(clippy::large_enum_variant)]
     #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
     pub enum Command {
         Configure(Configure),
@@ -1643,6 +1646,7 @@ pub struct GetProposalResponse {
 pub mod get_proposal_response {
     /// The response to a GetProposal command is either an error or
     /// the proposal data corresponding to the requested proposal.
+    #[expect(clippy::large_enum_variant)]
     #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
     pub enum Result {
         Error(super::GovernanceError),

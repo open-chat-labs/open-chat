@@ -134,11 +134,11 @@ impl GroupMembers {
                 self.notifications_unmuted.insert(user_id);
             }
             self.prune_then_insert_member_update(user_id, MemberUpdate::Added, now);
-            AddResult::Success(AddMemberSuccess {
+            AddResult::Success(Box::new(AddMemberSuccess {
                 member,
                 unlapse: false,
                 bot_notification: None,
-            })
+            }))
         } else {
             AddResult::AlreadyInGroup
         }
@@ -557,7 +557,7 @@ impl Members for GroupMembers {
 }
 
 pub enum AddResult {
-    Success(AddMemberSuccess),
+    Success(Box<AddMemberSuccess>),
     AlreadyInGroup,
     MemberLimitReached(u32),
     Blocked,

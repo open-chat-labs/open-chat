@@ -634,7 +634,7 @@ fn p2p_swap_blocked_if_token_disabled(input_token: bool) {
                 .is_some_and(|m| m.contains(if input_token { "Input" } else { "Output" }))
         );
     } else {
-        panic!("Unexpected response: {:?}", send_message_response);
+        panic!("Unexpected response: {send_message_response:?}");
     }
 }
 
