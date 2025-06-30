@@ -8,6 +8,7 @@
         "declaration": true,
         "experimentalDecorators": true,
         "lib": ["DOM", "DOM.Iterable", "ESNext", "WebWorker"],
+        "moduleResolution": "node",
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "resolveJsonModule": true,
