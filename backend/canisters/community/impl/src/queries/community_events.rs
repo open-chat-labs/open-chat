@@ -17,7 +17,7 @@ fn community_events(args: Args) -> Response {
 fn community_events_impl(args: Args, state: &RuntimeState) -> OCResult<EventsResponse> {
     // Ensure this endpoint is only accessible to community owners
     let caller = state.env.caller();
-    if !state.data.members.get_verified_member(caller).map_or(false, |m| m.is_owner()) {
+    if !state.data.members.get_verified_member(caller).is_ok_and(|m| m.is_owner()) {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
