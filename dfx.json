@@ -1,5 +1,5 @@
 {
-  "dfx": "0.27.0",
+  "dfx": "0.28.0-beta.1",
   "canisters": {
     "openchat_installer": {
       "type": "custom",
@@ -192,7 +192,7 @@
   },
   "networks": {
     "local": {
-      "bind": "0.0.0.0:8080",
+      "bind": "127.0.0.1:8080",
       "type": "ephemeral",
       "replica": {
         "subnet_type": "system"
