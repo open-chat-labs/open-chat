@@ -76,6 +76,7 @@ pub(crate) fn join_channel_synchronously(
     user_principal: Principal,
     diamond_membership_expires_at: Option<TimestampMillis>,
     unique_person_proof: Option<UniquePersonProof>,
+    explicit_join: bool,
 ) {
     let is_unique_person = unique_person_proof.is_some();
 
@@ -108,6 +109,7 @@ pub(crate) fn join_channel_synchronously(
             diamond_membership_expires_at,
             is_unique_person,
             Vec::new(),
+            explicit_join,
             state,
         )
     });
@@ -140,6 +142,7 @@ async fn check_gate_then_join_channel(args: &Args) -> Response {
             args.diamond_membership_expires_at,
             args.unique_person_proof.is_some(),
             payments,
+            true,
             state,
         )
     })
@@ -219,6 +222,7 @@ fn commit(
     diamond_membership_expires_at: Option<TimestampMillis>,
     is_unique_person: bool,
     payments: Vec<GatePayment>,
+    explicit_join: bool,
     state: &mut RuntimeState,
 ) -> Response {
     let Some(member) = state.data.members.get(user_principal) else {
@@ -238,7 +242,7 @@ fn commit(
         &mut state.data.members,
         state.data.is_public.value && channel.chat.is_public.value,
         true,
-        true,
+        explicit_join,
         now,
     ) {
         AddResult::Success(result) => {
