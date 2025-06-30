@@ -219,15 +219,12 @@ fn create_channel_impl(
         }
     }
 
-    state.data.events.push_event(
-        CommunityEventInternal::ChannelCreated(Box::new(ChannelCreated {
-            channel_id,
-            is_public: args.is_public,
-            name: args.name,
-            created_by: caller.agent(),
-        })),
-        now,
-    );
+    state.push_community_event(CommunityEventInternal::ChannelCreated(Box::new(ChannelCreated {
+        channel_id,
+        is_public: args.is_public,
+        name: args.name,
+        created_by: caller.agent(),
+    })));
 
     handle_activity_notification(state);
     Ok(SuccessResult { channel_id })

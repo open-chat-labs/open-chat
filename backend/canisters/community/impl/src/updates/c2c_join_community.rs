@@ -129,10 +129,7 @@ pub(crate) fn join_community_impl(
             unblocked_by: args.user_id,
         };
 
-        state
-            .data
-            .events
-            .push_event(CommunityEventInternal::UsersUnblocked(Box::new(event)), now);
+        state.push_community_event(CommunityEventInternal::UsersUnblocked(Box::new(event)));
     }
 
     let referred_by = state

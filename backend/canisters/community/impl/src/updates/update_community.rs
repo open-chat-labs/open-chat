@@ -199,7 +199,6 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
     let mut result = SuccessResult { rules_version: None };
 
     let now = state.env.now();
-    let events = &mut state.data.events;
 
     // If a verified community changes its name or becomes private it loses it's verified status
     if state.data.verified.value {
@@ -224,14 +223,11 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
 
     if let Some(name) = args.name {
         if state.data.name.value != name {
-            events.push_event(
-                CommunityEventInternal::NameChanged(Box::new(GroupNameChanged {
-                    new_name: name.clone(),
-                    previous_name: state.data.name.value.clone(),
-                    changed_by: my_user_id,
-                })),
-                now,
-            );
+            state.push_community_event(CommunityEventInternal::NameChanged(Box::new(GroupNameChanged {
+                new_name: name.clone(),
+                previous_name: state.data.name.value.clone(),
+                changed_by: my_user_id,
+            })));
 
             state.data.name = Timestamped::new(name, now);
         }
@@ -239,14 +235,13 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
 
     if let Some(description) = args.description {
         if state.data.description.value != description {
-            events.push_event(
-                CommunityEventInternal::DescriptionChanged(Box::new(GroupDescriptionChanged {
+            state.push_community_event(CommunityEventInternal::DescriptionChanged(Box::new(
+                GroupDescriptionChanged {
                     new_description: description.clone(),
                     previous_description: state.data.description.value.clone(),
                     changed_by: my_user_id,
-                })),
-                now,
-            );
+                },
+            )));
 
             state.data.description = Timestamped::new(description, now);
         }
@@ -268,14 +263,11 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
             },
             now,
         ) {
-            events.push_event(
-                CommunityEventInternal::RulesChanged(Box::new(GroupRulesChanged {
-                    enabled,
-                    prev_enabled,
-                    changed_by: my_user_id,
-                })),
-                now,
-            );
+            state.push_community_event(CommunityEventInternal::RulesChanged(Box::new(GroupRulesChanged {
+                enabled,
+                prev_enabled,
+                changed_by: my_user_id,
+            })));
         }
     }
 
@@ -284,14 +276,11 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
         let new_avatar_id = Document::id(&avatar);
 
         if new_avatar_id != previous_avatar_id {
-            events.push_event(
-                CommunityEventInternal::AvatarChanged(Box::new(AvatarChanged {
-                    new_avatar: new_avatar_id,
-                    previous_avatar: previous_avatar_id,
-                    changed_by: my_user_id,
-                })),
-                now,
-            );
+            state.push_community_event(CommunityEventInternal::AvatarChanged(Box::new(AvatarChanged {
+                new_avatar: new_avatar_id,
+                previous_avatar: previous_avatar_id,
+                changed_by: my_user_id,
+            })));
 
             state.data.avatar = Timestamped::new(avatar, now);
         }
@@ -302,14 +291,11 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
         let new_banner_id = Document::id(&banner);
 
         if new_banner_id != previous_banner_id {
-            events.push_event(
-                CommunityEventInternal::BannerChanged(Box::new(BannerChanged {
-                    new_banner: new_banner_id,
-                    previous_banner: previous_banner_id,
-                    changed_by: my_user_id,
-                })),
-                now,
-            );
+            state.push_community_event(CommunityEventInternal::BannerChanged(Box::new(BannerChanged {
+                new_banner: new_banner_id,
+                previous_banner: previous_banner_id,
+                changed_by: my_user_id,
+            })));
 
             state.data.banner = Timestamped::new(banner, now);
         }
@@ -320,14 +306,13 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
         let new_permissions = merge_permissions(permissions, &old_permissions);
         state.data.permissions = Timestamped::new(new_permissions.clone(), now);
 
-        state.data.events.push_event(
-            CommunityEventInternal::PermissionsChanged(Box::new(CommunityPermissionsChanged {
+        state.push_community_event(CommunityEventInternal::PermissionsChanged(Box::new(
+            CommunityPermissionsChanged {
                 old_permissions,
                 new_permissions,
                 changed_by: my_user_id,
-            })),
-            state.env.now(),
-        );
+            },
+        )));
     }
 
     if let Some(gate_config) = args.gate_config.clone().map(|g| g.into()).expand() {
@@ -338,13 +323,10 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
 
             state.data.update_member_expiry(None, &prev_gate_config, now);
 
-            state.data.events.push_event(
-                CommunityEventInternal::GateUpdated(Box::new(GroupGateUpdatedInternal {
-                    updated_by: my_user_id,
-                    new_gate_config: gate_config,
-                })),
-                state.env.now(),
-            );
+            state.push_community_event(CommunityEventInternal::GateUpdated(Box::new(GroupGateUpdatedInternal {
+                updated_by: my_user_id,
+                new_gate_config: gate_config,
+            })));
         }
     }
 
@@ -357,10 +339,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
                 changed_by: my_user_id,
             };
 
-            state
-                .data
-                .events
-                .push_event(CommunityEventInternal::VisibilityChanged(Box::new(event)), now);
+            state.push_community_event(CommunityEventInternal::VisibilityChanged(Box::new(event)));
         }
     }
     if let Some(new) = args.primary_language {
@@ -375,10 +354,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
                 changed_by: my_user_id,
             };
 
-            state
-                .data
-                .events
-                .push_event(CommunityEventInternal::PrimaryLanguageChanged(Box::new(event)), now);
+            state.push_community_event(CommunityEventInternal::PrimaryLanguageChanged(Box::new(event)));
         }
     }
 

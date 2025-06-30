@@ -83,14 +83,10 @@ pub(crate) fn invite_users_to_community_impl(
             );
         }
 
-        // Push a UsersInvited event
-        state.data.events.push_event(
-            CommunityEventInternal::UsersInvited(Box::new(UsersInvited {
-                user_ids: user_ids.clone(),
-                invited_by,
-            })),
-            now,
-        );
+        state.push_community_event(CommunityEventInternal::UsersInvited(Box::new(UsersInvited {
+            user_ids: user_ids.clone(),
+            invited_by,
+        })));
 
         handle_activity_notification(state);
 

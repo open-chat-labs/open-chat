@@ -167,7 +167,7 @@ fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeS
     } else {
         return;
     };
-    state.data.events.push_event(event, now);
+    state.push_community_event(event);
 
     handle_activity_notification(state);
 

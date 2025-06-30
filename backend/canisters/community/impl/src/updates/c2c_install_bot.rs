@@ -1,9 +1,10 @@
 use crate::guards::caller_is_local_user_index;
+use crate::model::events::CommunityEventInternal;
 use crate::{RuntimeState, activity_notifications::handle_activity_notification, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
-use types::c2c_install_bot::*;
+use types::{BotAdded, c2c_install_bot::*};
 use types::{BotEvent, BotInstallationLocation, BotInstalledEvent, BotLifecycleEvent, BotNotification, OCResult};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
@@ -31,6 +32,11 @@ fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     ) {
         return Err(OCErrorCode::AlreadyAdded.into());
     }
+
+    state.push_community_event(CommunityEventInternal::BotAdded(Box::new(BotAdded {
+        user_id: args.bot_id,
+        added_by: member.user_id,
+    })));
 
     state.push_bot_notification(Some(BotNotification {
         event: BotEvent::Lifecycle(BotLifecycleEvent::Installed(BotInstalledEvent {

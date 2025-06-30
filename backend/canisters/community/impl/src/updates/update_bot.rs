@@ -1,9 +1,11 @@
-use crate::{RuntimeState, activity_notifications::handle_activity_notification, execute_update};
+use crate::{
+    RuntimeState, activity_notifications::handle_activity_notification, execute_update, model::events::CommunityEventInternal,
+};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::update_bot::*;
 use oc_error_codes::OCErrorCode;
-use types::{BotEvent, BotInstallationLocation, BotInstalledEvent, BotLifecycleEvent, BotNotification, OCResult};
+use types::{BotEvent, BotInstallationLocation, BotInstalledEvent, BotLifecycleEvent, BotNotification, BotUpdated, OCResult};
 
 #[update(msgpack = true)]
 #[trace]
@@ -21,7 +23,6 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     }
 
     if !state.data.update_bot(
-        member.user_id,
         args.bot_id,
         args.granted_permissions.clone(),
         args.granted_autonomous_permissions.clone(),
@@ -29,6 +30,11 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     ) {
         return Err(OCErrorCode::BotNotFound.into());
     }
+
+    state.push_community_event(CommunityEventInternal::BotUpdated(Box::new(BotUpdated {
+        user_id: args.bot_id,
+        updated_by: member.user_id,
+    })));
 
     state.push_bot_notification(Some(BotNotification {
         event: BotEvent::Lifecycle(BotLifecycleEvent::Installed(BotInstalledEvent {

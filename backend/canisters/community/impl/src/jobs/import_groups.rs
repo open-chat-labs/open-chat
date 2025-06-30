@@ -207,14 +207,11 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
                     }
                 }
                 if !blocked_from_community.is_empty() {
-                    state.data.events.push_event(
-                        CommunityEventInternal::UsersBlocked(Box::new(CommunityUsersBlocked {
-                            user_ids: blocked_from_community,
-                            blocked_by: OPENCHAT_BOT_USER_ID,
-                            referred_by: HashMap::new(),
-                        })),
-                        now,
-                    );
+                    state.push_community_event(CommunityEventInternal::UsersBlocked(Box::new(CommunityUsersBlocked {
+                        user_ids: blocked_from_community,
+                        blocked_by: OPENCHAT_BOT_USER_ID,
+                        referred_by: HashMap::new(),
+                    })));
                 }
             }
 
@@ -345,14 +342,11 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
     }
 
     mutate_state(|state| {
-        state.data.events.push_event(
-            CommunityEventInternal::GroupImported(Box::new(GroupImportedInternal {
-                group_id,
-                channel_id,
-                members_added,
-            })),
-            state.env.now(),
-        );
+        state.push_community_event(CommunityEventInternal::GroupImported(Box::new(GroupImportedInternal {
+            group_id,
+            channel_id,
+            members_added,
+        })));
     });
 
     ic_cdk_timers::set_timer(Duration::ZERO, move || mark_import_complete(group_id, channel_id));
