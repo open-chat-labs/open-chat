@@ -156,7 +156,7 @@ export class AndroidWebAuthnPasskeyIdentity extends SignIdentity {
         if (!cbor) {
             throw new Error("failed to encode cbor");
         }
-        return new Uint8Array(cbor).buffer as Signature;
+        return new Uint8Array(cbor);
     }
 }
 

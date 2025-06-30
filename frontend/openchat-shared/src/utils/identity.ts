@@ -1,5 +1,5 @@
 import { type Delegation, DelegationChain, DelegationIdentity } from "@dfinity/identity";
-import { type DerEncodedPublicKey, type Signature, SignIdentity } from "@dfinity/agent";
+import { type Signature, SignIdentity } from "@dfinity/agent";
 
 export function buildDelegationIdentity(
     userKey: Uint8Array,
@@ -14,14 +14,11 @@ export function buildDelegationIdentity(
         },
     ];
 
-    const delegationChain = DelegationChain.fromDelegations(
-        delegations,
-        userKey.buffer as DerEncodedPublicKey,
-    );
+    const delegationChain = DelegationChain.fromDelegations(delegations, userKey);
 
     return DelegationIdentity.fromDelegation(sessionKey, delegationChain);
 }
 
 export function toDer(key: SignIdentity): Uint8Array {
-    return new Uint8Array(key.getPublicKey().toDer() as ArrayBuffer);
+    return key.getPublicKey().toDer();
 }
