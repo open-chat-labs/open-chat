@@ -66,7 +66,7 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
         streak_ends: state.data.streak.ends(),
         max_streak: state.data.streak.max_streak(),
         streak_insurance: state.data.streak.streak_insurance(now),
-        next_daily_claim: if state.data.streak.can_claim(now) { today(now) } else { tomorrow(now) },
+        next_daily_claim: state.data.streak.next_claim(),
         is_unique_person: state.data.unique_person_proof.is_some(),
         wallet_config: state.data.wallet_config.value.clone(),
         referrals: state.data.referrals.list(),
