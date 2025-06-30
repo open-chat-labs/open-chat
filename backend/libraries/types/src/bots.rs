@@ -253,6 +253,19 @@ impl BotPermissions {
         event_categories
     }
 
+    pub fn permitted_community_event_categories_to_read(&self) -> HashSet<CommunityEventCategory> {
+        let mut event_categories = HashSet::new();
+        let community_permissions = self.community();
+
+        if community_permissions.contains(&CommunityPermission::ReadMembership) {
+            event_categories.insert(CommunityEventCategory::Membership);
+        }
+        if community_permissions.contains(&CommunityPermission::ReadSummary) {
+            event_categories.insert(CommunityEventCategory::Details);
+        }
+        event_categories
+    }
+
     fn encode<T: Into<u8> + Copy>(field: &HashSet<T>) -> u32 {
         encode_as_bitflags(field.iter().map(|v| (*v).into()))
     }

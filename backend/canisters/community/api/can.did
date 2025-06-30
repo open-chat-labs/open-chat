@@ -244,6 +244,7 @@ type CommunityEventsResponse = variant {
 
 type CommunityEventsSuccessResult = record {
     events : vec CommunityEventWrapper;
+    unauthorized: vec EventIndex;
     latest_event_index : nat32;
     community_last_updated : TimestampMillis;
 };
