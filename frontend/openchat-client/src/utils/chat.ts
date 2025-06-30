@@ -81,16 +81,16 @@ import {
 } from "openchat-shared";
 import {
     allServerChatsStore,
-    eventIndexesLoadedStore,
-    threadEventIndexesLoadedStore,
     cryptoLookup,
     currentUserIdStore,
     currentUserStore,
+    eventIndexesLoadedStore,
     eventsStore,
     localUpdates,
     selectedChatIdStore,
     selectedChatUserIdsStore,
     selectedThreadIdStore,
+    threadEventIndexesLoadedStore,
     threadEventsStore,
 } from "../state";
 import type { LocalTipsReceived, MessageLocalUpdates } from "../state/message/localUpdates";
@@ -275,7 +275,10 @@ export function getMembersString(
         : sorted.join();
 }
 
-export function createMessage(context: MessageContext, message: NewUnconfirmedMessage): EventWrapper<Message> {
+export function createMessage(
+    context: MessageContext,
+    message: NewUnconfirmedMessage,
+): EventWrapper<Message> {
     const [eventIndex, messageIndex] = nextEventAndMessageIndex(context);
     return {
         event: {
@@ -326,7 +329,9 @@ function mentionsFromMessages(
     }, [] as Mention[]);
 }
 
-export function mergeUnconfirmedThreadsIntoSummary<T extends GroupChatSummary | ChannelSummary>(chat: T) {
+export function mergeUnconfirmedThreadsIntoSummary<T extends GroupChatSummary | ChannelSummary>(
+    chat: T,
+) {
     if (chat.membership === undefined) return chat;
     chat.membership = {
         ...chat.membership,
@@ -534,15 +539,16 @@ export function groupBySender<T extends ChatEvent>(events: EventWrapper<T>[]): E
 export function groupEvents(
     events: EventWrapper<ChatEvent>[],
     myUserId: string,
+    isPublicChannel: boolean,
     expandedDeletedMessages: ReadonlySet<number>,
     groupInner?: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][],
 ): TimelineItem<ChatEvent>[] {
     return flattenTimeline(
         groupWhile(
             sameDate,
-            events.filter((e) => !isEventKindHidden(e.event.kind)),
+            events.filter((e) => !isEventKindHidden(e.event.kind, isPublicChannel)),
         )
-            .map((e) => reduceJoinedOrLeft(e, myUserId, expandedDeletedMessages))
+            .map((e) => reduceJoinedOrLeft(e, myUserId, isPublicChannel, expandedDeletedMessages))
             .map(groupInner ?? groupBySender),
     );
 }
@@ -563,7 +569,7 @@ export function flattenTimeline(grouped: EventWrapper<ChatEvent>[][][]): Timelin
     return timeline;
 }
 
-export function isEventKindHidden(kind: ChatEvent["kind"]): boolean {
+export function isEventKindHidden(kind: ChatEvent["kind"], isPublicChannel: boolean): boolean {
     switch (kind) {
         case "empty":
         case "message_pinned":
@@ -571,6 +577,9 @@ export function isEventKindHidden(kind: ChatEvent["kind"]): boolean {
         case "member_left":
         case "members_added_to_default_channel":
             return true;
+
+        case "member_joined":
+            return isPublicChannel;
 
         default:
             return false;
@@ -580,6 +589,7 @@ export function isEventKindHidden(kind: ChatEvent["kind"]): boolean {
 function reduceJoinedOrLeft(
     events: EventWrapper<ChatEvent>[],
     myUserId: string,
+    isPublicChannel: boolean,
     expandedDeletedMessages: ReadonlySet<number>,
 ): EventWrapper<ChatEvent>[] {
     function getLatestAggregateEventIfExists(
@@ -594,7 +604,7 @@ function reduceJoinedOrLeft(
         let newEvent = e;
 
         if (
-            isEventKindHidden(e.event.kind) ||
+            isEventKindHidden(e.event.kind, isPublicChannel) ||
             e.event.kind === "member_joined" ||
             e.event.kind === "role_changed" ||
             (e.event.kind === "message" &&
@@ -689,10 +699,7 @@ function messageIsHidden(
 }
 
 export function groupMessagesByDate(events: EventWrapper<Message>[]): EventWrapper<Message>[][] {
-    return groupWhile(
-        sameDate,
-        events.filter((e) => !isEventKindHidden(e.event.kind)),
-    );
+    return groupWhile(sameDate, events);
 }
 
 export function getNextEventAndMessageIndexes(
@@ -1370,9 +1377,7 @@ export function mergeEventsAndLocalUpdates(
                     : [undefined, undefined];
 
             const tallyUpdate =
-                e.event.content.kind === "proposal_content"
-                    ? updates?.proposalTally
-                    : undefined;
+                e.event.content.kind === "proposal_content" ? updates?.proposalTally : undefined;
 
             const senderBlocked = selectedChatBlockedOrSuspendedUsers.has(e.event.sender);
             const repliesToSenderBlocked =
@@ -2053,7 +2058,7 @@ export function newDefaultChannel(id: ChannelIdentifier, name: string): ChannelS
         isInvited: false,
         messagesVisibleToNonMembers: true,
         externalUrl: undefined,
-    }
+    };
 }
 
 function nextEventAndMessageIndex(context: MessageContext): [number, number] {
@@ -2073,7 +2078,8 @@ function nextEventAndMessageIndex(context: MessageContext): [number, number] {
         }
     }
 
-    let summary: { latestEventIndex: number, latestMessageIndex: number | undefined } | undefined = undefined;
+    let summary: { latestEventIndex: number; latestMessageIndex: number | undefined } | undefined =
+        undefined;
     let events: EventWrapper<ChatEvent>[] = [];
     if (chat !== undefined) {
         if (context.threadRootMessageIndex === undefined) {
@@ -2083,8 +2089,9 @@ function nextEventAndMessageIndex(context: MessageContext): [number, number] {
                 events = eventsStore.value;
             }
         } else {
-            const thread = chat.membership.latestThreads.find((t) =>
-                t.threadRootMessageIndex === context.threadRootMessageIndex);
+            const thread = chat.membership.latestThreads.find(
+                (t) => t.threadRootMessageIndex === context.threadRootMessageIndex,
+            );
 
             if (thread) {
                 summary = thread;
@@ -2100,12 +2107,16 @@ function nextEventAndMessageIndex(context: MessageContext): [number, number] {
         if (summary.latestEventIndex >= eventIndex) {
             eventIndex = summary.latestEventIndex + 1;
         }
-        if (summary.latestMessageIndex !== undefined && summary.latestMessageIndex >= messageIndex) {
+        if (
+            summary.latestMessageIndex !== undefined &&
+            summary.latestMessageIndex >= messageIndex
+        ) {
             messageIndex = summary.latestMessageIndex + 1;
         }
     }
 
-    const [eventIndexFromEvents, messageIndexFromEvents] = latestEventAndMessageIndexesFromEvents(events);
+    const [eventIndexFromEvents, messageIndexFromEvents] =
+        latestEventAndMessageIndexesFromEvents(events);
 
     if (eventIndexFromEvents !== undefined && eventIndexFromEvents >= eventIndex) {
         eventIndex = eventIndexFromEvents + 1;
@@ -2117,7 +2128,9 @@ function nextEventAndMessageIndex(context: MessageContext): [number, number] {
     return [eventIndex, messageIndex];
 }
 
-function latestEventAndMessageIndexesFromEvents(events: EventWrapper<ChatEvent>[]): [number | undefined, number | undefined] {
+function latestEventAndMessageIndexesFromEvents(
+    events: EventWrapper<ChatEvent>[],
+): [number | undefined, number | undefined] {
     let eventIndex: number | undefined = undefined;
     let messageIndex: number | undefined = undefined;
 

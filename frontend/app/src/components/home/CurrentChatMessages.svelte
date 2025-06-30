@@ -267,6 +267,7 @@
         client.groupEvents(
             [...$eventsStore].reverse(),
             $currentUserIdStore,
+            chat.kind === "channel" && chat.public,
             $selectedChatExpandedDeletedMessageStore,
             groupInner(filteredProposals),
         ),
