@@ -36,11 +36,12 @@ use std::collections::{BTreeMap, HashSet};
 use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotEventsCaller, BotInitiator, BotNotification,
-    BotPermissions, BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId, ChatEventCategory,
-    ChatEventType, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cycles, Document,
-    Empty, EventIndex, EventsCaller, FcmData, FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds,
-    Notification, Rules, TimestampMillis, Timestamped, UserId, UserNotification, UserNotificationPayload, UserType,
+    AccessGate, AccessGateConfigInternal, Achievement, BotCommunityEvent, BotEventsCaller, BotInitiator, BotNotification,
+    BotPermissions, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId, ChatEventCategory, ChatEventType, ChatMetrics,
+    CommunityCanisterCommunitySummary, CommunityEvent, CommunityEventCategory, CommunityEventType, CommunityMembership,
+    CommunityPermissions, Cycles, Document, Empty, EventIndex, EventsCaller, FcmData, FrozenGroupInfo, GroupRole,
+    IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId,
+    UserNotification, UserNotificationPayload, UserType,
 };
 use types::{BotSubscriptions, CommunityId};
 use user_canister::CommunityCanisterEvent;
@@ -138,6 +139,31 @@ impl RuntimeState {
             });
             self.push_notification_inner(notification);
         }
+    }
+
+    pub fn push_community_event(&mut self, event: CommunityEventInternal) -> EventIndex {
+        let now = self.env.now();
+        let community_id = self.env.canister_id().into();
+        let event_index = self.data.events.push_event(event.clone(), now);
+        let latest_event_index = self.data.events.latest_event_index();
+        let event: CommunityEvent = event.into();
+
+        if let Some(event_type) = event.event_type() {
+            let bots_to_notify = self.data.events.bots_to_notify(&event_type);
+            if !bots_to_notify.is_empty() {
+                self.push_bot_notification(Some(BotNotification {
+                    event: types::BotEvent::Community(BotCommunityEvent {
+                        event_index,
+                        latest_event_index,
+                        event,
+                        community_id,
+                    }),
+                    recipients: bots_to_notify,
+                }));
+            }
+        }
+
+        event_index
     }
 
     pub fn push_bot_notification(&mut self, notification: Option<BotNotification>) {
@@ -912,17 +938,17 @@ impl Data {
             return false;
         }
 
-        // Publish community event
-        self.events.push_event(
-            CommunityEventInternal::BotAdded(Box::new(BotAdded {
-                user_id: bot_id,
-                added_by: owner_id,
-            })),
-            now,
-        );
-
         if let (Some(subscriptions), Some(permissions)) = (default_subscriptions, autonomous_permissions) {
-            // TODO: Subscribe to permitted community events
+            // Subscribe to permitted community events
+            let permitted_categories = permissions.permitted_community_event_categories_to_read();
+
+            let community_events: HashSet<CommunityEventType> = subscriptions
+                .community
+                .into_iter()
+                .filter(|t| permitted_categories.contains(&CommunityEventCategory::from(*t)))
+                .collect();
+
+            self.events.subscribe_bot_to_events(bot_id, community_events);
 
             // Subscribe to permitted chat events for all public channels
             let permitted_categories = permissions.permitted_chat_event_categories_to_read();
@@ -945,7 +971,6 @@ impl Data {
 
     pub fn update_bot(
         &mut self,
-        owner_id: UserId,
         bot_id: UserId,
         permissions: BotPermissions,
         autonomous_permissions: Option<BotPermissions>,
@@ -954,15 +979,6 @@ impl Data {
         if !self.bots.update(bot_id, permissions, autonomous_permissions.clone(), now) {
             return false;
         }
-
-        // Publish community event
-        self.events.push_event(
-            CommunityEventInternal::BotUpdated(Box::new(BotUpdated {
-                user_id: bot_id,
-                updated_by: owner_id,
-            })),
-            now,
-        );
 
         let bot = self.bots.get(&bot_id).unwrap();
         let permissions = autonomous_permissions.unwrap_or_default();
@@ -984,7 +1000,7 @@ impl Data {
         true
     }
 
-    pub fn uninstall_bot(&mut self, owner_id: UserId, bot_id: UserId, now: TimestampMillis) -> bool {
+    pub fn uninstall_bot(&mut self, bot_id: UserId, now: TimestampMillis) -> bool {
         if !self.bots.remove(bot_id, now) {
             return false;
         }
@@ -993,17 +1009,7 @@ impl Data {
             channel.chat.events.unsubscribe_bot_from_events(bot_id);
         }
 
-        // Publish community event
-        self.events.push_event(
-            CommunityEventInternal::BotRemoved(Box::new(BotRemoved {
-                user_id: bot_id,
-                removed_by: owner_id,
-            })),
-            now,
-        );
-
         // TODO: Notify UserIndex
-
         true
     }
 

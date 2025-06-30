@@ -34,10 +34,7 @@ fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             unblocked_by: caller_member.user_id,
         };
 
-        state
-            .data
-            .events
-            .push_event(CommunityEventInternal::UsersUnblocked(Box::new(event)), now);
+        state.push_community_event(CommunityEventInternal::UsersUnblocked(Box::new(event)));
 
         handle_activity_notification(state);
         Ok(())

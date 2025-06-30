@@ -1,6 +1,6 @@
 use crate::{
     BotDataEncoding, BotInstallationLocation, BotPermissions, CanisterId, ChannelId, Chat, ChatEventType, ChatId,
-    CommunityEventType, CommunityId, EventIndex, FcmData, MessageIndex, Reaction, TimestampMillis, UserId,
+    CommunityEvent, CommunityId, EventIndex, FcmData, MessageIndex, Reaction, TimestampMillis, UserId,
 };
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
@@ -78,15 +78,13 @@ pub struct BotChatEvent {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BotCommunityEvent {
     #[serde(rename = "e")]
-    pub event_type: CommunityEventType,
+    pub event: CommunityEvent,
     #[serde(rename = "c")]
     pub community_id: CommunityId,
     #[serde(rename = "i")]
     pub event_index: EventIndex,
     #[serde(rename = "l")]
     pub latest_event_index: EventIndex,
-    #[serde(rename = "u")]
-    pub initiated_by: Option<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

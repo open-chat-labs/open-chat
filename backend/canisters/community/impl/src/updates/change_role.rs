@@ -124,10 +124,7 @@ fn commit(
         new_role: args.new_role,
         changed_by: caller_id,
     };
-    state
-        .data
-        .events
-        .push_event(CommunityEventInternal::RoleChanged(Box::new(event)), now);
+    state.push_community_event(CommunityEventInternal::RoleChanged(Box::new(event)));
 
     jobs::expire_members::start_job_if_required(state);
 

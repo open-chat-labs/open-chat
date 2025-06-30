@@ -2,13 +2,14 @@ use crate::model::events::stable_memory::EventsStableStorage;
 use chat_events::GroupGateUpdatedInternal;
 use community_canister::community_events::EventsPageArgs;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use types::{
     AvatarChanged, BannerChanged, BotAdded, BotRemoved, BotUpdated, ChannelCreated, ChannelDeleted, ChannelId, ChatId,
-    CommunityEvent, CommunityEventCategory, CommunityMembersRemoved, CommunityPermissionsChanged, CommunityRoleChanged,
-    CommunityUsersBlocked, CommunityVisibilityChanged, EventIndex, EventWrapper, EventWrapperInternal, GroupCreated,
-    GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupImported, GroupInviteCodeChanged, GroupNameChanged,
-    GroupRulesChanged, GroupUnfrozen, PrimaryLanguageChanged, TimestampMillis, UserId, UsersInvited, UsersUnblocked,
+    CommunityEvent, CommunityEventCategory, CommunityEventType, CommunityMembersRemoved, CommunityPermissionsChanged,
+    CommunityRoleChanged, CommunityUsersBlocked, CommunityVisibilityChanged, EventIndex, EventWrapper, EventWrapperInternal,
+    GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupImported, GroupInviteCodeChanged,
+    GroupNameChanged, GroupRulesChanged, GroupUnfrozen, PrimaryLanguageChanged, TimestampMillis, UserId, UsersInvited,
+    UsersUnblocked,
 };
 
 mod stable_memory;
@@ -18,6 +19,8 @@ pub struct CommunityEvents {
     stable_events_map: EventsStableStorage,
     latest_event_index: EventIndex,
     latest_event_timestamp: TimestampMillis,
+    #[serde(default)]
+    bot_subscriptions: BTreeMap<CommunityEventType, HashSet<UserId>>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -98,6 +101,7 @@ impl CommunityEvents {
             stable_events_map,
             latest_event_index: event_index,
             latest_event_timestamp: now,
+            bot_subscriptions: BTreeMap::new(),
         }
     }
 
@@ -148,6 +152,30 @@ impl CommunityEvents {
             event_indexes.iter().filter_map(|&e| self.stable_events_map.get(e)).collect(),
             permitted_event_types,
         )
+    }
+
+    pub fn subscribe_bot_to_events(&mut self, bot_id: UserId, event_types: HashSet<CommunityEventType>) {
+        // Remove any existing subscriptions
+        self.unsubscribe_bot_from_events(bot_id);
+
+        // Add the new subscriptions (if any)
+        for event_type in event_types {
+            self.bot_subscriptions.entry(event_type).or_default().insert(bot_id);
+        }
+    }
+
+    pub fn unsubscribe_bot_from_events(&mut self, bot_id: UserId) {
+        for subscriptions in self.bot_subscriptions.values_mut() {
+            subscriptions.remove(&bot_id);
+        }
+        self.bot_subscriptions.retain(|_, subscriptions| !subscriptions.is_empty());
+    }
+
+    pub fn bots_to_notify(&self, event_type: &CommunityEventType) -> Vec<UserId> {
+        self.bot_subscriptions
+            .get(event_type)
+            .map(|s| s.iter().cloned().collect())
+            .unwrap_or_default()
     }
 
     fn filter_events_by_type(

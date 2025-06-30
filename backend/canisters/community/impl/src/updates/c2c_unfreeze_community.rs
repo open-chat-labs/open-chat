@@ -19,12 +19,9 @@ fn c2c_unfreeze_community_impl(args: Args, state: &mut RuntimeState) -> Response
 
         state.data.frozen = Timestamped::new(None, now);
 
-        let event_index = state.data.events.push_event(
-            CommunityEventInternal::Unfrozen(Box::new(GroupUnfrozen {
-                unfrozen_by: args.caller,
-            })),
-            now,
-        );
+        let event_index = state.push_community_event(CommunityEventInternal::Unfrozen(Box::new(GroupUnfrozen {
+            unfrozen_by: args.caller,
+        })));
 
         handle_activity_notification(state);
 
