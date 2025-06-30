@@ -3,7 +3,6 @@ use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use types::{InstalledBotDetails, UserId};
 use user_canister::initial_state::{Response::*, *};
-use utils::time::{today, tomorrow};
 
 #[query(guard = "caller_is_owner", msgpack = true)]
 fn initial_state(_args: Args) -> Response {
