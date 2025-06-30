@@ -71,16 +71,11 @@ async fn generate_code() -> u64 {
 }
 
 fn record_event(user_id: UserId, change: GroupInviteCodeChange, state: &mut RuntimeState) {
-    let now = state.env.now();
-
     if let Some(participant) = state.data.members.get_by_user_id(&user_id) {
-        state.data.events.push_event(
-            CommunityEventInternal::InviteCodeChanged(Box::new(GroupInviteCodeChanged {
-                change,
-                changed_by: participant.user_id,
-            })),
-            now,
-        );
+        state.push_community_event(CommunityEventInternal::InviteCodeChanged(Box::new(GroupInviteCodeChanged {
+            change,
+            changed_by: participant.user_id,
+        })));
 
         handle_activity_notification(state);
     }

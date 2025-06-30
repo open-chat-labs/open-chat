@@ -91,15 +91,12 @@ fn delete_channel_impl(channel_id: ChannelId, ext_caller: Option<Caller>, state:
 
     crate::jobs::garbage_collect_stable_memory::start_job_if_required(state);
 
-    state.data.events.push_event(
-        CommunityEventInternal::ChannelDeleted(Box::new(ChannelDeleted {
-            channel_id,
-            name: channel.chat.name.value,
-            deleted_by: caller.agent(),
-            bot_command: caller.bot_command().cloned(),
-        })),
-        now,
-    );
+    state.push_community_event(CommunityEventInternal::ChannelDeleted(Box::new(ChannelDeleted {
+        channel_id,
+        name: channel.chat.name.value,
+        deleted_by: caller.agent(),
+        bot_command: caller.bot_command().cloned(),
+    })));
 
     for user_id in channel.chat.members.member_ids() {
         state.data.members.mark_member_left_channel(*user_id, channel_id, true, now);

@@ -38,14 +38,11 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
 ) {
     match event {
         LocalIndexEvent::NameChanged(ev) => {
-            state.data.events.push_event(
-                CommunityEventInternal::NameChanged(Box::new(GroupNameChanged {
-                    new_name: ev.name.clone(),
-                    previous_name: state.data.name.value.clone(),
-                    changed_by: OPENCHAT_BOT_USER_ID,
-                })),
-                **now,
-            );
+            state.push_community_event(CommunityEventInternal::NameChanged(Box::new(GroupNameChanged {
+                new_name: ev.name.clone(),
+                previous_name: state.data.name.value.clone(),
+                changed_by: OPENCHAT_BOT_USER_ID,
+            })));
 
             state.data.name = Timestamped::new(ev.name, **now);
         }

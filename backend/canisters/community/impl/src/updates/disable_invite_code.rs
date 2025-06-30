@@ -20,13 +20,10 @@ fn disable_invite_code_impl(state: &mut RuntimeState) -> OCResult {
     if member.role().can_invite_users(&state.data.permissions) {
         let now = state.env.now();
         state.data.invite_code_enabled = Timestamped::new(false, now);
-        state.data.events.push_event(
-            CommunityEventInternal::InviteCodeChanged(Box::new(GroupInviteCodeChanged {
-                change: GroupInviteCodeChange::Disabled,
-                changed_by: member.user_id,
-            })),
-            now,
-        );
+        state.push_community_event(CommunityEventInternal::InviteCodeChanged(Box::new(GroupInviteCodeChanged {
+            change: GroupInviteCodeChange::Disabled,
+            changed_by: member.user_id,
+        })));
 
         handle_activity_notification(state);
         Ok(())
