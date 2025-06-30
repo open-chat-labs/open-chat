@@ -25,7 +25,7 @@ fn c2c_bot_channel_details_impl(args: Args, state: &RuntimeState) -> OCResult<Ch
         &args.initiator,
         &BotPermissions::from_chat_permission(ChatPermission::ReadSummary),
     ) {
-        return Err(OCErrorCode::InitiatorNotFound.into());
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
     let channel = state.data.channels.get_or_err(&args.channel_id)?;

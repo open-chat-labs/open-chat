@@ -28,7 +28,6 @@ pub enum CommunityPermission {
     ManageUserGroups = 6,
     ReadMembership = 7,
     ReadSummary = 8,
-    ReadEvents = 9,
 }
 
 impl From<CommunityPermission> for u8 {
@@ -51,7 +50,6 @@ impl TryFrom<u8> for CommunityPermission {
             6 => Ok(CommunityPermission::ManageUserGroups),
             7 => Ok(CommunityPermission::ReadMembership),
             8 => Ok(CommunityPermission::ReadSummary),
-            9 => Ok(CommunityPermission::ReadEvents),
             _ => Err(()),
         }
     }

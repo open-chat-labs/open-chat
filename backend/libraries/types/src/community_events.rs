@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -16,6 +16,12 @@ use crate::{
 pub enum CommunityEventCategory {
     Membership = 0, // User added, blocked, invited, role changed, etc.
     Details = 1,    // Name, description, rules, permissions changed, etc.
+}
+
+impl CommunityEventCategory {
+    pub fn all() -> HashSet<CommunityEventCategory> {
+        HashSet::from_iter([CommunityEventCategory::Membership, CommunityEventCategory::Details])
+    }
 }
 
 #[ts_export]

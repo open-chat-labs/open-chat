@@ -26,6 +26,7 @@ pub enum Response {
 pub struct EventsResponse {
     #[ts(as = "Vec<types::EventWrapperCommunityEvent>")]
     pub events: Vec<EventWrapper<CommunityEvent>>,
+    pub unauthorized: Vec<EventIndex>,
     pub latest_event_index: EventIndex,
     pub community_last_updated: TimestampMillis,
 }

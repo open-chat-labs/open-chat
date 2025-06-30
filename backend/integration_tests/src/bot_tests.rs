@@ -1023,7 +1023,10 @@ fn read_community_events() {
 
     env.tick();
 
-    let permissions = BotPermissions::default().with_community(&HashSet::from_iter([CommunityPermission::ReadEvents]));
+    let permissions = BotPermissions::default().with_community(&HashSet::from_iter([
+        CommunityPermission::ReadMembership,
+        CommunityPermission::ReadSummary,
+    ]));
 
     // Add bot to community
     client::local_user_index::happy_path::install_bot(

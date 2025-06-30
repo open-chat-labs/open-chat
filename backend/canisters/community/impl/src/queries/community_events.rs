@@ -4,7 +4,7 @@ use community_canister::community_events::Args;
 use community_canister::community_events::{Response::*, *};
 use group_community_common::Member;
 use oc_error_codes::OCErrorCode;
-use types::OCResult;
+use types::{CommunityEventCategory, OCResult};
 
 #[query(candid = true, msgpack = true)]
 fn community_events(args: Args) -> Response {
@@ -21,11 +21,12 @@ fn community_events_impl(args: Args, state: &RuntimeState) -> OCResult<EventsRes
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
-    let events = state.data.events.get_page_events(args);
+    let resp = state.data.events.get_page_events(args, &CommunityEventCategory::all());
 
     Ok(EventsResponse {
-        events,
-        latest_event_index: state.data.events.latest_event_index(),
+        events: resp.events,
+        unauthorized: resp.unauthorized,
+        latest_event_index: resp.latest_event_index,
         community_last_updated: state.data.details_last_updated(),
     })
 }

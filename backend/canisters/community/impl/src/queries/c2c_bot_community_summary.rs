@@ -21,7 +21,7 @@ fn c2c_bot_community_summary_impl(args: Args, state: &RuntimeState) -> OCResult<
         &args.initiator,
         &BotPermissions::from_community_permission(CommunityPermission::ReadSummary),
     ) {
-        return Err(OCErrorCode::InitiatorNotFound.into());
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
     let data = &state.data;

@@ -2,12 +2,13 @@ use crate::model::events::stable_memory::EventsStableStorage;
 use chat_events::GroupGateUpdatedInternal;
 use community_canister::community_events::EventsPageArgs;
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use types::{
     AvatarChanged, BannerChanged, BotAdded, BotRemoved, BotUpdated, ChannelCreated, ChannelDeleted, ChannelId, ChatId,
-    CommunityEvent, CommunityMembersRemoved, CommunityPermissionsChanged, CommunityRoleChanged, CommunityUsersBlocked,
-    CommunityVisibilityChanged, EventIndex, EventWrapper, EventWrapperInternal, GroupCreated, GroupDescriptionChanged,
-    GroupFrozen, GroupGateUpdated, GroupImported, GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupUnfrozen,
-    PrimaryLanguageChanged, TimestampMillis, UserId, UsersInvited, UsersUnblocked,
+    CommunityEvent, CommunityEventCategory, CommunityMembersRemoved, CommunityPermissionsChanged, CommunityRoleChanged,
+    CommunityUsersBlocked, CommunityVisibilityChanged, EventIndex, EventWrapper, EventWrapperInternal, GroupCreated,
+    GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupImported, GroupInviteCodeChanged, GroupNameChanged,
+    GroupRulesChanged, GroupUnfrozen, PrimaryLanguageChanged, TimestampMillis, UserId, UsersInvited, UsersUnblocked,
 };
 
 mod stable_memory;
@@ -127,31 +128,64 @@ impl CommunityEvents {
         self.latest_event_timestamp
     }
 
-    pub fn get_page_events(&self, args: EventsPageArgs) -> Vec<EventWrapper<CommunityEvent>> {
-        self.stable_events_map
-            .page(args.start_index, args.ascending, args.max_events)
-            .into_iter()
-            .map(|e| EventWrapper {
-                index: e.index,
-                timestamp: e.timestamp,
-                expires_at: e.expires_at,
-                event: e.event.into(),
-            })
-            .collect()
+    pub fn get_page_events(
+        &self,
+        args: EventsPageArgs,
+        permitted_event_types: &HashSet<CommunityEventCategory>,
+    ) -> EventsResponse {
+        self.filter_events_by_type(
+            self.stable_events_map.page(args.start_index, args.ascending, args.max_events),
+            permitted_event_types,
+        )
     }
 
-    pub fn get_by_indexes(&self, event_indexes: &[EventIndex]) -> Vec<EventWrapper<CommunityEvent>> {
-        event_indexes
-            .iter()
-            .filter_map(|&e| self.stable_events_map.get(e))
-            .map(|e| EventWrapper {
-                index: e.index,
-                timestamp: e.timestamp,
-                expires_at: e.expires_at,
-                event: e.event.clone().into(),
-            })
-            .collect()
+    pub fn get_by_indexes(
+        &self,
+        event_indexes: &[EventIndex],
+        permitted_event_types: &HashSet<CommunityEventCategory>,
+    ) -> EventsResponse {
+        self.filter_events_by_type(
+            event_indexes.iter().filter_map(|&e| self.stable_events_map.get(e)).collect(),
+            permitted_event_types,
+        )
     }
+
+    fn filter_events_by_type(
+        &self,
+        events: Vec<EventWrapperInternal<CommunityEventInternal>>,
+        permitted_event_types: &HashSet<CommunityEventCategory>,
+    ) -> EventsResponse {
+        let mut response = EventsResponse {
+            events: Vec::new(),
+            unauthorized: Vec::new(),
+            latest_event_index: self.latest_event_index,
+        };
+
+        for wrapper in events {
+            let event: CommunityEvent = wrapper.event.into();
+
+            if event
+                .event_type()
+                .is_none_or(|event_type| permitted_event_types.contains(&CommunityEventCategory::from(event_type)))
+            {
+                response.events.push(EventWrapper {
+                    index: wrapper.index,
+                    timestamp: wrapper.timestamp,
+                    expires_at: wrapper.expires_at,
+                    event,
+                });
+            } else {
+                response.unauthorized.push(wrapper.index);
+            }
+        }
+
+        response
+    }
+}
+pub struct EventsResponse {
+    pub events: Vec<EventWrapper<CommunityEvent>>,
+    pub unauthorized: Vec<EventIndex>,
+    pub latest_event_index: EventIndex,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
