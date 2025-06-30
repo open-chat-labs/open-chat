@@ -570,10 +570,6 @@ export function flattenTimeline(grouped: EventWrapper<ChatEvent>[][][]): Timelin
 }
 
 export function isEventKindHidden(kind: ChatEvent["kind"], isPublicChannel: boolean): boolean {
-    if (isPublicChannel && kind === "member_joined") {
-        return true;
-    }
-
     switch (kind) {
         case "empty":
         case "message_pinned":
@@ -581,6 +577,9 @@ export function isEventKindHidden(kind: ChatEvent["kind"], isPublicChannel: bool
         case "member_left":
         case "members_added_to_default_channel":
             return true;
+
+        case "member_joined":
+            return isPublicChannel;
 
         default:
             return false;
