@@ -2,8 +2,8 @@
 include ':tauri-android'
 project(':tauri-android').projectDir = new File("/Users/ivan/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-2.5.1/mobile/android")
 include ':tauri-plugin-deep-link'
-project(':tauri-plugin-deep-link').projectDir = new File("/Users/ivan/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-plugin-deep-link-2.2.1/android")
+project(':tauri-plugin-deep-link').projectDir = new File("/Users/ivan/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-plugin-deep-link-2.3.0/android")
 include ':tauri-plugin-notification'
-project(':tauri-plugin-notification').projectDir = new File("/Users/ivan/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-plugin-notification-2.2.2/android")
+project(':tauri-plugin-notification').projectDir = new File("/Users/ivan/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-plugin-notification-2.2.3/android")
 include ':tauri-plugin-oc'
 project(':tauri-plugin-oc').projectDir = new File("/Users/ivan/projects/open-chat/frontend/tauri-plugin-oc/android")

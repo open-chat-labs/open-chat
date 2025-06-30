@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use chat_events::TipMessageArgs;
 use group_canister::c2c_tip_message::*;
 use ledger_utils::format_crypto_amount_with_symbol;
-use types::{Achievement, Chat, EventIndex, FcmData, GroupMessageTipped, OCResult, UserNotificationPayload};
+use types::{Achievement, Chat, ChatId, EventIndex, FcmData, GroupMessageTipped, OCResult, UserNotificationPayload};
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
 #[update(msgpack = true)]
@@ -49,15 +49,18 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     {
         if let Some(sender) = state.data.chat.members.get(&message.sender) {
             if message.sender != user_id && !sender.user_type().is_bot() {
-                let chat_id = state.env.canister_id().into();
+                let chat_id: ChatId = state.env.canister_id().into();
                 let tipped_by_name = args.username;
                 let tipped_by_display_name = args.display_name;
                 let tip = format_crypto_amount_with_symbol(args.amount, args.decimals, &args.token_symbol);
+                let group_avatar_id = state.data.chat.avatar.as_ref().map(|a| a.id);
 
                 // TODO i18n
                 let fcm_data = FcmData::builder()
-                    .with_alt_title(&tipped_by_display_name, &tipped_by_name)
                     .with_body(format!("Tipped your message {tip}"))
+                    .with_chat_id(chat_id.to_text())
+                    .with_alt_sender_name(&tipped_by_display_name, &tipped_by_name)
+                    .with_sender_avatar_id(group_avatar_id)
                     .build();
 
                 let user_notification_payload = UserNotificationPayload::GroupMessageTipped(GroupMessageTipped {

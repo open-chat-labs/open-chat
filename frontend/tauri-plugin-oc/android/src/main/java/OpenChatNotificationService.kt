@@ -24,21 +24,21 @@ class OpenChatNotificationService : FirebaseMessagingService() {
     // notification manager, and displayed according to the channel settings for which the
     // notification was pushed.
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        remoteMessage.notification?.let {
-            Log.d("TEST_OC", "Notification received from ${remoteMessage.from}: ${it.body}")
+        Log.d("TEST_OC", "REMOTE MESSAGE RECEIVED: $remoteMessage")
 
-            // Keeping this here for debugging purposes!
-            // NotificationsHelper.showNotification(this, it.title ?: "Title", it.body ?: "Body")
+        remoteMessage.data.let {
+            // If the app is in the background, or closed, show the notification
+            NotificationsHelper.showNotification(this, it)
 
+            // TODO if the app is in the foreground, send to UI code
             // Push the new notification to the UI by raising an event!
             // This is less relevant at the moment, since the UI service worker can handle web push
             // notification, but will be important if we decide to switch over to pure Firebase
-            // solution.
-            // TODO add data, image, and any other required properties!
-            OpenChatPlugin.triggerRef("push-notification", JSObject().apply {
-                put("title", it.title ?: "Title")
-                put("body", it.body ?: "Body")
-            })
+            // solution.es!
+            // OpenChatPlugin.triggerRef("push-notification", JSObject().apply {
+            //   put("title", it.title ?: "Title")
+            //   put("body", it.body ?: "Body")
+            // })
         }
     }
 }

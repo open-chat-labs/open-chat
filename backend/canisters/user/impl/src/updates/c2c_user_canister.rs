@@ -318,8 +318,10 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
                         // TODO i18n
                         let fcm_body = format!("Reacted {} to your message", args.reaction.clone().0);
                         let fcm_data = FcmData::builder()
-                            .with_alt_title(&args.display_name, &args.username)
                             .with_body(fcm_body)
+                            .with_sender_id(caller_user_id.to_text())
+                            .with_alt_sender_name(&args.display_name, &args.username)
+                            .with_sender_avatar_id(args.user_avatar_id)
                             .build();
 
                         let notification = UserNotificationPayload::DirectReactionAdded(DirectReactionAddedNotification {
@@ -429,8 +431,10 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
                 // TODO i18n
                 let fcm_body = format!("Tipped your message {tip}");
                 let fcm_data = FcmData::builder()
-                    .with_alt_title(&args.display_name, &args.username)
                     .with_body(fcm_body)
+                    .with_sender_id(caller_user_id.to_text())
+                    .with_alt_sender_name(&args.display_name, &args.username)
+                    .with_sender_avatar_id(args.user_avatar_id)
                     .build();
 
                 let notification = UserNotificationPayload::DirectMessageTipped(DirectMessageTipped {

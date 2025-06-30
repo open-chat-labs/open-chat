@@ -5,50 +5,68 @@ use std::collections::HashMap;
 // Values relevant for the FCM notifications
 #[derive(CandidType, Serialize, Deserialize, Clone, Default, Debug)]
 pub struct FcmData {
-    #[serde(rename = "t")]
-    pub title: String,
     #[serde(rename = "b")]
     pub body: String,
     #[serde(rename = "i")]
     pub image: Option<String>,
-    #[serde(rename = "d")]
-    pub data: Option<HashMap<String, String>>,
+    #[serde(rename = "c")]
+    pub chat_id: Option<String>,
+    #[serde(rename = "s")]
+    pub sender_id: Option<String>,
+    #[serde(rename = "n")]
+    pub sender_name: String,
+    #[serde(rename = "a")]
+    pub sender_avatar_id: Option<u128>,
 }
 
 impl FcmData {
     pub fn builder() -> FcmDataBuilder {
         FcmDataBuilder::new()
     }
+
+    pub fn as_data(&self) -> HashMap<String, String> {
+        let clone = self.clone();
+        let mut map = HashMap::new();
+
+        map.insert("body".into(), clone.body);
+        map.insert("sender_name".into(), clone.sender_name);
+
+        if let Some(image) = clone.image {
+            map.insert("image".into(), image);
+        }
+
+        if let Some(chat_id) = clone.chat_id {
+            map.insert("chat_id".into(), chat_id);
+        }
+
+        if let Some(sender_id) = clone.sender_id {
+            map.insert("sender_id".into(), sender_id);
+        }
+
+        if let Some(sender_avatar_id) = clone.sender_avatar_id {
+            map.insert("sender_avatar_id".into(), sender_avatar_id.to_string());
+        }
+
+        map
+    }
 }
 
 #[derive(Default)]
 pub struct FcmDataBuilder {
-    title: String,
     body: String,
     image: Option<String>,
-    data: HashMap<String, String>,
+    chat_id: Option<String>,
+    sender_id: Option<String>,
+    sender_name: Option<String>,
+    sender_avatar_id: Option<u128>,
 }
 
 impl FcmDataBuilder {
     fn new() -> Self {
         Self {
-            title: "OpenChat".to_string(),
+            // TODO i18n?
             body: "You have a notification...".to_string(),
             ..Self::default()
-        }
-    }
-
-    /// Set title when we know what it will be!
-    pub fn with_title(self, title: String) -> Self {
-        Self { title, ..self }
-    }
-
-    /// If wanted title value is optional, also provide alternative title!
-    /// Borrows the arg values, then creates copies to reduce boilerplate.
-    pub fn with_alt_title(self, title: &Option<String>, alt_title: &str) -> Self {
-        Self {
-            title: title.clone().unwrap_or(alt_title.to_string()),
-            ..self
         }
     }
 
@@ -72,19 +90,54 @@ impl FcmDataBuilder {
         Self { image, ..self }
     }
 
-    /// Additional notification data in key & value format!
-    pub fn with_data(self, key: String, value: String) -> Self {
-        let mut data = self.data;
-        data.insert(key, value);
-        Self { data, ..self }
+    pub fn with_chat_id(self, chat_id: String) -> Self {
+        Self {
+            chat_id: Some(chat_id),
+            ..self
+        }
     }
 
+    pub fn with_sender_id(self, sender_id: String) -> Self {
+        Self {
+            sender_id: Some(sender_id),
+            ..self
+        }
+    }
+
+    /// Set sender name when we know what it will be!
+    pub fn with_sender_name(self, sender_name: String) -> Self {
+        Self {
+            sender_name: Some(sender_name),
+            ..self
+        }
+    }
+
+    /// If wanted title value is optional, also provide alternative title!
+    /// Borrows the arg values, then creates copies to reduce boilerplate.
+    pub fn with_alt_sender_name(self, sender_name: &Option<String>, alt_sender_name: &str) -> Self {
+        Self {
+            sender_name: sender_name.clone().or_else(|| Some(alt_sender_name.to_string())),
+            ..self
+        }
+    }
+
+    pub fn with_sender_avatar_id(self, sender_avatar_id: Option<u128>) -> Self {
+        Self {
+            sender_avatar_id,
+            ..self
+        }
+    }
+
+    // Notifications do not need to have all fields set, so they can remain
+    // with default values if not set.
     pub fn build(self) -> FcmData {
         FcmData {
-            title: self.title,
             body: self.body,
             image: self.image,
-            data: if self.data.is_empty() { None } else { Some(self.data) },
+            chat_id: self.chat_id,
+            sender_id: self.sender_id,
+            sender_name: self.sender_name.unwrap_or_default(),
+            sender_avatar_id: self.sender_avatar_id,
         }
     }
 }
