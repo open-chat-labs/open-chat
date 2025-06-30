@@ -150,8 +150,8 @@ impl RuntimeState {
 
         if let Some(event_type) = event.event_type() {
             let bots_to_notify = self.data.events.bots_to_notify(&event_type);
-            let bot_notification = if !bots_to_notify.is_empty() {
-                Some(BotNotification {
+            if !bots_to_notify.is_empty() {
+                self.push_bot_notification(Some(BotNotification {
                     event: types::BotEvent::Community(BotCommunityEvent {
                         event_index,
                         latest_event_index,
@@ -159,12 +159,8 @@ impl RuntimeState {
                         community_id,
                     }),
                     recipients: bots_to_notify,
-                })
-            } else {
-                None
-            };
-
-            self.push_bot_notification(bot_notification);
+                }));
+            }
         }
 
         event_index
