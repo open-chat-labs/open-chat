@@ -6,8 +6,8 @@ const Packer = new Packr({
     largeBigIntToString: true,
 } as unknown as Options);
 
-export function serializeToMsgPack<T>(value: T): ArrayBuffer {
-    return Packer.pack(value);
+export function serializeToMsgPack<T>(value: T): Uint8Array {
+    return new Uint8Array(Packer.pack(value));
 }
 
 export function deserializeFromMsgPack<T>(bytes: Uint8Array): T {
