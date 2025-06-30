@@ -157,7 +157,7 @@
             message.event.blockLevelMarkdown,
             [],
             message.event.forwarded,
-            true
+            true,
         );
     }
 
@@ -355,6 +355,6 @@
         event={event.event}
         userId={$currentUserIdStore}
         timestamp={event.timestamp} />
-{:else if !client.isEventKindHidden(event.event.kind)}
+{:else if !client.isEventKindHidden(event.event.kind, publicGroup && chatType === "channel")}
     <div>Unexpected event type: {event.event.kind}</div>
 {/if}

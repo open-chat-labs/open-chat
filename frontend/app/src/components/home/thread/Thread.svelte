@@ -94,6 +94,7 @@
         client.groupEvents(
             [...events].reverse(),
             $currentUserIdStore,
+            chat.kind === "channel" && chat.public,
             $selectedChatExpandedDeletedMessageStore,
         ) as TimelineItem<Message>[],
     );
