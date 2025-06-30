@@ -112,10 +112,6 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
                 const status = new TextDecoder().decode(
                     lookupResultToBuffer(certificate.lookup_path([...path, 'status'])),
                 );
-                const timestamp = new TextDecoder().decode(
-                    lookupResultToBuffer(certificate.lookup([...path, "time"])),
-                );
-                console.log(timestamp);
 
                 switch (status) {
                     case "replied": {
