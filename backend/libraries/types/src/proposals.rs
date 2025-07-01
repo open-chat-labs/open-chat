@@ -1,5 +1,6 @@
-use crate::{CanisterId, MessageId, NnsNeuronId, ProposalId, SnsNeuronId, TimestampMillis};
+use crate::{CanisterId, EventIndex, MessageId, NnsNeuronId, ProposalId, SnsNeuronId, TimestampMillis};
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 
@@ -252,4 +253,17 @@ impl TryFrom<i32> for ProposalRewardStatus {
             _ => Err(value),
         }
     }
+}
+
+#[ts_export]
+#[derive(Serialize, Deserialize, Debug)]
+pub enum ActiveTalliesResponse {
+    Success(ActiveTalliesSuccessResult),
+    Error(OCError),
+}
+
+#[ts_export]
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ActiveTalliesSuccessResult {
+    pub tallies: Vec<(EventIndex, Tally)>,
 }
