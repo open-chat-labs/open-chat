@@ -65,7 +65,7 @@ pub enum GroupIndexEvent {
 pub enum GroupEvent {
     MarkActivity(TimestampMillis),
     EventStoreEvent(Event),
-    Notification(Notification),
+    Notification(Box<Notification>),
 }
 
 pub type CommunityEvent = GroupEvent;
@@ -309,7 +309,7 @@ pub enum UserEvent {
     UserUnblocked(UserId),
     SetMaxStreak(u16),
     EventStoreEvent(Event),
-    Notification(Notification),
+    Notification(Box<Notification>),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]

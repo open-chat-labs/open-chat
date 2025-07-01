@@ -113,12 +113,10 @@ impl ChatEventsList {
     ) -> Result<UpdateEventInternalSuccess<T>, UpdateEventError<E>> {
         if let Some(mut event) = self.get_event(event_key, EventIndex::default(), None) {
             update_event_fn(&mut event).map(|result| {
-                let event_index = event.index;
-                let initiated_by = event.event.initiated_by();
-                self.events_map.insert(event);
+                self.events_map.insert(event.clone());
                 UpdateEventInternalSuccess {
-                    event_index,
-                    initiated_by,
+                    event_index: event.index,
+                    event: event.event,
                     value: result,
                 }
             })
@@ -426,39 +424,7 @@ pub trait Reader {
         event: EventWrapperInternal<ChatEventInternal>,
         my_user_id: Option<UserId>,
     ) -> EventWrapper<ChatEvent> {
-        let event_data = match event.event {
-            ChatEventInternal::DirectChatCreated(d) => ChatEvent::DirectChatCreated(d),
-            ChatEventInternal::Message(m) => ChatEvent::Message(Box::new(m.hydrate(my_user_id))),
-            ChatEventInternal::GroupChatCreated(g) => ChatEvent::GroupChatCreated(*g),
-            ChatEventInternal::GroupNameChanged(g) => ChatEvent::GroupNameChanged(*g),
-            ChatEventInternal::GroupDescriptionChanged(g) => ChatEvent::GroupDescriptionChanged(*g),
-            ChatEventInternal::GroupRulesChanged(g) => ChatEvent::GroupRulesChanged(*g),
-            ChatEventInternal::AvatarChanged(g) => ChatEvent::AvatarChanged(*g),
-            ChatEventInternal::ParticipantsAdded(p) => ChatEvent::ParticipantsAdded(*p),
-            ChatEventInternal::ParticipantsRemoved(p) => ChatEvent::ParticipantsRemoved(*p),
-            ChatEventInternal::ParticipantJoined(p) => ChatEvent::ParticipantJoined((*p).into()),
-            ChatEventInternal::ParticipantLeft(p) => ChatEvent::ParticipantLeft(*p),
-            ChatEventInternal::RoleChanged(r) => ChatEvent::RoleChanged(*r),
-            ChatEventInternal::UsersBlocked(u) => ChatEvent::UsersBlocked(*u),
-            ChatEventInternal::UsersUnblocked(u) => ChatEvent::UsersUnblocked(*u),
-            ChatEventInternal::MessagePinned(p) => ChatEvent::MessagePinned(*p),
-            ChatEventInternal::PermissionsChanged(p) => ChatEvent::PermissionsChanged(*p),
-            ChatEventInternal::MessageUnpinned(u) => ChatEvent::MessageUnpinned(*u),
-            ChatEventInternal::GroupVisibilityChanged(g) => ChatEvent::GroupVisibilityChanged(*g),
-            ChatEventInternal::GroupInviteCodeChanged(g) => ChatEvent::GroupInviteCodeChanged(*g),
-            ChatEventInternal::ChatFrozen(f) => ChatEvent::ChatFrozen(*f),
-            ChatEventInternal::ChatUnfrozen(u) => ChatEvent::ChatUnfrozen(*u),
-            ChatEventInternal::EventsTimeToLiveUpdated(u) => ChatEvent::EventsTimeToLiveUpdated(*u),
-            ChatEventInternal::GroupGateUpdated(g) => ChatEvent::GroupGateUpdated((*g).into()),
-            ChatEventInternal::UsersInvited(e) => ChatEvent::UsersInvited(*e),
-            ChatEventInternal::MembersAddedToPublicChannel(m) => ChatEvent::MembersAddedToDefaultChannel(m.as_ref().into()),
-            ChatEventInternal::ExternalUrlUpdated(u) => ChatEvent::ExternalUrlUpdated(*u),
-            ChatEventInternal::Empty => ChatEvent::Empty,
-            ChatEventInternal::FailedToDeserialize => ChatEvent::FailedToDeserialize,
-            ChatEventInternal::BotAdded(e) => ChatEvent::BotAdded(e),
-            ChatEventInternal::BotRemoved(e) => ChatEvent::BotRemoved(e),
-            ChatEventInternal::BotUpdated(e) => ChatEvent::BotUpdated(e),
-        };
+        let event_data = event.event.chat_event(my_user_id);
 
         EventWrapper {
             index: event.index,
