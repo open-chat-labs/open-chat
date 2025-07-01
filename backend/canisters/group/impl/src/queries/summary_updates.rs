@@ -1,13 +1,13 @@
 use crate::{RuntimeState, read_state};
-use candid::Principal;
 use canister_api_macros::query;
 use group_canister::summary_updates::{Response::*, *};
+use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use types::{
     GroupCanisterGroupChatSummaryUpdates, GroupMembershipUpdates, MAX_THREADS_IN_SUMMARY, OptionUpdate, TimestampMillis,
 };
 
-#[query(candid = true, msgpack = true)]
+#[query(msgpack = true)]
 fn summary_updates(args: Args) -> Response {
     read_state(|state| summary_updates_impl(args.updates_since, args.on_behalf_of, state))
 }

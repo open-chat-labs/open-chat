@@ -1,11 +1,11 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::{caller_is_local_user_index, caller_is_user_index_or_local_user_index};
 use crate::{RuntimeState, execute_update};
-use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_bot_invite_users;
 use group_canister::c2c_invite_users::{Response::*, *};
+use ic_principal::Principal;
 use oc_error_codes::{OCError, OCErrorCode};
 use types::{BotCaller, BotPermissions, Caller, ChatPermission, OCResult, UserId};
 

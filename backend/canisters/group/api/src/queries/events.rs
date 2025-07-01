@@ -1,10 +1,9 @@
-use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{EventIndex, MessageIndex, TimestampMillis};
 
 #[ts_export(group, events)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub thread_root_message_index: Option<MessageIndex>,
     pub start_index: EventIndex,

@@ -5,7 +5,7 @@ use installed_bots::BotUpdate;
 use std::collections::HashSet;
 use types::{InstalledBotDetails, OCResult};
 
-#[query(candid = true, msgpack = true)]
+#[query(msgpack = true)]
 fn selected_updates_v2(args: Args) -> Response {
     read_state(|state| selected_updates_impl(args, state)).unwrap_or_else(Error)
 }

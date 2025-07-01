@@ -5,7 +5,7 @@ use chat_events::Reader;
 use group_canister::public_summary::{Response::*, *};
 use types::{BuildVersion, Document, PublicGroupSummary};
 
-#[query(candid = true, msgpack = true)]
+#[query(msgpack = true)]
 fn public_summary(args: Args) -> Response {
     read_state(|state| public_summary_impl(args, state))
 }

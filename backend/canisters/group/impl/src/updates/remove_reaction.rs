@@ -4,7 +4,7 @@ use canister_tracing_macros::trace;
 use group_canister::remove_reaction::*;
 use types::OCResult;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn remove_reaction(args: Args) -> Response {
     execute_update(|state| remove_reaction_impl(args, state)).into()

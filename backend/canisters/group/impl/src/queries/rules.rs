@@ -3,7 +3,7 @@ use crate::read_state;
 use canister_api_macros::query;
 use group_canister::rules::{Response::*, *};
 
-#[query(candid = true, msgpack = true)]
+#[query(msgpack = true)]
 fn rules(args: Args) -> Response {
     read_state(|state| rules_impl(args, state))
 }
