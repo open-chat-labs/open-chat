@@ -9,6 +9,7 @@ use syn::{Block, FnArg, Ident, ItemFn, LitBool, Pat, PatIdent, PatType, ReturnTy
 
 enum MethodType {
     Init,
+    PostUpgrade,
     Update,
     Query,
 }
@@ -17,6 +18,7 @@ impl std::fmt::Display for MethodType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             MethodType::Init => f.write_str("init"),
+            MethodType::PostUpgrade => f.write_str("post_upgrade"),
             MethodType::Update => f.write_str("update"),
             MethodType::Query => f.write_str("query"),
         }
@@ -45,6 +47,11 @@ pub fn init(attr: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_attribute]
+pub fn post_upgrade(attr: TokenStream, item: TokenStream) -> TokenStream {
+    canister_api_method(MethodType::PostUpgrade, attr, item)
+}
+
+#[proc_macro_attribute]
 pub fn update(attr: TokenStream, item: TokenStream) -> TokenStream {
     canister_api_method(MethodType::Update, attr, item)
 }
@@ -57,7 +64,7 @@ pub fn query(attr: TokenStream, item: TokenStream) -> TokenStream {
 fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenStream) -> TokenStream {
     let attr: AttributeInput = from_tokenstream(&attr.into()).unwrap();
     let item = parse_macro_input!(item as ItemFn);
-    let is_init = matches!(method_type, MethodType::Init);
+    let is_lifecycle = matches!(method_type, MethodType::Init | MethodType::PostUpgrade);
     let method_type = Ident::new(method_type.to_string().as_str(), Span::call_site());
 
     let mut attrs = Vec::new();
@@ -93,13 +100,13 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
 
     let msgpack = if attr.msgpack {
         let mut msgpack_attrs = attrs.clone();
-        let msgpack_name = if is_init { name.clone() } else { format!("{name}_msgpack") };
+        let msgpack_name = if is_lifecycle { name.clone() } else { format!("{name}_msgpack") };
 
-        if !is_init {
+        if !is_lifecycle {
             msgpack_attrs.push(quote! { name = #msgpack_name });
         }
 
-        let serializer = if is_init {
+        let serializer = if is_lifecycle {
             quote! {}
         } else {
             let serializer_func = if empty_return {
@@ -145,13 +152,13 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
 
     let json = if attr.json {
         let mut json_attrs = attrs.clone();
-        let json_name = if is_init { name.clone() } else { format!("{name}_json") };
+        let json_name = if is_lifecycle { name.clone() } else { format!("{name}_json") };
 
-        if !is_init {
+        if !is_lifecycle {
             json_attrs.push(quote! { name = #json_name });
         }
 
-        let serializer = if is_init {
+        let serializer = if is_lifecycle {
             quote! {}
         } else {
             let serializer_func = if empty_return {

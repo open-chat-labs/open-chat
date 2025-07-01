@@ -2,15 +2,15 @@ use crate::jobs::import_groups::finalize_group_import;
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
 use crate::{Data, read_state};
+use canister_api_macros::post_upgrade;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use community_canister::post_upgrade::Args;
-use ic_cdk::post_upgrade;
 use instruction_counts_log::InstructionCountFunctionId;
 use stable_memory::get_reader;
 use tracing::info;
 
-#[post_upgrade]
+#[post_upgrade(msgpack = true)]
 #[trace]
 fn post_upgrade(args: Args) {
     stable_memory_map::init(get_stable_memory_map_memory());

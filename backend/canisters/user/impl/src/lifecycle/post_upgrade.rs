@@ -1,15 +1,15 @@
 use crate::Data;
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
+use canister_api_macros::post_upgrade;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
-use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
 use tracing::info;
 use types::CanisterId;
 use user_canister::post_upgrade::Args;
 
-#[post_upgrade]
+#[post_upgrade(msgpack = true)]
 #[trace]
 fn post_upgrade(args: Args) {
     stable_memory_map::init(get_stable_memory_map_memory());
