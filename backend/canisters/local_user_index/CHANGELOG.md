@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Use MessagePack to serialize upgrade args for Users/Group/Communities ([#8269](https://github.com/open-chat-labs/open-chat/pull/8269))
+
 ## [[2.0.1809](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1809-local_user_index)] - 2025-06-27
 
 ### Changed

@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Updated the `FcmData` interface ([8261](https://github.com/open-chat-labs/open-chat/pull/8261))
+- Use MessagePack to serialize upgrade args ([#8269](https://github.com/open-chat-labs/open-chat/pull/8269))
+
 ## [[2.0.1804](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1804-group)] - 2025-06-26
 
 ### Added
@@ -14,7 +19,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `c2c_bot_remove_user` endpoint ([#8217](https://github.com/open-chat-labs/open-chat/pull/8217))
 - Add `c2c_bot_invite_users` endpoint ([#8218](https://github.com/open-chat-labs/open-chat/pull/8218))
 - Add `c2c_bot_members` endpoint ([#8225](https://github.com/open-chat-labs/open-chat/pull/8225))
-- Updated the `FcmData` interface ([8261](https://github.com/open-chat-labs/open-chat/pull/8261))
 
 ### Changed
 

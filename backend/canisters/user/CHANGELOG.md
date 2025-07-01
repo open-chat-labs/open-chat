@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Store Identity canisterId in each User canister ([8220](https://github.com/open-chat-labs/open-chat/pull/8220))
 - Expose more details about daily claims ([8255](https://github.com/open-chat-labs/open-chat/pull/8255))
 - Updated the `FcmData` interface ([8261](https://github.com/open-chat-labs/open-chat/pull/8261))
+- Use MessagePack to serialize upgrade args ([#8269](https://github.com/open-chat-labs/open-chat/pull/8269))
 
 ### Fixed
 
