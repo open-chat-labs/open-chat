@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Push full chat events to subscribed bots ([#8264](https://github.com/open-chat-labs/open-chat/pull/8264))
+- Implement getting proposal tallies for a batch of chats in a single query ([#8275](https://github.com/open-chat-labs/open-chat/pull/8275))
 
 ### Fixed
 
