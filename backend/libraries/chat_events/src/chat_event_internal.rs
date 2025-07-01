@@ -93,7 +93,7 @@ impl ChatEventInternal {
         )
     }
 
-    pub fn is_valid_for_group_chat(&self) -> bool {
+    pub fn is_valid_for_group(&self) -> bool {
         matches!(
             self,
             ChatEventInternal::Message(_)

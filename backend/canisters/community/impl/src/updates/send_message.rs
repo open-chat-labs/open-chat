@@ -18,8 +18,8 @@ use rand::RngCore;
 use regex_lite::Regex;
 use std::str::FromStr;
 use types::{
-    Achievement, BotCaller, BotPermissions, Caller, ChannelId, ChannelMessageNotification, Chat, EventIndex, EventWrapper,
-    FcmData, IdempotentEnvelope, Message, MessageContent, MessageIndex, OCResult, TimestampMillis, User, UserId,
+    Achievement, BotCaller, BotPermissions, Caller, ChannelId, ChannelMessageNotification, Chat, CommunityId, EventIndex,
+    EventWrapper, FcmData, IdempotentEnvelope, Message, MessageContent, MessageIndex, OCResult, TimestampMillis, User, UserId,
     UserNotificationPayload, Version,
 };
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
@@ -239,7 +239,7 @@ fn process_send_message_result(
     let message_id = message_event.event.message_id;
     let expires_at = message_event.expires_at;
     let content = &message_event.event.content;
-    let community_id = state.env.canister_id().into();
+    let community_id: CommunityId = state.env.canister_id().into();
 
     register_timer_jobs(channel_id, thread_root_message_index, message_event, now, &mut state.data);
 
@@ -251,10 +251,11 @@ fn process_send_message_result(
             content.notification_text(&users_mentioned.mentioned_directly, &users_mentioned.user_groups_mentioned);
 
         // TODO i18n
-        let fcm_data = FcmData::builder()
-            .with_alt_title(&sender_display_name, &sender_username)
-            .with_alt_body(&message_text, &message_type)
-            .build();
+        let fcm_data = FcmData::for_channel(community_id, channel_id)
+            .set_body_with_alt(&message_text, &message_type)
+            .set_sender_id(sender)
+            .set_sender_name_with_alt(&sender_display_name, &sender_username)
+            .set_avatar_id(channel_avatar_id);
 
         let notification = UserNotificationPayload::ChannelMessage(ChannelMessageNotification {
             community_id,

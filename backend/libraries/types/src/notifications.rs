@@ -30,7 +30,7 @@ pub struct UserNotification {
 
     // Values relevant for the FCM notifications
     #[serde(default, rename = "f")]
-    pub fcm_data: FcmData,
+    pub fcm_data: Option<FcmData>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -156,7 +156,7 @@ pub struct UserNotificationEnvelope {
     #[serde(rename = "t")]
     pub timestamp: TimestampMillis,
     #[serde(default, rename = "f")]
-    pub fcm_data: FcmData,
+    pub fcm_data: Option<FcmData>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

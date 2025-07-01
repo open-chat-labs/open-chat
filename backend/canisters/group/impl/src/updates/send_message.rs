@@ -11,8 +11,8 @@ use group_canister::send_message_v2::{Response::*, *};
 use group_chat_core::SendMessageSuccess;
 use oc_error_codes::OCErrorCode;
 use types::{
-    Achievement, BotCaller, BotPermissions, Caller, Chat, EventIndex, EventWrapper, FcmData, GroupMessageNotification, Message,
-    MessageContent, MessageIndex, OCResult, TimestampMillis, User, UserNotificationPayload,
+    Achievement, BotCaller, BotPermissions, Caller, Chat, ChatId, EventIndex, EventWrapper, FcmData, GroupMessageNotification,
+    Message, MessageContent, MessageIndex, OCResult, TimestampMillis, User, UserNotificationPayload,
 };
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -189,16 +189,17 @@ fn process_send_message_result(
     if !result.unfinalised_bot_message {
         let sender = caller.agent();
         let content = &message_event.event.content;
-        let chat_id = state.env.canister_id().into();
+        let chat_id: ChatId = state.env.canister_id().into();
         let message_type = content.message_type();
         let message_text = content.notification_text(&mentioned, &[]);
+        let group_avatar_id = state.data.chat.avatar.as_ref().map(|d| d.id);
 
         // TODO i18n
         let fcm_body = message_text.clone().unwrap_or(message_type.clone());
-        let fcm_data = FcmData::builder()
-            .with_alt_title(&sender_display_name, &sender_username)
-            .with_body(fcm_body)
-            .build();
+        let fcm_data = FcmData::for_group(chat_id)
+            .set_body(fcm_body)
+            .set_sender_name_with_alt(&sender_display_name, &sender_username)
+            .set_avatar_id(group_avatar_id);
 
         let notification = UserNotificationPayload::GroupMessage(GroupMessageNotification {
             chat_id,

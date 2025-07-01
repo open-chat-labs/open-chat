@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `c2c_bot_remove_user` endpoint ([#8217](https://github.com/open-chat-labs/open-chat/pull/8217))
 - Add `c2c_bot_invite_users` endpoint ([#8218](https://github.com/open-chat-labs/open-chat/pull/8218))
 - Add `c2c_bot_members` endpoint ([#8225](https://github.com/open-chat-labs/open-chat/pull/8225))
+- Updated the `FcmData` interface ([8261](https://github.com/open-chat-labs/open-chat/pull/8261))
 
 ### Changed
 
