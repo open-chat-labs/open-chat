@@ -1,11 +1,10 @@
-use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{AccessGateConfig, Document, OptionUpdate, OptionalCommunityPermissions, UpdatedRules, Version};
 
 #[ts_export(community, update_community)]
-#[derive(CandidType, Serialize, Deserialize, Debug, Default)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Args {
     pub name: Option<String>,
     pub description: Option<String>,
@@ -22,14 +21,14 @@ pub struct Args {
 }
 
 #[ts_export(community, update_community)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     SuccessV2(SuccessResult),
     Error(OCError),
 }
 
 #[ts_export(community, update_community)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub rules_version: Option<Version>,
 }

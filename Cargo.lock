@@ -1910,8 +1910,8 @@ name = "community_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "candid_gen",
  "chat_events",
+ "ic_principal",
  "oc_error_codes",
  "serde",
  "serde_bytes",
@@ -1966,6 +1966,7 @@ dependencies = [
  "ic-cdk",
  "ic-cdk-timers",
  "ic-stable-structures",
+ "ic_principal",
  "icrc-ledger-types",
  "installed_bots",
  "instruction_counts_log",

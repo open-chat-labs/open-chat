@@ -2,16 +2,16 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_local_user_index;
 use crate::timer_job_types::HardDeleteMessageContentJob;
 use crate::{RuntimeState, TimerJob, execute_update, execute_update_async, mutate_state, read_state};
-use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::{c2c_bot_delete_messages, delete_messages::*};
 use constants::MINUTE_IN_MS;
+use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, BotCaller, BotPermissions, Caller, CanisterId, ChatPermission, OCResult};
 use user_index_canister_c2c_client::lookup_user;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn delete_messages(args: Args) -> Response {
     execute_update_async(|| delete_messages_impl(args)).await

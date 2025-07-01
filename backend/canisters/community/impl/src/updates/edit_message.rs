@@ -6,7 +6,7 @@ use community_canister::edit_message::*;
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, OCResult};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn edit_message(args: Args) -> Response {
     execute_update(|state| edit_message_impl(args, state)).into()

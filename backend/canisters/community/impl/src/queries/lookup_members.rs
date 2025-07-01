@@ -3,7 +3,7 @@ use canister_api_macros::query;
 use community_canister::lookup_members::{Response::*, *};
 use types::OCResult;
 
-#[query(candid = true, msgpack = true)]
+#[query(msgpack = true)]
 fn lookup_members(args: Args) -> Response {
     match read_state(|state| lookup_members_impl(args, state)) {
         Ok(result) => Success(result),

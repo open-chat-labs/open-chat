@@ -5,7 +5,6 @@ use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::members::CommunityMembers;
 use crate::timer_job_types::{DeleteFileReferencesJob, MakeTransferJob, RemoveExpiredEventsJob, TimerJob};
 use activity_notification_state::ActivityNotificationState;
-use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::{ChatEventInternal, ChatMetricsInternal, EventPusher};
@@ -19,6 +18,7 @@ use group_community_common::{
     Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, Members, PaymentReceipts, PendingPaymentsQueue,
     UserCache,
 };
+use ic_principal::Principal;
 use installed_bots::InstalledBots;
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use model::events::CommunityEventInternal;
