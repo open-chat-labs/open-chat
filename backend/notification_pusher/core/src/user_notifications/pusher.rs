@@ -1,7 +1,7 @@
 use crate::metrics::write_metrics;
 use crate::{FcmNotification, NotificationToPush, UserNotificationToPush, timestamp};
 use async_channel::{Receiver, Sender};
-use fcm_service::{FcmMessage, FcmNotification as ExternalFcmNotification, FcmService, Target};
+use fcm_service::{FcmMessage, FcmService, Target};
 use std::collections::{BinaryHeap, HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
@@ -131,25 +131,9 @@ impl Pusher {
     async fn process_fcm_notification_to_push(&self, fcm_notification_to_push: Box<FcmNotification>) -> bool {
         let fcm_data = fcm_notification_to_push.fcm_data;
         let mut message = FcmMessage::new();
-        let mut notification = ExternalFcmNotification::new();
 
-        let mut android_notification = fcm_service::AndroidNotification::new();
-        // We can route messages to different channels, which can have different setups
-        android_notification.set_channel_id(Some("oc_messages".into()));
-        // TODO add url for the sender avatar, then we can do:
-        // android_notification.set_icon(fcm_data.sender_icon)
-
-        let mut android_cfg = fcm_service::AndroidConfig::new();
-        android_cfg.set_notification(Some(android_notification));
-
-        notification.set_title(fcm_data.title);
-        notification.set_body(fcm_data.body);
-        notification.set_image(fcm_data.image);
-        // TODO add any additional data to the notification
-
-        message.set_notification(Some(notification));
+        message.set_data(fcm_data.map(|d| d.as_data()));
         message.set_target(Target::Token(fcm_notification_to_push.fcm_token.0));
-        message.set_android(Some(android_cfg));
 
         let res = self.fcm_service.send_notification(message).await;
         if res.is_err() {

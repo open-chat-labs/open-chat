@@ -61,13 +61,14 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                     user_id: Some(user_id),
                 });
 
+                let channel_avatar_id = channel.chat.avatar.as_ref().map(|a| a.id);
                 let tip = format_crypto_amount_with_symbol(args.amount, args.decimals, &args.token_symbol);
                 // TODO i18n
                 let fcm_body = format!("Tipped your message {}", tip.clone());
-                let fcm_data = FcmData::builder()
-                    .with_alt_title(&args.display_name, &args.username)
-                    .with_body(fcm_body)
-                    .build();
+                let fcm_data = FcmData::for_channel(community_id, channel.id)
+                    .set_body(fcm_body)
+                    .set_sender_name_with_alt(&args.display_name, &args.username)
+                    .set_avatar_id(channel_avatar_id);
 
                 let notification = UserNotificationPayload::ChannelMessageTipped(ChannelMessageTipped {
                     community_id,
@@ -82,7 +83,7 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                     tipped_by_display_name: args.display_name,
                     tip,
                     community_avatar_id: state.data.avatar.as_ref().map(|a| a.id),
-                    channel_avatar_id: channel.chat.avatar.as_ref().map(|a| a.id),
+                    channel_avatar_id,
                 });
 
                 state.push_notification(Some(user_id), vec![message.sender], notification, fcm_data);

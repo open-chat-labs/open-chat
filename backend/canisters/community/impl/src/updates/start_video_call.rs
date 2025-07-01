@@ -9,7 +9,8 @@ use community_canister::start_video_call_v2::*;
 use constants::HOUR_IN_MS;
 use oc_error_codes::OCErrorCode;
 use types::{
-    Caller, ChannelMessageNotification, FcmData, OCResult, UserId, UserNotificationPayload, VideoCallPresence, VideoCallType,
+    Caller, ChannelMessageNotification, CommunityId, FcmData, OCResult, UserId, UserNotificationPayload, VideoCallPresence,
+    VideoCallType,
 };
 
 #[update(guard = "caller_is_video_call_operator", msgpack = true)]
@@ -77,15 +78,19 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         .filter(|u| state.data.members.get_by_user_id(u).is_some_and(|m| !m.suspended().value))
         .collect();
 
+    let community_id: CommunityId = state.env.canister_id().into();
+    let channel_avatar_id = channel.chat.avatar.as_ref().map(|d| d.id);
+
     // TODO i18n
     // TODO video call notifications could display decline and answer buttons
-    let fcm_data = FcmData::builder()
-        .with_alt_title(&args.initiator_display_name, &args.initiator_username)
-        .with_body("Video call incoming...".to_string())
-        .build();
+    let fcm_data = FcmData::for_channel(community_id, args.channel_id)
+        .set_body("Video call incoming...".to_string())
+        .set_sender_id(sender)
+        .set_sender_name_with_alt(&args.initiator_display_name, &args.initiator_username)
+        .set_avatar_id(channel_avatar_id);
 
     let notification = UserNotificationPayload::ChannelMessage(ChannelMessageNotification {
-        community_id: state.env.canister_id().into(),
+        community_id,
         channel_id: args.channel_id,
         thread_root_message_index: None,
         message_index,
@@ -100,7 +105,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         community_name: state.data.name.value.clone(),
         channel_name: channel.chat.name.value.clone(),
         community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
-        channel_avatar_id: channel.chat.avatar.as_ref().map(|d| d.id),
+        channel_avatar_id,
     });
 
     state.push_notification(Some(sender), users_to_notify, notification, fcm_data);

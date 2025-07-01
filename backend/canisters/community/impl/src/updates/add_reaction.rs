@@ -6,8 +6,8 @@ use canister_tracing_macros::trace;
 use community_canister::{add_reaction::*, c2c_bot_add_reaction};
 use oc_error_codes::OCErrorCode;
 use types::{
-    Achievement, BotCaller, BotPermissions, Caller, ChannelReactionAddedNotification, Chat, ChatPermission, EventIndex,
-    FcmData, OCResult, UserNotificationPayload,
+    Achievement, BotCaller, BotPermissions, Caller, ChannelReactionAddedNotification, Chat, ChatPermission, CommunityId,
+    EventIndex, FcmData, OCResult, UserNotificationPayload,
 };
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -81,7 +81,7 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
     {
         if let Some(sender) = channel.chat.members.get(&message.sender) {
             if message.sender != agent && !sender.user_type().is_bot() {
-                let community_id = state.env.canister_id().into();
+                let community_id: CommunityId = state.env.canister_id().into();
 
                 let notifications_muted = channel
                     .chat
@@ -96,13 +96,14 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
                         .get_by_user_id(&agent)
                         .and_then(|m| m.display_name().value.clone())
                         .or(args.display_name);
+                    let channel_avatar_id = channel.chat.avatar.as_ref().map(|d| d.id);
 
                     // TODO i18n
                     let fcm_body = format!("Reacted {} to your message", args.reaction.clone().0);
-                    let fcm_data = FcmData::builder()
-                        .with_alt_title(&display_name, &args.username)
-                        .with_body(fcm_body)
-                        .build();
+                    let fcm_data = FcmData::for_channel(community_id, args.channel_id)
+                        .set_body(fcm_body)
+                        .set_sender_name_with_alt(&display_name, &args.username)
+                        .set_avatar_id(channel_avatar_id);
 
                     let notification = UserNotificationPayload::ChannelReactionAdded(ChannelReactionAddedNotification {
                         community_id,
@@ -117,7 +118,7 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
                         added_by_display_name: display_name,
                         reaction: args.reaction,
                         community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
-                        channel_avatar_id: channel.chat.avatar.as_ref().map(|d| d.id),
+                        channel_avatar_id,
                     });
 
                     state.push_notification(Some(agent), vec![message.sender], notification, fcm_data);
