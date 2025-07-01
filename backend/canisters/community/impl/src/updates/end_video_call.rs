@@ -8,7 +8,7 @@ use community_canister::end_video_call_v2::*;
 use oc_error_codes::OCErrorCode;
 use types::OCResult;
 
-#[update(guard = "caller_is_video_call_operator", msgpack = true, candid = true)]
+#[update(guard = "caller_is_video_call_operator", candid = true, msgpack = true)]
 #[trace]
 fn end_video_call_v2(args: Args) -> Response {
     execute_update(|state| end_video_call_impl(args, state)).into()

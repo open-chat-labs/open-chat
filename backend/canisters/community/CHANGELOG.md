@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Update video call endpoints to support both Candid and MessagePack ([#8273](https://github.com/open-chat-labs/open-chat/pull/8273))
+
 ### Fixed
 
 - Trying to fix fcm_data issue ([#8272](https://github.com/open-chat-labs/open-chat/pull/8272))
