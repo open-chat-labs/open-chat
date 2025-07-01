@@ -17,15 +17,15 @@ use std::mem;
 use std::ops::DerefMut;
 use tracing::error;
 use types::{
-    BlobReference, BotChatEvent, BotNotification, CallParticipant, CanisterId, Chat, ChatEventCategory, ChatEventType,
-    ChatType, CompletedCryptoTransaction, DirectChatCreated, EventContext, EventIndex, EventMetaData, EventWrapper,
-    EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen,
-    HydratedMention, Mention, Message, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch,
-    MessageTippedEventPayload, Milliseconds, MultiUserChat, OCResult, OptionUpdate, P2PSwapAccepted, P2PSwapCompleted,
-    P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalRewardStatus,
-    ProposalUpdate, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess, SenderContext, Tally,
-    TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants,
-    VideoCallPresence, VideoCallType, VoteOperation,
+    BlobReference, BotChatEvent, BotNotification, CallParticipant, CanisterId, Chat, ChatEvent, ChatEventCategory,
+    ChatEventType, ChatType, CompletedCryptoTransaction, DirectChatCreated, EventContext, EventIndex, EventMetaData,
+    EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen,
+    GroupUnfrozen, HydratedMention, Mention, Message, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex,
+    MessageMatch, MessageTippedEventPayload, Milliseconds, MultiUserChat, OCResult, OptionUpdate, P2PSwapAccepted,
+    P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes,
+    ProposalRewardStatus, ProposalUpdate, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess,
+    SenderContext, Tally, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload,
+    VideoCallParticipants, VideoCallPresence, VideoCallType, VoteOperation,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -656,7 +656,7 @@ impl ChatEvents {
             ChatEventType::MessagePollEnded,
             |message, _| Self::end_poll_inner(message),
         ) {
-            Ok(result) => Success(result),
+            Ok(result) => Success(Box::new(result)),
             Err(UpdateEventError::NoChange(_)) => UnableToEndPoll,
             Err(UpdateEventError::NotFound) => PollNotFound,
         }
@@ -1633,8 +1633,7 @@ impl ChatEvents {
             &mut self.main
         };
 
-        let initiated_by = event.initiated_by();
-        let event_index = events_list.push_event(event, expires_at, now);
+        let event_index = events_list.push_event(event.clone(), expires_at, now);
 
         if let Some(timestamp) = expires_at {
             self.expiring_events.insert(event_index, timestamp);
@@ -1644,9 +1643,12 @@ impl ChatEvents {
         let bot_notification = if bots_to_notify.is_empty() {
             None
         } else {
+            let event = event.chat_event(None);
+            let initiated_by = event.initiated_by();
             Some(BotNotification {
                 event: types::BotEvent::Chat(BotChatEvent {
                     event_type,
+                    event,
                     chat: self.chat,
                     thread: thread_root_message_index,
                     event_index,
@@ -2273,7 +2275,7 @@ impl ChatEvents {
         result.map(|success| UpdateEventSuccess {
             event_index: success.event_index,
             latest_event_index,
-            initiated_by: success.initiated_by,
+            event: success.event.chat_event(None),
             value: success.value,
         })
     }
@@ -2297,14 +2299,16 @@ impl ChatEvents {
         .map(|r| {
             let bots_to_notify = self.bots_to_notify(&event_type);
             let bot_notification = if !bots_to_notify.is_empty() {
+                let initiated_by = r.event.initiated_by();
                 Some(BotNotification {
                     event: types::BotEvent::Chat(BotChatEvent {
                         event_type,
+                        event: r.event,
                         chat: self.chat,
                         thread: thread_root_message_index,
                         event_index: r.event_index,
                         latest_event_index: r.latest_event_index,
-                        initiated_by: r.initiated_by,
+                        initiated_by,
                     }),
                     recipients: bots_to_notify,
                 })
@@ -2440,7 +2444,7 @@ pub struct RegisterPollVoteSuccess {
 }
 
 pub enum EndPollResult {
-    Success(UpdateMessageSuccess),
+    Success(Box<UpdateMessageSuccess>),
     PollNotFound,
     UnableToEndPoll,
 }
@@ -2562,13 +2566,13 @@ impl<T> UpdateMessageSuccess<T> {
 pub struct UpdateEventSuccess<T> {
     pub event_index: EventIndex,
     pub latest_event_index: EventIndex,
-    pub initiated_by: Option<UserId>,
+    pub event: ChatEvent,
     pub value: T,
 }
 
 pub struct UpdateEventInternalSuccess<T> {
     pub event_index: EventIndex,
-    pub initiated_by: Option<UserId>,
+    pub event: ChatEventInternal,
     pub value: T,
 }
 

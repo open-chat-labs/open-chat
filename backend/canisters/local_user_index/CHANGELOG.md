@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Push full chat events to subscribed bots ([#8264](https://github.com/open-chat-labs/open-chat/pull/8264))
+
 ## [[2.0.1809](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1809-local_user_index)] - 2025-06-27
 
 ### Changed

@@ -184,7 +184,7 @@ impl RuntimeState {
         self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
             created_at: self.env.now(),
             idempotency_id: self.env.rng().next_u64(),
-            value: local_user_index_canister::CommunityEvent::Notification(notification),
+            value: local_user_index_canister::CommunityEvent::Notification(Box::new(notification)),
         });
     }
 

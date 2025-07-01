@@ -126,12 +126,12 @@ impl RuntimeState {
         self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
             created_at: self.env.now(),
             idempotency_id: self.env.rng().next_u64(),
-            value: local_user_index_canister::UserEvent::Notification(Notification::User(UserNotification {
+            value: local_user_index_canister::UserEvent::Notification(Box::new(Notification::User(UserNotification {
                 sender,
                 recipients: vec![recipient],
                 notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
                 fcm_data: Some(fcm_data),
-            })),
+            }))),
         })
     }
 
@@ -246,7 +246,7 @@ impl RuntimeState {
         if let Some(notification) = notification {
             if !notification.recipients.is_empty() {
                 self.push_local_user_index_canister_event(
-                    LocalUserIndexEvent::Notification(Notification::Bot(notification)),
+                    LocalUserIndexEvent::Notification(Box::new(Notification::Bot(notification))),
                     self.env.now(),
                 );
             }
