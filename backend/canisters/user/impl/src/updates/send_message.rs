@@ -236,7 +236,7 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
                         let message_text = message_content.notification_text(&[], &[]);
                         let image_url = message_content.notification_image_url();
 
-                        let fcm_data = FcmData::for_direct_chat(bot_id.into())
+                        let fcm_data = FcmData::for_direct_chat(bot_id)
                             .set_body_with_alt(&message_text, &message_type)
                             .set_optional_image(image_url.clone())
                             .set_sender_name(bot_name.clone());

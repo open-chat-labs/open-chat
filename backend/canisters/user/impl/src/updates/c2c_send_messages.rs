@@ -202,7 +202,7 @@ pub(crate) fn handle_message_impl(
         let message_text = content.notification_text(&args.mentioned, &[]);
         let image_url = content.notification_image_url();
 
-        let fcm_data = FcmData::for_direct_chat(args.sender.into())
+        let fcm_data = FcmData::for_direct_chat(args.sender)
             .set_body_with_alt(&message_text, &message_type)
             .set_optional_image(image_url.clone())
             .set_sender_name_with_alt(&args.sender_display_name, &args.sender_name)

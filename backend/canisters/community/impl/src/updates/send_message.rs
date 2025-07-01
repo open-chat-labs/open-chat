@@ -251,9 +251,9 @@ fn process_send_message_result(
             content.notification_text(&users_mentioned.mentioned_directly, &users_mentioned.user_groups_mentioned);
 
         // TODO i18n
-        let fcm_data = FcmData::for_channel(community_id.into(), channel_id.into())
+        let fcm_data = FcmData::for_channel(community_id, channel_id)
             .set_body_with_alt(&message_text, &message_type)
-            .set_sender_id(sender.clone())
+            .set_sender_id(sender)
             .set_sender_name_with_alt(&sender_display_name, &sender_username)
             .set_avatar_id(channel_avatar_id);
 
