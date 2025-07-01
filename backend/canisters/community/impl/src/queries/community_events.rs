@@ -6,7 +6,7 @@ use group_community_common::Member;
 use oc_error_codes::OCErrorCode;
 use types::{CommunityEventCategory, OCResult};
 
-#[query(candid = true, msgpack = true)]
+#[query(msgpack = true)]
 fn community_events(args: Args) -> Response {
     match read_state(|state| community_events_impl(args, state)) {
         Ok(result) => Success(result),

@@ -1,6 +1,5 @@
 use crate::CommunityMemberInternal;
-use candid::Deserialize;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use stable_memory_map::{StableMemoryMap, UserIdKeyPrefix};
 use std::collections::BTreeSet;
 use types::{CommunityRole, TimestampMillis, Timestamped, UserId, UserType, Version, is_default};
@@ -33,7 +32,7 @@ impl MembersStableStorage {
 
     #[cfg(test)]
     pub fn all_members(&self) -> Vec<CommunityMemberInternal> {
-        use candid::Principal;
+        use ic_principal::Principal;
         use stable_memory_map::{Key, KeyPrefix, with_map};
 
         with_map(|m| {

@@ -4,7 +4,6 @@ use crate::model::members::CommunityMembers;
 use crate::updates::c2c_join_community::join_community;
 use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, read_state};
 use crate::{execute_update_async, jobs};
-use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
@@ -15,6 +14,7 @@ use gated_groups::{
 };
 use group_chat_core::{AddMemberSuccess, AddResult};
 use group_community_common::ExpiringMember;
+use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use types::{
     AccessGateConfigInternal, ChannelId, MemberJoinedInternal, TimestampMillis, UniquePersonProof, UserId, UserType,

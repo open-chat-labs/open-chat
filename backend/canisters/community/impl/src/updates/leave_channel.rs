@@ -4,7 +4,7 @@ use canister_tracing_macros::trace;
 use community_canister::leave_channel::*;
 use types::OCResult;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn leave_channel(args: Args) -> Response {
     execute_update(|state| leave_channel_impl(args, state)).into()

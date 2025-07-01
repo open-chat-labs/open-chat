@@ -1,8 +1,8 @@
 use crate::model::members::stable_memory::MembersStableStorage;
 use crate::model::user_groups::{UserGroup, UserGroups};
-use candid::Principal;
 use constants::calculate_summary_updates_data_removal_cutoff;
 use group_community_common::{Member, MemberUpdate, Members};
+use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use principal_to_user_id_map::PrincipalToUserIdMap;
 use rand::RngCore;

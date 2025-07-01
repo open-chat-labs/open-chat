@@ -1,11 +1,10 @@
-use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{ChannelId, UserId};
 
 #[ts_export(community, add_members_to_channel)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub channel_id: ChannelId,
     pub user_ids: Vec<UserId>,
@@ -14,7 +13,7 @@ pub struct Args {
 }
 
 #[ts_export(community, add_members_to_channel)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
     PartialSuccess(PartialSuccessResult),
@@ -23,7 +22,7 @@ pub enum Response {
 }
 
 #[ts_export(community, add_members_to_channel)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct PartialSuccessResult {
     pub users_added: Vec<UserId>,
     pub users_already_in_channel: Vec<UserId>,
@@ -32,7 +31,7 @@ pub struct PartialSuccessResult {
 }
 
 #[ts_export(community, add_members_to_channel)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct FailedResult {
     pub users_already_in_channel: Vec<UserId>,
     pub users_limit_reached: Vec<UserId>,
@@ -40,7 +39,7 @@ pub struct FailedResult {
 }
 
 #[ts_export(community, add_members_to_channel)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct UserFailedError {
     pub user_id: UserId,
     pub error: String,

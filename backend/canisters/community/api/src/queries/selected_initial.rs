@@ -1,24 +1,23 @@
-use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{CommunityMember, EventIndex, InstalledBotDetails, TimestampMillis, UserGroupDetails, UserId, VersionedRules};
 
 #[ts_export(community, selected_initial)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub invite_code: Option<u64>,
 }
 
 #[ts_export(community, selected_initial)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     Error(OCError),
 }
 
 #[ts_export(community, selected_initial)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub timestamp: TimestampMillis,
     pub last_updated: TimestampMillis,

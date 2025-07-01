@@ -1,15 +1,15 @@
 use crate::RuntimeState;
 use crate::model::channels::ChannelUpdates;
 use crate::read_state;
-use candid::Principal;
 use canister_api_macros::query;
 use community_canister::summary_updates::{Response::*, *};
+use ic_principal::Principal;
 use std::cmp::max;
 use types::{
     AccessGateConfig, CommunityCanisterCommunitySummaryUpdates, CommunityMembershipUpdates, OptionUpdate, TimestampMillis,
 };
 
-#[query(candid = true, msgpack = true)]
+#[query(msgpack = true)]
 fn summary_updates(args: Args) -> Response {
     read_state(|state| summary_updates_impl(args.updates_since, args.invite_code, args.on_behalf_of, state))
 }

@@ -1,11 +1,9 @@
-use candid::Deserialize;
-use community_canister::c2c_bot_community_summary::CommunitySummary;
-use community_canister::c2c_bot_community_summary::Response as C2CResponse;
+use candid::CandidType;
+use community_canister::c2c_bot_community_summary::{CommunitySummary, Response as C2CResponse};
 use oc_error_codes::OCError;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::CommunityId;
-use user_canister::token_swap_status::CandidType;
 
 #[ts_export(local_user_index, bot_community_summary)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]

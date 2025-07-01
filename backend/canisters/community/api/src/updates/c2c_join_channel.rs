@@ -1,4 +1,4 @@
-use candid::{CandidType, Principal};
+use ic_principal::Principal;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{
@@ -6,7 +6,7 @@ use types::{
     UniquePersonProof, UserId, UserType, VerifiedCredentialGateArgs,
 };
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub user_id: UserId,
     pub principal: Principal,
@@ -20,7 +20,7 @@ pub struct Args {
     pub unique_person_proof: Option<UniquePersonProof>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(Box<CommunityCanisterChannelSummary>),
     SuccessJoinedCommunity(Box<CommunityCanisterCommunitySummary>),

@@ -35,7 +35,7 @@ async fn reset_invite_code_impl() -> reset_invite_code::Response {
     Success(SuccessResult { code })
 }
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn enable_invite_code(_args: Args) -> Response {
     execute_update_async(enable_invite_code_impl).await

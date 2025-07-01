@@ -1,11 +1,11 @@
 use crate::RuntimeState;
 use crate::read_state;
-use candid::Principal;
 use canister_api_macros::query;
 use community_canister::summary::{Response::*, *};
+use ic_principal::Principal;
 use types::{CommunityCanisterCommunitySummary, OCResult};
 
-#[query(candid = true, msgpack = true)]
+#[query(msgpack = true)]
 fn summary(args: Args) -> Response {
     match read_state(|state| summary_impl(args.invite_code, args.on_behalf_of, state)) {
         Ok(summary) => Success(summary),

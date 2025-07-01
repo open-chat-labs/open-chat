@@ -1,5 +1,4 @@
-use candid::Deserialize;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{ChannelId, EventIndex, MessageIndex, TimestampMillis, UserId};
 

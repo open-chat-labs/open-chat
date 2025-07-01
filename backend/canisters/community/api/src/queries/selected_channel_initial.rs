@@ -1,4 +1,3 @@
-use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
@@ -7,20 +6,20 @@ use types::{
 };
 
 #[ts_export(community, selected_channel_initial)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub channel_id: ChannelId,
 }
 
 #[ts_export(community, selected_channel_initial)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     Error(OCError),
 }
 
 #[ts_export(community, selected_channel_initial)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub timestamp: TimestampMillis,
     pub last_updated: TimestampMillis,

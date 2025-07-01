@@ -5,7 +5,7 @@ use community_canister::channel_summary::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use types::{CommunityCanisterChannelSummary, OCResult};
 
-#[query(candid = true, msgpack = true)]
+#[query(msgpack = true)]
 fn channel_summary(args: Args) -> Response {
     match read_state(|state| summary_impl(args, state)) {
         Ok(summary) => Success(summary),

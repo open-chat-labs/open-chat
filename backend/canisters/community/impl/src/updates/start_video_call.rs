@@ -2,17 +2,17 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_video_call_operator;
 use crate::timer_job_types::{MarkVideoCallEndedJob, TimerJob};
 use crate::{CommunityEventPusher, RuntimeState, execute_update};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{CallParticipantInternal, MessageContentInternal, VideoCallContentInternal};
 use community_canister::start_video_call_v2::*;
 use constants::HOUR_IN_MS;
-use ic_cdk::update;
 use oc_error_codes::OCErrorCode;
 use types::{
     Caller, ChannelMessageNotification, FcmData, OCResult, UserId, UserNotificationPayload, VideoCallPresence, VideoCallType,
 };
 
-#[update(guard = "caller_is_video_call_operator")]
+#[update(guard = "caller_is_video_call_operator", msgpack = true)]
 #[trace]
 fn start_video_call_v2(args: Args) -> Response {
     execute_update(|state| start_video_call_impl(args, state)).into()

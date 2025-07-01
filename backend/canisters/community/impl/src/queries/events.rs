@@ -1,14 +1,14 @@
 use crate::guards::caller_is_local_user_index;
 use crate::queries::check_replica_up_to_date;
 use crate::{RuntimeState, read_state};
-use candid::Principal;
 use canister_api_macros::query;
 use community_canister::c2c_events::Args as C2CArgs;
 use community_canister::events::{Response::*, *};
+use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use types::{BotInitiator, EventsResponse, OCResult};
 
-#[query(candid = true, msgpack = true)]
+#[query(msgpack = true)]
 fn events(args: Args) -> Response {
     match read_state(|state| events_impl(args, None, None, state)) {
         Ok(result) => Success(result),

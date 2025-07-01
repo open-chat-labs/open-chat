@@ -4,7 +4,7 @@ use community_canister::selected_channel_initial::{Response::*, *};
 use std::collections::HashSet;
 use types::{GroupMember, OCResult};
 
-#[query(candid = true, msgpack = true)]
+#[query(msgpack = true)]
 fn selected_channel_initial(args: Args) -> Response {
     match read_state(|state| selected_channel_initial_impl(args, state)) {
         Ok(result) => Success(result),

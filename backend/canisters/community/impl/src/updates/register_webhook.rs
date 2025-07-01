@@ -6,7 +6,7 @@ use oc_error_codes::OCErrorCode;
 use types::OCResult;
 use utils::document::try_parse_data_url;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn register_webhook(args: Args) -> Response {
     match execute_update(|state| register_webhook_impl(args, state)) {
