@@ -35,15 +35,18 @@ impl FcmData {
         }
     }
 
-    pub fn for_direct_chat(direct_chat_id: ChatId) -> Self {
-        Self::default(Chat::Direct(direct_chat_id))
+    pub fn for_direct_chat(direct_chat_id: UserId) -> Self {
+        Self {
+            sender_id: Some(direct_chat_id),
+            ..Self::default(Chat::Direct(direct_chat_id.into()))
+        }
     }
 
-    pub fn for_group_chat(group_chat_id: ChatId) -> Self {
+    pub fn for_group(group_chat_id: ChatId) -> Self {
         Self::default(Chat::Group(group_chat_id))
     }
 
-    pub fn for_community_chat(community_id: CommunityId, channel_id: ChannelId) -> Self {
+    pub fn for_channel(community_id: CommunityId, channel_id: ChannelId) -> Self {
         Self::default(Chat::Channel(community_id, channel_id))
     }
 
@@ -106,24 +109,14 @@ impl FcmData {
                 map.insert("community_id".into(), community_id.to_string());
                 map.insert("channel_id".into(), channel_id.to_string());
             }
-            Chat::Direct(chat_id) => {
+            // Sender id is already initialised with the same value, so we
+            // ignore it here (only for direct chats).
+            Chat::Direct(_) => {
                 map.insert("type".into(), "direct".into());
-                map.insert("sender_id".into(), chat_id.to_string());
             }
             Chat::Group(chat_id) => {
                 map.insert("type".into(), "group".into());
                 map.insert("chat_id".into(), chat_id.to_string());
-            }
-        }
-
-        // For group and community chats also add sender to the data! For
-        // direct chats sender is already known.
-        match self.chat_id {
-            Chat::Direct(_) => {}
-            _ => {
-                if let Some(sender_id) = &self.sender_id {
-                    map.insert("sender_id".into(), sender_id.to_string());
-                }
             }
         }
 
@@ -137,6 +130,12 @@ impl FcmData {
 
         if let Some(image) = &self.image {
             map.insert("image".into(), image.clone());
+        }
+
+        // Initialised by default for direct chats, while can be set for
+        // group and community chats.
+        if let Some(sender_id) = &self.sender_id {
+            map.insert("sender_id".into(), sender_id.to_string());
         }
 
         if let Some(sender_name) = &self.sender_name {

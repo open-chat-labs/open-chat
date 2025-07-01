@@ -4,7 +4,6 @@ use crate::{
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::add_members_to_channel::{Response::*, *};
-use futures::channel;
 use oc_error_codes::OCErrorCode;
 use types::{AddedToChannelNotification, ChannelId, CommunityId, FcmData, OCResult, UserId, UserNotificationPayload, UserType};
 
@@ -112,7 +111,7 @@ fn commit(
 
     // TODO i18n
     let fcm_body = format!("You have been added to channel {}", channel_name.clone());
-    let fcm_data = FcmData::for_community_chat(community_id, channel_id)
+    let fcm_data = FcmData::for_channel(community_id, channel_id)
         .set_body(fcm_body)
         .set_sender_name_with_alt(&added_by_display_name, &added_by_name)
         .set_avatar_id(community_avatar_id);

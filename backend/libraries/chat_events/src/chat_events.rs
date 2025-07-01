@@ -1614,7 +1614,7 @@ impl ChatEvents {
         } else {
             match self.chat {
                 Chat::Direct(_) => event.is_valid_for_direct_chat(),
-                Chat::Group(_) | Chat::Channel(..) => event.is_valid_for_group_chat(),
+                Chat::Group(_) | Chat::Channel(..) => event.is_valid_for_group(),
             }
         };
 

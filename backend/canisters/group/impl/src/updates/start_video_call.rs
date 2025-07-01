@@ -84,7 +84,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     // TODO i18n
     // TODO video call notifications could display decline and answer buttons
     let fcm_body = "Video call incoming...".to_string();
-    let fcm_data = FcmData::for_group_chat(chat_id)
+    let fcm_data = FcmData::for_group(chat_id)
         .set_body(fcm_body)
         .set_body_with_alt(&sender_display_name, &sender_name)
         .set_avatar_id(group_avatar_id);

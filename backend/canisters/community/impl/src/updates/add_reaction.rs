@@ -100,7 +100,7 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
 
                     // TODO i18n
                     let fcm_body = format!("Reacted {} to your message", args.reaction.clone().0);
-                    let fcm_data = FcmData::for_community_chat(community_id, args.channel_id)
+                    let fcm_data = FcmData::for_channel(community_id, args.channel_id)
                         .set_body(fcm_body)
                         .set_sender_name_with_alt(&display_name, &args.username)
                         .set_avatar_id(channel_avatar_id);

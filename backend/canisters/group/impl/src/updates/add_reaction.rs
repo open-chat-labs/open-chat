@@ -95,7 +95,7 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
 
                     // TODO i18n
                     // TODO create alternative channels for notifications that we consider to be low priority
-                    let fcm_data = FcmData::for_group_chat(chat_id)
+                    let fcm_data = FcmData::for_group(chat_id)
                         .set_body(format!("Reacted {} to your message", args.reaction.clone().0))
                         .set_sender_name_with_alt(&added_by_display_name, &added_by_name)
                         .set_avatar_id(group_avatar_id);

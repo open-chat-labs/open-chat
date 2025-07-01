@@ -196,7 +196,7 @@ fn process_send_message_result(
 
         // TODO i18n
         let fcm_body = message_text.clone().unwrap_or(message_type.clone());
-        let fcm_data = FcmData::for_group_chat(chat_id)
+        let fcm_data = FcmData::for_group(chat_id)
             .set_body(fcm_body)
             .set_sender_name_with_alt(&sender_display_name, &sender_username)
             .set_avatar_id(group_avatar_id);
