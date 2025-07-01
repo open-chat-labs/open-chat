@@ -1,20 +1,24 @@
 import {
     type ChatEventsArgs,
-    type ChatEventsResponse, type ChatIdentifier,
+    type ChatEventsResponse,
+    type ChatIdentifier,
     chatIdentifierToString,
     type ChatStateFull,
     type ChatSummary,
     MAX_MESSAGES,
+    ResponseTooLargeError,
     userIdsFromEvents,
 } from "openchat-shared";
 
 const BATCH_SIZE = 20;
+const FAILURE = { kind: "failure" };
 
 export class CachePrimer {
     private pending: QueuedChat[] = [];
     private usersLoaded: Set<string> = new Set<string>();
     private jobActive: boolean = false;
     private inProgress: Set<string> = new Set<string>();
+    private blockedChats: Set<string> = new Set<string>();
 
     constructor(
         private userCanisterLocalUserIndex: string,
@@ -46,7 +50,7 @@ export class CachePrimer {
 
     private processChat(chat: ChatSummary, localUserIndex: string) {
         const chatIdString = chatIdentifierToString(chat.id);
-        if (this.inProgress.has(chatIdString)) {
+        if (this.inProgress.has(chatIdString) || this.blockedChats.has(chatIdString)) {
             return;
         }
 
@@ -67,7 +71,7 @@ export class CachePrimer {
 
             const [localUserIndex, batch] = next;
 
-            const responses = await this.getEventsBatch(localUserIndex, batch);
+            const responses = await this.fetchEvents(localUserIndex, batch);
 
             const userIds = new Set<string>();
             const loadRepliesBatch: ChatEventsArgs[] = [];
@@ -113,7 +117,7 @@ export class CachePrimer {
             }
 
             if (loadRepliesBatch.length > 0) {
-                const repliesResponse = await this.getEventsBatch(localUserIndex, loadRepliesBatch);
+                const repliesResponse = await this.fetchEvents(localUserIndex, loadRepliesBatch);
 
                 for (const response of repliesResponse) {
                     if (response.kind === "success") {
@@ -203,6 +207,25 @@ export class CachePrimer {
         });
 
         return args;
+    }
+
+    // Get events for a batch of chats, if the response fails because it is too large, retry each request individually,
+    // if any responses are still too large, mark those chats as blocked to avoid retrying them indefinitely.
+    private async fetchEvents(localUserIndex: string, batch: ChatEventsArgs[]): Promise<ChatEventsResponse[]> {
+        try {
+            return await this.getEventsBatch(localUserIndex, batch);
+        } catch (error) {
+            if (error instanceof ResponseTooLargeError) {
+                if (batch.length === 1) {
+                    // Block this chat to avoid retrying it indefinitely
+                    this.blockedChats.add(chatIdentifierToString(batch[0].context.chatId));
+                } else {
+                    // Split the batch into individual requests and try again
+                    return (await Promise.all(batch.map((args) => this.fetchEvents(localUserIndex, [args])))).flat();
+                }
+            }
+            return Array(batch.length).fill(FAILURE);
+        }
     }
 
     private shouldEnqueueChat(chat: ChatSummary, lastUpdated: bigint | undefined): boolean {
