@@ -1,11 +1,10 @@
-use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{ChannelId, MessageIndex, PollVotes, VoteOperation};
 
 #[ts_export(community, register_poll_vote)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub channel_id: ChannelId,
     pub thread_root_message_index: Option<MessageIndex>,
@@ -16,7 +15,7 @@ pub struct Args {
 }
 
 #[ts_export(community, register_poll_vote)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(PollVotes),
     Error(OCError),

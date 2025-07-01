@@ -8,7 +8,7 @@ use std::cell::LazyCell;
 use std::collections::HashSet;
 use types::{InstalledBotDetails, UserId};
 
-#[query(candid = true, msgpack = true)]
+#[query(msgpack = true)]
 fn selected_updates_v2(args: Args) -> Response {
     read_state(|state| selected_updates_impl(args, state))
 }

@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Set `explicit_join` to false if joining channel via joining community ([#8256](https://github.com/open-chat-labs/open-chat/pull/8256))
 - Push community events to subscribed bots ([#8259](https://github.com/open-chat-labs/open-chat/pull/8259))
 - Push full chat events to subscribed bots ([#8264](https://github.com/open-chat-labs/open-chat/pull/8264))
+- Remove almost all usages of `Candid` from Community canisters ([#8267](https://github.com/open-chat-labs/open-chat/pull/8267))
 
 ### Fixed
 

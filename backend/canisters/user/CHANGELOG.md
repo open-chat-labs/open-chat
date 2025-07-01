@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Store Identity canisterId in each User canister ([8220](https://github.com/open-chat-labs/open-chat/pull/8220))
 - Expose more details about daily claims ([8255](https://github.com/open-chat-labs/open-chat/pull/8255))
 
+### Fixed
+
+- Fix daily claim sometimes incorrectly displaying as inactive ([8266](https://github.com/open-chat-labs/open-chat/pull/8266))
+
 ## [[2.0.1799-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1799-user)] - 2025-06-20
 
 ### Added

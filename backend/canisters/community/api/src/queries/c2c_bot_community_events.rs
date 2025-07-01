@@ -1,4 +1,4 @@
-use crate::community_events::{self, EventsPageArgs};
+use crate::community_events::EventsPageArgs;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
@@ -24,4 +24,4 @@ pub struct EventsByIndexArgs {
     pub events: Vec<EventIndex>,
 }
 
-pub type Response = community_events::Response;
+pub type Response = crate::community_events::Response;

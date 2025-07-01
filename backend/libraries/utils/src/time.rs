@@ -19,14 +19,6 @@ pub const MONTHS: [&str; 12] = [
     "December",
 ];
 
-pub fn today(now: TimestampMillis) -> TimestampMillis {
-    to_timestamp(to_date(now))
-}
-
-pub fn tomorrow(now: TimestampMillis) -> TimestampMillis {
-    to_timestamp(to_date(now).next_day().unwrap())
-}
-
 pub fn to_date(ts: TimestampMillis) -> time::Date {
     OffsetDateTime::from_unix_timestamp((ts / 1000) as i64).unwrap().date()
 }

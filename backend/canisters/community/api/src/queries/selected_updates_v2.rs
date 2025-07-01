@@ -1,11 +1,10 @@
-use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{CommunityMember, InstalledBotDetails, TimestampMillis, UserGroupDetails, UserId, VersionedRules};
 
 #[ts_export(community, selected_updates)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub invite_code: Option<u64>,
     pub updates_since: TimestampMillis,
@@ -13,7 +12,7 @@ pub struct Args {
 
 #[ts_export(community, selected_updates)]
 #[expect(clippy::large_enum_variant)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     SuccessNoUpdates(TimestampMillis),
@@ -21,7 +20,7 @@ pub enum Response {
 }
 
 #[ts_export(community, selected_updates)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub timestamp: TimestampMillis,
     pub last_updated: TimestampMillis,

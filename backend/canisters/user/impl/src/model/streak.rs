@@ -89,10 +89,6 @@ impl Streak {
         self.insurance_last_updated = now;
     }
 
-    pub fn can_claim(&self, now: TimestampMillis) -> bool {
-        now > self.next_claim()
-    }
-
     pub fn next_claim(&self) -> TimestampMillis {
         self.day_to_timestamp(self.end_day + 1)
     }
@@ -231,7 +227,7 @@ mod tests {
     fn never_claimed_can_claim() {
         let now = DAY_ZERO + (60 * DAY_IN_MS);
         let streak = Streak::default();
-        assert!(streak.can_claim(now));
+        assert!(now > streak.next_claim());
     }
 
     #[test]

@@ -7,8 +7,8 @@ edition.workspace = true
 
 [dependencies]
 candid = { workspace = true }
-candid_gen = { path = "../../../libraries/candid_gen" }
 chat_events = { path = "../../../libraries/chat_events" }
+ic_principal = { workspace = true }
 oc_error_codes = { path = "../../../libraries/error_codes" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }

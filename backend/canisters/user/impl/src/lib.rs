@@ -46,7 +46,6 @@ use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, Walle
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
 use utils::regular_jobs::RegularJobs;
-use utils::time::{today, tomorrow};
 
 mod crypto;
 mod governance_clients;
@@ -359,7 +358,7 @@ impl RuntimeState {
             streak: self.data.streak.days(now),
             streak_ends: self.data.streak.ends(),
             max_streak: self.data.streak.max_streak(),
-            next_daily_claim: if self.data.streak.can_claim(now) { today(now) } else { tomorrow(now) },
+            next_daily_claim: self.data.streak.next_claim(),
             achievements: self.data.achievements.iter().cloned().collect(),
             unique_person_proof: self.data.unique_person_proof.is_some(),
             referred_by: self.data.referred_by,

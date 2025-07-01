@@ -8,7 +8,7 @@ use types::OCResult;
 const MIN_TERM_LENGTH: u8 = 2;
 const MAX_TERM_LENGTH: u8 = 20;
 
-#[query(candid = true, msgpack = true)]
+#[query(msgpack = true)]
 fn explore_channels(args: Args) -> Response {
     match read_state(|state| explore_channels_impl(args, state)) {
         Ok(result) => Success(result),

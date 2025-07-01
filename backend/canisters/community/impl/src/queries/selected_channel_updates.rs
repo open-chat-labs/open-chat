@@ -3,7 +3,7 @@ use canister_api_macros::query;
 use community_canister::selected_channel_updates_v2::{Response::*, *};
 use types::OCResult;
 
-#[query(candid = true, msgpack = true)]
+#[query(msgpack = true)]
 fn selected_channel_updates_v2(args: Args) -> Response {
     read_state(|state| selected_channel_updates_impl(args, state)).unwrap_or_else(Error)
 }
