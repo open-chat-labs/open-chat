@@ -189,7 +189,7 @@ dataurl = "0.1"
 dotenv = "0.15.0"
 either = "1.15.0"
 enum-repr = "0.2"
-envconfig = "0.10.0"
+envconfig = "0.11"
 event_store_canister = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
 event_store_producer = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
 event_store_producer_cdk_runtime = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
@@ -219,7 +219,7 @@ ic-transport-types = "0.40"
 ic-utils = "0.40"
 ic-verifiable-credentials = "1"
 icrc-ledger-types = "0.1"
-ic0 = "0.25"
+ic0 = "1"
 itertools = "0.14"
 jwt-simple = { version = "0.12", default-features = false, features = [
     "pure-rust",
