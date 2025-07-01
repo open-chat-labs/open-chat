@@ -6,10 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1811](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1811-airdrop_bot)] - 2025-07-01
+
 ### Changed
 
 - Filter trace level events globally so they are dropped earlier ([#7678](https://github.com/open-chat-labs/open-chat/pull/7678))
 - Include more details in failed c2c call errors ([#7749](https://github.com/open-chat-labs/open-chat/pull/7749))
+
+### Fixed
+
+- Remove `correlation_id` from `join_channel` response ([#8097](https://github.com/open-chat-labs/open-chat/pull/8097))
 
 ## [[2.0.1637](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1637-airdrop_bot)] - 2025-03-11
 
