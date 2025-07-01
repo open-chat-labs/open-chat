@@ -5,7 +5,7 @@ use ts_export::ts_export;
 use types::{AccessGateConfig, Document, Milliseconds, OptionUpdate, OptionalGroupPermissions, UpdatedRules, Version};
 
 #[ts_export(group, update_group)]
-#[derive(CandidType, Serialize, Deserialize, Debug, Default)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Args {
     pub name: Option<String>,
     pub description: Option<String>,

@@ -6,7 +6,7 @@ use group_canister::undelete_messages::{Response::*, *};
 use std::collections::HashSet;
 use types::OCResult;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn undelete_messages(args: Args) -> Response {
     match execute_update(|state| undelete_messages_impl(args, state)) {

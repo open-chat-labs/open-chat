@@ -9,7 +9,7 @@ use utils::{
     text_validation::{UsernameValidationError, validate_username_custom},
 };
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn register_webhook(args: Args) -> Response {
     match execute_update(|state| register_webhook_impl(args, state)) {

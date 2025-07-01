@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::join_video_call::{Args, Response};
 
-#[update(msgpack = true)]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn join_video_call(args: Args) -> Response {
     execute_update(|state| set_video_call_presence_impl(args.into(), state).into())
