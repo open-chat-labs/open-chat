@@ -13,7 +13,7 @@ use types::{
     VideoCallType,
 };
 
-#[update(guard = "caller_is_video_call_operator", msgpack = true)]
+#[update(guard = "caller_is_video_call_operator", candid = true, msgpack = true)]
 #[trace]
 fn start_video_call_v2(args: Args) -> Response {
     execute_update(|state| start_video_call_impl(args, state)).into()
