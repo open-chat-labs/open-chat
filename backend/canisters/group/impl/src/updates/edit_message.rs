@@ -6,7 +6,7 @@ use chat_events::EditMessageArgs;
 use group_canister::edit_message_v2::*;
 use types::{Achievement, OCResult};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn edit_message_v2(args: Args) -> Response {
     execute_update(|state| edit_message_impl(args, state)).into()

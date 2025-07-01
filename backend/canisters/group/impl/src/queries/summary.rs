@@ -1,11 +1,11 @@
 use crate::RuntimeState;
 use crate::read_state;
-use candid::Principal;
 use canister_api_macros::query;
 use group_canister::summary::{Response::*, *};
+use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 
-#[query(candid = true, msgpack = true)]
+#[query(msgpack = true)]
 fn summary(args: Args) -> Response {
     read_state(|state| summary_impl(args.on_behalf_of, state))
 }

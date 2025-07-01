@@ -5,7 +5,7 @@ use ts_export::ts_export;
 use types::{MessageIndex, PollVotes, VoteOperation};
 
 #[ts_export(group, register_poll_vote)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,

@@ -1,10 +1,10 @@
 use crate::updates::c2c_unfreeze_group::c2c_unfreeze_group_impl;
 use crate::{CommunityBeingImportedInto, RuntimeState, execute_update_async, mutate_state, read_state};
-use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
 use group_canister::convert_into_community::{Response::*, *};
+use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use rand::RngCore;
 use std::collections::HashMap;

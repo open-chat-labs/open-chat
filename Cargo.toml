@@ -17,7 +17,6 @@ members = [
     "backend/canisters/event_relay/impl",
     "backend/canisters/group/api",
     "backend/canisters/group/c2c_client",
-    "backend/canisters/group/client",
     "backend/canisters/group/impl",
     "backend/canisters/group_index/api",
     "backend/canisters/group_index/c2c_client",

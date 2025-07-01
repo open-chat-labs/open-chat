@@ -16,7 +16,7 @@ use types::{
 };
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn send_message_v2(args: Args) -> Response {
     match execute_update(|state| send_message_impl(args, None, true, state)) {

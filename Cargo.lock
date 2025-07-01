@@ -3799,8 +3799,8 @@ name = "group_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "candid_gen",
  "chat_events",
+ "ic_principal",
  "oc_error_codes",
  "serde",
  "serde_bytes",
@@ -3819,17 +3819,6 @@ dependencies = [
  "ic-cdk",
  "msgpack",
  "tracing",
- "types",
-]
-
-[[package]]
-name = "group_canister_client"
-version = "0.1.0"
-dependencies = [
- "candid",
- "canister_client",
- "group_canister",
- "ic-agent",
  "types",
 ]
 
@@ -3863,6 +3852,7 @@ dependencies = [
  "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures",
+ "ic_principal",
  "icp_ledger_canister_c2c_client",
  "icrc-ledger-types",
  "installed_bots",

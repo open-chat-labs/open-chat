@@ -5,7 +5,7 @@ use group_canister::messages_by_message_index::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use types::{EventsCaller, MessagesResponse, OCResult};
 
-#[query(candid = true, msgpack = true)]
+#[query(msgpack = true)]
 fn messages_by_message_index(args: Args) -> Response {
     match read_state(|state| messages_by_message_index_impl(args, state)) {
         Ok(result) => Success(result),

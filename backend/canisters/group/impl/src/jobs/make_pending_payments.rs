@@ -1,10 +1,10 @@
 use crate::{RuntimeState, mutate_state, read_state};
-use candid::Principal;
 use constants::{
     MEMO_GROUP_IMPORT_INTO_COMMUNITY, MEMO_JOINING_FEE, OPENCHAT_TREASURY_CANISTER_ID, SNS_GOVERNANCE_CANISTER_ID,
 };
 use group_community_common::{PaymentRecipient, PendingPayment, PendingPaymentReason};
 use ic_cdk_timers::TimerId;
+use ic_principal::Principal;
 use icrc_ledger_types::icrc1::transfer::{Memo, TransferArg};
 use ledger_utils::icrc1::make_transfer;
 use std::cell::Cell;
