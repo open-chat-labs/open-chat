@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Trying to fix fcm_data issue ([#8272](https://github.com/open-chat-labs/open-chat/pull/8272))
+
+## [[2.0.1812](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1812-community)] - 2025-07-01
+
 ### Changed
 
 - Set `explicit_join` to false if joining channel via joining community ([#8256](https://github.com/open-chat-labs/open-chat/pull/8256))

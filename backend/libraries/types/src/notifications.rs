@@ -29,7 +29,7 @@ pub struct UserNotification {
     pub notification_bytes: ByteBuf,
 
     // Values relevant for the FCM notifications
-    #[serde(default, rename = "f")]
+    #[serde(skip_deserializing, rename = "f")]
     pub fcm_data: Option<FcmData>,
 }
 
@@ -155,7 +155,7 @@ pub struct UserNotificationEnvelope {
     pub notification_bytes: ByteBuf,
     #[serde(rename = "t")]
     pub timestamp: TimestampMillis,
-    #[serde(default, rename = "f")]
+    #[serde(skip_deserializing, rename = "f")]
     pub fcm_data: Option<FcmData>,
 }
 
