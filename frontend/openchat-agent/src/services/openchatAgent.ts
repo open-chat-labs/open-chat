@@ -1858,7 +1858,9 @@ export class OpenChatAgent extends EventTarget {
                     processAchievementsResponse(userResponse.achievements);
                     if (
                         userResponse.totalChitEarned !== chitState.value.totalChitEarned ||
-                        userResponse.streakEnds !== chitState.value.streakEnds
+                        userResponse.streakEnds !== chitState.value.streakEnds ||
+                        // TODO remove this once User canisters have been upgraded
+                        userResponse.nextDailyClaim !== chitState.value.nextDailyChitClaim
                     ) {
                         chitState.value = {
                             streakEnds: userResponse.streakEnds,
