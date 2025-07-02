@@ -2083,6 +2083,8 @@ export class OpenChatAgent extends EventTarget {
                                     requests,
                                     true,
                                 ),
+                            (localUserIndex, proposalChatIds) =>
+                                this.#updateCachedProposalTallies(localUserIndex, proposalChatIds),
                             (userIds) => this._userIndexClient.populateUserCache(userIds),
                         )),
                 );
@@ -4539,6 +4541,14 @@ export class OpenChatAgent extends EventTarget {
         }
 
         return await updateCachedProposalTallies(this.db, chatId, response);
+    }
+
+    async #updateCachedProposalTallies(localUserIndex: string, chatIds: MultiUserChatIdentifier[]) {
+        const response = await this.getLocalUserIndexClient(localUserIndex).activeProposalTallies(chatIds);
+
+        for (const [chatId, tallies] of response) {
+            await updateCachedProposalTallies(this.db, chatId, tallies);
+        }
     }
 }
 
