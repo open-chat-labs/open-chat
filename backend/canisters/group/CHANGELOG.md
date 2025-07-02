@@ -10,10 +10,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Implement `c2c_active_proposal_tallies` to be called via composite query ([#8275](https://github.com/open-chat-labs/open-chat/pull/8275))
 
+### Changed
+
+- Use MessagePack to serialize upgrade args ([#8269](https://github.com/open-chat-labs/open-chat/pull/8269))
+
 ## [[2.0.1814](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1814-group)] - 2025-07-02
 
 ### Changed
 
+- Updated the `FcmData` interface ([8261](https://github.com/open-chat-labs/open-chat/pull/8261))
 - Push full chat events to subscribed bots ([#8264](https://github.com/open-chat-labs/open-chat/pull/8264))
 - Remove almost all usages of `Candid` from Group canisters ([#8270](https://github.com/open-chat-labs/open-chat/pull/8270))
 - Update video call endpoints to support both Candid and MessagePack ([#8273](https://github.com/open-chat-labs/open-chat/pull/8273))
@@ -30,7 +35,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `c2c_bot_remove_user` endpoint ([#8217](https://github.com/open-chat-labs/open-chat/pull/8217))
 - Add `c2c_bot_invite_users` endpoint ([#8218](https://github.com/open-chat-labs/open-chat/pull/8218))
 - Add `c2c_bot_members` endpoint ([#8225](https://github.com/open-chat-labs/open-chat/pull/8225))
-- Updated the `FcmData` interface ([8261](https://github.com/open-chat-labs/open-chat/pull/8261))
 
 ### Changed
 
