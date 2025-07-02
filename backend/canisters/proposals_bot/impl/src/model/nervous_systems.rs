@@ -439,6 +439,7 @@ impl NervousSystem {
                 latest_tally: (latest_tally != previous.tally()).then_some(latest_tally),
                 deadline: (deadline != previous.deadline()).then_some(deadline),
             };
+            *previous = proposal;
             self.upsert_proposal_update(update);
         } else {
             self.proposals_to_be_pushed.queue.insert(proposal_id, proposal);
