@@ -1,4 +1,5 @@
 pub mod active_proposal_tallies;
+pub mod c2c_active_proposal_tallies;
 pub mod c2c_bot_channel_details;
 pub mod c2c_bot_community_events;
 pub mod c2c_bot_community_summary;

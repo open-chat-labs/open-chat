@@ -68,10 +68,10 @@ import {
 } from "openchat-shared";
 import type { AgentConfig } from "../../config";
 import {
+    ActiveProposalTalliesResponse,
     GroupAcceptP2pSwapArgs,
     GroupAcceptP2pSwapResponse,
     GroupActiveProposalTalliesArgs,
-    GroupActiveProposalTalliesResponse,
     GroupAddReactionArgs,
     GroupBlockUserArgs,
     GroupCancelInvitesArgs,
@@ -1354,7 +1354,7 @@ export class GroupClient extends MsgpackCanisterAgent {
             },
             (resp) => mapResult(resp, (value) => value.tallies.map(([idx, t]) => [idx, tally(t)])),
             GroupActiveProposalTalliesArgs,
-            GroupActiveProposalTalliesResponse,
+            ActiveProposalTalliesResponse,
         )
     }
 }

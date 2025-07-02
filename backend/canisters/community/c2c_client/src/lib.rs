@@ -2,6 +2,7 @@ use canister_client::generate_c2c_call;
 use community_canister::*;
 
 // Queries
+generate_c2c_call!(c2c_active_proposal_tallies);
 generate_c2c_call!(c2c_bot_channel_details);
 generate_c2c_call!(c2c_bot_community_events);
 generate_c2c_call!(c2c_bot_community_summary);
