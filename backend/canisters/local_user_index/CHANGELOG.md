@@ -10,12 +10,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Implement getting proposal tallies for a batch of chats in a single query ([#8275](https://github.com/open-chat-labs/open-chat/pull/8275))
 
+### Changed
+
+- Use MessagePack to serialize upgrade args for Users/Group/Communities ([#8269](https://github.com/open-chat-labs/open-chat/pull/8269))
+
 ## [[2.0.1813](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1813-local_user_index)] - 2025-07-01
 
 ### Changed
 
 - Push full chat events to subscribed bots ([#8264](https://github.com/open-chat-labs/open-chat/pull/8264))
-- Use MessagePack to serialize upgrade args for Users/Group/Communities ([#8269](https://github.com/open-chat-labs/open-chat/pull/8269))
 
 ### Fixed
 
