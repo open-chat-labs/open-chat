@@ -4,7 +4,7 @@ use canister_api_macros::query;
 use canister_tracing_macros::trace;
 use local_user_index_canister::active_proposal_tallies::*;
 use oc_error_codes::OCErrorCode;
-use types::{ActiveTalliesResponse, MultiUserChat};
+use types::{ActiveProposalTalliesResponse, MultiUserChat};
 
 #[query(composite = true, msgpack = true)]
 #[trace]
@@ -17,7 +17,7 @@ async fn active_proposal_tallies(args: Args) -> Response {
     Response::Success(SuccessResult { responses })
 }
 
-async fn process_single_chat(caller: Principal, chat: MultiUserChat) -> ActiveTalliesResponse {
+async fn process_single_chat(caller: Principal, chat: MultiUserChat) -> ActiveProposalTalliesResponse {
     if read_state(|state| check_chat_is_local(chat, state)) {
         let response = match chat {
             MultiUserChat::Group(group_id) => {
@@ -49,10 +49,10 @@ async fn process_single_chat(caller: Principal, chat: MultiUserChat) -> ActiveTa
 
         match response {
             Ok(result) => result,
-            Err(error) => ActiveTalliesResponse::Error(error.into()),
+            Err(error) => ActiveProposalTalliesResponse::Error(error.into()),
         }
     } else {
-        ActiveTalliesResponse::Error(OCErrorCode::ChatNotFound.into())
+        ActiveProposalTalliesResponse::Error(OCErrorCode::ChatNotFound.into())
     }
 }
 

@@ -86,10 +86,10 @@ import {
 } from "openchat-shared";
 import type { AgentConfig } from "../../config";
 import {
+    ActiveProposalTalliesResponse,
     CommunityAcceptP2pSwapArgs,
     CommunityAcceptP2pSwapResponse,
     CommunityActiveProposalTalliesArgs,
-    CommunityActiveProposalTalliesResponse,
     CommunityAddMembersToChannelArgs,
     CommunityAddMembersToChannelResponse,
     CommunityAddReactionArgs,
@@ -1818,7 +1818,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
             },
             (resp) => mapResult(resp, (value) => value.tallies.map(([idx, t]) => [idx, tally(t)])),
             CommunityActiveProposalTalliesArgs,
-            CommunityActiveProposalTalliesResponse,
+            ActiveProposalTalliesResponse,
         )
     }
 }

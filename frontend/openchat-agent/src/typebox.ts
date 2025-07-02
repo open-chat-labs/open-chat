@@ -4646,8 +4646,8 @@ export const MessagePermissions = Type.Object({
     custom: Type.Array(CustomPermission),
 });
 
-export type ActiveTalliesSuccessResult = Static<typeof ActiveTalliesSuccessResult>;
-export const ActiveTalliesSuccessResult = Type.Object({
+export type ActiveProposalTalliesSuccessResult = Static<typeof ActiveProposalTalliesSuccessResult>;
+export const ActiveProposalTalliesSuccessResult = Type.Object({
     tallies: Type.Array(Type.Tuple([EventIndex, Tally])),
 });
 
@@ -5102,10 +5102,10 @@ export const CallParticipant = Type.Object({
     joined: Type.BigInt(),
 });
 
-export type ActiveTalliesResponse = Static<typeof ActiveTalliesResponse>;
-export const ActiveTalliesResponse = Type.Union([
+export type ActiveProposalTalliesResponse = Static<typeof ActiveProposalTalliesResponse>;
+export const ActiveProposalTalliesResponse = Type.Union([
     Type.Object({
-        Success: ActiveTalliesSuccessResult,
+        Success: ActiveProposalTalliesSuccessResult,
     }),
     Type.Object({
         Error: OCError,
@@ -5977,7 +5977,7 @@ export type LocalUserIndexActiveProposalTalliesSuccessResult = Static<
     typeof LocalUserIndexActiveProposalTalliesSuccessResult
 >;
 export const LocalUserIndexActiveProposalTalliesSuccessResult = Type.Object({
-    responses: Type.Array(ActiveTalliesResponse),
+    responses: Type.Array(ActiveProposalTalliesResponse),
 });
 
 export type LocalUserIndexInviteUsersToChannelResponse = Static<

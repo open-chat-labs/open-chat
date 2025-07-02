@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{ActiveTalliesResponse, MultiUserChat};
+use types::{ActiveProposalTalliesResponse, MultiUserChat};
 
 #[ts_export(local_user_index, active_proposal_tallies)]
 #[derive(Serialize, Deserialize, Debug)]
@@ -17,5 +17,5 @@ pub enum Response {
 #[ts_export(local_user_index, active_proposal_tallies)]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub responses: Vec<ActiveTalliesResponse>,
+    pub responses: Vec<ActiveProposalTalliesResponse>,
 }

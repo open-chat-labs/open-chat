@@ -7,4 +7,4 @@ pub struct Args {
     pub invite_code: Option<u64>,
 }
 
-pub type Response = types::ActiveTalliesResponse;
+pub type Response = types::ActiveProposalTalliesResponse;

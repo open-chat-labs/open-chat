@@ -257,13 +257,13 @@ impl TryFrom<i32> for ProposalRewardStatus {
 
 #[ts_export]
 #[derive(Serialize, Deserialize, Debug)]
-pub enum ActiveTalliesResponse {
-    Success(ActiveTalliesSuccessResult),
+pub enum ActiveProposalTalliesResponse {
+    Success(ActiveProposalTalliesSuccessResult),
     Error(OCError),
 }
 
 #[ts_export]
 #[derive(Serialize, Deserialize, Debug)]
-pub struct ActiveTalliesSuccessResult {
+pub struct ActiveProposalTalliesSuccessResult {
     pub tallies: Vec<(EventIndex, Tally)>,
 }
