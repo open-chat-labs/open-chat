@@ -497,6 +497,7 @@ import {
     serialiseMessageForRtc,
     startTyping,
     stopTyping,
+    updateExistingMessages,
 } from "./utils/chat";
 import {
     canBlockUsers as canBlockCommunityUsers,
@@ -9351,7 +9352,12 @@ export class OpenChat {
             chatId,
         });
 
-        this.#addServerEventsToStores(chatId, updatedMessages, undefined, []);
+        if (chatId === selectedChatIdStore.value) {
+            this.#updateServerEventsStore(
+                chatId,
+                (events) => updateExistingMessages(events, updatedMessages)
+            );
+        }
     }
 
     async initialiseNotifications(): Promise<boolean> {
