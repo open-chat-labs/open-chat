@@ -38,9 +38,9 @@ use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BotCommunityEvent, BotEventsCaller, BotInitiator, BotNotification,
     BotPermissions, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId, ChatEventCategory, ChatEventType, ChatMetrics,
-    CommunityCanisterCommunitySummary, CommunityEvent, CommunityEventCategory, CommunityEventType, CommunityMembership,
-    CommunityPermissions, Cycles, Document, Empty, EventIndex, EventsCaller, FcmData, FrozenGroupInfo, GroupRole,
-    IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId,
+    ChatPermission, CommunityCanisterCommunitySummary, CommunityEvent, CommunityEventCategory, CommunityEventType,
+    CommunityMembership, CommunityPermissions, Cycles, Document, Empty, EventIndex, EventsCaller, FcmData, FrozenGroupInfo,
+    GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId,
     UserNotification, UserNotificationPayload, UserType,
 };
 use types::{BotSubscriptions, CommunityId};
@@ -1068,15 +1068,15 @@ impl Data {
             BotInitiator::Autonomous => bot.autonomous_permissions.as_ref()?,
         };
 
-        let mut bot_is_channel_owner = false;
-        if let Some(channel) = channel_id.and_then(|id| self.channels.get(&id)) {
-            bot_is_channel_owner = channel.chat.members.get(bot_id).map(|m| m.role().is_owner()).unwrap_or(false);
-
-            // If the channel is not public and the bot is not an owner, it cannot access the channel
-            if !bot_is_channel_owner && !channel.chat.is_public.value {
-                return None;
-            }
-        }
+        let (bot_is_channel_owner, is_private_channel) = if let Some(channel) = channel_id.and_then(|id| self.channels.get(&id))
+        {
+            (
+                channel.chat.members.get(bot_id).map(|m| m.role().is_owner()).unwrap_or(false),
+                !channel.chat.is_public.value,
+            )
+        } else {
+            (false, false)
+        };
 
         // If the bot is the owner of the channel then grant all chat permissions
         let granted_to_bot = if bot_is_channel_owner {
@@ -1085,12 +1085,25 @@ impl Data {
             granted_to_bot
         };
 
-        // If this is a command initiated by a user then intersect the permissions granted to the bot with the user's permissions
         match initiator {
-            BotInitiator::Command(command) => self
-                .get_user_permissions(&command.initiator, channel_id)
-                .map(|u| BotPermissions::intersect(granted_to_bot, &u)),
-            _ => Some(granted_to_bot.clone()),
+            BotInitiator::Command(command) => {
+                // Intersect the permissions granted to the bot with the user's permissions
+                self.get_user_permissions(&command.initiator, channel_id)
+                    .map(|u| BotPermissions::intersect(granted_to_bot, &u))
+            }
+            BotInitiator::Autonomous => {
+                if is_private_channel && !bot_is_channel_owner {
+                    // If the channel is private and the bot is not an owner, it cannot have read access to the channel.
+                    // It is still allowed to take actions such as sending messages.
+                    let mut chat_permissions = granted_to_bot.chat();
+                    chat_permissions.remove(&ChatPermission::ReadMembership);
+                    chat_permissions.remove(&ChatPermission::ReadSummary);
+                    chat_permissions.remove(&ChatPermission::ReadMessages);
+                    Some(granted_to_bot.clone().with_chat(&chat_permissions))
+                } else {
+                    Some(granted_to_bot.clone())
+                }
+            }
         }
     }
 
