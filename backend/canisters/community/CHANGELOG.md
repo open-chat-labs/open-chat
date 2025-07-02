@@ -6,10 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Implement `c2c_active_proposal_tallies` to be called via composite query ([#8275](https://github.com/open-chat-labs/open-chat/pull/8275))
+
+## [[2.0.1815](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1815-community)] - 2025-07-01
+
 ### Changed
 
 - Update video call endpoints to support both Candid and MessagePack ([#8273](https://github.com/open-chat-labs/open-chat/pull/8273))
-- Implement `c2c_active_proposal_tallies` to be called via composite query ([#8275](https://github.com/open-chat-labs/open-chat/pull/8275))
 
 ### Fixed
 
