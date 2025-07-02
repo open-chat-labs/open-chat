@@ -7,8 +7,8 @@ use ts_export::ts_export;
 use crate::{
     AvatarChanged, BannerChanged, BotAdded, BotRemoved, BotUpdated, ChannelCreated, ChannelDeleted, ChannelId, ChatId,
     CommunityPermissions, CommunityRole, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated,
-    GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupUnfrozen, PrimaryLanguageChanged, UserId, UsersInvited,
-    UsersUnblocked,
+    GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupUnfrozen, MemberJoined, MemberLeft,
+    PrimaryLanguageChanged, UserId, UsersInvited, UsersUnblocked,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -49,8 +49,9 @@ pub enum CommunityEventType {
     ChannelDeleted,
 
     // Membership category
-    MembersJoined,
-    MembersLeft,
+    MemberJoined,
+    MemberLeft,
+    MembersRemoved,
     RoleChanged,
     UsersInvited,
     BotAdded,
@@ -82,8 +83,9 @@ impl From<CommunityEventType> for CommunityEventCategory {
             | CommunityEventType::ChannelDeleted
             | CommunityEventType::MessagePinned
             | CommunityEventType::MessageUnpinned => CommunityEventCategory::Details,
-            CommunityEventType::MembersJoined
-            | CommunityEventType::MembersLeft
+            CommunityEventType::MemberJoined
+            | CommunityEventType::MemberLeft
+            | CommunityEventType::MembersRemoved
             | CommunityEventType::RoleChanged
             | CommunityEventType::UsersInvited
             | CommunityEventType::BotAdded
@@ -105,6 +107,8 @@ pub enum CommunityEvent {
     AvatarChanged(Box<AvatarChanged>),
     BannerChanged(Box<BannerChanged>),
     UsersInvited(Box<UsersInvited>),
+    MemberJoined(Box<MemberJoined>),
+    MemberLeft(Box<MemberLeft>),
     MembersRemoved(Box<CommunityMembersRemoved>),
     RoleChanged(Box<CommunityRoleChanged>),
     UsersBlocked(Box<CommunityUsersBlocked>),
@@ -135,7 +139,9 @@ impl CommunityEvent {
             CommunityEvent::AvatarChanged(_) => Some(CommunityEventType::AvatarChanged),
             CommunityEvent::BannerChanged(_) => Some(CommunityEventType::BannerChanged),
             CommunityEvent::UsersInvited(_) => Some(CommunityEventType::UsersInvited),
-            CommunityEvent::MembersRemoved(_) => Some(CommunityEventType::MembersLeft),
+            CommunityEvent::MembersRemoved(_) => Some(CommunityEventType::MembersRemoved),
+            CommunityEvent::MemberJoined(_) => Some(CommunityEventType::MemberJoined),
+            CommunityEvent::MemberLeft(_) => Some(CommunityEventType::MemberLeft),
             CommunityEvent::RoleChanged(_) => Some(CommunityEventType::RoleChanged),
             CommunityEvent::UsersBlocked(_) => Some(CommunityEventType::UsersBlocked),
             CommunityEvent::UsersUnblocked(_) => Some(CommunityEventType::UsersUnblocked),

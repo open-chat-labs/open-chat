@@ -1,9 +1,11 @@
-use crate::{RuntimeState, activity_notifications::handle_activity_notification, execute_update};
+use crate::{
+    RuntimeState, activity_notifications::handle_activity_notification, execute_update, model::events::CommunityEventInternal,
+};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_leave_community::*;
 use oc_error_codes::OCErrorCode;
-use types::OCResult;
+use types::{MemberLeft, OCResult};
 
 // Called via the user's user canister
 #[update(msgpack = true)]
@@ -31,6 +33,10 @@ fn c2c_leave_community_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state
         .data
         .remove_user_from_community(member.user_id, Some(args.principal), now);
+
+    state.push_community_event(CommunityEventInternal::MemberLeft(Box::new(MemberLeft {
+        user_id: member.user_id,
+    })));
 
     handle_activity_notification(state);
     Ok(())

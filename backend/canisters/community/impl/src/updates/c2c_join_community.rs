@@ -12,7 +12,7 @@ use gated_groups::{
 };
 use group_community_common::ExpiringMember;
 use oc_error_codes::OCErrorCode;
-use types::{AccessGate, ChannelId, CommunityCanisterCommunitySummary, OCResult, UsersUnblocked};
+use types::{AccessGate, ChannelId, CommunityCanisterCommunitySummary, MemberJoined, OCResult, UsersUnblocked};
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
@@ -156,7 +156,7 @@ pub(crate) fn join_community_impl(
         AddResult::Blocked => return Err(Error(OCErrorCode::InitiatorBlocked.into())),
     }
 
-    state.data.invited_users.remove(&args.user_id, now);
+    let invitation = state.data.invited_users.remove(&args.user_id, now);
 
     if matches!(result, AddResult::AlreadyInCommunity) {
         state.data.update_lapsed(args.user_id, None, false, now);
@@ -182,6 +182,11 @@ pub(crate) fn join_community_impl(
     );
 
     jobs::expire_members::start_job_if_required(state);
+
+    state.push_community_event(CommunityEventInternal::MemberJoined(Box::new(MemberJoined {
+        user_id: args.user_id,
+        invited_by: invitation.map(|i| i.invited_by),
+    })));
 
     handle_activity_notification(state);
 
