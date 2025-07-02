@@ -2289,6 +2289,7 @@ type CommunityEventType = variant {
     GroupImported;
     BotRemoved;
     MemberLeft;
+    MembersRemoved;
     RoleChanged;
     BotAdded;
     Created;
