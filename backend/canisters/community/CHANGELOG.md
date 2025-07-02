@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Update video call endpoints to support both Candid and MessagePack ([#8273](https://github.com/open-chat-labs/open-chat/pull/8273))
+
+### Fixed
+
+- Trying to fix fcm_data issue ([#8272](https://github.com/open-chat-labs/open-chat/pull/8272))
+
+## [[2.0.1812](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1812-community)] - 2025-07-01
+
+### Changed
+
 - Set `explicit_join` to false if joining channel via joining community ([#8256](https://github.com/open-chat-labs/open-chat/pull/8256))
 - Push community events to subscribed bots ([#8259](https://github.com/open-chat-labs/open-chat/pull/8259))
 - Push full chat events to subscribed bots ([#8264](https://github.com/open-chat-labs/open-chat/pull/8264))

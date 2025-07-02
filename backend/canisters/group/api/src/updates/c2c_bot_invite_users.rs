@@ -1,4 +1,4 @@
-use candid::Principal;
+use ic_principal::Principal;
 use serde::{Deserialize, Serialize};
 use types::{BotInitiator, UnitResult, UserId};
 

@@ -5,7 +5,7 @@ use group_canister::delete_webhook::*;
 use oc_error_codes::OCErrorCode;
 use types::OCResult;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn delete_webhook(args: Args) -> Response {
     execute_update(|state| delete_webhook_impl(args, state)).into()

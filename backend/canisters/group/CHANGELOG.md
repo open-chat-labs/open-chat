@@ -11,6 +11,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Updated the `FcmData` interface ([8261](https://github.com/open-chat-labs/open-chat/pull/8261))
 - Push full chat events to subscribed bots ([#8264](https://github.com/open-chat-labs/open-chat/pull/8264))
 - Use MessagePack to serialize upgrade args ([#8269](https://github.com/open-chat-labs/open-chat/pull/8269))
+- Remove almost all usages of `Candid` from Group canisters ([#8270](https://github.com/open-chat-labs/open-chat/pull/8270))
+- Update video call endpoints to support both Candid and MessagePack ([#8273](https://github.com/open-chat-labs/open-chat/pull/8273))
+
+### Fixed
+
+- Trying to fix fcm_data issue ([#8272](https://github.com/open-chat-labs/open-chat/pull/8272))
 
 ## [[2.0.1804](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1804-group)] - 2025-06-26
 

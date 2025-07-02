@@ -5,7 +5,7 @@ use group_canister::regenerate_webhook::*;
 use oc_error_codes::OCErrorCode;
 use types::OCResult;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn regenerate_webhook(args: Args) -> Response {
     match execute_update(|state| regenerate_webhook_impl(args, state)) {

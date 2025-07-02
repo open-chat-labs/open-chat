@@ -11,7 +11,7 @@ use types::{
 };
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn add_reaction(args: Args) -> Response {
     execute_update(|state| add_reaction_impl(args, None, state)).into()

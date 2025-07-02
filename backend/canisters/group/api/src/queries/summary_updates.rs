@@ -1,11 +1,11 @@
-use candid::{CandidType, Principal};
+use candid::Principal;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{GroupCanisterGroupChatSummaryUpdates, TimestampMillis};
 
 #[ts_export(group, summary_updates)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     #[ts(skip)]
     pub on_behalf_of: Option<Principal>,
@@ -14,7 +14,7 @@ pub struct Args {
 
 #[ts_export(group, summary_updates)]
 #[expect(clippy::large_enum_variant)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     SuccessNoUpdates,
@@ -22,7 +22,7 @@ pub enum Response {
 }
 
 #[ts_export(group, summary_updates)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub updates: GroupCanisterGroupChatSummaryUpdates,
 }

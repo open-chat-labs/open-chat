@@ -4,7 +4,7 @@ use group_canister::selected_initial::{Response::*, *};
 use std::collections::HashSet;
 use types::{GroupMember, InstalledBotDetails, OCResult};
 
-#[query(candid = true, msgpack = true)]
+#[query(msgpack = true)]
 fn selected_initial(_args: Args) -> Response {
     match read_state(selected_initial_impl) {
         Ok(result) => Success(result),
