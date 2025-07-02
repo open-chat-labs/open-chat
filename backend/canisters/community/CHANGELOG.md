@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Use MessagePack to serialize upgrade args ([#8269](https://github.com/open-chat-labs/open-chat/pull/8269))
+- Allow bots to act but not read in private channels ([#8277](https://github.com/open-chat-labs/open-chat/pull/8277))
 
 ## [[2.0.1815](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1815-community)] - 2025-07-01
 
@@ -22,7 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Trying to fix fcm_data issue ([#8272](https://github.com/open-chat-labs/open-chat/pull/8272))
+- Work around fcm_data issue ([#8272](https://github.com/open-chat-labs/open-chat/pull/8272))
 
 ## [[2.0.1812](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1812-community)] - 2025-07-01
 

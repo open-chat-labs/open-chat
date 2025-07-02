@@ -16,7 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Fix daily claim sometimes incorrectly displaying as inactive ([8266](https://github.com/open-chat-labs/open-chat/pull/8266))
-- Trying to fix fcm_data issue ([#8272](https://github.com/open-chat-labs/open-chat/pull/8272))
+- Work around fcm_data issue ([#8272](https://github.com/open-chat-labs/open-chat/pull/8272))
 
 ## [[2.0.1799-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1799-user)] - 2025-06-20
 

@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Trying to fix fcm_data issue ([#8272](https://github.com/open-chat-labs/open-chat/pull/8272))
+- Work around fcm_data issue ([#8272](https://github.com/open-chat-labs/open-chat/pull/8272))
 
 ## [[2.0.1809](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1809-local_user_index)] - 2025-06-27
 
