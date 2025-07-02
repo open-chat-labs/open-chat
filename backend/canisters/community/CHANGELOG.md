@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Implement `c2c_active_proposal_tallies` to be called via composite query ([#8275](https://github.com/open-chat-labs/open-chat/pull/8275))
 
+### Changed
+
+- Use MessagePack to serialize upgrade args ([#8269](https://github.com/open-chat-labs/open-chat/pull/8269))
+
 ## [[2.0.1815](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1815-community)] - 2025-07-01
 
 ### Changed
@@ -29,7 +33,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Push full chat events to subscribed bots ([#8264](https://github.com/open-chat-labs/open-chat/pull/8264))
 - Remove almost all usages of `Candid` from Community canisters ([#8267](https://github.com/open-chat-labs/open-chat/pull/8267))
 - Updated the `FcmData` interface ([8261](https://github.com/open-chat-labs/open-chat/pull/8261))
-- Use MessagePack to serialize upgrade args ([#8269](https://github.com/open-chat-labs/open-chat/pull/8269))
 
 ### Fixed
 
