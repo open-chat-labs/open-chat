@@ -2279,7 +2279,7 @@ type CommunityEventType = variant {
     ChannelDeleted;
     PermissionsChanged;
     EventsTTLUpdated;
-    MembersJoined;
+    MemberJoined;
     UsersUnblocked;
     Unfrozen;
     VisibilityChanged;
@@ -2288,7 +2288,7 @@ type CommunityEventType = variant {
     InviteCodeChanged;
     GroupImported;
     BotRemoved;
-    MembersLeft;
+    MemberLeft;
     RoleChanged;
     BotAdded;
     Created;
