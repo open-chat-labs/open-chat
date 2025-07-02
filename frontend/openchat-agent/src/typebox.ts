@@ -3090,25 +3090,6 @@ export const CommunityThreadPreviewsArgs = Type.Object({
     latest_client_thread_update: Type.Optional(Type.BigInt()),
 });
 
-export type CommunityActiveProposalTalliesSuccessResult = Static<
-    typeof CommunityActiveProposalTalliesSuccessResult
->;
-export const CommunityActiveProposalTalliesSuccessResult = Type.Object({
-    tallies: Type.Array(Type.Tuple([EventIndex, Tally])),
-});
-
-export type CommunityActiveProposalTalliesResponse = Static<
-    typeof CommunityActiveProposalTalliesResponse
->;
-export const CommunityActiveProposalTalliesResponse = Type.Union([
-    Type.Object({
-        Success: CommunityActiveProposalTalliesSuccessResult,
-    }),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
-
 export type CommunityActiveProposalTalliesArgs = Static<typeof CommunityActiveProposalTalliesArgs>;
 export const CommunityActiveProposalTalliesArgs = Type.Object({
     channel_id: ChannelId,
@@ -3959,13 +3940,6 @@ export const GroupThreadPreviewsArgs = Type.Object({
     latest_client_thread_update: Type.Optional(Type.BigInt()),
 });
 
-export type GroupActiveProposalTalliesSuccessResult = Static<
-    typeof GroupActiveProposalTalliesSuccessResult
->;
-export const GroupActiveProposalTalliesSuccessResult = Type.Object({
-    tallies: Type.Array(Type.Tuple([EventIndex, Tally])),
-});
-
 export type GroupRulesResponse = Static<typeof GroupRulesResponse>;
 export const GroupRulesResponse = Type.Union([
     Type.Object({
@@ -4672,6 +4646,11 @@ export const MessagePermissions = Type.Object({
     custom: Type.Array(CustomPermission),
 });
 
+export type ActiveProposalTalliesSuccessResult = Static<typeof ActiveProposalTalliesSuccessResult>;
+export const ActiveProposalTalliesSuccessResult = Type.Object({
+    tallies: Type.Array(Type.Tuple([EventIndex, Tally])),
+});
+
 export type ChatId = Static<typeof ChatId>;
 export const ChatId = TSPrincipal;
 
@@ -5122,6 +5101,16 @@ export const CallParticipant = Type.Object({
     user_id: UserId,
     joined: Type.BigInt(),
 });
+
+export type ActiveProposalTalliesResponse = Static<typeof ActiveProposalTalliesResponse>;
+export const ActiveProposalTalliesResponse = Type.Union([
+    Type.Object({
+        Success: ActiveProposalTalliesSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
 
 export type GroupFrozen = Static<typeof GroupFrozen>;
 export const GroupFrozen = Type.Object({
@@ -5977,6 +5966,20 @@ export const LocalUserIndexChatEventsEventsSelectionCriteria = Type.Union([
     }),
 ]);
 
+export type LocalUserIndexActiveProposalTalliesArgs = Static<
+    typeof LocalUserIndexActiveProposalTalliesArgs
+>;
+export const LocalUserIndexActiveProposalTalliesArgs = Type.Object({
+    chat_ids: Type.Array(MultiUserChat),
+});
+
+export type LocalUserIndexActiveProposalTalliesSuccessResult = Static<
+    typeof LocalUserIndexActiveProposalTalliesSuccessResult
+>;
+export const LocalUserIndexActiveProposalTalliesSuccessResult = Type.Object({
+    responses: Type.Array(ActiveProposalTalliesResponse),
+});
+
 export type LocalUserIndexInviteUsersToChannelResponse = Static<
     typeof LocalUserIndexInviteUsersToChannelResponse
 >;
@@ -6271,16 +6274,6 @@ export type GroupSelectedInitialResponse = Static<typeof GroupSelectedInitialRes
 export const GroupSelectedInitialResponse = Type.Union([
     Type.Object({
         Success: GroupSelectedInitialSuccessResult,
-    }),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
-
-export type GroupActiveProposalTalliesResponse = Static<typeof GroupActiveProposalTalliesResponse>;
-export const GroupActiveProposalTalliesResponse = Type.Union([
-    Type.Object({
-        Success: GroupActiveProposalTalliesSuccessResult,
     }),
     Type.Object({
         Error: OCError,
@@ -7131,6 +7124,13 @@ export const LocalUserIndexBotSubscribeToEventsArgs = Type.Object({
     scope: AutonomousBotScope,
     community_events: Type.Array(CommunityEventType),
     chat_events: Type.Array(ChatEventType),
+});
+
+export type LocalUserIndexActiveProposalTalliesResponse = Static<
+    typeof LocalUserIndexActiveProposalTalliesResponse
+>;
+export const LocalUserIndexActiveProposalTalliesResponse = Type.Object({
+    Success: LocalUserIndexActiveProposalTalliesSuccessResult,
 });
 
 export type LocalUserIndexBotDeleteMessagesArgs = Static<

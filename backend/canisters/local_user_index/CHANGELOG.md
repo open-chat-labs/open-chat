@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Implement getting proposal tallies for a batch of chats in a single query ([#8275](https://github.com/open-chat-labs/open-chat/pull/8275))
+
+## [[2.0.1813](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1813-local_user_index)] - 2025-07-01
+
 ### Changed
 
 - Push full chat events to subscribed bots ([#8264](https://github.com/open-chat-labs/open-chat/pull/8264))

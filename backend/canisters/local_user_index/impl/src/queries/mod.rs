@@ -1,4 +1,5 @@
 pub mod access_token_v2;
+pub mod active_proposal_tallies;
 pub mod bot_chat_events;
 pub mod bot_chat_summary;
 pub mod bot_community_events;
