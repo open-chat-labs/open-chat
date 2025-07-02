@@ -758,6 +758,19 @@ export function mergeServerEvents(
     return merged;
 }
 
+export function updateExistingMessages(events: EventWrapper<ChatEvent>[], updatedMessages: EventWrapper<Message>[]) {
+    const updatedMessagesMap = new Map(updatedMessages.map((m) => [m.event.messageIndex, m.event]));
+    for (const event of events) {
+        if (event.event.kind === "message") {
+            const updatedMessage = updatedMessagesMap.get(event.event.messageIndex);
+            if (updatedMessage) {
+                event.event = updatedMessage;
+            }
+        }
+    }
+    return events;
+}
+
 function updateReplyContexts(
     events: EventWrapper<ChatEvent>[],
     newEvents: EventWrapper<ChatEvent>[],
