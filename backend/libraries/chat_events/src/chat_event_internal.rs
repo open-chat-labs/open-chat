@@ -9,9 +9,9 @@ use types::{
     EventsTimeToLiveUpdated, ExternalUrlUpdated, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated,
     GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged,
     MemberJoinedInternal, MemberLeft, MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, Message, MessageContent,
-    MessageId, MessageIndex, MessagePinned, MessageUnpinned, MultiUserChat, PermissionsChanged, PushIfNotContains, Reaction,
-    ReplyContext, RoleChanged, SenderContext, ThreadSummary, TimestampMillis, Tips, UserId, UsersBlocked, UsersInvited,
-    UsersUnblocked, is_default,
+    MessageContentType, MessageId, MessageIndex, MessagePinned, MessageUnpinned, MultiUserChat, PermissionsChanged,
+    PushIfNotContains, Reaction, ReplyContext, RoleChanged, SenderContext, ThreadSummary, TimestampMillis, Tips, UserId,
+    UsersBlocked, UsersInvited, UsersUnblocked, is_default,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -328,53 +328,53 @@ impl MessageInternal {
             metrics.incr(MetricKey::Replies, 1);
         }
 
-        match &self.content {
-            MessageContentInternal::Text(_) => {
+        match &self.content.content_type() {
+            MessageContentType::Text => {
                 metrics.incr(MetricKey::TextMessages, 1);
             }
-            MessageContentInternal::Image(_) => {
+            MessageContentType::Image => {
                 metrics.incr(MetricKey::ImageMessages, 1);
             }
-            MessageContentInternal::Video(_) => {
+            MessageContentType::Video => {
                 metrics.incr(MetricKey::VideoMessages, 1);
             }
-            MessageContentInternal::Audio(_) => {
+            MessageContentType::Audio => {
                 metrics.incr(MetricKey::AudioMessages, 1);
             }
-            MessageContentInternal::File(_) => {
+            MessageContentType::File => {
                 metrics.incr(MetricKey::FileMessages, 1);
             }
-            MessageContentInternal::Poll(_) => {
+            MessageContentType::Poll => {
                 metrics.incr(MetricKey::Polls, 1);
             }
-            MessageContentInternal::Crypto(_) => {
+            MessageContentType::Crypto => {
                 metrics.incr(MetricKey::CryptoMessages, 1);
             }
-            MessageContentInternal::Deleted(_) => {}
-            MessageContentInternal::Giphy(_) => {
+            MessageContentType::Deleted => {}
+            MessageContentType::Giphy => {
                 metrics.incr(MetricKey::GiphyMessages, 1);
             }
-            MessageContentInternal::GovernanceProposal(_) => {
+            MessageContentType::GovernanceProposal => {
                 metrics.incr(MetricKey::Proposals, 1);
             }
-            MessageContentInternal::Prize(_) => {
+            MessageContentType::Prize => {
                 metrics.incr(MetricKey::PrizeMessages, 1);
             }
-            MessageContentInternal::PrizeWinner(_) => {
+            MessageContentType::PrizeWinner => {
                 metrics.incr(MetricKey::PrizeWinnerMessages, 1);
             }
-            MessageContentInternal::MessageReminderCreated(_) => {}
-            MessageContentInternal::MessageReminder(_) => {
+            MessageContentType::MessageReminderCreated => {}
+            MessageContentType::MessageReminder => {
                 metrics.incr(MetricKey::MessageReminders, 1);
             }
-            MessageContentInternal::ReportedMessage(_) => {}
-            MessageContentInternal::P2PSwap(_) => {
+            MessageContentType::ReportedMessage => {}
+            MessageContentType::P2PSwap => {
                 metrics.incr(MetricKey::P2pSwaps, 1);
             }
-            MessageContentInternal::VideoCall(_) => {
+            MessageContentType::VideoCall => {
                 metrics.incr(MetricKey::VideoCalls, 1);
             }
-            MessageContentInternal::Custom(_) => {
+            MessageContentType::Custom(_) => {
                 metrics.incr(MetricKey::CustomTypeMessages, 1);
             }
         }
