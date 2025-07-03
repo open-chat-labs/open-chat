@@ -559,41 +559,4 @@ impl ChatEvent {
             ChatEvent::Empty => None,
         }
     }
-
-    // TODO: Remove this once groups/communities and dependant bots are updated
-    pub fn initiated_by(&self) -> Option<UserId> {
-        match self {
-            ChatEvent::Message(m) => Some(m.sender),
-            ChatEvent::DirectChatCreated(_) => None,
-            ChatEvent::GroupChatCreated(gcc) => Some(gcc.created_by),
-            ChatEvent::GroupNameChanged(gcn) => Some(gcn.changed_by),
-            ChatEvent::GroupDescriptionChanged(gdc) => Some(gdc.changed_by),
-            ChatEvent::GroupRulesChanged(grc) => Some(grc.changed_by),
-            ChatEvent::AvatarChanged(ac) => Some(ac.changed_by),
-            ChatEvent::ParticipantsAdded(ma) => Some(ma.added_by),
-            ChatEvent::ParticipantsRemoved(mr) => Some(mr.removed_by),
-            ChatEvent::ParticipantJoined(mj) => Some(mj.user_id),
-            ChatEvent::ParticipantLeft(ml) => Some(ml.user_id),
-            ChatEvent::RoleChanged(rc) => Some(rc.changed_by),
-            ChatEvent::UsersBlocked(ub) => Some(ub.blocked_by),
-            ChatEvent::UsersUnblocked(uub) => Some(uub.unblocked_by),
-            ChatEvent::MessagePinned(mp) => Some(mp.pinned_by),
-            ChatEvent::MessageUnpinned(mup) => Some(mup.unpinned_by),
-            ChatEvent::PermissionsChanged(pc) => Some(pc.changed_by),
-            ChatEvent::GroupVisibilityChanged(gvc) => Some(gvc.changed_by),
-            ChatEvent::GroupInviteCodeChanged(gic) => Some(gic.changed_by),
-            ChatEvent::ChatFrozen(fz) => Some(fz.frozen_by),
-            ChatEvent::ChatUnfrozen(ufz) => Some(ufz.unfrozen_by),
-            ChatEvent::EventsTimeToLiveUpdated(ttl) => Some(ttl.updated_by),
-            ChatEvent::GroupGateUpdated(gu) => Some(gu.updated_by),
-            ChatEvent::UsersInvited(ui) => Some(ui.invited_by),
-            ChatEvent::MembersAddedToDefaultChannel(_) => None,
-            ChatEvent::ExternalUrlUpdated(eu) => Some(eu.updated_by),
-            ChatEvent::BotAdded(ba) => Some(ba.added_by),
-            ChatEvent::BotRemoved(br) => Some(br.removed_by),
-            ChatEvent::BotUpdated(bu) => Some(bu.updated_by),
-            ChatEvent::FailedToDeserialize => None,
-            ChatEvent::Empty => None,
-        }
-    }
 }
