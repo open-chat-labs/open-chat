@@ -994,10 +994,17 @@ export class OpenChat {
         }
     }
 
-    listNervousSystemFunctions(governanceCanisterId: string) {
-        return this.#sendRequest({
+    #updateNervousSystemFunctions(governanceCanisterId: string) {
+        if (get(offlineStore)) return;
+
+        this.#sendRequest({
             kind: "listNervousSystemFunctions",
             snsGovernanceCanisterId: governanceCanisterId,
+        }).then((val) => {
+            snsFunctionsStore.update((s) => {
+                s.set(governanceCanisterId, val.functions);
+                return s;
+            });
         });
     }
 
@@ -2849,25 +2856,6 @@ export class OpenChat {
             return;
         }
 
-        if ((clientChat.kind === "group_chat" || clientChat.kind === "channel") && clientChat.subtype?.kind === "governance_proposals") {
-            const { isNns, governanceCanisterId } = clientChat.subtype;
-            if (!isNns) {
-                this.listNervousSystemFunctions(governanceCanisterId).then((val) => {
-                    snsFunctionsStore.update((s) => {
-                        s.set(governanceCanisterId, val.functions);
-                        return s;
-                    });
-                });
-            }
-            const id = clientChat.id;
-            this.#proposalTalliesPoller = new Poller(
-                () => this.#updateProposalTallies(id),
-                20_000,
-                undefined,
-                true
-            );
-        }
-
         if (messageIndex === undefined) {
             messageIndex = isPreviewing(clientChat)
                 ? undefined
@@ -2887,12 +2875,6 @@ export class OpenChat {
 
         // TODO - this might belong as a derivation in the selected chat state
         this.#userLookupForMentions = undefined;
-
-        if (isProposalsChat(clientChat)) {
-            filteredProposalsStore.set(
-                FilteredProposals.fromStorage(clientChat.subtype.governanceCanisterId),
-            );
-        }
 
         const selectedChat = selectedChatSummaryStore.value;
         if (selectedChat !== undefined) {
@@ -2921,6 +2903,24 @@ export class OpenChat {
                     this.getUser(selectedChat.them.userId);
                 }
             }
+        }
+
+        if (isProposalsChat(clientChat)) {
+            const { isNns, governanceCanisterId } = clientChat.subtype;
+            if (!isNns) {
+                this.#updateNervousSystemFunctions(governanceCanisterId);
+            }
+            const id = clientChat.id;
+            this.#proposalTalliesPoller = new Poller(
+                () => this.#updateProposalTallies(id),
+                20_000,
+                undefined,
+                true
+            );
+
+            filteredProposalsStore.set(
+                FilteredProposals.fromStorage(governanceCanisterId),
+            );
         }
     }
 
@@ -9347,6 +9347,8 @@ export class OpenChat {
     }
 
     async #updateProposalTallies(chatId: MultiUserChatIdentifier) {
+        if (get(offlineStore)) return;
+
         const updatedMessages = await this.#sendRequest({
             kind: "updateProposalTallies",
             chatId,
