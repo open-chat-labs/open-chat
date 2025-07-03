@@ -14,6 +14,7 @@ import type {
     MessageContext,
     MessagePermission,
     Metrics,
+    MultiUserChat,
     PartitionedUserIds,
     VersionedRules,
 } from "../domain";
@@ -366,7 +367,7 @@ export function contentTypeToPermission(contentType: AttachmentContent["kind"]):
     }
 }
 
-export function isProposalsChat(chat: ChatSummary): chat is ChatSummary & {
+export function isProposalsChat(chat: ChatSummary): chat is MultiUserChat & {
     subtype: GovernanceProposalsSubtype;
 } {
     return chat.kind !== "direct_chat" && chat.subtype?.kind === "governance_proposals";
