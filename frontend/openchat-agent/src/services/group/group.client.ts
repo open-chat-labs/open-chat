@@ -182,10 +182,10 @@ import {
     inviteCodeSuccess,
     isSuccess,
     mapResult,
+    proposalTallies,
     pushEventSuccess,
     searchGroupChatResponse,
     sendMessageSuccess,
-    tally,
     threadPreviewsSuccess,
     undeleteMessageSuccess,
     unitResult,
@@ -1352,7 +1352,7 @@ export class GroupClient extends MsgpackCanisterAgent {
             {
                 invite_code: mapOptional(this.inviteCode, textToCode),
             },
-            (resp) => mapResult(resp, (value) => value.tallies.map(([idx, t]) => [idx, tally(t)])),
+            (resp) => mapResult(resp, (value) => proposalTallies(value.tallies)),
             GroupActiveProposalTalliesArgs,
             ActiveProposalTalliesResponse,
         )

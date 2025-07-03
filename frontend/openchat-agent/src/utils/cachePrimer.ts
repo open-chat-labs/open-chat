@@ -6,6 +6,7 @@ import {
     type ChatStateFull,
     type ChatSummary,
     MAX_MESSAGES,
+    type MultiUserChatIdentifier,
     ResponseTooLargeError,
     userIdsFromEvents,
 } from "openchat-shared";
@@ -15,15 +16,18 @@ const FAILURE = { kind: "failure" };
 
 export class CachePrimer {
     private pending: QueuedChat[] = [];
-    private usersLoaded: Set<string> = new Set<string>();
+    private usersLoaded: Set<string> = new Set();
     private jobActive: boolean = false;
-    private inProgress: Set<string> = new Set<string>();
-    private blockedChats: Set<string> = new Set<string>();
+    private proposalTalliesJobActive: boolean = false;
+    private inProgress: Set<string> = new Set();
+    private blockedChats: Set<string> = new Set();
+    private proposalChats: Map<string, MultiUserChatIdentifier[]> = new Map();
 
     constructor(
         private userCanisterLocalUserIndex: string,
         private lastUpdatedTimestamps: Record<string, bigint>,
         private getEventsBatch: (localUserIndex: string, requests: ChatEventsArgs[]) => Promise<ChatEventsResponse[]>,
+        private updateProposalTallies: (localUserIndex: string, chatIds: MultiUserChatIdentifier[]) => Promise<void>,
         private loadUsers: (userIds: string[]) => void
     ) {
         debug("initialized");
@@ -31,6 +35,7 @@ export class CachePrimer {
 
     processState(state: ChatStateFull) {
         this.pending = [];
+        this.proposalChats.clear();
 
         state.directChats.forEach((c) => this.processChat(c, this.userCanisterLocalUserIndex));
         state.groupChats.forEach((c) => this.processChat(c, c.localUserIndex));
@@ -46,6 +51,11 @@ export class CachePrimer {
             this.pending.sort((a, b) => a.lastUpdated > b.lastUpdated ? 1 : -1);
             setTimeout(() => this.processNextBatch(), 0);
         }
+
+        if (!this.proposalTalliesJobActive && this.proposalChats.size > 0) {
+            this.proposalTalliesJobActive = true;
+            this.processProposalTallies();
+        }
     }
 
     private processChat(chat: ChatSummary, localUserIndex: string) {
@@ -57,6 +67,15 @@ export class CachePrimer {
         const lastUpdated = this.lastUpdatedTimestamps[chatIdString];
         if (this.shouldEnqueueChat(chat, lastUpdated)) {
             this.pending.push(normalizeChat(chat, localUserIndex));
+        }
+
+        if (chat.kind !== "direct_chat" && chat.subtype?.kind === "governance_proposals") {
+            let proposalChatIds = this.proposalChats.get(localUserIndex);
+            if (proposalChatIds === undefined) {
+                proposalChatIds = [];
+                this.proposalChats.set(localUserIndex, proposalChatIds);
+            }
+            proposalChatIds.push(chat.id);
         }
     }
 
@@ -225,6 +244,16 @@ export class CachePrimer {
                 }
             }
             return Array(batch.length).fill(FAILURE);
+        }
+    }
+
+    private async processProposalTallies() {
+        try {
+            for (const [localUserIndex, chatIds] of this.proposalChats) {
+                await this.updateProposalTallies(localUserIndex, chatIds);
+            }
+        } finally {
+            setTimeout(() => this.processNextBatch(), 60_000);
         }
     }
 
