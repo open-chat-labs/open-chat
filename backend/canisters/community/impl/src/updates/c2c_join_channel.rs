@@ -40,6 +40,7 @@ async fn c2c_join_channel_impl(args: Args) -> Response {
         match join_community(community_canister::c2c_join_community::Args {
             user_id: args.user_id,
             principal: args.principal,
+            channel_id: Some(args.channel_id),
             invite_code: args.invite_code,
             referred_by: args.referred_by,
             is_platform_moderator: args.is_platform_moderator,

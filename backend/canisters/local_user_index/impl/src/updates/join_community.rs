@@ -15,6 +15,7 @@ async fn join_community(args: Args) -> Response {
     let c2c_args = community_canister::c2c_join_community::Args {
         user_id: user_details.user_id,
         principal: user_details.principal,
+        channel_id: None,
         invite_code: args.invite_code,
         referred_by: args.referred_by,
         is_platform_moderator: user_details.is_platform_moderator,

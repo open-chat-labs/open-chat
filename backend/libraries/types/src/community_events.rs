@@ -7,8 +7,8 @@ use ts_export::ts_export;
 use crate::{
     AvatarChanged, BannerChanged, BotAdded, BotRemoved, BotUpdated, ChannelCreated, ChannelDeleted, ChannelId, ChatId,
     CommunityPermissions, CommunityRole, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated,
-    GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupUnfrozen, MemberJoined, MemberLeft,
-    PrimaryLanguageChanged, UserId, UsersInvited, UsersUnblocked,
+    GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupUnfrozen, MemberLeft, PrimaryLanguageChanged, UserId,
+    UsersInvited, UsersUnblocked,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -107,7 +107,7 @@ pub enum CommunityEvent {
     AvatarChanged(Box<AvatarChanged>),
     BannerChanged(Box<BannerChanged>),
     UsersInvited(Box<UsersInvited>),
-    MemberJoined(Box<MemberJoined>),
+    MemberJoined(Box<CommunityMemberJoined>),
     MemberLeft(Box<MemberLeft>),
     MembersRemoved(Box<CommunityMembersRemoved>),
     RoleChanged(Box<CommunityRoleChanged>),
@@ -208,4 +208,12 @@ pub struct CommunityRoleChanged {
 pub struct GroupImported {
     pub group_id: ChatId,
     pub channel_id: ChannelId,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CommunityMemberJoined {
+    pub user_id: UserId,
+    pub channel_id: Option<ChannelId>,
+    pub invited_by: Option<UserId>,
 }
