@@ -1,7 +1,7 @@
 use crate::CommunityMemberInternal;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{StableMemoryMap, UserIdKeyPrefix};
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 use types::{CommunityRole, TimestampMillis, Timestamped, UserId, UserType, Version, is_default};
 
 #[derive(Serialize, Deserialize)]
@@ -39,19 +39,6 @@ impl MembersStableStorage {
             m.range(self.prefix.create_key(&Principal::from_slice(&[]).into())..)
                 .take_while(|(k, _)| k.matches_prefix(&self.prefix))
                 .map(|(k, v)| bytes_to_member(&v).hydrate(k.user_id()))
-                .collect()
-        })
-    }
-
-    // TODO: Delete after communities are upgraded
-    pub fn members_joined(&self) -> BTreeMap<UserId, TimestampMillis> {
-        use ic_principal::Principal;
-        use stable_memory_map::{Key, KeyPrefix, with_map};
-
-        with_map(|m| {
-            m.range(self.prefix.create_key(&Principal::from_slice(&[]).into())..)
-                .take_while(|(k, _)| k.matches_prefix(&self.prefix))
-                .map(|(k, v)| (k.user_id(), bytes_to_member(&v).date_added()))
                 .collect()
         })
     }
@@ -104,11 +91,6 @@ impl CommunityMemberStableStorage {
             lapsed: self.lapsed,
             suspended: self.suspended,
         }
-    }
-
-    // TODO: Delete after communities are upgraded
-    fn date_added(&self) -> TimestampMillis {
-        self.date_added
     }
 }
 

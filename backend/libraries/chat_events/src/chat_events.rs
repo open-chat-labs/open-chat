@@ -1644,16 +1644,13 @@ impl ChatEvents {
             None
         } else {
             let event = event.chat_event(None);
-            let initiated_by = event.initiated_by();
             Some(BotNotification {
                 event: types::BotEvent::Chat(BotChatEvent {
-                    event_type,
                     event,
                     chat: self.chat,
                     thread: thread_root_message_index,
                     event_index,
                     latest_event_index: event_index,
-                    initiated_by,
                 }),
                 recipients: bots_to_notify,
             })
@@ -2299,16 +2296,13 @@ impl ChatEvents {
         .map(|r| {
             let bots_to_notify = self.bots_to_notify(&event_type);
             let bot_notification = if !bots_to_notify.is_empty() {
-                let initiated_by = r.event.initiated_by();
                 Some(BotNotification {
                     event: types::BotEvent::Chat(BotChatEvent {
-                        event_type,
                         event: r.event,
                         chat: self.chat,
                         thread: thread_root_message_index,
                         event_index: r.event_index,
                         latest_event_index: r.latest_event_index,
-                        initiated_by,
                     }),
                     recipients: bots_to_notify,
                 })

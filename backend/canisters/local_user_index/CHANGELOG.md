@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1822](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1822-local_user_index)] - 2025-07-03
+
 ### Changed
 
 - Introduce and backdate MemberJoined/Left events ([#8280](https://github.com/open-chat-labs/open-chat/pull/8280))
