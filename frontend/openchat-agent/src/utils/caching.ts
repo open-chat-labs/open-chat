@@ -919,7 +919,7 @@ export async function updateCachedProposalTallies(
     });
     const eventStore = tx.objectStore("chat_events");
 
-    const updatedMessages: EventWrapper<Message>[] = [];
+    const messages: EventWrapper<Message>[] = [];
     const promises: Promise<void>[] = tallies.map(([eventIndex, tally]) => {
         const cacheKey = createCacheKey({ chatId }, eventIndex);
         return eventStore
@@ -927,19 +927,22 @@ export async function updateCachedProposalTallies(
             .then((event) => {
                 if (event?.kind === "event"
                     && event.event.kind === "message"
-                    && event.event.content.kind === "proposal_content"
-                    && event.event.content.proposal.tally.timestamp < tally.timestamp
-                ) {
+                    && event.event.content.kind === "proposal_content")
+                {
+                    const updateCache = tally.timestamp > event.event.content.proposal.tally.timestamp;
                     event.event.content.proposal.tally = tally;
-                    updatedMessages.push(event as EventWrapper<Message>);
-                    return eventStore.put(event, cacheKey);
+                    messages.push(event as EventWrapper<Message>);
+
+                    if (updateCache) {
+                        return eventStore.put(event, cacheKey);
+                    }
                 }
             })
             .then((_) => {});
     });
     await Promise.all(promises);
     await tx.done;
-    return updatedMessages;
+    return messages;
 }
 
 export function setCachedMessageFromSendResponse(
