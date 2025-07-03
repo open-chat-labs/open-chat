@@ -136,7 +136,11 @@ export type UpdateCommunityResponse =
 
 export type ToggleMuteCommunityNotificationsResponse = Success | OCError | Offline;
 
-export type CreateCommunityResponse = Offline | Failure | OCError | (Success & { id: string; channels: [ChannelIdentifier, string][] });
+export type CreateCommunityResponse =
+    | Offline
+    | Failure
+    | OCError
+    | (Success & { id: string; channels: [ChannelIdentifier, string][] });
 
 export type JoinCommunityResponse =
     | Failure
@@ -218,7 +222,10 @@ export type ChannelMatch = {
     public: boolean;
 };
 
-export type CommunityDetailsResponse = CommunityDetails | { kind: "success_no_updates", lastUpdated: bigint } | Failure;
+export type CommunityDetailsResponse =
+    | CommunityDetails
+    | { kind: "success_no_updates"; lastUpdated: bigint }
+    | Failure;
 
 export type CommunityDetailsUpdatesResponse =
     | ({
@@ -332,8 +339,9 @@ export type CommunityEventType =
     | "GroupImported"
     | "ChannelCreated"
     | "ChannelDeleted"
-    | "MembersJoined"
-    | "MembersLeft"
+    | "MemberJoined"
+    | "MemberLeft"
+    | "MembersRemoved"
     | "RoleChanged"
     | "UsersInvited"
     | "BotAdded"
