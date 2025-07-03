@@ -5,11 +5,11 @@ use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashSet};
 use types::{
     AvatarChanged, BannerChanged, BotAdded, BotRemoved, BotUpdated, ChannelCreated, ChannelDeleted, ChannelId, ChatId,
-    CommunityEvent, CommunityEventCategory, CommunityEventType, CommunityMembersRemoved, CommunityPermissionsChanged,
-    CommunityRoleChanged, CommunityUsersBlocked, CommunityVisibilityChanged, EventIndex, EventWrapper, EventWrapperInternal,
-    GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupImported, GroupInviteCodeChanged,
-    GroupNameChanged, GroupRulesChanged, GroupUnfrozen, MemberJoined, MemberLeft, PrimaryLanguageChanged, TimestampMillis,
-    UserId, UsersInvited, UsersUnblocked,
+    CommunityEvent, CommunityEventCategory, CommunityEventType, CommunityMemberJoined, CommunityMembersRemoved,
+    CommunityPermissionsChanged, CommunityRoleChanged, CommunityUsersBlocked, CommunityVisibilityChanged, EventIndex,
+    EventWrapper, EventWrapperInternal, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupImported,
+    GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupUnfrozen, MemberLeft, PrimaryLanguageChanged,
+    TimestampMillis, UserId, UsersInvited, UsersUnblocked,
 };
 
 mod stable_memory;
@@ -42,7 +42,7 @@ pub enum CommunityEventInternal {
     #[serde(rename = "mr", alias = "MembersRemoved")]
     MembersRemoved(Box<CommunityMembersRemoved>),
     #[serde(rename = "mj", alias = "MemberJoined")]
-    MemberJoined(Box<MemberJoined>),
+    MemberJoined(Box<CommunityMemberJoinedInternal>),
     #[serde(rename = "ml", alias = "MemberLeft")]
     MemberLeft(Box<MemberLeft>),
     #[serde(rename = "rl", alias = "RoleChanged")]
@@ -256,7 +256,7 @@ impl From<CommunityEventInternal> for CommunityEvent {
             CommunityEventInternal::AvatarChanged(event) => CommunityEvent::AvatarChanged(event),
             CommunityEventInternal::BannerChanged(event) => CommunityEvent::BannerChanged(event),
             CommunityEventInternal::UsersInvited(event) => CommunityEvent::UsersInvited(event),
-            CommunityEventInternal::MemberJoined(event) => CommunityEvent::MemberJoined(event),
+            CommunityEventInternal::MemberJoined(event) => CommunityEvent::MemberJoined(Box::new((*event).into())),
             CommunityEventInternal::MemberLeft(event) => CommunityEvent::MemberLeft(event),
             CommunityEventInternal::MembersRemoved(event) => CommunityEvent::MembersRemoved(event),
             CommunityEventInternal::RoleChanged(event) => CommunityEvent::RoleChanged(event),
@@ -282,6 +282,26 @@ impl From<CommunityEventInternal> for CommunityEvent {
             CommunityEventInternal::BotRemoved(event) => CommunityEvent::BotRemoved(event),
             CommunityEventInternal::BotUpdated(event) => CommunityEvent::BotUpdated(event),
             CommunityEventInternal::FailedToDeserialize => CommunityEvent::FailedToDeserialize,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct CommunityMemberJoinedInternal {
+    #[serde(rename = "u", alias = "user_id")]
+    pub user_id: UserId,
+    #[serde(rename = "c", alias = "channel_id", skip_serializing_if = "Option::is_none")]
+    pub channel_id: Option<ChannelId>,
+    #[serde(rename = "i", alias = "invited_by", skip_serializing_if = "Option::is_none")]
+    pub invited_by: Option<UserId>,
+}
+
+impl From<CommunityMemberJoinedInternal> for CommunityMemberJoined {
+    fn from(value: CommunityMemberJoinedInternal) -> Self {
+        CommunityMemberJoined {
+            user_id: value.user_id,
+            invited_by: value.invited_by,
+            channel_id: value.channel_id,
         }
     }
 }

@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_user_index_or_local_user_index;
-use crate::model::events::CommunityEventInternal;
+use crate::model::events::{CommunityEventInternal, CommunityMemberJoinedInternal};
 use crate::model::members::AddResult;
 use crate::updates::c2c_join_channel::join_channel_synchronously;
 use crate::{RuntimeState, execute_update_async, jobs, mutate_state, read_state};
@@ -12,7 +12,7 @@ use gated_groups::{
 };
 use group_community_common::ExpiringMember;
 use oc_error_codes::OCErrorCode;
-use types::{AccessGate, ChannelId, CommunityCanisterCommunitySummary, MemberJoined, OCResult, UsersUnblocked};
+use types::{AccessGate, ChannelId, CommunityCanisterCommunitySummary, OCResult, UsersUnblocked};
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
@@ -183,10 +183,13 @@ pub(crate) fn join_community_impl(
 
     jobs::expire_members::start_job_if_required(state);
 
-    state.push_community_event(CommunityEventInternal::MemberJoined(Box::new(MemberJoined {
-        user_id: args.user_id,
-        invited_by: invitation.map(|i| i.invited_by),
-    })));
+    state.push_community_event(CommunityEventInternal::MemberJoined(Box::new(
+        CommunityMemberJoinedInternal {
+            user_id: args.user_id,
+            channel_id: args.channel_id,
+            invited_by: invitation.map(|i| i.invited_by),
+        },
+    )));
 
     handle_activity_notification(state);
 

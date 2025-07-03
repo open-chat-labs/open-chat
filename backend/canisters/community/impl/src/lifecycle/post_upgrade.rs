@@ -1,7 +1,7 @@
 use crate::jobs::import_groups::finalize_group_import;
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
-use crate::model::events::CommunityEventInternal;
+use crate::model::events::{CommunityEventInternal, CommunityMemberJoinedInternal};
 use crate::{Data, mutate_state, read_state};
 use canister_api_macros::post_upgrade;
 use canister_logger::LogEntry;
@@ -10,7 +10,7 @@ use community_canister::post_upgrade::Args;
 use instruction_counts_log::InstructionCountFunctionId;
 use stable_memory::get_reader;
 use tracing::info;
-use types::{EventIndex, EventWrapperInternal, MemberJoined};
+use types::{EventIndex, EventWrapperInternal};
 
 #[post_upgrade(msgpack = true)]
 #[trace]
@@ -58,8 +58,9 @@ fn post_upgrade(args: Args) {
 
         // Append MemberJoined events to CommunityEvents
         for (user_id, date_joined) in state.data.members.members_joined() {
-            let event = CommunityEventInternal::MemberJoined(Box::new(MemberJoined {
+            let event = CommunityEventInternal::MemberJoined(Box::new(CommunityMemberJoinedInternal {
                 user_id,
+                channel_id: None,
                 invited_by: None,
             }));
             community_events.push(EventWrapperInternal {
