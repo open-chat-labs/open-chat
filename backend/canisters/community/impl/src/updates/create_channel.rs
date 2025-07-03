@@ -64,6 +64,7 @@ fn c2c_create_proposals_channel_impl(args: Args, state: &mut RuntimeState) -> Re
         &c2c_join_community::Args {
             user_id: caller.into(),
             principal: caller,
+            channel_id: None,
             invite_code: None,
             referred_by: None,
             is_platform_moderator: false,

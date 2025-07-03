@@ -2,7 +2,7 @@ use ic_principal::Principal;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{
-    CommunityCanisterCommunitySummary, GateCheckFailedReason, TimestampMillis, UniquePersonProof, UserId, UserType,
+    ChannelId, CommunityCanisterCommunitySummary, GateCheckFailedReason, TimestampMillis, UniquePersonProof, UserId, UserType,
     VerifiedCredentialGateArgs,
 };
 
@@ -10,6 +10,7 @@ use types::{
 pub struct Args {
     pub user_id: UserId,
     pub principal: Principal,
+    pub channel_id: Option<ChannelId>,
     pub invite_code: Option<u64>,
     pub referred_by: Option<UserId>,
     pub is_platform_moderator: bool,
