@@ -11,7 +11,9 @@ import type {
     JoinCommunityResponse,
     JoinGroupResponse,
     MessageContext,
+    MultiUserChatIdentifier,
     RegisterUserResponse,
+    Tally,
     VerifiedCredentialArgs,
     VideoCallType,
 } from "openchat-shared";
@@ -29,6 +31,7 @@ import type {
     BotCommandArgValue,
     LocalUserIndexAccessTokenV2Args,
     LocalUserIndexAccessTokenV2Response,
+    LocalUserIndexActiveProposalTalliesResponse,
     LocalUserIndexChatEventsEventsArgs,
     LocalUserIndexChatEventsEventsContext,
     LocalUserIndexChatEventsEventsSelectionCriteria,
@@ -56,6 +59,7 @@ import {
     gateCheckFailedReason,
     getEventsSuccess,
     ocError,
+    proposalTallies,
 } from "../common/chatMappersV2";
 import { communitySummaryUpdates } from "../community/mappersV2";
 import { groupChatSummary, groupChatSummaryUpdates } from "../group/mappersV2";
@@ -307,6 +311,24 @@ export async function chatEventsBatchResponse(
         responses,
         timestamp: value.Success.timestamp,
     };
+}
+
+export function activeProposalTalliesResponse(chatIds: MultiUserChatIdentifier[], value: LocalUserIndexActiveProposalTalliesResponse): Map<MultiUserChatIdentifier, [number, Tally][]> {
+    const responses = value.Success.responses;
+    if (chatIds.length !== responses.length) {
+        console.error("Invalid activeProposalTalliesResponse", chatIds, responses.length);
+    }
+
+    const results = new Map<MultiUserChatIdentifier, [number, Tally][]>();
+    for (let i = 0; i < chatIds.length; i++) {
+        const chatId = chatIds[i];
+        const response = responses[i];
+
+        if ("Success" in response && response.Success.tallies.length > 0) {
+            results.set(chatId, proposalTallies(response.Success.tallies));
+        }
+    }
+    return results;
 }
 
 export function joinChannelResponse(

@@ -929,6 +929,10 @@ function proposal(value: TProposal): Proposal {
     throw new UnsupportedValueError("Unexpected ApiProposal type received", value);
 }
 
+export function proposalTallies(value: [number, TTally][]): [number, Tally][] {
+    return value.map(([i, t]) => [i, tally(t)]);
+}
+
 export function tally(value: TTally): Tally {
     return {
         yes: Number(value.yes / E8S_AS_BIGINT),

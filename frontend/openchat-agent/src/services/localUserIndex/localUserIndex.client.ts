@@ -16,7 +16,9 @@ import type {
     JoinCommunityResponse,
     JoinGroupResponse,
     MessageContext,
+    MultiUserChatIdentifier,
     RegisterUserResponse,
+    Tally,
     VerifiedCredentialArgs,
 } from "openchat-shared";
 import { MAX_MISSING, textToCode, toBigInt32, UnsupportedValueError } from "openchat-shared";
@@ -24,6 +26,8 @@ import {
     BotInstallationLocation as ApiBotInstallationLocation,
     LocalUserIndexAccessTokenV2Args,
     LocalUserIndexAccessTokenV2Response,
+    LocalUserIndexActiveProposalTalliesArgs,
+    LocalUserIndexActiveProposalTalliesResponse,
     LocalUserIndexChatEventsArgs,
     LocalUserIndexChatEventsResponse,
     LocalUserIndexGroupAndCommunitySummaryUpdatesV2Args,
@@ -47,6 +51,7 @@ import {
     LocalUserIndexUninstallBotResponse,
     LocalUserIndexWithdrawFromIcpswapArgs,
     LocalUserIndexWithdrawFromIcpswapResponse,
+    MultiUserChat as TMultiUserChat,
     UnitResult,
 } from "../../typebox";
 import {
@@ -63,9 +68,10 @@ import {
     principalStringToBytes,
 } from "../../utils/mapping";
 import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
-import { apiExternalBotPermissions, joinGroupResponse } from "../common/chatMappersV2";
+import { apiChatIdentifier, apiExternalBotPermissions, joinGroupResponse } from "../common/chatMappersV2";
 import {
     accessTokenResponse,
+    activeProposalTalliesResponse,
     apiAccessTokenType,
     apiVerifiedCredentialArgs,
     chatEventsArgs,
@@ -238,6 +244,18 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
             (resp) => chatEventsBatchResponse(this.principal, requests, resp),
             LocalUserIndexChatEventsArgs,
             LocalUserIndexChatEventsResponse,
+        );
+    }
+
+    activeProposalTallies(chatIds: MultiUserChatIdentifier[]): Promise<Map<MultiUserChatIdentifier, [number, Tally][]>> {
+        return this.executeMsgpackQuery(
+            "active_proposal_tallies",
+            {
+                chat_ids: chatIds.map(apiChatIdentifier) as TMultiUserChat[],
+            },
+            (resp) => activeProposalTalliesResponse(chatIds, resp),
+            LocalUserIndexActiveProposalTalliesArgs,
+            LocalUserIndexActiveProposalTalliesResponse,
         );
     }
 
