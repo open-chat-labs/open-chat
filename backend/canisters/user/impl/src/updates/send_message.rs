@@ -232,7 +232,7 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
                     };
 
                     if finalised && !chat.notifications_muted.value {
-                        let message_type = message_content.message_type();
+                        let message_type = message_content.content_type().to_string();
                         let message_text = message_content.notification_text(&[], &[]);
                         let image_url = message_content.notification_image_url();
 

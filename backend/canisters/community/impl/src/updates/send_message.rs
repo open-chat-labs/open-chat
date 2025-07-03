@@ -246,7 +246,7 @@ fn process_send_message_result(
     if !result.unfinalised_bot_message {
         let sender = caller.agent();
 
-        let message_type = content.message_type();
+        let message_type = content.content_type().to_string();
         let message_text =
             content.notification_text(&users_mentioned.mentioned_directly, &users_mentioned.user_groups_mentioned);
 
@@ -268,7 +268,7 @@ fn process_send_message_result(
             sender,
             sender_name: sender_username,
             sender_display_name,
-            message_type: content.message_type(),
+            message_type,
             message_text,
             image_url: content.notification_image_url(),
             community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),

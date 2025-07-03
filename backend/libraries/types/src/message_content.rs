@@ -145,31 +145,6 @@ impl MessageContent {
         references
     }
 
-    pub fn message_type(&self) -> String {
-        let message_type = match self {
-            MessageContent::Text(_) => "Text",
-            MessageContent::Image(_) => "Image",
-            MessageContent::Video(_) => "Video",
-            MessageContent::Audio(_) => "Audio",
-            MessageContent::File(_) => "File",
-            MessageContent::Poll(_) => "Poll",
-            MessageContent::Crypto(_) => "Crypto",
-            MessageContent::Deleted(_) => "Deleted",
-            MessageContent::Giphy(_) => "Giphy",
-            MessageContent::GovernanceProposal(_) => "GovernanceProposal",
-            MessageContent::Prize(_) => "Prize",
-            MessageContent::PrizeWinner(_) => "PrizeWinner",
-            MessageContent::MessageReminderCreated(_) => "MessageReminderCreated",
-            MessageContent::MessageReminder(_) => "MessageReminder",
-            MessageContent::ReportedMessage(_) => "ReportedMessage",
-            MessageContent::P2PSwap(_) => "P2PSwap",
-            MessageContent::VideoCall(_) => "VideoCall",
-            MessageContent::Custom(c) => &c.kind,
-        };
-
-        message_type.to_string()
-    }
-
     pub fn text(&self) -> Option<&str> {
         match self {
             MessageContent::Text(t) => Some(t.text.as_str()),

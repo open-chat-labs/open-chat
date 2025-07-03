@@ -198,7 +198,7 @@ pub(crate) fn handle_message_impl(
     }
 
     if !args.mute_notification && !chat.notifications_muted.value && !state.data.suspended.value {
-        let message_type = content.message_type();
+        let message_type = content.content_type().to_string();
         let message_text = content.notification_text(&args.mentioned, &[]);
         let image_url = content.notification_image_url();
 
