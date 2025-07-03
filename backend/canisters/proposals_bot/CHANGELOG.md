@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1820](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1820-proposals_bot)] - 2025-07-03
+
 ### Fixed
 
 - Update `active_proposals` with latest proposal data ([#8285](https://github.com/open-chat-labs/open-chat/pull/8285))
