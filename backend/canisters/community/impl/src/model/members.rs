@@ -42,6 +42,11 @@ pub struct CommunityMembers {
 }
 
 impl CommunityMembers {
+    // TODO: Delete after communities are upgraded
+    pub fn members_joined(&self) -> BTreeMap<UserId, TimestampMillis> {
+        self.members_map.members_joined()
+    }
+
     pub fn new(
         creator_principal: Principal,
         creator_user_id: UserId,

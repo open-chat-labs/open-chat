@@ -8,8 +8,8 @@ use types::{
     CommunityEvent, CommunityEventCategory, CommunityEventType, CommunityMembersRemoved, CommunityPermissionsChanged,
     CommunityRoleChanged, CommunityUsersBlocked, CommunityVisibilityChanged, EventIndex, EventWrapper, EventWrapperInternal,
     GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupImported, GroupInviteCodeChanged,
-    GroupNameChanged, GroupRulesChanged, GroupUnfrozen, PrimaryLanguageChanged, TimestampMillis, UserId, UsersInvited,
-    UsersUnblocked,
+    GroupNameChanged, GroupRulesChanged, GroupUnfrozen, MemberJoined, MemberLeft, PrimaryLanguageChanged, TimestampMillis,
+    UserId, UsersInvited, UsersUnblocked,
 };
 
 mod stable_memory;
@@ -41,6 +41,10 @@ pub enum CommunityEventInternal {
     UsersInvited(Box<UsersInvited>),
     #[serde(rename = "mr", alias = "MembersRemoved")]
     MembersRemoved(Box<CommunityMembersRemoved>),
+    #[serde(rename = "mj", alias = "MemberJoined")]
+    MemberJoined(Box<MemberJoined>),
+    #[serde(rename = "ml", alias = "MemberLeft")]
+    MemberLeft(Box<MemberLeft>),
     #[serde(rename = "rl", alias = "RoleChanged")]
     RoleChanged(Box<CommunityRoleChanged>),
     #[serde(rename = "ub", alias = "UsersBlocked")]
@@ -81,6 +85,25 @@ pub enum CommunityEventInternal {
 }
 
 impl CommunityEvents {
+    // TODO: Delete after communities are upgraded
+    pub fn read_all_events(&self) -> Vec<EventWrapperInternal<CommunityEventInternal>> {
+        self.stable_events_map.page(EventIndex::default(), true, u32::MAX)
+    }
+
+    // TODO: Delete after communities are upgraded
+    // This function assumes:
+    // - The event indexes of the given events are sequential and start from 0.
+    // - There are now more events than previously
+    pub fn overwrite_all_events(&mut self, events: Vec<EventWrapperInternal<CommunityEventInternal>>) {
+        let latest = events.last().unwrap();
+        self.latest_event_index = latest.index;
+        self.latest_event_timestamp = latest.timestamp;
+
+        for event in events {
+            self.stable_events_map.insert(event);
+        }
+    }
+
     pub fn new(name: String, description: String, created_by: UserId, now: TimestampMillis) -> CommunityEvents {
         let event_index = EventIndex::default();
         let event = EventWrapperInternal {
@@ -233,6 +256,8 @@ impl From<CommunityEventInternal> for CommunityEvent {
             CommunityEventInternal::AvatarChanged(event) => CommunityEvent::AvatarChanged(event),
             CommunityEventInternal::BannerChanged(event) => CommunityEvent::BannerChanged(event),
             CommunityEventInternal::UsersInvited(event) => CommunityEvent::UsersInvited(event),
+            CommunityEventInternal::MemberJoined(event) => CommunityEvent::MemberJoined(event),
+            CommunityEventInternal::MemberLeft(event) => CommunityEvent::MemberLeft(event),
             CommunityEventInternal::MembersRemoved(event) => CommunityEvent::MembersRemoved(event),
             CommunityEventInternal::RoleChanged(event) => CommunityEvent::RoleChanged(event),
             CommunityEventInternal::UsersBlocked(event) => CommunityEvent::UsersBlocked(event),
