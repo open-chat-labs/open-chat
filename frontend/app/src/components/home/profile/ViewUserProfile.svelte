@@ -346,7 +346,6 @@
                         <ChitBalance
                             size={"small"}
                             {me}
-                            balance={user.chitBalance}
                             totalEarned={user.totalChitEarned} />
                     {/if}
                     {#if profile!.bio.length > 0}

@@ -97,7 +97,6 @@
                 <ChitBalance
                     size={"large"}
                     me
-                    balance={$chitStateStore.chitBalance}
                     totalEarned={$chitStateStore.totalChitEarned} />
             </div>
             {#if streak > 0}
