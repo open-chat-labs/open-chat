@@ -104,7 +104,6 @@ impl From<EncryptedMessageContentType> for MessageContentType {
             EncryptedMessageContentType::Audio => MessageContentType::Audio,
             EncryptedMessageContentType::File => MessageContentType::File,
             EncryptedMessageContentType::Crypto => MessageContentType::Crypto,
-            EncryptedMessageContentType::Deleted => MessageContentType::Deleted,
             EncryptedMessageContentType::Giphy => MessageContentType::Giphy,
             EncryptedMessageContentType::Custom(c) => MessageContentType::Custom(c),
         }
