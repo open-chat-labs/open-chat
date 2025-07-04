@@ -828,6 +828,7 @@ type MessageContentInitial = variant {
     P2PSwap : P2PSwapContentInitial;
     MessageReminderCreated : MessageReminderCreated;
     MessageReminder : MessageReminder;
+    Encrypted : EncryptedContent;
     Custom : CustomMessageContent;
 };
 
@@ -848,6 +849,7 @@ type MessageContent = variant {
     MessageReminder : MessageReminder;
     P2PSwap : P2PSwapContent;
     VideoCall : VideoCallContent;
+    Encrypted : EncryptedContent;
     Custom : CustomMessageContent;
     ReportedMessage : ReportedMessage;
 };
@@ -1689,9 +1691,28 @@ type MessageReminder = record {
     notes : opt text;
 };
 
+type EncryptedContent = record {
+    content_type : EncryptedMessageContentType;
+    version : nat32;
+    encrypted_message_key : blob;
+    public_key : blob;
+    encrypted_data : blob;
+};
+
 type CustomMessageContent = record {
     kind : text;
     data : blob;
+};
+
+type EncryptedMessageContentType = variant {
+    Text;
+    Image;
+    Video;
+    Audio;
+    File;
+    Crypto;
+    Giphy;
+    Custom : text;
 };
 
 type UsersInvited = record {

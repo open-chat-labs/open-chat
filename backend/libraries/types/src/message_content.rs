@@ -1,6 +1,6 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
-    Achievement, CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, MessageIndex,
+    Achievement, CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, EncryptionKey, MessageIndex,
     MessagePermission, Milliseconds, P2PSwapStatus, PendingCryptoTransaction, ProposalContent, TimestampMillis, TokenInfo,
     TotalVotes, User, UserId, VideoCallType,
 };
@@ -31,6 +31,7 @@ pub enum MessageContentInitial {
     MessageReminderCreated(MessageReminderCreatedContent),
     MessageReminder(MessageReminderContent),
     P2PSwap(P2PSwapContentInitial),
+    Encrypted(EncryptedContent),
     Custom(CustomContent),
 }
 
@@ -54,10 +55,12 @@ pub enum MessageContent {
     ReportedMessage(ReportedMessage),
     P2PSwap(P2PSwapContent),
     VideoCall(VideoCallContent),
+    Encrypted(EncryptedContent),
     Custom(CustomContent),
 }
 
-#[derive(Clone)]
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum MessageContentType {
     Text,
     Image,
@@ -77,6 +80,34 @@ pub enum MessageContentType {
     P2PSwap,
     VideoCall,
     Custom(String),
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum EncryptedMessageContentType {
+    Text,
+    Image,
+    Video,
+    Audio,
+    File,
+    Crypto,
+    Giphy,
+    Custom(String),
+}
+
+impl From<EncryptedMessageContentType> for MessageContentType {
+    fn from(value: EncryptedMessageContentType) -> Self {
+        match value {
+            EncryptedMessageContentType::Text => MessageContentType::Text,
+            EncryptedMessageContentType::Image => MessageContentType::Image,
+            EncryptedMessageContentType::Video => MessageContentType::Video,
+            EncryptedMessageContentType::Audio => MessageContentType::Audio,
+            EncryptedMessageContentType::File => MessageContentType::File,
+            EncryptedMessageContentType::Crypto => MessageContentType::Crypto,
+            EncryptedMessageContentType::Giphy => MessageContentType::Giphy,
+            EncryptedMessageContentType::Custom(c) => MessageContentType::Custom(c),
+        }
+    }
 }
 
 #[ts_export]
@@ -139,6 +170,7 @@ impl MessageContent {
             | MessageContent::ReportedMessage(_)
             | MessageContent::P2PSwap(_)
             | MessageContent::VideoCall(_)
+            | MessageContent::Encrypted(_)
             | MessageContent::Custom(_) => {}
         }
 
@@ -164,6 +196,7 @@ impl MessageContent {
             | MessageContent::MessageReminder(_)
             | MessageContent::ReportedMessage(_)
             | MessageContent::VideoCall(_)
+            | MessageContent::Encrypted(_)
             | MessageContent::Custom(_) => None,
         }
     }
@@ -204,6 +237,7 @@ impl MessageContent {
             | MessageContent::ReportedMessage(_)
             | MessageContent::P2PSwap(_)
             | MessageContent::VideoCall(_)
+            | MessageContent::Encrypted(_)
             | MessageContent::Custom(_) => None,
         }
     }
@@ -250,7 +284,7 @@ impl MessageContentInitial {
             MessageContentInitial::MessageReminderCreated(r) => r.notes.as_deref(),
             MessageContentInitial::MessageReminder(r) => r.notes.as_deref(),
             MessageContentInitial::P2PSwap(p) => p.caption.as_deref(),
-            MessageContentInitial::Deleted(_) | MessageContentInitial::Custom(_) => None,
+            MessageContentInitial::Encrypted(_) | MessageContentInitial::Deleted(_) | MessageContentInitial::Custom(_) => None,
         }
     }
 
@@ -309,6 +343,7 @@ impl From<MessageContent> for MessageContentInitial {
             MessageContent::MessageReminderCreated(r) => MessageContentInitial::MessageReminderCreated(r),
             MessageContent::MessageReminder(r) => MessageContentInitial::MessageReminder(r),
             MessageContent::ReportedMessage(_) => panic!("Cannot send a 'reported message' message"),
+            MessageContent::Encrypted(e) => MessageContentInitial::Encrypted(e),
             MessageContent::Custom(c) => MessageContentInitial::Custom(c),
             MessageContent::P2PSwap(_) | MessageContent::VideoCall(_) => unimplemented!(),
         }
@@ -347,6 +382,7 @@ impl From<MessageContentInitial> for MessageContent {
             }),
             MessageContentInitial::MessageReminderCreated(r) => MessageContent::MessageReminderCreated(r),
             MessageContentInitial::MessageReminder(r) => MessageContent::MessageReminder(r),
+            MessageContentInitial::Encrypted(e) => MessageContent::Encrypted(e),
             MessageContentInitial::Custom(c) => MessageContent::Custom(c),
             MessageContentInitial::P2PSwap(_) => unimplemented!(),
         }
@@ -431,6 +467,7 @@ impl From<&MessageContent> for MessageContentType {
             MessageContent::ReportedMessage(_) => MessageContentType::ReportedMessage,
             MessageContent::P2PSwap(_) => MessageContentType::P2PSwap,
             MessageContent::VideoCall(_) => MessageContentType::VideoCall,
+            MessageContent::Encrypted(e) => e.content_type.clone().into(),
             MessageContent::Custom(c) => MessageContentType::Custom(c.kind.clone()),
         }
     }
@@ -667,6 +704,17 @@ pub struct VideoCallContent {
 pub struct CallParticipant {
     pub user_id: UserId,
     pub joined: TimestampMillis,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct EncryptedContent {
+    pub content_type: EncryptedMessageContentType,
+    pub version: u32,
+    pub encrypted_message_key: EncryptionKey,
+    pub public_key: EncryptionKey,
+    #[serde(with = "serde_bytes")]
+    pub encrypted_data: Vec<u8>,
 }
 
 #[ts_export]

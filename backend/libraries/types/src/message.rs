@@ -163,6 +163,7 @@ pub enum MessageContentEventPayload {
     MessageReminder(MessageReminderContentEventPayload),
     ReportedMessage(ReportedMessageContentEventPayload),
     P2PSwap(P2PSwapContentEventPayload),
+    Encrypted(EncryptedContentEventPayload),
     Empty,
 }
 
@@ -238,6 +239,12 @@ pub struct MessageReminderContentEventPayload {
 pub struct ReportedMessageContentEventPayload {
     pub reason: u32,
     pub notes_length: u32,
+}
+
+#[derive(Serialize)]
+pub struct EncryptedContentEventPayload {
+    pub content_type: String,
+    pub encrypted_length: u32,
 }
 
 #[derive(Serialize)]

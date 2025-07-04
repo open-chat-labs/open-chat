@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Introduce `Encrypted` message type ([8294](https://github.com/open-chat-labs/open-chat/pull/8294))
+
 ## [[2.0.1806](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1806-group_index)] - 2025-06-26
 
 ### Changed
