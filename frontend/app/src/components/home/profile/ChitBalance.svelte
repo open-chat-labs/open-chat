@@ -5,13 +5,12 @@
     import LearnToEarn from "./LearnToEarn.svelte";
 
     interface Props {
-        balance: number;
         totalEarned: number;
         me: boolean;
         size?: "small" | "large";
     }
 
-    let { balance, totalEarned, me, size = "small" }: Props = $props();
+    let { totalEarned, me, size = "small" }: Props = $props();
 
     let learnToEarn = $state(false);
 
@@ -35,12 +34,6 @@
         <div class="chit"></div>
         <div class="balances">
             <Tooltip position="top" align="middle">
-                <div class="current">{`${balance.toLocaleString()} CHIT`}</div>
-                {#snippet popupTemplate()}
-                    <Translatable resourceKey={i18nKey("currentChitBalance")} />
-                {/snippet}
-            </Tooltip>
-            <Tooltip position="bottom" align="middle">
                 <div class="total">{`${totalEarned.toLocaleString()} CHIT`}</div>
                 {#snippet popupTemplate()}
                     <Translatable resourceKey={i18nKey("totalChitEarned")} />

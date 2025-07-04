@@ -60,14 +60,12 @@
 
         busy = true;
 
-        const previousBalance = $chitStateStore.chitBalance;
-
         client
             .claimDailyChit()
             .then((resp) => {
                 if (resp.kind === "success") {
                     claimed = true;
-                    additional = $chitStateStore.chitBalance - previousBalance;
+                    additional = resp.chitEarned;
                     window.setTimeout(() => {
                         additional = undefined;
                     }, 2000);
@@ -146,7 +144,6 @@
                 <div class="spacer"></div>
                 <div class="current">
                     <ChitBalance
-                        balance={$chitStateStore.chitBalance}
                         totalEarned={$chitStateStore.totalChitEarned}
                         me={false}
                         size={"large"} />
