@@ -34,7 +34,7 @@
         <div class="chit"></div>
         <div class="balances">
             <Tooltip position="top" align="middle">
-                <div class="total">{`${totalEarned.toLocaleString()} CHIT`}</div>
+                <div>{`${totalEarned.toLocaleString()} CHIT`}</div>
                 {#snippet popupTemplate()}
                     <Translatable resourceKey={i18nKey("totalChitEarned")} />
                 {/snippet}
@@ -69,10 +69,6 @@
         .balances {
             display: flex;
             flex-direction: column;
-            .total {
-                text-align: start;
-                @include font(light, normal, fs-60);
-            }
         }
 
         .chit {
