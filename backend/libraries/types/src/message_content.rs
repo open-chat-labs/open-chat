@@ -84,6 +84,35 @@ pub enum MessageContentType {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum EncryptedMessageContentType {
+    Text,
+    Image,
+    Video,
+    Audio,
+    File,
+    Crypto,
+    Giphy,
+    Custom(String),
+}
+
+impl From<EncryptedMessageContentType> for MessageContentType {
+    fn from(value: EncryptedMessageContentType) -> Self {
+        match value {
+            EncryptedMessageContentType::Text => MessageContentType::Text,
+            EncryptedMessageContentType::Image => MessageContentType::Image,
+            EncryptedMessageContentType::Video => MessageContentType::Video,
+            EncryptedMessageContentType::Audio => MessageContentType::Audio,
+            EncryptedMessageContentType::File => MessageContentType::File,
+            EncryptedMessageContentType::Crypto => MessageContentType::Crypto,
+            EncryptedMessageContentType::Deleted => MessageContentType::Deleted,
+            EncryptedMessageContentType::Giphy => MessageContentType::Giphy,
+            EncryptedMessageContentType::Custom(c) => MessageContentType::Custom(c),
+        }
+    }
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ContentValidationError {
     Empty,
     TextTooLong(u32),
@@ -439,7 +468,7 @@ impl From<&MessageContent> for MessageContentType {
             MessageContent::ReportedMessage(_) => MessageContentType::ReportedMessage,
             MessageContent::P2PSwap(_) => MessageContentType::P2PSwap,
             MessageContent::VideoCall(_) => MessageContentType::VideoCall,
-            MessageContent::Encrypted(e) => e.content_type.clone(),
+            MessageContent::Encrypted(e) => e.content_type.clone().into(),
             MessageContent::Custom(c) => MessageContentType::Custom(c.kind.clone()),
         }
     }
@@ -681,7 +710,7 @@ pub struct CallParticipant {
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct EncryptedContent {
-    pub content_type: MessageContentType,
+    pub content_type: EncryptedMessageContentType,
     pub version: u32,
     pub encrypted_message_key: EncryptionKey,
     pub public_key: EncryptionKey,

@@ -1692,7 +1692,7 @@ type MessageReminder = record {
 };
 
 type EncryptedContent = record {
-    content_type : MessageContentType;
+    content_type : EncryptedMessageContentType;
     version : nat32;
     encrypted_message_key : blob;
     public_key : blob;
@@ -1704,24 +1704,14 @@ type CustomMessageContent = record {
     data : blob;
 };
 
-type MessageContentType = variant {
+type EncryptedMessageContentType = variant {
     Text;
     Image;
     Video;
     Audio;
     File;
-    Poll;
     Crypto;
-    Deleted;
     Giphy;
-    GovernanceProposal;
-    Prize;
-    PrizeWinner;
-    MessageReminderCreated;
-    MessageReminder;
-    ReportedMessage;
-    P2PSwap;
-    VideoCall;
     Custom : text;
 };
 

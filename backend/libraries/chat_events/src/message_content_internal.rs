@@ -11,13 +11,14 @@ use types::icrc1::{Account, CryptoAccount};
 use types::{
     AudioContent, BlobReference, CallParticipant, CanisterId, CompletedCryptoTransaction, ContentValidationError,
     ContentWithCaptionEventPayload, CryptoContent, CryptoContentEventPayload, CryptoTransaction, Cryptocurrency, CustomContent,
-    EncryptedContent, EncryptedContentEventPayload, EncryptionKey, FileContent, FileContentEventPayload, GiphyContent,
-    GiphyImageVariant, GovernanceProposalContentEventPayload, ImageContent, ImageOrVideoContentEventPayload, MAX_TEXT_LENGTH,
-    MAX_TEXT_LENGTH_USIZE, MessageContent, MessageContentEventPayload, MessageContentInitial, MessageContentType, MessageIndex,
-    MessageReminderContent, MessageReminderContentEventPayload, MessageReminderCreatedContent, MessageReport, P2PSwapAccepted,
-    P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent, P2PSwapContentEventPayload, P2PSwapContentInitial, P2PSwapExpired,
-    P2PSwapReserved, P2PSwapStatus, PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload, PollVotes,
-    PrizeContent, PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal,
+    EncryptedContent, EncryptedContentEventPayload, EncryptedMessageContentType, EncryptionKey, FileContent,
+    FileContentEventPayload, GiphyContent, GiphyImageVariant, GovernanceProposalContentEventPayload, ImageContent,
+    ImageOrVideoContentEventPayload, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE, MessageContent, MessageContentEventPayload,
+    MessageContentInitial, MessageContentType, MessageIndex, MessageReminderContent, MessageReminderContentEventPayload,
+    MessageReminderCreatedContent, MessageReport, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent,
+    P2PSwapContentEventPayload, P2PSwapContentInitial, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus,
+    PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload, PollVotes, PrizeContent,
+    PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal,
     ProposalContent, RegisterVoteResult, ReportedMessage, ReportedMessageContentEventPayload, TextContent,
     TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos, TokenInfo, TotalVotes, TransactionHash, UserId,
     UserType, VideoCallContent, VideoCallPresence, VideoCallType, VideoContent, VoteOperation, is_default,
@@ -366,7 +367,7 @@ impl MessageContentInternal {
                 token1_amount: c.token1_amount,
             }),
             MessageContentInternal::Encrypted(e) => MessageContentEventPayload::Encrypted(EncryptedContentEventPayload {
-                content_type: e.content_type.to_string(),
+                content_type: MessageContentType::from(e.content_type.clone()).to_string(),
                 encrypted_length: e.encrypted_data.len() as u32,
             }),
             MessageContentInternal::Deleted(_) | MessageContentInternal::VideoCall(_) | MessageContentInternal::Custom(_) => {
@@ -1782,7 +1783,7 @@ impl MessageContentInternalSubtype for ReportedMessageInternal {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct EncryptedContentInternal {
     #[serde(rename = "c")]
-    pub content_type: MessageContentType,
+    pub content_type: EncryptedMessageContentType,
     #[serde(rename = "v")]
     pub version: u32,
     #[serde(rename = "k")]
@@ -1920,7 +1921,7 @@ impl From<&MessageContentInternal> for MessageContentType {
             MessageContentInternal::ReportedMessage(_) => MessageContentType::ReportedMessage,
             MessageContentInternal::P2PSwap(_) => MessageContentType::P2PSwap,
             MessageContentInternal::VideoCall(_) => MessageContentType::VideoCall,
-            MessageContentInternal::Encrypted(e) => e.content_type.clone(),
+            MessageContentInternal::Encrypted(e) => e.content_type.clone().into(),
             MessageContentInternal::Custom(c) => MessageContentType::Custom(c.kind.clone()),
         }
     }
