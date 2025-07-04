@@ -1,21 +1,18 @@
 <script lang="ts">
     import InfoIcon from "@src/components/InfoIcon.svelte";
     import {
-        type AirdropChannelDetails,
         chitStateStore,
         iconSize,
         type OpenChat,
     } from "openchat-client";
-    import { getContext, onMount, tick } from "svelte";
+    import { getContext, tick } from "svelte";
     import { Confetti } from "svelte-confetti";
-    import { _ } from "svelte-i18n";
     import ShieldHalfFull from "svelte-material-icons/ShieldHalfFull.svelte";
     import TrophyOutline from "svelte-material-icons/TrophyOutline.svelte";
     import { fade } from "svelte/transition";
     import { i18nKey } from "../../i18n/i18n";
     import { now500 } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
-    import AlertBox from "../AlertBox.svelte";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import HoverIcon from "../HoverIcon.svelte";
@@ -25,7 +22,6 @@
     import Progress from "../Progress.svelte";
     import Translatable from "../Translatable.svelte";
     import StreakInsuranceBuy from "./insurance/StreakInsuranceBuy.svelte";
-    import Markdown from "./Markdown.svelte";
     import ChitBalance from "./profile/ChitBalance.svelte";
     import LearnToEarn from "./profile/LearnToEarn.svelte";
     import Streak from "./profile/Streak.svelte";
@@ -42,16 +38,7 @@
     let claimed = $state(false);
     let additional: number | undefined = $state(undefined);
     let learnToEarn = $state(false);
-    let airdropChannel: AirdropChannelDetails | undefined = $state(undefined);
-    let isMemberOfAirdropChannel = $state(false);
     let showInsurance = $state(false);
-
-    onMount(() => {
-        isMemberOfAirdropChannel = client.isMemberOfAirdropChannel();
-        if (!isMemberOfAirdropChannel) {
-            airdropChannel = client.currentAirdropChannel;
-        }
-    });
 
     function calculateBadgesVisible(streak: number): number[] {
         if (streak < 30) {
@@ -73,14 +60,12 @@
 
         busy = true;
 
-        const previousBalance = $chitStateStore.chitBalance;
-
         client
             .claimDailyChit()
             .then((resp) => {
                 if (resp.kind === "success") {
                     claimed = true;
-                    additional = $chitStateStore.chitBalance - previousBalance;
+                    additional = resp.chitEarned;
                     window.setTimeout(() => {
                         additional = undefined;
                     }, 2000);
@@ -159,7 +144,6 @@
                 <div class="spacer"></div>
                 <div class="current">
                     <ChitBalance
-                        balance={$chitStateStore.chitBalance}
                         totalEarned={$chitStateStore.totalChitEarned}
                         me={false}
                         size={"large"} />
@@ -212,19 +196,6 @@
                         </InfoIcon>
                     </div>
                 </Link>
-            {/if}
-
-            {#if airdropChannel !== undefined}
-                <AlertBox>
-                    <Markdown
-                        text={$_("airdropWarning", {
-                            values: {
-                                url: airdropChannel.url,
-                                channelName: airdropChannel.channelName,
-                                communityName: airdropChannel.communityName,
-                            },
-                        })}></Markdown>
-                </AlertBox>
             {/if}
         </div>
     {/snippet}
