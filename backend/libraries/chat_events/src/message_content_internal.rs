@@ -1,6 +1,6 @@
 #![expect(deprecated)]
 use crate::DeletedByInternal;
-use candid::Principal;
+use candid::{CandidType, Principal};
 use constants::{MEMO_PRIZE_FEE, MEMO_PRIZE_REFUND, OPENCHAT_TREASURY_CANISTER_ID, PRIZE_FEE_PERCENT};
 use ledger_utils::{create_pending_transaction, format_crypto_amount};
 use search::simple::Document;
@@ -11,13 +11,13 @@ use types::icrc1::{Account, CryptoAccount};
 use types::{
     AudioContent, BlobReference, CallParticipant, CanisterId, CompletedCryptoTransaction, ContentValidationError,
     ContentWithCaptionEventPayload, CryptoContent, CryptoContentEventPayload, CryptoTransaction, Cryptocurrency, CustomContent,
-    FileContent, FileContentEventPayload, GiphyContent, GiphyImageVariant, GovernanceProposalContentEventPayload, ImageContent,
-    ImageOrVideoContentEventPayload, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE, MessageContent, MessageContentEventPayload,
-    MessageContentInitial, MessageContentType, MessageIndex, MessageReminderContent, MessageReminderContentEventPayload,
-    MessageReminderCreatedContent, MessageReport, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent,
-    P2PSwapContentEventPayload, P2PSwapContentInitial, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus,
-    PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload, PollVotes, PrizeContent,
-    PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal,
+    EncryptedContent, EncryptedContentEventPayload, EncryptionKey, FileContent, FileContentEventPayload, GiphyContent,
+    GiphyImageVariant, GovernanceProposalContentEventPayload, ImageContent, ImageOrVideoContentEventPayload, MAX_TEXT_LENGTH,
+    MAX_TEXT_LENGTH_USIZE, MessageContent, MessageContentEventPayload, MessageContentInitial, MessageContentType, MessageIndex,
+    MessageReminderContent, MessageReminderContentEventPayload, MessageReminderCreatedContent, MessageReport, P2PSwapAccepted,
+    P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent, P2PSwapContentEventPayload, P2PSwapContentInitial, P2PSwapExpired,
+    P2PSwapReserved, P2PSwapStatus, PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload, PollVotes,
+    PrizeContent, PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal,
     ProposalContent, RegisterVoteResult, ReportedMessage, ReportedMessageContentEventPayload, TextContent,
     TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos, TokenInfo, TotalVotes, TransactionHash, UserId,
     UserType, VideoCallContent, VideoCallPresence, VideoCallType, VideoContent, VoteOperation, is_default,
@@ -59,6 +59,8 @@ pub enum MessageContentInternal {
     P2PSwap(P2PSwapContentInternal),
     #[serde(rename = "vc")]
     VideoCall(VideoCallContentInternal),
+    #[serde(rename = "e")]
+    Encrypted(EncryptedContentInternal),
     #[serde(rename = "cu")]
     Custom(CustomContentInternal),
 }
@@ -101,6 +103,11 @@ impl MessageContentInternal {
                     return ValidateNewMessageContentResult::Error(ContentValidationError::PrizeEndDateInThePast);
                 }
             }
+            MessageContentInitial::Encrypted(e) => {
+                if e.encrypted_data.len() > MAX_TEXT_LENGTH_USIZE {
+                    return ValidateNewMessageContentResult::Error(ContentValidationError::TextTooLong(MAX_TEXT_LENGTH));
+                }
+            }
             MessageContentInitial::GovernanceProposal(_)
             | MessageContentInitial::MessageReminderCreated(_)
             | MessageContentInitial::MessageReminder(_) => {
@@ -117,6 +124,7 @@ impl MessageContentInternal {
             MessageContentInitial::File(f) => f.blob_reference.is_none(),
             MessageContentInitial::Poll(p) => p.config.options.is_empty(),
             MessageContentInitial::Prize(p) => p.prizes_v2.is_empty(),
+            MessageContentInitial::Encrypted(e) => e.encrypted_data.is_empty(),
             MessageContentInitial::Deleted(_) => true,
             MessageContentInitial::Crypto(_)
             | MessageContentInitial::Giphy(_)
@@ -197,6 +205,7 @@ impl MessageContentInternal {
             MessageContentInternal::ReportedMessage(r) => MessageContent::ReportedMessage(r.hydrate(my_user_id)),
             MessageContentInternal::P2PSwap(p) => MessageContent::P2PSwap(p.hydrate(my_user_id)),
             MessageContentInternal::VideoCall(c) => MessageContent::VideoCall(c.hydrate()),
+            MessageContentInternal::Encrypted(e) => MessageContent::Encrypted(e.hydrate(my_user_id)),
             MessageContentInternal::Custom(c) => MessageContent::Custom(c.hydrate(my_user_id)),
         }
     }
@@ -220,6 +229,7 @@ impl MessageContentInternal {
             | MessageContentInternal::Deleted(_)
             | MessageContentInternal::ReportedMessage(_)
             | MessageContentInternal::VideoCall(_)
+            | MessageContentInternal::Encrypted(_)
             | MessageContentInternal::Custom(_) => None,
         }
     }
@@ -268,6 +278,7 @@ impl MessageContentInternal {
             | MessageContentInternal::ReportedMessage(_)
             | MessageContentInternal::P2PSwap(_)
             | MessageContentInternal::VideoCall(_)
+            | MessageContentInternal::Encrypted(_)
             | MessageContentInternal::Custom(_) => {}
         }
 
@@ -353,6 +364,10 @@ impl MessageContentInternal {
                 token0_amount: c.token0_amount,
                 token1: c.token1.symbol.clone(),
                 token1_amount: c.token1_amount,
+            }),
+            MessageContentInternal::Encrypted(e) => MessageContentEventPayload::Encrypted(EncryptedContentEventPayload {
+                content_type: e.content_type.to_string(),
+                encrypted_length: e.encrypted_data.len() as u32,
             }),
             MessageContentInternal::Deleted(_) | MessageContentInternal::VideoCall(_) | MessageContentInternal::Custom(_) => {
                 MessageContentEventPayload::Empty
@@ -442,7 +457,8 @@ impl From<&MessageContentInternal> for Document {
             }
             MessageContentInternal::ReportedMessage(_)
             | MessageContentInternal::Deleted(_)
-            | MessageContentInternal::VideoCall(_) => {}
+            | MessageContentInternal::VideoCall(_)
+            | MessageContentInternal::Encrypted(_) => {}
         }
 
         document
@@ -1763,6 +1779,46 @@ impl MessageContentInternalSubtype for ReportedMessageInternal {
     }
 }
 
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct EncryptedContentInternal {
+    #[serde(rename = "c")]
+    pub content_type: MessageContentType,
+    #[serde(rename = "v")]
+    pub version: u32,
+    #[serde(rename = "k")]
+    pub encrypted_message_key: EncryptionKey,
+    #[serde(rename = "p")]
+    pub public_key: EncryptionKey,
+    #[serde(rename = "d", with = "serde_bytes")]
+    pub encrypted_data: Vec<u8>,
+}
+
+impl From<EncryptedContent> for EncryptedContentInternal {
+    fn from(value: EncryptedContent) -> Self {
+        EncryptedContentInternal {
+            content_type: value.content_type,
+            version: value.version,
+            encrypted_message_key: value.encrypted_message_key,
+            public_key: value.public_key,
+            encrypted_data: value.encrypted_data,
+        }
+    }
+}
+
+impl MessageContentInternalSubtype for EncryptedContentInternal {
+    type ContentType = EncryptedContent;
+
+    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
+        EncryptedContent {
+            version: self.version,
+            content_type: self.content_type,
+            encrypted_message_key: self.encrypted_message_key,
+            public_key: self.public_key,
+            encrypted_data: self.encrypted_data,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct CustomContentInternal {
     #[serde(rename = "k")]
@@ -1831,6 +1887,7 @@ impl From<MessageContentInitial> for MessageContentInternal {
             MessageContentInitial::GovernanceProposal(p) => MessageContentInternal::GovernanceProposal(p.into()),
             MessageContentInitial::MessageReminderCreated(r) => MessageContentInternal::MessageReminderCreated(r.into()),
             MessageContentInitial::MessageReminder(r) => MessageContentInternal::MessageReminder(r.into()),
+            MessageContentInitial::Encrypted(e) => MessageContentInternal::Encrypted(e.into()),
             MessageContentInitial::Custom(c) => MessageContentInternal::Custom(c.into()),
             MessageContentInitial::Crypto(c) => c
                 .try_into()
@@ -1863,6 +1920,7 @@ impl From<&MessageContentInternal> for MessageContentType {
             MessageContentInternal::ReportedMessage(_) => MessageContentType::ReportedMessage,
             MessageContentInternal::P2PSwap(_) => MessageContentType::P2PSwap,
             MessageContentInternal::VideoCall(_) => MessageContentType::VideoCall,
+            MessageContentInternal::Encrypted(e) => e.content_type.clone(),
             MessageContentInternal::Custom(c) => MessageContentType::Custom(c.kind.clone()),
         }
     }
