@@ -6955,12 +6955,6 @@ export class OpenChat {
         }).catch(() => ({ kind: "failure" }));
     }
 
-    isMemberOfAirdropChannel(): boolean {
-        if (this.currentAirdropChannel === undefined) return false;
-        const airdropChannel = allChatsStore.value.get(this.currentAirdropChannel.id);
-        return (airdropChannel?.membership.role ?? "none") !== "none";
-    }
-
     async #updateRegistry(): Promise<void> {
         let resolved = false;
         return new Promise((resolve) => {
