@@ -15,20 +15,22 @@ pub struct Oc<R: Runtime>(AppHandle<R>);
 
 impl<R: Runtime> Oc<R> {
     pub fn open_url(&self, _payload: OpenUrlRequest) -> crate::Result<OpenUrlResponse> {
-        Ok(OpenUrlResponse {
-            value: Some("not implemented for desktop environment".to_string()),
-        })
+        unimplemented!("not implemented for desktop environment")
     }
 
     pub fn sign_up(&self, _payload: SignUpRequest) -> crate::Result<SignUpResponse> {
-        // NOTE: this is not implemented due to this being the desktop version
-        // of the plugin, which we do not support.
-        Ok(SignUpResponse { passkey: "".into() })
+        unimplemented!("not implemented for desktop environment")
     }
 
     pub fn sign_in(&self, _payload: SignInRequest) -> crate::Result<SignInResponse> {
-        // NOTE: this is not implemented due to this being the desktop version
-        // of the plugin, which we do not support.
-        Ok(SignInResponse { passkey: "".into() })
+        unimplemented!("not implemented for desktop environment")
+    }
+
+    pub fn show_notification(&self, _payload: ShowNotificationRequest) {
+        unimplemented!("not implemented for desktop environment")
+    }
+
+    pub fn svelte_ready(&self) {
+        unimplemented!("not implemented for desktop environment")
     }
 }

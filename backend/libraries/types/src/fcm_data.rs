@@ -106,8 +106,8 @@ impl FcmData {
         match self.chat_id {
             Chat::Channel(community_id, channel_id) => {
                 map.insert("type".into(), "community".into());
-                map.insert("community_id".into(), community_id.to_string());
-                map.insert("channel_id".into(), channel_id.to_string());
+                map.insert("communityId".into(), community_id.to_string());
+                map.insert("channelId".into(), channel_id.to_string());
             }
             // Sender id is already initialised with the same value, so we
             // ignore it here (only for direct chats).
@@ -116,12 +116,12 @@ impl FcmData {
             }
             Chat::Group(chat_id) => {
                 map.insert("type".into(), "group".into());
-                map.insert("chat_id".into(), chat_id.to_string());
+                map.insert("chatId".into(), chat_id.to_string());
             }
         }
 
         if let Some(thread_id) = self.thread_id {
-            map.insert("thread_id".into(), thread_id.to_string());
+            map.insert("threadId".into(), thread_id.to_string());
         }
 
         if let Some(body) = &self.body {
@@ -135,15 +135,15 @@ impl FcmData {
         // Initialised by default for direct chats, while can be set for
         // group and community chats.
         if let Some(sender_id) = &self.sender_id {
-            map.insert("sender_id".into(), sender_id.to_string());
+            map.insert("senderId".into(), sender_id.to_string());
         }
 
         if let Some(sender_name) = &self.sender_name {
-            map.insert("sender_name".into(), sender_name.clone());
+            map.insert("senderName".into(), sender_name.clone());
         }
 
         if let Some(avatar_id) = self.avatar_id {
-            map.insert("avatar_id".into(), avatar_id.to_string());
+            map.insert("avatarId".into(), avatar_id.to_string());
         }
 
         map
