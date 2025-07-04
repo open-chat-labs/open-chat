@@ -1646,7 +1646,13 @@ function mergeLocalUpdates(
         message.content.kind === "proposal_content" &&
         tallyUpdate.timestamp > message.content.proposal.tally.timestamp
     ) {
-        message.content.proposal.tally = tallyUpdate;
+        message.content = {
+            ...message.content,
+            proposal: {
+                ...message.content.proposal,
+                tally: tallyUpdate
+            },
+        };
     }
 
     if (translation !== undefined) {
