@@ -1,12 +1,11 @@
 <script lang="ts">
     import InfoIcon from "@src/components/InfoIcon.svelte";
     import {
-        type AirdropChannelDetails,
         chitStateStore,
         iconSize,
         type OpenChat,
     } from "openchat-client";
-    import { getContext, onMount, tick } from "svelte";
+    import { getContext, tick } from "svelte";
     import { Confetti } from "svelte-confetti";
     import { _ } from "svelte-i18n";
     import ShieldHalfFull from "svelte-material-icons/ShieldHalfFull.svelte";
@@ -42,16 +41,7 @@
     let claimed = $state(false);
     let additional: number | undefined = $state(undefined);
     let learnToEarn = $state(false);
-    let airdropChannel: AirdropChannelDetails | undefined = $state(undefined);
-    let isMemberOfAirdropChannel = $state(false);
     let showInsurance = $state(false);
-
-    onMount(() => {
-        isMemberOfAirdropChannel = client.isMemberOfAirdropChannel();
-        if (!isMemberOfAirdropChannel) {
-            airdropChannel = client.currentAirdropChannel;
-        }
-    });
 
     function calculateBadgesVisible(streak: number): number[] {
         if (streak < 30) {
@@ -212,19 +202,6 @@
                         </InfoIcon>
                     </div>
                 </Link>
-            {/if}
-
-            {#if airdropChannel !== undefined}
-                <AlertBox>
-                    <Markdown
-                        text={$_("airdropWarning", {
-                            values: {
-                                url: airdropChannel.url,
-                                channelName: airdropChannel.channelName,
-                                communityName: airdropChannel.communityName,
-                            },
-                        })}></Markdown>
-                </AlertBox>
             {/if}
         </div>
     {/snippet}
