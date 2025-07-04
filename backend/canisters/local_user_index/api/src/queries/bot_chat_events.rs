@@ -122,7 +122,7 @@ impl From<types::MessageContent> for MessageContent {
             types::MessageContent::Giphy(giphy_content) => Self::Giphy(giphy_content),
             types::MessageContent::Custom(custom_content) => Self::Custom(custom_content),
             other => Self::Unsupported(UnsupportedContent {
-                kind: other.message_type(),
+                kind: other.content_type().to_string(),
             }),
         }
     }

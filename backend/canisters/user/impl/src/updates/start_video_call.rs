@@ -54,7 +54,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             event_index: message_event.index,
             sender_name: args.initiator_username,
             sender_display_name: args.initiator_display_name,
-            message_type: message_event.event.content.message_type(),
+            message_type: message_event.event.content.content_type().to_string(),
             message_text: None,
             image_url: None,
             sender_avatar_id: args.initiator_avatar_id,

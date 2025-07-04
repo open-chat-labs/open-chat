@@ -190,7 +190,7 @@ fn process_send_message_result(
         let sender = caller.agent();
         let content = &message_event.event.content;
         let chat_id: ChatId = state.env.canister_id().into();
-        let message_type = content.message_type();
+        let message_type = content.content_type().to_string();
         let message_text = content.notification_text(&mentioned, &[]);
         let group_avatar_id = state.data.chat.avatar.as_ref().map(|d| d.id);
 
