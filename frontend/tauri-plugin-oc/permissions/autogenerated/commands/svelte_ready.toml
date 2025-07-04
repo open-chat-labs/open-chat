@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-svelte-ready"
+description = "Enables the svelte_ready command without any pre-configured scope."
+commands.allow = ["svelte_ready"]
+
+[[permission]]
+identifier = "deny-svelte-ready"
+description = "Denies the svelte_ready command without any pre-configured scope."
+commands.deny = ["svelte_ready"]

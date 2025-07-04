@@ -2,7 +2,7 @@ DFX_IDENTITY=${1:-default}
 
 export NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister id notifications_index)
 export NOTIFICATIONS_CANISTER_ID=$(dfx canister id local_user_index)
-export IC_URL="http://0.0.0.0:8080"
+export IC_URL="http://127.0.0.1:8080"
 export IC_IDENTITY_PEM=$(dfx identity export $DFX_IDENTITY)
 export VAPID_PRIVATE_PEM="-----BEGIN EC PRIVATE KEY-----
 MHcCAQEEIJdV6F+ZBM6sf74RwIrx8SmT7EjRhRfdYPpLN/6Az99EoAoGCCqGSM49

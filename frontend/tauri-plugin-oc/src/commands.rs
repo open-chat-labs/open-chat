@@ -27,3 +27,16 @@ pub(crate) async fn sign_in<R: Runtime>(
 ) -> Result<SignInResponse> {
     app.oc().sign_in(payload)
 }
+
+#[command]
+pub(crate) async fn show_notification<R: Runtime>(
+    app: AppHandle<R>,
+    payload: ShowNotificationRequest,
+) {
+    app.oc().show_notification(payload)
+}
+
+#[command]
+pub(crate) async fn svelte_ready<R: Runtime>(app: AppHandle<R>) {
+    app.oc().svelte_ready()
+}

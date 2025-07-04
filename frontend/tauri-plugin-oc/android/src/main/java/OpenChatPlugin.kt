@@ -10,6 +10,8 @@ import app.tauri.plugin.JSObject
 import app.tauri.plugin.Plugin
 import com.ocplugin.app.commands.OpenUrl
 import com.ocplugin.app.commands.PasskeyAuth
+import com.ocplugin.app.commands.ShowNotification
+import com.ocplugin.app.commands.SvelteReady
 
 @Suppress("UNUSED")
 @TauriPlugin
@@ -17,17 +19,31 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
     private val passkeyAuth = PasskeyAuth(activity)
 
     companion object {
-        var triggerRef: (event: String, payload: JSObject) -> Unit = { _, _ ->
-            Log.d("TEST_OC", "No trigger")
+        var triggerRef: (event: String, payload: JSObject) -> Unit = { event, payload ->
+            eventQueue.add(Pair(event, payload.toString()))
         }
+
+        var flushQueuedEvents: () -> Unit = {
+            Log.d("TEST_OC", "Flushing queued events")
+            eventQueue.forEach { (event, payload) ->
+                triggerRef(event, JSObject(payload))
+            }
+            eventQueue.clear()
+        }
+
+        var eventQueue = mutableListOf<Pair<String, String>>()
         var fcmToken: String? = null
+        var svelteReady: Boolean = false
     }
 
     override fun load(webView: WebView) {
         var self = this
         triggerRef = { event, payload ->
-            Log.d("TEST_OC", "Running the trigger for event: $event, and payload: $payload")
-            self.trigger(event, payload)
+            if (svelteReady) {
+                self.trigger(event, payload)
+            } else {
+                eventQueue.add(Pair(event, payload.toString()))
+            }
         }
     }
 
@@ -48,6 +64,17 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
 
     @Command
     fun getFcmToken(invoke: Invoke) {
-        invoke.resolve(JSObject().put("fcmToken", OpenChatPlugin.fcmToken))
+        invoke.resolve(JSObject().put("fcmToken", fcmToken))
+    }
+
+    @Command
+    fun showNotification(invoke: Invoke) {
+        ShowNotification(activity).handler(invoke)
+    }
+
+    @Command
+    fun svelteReady(invoke: Invoke) {
+        SvelteReady(activity).handler(invoke)
+        flushQueuedEvents()
     }
 }
