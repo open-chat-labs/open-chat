@@ -7,14 +7,12 @@
     } from "openchat-client";
     import { getContext, tick } from "svelte";
     import { Confetti } from "svelte-confetti";
-    import { _ } from "svelte-i18n";
     import ShieldHalfFull from "svelte-material-icons/ShieldHalfFull.svelte";
     import TrophyOutline from "svelte-material-icons/TrophyOutline.svelte";
     import { fade } from "svelte/transition";
     import { i18nKey } from "../../i18n/i18n";
     import { now500 } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
-    import AlertBox from "../AlertBox.svelte";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import HoverIcon from "../HoverIcon.svelte";
@@ -24,7 +22,6 @@
     import Progress from "../Progress.svelte";
     import Translatable from "../Translatable.svelte";
     import StreakInsuranceBuy from "./insurance/StreakInsuranceBuy.svelte";
-    import Markdown from "./Markdown.svelte";
     import ChitBalance from "./profile/ChitBalance.svelte";
     import LearnToEarn from "./profile/LearnToEarn.svelte";
     import Streak from "./profile/Streak.svelte";
