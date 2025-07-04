@@ -38,11 +38,21 @@ RUN echo 'server {\n\
     server_name localhost;\n\
 \n\
     location /api {\n\
+        add_header "Access-Control-Allow-Origin" "*";\n\
+        add_header "Access-Control-Allow-Methods" "GET, POST, PUT, DELETE, OPTIONS";\n\
+        add_header "Access-Control-Allow-Headers" "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range";\n\
+        add_header "Access-Control-Expose-Headers"  "Content-Length,Content-Range";\n\
+\n\
+        if ($request_method = "OPTIONS") {\n\
+            return 204;\n\
+        }\n\
+\n\
         proxy_pass http://0.0.0.0:8080;\n\
         proxy_set_header Host $host;\n\
         proxy_set_header X-Real-IP $remote_addr;\n\
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n\
         proxy_set_header X-Forwarded-Proto $scheme;\n\
+        proxy_hide_header "Access-Control-Allow-Origin";\n\
     }\n\
 \n\
     location / {\n\

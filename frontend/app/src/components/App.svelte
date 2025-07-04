@@ -55,9 +55,12 @@
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
     import { portalState } from "./portalState.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
-    import { expectNewFcmToken } from "@utils/native/notification_channels";
-    import { getFcmToken } from "tauri-plugin-oc-api";
-    import { expectPushNotifications } from "@utils/native/notification_channels";
+    import {
+        expectNewFcmToken,
+        expectPushNotifications,
+        expectNotificationTap,
+    } from "@utils/native/notification_channels";
+    import { getFcmToken, svelteReady } from "tauri-plugin-oc-api";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -199,6 +202,15 @@
             botState.messageFormatter = formatter;
         });
 
+        if (client.isNativeAndroid()) {
+            // Inform the native android app that svelte code is ready! SetTimeout
+            // delays the fn execution until the call stack is empty, just to 
+            // make sure anything else non-async that needs to run is done.
+            //
+            // Once Svelte app is ready, native code can start pushing events.
+            setTimeout(svelteReady);
+        }
+
         return () => {
             window.removeEventListener("scroll", trackVirtualKeyboard);
             window.removeEventListener("resize", trackVirtualKeyboard);
@@ -225,9 +237,10 @@
     if (client.isNativeApp()) {
         // Listen for incoming push notifications from Firebase; also asks
         // for permission to show notifications if not already granted.
-        expectPushNotifications((notification) => {
-            console.warn("TODO handle notifications: ", notification);
-        }).catch(console.error);
+        expectPushNotifications().catch(console.error);
+
+        // Listen for notifications user has tapped on
+        expectNotificationTap().catch(console.error);
     }
 
     function addFcmToken(token: string) {

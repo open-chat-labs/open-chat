@@ -128,15 +128,14 @@ impl RuntimeState {
         sender: Option<UserId>,
         recipients: Vec<UserId>,
         notification: UserNotificationPayload,
-        _fcm_data: FcmData,
+        fcm_data: FcmData,
     ) {
         if !recipients.is_empty() {
             let notification = Notification::User(UserNotification {
                 sender,
                 recipients,
                 notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
-                fcm_data: None,
-                //fcm_data: Some(fcm_data),
+                fcm_data: Some(fcm_data),
             });
             self.push_notification_inner(notification);
         }

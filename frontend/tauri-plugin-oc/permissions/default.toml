@@ -7,4 +7,6 @@ permissions = [
     "allow-registerListener",
     "allow-removeListener",
     "allow-get-fcm-token",
+    "allow-show-notification",
+    "allow-svelte-ready",
 ]
