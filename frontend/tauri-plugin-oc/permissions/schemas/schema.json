@@ -343,6 +343,18 @@
           "markdownDescription": "Denies the removeListener command without any pre-configured scope."
         },
         {
+          "description": "Enables the show_notification command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-show-notification",
+          "markdownDescription": "Enables the show_notification command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the show_notification command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-show-notification",
+          "markdownDescription": "Denies the show_notification command without any pre-configured scope."
+        },
+        {
           "description": "Enables the sign_in command without any pre-configured scope.",
           "type": "string",
           "const": "allow-sign-in",
@@ -367,10 +379,22 @@
           "markdownDescription": "Denies the sign_up command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`",
+          "description": "Enables the svelte_ready command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-svelte-ready",
+          "markdownDescription": "Enables the svelte_ready command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the svelte_ready command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-svelte-ready",
+          "markdownDescription": "Denies the svelte_ready command without any pre-configured scope."
+        },
+        {
+          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`"
+          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`"
         }
       ]
     }

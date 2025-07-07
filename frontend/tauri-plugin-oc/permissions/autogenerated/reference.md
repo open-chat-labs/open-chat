@@ -10,6 +10,8 @@ Default permissions for the plugin
 - `allow-registerListener`
 - `allow-removeListener`
 - `allow-get-fcm-token`
+- `allow-show-notification`
+- `allow-svelte-ready`
 
 ## Permission Table
 
@@ -127,6 +129,32 @@ Denies the removeListener command without any pre-configured scope.
 <tr>
 <td>
 
+`oc:allow-show-notification`
+
+</td>
+<td>
+
+Enables the show_notification command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-show-notification`
+
+</td>
+<td>
+
+Denies the show_notification command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
 `oc:allow-sign-in`
 
 </td>
@@ -172,6 +200,32 @@ Enables the sign_up command without any pre-configured scope.
 <td>
 
 Denies the sign_up command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-svelte-ready`
+
+</td>
+<td>
+
+Enables the svelte_ready command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-svelte-ready`
+
+</td>
+<td>
+
+Denies the svelte_ready command without any pre-configured scope.
 
 </td>
 </tr>

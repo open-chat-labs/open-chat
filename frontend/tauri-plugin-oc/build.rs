@@ -1,10 +1,12 @@
 const COMMANDS: &[&str] = &[
+    "registerListener",
+    "removeListener",
     "open_url",
     "sign_up",
     "sign_in",
-    "registerListener",
-    "removeListener",
     "get_fcm_token",
+    "show_notification",
+    "svelte_ready",
 ];
 
 fn main() {

@@ -121,7 +121,7 @@ impl RuntimeState {
         sender: Option<UserId>,
         recipient: UserId,
         notification: UserNotificationPayload,
-        _fcm_data: FcmData,
+        fcm_data: FcmData,
     ) {
         self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
             created_at: self.env.now(),
@@ -130,8 +130,7 @@ impl RuntimeState {
                 sender,
                 recipients: vec![recipient],
                 notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
-                fcm_data: None,
-                //fcm_data: Some(fcm_data),
+                fcm_data: Some(fcm_data),
             }))),
         })
     }

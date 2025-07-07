@@ -38,7 +38,9 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
         .invoke_handler(tauri::generate_handler![
             commands::open_url,
             commands::sign_up,
-            commands::sign_in
+            commands::sign_in,
+            commands::show_notification,
+            commands::svelte_ready,
         ])
         .setup(|app, api| {
             #[cfg(mobile)]

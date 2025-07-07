@@ -23,6 +23,7 @@ import coil3.request.ImageRequest
 import coil3.request.SuccessResult
 import coil3.request.bitmapConfig
 import kotlinx.coroutines.CoroutineScope
+import org.json.JSONObject
 
 // All functions are used, though outside the plugin codebase
 @Suppress("UNUSED")
@@ -31,11 +32,6 @@ object NotificationsHelper {
     private const val MESSAGES_GROUP_ID = "oc_messages_group"
 
     fun showNotification(context: Context, data: Map<String, String>) {
-        // For debugging purposes
-        // for ((key, value) in data) {
-        //    Log.d("TEST_OC", "Key: $key, Value: $value")
-        // }
-
         // TODO replace with actual default
         val defaultAvatar = "https://oc.app/assets/ckbtc_nobackground.png"
 
@@ -44,27 +40,38 @@ object NotificationsHelper {
             // TODO add support for loading circular avatars / or make circular bitmap once image is loaded
             val avatarBitmap = loadBitmapFromUrl(context, data["sender_avatar_id"] ?: defaultAvatar)
 
-            Log.d("TEST_OC", "Avatar bitmap: $avatarBitmap")
-
             showNotificationWithAvatar(context, data, avatarBitmap)
         }
     }
 
     fun showNotificationWithAvatar(context: Context, data: Map<String, String>, avatar: Bitmap?) {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationPayload = JSONObject().apply {
+            data.forEach { (key, value) -> put(key, value) }
+        }
 
         // Build pending intent with the notification data that we will read once the user taps on
         // the notification.
         val packageName = context.packageName
         val mainActivityClass = Class.forName("$packageName.MainActivity")
         val intent = Intent(context, mainActivityClass).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            data.forEach { (key, value) -> putExtra(key, value) }
+            // Correct flags for bringing existing activity to front and delivering new intent
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or // Essential for launching from outside app (e.g., notification when app not running)
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or   // Clear all activities on top of the target activity
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP     // Deliver new intent to existing activity if it's top of stack
+
+            putExtra("notificationPayload", notificationPayload.toString())
+
         }
-        val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+        val pendingIntentFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        } else {
+            PendingIntent.FLAG_UPDATE_CURRENT
+        }
+        val pendingIntent = PendingIntent.getActivity(context, 0, intent, pendingIntentFlags)
 
         // Build the user style notification specific for chat like apps!
-        val sender = buildChatNotificationSender(data["sender_name"], avatar)
+        val sender = buildChatNotificationSender(data["senderName"], avatar)
 
         val style = NotificationCompat
             .MessagingStyle(sender)

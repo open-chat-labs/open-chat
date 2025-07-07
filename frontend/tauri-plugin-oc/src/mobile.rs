@@ -42,4 +42,16 @@ impl<R: Runtime> Oc<R> {
             .run_mobile_plugin("signIn", payload)
             .map_err(Into::into)
     }
+
+    pub fn show_notification(&self, payload: ShowNotificationRequest) {
+        let _: Result<(), _> = self.0.run_mobile_plugin("showNotification", payload);
+    }
+
+    // SvelteReadyRequest is just a placeholder type simply required as the
+    // second arg to the run_mobile_plugin function.
+    pub fn svelte_ready(&self) {
+        let _: Result<(), _> = self
+            .0
+            .run_mobile_plugin("svelteReady", SvelteReadyRequest::default());
+    }
 }
