@@ -501,6 +501,10 @@ export enum NnsProposalTopic {
     SubnetReplicaVersionManagement,
     ReplicaVersionManagement,
     SnsAndCommunityFund,
+    ApiBoundaryNodeManagement,
+    SubnetRental,
+    ProtocolCanisterManagement,
+    ServiceNervousSystemManagement,
 }
 
 export interface SnsProposal extends ProposalCommon {
