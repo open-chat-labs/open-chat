@@ -1063,6 +1063,10 @@ export const proposalTopicsStore = derived(
                     [12, "Subnet Replica Version Management"],
                     [13, "Replica Version Management"],
                     [14, "SNS & Neurons' Fund"],
+                    [15, "API Boundary Node Management"],
+                    [16, "Subnet Rental"],
+                    [17, "Protocol Canister Management"],
+                    [18, "Service Nervous System Management"]
                 ]);
             } else {
                 const snsFunctionsMap = snsFunctions.get(
