@@ -35,6 +35,7 @@ fn c2c_uninstall_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             location: BotInstallationLocation::Group(args.caller.into()),
         })),
         recipients: vec![args.bot_id],
+        timestamp: now,
     }));
 
     Ok(())

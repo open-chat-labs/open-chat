@@ -87,16 +87,14 @@ fn commit(channel_id: ChannelId, user_id: UserId, args: Args, state: &mut Runtim
     let channel = state.data.channels.get_mut_or_err(&channel_id)?;
     let member = channel.chat.members.get_verified_member(user_id)?;
     let min_visible_event_index = member.min_visible_event_index();
+    let now = state.env.now();
 
     channel
         .chat
         .events
-        .record_proposal_vote(user_id, min_visible_event_index, args.message_index, args.adopt)?;
+        .record_proposal_vote(user_id, min_visible_event_index, args.message_index, args.adopt, now)?;
 
-    channel
-        .chat
-        .members
-        .register_proposal_vote(&user_id, args.message_index, state.env.now());
+    channel.chat.members.register_proposal_vote(&user_id, args.message_index, now);
 
     handle_activity_notification(state);
     Ok(())

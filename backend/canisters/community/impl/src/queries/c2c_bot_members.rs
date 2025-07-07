@@ -56,7 +56,10 @@ fn c2c_bot_members_impl(args: Args, state: &RuntimeState) -> OCResult<MembersRes
         }
     }
 
-    Ok(MembersResult { members_map })
+    Ok(MembersResult {
+        members_map,
+        timestamp: state.env.now(),
+    })
 }
 
 fn community_users_by_type(data: &Data, member_type: MemberType) -> Vec<UserId> {

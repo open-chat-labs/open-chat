@@ -160,6 +160,7 @@ impl RuntimeState {
                         community_id,
                     }),
                     recipients: bots_to_notify,
+                    timestamp: now,
                 }));
             }
         }

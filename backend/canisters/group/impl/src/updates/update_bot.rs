@@ -21,13 +21,14 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     }
 
     let installed_by = member.user_id();
+    let now = state.env.now();
 
     if !state.data.update_bot(
         installed_by,
         args.bot_id,
         args.granted_permissions.clone(),
         args.granted_autonomous_permissions.clone(),
-        state.env.now(),
+        now,
     ) {
         return Err(OCErrorCode::BotNotFound.into());
     }
@@ -41,6 +42,7 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             granted_autonomous_permissions: args.granted_autonomous_permissions.unwrap_or_default(),
         })),
         recipients: vec![args.bot_id],
+        timestamp: now,
     }));
 
     handle_activity_notification(state);
