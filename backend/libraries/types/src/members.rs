@@ -1,4 +1,4 @@
-use crate::UserId;
+use crate::{TimestampMillis, UserId};
 use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
@@ -16,6 +16,7 @@ pub enum MembersResponse {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct MembersResult {
     pub members_map: HashMap<MemberType, Vec<UserId>>,
+    pub timestamp: TimestampMillis,
 }
 
 #[ts_export]

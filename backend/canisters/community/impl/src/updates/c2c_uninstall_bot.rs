@@ -22,7 +22,9 @@ fn c2c_uninstall_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         }
     }
 
-    state.data.uninstall_bot(args.bot_id, state.env.now());
+    let now = state.env.now();
+
+    state.data.uninstall_bot(args.bot_id, now);
 
     state.push_community_event(CommunityEventInternal::BotRemoved(Box::new(BotRemoved {
         user_id: args.bot_id,
@@ -35,6 +37,7 @@ fn c2c_uninstall_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             location: BotInstallationLocation::Community(state.env.canister_id().into()),
         })),
         recipients: vec![args.bot_id],
+        timestamp: now,
     }));
 
     handle_activity_notification(state);

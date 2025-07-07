@@ -190,7 +190,7 @@ impl Job for HardDeleteMessageContentJob {
         mutate_state(|state| {
             if let Some((content, sender)) = state.data.direct_chats.get_mut(&self.chat_id).and_then(|chat| {
                 chat.events
-                    .remove_deleted_message_content(self.thread_root_message_index, self.message_id)
+                    .remove_deleted_message_content(self.thread_root_message_index, self.message_id, state.env.now())
             }) {
                 let my_user_id = state.env.canister_id().into();
                 if sender == my_user_id {

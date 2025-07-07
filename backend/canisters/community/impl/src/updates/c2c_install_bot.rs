@@ -22,13 +22,15 @@ fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
+    let now = state.env.now();
+
     if !state.data.install_bot(
         member.user_id,
         args.bot_id,
         args.granted_permissions.clone(),
         args.granted_autonomous_permissions.clone(),
         args.default_subscriptions,
-        state.env.now(),
+        now,
     ) {
         return Err(OCErrorCode::AlreadyAdded.into());
     }
@@ -47,6 +49,7 @@ fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             granted_autonomous_permissions: args.granted_autonomous_permissions.unwrap_or_default(),
         })),
         recipients: vec![args.bot_id],
+        timestamp: now,
     }));
 
     handle_activity_notification(state);

@@ -114,6 +114,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                             bot_name: ev.name,
                         })),
                         recipients: vec![ev.bot_id],
+                        timestamp: **now,
                     },
                     this_canister_id,
                     **now,
