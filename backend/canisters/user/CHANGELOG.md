@@ -18,7 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Use MessagePack to serialize upgrade args ([#8269](https://github.com/open-chat-labs/open-chat/pull/8269))
 - Remove duplication by removing `MessageContent::message_type` function ([#8293](https://github.com/open-chat-labs/open-chat/pull/8293))
 - Updated the `FcmData` interface ([8261](https://github.com/open-chat-labs/open-chat/pull/8261))
-- Re-enabled fcm_data; needs to be released with group, community and local_user_index canisters ([8298](https://github.com/open-chat-labs/open-chat/pull/8298))
+- Re-enabled fcm_data ([8298](https://github.com/open-chat-labs/open-chat/pull/8298))
 
 
 ### Fixed
