@@ -56,7 +56,7 @@ import {
     updateCreatedUser,
 } from "openchat-shared";
 
-const CACHE_VERSION = 139;
+const CACHE_VERSION = 140;
 const EARLIEST_SUPPORTED_MIGRATION = 138;
 const MAX_INDEX = 9999999999;
 
@@ -185,13 +185,6 @@ type MigrationFunction<T> = (
 // ) {
 //     await tx.objectStore("chats").clear();
 // }
-// async function clearChatEventsStore(
-//     _db: IDBPDatabase<ChatSchema>,
-//     _principal: Principal,
-//     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-// ) {
-//     await tx.objectStore("chat_events").clear();
-// }
 //
 // async function clearGroupDetailsStore(
 //     _db: IDBPDatabase<ChatSchema>,
@@ -217,14 +210,14 @@ async function clearCommunityDetailsStore(
 //     nuke(db);
 // }
 //
-// async function clearEvents(
-//     _db: IDBPDatabase<ChatSchema>,
-//     _principal: Principal,
-//     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-// ) {
-//     await tx.objectStore("chat_events").clear();
-// }
-//
+async function clearEvents(
+    _db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    await tx.objectStore("chat_events").clear();
+}
+
 // async function clearChatAndGroups(
 //     _db: IDBPDatabase<ChatSchema>,
 //     _principal: Principal,
@@ -244,6 +237,7 @@ async function clearCommunityDetailsStore(
 
 const migrations: Record<number, MigrationFunction<ChatSchema>> = {
     139: clearCommunityDetailsStore,
+    140: clearEvents,
 };
 
 async function migrate(
@@ -1014,7 +1008,8 @@ function messageToEvent(
                     kind: "prize_content",
                     prizesRemaining: message.content.prizes.length,
                     prizesPending: 0,
-                    winners: [],
+                    winnerCount: 0,
+                    userIsWinner: false,
                     token: message.content.transfer.token,
                     endDate: message.content.endDate,
                     caption: message.content.caption,

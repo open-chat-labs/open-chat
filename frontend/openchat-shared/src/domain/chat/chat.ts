@@ -351,7 +351,8 @@ export interface PrizeContent {
     lifetimeDiamondOnly: boolean;
     uniquePersonOnly: boolean;
     streakOnly: number;
-    winners: string[];
+    winnerCount: number;
+    userIsWinner: boolean;
     token: string;
     endDate: bigint;
     caption?: string;

@@ -969,11 +969,11 @@ export class GlobalLocalState {
         );
     }
 
-    markPrizeClaimed(messageId: bigint, userId: string) {
+    markPrizeClaimed(messageId: bigint) {
         return this.#modifyMessageUpdates(
             messageId,
             (upd) => {
-                upd.prizeClaimed = userId;
+                upd.prizeClaimed = true;
                 return (upd) => {
                     upd.prizeClaimed = undefined;
                     return upd;
