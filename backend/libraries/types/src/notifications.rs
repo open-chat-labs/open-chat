@@ -39,6 +39,8 @@ pub struct BotNotification {
     pub event: BotEvent,
     #[serde(rename = "r")]
     pub recipients: Vec<UserId>,
+    #[serde(default, rename = "t")]
+    pub timestamp: TimestampMillis,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -57,6 +59,8 @@ pub struct BotEventWrapper {
     pub api_gateway: CanisterId,
     #[serde(rename = "e")]
     pub event: BotEvent,
+    #[serde(rename = "t")]
+    pub timestamp: TimestampMillis,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

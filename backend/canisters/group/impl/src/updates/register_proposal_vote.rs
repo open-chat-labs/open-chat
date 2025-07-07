@@ -77,17 +77,19 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
 }
 
 fn commit(user_id: UserId, args: Args, state: &mut RuntimeState) -> OCResult {
+    let now = state.env.now();
+
     state
         .data
         .chat
         .events
-        .record_proposal_vote(user_id, EventIndex::default(), args.message_index, args.adopt)?;
+        .record_proposal_vote(user_id, EventIndex::default(), args.message_index, args.adopt, now)?;
 
     state
         .data
         .chat
         .members
-        .register_proposal_vote(&user_id, args.message_index, state.env.now());
+        .register_proposal_vote(&user_id, args.message_index, now);
 
     handle_activity_notification(state);
     Ok(())

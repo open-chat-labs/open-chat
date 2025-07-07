@@ -9,6 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Introduce `Encrypted` message type ([8294](https://github.com/open-chat-labs/open-chat/pull/8294))
+- Add timestamp to BotEventWrapper and MembersResult ([8300](https://github.com/open-chat-labs/open-chat/pull/8300))
+
+### Changed
+
+- Deprecate `winners` field on prize messages ([#8302](https://github.com/open-chat-labs/open-chat/pull/8302))
 
 ### Removed
 

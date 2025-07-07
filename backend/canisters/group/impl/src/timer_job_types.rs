@@ -138,12 +138,11 @@ impl Job for HardDeleteMessageContentJob {
     fn execute(self) {
         let mut follow_on_jobs = Vec::new();
         mutate_state(|state| {
-            if let Some((content, sender)) = state
-                .data
-                .chat
-                .events
-                .remove_deleted_message_content(self.thread_root_message_index, self.message_id)
-            {
+            if let Some((content, sender)) = state.data.chat.events.remove_deleted_message_content(
+                self.thread_root_message_index,
+                self.message_id,
+                state.env.now(),
+            ) {
                 let files_to_delete = content.blob_references();
                 if !files_to_delete.is_empty() {
                     let delete_files_job = DeleteFileReferencesJob { files: files_to_delete };

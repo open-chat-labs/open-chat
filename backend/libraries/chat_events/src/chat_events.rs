@@ -284,7 +284,8 @@ impl ChatEvents {
             thread_root_message_index,
             args.message_id.into(),
             args.min_visible_event_index,
-            Some(now),
+            now,
+            true,
             ChatEventType::MessageEdited,
             |message, event| Self::edit_message_inner(message, event, args, chat, anonymized_id, event_pusher),
         ) {
@@ -413,7 +414,8 @@ impl ChatEvents {
             args.thread_root_message_index,
             args.message_id.into(),
             args.min_visible_event_index,
-            Some(args.now),
+            args.now,
+            true,
             ChatEventType::MessageDeleted,
             |message, _| Self::delete_message_inner(message, &args),
         ) {
@@ -476,7 +478,8 @@ impl ChatEvents {
             args.thread_root_message_index,
             args.message_id.into(),
             args.min_visible_event_index,
-            Some(args.now),
+            args.now,
+            true,
             ChatEventType::MessageDeleted,
             |message, _| Self::undelete_message_inner(message, &args),
         ) {
@@ -536,13 +539,15 @@ impl ChatEvents {
         &mut self,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
+        now: TimestampMillis,
     ) -> Option<(MessageContentInternal, UserId)> {
         if let Ok((content, sender)) = self
             .update_message(
                 thread_root_message_index,
                 message_id.into(),
                 EventIndex::default(),
-                None,
+                now,
+                false,
                 ChatEventType::MessageDeleted,
                 |message, _| Self::remove_deleted_message_content_inner(message),
             )
@@ -575,7 +580,8 @@ impl ChatEvents {
             args.thread_root_message_index,
             args.message_index.into(),
             args.min_visible_event_index,
-            Some(args.now),
+            args.now,
+            true,
             ChatEventType::MessagePollVote,
             |message, _| Self::register_poll_vote_inner(message, &args),
         ) {
@@ -652,7 +658,8 @@ impl ChatEvents {
             thread_root_message_index,
             message_index.into(),
             EventIndex::default(),
-            Some(now),
+            now,
+            true,
             ChatEventType::MessagePollEnded,
             |message, _| Self::end_poll_inner(message),
         ) {
@@ -680,7 +687,8 @@ impl ChatEvents {
             None,
             message_index.into(),
             EventIndex::default(),
-            None,
+            now_nanos / 1_000_000,
+            false,
             ChatEventType::MessageOther,
             |message, _| Self::final_payments_inner(message, now_nanos),
         )
@@ -706,12 +714,14 @@ impl ChatEvents {
         min_visible_event_index: EventIndex,
         message_index: MessageIndex,
         adopt: bool,
+        now: TimestampMillis,
     ) -> OCResult<UpdateMessageSuccess> {
         match self.update_message(
             None,
             message_index.into(),
             min_visible_event_index,
-            None,
+            now,
+            false,
             ChatEventType::MessageOther,
             |message, _| Self::record_proposal_vote_inner(message, user_id, adopt),
         ) {
@@ -753,7 +763,8 @@ impl ChatEvents {
                 None,
                 update.message_id.into(),
                 EventIndex::default(),
-                should_mark_updated.then_some(now),
+                now,
+                should_mark_updated,
                 ChatEventType::MessageOther,
                 |message, _| Self::update_proposal_inner(message, user_id, update, now),
             ) {
@@ -810,7 +821,8 @@ impl ChatEvents {
             args.thread_root_message_index,
             args.message_id.into(),
             args.min_visible_event_index,
-            Some(now),
+            now,
+            true,
             ChatEventType::MessageReaction,
             |message, _| Self::add_reaction_inner(message, args, chat, anonymized_id, event_pusher),
         ) {
@@ -874,7 +886,8 @@ impl ChatEvents {
             args.thread_root_message_index,
             args.message_id.into(),
             args.min_visible_event_index,
-            Some(args.now),
+            args.now,
+            true,
             ChatEventType::MessageReaction,
             |message, _| Self::remove_reaction_inner(message, &args),
         ) {
@@ -925,7 +938,8 @@ impl ChatEvents {
             args.thread_root_message_index,
             args.message_id.into(),
             min_visible_event_index,
-            Some(args.now),
+            args.now,
+            true,
             ChatEventType::MessageTipped,
             |message, _| Self::tip_message_inner(message, &args, chat, anonymized_id, event_pusher),
         ) {
@@ -1001,7 +1015,8 @@ impl ChatEvents {
             None,
             message_id.into(),
             min_visible_event_index,
-            Some(now),
+            now,
+            true,
             ChatEventType::MessageOther,
             |message, _| Self::reserve_prize_inner(message, user_id, now),
         ) {
@@ -1067,7 +1082,8 @@ impl ChatEvents {
             None,
             message_id.into(),
             EventIndex::default(),
-            Some(now),
+            now,
+            true,
             ChatEventType::MessagePrizeClaim,
             |message, _| Self::claim_prize_inner(message, winner, amount),
         ) {
@@ -1137,7 +1153,8 @@ impl ChatEvents {
             None,
             message_id.into(),
             EventIndex::default(),
-            Some(now),
+            now,
+            true,
             ChatEventType::MessageOther,
             |message, _| Self::unreserve_prize_inner(message, user_id, amount, ledger_error),
         ) {
@@ -1187,12 +1204,13 @@ impl ChatEvents {
             .collect()
     }
 
-    pub fn reduce_final_prize_by_transfer_fee(&mut self, message_id: MessageId) -> bool {
+    pub fn reduce_final_prize_by_transfer_fee(&mut self, message_id: MessageId, now: TimestampMillis) -> bool {
         self.update_message(
             None,
             message_id.into(),
             EventIndex::default(),
-            None,
+            now,
+            false,
             ChatEventType::MessageOther,
             |message, _| Self::reduce_final_prize_by_transfer_fee_inner(message),
         )
@@ -1235,7 +1253,8 @@ impl ChatEvents {
             thread_root_message_index,
             message_id.into(),
             min_visible_event_index,
-            Some(now),
+            now,
+            true,
             ChatEventType::MessageOther,
             |message, event| Self::reserve_p2p_swap_inner(message, event.timestamp, user_id, now),
         ) {
@@ -1278,7 +1297,8 @@ impl ChatEvents {
             thread_root_message_index,
             message_id.into(),
             EventIndex::default(),
-            Some(now),
+            now,
+            true,
             ChatEventType::MessageOther,
             |message, _| Self::accept_p2p_swap_inner(message, user_id, token1_txn_in),
         ) {
@@ -1325,7 +1345,8 @@ impl ChatEvents {
             thread_root_message_index,
             message_id.into(),
             EventIndex::default(),
-            Some(now),
+            now,
+            true,
             ChatEventType::MessageP2pSwapCompleted,
             |message, _| {
                 Self::complete_p2p_swap_inner(
@@ -1396,7 +1417,8 @@ impl ChatEvents {
             thread_root_message_index,
             message_id.into(),
             EventIndex::default(),
-            Some(now),
+            now,
+            true,
             ChatEventType::MessageOther,
             |message, _| Self::unreserve_p2p_swap_inner(message, user_id),
         );
@@ -1421,7 +1443,8 @@ impl ChatEvents {
             thread_root_message_index,
             message_id.into(),
             EventIndex::default(),
-            Some(now),
+            now,
+            true,
             ChatEventType::MessageP2pSwapCancelled,
             |message, _| Self::cancel_p2p_swap_inner(message, user_id),
         ) {
@@ -1455,7 +1478,8 @@ impl ChatEvents {
             thread_root_message_index,
             message_id.into(),
             EventIndex::default(),
-            Some(now),
+            now,
+            true,
             ChatEventType::MessageOther,
             |message, _| Self::mark_p2p_swap_expired_inner(message),
         )
@@ -1480,7 +1504,8 @@ impl ChatEvents {
             thread_root_message_index,
             message_id.into(),
             EventIndex::default(),
-            Some(now),
+            now,
+            true,
             ChatEventType::MessageOther,
             |message, _| Self::set_p2p_swap_status_inner(message, status),
         )
@@ -1502,7 +1527,8 @@ impl ChatEvents {
                 None,
                 message_index.into(),
                 EventIndex::default(),
-                Some(now),
+                now,
+                true,
                 ChatEventType::MessageOther,
                 |message, _| {
                     if let Some(r) = message.replies_to.as_mut() {
@@ -1574,7 +1600,8 @@ impl ChatEvents {
             None,
             thread_root_message_index.into(),
             min_visible_event_index,
-            Some(now),
+            now,
+            true,
             ChatEventType::MessageOther,
             |message, _| Self::update_thread_summary_inner(message, create_if_not_exists, update_fn),
         )
@@ -1653,6 +1680,7 @@ impl ChatEvents {
                     latest_event_index: event_index,
                 }),
                 recipients: bots_to_notify,
+                timestamp: now,
             })
         };
 
@@ -1724,7 +1752,8 @@ impl ChatEvents {
             None,
             message_index.into(),
             EventIndex::default(),
-            Some(now),
+            now,
+            true,
             ChatEventType::MessageOther,
             |message, _| Self::mark_message_reminder_created_message_hidden_inner(message),
         )
@@ -1949,7 +1978,8 @@ impl ChatEvents {
             None,
             event_key,
             EventIndex::default(),
-            Some(now),
+            now,
+            true,
             ChatEventType::MessageVideoCall,
             |message, event| Self::end_video_call_inner(message, event.timestamp, now, chat, anonymized_id, event_pusher),
         ) {
@@ -2017,7 +2047,8 @@ impl ChatEvents {
             None,
             message_id.into(),
             min_visible_event_index,
-            Some(now),
+            now,
+            true,
             ChatEventType::MessageVideoCall,
             |message, _| Self::set_video_presence_inner(message, user_id, presence, now),
         ) {
@@ -2277,12 +2308,14 @@ impl ChatEvents {
         })
     }
 
+    #[expect(clippy::too_many_arguments)]
     fn update_message<F: FnOnce(&mut MessageInternal, EventMetaData) -> Result<T, UpdateEventError<E>>, T, E>(
         &mut self,
         thread_root_message_index: Option<MessageIndex>,
         event_key: EventKey,
         min_visible_event_index: EventIndex,
-        now_if_should_mark_updated: Option<TimestampMillis>,
+        now: TimestampMillis,
+        should_mark_updated: bool,
         event_type: ChatEventType,
         update_message_fn: F,
     ) -> Result<UpdateMessageSuccess<T>, UpdateEventError<E>> {
@@ -2290,7 +2323,7 @@ impl ChatEvents {
             thread_root_message_index,
             event_key,
             min_visible_event_index,
-            now_if_should_mark_updated,
+            should_mark_updated.then_some(now),
             |event| Self::update_message_inner(event, update_message_fn),
         )
         .map(|r| {
@@ -2305,6 +2338,7 @@ impl ChatEvents {
                         latest_event_index: r.latest_event_index,
                     }),
                     recipients: bots_to_notify,
+                    timestamp: now,
                 })
             } else {
                 None

@@ -25,7 +25,7 @@ export class MessageLocalUpdates {
     cancelledReminder?: MessageReminderCreatedContent;
     undeletedContent?: MessageContent;
     revealedContent?: MessageContent;
-    prizeClaimed?: string;
+    prizeClaimed?: boolean;
     p2pSwapStatus?: P2PSwapStatus;
     reactions: LocalReaction[] = [];
     pollVotes: LocalPollVote[] = [];

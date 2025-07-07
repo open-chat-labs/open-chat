@@ -312,7 +312,7 @@ impl RuntimeState {
             match transfers_required.entry(ledger) {
                 Vacant(e) => {
                     e.insert((amount.saturating_sub(fee), fee));
-                    self.data.chat.events.reduce_final_prize_by_transfer_fee(message_id);
+                    self.data.chat.events.reduce_final_prize_by_transfer_fee(message_id, now);
                 }
                 Occupied(e) => {
                     let (total, _) = e.into_mut();

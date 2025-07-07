@@ -626,6 +626,7 @@ impl Data {
         let event_wrapper = BotEventWrapper {
             api_gateway: this_canister_id,
             event: bot_notification.event,
+            timestamp: bot_notification.timestamp,
         };
 
         let notification_bytes = encodings

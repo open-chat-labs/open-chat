@@ -1528,19 +1528,17 @@ function mergeLocalUpdates(
         message.deleted = true;
     }
 
-    if (localUpdates?.prizeClaimed !== undefined) {
-        if (message.content.kind === "prize_content") {
-            if (!message.content.winners.includes(localUpdates.prizeClaimed)) {
-                message.content = { ...message.content };
-                message.content.winners.push(localUpdates.prizeClaimed);
-                // We can't tell for sure if this user's claim was contained within the `prizesPending` count or not,
-                // but it doesn't actually matter, so if any were pending, then decrement `prizesPending`, else
-                // decrement `prizesRemaining`
-                if (message.content.prizesPending > 0) {
-                    message.content.prizesPending -= 1;
-                } else {
-                    message.content.prizesRemaining -= 1;
-                }
+    if (localUpdates?.prizeClaimed) {
+        if (message.content.kind === "prize_content" && !message.content.userIsWinner) {
+            message.content = { ...message.content };
+            message.content.userIsWinner = true;
+            // We can't tell for sure if this user's claim was contained within the `prizesPending` count or not,
+            // but it doesn't actually matter, so if any were pending, then decrement `prizesPending`, else
+            // decrement `prizesRemaining`
+            if (message.content.prizesPending > 0) {
+                message.content.prizesPending -= 1;
+            } else {
+                message.content.prizesRemaining -= 1;
             }
         }
     }
