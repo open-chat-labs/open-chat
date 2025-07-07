@@ -14,10 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Deprecate `winners` field on prize messages ([#8302](https://github.com/open-chat-labs/open-chat/pull/8302))
-
-### Changed
 - Re-enabled fcm_data ([8298](https://github.com/open-chat-labs/open-chat/pull/8298))
-
+- Add shorter aliases to `MessageContent` fields ([8305](https://github.com/open-chat-labs/open-chat/pull/8305))
 
 ### Removed
 

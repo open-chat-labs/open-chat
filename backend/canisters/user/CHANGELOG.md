@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove duplication by removing `MessageContent::message_type` function ([#8293](https://github.com/open-chat-labs/open-chat/pull/8293))
 - Updated the `FcmData` interface ([8261](https://github.com/open-chat-labs/open-chat/pull/8261))
 - Re-enabled fcm_data ([8298](https://github.com/open-chat-labs/open-chat/pull/8298))
-
+- Add shorter aliases to `MessageContent` fields ([8305](https://github.com/open-chat-labs/open-chat/pull/8305))
 
 ### Fixed
 
