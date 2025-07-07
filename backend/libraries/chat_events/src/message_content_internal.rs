@@ -1434,7 +1434,7 @@ impl MessageContentInternalSubtype for PrizeContentInternal {
             prizes_pending: self.reservations.len() as u32,
             winner_count: self.winners.len() as u32,
             user_is_winner: my_user_id.map(|u| self.winners.contains(&u)).unwrap_or_default(),
-            winners: self.winners.into_iter().collect(),
+            winners: Vec::new(),
             token_symbol: self.transaction.token().token_symbol().to_string(),
             ledger: self.transaction.ledger_canister_id(),
             end_date: self.end_date,
