@@ -2308,6 +2308,7 @@ impl ChatEvents {
         })
     }
 
+    #[expect(clippy::too_many_arguments)]
     fn update_message<F: FnOnce(&mut MessageInternal, EventMetaData) -> Result<T, UpdateEventError<E>>, T, E>(
         &mut self,
         thread_root_message_index: Option<MessageIndex>,
