@@ -353,6 +353,7 @@ impl From<MessageContent> for MessageContentInitial {
 // TODO: We shouldn't need this
 impl From<MessageContentInitial> for MessageContent {
     fn from(content: MessageContentInitial) -> Self {
+        #[expect(deprecated)]
         match content {
             MessageContentInitial::Audio(c) => MessageContent::Audio(c),
             MessageContentInitial::Crypto(c) => MessageContent::Crypto(c),
@@ -605,6 +606,8 @@ pub struct PrizeContentInitial {
 pub struct PrizeContent {
     pub prizes_remaining: u32,
     pub prizes_pending: u32,
+    #[deprecated]
+    #[ts(skip)]
     pub winners: Vec<UserId>,
     pub winner_count: u32,
     pub user_is_winner: bool,

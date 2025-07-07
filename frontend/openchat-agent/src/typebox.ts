@@ -4754,7 +4754,6 @@ export type PrizeContent = Static<typeof PrizeContent>;
 export const PrizeContent = Type.Object({
     prizes_remaining: Type.Number(),
     prizes_pending: Type.Number(),
-    winners: Type.Array(UserId),
     winner_count: Type.Number(),
     user_is_winner: Type.Boolean(),
     token_symbol: Type.String(),

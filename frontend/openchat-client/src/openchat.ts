@@ -6520,7 +6520,7 @@ export class OpenChat {
                 if (resp.kind !== "success") {
                     return false;
                 } else {
-                    localUpdates.markPrizeClaimed(messageId, currentUserIdStore.value);
+                    localUpdates.markPrizeClaimed(messageId);
                     return true;
                 }
             })

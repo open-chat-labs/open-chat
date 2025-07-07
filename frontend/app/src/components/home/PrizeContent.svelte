@@ -2,7 +2,6 @@
     import {
         chitStateStore,
         cryptoLookup,
-        currentUserIdStore,
         currentUserStore,
         isDiamondStore,
         isLifetimeDiamondStore,
@@ -82,9 +81,9 @@
             (t) => t.symbol.toLowerCase() === content.token.toLowerCase(),
         )?.logo ?? "",
     );
-    let total = $derived(content.prizesRemaining + content.prizesPending + content.winners.length);
-    let percentage = $derived((content.winners.length / total) * 100);
-    let claimedByYou = $derived(content.winners.includes($currentUserIdStore));
+    let total = $derived(content.prizesRemaining + content.prizesPending + content.winnerCount);
+    let percentage = $derived((content.winnerCount / total) * 100);
+    let claimedByYou = $derived(content.userIsWinner);
     let finished = $derived($now500 >= Number(content.endDate));
     let allClaimed = $derived(content.prizesRemaining <= 0);
     let userEligible = $derived(
@@ -229,7 +228,7 @@
             </div>
         </div>
         <div class="number-claimed">
-            {content.winners.length}/{total}
+            {content.winnerCount}/{total}
         </div>
         <div class="prize-claim">
             {#if claimedByYou}
