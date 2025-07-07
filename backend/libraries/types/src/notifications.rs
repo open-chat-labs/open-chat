@@ -39,7 +39,7 @@ pub struct BotNotification {
     pub event: BotEvent,
     #[serde(rename = "r")]
     pub recipients: Vec<UserId>,
-    #[serde(rename = "t")]
+    #[serde(default, rename = "t")]
     pub timestamp: TimestampMillis,
 }
 
