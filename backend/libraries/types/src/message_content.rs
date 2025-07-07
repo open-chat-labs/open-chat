@@ -477,6 +477,7 @@ impl From<&MessageContent> for MessageContentType {
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct TextContent {
+    #[serde(alias = "t")]
     pub text: String,
 }
 
@@ -489,67 +490,99 @@ impl From<String> for TextContent {
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ImageContent {
+    #[serde(alias = "w")]
     pub width: u32,
+    #[serde(alias = "h")]
     pub height: u32,
+    #[serde(alias = "t")]
     pub thumbnail_data: ThumbnailData,
+    #[serde(alias = "c")]
     pub caption: Option<String>,
+    #[serde(alias = "m")]
     pub mime_type: String,
+    #[serde(alias = "b")]
     pub blob_reference: Option<BlobReference>,
 }
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GiphyImageVariant {
+    #[serde(alias = "w")]
     pub width: u32,
+    #[serde(alias = "h")]
     pub height: u32,
+    #[serde(alias = "u")]
     pub url: String,
+    #[serde(alias = "m")]
     pub mime_type: String,
 }
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GiphyContent {
+    #[serde(alias = "c")]
     pub caption: Option<String>,
+    #[serde(alias = "t")]
     pub title: String,
+    #[serde(alias = "d")]
     pub desktop: GiphyImageVariant,
+    #[serde(alias = "m")]
     pub mobile: GiphyImageVariant,
 }
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct VideoContent {
+    #[serde(alias = "w")]
     pub width: u32,
+    #[serde(alias = "h")]
     pub height: u32,
+    #[serde(alias = "t")]
     pub thumbnail_data: ThumbnailData,
+    #[serde(alias = "c")]
     pub caption: Option<String>,
+    #[serde(alias = "m")]
     pub mime_type: String,
+    #[serde(alias = "i")]
     pub image_blob_reference: Option<BlobReference>,
+    #[serde(alias = "v")]
     pub video_blob_reference: Option<BlobReference>,
 }
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct AudioContent {
+    #[serde(alias = "c")]
     pub caption: Option<String>,
+    #[serde(alias = "m")]
     pub mime_type: String,
+    #[serde(alias = "b")]
     pub blob_reference: Option<BlobReference>,
 }
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct FileContent {
+    #[serde(alias = "n")]
     pub name: String,
+    #[serde(alias = "c")]
     pub caption: Option<String>,
+    #[serde(alias = "m")]
     pub mime_type: String,
+    #[serde(alias = "f")]
     pub file_size: u32,
+    #[serde(alias = "b")]
     pub blob_reference: Option<BlobReference>,
 }
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PollContent {
+    #[serde(alias = "c")]
     pub config: PollConfig,
+    #[serde(alias = "v")]
     pub votes: PollVotes,
+    #[serde(alias = "e")]
     pub ended: bool,
 }
 
@@ -582,8 +615,11 @@ pub enum RegisterVoteResult {
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CryptoContent {
+    #[serde(alias = "r")]
     pub recipient: UserId,
+    #[serde(alias = "t")]
     pub transfer: CryptoTransaction,
+    #[serde(alias = "c")]
     pub caption: Option<String>,
 }
 
@@ -604,45 +640,68 @@ pub struct PrizeContentInitial {
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PrizeContent {
+    #[serde(alias = "r")]
     pub prizes_remaining: u32,
+    #[serde(alias = "p")]
     pub prizes_pending: u32,
     #[deprecated]
+    #[serde(alias = "wi")]
     #[ts(skip)]
     pub winners: Vec<UserId>,
+    #[serde(alias = "w")]
     pub winner_count: u32,
+    #[serde(alias = "u")]
     pub user_is_winner: bool,
+    #[serde(alias = "s")]
     pub token_symbol: String,
+    #[serde(alias = "l")]
     pub ledger: CanisterId,
+    #[serde(alias = "e")]
     pub end_date: TimestampMillis,
+    #[serde(alias = "c")]
     pub caption: Option<String>,
+    #[serde(alias = "d")]
     pub diamond_only: bool,
+    #[serde(alias = "ld")]
     pub lifetime_diamond_only: bool,
+    #[serde(alias = "up")]
     pub unique_person_only: bool,
+    #[serde(alias = "st")]
     pub streak_only: u16,
+    #[serde(alias = "rc")]
     pub requires_captcha: bool,
 }
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PrizeWinnerContent {
+    #[serde(alias = "w")]
     pub winner: UserId,
+    #[serde(alias = "t")]
     pub transaction: CompletedCryptoTransaction,
+    #[serde(alias = "m")]
     pub prize_message: MessageIndex,
 }
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MessageReminderCreatedContent {
+    #[serde(alias = "i")]
     pub reminder_id: u64,
+    #[serde(alias = "t")]
     pub remind_at: TimestampMillis,
+    #[serde(alias = "n")]
     pub notes: Option<String>,
+    #[serde(alias = "h")]
     pub hidden: bool,
 }
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MessageReminderContent {
+    #[serde(alias = "i")]
     pub reminder_id: u64,
+    #[serde(alias = "n")]
     pub notes: Option<String>,
 }
 
@@ -676,14 +735,23 @@ pub struct P2PSwapContentInitial {
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct P2PSwapContent {
+    #[serde(alias = "i")]
     pub swap_id: u32,
+    #[serde(alias = "t0")]
     pub token0: TokenInfo,
+    #[serde(alias = "a0")]
     pub token0_amount: u128,
+    #[serde(alias = "t1")]
     pub token1: TokenInfo,
+    #[serde(alias = "a1")]
     pub token1_amount: u128,
+    #[serde(alias = "e")]
     pub expires_at: TimestampMillis,
+    #[serde(alias = "c")]
     pub caption: Option<String>,
+    #[serde(alias = "x0")]
     pub token0_txn_in: u64,
+    #[serde(alias = "s")]
     pub status: P2PSwapStatus,
 }
 
@@ -696,9 +764,13 @@ pub struct VideoCallContentInitial {
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct VideoCallContent {
+    #[serde(alias = "t")]
     pub call_type: VideoCallType,
+    #[serde(alias = "e")]
     pub ended: Option<TimestampMillis>,
+    #[serde(alias = "p")]
     pub participants: Vec<CallParticipant>,
+    #[serde(alias = "h")]
     pub hidden_participants: u32,
 }
 
@@ -723,15 +795,18 @@ pub struct EncryptedContent {
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CustomContent {
+    #[serde(alias = "k")]
     pub kind: String,
-    #[serde(with = "serde_bytes")]
+    #[serde(alias = "d", with = "serde_bytes")]
     pub data: Vec<u8>,
 }
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DeletedBy {
+    #[serde(alias = "d")]
     pub deleted_by: UserId,
+    #[serde(alias = "t")]
     pub timestamp: TimestampMillis,
 }
 

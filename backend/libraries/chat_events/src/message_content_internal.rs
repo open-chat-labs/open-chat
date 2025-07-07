@@ -500,11 +500,11 @@ pub struct ImageContentInternal {
     pub height: u32,
     #[serde(rename = "t")]
     pub thumbnail_data: ThumbnailData,
-    #[serde(rename = "c", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "c", skip_serializing_if = "Option::is_none")]
     pub caption: Option<String>,
     #[serde(rename = "m")]
     pub mime_type: String,
-    #[serde(rename = "b", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "b", skip_serializing_if = "Option::is_none")]
     pub blob_reference: Option<BlobReferenceInternal>,
 }
 

@@ -161,8 +161,11 @@ impl SnsProposal {
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ProposalContent {
+    #[serde(alias = "g")]
     pub governance_canister_id: CanisterId,
+    #[serde(alias = "p")]
     pub proposal: Proposal,
+    #[serde(alias = "v")]
     pub my_vote: Option<bool>,
 }
 
