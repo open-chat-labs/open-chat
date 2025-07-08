@@ -9348,7 +9348,7 @@ export class OpenChat {
             chatId,
         });
 
-        if (chatId === selectedChatIdStore.value) {
+        if (chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
             this.#updateServerEventsStore(
                 chatId,
                 (events) => updateExistingMessages(events, updatedMessages)
