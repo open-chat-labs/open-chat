@@ -130,6 +130,10 @@ fn insert_field_attributes(field: &mut Field, is_tuple: bool, derives_serde: boo
                     // }
                 }
             }
+            if let Some(original_name) = is_renamed(field) {
+                let doc_comment = format!("@name {original_name}");
+                field.attrs.push(parse_quote!( #[doc = #doc_comment] ));
+            }
         }
     }
 }
@@ -204,6 +208,21 @@ fn derives_serde(attr: &Attribute) -> bool {
         as_string.contains("Serialize") || as_string.contains("Deserialize")
     } else {
         false
+    }
+}
+
+fn is_renamed(field: &Field) -> Option<String> {
+    if field.attrs.iter().any(|attr| {
+        if attr.path().is_ident("serde") {
+            let as_string = attr.into_token_stream().to_string();
+            as_string.contains("rename")
+        } else {
+            false
+        }
+    }) {
+        field.ident.as_ref().map(|ident| ident.to_string())
+    } else {
+        None
     }
 }
 

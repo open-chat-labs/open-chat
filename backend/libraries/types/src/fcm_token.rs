@@ -1,8 +1,9 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use ts_rs::TS;
+use ts_export::ts_export;
 
-#[derive(Debug, CandidType, Serialize, Deserialize, Clone, Hash, Eq, PartialEq, PartialOrd, Ord, TS)]
+#[ts_export]
+#[derive(Debug, CandidType, Serialize, Deserialize, Clone, Hash, Eq, PartialEq, PartialOrd, Ord)]
 pub struct FcmToken(pub String);
 
 impl From<String> for FcmToken {
