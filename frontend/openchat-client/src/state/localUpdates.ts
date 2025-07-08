@@ -387,12 +387,12 @@ export class GlobalLocalState {
                 },
             });
         });
-        return scheduleUndo(() => {
+        return () => {
             this.#uninitialisedDirectChats.update((data) => {
                 data.delete(chatId);
                 return data;
             });
-        });
+        };
     }
 
     anyUninitialisedDirectChats(): boolean {
