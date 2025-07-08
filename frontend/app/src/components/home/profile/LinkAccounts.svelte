@@ -133,7 +133,7 @@
 
         if (provider === AuthProvider.PASSKEY) {
             if (substep.kind === "initiator") {
-                const [identity, delegation, webAuthnKey] = await client.signUpWithWebAuthn(false);
+                const [identity, delegation, webAuthnKey] = await client.signInWithWebAuthn(false);
                 substep = {
                     kind: "approver",
                     initiator: {
