@@ -7,6 +7,7 @@ import {
     MessageContextMap,
     MessageMap,
     nullMembership,
+    ONE_MINUTE_MILLIS,
     ROLE_OWNER,
     SafeMap,
     type AccessGateConfig,
@@ -680,6 +681,7 @@ export class GlobalLocalState {
         messageId: bigint,
         fn: (val: MessageLocalUpdates) => (v: MessageLocalUpdates) => MessageLocalUpdates,
         functionName: string,
+        timeout?: number,
     ): UndoLocalUpdate {
         return modifyWritableMap(
             messageId,
@@ -687,6 +689,7 @@ export class GlobalLocalState {
             messageLocalUpdates,
             () => new MessageLocalUpdates(),
             `${functionName}_${messageId}`,
+            timeout,
         );
     }
 
@@ -993,7 +996,8 @@ export class GlobalLocalState {
                     return upd;
                 };
             },
-            "markProposalTallyUpdated"
+            "markProposalTallyUpdated",
+            5 * ONE_MINUTE_MILLIS,
         );
     }
 
