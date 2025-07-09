@@ -323,9 +323,6 @@ pub mod happy_path {
         local_user_index: CanisterId,
         from_index: u64,
     ) -> local_user_index_canister::notifications::SuccessResult {
-        // TODO remove this
-        env.tick();
-
         let response = super::notifications(
             env,
             sender,
@@ -340,9 +337,6 @@ pub mod happy_path {
     }
 
     pub fn latest_notification_index(env: &PocketIc, sender: Principal, local_user_index: CanisterId) -> u64 {
-        // TODO remove this
-        env.tick();
-
         let response = super::latest_notification_index(env, sender, local_user_index, &Empty {});
         let local_user_index_canister::latest_notification_index::Response::Success(index) = response;
         index
