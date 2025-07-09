@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Removed unused fields from BotChatEvent (must go ahead of groups/communities) ([#8291](https://github.com/open-chat-labs/open-chat/pull/8291))
 - Remove the now unused `group_and_community_summary_updates` ([#8311](https://github.com/open-chat-labs/open-chat/pull/8311))
+- Remove the now unused `notifications_v2` ([#8312](https://github.com/open-chat-labs/open-chat/pull/8312))
 
 ### Fixed
 
