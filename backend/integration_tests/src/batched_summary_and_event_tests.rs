@@ -81,6 +81,7 @@ fn get_batched_events_succeeds() {
     assert_is_message_with_text(result.responses.get(3).unwrap(), "Channel: 3");
 }
 
+#[test]
 fn get_batched_summaries_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
