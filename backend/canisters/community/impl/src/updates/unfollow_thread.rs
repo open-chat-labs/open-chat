@@ -18,6 +18,6 @@ fn unfollow_thread_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let now = state.env.now();
 
     channel.chat.unfollow_thread(user_id, args.thread_root_message_index, now)?;
-    state.data.mark_community_updated_in_user_canister(user_id);
+    state.mark_activity_for_user(user_id);
     Ok(())
 }

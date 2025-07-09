@@ -53,6 +53,19 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 state.data.local_communities.mark_activity(&caller.into(), timestamp);
             }
         }
+        GroupEvent::MarkActivityForUser(timestamp, user_id) => {
+            if is_group {
+                state
+                    .data
+                    .local_groups
+                    .mark_activity_for_user(&caller.into(), user_id, timestamp);
+            } else {
+                state
+                    .data
+                    .local_communities
+                    .mark_activity_for_user(&caller.into(), user_id, timestamp);
+            }
+        }
         GroupEvent::EventStoreEvent(event) => state.data.event_store_client.push(event),
         GroupEvent::Notification(notification) => state.data.handle_notification(*notification, state.env.canister_id(), **now),
     }

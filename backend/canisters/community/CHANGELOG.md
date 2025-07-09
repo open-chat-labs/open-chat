@@ -21,6 +21,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Removed unused fields from BotChatEvent ([#8291](https://github.com/open-chat-labs/open-chat/pull/8291))
 
+### Fixed
+
+- Fix proposal vote updates not propagating to frontend ([#8310](https://github.com/open-chat-labs/open-chat/pull/8310))
+
 ## [[2.0.1821](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1821-community)] - 2025-07-03
 
 ### Changed

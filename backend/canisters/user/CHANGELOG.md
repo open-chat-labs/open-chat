@@ -20,6 +20,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Updated the `FcmData` interface ([8261](https://github.com/open-chat-labs/open-chat/pull/8261))
 - Re-enabled fcm_data ([8298](https://github.com/open-chat-labs/open-chat/pull/8298))
 
+### Removed
+
+- Remove the now unused `c2c_mark_group/community_updated_for_user` ([#8310](https://github.com/open-chat-labs/open-chat/pull/8310))
 
 ### Fixed
 

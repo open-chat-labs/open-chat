@@ -1,7 +1,7 @@
 use local_user_index_canister::LocalCommunity;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{BuildVersion, CommunityId, CyclesTopUp, TimestampMillis};
+use types::{BuildVersion, CommunityId, CyclesTopUp, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct LocalCommunityMap {
@@ -33,6 +33,16 @@ impl LocalCommunityMap {
     pub fn mark_activity(&mut self, community_id: &CommunityId, timestamp: TimestampMillis) -> bool {
         if let Some(community) = self.communities.get_mut(community_id) {
             community.latest_activity = timestamp;
+            community.latest_activity_per_user.clear();
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn mark_activity_for_user(&mut self, community_id: &CommunityId, user_id: UserId, timestamp: TimestampMillis) -> bool {
+        if let Some(community) = self.communities.get_mut(community_id) {
+            community.latest_activity_per_user.insert(user_id, timestamp);
             true
         } else {
             false

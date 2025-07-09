@@ -3,7 +3,7 @@ use crate::{RuntimeState, read_state};
 use candid::Principal;
 use canister_api_macros::query;
 use local_user_index_canister::group_and_community_summary_updates_v2::{Response::*, *};
-use types::{C2CError, CanisterId, TimestampMillis};
+use types::{C2CError, CanisterId, TimestampMillis, UserId};
 
 #[query(composite = true, guard = "caller_is_openchat_user", candid = true, msgpack = true)]
 async fn group_and_community_summary_updates_v2(args: Args) -> Response {
@@ -50,8 +50,9 @@ fn prepare(args: Args, state: &RuntimeState) -> PrepareResult {
     let mut c2c_args = Vec::new();
     let mut excess_updates = Vec::new();
     let mut not_found = Vec::new();
+    let user_id = state.calling_user_id();
     for request in args.requests {
-        match should_include_request(&request, state) {
+        match should_include_request(&request, user_id, state) {
             Some(true) if c2c_args.len() < args.max_c2c_calls => c2c_args.push(request),
             Some(true) => excess_updates.push(request.canister_id),
             Some(false) => {} // No updates
@@ -68,19 +69,19 @@ fn prepare(args: Args, state: &RuntimeState) -> PrepareResult {
     }
 }
 
-fn should_include_request(request: &SummaryUpdatesArgs, state: &RuntimeState) -> Option<bool> {
+fn should_include_request(request: &SummaryUpdatesArgs, user_id: UserId, state: &RuntimeState) -> Option<bool> {
     if request.is_community {
-        state
-            .data
-            .local_communities
-            .get(&request.canister_id.into())
-            .map(|c| request.updates_since.is_none_or(|since| c.latest_activity > since))
+        state.data.local_communities.get(&request.canister_id.into()).map(|c| {
+            request
+                .updates_since
+                .is_none_or(|since| c.latest_activity(Some(user_id)) > since)
+        })
     } else {
-        state
-            .data
-            .local_groups
-            .get(&request.canister_id.into())
-            .map(|g| request.updates_since.is_none_or(|since| g.latest_activity > since))
+        state.data.local_groups.get(&request.canister_id.into()).map(|g| {
+            request
+                .updates_since
+                .is_none_or(|since| g.latest_activity(Some(user_id)) > since)
+        })
     }
 }
 
