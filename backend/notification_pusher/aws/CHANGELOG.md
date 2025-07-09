@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1830](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1830-notification_pusher)] - 2025-07-09
+
+### Changed
+
+- Re-enabled fcm_data ([8298](https://github.com/open-chat-labs/open-chat/pull/8298))
+
 ## [[2.0.1819](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1819-notification_pusher)] - 2025-07-02
 
 ### Changed
