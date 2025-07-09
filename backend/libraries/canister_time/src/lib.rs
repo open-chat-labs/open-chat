@@ -12,7 +12,7 @@ pub fn now_micros() -> u64 {
 
 #[cfg(target_arch = "wasm32")]
 pub fn now_nanos() -> u64 {
-    unsafe { ic0::time() as u64 }
+    ic0::time() as u64
 }
 
 #[cfg(not(target_arch = "wasm32"))]

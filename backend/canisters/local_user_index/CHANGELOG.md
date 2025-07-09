@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Re-enabled fcm_data ([8298](https://github.com/open-chat-labs/open-chat/pull/8298))
 - Deprecate `winners` field on prize messages ([#8302](https://github.com/open-chat-labs/open-chat/pull/8302))
+- Handle deserializing FcmData from canisters on older versions ([#8313](https://github.com/open-chat-labs/open-chat/pull/8313))
 
 ### Removed
 
