@@ -57,7 +57,7 @@
 
     <p>
         When a user attempts to join a group, community or channel that is protected by an access
-        gate with an expiry, they will be reminded that that access gate will be re-evaluated
+        gate with an expiry, they will be reminded that access gate will be re-evaluated
         according to the schedule set by the owner.
     </p>
 
