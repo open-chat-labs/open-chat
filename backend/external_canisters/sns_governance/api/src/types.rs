@@ -1378,7 +1378,7 @@ pub mod manage_neuron {
         pub percentage_to_merge: u32,
     }
     /// Stake the maturity of a neuron.
-    /// The caller can choose a percentage of of the current maturity to stake.
+    /// The caller can choose a percentage of the current maturity to stake.
     /// If 'percentage_to_stake' is not provided, all of the neuron's current
     /// maturity will be staked.
     #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]

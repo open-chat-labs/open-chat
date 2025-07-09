@@ -63,7 +63,7 @@
             <p>
                 Around the same time, Julian Jelfs joined to become the 3rd member of the OpenChat
                 team, and started building a new version of the website in Svelte, whilst the others
-                began desiging and and building the new backend system. It consisted of a user index
+                began desiging and building the new backend system. It consisted of a user index
                 canister, a group index canister, 1 canister per user, 1 canister per group, and
                 some other miscellaneous canisters. Together the team spent most of the rest of the
                 year building the long term version of OpenChat but also made some improvements to
