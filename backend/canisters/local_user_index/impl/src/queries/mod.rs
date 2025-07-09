@@ -10,7 +10,6 @@ pub mod c2c_lookup_user;
 pub mod c2c_lookup_users;
 pub mod c2c_user_principals;
 pub mod chat_events;
-pub mod group_and_community_summary_updates;
 pub mod group_and_community_summary_updates_v2;
 pub mod http_request;
 pub mod latest_notification_index;
