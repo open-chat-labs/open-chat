@@ -35,7 +35,7 @@ use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     AccessGateConfigInternal, Achievement, BotAdded, BotEventsCaller, BotInitiator, BotNotification, BotPermissions,
     BotRemoved, BotSubscriptions, BotUpdated, BuildVersion, Caller, CanisterId, ChatEventCategory, ChatId, ChatMetrics,
-    CommunityId, Cycles, Document, Empty, EventIndex, EventsCaller, FcmData, FrozenGroupInfo, GroupCanisterGroupChatSummary,
+    CommunityId, Cycles, Document, EventIndex, EventsCaller, FcmData, FrozenGroupInfo, GroupCanisterGroupChatSummary,
     GroupMembership, GroupPermissions, GroupSubtype, IdempotentEnvelope, MAX_THREADS_IN_SUMMARY, MessageIndex, Milliseconds,
     MultiUserChat, Notification, OCResult, Rules, TimestampMillis, Timestamped, UserId, UserNotification,
     UserNotificationPayload, UserType,
@@ -482,6 +482,16 @@ impl RuntimeState {
             UserType::BotV2 | UserType::Webhook => Err(OCErrorCode::InitiatorNotFound.into()),
         }
     }
+
+    pub fn mark_activity_for_user(&mut self, user_id: UserId) {
+        let now = self.env.now();
+
+        self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
+            created_at: now,
+            idempotency_id: self.env.rng().next_u64(),
+            value: local_user_index_canister::GroupEvent::MarkActivityForUser(now, user_id),
+        });
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -694,14 +704,6 @@ impl Data {
         let _ = self
             .instruction_counts_log
             .record(function_id, instructions_count, wasm_version, now);
-    }
-
-    pub fn mark_group_updated_in_user_canister(&self, user_id: UserId) {
-        self.fire_and_forget_handler.send(
-            user_id.into(),
-            "c2c_mark_group_updated_for_user_msgpack".to_string(),
-            serialize_then_unwrap(Empty {}),
-        );
     }
 
     pub fn handle_event_expiry(&mut self, expiry: TimestampMillis, now: TimestampMillis) {

@@ -1,6 +1,8 @@
 use candid::{CandidType, Principal};
 use event_store_types::Event;
 use serde::{Deserialize, Serialize};
+use std::cmp::max;
+use std::collections::HashMap;
 use types::nns::CryptoAmount;
 use types::{
     AutonomousConfig, BotCommandDefinition, BotDataEncoding, BotDefinition, BotInstallationLocation, BotSubscriptions,
@@ -64,6 +66,7 @@ pub enum GroupIndexEvent {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum GroupEvent {
     MarkActivity(TimestampMillis),
+    MarkActivityForUser(TimestampMillis, UserId),
     EventStoreEvent(Event),
     Notification(Box<Notification>),
 }
@@ -324,6 +327,8 @@ pub struct LocalGroup {
     pub wasm_version: BuildVersion,
     pub upgrade_in_progress: bool,
     pub latest_activity: TimestampMillis,
+    #[serde(default)]
+    pub latest_activity_per_user: HashMap<UserId, TimestampMillis>,
     pub cycle_top_ups: Vec<CyclesTopUp>,
 }
 
@@ -333,6 +338,7 @@ impl LocalGroup {
             wasm_version,
             upgrade_in_progress: false,
             latest_activity: 0,
+            latest_activity_per_user: HashMap::new(),
             cycle_top_ups: Vec::new(),
         }
     }
@@ -347,6 +353,15 @@ impl LocalGroup {
     pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
         self.cycle_top_ups.push(top_up)
     }
+
+    pub fn latest_activity(&self, user_id: Option<UserId>) -> TimestampMillis {
+        max(
+            self.latest_activity,
+            user_id
+                .and_then(|u| self.latest_activity_per_user.get(&u).copied())
+                .unwrap_or_default(),
+        )
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -354,6 +369,8 @@ pub struct LocalCommunity {
     pub wasm_version: BuildVersion,
     pub upgrade_in_progress: bool,
     pub latest_activity: TimestampMillis,
+    #[serde(default)]
+    pub latest_activity_per_user: HashMap<UserId, TimestampMillis>,
     pub cycle_top_ups: Vec<CyclesTopUp>,
 }
 
@@ -363,6 +380,7 @@ impl LocalCommunity {
             wasm_version,
             upgrade_in_progress: false,
             latest_activity: 0,
+            latest_activity_per_user: HashMap::new(),
             cycle_top_ups: Vec::new(),
         }
     }
@@ -376,5 +394,14 @@ impl LocalCommunity {
 
     pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
         self.cycle_top_ups.push(top_up)
+    }
+
+    pub fn latest_activity(&self, user_id: Option<UserId>) -> TimestampMillis {
+        max(
+            self.latest_activity,
+            user_id
+                .and_then(|u| self.latest_activity_per_user.get(&u).copied())
+                .unwrap_or_default(),
+        )
     }
 }
