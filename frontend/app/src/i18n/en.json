@@ -354,7 +354,9 @@
         "member": {
             "bots": "Bots",
             "people": "People",
-            "webhooks": "Webhooks"
+            "webhooks": "Webhooks",
+            "installed": "Installed",
+            "explore": "Explore"
         },
         "poll": {
             "desc": "Create a poll in the current chat"

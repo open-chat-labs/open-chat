@@ -623,7 +623,9 @@
                                             uniquePerson={sender?.isUniquePerson}
                                             diamondStatus={sender?.diamondStatus}
                                             {streak} />
-                                        <BotBadge bot={sender?.kind === "bot"} />
+                                        <BotBadge
+                                            bot={senderContext?.kind === "bot"}
+                                            webhook={senderContext?.kind === "webhook"} />
                                         {#if sender !== undefined && multiUserChat}
                                             <WithRole
                                                 userId={sender.userId}

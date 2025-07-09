@@ -1,11 +1,8 @@
 <script lang="ts">
-    import BotInstaller from "@src/components/bots/install/BotInstaller.svelte";
-    import WebhookMember from "@src/components/bots/WebhookMember.svelte";
+    import BotsTab from "@src/components/bots/BotsTab.svelte";
     import {
-        type BotMatch as BotMatchType,
         type CommunityIdentifier,
         type CommunitySummary,
-        type EnhancedExternalBot,
         type ExternalBot,
         type FullMember,
         type GrantedBotPermissions,
@@ -20,7 +17,6 @@
         type UserSummary,
         type WebhookDetails,
         allUsersStore,
-        botState,
         chatIdentifiersEqual,
         currentUserIdStore,
         LARGE_GROUP_THRESHOLD,
@@ -37,8 +33,6 @@
     import { menuCloser } from "../../../actions/closeMenu";
     import { i18nKey } from "../../../i18n/i18n";
     import { trimLeadingAtSymbol } from "../../../utils/user";
-    import BotExplorer from "../../bots/BotExplorer.svelte";
-    import BotMember from "../../bots/BotMember.svelte";
     import Search from "../../Search.svelte";
     import Translatable from "../../Translatable.svelte";
     import VirtualList from "../../VirtualList.svelte";
@@ -51,6 +45,9 @@
 
     const MAX_SEARCH_RESULTS = 255; // irritatingly this is a nat8 in the candid
     const client = getContext<OpenChat>("client");
+
+    type Tab = "users" | "groups" | "bots";
+    type View = "members" | "blocked" | "invited" | "lapsed";
 
     interface Props {
         closeIcon: "close" | "back";
@@ -82,7 +79,7 @@
         installedBots,
         initialUsergroup = $bindable(undefined),
         showHeader = true,
-        webhooks,
+        webhooks = [],
         onClose,
         onShowInviteUsers,
         onChangeRole,
@@ -92,29 +89,7 @@
         onCancelInvite,
     }: Props = $props();
 
-    type SelectedBot = {
-        bot: BotMatchType | ExternalBot;
-    };
-
     let userGroups: UserGroups | undefined = $state();
-    let showingBotInstaller: SelectedBot | undefined = $state(undefined);
-    let installingBot: BotMatchType | undefined = undefined;
-
-    function hydrateBots(
-        bots: ReadonlyMap<string, GrantedBotPermissions>,
-        allBots: Map<string, ExternalBot>,
-    ): EnhancedExternalBot[] {
-        return [...bots.entries()].reduce((bots, [id, perm]) => {
-            const bot = allBots.get(id);
-            if (bot !== undefined) {
-                bots.push({
-                    ...bot,
-                    grantedPermissions: perm,
-                });
-            }
-            return bots;
-        }, [] as EnhancedExternalBot[]);
-    }
 
     function matchingUsers(
         term: string,
@@ -138,8 +113,8 @@
     let searchTermEntered = $state("");
     let id = $state(collection.id);
     let membersList = $state<VirtualList<FullMember> | undefined>();
-    let memberView: "members" | "blocked" | "invited" | "lapsed" = $state("members");
-    let selectedTab: "users" | "groups" | "add-bots" = $state("users");
+    let memberView = $state<View>("members");
+    let selectedTab = $state<Tab>("users");
 
     function idsMatch(
         previous: CommunityIdentifier | MultiUserChatIdentifier,
@@ -170,11 +145,6 @@
         );
     }
 
-    function webhookMatches(searchTermLower: string, webhook: WebhookDetails): boolean {
-        if (searchTermLower === "") return true;
-        return webhook.name.toLowerCase().includes(searchTermLower);
-    }
-
     function getKnownUsers(userStore: UserLookup, members: MemberType[]): FullMember[] {
         const users: FullMember[] = [];
         members.forEach((m) => {
@@ -194,11 +164,11 @@
         return b.role - a.role;
     }
 
-    function setView(v: "members" | "blocked" | "invited" | "lapsed"): void {
+    function setView(v: View): void {
         memberView = v;
     }
 
-    function selectTab(tab: "users" | "groups" | "add-bots") {
+    function selectTab(tab: Tab) {
         selectedTab = tab;
         userGroups?.reset();
     }
@@ -213,29 +183,6 @@
         membersList?.reset();
     }
 
-    function onBotSelected(bot: BotMatchType | ExternalBot | undefined) {
-        if (bot === undefined) {
-            showingBotInstaller = undefined;
-            return;
-        }
-
-        if (installedBots.has(bot.id)) {
-            // TODO - probably this should go to review command permissions if there are any commands
-            selectTab("users");
-            return;
-        }
-
-        showingBotInstaller = {
-            bot,
-        };
-    }
-
-    function closeInstaller(installed: boolean) {
-        showingBotInstaller = undefined;
-        if (installed) {
-            selectTab("users");
-        }
-    }
     let knownUsers = $derived(getKnownUsers($allUsersStore, members));
     let largeGroup = $derived(members.length > LARGE_GROUP_THRESHOLD);
     let me = $derived(knownUsers.find((u) => u.userId === $currentUserIdStore));
@@ -249,25 +196,11 @@
     let blockedUsers = $derived(matchingUsers(searchTermLower, $allUsersStore, blocked, true));
     let lapsedMembers = $derived(matchingUsers(searchTermLower, $allUsersStore, lapsed, true));
     let invitedUsers = $derived(matchingUsers(searchTermLower, $allUsersStore, invited, true));
-    let matchingWebhooks = $derived(
-        webhooks?.filter((w) => webhookMatches(searchTermLower, w)) ?? [],
-    );
     let showBlocked = $derived(blockedUsers.length > 0);
     let showInvited = $derived(invitedUsers.length > 0);
     let showLapsed = $derived(lapsedMembers.length > 0);
     let canInvite = $derived(client.canInviteUsers(collection.id));
 
-    let bots = $derived(
-        hydrateBots(installedBots, botState.externalBots).filter((b) =>
-            matchesSearch(searchTermLower, b),
-        ),
-    );
-    let canManageBots = $derived(client.canManageBots(collection.id));
-    let botContainer = $derived(
-        collection.kind === "channel"
-            ? ({ kind: "community", communityId: collection.id.communityId } as CommunityIdentifier)
-            : collection.id,
-    );
     $effect(() => {
         if (!idsMatch(collection.id, id)) {
             id = collection.id;
@@ -287,44 +220,29 @@
     });
 </script>
 
-{#if showingBotInstaller}
-    <BotInstaller
-        location={botContainer}
-        level={collection.level}
-        {installedBots}
-        onClose={closeInstaller}
-        bot={showingBotInstaller.bot} />
-{/if}
-
 {#if showHeader}
     <MembersHeader level={collection.level} {closeIcon} {canInvite} {onClose} {onShowInviteUsers} />
 {/if}
 
-{#if collection.kind !== "channel"}
-    <div class="tabs">
+<div class="tabs">
+    <button onclick={() => selectTab("users")} class:selected={selectedTab === "users"} class="tab">
+        <Translatable resourceKey={i18nKey("communities.members")} />
+    </button>
+    <button onclick={() => selectTab("bots")} class:selected={selectedTab === "bots"} class="tab">
+        <Translatable resourceKey={i18nKey("bots.member.bots")} />
+    </button>
+    {#if collection.kind === "community"}
         <button
-            onclick={() => selectTab("users")}
-            class:selected={selectedTab === "users"}
+            onclick={() => selectTab("groups")}
+            class:selected={selectedTab === "groups"}
             class="tab">
-            <Translatable resourceKey={i18nKey("communities.members")} />
+            <Translatable resourceKey={i18nKey("communities.userGroups")} />
         </button>
-        {#if collection.kind === "community"}
-            <button
-                onclick={() => selectTab("groups")}
-                class:selected={selectedTab === "groups"}
-                class="tab">
-                <Translatable resourceKey={i18nKey("communities.userGroups")} />
-            </button>
-        {/if}
-        {#if canManageBots}
-            <button
-                onclick={() => selectTab("add-bots")}
-                class:selected={selectedTab === "add-bots"}
-                class="tab">
-                <Translatable resourceKey={i18nKey("bots.explorer.addBots")} />
-            </button>
-        {/if}
-    </div>
+    {/if}
+</div>
+
+{#if selectedTab === "bots"}
+    <BotsTab {me} bind:searchTermEntered {installedBots} {webhooks} {collection} />
 {/if}
 
 {#if selectedTab === "users"}
@@ -402,35 +320,6 @@
                 {onChangeRole} />
         {/if}
 
-        {#if bots.length > 0}
-            <h4 class="member_type_label">
-                <Translatable resourceKey={i18nKey("bots.member.bots")}></Translatable>
-            </h4>
-            {#each bots as bot}
-                <BotMember
-                    {collection}
-                    {bot}
-                    grantedPermissions={bot.grantedPermissions}
-                    canManage={canManageBots}
-                    {searchTerm} />
-            {/each}
-        {/if}
-
-        {#if matchingWebhooks !== undefined && matchingWebhooks.length > 0 && me?.role === ROLE_OWNER && collection.kind !== "community"}
-            <h4 class="member_type_label">
-                <Translatable resourceKey={i18nKey("bots.member.webhooks")}></Translatable>
-            </h4>
-            {#each matchingWebhooks.values() as webhook}
-                <WebhookMember chat={collection} {webhook} {searchTerm} />
-            {/each}
-        {/if}
-
-        {#if (bots.length > 0 || (matchingWebhooks !== undefined && matchingWebhooks.length > 0)) && fullMembers.length > 0}
-            <h4 class="member_type_label">
-                <Translatable resourceKey={i18nKey("bots.member.people")}></Translatable>
-            </h4>
-        {/if}
-
         <VirtualList bind:this={membersList} keyFn={(user) => user.userId} items={fullMembers}>
             {#snippet children(item)}
                 <Member
@@ -439,8 +328,16 @@
                     canPromoteToOwner={client.canPromote(collection.id, item.role, ROLE_OWNER)}
                     canPromoteToAdmin={client.canPromote(collection.id, item.role, ROLE_ADMIN)}
                     canDemoteToAdmin={client.canDemote(collection.id, item.role, ROLE_ADMIN)}
-                    canPromoteToModerator={client.canPromote(collection.id, item.role, ROLE_MODERATOR)}
-                    canDemoteToModerator={client.canDemote(collection.id, item.role, ROLE_MODERATOR)}
+                    canPromoteToModerator={client.canPromote(
+                        collection.id,
+                        item.role,
+                        ROLE_MODERATOR,
+                    )}
+                    canDemoteToModerator={client.canDemote(
+                        collection.id,
+                        item.role,
+                        ROLE_MODERATOR,
+                    )}
                     canDemoteToMember={client.canDemote(collection.id, item.role, ROLE_MEMBER)}
                     canBlockUser={client.canBlockUsers(collection.id)}
                     canRemoveMember={client.canRemoveMembers(collection.id)}
@@ -486,14 +383,6 @@
             bind:openedGroupId={initialUsergroup}
             community={collection} />
     </div>
-{:else if selectedTab === "add-bots" && collection.kind !== "channel"}
-    <div class="bot-explorer">
-        <BotExplorer
-            location={botContainer}
-            {installingBot}
-            excludeInstalled
-            onSelect={onBotSelected}></BotExplorer>
-    </div>
 {/if}
 
 <style lang="scss">
@@ -509,8 +398,7 @@
         @include nice-scrollbar();
     }
 
-    .user-groups,
-    .bot-explorer {
+    .user-groups {
         padding: 0 0 $sp4 0;
         flex: auto;
     }
@@ -544,12 +432,5 @@
                 }
             }
         }
-    }
-
-    .member_type_label {
-        padding: $sp2 $sp4;
-        text-transform: uppercase;
-        @include font(light, normal, fs-50);
-        border-bottom: 1px solid var(--bd);
     }
 </style>
