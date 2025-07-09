@@ -11,7 +11,6 @@ pub struct Community {
     pub channels: HashMap<ChannelId, Channel>,
     pub index: Timestamped<u32>,
     pub last_read: TimestampMillis,
-    pub last_changed_for_my_data: TimestampMillis,
     pub archived: Timestamped<bool>,
     pub pinned: Timestamped<Vec<ChannelId>>,
 }
@@ -30,7 +29,6 @@ impl Community {
             channels: HashMap::new(),
             index: Timestamped::new(index, now),
             last_read: now,
-            last_changed_for_my_data: now,
             archived: Timestamped::default(),
             pinned: Timestamped::default(),
         }
@@ -40,7 +38,6 @@ impl Community {
         [
             self.date_joined,
             self.last_read,
-            self.last_changed_for_my_data,
             self.index.timestamp,
             self.archived.timestamp,
             self.pinned.timestamp,

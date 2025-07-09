@@ -24,7 +24,7 @@ fn follow_thread_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             state.notify_user_of_achievement(user_id, Achievement::FollowedThread, now);
         }
 
-        state.data.mark_group_updated_in_user_canister(user_id);
+        state.mark_activity_for_user(user_id);
     }
     Ok(())
 }

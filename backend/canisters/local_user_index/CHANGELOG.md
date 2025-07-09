@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1827](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1827-local_user_index)] - 2025-07-09
+
 ### Added
 
 - Introduce `Encrypted` message type ([8294](https://github.com/open-chat-labs/open-chat/pull/8294))
@@ -13,15 +15,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Deprecate `winners` field on prize messages ([#8302](https://github.com/open-chat-labs/open-chat/pull/8302))
-
-### Changed
 - Re-enabled fcm_data ([8298](https://github.com/open-chat-labs/open-chat/pull/8298))
-
+- Deprecate `winners` field on prize messages ([#8302](https://github.com/open-chat-labs/open-chat/pull/8302))
+- Handle deserializing FcmData from canisters on older versions ([#8313](https://github.com/open-chat-labs/open-chat/pull/8313))
 
 ### Removed
 
 - Removed unused fields from BotChatEvent (must go ahead of groups/communities) ([#8291](https://github.com/open-chat-labs/open-chat/pull/8291))
+- Remove the now unused `group_and_community_summary_updates` ([#8311](https://github.com/open-chat-labs/open-chat/pull/8311))
+- Remove the now unused `notifications_v2` ([#8312](https://github.com/open-chat-labs/open-chat/pull/8312))
+
+### Fixed
+
+- Fix proposal vote updates not propagating to frontend ([#8310](https://github.com/open-chat-labs/open-chat/pull/8310))
 
 ## [[2.0.1822](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1822-local_user_index)] - 2025-07-03
 

@@ -19,7 +19,6 @@ pub struct CommunityEvents {
     stable_events_map: EventsStableStorage,
     latest_event_index: EventIndex,
     latest_event_timestamp: TimestampMillis,
-    #[serde(default)]
     bot_subscriptions: BTreeMap<CommunityEventType, HashSet<UserId>>,
 }
 

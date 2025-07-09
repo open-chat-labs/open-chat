@@ -9,7 +9,6 @@ use local_user_index_canister::group_and_community_summary_updates_v2::{SummaryU
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
-use test_case::test_case;
 use testing::rng::random_string;
 use types::{CanisterId, ChannelId, ChatEvent, ChatId, CommunityId};
 
@@ -82,9 +81,8 @@ fn get_batched_events_succeeds() {
     assert_is_message_with_text(result.responses.get(3).unwrap(), "Channel: 3");
 }
 
-#[test_case(true)]
-#[test_case(false)]
-fn get_batched_summaries_succeeds(v2: bool) {
+#[test]
+fn get_batched_summaries_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -124,7 +122,7 @@ fn get_batched_summaries_succeeds(v2: bool) {
         },
     ];
 
-    let responses = get_summary_updates(env, user1.principal, local_user_index, requests, v2);
+    let responses = get_summary_updates(env, user1.principal, local_user_index, requests);
 
     assert_is_summary_with_id(responses.first().unwrap(), group_id1.into(), false);
     assert_is_summary_with_id(responses.get(1).unwrap(), group_id2.into(), false);
@@ -157,15 +155,11 @@ fn get_batched_summaries_succeeds(v2: bool) {
         },
     ];
 
-    let responses = get_summary_updates(env, user1.principal, local_user_index, requests, v2);
+    let responses = get_summary_updates(env, user1.principal, local_user_index, requests);
 
-    assert_eq!(responses.len(), if v2 { 2 } else { 3 });
+    assert_eq!(responses.len(), 2);
     assert_is_summary_updates_with_id(responses.first().unwrap(), group_id1.into(), false);
     assert_is_summary_updates_with_id(responses.last().unwrap(), community_id.into(), true);
-
-    if !v2 {
-        assert!(matches!(responses.get(1).unwrap(), SummaryUpdatesResponse::SuccessNoUpdates));
-    }
 }
 
 fn get_summary_updates(
@@ -173,30 +167,18 @@ fn get_summary_updates(
     sender: Principal,
     local_user_index: CanisterId,
     requests: Vec<SummaryUpdatesArgs>,
-    v2: bool,
 ) -> Vec<SummaryUpdatesResponse> {
-    if v2 {
-        let local_user_index_canister::group_and_community_summary_updates_v2::Response::Success(response) =
-            client::local_user_index::group_and_community_summary_updates_v2(
-                env,
-                sender,
-                local_user_index,
-                &local_user_index_canister::group_and_community_summary_updates_v2::Args {
-                    requests,
-                    max_c2c_calls: 10,
-                },
-            );
-        response.updates
-    } else {
-        let local_user_index_canister::group_and_community_summary_updates::Response::Success(responses) =
-            client::local_user_index::group_and_community_summary_updates(
-                env,
-                sender,
-                local_user_index,
-                &local_user_index_canister::group_and_community_summary_updates::Args { requests },
-            );
-        responses
-    }
+    let local_user_index_canister::group_and_community_summary_updates_v2::Response::Success(response) =
+        client::local_user_index::group_and_community_summary_updates_v2(
+            env,
+            sender,
+            local_user_index,
+            &local_user_index_canister::group_and_community_summary_updates_v2::Args {
+                requests,
+                max_c2c_calls: 10,
+            },
+        );
+    response.updates
 }
 
 fn assert_is_message_with_text(response: &EventsResponse, text: &str) {

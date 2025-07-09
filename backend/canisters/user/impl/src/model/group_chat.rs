@@ -11,7 +11,6 @@ pub struct GroupChat {
     pub local_user_index_canister_id: CanisterId,
     pub date_joined: TimestampMillis,
     pub messages_read: GroupMessagesRead,
-    pub last_changed_for_my_data: TimestampMillis,
     pub archived: Timestamped<bool>,
 }
 
@@ -30,7 +29,6 @@ impl GroupChat {
                 read_by_me_up_to: Timestamped::new(read_up_to, now),
                 ..Default::default()
             },
-            last_changed_for_my_data: now,
             archived: Timestamped::new(false, now),
         }
     }
@@ -41,7 +39,6 @@ impl GroupChat {
             self.messages_read.read_by_me_up_to.timestamp,
             self.messages_read.threads_read.last_updated().unwrap_or_default(),
             self.messages_read.date_read_pinned.timestamp,
-            self.last_changed_for_my_data,
             self.archived.timestamp,
         ]
         .iter()

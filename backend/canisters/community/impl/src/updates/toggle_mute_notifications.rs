@@ -37,7 +37,7 @@ fn toggle_mute_notifications_impl(args: Args, state: &mut RuntimeState) -> OCRes
     };
 
     if updated {
-        state.data.mark_community_updated_in_user_canister(user_id);
+        state.mark_activity_for_user(user_id);
     }
     Ok(())
 }

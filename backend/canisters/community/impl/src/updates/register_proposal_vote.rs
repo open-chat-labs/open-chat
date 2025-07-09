@@ -1,4 +1,3 @@
-use crate::activity_notifications::handle_activity_notification;
 use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -96,6 +95,6 @@ fn commit(channel_id: ChannelId, user_id: UserId, args: Args, state: &mut Runtim
 
     channel.chat.members.register_proposal_vote(&user_id, args.message_index, now);
 
-    handle_activity_notification(state);
+    state.mark_activity_for_user(user_id);
     Ok(())
 }
