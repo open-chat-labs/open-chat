@@ -13,15 +13,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Deprecate `winners` field on prize messages ([#8302](https://github.com/open-chat-labs/open-chat/pull/8302))
-
-### Changed
 - Re-enabled fcm_data ([8298](https://github.com/open-chat-labs/open-chat/pull/8298))
-
+- Deprecate `winners` field on prize messages ([#8302](https://github.com/open-chat-labs/open-chat/pull/8302))
 
 ### Removed
 
 - Removed unused fields from BotChatEvent (must go ahead of groups/communities) ([#8291](https://github.com/open-chat-labs/open-chat/pull/8291))
+- Remove the now unused `group_and_community_summary_updates` ([#8311](https://github.com/open-chat-labs/open-chat/pull/8311))
 
 ## [[2.0.1822](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1822-local_user_index)] - 2025-07-03
 
