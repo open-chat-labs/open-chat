@@ -17,7 +17,7 @@ fn toggle_mute_notifications_impl(args: Args, state: &mut RuntimeState) -> OCRes
         state.data.chat.members.toggle_notifications_muted(user_id, args.mute, now),
         Some(true)
     ) {
-        state.data.mark_group_updated_in_user_canister(user_id);
+        state.mark_activity_for_user(user_id);
     }
     Ok(())
 }

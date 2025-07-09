@@ -20,7 +20,7 @@ fn follow_thread_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
         channel.chat.follow_thread(user_id, args.thread_root_message_index, now)?;
-        state.data.mark_community_updated_in_user_canister(user_id);
+        state.mark_activity_for_user(user_id);
 
         if args.new_achievement && !member.user_type.is_bot() {
             state.notify_user_of_achievement(user_id, Achievement::FollowedThread, now);

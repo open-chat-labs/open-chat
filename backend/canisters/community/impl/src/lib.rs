@@ -39,8 +39,8 @@ use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BotCommunityEvent, BotEventsCaller, BotInitiator, BotNotification,
     BotPermissions, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId, ChatEventCategory, ChatEventType, ChatMetrics,
     ChatPermission, CommunityCanisterCommunitySummary, CommunityEvent, CommunityEventCategory, CommunityEventType,
-    CommunityMembership, CommunityPermissions, Cycles, Document, Empty, EventIndex, EventsCaller, FcmData, FrozenGroupInfo,
-    GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId,
+    CommunityMembership, CommunityPermissions, Cycles, Document, EventIndex, EventsCaller, FcmData, FrozenGroupInfo, GroupRole,
+    IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId,
     UserNotification, UserNotificationPayload, UserType,
 };
 use types::{BotSubscriptions, CommunityId};
@@ -416,6 +416,16 @@ impl RuntimeState {
             UserType::BotV2 | UserType::Webhook => Err(OCErrorCode::InitiatorNotFound),
         }
     }
+
+    pub fn mark_activity_for_user(&mut self, user_id: UserId) {
+        let now = self.env.now();
+
+        self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
+            created_at: now,
+            idempotency_id: self.env.rng().next_u64(),
+            value: local_user_index_canister::CommunityEvent::MarkActivityForUser(now, user_id),
+        });
+    }
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -634,14 +644,6 @@ impl Data {
         let _ = self
             .instruction_counts_log
             .record(function_id, instructions_count, wasm_version, now);
-    }
-
-    pub fn mark_community_updated_in_user_canister(&self, user_id: UserId) {
-        self.fire_and_forget_handler.send(
-            user_id.into(),
-            "c2c_mark_community_updated_for_user_msgpack".to_string(),
-            serialize_then_unwrap(Empty {}),
-        );
     }
 
     pub fn details_last_updated(&self) -> TimestampMillis {
