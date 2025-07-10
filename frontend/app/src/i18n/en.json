@@ -353,10 +353,11 @@
         "matchingCommands": "Matching commands",
         "member": {
             "bots": "Bots",
-            "people": "People",
-            "webhooks": "Webhooks",
+            "explore": "Available",
             "installed": "Installed",
-            "explore": "Explore"
+            "notfound": "No bots found",
+            "people": "People",
+            "webhooks": "Webhooks"
         },
         "poll": {
             "desc": "Create a poll in the current chat"

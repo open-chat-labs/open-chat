@@ -1,6 +1,5 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { botSearchState } from "@src/stores/search.svelte";
     import {
         botState,
         OpenChat,
@@ -14,20 +13,18 @@
         type GrantedBotPermissions,
         type MultiUserChat,
         type ReadonlyMap,
-        type UserSummary,
         type WebhookDetails,
     } from "openchat-client";
     import { getContext } from "svelte";
     import Search from "../Search.svelte";
     import Tabs, { type Tab } from "../Tabs.svelte";
-    import BotExplorer from "./BotExplorer.svelte";
+    import Translatable from "../Translatable.svelte";
     import BotMember from "./BotMember.svelte";
     import WebhookMember from "./WebhookMember.svelte";
     import BotInstaller from "./install/BotInstaller.svelte";
+    import BotProperties from "./install/BotProperties.svelte";
 
-    const PAGE_SIZE = 50;
     const INSTALLED = 0;
-    const EXPLORE = 1;
     const client = getContext<OpenChat>("client");
 
     type SelectedBot = {
@@ -52,7 +49,7 @@
 
     let selectedTab = $state(0);
     let showingBotInstaller: SelectedBot | undefined = $state(undefined);
-    let installingBot: BotMatchType | undefined = undefined;
+    let installingBot: ExternalBot | undefined = undefined;
     let botContainer = $derived(
         collection.kind === "channel"
             ? ({ kind: "community", communityId: collection.id.communityId } as CommunityIdentifier)
@@ -67,31 +64,32 @@
         webhooks.filter((w) => multiUserChatOwner && webhookMatches(searchTermLower ?? "", w)) ??
             [],
     );
-    let bots = $derived(
+    let matchingInstalledBots = $derived(
         hydrateBots(installedBots, botState.externalBots).filter((b) =>
-            matchesSearch(searchTermLower ?? "", b),
+            matchesSearch(searchTermLower ?? "", [
+                b.name.toLocaleLowerCase(),
+                b.definition.description?.toLocaleLowerCase(),
+            ]),
         ),
     );
-    function webhookMatches(searchTermLower: string, webhook: WebhookDetails): boolean {
-        if (searchTermLower === "") return true;
-        return webhook.name.toLowerCase().includes(searchTermLower);
-    }
-    function matchesSearch(searchTermLower: string, user: UserSummary | ExternalBot): boolean {
-        if (searchTermLower === "") return true;
-        if (user.kind === "external_bot") {
-            return (
-                user.name.toLowerCase().includes(searchTermLower) ||
-                (user.definition.description !== undefined &&
-                    user.definition.description.toLocaleLowerCase().includes(searchTermLower))
-            );
-        }
+    let matchingUninstalledBots = $derived(
+        [...botState.externalBots.values()].filter(
+            (b) =>
+                !installedBots.has(b.id) &&
+                matchesSearch(searchTermLower ?? "", [
+                    b.name.toLocaleLowerCase(),
+                    b.definition.description?.toLocaleLowerCase(),
+                ]),
+        ),
+    );
 
-        if (user.username === undefined) return true;
-        return (
-            user.username.toLowerCase().includes(searchTermLower) ||
-            (user.displayName !== undefined &&
-                user.displayName.toLowerCase().includes(searchTermLower))
-        );
+    let numberOfInstalledBots = $derived(matchingInstalledBots.length + matchingWebhooks.length);
+    function webhookMatches(searchTermLower: string, webhook: WebhookDetails): boolean {
+        return matchesSearch(searchTermLower, [webhook.name.toLocaleLowerCase()]);
+    }
+    function matchesSearch(searchTermLower: string, things: string[]): boolean {
+        if (searchTermLower === "") return true;
+        return things.some((t) => t !== undefined && t.toLocaleLowerCase().includes(searchTerm));
     }
 
     function hydrateBots(
@@ -148,42 +146,6 @@
         }
         return t;
     });
-
-    function onTabSelected() {
-        onSearchEntered(true);
-    }
-
-    function onSearchEntered(reset = false) {
-        if (selectedTab === EXPLORE) {
-            if (reset) {
-                botSearchState.reset();
-            } else {
-                botSearchState.nextPage();
-            }
-            client
-                .exploreBots(
-                    botSearchState.term === "" ? undefined : botSearchState.term,
-                    botSearchState.index,
-                    PAGE_SIZE,
-                    botContainer,
-                    true,
-                )
-                .then((results) => {
-                    if (results.kind === "success") {
-                        if (reset) {
-                            botSearchState.results = results.matches;
-                        } else {
-                            botSearchState.appendResults(results.matches);
-                        }
-                        botSearchState.total = results.total;
-                    }
-                });
-        }
-    }
-
-    $effect(() => {
-        searchTermEntered = botSearchState.term;
-    });
 </script>
 
 {#if showingBotInstaller}
@@ -197,37 +159,52 @@
 
 {#snippet installedTab()}
     <div class="bots-list">
-        {#each bots as bot}
-            <BotMember
-                {collection}
-                {bot}
-                grantedPermissions={bot.grantedPermissions}
-                canManage={canManageBots}
-                {searchTerm} />
-        {/each}
-        {#if collection.kind !== "community"}
-            {#each matchingWebhooks.values() as webhook}
-                <WebhookMember chat={collection} {webhook} {searchTerm} />
+        {#if numberOfInstalledBots === 0}
+            <div class="no-result">
+                <Translatable resourceKey={i18nKey("bots.member.notfound")}></Translatable>
+            </div>
+        {:else}
+            {#each matchingInstalledBots as bot}
+                <BotMember
+                    {collection}
+                    {bot}
+                    grantedPermissions={bot.grantedPermissions}
+                    canManage={canManageBots}
+                    {searchTerm} />
             {/each}
+            {#if collection.kind !== "community"}
+                {#each matchingWebhooks.values() as webhook}
+                    <WebhookMember chat={collection} {webhook} {searchTerm} />
+                {/each}
+            {/if}
         {/if}
     </div>
 {/snippet}
 
 {#snippet exploreTab()}
     <div class="bot-explorer">
-        <BotExplorer {installingBot} onSelect={onBotSelected}></BotExplorer>
+        {#if matchingUninstalledBots.length === 0}
+            <div class="no-result">
+                <Translatable resourceKey={i18nKey("bots.member.notfound")}></Translatable>
+            </div>
+        {:else}
+            {#each matchingUninstalledBots as bot}
+                <BotProperties
+                    showAvatar
+                    padded
+                    installing={bot === installingBot}
+                    onClick={onBotSelected}
+                    {bot} />
+            {/each}
+        {/if}
     </div>
 {/snippet}
 
 <div class="search">
-    <Search
-        onPerformSearch={() => onSearchEntered(true)}
-        searching={false}
-        bind:searchTerm={botSearchState.term}
-        placeholder={i18nKey("search")} />
+    <Search searching={false} bind:searchTerm={searchTermEntered} placeholder={i18nKey("search")} />
 </div>
 <div class="bot-tabs">
-    <Tabs {onTabSelected} bind:selectedIndex={selectedTab} nested {tabs}></Tabs>
+    <Tabs bind:selectedIndex={selectedTab} nested {tabs}></Tabs>
 </div>
 
 <style lang="scss">
@@ -235,5 +212,12 @@
         :global(.tabs) {
             margin: 0 $sp4;
         }
+        overflow: auto;
+    }
+
+    .no-result {
+        padding: $sp4;
+        color: var(--txt-light);
+        @include font(light, normal, fs-90);
     }
 </style>

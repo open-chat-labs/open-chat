@@ -319,7 +319,6 @@ import {
     chitStateStore,
     communitiesStore,
     communityFiltersStore,
-    threadEventIndexesLoadedStore,
     cryptoBalanceStore,
     cryptoLookup,
     currentUserIdStore,
@@ -339,6 +338,7 @@ import {
     isDiamondStore,
     isLifetimeDiamondStore,
     lastCryptoSent,
+    latestSuccessfulUpdatesLoop,
     localUpdates,
     messageActivitySummaryStore,
     messageFiltersStore,
@@ -399,12 +399,12 @@ import {
     storageStore,
     suspendedUserStore,
     swappableTokensStore,
+    threadEventIndexesLoadedStore,
     threadEventsStore,
     translationsStore,
     userCreatedStore,
     walletConfigStore,
     webhookUserIdsStore,
-    latestSuccessfulUpdatesLoop,
 } from "./state";
 import { botState } from "./state/bots.svelte";
 import { ChatDetailsState } from "./state/chat/serverDetails";
@@ -466,11 +466,11 @@ import {
     canSendGroupMessage,
     canStartVideoCalls,
     canUnblockUsers,
-    eventIndexesLoaded,
     containsReaction,
     createMessage,
     diffGroupPermissions,
     doesMessageFailFilter,
+    eventIndexesLoaded,
     findMessageById,
     getMembersString,
     getMessageText,
@@ -2055,6 +2055,10 @@ export class OpenChat {
         }
     }
 
+    canRegisterWebhook(id: ChatIdentifier): boolean {
+        return this.#chatPredicate(id, ({ membership: { role } }) => hasOwnerRights(role));
+    }
+
     canManageBots(id: ChatIdentifier | CommunityIdentifier): boolean {
         switch (id.kind) {
             case "community":
@@ -2915,12 +2919,10 @@ export class OpenChat {
                 () => this.#updateProposalTallies(id),
                 20_000,
                 undefined,
-                true
+                true,
             );
 
-            filteredProposalsStore.set(
-                FilteredProposals.fromStorage(governanceCanisterId),
-            );
+            filteredProposalsStore.set(FilteredProposals.fromStorage(governanceCanisterId));
         }
     }
 
@@ -3698,7 +3700,7 @@ export class OpenChat {
             // now a new latest message and if so, mark it as a local chat summary update.
             let latestMessageIndex =
                 threadRootMessageIndex === undefined
-                    ? (allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1)
+                    ? allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1
                     : undefined;
             let newLatestMessage: EventWrapper<Message> | undefined = undefined;
 
@@ -4779,7 +4781,6 @@ export class OpenChat {
     }
 
     checkUsername(username: string, isBot: boolean): Promise<CheckUsernameResponse> {
-        console.log("we are getting here right?");
         return this.#sendRequest({ kind: "checkUsername", username, isBot }).then((resp) => {
             console.log("Resp: ", resp);
             return resp;
@@ -4965,10 +4966,17 @@ export class OpenChat {
         return this.#sendRequest({
             kind: "removeBot",
             botId,
-        }).catch((err) => {
-            this.#logger.error("Failed to register bot: ", err);
-            return false;
-        });
+        })
+            .then((success) => {
+                if (success) {
+                    this.#loadBots();
+                }
+                return success;
+            })
+            .catch((err) => {
+                this.#logger.error("Failed to register bot: ", err);
+                return false;
+            });
     }
 
     updateRegisteredBot(
@@ -7607,15 +7615,8 @@ export class OpenChat {
             }));
         if (webAuthnKey === undefined) throw new Error("WebAuthnKey not set");
 
-        const cose = unwrapDER(
-            webAuthnKey.publicKey,
-            DER_COSE_OID,
-        );
-        const webAuthnIdentity = new WebAuthnIdentity(
-            webAuthnKey.credentialId,
-            cose,
-            undefined,
-        );
+        const cose = unwrapDER(webAuthnKey.publicKey, DER_COSE_OID);
+        const webAuthnIdentity = new WebAuthnIdentity(webAuthnKey.credentialId, cose, undefined);
 
         return await this.#finaliseWebAuthnSignin(webAuthnIdentity, () => webAuthnIdentity, false);
     }
@@ -8369,7 +8370,7 @@ export class OpenChat {
     }
 
     getStreak(userId: string | undefined) {
-        return userId ? (userStore.get(userId)?.streak ?? 0) : 0;
+        return userId ? userStore.get(userId)?.streak ?? 0 : 0;
     }
 
     getBotDefinition(endpoint: string): Promise<BotDefinitionResponse> {
@@ -8816,13 +8817,13 @@ export class OpenChat {
                                         botContext === undefined
                                             ? undefined
                                             : {
-                                                ...botContext,
-                                                finalised: resp.message.finalised,
-                                            },
+                                                  ...botContext,
+                                                  finalised: resp.message.finalised,
+                                              },
                                         resp.message.messageContent,
                                         resp.message.messageId,
                                         bot.id,
-                                        resp.message.blockLevelMarkdown
+                                        resp.message.blockLevelMarkdown,
                                     );
                                 }
                             } else {
@@ -9349,9 +9350,8 @@ export class OpenChat {
         });
 
         if (chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
-            this.#updateServerEventsStore(
-                chatId,
-                (events) => updateExistingMessages(events, updatedMessages)
+            this.#updateServerEventsStore(chatId, (events) =>
+                updateExistingMessages(events, updatedMessages),
             );
         }
     }

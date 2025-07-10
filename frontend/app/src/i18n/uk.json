@@ -353,6 +353,9 @@
         "matchingCommands": "Зіставлення команд",
         "member": {
             "bots": "Боти",
+            "explore": "Доступно",
+            "installed": "Встановлено",
+            "notfound": "Ботів не знайдено",
             "people": "Люди",
             "webhooks": "Вебхуки"
         },

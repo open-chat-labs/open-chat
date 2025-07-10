@@ -151,7 +151,7 @@
     {/snippet}
     {#snippet body()}
         <div class="body">
-            <form onsubmit={onSubmit} class="bot">
+            <form onsubmit={onSubmit} class="webhook-form">
                 <Legend label={i18nKey("webhook.avatarLabel")} />
                 <div class="photo">
                     <EditableAvatar
@@ -231,6 +231,11 @@
 </ModalContent>
 
 <style lang="scss">
+    .webhook-form {
+        :global(.input-wrapper) {
+            margin-bottom: $sp5;
+        }
+    }
     .url {
         display: flex;
         align-items: center;

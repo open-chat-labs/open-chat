@@ -353,6 +353,9 @@
         "matchingCommands": "تطبیق دستورات",
         "member": {
             "bots": "ربات ها",
+            "explore": "موجود است",
+            "installed": "نصب شده",
+            "notfound": "هیچ رباتی یافت نشد",
             "people": "مردم",
             "webhooks": "وب هوک ها"
         },

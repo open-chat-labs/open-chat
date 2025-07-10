@@ -9,6 +9,7 @@ import {
     type MessageContext,
     type MessageFormatter,
 } from "openchat-shared";
+import { SvelteMap } from "svelte/reactivity";
 import { builtinBot } from "../utils/builtinBotCommands";
 
 function filterCommand(
@@ -83,7 +84,7 @@ export class BotState {
     #selectedCommand = $state<FlattenedCommand | undefined>();
     #focusedCommandIndex = $state(0);
     #selectedCommandArgs = $state<CommandArg[]>([]);
-    #externalBots = $state<Map<string, ExternalBot>>(new Map());
+    #externalBots = $state<SvelteMap<string, ExternalBot>>(new SvelteMap());
     #showingBuilder = $state<MessageContext | undefined>();
     #prefixParts = $derived(parseCommand(this.#prefix));
     #maybeArgs = $derived(this.#prefixParts.slice(1) ?? []);
