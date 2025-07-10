@@ -1,6 +1,8 @@
 use ic_principal::Principal;
 use serde::{Deserialize, Serialize};
-use types::{BotInitiator, UnitResult, UserId};
+use types::{BotInitiator, UserId};
+
+use crate::c2c_invite_users;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -9,4 +11,4 @@ pub struct Args {
     pub users: Vec<(UserId, Principal)>,
 }
 
-pub type Response = UnitResult;
+pub type Response = c2c_invite_users::Response;

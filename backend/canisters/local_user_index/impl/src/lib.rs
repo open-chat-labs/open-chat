@@ -34,7 +34,7 @@ use types::{
     BotDataEncoding, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion, CanisterId,
     ChannelLatestMessageIndex, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
     CommunityId, Cycles, DiamondMembershipDetails, IdempotentEnvelope, MessageContent, Milliseconds, Notification,
-    NotificationEnvelope, ReferralType, TimestampMillis, Timestamped, User, UserId, UserNotificationEnvelope,
+    NotificationEnvelope, ReferralType, TimestampMillis, Timestamped, UserId, UserNotificationEnvelope,
     VerifiedCredentialGateArgs,
 };
 use user_canister::LocalUserIndexEvent as UserEvent;
@@ -232,13 +232,7 @@ impl RuntimeState {
         );
     }
 
-    pub fn push_oc_bot_message_to_user(
-        &mut self,
-        user_id: UserId,
-        content: MessageContent,
-        _mentioned: Vec<User>,
-        now: TimestampMillis,
-    ) {
+    pub fn push_oc_bot_message_to_user(&mut self, user_id: UserId, content: MessageContent, now: TimestampMillis) {
         if self.data.local_users.contains(&user_id) {
             self.push_event_to_user(user_id, UserEvent::OpenChatBotMessage(Box::new(content)), now);
         } else {
