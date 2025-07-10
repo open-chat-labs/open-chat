@@ -10,7 +10,6 @@ pub struct Args {
     pub community_id: CommunityId,
     pub channel_id: ChannelId,
     pub user_ids: Vec<UserId>,
-    pub caller_username: String,
 }
 
 #[ts_export(local_user_index, invite_users_to_channel)]
