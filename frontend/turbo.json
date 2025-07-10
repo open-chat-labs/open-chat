@@ -77,6 +77,14 @@
             "persistent": true,
             "dependsOn": ["^wait"]
         },
+        "android:release": {
+            "outputs": ["lib/**", "build/**"],
+            "dependsOn": [
+                "^android:release",
+                "openchat-service-worker#build",
+                "openchat-worker#build"
+            ]
+        },
         "wait": {
             "cache": false
         },

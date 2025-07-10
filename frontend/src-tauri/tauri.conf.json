@@ -7,7 +7,7 @@
         "frontendDist": "../app/build",
         "devUrl": "http://localhost:5003",
         "beforeDevCommand": "echo 'Make sure dev server is running'",
-        "beforeBuildCommand": "echo '`npm run build:mobile` not setup yet' && exit 1"
+        "beforeBuildCommand": "echo 'BUILDING ANDROID APK' && npm run android:release"
     },
     "app": {
         "windows": [

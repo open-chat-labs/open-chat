@@ -16,7 +16,8 @@
         "changelog": "auto-changelog --tag-pattern '-website' --file-pattern '^frontend'",
         "verify": "dotenv -- turbo run verify --cache-dir .turbo",
         "tauri": "tauri",
-        "mobile": "cargo tauri android dev",
+        "mobile": "cargo tauri android dev --no-watch",
+        "android:release": "npm ci && dotenv -- turbo run android:release --cache-dir .turbo",
         "dev:mobile": "npm ci && dotenv -- turbo run dev:mobile --cache-dir .turbo"
     },
     "author": "julian.jelfs@gmail.com",

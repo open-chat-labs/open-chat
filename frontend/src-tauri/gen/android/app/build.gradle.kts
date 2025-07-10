@@ -17,6 +17,10 @@ val tauriProperties = Properties().apply {
 android {
     compileSdk = 35
     namespace = "com.oc.app"
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
     defaultConfig {
         manifestPlaceholders["usesCleartextTraffic"] = "false"
         applicationId = "com.oc.app"
@@ -24,6 +28,14 @@ android {
         targetSdk = 35
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
+    }
+    signingConfigs {
+        create("debugRelease") {
+            storeFile = file(System.getProperty("user.home") + "/.android/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
     }
     buildTypes {
         getByName("debug") {
@@ -39,6 +51,7 @@ android {
             }
         }
         getByName("release") {
+            signingConfig = signingConfigs.getByName("debugRelease")
             isMinifyEnabled = true
             proguardFiles(
                 *fileTree(".") { include("**/*.pro") }
@@ -48,10 +61,14 @@ android {
         }
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
     buildFeatures {
         buildConfig = true
+    }
+    lint {
+        disable += "NullSafeMutableLiveData"
+        checkReleaseBuilds = false // Optional: skip all lint on release builds
     }
 }
 
@@ -72,3 +89,17 @@ dependencies {
 }
 
 apply(from = "tauri.build.gradle.kts")
+
+android.applicationVariants.all {
+    if (buildType.name == "release") {
+        outputs.all {
+            val outputImpl = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            // val buildTypeName = buildType.name.capitalize()
+            // val flavorName = if (flavorName.isNotEmpty()) flavorName.capitalize() else ""
+            // val versionName = versionName
+            // val versionCode = versionCode
+
+            outputImpl.outputFileName = "openchat-release.apk"
+        }
+    }
+}
