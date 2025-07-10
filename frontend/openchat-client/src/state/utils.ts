@@ -113,6 +113,7 @@ export function removeFromWritableMap<K, V>(
     return modifyWritable(
         (d) => {
             const prev = d.get(key);
+            if (prev === undefined) return NOOP;
             d.delete(key);
             return () => {
                 if (prev !== undefined) {
