@@ -1663,7 +1663,21 @@ export class OpenChat {
             .then((resp) => {
                 return withPausedStores(() => {
                     if (resp.kind === "success") {
-                        localUpdates.addChat(resp.group);
+                        const serverChat = resp.group;
+                        if (serverChat.kind === "group_chat") {
+                            serverGroupChatsStore.update((map) => map.set(serverChat.id, serverChat));
+                        } else {
+                            serverCommunitiesStore.update((map) => {
+                                const community = map.get({ kind: "community", communityId: serverChat.id.communityId });
+                                if (community !== undefined
+                                    && !community.channels.find((c) => c.id.channelId === serverChat.id.channelId))
+                                {
+                                    community.channels.push(serverChat);
+                                }
+                                return map;
+                            });
+                        }
+                        localUpdates.removeGroupPreview(chat.id);
                         this.#loadChatDetails(resp.group);
                         messagesRead.syncWithServer(
                             resp.group.id,
@@ -1672,12 +1686,12 @@ export class OpenChat {
                             undefined,
                         );
                     } else if (resp.kind === "success_joined_community") {
+                        serverCommunitiesStore.update((map) => map.set(resp.community.id, resp.community));
+                        localUpdates.removeCommunityPreview(resp.community.id);
                         resp.community.membership.index = nextCommunityIndexStore.value;
-                        this.#addCommunityLocally(resp.community);
-
                         resp.community.channels.forEach((c) => {
+                            localUpdates.removeGroupPreview(c.id);
                             if (chatIdentifiersEqual(c.id, chat.id)) {
-                                localUpdates.addChat(c);
                                 this.#loadChatDetails(c);
                             }
                             if (c.latestMessage) {
@@ -1687,9 +1701,6 @@ export class OpenChat {
                                 );
                             }
                         });
-                        if (localUpdates.isPreviewingCommunity(resp.community.id)) {
-                            localUpdates.removeCommunityPreview(resp.community.id);
-                        }
                     } else {
                         if (resp.kind === "error" && resp.code === ErrorCode.InitiatorBlocked) {
                             return CommonResponses.blocked();
@@ -1702,8 +1713,8 @@ export class OpenChat {
                 });
             })
             .then((resp) => {
-                if (resp.kind === "success") {
-                    localUpdates.removeGroupPreview(chat.id);
+                if (resp.kind === "success" && eventIndexesLoaded(chat.id).length === 0) {
+                    this.loadPreviousMessages(chat.id, undefined, true);
                 }
                 return resp;
             })
