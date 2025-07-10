@@ -1663,7 +1663,20 @@ export class OpenChat {
             .then((resp) => {
                 return withPausedStores(() => {
                     if (resp.kind === "success") {
-                        serverGroupChatsStore.update((map) => map.set(resp.group.id, resp.group as GroupChatSummary));
+                        const serverChat = resp.group;
+                        if (serverChat.kind === "group_chat") {
+                            serverGroupChatsStore.update((map) => map.set(serverChat.id, serverChat));
+                        } else {
+                            serverCommunitiesStore.update((map) => {
+                                const community = map.get({ kind: "community", communityId: serverChat.id.communityId });
+                                if (community !== undefined
+                                    && !community.channels.find((c) => c.id.channelId === serverChat.id.channelId))
+                                {
+                                    community.channels.push(serverChat);
+                                }
+                                return map;
+                            });
+                        }
                         localUpdates.removeGroupPreview(chat.id);
                         this.#loadChatDetails(resp.group);
                         messagesRead.syncWithServer(
