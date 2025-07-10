@@ -183,7 +183,6 @@ fn invite_non_community_member_to_channel_succeeds() {
             community_id,
             channel_id,
             user_ids: vec![user3.user_id],
-            caller_username: user1.username(),
         },
     );
 
