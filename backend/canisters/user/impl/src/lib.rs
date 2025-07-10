@@ -198,6 +198,8 @@ impl RuntimeState {
             reason: ChitEarnedReason::StreakInsuranceClaim,
         });
         let user_id: UserId = self.env.canister_id().into();
+        let new_streak = claim.streak_length;
+        let days_remaining = claim.insured_days_remaining;
         let events = vec![
             LocalUserIndexEvent::EventStoreEvent(
                 EventBuilder::new("user_streak_insurance_claim", claim.timestamp)
@@ -209,6 +211,16 @@ impl RuntimeState {
             LocalUserIndexEvent::NotifyStreakInsuranceClaim(claim),
         ];
         self.push_local_user_index_canister_events(events, self.env.now());
+        let days_remaining_text = if days_remaining == 1 { "1 day".to_string() } else { format!("{days_remaining} days") };
+        openchat_bot::send_text_message(
+            format!(
+                "One day of streak insurance was just used up to protect your streak from being lost.\
+Your streak is now {new_streak} days and you have {days_remaining_text} of streak insurance remaining."
+            ),
+            Vec::new(),
+            false,
+            self,
+        );
     }
 
     pub fn set_up_streak_insurance_timer_job(&mut self) {

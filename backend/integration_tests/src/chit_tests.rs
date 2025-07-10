@@ -321,6 +321,9 @@ fn streak_utc_offset_can_be_updated() {
     let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
     ensure_time_at_least_day0(env);
+    let now = now_millis(env);
+    // Advance time to midday the next day
+    env.advance_time(Duration::from_millis(DAY_IN_MS - (now % DAY_IN_MS) + (12 * HOUR_IN_MS)));
 
     let result1 = client::user::happy_path::claim_daily_chit(env, &user1, Some(60));
     let result2 = client::user::happy_path::claim_daily_chit(env, &user2, None);
