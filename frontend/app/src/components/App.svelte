@@ -204,7 +204,7 @@
 
         if (client.isNativeAndroid()) {
             // Inform the native android app that svelte code is ready! SetTimeout
-            // delays the fn execution until the call stack is empty, just to 
+            // delays the fn execution until the call stack is empty, just to
             // make sure anything else non-async that needs to run is done.
             //
             // Once Svelte app is ready, native code can start pushing events.
@@ -587,6 +587,10 @@
         incomingVideoCall.set(undefined);
         page(routeForChatIdentifier("none", chatId));
         videoCallElement?.startOrJoinVideoCall(chatId, callType, true);
+    }
+
+    if (client.isNativeAndroid()) {
+        document.body.classList.add("native-android");
     }
 </script>
 

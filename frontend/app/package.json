@@ -11,6 +11,7 @@
         "build:docker": "sh ./build_docker.sh",
         "dev": "sh ./build_dev.sh",
         "dev:mobile": "sh ./build_mobile.sh",
+        "android:release": "sh ./build_android.sh",
         "start": "sirv public --no-clear",
         "validate": "svelte-check --threshold error",
         "lint": "eslint ./src --fix",
