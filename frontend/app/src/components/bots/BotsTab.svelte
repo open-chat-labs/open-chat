@@ -2,6 +2,7 @@
     import { i18nKey } from "@src/i18n/i18n";
     import {
         botState,
+        currentUserIdStore,
         installationLocationsEqual,
         OpenChat,
         ROLE_OWNER,
@@ -105,14 +106,11 @@
             case "public":
                 return true;
             case "private": {
-                if (client.hasOwnerRights(collection.membership.role)) {
-                    return true;
-                } else {
-                    return (
-                        bot.registrationStatus.location !== undefined &&
-                        installationLocationsEqual(bot.registrationStatus.location, location)
-                    );
-                }
+                return (
+                    bot.ownerId === $currentUserIdStore ||
+                    (bot.registrationStatus.location !== undefined &&
+                        installationLocationsEqual(bot.registrationStatus.location, location))
+                );
             }
         }
     }
