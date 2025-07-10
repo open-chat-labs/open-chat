@@ -199,6 +199,7 @@ impl RuntimeState {
         });
         let user_id: UserId = self.env.canister_id().into();
         let new_streak = claim.streak_length;
+        let days_remaining = claim.insured_days_remaining;
         let events = vec![
             LocalUserIndexEvent::EventStoreEvent(
                 EventBuilder::new("user_streak_insurance_claim", claim.timestamp)
@@ -212,8 +213,8 @@ impl RuntimeState {
         self.push_local_user_index_canister_events(events, self.env.now());
         openchat_bot::send_text_message(
             format!(
-                "One day of streak insurance was just used up in order to protect your streak from being lost.\
-Your streak is now {new_streak} days."
+                "One day of streak insurance was just used up to protect your streak from being lost.\
+Your streak is now {new_streak} days and you have {days_remaining} day(s) of streak insurance remaining."
             ),
             Vec::new(),
             false,
