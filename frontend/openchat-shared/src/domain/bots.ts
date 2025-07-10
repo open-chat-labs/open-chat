@@ -1,16 +1,21 @@
 import { Principal } from "@dfinity/principal";
 import * as chrono from "chrono-node";
 import { ROLE_MEMBER } from "../constants";
-import { type InterpolationValues, parseBigInt, random64, type ResourceKey } from "../utils";
+import { parseBigInt, random64, type InterpolationValues, type ResourceKey } from "../utils";
 import { ValidationErrors } from "../utils/validation";
-import type {
-    ChatEventType,
-    ChatIdentifier,
-    DirectChatIdentifier,
-    GroupChatIdentifier,
-    MessageContent,
+import {
+    chatIdentifiersEqual,
+    type ChatEventType,
+    type ChatIdentifier,
+    type DirectChatIdentifier,
+    type GroupChatIdentifier,
+    type MessageContent,
 } from "./chat";
-import type { CommunityEventType, CommunityIdentifier } from "./community";
+import {
+    communityIdentifiersEqual,
+    type CommunityEventType,
+    type CommunityIdentifier,
+} from "./community";
 import type {
     BotActionScope,
     BotChatPermission,
@@ -784,6 +789,19 @@ export function botActionScopeFromExecutionContext(
                 messageId: random64(),
                 threadRootMessageIndex: undefined,
             };
+    }
+}
+
+export function installationLocationsEqual(
+    a: BotInstallationLocation,
+    b: BotInstallationLocation,
+): boolean {
+    if (a.kind !== b.kind) return false;
+    switch (a.kind) {
+        case "community":
+            return communityIdentifiersEqual(a, b as CommunityIdentifier);
+        default:
+            return chatIdentifiersEqual(a, b as ChatIdentifier);
     }
 }
 

@@ -6,18 +6,30 @@
 </script>
 
 <script lang="ts">
+    import type { ResourceKey } from "openchat-client";
     import type { Snippet } from "svelte";
     import Translatable from "./Translatable.svelte";
-    import type { ResourceKey } from "openchat-client";
 
     interface Props {
         tabs: Tab[];
         initialIndex?: number;
         nested?: boolean;
+        selectedIndex?: number;
+        onTabSelected?: (index: number) => void;
     }
 
-    let { tabs, initialIndex = 0, nested = false }: Props = $props();
-    let selectedIndex = $state(initialIndex);
+    let {
+        tabs,
+        initialIndex = 0,
+        nested = false,
+        selectedIndex = $bindable(initialIndex),
+        onTabSelected,
+    }: Props = $props();
+
+    function selectTab(idx: number) {
+        selectedIndex = idx;
+        onTabSelected?.(idx);
+    }
 </script>
 
 <div class="tabs" class:nested>
@@ -28,7 +40,7 @@
             role="button"
             class="tab"
             class:nested
-            onclick={() => (selectedIndex = i)}
+            onclick={() => selectTab(i)}
             class:selected={selectedIndex === i}>
             <Translatable resourceKey={tab.title}></Translatable>
         </div>
