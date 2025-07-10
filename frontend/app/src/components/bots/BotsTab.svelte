@@ -2,8 +2,10 @@
     import { i18nKey } from "@src/i18n/i18n";
     import {
         botState,
+        installationLocationsEqual,
         OpenChat,
         ROLE_OWNER,
+        type BotInstallationLocation,
         type BotMatch as BotMatchType,
         type CommunityIdentifier,
         type CommunitySummary,
@@ -55,6 +57,16 @@
             ? ({ kind: "community", communityId: collection.id.communityId } as CommunityIdentifier)
             : collection.id,
     );
+    let location = $derived.by<BotInstallationLocation>(() => {
+        switch (collection.kind) {
+            case "community":
+                return collection.id;
+            case "group_chat":
+                return collection.id;
+            case "channel":
+                return { kind: "community", communityId: collection.id.communityId };
+        }
+    });
     let canManageBots = $derived(client.canManageBots(collection.id));
     let canAddBots = $derived(canManageBots && collection.kind !== "channel");
     let searchTerm = $derived(searchTermEntered ?? "");
@@ -72,10 +84,13 @@
             ]),
         ),
     );
+    // we can install a bot if it's public
+    // if it's private then we can only install it if it's test location = this location of if we are the bot owner
     let matchingUninstalledBots = $derived(
         [...botState.externalBots.values()].filter(
             (b) =>
                 !installedBots.has(b.id) &&
+                botIsInstallable(b) &&
                 matchesSearch(searchTermLower ?? "", [
                     b.name.toLocaleLowerCase(),
                     b.definition.description?.toLocaleLowerCase(),
@@ -84,6 +99,23 @@
     );
 
     let numberOfInstalledBots = $derived(matchingInstalledBots.length + matchingWebhooks.length);
+
+    function botIsInstallable(bot: ExternalBot) {
+        switch (bot.registrationStatus.kind) {
+            case "public":
+                return true;
+            case "private": {
+                if (client.hasOwnerRights(collection.membership.role)) {
+                    return true;
+                } else {
+                    return (
+                        bot.registrationStatus.location !== undefined &&
+                        installationLocationsEqual(bot.registrationStatus.location, location)
+                    );
+                }
+            }
+        }
+    }
     function webhookMatches(searchTermLower: string, webhook: WebhookDetails): boolean {
         return matchesSearch(searchTermLower, [webhook.name.toLocaleLowerCase()]);
     }
