@@ -353,6 +353,9 @@
         "matchingCommands": "Commandes correspondantes",
         "member": {
             "bots": "Les robots",
+            "explore": "Disponible",
+            "installed": "Installé",
+            "notfound": "Aucun robot trouvé",
             "people": "Personnes",
             "webhooks": "Webhooks"
         },

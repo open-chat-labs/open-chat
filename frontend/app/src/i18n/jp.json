@@ -353,6 +353,9 @@
         "matchingCommands": "一致するコマンド",
         "member": {
             "bots": "ボット",
+            "explore": "利用可能",
+            "installed": "インストール済み",
+            "notfound": "ボットは見つかりませんでした",
             "people": "人々",
             "webhooks": "ウェブフック"
         },

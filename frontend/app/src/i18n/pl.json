@@ -353,6 +353,9 @@
         "matchingCommands": "Dopasowywanie poleceń",
         "member": {
             "bots": "Boty",
+            "explore": "Dostępny",
+            "installed": "Zainstalowano",
+            "notfound": "Nie znaleziono botów",
             "people": "Ludzie",
             "webhooks": "Webhooki"
         },

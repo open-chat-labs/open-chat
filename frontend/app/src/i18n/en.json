@@ -353,6 +353,9 @@
         "matchingCommands": "Matching commands",
         "member": {
             "bots": "Bots",
+            "explore": "Available",
+            "installed": "Installed",
+            "notfound": "No bots found",
             "people": "People",
             "webhooks": "Webhooks"
         },

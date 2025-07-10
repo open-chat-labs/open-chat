@@ -2202,8 +2202,7 @@ export class OpenChatAgent extends EventTarget {
         );
         const responses = await waitAll(promises);
 
-        const success: GroupAndCommunitySummaryUpdatesResponseBatch[] = responses.success;
-        const errors = responses.errors;
+        const { success, errors } = responses;
         const excessUpdates = new Set<string>();
 
         for (const response of responses.success) {

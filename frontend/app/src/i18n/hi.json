@@ -353,6 +353,9 @@
         "matchingCommands": "मिलान आदेश",
         "member": {
             "bots": "बॉट",
+            "explore": "उपलब्ध",
+            "installed": "स्थापित",
+            "notfound": "कोई बॉट नहीं मिला",
             "people": "लोग",
             "webhooks": "वेबहुक"
         },

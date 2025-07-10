@@ -353,6 +353,9 @@
         "matchingCommands": "Соответствующие команды",
         "member": {
             "bots": "Боты",
+            "explore": "Доступный",
+            "installed": "Установлено",
+            "notfound": "Боты не найдены",
             "people": "Люди",
             "webhooks": "Вебхуки"
         },

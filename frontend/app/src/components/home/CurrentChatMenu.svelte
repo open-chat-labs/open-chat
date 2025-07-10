@@ -38,6 +38,7 @@
     import Magnify from "svelte-material-icons/Magnify.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
     import Tune from "svelte-material-icons/Tune.svelte";
+    import Webhook from "svelte-material-icons/Webhook.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
     import { toastStore } from "../../stores/toast";
@@ -125,6 +126,8 @@
               ? i18nKey("videoCall.startBroadcast")
               : i18nKey("videoCall.startVideo"),
     );
+
+    let canRegisterWebhook = $derived(client.canRegisterWebhook(selectedChatSummary.id));
 
     let canStartOrJoinVideoCall = $derived(!inCall && (videoCallInProgress || canStartVideoCalls));
 
@@ -274,6 +277,10 @@
 
     function makeProposal() {
         publish("makeProposal");
+    }
+
+    function registerWebhook() {
+        publish("registerWebhook");
     }
 
     function startVideoCall() {
@@ -520,6 +527,17 @@
                             {/snippet}
                             {#snippet text()}
                                 <Translatable resourceKey={i18nKey("proposal.makeProposal")} />
+                            {/snippet}
+                        </MenuItem>
+                    {/if}
+
+                    {#if canRegisterWebhook}
+                        <MenuItem onclick={registerWebhook}>
+                            {#snippet icon()}
+                                <Webhook size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
+                                <Translatable resourceKey={i18nKey("webhook.registerTitle")} />
                             {/snippet}
                         </MenuItem>
                     {/if}
