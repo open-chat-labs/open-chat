@@ -353,6 +353,9 @@
         "matchingCommands": "Lệnh khớp",
         "member": {
             "bots": "Bots",
+            "explore": "Có sẵn",
+            "installed": "Đã cài đặt",
+            "notfound": "Không tìm thấy bot",
             "people": "Mọi người",
             "webhooks": "Webhook"
         },

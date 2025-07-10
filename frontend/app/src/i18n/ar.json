@@ -353,6 +353,9 @@
         "matchingCommands": "أوامر المطابقة",
         "member": {
             "bots": "الروبوتات",
+            "explore": "متاح",
+            "installed": "تم التثبيت",
+            "notfound": "لم يتم العثور على أي روبوتات",
             "people": "الناس",
             "webhooks": "خطافات الويب"
         },

@@ -353,6 +353,9 @@
         "matchingCommands": "התאמת פקודות",
         "member": {
             "bots": "בוטים",
+            "explore": "זָמִין",
+            "installed": "מוּתקָן",
+            "notfound": "לא נמצאו בוטים",
             "people": "אֲנָשִׁים",
             "webhooks": "וובים"
         },

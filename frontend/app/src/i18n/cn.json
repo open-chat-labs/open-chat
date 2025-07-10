@@ -353,6 +353,9 @@
         "matchingCommands": "匹配命令",
         "member": {
             "bots": "机器人",
+            "explore": "可用的",
+            "installed": "已安装",
+            "notfound": "未找到机器人",
             "people": "人们",
             "webhooks": "Webhook"
         },
