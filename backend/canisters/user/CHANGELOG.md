@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove duplication by removing `MessageContent::message_type` function ([#8293](https://github.com/open-chat-labs/open-chat/pull/8293))
 - Updated the `FcmData` interface ([8261](https://github.com/open-chat-labs/open-chat/pull/8261))
 - Re-enabled fcm_data ([8298](https://github.com/open-chat-labs/open-chat/pull/8298))
+- Send user a message each time a day of streak insurance is used up ([8315](https://github.com/open-chat-labs/open-chat/pull/8315))
 
 ### Removed
 
@@ -26,7 +27,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Fix daily claim sometimes incorrectly displaying as inactive ([8266](https://github.com/open-chat-labs/open-chat/pull/8266))
 - Work around fcm_data issue ([#8272](https://github.com/open-chat-labs/open-chat/pull/8272))
 
 ## [[2.0.1799-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1799-user)] - 2025-06-20

@@ -74,6 +74,7 @@ impl Streak {
                     timestamp: self.final_timestamp_of_day(today - 1),
                     streak_length: self.end_day - self.start_day,
                     new_days_claimed: self.days_missed,
+                    insured_days_remaining: self.days_insured.saturating_sub(self.days_missed),
                 };
                 self.claims.push(claim.clone());
                 info!(day = today, "Streak insurance used");
