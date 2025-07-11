@@ -1009,6 +1009,8 @@ impl Data {
             return false;
         }
 
+        self.events.unsubscribe_bot_from_events(bot_id);
+
         for channel in self.channels.iter_mut() {
             channel.chat.events.unsubscribe_bot_from_events(bot_id);
         }
