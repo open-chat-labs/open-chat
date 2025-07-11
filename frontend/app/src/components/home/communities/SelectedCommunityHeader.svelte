@@ -1,7 +1,7 @@
 <script lang="ts">
     import {
         AvatarSize,
-        rightPanelHistory,
+        setRightPanelHistory,
         type CommunitySummary,
         type OpenChat,
     } from "openchat-client";
@@ -25,7 +25,7 @@
     let { community, canMarkAllRead }: Props = $props();
 
     function showCommunityMembers() {
-        rightPanelHistory.set([{ kind: "show_community_members" }]);
+        setRightPanelHistory([{ kind: "show_community_members" }]);
     }
 </script>
 

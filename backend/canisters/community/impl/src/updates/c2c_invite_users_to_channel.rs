@@ -8,7 +8,7 @@ use community_canister::c2c_bot_invite_users;
 use community_canister::c2c_invite_users_to_channel::{Response::*, *};
 use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
-use types::{BotCaller, BotPermissions, Caller, ChannelId, ChatPermission, OCResult, UnitResult, UserId};
+use types::{BotCaller, BotPermissions, Caller, ChannelId, ChatPermission, OCResult, UserId};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -19,7 +19,7 @@ fn c2c_invite_users_to_channel(args: Args) -> Response {
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
-fn c2c_bot_invite_users(args: c2c_bot_invite_users::Args) -> UnitResult {
+fn c2c_bot_invite_users(args: c2c_bot_invite_users::Args) -> Response {
     execute_update(|state| {
         c2c_invite_users_to_channel_impl(
             args.channel_id,
@@ -30,7 +30,7 @@ fn c2c_bot_invite_users(args: c2c_bot_invite_users::Args) -> UnitResult {
             }),
             state,
         )
-        .into()
+        .unwrap_or_else(Error)
     })
 }
 

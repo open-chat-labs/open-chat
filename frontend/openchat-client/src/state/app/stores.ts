@@ -79,7 +79,6 @@ import { localUpdates } from "../localUpdates";
 import { messageLocalUpdates } from "../message/localUpdates";
 import { routeStore, selectedCommunityIdStore } from "../path/stores";
 import { SnsFunctions } from "../snsFunctions.svelte";
-import { hideMessagesFromDirectBlocked } from "../ui/stores";
 import { messagesRead } from "../unread/markRead";
 import { blockedUsersStore, suspendedUsersStore } from "../users/stores";
 import { eqIfEmpty, eqIfUndefined, notEq } from "../utils";
@@ -99,6 +98,11 @@ function communityFilterToString(filter: Set<string>): string {
 }
 type LedgerCanister = string;
 type GovernanceCanister = string;
+
+export const hideMessagesFromDirectBlocked = new LocalStorageBoolStore(
+    "openchat_hideblocked",
+    false,
+);
 
 export const cryptoLookup = writable<ReadonlyMap<LedgerCanister, CryptocurrencyDetails>>(
     new SafeMap(),
@@ -1066,7 +1070,7 @@ export const proposalTopicsStore = derived(
                     [15, "API Boundary Node Management"],
                     [16, "Subnet Rental"],
                     [17, "Protocol Canister Management"],
-                    [18, "Service Nervous System Management"]
+                    [18, "Service Nervous System Management"],
                 ]);
             } else {
                 const snsFunctionsMap = snsFunctions.get(

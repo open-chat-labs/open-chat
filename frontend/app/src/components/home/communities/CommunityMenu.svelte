@@ -7,8 +7,8 @@
         notificationsSupported,
         platformModeratorStore,
         publish,
-        rightPanelHistory,
         ROLE_NONE,
+        setRightPanelHistory,
     } from "openchat-client";
     import { getContext } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
@@ -92,12 +92,12 @@
     }
 
     function showMembers() {
-        rightPanelHistory.set([{ kind: "show_community_members" }]);
+        setRightPanelHistory([{ kind: "show_community_members" }]);
     }
 
     function invite() {
         if (canInvite) {
-            rightPanelHistory.set([{ kind: "invite_community_users" }]);
+            setRightPanelHistory([{ kind: "invite_community_users" }]);
         }
     }
 

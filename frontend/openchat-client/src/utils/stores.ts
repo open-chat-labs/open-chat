@@ -306,6 +306,10 @@ class _Derived<S extends Stores, T> {
 }
 
 function convertStore<T>(store: Readable<T> | SvelteReadable<T>): Readable<T> {
+    if (store === undefined) {
+        const err = new Error();
+        console.log(err.stack);
+    }
     if ("dirty" in store && "value" in store) {
         return store;
     }

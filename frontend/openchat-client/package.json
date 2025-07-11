@@ -10,6 +10,7 @@
         "dev": "npm run clean && tsc -w",
         "dev:mobile": "npm run dev",
         "wait": "npm run clean && wait-on lib/index.js",
+        "android:release": "npm run build",
         "clean": "rm -rf lib",
         "typecheck": "tsc --noEmit",
         "typecheck:watch": "tsc --noEmit -w",

@@ -428,3 +428,50 @@ a {
         }
     }
 }
+
+// TODO get the status bar height programatically from the device
+body.native-android {
+    --status-bar-height: 36px; // This is the height we'll take as relevant!
+
+    // Prevent pinch-zooming on Android devices
+    // Note: tested meta viewport `user-scalable=no`, but seems like Tauri
+    // webview does not respect it
+    touch-action: pan-x pan-y;
+    height: 100%;
+
+    // Status bar on Android devices
+    &:before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: var(--status-bar-height);
+        background-color: #14151b;
+        z-index: 1;
+    }
+
+    // We need to adjust the main content to account for the status bar height!
+    // This is a workaround for the Android status bar issue
+    // where the content is pushed down by the status bar height.
+    &:not(.landing-page) > main {
+        margin-top: var(--status-bar-height);
+        height: calc(100vh - var(--status-bar-height));
+    }
+
+    &.landing-page {
+        &:before {
+            background-color: #1b1c20;
+        }
+
+        > .wrapper {
+            top: var(--status-bar-height);
+        }
+    
+        > .main {
+            margin-top: var(--status-bar-height);
+            padding-top: var(--status-bar-height);
+            height: calc(100vh - var(--status-bar-height));
+        }
+    }  
+}
