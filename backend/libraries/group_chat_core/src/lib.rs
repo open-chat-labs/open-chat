@@ -1347,8 +1347,7 @@ impl GroupChatCore {
 
             let target_member_role = match self.members.get(&target_user_id) {
                 Some(m) => m.role().value,
-                None if block => GroupRoleInternal::Member,
-                _ => return Err(OCErrorCode::TargetUserNotInChat.into()),
+                None => GroupRoleInternal::Member,
             };
 
             if !member
@@ -1360,30 +1359,33 @@ impl GroupChatCore {
         }
 
         // Remove the user from the group
-        self.members.remove(target_user_id, now);
+        let removed = self.members.remove(target_user_id, now).is_some();
 
         // Remove any invite for the user
-        self.invited_users.remove(&target_user_id, now);
+        let invite_removed = self.invited_users.remove(&target_user_id, now).is_some();
 
-        if block && !self.members.block(target_user_id, now) {
-            // Return Ok if the user was already blocked
-            return Ok(None);
-        }
+        // Try to block the user if requested
+        let blocked = block && self.members.block(target_user_id, now);
 
         // Push relevant event
-        let event = if block {
+        let event = if blocked {
             let event = UsersBlocked {
                 user_ids: vec![target_user_id],
                 blocked_by: agent,
             };
 
             ChatEventInternal::UsersBlocked(Box::new(event))
-        } else {
+        } else if removed {
             let event = MembersRemoved {
                 user_ids: vec![target_user_id],
                 removed_by: agent,
             };
             ChatEventInternal::ParticipantsRemoved(Box::new(event))
+        } else if invite_removed {
+            // An existing invite was removed but there is no corresponding event for this
+            return Ok(None);
+        } else {
+            return Err(OCErrorCode::NoChange.into());
         };
 
         let result = self.events.push_main_event(event, now);

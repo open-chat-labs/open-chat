@@ -3,11 +3,13 @@ use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
+use test_case::test_case;
 use testing::rng::random_string;
 use types::CommunityId;
 
-#[test]
-fn remove_member_from_channel_succeeds() {
+#[test_case(true)]
+#[test_case(false)]
+fn remove_member_from_channel_succeeds(user_joins_channel: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -33,10 +35,12 @@ fn remove_member_from_channel_succeeds() {
         vec![user2.user_id],
     );
 
-    client::community::happy_path::join_channel(env, user2.principal, community_id, channel_id);
+    if user_joins_channel {
+        client::community::happy_path::join_channel(env, user2.principal, community_id, channel_id);
 
-    let user2_summary1 = client::community::happy_path::summary(env, user2.principal, community_id);
-    assert!(user2_summary1.channels.iter().any(|c| c.channel_id == channel_id));
+        let user2_summary1 = client::community::happy_path::summary(env, user2.principal, community_id);
+        assert!(user2_summary1.channels.iter().any(|c| c.channel_id == channel_id));
+    }
 
     let remove_member_response = client::community::remove_member_from_channel(
         env,
@@ -52,6 +56,10 @@ fn remove_member_from_channel_succeeds() {
         remove_member_response,
         community_canister::remove_member_from_channel::Response::Success
     ));
+
+    // Check user invite has been removed
+    let response = client::community::happy_path::selected_channel_initial(env, &user1, community_id, channel_id);
+    assert!(!response.invited_users.contains(&user2.user_id));
 
     // Check that the channel is no longer returned for user2
     let user2_summary2 = client::community::happy_path::summary(env, user2.principal, community_id);

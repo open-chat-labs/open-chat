@@ -108,13 +108,12 @@ fn prepare(user_id: UserId, block: bool, ext_caller: Option<Caller>, state: &Run
     } else {
         let user_to_remove_role = match state.data.members.get_by_user_id(&user_id) {
             Some(member_to_remove) => member_to_remove.role(),
-            None if block => {
-                if state.data.members.is_blocked(&user_id) {
+            None => {
+                if !state.data.invited_users.contains(&user_id) && (!block || state.data.members.is_blocked(&user_id)) {
                     return Err(OCErrorCode::NoChange.into());
                 }
-                CommunityRole::Member
+                CommunityRole::Member // We still want to remove an invite and/or block the user
             }
-            None => return Err(OCErrorCode::TargetUserNotInCommunity.into()),
         };
 
         // Check if the caller is authorized to remove the user
@@ -149,6 +148,8 @@ fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeS
         .and_then(|r| r.referred_by)
         .map_or(HashMap::new(), |referred_by| HashMap::from_iter([(user_id, referred_by)]));
 
+    let invite_removed = state.data.invited_users.remove(&user_id, now).is_some();
+
     // Push relevant event
     let event = if blocked {
         let event = CommunityUsersBlocked {
@@ -156,18 +157,23 @@ fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeS
             blocked_by: removed_by,
             referred_by,
         };
-        CommunityEventInternal::UsersBlocked(Box::new(event))
+        Some(CommunityEventInternal::UsersBlocked(Box::new(event)))
     } else if removed {
         let event = CommunityMembersRemoved {
             user_ids: vec![user_id],
             removed_by,
             referred_by,
         };
-        CommunityEventInternal::MembersRemoved(Box::new(event))
+        Some(CommunityEventInternal::MembersRemoved(Box::new(event)))
+    } else if invite_removed {
+        None
     } else {
         return;
     };
-    state.push_community_event(event);
+
+    if let Some(event) = event {
+        state.push_community_event(event);
+    }
 
     handle_activity_notification(state);
 
