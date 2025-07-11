@@ -1362,6 +1362,9 @@ impl GroupChatCore {
         // Remove the user from the group
         self.members.remove(target_user_id, now);
 
+        // Remove any invite for the user
+        self.invited_users.remove(&target_user_id, now);
+
         if block && !self.members.block(target_user_id, now) {
             // Return Ok if the user was already blocked
             return Ok(None);

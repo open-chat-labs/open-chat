@@ -700,6 +700,7 @@ impl Data {
         self.expiring_member_actions.remove_member(user_id, None);
         self.achievements.remove_user(&user_id);
         self.user_cache.delete(user_id);
+        self.invited_users.remove(&user_id, now);
         removed
     }
 
