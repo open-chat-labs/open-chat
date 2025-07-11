@@ -25,7 +25,6 @@
         selectedCommunityIdStore,
         selectedCommunityRoute,
         selectedServerChatStore,
-        selectedServerCommunityStore,
         shareRoute,
         threadMessageIndexStore,
         threadOpenStore,
