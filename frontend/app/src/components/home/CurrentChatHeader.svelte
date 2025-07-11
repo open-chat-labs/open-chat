@@ -8,10 +8,10 @@
         iconSize,
         mobileWidth,
         publish,
-        rightPanelHistory,
         routeForChatIdentifier,
         selectedChatIdStore,
         selectedCommunitySummaryStore,
+        setRightPanelHistory,
         byContext as typersByContext,
         type OpenChat,
         type TypersByKey,
@@ -78,7 +78,7 @@
 
     function showGroupDetails() {
         if ($selectedChatIdStore !== undefined) {
-            rightPanelHistory.set([
+            setRightPanelHistory([
                 {
                     kind: "group_details",
                 },

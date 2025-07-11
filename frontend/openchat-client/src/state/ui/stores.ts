@@ -8,8 +8,9 @@ import {
     type RouteParams,
 } from "openchat-shared";
 import { type Readable } from "svelte/store";
+import { pageReplace } from "../../utils/routes";
 import { derived, writable } from "../../utils/stores";
-import { isCanisterUrl } from "../../utils/url";
+import { isCanisterUrl, removeQueryStringParam } from "../../utils/url";
 import { LocalStorageBoolStore, LocalStorageStore } from "../localStorageStore";
 import { routeStore } from "../path/stores";
 
@@ -108,6 +109,13 @@ export const lastRightPanelState = derived(
     rightPanelHistory,
     (rightPanelHistory) => rightPanelHistory[rightPanelHistory.length - 1] ?? { kind: "no_panel" },
 );
+export function setRightPanelHistory(history: RightPanelContent[]) {
+    if (rightPanelHistory.value.find((p) => p.kind === "message_thread_panel") !== undefined) {
+        pageReplace(removeQueryStringParam("open"));
+    }
+    rightPanelHistory.set(history);
+}
+
 export const disableLeftNav = writable<boolean>(false);
 export const layout = derived(
     [mobileWidth, fullWidth, rightPanelHistory, disableLeftNav, routeStore],

@@ -13,13 +13,13 @@
         currentUserIdStore,
         mobileWidth,
         platformModeratorStore,
-        rightPanelHistory,
         selectedChatBlockedUsersStore,
         selectedChatMembersStore,
         selectedChatSummaryStore,
         selectedCommunityBlockedUsersStore,
         selectedCommunityMembersStore,
         selectedCommunitySummaryStore,
+        setRightPanelHistory,
     } from "openchat-client";
 
     import { getContext, onMount } from "svelte";
@@ -199,7 +199,7 @@
     }
 
     function showUserProfile() {
-        rightPanelHistory.set([{ kind: "user_profile" }]);
+        setRightPanelHistory([{ kind: "user_profile" }]);
         onClose();
     }
 
@@ -343,10 +343,7 @@
                         <Avatar url={avatarUrl} {userId} size={AvatarSize.Large} />
                     </div>
                     {#if user !== undefined && !$disableChit}
-                        <ChitBalance
-                            size={"small"}
-                            {me}
-                            totalEarned={user.totalChitEarned} />
+                        <ChitBalance size={"small"} {me} totalEarned={user.totalChitEarned} />
                     {/if}
                     {#if profile!.bio.length > 0}
                         <p class="bio"><Markdown inline={false} text={profile!.bio} /></p>

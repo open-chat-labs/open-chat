@@ -39,6 +39,7 @@
         selectedCommunityLapsedMembersStore,
         selectedCommunityMembersStore,
         selectedCommunitySummaryStore,
+        setRightPanelHistory,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -341,7 +342,7 @@
 
     function showInviteCommunityUsers() {
         if ($selectedCommunitySummaryStore !== undefined) {
-            rightPanelHistory.set([{ kind: "invite_community_users" }]);
+            setRightPanelHistory([{ kind: "invite_community_users" }]);
         }
     }
 

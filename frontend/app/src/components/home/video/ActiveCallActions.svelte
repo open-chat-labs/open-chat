@@ -5,8 +5,8 @@
         mobileWidth,
         OpenChat,
         pageReplace,
-        rightPanelHistory,
         routeForMessage,
+        setRightPanelHistory,
     } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
@@ -72,7 +72,7 @@
                 $activeVideoCall?.messageId !== undefined &&
                 $activeVideoCall.chatId.kind !== "direct_chat"
             ) {
-                rightPanelHistory.set([
+                setRightPanelHistory([
                     {
                         kind: "call_participants_panel",
                         chatId: $activeVideoCall.chatId,
