@@ -28,12 +28,12 @@
         type MultiUserChat,
         type OpenChat,
         type ReadonlySet,
-        rightPanelHistory,
         ROLE_OWNER,
         runningInIframe,
         selectedChatDraftMessageStore,
         selectedChatPinnedMessagesStore,
         selectedCommunitySummaryStore,
+        setRightPanelHistory,
         subscribe,
         suspendedUserStore,
         type User,
@@ -138,7 +138,7 @@
             toastStore.showFailureToast(i18nKey("communities.noOwned"));
             importToCommunities = undefined;
         } else {
-            rightPanelHistory.set([]);
+            setRightPanelHistory([]);
         }
     }
 
