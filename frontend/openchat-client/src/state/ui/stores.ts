@@ -8,9 +8,10 @@ import {
     type RouteParams,
 } from "openchat-shared";
 import { type Readable } from "svelte/store";
+import { pageReplace } from "../../utils/routes";
 import { derived, writable } from "../../utils/stores";
-import { isCanisterUrl } from "../../utils/url";
-import { LocalStorageBoolStore, LocalStorageStore } from "../localStorageStore";
+import { isCanisterUrl, removeQueryStringParam } from "../../utils/url";
+import { LocalStorageStore } from "../localStorageStore";
 import { routeStore } from "../path/stores";
 
 function translateScale(scale: FontScale): number {
@@ -23,10 +24,6 @@ function translateScale(scale: FontScale): number {
 }
 
 export const runningInIframe: Readable<boolean> = writable(window.self !== window.top);
-export const hideMessagesFromDirectBlocked = new LocalStorageBoolStore(
-    "openchat_hideblocked",
-    false,
-);
 export const activityFeedShowing = writable(false);
 export const notificationsSupported =
     !isCanisterUrl &&
@@ -108,6 +105,13 @@ export const lastRightPanelState = derived(
     rightPanelHistory,
     (rightPanelHistory) => rightPanelHistory[rightPanelHistory.length - 1] ?? { kind: "no_panel" },
 );
+export function setRightPanelHistory(history: RightPanelContent[]) {
+    if (rightPanelHistory.value.find((p) => p.kind === "message_thread_panel") !== undefined) {
+        pageReplace(removeQueryStringParam("open"));
+    }
+    rightPanelHistory.set(history);
+}
+
 export const disableLeftNav = writable<boolean>(false);
 export const layout = derived(
     [mobileWidth, fullWidth, rightPanelHistory, disableLeftNav, routeStore],

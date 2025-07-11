@@ -17,7 +17,7 @@
         type OpenChat,
         platformModeratorStore,
         publish,
-        rightPanelHistory,
+        setRightPanelHistory,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
@@ -169,7 +169,7 @@
     }
 
     function showPinned() {
-        rightPanelHistory.set([
+        setRightPanelHistory([
             {
                 kind: "show_pinned",
             },

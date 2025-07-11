@@ -869,7 +869,7 @@ export function groupChatFromCandidate(
         minVisibleEventIndex: 0,
         minVisibleMessageIndex: 0,
         lastUpdated: BigInt(0),
-        memberCount: candidate.members.length + 1, // +1 to include us
+        memberCount: 1,
         ...candidate.avatar,
         permissions: candidate.permissions,
         metrics: emptyChatMetrics(),
