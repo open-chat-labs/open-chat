@@ -263,13 +263,6 @@
         }
     });
 
-    // clear selected community
-    $effect(() => {
-        if ($selectedCommunityIdStore === undefined) {
-            selectedServerCommunityStore.set(undefined);
-        }
-    });
-
     let previousChatId: ChatIdentifier | undefined = undefined;
     $effect(() => {
         if (
