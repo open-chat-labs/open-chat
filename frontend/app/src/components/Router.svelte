@@ -25,7 +25,6 @@
         selectedCommunityIdStore,
         selectedCommunityRoute,
         selectedServerChatStore,
-        selectedServerCommunityStore,
         shareRoute,
         threadMessageIndexStore,
         threadOpenStore,
@@ -260,13 +259,6 @@
     $effect(() => {
         if (client.captureReferralCode()) {
             pageReplace(removeQueryStringParam("ref"));
-        }
-    });
-
-    // clear selected community
-    $effect(() => {
-        if ($selectedCommunityIdStore === undefined) {
-            selectedServerCommunityStore.set(undefined);
         }
     });
 
