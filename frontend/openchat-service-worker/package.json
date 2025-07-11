@@ -9,6 +9,7 @@
         "dev": "rollup -cw",
         "dev:mobile": "npm run dev",
         "wait": "npm run clean && wait-on lib/service_worker.js",
+        "android:release": "npm run build",
         "clean": "rm -f lib/service_worker.js",
         "typecheck": "tsc --noEmit",
         "lint": "eslint ./src --fix"

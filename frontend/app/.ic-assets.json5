@@ -20,7 +20,7 @@
         },
     },
     {
-        match: "index.html",
+        match: "{index.html,version}",
         headers: {
             "Cache-Control": "no-cache",
         },

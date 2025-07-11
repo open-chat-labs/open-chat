@@ -6,7 +6,7 @@ use canister_tracing_macros::trace;
 use group_canister::c2c_bot_invite_users;
 use group_canister::c2c_invite_users::{Response::*, *};
 use ic_principal::Principal;
-use oc_error_codes::{OCError, OCErrorCode};
+use oc_error_codes::OCErrorCode;
 use types::{BotCaller, BotPermissions, Caller, ChatPermission, OCResult, UserId};
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
@@ -20,11 +20,14 @@ fn c2c_invite_users(args: Args) -> Response {
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
-fn c2c_bot_invite_users(args: c2c_bot_invite_users::Args) -> c2c_bot_invite_users::Response {
-    execute_update(|state| c2c_bot_invite_users_impl(args, state))
+fn c2c_bot_invite_users(args: c2c_bot_invite_users::Args) -> Response {
+    match execute_update(|state| c2c_bot_invite_users_impl(args, state)) {
+        Ok(result) => Success(result),
+        Err(error) => Error(error),
+    }
 }
 
-fn c2c_bot_invite_users_impl(args: c2c_bot_invite_users::Args, state: &mut RuntimeState) -> c2c_bot_invite_users::Response {
+fn c2c_bot_invite_users_impl(args: c2c_bot_invite_users::Args, state: &mut RuntimeState) -> OCResult<SuccessResult> {
     let bot_caller = BotCaller {
         bot: args.bot_id,
         initiator: args.initiator.clone(),
@@ -35,10 +38,10 @@ fn c2c_bot_invite_users_impl(args: c2c_bot_invite_users::Args, state: &mut Runti
         &bot_caller.initiator,
         &BotPermissions::from_chat_permission(ChatPermission::InviteUsers),
     ) {
-        return OCError::from(OCErrorCode::InitiatorNotAuthorized).into();
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
-    c2c_invite_users_impl(args.users, Caller::BotV2(bot_caller), state).into()
+    c2c_invite_users_impl(args.users, Caller::BotV2(bot_caller), state)
 }
 
 fn c2c_invite_users_impl(

@@ -46,7 +46,6 @@
         pageReplace,
         pinNumberResolverStore,
         querystringStore,
-        rightPanelHistory,
         ROLE_NONE,
         ROLE_OWNER,
         routeForChatIdentifier,
@@ -56,6 +55,7 @@
         selectedChatIdStore,
         selectedChatSummaryStore,
         selectedCommunityRulesStore,
+        setRightPanelHistory,
         subscribe,
         suspendedUserStore,
     } from "openchat-client";
@@ -343,7 +343,7 @@
                 if (client.isHomeRoute(route)) {
                     filterChatSpecificRightPanelStates();
                 } else if (client.isCommunitiesRoute(route)) {
-                    rightPanelHistory.set($fullWidth ? [{ kind: "community_filters" }] : []);
+                    setRightPanelHistory($fullWidth ? [{ kind: "community_filters" }] : []);
                 } else {
                     // any other route with no associated chat therefore we must clear any selected chat and potentially close the right panel
                     if (client.isShareRoute(route)) {
@@ -430,12 +430,12 @@
                 return leaveCommunity(confirmActionEvent.communityId);
             case "delete_community":
                 return deleteCommunity(confirmActionEvent.communityId).then((_) => {
-                    rightPanelHistory.set([]);
+                    setRightPanelHistory([]);
                 });
             case "delete":
                 return deleteGroup(confirmActionEvent.chatId, confirmActionEvent.level).then(
                     (_) => {
-                        rightPanelHistory.set([]);
+                        setRightPanelHistory([]);
                         confirmActionEvent.after?.();
                     },
                 );
@@ -516,7 +516,7 @@
     function showInviteGroupUsers(show: boolean) {
         if ($selectedChatIdStore !== undefined) {
             if (show) {
-                rightPanelHistory.set([{ kind: "invite_group_users" }]);
+                setRightPanelHistory([{ kind: "invite_group_users" }]);
             } else {
                 client.pushRightPanelHistory({ kind: "invite_group_users" });
             }
@@ -553,29 +553,25 @@
 
     function showGroupMembers() {
         if ($selectedChatIdStore !== undefined) {
-            rightPanelHistory.set([{ kind: "show_group_members" }]);
+            setRightPanelHistory([{ kind: "show_group_members" }]);
         }
     }
 
     function showProfile() {
-        if ($selectedChatIdStore !== undefined) {
-            pageReplace(routeForChatIdentifier($chatListScopeStore.kind, $selectedChatIdStore));
-        }
-        rightPanelHistory.set([{ kind: "user_profile" }]);
+        setRightPanelHistory([{ kind: "user_profile" }]);
     }
 
     function communityDetails(_: CommunitySummary) {
         // what do we do here if the community is not selected
         // do we select it?
         if ($chatListScopeStore.kind === "community") {
-            rightPanelHistory.set([{ kind: "community_details" }]);
+            setRightPanelHistory([{ kind: "community_details" }]);
         }
     }
 
     function showProposalFilters() {
         if ($selectedChatIdStore !== undefined) {
-            pageReplace(routeForChatIdentifier($chatListScopeStore.kind, $selectedChatIdStore));
-            rightPanelHistory.set([
+            setRightPanelHistory([
                 {
                     kind: "proposal_filters",
                 },
@@ -856,7 +852,7 @@
     }
 
     function convertGroupToCommunity(group: GroupChatSummary) {
-        rightPanelHistory.set([]);
+        setRightPanelHistory([]);
         convertGroup = group;
     }
 
@@ -963,13 +959,13 @@
                 pageReplace(removeQueryStringParam("hof"));
             }
             if ($querystringStore.get("everyone") !== null) {
-                rightPanelHistory.set([{ kind: "show_group_members" }]);
+                setRightPanelHistory([{ kind: "show_group_members" }]);
                 pageReplace(removeQueryStringParam("everyone"));
             }
             const usergroup = $querystringStore.get("usergroup");
             if (usergroup !== null) {
                 const userGroupId = Number(usergroup);
-                rightPanelHistory.set([{ kind: "show_community_members", userGroupId }]);
+                setRightPanelHistory([{ kind: "show_community_members", userGroupId }]);
                 pageReplace(removeQueryStringParam("usergroup"));
             }
         }
