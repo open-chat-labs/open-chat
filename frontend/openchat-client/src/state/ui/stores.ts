@@ -11,7 +11,7 @@ import { type Readable } from "svelte/store";
 import { pageReplace } from "../../utils/routes";
 import { derived, writable } from "../../utils/stores";
 import { isCanisterUrl, removeQueryStringParam } from "../../utils/url";
-import { LocalStorageBoolStore, LocalStorageStore } from "../localStorageStore";
+import { LocalStorageStore } from "../localStorageStore";
 import { routeStore } from "../path/stores";
 
 function translateScale(scale: FontScale): number {
@@ -24,10 +24,6 @@ function translateScale(scale: FontScale): number {
 }
 
 export const runningInIframe: Readable<boolean> = writable(window.self !== window.top);
-export const hideMessagesFromDirectBlocked = new LocalStorageBoolStore(
-    "openchat_hideblocked",
-    false,
-);
 export const activityFeedShowing = writable(false);
 export const notificationsSupported =
     !isCanisterUrl &&
