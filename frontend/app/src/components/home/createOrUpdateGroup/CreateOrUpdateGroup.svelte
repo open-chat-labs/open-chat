@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
         type CandidateGroupChat,
+        type CandidateMember,
         type CreateGroupResponse,
         type Level,
         type MultiUserChatIdentifier,
@@ -52,6 +53,7 @@
     let visibilityValid = $state(true);
     let originalGroup = $state<CandidateGroupChat>($state.snapshot(candidateGroup));
     let rulesValid = $state(true);
+    let usersToInvite = $state<CandidateMember[]>([]);
 
     function getSteps(
         editing: boolean,
@@ -141,13 +143,13 @@
     }
 
     function optionallyInviteUsers(chatId: MultiUserChatIdentifier): Promise<void> {
-        if (candidateGroup.members.length === 0) {
+        if (usersToInvite.length === 0) {
             return Promise.resolve();
         }
         return client
             .inviteUsers(
                 chatId,
-                candidateGroup.members.map((m) => m.user.userId),
+                usersToInvite.map((u) => u.user.userId),
             )
             .then((resp) => {
                 if (!resp) {
@@ -424,7 +426,7 @@
                     <div class="members">
                         <ChooseMembers
                             userLookup={searchUsers}
-                            bind:members={candidateGroup.members}
+                            bind:members={usersToInvite}
                             {busy} />
                     </div>
                 {/if}
