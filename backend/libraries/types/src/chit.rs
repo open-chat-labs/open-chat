@@ -59,6 +59,7 @@ pub struct UserCanisterStreakInsuranceClaim {
     pub timestamp: TimestampMillis,
     pub streak_length: u16,
     pub new_days_claimed: u8,
+    #[serde(default)]
     pub insured_days_remaining: u8,
 }
 

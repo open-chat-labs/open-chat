@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Add `serde(default)` to field which doesn't yet exist in User canisters ([#8333](https://github.com/open-chat-labs/open-chat/pull/8333))
+
+## [[2.0.1831](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1831-local_user_index)] - 2025-07-11
+
 ### Changed
 
 - When a bot invites a user also send an invitation ([#8320](https://github.com/open-chat-labs/open-chat/pull/8320))
