@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - When a bot invites a user also send an invitation ([#8320](https://github.com/open-chat-labs/open-chat/pull/8320))
 
+### Fixed
+
+- When a member is removed also remove any invite ([#8328](https://github.com/open-chat-labs/open-chat/pull/8328))
+
 ## [[2.0.1829](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1829-community)] - 2025-07-09
 
 ### Added
