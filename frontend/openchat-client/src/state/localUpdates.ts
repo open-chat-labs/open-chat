@@ -442,7 +442,11 @@ export class GlobalLocalState {
 
     addCommunity(val: CommunitySummary) {
         this.removeCommunityPreview(val.id);
-        return addToWritableLocalMap(val.id, val, this.communities);
+        addToWritableLocalMap(val.id, val, this.communities);
+        this.chats.update((map) => {
+            val.channels.forEach((c) => map.addOrUpdate(c.id, c));
+            return map;
+        });
     }
 
     get messageActivityFeedReadUpTo() {

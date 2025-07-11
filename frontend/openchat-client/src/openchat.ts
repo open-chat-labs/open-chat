@@ -1500,14 +1500,6 @@ export class OpenChat {
             });
     }
 
-    #addCommunityLocally(community: CommunitySummary) {
-        return localUpdates.addCommunity(community);
-    }
-
-    #removeCommunityLocally(id: CommunityIdentifier) {
-        return localUpdates.removeCommunity(id);
-    }
-
     verifyAccessGate(gate: AccessGate, iiPrincipal: string): Promise<string | undefined> {
         if (gate.kind !== "credential_gate" || this.#authPrincipal === undefined) {
             return Promise.resolve(undefined);
@@ -3060,7 +3052,7 @@ export class OpenChat {
     }
 
     removeCommunity(id: CommunityIdentifier): void {
-        this.#removeCommunityLocally(id);
+        localUpdates.removeCommunity(id);
     }
 
     diffGroupPermissions = diffGroupPermissions;
@@ -8014,8 +8006,7 @@ export class OpenChat {
                 if (resp.kind === "success") {
                     // Make the community appear at the top of the list
                     resp.community.membership.index = nextCommunityIndexStore.value;
-                    this.#addCommunityLocally(resp.community);
-                    localUpdates.removeCommunityPreview(community.id);
+                    localUpdates.addCommunity(resp.community);
                     this.#loadCommunityDetails(resp.community);
                     withPausedStores(() => {
                         resp.community.channels.forEach((c) => {
@@ -8042,7 +8033,7 @@ export class OpenChat {
         const community = communitiesStore.value.get(id);
         if (community === undefined) return Promise.resolve(false);
 
-        const undo = this.#removeCommunityLocally(id);
+        const undo = localUpdates.removeCommunity(id);
 
         return this.#sendRequest({ kind: "deleteCommunity", id })
             .then((resp) => {
@@ -8061,7 +8052,7 @@ export class OpenChat {
         const community = communitiesStore.value.get(id);
         if (community === undefined) return Promise.resolve(false);
 
-        const undo = this.#removeCommunityLocally(id);
+        const undo = localUpdates.removeCommunity(id);
 
         return this.#sendRequest({ kind: "leaveCommunity", id })
             .then((resp) => {
@@ -8090,7 +8081,7 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    this.#addCommunityLocally({
+                    localUpdates.addCommunity({
                         ...candidate,
                         id: {
                             kind: "community",
