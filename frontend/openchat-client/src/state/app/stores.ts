@@ -611,6 +611,9 @@ export const selectedServerCommunityStore = writable<CommunityDetailsState | und
     notEq,
 );
 
+// Whenever the selectedCommunityIdStore value changes we immediately clear the selectedServerCommunityStore
+selectedCommunityIdStore.subscribe((_) => selectedServerCommunityStore.set(undefined));
+
 export const selectedCommunityMembersStore = derived(
     [selectedServerCommunityStore, communityLocalUpdates.members],
     ([community, members]) => {

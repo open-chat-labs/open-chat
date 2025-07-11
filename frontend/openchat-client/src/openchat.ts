@@ -3310,11 +3310,6 @@ export class OpenChat {
 
     async #loadCommunityDetails(community: CommunitySummary): Promise<void> {
         const id = community.id;
-        if (!communityIdentifiersEqual(id, selectedServerCommunityStore.value?.communityId)) {
-            // If the existing community details are for a different community, clear them while we load the details
-            // for this community
-            selectedServerCommunityStore.set(undefined);
-        }
         const resp: CommunityDetailsResponse = await this.#sendRequest({
             kind: "getCommunityDetails",
             id,
