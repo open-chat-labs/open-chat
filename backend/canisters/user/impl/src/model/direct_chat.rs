@@ -63,21 +63,19 @@ impl DirectChat {
 
     pub fn push_message<P: EventPusher>(
         &mut self,
-        sent_by_me: bool,
         args: PushMessageArgs,
         their_message_index: Option<MessageIndex>,
         event_pusher: Option<P>,
     ) -> EventWrapper<Message> {
         let now = args.now;
+        let sent_by_me = args.sender != self.them;
         let (message_event, _) = self.events.push_message(args, event_pusher);
 
         self.mark_read_up_to(message_event.event.message_index, sent_by_me, now);
 
-        if !sent_by_me {
-            if let Some(their_message_index) = their_message_index {
-                self.unread_message_index_map
-                    .add(message_event.event.message_index, their_message_index);
-            }
+        if let Some(their_message_index) = their_message_index {
+            self.unread_message_index_map
+                .add(message_event.event.message_index, their_message_index);
         }
 
         message_event
