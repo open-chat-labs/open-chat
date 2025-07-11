@@ -35,6 +35,8 @@ fn start_join_end_video_call_in_direct_chat_succeeds(manually_end_video_call: bo
         .find(|c| c.them == user2.user_id)
         .unwrap();
     assert_eq!(user1_chat.video_call_in_progress.unwrap().message_index, 0.into());
+    assert_eq!(user1_chat.read_by_me_up_to, Some(0.into()));
+    assert!(user1_chat.read_by_them_up_to.is_none());
 
     let chat1_event = client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![1.into()])
         .events
@@ -50,6 +52,8 @@ fn start_join_end_video_call_in_direct_chat_succeeds(manually_end_video_call: bo
         .find(|c| c.them == user1.user_id)
         .unwrap();
     assert_eq!(user2_chat.video_call_in_progress.unwrap().message_index, 0.into());
+    assert_eq!(user2_chat.read_by_them_up_to, Some(0.into()));
+    assert!(user2_chat.read_by_me_up_to.is_none());
 
     let chat2_event = client::user::happy_path::events_by_index(env, &user2, user1.user_id, vec![1.into()])
         .events
