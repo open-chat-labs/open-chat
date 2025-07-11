@@ -26,7 +26,7 @@ fn block_user_succeeds(user_has_left_community: bool) {
         user2,
         community_id,
         community_name,
-    } = init_test_data(env, canister_ids, *controller, true);
+    } = init_test_data(env, canister_ids, *controller, true, true);
 
     if user_has_left_community {
         client::user::happy_path::leave_community(env, &user2, community_id);
@@ -92,7 +92,7 @@ fn block_user_fails_for_private_communities() {
         user2,
         community_id,
         community_name: _,
-    } = init_test_data(env, canister_ids, *controller, false);
+    } = init_test_data(env, canister_ids, *controller, false, true);
 
     let block_user_response = client::community::block_user(
         env,
@@ -122,7 +122,7 @@ fn remove_user_succeeds() {
         user2,
         community_id,
         community_name,
-    } = init_test_data(env, canister_ids, *controller, false);
+    } = init_test_data(env, canister_ids, *controller, false, true);
 
     // Remove user2
     let remove_member_response = client::community::remove_member(
@@ -182,7 +182,7 @@ fn community_referral_added_and_removed() {
         user2,
         community_id,
         community_name: _,
-    } = init_test_data(env, canister_ids, *controller, false);
+    } = init_test_data(env, canister_ids, *controller, false, true);
 
     // Check the referral has been added - method 1
     let response1 = client::community::happy_path::selected_initial(env, user1.principal, community_id);
@@ -220,7 +220,45 @@ fn community_referral_added_and_removed() {
     assert!(response4.referrals_removed.contains(&user2.user_id));
 }
 
-fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, public: bool) -> TestData {
+#[test_case(true)]
+#[test_case(false)]
+fn remove_invite_succeeds(user_joins_community: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData {
+        user1,
+        user2,
+        community_id,
+        ..
+    } = init_test_data(env, canister_ids, *controller, false, user_joins_community);
+
+    // Remove user2
+    let remove_member_response = client::community::remove_member(
+        env,
+        user1.principal,
+        community_id.into(),
+        &community_canister::remove_member::Args { user_id: user2.user_id },
+    );
+
+    assert!(matches!(
+        remove_member_response,
+        community_canister::remove_member::Response::Success
+    ));
+
+    // Check user invite has been removed
+    let response = client::community::happy_path::selected_initial(env, user1.principal, community_id);
+
+    assert!(!response.invited_users.contains(&user2.user_id));
+    assert!(!response.members.iter().any(|member| member.user_id == user2.user_id));
+}
+
+fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, public: bool, join: bool) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
     let user2 = client::register_user(env, canister_ids);
 
@@ -239,7 +277,9 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
         );
     }
 
-    client::community::happy_path::join_community(env, user2.principal, community_id);
+    if join {
+        client::community::happy_path::join_community(env, user2.principal, community_id);
+    }
 
     tick_many(env, 3);
 

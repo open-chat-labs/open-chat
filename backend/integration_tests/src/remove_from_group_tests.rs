@@ -5,11 +5,13 @@ use candid::Principal;
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
+use test_case::test_case;
 use testing::rng::random_string;
 use types::ChatId;
 
-#[test]
-fn remove_group_member_succeeds() {
+#[test_case(true)]
+#[test_case(false)]
+fn remove_group_member_succeeds(user_joins_group: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -18,7 +20,7 @@ fn remove_group_member_succeeds() {
         ..
     } = wrapper.env();
 
-    let TestData { user1, user2, group_id } = init_test_data(env, canister_ids, *controller, true);
+    let TestData { user1, user2, group_id } = init_test_data(env, canister_ids, *controller, false, user_joins_group);
 
     let remove_member_response = client::group::remove_participant(
         env,
@@ -32,9 +34,9 @@ fn remove_group_member_succeeds() {
         group_canister::remove_participant::Response::Success
     ));
 
-    let members = client::group::happy_path::selected_initial(env, user1.principal, group_id).participants;
-
-    assert!(!members.iter().any(|m| m.user_id == user2.user_id));
+    let response = client::group::happy_path::selected_initial(env, user1.principal, group_id);
+    assert!(!response.invited_users.contains(&user2.user_id));
+    assert!(!response.participants.iter().any(|m| m.user_id == user2.user_id));
 }
 
 #[test]
@@ -47,7 +49,7 @@ fn block_user_who_is_no_longer_group_member_succeeds() {
         ..
     } = wrapper.env();
 
-    let TestData { user1, user2, group_id } = init_test_data(env, canister_ids, *controller, true);
+    let TestData { user1, user2, group_id } = init_test_data(env, canister_ids, *controller, true, true);
 
     client::user::happy_path::leave_group(env, &user2, group_id);
 
@@ -81,7 +83,13 @@ fn block_user_who_is_no_longer_group_member_succeeds() {
     ));
 }
 
-fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, public: bool) -> TestData {
+fn init_test_data(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    controller: Principal,
+    public: bool,
+    user_joins_group: bool,
+) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
     let user2 = client::register_user(env, canister_ids);
 
@@ -89,7 +97,19 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
 
     let group_id = client::user::happy_path::create_group(env, &user1, &group_name, public, true);
 
-    client::group::happy_path::join_group(env, user2.principal, group_id);
+    if !public {
+        client::local_user_index::happy_path::invite_users_to_group(
+            env,
+            &user1,
+            canister_ids.local_user_index(env, group_id),
+            group_id,
+            vec![user2.user_id],
+        );
+    }
+
+    if user_joins_group {
+        client::group::happy_path::join_group(env, user2.principal, group_id);
+    }
 
     tick_many(env, 3);
 
