@@ -286,7 +286,6 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
                 .get_or_create(bot_id, UserType::BotV2, || state.env.rng().r#gen(), now);
 
             chat.push_message::<UserEventPusher>(
-                true,
                 PushMessageArgs {
                     thread_root_message_index: args.thread_root_message_index,
                     message_id,
@@ -453,7 +452,6 @@ fn send_message_impl(
         .get_or_create(recipient, recipient_type.into(), || state.env.rng().r#gen(), now);
 
     let message_event = chat.push_message(
-        true,
         push_message_args,
         None,
         Some(UserEventPusher {
@@ -571,7 +569,6 @@ async fn send_to_bot_canister(
                             sender_context: None,
                         };
                         chat.push_message(
-                            false,
                             push_message_args,
                             None,
                             Some(UserEventPusher {

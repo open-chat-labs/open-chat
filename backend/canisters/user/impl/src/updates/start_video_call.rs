@@ -121,7 +121,6 @@ pub fn handle_start_video_call(
     let mute_notification = their_message_index.is_some() || chat.notifications_muted.value;
 
     let message_event = chat.push_message(
-        false,
         push_message_args,
         their_message_index,
         Some(UserEventPusher {

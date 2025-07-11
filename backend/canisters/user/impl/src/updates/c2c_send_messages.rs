@@ -181,7 +181,6 @@ pub(crate) fn handle_message_impl(
     };
 
     let message_event = chat.push_message(
-        false,
         push_message_args,
         args.sender_message_index,
         args.push_message_sent_event.then_some(UserEventPusher {
