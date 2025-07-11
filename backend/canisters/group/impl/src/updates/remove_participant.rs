@@ -63,13 +63,14 @@ async fn remove_participant_impl(user_to_remove: UserId, block: bool, ext_caller
     }
 
     // Remove the user from the group
-    mutate_state(|state| commit(user_to_remove, block, prepare_result.removed_by, state))
+    mutate_state(|state| commit(user_to_remove, block, prepare_result.remove, prepare_result.removed_by, state))
 }
 
 struct PrepareResult {
     removed_by: Caller,
     local_user_index_canister_id: CanisterId,
     is_user_to_remove_an_owner: bool,
+    remove: bool,
 }
 
 fn prepare(
@@ -89,15 +90,16 @@ fn prepare(
     if caller.agent() == user_to_remove {
         Err(OCErrorCode::CannotRemoveSelf.into())
     } else {
-        let user_to_remove_role = match state.data.chat.members.get(&user_to_remove) {
-            Some(member_to_remove) => member_to_remove.role().value,
-            None if block => {
-                if state.data.chat.members.is_blocked(&user_to_remove) {
-                    return Ok(None);
+        let (remove, user_to_remove_role) = match state.data.chat.members.get(&user_to_remove) {
+            Some(member_to_remove) => (true, member_to_remove.role().value),
+            None => {
+                if !state.data.chat.invited_users.contains(&user_to_remove)
+                    && (!block || state.data.chat.members.is_blocked(&user_to_remove))
+                {
+                    return Err(OCErrorCode::NoChange.into());
                 }
-                GroupRoleInternal::Member
+                (false, GroupRoleInternal::Member) // We still want to remove an invite and/or block the user
             }
-            None => return Err(OCErrorCode::TargetUserNotInChat.into()),
         };
 
         if let Caller::BotV2(bot_caller) = &caller {
@@ -124,11 +126,12 @@ fn prepare(
             removed_by: caller,
             local_user_index_canister_id: state.data.local_user_index_canister_id,
             is_user_to_remove_an_owner: user_to_remove_role.is_owner(),
+            remove,
         }))
     }
 }
 
-fn commit(user_to_remove: UserId, block: bool, caller: Caller, state: &mut RuntimeState) -> OCResult {
+fn commit(user_to_remove: UserId, block: bool, remove: bool, caller: Caller, state: &mut RuntimeState) -> OCResult {
     let agent = caller.agent();
 
     let bot_notification = state
@@ -136,19 +139,25 @@ fn commit(user_to_remove: UserId, block: bool, caller: Caller, state: &mut Runti
         .chat
         .remove_member(caller, user_to_remove, block, state.env.now())?;
 
-    state.data.remove_user(user_to_remove, None);
+    if remove {
+        state.data.remove_user(user_to_remove, None);
+    }
+
     state.push_bot_notification(bot_notification);
     handle_activity_notification(state);
 
-    // Fire-and-forget call to notify the user canister
-    remove_membership_from_user_canister(
-        user_to_remove,
-        agent,
-        block,
-        state.data.chat.name.value.clone(),
-        state.data.chat.is_public.value,
-        &mut state.data.fire_and_forget_handler,
-    );
+    if remove {
+        // Fire-and-forget call to notify the user canister
+        remove_membership_from_user_canister(
+            user_to_remove,
+            agent,
+            block,
+            state.data.chat.name.value.clone(),
+            state.data.chat.is_public.value,
+            &mut state.data.fire_and_forget_handler,
+        );
+    }
+
     Ok(())
 }
 
