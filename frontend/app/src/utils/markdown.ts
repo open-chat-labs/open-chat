@@ -45,9 +45,18 @@ const renderer = {
 };
 
 const walkTokens = (token: Token) => {
+    if (token.raw.includes("<profile-link")) {
+        return;
+    }
+
     if (token.type === "escape") {
         // This ensures each instance of \\ is rendered correctly rather than being modified to \
         token.text = token.raw;
+    }
+
+    if (token.type === "html") {
+        token.type = "text";
+        token.raw = token.raw.replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 };
 
