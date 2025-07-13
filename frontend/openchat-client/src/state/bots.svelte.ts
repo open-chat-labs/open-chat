@@ -75,135 +75,129 @@ function commandsMatch(a: FlattenedCommand | undefined, b: FlattenedCommand | un
     if (a === undefined || b === undefined) return false;
     return a.botName === b.botName && a.name === b.name;
 }
+let messageFormatter = $state<MessageFormatter>((s) => s);
+let error = $state<string | undefined>();
+let prefix = $state<string>("");
+let selectedCommand = $state<FlattenedCommand | undefined>();
+let focusedCommandIndex = $state(0);
+let selectedCommandArgs = $state<CommandArg[]>([]);
+let externalBots = $state<Map<string, ExternalBot>>(new Map());
+let showingBuilder = $state<MessageContext | undefined>();
+const prefixParts = $derived(parseCommand(prefix));
+const maybeArgs = $derived(prefixParts.slice(1) ?? []);
+const parsedPrefix = $derived(prefixParts[0]?.slice(1)?.toLocaleLowerCase() ?? "");
+const commands = $derived.by(() => {
+    const parts = prefixParts;
+    const prefix = parsedPrefix;
+    const bots = [builtinBot, ...externalBots.values()];
+    return bots
+        .flatMap((b) => {
+            switch (b.kind) {
+                case "external_bot":
+                    return b.definition.commands
+                        .map((c) => {
+                            return {
+                                ...c,
+                                kind: b.kind,
+                                botName: b.name,
+                                avatarUrl: b.avatarUrl,
+                                botId: b.id,
+                                botEndpoint: b.endpoint,
+                                botDescription: b.definition.description,
+                            };
+                        })
+                        .filter((c) =>
+                            filterCommand(messageFormatter, c, selectedCommand, prefix, parts),
+                        ) as FlattenedCommand[];
+                case "internal_bot":
+                    return b.definition.commands
+                        .map((c) => {
+                            return {
+                                ...c,
+                                kind: b.kind,
+                                botName: b.name,
+                                botDescription: b.definition.description,
+                            };
+                        })
+                        .filter((c) =>
+                            filterCommand(messageFormatter, c, selectedCommand, prefix, parts),
+                        ) as FlattenedCommand[];
+            }
+        })
+        .sort(sortCommands(parsedPrefix));
+});
+const instanceValid = $derived.by(() => {
+    if (selectedCommand === undefined) return false;
+    return instanceIsValid(selectedCommand, selectedCommandArgs);
+});
+
+export function instanceIsValid(command: FlattenedCommand, params: CommandArg[]): boolean {
+    if (params.length !== command.params.length) {
+        return false;
+    }
+    const pairs: [CommandParam, CommandArg][] = command.params.map((p, i) => [p, params[i]]);
+    return pairs.every(([p, i]) => argIsValid(p, i));
+}
 
 export class BotState {
-    #messageFormatter = $state<MessageFormatter>((s) => s);
-    #error = $state<string | undefined>();
-    #prefix = $state<string>("");
-    #selectedCommand = $state<FlattenedCommand | undefined>();
-    #focusedCommandIndex = $state(0);
-    #selectedCommandArgs = $state<CommandArg[]>([]);
-    #externalBots = $state<Map<string, ExternalBot>>(new Map());
-    #showingBuilder = $state<MessageContext | undefined>();
-    #prefixParts = $derived(parseCommand(this.#prefix));
-    #maybeArgs = $derived(this.#prefixParts.slice(1) ?? []);
-    #parsedPrefix = $derived(this.#prefixParts[0]?.slice(1)?.toLocaleLowerCase() ?? "");
-    #commands = $derived.by(() => {
-        const prefixParts = this.#prefixParts;
-        const parsedPrefix = this.#parsedPrefix;
-        const bots = [builtinBot, ...this.#externalBots.values()];
-        return bots
-            .flatMap((b) => {
-                switch (b.kind) {
-                    case "external_bot":
-                        return b.definition.commands
-                            .map((c) => {
-                                return {
-                                    ...c,
-                                    kind: b.kind,
-                                    botName: b.name,
-                                    avatarUrl: b.avatarUrl,
-                                    botId: b.id,
-                                    botEndpoint: b.endpoint,
-                                    botDescription: b.definition.description,
-                                };
-                            })
-                            .filter((c) =>
-                                filterCommand(
-                                    this.#messageFormatter,
-                                    c,
-                                    this.#selectedCommand,
-                                    parsedPrefix,
-                                    prefixParts,
-                                ),
-                            ) as FlattenedCommand[];
-                    case "internal_bot":
-                        return b.definition.commands
-                            .map((c) => {
-                                return {
-                                    ...c,
-                                    kind: b.kind,
-                                    botName: b.name,
-                                    botDescription: b.definition.description,
-                                };
-                            })
-                            .filter((c) =>
-                                filterCommand(
-                                    this.#messageFormatter,
-                                    c,
-                                    this.#selectedCommand,
-                                    parsedPrefix,
-                                    prefixParts,
-                                ),
-                            ) as FlattenedCommand[];
-                }
-            })
-            .sort(sortCommands(this.#parsedPrefix));
-    });
-    #instanceValid = $derived.by(() => {
-        if (this.#selectedCommand === undefined) return false;
-        return this.instanceIsValid(this.#selectedCommand, this.#selectedCommandArgs);
-    });
-
     public set messageFormatter(v: MessageFormatter) {
-        this.#messageFormatter = v;
+        messageFormatter = v;
     }
 
     public get focusedCommandIndex() {
-        return this.#focusedCommandIndex;
+        return focusedCommandIndex;
     }
 
     public get instanceValid() {
-        return this.#instanceValid;
+        return instanceValid;
     }
 
     public get showingBuilder(): MessageContext | undefined {
-        return this.#showingBuilder;
+        return showingBuilder;
     }
 
     public get error(): string | undefined {
-        return this.#error;
+        return error;
     }
 
     public set error(err: string | undefined) {
-        this.#error = err;
+        error = err;
     }
 
     public get commands(): FlattenedCommand[] {
-        return this.#commands;
+        return commands;
     }
 
     public get selectedCommand() {
-        return this.#selectedCommand;
+        return selectedCommand;
     }
 
     public get selectedCommandArgs() {
-        return this.#selectedCommandArgs;
+        return selectedCommandArgs;
     }
 
     public get prefix() {
-        return this.#prefix;
+        return prefix;
     }
 
     public set prefix(v: string) {
-        this.#prefix = v;
+        prefix = v;
     }
 
     public get prefixParts() {
-        return this.#prefixParts;
+        return prefixParts;
     }
 
     public get parsedPrefix() {
-        return this.#parsedPrefix;
+        return parsedPrefix;
     }
 
     focusPreviousCommand() {
-        this.#focusedCommandIndex = (this.#focusedCommandIndex + 1) % this.#commands.length;
+        focusedCommandIndex = (focusedCommandIndex + 1) % commands.length;
     }
 
     focusNextCommand() {
-        this.#focusedCommandIndex =
-            (this.#focusedCommandIndex - 1 + this.#commands.length) % this.#commands.length;
+        focusedCommandIndex = (focusedCommandIndex - 1 + commands.length) % commands.length;
     }
 
     setSelectedCommand(
@@ -211,30 +205,30 @@ export class BotState {
         commands: FlattenedCommand[],
         cmd?: FlattenedCommand,
     ) {
-        cmd = cmd ?? commands[this.#focusedCommandIndex];
+        cmd = cmd ?? commands[focusedCommandIndex];
 
         // make sure that we don't set the same command twice
-        if (!commandsMatch(this.#selectedCommand, cmd)) {
-            this.#selectedCommand = cmd;
+        if (!commandsMatch(selectedCommand, cmd)) {
+            selectedCommand = cmd;
             if (cmd !== undefined) {
-                this.#focusedCommandIndex = 0;
+                focusedCommandIndex = 0;
                 if (cmd.params.length > 0) {
-                    this.#selectedCommandArgs = createArgsFromSchema(cmd.params, this.#maybeArgs);
+                    selectedCommandArgs = createArgsFromSchema(cmd.params, maybeArgs);
                 }
                 // if the instance is not already valid (via inline params) show the builder modal
-                this.#showingBuilder = !this.#instanceValid ? messageContext : undefined;
+                showingBuilder = !instanceValid ? messageContext : undefined;
             }
         }
-        return this.#selectedCommand;
+        return selectedCommand;
     }
 
     cancel() {
-        this.#selectedCommand = undefined;
-        this.#error = undefined;
-        this.#prefix = "";
-        this.#focusedCommandIndex = 0;
-        this.#selectedCommandArgs = [];
-        this.#showingBuilder = undefined;
+        selectedCommand = undefined;
+        error = undefined;
+        prefix = "";
+        focusedCommandIndex = 0;
+        selectedCommandArgs = [];
+        showingBuilder = undefined;
     }
 
     createBotInstance(command: FlattenedCommand): BotCommandInstance {
@@ -246,7 +240,7 @@ export class BotState {
                     endpoint: command.botEndpoint,
                     command: {
                         name: command.name,
-                        arguments: this.#selectedCommandArgs,
+                        arguments: selectedCommandArgs,
                         placeholder: command.placeholder,
                     },
                 };
@@ -255,28 +249,20 @@ export class BotState {
                     kind: "internal_bot",
                     command: {
                         name: command.name,
-                        arguments: this.#selectedCommandArgs,
+                        arguments: selectedCommandArgs,
                     },
                 };
         }
     }
 
-    instanceIsValid(command: FlattenedCommand, params: CommandArg[]): boolean {
-        if (params.length !== command.params.length) {
-            return false;
-        }
-        const pairs: [CommandParam, CommandArg][] = command.params.map((p, i) => [p, params[i]]);
-        return pairs.every(([p, i]) => argIsValid(p, i));
-    }
-
     public get externalBots() {
-        return this.#externalBots;
+        return externalBots;
     }
 
     setExternalBots(bots: ExternalBot[]) {
         const map = new Map<string, ExternalBot>();
         bots.forEach((b) => map.set(b.id, b));
-        this.#externalBots = map;
+        externalBots = map;
     }
 }
 

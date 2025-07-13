@@ -522,7 +522,7 @@ export const communitiesStore = derived(
 );
 
 export const sortedCommunitiesStore = derived(communitiesStore, (communities) => {
-    return [...communities.values()].toSorted((a, b) => {
+    return [...communities.values()].sort((a, b) => {
         return b.membership.index === a.membership.index
             ? b.memberCount - a.memberCount
             : b.membership.index - a.membership.index;

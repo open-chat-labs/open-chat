@@ -2,18 +2,18 @@
     "extends": "@tsconfig/svelte/tsconfig.json",
     "compilerOptions": {
         "outDir": "build", // prevents "cannot overwrite file" errors in IDE
-        "module": "ESNext",
+        "module": "es2020",
         "allowJs": true,
         "checkJs": false,
         "declaration": true,
         "experimentalDecorators": true,
-        "lib": ["DOM", "DOM.Iterable", "ESNext", "WebWorker"],
+        "lib": ["DOM", "DOM.Iterable", "es2020", "WebWorker"],
         "moduleResolution": "bundler",
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "resolveJsonModule": true,
         "sourceMap": false,
-        "target": "ESNext",
+        "target": "es2020",
         "types": ["jest", "node", "svelte"],
         "useDefineForClassFields": true,
         "verbatimModuleSyntax": true

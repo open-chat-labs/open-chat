@@ -1,5 +1,5 @@
 import type { MessageContext } from "openchat-shared";
-import { botState } from "./bots.svelte";
+import { botState, instanceIsValid } from "./bots.svelte";
 
 const messageContext: MessageContext = { chatId: { kind: "group_chat", groupId: "123456" } };
 
@@ -58,15 +58,12 @@ describe("bot state", () => {
                     value: "",
                 });
                 expect(
-                    botState.instanceIsValid(
-                        botState.selectedCommand!,
-                        botState.selectedCommandArgs,
-                    ),
+                    instanceIsValid(botState.selectedCommand!, botState.selectedCommandArgs),
                 ).toBe(false);
 
                 // TODO - this _should_ in fact fail
                 expect(
-                    botState.instanceIsValid(botState.selectedCommand!, [
+                    instanceIsValid(botState.selectedCommand!, [
                         {
                             kind: "string",
                             name: "",

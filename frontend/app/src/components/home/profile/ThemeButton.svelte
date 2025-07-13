@@ -47,7 +47,7 @@
         {/snippet}
         {#snippet menuItems()}
             <Menu>
-                {#each otherThemes.toSorted() as theme}
+                {#each [...otherThemes].sort() as theme}
                     <MenuItem onclick={() => onSelect(theme.name)}>
                         {#snippet text()}
                             <div class="theme-item">
