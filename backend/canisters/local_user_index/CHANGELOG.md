@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Increase max username length from 15 to 20 ([#8338](https://github.com/open-chat-labs/open-chat/pull/8338))
+
 ### Fixed
 
 - Add `serde(default)` to field which doesn't yet exist in User canisters ([#8333](https://github.com/open-chat-labs/open-chat/pull/8333))
