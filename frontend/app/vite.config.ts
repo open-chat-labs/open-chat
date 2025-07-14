@@ -123,7 +123,7 @@ export default defineConfig({
                     csp: `<meta http-equiv="Content-Security-Policy" content="${generateCspForScripts(
                         inlineScripts,
                         true,
-                    )}" />`,
+                    )}" />\n`,
                 },
             },
         }),
