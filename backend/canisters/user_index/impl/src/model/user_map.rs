@@ -425,12 +425,14 @@ impl UserMap {
         now: TimestampMillis,
     ) -> bool {
         if let Some(user) = self.users.get_mut(&user_id) {
-            user.suspension_details = Some(SuspensionDetails {
+            let suspension_details = SuspensionDetails {
                 timestamp: now,
                 duration: duration.map_or(SuspensionDuration::Indefinitely, SuspensionDuration::Duration),
                 reason,
                 suspended_by,
-            });
+            };
+            info!(%user_id, ?suspension_details, "User suspended");
+            user.suspension_details = Some(suspension_details);
             self.suspended_or_unsuspended_users.insert((now, user_id));
             true
         } else {
@@ -440,6 +442,7 @@ impl UserMap {
 
     pub fn unsuspend_user(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
         if let Some(user) = self.users.get_mut(&user_id) {
+            info!(%user_id, "User unsuspended");
             user.suspension_details = None;
             self.suspended_or_unsuspended_users.insert((now, user_id));
             true
