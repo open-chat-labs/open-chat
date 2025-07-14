@@ -5,6 +5,7 @@ import { idlFactory, type BitcoinService } from "./candid/idl";
 import { getUtxosResponse } from "./mappers";
 
 const BITCOIN_CANISTER_ID = "ghsi2-tqaaa-aaaan-aaaca-cai";
+const CKBTC_MINTER_MIN_CONFIMRATIONS_REQUIRED = 6;
 
 export class BitcoinClient extends CandidCanisterAgent<BitcoinService> {
     private readonly network: { mainnet: null } | { testnet: null };
@@ -22,7 +23,7 @@ export class BitcoinClient extends CandidCanisterAgent<BitcoinService> {
             () => this.service.bitcoin_get_utxos_query({
                 network: this.network,
                 address,
-                filter: []
+                filter: [{ min_confirmations: CKBTC_MINTER_MIN_CONFIMRATIONS_REQUIRED }],
             }),
             getUtxosResponse,
         );
