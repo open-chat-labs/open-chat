@@ -32,7 +32,8 @@
     let sanitized = $derived.by(() => {
         let parsed = replaceEveryone(
             replaceUserGroupIds(
-                replaceUserIds(replaceDatetimes(client.stripLinkDisabledMarker(text))),
+                // Don't replace UserIds yet - just mark them
+                replaceDatetimes(client.stripLinkDisabledMarker(text)),
                 $userGroupSummariesStore,
             ),
         );
@@ -42,6 +43,9 @@
             } else {
                 parsed = marked.parse(parsed, options) as string;
             }
+
+            // replace userIds *after* markdown parsing so that we can fully disallow html in the markdown source
+            parsed = replaceUserIds(parsed);
         } catch (err: any) {
             client.logError("Error parsing markdown: ", err);
         }
@@ -59,10 +63,18 @@
         return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
             const u = $allUsersStore.get(p1);
             if (u !== undefined) {
-                return `<profile-link text="${u.username}" user-id="${u.userId}" suppress-links="${suppressLinks}"></profile-link>`;
+                return `<profile-link text="${escapeHtml(u.username)}" user-id="${
+                    u.userId
+                }" suppress-links="${suppressLinks}"></profile-link>`;
             }
             return match;
         });
+    }
+
+    function escapeHtml(text: string): string {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     function replaceUserGroupIds(
@@ -72,7 +84,7 @@
         return text.replace(/@UserGroup\(([\d]+)\)/g, (match, p1) => {
             const u = userGroups.get(Number(p1));
             if (u !== undefined) {
-                return `**[@${u.name}](?usergroup=${u.id})**`;
+                return `**[@${escapeHtml(u.name)}](?usergroup=${u.id})**`;
             } else {
                 console.warn("Unable to find user group: ", match);
                 return `**@unknown_user_group**`;
