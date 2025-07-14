@@ -1,9 +1,5 @@
 // Not really sure whether to make this separate or not yet. Feels like a thing.
-import {
-    type ReadonlyMap,
-    type ReadonlySet,
-    type UserSummary,
-} from "openchat-shared";
+import { type ReadonlyMap, type ReadonlySet, type UserSummary } from "openchat-shared";
 import {
     allUsersStore,
     blockedUsersStore,
@@ -73,6 +69,26 @@ export class UsersState {
                 }
             }
             return map;
+        });
+    }
+
+    userSuspended(userId: string, suspended: boolean) {
+        allUsersStore.update((users) => {
+            const u = users.get(userId);
+            if (u) {
+                u.suspended = suspended;
+                console.log("Set user to suspended", u, suspended);
+                users.set(userId, u);
+                suspendedUsersStore.update((s) => {
+                    if (suspended) {
+                        s.add(userId);
+                    } else {
+                        s.delete(userId);
+                    }
+                    return s;
+                });
+            }
+            return users;
         });
     }
 

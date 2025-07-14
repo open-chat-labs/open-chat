@@ -135,4 +135,5 @@ export type PubSubEvents = {
     showSuccessToast: ResourceKey;
     ephemeralMessage: EphemeralMessageEvent;
     copyUrl: undefined;
+    suspendUser: string;
 };

@@ -168,6 +168,19 @@ export async function setSuspendedUsersSyncedUpTo(value: bigint): Promise<void> 
     await resolvedDb.put("suspendedUsersSyncedUpTo", value, "value");
 }
 
+export async function userSuspended(userId: string, suspended: boolean) {
+    const tx = (await lazyOpenUserCache()).transaction("users", "readwrite", {
+        durability: "relaxed",
+    });
+    const store = tx.objectStore("users");
+    const user = await store.get(userId);
+    if (user !== undefined) {
+        user.suspended = suspended;
+        await store.put(user, userId);
+    }
+    await tx.done;
+}
+
 export async function setChitInfoInCache(
     userId: string,
     chitBalance: number,
