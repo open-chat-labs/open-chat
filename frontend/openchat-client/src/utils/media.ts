@@ -113,6 +113,7 @@ export function changeDimensions(
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const context = canvas.getContext("2d")!;
     context.drawImage(original, 0, 0, canvas.width, canvas.height);
+    const resultMimeType = mimeType === "image/jpeg" ? "image/jpeg" : "image/png";
 
     return new Promise((resolve) => {
         canvas.toBlob((blob) => {
@@ -127,7 +128,7 @@ export function changeDimensions(
                 });
                 reader.readAsArrayBuffer(blob);
             }
-        }, mimeType);
+        }, resultMimeType);
     });
 }
 
@@ -196,6 +197,7 @@ export async function messageContentFromFile(
 
             const mimeType = file.type;
             const isImage = /^image/.test(mimeType);
+            const isSVG = mimeType === "image/svg+xml";
             const isGif = isImage && /gif/.test(mimeType);
             const isVideo = /^video/.test(mimeType);
             const isAudio = /^audio/.test(mimeType);
@@ -226,7 +228,7 @@ export async function messageContentFromFile(
 
                 content = {
                     kind: "image_content",
-                    mimeType: mimeType,
+                    mimeType: isSVG ? "image/png" : mimeType,
                     width: extract.dimensions.width,
                     height: extract.dimensions.height,
                     blobData: new Uint8Array(data),
