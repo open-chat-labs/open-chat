@@ -48,7 +48,7 @@
     inputmode={type === "numeric" ? "numeric" : "text"}
     pattern={type === "numeric" ? "[0-9]{1}" : "^[a-zA-Z0-9]$"}
     maxlength="1"
-    value={char.value}
+    value={char.value.length > 0 ? "*" : ""}
     onblur={onBlur}
     oninput={onInput}
     onkeydown={(e) => {
