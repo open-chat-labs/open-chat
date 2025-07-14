@@ -1,0 +1,11 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/frontend/app"
+    schedule:
+      interval: "daily"
+    allow:
+      - dependency-name: "dompurify"
+      - dependency-name: "@types/dompurify"
+      - dependency-name: "marked"
+      - dependency-name: "@types/marked"
