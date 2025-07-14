@@ -1,16 +1,16 @@
 //* Extra functionality provided to Rollup and Vite for prod/test/dev builds!
-import fs from "fs-extra";
 import dotenv from "dotenv";
-import path, { dirname } from "path";
-import { fileURLToPath } from 'url';
+import fs from "fs-extra";
 import { sha256 } from "js-sha256";
+import path, { dirname } from "path";
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 export const __dirname = dirname(__filename);
 
 // Sass relevant files & directives
 export const mixins = path.join(__dirname, "src", "styles", "mixins.scss");
-export const sassModulesAndMixins = `@use 'sass:math'; @use 'sass:map'; @use '${mixins}' as *;`
+export const sassModulesAndMixins = `@use 'sass:math'; @use 'sass:map'; @use '${mixins}' as *;`;
 
 // Generates content security policy (CSP) hash for the provided entry
 function generateCspHashValue(text) {
@@ -21,17 +21,24 @@ function generateCspHashValue(text) {
 
 export function generateCspForScripts(inlineScripts, development) {
     const cspHashValues = inlineScripts.map(generateCspHashValue);
-    return `
-        style-src * 'unsafe-inline'; 
-        style-src-elem * 'unsafe-inline';
-        font-src 'self' https://fonts.gstatic.com/;
+    return (
+        `
+        default-src 'self';
+        img-src * 'self' data: blob:;
+        media-src * 'self' data: blob:;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com/ https://cdnjs.cloudflare.com/;
+        style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com/ https://cdnjs.cloudflare.com/;
+        font-src 'self' https://fonts.gstatic.com/ data:;
+        frame-src *;
         object-src 'none';
         base-uri 'self';
         form-action 'self';
+        connect-src 'self' wss: https:;
         upgrade-insecure-requests;
-        script-src 'self' 'unsafe-eval' https://scripts.wobbl3.com/ https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(
-            " "
-        )}` + (development ? " http://localhost:* http://127.0.0.1:*" : "");
+        script-src 'self' https://scripts.wobbl3.com/ https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(
+            " ",
+        )}` + (development ? " http://localhost:* http://127.0.0.1:*" : "")
+    );
 }
 
 // Set up environment
@@ -62,7 +69,8 @@ export function initEnv() {
             process.env.OC_REGISTRY_CANISTER = canisters.registry[dfxNetwork];
             process.env.OC_MARKET_MAKER_CANISTER = canisters.market_maker[dfxNetwork];
             process.env.OC_SIGN_IN_WITH_EMAIL_CANISTER = canisters.sign_in_with_email[dfxNetwork];
-            process.env.OC_SIGN_IN_WITH_ETHEREUM_CANISTER = canisters.sign_in_with_ethereum[dfxNetwork];
+            process.env.OC_SIGN_IN_WITH_ETHEREUM_CANISTER =
+                canisters.sign_in_with_ethereum[dfxNetwork];
             process.env.OC_SIGN_IN_WITH_SOLANA_CANISTER = canisters.sign_in_with_solana[dfxNetwork];
 
             console.log("TranslationsCanisterId: ", process.env.OC_TRANSLATIONS_CANISTER);
@@ -131,7 +139,7 @@ export function initEnv() {
         development,
         version,
         dfxNetwork,
-    }
+    };
 }
 
 // Put external dependencies into their own bundle so that they get cached separately

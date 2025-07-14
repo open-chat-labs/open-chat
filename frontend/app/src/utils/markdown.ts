@@ -49,6 +49,11 @@ const walkTokens = (token: Token) => {
         // This ensures each instance of \\ is rendered correctly rather than being modified to \
         token.text = token.raw;
     }
+
+    if (token.type === "html") {
+        token.type = "text";
+        token.raw = token.raw.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
 };
 
 marked.use({ renderer, walkTokens });
