@@ -1,12 +1,11 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
-    import Input from "./Input.svelte";
     import { onMount } from "svelte";
-    import { _ } from "svelte-i18n";
     import { i18nKey } from "../i18n/i18n";
+    import Input from "./Input.svelte";
 
     const MIN_EXTANT_USERNAME_LENGTH = 3;
-    const MAX_USERNAME_LENGTH = 15;
+    const MAX_USERNAME_LENGTH = 20;
 
     interface Props {
         client: OpenChat;
