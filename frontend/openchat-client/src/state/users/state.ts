@@ -77,7 +77,6 @@ export class UsersState {
             const u = users.get(userId);
             if (u) {
                 u.suspended = suspended;
-                console.log("Set user to suspended", u, suspended);
                 users.set(userId, u);
                 suspendedUsersStore.update((s) => {
                     if (suspended) {
