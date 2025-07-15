@@ -13,6 +13,7 @@
         currentUserIdStore,
         mobileWidth,
         platformModeratorStore,
+        publish,
         selectedChatBlockedUsersStore,
         selectedChatMembersStore,
         selectedChatSummaryStore,
@@ -229,14 +230,8 @@
     }
 
     function suspendUser() {
-        client.suspendUser(userId, "").then((success) => {
-            if (success) {
-                toastStore.showSuccessToast(i18nKey("suspendedUser"));
-                onClose();
-            } else {
-                toastStore.showFailureToast(i18nKey("failedToSuspendUser"));
-            }
-        });
+        publish("suspendUser", userId);
+        onClose();
     }
     let diamondStatus = $derived(user?.diamondStatus);
     let me = $derived(userId === $currentUserIdStore);

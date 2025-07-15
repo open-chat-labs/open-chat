@@ -57,7 +57,6 @@
     interface Props {
         selectedChatSummary: ChatSummary;
         blocked: boolean;
-        showSuspendUserModal: boolean;
         hasPinned: boolean;
         onShowGroupDetails: () => void;
         onSearchChat: (search: string) => void;
@@ -67,14 +66,11 @@
     let {
         selectedChatSummary,
         blocked,
-        showSuspendUserModal = $bindable(false),
         hasPinned,
         onShowGroupDetails,
         onSearchChat,
         onImportToCommunity,
     }: Props = $props();
-
-    showSuspendUserModal;
 
     let botIdToUninstall = $derived(
         selectedChatSummary.kind === "direct_chat" &&
@@ -262,7 +258,7 @@
     }
 
     function onSuspendUser() {
-        showSuspendUserModal = true;
+        publish("suspendUser", userId);
     }
 
     function unsuspendUser() {
