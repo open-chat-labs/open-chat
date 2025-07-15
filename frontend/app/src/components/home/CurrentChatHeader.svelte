@@ -34,7 +34,6 @@
     import ChatSubtext from "./ChatSubtext.svelte";
     import CurrentChatMenu from "./CurrentChatMenu.svelte";
     import Badges from "./profile/Badges.svelte";
-    import SuspendModal from "./SuspendModal.svelte";
     import ActiveBroadcastSummary from "./video/ActiveBroadcastSummary.svelte";
     import ActiveVideoCallResume from "./video/ActiveVideoCallResume.svelte";
 
@@ -57,8 +56,6 @@
         onSearchChat,
         onImportToCommunity,
     }: Props = $props();
-
-    let showSuspendUserModal = $state(false);
 
     let userId = $derived(
         selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "",
@@ -160,10 +157,6 @@
     let chat = $derived(normaliseChatSummary($now, selectedChatSummary, $typersByContext));
 </script>
 
-{#if showSuspendUserModal}
-    <SuspendModal {userId} onClose={() => (showSuspendUserModal = false)} />
-{/if}
-
 <SectionHeader shadow flush>
     {#if $mobileWidth}
         <div class="back" class:rtl={$rtlStore} onclick={clearSelection}>
@@ -237,7 +230,6 @@
     <ActiveVideoCallResume />
     {#if !readonly && !$anonUserStore}
         <CurrentChatMenu
-            bind:showSuspendUserModal
             {hasPinned}
             {selectedChatSummary}
             {blocked}

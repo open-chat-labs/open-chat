@@ -1080,12 +1080,17 @@
     "messageUrlCopiedToClipboard": "Message url copied to clipboard!",
     "minimumAmount": "Minimum: {amount} {symbol}",
     "minutes": "Minutes",
-    "mobile": {
-        "credentials": {
-            "errors": {
-                "genericSignIn": "Could not sign in with a passkey.",
-                "genericSignUp": "Could not create a passkey."
-            }
+    "native": {
+        "auth": {
+            "createAccount": "Create new account",
+            "existingAccount": "I'm an existing user",
+            "linkAccount": {
+                "title": "Link with existing account",
+                "info": "To link with your existing OpenChat account, please enter your one-time-password below.",
+                "note": "One-time-password can be found under your profile / advanced, on a device where you are currently signed in.",
+                "cta": "Link account"
+            },
+            "error": "Authentication failed. Please try again."
         }
     },
     "moderator": "moderator",

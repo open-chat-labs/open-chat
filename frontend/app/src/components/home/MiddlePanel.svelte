@@ -57,6 +57,7 @@
     function alignVideoCall(
         call: ActiveVideoCall | undefined,
         chatId: ChatIdentifier | undefined,
+        rightPanelWidth: number | undefined,
         attempts: number = 0,
     ) {
         if (call && chatIdentifiersEqual(call.chatId, chatId) && middlePanel) {
@@ -69,7 +70,7 @@
                         $rightPanelMode !== "floating" &&
                         (call.threadOpen || call.participantsOpen)
                     ) {
-                        width = width - ($rightPanelWidth ?? 500);
+                        width = width - (rightPanelWidth ?? 500);
                     }
                     callContainer.style.setProperty("left", `0px`);
                     callContainer.style.setProperty("width", `${width}px`);
@@ -91,12 +92,12 @@
     }
 
     function resize() {
-        alignVideoCall($activeVideoCall, $selectedChatIdStore);
+        alignVideoCall($activeVideoCall, $selectedChatIdStore, $rightPanelWidth);
     }
     let noChat = $derived($routeStore.kind !== "global_chat_selected_route");
-    trackedEffect("align-video-call", () => {
+    $effect(() => {
         if (middlePanel) {
-            alignVideoCall($activeVideoCall, $selectedChatIdStore);
+            resize();
         }
     });
 </script>
