@@ -15,7 +15,7 @@ fn deposit_accounts_impl(args: Args, state: &RuntimeState) -> Response {
         let principal = args.principal.unwrap_or(state.env.caller());
 
         if swap.offered_by != principal || swap.accept_by.is_some_and(|p| p != principal) {
-            return NotAuthorized;
+            return PrincipalNotFound;
         }
 
         Success(Account {

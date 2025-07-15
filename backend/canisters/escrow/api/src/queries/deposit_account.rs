@@ -15,6 +15,6 @@ pub struct Args {
 pub enum Response {
     Success(Account),
     SwapNotFound,
-    NotAuthorized,
+    PrincipalNotFound,
     Error(OCError),
 }

@@ -122,7 +122,7 @@ type DepositAccountArgs = record {
 type DepositAccountResponse = variant {
     Success: Account;
     SwapNotFound;
-    NotAuthorized;
+    PrincipalNotFound;
     Error : OCError;
 };
 
