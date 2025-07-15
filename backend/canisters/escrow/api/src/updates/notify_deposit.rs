@@ -5,8 +5,6 @@ use serde::{Deserialize, Serialize};
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub swap_id: u32,
-
-    // The principal of the party whose tokens have been deposited
     #[serde(alias = "user_id")]
     pub principal: Option<Principal>,
 }

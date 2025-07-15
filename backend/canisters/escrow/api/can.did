@@ -94,6 +94,8 @@ type CancelSwapResponse = variant {
 
 type NotifyDepositArgs = record {
     swap_id : nat32;
+
+    // The principal of the party whose tokens have been deposited
     "principal" : opt principal;
 };
 
@@ -116,7 +118,9 @@ type NotifyDepositResponse = variant {
 
 type DepositAccountArgs = record {
     swap_id : nat32;
-    "principal" : opt principal; // If not provided, defaults to the caller
+
+    // The principal of either party in the swap or the caller if not specified
+    "principal" : opt principal;
 };
 
 type DepositAccountResponse = variant {
