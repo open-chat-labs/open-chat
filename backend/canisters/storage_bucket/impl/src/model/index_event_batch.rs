@@ -3,8 +3,8 @@ use crate::mutate_state;
 use candid::Deserialize;
 use serde::Serialize;
 use timer_job_queues::{TimerJobItem, timer_job_batch};
-use types::{CanisterId, FileAdded, FileRemoved};
-use utils::canister::should_retry_failed_c2c_call;
+use types::{CanisterId, FileAdded, FileRemoved, Milliseconds};
+use utils::canister::delay_if_should_retry_failed_c2c_call;
 
 timer_job_batch!(IndexEventBatch, CanisterId, (EventToSync, u64), 1000);
 
@@ -15,7 +15,7 @@ pub enum EventToSync {
 }
 
 impl TimerJobItem for IndexEventBatch {
-    async fn process(&self) -> Result<(), bool> {
+    async fn process(&self) -> Result<(), Option<Milliseconds>> {
         let mut args = storage_index_canister::c2c_sync_bucket::Args {
             heap_memory_used: utils::memory::heap(),
             stable_memory_used: utils::memory::stable(),
@@ -64,8 +64,8 @@ impl TimerJobItem for IndexEventBatch {
                 Ok(())
             }
             Err(error) => {
-                let retry = should_retry_failed_c2c_call(error.reject_code(), error.message());
-                Err(retry)
+                let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(error.reject_code(), error.message());
+                Err(delay_if_should_retry)
             }
         }
     }

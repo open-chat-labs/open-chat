@@ -1,12 +1,12 @@
 use storage_index_canister::add_or_update_users::UserConfig;
 use timer_job_queues::{TimerJobItem, timer_job_batch};
-use types::CanisterId;
-use utils::canister::should_retry_failed_c2c_call;
+use types::{CanisterId, Milliseconds};
+use utils::canister::delay_if_should_retry_failed_c2c_call;
 
 timer_job_batch!(StorageIndexUserConfigBatch, CanisterId, UserConfig, 1000);
 
 impl TimerJobItem for StorageIndexUserConfigBatch {
-    async fn process(&self) -> Result<(), bool> {
+    async fn process(&self) -> Result<(), Option<Milliseconds>> {
         let response = storage_index_canister_c2c_client::add_or_update_users(
             self.state,
             &storage_index_canister::add_or_update_users::Args {
@@ -18,8 +18,8 @@ impl TimerJobItem for StorageIndexUserConfigBatch {
         match response {
             Ok(_) => Ok(()),
             Err(error) => {
-                let retry = should_retry_failed_c2c_call(error.reject_code(), error.message());
-                Err(retry)
+                let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(error.reject_code(), error.message());
+                Err(delay_if_should_retry)
             }
         }
     }

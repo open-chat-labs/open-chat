@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Log whenever a user is suspended/unsuspended ([#8337](https://github.com/open-chat-labs/open-chat/pull/8337))
 - Increase max username length from 15 to 20 ([#8338](https://github.com/open-chat-labs/open-chat/pull/8338))
 - Expose `liquid_cycles_balance` in metrics ([#8350](https://github.com/open-chat-labs/open-chat/pull/8350))
+- Add delay before retrying c2c call under certain error conditions ([#8355](https://github.com/open-chat-labs/open-chat/pull/8355))
 
 ## [[2.0.1805](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1805-user_index)] - 2025-06-26
 

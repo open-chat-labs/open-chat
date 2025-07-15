@@ -1,6 +1,6 @@
 use ic_cdk::call::{Error, RejectCode};
 use std::cmp::Ordering;
-use types::{BuildVersion, C2CError, CanisterId, UpgradesFilter};
+use types::{BuildVersion, C2CError, CanisterId, Milliseconds, UpgradesFilter};
 
 mod canisters_requiring_upgrade;
 mod chunk_store;
@@ -18,6 +18,7 @@ mod update_settings;
 
 pub use canisters_requiring_upgrade::*;
 pub use chunk_store::*;
+use constants::MINUTE_IN_MS;
 pub use create::*;
 pub use delete::*;
 pub use deposit_cycles::*;
@@ -34,13 +35,19 @@ pub fn is_out_of_cycles_error(reject_code: RejectCode, message: &str) -> bool {
     matches!(reject_code, RejectCode::SysTransient) && message.contains("out of cycles")
 }
 
-pub fn should_retry_failed_c2c_call(reject_code: RejectCode, message: &str) -> bool {
+// Returns `Some(delay)` if the call should be retried, else `None`.
+pub fn delay_if_should_retry_failed_c2c_call(reject_code: RejectCode, message: &str) -> Option<Milliseconds> {
     match reject_code {
-        RejectCode::DestinationInvalid => false,
-        RejectCode::CanisterReject => false,
-        RejectCode::CanisterError if message.contains("IC0536") => false, // CanisterMethodNotFound
-        RejectCode::CanisterError if message.contains("IC0537") => false, // CanisterWasmModuleNotFound
-        _ => true,
+        RejectCode::DestinationInvalid => None,
+        RejectCode::CanisterReject => None,
+        RejectCode::CanisterError if message.contains("IC0207") => Some(5 * MINUTE_IN_MS), // CanisterOutOfCycles
+        RejectCode::CanisterError if message.contains("IC0502") => Some(5 * MINUTE_IN_MS), // CanisterTrapped
+        RejectCode::CanisterError if message.contains("IC0503") => Some(5 * MINUTE_IN_MS), // CanisterCalledTrap
+        RejectCode::CanisterError if message.contains("IC0536") => None,                   // CanisterMethodNotFound
+        RejectCode::CanisterError if message.contains("IC0537") => None,                   // CanisterWasmModuleNotFound
+        RejectCode::CanisterError if message.contains("IC0540") => None,                   // ReservedCyclesLimitIsTooLow
+        RejectCode::SysTransient if message.contains("insufficient liquid cycles balance") => Some(5 * MINUTE_IN_MS),
+        _ => Some(0),
     }
 }
 
