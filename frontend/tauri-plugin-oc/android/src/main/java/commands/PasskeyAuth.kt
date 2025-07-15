@@ -8,6 +8,8 @@ import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetPublicKeyCredentialOption
 import androidx.credentials.exceptions.CreateCredentialNoCreateOptionException
+import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.GetCredentialCancellationException
 import app.tauri.annotation.InvokeArg
 import app.tauri.plugin.Invoke
 import app.tauri.plugin.JSObject
@@ -123,8 +125,8 @@ class PasskeyAuth(private val activity: Activity) {
                                     requestJson.toString()
                                 )
                             )
-                        ),
-                    )
+                    ),
+                )
 
                 val rawResponse = result.credential.data.getString(
                     "androidx.credentials.BUNDLE_KEY_AUTHENTICATION_RESPONSE_JSON"
@@ -132,9 +134,15 @@ class PasskeyAuth(private val activity: Activity) {
 
                 val tauriResponse = JSObject().put("passkey", rawResponse)
                 invoke.resolve(tauriResponse)
+            } catch (e: GetCredentialCancellationException) {
+                Log.d("TEST_OC", "User cancelled auth: $e")
+                invoke.reject("USER_CANCELED")
+            } catch (e: GetCredentialException) {
+                Log.d("TEST_OC", "No passkey found: $e")
+                invoke.reject("NO_PASSKEY")
             } catch (e: Exception) {
-                // TODO use error codes?
-                invoke.reject("Failed to sign in with passkey: ${e.localizedMessage}")
+                Log.d("TEST_OC", "Sign in failed: $e")
+                invoke.reject("AUTH_FAILED")
             }
         }
     }
