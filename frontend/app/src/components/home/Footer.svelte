@@ -16,7 +16,7 @@
         type OpenChat,
         type User,
     } from "openchat-client";
-    import { getContext, onMount } from "svelte";
+    import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -104,9 +104,13 @@
         };
     });
 
-    function onEphemeralMessage(ev: EphemeralMessageEvent) {
+    async function onEphemeralMessage(ev: EphemeralMessageEvent) {
         if (ev.scope.kind !== "chat_scope") return;
         if (!messageContextsEqual(messageContext, ev.scope)) return;
+        if (ephemeralMessageEvent !== undefined) {
+            ephemeralMessageEvent = undefined;
+            await tick();
+        }
         ephemeralMessageEvent = ev;
     }
 
@@ -167,6 +171,16 @@
             messageEntry?.replaceSelection(code);
         }
     }
+
+    $effect(() => {
+        if (
+            ephemeralMessageEvent !== undefined &&
+            ephemeralMessageEvent.scope.kind === "chat_scope" &&
+            !messageContextsEqual(messageContext, ephemeralMessageEvent.scope)
+        ) {
+            ephemeralMessageEvent = undefined;
+        }
+    });
 </script>
 
 {#if messageAction === "emoji"}
