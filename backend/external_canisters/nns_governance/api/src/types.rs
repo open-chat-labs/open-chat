@@ -1,7 +1,7 @@
 use candid::{CandidType, Principal};
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{Empty, TimestampMillis};
+use types::{Empty, TimestampMillis, ok_or_default};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BallotInfo {
@@ -376,14 +376,6 @@ pub struct Proposal {
 pub struct Ballot {
     pub vote: i32,
     pub voting_power: u64,
-}
-
-fn ok_or_default<'de, T, D>(deserializer: D) -> Result<T, D::Error>
-where
-    T: Deserialize<'de> + Default,
-    D: Deserializer<'de>,
-{
-    Ok(T::deserialize(deserializer).unwrap_or_default())
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

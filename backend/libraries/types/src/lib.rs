@@ -1,6 +1,6 @@
 use crate::nns::Tokens;
 use candid::{CandidType, Principal};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
 mod access_tokens;
 mod achievement;
@@ -261,4 +261,17 @@ pub trait Fallback: Sized {
 pub enum CommunityOrGroup {
     Community(CommunityId),
     Group(ChatId),
+}
+
+pub fn ok_or_default<'de, T: Deserialize<'de> + Default, D: Deserializer<'de>>(d: D) -> Result<T, D::Error> {
+    // By deserializing to an untagged enum, Serde will consume the entire stream and deserialize
+    // it to a dynamic type, we need to consume the entire stream otherwise any subsequent
+    // deserializations will fail (eg. if deserializing a Vec of items).
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum Temp<T> {
+        Val(T),
+    }
+
+    Ok(if let Ok(Temp::Val(value)) = Temp::deserialize(d) { value } else { T::default() })
 }
