@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Deprecate `winners` field on prize messages ([#8302](https://github.com/open-chat-labs/open-chat/pull/8302))
 - Expose `liquid_cycles_balance` in metrics ([#8350](https://github.com/open-chat-labs/open-chat/pull/8350))
+- Add delay before retrying c2c call under certain error conditions ([#8355](https://github.com/open-chat-labs/open-chat/pull/8355))
 
 ## [[2.0.1806](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1806-group_index)] - 2025-06-26
 
