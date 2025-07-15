@@ -24,6 +24,7 @@
     onMount(() => {
         perc.target = 0;
         timer = window.setTimeout(onClose, duration);
+        return () => window.clearTimeout(timer);
     });
 
     function pause() {
