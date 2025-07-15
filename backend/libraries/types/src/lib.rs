@@ -1,6 +1,6 @@
 use crate::nns::Tokens;
 use candid::{CandidType, Principal};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
 mod access_tokens;
 mod achievement;
@@ -261,4 +261,19 @@ pub trait Fallback: Sized {
 pub enum CommunityOrGroup {
     Community(CommunityId),
     Group(ChatId),
+}
+
+fn ok_or_default<'de, T: Deserialize<'de> + Default, D: Deserializer<'de>>(d: D) -> Result<T, D::Error> {
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum Temp<T> {
+        Value(T),
+    }
+
+    Ok(Temp::deserialize(d)
+        .map(|e| {
+            let Temp::Value(v) = e;
+            v
+        })
+        .unwrap_or_default())
 }

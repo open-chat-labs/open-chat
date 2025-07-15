@@ -12,6 +12,7 @@ pub trait Environment {
     fn caller(&self) -> Principal;
     fn canister_id(&self) -> CanisterId;
     fn cycles_balance(&self) -> Cycles;
+    fn liquid_cycles_balance(&self) -> Cycles;
     fn rng(&mut self) -> &mut StdRng;
     fn arg_data_raw(&self) -> Vec<u8>;
 
