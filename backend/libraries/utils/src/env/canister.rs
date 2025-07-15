@@ -38,6 +38,10 @@ impl Environment for CanisterEnv {
         ic_cdk::api::canister_cycle_balance()
     }
 
+    fn liquid_cycles_balance(&self) -> Cycles {
+        ic_cdk::api::canister_liquid_cycle_balance()
+    }
+
     fn rng(&mut self) -> &mut StdRng {
         &mut self.rng
     }

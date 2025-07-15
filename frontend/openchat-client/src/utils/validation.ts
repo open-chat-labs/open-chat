@@ -1,8 +1,7 @@
-
 export function isDisplayNameValid(displayName: string): boolean {
     const MIN_DISPLAY_NAME_LENGTH = 3;
     const MAX_DISPLAY_NAME_LENGTH = 25;
-    
+
     if (
         displayName.length < MIN_DISPLAY_NAME_LENGTH ||
         displayName.length > MAX_DISPLAY_NAME_LENGTH
@@ -27,12 +26,9 @@ export function isDisplayNameValid(displayName: string): boolean {
 
 export function isUsernameValid(displayName: string): boolean {
     const MIN_USERNAME_LENGTH = 5;
-    const MAX_USERNAME_LENGTH = 15;
-    
-    if (
-        displayName.length < MIN_USERNAME_LENGTH ||
-        displayName.length > MAX_USERNAME_LENGTH
-    ) {
+    const MAX_USERNAME_LENGTH = 20;
+
+    if (displayName.length < MIN_USERNAME_LENGTH || displayName.length > MAX_USERNAME_LENGTH) {
         return false;
     }
 

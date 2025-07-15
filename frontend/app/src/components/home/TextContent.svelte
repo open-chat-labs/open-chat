@@ -87,5 +87,11 @@
 <style lang="scss">
     .expand {
         cursor: pointer;
+
+        @include mobile() {
+            padding: 0 $sp3;
+            border-radius: var(--rd);
+            background-color: rgba(226, 226, 226, 0.2);
+        }
     }
 </style>

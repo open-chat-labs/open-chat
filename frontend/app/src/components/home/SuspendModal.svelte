@@ -1,15 +1,14 @@
 <script lang="ts">
-    import { getContext } from "svelte";
-    import { _ } from "svelte-i18n";
     import type { OpenChat } from "openchat-client";
+    import { getContext } from "svelte";
+    import { i18nKey } from "../../i18n/i18n";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
+    import ErrorMessage from "../ErrorMessage.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
-    import ErrorMessage from "../ErrorMessage.svelte";
     import TextArea from "../TextArea.svelte";
     import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
 
     interface Props {
         userId: string;

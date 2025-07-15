@@ -92,7 +92,7 @@
             chat !== undefined && chat.kind !== "direct_chat"
                 ? [...command.permissions.chatPermissions].every(
                       (p) =>
-                          ["readMessages", "readMembership", "readChatDetails"].includes(p) ||
+                          ["readMessages", "readMembership", "readChatSummary"].includes(p) ||
                           isPermitted(
                               chat.membership.role,
                               chat.permissions[p as keyof ChatPermissions] as PermissionRole,

@@ -35,6 +35,7 @@
     let searching = $state(false);
     let showFab = $state(false);
     let scrollableElement: HTMLElement | null;
+    let initialised = $state(false);
 
     function calculatePageSize(width: ScreenWidth): number {
         // make sure we get even rows of results
@@ -103,10 +104,12 @@
             }
             onScroll();
         });
-    });
-
-    $effect(() => {
-        search($exploreCommunitiesFiltersStore, true);
+        return exploreCommunitiesFiltersStore.subscribe((filters) => {
+            if (initialised || communitySearchState.results.length === 0) {
+                search(filters, true);
+            }
+            initialised = true;
+        });
     });
 
     function scrollToTop() {

@@ -134,7 +134,7 @@ export class AndroidWebAuthnPasskeyIdentity extends SignIdentity {
         }
 
         // Check credentials from android side, while providing the challenge!
-        const credential = await getExistingAndroidWebAuthnPasskey(blob);
+        const credential = await getExistingAndroidWebAuthnPasskey(blob.buffer as ArrayBuffer);
         const credentialId = credential.rawId;
         const pubkey = await this.lookupPubKeyFn(credentialId);
 

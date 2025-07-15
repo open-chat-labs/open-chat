@@ -1657,13 +1657,21 @@ export class OpenChat {
                     if (resp.kind === "success") {
                         const serverChat = resp.group;
                         if (serverChat.kind === "group_chat") {
-                            serverGroupChatsStore.update((map) => map.set(serverChat.id, serverChat));
+                            serverGroupChatsStore.update((map) =>
+                                map.set(serverChat.id, serverChat),
+                            );
                         } else {
                             serverCommunitiesStore.update((map) => {
-                                const community = map.get({ kind: "community", communityId: serverChat.id.communityId });
-                                if (community !== undefined
-                                    && !community.channels.find((c) => c.id.channelId === serverChat.id.channelId))
-                                {
+                                const community = map.get({
+                                    kind: "community",
+                                    communityId: serverChat.id.communityId,
+                                });
+                                if (
+                                    community !== undefined &&
+                                    !community.channels.find(
+                                        (c) => c.id.channelId === serverChat.id.channelId,
+                                    )
+                                ) {
                                     community.channels.push(serverChat);
                                 }
                                 return map;
@@ -1678,7 +1686,9 @@ export class OpenChat {
                             undefined,
                         );
                     } else if (resp.kind === "success_joined_community") {
-                        serverCommunitiesStore.update((map) => map.set(resp.community.id, resp.community));
+                        serverCommunitiesStore.update((map) =>
+                            map.set(resp.community.id, resp.community),
+                        );
                         localUpdates.removeCommunityPreview(resp.community.id);
                         resp.community.membership.index = nextCommunityIndexStore.value;
                         resp.community.channels.forEach((c) => {
@@ -5903,13 +5913,23 @@ export class OpenChat {
 
     suspendUser(userId: string, reason: string): Promise<boolean> {
         return this.#sendRequest({ kind: "suspendUser", userId, reason })
-            .then((resp) => resp === "success")
+            .then((resp) => {
+                if (resp === "success") {
+                    userStore.userSuspended(userId, true);
+                }
+                return resp === "success";
+            })
             .catch(() => false);
     }
 
     unsuspendUser(userId: string): Promise<boolean> {
         return this.#sendRequest({ kind: "unsuspendUser", userId })
-            .then((resp) => resp === "success")
+            .then((resp) => {
+                if (resp === "success") {
+                    userStore.userSuspended(userId, false);
+                }
+                return resp === "success";
+            })
             .catch(() => false);
     }
 

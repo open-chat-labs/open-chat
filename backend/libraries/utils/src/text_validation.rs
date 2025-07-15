@@ -2,7 +2,7 @@ use oc_error_codes::{OCError, OCErrorCode};
 use types::{FieldTooLongResult, FieldTooShortResult, GroupSubtype};
 
 const MIN_USERNAME_LENGTH: u32 = 5;
-const MAX_USERNAME_LENGTH: u32 = 15;
+const MAX_USERNAME_LENGTH: u32 = 20;
 const MIN_DISPLAY_NAME_LENGTH: u32 = 3;
 const MAX_DISPLAY_NAME_LENGTH: u32 = 25;
 const MIN_GROUP_NAME_LENGTH: u32 = 3;
@@ -219,7 +219,7 @@ mod tests {
         assert!(validate_username("abcde").is_ok());
         assert!(validate_username("12345").is_ok());
         assert!(validate_username("SNSABC").is_ok());
-        assert!(validate_username("1_2_3_4_5_6_7_8").is_ok());
+        assert!(validate_username("TwentyCharactersLong").is_ok());
     }
 
     #[test]
