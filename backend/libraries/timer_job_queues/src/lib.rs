@@ -1,3 +1,5 @@
+use types::Milliseconds;
+
 mod batched_timer_job_queue;
 mod grouped_timer_job_queue;
 mod timer_job_queue;
@@ -7,7 +9,7 @@ pub use grouped_timer_job_queue::GroupedTimerJobQueue;
 pub use timer_job_queue::TimerJobQueue;
 
 pub trait TimerJobItem {
-    fn process(&self) -> impl std::future::Future<Output = Result<(), bool>> + Send;
+    fn process(&self) -> impl Future<Output = Result<(), Option<Milliseconds>>> + Send;
 }
 
 pub trait TimerJobItemBatch: TimerJobItem {

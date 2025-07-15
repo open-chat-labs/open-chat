@@ -6,6 +6,7 @@ use std::ops::DerefMut;
 use std::rc::Rc;
 use std::sync::Mutex;
 use std::time::Duration;
+use types::Milliseconds;
 
 pub struct TimerJobQueue<T> {
     inner: Rc<Mutex<TimerJobQueueInner<T>>>,
@@ -99,17 +100,17 @@ where
         });
 
         if defer_processing {
-            self.set_timer_if_required();
+            self.set_timer_if_required(0);
         } else {
             self.run();
         }
     }
 
-    fn set_timer_if_required(&self) -> bool {
+    fn set_timer_if_required(&self, delay: Milliseconds) -> bool {
         let should_set_timer = self.within_lock(|i| i.timer_id.is_none() && !i.queue.is_empty());
         if should_set_timer {
             let clone = self.clone();
-            let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, move || clone.run());
+            let timer_id = ic_cdk_timers::set_timer_interval(Duration::from_millis(delay), move || clone.run());
             self.within_lock(|i| i.timer_id = Some(timer_id));
             true
         } else {
@@ -151,7 +152,7 @@ where
 
     async fn process_single(&self, item: T) {
         let result = item.process().await;
-        let retry = matches!(result, Err(true));
+        let retry = matches!(result, Err(Some(_)));
 
         self.within_lock(|i| {
             if retry {
@@ -159,7 +160,7 @@ where
             }
             i.in_progress = i.in_progress.saturating_sub(1);
         });
-        self.set_timer_if_required();
+        self.set_timer_if_required(result.err().flatten().unwrap_or_default());
     }
 }
 
@@ -183,7 +184,7 @@ impl<'de, T: Deserialize<'de> + TimerJobItem + 'static> Deserialize<'de> for Tim
         let value = TimerJobQueue {
             inner: Rc::new(Mutex::new(inner)),
         };
-        value.set_timer_if_required();
+        value.set_timer_if_required(0);
         Ok(value)
     }
 }

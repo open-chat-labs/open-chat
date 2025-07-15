@@ -8,6 +8,7 @@ use std::ops::DerefMut;
 use std::rc::Rc;
 use std::sync::Mutex;
 use std::time::Duration;
+use types::Milliseconds;
 
 // Use this to process events where events are grouped into batches based on their key.
 // Eg. sending events to User canisters (in this case the User canisterId would be the key).
@@ -123,7 +124,7 @@ where
         });
 
         if defer_processing {
-            self.set_timer_if_required();
+            self.set_timer_if_required(0);
         } else {
             self.flush();
         }
@@ -183,11 +184,11 @@ where
         }
     }
 
-    fn set_timer_if_required(&self) -> bool {
+    fn set_timer_if_required(&self, delay: Milliseconds) -> bool {
         let should_set_timer = self.within_lock(|i| i.timer_id.is_none() && !i.queue.is_empty());
         if should_set_timer {
             let clone = self.clone();
-            let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, move || clone.flush());
+            let timer_id = ic_cdk_timers::set_timer_interval(Duration::from_millis(delay), move || clone.flush());
             self.within_lock(|i| i.timer_id = Some(timer_id));
             true
         } else {
@@ -201,7 +202,7 @@ where
 
     async fn process_batch(&self, batch: T) {
         let result = batch.process().await;
-        let retry = matches!(result, Err(true));
+        let retry = matches!(result, Err(Some(_)));
         let key = batch.key();
 
         self.within_lock(|i| {
@@ -217,7 +218,7 @@ where
                 i.queue.push_back(key);
             }
         });
-        self.set_timer_if_required();
+        self.set_timer_if_required(result.err().flatten().unwrap_or_default());
     }
 }
 
@@ -253,7 +254,7 @@ where
             inner: Rc::new(Mutex::new(inner)),
             phantom: PhantomData,
         };
-        value.set_timer_if_required();
+        value.set_timer_if_required(0);
         Ok(value)
     }
 }

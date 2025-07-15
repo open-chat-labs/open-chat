@@ -10571,8 +10571,8 @@ dependencies = [
  "futures",
  "ic-cdk",
  "ic-cdk-timers",
- "ic_principal",
  "serde",
+ "types",
 ]
 
 [[package]]

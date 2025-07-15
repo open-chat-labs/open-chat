@@ -10,13 +10,13 @@ use tracing::{error, info, trace};
 use types::icrc1::{self, Account};
 use types::{
     BotMessage, CanisterId, ChannelId, CommunityId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction,
-    MessageContentInitial, UserId,
+    MessageContentInitial, Milliseconds, UserId,
 };
-use utils::canister::should_retry_failed_c2c_call;
+use utils::canister::delay_if_should_retry_failed_c2c_call;
 use utils::time::{MONTHS, MonthKey};
 
 impl TimerJobItem for Action {
-    async fn process(&self) -> Result<(), bool> {
+    async fn process(&self) -> Result<(), Option<Milliseconds>> {
         match self.clone() {
             Action::JoinChannel(community_id, channel_id) => join_channel(community_id, channel_id).await,
             Action::SendMessage(a) if matches!(a.airdrop_type, AirdropType::Lottery(_)) => {
@@ -66,7 +66,7 @@ pub struct LotteryAirdrop {
     pub position: usize,
 }
 
-async fn join_channel(community_id: CommunityId, channel_id: ChannelId) -> Result<(), bool> {
+async fn join_channel(community_id: CommunityId, channel_id: ChannelId) -> Result<(), Option<Milliseconds>> {
     info!(?community_id, ?channel_id, "Join channel");
 
     let local_user_index_canister_id = match community_canister_c2c_client::local_user_index(
@@ -77,8 +77,8 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) -> Resul
     {
         Ok(community_canister::local_user_index::Response::Success(canister_id)) => canister_id,
         Err(error) => {
-            let retry = should_retry_failed_c2c_call(error.reject_code(), error.message());
-            return Err(retry);
+            let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(error.reject_code(), error.message());
+            return Err(delay_if_should_retry);
         }
     };
 
@@ -99,15 +99,15 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) -> Resul
         | Ok(local_user_index_canister::join_channel::Response::SuccessJoinedCommunity(_)) => (),
         Ok(local_user_index_canister::join_channel::Response::InternalError(err)) => {
             error!("Failed to join_channel {err:?}");
-            return Err(true);
+            return Err(Some(0));
         }
         Ok(resp) => {
             error!("Failed to join_channel {resp:?}");
-            return Err(false);
+            return Err(None);
         }
         Err(err) => {
             error!("Failed to join_channel {err:?}");
-            return Err(true);
+            return Err(Some(0));
         }
     }
 
@@ -118,7 +118,7 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) -> Resul
     Ok(())
 }
 
-async fn handle_transfer_action(action: AirdropTransfer) -> Result<(), bool> {
+async fn handle_transfer_action(action: AirdropTransfer) -> Result<(), Option<Milliseconds>> {
     let amount = action.amount.into();
 
     trace!(?amount, "CHAT Transfer");
@@ -187,14 +187,14 @@ async fn handle_transfer_action(action: AirdropTransfer) -> Result<(), bool> {
         }
         Err(error) => {
             error!(?args, ?error, "Failed to transfer CHAT, retrying");
-            return Err(true);
+            return Err(Some(0));
         }
     }
 
     Ok(())
 }
 
-async fn handle_main_message_action(action: AirdropMessage) -> Result<(), bool> {
+async fn handle_main_message_action(action: AirdropMessage) -> Result<(), Option<Milliseconds>> {
     trace!("Send DM");
 
     let AirdropType::Main(MainAirdrop { chit, shares }) = action.airdrop_type else {
@@ -231,21 +231,21 @@ async fn handle_main_message_action(action: AirdropMessage) -> Result<(), bool> 
         Ok(user_canister::c2c_handle_bot_messages::Response::Success) => Ok(()),
         Ok(resp) => {
             error!(?args, ?resp, "Failed to send DM");
-            Err(false)
+            Err(None)
         }
         Err(error) => {
-            let retry = should_retry_failed_c2c_call(error.reject_code(), error.message());
+            let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(error.reject_code(), error.message());
             error!(?args, ?error, "Failed to send DM");
-            Err(retry)
+            Err(delay_if_should_retry)
         }
     }
 }
 
-async fn handle_lottery_message_action(action: AirdropMessage) -> Result<(), bool> {
+async fn handle_lottery_message_action(action: AirdropMessage) -> Result<(), Option<Milliseconds>> {
     info!("Send lottery winners message");
 
     let AirdropType::Lottery(LotteryAirdrop { position }): AirdropType = action.airdrop_type else {
-        return Err(false);
+        return Err(None);
     };
 
     let Some((community_id, channel_id, message_id)) = mutate_state(|state| {
@@ -255,7 +255,7 @@ async fn handle_lottery_message_action(action: AirdropMessage) -> Result<(), boo
             .current(state.env.now())
             .map(|c| (c.community_id, c.channel_id, state.env.rng().r#gen()))
     }) else {
-        return Err(false);
+        return Err(None);
     };
 
     let position = match position {
@@ -295,12 +295,12 @@ async fn handle_lottery_message_action(action: AirdropMessage) -> Result<(), boo
         Ok(community_canister::send_message::Response::Success(_)) => Ok(()),
         Ok(resp) => {
             error!(?args, ?resp, "Failed to send lottery message");
-            Err(false)
+            Err(None)
         }
         Err(error) => {
             error!(?args, ?error, "Failed to send lottery message");
-            let retry = should_retry_failed_c2c_call(error.reject_code(), error.message());
-            Err(retry)
+            let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(error.reject_code(), error.message());
+            Err(delay_if_should_retry)
         }
     }
 }
