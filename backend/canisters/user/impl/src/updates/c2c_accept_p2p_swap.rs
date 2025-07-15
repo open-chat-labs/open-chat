@@ -33,7 +33,7 @@ async fn c2c_accept_p2p_swap_impl(args: Args) -> Response {
             from_subaccount: None,
             to: Account {
                 owner: escrow_canister_id,
-                subaccount: Some(deposit_subaccount(my_user_id, args.swap_id)),
+                subaccount: Some(deposit_subaccount(my_user_id.into(), args.swap_id)),
             },
             fee: Some(args.token1.fee.into()),
             created_at_time: Some(now * NANOS_PER_MILLISECOND),

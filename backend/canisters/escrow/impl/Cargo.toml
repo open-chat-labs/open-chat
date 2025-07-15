@@ -28,6 +28,7 @@ icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_led
 icrc-ledger-types = { workspace = true }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 msgpack = { path = "../../../libraries/msgpack" }
+oc_error_codes = { path = "../../../libraries/error_codes" }
 rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }

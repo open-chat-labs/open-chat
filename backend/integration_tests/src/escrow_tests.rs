@@ -37,7 +37,7 @@ fn swap_via_escrow_canister_succeeds() {
 
     let user1_deposit_account = Account {
         owner: canister_ids.escrow,
-        subaccount: Some(deposit_subaccount(user1.user_id, swap_id)),
+        subaccount: Some(deposit_subaccount(user1.user_id.into(), swap_id)),
     };
 
     client::ledger::happy_path::transfer(
@@ -50,7 +50,7 @@ fn swap_via_escrow_canister_succeeds() {
 
     let user2_deposit_account = Account {
         owner: canister_ids.escrow,
-        subaccount: Some(deposit_subaccount(user2.user_id, swap_id)),
+        subaccount: Some(deposit_subaccount(user2.user_id.into(), swap_id)),
     };
 
     client::ledger::happy_path::transfer(

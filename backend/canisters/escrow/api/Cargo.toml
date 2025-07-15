@@ -7,6 +7,7 @@ edition.workspace = true
 
 [dependencies]
 candid = { workspace = true }
+candid_gen = { path = "../../../libraries/candid_gen" }
 icrc-ledger-types = { workspace = true }
 oc_error_codes = { path = "../../../libraries/error_codes" }
 serde = { workspace = true }

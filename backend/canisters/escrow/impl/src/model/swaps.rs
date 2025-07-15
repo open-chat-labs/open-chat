@@ -3,7 +3,7 @@ use candid::Principal;
 use escrow_canister::{SwapStatus, SwapStatusAccepted, SwapStatusCancelled, SwapStatusCompleted, SwapStatusExpired};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use types::{CanisterId, P2PSwapLocation, TimestampMillis, TokenInfo, UserId, icrc1::CompletedCryptoTransaction};
+use types::{CanisterId, P2PSwapLocation, TimestampMillis, TokenInfo, icrc1::CompletedCryptoTransaction};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Swaps {
@@ -11,7 +11,7 @@ pub struct Swaps {
 }
 
 impl Swaps {
-    pub fn push(&mut self, caller: UserId, args: escrow_canister::create_swap::Args, now: TimestampMillis) -> u32 {
+    pub fn push(&mut self, caller: Principal, args: escrow_canister::create_swap::Args, now: TimestampMillis) -> u32 {
         let id = self.map.last_key_value().map(|(k, _)| *k + 1).unwrap_or_default();
         self.map.insert(id, Swap::new(id, caller, args, now));
         id
@@ -50,14 +50,17 @@ pub struct Swap {
     pub id: u32,
     pub location: P2PSwapLocation,
     pub created_at: TimestampMillis,
-    pub created_by: UserId,
+    #[serde(alias = "created_by")]
+    pub offered_by: Principal,
+    #[serde(default)]
+    pub accept_by: Option<Principal>,
     pub token0: TokenInfo,
     pub amount0: u128,
     pub token1: TokenInfo,
     pub amount1: u128,
     pub expires_at: TimestampMillis,
     pub cancelled_at: Option<TimestampMillis>,
-    pub accepted_by: Option<(UserId, TimestampMillis)>,
+    pub accepted_by: Option<(Principal, TimestampMillis)>,
     pub token0_received: bool,
     pub token1_received: bool,
     pub token0_transfer_out: Option<CompletedCryptoTransaction>,
@@ -69,12 +72,15 @@ pub struct Swap {
 }
 
 impl Swap {
-    pub fn new(id: u32, caller: UserId, args: escrow_canister::create_swap::Args, now: TimestampMillis) -> Swap {
+    pub fn new(id: u32, caller: Principal, args: escrow_canister::create_swap::Args, now: TimestampMillis) -> Swap {
+        let offered_by = args.token0_principal.unwrap_or(caller);
+
         Swap {
             id,
             location: args.location,
             created_at: now,
-            created_by: caller,
+            offered_by,
+            accept_by: args.token1_principal,
             token0: args.token0,
             amount0: args.token0_amount,
             token1: args.token1,
@@ -94,7 +100,7 @@ impl Swap {
     }
 
     pub fn is_admin(&self, principal: Principal) -> bool {
-        self.created_by == principal.into() || self.additional_admins.contains(&principal)
+        self.offered_by == principal || self.additional_admins.contains(&principal)
     }
 
     pub fn is_complete(&self) -> bool {

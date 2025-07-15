@@ -13,18 +13,19 @@ fn c2c_notify_p2p_swap_status_change(args: Args) {
 }
 
 fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) {
-    let P2PSwapLocation::Message(m) = args.location;
+    let P2PSwapLocation::Message(message) = args.location else {
+        return;
+    };
+
     let mut result = None;
 
     match args.status {
         SwapStatus::Expired(e) => {
-            if let Some(content) =
-                state
-                    .data
-                    .chat
-                    .events
-                    .get_p2p_swap(m.thread_root_message_index, m.message_id, EventIndex::default())
-            {
+            if let Some(content) = state.data.chat.events.get_p2p_swap(
+                message.thread_root_message_index,
+                message.message_id,
+                EventIndex::default(),
+            ) {
                 let token0_txn_out = e
                     .refunds
                     .into_iter()
@@ -36,8 +37,8 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                     .chat
                     .events
                     .set_p2p_swap_status(
-                        m.thread_root_message_index,
-                        m.message_id,
+                        message.thread_root_message_index,
+                        message.message_id,
                         P2PSwapStatus::Expired(P2PSwapExpired { token0_txn_out }),
                         state.env.now(),
                     )
@@ -45,13 +46,11 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
             }
         }
         SwapStatus::Cancelled(c) => {
-            if let Some(content) =
-                state
-                    .data
-                    .chat
-                    .events
-                    .get_p2p_swap(m.thread_root_message_index, m.message_id, EventIndex::default())
-            {
+            if let Some(content) = state.data.chat.events.get_p2p_swap(
+                message.thread_root_message_index,
+                message.message_id,
+                EventIndex::default(),
+            ) {
                 let token0_txn_out = c
                     .refunds
                     .into_iter()
@@ -63,8 +62,8 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                     .chat
                     .events
                     .set_p2p_swap_status(
-                        m.thread_root_message_index,
-                        m.message_id,
+                        message.thread_root_message_index,
+                        message.message_id,
                         P2PSwapStatus::Cancelled(P2PSwapCancelled { token0_txn_out }),
                         state.env.now(),
                     )
@@ -78,9 +77,9 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                 .chat
                 .events
                 .complete_p2p_swap(
-                    c.accepted_by,
-                    m.thread_root_message_index,
-                    m.message_id,
+                    c.accepted_by.into(),
+                    message.thread_root_message_index,
+                    message.message_id,
                     c.token0_transfer_out.block_index,
                     c.token1_transfer_out.block_index,
                     now,

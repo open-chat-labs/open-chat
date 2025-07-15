@@ -3,9 +3,11 @@ use crate::{Data, RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use escrow_canister::create_swap::{Response::*, *};
+use escrow_canister::deposit_subaccount;
+use icrc_ledger_types::icrc1::account::Account;
 use types::TimestampMillis;
 
-#[update(msgpack = true)]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn create_swap(args: Args) -> Response {
     mutate_state(|state| create_swap_impl(args, state))
@@ -16,15 +18,29 @@ fn create_swap_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Err(error) = validate_swap(&args, now, &state.data) {
         InvalidSwap(error)
     } else {
-        let caller = state.env.caller().into();
+        let caller = state.env.caller();
         let expires_at = args.expires_at;
+        let token0_principal = args.token0_principal.unwrap_or(caller);
+        let token1_principal = args.token1_principal;
         let id = state.data.swaps.push(caller, args, now);
         state
             .data
             .timer_jobs
             .enqueue_job(TimerJob::ExpireSwap(Box::new(ExpireSwapJob { swap_id: id })), expires_at, now);
 
-        Success(SuccessResult { id })
+        let escrow_canister_id = state.env.canister_id();
+
+        Success(SuccessResult {
+            id,
+            token0_deposit_account: Account {
+                owner: escrow_canister_id,
+                subaccount: Some(deposit_subaccount(token0_principal, id)),
+            },
+            token1_deposit_account: token1_principal.map(|principal| Account {
+                owner: escrow_canister_id,
+                subaccount: Some(deposit_subaccount(principal, id)),
+            }),
+        })
     }
 }
 

@@ -32,8 +32,10 @@ pub mod happy_path {
                 location,
                 token0: input_token,
                 token0_amount: input_amount,
+                token0_principal: None,
                 token1: output_token,
                 token1_amount: output_amount,
+                token1_principal: None,
                 expires_at,
                 additional_admins: Vec::new(),
                 canister_to_notify: None,
@@ -56,7 +58,10 @@ pub mod happy_path {
             env,
             user_id.into(),
             escrow_canister_id,
-            &escrow_canister::notify_deposit::Args { swap_id, user_id: None },
+            &escrow_canister::notify_deposit::Args {
+                swap_id,
+                principal: None,
+            },
         );
 
         match response {
