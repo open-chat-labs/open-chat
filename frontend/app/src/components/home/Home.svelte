@@ -113,6 +113,7 @@
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import MakeProposalModal from "./proposal/MakeProposalModal.svelte";
     import RightPanel from "./RightPanelWrapper.svelte";
+    import SuspendModal from "./SuspendModal.svelte";
     import Upgrade from "./upgrade/Upgrade.svelte";
 
     type ViewProfileConfig = {
@@ -168,6 +169,7 @@
         | { kind: "register_webhook" }
         | { kind: "update_webhook"; webhook: FullWebhookDetails }
         | { kind: "suspended" }
+        | { kind: "suspending"; userId: string }
         | { kind: "no_access" }
         | { kind: "new_group"; embeddedContent: boolean; candidate: CandidateGroupChat }
         | { kind: "wallet" }
@@ -240,6 +242,7 @@
             subscribe("noAccess", () => (modal = { kind: "no_access" })),
             subscribe("notFound", () => (modal = { kind: "not_found" })),
             subscribe("copyUrl", copyUrl),
+            subscribe("suspendUser", suspendUser),
         ];
         client.initialiseNotifications();
         document.body.addEventListener("profile-clicked", profileClicked);
@@ -253,6 +256,10 @@
             document.body.removeEventListener("profile-clicked", profileClicked);
         };
     });
+
+    function suspendUser(userId: string) {
+        modal = { kind: "suspending", userId };
+    }
 
     function profileClicked(event: Event) {
         profileLinkClicked(event as CustomEvent<ProfileLinkClickedEvent>);
@@ -1094,6 +1101,8 @@
             <ChallengeModal on:close={closeModal} />
         {:else if modal.kind === "verify_humanity"}
             <VerifyHumanity onClose={closeModal} onSuccess={closeModal} />
+        {:else if modal.kind === "suspending"}
+            <SuspendModal userId={modal.userId} onClose={closeModal} />
         {/if}
     </Overlay>
 {/if}

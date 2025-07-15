@@ -263,7 +263,12 @@ import {
 } from "../utils/referralCache";
 import { getCachedRegistry, setCachedRegistry } from "../utils/registryCache";
 import { Updatable, UpdatableOption } from "../utils/updatable";
-import { clearCache as clearUserCache, getAllUsers, isUserIdDeleted } from "../utils/userCache";
+import {
+    clearCache as clearUserCache,
+    getAllUsers,
+    isUserIdDeleted,
+    userSuspended,
+} from "../utils/userCache";
 import { BitcoinClient } from "./bitcoin/bitcoin.client";
 import { CkbtcMinterClient } from "./ckbtcMinter/ckbtcMinter.client";
 import { measure } from "./common/profiling";
@@ -327,10 +332,7 @@ export class OpenChatAgent extends EventTarget {
     private _signInWithSolanaClient: Lazy<SignInWithSolanaClient>;
     private _translationsClient: Lazy<TranslationsClient>;
 
-    constructor(
-        private identity: Identity,
-        private config: AgentConfig,
-    ) {
+    constructor(private identity: Identity, private config: AgentConfig) {
         super();
         this._logger = config.logger;
         this._agent = createHttpAgentSync(identity, config.icUrl);
@@ -1739,8 +1741,8 @@ export class OpenChatAgent extends EventTarget {
                         a.reason.kind === "achievement_unlocked"
                             ? a.reason.type
                             : a.reason.kind === "external_achievement_unlocked"
-                              ? a.reason.name
-                              : undefined;
+                            ? a.reason.name
+                            : undefined;
 
                     if (name !== undefined) {
                         achievements.mutate((ac) => ac.add(name));
@@ -2165,8 +2167,8 @@ export class OpenChatAgent extends EventTarget {
             previousUpdatesTimestamp === undefined
                 ? maxC2cCalls
                 : durationSincePreviousUpdates < 10 * ONE_MINUTE_MILLIS
-                  ? maxC2cCalls * 4
-                  : maxC2cCalls * 20;
+                ? maxC2cCalls * 4
+                : maxC2cCalls * 20;
 
         const promises: Promise<WaitAllResult<GroupAndCommunitySummaryUpdatesResponseBatch>>[] = [];
         for (const [localUserIndex, requests] of requestsByLocalUserIndex) {
@@ -3275,13 +3277,23 @@ export class OpenChatAgent extends EventTarget {
     suspendUser(userId: string, reason: string): Promise<SuspendUserResponse> {
         if (offline()) return Promise.resolve("offline");
 
-        return this._userIndexClient.suspendUser(userId, reason);
+        return this._userIndexClient.suspendUser(userId, reason).then((resp) => {
+            if (resp === "success") {
+                userSuspended(userId, true);
+            }
+            return resp;
+        });
     }
 
     unsuspendUser(userId: string): Promise<UnsuspendUserResponse> {
         if (offline()) return Promise.resolve("offline");
 
-        return this._userIndexClient.unsuspendUser(userId);
+        return this._userIndexClient.unsuspendUser(userId).then((resp) => {
+            if (resp === "success") {
+                userSuspended(userId, false);
+            }
+            return resp;
+        });
     }
 
     loadFailedMessages(): Promise<Map<string, Record<number, EventWrapper<Message>>>> {
@@ -4543,7 +4555,9 @@ export class OpenChatAgent extends EventTarget {
     }
 
     async #updateCachedProposalTallies(localUserIndex: string, chatIds: MultiUserChatIdentifier[]) {
-        const response = await this.getLocalUserIndexClient(localUserIndex).activeProposalTallies(chatIds);
+        const response = await this.getLocalUserIndexClient(localUserIndex).activeProposalTallies(
+            chatIds,
+        );
 
         for (const [chatId, tallies] of response) {
             await updateCachedProposalTallies(this.db, chatId, tallies);
