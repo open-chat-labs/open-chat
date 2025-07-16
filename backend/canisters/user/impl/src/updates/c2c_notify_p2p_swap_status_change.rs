@@ -13,108 +13,94 @@ fn c2c_notify_p2p_swap_status_change(args: Args) {
 }
 
 fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) {
-    let P2PSwapLocation::Message(message) = args.location else {
+    let P2PSwapLocation::Message(m) = args.location else {
         return;
     };
 
-    let Chat::Direct(chat_id) = message.chat else {
-        return;
-    };
+    if let Chat::Direct(chat_id) = m.chat {
+        let my_user_id = state.env.canister_id();
+        let chat_id = if args.offered_by == my_user_id { chat_id } else { args.offered_by.into() };
 
-    let my_principal = state.env.canister_id();
-    let chat_id = if args.offered_by == my_principal { chat_id } else { args.offered_by.into() };
+        if let Some(chat) = state.data.direct_chats.get_mut(&chat_id) {
+            let mut status_to_push_c2c = None;
 
-    let Some(chat) = state.data.direct_chats.get_mut(&chat_id) else {
-        return;
-    };
+            match args.status {
+                SwapStatus::Expired(e) => {
+                    if let Some(content) =
+                        chat.events
+                            .get_p2p_swap(m.thread_root_message_index, m.message_id, EventIndex::default())
+                    {
+                        let token0_txn_out = e
+                            .refunds
+                            .into_iter()
+                            .find(|t| t.ledger == content.token0.ledger)
+                            .map(|t| t.block_index);
 
-    let mut status_to_push_c2c = None;
+                        let status = P2PSwapStatus::Expired(P2PSwapExpired { token0_txn_out });
 
-    match args.status {
-        SwapStatus::Expired(e) => {
-            if let Some(content) =
-                chat.events
-                    .get_p2p_swap(message.thread_root_message_index, message.message_id, EventIndex::default())
-            {
-                let token0_txn_out = e
-                    .refunds
-                    .into_iter()
-                    .find(|t| t.ledger == content.token0.ledger)
-                    .map(|t| t.block_index);
-
-                let status = P2PSwapStatus::Expired(P2PSwapExpired { token0_txn_out });
-
-                if chat
-                    .events
-                    .set_p2p_swap_status(
-                        message.thread_root_message_index,
-                        message.message_id,
-                        status.clone(),
-                        state.env.now(),
-                    )
-                    .is_ok()
-                {
-                    status_to_push_c2c = Some(status);
+                        if chat
+                            .events
+                            .set_p2p_swap_status(m.thread_root_message_index, m.message_id, status.clone(), state.env.now())
+                            .is_ok()
+                        {
+                            status_to_push_c2c = Some(status);
+                        }
+                    }
                 }
-            }
-        }
-        SwapStatus::Cancelled(c) => {
-            if let Some(content) =
-                chat.events
-                    .get_p2p_swap(message.thread_root_message_index, message.message_id, EventIndex::default())
-            {
-                let token0_txn_out = c
-                    .refunds
-                    .into_iter()
-                    .find(|t| t.ledger == content.token0.ledger)
-                    .map(|t| t.block_index);
+                SwapStatus::Cancelled(c) => {
+                    if let Some(content) =
+                        chat.events
+                            .get_p2p_swap(m.thread_root_message_index, m.message_id, EventIndex::default())
+                    {
+                        let token0_txn_out = c
+                            .refunds
+                            .into_iter()
+                            .find(|t| t.ledger == content.token0.ledger)
+                            .map(|t| t.block_index);
 
-                let status = P2PSwapStatus::Cancelled(P2PSwapCancelled { token0_txn_out });
+                        let status = P2PSwapStatus::Cancelled(P2PSwapCancelled { token0_txn_out });
 
-                if chat
-                    .events
-                    .set_p2p_swap_status(
-                        message.thread_root_message_index,
-                        message.message_id,
-                        status.clone(),
-                        state.env.now(),
-                    )
-                    .is_ok()
-                {
-                    status_to_push_c2c = Some(status);
+                        if chat
+                            .events
+                            .set_p2p_swap_status(m.thread_root_message_index, m.message_id, status.clone(), state.env.now())
+                            .is_ok()
+                        {
+                            status_to_push_c2c = Some(status);
+                        }
+                    }
                 }
+                SwapStatus::Completed(c) => {
+                    let now = state.env.now();
+                    if let Ok(result) = chat.events.complete_p2p_swap(
+                        c.accepted_by.into(),
+                        m.thread_root_message_index,
+                        m.message_id,
+                        c.token0_transfer_out.block_index,
+                        c.token1_transfer_out.block_index,
+                        now,
+                        UserEventPusher {
+                            now,
+                            rng: state.env.rng(),
+                            queue: &mut state.data.local_user_index_event_sync_queue,
+                        },
+                    ) {
+                        status_to_push_c2c = Some(P2PSwapStatus::Completed(result.value));
+                    }
+                }
+                _ => {}
             }
-        }
-        SwapStatus::Completed(c) => {
-            let now = state.env.now();
-            if let Ok(result) = chat.events.complete_p2p_swap(
-                c.accepted_by.into(),
-                message.thread_root_message_index,
-                message.message_id,
-                c.token0_transfer_out.block_index,
-                c.token1_transfer_out.block_index,
-                now,
-                UserEventPusher {
-                    now,
-                    rng: state.env.rng(),
-                    queue: &mut state.data.local_user_index_event_sync_queue,
-                },
-            ) {
-                status_to_push_c2c = Some(P2PSwapStatus::Completed(result.value));
-            }
-        }
-        _ => {}
-    }
 
-    if let Some(status) = status_to_push_c2c {
-        let thread_root_message_id = message.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
-        state.push_user_canister_event(
-            chat_id.into(),
-            UserCanisterEvent::P2PSwapStatusChange(Box::new(P2PSwapStatusChange {
-                thread_root_message_id,
-                message_id: message.message_id,
-                status,
-            })),
-        );
+            if let Some(status) = status_to_push_c2c {
+                let thread_root_message_id = m.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
+                state.push_user_canister_event(
+                    chat_id.into(),
+                    UserCanisterEvent::P2PSwapStatusChange(Box::new(P2PSwapStatusChange {
+                        thread_root_message_id,
+                        message_id: m.message_id,
+                        status,
+                    })),
+                );
+            }
+        }
     }
 }
