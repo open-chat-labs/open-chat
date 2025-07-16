@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 pub struct Args {
     pub swap_id: u32,
     #[serde(alias = "user_id")]
-    pub principal: Option<Principal>,
+    pub deposited_by: Option<Principal>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

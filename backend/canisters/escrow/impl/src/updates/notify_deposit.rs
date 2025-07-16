@@ -84,7 +84,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
             Err(SwapExpired)
         } else {
             let escrow_canister_id = state.env.canister_id();
-            let principal = args.principal.unwrap_or_else(|| state.env.caller());
+            let principal = args.deposited_by.unwrap_or_else(|| state.env.caller());
 
             if swap.offered_by == principal {
                 if swap.token0_received {
