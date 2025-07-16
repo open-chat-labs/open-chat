@@ -110,7 +110,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
                 } else {
                     Err(SwapAlreadyAccepted)
                 }
-            } else if swap.accept_by == Some(principal) || swap.accept_by.is_none() {
+            } else if swap.restricted_to.is_none_or(|p| p == principal) {
                 Ok(PrepareResult {
                     principal,
                     ledger: swap.token1.ledger,

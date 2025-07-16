@@ -53,7 +53,7 @@ pub struct Swap {
     #[serde(alias = "created_by")]
     pub offered_by: Principal,
     #[serde(default)]
-    pub accept_by: Option<Principal>,
+    pub restricted_to: Option<Principal>,
     pub token0: TokenInfo,
     pub amount0: u128,
     pub token1: TokenInfo,
@@ -80,7 +80,7 @@ impl Swap {
             location: args.location,
             created_at: now,
             offered_by,
-            accept_by: args.token1_principal,
+            restricted_to: args.token1_principal,
             token0: args.token0,
             amount0: args.token0_amount,
             token1: args.token1,

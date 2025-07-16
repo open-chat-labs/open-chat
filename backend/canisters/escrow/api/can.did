@@ -116,22 +116,37 @@ type NotifyDepositResponse = variant {
     Error : OCError;
 };
 
-type DepositAccountArgs = record {
+type LookupSwapArgs = record {
     swap_id : nat32;
 
-    // The principal of either party in the swap or the caller if not specified
-    "principal" : opt principal;
+    // The principal of the accepting party or the caller if not specified
+    accepting_principal : opt principal;
 };
 
-type DepositAccountResponse = variant {
-    Success: Account;
+type LookupSwapResponse = variant {
+    Success: record {
+        id : nat32;
+        location : P2PSwapLocation;
+        created_at : TimestampMillis;
+        offered_by : principal;
+        restricted_to : opt principal;
+        token0 : TokenInfo;
+        amount0 : nat;
+        token0_deposit_account : Account;
+        token1 : TokenInfo;
+        amount1 : nat;
+        token1_deposit_account : Account;
+        expires_at : TimestampMillis;
+        additional_admins : vec principal;
+        canister_to_notify : opt CanisterId;
+    };
     SwapNotFound;
     PrincipalNotFound;
     Error : OCError;
 };
 
 service : {
-    deposit_account : (DepositAccountArgs) -> (DepositAccountResponse) query;    
+    lookup_swap : (LookupSwapArgs) -> (LookupSwapResponse) query;    
     create_swap : (CreateSwapArgs) -> (CreateSwapResponse);
     cancel_swap : (CancelSwapArgs) -> (CancelSwapResponse);
     notify_deposit : (NotifyDepositArgs) -> (NotifyDepositResponse);
