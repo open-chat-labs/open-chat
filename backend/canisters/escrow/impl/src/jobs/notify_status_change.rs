@@ -5,7 +5,7 @@ use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
 use types::CanisterId;
-use utils::canister::should_retry_failed_c2c_call;
+use utils::canister::delay_if_should_retry_failed_c2c_call;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -56,7 +56,7 @@ async fn notify_swap_status(canister_id: CanisterId, notification: SwapStatusCha
     let swap_id = notification.swap_id;
 
     if let Err(error) = c2c_notify_p2p_swap_status_change(canister_id, &notification).await {
-        if should_retry_failed_c2c_call(error.reject_code(), error.message()) {
+        if delay_if_should_retry_failed_c2c_call(error.reject_code(), error.message()).is_some() {
             mutate_state(|state| {
                 state.data.notify_status_change_queue.push(swap_id);
                 start_job_if_required(state);

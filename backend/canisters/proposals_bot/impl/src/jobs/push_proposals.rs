@@ -10,7 +10,7 @@ use std::fmt::Debug;
 use std::time::Duration;
 use tracing::{error, trace};
 use types::{C2CError, CanisterId, ChannelId, ChatId, CommunityId, MessageId, MessageIndex, MultiUserChat, Proposal};
-use utils::canister::should_retry_failed_c2c_call;
+use utils::canister::delay_if_should_retry_failed_c2c_call;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -171,7 +171,7 @@ fn mark_proposal_pushed(
                     .nervous_systems
                     .mark_proposal_push_failed(&governance_canister_id, proposal, state.env.now());
 
-                if !should_retry_failed_c2c_call(error.reject_code(), error.message()) {
+                if delay_if_should_retry_failed_c2c_call(error.reject_code(), error.message()).is_none() {
                     state.data.nervous_systems.mark_disabled(&governance_canister_id);
                 }
             }

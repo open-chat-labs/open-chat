@@ -1,8 +1,8 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use timer_job_queues::{TimerJobItem, grouped_timer_job_batch};
-use types::{AccessorId, CanisterId, FileId};
-use utils::canister::should_retry_failed_c2c_call;
+use types::{AccessorId, CanisterId, FileId, Milliseconds};
+use utils::canister::delay_if_should_retry_failed_c2c_call;
 
 grouped_timer_job_batch!(BucketEventBatch, CanisterId, EventToSync, 1000);
 
@@ -16,7 +16,7 @@ pub enum EventToSync {
 }
 
 impl TimerJobItem for BucketEventBatch {
-    async fn process(&self) -> Result<(), bool> {
+    async fn process(&self) -> Result<(), Option<Milliseconds>> {
         let mut args = storage_bucket_canister::c2c_sync_index::Args::default();
         for event in &self.items {
             match event {
@@ -33,8 +33,8 @@ impl TimerJobItem for BucketEventBatch {
         match response {
             Ok(_) => Ok(()),
             Err(error) => {
-                let retry = should_retry_failed_c2c_call(error.reject_code(), error.message());
-                Err(retry)
+                let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(error.reject_code(), error.message());
+                Err(delay_if_should_retry)
             }
         }
     }

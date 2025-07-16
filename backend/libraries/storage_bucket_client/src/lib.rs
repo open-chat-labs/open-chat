@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use types::{BlobReference, CanisterId};
-use utils::canister::should_retry_failed_c2c_call;
+use utils::canister::delay_if_should_retry_failed_c2c_call;
 
 pub async fn delete_files(blob_references: Vec<BlobReference>) -> Vec<BlobReference> {
     async fn delete_files_inner(canister_id: CanisterId, blob_ids: Vec<u128>) -> Result<(), Vec<BlobReference>> {
@@ -10,10 +10,12 @@ pub async fn delete_files(blob_references: Vec<BlobReference>) -> Vec<BlobRefere
 
         match storage_bucket_canister_c2c_client::delete_files(canister_id, &args).await {
             Ok(_) => Ok(()),
-            Err(error) if should_retry_failed_c2c_call(error.reject_code(), error.message()) => Err(blob_ids
-                .into_iter()
-                .map(|blob_id| BlobReference { canister_id, blob_id })
-                .collect()),
+            Err(error) if delay_if_should_retry_failed_c2c_call(error.reject_code(), error.message()).is_some() => {
+                Err(blob_ids
+                    .into_iter()
+                    .map(|blob_id| BlobReference { canister_id, blob_id })
+                    .collect())
+            }
             Err(_) => Err(Vec::new()),
         }
     }
