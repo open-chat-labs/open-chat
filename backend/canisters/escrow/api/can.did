@@ -96,7 +96,7 @@ type NotifyDepositArgs = record {
     swap_id : nat32;
 
     // The principal of the party whose tokens have been deposited
-    "principal" : opt principal;
+    deposited_by : opt principal;
 };
 
 type NotifyDepositResponse = variant {
