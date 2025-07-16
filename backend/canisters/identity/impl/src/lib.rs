@@ -20,7 +20,8 @@ use serde_bytes::ByteBuf;
 use sha256::sha256;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
-use types::{BuildVersion, CanisterId, Cycles, Milliseconds, OCResult, TimestampMillis, Timestamped};
+use types::AccountLinkingCode;
+use types::{BuildVersion, CanisterId, Cycles, Milliseconds, OCResult, TimestampMillis, Timestamped, UserId};
 use utils::env::Environment;
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
@@ -147,6 +148,14 @@ impl RuntimeState {
         }
     }
 
+    pub fn get_user_id_by_caller(&self) -> Option<UserId> {
+        let caller = self.env.caller();
+        self.data
+            .user_principals
+            .get_by_auth_principal(&caller)
+            .and_then(|u| u.user_id)
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
             heap_memory_used: utils::memory::heap(),
@@ -189,6 +198,8 @@ struct Data {
     rng_seed: [u8; 32],
     challenges: Challenges,
     test_mode: bool,
+    #[serde(default)]
+    account_linking_codes: HashMap<String, (UserId, AccountLinkingCode)>,
 }
 
 impl Data {
@@ -218,6 +229,7 @@ impl Data {
             rng_seed: [0; 32],
             challenges: Challenges::default(),
             test_mode,
+            account_linking_codes: HashMap::new(),
         }
     }
 
