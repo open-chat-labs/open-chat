@@ -197,10 +197,14 @@ impl CommunityRole {
             (rps.update_details, CommunityPermission::UpdateDetails),
         ];
 
-        permissions
+        let mut permissions: HashSet<_> = permissions
             .into_iter()
             .filter_map(|(rp, p)| self.is_permitted(rp).then_some(p))
-            .collect()
+            .collect();
+
+        permissions.insert(CommunityPermission::ReadSummary);
+        permissions.insert(CommunityPermission::ReadMembership);
+        permissions
     }
 }
 
