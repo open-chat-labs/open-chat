@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add delay before retrying c2c call under certain error conditions ([#8355](https://github.com/open-chat-labs/open-chat/pull/8355))
 - Generalise Escrow so it can be used by 3rd parties ([#8356](https://github.com/open-chat-labs/open-chat/pull/8356))
 
+### Fixed
+
+- Fix call to `c2c_notify_p2p_swap_status_change` ([#8359](https://github.com/open-chat-labs/open-chat/pull/8359))
+
 ## [[2.0.1694](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1694-escrow)] - 2025-04-09
 
 ### Added
