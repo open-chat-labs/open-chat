@@ -6,6 +6,7 @@ use constants::DAY_IN_MS;
 use escrow_canister::deposit_subaccount;
 use icrc_ledger_types::icrc1::account::Account;
 use std::ops::Deref;
+use std::str::FromStr;
 use types::{Chat, P2PSwapLocation};
 
 #[test]
@@ -120,7 +121,7 @@ fn external_swap_via_escrow_canister_succeeds() {
         env,
         *controller,
         canister_ids.icp_ledger,
-        swap.token0_deposit_account,
+        Account::from_str(swap.token0_deposit_address.as_str()).unwrap(),
         icp_amount + 10_000,
     );
 
@@ -128,7 +129,7 @@ fn external_swap_via_escrow_canister_succeeds() {
         env,
         *controller,
         canister_ids.chat_ledger,
-        swap.token1_deposit_account,
+        Account::from_str(swap.token1_deposit_address.as_str()).unwrap(),
         chat_amount + 100_000,
     );
 

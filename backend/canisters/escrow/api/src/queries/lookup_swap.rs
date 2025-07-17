@@ -1,5 +1,4 @@
 use candid::{CandidType, Principal};
-use icrc_ledger_types::icrc1::account::Account;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{CanisterId, P2PSwapLocation, TimestampMillis, TokenInfo};
@@ -28,10 +27,10 @@ pub struct Swap {
     pub restricted_to: Option<Principal>,
     pub token0: TokenInfo,
     pub amount0: u128,
-    pub token0_deposit_account: Account,
+    pub token0_deposit_address: String,
     pub token1: TokenInfo,
     pub amount1: u128,
-    pub token1_deposit_account: Account,
+    pub token1_deposit_address: String,
     pub expires_at: TimestampMillis,
     pub additional_admins: Vec<Principal>,
     pub canister_to_notify: Option<CanisterId>,

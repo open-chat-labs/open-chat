@@ -1,10 +1,7 @@
-use crate::{RuntimeState, read_state};
-use candid::Principal;
+use crate::{RuntimeState, deposit_address, read_state};
 use canister_api_macros::query;
 use canister_tracing_macros::trace;
 use escrow_canister::lookup_swap::{Response::*, *};
-use icrc_ledger_types::icrc1::account::Account;
-use types::CanisterId;
 
 #[query(candid = true, msgpack = true)]
 #[trace]
@@ -33,19 +30,12 @@ fn lookup_swap_impl(args: Args, state: &RuntimeState) -> Response {
         restricted_to: swap.restricted_to,
         token0: swap.token0.clone(),
         amount0: swap.amount0,
-        token0_deposit_account: account(swap.offered_by, swap.id, escrow_canister_id),
+        token0_deposit_address: deposit_address(swap.offered_by, swap.id, escrow_canister_id),
         token1: swap.token1.clone(),
         amount1: swap.amount1,
-        token1_deposit_account: account(accepting_principal, swap.id, escrow_canister_id),
+        token1_deposit_address: deposit_address(accepting_principal, swap.id, escrow_canister_id),
         expires_at: swap.expires_at,
         additional_admins: swap.additional_admins.clone(),
         canister_to_notify: swap.canister_to_notify,
     })
-}
-
-fn account(principal: Principal, swap_id: u32, escrow_canister_id: CanisterId) -> Account {
-    Account {
-        owner: escrow_canister_id,
-        subaccount: Some(escrow_canister::deposit_subaccount(principal, swap_id)),
-    }
 }

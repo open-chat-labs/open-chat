@@ -8,11 +8,6 @@ type TimestampMillis = nat64;
 
 type OCError = record { nat16; opt text; };
 
-type Account = record{
-    owner: principal;
-    subaccount: opt blob;
-};
-
 type Chat = variant {
     Direct : ChatId;
     Group : ChatId;
@@ -44,7 +39,7 @@ type CreateSwapArgs = record {
     // The token to be deposited by the offerer of the swap.
     token0 : TokenInfo;
 
-    // The amount of token0 to be deposited.
+    // The amount of token0 to be deposited. When making the deposit it is necessary to add the fee to this amount to cover the transaction fee for the swap or refund.
     token0_amount : nat;
 
     // The principal of the party offering the swap. If this is not specified then the caller's principal is used.
@@ -53,7 +48,7 @@ type CreateSwapArgs = record {
     // The token to be deposited by the accepter of the swap.
     token1 : TokenInfo;
 
-    // The amount of token1 to be deposited.
+    // The amount of token1 to be deposited. When making the deposit it is necessary to add the fee to this amount to cover the transaction fee for the swap or refund.
     token1_amount : nat;
 
     // The principal of the party who can accept the swap. If this is not specified then anyone can accept the swap.
@@ -72,8 +67,10 @@ type CreateSwapArgs = record {
 type CreateSwapResponse = variant {
     Success : record {
         id : nat32;
-        token0_deposit_account: Account;
-        token1_deposit_account: opt Account;
+        // These addresses use the standard text encoding for ICRC-1 accounts:
+        // https://github.com/dfinity/ICRC-1/blob/main/standards/ICRC-1/TextualEncoding.md#textual-encoding-of-icrc-1-accounts        
+        token0_deposit_address : text;
+        token1_deposit_address : opt text;
     };
     InvalidSwap : text;
     Error : OCError;
@@ -132,10 +129,14 @@ type LookupSwapResponse = variant {
         restricted_to : opt principal;
         token0 : TokenInfo;
         amount0 : nat;
-        token0_deposit_account : Account;
+        // This address uses the standard text encoding for ICRC-1 accounts:
+        // https://github.com/dfinity/ICRC-1/blob/main/standards/ICRC-1/TextualEncoding.md#textual-encoding-of-icrc-1-accounts
+        token0_deposit_address : text;
         token1 : TokenInfo;
         amount1 : nat;
-        token1_deposit_account : Account;
+        // This address uses the standard text encoding for ICRC-1 accounts:
+        // https://github.com/dfinity/ICRC-1/blob/main/standards/ICRC-1/TextualEncoding.md#textual-encoding-of-icrc-1-accounts        
+        token1_deposit_address : text;
         expires_at : TimestampMillis;
         additional_admins : vec principal;
         canister_to_notify : opt CanisterId;

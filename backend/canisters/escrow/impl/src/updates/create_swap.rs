@@ -1,10 +1,8 @@
 use crate::timer_job_types::{ExpireSwapJob, TimerJob};
-use crate::{Data, RuntimeState, mutate_state};
+use crate::{Data, RuntimeState, deposit_address, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use escrow_canister::create_swap::{Response::*, *};
-use escrow_canister::deposit_subaccount;
-use icrc_ledger_types::icrc1::account::Account;
 use types::TimestampMillis;
 
 #[update(candid = true, msgpack = true)]
@@ -32,14 +30,8 @@ fn create_swap_impl(args: Args, state: &mut RuntimeState) -> Response {
 
         Success(SuccessResult {
             id,
-            token0_deposit_account: Account {
-                owner: escrow_canister_id,
-                subaccount: Some(deposit_subaccount(token0_principal, id)),
-            },
-            token1_deposit_account: token1_principal.map(|principal| Account {
-                owner: escrow_canister_id,
-                subaccount: Some(deposit_subaccount(principal, id)),
-            }),
+            token0_deposit_address: deposit_address(token0_principal, id, escrow_canister_id),
+            token1_deposit_address: token1_principal.map(|principal| deposit_address(principal, id, escrow_canister_id)),
         })
     }
 }
