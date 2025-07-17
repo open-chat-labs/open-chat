@@ -7,17 +7,17 @@ fn verify_account_linking_code(args: Args) -> Response {
     read_state(|state| verify_account_linking_code_impl(args, state))
 }
 
-// Verify that the account linking code is correct & valid for the caller's user ID.
+// Verify that the account linking code exists and is valid & correct.
+//
+// We're assuming this will be called by the user on a new device, trying to
+// link to their existing account.
+// TODO Make this a bit more secure: rate limit number of request.
 fn verify_account_linking_code_impl(args: Args, state: &RuntimeState) -> Response {
     let now = state.env.now();
 
-    if let Some(user_id) = state.get_user_id_by_caller() {
-        if let Some((alc_user_id, alc)) = state.data.account_linking_codes.get(&args.code) {
-            // Check if the account linking code is valid and matches the user ID.
-            Response(alc.is_valid(now) && alc.value == args.code && user_id == *alc_user_id)
-        } else {
-            Response(false)
-        }
+    if let Some(linking_code) = state.data.account_linking_codes.get(&args.code) {
+        // Check if the account linking code is valid!
+        Response(linking_code.is_valid(now) && linking_code.value == args.code)
     } else {
         Response(false)
     }

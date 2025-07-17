@@ -13,8 +13,8 @@ fn get_account_linking_code_impl(state: &RuntimeState) -> Response {
     let now = state.env.now();
 
     if let Some(user_id) = state.get_user_id_by_caller() {
-        if let Some(alc) = find_account_linking_code_for_user_id(state, &user_id) {
-            if alc.is_valid(now) { Success(alc.clone()) } else { NotFound }
+        if let Some(linking_code) = find_account_linking_code_for_user_id(state, user_id) {
+            if linking_code.is_valid(now) { Success(linking_code.clone()) } else { NotFound }
         } else {
             NotFound
         }
@@ -23,11 +23,11 @@ fn get_account_linking_code_impl(state: &RuntimeState) -> Response {
     }
 }
 
-fn find_account_linking_code_for_user_id(state: &RuntimeState, user_id: &UserId) -> Option<AccountLinkingCode> {
+fn find_account_linking_code_for_user_id(state: &RuntimeState, user_id: UserId) -> Option<AccountLinkingCode> {
     state
         .data
         .account_linking_codes
         .iter()
-        .find(|(_, (alc_user_id, _))| alc_user_id == user_id)
-        .map(|(_, (_, alc))| alc.clone())
+        .find(|(_, linking_code)| linking_code.user_id == user_id)
+        .map(|(_, linking_code)| linking_code.clone())
 }
