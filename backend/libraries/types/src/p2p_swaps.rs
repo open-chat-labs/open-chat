@@ -124,6 +124,7 @@ pub struct SwapStatusErrorCancelled {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum P2PSwapLocation {
     Message(swap_location::Message),
+    External,
 }
 
 impl P2PSwapLocation {

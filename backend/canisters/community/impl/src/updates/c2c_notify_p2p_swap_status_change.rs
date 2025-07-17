@@ -13,7 +13,10 @@ fn c2c_notify_p2p_swap_status_change(args: Args) {
 }
 
 fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) {
-    let P2PSwapLocation::Message(m) = args.location;
+    let P2PSwapLocation::Message(m) = args.location else {
+        return;
+    };
+
     let mut result = None;
 
     if let Chat::Channel(_, channel_id) = m.chat {
@@ -75,7 +78,7 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                         .chat
                         .events
                         .complete_p2p_swap(
-                            c.accepted_by,
+                            c.accepted_by.into(),
                             m.thread_root_message_index,
                             m.message_id,
                             c.token0_transfer_out.block_index,

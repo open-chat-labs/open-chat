@@ -1,6 +1,5 @@
 use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
 use crate::{RuntimeState, mutate_state, read_state};
-use candid::Principal;
 use constants::NANOS_PER_MILLISECOND;
 use escrow_canister::{SwapStatus, deposit_subaccount};
 use ic_cdk_timers::TimerId;
@@ -38,13 +37,13 @@ pub fn run() {
 async fn process_payment(pending_payment: PendingPayment) {
     let from_user = match pending_payment.reason {
         PendingPaymentReason::Swap(other_user_id) => other_user_id,
-        PendingPaymentReason::Refund => pending_payment.user_id,
+        PendingPaymentReason::Refund => pending_payment.principal,
     };
     let created_at_time = pending_payment.timestamp * NANOS_PER_MILLISECOND;
 
     let args = TransferArg {
         from_subaccount: Some(deposit_subaccount(from_user, pending_payment.swap_id)),
-        to: Principal::from(pending_payment.user_id).into(),
+        to: pending_payment.principal.into(),
         fee: Some(pending_payment.token_info.fee.into()),
         created_at_time: Some(created_at_time),
         memo: None,
@@ -65,7 +64,7 @@ async fn process_payment(pending_payment: PendingPayment) {
                         subaccount: args.from_subaccount,
                     }
                     .into(),
-                    to: Account::from(pending_payment.user_id).into(),
+                    to: Account::from(pending_payment.principal).into(),
                     fee: pending_payment.token_info.fee,
                     memo: None,
                     created: created_at_time,

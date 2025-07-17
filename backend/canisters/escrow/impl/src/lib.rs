@@ -2,8 +2,10 @@ use crate::model::notify_status_change_queue::NotifyStatusChangeQueue;
 use crate::model::pending_payments_queue::PendingPaymentsQueue;
 use crate::model::swaps::Swaps;
 use crate::timer_job_types::TimerJob;
+use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
+use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
@@ -121,4 +123,13 @@ pub struct SwapMetrics {
 pub struct CanisterIds {
     pub registry: CanisterId,
     pub cycles_dispenser: CanisterId,
+}
+
+pub(crate) fn deposit_address(principal: Principal, swap_id: u32, escrow_canister_id: CanisterId) -> String {
+    let account = Account {
+        owner: escrow_canister_id,
+        subaccount: Some(escrow_canister::deposit_subaccount(principal, swap_id)),
+    };
+
+    account.to_string()
 }

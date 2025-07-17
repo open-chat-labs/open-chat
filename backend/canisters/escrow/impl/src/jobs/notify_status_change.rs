@@ -39,7 +39,7 @@ fn get_next(state: &mut RuntimeState) -> Option<(CanisterId, SwapStatusChange)> 
                     canister_id,
                     SwapStatusChange {
                         swap_id: swap.id,
-                        created_by: swap.created_by,
+                        offered_by: swap.offered_by,
                         location: swap.location.clone(),
                         status: swap.status(state.env.now()),
                     },

@@ -2996,6 +2996,7 @@ name = "escrow_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "candid_gen",
  "icrc-ledger-types",
  "oc_error_codes",
  "serde",
@@ -3038,6 +3039,7 @@ dependencies = [
  "icrc_ledger_canister_c2c_client",
  "ledger_utils",
  "msgpack",
+ "oc_error_codes",
  "rand 0.8.5",
  "serde",
  "serde_bytes",

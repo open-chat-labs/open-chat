@@ -1,0 +1,154 @@
+type CanisterId = principal;
+type ChannelId = nat32;
+type ChatId = CanisterId;
+type CommunityId = CanisterId;
+type MessageId = nat64;
+type MessageIndex = nat32;
+type TimestampMillis = nat64;
+
+type OCError = record { nat16; opt text; };
+
+type Chat = variant {
+    Direct : ChatId;
+    Group : ChatId;
+    Channel : record { CommunityId; ChannelId };
+};
+
+type TokenInfo = record {
+    symbol : text;
+    ledger : CanisterId;
+    decimals : nat8;
+    fee : nat;
+};
+
+type P2PSwapLocation = variant {
+    Message : Message;
+    External;
+};
+
+type Message = record {
+    chat : Chat;
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+};
+
+type CreateSwapArgs = record {
+    // Specifies whether the swap is associated with an OpenChat message or is External.
+    location : P2PSwapLocation;
+
+    // The token to be deposited by the offerer of the swap.
+    token0 : TokenInfo;
+
+    // The amount of token0 to be deposited. When making the deposit it is necessary to add the fee to this amount to cover the transaction fee for the swap or refund.
+    token0_amount : nat;
+
+    // The principal of the party offering the swap. If this is not specified then the caller's principal is used.
+    token0_principal : opt principal;
+
+    // The token to be deposited by the accepter of the swap.
+    token1 : TokenInfo;
+
+    // The amount of token1 to be deposited. When making the deposit it is necessary to add the fee to this amount to cover the transaction fee for the swap or refund.
+    token1_amount : nat;
+
+    // The principal of the party who can accept the swap. If this is not specified then anyone can accept the swap.
+    token1_principal : opt principal;
+
+    // The swap will expire after this timestamp.
+    expires_at : TimestampMillis;
+
+    // The principals of parties other than the offerer who can cancel the swap.
+    additional_admins : vec principal;
+
+    // If specified, this canister will be notified when the status of the swap has changed.
+    canister_to_notify : opt CanisterId;
+};
+
+type CreateSwapResponse = variant {
+    Success : record {
+        id : nat32;
+        // These addresses use the standard text encoding for ICRC-1 accounts:
+        // https://github.com/dfinity/ICRC-1/blob/main/standards/ICRC-1/TextualEncoding.md#textual-encoding-of-icrc-1-accounts        
+        token0_deposit_address : text;
+        token1_deposit_address : opt text;
+    };
+    InvalidSwap : text;
+    Error : OCError;
+};
+
+type CancelSwapArgs = record {
+    swap_id : nat32;
+};
+
+type CancelSwapResponse = variant {
+    Success;
+    SwapAlreadyAccepted;
+    SwapExpired;
+    SwapNotFound;
+    NotAuthorized;
+    Error : OCError;
+};
+
+type NotifyDepositArgs = record {
+    swap_id : nat32;
+
+    // The principal of the party whose tokens have been deposited
+    deposited_by : opt principal;
+};
+
+type NotifyDepositResponse = variant {
+    Success : record {
+        complete : bool;
+    };
+    BalanceTooLow : record {
+        balance : nat;
+        balance_required : nat;
+    };
+    SwapAlreadyAccepted;
+    SwapCancelled;
+    SwapExpired;
+    SwapNotFound;
+    NotAuthorized;
+    InternalError : text;
+    Error : OCError;
+};
+
+type LookupSwapArgs = record {
+    swap_id : nat32;
+
+    // The principal of the accepting party or the caller if not specified
+    accepting_principal : opt principal;
+};
+
+type LookupSwapResponse = variant {
+    Success: record {
+        id : nat32;
+        location : P2PSwapLocation;
+        created_at : TimestampMillis;
+        offered_by : principal;
+        restricted_to : opt principal;
+        token0 : TokenInfo;
+        amount0 : nat;
+        // This address uses the standard text encoding for ICRC-1 accounts:
+        // https://github.com/dfinity/ICRC-1/blob/main/standards/ICRC-1/TextualEncoding.md#textual-encoding-of-icrc-1-accounts
+        token0_deposit_address : text;
+        token1 : TokenInfo;
+        amount1 : nat;
+        // This address uses the standard text encoding for ICRC-1 accounts:
+        // https://github.com/dfinity/ICRC-1/blob/main/standards/ICRC-1/TextualEncoding.md#textual-encoding-of-icrc-1-accounts        
+        token1_deposit_address : text;
+        expires_at : TimestampMillis;
+        additional_admins : vec principal;
+        canister_to_notify : opt CanisterId;
+    };
+    SwapNotFound;
+    PrincipalNotFound;
+    Error : OCError;
+};
+
+service : {
+    lookup_swap : (LookupSwapArgs) -> (LookupSwapResponse) query;    
+    create_swap : (CreateSwapArgs) -> (CreateSwapResponse);
+    cancel_swap : (CancelSwapArgs) -> (CancelSwapResponse);
+    notify_deposit : (NotifyDepositArgs) -> (NotifyDepositResponse);
+};
