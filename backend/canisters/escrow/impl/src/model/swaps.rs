@@ -50,9 +50,7 @@ pub struct Swap {
     pub id: u32,
     pub location: P2PSwapLocation,
     pub created_at: TimestampMillis,
-    #[serde(alias = "created_by")]
     pub offered_by: Principal,
-    #[serde(default)]
     pub restricted_to: Option<Principal>,
     pub token0: TokenInfo,
     pub amount0: u128,
