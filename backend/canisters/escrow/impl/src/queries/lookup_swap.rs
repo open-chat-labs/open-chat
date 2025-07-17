@@ -26,6 +26,7 @@ fn lookup_swap_impl(args: Args, state: &RuntimeState) -> Response {
         id: swap.id,
         location: swap.location.clone(),
         created_at: swap.created_at,
+        created_by: swap.created_by,
         offered_by: swap.offered_by,
         restricted_to: swap.restricted_to,
         token0: swap.token0.clone(),

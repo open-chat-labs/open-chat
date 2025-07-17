@@ -23,6 +23,7 @@ pub struct Swap {
     pub id: u32,
     pub location: P2PSwapLocation,
     pub created_at: TimestampMillis,
+    pub created_by: Principal,
     pub offered_by: Principal,
     pub restricted_to: Option<Principal>,
     pub token0: TokenInfo,

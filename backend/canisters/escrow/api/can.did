@@ -125,6 +125,7 @@ type LookupSwapResponse = variant {
         id : nat32;
         location : P2PSwapLocation;
         created_at : TimestampMillis;
+        created_by : principal;
         offered_by : principal;
         restricted_to : opt principal;
         token0 : TokenInfo;
