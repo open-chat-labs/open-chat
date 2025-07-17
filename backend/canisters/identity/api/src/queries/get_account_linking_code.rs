@@ -6,7 +6,7 @@ use types::{AccountLinkingCode, Empty};
 pub type Args = Empty;
 
 #[ts_export(identity, get_account_linking_code)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Eq, PartialEq)]
 pub enum Response {
     Success(AccountLinkingCode),
     NotFound,

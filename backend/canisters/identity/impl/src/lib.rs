@@ -173,6 +173,7 @@ impl RuntimeState {
                 user_index: self.data.user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
+            account_linking_codes_count: self.data.account_linking_codes.len(),
         }
     }
 }
@@ -199,7 +200,7 @@ struct Data {
     challenges: Challenges,
     test_mode: bool,
     #[serde(default)]
-    account_linking_codes: HashMap<String, (UserId, AccountLinkingCode)>,
+    account_linking_codes: HashMap<String, AccountLinkingCode>,
 }
 
 impl Data {
@@ -321,6 +322,7 @@ pub struct Metrics {
     pub originating_canisters: HashMap<CanisterId, u32>,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
+    pub account_linking_codes_count: usize,
 }
 
 #[derive(Serialize, Debug)]

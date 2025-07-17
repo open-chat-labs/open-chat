@@ -4,6 +4,8 @@ use canister_tracing_macros::trace;
 use identity_canister::create_account_linking_code::{Response::*, *};
 use types::AccountLinkingCode;
 
+const MAX_CODE_GEN_ATTEMPTS: usize = 20;
+
 #[update(msgpack = true, candid = true)]
 #[trace]
 fn create_account_linking_code(_args: Args) -> Response {
@@ -11,33 +13,40 @@ fn create_account_linking_code(_args: Args) -> Response {
 }
 
 fn create_account_linking_code_impl(state: &mut RuntimeState) -> Response {
+    let caller_user_id = state.get_user_id_by_caller();
     let now = state.env.now();
-    let caller = state.env.caller();
+    let rng = state.env.rng();
 
-    if let Some(user_id) = state
-        .data
-        .user_principals
-        .get_by_auth_principal(&caller)
-        .and_then(|u| u.user_id)
-    {
+    if let Some(user_id) = caller_user_id {
         // Clean up expired codes - keeps the memory footprint smaller in
         // exchange for a bit of extra CPU time.
-        state.data.account_linking_codes.retain(|_, (_, alc)| alc.is_valid(now));
-
-        let mut alc = AccountLinkingCode::new(now);
-
-        // Verify that the generated code is unique
-        while state.data.account_linking_codes.contains_key(&alc.value) {
-            alc = AccountLinkingCode::new(now);
-        }
-
-        // Store the code in the state (this part is assumed, as the original code does not specify how to store it)
         state
             .data
             .account_linking_codes
-            .insert(alc.value.clone(), (user_id, alc.clone()));
+            .retain(|_, linking_code| linking_code.is_valid(now));
 
-        Success(alc)
+        // Attempt to generate linking code, up to max number of attempts
+        let mut current_attempt = 0;
+        while current_attempt < MAX_CODE_GEN_ATTEMPTS {
+            let Ok(linking_code) = AccountLinkingCode::new(user_id, rng, now) else {
+                continue;
+            };
+
+            // Check if the code already exists in the state, if it does, we
+            // try again; if not, we insert it and return success.
+            if !state.data.account_linking_codes.contains_key(&linking_code.value) {
+                state
+                    .data
+                    .account_linking_codes
+                    .insert(linking_code.value.clone(), linking_code.clone());
+
+                return Success(linking_code);
+            }
+
+            current_attempt += 1;
+        }
+
+        FailedToGenerateCode
     } else {
         UserNotFound
     }
