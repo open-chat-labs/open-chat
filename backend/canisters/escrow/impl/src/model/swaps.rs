@@ -1,7 +1,7 @@
 use crate::SwapMetrics;
 use candid::Principal;
 use escrow_canister::{SwapStatus, SwapStatusAccepted, SwapStatusCancelled, SwapStatusCompleted, SwapStatusExpired};
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use types::{CanisterId, P2PSwapLocation, TimestampMillis, TokenInfo, icrc1::CompletedCryptoTransaction};
 
@@ -45,7 +45,7 @@ impl Swaps {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Swap {
     pub id: u32,
     pub location: P2PSwapLocation,
@@ -68,63 +68,6 @@ pub struct Swap {
     pub additional_admins: Vec<Principal>,
     pub canister_to_notify: Option<CanisterId>,
     pub errors: Vec<String>,
-}
-
-// TODO: Remove this once Escrow has been released
-impl<'de> Deserialize<'de> for Swap {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        #[derive(Deserialize)]
-        struct Inner {
-            pub id: u32,
-            pub location: P2PSwapLocation,
-            pub created_at: TimestampMillis,
-            pub offered_by: Principal,
-            pub restricted_to: Option<Principal>,
-            pub token0: TokenInfo,
-            pub amount0: u128,
-            pub token1: TokenInfo,
-            pub amount1: u128,
-            pub expires_at: TimestampMillis,
-            pub cancelled_at: Option<TimestampMillis>,
-            pub accepted_by: Option<(Principal, TimestampMillis)>,
-            pub token0_received: bool,
-            pub token1_received: bool,
-            pub token0_transfer_out: Option<CompletedCryptoTransaction>,
-            pub token1_transfer_out: Option<CompletedCryptoTransaction>,
-            pub refunds: Vec<CompletedCryptoTransaction>,
-            pub additional_admins: Vec<Principal>,
-            pub canister_to_notify: Option<CanisterId>,
-            pub errors: Vec<String>,
-        }
-
-        let inner = Inner::deserialize(deserializer)?;
-        Ok(Swap {
-            id: inner.id,
-            location: inner.location,
-            created_at: inner.created_at,
-            created_by: inner.offered_by,
-            offered_by: inner.offered_by,
-            restricted_to: inner.restricted_to,
-            token0: inner.token0,
-            amount0: inner.amount0,
-            token1: inner.token1,
-            amount1: inner.amount1,
-            expires_at: inner.expires_at,
-            cancelled_at: inner.cancelled_at,
-            accepted_by: inner.accepted_by,
-            token0_received: inner.token0_received,
-            token1_received: inner.token1_received,
-            token0_transfer_out: inner.token0_transfer_out,
-            token1_transfer_out: inner.token1_transfer_out,
-            refunds: inner.refunds,
-            additional_admins: inner.additional_admins,
-            canister_to_notify: inner.canister_to_notify,
-            errors: inner.errors,
-        })
-    }
 }
 
 impl Swap {
