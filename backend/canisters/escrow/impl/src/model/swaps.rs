@@ -49,6 +49,8 @@ impl Swaps {
 pub struct Swap {
     pub id: u32,
     pub location: P2PSwapLocation,
+    #[serde(default)]
+    pub is_public: bool,
     pub created_at: TimestampMillis,
     pub created_by: Principal,
     pub offered_by: Principal,
@@ -77,6 +79,7 @@ impl Swap {
         Swap {
             id,
             location: args.location,
+            is_public: args.is_public,
             created_at: now,
             created_by: caller,
             offered_by,

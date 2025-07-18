@@ -14,7 +14,13 @@ fn lookup_swap_impl(args: Args, state: &RuntimeState) -> Response {
         return SwapNotFound;
     };
 
-    let accepting_principal = args.accepting_principal.unwrap_or(state.env.caller());
+    let caller = state.env.caller();
+
+    if !swap.is_public && !swap.is_admin(caller) {
+        return SwapIsPrivate;
+    }
+
+    let accepting_principal = args.accepting_principal.unwrap_or(caller);
 
     let escrow_canister_id = state.env.canister_id();
 
@@ -25,6 +31,7 @@ fn lookup_swap_impl(args: Args, state: &RuntimeState) -> Response {
     Success(Swap {
         id: swap.id,
         location: swap.location.clone(),
+        is_public: swap.is_public,
         created_at: swap.created_at,
         created_by: swap.created_by,
         offered_by: swap.offered_by,
@@ -38,5 +45,6 @@ fn lookup_swap_impl(args: Args, state: &RuntimeState) -> Response {
         expires_at: swap.expires_at,
         additional_admins: swap.additional_admins.clone(),
         canister_to_notify: swap.canister_to_notify,
+        status: swap.status(state.env.now()),
     })
 }
