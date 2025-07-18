@@ -45,7 +45,7 @@ type CreateSwapArgs = record {
     // The amount of token0 to be deposited. When making the deposit it is necessary to add the fee to this amount to cover the transaction fee for the swap or refund.
     token0_amount : nat;
 
-    // The principal of the party offering the swap. If this is not specified then the caller's principal is used.
+    // The principal of the offering account. This is where token1 will be sent if the swap completes or where token0 is refunded to. If this is not specified then the caller's principal is used.
     token0_principal : opt principal;
 
     // The token to be deposited by the accepter of the swap.
@@ -54,16 +54,16 @@ type CreateSwapArgs = record {
     // The amount of token1 to be deposited. When making the deposit it is necessary to add the fee to this amount to cover the transaction fee for the swap or refund.
     token1_amount : nat;
 
-    // The principal of the party who can accept the swap. If this is not specified then anyone can accept the swap.
+    // The principal of the accepting account. This is where token0 will be sent if the swap completes or where token1 is refunded to. If this is not specified then anyone can accept the swap.
     token1_principal : opt principal;
 
     // The swap will expire after this timestamp.
     expires_at : TimestampMillis;
 
-    // The principals of parties other than the offerer who can cancel the swap and lookup the swap details (if the swap is private).
+    // The principals of callers other than the offerer who can cancel the swap and lookup the swap details (if the swap is private).
     additional_admins : vec principal;
 
-    // If specified; this canister will be notified when the status of the swap has changed.
+    // If specified, this canister will be notified when the status of the swap has changed.
     canister_to_notify : opt CanisterId;
 
     // Determines whether anyone can call lookup_swap to see the details of the swap or whether only the creator and admins can see the details.
