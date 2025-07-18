@@ -4,7 +4,7 @@ use serde::Serialize;
 use ts_export::ts_export;
 use types::UnitResult;
 
-#[ts_export(identity, use_account_linking_code)]
+#[ts_export(identity, link_with_account_linking_code)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub code: String,
