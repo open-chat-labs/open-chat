@@ -1,10 +1,13 @@
+type AccountIdentifier = blob;
 type CanisterId = principal;
 type ChannelId = nat32;
 type ChatId = CanisterId;
 type CommunityId = CanisterId;
+type Memo = blob;
 type MessageId = nat64;
 type MessageIndex = nat32;
 type TimestampMillis = nat64;
+type TimestampNanos = nat64;
 
 type OCError = record { nat16; opt text; };
 
@@ -57,11 +60,14 @@ type CreateSwapArgs = record {
     // The swap will expire after this timestamp.
     expires_at : TimestampMillis;
 
-    // The principals of parties other than the offerer who can cancel the swap.
+    // The principals of parties other than the offerer who can cancel the swap and lookup the swap details (if the swap is private).
     additional_admins : vec principal;
 
-    // If specified, this canister will be notified when the status of the swap has changed.
+    // If specified; this canister will be notified when the status of the swap has changed.
     canister_to_notify : opt CanisterId;
+
+    // Determines whether anyone can call lookup_swap to see the details of the swap or whether only the creator and admins can see the details.
+    is_public : bool;
 };
 
 type CreateSwapResponse = variant {
@@ -124,6 +130,7 @@ type LookupSwapResponse = variant {
     Success: record {
         id : nat32;
         location : P2PSwapLocation;
+        is_public : bool;
         created_at : TimestampMillis;
         created_by : principal;
         offered_by : principal;
@@ -141,10 +148,73 @@ type LookupSwapResponse = variant {
         expires_at : TimestampMillis;
         additional_admins : vec principal;
         canister_to_notify : opt CanisterId;
+        status : SwapStatus;
     };
     SwapNotFound;
+    SwapIsPrivate;
     PrincipalNotFound;
     Error : OCError;
+};
+
+type SwapStatus = variant {
+    Open;
+    Cancelled : SwapStatusCancelled;
+    Expired : SwapStatusExpired;
+    Accepted : SwapStatusAccepted;
+    Completed : SwapStatusCompleted;
+};
+
+type SwapStatusCancelled = record {
+    cancelled_at : TimestampMillis;
+    refunds : vec CompletedCryptoTransaction;
+};
+
+type SwapStatusExpired = record {
+    refunds : vec CompletedCryptoTransaction;
+};
+
+type SwapStatusAccepted = record {
+    accepted_by : principal;
+    accepted_at : TimestampMillis;
+};
+
+type SwapStatusCompleted = record {
+    accepted_by : principal;
+    accepted_at : TimestampMillis;
+    token0_transfer_out : CompletedCryptoTransaction;
+    token1_transfer_out : CompletedCryptoTransaction;
+    refunds : vec CompletedCryptoTransaction;
+};
+
+type CompletedCryptoTransaction = record {
+    ledger : CanisterId;
+    token : Cryptocurrency;
+    amount : nat;
+    from : CryptoAccount;
+    to : CryptoAccount;
+    fee : nat;
+    memo : opt Memo;
+    created : TimestampNanos;
+    block_index : nat64;
+};
+
+type Cryptocurrency = variant {
+    InternetComputer;
+    SNS1;
+    CKBTC;
+    CHAT;
+    KINIC;
+    Other : text;
+};
+
+type CryptoAccount = variant {
+    Mint;
+    Account : Account;
+};
+
+type Account = record {
+    owner: principal;
+    subaccount: opt blob;
 };
 
 service : {

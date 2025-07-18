@@ -1,4 +1,4 @@
-use candid::{Deserialize, Principal};
+use candid::{CandidType, Deserialize, Principal};
 use icrc_ledger_types::icrc1::account::Subaccount;
 use serde::Serialize;
 use sha256::sha256;
@@ -13,7 +13,7 @@ pub use lifecycle::*;
 pub use queries::*;
 pub use updates::*;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum SwapStatus {
     Open,
     Cancelled(Box<SwapStatusCancelled>),
@@ -22,24 +22,24 @@ pub enum SwapStatus {
     Completed(Box<SwapStatusCompleted>),
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SwapStatusCancelled {
     pub cancelled_at: TimestampMillis,
     pub refunds: Vec<CompletedCryptoTransaction>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SwapStatusExpired {
     pub refunds: Vec<CompletedCryptoTransaction>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SwapStatusAccepted {
     pub accepted_by: Principal,
     pub accepted_at: TimestampMillis,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SwapStatusCompleted {
     pub accepted_by: Principal,
     pub accepted_at: TimestampMillis,

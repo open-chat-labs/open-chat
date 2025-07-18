@@ -108,6 +108,7 @@ async fn send_message_v2_impl(args: Args) -> Response {
                     expires_at: now + content.expires_in,
                     additional_admins: Vec::new(),
                     canister_to_notify: Some(args.recipient.into()),
+                    is_public: false,
                 };
                 match set_up_p2p_swap(escrow_canister_id, create_swap_args).await {
                     Ok((swap_id, pending_transaction)) => {
