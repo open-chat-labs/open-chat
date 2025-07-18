@@ -1,5 +1,5 @@
 use crate::SwapMetrics;
-use candid::{Principal, ser};
+use candid::Principal;
 use escrow_canister::{SwapStatus, SwapStatusAccepted, SwapStatusCancelled, SwapStatusCompleted, SwapStatusExpired};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
