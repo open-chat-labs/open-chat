@@ -1,5 +1,5 @@
 use crate::SwapMetrics;
-use candid::Principal;
+use candid::{Principal, ser};
 use escrow_canister::{SwapStatus, SwapStatusAccepted, SwapStatusCancelled, SwapStatusCompleted, SwapStatusExpired};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -49,6 +49,7 @@ impl Swaps {
 pub struct Swap {
     pub id: u32,
     pub location: P2PSwapLocation,
+    #[serde(default)]
     pub is_public: bool,
     pub created_at: TimestampMillis,
     pub created_by: Principal,
