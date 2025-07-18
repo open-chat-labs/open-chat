@@ -3,6 +3,7 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Deserializer, Serialize};
 
 mod access_tokens;
+mod account_linking_code;
 mod achievement;
 mod airdrop_config;
 mod avatar;
@@ -89,6 +90,7 @@ mod versioned;
 mod video_calls;
 
 pub use access_tokens::*;
+pub use account_linking_code::*;
 pub use achievement::*;
 pub use airdrop_config::*;
 pub use avatar::*;

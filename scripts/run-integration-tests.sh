@@ -49,6 +49,6 @@ function cleanup() {
 
 trap cleanup EXIT
 
-cargo test --package integration_tests $TESTNAME -- --test-threads $TEST_THREADS || exit 1
+cargo test --package integration_tests $TESTNAME -- --nocapture --test-threads $TEST_THREADS || exit 1
 
 cleanup
