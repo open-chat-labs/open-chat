@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Only `admins` can call `lookup_swap` for private swaps ([#8364](https://github.com/open-chat-labs/open-chat/pull/8364))
+
 ## [[2.0.1835](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1835-escrow)] - 2025-07-17
 
 ### Changed

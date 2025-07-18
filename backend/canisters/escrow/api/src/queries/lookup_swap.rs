@@ -1,3 +1,4 @@
+use crate::SwapStatus;
 use candid::{CandidType, Principal};
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
@@ -14,6 +15,7 @@ pub struct Args {
 pub enum Response {
     Success(Swap),
     SwapNotFound,
+    SwapIsPrivate,
     PrincipalNotFound,
     Error(OCError),
 }
@@ -22,6 +24,7 @@ pub enum Response {
 pub struct Swap {
     pub id: u32,
     pub location: P2PSwapLocation,
+    pub is_public: bool,
     pub created_at: TimestampMillis,
     pub created_by: Principal,
     pub offered_by: Principal,
@@ -35,4 +38,5 @@ pub struct Swap {
     pub expires_at: TimestampMillis,
     pub additional_admins: Vec<Principal>,
     pub canister_to_notify: Option<CanisterId>,
+    pub status: SwapStatus,
 }

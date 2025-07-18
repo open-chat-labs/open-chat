@@ -16,6 +16,8 @@ pub struct Args {
     pub expires_at: TimestampMillis,
     pub additional_admins: Vec<Principal>,
     pub canister_to_notify: Option<CanisterId>,
+    #[serde(default)]
+    pub is_public: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
