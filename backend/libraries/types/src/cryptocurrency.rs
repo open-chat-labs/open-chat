@@ -614,7 +614,8 @@ pub mod icrc1 {
             struct Inner {
                 ledger: CanisterId,
                 token: Option<Cryptocurrency>,
-                token_symbol: Option<String>,
+                #[serde(default)]
+                token_symbol: String,
                 amount: u128,
                 from: CryptoAccount,
                 to: CryptoAccount,
@@ -627,9 +628,11 @@ pub mod icrc1 {
             let inner = Inner::deserialize(deserializer)?;
             Ok(CompletedCryptoTransaction {
                 ledger: inner.ledger,
-                token_symbol: inner
-                    .token_symbol
-                    .unwrap_or_else(|| inner.token.unwrap().token_symbol().to_string()),
+                token_symbol: if inner.token_symbol.is_empty() {
+                    inner.token.unwrap().token_symbol().to_string()
+                } else {
+                    inner.token_symbol
+                },
                 amount: inner.amount,
                 from: inner.from,
                 to: inner.to,
