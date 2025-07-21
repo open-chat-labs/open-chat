@@ -566,6 +566,8 @@ async fn upgrade_canister_via_openchat_installer(
     .await
     .unwrap();
 
+    println!("Response: {response:?}");
+
     assert!(matches!(
         response,
         openchat_installer_canister::upgrade_canister::Response::Success

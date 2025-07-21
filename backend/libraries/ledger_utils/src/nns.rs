@@ -31,7 +31,7 @@ pub async fn process_transaction(
     match response {
         Ok(block_index) => Ok(Ok(CompletedCryptoTransaction::NNS(types::nns::CompletedCryptoTransaction {
             ledger: transaction.ledger,
-            token: transaction.token_symbol.into(),
+            token_symbol: transaction.token_symbol,
             amount: transaction.amount,
             fee,
             from: types::nns::CryptoAccount::Account(from),
@@ -45,7 +45,7 @@ pub async fn process_transaction(
             let error_message = format!("Transfer failed. {transfer_error:?}");
             Ok(Err(FailedCryptoTransaction::NNS(types::nns::FailedCryptoTransaction {
                 ledger: transaction.ledger,
-                token: transaction.token_symbol.into(),
+                token_symbol: transaction.token_symbol,
                 amount: transaction.amount,
                 fee,
                 from: types::nns::CryptoAccount::Account(from),

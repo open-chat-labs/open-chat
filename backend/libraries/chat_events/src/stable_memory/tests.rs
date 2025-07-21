@@ -168,7 +168,7 @@ fn crypto_content() {
         recipient: random_from_principal(&mut rng),
         transfer: CompletedCryptoTransactionInternal::ICRC1(crate::icrc1::CompletedCryptoTransactionInternal {
             ledger: random_principal(&mut rng),
-            token: CHAT_SYMBOL.to_string().into(),
+            token_symbol: CHAT_SYMBOL.to_string(),
             amount: rng.r#gen(),
             from: crate::icrc1::CryptoAccountInternal::Account(AccountInternal {
                 owner: random_principal(&mut rng),
@@ -305,7 +305,7 @@ fn prize_content() {
         .collect(),
         transaction: CompletedCryptoTransactionInternal::NNS(crate::nns::CompletedCryptoTransactionInternal {
             ledger: random_principal(&mut rng),
-            token: CHAT_SYMBOL.to_string().into(),
+            token_symbol: CHAT_SYMBOL.to_string(),
             amount: rng.r#gen(),
             fee: rng.r#gen(),
             from: crate::nns::CryptoAccountInternal::Account(rng.r#gen::<[u8; 28]>().try_into().unwrap()),

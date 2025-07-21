@@ -3,7 +3,7 @@ use crate::nns::{Tokens, UserOrAccount};
 use crate::{CanisterId, TimestampNanos, UserId};
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, Subaccount};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use ts_export::ts_export;
 
 const ICP_FEE: u128 = 10_000;
@@ -253,9 +253,9 @@ impl CompletedCryptoTransaction {
 
     pub fn token_symbol(&self) -> &str {
         match self {
-            CompletedCryptoTransaction::NNS(t) => t.token.token_symbol(),
-            CompletedCryptoTransaction::ICRC1(t) => t.token.token_symbol(),
-            CompletedCryptoTransaction::ICRC2(t) => t.token.token_symbol(),
+            CompletedCryptoTransaction::NNS(t) => t.token_symbol.as_str(),
+            CompletedCryptoTransaction::ICRC1(t) => t.token_symbol.as_str(),
+            CompletedCryptoTransaction::ICRC2(t) => t.token_symbol.as_str(),
         }
     }
 
@@ -295,9 +295,9 @@ impl FailedCryptoTransaction {
 
     pub fn token_symbol(&self) -> &str {
         match self {
-            FailedCryptoTransaction::NNS(t) => t.token.token_symbol(),
-            FailedCryptoTransaction::ICRC1(t) => t.token.token_symbol(),
-            FailedCryptoTransaction::ICRC2(t) => t.token.token_symbol(),
+            FailedCryptoTransaction::NNS(t) => t.token_symbol.as_str(),
+            FailedCryptoTransaction::ICRC1(t) => t.token_symbol.as_str(),
+            FailedCryptoTransaction::ICRC2(t) => t.token_symbol.as_str(),
         }
     }
 
@@ -370,10 +370,32 @@ pub mod nns {
     }
 
     #[ts_export]
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[derive(CandidType, Serialize, Clone, Debug)]
     pub struct CryptoAmount {
-        pub token: Cryptocurrency,
+        pub token_symbol: String,
         pub amount: Tokens,
+    }
+
+    impl<'de> Deserialize<'de> for CryptoAmount {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            #[derive(Deserialize)]
+            struct Inner {
+                token: Option<Cryptocurrency>,
+                token_symbol: Option<String>,
+                amount: Tokens,
+            }
+
+            let inner = Inner::deserialize(deserializer)?;
+            Ok(CryptoAmount {
+                token_symbol: inner
+                    .token_symbol
+                    .unwrap_or_else(|| inner.token.unwrap().token_symbol().to_string()),
+                amount: inner.amount,
+            })
+        }
     }
 
     #[ts_export]
@@ -405,11 +427,11 @@ pub mod nns {
     }
 
     #[ts_export]
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[derive(CandidType, Serialize, Clone, Debug)]
     #[ts(rename = "CompletedCryptoTransactionNNS")]
     pub struct CompletedCryptoTransaction {
         pub ledger: CanisterId,
-        pub token: Cryptocurrency,
+        pub token_symbol: String,
         pub amount: Tokens,
         pub fee: Tokens,
         pub from: CryptoAccount,
@@ -421,12 +443,50 @@ pub mod nns {
         pub block_index: u64,
     }
 
+    impl<'de> Deserialize<'de> for CompletedCryptoTransaction {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            #[derive(Deserialize)]
+            struct Inner {
+                ledger: CanisterId,
+                token: Option<Cryptocurrency>,
+                token_symbol: Option<String>,
+                amount: Tokens,
+                from: CryptoAccount,
+                to: CryptoAccount,
+                fee: Tokens,
+                memo: u64,
+                created: TimestampNanos,
+                transaction_hash: TransactionHash,
+                block_index: u64,
+            }
+
+            let inner = Inner::deserialize(deserializer)?;
+            Ok(CompletedCryptoTransaction {
+                ledger: inner.ledger,
+                token_symbol: inner
+                    .token_symbol
+                    .unwrap_or_else(|| inner.token.unwrap().token_symbol().to_string()),
+                amount: inner.amount,
+                from: inner.from,
+                to: inner.to,
+                fee: inner.fee,
+                memo: inner.memo,
+                created: inner.created,
+                block_index: inner.block_index,
+                transaction_hash: inner.transaction_hash,
+            })
+        }
+    }
+
     #[ts_export]
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[derive(CandidType, Serialize, Clone, Debug)]
     #[ts(rename = "FailedCryptoTransactionNNS")]
     pub struct FailedCryptoTransaction {
         pub ledger: CanisterId,
-        pub token: Cryptocurrency,
+        pub token_symbol: String,
         pub amount: Tokens,
         pub fee: Tokens,
         pub from: CryptoAccount,
@@ -436,6 +496,44 @@ pub mod nns {
         #[serde(default)]
         pub transaction_hash: TransactionHash,
         pub error_message: String,
+    }
+
+    impl<'de> Deserialize<'de> for FailedCryptoTransaction {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            #[derive(Deserialize)]
+            struct Inner {
+                ledger: CanisterId,
+                token: Option<Cryptocurrency>,
+                token_symbol: Option<String>,
+                amount: Tokens,
+                fee: Tokens,
+                from: CryptoAccount,
+                to: CryptoAccount,
+                memo: u64,
+                created: TimestampNanos,
+                transaction_hash: TransactionHash,
+                error_message: String,
+            }
+
+            let inner = Inner::deserialize(deserializer)?;
+            Ok(FailedCryptoTransaction {
+                ledger: inner.ledger,
+                token_symbol: inner
+                    .token_symbol
+                    .unwrap_or_else(|| inner.token.unwrap().token_symbol().to_string()),
+                amount: inner.amount,
+                fee: inner.fee,
+                from: inner.from,
+                to: inner.to,
+                memo: inner.memo,
+                created: inner.created,
+                transaction_hash: inner.transaction_hash,
+                error_message: inner.error_message,
+            })
+        }
     }
 }
 
@@ -492,11 +590,11 @@ pub mod icrc1 {
     }
 
     #[ts_export]
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[derive(CandidType, Serialize, Clone, Debug)]
     #[ts(rename = "CompletedCryptoTransactionICRC1")]
     pub struct CompletedCryptoTransaction {
         pub ledger: CanisterId,
-        pub token: Cryptocurrency,
+        pub token_symbol: String,
         pub amount: u128,
         pub from: CryptoAccount,
         pub to: CryptoAccount,
@@ -507,12 +605,48 @@ pub mod icrc1 {
         pub block_index: u64,
     }
 
+    impl<'de> Deserialize<'de> for CompletedCryptoTransaction {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            #[derive(Deserialize)]
+            struct Inner {
+                ledger: CanisterId,
+                token: Option<Cryptocurrency>,
+                token_symbol: Option<String>,
+                amount: u128,
+                from: CryptoAccount,
+                to: CryptoAccount,
+                fee: u128,
+                memo: Option<Memo>,
+                created: TimestampNanos,
+                block_index: u64,
+            }
+
+            let inner = Inner::deserialize(deserializer)?;
+            Ok(CompletedCryptoTransaction {
+                ledger: inner.ledger,
+                token_symbol: inner
+                    .token_symbol
+                    .unwrap_or_else(|| inner.token.unwrap().token_symbol().to_string()),
+                amount: inner.amount,
+                from: inner.from,
+                to: inner.to,
+                fee: inner.fee,
+                memo: inner.memo,
+                created: inner.created,
+                block_index: inner.block_index,
+            })
+        }
+    }
+
     #[ts_export]
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[derive(CandidType, Serialize, Clone, Debug)]
     #[ts(rename = "FailedCryptoTransactionICRC1")]
     pub struct FailedCryptoTransaction {
         pub ledger: CanisterId,
-        pub token: Cryptocurrency,
+        pub token_symbol: String,
         pub amount: u128,
         pub fee: u128,
         pub from: CryptoAccount,
@@ -521,6 +655,42 @@ pub mod icrc1 {
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
         pub error_message: String,
+    }
+
+    impl<'de> Deserialize<'de> for FailedCryptoTransaction {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            #[derive(Deserialize)]
+            struct Inner {
+                pub ledger: CanisterId,
+                pub token: Option<Cryptocurrency>,
+                pub token_symbol: Option<String>,
+                pub amount: u128,
+                pub fee: u128,
+                pub from: CryptoAccount,
+                pub to: CryptoAccount,
+                pub memo: Option<Memo>,
+                pub created: TimestampNanos,
+                pub error_message: String,
+            }
+
+            let inner = Inner::deserialize(deserializer)?;
+            Ok(FailedCryptoTransaction {
+                ledger: inner.ledger,
+                token_symbol: inner
+                    .token_symbol
+                    .unwrap_or_else(|| inner.token.unwrap().token_symbol().to_string()),
+                amount: inner.amount,
+                fee: inner.fee,
+                from: inner.from,
+                to: inner.to,
+                memo: inner.memo,
+                created: inner.created,
+                error_message: inner.error_message,
+            })
+        }
     }
 
     impl From<CompletedCryptoTransaction> for super::CompletedCryptoTransaction {
@@ -563,11 +733,11 @@ pub mod icrc2 {
     }
 
     #[ts_export]
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[derive(CandidType, Serialize, Clone, Debug)]
     #[ts(rename = "CompletedCryptoTransactionICRC2")]
     pub struct CompletedCryptoTransaction {
         pub ledger: CanisterId,
-        pub token: Cryptocurrency,
+        pub token_symbol: String,
         pub amount: u128,
         pub spender: UserId,
         pub from: icrc1::CryptoAccount,
@@ -579,12 +749,50 @@ pub mod icrc2 {
         pub block_index: u64,
     }
 
+    impl<'de> Deserialize<'de> for CompletedCryptoTransaction {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            #[derive(Deserialize)]
+            struct Inner {
+                ledger: CanisterId,
+                token: Option<Cryptocurrency>,
+                token_symbol: Option<String>,
+                amount: u128,
+                spender: UserId,
+                from: icrc1::CryptoAccount,
+                to: icrc1::CryptoAccount,
+                fee: u128,
+                memo: Option<Memo>,
+                created: TimestampNanos,
+                block_index: u64,
+            }
+
+            let inner = Inner::deserialize(deserializer)?;
+            Ok(CompletedCryptoTransaction {
+                ledger: inner.ledger,
+                token_symbol: inner
+                    .token_symbol
+                    .unwrap_or_else(|| inner.token.unwrap().token_symbol().to_string()),
+                amount: inner.amount,
+                spender: inner.spender,
+                from: inner.from,
+                to: inner.to,
+                fee: inner.fee,
+                memo: inner.memo,
+                created: inner.created,
+                block_index: inner.block_index,
+            })
+        }
+    }
+
     #[ts_export]
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[derive(CandidType, Serialize, Clone, Debug)]
     #[ts(rename = "FailedCryptoTransactionICRC2")]
     pub struct FailedCryptoTransaction {
         pub ledger: CanisterId,
-        pub token: Cryptocurrency,
+        pub token_symbol: String,
         pub amount: u128,
         pub fee: u128,
         pub spender: UserId,
@@ -594,6 +802,44 @@ pub mod icrc2 {
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
         pub error_message: String,
+    }
+
+    impl<'de> Deserialize<'de> for FailedCryptoTransaction {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            #[derive(Deserialize)]
+            struct Inner {
+                ledger: CanisterId,
+                token: Option<Cryptocurrency>,
+                token_symbol: Option<String>,
+                amount: u128,
+                fee: u128,
+                spender: UserId,
+                from: icrc1::CryptoAccount,
+                to: icrc1::CryptoAccount,
+                memo: Option<Memo>,
+                created: TimestampNanos,
+                error_message: String,
+            }
+
+            let inner = Inner::deserialize(deserializer)?;
+            Ok(FailedCryptoTransaction {
+                ledger: inner.ledger,
+                token_symbol: inner
+                    .token_symbol
+                    .unwrap_or_else(|| inner.token.unwrap().token_symbol().to_string()),
+                amount: inner.amount,
+                fee: inner.fee,
+                spender: inner.spender,
+                from: inner.from,
+                to: inner.to,
+                memo: inner.memo,
+                created: inner.created,
+                error_message: inner.error_message,
+            })
+        }
     }
 
     impl From<CompletedCryptoTransaction> for super::CompletedCryptoTransaction {
