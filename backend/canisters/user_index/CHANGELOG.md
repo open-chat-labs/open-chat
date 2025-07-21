@@ -6,11 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1838](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1838-user_index)] - 2025-07-21
+
 ### Changed
 
 - Introduce and backdate MemberJoined/Left events ([#8280](https://github.com/open-chat-labs/open-chat/pull/8280))
 - Log whenever a user is suspended/unsuspended ([#8337](https://github.com/open-chat-labs/open-chat/pull/8337))
-- Increase max username length from 15 to 20 ([#8338](https://github.com/open-chat-labs/open-chat/pull/8338))
+- Increase max username length from 15 to 20 ([#8340](https://github.com/open-chat-labs/open-chat/pull/8340))
 - Expose `liquid_cycles_balance` in metrics ([#8350](https://github.com/open-chat-labs/open-chat/pull/8350))
 - Add delay before retrying c2c call under certain error conditions ([#8355](https://github.com/open-chat-labs/open-chat/pull/8355))
 
