@@ -102,7 +102,10 @@ impl Swap {
     }
 
     pub fn is_admin(&self, principal: Principal) -> bool {
-        self.created_by == principal || self.additional_admins.contains(&principal)
+        self.created_by == principal
+            || self.offered_by == principal
+            || self.restricted_to.is_some_and(|restricted_to| restricted_to == principal)
+            || self.additional_admins.contains(&principal)
     }
 
     pub fn is_complete(&self) -> bool {

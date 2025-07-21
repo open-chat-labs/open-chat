@@ -188,7 +188,6 @@ type SwapStatusCompleted = record {
 
 type CompletedCryptoTransaction = record {
     ledger : CanisterId;
-    token : Cryptocurrency;
     amount : nat;
     from : CryptoAccount;
     to : CryptoAccount;
