@@ -13,7 +13,9 @@ fn create_account_linking_code(_args: Args) -> Response {
 }
 
 fn create_account_linking_code_impl(state: &mut RuntimeState) -> Response {
-    let caller_user_id = state.get_user_id_by_caller();
+    let Some(user_id) = state.get_user_id_by_caller() else {
+        return UserNotFound;
+    };
     let now = state.env.now();
     let rng = state.env.rng();
 
