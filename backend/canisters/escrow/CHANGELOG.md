@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Extend admins to include offerer and accepter ([#8366](https://github.com/open-chat-labs/open-chat/pull/8366))
+
 ## [[2.0.1836](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1836-escrow)] - 2025-07-18
 
 ### Changed
