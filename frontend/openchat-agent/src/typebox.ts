@@ -1236,7 +1236,6 @@ export const P2PSwapCancelled = Type.Object({
 export type FailedCryptoTransactionNNS = Static<typeof FailedCryptoTransactionNNS>;
 export const FailedCryptoTransactionNNS = Type.Object({
     ledger: TSPrincipal,
-    token: Cryptocurrency,
     amount: Tokens,
     fee: Tokens,
     from: CryptoAccountNNS,
@@ -4902,7 +4901,6 @@ export const CustomContent = Type.Object({
 export type FailedCryptoTransactionICRC1 = Static<typeof FailedCryptoTransactionICRC1>;
 export const FailedCryptoTransactionICRC1 = Type.Object({
     ledger: TSPrincipal,
-    token: Cryptocurrency,
     amount: Type.BigInt(),
     fee: Type.BigInt(),
     from: CryptoAccountICRC1,
@@ -5018,7 +5016,6 @@ export const DirectMessageNotification = Type.Object({
 export type CompletedCryptoTransactionNNS = Static<typeof CompletedCryptoTransactionNNS>;
 export const CompletedCryptoTransactionNNS = Type.Object({
     ledger: TSPrincipal,
-    token: Cryptocurrency,
     amount: Tokens,
     fee: Tokens,
     from: CryptoAccountNNS,
@@ -5141,7 +5138,6 @@ export const OptionUpdateOptionalMessagePermissions = Type.Union(
 export type FailedCryptoTransactionICRC2 = Static<typeof FailedCryptoTransactionICRC2>;
 export const FailedCryptoTransactionICRC2 = Type.Object({
     ledger: TSPrincipal,
-    token: Cryptocurrency,
     amount: Type.BigInt(),
     fee: Type.BigInt(),
     spender: UserId,
@@ -5400,7 +5396,6 @@ export const BotInstallationLocation = Type.Union([
 export type CompletedCryptoTransactionICRC1 = Static<typeof CompletedCryptoTransactionICRC1>;
 export const CompletedCryptoTransactionICRC1 = Type.Object({
     ledger: TSPrincipal,
-    token: Cryptocurrency,
     amount: Type.BigInt(),
     from: CryptoAccountICRC1,
     to: CryptoAccountICRC1,
@@ -6717,7 +6712,6 @@ export const BotChatContext = Type.Union([
 export type CompletedCryptoTransactionICRC2 = Static<typeof CompletedCryptoTransactionICRC2>;
 export const CompletedCryptoTransactionICRC2 = Type.Object({
     ledger: TSPrincipal,
-    token: Cryptocurrency,
     amount: Type.BigInt(),
     spender: UserId,
     from: CryptoAccountICRC1,

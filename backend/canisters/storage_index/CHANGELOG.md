@@ -6,11 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Implement ability for StorageIndex to create buckets via the CMC ([#8370](https://github.com/open-chat-labs/open-chat/pull/8370))
+
 ### Changed
 
 - Include more details in failed c2c call errors ([#7749](https://github.com/open-chat-labs/open-chat/pull/7749))
 - Expose `liquid_cycles_balance` in metrics ([#8350](https://github.com/open-chat-labs/open-chat/pull/8350))
 - Add delay before retrying c2c call under certain error conditions ([#8355](https://github.com/open-chat-labs/open-chat/pull/8355))
+- Mark buckets as full if they start having to pay reserved cycles ([#8372](https://github.com/open-chat-labs/open-chat/pull/8372))
 
 ## [[2.0.1680](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1680-storage_index)] - 2025-04-02
 

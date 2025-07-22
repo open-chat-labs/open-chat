@@ -1,23 +1,22 @@
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use human_readable::{HumanReadablePrincipal, ToHumanReadable};
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
-use types::CanisterId;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub canister_id: CanisterId,
+    pub subnet_id: Option<Principal>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
-    BucketAlreadyAdded,
-    InternalError(String),
+    Error(OCError),
 }
 
 #[derive(Serialize)]
 pub struct HumanReadableArgs {
-    canister_id: HumanReadablePrincipal,
+    subnet_id: Option<HumanReadablePrincipal>,
 }
 
 impl ToHumanReadable for Args {
@@ -25,7 +24,7 @@ impl ToHumanReadable for Args {
 
     fn to_human_readable(&self) -> Self::Target {
         HumanReadableArgs {
-            canister_id: self.canister_id.into(),
+            subnet_id: self.subnet_id.map(|p| p.into()),
         }
     }
 }
