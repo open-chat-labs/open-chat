@@ -3,13 +3,10 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{BuildVersion, CanisterId, CyclesTopUp, Hash};
 
-const TARGET_ACTIVE_BUCKETS: usize = 4;
-
 #[derive(Serialize, Deserialize, Default)]
 pub struct Buckets {
     active_buckets: Vec<BucketRecord>,
     full_buckets: HashMap<CanisterId, BucketRecord>,
-    creation_in_progress: bool,
 }
 
 impl Buckets {
@@ -28,24 +25,8 @@ impl Buckets {
         }
     }
 
-    pub fn try_to_acquire_creation_lock(&mut self) -> bool {
-        if self.creation_in_progress {
-            false
-        } else {
-            self.creation_in_progress = self.active_buckets.len() < TARGET_ACTIVE_BUCKETS;
-            self.creation_in_progress
-        }
-    }
-
-    pub fn release_creation_lock(&mut self) {
-        self.creation_in_progress = false;
-    }
-
-    pub fn add_bucket(&mut self, bucket: BucketRecord, release_creation_lock: bool) {
+    pub fn add_bucket(&mut self, bucket: BucketRecord) {
         self.active_buckets.push(bucket);
-        if release_creation_lock {
-            self.release_creation_lock();
-        }
     }
 
     pub fn allocate(&self, blob_hash: Hash, entropy: u64) -> Option<CanisterId> {

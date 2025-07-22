@@ -318,7 +318,7 @@ impl MessageContentInternal {
             }),
             MessageContentInternal::Crypto(c) => MessageContentEventPayload::Crypto(CryptoContentEventPayload {
                 caption_length: option_string_length(&c.caption),
-                token: c.transfer.token().token_symbol().to_string(),
+                token: c.transfer.token_symbol().to_string(),
                 amount: c.transfer.units(),
             }),
             MessageContentInternal::Giphy(c) => MessageContentEventPayload::Giphy(ContentWithCaptionEventPayload {
@@ -332,7 +332,7 @@ impl MessageContentInternal {
             MessageContentInternal::Prize(c) => MessageContentEventPayload::Prize(PrizeContentEventPayload {
                 caption_length: option_string_length(&c.caption),
                 prizes: (c.prizes_remaining.len() + c.winners.len() + c.reservations.len()) as u32,
-                token: c.transaction.token().token_symbol().to_string(),
+                token: c.transaction.token_symbol().to_string(),
                 amount: c.transaction.units(),
                 diamond_only: c.diamond_only,
                 lifetime_diamond_only: c.lifetime_diamond_only,
@@ -413,8 +413,7 @@ impl From<&MessageContentInternal> for Document {
                 document.add_field(&c.text);
             }
             MessageContentInternal::Crypto(c) => {
-                let token = c.transfer.token();
-                document.add_field(token.token_symbol());
+                document.add_field(c.transfer.token_symbol());
 
                 let amount = c.transfer.units();
                 // This is only used for string searching so it's better to default to 8 than to trap
@@ -439,7 +438,7 @@ impl From<&MessageContentInternal> for Document {
                 document.add_field(p.proposal.summary());
             }
             MessageContentInternal::Prize(c) => {
-                document.add_field(c.transaction.token().token_symbol());
+                document.add_field(c.transaction.token_symbol());
                 try_add_caption(&mut document, c.caption.as_ref())
             }
             MessageContentInternal::PrizeWinner(c) => {
@@ -876,11 +875,11 @@ impl CompletedCryptoTransactionInternal {
         }
     }
 
-    pub fn token(&self) -> Cryptocurrency {
+    pub fn token_symbol(&self) -> &str {
         match self {
-            CompletedCryptoTransactionInternal::NNS(t) => t.token.clone(),
-            CompletedCryptoTransactionInternal::ICRC1(t) => t.token.clone(),
-            CompletedCryptoTransactionInternal::ICRC2(t) => t.token.clone(),
+            CompletedCryptoTransactionInternal::NNS(t) => t.token_symbol.as_str(),
+            CompletedCryptoTransactionInternal::ICRC1(t) => t.token_symbol.as_str(),
+            CompletedCryptoTransactionInternal::ICRC2(t) => t.token_symbol.as_str(),
         }
     }
 
@@ -961,12 +960,12 @@ pub(crate) mod nns {
         }
     }
 
-    #[derive(Serialize, Deserialize, Clone, Debug)]
+    #[derive(Serialize, Clone, Debug)]
     pub struct CompletedCryptoTransactionInternal {
         #[serde(rename = "l", alias = "ledger")]
         pub ledger: CanisterId,
-        #[serde(rename = "k", alias = "token")]
-        pub token: Cryptocurrency,
+        #[serde(rename = "y", alias = "token_symbol")]
+        pub token_symbol: String,
         #[serde(rename = "a", alias = "amount", deserialize_with = "deserialize_amount")]
         pub amount: u64,
         #[serde(rename = "e", alias = "fee", deserialize_with = "deserialize_amount")]
@@ -983,6 +982,55 @@ pub(crate) mod nns {
         pub transaction_hash: TransactionHash,
         #[serde(rename = "i", alias = "block_index")]
         pub block_index: u64,
+    }
+
+    impl<'de> Deserialize<'de> for CompletedCryptoTransactionInternal {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            #[derive(Deserialize)]
+            struct Inner {
+                #[serde(rename = "l", alias = "ledger")]
+                ledger: CanisterId,
+                #[serde(rename = "k", alias = "token")]
+                token: Option<Cryptocurrency>,
+                #[serde(rename = "y", alias = "token_symbol")]
+                token_symbol: Option<String>,
+                #[serde(rename = "a", alias = "amount", deserialize_with = "deserialize_amount")]
+                amount: u64,
+                #[serde(rename = "e", alias = "fee", deserialize_with = "deserialize_amount")]
+                fee: u64,
+                #[serde(rename = "f", alias = "from")]
+                from: CryptoAccountInternal,
+                #[serde(rename = "t", alias = "to")]
+                to: CryptoAccountInternal,
+                #[serde(rename = "m", alias = "memo")]
+                memo: u64,
+                #[serde(rename = "c", alias = "created")]
+                created: TimestampNanos,
+                #[serde(rename = "h", alias = "transaction_hash")]
+                transaction_hash: TransactionHash,
+                #[serde(rename = "i", alias = "block_index")]
+                block_index: u64,
+            }
+
+            let inner = Inner::deserialize(deserializer)?;
+            Ok(CompletedCryptoTransactionInternal {
+                ledger: inner.ledger,
+                token_symbol: inner
+                    .token_symbol
+                    .unwrap_or_else(|| inner.token.unwrap().token_symbol().to_string()),
+                amount: inner.amount,
+                from: inner.from,
+                to: inner.to,
+                fee: inner.fee,
+                memo: inner.memo,
+                created: inner.created,
+                transaction_hash: inner.transaction_hash,
+                block_index: inner.block_index,
+            })
+        }
     }
 
     fn deserialize_amount<'de, D: Deserializer<'de>>(d: D) -> Result<u64, D::Error> {
@@ -1010,7 +1058,7 @@ pub(crate) mod nns {
         fn from(value: CompletedCryptoTransactionInternal) -> Self {
             Self {
                 ledger: value.ledger,
-                token: value.token,
+                token_symbol: value.token_symbol,
                 amount: Tokens::from_e8s(value.amount),
                 fee: Tokens::from_e8s(value.fee),
                 from: value.from.into(),
@@ -1027,7 +1075,7 @@ pub(crate) mod nns {
         fn from(value: types::nns::CompletedCryptoTransaction) -> Self {
             Self {
                 ledger: value.ledger,
-                token: value.token,
+                token_symbol: value.token_symbol,
                 amount: value.amount.e8s(),
                 fee: value.fee.e8s(),
                 from: value.from.into(),
@@ -1098,13 +1146,12 @@ pub(crate) mod icrc1 {
         }
     }
 
-    #[derive(Serialize, Deserialize, Clone, Debug)]
+    #[derive(Serialize, Clone, Debug)]
     pub struct CompletedCryptoTransactionInternal {
         #[serde(rename = "l", alias = "ledger")]
         pub ledger: CanisterId,
-        #[serde(rename = "k", alias = "token")]
-        #[expect(deprecated)]
-        pub token: Cryptocurrency,
+        #[serde(rename = "y", alias = "token_symbol")]
+        pub token_symbol: String,
         #[serde(rename = "a", alias = "amount")]
         pub amount: u128,
         #[serde(rename = "f", alias = "from")]
@@ -1121,11 +1168,57 @@ pub(crate) mod icrc1 {
         pub block_index: u64,
     }
 
+    impl<'de> Deserialize<'de> for CompletedCryptoTransactionInternal {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            #[derive(Deserialize)]
+            struct Inner {
+                #[serde(rename = "l", alias = "ledger")]
+                ledger: CanisterId,
+                #[serde(rename = "k", alias = "token")]
+                token: Option<Cryptocurrency>,
+                #[serde(rename = "y", alias = "token_symbol")]
+                token_symbol: Option<String>,
+                #[serde(rename = "a", alias = "amount")]
+                amount: u128,
+                #[serde(rename = "f", alias = "from")]
+                from: CryptoAccountInternal,
+                #[serde(rename = "t", alias = "to")]
+                to: CryptoAccountInternal,
+                #[serde(rename = "e", alias = "fee")]
+                fee: u128,
+                #[serde(rename = "m", alias = "memo", skip_serializing_if = "Option::is_none")]
+                memo: Option<ByteBuf>,
+                #[serde(rename = "c", alias = "created")]
+                created: TimestampNanos,
+                #[serde(rename = "i", alias = "block_index")]
+                block_index: u64,
+            }
+
+            let inner = Inner::deserialize(deserializer)?;
+            Ok(CompletedCryptoTransactionInternal {
+                ledger: inner.ledger,
+                token_symbol: inner
+                    .token_symbol
+                    .unwrap_or_else(|| inner.token.unwrap().token_symbol().to_string()),
+                amount: inner.amount,
+                from: inner.from,
+                to: inner.to,
+                fee: inner.fee,
+                memo: inner.memo,
+                created: inner.created,
+                block_index: inner.block_index,
+            })
+        }
+    }
+
     impl From<CompletedCryptoTransactionInternal> for types::icrc1::CompletedCryptoTransaction {
         fn from(value: CompletedCryptoTransactionInternal) -> Self {
             Self {
                 ledger: value.ledger,
-                token: value.token,
+                token_symbol: value.token_symbol,
                 amount: value.amount,
                 from: value.from.into(),
                 to: value.to.into(),
@@ -1141,7 +1234,7 @@ pub(crate) mod icrc1 {
         fn from(value: types::icrc1::CompletedCryptoTransaction) -> Self {
             Self {
                 ledger: value.ledger,
-                token: value.token,
+                token_symbol: value.token_symbol,
                 amount: value.amount,
                 from: value.from.into(),
                 to: value.to.into(),
@@ -1158,13 +1251,12 @@ pub(crate) mod icrc2 {
     use super::*;
     use crate::message_content_internal::icrc1::CryptoAccountInternal;
 
-    #[derive(Serialize, Deserialize, Clone, Debug)]
+    #[derive(Serialize, Clone, Debug)]
     pub struct CompletedCryptoTransactionInternal {
         #[serde(rename = "l", alias = "ledger")]
         pub ledger: CanisterId,
-        #[serde(rename = "k", alias = "token")]
-        #[expect(deprecated)]
-        pub token: Cryptocurrency,
+        #[serde(rename = "y", alias = "token_symbol")]
+        pub token_symbol: String,
         #[serde(rename = "a", alias = "amount")]
         pub amount: u128,
         #[serde(rename = "s", alias = "spender")]
@@ -1183,11 +1275,60 @@ pub(crate) mod icrc2 {
         pub block_index: u64,
     }
 
+    impl<'de> Deserialize<'de> for CompletedCryptoTransactionInternal {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            #[derive(Deserialize)]
+            struct Inner {
+                #[serde(rename = "l", alias = "ledger")]
+                ledger: CanisterId,
+                #[serde(rename = "k", alias = "token")]
+                token: Option<Cryptocurrency>,
+                #[serde(rename = "y", alias = "token_symbol")]
+                token_symbol: Option<String>,
+                #[serde(rename = "a", alias = "amount")]
+                amount: u128,
+                #[serde(rename = "s", alias = "spender")]
+                spender: UserId,
+                #[serde(rename = "f", alias = "from")]
+                from: CryptoAccountInternal,
+                #[serde(rename = "t", alias = "to")]
+                to: CryptoAccountInternal,
+                #[serde(rename = "e", alias = "fee")]
+                fee: u128,
+                #[serde(rename = "m", alias = "memo")]
+                memo: Option<ByteBuf>,
+                #[serde(rename = "c", alias = "created")]
+                created: TimestampNanos,
+                #[serde(rename = "i", alias = "block_index")]
+                block_index: u64,
+            }
+
+            let inner = Inner::deserialize(deserializer)?;
+            Ok(CompletedCryptoTransactionInternal {
+                ledger: inner.ledger,
+                token_symbol: inner
+                    .token_symbol
+                    .unwrap_or_else(|| inner.token.unwrap().token_symbol().to_string()),
+                amount: inner.amount,
+                spender: inner.spender,
+                from: inner.from,
+                to: inner.to,
+                fee: inner.fee,
+                memo: inner.memo,
+                created: inner.created,
+                block_index: inner.block_index,
+            })
+        }
+    }
+
     impl From<CompletedCryptoTransactionInternal> for types::icrc2::CompletedCryptoTransaction {
         fn from(value: CompletedCryptoTransactionInternal) -> Self {
             Self {
                 ledger: value.ledger,
-                token: value.token,
+                token_symbol: value.token_symbol,
                 amount: value.amount,
                 spender: value.spender,
                 from: value.from.into(),
@@ -1204,7 +1345,7 @@ pub(crate) mod icrc2 {
         fn from(value: types::icrc2::CompletedCryptoTransaction) -> Self {
             Self {
                 ledger: value.ledger,
-                token: value.token,
+                token_symbol: value.token_symbol,
                 amount: value.amount,
                 spender: value.spender,
                 from: value.from.into(),
@@ -1393,7 +1534,7 @@ impl PrizeContentInternal {
         let unclaimed_fees =
             ((unclaimed_prizes * self.fee_percent as u128) / 100) + (self.prizes_remaining.len() as u128 * transaction_fee);
         let refund = unclaimed_prizes + unclaimed_fees;
-        let token_symbol = self.transaction.token().token_symbol().to_string();
+        let token_symbol = self.transaction.token_symbol().to_string();
 
         let mut payments = Vec::new();
 
@@ -1435,7 +1576,7 @@ impl MessageContentInternalSubtype for PrizeContentInternal {
             winner_count: self.winners.len() as u32,
             user_is_winner: my_user_id.map(|u| self.winners.contains(&u)).unwrap_or_default(),
             winners: Vec::new(),
-            token_symbol: self.transaction.token().token_symbol().to_string(),
+            token_symbol: self.transaction.token_symbol().to_string(),
             ledger: self.transaction.ledger_canister_id(),
             end_date: self.end_date,
             caption: self.caption,
@@ -1474,7 +1615,7 @@ impl MessageContentInternalSubtype for PrizeWinnerContentInternal {
             winner: self.winner,
             transaction: CompletedCryptoTransaction::ICRC1(types::icrc1::CompletedCryptoTransaction {
                 ledger: self.ledger,
-                token: Cryptocurrency::Other(self.token_symbol.clone()),
+                token_symbol: self.token_symbol,
                 amount: self.amount,
                 from: types::icrc1::Account {
                     owner: Principal::anonymous(),

@@ -19,11 +19,11 @@
     },
     "author": "julian.jelfs@gmail.com",
     "dependencies": {
-        "@dfinity/agent": "^3.0.0-beta.1",
-        "@dfinity/auth-client": "^3.0.0-beta.1",
-        "@dfinity/candid": "^3.0.0-beta.1",
-        "@dfinity/identity": "^3.0.0-beta.1",
-        "@dfinity/principal": "^3.0.0-beta.1",
+        "@dfinity/agent": "^3.0.0",
+        "@dfinity/auth-client": "^3.0.0",
+        "@dfinity/candid": "^3.0.0",
+        "@dfinity/identity": "^3.0.0",
+        "@dfinity/principal": "^3.0.0",
         "drange": "^2.0.1",
         "rollbar": "^2.26.2"
     },

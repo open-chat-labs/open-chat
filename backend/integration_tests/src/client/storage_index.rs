@@ -7,6 +7,7 @@ generate_query_call!(can_forward);
 generate_query_call!(user);
 
 // Updates
+generate_update_call!(add_bucket_canister);
 generate_update_call!(add_or_update_users);
 generate_update_call!(remove_accessors);
 generate_update_call!(remove_users);
@@ -21,6 +22,22 @@ pub mod happy_path {
     use storage_index_canister::user::UserRecord;
     use types::{AccessorId, BlobReference, CanisterId, CanisterWasm};
     use utils::hasher::hash_bytes;
+
+    pub fn add_bucket_canister(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, subnet_id: Principal) {
+        let response = super::add_bucket_canister(
+            env,
+            sender,
+            canister_id,
+            &storage_index_canister::add_bucket_canister::Args {
+                subnet_id: Some(subnet_id),
+            },
+        );
+
+        assert!(matches!(
+            response,
+            storage_index_canister::add_bucket_canister::Response::Success
+        ));
+    }
 
     pub fn add_or_update_users(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, users: Vec<UserConfig>) {
         let response = super::add_or_update_users(
