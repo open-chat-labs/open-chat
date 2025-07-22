@@ -287,6 +287,8 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
             canister_id: cycles_dispenser_canister_id,
             min_cycles_balance: 200 * T,
         },
+        icp_ledger_canister_id: nns_ledger_canister_id,
+        cmc_canister_id: cycles_minting_canister_id,
         wasm_version,
         test_mode,
     };

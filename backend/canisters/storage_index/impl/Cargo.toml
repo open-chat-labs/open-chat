@@ -17,12 +17,16 @@ canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 constants = { path = "../../../libraries/constants" }
 cycles_dispenser_client = { path = "../../../libraries/cycles_dispenser_client" }
+cycles_minting_canister = { path = "../../../external_canisters/cmc/api" }
+cycles_minting_canister_c2c_client = { path = "../../../external_canisters/cmc/c2c_client" }
 futures = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
 human_readable = { path = "../../../libraries/human_readable" }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
+ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
+icp_ledger_canister_c2c_client = { path = "../../../external_canisters/icp_ledger/c2c_client" }
 json = { path = "../../../libraries/json" }
 msgpack = { path = "../../../libraries/msgpack" }
 rand = { workspace = true }
