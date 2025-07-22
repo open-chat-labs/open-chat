@@ -27,7 +27,7 @@ pub async fn process_transaction(
     Ok(match response {
         Ok(block_index) => Ok(CompletedCryptoTransaction {
             ledger: transaction.ledger,
-            token: transaction.token_symbol.into(),
+            token_symbol: transaction.token_symbol,
             amount: transaction.amount,
             fee: transaction.fee,
             from: from.into(),
@@ -38,7 +38,7 @@ pub async fn process_transaction(
         }),
         Err(error_message) => Err(FailedCryptoTransaction {
             ledger: transaction.ledger,
-            token: transaction.token_symbol.into(),
+            token_symbol: transaction.token_symbol,
             amount: transaction.amount,
             fee: transaction.fee,
             from: from.into(),
