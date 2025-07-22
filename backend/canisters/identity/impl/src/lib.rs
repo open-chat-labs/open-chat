@@ -20,7 +20,7 @@ use serde_bytes::ByteBuf;
 use sha256::sha256;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
-use types::AccountLinkingCode;
+use types::AccountLinkingCodes;
 use types::{BuildVersion, CanisterId, Cycles, Milliseconds, OCResult, TimestampMillis, Timestamped, UserId};
 use utils::env::Environment;
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
@@ -200,7 +200,7 @@ struct Data {
     challenges: Challenges,
     test_mode: bool,
     #[serde(default)]
-    account_linking_codes: HashMap<String, AccountLinkingCode>,
+    account_linking_codes: AccountLinkingCodes,
 }
 
 impl Data {
@@ -230,7 +230,7 @@ impl Data {
             rng_seed: [0; 32],
             challenges: Challenges::default(),
             test_mode,
-            account_linking_codes: HashMap::new(),
+            account_linking_codes: AccountLinkingCodes::default(),
         }
     }
 

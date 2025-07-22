@@ -10,9 +10,7 @@ fn main() {
     generate_ts_method!(identity, auth_principals);
     generate_ts_method!(identity, check_auth_principal_v2);
     generate_ts_method!(identity, get_delegation);
-    generate_ts_method!(identity, get_account_linking_code);
     generate_ts_method!(identity, lookup_webauthn_pubkey);
-    generate_ts_method!(identity, verify_account_linking_code);
 
     generate_ts_method!(identity, approve_identity_link);
     generate_ts_method!(identity, create_identity);

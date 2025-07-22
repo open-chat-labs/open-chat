@@ -5,8 +5,6 @@ use identity_canister::*;
 generate_msgpack_query_call!(auth_principals);
 generate_msgpack_query_call!(check_auth_principal_v2);
 generate_msgpack_query_call!(get_delegation);
-generate_msgpack_query_call!(get_account_linking_code);
-generate_msgpack_query_call!(verify_account_linking_code);
 // Updates
 generate_msgpack_update_call!(accept_identity_link_via_qr_code);
 generate_msgpack_update_call!(approve_identity_link);

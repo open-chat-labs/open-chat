@@ -3,9 +3,7 @@ use crate::env::ENV;
 use crate::utils::now_millis;
 use crate::{TestEnv, client};
 use identity_canister::create_account_linking_code::Response as CreateAccountLinkingCodeResponse;
-use identity_canister::get_account_linking_code::Response as GetAccountLinkingCodeResponse;
 use identity_canister::link_with_account_linking_code::Response as LinkWithAccountLinkingCodeResponse;
-use identity_canister::verify_account_linking_code::Response as VerifyAccountLinkingCodeResponse;
 use std::ops::Deref;
 use testing::rng::random_delegated_principal;
 
@@ -16,18 +14,6 @@ fn test_account_linking_create_link_code() {
 
     // Original user that will create the linking code
     let (user, user_auth) = register_user_and_include_auth(env, canister_ids);
-
-    //
-    // ---- Check that there's no code initially ----
-    //
-    let get_linking_code_response = client::identity::get_account_linking_code(
-        env,
-        user_auth.auth_principal,
-        canister_ids.identity,
-        &identity_canister::get_account_linking_code::Args {},
-    );
-
-    assert_eq!(get_linking_code_response, GetAccountLinkingCodeResponse::NotFound);
 
     //
     // ---- Create a linking code ----
@@ -51,42 +37,25 @@ fn test_account_linking_create_link_code() {
     //
     // ---- Fetch the linking code again to ensure it's the same ----
     //
-    let get_linking_code_response = client::identity::get_account_linking_code(
+
+    let repeated_linking_code_response = client::identity::create_account_linking_code(
         env,
         user_auth.auth_principal,
         canister_ids.identity,
-        &identity_canister::get_account_linking_code::Args {},
+        &identity_canister::create_account_linking_code::Args {},
     );
 
-    let fetched_linking_code = match get_linking_code_response {
-        GetAccountLinkingCodeResponse::Success(code) => code,
-        response => panic!("'get_account_linking_code' error: {response:?}"),
+    match repeated_linking_code_response {
+        CreateAccountLinkingCodeResponse::Success(repeated_linking_code) => {
+            assert_eq!(repeated_linking_code, created_linking_code)
+        }
+        response => panic!("'create_account_linking_code' error: {response:?}"),
     };
-
-    assert_eq!(fetched_linking_code, created_linking_code);
 
     //
     // ---- Initialise new identity to link ----
     //
     let (new_principal, new_pub_key) = random_delegated_principal(canister_ids.sign_in_with_email);
-
-    //
-    // ---- Verify that the linking code can be used to link accounts ----
-    //
-
-    // In a real scenario, to avoid running an update call, we first verify
-    // that the linking code is valid with a query. Only after that we proceed
-    // to link the accounts using an update call.
-    let VerifyAccountLinkingCodeResponse(verify_success) = client::identity::verify_account_linking_code(
-        env,
-        new_principal,
-        canister_ids.identity,
-        &identity_canister::verify_account_linking_code::Args {
-            code: created_linking_code.value.clone(),
-        },
-    );
-
-    assert!(verify_success);
 
     //
     // ---- Link account auth methods using the code ----
@@ -108,15 +77,11 @@ fn test_account_linking_create_link_code() {
     }
 
     //
-    // ---- Verify that the linking code is not returned anymore ----
-    //      (code has been removed from the map of active codes)
+    // ---- Verify that the linking is successful by querying for it ----
     //
-    let get_linking_code_response = client::identity::get_account_linking_code(
-        env,
-        user_auth.auth_principal,
-        canister_ids.identity,
-        &identity_canister::get_account_linking_code::Args {},
-    );
+    let auth_principals_response = client::identity::happy_path::auth_principals(env, new_principal, canister_ids.identity);
 
-    assert_eq!(get_linking_code_response, GetAccountLinkingCodeResponse::NotFound);
+    assert_eq!(auth_principals_response.len(), 2);
+    assert_eq!(auth_principals_response.first().unwrap().is_ii_principal, true);
+    assert_eq!(auth_principals_response.last().unwrap().is_ii_principal, false);
 }
