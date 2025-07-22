@@ -28,7 +28,9 @@ pub mod happy_path {
             env,
             sender,
             canister_id,
-            &storage_index_canister::add_bucket_canister::Args { subnet_id },
+            &storage_index_canister::add_bucket_canister::Args {
+                subnet_id: Some(subnet_id),
+            },
         );
 
         assert!(matches!(

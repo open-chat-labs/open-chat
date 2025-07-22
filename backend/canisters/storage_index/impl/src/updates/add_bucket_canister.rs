@@ -69,7 +69,7 @@ fn prepare(state: &RuntimeState) -> PrepareResult {
 async fn create_canister(
     ledger: CanisterId,
     cmc: CanisterId,
-    subnet: Principal,
+    subnet: Option<Principal>,
     this_canister_id: Principal,
     now: TimestampMillis,
 ) -> Result<CanisterId, C2CError> {
@@ -94,7 +94,7 @@ async fn create_canister(
         &cycles_minting_canister::notify_create_canister::Args {
             block_index,
             controller: this_canister_id,
-            subnet_selection: Some(SubnetSelection::Subnet(Subnet { subnet })),
+            subnet_selection: subnet.map(|s| SubnetSelection::Subnet(Subnet { subnet: s })),
         },
     )
     .await?

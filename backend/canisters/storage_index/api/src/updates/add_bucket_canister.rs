@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub subnet_id: Principal,
+    pub subnet_id: Option<Principal>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -16,7 +16,7 @@ pub enum Response {
 
 #[derive(Serialize)]
 pub struct HumanReadableArgs {
-    subnet_id: HumanReadablePrincipal,
+    subnet_id: Option<HumanReadablePrincipal>,
 }
 
 impl ToHumanReadable for Args {
@@ -24,7 +24,7 @@ impl ToHumanReadable for Args {
 
     fn to_human_readable(&self) -> Self::Target {
         HumanReadableArgs {
-            subnet_id: self.subnet_id.into(),
+            subnet_id: self.subnet_id.map(|p| p.into()),
         }
     }
 }
