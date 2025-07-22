@@ -23,7 +23,7 @@ pub async fn process_transaction(
     Ok(match response {
         Ok(block_index) => Ok(CompletedCryptoTransaction {
             ledger: transaction.ledger,
-            token: transaction.token_symbol.into(),
+            token_symbol: transaction.token_symbol,
             amount: transaction.amount,
             fee: transaction.fee,
             spender: sender.into(),
@@ -43,7 +43,7 @@ pub async fn process_transaction(
             let error_message = format!("Transfer failed. {transfer_error:?}");
             Err(FailedCryptoTransaction {
                 ledger: transaction.ledger,
-                token: transaction.token_symbol.into(),
+                token_symbol: transaction.token_symbol,
                 amount: transaction.amount,
                 fee: transaction.fee,
                 spender: sender.into(),
