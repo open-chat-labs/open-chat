@@ -82,6 +82,6 @@ fn test_account_linking_create_link_code() {
     let auth_principals_response = client::identity::happy_path::auth_principals(env, new_principal, canister_ids.identity);
 
     assert_eq!(auth_principals_response.len(), 2);
-    assert_eq!(auth_principals_response.first().unwrap().is_ii_principal, true);
-    assert_eq!(auth_principals_response.last().unwrap().is_ii_principal, false);
+    assert!(auth_principals_response.first().unwrap().is_ii_principal);
+    assert!(!auth_principals_response.last().unwrap().is_ii_principal);
 }
