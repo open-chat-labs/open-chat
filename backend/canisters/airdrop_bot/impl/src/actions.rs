@@ -156,8 +156,7 @@ async fn handle_transfer_action(action: AirdropTransfer) -> Result<(), Option<Mi
                     recipient: action.recipient,
                     transaction: CompletedCryptoTransaction::ICRC1(icrc1::CompletedCryptoTransaction {
                         ledger: ledger_canister_id,
-                        #[expect(deprecated)]
-                        token: types::Cryptocurrency::CHAT,
+                        token_symbol: "CHAT".to_string(),
                         amount: action.amount,
                         fee,
                         from: Account::from(this_canister_id).into(),

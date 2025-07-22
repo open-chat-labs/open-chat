@@ -57,7 +57,7 @@ async fn process_payment(pending_payment: PendingPayment) {
             if let Some(swap) = state.data.swaps.get_mut(pending_payment.swap_id) {
                 let transfer = CompletedCryptoTransaction {
                     ledger: pending_payment.token_info.ledger,
-                    token: pending_payment.token_info.symbol.into(),
+                    token_symbol: pending_payment.token_info.symbol,
                     amount: pending_payment.amount,
                     from: Account {
                         owner: state.env.canister_id(),

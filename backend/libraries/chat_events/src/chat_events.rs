@@ -1059,7 +1059,7 @@ impl ChatEvents {
         content.reservations.insert(user_id);
 
         Ok(ReservePrizeSuccess {
-            token_symbol: content.transaction.token().token_symbol().to_string(),
+            token_symbol: content.transaction.token_symbol().to_string(),
             ledger_canister_id,
             amount,
             fee,
