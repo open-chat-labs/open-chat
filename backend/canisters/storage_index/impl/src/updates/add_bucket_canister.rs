@@ -38,7 +38,7 @@ async fn add_bucket_canister(args: Args) -> Response {
     }
 
     let bucket = BucketRecord::new(canister_id, wasm_version);
-    mutate_state(|state| state.data.add_bucket(bucket, false));
+    mutate_state(|state| state.data.add_bucket(bucket));
     Success
 }
 

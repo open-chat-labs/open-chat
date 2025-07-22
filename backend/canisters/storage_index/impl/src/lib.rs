@@ -220,12 +220,12 @@ impl Data {
         }
     }
 
-    pub fn add_bucket(&mut self, bucket: BucketRecord, release_creation_lock: bool) {
+    pub fn add_bucket(&mut self, bucket: BucketRecord) {
         self.bucket_event_sync_queue.push_many(
             bucket.canister_id,
             self.users.keys().map(|p| EventToSync::UserAdded(*p)).collect(),
         );
-        self.buckets.add_bucket(bucket, release_creation_lock);
+        self.buckets.add_bucket(bucket);
     }
 }
 
