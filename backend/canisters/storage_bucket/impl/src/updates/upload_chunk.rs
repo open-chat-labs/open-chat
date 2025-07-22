@@ -2,7 +2,7 @@ use crate::guards::caller_is_known_user;
 use crate::model::files::{PutChunkArgs, PutChunkResult};
 use crate::model::index_event_batch::EventToSync;
 use crate::model::users::{FileStatusInternal, IndexSyncComplete};
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, check_cycles_balance, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use storage_bucket_canister::upload_chunk_v2::{Response::*, *};
@@ -12,6 +12,8 @@ use utils::file_id::validate_file_id;
 #[update(guard = "caller_is_known_user", candid = true, json = true, msgpack = true)]
 #[trace]
 fn upload_chunk_v2(args: Args) -> Response {
+    check_cycles_balance();
+
     mutate_state(|state| upload_chunk_impl(args, state))
 }
 
