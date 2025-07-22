@@ -494,6 +494,15 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         10 * 100_000_000,
     );
 
+    // Top up StorageIndex with 10 ICP
+    client::ledger::happy_path::transfer(
+        env,
+        controller,
+        nns_ledger_canister_id,
+        storage_index_canister_id,
+        10 * 100_000_000,
+    );
+
     let subnet = client::registry::happy_path::expand_onto_subnet(env, controller, registry_canister_id, application_subnet);
 
     let airdrop_bot_init_args = airdrop_bot_canister::init::Args {
@@ -512,6 +521,8 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         airdrop_bot_canister_wasm,
         airdrop_bot_init_args,
     );
+
+    client::storage_index::happy_path::add_bucket_canister(env, controller, storage_index_canister_id, application_subnet);
 
     // Tick a load of times so that all the child canisters have time to get installed
     tick_many(env, 10);
