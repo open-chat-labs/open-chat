@@ -9,6 +9,8 @@
         "approvePaymentTitle": "Phê duyệt thanh toán",
         "bypassWarning": "Bất kỳ người dùng nào được mời rõ ràng vào {level} này sẽ không cần phải vượt qua cổng truy cập",
         "cannotMakePublic": "Bạn không thể công khai {level} riêng tư vì điều đó sẽ gây rủi ro cho quyền riêng tư của các thành viên hiện có.",
+        "chitEarnedGate": "Số CHIT tối thiểu kiếm được",
+        "chitEarnedGateInfo": "Người dùng chỉ có thể tham gia nếu họ đã kiếm đủ CHIT",
         "chooseGate": "Chọn một cổng truy cập",
         "chooseNervousSystem": "Chọn hệ thần kinh",
         "chooseOneGate": "Chọn một cổng",
@@ -67,6 +69,7 @@
         "minimumBalanceInfo": "Người dùng chỉ có thể tham gia nếu họ có số dư token tối thiểu",
         "minimumBalanceInfo2": "Người dùng chỉ có thể tham gia nếu họ có ít nhất mã thông báo {n} {token} trong ví của mình",
         "minimumBalanceN": "Số dư tối thiểu của mã thông báo {n}",
+        "minimumChitEarned": "Số CHIT tối thiểu kiếm được",
         "minimumTokenBalance": "Số dư tối thiểu {token}",
         "minStake": "Cổ phần tối thiểu (token)",
         "minStakeN": "Cổ phần tối thiểu {n} mã thông báo",
@@ -1080,20 +1083,25 @@
     "messageUrlCopiedToClipboard": "Đã sao chép url tin nhắn vào khay nhớ tạm!",
     "minimumAmount": "Tối thiểu: {amount} {symbol}",
     "minutes": "Phút",
-    "mobile": {
-        "credentials": {
-            "errors": {
-                "genericSignIn": "Không thể đăng nhập bằng mã khóa.",
-                "genericSignUp": "Không thể tạo mã khóa."
-            }
-        }
-    },
     "moderator": "người điều hành",
     "months": "Tháng",
     "mustBeFutureDateError": "Bạn phải chọn một ngày trong tương lai",
     "muted": "Đã tắt tiếng",
     "muteNotifications": "Ẩn thông báo",
     "myAccount": "Tài khoản",
+    "native": {
+        "auth": {
+            "createAccount": "Tạo tài khoản mới",
+            "error": "Xác thực không thành công. Vui lòng thử lại.",
+            "existingAccount": "Tôi là người dùng hiện tại",
+            "linkAccount": {
+                "cta": "Liên kết tài khoản",
+                "info": "Để liên kết với tài khoản OpenChat hiện tại của bạn, vui lòng nhập mật khẩu một lần bên dưới.",
+                "note": "Mật khẩu một lần có thể được tìm thấy trong hồ sơ của bạn/nâng cao, trên thiết bị mà bạn hiện đang đăng nhập.",
+                "title": "Liên kết với tài khoản hiện có"
+            }
+        }
+    },
     "new": "Mới",
     "newChat": "Cuộc trò truyện mới",
     "newGroup": "Nhóm mới",

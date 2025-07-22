@@ -9,7 +9,7 @@
         "approvePaymentTitle": "Approve payment",
         "bypassWarning": "Any users who are explicitly invited to this {level} will not be required to pass the access gates",
         "cannotMakePublic": "You cannot make a private {level} public as that would risk the privacy of the existing members.",
-        "chitEarnedGate": "CHIT Earned",
+        "chitEarnedGate": "Minimum CHIT Earned",
         "chitEarnedGateInfo": "Users can only join if they have earned enough CHIT",
         "chooseGate": "Access gate type",
         "chooseNervousSystem": "Choose nervous system",
@@ -65,11 +65,11 @@
         "messagesVisibleToNonMembers": "Messages can be previewed by non-members",
         "minDissolveDelay": "Min dissolve delay (days)",
         "minDissolveDelayN": "Min dissolve delay {n} days",
-        "minimumChitEarned": "Minimum CHIT earned",
         "minimumBalance": "Minimum token balance",
         "minimumBalanceInfo": "Users can only join if they have a minimum balance of tokens",
         "minimumBalanceInfo2": "Users can only join if they have at least {n} {token} tokens in their wallet",
         "minimumBalanceN": "Minimum balance of {n} tokens",
+        "minimumChitEarned": "Minimum CHIT earned",
         "minimumTokenBalance": "Minimum {token} balance",
         "minStake": "Min stake (tokens)",
         "minStakeN": "Min stake {n} tokens",
@@ -1083,25 +1083,25 @@
     "messageUrlCopiedToClipboard": "Message url copied to clipboard!",
     "minimumAmount": "Minimum: {amount} {symbol}",
     "minutes": "Minutes",
-    "native": {
-        "auth": {
-            "createAccount": "Create new account",
-            "existingAccount": "I'm an existing user",
-            "linkAccount": {
-                "title": "Link with existing account",
-                "info": "To link with your existing OpenChat account, please enter your one-time-password below.",
-                "note": "One-time-password can be found under your profile / advanced, on a device where you are currently signed in.",
-                "cta": "Link account"
-            },
-            "error": "Authentication failed. Please try again."
-        }
-    },
     "moderator": "moderator",
     "months": "Months",
     "mustBeFutureDateError": "You must select a future date",
     "muted": "muted",
     "muteNotifications": "Mute notifications",
     "myAccount": "My account",
+    "native": {
+        "auth": {
+            "createAccount": "Create new account",
+            "error": "Authentication failed. Please try again.",
+            "existingAccount": "I'm an existing user",
+            "linkAccount": {
+                "cta": "Link account",
+                "info": "To link with your existing OpenChat account, please enter your one-time-password below.",
+                "note": "One-time-password can be found under your profile / advanced, on a device where you are currently signed in.",
+                "title": "Link with existing account"
+            }
+        }
+    },
     "new": "new",
     "newChat": "New chat",
     "newGroup": "New group",

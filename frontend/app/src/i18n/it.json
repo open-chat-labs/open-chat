@@ -9,6 +9,8 @@
         "approvePaymentTitle": "Approva il pagamento",
         "bypassWarning": "A tutti gli utenti esplicitamente invitati a questo {level} non verrà richiesto di superare le porte di accesso",
         "cannotMakePublic": "Non puoi rendere pubblico un {level} privato in quanto ciò metterebbe a rischio la privacy dei membri esistenti.",
+        "chitEarnedGate": "CHIT minimo guadagnato",
+        "chitEarnedGateInfo": "Gli utenti possono iscriversi solo se hanno guadagnato abbastanza CHIT",
         "chooseGate": "Scegli un varco di accesso",
         "chooseNervousSystem": "Scegli il sistema nervoso",
         "chooseOneGate": "Scegli un cancello",
@@ -67,6 +69,7 @@
         "minimumBalanceInfo": "Gli utenti possono iscriversi solo se dispongono di un saldo minimo di token",
         "minimumBalanceInfo2": "Gli utenti possono partecipare solo se hanno almeno {n} token {token} nel proprio portafoglio",
         "minimumBalanceN": "Saldo minimo di token {n}",
+        "minimumChitEarned": "CHIT minimo guadagnato",
         "minimumTokenBalance": "Saldo minimo {token}",
         "minStake": "Puntata minima (token)",
         "minStakeN": "Puntata minima {n} gettoni",
@@ -1080,20 +1083,25 @@
     "messageUrlCopiedToClipboard": "URL del messaggio copiato negli appunti!",
     "minimumAmount": "Minimo: {amount} {symbol}",
     "minutes": "Minuti",
-    "mobile": {
-        "credentials": {
-            "errors": {
-                "genericSignIn": "Impossibile accedere con una passkey.",
-                "genericSignUp": "Impossibile creare una passkey."
-            }
-        }
-    },
     "moderator": "moderatore",
     "months": "Mesi",
     "mustBeFutureDateError": "Devi selezionare una data futura",
     "muted": "muto",
     "muteNotifications": "Notifiche mute",
     "myAccount": "Il mio account",
+    "native": {
+        "auth": {
+            "createAccount": "Crea un nuovo account",
+            "error": "Autenticazione non riuscita. Riprova.",
+            "existingAccount": "Sono un utente esistente",
+            "linkAccount": {
+                "cta": "Collega account",
+                "info": "Per effettuare il collegamento al tuo account OpenChat esistente, inserisci la tua password monouso qui sotto.",
+                "note": "La password monouso si trova nella sezione \"Profilo/Avanzate\" del dispositivo su cui hai effettuato l'accesso.",
+                "title": "Collegamento con account esistente"
+            }
+        }
+    },
     "new": "nuovo",
     "newChat": "Nuova chat",
     "newGroup": "Nuovo gruppo",

@@ -9,6 +9,8 @@
         "approvePaymentTitle": "Approuver le paiement",
         "bypassWarning": "Les utilisateurs explicitement invités à ce {level} ne seront pas tenus de franchir les portes d'accès.",
         "cannotMakePublic": "Vous ne pouvez pas rendre public un {level} privé car cela mettrait en danger la vie privée des membres existants.",
+        "chitEarnedGate": "CHIT minimum gagné",
+        "chitEarnedGateInfo": "Les utilisateurs ne peuvent adhérer que s'ils ont gagné suffisamment de CHIT",
         "chooseGate": "Choisissez une porte d'accès",
         "chooseNervousSystem": "Choisissez le système nerveux",
         "chooseOneGate": "Choisissez un portail",
@@ -67,6 +69,7 @@
         "minimumBalanceInfo": "Les utilisateurs ne peuvent adhérer que s'ils disposent d'un solde minimum de jetons",
         "minimumBalanceInfo2": "Les utilisateurs ne peuvent s'inscrire que s'ils ont au moins {n} {token} jetons dans leur portefeuille.",
         "minimumBalanceN": "Solde minimum de {n} jetons",
+        "minimumChitEarned": "CHIT minimum gagné",
         "minimumTokenBalance": "Solde minimum de {token}",
         "minStake": "Mise minimale (jetons)",
         "minStakeN": "Mise minimale {n} jetons",
@@ -1080,20 +1083,25 @@
     "messageUrlCopiedToClipboard": "URL du message copiée dans le presse-papier !",
     "minimumAmount": "Minimum: {amount} {symbol}",
     "minutes": "Minutes",
-    "mobile": {
-        "credentials": {
-            "errors": {
-                "genericSignIn": "Impossible de se connecter avec un mot de passe.",
-                "genericSignUp": "Impossible de créer une clé d'accès."
-            }
-        }
-    },
     "moderator": "modérateur",
     "months": "Mois",
     "mustBeFutureDateError": "Vous devez sélectionner une date future",
     "muted": "en sourdine",
     "muteNotifications": "Désactiver les notifications",
     "myAccount": "Mon compte",
+    "native": {
+        "auth": {
+            "createAccount": "Créer un nouveau compte",
+            "error": "Échec de l'authentification. Veuillez réessayer.",
+            "existingAccount": "Je suis un utilisateur existant",
+            "linkAccount": {
+                "cta": "Lier le compte",
+                "info": "Pour vous connecter à votre compte OpenChat existant, veuillez saisir votre mot de passe à usage unique ci-dessous.",
+                "note": "Le mot de passe à usage unique se trouve sous votre profil / avancé, sur un appareil sur lequel vous êtes actuellement connecté.",
+                "title": "Lien avec un compte existant"
+            }
+        }
+    },
     "new": "Nouveau",
     "newChat": "Nouvelle conversation",
     "newGroup": "Nouveau groupe",

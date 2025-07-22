@@ -9,6 +9,8 @@
         "approvePaymentTitle": "الموافقة على الدفع",
         "bypassWarning": "لن يُطلب من أي مستخدمين تمت دعوتهم صراحةً إلى هذا {level} عبور بوابات الوصول",
         "cannotMakePublic": "لا يمكنك جعل {level} خاصًا عامًا لأن ذلك من شأنه تعريض خصوصية الأعضاء الحاليين للخطر.",
+        "chitEarnedGate": "الحد الأدنى من CHIT المكتسبة",
+        "chitEarnedGateInfo": "لا يمكن للمستخدمين الانضمام إلا إذا حصلوا على ما يكفي من CHIT",
         "chooseGate": "نوع بوابة الوصول",
         "chooseNervousSystem": "اختر الجهاز العصبي",
         "chooseOneGate": "اختر البوابة",
@@ -67,6 +69,7 @@
         "minimumBalanceInfo": "لا يمكن للمستخدمين الانضمام إلا إذا كان لديهم حد أدنى من رصيد الرموز",
         "minimumBalanceInfo2": "لا يمكن للمستخدمين الانضمام إلا إذا كان لديهم على الأقل {n} {token} رمز في محفظتهم",
         "minimumBalanceN": "الحد الأدنى لرصيد {n} من الرموز",
+        "minimumChitEarned": "الحد الأدنى من CHIT المكتسبة",
         "minimumTokenBalance": "الحد الأدنى للرصيد {token}",
         "minStake": "الحد الأدنى للرهان (الرموز)",
         "minStakeN": "الحد الأدنى للرهان {n} من الرموز",
@@ -1080,20 +1083,25 @@
     "messageUrlCopiedToClipboard": "تم نسخ عنوان الرسالة إلى الحافظة!",
     "minimumAmount": "الحد الأدنى: {amount} {symbol}",
     "minutes": "دقائق",
-    "mobile": {
-        "credentials": {
-            "errors": {
-                "genericSignIn": "لم أتمكن من تسجيل الدخول باستخدام مفتاح المرور.",
-                "genericSignUp": "لم يتمكن من إنشاء مفتاح المرور."
-            }
-        }
-    },
     "moderator": "المشرف",
     "months": "شهور",
     "mustBeFutureDateError": "يجب عليك تحديد تاريخ مستقبلي",
     "muted": "مكتوم",
     "muteNotifications": "كتم صوت الإشعارات",
     "myAccount": "حسابي",
+    "native": {
+        "auth": {
+            "createAccount": "إنشاء حساب جديد",
+            "error": "فشل المصادقة. يُرجى المحاولة مرة أخرى.",
+            "existingAccount": "أنا مستخدم موجود",
+            "linkAccount": {
+                "cta": "ربط الحساب",
+                "info": "للربط بحساب OpenChat الحالي لديك، يرجى إدخال كلمة المرور الخاصة بك لمرة واحدة أدناه.",
+                "note": "يمكنك العثور على كلمة المرور لمرة واحدة ضمن ملفك الشخصي / المتقدم، على الجهاز الذي قمت بتسجيل الدخول إليه حاليًا.",
+                "title": "ربط مع الحساب الحالي"
+            }
+        }
+    },
     "new": "جديد",
     "newChat": "دردشة جديدة",
     "newGroup": "مجموعة جديدة",
