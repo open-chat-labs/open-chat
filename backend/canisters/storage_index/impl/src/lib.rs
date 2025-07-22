@@ -3,6 +3,7 @@ use crate::model::buckets::{BucketRecord, Buckets};
 use crate::model::files::Files;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
+use constants::ICP_LEDGER_CANISTER_ID;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -91,6 +92,11 @@ impl RuntimeState {
             bucket_canister_wasm: self.data.bucket_canister_wasm.version,
             cycles_dispenser_config: self.data.cycles_dispenser_config.clone(),
             stable_memory_sizes: memory::memory_sizes(),
+            canister_ids: CanisterIds {
+                cycles_dispenser: self.data.cycles_dispenser_config.canister_id,
+                icp_ledger: self.data.icp_ledger_canister_id,
+                cmc: self.data.cycles_minting_canister_id,
+            },
         }
     }
 }
@@ -107,8 +113,20 @@ struct Data {
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_config: CyclesDispenserConfig,
+    #[serde(default = "icp_ledger_canister_id")]
+    pub icp_ledger_canister_id: CanisterId,
+    #[serde(default = "cycles_minting_canister_id")]
+    pub cycles_minting_canister_id: CanisterId,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
+}
+
+fn icp_ledger_canister_id() -> CanisterId {
+    ICP_LEDGER_CANISTER_ID
+}
+
+fn cycles_minting_canister_id() -> CanisterId {
+    CanisterId::from_text("rkp4c-7iaaa-aaaaa-aaaca-cai").unwrap()
 }
 
 impl Data {
@@ -117,6 +135,8 @@ impl Data {
         governance_principals: Vec<Principal>,
         bucket_canister_wasm: CanisterWasm,
         cycles_dispenser_config: CyclesDispenserConfig,
+        icp_ledger_canister_id: CanisterId,
+        cycles_minting_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -130,6 +150,8 @@ impl Data {
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             total_cycles_spent_on_canisters: 0,
             cycles_dispenser_config,
+            icp_ledger_canister_id,
+            cycles_minting_canister_id,
             rng_seed: [0; 32],
             test_mode,
         }
@@ -198,12 +220,12 @@ impl Data {
         }
     }
 
-    pub fn add_bucket(&mut self, bucket: BucketRecord, release_creation_lock: bool) {
+    pub fn add_bucket(&mut self, bucket: BucketRecord) {
         self.bucket_event_sync_queue.push_many(
             bucket.canister_id,
             self.users.keys().map(|p| EventToSync::UserAdded(*p)).collect(),
         );
-        self.buckets.add_bucket(bucket, release_creation_lock);
+        self.buckets.add_bucket(bucket);
     }
 }
 
@@ -238,6 +260,7 @@ pub struct Metrics {
     pub bucket_canister_wasm: BuildVersion,
     pub cycles_dispenser_config: CyclesDispenserConfig,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
+    pub canister_ids: CanisterIds,
 }
 
 #[derive(CandidType, Serialize, Debug)]
@@ -251,4 +274,11 @@ pub struct BucketMetrics {
     #[serde(default)]
     pub total_file_bytes: u64,
     pub cycle_top_ups: u128,
+}
+
+#[derive(CandidType, Serialize, Debug)]
+pub struct CanisterIds {
+    cycles_dispenser: CanisterId,
+    icp_ledger: CanisterId,
+    cmc: CanisterId,
 }

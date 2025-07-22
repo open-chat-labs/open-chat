@@ -205,6 +205,8 @@ async fn install_service_canisters_impl(
             canister_id: canister_ids.cycles_dispenser,
             min_cycles_balance: 200 * T,
         },
+        icp_ledger_canister_id: canister_ids.nns_ledger,
+        cmc_canister_id: canister_ids.nns_cmc,
         wasm_version: version,
         test_mode,
     };
