@@ -1,5 +1,4 @@
 use crate::{mutate_state, read_state};
-use candid::Nat;
 use constants::{HOUR_IN_MS, MINUTE_IN_MS};
 use ic_cdk::management_canister::CanisterStatusArgs;
 use std::time::Duration;
@@ -24,7 +23,7 @@ async fn run_async(buckets: Vec<CanisterId>) {
         if let Ok(status) = ic_cdk::management_canister::canister_status(&CanisterStatusArgs { canister_id: bucket }).await {
             // If the subnet memory has grown to the stage where canisters are now having to pay
             // reserved cycles when requesting additional memory pages, then mark the bucket as full
-            if status.reserved_cycles > Nat::from(0u32) {
+            if status.reserved_cycles > 0u32 {
                 mutate_state(|state| state.data.buckets.set_full(bucket, true));
             }
         }
