@@ -151,8 +151,10 @@
 
         busy = true;
 
+        const pin = await client.promptForPinIfRequired();
+
         if (
-            !(await approvePayment(PROPOSALS_BOT_CANISTER, proposalCost + BigInt(2) * transferFee))
+            !(await approvePayment(PROPOSALS_BOT_CANISTER, proposalCost + BigInt(2) * transferFee, pin))
         ) {
             busy = false;
             return;
@@ -166,7 +168,7 @@
             let spender = addToken ? REGISTRY_CANISTER : USER_INDEX_CANISTER;
             let amount = addToken ? TOKEN_LISTING_FEE : achievementChatCost;
 
-            if (!(await approvePayment(spender, amount))) {
+            if (!(await approvePayment(spender, amount, pin))) {
                 busy = false;
                 return;
             }
@@ -268,13 +270,14 @@
         }
     }
 
-    async function approvePayment(spender_canister_id: string, amount: bigint): Promise<boolean> {
+    async function approvePayment(spender_canister_id: string, amount: bigint, pin: string | undefined): Promise<boolean> {
         return client
             .approveTransfer(
                 spender_canister_id,
                 tokenDetails.ledger,
                 amount,
                 BigInt(Date.now() + 1000 * 60 * 60 * 24 * 5), // allow 5 days for proposal
+                pin,
             )
             .then((resp) => {
                 if (resp.kind === "success") {
