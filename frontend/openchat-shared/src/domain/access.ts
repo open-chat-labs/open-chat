@@ -148,6 +148,10 @@ export function isBalanceGate(gate: AccessGate): gate is TokenBalanceGate {
     return gate.kind === "token_balance_gate";
 }
 
+export function isChitEarnedGate(gate: AccessGate): gate is ChitEarnedGate {
+    return gate.kind === "chit_earned_gate";
+}
+
 export function isCredentialGate(gate: AccessGate): gate is CredentialGate {
     return gate.kind === "credential_gate";
 }

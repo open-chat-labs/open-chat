@@ -4623,6 +4623,8 @@ export class OpenChat {
                 return currentUserStore.value.diamondStatus.kind === "lifetime";
             } else if (gate.kind === "unique_person_gate") {
                 return currentUserStore.value.isUniquePerson;
+            } else if (gate.kind === "chit_earned_gate") {
+                return currentUserStore.value.totalChitEarned >= gate.minEarned;
             } else {
                 return false;
             }

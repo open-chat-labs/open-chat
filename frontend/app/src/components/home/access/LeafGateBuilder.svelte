@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
         isBalanceGate,
+        isChitEarnedGate,
         isNeuronGate,
         isPaymentGate,
         type AccessGate,
@@ -61,6 +62,7 @@
     let minDissolveDelay = $state(client.getMinDissolveDelayDays(gate) ?? "");
     let minStake = $state(client.getMinStakeInTokens(gate) ?? "");
     let minBalanceText = $state(initialMinBalance(gate));
+    let minChitEarnedText = $state(initialMinChit(gate));
     let amountText = $state(initialPaymentAmount(gate));
     let credentialIssuerValid = $state(true);
 
@@ -70,6 +72,13 @@
             if (token !== undefined) {
                 return client.formatTokens(gate.amount, token.decimals);
             }
+        }
+        return "";
+    }
+
+    function initialMinChit(gate: AccessGate): string {
+        if (isChitEarnedGate(gate)) {
+            return gate.minEarned.toString();
         }
         return "";
     }
@@ -174,7 +183,16 @@
     let minPayment = $derived((candidateTokenDetails?.transferFee ?? BigInt(0)) * BigInt(100));
     let invalidAmount = $derived(amount === undefined || amount < minPayment);
     let minBalance = $derived(amountFromText(minBalanceText, candidateTokenDetails));
+    let minChitEarned = $derived.by(() => {
+        try {
+            const cleaned = minChitEarnedText.replace(/[_\,]/g, "");
+            return BigInt(cleaned);
+        } catch (_) {
+            return undefined;
+        }
+    });
     let invalidMinBalance = $derived(minBalance === undefined || minBalance < minPayment);
+    let invalidChitEarned = $derived(minChitEarned === undefined);
     let invalidDissolveDelay = $derived(minDissolveDelay !== "" && isNaN(Number(minDissolveDelay)));
     let invalidMinStake = $derived(minStake !== "" && isNaN(Number(minStake)));
     let isValid = $derived.by(() => {
@@ -186,6 +204,7 @@
             ) &&
             !(selectedGateKey === "payment_gate_folder" && invalidAmount) &&
             !(selectedGateKey === "balance_gate_folder" && invalidMinBalance) &&
+            !(selectedGateKey === "chit_earned_gate" && invalidChitEarned) &&
             credentialIssuerValid
         );
     });
@@ -228,6 +247,12 @@
                 ...gate,
                 minBalance,
             };
+        } else if (
+            isChitEarnedGate(gate) &&
+            minChitEarned !== undefined &&
+            minChitEarned !== gate.minEarned
+        ) {
+            gate = { ...gate, minEarned: minChitEarned };
         }
     });
 </script>
@@ -320,6 +345,13 @@
             maxlength={100}
             invalid={invalidMinBalance}
             bind:value={minBalanceText} />
+    {:else if selectedGateKey === "chit_earned_gate"}
+        <Legend label={i18nKey("access.minimumChitEarned")} required={editable} />
+        <Input
+            disabled={!editable}
+            maxlength={100}
+            invalid={invalidChitEarned}
+            bind:value={minChitEarnedText} />
     {:else if gate.kind === "diamond_gate"}
         <div class="info">
             <Translatable resourceKey={i18nKey("access.diamondGateInfo")} />
