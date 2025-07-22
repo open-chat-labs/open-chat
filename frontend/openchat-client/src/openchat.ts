@@ -7305,10 +7305,10 @@ export class OpenChat {
         if (chat !== undefined) {
             if (chat.kind === "direct_chat") {
                 userIds.push(chat.them.userId);
-            } else if (this.isChatPrivate(chat)) {
+            } else if (this.isChatPrivate(chat) && chatIdentifiersEqual(selectedChatIdStore.value, chatId)) {
                 userIds = [...selectedChatMembersStore.value.keys()].filter((id) => id !== me);
             }
-            if (userIds.length > 0) {
+            if (0 < userIds.length && userIds.length < 50) {
                 await Promise.all(
                     userIds.map((id) =>
                         rtcConnectionsManager.create(
