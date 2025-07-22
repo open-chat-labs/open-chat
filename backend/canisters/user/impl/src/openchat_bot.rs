@@ -68,7 +68,7 @@ pub(crate) fn send_phone_number_confirmed_bot_message(event: &PhoneNumberConfirm
 
 pub(crate) fn send_storage_ugraded_bot_message(event: &StorageUpgraded, state: &mut RuntimeState) {
     let amount_paid = to_tokens(event.cost.amount);
-    let token = event.cost.token.token_symbol();
+    let token = &event.cost.token_symbol;
     let storage_added = to_gb(event.storage_added);
     let storage_total = to_gb(event.new_storage_limit);
     let new_group_limit = Membership::Diamond.group_creation_limit().to_string();
