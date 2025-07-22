@@ -429,7 +429,19 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
 
     let icp_ledger_init_args = NnsLedgerCanisterInitPayload {
         minting_account: minting_account.to_string(),
-        initial_values: HashMap::new(),
+        initial_values: [
+            (cycles_dispenser_canister_id, 10_000),
+            (registry_canister_id, 10),
+            (storage_index_canister_id, 10),
+        ]
+        .into_iter()
+        .map(|(p, t)| {
+            (
+                AccountIdentifier::new(&p, &DEFAULT_SUBACCOUNT).to_string(),
+                Tokens::from_e8s(t * Tokens::SUBDIVIDABLE_BY),
+            )
+        })
+        .collect(),
         send_whitelist: HashSet::new(),
         transfer_fee: Some(Tokens::from_e8s(10_000)),
     };
@@ -474,33 +486,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         sns_wasm_canister_id,
         sns_wasm_canister_wasm,
         sns_wasm_canister_init_args,
-    );
-
-    // Top up the CyclesDispenser with 10k ICP
-    client::ledger::happy_path::transfer(
-        env,
-        controller,
-        nns_ledger_canister_id,
-        cycles_dispenser_canister_id,
-        10_000 * 100_000_000,
-    );
-
-    // Top up the Registry with 10 ICP
-    client::ledger::happy_path::transfer(
-        env,
-        controller,
-        nns_ledger_canister_id,
-        registry_canister_id,
-        10 * 100_000_000,
-    );
-
-    // Top up StorageIndex with 10 ICP
-    client::ledger::happy_path::transfer(
-        env,
-        controller,
-        nns_ledger_canister_id,
-        storage_index_canister_id,
-        10 * 100_000_000,
     );
 
     let subnet = client::registry::happy_path::expand_onto_subnet(env, controller, registry_canister_id, application_subnet);
