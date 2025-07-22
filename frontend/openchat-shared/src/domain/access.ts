@@ -25,6 +25,7 @@ export type LeafGate =
     | NeuronGate
     | PaymentGate
     | DiamondGate
+    | ChitEarnedGate
     | LifetimeDiamondGate
     | NftGate
     | CredentialGate
@@ -86,6 +87,11 @@ export type PaymentGate = {
     ledgerCanister: string;
     amount: bigint;
     fee: bigint;
+};
+
+export type ChitEarnedGate = {
+    kind: "chit_earned_gate";
+    minEarned: bigint;
 };
 
 export type TokenBalanceGate = {
