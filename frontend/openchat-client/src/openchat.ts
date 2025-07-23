@@ -7457,7 +7457,7 @@ export class OpenChat {
         return this.#getLocalUserIndex(chat).then((localUserIndex) => {
             return this.#sendRequest({
                 kind: "getAccessToken",
-                accessTokenType: { kind: "join_video_call", chatId }, // TODO - this should have it's own token type really
+                accessTokenType: { kind: "mark_video_call_ended", chatId },
                 localUserIndex,
             })
                 .then((token) => {
