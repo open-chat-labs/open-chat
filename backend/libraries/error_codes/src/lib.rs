@@ -183,6 +183,8 @@ pub enum OCErrorCode {
     WebhookNotFound = 339,
     InvalidWebhook = 340,
     InvalidOriginatingCanister = 341,
+    LinkingCodeNotFound = 342,
+    LinkingCodeExpired = 343,
 
     // InternalError
     C2CError = 500,
