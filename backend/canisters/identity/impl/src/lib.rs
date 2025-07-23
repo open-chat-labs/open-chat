@@ -149,7 +149,7 @@ impl RuntimeState {
     }
 
     pub fn get_user_id_by_caller(&self) -> Option<UserId> {
-        let caller = self.env.caller();
+        let caller = self.caller_auth_principal();
         self.data
             .user_principals
             .get_by_auth_principal(&caller)
