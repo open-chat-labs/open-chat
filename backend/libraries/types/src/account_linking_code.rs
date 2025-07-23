@@ -30,6 +30,10 @@ impl AccountLinkingCode {
     pub fn is_valid(&self, now: u64) -> bool {
         now < self.expires_at
     }
+
+    pub fn is_valid_for_more_than_a_minute(&self, now: u64) -> bool {
+        (self.expires_at - now) > (60 * 1000)
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Default, Debug)]
@@ -39,20 +43,15 @@ pub struct AccountLinkingCodes {
 
 impl AccountLinkingCodes {
     /// Creates a new code, saves it, and returns a clone back!
-    pub fn get_new_linking_code(&mut self, user_id: UserId, rng: &mut StdRng, now: u64) -> Result<AccountLinkingCode, String> {
-        let code = Self::generate_code(rng)?;
-
-        // Check if code already exists and is valid
-        if self.codes.get(&code).map(|c| c.is_valid(now)).unwrap_or(false) {
-            return Err("Code already exists".into());
-        }
-
+    pub fn get_new_linking_code(&mut self, user_id: UserId, rng: &mut StdRng, now: u64) -> AccountLinkingCode {
+        let code = Self::generate_code(rng);
         let new_linking_code = AccountLinkingCode::new(user_id, code.clone(), now);
 
-        // Add to the map of existing account linking codes!
+        // Add to the map of existing account linking codes! If the same code
+        // existed before it will get overwritten, and therefore invalid.
         self.codes.insert(code, new_linking_code.clone());
 
-        Ok(new_linking_code)
+        new_linking_code
     }
 
     /// Get the account linking code with specified value.
@@ -74,7 +73,7 @@ impl AccountLinkingCodes {
     }
 
     /// Used to manually clean up expired codes.
-    pub fn cleanup(&mut self, now: u64) {
+    pub fn prune_expired(&mut self, now: u64) {
         self.codes.retain(|_, linking_code| linking_code.is_valid(now));
     }
 
@@ -83,28 +82,22 @@ impl AccountLinkingCodes {
         self.codes.len()
     }
 
+    /// Check if there's no codes
     pub fn is_empty(&self) -> bool {
         self.codes.is_empty()
     }
 
     // Generates a random 6 character string.
-    fn generate_code(rng: &mut StdRng) -> Result<String, String> {
+    fn generate_code(rng: &mut StdRng) -> String {
         let bytes: [u8; 32] = rng.r#gen();
 
-        // Validate and prepare seed
-        if bytes.len() < ALC_LENGTH {
-            return Err("Insufficient random bytes from raw_rand".to_string());
-        }
-
         // Map bytes to characters
-        let code: String = bytes[..ALC_LENGTH]
+        bytes[..ALC_LENGTH]
             .iter()
             .map(|&b| {
                 let idx = (b as usize) % ALC_CHARSET.len();
                 ALC_CHARSET[idx] as char
             })
-            .collect();
-
-        Ok(code)
+            .collect()
     }
 }

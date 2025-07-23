@@ -10,5 +10,4 @@ pub type Args = Empty;
 pub enum Response {
     Success(AccountLinkingCode),
     UserNotFound,
-    FailedToGenerateCode,
 }
