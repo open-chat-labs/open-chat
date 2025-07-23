@@ -83,10 +83,15 @@ impl RuntimeState {
         seed
     }
 
+    pub fn caller_auth_principal(&self) -> Principal {
+        let caller = self.env.caller();
+        self.data.user_principals.unwrap_temp_key_or(caller)
+    }
+
     pub fn verify_new_identity(&self, args: VerifyNewIdentityArgs) -> Result<VerifyNewIdentitySuccess, VerifyNewIdentityError> {
         use VerifyNewIdentityError::*;
 
-        let caller = self.env.caller();
+        let caller = self.caller_auth_principal();
 
         if args.allow_existing_provided_not_linked_to_oc_account {
             if self.data.user_principals.is_linked_to_oc_account(&caller) {

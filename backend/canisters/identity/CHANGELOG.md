@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Expose `liquid_cycles_balance` in metrics ([#8350](https://github.com/open-chat-labs/open-chat/pull/8350))
 
+### Fixed
+
+- Always check temp keys when fetching caller's principal ([#8379](https://github.com/open-chat-labs/open-chat/pull/8379))
+
 ## [[2.0.1725](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1725-identity)] - 2025-05-06
 
 ### Added

@@ -17,7 +17,7 @@ fn prepare_delegation(args: Args) -> Response {
 }
 
 fn prepare_delegation_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let caller = state.env.caller();
+    let caller = state.caller_auth_principal();
 
     let Some(user) = state.data.user_principals.get_by_auth_principal(&caller) else {
         return NotFound;
