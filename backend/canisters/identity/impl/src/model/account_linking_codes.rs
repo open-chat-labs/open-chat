@@ -58,13 +58,9 @@ impl AccountLinkingCodes {
 
     // Generates a random 6 character string.
     fn generate_code(rng: &mut StdRng) -> String {
-        let bytes: [u8; ALC_LENGTH] = rng.r#gen();
-
-        // Map bytes to characters
-        bytes
-            .iter()
-            .map(|&b| {
-                let idx = (b as usize) % ALC_CHARSET.len();
+        (0..ALC_LENGTH)
+            .map(|_| {
+                let idx = rng.gen_range(0..ALC_CHARSET.len());
                 ALC_CHARSET[idx] as char
             })
             .collect()
