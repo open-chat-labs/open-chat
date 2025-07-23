@@ -13,7 +13,7 @@
     let clientVersion = Version.parse(window.OC_WEBSITE_VERSION);
     let serverVersion = $state(clientVersion);
     let countdown = $state(30);
-    let showBanner = $state(true);
+    let showBanner = $state(false);
     let errorCount = 0;
 
     onDestroy(() => poller.stop());
