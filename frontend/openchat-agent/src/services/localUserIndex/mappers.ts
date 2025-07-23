@@ -75,6 +75,8 @@ export function apiAccessTokenType(domain: AccessTokenType): LocalUserIndexAcces
                     chat: apiChatIdentifier(domain.chatId),
                 },
             };
+        case "mark_video_call_ended":
+            return { MarkVideoCallAsEnded: { chat: apiChatIdentifier(domain.chatId) } };
 
         case "bot_action_by_command":
             return {

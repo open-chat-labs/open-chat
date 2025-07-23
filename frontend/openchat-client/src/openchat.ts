@@ -1576,9 +1576,9 @@ export class OpenChat {
         ledger: string,
         amount: bigint,
         expiresIn: bigint,
+        pin: string | undefined,
     ): Promise<ApproveTransferResponse> {
-        let pin: string | undefined = undefined;
-        if (pinNumberRequiredStore.value) {
+        if (pinNumberRequiredStore.value && pin === undefined) {
             pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
@@ -7457,7 +7457,7 @@ export class OpenChat {
         return this.#getLocalUserIndex(chat).then((localUserIndex) => {
             return this.#sendRequest({
                 kind: "getAccessToken",
-                accessTokenType: { kind: "join_video_call", chatId }, // TODO - this should have it's own token type really
+                accessTokenType: { kind: "mark_video_call_ended", chatId },
                 localUserIndex,
             })
                 .then((token) => {
@@ -8343,6 +8343,12 @@ export class OpenChat {
 
             return resp;
         });
+    }
+
+    promptForPinIfRequired(): Promise<string | undefined> {
+        return pinNumberRequiredStore.value
+            ? this.#promptForCurrentPin("pinNumber.enterPinInfo")
+            : Promise.resolve(undefined);
     }
 
     #promptForCurrentPin(message: string | undefined): Promise<string> {

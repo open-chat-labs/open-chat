@@ -19,6 +19,8 @@ fn main() {
     generate_ts_method!(identity, initiate_identity_link);
     generate_ts_method!(identity, prepare_delegation);
     generate_ts_method!(identity, remove_identity_link);
+    generate_ts_method!(identity, create_account_linking_code);
+    generate_ts_method!(identity, link_with_account_linking_code);
 
     candid::export_service!();
     std::print!("{}", __export_service());
