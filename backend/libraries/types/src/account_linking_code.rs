@@ -32,7 +32,7 @@ impl AccountLinkingCode {
     }
 
     pub fn is_valid_for_more_than_a_minute(&self, now: u64) -> bool {
-        (self.expires_at - now) > (60 * 1000)
+        self.expires_at > now && self.expires_at - now > 60_000 // 60 sec in ms
     }
 }
 
@@ -89,7 +89,7 @@ impl AccountLinkingCodes {
 
     // Generates a random 6 character string.
     fn generate_code(rng: &mut StdRng) -> String {
-        let bytes: [u8; 32] = rng.r#gen();
+        let bytes: [u8; ALC_LENGTH] = rng.r#gen();
 
         // Map bytes to characters
         bytes[..ALC_LENGTH]
