@@ -1962,7 +1962,7 @@ export class OpenChat {
         switch (chat.kind) {
             case "channel": {
                 const community = this.getCommunityForChannel(chat.id);
-                return !(community?.public ?? true) || !chat.public;
+                return !chat.public || community?.public !== true;
             }
             case "group_chat":
                 return !chat.public;
