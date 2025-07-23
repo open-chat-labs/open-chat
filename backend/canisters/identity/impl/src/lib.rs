@@ -1,3 +1,4 @@
+use crate::model::account_linking_codes::AccountLinkingCodes;
 use crate::model::challenges::Challenges;
 use crate::model::encryption_key_requests::EncryptionKeyRequests;
 use crate::model::identity_link_requests::IdentityLinkRequests;
@@ -20,7 +21,6 @@ use serde_bytes::ByteBuf;
 use sha256::sha256;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
-use types::AccountLinkingCodes;
 use types::{BuildVersion, CanisterId, Cycles, Milliseconds, OCResult, TimestampMillis, Timestamped, UserId};
 use utils::env::Environment;
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};

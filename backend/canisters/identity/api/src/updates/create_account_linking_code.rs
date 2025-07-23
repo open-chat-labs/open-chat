@@ -1,7 +1,8 @@
+use crate::account_linking_code::AccountLinkingCode;
 use candid::{CandidType, Deserialize};
 use serde::Serialize;
 use ts_export::ts_export;
-use types::{AccountLinkingCode, Empty};
+use types::Empty;
 
 pub type Args = Empty;
 
