@@ -108,6 +108,25 @@
     "accountCopiedToClipboard": "Account address copied to clipboard!",
     "accounts": "Accounts",
     "accountSuspended": "Account suspended",
+    "accountLinkingCode": {
+        "settingsMenu": {
+            "title": "Link with new device",
+            "disclaimer": "If you would like to link this account to a device with the OpenChat native app installed, click on the button below to get your Account Linking Code! Use the code on a trusted device only.",
+            "cta": "Show account linking code"
+        },
+        "webModal": {
+            "title": "Account Linking Code",
+            "subtitle": "Use the code below to link your current account with a new trusted device. The code is case sensitive.",
+            "expired": "Your code has expired!",
+            "willExpireIn": "The code will expire in {remaining}",
+            "close": "Thanks, close the modal",
+            "error": {
+                "msg": "Your account linking code could not be loaded, please try again.",
+                "tryAgain": "Try again",
+                "cancel": "Cancel"
+            }
+        }
+    },
     "activity": {
         "anon": "An anonymous user",
         "crypto": "{username} sent you a crypto message",

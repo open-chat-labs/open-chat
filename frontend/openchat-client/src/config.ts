@@ -35,4 +35,5 @@ export type OpenChatConfig = {
     groupInvite?: GroupInvite;
     communityInvite?: CommunityInvite;
     vapidPublicKey: string;
+    accountLinkingCodesEnabled: boolean;
 };

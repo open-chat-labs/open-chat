@@ -298,6 +298,7 @@ import {
     type WorkerRequest,
     type WorkerResponse,
     type WorkerResult,
+    type AccountLinkingCode,
 } from "openchat-shared";
 import page from "page";
 import { tick } from "svelte";
@@ -3714,7 +3715,7 @@ export class OpenChat {
             // now a new latest message and if so, mark it as a local chat summary update.
             let latestMessageIndex =
                 threadRootMessageIndex === undefined
-                    ? allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1
+                    ? (allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1)
                     : undefined;
             let newLatestMessage: EventWrapper<Message> | undefined = undefined;
 
@@ -7311,7 +7312,10 @@ export class OpenChat {
         if (chat !== undefined) {
             if (chat.kind === "direct_chat") {
                 userIds.push(chat.them.userId);
-            } else if (this.isChatPrivate(chat) && chatIdentifiersEqual(selectedChatIdStore.value, chatId)) {
+            } else if (
+                this.isChatPrivate(chat) &&
+                chatIdentifiersEqual(selectedChatIdStore.value, chatId)
+            ) {
                 userIds = [...selectedChatMembersStore.value.keys()].filter((id) => id !== me);
             }
             if (0 < userIds.length && userIds.length < 50) {
@@ -8405,7 +8409,7 @@ export class OpenChat {
     }
 
     getStreak(userId: string | undefined) {
-        return userId ? userStore.get(userId)?.streak ?? 0 : 0;
+        return userId ? (userStore.get(userId)?.streak ?? 0) : 0;
     }
 
     getBotDefinition(endpoint: string): Promise<BotDefinitionResponse> {
@@ -8949,6 +8953,12 @@ export class OpenChat {
         return AuthProvider.II;
     }
 
+    createAccountLinkingCode(): Promise<AccountLinkingCode | undefined> {
+        return this.#sendRequest({
+            kind: "createAccountLinkingCode",
+        });
+    }
+
     getAuthenticationPrincipals(): Promise<
         (AuthenticationPrincipal & { provider: AuthProvider })[]
     > {
@@ -9126,6 +9136,7 @@ export class OpenChat {
                     bitcoinMainnetEnabled: this.config.bitcoinMainnetEnabled,
                     groupInvite: this.config.groupInvite,
                     communityInvite: this.config.communityInvite,
+                    accountLinkingCodesEnabled: this.config.accountLinkingCodesEnabled,
                 },
                 true,
             ).then((resp) => {

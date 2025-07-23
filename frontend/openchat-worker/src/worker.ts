@@ -34,6 +34,7 @@ import {
     type WorkerEvent,
     type WorkerRequest,
     type WorkerResponseInner,
+    type AccountLinkingCode,
 } from "openchat-shared";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -1825,7 +1826,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    identityAgent?.checkAuthPrincipal().then((res) => {
+                    // TODO add type for the `res`
+                    identityAgent?.checkAuthPrincipal().then((res: any) => {
                         return res.kind === "success" ? res.webAuthnKey : undefined;
                     }) ?? Promise.resolve(undefined),
                 );
@@ -2095,6 +2097,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload,
                     correlationId,
                     agent.updateProposalTallies(payload.chatId),
+                );
+                break;
+
+            case "createAccountLinkingCode":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    identityAgent?.createAccountLinkingCode() ?? Promise.resolve(undefined),
                 );
                 break;
 

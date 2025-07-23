@@ -6,6 +6,7 @@ export NODE_ENV=development
 # OC specific env variables
 export OC_CANISTER_URL_PATH=http://{canisterId}.localhost:8080
 export OC_BITCOIN_MAINNET_ENABLED=false
+export OC_ACCOUNT_LINKING_CODES_ENABLED=false
 export OC_BLOB_URL_PATTERN=http://{canisterId}.raw.localhost:8080/{blobType}
 export OC_BUILD_ENV=$NODE_ENV
 export OC_WEBAUTHN_ORIGIN=localhost
