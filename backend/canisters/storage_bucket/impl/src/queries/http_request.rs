@@ -50,10 +50,10 @@ fn start_streaming_file(file_id: FileId, headers: &[(String, String)], state: &R
     if let Some(file) = state.data.files.get(&file_id) {
         let range = extract_range_from_headers(headers);
 
-        if let Some(bytes) = match range {
-            None | Some((None, None)) => state.data.files.blob_bytes(&file.hash),
-            Some((Some(start), end)) => state.data.files.blob_bytes_range(&file.hash, start, end),
-            Some((None, Some(suffix))) => state.data.files.blob_bytes_suffix(&file.hash, suffix),
+        if let (Some(bytes), partial) = match range {
+            None | Some((None, None)) => (state.data.files.blob_bytes(&file.hash), false),
+            Some((Some(start), end)) => (state.data.files.blob_bytes_range(&file.hash, start, end), true),
+            Some((None, Some(suffix))) => (state.data.files.blob_bytes_suffix(&file.hash, suffix), true),
         } {
             let canister_id = state.env.canister_id();
 
@@ -69,7 +69,7 @@ fn start_streaming_file(file_id: FileId, headers: &[(String, String)], state: &R
             };
 
             return HttpResponse {
-                status_code: 200,
+                status_code: if partial { 206 } else { 200 },
                 headers: vec![
                     HeaderField("Content-Type".to_string(), file.mime_type.clone()),
                     HeaderField("Cache-Control".to_string(), CACHE_HEADER_VALUE.to_string()),
