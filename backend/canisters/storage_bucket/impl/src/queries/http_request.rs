@@ -3,6 +3,8 @@ use http_request::{Route, build_json_response, encode_logs, extract_route};
 use ic_cdk::query;
 use num_traits::cast::ToPrimitive;
 use std::cmp::min;
+use std::num::ParseIntError;
+use std::str::FromStr;
 use types::{
     CallbackFunc, FileId, HeaderField, HttpRequest, HttpResponse, StreamingCallbackHttpResponse, StreamingStrategy,
     TimestampMillis, Token,
@@ -30,7 +32,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     }
 
     match extract_route(&request.url) {
-        Route::File(file_id) => read_state(|state| start_streaming_file(file_id, state)),
+        Route::File(file_id) => read_state(|state| start_streaming_file(file_id, &request.headers, state)),
         Route::Errors(since) => get_errors_impl(since),
         Route::Logs(since) => get_logs_impl(since),
         Route::Traces(since) => get_traces_impl(since),
@@ -44,9 +46,15 @@ fn http_request_streaming_callback(token: Token) -> StreamingCallbackHttpRespons
     read_state(|state| continue_streaming_file(token, state))
 }
 
-fn start_streaming_file(file_id: FileId, state: &RuntimeState) -> HttpResponse {
+fn start_streaming_file(file_id: FileId, headers: &[(String, String)], state: &RuntimeState) -> HttpResponse {
     if let Some(file) = state.data.files.get(&file_id) {
-        if let Some(bytes) = state.data.files.blob_bytes(&file.hash) {
+        let range = extract_range_from_headers(headers);
+
+        if let Some(bytes) = match range {
+            None | Some((None, None)) => state.data.files.blob_bytes(&file.hash),
+            Some((Some(start), end)) => state.data.files.blob_bytes_range(&file.hash, start, end),
+            Some((None, Some(suffix))) => state.data.files.blob_bytes_suffix(&file.hash, suffix),
+        } {
             let canister_id = state.env.canister_id();
 
             let (chunk_bytes, stream_next_chunk) = chunk_bytes(bytes, 0);
@@ -129,5 +137,45 @@ fn build_token(blob_id: u128, index: u32) -> Token {
         content_encoding: String::default(),
         index: index.into(),
         sha256: None,
+    }
+}
+
+fn extract_range_from_headers(headers: &[(String, String)]) -> Option<(Option<usize>, Option<usize>)> {
+    let range = headers
+        .iter()
+        .find(|(k, _)| k.eq_ignore_ascii_case("range"))
+        .map(|(_, v)| v)?;
+
+    let (key, value) = range.split_once("=")?;
+
+    if !key.trim().eq_ignore_ascii_case("bytes") {
+        return None;
+    }
+
+    let (start, end) = value.split_once("-")?;
+
+    let start = parse_range_limit(start).ok()?;
+    let end = parse_range_limit(end).ok()?;
+
+    Some((start, end))
+}
+
+fn parse_range_limit(s: &str) -> Result<Option<usize>, ParseIntError> {
+    let s = s.trim();
+    if s.is_empty() { Ok(None) } else { usize::from_str(s).map(|u| Some(u)) }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test_case::test_case;
+
+    #[test_case("bytes=1-100", Some((Some(1), Some(100))))]
+    #[test_case("bytes=0-", Some((Some(0), None)))]
+    #[test_case("bytes=-100", Some((None, Some(100))))]
+    #[test_case("bytes=a-b", None)]
+    fn extract_range_from_headers_tests(input: &str, expected: Option<(Option<usize>, Option<usize>)>) {
+        let result = extract_range_from_headers(&[("Range".to_string(), input.to_string())]);
+        assert_eq!(result, expected);
     }
 }
