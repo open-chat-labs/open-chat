@@ -1,6 +1,7 @@
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::MINUTE_IN_MS;
 use identity_canister::create_account_linking_code::{Response::*, *};
 
 #[update(msgpack = true, candid = true)]
@@ -27,7 +28,7 @@ fn create_account_linking_code_impl(state: &mut RuntimeState) -> Response {
     // the code on their other device.
     let existing_linking_code = state.data.account_linking_codes.get_by_user_id(&user_id);
     if let Some(code) = existing_linking_code {
-        if code.is_valid_for_more_than_a_minute(now) {
+        if code.is_valid(now + MINUTE_IN_MS) {
             return Success(code);
         }
     }

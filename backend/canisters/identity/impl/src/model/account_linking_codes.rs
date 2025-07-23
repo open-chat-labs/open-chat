@@ -4,6 +4,7 @@ use identity_canister::account_linking_code::AccountLinkingCode;
 use rand::{Rng, rngs::StdRng};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use types::TimestampMillis;
 
 // For [a-zA-Z0-9] characters this gives us 62^6 = 56,800,235,584 possible combinations
 const ALC_LENGTH: usize = 6;
@@ -16,7 +17,7 @@ pub struct AccountLinkingCodes {
 
 impl AccountLinkingCodes {
     /// Creates a new code, saves it, and returns a clone back!
-    pub fn get_new_linking_code(&mut self, user_id: UserId, rng: &mut StdRng, now: u64) -> AccountLinkingCode {
+    pub fn get_new_linking_code(&mut self, user_id: UserId, rng: &mut StdRng, now: TimestampMillis) -> AccountLinkingCode {
         let code = Self::generate_code(rng);
         let new_linking_code = AccountLinkingCode::new(user_id, code.clone(), now);
 
@@ -46,7 +47,7 @@ impl AccountLinkingCodes {
     }
 
     /// Used to manually clean up expired codes.
-    pub fn prune_expired(&mut self, now: u64) {
+    pub fn prune_expired(&mut self, now: TimestampMillis) {
         self.codes.retain(|_, linking_code| linking_code.is_valid(now));
     }
 
@@ -55,17 +56,12 @@ impl AccountLinkingCodes {
         self.codes.len()
     }
 
-    // /// Check if there's no codes
-    // pub fn is_empty(&self) -> bool {
-    //     self.codes.is_empty()
-    // }
-
     // Generates a random 6 character string.
     fn generate_code(rng: &mut StdRng) -> String {
         let bytes: [u8; ALC_LENGTH] = rng.r#gen();
 
         // Map bytes to characters
-        bytes[..ALC_LENGTH]
+        bytes
             .iter()
             .map(|&b| {
                 let idx = (b as usize) % ALC_CHARSET.len();
