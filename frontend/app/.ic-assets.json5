@@ -22,7 +22,7 @@
     {
         match: "{index.html,version}",
         headers: {
-            "Cache-Control": "no-cache",
+            "Cache-Control": "no-store",
         },
     },
     {
