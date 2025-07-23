@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { onMount } from "svelte";
     import "emoji-picker-element";
-    import { currentTheme } from "../../theme/themes";
     import type {
         EmojiClickEvent,
         SkinTone,
         SkinToneChangeEvent,
     } from "emoji-picker-element/shared";
+    import { onMount } from "svelte";
+    import { currentTheme } from "../../theme/themes";
 
     interface Props {
         mode?: "message" | "reaction" | "thread";
@@ -18,6 +18,30 @@
 
     onMount(() => {
         const emojiPicker = document.querySelector("emoji-picker");
+        if (emojiPicker) {
+            emojiPicker.customEmoji = [
+                {
+                    name: "ThisIsFine",
+                    shortcodes: ["this_is_fine"],
+                    url: "https://emojis.slackmojis.com/emojis/images/1643514843/8559/this_is_fine.gif?1643514843",
+                },
+                {
+                    name: "PartyParrot",
+                    shortcodes: ["party_parrot"],
+                    url: "https://emojis.slackmojis.com/emojis/images/1643514742/7500/partyparrot.gif?1643514742",
+                },
+                {
+                    name: "BananaDance",
+                    shortcodes: ["banana_dance"],
+                    url: "https://emojis.slackmojis.com/emojis/images/1643514066/220/bananadance.gif?1643514066v",
+                },
+                {
+                    name: "Thankyou",
+                    shortcodes: ["thankyou"],
+                    url: "https://emojis.slackmojis.com/emojis/images/1643514318/2905/thankyou.gif?1643514318",
+                },
+            ];
+        }
         emojiPicker?.addEventListener("emoji-click", onClick);
         emojiPicker?.addEventListener("skin-tone-change", skinToneChanged);
         return () => {

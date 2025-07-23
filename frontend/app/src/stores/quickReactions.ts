@@ -2,22 +2,33 @@ import { writable } from "svelte/store";
 import { Database as EmojiDatabase } from "emoji-picker-element";
 import type { Emoji } from "emoji-picker-element/shared";
 
-const emojiDb = new EmojiDatabase();
+const emojiDb = new EmojiDatabase({
+    customEmoji: [
+        {
+            name: "ThisIsFine",
+            shortcodes: ["this_is_fine"],
+            url: "https://emojis.slackmojis.com/emojis/images/1643514843/8559/this_is_fine.gif?1643514843",
+            category: "Slackmoji",
+        },
+    ],
+});
+
 const showQuickReactionCount = 3;
 const defaultReactions = ["yes", "tears_of_joy", "pray"];
 
 function initQuickReactions() {
-
     // Filter the reactions by taking into account the appropriate skin tone.
     function getUnicodeBySkintone(skintone: number, reactions: Emoji[]): string[] {
-        return reactions.map((emoji) => {
-            if ("unicode" in emoji) {
-                return undefined === emoji.skins || 0 === skintone
-                    ? emoji.unicode
-                    : emoji.skins.find((val) => val.tone === skintone ? val.unicode : null)?.unicode
-            }
-        })
-        .filter((u) => u !== undefined) as string[];
+        return reactions
+            .map((emoji) => {
+                if ("unicode" in emoji) {
+                    return undefined === emoji.skins || 0 === skintone
+                        ? emoji.unicode
+                        : emoji.skins.find((val) => (val.tone === skintone ? val.unicode : null))
+                              ?.unicode;
+                }
+            })
+            .filter((u) => u !== undefined) as string[];
     }
 
     function loadQuickReactions(skintone: number) {
@@ -25,28 +36,34 @@ function initQuickReactions() {
             .getTopFavoriteEmoji(showQuickReactionCount)
             .then((fav) => {
                 const favUnicode = getUnicodeBySkintone(skintone, fav);
-                
+
                 // If we have less emoji than we want to show, expand with
                 // a default selection of emoji.
                 if (fav.length < showQuickReactionCount) {
                     return Promise.all(
                         defaultReactions.map((em) => emojiDb.getEmojiByShortcode(em)),
                     )
-                        .then((def) => getUnicodeBySkintone(skintone, def.filter((v) => v != null) as Emoji[]))
-                        .then((defUnicode) => [...new Set(favUnicode.concat(defUnicode))].slice(0, showQuickReactionCount))
+                        .then((def) =>
+                            getUnicodeBySkintone(skintone, def.filter((v) => v != null) as Emoji[]),
+                        )
+                        .then((defUnicode) =>
+                            [...new Set(favUnicode.concat(defUnicode))].slice(
+                                0,
+                                showQuickReactionCount,
+                            ),
+                        );
                 }
 
                 return favUnicode;
-            }).catch((e) => {
+            })
+            .catch((e) => {
                 console.log(e);
-                return ([] as string[]);
+                return [] as string[];
             });
     }
 
     function loadSkintoneAndQuickReactions() {
-        return emojiDb
-            .getPreferredSkinTone()
-            .then(loadQuickReactions);
+        return emojiDb.getPreferredSkinTone().then(loadQuickReactions);
     }
 
     const { subscribe, set } = writable<string[]>([]);
@@ -62,10 +79,7 @@ function initQuickReactions() {
 
         // Reload reactions
         reload: (skintone?: number): void => {
-            (skintone
-                ? loadQuickReactions(skintone)
-                : loadSkintoneAndQuickReactions()
-            ).then(set);
+            (skintone ? loadQuickReactions(skintone) : loadSkintoneAndQuickReactions()).then(set);
         },
     };
 }

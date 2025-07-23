@@ -16,11 +16,13 @@ function initEmojiSet() {
 
     emojiDatabase
         .getAllNativeEmojis()
-        .then((emojis) => emojis.forEach((e) => {
-            emojiSet.add(e.unicode);
-            e.skins?.forEach((s) => emojiSet.add(s.unicode));
-        }))
-        .finally(() => initializing = false);
+        .then((emojis) =>
+            emojis.forEach((e) => {
+                emojiSet.add(e.unicode);
+                e.skins?.forEach((s) => emojiSet.add(s.unicode));
+            }),
+        )
+        .finally(() => (initializing = false));
 }
 
 initEmojiSet();
