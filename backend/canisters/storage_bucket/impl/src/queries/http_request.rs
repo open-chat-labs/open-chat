@@ -93,9 +93,11 @@ fn start_streaming_file(file_id: FileId, request_headers: &[(String, String)], s
 
                 let range_bytes = file_bytes[start..end].to_vec();
                 response_headers.push(HeaderField("Content-Length".to_string(), range_bytes.len().to_string()));
+
+                let last_byte = end - 1;
                 response_headers.push(HeaderField(
                     "Content-Range".to_string(),
-                    format!("bytes {start}-{end}/{file_bytes_len}"),
+                    format!("bytes {start}-{last_byte}/{file_bytes_len}"),
                 ));
 
                 return HttpResponse {
@@ -119,7 +121,7 @@ fn start_streaming_file(file_id: FileId, request_headers: &[(String, String)], s
                     None
                 };
 
-                response_headers.push(HeaderField("Content-Length".to_string(), chunk_bytes.len().to_string()));
+                response_headers.push(HeaderField("Content-Length".to_string(), file_bytes_len.to_string()));
 
                 return HttpResponse {
                     status_code: 200,
