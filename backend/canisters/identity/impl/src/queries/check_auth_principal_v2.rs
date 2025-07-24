@@ -8,8 +8,7 @@ fn check_auth_principal_v2(_args: Args) -> Response {
 }
 
 fn check_auth_principal_impl(state: &RuntimeState) -> Response {
-    let caller = state.env.caller();
-    let auth_principal = state.data.user_principals.unwrap_temp_key_or(caller);
+    let auth_principal = state.caller_auth_principal();
 
     if let Some(user_principal) = state.data.user_principals.get_by_auth_principal(&auth_principal) {
         if let Some(auth_principal) = state.data.user_principals.get_auth_principal(&auth_principal) {

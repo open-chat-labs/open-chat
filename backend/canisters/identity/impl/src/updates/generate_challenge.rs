@@ -10,7 +10,7 @@ fn generate_challenge(_args: Args) -> Response {
 }
 
 fn generate_challenge_impl(state: &mut RuntimeState) -> Response {
-    let caller = state.env.caller();
+    let caller = state.caller_auth_principal();
 
     if state.data.user_principals.auth_principal_exists(&caller) {
         return AlreadyRegistered;

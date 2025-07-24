@@ -219,7 +219,7 @@ export function defaultOptionalMessagePermissions(): OptionalMessagePermissions 
 
 export type PermissionsByRole = Record<ChatPermissionRole, Set<string>>;
 
-export type AccessTokenType = JoinVideoCall | StartVideoCall | BotActionByCommand;
+export type AccessTokenType = JoinVideoCall | StartVideoCall | MarkVideoCallEnded | BotActionByCommand;
 
 export type JoinVideoCall = {
     kind: "join_video_call";
@@ -229,6 +229,11 @@ export type JoinVideoCall = {
 export type StartVideoCall = {
     kind: "start_video_call";
     callType: VideoCallType;
+    chatId: ChatIdentifier;
+};
+
+export type MarkVideoCallEnded = {
+    kind: "mark_video_call_ended";
     chatId: ChatIdentifier;
 };
 
