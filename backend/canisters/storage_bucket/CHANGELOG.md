@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Expose `liquid_cycles_balance` in metrics ([#8350](https://github.com/open-chat-labs/open-chat/pull/8350))
 - Add delay before retrying c2c call under certain error conditions ([#8355](https://github.com/open-chat-labs/open-chat/pull/8355))
 - Simplify cycles balance check now that `liquid_cycle_balance` is available ([#8374](https://github.com/open-chat-labs/open-chat/pull/8374))
+- Support range headers when accessing files ([#8380](https://github.com/open-chat-labs/open-chat/pull/8380))
+- Reduce default range response chunk size to 256KB ([#8386](https://github.com/open-chat-labs/open-chat/pull/8386))
 
 ## [[2.0.1681](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1681-storage_bucket)] - 2025-04-02
 
