@@ -56,12 +56,16 @@ pub enum InstructionCountFunctionId {
 }
 
 fn init_log(index_memory: Memory, data_memory: Memory) -> StableLog<InstructionCountEntry, Memory, Memory> {
-    StableLog::init(index_memory, data_memory).unwrap()
+    StableLog::init(index_memory, data_memory)
 }
 
 impl Storable for InstructionCountEntry {
     fn to_bytes(&self) -> Cow<[u8]> {
-        Cow::Owned(msgpack::serialize_then_unwrap(self))
+        Cow::Owned(self.to_vec())
+    }
+
+    fn into_bytes(self) -> Vec<u8> {
+        self.to_vec()
     }
 
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
@@ -69,6 +73,12 @@ impl Storable for InstructionCountEntry {
     }
 
     const BOUND: Bound = Bound::Unbounded;
+}
+
+impl InstructionCountEntry {
+    fn to_vec(&self) -> Vec<u8> {
+        msgpack::serialize_then_unwrap(self)
+    }
 }
 
 #[cfg(test)]
