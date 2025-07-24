@@ -87,6 +87,7 @@ export interface PrizeContentInitial {
     lifetimeDiamondOnly: boolean;
     uniquePersonOnly: boolean;
     streakOnly: number;
+    minChitEarned: number;
     endDate: bigint;
     caption?: string;
     transfer: PendingCryptocurrencyTransfer;
@@ -357,6 +358,7 @@ export interface PrizeContent {
     endDate: bigint;
     caption?: string;
     requiresCaptcha: boolean;
+    minChitEarned: number;
 }
 
 export interface P2PSwapContent {
