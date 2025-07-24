@@ -42,4 +42,4 @@ if [[ ${HTTP_CODE} -ne 200 ]] ; then
     exit 1
 fi
 
-echo "Wasm downloaded"
+echo "Downloaded $CANISTER_NAME wasm"
