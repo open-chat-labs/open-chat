@@ -50,7 +50,7 @@ async fn get_encryption_key(args: Args) -> Response {
 }
 
 fn prepare(state: &mut RuntimeState) -> OCResult<UserId> {
-    let caller = state.env.caller();
+    let caller = state.caller_auth_principal();
     let user_id = state
         .data
         .user_principals

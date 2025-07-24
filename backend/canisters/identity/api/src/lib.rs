@@ -2,10 +2,12 @@ use candid::{CandidType, Deserialize};
 use serde::Serialize;
 
 mod lifecycle;
+mod model;
 mod queries;
 mod updates;
 
 pub use lifecycle::*;
+pub use model::*;
 pub use queries::*;
 use ts_export::ts_export;
 use types::CanisterId;

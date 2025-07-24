@@ -7,6 +7,7 @@ use registry_canister::subnets::Subnet;
 use std::fmt::{Debug, Formatter};
 use types::{CanisterId, Cycles, SignedDelegation, UserId};
 
+mod account_linking_tests;
 mod airdrop_bot_tests;
 mod batched_summary_and_event_tests;
 mod bot_tests;

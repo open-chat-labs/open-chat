@@ -9,10 +9,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Implement `get_encryption_key` for getting e2e encryption keys ([#8248](https://github.com/open-chat-labs/open-chat/pull/8248))
+- Implement `create_account_linking_code` creates new account linking code, overwrites old if it existed ([8358](https://github.com/open-chat-labs/open-chat/pull/8358))
+- Implement `link_with_account_linking_code` links auth method with existing account ([8358](https://github.com/open-chat-labs/open-chat/pull/8358))
 
 ### Changed
 
 - Expose `liquid_cycles_balance` in metrics ([#8350](https://github.com/open-chat-labs/open-chat/pull/8350))
+
+### Fixed
+
+- Always check temp keys when fetching caller's principal ([#8379](https://github.com/open-chat-labs/open-chat/pull/8379))
 
 ## [[2.0.1725](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1725-identity)] - 2025-05-06
 

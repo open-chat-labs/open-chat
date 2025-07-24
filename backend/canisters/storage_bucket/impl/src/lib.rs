@@ -70,7 +70,6 @@ impl RuntimeState {
             total_file_bytes: file_metrics.total_file_bytes,
             index_sync_queue_length: self.data.index_event_sync_queue.len() as u32,
             expiration_queue_length: file_metrics.expiration_queue_len,
-            freezing_limit: self.data.freezing_limit.value.unwrap_or_default(),
             stable_memory_sizes: memory::memory_sizes(),
         }
     }
@@ -83,7 +82,6 @@ struct Data {
     files: Files,
     index_event_sync_queue: BatchedTimerJobQueue<IndexEventBatch>,
     created: TimestampMillis,
-    freezing_limit: Timestamped<Option<Cycles>>,
     rng_seed: [u8; 32],
     test_mode: bool,
 }
@@ -96,7 +94,6 @@ impl Data {
             files: Files::default(),
             index_event_sync_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
             created: now,
-            freezing_limit: Timestamped::default(),
             rng_seed: [0; 32],
             test_mode,
         }
@@ -134,10 +131,14 @@ pub struct Metrics {
     pub total_file_bytes: u64,
     pub index_sync_queue_length: u32,
     pub expiration_queue_length: u64,
-    pub freezing_limit: Cycles,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
 }
 
 pub fn calc_chunk_count(chunk_size: u32, total_size: u64) -> u32 {
     (((total_size - 1) / (chunk_size as u64)) + 1) as u32
+}
+
+fn check_cycles_balance() {
+    let storage_index_canister_id = read_state(|state| state.data.storage_index_canister_id);
+    utils::cycles::check_cycles_balance(storage_index_canister_id);
 }

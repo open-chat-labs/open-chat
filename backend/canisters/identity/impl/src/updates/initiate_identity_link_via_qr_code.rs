@@ -13,7 +13,7 @@ fn initiate_identity_link_via_qr_code(args: Args) -> Response {
 }
 
 fn initiate_identity_link_via_qr_code_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    let caller = state.env.caller();
+    let caller = state.caller_auth_principal();
     let auth_principal = state
         .data
         .user_principals

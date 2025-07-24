@@ -41,7 +41,7 @@ struct PrepareResult {
 }
 
 fn prepare(args: Args, state: &RuntimeState) -> OCResult<PrepareResult> {
-    let caller = state.env.caller();
+    let caller = state.caller_auth_principal();
     let Some(auth_principal) = state.data.user_principals.get_auth_principal(&caller) else {
         return Err(OCErrorCode::InitiatorNotFound.into());
     };

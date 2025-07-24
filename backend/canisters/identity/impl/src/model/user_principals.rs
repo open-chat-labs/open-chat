@@ -224,6 +224,19 @@ impl UserPrincipals {
         }
     }
 
+    pub fn find_user_principal_by_user_id(&self, user_id: UserId) -> Option<UserPrincipal> {
+        self.user_principals
+            .iter()
+            .enumerate()
+            .find(|(_, u)| u.user_id == Some(user_id))
+            .map(|(i, u)| UserPrincipal {
+                principal: u.principal,
+                auth_principals: u.auth_principals.clone(),
+                index: i as u32,
+                user_id: Some(user_id),
+            })
+    }
+
     // This is O(number of users) so only use in rare cases
     pub fn get_originating_canisters_by_user_id_slow(&self, user_id: UserId) -> Vec<(CanisterId, bool)> {
         if let Some(user_principal) = self.user_principals.iter().find(|u| u.user_id == Some(user_id)) {

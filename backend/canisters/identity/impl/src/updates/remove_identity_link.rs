@@ -10,8 +10,7 @@ fn remove_identity_link(args: Args) -> Response {
 }
 
 fn remove_identity_link_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let caller = state.env.caller();
-    let auth_principal = state.data.user_principals.unwrap_temp_key_or(caller);
+    let auth_principal = state.caller_auth_principal();
 
     state
         .data
