@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
-    import { AvatarSize, selectedCommunityMembersStore } from "openchat-client";
+    import { AvatarSize, selectedChatWebhooksStore, selectedCommunityMembersStore } from "openchat-client";
     import type { UserSummary } from "openchat-shared";
     import { getContext, type Snippet } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -36,7 +36,7 @@
 
     let hovering = $state(false);
 
-    let displayName = $derived(client.getDisplayName(user, $selectedCommunityMembersStore));
+    let displayName = $derived(client.getDisplayName(user.userId, $selectedCommunityMembersStore, $selectedChatWebhooksStore));
 
     function click(ev: Event) {
         if (profile) {

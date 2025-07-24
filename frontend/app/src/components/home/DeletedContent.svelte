@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
         OPENCHAT_BOT_USER_ID,
+        selectedChatWebhooksStore,
         selectedCommunityMembersStore,
         type DeletedContent,
         type OpenChat,
@@ -25,7 +26,7 @@
         `${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`,
     );
     let username = $derived(
-        client.getDisplayNameById(content.deletedBy, $selectedCommunityMembersStore),
+        client.getDisplayName(content.deletedBy, $selectedCommunityMembersStore, $selectedChatWebhooksStore)
     );
 </script>
 

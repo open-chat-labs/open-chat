@@ -372,6 +372,7 @@ import {
     selectedChatSummaryStore,
     selectedChatUserGroupKeysStore,
     selectedChatUserIdsStore,
+    selectedChatWebhooksStore,
     selectedCommunityBlockedUsersStore,
     selectedCommunityIdStore,
     selectedCommunityInvitedUsersStore,
@@ -5074,19 +5075,24 @@ export class OpenChat {
         });
     }
 
-    getDisplayNameById(userId: string, communityMembers?: ReadonlyMap<string, Member>): string {
-        return this.getDisplayName(userStore.get(userId), communityMembers);
-    }
-
     getDisplayName(
-        user: { userId: string; username: string; displayName?: string } | undefined,
+        userId: string | undefined,
         communityMembers?: ReadonlyMap<string, Member>,
+        webhooks?: ReadonlyMap<string, WebhookDetails>
     ): string {
-        if (user !== undefined) {
-            const member = communityMembers?.get(user.userId);
-            const displayName = member?.displayName ?? user.displayName ?? user.username;
-            if (displayName?.length > 0) {
-                return displayName;
+        if (userId !== undefined) {
+            const user = userStore.get(userId);
+            if (user !== undefined) {
+                const communityDisplayName = communityMembers?.get(userId)?.displayName;
+                const displayName = communityDisplayName ?? user.displayName ?? user.username;
+                if (displayName?.length > 0) {
+                    return displayName;
+                }
+            } else {
+                const webhook = webhooks?.get(userId);
+                if (webhook !== undefined) {
+                    return webhook.name;
+                }
             }
         }
 
@@ -7076,15 +7082,15 @@ export class OpenChat {
         if (this.#userLookupForMentions === undefined) {
             const lookup = {} as Record<string, UserOrUserGroup>;
             for (const [userId] of selectedChatMembersStore.value) {
-                let user = userStore.get(userId);
-                if (user !== undefined && selectedChatSummaryStore.value?.kind === "channel") {
-                    user = {
-                        ...user,
-                        displayName: this.getDisplayName(user, selectedCommunityMembersStore.value),
-                    };
-                }
-                if (user?.username !== undefined) {
-                    lookup[user.username.toLowerCase()] = user as UserSummary;
+                const user = userStore.get(userId);
+                if (user !== undefined) {
+                    const displayName = this.getDisplayName(userId, selectedCommunityMembersStore.value);
+                    lookup[user.username.toLowerCase()] = displayName === user.displayName
+                        ? user
+                        : {
+                            ...user,
+                            displayName
+                        };
                 }
             }
             if (selectedCommunitySummaryStore.value !== undefined) {
@@ -7345,8 +7351,9 @@ export class OpenChat {
         // * obtain an access token for the user
         // * return it to the front end
         const displayName = this.getDisplayName(
-            currentUserStore.value,
+            currentUserIdStore.value,
             selectedCommunityMembersStore.value,
+            selectedChatWebhooksStore.value,
         );
         const user = currentUserStore.value;
         const username = user.username;
