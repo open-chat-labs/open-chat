@@ -119,11 +119,6 @@
     let showChallenge = $state(false);
     let spin = $derived(intersecting && !finished && !allClaimed);
     let mirror = $derived(intersecting && !$mobileWidth);
-    let chitIconText = $derived(
-        content.minChitEarned === 1_000_000
-            ? "1 m"
-            : Math.floor(content.minChitEarned / 1_000).toString(),
-    );
 
     function onChallengeResult(e: MouseEvent, success: boolean) {
         if (success) {

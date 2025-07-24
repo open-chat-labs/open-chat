@@ -460,10 +460,10 @@
                                         {/each}
                                     </Select>
                                 {/if}
-                                <Checkbox
+                                <!-- <Checkbox
                                     id="chit_only"
                                     label={i18nKey(`prizes.onlyChit`)}
-                                    bind:checked={chitOnly} />
+                                    bind:checked={chitOnly} /> -->
                                 {#if chitOnly}
                                     <Select bind:value={minChitEarned}>
                                         {#each chitBands.entries() as [value, name]}
