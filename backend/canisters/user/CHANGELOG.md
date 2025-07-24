@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Introduce `Encrypted` message type ([8294](https://github.com/open-chat-labs/open-chat/pull/8294))
 - Add timestamp to BotNotification ([8300](https://github.com/open-chat-labs/open-chat/pull/8300))
-- Use full names for bot notification fields ([#8389](https://github.com/open-chat-labs/open-chat/pull/8389))
+- Use full names for bot event notification fields ([#8389](https://github.com/open-chat-labs/open-chat/pull/8389))
 
 ### Changed
 
@@ -25,7 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add delay before retrying c2c call under certain error conditions ([#8355](https://github.com/open-chat-labs/open-chat/pull/8355))
 - Generalise Escrow so it can be used by 3rd parties ([#8356](https://github.com/open-chat-labs/open-chat/pull/8356))
 - `token:Cryptocurrency` -> `token_symbol:String` ([#8368](https://github.com/open-chat-labs/open-chat/pull/8368))
-- Use full names for bot notification fields ([#8389](https://github.com/open-chat-labs/open-chat/pull/8389))
+- Use full names for bot event notification fields ([#8389](https://github.com/open-chat-labs/open-chat/pull/8389))
 
 ### Removed
 

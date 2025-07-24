@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - `token:Cryptocurrency` -> `token_symbol:String` ([#8368](https://github.com/open-chat-labs/open-chat/pull/8368))
-- Use full names for bot notification fields ([#8389](https://github.com/open-chat-labs/open-chat/pull/8389))
+- Use full names for bot event notification fields ([#8389](https://github.com/open-chat-labs/open-chat/pull/8389))
 
 ## [[2.0.1837](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1837-local_user_index)] - 2025-07-21
 
