@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { getContext, onDestroy } from "svelte";
     import { OpenChat, Poller, Version } from "openchat-client";
-    import Translatable from "./Translatable.svelte";
+    import { getContext, onDestroy } from "svelte";
     import { i18nKey } from "../i18n/i18n";
     import { activeVideoCall } from "../stores/video";
+    import Translatable from "./Translatable.svelte";
 
     const VERSION_INTERVAL = 60 * 1000;
     const client = getContext<OpenChat>("client");
@@ -11,6 +11,7 @@
     let poller = new Poller(checkVersion, VERSION_INTERVAL);
     // @ts-ignore
     let clientVersion = Version.parse(window.OC_WEBSITE_VERSION);
+    let serverVersion = $state(clientVersion);
     let countdown = $state(30);
     let showBanner = $state(false);
     let errorCount = 0;
@@ -20,7 +21,8 @@
     function checkVersion(): Promise<void> {
         if (import.meta.env.OC_NODE_ENV !== "production" || $activeVideoCall !== undefined)
             return Promise.resolve();
-        return getServerVersion().then((serverVersion) => {
+        return getServerVersion().then((sv) => {
+            serverVersion = sv;
             if (serverVersion.isGreaterThan(clientVersion)) {
                 poller.stop();
                 countdown = 30;
@@ -71,6 +73,9 @@
                 <a href="/" onclick={reload}><Translatable resourceKey={i18nKey("updateNow")} /></a>
             </span>
         </div>
+        <div class="versions">
+            {clientVersion.toText()} -> {serverVersion.toText()}
+        </div>
     </div>
 {/if}
 
@@ -83,7 +88,7 @@
         @include z-index("upgrade-banner");
         background-color: var(--notificationBar-bg);
         color: var(--notificationBar-txt);
-        padding: $sp4 $sp3;
+        padding: $sp3;
         text-align: center;
         @include box-shadow(2);
     }
@@ -102,5 +107,9 @@
         text-underline-offset: $sp1;
         cursor: pointer;
         color: inherit;
+    }
+
+    .versions {
+        @include font(light, normal, fs-70);
     }
 </style>

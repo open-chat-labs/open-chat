@@ -1,3 +1,4 @@
+use crate::model::account_linking_codes::AccountLinkingCodes;
 use crate::model::challenges::Challenges;
 use crate::model::encryption_key_requests::EncryptionKeyRequests;
 use crate::model::identity_link_requests::IdentityLinkRequests;
@@ -20,7 +21,7 @@ use serde_bytes::ByteBuf;
 use sha256::sha256;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
-use types::{BuildVersion, CanisterId, Cycles, Milliseconds, OCResult, TimestampMillis, Timestamped};
+use types::{BuildVersion, CanisterId, Cycles, Milliseconds, OCResult, TimestampMillis, Timestamped, UserId};
 use utils::env::Environment;
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
@@ -147,6 +148,14 @@ impl RuntimeState {
         }
     }
 
+    pub fn get_user_id_by_caller(&self) -> Option<UserId> {
+        let caller = self.caller_auth_principal();
+        self.data
+            .user_principals
+            .get_by_auth_principal(&caller)
+            .and_then(|u| u.user_id)
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
             heap_memory_used: utils::memory::heap(),
@@ -164,6 +173,7 @@ impl RuntimeState {
                 user_index: self.data.user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
+            account_linking_codes_count: self.data.account_linking_codes.len(),
         }
     }
 }
@@ -189,6 +199,8 @@ struct Data {
     rng_seed: [u8; 32],
     challenges: Challenges,
     test_mode: bool,
+    #[serde(default)]
+    account_linking_codes: AccountLinkingCodes,
 }
 
 impl Data {
@@ -218,6 +230,7 @@ impl Data {
             rng_seed: [0; 32],
             challenges: Challenges::default(),
             test_mode,
+            account_linking_codes: AccountLinkingCodes::default(),
         }
     }
 
@@ -309,6 +322,7 @@ pub struct Metrics {
     pub originating_canisters: HashMap<CanisterId, u32>,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
+    pub account_linking_codes_count: usize,
 }
 
 #[derive(Serialize, Debug)]

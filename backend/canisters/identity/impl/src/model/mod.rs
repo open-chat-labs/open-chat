@@ -1,3 +1,4 @@
+pub mod account_linking_codes;
 pub mod challenges;
 pub mod encryption_key_requests;
 pub mod identity_link_requests;
