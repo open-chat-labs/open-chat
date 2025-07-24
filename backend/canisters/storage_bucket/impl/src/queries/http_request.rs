@@ -10,7 +10,8 @@ use types::{
     TimestampMillis, Token,
 };
 
-const BLOB_RESPONSE_CHUNK_SIZE_BYTES: usize = 1 << 19; // 1/2 MB
+const MAX_CHUNK_SIZE_BYTES: usize = 1 << 20; // 1MB
+const DEFAULT_RANGE_RESPONSE_CHUNK_SIZE: usize = 1 << 18; // 256KB
 const CACHE_HEADER_VALUE: &str = "public, max-age=100000000, immutable";
 
 #[query]
@@ -61,16 +62,13 @@ fn start_streaming_file(file_id: FileId, request_headers: &[(String, String)], s
                 ),
             ];
 
-            if let Some(range) = (file_bytes_len > BLOB_RESPONSE_CHUNK_SIZE_BYTES)
-                .then(|| extract_range_from_headers(request_headers))
-                .flatten()
-            {
+            return if let Some(range) = extract_range_from_headers(request_headers) {
                 let (start, end) = match range {
                     BytesRange::From(start, end) => {
                         let end = [
-                            start + BLOB_RESPONSE_CHUNK_SIZE_BYTES,
+                            start + MAX_CHUNK_SIZE_BYTES,
                             file_bytes_len,
-                            end.unwrap_or(usize::MAX),
+                            end.unwrap_or(start + DEFAULT_RANGE_RESPONSE_CHUNK_SIZE),
                         ]
                         .into_iter()
                         .min()
@@ -100,13 +98,13 @@ fn start_streaming_file(file_id: FileId, request_headers: &[(String, String)], s
                     format!("bytes {start}-{last_byte}/{file_bytes_len}"),
                 ));
 
-                return HttpResponse {
+                HttpResponse {
                     status_code: 206,
                     headers: response_headers,
                     body: range_bytes,
                     streaming_strategy: None,
                     upgrade: None,
-                };
+                }
             } else {
                 let canister_id = state.env.canister_id();
 
@@ -123,14 +121,14 @@ fn start_streaming_file(file_id: FileId, request_headers: &[(String, String)], s
 
                 response_headers.push(HeaderField("Content-Length".to_string(), file_bytes_len.to_string()));
 
-                return HttpResponse {
+                HttpResponse {
                     status_code: 200,
                     headers: response_headers,
                     body: chunk_bytes,
                     streaming_strategy,
                     upgrade: None,
-                };
-            }
+                }
+            };
         }
     }
 
@@ -161,7 +159,7 @@ fn continue_streaming_file(token: Token, state: &RuntimeState) -> StreamingCallb
 
 fn chunk_bytes(mut blob_bytes: Vec<u8>, chunk_index: u32) -> (Vec<u8>, bool) {
     let total_size = blob_bytes.len();
-    let total_chunks = calc_chunk_count(BLOB_RESPONSE_CHUNK_SIZE_BYTES as u32, total_size as u64);
+    let total_chunks = calc_chunk_count(MAX_CHUNK_SIZE_BYTES as u32, total_size as u64);
     let last_chunk_index = total_chunks - 1;
     let stream_next_chunk = chunk_index < last_chunk_index;
 
@@ -169,8 +167,8 @@ fn chunk_bytes(mut blob_bytes: Vec<u8>, chunk_index: u32) -> (Vec<u8>, bool) {
         panic!("Invalid request");
     }
 
-    let start = BLOB_RESPONSE_CHUNK_SIZE_BYTES * (chunk_index as usize);
-    let end = min(start + BLOB_RESPONSE_CHUNK_SIZE_BYTES, total_size);
+    let start = MAX_CHUNK_SIZE_BYTES * (chunk_index as usize);
+    let end = min(start + MAX_CHUNK_SIZE_BYTES, total_size);
 
     blob_bytes.drain(end..);
     blob_bytes.drain(0..start);
