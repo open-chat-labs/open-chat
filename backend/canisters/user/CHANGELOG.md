@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Introduce `Encrypted` message type ([8294](https://github.com/open-chat-labs/open-chat/pull/8294))
 - Add timestamp to BotNotification ([8300](https://github.com/open-chat-labs/open-chat/pull/8300))
+- Use full names for bot notification fields ([#8389](https://github.com/open-chat-labs/open-chat/pull/8389))
 
 ### Changed
 

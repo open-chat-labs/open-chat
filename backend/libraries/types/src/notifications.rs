@@ -45,87 +45,85 @@ pub struct BotNotification {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum BotEvent {
-    #[serde(rename = "c")]
+    #[serde(alias = "c")]
     Chat(BotChatEvent),
-    #[serde(rename = "u")]
+    #[serde(alias = "u")]
     Community(BotCommunityEvent),
-    #[serde(rename = "l")]
+    #[serde(alias = "l")]
     Lifecycle(BotLifecycleEvent),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BotEventWrapper {
-    #[serde(rename = "g")]
+    #[serde(alias = "g")]
     pub api_gateway: CanisterId,
-    #[serde(rename = "e")]
+    #[serde(alias = "e")]
     pub event: BotEvent,
-    #[serde(rename = "t")]
+    #[serde(alias = "t")]
     pub timestamp: TimestampMillis,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BotChatEvent {
-    #[serde(rename = "v")]
+    #[serde(alias = "v")]
     pub event: ChatEvent,
-    #[serde(rename = "c")]
+    #[serde(alias = "c")]
     pub chat: Chat,
-    #[serde(rename = "t")]
+    #[serde(alias = "t")]
     pub thread: Option<MessageIndex>,
-    #[serde(rename = "i")]
+    #[serde(alias = "i")]
     pub event_index: EventIndex,
-    #[serde(rename = "l")]
+    #[serde(alias = "l")]
     pub latest_event_index: EventIndex,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BotCommunityEvent {
-    #[serde(rename = "e")]
+    #[serde(alias = "e")]
     pub event: CommunityEvent,
-    #[serde(rename = "c")]
+    #[serde(alias = "c")]
     pub community_id: CommunityId,
-    #[serde(rename = "i")]
+    #[serde(alias = "i")]
     pub event_index: EventIndex,
-    #[serde(rename = "l")]
+    #[serde(alias = "l")]
     pub latest_event_index: EventIndex,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum BotLifecycleEvent {
-    #[serde(rename = "r")]
+    #[serde(alias = "r")]
     Registered(BotRegisteredEvent),
-    #[serde(rename = "i")]
+    #[serde(alias = "i")]
     Installed(BotInstalledEvent),
-    #[serde(rename = "u")]
+    #[serde(alias = "u")]
     Uninstalled(BotUninstalledEvent),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BotInstalledEvent {
-    #[serde(rename = "u")]
+    #[serde(alias = "u")]
     pub installed_by: UserId,
-    #[serde(rename = "l")]
+    #[serde(alias = "l")]
     pub location: BotInstallationLocation,
-    #[serde(rename = "g")]
-    pub api_gateway: CanisterId,
-    #[serde(rename = "p")]
+    #[serde(alias = "p")]
     pub granted_command_permissions: BotPermissions,
-    #[serde(rename = "a")]
+    #[serde(alias = "a")]
     pub granted_autonomous_permissions: BotPermissions,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BotUninstalledEvent {
-    #[serde(rename = "u")]
+    #[serde(alias = "u")]
     pub uninstalled_by: UserId,
-    #[serde(rename = "l")]
+    #[serde(alias = "l")]
     pub location: BotInstallationLocation,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BotRegisteredEvent {
-    #[serde(rename = "i")]
+    #[serde(alias = "i")]
     pub bot_id: UserId,
-    #[serde(rename = "n")]
+    #[serde(alias = "n")]
     pub bot_name: String,
 }
 
