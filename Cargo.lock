@@ -136,7 +136,7 @@ dependencies = [
  "http_request",
  "ic-cdk",
  "ic-cdk-timers",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "icrc-ledger-types",
  "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
@@ -994,7 +994,7 @@ dependencies = [
  "chat_events",
  "event_store_types",
  "ic-cdk",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "stable_memory_map",
  "types",
 ]
@@ -1695,7 +1695,7 @@ dependencies = [
  "hex",
  "ic-cdk",
  "ic-ledger-types",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "itertools 0.14.0",
  "ledger_utils",
  "msgpack",
@@ -1965,7 +1965,7 @@ dependencies = [
  "http_request",
  "ic-cdk",
  "ic-cdk-timers",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "ic_principal",
  "icrc-ledger-types",
  "installed_bots",
@@ -2345,7 +2345,7 @@ dependencies = [
  "ic-cdk",
  "ic-cdk-timers",
  "ic-ledger-types",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "icp_ledger_canister_c2c_client",
  "ledger_utils",
  "msgpack",
@@ -3034,7 +3034,7 @@ dependencies = [
  "http_request",
  "ic-cdk",
  "ic-cdk-timers",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",
  "ledger_utils",
@@ -3114,7 +3114,7 @@ dependencies = [
  "http_request",
  "ic-cdk",
  "ic-cdk-timers",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "icrc-ledger-types",
  "msgpack",
  "rand 0.8.5",
@@ -3853,7 +3853,7 @@ dependencies = [
  "ic-cdk",
  "ic-cdk-timers",
  "ic-ledger-types",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "ic_principal",
  "icp_ledger_canister_c2c_client",
  "icrc-ledger-types",
@@ -3892,7 +3892,7 @@ dependencies = [
  "event_store_types",
  "group_community_common",
  "hex",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "itertools 0.14.0",
  "lazy_static",
  "msgpack",
@@ -3986,7 +3986,7 @@ dependencies = [
  "human_readable",
  "ic-cdk",
  "ic-cdk-timers",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
  "msgpack",
@@ -4748,6 +4748,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ic-stable-structures"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e54aeb082293c69def5ab34c70593ba85ff000386f7d0eacdf73514daaeca031"
+dependencies = [
+ "ic_principal",
+]
+
+[[package]]
 name = "ic-transport-types"
 version = "0.40.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4976,7 +4985,7 @@ dependencies = [
  "candid",
  "crc32fast",
  "hex",
- "ic-stable-structures",
+ "ic-stable-structures 0.6.9",
  "icrc-cbor",
  "itertools 0.12.1",
  "minicbor",
@@ -5147,7 +5156,7 @@ dependencies = [
  "ic-cdk-timers",
  "ic-certificate-verification",
  "ic-certification 2.6.0",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "identity_canister",
  "identity_utils",
  "msgpack",
@@ -5403,7 +5412,7 @@ dependencies = [
 name = "instruction_counts_log"
 version = "0.1.0"
 dependencies = [
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "msgpack",
  "serde",
  "types",
@@ -5426,7 +5435,7 @@ dependencies = [
  "group_canister",
  "group_index_canister",
  "ic-ledger-types",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "icrc-ledger-types",
  "identity_canister",
  "itertools 0.14.0",
@@ -6015,7 +6024,7 @@ dependencies = [
  "http_request",
  "ic-cdk",
  "ic-cdk-timers",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "itertools 0.14.0",
  "json",
  "jwt",
@@ -6143,7 +6152,7 @@ dependencies = [
  "http_request",
  "ic-cdk",
  "ic-cdk-timers",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "icdex_canister",
  "icdex_canister_c2c_client",
  "icdex_client",
@@ -6447,7 +6456,7 @@ dependencies = [
  "ic-cdk",
  "ic-cdk-timers",
  "ic-ledger-types",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "ic-transport-types",
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",
@@ -6631,7 +6640,7 @@ dependencies = [
  "human_readable",
  "ic-cdk",
  "ic-cdk-timers",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
  "msgpack",
@@ -7091,7 +7100,7 @@ dependencies = [
  "http_request",
  "ic-cdk",
  "ic-cdk-timers",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "msgpack",
  "online_users_canister",
  "principal_to_user_id_map",
@@ -7167,7 +7176,7 @@ dependencies = [
  "human_readable",
  "ic-cdk",
  "ic-cdk-timers",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "msgpack",
  "notifications_index_canister",
  "openchat_installer_canister",
@@ -7952,7 +7961,7 @@ dependencies = [
  "human_readable",
  "ic-cdk",
  "ic-cdk-timers",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",
  "itertools 0.14.0",
@@ -8464,7 +8473,7 @@ dependencies = [
  "ic-cdk",
  "ic-cdk-timers",
  "ic-ledger-types",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "icp_ledger_canister_c2c_client",
  "icrc-ledger-types",
  "icrc_ledger_canister",
@@ -9600,7 +9609,7 @@ name = "stable_memory"
 version = "0.1.0"
 dependencies = [
  "ic-cdk",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
 ]
 
 [[package]]
@@ -9608,7 +9617,7 @@ name = "stable_memory_map"
 version = "0.1.0"
 dependencies = [
  "ic-cdk",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "ic_principal",
  "msgpack",
  "rand 0.8.5",
@@ -9686,7 +9695,7 @@ dependencies = [
  "http_request",
  "ic-cdk",
  "ic-cdk-timers",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "json",
  "msgpack",
  "num-traits",
@@ -9775,7 +9784,7 @@ dependencies = [
  "ic-cdk",
  "ic-cdk-timers",
  "ic-ledger-types",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "icp_ledger_canister_c2c_client",
  "json",
  "msgpack",
@@ -10952,7 +10961,7 @@ dependencies = [
  "http_request",
  "ic-cdk",
  "ic-cdk-timers",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "icrc-ledger-types",
  "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
@@ -11313,7 +11322,7 @@ dependencies = [
  "ic-cdk-timers",
  "ic-certificate-verification",
  "ic-ledger-types",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "icpswap_swap_pool_canister",
  "icpswap_swap_pool_canister_c2c_client",
  "icrc-ledger-types",
@@ -11441,7 +11450,7 @@ dependencies = [
  "ic-cdk-timers",
  "ic-certificate-verification",
  "ic-ledger-types",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",
  "identity_canister",
