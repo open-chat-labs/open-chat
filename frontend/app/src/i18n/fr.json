@@ -1080,20 +1080,25 @@
     "messageUrlCopiedToClipboard": "URL du message copiée dans le presse-papier !",
     "minimumAmount": "Minimum: {amount} {symbol}",
     "minutes": "Minutes",
-    "mobile": {
-        "credentials": {
-            "errors": {
-                "genericSignIn": "Impossible de se connecter avec un mot de passe.",
-                "genericSignUp": "Impossible de créer une clé d'accès."
-            }
-        }
-    },
     "moderator": "modérateur",
     "months": "Mois",
     "mustBeFutureDateError": "Vous devez sélectionner une date future",
     "muted": "en sourdine",
     "muteNotifications": "Désactiver les notifications",
     "myAccount": "Mon compte",
+    "native": {
+        "auth": {
+            "createAccount": "Créer un nouveau compte",
+            "error": "Échec de l'authentification. Veuillez réessayer.",
+            "existingAccount": "Je suis un utilisateur existant",
+            "linkAccount": {
+                "cta": "Lier le compte",
+                "info": "Pour vous connecter à votre compte OpenChat existant, veuillez saisir votre mot de passe à usage unique ci-dessous.",
+                "note": "Le mot de passe à usage unique se trouve sous votre profil / avancé, sur un appareil sur lequel vous êtes actuellement connecté.",
+                "title": "Lien avec un compte existant"
+            }
+        }
+    },
     "new": "Nouveau",
     "newChat": "Nouvelle conversation",
     "newGroup": "Nouveau groupe",
@@ -1348,8 +1353,11 @@
         "lifetimeDiamondMembership": "Adhésion diamant à vie",
         "live": "Message de récompense en direct ! Les autres peuvent cliquer pour réclamer 🎁",
         "maxPrize": "Quel est le prix maximum ?",
+        "minChitEarned": "CHIT minimum gagné",
+        "minChitEarnedValue": "Au moins {n} CHIT gagné",
         "minPrize": "Quel est le prix minimum ?",
         "numberOfWinners": "Nombre de gagnants",
+        "onlyChit": "Seuls les utilisateurs avec CHIT",
         "onlyDiamond": "Uniquement les utilisateurs Diamond",
         "onlyStreak": "Seuls les utilisateurs avec une séquence",
         "onlyUniquePerson": "Seuls les humains uniques",

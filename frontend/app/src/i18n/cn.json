@@ -1080,20 +1080,25 @@
     "messageUrlCopiedToClipboard": "消息网址已复制到剪贴板！",
     "minimumAmount": "最小值：{amount} {symbol}",
     "minutes": "分钟",
-    "mobile": {
-        "credentials": {
-            "errors": {
-                "genericSignIn": "无法使用密钥登录。",
-                "genericSignUp": "无法创建密钥。"
-            }
-        }
-    },
     "moderator": "版主",
     "months": "月份",
     "mustBeFutureDateError": "您必须选择一个未来日期",
     "muted": "静默",
     "muteNotifications": "关闭通知",
     "myAccount": "我的帐户",
+    "native": {
+        "auth": {
+            "createAccount": "创建新帐户",
+            "error": "身份验证失败。请重试。",
+            "existingAccount": "我是现有用户",
+            "linkAccount": {
+                "cta": "关联账户",
+                "info": "要链接到您现有的 OpenChat 帐户，请在下面输入您的一次性密码。",
+                "note": "您可以在当前登录的设备上，在个人资料/高级下找到一次性密码。",
+                "title": "与现有帐户关联"
+            }
+        }
+    },
     "new": "新的",
     "newChat": "新的聊天",
     "newGroup": "新的群聊",
@@ -1348,8 +1353,11 @@
         "lifetimeDiamondMembership": "终身钻石会员",
         "live": "奖品留言直播！其他人可以点击领取🎁",
         "maxPrize": "最高奖金是多少？",
+        "minChitEarned": "获得的最低 CHIT",
+        "minChitEarnedValue": "至少获得 {n} CHIT",
         "minPrize": "最低奖金是多少？",
         "numberOfWinners": "获奖人数",
+        "onlyChit": "仅限拥有 CHIT 的用户",
         "onlyDiamond": "仅限钻石用户",
         "onlyStreak": "仅限有连胜记录的用户",
         "onlyUniquePerson": "只有独一无二的人类",

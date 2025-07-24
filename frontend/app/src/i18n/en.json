@@ -1080,25 +1080,25 @@
     "messageUrlCopiedToClipboard": "Message url copied to clipboard!",
     "minimumAmount": "Minimum: {amount} {symbol}",
     "minutes": "Minutes",
-    "native": {
-        "auth": {
-            "createAccount": "Create new account",
-            "existingAccount": "I'm an existing user",
-            "linkAccount": {
-                "title": "Link with existing account",
-                "info": "To link with your existing OpenChat account, please enter your one-time-password below.",
-                "note": "One-time-password can be found under your profile / advanced, on a device where you are currently signed in.",
-                "cta": "Link account"
-            },
-            "error": "Authentication failed. Please try again."
-        }
-    },
     "moderator": "moderator",
     "months": "Months",
     "mustBeFutureDateError": "You must select a future date",
     "muted": "muted",
     "muteNotifications": "Mute notifications",
     "myAccount": "My account",
+    "native": {
+        "auth": {
+            "createAccount": "Create new account",
+            "error": "Authentication failed. Please try again.",
+            "existingAccount": "I'm an existing user",
+            "linkAccount": {
+                "cta": "Link account",
+                "info": "To link with your existing OpenChat account, please enter your one-time-password below.",
+                "note": "One-time-password can be found under your profile / advanced, on a device where you are currently signed in.",
+                "title": "Link with existing account"
+            }
+        }
+    },
     "new": "new",
     "newChat": "New chat",
     "newGroup": "New group",
@@ -1352,9 +1352,9 @@
         "lifetimeDiamond": "Lifetime",
         "lifetimeDiamondMembership": "Lifetime diamond membership",
         "live": "Prize message live! Others can click to claim 🎁",
+        "maxPrize": "What is the maximum prize?",
         "minChitEarned": "Minimum CHIT earned",
         "minChitEarnedValue": "At least {n} CHIT earned",
-        "maxPrize": "What is the maximum prize?",
         "minPrize": "What is the minimum prize?",
         "numberOfWinners": "Number of winners",
         "onlyChit": "Only users with CHIT",
