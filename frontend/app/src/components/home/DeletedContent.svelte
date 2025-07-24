@@ -26,7 +26,7 @@
         `${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`,
     );
     let username = $derived(
-        client.getDisplayName(content.deletedBy, $selectedCommunityMembersStore, $selectedChatWebhooksStore)
+        client.getDisplayName(content.deletedBy, $selectedCommunityMembersStore, $selectedChatWebhooksStore),
     );
 </script>
 
